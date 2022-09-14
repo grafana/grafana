@@ -12,6 +12,7 @@ import { windTurbineItem } from './elements/windTurbine';
 
 export const DEFAULT_CANVAS_ELEMENT_CONFIG: CanvasElementOptions = {
   ...metricValueItem.getNewOptions(),
+  placement: { ...metricValueItem.defaultSize },
   type: metricValueItem.id,
   name: `Element 1`,
 };

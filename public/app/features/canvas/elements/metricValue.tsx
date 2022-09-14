@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useCallback } from 'react';
 
 import { DataFrame, FieldNamePickerConfigSettings, GrafanaTheme2, StandardEditorsRegistryItem } from '@grafana/data';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
@@ -10,6 +10,7 @@ import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimen
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
 
 import { CanvasElementItem, CanvasElementProps, defaultBgColor, defaultTextColor } from '../element';
+import { ElementState } from '../runtime/element';
 
 import { Align, TextBoxConfig, TextBoxData, VAlign } from './textBox';
 
@@ -18,30 +19,53 @@ const dummyFieldSettings: StandardEditorsRegistryItem<string, FieldNamePickerCon
 } as any;
 
 const MetricValueDisplay = (props: CanvasElementProps<TextBoxConfig, TextBoxData>) => {
-  const styles = useStyles2(getStyles(props.data));
+  const { data } = props;
+  const styles = useStyles2(getStyles(data));
 
-  if (!props?.data?.text) {
+  if (!data?.text) {
     return <MetricValueInlineEdit {...props} />;
   }
   return (
     <div className={styles.container}>
-      <span className={styles.span}>{props.data?.text}</span>
+      <span className={styles.span}>{data?.text}</span>
     </div>
   );
 };
 
 const MetricValueInlineEdit = (props: CanvasElementProps<TextBoxConfig, TextBoxData>) => {
+  let { data } = props;
   const context = usePanelContext();
-  const data = context.instanceState?.scene?.data.series as DataFrame[];
-  const styles = useStyles2(getStyles(props.data));
+  const panelData = context.instanceState?.scene?.data.series as DataFrame[];
+
+  const onFieldChange = useCallback(
+    (field) => {
+      const selectedElement = context.instanceState?.selected[0] as ElementState;
+      if (selectedElement) {
+        selectedElement.onChange({
+          ...selectedElement.options,
+          config: {
+            ...selectedElement.options.config,
+            text: { fixed: '', field: field, mode: TextDimensionMode.Field },
+          },
+        });
+
+        context.instanceState?.scene?.updateData(context.instanceState?.scene?.data);
+      }
+    },
+    [context.instanceState?.scene, context.instanceState?.selected]
+  );
+
+  const styles = useStyles2(getStyles(data));
   return (
     <div className={styles.inlineEditorContainer}>
-      <FieldNamePicker
-        context={{ data }}
-        value={props.config.text?.field ?? ''}
-        onChange={(foo: any) => console.log(foo)}
-        item={dummyFieldSettings}
-      />
+      {panelData && (
+        <FieldNamePicker
+          context={{ data: panelData }}
+          value={props.config.text?.field ?? ''}
+          onChange={onFieldChange}
+          item={dummyFieldSettings}
+        />
+      )}
     </div>
   );
 };
@@ -58,9 +82,6 @@ const getStyles = (data: TextBoxData | undefined) => (theme: GrafanaTheme2) => (
     width: 100%;
     display: flex;
     align-items: center;
-    div < {
-      font-size: 20px;
-    }
   `,
   span: css`
     display: table-cell;
@@ -79,8 +100,8 @@ export const metricValueItem: CanvasElementItem<TextBoxConfig, TextBoxData> = {
   display: MetricValueDisplay,
 
   defaultSize: {
-    width: 240,
-    height: 160,
+    width: 300,
+    height: 50,
   },
 
   getNewOptions: (options) => ({
