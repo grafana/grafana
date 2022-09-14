@@ -92,15 +92,35 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
       <EditorHeader>
         <InlineSelect
           value={null}
+          onOpenMenu={() => {
+            const visualQuery = buildVisualQueryFromString(query.expr || '');
+            reportInteraction('grafana_loki_query_patterns_opened', {
+              version: 'v1',
+              app: app ?? '',
+              editorMode: query.editorMode,
+              preSelectedOperationsCount: visualQuery.query.operations.length,
+              preSelectedLabelsCount: visualQuery.query.labels.length,
+            });
+          }}
           placeholder="Query patterns"
           aria-label={selectors.components.QueryBuilder.queryPatterns}
           allowCustomValue
           onChange={({ value }: SelectableValue<LokiQueryPattern>) => {
-            const result = buildVisualQueryFromString(query.expr || '');
-            result.query.operations = value?.operations!;
+            const visualQuery = buildVisualQueryFromString(query.expr || '');
+            reportInteraction('grafana_loki_query_patterns_selected', {
+              version: 'v1',
+              app: app ?? '',
+              editorMode: query.editorMode,
+              selectedPattern: value?.name,
+              preSelectedOperationsCount: visualQuery.query.operations.length,
+              preSelectedLabelsCount: visualQuery.query.labels.length,
+            });
+
+            // Update operations
+            visualQuery.query.operations = value?.operations!;
             onChange({
               ...query,
-              expr: lokiQueryModeller.renderQuery(result.query),
+              expr: lokiQueryModeller.renderQuery(visualQuery.query),
             });
           }}
           options={lokiQueryModeller.getQueryPatterns().map((x) => ({ label: x.name, value: x }))}
@@ -141,6 +161,7 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
             showExplain={explain}
           />
         )}
+        <Button onClick={() => onRunQuery()}>Run log</Button>
         <LokiQueryBuilderOptions query={query} onChange={onChange} onRunQuery={onRunQuery} app={app} />
       </EditorRows>
     </>
