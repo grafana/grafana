@@ -499,7 +499,7 @@ func TestBuildMetricRequest(t *testing.T) {
 			publicDashboardQueryDTO,
 		)
 
-		require.ErrorContains(t, err, "Panel not found")
+		require.ErrorContains(t, err, ErrPublicDashboardPanelNotFound.Reason)
 	})
 }
 
