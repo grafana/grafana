@@ -19,6 +19,7 @@ import {
   FeatureBadge,
   Select,
   ClipboardButton,
+  Stack,
 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { PanelModel } from 'app/features/dashboard/state';
@@ -69,28 +70,27 @@ export function SupportSnapshot({ panel, plugin, onClose }: Props) {
 
   return (
     <Drawer
-      title={`Panel: ${panelTitle}`}
+      title={`Support snapshot`}
       width="90%"
       onClose={onClose}
       expandable
       scrollableContent
       subtitle={
-        <div>
+        <Stack direction="column">
           <FeatureBadge featureState={FeatureState.beta} />
-        </div>
+          Panel: {panelTitle}
+        </Stack>
       }
       tabs={
         <TabsBar>
-          {tabs.map((t, index) => {
-            return (
-              <Tab
-                key={`${t.value}-${index}`}
-                label={t.label}
-                active={t.value === currentTab}
-                onChangeTab={() => service.onCurrentTabChange(t.value!)}
-              />
-            );
-          })}
+          {tabs.map((t, index) => (
+            <Tab
+              key={`${t.value}-${index}`}
+              label={t.label}
+              active={t.value === currentTab}
+              onChangeTab={() => service.onCurrentTabChange(t.value!)}
+            />
+          ))}
         </TabsBar>
       }
     >
