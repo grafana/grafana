@@ -36,7 +36,7 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 	type conf struct {
 		AllowAssignGrafanaAdmin bool
 		RoleAttributeStrict     bool
-		DefaultOrgRole          org.RoleType
+		AutoAssignOrgRole       org.RoleType
 	}
 
 	tests := []struct {
@@ -49,6 +49,7 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 		ExpectedEmail        string
 		ExpectedRole         org.RoleType
 		ExpectedGrafanaAdmin *bool
+		ExpectedError        error
 	}{
 		{
 			Name:                 "Server Admin Allowed",
@@ -62,15 +63,14 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 			ExpectedGrafanaAdmin: trueBoolPtr(),
 		},
 		{ // Edge case, he is in the Viewer Group, Server Admin is disabled but the attribute path has a condition for it
-			Name:                 "Server Admin Disabled",
-			Cfg:                  conf{AllowAssignGrafanaAdmin: false},
-			UserRespBody:         rootUserRespBody,
-			GroupsRespBody:       "[" + strings.Join([]string{viewerGroup}, ",") + "]",
-			RoleAttributePath:    gitlabAttrPath,
-			ExpectedLogin:        "root",
-			ExpectedEmail:        "root@example.org",
-			ExpectedRole:         "Admin",
-			ExpectedGrafanaAdmin: nil,
+			Name:              "Server Admin Disabled",
+			Cfg:               conf{AllowAssignGrafanaAdmin: false},
+			UserRespBody:      rootUserRespBody,
+			GroupsRespBody:    "[" + strings.Join([]string{viewerGroup}, ",") + "]",
+			RoleAttributePath: gitlabAttrPath,
+			ExpectedLogin:     "root",
+			ExpectedEmail:     "root@example.org",
+			ExpectedRole:      "Admin",
 		},
 		{
 			Name:                 "Editor",
@@ -84,22 +84,33 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 			ExpectedGrafanaAdmin: falseBoolPtr(),
 		},
 		{
-			Name:                 "Fallback to default",
-			Cfg:                  conf{AllowAssignGrafanaAdmin: true, DefaultOrgRole: org.RoleViewer},
-			UserRespBody:         editorUserRespBody,
-			GroupsRespBody:       "[" + strings.Join([]string{}, ",") + "]",
-			RoleAttributePath:    gitlabAttrPath,
-			ExpectedLogin:        "gitlab-editor",
-			ExpectedEmail:        "gitlab-editor@example.org",
-			ExpectedRole:         "Viewer",
-			ExpectedGrafanaAdmin: falseBoolPtr(),
+			Name:              "Fallback to default",
+			Cfg:               conf{AutoAssignOrgRole: org.RoleViewer},
+			UserRespBody:      editorUserRespBody,
+			GroupsRespBody:    "[" + strings.Join([]string{}, ",") + "]",
+			RoleAttributePath: gitlabAttrPath,
+			ExpectedLogin:     "gitlab-editor",
+			ExpectedEmail:     "gitlab-editor@example.org",
+			ExpectedRole:      "Viewer",
+		},
+		{
+			Name:              "Strict mode prevents fallback to default",
+			Cfg:               conf{RoleAttributeStrict: true, AutoAssignOrgRole: org.RoleViewer},
+			UserRespBody:      editorUserRespBody,
+			GroupsRespBody:    "[" + strings.Join([]string{}, ",") + "]",
+			RoleAttributePath: gitlabAttrPath,
+			ExpectedLogin:     "gitlab-editor",
+			ExpectedEmail:     "gitlab-editor@example.org",
+			ExpectedRole:      "",
+			ExpectedError:     ErrInvalidBasicRole,
 		},
 	}
 
 	for _, test := range tests {
 		provider.roleAttributePath = test.RoleAttributePath
 		provider.allowAssignGrafanaAdmin = test.Cfg.AllowAssignGrafanaAdmin
-		provider.autoAssignOrgRole = string(test.Cfg.DefaultOrgRole)
+		provider.autoAssignOrgRole = string(test.Cfg.AutoAssignOrgRole)
+		provider.roleAttributeStrict = test.Cfg.RoleAttributeStrict
 
 		t.Run(test.Name, func(t *testing.T) {
 			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -118,6 +129,11 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 			}))
 			provider.apiUrl = ts.URL + apiURI
 			actualResult, err := provider.UserInfo(ts.Client(), nil)
+			if test.ExpectedError != nil {
+				require.Equal(t, err, test.ExpectedError)
+				return
+			}
+
 			require.NoError(t, err)
 			require.Equal(t, test.ExpectedEmail, actualResult.Email)
 			require.Equal(t, test.ExpectedLogin, actualResult.Login)
