@@ -149,7 +149,7 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
         ],
       },
       {
-        name: 'Bytes used by log stream',
+        name: 'Bytes used by a log stream',
         type: LokiQueryPatternType.Metric,
         // bytes_over_time({}[$__interval])
         operations: [
