@@ -11,8 +11,9 @@ import { CustomScrollbar, Icon, IconButton, useTheme2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
 import { TOP_BAR_LEVEL_HEIGHT } from '../AppChrome/types';
-import { NavItem } from '../NavBar/NavBarMenu';
 import { NavBarToggle } from '../NavBar/NavBarToggle';
+
+import { NavItem } from './NavBarMenuItem';
 
 const MENU_WIDTH = '350px';
 
