@@ -76,6 +76,25 @@ type MetricRequest struct {
 	HTTPRequest *http.Request `json:"-"`
 }
 
+func (mr *MetricRequest) GetUniqueDatasourceTypes() []string {
+	dsTypes := make(map[string]bool)
+	for _, query := range mr.Queries {
+		if dsType, ok := query.Get("datasource").CheckGet("type"); ok {
+			name := dsType.MustString()
+			if _, ok := dsTypes[name]; !ok {
+				dsTypes[name] = true
+			}
+		}
+	}
+
+	res := make([]string, 0)
+	for dsType := range dsTypes {
+		res = append(res, dsType)
+	}
+
+	return res
+}
+
 func (mr *MetricRequest) CloneWithQueries(queries []*simplejson.Json) MetricRequest {
 	return MetricRequest{
 		From:        mr.From,

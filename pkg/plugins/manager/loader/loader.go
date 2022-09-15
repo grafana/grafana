@@ -19,11 +19,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -35,7 +35,6 @@ var (
 var _ plugins.ErrorResolver = (*Loader)(nil)
 
 type Loader struct {
-	cfg                *plugins.Cfg
 	pluginFinder       finder.Finder
 	pluginInitializer  initializer.Initializer
 	signatureValidator signature.Validator
@@ -44,15 +43,14 @@ type Loader struct {
 	errs map[string]*plugins.SignatureError
 }
 
-func ProvideService(cfg *setting.Cfg, license models.Licensing, authorizer plugins.PluginLoaderAuthorizer,
+func ProvideService(cfg *config.Cfg, license models.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	backendProvider plugins.BackendFactoryProvider) (*Loader, error) {
-	return New(plugins.FromGrafanaCfg(cfg), license, authorizer, backendProvider), nil
+	return New(cfg, license, authorizer, backendProvider), nil
 }
 
-func New(cfg *plugins.Cfg, license models.Licensing, authorizer plugins.PluginLoaderAuthorizer,
+func New(cfg *config.Cfg, license models.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	backendProvider plugins.BackendFactoryProvider) *Loader {
 	return &Loader{
-		cfg:                cfg,
 		pluginFinder:       finder.New(),
 		pluginInitializer:  initializer.New(cfg, backendProvider, license),
 		signatureValidator: signature.NewValidator(authorizer),

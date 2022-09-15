@@ -245,12 +245,14 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 		}
 
 		tests := []struct {
-			Name              string
-			ResponseBody      interface{}
-			OAuth2Extra       interface{}
-			RoleAttributePath string
-			ExpectedEmail     string
-			ExpectedRole      string
+			Name                    string
+			AllowAssignGrafanaAdmin bool
+			ResponseBody            interface{}
+			OAuth2Extra             interface{}
+			RoleAttributePath       string
+			ExpectedEmail           string
+			ExpectedRole            string
+			ExpectedGrafanaAdmin    *bool
 		}{
 			{
 				Name: "Given a valid id_token, a valid role path, no API response, use id_token",
@@ -331,6 +333,38 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 				ExpectedRole:      "Admin",
 			},
 			{
+				Name:                    "Given a valid id_token and AssignGrafanaAdmin is unchecked, don't grant Server Admin",
+				AllowAssignGrafanaAdmin: false,
+				OAuth2Extra: map[string]interface{}{
+					// { "role": "GrafanaAdmin", "email": "john.doe@example.com" }
+					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiR3JhZmFuYUFkbWluIiwiZW1haWwiOiJqb2huLmRvZUBleGFtcGxlLmNvbSJ9.cQqMJpVjwdtJ8qEZLOo9RKNbAFfpkQcpnRG0nopmWEI",
+				},
+				ResponseBody: map[string]interface{}{
+					"role":  "FromResponse",
+					"email": "from_response@example.com",
+				},
+				RoleAttributePath:    "role",
+				ExpectedEmail:        "john.doe@example.com",
+				ExpectedRole:         "Admin",
+				ExpectedGrafanaAdmin: nil,
+			},
+			{
+				Name:                    "Given a valid id_token and AssignGrafanaAdmin is checked, grant Server Admin",
+				AllowAssignGrafanaAdmin: true,
+				OAuth2Extra: map[string]interface{}{
+					// { "role": "GrafanaAdmin", "email": "john.doe@example.com" }
+					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiR3JhZmFuYUFkbWluIiwiZW1haWwiOiJqb2huLmRvZUBleGFtcGxlLmNvbSJ9.cQqMJpVjwdtJ8qEZLOo9RKNbAFfpkQcpnRG0nopmWEI",
+				},
+				ResponseBody: map[string]interface{}{
+					"role":  "FromResponse",
+					"email": "from_response@example.com",
+				},
+				RoleAttributePath:    "role",
+				ExpectedEmail:        "john.doe@example.com",
+				ExpectedRole:         "Admin",
+				ExpectedGrafanaAdmin: trueBoolPtr(),
+			},
+			{
 				Name: "Given a valid id_token, an invalid role path, a valid API response, prefer id_token",
 				OAuth2Extra: map[string]interface{}{
 					// { "role": "Admin", "email": "john.doe@example.com" }
@@ -368,7 +402,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 				},
 				RoleAttributePath: "role",
 				ExpectedEmail:     "john.doe@example.com",
-				ExpectedRole:      "FromResponse",
+				ExpectedRole:      "Fromresponse",
 			},
 			{
 				Name: "Given a valid id_token, a valid advanced JMESPath role path, derive the role",
@@ -416,6 +450,8 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 
 		for _, test := range tests {
 			provider.roleAttributePath = test.RoleAttributePath
+			provider.allowAssignGrafanaAdmin = test.AllowAssignGrafanaAdmin
+
 			t.Run(test.Name, func(t *testing.T) {
 				body, err := json.Marshal(test.ResponseBody)
 				require.NoError(t, err)
@@ -439,6 +475,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 				require.Equal(t, test.ExpectedEmail, actualResult.Email)
 				require.Equal(t, test.ExpectedEmail, actualResult.Login)
 				require.Equal(t, test.ExpectedRole, actualResult.Role)
+				require.Equal(t, test.ExpectedGrafanaAdmin, actualResult.IsGrafanaAdmin)
 			})
 		}
 	})

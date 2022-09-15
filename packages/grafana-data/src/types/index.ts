@@ -50,3 +50,4 @@ export type { FeatureToggles } from './featureToggles.gen';
 export * from './alerts';
 export * from './slider';
 export * from './accesscontrol';
+export * from './icon';

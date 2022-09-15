@@ -3,7 +3,7 @@ import { defaults } from 'lodash';
 import React from 'react';
 
 import { QueryEditorProps } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { InlineLabel, useStyles2 } from '@grafana/ui';
 
 import { TempoDatasource } from '../datasource';
 import { defaultQuery, MyDataSourceOptions, TempoQuery } from '../types';
@@ -23,7 +23,22 @@ export function QueryEditor(props: Props) {
 
   return (
     <>
-      <TraceQLEditor value={query.query} onChange={onEditorChange} datasource={props.datasource} />
+      <InlineLabel>
+        Build complex queries using TraceQL to select a list of traces.{' '}
+        <a
+          rel="noreferrer"
+          target="_blank"
+          href="https://github.com/grafana/tempo/blob/main/docs/design-proposals/2022-04%20TraceQL%20Concepts.md"
+        >
+          Documentation
+        </a>
+      </InlineLabel>
+      <TraceQLEditor
+        value={query.query}
+        onChange={onEditorChange}
+        datasource={props.datasource}
+        onRunQuery={props.onRunQuery}
+      />
       <div className={styles.optionsContainer}>
         <TempoQueryBuilderOptions query={query} onChange={props.onChange} />
       </div>
