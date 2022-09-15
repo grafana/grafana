@@ -109,7 +109,7 @@ export class UserAdminPage extends PureComponent<Props> {
     const canReadSessions = contextSrv.hasPermission(AccessControlAction.UsersAuthTokenList);
     const canReadLDAPStatus = contextSrv.hasPermission(AccessControlAction.LDAPStatusRead);
     const isOAuthUserWithSkippableSync =
-      user && user.isExternal && user.authLabels && user.authLabels.some((r) => SyncedOAuthLabels.includes(r));
+      user?.isExternal && user?.authLabels?.some((r) => SyncedOAuthLabels.includes(r));
     const isUserSynced =
       (user?.isExternal && !isOAuthUserWithSkippableSync) ||
       (!config.auth.OAuthSkipOrgRoleUpdateSync && isOAuthUserWithSkippableSync);
