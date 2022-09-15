@@ -173,6 +173,11 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:        "correlations",
+			Description: "Correlations page",
+			State:       FeatureStateAlpha,
+		},
+		{
 			Name:        "cloudWatchDynamicLabels",
 			Description: "Use dynamic labels instead of alias patterns in CloudWatch datasource",
 			State:       FeatureStateStable,

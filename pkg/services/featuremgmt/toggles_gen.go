@@ -127,6 +127,10 @@ const (
 	// Enable command palette
 	FlagCommandPalette = "commandPalette"
 
+	// FlagCorrelations
+	// Correlations page
+	FlagCorrelations = "correlations"
+
 	// FlagCloudWatchDynamicLabels
 	// Use dynamic labels instead of alias patterns in CloudWatch datasource
 	FlagCloudWatchDynamicLabels = "cloudWatchDynamicLabels"
