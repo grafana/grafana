@@ -67,10 +67,11 @@ func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*Bas
 		return nil, ErrEmailNotFound
 	}
 
-	role, grafanaAdmin := claims.extractRoleAndAdmin(s.autoAssignOrgRole, s.roleAttributeStrict)
-	if role == "" {
+	role, grafanaAdmin := s.extractRoleAndAdmin(&claims)
+	if s.roleAttributeStrict && !role.IsValid() {
 		return nil, ErrInvalidBasicRole
 	}
+
 	logger.Debug("AzureAD OAuth: extracted role", "email", email, "role", role)
 
 	groups, err := extractGroups(client, claims, token)
@@ -93,7 +94,7 @@ func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*Bas
 		Name:           claims.Name,
 		Email:          email,
 		Login:          email,
-		Role:           string(role),
+		Role:           role,
 		IsGrafanaAdmin: isGrafanaAdmin,
 		Groups:         groups,
 	}, nil
@@ -126,22 +127,12 @@ func (claims *azureClaims) extractEmail() string {
 }
 
 // extractRoleAndAdmin extracts the role from the claims and returns the role and whether the user is a Grafana admin.
-func (claims *azureClaims) extractRoleAndAdmin(autoAssignRole string, strictMode bool) (models.RoleType, bool) {
+func (s *SocialAzureAD) extractRoleAndAdmin(claims *azureClaims) (models.RoleType, bool) {
 	if len(claims.Roles) == 0 {
-		if strictMode {
-			return models.RoleType(""), false
-		}
-
-		return models.RoleType(autoAssignRole), false
+		return s.defaultRole(false), false
 	}
 
-	roleOrder := []models.RoleType{
-		RoleGrafanaAdmin,
-		models.ROLE_ADMIN,
-		models.ROLE_EDITOR,
-		models.ROLE_VIEWER,
-	}
-
+	roleOrder := []models.RoleType{RoleGrafanaAdmin, models.ROLE_ADMIN, models.ROLE_EDITOR, models.ROLE_VIEWER}
 	for _, role := range roleOrder {
 		if found := hasRole(claims.Roles, role); found {
 			if role == RoleGrafanaAdmin {
@@ -152,11 +143,7 @@ func (claims *azureClaims) extractRoleAndAdmin(autoAssignRole string, strictMode
 		}
 	}
 
-	if strictMode {
-		return models.RoleType(""), false
-	}
-
-	return models.ROLE_VIEWER, false
+	return s.defaultRole(false), false
 }
 
 func hasRole(roles []string, role models.RoleType) bool {
