@@ -3,7 +3,7 @@ import React from 'react';
 import { SelectableValue } from '@grafana/data';
 import { EditorField, Select } from '@grafana/ui';
 
-import { LOOKBACK_PERIODS } from '../../constants';
+import { LOOKBACK_PERIODS } from '../constants';
 
 export interface Props {
   refId: string;
