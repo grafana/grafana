@@ -57,6 +57,9 @@ export class AppChromeService {
       this.routeChangeHandled = true;
     }
 
+    // KioskMode overrides chromeless state
+    newState.chromeless = newState.kioskMode === KioskMode.Full || this.currentRoute?.chromeless;
+
     Object.assign(newState, update);
 
     if (!isShallowEqual(current, newState)) {
@@ -119,20 +122,17 @@ export class AppChromeService {
   private getNextKioskMode() {
     const { kioskMode, searchBarHidden } = this.state.getValue();
 
-    if (searchBarHidden) {
+    if (searchBarHidden || kioskMode === KioskMode.TV) {
+      appEvents.emit(AppEvents.alertSuccess, [
+        t({ id: 'navigation.kiosk.tv-alert', message: 'Press ESC to exit kiosk mode' }),
+      ]);
       return KioskMode.Full;
     }
 
-    switch (kioskMode) {
-      case null:
-        return KioskMode.TV;
-      case KioskMode.TV:
-        appEvents.emit(AppEvents.alertSuccess, [
-          t({ id: 'navigation.kiosk.tv-alert', message: 'Press ESC to exit Kiosk mode' }),
-        ]);
-        return KioskMode.Full;
-      default:
-        return null;
+    if (!kioskMode) {
+      return KioskMode.TV;
     }
+
+    return null;
   }
 }

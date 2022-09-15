@@ -24,18 +24,17 @@ export function AppChrome({ children }: Props) {
     return <main className="main-view">{children}</main>;
   }
 
-  const chromeless = state.chromeless || state.kioskMode === KioskMode.Full;
   const searchBarHidden = state.searchBarHidden || state.kioskMode === KioskMode.TV;
 
   const contentClass = cx({
     [styles.content]: true,
     [styles.contentNoSearchBar]: searchBarHidden,
-    [styles.contentChromeless]: chromeless,
+    [styles.contentChromeless]: state.chromeless,
   });
 
   return (
     <main className="main-view">
-      {!chromeless && (
+      {!state.chromeless && (
         <div className={cx(styles.topNav)}>
           {!searchBarHidden && <TopSearchBar />}
           <NavToolbar
