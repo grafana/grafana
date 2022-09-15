@@ -15,7 +15,7 @@ weight: 900
 
 > **Note:** Available in [Grafana Enterprise]({{< relref "../" >}}) version 7.4 and later, and [Grafana Cloud Pro and Advanced]({{< ref "/docs/grafana-cloud" >}}).
 
-By exporting usage logs to Loki, you can directly query them and create dashboards of the information that matters to you most, such as dashboard errors, most active organizations, or your top-10 most-used queries.
+By exporting usage logs to Loki, you can directly query them and create dashboards of the information that matters to you most, such as dashboard errors, most active organizations, or your top-10 most-used queries. TODO: add notes about Cloud
 
 ## Usage insights logs
 
@@ -97,3 +97,5 @@ If you export logs into Loki, you can build Grafana dashboards to understand you
    - In Explore, you can use the query `{datasource="gdev-loki",kind="usage_insights"}` to retrieve all logs related to your `gdev-loki` data source.
    - In a dashboard, you can build a table panel with the query `topk(10, sum by (error) (count_over_time({kind="usage_insights", datasource="gdev-prometheus"} | json | error != "" [$__interval])))` to display the 10 most common errors your users see using the `gdev-prometheus` data source.
    - In a dashboard, you can build a graph panel with the queries `sum by(host) (count_over_time({kind="usage_insights"} | json | eventName="data-request" | error != "" [$__interval]))` and `sum by(host) (count_over_time({kind="usage_insights"} | json | eventName="data-request" | error = "" [$__interval]))` to show the evolution of the data request count over time. Using `by (host)` allows you to have more information for each Grafana server you have if you have set up Grafana for [high availability](<{{< relref "../../setup-grafana/set-up-for-high-availability/" >}}>).
+
+TODO: not needed for cloud

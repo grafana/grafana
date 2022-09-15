@@ -34,6 +34,7 @@ The aggregated data provides you access to several features:
 - [Dashboard and data source insights]({{< relref "#dashboard-and-data-source-insights" >}})
 - [Presence indicator]({{< relref "#presence-indicator" >}})
 - [Sort dashboards by using insights data]({{< relref "#sort-dashboards-by-using-insights-data" >}})
+- [Visualize usage insight data in a dashboard]({{< relref "visualize-usage-insights-data" >}})
 
 This feature also generates detailed logs that can be exported to Loki. Refer to [Export logs of usage insights]({{< relref "../../setup-grafana/configure-security/export-logs/" >}}).
 
@@ -73,7 +74,7 @@ To find data source insights:
 1. Click the **Insights** tab.
 
 {{< figure src="/static/img/docs/enterprise/datasource_insights.png" max-width="650px" class="docs-image--no-shadow" >}}
-
+ 
 ## Presence indicator
 
 > **Note:** Available in [Grafana Enterprise]({{< relref "../" >}}) version 7.0 and later, and [Grafana Cloud Pro and Advanced]({{< ref "/docs/grafana-cloud" >}}).
@@ -107,6 +108,6 @@ You can sort the dashboards by:
 
 {{< figure src="/static/img/docs/enterprise/improved-search-7-5.png" max-width="650px" class="docs-image--no-shadow" >}}
 
-## Usage insights dashboards
+## Visualize usage insights data
 
 If you set up your installation to [export logs of usage insights]({{< relref "../../setup-grafana/configure-security/export-logs/" >}}), we've created two dashboards to help you take advantage of this data. First is an [overview dashboard](https://grafana.com/grafana/dashboards/13785-usage-insights/) to provide a top-level perspective of user activity. Second is a [data source details](https://grafana.com/grafana/dashboards/13786-grafana-usage-insights-datasource-details/) dashboard to provide a view of data source activity and health. You can click the previous links to download the respective dashboard JSON, then import into your Grafana installation.
