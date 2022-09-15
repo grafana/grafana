@@ -51,18 +51,20 @@ type SlackNotifier struct {
 }
 
 type slackSettings struct {
-	EndpointURL    string `json:"endpointUrl,omitempty" yaml:"endpointUrl,omitempty"`
-	URL            string `json:"url,omitempty" yaml:"url,omitempty"`
-	Token          string `json:"token,omitempty" yaml:"token,omitempty"`
-	Recipient      string `json:"recipient,omitempty" yaml:"recipient,omitempty"`
-	Text           string `json:"text,omitempty" yaml:"text,omitempty"`
-	Title          string `json:"title,omitempty" yaml:"title,omitempty"`
-	Username       string `json:"username,omitempty" yaml:"username,omitempty"`
-	IconEmoji      string `json:"icon_emoji,omitempty" yaml:"icon_emoji,omitempty"`
-	IconURL        string `json:"icon_url,omitempty" yaml:"icon_url,omitempty"`
-	MentionChannel string `json:"mentionChannel,omitempty" yaml:"mentionChannel,omitempty"`
-	MentionUsers   string `json:"mentionUsers,omitempty" yaml:"mentionUsers,omitempty"`
-	MentionGroups  string `json:"mentionGroups,omitempty" yaml:"mentionGroups,omitempty"`
+	EndpointURL      string   `json:"endpointUrl,omitempty" yaml:"endpointUrl,omitempty"`
+	URL              string   `json:"url,omitempty" yaml:"url,omitempty"`
+	Token            string   `json:"token,omitempty" yaml:"token,omitempty"`
+	Recipient        string   `json:"recipient,omitempty" yaml:"recipient,omitempty"`
+	Text             string   `json:"text,omitempty" yaml:"text,omitempty"`
+	Title            string   `json:"title,omitempty" yaml:"title,omitempty"`
+	Username         string   `json:"username,omitempty" yaml:"username,omitempty"`
+	IconEmoji        string   `json:"icon_emoji,omitempty" yaml:"icon_emoji,omitempty"`
+	IconURL          string   `json:"icon_url,omitempty" yaml:"icon_url,omitempty"`
+	MentionChannel   string   `json:"mentionChannel,omitempty" yaml:"mentionChannel,omitempty"`
+	MentionUsersStr  string   `json:"mentionUsers,omitempty" yaml:"mentionUsers,omitempty"`
+	MentionUsers     []string `json:"-" yaml:"-"`
+	MentionGroupsStr string   `json:"mentionGroups,omitempty" yaml:"mentionGroups,omitempty"`
+	MentionGroups    []string `json:"-" yaml:"-"`
 }
 
 func newSlackSettings(stgs *simplejson.Json) (slackSettings, error) {
@@ -93,42 +95,56 @@ func SlackFactory(fc FactoryConfig) (NotificationChannel, error) {
 func buildSlackNotifier(factoryConfig FactoryConfig) (*SlackNotifier, error) {
 	channelConfig := factoryConfig.Config
 	decryptFunc := factoryConfig.DecryptFunc
-	endpointURL := channelConfig.Settings.Get("endpointUrl").MustString(SlackAPIEndpoint)
-	slackURL := decryptFunc(context.Background(), channelConfig.SecureSettings, "url", channelConfig.Settings.Get("url").MustString())
+	settings, err := newSlackSettings(factoryConfig.Config.Settings)
+	if err != nil {
+		return nil, err
+	}
+
+	if settings.EndpointURL == "" {
+		settings.EndpointURL = SlackAPIEndpoint
+	}
+	slackURL := decryptFunc(context.Background(), channelConfig.SecureSettings, "url", settings.URL)
 	if slackURL == "" {
-		slackURL = endpointURL
+		slackURL = settings.EndpointURL
 	}
 	apiURL, err := url.Parse(slackURL)
 	if err != nil {
 		return nil, fmt.Errorf("invalid URL %q", slackURL)
 	}
-	recipient := strings.TrimSpace(channelConfig.Settings.Get("recipient").MustString())
-	if recipient == "" && apiURL.String() == SlackAPIEndpoint {
+
+	settings.Recipient = strings.TrimSpace(settings.Recipient)
+	if settings.Recipient == "" && apiURL.String() == SlackAPIEndpoint {
 		return nil, errors.New("recipient must be specified when using the Slack chat API")
 	}
-	mentionChannel := channelConfig.Settings.Get("mentionChannel").MustString()
-	if mentionChannel != "" && mentionChannel != "here" && mentionChannel != "channel" {
-		return nil, fmt.Errorf("invalid value for mentionChannel: %q", mentionChannel)
+	if settings.MentionChannel != "" && settings.MentionChannel != "here" && settings.MentionChannel != "channel" {
+		return nil, fmt.Errorf("invalid value for mentionChannel: %q", settings.MentionChannel)
 	}
-	token := decryptFunc(context.Background(), channelConfig.SecureSettings, "token", channelConfig.Settings.Get("token").MustString())
-	if token == "" && apiURL.String() == SlackAPIEndpoint {
+	settings.Token = decryptFunc(context.Background(), channelConfig.SecureSettings, "token", settings.Token)
+	if settings.Token == "" && apiURL.String() == SlackAPIEndpoint {
 		return nil, errors.New("token must be specified when using the Slack chat API")
 	}
-	mentionUsersStr := channelConfig.Settings.Get("mentionUsers").MustString()
-	mentionUsers := []string{}
-	for _, u := range strings.Split(mentionUsersStr, ",") {
+	settings.MentionUsers = []string{}
+	for _, u := range strings.Split(settings.MentionUsersStr, ",") {
 		u = strings.TrimSpace(u)
 		if u != "" {
-			mentionUsers = append(mentionUsers, u)
+			settings.MentionUsers = append(settings.MentionUsers, u)
 		}
 	}
-	mentionGroupsStr := channelConfig.Settings.Get("mentionGroups").MustString()
-	mentionGroups := []string{}
-	for _, g := range strings.Split(mentionGroupsStr, ",") {
+	settings.MentionGroups = []string{}
+	for _, g := range strings.Split(settings.MentionGroupsStr, ",") {
 		g = strings.TrimSpace(g)
 		if g != "" {
-			mentionGroups = append(mentionGroups, g)
+			settings.MentionGroups = append(settings.MentionGroups, g)
 		}
+	}
+	if settings.Username == "" {
+		settings.Username = "Grafana"
+	}
+	if settings.Text == "" {
+		settings.Text = `{{ template "default.message" . }}`
+	}
+	if settings.Title == "" {
+		settings.Title = DefaultMessageTitleEmbed
 	}
 
 	return &SlackNotifier{
@@ -140,16 +156,16 @@ func buildSlackNotifier(factoryConfig FactoryConfig) (*SlackNotifier, error) {
 			Settings:              factoryConfig.Config.Settings,
 		}),
 		URL:            apiURL,
-		Recipient:      strings.TrimSpace(channelConfig.Settings.Get("recipient").MustString()),
-		MentionUsers:   mentionUsers,
-		MentionGroups:  mentionGroups,
-		MentionChannel: mentionChannel,
-		Username:       channelConfig.Settings.Get("username").MustString("Grafana"),
-		IconEmoji:      channelConfig.Settings.Get("icon_emoji").MustString(),
-		IconURL:        channelConfig.Settings.Get("icon_url").MustString(),
-		Token:          token,
-		Text:           channelConfig.Settings.Get("text").MustString(`{{ template "default.message" . }}`),
-		Title:          channelConfig.Settings.Get("title").MustString(DefaultMessageTitleEmbed),
+		Recipient:      settings.Recipient,
+		MentionUsers:   settings.MentionUsers,
+		MentionGroups:  settings.MentionGroups,
+		MentionChannel: settings.MentionChannel,
+		Username:       settings.Username,
+		IconEmoji:      settings.IconEmoji,
+		IconURL:        settings.IconURL,
+		Token:          settings.Token,
+		Text:           settings.Text,
+		Title:          settings.Title,
 
 		images:        factoryConfig.ImageStore,
 		webhookSender: factoryConfig.NotificationService,
