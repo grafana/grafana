@@ -6,7 +6,7 @@ import { useAsync } from 'react-use';
 
 import { AppEvents, SelectableValue, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useStyles2, ActionMeta, AsyncSelect, Input, InputActionMeta, Icon, Stack, Tooltip} from '@grafana/ui';
+import { useStyles2, ActionMeta, AsyncSelect, Input, InputActionMeta, Icon, Stack, Tooltip } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/services/context_srv';
 import { createFolder, getFolderById, searchFolders } from 'app/features/manage-dashboards/state/actions';
@@ -78,13 +78,17 @@ export function FolderPicker(props: Props) {
     skipInitialLoad,
     accessControlMetadata,
     customAdd,
-    dissalowSlashes
+    dissalowSlashes,
   } = props;
-  const isClearable = typeof onClear === 'function';
+
   const [folder, setFolder] = useState<SelectedFolder | null>(null);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
-  const [inputValue, setInputValue] = useState<string>('');
+  const [inputValue, setInputValue] = useState('');
+  const [newFolderValue, setNewFolderValue] = useState(folder?.title || '');
+
   const styles = useStyles2(getStyles);
+
+  const isClearable = typeof onClear === 'function';
   const isUsingSlashes = containsSlashes(inputValue);
 
   const getOptions = useCallback(
@@ -169,11 +173,6 @@ export function FolderPicker(props: Props) {
     !isCreatingNew && setFolder(folder);
   };
 
-   //Keep the textbox value in line with what is selected
-   useEffect(() => {
-    setInputValue(folder?.label || '');
-  }, [folder]);
-
   useEffect(() => {
     // if this is not the same as our initial value notify parent
     if (folder && folder.value !== initialFolderId) {
@@ -210,6 +209,7 @@ export function FolderPicker(props: Props) {
           id: VALUE_FOR_ADD,
           title: inputValue,
         });
+        setNewFolderValue(inputValue);
       } else {
         if (!newFolder) {
           newFolder = { value: 0, label: rootName };
@@ -221,7 +221,6 @@ export function FolderPicker(props: Props) {
         }
 
         setFolder(newFolder);
-        setInputValue(newFolder.label!);
         onChange({ id: newFolder.value!, title: newFolder.label! });
       }
     },
@@ -230,10 +229,8 @@ export function FolderPicker(props: Props) {
 
   const createNewFolder = useCallback(
     async (folderName: string) => {
-      if (dissalowSlashes) {
-        if (containsSlashes(folderName)) {
-          return false;
-        }
+      if (dissalowSlashes && containsSlashes(folderName)) {
+        return false;
       }
       const newFolder = await createFolder({ title: folderName });
       let folder: SelectableValue<number> = { value: -1, label: 'Not created' };
@@ -255,6 +252,11 @@ export function FolderPicker(props: Props) {
 
   const onKeyDown = useCallback(
     (event: React.KeyboardEvent) => {
+      if (event.key === 'Enter' && containsSlashes(newFolderValue)) {
+        event.preventDefault();
+        return;
+      }
+
       switch (event.key) {
         case 'Enter': {
           createNewFolder(folder?.title!);
@@ -264,11 +266,15 @@ export function FolderPicker(props: Props) {
         case 'Escape': {
           setFolder({ value: 0, label: rootName });
           setIsCreatingNew(false);
-  };
-}}, [createNewFolder, folder, rootName])
+        }
+      }
+    },
+    [newFolderValue, createNewFolder, folder?.title, rootName]
+  );
 
   const onNewFolderChange = (e: FormEvent<HTMLInputElement>) => {
     const value = e.currentTarget.value;
+    setNewFolderValue(value);
     setFolder({ id: -1, title: value });
   };
 
@@ -287,26 +293,27 @@ export function FolderPicker(props: Props) {
     }
     return;
   };
+  const newValueContainsSlashes = containsSlashes(newFolderValue);
 
   if (isCreatingNew) {
     return (
       <>
+        {dissalowSlashes && newValueContainsSlashes && <SlashesWarning />}
+        <div className={styles.newFolder}>Press enter to create the new folder.</div>
         <Input
           aria-label={'aria-label'}
           width={30}
           autoFocus={true}
-          value={folder?.title || ''}
+          value={newFolderValue}
           onChange={onNewFolderChange}
           onKeyDown={onKeyDown}
           placeholder="Press enter to confirm new folder."
           onBlur={onBlur}
         />
-        <div className={styles.newFolder}>Press enter to create the new folder.</div>
       </>
     );
   } else {
     return (
-    <>
       <div data-testid={selectors.components.FolderPicker.containerV2}>
         {dissalowSlashes && isUsingSlashes && <SlashesWarning />}
         <AsyncSelect
@@ -323,14 +330,10 @@ export function FolderPicker(props: Props) {
           onChange={onFolderChange}
           onCreateOption={createNewFolder}
           isClearable={isClearable}
-          components={{
-            Input,
-          }}
         />
       </div>
-    </>
-  );
-}
+    );
+  }
 }
 
 function mapSearchHitsToOptions(hits: DashboardSearchHit[], filterSlashes: boolean, filter?: FolderPickerFilter) {
@@ -366,8 +369,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   newFolder: css`
     color: ${theme.colors.warning.main};
     font-size: ${theme.typography.bodySmall.fontSize};
-    padding-top: ${theme.spacing(1)};
-    `,
+    padding-bottom: ${theme.spacing(1)};
+  `,
   slashNotAllowed: css`
     color: ${theme.colors.warning.main};
     font-size: 12px;

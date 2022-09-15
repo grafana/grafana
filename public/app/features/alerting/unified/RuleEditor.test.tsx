@@ -82,7 +82,6 @@ const ui = {
     folder: byTestId('folder-picker'),
     folderContainer: byTestId(selectors.components.FolderPicker.containerV2),
     namespace: byTestId('namespace-picker'),
-    folderContainer: byTestId(selectors.components.FolderPicker.containerV2),
     group: byTestId('group-picker'),
     annotationKey: (idx: number) => byTestId(`annotation-key-${idx}`),
     annotationValue: (idx: number) => byTestId(`annotation-value-${idx}`),
@@ -481,17 +480,16 @@ describe('RuleEditor', () => {
     const nameInput = await ui.inputs.name.find();
     expect(nameInput).toHaveValue('my great new rule');
     //check that folder is in the list
-    const folderInput = await ui.inputs.folderContainer.find();
-    expect(within(folderInput).getByRole('combobox')).toHaveValue(folder.title);
+    expect(ui.inputs.folder.get()).toHaveTextContent(new RegExp(folder.title));
     expect(ui.inputs.annotationValue(0).get()).toHaveValue('some description');
     expect(ui.inputs.annotationValue(1).get()).toHaveValue('some summary');
 
     //check that slashed folders are not in the list
-    await userEvent.click(within(folderInput).getByRole('combobox'));
-    expect(screen.getByText(folder.title)).toBeInTheDocument();
-    expect(screen.queryByText(slashedFolder.title)).not.toBeInTheDocument();
+    expect(ui.inputs.folder.get()).toHaveTextContent(new RegExp(folder.title));
+    expect(ui.inputs.folder.get()).not.toHaveTextContent(new RegExp(slashedFolder.title));
 
     //check that slashes warning is only shown once user search slashes
+    const folderInput = await ui.inputs.folderContainer.find();
     expect(within(folderInput).queryByText("Folders with '/' character are not allowed.")).not.toBeInTheDocument();
     await userEvent.type(within(folderInput).getByRole('combobox'), 'new slashed //');
     expect(within(folderInput).getByText("Folders with '/' character are not allowed.")).toBeInTheDocument();
@@ -512,10 +510,10 @@ describe('RuleEditor', () => {
     await waitFor(() => expect(mocks.api.setRulerRuleGroup).toHaveBeenCalled());
 
     //check that '+ Add new' option is in folders drop down even if we don't have values
-    const folderInput = await ui.inputs.folderContainer.find();
+    const emptyFolderInput = await ui.inputs.folderContainer.find();
     mocks.searchFolders.mockResolvedValue([] as DashboardSearchHit[]);
     await renderRuleEditor(uid);
-    await userEvent.click(within(folderInput).getByRole('combobox'));
+    await userEvent.click(within(emptyFolderInput).getByRole('combobox'));
     expect(screen.getByText(ADD_NEW_FOLER_OPTION)).toBeInTheDocument();
 
     expect(mocks.api.setRulerRuleGroup).toHaveBeenCalledWith(

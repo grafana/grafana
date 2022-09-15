@@ -13,7 +13,8 @@ export interface RuleFolderPickerProps extends Omit<FolderPickerProps, 'initialT
   dissalowSlashes: boolean;
 }
 
-export const RuleFolderPicker: FC<RuleFolderPickerProps> = ({ value, dissalowSlashes, ...props }) => {
+export function RuleFolderPicker(props: RuleFolderPickerProps) {
+  const { value } = props;
   return (
     <FolderPicker
       showRoot={false}
