@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -145,7 +146,9 @@ func runValidateConflictUsersFile() func(context *cli.Context) error {
 		}
 		resolver := ConflictResolver{Users: conflicts}
 		resolver.BuildConflictBlocks(conflicts, fmt.Sprintf)
-		b, err = os.ReadFile(arg)
+
+		// read in the file to validate
+		b, err = os.ReadFile(filepath.Clean(arg))
 		if err != nil {
 			return fmt.Errorf("could not read file with error %e", err)
 		}
@@ -182,7 +185,9 @@ func runIngestConflictUsersFile() func(context *cli.Context) error {
 		}
 		resolver := ConflictResolver{Users: conflicts}
 		resolver.BuildConflictBlocks(conflicts, fmt.Sprintf)
-		b, err := os.ReadFile(arg)
+
+		// read in the file to ingest
+		b, err := os.ReadFile(filepath.Clean(arg))
 		if err != nil {
 			return fmt.Errorf("could not read file with error %e", err)
 		}
@@ -265,7 +270,10 @@ func getValidConflictUsers(r *ConflictResolver, b []byte) error {
 		switch {
 		case strings.HasPrefix(row, "+"):
 			newUser := &ConflictingUser{}
-			newUser.Marshal(row)
+			err := newUser.Marshal(row)
+			if err != nil {
+				return fmt.Errorf("could not parse the content of the file with error %e", err)
+			}
 			if !previouslySeenEmails[strings.ToLower(newUser.Email)] {
 				return fmt.Errorf("not valid email: %s, email not in previous conflicts seen", newUser.Email)
 			}
@@ -281,7 +289,7 @@ func getValidConflictUsers(r *ConflictResolver, b []byte) error {
 			newUser := &ConflictingUser{}
 			err := newUser.Marshal(row)
 			if err != nil {
-				return fmt.Errorf("unable to know which operation should be performed on the user")
+				return fmt.Errorf("could not parse the content of the file with error %e", err)
 			}
 			if !previouslySeenEmails[strings.ToLower(newUser.Email)] {
 				return fmt.Errorf("not valid email, email not in previous list")
@@ -324,22 +332,22 @@ func (r *ConflictResolver) showChanges() {
 		}
 		for _, user := range users {
 			if !startOfBlock[block] {
-				fileString += fmt.Sprintf("IDENTIFIED user conflict\n")
+				fileString += fmt.Sprint("IDENTIFIED user conflict\n")
 				fileString += fmt.Sprintf("%s\n", block)
-				fileString += fmt.Sprintf("The permissions, roles and ownership will be transferred to the user below.\n")
+				fileString += fmt.Sprint("The permissions, roles and ownership will be transferred to the user below.\n")
 				fileString += fmt.Sprintf("id: %s, email: %s, login: %s\n", user.Id, user.Email, user.Login)
-				fileString += fmt.Sprintf("\n")
+				fileString += fmt.Sprint("\n")
 				startOfBlock[block] = true
 				continue
 			}
 			// mergable users
 			if !startOfEndBlock[block] {
-				fileString += fmt.Sprintf("The following user(s) will be deleted and their permissions transferred.\n")
+				fileString += fmt.Sprint("The following user(s) will be deleted and their permissions transferred.\n")
 				startOfEndBlock[block] = true
 			}
 			fileString += fmt.Sprintf("id: %s, email: %s, login: %s\n", user.Id, user.Email, user.Login)
 		}
-		fileString += fmt.Sprintf("\n\n")
+		fileString += fmt.Sprint("\n\n")
 	}
 	logger.Info("Changes that will take place\n\n")
 	logger.Infof(fileString)
@@ -372,11 +380,11 @@ func (r *ConflictResolver) BuildConflictBlocks(users ConflictingUsers, f Formatt
 	for _, user := range users {
 		// conflict blocks is how we identify a conflict in the user base.
 		var conflictBlock string
-		if user.Email != "" {
+		if user.ConflictEmail != "" {
 			conflictBlock = f("conflict: %s", strings.ToLower(user.Email))
-		} else if user.Login != "" {
+		} else if user.ConflictLogin != "" {
 			conflictBlock = f("conflict: %s", strings.ToLower(user.Login))
-		} else if user.Email != "" && user.Login != "" {
+		} else if user.ConflictEmail != "" && user.ConflictLogin != "" {
 			// both conflicts
 			// should not be here unless changed in sql
 			conflictBlock = f("conflict: %s%s", strings.ToLower(user.Email), strings.ToLower(user.Login))
@@ -477,12 +485,14 @@ type ConflictResolver struct {
 }
 
 type ConflictingUser struct {
-	Direction  string `xorm:"direction"`
-	Id         string `xorm:"id"`
-	Email      string `xorm:"email"`
-	Login      string `xorm:"login"`
-	LastSeenAt string `xorm:"last_seen_at"`
-	AuthModule string `xorm:"auth_module"`
+	Direction     string `xorm:"direction"`
+	Id            string `xorm:"id"`
+	Email         string `xorm:"email"`
+	Login         string `xorm:"login"`
+	LastSeenAt    string `xorm:"last_seen_at"`
+	AuthModule    string `xorm:"auth_module"`
+	ConflictEmail string `xorm:"conflict_email"`
+	ConflictLogin string `xorm:"conflict_login"`
 }
 
 type ConflictingUsers []ConflictingUser
@@ -510,7 +520,9 @@ func (c *ConflictingUser) Marshal(filerow string) error {
 	login := strings.Split(values[2], ":")
 	c.Id = id[1]
 	c.Email = email[1]
+	c.ConflictEmail = email[1]
 	c.Login = login[1]
+	c.ConflictLogin = login[1]
 
 	// optional fields
 	if len(values) == 5 {
@@ -679,5 +691,4 @@ func confirm(confirmPrompt string) bool {
 	}
 
 	return false
-
 }

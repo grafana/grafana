@@ -3,7 +3,7 @@ package commands
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"testing"
 
@@ -15,6 +15,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/urfave/cli/v2"
 )
+
+// "Skipping conflicting users test for mysql as it does make unique constraint case insensitive by default
+const ignoredDatabase = "mysql"
 
 func TestBuildConflictBlock(t *testing.T) {
 	type testBuildConflictBlock struct {
@@ -87,8 +90,7 @@ func TestBuildConflictBlock(t *testing.T) {
 			// Restore after destructive operation
 			sqlStore := sqlstore.InitTestDB(t)
 
-			// "Skipping conflicting users test for mysql as it does make unique constraint case insensitive by default
-			if sqlStore.GetDialect().DriverName() != "mysql" {
+			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
 				for _, u := range tc.users {
 					cmd := user.CreateUserCommand{
 						Email: u.Email,
@@ -251,9 +253,7 @@ func TestGetConflictingUsers(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			// Restore after destructive operation
 			sqlStore := sqlstore.InitTestDB(t)
-
-			// "Skipping conflicting users test for mysql as it does make unique constraint case insensitive by default
-			if sqlStore.GetDialect().DriverName() != "mysql" {
+			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
 				for _, u := range tc.users {
 					cmd := user.CreateUserCommand{
 						Email:            u.Email,
@@ -281,7 +281,8 @@ func TestGenerateConflictingUsersFile(t *testing.T) {
 		desc               string
 		users              []user.User
 		wantDiscardedBlock string
-		want               string
+		wantBlock          string
+		wantNumberOfUsers  int
 	}
 	testOrgID := 1
 	testCases := []testGenerateConflictUsers{
@@ -345,19 +346,15 @@ func TestGenerateConflictingUsersFile(t *testing.T) {
 					OrgID: int64(testOrgID),
 				},
 			},
-			want: `conflict: ldap-editor
-+ id: 1, email: ldap-editor, login: ldap-editor
-- id: 2, email: LDAP-EDITOR, login: LDAP-EDITOR
-- id: 3, email: No confli, login: LDAP-editor
-`,
+			wantBlock:         "conflict: ldap-editor",
+			wantNumberOfUsers: 3,
 		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			// Restore after destructive operation
 			sqlStore := sqlstore.InitTestDB(t)
-			// "Skipping conflicting users test for mysql as it does make unique constraint case insensitive by default
-			if sqlStore.GetDialect().DriverName() != "mysql" {
+			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
 				for _, u := range tc.users {
 					cmd := user.CreateUserCommand{
 						Email: u.Email,
@@ -375,9 +372,10 @@ func TestGenerateConflictingUsersFile(t *testing.T) {
 				if tc.wantDiscardedBlock != "" {
 					require.Equal(t, true, r.DiscardedBlocks[tc.wantDiscardedBlock])
 				}
-				if tc.want != "" {
-					fileString := r.ToStringPresentation()
-					require.Equal(t, tc.want, fileString)
+				if tc.wantBlock != "" {
+					_, exists := r.Blocks[tc.wantBlock]
+					require.Equal(t, true, exists)
+					require.Equal(t, tc.wantNumberOfUsers, len(r.Blocks[tc.wantBlock]))
 				}
 			}
 		})
@@ -389,8 +387,7 @@ func TestRunValidateConflictUserFile(t *testing.T) {
 		// Restore after destructive operation
 		sqlStore := sqlstore.InitTestDB(t)
 		const testOrgID int64 = 1
-		// "Skipping conflicting users test for mysql as it does make unique constraint case insensitive by default
-		if sqlStore.GetDialect().DriverName() != "mysql" {
+		if sqlStore.GetDialect().DriverName() != ignoredDatabase {
 			// add additional user with conflicting login where DOMAIN is upper case
 			dupUserLogincmd := user.CreateUserCommand{
 				Email: "userduplicatetest1@test.com",
@@ -415,7 +412,7 @@ func TestRunValidateConflictUserFile(t *testing.T) {
 			tmpFile, err := generateConflictUsersFile(&r)
 			require.NoError(t, err)
 
-			b, err := ioutil.ReadFile(tmpFile.Name())
+			b, err := os.ReadFile(tmpFile.Name())
 			require.NoError(t, err)
 
 			validErr := getValidConflictUsers(&r, b)
@@ -433,8 +430,7 @@ func TestMergeUser(t *testing.T) {
 		require.Nil(t, err)
 		const testOrgID int64 = 1
 
-		// "Skipping conflicting users test for mysql as it does make unique constraint case insensitive by default
-		if sqlStore.GetDialect().DriverName() != "mysql" {
+		if sqlStore.GetDialect().DriverName() != ignoredDatabase {
 			// add additional user with conflicting login where DOMAIN is upper case
 
 			// the order of adding the conflict matters
@@ -467,7 +463,7 @@ func TestMergeUser(t *testing.T) {
 			require.NoError(t, err)
 			// validation to get newConflicts
 			// edited file
-			b, err := ioutil.ReadFile(tmpFile.Name())
+			b, err := os.ReadFile(tmpFile.Name())
 			require.NoError(t, err)
 			validErr := getValidConflictUsers(&r, b)
 			require.NoError(t, validErr)
