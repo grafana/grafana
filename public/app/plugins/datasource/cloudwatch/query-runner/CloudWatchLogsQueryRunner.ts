@@ -56,6 +56,7 @@ import { CloudWatchQueryRunner } from './CloudWatchQueryRunner';
 export const LOG_IDENTIFIER_INTERNAL = '__log__grafana_internal__';
 export const LOGSTREAM_IDENTIFIER_INTERNAL = '__logstream__grafana_internal__';
 
+// This class handles execution of CloudWatch logs query data queries
 export class CloudWatchLogsQueryRunner extends CloudWatchQueryRunner {
   logsTimeout: string;
   defaultLogGroups: string[];

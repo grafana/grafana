@@ -48,6 +48,7 @@ const displayAlert = (datasourceName: string, region: string) =>
     )
   );
 
+// This class handles execution of CloudWatch metrics query data queries
 export class CloudWatchMetricsQueryRunner extends CloudWatchQueryRunner {
   debouncedAlert: (datasourceName: string, region: string) => void = memoizedDebounce(
     displayAlert,

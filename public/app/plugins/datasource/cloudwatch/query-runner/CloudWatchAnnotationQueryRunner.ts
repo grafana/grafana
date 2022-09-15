@@ -8,6 +8,7 @@ import { CloudWatchAnnotationQuery, CloudWatchJsonData, CloudWatchQuery } from '
 
 import { CloudWatchQueryRunner } from './CloudWatchQueryRunner';
 
+// This class handles execution of CloudWatch annotation queries
 export class CloudWatchAnnotationQueryRunner extends CloudWatchQueryRunner {
   constructor(instanceSettings: DataSourceInstanceSettings<CloudWatchJsonData>, templateSrv: TemplateSrv) {
     super(instanceSettings, templateSrv);

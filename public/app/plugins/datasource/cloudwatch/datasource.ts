@@ -46,9 +46,10 @@ export class CloudWatchDatasource
   type = 'cloudwatch';
   standardStatistics = ['Average', 'Maximum', 'Minimum', 'Sum', 'SampleCount'];
 
-  metricsQueryRunner: CloudWatchMetricsQueryRunner;
+  private metricsQueryRunner: CloudWatchMetricsQueryRunner;
+  private annotationQueryRunner: CloudWatchAnnotationQueryRunner;
+  // this member should be private too, but we need to fix https://github.com/grafana/grafana/issues/55243 to enable that
   logsQueryRunner: CloudWatchLogsQueryRunner;
-  annotationQueryRunner: CloudWatchAnnotationQueryRunner;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<CloudWatchJsonData>,
