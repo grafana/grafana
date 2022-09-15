@@ -1,6 +1,7 @@
 package dtos
 
 import (
+	"sort"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -63,6 +64,8 @@ func TestGetUniqueDatasourceTypes(t *testing.T) {
 				Queries: testcase.queries,
 			}
 			result := metReq.GetUniqueDatasourceTypes()
+			sort.Strings(result)
+			assert.Equal(t, testcase.result, result)
 			assert.Equal(t, testcase.result, result)
 		})
 	}
