@@ -101,6 +101,7 @@ export const availableIconsIndex = {
   'gf-logs': true,
   'gf-portrait': true,
   'gf-service-account': true,
+  'gf-show-context': true,
   grafana: true,
   'graph-bar': true,
   heart: true,
