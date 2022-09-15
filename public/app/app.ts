@@ -59,6 +59,7 @@ import { GAEchoBackend } from './core/services/echo/backends/analytics/GABackend
 import { RudderstackBackend } from './core/services/echo/backends/analytics/RudderstackBackend';
 import { GrafanaJavascriptAgentBackend } from './core/services/echo/backends/grafana-javascript-agent/GrafanaJavascriptAgentBackend';
 import { SentryEchoBackend } from './core/services/echo/backends/sentry/SentryBackend';
+import { KeybindingSrv } from './core/services/keybindingSrv';
 import { initDevFeatures } from './dev';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
@@ -99,6 +100,9 @@ export class GrafanaApp {
 
   async init() {
     try {
+      // Let iframe container know grafana has started loading
+      parent.postMessage('GrafanaAppInit', '*');
+
       setBackendSrv(backendSrv);
       initEchoSrv();
       addClassIfNoOverlayScrollbar();
@@ -154,10 +158,19 @@ export class GrafanaApp {
       // Preload selected app plugins
       await preloadPlugins(config.pluginsToPreload);
 
+      // initialize chrome service
+      const queryParams = locationService.getSearchObject();
+      const chromeService = new AppChromeService();
+      const keybindingsService = new KeybindingSrv(locationService, chromeService);
+
+      // Read initial kiosk mode from url at app startup
+      chromeService.setKioskModeFromUrl(queryParams.kiosk);
+
       this.context = {
         backend: backendSrv,
         location: locationService,
-        chrome: new AppChromeService(),
+        chrome: chromeService,
+        keybindings: keybindingsService,
         config,
       };
 

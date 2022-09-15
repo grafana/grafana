@@ -6,10 +6,10 @@ import tinycolor from 'tinycolor2';
 
 import { LogRowModel, findHighlightChunksInText, GrafanaTheme2 } from '@grafana/data';
 
-// @ts-ignore
-
 import { withTheme2 } from '../../themes/index';
 import { Themeable2 } from '../../types/theme';
+import { IconButton } from '../IconButton/IconButton';
+import { Tooltip } from '../Tooltip/Tooltip';
 
 import { LogMessageAnsi } from './LogMessageAnsi';
 import { LogRowContext } from './LogRowContext';
@@ -54,6 +54,24 @@ const getStyles = (theme: GrafanaTheme2) => {
     contextNewline: css`
       display: block;
       margin-left: 0px;
+    `,
+    contextButton: css`
+      display: flex;
+      flex-wrap: nowrap;
+      flex-direction: row;
+      align-content: flex-end;
+      justify-content: space-evenly;
+      align-items: center;
+      position: absolute;
+      right: -8px;
+      top: 0;
+      bottom: auto;
+      width: 80px;
+      height: 36px;
+      background: ${theme.colors.background.primary};
+      box-shadow: ${theme.shadows.z3};
+      padding: ${theme.spacing(0, 0, 0, 0.5)};
+      z-index: 100;
     `,
   };
 };
@@ -146,12 +164,21 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
           <span className={cx(styles.positionRelative, { [styles.rowWithContext]: contextIsOpen })}>
             {renderLogMessage(hasAnsi, restructuredEntry, row.searchWords, style.logsRowMatchHighLight)}
           </span>
-          {showContextToggle?.(row) && (
+          {!contextIsOpen && showContextToggle?.(row) && (
             <span
-              onClick={this.onContextToggle}
-              className={cx('log-row-context', style.context, { [styles.contextNewline]: !wrapLogMessage })}
+              className={cx('log-row-context', style.context, styles.contextButton)}
+              onClick={(e) => e.stopPropagation()}
             >
-              {contextIsOpen ? 'Hide' : 'Show'} context
+              <Tooltip placement="top" content={'Show context'}>
+                <IconButton size="md" name="gf-show-context" onClick={this.onContextToggle} />
+              </Tooltip>
+              <Tooltip placement="top" content={'Copy'}>
+                <IconButton
+                  size="md"
+                  name="copy"
+                  onClick={() => navigator.clipboard.writeText(JSON.stringify(restructuredEntry))}
+                />
+              </Tooltip>
             </span>
           )}
         </div>

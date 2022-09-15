@@ -26,33 +26,33 @@ func (e PublicDashboardErr) Error() string {
 
 var (
 	ErrPublicDashboardFailedGenerateUniqueUid = PublicDashboardErr{
-		Reason:     "Failed to generate unique public dashboard id",
+		Reason:     "failed to generate unique public dashboard id",
 		StatusCode: 500,
 	}
 	ErrPublicDashboardFailedGenerateAccesstoken = PublicDashboardErr{
-		Reason:     "Failed to public dashboard access token",
+		Reason:     "failed to public dashboard access token",
 		StatusCode: 500,
 	}
 	ErrPublicDashboardNotFound = PublicDashboardErr{
-		Reason:     "Public dashboard not found",
+		Reason:     "public dashboard not found",
 		StatusCode: 404,
 		Status:     "not-found",
 	}
 	ErrPublicDashboardPanelNotFound = PublicDashboardErr{
-		Reason:     "Panel not found in dashboard",
+		Reason:     "panel not found in dashboard",
 		StatusCode: 404,
 		Status:     "not-found",
 	}
 	ErrPublicDashboardIdentifierNotSet = PublicDashboardErr{
-		Reason:     "No Uid for public dashboard specified",
+		Reason:     "no Uid for public dashboard specified",
 		StatusCode: 400,
 	}
 	ErrPublicDashboardHasTemplateVariables = PublicDashboardErr{
-		Reason:     "Public dashboard has template variables",
+		Reason:     "public dashboard has template variables",
 		StatusCode: 422,
 	}
 	ErrPublicDashboardBadRequest = PublicDashboardErr{
-		Reason:     "Bad Request",
+		Reason:     "bad Request",
 		StatusCode: 400,
 	}
 )

@@ -124,6 +124,17 @@ func main() {
 			Usage:  "Exports version in dist/grafana.version",
 			Action: ExportVersion,
 		},
+		{
+			Name:   "store-storybook",
+			Usage:  "Integrity check for storybook build",
+			Action: StoreStorybook,
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:  "deployment",
+					Usage: "Kind of deployment (e.g. canary/latest)",
+				},
+			},
+		},
 	}
 
 	if err := app.Run(os.Args); err != nil {
