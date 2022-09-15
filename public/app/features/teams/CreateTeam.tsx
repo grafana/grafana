@@ -20,7 +20,6 @@ const pageNav: NavModelItem = {
   id: 'team-new',
   text: 'New team',
   subTitle: 'Create a new team. Teams let you grant permissions to a group of users.',
-
   breadcrumbs: [{ title: 'Configuration', url: 'org/teams' }],
 };
 
