@@ -16,6 +16,23 @@ export const MapViewEditor: FC<StandardEditorProps<MapViewConfig, any, GeomapPan
 }) => {
   const labelWidth = 10;
 
+  // Data scope options for 'Fit to data'
+  enum DataScopeValues {
+    all = 'all',
+    layer = 'layer',
+    last = 'last',
+  }
+  enum DataScopeLabels {
+    all = 'All layers',
+    layer = 'Layer',
+    last = 'Last value',
+  }
+  const ScopeOptions = Object.values(DataScopeValues);
+  const DataScopeOptions: Array<SelectableValue<DataScopeValues>> = ScopeOptions.map((r) => ({
+    label: DataScopeLabels[r],
+    value: r,
+  }));
+
   // Populate layers as select options
   const layers: Array<SelectableValue<string>> = [];
   if (context.options && context.options.layers) {
@@ -121,17 +138,28 @@ export const MapViewEditor: FC<StandardEditorProps<MapViewConfig, any, GeomapPan
           <InlineFieldRow>
             <InlineField label="Data" labelWidth={labelWidth} grow={true}>
               <RadioButtonGroup
-                value={value?.allLayers ? 'all' : !value?.allLayers && value.lastOnly ? 'last' : 'layer'}
-                options={[
-                  { label: 'All layers', value: 'all' },
-                  { label: 'Layer', value: 'layer' },
-                  { label: 'Last value', value: 'last' },
-                ]}
+                value={
+                  value?.allLayers
+                    ? DataScopeValues.all
+                    : !value?.allLayers && value.lastOnly
+                    ? DataScopeValues.last
+                    : DataScopeValues.layer
+                }
+                options={DataScopeOptions}
                 onChange={(v) => {
-                  if (v !== 'all' && !value.layer) {
-                    onChange({ ...value, allLayers: v === 'all', lastOnly: v === 'last', layer: layers[0].value });
+                  if (v !== DataScopeValues.all && !value.layer) {
+                    onChange({
+                      ...value,
+                      allLayers: v === String(DataScopeValues.all),
+                      lastOnly: v === String(DataScopeValues.last),
+                      layer: layers[0].value,
+                    });
                   } else {
-                    onChange({ ...value, allLayers: v === 'all', lastOnly: v === 'last' });
+                    onChange({
+                      ...value,
+                      allLayers: v === String(DataScopeValues.all),
+                      lastOnly: v === String(DataScopeValues.last),
+                    });
                   }
                 }}
               ></RadioButtonGroup>
