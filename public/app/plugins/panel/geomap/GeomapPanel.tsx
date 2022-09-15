@@ -601,12 +601,7 @@ export class GeomapPanel extends Component<Props, State> {
         if (v.id === MapCenterID.Coordinates) {
           coord = [config.lon ?? 0, config.lat ?? 0];
         } else if (v.id === MapCenterID.Fit) {
-          const extent = getLayersExtent(
-            this.layers,
-            config.allLayers ?? false,
-            config.lastOnly ?? false,
-            config.layer
-          );
+          const extent = getLayersExtent(this.layers, config.allLayers, config.lastOnly, config.layer);
           if (!isEmpty(extent)) {
             const padding = config.padding ?? 5;
             const res = view.getResolutionForExtent(extent, this.map?.getSize());

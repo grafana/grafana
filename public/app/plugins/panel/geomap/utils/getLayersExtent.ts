@@ -6,8 +6,8 @@ import { MapLayerState } from '../types';
 
 export function getLayersExtent(
   layers: MapLayerState[] = [],
-  allLayers: boolean,
-  lastOnly: boolean,
+  allLayers = false,
+  lastOnly = false,
   layer: string | undefined
 ): Extent {
   return layers
