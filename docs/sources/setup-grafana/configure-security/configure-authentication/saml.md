@@ -297,7 +297,7 @@ For more information about roles and permissions in Grafana, refer to [Roles and
 
 Example configuration:
 
-```bash
+```ini
 [auth.saml]
 assertion_attribute_role = role
 role_values_editor = editor, developer
@@ -306,6 +306,15 @@ role_values_grafana_admin = superadmin
 ```
 
 **Important**: When role sync is configured, any changes of user roles and organization membership made manually in Grafana will be overwritten on next user login. Assign user organizations and roles in the IdP instead.
+
+If you don't want user organizations and roles to be synchronized with the IdP, you can use the `skip_org_role_update_sync` configuration option.
+
+Example configuration:
+
+```ini
+[auth.saml]
+skip_org_role_update_sync = true
+```
 
 ### Configure organization mapping
 
