@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/searchV2/dslookup"
 	"github.com/grafana/grafana/pkg/services/searchV2/extract"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -93,9 +94,10 @@ type searchIndex struct {
 	extender                DocumentExtender
 	folderIdLookup          folderUIDLookup
 	syncCh                  chan chan struct{}
+	tracer                  tracing.Tracer
 }
 
-func newSearchIndex(dashLoader dashboardLoader, evStore eventStore, extender DocumentExtender, folderIDs folderUIDLookup) *searchIndex {
+func newSearchIndex(dashLoader dashboardLoader, evStore eventStore, extender DocumentExtender, folderIDs folderUIDLookup, tracer tracing.Tracer) *searchIndex {
 	return &searchIndex{
 		loader:          dashLoader,
 		eventStore:      evStore,
@@ -106,6 +108,7 @@ func newSearchIndex(dashLoader dashboardLoader, evStore eventStore, extender Doc
 		extender:        extender,
 		folderIdLookup:  folderIDs,
 		syncCh:          make(chan chan struct{}),
+		tracer:          tracer,
 	}
 }
 
@@ -209,17 +212,22 @@ func (i *searchIndex) run(ctx context.Context, orgIDs []int64, reIndexSignalCh c
 			close(doneCh)
 		case <-partialUpdateTimer.C:
 			// Periodically apply updates collected in entity events table.
-			lastEventID = i.applyIndexUpdates(ctx, lastEventID)
+			partialIndexUpdateCtx, span := i.tracer.Start(ctx, "searchV2 partial update timer")
+			lastEventID = i.applyIndexUpdates(partialIndexUpdateCtx, lastEventID)
+			span.End()
 			partialUpdateTimer.Reset(partialUpdateInterval)
 		case <-reIndexSignalCh:
 			// External systems may trigger re-indexing, at this moment provisioning does this.
 			i.logger.Info("Full re-indexing due to external signal")
 			fullReIndexTimer.Reset(0)
 		case signal := <-i.buildSignals:
+			buildSignalCtx, span := i.tracer.Start(ctx, "searchV2 build signal")
+
 			// When search read request meets new not-indexed org we build index for it.
 			i.mu.RLock()
 			_, ok := i.perOrgIndex[signal.orgID]
 			if ok {
+				span.End()
 				// Index for org already exists, do nothing.
 				i.mu.RUnlock()
 				close(signal.done)
@@ -232,14 +240,17 @@ func (i *searchIndex) run(ctx context.Context, orgIDs []int64, reIndexSignalCh c
 			// branch.
 			fullReIndexTimer.Stop()
 			go func() {
+				defer span.End()
 				// We need semaphore here since asynchronous re-indexing may be in progress already.
 				asyncReIndexSemaphore <- struct{}{}
 				defer func() { <-asyncReIndexSemaphore }()
-				_, err = i.buildOrgIndex(ctx, signal.orgID)
+				_, err = i.buildOrgIndex(buildSignalCtx, signal.orgID)
 				signal.done <- err
 				reIndexDoneCh <- lastIndexedEventID
 			}()
 		case <-fullReIndexTimer.C:
+			fullReindexCtx, span := i.tracer.Start(ctx, "searchV2 full reindex timer")
+
 			// Periodically rebuild indexes since we could miss updates. At this moment we are issuing
 			// entity events non-atomically (outside of transaction) and do not cover all possible dashboard
 			// change places, so periodic re-indexing fixes possibly broken state. But ideally we should
@@ -247,6 +258,7 @@ func (i *searchIndex) run(ctx context.Context, orgIDs []int64, reIndexSignalCh c
 			// is to use DB triggers, see https://github.com/grafana/grafana/pull/47712.
 			lastIndexedEventID := lastEventID
 			go func() {
+				defer span.End()
 				// Do full re-index asynchronously to avoid blocking index synchronization
 				// on read for a long time.
 
@@ -256,7 +268,7 @@ func (i *searchIndex) run(ctx context.Context, orgIDs []int64, reIndexSignalCh c
 
 				started := time.Now()
 				i.logger.Info("Start re-indexing")
-				i.reIndexFromScratch(ctx)
+				i.reIndexFromScratch(fullReindexCtx)
 				i.logger.Info("Full re-indexing finished", "fullReIndexElapsed", time.Since(started))
 				reIndexDoneCh <- lastIndexedEventID
 			}()
