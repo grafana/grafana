@@ -102,7 +102,7 @@ export const XYChartPanel2: React.FC<Props> = (props: Props) => {
     for (const s of series) {
       const frame = s.frame(props.data.series);
       if (frame) {
-        for (const item of s.legend(frame)) {
+        for (const item of s.legend()) {
           item.getDisplayValues = () => {
             const calcs = props.options.legend.calcs;
 

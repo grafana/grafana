@@ -35,7 +35,7 @@ export interface ScatterSeries {
   x: (frame: DataFrame) => Field;
   y: (frame: DataFrame) => Field;
 
-  legend: (frame: DataFrame) => VizLegendItem[]; // could be single if symbol is constant
+  legend: () => VizLegendItem[]; // could be single if symbol is constant
 
   showLine: boolean;
   lineWidth: number;

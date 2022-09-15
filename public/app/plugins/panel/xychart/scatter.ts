@@ -13,7 +13,7 @@ import {
 } from '@grafana/data';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import { config } from '@grafana/runtime';
-import { AxisPlacement, ScaleDirection, ScaleOrientation, VisibilityMode } from '@grafana/schema';
+import { AxisPlacement, LineStyle, ScaleDirection, ScaleOrientation, VisibilityMode } from '@grafana/schema';
 import { UPlotConfigBuilder } from '@grafana/ui';
 import { FacetedData, FacetSeries } from '@grafana/ui/src/components/uPlot/types';
 import {
@@ -86,7 +86,8 @@ function getScatterSeries(
   frameIndex: number,
   xIndex: number,
   yIndex: number,
-  dims: Dims
+  dims: Dims,
+  customLineStyle?: LineStyle
 ): ScatterSeries {
   const frame = frames[frameIndex];
   const y = frame.fields[yIndex];
@@ -161,7 +162,7 @@ function getScatterSeries(
 
     x: (frame) => frame.fields[xIndex],
     y: (frame) => frame.fields[yIndex],
-    legend: (frame) => {
+    legend: () => {
       return [
         {
           label: name,
@@ -174,7 +175,7 @@ function getScatterSeries(
 
     showLine: fieldConfig.show !== ScatterShow.Points,
     lineWidth: fieldConfig.lineWidth ?? 2,
-    lineStyle: fieldConfig.lineStyle!,
+    lineStyle: customLineStyle ?? fieldConfig.lineStyle!,
     lineColor: () => seriesColor,
 
     showPoints: fieldConfig.show !== ScatterShow.Lines ? VisibilityMode.Always : VisibilityMode.Never,
@@ -232,7 +233,12 @@ function prepSeries(options: XYChartOptions, frames: DataFrame[]): ScatterSeries
               pointSizeConfig: series.pointSize,
               pointSizeIndex: findFieldIndex(frame, series.pointSize?.field),
             };
-            scatterSeries.push(getScatterSeries(seriesIndex++, frames, frameIndex, xIndex, yIndex, dims));
+
+            const customLineStyle = series.lineStyle;
+
+            scatterSeries.push(
+              getScatterSeries(seriesIndex++, frames, frameIndex, xIndex, yIndex, dims, customLineStyle)
+            );
           }
         }
       }

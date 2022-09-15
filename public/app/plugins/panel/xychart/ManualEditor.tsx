@@ -2,10 +2,12 @@ import { css, cx } from '@emotion/css';
 import React, { FC, useState } from 'react';
 
 import { GrafanaTheme, StandardEditorProps } from '@grafana/data';
-import { Button, Field, IconButton, useStyles } from '@grafana/ui';
+import { Button, Field, IconButton, RadioButtonGroup, useStyles } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
 import { LayerName } from 'app/core/components/Layers/LayerName';
 import { ColorDimensionEditor, ScaleDimensionEditor } from 'app/features/dimensions/editors';
+
+import { LineStyleEditor } from '../timeseries/LineStyleEditor';
 
 import { XYChartOptions, ScatterSeriesConfig, defaultScatterConfig } from './models.gen';
 
@@ -113,6 +115,33 @@ export const ManualEditor: FC<StandardEditorProps<ScatterSeriesConfig[], any, XY
                 item={{ settings: { min: 1, max: 50 } } as any}
               />
             </Field>
+            <Field label={'Enable series line style'}>
+              <RadioButtonGroup
+                options={[
+                  { label: 'Yes', value: true },
+                  { label: 'No', value: false },
+                ]}
+                value={!!options.series[selected].lineStyle}
+                onChange={(v) => {
+                  if (v) {
+                    onFieldChange({ fill: 'solid' }, selected, 'lineStyle');
+                    return;
+                  }
+
+                  onFieldChange(null, selected, 'lineStyle');
+                }}
+              />
+            </Field>
+            {!!options.series[selected].lineStyle && (
+              <Field label={'Line style'}>
+                <LineStyleEditor
+                  value={options.series[selected].lineStyle!}
+                  context={context}
+                  onChange={(field) => onFieldChange(field, selected, 'lineStyle')}
+                  item={{} as any}
+                />
+              </Field>
+            )}
           </div>
         </>
       )}
