@@ -27,7 +27,7 @@ export interface FNDashboardProps<Q extends string = string> {
   fnLoader?: ReactNode;
   pageTitle?: string;
   controlsContainer: HTMLElement | null;
-  setIsLoading: (isLoading: boolean) => void;
+  isLoading: (isLoading: boolean) => void;
   setErrors: (errors?: { [K: number | string]: string }) => void;
   hiddenVariables: string[];
   container?: HTMLElement | null;
