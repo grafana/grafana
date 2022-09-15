@@ -205,7 +205,9 @@ func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, 
 		return nil, err
 	}
 
-	return pd.QueryDataService.QueryDataMultipleSources(ctx, anonymousUser, skipCache, metricReq, true)
+	res, err := pd.QueryDataService.QueryDataMultipleSources(ctx, anonymousUser, skipCache, metricReq, true)
+	queries.RemoveMetadataFromQueryData(res)
+	return res, err
 }
 
 func (pd *PublicDashboardServiceImpl) GetMetricRequest(ctx context.Context, dashboard *models.Dashboard, publicDashboard *PublicDashboard, panelId int64, queryDto PublicDashboardQueryDTO) (dtos.MetricRequest, error) {
