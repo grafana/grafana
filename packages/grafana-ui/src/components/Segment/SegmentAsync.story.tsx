@@ -220,11 +220,11 @@ export const Basic: ComponentStory<React.ComponentType<SegmentAsyncProps<string>
       }
       return loadOptions(options);
     },
-    onChange: ({ value }: SelectableValue<string>) => {
+    onChange: ({ value }) => {
       setValue(value);
       action('onChange fired')(value);
     },
-    onExpandedChange: (expanded: boolean) => action('onExpandedChange fired')({ expanded }),
+    onExpandedChange: (expanded) => action('onExpandedChange fired')({ expanded }),
   };
 
   return (

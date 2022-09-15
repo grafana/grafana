@@ -2,7 +2,6 @@ import { action } from '@storybook/addon-actions';
 import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React, { useState } from 'react';
 
-import { SelectableValue } from '@grafana/data';
 import { Segment, Icon, SegmentSection } from '@grafana/ui';
 
 import { SegmentSyncProps } from './Segment';
@@ -160,11 +159,11 @@ export const Basic: ComponentStory<React.ComponentType<SegmentSyncProps<string>>
   const props: SegmentSyncProps<string> = {
     ...args,
     value,
-    onChange: ({ value }: SelectableValue<string>) => {
+    onChange: ({ value }) => {
       setValue(value);
       action('onChange fired')(value);
     },
-    onExpandedChange: (expanded: boolean) => action('onExpandedChange fired')({ expanded }),
+    onExpandedChange: (expanded) => action('onExpandedChange fired')({ expanded }),
   };
 
   return (
