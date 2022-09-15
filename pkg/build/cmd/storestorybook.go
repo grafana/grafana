@@ -18,7 +18,7 @@ func StoreStorybook(c *cli.Context) error {
 		return err
 	}
 
-	verMode, err := config.GetVersion(metadata.ReleaseMode.Mode)
+	releaseModeConfig, err := config.GetReleaseModeConfig(metadata.ReleaseMode.Mode)
 	if err != nil {
 		return err
 	}
@@ -26,8 +26,8 @@ func StoreStorybook(c *cli.Context) error {
 		return err
 	}
 
-	storybookBucket := verMode.StorybookBucket
-	srcPath := verMode.StorybookSrcDir
+	storybookBucket := releaseModeConfig.Buckets.Storybook
+	srcPath := releaseModeConfig.Buckets.StorybookSrcDir
 	srcPath = filepath.Join(srcPath, deployment)
 
 	gcs, err := storage.New()

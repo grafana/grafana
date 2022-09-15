@@ -21,7 +21,7 @@ func BuildInternalPlugins(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	verMode, err := config.GetVersion(metadata.ReleaseMode.Mode)
+	verMode, err := config.GetReleaseModeConfig(metadata.ReleaseMode.Mode)
 	if err != nil {
 		return err
 	}
