@@ -8,7 +8,7 @@ import { CloudMonitoringQuery, MetricQuery, QueryType, SLOQuery, CloudMonitoring
 
 import { defaultQuery } from './MetricQueryEditor';
 import { QueryHeader } from './QueryHeader';
-import { defaultQuery as defaultSLOQuery } from './SLO/SLOQueryEditor';
+import { defaultQuery as defaultSLOQuery } from './SLOQueryEditor';
 
 import { MetricQueryEditor, SLOQueryEditor } from './';
 
@@ -25,7 +25,7 @@ export class QueryEditor extends PureComponent<Props> {
       this.props.query.metricQuery = metricQuery;
     }
 
-    if (this.props.query.queryType !== QueryType.METRICS || QueryType.SLO) {
+    if (![QueryType.METRICS, QueryType.SLO].includes(this.props.query.queryType)) {
       this.props.query.queryType = QueryType.METRICS;
     }
 
