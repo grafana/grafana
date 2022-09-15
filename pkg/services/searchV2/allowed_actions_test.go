@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -80,7 +81,7 @@ var (
 )
 
 func service(t *testing.T) *StandardSearchService {
-	service, ok := ProvideService(nil, nil, nil, accesscontrolmock.New()).(*StandardSearchService)
+	service, ok := ProvideService(nil, nil, nil, accesscontrolmock.New(), tracing.InitializeTracerForTest()).(*StandardSearchService)
 	require.True(t, ok)
 	return service
 }
