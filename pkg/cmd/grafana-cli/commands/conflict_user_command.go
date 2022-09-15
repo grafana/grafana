@@ -131,10 +131,6 @@ func runValidateConflictUsersFile() func(context *cli.Context) error {
 		if arg == "" {
 			return errors.New("please specify a absolute path to file to read from")
 		}
-		b, err := os.ReadFile(arg)
-		if err != nil {
-			return fmt.Errorf("could not read file with error %s", err)
-		}
 		// validation
 		s, err := getSqlStore(context, cfg)
 		if err != nil {
@@ -148,7 +144,7 @@ func runValidateConflictUsersFile() func(context *cli.Context) error {
 		resolver.BuildConflictBlocks(conflicts, fmt.Sprintf)
 
 		// read in the file to validate
-		b, err = os.ReadFile(filepath.Clean(arg))
+		b, err := os.ReadFile(filepath.Clean(arg))
 		if err != nil {
 			return fmt.Errorf("could not read file with error %e", err)
 		}
@@ -332,22 +328,22 @@ func (r *ConflictResolver) showChanges() {
 		}
 		for _, user := range users {
 			if !startOfBlock[block] {
-				fileString += fmt.Sprint("IDENTIFIED user conflict\n")
+				fileString += "IDENTIFIED user conflict\n"
 				fileString += fmt.Sprintf("%s\n", block)
-				fileString += fmt.Sprint("The permissions, roles and ownership will be transferred to the user below.\n")
+				fileString += "The permissions, roles and ownership will be transferred to the user below.\n"
 				fileString += fmt.Sprintf("id: %s, email: %s, login: %s\n", user.Id, user.Email, user.Login)
-				fileString += fmt.Sprint("\n")
+				fileString += "\n"
 				startOfBlock[block] = true
 				continue
 			}
 			// mergable users
 			if !startOfEndBlock[block] {
-				fileString += fmt.Sprint("The following user(s) will be deleted and their permissions transferred.\n")
+				fileString += "The following user(s) will be deleted and their permissions transferred.\n"
 				startOfEndBlock[block] = true
 			}
 			fileString += fmt.Sprintf("id: %s, email: %s, login: %s\n", user.Id, user.Email, user.Login)
 		}
-		fileString += fmt.Sprint("\n\n")
+		fileString += "\n\n"
 	}
 	logger.Info("Changes that will take place\n\n")
 	logger.Infof(fileString)
