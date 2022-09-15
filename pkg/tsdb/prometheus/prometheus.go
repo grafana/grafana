@@ -126,6 +126,8 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return data, err
 	}
 
+	if req.Headers[]
+
 	return i.buffered.ExecuteTimeSeriesQuery(ctx, req)
 }
 

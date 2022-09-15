@@ -96,7 +96,14 @@ func New(roundTripper http.RoundTripper, tracer tracing.Tracer, settings backend
 func (b *Buffered) ExecuteTimeSeriesQuery(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	// Add headers from the request to context so they are added later on by a context middleware. This is because
 	// prom client does not allow us to do this directly.
-	ctxWithHeaders := sdkHTTPClient.WithContextualMiddleware(ctx, middleware.ReqHeadersMiddleware(req.Headers))
+
+	addHeaders := make(map[string]string)
+
+	if req.Headers["FromAlert"] == "true" {
+		addHeaders["FromAlert"] = "true"
+	}
+
+	ctxWithHeaders := sdkHTTPClient.WithContextualMiddleware(ctx, middleware.ReqHeadersMiddleware(addHeaders))
 
 	queries, err := b.parseTimeSeriesQuery(req)
 	if err != nil {
