@@ -174,9 +174,6 @@ func (a *State) resultNoData(alertRule *models.AlertRule, result eval.Result) {
 }
 
 func (a *State) NeedsSending(resendDelay time.Duration) bool {
-	if a.StateReason == models.StateReasonMissingSeries { // stale state is deleted from cache and will not be sent many times
-		return true
-	}
 	switch a.State {
 	case eval.Pending:
 		// We do not send notifications for pending states
