@@ -114,7 +114,7 @@ You can sort the dashboards by:
 
 If you set up your installation to [export logs of usage insights]({{< relref "../../setup-grafana/configure-security/export-logs/" >}}), we've created two dashboards to help you take advantage of this data. 
 
-1. [Usage Insights overview](https://grafana.com/grafana/dashboards/13785-usage-insights/) provides a top-level perspective of user activity. 
-1. [Data source details](https://grafana.com/grafana/dashboards/13786-grafana-usage-insights-datasource-details/) dashboard provides a view of data source activity and health. 
+1. [Usage Insights overview](/grafana/dashboards/13785) provides a top-level perspective of user activity. 
+1. [Data source details](/grafana/dashboards/13786) dashboard provides a view of data source activity and health. 
 
 You can click the previous links to download the respective dashboard JSON, then import into your Grafana installation.
