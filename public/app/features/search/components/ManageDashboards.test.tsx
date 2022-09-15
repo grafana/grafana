@@ -42,7 +42,7 @@ describe('ManageDashboards', () => {
   beforeEach(() => {
     (contextSrv.hasAccess as jest.Mock).mockClear();
   });
-  it('should show dashboard actions if user has correct permissions', async () => {
+  it("should hide and show dashboard actions based on user's permissions", async () => {
     (contextSrv.hasAccess as jest.Mock).mockReturnValue(false);
 
     const { rerender, store } = await setup();
