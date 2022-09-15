@@ -7,11 +7,12 @@ import (
 	"io"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"gocloud.dev/blob"
 	_ "gocloud.dev/blob/fileblob"
 	_ "gocloud.dev/blob/memblob"
 	"gocloud.dev/gcerrors"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 const (
@@ -30,17 +31,27 @@ func NewCdkBlobStorage(log log.Logger, bucket *blob.Bucket, rootFolder string, f
 	}, filter, rootFolder)
 }
 
-func (c cdkBlobStorage) Get(ctx context.Context, filePath string) (*File, error) {
-	contents, err := c.bucket.ReadAll(ctx, strings.ToLower(filePath))
+func (c cdkBlobStorage) Get(ctx context.Context, path string, options *GetFileOptions) (*File, bool, error) {
+	var err error
+	var contents []byte
+	if options.WithContents {
+		contents, err = c.bucket.ReadAll(ctx, strings.ToLower(path))
+		if err != nil {
+			if gcerrors.Code(err) == gcerrors.NotFound {
+				return nil, false, nil
+			}
+			return nil, false, err
+		}
+	} else {
+		contents = make([]byte, 0)
+	}
+
+	attributes, err := c.bucket.Attributes(ctx, strings.ToLower(path))
 	if err != nil {
 		if gcerrors.Code(err) == gcerrors.NotFound {
-			return nil, nil
+			return nil, false, nil
 		}
-		return nil, err
-	}
-	attributes, err := c.bucket.Attributes(ctx, strings.ToLower(filePath))
-	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	var originalPath string
@@ -53,7 +64,7 @@ func (c cdkBlobStorage) Get(ctx context.Context, filePath string) (*File, error)
 		}
 	} else {
 		props = make(map[string]string)
-		originalPath = filePath
+		originalPath = path
 	}
 
 	return &File{
@@ -67,7 +78,7 @@ func (c cdkBlobStorage) Get(ctx context.Context, filePath string) (*File, error)
 			Size:       attributes.Size,
 			MimeType:   detectContentType(originalPath, attributes.ContentType),
 		},
-	}, nil
+	}, true, nil
 }
 
 func (c cdkBlobStorage) Delete(ctx context.Context, filePath string) error {
@@ -85,7 +96,7 @@ func (c cdkBlobStorage) Delete(ctx context.Context, filePath string) error {
 }
 
 func (c cdkBlobStorage) Upsert(ctx context.Context, command *UpsertFileCommand) error {
-	existing, err := c.Get(ctx, command.Path)
+	existing, _, err := c.Get(ctx, command.Path, &GetFileOptions{WithContents: true})
 	if err != nil {
 		return err
 	}
@@ -272,7 +283,7 @@ func (c cdkBlobStorage) DeleteFolder(ctx context.Context, folderPath string, opt
 	return lastErr
 }
 
-//nolint: gocyclo
+//nolint:gocyclo
 func (c cdkBlobStorage) list(ctx context.Context, folderPath string, paging *Paging, options *ListOptions) (*ListResponse, error) {
 	lowerRootPath := strings.ToLower(folderPath)
 	iterators := []*blob.ListIterator{c.bucket.List(&blob.ListOptions{

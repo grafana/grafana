@@ -5,6 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, styleMixins } from '@grafana/ui';
 
 import { Branding } from '../Branding/Branding';
+import { BrandingSettings } from '../Branding/types';
 import { Footer } from '../Footer/Footer';
 
 interface InnerBoxProps {
@@ -15,26 +16,36 @@ export const InnerBox: FC<InnerBoxProps> = ({ children, enterAnimation = true })
   return <div className={cx(loginStyles.loginInnerBox, enterAnimation && loginStyles.enterAnimation)}>{children}</div>;
 };
 
-export const LoginLayout: FC = ({ children }) => {
+export interface LoginLayoutProps {
+  /** Custom branding settings that can be used e.g. for previewing the Login page changes */
+  branding?: BrandingSettings;
+}
+
+export const LoginLayout: FC<LoginLayoutProps> = ({ children, branding }) => {
   const loginStyles = useStyles2(getLoginStyles);
-  const subTitle = Branding.GetLoginSubTitle();
   const [startAnim, setStartAnim] = useState(false);
+  const subTitle = branding?.loginSubtitle ?? Branding.GetLoginSubTitle();
+  const loginTitle = branding?.loginTitle ?? Branding.LoginTitle;
+  const loginBoxBackground = branding?.loginBoxBackground || Branding.LoginBoxBackground();
+  const loginLogo = branding?.loginLogo;
 
   useEffect(() => setStartAnim(true), []);
 
   return (
-    <Branding.LoginBackground className={cx(loginStyles.container, startAnim && loginStyles.loginAnim)}>
-      <div className={cx(loginStyles.loginContent, Branding.LoginBoxBackground(), 'login-content-box')}>
+    <Branding.LoginBackground
+      className={cx(loginStyles.container, startAnim && loginStyles.loginAnim, branding?.loginBackground)}
+    >
+      <div className={cx(loginStyles.loginContent, loginBoxBackground, 'login-content-box')}>
         <div className={loginStyles.loginLogoWrapper}>
-          <Branding.LoginLogo className={loginStyles.loginLogo} />
+          <Branding.LoginLogo className={loginStyles.loginLogo} logo={loginLogo} />
           <div className={loginStyles.titleWrapper}>
-            <h1 className={loginStyles.mainTitle}>{Branding.LoginTitle}</h1>
-            {subTitle && <h3 className={loginStyles.subTitle}>{Branding.GetLoginSubTitle()}</h3>}
+            <h1 className={loginStyles.mainTitle}>{loginTitle}</h1>
+            {subTitle && <h3 className={loginStyles.subTitle}>{subTitle}</h3>}
           </div>
         </div>
         <div className={loginStyles.loginOuterBox}>{children}</div>
       </div>
-      <Footer />
+      <Footer customLinks={branding?.footerLinks} />
     </Branding.LoginBackground>
   );
 };

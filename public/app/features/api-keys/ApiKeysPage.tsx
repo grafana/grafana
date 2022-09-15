@@ -10,7 +10,6 @@ import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
-import { getNavModel } from 'app/core/selectors/navModel';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { AccessControlAction, ApiKey, NewApiKey, StoreState } from 'app/types';
 import { ShowModalReactEvent } from 'app/types/events';
@@ -39,7 +38,6 @@ function mapStateToProps(state: StoreState) {
   const canCreate = contextSrv.hasAccess(AccessControlAction.ActionAPIKeysCreate, true);
 
   return {
-    navModel: getNavModel(state.navIndex, 'apikeys'),
     apiKeys: getApiKeys(state.apiKeys),
     searchQuery: state.apiKeys.searchQuery,
     apiKeysCount: getApiKeysCount(state.apiKeys),
@@ -51,6 +49,11 @@ function mapStateToProps(state: StoreState) {
     apiKeysMigrated: state.apiKeys.apiKeysMigrated,
   };
 }
+
+const defaultPageProps = {
+  navId: 'apikeys',
+  subTitle: 'Manage and create API keys that are used to interact with Grafana HTTP APIs.',
+};
 
 const mapDispatchToProps = {
   loadApiKeys,
@@ -156,7 +159,6 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
   render() {
     const {
       hasFetched,
-      navModel,
       apiKeysCount,
       apiKeys,
       searchQuery,
@@ -169,14 +171,14 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
 
     if (!hasFetched) {
       return (
-        <Page navModel={navModel}>
+        <Page {...defaultPageProps}>
           <Page.Contents isLoading={true}>{}</Page.Contents>
         </Page>
       );
     }
 
     return (
-      <Page navModel={navModel}>
+      <Page {...defaultPageProps}>
         <Page.Contents isLoading={false}>
           <ApiKeysController>
             {({ isAdding, toggleIsAdding }) => {

@@ -85,7 +85,7 @@ func (s *Service) DeleteUserFromAll(ctx context.Context, userID int64) error {
 	return s.store.DeleteUserFromAll(ctx, userID)
 }
 
-//  TODO: remove wrapper around sqlstore
+// TODO: remove wrapper around sqlstore
 func (s *Service) GetUserOrgList(ctx context.Context, query *org.GetUserOrgListQuery) ([]*org.UserOrgDTO, error) {
 	q := &models.GetUserOrgListQuery{
 		UserId: query.UserID,
@@ -103,4 +103,8 @@ func (s *Service) GetUserOrgList(ctx context.Context, query *org.GetUserOrgListQ
 		})
 	}
 	return result, nil
+}
+
+func (s *Service) UpdateOrg(ctx context.Context, cmd *org.UpdateOrgCommand) error {
+	return s.store.Update(ctx, cmd)
 }

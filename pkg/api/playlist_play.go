@@ -66,6 +66,7 @@ func (hs *HTTPServer) populateDashboardsByTag(ctx context.Context, orgID int64, 
 	return result
 }
 
+// Deprecated -- the frontend can do this better
 func (hs *HTTPServer) LoadPlaylistDashboards(ctx context.Context, orgID int64, signedInUser *user.SignedInUser, playlistUID string) (dtos.PlaylistDashboardsSlice, error) {
 	playlistItems, _ := hs.LoadPlaylistItems(ctx, playlistUID, orgID)
 

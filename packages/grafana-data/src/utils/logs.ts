@@ -134,7 +134,7 @@ export function calculateLogsLabelStats(rows: LogRowModel[], label: string): Log
   return getSortedCounts(countsByValue, rowCount);
 }
 
-export function calculateStats(values: any[]): LogLabelStatsModel[] {
+export function calculateStats(values: unknown[]): LogLabelStatsModel[] {
   const nonEmptyValues = values.filter((value) => value !== undefined && value !== null);
   const countsByValue = countBy(nonEmptyValues);
   return getSortedCounts(countsByValue, nonEmptyValues.length);

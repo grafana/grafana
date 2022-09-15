@@ -13,6 +13,7 @@ import { TOP_BAR_LEVEL_HEIGHT } from './types';
 export interface Props {
   onToggleSearchBar(): void;
   onToggleMegaMenu(): void;
+  onToggleKioskMode(): void;
   searchBarHidden?: boolean;
   sectionNav: NavModelItem;
   pageNav?: NavModelItem;
@@ -26,6 +27,7 @@ export function NavToolbar({
   pageNav,
   onToggleMegaMenu,
   onToggleSearchBar,
+  onToggleKioskMode,
 }: Props) {
   const styles = useStyles2(getStyles);
   const breadcrumbs = buildBreadcrumbs(sectionNav, pageNav);
@@ -39,7 +41,10 @@ export function NavToolbar({
       <div className={styles.actions}>
         {actions}
         {actions && <NavToolbarSeparator />}
-        <ToolbarButton onClick={onToggleSearchBar} narrow tooltip="Toggle top search bar">
+        {searchBarHidden && (
+          <ToolbarButton onClick={onToggleKioskMode} narrow title="Enable kiosk mode" icon="monitor" />
+        )}
+        <ToolbarButton onClick={onToggleSearchBar} narrow title="Toggle top search bar">
           <Icon name={searchBarHidden ? 'angle-down' : 'angle-up'} size="xl" />
         </ToolbarButton>
       </div>
@@ -52,13 +57,14 @@ const getStyles = (theme: GrafanaTheme2) => {
     pageToolbar: css({
       height: TOP_BAR_LEVEL_HEIGHT,
       display: 'flex',
-      padding: theme.spacing(0, 2),
+      padding: theme.spacing(0, 1, 0, 2),
       alignItems: 'center',
       justifyContent: 'space-between',
     }),
     menuButton: css({
       display: 'flex',
       alignItems: 'center',
+      marginRight: theme.spacing(1),
     }),
     actions: css({
       display: 'flex',
@@ -68,6 +74,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       paddingLeft: theme.spacing(1),
       flexGrow: 1,
       gap: theme.spacing(0.5),
+      minWidth: 0,
     }),
   };
 };
