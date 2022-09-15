@@ -258,7 +258,7 @@ const migrateGrafanaTemplateVariableFn = (query: AzureMonitorQuery) => {
     return query;
   }
 
-  const migratedQuery: AzureMonitorQuery = {
+  let migratedQuery: AzureMonitorQuery = {
     ...query,
   };
   if ('subscription' in grafanaTemplateVariableFn) {
@@ -287,6 +287,9 @@ const migrateGrafanaTemplateVariableFn = (query: AzureMonitorQuery) => {
     case 'MetricNamespaceQuery':
       migratedQuery.queryType = AzureQueryType.NamespacesQuery;
       break;
+    case 'MetricDefinitionsQuery':
+      migratedQuery.queryType = AzureQueryType.NamespacesQuery;
+      break;
     case 'MetricNamesQuery':
       migratedQuery.queryType = AzureQueryType.MetricNamesQuery;
       break;
@@ -295,6 +298,7 @@ const migrateGrafanaTemplateVariableFn = (query: AzureMonitorQuery) => {
       break;
   }
 
+  delete migratedQuery.grafanaTemplateVariableFn;
   return migratedQuery;
 };
 
