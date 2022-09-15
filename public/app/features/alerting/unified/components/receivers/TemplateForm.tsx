@@ -5,7 +5,7 @@ import { useDispatch } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, Button, Field, FieldSet, Input, LinkButton, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Field, FieldSet, Input, LinkButton, Stack, useStyles2 } from '@grafana/ui';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
@@ -174,48 +174,25 @@ function TemplatingGuideline() {
 
   return (
     <Alert title="Templating guideline" severity="info">
-      <div>
-        Grafana uses the{' '}
-        <a
-          href="https://pkg.go.dev/text/template?utm_source=godoc"
-          target="__blank"
-          rel="noreferrer"
-          className={styles.externalLink}
-        >
-          Go templating language{' '}
-        </a>
-        to create notification messages.{' '}
-        <a
-          href="https://prometheus.io/blog/2016/03/03/custom-alertmanager-templates/"
-          target="__blank"
-          rel="noreferrer"
-          className={styles.externalLink}
-        >
-          More info about alertmanager templates
-        </a>
-      </div>
-      <div>
-        The list of available template data can be found{' '}
-        <a
-          href="https://grafana.com/docs/grafana/latest/alerting/contact-points/message-templating/template-data/"
-          target="_blank"
-          rel="noreferrer"
-          className={styles.externalLink}
-        >
-          in the documentation
-        </a>
-        , along with{' '}
-        <a
-          href="https://grafana.com/docs/grafana/latest/alerting/contact-points/message-templating/example-template/"
-          target="_blank"
-          rel="noreferrer"
-          className={styles.externalLink}
-        >
-          templating examples.
-        </a>
-      </div>
-      <div>
-        To make templating easier, we provide a few snippets to help you speed up your workflow.{' '}
+      <Stack direction="row">
+        <div>
+          Grafana uses Go templating language to create notification messages.
+          <br />
+          To find out more about templating please visit our documentation.
+        </div>
+        <div>
+          <LinkButton
+            href="https://grafana.com/docs/grafana/latest/alerting/contact-points/message-templating"
+            target="_blank"
+            icon="external-link-alt"
+          >
+            Templating documentation
+          </LinkButton>
+        </div>
+      </Stack>
+
+      <div className={styles.snippets}>
+        To make templating easier, we provide a few snippets in the content editor to help you speed up your workflow.
         <div className={styles.code}>
           {Object.values(snippets)
             .map((s) => s.label)
@@ -237,12 +214,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
       flex-wrap: nowrap;
     }
   `,
-  code: css`
-    color: ${theme.colors.text.link};
+  snippets: css`
+    margin-top: ${theme.spacing(2)};
+    font-size: ${theme.typography.bodySmall.fontSize};
   `,
-  externalLink: css`
+  code: css`
     color: ${theme.colors.text.secondary};
-    text-decoration: underline;
+    font-weight: ${theme.typography.fontWeightBold};
   `,
   buttons: css`
     & > * + * {

@@ -1,22 +1,51 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data/src';
-import { Stack, useStyles2 } from '@grafana/ui/src';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Stack, useStyles2 } from '@grafana/ui';
+
+import { HoverCard } from '../HoverCard';
+
+import {
+  AlertTemplateData,
+  GlobalTemplateData,
+  KeyValueCodeSnippet,
+  KeyValueTemplateFunctions,
+  TemplateDataItem,
+} from './TemplateData';
 
 export function TemplateDataDocs() {
   const styles = useStyles2(getTemplateDataDocsStyles);
 
+  const AlertTemplateDataTable = (
+    <TemplateDataTable
+      caption={
+        <h4 className={styles.header}>
+          Alert template data <span>Available only when in the context of an Alert (e.g. inside .Alerts loop)</span>
+        </h4>
+      }
+      dataItems={AlertTemplateData}
+    />
+  );
+
   return (
-    <Stack gap={2}>
-      <TemplateDataTable caption={<h4 className={styles.header}>Template Data</h4>} dataItems={GlobalTemplateData} />
+    <Stack gap={2} flexGrow={1}>
       <TemplateDataTable
-        caption={
-          <h4 className={styles.header}>
-            Alert template data <span>Available only when in the context of an Alert (e.g. inside .Alerts loop)</span>
-          </h4>
+        caption={<h4 className={styles.header}>Template Data</h4>}
+        dataItems={GlobalTemplateData}
+        typeRenderer={(type) =>
+          type === '[]Alert' ? (
+            <HoverCard content={AlertTemplateDataTable}>
+              <div className={styles.interactiveType}>{type}</div>
+            </HoverCard>
+          ) : type === 'KeyValue' ? (
+            <HoverCard content={<KeyValueTemplateDataTable />}>
+              <div className={styles.interactiveType}>{type}</div>
+            </HoverCard>
+          ) : (
+            type
+          )
         }
-        dataItems={AlertTemplateData}
       />
     </Stack>
   );
@@ -31,9 +60,18 @@ const getTemplateDataDocsStyles = (theme: GrafanaTheme2) => ({
       font-size: ${theme.typography.bodySmall.fontSize};
     }
   `,
+  interactiveType: css`
+    color: ${theme.colors.text.link};
+  `,
 });
 
-function TemplateDataTable({ dataItems, caption }: { dataItems: TemplateDataItem[]; caption: JSX.Element | string }) {
+interface TemplateDataTableProps {
+  dataItems: TemplateDataItem[];
+  caption: JSX.Element | string;
+  typeRenderer?: (type: TemplateDataItem['type']) => React.ReactNode;
+}
+
+function TemplateDataTable({ dataItems, caption, typeRenderer }: TemplateDataTableProps) {
   const styles = useStyles2(getTemplateDataTableStyles);
 
   return (
@@ -50,7 +88,7 @@ function TemplateDataTable({ dataItems, caption }: { dataItems: TemplateDataItem
         {dataItems.map(({ name, type, notes }, index) => (
           <tr key={index}>
             <td>{name}</td>
-            <td>{type}</td>
+            <td>{typeRenderer ? typeRenderer(type) : type}</td>
             <td>{notes}</td>
           </tr>
         ))}
@@ -59,9 +97,42 @@ function TemplateDataTable({ dataItems, caption }: { dataItems: TemplateDataItem
   );
 }
 
+function KeyValueTemplateDataTable() {
+  const tableStyles = useStyles2(getTemplateDataTableStyles);
+
+  return (
+    <div>
+      KeyValue is a set of key/value string pairs that represent labels and annotations.
+      <pre>
+        <code>{KeyValueCodeSnippet}</code>
+      </pre>
+      <table className={tableStyles.table}>
+        <caption>Key-value methods</caption>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Arguments</th>
+            <th>Returns</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          {KeyValueTemplateFunctions.map(({ name, args, returns, notes }) => (
+            <tr key={name}>
+              <td>{name}</td>
+              <td>{args}</td>
+              <td>{returns}</td>
+              <td>{notes}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 const getTemplateDataTableStyles = (theme: GrafanaTheme2) => ({
   table: css`
-    table-layout: fixed;
     border-collapse: collapse;
     width: 100%;
 
@@ -71,24 +142,11 @@ const getTemplateDataTableStyles = (theme: GrafanaTheme2) => ({
 
     td,
     th {
-      padding: ${theme.spacing(1, 2)};
+      padding: ${theme.spacing(1, 1)};
     }
 
     thead {
       font-weight: ${theme.typography.fontWeightBold};
-    }
-
-    thead th:nth-child(1) {
-      width: 180px;
-    }
-
-    thead th:nth-child(2) {
-      width: 120px;
-    }
-
-    thead th:nth-child(3) {
-      width: auto;
-      max-width: 400px;
     }
 
     tbody tr:nth-child(2n + 1) {
@@ -104,116 +162,3 @@ const getTemplateDataTableStyles = (theme: GrafanaTheme2) => ({
     }
   `,
 });
-
-interface TemplateDataItem {
-  name: string;
-  type: 'string' | '[]Alert' | 'KeyValue' | 'time.Time';
-  notes: string;
-}
-
-const GlobalTemplateData: TemplateDataItem[] = [
-  {
-    name: 'Receiver',
-    type: 'string',
-    notes: 'Name of the contact point that the notification is being sent to.',
-  },
-  {
-    name: 'Status',
-    type: 'string',
-    notes: 'firing if at least one alert is firing, otherwise resolved',
-  },
-  {
-    name: 'Alerts',
-    type: '[]Alert',
-    notes: 'List of alert objects that are included in this notification.',
-  },
-  {
-    name: 'Alerts.Firing',
-    type: '[]Alert',
-    notes: 'List of firing alerts',
-  },
-  {
-    name: 'Alerts.Resolved',
-    type: '[]Alert',
-    notes: 'List of resolved alerts',
-  },
-  {
-    name: 'GroupLabels',
-    type: 'KeyValue',
-    notes: 'Labels these alerts were grouped by.',
-  },
-  {
-    name: 'CommonLabels',
-    type: 'KeyValue',
-    notes: 'Labels common to all the alerts included in this notification.',
-  },
-  {
-    name: 'CommonAnnotations',
-    type: 'KeyValue',
-    notes: 'Annotations common to all the alerts included in this notification.',
-  },
-  {
-    name: 'ExternalURL',
-    type: 'string',
-    notes: 'Back link to the Grafana that sent the notification.',
-  },
-];
-
-const AlertTemplateData: TemplateDataItem[] = [
-  {
-    name: 'Status',
-    type: 'string',
-    notes: 'firing or resolved.',
-  },
-  {
-    name: 'Labels',
-    type: 'KeyValue',
-    notes: 'Set of labels attached to the alert.',
-  },
-  {
-    name: 'Annotations',
-    type: 'KeyValue',
-    notes: 'Set of annotations attached to the alert.',
-  },
-  {
-    name: 'StartsAt',
-    type: 'time.Time',
-    notes: 'Time the alert started firing.',
-  },
-  {
-    name: 'EndsAt',
-    type: 'time.Time',
-    notes:
-      'Only set if the end time of an alert is known. Otherwise set to a configurable timeout period from the time since the last alert was received.',
-  },
-  {
-    name: 'GeneratorURL',
-    type: 'string',
-    notes: 'A back link to Grafana or external Alertmanager.',
-  },
-  {
-    name: 'SilenceURL',
-    type: 'string',
-    notes: 'Link to Grafana silence for with labels for this alert pre-filled. Only for Grafana managed alerts.',
-  },
-  {
-    name: 'DashboardURL',
-    type: 'string',
-    notes: 'Link to Grafana dashboard, if alert rule belongs to one. Only for Grafana managed alerts.',
-  },
-  {
-    name: 'PanelURL',
-    type: 'string',
-    notes: 'Link to Grafana dashboard panel, if alert rule belongs to one. Only for Grafana managed alerts.',
-  },
-  {
-    name: 'Fingerprint',
-    type: 'string',
-    notes: 'Fingerprint that can be used to identify the alert.',
-  },
-  {
-    name: 'ValueString',
-    type: 'string',
-    notes: 'String that contains the labels and value of each reduced expression in the alert.',
-  },
-];
