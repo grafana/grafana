@@ -20,6 +20,7 @@ import {
   Select,
   ClipboardButton,
   Stack,
+  Icon,
 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { PanelModel } from 'app/features/dashboard/state';
@@ -78,13 +79,17 @@ export function SupportSnapshot({ panel, plugin, onClose }: Props) {
       scrollableContent
       subtitle={
         <Stack direction="column" gap={1}>
-          <span>
+          <Stack direction="row">
             <FeatureBadge featureState={FeatureState.beta} />
-            &nbsp;
-            <a href="https://grafana.com/docs/grafana/latest/troubleshooting/" target="blank">
-              https://grafana.com/docs/grafana/latest/troubleshooting/
+            <a
+              href="https://grafana.com/docs/grafana/latest/troubleshooting/"
+              target="blank"
+              className="external-link"
+              rel="noopener noreferrer"
+            >
+              Troubleshooting docs <Icon name="external-link-alt" />
             </a>
-          </span>
+          </Stack>
           <span className="muted">
             To request troubleshooting help, send a snapshot of this panel to Grafana Labs Technical Support. The
             snapshot contains query response data and panel settings.
