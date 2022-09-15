@@ -17,7 +17,7 @@ func TestGetUniqueDatasourceTypes(t *testing.T) {
 	}{
 		{
 			desc:   "can get unique datasource names",
-			result: []string{"prometheus", "mysql"},
+			result: []string{"mysql", "prometheus"},
 			queries: []*simplejson.Json{
 				simplejson.NewFromAny(map[string]interface{}{
 					"datasource": map[string]interface{}{
