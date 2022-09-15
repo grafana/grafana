@@ -1,4 +1,4 @@
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv } from '@grafana/runtime/src';
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { VariableModel } from 'app/features/variables/types';
@@ -57,8 +57,8 @@ export const dashboardHasTemplateVariables = (variables: VariableModel[]): boole
   return variables.length > 0;
 };
 
-export const publicDashboardPersisted = (publicDashboard: PublicDashboard): boolean => {
-  return publicDashboard.uid !== '' && publicDashboard.uid !== undefined;
+export const publicDashboardPersisted = (publicDashboard?: PublicDashboard): boolean => {
+  return publicDashboard?.uid !== '' && publicDashboard?.uid !== undefined;
 };
 
 export const generatePublicDashboardUrl = (publicDashboard: PublicDashboard): string => {

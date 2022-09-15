@@ -4,12 +4,12 @@ import React from 'react';
 import { BootData } from '@grafana/data';
 import { BackendSrv, setEchoSrv } from '@grafana/runtime';
 import config from 'app/core/config';
+import { PublicDashboard } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 
 import { Echo } from '../../../../core/services/echo/Echo';
 
 import { ShareModal } from './ShareModal';
-import { PublicDashboard } from './SharePublicDashboardUtils';
 
 // Mock api request
 const publicDashboardconfigResp: PublicDashboard = {

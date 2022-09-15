@@ -1,5 +1,3 @@
-import { VariableModel } from 'app/features/variables/types';
-
 import {
   PublicDashboard,
   dashboardHasTemplateVariables,
@@ -7,7 +5,8 @@ import {
   publicDashboardPersisted,
   getPublicDashboardConfigUrl,
   savePublicDashboardConfigUrl,
-} from './SharePublicDashboardUtils';
+} from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
+import { VariableModel } from 'app/features/variables/types';
 
 describe('dashboardHasTemplateVariables', () => {
   it('false', () => {
