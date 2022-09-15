@@ -73,6 +73,7 @@ export async function getDebugDashboard(panel: PanelModel, rand: Randomize, time
       withTransforms: false,
     })
   );
+
   const dsref = panel.datasource;
   const frames = randomizeData(getPanelDataFrames(data), rand);
   const grafanaVersion = `${config.buildInfo.version} (${config.buildInfo.commit})`;
@@ -139,6 +140,9 @@ export async function getDebugDashboard(panel: PanelModel, rand: Randomize, time
       datasource: {
         type: 'grafana',
         uid: 'grafana',
+      },
+      options: {
+        showTypeIcons: true,
       },
       targets: [
         {
@@ -272,6 +276,9 @@ const embeddedDataTemplate: any = {
         w: 15,
         x: 0,
         y: 13,
+      },
+      options: {
+        showTypeIcons: true,
       },
       targets: [
         {

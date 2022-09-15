@@ -28,7 +28,7 @@ func ProvideService(pluginRegistry registry.Service) *Service {
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	plugin, exists := s.plugin(ctx, req.PluginContext.PluginID)
 	if !exists {
-		return nil, backendplugin.ErrPluginNotRegistered
+		return nil, plugins.ErrPluginNotRegistered.Errorf("%w", backendplugin.ErrPluginNotRegistered)
 	}
 
 	var resp *backend.QueryDataResponse
@@ -39,14 +39,14 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 	if err != nil {
 		if errors.Is(err, backendplugin.ErrMethodNotImplemented) {
-			return nil, err
+			return nil, plugins.ErrMethodNotImplemented.Errorf("%w", backendplugin.ErrMethodNotImplemented)
 		}
 
 		if errors.Is(err, backendplugin.ErrPluginUnavailable) {
-			return nil, err
+			return nil, plugins.ErrPluginUnavailable.Errorf("%w", backendplugin.ErrPluginUnavailable)
 		}
 
-		return nil, fmt.Errorf("%v: %w", "failed to query data", err)
+		return nil, plugins.ErrPluginDownstreamError.Errorf("%v: %w", "failed to query data", err)
 	}
 
 	for refID, res := range resp.Responses {
