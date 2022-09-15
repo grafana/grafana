@@ -4,7 +4,6 @@ import { DataQueryRequest, DataQueryResponse, DataSourceInstanceSettings } from 
 import { toDataQueryResponse } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
-// import { CloudWatchDataSource } from './CloudWatchDataSource';
 import { CloudWatchAnnotationQuery, CloudWatchJsonData, CloudWatchQuery } from '../types';
 
 import { CloudWatchQueryRunner } from './CloudWatchQueryRunner';

@@ -26,7 +26,6 @@ export function setupMockedTemplateService(variables: CustomVariableModel[]) {
 const info: PluginMetaInfo = {
   author: {
     name: '',
-    url: undefined,
   },
   description: '',
   links: [],
