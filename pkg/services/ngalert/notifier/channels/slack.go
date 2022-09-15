@@ -50,21 +50,6 @@ type SlackNotifier struct {
 	Token          string
 }
 
-type SlackConfig struct {
-	*NotificationChannelConfig
-	URL            *url.URL
-	Username       string
-	IconEmoji      string
-	IconURL        string
-	Recipient      string
-	Text           string
-	Title          string
-	MentionUsers   []string
-	MentionGroups  []string
-	MentionChannel string
-	Token          string
-}
-
 type slackSettings struct {
 	EndpointURL    string `json:"endpointUrl,omitempty" yaml:"endpointUrl,omitempty"`
 	URL            string `json:"url,omitempty" yaml:"url,omitempty"`
