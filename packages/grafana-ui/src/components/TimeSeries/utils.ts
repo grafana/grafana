@@ -217,6 +217,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
           direction: ScaleDirection.Up,
           distribution: customConfig.scaleDistribution?.type,
           log: customConfig.scaleDistribution?.log,
+          linearThreshold: customConfig.scaleDistribution?.linearThreshold,
           min: field.config.min,
           max: field.config.max,
           softMin: customConfig.axisSoftMin,

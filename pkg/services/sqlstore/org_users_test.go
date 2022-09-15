@@ -86,8 +86,9 @@ func TestSQLStore_GetOrgUsers(t *testing.T) {
 
 func TestSQLStore_GetOrgUsers_PopulatesCorrectly(t *testing.T) {
 	// The millisecond part is not stored in the DB
-	constNow := time.Now().UTC().Truncate(time.Second)
-	defer mockTimeNow(constNow)()
+	constNow := time.Date(2022, 8, 17, 20, 34, 58, 0, time.UTC)
+	MockTimeNow(constNow)
+	defer ResetTimeNow()
 
 	store := InitTestDB(t, InitTestDBOpt{})
 	_, err := store.CreateUser(context.Background(), user.CreateUserCommand{
@@ -333,15 +334,4 @@ func hasWildcardScope(user *user.SignedInUser, action string) bool {
 		}
 	}
 	return false
-}
-
-func mockTimeNow(constTime time.Time) func() {
-	timeNow = func() time.Time {
-		return constTime.Truncate(time.Second)
-	}
-	return resetTimeNow
-}
-
-func resetTimeNow() {
-	timeNow = time.Now
 }

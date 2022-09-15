@@ -351,6 +351,11 @@ export class PanelQueryRunner {
     }
   }
 
+  /** Useful from tests */
+  setLastResult(data: PanelData) {
+    this.lastResult = data;
+  }
+
   getLastResult(): PanelData | undefined {
     return this.lastResult;
   }

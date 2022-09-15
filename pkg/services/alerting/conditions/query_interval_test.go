@@ -127,7 +127,7 @@ type fakeIntervalTestReqHandler struct {
 	verifier queryIntervalVerifier
 }
 
-//nolint: staticcheck // legacydata.DataResponse deprecated
+//nolint:staticcheck // legacydata.DataResponse deprecated
 func (rh fakeIntervalTestReqHandler) HandleRequest(ctx context.Context, dsInfo *datasources.DataSource, query legacydata.DataQuery) (
 	legacydata.DataResponse, error) {
 	q := query.Queries[0]
@@ -135,7 +135,7 @@ func (rh fakeIntervalTestReqHandler) HandleRequest(ctx context.Context, dsInfo *
 	return rh.response, nil
 }
 
-//nolint: staticcheck // legacydata.DataResponse deprecated
+//nolint:staticcheck // legacydata.DataResponse deprecated
 func applyScenario(t *testing.T, timeRange string, dataSourceJsonData *simplejson.Json, queryModel string, verifier func(query legacydata.DataSubQuery)) {
 	t.Run("desc", func(t *testing.T) {
 		store := mockstore.NewSQLStoreMock()

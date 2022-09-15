@@ -11,7 +11,6 @@ import (
 
 func main() {
 	app := cli.NewApp()
-	app.Before = GenerateVersions
 	app.Commands = cli.Commands{
 		{
 			Name:      "build-backend",
@@ -107,6 +106,33 @@ func main() {
 				&signingAdminFlag,
 				&signFlag,
 				&noInstallDepsFlag,
+			},
+		},
+		{
+			Name:      "publish-metrics",
+			Usage:     "Publish a set of metrics from stdin",
+			ArgsUsage: "<api-key>",
+			Action:    ArgCountWrapper(1, PublishMetrics),
+		},
+		{
+			Name:   "verify-drone",
+			Usage:  "Verify Drone configuration",
+			Action: VerifyDrone,
+		},
+		{
+			Name:   "export-version",
+			Usage:  "Exports version in dist/grafana.version",
+			Action: ExportVersion,
+		},
+		{
+			Name:   "store-storybook",
+			Usage:  "Integrity check for storybook build",
+			Action: StoreStorybook,
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:  "deployment",
+					Usage: "Kind of deployment (e.g. canary/latest)",
+				},
 			},
 		},
 	}

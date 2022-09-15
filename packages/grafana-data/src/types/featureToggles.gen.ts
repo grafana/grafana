@@ -57,7 +57,6 @@ export interface FeatureToggles {
   canvasPanelNesting?: boolean;
   scenes?: boolean;
   useLegacyHeatmapPanel?: boolean;
-  cloudMonitoringExperimentalUI?: boolean;
   disableSecretsCompatibility?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
   dataConnectionsConsole?: boolean;
@@ -67,4 +66,5 @@ export interface FeatureToggles {
   traceqlEditor?: boolean;
   redshiftAsyncQueryDataSupport?: boolean;
   athenaAsyncQueryDataSupport?: boolean;
+  increaseInMemDatabaseQueryCache?: boolean;
 }
