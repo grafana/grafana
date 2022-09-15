@@ -1,10 +1,10 @@
 package models
 
 import (
+	"encoding/json"
 	"strconv"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
@@ -26,44 +26,44 @@ func (e PublicDashboardErr) Error() string {
 
 var (
 	ErrPublicDashboardFailedGenerateUniqueUid = PublicDashboardErr{
-		Reason:     "Failed to generate unique public dashboard id",
+		Reason:     "failed to generate unique public dashboard id",
 		StatusCode: 500,
 	}
 	ErrPublicDashboardFailedGenerateAccesstoken = PublicDashboardErr{
-		Reason:     "Failed to public dashboard access token",
+		Reason:     "failed to public dashboard access token",
 		StatusCode: 500,
 	}
 	ErrPublicDashboardNotFound = PublicDashboardErr{
-		Reason:     "Public dashboard not found",
+		Reason:     "public dashboard not found",
 		StatusCode: 404,
 		Status:     "not-found",
 	}
 	ErrPublicDashboardPanelNotFound = PublicDashboardErr{
-		Reason:     "Panel not found in dashboard",
+		Reason:     "panel not found in dashboard",
 		StatusCode: 404,
 		Status:     "not-found",
 	}
 	ErrPublicDashboardIdentifierNotSet = PublicDashboardErr{
-		Reason:     "No Uid for public dashboard specified",
+		Reason:     "no Uid for public dashboard specified",
 		StatusCode: 400,
 	}
 	ErrPublicDashboardHasTemplateVariables = PublicDashboardErr{
-		Reason:     "Public dashboard has template variables",
+		Reason:     "public dashboard has template variables",
 		StatusCode: 422,
 	}
 	ErrPublicDashboardBadRequest = PublicDashboardErr{
-		Reason:     "Bad Request",
+		Reason:     "bad Request",
 		StatusCode: 400,
 	}
 )
 
 type PublicDashboard struct {
-	Uid          string           `json:"uid" xorm:"pk uid"`
-	DashboardUid string           `json:"dashboardUid" xorm:"dashboard_uid"`
-	OrgId        int64            `json:"-" xorm:"org_id"` // Don't ever marshal orgId to Json
-	TimeSettings *simplejson.Json `json:"timeSettings" xorm:"time_settings"`
-	IsEnabled    bool             `json:"isEnabled" xorm:"is_enabled"`
-	AccessToken  string           `json:"accessToken" xorm:"access_token"`
+	Uid          string        `json:"uid" xorm:"pk uid"`
+	DashboardUid string        `json:"dashboardUid" xorm:"dashboard_uid"`
+	OrgId        int64         `json:"-" xorm:"org_id"` // Don't ever marshal orgId to Json
+	TimeSettings *TimeSettings `json:"timeSettings" xorm:"time_settings"`
+	IsEnabled    bool          `json:"isEnabled" xorm:"is_enabled"`
+	AccessToken  string        `json:"accessToken" xorm:"access_token"`
 
 	CreatedBy int64 `json:"createdBy" xorm:"created_by"`
 	UpdatedBy int64 `json:"updatedBy" xorm:"updated_by"`
@@ -77,8 +77,16 @@ func (pd PublicDashboard) TableName() string {
 }
 
 type TimeSettings struct {
-	From string `json:"from"`
-	To   string `json:"to"`
+	From string `json:"from,omitempty"`
+	To   string `json:"to,omitempty"`
+}
+
+func (ts *TimeSettings) FromDB(data []byte) error {
+	return json.Unmarshal(data, ts)
+}
+
+func (ts *TimeSettings) ToDB() ([]byte, error) {
+	return json.Marshal(ts)
 }
 
 // build time settings object from json on public dashboard. If empty, use
@@ -101,9 +109,7 @@ func (pd PublicDashboard) BuildTimeSettings(dashboard *models.Dashboard) TimeSet
 	return ts
 }
 
-//
 // DTO for transforming user input in the api
-//
 type SavePublicDashboardConfigDTO struct {
 	DashboardUid    string
 	OrgId           int64

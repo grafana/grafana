@@ -181,10 +181,6 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
           });
         }
 
-        if (options.tooltip.mode === TooltipDisplayMode.None) {
-          return null;
-        }
-
         return (
           <>
             <ZoomPlugin config={config} onZoom={onChangeTimeRange} />
@@ -198,6 +194,10 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
             {enableAnnotationCreation ? (
               <AnnotationEditorPlugin data={alignedFrame} timeZone={timeZone} config={config}>
                 {({ startAnnotating }) => {
+                  if (options.tooltip.mode === TooltipDisplayMode.None) {
+                    return null;
+                  }
+
                   return (
                     <Portal>
                       {hover && coords && (
@@ -218,7 +218,7 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
               </AnnotationEditorPlugin>
             ) : (
               <Portal>
-                {hover && coords && (
+                {options.tooltip.mode !== TooltipDisplayMode.None && hover && coords && (
                   <VizTooltipContainer
                     position={{ x: coords.viewport.x, y: coords.viewport.y }}
                     offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}
