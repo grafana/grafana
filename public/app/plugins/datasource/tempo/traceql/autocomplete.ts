@@ -1,3 +1,4 @@
+import { SelectableValue } from '@grafana/data';
 import type { Monaco, monacoTypes } from '@grafana/ui';
 
 import TempoLanguageProvider from '../language_provider';
@@ -19,9 +20,9 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
 
   triggerCharacters = ['{', '.', '[', '(', '=', '~', ' ', '"'];
 
-  static readonly intrinsics: string[] = ['name', 'status', 'duration'];
-  static readonly scopes: string[] = ['span', 'resource'];
-  static readonly operators: string[] = ['=', '-', '+', '<', '>', '>=', '<='];
+  static readonly intrinsics: string[] = ['duration', 'name', 'status'];
+  static readonly scopes: string[] = ['resource', 'span'];
+  static readonly operators: string[] = ['=', '-', '+', '<', '>', '>=', '<=', '=~'];
   static readonly logicalOps: string[] = ['&&', '||'];
 
   // We set these directly and ae required for the provider to function.
@@ -29,6 +30,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
   editor: monacoTypes.editor.IStandaloneCodeEditor | undefined;
 
   private tags: { [tag: string]: Set<string> } = {};
+  private cachedValues: { [key: string]: Array<SelectableValue<string>> } = {};
 
   provideCompletionItems(
     model: monacoTypes.editor.ITextModel,
@@ -72,6 +74,27 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
     tags.forEach((t) => (this.tags[t] = new Set<string>()));
   }
 
+  private overrideTagName(tagName: string): string {
+    switch (tagName) {
+      case 'status':
+        return 'status.code';
+      default:
+        return tagName;
+    }
+  }
+
+  private async getTagValues(tagName: string): Promise<Array<SelectableValue<string>>> {
+    let tagValues: Array<SelectableValue<string>> = [];
+
+    if (this.cachedValues.hasOwnProperty(tagName)) {
+      tagValues = this.cachedValues[tagName];
+    } else {
+      tagValues = await this.languageProvider.getOptions(tagName);
+      this.cachedValues[tagName] = tagValues;
+    }
+    return tagValues;
+  }
+
   /**
    * Get suggestion based on the situation we are in like whether we should suggest tag names or values.
    * @param situation
@@ -87,16 +110,16 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
         return [];
       }
       case 'EMPTY': {
-        return this.getTagsCompletions('{ .')
+        return this.getScopesCompletions('{ ')
           .concat(this.getIntrinsicsCompletions('{ '))
-          .concat(this.getScopesCompletions('{ '));
+          .concat(this.getTagsCompletions('{ .'));
       }
       case 'SPANSET_EMPTY':
-        return this.getTagsCompletions('.').concat(this.getIntrinsicsCompletions()).concat(this.getScopesCompletions());
+        return this.getScopesCompletions().concat(this.getIntrinsicsCompletions()).concat(this.getTagsCompletions('.'));
       case 'SPANSET_IN_NAME':
-        return this.getTagsCompletions().concat(this.getIntrinsicsCompletions()).concat(this.getScopesCompletions());
+        return this.getScopesCompletions().concat(this.getIntrinsicsCompletions()).concat(this.getTagsCompletions());
       case 'SPANSET_IN_NAME_SCOPE':
-        return this.getTagsCompletions().concat(this.getIntrinsicsCompletions());
+        return this.getIntrinsicsCompletions().concat(this.getTagsCompletions());
       case 'SPANSET_AFTER_NAME':
         return CompletionProvider.operators.map((key) => ({
           label: key,
@@ -104,19 +127,19 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
           type: 'OPERATOR' as CompletionType,
         }));
       case 'SPANSET_IN_VALUE':
-        return await this.languageProvider.getOptions(situation.tagName).then((res) => {
-          const items: Completion[] = [];
-          res.forEach((val) => {
-            if (val?.label) {
-              items.push({
-                label: val.label,
-                insertText: situation.betweenQuotes ? val.label : `"${val.label}"`,
-                type: 'TAG_VALUE',
-              });
-            }
-          });
-          return items;
+        const tagName = this.overrideTagName(situation.tagName);
+        const tagValues = await this.getTagValues(tagName);
+        const items: Completion[] = [];
+        tagValues.forEach((val) => {
+          if (val?.label) {
+            items.push({
+              label: val.label,
+              insertText: situation.betweenQuotes ? val.label : `"${val.label}"`,
+              type: 'TAG_VALUE',
+            });
+          }
         });
+        return items;
       case 'SPANSET_AFTER_VALUE':
         return CompletionProvider.logicalOps.concat('}').map((key) => ({
           label: key,
@@ -129,11 +152,13 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
   }
 
   private getTagsCompletions(prepend?: string): Completion[] {
-    return Object.keys(this.tags).map((key) => ({
-      label: key,
-      insertText: (prepend || '') + key,
-      type: 'TAG_NAME' as CompletionType,
-    }));
+    return Object.keys(this.tags)
+      .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'accent' }))
+      .map((key) => ({
+        label: key,
+        insertText: (prepend || '') + key,
+        type: 'TAG_NAME' as CompletionType,
+      }));
   }
 
   private getIntrinsicsCompletions(prepend?: string): Completion[] {
@@ -155,11 +180,12 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
   private getSituationInSpanSet(textUntilCaret: string): Situation {
     const nameRegex = /(?<name>[\w./-]+)?/;
     const opRegex = /(?<op>[!=+\-<>]+)/;
-    const valueRegex = /(?<value>(?<open_quote>")?(\w[^"\n&|]*\w)?(?<close_quote>")?)?/;
+    // only allow spaces in the value if it's enclosed by quotes
+    const valueRegex = /(?<value>(?<open_quote>")([^"\n&|]+)?(?<close_quote>")?|([^"\n\s&|]+))?/;
 
     // prettier-ignore
     const fullRegex = new RegExp(
-      '([\\s{])' +      // Space(s) or initial opening bracket {
+        '([\\s{])' +      // Space(s) or initial opening bracket {
         '(' +                   // Open full set group
         nameRegex.source +
         '(?<space1>\\s*)' +     // Optional space(s) between name and operator
@@ -191,7 +217,6 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       if (!op) {
         // There's no operator so we check if the name is one of the known scopes
         // { resource.|
-
         if (CompletionProvider.scopes.filter((w) => w === nameMatched?.groups?.word) && nameMatched?.groups?.post_dot) {
           return {
             type: 'SPANSET_IN_NAME_SCOPE',
@@ -237,8 +262,6 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
 
   /**
    * Figure out where is the cursor and what kind of suggestions are appropriate.
-   * As currently TraceQL handles just a simple {foo="bar", baz="zyx"} kind of values we can do with simple regex to figure
-   * out where we are with the cursor.
    * @param text
    * @param offset
    */

@@ -123,7 +123,7 @@ export class VariableSupport extends CustomVariableSupport<DataSource, AzureMoni
     }
 
     if (query.kind === 'MetricNamespaceQuery') {
-      return this.datasource.azureMonitorDatasource.getMetricNamespaces(query);
+      return this.datasource.azureMonitorDatasource.getMetricNamespaces(query, true);
     }
 
     if (query.kind === 'MetricNamesQuery') {

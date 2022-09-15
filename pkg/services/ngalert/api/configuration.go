@@ -32,3 +32,7 @@ func (f *ConfigurationApiHandler) handleRoutePostNGalertConfig(c *models.ReqCont
 func (f *ConfigurationApiHandler) handleRouteDeleteNGalertConfig(c *models.ReqContext) response.Response {
 	return f.grafana.RouteDeleteNGalertConfig(c)
 }
+
+func (f *ConfigurationApiHandler) handleRouteGetStatus(c *models.ReqContext) response.Response {
+	return f.grafana.RouteGetAlertingStatus(c)
+}

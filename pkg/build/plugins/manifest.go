@@ -113,6 +113,7 @@ func BuildManifest(ctx context.Context, dpath string, signingAdmin bool) error {
 	}
 
 	log.Printf("Successfully signed manifest via Grafana API, writing to %q", manifestPath)
+	//nolint:gosec
 	f, err := os.Create(manifestPath)
 	if err != nil {
 		return fmt.Errorf("failed to create %s: %w", manifestPath, err)

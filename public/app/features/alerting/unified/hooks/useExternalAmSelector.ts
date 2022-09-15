@@ -1,7 +1,7 @@
 import { countBy, keyBy } from 'lodash';
 import { useSelector } from 'react-redux';
 
-import { DataSourceInstanceSettings, DataSourceSettings } from '@grafana/data';
+import { DataSourceInstanceSettings, DataSourceJsonData, DataSourceSettings } from '@grafana/data';
 import { AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
 
 import { StoreState } from '../../../../types';
@@ -118,7 +118,7 @@ export function useExternalDataSourceAlertmanagers(): ExternalDataSourceAM[] {
   });
 }
 
-function getDataSourceUrlWithProtocol<T>(dsSettings: DataSourceSettings<T>) {
+function getDataSourceUrlWithProtocol<T extends DataSourceJsonData>(dsSettings: DataSourceSettings<T>) {
   const hasProtocol = new RegExp('^[^:]*://').test(dsSettings.url);
   if (!hasProtocol) {
     return `http://${dsSettings.url}`; // Grafana append http protocol if there is no any
