@@ -21,7 +21,7 @@ weight: 200
 
 Usage insights enables you to have a better understanding of how your Grafana instance is used.
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../" >}}) and [Grafana Cloud Pro and Advanced]({{< ref "/docs/grafana-cloud" >}}). Grafana Cloud provides additional features via the Usage Insights dashboards. Read more [here](TODO).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../" >}}) and [Grafana Cloud Pro and Advanced]({{< ref "/docs/grafana-cloud" >}}). Grafana Cloud insights logs include additional with their own dashboards. Read more [here]({{< ref "/docs/grafana-cloud/usage-insights" >}}).
 
 The usage insights feature collects a number of aggregated data and stores them in the database:
 
@@ -110,4 +110,11 @@ You can sort the dashboards by:
 
 ## Visualize usage insights data
 
-If you set up your installation to [export logs of usage insights]({{< relref "../../setup-grafana/configure-security/export-logs/" >}}), we've created two dashboards to help you take advantage of this data. First is an [overview dashboard](https://grafana.com/grafana/dashboards/13785-usage-insights/) to provide a top-level perspective of user activity. Second is a [data source details](https://grafana.com/grafana/dashboards/13786-grafana-usage-insights-datasource-details/) dashboard to provide a view of data source activity and health. You can click the previous links to download the respective dashboard JSON, then import into your Grafana installation.
+> **Note:** Available in [Grafana Enterprise]({{< relref "../" >}}) version 7.0 and later, and [Grafana Cloud Pro and Advanced]({{< ref "/docs/grafana-cloud" >}}).
+
+If you set up your installation to [export logs of usage insights]({{< relref "../../setup-grafana/configure-security/export-logs/" >}}), we've created two dashboards to help you take advantage of this data. 
+
+1. [Usage Insights overview](https://grafana.com/grafana/dashboards/13785-usage-insights/) provides a top-level perspective of user activity. 
+1. [Data source details](https://grafana.com/grafana/dashboards/13786-grafana-usage-insights-datasource-details/) dashboard provides a view of data source activity and health. 
+
+You can click the previous links to download the respective dashboard JSON, then import into your Grafana installation.
