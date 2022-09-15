@@ -20,10 +20,7 @@ import {
   useStyles2,
   VerticalGroup,
 } from '@grafana/ui';
-import { notifyApp } from 'app/core/actions';
-import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
-import { dispatch } from 'app/store/store';
 
 import { contextSrv } from '../../../../core/services/context_srv';
 import { AccessControlAction } from '../../../../types';
@@ -89,13 +86,6 @@ export const SharePublicDashboard = (props: Props) => {
   const onSavePublicConfig = () => {
     reportInteraction('grafana_dashboards_public_create_clicked');
 
-    if (dashboardHasTemplateVariables(dashboardVariables)) {
-      dispatch(
-        notifyApp(createErrorNotification('This dashboard cannot be made public because it has template variables'))
-      );
-      return;
-    }
-
     savePublicDashboardConfig(props.dashboard.uid, publicDashboard, setPublicDashboardConfig).catch();
   };
 
@@ -112,7 +102,7 @@ export const SharePublicDashboard = (props: Props) => {
   return (
     <>
       <p>Welcome to Grafana public dashboards alpha!</p>
-      {dashboardHasTemplateVariables(dashboardVariables) ? (
+      {dashboardHasTemplateVariables(dashboardVariables) && !publicDashboardPersisted(publicDashboard) ? (
         <Alert
           severity="warning"
           title="dashboard cannot be public"
@@ -211,7 +201,6 @@ export const SharePublicDashboard = (props: Props) => {
                 <HorizontalGroup spacing="xs" justify="space-between">
                   <Label description="Configures whether current dashboard can be available publicly">Enabled</Label>
                   <Switch
-                    disabled={dashboardHasTemplateVariables(dashboardVariables)}
                     data-testid={selectors.EnableSwitch}
                     value={publicDashboard?.isEnabled}
                     onChange={() => {
@@ -248,11 +237,18 @@ export const SharePublicDashboard = (props: Props) => {
               </VerticalGroup>
             </FieldSet>
             {hasWritePermissions ? (
-              props.dashboard.hasUnsavedChanges() && (
+              props.dashboard.hasUnsavedChanges() ? (
                 <Alert
                   title="Please save your dashboard changes before updating the public configuration"
                   severity="warning"
                 />
+              ) : (
+                dashboardHasTemplateVariables(dashboardVariables) && (
+                  <Alert
+                    title="If you make this dashboard public it won't work because it has template variables"
+                    severity="warning"
+                  />
+                )
               )
             ) : (
               <Alert title="You don't have permissions to create or update a public dashboard" severity="warning" />
