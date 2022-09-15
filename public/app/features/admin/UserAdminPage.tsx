@@ -110,9 +110,11 @@ export class UserAdminPage extends PureComponent<Props> {
     const canReadLDAPStatus = contextSrv.hasPermission(AccessControlAction.LDAPStatusRead);
     const isOAuthUserWithSkippableSync =
       user?.isExternal && user?.authLabels?.some((r) => SyncedOAuthLabels.includes(r));
+    const isSAMLUser = user?.isExternal && user?.authLabels?.includes('SAML');
     const isUserSynced =
-      (user?.isExternal && !isOAuthUserWithSkippableSync) ||
-      (!config.auth.OAuthSkipOrgRoleUpdateSync && isOAuthUserWithSkippableSync);
+      (user?.isExternal && !(isOAuthUserWithSkippableSync || isSAMLUser)) ||
+      (!config.auth.OAuthSkipOrgRoleUpdateSync && isOAuthUserWithSkippableSync) ||
+      (!config.auth.SAMLSkipOrgRoleSync && isSAMLUser);
 
     const pageNav: NavModelItem = {
       text: user?.login ?? '',
