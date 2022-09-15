@@ -80,7 +80,7 @@ func (s *SocialOkta) UserInfo(client *http.Client, token *oauth2.Token) (*BasicU
 		return nil, errMissingGroupMembership
 	}
 
-	role, grafanaAdmin := s.extractRoleAndAdmin(data.rawJSON, groups)
+	role, grafanaAdmin := s.extractRoleAndAdmin(data.rawJSON, groups, true)
 	if s.roleAttributeStrict && !role.IsValid() {
 		return nil, ErrInvalidBasicRole
 	}
@@ -95,7 +95,7 @@ func (s *SocialOkta) UserInfo(client *http.Client, token *oauth2.Token) (*BasicU
 		Name:           claims.Name,
 		Email:          email,
 		Login:          email,
-		Role:           string(role),
+		Role:           role,
 		IsGrafanaAdmin: isGrafanaAdmin,
 		Groups:         groups,
 	}, nil
