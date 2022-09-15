@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/build/fsutil"
 	"github.com/grafana/grafana/pkg/build/gcloud"
 	"io"
+	"log"
 	"mime"
 	"os"
 	"path"
@@ -16,7 +17,6 @@ import (
 	"time"
 
 	"cloud.google.com/go/storage"
-	"github.com/rs/zerolog/log"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 )
@@ -67,7 +67,7 @@ func newClient() (*storage.Client, error) {
 	}
 	client, err := storage.NewClient(ctx, option.WithCredentialsJSON(byteKey))
 	if err != nil {
-		log.Debug().Msgf("failed to login with GCP_KEY, trying with default application credentials...")
+		log.Println("failed to login with GCP_KEY, trying with default application credentials...")
 		client, err = storage.NewClient(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("failed to open Google Cloud Storage client: %w", err)
@@ -87,7 +87,7 @@ func (client *Client) CopyLocalDir(ctx context.Context, dir string, bucket *stor
 	if err != nil {
 		return err
 	}
-	log.Debug().Msgf("Number or files to be copied over: %d", len(files))
+	log.Printf("Number or files to be copied over: %d\n", len(files))
 
 	for _, chunk := range asChunks(files, maxThreads) {
 		var wg sync.WaitGroup
@@ -97,7 +97,7 @@ func (client *Client) CopyLocalDir(ctx context.Context, dir string, bucket *stor
 				defer wg.Done()
 				err = client.Copy(ctx, file, bucket, bucketPath, trim)
 				if err != nil {
-					log.Error().Msgf("failed to copy objects, err: %s", err.Error())
+					log.Printf("failed to copy objects, err: %s\n", err.Error())
 				}
 			}(f)
 		}
@@ -138,7 +138,7 @@ func (client *Client) Copy(ctx context.Context, file File, bucket *storage.Bucke
 		return fmt.Errorf("failed to copy to Cloud Storage: %w", err)
 	}
 
-	log.Debug().Msgf("Successfully uploaded tarball to Google Cloud Storage, path: %s/%s", remote, file.FullPath)
+	log.Printf("Successfully uploaded tarball to Google Cloud Storage, path: %s/%s\n", remote, file.FullPath)
 
 	return nil
 }
@@ -167,7 +167,7 @@ func (client *Client) CopyRemoteDir(ctx context.Context, fromBucket *storage.Buc
 					return
 				}
 				if err := client.RemoteCopy(ctx, file, fromBucket, toBucket, to); err != nil {
-					log.Error().Msgf("failed to copy files between buckets: err: %s", err.Error())
+					log.Printf("failed to copy files between buckets: err: %s\n", err.Error())
 					return
 				}
 			}
@@ -197,7 +197,7 @@ func (client *Client) RemoteCopy(ctx context.Context, file File, fromBucket, toB
 		return fmt.Errorf("failed to copy object %s, to %s, err: %w", file.FullPath, dstObject, err)
 	}
 
-	log.Debug().Msgf("%s was successfully copied to %v bucket!.\n", file.FullPath, toBucket)
+	log.Printf("%s was successfully copied to %v bucket!.\n\n", file.FullPath, toBucket)
 	return nil
 }
 
@@ -226,7 +226,7 @@ func (client *Client) DeleteDir(ctx context.Context, bucket *storage.BucketHandl
 				}
 				err := client.Delete(ctx, bucket, fullPath)
 				if err != nil && !errors.Is(err, storage.ErrObjectNotExist) {
-					log.Error().Msgf("failed to delete objects, err %s", err.Error())
+					log.Printf("failed to delete objects, err %s\n", err.Error())
 					panic(err)
 				}
 			}
@@ -249,7 +249,7 @@ func (client *Client) Delete(ctx context.Context, bucket *storage.BucketHandle, 
 	if err := object.Delete(ctx); err != nil {
 		return fmt.Errorf("cannot delete %s, err: %w", path, err)
 	}
-	log.Debug().Msgf("Successfully deleted tarball to Google Cloud Storage, path: %s", path)
+	log.Printf("Successfully deleted tarball to Google Cloud Storage, path: %s", path)
 	return nil
 }
 
