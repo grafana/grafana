@@ -1,12 +1,11 @@
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { Select } from '@grafana/ui';
+import { EditorField, Select } from '@grafana/ui';
 
-import { QueryEditorRow } from '..';
-import { SELECT_WIDTH, SELECTORS } from '../../constants';
-import CloudMonitoringDatasource from '../../datasource';
-import { SLOQuery } from '../../types';
+import { SELECTORS } from '../constants';
+import CloudMonitoringDatasource from '../datasource';
+import { SLOQuery } from '../types';
 
 export interface Props {
   refId: string;
@@ -18,10 +17,10 @@ export interface Props {
 
 export const Selector = ({ refId, query, templateVariableOptions, onChange, datasource }: Props) => {
   return (
-    <QueryEditorRow label="Selector" htmlFor={`${refId}-slo-selector`}>
+    <EditorField label="Selector" htmlFor={`${refId}-slo-selector`}>
       <Select
         inputId={`${refId}-slo-selector`}
-        width={SELECT_WIDTH}
+        width="auto"
         allowCustomValue
         value={[...SELECTORS, ...templateVariableOptions].find((s) => s.value === query?.selectorName ?? '')}
         options={[
@@ -33,6 +32,6 @@ export const Selector = ({ refId, query, templateVariableOptions, onChange, data
         ]}
         onChange={({ value: selectorName }) => onChange({ ...query, selectorName: selectorName ?? '' })}
       />
-    </QueryEditorRow>
+    </EditorField>
   );
 };

@@ -1,12 +1,10 @@
 import React, { useEffect, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { Select } from '@grafana/ui';
+import { Select, EditorField } from '@grafana/ui';
 
-import { QueryEditorRow } from '..';
-import { SELECT_WIDTH } from '../../constants';
-import CloudMonitoringDatasource from '../../datasource';
-import { SLOQuery } from '../../types';
+import CloudMonitoringDatasource from '../datasource';
+import { SLOQuery } from '../types';
 
 export interface Props {
   refId: string;
@@ -37,10 +35,10 @@ export const SLO = ({ refId, query, templateVariableOptions, onChange, datasourc
   }, [datasource, projectName, serviceId, templateVariableOptions]);
 
   return (
-    <QueryEditorRow label="SLO" htmlFor={`${refId}-slo`}>
+    <EditorField label="SLO">
       <Select
         inputId={`${refId}-slo`}
-        width={SELECT_WIDTH}
+        width="auto"
         allowCustomValue
         value={query?.sloId && { value: query?.sloId, label: query?.sloName || query?.sloId }}
         placeholder="Select SLO"
@@ -51,6 +49,6 @@ export const SLO = ({ refId, query, templateVariableOptions, onChange, datasourc
           onChange({ ...query, sloId, sloName, goal: slo?.goal });
         }}
       />
-    </QueryEditorRow>
+    </EditorField>
   );
 };

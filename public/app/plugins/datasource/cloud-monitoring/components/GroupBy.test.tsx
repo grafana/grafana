@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { openMenu, select } from 'react-select-event';
 
-import { createMockMetricQuery } from '../../__mocks__/cloudMonitoringQuery';
+import { createMockMetricQuery } from '../__mocks__/cloudMonitoringQuery';
 
 import { GroupBy, Props } from './GroupBy';
 

@@ -3,8 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { EditorField, Select } from '@grafana/ui';
 
-import CloudMonitoringDatasource from '../../datasource';
-import { SLOQuery } from '../../types';
+import CloudMonitoringDatasource from '../datasource';
+import { SLOQuery } from '../types';
 
 export interface Props {
   refId: string;

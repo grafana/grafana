@@ -3,8 +3,8 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { openMenu, select } from 'react-select-event';
 
-import { createMockQuery, createMockSLOQuery } from '../../__mocks__/cloudMonitoringQuery';
-import { EditorMode, QueryType } from '../../types';
+import { createMockQuery, createMockSLOQuery } from '../__mocks__/cloudMonitoringQuery';
+import { EditorMode, QueryType } from '../types';
 
 import { QueryHeader } from './QueryHeader';
 
