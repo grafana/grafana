@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { NavModelItem } from '@grafana/data';
-import { Button, Input, Field, Form } from '@grafana/ui';
+import { Button, Input, Field, Form, FieldSet } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { getConfig } from 'app/core/config';
 
@@ -36,24 +36,26 @@ export const NewOrgPage: FC<Props> = ({ createOrganization }) => {
   return (
     <Page navId="global-orgs" pageNav={pageNav}>
       <Page.Contents>
-        <p className="playlist-description">
+        <p className="muted">
           Each organization contains their own dashboards, data sources, and configuration, which cannot be shared
           shared between organizations. While users might belong to more than one organization, multiple organizations
-          are most frequently used in multi-tenant deployments.{' '}
+          are most frequently used in multi-tenant deployments.
         </p>
 
         <Form<CreateOrgFormDTO> onSubmit={createOrg}>
           {({ register, errors }) => {
             return (
               <>
-                <Field label="Organization name" invalid={!!errors.name} error={errors.name && errors.name.message}>
-                  <Input
-                    placeholder="Org name"
-                    {...register('name', {
-                      required: 'Organization name is required',
-                    })}
-                  />
-                </Field>
+                <FieldSet>
+                  <Field label="Organization name" invalid={!!errors.name} error={errors.name && errors.name.message}>
+                    <Input
+                      placeholder="Org name"
+                      {...register('name', {
+                        required: 'Organization name is required',
+                      })}
+                    />
+                  </Field>
+                </FieldSet>
                 <Button type="submit">Create</Button>
               </>
             );
