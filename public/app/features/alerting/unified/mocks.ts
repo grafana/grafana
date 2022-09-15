@@ -524,7 +524,7 @@ export function mockStore(recipe: (state: StoreState) => Promise<StoreState> | v
   const defaultState = configureStore().getState() as PreloadedState<StoreState>;
 
   return configureStore(
-    /* eslint-disable-next-line  */
+    // @ts-ignore
     produce(defaultState, recipe as (state: StoreState) => Promise<StoreState>) as Promise<
       Required<PreloadedState<StoreState>>
     >

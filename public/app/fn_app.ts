@@ -8,6 +8,7 @@ import 'whatwg-fetch'; // fetch polyfill needed for PhantomJs rendering
 import './polyfills/old-mediaquerylist'; // Safari < 14 does not have mql.addEventListener()
 
 import 'app/features/all';
+import _ from 'lodash'; // eslint-disable-line lodash/import-scope
 
 import {
   locationUtil,
