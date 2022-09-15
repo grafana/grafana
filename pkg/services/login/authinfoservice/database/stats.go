@@ -17,7 +17,7 @@ type LoginStats struct {
 
 const (
 	ExporterName              = "grafana"
-	metricsCollectionInterval = time.Second * 60 * 4 // every 4 hours, indication of duplicate users
+	metricsCollectionInterval = time.Hour * 4 // every 4 hours, indication of duplicate users
 )
 
 var (
