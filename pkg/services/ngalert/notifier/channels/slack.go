@@ -18,6 +18,7 @@ import (
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -62,6 +63,34 @@ type SlackConfig struct {
 	MentionGroups  []string
 	MentionChannel string
 	Token          string
+}
+
+type slackSettings struct {
+	EndpointURL    string `json:"endpointUrl,omitempty" yaml:"endpointUrl,omitempty"`
+	URL            string `json:"url,omitempty" yaml:"url,omitempty"`
+	Token          string `json:"token,omitempty" yaml:"token,omitempty"`
+	Recipient      string `json:"recipient,omitempty" yaml:"recipient,omitempty"`
+	Text           string `json:"text,omitempty" yaml:"text,omitempty"`
+	Title          string `json:"title,omitempty" yaml:"title,omitempty"`
+	Username       string `json:"username,omitempty" yaml:"username,omitempty"`
+	IconEmoji      string `json:"icon_emoji,omitempty" yaml:"icon_emoji,omitempty"`
+	IconURL        string `json:"icon_url,omitempty" yaml:"icon_url,omitempty"`
+	MentionChannel string `json:"mentionChannel,omitempty" yaml:"mentionChannel,omitempty"`
+	MentionUsers   string `json:"mentionUsers,omitempty" yaml:"mentionUsers,omitempty"`
+	MentionGroups  string `json:"mentionGroups,omitempty" yaml:"mentionGroups,omitempty"`
+}
+
+func newSlackSettings(stgs *simplejson.Json) (slackSettings, error) {
+	ser, err := stgs.Encode()
+	if err != nil {
+		return slackSettings{}, err
+	}
+	var settings slackSettings
+	err = json.Unmarshal(ser, &settings)
+	if err != nil {
+		return slackSettings{}, err
+	}
+	return settings, nil
 }
 
 func SlackFactory(fc FactoryConfig) (NotificationChannel, error) {
