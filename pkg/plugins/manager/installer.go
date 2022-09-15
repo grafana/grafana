@@ -16,7 +16,6 @@ import (
 var _ plugins.Installer = (*PluginInstaller)(nil)
 
 type PluginInstaller struct {
-	cfg           *plugins.Cfg
 	pluginRepo    repo.Service
 	pluginStorage storage.Manager
 	pluginStore   plugins.Store
@@ -24,16 +23,15 @@ type PluginInstaller struct {
 	log           log.Logger
 }
 
-func ProvideInstaller(grafanaCfg *setting.Cfg, pluginStore plugins.Store, pluginLoader loader.Service,
+func ProvideInstaller(cfg *setting.Cfg, pluginStore plugins.Store, pluginLoader loader.Service,
 	pluginRepo repo.Service) *PluginInstaller {
-	return New(plugins.FromGrafanaCfg(grafanaCfg), pluginStore, pluginLoader,
-		storage.FileSystem(logger.NewLogger("plugin.fs"), grafanaCfg.PluginsPath), pluginRepo)
+	return New(pluginStore, pluginLoader, pluginRepo,
+		storage.FileSystem(logger.NewLogger("plugin.fs"), cfg.PluginsPath))
 }
 
-func New(cfg *plugins.Cfg, pluginStore plugins.Store, pluginLoader loader.Service,
-	pluginStorage storage.Manager, pluginRepo repo.Service) *PluginInstaller {
+func New(pluginStore plugins.Store, pluginLoader loader.Service, pluginRepo repo.Service,
+	pluginStorage storage.Manager) *PluginInstaller {
 	return &PluginInstaller{
-		cfg:           cfg,
 		pluginLoader:  pluginLoader,
 		pluginStore:   pluginStore,
 		pluginRepo:    pluginRepo,
@@ -135,7 +133,7 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 func (m *PluginInstaller) AddFromSource(ctx context.Context, source plugins.PluginSource) error {
 	_, err := m.pluginLoader.Load(ctx, source.Class, source.Paths)
 	if err != nil {
-		m.log.Error("Could not load plugins", "path", m.cfg.PluginsPath, "err", err)
+		m.log.Error("Could not load plugins", "path", source.Paths, "err", err)
 		return err
 	}
 	return nil

@@ -273,5 +273,21 @@ var (
 			Description: "Show the TraceQL editor in the explore page",
 			State:       FeatureStateAlpha,
 		},
+		{
+			Name:         "redshiftAsyncQueryDataSupport",
+			Description:  "Enable async query data support for Redshift",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
+			Name:         "athenaAsyncQueryDataSupport",
+			Description:  "Enable async query data support for Athena",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
+			Name:        "increaseInMemDatabaseQueryCache",
+			Description: "Enable more in memory caching for database queries",
+		},
 	}
 )

@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/grafana/grafana/pkg/build/docker"
@@ -15,7 +14,7 @@ func BuildDocker(c *cli.Context) error {
 		return err
 	}
 
-	metadata, err := config.GetMetadata(filepath.Join("dist", "version.json"))
+	metadata, err := GenerateMetadata(c)
 	if err != nil {
 		return err
 	}

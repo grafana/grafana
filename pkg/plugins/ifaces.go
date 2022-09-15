@@ -56,12 +56,12 @@ type BackendFactoryProvider interface {
 
 type RendererManager interface {
 	// Renderer returns a renderer plugin.
-	Renderer() *Plugin
+	Renderer(ctx context.Context) *Plugin
 }
 
 type SecretsPluginManager interface {
 	// SecretsManager returns a secretsmanager plugin
-	SecretsManager() *Plugin
+	SecretsManager(ctx context.Context) *Plugin
 }
 
 type StaticRouteResolver interface {

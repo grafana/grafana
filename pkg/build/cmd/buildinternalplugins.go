@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"log"
-	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/grafana/grafana/pkg/build/errutil"
@@ -18,7 +17,7 @@ func BuildInternalPlugins(c *cli.Context) error {
 	}
 
 	const grafanaDir = "."
-	metadata, err := config.GetMetadata(filepath.Join("dist", "version.json"))
+	metadata, err := GenerateMetadata(c)
 	if err != nil {
 		return err
 	}

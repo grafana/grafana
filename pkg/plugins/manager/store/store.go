@@ -9,8 +9,6 @@ import (
 )
 
 var _ plugins.Store = (*Service)(nil)
-var _ plugins.RendererManager = (*Service)(nil)
-var _ plugins.SecretsPluginManager = (*Service)(nil)
 
 type Service struct {
 	pluginRegistry registry.Service
@@ -51,26 +49,6 @@ func (s *Service) Plugins(ctx context.Context, pluginTypes ...plugins.Type) []pl
 	return pluginsList
 }
 
-func (s *Service) Renderer() *plugins.Plugin {
-	for _, p := range s.availablePlugins(context.TODO()) {
-		if p.IsRenderer() {
-			return p
-		}
-	}
-
-	return nil
-}
-
-func (s *Service) SecretsManager() *plugins.Plugin {
-	for _, p := range s.availablePlugins(context.TODO()) {
-		if p.IsSecretsManager() {
-			return p
-		}
-	}
-
-	return nil
-}
-
 // plugin finds a plugin with `pluginID` from the registry that is not decommissioned
 func (s *Service) plugin(ctx context.Context, pluginID string) (*plugins.Plugin, bool) {
 	p, exists := s.pluginRegistry.Plugin(ctx, pluginID)
@@ -108,4 +86,22 @@ func (s *Service) Routes() []*plugins.StaticRoute {
 		}
 	}
 	return staticRoutes
+}
+
+func (s *Service) Renderer(ctx context.Context) *plugins.Plugin {
+	for _, p := range s.availablePlugins(ctx) {
+		if p.IsRenderer() {
+			return p
+		}
+	}
+	return nil
+}
+
+func (s *Service) SecretsManager(ctx context.Context) *plugins.Plugin {
+	for _, p := range s.availablePlugins(ctx) {
+		if p.IsSecretsManager() {
+			return p
+		}
+	}
+	return nil
 }

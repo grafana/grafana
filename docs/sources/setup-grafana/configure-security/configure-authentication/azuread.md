@@ -61,8 +61,8 @@ To enable the Azure AD OAuth2, register your application with Azure AD.
    				"allowedMemberTypes": [
    					"User"
    				],
-   				"description": "Grafana admin Users",
-   				"displayName": "Grafana Admin",
+   				"description": "Grafana org admin Users",
+   				"displayName": "Grafana Org Admin",
    				"id": "SOME_UNIQUE_ID",
    				"isEnabled": true,
    				"lang": null,
@@ -100,6 +100,30 @@ To enable the Azure AD OAuth2, register your application with Azure AD.
 
 1. Click on **Users and Groups** and add Users/Groups to the Grafana roles by using **Add User**.
 
+### Assign server administrator privileges
+
+> Available in Grafana v9.2 and later versions.
+
+If the application role received by Grafana is `GrafanaAdmin`, Grafana grants the user server administrator privileges.  
+This is useful if you want to grant server administrator privileges to a subset of users.  
+Grafana also assigns the user the `Admin` role of the default organization.
+
+The setting `allow_assign_grafana_admin` under `[auth.azuread]` must be set to `true` for this to work.  
+If the setting is set to `false`, the user is assigned the role of `Admin` of the default organization, but not server administrator privileges.
+
+```json
+{
+  "allowedMemberTypes": ["User"],
+  "description": "Grafana server admin Users",
+  "displayName": "Grafana Server Admin",
+  "id": "SOME_UNIQUE_ID",
+  "isEnabled": true,
+  "lang": null,
+  "origin": "Application",
+  "value": "GrafanaAdmin"
+}
+```
+
 ## Enable Azure AD OAuth in Grafana
 
 1. Add the following to the [Grafana configuration file]({{< relref "../../configure-grafana/#config-file-locations" >}}):
@@ -117,6 +141,7 @@ token_url = https://login.microsoftonline.com/TENANT_ID/oauth2/v2.0/token
 allowed_domains =
 allowed_groups =
 role_attribute_strict = false
+allow_assign_grafana_admin = false
 ```
 
 You can also use these environment variables to configure **client_id** and **client_secret**:

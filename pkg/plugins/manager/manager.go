@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -15,8 +16,12 @@ type PluginManager struct {
 	log             log.Logger
 }
 
-func ProvideService(cfg *setting.Cfg, pluginInstaller plugins.Installer) (*PluginManager, error) {
-	pm := NewManager(pluginInstaller, pluginSources(cfg))
+func ProvideService(cfg *config.Cfg, gCfg *setting.Cfg, pluginInstaller plugins.Installer) (*PluginManager, error) {
+	pm := NewManager(pluginInstaller, pluginSources(pathData{
+		pluginsPath:        gCfg.PluginsPath,
+		bundledPluginsPath: gCfg.BundledPluginsPath,
+		staticRootPath:     gCfg.StaticRootPath,
+	}, cfg.PluginSettings))
 	if err := pm.Init(context.Background()); err != nil {
 		return nil, err
 	}
@@ -40,26 +45,30 @@ func (m *PluginManager) Init(ctx context.Context) error {
 	return nil
 }
 
-func pluginSources(cfg *setting.Cfg) []plugins.PluginSource {
+type pathData struct {
+	pluginsPath, bundledPluginsPath, staticRootPath string
+}
+
+func pluginSources(p pathData, ps map[string]map[string]string) []plugins.PluginSource {
 	return []plugins.PluginSource{
-		{Class: plugins.Core, Paths: corePluginPaths(cfg)},
-		{Class: plugins.Bundled, Paths: []string{cfg.BundledPluginsPath}},
-		{Class: plugins.External, Paths: append([]string{cfg.PluginsPath}, pluginSettingPaths(cfg)...)},
+		{Class: plugins.Core, Paths: corePluginPaths(p.staticRootPath)},
+		{Class: plugins.Bundled, Paths: []string{p.bundledPluginsPath}},
+		{Class: plugins.External, Paths: append([]string{p.pluginsPath}, pluginSettingPaths(ps)...)},
 	}
 }
 
 // corePluginPaths provides a list of the Core plugin paths which need to be scanned on init()
-func corePluginPaths(cfg *setting.Cfg) []string {
-	datasourcePaths := filepath.Join(cfg.StaticRootPath, "app/plugins/datasource")
-	panelsPath := filepath.Join(cfg.StaticRootPath, "app/plugins/panel")
+func corePluginPaths(staticRootPath string) []string {
+	datasourcePaths := filepath.Join(staticRootPath, "app/plugins/datasource")
+	panelsPath := filepath.Join(staticRootPath, "app/plugins/panel")
 	return []string{datasourcePaths, panelsPath}
 }
 
 // pluginSettingPaths provides a plugin paths defined in cfg.PluginSettings which need to be scanned on init()
-func pluginSettingPaths(cfg *setting.Cfg) []string {
+func pluginSettingPaths(ps map[string]map[string]string) []string {
 	var pluginSettingDirs []string
-	for _, settings := range cfg.PluginSettings {
-		path, exists := settings["path"]
+	for _, s := range ps {
+		path, exists := s["path"]
 		if !exists || path == "" {
 			continue
 		}

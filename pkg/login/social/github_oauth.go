@@ -201,21 +201,24 @@ func (s *SocialGithub) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 
 	teams := convertToGroupList(teamMemberships)
 
-	role, err := s.extractRole(response.Body, teams)
-	if err != nil {
-		s.log.Error("Failed to extract role", "error", err)
-	}
+	role, grafanaAdmin := s.extractRoleAndAdmin(response.Body, teams)
 	if s.roleAttributeStrict && !role.IsValid() {
-		return nil, errors.New("invalid role")
+		return nil, ErrInvalidBasicRole
+	}
+
+	var isGrafanaAdmin *bool = nil
+	if s.allowAssignGrafanaAdmin {
+		isGrafanaAdmin = &grafanaAdmin
 	}
 
 	userInfo := &BasicUserInfo{
-		Name:   data.Login,
-		Login:  data.Login,
-		Id:     fmt.Sprintf("%d", data.Id),
-		Email:  data.Email,
-		Role:   string(role),
-		Groups: teams,
+		Name:           data.Login,
+		Login:          data.Login,
+		Id:             fmt.Sprintf("%d", data.Id),
+		Email:          data.Email,
+		Role:           string(role),
+		Groups:         teams,
+		IsGrafanaAdmin: isGrafanaAdmin,
 	}
 	if data.Name != "" {
 		userInfo.Name = data.Name

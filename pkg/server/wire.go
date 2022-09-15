@@ -6,6 +6,7 @@ package server
 import (
 	"github.com/google/wire"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/playlist/playlistimpl"
 	"github.com/grafana/grafana/pkg/services/store/sanitizer"
@@ -34,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
+	pluginsCfg "github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
 	pluginDashboards "github.com/grafana/grafana/pkg/plugins/manager/dashboards"
@@ -44,6 +46,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
@@ -80,7 +83,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
 	authinfodatabase "github.com/grafana/grafana/pkg/services/login/authinfoservice/database"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
-	"github.com/grafana/grafana/pkg/services/login_attempt/loginattemptimpl"
+	"github.com/grafana/grafana/pkg/services/loginattempt/loginattemptimpl"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	ngimage "github.com/grafana/grafana/pkg/services/ngalert/image"
 	ngmetrics "github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -172,6 +175,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(usagestats.Service), new(*uss.UsageStats)),
 	registry.ProvideService,
 	wire.Bind(new(registry.Service), new(*registry.InMemory)),
+	pluginsCfg.ProvideConfig,
 	repo.ProvideService,
 	wire.Bind(new(repo.Service), new(*repo.Manager)),
 	manager.ProvideInstaller,
@@ -333,11 +337,11 @@ var wireBasicSet = wire.NewSet(
 	secretsMigrations.ProvideDataSourceMigrationService,
 	secretsMigrations.ProvideMigrateToPluginService,
 	secretsMigrations.ProvideMigrateFromPluginService,
-	secretsMigrations.ProvideSecretMigrationService,
-	wire.Bind(new(secretsMigrations.SecretMigrationService), new(*secretsMigrations.SecretMigrationServiceImpl)),
+	secretsMigrations.ProvideSecretMigrationProvider,
+	wire.Bind(new(secretsMigrations.SecretMigrationProvider), new(*secretsMigrations.SecretMigrationProviderImpl)),
 	userauthimpl.ProvideService,
-	ossaccesscontrol.ProvideAccessControl,
-	wire.Bind(new(accesscontrol.AccessControl), new(*ossaccesscontrol.AccessControl)),
+	acimpl.ProvideAccessControl,
+	wire.Bind(new(accesscontrol.AccessControl), new(*acimpl.AccessControl)),
 )
 
 var wireSet = wire.NewSet(

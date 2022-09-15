@@ -61,7 +61,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 			Added: make(map[string]string),
 		}
 
-		pm := New(&plugins.Cfg{}, fakes.NewFakePluginStore(), loader, fs, pluginRepo)
+		pm := New(fakes.NewFakePluginStore(), loader, pluginRepo, fs)
 		err := pm.Add(context.Background(), pluginID, v1, plugins.CompatOpts{})
 		require.NoError(t, err)
 
@@ -172,7 +172,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 				},
 			}
 
-			pm := New(&plugins.Cfg{}, store, &fakes.FakeLoader{}, &fakes.FakePluginStorage{}, &fakes.FakePluginRepo{})
+			pm := New(store, &fakes.FakeLoader{}, &fakes.FakePluginRepo{}, &fakes.FakePluginStorage{})
 			err := pm.Add(context.Background(), p.ID, "3.2.0", plugins.CompatOpts{})
 			require.ErrorIs(t, err, plugins.ErrInstallCorePlugin)
 
