@@ -118,6 +118,18 @@ export async function getDebugDashboard(panel: PanelModel, rand: Randomize, time
     ],
   };
 
+  if (saveModel.transformations?.length) {
+    const last = dashboard.panels[dashboard.panels.length - 1];
+    last.title = last.title + ' (after transformations)';
+
+    const before = cloneDeep(last);
+    before.id = 100;
+    before.title = 'Data (before transformations)';
+    before.gridPos.w = 24; // full width
+    before.targets[0].withTransforms = false;
+    dashboard.panels.push(before);
+  }
+
   if (data.annotations?.length) {
     const anno: DataFrameJSON[] = [];
     for (const f of frames) {
@@ -287,6 +299,7 @@ const embeddedDataTemplate: any = {
             uid: '-- Dashboard --',
           },
           panelId: 2,
+          withTransforms: true,
           refId: 'A',
         },
       ],
