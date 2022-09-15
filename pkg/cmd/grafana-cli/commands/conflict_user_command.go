@@ -26,10 +26,11 @@ import (
 
 func initConflictCfg(cmd *utils.ContextCommandLine) (*setting.Cfg, error) {
 	configOptions := strings.Split(cmd.String("configOverrides"), " ")
+	configOptions = append(configOptions, cmd.Args().Slice()...)
 	cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{
 		Config:   cmd.ConfigFile(),
 		HomePath: cmd.HomePath(),
-		Args:     append(configOptions, cmd.Args().Slice()...), // tailing arguments have precedence over the options string
+		Args:     append(configOptions, "cfg:log.level=error"), // tailing arguments have precedence over the options string
 	})
 
 	if err != nil {
@@ -52,7 +53,6 @@ func runListConflictUsers() func(context *cli.Context) error {
 	return func(context *cli.Context) error {
 		cmd := &utils.ContextCommandLine{Context: context}
 		cfg, err := initConflictCfg(cmd)
-		cfg.Logger = nil
 		if err != nil {
 			return fmt.Errorf("%v: %w", "failed to load configuration", err)
 		}
@@ -152,7 +152,7 @@ func runValidateConflictUsersFile() func(context *cli.Context) error {
 		if validErr != nil {
 			return fmt.Errorf("could not validate file with error %s", err)
 		}
-		logger.Info("file valid for ingestion")
+		logger.Info("File validation complete without errors.\n\n File can be used with ingesting command `ingest-file`.\n\n")
 		return nil
 	}
 }
