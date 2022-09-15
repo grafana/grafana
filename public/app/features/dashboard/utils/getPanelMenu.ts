@@ -172,14 +172,6 @@ export function getPanelMenu(
     onClick: (e: React.MouseEvent<any>) => onInspectPanel(InspectTab.JSON),
   });
 
-  // Only show for editors
-  if (panel.plugin && dashboard.meta.canEdit && !panel.plugin.meta.skipDataQuery) {
-    inspectMenu.push({
-      text: 'Support snapshot',
-      onClick: (e: React.MouseEvent) => onInspectPanel(InspectTab.Support),
-    });
-  }
-
   const inspectTextTranslation = t({
     id: 'panel.header-menu.inspect',
     message: `Inspect`,
@@ -195,8 +187,9 @@ export function getPanelMenu(
   });
 
   const subMenu: PanelMenuItem[] = [];
+  const canEdit = dashboard.canEditPanel(panel);
 
-  if (dashboard.canEditPanel(panel) && !(panel.isViewing || panel.isEditing)) {
+  if (canEdit && !(panel.isViewing || panel.isEditing)) {
     subMenu.push({
       text: 'Duplicate',
       onClick: onDuplicatePanel,
@@ -252,7 +245,19 @@ export function getPanelMenu(
     });
   }
 
-  if (!panel.isEditing && subMenu.length) {
+  // When editing hide most actions
+  if (panel.isEditing) {
+    subMenu.length = 0;
+  }
+
+  if (canEdit && panel.plugin && !panel.plugin.meta.skipDataQuery) {
+    subMenu.push({
+      text: 'Get help...',
+      onClick: (e: React.MouseEvent) => onInspectPanel(InspectTab.Support),
+    });
+  }
+
+  if (subMenu.length) {
     const moreTextTranslation = t({
       id: 'panel.header-menu.more',
       message: `More...`,

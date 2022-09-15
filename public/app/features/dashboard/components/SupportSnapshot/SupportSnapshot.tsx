@@ -65,13 +65,13 @@ export function SupportSnapshot({ panel, plugin, onClose }: Props) {
   }
 
   const tabs = [
-    { label: 'Support', value: SnapshotTab.Support },
+    { label: 'Snapshot', value: SnapshotTab.Support },
     { label: 'Data', value: SnapshotTab.Data },
   ];
 
   return (
     <Drawer
-      title={`Support snapshot`}
+      title={`Get help with this panel`}
       width="90%"
       onClose={onClose}
       expandable
@@ -80,10 +80,14 @@ export function SupportSnapshot({ panel, plugin, onClose }: Props) {
         <Stack direction="column" gap={1}>
           <span>
             <FeatureBadge featureState={FeatureState.beta} />
+            &nbsp;
+            <a href="https://grafana.com/docs/grafana/latest/troubleshooting/" target="blank">
+              https://grafana.com/docs/grafana/latest/troubleshooting/
+            </a>
           </span>
           <span className="muted">
-            A support snapshot contains the query response data and raw panel settings. Include this snapshot in support
-            requests to help identify issues faster
+            When requesting help, including this snapshot a support snapshot contains the query response data and raw
+            panel settings. Include this snapshot in support requests to help identify issues faster
           </span>
         </Stack>
       }
