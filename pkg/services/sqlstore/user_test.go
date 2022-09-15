@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package sqlstore
@@ -455,7 +456,9 @@ func TestUserDataAccess(t *testing.T) {
 				// Calling GetUserByAuthInfoQuery on an existing user will populate an entry in the user_auth table
 				// Make the first log-in during the past
 				getTime = func() time.Time { return time.Now().AddDate(0, 0, -2) }
-				query := &models.GetUserByAuthInfoQuery{Login: login, AuthModule: "ldap", AuthId: "ldap0"}
+				query := &models.GetUserByAuthInfoQuery{AuthModule: "ldap", AuthId: "ldap0", UserLookupParams: models.UserLookupParams{
+					Login: &login,
+				}}
 				err := GetUserByAuthInfo(query)
 				getTime = time.Now
 
@@ -465,7 +468,9 @@ func TestUserDataAccess(t *testing.T) {
 				// Add a second auth module for this user
 				// Have this module's last log-in be more recent
 				getTime = func() time.Time { return time.Now().AddDate(0, 0, -1) }
-				query = &models.GetUserByAuthInfoQuery{Login: login, AuthModule: "oauth", AuthId: "oauth0"}
+				query = &models.GetUserByAuthInfoQuery{AuthModule: "oauth", AuthId: "oauth0", UserLookupParams: models.UserLookupParams{
+					Login: &login,
+				}}
 				err = GetUserByAuthInfo(query)
 				getTime = time.Now
 
@@ -511,7 +516,9 @@ func TestUserDataAccess(t *testing.T) {
 					// Calling GetUserByAuthInfoQuery on an existing user will populate an entry in the user_auth table
 					// Make the first log-in during the past
 					getTime = func() time.Time { return time.Now().AddDate(0, 0, -2) }
-					query := &models.GetUserByAuthInfoQuery{Login: login, AuthModule: "ldap", AuthId: fmt.Sprint("ldap", i)}
+					query := &models.GetUserByAuthInfoQuery{AuthModule: "ldap", AuthId: fmt.Sprint("ldap", i), UserLookupParams: models.UserLookupParams{
+						Login: &login,
+					}}
 					err := GetUserByAuthInfo(query)
 					getTime = time.Now
 
@@ -522,7 +529,9 @@ func TestUserDataAccess(t *testing.T) {
 				// Log in first user with oauth
 				login := "loginuser0"
 				getTime = func() time.Time { return time.Now().AddDate(0, 0, -1) }
-				query := &models.GetUserByAuthInfoQuery{Login: login, AuthModule: "oauth", AuthId: "oauth0"}
+				query := &models.GetUserByAuthInfoQuery{AuthModule: "oauth", AuthId: "oauth0", UserLookupParams: models.UserLookupParams{
+					Login: &login,
+				}}
 				err := GetUserByAuthInfo(query)
 				getTime = time.Now
 

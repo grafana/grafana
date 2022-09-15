@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package sqlstore
@@ -45,7 +46,7 @@ func TestUserAuth(t *testing.T) {
 			// By Login
 			login := "loginuser0"
 
-			query := &models.GetUserByAuthInfoQuery{Login: login}
+			query := &models.GetUserByAuthInfoQuery{UserLookupParams: models.UserLookupParams{Login: &login}}
 			err = GetUserByAuthInfo(query)
 
 			So(err, ShouldBeNil)
@@ -54,7 +55,7 @@ func TestUserAuth(t *testing.T) {
 			// By ID
 			id := query.Result.Id
 
-			query = &models.GetUserByAuthInfoQuery{UserId: id}
+			query = &models.GetUserByAuthInfoQuery{UserLookupParams: models.UserLookupParams{UserID: &id}}
 			err = GetUserByAuthInfo(query)
 
 			So(err, ShouldBeNil)
@@ -63,7 +64,7 @@ func TestUserAuth(t *testing.T) {
 			// By Email
 			email := "user1@test.com"
 
-			query = &models.GetUserByAuthInfoQuery{Email: email}
+			query = &models.GetUserByAuthInfoQuery{UserLookupParams: models.UserLookupParams{Email: &email}}
 			err = GetUserByAuthInfo(query)
 
 			So(err, ShouldBeNil)
@@ -72,7 +73,7 @@ func TestUserAuth(t *testing.T) {
 			// Don't find nonexistent user
 			email = "nonexistent@test.com"
 
-			query = &models.GetUserByAuthInfoQuery{Email: email}
+			query = &models.GetUserByAuthInfoQuery{UserLookupParams: models.UserLookupParams{Email: &email}}
 			err = GetUserByAuthInfo(query)
 
 			So(err, ShouldEqual, models.ErrUserNotFound)
@@ -90,7 +91,7 @@ func TestUserAuth(t *testing.T) {
 			// create user_auth entry
 			login := "loginuser0"
 
-			query.Login = login
+			query.UserLookupParams.Login = &login
 			err = GetUserByAuthInfo(query)
 
 			So(err, ShouldBeNil)
@@ -105,8 +106,9 @@ func TestUserAuth(t *testing.T) {
 
 			// get with non-matching id
 			id := query.Result.Id
+			idPlusOne := id + 1
 
-			query.UserId = id + 1
+			query.UserLookupParams.UserID = &idPlusOne
 			err = GetUserByAuthInfo(query)
 
 			So(err, ShouldBeNil)
@@ -143,7 +145,9 @@ func TestUserAuth(t *testing.T) {
 			login := "loginuser0"
 
 			// Calling GetUserByAuthInfoQuery on an existing user will populate an entry in the user_auth table
-			query := &models.GetUserByAuthInfoQuery{Login: login, AuthModule: "test", AuthId: "test"}
+			query := &models.GetUserByAuthInfoQuery{AuthModule: "test", AuthId: "test", UserLookupParams: models.UserLookupParams{
+				Login: &login,
+			}}
 			err = GetUserByAuthInfo(query)
 
 			So(err, ShouldBeNil)
@@ -178,7 +182,9 @@ func TestUserAuth(t *testing.T) {
 			// Calling GetUserByAuthInfoQuery on an existing user will populate an entry in the user_auth table
 			// Make the first log-in during the past
 			getTime = func() time.Time { return time.Now().AddDate(0, 0, -2) }
-			query := &models.GetUserByAuthInfoQuery{Login: login, AuthModule: "test1", AuthId: "test1"}
+			query := &models.GetUserByAuthInfoQuery{AuthModule: "test1", AuthId: "test1", UserLookupParams: models.UserLookupParams{
+				Login: &login,
+			}}
 			err = GetUserByAuthInfo(query)
 			getTime = time.Now
 
@@ -188,7 +194,9 @@ func TestUserAuth(t *testing.T) {
 			// Add a second auth module for this user
 			// Have this module's last log-in be more recent
 			getTime = func() time.Time { return time.Now().AddDate(0, 0, -1) }
-			query = &models.GetUserByAuthInfoQuery{Login: login, AuthModule: "test2", AuthId: "test2"}
+			query = &models.GetUserByAuthInfoQuery{AuthModule: "test2", AuthId: "test2", UserLookupParams: models.UserLookupParams{
+				Login: &login,
+			}}
 			err = GetUserByAuthInfo(query)
 			getTime = time.Now
 

@@ -27,6 +27,7 @@ func GetUserByAuthInfo(query *models.GetUserByAuthInfoQuery) error {
 	has := false
 	var err error
 	authQuery := &models.GetAuthInfoQuery{}
+	params := query.UserLookupParams
 
 	// Try to find the user by auth module and id first
 	if query.AuthModule != "" && query.AuthId != "" {
@@ -40,7 +41,9 @@ func GetUserByAuthInfo(query *models.GetUserByAuthInfoQuery) error {
 			}
 
 			// if user id was specified and doesn't match the user_auth entry, remove it
-			if query.UserId != 0 && query.UserId != authQuery.Result.UserId {
+			if params.UserID != nil &&
+				*params.UserID != 0 &&
+				*params.UserID != authQuery.Result.UserId {
 				err = DeleteAuthInfo(&models.DeleteAuthInfoCommand{
 					UserAuth: authQuery.Result,
 				})
@@ -71,16 +74,16 @@ func GetUserByAuthInfo(query *models.GetUserByAuthInfoQuery) error {
 	}
 
 	// If not found, try to find the user by id
-	if !has && query.UserId != 0 {
-		has, err = x.Id(query.UserId).Get(user)
+	if !has && params.UserID != nil && *params.UserID != 0 {
+		has, err = x.Id(*params.UserID).Get(user)
 		if err != nil {
 			return err
 		}
 	}
 
 	// If not found, try to find the user by email address
-	if !has && query.Email != "" {
-		user = &models.User{Email: query.Email}
+	if !has && params.Email != nil && *params.Email != "" {
+		user = &models.User{Email: *params.Email}
 		has, err = x.Get(user)
 		if err != nil {
 			return err
@@ -88,8 +91,8 @@ func GetUserByAuthInfo(query *models.GetUserByAuthInfoQuery) error {
 	}
 
 	// If not found, try to find the user by login
-	if !has && query.Login != "" {
-		user = &models.User{Login: query.Login}
+	if !has && params.Login != nil && *params.Login != "" {
+		user = &models.User{Login: *params.Login}
 		has, err = x.Get(user)
 		if err != nil {
 			return err

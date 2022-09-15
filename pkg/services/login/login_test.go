@@ -81,11 +81,14 @@ func Test_teamSync(t *testing.T) {
 		Bus:          bus.New(),
 		QuotaService: &quota.QuotaService{},
 	}
+	email := "test_user@example.org"
 
-	upserCmd := &models.UpsertUserCommand{ExternalUser: &models.ExternalUserInfo{Email: "test_user@example.org"}}
+	upserCmd := &models.UpsertUserCommand{
+		ExternalUser:     &models.ExternalUserInfo{Email: email},
+		UserLookupParams: models.UserLookupParams{Email: &email}}
 	expectedUser := &models.User{
 		Id:    1,
-		Email: "test_user@example.org",
+		Email: email,
 		Name:  "test_user",
 		Login: "test_user",
 	}

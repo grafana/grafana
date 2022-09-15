@@ -37,11 +37,9 @@ func (ls *LoginService) UpsertUser(cmd *models.UpsertUserCommand) error {
 	extUser := cmd.ExternalUser
 
 	userQuery := &models.GetUserByAuthInfoQuery{
-		AuthModule: extUser.AuthModule,
-		AuthId:     extUser.AuthId,
-		UserId:     extUser.UserId,
-		Email:      extUser.Email,
-		Login:      extUser.Login,
+		AuthModule:       extUser.AuthModule,
+		AuthId:           extUser.AuthId,
+		UserLookupParams: cmd.UserLookupParams,
 	}
 	if err := bus.Dispatch(userQuery); err != nil {
 		if !errors.Is(err, models.ErrUserNotFound) {
