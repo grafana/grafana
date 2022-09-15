@@ -28,7 +28,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   isPublicDashboardView: boolean;
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
   panels: { [key: string]: PanelPluginMeta } = {};
-  auth: AuthSettings = {} as AuthSettings;
+  auth: AuthSettings = {};
   minRefreshInterval = '';
   appUrl = '';
   appSubUrl = '';
