@@ -2,8 +2,8 @@ import React from 'react';
 
 import { EditorHeader, FlexItem, InlineSelect, RadioButtonGroup } from '@grafana/ui';
 
-import { QUERY_TYPES } from '../../constants';
-import { EditorMode, CloudMonitoringQuery, QueryType, SLOQuery, MetricQuery } from '../../types';
+import { QUERY_TYPES } from '../constants';
+import { EditorMode, CloudMonitoringQuery, QueryType, SLOQuery, MetricQuery } from '../types';
 
 export interface QueryEditorHeaderProps {
   query: CloudMonitoringQuery;

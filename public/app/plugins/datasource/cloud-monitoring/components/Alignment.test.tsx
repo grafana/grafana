@@ -5,9 +5,9 @@ import { openMenu } from 'react-select-event';
 
 import { TemplateSrvMock } from 'app/features/templating/template_srv.mock';
 
-import { createMockDatasource } from '../../__mocks__/cloudMonitoringDatasource';
-import { createMockMetricQuery } from '../../__mocks__/cloudMonitoringQuery';
-import { MetricKind, ValueTypes } from '../../types';
+import { createMockDatasource } from '../__mocks__/cloudMonitoringDatasource';
+import { createMockMetricQuery } from '../__mocks__/cloudMonitoringQuery';
+import { MetricKind, ValueTypes } from '../types';
 
 import { Alignment } from './Alignment';
 
