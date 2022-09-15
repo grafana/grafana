@@ -26,8 +26,8 @@ Usage insights enables you to have a better understanding of how your Grafana in
 The usage insights feature collects a number of aggregated data and stores them in the database:
 
 - Dashboard views (aggregated and per user)
-- Data source error messages
-- Data source query counts
+- Data source errors
+- Data source queries
 
 The aggregated data provides you access to several features:
 
