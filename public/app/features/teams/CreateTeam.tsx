@@ -18,8 +18,8 @@ interface TeamDTO {
 const pageNav: NavModelItem = {
   icon: 'users-alt',
   id: 'team-new',
-  text: 'Add new team',
-  subTitle: 'Team let you grant permissions to a group of users.',
+  text: 'New team',
+  subTitle: 'Create a new team. Teams let you grant permissions to a group of users.',
 
   breadcrumbs: [{ title: 'Configuration', url: 'org/teams' }],
 };
