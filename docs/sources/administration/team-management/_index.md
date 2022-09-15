@@ -22,7 +22,7 @@ A team is a group of users within an organization that have common dashboard and
 
 A user can belong to multiple teams.
 
-### Before you begin
+**Before you begin:**
 
 - Ensure that you have either organization administrator permissions or team administrator permissions
 - Make a plan for which users belong to which teams and the permissions team members receive
@@ -41,7 +41,7 @@ A user can belong to multiple teams.
 
 Add a team member to an existing team whenever you want to provide access to team dashboards and folders to another user.
 
-### Before you begin
+**Before you begin:**
 
 - Ensure that you have organization administrator permissions
 - [Create a team](#create-a-team).
@@ -61,7 +61,7 @@ Add a team member to an existing team whenever you want to provide access to tea
 
 Complete this task when you want to add or modify team member permissions.
 
-### Before you begin
+**Before you begin:**
 
 - Ensure that you have either organization administrator permissions or team administrator permissions
 
@@ -79,7 +79,7 @@ Complete this task when you want to add or modify team member permissions.
 
 You can remove a team member when you no longer want to apply team permissions to the user
 
-### Before you begin
+**Before you begin:**
 
 - Ensure that you have either organization administrator permissions or team administrator permissions
 
@@ -95,7 +95,7 @@ You can remove a team member when you no longer want to apply team permissions t
 
 Delete a team when you no longer need it. This action permanently deletes the team and removes all team permissions from dashboards and folders.
 
-### Before you begin
+**Before you begin:**
 
 - Ensure that you have organization administrator permissions
 
@@ -110,7 +110,7 @@ Delete a team when you no longer need it. This action permanently deletes the te
 
 See the complete list of teams in your Grafana organization.
 
-### Before you begin
+**Before you begin:**
 
 - Ensure that you have either organization administrator permissions or team administrator permissions
 
