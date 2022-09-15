@@ -18,7 +18,6 @@ import (
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -67,19 +66,6 @@ type slackSettings struct {
 	MentionGroups    []string `json:"-" yaml:"-"`
 }
 
-func newSlackSettings(stgs *simplejson.Json) (slackSettings, error) {
-	ser, err := stgs.Encode()
-	if err != nil {
-		return slackSettings{}, err
-	}
-	var settings slackSettings
-	err = json.Unmarshal(ser, &settings)
-	if err != nil {
-		return slackSettings{}, err
-	}
-	return settings, nil
-}
-
 // SlackFactory creates a new NotificationChannel that sends notifications to Slack.
 func SlackFactory(fc FactoryConfig) (NotificationChannel, error) {
 	ch, err := buildSlackNotifier(fc)
@@ -95,7 +81,8 @@ func SlackFactory(fc FactoryConfig) (NotificationChannel, error) {
 func buildSlackNotifier(factoryConfig FactoryConfig) (*SlackNotifier, error) {
 	channelConfig := factoryConfig.Config
 	decryptFunc := factoryConfig.DecryptFunc
-	settings, err := newSlackSettings(factoryConfig.Config.Settings)
+	var settings slackSettings
+	err := factoryConfig.Config.marshalSettings(&settings)
 	if err != nil {
 		return nil, err
 	}

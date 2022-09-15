@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -168,6 +169,18 @@ type NotificationChannelConfig struct {
 	DisableResolveMessage bool              `json:"disableResolveMessage"`
 	Settings              *simplejson.Json  `json:"settings"`
 	SecureSettings        map[string][]byte `json:"secureSettings"`
+}
+
+func (c NotificationChannelConfig) marshalSettings(v interface{}) error {
+	ser, err := c.Settings.Encode()
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal(ser, v)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 type httpCfg struct {
