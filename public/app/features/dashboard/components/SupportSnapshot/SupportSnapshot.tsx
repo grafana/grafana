@@ -79,7 +79,7 @@ export function SupportSnapshot({ panel, plugin, onClose }: Props) {
       scrollableContent
       subtitle={
         <Stack direction="column" gap={1}>
-          <Stack direction="row">
+          <Stack direction="row" gap={1}>
             <FeatureBadge featureState={FeatureState.beta} />
             <a
               href="https://grafana.com/docs/grafana/latest/troubleshooting/"
