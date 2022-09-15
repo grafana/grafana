@@ -6,8 +6,6 @@ import tinycolor from 'tinycolor2';
 
 import { LogRowModel, findHighlightChunksInText, GrafanaTheme2 } from '@grafana/data';
 
-// @ts-ignore
-
 import { withTheme2 } from '../../themes/index';
 import { Themeable2 } from '../../types/theme';
 import { IconButton } from '../IconButton/IconButton';
@@ -166,18 +164,18 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
           <span className={cx(styles.positionRelative, { [styles.rowWithContext]: contextIsOpen })}>
             {renderLogMessage(hasAnsi, restructuredEntry, row.searchWords, style.logsRowMatchHighLight)}
           </span>
-          {showContextToggle?.(row) && (
+          {!contextIsOpen && showContextToggle?.(row) && (
             <span
               className={cx('log-row-context', style.context, styles.contextButton)}
               onClick={(e) => e.stopPropagation()}
             >
               <Tooltip placement="top" content={'Show context'}>
-                <IconButton name="eye" title="Show context" onClick={this.onContextToggle} />
+                <IconButton size="md" name="gf-show-context" onClick={this.onContextToggle} />
               </Tooltip>
-              <Tooltip placement="top" content={'copy'}>
+              <Tooltip placement="top" content={'Copy'}>
                 <IconButton
+                  size="md"
                   name="copy"
-                  title="Copy context"
                   onClick={() => navigator.clipboard.writeText(JSON.stringify(restructuredEntry))}
                 />
               </Tooltip>
