@@ -93,18 +93,19 @@ func newSlackSettings(stgs *simplejson.Json) (slackSettings, error) {
 	return settings, nil
 }
 
+// SlackFactory creates a new NotificationChannel that sends notifications to Slack.
 func SlackFactory(fc FactoryConfig) (NotificationChannel, error) {
-	cfg, err := NewSlackConfig(fc)
+	ch, err := buildSlackNotifier(fc)
 	if err != nil {
 		return nil, receiverInitError{
 			Reason: err.Error(),
 			Cfg:    *fc.Config,
 		}
 	}
-	return NewSlackNotifier(cfg, fc.ImageStore, fc.NotificationService, fc.Template), nil
+	return ch, nil
 }
 
-func NewSlackConfig(factoryConfig FactoryConfig) (*SlackConfig, error) {
+func buildSlackNotifier(factoryConfig FactoryConfig) (*SlackNotifier, error) {
 	channelConfig := factoryConfig.Config
 	decryptFunc := factoryConfig.DecryptFunc
 	endpointURL := channelConfig.Settings.Get("endpointUrl").MustString(SlackAPIEndpoint)
@@ -144,52 +145,32 @@ func NewSlackConfig(factoryConfig FactoryConfig) (*SlackConfig, error) {
 			mentionGroups = append(mentionGroups, g)
 		}
 	}
-	return &SlackConfig{
-		NotificationChannelConfig: channelConfig,
-		Recipient:                 strings.TrimSpace(channelConfig.Settings.Get("recipient").MustString()),
-		MentionChannel:            channelConfig.Settings.Get("mentionChannel").MustString(),
-		MentionUsers:              mentionUsers,
-		MentionGroups:             mentionGroups,
-		URL:                       apiURL,
-		Username:                  channelConfig.Settings.Get("username").MustString("Grafana"),
-		IconEmoji:                 channelConfig.Settings.Get("icon_emoji").MustString(),
-		IconURL:                   channelConfig.Settings.Get("icon_url").MustString(),
-		Token:                     token,
-		Text:                      channelConfig.Settings.Get("text").MustString(`{{ template "default.message" . }}`),
-		Title:                     channelConfig.Settings.Get("title").MustString(DefaultMessageTitleEmbed),
-	}, nil
-}
 
-// NewSlackNotifier is the constructor for the Slack notifier
-func NewSlackNotifier(config *SlackConfig,
-	images ImageStore,
-	webhookSender notifications.WebhookSender,
-	t *template.Template,
-) *SlackNotifier {
 	return &SlackNotifier{
 		Base: NewBase(&models.AlertNotification{
-			Uid:                   config.UID,
-			Name:                  config.Name,
-			Type:                  config.Type,
-			DisableResolveMessage: config.DisableResolveMessage,
-			Settings:              config.Settings,
+			Uid:                   factoryConfig.Config.UID,
+			Name:                  factoryConfig.Config.Name,
+			Type:                  factoryConfig.Config.Type,
+			DisableResolveMessage: factoryConfig.Config.DisableResolveMessage,
+			Settings:              factoryConfig.Config.Settings,
 		}),
-		URL:            config.URL,
-		Recipient:      config.Recipient,
-		MentionUsers:   config.MentionUsers,
-		MentionGroups:  config.MentionGroups,
-		MentionChannel: config.MentionChannel,
-		Username:       config.Username,
-		IconEmoji:      config.IconEmoji,
-		IconURL:        config.IconURL,
-		Token:          config.Token,
-		Text:           config.Text,
-		Title:          config.Title,
-		images:         images,
-		webhookSender:  webhookSender,
-		log:            log.New("alerting.notifier.slack"),
-		tmpl:           t,
-	}
+		URL:            apiURL,
+		Recipient:      strings.TrimSpace(channelConfig.Settings.Get("recipient").MustString()),
+		MentionUsers:   mentionUsers,
+		MentionGroups:  mentionGroups,
+		MentionChannel: mentionChannel,
+		Username:       channelConfig.Settings.Get("username").MustString("Grafana"),
+		IconEmoji:      channelConfig.Settings.Get("icon_emoji").MustString(),
+		IconURL:        channelConfig.Settings.Get("icon_url").MustString(),
+		Token:          token,
+		Text:           channelConfig.Settings.Get("text").MustString(`{{ template "default.message" . }}`),
+		Title:          channelConfig.Settings.Get("title").MustString(DefaultMessageTitleEmbed),
+
+		images:        factoryConfig.ImageStore,
+		webhookSender: factoryConfig.NotificationService,
+		log:           log.New("alerting.notifier.slack"),
+		tmpl:          factoryConfig.Template,
+	}, nil
 }
 
 // slackMessage is the slackMessage for sending a slack notification.
