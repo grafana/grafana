@@ -86,8 +86,8 @@ export function SupportSnapshot({ panel, plugin, onClose }: Props) {
             </a>
           </span>
           <span className="muted">
-            When requesting help, including this snapshot a support snapshot contains the query response data and raw
-            panel settings. Include this snapshot in support requests to help identify issues faster
+            To request troubleshooting help, send a snapshot of this panel to Grafana Labs Technical Support. The
+            snapshot contains query response data and panel settings.
           </span>
         </Stack>
       }
