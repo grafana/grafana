@@ -35,18 +35,7 @@ type SlackNotifier struct {
 	tmpl          *template.Template
 	images        ImageStore
 	webhookSender notifications.WebhookSender
-
-	URL            *url.URL
-	Username       string
-	IconEmoji      string
-	IconURL        string
-	Recipient      string
-	Text           string
-	Title          string
-	MentionUsers   []string
-	MentionGroups  []string
-	MentionChannel string
-	Token          string
+	settings      slackSettings
 }
 
 type slackSettings struct {
@@ -98,16 +87,17 @@ func buildSlackNotifier(factoryConfig FactoryConfig) (*SlackNotifier, error) {
 	if err != nil {
 		return nil, fmt.Errorf("invalid URL %q", slackURL)
 	}
+	settings.URL = apiURL.String()
 
 	settings.Recipient = strings.TrimSpace(settings.Recipient)
-	if settings.Recipient == "" && apiURL.String() == SlackAPIEndpoint {
+	if settings.Recipient == "" && settings.URL == SlackAPIEndpoint {
 		return nil, errors.New("recipient must be specified when using the Slack chat API")
 	}
 	if settings.MentionChannel != "" && settings.MentionChannel != "here" && settings.MentionChannel != "channel" {
 		return nil, fmt.Errorf("invalid value for mentionChannel: %q", settings.MentionChannel)
 	}
 	settings.Token = decryptFunc(context.Background(), channelConfig.SecureSettings, "token", settings.Token)
-	if settings.Token == "" && apiURL.String() == SlackAPIEndpoint {
+	if settings.Token == "" && settings.URL == SlackAPIEndpoint {
 		return nil, errors.New("token must be specified when using the Slack chat API")
 	}
 	settings.MentionUsers = []string{}
@@ -142,17 +132,7 @@ func buildSlackNotifier(factoryConfig FactoryConfig) (*SlackNotifier, error) {
 			DisableResolveMessage: factoryConfig.Config.DisableResolveMessage,
 			Settings:              factoryConfig.Config.Settings,
 		}),
-		URL:            apiURL,
-		Recipient:      settings.Recipient,
-		MentionUsers:   settings.MentionUsers,
-		MentionGroups:  settings.MentionGroups,
-		MentionChannel: settings.MentionChannel,
-		Username:       settings.Username,
-		IconEmoji:      settings.IconEmoji,
-		IconURL:        settings.IconURL,
-		Token:          settings.Token,
-		Text:           settings.Text,
-		Title:          settings.Title,
+		settings: settings,
 
 		images:        factoryConfig.ImageStore,
 		webhookSender: factoryConfig.NotificationService,
@@ -199,21 +179,21 @@ func (sn *SlackNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bo
 		return false, fmt.Errorf("marshal json: %w", err)
 	}
 
-	sn.log.Debug("sending Slack API request", "url", sn.URL.String(), "data", string(b))
-	request, err := http.NewRequestWithContext(ctx, http.MethodPost, sn.URL.String(), bytes.NewReader(b))
+	sn.log.Debug("sending Slack API request", "url", sn.settings.URL, "data", string(b))
+	request, err := http.NewRequestWithContext(ctx, http.MethodPost, sn.settings.URL, bytes.NewReader(b))
 	if err != nil {
 		return false, fmt.Errorf("failed to create HTTP request: %w", err)
 	}
 
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("User-Agent", "Grafana")
-	if sn.Token == "" {
-		if sn.URL.String() == SlackAPIEndpoint {
+	if sn.settings.Token == "" {
+		if sn.settings.URL == SlackAPIEndpoint {
 			panic("Token should be set when using the Slack chat API")
 		}
 	} else {
 		sn.log.Debug("adding authorization header to HTTP request")
-		request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", sn.Token))
+		request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", sn.settings.Token))
 	}
 
 	if err := sendSlackRequest(request, sn.log); err != nil {
@@ -297,23 +277,23 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, alrts []*types.A
 	ruleURL := joinUrlPath(sn.tmpl.ExternalURL.String(), "/alerting/list", sn.log)
 
 	req := &slackMessage{
-		Channel:   tmpl(sn.Recipient),
-		Text:      tmpl(sn.Title),
-		Username:  tmpl(sn.Username),
-		IconEmoji: tmpl(sn.IconEmoji),
-		IconURL:   tmpl(sn.IconURL),
+		Channel:   tmpl(sn.settings.Recipient),
+		Text:      tmpl(sn.settings.Title),
+		Username:  tmpl(sn.settings.Username),
+		IconEmoji: tmpl(sn.settings.IconEmoji),
+		IconURL:   tmpl(sn.settings.IconURL),
 		// TODO: We should use the Block Kit API instead:
 		// https://api.slack.com/messaging/composing/layouts#when-to-use-attachments
 		Attachments: []attachment{
 			{
 				Color:      getAlertStatusColor(alerts.Status()),
-				Title:      tmpl(sn.Title),
-				Fallback:   tmpl(sn.Title),
+				Title:      tmpl(sn.settings.Title),
+				Fallback:   tmpl(sn.settings.Title),
 				Footer:     "Grafana v" + setting.BuildVersion,
 				FooterIcon: FooterIconURL,
 				Ts:         time.Now().Unix(),
 				TitleLink:  ruleURL,
-				Text:       tmpl(sn.Text),
+				Text:       tmpl(sn.settings.Text),
 				Fields:     nil, // TODO. Should be a config.
 			},
 		},
@@ -334,19 +314,19 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, alrts []*types.A
 			mentionsBuilder.WriteString(" ")
 		}
 	}
-	mentionChannel := strings.TrimSpace(sn.MentionChannel)
+	mentionChannel := strings.TrimSpace(sn.settings.MentionChannel)
 	if mentionChannel != "" {
 		mentionsBuilder.WriteString(fmt.Sprintf("<!%s|%s>", mentionChannel, mentionChannel))
 	}
-	if len(sn.MentionGroups) > 0 {
+	if len(sn.settings.MentionGroups) > 0 {
 		appendSpace()
-		for _, g := range sn.MentionGroups {
+		for _, g := range sn.settings.MentionGroups {
 			mentionsBuilder.WriteString(fmt.Sprintf("<!subteam^%s>", tmpl(g)))
 		}
 	}
-	if len(sn.MentionUsers) > 0 {
+	if len(sn.settings.MentionUsers) > 0 {
 		appendSpace()
-		for _, u := range sn.MentionUsers {
+		for _, u := range sn.settings.MentionUsers {
 			mentionsBuilder.WriteString(fmt.Sprintf("<@%s>", tmpl(u)))
 		}
 	}
