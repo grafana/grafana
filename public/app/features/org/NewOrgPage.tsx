@@ -23,7 +23,7 @@ interface CreateOrgFormDTO {
 const pageNav: NavModelItem = {
   icon: 'building',
   id: 'org-new',
-  text: 'Add new organization',
+  text: 'New organization',
   breadcrumbs: [{ title: 'Server admin', url: 'admin/orgs' }],
 };
 
