@@ -19,7 +19,7 @@ const pageNav: NavModelItem = {
   icon: 'user',
   id: 'team-new',
   text: 'Add new user',
-  subTitle: 'Add new user information.',
+  subTitle: 'Create a new Grafana user.',
   breadcrumbs: [{ title: 'Server admin', url: 'admin/orgs' }],
 };
 
@@ -28,8 +28,9 @@ const UserCreatePage: React.FC = () => {
 
   const onSubmit = useCallback(
     async (data: UserDTO) => {
-      await createUser(data);
-      history.push('/admin/users');
+      const { id } = await createUser(data);
+
+      history.push(`/admin/users/edit/${id}`);
     },
     [history]
   );
