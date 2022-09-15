@@ -21,7 +21,7 @@ weight: 200
 
 Usage insights enables you to have a better understanding of how your Grafana instance is used.
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../grafana-enterprise" >}}) and [Grafana Cloud Pro and Advanced]({{< ref "/docs/grafana-cloud" >}}). Grafana Cloud insights logs include additional with their own dashboards. Read more [here]({{< ref "/docs/grafana-cloud/usage-insights" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../grafana-enterprise" >}}) and [Grafana Cloud Pro and Advanced]({{< ref "/docs/grafana-cloud" >}}). Grafana Cloud insights logs include additional fields with their own dashboards. Read more [here]({{< ref "/docs/grafana-cloud/usage-insights" >}}).
 
 The usage insights feature collects a number of aggregated data and stores them in the database:
 
