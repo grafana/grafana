@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/searchV2/extract"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/store"
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/blugelabs/bluge"
 )
@@ -462,7 +463,14 @@ func (i *searchIndex) buildOrgIndex(ctx context.Context, orgID int64) (int, erro
 	i.logger.Info("Finish loading org dashboards", "elapsed", orgSearchIndexLoadTime, "orgId", orgID)
 
 	dashboardExtender := i.extender.GetDashboardExtender(orgID)
+
+	_, initOrgIndexSpan := i.tracer.Start(ctx, "searchV2 init org index")
+	initOrgIndexSpan.SetAttributes("org_id", orgID, attribute.Key("org_id").Int64(orgID))
+
 	index, err := initOrgIndex(dashboards, i.logger, dashboardExtender)
+
+	initOrgIndexSpan.End()
+
 	if err != nil {
 		return 0, fmt.Errorf("error initializing index: %w", err)
 	}
