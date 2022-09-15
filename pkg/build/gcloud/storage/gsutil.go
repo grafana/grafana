@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/grafana/grafana/pkg/build/fsutil"
-	"github.com/grafana/grafana/pkg/build/gcloud"
 	"io"
 	"log"
 	"mime"
@@ -17,6 +15,8 @@ import (
 	"time"
 
 	"cloud.google.com/go/storage"
+	"github.com/grafana/grafana/pkg/build/fsutil"
+	"github.com/grafana/grafana/pkg/build/gcloud"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 )
@@ -118,7 +118,11 @@ func (client *Client) Copy(ctx context.Context, file File, bucket *storage.Bucke
 	if err != nil {
 		return fmt.Errorf("failed to open file %s, err: %q", file.FullPath, err)
 	}
-	defer localFile.Close()
+	defer func() {
+		if err := localFile.Close(); err != nil {
+			log.Println("failed to close localfile", "err", err)
+		}
+	}()
 
 	extension := strings.ToLower(path.Ext(file.FullPath))
 	contentType := mime.TypeByExtension(extension)
@@ -132,7 +136,11 @@ func (client *Client) Copy(ctx context.Context, file File, bucket *storage.Bucke
 
 	wc := bucket.Object(objectPath).NewWriter(ctx)
 	wc.ContentType = contentType
-	defer wc.Close()
+	defer func() {
+		if err := wc.Close(); err != nil {
+			log.Println("failed to close writer", "err", err)
+		}
+	}()
 
 	if _, err = io.Copy(wc, localFile); err != nil {
 		return fmt.Errorf("failed to copy to Cloud Storage: %w", err)
@@ -336,7 +344,7 @@ func (client *Client) DownloadDirectory(ctx context.Context, bucket *storage.Buc
 		return fmt.Errorf("destination path %q already exists", destPath)
 	}
 
-	err = os.MkdirAll(destPath, 0755)
+	err = os.MkdirAll(destPath, 0750)
 	if err != nil && !os.IsExist(err) {
 		return err
 	}
@@ -359,6 +367,7 @@ func (client *Client) downloadFile(ctx context.Context, bucket *storage.BucketHa
 	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
+	// nolint:gosec
 	f, err := os.Create(destFileName)
 	if err != nil {
 		return fmt.Errorf("os.Create: %v", err)
@@ -368,7 +377,11 @@ func (client *Client) downloadFile(ctx context.Context, bucket *storage.BucketHa
 	if err != nil {
 		return fmt.Errorf("Object(%q).NewReader: %v", objectName, err)
 	}
-	defer rc.Close()
+	defer func() {
+		if err := rc.Close(); err != nil {
+			log.Println("failed to close reader", "err", err)
+		}
+	}()
 
 	if _, err := io.Copy(f, rc); err != nil {
 		return fmt.Errorf("io.Copy: %v", err)
