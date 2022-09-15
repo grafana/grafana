@@ -122,7 +122,6 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden?: boolean) => {
       bottom: 0,
       flexDirection: 'column',
       left: 0,
-      paddingTop: theme.spacing(1),
       marginRight: theme.spacing(1.5),
       right: 0,
       // Needs to below navbar should we change the navbarFixed? add add a new level?

@@ -135,7 +135,6 @@ const getNavItemStyles = (theme: GrafanaTheme2) => ({
   linkText: css({
     fontSize: theme.typography.pxToRem(14),
     justifySelf: 'start',
-    padding: theme.spacing(0.5, 4.25, 0.5, 0.5),
   }),
   emptyMessage: css({
     color: theme.colors.text.secondary,
