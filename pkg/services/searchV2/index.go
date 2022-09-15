@@ -552,7 +552,7 @@ func (i *searchIndex) reIndexFromScratch(ctx context.Context) {
 }
 
 func (i *searchIndex) applyIndexUpdates(ctx context.Context, lastEventID int64) int64 {
-	events, err := i.eventStore.GetAllEventsAfter(context.Background(), lastEventID)
+	events, err := i.eventStore.GetAllEventsAfter(ctx, lastEventID)
 	if err != nil {
 		i.logger.Error("can't load events", "error", err)
 		return lastEventID
