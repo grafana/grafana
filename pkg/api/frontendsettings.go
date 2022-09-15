@@ -138,7 +138,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"pluginsToPreload":                    pluginsToPreload,
 		"auth": map[string]interface{}{
 			"OAuthSkipOrgRoleUpdateSync": hs.Cfg.OAuthSkipOrgRoleUpdateSync,
-			"SAMLSkipOrgRoleUpdateSync":  hs.Cfg.SectionWithEnvOverrides("auth.saml").Key("skip_org_role_update_sync").MustBool(false),
+			"SAMLSkipOrgRoleSync":        hs.Cfg.SectionWithEnvOverrides("auth.saml").Key("skip_org_role_sync").MustBool(false),
 		},
 		"buildInfo": map[string]interface{}{
 			"hideVersion":   hideVersion,

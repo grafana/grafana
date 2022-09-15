@@ -114,7 +114,7 @@ export class UserAdminPage extends PureComponent<Props> {
     const isUserSynced =
       (user?.isExternal && !(isOAuthUserWithSkippableSync || isSAMLUser)) ||
       (!config.auth.OAuthSkipOrgRoleUpdateSync && isOAuthUserWithSkippableSync) ||
-      (!config.auth.SAMLSkipOrgRoleUpdateSync && isSAMLUser);
+      (!config.auth.SAMLSkipOrgRoleSync && isSAMLUser);
 
     const pageNav: NavModelItem = {
       text: user?.login ?? '',
