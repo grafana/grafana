@@ -198,9 +198,11 @@ export class GeomapPanel extends Component<Props, State> {
       layers.push(await initLayer(this, map, options.basemap ?? DEFAULT_BASEMAP_CONFIG, true));
 
       // Default layer values
-      const layerOptions = options.layers ?? [defaultMarkersConfig];
+      if (!options.layers) {
+        options.layers = [defaultMarkersConfig];
+      }
 
-      for (const lyr of layerOptions) {
+      for (const lyr of options.layers) {
         layers.push(await initLayer(this, map, lyr, false));
       }
     } catch (ex) {
