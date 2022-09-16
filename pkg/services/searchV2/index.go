@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/searchV2/dslookup"
 	"github.com/grafana/grafana/pkg/services/searchV2/extract"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -96,9 +97,10 @@ type searchIndex struct {
 	folderIdLookup          folderUIDLookup
 	syncCh                  chan chan struct{}
 	tracer                  tracing.Tracer
+	features                featuremgmt.FeatureToggles
 }
 
-func newSearchIndex(dashLoader dashboardLoader, evStore eventStore, extender DocumentExtender, folderIDs folderUIDLookup, tracer tracing.Tracer) *searchIndex {
+func newSearchIndex(dashLoader dashboardLoader, evStore eventStore, extender DocumentExtender, folderIDs folderUIDLookup, tracer tracing.Tracer, features featuremgmt.FeatureToggles) *searchIndex {
 	return &searchIndex{
 		loader:          dashLoader,
 		eventStore:      evStore,
@@ -110,6 +112,7 @@ func newSearchIndex(dashLoader dashboardLoader, evStore eventStore, extender Doc
 		folderIdLookup:  folderIDs,
 		syncCh:          make(chan chan struct{}),
 		tracer:          tracer,
+		features:        features,
 	}
 }
 
@@ -268,9 +271,9 @@ func (i *searchIndex) run(ctx context.Context, orgIDs []int64, reIndexSignalCh c
 				defer func() { <-asyncReIndexSemaphore }()
 
 				started := time.Now()
-				i.logger.Info("Start re-indexing", withTraceID(fullReindexCtx)...)
+				i.logger.Info("Start re-indexing", i.withCtxData(fullReindexCtx)...)
 				i.reIndexFromScratch(fullReindexCtx)
-				i.logger.Info("Full re-indexing finished", withTraceID(fullReindexCtx, "fullReIndexElapsed", time.Since(started))...)
+				i.logger.Info("Full re-indexing finished", i.withCtxData(fullReindexCtx, "fullReIndexElapsed", time.Since(started))...)
 				reIndexDoneCh <- lastIndexedEventID
 			}()
 		case lastIndexedEventID := <-reIndexDoneCh:
@@ -452,6 +455,8 @@ func (i *searchIndex) reportSizeOfIndexDiskBackup(orgID int64) {
 func (i *searchIndex) buildOrgIndex(ctx context.Context, orgID int64) (int, error) {
 	started := time.Now()
 	ctx, cancel := context.WithTimeout(ctx, time.Minute)
+	ctx = log.InitCounter(ctx)
+
 	defer cancel()
 
 	i.logger.Info("Start building org index", "orgId", orgID)
@@ -478,7 +483,7 @@ func (i *searchIndex) buildOrgIndex(ctx context.Context, orgID int64) (int, erro
 	orgSearchIndexBuildTime := orgSearchIndexTotalTime - orgSearchIndexLoadTime
 
 	i.logger.Info("Re-indexed dashboards for organization",
-		withTraceID(ctx, "orgId", orgID,
+		i.withCtxData(ctx, "orgId", orgID,
 			"orgSearchIndexLoadTime", orgSearchIndexLoadTime,
 			"orgSearchIndexBuildTime", orgSearchIndexBuildTime,
 			"orgSearchIndexTotalTime", orgSearchIndexTotalTime,
@@ -559,15 +564,21 @@ func (i *searchIndex) reIndexFromScratch(ctx context.Context) {
 	}
 }
 
-func withTraceID(ctx context.Context, params ...interface{}) []interface{} {
+func (i *searchIndex) withCtxData(ctx context.Context, params ...interface{}) []interface{} {
 	traceID := tracing.TraceIDFromContext(ctx, false)
 	if traceID != "" {
-		return append(params, "traceID", traceID)
+		params = append(params, "traceID", traceID)
 	}
+
+	if i.features.IsEnabled(featuremgmt.FlagDatabaseMetrics) {
+		params = append(params, "db_call_count", log.TotalDBCallCount(ctx))
+	}
+
 	return params
 }
 
 func (i *searchIndex) applyIndexUpdates(ctx context.Context, lastEventID int64) int64 {
+	ctx = log.InitCounter(ctx)
 	events, err := i.eventStore.GetAllEventsAfter(ctx, lastEventID)
 	if err != nil {
 		i.logger.Error("can't load events", "error", err)
@@ -585,7 +596,7 @@ func (i *searchIndex) applyIndexUpdates(ctx context.Context, lastEventID int64) 
 		}
 		lastEventID = e.Id
 	}
-	i.logger.Info("Index updates applied", withTraceID(ctx, "indexEventsAppliedElapsed", time.Since(started), "numEvents", len(events))...)
+	i.logger.Info("Index updates applied", i.withCtxData(ctx, "indexEventsAppliedElapsed", time.Since(started), "numEvents", len(events))...)
 	return lastEventID
 }
 
