@@ -11,4 +11,5 @@ weight: 107
 
 Configure the features and integrations that you need to create and manage your alerts.
 
-- [Alertmanager](https://grafana.com/docs/grafana/latest/alerting/set-up/Alertmanager/)
+- [Alertmanager](https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/)
+- [Provisioning](https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/)
