@@ -10,8 +10,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	datasourcesService "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -82,8 +84,8 @@ func GenerateDatasourcePermissions(b *testing.B, db *sqlstore.SQLStore, ac *stor
 			Access: datasources.DS_ACCESS_DIRECT,
 			Url:    "http://test",
 		}
-
-		_ = db.AddDataSource(context.Background(), addDSCommand)
+		dsStore := datasourcesService.CreateStore(db, log.New("publicdashboards.test"))
+		_ = dsStore.AddDataSource(context.Background(), addDSCommand)
 		dataSources = append(dataSources, addDSCommand.Result.Id)
 	}
 

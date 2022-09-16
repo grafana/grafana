@@ -36,7 +36,7 @@ const setup = () => {
   const context = getGrafanaContextMock();
   const store = configureStore({ navBarTree });
 
-  context.chrome.toggleMegaMenu();
+  context.chrome.onToggleMegaMenu();
 
   return render(
     <Provider store={store}>
