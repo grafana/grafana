@@ -28,5 +28,5 @@
     command: filebeat -e -strict.perms=false
     volumes:
       - ./docker/blocks/elastic8/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
-      - /var/log:/var/log:ro
+      # - /var/log:/var/log:ro
       - ../data/log:/var/log/grafana:ro
