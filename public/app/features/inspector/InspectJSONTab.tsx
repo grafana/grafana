@@ -10,7 +10,7 @@ import { Button, CodeEditor, Field, Select } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 
-import { getPanelDataFrames } from '../dashboard/components/DebugWizard/utils';
+import { getPanelDataFrames } from '../dashboard/components/SupportSnapshot/utils';
 import { getPanelInspectorStyles } from '../inspector/styles';
 
 import { InspectTab } from './types';
@@ -136,7 +136,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
 
   onShowSupportWizard = () => {
     const queryParms = locationService.getSearch();
-    queryParms.set('inspectTab', InspectTab.Debug.toString());
+    queryParms.set('inspectTab', InspectTab.Support.toString());
     locationService.push('?' + queryParms.toString());
   };
 
@@ -170,7 +170,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
           )}
           {show === ShowContent.DataFrames && (
             <Button className={styles.toolbarItem} onClick={this.onShowSupportWizard}>
-              Debug
+              Support
             </Button>
           )}
         </div>

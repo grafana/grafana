@@ -51,6 +51,7 @@ func TestAdd(t *testing.T) {
 func TestRemove(t *testing.T) {
 	pluginDir := t.TempDir()
 	pluginJSON := filepath.Join(pluginDir, "plugin.json")
+	//nolint:gosec
 	_, err := os.Create(pluginJSON)
 	require.NoError(t, err)
 
@@ -74,6 +75,7 @@ func TestRemove(t *testing.T) {
 		err = os.Mkdir(pluginDistDir, os.ModePerm)
 		require.NoError(t, err)
 		pluginJSON = filepath.Join(pluginDistDir, "plugin.json")
+		//nolint:gosec
 		_, err = os.Create(pluginJSON)
 		require.NoError(t, err)
 

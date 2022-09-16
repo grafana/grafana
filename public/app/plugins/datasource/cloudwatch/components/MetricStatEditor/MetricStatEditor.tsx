@@ -61,7 +61,7 @@ export function MetricStatEditor({
           <EditorField label="Namespace" width={26}>
             <Select
               aria-label="Namespace"
-              value={metricStat.namespace}
+              value={metricStat?.namespace && toOption(metricStat.namespace)}
               allowCustomValue
               options={namespaces}
               onChange={({ value: namespace }) => {
@@ -74,7 +74,7 @@ export function MetricStatEditor({
           <EditorField label="Metric name" width={16}>
             <Select
               aria-label="Metric name"
-              value={metricStat.metricName || null}
+              value={metricStat?.metricName && toOption(metricStat.metricName)}
               allowCustomValue
               options={metrics}
               onChange={({ value: metricName }) => {

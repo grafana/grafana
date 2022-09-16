@@ -1,5 +1,7 @@
 import { VariableModel } from 'app/features/variables/types';
 
+import { updateConfig } from '../../../../core/config';
+
 import {
   PublicDashboard,
   dashboardHasTemplateVariables,
@@ -23,9 +25,13 @@ describe('dashboardHasTemplateVariables', () => {
 });
 
 describe('generatePublicDashboardUrl', () => {
-  it('has the right uid', () => {
-    let pubdash = { accessToken: 'abcd1234' } as PublicDashboard;
-    expect(generatePublicDashboardUrl(pubdash)).toEqual(`${window.location.origin}/public-dashboards/abcd1234`);
+  it('uses the grafana config appUrl to generate the url', () => {
+    const appUrl = 'http://localhost/';
+    const accessToken = 'abcd1234';
+    updateConfig({ appUrl });
+    let pubdash = { accessToken } as PublicDashboard;
+
+    expect(generatePublicDashboardUrl(pubdash)).toEqual(`${appUrl}public-dashboards/${accessToken}`);
   });
 });
 

@@ -100,6 +100,7 @@ Object {
   ],
   "scales": Object {
     "__fixed/na-na/na-na/auto/linear/na": Object {
+      "asinh": undefined,
       "auto": true,
       "dir": 1,
       "distr": 1,

@@ -5,21 +5,21 @@ import Drop from 'tether-drop';
 import { locationSearchToObject, navigationLogger, reportPageview } from '@grafana/runtime';
 
 import { useGrafana } from '../context/GrafanaContext';
-import { keybindingSrv } from '../services/keybindingSrv';
 
 import { GrafanaRouteComponentProps, RouteDescriptor } from './types';
 
 export interface Props extends Omit<GrafanaRouteComponentProps, 'queryParams'> {}
 
 export function GrafanaRoute(props: Props) {
-  const { chrome } = useGrafana();
+  const { chrome, keybindings } = useGrafana();
 
-  chrome.registerRouteRender(props.route);
+  chrome.setMatchedRoute(props.route);
 
   useEffect(() => {
+    keybindings.clearAndInitGlobalBindings();
+
     updateBodyClassNames(props.route);
     cleanupDOM();
-    reportPageview();
     navigationLogger('GrafanaRoute', false, 'Mounted', props.match);
 
     return () => {
@@ -29,12 +29,6 @@ export function GrafanaRoute(props: Props) {
     // props.match instance change even though only query params changed so to make this effect only trigger on route mount we have to disable exhaustive-deps
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useEffect(() => {
-    // unbinds all and re-bind global keybindins
-    keybindingSrv.reset();
-    keybindingSrv.initGlobals();
-  }, [chrome, props.route]);
 
   useEffect(() => {
     cleanupDOM();

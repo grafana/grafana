@@ -3,8 +3,6 @@ load(
     'identify_runner_step',
     'download_grabpl_step',
     'wire_install_step',
-    'codespell_step',
-    'shellcheck_step',
     'lint_backend_step',
     'lint_drone_step',
     'test_backend_step',
@@ -27,8 +25,6 @@ def test_backend(trigger, ver_mode):
         wire_install_step(),
     ]
     test_steps = [
-        codespell_step(),
-        shellcheck_step(),
         lint_backend_step(edition="oss"),
         test_backend_step(edition="oss"),
         test_backend_integration_step(edition="oss"),

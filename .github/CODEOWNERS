@@ -27,6 +27,10 @@ go.sum @grafana/backend-platform
 # Backend code, developers environment
 /devenv/docker/blocks/auth @grafana/grafana-authnz-team
 
+# Logs code, developers environment
+/devenv/docker/blocks/loki* @grafana/observability-logs
+/devenv/docker/blocks/elastic* @grafana/observability-logs
+
 # Continuous Integration
 .drone.yml @grafana/grafana-release-eng
 .drone.star @grafana/grafana-release-eng
@@ -71,6 +75,7 @@ pkg/tsdb/testdatasource/sims/ @grafana/grafana-edge-squad
 /pkg/services/alerting @grafana/alerting-squad-backend
 /pkg/tests/api/alerting @grafana/alerting-squad-backend
 /public/app/features/alerting @grafana/alerting-squad-frontend
+/docs/sources/alerting @brendamuir
 
 # Library Services
 /pkg/services/libraryelements @grafana/user-essentials

@@ -9,17 +9,19 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel/trace"
 	"gopkg.in/ini.v1"
 
+	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
+	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
@@ -57,20 +59,27 @@ func TestIntegrationPluginManager_Run(t *testing.T) {
 	require.NoError(t, err)
 
 	features := featuremgmt.WithFeatures()
+
+	// We use the raw config here as it forms the basis for the setting.Provider implementation
+	// The plugin manager also relies directly on the setting.Cfg struct to provide Grafana specific
+	// properties such as the loading paths
+	raw, err := ini.Load([]byte(`
+		app_mode = production
+
+		[plugin.test-app]
+		path=testdata/test-app
+
+		[plugin.test-panel]
+		not=included
+		`),
+	)
+	require.NoError(t, err)
+
 	cfg := &setting.Cfg{
-		Raw:                    ini.Empty(),
-		Env:                    setting.Prod,
-		StaticRootPath:         staticRootPath,
-		BundledPluginsPath:     bundledPluginsPath,
-		IsFeatureToggleEnabled: features.IsEnabled,
-		PluginSettings: map[string]map[string]string{
-			"plugin.test-app": {
-				"path": "testdata/test-app",
-			},
-			"plugin.test-panel": {
-				"not": "included",
-			},
-		},
+		Raw:                raw,
+		StaticRootPath:     staticRootPath,
+		BundledPluginsPath: bundledPluginsPath,
+		Azure:              &azsettings.AzureSettings{},
 	}
 
 	tracer := &fakeTracer{}
@@ -99,9 +108,9 @@ func TestIntegrationPluginManager_Run(t *testing.T) {
 
 	coreRegistry := coreplugin.ProvideCoreRegistry(am, cw, cm, es, grap, idb, lk, otsdb, pr, tmpo, td, pg, my, ms, graf)
 
-	pmCfg := plugins.FromGrafanaCfg(cfg)
+	pCfg := config.ProvideConfig(setting.ProvideProvider(cfg), cfg)
 	reg := registry.ProvideService()
-	pm, err := ProvideService(cfg, reg, loader.New(pmCfg, license, signature.NewUnsignedAuthorizer(pmCfg),
+	pm, err := ProvideService(pCfg, cfg, reg, loader.New(pCfg, license, signature.NewUnsignedAuthorizer(pCfg),
 		provider.ProvideService(coreRegistry)), nil)
 	require.NoError(t, err)
 	ps := store.ProvideService(reg)
