@@ -1,14 +1,7 @@
 import React, { CSSProperties } from 'react';
 import tinycolor from 'tinycolor2';
 
-import {
-  formattedValueToString,
-  DisplayValue,
-  FieldConfig,
-  FieldType,
-  VizOrientation,
-  GrafanaTheme2,
-} from '@grafana/data';
+import { formattedValueToString, DisplayValue, FieldConfig, FieldType, VizOrientation } from '@grafana/data';
 import { GraphDrawStyle, GraphFieldConfig } from '@grafana/schema';
 
 import { getTextColorForBackground } from '../../utils';
@@ -63,14 +56,14 @@ export abstract class BigValueLayout {
     }
   }
 
-  getTitleStyles(theme: GrafanaTheme2): CSSProperties {
+  getTitleStyles(): CSSProperties {
     const styles: CSSProperties = {
       fontSize: `${this.titleFontSize}px`,
       lineHeight: LINE_HEIGHT,
     };
 
     if (this.props.parentOrientation === VizOrientation.Horizontal && this.justifyCenter) {
-      styles.paddingRight = this.props.theme.spacing(1);
+      styles.paddingRight = '0.75ch';
     }
 
     if (this.props.colorMode === BigValueColorMode.Background) {

@@ -79,12 +79,12 @@ export class BigValue extends PureComponent<Props> {
   };
 
   render() {
-    const { onClick, className, hasLinks, theme } = this.props;
+    const { onClick, className, hasLinks } = this.props;
     const layout = buildLayout(this.props);
     const panelStyles = layout.getPanelStyles();
     const valueAndTitleContainerStyles = layout.getValueAndTitleContainerStyles();
     const valueStyles = layout.getValueStyles();
-    const titleStyles = layout.getTitleStyles(theme);
+    const titleStyles = layout.getTitleStyles();
     const textValues = layout.textValues;
 
     // When there is an outer data link this tooltip will override the outer native tooltip
