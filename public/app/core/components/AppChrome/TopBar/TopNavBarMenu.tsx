@@ -48,10 +48,6 @@ export function TopNavBarMenu({ node }: TopNavBarMenuProps) {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    icon: css`
-      margin-left: ${theme.spacing(1)};
-      color: ${theme.colors.text.secondary};
-    `,
     header: css({
       fontSize: theme.typography.h5.fontSize,
       fontWeight: theme.typography.h5.fontWeight,
