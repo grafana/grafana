@@ -850,7 +850,7 @@ func (ss *SQLStore) SetUserHelpFlag(ctx context.Context, cmd *models.SetUserHelp
 		user := user.User{
 			ID:         cmd.UserId,
 			HelpFlags1: cmd.HelpFlags1,
-			Updated:    time.Now(),
+			Updated:    TimeNow(),
 		}
 
 		_, err := sess.ID(cmd.UserId).Cols("help_flags1").Update(&user)
