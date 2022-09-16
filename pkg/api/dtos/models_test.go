@@ -1,6 +1,7 @@
 package dtos
 
 import (
+	"sort"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -17,7 +18,7 @@ func TestGetUniqueDatasourceTypes(t *testing.T) {
 	}{
 		{
 			desc:   "can get unique datasource names",
-			result: []string{"prometheus", "mysql"},
+			result: []string{"mysql", "prometheus"},
 			queries: []*simplejson.Json{
 				simplejson.NewFromAny(map[string]interface{}{
 					"datasource": map[string]interface{}{
@@ -63,6 +64,7 @@ func TestGetUniqueDatasourceTypes(t *testing.T) {
 				Queries: testcase.queries,
 			}
 			result := metReq.GetUniqueDatasourceTypes()
+			sort.Strings(result)
 			assert.Equal(t, testcase.result, result)
 		})
 	}
