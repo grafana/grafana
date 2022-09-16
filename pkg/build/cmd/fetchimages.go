@@ -2,13 +2,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/grafana/grafana/pkg/build/config"
-	"github.com/grafana/grafana/pkg/build/docker"
-	"github.com/grafana/grafana/pkg/build/gcloud"
+	"log"
 	"os/exec"
 	"strings"
 
-	"github.com/rs/zerolog/log"
+	"github.com/grafana/grafana/pkg/build/config"
+	"github.com/grafana/grafana/pkg/build/docker"
+	"github.com/grafana/grafana/pkg/build/gcloud"
 	"github.com/urfave/cli/v2"
 )
 
@@ -75,28 +75,28 @@ func FetchImages(c *cli.Context) error {
 }
 
 func loadImages(cfg docker.Config, basesStr []string, edition string) error {
-	log.Info().Msgf("Loading fetched image files to local docker registry...")
-	log.Debug().Msgf("Number of images to be loaded: %d", len(basesStr)*len(cfg.Archs))
+	log.Println("Loading fetched image files to local docker registry...")
+	log.Printf("Number of images to be loaded: %d\n", len(basesStr)*len(cfg.Archs))
 	for _, base := range basesStr {
 		for _, arch := range cfg.Archs {
 			imageFilename := fmt.Sprintf("grafana%s-%s%s-%s.img", edition, cfg.Tag, base, arch)
-			log.Info().Msgf("image file name: %s", imageFilename)
+			log.Printf("image file name: %s\n", imageFilename)
 			cmd := exec.Command("docker", "load", "-i", imageFilename)
 			cmd.Dir = "."
 			out, err := cmd.CombinedOutput()
 			if err != nil {
-				log.Info().Msgf("out: %s", out)
+				log.Printf("out: %s\n", out)
 				return fmt.Errorf("error loading image: %q", err)
 			}
-			log.Info().Msgf("Successfully loaded %s!\n %s", fmt.Sprintf("grafana%s-%s%s-%s", edition, cfg.Tag, base, arch), out)
+			log.Printf("Successfully loaded %s!\n %s\n", fmt.Sprintf("grafana%s-%s%s-%s", edition, cfg.Tag, base, arch), out)
 		}
 	}
-	log.Info().Msgf("Images successfully loaded!")
+	log.Println("Images successfully loaded!")
 	return nil
 }
 
 func downloadFromGCS(cfg docker.Config, basesStr []string, edition string) error {
-	log.Info().Msgf("Downloading Docker images from GCS bucket: %s", cfg.Bucket)
+	log.Printf("Downloading Docker images from GCS bucket: %s\n", cfg.Bucket)
 
 	for _, base := range basesStr {
 		for _, arch := range cfg.Archs {
@@ -109,6 +109,6 @@ func downloadFromGCS(cfg docker.Config, basesStr []string, edition string) error
 			}
 		}
 	}
-	log.Info().Msgf("Successfully fetched image files from %s bucket!", cfg.Bucket)
+	log.Printf("Successfully fetched image files from %s bucket!\n", cfg.Bucket)
 	return nil
 }
