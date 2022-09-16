@@ -48,6 +48,12 @@ export function getAppRoutes(): RouteDescriptor[] {
             }
           },
         },
+        {
+          path: '/dashboards/browse',
+          component: SafeDynamicImport(
+            () => import(/* webpackChunkName: "DashboardListPage"*/ 'app/features/search/components/DashboardListPage')
+          ),
+        },
       ]
     : [];
 
@@ -153,9 +159,11 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/dashboards',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "DashboardListPage"*/ 'app/features/search/components/DashboardListPage')
-      ),
+      component: config.featureToggles.topnav
+        ? () => <NavLandingPage navId="dashboards" />
+        : SafeDynamicImport(
+            () => import(/* webpackChunkName: "DashboardListPage"*/ 'app/features/search/components/DashboardListPage')
+          ),
     },
     {
       path: '/dashboards/folder/new',

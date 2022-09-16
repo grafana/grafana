@@ -209,10 +209,6 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 			Children:   dashboardChildLinks,
 		}
 
-		if hs.Features.IsEnabled(featuremgmt.FlagTopnav) {
-			dashboardLink.Id = "dashboards/browse"
-		}
-
 		navTree = append(navTree, dashboardLink)
 	}
 
@@ -516,11 +512,18 @@ func (hs *HTTPServer) buildDashboardNavLinks(c *models.ReqContext, hasEditPerm b
 	}
 
 	dashboardChildNavs := []*dtos.NavLink{}
-	if !hs.Features.IsEnabled(featuremgmt.FlagTopnav) {
-		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
-			Text: "Browse", Id: "dashboards/browse", Url: hs.Cfg.AppSubURL + "/dashboards", Icon: "sitemap",
-		})
+	browseNavLink := &dtos.NavLink{
+		Text: "Browse",
+		Id:   "dashboards/browse",
+		Url:  hs.Cfg.AppSubURL + "/dashboards",
+		Icon: "sitemap",
 	}
+
+	if hs.Features.IsEnabled(featuremgmt.FlagTopnav) {
+		browseNavLink.Url = hs.Cfg.AppSubURL + "/dashboards/browse"
+	}
+
+	dashboardChildNavs = append(dashboardChildNavs, browseNavLink)
 	dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
 		Text: "Playlists", Id: "dashboards/playlists", Url: hs.Cfg.AppSubURL + "/playlists", Icon: "presentation-play",
 	})
