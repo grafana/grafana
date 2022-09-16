@@ -115,7 +115,7 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden?: boolean) => {
       position: 'fixed',
       right: 0,
       top: topPosition,
-      zIndex: theme.zIndex.navbarFixed - 2,
+      zIndex: theme.zIndex.modalBackdrop,
     }),
     container: css({
       display: 'flex',
@@ -125,7 +125,7 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden?: boolean) => {
       marginRight: theme.spacing(1.5),
       right: 0,
       // Needs to below navbar should we change the navbarFixed? add add a new level?
-      zIndex: theme.zIndex.navbarFixed - 1,
+      zIndex: theme.zIndex.modal,
       position: 'fixed',
       top: topPosition,
       backgroundColor: theme.colors.background.primary,
