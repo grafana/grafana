@@ -42,8 +42,8 @@ type Buckets struct {
 	StorybookSrcDir      string `json:"storybookSrcDir,omitempty"`
 }
 
-// ReleaseModeConfig represents the "version.json" that defines all of the different variables used to build Grafana
-type ReleaseModeConfig struct {
+// BuildConfig represents the struct that defines all of the different variables used to build Grafana
+type BuildConfig struct {
 	Variants        []Variant       `json:"variants,omitempty"`
 	PluginSignature PluginSignature `json:"pluginSignature,omitempty"`
 	Docker          Docker          `json:"docker,omitempty"`
@@ -57,10 +57,10 @@ func (md *Metadata) GetReleaseMode() (ReleaseMode, error) {
 // VersionMap is a map of versions. Each key of the Versions map is an event that uses the the config as the value for that key.
 // For example, the 'pull_request' key will have data in it that might cause Grafana to be built differently in a pull request,
 // than the way it will be built in 'main'
-type VersionMap map[VersionMode]ReleaseModeConfig
+type VersionMap map[VersionMode]BuildConfig
 
-// GetReleaseModeConfig reads the embedded config.json and decodes it.
-func GetReleaseModeConfig(mode VersionMode) (*ReleaseModeConfig, error) {
+// GetBuildConfig reads the embedded config.json and decodes it.
+func GetBuildConfig(mode VersionMode) (*BuildConfig, error) {
 	if v, ok := Versions[mode]; ok {
 		return &v, nil
 	}
