@@ -12,7 +12,7 @@ import { lokiQueryModeller } from '../LokiQueryModeller';
 import { buildVisualQueryFromString } from '../parsing';
 import { LokiQueryPattern, LokiQueryPatternType } from '../types';
 
-import { QueryPatternsCard } from './QueryPatternsCard';
+import { QueryPattern } from './QueryPattern';
 
 type Props = {
   isOpen: boolean;
@@ -89,7 +89,7 @@ export const QueryPatternsModal = (props: Props) => {
                 .getQueryPatterns()
                 .filter((pattern) => pattern.type === patternType)
                 .map((pattern) => (
-                  <QueryPatternsCard
+                  <QueryPattern
                     key={pattern.name}
                     pattern={pattern}
                     hasNewQueryOption={hasNewQueryOption}

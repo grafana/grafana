@@ -18,7 +18,7 @@ type Props = {
   onPatternSelect: (pattern: LokiQueryPattern, selectAsNewQuery?: boolean) => void;
 };
 
-export const QueryPatternsCard = (props: Props) => {
+export const QueryPattern = (props: Props) => {
   const { pattern, onPatternSelect, hasNewQueryOption, hasPreviousQuery, selectedPatternName, setSelectedPatternName } =
     props;
 
