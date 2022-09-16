@@ -62,7 +62,6 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-
 		jsonData := map[string]interface{}{}
 		err := json.Unmarshal(settings.JSONData, &jsonData)
 		if err != nil {
