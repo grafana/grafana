@@ -21,7 +21,13 @@ const defaultTimeRange: TimeRange = {
 
 function setup(initial: TimeRange = defaultTimeRange, timeZone = 'utc'): TimeRangeFormRenderResult {
   const result = render(
-    <TimeRangeContent isFullscreen={true} value={initial} onApply={() => {}} timeZone={timeZone} />
+    <TimeRangeContent
+      isFullscreen={true}
+      value={initial}
+      onApply={() => {}}
+      timeZone={timeZone}
+      calendarHeaderTitle="Select a time range"
+    />
   );
 
   return {

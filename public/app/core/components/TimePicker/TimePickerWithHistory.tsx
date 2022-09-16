@@ -1,3 +1,4 @@
+import { t } from '@lingui/macro';
 import React from 'react';
 
 import { TimeRange, isDateTime, toUtc } from '@grafana/data';
@@ -7,7 +8,28 @@ import { LocalStorageValueProvider } from '../LocalStorageValueProvider';
 
 const LOCAL_STORAGE_KEY = 'grafana.dashboard.timepicker.history';
 
-interface Props extends Omit<TimeRangePickerProps, 'history' | 'theme'> {}
+interface Props extends Omit<TimeRangePickerProps, 'history' | 'theme' | 'timePickerTitles'> {}
+
+const timePickerContentTitle = t({
+  id: 'dashboard.time-picker-content.title',
+  message: `Absolute time range`,
+});
+
+const timeRangeListTitle = t({
+  id: 'dashboard.time-range-list.title',
+  message: `Recently used absolute ranges`,
+});
+
+const calendarHeaderTitle = t({
+  id: 'dashboard.calendar-header-title.title',
+  message: `Select a time range`,
+});
+
+export const timePickerTitles = {
+  timePickerContentTitle,
+  timeRangeListTitle,
+  calendarHeaderTitle,
+};
 
 export const TimePickerWithHistory = (props: Props) => {
   return (
@@ -16,6 +38,7 @@ export const TimePickerWithHistory = (props: Props) => {
         return (
           <TimeRangePicker
             {...props}
+            timePickerTitles={timePickerTitles}
             history={convertIfJson(values)}
             onChange={(value) => {
               onAppendToHistory(value, values, onSaveToStore);

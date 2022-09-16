@@ -41,6 +41,11 @@ export interface TimeRangePickerProps {
   history?: TimeRange[];
   hideQuickRanges?: boolean;
   widthOverride?: number;
+  timePickerTitles: {
+    timePickerContentTitle: string;
+    timeRangeListTitle: string;
+    calendarHeaderTitle: string;
+  };
   isOnCanvas?: boolean;
 }
 
@@ -65,6 +70,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
     onChangeFiscalYearStartMonth,
     hideQuickRanges,
     widthOverride,
+    timePickerTitles,
     isOnCanvas,
   } = props;
 
@@ -120,6 +126,9 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
         <FocusScope contain autoFocus>
           <section ref={ref} {...overlayProps} {...dialogProps}>
             <TimePickerContent
+              timePickerContentTitle={timePickerTitles.timePickerContentTitle}
+              timeRangeListTitle={timePickerTitles.timeRangeListTitle}
+              calendarHeaderTitle={timePickerTitles.calendarHeaderTitle}
               timeZone={timeZone}
               fiscalYearStartMonth={fiscalYearStartMonth}
               value={value}

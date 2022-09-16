@@ -14,10 +14,17 @@ const value: TimeRange = {
   raw: { from, to },
 };
 
+const timePickerTitles = {
+  timePickerContentTitle: 'Absolute time range',
+  timeRangeListTitle: 'Recently used absolute ranges',
+  calendarHeaderTitle: 'Select a time range',
+};
+
 describe('TimePicker', () => {
   it('renders buttons correctly', () => {
     const container = render(
       <TimeRangePicker
+        timePickerTitles={timePickerTitles}
         onChangeTimeZone={() => {}}
         onChange={(value) => {}}
         value={value}

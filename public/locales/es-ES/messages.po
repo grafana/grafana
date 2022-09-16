@@ -19,6 +19,14 @@ msgstr ""
 "X-Crowdin-File: /main/public/locales/en-US/messages.po\n"
 "X-Crowdin-File-ID: 59\n"
 
+#: public/app/features/alerting/unified/components/rule-editor/QueryWrapper.tsx
+msgid "alerting.time-ranger-picker-list.title"
+msgstr ""
+
+#: public/app/features/alerting/unified/components/rule-editor/QueryWrapper.tsx
+msgid "alerting.time-ranger-picker.title"
+msgstr ""
+
 #: public/app/core/components/SharedPreferences/SharedPreferences.tsx
 msgid "common.locale.default"
 msgstr ""
@@ -38,6 +46,10 @@ msgstr ""
 #: public/app/core/components/SharedPreferences/SharedPreferences.tsx
 #: public/app/features/profile/UserProfileEditForm.tsx
 msgid "common.save"
+msgstr ""
+
+#: public/app/core/components/TimePicker/TimePickerWithHistory.tsx
+msgid "dashboard.calendar-header-title.title"
 msgstr ""
 
 #: public/app/features/inspector/InspectDataOptions.tsx
@@ -222,6 +234,14 @@ msgstr ""
 
 #: public/app/features/dashboard/components/DashNav/DashNavTimeControls.tsx
 msgid "dashboard.refresh-picker.on-description"
+msgstr ""
+
+#: public/app/core/components/TimePicker/TimePickerWithHistory.tsx
+msgid "dashboard.time-picker-content.title"
+msgstr ""
+
+#: public/app/core/components/TimePicker/TimePickerWithHistory.tsx
+msgid "dashboard.time-range-list.title"
 msgstr ""
 
 #: public/app/features/dashboard/components/DashNav/DashNav.tsx
@@ -826,4 +846,3 @@ msgstr ""
 #: public/app/features/profile/UserSessions.tsx
 msgid "user-sessions.loading"
 msgstr ""
-

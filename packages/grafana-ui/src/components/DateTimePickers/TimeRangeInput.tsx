@@ -31,6 +31,11 @@ export interface TimeRangeInputProps {
   /** Controls visibility of the preset time ranges (e.g. **Last 5 minutes**) in the picker menu */
   hideQuickRanges?: boolean;
   disabled?: boolean;
+  timePickerTitles: {
+    timePickerContentTitle: string;
+    timeRangeListTitle: string;
+    calendarHeaderTitle: string;
+  };
 }
 
 const noop = () => {};
@@ -46,6 +51,7 @@ export const TimeRangeInput: FC<TimeRangeInputProps> = ({
   isReversed = true,
   hideQuickRanges = false,
   disabled = false,
+  timePickerTitles,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const theme = useTheme2();
@@ -102,6 +108,7 @@ export const TimeRangeInput: FC<TimeRangeInputProps> = ({
       {isOpen && (
         <ClickOutsideWrapper includeButtonPress={false} onClick={onClose}>
           <TimePickerContent
+            {...timePickerTitles}
             timeZone={timeZone}
             value={isValidTimeRange(value) ? value : getDefaultTimeRange()}
             onChange={onRangeChange}

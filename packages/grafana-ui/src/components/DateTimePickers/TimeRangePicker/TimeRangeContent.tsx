@@ -31,6 +31,7 @@ interface Props {
   fiscalYearStartMonth?: number;
   roundup?: boolean;
   isReversed?: boolean;
+  calendarHeaderTitle: string;
 }
 
 interface InputState {
@@ -44,8 +45,16 @@ const ERROR_MESSAGES = {
   range: '"From" can\'t be after "To"',
 };
 
-export const TimeRangeContent = (props: Props) => {
-  const { value, isFullscreen = false, timeZone, onApply: onApplyFromProps, isReversed, fiscalYearStartMonth } = props;
+export const TimeRangeContent: React.FC<Props> = (props) => {
+  const {
+    value,
+    isFullscreen = false,
+    timeZone,
+    onApply: onApplyFromProps,
+    isReversed,
+    fiscalYearStartMonth,
+    calendarHeaderTitle,
+  } = props;
   const [fromValue, toValue] = valueToState(value.raw.from, value.raw.to, timeZone);
   const style = useStyles2(getStyles);
 
@@ -149,6 +158,7 @@ export const TimeRangeContent = (props: Props) => {
       </Button>
 
       <TimePickerCalendar
+        calendarHeaderTitle={calendarHeaderTitle}
         isFullscreen={isFullscreen}
         isOpen={isOpen}
         from={dateTimeParse(from.value)}

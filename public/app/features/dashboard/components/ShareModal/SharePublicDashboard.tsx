@@ -21,6 +21,7 @@ import {
   VerticalGroup,
 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
+import { timePickerTitles } from 'app/core/components/TimePicker/TimePickerWithHistory';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 import { dispatch } from 'app/store/store';
@@ -206,7 +207,7 @@ export const SharePublicDashboard = (props: Props) => {
                   <Label description="The public dashboard uses the default time settings of the dashboard">
                     Time Range
                   </Label>
-                  <TimeRangeInput value={timeRange} disabled onChange={() => {}} />
+                  <TimeRangeInput timePickerTitles={timePickerTitles} value={timeRange} disabled onChange={() => {}} />
                 </HorizontalGroup>
                 <HorizontalGroup spacing="xs" justify="space-between">
                   <Label description="Configures whether current dashboard can be available publicly">Enabled</Label>

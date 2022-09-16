@@ -29,6 +29,10 @@ import {
 export interface RelativeTimeRangePickerProps {
   timeRange: RelativeTimeRange;
   onChange: (timeRange: RelativeTimeRange) => void;
+  relativeTimeRangePickerTitles: {
+    pickerTitle: string;
+    timeRangeListTitle: string;
+  };
 }
 
 type InputState = {
@@ -42,7 +46,7 @@ const validOptions = quickOptions.filter((o) => isRelativeFormat(o.from));
  * @internal
  */
 export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
-  const { timeRange, onChange } = props;
+  const { timeRange, onChange, relativeTimeRangePickerTitles } = props;
   const [isOpen, setIsOpen] = useState(false);
   const onClose = useCallback(() => setIsOpen(false), []);
   const timeOption = mapRelativeTimeRangeToOption(timeRange);
@@ -111,7 +115,7 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
             <div className={styles.body}>
               <CustomScrollbar className={styles.leftSide} hideHorizontalTrack>
                 <TimeRangeList
-                  title="Example time ranges"
+                  title={relativeTimeRangePickerTitles.timeRangeListTitle}
                   options={validOptions}
                   onChange={onChangeTimeOption}
                   value={timeOption}
@@ -122,7 +126,7 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
                   <TimePickerTitle>
                     <Tooltip content={<TooltipContent />} placement="bottom" theme="info">
                       <div>
-                        Specify time range <Icon name="info-circle" />
+                        {relativeTimeRangePickerTitles.pickerTitle} <Icon name="info-circle" />
                       </div>
                     </Tooltip>
                   </TimePickerTitle>

@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { t } from '@lingui/macro';
 import { cloneDeep } from 'lodash';
 import React, { FC, useState } from 'react';
 
@@ -38,6 +39,21 @@ interface Props {
   thresholds: ThresholdsConfig;
   onChangeThreshold: (thresholds: ThresholdsConfig, index: number) => void;
 }
+
+const pickerTitle = t({
+  id: 'alerting.time-ranger-picker.title',
+  message: `Specify time range`,
+});
+
+const timeRangeListTitle = t({
+  id: 'alerting.time-ranger-picker-list.title',
+  message: `Example time ranges`,
+});
+
+const relativeTimeRangePickerTitles = {
+  pickerTitle,
+  timeRangeListTitle,
+};
 
 export const QueryWrapper: FC<Props> = ({
   data,
@@ -93,6 +109,7 @@ export const QueryWrapper: FC<Props> = ({
           <SelectingDataSourceTooltip />
           {onChangeTimeRange && (
             <RelativeTimeRangePicker
+              relativeTimeRangePickerTitles={relativeTimeRangePickerTitles}
               timeRange={query.relativeTimeRange ?? getDefaultRelativeTimeRange()}
               onChange={(range) => onChangeTimeRange(range, index)}
             />

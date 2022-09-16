@@ -135,6 +135,7 @@ function renderComponent({
 }: Pick<PropsWithScreenSize, 'value'> & Partial<PropsWithScreenSize>): RenderResult {
   return render(
     <TimePickerContentWithScreenSize
+      timeRangeListTitle="Recently used absolute ranges"
       onChangeTimeZone={noop}
       onChange={noop}
       quickOptions={[
@@ -148,6 +149,8 @@ function renderComponent({
       history={history}
       hideQuickRanges={hideQuickRanges}
       hideTimeZone={hideTimeZone}
+      timePickerContentTitle="Absolute time range"
+      calendarHeaderTitle="Select a time range"
     />
   );
 }

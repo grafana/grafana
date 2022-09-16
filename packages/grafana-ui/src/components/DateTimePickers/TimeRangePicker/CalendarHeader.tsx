@@ -10,12 +10,12 @@ import { Button } from '../../Button';
 import { TimePickerCalendarProps } from './TimePickerCalendar';
 import { TimePickerTitle } from './TimePickerTitle';
 
-export function Header({ onClose }: TimePickerCalendarProps) {
+export function Header({ onClose, calendarHeaderTitle }: TimePickerCalendarProps) {
   const styles = useStyles2(getHeaderStyles);
 
   return (
     <div className={styles.container}>
-      <TimePickerTitle>Select a time range</TimePickerTitle>
+      <TimePickerTitle>{calendarHeaderTitle}</TimePickerTitle>
       <Button
         aria-label={selectors.components.TimePicker.calendar.closeButton}
         icon="times"

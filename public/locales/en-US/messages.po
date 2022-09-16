@@ -14,6 +14,14 @@ msgstr ""
 "Plural-Forms: \n"
 "X-Crowdin-SourceKey: msgstr\n"
 
+#: public/app/features/alerting/unified/components/rule-editor/QueryWrapper.tsx
+msgid "alerting.time-ranger-picker-list.title"
+msgstr "Example time ranges"
+
+#: public/app/features/alerting/unified/components/rule-editor/QueryWrapper.tsx
+msgid "alerting.time-ranger-picker.title"
+msgstr "Specify time range"
+
 #: public/app/core/components/SharedPreferences/SharedPreferences.tsx
 msgid "common.locale.default"
 msgstr "Default"
@@ -34,6 +42,10 @@ msgstr "French"
 #: public/app/features/profile/UserProfileEditForm.tsx
 msgid "common.save"
 msgstr "Save"
+
+#: public/app/core/components/TimePicker/TimePickerWithHistory.tsx
+msgid "dashboard.calendar-header-title.title"
+msgstr "Select a time range"
 
 #: public/app/features/inspector/InspectDataOptions.tsx
 msgid "dashboard.inspect-data.data-options"
@@ -218,6 +230,14 @@ msgstr "Off"
 #: public/app/features/dashboard/components/DashNav/DashNavTimeControls.tsx
 msgid "dashboard.refresh-picker.on-description"
 msgstr "Choose refresh time interval with current interval {durationAriaLabel} selected"
+
+#: public/app/core/components/TimePicker/TimePickerWithHistory.tsx
+msgid "dashboard.time-picker-content.title"
+msgstr "Absolute time range"
+
+#: public/app/core/components/TimePicker/TimePickerWithHistory.tsx
+msgid "dashboard.time-range-list.title"
+msgstr "Recently used absolute ranges"
 
 #: public/app/features/dashboard/components/DashNav/DashNav.tsx
 msgid "dashboard.toolbar.add-panel"

@@ -4,6 +4,7 @@ import { useController, useFormContext } from 'react-hook-form';
 
 import { dateTime, GrafanaTheme } from '@grafana/data';
 import { Field, TimeRangeInput, useStyles } from '@grafana/ui';
+import { timePickerTitles } from 'app/core/components/TimePicker/TimePickerWithHistory';
 
 import { SilenceFormFields } from '../../types/silence-form';
 
@@ -60,6 +61,7 @@ export const SilencePeriod = () => {
             to,
           },
         }}
+        timePickerTitles={timePickerTitles}
         timeZone={timeZone}
         onChange={(newValue) => {
           onChangeStartsAt(dateTime(newValue.from));
