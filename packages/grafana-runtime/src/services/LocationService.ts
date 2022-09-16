@@ -47,7 +47,7 @@ export class HistoryWrapper implements LocationService {
     this.getLocation = this.getLocation.bind(this);
   }
 
-  fnPathnameChange(path: string, queryParams: string) {
+  fnPathnameChange(path: string, queryParams: any) {
     this.history.location.pathname = path;
     this.history.location.search = urlUtil.toUrlParams(queryParams);
   }
@@ -91,6 +91,7 @@ export class HistoryWrapper implements LocationService {
   }
 
   reload() {
+    /* eslint-disable-next-line  */
     const prevState = (this.history.location.state as any)?.routeReloadCounter;
     this.history.replace({
       ...this.history.location,

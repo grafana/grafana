@@ -1,11 +1,14 @@
+import { ClassicComponentClass } from 'react';
 import { BehaviorSubject } from 'rxjs';
 
 import { dateMath, dateTime, TimeRange } from '@grafana/data';
 
-import { PanelChrome } from './PanelChrome';
+import { Props } from './PanelChrome';
 
 // target is 20hz (50ms), but we poll at 100ms to smooth out jitter
 const interval = 100;
+
+type PanelChrome = InstanceType<ClassicComponentClass<Props>> & { liveTimeChanged: (tr: TimeRange) => void };
 
 interface LiveListener {
   last: number;

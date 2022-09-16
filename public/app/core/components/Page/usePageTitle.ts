@@ -2,11 +2,13 @@ import { useEffect } from 'react';
 import { useSelector } from 'react-redux';
 
 import { NavModel, NavModelItem } from '@grafana/data';
+import { FnGlobalState } from 'app/core/reducers/fn-slice';
+import type { StoreState } from 'app/types';
 
 import { Branding } from '../Branding/Branding';
 
 export function usePageTitle(navModel?: NavModel, pageNav?: NavModelItem) {
-  const { FNDashboard, pageTitle } = useSelector((state) => state.fnGlobleState);
+  const { FNDashboard, pageTitle } = useSelector<StoreState, FnGlobalState>((state) => state.fnGlobalState);
   useEffect(() => {
     const parts: string[] = [];
 

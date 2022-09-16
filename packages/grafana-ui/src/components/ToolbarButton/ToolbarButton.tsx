@@ -35,7 +35,7 @@ type CommonProps = {
   isHighlighted?: boolean;
 };
 
-export type ToolbarButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
+export type ToolbarButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement> & { isHidden?: boolean };
 
 export type ToolbarButtonVariant = 'default' | 'primary' | 'destructive' | 'active';
 
