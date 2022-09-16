@@ -37,7 +37,7 @@ Use [Homebrew](http://brew.sh/) to install the most recent released version of G
 
 ## Install standalone macOS binaries
 
-To install a nightly build, or to install the latest version of Grafana without Homebrew, go to the [Grafana download page](https://grafana.com/grafana/download/7.3.0-381ff45epre?platform=mac).
+To install a nightly build, or to install the latest version of Grafana without Homebrew, go to the [Grafana download page](https://grafana.com/grafana/download?platform=mac).
 
 1. Select the Grafana version you want to install. By default, the most recent released version is selected.
 

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 
+import { NavModelItem } from '@grafana/data';
 import { getBackendSrv, locationService } from '@grafana/runtime';
 import { Button, Form, Field, Input, FieldSet } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -13,6 +14,14 @@ interface TeamDTO {
   email: string;
   name: string;
 }
+
+const pageNav: NavModelItem = {
+  icon: 'users-alt',
+  id: 'team-new',
+  text: 'New team',
+  subTitle: 'Create a new team. Teams let you grant permissions to a group of users.',
+  breadcrumbs: [{ title: 'Configuration', url: 'org/teams' }],
+};
 
 export const CreateTeam = (): JSX.Element => {
   const currentOrgId = contextSrv.user.orgId;
@@ -39,13 +48,13 @@ export const CreateTeam = (): JSX.Element => {
   };
 
   return (
-    <Page navId="teams">
+    <Page navId="teams" pageNav={pageNav}>
       <Page.Contents>
         <Form onSubmit={createTeam}>
           {({ register, errors }) => (
-            <FieldSet label="New Team">
+            <FieldSet>
               <Field label="Name" required invalid={!!errors.name} error="Team name is required">
-                <Input {...register('name', { required: true })} id="team-name" width={60} />
+                <Input {...register('name', { required: true })} id="team-name" />
               </Field>
               {contextSrv.licensedAccessControlEnabled() && (
                 <Field label="Role">
@@ -56,6 +65,7 @@ export const CreateTeam = (): JSX.Element => {
                     apply={true}
                     onApplyRoles={setPendingRoles}
                     pendingRoles={pendingRoles}
+                    maxWidth="100%"
                   />
                 </Field>
               )}
@@ -63,7 +73,7 @@ export const CreateTeam = (): JSX.Element => {
                 label={'Email'}
                 description={'This is optional and is primarily used for allowing custom team avatars.'}
               >
-                <Input {...register('email')} type="email" id="team-email" placeholder="email@test.com" width={60} />
+                <Input {...register('email')} type="email" id="team-email" placeholder="email@test.com" />
               </Field>
               <div className="gf-form-button-row">
                 <Button type="submit" variant="primary">

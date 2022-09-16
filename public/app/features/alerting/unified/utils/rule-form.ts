@@ -21,6 +21,8 @@ import {
   GrafanaAlertStateDecision,
   Labels,
   PostableRuleGrafanaRuleDTO,
+  RulerAlertingRuleDTO,
+  RulerRecordingRuleDTO,
   RulerRuleDTO,
 } from 'app/types/unified-alerting-dto';
 
@@ -136,37 +138,60 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
     }
   } else {
     if (isAlertingRulerRule(rule)) {
-      const [forTime, forTimeUnit] = rule.for
-        ? parseInterval(rule.for)
-        : [defaultFormValues.forTime, defaultFormValues.forTimeUnit];
+      const alertingRuleValues = alertingRulerRuleToRuleForm(rule);
+
       return {
         ...defaultFormValues,
-        name: rule.alert,
+        ...alertingRuleValues,
         type: RuleFormType.cloudAlerting,
         dataSourceName: ruleSourceName,
         namespace,
         group: group.name,
-        expression: rule.expr,
-        forTime,
-        forTimeUnit,
-        annotations: listifyLabelsOrAnnotations(rule.annotations),
-        labels: listifyLabelsOrAnnotations(rule.labels),
       };
     } else if (isRecordingRulerRule(rule)) {
+      const recordingRuleValues = recordingRulerRuleToRuleForm(rule);
+
       return {
         ...defaultFormValues,
-        name: rule.record,
+        ...recordingRuleValues,
         type: RuleFormType.cloudRecording,
         dataSourceName: ruleSourceName,
         namespace,
         group: group.name,
-        expression: rule.expr,
-        labels: listifyLabelsOrAnnotations(rule.labels),
       };
     } else {
       throw new Error('Unexpected type of rule for cloud rules source');
     }
   }
+}
+
+export function alertingRulerRuleToRuleForm(
+  rule: RulerAlertingRuleDTO
+): Pick<RuleFormValues, 'name' | 'forTime' | 'forTimeUnit' | 'expression' | 'annotations' | 'labels'> {
+  const defaultFormValues = getDefaultFormValues();
+
+  const [forTime, forTimeUnit] = rule.for
+    ? parseInterval(rule.for)
+    : [defaultFormValues.forTime, defaultFormValues.forTimeUnit];
+
+  return {
+    name: rule.alert,
+    expression: rule.expr,
+    forTime,
+    forTimeUnit,
+    annotations: listifyLabelsOrAnnotations(rule.annotations),
+    labels: listifyLabelsOrAnnotations(rule.labels),
+  };
+}
+
+export function recordingRulerRuleToRuleForm(
+  rule: RulerRecordingRuleDTO
+): Pick<RuleFormValues, 'name' | 'expression' | 'labels'> {
+  return {
+    name: rule.record,
+    expression: rule.expr,
+    labels: listifyLabelsOrAnnotations(rule.labels),
+  };
 }
 
 export const getDefaultQueries = (): AlertQuery[] => {

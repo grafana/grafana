@@ -1,5 +1,10 @@
 import React from 'react';
-import { ActionMeta as SelectActionMeta, GroupBase, OptionsOrGroups } from 'react-select';
+import {
+  ActionMeta as SelectActionMeta,
+  CommonProps as ReactSelectCommonProps,
+  GroupBase,
+  OptionsOrGroups,
+} from 'react-select';
 
 import { SelectableValue } from '@grafana/data';
 
@@ -71,7 +76,7 @@ export interface SelectCommonProps<T> {
   /** Use a custom element to control Select. A proper ref to the renderControl is needed if 'portal' isn't set to null*/
   renderControl?: ControlComponent<T>;
   tabSelectsValue?: boolean;
-  value?: SelectValue<T> | null;
+  value?: T | SelectValue<T> | null;
   /** Sets the width to a multiple of 8px. Should only be used with inline forms. Setting width of the container is preferred in other cases.*/
   width?: number | 'auto';
   isOptionDisabled?: () => boolean;
@@ -103,10 +108,13 @@ export interface MultiSelectCommonProps<T> extends Omit<SelectCommonProps<T>, 'o
   onChange: (item: Array<SelectableValue<T>>) => {} | void;
 }
 
+// This is the type of *our* SelectBase component, not ReactSelect's prop, although
+// they should be mostly compatible.
 export interface SelectBaseProps<T> extends SelectCommonProps<T>, SelectAsyncProps<T> {
   invalid?: boolean;
 }
 
+// This is used for the `renderControl` prop on *our* SelectBase component
 export interface CustomControlProps<T> {
   ref: React.Ref<any>;
   isOpen: boolean;
@@ -133,3 +141,20 @@ export type SelectOptions<T = any> =
   | Array<SelectableValue<T> | SelectableOptGroup<T> | Array<SelectableOptGroup<T>>>;
 
 export type FormatOptionLabelMeta<T> = { context: string; inputValue: string; selectValue: Array<SelectableValue<T>> };
+
+// This is the type of `selectProps` our custom components (like SelectContainer, etc) recieve
+// It's slightly different to the base react select props because we pass in additional props directly to
+// react select
+export type ReactSelectProps<Option, IsMulti extends boolean, Group extends GroupBase<Option>> = ReactSelectCommonProps<
+  Option,
+  IsMulti,
+  Group
+>['selectProps'] & {
+  invalid: boolean;
+};
+
+// Use this type when implementing custom components for react select.
+// See SelectContainerProps in SelectContainer.tsx
+export interface CustomComponentProps<Option, isMulti extends boolean, Group extends GroupBase<Option>> {
+  selectProps: ReactSelectProps<Option, isMulti, Group>;
+}

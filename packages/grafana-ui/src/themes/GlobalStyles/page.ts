@@ -112,5 +112,9 @@ export function getPageStyles(theme: GrafanaTheme2) {
       margin-left: ${theme.spacing(1)};
       margin-top: ${theme.spacing(0.5)};
     }
+
+    .page-hidden {
+      display: none;
+    }
   `;
 }

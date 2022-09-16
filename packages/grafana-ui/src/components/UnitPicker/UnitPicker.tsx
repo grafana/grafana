@@ -4,7 +4,7 @@ import { getValueFormats, SelectableValue } from '@grafana/data';
 
 import { Cascader, CascaderOption } from '../Cascader/Cascader';
 
-interface Props {
+export interface UnitPickerProps {
   onChange: (item?: string) => void;
   value?: string;
   width?: number;
@@ -14,7 +14,7 @@ function formatCreateLabel(input: string) {
   return `Custom unit: ${input}`;
 }
 
-export class UnitPicker extends PureComponent<Props> {
+export class UnitPicker extends PureComponent<UnitPickerProps> {
   onChange = (value: SelectableValue<string>) => {
     this.props.onChange(value.value);
   };

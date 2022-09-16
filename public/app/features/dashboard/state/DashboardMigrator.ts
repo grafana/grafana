@@ -43,6 +43,7 @@ import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { isConstant, isMulti } from 'app/features/variables/guard';
 import { alignCurrentWithMulti } from 'app/features/variables/shared/multiOptions';
 import { CloudWatchMetricsQuery, LegacyAnnotationQuery } from 'app/plugins/datasource/cloudwatch/types';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { plugin as gaugePanelPlugin } from 'app/plugins/panel/gauge/module';
 import { plugin as statPanelPlugin } from 'app/plugins/panel/stat/module';
 
@@ -771,10 +772,14 @@ export class DashboardMigrator {
 
             for (const target of panel.targets) {
               if (target.datasource == null || target.datasource.uid == null) {
-                target.datasource = { ...panel.datasource };
+                if (panel.datasource?.uid !== MIXED_DATASOURCE_NAME) {
+                  target.datasource = { ...panel.datasource };
+                } else {
+                  target.datasource = migrateDatasourceNameToRef(target.datasource, { returnDefaultAsNull: false });
+                }
               }
 
-              if (panelDataSourceWasDefault && target.datasource.uid !== '__expr__') {
+              if (panelDataSourceWasDefault && target.datasource?.uid !== '__expr__') {
                 // We can have situations when default ds changed and the panel level data source is different from the queries
                 // In this case we use the query level data source as source for truth
                 panel.datasource = target.datasource as DataSourceRef;
@@ -788,7 +793,11 @@ export class DashboardMigrator {
 
     if (oldVersion < 37) {
       panelUpgrades.push((panel: PanelModel) => {
-        if (panel.options?.legend && panel.options.legend.displayMode === 'hidden') {
+        if (
+          panel.options?.legend &&
+          // There were two ways to hide the legend, this normalizes to `legend.showLegend`
+          (panel.options.legend.displayMode === 'hidden' || panel.options.legend.showLegend === false)
+        ) {
           panel.options.legend.displayMode = 'list';
           panel.options.legend.showLegend = false;
         } else if (panel.options?.legend) {

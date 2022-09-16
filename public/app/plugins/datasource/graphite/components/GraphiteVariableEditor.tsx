@@ -17,7 +17,7 @@ const GRAPHITE_QUERY_VARIABLE_TYPE_OPTIONS = [
   { label: 'Metric Name Query', value: GraphiteQueryType.MetricName },
 ];
 
-export const GraphiteVariableEditor: React.FC<Props> = (props) => {
+export const GraphiteVariableEditor = (props: Props) => {
   const { query, onChange } = props;
   const [value, setValue] = useState(convertToGraphiteQueryObject(query));
 
@@ -30,14 +30,21 @@ export const GraphiteVariableEditor: React.FC<Props> = (props) => {
           width={25}
           value={value.queryType ?? GraphiteQueryType.Default}
           onChange={(selectableValue) => {
-            onChange({
+            setValue({
               ...value,
               queryType: selectableValue.value,
             });
+
+            if (value.target) {
+              onChange({
+                ...value,
+                queryType: selectableValue.value,
+              });
+            }
           }}
         />
       </InlineField>
-      <InlineField label="Select query type" labelWidth={20} grow>
+      <InlineField label="Query" labelWidth={20} grow>
         <Input
           aria-label="Variable editor query input"
           value={value.target}
