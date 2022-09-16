@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
@@ -42,11 +42,10 @@ export const SharePublicDashboard = (props: ShareModalTabProps) => {
     datasources: false,
     usage: false,
   });
-  const [isPubDashEnabled, setIsPubDashEnabled] = useState(false);
-
-  const isLoading = isFetchingLoading || isSaveLoading;
-  const hasWritePermissions = contextSrv.hasAccess(AccessControlAction.DashboardsPublicWrite, isOrgAdmin());
-  const acknowledged = acknowledgements.public && acknowledgements.datasources && acknowledgements.usage;
+  const [enabledSwitch, setEnabledSwitch] = useState({
+    isEnabled: false,
+    wasTocuhed: false,
+  });
 
   useEffect(() => {
     reportInteraction('grafana_dashboards_public_share_viewed');
@@ -61,8 +60,22 @@ export const SharePublicDashboard = (props: ShareModalTabProps) => {
       });
     }
 
-    setIsPubDashEnabled(!!publicDashboard?.isEnabled);
+    setEnabledSwitch((prevState) => ({ ...prevState, isEnabled: !!publicDashboard?.isEnabled }));
   }, [publicDashboard]);
+
+  const isLoading = isFetchingLoading || isSaveLoading;
+  const hasWritePermissions = contextSrv.hasAccess(AccessControlAction.DashboardsPublicWrite, isOrgAdmin());
+  const acknowledged = acknowledgements.public && acknowledgements.datasources && acknowledgements.usage;
+  const isSaveEnabled = useMemo(
+    () =>
+      !hasWritePermissions ||
+      !acknowledged ||
+      props.dashboard.hasUnsavedChanges() ||
+      isLoading ||
+      isFetchingError ||
+      (!publicDashboardPersisted(publicDashboard) && !enabledSwitch.wasTocuhed),
+    [hasWritePermissions, acknowledged, props.dashboard, isLoading, isFetchingError, enabledSwitch, publicDashboard]
+  );
 
   const onSavePublicConfig = () => {
     reportInteraction('grafana_dashboards_public_create_clicked');
@@ -74,7 +87,10 @@ export const SharePublicDashboard = (props: ShareModalTabProps) => {
       return;
     }
 
-    saveConfig({ dashboardUid: props.dashboard.uid, payload: { ...publicDashboard!, isEnabled: isPubDashEnabled } });
+    saveConfig({
+      dashboardUid: props.dashboard.uid,
+      payload: { ...publicDashboard!, isEnabled: enabledSwitch.isEnabled },
+    });
   };
 
   const onAcknowledge = (field: string, checked: boolean) => {
@@ -107,7 +123,6 @@ export const SharePublicDashboard = (props: ShareModalTabProps) => {
             <PubDashDescription />
             <hr />
             <div className={styles.checkboxes}>
-              <p>Before you click Save, please acknowledge the following information:</p>
               <AcknowledgeCheckboxes
                 disabled={
                   publicDashboardPersisted(publicDashboard) || !hasWritePermissions || isLoading || isFetchingError
@@ -117,66 +132,55 @@ export const SharePublicDashboard = (props: ShareModalTabProps) => {
               />
             </div>
             <hr />
-            <div>
-              <h4 className="share-modal-info-text">Public dashboard configuration</h4>
-              <PubDashConfiguration
-                disabled={!hasWritePermissions || isLoading || isFetchingError}
-                isPubDashEnabled={isPubDashEnabled}
-                onToggleEnabled={() => setIsPubDashEnabled((prevState) => !prevState)}
-                hasTemplateVariables={dashboardHasTemplateVariables(dashboardVariables)}
-                time={{
-                  from: props.dashboard.getDefaultTime().from,
-                  to: props.dashboard.getDefaultTime().to,
-                  timeZone: props.dashboard.timezone,
-                }}
-              />
-              {publicDashboardPersisted(publicDashboard) && isPubDashEnabled && (
-                <Field label="Link URL" className={styles.publicUrl}>
-                  <Input
-                    disabled={isLoading}
-                    value={generatePublicDashboardUrl(publicDashboard!)}
-                    readOnly
-                    data-testid={selectors.CopyUrlInput}
-                    addonAfter={
-                      <ClipboardButton
-                        data-testid={selectors.CopyUrlButton}
-                        variant="primary"
-                        icon="copy"
-                        getText={() => generatePublicDashboardUrl(publicDashboard!)}
-                      >
-                        Copy
-                      </ClipboardButton>
-                    }
-                  />
-                </Field>
-              )}
-              {hasWritePermissions ? (
-                props.dashboard.hasUnsavedChanges() && (
-                  <Alert
-                    title="Please save your dashboard changes before updating the public configuration"
-                    severity="warning"
-                  />
-                )
-              ) : (
-                <Alert title="You don't have permissions to create or update a public dashboard" severity="warning" />
-              )}
-              <HorizontalGroup>
-                <Button
-                  disabled={
-                    !hasWritePermissions ||
-                    !acknowledged ||
-                    props.dashboard.hasUnsavedChanges() ||
-                    isLoading ||
-                    isFetchingError
+            <PubDashConfiguration
+              disabled={!hasWritePermissions || isLoading || isFetchingError}
+              isPubDashEnabled={enabledSwitch.isEnabled}
+              onToggleEnabled={() =>
+                setEnabledSwitch((prevState) => ({ isEnabled: !prevState.isEnabled, wasTocuhed: true }))
+              }
+              hasTemplateVariables={dashboardHasTemplateVariables(dashboardVariables)}
+              time={{
+                from: props.dashboard.getDefaultTime().from,
+                to: props.dashboard.getDefaultTime().to,
+                timeZone: props.dashboard.timezone,
+              }}
+            />
+            {publicDashboardPersisted(publicDashboard) && enabledSwitch.isEnabled && (
+              <Field label="Link URL" className={styles.publicUrl}>
+                <Input
+                  disabled={isLoading}
+                  value={generatePublicDashboardUrl(publicDashboard!)}
+                  readOnly
+                  data-testid={selectors.CopyUrlInput}
+                  addonAfter={
+                    <ClipboardButton
+                      data-testid={selectors.CopyUrlButton}
+                      variant="primary"
+                      icon="copy"
+                      getText={() => generatePublicDashboardUrl(publicDashboard!)}
+                    >
+                      Copy
+                    </ClipboardButton>
                   }
-                  onClick={onSavePublicConfig}
-                  data-testid={selectors.SaveConfigButton}
-                >
-                  Save sharing configuration
-                </Button>
-                {isSaveLoading && <Spinner />}
-              </HorizontalGroup>
-            </div>
+                />
+              </Field>
+            )}
+            {hasWritePermissions ? (
+              props.dashboard.hasUnsavedChanges() && (
+                <Alert
+                  title="Please save your dashboard changes before updating the public configuration"
+                  severity="warning"
+                />
+              )
+            ) : (
+              <Alert title="You don't have permissions to create or update a public dashboard" severity="warning" />
+            )}
+            <HorizontalGroup>
+              <Button disabled={isSaveEnabled} onClick={onSavePublicConfig} data-testid={selectors.SaveConfigButton}>
+                Save sharing configuration
+              </Button>
+              {isSaveLoading && <Spinner />}
+            </HorizontalGroup>
           </>
         )}
       </div>

@@ -30,29 +30,32 @@ export const PubDashConfiguration = ({
   const timeRange = getTimeRange({ from: time.from, to: time.to }, time.timeZone);
 
   return (
-    <FieldSet disabled={disabled} className={styles.dashboardConfig}>
-      <VerticalGroup spacing="md">
-        <Layout orientation={isDesktop ? 0 : 1} spacing="xs" justify="space-between">
-          <Label description="The public dashboard uses the default time settings of the dashboard">Time Range</Label>
-          <TimeRangeInput value={timeRange} disabled onChange={() => {}} />
-        </Layout>
-        <Layout orientation={isDesktop ? 0 : 1} spacing="xs" justify="space-between">
-          <Label description="Configures whether current dashboard can be available publicly">Enabled</Label>
-          <Switch
-            disabled={hasTemplateVariables}
-            data-testid={selectors.EnableSwitch}
-            value={isPubDashEnabled}
-            onChange={() => {
-              reportInteraction('grafana_dashboards_public_enable_clicked', {
-                action: isPubDashEnabled ? 'disable' : 'enable',
-              });
+    <>
+      <h4 className="share-modal-info-text">Public dashboard configuration</h4>
+      <FieldSet disabled={disabled} className={styles.dashboardConfig}>
+        <VerticalGroup spacing="md">
+          <Layout orientation={isDesktop ? 0 : 1} spacing="xs" justify="space-between">
+            <Label description="The public dashboard uses the default time settings of the dashboard">Time Range</Label>
+            <TimeRangeInput value={timeRange} disabled onChange={() => {}} />
+          </Layout>
+          <Layout orientation={isDesktop ? 0 : 1} spacing="xs" justify="space-between">
+            <Label description="Configures whether current dashboard can be available publicly">Enabled</Label>
+            <Switch
+              disabled={hasTemplateVariables}
+              data-testid={selectors.EnableSwitch}
+              value={isPubDashEnabled}
+              onChange={() => {
+                reportInteraction('grafana_dashboards_public_enable_clicked', {
+                  action: isPubDashEnabled ? 'disable' : 'enable',
+                });
 
-              onToggleEnabled();
-            }}
-          />
-        </Layout>
-      </VerticalGroup>
-    </FieldSet>
+                onToggleEnabled();
+              }}
+            />
+          </Layout>
+        </VerticalGroup>
+      </FieldSet>
+    </>
   );
 };
 

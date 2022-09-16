@@ -1,8 +1,4 @@
-import { getBackendSrv } from '@grafana/runtime/src';
-import { notifyApp } from 'app/core/actions';
-import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { VariableModel } from 'app/features/variables/types';
-import { dispatch } from 'app/store/store';
 import { DashboardDataDTO, DashboardMeta } from 'app/types/dashboard';
 
 export interface PublicDashboard {
@@ -23,40 +19,6 @@ export interface DashboardResponse {
   dashboard: DashboardDataDTO;
   meta: DashboardMeta;
 }
-
-export const getPublicDashboardConfig = async (
-  dashboardUid: string,
-  setPublicDashboard: React.Dispatch<React.SetStateAction<PublicDashboard>>
-) => {
-  const pdResp: PublicDashboard = await getBackendSrv().get(getPublicDashboardConfigUrl(dashboardUid));
-  setPublicDashboard(pdResp);
-};
-
-export const savePublicDashboardConfig = async (
-  dashboardUid: string,
-  publicDashboardConfig: PublicDashboard,
-  setPublicDashboard: React.Dispatch<React.SetStateAction<PublicDashboard>>
-) => {
-  const pdResp: PublicDashboard = await getBackendSrv().post(
-    savePublicDashboardConfigUrl(dashboardUid),
-    publicDashboardConfig
-  );
-
-  // Never allow a user to send the orgId
-  // @ts-ignore
-  delete pdResp.orgId;
-
-  dispatch(notifyApp(createSuccessNotification('Dashboard sharing configuration saved')));
-  setPublicDashboard(pdResp);
-};
-
-export const getPublicDashboardConfigUrl = (dashboardUid: string) => {
-  return `/api/dashboards/uid/${dashboardUid}/public-config`;
-};
-
-export const savePublicDashboardConfigUrl = (dashboardUid: string) => {
-  return `/api/dashboards/uid/${dashboardUid}/public-config`;
-};
 
 // Instance methods
 export const dashboardHasTemplateVariables = (variables: VariableModel[]): boolean => {
