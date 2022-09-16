@@ -13,7 +13,7 @@ import { useGrafana } from 'app/core/context/GrafanaContext';
 import { TOP_BAR_LEVEL_HEIGHT } from '../AppChrome/types';
 import { NavBarToggle } from '../NavBar/NavBarToggle';
 
-import { NavItem } from './NavBarMenuItem';
+import { NavBarMenuItemWrapper } from './NavBarMenuItemWrapper';
 
 const MENU_WIDTH = '350px';
 
@@ -86,7 +86,7 @@ export function NavBarMenu({ activeItem, navItems, searchBarHidden, onClose }: P
               <CustomScrollbar showScrollIndicators hideHorizontalTrack>
                 <ul className={styles.itemList}>
                   {navItems.map((link) => (
-                    <NavItem link={link} onClose={onMenuClose} activeItem={activeItem} key={link.text} />
+                    <NavBarMenuItemWrapper link={link} onClose={onMenuClose} activeItem={activeItem} key={link.text} />
                   ))}
                 </ul>
               </CustomScrollbar>

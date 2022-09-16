@@ -1,135 +1,107 @@
 import { css } from '@emotion/css';
-import { useLingui } from '@lingui/react';
 import React from 'react';
 
-import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { toIconName, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Icon, IconName, Link, useTheme2 } from '@grafana/ui';
 
-import { NavBarItemIcon } from '../NavBar/NavBarItemIcon';
-import { NavFeatureHighlight } from '../NavBar/NavFeatureHighlight';
-import menuItemTranslations from '../NavBar/navBarItem-translations';
-import { isMatchOrChildMatch } from '../NavBar/utils';
-
-import { NavBarMenuSection } from './NavBarMenuSection';
-import { NavBarMenuSectionChild } from './NavBarMenuSectionChild';
-
-export function NavItem({
-  link,
-  activeItem,
-  onClose,
-}: {
-  link: NavModelItem;
-  activeItem?: NavModelItem;
-  onClose: () => void;
-}) {
-  const { i18n } = useLingui();
-  const styles = useStyles2(getNavItemStyles);
-
-  if (linkHasChildren(link)) {
-    return (
-      <NavBarMenuSection link={link} activeItem={activeItem}>
-        <ul className={styles.children}>
-          {link.children.map((childLink) => {
-            const icon = childLink.icon ? toIconName(childLink.icon) : undefined;
-            return (
-              !childLink.divider && (
-                <NavBarMenuSectionChild
-                  key={`${link.text}-${childLink.text}`}
-                  isActive={isMatchOrChildMatch(childLink, activeItem)}
-                  isChild
-                  icon={childLink.showIconInNavbar ? icon : undefined}
-                  onClick={() => {
-                    childLink.onClick?.();
-                    onClose();
-                  }}
-                  target={childLink.target}
-                  label={childLink.text}
-                  url={childLink.url}
-                />
-              )
-            );
-          })}
-        </ul>
-      </NavBarMenuSection>
-    );
-  } else if (link.emptyMessageId) {
-    const emptyMessageTranslated = i18n._(menuItemTranslations[link.emptyMessageId]);
-    return (
-      <NavBarMenuSection link={link}>
-        <ul className={styles.children}>
-          <div className={styles.emptyMessage}>{emptyMessageTranslated}</div>
-        </ul>
-      </NavBarMenuSection>
-    );
-  } else {
-    const FeatureHighlightWrapper = link.highlightText ? NavFeatureHighlight : React.Fragment;
-    return (
-      <NavBarMenuSectionChild
-        isActive={activeItem === link}
-        icon={link.showIconInNavbar ? link.icon && toIconName(link.icon) : undefined}
-        onClick={() => {
-          link.onClick?.();
-          onClose();
-        }}
-        target={link.target}
-        label={
-          <div className={styles.itemWithoutMenuContent}>
-            <div className={styles.iconContainer}>
-              <FeatureHighlightWrapper>
-                <NavBarItemIcon link={link} />
-              </FeatureHighlightWrapper>
-            </div>
-            <span className={styles.linkText}>{link.text}</span>
-          </div>
-        }
-        url={link.url}
-      />
-    );
-  }
+export interface Props {
+  children: React.ReactNode;
+  icon?: IconName;
+  isActive?: boolean;
+  isChild?: boolean;
+  onClick?: () => void;
+  target?: HTMLAnchorElement['target'];
+  url?: string;
 }
 
-const getNavItemStyles = (theme: GrafanaTheme2) => ({
-  children: css({
-    display: 'flex',
-    flexDirection: 'column',
-  }),
-  flex: css({
-    display: 'flex',
-  }),
-  itemWithoutMenu: css({
-    position: 'relative',
-    placeItems: 'inherit',
-    justifyContent: 'start',
-    display: 'flex',
-    flexGrow: 1,
+export function NavBarMenuItem({ children, icon, isActive, isChild, onClick, target, url }: Props) {
+  const theme = useTheme2();
+  const styles = getStyles(theme, isActive, isChild);
+
+  const linkContent = (
+    <div className={styles.linkContent}>
+      {icon && <Icon data-testid="dropdown-child-icon" name={icon} />}
+
+      <div className={styles.linkText}>{children}</div>
+
+      {target === '_blank' && (
+        <Icon data-testid="external-link-icon" name="external-link-alt" className={styles.externalLinkIcon} />
+      )}
+    </div>
+  );
+
+  let element = (
+    <button className={styles.element} onClick={onClick}>
+      {linkContent}
+    </button>
+  );
+
+  if (url) {
+    element =
+      !target && url.startsWith('/') ? (
+        <Link className={styles.element} href={url} target={target} onClick={onClick}>
+          {linkContent}
+        </Link>
+      ) : (
+        <a href={url} target={target} className={styles.element} onClick={onClick}>
+          {linkContent}
+        </a>
+      );
+  }
+
+  return <li className={styles.listItem}>{element}</li>;
+}
+
+NavBarMenuItem.displayName = 'NavBarMenuItem';
+
+const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], isChild: Props['isActive']) => ({
+  linkContent: css({
     alignItems: 'center',
-  }),
-  fullWidth: css({
+    display: 'flex',
+    gap: '0.5rem',
     height: '100%',
     width: '100%',
   }),
-  iconContainer: css({
-    display: 'flex',
-    placeContent: 'center',
-  }),
-  itemWithoutMenuContent: css({
-    display: 'grid',
-    gridAutoFlow: 'column',
-    gridTemplateColumns: `${theme.spacing(7)} auto`,
-    alignItems: 'center',
-    height: '100%',
-  }),
   linkText: css({
-    fontSize: theme.typography.pxToRem(14),
-    justifySelf: 'start',
+    textOverflow: 'ellipsis',
+    overflow: 'hidden',
+    whiteSpace: 'nowrap',
   }),
-  emptyMessage: css({
+  externalLinkIcon: css({
     color: theme.colors.text.secondary,
-    fontStyle: 'italic',
-    padding: theme.spacing(1, 1.5),
+  }),
+  element: css({
+    alignItems: 'center',
+    backgroundColor: isActive ? theme.colors.action.disabledBackground : undefined,
+    boxSizing: 'border-box',
+    color: isActive ? theme.colors.text.primary : theme.colors.text.secondary,
+    padding: theme.spacing(1, 1, 1, isChild ? 7 : 0),
+    width: '100%',
+    '&:hover, &:focus-visible': {
+      backgroundColor: theme.colors.action.hover,
+      color: theme.colors.text.primary,
+    },
+    '&:focus-visible': {
+      boxShadow: 'none',
+      outline: `2px solid ${theme.colors.primary.main}`,
+      outlineOffset: '-2px',
+      transition: 'none',
+    },
+    '&::before': {
+      display: isActive ? 'block' : 'none',
+      content: '" "',
+      height: theme.spacing(3),
+      position: 'absolute',
+      left: theme.spacing(1),
+      top: '50%',
+      transform: 'translateY(-50%)',
+      width: theme.spacing(0.5),
+      borderRadius: theme.shape.borderRadius(1),
+      backgroundImage: theme.colors.gradients.brandVertical,
+    },
+  }),
+  listItem: css({
+    position: 'relative',
+    display: 'flex',
   }),
 });
-
-function linkHasChildren(link: NavModelItem): link is NavModelItem & { children: NavModelItem[] } {
-  return Boolean(link.children && link.children.length > 0);
-}
