@@ -1,13 +1,14 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = 'v3.0.6'
-build_image = 'grafana/build-container:1.5.9'
+grabpl_version = 'v3.0.7'
+build_image = 'grafana/build-container:1.6.2'
 publish_image = 'grafana/grafana-ci-deploy:1.3.3'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
 alpine_image = 'alpine:3.15.6'
 curl_image = 'byrnedo/alpine-curl:0.1.8'
 windows_image = 'mcr.microsoft.com/windows:1809'
 wix_image = 'grafana/ci-wix:0.1.1'
+go_image = 'golang:1.19.1'
 
 disable_tests = False
 trigger_oss = {
@@ -163,10 +164,10 @@ def lint_drone_step():
         'name': 'lint-drone',
         'image': curl_image,
         'commands': [
-            './bin/grabpl verify-drone',
+            './bin/build verify-drone',
         ],
         'depends_on': [
-            'grabpl',
+            'compile-build-cmd',
         ],
     }
 
@@ -265,13 +266,13 @@ def store_storybook_step(edition, ver_mode, trigger=None):
     commands = []
     if ver_mode == 'release':
         commands.extend([
-            './bin/grabpl store-storybook --deployment latest --src-bucket grafana-prerelease --src-dir artifacts/storybook',
-            './bin/grabpl store-storybook --deployment ${DRONE_TAG} --src-bucket grafana-prerelease --src-dir artifacts/storybook',
+            './bin/build store-storybook --deployment latest',
+            './bin/build store-storybook --deployment ${DRONE_TAG}',
         ])
 
     else:
         # main pipelines should deploy storybook to grafana-storybook/canary public bucket
-        commands = ['./bin/grabpl store-storybook --deployment canary --src-bucket grafana-storybook', ]
+        commands = ['./bin/build store-storybook --deployment canary', ]
 
     step = {
         'name': 'store-storybook',
@@ -608,7 +609,7 @@ def frontend_metrics_step(edition, trigger=None):
         },
         'failure': 'ignore',
         'commands': [
-            './scripts/ci-frontend-metrics.sh | ./bin/grabpl publish-metrics $${GRAFANA_MISC_STATS_API_KEY}',
+            './scripts/ci-frontend-metrics.sh | ./bin/build publish-metrics $${GRAFANA_MISC_STATS_API_KEY}',
         ],
     }
     if trigger:
@@ -625,20 +626,6 @@ def codespell_step():
             'echo -e "unknwon\nreferer\nerrorstring\neror\niam\nwan" > words_to_ignore.txt',
             'codespell -I words_to_ignore.txt docs/',
             'rm words_to_ignore.txt',
-        ],
-    }
-
-
-def shellcheck_step():
-    return {
-        'name': 'shellcheck',
-        'image': build_image,
-        'depends_on': [
-            'grabpl',
-            'compile-build-cmd',
-        ],
-        'commands': [
-            './bin/build shellcheck',
         ],
     }
 
@@ -1251,7 +1238,7 @@ def compile_build_cmd(edition='oss'):
           dependencies = ['init-enterprise',]
     return {
         'name': 'compile-build-cmd',
-        'image': 'golang:1.17',
+        'image': go_image,
         'commands': [
             "go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd",
         ],

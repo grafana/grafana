@@ -7,11 +7,12 @@ import (
 	"io"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"gocloud.dev/blob"
 	_ "gocloud.dev/blob/fileblob"
 	_ "gocloud.dev/blob/memblob"
 	"gocloud.dev/gcerrors"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 const (
@@ -282,7 +283,7 @@ func (c cdkBlobStorage) DeleteFolder(ctx context.Context, folderPath string, opt
 	return lastErr
 }
 
-//nolint: gocyclo
+//nolint:gocyclo
 func (c cdkBlobStorage) list(ctx context.Context, folderPath string, paging *Paging, options *ListOptions) (*ListResponse, error) {
 	lowerRootPath := strings.ToLower(folderPath)
 	iterators := []*blob.ListIterator{c.bucket.List(&blob.ListOptions{
