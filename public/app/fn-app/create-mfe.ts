@@ -11,6 +11,7 @@ import { createTheme } from '@grafana/data';
 import { ThemeChangedEvent } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
+import { backendSrv } from 'app/core/services/backend_srv';
 import fn_app from 'app/fn_app';
 
 import { FnGlobalState } from '../core/reducers/fn-slice';
@@ -22,7 +23,22 @@ import { FNDashboardProps, FailedToMountGrafanaErrorName } from './types';
  * Qiankun expects Promise. Otherwise warnings are logged nad life cycle hooks do not work
  */
 /* eslint-disable-next-line  */
-type LifeCycleFn<R = any, A extends any[] = any[]> = (...args: A) => Promise<R>;
+export declare type LifeCycleFn<T extends { [key: string]: any }> = (app: any, global: typeof window) => Promise<any>;
+
+/**
+ * NOTE: single-spa and qiankun lifeCycles
+ */
+export declare type FrameworkLifeCycles<T = any> = {
+  beforeLoad: LifeCycleFn<T> | Array<LifeCycleFn<T>>;
+  beforeMount: LifeCycleFn<T> | Array<LifeCycleFn<T>>;
+  afterMount: LifeCycleFn<T> | Array<LifeCycleFn<T>>;
+  beforeUnmount: LifeCycleFn<T> | Array<LifeCycleFn<T>>;
+  afterUnmount: LifeCycleFn<T> | Array<LifeCycleFn<T>>;
+  bootstrap: LifeCycleFn<T> | Array<LifeCycleFn<T>>;
+  mount: LifeCycleFn<T> | Array<LifeCycleFn<T>>;
+  unmount: LifeCycleFn<T> | Array<LifeCycleFn<T>>;
+  update: LifeCycleFn<T> | Array<LifeCycleFn<T>>;
+};
 
 class createMfe {
   private static readonly containerSelector = '#grafanaRoot';
@@ -38,22 +54,33 @@ class createMfe {
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   private static logger = (...args: any[]) => console.log(createMfe.logPrefix, ...args);
 
-  static create(component: ComponentType<FNDashboardProps>) {
-    return {
+  static getLifeCycles(component: ComponentType<FNDashboardProps>) {
+    const lifeCycles: FrameworkLifeCycles = {
       bootstrap: this.boot(),
       mount: this.mountFnApp(component),
       unmount: this.unMountFnApp(),
       update: this.updateFnApp(),
+      afterMount: () => Promise.resolve(),
+      beforeMount: () => Promise.resolve(),
+      afterUnmount: () => Promise.resolve(),
+      beforeUnmount: () => Promise.resolve(),
+      beforeLoad: () => Promise.resolve(),
     };
+
+    console.log('LIFECYCLES exported');
+
+    return lifeCycles;
+  }
+
+  static create(component: ComponentType<FNDashboardProps>) {
+    return createMfe.getLifeCycles(component);
   }
 
   static boot() {
-    return async () => {
-      await fn_app.init();
-    };
+    return () => fn_app.init();
   }
 
-  private loadFnTheme() {
+  private loadFnTheme = () => {
     const theme = this.theme;
 
     createMfe.logger('Trying to load theme...', theme);
@@ -80,7 +107,7 @@ class createMfe {
     }
 
     createMfe.logger('Successfully loaded theme:', theme);
-  }
+  };
 
   private static getContainer(props: FNDashboardProps) {
     const parentElement = props.container || document;
@@ -93,7 +120,7 @@ class createMfe {
   }
 
   static mountFnApp(component: ComponentType<FNDashboardProps>) {
-    const lifeCycleFn: LifeCycleFn = (props: FNDashboardProps) => {
+    const lifeCycleFn: FrameworkLifeCycles['mount'] = (props: FNDashboardProps) => {
       return new Promise((res, rej) => {
         createMfe.logger('Trying to mount grafana...');
 
@@ -126,30 +153,27 @@ class createMfe {
   }
 
   static unMountFnApp() {
-    const lifeCycleFn: LifeCycleFn = (props: FNDashboardProps) => {
+    const lifeCycleFn: FrameworkLifeCycles['unmount'] = (props: FNDashboardProps) => {
       const container = createMfe.getContainer(props);
 
       if (container) {
         createMfe.logger('Trying to unmount grafana...');
         ReactDOM.unmountComponentAtNode(container);
         createMfe.logger('Successfully unmounted grafana.');
-
-        return Promise.resolve(true);
       } else {
-        const message = '[Failed to unmount grafana. Container does not exist.';
-        createMfe.logger(message);
-
-        // TODO: I'm not sure what would break so I leave the target implementation in the comment
-        // return Promise.reject(new Error(message));
-        return Promise.resolve(false);
+        createMfe.logger('[Failed to unmount grafana. Container does not exist.');
       }
+
+      backendSrv.cancelAllInFlightRequests();
+
+      return Promise.resolve(!!container);
     };
 
     return lifeCycleFn;
   }
 
   static updateFnApp() {
-    const lifeCycleFn: LifeCycleFn = (props: FnGlobalState) => {
+    const lifeCycleFn: FrameworkLifeCycles['update'] = (props: FnGlobalState) => {
       createMfe.logger('Trying to update grafana...');
 
       return Promise.resolve(false);

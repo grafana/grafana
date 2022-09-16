@@ -34,7 +34,10 @@ const fnSlice = createSlice({
         ...action.payload,
       };
     },
-    updateFnState: (state, action: PayloadAction<{ type: string; payload: string | boolean | HTMLElement }>) => {
+    updateFnState: (
+      state,
+      action: PayloadAction<{ type: keyof FnGlobalState; payload: FnGlobalState[keyof FnGlobalState] }>
+    ) => {
       const { type, payload } = action.payload;
       return {
         ...state,
