@@ -22,9 +22,6 @@ func StoreStorybook(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	if err != nil {
-		return err
-	}
 
 	storybookBucket := buildConfig.Buckets.Storybook
 	srcPath := buildConfig.Buckets.StorybookSrcDir
