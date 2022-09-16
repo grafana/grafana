@@ -72,6 +72,7 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule model
 		return models.AlertRule{}, err
 	}
 	rule.IntervalSeconds = interval
+
 	err = rule.SetDashboardAndPanel()
 	if err != nil {
 		return models.AlertRule{}, err
