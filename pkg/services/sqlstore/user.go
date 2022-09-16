@@ -295,20 +295,25 @@ func (ss *SQLStore) GetUserByLogin(ctx context.Context, query *models.GetUserByL
 			return models.ErrUserNotFound
 		}
 
-		// Try and find the user by login first.
-		// It's not sufficient to assume that a LoginOrEmail with an "@" is an email.
+		var has bool
+		var err error
 		user := &models.User{Login: query.LoginOrEmail}
-		has, err := sess.Where(notServiceAccountFilter(ss)).Get(user)
 
-		if err != nil {
-			return err
-		}
-
-		if !has && strings.Contains(query.LoginOrEmail, "@") {
-			// If the user wasn't found, and it contains an "@" fallback to finding the
-			// user by email.
+		// Since username can be an email address, attempt login with email address
+		// first if the login field has the "@" symbol.
+		if strings.Contains(query.LoginOrEmail, "@") {
 			user = &models.User{Email: query.LoginOrEmail}
 			has, err = sess.Get(user)
+
+			if err != nil {
+				return err
+			}
+		}
+
+		// Lookup the login field instead of email field
+		if !has {
+			user = &models.User{Login: query.LoginOrEmail}
+			has, err = sess.Where(notServiceAccountFilter(ss)).Get(user)
 		}
 
 		if err != nil {
