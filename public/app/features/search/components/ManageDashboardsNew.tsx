@@ -29,16 +29,20 @@ export const ManageDashboardsNew = React.memo(({ folder }: Props) => {
   const folderId = folder?.id;
   // const folderUid = folder?.uid;
   const canSave = folder?.canSave;
+  const { isEditor } = contextSrv;
   const hasEditPermissionInFolders = folder ? canSave : contextSrv.hasEditPermissionInFolders;
-
+  const canCreateFolders = contextSrv.hasAccess(AccessControlAction.FoldersCreate, isEditor);
+  const canCreateDashboards = contextSrv.hasAccess(
+    AccessControlAction.DashboardsCreate,
+    hasEditPermissionInFolders || !!canSave
+  );
   let [includePanels, setIncludePanels] = useLocalStorage<boolean>(SEARCH_PANELS_LOCAL_STORAGE_KEY, true);
   if (!config.featureToggles.panelTitleSearch) {
     includePanels = false;
   }
 
-  const { isEditor } = contextSrv;
-
   const [inputValue, setInputValue] = useState(query.query ?? '');
+
   const onSearchQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
     setInputValue(e.currentTarget.value);
@@ -60,14 +64,13 @@ export const ManageDashboardsNew = React.memo(({ folder }: Props) => {
             suffix={false ? <Spinner /> : null}
           />
         </div>
-        <DashboardActions
-          folderId={folderId}
-          canCreateFolders={contextSrv.hasAccess(AccessControlAction.FoldersCreate, isEditor)}
-          canCreateDashboards={contextSrv.hasAccess(
-            AccessControlAction.DashboardsCreate,
-            hasEditPermissionInFolders || !!canSave
-          )}
-        />
+        {canCreateFolders && canCreateDashboards && (
+          <DashboardActions
+            folderId={folderId}
+            canCreateFolders={canCreateFolders}
+            canCreateDashboards={canCreateDashboards}
+          />
+        )}
       </div>
 
       <SearchView
