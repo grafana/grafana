@@ -1,3 +1,4 @@
+import { babel } from '@rollup/plugin-babel';
 import resolve from '@rollup/plugin-node-resolve';
 import path from 'path';
 import dts from 'rollup-plugin-dts';
@@ -7,10 +8,23 @@ import svg from 'rollup-plugin-svg-import';
 
 const pkg = require('./package.json');
 
+const cwd = process.env.PROJECT_CWD ?? '';
+
 export default [
   {
     input: 'src/index.ts',
-    plugins: [externals({ deps: true, packagePath: './package.json' }), resolve(), svg({ stringify: true }), esbuild()],
+    plugins: [
+      externals({ deps: true, packagePath: './package.json' }),
+      resolve(),
+      svg({ stringify: true }),
+      babel({
+        extensions: ['.js', '.jsx', '.ts', '.tsx'],
+        babelHelpers: 'bundled',
+        plugins: [['@babel/plugin-syntax-typescript', { isTSX: true }], 'macros'],
+        babelrc: false,
+      }),
+      esbuild(),
+    ],
     output: [
       {
         format: 'cjs',
@@ -22,8 +36,7 @@ export default [
         sourcemap: true,
         dir: path.dirname(pkg.publishConfig.module),
         preserveModules: true,
-        // @ts-expect-error (TS cannot assure that `process.env.PROJECT_CWD` is a string)
-        preserveModulesRoot: path.join(process.env.PROJECT_CWD, `packages/grafana-ui/src`),
+        preserveModulesRoot: path.join(cwd, `packages/grafana-ui/src`),
       },
     ],
   },
