@@ -258,7 +258,7 @@ const migrateGrafanaTemplateVariableFn = (query: AzureMonitorQuery) => {
     return query;
   }
 
-  let migratedQuery: AzureMonitorQuery = {
+  const migratedQuery: AzureMonitorQuery = {
     ...query,
   };
   if ('subscription' in grafanaTemplateVariableFn) {
