@@ -15,7 +15,7 @@ export default function CheatSheet() {
           href="https://grafana.com/docs/grafana/latest/datasources/jaeger"
           target="_blank"
           rel="noreferrer"
-          className={styles.linkColor}
+          className={styles.anchorTag}
         >
           here,
         </a>{' '}
@@ -23,7 +23,7 @@ export default function CheatSheet() {
       </p>
 
       <hr />
-      <ul className={styles.removeBullets}>
+      <ul className={styles.unorderedList}>
         <li>
           Search - filter traces by service name. Addtionally, you can filter by tags or min/max duration, as well as
           limit the number of traces that are returned.
@@ -36,7 +36,7 @@ export default function CheatSheet() {
             href="https://grafana.com/docs/grafana/latest/datasources/jaeger/#upload-json-trace-file"
             target="_blank"
             rel="noreferrer"
-            className={styles.linkColor}
+            className={styles.anchorTag}
           >
             here
           </a>{' '}
@@ -48,10 +48,10 @@ export default function CheatSheet() {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  linkColor: css`
+  anchorTag: css`
     color: ${theme.colors.text.link};
   `,
-  removeBullets: css`
+  unorderedList: css`
     list-style-type: none;
   `,
 });
