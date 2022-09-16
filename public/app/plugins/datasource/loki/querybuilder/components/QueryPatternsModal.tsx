@@ -38,7 +38,6 @@ export const QueryPatternsModal = (props: Props) => {
 
   const onPatternSelect = (pattern: LokiQueryPattern, selectAsNewQuery = false) => {
     const visualQuery = buildVisualQueryFromString(selectAsNewQuery ? '' : query.expr);
-
     reportInteraction('grafana_loki_query_patterns_selected', {
       version: 'v2',
       app: app ?? '',
