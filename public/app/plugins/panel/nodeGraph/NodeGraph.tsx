@@ -162,7 +162,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
     focusedNodeId
   );
 
-  // If we move from grid to graph layout and we have focused node lets get it's position to center there. We want do
+  // If we move from grid to graph layout and we have focused node lets get its position to center there. We want do
   // do it specifically only in that case.
   const focusPosition = useFocusPositionOnLayout(config, nodes, focusedNodeId);
   const { panRef, zoomRef, onStepUp, onStepDown, isPanning, position, scale, isMaxZoom, isMinZoom } = usePanAndZoom(

@@ -21,7 +21,7 @@ GraphTransform:     "constant" | "negative-Y"                               @cue
 LineInterpolation:  "linear" | "smooth" | "stepBefore" | "stepAfter"        @cuetsy(kind="enum")
 
 // TODO docs
-ScaleDistribution:  "linear" | "log" | "ordinal"                            @cuetsy(kind="enum")
+ScaleDistribution:  "linear" | "log" | "ordinal" | "symlog"                 @cuetsy(kind="enum")
 
 // TODO docs
 GraphGradientMode:  "none" | "opacity" | "hue" | "scheme"                   @cuetsy(kind="enum")
@@ -83,6 +83,7 @@ PointsConfig: {
 ScaleDistributionConfig: {
 	type: ScaleDistribution
 	log?: number
+	linearThreshold?: number
 } @cuetsy(kind="interface")
 
 // TODO docs
@@ -95,6 +96,7 @@ AxisConfig: {
 	axisSoftMax?:       number
 	axisGridShow?:      bool
 	scaleDistribution?: ScaleDistributionConfig
+	axisCenteredZero?:   bool
 } @cuetsy(kind="interface")
 
 // TODO docs
@@ -132,6 +134,7 @@ GraphThresholdsStyleConfig: {
 LegendPlacement: "bottom" | "right" @cuetsy(kind="type")
 
 // TODO docs
+// Note: "hidden" needs to remain as an option for plugins compatibility
 LegendDisplayMode: "list" | "table" | "hidden" @cuetsy(kind="enum")
 
 // TODO docs
@@ -170,6 +173,11 @@ OptionsWithTooltip: {
 // TODO docs
 OptionsWithLegend: {
 	legend: VizLegendOptions
+} @cuetsy(kind="interface")
+
+// TODO docs
+OptionsWithTimezones: {
+	timezone?: [...string]
 } @cuetsy(kind="interface")
 
 // TODO docs
@@ -229,6 +237,7 @@ GraphFieldConfig: {
 VizLegendOptions: {
 	displayMode:  LegendDisplayMode
 	placement:    LegendPlacement
+	showLegend: 	bool
 	asTable?:     bool
 	isVisible?:   bool
   sortBy?:      string

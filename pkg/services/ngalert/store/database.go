@@ -36,3 +36,16 @@ type DBstore struct {
 	AccessControl    accesscontrol.AccessControl
 	DashboardService dashboards.DashboardService
 }
+
+func ProvideDBStore(
+	cfg *setting.Cfg, sqlstore *sqlstore.SQLStore, folderService dashboards.FolderService,
+	access accesscontrol.AccessControl, dashboards dashboards.DashboardService) *DBstore {
+	return &DBstore{
+		Cfg:              cfg.UnifiedAlerting,
+		SQLStore:         sqlstore,
+		Logger:           log.New("dbstore"),
+		FolderService:    folderService,
+		AccessControl:    access,
+		DashboardService: dashboards,
+	}
+}

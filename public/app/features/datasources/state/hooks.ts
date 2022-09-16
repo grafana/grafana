@@ -1,7 +1,7 @@
-import { useEffect } from 'react';
+import { useContext, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { DataSourcePluginMeta, DataSourceSettings, urlUtil } from '@grafana/data';
+import { DataSourcePluginMeta, DataSourceSettings, NavModelItem, urlUtil } from '@grafana/data';
 import { cleanUpAction } from 'app/core/actions/cleanUp';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/core';
@@ -21,6 +21,7 @@ import {
   updateDataSource,
   deleteLoadedDataSource,
 } from './actions';
+import { DataSourcesRoutesContext } from './contexts';
 import { getDataSourceLoadingNav, buildNavModel, getDataSourceNav } from './navModel';
 import { getDataSource, getDataSourceMeta } from './selectors';
 
@@ -33,7 +34,7 @@ export const useInitDataSourceSettings = (uid: string) => {
     return function cleanUp() {
       dispatch(
         cleanUpAction({
-          stateSelector: (state) => state.dataSourceSettings,
+          cleanupAction: (state) => state.dataSourceSettings,
         })
       );
     };
@@ -72,9 +73,10 @@ export const useLoadDataSourcePlugins = () => {
 
 export const useAddDatasource = () => {
   const dispatch = useDispatch();
+  const dataSourcesRoutes = useDataSourcesRoutes();
 
   return (plugin: DataSourcePluginMeta) => {
-    dispatch(addDataSource(plugin));
+    dispatch(addDataSource(plugin, dataSourcesRoutes.Edit));
   };
 };
 
@@ -113,8 +115,8 @@ export const useDataSourceExploreUrl = (uid: string) => {
   return exploreUrl;
 };
 
-export const useDataSourceMeta = (uid: string): DataSourcePluginMeta => {
-  return useSelector((state: StoreState) => getDataSourceMeta(state.dataSources, uid));
+export const useDataSourceMeta = (pluginType: string): DataSourcePluginMeta => {
+  return useSelector((state: StoreState) => getDataSourceMeta(state.dataSources, pluginType));
 };
 
 export const useDataSourceSettings = () => {
@@ -125,10 +127,10 @@ export const useDataSourceSettingsNav = (dataSourceId: string, pageId: string | 
   const dataSource = useDataSource(dataSourceId);
   const { plugin, loadError, loading } = useDataSourceSettings();
   const navIndex = useSelector((state: StoreState) => state.navIndex);
-  const navIndexId = pageId ? `datasource-page-${pageId}` : `datasource-settings-${dataSourceId}`;
+  const navIndexId = pageId ? `datasource-${pageId}-${dataSourceId}` : `datasource-settings-${dataSourceId}`;
 
   if (loadError) {
-    const node = {
+    const node: NavModelItem = {
       text: loadError,
       subTitle: 'Data Source Error',
       icon: 'exclamation-triangle',
@@ -158,4 +160,8 @@ export const useDataSourceRights = (uid: string): DataSourceRights => {
     hasWriteRights,
     hasDeleteRights,
   };
+};
+
+export const useDataSourcesRoutes = () => {
+  return useContext(DataSourcesRoutesContext);
 };

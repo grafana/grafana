@@ -315,6 +315,11 @@ enabled = false
 loggers = file
 # Keep dashboard content in the logs (request or response fields); this can significantly increase the size of your logs.
 log_dashboard_content = false
+# Log all GET requests and always include request body for generic POST/PUT/PATCH requests.
+verbose = false
+# By default Grafana logs requests even if the status code indicates that no changes to the system were made.
+# Set to false to only log requests with 2xx, 3xx, 401, 403, 500 responses.
+log_all_status_codes = true
 ```
 
 Each exporter has its own configuration fields.

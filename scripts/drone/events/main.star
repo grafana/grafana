@@ -9,6 +9,7 @@ load(
 load(
     'scripts/drone/pipelines/docs.star',
     'docs_pipelines',
+    'trigger_docs_main',
 )
 
 load(
@@ -48,6 +49,13 @@ ver_mode = 'main'
 trigger = {
     'event': ['push',],
     'branch': 'main',
+    'paths': {
+        'exclude': [
+            '*.md',
+            'docs/**',
+            'latest.json',
+        ],
+    },
 }
 
 def main_pipelines(edition):
@@ -68,7 +76,7 @@ def main_pipelines(edition):
     }
 
     pipelines = [
-        docs_pipelines(edition, ver_mode, trigger),
+        docs_pipelines(edition, ver_mode, trigger_docs_main()),
         test_frontend(trigger, ver_mode),
         test_backend(trigger, ver_mode),
         build_e2e(trigger, ver_mode, edition),

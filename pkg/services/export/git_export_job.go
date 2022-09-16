@@ -14,6 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -23,6 +25,8 @@ type gitExportJob struct {
 	logger                    log.Logger
 	sql                       *sqlstore.SQLStore
 	dashboardsnapshotsService dashboardsnapshots.Service
+	datasourceService         datasources.DataSourceService
+	playlistService           playlist.Service
 	rootDir                   string
 
 	statusMu    sync.Mutex
@@ -32,12 +36,16 @@ type gitExportJob struct {
 	helper      *commitHelper
 }
 
-func startGitExportJob(cfg ExportConfig, sql *sqlstore.SQLStore, dashboardsnapshotsService dashboardsnapshots.Service, rootDir string, orgID int64, broadcaster statusBroadcaster) (Job, error) {
+func startGitExportJob(cfg ExportConfig, sql *sqlstore.SQLStore,
+	dashboardsnapshotsService dashboardsnapshots.Service, rootDir string, orgID int64,
+	broadcaster statusBroadcaster, playlistService playlist.Service, datasourceService datasources.DataSourceService) (Job, error) {
 	job := &gitExportJob{
 		logger:                    log.New("git_export_job"),
 		cfg:                       cfg,
 		sql:                       sql,
 		dashboardsnapshotsService: dashboardsnapshotsService,
+		playlistService:           playlistService,
+		datasourceService:         datasourceService,
 		rootDir:                   rootDir,
 		broadcaster:               broadcaster,
 		status: ExportStatus{

@@ -20,6 +20,7 @@ export const SearchResultsGrid = ({
   selection,
   selectionToggle,
   onTagSelected,
+  onClickItem,
   keyboardEvents,
 }: SearchResultsProps) => {
   const styles = useStyles2(getStyles);
@@ -35,6 +36,7 @@ export const SearchResultsGrid = ({
       }
     },
     onTagSelected,
+    onClick: onClickItem,
   };
 
   const itemCount = response.totalRows ?? response.view.length;

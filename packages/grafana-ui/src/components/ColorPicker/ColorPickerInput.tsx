@@ -29,6 +29,14 @@ export const ColorPickerInput = forwardRef<HTMLInputElement, ColorPickerInputPro
 
     useThrottleFn(
       (c) => {
+        if (c === value) {
+          return;
+        }
+        // Default to an empty string if no color value is available
+        if (!c) {
+          onChange('');
+          return;
+        }
         const color = theme.visualization.getColorByName(c);
         if (returnColorAs === 'rgb') {
           onChange(colorManipulator.asRgbString(color));
@@ -43,15 +51,16 @@ export const ColorPickerInput = forwardRef<HTMLInputElement, ColorPickerInputPro
     return (
       <ClickOutsideWrapper onClick={() => setIsOpen(false)}>
         <div className={styles.wrapper}>
-          {isOpen && (
+          {isOpen && !inputProps.disabled && (
             <RgbaStringColorPicker
+              data-testid={'color-popover'}
               color={currentColor}
               onChange={setColor}
               className={cx(paletteStyles.root, styles.picker)}
             />
           )}
           <div onClick={() => setIsOpen(true)}>
-            <ColorInput {...inputProps} theme={theme} color={currentColor} onChange={setColor} ref={ref} />
+            <ColorInput {...inputProps} theme={theme} color={currentColor} onChange={setColor} ref={ref} isClearable />
           </div>
         </div>
       </ClickOutsideWrapper>

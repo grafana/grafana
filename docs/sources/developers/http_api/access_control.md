@@ -753,7 +753,7 @@ Content-Type: application/json; charset=UTF-8
 
 `GET /api/access-control/users/:serviceAccountId/roles`
 
-Lists the roles that have been directly assigned to a given service account. The list does not include basic roles (Viewer, Editor, Admin or Grafana Admin), and it does not include roles that have been inherited from a team.
+Lists the roles that have been directly assigned to a given service account. The list does not include basic roles (Viewer, Editor, Admin or Grafana Admin).
 
 Query Parameters:
 

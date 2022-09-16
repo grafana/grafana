@@ -1,6 +1,6 @@
 import { Value } from 'slate';
 
-import { HistoryItem, LanguageProvider, SelectableValue } from '@grafana/data';
+import { LanguageProvider, SelectableValue } from '@grafana/data';
 import { CompletionItemGroup, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
 
 import { TempoDatasource } from './datasource';
@@ -21,8 +21,13 @@ export default class TempoLanguageProvider extends LanguageProvider {
   };
 
   start = async () => {
-    await this.fetchTags();
-    return [];
+    if (!this.startTask) {
+      this.startTask = this.fetchTags().then(() => {
+        return [];
+      });
+    }
+
+    return this.startTask;
   };
 
   async fetchTags() {
@@ -30,10 +35,11 @@ export default class TempoLanguageProvider extends LanguageProvider {
     this.tags = response.tagNames;
   }
 
-  provideCompletionItems = async (
-    { prefix, text, value, labelKey, wrapperClasses }: TypeaheadInput,
-    context: { history: Array<HistoryItem<any>> } = { history: [] }
-  ): Promise<TypeaheadOutput> => {
+  getTags = () => {
+    return this.tags;
+  };
+
+  provideCompletionItems = async ({ text, value }: TypeaheadInput): Promise<TypeaheadOutput> => {
     const emptyResult: TypeaheadOutput = { suggestions: [] };
 
     if (!value) {

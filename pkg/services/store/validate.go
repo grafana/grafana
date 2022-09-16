@@ -3,10 +3,14 @@ package store
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"net/http"
 	"path/filepath"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/filestorage"
-	"github.com/grafana/grafana/pkg/models"
+	issvg "github.com/grafana/grafana/pkg/services/store/go-is-svg"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 var (
@@ -24,7 +28,7 @@ var (
 		".gif":  {"image/gif": true},
 		".png":  {"image/png": true},
 		".webp": {"image/webp": true},
-		".svg":  {"text/xml; charset=utf-8": true, "text/plain; charset=utf-8": true, "image/svg+xml": true},
+		".svg":  {"image/svg+xml": true},
 	}
 )
 
@@ -46,31 +50,36 @@ func fail(reason string) validationResult {
 	}
 }
 
-func (s *standardStorageService) detectMimeType(ctx context.Context, user *models.SignedInUser, uploadRequest *UploadRequest) string {
-	// TODO: implement a spoofing-proof MimeType detection based on the contents
-	return uploadRequest.MimeType
+func (s *standardStorageService) detectMimeType(ctx context.Context, user *user.SignedInUser, uploadRequest *UploadRequest) string {
+	if strings.HasSuffix(uploadRequest.Path, ".svg") {
+		if issvg.IsSVG(uploadRequest.Contents) {
+			return "image/svg+xml"
+		}
+	}
+
+	return http.DetectContentType(uploadRequest.Contents)
 }
 
-func (s *standardStorageService) validateImage(ctx context.Context, user *models.SignedInUser, uploadRequest *UploadRequest) validationResult {
+func (s *standardStorageService) validateImage(ctx context.Context, user *user.SignedInUser, uploadRequest *UploadRequest) validationResult {
 	ext := filepath.Ext(uploadRequest.Path)
 	if !allowedImageExtensions[ext] {
-		return fail("unsupported extension")
+		return fail(fmt.Sprintf("unsupported extension: %s", ext))
 	}
 
 	mimeType := s.detectMimeType(ctx, user, uploadRequest)
 	if !imageExtensionsToMatchingMimeTypes[ext][mimeType] {
-		return fail("mismatched extension and file contents")
+		return fail(fmt.Sprintf("extension '%s' does not match the detected MimeType: %s", ext, mimeType))
 	}
 
 	return success()
 }
 
-func (s *standardStorageService) validateUploadRequest(ctx context.Context, user *models.SignedInUser, req *UploadRequest, storagePath string) validationResult {
+func (s *standardStorageService) validateUploadRequest(ctx context.Context, user *user.SignedInUser, req *UploadRequest, storagePath string) validationResult {
 	// TODO: validateSize
 	// TODO: validateProperties
 
 	if err := filestorage.ValidatePath(storagePath); err != nil {
-		return fail("path validation failed. error:" + err.Error() + ". path: " + storagePath)
+		return fail(fmt.Sprintf("path validation failed. error: %s. path: %s", err.Error(), storagePath))
 	}
 
 	switch req.EntityType {

@@ -52,7 +52,7 @@ export const LogLevelColor = {
   [LogLevel.info]: colors[0],
   [LogLevel.debug]: colors[5],
   [LogLevel.trace]: colors[2],
-  [LogLevel.unknown]: getThemeColor('#8e8e8e', '#dde4ed'),
+  [LogLevel.unknown]: getThemeColor('#8e8e8e', '#bdc4cd'),
 };
 
 const MILLISECOND = 1;
@@ -678,12 +678,16 @@ export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataS
 ): Observable<DataQueryResponse> {
   const timespan = options.range.to.valueOf() - options.range.from.valueOf();
   const intervalInfo = getIntervalInfo(logsVolumeRequest.scopedVars, timespan);
+
   logsVolumeRequest.interval = intervalInfo.interval;
   logsVolumeRequest.scopedVars.__interval = { value: intervalInfo.interval, text: intervalInfo.interval };
+
   if (intervalInfo.intervalMs !== undefined) {
     logsVolumeRequest.intervalMs = intervalInfo.intervalMs;
     logsVolumeRequest.scopedVars.__interval_ms = { value: intervalInfo.intervalMs, text: intervalInfo.intervalMs };
   }
+
+  logsVolumeRequest.hideFromInspector = true;
 
   return new Observable((observer) => {
     let rawLogsVolume: DataFrame[] = [];

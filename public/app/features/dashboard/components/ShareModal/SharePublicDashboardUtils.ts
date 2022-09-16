@@ -1,5 +1,6 @@
 import { getBackendSrv } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
+import { getConfig } from 'app/core/config';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { VariableModel } from 'app/features/variables/types';
 import { dispatch } from 'app/store/store';
@@ -22,8 +23,7 @@ export const getPublicDashboardConfig = async (
   dashboardUid: string,
   setPublicDashboard: React.Dispatch<React.SetStateAction<PublicDashboard>>
 ) => {
-  const url = `/api/dashboards/uid/${dashboardUid}/public-config`;
-  const pdResp: PublicDashboard = await getBackendSrv().get(url);
+  const pdResp: PublicDashboard = await getBackendSrv().get(getPublicDashboardConfigUrl(dashboardUid));
   setPublicDashboard(pdResp);
 };
 
@@ -32,8 +32,10 @@ export const savePublicDashboardConfig = async (
   publicDashboardConfig: PublicDashboard,
   setPublicDashboard: React.Dispatch<React.SetStateAction<PublicDashboard>>
 ) => {
-  const url = `/api/dashboards/uid/${dashboardUid}/public-config`;
-  const pdResp: PublicDashboard = await getBackendSrv().post(url, publicDashboardConfig);
+  const pdResp: PublicDashboard = await getBackendSrv().post(
+    savePublicDashboardConfigUrl(dashboardUid),
+    publicDashboardConfig
+  );
 
   // Never allow a user to send the orgId
   // @ts-ignore
@@ -41,6 +43,14 @@ export const savePublicDashboardConfig = async (
 
   dispatch(notifyApp(createSuccessNotification('Dashboard sharing configuration saved')));
   setPublicDashboard(pdResp);
+};
+
+export const getPublicDashboardConfigUrl = (dashboardUid: string) => {
+  return `/api/dashboards/uid/${dashboardUid}/public-config`;
+};
+
+export const savePublicDashboardConfigUrl = (dashboardUid: string) => {
+  return `/api/dashboards/uid/${dashboardUid}/public-config`;
 };
 
 // Instance methods
@@ -52,6 +62,14 @@ export const publicDashboardPersisted = (publicDashboard: PublicDashboard): bool
   return publicDashboard.uid !== '' && publicDashboard.uid !== undefined;
 };
 
+/**
+ * Generate the public dashboard url. Uses the appUrl from the Grafana boot config, so urls will also be correct
+ * when Grafana is hosted on a subpath.
+ *
+ * All app urls from the Grafana boot config end with a slash.
+ *
+ * @param publicDashboard
+ */
 export const generatePublicDashboardUrl = (publicDashboard: PublicDashboard): string => {
-  return `${window.location.origin}/public-dashboards/${publicDashboard.accessToken}`;
+  return `${getConfig().appUrl}public-dashboards/${publicDashboard.accessToken}`;
 };

@@ -18,7 +18,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	busmock "github.com/grafana/grafana/pkg/bus/mock"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -172,7 +171,7 @@ func TestAlertingTicker(t *testing.T) {
 		Scheme: "http",
 		Host:   "localhost",
 	}
-	sched := schedule.NewScheduler(schedCfg, appUrl, st, busmock.New())
+	sched := schedule.NewScheduler(schedCfg, appUrl, st)
 
 	go func() {
 		err := sched.Run(ctx)
@@ -253,7 +252,7 @@ func assertEvalRun(t *testing.T, ch <-chan evalAppliedInfo, tick time.Time, keys
 		case info := <-ch:
 			_, ok := expected[info.alertDefKey]
 			if !ok {
-				t.Fatal(fmt.Sprintf("alert rule: %v should not have been evaluated at: %v", info.alertDefKey, info.now))
+				t.Fatalf("alert rule: %v should not have been evaluated at: %v", info.alertDefKey, info.now)
 			}
 			t.Logf("alert rule: %v evaluated at: %v", info.alertDefKey, info.now)
 			assert.Equal(t, tick, info.now)

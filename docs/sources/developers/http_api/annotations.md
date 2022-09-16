@@ -48,6 +48,7 @@ Query Parameters:
 - `limit`: number. Optional - default is 100. Max limit for results returned.
 - `alertId`: number. Optional. Find annotations for a specified alert.
 - `dashboardId`: number. Optional. Find annotations that are scoped to a specific dashboard
+- `dashboardUID`: string. Optional. Find annotations that are scoped to a specific dashboard, when dashboardUID presents, dashboardId would be ignored.
 - `panelId`: number. Optional. Find annotations that are scoped to a specific panel
 - `userId`: number. Optional. Find annotations created by a specific user
 - `type`: string. Optional. `alert`|`annotation` Return alerts or user created annotations
@@ -120,6 +121,10 @@ See note in the [introduction]({{< ref "#annotations-api" >}}) for an explanatio
 | Action             | Scope                   |
 | ------------------ | ----------------------- |
 | annotations:create | annotations:type:<type> |
+
+**Required JSON Body Fields**
+
+- `text`: description of the annotation.
 
 **Example Request**:
 

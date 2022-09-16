@@ -29,7 +29,7 @@ export interface Props extends Themeable {
 }
 
 export class Gauge extends PureComponent<Props> {
-  canvasElement: any;
+  canvasElement: HTMLDivElement | null = null;
 
   static defaultProps: Partial<Props> = {
     showThresholdMarkers: true,
@@ -90,7 +90,7 @@ export class Gauge extends PureComponent<Props> {
       max = +max.toFixed(decimals);
     }
 
-    const options: any = {
+    const options = {
       series: {
         gauges: {
           gauge: {
@@ -133,7 +133,9 @@ export class Gauge extends PureComponent<Props> {
     };
 
     try {
-      $.plot(this.canvasElement, [plotSeries], options);
+      if (this.canvasElement) {
+        $.plot(this.canvasElement, [plotSeries], options);
+      }
     } catch (err) {
       console.error('Gauge rendering error', err, options, value);
     }

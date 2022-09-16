@@ -30,13 +30,12 @@ import {
   somePromRules,
   someRulerRules,
 } from './mocks';
-import { getAllDataSources } from './utils/config';
+import * as config from './utils/config';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 
 jest.mock('./api/buildInfo');
 jest.mock('./api/prometheus');
 jest.mock('./api/ruler');
-jest.mock('./utils/config');
 jest.mock('app/core/core', () => ({
   appEvents: {
     subscribe: () => {
@@ -46,8 +45,10 @@ jest.mock('app/core/core', () => ({
   },
 }));
 
+jest.spyOn(config, 'getAllDataSources');
+
 const mocks = {
-  getAllDataSourcesMock: jest.mocked(getAllDataSources),
+  getAllDataSourcesMock: jest.mocked(config.getAllDataSources),
 
   api: {
     discoverFeatures: jest.mocked(discoverFeatures),
@@ -344,8 +345,8 @@ describe('RuleList', () => {
     const instanceRows = byTestId('row').getAll(instancesTable);
     expect(instanceRows).toHaveLength(2);
 
-    expect(instanceRows![0]).toHaveTextContent('Firingfoo=barseverity=warning2021-03-18 13:47:05');
-    expect(instanceRows![1]).toHaveTextContent('Firingfoo=bazseverity=error2021-03-18 13:47:05');
+    expect(instanceRows![0]).toHaveTextContent('Firingfoo=barseverity=warning2021-03-18 08:47:05');
+    expect(instanceRows![1]).toHaveTextContent('Firingfoo=bazseverity=error2021-03-18 08:47:05');
 
     // expand details of an instance
     await userEvent.click(ui.ruleCollapseToggle.get(instanceRows![0]));

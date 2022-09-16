@@ -1,10 +1,10 @@
-import { Story } from '@storybook/react';
+import { Meta, Story } from '@storybook/react';
 import React, { useState } from 'react';
 
 import { RadioButtonGroup } from './RadioButtonGroup';
 import mdx from './RadioButtonGroup.mdx';
 
-export default {
+const meta: Meta = {
   title: 'Forms/RadioButtonGroup',
   component: RadioButtonGroup,
   parameters: {
@@ -83,3 +83,5 @@ RadioButtons.args = {
   size: 'md',
   fullWidth: true,
 };
+
+export default meta;

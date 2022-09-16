@@ -44,6 +44,7 @@ Object {
       ],
       "displayMode": "table",
       "placement": "bottom",
+      "showLegend": true,
     },
     "tooltip": Object {
       "mode": "multi",
@@ -72,6 +73,7 @@ Object {
       ],
       "displayMode": "list",
       "placement": "bottom",
+      "showLegend": true,
     },
     "tooltip": Object {
       "mode": "single",
@@ -98,6 +100,7 @@ Object {
       "calcs": Array [],
       "displayMode": "list",
       "placement": "bottom",
+      "showLegend": true,
     },
     "tooltip": Object {
       "mode": "single",
@@ -169,6 +172,7 @@ Object {
       ],
       "displayMode": "table",
       "placement": "bottom",
+      "showLegend": true,
     },
     "tooltip": Object {
       "mode": "multi",
@@ -240,6 +244,7 @@ Object {
       ],
       "displayMode": "table",
       "placement": "bottom",
+      "showLegend": true,
     },
     "tooltip": Object {
       "mode": "multi",
@@ -268,6 +273,7 @@ Object {
       "calcs": Array [],
       "displayMode": "list",
       "placement": "bottom",
+      "showLegend": true,
     },
     "tooltip": Object {
       "mode": "single",
@@ -355,6 +361,7 @@ Object {
       ],
       "displayMode": "table",
       "placement": "bottom",
+      "showLegend": true,
     },
     "tooltip": Object {
       "mode": "multi",
@@ -412,6 +419,7 @@ Object {
       ],
       "displayMode": "table",
       "placement": "bottom",
+      "showLegend": true,
     },
     "tooltip": Object {
       "mode": "multi",
@@ -453,6 +461,7 @@ Object {
       ],
       "displayMode": "table",
       "placement": "bottom",
+      "showLegend": true,
     },
     "tooltip": Object {
       "mode": "multi",
@@ -502,6 +511,7 @@ Object {
       "calcs": Array [],
       "displayMode": "list",
       "placement": "bottom",
+      "showLegend": true,
     },
     "tooltip": Object {
       "mode": "multi",
@@ -638,6 +648,7 @@ Object {
       "calcs": Array [],
       "displayMode": "list",
       "placement": "bottom",
+      "showLegend": true,
     },
     "tooltip": Object {
       "mode": "multi",

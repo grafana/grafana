@@ -5,9 +5,11 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
 
+import { MenuDivider } from './MenuDivider';
+import { MenuGroup } from './MenuGroup';
+import { MenuItem } from './MenuItem';
 import { useMenuFocus } from './hooks';
 
-/** @internal */
 export interface MenuProps extends React.HTMLAttributes<HTMLDivElement> {
   /** React element rendered at the top of the menu */
   header?: React.ReactNode;
@@ -18,8 +20,7 @@ export interface MenuProps extends React.HTMLAttributes<HTMLDivElement> {
   onKeyDown?: React.KeyboardEventHandler;
 }
 
-/** @internal */
-export const Menu = React.forwardRef<HTMLDivElement, MenuProps>(
+const MenuComp = React.forwardRef<HTMLDivElement, MenuProps>(
   ({ header, children, ariaLabel, onOpen, onClose, onKeyDown, ...otherProps }, forwardedRef) => {
     const styles = useStyles2(getStyles);
 
@@ -44,9 +45,15 @@ export const Menu = React.forwardRef<HTMLDivElement, MenuProps>(
     );
   }
 );
-Menu.displayName = 'Menu';
 
-/** @internal */
+MenuComp.displayName = 'Menu';
+
+export const Menu = Object.assign(MenuComp, {
+  Item: MenuItem,
+  Divider: MenuDivider,
+  Group: MenuGroup,
+});
+
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     header: css`
@@ -58,6 +65,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       box-shadow: ${theme.shadows.z3};
       display: inline-block;
       border-radius: ${theme.shape.borderRadius()};
+      padding: ${theme.spacing(0.5, 0)};
     `,
   };
 };

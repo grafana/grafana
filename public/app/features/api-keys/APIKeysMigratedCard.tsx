@@ -1,27 +1,36 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, LinkButton, useStyles2 } from '@grafana/ui';
+import { Alert, ConfirmModal, useStyles2, Button } from '@grafana/ui';
 
 interface Props {
   onHideApiKeys: () => void;
 }
 
 export const APIKeysMigratedCard = ({ onHideApiKeys }: Props): JSX.Element => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const styles = useStyles2(getStyles);
 
   return (
-    <Alert title="API keys were migrated to Service accounts. This tab is deprecated." severity="info">
+    <Alert title="API keys were migrated to Grafana service accounts. This tab is deprecated." severity="info">
       <div className={styles.text}>
-        We have upgraded your API keys into more powerful Service accounts and tokens. All your keys are safe and
-        working - you will find them inside respective service accounts. Keys are now called tokens.
+        We have migrated API keys into Grafana service accounts. All API keys are safe and continue working as they used
+        to, you can find them inside the respective service account.
       </div>
       <div className={styles.actionRow}>
-        <LinkButton className={styles.actionButton} href="org/serviceaccounts" onClick={onHideApiKeys}>
-          Go to service accounts tab and never show API keys tab again
-        </LinkButton>
-        <a href="org/serviceaccounts">Go to service accounts tab</a>
+        <Button className={styles.actionButton} onClick={() => setIsModalOpen(true)}>
+          Hide API keys page forever
+        </Button>
+        <ConfirmModal
+          title={'Hide API Keys page forever'}
+          isOpen={isModalOpen}
+          body={'Are you sure you want to hide API keys page forever and use service accounts from now on?'}
+          confirmText={'Yes, hide API keys page.'}
+          onConfirm={onHideApiKeys}
+          onDismiss={() => setIsModalOpen(false)}
+        />
+        <a href="org/serviceaccounts">View service accounts page</a>
       </div>
     </Alert>
   );

@@ -241,6 +241,9 @@ IdP-initiated SSO has some security risks, so make sure you understand the risks
 
 SAML's single logout feature allows users to log out from all applications associated with the current IdP session established via SAML SSO. If the `single_logout` option is set to `true` and a user logs out, Grafana requests IdP to end the user session which in turn triggers logout from all other applications the user is logged into using the same IdP session (applications should support single logout). Conversely, if another application connected to the same IdP logs out using single logout, Grafana receives a logout request from IdP and ends the user session.
 
+`HTTP-Redirect` and `HTTP-POST` bindings are supported for single logout.
+When using `HTTP-Redirect` bindings the query should include a request signature.
+
 ### Assertion mapping
 
 During the SAML SSO authentication flow, Grafana receives the ACS callback. The callback contains all the relevant information of the user under authentication embedded in the SAML response. Grafana parses the response to create (or update) the user within its internal database.
@@ -294,7 +297,7 @@ For more information about roles and permissions in Grafana, refer to [Roles and
 
 Example configuration:
 
-```bash
+```ini
 [auth.saml]
 assertion_attribute_role = role
 role_values_editor = editor, developer
@@ -303,6 +306,17 @@ role_values_grafana_admin = superadmin
 ```
 
 **Important**: When role sync is configured, any changes of user roles and organization membership made manually in Grafana will be overwritten on next user login. Assign user organizations and roles in the IdP instead.
+
+> **Note:** Available in Grafana version 9.2 and later.
+
+If you don't want user organizations and roles to be synchronized with the IdP, you can use the `skip_org_role_sync` configuration option.
+
+Example configuration:
+
+```ini
+[auth.saml]
+skip_org_role_sync = true
+```
 
 ### Configure organization mapping
 

@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { FC } from 'react';
 
 import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
-import { Button, DeleteButton, HorizontalGroup, Icon, IconName, Tooltip, useTheme2 } from '@grafana/ui';
+import { Button, DeleteButton, HorizontalGroup, Icon, Tooltip, useTheme2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types';
 
@@ -42,7 +42,7 @@ export const ApiKeysTable: FC<Props> = ({ apiKeys, timeZone, onDelete, onMigrate
                   {isExpired && (
                     <span className={styles.tooltipContainer}>
                       <Tooltip content="This API key has expired.">
-                        <Icon name={'exclamation-triangle' as IconName} />
+                        <Icon name="exclamation-triangle" />
                       </Tooltip>
                     </span>
                   )}
@@ -50,7 +50,7 @@ export const ApiKeysTable: FC<Props> = ({ apiKeys, timeZone, onDelete, onMigrate
                 <td>
                   <HorizontalGroup justify="flex-end">
                     <Button size="sm" onClick={() => onMigrate(key)}>
-                      Migrate
+                      Migrate to service account
                     </Button>
                     <DeleteButton
                       aria-label="Delete API key"
