@@ -173,6 +173,11 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:        "correlations",
+			Description: "Correlations page",
+			State:       FeatureStateAlpha,
+		},
+		{
 			Name:        "cloudWatchDynamicLabels",
 			Description: "Use dynamic labels instead of alias patterns in CloudWatch datasource",
 			State:       FeatureStateStable,
@@ -231,12 +236,6 @@ var (
 			Name:        "useLegacyHeatmapPanel",
 			Description: "Continue to use the angular/flot based heatmap panel",
 			State:       FeatureStateStable,
-		},
-		{
-			Name:         "cloudMonitoringExperimentalUI",
-			Description:  "Use grafana-experimental UI in Cloud Monitoring",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
 		},
 		{
 			Name:            "disableSecretsCompatibility",

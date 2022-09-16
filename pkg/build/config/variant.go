@@ -40,3 +40,11 @@ type LibC string
 const (
 	LibCMusl = "musl"
 )
+
+// Distribution is the base os image where the Grafana image is built on.
+type Distribution string
+
+const (
+	Ubuntu Distribution = "ubuntu"
+	Alpine Distribution = "alpine"
+)

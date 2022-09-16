@@ -4,9 +4,9 @@ import React from 'react';
 
 import { TemplateSrvMock } from 'app/features/templating/template_srv.mock';
 
-import { createMockMetricDescriptor } from '../../__mocks__/cloudMonitoringMetricDescriptor';
-import { createMockMetricQuery } from '../../__mocks__/cloudMonitoringQuery';
-import { MetricKind, ValueTypes } from '../../types';
+import { createMockMetricDescriptor } from '../__mocks__/cloudMonitoringMetricDescriptor';
+import { createMockMetricQuery } from '../__mocks__/cloudMonitoringQuery';
+import { MetricKind, ValueTypes } from '../types';
 
 import { Preprocessor } from './Preprocessor';
 

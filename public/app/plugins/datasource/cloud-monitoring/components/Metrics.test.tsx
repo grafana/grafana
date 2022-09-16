@@ -2,9 +2,9 @@ import { render, screen, within } from '@testing-library/react';
 import React from 'react';
 import { openMenu, select } from 'react-select-event';
 
-import { createMockDatasource } from '../../__mocks__/cloudMonitoringDatasource';
-import { createMockMetricDescriptor } from '../../__mocks__/cloudMonitoringMetricDescriptor';
-import { createMockMetricQuery } from '../../__mocks__/cloudMonitoringQuery';
+import { createMockDatasource } from '../__mocks__/cloudMonitoringDatasource';
+import { createMockMetricDescriptor } from '../__mocks__/cloudMonitoringMetricDescriptor';
+import { createMockMetricQuery } from '../__mocks__/cloudMonitoringQuery';
 
 import { Metrics } from './Metrics';
 
