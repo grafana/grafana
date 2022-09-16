@@ -110,7 +110,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 				"dynamicUrl": "https://dynamic.grafana.com",
 				"queryParam": "apiKey",
 			}),
-			SecureJsonData: simplejson.NewFromAny(map[string][]byte{
+			SecureJsonData: datasources.SecureData(map[string][]byte{
 				"key": key,
 			}),
 		}
@@ -263,7 +263,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 				"clientId": "asd",
 				"tenantId": "mytenantId",
 			}),
-			SecureJsonData: simplejson.NewFromAny(map[string][]byte{
+			SecureJsonData: datasources.SecureData(map[string][]byte{
 				"clientSecret": key,
 			}),
 		}

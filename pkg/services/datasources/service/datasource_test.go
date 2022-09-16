@@ -236,7 +236,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		dsService := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
-		secureJson := simplejson.NewFromAny(map[string][]byte{"tlsCACert": []byte(caCert)})
+		secureJson := map[string][]byte{"tlsCACert": []byte(caCert)}
 		ds := datasources.DataSource{
 			Id:             1,
 			Url:            "http://k8s:8001",
@@ -256,7 +256,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		require.Nil(t, tr1.TLSClientConfig.RootCAs)
 
 		ds.JsonData = nil
-		ds.SecureJsonData = simplejson.NewFromAny(map[string][]byte{})
+		ds.SecureJsonData = map[string][]byte{}
 		ds.Updated = time.Now()
 
 		rt2, err := dsService.GetHTTPTransport(context.Background(), &ds, provider)
@@ -573,7 +573,7 @@ func TestService_GetDecryptedValues(t *testing.T) {
 		secureJsonData, err := dsService.SecretsService.EncryptJsonData(context.Background(), jsonData, secrets.WithoutScope())
 
 		require.NoError(t, err)
-		ds.SecureJsonData = simplejson.NewFromAny(secureJsonData)
+		ds.SecureJsonData = secureJsonData
 
 		values, err := dsService.DecryptedValues(context.Background(), ds)
 		require.NoError(t, err)

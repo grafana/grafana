@@ -83,6 +83,6 @@ func DataSourceModel() *datasources.DataSource {
 		Name:           DatasourceUID,
 		Type:           DatasourceType,
 		JsonData:       simplejson.New(),
-		SecureJsonData: simplejson.New(),
+		SecureJsonData: make(map[string][]byte),
 	}
 }

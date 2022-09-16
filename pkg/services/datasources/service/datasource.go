@@ -54,7 +54,14 @@ func ProvideService(
 	features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl, datasourcePermissionsService accesscontrol.DatasourcePermissionsService,
 ) *Service {
 	dslogger := log.New("datasources")
-	store := &SqlStore{db: db, logger: dslogger}
+	var store Store = &SqlStore{db: db, logger: dslogger}
+	if cfg.IsFeatureToggleEnabled("newDBLibrary") {
+		store = &SqlxStore{
+			sess:    db.GetSqlxSession(),
+			dialect: db.GetDialect(),
+			logger:  dslogger,
+		}
+	}
 	s := &Service{
 		SQLStore:       store,
 		SecretsStore:   secretsStore,
@@ -325,22 +332,12 @@ func (s *Service) DecryptedValues(ctx context.Context, ds *datasources.DataSourc
 
 func (s *Service) decryptLegacySecrets(ctx context.Context, ds *datasources.DataSource) (map[string]string, error) {
 	secureJsonData := make(map[string]string)
-	if ds.SecureJsonData != nil {
-		sjbyte, err := ds.SecureJsonData.Bytes()
+	for k, v := range ds.SecureJsonData {
+		decrypted, err := s.SecretsService.Decrypt(ctx, v)
 		if err != nil {
-			return secureJsonData, err
+			return nil, err
 		}
-
-		x := map[string][]byte{}
-		json.Unmarshal(sjbyte, &x)
-
-		for k, v := range x {
-			decrypted, err := s.SecretsService.Decrypt(ctx, v)
-			if err != nil {
-				return nil, err
-			}
-			secureJsonData[k] = string(decrypted)
-		}
+		secureJsonData[k] = string(decrypted)
 	}
 	return secureJsonData, nil
 }

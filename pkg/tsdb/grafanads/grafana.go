@@ -81,7 +81,7 @@ func DataSourceModel(orgId int64) *datasources.DataSource {
 		Type:           "grafana",
 		OrgId:          orgId,
 		JsonData:       simplejson.New(),
-		SecureJsonData: simplejson.NewFromAny(make(map[string][]byte)),
+		SecureJsonData: make(map[string][]byte),
 	}
 }
 

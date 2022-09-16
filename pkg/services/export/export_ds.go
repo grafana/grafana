@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
@@ -25,9 +24,9 @@ func exportDataSources(helper *commitHelper, job *gitExportJob) error {
 	for _, ds := range cmd.Result {
 		ds.OrgId = 0
 		ds.Version = 0
-		ds.SecureJsonData = simplejson.NewFromAny(map[string][]byte{
+		ds.SecureJsonData = map[string][]byte{
 			"TODO": []byte("XXX"),
-		})
+		}
 
 		err := helper.add(commitOptions{
 			body: []commitBody{
