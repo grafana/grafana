@@ -45,6 +45,7 @@ export const VisualizationButton: FC<Props> = ({ panel }) => {
           isOpen={isVizPickerOpen}
           onClick={onToggleOpen}
           aria-label={selectors.components.PanelEditor.toggleVizPicker}
+          variant="canvas"
           fullWidth
         >
           {plugin.meta.name}
@@ -53,6 +54,7 @@ export const VisualizationButton: FC<Props> = ({ panel }) => {
           tooltip={isPanelOptionsVisible ? 'Close options pane' : 'Show options pane'}
           icon={isPanelOptionsVisible ? 'angle-right' : 'angle-left'}
           onClick={onToggleOptionsPane}
+          variant="canvas"
           aria-label={selectors.components.PanelEditor.toggleVizOptions}
         />
       </ButtonGroup>

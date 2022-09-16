@@ -21,9 +21,8 @@ You can configure many different OAuth2 authentication services with Grafana usi
   - [Set up OAuth2 with Bitbucket](#set-up-oauth2-with-bitbucket)
   - [Set up OAuth2 with Centrify](#set-up-oauth2-with-centrify)
   - [Set up OAuth2 with OneLogin](#set-up-oauth2-with-onelogin)
-  - [JMESPath examples](#jmespath-examples)
-    - [Role mapping](#role-mapping)
-    - [Groups mapping](#groups-mapping)
+  - [Role mapping](#role-mapping)
+  - [Team synchronization](#team-synchronization)
 
 This callback URL must match the full HTTP address that you use in your browser to access Grafana, but with the suffixed path of `/login/generic_oauth`.
 
@@ -79,12 +78,6 @@ Grafana determines a user's email address by querying the OAuth provider until i
 1. Check for the presence of an e-mail address in the `attributes` map encoded in the OAuth `id_token` parameter. By default Grafana will perform a lookup into the attributes map using the `email:primary` key, however, this is configurable and can be adjusted by using the `email_attribute_name` configuration option.
 1. Query the `/emails` endpoint of the OAuth provider's API (configured with `api_url`), then check for the presence of an email address marked as a primary address.
 1. If no email address is found in steps (1-4), then the email address of the user is set to an empty string.
-
-### Roles
-
-Grafana checks for the presence of a role using the [JMESPath](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option. The JMESPath is applied to the `id_token` first. If there is no match, then the UserInfo endpoint specified via the `api_url` configuration option is tried next. The result after evaluation of the `role_attribute_path` JMESPath expression should be a valid Grafana role, for example, `Viewer`, `Editor` or `Admin`.
-
-For more information, refer to the [JMESPath examples](#jmespath-examples).
 
 ### Groups / Teams
 
@@ -241,13 +234,31 @@ allowed_organizations =
    allowed_organizations =
    ```
 
-## JMESPath examples
+## Role Mapping
+
+Grafana checks for the presence of a role using the [JMESPath](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option. The JMESPath is applied to the `id_token` first. If there is no match, then the UserInfo endpoint specified via the `api_url` configuration option is tried next. The result after evaluation of the `role_attribute_path` JMESPath expression should be a valid Grafana role, for example, `Viewer`, `Editor` or `Admin`.
+
+For more information, refer to the [JMESPath examples](#jmespath-examples).
+
+> **Warning**: Currently if no organization role mapping is found for a user, Grafana doesn't
+> update the user's organization role. This is going to change in Grafana 10. To avoid overriding manually set roles,
+> enable the `oauth_skip_org_role_update_sync` option.
+> See [configure-grafana]({{< relref "../../configure-grafana#oauth_skip_org_role_update_sync" >}}) for more information.
+
+On first login, if the`role_attribute_path` property does not return a role, then the user is assigned the role
+specified by [the `auto_assign_org_role` option]({{< relref "../../configure-grafana#auto_assign_org_role" >}}).
+You can disable this default role assignment by setting `role_attribute_strict = true`.
+It denies user access if no role or an invalid role is returned.
+
+> **Warning**: With Grafana 10, **on every login**, if the`role_attribute_path` property does not return a role,
+> then the user is assigned the role specified by
+> [the `auto_assign_org_role` option]({{< relref "../../configure-grafana#auto_assign_org_role" >}}).
+
+### JMESPath examples
+
+#### Map user organization role
 
 To ease configuration of a proper JMESPath expression, you can test/evaluate expressions with custom payloads at http://jmespath.org/.
-
-### Role mapping
-
-If  the`role_attribute_path` property does not return a role, then the user is assigned the `Viewer` role by default. You can disable the role assignment by setting `role_attribute_strict = true`. It denies user access if no role or an invalid role is returned.
 
 **Basic example:**
 
@@ -296,7 +307,28 @@ Config:
 role_attribute_path = contains(info.roles[*], 'admin') && 'Admin' || contains(info.roles[*], 'editor') && 'Editor' || 'Viewer'
 ```
 
-### Groups mapping
+#### Map server administrator privileges
+
+> Available in Grafana v9.2 and later versions.
+
+If the application role received by Grafana is `GrafanaAdmin`, Grafana grants the user server administrator privileges.  
+This is useful if you want to grant server administrator privileges to a subset of users.  
+Grafana also assigns the user the `Admin` role of the default organization.
+
+The setting `allow_assign_grafana_admin` under `[auth.generic_oauth]` must be set to `true` for this to work.  
+If the setting is set to `false`, the user is assigned the role of `Admin` of the default organization, but not server administrator privileges.
+
+```ini
+allow_assign_grafana_admin = true
+```
+
+Example:
+
+```ini
+role_attribute_path = contains(info.roles[*], 'admin') && 'GrafanaAdmin' || contains(info.roles[*], 'editor') && 'Editor' || 'Viewer'
+```
+
+## Team synchronization
 
 > Available in Grafana Enterprise v8.1 and later versions.
 

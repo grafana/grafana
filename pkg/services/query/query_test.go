@@ -2,10 +2,12 @@ package query_test
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
@@ -15,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	dsSvc "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/query"
@@ -24,6 +27,92 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 )
+
+func TestQueryDataMultipleSources(t *testing.T) {
+	t.Run("can query multiple datasources", func(t *testing.T) {
+		tc := setup(t)
+		query1, err := simplejson.NewJson([]byte(`
+			{
+				"datasource": {
+					"type": "mysql",
+					"uid": "ds1"
+				}
+			}
+		`))
+		require.NoError(t, err)
+		query2, err := simplejson.NewJson([]byte(`
+			{
+				"datasource": {
+					"type": "mysql",
+					"uid": "ds2"
+				}
+			}
+		`))
+		require.NoError(t, err)
+		queries := []*simplejson.Json{query1, query2}
+		reqDTO := dtos.MetricRequest{
+			From:                       "2022-01-01",
+			To:                         "2022-01-02",
+			Queries:                    queries,
+			Debug:                      false,
+			PublicDashboardAccessToken: "abc123",
+			HTTPRequest:                nil,
+		}
+
+		_, err = tc.queryService.QueryDataMultipleSources(context.Background(), nil, true, reqDTO, false)
+
+		require.NoError(t, err)
+	})
+
+	t.Run("can query multiple datasources with an expression present", func(t *testing.T) {
+		tc := setup(t)
+		query1, err := simplejson.NewJson([]byte(`
+			{
+				"datasource": {
+					"type": "mysql",
+					"uid": "ds1"
+				}
+			}
+		`))
+		require.NoError(t, err)
+		query2, err := simplejson.NewJson([]byte(`
+			{
+				"datasource": {
+					"type": "mysql",
+					"uid": "ds2"
+				}
+			}
+		`))
+		require.NoError(t, err)
+		query3, err := simplejson.NewJson([]byte(`
+			{
+				"datasource": {
+					"name": "Expression",
+					"type": "__expr__",
+					"uid": "__expr__"
+				},
+				"expression": "$A + 1",
+				"hide": false,
+				"refId": "EXPRESSION",
+				"type": "math"
+			}
+		`))
+		require.NoError(t, err)
+		queries := []*simplejson.Json{query1, query2, query3}
+		reqDTO := dtos.MetricRequest{
+			From:                       "2022-01-01",
+			To:                         "2022-01-02",
+			Queries:                    queries,
+			Debug:                      false,
+			PublicDashboardAccessToken: "abc123",
+			HTTPRequest:                nil,
+		}
+
+		_, err = tc.queryService.QueryDataMultipleSources(context.Background(), nil, true, reqDTO, false)
+
+		require.NoError(t, err)
+	})
+}
 
 func TestQueryData(t *testing.T) {
 	t.Run("it auth custom headers to the request", func(t *testing.T) {
@@ -96,6 +185,11 @@ func setup(t *testing.T) *testContext {
 	ss := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 	ssvc := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	ds := dsSvc.ProvideService(nil, ssvc, ss, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
+	fakeDatasourceService := &fakeDatasources.FakeDataSourceService{
+		DataSources:           nil,
+		SimulatePluginFailure: false,
+	}
+	exprService := expr.ProvideService(nil, pc, fakeDatasourceService)
 
 	return &testContext{
 		pluginContext:          pc,
@@ -103,7 +197,7 @@ func setup(t *testing.T) *testContext {
 		dataSourceCache:        dc,
 		oauthTokenService:      tc,
 		pluginRequestValidator: rv,
-		queryService:           query.ProvideService(nil, dc, nil, rv, ds, pc, tc),
+		queryService:           query.ProvideService(nil, dc, exprService, rv, ds, pc, tc),
 	}
 }
 
@@ -167,5 +261,11 @@ type fakePluginClient struct {
 
 func (c *fakePluginClient) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	c.req = req
-	return nil, nil
+
+	// If an expression query ends up getting directly queried, we want it to return an error in our test.
+	if req.PluginContext.PluginID == "__expr__" {
+		return nil, errors.New("cant query an expression datasource")
+	}
+
+	return &backend.QueryDataResponse{Responses: make(backend.Responses)}, nil
 }

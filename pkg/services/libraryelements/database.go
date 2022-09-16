@@ -30,11 +30,14 @@ SELECT DISTINCT
 	, (SELECT COUNT(connection_id) FROM ` + models.LibraryElementConnectionTableName + ` WHERE element_id = le.id AND kind=1) AS connected_dashboards`
 )
 
+// redundant SELECT to trick mysql's optimizer
 const deleteInvalidConnections = `
 DELETE FROM library_element_connection
 WHERE connection_id IN (
-	SELECT connection_id as id FROM library_element_connection
-	WHERE element_id=? AND connection_id NOT IN (SELECT id as connection_id from dashboard)
+	SELECT connection_id FROM (
+		SELECT connection_id as id FROM library_element_connection
+		WHERE element_id=? AND connection_id NOT IN (SELECT id as connection_id from dashboard)
+	) as dummy
 )`
 
 func getFromLibraryElementDTOWithMeta(dialect migrator.Dialect) string {

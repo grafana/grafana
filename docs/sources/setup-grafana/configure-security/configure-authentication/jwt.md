@@ -15,6 +15,10 @@ You can configure Grafana to accept a JWT token provided in the HTTP header. The
 - JSON Web Key Set (JWKS) in a local file
 - JWKS provided by the configured JWKS endpoint
 
+This method of authentication is useful for integrating with other systems that
+use JWKS but can't directly integrate with Grafana or if you want to use pass-through
+authentication in an app embedding Grafana.
+
 ## Enable JWT
 
 To use JWT authentication:
@@ -52,6 +56,46 @@ email_claim = sub
 ```
 
 If `auto_sign_up` is enabled, then the `sub` claim is used as the "external Auth ID". The `name` claim is used as the user's full name if it is present.
+
+## Iframe Embedding
+
+If you want to embed Grafana in an iframe while maintaning user identity and role checks,
+you can use JWT authentication to authenticate the iframe.
+
+> **Note**: For Grafana Cloud, or scenarios where verifying viewer identity is not required,
+> embed [public dashboards]({{< relref "../../../dashboards/dashboard-public" >}}).
+
+In this scenario, you will need to configure Grafana to accept a JWT
+provided in the HTTP header and a reverse proxy should rewrite requests to the
+Grafana instance to include the JWT in the request's headers.
+
+> **Note**: For embedding to work, you must enable `allow_embedding` in the [security section]({{< relref "../../configure-grafana#allow_embedding" >}}). This setting is not available in Grafana Cloud.
+
+In a scenario where it is not possible to rewrite the request headers you
+can use URL login instead.
+
+### URL login
+
+`url_login` allows grafana to search for a JWT in the URL query parameter
+`auth_token` and use it as the authentication token.
+
+> **Warning**: this can lead to JWTs being exposed in logs and possible session hijacking if the server is not
+> using HTTP over TLS.
+
+```ini
+# [auth.jwt]
+# ...
+url_login = true # enable JWT authentication in the URL
+```
+
+An example of an URL for accessing grafana with JWT URL authentication is:
+
+```
+http://env.grafana.local/d/RciOKLR4z/board-identifier?orgId=1&kiosk&auth_token=eyJhbxxxxxxxxxxxxx
+```
+
+A sample repository using this authentication method is available
+at [grafana-iframe-oauth-sample](https://github.com/grafana/grafana-iframe-oauth-sample).
 
 ## Signature verification
 
@@ -99,3 +143,68 @@ You might also want to validate that other claims are really what you expect the
 # This can be seen as a required "subset" of a JWT Claims Set.
 expect_claims = {"iss": "https://your-token-issuer", "your-custom-claim": "foo"}
 ```
+
+## Roles
+
+Grafana checks for the presence of a role using the [JMESPath](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option. The JMESPath is applied to JWT token claims. The result after evaluation of the `role_attribute_path` JMESPath expression should be a valid Grafana role, for example, `Viewer`, `Editor` or `Admin`.
+
+The organization that the role is assigned to can be configured using the `X-Grafana-Org-Id` header.
+
+### JMESPath examples
+
+To ease configuration of a proper JMESPath expression, you can test/evaluate expressions with custom payloads at http://jmespath.org/.
+
+### Role mapping
+
+If the `role_attribute_path` property does not return a role, then the user is assigned the `Viewer` role by default. You can disable the role assignment by setting `role_attribute_strict = true`. It denies user access if no role or an invalid role is returned.
+
+**Basic example:**
+
+In the following example user will get `Editor` as role when authenticating. The value of the property `role` will be the resulting role if the role is a proper Grafana role, i.e. `Viewer`, `Editor` or `Admin`.
+
+Payload:
+
+```json
+{
+    ...
+    "role": "Editor",
+    ...
+}
+```
+
+Config:
+
+```bash
+role_attribute_path = role
+```
+
+**Advanced example:**
+
+In the following example user will get `Admin` as role when authenticating since it has a role `admin`. If a user has a role `editor` it will get `Editor` as role, otherwise `Viewer`.
+
+Payload:
+
+```json
+{
+    ...
+    "info": {
+        ...
+        "roles": [
+            "engineer",
+            "admin",
+        ],
+        ...
+    },
+    ...
+}
+```
+
+Config:
+
+```bash
+role_attribute_path = contains(info.roles[*], 'admin') && 'Admin' || contains(info.roles[*], 'editor') && 'Editor' || 'Viewer'
+```
+
+### Grafana Admin Role
+
+If the `role_attribute_path` property returns a `GrafanaAdmin` role, Grafana Admin is not assigned by default, instead the `Admin` role is assigned. To allow `Grafana Admin` role to be assigned set `allow_assign_grafana_admin = true`.
