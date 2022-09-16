@@ -59,7 +59,7 @@ import {
   removeCommentsFromQuery,
 } from './modifyQuery';
 import { getQueryHints } from './queryHints';
-import { getNormalizedLokiQuery, isLogsQuery, isValidQuery } from './query_utils';
+import { getNormalizedLokiQuery, isLogsQuery, isValidQuery } from './queryUtils';
 import { sortDataFrameByTime } from './sortDataFrame';
 import { doLokiChannelStream } from './streaming';
 import {
