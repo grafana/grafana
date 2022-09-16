@@ -46,7 +46,7 @@ export class ExploreTimeControls extends Component<Props> {
       to: adjustedTo,
     });
 
-    reportInteraction('grafana_explore_time_picker_time_range', {
+    reportInteraction('grafana_explore_time_picker_time_range_changed', {
       timeRangeFrom: adjustedFrom,
       timeRangeTo: adjustedTo,
     });
