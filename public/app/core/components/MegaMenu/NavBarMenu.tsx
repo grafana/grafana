@@ -144,7 +144,7 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden?: boolean) => {
       borderBottom: `1px solid ${theme.colors.border.weak}`,
       display: 'flex',
       justifyContent: 'space-between',
-      padding: theme.spacing(1, 2, 2),
+      padding: theme.spacing(1, 2),
       [theme.breakpoints.up('md')]: {
         display: 'none',
       },
@@ -152,6 +152,7 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden?: boolean) => {
     itemList: css({
       display: 'grid',
       gridAutoRows: `minmax(${theme.spacing(6)}, auto)`,
+      gridTemplateColumns: `minmax(${MENU_WIDTH}, auto)`,
       minWidth: MENU_WIDTH,
     }),
     menuCollapseIcon: css({
