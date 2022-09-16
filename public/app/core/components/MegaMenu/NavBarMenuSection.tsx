@@ -6,31 +6,39 @@ import { CollapsableSection, useStyles2 } from '@grafana/ui';
 
 import { NavBarItemIcon } from '../NavBar/NavBarItemIcon';
 import { NavFeatureHighlight } from '../NavBar/NavFeatureHighlight';
+import { isChildMatch } from '../NavBar/utils';
 
 export function NavBarMenuSection({
   link,
-  isActive,
+  activeItem,
   children,
   className,
 }: {
   link: NavModelItem;
-  isActive?: boolean;
+  activeItem?: NavModelItem;
   children: React.ReactNode;
   className?: string;
 }) {
   const styles = useStyles2(getStyles);
   const FeatureHighlightWrapper = link.highlightText ? NavFeatureHighlight : React.Fragment;
-  const [sectionExpanded, setSectionExpanded] = useState(Boolean(isActive));
+  const isActive = link === activeItem;
+  const hasActiveChild = isChildMatch(link, activeItem);
+  const [sectionExpanded, setSectionExpanded] = useState(Boolean(hasActiveChild));
 
   return (
     <li className={cx(styles.collapsibleSectionWrapper, className)}>
       <CollapsableSection
         isOpen={Boolean(sectionExpanded)}
         onToggle={(isOpen) => setSectionExpanded(isOpen)}
-        className={styles.collapseWrapper}
+        className={cx(styles.collapseWrapper, { [styles.collapseWrapperActive]: isActive })}
         contentClassName={styles.collapseContent}
         label={
-          <div className={cx(styles.labelWrapper, { [styles.isActive]: isActive })}>
+          <div
+            className={cx(styles.labelWrapper, {
+              [styles.isActive]: isActive,
+              [styles.hasActiveChild]: hasActiveChild,
+            })}
+          >
             <FeatureHighlightWrapper>
               <NavBarItemIcon link={link} />
             </FeatureHighlightWrapper>
@@ -68,6 +76,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
       transition: 'none',
     },
   }),
+  collapseWrapperActive: css({
+    backgroundColor: theme.colors.action.disabledBackground,
+  }),
   collapseContent: css({
     padding: 0,
   }),
@@ -79,6 +90,22 @@ const getStyles = (theme: GrafanaTheme2) => ({
     placeItems: 'center',
   }),
   isActive: css({
+    color: theme.colors.text.primary,
+
+    '&::before': {
+      display: 'block',
+      content: '" "',
+      height: theme.spacing(3),
+      position: 'absolute',
+      left: theme.spacing(1),
+      top: '50%',
+      transform: 'translateY(-50%)',
+      width: theme.spacing(0.5),
+      borderRadius: theme.shape.borderRadius(1),
+      backgroundImage: theme.colors.gradients.brandVertical,
+    },
+  }),
+  hasActiveChild: css({
     color: theme.colors.text.primary,
   }),
 });

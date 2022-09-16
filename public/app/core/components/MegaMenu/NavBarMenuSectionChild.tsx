@@ -7,21 +7,22 @@ import { Icon, IconName, Link, useTheme2 } from '@grafana/ui';
 export interface Props {
   icon?: IconName;
   isActive?: boolean;
+  isChild?: boolean;
   onClick?: () => void;
   target?: HTMLAnchorElement['target'];
-  text: React.ReactNode;
+  label: React.ReactNode;
   url?: string;
 }
 
-export function NavBarMenuSectionChild({ icon, isActive, onClick, target, text, url }: Props) {
+export function NavBarMenuSectionChild({ icon, isActive, isChild, onClick, target, label, url }: Props) {
   const theme = useTheme2();
-  const styles = getStyles(theme, isActive);
+  const styles = getStyles(theme, isActive, isChild);
 
   const linkContent = (
     <div className={styles.linkContent}>
       {icon && <Icon data-testid="dropdown-child-icon" name={icon} />}
 
-      <div className={styles.linkText}>{text}</div>
+      <div className={styles.linkText}>{label}</div>
 
       {target === '_blank' && (
         <Icon data-testid="external-link-icon" name="external-link-alt" className={styles.externalLinkIcon} />
@@ -53,11 +54,12 @@ export function NavBarMenuSectionChild({ icon, isActive, onClick, target, text, 
 
 NavBarMenuSectionChild.displayName = 'NavBarMenuSectionChild';
 
-const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
+const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], isChild: Props['isActive']) => ({
   linkContent: css({
     alignItems: 'center',
     display: 'flex',
     gap: '0.5rem',
+    height: '100%',
     width: '100%',
   }),
   linkText: css({
@@ -73,7 +75,7 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
     backgroundColor: isActive ? theme.colors.action.disabledBackground : undefined,
     boxSizing: 'border-box',
     color: isActive ? theme.colors.text.primary : theme.colors.text.secondary,
-    padding: theme.spacing(1, 1.5, 1, 2.25),
+    padding: theme.spacing(1, 1, 1, isChild ? 7 : 0),
     width: '100%',
     '&:hover, &:focus-visible': {
       backgroundColor: theme.colors.action.hover,
@@ -88,10 +90,11 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
     '&::before': {
       display: isActive ? 'block' : 'none',
       content: '" "',
+      height: theme.spacing(3),
       position: 'absolute',
-      left: 0,
-      top: 0,
-      bottom: 0,
+      left: theme.spacing(1),
+      top: '50%',
+      transform: 'translateY(-50%)',
       width: theme.spacing(0.5),
       borderRadius: theme.shape.borderRadius(1),
       backgroundImage: theme.colors.gradients.brandVertical,

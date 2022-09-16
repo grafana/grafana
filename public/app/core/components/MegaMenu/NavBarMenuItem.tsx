@@ -6,10 +6,8 @@ import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { toIconName, useStyles2 } from '@grafana/ui';
 
 import { NavBarItemIcon } from '../NavBar/NavBarItemIcon';
-import { NavBarItemWithoutMenu } from '../NavBar/NavBarItemWithoutMenu';
 import { NavFeatureHighlight } from '../NavBar/NavFeatureHighlight';
 import menuItemTranslations from '../NavBar/navBarItem-translations';
-import { isMatchOrChildMatch } from '../NavBar/utils';
 
 import { NavBarMenuSection } from './NavBarMenuSection';
 import { NavBarMenuSectionChild } from './NavBarMenuSectionChild';
@@ -28,7 +26,7 @@ export function NavItem({
 
   if (linkHasChildren(link)) {
     return (
-      <NavBarMenuSection link={link} isActive={isMatchOrChildMatch(link, activeItem)}>
+      <NavBarMenuSection link={link} activeItem={activeItem}>
         <ul className={styles.children}>
           {link.children.map((childLink) => {
             const icon = childLink.icon ? toIconName(childLink.icon) : undefined;
@@ -37,13 +35,14 @@ export function NavItem({
                 <NavBarMenuSectionChild
                   key={`${link.text}-${childLink.text}`}
                   isActive={activeItem === childLink}
+                  isChild
                   icon={childLink.showIconInNavbar ? icon : undefined}
                   onClick={() => {
                     childLink.onClick?.();
                     onClose();
                   }}
                   target={childLink.target}
-                  text={childLink.text}
+                  label={childLink.text}
                   url={childLink.url}
                 />
               )
@@ -55,7 +54,7 @@ export function NavItem({
   } else if (link.emptyMessageId) {
     const emptyMessageTranslated = i18n._(menuItemTranslations[link.emptyMessageId]);
     return (
-      <NavBarMenuSection link={link} isActive={isMatchOrChildMatch(link, activeItem)}>
+      <NavBarMenuSection link={link}>
         <ul className={styles.children}>
           <div className={styles.emptyMessage}>{emptyMessageTranslated}</div>
         </ul>
@@ -64,19 +63,15 @@ export function NavItem({
   } else {
     const FeatureHighlightWrapper = link.highlightText ? NavFeatureHighlight : React.Fragment;
     return (
-      <li className={styles.flex}>
-        <NavBarItemWithoutMenu
-          className={styles.itemWithoutMenu}
-          elClassName={styles.fullWidth}
-          label={link.text}
-          url={link.url}
-          target={link.target}
-          onClick={() => {
-            link.onClick?.();
-            onClose();
-          }}
-          isActive={link === activeItem}
-        >
+      <NavBarMenuSectionChild
+        isActive={activeItem === link}
+        icon={link.showIconInNavbar ? link.icon && toIconName(link.icon) : undefined}
+        onClick={() => {
+          link.onClick?.();
+          onClose();
+        }}
+        target={link.target}
+        label={
           <div className={styles.itemWithoutMenuContent}>
             <div className={styles.iconContainer}>
               <FeatureHighlightWrapper>
@@ -85,8 +80,9 @@ export function NavItem({
             </div>
             <span className={styles.linkText}>{link.text}</span>
           </div>
-        </NavBarItemWithoutMenu>
-      </li>
+        }
+        url={link.url}
+      />
     );
   }
 }

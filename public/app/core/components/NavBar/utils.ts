@@ -102,6 +102,10 @@ export const isMatchOrChildMatch = (itemToCheck: NavModelItem, searchItem?: NavM
   return Boolean(itemToCheck === searchItem || itemToCheck.children?.some((child) => child === searchItem));
 };
 
+export const isChildMatch = (itemToCheck: NavModelItem, searchItem?: NavModelItem) => {
+  return Boolean(itemToCheck.children?.some((child) => child === searchItem));
+};
+
 const stripQueryParams = (url?: string) => {
   return url?.split('?')[0] ?? '';
 };
