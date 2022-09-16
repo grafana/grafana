@@ -1,9 +1,8 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
-
-const linkColor = '#1F62E0';
 
 export default function CheatSheet() {
   const styles = useStyles2(getStyles);
@@ -48,9 +47,9 @@ export default function CheatSheet() {
   );
 }
 
-const getStyles = () => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   linkColor: css`
-    color: ${linkColor};
+    color: ${theme.colors.text.link};
   `,
   removeBullets: css`
     list-style-type: none;
