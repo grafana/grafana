@@ -1,4 +1,4 @@
-import { escapeLabelValueInExactSelector, escapeLabelValueInRegexSelector } from './language_utils';
+import { escapeLabelValueInExactSelector, escapeLabelValueInRegexSelector } from './languageUtils';
 
 describe('escapeLabelValueInExactSelector()', () => {
   it('handles newline characters', () => {
