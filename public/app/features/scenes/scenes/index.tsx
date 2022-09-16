@@ -11,6 +11,7 @@ import { sceneWithRows } from './sceneWithRows';
 import { sceneWithRowsFromJson } from './sceneWithRowsFromJson';
 import { timeShiftScene } from './timeShift';
 import { transformationsDemo } from './transformationNode';
+import { transformationsDemoFromJson } from './transformationNodeFromJson';
 
 export function getScenes(): Array<{ title: string; getScene: () => Scene }> {
   return [
@@ -26,6 +27,7 @@ export function getScenes(): Array<{ title: string; getScene: () => Scene }> {
     sceneWithRowsFromJson,
     timeShiftScene,
     transformationsDemo,
+    transformationsDemoFromJson,
   ];
 }
 

@@ -8,6 +8,7 @@ import { VizPanel } from '../components/VizPanel';
 import { SceneEditManager } from '../editor/SceneEditManager';
 import { SceneDataProviderNode } from './SceneDataProviderNode';
 import { SceneTimeRange } from './SceneTimeRange';
+import { SceneDataTransformationNode } from './SceneTransformationNode';
 import { isDataNode, isLayoutNode, isParametrizedState } from './typeguards';
 import { SceneLayoutState, SceneObject, SceneParametrizedState } from './types';
 
@@ -176,6 +177,9 @@ export function sceneFromJSON(
           break;
         case 'SceneDataProviderNode':
           dataNodesMap.set(input.key, new SceneDataProviderNode(input));
+          break;
+        case 'SceneDataTransformationNode':
+          dataNodesMap.set(input.key, new SceneDataTransformationNode(input));
           break;
         default:
           throw new Error(`Unknown input ${input.type}`);
