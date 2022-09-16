@@ -70,7 +70,7 @@ describe('calculateLogsLabelStats()', () => {
       },
     ];
 
-    expect(calculateLogsLabelStats(rows as any, 'baz')).toEqual([]);
+    expect(calculateLogsLabelStats(rows as unknown as LogRowModel[], 'baz')).toEqual([]);
   });
 
   test('should return stats for found labels', () => {
@@ -95,7 +95,7 @@ describe('calculateLogsLabelStats()', () => {
       },
     ];
 
-    expect(calculateLogsLabelStats(rows as any, 'foo')).toMatchObject([
+    expect(calculateLogsLabelStats(rows as unknown as LogRowModel[], 'foo')).toMatchObject([
       {
         value: 'bar',
         count: 2,
@@ -217,7 +217,7 @@ describe('calculateFieldStats()', () => {
       },
     ];
 
-    expect(calculateFieldStats(rows as any, /baz=(.*)/)).toEqual([]);
+    expect(calculateFieldStats(rows as LogRowModel[], /baz=(.*)/)).toEqual([]);
   });
 
   test('should return stats for found field', () => {
@@ -236,7 +236,7 @@ describe('calculateFieldStats()', () => {
       },
     ];
 
-    expect(calculateFieldStats(rows as any, /foo=("[^"]*"|\S+)/)).toMatchObject([
+    expect(calculateFieldStats(rows as LogRowModel[], /foo=("[^"]*"|\S+)/)).toMatchObject([
       {
         value: '"42 + 1"',
         count: 2,
@@ -364,7 +364,7 @@ describe('checkLogsError()', () => {
       __error__: 'Error Message',
       foo: 'boo',
     },
-  } as any as LogRowModel;
+  } as unknown as LogRowModel;
   test('should return correct error if error is present', () => {
     expect(checkLogsError(log)).toStrictEqual({ hasError: true, errorMessage: 'Error Message' });
   });
