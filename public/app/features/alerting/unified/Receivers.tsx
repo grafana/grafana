@@ -5,6 +5,9 @@ import { Redirect, Route, RouteChildrenProps, Switch, useLocation, useParams } f
 import { NavModelItem } from '@grafana/data';
 import { Alert, LoadingPlaceholder, withErrorBoundary } from '@grafana/ui';
 
+import { AlertmanagerChoice } from '../../../plugins/datasource/alertmanager/types';
+
+import { alertmanagerApi } from './api/alertmanager';
 import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { NoAlertManagerWarning } from './components/NoAlertManagerWarning';
@@ -21,12 +24,14 @@ import { fetchAlertManagerConfigAction, fetchGrafanaNotifiersAction } from './st
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { initialAsyncRequestState } from './utils/redux';
 
+type PageType = 'receivers' | 'templates' | 'global-config';
+
 const Receivers: FC = () => {
+  const { useGetAlertmanagerChoiceQuery } = alertmanagerApi;
+
   const alertManagers = useAlertManagersByPermission('notification');
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName(alertManagers);
   const dispatch = useDispatch();
-
-  type PageType = 'receivers' | 'templates' | 'global-config';
 
   const { id, type } = useParams<{ id?: string; type?: PageType }>();
   const location = useLocation();
@@ -58,28 +63,11 @@ const Receivers: FC = () => {
     }
   }, [alertManagerSourceName, dispatch, receiverTypes]);
 
+  const { data: alertmanagerChoice } = useGetAlertmanagerChoiceQuery();
+
   const disableAmSelect = !isRoot;
 
-  let pageNav: NavModelItem | undefined;
-  if (type === 'receivers' || type === 'templates') {
-    const objectText = type === 'receivers' ? 'contact point' : 'message template';
-    if (id) {
-      pageNav = {
-        text: id,
-        subTitle: `Edit the settings for a specific ${objectText}`,
-      };
-    } else {
-      pageNav = {
-        text: `New ${objectText}`,
-        subTitle: `Create a new ${objectText} for your notifications`,
-      };
-    }
-  } else if (type === 'global-config') {
-    pageNav = {
-      text: 'Global config',
-      subTitle: 'Manage your global configuration',
-    };
-  }
+  let pageNav = getPageNavigationModel(type, id);
 
   if (!alertManagerSourceName) {
     return isRoot ? (
@@ -102,6 +90,12 @@ const Receivers: FC = () => {
       {error && !loading && (
         <Alert severity="error" title="Error loading Alertmanager config">
           {error.message || 'Unknown error.'}
+        </Alert>
+      )}
+      {alertmanagerChoice === AlertmanagerChoice.External && alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME && (
+        <Alert title="Grafana Alertmanager is currently disabled">
+          Grafana is configured to sent alerts to external Alertmanagers only Changing Grafana Alertmanager
+          configuration will not affect your alerts!
         </Alert>
       )}
       {loading && !config && <LoadingPlaceholder text="loading configuration..." />}
@@ -146,5 +140,29 @@ const Receivers: FC = () => {
     </AlertingPageWrapper>
   );
 };
+
+function getPageNavigationModel(type: PageType | undefined, id: string | undefined) {
+  let pageNav: NavModelItem | undefined;
+  if (type === 'receivers' || type === 'templates') {
+    const objectText = type === 'receivers' ? 'contact point' : 'message template';
+    if (id) {
+      pageNav = {
+        text: id,
+        subTitle: `Edit the settings for a specific ${objectText}`,
+      };
+    } else {
+      pageNav = {
+        text: `New ${objectText}`,
+        subTitle: `Create a new ${objectText} for your notifications`,
+      };
+    }
+  } else if (type === 'global-config') {
+    pageNav = {
+      text: 'Global config',
+      subTitle: 'Manage your global configuration',
+    };
+  }
+  return pageNav;
+}
 
 export default withErrorBoundary(Receivers, { style: 'page' });
