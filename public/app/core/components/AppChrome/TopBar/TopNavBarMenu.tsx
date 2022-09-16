@@ -20,7 +20,7 @@ export function TopNavBarMenu({ node }: TopNavBarMenuProps) {
   return (
     <Menu
       header={
-        <div className={styles.header}>
+        <div onClick={(e) => e.stopPropagation()} className={styles.header}>
           <div>{node.text}</div>
           {node.subTitle && <div className={styles.subTitle}>{node.subTitle}</div>}
         </div>
