@@ -521,7 +521,7 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean) => {
       background-color: ${theme.colors.background.primary};
       padding: ${theme.spacing(1, 2)};
       border-radius: ${theme.shape.borderRadius()};
-      margin: ${theme.spacing(2, 0, 1)};
+      margin: ${theme.spacing(0, 0, 1)};
       border: 1px solid ${theme.colors.border.medium};
     `,
     headerButton: css`
