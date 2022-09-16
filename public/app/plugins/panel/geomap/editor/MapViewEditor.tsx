@@ -175,7 +175,7 @@ export const MapViewEditor: FC<
                 label="Padding"
                 labelWidth={labelWidth}
                 grow={true}
-                tooltip="sets relative padding outside of data extent"
+                tooltip="sets padding in relative percent beyond data extent"
               >
                 <NumberInput
                   value={value?.padding ?? 5}
