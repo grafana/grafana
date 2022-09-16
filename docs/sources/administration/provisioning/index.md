@@ -434,11 +434,11 @@ groups:
         noDataState: Alerting
         # <string> the state the alert rule will have when the query execution
         #          had no data - possible values: "NoData", "Alerting", "OK"
-        #          default = Alerting
+        #          default = NoData
         execErrState: Alerting
         # <string> the state the alert rule will have when the query execution
         #          failed - possible values: "Error", "Alerting", "OK"
-        #          default = NoData
+        #          default = Alerting
         # TOREVIEW
         # <duration, required> for how long should the alert fire before alerting
         for: 60s
