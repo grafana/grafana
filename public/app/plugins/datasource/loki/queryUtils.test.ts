@@ -5,7 +5,7 @@ import {
   isQueryWithLabelFormat,
   isQueryWithParser,
   isValidQuery,
-} from './query_utils';
+} from './queryUtils';
 import { LokiQuery, LokiQueryType } from './types';
 
 describe('getHighlighterExpressionsFromQuery', () => {

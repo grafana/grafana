@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardStore "github.com/grafana/grafana/pkg/services/dashboards/database"
@@ -487,8 +488,8 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 
 	cacheService := datasourcesService.ProvideCacheService(localcache.ProvideService(), db)
 	qds := buildQueryDataService(t, cacheService, nil, db)
-
-	_ = db.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+	dsStore := datasourcesService.CreateStore(db, log.New("publicdashboards.test"))
+	_ = dsStore.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
 		Uid:      "ds1",
 		OrgId:    1,
 		Name:     "laban",
