@@ -37,7 +37,7 @@ type file struct {
 }
 
 var (
-	fileColsNoContents = []string{"version", "path", "path_hash", "parent_folder_path_hash", "etag", "cache_control", "content_disposition", "updated", "created", "size", "mime_type"}
+	fileColsNoContents = []string{"contents_version", "path", "path_hash", "parent_folder_path_hash", "etag", "cache_control", "content_disposition", "updated", "created", "size", "mime_type"}
 	allFileCols        = append([]string{"contents"}, fileColsNoContents...)
 )
 
