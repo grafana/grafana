@@ -17,6 +17,7 @@ import {
   TestReceiversResult,
   ExternalAlertmanagerConfig,
   AlertmanagerChoice,
+  ExternalAlertmanagers,
 } from 'app/plugins/datasource/alertmanager/types';
 
 import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
@@ -287,8 +288,9 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
       providesTags: ['AlertmanagerChoice'],
     }),
 
-    getExternalAlertmanagers: build.query<ExternalAlertmanagersResponse, void>({
+    getExternalAlertmanagers: build.query<ExternalAlertmanagers, void>({
       query: () => ({ url: '/api/v1/ngalert/alertmanagers' }),
+      transformResponse: (response: ExternalAlertmanagersResponse) => response.data,
     }),
 
     saveExternalAlertmanagersConfig: build.mutation<{ message: string }, ExternalAlertmanagerConfig>({

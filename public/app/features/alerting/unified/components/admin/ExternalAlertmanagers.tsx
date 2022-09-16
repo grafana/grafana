@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import {
@@ -18,17 +18,16 @@ import {
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { loadDataSources } from 'app/features/datasources/state/actions';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
-import { StoreState } from 'app/types/store';
 
 import { useExternalAmSelector, useExternalDataSourceAlertmanagers } from '../../hooks/useExternalAmSelector';
-import {
-  addExternalAlertmanagersAction,
-  fetchExternalAlertmanagersAction,
-  fetchExternalAlertmanagersConfigAction,
-} from '../../state/actions';
+import // addExternalAlertmanagersAction,
+// fetchExternalAlertmanagersAction,
+// fetchExternalAlertmanagersConfigAction,
+'../../state/actions';
 
 import { AddAlertManagerModal } from './AddAlertManagerModal';
 import { ExternalAlertmanagerDataSources } from './ExternalAlertmanagerDataSources';
+import { alertmanagerApi } from '../../api/alertmanager';
 
 const alertmanagerChoices: Array<SelectableValue<AlertmanagerChoice>> = [
   { value: AlertmanagerChoice.Internal, label: 'Only Internal' },
@@ -45,20 +44,29 @@ export const ExternalAlertmanagers = () => {
   const externalAlertManagers = useExternalAmSelector();
   const externalDsAlertManagers = useExternalDataSourceAlertmanagers();
 
-  const alertmanagersChoice = useSelector(
-    (state: StoreState) => state.unifiedAlerting.externalAlertmanagers.alertmanagerConfig.result?.alertmanagersChoice
-  );
+  const {
+    useSaveExternalAlertmanagersConfigMutation,
+    useGetExternalAlertmanagerConfigQuery,
+    useGetExternalAlertmanagersQuery,
+  } = alertmanagerApi;
+
+  const [saveExternalAlertManagers] = useSaveExternalAlertmanagersConfigMutation();
+  const { currentData: externalAlertmanagerConfig } = useGetExternalAlertmanagerConfigQuery();
+
+  // Just to refresh the status periodically
+  useGetExternalAlertmanagersQuery(undefined, { pollingInterval: 5000 });
+
+  const alertmanagersChoice = externalAlertmanagerConfig?.alertmanagersChoice;
   const theme = useTheme2();
 
   useEffect(() => {
-    dispatch(fetchExternalAlertmanagersAction());
-    dispatch(fetchExternalAlertmanagersConfigAction());
+    // dispatch(fetchExternalAlertmanagersAction());
     dispatch(loadDataSources());
-    const interval = setInterval(() => dispatch(fetchExternalAlertmanagersAction()), 5000);
+    // const interval = setInterval(() => dispatch(fetchExternalAlertmanagersAction()), 5000);
 
-    return () => {
-      clearInterval(interval);
-    };
+    // return () => {
+    //   clearInterval(interval);
+    // };
   }, [dispatch]);
 
   const onDelete = useCallback(
@@ -69,12 +77,12 @@ export const ExternalAlertmanagers = () => {
         .map((am) => {
           return am.url;
         });
-      dispatch(
-        addExternalAlertmanagersAction({
-          alertmanagers: newList,
-          alertmanagersChoice: alertmanagersChoice ?? AlertmanagerChoice.All,
-        })
-      );
+
+      saveExternalAlertManagers({
+        alertmanagers: newList,
+        alertmanagersChoice: alertmanagersChoice ?? AlertmanagerChoice.All,
+      });
+      //
       setDeleteModalState({ open: false, index: 0 });
     },
     [externalAlertManagers, dispatch, alertmanagersChoice]
@@ -108,18 +116,14 @@ export const ExternalAlertmanagers = () => {
   }, [setModalState]);
 
   const onChangeAlertmanagerChoice = (alertmanagersChoice: AlertmanagerChoice) => {
-    dispatch(
-      addExternalAlertmanagersAction({ alertmanagers: externalAlertManagers.map((am) => am.url), alertmanagersChoice })
-    );
+    saveExternalAlertManagers({ alertmanagers: externalAlertManagers.map((am) => am.url), alertmanagersChoice });
   };
 
   const onChangeAlertmanagers = (alertmanagers: string[]) => {
-    dispatch(
-      addExternalAlertmanagersAction({
-        alertmanagers,
-        alertmanagersChoice: alertmanagersChoice ?? AlertmanagerChoice.All,
-      })
-    );
+    saveExternalAlertManagers({
+      alertmanagers,
+      alertmanagersChoice: alertmanagersChoice ?? AlertmanagerChoice.All,
+    });
   };
 
   const getStatusColor = (status: string) => {
