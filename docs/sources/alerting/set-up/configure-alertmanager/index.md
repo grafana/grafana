@@ -15,7 +15,7 @@ weight: 100
 
 # Configure Alertmanager
 
-Configure Alertmanager for Grafana Alerting to group and manage alert rules, adding a layer of orchestration on top of the alerting engines.
+Configure Alertmanager from Grafana Alerting to group and manage alert rules, adding a layer of orchestration on top of your external alerting engine.
 
 ## Add a new external Alertmanager
 
