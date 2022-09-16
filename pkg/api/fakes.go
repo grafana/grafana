@@ -20,6 +20,10 @@ type fakePlugin struct {
 	version  string
 }
 
+func NewFakePluginInstaller() *fakePluginInstaller {
+	return &fakePluginInstaller{plugins: map[string]fakePlugin{}}
+}
+
 func (pm *fakePluginInstaller) Add(_ context.Context, pluginID, version string, _ plugins.CompatOpts) error {
 	pm.plugins[pluginID] = fakePlugin{
 		pluginID: pluginID,

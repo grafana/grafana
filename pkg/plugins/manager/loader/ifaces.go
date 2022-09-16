@@ -10,6 +10,6 @@ import (
 type Service interface {
 	// Load will return a list of plugins found in the provided file system paths.
 	Load(ctx context.Context, class plugins.Class, paths []string) ([]*plugins.Plugin, error)
-	// Unload
+	// Unload will unload a specified plugin from the file system.
 	Unload(ctx context.Context, pluginID string) error
 }

@@ -17,11 +17,11 @@ type Store interface {
 }
 
 type Installer interface {
-	// Add adds a plugin to the store.
+	// Add adds a new plugin.
 	Add(ctx context.Context, pluginID, version string, opts CompatOpts) error
-	// Remove removes a plugin from the store.
+	// Remove removes an existing plugin.
 	Remove(ctx context.Context, pluginID string) error
-	// AddFromSource adds a plugin to the store.
+	// AddFromSource adds a new plugin from source.
 	AddFromSource(ctx context.Context, source PluginSource) error
 }
 

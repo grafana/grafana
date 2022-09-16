@@ -51,16 +51,14 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 			action, testCase.expectedHTTPStatus, testCase.pluginAdminEnabled, testCase.pluginAdminExternalManageEnabled)
 	}
 
-	pm := &fakePluginInstaller{
-		plugins: make(map[string]fakePlugin),
-	}
+	inst := NewFakePluginInstaller()
 	for _, tc := range tcs {
 		srv := SetupAPITestServer(t, func(hs *HTTPServer) {
 			hs.Cfg = &setting.Cfg{
 				PluginAdminEnabled:               tc.pluginAdminEnabled,
 				PluginAdminExternalManageEnabled: tc.pluginAdminExternalManageEnabled,
 			}
-			hs.pluginInstaller = pm
+			hs.pluginInstaller = inst
 			hs.QuotaService = quotatest.NewQuotaServiceFake()
 		})
 
@@ -78,7 +76,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 			require.Equal(t, tc.expectedHTTPStatus, resp.StatusCode)
 
 			if tc.expectedHTTPStatus == 200 {
-				require.Equal(t, fakePlugin{pluginID: "test", version: "1.0.2"}, pm.plugins["test"])
+				require.Equal(t, fakePlugin{pluginID: "test", version: "1.0.2"}, inst.plugins["test"])
 			}
 		})
 
@@ -96,7 +94,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 			require.Equal(t, tc.expectedHTTPStatus, resp.StatusCode)
 
 			if tc.expectedHTTPStatus == 200 {
-				require.Empty(t, pm.plugins)
+				require.Empty(t, inst.plugins)
 			}
 		})
 	}
