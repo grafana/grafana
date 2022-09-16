@@ -8,6 +8,13 @@ import { FolderDTO } from 'app/types';
 
 import ManageDashboardsNew from './ManageDashboardsNew';
 
+jest.mock('@grafana/runtime', () => {
+  const originMock = jest.requireActual('@grafana/runtime');
+  return {
+    ...originMock,
+    reportInteraction: jest.fn(),
+  };
+});
 jest.mock('app/core/services/context_srv', () => {
   const originMock = jest.requireActual('app/core/services/context_srv');
 
@@ -16,7 +23,7 @@ jest.mock('app/core/services/context_srv', () => {
     contextSrv: {
       ...originMock.context_srv,
       user: {},
-      hasAccess: jest.fn(() => false),
+      hasAccess: jest.fn(),
     },
   };
 });
