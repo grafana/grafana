@@ -150,7 +150,7 @@ func (hs *HTTPServer) PostAnnotation(c *models.ReqContext) response.Response {
 		Tags:        cmd.Tags,
 	}
 
-	if err := hs.annotationsRepo.Save(context.Background(), &item); err != nil {
+	if err := hs.annotationsRepo.Save(c.Req.Context(), &item); err != nil {
 		if errors.Is(err, annotations.ErrTimerangeMissing) {
 			return response.Error(400, "Failed to save annotation", err)
 		}
