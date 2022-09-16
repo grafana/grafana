@@ -8,6 +8,7 @@ import { toIconName, useStyles2 } from '@grafana/ui';
 import { NavBarItemIcon } from '../NavBar/NavBarItemIcon';
 import { NavFeatureHighlight } from '../NavBar/NavFeatureHighlight';
 import menuItemTranslations from '../NavBar/navBarItem-translations';
+import { isMatchOrChildMatch } from '../NavBar/utils';
 
 import { NavBarMenuSection } from './NavBarMenuSection';
 import { NavBarMenuSectionChild } from './NavBarMenuSectionChild';
@@ -34,7 +35,7 @@ export function NavItem({
               !childLink.divider && (
                 <NavBarMenuSectionChild
                   key={`${link.text}-${childLink.text}`}
-                  isActive={activeItem === childLink}
+                  isActive={isMatchOrChildMatch(childLink, activeItem)}
                   isChild
                   icon={childLink.showIconInNavbar ? icon : undefined}
                   onClick={() => {

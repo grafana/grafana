@@ -6,7 +6,7 @@ import { CollapsableSection, useStyles2 } from '@grafana/ui';
 
 import { NavBarItemIcon } from '../NavBar/NavBarItemIcon';
 import { NavFeatureHighlight } from '../NavBar/NavFeatureHighlight';
-import { isChildMatch } from '../NavBar/utils';
+import { hasChildMatch } from '../NavBar/utils';
 
 export function NavBarMenuSection({
   link,
@@ -22,7 +22,7 @@ export function NavBarMenuSection({
   const styles = useStyles2(getStyles);
   const FeatureHighlightWrapper = link.highlightText ? NavFeatureHighlight : React.Fragment;
   const isActive = link === activeItem;
-  const hasActiveChild = isChildMatch(link, activeItem);
+  const hasActiveChild = hasChildMatch(link, activeItem);
   const [sectionExpanded, setSectionExpanded] = useState(Boolean(hasActiveChild));
 
   return (
