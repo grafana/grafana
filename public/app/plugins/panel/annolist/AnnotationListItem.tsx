@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import React, { FC, MouseEvent } from 'react';
 
-import { AnnotationEvent, DateTimeInput, GrafanaTheme2, PanelProps, textUtil } from '@grafana/data';
-import { Card, TagList, Tooltip, useStyles2 } from '@grafana/ui';
+import { AnnotationEvent, DateTimeInput, GrafanaTheme2, PanelProps } from '@grafana/data';
+import { Card, TagList, Tooltip, RenderUserContentAsHTML, useStyles2 } from '@grafana/ui';
 
 import { PanelOptions } from './models.gen';
 
@@ -38,12 +38,12 @@ export const AnnotationListItem: FC<Props> = ({
   return (
     <Card className={styles.card} onClick={onItemClick}>
       <Card.Heading>
-        <span
+        <RenderUserContentAsHTML
           className={styles.heading}
           onClick={(e) => {
             e.stopPropagation();
           }}
-          dangerouslySetInnerHTML={{ __html: textUtil.sanitize(text) }}
+          content={text}
         />
       </Card.Heading>
       {showTimeStamp && (
