@@ -24,7 +24,6 @@ export const pubDashApi = createApi({
   baseQuery: retry(backendSrvBaseQuery({ baseUrl: '/api/dashboards' })),
   tagTypes: ['Config'],
   keepUnusedDataFor: 0,
-  refetchOnFocus: true,
   endpoints: (builder) => ({
     getPubDashConfig: builder.query<PublicDashboard, string>({
       query: (dashboardUid) => ({
@@ -32,10 +31,11 @@ export const pubDashApi = createApi({
       }),
       providesTags: ['Config'],
     }),
-    savePubDashConfig: builder.mutation<PublicDashboard, string>({
-      query: (dashboardUid) => ({
-        url: `/uid/${dashboardUid}/public-consfig`,
+    savePubDashConfig: builder.mutation<PublicDashboard, { dashboardUid: string; payload: PublicDashboard }>({
+      query: (params) => ({
+        url: `/uid/${params.dashboardUid}/public-config`,
         method: 'POST',
+        data: params.payload,
       }),
       async onQueryStarted(id, { dispatch, queryFulfilled }) {
         await queryFulfilled;

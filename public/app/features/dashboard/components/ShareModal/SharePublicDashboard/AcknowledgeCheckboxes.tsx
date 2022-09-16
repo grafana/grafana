@@ -3,17 +3,15 @@ import React from 'react';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { Checkbox, FieldSet, HorizontalGroup, LinkButton, VerticalGroup } from '@grafana/ui/src';
 
+import { Acknowledgements } from './SharePublicDashboardUtils';
+
 export const AcknowledgeCheckboxes = ({
   disabled,
   acknowledgements,
   onAcknowledge,
 }: {
   disabled: boolean;
-  acknowledgements: {
-    publicDashboard: boolean;
-    dataSources: boolean;
-    usage: boolean;
-  };
+  acknowledgements: Acknowledgements;
   onAcknowledge: (key: string, val: boolean) => void;
 }) => {
   const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
@@ -23,14 +21,14 @@ export const AcknowledgeCheckboxes = ({
       <VerticalGroup spacing="md">
         <Checkbox
           label="Your entire dashboard will be public"
-          value={acknowledgements.publicDashboard}
+          value={acknowledgements.public}
           data-testid={selectors.WillBePublicCheckbox}
           onChange={(e) => onAcknowledge('public', e.currentTarget.checked)}
         />
         <HorizontalGroup spacing="none">
           <Checkbox
             label="Publishing currently only works with a subset of datasources"
-            value={acknowledgements.dataSources}
+            value={acknowledgements.datasources}
             data-testid={selectors.LimitedDSCheckbox}
             onChange={(e) => onAcknowledge('datasources', e.currentTarget.checked)}
           />

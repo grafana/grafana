@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { reportInteraction } from '@grafana/runtime/src';
-import { Spinner } from '@grafana/ui';
+import { HorizontalGroup, Spinner } from '@grafana/ui';
 import { Alert, Button, ClipboardButton, Field, Input, useStyles2 } from '@grafana/ui/src';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
@@ -23,17 +23,9 @@ import { isOrgAdmin } from 'app/features/plugins/admin/permissions';
 import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types';
 
-import { HorizontalGroup } from '../../../../../../../packages/grafana-ui/src/components/Layout/Layout';
+import { Acknowledgements } from './SharePublicDashboardUtils';
 
-interface Props extends ShareModalTabProps {}
-
-interface Acknowledgements {
-  publicDashboard: boolean;
-  dataSources: boolean;
-  usage: boolean;
-}
-
-export const SharePublicDashboard = (props: Props) => {
+export const SharePublicDashboard = (props: ShareModalTabProps) => {
   const dashboardVariables = props.dashboard.getVariables();
   const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
   const styles = useStyles2(getStyles);
@@ -44,15 +36,17 @@ export const SharePublicDashboard = (props: Props) => {
     isError: isFetchingError,
   } = useGetPubDashConfigQuery(props.dashboard.uid);
   const [saveConfig, { isLoading: isSaveLoading }] = useSavePubDashConfigMutation();
-  const isLoading = isFetchingLoading || isSaveLoading;
-
-  const hasWritePermissions = contextSrv.hasAccess(AccessControlAction.DashboardsPublicWrite, isOrgAdmin());
 
   const [acknowledgements, setAcknowledgements] = useState<Acknowledgements>({
-    publicDashboard: false,
-    dataSources: false,
+    public: false,
+    datasources: false,
     usage: false,
   });
+  const [isPubDashEnabled, setIsPubDashEnabled] = useState(false);
+
+  const isLoading = isFetchingLoading || isSaveLoading;
+  const hasWritePermissions = contextSrv.hasAccess(AccessControlAction.DashboardsPublicWrite, isOrgAdmin());
+  const acknowledged = acknowledgements.public && acknowledgements.datasources && acknowledgements.usage;
 
   useEffect(() => {
     reportInteraction('grafana_dashboards_public_share_viewed');
@@ -61,11 +55,13 @@ export const SharePublicDashboard = (props: Props) => {
   useEffect(() => {
     if (publicDashboardPersisted(publicDashboard)) {
       setAcknowledgements({
-        publicDashboard: true,
-        dataSources: true,
+        public: true,
+        datasources: true,
         usage: true,
       });
     }
+
+    setIsPubDashEnabled(!!publicDashboard?.isEnabled);
   }, [publicDashboard]);
 
   const onSavePublicConfig = () => {
@@ -78,18 +74,12 @@ export const SharePublicDashboard = (props: Props) => {
       return;
     }
 
-    saveConfig(props.dashboard.uid);
-    // savePublicDashboardConfig(props.dashboard.uid, publicDashboard, setPublicDashboardConfig).catch();
+    saveConfig({ dashboardUid: props.dashboard.uid, payload: { ...publicDashboard!, isEnabled: isPubDashEnabled } });
   };
 
-  const onAcknowledge = useCallback(
-    (field: string, checked: boolean) => {
-      setAcknowledgements({ ...acknowledgements, [field]: checked });
-    },
-    [acknowledgements]
-  );
-
-  const acknowledged = acknowledgements.publicDashboard && acknowledgements.dataSources && acknowledgements.usage;
+  const onAcknowledge = (field: string, checked: boolean) => {
+    setAcknowledgements((prevState) => ({ ...prevState, [field]: checked }));
+  };
 
   return (
     <>
@@ -131,7 +121,8 @@ export const SharePublicDashboard = (props: Props) => {
               <h4 className="share-modal-info-text">Public dashboard configuration</h4>
               <PubDashConfiguration
                 disabled={!hasWritePermissions || isLoading || isFetchingError}
-                isPubDashEnabled={publicDashboard?.isEnabled}
+                isPubDashEnabled={isPubDashEnabled}
+                onToggleEnabled={() => setIsPubDashEnabled((prevState) => !prevState)}
                 hasTemplateVariables={dashboardHasTemplateVariables(dashboardVariables)}
                 time={{
                   from: props.dashboard.getDefaultTime().from,
@@ -139,7 +130,7 @@ export const SharePublicDashboard = (props: Props) => {
                   timeZone: props.dashboard.timezone,
                 }}
               />
-              {publicDashboardPersisted(publicDashboard) && publicDashboard!.isEnabled && (
+              {publicDashboardPersisted(publicDashboard) && isPubDashEnabled && (
                 <Field label="Link URL" className={styles.publicUrl}>
                   <Input
                     disabled={isLoading}

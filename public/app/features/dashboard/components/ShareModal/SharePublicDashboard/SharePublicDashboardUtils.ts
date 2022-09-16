@@ -13,6 +13,12 @@ export interface PublicDashboard {
   timeSettings?: object;
 }
 
+export interface Acknowledgements {
+  public: boolean;
+  datasources: boolean;
+  usage: boolean;
+}
+
 export interface DashboardResponse {
   dashboard: DashboardDataDTO;
   meta: DashboardMeta;
