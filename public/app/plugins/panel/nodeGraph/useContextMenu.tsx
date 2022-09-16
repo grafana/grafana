@@ -112,8 +112,11 @@ function mapMenuItem<T extends NodeDatum | EdgeDatum>(item: T) {
         onClick={
           link.onClick
             ? (event) => {
-                link.onClick?.(item);
-                event?.preventDefault();
+                if (!(event?.ctrlKey || event?.metaKey || event?.shiftKey)) {
+                  event?.preventDefault();
+                  event?.stopPropagation();
+                  link.onClick?.(item);
+                }
               }
             : undefined
         }
