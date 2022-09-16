@@ -5,7 +5,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
@@ -53,7 +52,6 @@ func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query acces
 		q += `
 			ORDER BY permission.scope
 		`
-		logger.Infof("\n\n%s\n\n", q)
 		if err := sess.SQL(q, params...).Find(&result); err != nil {
 			return err
 		}

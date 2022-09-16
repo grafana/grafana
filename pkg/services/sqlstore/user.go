@@ -823,19 +823,6 @@ func UserDeletions() []string {
 	return deletes
 }
 
-func (ss *SQLStore) SetUserHelpFlag(ctx context.Context, cmd *models.SetUserHelpFlagCommand) error {
-	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
-		user := user.User{
-			ID:         cmd.UserId,
-			HelpFlags1: cmd.HelpFlags1,
-			Updated:    time.Now(),
-		}
-
-		_, err := sess.ID(cmd.UserId).Cols("help_flags1").Update(&user)
-		return err
-	})
-}
-
 // UpdateUserPermissions sets the user Server Admin flag
 func (ss *SQLStore) UpdateUserPermissions(userID int64, isAdmin bool) error {
 	return ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
@@ -855,6 +842,19 @@ func (ss *SQLStore) UpdateUserPermissions(userID int64, isAdmin bool) error {
 			return err
 		}
 		return nil
+	})
+}
+
+func (ss *SQLStore) SetUserHelpFlag(ctx context.Context, cmd *models.SetUserHelpFlagCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
+		user := user.User{
+			ID:         cmd.UserId,
+			HelpFlags1: cmd.HelpFlags1,
+			Updated:    time.Now(),
+		}
+
+		_, err := sess.ID(cmd.UserId).Cols("help_flags1").Update(&user)
+		return err
 	})
 }
 
