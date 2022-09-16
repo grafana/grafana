@@ -131,14 +131,6 @@ export async function getDebugDashboard(panel: PanelModel, rand: Randomize, time
   }
 
   if (data.annotations?.length) {
-    const anno: DataFrameJSON[] = [];
-    for (const f of frames) {
-      if (f.schema?.meta?.dataTopic) {
-        delete f.schema.meta.dataTopic;
-        anno.push(f);
-      }
-    }
-
     dashboard.panels.push({
       id: 7,
       gridPos: {
@@ -150,17 +142,22 @@ export async function getDebugDashboard(panel: PanelModel, rand: Randomize, time
       type: 'table',
       title: 'Annotations',
       datasource: {
-        type: 'grafana',
-        uid: 'grafana',
+        type: 'datasource',
+        uid: '-- Dashboard --',
       },
       options: {
         showTypeIcons: true,
       },
       targets: [
         {
+          datasource: {
+            type: 'datasource',
+            uid: '-- Dashboard --',
+          },
+          panelId: 2,
+          withTransforms: true,
+          topic: DataTopic.Annotations,
           refId: 'A',
-          rawFrameContent: JSON.stringify(anno),
-          scenarioId: 'raw_frame',
         },
       ],
     });
