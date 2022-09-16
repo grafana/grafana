@@ -61,20 +61,20 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 			Added: make(map[string]string),
 		}
 
-		pm := New(fakes.NewFakePluginStore(), loader, pluginRepo, fs)
-		err := pm.Add(context.Background(), pluginID, v1, plugins.CompatOpts{})
+		inst := New(fakes.NewFakePluginRegistry(), loader, pluginRepo, fs)
+		err := inst.Add(context.Background(), pluginID, v1, plugins.CompatOpts{})
 		require.NoError(t, err)
 
 		require.Equal(t, zipNameV1, fs.Added[pluginID])
 
 		t.Run("Won't add if already exists", func(t *testing.T) {
-			pm.pluginStore = &fakes.FakePluginStore{
-				Store: map[string]plugins.PluginDTO{
-					pluginID: pluginV1.ToDTO(),
+			inst.pluginRegistry = &fakes.FakePluginRegistry{
+				Store: map[string]*plugins.Plugin{
+					pluginID: pluginV1,
 				},
 			}
 
-			err = pm.Add(context.Background(), pluginID, v1, plugins.CompatOpts{})
+			err = inst.Add(context.Background(), pluginID, v1, plugins.CompatOpts{})
 			require.Equal(t, plugins.DuplicateError{
 				PluginID:          pluginV1.ID,
 				ExistingPluginDir: pluginV1.PluginDir,
@@ -118,36 +118,36 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 				}, nil
 			}
 
-			err = pm.Add(context.Background(), pluginID, v2, plugins.CompatOpts{})
+			err = inst.Add(context.Background(), pluginID, v2, plugins.CompatOpts{})
 			require.NoError(t, err)
 
 			require.Equal(t, zipNameV2, fs.Added[pluginID])
 		})
 
 		t.Run("Removing an existing plugin", func(t *testing.T) {
-			pm.pluginStore = &fakes.FakePluginStore{
-				Store: map[string]plugins.PluginDTO{
-					pluginID: pluginV1.ToDTO(),
+			inst.pluginRegistry = &fakes.FakePluginRegistry{
+				Store: map[string]*plugins.Plugin{
+					pluginID: pluginV1,
 				},
 			}
 
 			var unloadedPlugins []string
-			pm.pluginLoader = &fakes.FakeLoader{
+			inst.pluginLoader = &fakes.FakeLoader{
 				UnloadFunc: func(_ context.Context, id string) error {
 					unloadedPlugins = append(unloadedPlugins, id)
 					return nil
 				},
 			}
 
-			err = pm.Remove(context.Background(), pluginID)
+			err = inst.Remove(context.Background(), pluginID)
 			require.NoError(t, err)
 
 			require.Equal(t, []string{pluginID}, unloadedPlugins)
 
 			t.Run("Won't remove if not exists", func(t *testing.T) {
-				pm.pluginStore = fakes.NewFakePluginStore()
+				inst.pluginRegistry = fakes.NewFakePluginRegistry()
 
-				err = pm.Remove(context.Background(), pluginID)
+				err = inst.Remove(context.Background(), pluginID)
 				require.Equal(t, plugins.ErrPluginNotInstalled, err)
 			})
 		})
@@ -166,13 +166,13 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 				plugin.Info.Version = "1.0.0"
 			})
 
-			store := &fakes.FakePluginStore{
-				Store: map[string]plugins.PluginDTO{
-					testPluginID: p.ToDTO(),
+			reg := &fakes.FakePluginRegistry{
+				Store: map[string]*plugins.Plugin{
+					testPluginID: p,
 				},
 			}
 
-			pm := New(store, &fakes.FakeLoader{}, &fakes.FakePluginRepo{}, &fakes.FakePluginStorage{})
+			pm := New(reg, &fakes.FakeLoader{}, &fakes.FakePluginRepo{}, &fakes.FakePluginStorage{})
 			err := pm.Add(context.Background(), p.ID, "3.2.0", plugins.CompatOpts{})
 			require.ErrorIs(t, err, plugins.ErrInstallCorePlugin)
 

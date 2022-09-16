@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/logger"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
+	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
 	"github.com/grafana/grafana/pkg/setting"
@@ -16,27 +17,27 @@ import (
 var _ plugins.Installer = (*PluginInstaller)(nil)
 
 type PluginInstaller struct {
-	pluginRepo    repo.Service
-	pluginStorage storage.Manager
-	pluginStore   plugins.Store
-	pluginLoader  loader.Service
-	log           log.Logger
+	pluginRepo     repo.Service
+	pluginStorage  storage.Manager
+	pluginRegistry registry.Service
+	pluginLoader   loader.Service
+	log            log.Logger
 }
 
-func ProvideInstaller(cfg *setting.Cfg, pluginStore plugins.Store, pluginLoader loader.Service,
+func ProvideInstaller(cfg *setting.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service,
 	pluginRepo repo.Service) *PluginInstaller {
-	return New(pluginStore, pluginLoader, pluginRepo,
+	return New(pluginRegistry, pluginLoader, pluginRepo,
 		storage.FileSystem(logger.NewLogger("plugin.fs"), cfg.PluginsPath))
 }
 
-func New(pluginStore plugins.Store, pluginLoader loader.Service, pluginRepo repo.Service,
+func New(pluginRegistry registry.Service, pluginLoader loader.Service, pluginRepo repo.Service,
 	pluginStorage storage.Manager) *PluginInstaller {
 	return &PluginInstaller{
-		pluginLoader:  pluginLoader,
-		pluginStore:   pluginStore,
-		pluginRepo:    pluginRepo,
-		pluginStorage: pluginStorage,
-		log:           log.New("plugin.installer"),
+		pluginLoader:   pluginLoader,
+		pluginRegistry: pluginRegistry,
+		pluginRepo:     pluginRepo,
+		pluginStorage:  pluginStorage,
+		log:            log.New("plugin.installer"),
 	}
 }
 
@@ -156,10 +157,10 @@ func (m *PluginInstaller) Remove(ctx context.Context, pluginID string) error {
 }
 
 // plugin finds a plugin with `pluginID` from the store
-func (m *PluginInstaller) plugin(ctx context.Context, pluginID string) (plugins.PluginDTO, bool) {
-	p, exists := m.pluginStore.Plugin(ctx, pluginID)
+func (m *PluginInstaller) plugin(ctx context.Context, pluginID string) (*plugins.Plugin, bool) {
+	p, exists := m.pluginRegistry.Plugin(ctx, pluginID)
 	if !exists {
-		return plugins.PluginDTO{}, false
+		return nil, false
 	}
 
 	return p, true

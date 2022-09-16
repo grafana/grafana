@@ -8,7 +8,37 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/setting"
 )
+
+func TestStore_ProvideService(t *testing.T) {
+	t.Run("Plugin sources are added in order", func(t *testing.T) {
+		var addedPaths []string
+		inst := &fakes.FakePluginInstaller{
+			AddFromSourceFunc: func(ctx context.Context, source plugins.PluginSource) error {
+				addedPaths = append(addedPaths, source.Paths...)
+				return nil
+			},
+		}
+		cfg := &setting.Cfg{
+			BundledPluginsPath: "path1",
+			PluginsPath:        "path2",
+		}
+		pCfg := &config.Cfg{
+			PluginSettings: setting.PluginSettings{
+				"blah": map[string]string{
+					"path": "path3",
+				},
+			},
+		}
+
+		_, err := ProvideService(cfg, pCfg, fakes.NewFakePluginRegistry(), inst)
+		require.NoError(t, err)
+		require.Equal(t, []string{"app/plugins/datasource", "app/plugins/panel", "path1", "path2", "path3"}, addedPaths)
+	})
+}
 
 func TestStore_Plugin(t *testing.T) {
 	t.Run("Plugin returns all non-decommissioned plugins", func(t *testing.T) {
@@ -16,7 +46,7 @@ func TestStore_Plugin(t *testing.T) {
 		p1.RegisterClient(&DecommissionedPlugin{})
 		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-panel"}}
 
-		ps := ProvideService(
+		ps := New(
 			newFakePluginRegistry(map[string]*plugins.Plugin{
 				p1.ID: p1,
 				p2.ID: p2,
@@ -42,7 +72,7 @@ func TestStore_Plugins(t *testing.T) {
 		p5 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "e-test-panel", Type: plugins.Panel}}
 		p5.RegisterClient(&DecommissionedPlugin{})
 
-		ps := ProvideService(
+		ps := New(
 			newFakePluginRegistry(map[string]*plugins.Plugin{
 				p1.ID: p1,
 				p2.ID: p2,
@@ -79,7 +109,7 @@ func TestStore_Routes(t *testing.T) {
 		p6 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "f-test-app", Type: plugins.App}}
 		p6.RegisterClient(&DecommissionedPlugin{})
 
-		ps := ProvideService(
+		ps := New(
 			newFakePluginRegistry(map[string]*plugins.Plugin{
 				p1.ID: p1,
 				p2.ID: p2,
@@ -105,7 +135,7 @@ func TestStore_availablePlugins(t *testing.T) {
 		p1.RegisterClient(&DecommissionedPlugin{})
 		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-app"}}
 
-		ps := ProvideService(
+		ps := New(
 			newFakePluginRegistry(map[string]*plugins.Plugin{
 				p1.ID: p1,
 				p2.ID: p2,

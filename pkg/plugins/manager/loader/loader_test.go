@@ -9,7 +9,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
@@ -418,9 +417,9 @@ func TestLoader_Load(t *testing.T) {
 			}
 
 			pluginErrs := l.PluginErrors()
-			assert.Equal(t, len(tt.pluginErrors), len(pluginErrs))
+			require.Equal(t, len(tt.pluginErrors), len(pluginErrs))
 			for _, pluginErr := range pluginErrs {
-				assert.Equal(t, tt.pluginErrors[pluginErr.PluginID], pluginErr)
+				require.Equal(t, tt.pluginErrors[pluginErr.PluginID], pluginErr)
 			}
 		})
 	}
@@ -630,7 +629,7 @@ func TestLoader_Signature_RootURL(t *testing.T) {
 
 		l := newLoader(&config.Cfg{})
 		got, err := l.Load(context.Background(), plugins.External, paths)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		if !cmp.Equal(got, expected, compareOpts) {
 			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts))
@@ -699,7 +698,7 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 
 		l := newLoader(&config.Cfg{})
 		got, err := l.Load(context.Background(), plugins.External, []string{pluginDir, pluginDir})
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		if !cmp.Equal(got, expected, compareOpts) {
 			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts))
@@ -786,7 +785,7 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 		l := newLoader(&config.Cfg{})
 
 		got, err := l.Load(context.Background(), plugins.External, []string{"../testdata/nested-plugins"})
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		// to ensure we can compare with expected
 		sort.SliceStable(got, func(i, j int) bool {
@@ -796,28 +795,20 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 		if !cmp.Equal(got, expected, compareOpts) {
 			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts))
 		}
-	})
 
-	t.Run("Load will exclude plugins that already exist", func(t *testing.T) {
-		// parent/child links will not be created when either plugins are provided in the existingPlugins map
-		parent.Children = nil
-		expected := []*plugins.Plugin{parent}
+		t.Run("Load will exclude plugins that already exist", func(t *testing.T) {
+			got, err := l.Load(context.Background(), plugins.External, []string{"../testdata/nested-plugins"})
+			require.NoError(t, err)
 
-		l := newLoader(&config.Cfg{})
+			// to ensure we can compare with expected
+			sort.SliceStable(got, func(i, j int) bool {
+				return got[i].ID < got[j].ID
+			})
 
-		//l.pluginRegistry =
-
-		got, err := l.Load(context.Background(), plugins.External, []string{"../testdata/nested-plugins"})
-		assert.NoError(t, err)
-
-		// to ensure we can compare with expected
-		sort.SliceStable(got, func(i, j int) bool {
-			return got[i].ID < got[j].ID
+			if !cmp.Equal(got, []*plugins.Plugin{}, compareOpts) {
+				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts))
+			}
 		})
-
-		if !cmp.Equal(got, expected, compareOpts) {
-			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts))
-		}
 	})
 
 	t.Run("Plugin child field `IncludedInAppID` is set to parent app's plugin ID", func(t *testing.T) {
@@ -946,7 +937,7 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 		l := newLoader(&config.Cfg{})
 
 		got, err := l.Load(context.Background(), plugins.External, []string{"../testdata/app-with-child"})
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		// to ensure we can compare with expected
 		sort.SliceStable(got, func(i, j int) bool {
@@ -961,8 +952,8 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 			parentPluginJSON := filepath.Join(rootDir, "testdata/app-with-child/dist/plugin.json")
 			childPluginJSON := filepath.Join(rootDir, "testdata/app-with-child/dist/child/plugin.json")
 
-			got, err := l.loadPlugins(context.Background(), plugins.External, []string{parentPluginJSON, childPluginJSON})
-			assert.NoError(t, err)
+			got, err := newLoader(&config.Cfg{}).loadPlugins(context.Background(), plugins.External, []string{parentPluginJSON, childPluginJSON})
+			require.NoError(t, err)
 
 			// to ensure we can compare with expected
 			sort.SliceStable(got, func(i, j int) bool {
@@ -973,8 +964,8 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts))
 			}
 
-			got, err = l.loadPlugins(context.Background(), plugins.External, []string{childPluginJSON, parentPluginJSON})
-			assert.NoError(t, err)
+			got, err = newLoader(&config.Cfg{}).loadPlugins(context.Background(), plugins.External, []string{childPluginJSON, parentPluginJSON})
+			require.NoError(t, err)
 
 			// to ensure we can compare with expected
 			sort.SliceStable(got, func(i, j int) bool {
@@ -1130,9 +1121,9 @@ func Test_setPathsBasedOnApp(t *testing.T) {
 
 		configureAppChildOPlugin(parent, child)
 
-		assert.Equal(t, "app/plugins/app/testdata-app/datasources/datasource/module", child.Module)
-		assert.Equal(t, "testdata-app", child.IncludedInAppID)
-		assert.Equal(t, "public/app/plugins/app/testdata-app", child.BaseURL)
+		require.Equal(t, "app/plugins/app/testdata-app/datasources/datasource/module", child.Module)
+		require.Equal(t, "testdata-app", child.IncludedInAppID)
+		require.Equal(t, "public/app/plugins/app/testdata-app", child.BaseURL)
 	})
 }
 

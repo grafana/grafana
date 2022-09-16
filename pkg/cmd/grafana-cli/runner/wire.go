@@ -183,7 +183,6 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(repo.Service), new(*repo.Manager)),
 	manager.ProvideInstaller,
 	wire.Bind(new(plugins.Installer), new(*manager.PluginInstaller)),
-	manager.ProvideService,
 	client.ProvideService,
 	wire.Bind(new(plugins.Client), new(*client.Service)),
 	managerStore.ProvideService,

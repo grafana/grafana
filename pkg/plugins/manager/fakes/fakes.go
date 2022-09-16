@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/storage"
 )
 
-type FakeInstaller struct {
+type FakePluginInstaller struct {
 	AddFunc func(ctx context.Context, pluginID, version string, opts plugins.CompatOpts) error
 	// Remove removes a plugin from the store.
 	RemoveFunc func(ctx context.Context, pluginID string) error
@@ -22,21 +22,21 @@ type FakeInstaller struct {
 	AddFromSourceFunc func(ctx context.Context, source plugins.PluginSource) error
 }
 
-func (i *FakeInstaller) Add(ctx context.Context, pluginID, version string, opts plugins.CompatOpts) error {
+func (i *FakePluginInstaller) Add(ctx context.Context, pluginID, version string, opts plugins.CompatOpts) error {
 	if i.AddFunc != nil {
 		return i.AddFunc(ctx, pluginID, version, opts)
 	}
 	return nil
 }
 
-func (i *FakeInstaller) Remove(ctx context.Context, pluginID string) error {
+func (i *FakePluginInstaller) Remove(ctx context.Context, pluginID string) error {
 	if i.RemoveFunc != nil {
 		return i.RemoveFunc(ctx, pluginID)
 	}
 	return nil
 }
 
-func (i *FakeInstaller) AddFromSource(ctx context.Context, source plugins.PluginSource) error {
+func (i *FakePluginInstaller) AddFromSource(ctx context.Context, source plugins.PluginSource) error {
 	if i.AddFromSourceFunc != nil {
 		return i.AddFromSourceFunc(ctx, source)
 	}
