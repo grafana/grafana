@@ -81,6 +81,7 @@ func loadImages(cfg docker.Config, basesStr []string, edition string) error {
 		for _, arch := range cfg.Archs {
 			imageFilename := fmt.Sprintf("grafana%s-%s%s-%s.img", edition, cfg.Tag, base, arch)
 			log.Printf("image file name: %s\n", imageFilename)
+			//nolint:gosec
 			cmd := exec.Command("docker", "load", "-i", imageFilename)
 			cmd.Dir = "."
 			out, err := cmd.CombinedOutput()
@@ -102,6 +103,7 @@ func downloadFromGCS(cfg docker.Config, basesStr []string, edition string) error
 		for _, arch := range cfg.Archs {
 			src := fmt.Sprintf("gs://%s/%s/grafana%s-%s%s-%s.img", cfg.Bucket, cfg.Tag, edition, cfg.Tag, base, arch)
 			args := strings.Split(fmt.Sprintf("-m cp -r %s .", src), " ")
+			//nolint:gosec
 			cmd := exec.Command("gsutil", args...)
 			out, err := cmd.CombinedOutput()
 			if err != nil {
