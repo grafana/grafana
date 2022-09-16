@@ -420,7 +420,7 @@ groups:
               datasource:
                 type: __expr__
                 uid: '-100'
-              expression: 1==0
+              expr: 1==0
               intervalMs: 1000
               maxDataPoints: 43200
               refId: A
@@ -433,9 +433,15 @@ groups:
         #          possible values: "NoData", "Alerting", "OK", default = NoData
         noDataState: Alerting
         # <string> the state the alert rule will have when the query execution
+        #          had no data - possible values: "NoData", "Alerting", "OK"
+        #          default = Alerting
+        # <duration, required> for how long should the alert fire before alerting
+        execErrState: Alerting
+        # <string> the state the alert rule will have when the query execution
         #          failed - possible values: "Error", "Alerting", "OK"
         #          default = Alerting
         # <duration, required> for how long should the alert fire before alerting
+        # TOREVIEW
         for: 60s
         # <map<string, string>> a map of strings to pass around any data
         annotations:
