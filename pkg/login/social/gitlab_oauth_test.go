@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/stretchr/testify/require"
 )
 
