@@ -32,10 +32,12 @@ type file struct {
 	Created              time.Time `xorm:"created"`
 	Size                 int64     `xorm:"size"`
 	MimeType             string    `xorm:"mime_type"`
+	Version              int       `xorm:"contents_version"`
+	Latest               bool      `xorm:"latest"`
 }
 
 var (
-	fileColsNoContents = []string{"path", "path_hash", "parent_folder_path_hash", "etag", "cache_control", "content_disposition", "updated", "created", "size", "mime_type"}
+	fileColsNoContents = []string{"version", "path", "path_hash", "parent_folder_path_hash", "etag", "cache_control", "content_disposition", "updated", "created", "size", "mime_type"}
 	allFileCols        = append([]string{"contents"}, fileColsNoContents...)
 )
 
@@ -172,6 +174,10 @@ func (s dbFileStorage) Delete(ctx context.Context, filePath string) error {
 	return err
 }
 
+func (s dbFileStorage) dialectBool(val bool) string {
+	return s.db.GetDialect().BooleanStr(val)
+}
+
 func (s dbFileStorage) Upsert(ctx context.Context, cmd *UpsertFileCommand) error {
 	now := time.Now()
 	pathHash, err := createPathHash(cmd.Path)
@@ -181,33 +187,49 @@ func (s dbFileStorage) Upsert(ctx context.Context, cmd *UpsertFileCommand) error
 
 	err = s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		existing := &file{}
-		exists, err := sess.Table("file").Where("path_hash = ?", pathHash).Get(existing)
+		exists, err := sess.Table("file").Where("path_hash = ? AND latest = ?", pathHash, s.dialectBool(true)).Get(existing)
 		if err != nil {
 			return err
 		}
 
-		if exists {
-			existing.Updated = now
-			if cmd.Contents != nil {
-				contents := cmd.Contents
-				existing.Contents = contents
-				existing.MimeType = cmd.MimeType
-				existing.ETag = createContentsHash(contents)
-				existing.ContentDisposition = cmd.ContentDisposition
-				existing.CacheControl = cmd.CacheControl
-				existing.Size = int64(len(contents))
-			}
+		contentsToInsert := make([]byte, 0)
+		if cmd.Contents != nil {
+			contentsToInsert = cmd.Contents
+		}
 
-			_, err = sess.Where("path_hash = ?", pathHash).Update(existing)
+		if exists {
+			parentFolderPath := getParentFolderPath(cmd.Path)
+			parentFolderPathHash, err := createPathHash(parentFolderPath)
 			if err != nil {
 				return err
 			}
-		} else {
-			contentsToInsert := make([]byte, 0)
-			if cmd.Contents != nil {
-				contentsToInsert = cmd.Contents
+
+			newFileVersion := &file{
+				Path:                 cmd.Path,
+				PathHash:             pathHash,
+				ParentFolderPathHash: parentFolderPathHash,
+				Contents:             contentsToInsert,
+				ContentDisposition:   cmd.ContentDisposition,
+				CacheControl:         cmd.CacheControl,
+				ETag:                 createContentsHash(contentsToInsert),
+				MimeType:             cmd.MimeType,
+				Size:                 int64(len(contentsToInsert)),
+				Updated:              now,
+				Created:              now,
+				Version:              existing.Version + 1,
+				Latest:               true,
 			}
 
+			_, err = sess.SQL("update file set latest = ? where path_hash = ?", s.dialectBool(false), pathHash).Query()
+			if err != nil {
+				return err
+			}
+
+			if _, err = sess.Table("file").Insert(newFileVersion); err != nil {
+				s.log.Error("failed to insert", "err", err, "oldVer", existing.Version, "newVer", newFileVersion.Version, "path", cmd.Path)
+				return err
+			}
+		} else {
 			parentFolderPath := getParentFolderPath(cmd.Path)
 			parentFolderPathHash, err := createPathHash(parentFolderPath)
 			if err != nil {
@@ -296,7 +318,7 @@ func (s dbFileStorage) List(ctx context.Context, folderPath string, paging *Pagi
 				return err
 			}
 
-			exists, err := sess.Table("file").Where("path_hash = ?", pagingFolderPathHash).Exist()
+			exists, err := sess.Table("file").Where("path_hash = ? AND latest = ?", pagingFolderPathHash, s.dialectBool(true)).Exist()
 			if err != nil {
 				return err
 			}
@@ -321,6 +343,7 @@ func (s dbFileStorage) List(ctx context.Context, folderPath string, paging *Pagi
 
 		prefixHash, _ := createPathHash(lowerFolderPrefix)
 
+		sess.Where("latest = ?", s.dialectBool(true))
 		sess.Where("path_hash != ?", prefixHash)
 		parentHash, err := createPathHash(lowerFolderPath)
 		if err != nil {

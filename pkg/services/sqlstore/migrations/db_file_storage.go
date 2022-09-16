@@ -64,4 +64,21 @@ func addDbFileStorageMigration(mg *migrator.Migrator) {
 		// MySQL `utf8mb4_unicode_ci` collation is set in `mysql_dialect.go`
 		// SQLite uses a `BINARY` collation by default
 		Postgres("ALTER TABLE file ALTER COLUMN path TYPE VARCHAR(1024) COLLATE \"C\";")) // Collate C - sorting done based on character code byte values
+
+	mg.AddMigration("add contents_version column", migrator.NewAddColumnMigration(filesTable, &migrator.Column{
+		Name: "contents_version", Type: migrator.DB_Int, Nullable: false, Default: "1",
+	}))
+
+	mg.AddMigration("add latest column", migrator.NewAddColumnMigration(filesTable, &migrator.Column{
+		Name: "latest", Type: migrator.DB_Bool, Nullable: false, Default: "1",
+	}))
+
+	mg.AddMigration("remove unique path index", migrator.NewDropIndexMigration(filesTable, filesTable.Indices[0]))
+	mg.AddMigration("file table idx: path, contents_version natural pk", migrator.NewAddIndexMigration(filesTable, &migrator.Index{
+		Cols: []string{"path", "contents_version"}, Type: migrator.UniqueIndex,
+	}))
+	mg.AddMigration("file table idx: path, latest natural pk", migrator.NewAddIndexMigration(filesTable, &migrator.Index{
+		Cols: []string{"path", "latest"},
+	}))
+
 }

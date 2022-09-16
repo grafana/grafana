@@ -90,6 +90,7 @@ type FileMetadata struct {
 	Created    time.Time
 	Size       int64
 	Properties map[string]string
+	Version    string
 }
 
 type Paging struct {
@@ -169,6 +170,9 @@ type DeleteFolderOptions struct {
 type GetFileOptions struct {
 	// WithContents if set to false, the `Get` operation will return just the file metadata. Default is `true`
 	WithContents bool
+
+	// Version defaults to latest
+	Version string
 }
 
 //go:generate mockery --name FileStorage --structname MockFileStorage --inpackage --filename file_storage_mock.go
