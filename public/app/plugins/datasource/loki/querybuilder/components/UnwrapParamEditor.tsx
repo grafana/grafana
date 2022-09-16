@@ -8,7 +8,7 @@ import { getOperationParamId } from '../../../prometheus/querybuilder/shared/ope
 import { QueryBuilderOperationParamEditorProps } from '../../../prometheus/querybuilder/shared/types';
 import { LokiDatasource } from '../../datasource';
 import { isBytesString } from '../../languageUtils';
-import { getLogQueryFromMetricsQuery, isValidQuery } from '../../query_utils';
+import { getLogQueryFromMetricsQuery, isValidQuery } from '../../queryUtils';
 import { lokiQueryModeller } from '../LokiQueryModeller';
 import { LokiVisualQuery } from '../types';
 
