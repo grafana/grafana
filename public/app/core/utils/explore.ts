@@ -316,13 +316,15 @@ export async function ensureQueries(
   if (queries && typeof queries === 'object' && queries.length > 0) {
     const allQueries = [];
     for (let index = 0; index < queries.length; index++) {
-      let query = queries[index];
+      const query = queries[index];
       const key = generateKey(index);
       let refId = query.refId;
       if (!refId) {
         refId = getNextRefIdChar(allQueries);
       }
 
+      // if a query has a datasource, validate it and only add it if valid
+      // if a query doesn't have a datasource, do not worry about it at this step
       let validDS = true;
       if (query.datasource) {
         try {
