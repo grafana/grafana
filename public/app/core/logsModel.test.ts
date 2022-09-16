@@ -39,7 +39,7 @@ describe('dedupLogRows()', () => {
       {
         entry: 'WARN test 1.23 on [xxx]',
       },
-    ] as any;
+    ] as LogRowModel[];
     expect(dedupLogRows(rows, LogsDedupStrategy.none)).toMatchObject(rows);
   });
 
@@ -57,7 +57,7 @@ describe('dedupLogRows()', () => {
       {
         entry: 'WARN test 1.23 on [xxx]',
       },
-    ] as any;
+    ] as LogRowModel[];
     expect(dedupLogRows(rows, LogsDedupStrategy.exact)).toEqual([
       {
         duplicates: 1,
@@ -88,7 +88,7 @@ describe('dedupLogRows()', () => {
       {
         entry: 'WARN test 1.23 on [xxx]',
       },
-    ] as any;
+    ] as LogRowModel[];
     expect(dedupLogRows(rows, LogsDedupStrategy.numbers)).toEqual([
       {
         duplicates: 1,
@@ -119,7 +119,7 @@ describe('dedupLogRows()', () => {
       {
         entry: 'WARN test 1.23 on [xxx]',
       },
-    ] as any;
+    ] as LogRowModel[];
     expect(dedupLogRows(rows, LogsDedupStrategy.signature)).toEqual([
       {
         duplicates: 3,
@@ -139,7 +139,7 @@ describe('dedupLogRows()', () => {
       {
         entry: 'WARN 123',
       },
-    ] as any;
+    ] as LogRowModel[];
     expect(dedupLogRows(rows, LogsDedupStrategy.exact)).toEqual([
       {
         duplicates: 0,
@@ -170,7 +170,7 @@ describe('filterLogLevels()', () => {
         entry: 'TRACE 1',
         logLevel: LogLevel.trace,
       },
-    ] as any;
+    ] as LogRowModel[];
     const filteredLogs = filterLogLevels(rows, new Set([LogLevel.debug]));
     expect(filteredLogs.length).toBe(2);
     expect(filteredLogs).toEqual([
@@ -200,7 +200,7 @@ describe('filterLogLevels()', () => {
         entry: 'TRACE 1',
         logLevel: LogLevel.trace,
       },
-    ] as any;
+    ] as LogRowModel[];
     const filteredLogs = filterLogLevels(rows, new Set([LogLevel.error]));
     const deduplicatedLogs = dedupLogRows(filteredLogs, LogsDedupStrategy.exact);
     expect(deduplicatedLogs.length).toBe(3);
@@ -1086,7 +1086,7 @@ describe('getSeriesProperties()', () => {
     const rows: LogRowModel[] = [
       { entry: 'foo', timeEpochMs: 10 },
       { entry: 'bar', timeEpochMs: 20 },
-    ] as any;
+    ] as LogRowModel[];
     const range = { from: 10, to: 20 };
     const result = getSeriesProperties(rows, 1, range, 2, 1);
     expect(result.bucketSize).toBe(2);
@@ -1097,7 +1097,7 @@ describe('getSeriesProperties()', () => {
     const rows: LogRowModel[] = [
       { entry: 'foo', timeEpochMs: 10 },
       { entry: 'bar', timeEpochMs: 20 },
-    ] as any;
+    ] as LogRowModel[];
     const range = { from: 0, to: 30 };
     const result = getSeriesProperties(rows, 3, range, 2, 1);
     // Bucketsize 6 gets shortened to 4 because of new visible range is 20ms vs original range being 30ms
