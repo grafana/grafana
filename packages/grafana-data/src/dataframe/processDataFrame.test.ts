@@ -1,3 +1,8 @@
+import { dateTime } from '../datetime/moment_wrapper';
+import { DataFrameDTO, FieldType, TableData, TimeSeries } from '../types/index';
+
+import { ArrayDataFrame } from './ArrayDataFrame';
+import { MutableDataFrame } from './MutableDataFrame';
 import {
   guessFieldTypeFromValue,
   guessFieldTypes,
@@ -7,10 +12,7 @@ import {
   toDataFrame,
   toLegacyResponseData,
 } from './processDataFrame';
-import { DataFrameDTO, FieldType, TableData, TimeSeries } from '../types/index';
-import { dateTime } from '../datetime/moment_wrapper';
-import { MutableDataFrame } from './MutableDataFrame';
-import { ArrayDataFrame } from './ArrayDataFrame';
+
 import { getFieldTypeFromValue } from '.';
 
 describe('toDataFrame', () => {

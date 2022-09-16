@@ -1,18 +1,19 @@
+import { defaults } from 'lodash';
 import { map } from 'rxjs/operators';
 
+import { getTimeField } from '../../dataframe/processDataFrame';
+import { getFieldDisplayName } from '../../field';
 import { DataFrame, DataTransformerInfo, Field, FieldType, NullValueMode, Vector } from '../../types';
-import { DataTransformerID } from './ids';
+import { BinaryOperationID, binaryOperators } from '../../utils/binaryOperators';
+import { ArrayVector, BinaryOperationVector, ConstantVector } from '../../vector';
+import { AsNumberVector } from '../../vector/AsNumberVector';
+import { RowVector } from '../../vector/RowVector';
 import { doStandardCalcs, fieldReducers, ReducerID } from '../fieldReducer';
 import { getFieldMatcher } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
-import { RowVector } from '../../vector/RowVector';
-import { ArrayVector, BinaryOperationVector, ConstantVector } from '../../vector';
-import { AsNumberVector } from '../../vector/AsNumberVector';
-import { getTimeField } from '../../dataframe/processDataFrame';
-import { defaults } from 'lodash';
-import { BinaryOperationID, binaryOperators } from '../../utils/binaryOperators';
+
 import { ensureColumnsTransformer } from './ensureColumns';
-import { getFieldDisplayName } from '../../field';
+import { DataTransformerID } from './ids';
 import { noopTransformer } from './noop';
 
 export enum CalculateFieldMode {
@@ -71,9 +72,11 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
       reducer: ReducerID.sum,
     },
   },
-  operator: (options) => (outerSource) => {
+  operator: (options, replace) => (outerSource) => {
     const operator =
       options && options.timeSeries !== false ? ensureColumnsTransformer.operator(null) : noopTransformer.operator({});
+
+    options.alias = replace ? replace(options.alias) : options.alias;
 
     return outerSource.pipe(
       operator,
@@ -84,7 +87,14 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
         if (mode === CalculateFieldMode.ReduceRow) {
           creator = getReduceRowCreator(defaults(options.reduce, defaultReduceOptions), data);
         } else if (mode === CalculateFieldMode.BinaryOperation) {
-          creator = getBinaryCreator(defaults(options.binary, defaultBinaryOptions), data);
+          const binaryOptions = replace
+            ? {
+                ...options.binary,
+                left: replace ? replace(options.binary?.left) : options.binary?.left,
+                right: replace ? replace(options.binary?.right) : options.binary?.right,
+              }
+            : options.binary;
+          creator = getBinaryCreator(defaults(binaryOptions, defaultBinaryOptions), data);
         }
 
         // Nothing configured

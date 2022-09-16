@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+
 import { TraceSpan } from '@jaegertracing/jaeger-ui-components';
 
 /**

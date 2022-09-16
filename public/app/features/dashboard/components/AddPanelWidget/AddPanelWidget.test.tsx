@@ -1,12 +1,14 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { AddPanelWidgetUnconnected as AddPanelWidget, Props } from './AddPanelWidget';
+import React from 'react';
+
 import { DashboardModel, PanelModel } from '../../state';
+
+import { AddPanelWidgetUnconnected as AddPanelWidget, Props } from './AddPanelWidget';
 
 const getTestContext = (propOverrides?: object) => {
   const props: Props = {
-    dashboard: {} as DashboardModel,
-    panel: {} as PanelModel,
+    dashboard: new DashboardModel({}),
+    panel: new PanelModel({}),
     addPanel: jest.fn() as any,
   };
   Object.assign(props, propOverrides);

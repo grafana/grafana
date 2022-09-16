@@ -1,7 +1,8 @@
-import React from 'react';
 import { css, cx } from '@emotion/css';
+import React from 'react';
 
 import { GrafanaTheme, renderMarkdown } from '@grafana/data';
+
 import { useTheme } from '../../themes/ThemeContext';
 import { CompletionItem } from '../../types';
 
@@ -21,7 +22,7 @@ const getStyles = (theme: GrafanaTheme, height: number, visible: boolean) => {
       box-shadow: 0 0 20px ${theme.colors.dropdownShadow};
       visibility: ${visible === true ? 'visible' : 'hidden'};
       width: 250px;
-      height: ${height + parseInt(theme.spacing.xxs, 10)}px;
+      min-height: ${height + parseInt(theme.spacing.xxs, 10)}px;
       position: relative;
       word-break: break-word;
     `,
@@ -33,7 +34,7 @@ interface Props {
   height: number;
 }
 
-export const TypeaheadInfo: React.FC<Props> = ({ item, height }) => {
+export const TypeaheadInfo = ({ item, height }: Props) => {
   const visible = item && !!item.documentation;
   const label = item ? item.label : '';
   const documentation = renderMarkdown(item?.documentation);

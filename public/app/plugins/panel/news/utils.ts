@@ -1,5 +1,6 @@
-import { Feed } from './types';
 import { ArrayVector, FieldType, DataFrame, dateTime } from '@grafana/data';
+
+import { Feed } from './types';
 
 export function feedToDataFrame(feed: Feed): DataFrame {
   const date = new ArrayVector<number>([]);

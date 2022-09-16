@@ -1,7 +1,7 @@
 import { once, chain, difference } from 'lodash';
 import LRU from 'lru-cache';
-import { Value } from 'slate';
 import Prism from 'prismjs';
+import { Value } from 'slate';
 
 import {
   AbstractLabelMatcher,
@@ -11,8 +11,10 @@ import {
   HistoryItem,
   LanguageProvider,
 } from '@grafana/data';
+import { BackendSrvRequest } from '@grafana/runtime';
 import { CompletionItem, CompletionItemGroup, SearchFunctionType, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
 
+import { PrometheusDatasource } from './datasource';
 import {
   addLimitInfo,
   extractLabelMatchers,
@@ -24,8 +26,6 @@ import {
   toPromLikeQuery,
 } from './language_utils';
 import PromqlSyntax, { FUNCTIONS, RATE_RANGES } from './promql';
-
-import { PrometheusDatasource } from './datasource';
 import { PromMetricsMetadata, PromQuery } from './types';
 
 const DEFAULT_KEYS = ['job', 'instance'];
@@ -63,10 +63,17 @@ export function addHistoryMetadata(item: CompletionItem, history: any[]): Comple
 function addMetricsMetadata(metric: string, metadata?: PromMetricsMetadata): CompletionItem {
   const item: CompletionItem = { label: metric };
   if (metadata && metadata[metric]) {
-    const { type, help } = metadata[metric];
-    item.documentation = `${type.toUpperCase()}: ${help}`;
+    item.documentation = getMetadataString(metric, metadata);
   }
   return item;
+}
+
+export function getMetadataString(metric: string, metadata: PromMetricsMetadata): string | undefined {
+  if (!metadata[metric]) {
+    return undefined;
+  }
+  const { type, help } = metadata[metric];
+  return `${type.toUpperCase()}: ${help}`;
 }
 
 const PREFIX_DELIMITER_REGEX =
@@ -114,9 +121,9 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     return PromqlSyntax;
   }
 
-  request = async (url: string, defaultValue: any, params = {}): Promise<any> => {
+  request = async (url: string, defaultValue: any, params = {}, options?: Partial<BackendSrvRequest>): Promise<any> => {
     try {
-      const res = await this.datasource.metadataRequest(url, params);
+      const res = await this.datasource.metadataRequest(url, params, options);
       return res.data.data;
     } catch (error) {
       console.error(error);
@@ -133,10 +140,16 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     // TODO #33976: make those requests parallel
     await this.fetchLabels();
     this.metrics = (await this.fetchLabelValues('__name__')) || [];
-    this.metricsMetadata = fixSummariesMetadata(await this.request('/api/v1/metadata', {}));
+    await this.loadMetricsMetadata();
     this.histogramMetrics = processHistogramMetrics(this.metrics).sort();
     return [];
   };
+
+  async loadMetricsMetadata() {
+    this.metricsMetadata = fixSummariesMetadata(
+      await this.request('/api/v1/metadata', {}, {}, { showErrorAlert: false })
+    );
+  }
 
   getLabelKeys(): string[] {
     return this.labelKeys;
@@ -485,7 +498,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   }
 
   /**
-   * Fetch labels for a series. This is cached by it's args but also by the global timeRange currently selected as
+   * Fetch labels for a series. This is cached by its args but also by the global timeRange currently selected as
    * they can change over requested time.
    * @param name
    * @param withName

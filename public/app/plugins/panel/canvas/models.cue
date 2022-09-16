@@ -12,18 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package grafanaschema
+package grafanaplugin
 
-Panel: {
-    lineages: [
-        [
-            {
-                PanelOptions: {
-                    // anything for now
-                    ...
-                }
-            }
-        ]
-    ]
-    migrations: []
+import "github.com/grafana/thema"
+
+Panel: thema.#Lineage & {
+	name: "canvas"
+	seqs: [
+		{
+			schemas: [
+				{
+					PanelOptions: {
+						// anything for now
+						...
+					} @cuetsy(kind="interface")
+				},
+			]
+		},
+	]
 }

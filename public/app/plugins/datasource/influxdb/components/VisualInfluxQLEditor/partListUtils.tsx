@@ -1,11 +1,13 @@
-import { InfluxQuery, InfluxQueryPart } from '../../types';
 import { SelectableValue } from '@grafana/data';
-import { PartParams } from './PartListSection';
-import InfluxQueryModel from '../../influx_query_model';
-import { unwrap } from './unwrap';
-import queryPart from '../../query_part';
-import { toSelectableValue } from './toSelectableValue';
 import { QueryPartDef } from 'app/features/alerting/state/query_part';
+
+import InfluxQueryModel from '../../influx_query_model';
+import queryPart from '../../query_part';
+import { InfluxQuery, InfluxQueryPart } from '../../types';
+
+import { PartParams } from './PartListSection';
+import { toSelectableValue } from './toSelectableValue';
+import { unwrap } from './unwrap';
 
 type Categories = Record<string, QueryPartDef[]>;
 

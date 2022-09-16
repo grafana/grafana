@@ -4,11 +4,14 @@ import (
 	"context"
 	"errors"
 
-	"github.com/grafana/grafana/pkg/bus"
+	"golang.org/x/oauth2"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models"
-	"golang.org/x/oauth2"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 var (
@@ -16,34 +19,36 @@ var (
 )
 
 type Service struct {
-	SocialService social.Service
+	SocialService   social.Service
+	AuthInfoService login.AuthInfoService
 }
 
 type OAuthTokenService interface {
-	GetCurrentOAuthToken(context.Context, *models.SignedInUser) *oauth2.Token
-	IsOAuthPassThruEnabled(*models.DataSource) bool
+	GetCurrentOAuthToken(context.Context, *user.SignedInUser) *oauth2.Token
+	IsOAuthPassThruEnabled(*datasources.DataSource) bool
 }
 
-func ProvideService(socialService social.Service) *Service {
+func ProvideService(socialService social.Service, authInfoService login.AuthInfoService) *Service {
 	return &Service{
-		SocialService: socialService,
+		SocialService:   socialService,
+		AuthInfoService: authInfoService,
 	}
 }
 
 // GetCurrentOAuthToken returns the OAuth token, if any, for the authenticated user. Will try to refresh the token if it has expired.
-func (o *Service) GetCurrentOAuthToken(ctx context.Context, user *models.SignedInUser) *oauth2.Token {
-	if user == nil {
+func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr *user.SignedInUser) *oauth2.Token {
+	if usr == nil {
 		// No user, therefore no token
 		return nil
 	}
 
-	authInfoQuery := &models.GetAuthInfoQuery{UserId: user.UserId}
-	if err := bus.Dispatch(ctx, authInfoQuery); err != nil {
-		if errors.Is(err, models.ErrUserNotFound) {
+	authInfoQuery := &models.GetAuthInfoQuery{UserId: usr.UserID}
+	if err := o.AuthInfoService.GetAuthInfo(ctx, authInfoQuery); err != nil {
+		if errors.Is(err, user.ErrUserNotFound) {
 			// Not necessarily an error.  User may be logged in another way.
-			logger.Debug("no OAuth token for user found", "userId", user.UserId, "username", user.Login)
+			logger.Debug("no OAuth token for user found", "userId", usr.UserID, "username", usr.Login)
 		} else {
-			logger.Error("failed to get OAuth token for user", "userId", user.UserId, "username", user.Login, "error", err)
+			logger.Error("failed to get OAuth token for user", "userId", usr.UserID, "username", usr.Login, "error", err)
 		}
 		return nil
 	}
@@ -76,7 +81,7 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, user *models.SignedI
 	// TokenSource handles refreshing the token if it has expired
 	token, err := connect.TokenSource(ctx, persistedToken).Token()
 	if err != nil {
-		logger.Error("failed to retrieve OAuth access token", "provider", authInfoQuery.Result.AuthModule, "userId", user.UserId, "username", user.Login, "error", err)
+		logger.Error("failed to retrieve OAuth access token", "provider", authInfoQuery.Result.AuthModule, "userId", usr.UserID, "username", usr.Login, "error", err)
 		return nil
 	}
 
@@ -88,17 +93,17 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, user *models.SignedI
 			AuthId:     authInfoQuery.Result.AuthId,
 			OAuthToken: token,
 		}
-		if err := bus.Dispatch(ctx, updateAuthCommand); err != nil {
-			logger.Error("failed to update auth info during token refresh", "userId", user.UserId, "username", user.Login, "error", err)
+		if err := o.AuthInfoService.UpdateAuthInfo(ctx, updateAuthCommand); err != nil {
+			logger.Error("failed to update auth info during token refresh", "userId", usr.UserID, "username", usr.Login, "error", err)
 			return nil
 		}
-		logger.Debug("updated OAuth info for user", "userId", user.UserId, "username", user.Login)
+		logger.Debug("updated OAuth info for user", "userId", usr.UserID, "username", usr.Login)
 	}
 	return token
 }
 
 // IsOAuthPassThruEnabled returns true if Forward OAuth Identity (oauthPassThru) is enabled for the provided data source.
-func (o *Service) IsOAuthPassThruEnabled(ds *models.DataSource) bool {
+func (o *Service) IsOAuthPassThruEnabled(ds *datasources.DataSource) bool {
 	return ds.JsonData != nil && ds.JsonData.Get("oauthPassThru").MustBool()
 }
 

@@ -1,10 +1,8 @@
 package api
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
-	"path"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -19,27 +17,15 @@ import (
 func (hs *HTTPServer) createShortURL(c *models.ReqContext) response.Response {
 	cmd := dtos.CreateShortURLCmd{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return response.Err(models.ErrShortURLBadRequest.Errorf("bad request data: %w", err))
 	}
 	hs.log.Debug("Received request to create short URL", "path", cmd.Path)
-
-	cmd.Path = strings.TrimSpace(cmd.Path)
-
-	if path.IsAbs(cmd.Path) {
-		hs.log.Error("Invalid short URL path", "path", cmd.Path)
-		return response.Error(400, "Path should be relative", nil)
-	}
-	if strings.Contains(cmd.Path, "../") {
-		hs.log.Error("Invalid short URL path", "path", cmd.Path)
-		return response.Error(400, "Invalid path", nil)
-	}
-
 	shortURL, err := hs.ShortURLService.CreateShortURL(c.Req.Context(), c.SignedInUser, cmd.Path)
 	if err != nil {
-		return response.Error(500, "Failed to create short URL", err)
+		return response.Err(err)
 	}
 
-	url := fmt.Sprintf("%s/goto/%s?orgId=%d", strings.TrimSuffix(setting.AppUrl, "/"), shortURL.Uid, c.OrgId)
+	url := fmt.Sprintf("%s/goto/%s?orgId=%d", strings.TrimSuffix(setting.AppUrl, "/"), shortURL.Uid, c.OrgID)
 	c.Logger.Debug("Created short URL", "url", url)
 
 	dto := dtos.ShortURL{
@@ -47,7 +33,7 @@ func (hs *HTTPServer) createShortURL(c *models.ReqContext) response.Response {
 		URL: url,
 	}
 
-	return response.JSON(200, dto)
+	return response.JSON(http.StatusOK, dto)
 }
 
 func (hs *HTTPServer) redirectFromShortURL(c *models.ReqContext) {
@@ -59,7 +45,7 @@ func (hs *HTTPServer) redirectFromShortURL(c *models.ReqContext) {
 
 	shortURL, err := hs.ShortURLService.GetShortURLByUID(c.Req.Context(), c.SignedInUser, shortURLUID)
 	if err != nil {
-		if errors.Is(err, models.ErrShortURLNotFound) {
+		if models.ErrShortURLNotFound.Is(err) {
 			hs.log.Debug("Not redirecting short URL since not found")
 			return
 		}

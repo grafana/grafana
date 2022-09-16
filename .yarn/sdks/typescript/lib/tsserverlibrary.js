@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 
 const {existsSync} = require(`fs`);
-const {createRequire, createRequireFromPath} = require(`module`);
+const {createRequire} = require(`module`);
 const {resolve} = require(`path`);
 
 const relPnpApiPath = "../../../../.pnp.cjs";
 
 const absPnpApiPath = resolve(__dirname, relPnpApiPath);
-const absRequire = (createRequire || createRequireFromPath)(absPnpApiPath);
+const absRequire = createRequire(absPnpApiPath);
 
 const moduleWrapper = tsserver => {
   if (!process.versions.pnp) {
@@ -61,12 +61,28 @@ const moduleWrapper = tsserver => {
           //
           // Ref: https://github.com/microsoft/vscode/issues/105014#issuecomment-686760910
           //
-          // Update Oct 8 2021: VSCode changed their format in 1.61.
+          // 2021-10-08: VSCode changed the format in 1.61.
           // Before | ^zip:/c:/foo/bar.zip/package.json
+          // After  | ^/zip//c:/foo/bar.zip/package.json
+          //
+          // 2022-04-06: VSCode changed the format in 1.66.
+          // Before | ^/zip//c:/foo/bar.zip/package.json
+          // After  | ^/zip/c:/foo/bar.zip/package.json
+          //
+          // 2022-05-06: VSCode changed the format in 1.68
+          // Before | ^/zip/c:/foo/bar.zip/package.json
           // After  | ^/zip//c:/foo/bar.zip/package.json
           //
           case `vscode <1.61`: {
             str = `^zip:${str}`;
+          } break;
+
+          case `vscode <1.66`: {
+            str = `^/zip/${str}`;
+          } break;
+
+          case `vscode <1.68`: {
+            str = `^/zip${str}`;
           } break;
 
           case `vscode`: {
@@ -119,9 +135,7 @@ const moduleWrapper = tsserver => {
 
       case `vscode`:
       default: {
-        return process.platform === `win32`
-          ? str.replace(/^\^?(zip:|\/zip)\/+/, ``)
-          : str.replace(/^\^?(zip:|\/zip)\/+/, `/`);
+        return str.replace(/^\^?(zip:|\/zip(\/ts-nul-authority)?)\/+/, process.platform === `win32` ? `` : `/`)
       } break;
     }
   }
@@ -160,8 +174,21 @@ const moduleWrapper = tsserver => {
         typeof parsedMessage.arguments.hostInfo === `string`
       ) {
         hostInfo = parsedMessage.arguments.hostInfo;
-        if (hostInfo === `vscode` && process.env.VSCODE_IPC_HOOK && process.env.VSCODE_IPC_HOOK.match(/Code\/1\.([1-5][0-9]|60)\./)) {
-          hostInfo += ` <1.61`;
+        if (hostInfo === `vscode` && process.env.VSCODE_IPC_HOOK) {
+          const [, major, minor] = (process.env.VSCODE_IPC_HOOK.match(
+            // The RegExp from https://semver.org/ but without the caret at the start
+            /(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/
+          ) ?? []).map(Number)
+
+          if (major === 1) {
+            if (minor < 61) {
+              hostInfo += ` <1.61`;
+            } else if (minor < 66) {
+              hostInfo += ` <1.66`;
+            } else if (minor < 68) {
+              hostInfo += ` <1.68`;
+            }
+          }
         }
       }
 

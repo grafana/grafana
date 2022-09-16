@@ -7,8 +7,9 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
@@ -77,7 +78,7 @@ func (ic *intervalCalculator) CalculateSafeInterval(timerange legacydata.DataTim
 	return Interval{Text: FormatDuration(rounded), Value: rounded}
 }
 
-func GetIntervalFrom(dsInfo *models.DataSource, queryModel *simplejson.Json, defaultInterval time.Duration) (time.Duration, error) {
+func GetIntervalFrom(dsInfo *datasources.DataSource, queryModel *simplejson.Json, defaultInterval time.Duration) (time.Duration, error) {
 	interval := queryModel.Get("interval").MustString("")
 
 	// intervalMs field appears in the v2 plugins API and should be preferred
@@ -145,7 +146,7 @@ func FormatDuration(inter time.Duration) string {
 	return "1ms"
 }
 
-//nolint: gocyclo
+//nolint:gocyclo
 func roundInterval(interval time.Duration) time.Duration {
 	switch {
 	// 0.015s

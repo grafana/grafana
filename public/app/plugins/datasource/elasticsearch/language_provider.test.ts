@@ -1,34 +1,29 @@
-import LanguageProvider from './language_provider';
-import { ElasticDatasource } from './datasource';
-import { AbstractLabelOperator, AbstractQuery, DataSourceInstanceSettings } from '@grafana/data';
-import { ElasticsearchOptions, ElasticsearchQuery } from './types';
+import { AbstractLabelOperator, AbstractQuery } from '@grafana/data';
+
 import { TemplateSrv } from '../../../features/templating/template_srv';
 
-const templateSrvStub = {
-  getAdhocFilters: jest.fn(() => [] as any[]),
-  replace: jest.fn((a: string) => a),
-} as any;
-
-const dataSource = new ElasticDatasource(
-  {
-    url: 'http://es.com',
-    database: '[asd-]YYYY.MM.DD',
-    jsonData: {
-      interval: 'Daily',
-      esVersion: '2.0.0',
-      timeField: '@time',
-    },
-  } as DataSourceInstanceSettings<ElasticsearchOptions>,
-  templateSrvStub as TemplateSrv
-);
+import { ElasticDatasource } from './datasource';
+import LanguageProvider from './language_provider';
+import { createElasticDatasource } from './mocks';
+import { ElasticsearchQuery } from './types';
 
 const baseLogsQuery: Partial<ElasticsearchQuery> = {
   metrics: [{ type: 'logs', id: '1' }],
 };
 
 describe('transform abstract query to elasticsearch query', () => {
+  let datasource: ElasticDatasource;
+  beforeEach(() => {
+    const templateSrvStub = {
+      getAdhocFilters: jest.fn(() => []),
+      replace: jest.fn((a: string) => a),
+    } as unknown as TemplateSrv;
+
+    datasource = createElasticDatasource({}, templateSrvStub);
+  });
+
   it('With some labels', () => {
-    const instance = new LanguageProvider(dataSource);
+    const instance = new LanguageProvider(datasource);
     const abstractQuery: AbstractQuery = {
       refId: 'bar',
       labelMatchers: [
@@ -48,7 +43,7 @@ describe('transform abstract query to elasticsearch query', () => {
   });
 
   it('Empty query', () => {
-    const instance = new LanguageProvider(dataSource);
+    const instance = new LanguageProvider(datasource);
     const abstractQuery = { labelMatchers: [], refId: 'foo' };
     const result = instance.importFromAbstractQuery(abstractQuery);
 

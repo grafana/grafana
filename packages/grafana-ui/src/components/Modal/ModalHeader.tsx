@@ -1,7 +1,9 @@
 import React from 'react';
-import { getModalStyles } from './getModalStyles';
-import { IconName } from '../../types';
+
 import { useStyles2 } from '../../themes';
+import { IconName } from '../../types';
+
+import { getModalStyles } from './getModalStyles';
 
 interface Props {
   title: string;

@@ -1,58 +1,44 @@
-import { parser } from 'lezer-promql';
-import { SyntaxNode, TreeCursor } from '@lezer/common';
+import { SyntaxNode } from '@lezer/common';
+import {
+  AggregateExpr,
+  AggregateModifier,
+  AggregateOp,
+  BinaryExpr,
+  BinModifiers,
+  Expr,
+  FunctionCall,
+  FunctionCallArgs,
+  FunctionCallBody,
+  FunctionIdentifier,
+  GroupingLabel,
+  GroupingLabelList,
+  GroupingLabels,
+  LabelMatcher,
+  LabelName,
+  MatchOp,
+  MetricIdentifier,
+  NumberLiteral,
+  On,
+  OnOrIgnoring,
+  ParenExpr,
+  parser,
+  StringLiteral,
+  VectorSelector,
+  Without,
+} from '@prometheus-io/lezer-promql';
+
+import { binaryScalarOperatorToOperatorName } from './binaryScalarOperations';
+import {
+  ErrorName,
+  getAllByType,
+  getLeftMostChild,
+  getString,
+  makeBinOp,
+  makeError,
+  replaceVariables,
+} from './shared/parsingUtils';
 import { QueryBuilderLabelFilter, QueryBuilderOperation } from './shared/types';
-import { PromVisualQuery } from './types';
-import { binaryScalarDefs } from './binaryScalarOperations';
-
-// Taken from template_srv, but copied so to not mess with the regex.index which is manipulated in the service
-/*
- * This regex matches 3 types of variable reference with an optional format specifier
- * \$(\w+)                          $var1
- * \[\[([\s\S]+?)(?::(\w+))?\]\]    [[var2]] or [[var2:fmt2]]
- * \${(\w+)(?::(\w+))?}             ${var3} or ${var3:fmt3}
- */
-const variableRegex = /\$(\w+)|\[\[([\s\S]+?)(?::(\w+))?\]\]|\${(\w+)(?:\.([^:^\}]+))?(?::([^\}]+))?}/g;
-
-/**
- * As variables with $ are creating parsing errors, we first replace them with magic string that is parseable and at
- * the same time we can get the variable and it's format back from it.
- * @param expr
- */
-function replaceVariables(expr: string) {
-  return expr.replace(variableRegex, (match, var1, var2, fmt2, var3, fieldPath, fmt3) => {
-    const fmt = fmt2 || fmt3;
-    let variable = var1;
-    let varType = '0';
-
-    if (var2) {
-      variable = var2;
-      varType = '1';
-    }
-
-    if (var3) {
-      variable = var3;
-      varType = '2';
-    }
-
-    return `__V_${varType}__` + variable + '__V__' + (fmt ? '__F__' + fmt + '__F__' : '');
-  });
-}
-
-const varTypeFunc = [
-  (v: string, f?: string) => `\$${v}`,
-  (v: string, f?: string) => `[[${v}${f ? `:${f}` : ''}]]`,
-  (v: string, f?: string) => `\$\{${v}${f ? `:${f}` : ''}\}`,
-];
-
-/**
- * Get beck the text with variables in their original format.
- * @param expr
- */
-function returnVariables(expr: string) {
-  return expr.replace(/__V_(\d)__(.+)__V__(?:__F__(\w+)__F__)?/g, (match, type, v, f) => {
-    return varTypeFunc[parseInt(type, 10)](v, f);
-  });
-}
+import { PromVisualQuery, PromVisualQueryBinary } from './types';
 
 /**
  * Parses a PromQL query into a visual query model.
@@ -83,9 +69,16 @@ export function buildVisualQueryFromString(expr: string): Context {
   } catch (err) {
     // Not ideal to log it here, but otherwise we would lose the stack trace.
     console.error(err);
-    context.errors.push({
-      text: err.message,
-    });
+    if (err instanceof Error) {
+      context.errors.push({
+        text: err.message,
+      });
+    }
+  }
+
+  // If we have empty query, we want to reset errors
+  if (isEmptyQuery(context.query)) {
+    context.errors = [];
   }
   return context;
 }
@@ -102,8 +95,8 @@ interface Context {
   errors: ParsingError[];
 }
 
-// This is used for error type for some reason
-const ErrorName = '⚠';
+// Although 0 isn't explicitly provided in the lezer-promql library as the error node ID, it does appear to be the ID of error nodes within lezer.
+const ErrorId = 0;
 
 /**
  * Handler for default state. It will traverse the tree and call the appropriate handler for each node. The node
@@ -114,14 +107,15 @@ const ErrorName = '⚠';
  */
 export function handleExpression(expr: string, node: SyntaxNode, context: Context) {
   const visQuery = context.query;
-  switch (node.name) {
-    case 'MetricIdentifier': {
+
+  switch (node.type.id) {
+    case MetricIdentifier: {
       // Expectation is that there is only one of those per query.
       visQuery.metric = getString(expr, node);
       break;
     }
 
-    case 'LabelMatcher': {
+    case LabelMatcher: {
       // Same as MetricIdentifier should be just one per query.
       visQuery.labels.push(getLabel(expr, node));
       const err = node.getChild(ErrorName);
@@ -131,22 +125,22 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
       break;
     }
 
-    case 'FunctionCall': {
+    case FunctionCall: {
       handleFunction(expr, node, context);
       break;
     }
 
-    case 'AggregateExpr': {
+    case AggregateExpr: {
       handleAggregation(expr, node, context);
       break;
     }
 
-    case 'BinaryExpr': {
+    case BinaryExpr: {
       handleBinary(expr, node, context);
       break;
     }
 
-    case ErrorName: {
+    case ErrorId: {
       if (isIntervalVariableError(node)) {
         break;
       }
@@ -155,7 +149,12 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
     }
 
     default: {
-      // Any other nodes we just ignore and go to it's children. This should be fine as there are lot's of wrapper
+      if (node.type.id === ParenExpr) {
+        // We don't support parenthesis in the query to group expressions. We just report error but go on with the
+        // parsing.
+        context.errors.push(makeError(expr, node));
+      }
+      // Any other nodes we just ignore and go to its children. This should be fine as there are lots of wrapper
       // nodes that can be skipped.
       // TODO: there are probably cases where we will just skip nodes we don't support and we should be able to
       //  detect those and report back.
@@ -168,26 +167,14 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
   }
 }
 
-function makeError(expr: string, node: SyntaxNode) {
-  return {
-    text: getString(expr, node),
-    // TODO: this are positions in the string with the replaced variables. Means it cannot be used to show exact
-    //  placement of the error for the user. We need some translation table to positions before the variable
-    //  replace.
-    from: node.from,
-    to: node.to,
-    parentType: node.parent?.name,
-  };
-}
-
 function isIntervalVariableError(node: SyntaxNode) {
-  return node.prevSibling?.name === 'Expr' && node.prevSibling?.firstChild?.name === 'VectorSelector';
+  return node.prevSibling?.type.id === Expr && node.prevSibling?.firstChild?.type.id === VectorSelector;
 }
 
 function getLabel(expr: string, node: SyntaxNode): QueryBuilderLabelFilter {
-  const label = getString(expr, node.getChild('LabelName'));
-  const op = getString(expr, node.getChild('MatchOp'));
-  const value = getString(expr, node.getChild('StringLiteral')).replace(/"/g, '');
+  const label = getString(expr, node.getChild(LabelName));
+  const op = getString(expr, node.getChild(MatchOp));
+  const value = getString(expr, node.getChild(StringLiteral)).replace(/"/g, '');
   return {
     label,
     op,
@@ -196,6 +183,7 @@ function getLabel(expr: string, node: SyntaxNode): QueryBuilderLabelFilter {
 }
 
 const rangeFunctions = ['changes', 'rate', 'irate', 'increase', 'delta'];
+
 /**
  * Handle function call which is usually and identifier and its body > arguments.
  * @param expr
@@ -204,11 +192,11 @@ const rangeFunctions = ['changes', 'rate', 'irate', 'increase', 'delta'];
  */
 function handleFunction(expr: string, node: SyntaxNode, context: Context) {
   const visQuery = context.query;
-  const nameNode = node.getChild('FunctionIdentifier');
+  const nameNode = node.getChild(FunctionIdentifier);
   const funcName = getString(expr, nameNode);
 
-  const body = node.getChild('FunctionCallBody');
-  const callArgs = body!.getChild('FunctionCallArgs');
+  const body = node.getChild(FunctionCallBody);
+  const callArgs = body!.getChild(FunctionCallArgs);
   const params = [];
   let interval = '';
 
@@ -246,10 +234,10 @@ function handleFunction(expr: string, node: SyntaxNode, context: Context) {
  */
 function handleAggregation(expr: string, node: SyntaxNode, context: Context) {
   const visQuery = context.query;
-  const nameNode = node.getChild('AggregateOp');
+  const nameNode = node.getChild(AggregateOp);
   let funcName = getString(expr, nameNode);
 
-  const modifier = node.getChild('AggregateModifier');
+  const modifier = node.getChild(AggregateModifier);
   const labels = [];
 
   if (modifier) {
@@ -258,16 +246,16 @@ function handleAggregation(expr: string, node: SyntaxNode, context: Context) {
       funcName = `__${funcName}_by`;
     }
 
-    const withoutModifier = modifier.getChild(`Without`);
+    const withoutModifier = modifier.getChild(Without);
     if (withoutModifier) {
       funcName = `__${funcName}_without`;
     }
 
-    labels.push(...getAllByType(expr, modifier, 'GroupingLabel'));
+    labels.push(...getAllByType(expr, modifier, GroupingLabel));
   }
 
-  const body = node.getChild('FunctionCallBody');
-  const callArgs = body!.getChild('FunctionCallArgs');
+  const body = node.getChild(FunctionCallBody);
+  const callArgs = body!.getChild(FunctionCallArgs);
 
   const op: QueryBuilderOperation = { id: funcName, params: [] };
   visQuery.operations.unshift(op);
@@ -292,11 +280,11 @@ function updateFunctionArgs(expr: string, node: SyntaxNode | null, context: Cont
   if (!node) {
     return;
   }
-  switch (node.name) {
+  switch (node.type.id) {
     // In case we have an expression we don't know what kind so we have to look at the child as it can be anything.
-    case 'Expr':
+    case Expr:
     // FunctionCallArgs are nested bit weirdly as mentioned so we have to go one deeper in this case.
-    case 'FunctionCallArgs': {
+    case FunctionCallArgs: {
       let child = node.firstChild;
       while (child) {
         updateFunctionArgs(expr, child, context, op);
@@ -305,12 +293,12 @@ function updateFunctionArgs(expr: string, node: SyntaxNode | null, context: Cont
       break;
     }
 
-    case 'NumberLiteral': {
+    case NumberLiteral: {
       op.params.push(parseFloat(getString(expr, node)));
       break;
     }
 
-    case 'StringLiteral': {
+    case StringLiteral: {
       op.params.push(getString(expr, node).replace(/"/g, ''));
       break;
     }
@@ -323,11 +311,6 @@ function updateFunctionArgs(expr: string, node: SyntaxNode | null, context: Cont
   }
 }
 
-const operatorToOpName = binaryScalarDefs.reduce((acc, def) => {
-  acc[def.sign] = def.id;
-  return acc;
-}, {} as Record<string, string>);
-
 /**
  * Right now binary expressions can be represented in 2 way in visual query. As additional operation in case it is
  * just operation with scalar or it creates a binaryQuery when it's 2 queries.
@@ -339,54 +322,42 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
   const visQuery = context.query;
   const left = node.firstChild!;
   const op = getString(expr, left.nextSibling);
-  // TODO: we are skipping BinModifiers
+  const binModifier = getBinaryModifier(expr, node.getChild(BinModifiers));
+
   const right = node.lastChild!;
 
-  const opName = operatorToOpName[op];
+  const opDef = binaryScalarOperatorToOperatorName[op];
 
-  const leftNumber = left.getChild('NumberLiteral');
-  const rightNumber = right.getChild('NumberLiteral');
+  const leftNumber = left.getChild(NumberLiteral);
+  const rightNumber = right.getChild(NumberLiteral);
 
-  if (leftNumber || rightNumber) {
-    // Scalar case, just add operation.
-    if (leftNumber) {
-      // TODO: this should be already handled in case parent is binary expression as it has to be added to parent
-      //  if query starts with a number that isn't handled now.
-    } else {
-      handleExpression(expr, left, context);
-    }
+  const rightBinary = right.getChild(BinaryExpr);
 
-    if (rightNumber) {
-      // TODO: this should be already handled in case parent is binary expression as it has to be added to parent
-      //  if query starts with a number that isn't handled now.
-      visQuery.operations.push({ id: opName, params: [parseInt(getString(expr, right), 10)] });
-    } else {
-      handleExpression(expr, right, context);
-    }
-    return;
-  }
-
-  const leftBinary = left.getChild('BinaryExpr');
-  const rightBinary = right.getChild('BinaryExpr');
-
-  if (leftBinary || rightBinary) {
-    // One of the sides is binary which means we don't really know if there is a query or just chained scalars. So
+  if (leftNumber) {
+    // TODO: this should be already handled in case parent is binary expression as it has to be added to parent
+    //  if query starts with a number that isn't handled now.
+  } else {
+    // If this is binary we don't really know if there is a query or just chained scalars. So
     // we have to traverse a bit deeper to know
     handleExpression(expr, left, context);
+  }
 
+  if (rightNumber) {
+    visQuery.operations.push(makeBinOp(opDef, expr, right, !!binModifier?.isBool));
+  } else if (rightBinary) {
     // Due to the way binary ops are parsed we can get a binary operation on the right that starts with a number which
     // is a factor for a current binary operation. So we have to add it as an operation now.
     const leftMostChild = getLeftMostChild(right);
-    if (leftMostChild?.name === 'NumberLiteral') {
-      visQuery.operations.push({ id: opName, params: [parseInt(getString(expr, leftMostChild), 10)] });
+    if (leftMostChild?.type.id === NumberLiteral) {
+      visQuery.operations.push(makeBinOp(opDef, expr, leftMostChild, !!binModifier?.isBool));
     }
+
     // If we added the first number literal as operation here we still can continue and handle the rest as the first
     // number will be just skipped.
     handleExpression(expr, right, context);
   } else {
-    // Two queries case so we create a binary query.
     visQuery.binaryQueries = visQuery.binaryQueries || [];
-    const binQuery = {
+    const binQuery: PromVisualQueryBinary = {
       operator: op,
       query: {
         metric: '',
@@ -394,9 +365,11 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
         operations: [],
       },
     };
+    if (binModifier?.isMatcher) {
+      binQuery.vectorMatchesType = binModifier.matchType;
+      binQuery.vectorMatches = binModifier.matches;
+    }
     visQuery.binaryQueries.push(binQuery);
-    // One query is the main query, second is wrapped in the binaryQuery wrapper.
-    handleExpression(expr, left, context);
     handleExpression(expr, right, {
       query: binQuery.query,
       errors: context.errors,
@@ -404,85 +377,37 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
   }
 }
 
-/**
- * Get the actual string of the expression. That is not stored in the tree so we have to get the indexes from the node
- * and then based on that get it from the expression.
- * @param expr
- * @param node
- */
-function getString(expr: string, node: SyntaxNode | TreeCursor | null) {
+function getBinaryModifier(
+  expr: string,
+  node: SyntaxNode | null
+):
+  | { isBool: true; isMatcher: false }
+  | { isBool: false; isMatcher: true; matches: string; matchType: 'ignoring' | 'on' }
+  | undefined {
   if (!node) {
-    return '';
-  }
-  return returnVariables(expr.substring(node.from, node.to));
-}
-
-/**
- * Get all nodes with type in the tree. This traverses the tree so it is safe only when you know there shouldn't be
- * too much nesting but you just want to skip some of the wrappers. For example getting function args this way would
- * not be safe is it would also find arguments of nested functions.
- * @param expr
- * @param cur
- * @param type
- */
-function getAllByType(expr: string, cur: SyntaxNode, type: string): string[] {
-  if (cur.name === type) {
-    return [getString(expr, cur)];
-  }
-  const values: string[] = [];
-  let pos = 0;
-  let child = cur.childAfter(pos);
-  while (child) {
-    values.push(...getAllByType(expr, child, type));
-    pos = child.to;
-    child = cur.childAfter(pos);
-  }
-  return values;
-}
-
-function getLeftMostChild(cur: SyntaxNode): SyntaxNode | null {
-  let child = cur;
-  while (true) {
-    if (child.firstChild) {
-      child = child.firstChild;
-    } else {
-      break;
-    }
-  }
-  return child;
-}
-
-// Debugging function for convenience.
-// @ts-ignore
-function log(expr: string, cur?: SyntaxNode) {
-  const json = toJson(expr, cur);
-  if (!json) {
-    console.log('<empty>');
-    return;
-  }
-  console.log(JSON.stringify(json, undefined, 2));
-}
-
-function toJson(expr: string, cur?: SyntaxNode) {
-  if (!cur) {
     return undefined;
   }
-  const treeJson: any = {};
-  const name = nodeToString(expr, cur);
-  const children = [];
-
-  let pos = 0;
-  let child = cur.childAfter(pos);
-  while (child) {
-    children.push(toJson(expr, child));
-    pos = child.to;
-    child = cur.childAfter(pos);
+  if (node.getChild('Bool')) {
+    return { isBool: true, isMatcher: false };
+  } else {
+    const matcher = node.getChild(OnOrIgnoring);
+    if (!matcher) {
+      // Not sure what this could be, maybe should be an error.
+      return undefined;
+    }
+    const labels = getString(expr, matcher.getChild(GroupingLabels)?.getChild(GroupingLabelList));
+    return {
+      isMatcher: true,
+      isBool: false,
+      matches: labels,
+      matchType: matcher.getChild(On) ? 'on' : 'ignoring',
+    };
   }
-
-  treeJson[name] = children;
-  return treeJson;
 }
 
-function nodeToString(expr: string, node: SyntaxNode) {
-  return node.name + ':' + getString(expr, node);
+function isEmptyQuery(query: PromVisualQuery) {
+  if (query.labels.length === 0 && query.operations.length === 0 && !query.metric) {
+    return true;
+  }
+  return false;
 }

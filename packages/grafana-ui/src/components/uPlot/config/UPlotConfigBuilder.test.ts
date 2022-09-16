@@ -1,6 +1,6 @@
 // TODO: migrate tests below to the builder
 
-import { UPlotConfigBuilder } from './UPlotConfigBuilder';
+import { createTheme, ThresholdsMode } from '@grafana/data';
 import {
   GraphGradientMode,
   AxisPlacement,
@@ -11,7 +11,8 @@ import {
   GraphTresholdsStyleMode,
   ScaleDistribution,
 } from '@grafana/schema';
-import { createTheme, ThresholdsMode } from '@grafana/data';
+
+import { UPlotConfigBuilder } from './UPlotConfigBuilder';
 
 describe('UPlotConfigBuilder', () => {
   const darkTheme = createTheme();
@@ -36,9 +37,21 @@ describe('UPlotConfigBuilder', () => {
               "width": [Function],
             },
           },
+          "focus": Object {
+            "alpha": 1,
+          },
           "hooks": Object {},
+          "legend": Object {
+            "show": false,
+          },
           "mode": 1,
-          "padding": undefined,
+          "ms": 1,
+          "padding": Array [
+            [Function],
+            [Function],
+            [Function],
+            [Function],
+          ],
           "scales": Object {},
           "select": undefined,
           "series": Array [
@@ -87,9 +100,21 @@ describe('UPlotConfigBuilder', () => {
               "width": [Function],
             },
           },
+          "focus": Object {
+            "alpha": 1,
+          },
           "hooks": Object {},
+          "legend": Object {
+            "show": false,
+          },
           "mode": 1,
-          "padding": undefined,
+          "ms": 1,
+          "padding": Array [
+            [Function],
+            [Function],
+            [Function],
+            [Function],
+          ],
           "scales": Object {
             "scale-x": Object {
               "auto": false,
@@ -99,6 +124,7 @@ describe('UPlotConfigBuilder', () => {
               "time": true,
             },
             "scale-y": Object {
+              "asinh": undefined,
               "auto": true,
               "dir": 1,
               "distr": 1,
@@ -167,11 +193,24 @@ describe('UPlotConfigBuilder', () => {
                 "width": [Function],
               },
             },
+            "focus": Object {
+              "alpha": 1,
+            },
             "hooks": Object {},
+            "legend": Object {
+              "show": false,
+            },
             "mode": 1,
-            "padding": undefined,
+            "ms": 1,
+            "padding": Array [
+              [Function],
+              [Function],
+              [Function],
+              [Function],
+            ],
             "scales": Object {
               "scale-y": Object {
+                "asinh": undefined,
                 "auto": true,
                 "dir": 1,
                 "distr": 1,
@@ -220,11 +259,24 @@ describe('UPlotConfigBuilder', () => {
                   "width": [Function],
                 },
               },
+              "focus": Object {
+                "alpha": 1,
+              },
               "hooks": Object {},
+              "legend": Object {
+                "show": false,
+              },
               "mode": 1,
-              "padding": undefined,
+              "ms": 1,
+              "padding": Array [
+                [Function],
+                [Function],
+                [Function],
+                [Function],
+              ],
               "scales": Object {
                 "scale-y": Object {
+                  "asinh": undefined,
                   "auto": true,
                   "dir": 1,
                   "distr": 1,
@@ -274,11 +326,24 @@ describe('UPlotConfigBuilder', () => {
                   "width": [Function],
                 },
               },
+              "focus": Object {
+                "alpha": 1,
+              },
               "hooks": Object {},
+              "legend": Object {
+                "show": false,
+              },
               "mode": 1,
-              "padding": undefined,
+              "ms": 1,
+              "padding": Array [
+                [Function],
+                [Function],
+                [Function],
+                [Function],
+              ],
               "scales": Object {
                 "scale-y": Object {
+                  "asinh": undefined,
                   "auto": true,
                   "dir": 1,
                   "distr": 1,
@@ -393,9 +458,21 @@ describe('UPlotConfigBuilder', () => {
             "width": [Function],
           },
         },
+        "focus": Object {
+          "alpha": 1,
+        },
         "hooks": Object {},
+        "legend": Object {
+          "show": false,
+        },
         "mode": 1,
-        "padding": undefined,
+        "ms": 1,
+        "padding": Array [
+          [Function],
+          [Function],
+          [Function],
+          [Function],
+        ],
         "scales": Object {},
         "select": undefined,
         "series": Array [
@@ -512,9 +589,21 @@ describe('UPlotConfigBuilder', () => {
             "width": [Function],
           },
         },
+        "focus": Object {
+          "alpha": 1,
+        },
         "hooks": Object {},
+        "legend": Object {
+          "show": false,
+        },
         "mode": 1,
-        "padding": undefined,
+        "ms": 1,
+        "padding": Array [
+          [Function],
+          [Function],
+          [Function],
+          [Function],
+        ],
         "scales": Object {},
         "select": undefined,
         "series": Array [
@@ -627,9 +716,21 @@ describe('UPlotConfigBuilder', () => {
               "width": [Function],
             },
           },
+          "focus": Object {
+            "alpha": 1,
+          },
           "hooks": Object {},
+          "legend": Object {
+            "show": false,
+          },
           "mode": 1,
-          "padding": undefined,
+          "ms": 1,
+          "padding": Array [
+            [Function],
+            [Function],
+            [Function],
+            [Function],
+          ],
           "scales": Object {},
           "select": undefined,
           "series": Array [

@@ -1,23 +1,27 @@
-import React, { FC, useMemo } from 'react';
-import { GrafanaTheme2, dateMath } from '@grafana/data';
-import { Icon, useStyles2, Link, Button } from '@grafana/ui';
 import { css } from '@emotion/css';
-import { AlertmanagerAlert, Silence, SilenceState } from 'app/plugins/datasource/alertmanager/types';
-import { NoSilencesSplash } from './NoSilencesCTA';
-import { getSilenceFiltersFromUrlParams, makeAMLink } from '../../utils/misc';
-import { contextSrv } from 'app/core/services/context_srv';
+import React, { FC, useMemo } from 'react';
+import { useDispatch } from 'react-redux';
+
+import { GrafanaTheme2, dateMath } from '@grafana/data';
+import { Icon, useStyles2, Link, Button, Stack } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { SilencesFilter } from './SilencesFilter';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AlertmanagerAlert, Silence, SilenceState } from 'app/plugins/datasource/alertmanager/types';
+
+import { expireSilenceAction } from '../../state/actions';
+import { getInstancesPermissions } from '../../utils/access-control';
 import { parseMatchers } from '../../utils/alertmanager';
+import { getSilenceFiltersFromUrlParams, makeAMLink } from '../../utils/misc';
+import { Authorize } from '../Authorize';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
-import { SilenceStateTag } from './SilenceStateTag';
-import { Matchers } from './Matchers';
 import { ActionButton } from '../rules/ActionButton';
 import { ActionIcon } from '../rules/ActionIcon';
-import { useDispatch } from 'react-redux';
-import { expireSilenceAction } from '../../state/actions';
+
+import { Matchers } from './Matchers';
+import { NoSilencesSplash } from './NoSilencesCTA';
 import { SilenceDetails } from './SilenceDetails';
-import { Stack } from '@grafana/experimental';
+import { SilenceStateTag } from './SilenceStateTag';
+import { SilencesFilter } from './SilencesFilter';
 
 export interface SilenceTableItem extends Silence {
   silencedAlerts: AlertmanagerAlert[];
@@ -35,6 +39,7 @@ const SilencesTable: FC<Props> = ({ silences, alertManagerAlerts, alertManagerSo
   const styles = useStyles2(getStyles);
   const [queryParams] = useQueryParams();
   const filteredSilences = useFilteredSilences(silences);
+  const permissions = getInstancesPermissions(alertManagerSourceName);
 
   const { silenceState } = getSilenceFiltersFromUrlParams(queryParams);
 
@@ -61,7 +66,7 @@ const SilencesTable: FC<Props> = ({ silences, alertManagerAlerts, alertManagerSo
       {!!silences.length && (
         <>
           <SilencesFilter />
-          {contextSrv.isEditor && (
+          <Authorize actions={[permissions.create]} fallback={contextSrv.isEditor}>
             <div className={styles.topButtonContainer}>
               <Link href={makeAMLink('/alerting/silence/new', alertManagerSourceName)}>
                 <Button className={styles.addNewSilence} icon="plus">
@@ -69,7 +74,7 @@ const SilencesTable: FC<Props> = ({ silences, alertManagerAlerts, alertManagerSo
                 </Button>
               </Link>
             </div>
-          )}
+          </Authorize>
           {!!items.length ? (
             <>
               <DynamicTable
@@ -167,11 +172,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
 function useColumns(alertManagerSourceName: string) {
   const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
+  const permissions = getInstancesPermissions(alertManagerSourceName);
   return useMemo((): SilenceTableColumnProps[] => {
     const handleExpireSilenceClick = (id: string) => {
       dispatch(expireSilenceAction(alertManagerSourceName, id));
     };
-    const showActions = contextSrv.isEditor;
+    const showActions = contextSrv.hasAccess(permissions.update, contextSrv.isEditor);
     const columns: SilenceTableColumnProps[] = [
       {
         id: 'state',
@@ -247,7 +253,7 @@ function useColumns(alertManagerSourceName: string) {
       });
     }
     return columns;
-  }, [alertManagerSourceName, dispatch, styles]);
+  }, [alertManagerSourceName, dispatch, styles, permissions]);
 }
 
 export default SilencesTable;

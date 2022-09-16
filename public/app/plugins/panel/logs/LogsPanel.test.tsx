@@ -1,6 +1,8 @@
-import React, { ComponentProps } from 'react';
 import { render, screen } from '@testing-library/react';
+import React, { ComponentProps } from 'react';
+
 import { LoadingState, MutableDataFrame, FieldType, LogsSortOrder } from '@grafana/data';
+
 import { LogsPanel } from './LogsPanel';
 
 type LogsPanelProps = ComponentProps<typeof LogsPanel>;

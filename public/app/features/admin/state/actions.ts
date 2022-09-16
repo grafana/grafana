@@ -1,6 +1,10 @@
-import config from 'app/core/config';
+import { debounce } from 'lodash';
+
 import { dateTimeFormatTimeAgo } from '@grafana/data';
-import { featureEnabled, getBackendSrv, locationService } from '@grafana/runtime';
+import { featureEnabled, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
+import config from 'app/core/config';
+import { contextSrv } from 'app/core/core';
+import { accessControlQueryParam } from 'app/core/utils/accessControl';
 import { ThunkResult, LdapUser, UserSession, UserDTO, AccessControlAction, UserFilter } from 'app/types';
 
 import {
@@ -23,9 +27,6 @@ import {
   usersFetchBegin,
   usersFetchEnd,
 } from './reducers';
-import { debounce } from 'lodash';
-import { contextSrv } from 'app/core/core';
-import { accessControlQueryParam } from 'app/core/utils/accessControl';
 // UserAdminPage
 
 export function loadAdminUserPage(userId: number): ThunkResult<void> {
@@ -42,12 +43,14 @@ export function loadAdminUserPage(userId: number): ThunkResult<void> {
     } catch (error) {
       console.error(error);
 
-      const userError = {
-        title: error.data.message,
-        body: error.data.error,
-      };
+      if (isFetchError(error)) {
+        const userError = {
+          title: error.data.message,
+          body: error.data.error,
+        };
 
-      dispatch(userAdminPageFailedAction(userError));
+        dispatch(userAdminPageFailedAction(userError));
+      }
     }
   };
 }
@@ -211,12 +214,14 @@ export function loadLdapState(): ThunkResult<void> {
       const connectionInfo = await getBackendSrv().get(`/api/admin/ldap/status`);
       dispatch(ldapConnectionInfoLoadedAction(connectionInfo));
     } catch (error) {
-      error.isHandled = true;
-      const ldapError = {
-        title: error.data.message,
-        body: error.data.error,
-      };
-      dispatch(ldapFailedAction(ldapError));
+      if (isFetchError(error)) {
+        error.isHandled = true;
+        const ldapError = {
+          title: error.data.message,
+          body: error.data.error,
+        };
+        dispatch(ldapFailedAction(ldapError));
+      }
     }
   };
 }
@@ -234,13 +239,15 @@ export function loadUserMapping(username: string): ThunkResult<void> {
       };
       dispatch(userMappingInfoLoadedAction(userInfo));
     } catch (error) {
-      error.isHandled = true;
-      const userError = {
-        title: error.data.message,
-        body: error.data.error,
-      };
-      dispatch(clearUserMappingInfoAction());
-      dispatch(userMappingInfoFailedAction(userError));
+      if (isFetchError(error)) {
+        error.isHandled = true;
+        const userError = {
+          title: error.data.message,
+          body: error.data.error,
+        };
+        dispatch(clearUserMappingInfoAction());
+        dispatch(userMappingInfoFailedAction(userError));
+      }
     }
   };
 }

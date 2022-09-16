@@ -1,6 +1,13 @@
-import { DataSourceInstanceSettings, DataSourceJsonData, DataSourceSettings, TableData } from '@grafana/data';
+import {
+  DataSourceInstanceSettings,
+  DataSourceJsonData,
+  DataSourceSettings,
+  PanelData,
+  TableData,
+} from '@grafana/data';
 
 import Datasource from '../datasource';
+
 import { AzureMonitorQuery } from './query';
 
 export type AzureDataSourceSettings = DataSourceSettings<AzureDataSourceJsonData, AzureDataSourceSecureJsonData>;
@@ -78,7 +85,7 @@ export interface AzureDataSourceSecureJsonData {
 
 // Represents an errors that come back from frontend requests.
 // Not totally sure how accurate this type is.
-export type AzureMonitorErrorish = Error;
+export type AzureMonitorErrorish = Error | string | React.ReactElement;
 
 // Azure Monitor API Types
 export interface AzureMonitorMetricsMetadataResponse {
@@ -95,6 +102,23 @@ export interface AzureMonitorMetricMetadataItem {
   metricAvailabilities?: AzureMonitorMetricAvailabilityMetadata[];
 }
 
+export interface AzureMonitorMetricNamespacesResponse {
+  value: AzureMonitorMetricNamespaceItem[];
+}
+
+export interface AzureMonitorMetricNamespaceItem {
+  name: string;
+  properties: { metricNamespacename: string };
+}
+
+export interface AzureMonitorMetricNamesResponse {
+  value: AzureMonitorMetricNameItem[];
+}
+
+export interface AzureMonitorMetricNameItem {
+  name: { value: string; localizedValue: string };
+}
+
 export interface AzureMonitorMetricAvailabilityMetadata {
   timeGrain: string;
   retention: string;
@@ -103,14 +127,6 @@ export interface AzureMonitorMetricAvailabilityMetadata {
 export interface AzureMonitorLocalizedValue {
   value: string;
   localizedValue: string;
-}
-
-export interface AzureMonitorMetricDefinitionsResponse {
-  data: {
-    value: Array<{ name: string; type: string; location?: string }>;
-  };
-  status: number;
-  statusText: string;
 }
 
 export interface AzureMonitorResourceGroupsResponse {
@@ -144,6 +160,7 @@ export interface AzureMonitorOption<T = string> {
 }
 
 export interface AzureQueryEditorFieldProps {
+  data?: PanelData;
   query: AzureMonitorQuery;
   datasource: Datasource;
   subscriptionId?: string;
@@ -191,4 +208,53 @@ export interface AzureResourceGraphOptions {
   $top: number;
   allowPartialScopes: boolean;
   resultFormat: 'objectArray' | 'table';
+}
+
+// Azure Monitor Metrics query API data fetcher argument types.
+// The types prefixed by Legacy are applicable to pre-version 9 of Grafana
+// that do not have a resourceUri, instead the resourceUri is built up from
+// the subscription, resource group, metric definition (a.k.a. resource type)
+// and the resource name.
+export type GetMetricNamespacesQuery = AzureGetMetricNamespacesQuery | LegacyAzureGetMetricNamespacesQuery;
+export type GetMetricNamesQuery = AzureGetMetricNamesQuery | LegacyAzureGetMetricNamesQuery;
+export type GetMetricMetadataQuery = AzureGetMetricMetadataQuery | LegacyAzureGetMetricMetadataQuery;
+
+export interface AzureGetMetricNamespacesQuery {
+  resourceUri: string;
+}
+export interface LegacyAzureGetMetricNamespacesQuery {
+  subscription: string;
+  resourceGroup: string;
+  metricNamespace?: string;
+  resourceName?: string;
+}
+
+export interface AzureGetMetricNamesQuery {
+  resourceUri: string;
+  metricNamespace?: string;
+  customNamespace?: string;
+}
+
+export interface LegacyAzureGetMetricNamesQuery {
+  subscription: string;
+  resourceGroup: string;
+  resourceName: string;
+  metricNamespace: string;
+  customNamespace?: string;
+}
+
+export interface AzureGetMetricMetadataQuery {
+  resourceUri: string;
+  metricNamespace: string;
+  customNamespace?: string;
+  metricName: string;
+}
+
+export interface LegacyAzureGetMetricMetadataQuery {
+  subscription: string;
+  resourceGroup: string;
+  resourceName: string;
+  metricNamespace: string;
+  customNamespace?: string;
+  metricName: string;
 }

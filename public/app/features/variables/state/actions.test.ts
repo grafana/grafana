@@ -1,12 +1,31 @@
 import { AnyAction } from 'redux';
 
-import { getPreloadedState, getTemplatingRootReducer, TemplatingReducerType } from './helpers';
-import { variableAdapters } from '../adapters';
-import { createQueryVariableAdapter } from '../query/adapter';
-import { createCustomVariableAdapter } from '../custom/adapter';
-import { createTextBoxVariableAdapter } from '../textbox/adapter';
-import { createConstantVariableAdapter } from '../constant/adapter';
+import { LoadingState } from '@grafana/data';
+import * as runtime from '@grafana/runtime';
+
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
+import { toAsyncOfResult } from '../../query/state/DashboardQueryRunner/testHelpers';
+import { variableAdapters } from '../adapters';
+import { createConstantVariableAdapter } from '../constant/adapter';
+import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, NEW_VARIABLE_ID } from '../constants';
+import { createCustomVariableAdapter } from '../custom/adapter';
+import { changeVariableName } from '../editor/actions';
+import { changeVariableNameFailed, changeVariableNameSucceeded, cleanEditorState } from '../editor/reducer';
+import { cleanPickerState } from '../pickers/OptionsPicker/reducer';
+import { setVariableQueryRunner, VariableQueryRunner } from '../query/VariableQueryRunner';
+import { createQueryVariableAdapter } from '../query/adapter';
+import { updateVariableOptions } from '../query/reducer';
+import {
+  constantBuilder,
+  customBuilder,
+  datasourceBuilder,
+  queryBuilder,
+  textboxBuilder,
+} from '../shared/testing/builders';
+import { createTextBoxVariableAdapter } from '../textbox/adapter';
+import { ConstantVariableModel, VariableRefresh } from '../types';
+import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
+
 import {
   cancelVariables,
   changeVariableMultiValue,
@@ -17,6 +36,8 @@ import {
   processVariables,
   validateVariableSelectionState,
 } from './actions';
+import { getPreloadedState, getTemplatingRootReducer, TemplatingReducerType } from './helpers';
+import { toKeyedAction } from './keyedVariablesReducer';
 import {
   addVariable,
   changeVariableProp,
@@ -26,32 +47,8 @@ import {
   variableStateFetching,
   variableStateNotStarted,
 } from './sharedReducer';
-import {
-  constantBuilder,
-  customBuilder,
-  datasourceBuilder,
-  queryBuilder,
-  textboxBuilder,
-} from '../shared/testing/builders';
-import { changeVariableName } from '../editor/actions';
-import {
-  changeVariableNameFailed,
-  changeVariableNameSucceeded,
-  cleanEditorState,
-  setIdInEditor,
-} from '../editor/reducer';
 import { variablesClearTransaction, variablesInitTransaction } from './transactionReducer';
-import { cleanPickerState } from '../pickers/OptionsPicker/reducer';
 import { cleanVariables } from './variablesReducer';
-import { ConstantVariableModel, VariableRefresh } from '../types';
-import { updateVariableOptions } from '../query/reducer';
-import { setVariableQueryRunner, VariableQueryRunner } from '../query/VariableQueryRunner';
-import * as runtime from '@grafana/runtime';
-import { LoadingState } from '@grafana/data';
-import { toAsyncOfResult } from '../../query/state/DashboardQueryRunner/testHelpers';
-import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, NEW_VARIABLE_ID } from '../constants';
-import { toKeyedAction } from './keyedVariablesReducer';
-import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 variableAdapters.setInit(() => [
   createQueryVariableAdapter(),
@@ -149,6 +146,22 @@ describe('shared actions', () => {
   });
 
   describe('when processVariables is dispatched', () => {
+    it('then circular dependencies fail gracefully', async () => {
+      const key = 'key';
+      const var1 = queryBuilder().withName('var1').withQuery('$var2').build();
+      const var2 = queryBuilder().withName('var2').withQuery('$var1').build();
+      const dashboard: any = { templating: { list: [var1, var2] } };
+      const preloadedState = getPreloadedState(key, {});
+
+      await expect(async () => {
+        await reduxTester<TemplatingReducerType>({ preloadedState })
+          .givenRootReducer(getTemplatingRootReducer())
+          .whenActionIsDispatched(toKeyedAction(key, variablesInitTransaction({ uid: key })))
+          .whenActionIsDispatched(initDashboardTemplating(key, dashboard))
+          .whenAsyncActionIsDispatched(processVariables(key), true);
+      }).rejects.toThrow(/circular dependency in dashboard variables detected/i);
+    });
+
     it('then correct actions are dispatched', async () => {
       const key = 'key';
       const query = queryBuilder().build();
@@ -493,7 +506,6 @@ describe('shared actions', () => {
               key,
               changeVariableNameSucceeded({ type: 'constant', id: 'constant1', data: { newName: 'constant1' } })
             ),
-            toKeyedAction(key, setIdInEditor({ id: 'constant1' })),
             toKeyedAction(key, removeVariable({ type: 'constant', id: 'constant', data: { reIndex: false } }))
           );
       });
@@ -539,7 +551,6 @@ describe('shared actions', () => {
               key,
               changeVariableNameSucceeded({ type: 'constant', id: 'constant1', data: { newName: 'constant1' } })
             ),
-            toKeyedAction(key, setIdInEditor({ id: 'constant1' })),
             toKeyedAction(key, removeVariable({ type: 'constant', id: NEW_VARIABLE_ID, data: { reIndex: false } }))
           );
       });

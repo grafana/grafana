@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package queryhistory
 
 import (
@@ -16,7 +13,9 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/require"
@@ -54,17 +53,17 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 
 		service.Cfg.QueryHistoryEnabled = true
 
-		user := models.SignedInUser{
-			UserId:     testUserID,
+		usr := user.SignedInUser{
+			UserID:     testUserID,
 			Name:       "Signed In User",
 			Login:      "signed_in_user",
 			Email:      "signed.in.user@test.com",
-			OrgId:      testOrgID,
-			OrgRole:    models.ROLE_VIEWER,
+			OrgID:      testOrgID,
+			OrgRole:    org.RoleViewer,
 			LastSeenAt: time.Now(),
 		}
 
-		_, err := sqlStore.CreateUser(context.Background(), models.CreateUserCommand{
+		_, err := sqlStore.CreateUser(context.Background(), user.CreateUserCommand{
 			Email: "signed.in.user@test.com",
 			Name:  "Signed In User",
 			Login: "signed_in_user",
@@ -77,7 +76,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			sqlStore: sqlStore,
 			reqContext: &models.ReqContext{
 				Context:      &ctx,
-				SignedInUser: &user,
+				SignedInUser: &usr,
 			},
 		}
 		fn(t, sc)
@@ -114,6 +113,12 @@ func testScenarioWithMultipleQueriesInQueryHistory(t *testing.T, desc string, fn
 		sc.reqContext.Req.Body = mockRequestBody(command1)
 		resp1 := sc.service.createHandler(sc.reqContext)
 		sc.initialResult = validateAndUnMarshalResponse(t, resp1)
+
+		// Add comment
+		cmd := PatchQueryCommentInQueryHistoryCommand{Comment: "test comment 2"}
+		sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
+		sc.reqContext.Req.Body = mockRequestBody(cmd)
+		sc.service.patchCommentHandler(sc.reqContext)
 
 		time.Sleep(1 * time.Second)
 		command2 := CreateQueryInQueryHistoryCommand{

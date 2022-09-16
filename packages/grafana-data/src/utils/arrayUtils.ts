@@ -12,8 +12,10 @@ export function moveItemImmutably<T>(arr: T[], from: number, to: number) {
  * Null/undefined/empty string values are always sorted to the end regardless of the sort order provided
  */
 const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+const numericCompare = (a: number, b: number) => a - b;
+
 export function sortValues(sort: SortOrder.Ascending | SortOrder.Descending) {
-  return (a: any, b: any) => {
+  return (a: unknown, b: unknown) => {
     if (a === b) {
       return 0;
     }
@@ -25,9 +27,16 @@ export function sortValues(sort: SortOrder.Ascending | SortOrder.Descending) {
       return 1;
     }
 
-    if (sort === SortOrder.Descending) {
-      return collator.compare(b, a);
+    let compareFn: (a: any, b: any) => number = collator.compare;
+
+    if (typeof a === 'number' && typeof b === 'number') {
+      compareFn = numericCompare;
     }
-    return collator.compare(a, b);
+
+    if (sort === SortOrder.Descending) {
+      return compareFn(b, a);
+    }
+
+    return compareFn(a, b);
   };
 }

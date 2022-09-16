@@ -1,9 +1,13 @@
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+
 import { PluginError } from '@grafana/data';
-import { setDisplayMode } from './reducer';
-import { fetchAll, fetchDetails, fetchRemotePlugins, install, uninstall } from './actions';
+
+import { sortPlugins, Sorters } from '../helpers';
 import { CatalogPlugin, PluginCatalogStoreState, PluginListDisplayMode } from '../types';
+
+import { fetchAll, fetchDetails, fetchRemotePlugins, install, uninstall } from './actions';
+import { setDisplayMode } from './reducer';
 import {
   find,
   selectAll,
@@ -14,10 +18,9 @@ import {
   selectDisplayMode,
   selectPluginErrors,
 } from './selectors';
-import { sortPlugins, Sorters } from '../helpers';
 
 type Filters = {
-  query?: string;
+  query?: string; // Note: this will be an escaped regex string as it comes from `FilterInput`
   filterBy?: string;
   filterByType?: string;
   sortBy?: Sorters;

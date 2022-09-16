@@ -1,9 +1,10 @@
-import React from 'react';
 import { css } from '@emotion/css';
-import { Modal, useStyles2 } from '@grafana/ui';
-import { GrafanaTheme2 } from '@grafana/data';
+import React from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
+import { Modal, useStyles2 } from '@grafana/ui';
 import { CommentManager } from 'app/features/comments/CommentManager';
+
 import { DashboardModel } from '../../state/DashboardModel';
 
 type Props = {

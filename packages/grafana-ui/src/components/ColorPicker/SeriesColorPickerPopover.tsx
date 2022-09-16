@@ -1,11 +1,12 @@
-import React, { FunctionComponent } from 'react';
+import { css } from '@emotion/css';
+import React, { FunctionComponent, PureComponent } from 'react';
+
+import { withTheme2, useStyles2 } from '../../themes';
+import { Button } from '../Button';
+import { Switch } from '../Forms/Legacy/Switch/Switch';
+import { PopoverContentProps } from '../Tooltip';
 
 import { ColorPickerPopover, ColorPickerProps } from './ColorPickerPopover';
-import { PopoverContentProps } from '../Tooltip';
-import { Switch } from '../Forms/Legacy/Switch/Switch';
-import { css } from '@emotion/css';
-import { withTheme2, useStyles } from '../../themes';
-import { Button } from '../Button';
 
 export interface SeriesColorPickerPopoverProps extends ColorPickerProps, PopoverContentProps {
   yaxis?: number;
@@ -13,7 +14,7 @@ export interface SeriesColorPickerPopoverProps extends ColorPickerProps, Popover
 }
 
 export const SeriesColorPickerPopover: FunctionComponent<SeriesColorPickerPopoverProps> = (props) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   const { yaxis, onToggleAxis, color, ...colorPickerProps } = props;
 
   const customPickers = onToggleAxis
@@ -51,7 +52,7 @@ interface AxisSelectorState {
   yaxis: number;
 }
 
-export class AxisSelector extends React.PureComponent<AxisSelectorProps, AxisSelectorState> {
+export class AxisSelector extends PureComponent<AxisSelectorProps, AxisSelectorState> {
   constructor(props: AxisSelectorProps) {
     super(props);
     this.state = {

@@ -1,6 +1,7 @@
+import { css, cx } from '@emotion/css';
 import React, { createRef, MutableRefObject, PureComponent, ReactNode } from 'react';
 import SplitPane from 'react-split-pane';
-import { css, cx } from '@emotion/css';
+
 import { GrafanaTheme } from '@grafana/data';
 import { stylesFactory } from '@grafana/ui';
 import { config } from 'app/core/config';
@@ -93,7 +94,7 @@ export class SplitPaneWrapper extends PureComponent<Props> {
       );
     }
 
-    return leftPaneComponents;
+    return <div className={styles.singleLeftPane}>{leftPaneComponents}</div>;
   }
 
   render() {
@@ -162,6 +163,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   `;
 
   return {
+    singleLeftPane: css`
+      height: 100%;
+      position: absolute;
+      overflow: hidden;
+      width: 100%;
+    `,
     resizerV: cx(
       resizer,
       css`

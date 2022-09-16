@@ -1,18 +1,18 @@
-// Libraries
 import React, { PureComponent } from 'react';
+import { DragDropContext, DragStart, Droppable, DropResult } from 'react-beautiful-dnd';
 
-// Types
 import {
   CoreApp,
   DataQuery,
   DataSourceInstanceSettings,
+  DataSourceRef,
   EventBusExtended,
   HistoryItem,
   PanelData,
 } from '@grafana/data';
-import { QueryEditorRow } from './QueryEditorRow';
-import { DragDropContext, DragStart, Droppable, DropResult } from 'react-beautiful-dnd';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+
+import { QueryEditorRow } from './QueryEditorRow';
 
 interface Props {
   // The query configuration
@@ -31,6 +31,8 @@ interface Props {
   app?: CoreApp;
   history?: Array<HistoryItem<DataQuery>>;
   eventBus?: EventBusExtended;
+
+  onDatasourceChange?: (dataSource: DataSourceInstanceSettings, query: DataQuery) => void;
 }
 
 export class QueryEditorRows extends PureComponent<Props> {
@@ -55,11 +57,20 @@ export class QueryEditorRows extends PureComponent<Props> {
   onDataSourceChange(dataSource: DataSourceInstanceSettings, index: number) {
     const { queries, onQueriesChange } = this.props;
 
+    if (this.props.onDatasourceChange) {
+      this.props.onDatasourceChange(dataSource, queries[index]);
+    }
+
     onQueriesChange(
       queries.map((item, itemIndex) => {
         if (itemIndex !== index) {
           return item;
         }
+
+        const dataSourceRef: DataSourceRef = {
+          type: dataSource.type,
+          uid: dataSource.uid,
+        };
 
         if (item.datasource) {
           const previous = getDataSourceSrv().getInstanceSettings(item.datasource);
@@ -67,7 +78,7 @@ export class QueryEditorRows extends PureComponent<Props> {
           if (previous?.type === dataSource.type) {
             return {
               ...item,
-              datasource: { uid: dataSource.uid },
+              datasource: dataSourceRef,
             };
           }
         }
@@ -75,7 +86,7 @@ export class QueryEditorRows extends PureComponent<Props> {
         return {
           refId: item.refId,
           hide: item.hide,
-          datasource: { uid: dataSource.uid },
+          datasource: dataSourceRef,
         };
       })
     );

@@ -1,23 +1,22 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
+
 import { LokiOptionFieldsProps, LokiOptionFields } from './LokiOptionFields';
 
-const setup = (propOverrides?: LokiOptionFieldsProps) => {
-  const queryType = 'range';
+const setup = () => {
   const lineLimitValue = '1';
-  const onLineLimitChange = jest.fn();
-  const onQueryTypeChange = jest.fn();
-  const onKeyDownFunc = jest.fn();
+  const resolution = 1;
+  const query = { refId: '1', expr: 'query' };
+  const onChange = jest.fn();
+  const onRunQuery = jest.fn();
 
-  const props: any = {
-    queryType,
+  const props: LokiOptionFieldsProps = {
     lineLimitValue,
-    onLineLimitChange,
-    onQueryTypeChange,
-    onKeyDownFunc,
+    resolution,
+    query,
+    onChange,
+    onRunQuery,
   };
-
-  Object.assign(props, propOverrides);
 
   return render(<LokiOptionFields {...props} />);
 };

@@ -6,21 +6,21 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/dashboards/database"
-	service "github.com/grafana/grafana/pkg/services/dashboards/manager"
+	service "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestFolderPermissionAPIEndpoint(t *testing.T) {
@@ -29,21 +29,36 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 	folderService := &dashboards.FakeFolderService{}
 	defer folderService.AssertExpectations(t)
 
-	dashboardStore := &database.FakeDashboardStore{}
+	dashboardStore := &dashboards.FakeDashboardStore{}
 	defer dashboardStore.AssertExpectations(t)
 
-	hs := &HTTPServer{Cfg: settings, folderService: folderService, dashboardService: service.ProvideDashboardService(dashboardStore, nil), Features: featuremgmt.WithFeatures()}
+	features := featuremgmt.WithFeatures()
+	ac := accesscontrolmock.New()
+	folderPermissions := accesscontrolmock.NewMockedPermissionsService()
+	dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
+
+	hs := &HTTPServer{
+		Cfg:                         settings,
+		Features:                    features,
+		folderService:               folderService,
+		folderPermissionsService:    folderPermissions,
+		dashboardPermissionsService: dashboardPermissions,
+		DashboardService: service.ProvideDashboardService(
+			settings, dashboardStore, nil, features, folderPermissions, dashboardPermissions, ac,
+		),
+		AccessControl: accesscontrolmock.New().WithDisabled(),
+	}
 
 	t.Run("Given folder not exists", func(t *testing.T) {
-		folderService.On("GetFolderByUID", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, models.ErrFolderNotFound).Twice()
+		folderService.On("GetFolderByUID", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, dashboards.ErrFolderNotFound).Twice()
 		mockSQLStore := mockstore.NewSQLStoreMock()
-		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", models.ROLE_EDITOR, func(sc *scenarioContext) {
+		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", org.RoleEditor, func(sc *scenarioContext) {
 			callGetFolderPermissions(sc, hs)
 			assert.Equal(t, 404, sc.resp.Code)
 		}, mockSQLStore)
 
-		cmd := dtos.UpdateDashboardAclCommand{
-			Items: []dtos.DashboardAclUpdateItem{
+		cmd := dtos.UpdateDashboardACLCommand{
+			Items: []dtos.DashboardACLUpdateItem{
 				{UserID: 1000, Permission: models.PERMISSION_ADMIN},
 			},
 		}
@@ -67,16 +82,16 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 		})
 
 		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanAdminValue: false})
-		folderService.On("GetFolderByUID", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, models.ErrFolderAccessDenied).Twice()
+		folderService.On("GetFolderByUID", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, dashboards.ErrFolderAccessDenied).Twice()
 		mockSQLStore := mockstore.NewSQLStoreMock()
 
-		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", models.ROLE_EDITOR, func(sc *scenarioContext) {
+		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", org.RoleEditor, func(sc *scenarioContext) {
 			callGetFolderPermissions(sc, hs)
 			assert.Equal(t, 403, sc.resp.Code)
 		}, mockSQLStore)
 
-		cmd := dtos.UpdateDashboardAclCommand{
-			Items: []dtos.DashboardAclUpdateItem{
+		cmd := dtos.UpdateDashboardACLCommand{
+			Items: []dtos.DashboardACLUpdateItem{
 				{UserID: 1000, Permission: models.PERMISSION_ADMIN},
 			},
 		}
@@ -102,7 +117,7 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
 			CanAdminValue:                    true,
 			CheckPermissionBeforeUpdateValue: true,
-			GetAclValue: []*models.DashboardAclInfoDTO{
+			GetACLValue: []*models.DashboardACLInfoDTO{
 				{OrgId: 1, DashboardId: 1, UserId: 2, Permission: models.PERMISSION_VIEW},
 				{OrgId: 1, DashboardId: 1, UserId: 3, Permission: models.PERMISSION_EDIT},
 				{OrgId: 1, DashboardId: 1, UserId: 4, Permission: models.PERMISSION_ADMIN},
@@ -116,11 +131,11 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 		dashboardStore.On("UpdateDashboardACL", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 		mockSQLStore := mockstore.NewSQLStoreMock()
 
-		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", models.ROLE_ADMIN, func(sc *scenarioContext) {
+		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", org.RoleAdmin, func(sc *scenarioContext) {
 			callGetFolderPermissions(sc, hs)
 			assert.Equal(t, 200, sc.resp.Code)
 
-			var resp []*models.DashboardAclInfoDTO
+			var resp []*models.DashboardACLInfoDTO
 			err := json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 			require.NoError(t, err)
 
@@ -129,8 +144,8 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 			assert.Equal(t, models.PERMISSION_VIEW, resp[0].Permission)
 		}, mockSQLStore)
 
-		cmd := dtos.UpdateDashboardAclCommand{
-			Items: []dtos.DashboardAclUpdateItem{
+		cmd := dtos.UpdateDashboardACLCommand{
+			Items: []dtos.DashboardACLUpdateItem{
 				{UserID: 1000, Permission: models.PERMISSION_ADMIN},
 			},
 		}
@@ -172,8 +187,8 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 		folderResponse := &models.Folder{Id: 1, Uid: "uid", Title: "Folder"}
 		folderService.On("GetFolderByUID", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(folderResponse, nil).Once()
 
-		cmd := dtos.UpdateDashboardAclCommand{
-			Items: []dtos.DashboardAclUpdateItem{
+		cmd := dtos.UpdateDashboardACLCommand{
+			Items: []dtos.DashboardACLUpdateItem{
 				{UserID: 1000, Permission: models.PERMISSION_ADMIN},
 			},
 		}
@@ -191,15 +206,15 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 	})
 
 	t.Run("When trying to update team or user permissions with a role", func(t *testing.T) {
-		role := models.ROLE_ADMIN
-		cmds := []dtos.UpdateDashboardAclCommand{
+		role := org.RoleAdmin
+		cmds := []dtos.UpdateDashboardACLCommand{
 			{
-				Items: []dtos.DashboardAclUpdateItem{
+				Items: []dtos.DashboardACLUpdateItem{
 					{UserID: 1000, Permission: models.PERMISSION_ADMIN, Role: &role},
 				},
 			},
 			{
-				Items: []dtos.DashboardAclUpdateItem{
+				Items: []dtos.DashboardACLUpdateItem{
 					{TeamID: 1000, Permission: models.PERMISSION_ADMIN, Role: &role},
 				},
 			},
@@ -237,8 +252,8 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 		folderResponse := &models.Folder{Id: 1, Uid: "uid", Title: "Folder"}
 		folderService.On("GetFolderByUID", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(folderResponse, nil).Once()
 
-		cmd := dtos.UpdateDashboardAclCommand{
-			Items: []dtos.DashboardAclUpdateItem{
+		cmd := dtos.UpdateDashboardACLCommand{
+			Items: []dtos.DashboardACLUpdateItem{
 				{UserID: 1000, Permission: models.PERMISSION_ADMIN},
 			},
 		}
@@ -269,27 +284,27 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
 			CanAdminValue:                    true,
 			CheckPermissionBeforeUpdateValue: true,
-			GetAclValue: []*models.DashboardAclInfoDTO{
+			GetACLValue: []*models.DashboardACLInfoDTO{
 				{OrgId: 1, DashboardId: 1, UserId: 2, UserLogin: "hiddenUser", Permission: models.PERMISSION_VIEW},
 				{OrgId: 1, DashboardId: 1, UserId: 3, UserLogin: testUserLogin, Permission: models.PERMISSION_EDIT},
 				{OrgId: 1, DashboardId: 1, UserId: 4, UserLogin: "user_1", Permission: models.PERMISSION_ADMIN},
 			},
-			GetHiddenAclValue: []*models.DashboardAcl{
+			GetHiddenACLValue: []*models.DashboardACL{
 				{OrgID: 1, DashboardID: 1, UserID: 2, Permission: models.PERMISSION_VIEW},
 			},
 		})
 
-		var gotItems []*models.DashboardAcl
+		var gotItems []*models.DashboardACL
 
 		folderResponse := &models.Folder{Id: 1, Uid: "uid", Title: "Folder"}
 		folderService.On("GetFolderByUID", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(folderResponse, nil).Twice()
 		dashboardStore.On("UpdateDashboardACL", mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-			gotItems = args.Get(2).([]*models.DashboardAcl)
+			gotItems = args.Get(2).([]*models.DashboardACL)
 		}).Return(nil).Once()
 
-		var resp []*models.DashboardAclInfoDTO
+		var resp []*models.DashboardACLInfoDTO
 		mockSQLStore := mockstore.NewSQLStoreMock()
-		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", models.ROLE_ADMIN, func(sc *scenarioContext) {
+		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", org.RoleAdmin, func(sc *scenarioContext) {
 			callGetFolderPermissions(sc, hs)
 			assert.Equal(t, 200, sc.resp.Code)
 
@@ -303,13 +318,13 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 			assert.Equal(t, models.PERMISSION_ADMIN, resp[1].Permission)
 		}, mockSQLStore)
 
-		cmd := dtos.UpdateDashboardAclCommand{
-			Items: []dtos.DashboardAclUpdateItem{
+		cmd := dtos.UpdateDashboardACLCommand{
+			Items: []dtos.DashboardACLUpdateItem{
 				{UserID: 1000, Permission: models.PERMISSION_ADMIN},
 			},
 		}
 		for _, acl := range resp {
-			cmd.Items = append(cmd.Items, dtos.DashboardAclUpdateItem{
+			cmd.Items = append(cmd.Items, dtos.DashboardACLUpdateItem{
 				UserID:     acl.UserId,
 				Permission: acl.Permission,
 			})
@@ -342,16 +357,14 @@ func callUpdateFolderPermissions(t *testing.T, sc *scenarioContext) {
 
 func updateFolderPermissionScenario(t *testing.T, ctx updatePermissionContext, hs *HTTPServer) {
 	t.Run(fmt.Sprintf("%s %s", ctx.desc, ctx.url), func(t *testing.T) {
-		t.Cleanup(bus.ClearBusHandlers)
-
 		sc := setupScenarioContext(t, ctx.url)
 
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(ctx.cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
-			sc.context.OrgId = testOrgID
-			sc.context.UserId = testUserID
+			sc.context.OrgID = testOrgID
+			sc.context.UserID = testUserID
 
 			return hs.UpdateFolderPermissions(c)
 		})

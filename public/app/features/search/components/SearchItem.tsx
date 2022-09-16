@@ -1,17 +1,21 @@
-import React, { FC, useCallback } from 'react';
 import { css } from '@emotion/css';
+import React, { FC, useCallback } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Card, Icon, IconName, TagList, useStyles2 } from '@grafana/ui';
-import { GrafanaTheme2 } from '@grafana/data';
-import { DashboardSectionItem, OnToggleChecked } from '../types';
-import { SearchCheckbox } from './SearchCheckbox';
+
 import { SEARCH_ITEM_HEIGHT } from '../constants';
+import { DashboardSectionItem, OnToggleChecked } from '../types';
+
+import { SearchCheckbox } from './SearchCheckbox';
 
 export interface Props {
   item: DashboardSectionItem;
   editable?: boolean;
   onTagSelected: (name: string) => any;
   onToggleChecked?: OnToggleChecked;
+  onClickItem?: (event: React.MouseEvent<HTMLElement>) => void;
 }
 
 const selectors = e2eSelectors.components.Search;
@@ -25,7 +29,8 @@ const getIconFromMeta = (meta = ''): IconName => {
   return metaIconMap.has(meta) ? metaIconMap.get(meta)! : 'sort-amount-down';
 };
 
-export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSelected }) => {
+/** @deprecated */
+export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSelected, onClickItem }) => {
   const styles = useStyles2(getStyles);
   const tagSelected = useCallback(
     (tag: string, event: React.MouseEvent<HTMLElement>) => {
@@ -55,6 +60,7 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSe
       href={item.url}
       style={{ minHeight: SEARCH_ITEM_HEIGHT }}
       className={styles.container}
+      onClick={onClickItem}
     >
       <Card.Heading>{item.title}</Card.Heading>
       <Card.Figure align={'center'} className={styles.checkbox}>

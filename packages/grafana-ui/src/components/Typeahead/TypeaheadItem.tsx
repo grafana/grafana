@@ -1,17 +1,18 @@
-import React from 'react';
-
-// @ts-ignore
-import Highlighter from 'react-highlight-words';
 import { css, cx } from '@emotion/css';
+import React from 'react';
+import Highlighter from 'react-highlight-words';
+
 import { GrafanaTheme } from '@grafana/data';
-import { CompletionItem, CompletionItemKind } from '../../types/completion';
-import { PartialHighlighter } from './PartialHighlighter';
+
 import { useStyles } from '../../themes/ThemeContext';
+import { CompletionItem, CompletionItemKind } from '../../types/completion';
+
+import { PartialHighlighter } from './PartialHighlighter';
 
 interface Props {
   isSelected: boolean;
   item: CompletionItem;
-  style: any;
+  style: React.CSSProperties;
   prefix?: string;
 
   onClickItem?: (event: React.MouseEvent) => void;
@@ -58,7 +59,7 @@ const getStyles = (theme: GrafanaTheme) => ({
   `,
 });
 
-export const TypeaheadItem: React.FC<Props> = (props: Props) => {
+export const TypeaheadItem = (props: Props) => {
   const styles = useStyles(getStyles);
 
   const { isSelected, item, prefix, style, onMouseEnter, onMouseLeave, onClickItem } = props;
@@ -90,7 +91,12 @@ export const TypeaheadItem: React.FC<Props> = (props: Props) => {
           highlightParts={item.highlightParts}
         ></PartialHighlighter>
       ) : (
-        <Highlighter textToHighlight={label} searchWords={[prefix ?? '']} highlightClassName={highlightClassName} />
+        <Highlighter
+          textToHighlight={label}
+          searchWords={[prefix ?? '']}
+          autoEscape={true}
+          highlightClassName={highlightClassName}
+        />
       )}
     </li>
   );

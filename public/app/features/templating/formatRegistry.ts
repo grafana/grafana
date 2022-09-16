@@ -1,8 +1,10 @@
-import kbn from 'app/core/utils/kbn';
-import { dateTime, Registry, RegistryItem, textUtil, VariableModel } from '@grafana/data';
 import { isArray, map, replace } from 'lodash';
-import { formatVariableLabel } from '../variables/shared/formatVariable';
+
+import { dateTime, Registry, RegistryItem, textUtil, TypedVariableModel } from '@grafana/data';
+import kbn from 'app/core/utils/kbn';
+
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../variables/constants';
+import { formatVariableLabel } from '../variables/shared/formatVariable';
 
 export interface FormatOptions {
   value: any;
@@ -11,7 +13,7 @@ export interface FormatOptions {
 }
 
 export interface FormatRegistryItem extends RegistryItem {
-  formatter(options: FormatOptions, variable: VariableModel): string;
+  formatter(options: FormatOptions, variable: TypedVariableModel): string;
 }
 
 export enum FormatRegistryID {
@@ -258,6 +260,10 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
 });
 
 function luceneEscape(value: string) {
+  if (isNaN(+value) === false) {
+    return value;
+  }
+
   return value.replace(/([\!\*\+\-\=<>\s\&\|\(\)\[\]\{\}\^\~\?\:\\/"])/g, '\\$1');
 }
 

@@ -1,4 +1,11 @@
 import { reducerTester } from 'test/core/redux/reducerTester';
+
+import { PluginMeta, PluginMetaInfo, PluginType, LayoutModes } from '@grafana/data';
+import { DataSourceSettingsState, DataSourcesState } from 'app/types';
+
+import { getMockDataSource, getMockDataSources } from '../__mocks__';
+import { GenericDataSourcePlugin } from '../types';
+
 import {
   dataSourceLoaded,
   dataSourceMetaLoaded,
@@ -17,10 +24,6 @@ import {
   setDataSourceTypeSearchQuery,
   setIsDefault,
 } from './reducers';
-import { getMockDataSource, getMockDataSources } from '../__mocks__/dataSourcesMocks';
-import { DataSourceSettingsState, DataSourcesState } from 'app/types';
-import { PluginMeta, PluginMetaInfo, PluginType, LayoutModes } from '@grafana/data';
-import { GenericDataSourcePlugin } from '../settings/PluginSettings';
 
 const mockPlugin = () =>
   ({
@@ -50,7 +53,7 @@ describe('dataSourcesReducer', () => {
 
   describe('when dataSourceLoaded is dispatched', () => {
     it('then state should be correct', () => {
-      const dataSource = getMockDataSource();
+      const dataSource = getMockDataSource<{}>();
 
       reducerTester<DataSourcesState>()
         .givenReducer(dataSourcesReducer, initialState)

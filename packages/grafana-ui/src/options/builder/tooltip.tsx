@@ -1,5 +1,5 @@
-import { OptionsWithTooltip, TooltipDisplayMode, SortOrder } from '@grafana/schema';
 import { PanelOptionsEditorBuilder } from '@grafana/data';
+import { OptionsWithTooltip, TooltipDisplayMode, SortOrder } from '@grafana/schema';
 
 export function addTooltipOptions<T extends OptionsWithTooltip>(
   builder: PanelOptionsEditorBuilder<T>,

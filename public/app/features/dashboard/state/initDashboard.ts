@@ -1,32 +1,38 @@
-// Services & Utils
+import { DataQuery, locationUtil, setWeekStart, DashboardLoadedEvent } from '@grafana/data';
+import { config, isFetchError, locationService } from '@grafana/runtime';
+import { notifyApp } from 'app/core/actions';
+import appEvents from 'app/core/app_events';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { DashboardSrv, getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { KeybindingSrv } from 'app/core/services/keybindingSrv';
+import store from 'app/core/store';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
+import { DashboardSrv, getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { keybindingSrv } from 'app/core/services/keybindingSrv';
-// Actions
-import { notifyApp } from 'app/core/actions';
-import { dashboardInitCompleted, dashboardInitFailed, dashboardInitFetching, dashboardInitServices } from './reducers';
-// Types
-import { DashboardDTO, DashboardInitPhase, DashboardRoutes, StoreState, ThunkDispatch, ThunkResult } from 'app/types';
-import { DashboardModel } from './DashboardModel';
-import { locationUtil, setWeekStart } from '@grafana/data';
-import { initVariablesTransaction } from '../../variables/state/actions';
-import { emitDashboardViewEvent } from './analyticsProcessor';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
-import { config, locationService } from '@grafana/runtime';
-import { createDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
-import { getIfExistsLastKey } from '../../variables/state/selectors';
+import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { toStateKey } from 'app/features/variables/utils';
+import { DashboardDTO, DashboardInitPhase, DashboardRoutes, StoreState, ThunkDispatch, ThunkResult } from 'app/types';
+
+import { createDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
+import { initVariablesTransaction } from '../../variables/state/actions';
+import { getIfExistsLastKey } from '../../variables/state/selectors';
+
+import { DashboardModel } from './DashboardModel';
+import { PanelModel } from './PanelModel';
+import { emitDashboardViewEvent } from './analyticsProcessor';
+import { dashboardInitCompleted, dashboardInitFailed, dashboardInitFetching, dashboardInitServices } from './reducers';
 
 export interface InitDashboardArgs {
   urlUid?: string;
   urlSlug?: string;
   urlType?: string;
-  urlFolderId?: string | null;
+  urlFolderId?: string;
+  panelType?: string;
+  accessToken?: string;
   routeName?: string;
   fixUrl: boolean;
+  keybindingSrv: KeybindingSrv;
 }
 
 async function fetchDashboard(
@@ -34,6 +40,13 @@ async function fetchDashboard(
   dispatch: ThunkDispatch,
   getState: () => StoreState
 ): Promise<DashboardDTO | null> {
+  // When creating new or adding panels to a dashboard from explore we load it from local storage
+  const model = store.getObject<DashboardDTO>(DASHBOARD_FROM_LS_KEY);
+  if (model) {
+    removeDashboardToFetchFromLocalStorage();
+    return model;
+  }
+
   try {
     switch (args.routeName) {
       case DashboardRoutes.Home: {
@@ -53,10 +66,13 @@ async function fetchDashboard(
         dashDTO.meta.canStar = false;
         return dashDTO;
       }
+      case DashboardRoutes.Public: {
+        return await dashboardLoaderSrv.loadDashboard('public', args.urlSlug, args.accessToken);
+      }
       case DashboardRoutes.Normal: {
         const dashDTO: DashboardDTO = await dashboardLoaderSrv.loadDashboard(args.urlType, args.urlSlug, args.urlUid);
 
-        if (args.fixUrl && dashDTO.meta.url) {
+        if (args.fixUrl && dashDTO.meta.url && !playlistSrv.isPlaying) {
           // check if the current url is correct (might be old slug)
           const dashboardUrl = locationUtil.stripBaseFromUrl(dashDTO.meta.url);
           const currentPath = locationService.getLocation().pathname;
@@ -73,14 +89,18 @@ async function fetchDashboard(
         return dashDTO;
       }
       case DashboardRoutes.New: {
-        return getNewDashboardModelData(args.urlFolderId);
+        return getNewDashboardModelData(args.urlFolderId, args.panelType);
+      }
+      case DashboardRoutes.Path: {
+        const path = args.urlSlug ?? '';
+        return await dashboardLoaderSrv.loadDashboard(DashboardRoutes.Path, path, path);
       }
       default:
         throw { message: 'Unknown route ' + args.routeName };
     }
   } catch (err) {
     // Ignore cancelled errors
-    if (err.cancelled) {
+    if (isFetchError(err) && err.cancelled) {
       return null;
     }
 
@@ -89,6 +109,28 @@ async function fetchDashboard(
     return null;
   }
 }
+
+const getQueriesByDatasource = (
+  panels: PanelModel[],
+  queries: { [datasourceId: string]: DataQuery[] } = {}
+): { [datasourceId: string]: DataQuery[] } => {
+  panels.forEach((panel) => {
+    if (panel.panels) {
+      getQueriesByDatasource(panel.panels, queries);
+    } else if (panel.targets) {
+      panel.targets.forEach((target) => {
+        if (target.datasource?.type) {
+          if (queries[target.datasource.type]) {
+            queries[target.datasource.type].push(target);
+          } else {
+            queries[target.datasource.type] = [target];
+          }
+        }
+      });
+    }
+  });
+  return queries;
+};
 
 /**
  * This action (or saga) does everything needed to bootstrap a dashboard & dashboard model.
@@ -172,9 +214,11 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
         dashboard.autoFitPanels(window.innerHeight, queryParams.kiosk);
       }
 
-      keybindingSrv.setupDashboardBindings(dashboard);
+      args.keybindingSrv.setupDashboardBindings(dashboard);
     } catch (err) {
-      dispatch(notifyApp(createErrorNotification('Dashboard init failed', err)));
+      if (err instanceof Error) {
+        dispatch(notifyApp(createErrorNotification('Dashboard init failed', err)));
+      }
       console.error(err);
     }
 
@@ -195,16 +239,28 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
       setWeekStart(config.bootData.user.weekStart);
     }
 
+    // Propagate an app-wide event about the dashboard being loaded
+    appEvents.publish(
+      new DashboardLoadedEvent({
+        dashboardId: dashboard.uid,
+        orgId: storeState.user.orgId,
+        userId: storeState.user.user?.id,
+        grafanaVersion: config.buildInfo.version,
+        queries: getQueriesByDatasource(dashboard.panels),
+      })
+    );
+
     // yay we are done
     dispatch(dashboardInitCompleted(dashboard));
   };
 }
 
-function getNewDashboardModelData(urlFolderId?: string | null): any {
+export function getNewDashboardModelData(urlFolderId?: string, panelType?: string): any {
   const data = {
     meta: {
       canStar: false,
       canShare: false,
+      canDelete: false,
       isNew: true,
       folderId: 0,
     },
@@ -212,7 +268,7 @@ function getNewDashboardModelData(urlFolderId?: string | null): any {
       title: 'New dashboard',
       panels: [
         {
-          type: 'add-panel',
+          type: panelType ?? 'add-panel',
           gridPos: { x: 0, y: 0, w: 12, h: 9 },
           title: 'Panel Title',
         },
@@ -225,4 +281,14 @@ function getNewDashboardModelData(urlFolderId?: string | null): any {
   }
 
   return data;
+}
+
+const DASHBOARD_FROM_LS_KEY = 'DASHBOARD_FROM_LS_KEY';
+
+export function setDashboardToFetchFromLocalStorage(model: DashboardDTO) {
+  store.setObject(DASHBOARD_FROM_LS_KEY, model);
+}
+
+export function removeDashboardToFetchFromLocalStorage() {
+  store.delete(DASHBOARD_FROM_LS_KEY);
 }

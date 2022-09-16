@@ -1,9 +1,11 @@
 import { compact, flattenDeep, map, uniq } from 'lodash';
-import { DashboardModel } from '../state/DashboardModel';
-import { expect } from 'test/lib/common';
-import { getDashboardModel } from '../../../../test/helpers/getDashboardModel';
-import { PanelModel } from './PanelModel';
+
 import { DashboardPanelsChangedEvent } from 'app/types/events';
+
+import { getDashboardModel } from '../../../../test/helpers/getDashboardModel';
+import { DashboardModel } from '../state/DashboardModel';
+
+import { PanelModel } from './PanelModel';
 
 jest.mock('app/core/services/context_srv', () => ({}));
 
@@ -585,6 +587,14 @@ describe('given dashboard with row and panel repeat', () => {
   it('should repeat row and panels for each row', () => {
     const panelTypes = map(dashboard.panels, 'type');
     expect(panelTypes).toEqual(['row', 'graph', 'graph', 'row', 'graph', 'graph']);
+  });
+
+  it('Row repeat should create new panel keys every repeat cycle', () => {
+    // This is the first repeated panel inside the second repeated row
+    // Since we create a new panel model every time (and new panel events bus) we need to create a new key here to trigger a re-mount & re-subscribe
+    const key1 = dashboard.panels[3].key;
+    dashboard.processRepeats();
+    expect(key1).not.toEqual(dashboard.panels[3].key);
   });
 
   it('should clean up old repeated panels', () => {

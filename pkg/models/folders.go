@@ -1,21 +1,10 @@
 package models
 
 import (
-	"errors"
 	"strings"
 	"time"
-)
 
-// Typed errors
-var (
-	ErrFolderNotFound                = errors.New("folder not found")
-	ErrFolderVersionMismatch         = errors.New("the folder has been changed by someone else")
-	ErrFolderTitleEmpty              = errors.New("folder title cannot be empty")
-	ErrFolderWithSameUIDExists       = errors.New("a folder/dashboard with the same uid already exists")
-	ErrFolderSameNameExists          = errors.New("a folder or dashboard in the general folder with the same name already exists")
-	ErrFolderFailedGenerateUniqueUid = errors.New("failed to generate unique folder ID")
-	ErrFolderAccessDenied            = errors.New("access denied to folder")
-	ErrFolderContainsAlertRules      = errors.New("folder contains alert rules")
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type Folder struct {
@@ -30,7 +19,32 @@ type Folder struct {
 
 	UpdatedBy int64
 	CreatedBy int64
-	HasAcl    bool
+	HasACL    bool
+}
+
+// NewFolder creates a new Folder
+func NewFolder(title string) *Folder {
+	folder := &Folder{}
+	folder.Title = title
+	folder.Created = time.Now()
+	folder.Updated = time.Now()
+	return folder
+}
+
+// DashboardToFolder converts Dashboard to Folder
+func DashboardToFolder(dash *Dashboard) *Folder {
+	return &Folder{
+		Id:        dash.Id,
+		Uid:       dash.Uid,
+		Title:     dash.Title,
+		HasACL:    dash.HasACL,
+		Url:       dash.GetUrl(),
+		Version:   dash.Version,
+		Created:   dash.Created,
+		CreatedBy: dash.CreatedBy,
+		Updated:   dash.Updated,
+		UpdatedBy: dash.UpdatedBy,
+	}
 }
 
 // UpdateDashboardModel updates an existing model from command into model for update
@@ -79,11 +93,11 @@ type UpdateFolderCommand struct {
 //
 
 type HasEditPermissionInFoldersQuery struct {
-	SignedInUser *SignedInUser
+	SignedInUser *user.SignedInUser
 	Result       bool
 }
 
-type HasAdminPermissionInFoldersQuery struct {
-	SignedInUser *SignedInUser
+type HasAdminPermissionInDashboardsOrFoldersQuery struct {
+	SignedInUser *user.SignedInUser
 	Result       bool
 }

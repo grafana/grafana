@@ -1,12 +1,15 @@
-import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
-import { exploreReducer, navigateToExplore, splitCloseAction } from './main';
 import { thunkTester } from 'test/core/thunk/thunkTester';
+
+import { ExploreUrlState } from '@grafana/data';
+import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
+import { locationService } from '@grafana/runtime';
 import { PanelModel } from 'app/features/dashboard/state';
+
+import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { MockDataSourceApi } from '../../../../test/mocks/datasource_srv';
 import { ExploreId, ExploreItemState, ExploreState } from '../../../types';
-import { reducerTester } from '../../../../test/core/redux/reducerTester';
-import { ExploreUrlState } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+
+import { exploreReducer, navigateToExplore, splitCloseAction } from './main';
 
 const getNavigateToExploreContext = async (openInNewWindow?: (url: string) => void) => {
   const url = '/explore';

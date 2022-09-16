@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -29,16 +30,12 @@ type Service interface {
 	EmailSender
 }
 
-type Store interface {
-	GetUserByLogin(context.Context, *models.GetUserByLoginQuery) error
-}
-
 var mailTemplates *template.Template
 var tmplResetPassword = "reset_password"
 var tmplSignUpStarted = "signup_started"
 var tmplWelcomeOnSignUp = "welcome_on_signup"
 
-func ProvideService(bus bus.Bus, cfg *setting.Cfg, mailer Mailer) (*NotificationService, error) {
+func ProvideService(bus bus.Bus, cfg *setting.Cfg, mailer Mailer, store TempUserStore) (*NotificationService, error) {
 	ns := &NotificationService{
 		Bus:          bus,
 		Cfg:          cfg,
@@ -46,14 +43,8 @@ func ProvideService(bus bus.Bus, cfg *setting.Cfg, mailer Mailer) (*Notification
 		mailQueue:    make(chan *Message, 10),
 		webhookQueue: make(chan *Webhook, 10),
 		mailer:       mailer,
+		store:        store,
 	}
-
-	ns.Bus.AddHandler(ns.SendResetPasswordEmail)
-	ns.Bus.AddHandler(ns.ValidateResetPasswordCode)
-	ns.Bus.AddHandler(ns.SendEmailCommandHandler)
-
-	ns.Bus.AddHandler(ns.SendEmailCommandHandlerSync)
-	ns.Bus.AddHandler(ns.SendWebhookSync)
 
 	ns.Bus.AddEventListener(ns.signUpStartedHandler)
 	ns.Bus.AddEventListener(ns.signUpCompletedHandler)
@@ -81,6 +72,10 @@ func ProvideService(bus bus.Bus, cfg *setting.Cfg, mailer Mailer) (*Notification
 	return ns, nil
 }
 
+type TempUserStore interface {
+	UpdateTempUserWithEmailSent(ctx context.Context, cmd *models.UpdateTempUserWithEmailSentCommand) error
+}
+
 type NotificationService struct {
 	Bus bus.Bus
 	Cfg *setting.Cfg
@@ -89,6 +84,7 @@ type NotificationService struct {
 	webhookQueue chan *Webhook
 	mailer       Mailer
 	log          log.Logger
+	store        TempUserStore
 }
 
 func (ns *NotificationService) Run(ctx context.Context) error {
@@ -131,6 +127,7 @@ func (ns *NotificationService) SendWebhookSync(ctx context.Context, cmd *models.
 		HttpMethod:  cmd.HttpMethod,
 		HttpHeader:  cmd.HttpHeader,
 		ContentType: cmd.ContentType,
+		Validation:  cmd.Validation,
 	})
 }
 
@@ -172,7 +169,7 @@ func (ns *NotificationService) SendEmailCommandHandler(ctx context.Context, cmd 
 }
 
 func (ns *NotificationService) SendResetPasswordEmail(ctx context.Context, cmd *models.SendResetPasswordEmailCommand) error {
-	code, err := createUserEmailCode(ns.Cfg, cmd.User, nil)
+	code, err := createUserEmailCode(ns.Cfg, cmd.User, "")
 	if err != nil {
 		return err
 	}
@@ -186,7 +183,7 @@ func (ns *NotificationService) SendResetPasswordEmail(ctx context.Context, cmd *
 	})
 }
 
-type GetUserByLoginFunc = func(c context.Context, login string) (*models.User, error)
+type GetUserByLoginFunc = func(c context.Context, login string) (*user.User, error)
 
 func (ns *NotificationService) ValidateResetPasswordCode(ctx context.Context, query *models.ValidateResetPasswordCodeQuery, userByLogin GetUserByLoginFunc) error {
 	login := getLoginForEmailCode(query.Code)
@@ -237,7 +234,7 @@ func (ns *NotificationService) signUpStartedHandler(ctx context.Context, evt *ev
 	}
 
 	emailSentCmd := models.UpdateTempUserWithEmailSentCommand{Code: evt.Code}
-	return bus.Dispatch(ctx, &emailSentCmd)
+	return ns.store.UpdateTempUserWithEmailSent(ctx, &emailSentCmd)
 }
 
 func (ns *NotificationService) signUpCompletedHandler(ctx context.Context, evt *events.SignUpCompleted) error {

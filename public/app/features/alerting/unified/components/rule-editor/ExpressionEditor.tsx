@@ -1,10 +1,11 @@
-import React, { FC, useCallback, useMemo, useState } from 'react';
 import { noop } from 'lodash';
+import React, { FC, useCallback, useMemo } from 'react';
+import { useAsync } from 'react-use';
+
 import { CoreApp, DataQuery } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { useAsync } from 'react-use';
-import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 import { LokiQuery } from 'app/plugins/datasource/loki/types';
+import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
 export interface ExpressionEditorProps {
   value?: string;
@@ -14,7 +15,8 @@ export interface ExpressionEditorProps {
 
 export const ExpressionEditor: FC<ExpressionEditorProps> = ({ value, onChange, dataSourceName }) => {
   const { mapToValue, mapToQuery } = useQueryMappers(dataSourceName);
-  const [query, setQuery] = useState(mapToQuery({ refId: 'A', hide: false }, value));
+  const query = mapToQuery({ refId: 'A', hide: false }, value);
+
   const {
     error,
     loading,
@@ -25,7 +27,6 @@ export const ExpressionEditor: FC<ExpressionEditorProps> = ({ value, onChange, d
 
   const onChangeQuery = useCallback(
     (query: DataQuery) => {
-      setQuery(query);
       onChange(mapToValue(query));
     },
     [onChange, mapToValue]

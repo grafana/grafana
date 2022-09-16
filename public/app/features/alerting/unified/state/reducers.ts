@@ -1,28 +1,35 @@
 import { combineReducers } from 'redux';
+
 import { createAsyncMapSlice, createAsyncSlice } from '../utils/redux';
+
 import {
+  createOrUpdateSilenceAction,
+  deleteAlertManagerConfigAction,
+  fetchAlertGroupsAction,
   fetchAlertManagerConfigAction,
   fetchAmAlertsAction,
   fetchEditableRuleAction,
+  fetchExternalAlertmanagersAction,
+  fetchExternalAlertmanagersConfigAction,
+  fetchFolderAction,
+  fetchGrafanaAnnotationsAction,
   fetchGrafanaNotifiersAction,
   fetchPromRulesAction,
   fetchRulerRulesAction,
+  fetchRulesSourceBuildInfoAction,
   fetchSilencesAction,
   saveRuleFormAction,
-  updateAlertManagerConfigAction,
-  createOrUpdateSilenceAction,
-  fetchFolderAction,
-  fetchAlertGroupsAction,
-  checkIfLotexSupportsEditingRulesAction,
-  deleteAlertManagerConfigAction,
   testReceiversAction,
+  updateAlertManagerConfigAction,
   updateLotexNamespaceAndGroupAction,
-  fetchExternalAlertmanagersAction,
-  fetchExternalAlertmanagersConfigAction,
-  fetchGrafanaAnnotationsAction,
 } from './actions';
 
 export const reducer = combineReducers({
+  dataSources: createAsyncMapSlice(
+    'dataSources',
+    fetchRulesSourceBuildInfoAction,
+    ({ rulesSourceName }) => rulesSourceName
+  ).reducer,
   promRules: createAsyncMapSlice('promRules', fetchPromRulesAction, ({ rulesSourceName }) => rulesSourceName).reducer,
   rulerRules: createAsyncMapSlice('rulerRules', fetchRulerRulesAction, ({ rulesSourceName }) => rulesSourceName)
     .reducer,
@@ -48,11 +55,6 @@ export const reducer = combineReducers({
     'amAlertGroups',
     fetchAlertGroupsAction,
     (alertManagerSourceName) => alertManagerSourceName
-  ).reducer,
-  lotexSupportsRuleEditing: createAsyncMapSlice(
-    'lotexSupportsRuleEditing',
-    checkIfLotexSupportsEditingRulesAction,
-    (source) => source
   ).reducer,
   testReceivers: createAsyncSlice('testReceivers', testReceiversAction).reducer,
   updateLotexNamespaceAndGroup: createAsyncSlice('updateLotexNamespaceAndGroup', updateLotexNamespaceAndGroupAction)

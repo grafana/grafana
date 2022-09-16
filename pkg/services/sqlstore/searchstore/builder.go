@@ -140,7 +140,12 @@ func (b *Builder) applyFilters() (ordering string) {
 		b.params = append(b.params, groupParams...)
 	}
 
-	orderBy := fmt.Sprintf(" ORDER BY %s", strings.Join(orders, ", "))
+	orderByCols := []string{}
+	for _, o := range orders {
+		orderByCols = append(orderByCols, b.Dialect.OrderBy(o))
+	}
+
+	orderBy := fmt.Sprintf(" ORDER BY %s", strings.Join(orderByCols, ", "))
 	b.sql.WriteString(orderBy)
 
 	order := strings.Join(orderJoins, "")

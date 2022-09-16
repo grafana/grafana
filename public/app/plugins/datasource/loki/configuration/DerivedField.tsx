@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from 'react';
 import { css } from '@emotion/css';
-import { Button, DataLinkInput, stylesFactory, LegacyForms } from '@grafana/ui';
+import React, { useEffect, useState } from 'react';
+import { usePrevious } from 'react-use';
+
 import { VariableSuggestion } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
+import { Button, DataLinkInput, stylesFactory, LegacyForms } from '@grafana/ui';
+
 import { DerivedFieldConfig } from '../types';
-import { usePrevious } from 'react-use';
 
 const { Switch, FormField } = LegacyForms;
 
@@ -58,7 +60,7 @@ export const DerivedField = (props: Props) => {
   };
 
   return (
-    <div className={className}>
+    <div className={className} data-testid="derived-field">
       <div className={styles.row}>
         <FormField
           className={styles.nameField}

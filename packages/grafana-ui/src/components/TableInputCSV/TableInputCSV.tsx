@@ -1,11 +1,13 @@
-import React from 'react';
-import { debounce } from 'lodash';
 import { css } from '@emotion/css';
+import { debounce } from 'lodash';
+import React, { PureComponent } from 'react';
+
 import { GrafanaTheme, DataFrame, CSVConfig, readCSV } from '@grafana/data';
-import { Icon } from '../Icon/Icon';
-import { Themeable } from '../../types/theme';
-import { TextArea } from '../TextArea/TextArea';
+
 import { stylesFactory, withTheme } from '../../themes';
+import { Themeable } from '../../types/theme';
+import { Icon } from '../Icon/Icon';
+import { TextArea } from '../TextArea/TextArea';
 
 interface Props extends Themeable {
   config?: CSVConfig;
@@ -23,7 +25,7 @@ interface State {
 /**
  * Expects the container div to have size set and will fill it 100%
  */
-export class UnThemedTableInputCSV extends React.PureComponent<Props, State> {
+export class UnThemedTableInputCSV extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
 
@@ -34,7 +36,7 @@ export class UnThemedTableInputCSV extends React.PureComponent<Props, State> {
     };
   }
 
-  readCSV: any = debounce(() => {
+  readCSV = debounce(() => {
     const { config } = this.props;
     const { text } = this.state;
 
@@ -58,7 +60,7 @@ export class UnThemedTableInputCSV extends React.PureComponent<Props, State> {
     }
   }
 
-  onTextChange = (event: any) => {
+  onTextChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     this.setState({ text: event.target.value });
   };
 

@@ -5,7 +5,9 @@ export interface FormAmRoute {
   object_matchers: MatcherFieldValue[];
   continue: boolean;
   receiver: string;
+  overrideGrouping: boolean;
   groupBy: string[];
+  overrideTimings: boolean;
   groupWaitValue: string;
   groupWaitValueType: string;
   groupIntervalValue: string;

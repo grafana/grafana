@@ -12,21 +12,23 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
+	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
-	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 // timeNow makes it possible to test usage of time
 var timeNow = time.Now
 
-type Scheduler interface {
+type ExternalAlertmanagerProvider interface {
 	AlertmanagersFor(orgID int64) []*url.URL
 	DroppedAlertmanagersFor(orgID int64) []*url.URL
 }
@@ -59,10 +61,13 @@ type AlertingStore interface {
 type API struct {
 	Cfg                  *setting.Cfg
 	DatasourceCache      datasources.CacheService
+	DatasourceService    datasources.DataSourceService
 	RouteRegister        routing.RouteRegister
 	ExpressionService    *expr.Service
-	QuotaService         *quota.QuotaService
+	QuotaService         quota.Service
 	Schedule             schedule.ScheduleService
+	TransactionManager   provisioning.TransactionManager
+	ProvenanceStore      provisioning.ProvisioningStore
 	RuleStore            store.RuleStore
 	InstanceStore        store.InstanceStore
 	AlertingStore        AlertingStore
@@ -70,8 +75,13 @@ type API struct {
 	DataProxy            *datasourceproxy.DataSourceProxyService
 	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
 	StateManager         *state.Manager
-	SecretsService       secrets.Service
 	AccessControl        accesscontrol.AccessControl
+	Policies             *provisioning.NotificationPolicyService
+	ContactPointService  *provisioning.ContactPointService
+	Templates            *provisioning.TemplateService
+	MuteTimings          *provisioning.MuteTimingService
+	AlertRules           *provisioning.AlertRuleService
+	AlertsRouter         *sender.AlertsRouter
 }
 
 // RegisterAPIEndpoints registers API handlers
@@ -79,40 +89,60 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 	logger := log.New("ngalert.api")
 	proxy := &AlertingProxy{
 		DataProxy: api.DataProxy,
+		ac:        api.AccessControl,
 	}
 
 	// Register endpoints for proxying to Alertmanager-compatible backends.
-	api.RegisterAlertmanagerApiEndpoints(NewForkedAM(
+	api.RegisterAlertmanagerApiEndpoints(NewForkingAM(
 		api.DatasourceCache,
 		NewLotexAM(proxy, logger),
-		&AlertmanagerSrv{store: api.AlertingStore, mam: api.MultiOrgAlertmanager, secrets: api.SecretsService, log: logger},
+		&AlertmanagerSrv{crypto: api.MultiOrgAlertmanager.Crypto, log: logger, ac: api.AccessControl, mam: api.MultiOrgAlertmanager},
 	), m)
 	// Register endpoints for proxying to Prometheus-compatible backends.
-	api.RegisterPrometheusApiEndpoints(NewForkedProm(
+	api.RegisterPrometheusApiEndpoints(NewForkingProm(
 		api.DatasourceCache,
 		NewLotexProm(proxy, logger),
-		&PrometheusSrv{log: logger, manager: api.StateManager, store: api.RuleStore},
+		&PrometheusSrv{log: logger, manager: api.StateManager, store: api.RuleStore, ac: api.AccessControl},
 	), m)
 	// Register endpoints for proxying to Cortex Ruler-compatible backends.
-	api.RegisterRulerApiEndpoints(NewForkedRuler(
+	api.RegisterRulerApiEndpoints(NewForkingRuler(
 		api.DatasourceCache,
 		NewLotexRuler(proxy, logger),
-		&RulerSrv{DatasourceCache: api.DatasourceCache, QuotaService: api.QuotaService, scheduleService: api.Schedule, store: api.RuleStore, log: logger, cfg: &api.Cfg.UnifiedAlerting},
-	), m)
-	api.RegisterTestingApiEndpoints(NewForkedTestingApi(
-		&TestingApiSrv{
-			AlertingProxy:     proxy,
-			Cfg:               api.Cfg,
-			ExpressionService: api.ExpressionService,
-			DatasourceCache:   api.DatasourceCache,
-			secretsService:    api.SecretsService,
-			log:               logger,
-		}), m)
-	api.RegisterConfigurationApiEndpoints(NewForkedConfiguration(
-		&AdminSrv{
-			store:     api.AdminConfigStore,
-			log:       logger,
-			scheduler: api.Schedule,
+		&RulerSrv{
+			DatasourceCache: api.DatasourceCache,
+			QuotaService:    api.QuotaService,
+			scheduleService: api.Schedule,
+			store:           api.RuleStore,
+			provenanceStore: api.ProvenanceStore,
+			xactManager:     api.TransactionManager,
+			log:             logger,
+			cfg:             &api.Cfg.UnifiedAlerting,
+			ac:              api.AccessControl,
 		},
 	), m)
+	api.RegisterTestingApiEndpoints(NewTestingApi(
+		&TestingApiSrv{
+			AlertingProxy:   proxy,
+			DatasourceCache: api.DatasourceCache,
+			log:             logger,
+			accessControl:   api.AccessControl,
+			evaluator:       eval.NewEvaluator(api.Cfg, log.New("ngalert.eval"), api.DatasourceCache, api.ExpressionService),
+		}), m)
+	api.RegisterConfigurationApiEndpoints(NewConfiguration(
+		&ConfigSrv{
+			datasourceService:    api.DatasourceService,
+			store:                api.AdminConfigStore,
+			log:                  logger,
+			alertmanagerProvider: api.AlertsRouter,
+		},
+	), m)
+
+	api.RegisterProvisioningApiEndpoints(NewProvisioningApi(&ProvisioningSrv{
+		log:                 logger,
+		policies:            api.Policies,
+		contactPointService: api.ContactPointService,
+		templates:           api.Templates,
+		muteTimings:         api.MuteTimings,
+		alertRules:          api.AlertRules,
+	}), m)
 }

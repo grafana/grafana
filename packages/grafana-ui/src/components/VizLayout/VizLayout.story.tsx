@@ -1,9 +1,11 @@
+import { Meta, Story } from '@storybook/react';
 import React, { useEffect, useState } from 'react';
+
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { Story } from '@storybook/react';
+
 import { VizLayout } from './VizLayout';
 
-export default {
+const meta: Meta = {
   title: 'Visualizations/VizLayout',
   component: VizLayout,
   decorators: [withCenteredStory],
@@ -86,3 +88,5 @@ RightLegend.args = {
   legendWidth: 100,
   legendItems: 2,
 };
+
+export default meta;

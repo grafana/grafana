@@ -1,7 +1,9 @@
-import React, { useEffect } from 'react';
 import MonacoEditor, { loader as monacoEditorLoader, useMonaco } from '@monaco-editor/react';
-import defineThemes from './theme';
+import React, { useEffect } from 'react';
+
 import { useTheme2 } from '../../themes';
+
+import defineThemes from './theme';
 import type { ReactMonacoEditorProps } from './types';
 
 let initalized = false;
@@ -31,8 +33,8 @@ export const ReactMonacoEditor = (props: ReactMonacoEditorProps) => {
   const monaco = useMonaco();
 
   useEffect(() => {
-    // monaco can be null at the beginning, because it is loaded in asynchronously
-    if (monaco !== null) {
+    // monaco can be null or undefined at the beginning, because it is loaded in asynchronously
+    if (monaco != null) {
       defineThemes(monaco, theme);
     }
   }, [monaco, theme]);

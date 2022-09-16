@@ -3,6 +3,8 @@ package setting
 import (
 	"testing"
 
+	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -17,27 +19,27 @@ func TestAzureSettings(t *testing.T) {
 			{
 				name:            "should be Public if not set",
 				configuredValue: "",
-				resolvedValue:   AzurePublic,
+				resolvedValue:   azsettings.AzurePublic,
 			},
 			{
 				name:            "should be Public if set to Public",
-				configuredValue: AzurePublic,
-				resolvedValue:   AzurePublic,
+				configuredValue: azsettings.AzurePublic,
+				resolvedValue:   azsettings.AzurePublic,
 			},
 			{
 				name:            "should be Public if set to Public using alternative name",
 				configuredValue: "AzurePublicCloud",
-				resolvedValue:   AzurePublic,
+				resolvedValue:   azsettings.AzurePublic,
 			},
 			{
 				name:            "should be China if set to China",
-				configuredValue: AzureChina,
-				resolvedValue:   AzureChina,
+				configuredValue: azsettings.AzureChina,
+				resolvedValue:   azsettings.AzureChina,
 			},
 			{
 				name:            "should be US Government if set to US Government using alternative name",
 				configuredValue: "usgov",
-				resolvedValue:   AzureUSGovernment,
+				resolvedValue:   azsettings.AzureUSGovernment,
 			},
 			{
 				name:            "should be same as set if not known",

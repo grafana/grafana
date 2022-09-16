@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package database
 
 import (
@@ -16,9 +13,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestDashboardProvisioningTest(t *testing.T) {
+func TestIntegrationDashboardProvisioningTest(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	sqlStore := sqlstore.InitTestDB(t)
-	dashboardStore := ProvideDashboardStore(sqlStore)
+	dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles)
 
 	folderCmd := models.SaveDashboardCommand{
 		OrgId:    1,
@@ -78,7 +78,7 @@ func TestDashboardProvisioningTest(t *testing.T) {
 			require.Nil(t, err)
 
 			query := &models.GetDashboardsQuery{DashboardIds: []int64{anotherDash.Id}}
-			err = sqlStore.GetDashboards(context.Background(), query)
+			err = dashboardStore.GetDashboards(context.Background(), query)
 			require.Nil(t, err)
 			require.NotNil(t, query.Result)
 
@@ -86,7 +86,7 @@ func TestDashboardProvisioningTest(t *testing.T) {
 			require.Nil(t, dashboardStore.DeleteOrphanedProvisionedDashboards(context.Background(), deleteCmd))
 
 			query = &models.GetDashboardsQuery{DashboardIds: []int64{dash.Id, anotherDash.Id}}
-			err = sqlStore.GetDashboards(context.Background(), query)
+			err = dashboardStore.GetDashboards(context.Background(), query)
 			require.Nil(t, err)
 
 			require.Equal(t, 1, len(query.Result))
@@ -120,7 +120,7 @@ func TestDashboardProvisioningTest(t *testing.T) {
 				OrgId: 1,
 			}
 
-			require.Nil(t, sqlStore.DeleteDashboard(context.Background(), deleteCmd))
+			require.Nil(t, dashboardStore.DeleteDashboard(context.Background(), deleteCmd))
 
 			data, err := dashboardStore.GetProvisionedDataByDashboardID(dash.Id)
 			require.Nil(t, err)

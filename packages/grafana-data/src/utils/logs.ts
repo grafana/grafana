@@ -1,7 +1,7 @@
 import { countBy, chain, escapeRegExp } from 'lodash';
 
-import { LogLevel, LogRowModel, LogLabelStatsModel, LogsParser, LogsModel, LogsSortOrder } from '../types/logs';
 import { DataFrame, FieldType } from '../types/index';
+import { LogLevel, LogRowModel, LogLabelStatsModel, LogsParser, LogsModel, LogsSortOrder } from '../types/logs';
 import { ArrayVector } from '../vector/ArrayVector';
 
 // This matches:
@@ -134,7 +134,7 @@ export function calculateLogsLabelStats(rows: LogRowModel[], label: string): Log
   return getSortedCounts(countsByValue, rowCount);
 }
 
-export function calculateStats(values: any[]): LogLabelStatsModel[] {
+export function calculateStats(values: unknown[]): LogLabelStatsModel[] {
   const nonEmptyValues = values.filter((value) => value !== undefined && value !== null);
   const countsByValue = countBy(nonEmptyValues);
   return getSortedCounts(countsByValue, nonEmptyValues.length);

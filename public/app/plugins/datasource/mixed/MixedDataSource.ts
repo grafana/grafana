@@ -1,3 +1,7 @@
+import { cloneDeep, groupBy, omit } from 'lodash';
+import { forkJoin, from, Observable, of, OperatorFunction } from 'rxjs';
+import { catchError, map, mergeAll, mergeMap, reduce, toArray } from 'rxjs/operators';
+
 import {
   DataQuery,
   DataQueryRequest,
@@ -7,9 +11,6 @@ import {
   LoadingState,
 } from '@grafana/data';
 import { getDataSourceSrv, toDataQueryError } from '@grafana/runtime';
-import { cloneDeep, groupBy } from 'lodash';
-import { forkJoin, from, Observable, of, OperatorFunction } from 'rxjs';
-import { catchError, map, mergeAll, mergeMap, reduce, toArray } from 'rxjs/operators';
 
 export const MIXED_DATASOURCE_NAME = '-- Mixed --';
 
@@ -95,6 +96,13 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
 
   testDatasource() {
     return Promise.resolve({});
+  }
+
+  getQueryDisplayText(query: DataQuery) {
+    const strippedQuery = omit(query, ['key', 'refId', 'datasource']);
+    const strippedQueryJSON = JSON.stringify(strippedQuery);
+    const prefix = query.datasource?.type ? `${query.datasource?.type}: ` : '';
+    return `${prefix}${strippedQueryJSON}`;
   }
 
   private isQueryable(query: BatchedQueries): boolean {

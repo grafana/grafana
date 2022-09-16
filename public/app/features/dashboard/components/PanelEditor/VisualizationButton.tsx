@@ -1,13 +1,16 @@
-import React, { FC } from 'react';
 import { css } from '@emotion/css';
+import React, { FC } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+
 import { GrafanaTheme } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { ToolbarButton, ButtonGroup, useStyles } from '@grafana/ui';
 import { StoreState } from 'app/types';
-import { useDispatch, useSelector } from 'react-redux';
-import { setPanelEditorUIState, toggleVizPicker } from './state/reducers';
-import { selectors } from '@grafana/e2e-selectors';
+
 import { PanelModel } from '../../state';
 import { getPanelPluginWithFallback } from '../../state/selectors';
+
+import { setPanelEditorUIState, toggleVizPicker } from './state/reducers';
 
 type Props = {
   panel: PanelModel;
@@ -42,6 +45,7 @@ export const VisualizationButton: FC<Props> = ({ panel }) => {
           isOpen={isVizPickerOpen}
           onClick={onToggleOpen}
           aria-label={selectors.components.PanelEditor.toggleVizPicker}
+          variant="canvas"
           fullWidth
         >
           {plugin.meta.name}
@@ -50,6 +54,7 @@ export const VisualizationButton: FC<Props> = ({ panel }) => {
           tooltip={isPanelOptionsVisible ? 'Close options pane' : 'Show options pane'}
           icon={isPanelOptionsVisible ? 'angle-right' : 'angle-left'}
           onClick={onToggleOptionsPane}
+          variant="canvas"
           aria-label={selectors.components.PanelEditor.toggleVizOptions}
         />
       </ButtonGroup>

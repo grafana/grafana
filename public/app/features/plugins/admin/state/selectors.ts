@@ -1,6 +1,9 @@
 import { createSelector } from '@reduxjs/toolkit';
-import { PluginError, PluginErrorCode } from '@grafana/data';
+
+import { PluginError, PluginErrorCode, unEscapeStringFromRegex } from '@grafana/data';
+
 import { RequestStatus, PluginCatalogStoreState } from '../types';
+
 import { pluginsAdapter } from './reducer';
 
 export const selectRoot = (state: PluginCatalogStoreState) => state.plugins;
@@ -37,7 +40,7 @@ const findByKeyword = (searchBy: string) =>
         fields.push(plugin.orgName.toLowerCase());
       }
 
-      return fields.some((f) => f.includes(searchBy.toLowerCase()));
+      return fields.some((f) => f.includes(unEscapeStringFromRegex(searchBy).toLowerCase()));
     });
   });
 

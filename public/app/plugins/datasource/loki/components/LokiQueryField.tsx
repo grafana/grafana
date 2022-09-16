@@ -1,15 +1,28 @@
-import React, { ReactNode } from 'react';
-import { SlatePrism, TypeaheadOutput, TypeaheadInput, BracesPlugin, Icon } from '@grafana/ui';
-import { Plugin, Node } from 'slate';
-import { LokiLabelBrowser } from './LokiLabelBrowser';
-import { CoreApp, QueryEditorProps } from '@grafana/data';
-import { LokiQuery, LokiOptions } from '../types';
 import { LanguageMap, languages as prismLanguages } from 'prismjs';
-import LokiLanguageProvider from '../language_provider';
-import { shouldRefreshLabels } from '../language_utils';
-import LokiDatasource from '../datasource';
+import React, { ReactNode } from 'react';
+import { Plugin, Node } from 'slate';
+import { Editor } from 'slate-react';
+
+import { QueryEditorProps } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
+import {
+  SlatePrism,
+  TypeaheadOutput,
+  SuggestionsState,
+  QueryField,
+  TypeaheadInput,
+  BracesPlugin,
+  DOMUtil,
+  Icon,
+} from '@grafana/ui';
 import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
-import { MonacoQueryFieldWrapper } from './monaco-query-field/MonacoQueryFieldWrapper';
+
+import LokiLanguageProvider from '../LanguageProvider';
+import { LokiDatasource } from '../datasource';
+import { escapeLabelValueInSelector, shouldRefreshLabels } from '../languageUtils';
+import { LokiQuery, LokiOptions } from '../types';
+
+import { LokiLabelBrowser } from './LokiLabelBrowser';
 
 const LAST_USED_LABELS_KEY = 'grafana.datasources.loki.browser.labels';
 
@@ -21,6 +34,42 @@ function getChooserText(hasSyntax: boolean, hasLogLabels: boolean) {
     return '(No logs found)';
   }
   return 'Log browser';
+}
+
+function willApplySuggestion(suggestion: string, { typeaheadContext, typeaheadText }: SuggestionsState): string {
+  // Modify suggestion based on context
+  switch (typeaheadContext) {
+    case 'context-labels': {
+      const nextChar = DOMUtil.getNextCharacter();
+      if (!nextChar || nextChar === '}' || nextChar === ',') {
+        suggestion += '=';
+      }
+      break;
+    }
+
+    case 'context-label-values': {
+      // Always add quotes and remove existing ones instead
+      let suggestionModified = '';
+
+      if (!typeaheadText.match(/^(!?=~?"|")/)) {
+        suggestionModified = '"';
+      }
+
+      suggestionModified += escapeLabelValueInSelector(suggestion, typeaheadText);
+
+      if (DOMUtil.getNextCharacter() !== '"') {
+        suggestionModified += '"';
+      }
+
+      suggestion = suggestionModified;
+
+      break;
+    }
+
+    default:
+  }
+
+  return suggestion;
 }
 
 export interface LokiQueryFieldProps extends QueryEditorProps<LokiDatasource, LokiQuery, LokiOptions> {
@@ -35,7 +84,8 @@ interface LokiQueryFieldState {
 }
 
 export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, LokiQueryFieldState> {
-  plugins: Plugin[];
+  plugins: Array<Plugin<Editor>>;
+  _isMounted = false;
 
   constructor(props: LokiQueryFieldProps) {
     super(props);
@@ -55,8 +105,15 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
   }
 
   async componentDidMount() {
+    this._isMounted = true;
     await this.props.datasource.languageProvider.start();
-    this.setState({ labelsLoaded: true });
+    if (this._isMounted) {
+      this.setState({ labelsLoaded: true });
+    }
+  }
+
+  componentWillUnmount() {
+    this._isMounted = false;
   }
 
   componentDidUpdate(prevProps: LokiQueryFieldProps) {
@@ -90,6 +147,16 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
   };
 
   onClickChooserButton = () => {
+    if (!this.state.labelBrowserVisible) {
+      reportInteraction('grafana_loki_log_browser_opened', {
+        app: this.props.app,
+      });
+    } else {
+      reportInteraction('grafana_loki_log_browser_closed', {
+        app: this.props.app,
+        closeType: 'logBrowserButton',
+      });
+    }
     this.setState((state) => ({ labelBrowserVisible: !state.labelBrowserVisible }));
   };
 
@@ -112,10 +179,17 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
   };
 
   render() {
-    const { ExtraFieldElement, query, datasource } = this.props;
+    const {
+      ExtraFieldElement,
+      query,
+      app,
+      datasource,
+      placeholder = 'Enter a Loki query (run with Shift+Enter)',
+    } = this.props;
 
     const { labelsLoaded, labelBrowserVisible } = this.state;
     const lokiLanguageProvider = datasource.languageProvider as LokiLanguageProvider;
+    const cleanText = datasource.languageProvider ? lokiLanguageProvider.cleanText : undefined;
     const hasLogLabels = lokiLanguageProvider.getLabelKeys().length > 0;
     const chooserText = getChooserText(labelsLoaded, hasLogLabels);
     const buttonDisabled = !(labelsLoaded && hasLogLabels);
@@ -138,13 +212,17 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
                   <Icon name={labelBrowserVisible ? 'angle-down' : 'angle-right'} />
                 </button>
                 <div className="gf-form gf-form--grow flex-shrink-1 min-width-15">
-                  <MonacoQueryFieldWrapper
-                    runQueryOnBlur={this.props.app !== CoreApp.Explore}
-                    languageProvider={datasource.languageProvider}
-                    history={this.props.history ?? []}
+                  <QueryField
+                    additionalPlugins={this.plugins}
+                    cleanText={cleanText}
+                    query={query.expr}
+                    onTypeahead={this.onTypeahead}
+                    onWillApplySuggestion={willApplySuggestion}
                     onChange={this.onChangeQuery}
+                    onBlur={this.props.onBlur}
                     onRunQuery={this.props.onRunQuery}
-                    initialValue={query.expr ?? ''}
+                    placeholder={placeholder}
+                    portalOrigin="loki"
                   />
                 </div>
               </div>
@@ -156,6 +234,7 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
                     lastUsedLabels={lastUsedLabels || []}
                     storeLastUsedLabels={onLastUsedLabelsSave}
                     deleteLastUsedLabels={onLastUsedLabelsDelete}
+                    app={app}
                   />
                 </div>
               )}

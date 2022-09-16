@@ -67,6 +67,21 @@ func parseQueryType(jsonValue string) (QueryType, error) {
 	}
 }
 
+func parseDirection(jsonValue string) (Direction, error) {
+	switch jsonValue {
+	case "backward":
+		return DirectionBackward, nil
+	case "forward":
+		return DirectionForward, nil
+	case "":
+		// there are older queries stored in alerting that did not have queryDirection,
+		// we default to "backward"
+		return DirectionBackward, nil
+	default:
+		return DirectionBackward, fmt.Errorf("invalid queryDirection: %s", jsonValue)
+	}
+}
+
 func parseQuery(queryContext *backend.QueryDataRequest) ([]*lokiQuery, error) {
 	qs := []*lokiQuery{}
 	for _, query := range queryContext.Queries {
@@ -95,9 +110,15 @@ func parseQuery(queryContext *backend.QueryDataRequest) ([]*lokiQuery, error) {
 			return nil, err
 		}
 
+		direction, err := parseDirection(model.Direction)
+		if err != nil {
+			return nil, err
+		}
+
 		qs = append(qs, &lokiQuery{
 			Expr:         expr,
 			QueryType:    queryType,
+			Direction:    direction,
 			Step:         step,
 			MaxLines:     model.MaxLines,
 			LegendFormat: model.LegendFormat,

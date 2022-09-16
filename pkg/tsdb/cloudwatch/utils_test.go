@@ -23,13 +23,16 @@ type fakeCWLogsClient struct {
 
 	calls logsQueryCalls
 
-	logGroups      cloudwatchlogs.DescribeLogGroupsOutput
+	logGroups      []cloudwatchlogs.DescribeLogGroupsOutput
 	logGroupFields cloudwatchlogs.GetLogGroupFieldsOutput
 	queryResults   cloudwatchlogs.GetQueryResultsOutput
+
+	logGroupsIndex int
 }
 
 type logsQueryCalls struct {
 	startQueryWithContext []*cloudwatchlogs.StartQueryInput
+	getEventsWithContext  []*cloudwatchlogs.GetLogEventsInput
 }
 
 func (m *fakeCWLogsClient) GetQueryResultsWithContext(ctx context.Context, input *cloudwatchlogs.GetQueryResultsInput, option ...request.Option) (*cloudwatchlogs.GetQueryResultsOutput, error) {
@@ -51,27 +54,40 @@ func (m *fakeCWLogsClient) StopQueryWithContext(ctx context.Context, input *clou
 }
 
 func (m *fakeCWLogsClient) DescribeLogGroupsWithContext(ctx context.Context, input *cloudwatchlogs.DescribeLogGroupsInput, option ...request.Option) (*cloudwatchlogs.DescribeLogGroupsOutput, error) {
-	return &m.logGroups, nil
+	output := &m.logGroups[m.logGroupsIndex]
+	m.logGroupsIndex++
+	return output, nil
 }
 
 func (m *fakeCWLogsClient) GetLogGroupFieldsWithContext(ctx context.Context, input *cloudwatchlogs.GetLogGroupFieldsInput, option ...request.Option) (*cloudwatchlogs.GetLogGroupFieldsOutput, error) {
 	return &m.logGroupFields, nil
 }
 
+func (m *fakeCWLogsClient) GetLogEventsWithContext(ctx context.Context, input *cloudwatchlogs.GetLogEventsInput, option ...request.Option) (*cloudwatchlogs.GetLogEventsOutput, error) {
+	m.calls.getEventsWithContext = append(m.calls.getEventsWithContext, input)
+
+	return &cloudwatchlogs.GetLogEventsOutput{
+		Events: []*cloudwatchlogs.OutputLogEvent{},
+	}, nil
+}
+
 type fakeCWClient struct {
 	cloudwatchiface.CloudWatchAPI
 	cloudwatch.GetMetricDataOutput
 
-	Metrics []*cloudwatch.Metric
-
+	Metrics        []*cloudwatch.Metric
 	MetricsPerPage int
+
+	callsGetMetricDataWithContext []*cloudwatch.GetMetricDataInput
 }
 
-func (c fakeCWClient) GetMetricDataWithContext(aws.Context, *cloudwatch.GetMetricDataInput, ...request.Option) (*cloudwatch.GetMetricDataOutput, error) {
+func (c *fakeCWClient) GetMetricDataWithContext(ctx aws.Context, input *cloudwatch.GetMetricDataInput, opts ...request.Option) (*cloudwatch.GetMetricDataOutput, error) {
+	c.callsGetMetricDataWithContext = append(c.callsGetMetricDataWithContext, input)
+
 	return &c.GetMetricDataOutput, nil
 }
 
-func (c fakeCWClient) ListMetricsPages(input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool) error {
+func (c *fakeCWClient) ListMetricsPages(input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool) error {
 	if c.MetricsPerPage == 0 {
 		c.MetricsPerPage = 1000
 	}

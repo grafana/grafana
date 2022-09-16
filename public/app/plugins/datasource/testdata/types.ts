@@ -4,14 +4,17 @@ export interface Scenario {
   id: string;
   name: string;
   stringInput: string;
+  description?: string;
+  hideAliasField?: boolean;
 }
 
 export interface TestDataQuery extends DataQuery {
   alias?: string;
-  scenarioId: string;
+  scenarioId?: string;
   stringInput?: string;
   stream?: StreamingQuery;
   pulseWave?: PulseWaveQuery;
+  sim?: SimulationQuery;
   csvWave?: CSVWave[];
   labels?: string;
   lines?: number;
@@ -22,6 +25,7 @@ export interface TestDataQuery extends DataQuery {
   csvContent?: string;
   rawFrameContent?: string;
   usa?: USAQuery;
+  errorType?: 'server_panic' | 'frontend_exception' | 'frontend_observable';
 }
 
 export interface NodesQuery {
@@ -36,6 +40,17 @@ export interface StreamingQuery {
   noise: number; // wiggle around the signal for min/max
   bands?: number; // number of bands around the middle band
   url?: string; // the Fetch URL
+}
+
+export interface SimulationQuery {
+  key: {
+    type: string;
+    tick: number;
+    uid?: string;
+  };
+  config?: Record<string, any>;
+  stream?: boolean;
+  last?: boolean;
 }
 
 export interface PulseWaveQuery {

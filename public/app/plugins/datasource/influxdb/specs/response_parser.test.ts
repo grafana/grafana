@@ -1,7 +1,23 @@
 import { size } from 'lodash';
-import ResponseParser, { getSelectedParams } from '../response_parser';
-import InfluxQueryModel from '../influx_query_model';
+import { of } from 'rxjs';
+import { TemplateSrvStub } from 'test/specs/helpers';
+
 import { FieldType, MutableDataFrame } from '@grafana/data';
+import { FetchResponse } from '@grafana/runtime';
+import config from 'app/core/config';
+import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+
+import InfluxDatasource from '../datasource';
+import InfluxQueryModel from '../influx_query_model';
+import ResponseParser, { getSelectedParams } from '../response_parser';
+
+//@ts-ignore
+const templateSrv = new TemplateSrvStub();
+
+jest.mock('@grafana/runtime', () => ({
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  getBackendSrv: () => backendSrv,
+}));
 
 describe('influxdb response parser', () => {
   const parser = new ResponseParser();
@@ -280,6 +296,152 @@ describe('influxdb response parser', () => {
 
     it('executedQueryString correctly', () => {
       expect(table.meta?.executedQueryString).toBe('SELECT everything!');
+    });
+  });
+
+  describe('When issuing annotationQuery', () => {
+    const ctx: any = {
+      instanceSettings: { url: 'url', name: 'influxDb' },
+    };
+
+    const fetchMock = jest.spyOn(backendSrv, 'fetch');
+
+    const annotation = {
+      fromAnnotations: true,
+      name: 'Anno',
+      query: 'select * from logs where time >= now() - 15m and time <= now()',
+      textColumn: 'textColumn',
+      tagsColumn: 'host,path',
+    };
+
+    const queryOptions: any = {
+      targets: [annotation],
+      range: {
+        from: '2018-01-01T00:00:00Z',
+        to: '2018-01-02T00:00:00Z',
+      },
+    };
+    let response: any;
+
+    beforeEach(async () => {
+      fetchMock.mockImplementation(() => {
+        return of({
+          data: {
+            results: {
+              metricFindQuery: {
+                frames: [
+                  {
+                    schema: {
+                      name: 'logs.host',
+                      fields: [
+                        {
+                          name: 'time',
+                          type: 'time',
+                        },
+                        {
+                          name: 'value',
+                          type: 'string',
+                        },
+                      ],
+                    },
+                    data: {
+                      values: [
+                        [1645208701000, 1645208702000],
+                        ['cbfa07e0e3bb 1', 'cbfa07e0e3bb 2'],
+                      ],
+                    },
+                  },
+                  {
+                    schema: {
+                      name: 'logs.message',
+                      fields: [
+                        {
+                          name: 'time',
+                          type: 'time',
+                        },
+                        {
+                          name: 'value',
+                          type: 'string',
+                        },
+                      ],
+                    },
+                    data: {
+                      values: [
+                        [1645208701000, 1645208702000],
+                        [
+                          'Station softwareupdated[447]: Adding client 1',
+                          'Station softwareupdated[447]: Adding client 2',
+                        ],
+                      ],
+                    },
+                  },
+                  {
+                    schema: {
+                      name: 'logs.path',
+                      fields: [
+                        {
+                          name: 'time',
+                          type: 'time',
+                        },
+                        {
+                          name: 'value',
+                          type: 'string',
+                        },
+                      ],
+                    },
+                    data: {
+                      values: [
+                        [1645208701000, 1645208702000],
+                        ['/var/log/host/install.log 1', '/var/log/host/install.log 2'],
+                      ],
+                    },
+                  },
+                  {
+                    schema: {
+                      name: 'textColumn',
+                      fields: [
+                        {
+                          name: 'time',
+                          type: 'time',
+                        },
+                        {
+                          name: 'value',
+                          type: 'string',
+                        },
+                      ],
+                    },
+                    data: {
+                      values: [
+                        [1645208701000, 1645208702000],
+                        ['text 1', 'text 2'],
+                      ],
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        } as FetchResponse);
+      });
+
+      ctx.ds = new InfluxDatasource(ctx.instanceSettings, templateSrv);
+      ctx.ds.access = 'proxy';
+      config.featureToggles.influxdbBackendMigration = true;
+      response = await ctx.ds.annotationEvents(queryOptions, annotation);
+    });
+
+    it('should return annotation list', () => {
+      expect(response.length).toBe(2);
+      expect(response[0].time).toBe(1645208701000);
+      expect(response[0].title).toBe('Station softwareupdated[447]: Adding client 1');
+      expect(response[0].text).toBe('text 1');
+      expect(response[0].tags[0]).toBe('cbfa07e0e3bb 1');
+      expect(response[0].tags[1]).toBe('/var/log/host/install.log 1');
+      expect(response[1].time).toBe(1645208702000);
+      expect(response[1].title).toBe('Station softwareupdated[447]: Adding client 2');
+      expect(response[1].text).toBe('text 2');
+      expect(response[1].tags[0]).toBe('cbfa07e0e3bb 2');
+      expect(response[1].tags[1]).toBe('/var/log/host/install.log 2');
     });
   });
 });

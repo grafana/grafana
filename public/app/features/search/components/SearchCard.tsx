@@ -1,13 +1,17 @@
-import React, { useCallback, useRef, useState } from 'react';
 import { css } from '@emotion/css';
+import React, { useCallback, useRef, useState } from 'react';
+import SVG from 'react-inlinesvg';
 import { usePopper } from 'react-popper';
+
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, Portal, TagList, useTheme2 } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
+import { Icon, Portal, TagList, useTheme2 } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
+
 import { DashboardSectionItem, OnToggleChecked } from '../types';
-import { SearchCheckbox } from './SearchCheckbox';
+
 import { SearchCardExpanded } from './SearchCardExpanded';
+import { SearchCheckbox } from './SearchCheckbox';
 
 const DELAY_BEFORE_EXPANDING = 500;
 
@@ -16,15 +20,16 @@ export interface Props {
   item: DashboardSectionItem;
   onTagSelected?: (name: string) => any;
   onToggleChecked?: OnToggleChecked;
+  onClick?: (event: React.MouseEvent<HTMLAnchorElement>) => void;
 }
 
 export function getThumbnailURL(uid: string, isLight?: boolean) {
   return `/api/dashboards/uid/${uid}/img/thumb/${isLight ? 'light' : 'dark'}`;
 }
 
-export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: Props) {
+export function SearchCard({ editable, item, onTagSelected, onToggleChecked, onClick }: Props) {
   const [hasImage, setHasImage] = useState(true);
-  const [lastUpdated, setLastUpdated] = useState<string>();
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [showExpandedView, setShowExpandedView] = useState(false);
   const timeout = useRef<number | null>(null);
 
@@ -64,7 +69,11 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
     if (item.uid && !lastUpdated) {
       const dashboard = await backendSrv.getDashboardByUid(item.uid);
       const { updated } = dashboard.meta;
-      setLastUpdated(new Date(updated).toLocaleString());
+      if (updated) {
+        setLastUpdated(new Date(updated).toLocaleString());
+      } else {
+        setLastUpdated(null);
+      }
     }
   };
 
@@ -110,11 +119,12 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       onMouseMove={onMouseMove}
+      onClick={onClick}
     >
       <div className={styles.imageContainer}>
         <SearchCheckbox
           className={styles.checkbox}
-          aria-label="Select dashboard"
+          aria-label={`Select dashboard ${item.title}`}
           editable={editable}
           checked={item.checked}
           onClick={onCheckboxClick}
@@ -123,7 +133,11 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
           <img loading="lazy" className={styles.image} src={imageSrc} onError={() => setHasImage(false)} />
         ) : (
           <div className={styles.imagePlaceholder}>
-            <Icon name="apps" size="xl" />
+            {item.icon ? (
+              <SVG src={item.icon} width={36} height={36} title={item.title} />
+            ) : (
+              <Icon name="apps" size="xl" />
+            )}
           </div>
         )}
       </div>
@@ -140,6 +154,7 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
               imageWidth={320}
               item={item}
               lastUpdated={lastUpdated}
+              onClick={onClick}
             />
           </div>
         </Portal>

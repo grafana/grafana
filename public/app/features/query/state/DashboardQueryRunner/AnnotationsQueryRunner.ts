@@ -1,10 +1,12 @@
 import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
+
 import { AnnotationEvent, DataSourceApi } from '@grafana/data';
 
-import { AnnotationQueryRunner, AnnotationQueryRunnerOptions } from './types';
-import { PanelModel } from '../../../dashboard/state';
 import { executeAnnotationQuery } from '../../../annotations/executeAnnotationQuery';
+import { PanelModel } from '../../../dashboard/state';
+
+import { AnnotationQueryRunner, AnnotationQueryRunnerOptions } from './types';
 import { handleAnnotationQueryRunnerError } from './utils';
 
 export class AnnotationsQueryRunner implements AnnotationQueryRunner {
@@ -13,7 +15,7 @@ export class AnnotationsQueryRunner implements AnnotationQueryRunner {
       return false;
     }
 
-    return !Boolean(datasource.annotationQuery && !datasource.annotations);
+    return Boolean(!datasource.annotationQuery || datasource.annotations);
   }
 
   run({ annotation, datasource, dashboard, range }: AnnotationQueryRunnerOptions): Observable<AnnotationEvent[]> {

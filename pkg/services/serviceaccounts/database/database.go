@@ -8,70 +8,177 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/apikey"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type ServiceAccountsStoreImpl struct {
-	sqlStore *sqlstore.SQLStore
-	log      log.Logger
+	sqlStore      *sqlstore.SQLStore
+	apiKeyService apikey.Service
+	kvStore       kvstore.KVStore
+	log           log.Logger
+	userService   user.Service
 }
 
-func NewServiceAccountsStore(store *sqlstore.SQLStore) *ServiceAccountsStoreImpl {
+func ProvideServiceAccountsStore(store *sqlstore.SQLStore, apiKeyService apikey.Service, kvStore kvstore.KVStore) *ServiceAccountsStoreImpl {
 	return &ServiceAccountsStoreImpl{
-		sqlStore: store,
+		sqlStore:      store,
+		apiKeyService: apiKeyService,
+		kvStore:       kvStore,
+		log:           log.New("serviceaccounts.store"),
 	}
 }
 
-func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, orgID int64, name string) (saDTO *serviceaccounts.ServiceAccountDTO, err error) {
-	generatedLogin := "sa-" + strings.ToLower(name)
+// CreateServiceAccount creates service account
+func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, orgId int64, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
+	generatedLogin := "sa-" + strings.ToLower(saForm.Name)
 	generatedLogin = strings.ReplaceAll(generatedLogin, " ", "-")
-	cmd := models.CreateUserCommand{
-		Login:            generatedLogin,
-		OrgId:            orgID,
-		Name:             name,
-		IsServiceAccount: true,
+	isDisabled := false
+	role := org.RoleViewer
+	if saForm.IsDisabled != nil {
+		isDisabled = *saForm.IsDisabled
 	}
-
-	newuser, err := s.sqlStore.CreateUser(ctx, cmd)
-	if err != nil {
-		if errors.Is(err, models.ErrUserAlreadyExists) {
-			return nil, &ErrSAInvalidName{}
+	if saForm.Role != nil {
+		role = *saForm.Role
+	}
+	var newSA *user.User
+	createErr := s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) (err error) {
+		var errUser error
+		newSA, errUser = s.sqlStore.CreateUser(ctx, user.CreateUserCommand{
+			Login:            generatedLogin,
+			OrgID:            orgId,
+			Name:             saForm.Name,
+			IsDisabled:       isDisabled,
+			IsServiceAccount: true,
+			SkipOrgSetup:     true,
+		})
+		if errUser != nil {
+			return errUser
 		}
-		return nil, fmt.Errorf("failed to create service account: %w", err)
+
+		errAddOrgUser := s.sqlStore.AddOrgUser(ctx, &models.AddOrgUserCommand{
+			Role:                      role,
+			OrgId:                     orgId,
+			UserId:                    newSA.ID,
+			AllowAddingServiceAccount: true,
+		})
+		if errAddOrgUser != nil {
+			return errAddOrgUser
+		}
+
+		return nil
+	})
+
+	if createErr != nil {
+		if errors.Is(createErr, user.ErrUserAlreadyExists) {
+			return nil, ErrServiceAccountAlreadyExists
+		}
+
+		return nil, fmt.Errorf("failed to create service account: %w", createErr)
 	}
 
 	return &serviceaccounts.ServiceAccountDTO{
-		Id:     newuser.Id,
-		Name:   newuser.Name,
-		Login:  newuser.Login,
-		OrgId:  newuser.OrgId,
-		Tokens: 0,
+		Id:         newSA.ID,
+		Name:       newSA.Name,
+		Login:      newSA.Login,
+		OrgId:      newSA.OrgID,
+		Tokens:     0,
+		Role:       string(role),
+		IsDisabled: isDisabled,
 	}, nil
 }
 
-func (s *ServiceAccountsStoreImpl) DeleteServiceAccount(ctx context.Context, orgID, serviceaccountID int64) error {
+// UpdateServiceAccount updates service account
+func (s *ServiceAccountsStoreImpl) UpdateServiceAccount(ctx context.Context,
+	orgId, serviceAccountId int64,
+	saForm *serviceaccounts.UpdateServiceAccountForm) (*serviceaccounts.ServiceAccountProfileDTO, error) {
+	updatedUser := &serviceaccounts.ServiceAccountProfileDTO{}
+
+	err := s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		var err error
+		updatedUser, err = s.RetrieveServiceAccount(ctx, orgId, serviceAccountId)
+		if err != nil {
+			return err
+		}
+
+		if saForm.Name == nil && saForm.Role == nil && saForm.IsDisabled == nil {
+			return nil
+		}
+
+		updateTime := time.Now()
+		if saForm.Role != nil {
+			var orgUser models.OrgUser
+			orgUser.Role = *saForm.Role
+			orgUser.Updated = updateTime
+
+			if _, err := sess.Where("org_id = ? AND user_id = ?", orgId, serviceAccountId).Update(&orgUser); err != nil {
+				return err
+			}
+
+			updatedUser.Role = string(*saForm.Role)
+		}
+
+		if saForm.Name != nil || saForm.IsDisabled != nil {
+			user := user.User{
+				Updated: updateTime,
+			}
+
+			if saForm.IsDisabled != nil {
+				user.IsDisabled = *saForm.IsDisabled
+				updatedUser.IsDisabled = *saForm.IsDisabled
+				sess.UseBool("is_disabled")
+			}
+
+			if saForm.Name != nil {
+				user.Name = *saForm.Name
+				updatedUser.Name = *saForm.Name
+			}
+
+			if _, err := sess.ID(serviceAccountId).Update(&user); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
+	return updatedUser, err
+}
+
+func ServiceAccountDeletions() []string {
+	deletes := []string{
+		"DELETE FROM api_key WHERE service_account_id = ?",
+	}
+	deletes = append(deletes, sqlstore.UserDeletions()...)
+	return deletes
+}
+
+// DeleteServiceAccount deletes service account and all associated tokens
+func (s *ServiceAccountsStoreImpl) DeleteServiceAccount(ctx context.Context, orgId, serviceAccountId int64) error {
 	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		return deleteServiceAccountInTransaction(sess, orgID, serviceaccountID)
+		return s.deleteServiceAccount(sess, orgId, serviceAccountId)
 	})
 }
 
-func deleteServiceAccountInTransaction(sess *sqlstore.DBSession, orgID, serviceAccountID int64) error {
-	user := models.User{}
-	has, err := sess.Where(`org_id = ? and id = ? and is_service_account = true`, orgID, serviceAccountID).Get(&user)
+func (s *ServiceAccountsStoreImpl) deleteServiceAccount(sess *sqlstore.DBSession, orgId, serviceAccountId int64) error {
+	user := user.User{}
+	has, err := sess.Where(`org_id = ? and id = ? and is_service_account = ?`,
+		orgId, serviceAccountId, s.sqlStore.Dialect.BooleanStr(true)).Get(&user)
 	if err != nil {
 		return err
 	}
 	if !has {
 		return serviceaccounts.ErrServiceAccountNotFound
 	}
-	for _, sql := range sqlstore.ServiceAccountDeletions() {
-		_, err := sess.Exec(sql, user.Id)
+	for _, sql := range ServiceAccountDeletions() {
+		_, err := sess.Exec(sql, user.ID)
 		if err != nil {
 			return err
 		}
@@ -79,104 +186,8 @@ func deleteServiceAccountInTransaction(sess *sqlstore.DBSession, orgID, serviceA
 	return nil
 }
 
-func (s *ServiceAccountsStoreImpl) UpgradeServiceAccounts(ctx context.Context) error {
-	basicKeys := s.sqlStore.GetNonServiceAccountAPIKeys(ctx)
-	if len(basicKeys) > 0 {
-		s.log.Info("Launching background thread to upgrade API keys to service accounts", "numberKeys", len(basicKeys))
-		go func() {
-			for _, key := range basicKeys {
-				err := s.CreateServiceAccountFromApikey(ctx, key)
-				if err != nil {
-					s.log.Error("migating to service accounts failed with error", err)
-				}
-			}
-		}()
-	}
-	return nil
-}
-
-func (s *ServiceAccountsStoreImpl) ConvertToServiceAccounts(ctx context.Context, keys []int64) error {
-	basicKeys := s.sqlStore.GetNonServiceAccountAPIKeys(ctx)
-	if len(basicKeys) == 0 {
-		return nil
-	}
-	if len(basicKeys) != len(keys) {
-		return fmt.Errorf("one of the keys already has a serviceaccount")
-	}
-	for _, key := range basicKeys {
-		if !contains(keys, key.Id) {
-			s.log.Error("convert service accounts stopped for keyId %d as it is not part of the query to convert or already has a service account", key.Id)
-			continue
-		}
-		err := s.CreateServiceAccountFromApikey(ctx, key)
-		if err != nil {
-			s.log.Error("converting to service accounts failed with error", err)
-		}
-	}
-	return nil
-}
-
-func (s *ServiceAccountsStoreImpl) CreateServiceAccountFromApikey(ctx context.Context, key *models.ApiKey) error {
-	sa, err := s.sqlStore.CreateServiceAccountForApikey(ctx, key.OrgId, key.Name, key.Role)
-	if err != nil {
-		return fmt.Errorf("failed to create service account for API key with error : %w", err)
-	}
-
-	err = s.sqlStore.UpdateApikeyServiceAccount(ctx, key.Id, sa.Id)
-	if err != nil {
-		return fmt.Errorf("failed to attach new service account to API key for keyId: %d and newServiceAccountId: %d with error: %w", key.Id, sa.Id, err)
-	}
-	s.log.Debug("Updated basic api key", "keyId", key.Id, "newServiceAccountId", sa.Id)
-	return nil
-}
-
-//nolint:gosimple
-func (s *ServiceAccountsStoreImpl) ListTokens(ctx context.Context, orgID int64, serviceAccountID int64) ([]*models.ApiKey, error) {
-	result := make([]*models.ApiKey, 0)
-	err := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
-		var sess *xorm.Session
-
-		sess = dbSession.
-			Join("inner", "user", "user.id = api_key.service_account_id").
-			Where("user.org_id=? AND user.id=?", orgID, serviceAccountID).
-			Asc("name")
-
-		return sess.Find(&result)
-	})
-	return result, err
-}
-
-func (s *ServiceAccountsStoreImpl) ListServiceAccounts(ctx context.Context, orgID, serviceAccountID int64) ([]*serviceaccounts.ServiceAccountDTO, error) {
-	query := models.GetOrgUsersQuery{OrgId: orgID, IsServiceAccount: true}
-	if serviceAccountID > 0 {
-		query.UserID = serviceAccountID
-	}
-
-	if err := s.sqlStore.GetOrgUsers(ctx, &query); err != nil {
-		return nil, err
-	}
-
-	saDTOs := make([]*serviceaccounts.ServiceAccountDTO, len(query.Result))
-	for i, user := range query.Result {
-		saDTOs[i] = &serviceaccounts.ServiceAccountDTO{
-			Id:    user.UserId,
-			OrgId: user.OrgId,
-			Name:  user.Name,
-			Login: user.Login,
-			Role:  user.Role,
-		}
-		tokens, err := s.ListTokens(ctx, user.OrgId, user.UserId)
-		if err != nil {
-			return nil, err
-		}
-		saDTOs[i].Tokens = int64(len(tokens))
-	}
-
-	return saDTOs, nil
-}
-
-// RetrieveServiceAccountByID returns a service account by its ID
-func (s *ServiceAccountsStoreImpl) RetrieveServiceAccount(ctx context.Context, orgID, serviceAccountID int64) (*serviceaccounts.ServiceAccountProfileDTO, error) {
+// RetrieveServiceAccount returns a service account by its ID
+func (s *ServiceAccountsStoreImpl) RetrieveServiceAccount(ctx context.Context, orgId, serviceAccountId int64) (*serviceaccounts.ServiceAccountProfileDTO, error) {
 	serviceAccount := &serviceaccounts.ServiceAccountProfileDTO{}
 
 	err := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
@@ -188,10 +199,10 @@ func (s *ServiceAccountsStoreImpl) RetrieveServiceAccount(ctx context.Context, o
 		whereParams := make([]interface{}, 0)
 
 		whereConditions = append(whereConditions, "org_user.org_id = ?")
-		whereParams = append(whereParams, orgID)
+		whereParams = append(whereParams, orgId)
 
 		whereConditions = append(whereConditions, "org_user.user_id = ?")
-		whereParams = append(whereParams, serviceAccountID)
+		whereParams = append(whereParams, serviceAccountId)
 
 		whereConditions = append(whereConditions,
 			fmt.Sprintf("%s.is_service_account = %s",
@@ -221,85 +232,60 @@ func (s *ServiceAccountsStoreImpl) RetrieveServiceAccount(ctx context.Context, o
 		return nil
 	})
 
-	if err != nil {
-		return nil, err
-	}
-
-	// Get Teams of service account. Can be optimized by combining with the query above
-	// in refactor
-	getTeamQuery := models.GetTeamsByUserQuery{UserId: serviceAccountID, OrgId: orgID}
-	if err := s.sqlStore.GetTeamsByUser(ctx, &getTeamQuery); err != nil {
-		return nil, err
-	}
-	teams := make([]string, len(getTeamQuery.Result))
-
-	for i := range getTeamQuery.Result {
-		teams[i] = getTeamQuery.Result[i].Name
-	}
-
-	serviceAccount.Teams = teams
-
-	return serviceAccount, nil
+	return serviceAccount, err
 }
 
-func (s *ServiceAccountsStoreImpl) UpdateServiceAccount(ctx context.Context,
-	orgID, serviceAccountID int64,
-	saForm *serviceaccounts.UpdateServiceAccountForm) (*serviceaccounts.ServiceAccountProfileDTO, error) {
-	updatedUser := &serviceaccounts.ServiceAccountProfileDTO{}
+func (s *ServiceAccountsStoreImpl) RetrieveServiceAccountIdByName(ctx context.Context, orgId int64, name string) (int64, error) {
+	serviceAccount := &struct {
+		Id int64
+	}{}
 
-	err := s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		var err error
-		updatedUser, err = s.RetrieveServiceAccount(ctx, orgID, serviceAccountID)
-		if err != nil {
+	err := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		sess := dbSession.Table("user")
+
+		whereConditions := []string{
+			fmt.Sprintf("%s.name = ?",
+				s.sqlStore.Dialect.Quote("user")),
+			fmt.Sprintf("%s.org_id = ?",
+				s.sqlStore.Dialect.Quote("user")),
+			fmt.Sprintf("%s.is_service_account = %s",
+				s.sqlStore.Dialect.Quote("user"),
+				s.sqlStore.Dialect.BooleanStr(true)),
+		}
+		whereParams := []interface{}{name, orgId}
+
+		sess.Where(strings.Join(whereConditions, " AND "), whereParams...)
+
+		sess.Cols(
+			"user.id",
+		)
+
+		if ok, err := sess.Get(serviceAccount); err != nil {
 			return err
-		}
-
-		if saForm.Name == nil && saForm.Role == nil && saForm.IsDisabled == nil {
-			return nil
-		}
-
-		updateTime := time.Now()
-		if saForm.Role != nil {
-			var orgUser models.OrgUser
-			orgUser.Role = *saForm.Role
-			orgUser.Updated = updateTime
-
-			if _, err := sess.ID(orgUser.Id).Update(&orgUser); err != nil {
-				return err
-			}
-
-			updatedUser.Role = string(*saForm.Role)
-		}
-
-		if saForm.Name != nil || saForm.IsDisabled != nil {
-			user := models.User{
-				Updated: updateTime,
-			}
-
-			if saForm.IsDisabled != nil {
-				user.IsDisabled = *saForm.IsDisabled
-				updatedUser.IsDisabled = *saForm.IsDisabled
-				sess.UseBool("is_disabled")
-			}
-
-			if saForm.Name != nil {
-				user.Name = *saForm.Name
-				updatedUser.Name = *saForm.Name
-			}
-
-			if _, err := sess.ID(serviceAccountID).Update(&user); err != nil {
-				return err
-			}
+		} else if !ok {
+			return serviceaccounts.ErrServiceAccountNotFound
 		}
 
 		return nil
 	})
 
-	return updatedUser, err
+	if err != nil {
+		return 0, err
+	}
+
+	return serviceAccount.Id, nil
 }
 
-func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context, query *models.SearchOrgUsersQuery) ([]*serviceaccounts.ServiceAccountDTO, error) {
-	serviceAccounts := make([]*serviceaccounts.ServiceAccountDTO, 0)
+func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(
+	ctx context.Context, orgId int64, query string, filter serviceaccounts.ServiceAccountFilter, page int, limit int,
+	signedInUser *user.SignedInUser,
+) (*serviceaccounts.SearchServiceAccountsResult, error) {
+	searchResult := &serviceaccounts.SearchServiceAccountsResult{
+		TotalCount:      0,
+		ServiceAccounts: make([]*serviceaccounts.ServiceAccountDTO, 0),
+		Page:            page,
+		PerPage:         limit,
+	}
 
 	err := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		sess := dbSession.Table("org_user")
@@ -309,15 +295,15 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 		whereParams := make([]interface{}, 0)
 
 		whereConditions = append(whereConditions, "org_user.org_id = ?")
-		whereParams = append(whereParams, query.OrgID)
+		whereParams = append(whereParams, orgId)
 
 		whereConditions = append(whereConditions,
 			fmt.Sprintf("%s.is_service_account = %s",
 				s.sqlStore.Dialect.Quote("user"),
 				s.sqlStore.Dialect.BooleanStr(true)))
 
-		if s.sqlStore.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
-			acFilter, err := accesscontrol.Filter(ctx, "org_user.user_id", "serviceaccounts", "serviceaccounts:read", query.User)
+		if !accesscontrol.IsDisabled(s.sqlStore.Cfg) {
+			acFilter, err := accesscontrol.Filter(signedInUser, "org_user.user_id", "serviceaccounts:id:", serviceaccounts.ActionRead)
 			if err != nil {
 				return err
 			}
@@ -325,18 +311,37 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 			whereParams = append(whereParams, acFilter.Args...)
 		}
 
-		if query.Query != "" {
-			queryWithWildcards := "%" + query.Query + "%"
+		if query != "" {
+			queryWithWildcards := "%" + query + "%"
 			whereConditions = append(whereConditions, "(email "+s.sqlStore.Dialect.LikeStr()+" ? OR name "+s.sqlStore.Dialect.LikeStr()+" ? OR login "+s.sqlStore.Dialect.LikeStr()+" ?)")
 			whereParams = append(whereParams, queryWithWildcards, queryWithWildcards, queryWithWildcards)
+		}
+
+		switch filter {
+		case serviceaccounts.FilterIncludeAll:
+			// pass
+		case serviceaccounts.FilterOnlyExpiredTokens:
+			now := time.Now().Unix()
+			// we do a subquery to remove duplicates coming from joining in api_keys, if we find more than one api key that has expired
+			whereConditions = append(
+				whereConditions,
+				"(SELECT count(*) FROM api_key WHERE api_key.service_account_id = org_user.user_id AND api_key.expires < ?) > 0")
+			whereParams = append(whereParams, now)
+		case serviceaccounts.FilterOnlyDisabled:
+			whereConditions = append(
+				whereConditions,
+				"is_disabled = ?")
+			whereParams = append(whereParams, s.sqlStore.Dialect.BooleanStr(true))
+		default:
+			s.log.Warn("invalid filter user for service account filtering", "service account search filtering", filter)
 		}
 
 		if len(whereConditions) > 0 {
 			sess.Where(strings.Join(whereConditions, " AND "), whereParams...)
 		}
-		if query.Limit > 0 {
-			offset := query.Limit * (query.Page - 1)
-			sess.Limit(query.Limit, offset)
+		if limit > 0 {
+			offset := limit * (page - 1)
+			sess.Limit(limit, offset)
 		}
 
 		sess.Cols(
@@ -350,7 +355,7 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 			"user.is_disabled",
 		)
 		sess.Asc("user.email", "user.login")
-		if err := sess.Find(&serviceAccounts); err != nil {
+		if err := sess.Find(&searchResult.ServiceAccounts); err != nil {
 			return err
 		}
 
@@ -366,7 +371,7 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 		if err != nil {
 			return err
 		}
-		query.Result.TotalCount = count
+		searchResult.TotalCount = count
 
 		return nil
 	})
@@ -374,14 +379,150 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 		return nil, err
 	}
 
-	return serviceAccounts, nil
+	return searchResult, nil
 }
 
-func contains(s []int64, e int64) bool {
-	for _, a := range s {
-		if a == e {
-			return true
+func (s *ServiceAccountsStoreImpl) GetAPIKeysMigrationStatus(ctx context.Context, orgId int64) (status *serviceaccounts.APIKeysMigrationStatus, err error) {
+	migrationStatus, exists, err := s.kvStore.Get(ctx, orgId, "serviceaccounts", "migrationStatus")
+	if err != nil {
+		return nil, err
+	}
+	if exists && migrationStatus == "1" {
+		return &serviceaccounts.APIKeysMigrationStatus{
+			Migrated: true,
+		}, nil
+	} else {
+		return &serviceaccounts.APIKeysMigrationStatus{
+			Migrated: false,
+		}, nil
+	}
+}
+
+func (s *ServiceAccountsStoreImpl) HideApiKeysTab(ctx context.Context, orgId int64) error {
+	if err := s.kvStore.Set(ctx, orgId, "serviceaccounts", "hideApiKeys", "1"); err != nil {
+		s.log.Error("Failed to hide API keys tab", err)
+	}
+	return nil
+}
+
+func (s *ServiceAccountsStoreImpl) MigrateApiKeysToServiceAccounts(ctx context.Context, orgId int64) error {
+	basicKeys, err := s.apiKeyService.GetAllAPIKeys(ctx, orgId)
+	if err != nil {
+		return err
+	}
+	if len(basicKeys) > 0 {
+		for _, key := range basicKeys {
+			err := s.CreateServiceAccountFromApikey(ctx, key)
+			if err != nil {
+				s.log.Error("migating to service accounts failed with error", err)
+				return err
+			}
+			s.log.Debug("API key converted to service account token", "keyId", key.Id)
 		}
 	}
-	return false
+	if err := s.kvStore.Set(ctx, orgId, "serviceaccounts", "migrationStatus", "1"); err != nil {
+		s.log.Error("Failed to write API keys migration status", err)
+	}
+	return nil
+}
+
+func (s *ServiceAccountsStoreImpl) MigrateApiKey(ctx context.Context, orgId int64, keyId int64) error {
+	basicKeys, err := s.apiKeyService.GetAllAPIKeys(ctx, orgId)
+	if err != nil {
+		return err
+	}
+	if len(basicKeys) == 0 {
+		return fmt.Errorf("no API keys to convert found")
+	}
+	for _, key := range basicKeys {
+		if keyId == key.Id {
+			err := s.CreateServiceAccountFromApikey(ctx, key)
+			if err != nil {
+				s.log.Error("converting to service account failed with error", "keyId", keyId, "error", err)
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (s *ServiceAccountsStoreImpl) CreateServiceAccountFromApikey(ctx context.Context, key *apikey.APIKey) error {
+	prefix := "sa-autogen"
+	cmd := user.CreateUserCommand{
+		Login:            fmt.Sprintf("%v-%v-%v", prefix, key.OrgId, key.Name),
+		Name:             fmt.Sprintf("%v-%v", prefix, key.Name),
+		OrgID:            key.OrgId,
+		DefaultOrgRole:   string(key.Role),
+		IsServiceAccount: true,
+	}
+
+	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		newSA, errCreateSA := s.sqlStore.CreateUser(ctx, cmd)
+		if errCreateSA != nil {
+			return fmt.Errorf("failed to create service account: %w", errCreateSA)
+		}
+
+		if err := s.assignApiKeyToServiceAccount(sess, key.Id, newSA.ID); err != nil {
+			if err := s.userService.Delete(ctx, &user.DeleteUserCommand{UserID: newSA.ID}); err != nil {
+				s.log.Error("Error deleting service account", "error", err)
+			}
+			return fmt.Errorf("failed to migrate API key to service account token: %w", err)
+		}
+
+		return nil
+	})
+}
+
+// RevertApiKey converts service account token to old API key
+func (s *ServiceAccountsStoreImpl) RevertApiKey(ctx context.Context, saId int64, keyId int64) error {
+	query := apikey.GetByIDQuery{ApiKeyId: keyId}
+	if err := s.apiKeyService.GetApiKeyById(ctx, &query); err != nil {
+		return err
+	}
+	key := query.Result
+
+	if key.ServiceAccountId == nil {
+		return fmt.Errorf("API key is not service account token")
+	}
+
+	if *key.ServiceAccountId != saId {
+		return ErrServiceAccountAndTokenMismatch
+	}
+
+	tokens, err := s.ListTokens(ctx, &serviceaccounts.GetSATokensQuery{
+		OrgID:            &key.OrgId,
+		ServiceAccountID: key.ServiceAccountId,
+	})
+	if err != nil {
+		return fmt.Errorf("cannot revert token: %w", err)
+	}
+	if len(tokens) > 1 {
+		return fmt.Errorf("cannot revert token: service account contains more than one token")
+	}
+
+	err = s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		user := user.User{}
+		has, err := sess.Where(`org_id = ? and id = ? and is_service_account = ?`,
+			key.OrgId, *key.ServiceAccountId, s.sqlStore.Dialect.BooleanStr(true)).Get(&user)
+		if err != nil {
+			return err
+		}
+		if !has {
+			return serviceaccounts.ErrServiceAccountNotFound
+		}
+		// Detach API key from service account
+		if err := s.detachApiKeyFromServiceAccount(sess, key.Id); err != nil {
+			return err
+		}
+		// Delete service account
+		if err := s.deleteServiceAccount(sess, key.OrgId, *key.ServiceAccountId); err != nil {
+			return err
+		}
+		return nil
+	})
+
+	if err != nil {
+		return fmt.Errorf("cannot revert token to API key: %w", err)
+	}
+	return nil
 }

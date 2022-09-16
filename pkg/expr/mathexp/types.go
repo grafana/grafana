@@ -2,6 +2,7 @@ package mathexp
 
 import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/expr/mathexp/parse"
 )
 
@@ -33,6 +34,7 @@ type Value interface {
 	GetMeta() interface{}
 	SetMeta(interface{})
 	AsDataFrame() *data.Frame
+	AddNotice(notice data.Notice)
 }
 
 // Scalar is the type that holds a single number constant.
@@ -55,7 +57,21 @@ func (s Scalar) GetMeta() interface{} {
 }
 
 func (s Scalar) SetMeta(v interface{}) {
-	s.Frame.SetMeta(&data.FrameMeta{Custom: v})
+	m := s.Frame.Meta
+	if m == nil {
+		m = &data.FrameMeta{}
+		s.Frame.SetMeta(m)
+	}
+	m.Custom = v
+}
+
+func (s Scalar) AddNotice(notice data.Notice) {
+	m := s.Frame.Meta
+	if m == nil {
+		m = &data.FrameMeta{}
+		s.Frame.SetMeta(m)
+	}
+	m.Notices = append(m.Notices, notice)
 }
 
 // AsDataFrame returns the underlying *data.Frame.
@@ -121,7 +137,21 @@ func (n Number) GetMeta() interface{} {
 }
 
 func (n Number) SetMeta(v interface{}) {
-	n.Frame.SetMeta(&data.FrameMeta{Custom: v})
+	m := n.Frame.Meta
+	if m == nil {
+		m = &data.FrameMeta{}
+		n.Frame.SetMeta(m)
+	}
+	m.Custom = v
+}
+
+func (n Number) AddNotice(notice data.Notice) {
+	m := n.Frame.Meta
+	if m == nil {
+		m = &data.FrameMeta{}
+		n.Frame.SetMeta(m)
+	}
+	m.Notices = append(m.Notices, notice)
 }
 
 // FloatField is a *float64 or a float64 data.Field with methods to always
@@ -142,4 +172,45 @@ func (ff *Float64Field) GetValue(idx int) *float64 {
 func (ff *Float64Field) Len() int {
 	df := data.Field(*ff)
 	return df.Len()
+}
+
+// NoData is an untyped no data response.
+type NoData struct{ Frame *data.Frame }
+
+// Type returns the Value type and allows it to fulfill the Value interface.
+func (s NoData) Type() parse.ReturnType { return parse.TypeNoData }
+
+// Value returns the actual value allows it to fulfill the Value interface.
+func (s NoData) Value() interface{} { return s }
+
+func (s NoData) GetLabels() data.Labels { return nil }
+
+func (s NoData) SetLabels(ls data.Labels) {}
+
+func (s NoData) GetMeta() interface{} {
+	return s.Frame.Meta.Custom
+}
+
+func (s NoData) SetMeta(v interface{}) {
+	m := s.Frame.Meta
+	if m == nil {
+		m = &data.FrameMeta{}
+		s.Frame.SetMeta(m)
+	}
+	m.Custom = v
+}
+
+func (s NoData) AddNotice(notice data.Notice) {
+	m := s.Frame.Meta
+	if m == nil {
+		m = &data.FrameMeta{}
+		s.Frame.SetMeta(m)
+	}
+	m.Notices = append(m.Notices, notice)
+}
+
+func (s NoData) AsDataFrame() *data.Frame { return s.Frame }
+
+func (s NoData) New() NoData {
+	return NoData{data.NewFrame("no data")}
 }

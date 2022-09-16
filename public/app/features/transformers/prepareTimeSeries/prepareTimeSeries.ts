@@ -1,3 +1,5 @@
+import { map } from 'rxjs/operators';
+
 import {
   SynchronousDataTransformerInfo,
   DataFrame,
@@ -12,7 +14,6 @@ import {
   ArrayVector,
 } from '@grafana/data';
 import { Labels } from 'app/types/unified-alerting-dto';
-import { map } from 'rxjs/operators';
 
 /**
  * There is currently an effort to figure out consistent names
@@ -301,7 +302,6 @@ export const prepareTimeSeriesTransformer: SynchronousDataTransformerInfo<Prepar
       const frame = outerJoinDataFrames({
         frames: data,
         joinBy: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
-        enforceSort: true,
         keepOriginIndices: true,
       });
       return frame ? [frame] : [];

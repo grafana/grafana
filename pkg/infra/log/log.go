@@ -15,13 +15,14 @@ import (
 	"time"
 
 	gokitlog "github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 	"github.com/go-stack/stack"
-	"github.com/grafana/grafana/pkg/infra/log/level"
-	"github.com/grafana/grafana/pkg/infra/log/term"
-	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/mattn/go-isatty"
 	"gopkg.in/ini.v1"
+
+	"github.com/grafana/grafana/pkg/infra/log/term"
+	"github.com/grafana/grafana/pkg/infra/log/text"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
@@ -29,6 +30,7 @@ var (
 	loggersToReload []ReloadableHandler
 	root            *logManager
 	now             = time.Now
+	logTimeFormat   = time.RFC3339Nano
 )
 
 const (
@@ -41,8 +43,10 @@ func init() {
 	loggersToClose = make([]DisposableHandler, 0)
 	loggersToReload = make([]ReloadableHandler, 0)
 
-	// Use console by default
-	format := getLogFormat("console")
+	// Use discard by default
+	format := func(w io.Writer) gokitlog.Logger {
+		return gokitlog.NewLogfmtLogger(gokitlog.NewSyncWriter(io.Discard))
+	}
 	logger := level.NewFilter(format(os.Stderr), level.AllowInfo())
 	root = newManager(logger)
 }
@@ -169,6 +173,11 @@ func (cl *ConcreteLogger) Debug(msg string, args ...interface{}) {
 	_ = cl.log(msg, level.DebugValue(), args...)
 }
 
+func (cl *ConcreteLogger) Log(ctx ...interface{}) error {
+	logger := gokitlog.With(&cl.SwapLogger, "t", gokitlog.TimestampFormat(now, logTimeFormat))
+	return logger.Log(ctx...)
+}
+
 func (cl *ConcreteLogger) Error(msg string, args ...interface{}) {
 	_ = cl.log(msg, level.ErrorValue(), args...)
 }
@@ -178,10 +187,7 @@ func (cl *ConcreteLogger) Info(msg string, args ...interface{}) {
 }
 
 func (cl *ConcreteLogger) log(msg string, logLevel level.Value, args ...interface{}) error {
-	logger := gokitlog.With(&cl.SwapLogger, "t", gokitlog.TimestampFormat(now, "2006-01-02T15:04:05.99-0700"))
-	args = append([]interface{}{level.Key(), logLevel, "msg", msg}, args...)
-
-	return logger.Log(args...)
+	return cl.Log(append([]interface{}{level.Key(), logLevel, "msg", msg}, args...)...)
 }
 
 func (cl *ConcreteLogger) New(ctx ...interface{}) *ConcreteLogger {
@@ -192,6 +198,18 @@ func (cl *ConcreteLogger) New(ctx ...interface{}) *ConcreteLogger {
 	return newConcreteLogger(gokitlog.With(&cl.SwapLogger), ctx...)
 }
 
+// New creates a new logger.
+// First ctx argument is expected to be the name of the logger.
+// Note: For a contextual logger, i.e. a logger with a shared
+// name plus additional contextual information, you must use the
+// Logger interface New method for it to work as expected.
+// Example creating a shared logger:
+//
+//	requestLogger := log.New("request-logger")
+//
+// Example creating a contextual logger:
+//
+//	contextualLogger := requestLogger.New("username", "user123")
 func New(ctx ...interface{}) *ConcreteLogger {
 	if len(ctx) == 0 {
 		return root.New()
@@ -305,11 +323,11 @@ func getLogFormat(format string) Formatedlogger {
 			}
 		}
 		return func(w io.Writer) gokitlog.Logger {
-			return gokitlog.NewLogfmtLogger(w)
+			return text.NewTextLogger(w)
 		}
 	case "text":
 		return func(w io.Writer) gokitlog.Logger {
-			return gokitlog.NewLogfmtLogger(w)
+			return text.NewTextLogger(w)
 		}
 	case "json":
 		return func(w io.Writer) gokitlog.Logger {
@@ -317,7 +335,7 @@ func getLogFormat(format string) Formatedlogger {
 		}
 	default:
 		return func(w io.Writer) gokitlog.Logger {
-			return gokitlog.NewLogfmtLogger(w)
+			return text.NewTextLogger(w)
 		}
 	}
 }
@@ -357,6 +375,11 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 		return err
 	}
 
+	logEnabled := cfg.Section("log").Key("enabled").MustBool(true)
+	if !logEnabled {
+		return nil
+	}
+
 	defaultLevelName, _ := getLogLevelFromConfig("log", "info", cfg)
 	defaultFilters := getFilters(util.SplitString(cfg.Section("log").Key("filters").String()))
 
@@ -366,7 +389,7 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 		sec, err := cfg.GetSection("log." + mode)
 		if err != nil {
 			_ = level.Error(root).Log("Unknown log mode", "mode", mode)
-			return errutil.Wrapf(err, "failed to get config section log.%s", mode)
+			return fmt.Errorf("failed to get config section log. %s: %w", mode, err)
 		}
 
 		// Log level.
@@ -423,7 +446,6 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 		handler.maxLevel = leveloption
 		configLoggers = append(configLoggers, handler)
 	}
-
 	if len(configLoggers) > 0 {
 		root.initialize(configLoggers)
 	}

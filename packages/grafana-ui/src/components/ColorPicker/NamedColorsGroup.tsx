@@ -1,11 +1,14 @@
-import React, { FunctionComponent } from 'react';
-import { GrafanaTheme2, ThemeVizHue } from '@grafana/data';
-import { Property } from 'csstype';
-import { ColorSwatch, ColorSwatchVariant } from './ColorSwatch';
-import { upperFirst } from 'lodash';
-import { useStyles2 } from '../../themes/ThemeContext';
 import { css } from '@emotion/css';
+import { Property } from 'csstype';
+import { upperFirst } from 'lodash';
+import React, { FunctionComponent } from 'react';
+
+import { GrafanaTheme2, ThemeVizHue } from '@grafana/data';
+
+import { useStyles2 } from '../../themes/ThemeContext';
 import { reverseMap } from '../../utils/reverseMap';
+
+import { ColorSwatch, ColorSwatchVariant } from './ColorSwatch';
 
 interface NamedColorsGroupProps {
   hue: ThemeVizHue;

@@ -1,4 +1,5 @@
 import { Registry } from '@grafana/data';
+
 import { getBasicValueMatchersUI } from './BasicMatcherEditor';
 import { getNoopValueMatchersUI } from './NoopMatcherEditor';
 import { getRangeValueMatchersUI } from './RangeMatcherEditor';

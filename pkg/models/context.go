@@ -4,6 +4,9 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/prometheus/client_golang/prometheus"
@@ -11,7 +14,7 @@ import (
 
 type ReqContext struct {
 	*web.Context
-	*SignedInUser
+	*user.SignedInUser
 	UserToken *UserToken
 
 	IsSignedIn     bool
@@ -20,7 +23,8 @@ type ReqContext struct {
 	SkipCache      bool
 	Logger         log.Logger
 	// RequestNonce is a cryptographic request identifier for use with Content Security Policy.
-	RequestNonce string
+	RequestNonce          string
+	IsPublicDashboardView bool
 
 	PerfmonTimer   prometheus.Summary
 	LookupTokenErr error
@@ -51,9 +55,11 @@ func (ctx *ReqContext) IsApiRequest() bool {
 
 func (ctx *ReqContext) JsonApiErr(status int, message string, err error) {
 	resp := make(map[string]interface{})
+	traceID := tracing.TraceIDFromContext(ctx.Req.Context(), false)
 
 	if err != nil {
-		ctx.Logger.Error(message, "error", err)
+		resp["traceID"] = traceID
+		ctx.Logger.Error(message, "error", err, "traceID", traceID)
 		if setting.Env != setting.Prod {
 			resp["error"] = err.Error()
 		}
@@ -73,11 +79,11 @@ func (ctx *ReqContext) JsonApiErr(status int, message string, err error) {
 	ctx.JSON(status, resp)
 }
 
-func (ctx *ReqContext) HasUserRole(role RoleType) bool {
+func (ctx *ReqContext) HasUserRole(role org.RoleType) bool {
 	return ctx.OrgRole.Includes(role)
 }
 
-func (ctx *ReqContext) HasHelpFlag(flag HelpFlags1) bool {
+func (ctx *ReqContext) HasHelpFlag(flag user.HelpFlags1) bool {
 	return ctx.HelpFlags1.HasFlag(flag)
 }
 

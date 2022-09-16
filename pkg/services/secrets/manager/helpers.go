@@ -4,17 +4,25 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/usagestats"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	encryptionprovider "github.com/grafana/grafana/pkg/services/encryption/provider"
+	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/kmsproviders/osskmsproviders"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 )
 
 func SetupTestService(tb testing.TB, store secrets.Store) *SecretsService {
+	return setupTestService(tb, store, featuremgmt.WithFeatures())
+}
+
+func SetupDisabledTestService(tb testing.TB, store secrets.Store) *SecretsService {
+	return setupTestService(tb, store, featuremgmt.WithFeatures(featuremgmt.FlagDisableEnvelopeEncryption))
+}
+
+func setupTestService(tb testing.TB, store secrets.Store, features *featuremgmt.FeatureManager) *SecretsService {
 	tb.Helper()
 	defaultKey := "SdlklWklckeLS"
 	if len(setting.SecretKey) > 0 {
@@ -22,19 +30,22 @@ func SetupTestService(tb testing.TB, store secrets.Store) *SecretsService {
 	}
 	raw, err := ini.Load([]byte(`
 		[security]
-		secret_key = ` + defaultKey))
+		secret_key = ` + defaultKey + `
+
+		[security.encryption]
+		data_keys_cache_ttl = 5m
+		data_keys_cache_cleanup_interval = 1ns`))
 	require.NoError(tb, err)
 
-	features := featuremgmt.WithFeatures(featuremgmt.FlagEnvelopeEncryption)
-
 	cfg := &setting.Cfg{Raw: raw}
-	cfg.IsFeatureToggleEnabled = features.IsEnabled
-
 	settings := &setting.OSSImpl{Cfg: cfg}
-	assert.True(tb, settings.IsFeatureToggleEnabled(featuremgmt.FlagEnvelopeEncryption))
-	assert.True(tb, features.IsEnabled(featuremgmt.FlagEnvelopeEncryption))
 
-	encryption := ossencryption.ProvideService()
+	encProvider := encryptionprovider.Provider{}
+	usageStats := &usagestats.UsageStatsMock{}
+
+	encryption, err := encryptionservice.ProvideEncryptionService(encProvider, usageStats, settings)
+	require.NoError(tb, err)
+
 	secretsService, err := ProvideSecretsService(
 		store,
 		osskmsproviders.ProvideService(encryption, settings, features),

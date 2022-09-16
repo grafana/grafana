@@ -1,3 +1,6 @@
+import { merge, Observable, of } from 'rxjs';
+import { catchError, switchMap } from 'rxjs/operators';
+
 import {
   DataSourceApi,
   DataQueryRequest,
@@ -13,8 +16,8 @@ import {
   DataSourceRef,
   dataFrameToJSON,
 } from '@grafana/data';
-import { merge, Observable, of } from 'rxjs';
-import { catchError, switchMap } from 'rxjs/operators';
+
+import { config } from '../config';
 import {
   getBackendSrv,
   getDataSourceSrv,
@@ -22,7 +25,7 @@ import {
   StreamingFrameOptions,
   StreamingFrameAction,
 } from '../services';
-import { config } from '../config';
+
 import { BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
 
 /**
@@ -31,6 +34,7 @@ import { BackendDataSourceResponse, toDataQueryResponse } from './queryResponse'
 export const ExpressionDatasourceRef = Object.freeze({
   type: '__expr__',
   uid: '__expr__',
+  name: 'Expression',
 });
 
 /**
@@ -44,7 +48,7 @@ export function isExpressionReference(ref?: DataSourceRef | string | null): bool
   return v === ExpressionDatasourceRef.type || v === '-100'; // -100 was a legacy accident that should be removed
 }
 
-class HealthCheckError extends Error {
+export class HealthCheckError extends Error {
   details: HealthCheckResultDetails;
 
   constructor(message: string, details: HealthCheckResultDetails) {
@@ -106,7 +110,7 @@ class DataSourceWithBackend<
    * Ideally final -- any other implementation may not work as expected
    */
   query(request: DataQueryRequest<TQuery>): Observable<DataQueryResponse> {
-    const { intervalMs, maxDataPoints, range, requestId } = request;
+    const { intervalMs, maxDataPoints, range, requestId, hideFromInspector = false } = request;
     let targets = request.targets;
 
     if (this.filterQuery) {
@@ -170,6 +174,7 @@ class DataSourceWithBackend<
         method: 'POST',
         data: body,
         requestId,
+        hideFromInspector,
       })
       .pipe(
         switchMap((raw) => {

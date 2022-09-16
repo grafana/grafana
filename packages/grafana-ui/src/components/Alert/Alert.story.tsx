@@ -1,15 +1,16 @@
-import React from 'react';
-import { Story } from '@storybook/react';
 import { action } from '@storybook/addon-actions';
+import { ComponentStory, ComponentMeta } from '@storybook/react';
+import React from 'react';
+
 import { Alert, AlertVariant, VerticalGroup } from '@grafana/ui';
-import { Props } from './Alert';
+
+import { StoryExample } from '../../utils/storybook/StoryExample';
 import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 import mdx from '../Alert/Alert.mdx';
-import { StoryExample } from '../../utils/storybook/StoryExample';
 
 const severities: AlertVariant[] = ['error', 'warning', 'info', 'success'];
 
-export default {
+const meta: ComponentMeta<typeof Alert> = {
   title: 'Overlays/Alert',
   component: Alert,
   decorators: [withCenteredStory, withHorizontallyCenteredStory],
@@ -29,7 +30,7 @@ export default {
   },
 };
 
-export const Examples: Story<Props> = ({ severity, title, buttonContent }) => {
+export const Examples: ComponentStory<typeof Alert> = ({ severity, title, buttonContent }) => {
   return (
     <VerticalGroup>
       <StoryExample name="With buttonContent and children">
@@ -187,3 +188,5 @@ Examples.args = {
   title: 'Some very important message',
   buttonContent: 'Close',
 };
+
+export default meta;

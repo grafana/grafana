@@ -1,43 +1,16 @@
 package api
 
 import (
-	"context"
 	"fmt"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
-
-type FakeAlertingStore struct {
-	orgsWithConfig map[int64]bool
-}
-
-func newFakeAlertingStore(t *testing.T) FakeAlertingStore {
-	t.Helper()
-
-	return FakeAlertingStore{
-		orgsWithConfig: map[int64]bool{},
-	}
-}
-
-func (f FakeAlertingStore) Setup(orgID int64) {
-	f.orgsWithConfig[orgID] = true
-}
-
-func (f FakeAlertingStore) GetLatestAlertmanagerConfiguration(_ context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) error {
-	if _, ok := f.orgsWithConfig[query.OrgID]; ok {
-		return nil
-	}
-	return store.ErrNoAlertmanagerConfiguration
-}
 
 type fakeAlertInstanceManager struct {
 	mtx sync.Mutex
@@ -73,13 +46,15 @@ func (f *fakeAlertInstanceManager) GetStatesForRuleUID(orgID int64, alertRuleUID
 	return f.states[orgID][alertRuleUID]
 }
 
-func (f *fakeAlertInstanceManager) GenerateAlertInstances(orgID int64, count int) {
+// forEachState represents the callback used when generating alert instances that allows us to modify the generated result
+type forEachState func(s *state.State) *state.State
+
+func (f *fakeAlertInstanceManager) GenerateAlertInstances(orgID int64, alertRuleUID string, count int, callbacks ...forEachState) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 
-	evaluationTime := time.Now()
+	evaluationTime := timeNow()
 	evaluationDuration := 1 * time.Minute
-	alertRuleUID := util.GenerateShortUID()
 
 	for i := 0; i < count; i++ {
 		_, ok := f.states[orgID]
@@ -91,8 +66,8 @@ func (f *fakeAlertInstanceManager) GenerateAlertInstances(orgID int64, count int
 			f.states[orgID][alertRuleUID] = []*state.State{}
 		}
 
-		f.states[orgID][alertRuleUID] = append(f.states[orgID][alertRuleUID], &state.State{
-			AlertRuleUID: fmt.Sprintf("alert_rule_%v", i),
+		newState := &state.State{
+			AlertRuleUID: alertRuleUID,
 			OrgID:        1,
 			Labels: data.Labels{
 				"__alert_rule_namespace_uid__": "test_namespace_uid",
@@ -117,6 +92,14 @@ func (f *fakeAlertInstanceManager) GenerateAlertInstances(orgID int64, count int
 			LastEvaluationTime: evaluationTime.Add(1 * time.Minute),
 			EvaluationDuration: evaluationDuration,
 			Annotations:        map[string]string{"annotation": "test"},
-		})
+		}
+
+		if len(callbacks) != 0 {
+			for _, cb := range callbacks {
+				newState = cb(newState)
+			}
+		}
+
+		f.states[orgID][alertRuleUID] = append(f.states[orgID][alertRuleUID], newState)
 	}
 }

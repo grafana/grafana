@@ -1,8 +1,12 @@
+import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { FieldType, LogRowModel, MutableDataFrame, Labels, LogLevel, DataQueryResponse } from '@grafana/data';
-import { getRowContexts, LogRowContextProvider } from './LogRowContextProvider';
-import { mount } from 'enzyme';
-import { act } from 'react-dom/test-utils';
+
+import { FieldType, LogRowModel, MutableDataFrame, DataQueryResponse } from '@grafana/data';
+
+import { getRowContexts, LogRowContextProvider, RowContextOptions } from './LogRowContextProvider';
+import { createLogRow } from './__mocks__/logRow';
+
+const row = createLogRow({ entry: '4', timeEpochMs: 4 });
 
 describe('getRowContexts', () => {
   describe('when called with a DataFrame and results are returned', () => {
@@ -24,7 +28,7 @@ describe('getRowContexts', () => {
         ],
       });
       let called = false;
-      const getRowContextMock = (row: LogRowModel, options?: any): Promise<DataQueryResponse> => {
+      const getRowContextMock = (row: LogRowModel, options?: RowContextOptions): Promise<DataQueryResponse> => {
         if (!called) {
           called = true;
           return Promise.resolve({ data: [firstResult] });
@@ -59,7 +63,7 @@ describe('getRowContexts', () => {
         ],
       });
       let called = false;
-      const getRowContextMock = (row: LogRowModel, options?: any): Promise<DataQueryResponse> => {
+      const getRowContextMock = (row: LogRowModel, options?: RowContextOptions): Promise<DataQueryResponse> => {
         if (!called) {
           called = true;
           return Promise.resolve({ data: [firstResult] });
@@ -84,7 +88,7 @@ describe('getRowContexts', () => {
       const firstError = new Error('Error 1');
       const secondError = new Error('Error 2');
       let called = false;
-      const getRowContextMock = (row: LogRowModel, options?: any): Promise<DataQueryResponse> => {
+      const getRowContextMock = (row: LogRowModel, options?: RowContextOptions): Promise<DataQueryResponse> => {
         if (!called) {
           called = true;
           return Promise.reject(firstError);
@@ -131,7 +135,7 @@ describe('LogRowContextProvider', () => {
       });
 
       let called = false;
-      const getRowContextMock = (row: LogRowModel, options?: any): Promise<DataQueryResponse> => {
+      const getRowContextMock = (row: LogRowModel, options?: RowContextOptions): Promise<DataQueryResponse> => {
         if (!called) {
           called = true;
           return Promise.resolve({ data: [firstResult] });
@@ -140,14 +144,14 @@ describe('LogRowContextProvider', () => {
       };
       let updateLimitCalled = false;
 
-      const mockedChildren = jest.fn((mockState: any) => {
+      const mockedChildren = jest.fn((mockState) => {
         const { result, errors, hasMoreContextRows, updateLimit, limit } = mockState;
         if (!updateLimitCalled && result.before.length === 0) {
           expect(result).toEqual({ before: [], after: [] });
           expect(errors).toEqual({ before: undefined, after: undefined });
           expect(hasMoreContextRows).toEqual({ before: true, after: true });
           expect(limit).toBe(10);
-          return <></>;
+          return <div data-testid="mockChild" />;
         }
         if (!updateLimitCalled && result.before.length > 0) {
           expect(result).toEqual({ before: ['10', '9', '8', '7', '6', '5'], after: ['14', '13', '12'] });
@@ -156,38 +160,19 @@ describe('LogRowContextProvider', () => {
           expect(limit).toBe(10);
           updateLimit();
           updateLimitCalled = true;
-          return <></>;
+          return <div data-testid="mockChild" />;
         }
         if (updateLimitCalled && result.before.length > 0 && limit > 10) {
           expect(limit).toBe(20);
         }
-        return <></>;
+        return <div data-testid="mockChild" />;
       });
-      await act(async () => {
-        await mount(
-          <LogRowContextProvider row={row} getRowContext={getRowContextMock}>
-            {mockedChildren}
-          </LogRowContextProvider>
-        );
-      });
+      render(
+        <LogRowContextProvider row={row} getRowContext={getRowContextMock}>
+          {mockedChildren}
+        </LogRowContextProvider>
+      );
+      await screen.findByTestId('mockChild');
     });
   });
 });
-
-const row: LogRowModel = {
-  entryFieldIndex: 0,
-  rowIndex: 0,
-  dataFrame: new MutableDataFrame(),
-  entry: '4',
-  labels: null as any as Labels,
-  hasAnsi: false,
-  hasUnescapedContent: false,
-  raw: '4',
-  logLevel: LogLevel.info,
-  timeEpochMs: 4,
-  timeEpochNs: '4000000',
-  timeFromNow: '',
-  timeLocal: '',
-  timeUtc: '',
-  uid: '1',
-};

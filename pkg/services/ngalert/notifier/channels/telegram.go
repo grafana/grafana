@@ -3,18 +3,24 @@ package channels
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"mime/multipart"
+	"os"
+
+	"github.com/prometheus/alertmanager/notify"
+	"github.com/prometheus/alertmanager/template"
+	"github.com/prometheus/alertmanager/types"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
-	"github.com/prometheus/alertmanager/template"
-	"github.com/prometheus/alertmanager/types"
 )
 
 var (
-	TelegramAPIURL = "https://api.telegram.org/bot%s/sendMessage"
+	TelegramAPIURL = "https://api.telegram.org/bot%s/%s"
 )
 
 // TelegramNotifier is responsible for sending
@@ -25,127 +31,182 @@ type TelegramNotifier struct {
 	ChatID   string
 	Message  string
 	log      log.Logger
+	images   ImageStore
 	ns       notifications.WebhookSender
 	tmpl     *template.Template
 }
 
-// NewTelegramNotifier is the constructor for the Telegram notifier
-func NewTelegramNotifier(model *NotificationChannelConfig, ns notifications.WebhookSender, t *template.Template, fn GetDecryptedValueFn) (*TelegramNotifier, error) {
-	if model.Settings == nil {
-		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
-	}
-	if model.SecureSettings == nil {
-		return nil, receiverInitError{Cfg: *model, Reason: "no secure settings supplied"}
-	}
+type TelegramConfig struct {
+	*NotificationChannelConfig
+	BotToken string
+	ChatID   string
+	Message  string
+}
 
-	botToken := fn(context.Background(), model.SecureSettings, "bottoken", model.Settings.Get("bottoken").MustString())
-	chatID := model.Settings.Get("chatid").MustString()
-	message := model.Settings.Get("message").MustString(`{{ template "default.message" . }}`)
+func TelegramFactory(fc FactoryConfig) (NotificationChannel, error) {
+	config, err := NewTelegramConfig(fc.Config, fc.DecryptFunc)
+	if err != nil {
+		return nil, receiverInitError{
+			Reason: err.Error(),
+			Cfg:    *fc.Config,
+		}
+	}
+	return NewTelegramNotifier(config, fc.ImageStore, fc.NotificationService, fc.Template), nil
+}
 
+func NewTelegramConfig(config *NotificationChannelConfig, fn GetDecryptedValueFn) (*TelegramConfig, error) {
+	botToken := fn(context.Background(), config.SecureSettings, "bottoken", config.Settings.Get("bottoken").MustString())
 	if botToken == "" {
-		return nil, receiverInitError{Cfg: *model, Reason: "could not find Bot Token in settings"}
+		return &TelegramConfig{}, errors.New("could not find Bot Token in settings")
 	}
-
+	chatID := config.Settings.Get("chatid").MustString()
 	if chatID == "" {
-		return nil, receiverInitError{Cfg: *model, Reason: "could not find Chat Id in settings"}
+		return &TelegramConfig{}, errors.New("could not find Chat Id in settings")
 	}
+	return &TelegramConfig{
+		NotificationChannelConfig: config,
+		BotToken:                  botToken,
+		ChatID:                    chatID,
+		Message:                   config.Settings.Get("message").MustString(`{{ template "default.message" . }}`),
+	}, nil
+}
 
+// NewTelegramNotifier is the constructor for the Telegram notifier
+func NewTelegramNotifier(config *TelegramConfig, images ImageStore, ns notifications.WebhookSender, t *template.Template) *TelegramNotifier {
 	return &TelegramNotifier{
 		Base: NewBase(&models.AlertNotification{
-			Uid:                   model.UID,
-			Name:                  model.Name,
-			Type:                  model.Type,
-			DisableResolveMessage: model.DisableResolveMessage,
-			Settings:              model.Settings,
+			Uid:                   config.UID,
+			Name:                  config.Name,
+			Type:                  config.Type,
+			DisableResolveMessage: config.DisableResolveMessage,
+			Settings:              config.Settings,
 		}),
-		BotToken: botToken,
-		ChatID:   chatID,
-		Message:  message,
+		BotToken: config.BotToken,
+		ChatID:   config.ChatID,
+		Message:  config.Message,
 		tmpl:     t,
 		log:      log.New("alerting.notifier.telegram"),
+		images:   images,
 		ns:       ns,
-	}, nil
+	}
 }
 
 // Notify send an alert notification to Telegram.
 func (tn *TelegramNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
-	msg, err := tn.buildTelegramMessage(ctx, as)
-	if err != nil {
-		return false, err
-	}
-
-	var body bytes.Buffer
-	w := multipart.NewWriter(&body)
-	defer func() {
-		if err := w.Close(); err != nil {
-			tn.log.Warn("Failed to close writer", "err", err)
-		}
-	}()
-	boundary := GetBoundary()
-	if boundary != "" {
-		err = w.SetBoundary(boundary)
+	// Create the cmd for sendMessage
+	cmd, err := tn.newWebhookSyncCmd("sendMessage", func(w *multipart.Writer) error {
+		msg, err := tn.buildTelegramMessage(ctx, as)
 		if err != nil {
-			return false, err
+			return fmt.Errorf("failed to build message: %w", err)
 		}
-	}
-
-	for k, v := range msg {
-		if err := writeField(w, k, v); err != nil {
-			return false, err
+		for k, v := range msg {
+			fw, err := w.CreateFormField(k)
+			if err != nil {
+				return fmt.Errorf("failed to create form field: %w", err)
+			}
+			if _, err := fw.Write([]byte(v)); err != nil {
+				return fmt.Errorf("failed to write value: %w", err)
+			}
 		}
+		return nil
+	})
+	if err != nil {
+		return false, fmt.Errorf("failed to create telegram message: %w", err)
 	}
-
-	// We need to close it before using so that the last part
-	// is added to the writer along with the boundary.
-	if err := w.Close(); err != nil {
-		return false, err
-	}
-
-	tn.log.Info("sending telegram notification", "chat_id", msg["chat_id"])
-	cmd := &models.SendWebhookSync{
-		Url:        fmt.Sprintf(TelegramAPIURL, tn.BotToken),
-		Body:       body.String(),
-		HttpMethod: "POST",
-		HttpHeader: map[string]string{
-			"Content-Type": w.FormDataContentType(),
-		},
-	}
-
 	if err := tn.ns.SendWebhookSync(ctx, cmd); err != nil {
-		tn.log.Error("Failed to send webhook", "error", err, "webhook", tn.Name)
-		return false, err
+		return false, fmt.Errorf("failed to send telegram message: %w", err)
 	}
+
+	// Create the cmd to upload each image
+	_ = withStoredImages(ctx, tn.log, tn.images, func(index int, image ngmodels.Image) error {
+		cmd, err = tn.newWebhookSyncCmd("sendPhoto", func(w *multipart.Writer) error {
+			f, err := os.Open(image.Path)
+			if err != nil {
+				return fmt.Errorf("failed to open image: %w", err)
+			}
+			defer func() {
+				if err := f.Close(); err != nil {
+					tn.log.Warn("failed to close image", "err", err)
+				}
+			}()
+			fw, err := w.CreateFormFile("photo", image.Path)
+			if err != nil {
+				return fmt.Errorf("failed to create form file: %w", err)
+			}
+			if _, err := io.Copy(fw, f); err != nil {
+				return fmt.Errorf("failed to write to form file: %w", err)
+			}
+			return nil
+		})
+		if err != nil {
+			return fmt.Errorf("failed to create image: %w", err)
+		}
+		if err := tn.ns.SendWebhookSync(ctx, cmd); err != nil {
+			return fmt.Errorf("failed to upload image to telegram: %w", err)
+		}
+		return nil
+	}, as...)
 
 	return true, nil
 }
 
 func (tn *TelegramNotifier) buildTelegramMessage(ctx context.Context, as []*types.Alert) (map[string]string, error) {
 	var tmplErr error
+	defer func() {
+		if tmplErr != nil {
+			tn.log.Warn("failed to template Telegram message", "err", tmplErr)
+		}
+	}()
+
 	tmpl, _ := TmplText(ctx, tn.tmpl, as, tn.log, &tmplErr)
-
-	msg := map[string]string{}
-	msg["chat_id"] = tmpl(tn.ChatID)
-	msg["parse_mode"] = "html"
-
-	message := tmpl(tn.Message)
-	if tmplErr != nil {
-		tn.log.Warn("failed to template Telegram message", "err", tmplErr.Error())
+	// Telegram supports 4096 chars max
+	messageText, truncated := notify.Truncate(tmpl(tn.Message), 4096)
+	if truncated {
+		tn.log.Warn("Telegram message too long, truncate message", "original_message", tn.Message)
 	}
 
-	msg["text"] = message
-
-	return msg, nil
+	m := make(map[string]string)
+	m["text"] = messageText
+	m["parse_mode"] = "html"
+	return m, nil
 }
 
-func writeField(w *multipart.Writer, name, value string) error {
-	fw, err := w.CreateFormField(name)
+func (tn *TelegramNotifier) newWebhookSyncCmd(action string, fn func(writer *multipart.Writer) error) (*models.SendWebhookSync, error) {
+	b := bytes.Buffer{}
+	w := multipart.NewWriter(&b)
+
+	boundary := GetBoundary()
+	if boundary != "" {
+		if err := w.SetBoundary(boundary); err != nil {
+			return nil, err
+		}
+	}
+
+	fw, err := w.CreateFormField("chat_id")
 	if err != nil {
-		return err
+		return nil, err
 	}
-	if _, err := fw.Write([]byte(value)); err != nil {
-		return err
+	if _, err := fw.Write([]byte(tn.ChatID)); err != nil {
+		return nil, err
 	}
-	return nil
+
+	if err := fn(w); err != nil {
+		return nil, err
+	}
+
+	if err := w.Close(); err != nil {
+		return nil, fmt.Errorf("failed to close multipart: %w", err)
+	}
+
+	cmd := &models.SendWebhookSync{
+		Url:        fmt.Sprintf(TelegramAPIURL, tn.BotToken, action),
+		Body:       b.String(),
+		HttpMethod: "POST",
+		HttpHeader: map[string]string{
+			"Content-Type": w.FormDataContentType(),
+		},
+	}
+	return cmd, nil
 }
 
 func (tn *TelegramNotifier) SendResolved() bool {

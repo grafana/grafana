@@ -1,3 +1,6 @@
+import React, { useState, useEffect } from 'react';
+import useAsync from 'react-use/lib/useAsync';
+
 import {
   LogRowModel,
   toDataFrame,
@@ -7,8 +10,6 @@ import {
   DataQueryResponse,
   DataQueryError,
 } from '@grafana/data';
-import React, { useState, useEffect } from 'react';
-import useAsync from 'react-use/lib/useAsync';
 
 export interface RowContextOptions {
   direction?: 'BACKWARD' | 'FORWARD';
@@ -72,7 +73,7 @@ export const getRowContexts = async (
       return [];
     }
 
-    const data: any[] = [];
+    const data = [];
     for (let index = 0; index < dataResult.data.length; index++) {
       const dataFrame = toDataFrame(dataResult.data[index]);
       const fieldCache = new FieldCache(dataFrame);
@@ -165,7 +166,7 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
   // The side effect changes the hasMoreContextRows state if there are more context rows before or after the current result
   useEffect(() => {
     if (value) {
-      setResult((currentResult: any) => {
+      setResult((currentResult) => {
         let hasMoreLogsBefore = true,
           hasMoreLogsAfter = true;
 

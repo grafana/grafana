@@ -3,9 +3,9 @@ package flux
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -34,7 +34,7 @@ type MockRunner struct {
 }
 
 func (r *MockRunner) runQuery(ctx context.Context, q string) (*api.QueryTableResult, error) {
-	bytes, err := ioutil.ReadFile(filepath.Join("testdata", r.testDataPath))
+	bytes, err := os.ReadFile(filepath.Join("testdata", r.testDataPath))
 	if err != nil {
 		return nil, err
 	}
@@ -69,9 +69,7 @@ func executeMockedQuery(t *testing.T, name string, query queryModel) *backend.Da
 func verifyGoldenResponse(t *testing.T, name string) *backend.DataResponse {
 	dr := executeMockedQuery(t, name, queryModel{MaxDataPoints: 100})
 
-	err := experimental.CheckGoldenDataResponse(filepath.Join("testdata", fmt.Sprintf("%s.golden.txt", name)),
-		dr, true)
-	require.NoError(t, err)
+	experimental.CheckGoldenJSONResponse(t, "testdata", name+".golden", dr, true)
 	require.NoError(t, dr.Error)
 
 	return dr
@@ -232,8 +230,7 @@ func TestRealQuery(t *testing.T) {
 			MaxDataPoints: 100,
 			RawQuery:      "buckets()",
 		}, runner, 50)
-		err = experimental.CheckGoldenDataResponse(filepath.Join("testdata", "buckets-real.golden.txt"), &dr, true)
-		require.NoError(t, err)
+		experimental.CheckGoldenJSONResponse(t, "testdata", "buckets-real.golden", &dr, true)
 	})
 }
 

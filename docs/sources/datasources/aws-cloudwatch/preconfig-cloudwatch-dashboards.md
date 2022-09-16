@@ -1,10 +1,18 @@
-+++
-title = "Curated CloudWatch dashboards"
-description = "Guide for using AWS CloudWatch in Grafana"
-keywords = ["grafana", "stackdriver", "google", "guide", "cloud", "monitoring"]
-aliases = ["/docs/grafana/latest/datasources/cloudwatch"]
-weight = 15
-+++
+---
+aliases:
+  - /docs/grafana/latest/datasources/aws-cloudwatch/preconfig-cloudwatch-dashboards/
+  - /docs/grafana/latest/datasources/cloudwatch/
+description: Guide for using AWS CloudWatch in Grafana
+keywords:
+  - grafana
+  - stackdriver
+  - google
+  - guide
+  - cloud
+  - monitoring
+title: Curated CloudWatch dashboards
+weight: 15
+---
 
 # Curated CloudWatch dashboards
 
@@ -16,7 +24,7 @@ The updated CloudWatch data source ships with pre-configured dashboards for five
 - Amazon CloudWatch Logs `Amazon CloudWatch Logs`, and
 - Amazon Relational Database Service `Amazon RDS`.
 
-To import curatedd dashboards:
+To import curated dashboards:
 
 1. On the configuration page of your CloudWatch data source, click the **Dashboards** tab.
 

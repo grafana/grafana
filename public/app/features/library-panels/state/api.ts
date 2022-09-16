@@ -1,3 +1,7 @@
+import { lastValueFrom } from 'rxjs';
+
+import { getBackendSrv } from '../../../core/services/backend_srv';
+import { DashboardSearchItem } from '../../search/types';
 import {
   LibraryElementConnectionDTO,
   LibraryElementDTO,
@@ -5,9 +9,6 @@ import {
   LibraryElementsSearchResult,
   PanelModelWithLibraryPanel,
 } from '../types';
-import { DashboardSearchHit } from '../../search/types';
-import { getBackendSrv } from '../../../core/services/backend_srv';
-import { lastValueFrom } from 'rxjs';
 
 export interface GetLibraryPanelsOptions {
   searchString?: string;
@@ -100,12 +101,13 @@ export async function getLibraryPanelConnectedDashboards(
   return result;
 }
 
-export async function getConnectedDashboards(uid: string): Promise<DashboardSearchHit[]> {
+export async function getConnectedDashboards(uid: string): Promise<DashboardSearchItem[]> {
   const connections = await getLibraryPanelConnectedDashboards(uid);
   if (connections.length === 0) {
     return [];
   }
 
-  const searchHits = await getBackendSrv().search({ dashboardIds: connections.map((c) => c.connectionId) });
+  const searchHits = await getBackendSrv().search({ dashboardUIDs: connections.map((c) => c.connectionUid) });
+
   return searchHits;
 }

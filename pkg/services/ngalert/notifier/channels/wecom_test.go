@@ -77,9 +77,36 @@ func TestWeComNotifier(t *testing.T) {
 			},
 			expMsgError: nil,
 		}, {
+			name: "Custom title and message with multiple alerts",
+			settings: `{
+				"url": "http://localhost",
+				"message": "{{ len .Alerts.Firing }} alerts are firing, {{ len .Alerts.Resolved }} are resolved",
+				"title": "This notification is {{ .Status }}!"
+			}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1"},
+					},
+				}, {
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val2"},
+						Annotations: model.LabelSet{"ann1": "annv2"},
+					},
+				},
+			},
+			expMsg: map[string]interface{}{
+				"markdown": map[string]interface{}{
+					"content": "# This notification is firing!\n2 alerts are firing, 0 are resolved\n",
+				},
+				"msgtype": "markdown",
+			},
+			expMsgError: nil,
+		}, {
 			name:         "Error in initing",
 			settings:     `{}`,
-			expInitError: `failed to validate receiver "wecom_testing" of type "wecom": could not find webhook URL in settings`,
+			expInitError: `could not find webhook URL in settings`,
 		},
 	}
 
@@ -97,7 +124,7 @@ func TestWeComNotifier(t *testing.T) {
 			webhookSender := mockNotificationService()
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 			decryptFn := secretsService.GetDecryptedValue
-			pn, err := NewWeComNotifier(m, webhookSender, tmpl, decryptFn)
+			cfg, err := NewWeComConfig(m, decryptFn)
 			if c.expInitError != "" {
 				require.Equal(t, c.expInitError, err.Error())
 				return
@@ -106,6 +133,7 @@ func TestWeComNotifier(t *testing.T) {
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
+			pn := NewWeComNotifier(cfg, webhookSender, tmpl)
 			ok, err := pn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.False(t, ok)

@@ -1,13 +1,15 @@
-import React, { useRef, useEffect } from 'react';
-import { useTheme2, ReactMonacoEditor, Monaco, monacoTypes } from '@grafana/ui';
-import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
-import { useLatest } from 'react-use';
 import { promLanguageDefinition } from 'monaco-promql';
+import React, { useRef, useEffect } from 'react';
+import { useLatest } from 'react-use';
+
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { getCompletionProvider, getSuggestOptions } from './monaco-completion-provider';
+import { useTheme2, ReactMonacoEditor, Monaco, monacoTypes } from '@grafana/ui';
+
 import { Props } from './MonacoQueryFieldProps';
 import { getOverrideServices } from './getOverrideServices';
+import { getCompletionProvider, getSuggestOptions } from './monaco-completion-provider';
 
 const options: monacoTypes.editor.IStandaloneEditorConstructionOptions = {
   codeLens: false,
@@ -68,11 +70,18 @@ function ensurePromQL(monaco: Monaco) {
   }
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, placeholder: string) => {
   return {
     container: css`
       border-radius: ${theme.shape.borderRadius()};
       border: 1px solid ${theme.components.input.borderColor};
+    `,
+    placeholder: css`
+      ::after {
+        content: '${placeholder}';
+        font-family: ${theme.typography.fontFamilyMonospace};
+        opacity: 0.3;
+      }
     `,
   };
 };
@@ -81,7 +90,7 @@ const MonacoQueryField = (props: Props) => {
   // we need only one instance of `overrideServices` during the lifetime of the react component
   const overrideServicesRef = useRef(getOverrideServices());
   const containerRef = useRef<HTMLDivElement>(null);
-  const { languageProvider, history, onBlur, onRunQuery, initialValue } = props;
+  const { languageProvider, history, onBlur, onRunQuery, initialValue, placeholder } = props;
 
   const lpRef = useLatest(languageProvider);
   const historyRef = useLatest(history);
@@ -91,7 +100,7 @@ const MonacoQueryField = (props: Props) => {
   const autocompleteDisposeFun = useRef<(() => void) | null>(null);
 
   const theme = useTheme2();
-  const styles = getStyles(theme);
+  const styles = getStyles(theme, placeholder);
 
   useEffect(() => {
     // when we unmount, we unregister the autocomplete-function, if it was registered
@@ -197,6 +206,41 @@ const MonacoQueryField = (props: Props) => {
           editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.Enter, () => {
             onRunQueryRef.current(editor.getValue());
           });
+
+          /* Something in this configuration of monaco doesn't bubble up [mod]+K, which the
+          command palette uses. Pass the event out of monaco manually
+          */
+          editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyK, function () {
+            global.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }));
+          });
+
+          if (placeholder) {
+            const placeholderDecorators = [
+              {
+                range: new monaco.Range(1, 1, 1, 1),
+                options: {
+                  className: styles.placeholder,
+                  isWholeLine: true,
+                },
+              },
+            ];
+
+            let decorators: string[] = [];
+
+            const checkDecorators: () => void = () => {
+              const model = editor.getModel();
+
+              if (!model) {
+                return;
+              }
+
+              const newDecorators = model.getValueLength() === 0 ? placeholderDecorators : [];
+              decorators = model.deltaDecorations(decorators, newDecorators);
+            };
+
+            checkDecorators();
+            editor.onDidChangeModelContent(checkDecorators);
+          }
         }}
       />
     </div>

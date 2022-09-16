@@ -1,5 +1,6 @@
+import { css } from '@emotion/css';
 import React from 'react';
-import { LinkButton, useStyles2, VerticalGroup } from '@grafana/ui';
+
 import {
   arrayUtils,
   DataFrame,
@@ -9,17 +10,18 @@ import {
   GrafanaTheme2,
   LinkModel,
 } from '@grafana/data';
-import { css } from '@emotion/css';
-import { SortOrder } from '@grafana/schema';
+import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
+import { LinkButton, useStyles2, VerticalGroup } from '@grafana/ui';
 
 export interface Props {
   data?: DataFrame; // source data
   rowIndex?: number | null; // the hover row
   columnIndex?: number | null; // the hover column
   sortOrder?: SortOrder;
+  mode?: TooltipDisplayMode | null;
 }
 
-export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder }: Props) => {
+export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode }: Props) => {
   const styles = useStyles2(getStyles);
 
   if (!data || rowIndex == null) {
@@ -32,7 +34,7 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder }: Props)
     return null;
   }
 
-  const displayValues: Array<[string, any, string]> = [];
+  const displayValues: Array<[string, unknown, string]> = [];
   const links: Array<LinkModel<Field>> = [];
   const linkLookup = new Set<string>();
 
@@ -59,12 +61,19 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder }: Props)
   return (
     <table className={styles.infoWrap}>
       <tbody>
-        {displayValues.map((v, i) => (
-          <tr key={`${i}/${rowIndex}`} className={i === columnIndex ? styles.highlight : ''}>
-            <th>{v[0]}:</th>
-            <td>{v[2]}</td>
+        {(mode === TooltipDisplayMode.Multi || mode == null) &&
+          displayValues.map((v, i) => (
+            <tr key={`${i}/${rowIndex}`} className={i === columnIndex ? styles.highlight : ''}>
+              <th>{v[0]}:</th>
+              <td>{v[2]}</td>
+            </tr>
+          ))}
+        {mode === TooltipDisplayMode.Single && columnIndex && (
+          <tr key={`${columnIndex}/${rowIndex}`}>
+            <th>{displayValues[columnIndex][0]}:</th>
+            <td>{displayValues[columnIndex][2]}</td>
           </tr>
-        ))}
+        )}
         {links.length > 0 && (
           <tr>
             <td colSpan={2}>

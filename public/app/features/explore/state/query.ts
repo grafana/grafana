@@ -1,5 +1,9 @@
-import { mergeMap, throttleTime } from 'rxjs/operators';
+import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
+import deepEqual from 'fast-deep-equal';
+import { flatten, groupBy } from 'lodash';
 import { identity, Observable, of, SubscriptionLike, Unsubscribable } from 'rxjs';
+import { mergeMap, throttleTime } from 'rxjs/operators';
+
 import {
   AbsoluteTimeRange,
   DataQuery,
@@ -16,7 +20,7 @@ import {
   QueryFixAction,
   toLegacyResponseData,
 } from '@grafana/data';
-
+import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import {
   buildQueryTransaction,
   ensureQueries,
@@ -27,26 +31,21 @@ import {
   stopQueryState,
   updateHistory,
 } from 'app/core/utils/explore';
-import { addToRichHistory } from 'app/core/utils/richHistory';
+import { getShiftedTimeRange } from 'app/core/utils/timePicker';
+import { getTimeZone } from 'app/features/profile/state/selectors';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { ExploreItemState, ExplorePanelData, ThunkDispatch, ThunkResult } from 'app/types';
 import { ExploreId, ExploreState, QueryOptions } from 'app/types/explore';
-import { getTimeZone } from 'app/features/profile/state/selectors';
-import { getShiftedTimeRange } from 'app/core/utils/timePicker';
+
 import { notifyApp } from '../../../core/actions';
+import { createErrorNotification } from '../../../core/copy/appNotification';
 import { runRequest } from '../../query/state/runRequest';
 import { decorateData } from '../utils/decorators';
-import { createErrorNotification } from '../../../core/copy/appNotification';
-import {
-  richHistoryStorageFullAction,
-  richHistoryLimitExceededAction,
-  richHistoryUpdatedAction,
-  stateSave,
-} from './main';
-import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
+
+import { addHistoryItem, historyUpdatedAction, loadRichHistory } from './history';
+import { stateSave } from './main';
 import { updateTime } from './time';
-import { historyUpdatedAction } from './history';
 import { createCacheKey, getResultsFromCache } from './utils';
-import deepEqual from 'fast-deep-equal';
 
 //
 // Actions and Payloads
@@ -217,9 +216,9 @@ export const clearCacheAction = createAction<ClearCachePayload>('explore/clearCa
  * Adds a query row after the row with the given index.
  */
 export function addQueryRow(exploreId: ExploreId, index: number): ThunkResult<void> {
-  return (dispatch, getState) => {
+  return async (dispatch, getState) => {
     const queries = getState().explore[exploreId]!.queries;
-    const query = generateEmptyQuery(queries, index);
+    const query = await generateEmptyQuery(queries, index);
 
     dispatch(addQueryRowAction({ exploreId, index, query }));
   };
@@ -246,6 +245,32 @@ export function cancelQueries(exploreId: ExploreId): ThunkResult<void> {
   };
 }
 
+const addDatasourceToQueries = (datasource: DataSourceApi, queries: DataQuery[]) => {
+  const dataSourceRef = datasource.getRef();
+  return queries.map((query: DataQuery) => {
+    return { ...query, datasource: dataSourceRef };
+  });
+};
+
+const getImportableQueries = async (
+  targetDataSource: DataSourceApi,
+  sourceDataSource: DataSourceApi,
+  queries: DataQuery[]
+): Promise<DataQuery[]> => {
+  let queriesOut: DataQuery[] = [];
+  if (sourceDataSource.meta?.id === targetDataSource.meta?.id) {
+    queriesOut = queries;
+  } else if (hasQueryExportSupport(sourceDataSource) && hasQueryImportSupport(targetDataSource)) {
+    const abstractQueries = await sourceDataSource.exportToAbstractQueries(queries);
+    queriesOut = await targetDataSource.importFromAbstractQueries(abstractQueries);
+  } else if (targetDataSource.importQueries) {
+    // Datasource-specific importers
+    queriesOut = await targetDataSource.importQueries(queries, sourceDataSource);
+  }
+  // add new datasource to queries before returning
+  return addDatasourceToQueries(targetDataSource, queriesOut);
+};
+
 /**
  * Import queries from previous datasource if possible eg Loki and Prometheus have similar query language so the
  * labels part can be reused to get similar data.
@@ -258,7 +283,8 @@ export const importQueries = (
   exploreId: ExploreId,
   queries: DataQuery[],
   sourceDataSource: DataSourceApi | undefined | null,
-  targetDataSource: DataSourceApi
+  targetDataSource: DataSourceApi,
+  singleQueryChangeRef?: string // when changing one query DS to another in a mixed environment, we do not want to change all queries, just the one being changed
 ): ThunkResult<void> => {
   return async (dispatch) => {
     if (!sourceDataSource) {
@@ -268,22 +294,52 @@ export const importQueries = (
     }
 
     let importedQueries = queries;
-    // Check if queries can be imported from previously selected datasource
-    if (sourceDataSource.meta?.id === targetDataSource.meta?.id) {
-      // Keep same queries if same type of datasource, but delete datasource query property to prevent mismatch of new and old data source instance
-      importedQueries = queries.map(({ datasource, ...query }) => query);
-    } else if (hasQueryExportSupport(sourceDataSource) && hasQueryImportSupport(targetDataSource)) {
-      const abstractQueries = await sourceDataSource.exportToAbstractQueries(queries);
-      importedQueries = await targetDataSource.importFromAbstractQueries(abstractQueries);
-    } else if (targetDataSource.importQueries) {
-      // Datasource-specific importers
-      importedQueries = await targetDataSource.importQueries(queries, sourceDataSource);
+    // If going to mixed, keep queries with source datasource
+    if (targetDataSource.uid === MIXED_DATASOURCE_NAME) {
+      importedQueries = queries.map((query) => {
+        return { ...query, datasource: sourceDataSource.getRef() };
+      });
+    }
+    // If going from mixed, see what queries you keep by their individual datasources
+    else if (sourceDataSource.uid === MIXED_DATASOURCE_NAME) {
+      const groupedQueries = groupBy(queries, (query) => query.datasource?.uid);
+      const groupedImportableQueries = await Promise.all(
+        Object.keys(groupedQueries).map(async (key: string) => {
+          const queryDatasource = await getDataSourceSrv().get({ uid: key });
+          return await getImportableQueries(targetDataSource, queryDatasource, groupedQueries[key]);
+        })
+      );
+      importedQueries = flatten(groupedImportableQueries.filter((arr) => arr.length > 0));
     } else {
-      // Default is blank queries
-      importedQueries = ensureQueries();
+      let queriesStartArr = queries;
+      if (singleQueryChangeRef !== undefined) {
+        const changedQuery = queries.find((query) => query.refId === singleQueryChangeRef);
+        if (changedQuery) {
+          queriesStartArr = [changedQuery];
+        }
+      }
+      importedQueries = await getImportableQueries(targetDataSource, sourceDataSource, queriesStartArr);
     }
 
-    const nextQueries = ensureQueries(importedQueries);
+    // this will be the entire imported set, or the single imported query in an array
+    let nextQueries = await ensureQueries(importedQueries, targetDataSource.getRef());
+
+    if (singleQueryChangeRef !== undefined) {
+      // if the query import didn't return a result, there was no ability to import between datasources. Create an empty query for the datasource
+      if (importedQueries.length === 0) {
+        const dsQuery = await generateEmptyQuery([], undefined, targetDataSource.getRef());
+        importedQueries = [dsQuery];
+      }
+
+      // capture the single imported query, and copy the original set
+      const updatedQueryIdx = queries.findIndex((query) => query.refId === singleQueryChangeRef);
+      // for single query change, all areas that generate refId do not know about other queries, so just copy the existing refID to the new query
+      const changedQuery = { ...nextQueries[0], refId: queries[updatedQueryIdx].refId };
+      nextQueries = [...queries];
+
+      // replace the changed query
+      nextQueries[updatedQueryIdx] = changedQuery;
+    }
 
     dispatch(queriesImportedAction({ exploreId, queries: nextQueries }));
   };
@@ -320,29 +376,15 @@ async function handleHistory(
 ) {
   const datasourceId = datasource.meta.id;
   const nextHistory = updateHistory(history, datasourceId, queries);
-  const {
-    richHistory: nextRichHistory,
-    richHistoryStorageFull,
-    limitExceeded,
-  } = await addToRichHistory(
-    state.richHistory || [],
-    datasource.uid,
-    datasource.name,
-    queries,
-    false,
-    '',
-    !state.richHistoryStorageFull,
-    !state.richHistoryLimitExceededWarningShown
-  );
   dispatch(historyUpdatedAction({ exploreId, history: nextHistory }));
-  dispatch(richHistoryUpdatedAction({ richHistory: nextRichHistory }));
 
-  if (richHistoryStorageFull) {
-    dispatch(richHistoryStorageFullAction());
-  }
-  if (limitExceeded) {
-    dispatch(richHistoryLimitExceededAction());
-  }
+  dispatch(addHistoryItem(datasource.uid, datasource.name, queries));
+
+  // Because filtering happens in the backend we cannot add a new entry without checking if it matches currently
+  // used filters. Instead, we refresh the query history list.
+  // TODO: run only if Query History list is opened (#47252)
+  await dispatch(loadRichHistory(ExploreId.left));
+  await dispatch(loadRichHistory(ExploreId.right));
 }
 
 /**
@@ -373,7 +415,6 @@ export const runQueries = (
       refreshInterval,
       absoluteRange,
       cache,
-      logsVolumeDataProvider,
     } = exploreItemState;
     let newQuerySub;
 
@@ -395,7 +436,14 @@ export const runQueries = (
       newQuerySub = of(cachedValue)
         .pipe(
           mergeMap((data: PanelData) =>
-            decorateData(data, queryResponse, absoluteRange, refreshInterval, queries, !!logsVolumeDataProvider)
+            decorateData(
+              data,
+              queryResponse,
+              absoluteRange,
+              refreshInterval,
+              queries,
+              datasourceInstance != null && hasLogsVolumeSupport(datasourceInstance)
+            )
           )
         )
         .subscribe((data) => {
@@ -453,12 +501,17 @@ export const runQueries = (
               absoluteRange,
               refreshInterval,
               queries,
-              !!getState().explore[exploreId]!.logsVolumeDataProvider
+              datasourceInstance != null && hasLogsVolumeSupport(datasourceInstance)
             )
           )
         )
         .subscribe({
           next(data) {
+            if (data.logsResult !== null) {
+              reportInteraction('grafana_explore_logs_result_displayed', {
+                datasourceType: datasourceInstance.type,
+              });
+            }
             dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
 
             // Keep scanning for results if this was the last scanning transaction
@@ -637,7 +690,7 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     return {
       ...state,
       queries: nextQueries,
-      queryKeys: getQueryKeys(nextQueries, state.datasourceInstance),
+      queryKeys: getQueryKeys(nextQueries),
     };
   }
 
@@ -683,7 +736,7 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     return {
       ...state,
       queries: nextQueries,
-      queryKeys: getQueryKeys(nextQueries, state.datasourceInstance),
+      queryKeys: getQueryKeys(nextQueries),
     };
   }
 
@@ -692,16 +745,7 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     return {
       ...state,
       queries: queries.slice(),
-      queryKeys: getQueryKeys(queries, state.datasourceInstance),
-    };
-  }
-
-  if (queriesImportedAction.match(action)) {
-    const { queries } = action.payload;
-    return {
-      ...state,
-      queries,
-      queryKeys: getQueryKeys(queries, state.datasourceInstance),
+      queryKeys: getQueryKeys(queries),
     };
   }
 
@@ -758,7 +802,7 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     return {
       ...state,
       queries,
-      queryKeys: getQueryKeys(queries, state.datasourceInstance),
+      queryKeys: getQueryKeys(queries),
     };
   }
 
@@ -852,7 +896,8 @@ export const processQueryResponse = (
     }
 
     // Send error to Angular editors
-    if (state.datasourceInstance?.components?.QueryCtrl) {
+    // When angularSupportEnabled is removed we can remove this code and all references to eventBridge
+    if (config.angularSupportEnabled && state.datasourceInstance?.components?.QueryCtrl) {
       state.eventBridge.emit(PanelEvents.dataError, error);
     }
   }
@@ -862,7 +907,8 @@ export const processQueryResponse = (
   }
 
   // Send legacy data to Angular editors
-  if (state.datasourceInstance?.components?.QueryCtrl) {
+  // When angularSupportEnabled is removed we can remove this code and all references to eventBridge
+  if (config.angularSupportEnabled && state.datasourceInstance?.components?.QueryCtrl) {
     const legacy = series.map((v) => toLegacyResponseData(v));
     state.eventBridge.emit(PanelEvents.dataReceived, legacy);
   }
