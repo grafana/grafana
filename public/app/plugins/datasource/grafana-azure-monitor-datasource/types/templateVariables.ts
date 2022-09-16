@@ -43,6 +43,7 @@ export interface MetricNamespaceQuery extends BaseGrafanaTemplateVariableQuery {
   metricNamespace?: string;
   resourceName?: string;
 }
+/** @deprecated Use MetricNamespaceQuery instead */
 export interface MetricDefinitionsQuery extends BaseGrafanaTemplateVariableQuery {
   kind: 'MetricDefinitionsQuery';
   subscription: string;
