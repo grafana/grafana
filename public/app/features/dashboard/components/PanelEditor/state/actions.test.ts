@@ -165,6 +165,45 @@ describe('panelEditor actions', () => {
       expect(sourcePanel.configRev).toEqual(0);
     });
 
+    it('should apply changes when dashboard was saved from panel edit', async () => {
+      const sourcePanel = new PanelModel({ id: 12, type: 'graph' });
+      sourcePanel.plugin = getPanelPlugin({});
+      sourcePanel.plugin.angularPanelCtrl = undefined;
+
+      const dashboard = new DashboardModel({
+        panels: [{ id: 12, type: 'graph' }],
+      });
+
+      const panel = dashboard.initEditPanel(sourcePanel);
+
+      const state: PanelEditorState = {
+        ...initialState(),
+        getPanel: () => panel,
+        getSourcePanel: () => sourcePanel,
+      };
+
+      panel.setProperty('title', 'new title');
+      panel.configRev = 0;
+      panel.hasSavedPanelEditChange = true;
+
+      await thunkTester({
+        panelEditor: state,
+        panels: {},
+        dashboard: {
+          getModel: () => dashboard,
+        },
+      })
+        .givenThunk(exitPanelEditor)
+        .whenThunkIsDispatched();
+
+      expect(sourcePanel.configRev).toEqual(1);
+
+      await new Promise((r) => setTimeout(r, 30));
+
+      // expect configRev to be reset to 0 as it was saved
+      expect(sourcePanel.hasChanged).toEqual(false);
+    });
+
     it('should apply changes when leaving panel edit with angular panel', async () => {
       const sourcePanel = new PanelModel({ id: 12, type: 'graph' });
       sourcePanel.plugin = getPanelPlugin({});

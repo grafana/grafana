@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -34,6 +35,7 @@ var ErrOnlyDashboardSaveSupported = errors.New("only dashboard save is currently
 
 const RootPublicStatic = "public-static"
 const RootResources = "resources"
+const RootContent = "content"
 const RootDevenv = "devenv"
 const RootSystem = "system"
 
@@ -129,9 +131,10 @@ func ProvideService(
 			s := newDiskStorage(RootStorageMeta{
 				ReadOnly: false,
 			}, RootStorageConfig{
-				Prefix:      RootDevenv,
-				Name:        "Development Environment",
-				Description: "Explore files within the developer environment directly",
+				Prefix:           RootDevenv,
+				UnderContentRoot: true,
+				Name:             "Development Environment",
+				Description:      "Explore files within the developer environment directly",
 				Disk: &StorageLocalDiskConfig{
 					Path: devenv,
 					Roots: []string{
@@ -147,6 +150,9 @@ func ProvideService(
 			grafanaStorageLogger.Warn("Invalid root configuration", "cfg", root)
 			continue
 		}
+
+		// all externally-defined storages lie under the "content" root
+		root.UnderContentRoot = true
 		s, err := newStorage(root, filepath.Join(cfg.DataPath, "storage", "cache", root.Prefix))
 		if err != nil {
 			grafanaStorageLogger.Warn("error loading storage config", "error", err)
@@ -159,23 +165,22 @@ func ProvideService(
 	initializeOrgStorages := func(orgId int64) []storageRuntime {
 		storages := make([]storageRuntime, 0)
 
+		storages = append(storages,
+			newSQLStorage(RootStorageMeta{
+				Builtin: true,
+			}, RootContent, "Content", "Content root", &StorageSQLConfig{}, sql, orgId, false))
+
 		// Custom upload files
 		storages = append(storages,
 			newSQLStorage(RootStorageMeta{
 				Builtin: true,
-			}, RootResources,
-				"Resources",
-				"Upload custom resource files",
-				&StorageSQLConfig{}, sql, orgId))
+			}, RootResources, "Resources", "Upload custom resource files", &StorageSQLConfig{}, sql, orgId, false))
 
 		// System settings
 		storages = append(storages,
 			newSQLStorage(RootStorageMeta{
 				Builtin: true,
-			}, RootSystem,
-				"System",
-				"Grafana system storage",
-				&StorageSQLConfig{}, sql, orgId))
+			}, RootSystem, "System", "Grafana system storage", &StorageSQLConfig{}, sql, orgId, false))
 
 		return storages
 	}
@@ -215,6 +220,30 @@ func ProvideService(
 			}
 		}
 
+		if storageName == RootContent {
+			if user.OrgRole != org.RoleAdmin {
+				// read only
+				return map[string]filestorage.PathFilter{
+					ActionFilesRead:   allowAllPathFilter,
+					ActionFilesWrite:  denyAllPathFilter,
+					ActionFilesDelete: denyAllPathFilter,
+				}
+			}
+
+			// read/write for all except for devenv
+			writeFilter := filestorage.NewPathFilter(
+				[]string{filestorage.Delimiter}, // access to everything
+				nil,
+				[]string{filestorage.Delimiter + RootDevenv + filestorage.Delimiter}, // except devenv
+				[]string{filestorage.Delimiter + RootDevenv})
+
+			return map[string]filestorage.PathFilter{
+				ActionFilesRead:   allowAllPathFilter,
+				ActionFilesWrite:  writeFilter,
+				ActionFilesDelete: writeFilter,
+			}
+		}
+
 		if !user.IsGrafanaAdmin {
 			return nil
 		}
@@ -248,6 +277,17 @@ func newStandardStorageService(
 	authService storageAuthService,
 	cfg *setting.Cfg,
 ) *standardStorageService {
+	prefixes := make(map[string]bool)
+
+	for _, root := range globalRoots {
+		currentPrefix := root.Meta().Config.Prefix
+		if _, ok := prefixes[currentPrefix]; ok {
+			panic("non-unique storage prefix: " + currentPrefix)
+		}
+
+		prefixes[currentPrefix] = true
+	}
+
 	rootsByOrgId := make(map[int64][]storageRuntime)
 	rootsByOrgId[ac.GlobalOrgID] = globalRoots
 
@@ -384,6 +424,10 @@ func (s *standardStorageService) DeleteFolder(ctx context.Context, user *user.Si
 		return ErrUnsupportedStorage
 	}
 
+	if err := s.validateFolderNameDoesNotConflictWithNestedStorages(root, storagePath, user.OrgID); err != nil {
+		return err
+	}
+
 	if storagePath == "" {
 		storagePath = filestorage.Delimiter
 	}
@@ -409,10 +453,26 @@ func (s *standardStorageService) CreateFolder(ctx context.Context, user *user.Si
 		return ErrUnsupportedStorage
 	}
 
+	if err := s.validateFolderNameDoesNotConflictWithNestedStorages(root, storagePath, user.OrgID); err != nil {
+		return err
+	}
+
 	err := root.Store().CreateFolder(ctx, storagePath)
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func (s *standardStorageService) validateFolderNameDoesNotConflictWithNestedStorages(root storageRuntime, storagePath string, orgID int64) error {
+	if !root.Meta().Config.UnderContentRoot {
+		return nil
+	}
+
+	if storagePath == "" || storagePath == "/" {
+		return ErrValidationFailed
+	}
+
 	return nil
 }
 

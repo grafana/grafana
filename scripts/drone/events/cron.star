@@ -10,18 +10,18 @@ def cronjobs(edition):
         scan_docker_image_pipeline(edition, 'main-ubuntu'),
     ]
 
-def cron_job_pipeline(name, steps):
+def cron_job_pipeline(cronName, name, steps):
     return {
         'kind': 'pipeline',
         'type': 'docker',
         'platform': {
-             'os': 'linux',
+            'os': 'linux',
             'arch': 'amd64',
         },
         'name': name,
         'trigger': {
             'event': 'cron',
-            'cron': 'nightly',
+            'cron': cronName,
         },
         'clone': {
             'retries': 3,
@@ -38,6 +38,7 @@ def scan_docker_image_pipeline(edition, tag):
     dockerImage='grafana/{}:{}'.format(edition, tag)
 
     return cron_job_pipeline(
+        cronName='nightly',
         name='scan-' + dockerImage + '-image',
         steps=[
             scan_docker_image_unkown_low_medium_vulnerabilities_step(dockerImage),
