@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 
-import { DisplayValue, DisplayValueAlignmentFactors, FieldSparkline } from '@grafana/data';
+import { DisplayValue, DisplayValueAlignmentFactors, FieldSparkline, VizOrientation } from '@grafana/data';
 import { VizTextDisplayOptions } from '@grafana/schema';
 
 import { Themeable2 } from '../../types';
@@ -63,6 +63,8 @@ export interface Props extends Themeable2 {
   textMode?: BigValueTextMode;
   /** If true disables the tooltip */
   hasLinks?: boolean;
+  /** The orientation of the parent container */
+  parentOrientation?: VizOrientation;
 
   /**
    * If part of a series of stat panes, this is the total number.
@@ -77,12 +79,12 @@ export class BigValue extends PureComponent<Props> {
   };
 
   render() {
-    const { onClick, className, hasLinks } = this.props;
+    const { onClick, className, hasLinks, theme } = this.props;
     const layout = buildLayout(this.props);
     const panelStyles = layout.getPanelStyles();
     const valueAndTitleContainerStyles = layout.getValueAndTitleContainerStyles();
     const valueStyles = layout.getValueStyles();
-    const titleStyles = layout.getTitleStyles();
+    const titleStyles = layout.getTitleStyles(theme);
     const textValues = layout.textValues;
 
     // When there is an outer data link this tooltip will override the outer native tooltip
