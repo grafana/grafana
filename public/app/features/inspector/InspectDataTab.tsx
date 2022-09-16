@@ -96,7 +96,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
     const { panel } = this.props;
     const { transformId } = this.state;
 
-    downloadDataFrameAsCsv(dataFrame, csvConfig, panel ? panel.getDisplayTitle() : 'Explore', transformId);
+    downloadDataFrameAsCsv(dataFrame, panel ? panel.getDisplayTitle() : 'Explore', csvConfig, transformId);
   };
 
   exportLogsAsTxt = () => {
@@ -126,18 +126,18 @@ export class InspectDataTab extends PureComponent<Props, State> {
       switch (df.meta?.custom?.traceFormat) {
         case 'jaeger': {
           let res = transformToJaeger(new MutableDataFrame(df));
-          downloadAsJson(res, panel ? panel.getDisplayTitle() : 'Explore');
+          downloadAsJson(res, (panel ? panel.getDisplayTitle() : 'Explore') + '-traces');
           break;
         }
         case 'zipkin': {
           let res = transformToZipkin(new MutableDataFrame(df));
-          downloadAsJson(res, panel ? panel.getDisplayTitle() : 'Explore');
+          downloadAsJson(res, (panel ? panel.getDisplayTitle() : 'Explore') + '-traces');
           break;
         }
         case 'otlp':
         default: {
           let res = transformToOTLP(new MutableDataFrame(df));
-          downloadAsJson(res, panel ? panel.getDisplayTitle() : 'Explore');
+          downloadAsJson(res, (panel ? panel.getDisplayTitle() : 'Explore') + '-traces');
           break;
         }
       }

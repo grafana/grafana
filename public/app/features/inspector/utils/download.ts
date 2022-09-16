@@ -42,14 +42,14 @@ export function downloadLogsModelAsTxt(logsModel: Pick<LogsModel, 'meta' | 'rows
  * Exports a DataFrame as a CSV file.
  *
  * @param {DataFrame} dataFrame
- * @param {CSVConfig} csvConfig
  * @param {string} title
+ * @param {CSVConfig} [csvConfig]
  * @param {DataTransformerID} [transformId=DataTransformerID.noop]
  */
 export function downloadDataFrameAsCsv(
   dataFrame: DataFrame,
-  csvConfig: CSVConfig,
   title: string,
+  csvConfig?: CSVConfig,
   transformId: DataTransformerID = DataTransformerID.noop
 ) {
   const dataFrameCsv = toCSV([dataFrame], csvConfig);
@@ -74,6 +74,6 @@ export function downloadAsJson(json: any, title: string) {
     type: 'application/json',
   });
 
-  const fileName = `${title}-traces-${dateTimeFormat(new Date())}.json`;
+  const fileName = `${title}-${dateTimeFormat(new Date())}.json`;
   saveAs(blob, fileName);
 }

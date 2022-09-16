@@ -7,6 +7,7 @@ import angular from 'angular';
 import { configure } from 'enzyme';
 
 import { EventBusSrv } from '@grafana/data';
+import 'blob-polyfill';
 import 'mutationobserver-shim';
 import './mocks/workers';
 
