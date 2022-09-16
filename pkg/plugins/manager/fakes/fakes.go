@@ -213,6 +213,11 @@ type FakePluginStorage struct {
 	Removed    map[string]int
 }
 
+func (s *FakePluginStorage) Register(_ context.Context, pluginID, pluginDir string) error {
+	s.Added[pluginID] = pluginDir
+	return nil
+}
+
 func (s *FakePluginStorage) Add(ctx context.Context, pluginID string, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
 	s.Added[pluginID] = z.File[0].Name
 	if s.AddFunc != nil {

@@ -73,6 +73,14 @@ func (fs *FS) Add(ctx context.Context, pluginID string, pluginArchive *zip.ReadC
 	}, nil
 }
 
+func (fs *FS) Register(_ context.Context, pluginID, pluginDir string) error {
+	fs.mu.Lock()
+	fs.store[pluginID] = pluginDir
+	fs.mu.Unlock()
+
+	return nil
+}
+
 func (fs *FS) Remove(_ context.Context, pluginID string) error {
 	fs.mu.RLock()
 	pluginDir, exists := fs.store[pluginID]
