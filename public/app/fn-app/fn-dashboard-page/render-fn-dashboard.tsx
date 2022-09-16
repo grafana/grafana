@@ -93,14 +93,14 @@ export const RenderFNDashboard: FC<FNDashboardProps> = (props) => {
     locationService.fnPathnameChange(window.location.pathname, queryParams);
 
     return () => {
-      // getTimeSrv().stopAutoRefresh();
-      // dispatch(
-      //   updateFnState({
-      //     type: 'FNDashboard',
-      //     payload: false,
-      //   })
-      // );
-      // dispatch(cancelVariables(uid));
+      getTimeSrv().stopAutoRefresh();
+      dispatch(
+        updateFnState({
+          type: 'FNDashboard',
+          payload: false,
+        })
+      );
+      dispatch(cancelVariables(uid));
     };
   }, [dispatch, uid, slug, theme, controlsContainer, pageTitle, hiddenVariables, queryParams]);
 
