@@ -435,13 +435,12 @@ groups:
         # <string> the state the alert rule will have when the query execution
         #          had no data - possible values: "NoData", "Alerting", "OK"
         #          default = Alerting
-        # <duration, required> for how long should the alert fire before alerting
         execErrState: Alerting
         # <string> the state the alert rule will have when the query execution
         #          failed - possible values: "Error", "Alerting", "OK"
-        #          default = Alerting
-        # <duration, required> for how long should the alert fire before alerting
+        #          default = NoData
         # TOREVIEW
+        # <duration, required> for how long should the alert fire before alerting
         for: 60s
         # <map<string, string>> a map of strings to pass around any data
         annotations:
