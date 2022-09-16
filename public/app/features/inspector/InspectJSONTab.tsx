@@ -124,7 +124,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
           dashboard!.shouldUpdateDashboardPanelFromJSON(updates, panel!);
 
           //Report relevant updates
-          reportInteraction('grafana_panel_inspect_applied_clicked', {
+          reportInteraction('grafana_panel_inspect_apply_clicked', {
             panel_type_changed: panel!.type !== updates.type,
             panel_id_changed: panel!.id !== updates.id,
             panel_grid_pos_changed: !isEqual(panel!.gridPos, updates.gridPos),
