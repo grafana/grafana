@@ -1,13 +1,15 @@
-import React, { useRef, useEffect } from 'react';
-import { useTheme2, ReactMonacoEditor, Monaco, monacoTypes } from '@grafana/ui';
-import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
-import { languageConfiguration, monarchlanguage } from '@grafana/monaco-logql';
+import React, { useRef, useEffect } from 'react';
 import { useLatest } from 'react-use';
+
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { getCompletionProvider, getSuggestOptions } from './monaco-completion-provider';
+import { languageConfiguration, monarchlanguage } from '@grafana/monaco-logql';
+import { useTheme2, ReactMonacoEditor, Monaco, monacoTypes } from '@grafana/ui';
+
 import { Props } from './MonacoQueryFieldProps';
 import { getOverrideServices } from './getOverrideServices';
+import { getCompletionProvider, getSuggestOptions } from './monaco-completion-provider';
 
 const options: monacoTypes.editor.IStandaloneEditorConstructionOptions = {
   codeLens: false,
@@ -80,7 +82,7 @@ const MonacoQueryField = (props: Props) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { languageProvider, history, onBlur, onRunQuery, initialValue } = props;
 
-  const lpRef = useLatest(languageProvider);
+  const langProviderRef = useLatest(languageProvider);
   const historyRef = useLatest(history);
   const onRunQueryRef = useLatest(onRunQuery);
   const onBlurRef = useLatest(onBlur);
@@ -120,16 +122,16 @@ const MonacoQueryField = (props: Props) => {
 
           // we construct a DataProvider object
           const getSeriesLabels = (selector: string) =>
-            lpRef.current.getSeriesLabels(selector).then((data) => data ?? {});
+            langProviderRef.current.getSeriesLabels(selector).then((data) => data ?? {});
 
           const getHistory = () =>
             Promise.resolve(historyRef.current.map((h) => h.query.expr).filter((expr) => expr !== undefined));
 
-          const getAllLabelNames = () => Promise.resolve(lpRef.current.getLabelKeys());
+          const getAllLabelNames = () => Promise.resolve(langProviderRef.current.getLabelKeys());
 
-          const getLabelValues = (labelName: string) => lpRef.current.getLabelValues(labelName);
+          const getLabelValues = (labelName: string) => langProviderRef.current.getLabelValues(labelName);
 
-          const getLogInfo = (selector: string) => lpRef.current.getLogInfo(selector);
+          const getLogInfo = (selector: string) => langProviderRef.current.getLogInfo(selector);
 
           const dataProvider = { getSeriesLabels, getHistory, getAllLabelNames, getLabelValues, getLogInfo };
           const completionProvider = getCompletionProvider(monaco, dataProvider);

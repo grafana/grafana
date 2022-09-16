@@ -1,5 +1,7 @@
-import { parser } from '@grafana/lezer-logql';
 import type { Tree, SyntaxNode } from '@lezer/common';
+
+import { parser } from '@grafana/lezer-logql';
+
 import { NeverCaseError } from './util';
 
 type Direction = 'parent' | 'firstChild' | 'lastChild' | 'nextSibling';
@@ -553,7 +555,8 @@ export function getSituation(text: string, pos: number): Situation | null {
   // so first we check if there is an error-node at the cursor-position
   const maybeErrorNode = getErrorNode(tree, text, pos);
 
-  const cur = maybeErrorNode != null ? maybeErrorNode.cursor : tree.cursor(pos);
+  const cur = maybeErrorNode != null ? maybeErrorNode.cursor() : tree.cursor(pos);
+
   const currentNode = cur.node;
 
   const names = [cur.name];
