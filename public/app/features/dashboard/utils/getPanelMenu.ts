@@ -1,7 +1,7 @@
 import { t } from '@lingui/macro';
 
 import { PanelMenuItem } from '@grafana/data';
-import { AngularComponent, getDataSourceSrv, locationService } from '@grafana/runtime';
+import { AngularComponent, getDataSourceSrv, locationService, reportInteraction } from '@grafana/runtime';
 import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -62,6 +62,10 @@ export function getPanelMenu(
     locationService.partial({
       inspect: panel.id,
       inspectTab: tab,
+    });
+
+    reportInteraction('grafana_panel_menu_inspect', {
+      tab: tab ?? InspectTab.Data,
     });
   };
 
