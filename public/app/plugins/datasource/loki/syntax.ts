@@ -117,6 +117,12 @@ export const RANGE_VEC_FUNCTIONS = [
     documentation: 'Counts the amount of bytes used by each log stream for a given range',
   },
   {
+    insertText: 'bytes_rate',
+    label: 'bytes_rate',
+    detail: 'bytes_rate(range-vector)',
+    documentation: 'Calculates the number of bytes per second for each stream.',
+  },
+  {
     insertText: 'first_over_time',
     label: 'first_over_time',
     detail: 'first_over_time(range-vector)',
