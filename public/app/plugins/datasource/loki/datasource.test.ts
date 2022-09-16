@@ -15,14 +15,7 @@ import {
   LogRowModel,
   MutableDataFrame,
 } from '@grafana/data';
-import {
-  BackendSrvRequest,
-  FetchResponse,
-  setBackendSrv,
-  getBackendSrv,
-  BackendSrv,
-  DataSourceWithBackend,
-} from '@grafana/runtime';
+import { BackendSrvRequest, FetchResponse, setBackendSrv, getBackendSrv, BackendSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { initialCustomVariableModelState } from '../../../features/variables/custom/reducer';
@@ -893,19 +886,6 @@ describe('applyTemplateVariables', () => {
     const spy = jest.spyOn(ds, 'addAdHocFilters');
     ds.applyTemplateVariables({ expr: '{test}', refId: 'A' }, {});
     expect(spy).toHaveBeenCalledWith('{test}');
-  });
-});
-
-describe('with null expr', () => {
-  it('should add the adhoc filter to the query', () => {
-    const ds = createLokiDatasource(templateSrvStub);
-    const spy = jest.spyOn(DataSourceWithBackend.prototype, 'query');
-    ds.query(
-      getQueryOptions<LokiQuery>({
-        targets: [{ refId: 'B', maxLines: 10 } as unknown as LokiQuery],
-      })
-    );
-    expect(spy).toHaveBeenCalledWith(expect.objectContaining({ targets: [] }));
   });
 });
 

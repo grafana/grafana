@@ -161,7 +161,6 @@ export class LokiDatasource
 
   query(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> {
     const queries = request.targets
-      .filter((t) => typeof t.expr === 'string') // this seems to be unnecessary, but there are cases where we get empty queries from Explore/ElasticSearch
       .map(getNormalizedLokiQuery) // "fix" the `.queryType` prop
       .map((q) => ({ ...q, maxLines: q.maxLines || this.maxLines })); // set maxLines if not set
 
