@@ -86,7 +86,7 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 		},
 		{ // Case that's going to change with Grafana 10
 			Name:              "No fallback to default org role (will change in Grafana 10)",
-			Cfg:               conf{AutoAssignOrgRole: org.ROLE_VIEWER},
+			Cfg:               conf{AutoAssignOrgRole: models.ROLE_VIEWER},
 			UserRespBody:      editorUserRespBody,
 			GroupsRespBody:    "[" + strings.Join([]string{}, ",") + "]",
 			RoleAttributePath: gitlabAttrPath,
@@ -96,7 +96,7 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 		},
 		{
 			Name:              "Strict mode prevents fallback to default",
-			Cfg:               conf{RoleAttributeStrict: true, AutoAssignOrgRole: org.ROLE_VIEWER},
+			Cfg:               conf{RoleAttributeStrict: true, AutoAssignOrgRole: models.ROLE_VIEWER},
 			UserRespBody:      editorUserRespBody,
 			GroupsRespBody:    "[" + strings.Join([]string{}, ",") + "]",
 			RoleAttributePath: gitlabAttrPath,
@@ -114,7 +114,7 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 		},
 		{ // Edge case, no attribute path with strict mode => User has an empty role
 			Name:              "Strict mode with no attribute path",
-			Cfg:               conf{RoleAttributeStrict: true, AutoAssignOrgRole: org.ROLE_VIEWER},
+			Cfg:               conf{RoleAttributeStrict: true, AutoAssignOrgRole: models.ROLE_VIEWER},
 			UserRespBody:      editorUserRespBody,
 			GroupsRespBody:    "[" + strings.Join([]string{editorGroup}, ",") + "]",
 			RoleAttributePath: "",
