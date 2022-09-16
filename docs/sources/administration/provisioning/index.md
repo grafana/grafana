@@ -420,7 +420,7 @@ groups:
               datasource:
                 type: __expr__
                 uid: '-100'
-              expression: 1==0
+              expr: 1==0
               intervalMs: 1000
               maxDataPoints: 43200
               refId: A
