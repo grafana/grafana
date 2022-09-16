@@ -4,7 +4,6 @@ import { CoreApp, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal, EditorHeader, EditorRows, FlexItem, Space } from '@grafana/ui';
-import { FeedbackLink } from 'app/plugins/datasource/prometheus/querybuilder/shared/FeedbackLink';
 import { QueryEditorModeToggle } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryEditorModeToggle';
 import { QueryHeaderSwitch } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryHeaderSwitch';
 import { QueryEditorMode } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
@@ -122,7 +121,6 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
         {editorMode === QueryEditorMode.Builder && (
           <>
             <QueryHeaderSwitch label="Raw query" value={rawQuery} onChange={onQueryPreviewChange} />
-            <FeedbackLink feedbackUrl="https://github.com/grafana/grafana/discussions/50785" />
           </>
         )}
         <FlexItem grow={1} />
