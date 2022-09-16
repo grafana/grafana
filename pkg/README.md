@@ -84,3 +84,5 @@ All new features that require state should be possible to configure using config
 - [Dashboards](https://github.com/grafana/grafana/tree/master/pkg/services/provisioning/dashboards)
 
 Today its only possible to provision data sources and dashboards but this is something we want to support all over Grafana.
+
+Test
