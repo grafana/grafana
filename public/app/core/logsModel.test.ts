@@ -32,7 +32,7 @@ import {
 
 describe('dedupLogRows()', () => {
   test('should return rows as is when dedup is set to none', () => {
-    const rows: LogRowModel[] = [
+    const rows = [
       {
         entry: 'WARN test 1.23 on [xxx]',
       },
@@ -44,7 +44,7 @@ describe('dedupLogRows()', () => {
   });
 
   test('should dedup on exact matches', () => {
-    const rows: LogRowModel[] = [
+    const rows = [
       {
         entry: 'WARN test 1.23 on [xxx]',
       },
@@ -75,7 +75,7 @@ describe('dedupLogRows()', () => {
   });
 
   test('should dedup on number matches', () => {
-    const rows: LogRowModel[] = [
+    const rows = [
       {
         entry: 'WARN test 1.2323423 on [xxx]',
       },
@@ -106,7 +106,7 @@ describe('dedupLogRows()', () => {
   });
 
   test('should dedup on signature matches', () => {
-    const rows: LogRowModel[] = [
+    const rows = [
       {
         entry: 'WARN test 1.2323423 on [xxx]',
       },
@@ -129,7 +129,7 @@ describe('dedupLogRows()', () => {
   });
 
   test('should return to non-deduped state on same log result', () => {
-    const rows: LogRowModel[] = [
+    const rows = [
       {
         entry: 'INFO 123',
       },
@@ -157,7 +157,7 @@ describe('dedupLogRows()', () => {
 
 describe('filterLogLevels()', () => {
   test('should correctly filter out log levels', () => {
-    const rows: LogRowModel[] = [
+    const rows = [
       {
         entry: 'DEBUG 1',
         logLevel: LogLevel.debug,
@@ -179,7 +179,7 @@ describe('filterLogLevels()', () => {
     ]);
   });
   test('should correctly filter out log levels and then deduplicate', () => {
-    const rows: LogRowModel[] = [
+    const rows = [
       {
         entry: 'DEBUG 1',
         logLevel: LogLevel.debug,
@@ -1083,7 +1083,7 @@ describe('getSeriesProperties()', () => {
   });
 
   it('does not adjust the bucketSize if the logs row times match the given range', () => {
-    const rows: LogRowModel[] = [
+    const rows = [
       { entry: 'foo', timeEpochMs: 10 },
       { entry: 'bar', timeEpochMs: 20 },
     ] as LogRowModel[];
@@ -1094,7 +1094,7 @@ describe('getSeriesProperties()', () => {
   });
 
   it('clamps the range and adjusts the bucketSize if the logs row times do not completely cover the given range', () => {
-    const rows: LogRowModel[] = [
+    const rows = [
       { entry: 'foo', timeEpochMs: 10 },
       { entry: 'bar', timeEpochMs: 20 },
     ] as LogRowModel[];
