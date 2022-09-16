@@ -213,7 +213,7 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
                   <Icon name={labelBrowserVisible ? 'angle-down' : 'angle-right'} />
                 </button>
                 <div className="gf-form gf-form--grow flex-shrink-1 min-width-15">
-                  {false ? (
+                  {true ? (
                     <MonacoQueryFieldWrapper
                       runQueryOnBlur={this.props.app !== CoreApp.Explore}
                       languageProvider={datasource.languageProvider}
