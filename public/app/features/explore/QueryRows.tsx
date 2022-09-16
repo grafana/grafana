@@ -3,7 +3,7 @@ import React, { useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { CoreApp, DataQuery, DataSourceInstanceSettings } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { getNextRefIdChar } from 'app/core/utils/query';
 import { ExploreId } from 'app/types/explore';
 
@@ -73,19 +73,29 @@ export const QueryRows = ({ exploreId }: Props) => {
     dispatch(importQueries(exploreId, queries, queryDatasource, targetDS, query.refId));
   };
 
+  const onTriggerTracking = (action: string, queryStatus?: boolean) => {
+    const trackingLabels = {
+      remove: 'grafana_explore_query_row_remove',
+      copy: 'grafana_explore_query_row_copy',
+      enableDisable: 'grafana_query-row_disable_enable',
+    };
+
+    reportInteraction(trackingLabels[action], queryStatus === undefined ? {} : { queryEnabled: queryStatus });
+  };
+
   return (
     <QueryEditorRows
       dsSettings={dsSettings}
-      onDatasourceChange={(ds: DataSourceInstanceSettings, query: DataQuery) => onMixedDataSourceChange(ds, query)}
+      onDatasourceChange={(ds: DataSourceInstanceSettings, query?: DataQuery) => onMixedDataSourceChange(ds, query)}
       queries={queries}
       onQueriesChange={onChange}
       onAddQuery={onAddQuery}
       onRunQueries={onRunQueries}
+      onTriggerTracking={onTriggerTracking}
       data={queryResponse}
       app={CoreApp.Explore}
       history={history}
       eventBus={eventBridge}
-      trackingContext="explore"
     />
   );
 };

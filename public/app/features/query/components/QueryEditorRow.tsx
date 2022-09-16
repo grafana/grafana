@@ -21,7 +21,7 @@ import {
   toLegacyResponseData,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { AngularComponent, getAngularLoader, reportInteraction } from '@grafana/runtime';
+import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 import { Badge, ErrorBoundaryAlert, HorizontalGroup } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 import { QueryOperationAction } from 'app/core/components/QueryOperationRow/QueryOperationAction';
@@ -57,7 +57,7 @@ interface Props<TQuery extends DataQuery> {
   history?: Array<HistoryItem<TQuery>>;
   eventBus?: EventBusExtended;
   alerting?: boolean;
-  trackingContext?: string;
+  onTriggerTracking?: (action: string, queryStatus?: boolean | undefined) => void;
 }
 
 interface State<TQuery extends DataQuery> {
@@ -274,34 +274,31 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   onRemoveQuery = () => {
-    const { onRemoveQuery, query, trackingContext } = this.props;
+    const { onRemoveQuery, query, onTriggerTracking } = this.props;
     onRemoveQuery(query);
 
-    if (trackingContext) {
-      reportInteraction('grafana_queryRow_remove_query', { context: trackingContext });
+    if (onTriggerTracking) {
+      onTriggerTracking('remove');
     }
   };
 
   onCopyQuery = () => {
-    const { query, onAddQuery, trackingContext } = this.props;
+    const { query, onAddQuery, onTriggerTracking } = this.props;
     const copy = cloneDeep(query);
     onAddQuery(copy);
 
-    if (trackingContext) {
-      reportInteraction('grafana_queryRow_duplicate_query', { context: trackingContext });
+    if (onTriggerTracking) {
+      onTriggerTracking('copy');
     }
   };
 
   onDisableQuery = () => {
-    const { query, onChange, onRunQuery, trackingContext } = this.props;
+    const { query, onChange, onRunQuery, onTriggerTracking } = this.props;
     onChange({ ...query, hide: !query.hide });
     onRunQuery();
 
-    if (trackingContext) {
-      reportInteraction('grafana_queryRow_disable_enable_query', {
-        context: trackingContext,
-        queryEnabled: query.hide,
-      });
+    if (onTriggerTracking) {
+      onTriggerTracking('enableDisable', query.hide);
     }
   };
 
