@@ -298,7 +298,6 @@ const migrateGrafanaTemplateVariableFn = (query: AzureMonitorQuery) => {
       break;
   }
 
-  delete migratedQuery.grafanaTemplateVariableFn;
   return migratedQuery;
 };
 
