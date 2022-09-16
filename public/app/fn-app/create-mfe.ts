@@ -67,8 +67,6 @@ class createMfe {
       beforeLoad: () => Promise.resolve(),
     };
 
-    console.log('LIFECYCLES exported');
-
     return lifeCycles;
   }
 
