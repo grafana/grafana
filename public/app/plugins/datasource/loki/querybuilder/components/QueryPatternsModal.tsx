@@ -18,7 +18,7 @@ type Props = {
   isOpen: boolean;
   query: LokiQuery;
   queries: DataQuery[] | undefined;
-  app: CoreApp | undefined;
+  app?: CoreApp;
   onClose: () => void;
   onChange: (query: LokiQuery) => void;
   onAddQuery?: (query: LokiQuery) => void;

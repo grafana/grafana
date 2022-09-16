@@ -7,6 +7,12 @@ import { LokiQueryPatternType } from '../types';
 
 import { QueryPatternsModal } from './QueryPatternsModal';
 
+// don't care about interaction tracking in our unit tests
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
+
 const defaultProps = {
   isOpen: true,
   onClose: jest.fn(),
