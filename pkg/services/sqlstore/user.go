@@ -226,28 +226,33 @@ func (ss *SQLStore) GetUserByLogin(ctx context.Context, query *models.GetUserByL
 			return user.ErrUserNotFound
 		}
 
-		// Try and find the user by login first.
-		// It's not sufficient to assume that a LoginOrEmail with an "@" is an email.
+		var where string
+		var has bool
+		var err error
+
+		// Since username can be an email address, attempt login with email address
+		// first if the login field has the "@" symbol.
 		usr := &user.User{}
-		where := "login=?"
-		if ss.Cfg.CaseInsensitiveLogin {
-			where = "LOWER(login)=LOWER(?)"
-		}
 
-		has, err := sess.Where(notServiceAccountFilter(ss)).Where(where, query.LoginOrEmail).Get(usr)
-		if err != nil {
-			return err
-		}
-
-		if !has && strings.Contains(query.LoginOrEmail, "@") {
-			// If the user wasn't found, and it contains an "@" fallback to finding the
-			// user by email.
-
+		if strings.Contains(query.LoginOrEmail, "@") {
 			where = "email=?"
 			if ss.Cfg.CaseInsensitiveLogin {
 				where = "LOWER(email)=LOWER(?)"
 			}
+			has, err = sess.Where(notServiceAccountFilter(ss)).Where(where, query.LoginOrEmail).Get(usr)
+
+			if err != nil {
+				return err
+			}
+		}
+
+		// Look for the login field instead of email
+		if !has {
 			usr = &user.User{}
+			where = "login=?"
+			if ss.Cfg.CaseInsensitiveLogin {
+				where = "LOWER(login)=LOWER(?)"
+			}
 			has, err = sess.Where(notServiceAccountFilter(ss)).Where(where, query.LoginOrEmail).Get(usr)
 		}
 
