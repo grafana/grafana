@@ -4,7 +4,6 @@ import { Field, RadioButtonGroup } from '@grafana/ui';
 
 import { SceneObjectBase } from '../core/SceneObjectBase';
 import { SceneObjectSize, SceneLayoutState, SceneComponentProps, SceneObject } from '../core/types';
-import { isFlexChildNode } from '../core/typeguards';
 
 export type FlexLayoutDirection = 'row' | 'column' | 'row-reverse' | 'column-reverse';
 export type FlexLayoutJustifyContent =
@@ -86,10 +85,6 @@ export class SceneFlexLayout extends SceneObjectBase<SceneFlexLayoutState> {
 
 function renderNodes(nodes: SceneObject[], direction: FlexLayoutDirection, isEditing: boolean): React.ReactNode {
   return nodes.map((node) => {
-    if (isFlexChildNode(node)) {
-      node.setState({ direction });
-    }
-
     return <node.Component key={node.state.key} model={node} isEditing={isEditing} />;
   });
 }

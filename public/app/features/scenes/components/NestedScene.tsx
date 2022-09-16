@@ -94,6 +94,7 @@ export class NestedScene extends SceneObjectBase<NestedSceneState> {
                             },
                             children: [
                               new SceneFlexLayout({
+                                justifyContent: 'end',
                                 children: isCollapsed ? [this.sceneCollapser] : actionChildren,
                               }),
                             ],
