@@ -268,9 +268,9 @@ func (i *searchIndex) run(ctx context.Context, orgIDs []int64, reIndexSignalCh c
 				defer func() { <-asyncReIndexSemaphore }()
 
 				started := time.Now()
-				i.logger.Info("Start re-indexing")
+				i.logger.Info("Start re-indexing", withTraceID(fullReindexCtx)...)
 				i.reIndexFromScratch(fullReindexCtx)
-				i.logger.Info("Full re-indexing finished", "fullReIndexElapsed", time.Since(started))
+				i.logger.Info("Full re-indexing finished", withTraceID(fullReindexCtx, "fullReIndexElapsed", time.Since(started))...)
 				reIndexDoneCh <- lastIndexedEventID
 			}()
 		case lastIndexedEventID := <-reIndexDoneCh:
@@ -478,11 +478,11 @@ func (i *searchIndex) buildOrgIndex(ctx context.Context, orgID int64) (int, erro
 	orgSearchIndexBuildTime := orgSearchIndexTotalTime - orgSearchIndexLoadTime
 
 	i.logger.Info("Re-indexed dashboards for organization",
-		"orgId", orgID,
-		"orgSearchIndexLoadTime", orgSearchIndexLoadTime,
-		"orgSearchIndexBuildTime", orgSearchIndexBuildTime,
-		"orgSearchIndexTotalTime", orgSearchIndexTotalTime,
-		"orgSearchDashboardCount", len(dashboards))
+		withTraceID(ctx, "orgId", orgID,
+			"orgSearchIndexLoadTime", orgSearchIndexLoadTime,
+			"orgSearchIndexBuildTime", orgSearchIndexBuildTime,
+			"orgSearchIndexTotalTime", orgSearchIndexTotalTime,
+			"orgSearchDashboardCount", len(dashboards))...)
 
 	i.mu.Lock()
 	if oldIndex, ok := i.perOrgIndex[orgID]; ok {
@@ -559,6 +559,14 @@ func (i *searchIndex) reIndexFromScratch(ctx context.Context) {
 	}
 }
 
+func withTraceID(ctx context.Context, params ...interface{}) []interface{} {
+	traceID := tracing.TraceIDFromContext(ctx, false)
+	if traceID != "" {
+		return append(params, "traceID", traceID)
+	}
+	return params
+}
+
 func (i *searchIndex) applyIndexUpdates(ctx context.Context, lastEventID int64) int64 {
 	events, err := i.eventStore.GetAllEventsAfter(ctx, lastEventID)
 	if err != nil {
@@ -577,7 +585,7 @@ func (i *searchIndex) applyIndexUpdates(ctx context.Context, lastEventID int64) 
 		}
 		lastEventID = e.Id
 	}
-	i.logger.Info("Index updates applied", "indexEventsAppliedElapsed", time.Since(started), "numEvents", len(events))
+	i.logger.Info("Index updates applied", withTraceID(ctx, "indexEventsAppliedElapsed", time.Since(started), "numEvents", len(events))...)
 	return lastEventID
 }
 
