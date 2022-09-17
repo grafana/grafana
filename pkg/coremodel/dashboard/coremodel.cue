@@ -102,7 +102,7 @@ seqs: [
 					iconColor?: string                @reviewme()
 					type:       string | *"dashboard" @reviewme()
 					iconColor?: string @reviewme()
-					// Annotation color for individual tags.
+					// Annotation color for tags.
 					tagColors?: [...#TagColor] @reviewme()
 					type:  string | *"dashboard" @reviewme()
 					// Query for annotation data.
@@ -122,9 +122,9 @@ seqs: [
 					...
 				} @cuetsy(kind="interface") @reviewme()
 
-				// TagColor represents which color should be displyed in an Annotation for the specified tag.
+				// TagColor represents which color should be displyed in an Annotation for the specified tags.
 				#TagColor: {
-					tag: string @reviewme()
+					tags: [...string] @reviewme()
 					color: string @reviewme()
 				} @cuetsy(kind="interface") @reviewme()
 

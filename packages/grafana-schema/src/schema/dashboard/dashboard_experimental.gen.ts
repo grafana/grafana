@@ -44,8 +44,12 @@ interface VariableModel {
 
 interface TagColor {
   color: string;
-  tag: string;
+  tags: string[];
 }
+
+const defaultTagColor: Partial<TagColor> = {
+  tags: [],
+};
 
 interface DashboardLink {
   asDropdown: boolean;

@@ -293,7 +293,7 @@ type AnnotationQuery struct {
 	RawQuery *string `json:"rawQuery,omitempty"`
 	ShowIn   int     `json:"showIn"`
 
-	// Annotation color for individual tags.
+	// Annotation color for tags.
 	TagColors *[]TagColor `json:"tagColors,omitempty"`
 
 	// Schema for panel targets is specified by datasource
@@ -599,13 +599,13 @@ type RowPanel struct {
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
 type RowPanelType string
 
-// TagColor represents which color should be displyed in an Annotation for the specified tag.
+// TagColor represents which color should be displyed in an Annotation for the specified tags.
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
 type TagColor struct {
-	Color string `json:"color"`
-	Tag   string `json:"tag"`
+	Color string   `json:"color"`
+	Tags  []string `json:"tags"`
 }
 
 // Schema for panel targets is specified by datasource
