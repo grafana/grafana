@@ -102,11 +102,9 @@ type PluginTreeOrErr struct {
 // It is, for now, tailored specifically to Grafana core's codegen needs.
 type PluginTree pfs.Tree
 
-// func (pt *PluginTree) GenerateTypeScriptAST(path string) (tsast.File, error) {
-func (pt *PluginTree) GenerateTS(path string) (WriteDiffer, error) {
+func (pt *PluginTree) GenerateTypeScriptAST() (*tsast.File, error) {
 	t := (*pfs.Tree)(pt)
-
-	f := tsast.File{}
+	f := &tsast.File{}
 
 	tf := tvars_autogen_header{
 		GeneratorPath: "public/app/plugins/gen.go", // FIXME hardcoding is not OK
@@ -115,7 +113,7 @@ func (pt *PluginTree) GenerateTS(path string) (WriteDiffer, error) {
 	var buf bytes.Buffer
 	err := tmpls.Lookup("autogen_header.tmpl").Execute(&buf, tf)
 	if err != nil {
-		return nil, fmt.Errorf("%s: error executing header template: %w", path, err)
+		return nil, fmt.Errorf("error executing header template: %w", err)
 	}
 
 	f.Doc = &tsast.Comment{
@@ -152,7 +150,7 @@ func (pt *PluginTree) GenerateTS(path string) (WriteDiffer, error) {
 				Export: true,
 			})
 			if err != nil {
-				return nil, fmt.Errorf("%s: error translating %s lineage to TypeScript: %w", path, slotname, err)
+				return nil, fmt.Errorf("error translating %s lineage to TypeScript: %w", slotname, err)
 			}
 
 			for _, decl := range tsf.Nodes {
@@ -161,7 +159,7 @@ func (pt *PluginTree) GenerateTS(path string) (WriteDiffer, error) {
 		} else {
 			pair, err := cuetsy.GenerateSingleAST(strings.Title(lin.Name()), sch.UnwrapCUE(), cuetsy.TypeInterface)
 			if err != nil {
-				return nil, fmt.Errorf("%s: error translating %s lineage to TypeScript: %w", path, slotname, err)
+				return nil, fmt.Errorf("error translating %s lineage to TypeScript: %w", slotname, err)
 			}
 			f.Nodes = append(f.Nodes, pair.T)
 			if pair.D != nil {
@@ -170,9 +168,7 @@ func (pt *PluginTree) GenerateTS(path string) (WriteDiffer, error) {
 		}
 	}
 
-	wd := NewWriteDiffer()
-	wd[filepath.Join(path, "models.gen.ts")] = []byte(f.String())
-	return wd, nil
+	return f, nil
 }
 
 func isGroupLineage(slotname string) bool {
