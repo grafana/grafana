@@ -10,7 +10,6 @@
 
 export const PanelModelVersion = Object.freeze([0, 0]);
 
-
 export interface PanelOptions {
   limit: number;
   navigateAfter: string;
@@ -21,7 +20,7 @@ export interface PanelOptions {
   showTags: boolean;
   showTime: boolean;
   showUser: boolean;
-  tags: string[];
+  tags: Array<string>;
 }
 
 export const defaultPanelOptions: Partial<PanelOptions> = {
@@ -36,4 +35,3 @@ export const defaultPanelOptions: Partial<PanelOptions> = {
   showUser: true,
   tags: [],
 };
-

@@ -133,7 +133,9 @@ func genSharedSchemas(groot string) (gcgen.WriteDiffer, error) {
 		return nil, fmt.Errorf("errors while building CUE in %s: %s", abspath, v.Err())
 	}
 
-	b, err := cuetsy.Generate(v, cuetsy.Config{})
+	b, err := cuetsy.Generate(v, cuetsy.Config{
+		Export: true,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate TS: %w", err)
 	}

@@ -1,7 +1,2 @@
 {{ template "autogen_header.tmpl" .Header -}}
-{{range .Imports}}
-import * as {{.Ident}} from '{{.Pkg}}';{{end}}
-{{range .Sections}}{{if ne .ModelName "" }}
-export const {{.ModelName}}ModelVersion = Object.freeze([{{index .V 0}}, {{index .V 1}}]);
-{{end}}
-{{.Body}}{{end}}
+{{ .Body }}

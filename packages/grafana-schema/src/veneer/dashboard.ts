@@ -1,19 +1,22 @@
 
 import * as raw from "../schema/dashboard/dashboard.gen";
 
-
-export interface DashboardModel extends raw.Dashboard {
-
+export interface Dashboard extends raw.Dashboard {
+  panels?: Array<Panel | raw.RowPanel | {
+    type: 'graph';
+  } | {
+    type: 'heatmap';
+  }>;
 }
 
-export interface Panel<TOptions = any, TCustomFieldConfig = any> extends raw.Panel {
+export interface Panel<TOptions = Record<string, unknown>, TCustomFieldConfig = Record<string, unknown>> extends raw.Panel {
   fieldConfig: FieldConfigSource<TCustomFieldConfig>
 }
 
-export interface FieldConfig<TOptions = any> extends raw.FieldConfig {
+export interface FieldConfig<TOptions = Record<string, unknown>> extends raw.FieldConfig {
   custom?: TOptions;
 }
 
-export interface FieldConfigSource<TOptions = any> extends raw.FieldConfigSource {
+export interface FieldConfigSource<TOptions = Record<string, unknown>> extends raw.FieldConfigSource {
   defaults: FieldConfig<TOptions>;
 }

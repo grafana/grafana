@@ -236,7 +236,9 @@ func (ls *ExtractedLineage) GenerateTypescriptCoremodel(path string) (WriteDiffe
 
 	schv := thema.SchemaP(ls.Lineage, thema.LatestVersion(ls.Lineage)).UnwrapCUE()
 
-	parts, err := cuetsy.GenerateAST(schv, cuetsy.Config{})
+	parts, err := cuetsy.GenerateAST(schv, cuetsy.Config{
+		Export: ls.IsCanonical,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("cuetsy parts gen failed: %w", err)
 	}
@@ -270,9 +272,6 @@ func (ls *ExtractedLineage) GenerateTypescriptCoremodel(path string) (WriteDiffe
 
 `)
 		strb.WriteString(fmt.Sprint(parts))
-		// TODO replace this regexp with cuetsy config for whether members are exported
-		re := regexp.MustCompile(`(?m)^export `)
-		str = re.ReplaceAllLiteralString(strb.String(), "")
 	} else {
 		strb.WriteString(fmt.Sprint(parts))
 		str = strb.String()

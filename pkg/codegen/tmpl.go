@@ -4,6 +4,8 @@ import (
 	"embed"
 	"text/template"
 	"time"
+
+	"github.com/grafana/cuetsy/ts/ast"
 )
 
 // All the parsed templates in the tmpl subdirectory
@@ -49,9 +51,8 @@ type (
 		Header      tvars_autogen_header
 	}
 	tvars_cuetsy_multi struct {
-		Header   tvars_autogen_header
-		Imports  []*tsImport
-		Sections []tsSection
+		Header tvars_autogen_header
+		Body   ast.File
 	}
 	tvars_plugin_registry struct {
 		Header  tvars_autogen_header

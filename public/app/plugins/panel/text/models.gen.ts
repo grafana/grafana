@@ -10,7 +10,6 @@
 
 export const PanelModelVersion = Object.freeze([0, 0]);
 
-
 export enum TextMode {
   Code = 'code',
   HTML = 'html',
@@ -32,6 +31,9 @@ export enum CodeLanguage {
 export const defaultCodeLanguage: CodeLanguage = CodeLanguage.Plaintext;
 
 export interface CodeOptions {
+  /**
+   * The language passed to monaco code editor
+   */
   language: CodeLanguage;
   showLineNumbers: boolean;
   showMiniMap: boolean;
@@ -55,4 +57,3 @@ export const defaultPanelOptions: Partial<PanelOptions> = {
 For markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)`,
   mode: TextMode.Markdown,
 };
-
