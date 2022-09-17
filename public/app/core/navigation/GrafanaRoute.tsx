@@ -49,13 +49,7 @@ export function GrafanaRoute(props: Props) {
         }
 
         return (
-          <Suspense
-            fallback={
-              <div>
-                <GrafanaRouteLoading />
-              </div>
-            }
-          >
+          <Suspense fallback={<GrafanaRouteLoading />}>
             <props.route.component {...props} queryParams={locationSearchToObject(props.location.search)} />
           </Suspense>
         );
