@@ -77,6 +77,19 @@ In Grafana v5.3+ it's possible to use template variables in the tag query. So if
 
 {{< figure src="/static/img/docs/annotations/annotation_tag_filter_variable-8-1-0.png" max-width="600px" >}}
 
+### Change annotation color based on tag
+
+You can display different color annotations in the same query based on the annotation's tags.
+
+For example, you may wish to highlight all annotations with the `success` tag `green` and all
+annotations with the `failure` tag `red`. When the dashboard is loaded, any annotation with
+matching tags will have the color specified.
+
+1. Add new annotation with tag you wish to display certain color for.
+1. Navigate to annotation query settings.
+1. Click `Add tag color` and update the color/list of tags to your preference.
+1. Click `Apply` and reload your dashboard.
+
 ## Querying other data sources
 
 Annotation events are fetched via annotation queries. To add a new annotation query to a dashboard
