@@ -15,6 +15,7 @@ import { DashboardModel } from '../../state';
 export interface Props {
   dashboard: DashboardModel;
   onChangeTimeZone: (timeZone: TimeZone) => void;
+  isOnCanvas?: boolean;
 }
 
 export class DashNavTimeControls extends Component<Props> {
@@ -77,7 +78,7 @@ export class DashNavTimeControls extends Component<Props> {
   };
 
   render() {
-    const { dashboard } = this.props;
+    const { dashboard, isOnCanvas } = this.props;
     const { refresh_intervals } = dashboard.timepicker;
     const intervals = getTimeSrv().getValidIntervals(refresh_intervals || defaultIntervals);
 
@@ -98,12 +99,14 @@ export class DashNavTimeControls extends Component<Props> {
           onZoom={this.onZoom}
           onChangeTimeZone={this.onChangeTimeZone}
           onChangeFiscalYearStartMonth={this.onChangeFiscalYearStartMonth}
+          isOnCanvas={isOnCanvas}
         />
         <RefreshPicker
           onIntervalChanged={this.onChangeRefreshInterval}
           onRefresh={this.onRefresh}
           value={dashboard.refresh}
           intervals={intervals}
+          isOnCanvas={isOnCanvas}
           tooltip={t({ id: 'dashboard.toolbar.refresh', message: 'Refresh dashboard' })}
           noIntervalPicker={hideIntervalPicker}
           offDescriptionAriaLabelMsg={t({

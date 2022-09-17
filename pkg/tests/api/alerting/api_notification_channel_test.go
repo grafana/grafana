@@ -913,6 +913,9 @@ func newMockNotificationChannel(t *testing.T, grafanaListedAddr string) *mockNot
 	require.NoError(t, err)
 
 	nc := &mockNotificationChannel{
+		// Skip gosec linter since this is in test code.
+		//
+		//nolint:gosec
 		server: &http.Server{
 			Addr: listener.Addr().String(),
 		},

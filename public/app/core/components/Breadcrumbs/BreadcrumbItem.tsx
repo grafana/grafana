@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, LinkButton, useStyles2 } from '@grafana/ui';
+import { Icon, useStyles2 } from '@grafana/ui';
 
 import { Breadcrumb } from './types';
 
@@ -20,20 +20,9 @@ export function BreadcrumbItem(props: Props) {
         </span>
       ) : (
         <>
-          {'icon' in props ? (
-            <LinkButton
-              size="md"
-              variant="secondary"
-              fill="text"
-              icon={props.icon}
-              href={props.href}
-              aria-label={props.text}
-            />
-          ) : (
-            <a className={cx(styles.breadcrumb, styles.breadcrumbLink)} href={props.href}>
-              {props.text}
-            </a>
-          )}
+          <a className={cx(styles.breadcrumb, styles.breadcrumbLink)} href={props.href}>
+            {props.text}
+          </a>
           <div className={styles.separator} aria-hidden={true}>
             <Icon name="angle-right" />
           </div>
