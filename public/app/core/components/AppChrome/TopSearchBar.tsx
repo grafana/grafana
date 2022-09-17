@@ -44,6 +44,7 @@ export function TopSearchBar() {
     toggleSwitcherModal
   ).map((item) => enrichWithInteractionTracking(item, false));
 
+  const helpNode = configItems.find((item) => item.id === 'help');
   const profileNode = configItems.find((item) => item.id === 'profile');
   const signInNode = configItems.find((item) => item.id === 'signin');
 
@@ -64,11 +65,13 @@ export function TopSearchBar() {
         />
       </div>
       <div className={styles.actions}>
-        <Tooltip placement="bottom" content="Help menu (todo)">
-          <button className={styles.actionItem}>
-            <Icon name="question-circle" size="lg" />
-          </button>
-        </Tooltip>
+        {helpNode && (
+          <Dropdown overlay={<TopNavBarMenu node={helpNode} />}>
+            <button className={styles.actionItem}>
+              <Icon name="question-circle" size="lg" />
+            </button>
+          </Dropdown>
+        )}
         <Tooltip placement="bottom" content="Grafana news (todo)">
           <button className={styles.actionItem}>
             <Icon name="rss" size="lg" />
