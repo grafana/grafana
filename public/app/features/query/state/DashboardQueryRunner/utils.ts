@@ -66,6 +66,19 @@ export function translateQueryResult(annotation: AnnotationQuery, results: Annot
     item.type = annotation.name;
     item.isRegion = Boolean(item.timeEnd && item.time !== item.timeEnd);
 
+    const tagColorLength = annotation.tagColors?.length ?? 0;
+
+    if (annotation.tagColors != null && tagColorLength > 0 && item.tags != null) {
+      // tagColors is stored in descending priority order (lower index == higher priority)
+      // reverse tag colors so tag colors with higher priority are applied after.
+      for (let i = tagColorLength - 1; i >= 0; i--) {
+        const tagColor = annotation.tagColors[i];
+        if (item.tags.some((tag: string) => tagColor.tags.includes(tag))) {
+          item.color = config.theme2.visualization.getColorByName(tagColor.color);
+        }
+      }
+    }
+
     switch (item.newState?.toLowerCase()) {
       case 'pending':
         item.color = 'yellow';

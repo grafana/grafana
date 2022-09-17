@@ -1,11 +1,23 @@
 import React, { useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { AnnotationQuery, DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
+import { AnnotationQuery, DataSourceInstanceSettings, getDataSourceRef, TagColor, arrayUtils } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { DataSourcePicker, getDataSourceSrv, locationService } from '@grafana/runtime';
-import { Button, Checkbox, Field, FieldSet, HorizontalGroup, Input, Stack } from '@grafana/ui';
+import {
+  Button,
+  Checkbox,
+  Field,
+  FieldSet,
+  HorizontalGroup,
+  IconButton,
+  Input,
+  Stack,
+  VerticalGroup,
+} from '@grafana/ui';
 import { ColorValueEditor } from 'app/core/components/OptionsUI/color';
+import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
+import { getAnnotationTags } from 'app/features/annotations/api';
 import StandardAnnotationQueryEditor from 'app/features/annotations/components/StandardAnnotationQueryEditor';
 
 import { DashboardModel } from '../../state/DashboardModel';
@@ -74,8 +86,58 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
     goBackToList();
   };
 
+  const onTagColorTagChange = (tags: string[], editIdx: number) => {
+    const newTagColors = annotation.tagColors!.map((tagColor: TagColor, idx: number) => {
+      if (idx === editIdx) {
+        tagColor = { ...tagColor, tags: tags };
+      }
+      return tagColor;
+    });
+    onUpdate({
+      ...annotation,
+      tagColors: newTagColors,
+    });
+  };
+
+  const onTagColorColorChange = (color: string, editIdx: number) => {
+    const newTagColors = annotation.tagColors!.map((tagColor: TagColor, idx: number) => {
+      if (idx === editIdx) {
+        tagColor = { ...tagColor, color: color };
+      }
+      return tagColor;
+    });
+    onUpdate({
+      ...annotation,
+      tagColors: newTagColors,
+    });
+  };
+
+  const onAddTagColorClick = (tagColors: TagColor[]) => {
+    tagColors.push({ tags: [], color: 'green' });
+    onUpdate({
+      ...annotation,
+      tagColors: tagColors,
+    });
+  };
+
+  const onRemoveTagColor = (idx: number) => {
+    annotation.tagColors!.splice(idx, 1);
+    onUpdate({
+      ...annotation,
+    });
+  };
+
+  const onMoveTagColor = (idx: number, direction: number) => {
+    const reorderedTagColors = arrayUtils.moveItemImmutably(annotation.tagColors!, idx, idx + direction);
+    onUpdate({
+      ...annotation,
+      tagColors: reorderedTagColors,
+    });
+  };
+
   const isNewAnnotation = annotation.name === newAnnotationName;
 
+  let tagColors = annotation.tagColors ?? [];
   return (
     <div>
       <FieldSet>
@@ -112,6 +174,67 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
           <HorizontalGroup>
             <ColorValueEditor value={annotation?.iconColor} onChange={onColorChange} />
           </HorizontalGroup>
+        </Field>
+        <Field label="Tag Colors" description="Color to use for the annotation event markers for given tags">
+          <VerticalGroup>
+            <table className="filter-table form-inline width-20">
+              <thead>
+                <tr>
+                  <th>Color</th>
+                  <th>Tag list</th>
+                  <th colSpan={3}></th>
+                </tr>
+              </thead>
+              <tbody>
+                {tagColors.map((tagColor: TagColor, idx: number) => (
+                  <tr key={idx}>
+                    <td>
+                      <ColorValueEditor
+                        value={tagColor.color}
+                        onChange={(color: string) => onTagColorColorChange(color, idx)}
+                      />
+                    </td>
+                    <td>
+                      <TagFilter
+                        inputId={`tag-filter-${idx}`}
+                        allowCustomValue
+                        onChange={(tag: string[]) => onTagColorTagChange(tag, idx)}
+                        tagOptions={getAnnotationTags}
+                        tags={tagColor.tags}
+                      />
+                    </td>
+                    <td style={{ width: '1%' }}>
+                      {idx !== 0 && (
+                        <IconButton name="arrow-up" aria-label="arrow-up" onClick={() => onMoveTagColor(idx, -1)} />
+                      )}
+                    </td>
+                    <td style={{ width: '1%' }}>
+                      {tagColors.length > 1 && idx !== tagColors.length - 1 ? (
+                        <IconButton name="arrow-down" aria-label="arrow-down" onClick={() => onMoveTagColor(idx, 1)} />
+                      ) : null}
+                    </td>
+                    <td style={{ width: '1%' }}>
+                      <IconButton
+                        key="delete"
+                        name="trash-alt"
+                        tooltip="Delete this tag color"
+                        onClick={() => onRemoveTagColor(idx)}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <Button
+              size="sm"
+              icon="plus"
+              variant="secondary"
+              className={'styles.addButton'}
+              onClick={() => onAddTagColorClick(tagColors)}
+            >
+              Add tag color
+            </Button>
+          </VerticalGroup>
         </Field>
         <h3 className="page-heading">Query</h3>
         {ds?.annotations && (

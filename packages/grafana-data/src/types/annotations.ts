@@ -18,6 +18,7 @@ export interface AnnotationQuery<TQuery extends DataQuery = DataQuery> {
   builtIn?: number;
   type?: string;
   snapshotData?: any;
+  tagColors?: TagColor[];
 
   // Standard datasource query
   target?: TQuery;
@@ -52,6 +53,11 @@ export interface AnnotationEvent {
 
   // Currently used to merge annotations from alerts and dashboard
   source?: any; // source.type === 'dashboard'
+}
+
+export interface TagColor {
+  tags: string[];
+  color: string;
 }
 
 export interface AnnotationEventUIModel {
