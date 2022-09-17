@@ -5161,11 +5161,11 @@ __metadata:
     "@grafana/ui": 9.2.0-pre
     "@types/jest": 26.0.15
     "@types/lodash": 4.14.149
-    "@types/react": 17.0.30
+    "@types/react": ^18.0.20
     jquery: 3.5.1
     lodash: 4.17.21
-    react: 17.0.1
-    react-dom: 17.0.1
+    react: ^18.2.0
+    react-dom: ^18.2.0
     react-hook-form: 7.5.3
     react-router-dom: ^5.2.0
     tslib: 2.4.0
@@ -5226,8 +5226,8 @@ __metadata:
     "@types/marked": 4.0.3
     "@types/node": 16.11.45
     "@types/papaparse": 5.3.2
-    "@types/react": 17.0.42
-    "@types/react-dom": 17.0.14
+    "@types/react": ^18.0.20
+    "@types/react-dom": ^18.0.6
     "@types/sinon": 10.0.13
     "@types/testing-library__jest-dom": 5.14.5
     "@types/testing-library__react-hooks": ^3.2.0
@@ -5244,8 +5244,8 @@ __metadata:
     moment-timezone: 0.5.35
     ol: 6.15.1
     papaparse: 5.3.2
-    react: 17.0.2
-    react-dom: 17.0.2
+    react: ^18.2.0
+    react-dom: ^18.2.0
     react-test-renderer: 17.0.2
     regenerator-runtime: 0.13.9
     rimraf: 3.0.2
@@ -5410,14 +5410,14 @@ __metadata:
     "@types/history": 4.7.11
     "@types/jest": 28.1.6
     "@types/lodash": 4.14.182
-    "@types/react": 17.0.42
-    "@types/react-dom": 17.0.14
+    "@types/react": ^18.0.20
+    "@types/react-dom": ^18.0.6
     "@types/systemjs": ^0.20.6
     esbuild: 0.15.7
     history: 4.10.1
     lodash: 4.17.21
-    react: 17.0.2
-    react-dom: 17.0.2
+    react: ^18.2.0
+    react-dom: ^18.2.0
     rimraf: 3.0.2
     rollup: 2.77.2
     rollup-plugin-dts: ^4.2.2
@@ -5614,13 +5614,13 @@ __metadata:
     "@types/mock-raf": 1.0.3
     "@types/node": 16.11.45
     "@types/prismjs": 1.26.0
-    "@types/react": 17.0.42
+    "@types/react": ^18.0.20
     "@types/react-beautiful-dnd": 13.1.2
     "@types/react-calendar": 3.5.1
     "@types/react-color": 3.0.6
-    "@types/react-dom": 17.0.14
+    "@types/react-dom": ^18.0.6
     "@types/react-highlight-words": 0.16.4
-    "@types/react-router-dom": 5.3.3
+    "@types/react-router-dom": ^5.3.3
     "@types/react-table": 7.7.12
     "@types/react-test-renderer": 17.0.1
     "@types/react-transition-group": 4.4.5
@@ -5666,13 +5666,13 @@ __metadata:
     rc-drawer: 4.4.3
     rc-slider: 9.7.5
     rc-time-picker: ^3.7.3
-    react: 17.0.2
+    react: ^18.2.0
     react-beautiful-dnd: 13.1.0
     react-calendar: 3.7.0
     react-colorful: 5.5.1
     react-custom-scrollbars-2: 4.5.0
     react-docgen-typescript-loader: 3.7.2
-    react-dom: 17.0.2
+    react-dom: ^18.2.0
     react-dropzone: 14.2.2
     react-highlight-words: 0.18.0
     react-hook-form: 7.5.3
@@ -5864,7 +5864,7 @@ __metadata:
     "@types/jest": 28.1.6
     "@types/lodash": 4.14.182
     "@types/prop-types": 15.7.5
-    "@types/react": 17.0.42
+    "@types/react": ^18.0.20
     "@types/react-icons": 2.2.7
     "@types/reselect": 2.2.0
     "@types/slate-react": 0.22.9
@@ -5885,8 +5885,8 @@ __metadata:
     moment: 2.29.4
     moment-timezone: 0.5.35
     prop-types: 15.8.1
-    react: 17.0.2
-    react-dom: 17.0.2
+    react: ^18.2.0
+    react-dom: ^18.2.0
     react-icons: 2.2.7
     reselect: 4.1.6
     sinon: 14.0.0
@@ -12156,12 +12156,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-dom@npm:17.0.14":
-  version: 17.0.14
-  resolution: "@types/react-dom@npm:17.0.14"
+"@types/react-dom@npm:^18.0.6":
+  version: 18.0.6
+  resolution: "@types/react-dom@npm:18.0.6"
   dependencies:
     "@types/react": "*"
-  checksum: b54cd0ef573236b3d87fe7493e6d1c36d8b4ca37a3b46364272a5c91ac178e3296b68ea1aeb299ce68f12ad663c5720ee890d0539b14881c6754bdcbdb0befa0
+  checksum: db571047af1a567631758700b9f7d143e566df939cfe5fbf7535347cc0c726a1cdbb5e3f8566d076e54cf708b6c1166689de194a9ba09ee35efc9e1d45911685
   languageName: node
   linkType: hard
 
@@ -12245,7 +12245,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-router-dom@npm:5.3.3":
+"@types/react-router-dom@npm:^5.3.3":
   version: 5.3.3
   resolution: "@types/react-router-dom@npm:5.3.3"
   dependencies:
@@ -12350,25 +12350,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react@npm:17.0.30":
-  version: 17.0.30
-  resolution: "@types/react@npm:17.0.30"
+"@types/react@npm:^18.0.20":
+  version: 18.0.20
+  resolution: "@types/react@npm:18.0.20"
   dependencies:
     "@types/prop-types": "*"
     "@types/scheduler": "*"
     csstype: ^3.0.2
-  checksum: e3aaac1b8fda6e3622b75db0bd7d8dc412c2f2b77a00afdd32cae8c71fb0b1ca6926ab1fbe1c536dd51d96c0ba372738993837a8df1637637aaab7b86e421b7f
-  languageName: node
-  linkType: hard
-
-"@types/react@npm:17.0.42":
-  version: 17.0.42
-  resolution: "@types/react@npm:17.0.42"
-  dependencies:
-    "@types/prop-types": "*"
-    "@types/scheduler": "*"
-    csstype: ^3.0.2
-  checksum: 9a84374da1173901b5eba6b2dda9e70220842c8e70274628e5c93684fca59786b7f6215c93f492e34f8834983de096b2544f280c60da9b8fd4c3f20ffe7cc51e
+  checksum: f67f5b16efd89e237bf0e40d133218c398cf2a2f81166ce1e9fa32d0df6b869106740983396c51df9708a1b79b2a9d725eda1230cc3064c92d86d9ea6a4b714c
   languageName: node
   linkType: hard
 
@@ -22241,15 +22230,15 @@ __metadata:
     "@types/prismjs": 1.26.0
     "@types/rc-time-picker": 3.4.1
     "@types/rc-tree": ^3.0.0
-    "@types/react": 17.0.42
+    "@types/react": ^18.0.20
     "@types/react-beautiful-dnd": 13.1.2
-    "@types/react-dom": 17.0.14
+    "@types/react-dom": ^18.0.6
     "@types/react-grid-layout": 1.3.2
     "@types/react-highlight-words": 0.16.4
     "@types/react-loadable": 5.5.6
     "@types/react-redux": 7.1.24
     "@types/react-resizable": 3.0.2
-    "@types/react-router-dom": 5.3.3
+    "@types/react-router-dom": ^5.3.3
     "@types/react-table": 7.7.12
     "@types/react-test-renderer": 17.0.1
     "@types/react-transition-group": 4.4.5
@@ -22383,11 +22372,11 @@ __metadata:
     rc-time-picker: 3.7.3
     rc-tree: 5.6.6
     re-resizable: 6.9.9
-    react: 17.0.2
+    react: ^18.2.0
     react-awesome-query-builder: ^5.1.2
     react-beautiful-dnd: 13.1.0
     react-diff-viewer: ^3.1.1
-    react-dom: 17.0.2
+    react-dom: ^18.2.0
     react-draggable: 4.4.5
     react-grid-layout: 1.3.4
     react-highlight-words: 0.18.0
@@ -32199,29 +32188,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-dom@npm:17.0.1":
-  version: 17.0.1
-  resolution: "react-dom@npm:17.0.1"
+"react-dom@npm:^18.2.0":
+  version: 18.2.0
+  resolution: "react-dom@npm:18.2.0"
   dependencies:
     loose-envify: ^1.1.0
-    object-assign: ^4.1.1
-    scheduler: ^0.20.1
+    scheduler: ^0.23.0
   peerDependencies:
-    react: 17.0.1
-  checksum: df2af300dd4f49a5daaccc38f5a307def2a9ae2b7ebffa3dce8fb9986129057696b86a2c94e5ae36133057c69428c500e4ee3bf5884eb44e5632ace8b7ace41f
-  languageName: node
-  linkType: hard
-
-"react-dom@npm:17.0.2":
-  version: 17.0.2
-  resolution: "react-dom@npm:17.0.2"
-  dependencies:
-    loose-envify: ^1.1.0
-    object-assign: ^4.1.1
-    scheduler: ^0.20.2
-  peerDependencies:
-    react: 17.0.2
-  checksum: 1c1eaa3bca7c7228d24b70932e3d7c99e70d1d04e13bb0843bbf321582bc25d7961d6b8a6978a58a598af2af496d1cedcfb1bf65f6b0960a0a8161cb8dab743c
+    react: ^18.2.0
+  checksum: 7d323310bea3a91be2965f9468d552f201b1c27891e45ddc2d6b8f717680c95a75ae0bc1e3f5cf41472446a2589a75aed4483aee8169287909fcd59ad149e8cc
   languageName: node
   linkType: hard
 
@@ -32981,23 +32956,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react@npm:17.0.1":
-  version: 17.0.1
-  resolution: "react@npm:17.0.1"
+"react@npm:^18.2.0":
+  version: 18.2.0
+  resolution: "react@npm:18.2.0"
   dependencies:
     loose-envify: ^1.1.0
-    object-assign: ^4.1.1
-  checksum: 83b9df9529a2b489f00a4eaa608fc7d55518b258e046c100344ae068713e43ae64e477a140f87e38cfe75489bcfd26d27fce5818f89f4ec41bdbda7ead4bb426
-  languageName: node
-  linkType: hard
-
-"react@npm:17.0.2":
-  version: 17.0.2
-  resolution: "react@npm:17.0.2"
-  dependencies:
-    loose-envify: ^1.1.0
-    object-assign: ^4.1.1
-  checksum: b254cc17ce3011788330f7bbf383ab653c6848902d7936a87b09d835d091e3f295f7e9dd1597c6daac5dc80f90e778c8230218ba8ad599f74adcc11e33b9d61b
+  checksum: 88e38092da8839b830cda6feef2e8505dec8ace60579e46aa5490fc3dc9bba0bd50336507dc166f43e3afc1c42939c09fe33b25fae889d6f402721dcd78fca1b
   languageName: node
   linkType: hard
 
@@ -34245,13 +34209,22 @@ __metadata:
   languageName: node
   linkType: hard
 
-"scheduler@npm:^0.20.1, scheduler@npm:^0.20.2":
+"scheduler@npm:^0.20.2":
   version: 0.20.2
   resolution: "scheduler@npm:0.20.2"
   dependencies:
     loose-envify: ^1.1.0
     object-assign: ^4.1.1
   checksum: c4b35cf967c8f0d3e65753252d0f260271f81a81e427241295c5a7b783abf4ea9e905f22f815ab66676f5313be0a25f47be582254db8f9241b259213e999b8fc
+  languageName: node
+  linkType: hard
+
+"scheduler@npm:^0.23.0":
+  version: 0.23.0
+  resolution: "scheduler@npm:0.23.0"
+  dependencies:
+    loose-envify: ^1.1.0
+  checksum: d79192eeaa12abef860c195ea45d37cbf2bbf5f66e3c4dcd16f54a7da53b17788a70d109ee3d3dde1a0fd50e6a8fc171f4300356c5aee4fc0171de526bf35f8a
   languageName: node
   linkType: hard
 

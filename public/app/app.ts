@@ -12,6 +12,7 @@ import 'app/features/all';
 import _ from 'lodash'; // eslint-disable-line lodash/import-scope
 import React from 'react';
 import ReactDOM from 'react-dom';
+// import { createRoot } from 'react-dom/client';
 
 import {
   locationUtil,
@@ -180,6 +181,11 @@ export class GrafanaApp {
         }),
         document.getElementById('reactRoot')
       );
+
+      // Pages get stuck not updating with this
+      // const rootElement = document.getElementById('reactRoot')!;
+      // const root = createRoot(rootElement);
+      // root.render(React.createElement(AppWrapper, { app: this }))
     } catch (error) {
       console.error('Failed to start Grafana', error);
       window.__grafana_load_failed();

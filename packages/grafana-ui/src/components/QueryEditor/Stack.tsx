@@ -11,13 +11,14 @@ interface StackProps {
   wrap?: boolean;
   gap?: number;
   flexGrow?: CSSProperties['flexGrow'];
+  children: React.ReactNode;
 }
 
-export const Stack: React.FC<StackProps> = ({ children, ...props }) => {
+export function Stack(props: StackProps) {
   const styles = useStyles2(useCallback((theme) => getStyles(theme, props), [props]));
 
-  return <div className={styles.root}>{children}</div>;
-};
+  return <div className={styles.root}>{props.children}</div>;
+}
 
 const getStyles = (theme: GrafanaTheme2, props: StackProps) => ({
   root: css({
