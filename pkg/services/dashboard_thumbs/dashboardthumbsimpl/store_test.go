@@ -283,7 +283,6 @@ func updateThumbnailState(t *testing.T, store store, dashboardUID string, orgId 
 }
 
 func updateTestDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, dashModel *models.Dashboard, data map[string]interface{}) {
-
 	t.Helper()
 
 	data["id"] = dashModel.Id
