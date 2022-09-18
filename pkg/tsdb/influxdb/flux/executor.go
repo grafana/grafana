@@ -51,14 +51,13 @@ func executeQuery(ctx context.Context, query queryModel, runner queryRunner, max
 	}
 
 	// Make sure there is at least one frame
-	if len(dr.Frames) == 0 {
-		dr.Frames = append(dr.Frames, data.NewFrame(""))
+	if len(dr.Frames) > 0 {
+		firstFrame := dr.Frames[0]
+		if firstFrame.Meta == nil {
+			firstFrame.SetMeta(&data.FrameMeta{})
+		}
+		firstFrame.Meta.ExecutedQueryString = flux
 	}
-	firstFrame := dr.Frames[0]
-	if firstFrame.Meta == nil {
-		firstFrame.SetMeta(&data.FrameMeta{})
-	}
-	firstFrame.Meta.ExecutedQueryString = flux
 	return dr
 }
 
