@@ -1,6 +1,6 @@
 package dashboardthumbsimpl
 
-// TOOD: migrate tests
+// TODO: migrate tests
 
 /*
 var theme = models.ThemeDark
