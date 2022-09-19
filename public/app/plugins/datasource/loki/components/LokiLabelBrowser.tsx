@@ -19,7 +19,7 @@ import {
 
 import PromQlLanguageProvider from '../../prometheus/language_provider';
 import LokiLanguageProvider from '../LanguageProvider';
-import { escapeLabelValueInExactSelector, escapeLabelValueInRegexSelector } from '../language_utils';
+import { escapeLabelValueInExactSelector, escapeLabelValueInRegexSelector } from '../languageUtils';
 
 // Hard limit on labels to render
 const MAX_LABEL_COUNT = 1000;

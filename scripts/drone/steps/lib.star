@@ -266,13 +266,13 @@ def store_storybook_step(edition, ver_mode, trigger=None):
     commands = []
     if ver_mode == 'release':
         commands.extend([
-            './bin/grabpl store-storybook --deployment latest --src-bucket grafana-prerelease --src-dir artifacts/storybook',
-            './bin/grabpl store-storybook --deployment ${DRONE_TAG} --src-bucket grafana-prerelease --src-dir artifacts/storybook',
+            './bin/build store-storybook --deployment latest',
+            './bin/build store-storybook --deployment ${DRONE_TAG}',
         ])
 
     else:
         # main pipelines should deploy storybook to grafana-storybook/canary public bucket
-        commands = ['./bin/grabpl store-storybook --deployment canary --src-bucket grafana-storybook', ]
+        commands = ['./bin/build store-storybook --deployment canary', ]
 
     step = {
         'name': 'store-storybook',

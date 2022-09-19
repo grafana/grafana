@@ -45,12 +45,6 @@ type Options struct {
 	ReloadCache bool
 }
 
-type Store interface {
-	// GetUserPermissions returns user permissions with only action and scope fields set.
-	GetUserPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]Permission, error)
-	DeleteUserPermissions(ctx context.Context, orgID, userID int64) error
-}
-
 type TeamPermissionsService interface {
 	GetPermissions(ctx context.Context, user *user.SignedInUser, resourceID string) ([]ResourcePermission, error)
 	SetUserPermission(ctx context.Context, orgID int64, user User, resourceID, permission string) (*ResourcePermission, error)
