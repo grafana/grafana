@@ -171,7 +171,7 @@ type NotificationChannelConfig struct {
 	SecureSettings        map[string][]byte `json:"secureSettings"`
 }
 
-func (c NotificationChannelConfig) marshalSettings(v interface{}) error {
+func (c NotificationChannelConfig) unmarshalSettings(v interface{}) error {
 	ser, err := c.Settings.Encode()
 	if err != nil {
 		return err

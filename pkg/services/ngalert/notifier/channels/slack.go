@@ -71,7 +71,7 @@ func buildSlackNotifier(factoryConfig FactoryConfig) (*SlackNotifier, error) {
 	channelConfig := factoryConfig.Config
 	decryptFunc := factoryConfig.DecryptFunc
 	var settings slackSettings
-	err := factoryConfig.Config.marshalSettings(&settings)
+	err := factoryConfig.Config.unmarshalSettings(&settings)
 	if err != nil {
 		return nil, err
 	}
