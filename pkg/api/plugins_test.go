@@ -130,9 +130,7 @@ func Test_PluginsInstallAndUninstall_AccessControl(t *testing.T) {
 			PluginAdminExternalManageEnabled: tc.pluginAdminExternalManageEnabled})
 		setInitCtxSignedInViewer(sc.initCtx)
 		setAccessControlPermissions(sc.acmock, tc.permissions, sc.initCtx.OrgID)
-		sc.hs.pluginInstaller = &fakePluginInstaller{
-			plugins: make(map[string]fakePlugin),
-		}
+		sc.hs.pluginInstaller = NewFakePluginInstaller()
 
 		t.Run(testName("Install", tc), func(t *testing.T) {
 			input := strings.NewReader("{ \"version\": \"1.0.2\" }")

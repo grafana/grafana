@@ -188,7 +188,6 @@ func (f *FakePluginStore) Plugin(_ context.Context, id string) (plugins.PluginDT
 
 func (f *FakePluginStore) Plugins(_ context.Context, _ ...plugins.Type) []plugins.PluginDTO {
 	var res []plugins.PluginDTO
-
 	for _, p := range f.Store {
 		res = append(res, p)
 	}
