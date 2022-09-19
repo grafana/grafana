@@ -34,7 +34,7 @@ export const Threshold: FC<Props> = ({ labelWidth, onChange, refIds, query }) =>
     },
   };
 
-  const conditions = query.conditions ?? [defaultEvaluator];
+  const conditions = query.conditions?.length ? query.conditions : [defaultEvaluator];
   const condition = conditions[0];
 
   const thresholdFunction = thresholdFunctions.find((fn) => fn.value === conditions[0].evaluator?.type);
