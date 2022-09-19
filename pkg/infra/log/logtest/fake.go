@@ -63,6 +63,6 @@ func (f *Fake) WarnCtx(_ context.Context, msg string, args ...interface{}) {
 	f.Warn(msg, args...)
 }
 
-func (f *Fake) ErrorCtx(_ context.Context, msg string, args ...interface{}) {
-	f.Error(msg, args...)
+func (f *Fake) FromContext(_ context.Context) log.Logger {
+	return f.New()
 }

@@ -102,14 +102,16 @@ func errorHandler(logger glog.Logger) func(http.ResponseWriter, *http.Request, e
 			return
 		}
 
+		ctxLogger := logger.FromContext(r.Context())
+
 		// nolint:errorlint
 		if timeoutErr, ok := err.(timeoutError); ok && timeoutErr.Timeout() {
-			logger.ErrorCtx(r.Context(), "Proxy request timed out", "err", err)
+			ctxLogger.Error("Proxy request timed out", "err", err)
 			w.WriteHeader(http.StatusGatewayTimeout)
 			return
 		}
 
-		logger.ErrorCtx(r.Context(), "Proxy request failed", "err", err)
+		ctxLogger.Error("Proxy request failed", "err", err)
 		w.WriteHeader(http.StatusBadGateway)
 	}
 }

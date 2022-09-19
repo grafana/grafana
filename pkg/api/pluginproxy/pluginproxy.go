@@ -162,7 +162,7 @@ func (proxy PluginProxy) director(req *http.Request) {
 	}
 
 	if err := setBodyContent(req, proxy.matchedRoute, data); err != nil {
-		logger.ErrorCtx(req.Context(), "Failed to set plugin route body content", "error", err)
+		logger.FromContext(req.Context()).Error("Failed to set plugin route body content", "error", err)
 	}
 }
 
@@ -180,7 +180,8 @@ func (proxy PluginProxy) logRequest() {
 		}
 	}
 
-	logger.InfoCtx(proxy.ctx.Req.Context(), "Proxying incoming request",
+	ctxLogger := logger.FromContext(proxy.ctx.Req.Context())
+	ctxLogger.Info("Proxying incoming request",
 		"userid", proxy.ctx.UserID,
 		"orgid", proxy.ctx.OrgID,
 		"username", proxy.ctx.Login,

@@ -30,19 +30,6 @@ type Logger interface {
 	// Error logs a message with error level and key/value pairs, if any.
 	Error(msg string, ctx ...interface{})
 
-	// DebugCtx logs a message with debug level and key/value pairs, if any.
-	// In addition adds context key/value pairs, if any,
-	DebugCtx(ctx context.Context, msg string, args ...interface{})
-
-	// InfoCtx logs a message with info level and key/value pairs, if any.
-	// In addition adds context key/value pairs, if any,
-	InfoCtx(ctx context.Context, msg string, args ...interface{})
-
-	// WarnCtx logs a message with warning level and key/value pairs, if any.
-	// In addition adds context key/value pairs, if any,
-	WarnCtx(ctx context.Context, msg string, args ...interface{})
-
-	// ErrorCtx logs a message with error level and key/value pairs, if any.
-	// In addition adds context key/value pairs, if any,
-	ErrorCtx(ctx context.Context, msg string, args ...interface{})
+	// FromContext returns a new contextual Logger that has this logger's context plus the given context.
+	FromContext(ctx context.Context) Logger
 }

@@ -74,9 +74,9 @@ func Logger(cfg *setting.Cfg) web.Middleware {
 				}
 
 				if status >= 500 {
-					ctx.Logger.ErrorCtx(ctx.Req.Context(), "Request Completed", logParams...)
+					ctx.Logger.Error("Request Completed", logParams...)
 				} else {
-					ctx.Logger.InfoCtx(ctx.Req.Context(), "Request Completed", logParams...)
+					ctx.Logger.Info("Request Completed", logParams...)
 				}
 			}
 		})
