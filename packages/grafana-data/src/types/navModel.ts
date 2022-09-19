@@ -1,15 +1,18 @@
 import { ComponentType } from 'react';
 
+import { LinkTarget } from './dataLink';
+import { IconName } from './icon';
+
 export interface NavLinkDTO {
   id?: string;
   text: string;
   description?: string;
   section?: NavSection;
   subTitle?: string;
-  icon?: string;
+  icon?: IconName;
   img?: string;
   url?: string;
-  target?: string;
+  target?: LinkTarget;
   sortWeight?: number;
   divider?: boolean;
   hideFromMenu?: boolean;
@@ -66,3 +69,9 @@ export interface NavModelBreadcrumb {
 }
 
 export type NavIndex = { [s: string]: NavModelItem };
+
+export enum PageLayoutType {
+  Standard,
+  Canvas,
+  Custom,
+}

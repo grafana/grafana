@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
@@ -61,7 +62,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 		}
 		proc := fakes.NewFakeProcessManager()
 
-		pm := New(&plugins.Cfg{}, fakes.NewFakePluginRegistry(), []plugins.PluginSource{}, loader, pluginRepo, fs, proc)
+		pm := New(&config.Cfg{}, fakes.NewFakePluginRegistry(), []plugins.PluginSource{}, loader, pluginRepo, fs, proc)
 		err := pm.Add(context.Background(), pluginID, v1, plugins.CompatOpts{})
 		require.NoError(t, err)
 
@@ -175,7 +176,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 			}
 
 			proc := fakes.NewFakeProcessManager()
-			pm := New(&plugins.Cfg{}, reg, []plugins.PluginSource{}, &fakes.FakeLoader{}, &fakes.FakePluginRepo{}, &fakes.FakePluginStorage{}, proc)
+			pm := New(&config.Cfg{}, reg, []plugins.PluginSource{}, &fakes.FakeLoader{}, &fakes.FakePluginRepo{}, &fakes.FakePluginStorage{}, proc)
 			err := pm.Add(context.Background(), p.ID, "3.2.0", plugins.CompatOpts{})
 			require.ErrorIs(t, err, plugins.ErrInstallCorePlugin)
 
@@ -201,7 +202,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 func TestPluginManager_Run(t *testing.T) {
 	t.Run("Plugin sources are loaded in order", func(t *testing.T) {
 		loader := &fakes.FakeLoader{}
-		pm := New(&plugins.Cfg{}, fakes.NewFakePluginRegistry(), []plugins.PluginSource{
+		pm := New(&config.Cfg{}, fakes.NewFakePluginRegistry(), []plugins.PluginSource{
 			{Class: plugins.Bundled, Paths: []string{"path1"}},
 			{Class: plugins.Core, Paths: []string{"path2"}},
 			{Class: plugins.External, Paths: []string{"path3"}},
@@ -210,6 +211,52 @@ func TestPluginManager_Run(t *testing.T) {
 		err := pm.Init(context.Background())
 		require.NoError(t, err)
 		require.Equal(t, []string{"path1", "path2", "path3"}, loader.LoadedPaths)
+	})
+}
+
+func TestManager_Renderer(t *testing.T) {
+	t.Run("Renderer returns a single (non-decommissioned) renderer plugin", func(t *testing.T) {
+		p1 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-renderer", Type: plugins.Renderer}}
+		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-panel", Type: plugins.Panel}}
+		p3 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-app", Type: plugins.App}}
+
+		reg := &fakes.FakePluginRegistry{
+			Store: map[string]*plugins.Plugin{
+				p1.ID: p1,
+				p2.ID: p2,
+				p3.ID: p3,
+			},
+		}
+
+		pm := New(&config.Cfg{}, reg, []plugins.PluginSource{}, &fakes.FakeLoader{}, &fakes.FakePluginRepo{},
+			&fakes.FakePluginStorage{}, &fakes.FakeProcessManager{})
+
+		r := pm.Renderer(context.Background())
+		require.Equal(t, p1, r)
+	})
+}
+
+func TestManager_SecretsManager(t *testing.T) {
+	t.Run("Renderer returns a single (non-decommissioned) secrets manager plugin", func(t *testing.T) {
+		p1 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-renderer", Type: plugins.Renderer}}
+		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-panel", Type: plugins.Panel}}
+		p3 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-secrets", Type: plugins.SecretsManager}}
+		p4 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-datasource", Type: plugins.DataSource}}
+
+		reg := &fakes.FakePluginRegistry{
+			Store: map[string]*plugins.Plugin{
+				p1.ID: p1,
+				p2.ID: p2,
+				p3.ID: p3,
+				p4.ID: p4,
+			},
+		}
+
+		pm := New(&config.Cfg{}, reg, []plugins.PluginSource{}, &fakes.FakeLoader{}, &fakes.FakePluginRepo{},
+			&fakes.FakePluginStorage{}, &fakes.FakeProcessManager{})
+
+		r := pm.SecretsManager(context.Background())
+		require.Equal(t, p3, r)
 	})
 }
 

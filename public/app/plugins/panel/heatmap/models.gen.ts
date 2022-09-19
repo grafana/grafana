@@ -26,13 +26,15 @@ export interface HeatmapColorOptions {
   exponent: number; // when scale== sqrt
   steps: number; // 2-128
 
+  reverse: boolean;
+
   // Clamp the colors to the value range
   min?: number;
   max?: number;
 }
 export interface YAxisConfig extends AxisConfig {
   unit?: string;
-  reverse?: boolean; 
+  reverse?: boolean;
   decimals?: number;
   // Only used when the axis is not ordinal
   min?: number;
@@ -78,9 +80,9 @@ export interface PanelOptions {
   cellGap?: number; // was cardPadding
   cellRadius?: number; // was cardRadius (not used, but migrated from angular)
   cellValues?: CellValues;
-  
+
   yAxis: YAxisConfig;
-  
+
   legend: HeatmapLegend;
 
   tooltip: HeatmapTooltip;
@@ -94,6 +96,7 @@ export const defaultPanelOptions: PanelOptions = {
     scheme: 'Oranges',
     fill: 'dark-orange',
     scale: HeatmapColorScale.Exponential,
+    reverse: false,
     exponent: 0.5,
     steps: 64,
   },

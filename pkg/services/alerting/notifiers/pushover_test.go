@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/validations"
 
@@ -76,7 +77,7 @@ func TestGenPushoverBody(t *testing.T) {
 			evalContext := alerting.NewEvalContext(context.Background(),
 				&alerting.Rule{
 					State: models.AlertStateAlerting,
-				}, &validations.OSSPluginRequestValidator{}, nil, nil, nil)
+				}, &validations.OSSPluginRequestValidator{}, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 			_, pushoverBody, err := notifier.genPushoverBody(evalContext, "", "")
 
 			require.Nil(t, err)
@@ -87,7 +88,7 @@ func TestGenPushoverBody(t *testing.T) {
 			evalContext := alerting.NewEvalContext(context.Background(),
 				&alerting.Rule{
 					State: models.AlertStateOK,
-				}, &validations.OSSPluginRequestValidator{}, nil, nil, nil)
+				}, &validations.OSSPluginRequestValidator{}, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 			_, pushoverBody, err := notifier.genPushoverBody(evalContext, "", "")
 
 			require.Nil(t, err)

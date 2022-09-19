@@ -1,4 +1,5 @@
 import { MutableDataFrame } from '../dataframe/MutableDataFrame';
+import { Labels } from '../types/data';
 import { LogLevel, LogsModel, LogRowModel, LogsSortOrder } from '../types/logs';
 
 import {
@@ -66,11 +67,11 @@ describe('calculateLogsLabelStats()', () => {
         entry: 'foo 1',
         labels: {
           foo: 'bar',
-        },
+        } as Labels,
       },
-    ];
+    ] as LogRowModel[];
 
-    expect(calculateLogsLabelStats(rows as any, 'baz')).toEqual([]);
+    expect(calculateLogsLabelStats(rows, 'baz')).toEqual([]);
   });
 
   test('should return stats for found labels', () => {
@@ -79,23 +80,23 @@ describe('calculateLogsLabelStats()', () => {
         entry: 'foo 1',
         labels: {
           foo: 'bar',
-        },
+        } as Labels,
       },
       {
         entry: 'foo 0',
         labels: {
           foo: 'xxx',
-        },
+        } as Labels,
       },
       {
         entry: 'foo 2',
         labels: {
           foo: 'bar',
-        },
+        } as Labels,
       },
-    ];
+    ] as LogRowModel[];
 
-    expect(calculateLogsLabelStats(rows as any, 'foo')).toMatchObject([
+    expect(calculateLogsLabelStats(rows, 'foo')).toMatchObject([
       {
         value: 'bar',
         count: 2,
@@ -215,9 +216,9 @@ describe('calculateFieldStats()', () => {
       {
         entry: 'foo=bar',
       },
-    ];
+    ] as LogRowModel[];
 
-    expect(calculateFieldStats(rows as any, /baz=(.*)/)).toEqual([]);
+    expect(calculateFieldStats(rows, /baz=(.*)/)).toEqual([]);
   });
 
   test('should return stats for found field', () => {
@@ -234,9 +235,9 @@ describe('calculateFieldStats()', () => {
       {
         entry: 't=2018-12-05T07:44:59+0000 foo=503',
       },
-    ];
+    ] as LogRowModel[];
 
-    expect(calculateFieldStats(rows as any, /foo=("[^"]*"|\S+)/)).toMatchObject([
+    expect(calculateFieldStats(rows, /foo=("[^"]*"|\S+)/)).toMatchObject([
       {
         value: '"42 + 1"',
         count: 2,
@@ -363,8 +364,8 @@ describe('checkLogsError()', () => {
     labels: {
       __error__: 'Error Message',
       foo: 'boo',
-    },
-  } as any as LogRowModel;
+    } as Labels,
+  } as LogRowModel;
   test('should return correct error if error is present', () => {
     expect(checkLogsError(log)).toStrictEqual({ hasError: true, errorMessage: 'Error Message' });
   });

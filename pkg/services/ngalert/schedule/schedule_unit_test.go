@@ -21,7 +21,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -111,10 +111,10 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 				require.Len(t, states, 1)
 				s := states[0]
 
-				var cmd *models.AlertInstance
+				var cmd *models.SaveAlertInstanceCommand
 				for _, op := range instanceStore.RecordedOps {
 					switch q := op.(type) {
-					case models.AlertInstance:
+					case models.SaveAlertInstanceCommand:
 						cmd = &q
 					}
 					if cmd != nil {
@@ -123,11 +123,11 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 				}
 
 				require.NotNil(t, cmd)
-				t.Logf("Saved alert instances: %v", cmd)
+				t.Logf("Saved alert instance: %v", cmd)
 				require.Equal(t, rule.OrgID, cmd.RuleOrgID)
 				require.Equal(t, expectedTime, cmd.LastEvalTime)
-				require.Equal(t, rule.UID, cmd.RuleUID)
-				require.Equal(t, evalState.String(), string(cmd.CurrentState))
+				require.Equal(t, cmd.RuleUID, cmd.RuleUID)
+				require.Equal(t, evalState.String(), string(cmd.State))
 				require.Equal(t, s.Labels, data.Labels(cmd.Labels))
 			})
 
@@ -484,8 +484,6 @@ func TestSchedule_DeleteAlertRule(t *testing.T) {
 func setupScheduler(t *testing.T, rs *store.FakeRuleStore, is *store.FakeInstanceStore, registry *prometheus.Registry, senderMock *AlertsSenderMock, evalMock *eval.FakeEvaluator) *schedule {
 	t.Helper()
 
-	fakeAnnoRepo := store.NewFakeAnnotationsRepo()
-	annotations.SetRepository(fakeAnnoRepo)
 	mockedClock := clock.NewMock()
 	logger := log.New("ngalert schedule test")
 
@@ -531,7 +529,7 @@ func setupScheduler(t *testing.T, rs *store.FakeRuleStore, is *store.FakeInstanc
 		Metrics:     m.GetSchedulerMetrics(),
 		AlertSender: senderMock,
 	}
-	st := state.NewManager(schedCfg.Logger, m.GetStateMetrics(), nil, rs, is, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, mockedClock)
+	st := state.NewManager(schedCfg.Logger, m.GetStateMetrics(), nil, rs, is, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, mockedClock, annotationstest.NewFakeAnnotationsRepo())
 	return NewScheduler(schedCfg, appUrl, st)
 }
 
