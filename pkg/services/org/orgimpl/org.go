@@ -19,8 +19,7 @@ type Service struct {
 	cfg   *setting.Cfg
 	log   log.Logger
 	// TODO remove sqlstore
-	sqlStore   *sqlstore.SQLStore
-	orgService org.Service
+	sqlStore *sqlstore.SQLStore
 }
 
 func ProvideService(db db.DB, cfg *setting.Cfg) org.Service {
