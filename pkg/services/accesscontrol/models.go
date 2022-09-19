@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 // RoleRegistration stores a role and its assignments to built-in roles
@@ -269,13 +270,12 @@ type SetResourcePermissionCommand struct {
 }
 
 type EvaluateUserPermissionCommand struct {
-	OrgID     int64        `json:"-"`
-	UserID    int64        `json:"-"`
-	OrgRole   org.RoleType `json:"role"`
-	Action    string       `json:"action,omitempty"`
-	Resource  string       `json:"resource,omitempty"`
-	Attribute string       `json:"attribute,omitempty"`
-	UIDs      []string     `json:"uids,omitempty"`
+	SignedInUser *user.SignedInUser `json:"-"`
+	OrgRole      org.RoleType       `json:"role"`
+	Action       string             `json:"action,omitempty"`
+	Resource     string             `json:"resource,omitempty"`
+	Attribute    string             `json:"attribute,omitempty"`
+	UIDs         []string           `json:"uids,omitempty"`
 }
 
 const (

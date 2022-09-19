@@ -40,10 +40,6 @@ func (f FakeService) RegisterFixedRoles(ctx context.Context) error {
 	return f.ExpectedErr
 }
 
-func (f FakeService) EvaluateUserPermissions(ctx context.Context, cmd accesscontrol.EvaluateUserPermissionCommand) (map[string]accesscontrol.Metadata, error) {
-	return nil, f.ExpectedErr
-}
-
 func (f FakeService) IsDisabled() bool {
 	return f.ExpectedDisabled
 }
@@ -58,6 +54,10 @@ type FakeAccessControl struct {
 
 func (f FakeAccessControl) Evaluate(ctx context.Context, user *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
 	return f.ExpectedEvaluate, f.ExpectedErr
+}
+
+func (f FakeAccessControl) EvaluateUserPermissions(ctx context.Context, cmd accesscontrol.EvaluateUserPermissionCommand) (map[string]accesscontrol.Metadata, error) {
+	return nil, f.ExpectedErr
 }
 
 func (f FakeAccessControl) RegisterScopeAttributeResolver(prefix string, resolver accesscontrol.ScopeAttributeResolver) {
