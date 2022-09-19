@@ -12,7 +12,7 @@ interface Props {
   labels: Labels;
 }
 
-/** @deprecated */
+/** @deprecated will be removed in the next major version */
 export const LogLabels: FunctionComponent<Props> = ({ labels }) => {
   const styles = useStyles2(getStyles);
   const displayLabels = Object.keys(labels).filter((label) => !label.startsWith('_') && !HIDDEN_LABELS.includes(label));
