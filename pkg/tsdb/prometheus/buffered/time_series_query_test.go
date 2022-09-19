@@ -59,7 +59,7 @@ func TestPrometheus_ExecuteTimeSeriesQuery(t *testing.T) {
 
 		_, err = buffered.ExecuteTimeSeriesQuery(context.Background(), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{},
-			// This header should end up in the outgoing request to prometheus
+			// This header is dropped, as only FromAlert header will be added to outgoing requests
 			Headers: map[string]string{"foo": "bar"},
 			Queries: []backend.DataQuery{{
 				JSON: []byte(`{"expr": "metric{label=\"test\"}", "rangeQuery": true}`),
@@ -67,7 +67,7 @@ func TestPrometheus_ExecuteTimeSeriesQuery(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.NotNil(t, rt.Req)
-		require.Equal(t, http.Header{"Content-Type": []string{"application/x-www-form-urlencoded"}, "foo": []string{"bar"}}, rt.Req.Header)
+		require.Equal(t, http.Header{"Content-Type": []string{"application/x-www-form-urlencoded"}, "Idempotency-Key": []string(nil)}, rt.Req.Header)
 	})
 }
 
