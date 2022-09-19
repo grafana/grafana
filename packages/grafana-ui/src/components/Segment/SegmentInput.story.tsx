@@ -129,11 +129,9 @@ Basic.parameters = {
 
 Basic.args = {
   value: 'Initial input value',
-  allowCustomValue: false,
   placeholder: 'Placeholder text',
   disabled: false,
   autofocus: false,
-  allowEmptyValue: false,
   inputPlaceholder: 'Start typing...',
 };
 
