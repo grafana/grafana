@@ -15,13 +15,13 @@ export type LayerDragDropListProps<T extends LayerElement> = {
   layers: T[];
   getLayerInfo: (element: T) => string;
   onDragEnd: (result: DropResult) => void;
-  onSelect: (element: T) => any;
-  onDelete: (element: T) => any;
-  onDuplicate?: (element: T) => any;
+  onSelect: (element: T) => void;
+  onDelete: (element: T) => void;
+  onDuplicate?: (element: T) => void;
   showActions: (element: T) => boolean;
   selection?: string[]; // list of unique ids (names)
   excludeBaseLayer?: boolean;
-  onNameChange: (element: T, newName: string) => any;
+  onNameChange: (element: T, newName: string) => void;
   verifyLayerNameUniqueness?: (nameToCheck: string) => boolean;
 };
 
