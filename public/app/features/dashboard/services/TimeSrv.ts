@@ -12,7 +12,7 @@ import {
 } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
-import { config, getConfig } from 'app/core/config';
+import { config } from 'app/core/config';
 import { contextSrv, ContextSrv } from 'app/core/services/context_srv';
 import { getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
@@ -149,7 +149,7 @@ export class TimeSrv {
 
   private initTimeFromUrl() {
     // If we are in a public dashboard ignore the time range in the url
-    if (getConfig().isPublicDashboardView) {
+    if (config.isPublicDashboardView) {
       return;
     }
 
@@ -281,7 +281,7 @@ export class TimeSrv {
 
   setTime(time: RawTimeRange, updateUrl = true) {
     // If we are in a public dashboard ignore time range changes
-    if (getConfig().isPublicDashboardView) {
+    if (config.isPublicDashboardView) {
       return;
     }
 
