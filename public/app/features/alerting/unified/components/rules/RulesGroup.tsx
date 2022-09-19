@@ -3,6 +3,7 @@ import pluralize from 'pluralize';
 import React, { FC, useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { logInfo } from '@grafana/runtime';
 import { Badge, ConfirmModal, HorizontalGroup, Icon, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
 import { useDispatch } from 'app/types';
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
@@ -179,6 +180,13 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll, 
     <RuleLocation namespace={namespace.name} group={group.name} />
   );
 
+  const closeEditModal = (saved = false) => {
+    if (!saved) {
+      logInfo('leaving rule group edit without saving');
+    }
+    setIsEditingGroup(false);
+  };
+
   return (
     <div className={styles.wrapper} data-testid="rule-group">
       <div className={styles.header} data-testid="rule-group-header">
@@ -215,9 +223,7 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll, 
       {!isCollapsed && (
         <RulesTable showSummaryColumn={true} className={styles.rulesTable} showGuidelines={true} rules={group.rules} />
       )}
-      {isEditingGroup && (
-        <EditCloudGroupModal group={group} namespace={namespace} onClose={() => setIsEditingGroup(false)} />
-      )}
+      {isEditingGroup && <EditCloudGroupModal group={group} namespace={namespace} onClose={() => closeEditModal()} />}
       {isReorderingGroup && (
         <ReorderCloudGroupModal group={group} namespace={namespace} onClose={() => setIsReorderingGroup(false)} />
       )}
