@@ -1,5 +1,5 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 
 import { textUtil } from '@grafana/data';
 import { config, CopyPanelEvent } from '@grafana/runtime';
@@ -15,6 +15,7 @@ import { provideTheme } from '../utils/ConfigProvider';
 export class ModalManager {
   reactModalRoot = document.body;
   reactModalNode = document.createElement('div');
+  root = createRoot(this.reactModalNode);
 
   init() {
     appEvents.subscribe(ShowConfirmModalEvent, (e) => this.showConfirmModal(e.payload));
@@ -35,11 +36,11 @@ export class ModalManager {
 
     const elem = React.createElement(provideI18n(provideTheme(AngularModalProxy, config.theme2)), modalProps);
     this.reactModalRoot.appendChild(this.reactModalNode);
-    ReactDOM.render(elem, this.reactModalNode);
+    this.root.render(elem);
   }
 
   onReactModalDismiss = () => {
-    ReactDOM.unmountComponentAtNode(this.reactModalNode);
+    this.root.unmount();
     this.reactModalRoot.removeChild(this.reactModalNode);
   };
 
@@ -86,6 +87,7 @@ export class ModalManager {
 
     const elem = React.createElement(provideTheme(AngularModalProxy, config.theme2), modalProps);
     this.reactModalRoot.appendChild(this.reactModalNode);
-    ReactDOM.render(elem, this.reactModalNode);
+    const root = createRoot(this.reactModalNode);
+    root.render(elem);
   }
 }
