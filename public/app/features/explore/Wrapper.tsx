@@ -4,7 +4,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { locationService } from '@grafana/runtime';
 import { ErrorBoundaryAlert } from '@grafana/ui';
-import { GrafanaContext } from 'app/core/context/GrafanaContext';
+import { GrafanaContext, GrafanaContextType } from 'app/core/context/GrafanaContext';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { StoreState } from 'app/types';
 import { ExploreId, ExploreQueryParams } from 'app/types/explore';
@@ -47,6 +47,7 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 
 type Props = OwnProps & RouteProps & ConnectedProps<typeof connector>;
 class WrapperUnconnected extends PureComponent<Props> {
+  declare context: GrafanaContextType;
   static contextType = GrafanaContext;
 
   componentWillUnmount() {

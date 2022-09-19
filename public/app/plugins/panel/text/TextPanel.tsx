@@ -19,6 +19,7 @@ interface State {
 }
 
 export class TextPanel extends PureComponent<Props, State> {
+  declare context: React.ContextType<typeof ThemeContext>;
   static contextType = ThemeContext;
 
   constructor(props: Props) {

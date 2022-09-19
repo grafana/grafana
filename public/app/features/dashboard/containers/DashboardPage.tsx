@@ -9,7 +9,7 @@ import { Themeable2, withTheme2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { Page } from 'app/core/components/Page/Page';
 import { config } from 'app/core/config';
-import { GrafanaContext } from 'app/core/context/GrafanaContext';
+import { GrafanaContext, GrafanaContextType } from 'app/core/context/GrafanaContext';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getKioskMode } from 'app/core/navigation/kiosk';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -97,6 +97,7 @@ export interface State {
 }
 
 export class UnthemedDashboardPage extends PureComponent<Props, State> {
+  declare context: GrafanaContextType;
   static contextType = GrafanaContext;
 
   private forceRouteReloadCounter = 0;
