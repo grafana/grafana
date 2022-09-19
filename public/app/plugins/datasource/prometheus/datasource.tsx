@@ -5,8 +5,10 @@ import { forkJoin, lastValueFrom, merge, Observable, of, OperatorFunction, pipe,
 import { catchError, filter, map, tap } from 'rxjs/operators';
 
 import {
+  AbstractQuery,
   AnnotationEvent,
   CoreApp,
+  DataFrame,
   DataQueryError,
   DataQueryRequest,
   DataQueryResponse,
@@ -15,31 +17,29 @@ import {
   DataSourceWithQueryImportSupport,
   dateMath,
   DateTime,
-  AbstractQuery,
+  dateTime,
   LoadingState,
+  QueryFixAction,
   rangeUtil,
   ScopedVars,
   TimeRange,
-  DataFrame,
-  dateTime,
-  QueryFixAction,
 } from '@grafana/data';
 import {
+  BackendDataSourceResponse,
   BackendSrvRequest,
+  DataSourceWithBackend,
   FetchError,
   FetchResponse,
   getBackendSrv,
-  DataSourceWithBackend,
-  BackendDataSourceResponse,
-  toDataQueryResponse,
   isFetchError,
+  toDataQueryResponse,
 } from '@grafana/runtime';
 import { Badge, BadgeColor, Tooltip } from '@grafana/ui';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { discoverDataSourceFeatures } from 'app/features/alerting/unified/api/buildInfo';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
-import { PromApplication, PromApiFeatures } from 'app/types/unified-alerting-dto';
+import { PromApiFeatures, PromApplication } from 'app/types/unified-alerting-dto';
 
 import { addLabelToQuery } from './add_label_to_query';
 import { AnnotationQueryEditor } from './components/AnnotationQueryEditor';
@@ -214,11 +214,16 @@ export class PrometheusDatasource
 
   // Use this for tab completion features, wont publish response to other components
   async metadataRequest<T = any>(url: string, params = {}, options?: Partial<BackendSrvRequest>) {
+    // Build the request URL based on the access mode
+    let queryUrl = url;
+    if (this.access === 'proxy') {
+      queryUrl = `/api/datasources/${this.id}/resources` + queryUrl;
+    }
     // If URL includes endpoint that supports POST and GET method, try to use configured method. This might fail as POST is supported only in v2.10+.
     if (GET_AND_POST_METADATA_ENDPOINTS.some((endpoint) => url.includes(endpoint))) {
       try {
         return await lastValueFrom(
-          this._request<T>(`/api/datasources/${this.id}/resources${url}`, params, {
+          this._request<T>(queryUrl, params, {
             method: this.httpMethod,
             hideFromInspector: true,
             showErrorAlert: false,
@@ -236,7 +241,7 @@ export class PrometheusDatasource
     }
 
     return await lastValueFrom(
-      this._request<T>(`/api/datasources/${this.id}/resources${url}`, params, {
+      this._request<T>(queryUrl, params, {
         method: 'GET',
         hideFromInspector: true,
         ...options,
