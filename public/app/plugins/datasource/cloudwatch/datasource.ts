@@ -12,9 +12,10 @@ import {
   ScopedVars,
 } from '@grafana/data';
 import { DataSourceWithBackend } from '@grafana/runtime';
-import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
+
+import { RowContextOptions } from '../../../features/logs/components/LogRowContextProvider';
 
 import { CloudWatchAnnotationSupport } from './annotationSupport';
 import { SQLCompletionItemProvider } from './cloudwatch-sql/completion/CompletionItemProvider';
