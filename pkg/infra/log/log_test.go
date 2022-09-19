@@ -120,7 +120,10 @@ func TestLogger(t *testing.T) {
 		childLoggerCtx := childLogger.FromContext(ctx)
 		childLoggerCtx.Error("hello child")
 
-		ctx = WithContextualArgs(ctx, "ctxKey", "ctxValue")
+		RegisterContextualLogProvider(func(ctx context.Context) ([]interface{}, bool) {
+			return []interface{}{"ctxKey", "ctxValue"}, true
+		})
+
 		rootLoggerCtx = rootLogger.FromContext(ctx)
 		rootLoggerCtx.Debug("hello contextual root")
 		childLoggerCtx = childLogger.FromContext(ctx)

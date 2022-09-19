@@ -14,7 +14,6 @@ import (
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -83,11 +82,6 @@ func RequestTracing(tracer tracing.Tracer) web.Middleware {
 
 			wireContext := otel.GetTextMapPropagator().Extract(req.Context(), propagation.HeaderCarrier(req.Header))
 			ctx, span := tracer.Start(wireContext, fmt.Sprintf("HTTP %s %s", req.Method, req.URL.Path), trace.WithLinks(trace.LinkFromContext(wireContext)))
-
-			traceID := tracing.TraceIDFromContext(ctx, false)
-			if traceID != "" {
-				ctx = log.WithContextualArgs(ctx, "traceID", traceID)
-			}
 
 			req = req.WithContext(ctx)
 			next.ServeHTTP(w, req)
