@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/validations"
 
@@ -93,7 +94,7 @@ func TestVictoropsNotifier(t *testing.T) {
 					{Key: "keyOnly"},
 					{Key: "severity", Value: "warning"},
 				},
-			}, &validations.OSSPluginRequestValidator{}, nil, nil, nil)
+			}, &validations.OSSPluginRequestValidator{}, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 			evalContext.IsTestRun = true
 
 			payload, err := victoropsNotifier.buildEventPayload(evalContext)
@@ -141,7 +142,7 @@ func TestVictoropsNotifier(t *testing.T) {
 					{Key: "keyOnly"},
 					{Key: "severity", Value: "warning"},
 				},
-			}, &validations.OSSPluginRequestValidator{}, nil, nil, nil)
+			}, &validations.OSSPluginRequestValidator{}, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 			evalContext.IsTestRun = true
 
 			payload, err := victoropsNotifier.buildEventPayload(evalContext)
