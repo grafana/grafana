@@ -514,7 +514,7 @@ func TestGroupQueriesByDataSource(t *testing.T) {
 	})
 }
 
-func TestRemoveMetadataFromQueryData(t *testing.T) {
+func TestSanitizeMetadataFromQueryData(t *testing.T) {
 	t.Run("can remove metadata from query", func(t *testing.T) {
 		fakeResponse := &backend.QueryDataResponse{
 			Responses: backend.Responses{
@@ -523,13 +523,19 @@ func TestRemoveMetadataFromQueryData(t *testing.T) {
 						&data.Frame{
 							Name: "1",
 							Meta: &data.FrameMeta{
-								Type: "Test1",
+								ExecutedQueryString: "Test1",
+								Custom: map[string]string{
+									"test1": "test1",
+								},
 							},
 						},
 						&data.Frame{
 							Name: "2",
 							Meta: &data.FrameMeta{
-								Type: "Test2",
+								ExecutedQueryString: "Test2",
+								Custom: map[string]string{
+									"test2": "test2",
+								},
 							},
 						},
 					},
@@ -539,18 +545,22 @@ func TestRemoveMetadataFromQueryData(t *testing.T) {
 						&data.Frame{
 							Name: "3",
 							Meta: &data.FrameMeta{
-								Type: "Test3",
+								ExecutedQueryString: "Test3",
+								Custom: map[string]string{
+									"test3": "test3",
+								},
 							},
 						},
 					},
 				},
 			},
 		}
-		RemoveMetadataFromQueryData(fakeResponse)
+		SanitizeMetadataFromQueryData(fakeResponse)
 		for k := range fakeResponse.Responses {
 			frames := fakeResponse.Responses[k].Frames
 			for i := range frames {
-				require.Nil(t, frames[i].Meta)
+				require.Empty(t, frames[i].Meta.ExecutedQueryString)
+				require.Empty(t, frames[i].Meta.Custom)
 			}
 		}
 	})

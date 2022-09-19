@@ -215,7 +215,7 @@ func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, 
 	}
 
 	pd.log.Info("Successfully queried datasources for public dashboard", "datasources", reqDatasources)
-	queries.RemoveMetadataFromQueryData(res)
+	queries.SanitizeMetadataFromQueryData(res)
 	return res, nil
 }
 
