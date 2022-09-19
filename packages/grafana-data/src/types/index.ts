@@ -41,6 +41,7 @@ export {
   BootData,
   OAuth,
   OAuthSettings,
+  AuthSettings,
   GrafanaConfig,
   BuildInfo,
   LicenseInfo,
