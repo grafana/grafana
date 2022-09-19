@@ -1,13 +1,12 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import React, { useState } from 'react';
-import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, NavModelItem, NavSection } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { useTheme2 } from '@grafana/ui';
-import { StoreState } from 'app/types';
+import { useSelector } from 'app/types';
 
 import { enrichConfigItems, enrichWithInteractionTracking, getActiveItem } from '../NavBar/utils';
 
@@ -19,7 +18,7 @@ export interface Props {
 }
 
 export const MegaMenu = React.memo<Props>(({ onClose, searchBarHidden }) => {
-  const navBarTree = useSelector((state: StoreState) => state.navBarTree);
+  const navBarTree = useSelector((state) => state.navBarTree);
   const theme = useTheme2();
   const styles = getStyles(theme);
   const location = useLocation();

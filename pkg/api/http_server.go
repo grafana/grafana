@@ -37,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/comments"
@@ -189,6 +190,7 @@ type HTTPServer struct {
 	loginAttemptService    loginAttempt.Service
 	orgService             org.Service
 	accesscontrolService   accesscontrol.Service
+	annotationsRepo        annotations.Repository
 }
 
 type ServerOptions struct {
@@ -227,7 +229,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	secretsMigrator secrets.Migrator, secretsPluginManager plugins.SecretsPluginManager, secretsService secrets.Service,
 	secretsPluginMigrator spm.SecretMigrationProvider, secretsStore secretsKV.SecretsKVStore,
 	publicDashboardsApi *publicdashboardsApi.Api, userService user.Service, tempUserService tempUser.Service, loginAttemptService loginAttempt.Service, orgService org.Service,
-	accesscontrolService accesscontrol.Service, dashboardThumbsService dashboardThumbs.Service,
+	accesscontrolService accesscontrol.Service, dashboardThumbsService dashboardThumbs.Service, annotationRepo annotations.Repository,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -323,6 +325,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		loginAttemptService:          loginAttemptService,
 		orgService:                   orgService,
 		accesscontrolService:         accesscontrolService,
+		annotationsRepo:              annotationRepo,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
@@ -330,7 +333,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	hs.registerRoutes()
 
 	// Register access control scope resolver for annotations
-	hs.AccessControl.RegisterScopeAttributeResolver(AnnotationTypeScopeResolver())
+	hs.AccessControl.RegisterScopeAttributeResolver(AnnotationTypeScopeResolver(hs.annotationsRepo))
 
 	if err := hs.declareFixedRoles(); err != nil {
 		return nil, err

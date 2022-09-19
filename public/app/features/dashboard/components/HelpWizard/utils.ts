@@ -118,15 +118,19 @@ export async function getDebugDashboard(panel: PanelModel, rand: Randomize, time
     ],
   };
 
-  if (data.annotations?.length) {
-    const anno: DataFrameJSON[] = [];
-    for (const f of frames) {
-      if (f.schema?.meta?.dataTopic) {
-        delete f.schema.meta.dataTopic;
-        anno.push(f);
-      }
-    }
+  if (saveModel.transformations?.length) {
+    const last = dashboard.panels[dashboard.panels.length - 1];
+    last.title = last.title + ' (after transformations)';
 
+    const before = cloneDeep(last);
+    before.id = 100;
+    before.title = 'Data (before transformations)';
+    before.gridPos.w = 24; // full width
+    before.targets[0].withTransforms = false;
+    dashboard.panels.push(before);
+  }
+
+  if (data.annotations?.length) {
     dashboard.panels.push({
       id: 7,
       gridPos: {
@@ -138,17 +142,22 @@ export async function getDebugDashboard(panel: PanelModel, rand: Randomize, time
       type: 'table',
       title: 'Annotations',
       datasource: {
-        type: 'grafana',
-        uid: 'grafana',
+        type: 'datasource',
+        uid: '-- Dashboard --',
       },
       options: {
         showTypeIcons: true,
       },
       targets: [
         {
+          datasource: {
+            type: 'datasource',
+            uid: '-- Dashboard --',
+          },
+          panelId: 2,
+          withTransforms: true,
+          topic: DataTopic.Annotations,
           refId: 'A',
-          rawFrameContent: JSON.stringify(anno),
-          scenarioId: 'raw_frame',
         },
       ],
     });
@@ -287,6 +296,7 @@ const embeddedDataTemplate: any = {
             uid: '-- Dashboard --',
           },
           panelId: 2,
+          withTransforms: true,
           refId: 'A',
         },
       ],

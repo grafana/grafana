@@ -1,4 +1,4 @@
-package sqlstore
+package annotationsimpl
 
 import (
 	"bytes"
@@ -8,13 +8,20 @@ import (
 	"strings"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 )
+
+var timeNow = time.Now
 
 // Update the item so that EpochEnd >= Epoch
 func validateTimeRange(item *annotations.Item) error {
@@ -34,15 +41,13 @@ func validateTimeRange(item *annotations.Item) error {
 }
 
 type SQLAnnotationRepo struct {
-	sql *SQLStore
+	cfg *setting.Cfg
+	db  db.DB
+	log log.Logger
 }
 
-func NewSQLAnnotationRepo(sql *SQLStore) SQLAnnotationRepo {
-	return SQLAnnotationRepo{sql: sql}
-}
-
-func (r *SQLAnnotationRepo) Save(item *annotations.Item) error {
-	return r.sql.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
+func (r *SQLAnnotationRepo) Add(ctx context.Context, item *annotations.Item) error {
+	return r.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		tags := models.ParseTagPairs(item.Tags)
 		item.Tags = models.JoinTagPairs(tags)
 		item.Created = timeNow().UnixNano() / int64(time.Millisecond)
@@ -59,7 +64,7 @@ func (r *SQLAnnotationRepo) Save(item *annotations.Item) error {
 		}
 
 		if item.Tags != nil {
-			tags, err := EnsureTagsExist(sess, tags)
+			tags, err := sqlstore.EnsureTagsExist(sess, tags)
 			if err != nil {
 				return err
 			}
@@ -75,7 +80,7 @@ func (r *SQLAnnotationRepo) Save(item *annotations.Item) error {
 }
 
 func (r *SQLAnnotationRepo) Update(ctx context.Context, item *annotations.Item) error {
-	return r.sql.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
+	return r.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var (
 			isExist bool
 			err     error
@@ -106,7 +111,7 @@ func (r *SQLAnnotationRepo) Update(ctx context.Context, item *annotations.Item) 
 		}
 
 		if item.Tags != nil {
-			tags, err := EnsureTagsExist(sess, models.ParseTagPairs(item.Tags))
+			tags, err := sqlstore.EnsureTagsExist(sess, models.ParseTagPairs(item.Tags))
 			if err != nil {
 				return err
 			}
@@ -127,11 +132,11 @@ func (r *SQLAnnotationRepo) Update(ctx context.Context, item *annotations.Item) 
 	})
 }
 
-func (r *SQLAnnotationRepo) Find(ctx context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
+func (r *SQLAnnotationRepo) Get(ctx context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
 	var sql bytes.Buffer
 	params := make([]interface{}, 0)
 	items := make([]*annotations.ItemDTO, 0)
-	err := r.sql.WithDbSession(ctx, func(sess *DBSession) error {
+	err := r.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		sql.WriteString(`
 			SELECT
 				annotation.id,
@@ -151,7 +156,7 @@ func (r *SQLAnnotationRepo) Find(ctx context.Context, query *annotations.ItemQue
 				usr.login,
 				alert.name as alert_name
 			FROM annotation
-			LEFT OUTER JOIN ` + dialect.Quote("user") + ` as usr on usr.id = annotation.user_id
+			LEFT OUTER JOIN ` + r.db.GetDialect().Quote("user") + ` as usr on usr.id = annotation.user_id
 			LEFT OUTER JOIN alert on alert.id = annotation.alert_id
 			INNER JOIN (
 				SELECT a.id from annotation a
@@ -203,10 +208,10 @@ func (r *SQLAnnotationRepo) Find(ctx context.Context, query *annotations.ItemQue
 			tags := models.ParseTagPairs(query.Tags)
 			for _, tag := range tags {
 				if tag.Value == "" {
-					keyValueFilters = append(keyValueFilters, "(tag."+dialect.Quote("key")+" = ?)")
+					keyValueFilters = append(keyValueFilters, "(tag."+r.db.GetDialect().Quote("key")+" = ?)")
 					params = append(params, tag.Key)
 				} else {
-					keyValueFilters = append(keyValueFilters, "(tag."+dialect.Quote("key")+" = ? AND tag."+dialect.Quote("value")+" = ?)")
+					keyValueFilters = append(keyValueFilters, "(tag."+r.db.GetDialect().Quote("key")+" = ? AND tag."+r.db.GetDialect().Quote("value")+" = ?)")
 					params = append(params, tag.Key, tag.Value)
 				}
 			}
@@ -229,7 +234,7 @@ func (r *SQLAnnotationRepo) Find(ctx context.Context, query *annotations.ItemQue
 			}
 		}
 
-		if !ac.IsDisabled(r.sql.Cfg) {
+		if !ac.IsDisabled(r.cfg) {
 			acFilter, acArgs, err := getAccessControlFilter(query.SignedInUser)
 			if err != nil {
 				return err
@@ -243,8 +248,9 @@ func (r *SQLAnnotationRepo) Find(ctx context.Context, query *annotations.ItemQue
 		}
 
 		// order of ORDER BY arguments match the order of a sql index for performance
-		sql.WriteString(" ORDER BY a.org_id, a.epoch_end DESC, a.epoch DESC" + dialect.Limit(query.Limit) + " ) dt on dt.id = annotation.id")
+		sql.WriteString(" ORDER BY a.org_id, a.epoch_end DESC, a.epoch DESC" + r.db.GetDialect().Limit(query.Limit) + " ) dt on dt.id = annotation.id")
 
+		spew.Dump(">>>> query: ", sql.String())
 		if err := sess.SQL(sql.String(), params...).Find(&items); err != nil {
 			items = nil
 			return err
@@ -288,13 +294,13 @@ func getAccessControlFilter(user *user.SignedInUser) (string, []interface{}, err
 }
 
 func (r *SQLAnnotationRepo) Delete(ctx context.Context, params *annotations.DeleteParams) error {
-	return r.sql.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
+	return r.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var (
 			sql        string
 			annoTagSQL string
 		)
 
-		sqlog.Info("delete", "orgId", params.OrgId)
+		r.log.Info("delete", "orgId", params.OrgId)
 		if params.Id != 0 {
 			annoTagSQL = "DELETE FROM annotation_tag WHERE annotation_id IN (SELECT id FROM annotation WHERE id = ? AND org_id = ?)"
 			sql = "DELETE FROM annotation WHERE id = ? AND org_id = ?"
@@ -323,17 +329,17 @@ func (r *SQLAnnotationRepo) Delete(ctx context.Context, params *annotations.Dele
 	})
 }
 
-func (r *SQLAnnotationRepo) FindTags(ctx context.Context, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
+func (r *SQLAnnotationRepo) GetTags(ctx context.Context, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
 	var items []*annotations.Tag
-	err := r.sql.WithDbSession(ctx, func(dbSession *DBSession) error {
+	err := r.db.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		if query.Limit == 0 {
 			query.Limit = 100
 		}
 
 		var sql bytes.Buffer
 		params := make([]interface{}, 0)
-		tagKey := `tag.` + dialect.Quote("key")
-		tagValue := `tag.` + dialect.Quote("value")
+		tagKey := `tag.` + r.db.GetDialect().Quote("key")
+		tagValue := `tag.` + r.db.GetDialect().Quote("value")
 
 		sql.WriteString(`
 		SELECT
@@ -347,12 +353,12 @@ func (r *SQLAnnotationRepo) FindTags(ctx context.Context, query *annotations.Tag
 		sql.WriteString(`WHERE EXISTS(SELECT 1 FROM annotation WHERE annotation.id = annotation_tag.annotation_id AND annotation.org_id = ?)`)
 		params = append(params, query.OrgID)
 
-		sql.WriteString(` AND (` + tagKey + ` ` + dialect.LikeStr() + ` ? OR ` + tagValue + ` ` + dialect.LikeStr() + ` ?)`)
+		sql.WriteString(` AND (` + tagKey + ` ` + r.db.GetDialect().LikeStr() + ` ? OR ` + tagValue + ` ` + r.db.GetDialect().LikeStr() + ` ?)`)
 		params = append(params, `%`+query.Tag+`%`, `%`+query.Tag+`%`)
 
 		sql.WriteString(` GROUP BY ` + tagKey + `,` + tagValue)
 		sql.WriteString(` ORDER BY ` + tagKey + `,` + tagValue)
-		sql.WriteString(` ` + dialect.Limit(query.Limit))
+		sql.WriteString(` ` + r.db.GetDialect().Limit(query.Limit))
 
 		err := dbSession.SQL(sql.String(), params...).Find(&items)
 		return err

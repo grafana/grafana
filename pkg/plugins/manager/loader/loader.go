@@ -227,6 +227,17 @@ func (l *Loader) registerAndStart(ctx context.Context, p *plugins.Plugin) error 
 	if err := l.pluginRegistry.Add(ctx, p); err != nil {
 		return err
 	}
+
+	if !p.IsCorePlugin() {
+		l.log.Info("Plugin registered", "pluginID", p.ID)
+	}
+
+	if p.IsExternalPlugin() {
+		if err := l.pluginStorage.Register(ctx, p.ID, p.PluginDir); err != nil {
+			return err
+		}
+	}
+
 	return l.processManager.Start(ctx, p.ID)
 }
 
