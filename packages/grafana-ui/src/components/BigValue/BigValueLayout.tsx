@@ -1,7 +1,7 @@
 import React, { CSSProperties } from 'react';
 import tinycolor from 'tinycolor2';
 
-import { formattedValueToString, DisplayValue, FieldConfig, FieldType } from '@grafana/data';
+import { formattedValueToString, DisplayValue, FieldConfig, FieldType, VizOrientation } from '@grafana/data';
 import { GraphDrawStyle, GraphFieldConfig } from '@grafana/schema';
 
 import { getTextColorForBackground } from '../../utils';
@@ -61,6 +61,10 @@ export abstract class BigValueLayout {
       fontSize: `${this.titleFontSize}px`,
       lineHeight: LINE_HEIGHT,
     };
+
+    if (this.props.parentOrientation === VizOrientation.Horizontal && this.justifyCenter) {
+      styles.paddingRight = '0.75ch';
+    }
 
     if (this.props.colorMode === BigValueColorMode.Background) {
       styles.color = getTextColorForBackground(this.valueColor);

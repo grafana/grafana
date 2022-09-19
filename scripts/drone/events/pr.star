@@ -34,6 +34,11 @@ load(
     'trigger_docs_pr',
 )
 
+load(
+    'scripts/drone/pipelines/shellcheck.star',
+    'shellcheck_pipeline',
+)
+
 ver_mode = 'pr'
 trigger = {
     'event': [
@@ -56,7 +61,8 @@ def pr_pipelines(edition):
         test_backend(get_pr_trigger(include_paths=['pkg/**', 'packaging/**', '.drone.yml', 'conf/**', 'go.sum', 'go.mod', 'public/app/plugins/**/plugin.json', 'devenv/**']), ver_mode),
         build_e2e(trigger, ver_mode, edition),
         integration_tests(get_pr_trigger(include_paths=['pkg/**', 'packaging/**', '.drone.yml', 'conf/**', 'go.sum', 'go.mod', 'public/app/plugins/**/plugin.json']), ver_mode, edition),
-        docs_pipelines(edition, ver_mode, trigger_docs_pr())
+        docs_pipelines(edition, ver_mode, trigger_docs_pr()),
+        shellcheck_pipeline(),
     ]
 
 

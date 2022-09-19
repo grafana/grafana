@@ -55,7 +55,10 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
   }
 
   async handleLogGroupsQuery({ region, logGroupPrefix }: VariableQuery) {
-    const logGroups = await this.datasource.describeAllLogGroups({ region, logGroupNamePrefix: logGroupPrefix });
+    const logGroups = await this.datasource.logsQueryRunner.describeAllLogGroups({
+      region,
+      logGroupNamePrefix: logGroupPrefix,
+    });
     return logGroups.map((s) => ({
       text: s,
       value: s,

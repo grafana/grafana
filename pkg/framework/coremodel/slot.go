@@ -42,6 +42,22 @@ func (s Slot) ForPluginType(plugintype string) (may, must bool) {
 	return
 }
 
+// IsGroup indicates whether the slot specifies a group lineage - one in which
+// each top-level key represents a distinct schema for objects that are expected
+// to exist in the wild, but objects corresponding to the root of the schema are not
+// expected to exist.
+func (s Slot) IsGroup() bool {
+	// TODO rely on first-class Thema properties for this, one they exist - https://github.com/grafana/thema/issues/62
+	switch s.name {
+	case "Panel", "DSOptions":
+		return true
+	case "Query":
+		return false
+	default:
+		panic("unreachable - unknown slot name " + s.name)
+	}
+}
+
 func AllSlots() map[string]*Slot {
 	fw := CUEFramework()
 	slots := make(map[string]*Slot)
