@@ -135,6 +135,21 @@ func main() {
 				},
 			},
 		},
+		{
+			Name:  "docker",
+			Usage: "Handle Grafana Docker images",
+			Subcommands: cli.Commands{
+				{
+					Name:      "fetch",
+					Usage:     "Fetch Grafana Docker images",
+					ArgsUsage: "[version]",
+					Action:    ArgCountWrapper(1, FetchImages),
+					Flags: []cli.Flag{
+						&editionFlag,
+					},
+				},
+			},
+		},
 	}
 
 	if err := app.Run(os.Args); err != nil {

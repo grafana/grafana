@@ -3038,10 +3038,16 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
-  - ./bin/grabpl artifacts docker fetch --version-tag ${TAG} --edition oss --base
-    alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.19.1
+  name: compile-build-cmd
+- commands:
+  - ./bin/build artifacts docker fetch --edition oss
   depends_on:
-  - grabpl
+  - compile-build-cmd
   environment:
     DOCKER_PASSWORD:
       from_secret: docker_password
@@ -3118,10 +3124,16 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
-  - ./bin/grabpl artifacts docker fetch --version-tag ${TAG} --edition enterprise
-    --base alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.19.1
+  name: compile-build-cmd
+- commands:
+  - ./bin/build artifacts docker fetch --edition enterprise
   depends_on:
-  - grabpl
+  - compile-build-cmd
   environment:
     DOCKER_PASSWORD:
       from_secret: docker_password
@@ -3181,10 +3193,16 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
-  - ./bin/grabpl artifacts docker fetch --version-tag ${TAG} --edition oss --base
-    alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.19.1
+  name: compile-build-cmd
+- commands:
+  - ./bin/build artifacts docker fetch --edition oss
   depends_on:
-  - grabpl
+  - compile-build-cmd
   environment:
     DOCKER_PASSWORD:
       from_secret: docker_password
@@ -3262,10 +3280,16 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
-  - ./bin/grabpl artifacts docker fetch --version-tag ${TAG} --edition enterprise
-    --base alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.19.1
+  name: compile-build-cmd
+- commands:
+  - ./bin/build artifacts docker fetch --edition enterprise
   depends_on:
-  - grabpl
+  - compile-build-cmd
   environment:
     DOCKER_PASSWORD:
       from_secret: docker_password
@@ -5060,6 +5084,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 1bbfd995ded7c2d1c0330ef2009691577a6613ec98df296fc8ec4388b9898e2d
+hmac: f5d430e8ea6ad2f889f24ffcaa5a2555e77b45fab364b6db85efa591bedc0a6b
 
 ...
