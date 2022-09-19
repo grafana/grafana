@@ -136,16 +136,22 @@ func main() {
 			},
 		},
 		{
-			Name:  "docker",
-			Usage: "Handle Grafana Docker images",
+			Name:  "artifacts",
+			Usage: "Handle Grafana artifacts",
 			Subcommands: cli.Commands{
 				{
-					Name:      "fetch",
-					Usage:     "Fetch Grafana Docker images",
-					ArgsUsage: "[version]",
-					Action:    ArgCountWrapper(1, FetchImages),
-					Flags: []cli.Flag{
-						&editionFlag,
+					Name:  "docker",
+					Usage: "Handle Grafana Docker images",
+					Subcommands: cli.Commands{
+						{
+							Name:      "fetch",
+							Usage:     "Fetch Grafana Docker images",
+							ArgsUsage: "[version]",
+							Action:    ArgCountWrapper(1, FetchImages),
+							Flags: []cli.Flag{
+								&editionFlag,
+							},
+						},
 					},
 				},
 			},

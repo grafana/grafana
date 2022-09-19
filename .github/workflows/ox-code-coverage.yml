@@ -3,7 +3,6 @@ on:
   pull_request:
     paths:
       - 'pkg/services/queryhistory/**'
-      - 'pkg/services/correlations/**'
       - 'public/app/features/explore/**'
       - 'public/app/features/correlations/**'
     branches-ignore:
@@ -15,4 +14,4 @@ jobs:
     uses: grafana/code-coverage/.github/workflows/code-coverage.yml@v0.1.10
     with:
       frontend-path-regexp: public\/app\/features\/(explore|correlations)
-      backend-path-regexp: pkg\/services\/(queryhistory|correlations)
+      backend-path-regexp: pkg\/services\/(queryhistory)
