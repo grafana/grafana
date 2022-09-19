@@ -2,15 +2,16 @@ import { css, cx } from '@emotion/css';
 import { StoryContext } from '@storybook/react';
 import React from 'react';
 
-import { RenderFunction } from '../../types';
+import { Renderable } from '../../types';
 
 interface Props {
   width?: number;
   height?: number;
   showBoundaries: boolean;
+  children?: React.ReactNode | JSX.Element;
 }
 
-const StoryContainer = ({ width, height, showBoundaries, children }: React.PropsWithChildren<Props>) => {
+const StoryContainer = ({ width, height, showBoundaries, children }: Props) => {
   const checkColor = '#f0f0f0';
   const finalWidth = width ? `${width}px` : '100%';
   const finalHeight = height !== 0 ? `${height}px` : 'auto';
@@ -45,7 +46,7 @@ const StoryContainer = ({ width, height, showBoundaries, children }: React.Props
   );
 };
 
-export const withStoryContainer = (story: RenderFunction, context: StoryContext) => {
+export const withStoryContainer = (story: () => Renderable, context: StoryContext) => {
   return (
     <StoryContainer
       width={context.args.containerWidth}

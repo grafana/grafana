@@ -2,7 +2,7 @@ import React from 'react';
 
 import { RenderFunction } from '../../types';
 
-const RightAlignedStory: React.FunctionComponent<{}> = ({ children }) => {
+const RightAlignedStory = ({ children }: { children: React.ReactNode }) => {
   return (
     <div
       style={{

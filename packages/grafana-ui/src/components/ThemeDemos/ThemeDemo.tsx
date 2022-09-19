@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { FC, useState } from 'react';
+import React, { useState } from 'react';
 
 import { GrafanaTheme2, ThemeRichColor } from '@grafana/data';
 
@@ -23,7 +23,7 @@ interface DemoBoxProps {
   textColor?: string;
 }
 
-const DemoBox: FC<DemoBoxProps> = ({ bg, border, children }) => {
+const DemoBox = ({ bg, border, children }: React.PropsWithChildren<DemoBoxProps>) => {
   const style = cx(
     css`
       padding: 16px;
@@ -40,7 +40,12 @@ const DemoBox: FC<DemoBoxProps> = ({ bg, border, children }) => {
   return <div className={style}>{children}</div>;
 };
 
-const DemoText: FC<{ color?: string; bold?: boolean; size?: number }> = ({ color, bold, size, children }) => {
+const DemoText = ({
+  color,
+  bold,
+  size,
+  children,
+}: React.PropsWithChildren<{ color?: string; bold?: boolean; size?: number }>) => {
   const style = css`
     padding: 4px;
     color: ${color ?? 'inherit'};

@@ -3,7 +3,7 @@ import React from 'react';
 import { GlobalStyles, useTheme2 } from '../../themes';
 import { RenderFunction } from '../../types';
 
-const PaddedStory: React.FunctionComponent<{}> = ({ children }) => {
+const PaddedStory = ({ children }: { children: React.ReactNode }) => {
   const theme = useTheme2();
 
   return (

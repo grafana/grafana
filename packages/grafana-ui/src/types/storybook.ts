@@ -1,2 +1,2 @@
-export type Renderable = React.ComponentType | JSX.Element;
+export type Renderable = React.ReactNode;
 export type RenderFunction = () => Renderable | Renderable[];

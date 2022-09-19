@@ -86,7 +86,7 @@ Basic.args = {
 export const AsyncSelect: ComponentStory<typeof AsyncSelectComponent> = (args) => {
   const [, updateArgs] = useArgs();
   const loadAsyncOptions = useCallback(
-    (inputValue) => {
+    (inputValue: string) => {
       return new Promise<Array<SelectableValue<string>>>((resolve) => {
         setTimeout(() => {
           updateArgs({ isLoading: false });

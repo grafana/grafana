@@ -5,7 +5,7 @@ import React from 'react';
 
 import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 
-import { Collapse, ControlledCollapse } from './Collapse';
+import { Collapse, ControlledCollapse, Props } from './Collapse';
 import mdx from './Collapse.mdx';
 
 const EXCLUDED_PROPS = ['className', 'onToggle'];
@@ -48,7 +48,7 @@ export const Basic: ComponentStory<typeof Collapse> = (args) => {
   );
 };
 
-export const Controlled: ComponentStory<typeof ControlledCollapse> = (args) => {
+export const Controlled: ComponentStory<typeof ControlledCollapse> = (args: React.PropsWithChildren<Props>) => {
   return (
     <ControlledCollapse {...args}>
       <p>{args.children}</p>

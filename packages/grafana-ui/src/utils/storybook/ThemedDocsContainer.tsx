@@ -10,10 +10,11 @@ type Props = {
   context: any;
 };
 
-export const ThemedDocsContainer: React.FC<Props> = ({ children, context }) => {
+export const ThemedDocsContainer = ({ children, context }: React.PropsWithChildren<Props>) => {
   const dark = useDarkMode();
 
   return (
+    // @ts-ignore
     <DocsContainer
       context={{
         ...context,

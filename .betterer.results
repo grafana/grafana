@@ -5,8 +5,8 @@
 //
 exports[`no enzyme tests`] = {
   value: `{
-    "packages/grafana-ui/src/components/Graph/Graph.test.tsx:2114912343": [
-      [0, 20, 13, "RegExp match", "2409514259"]
+    "packages/grafana-ui/src/components/Graph/Graph.test.tsx:2254332836": [
+      [1, 20, 13, "RegExp match", "2409514259"]
     ],
     "packages/jaeger-ui-components/src/TracePageHeader/SpanGraph/TickLabels.test.js:2931161174": [
       [14, 19, 13, "RegExp match", "2409514259"]
