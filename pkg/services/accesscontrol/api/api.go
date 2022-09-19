@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -99,10 +98,10 @@ func (api *AccessControlAPI) signedInUser(ctx context.Context, userID, orgID int
 	}
 
 	permissions, errGetPerms := api.Service.GetUserPermissions(ctx, signedInUser,
-		accesscontrol.Options{ReloadCache: reloadCache})
+		ac.Options{ReloadCache: reloadCache})
 	if errGetPerms != nil {
 		return nil, errGetPerms
 	}
-	signedInUser.Permissions[orgID] = accesscontrol.GroupScopesByAction(permissions)
+	signedInUser.Permissions[orgID] = ac.GroupScopesByAction(permissions)
 	return signedInUser, nil
 }
