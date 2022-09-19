@@ -7,7 +7,9 @@ import { locationService } from '@grafana/runtime/src';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 
 import { getGrafanaContextMock } from '../../../../../test/mocks/getGrafanaContextMock';
+import { setStarred } from '../../../../core/reducers/navBarTree';
 import { configureStore } from '../../../../store/configureStore';
+import { updateTimeZoneForSession } from '../../../profile/state/reducers';
 import { DashboardModel } from '../../state';
 
 import { DashNav } from './DashNav';
@@ -18,12 +20,17 @@ describe('Public dashboard title tag', () => {
 
     const store = configureStore();
     const context = getGrafanaContextMock();
+    const props = {
+      setStarred: jest.fn() as unknown as typeof setStarred,
+      updateTimeZoneForSession: jest.fn() as unknown as typeof updateTimeZoneForSession,
+    };
 
     render(
       <Provider store={store}>
         <GrafanaContext.Provider value={context}>
           <Router history={locationService.getHistory()}>
             <DashNav
+              {...props}
               dashboard={dashboard}
               hideTimePicker={true}
               isFullscreen={false}
