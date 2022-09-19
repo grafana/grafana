@@ -409,7 +409,7 @@ filebeat.inputs:
   enabled: true
   paths:
     - /var/log/grafana/grafana.log
-  include_lines: ['lvl=info']
+  include_lines: ['level=info']
   fields:
     app: grafana
     level: info
@@ -417,7 +417,7 @@ filebeat.inputs:
   enabled: true
   paths:
     - /var/log/grafana/grafana.log
-  include_lines: ['lvl=eror']
+  include_lines: ['level=eror']
   fields:
     app: grafana
     level: error
@@ -425,7 +425,7 @@ filebeat.inputs:
   enabled: true
   paths:
     - /var/log/grafana/grafana.log
-  include_lines: ['lvl=warn']
+  include_lines: ['level=warn']
   fields:
     app: grafana
     level: warning
@@ -433,7 +433,7 @@ filebeat.inputs:
   enabled: true
   paths:
     - /var/log/grafana/grafana.log
-  include_lines: ['lvl=dbug']
+  include_lines: ['level=dbug']
   fields:
     app: grafana
     level: debug

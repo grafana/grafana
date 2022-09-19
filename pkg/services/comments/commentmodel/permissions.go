@@ -19,12 +19,14 @@ type PermissionChecker struct {
 	features         featuremgmt.FeatureToggles
 	accessControl    accesscontrol.AccessControl
 	dashboardService dashboards.DashboardService
+	annotationsRepo  annotations.Repository
 }
 
 func NewPermissionChecker(sqlStore *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 	accessControl accesscontrol.AccessControl, dashboardService dashboards.DashboardService,
+	annotationsRepo annotations.Repository,
 ) *PermissionChecker {
-	return &PermissionChecker{sqlStore: sqlStore, features: features, accessControl: accessControl}
+	return &PermissionChecker{sqlStore: sqlStore, features: features, accessControl: accessControl, annotationsRepo: annotationsRepo}
 }
 
 func (c *PermissionChecker) getDashboardByUid(ctx context.Context, orgID int64, uid string) (*models.Dashboard, error) {
@@ -63,12 +65,11 @@ func (c *PermissionChecker) CheckReadPermissions(ctx context.Context, orgId int6
 		if !c.features.IsEnabled(featuremgmt.FlagAnnotationComments) {
 			return false, nil
 		}
-		repo := annotations.GetRepository()
 		annotationID, err := strconv.ParseInt(objectID, 10, 64)
 		if err != nil {
 			return false, nil
 		}
-		items, err := repo.Find(ctx, &annotations.ItemQuery{AnnotationId: annotationID, OrgId: orgId, SignedInUser: signedInUser})
+		items, err := c.annotationsRepo.Find(ctx, &annotations.ItemQuery{AnnotationId: annotationID, OrgId: orgId, SignedInUser: signedInUser})
 		if err != nil || len(items) != 1 {
 			return false, nil
 		}
@@ -116,12 +117,11 @@ func (c *PermissionChecker) CheckWritePermissions(ctx context.Context, orgId int
 				return canEdit, err
 			}
 		}
-		repo := annotations.GetRepository()
 		annotationID, err := strconv.ParseInt(objectID, 10, 64)
 		if err != nil {
 			return false, nil
 		}
-		items, err := repo.Find(ctx, &annotations.ItemQuery{AnnotationId: annotationID, OrgId: orgId, SignedInUser: signedInUser})
+		items, err := c.annotationsRepo.Find(ctx, &annotations.ItemQuery{AnnotationId: annotationID, OrgId: orgId, SignedInUser: signedInUser})
 		if err != nil || len(items) != 1 {
 			return false, nil
 		}

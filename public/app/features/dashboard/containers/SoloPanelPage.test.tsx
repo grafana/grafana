@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
+import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
+import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { DashboardMeta, DashboardRoutes } from 'app/types';
 
 import { getRouteComponentProps } from '../../../core/navigation/__mocks__/routeProps';
@@ -83,13 +85,22 @@ function soloPanelPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
         Object.assign(props, propOverrides);
 
         ctx.dashboard = props.dashboard;
-        let { rerender } = render(<SoloPanelPage {...props} />);
+
+        const context = getGrafanaContextMock();
+        const renderPage = (props: Props) => (
+          <GrafanaContext.Provider value={context}>
+            <SoloPanelPage {...props} />
+          </GrafanaContext.Provider>
+        );
+
+        let { rerender } = render(renderPage(props));
+
         // prop updates will be submitted by rerendering the same component with different props
         ctx.rerender = (newProps?: Partial<Props>) => {
-          Object.assign(props, newProps);
-          rerender(<SoloPanelPage {...props} />);
+          rerender(renderPage(Object.assign(props, newProps)));
         };
       },
+
       rerender: () => {
         // will be replaced while mount() is called
       },
