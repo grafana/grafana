@@ -1,6 +1,7 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { act } from 'react-dom/test-utils';
 
 import { serializeStateToUrlParam } from '@grafana/data';
 import { locationService, config } from '@grafana/runtime';
@@ -10,7 +11,6 @@ import { makeLogsQueryResponse, makeMetricsQueryResponse } from './spec/helper/q
 import { setupExplore, tearDown, waitForExplore } from './spec/helper/setup';
 import { splitOpen } from './state/main';
 import * as queryState from './state/query';
-import { act } from 'react-dom/test-utils';
 
 jest.mock('app/core/core', () => {
   return {

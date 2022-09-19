@@ -1,5 +1,6 @@
 /** @jsxImportSource @emotion/react */
 
+/* eslint-disable react/no-unknown-property */
 import { css, cx } from '@emotion/css';
 import classnames from 'classnames';
 import { Profiler, ProfilerOnRenderCallback, useState, FC } from 'react';
