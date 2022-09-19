@@ -13,6 +13,7 @@ export const SliderValueEditor: React.FC<FieldConfigEditorProps<number, SliderFi
   value,
   onChange,
   item,
+  testId,
 }) => {
   // Input reference
   const inputRef = useRef<HTMLSpanElement>(null);
@@ -111,7 +112,14 @@ export const SliderValueEditor: React.FC<FieldConfigEditorProps<number, SliderFi
           included={included}
         />
         <span className={stylesSlider.numberInputWrapper} ref={inputRef}>
-          <NumberInput value={sliderValue} onChange={onSliderInputChange} max={max} min={min} step={step} />
+          <NumberInput
+            value={sliderValue}
+            onChange={onSliderInputChange}
+            max={max}
+            min={min}
+            step={step}
+            testId={testId}
+          />
         </span>
       </label>
     </div>

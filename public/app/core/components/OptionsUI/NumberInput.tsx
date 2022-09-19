@@ -11,6 +11,7 @@ interface Props {
   min?: number;
   max?: number;
   step?: number;
+  testId?: string;
 }
 
 interface State {

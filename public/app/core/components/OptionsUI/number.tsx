@@ -8,6 +8,7 @@ export const NumberValueEditor: React.FC<FieldConfigEditorProps<number, NumberFi
   value,
   onChange,
   item,
+  testId,
 }) => {
   const { settings } = item;
 
@@ -26,6 +27,7 @@ export const NumberValueEditor: React.FC<FieldConfigEditorProps<number, NumberFi
       step={settings?.step}
       placeholder={settings?.placeholder}
       onChange={onValueChange}
+      testId={testId}
     />
   );
 };

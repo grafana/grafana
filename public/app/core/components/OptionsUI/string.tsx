@@ -7,7 +7,7 @@ interface Props extends StandardEditorProps<string, StringFieldConfigSettings> {
   suffix?: ReactNode;
 }
 
-export const StringValueEditor = ({ value, onChange, item, suffix }: Props) => {
+export const StringValueEditor = ({ value, onChange, item, suffix, testId }: Props) => {
   const Component = item.settings?.useTextarea ? TextArea : Input;
   const onValueChange = useCallback(
     (e: React.SyntheticEvent) => {
@@ -39,6 +39,7 @@ export const StringValueEditor = ({ value, onChange, item, suffix }: Props) => {
       onBlur={onValueChange}
       onKeyDown={onValueChange}
       suffix={suffix}
+      data-testid={testId}
     />
   );
 };

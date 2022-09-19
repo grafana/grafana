@@ -81,7 +81,7 @@ export const getAllOptionEditors = () => {
     name: 'Boolean',
     description: 'Allows boolean values input',
     editor(props) {
-      return <Switch {...props} onChange={(e) => props.onChange(e.currentTarget.checked)} />;
+      return <Switch {...props} onChange={(e) => props.onChange(e.currentTarget.checked)} data-testid={props.testId} />;
     },
   };
 

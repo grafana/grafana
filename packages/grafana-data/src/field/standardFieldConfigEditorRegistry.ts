@@ -22,6 +22,7 @@ export interface StandardEditorProps<TValue = any, TSettings = any, TOptions = a
   item: StandardEditorsRegistryItem<TValue, TSettings>;
   context: StandardEditorContext<TOptions, TState>;
   id?: string;
+  testId?: string;
 }
 export interface StandardEditorsRegistryItem<TValue = any, TSettings = any> extends RegistryItem {
   editor: ComponentType<StandardEditorProps<TValue, TSettings>>;
