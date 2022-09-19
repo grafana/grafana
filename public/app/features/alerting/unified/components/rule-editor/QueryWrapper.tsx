@@ -89,6 +89,7 @@ export const QueryWrapper: FC<Props> = ({
     );
   }
 
+  // TODO add a warning label here too when the data looks like time series data and is used as an alert condition
   function HeaderExtras({ query, index }: { query: AlertQuery; index: number }) {
     if (isExpressionQuery(query.model)) {
       return null;

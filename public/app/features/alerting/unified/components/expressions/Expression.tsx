@@ -2,8 +2,9 @@ import { css, cx } from '@emotion/css';
 import { capitalize, uniqueId } from 'lodash';
 import React, { FC, useCallback, useState } from 'react';
 
-import { DataFrame, GrafanaTheme2, LoadingState, PanelData } from '@grafana/data';
-import { AutoSizeInput, Icon, IconButton, Select, Stack, useStyles2 } from '@grafana/ui';
+import { DataFrame, dateTimeFormat, GrafanaTheme2, LoadingState, PanelData } from '@grafana/data';
+import { isTimeSeries } from '@grafana/data/src/dataframe/utils';
+import { AutoSizeInput, Badge, Icon, IconButton, Select, Stack, useStyles2 } from '@grafana/ui';
 import { ClassicConditions } from 'app/features/expressions/components/ClassicConditions';
 import { Math } from 'app/features/expressions/components/Math';
 import { Reduce } from 'app/features/expressions/components/Reduce';
@@ -11,10 +12,11 @@ import { Resample } from 'app/features/expressions/components/Resample';
 import { ExpressionQuery, ExpressionQueryType, gelTypes } from 'app/features/expressions/types';
 import { AlertQuery, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
+import { HoverCard } from '../HoverCard';
 import { AlertStateTag } from '../rules/AlertStateTag';
 
 import { AlertCondition } from './AlertCondition';
-import { getSeriesName, getSeriesValue } from './util';
+import { formatLabels, getSeriesName, getSeriesValue } from './util';
 
 interface ExpressionProps {
   isAlertCondition?: boolean;
@@ -83,12 +85,22 @@ export const Expression: FC<ExpressionProps> = ({
     [onChangeQuery, queries]
   );
 
+  // time series results should be visualized differently
+  // TODO add a warning if we're trying to alert on time series data
+  const isTimeSeriesResults = isTimeSeries(series);
+
+  let warning;
+  if (isTimeSeriesResults && isAlertCondition) {
+    warning = 'You cannot use time series data as an alert condition, consider adding a reduce expression.';
+  }
+
   return (
     <div className={cx(styles.expression.wrapper, alertCondition && styles.expression.alertCondition)}>
       <div className={styles.expression.stack}>
         <Header
           refId={query.refId}
           queryType={queryType}
+          warning={warning}
           onRemoveExpression={() => onRemoveExpression(query.refId)}
           onUpdateRefId={(newRefId) => onUpdateRefId(query.refId, newRefId)}
           onUpdateExpressionType={(type) => onUpdateExpressionType(query.refId, type)}
@@ -96,10 +108,18 @@ export const Expression: FC<ExpressionProps> = ({
         <div className={styles.expression.body}>{renderExpressionType(query)}</div>
         {hasResults && (
           <div className={styles.expression.results}>
-            {series.map((frame) => (
-              // There's no way to uniquely identify a frame that doesn't cause render bugs :/ (Gilles)
-              <FrameRow key={uniqueId()} frame={frame} isAlertCondition={alertCondition} />
-            ))}
+            {isTimeSeriesResults ? (
+              <div>
+                {series.map((frame, index) => (
+                  <TimeseriesRow key={uniqueId()} frame={frame} index={index} isAlertCondition={isAlertCondition} />
+                ))}
+              </div>
+            ) : (
+              series.map((frame) => (
+                // There's no way to uniquely identify a frame that doesn't cause render bugs :/ (Gilles)
+                <FrameRow key={uniqueId()} frame={frame} isAlertCondition={alertCondition} />
+              ))
+            )}
             {emptyResults && <div className={cx(styles.expression.noData, styles.mutedText)}>No data</div>}
           </div>
         )}
@@ -128,12 +148,20 @@ const PreviewSummary: FC<{ firing: number; normal: number }> = ({ firing, normal
 interface HeaderProps {
   refId: string;
   queryType: ExpressionQueryType;
+  warning?: string;
   onUpdateRefId: (refId: string) => void;
   onRemoveExpression: () => void;
   onUpdateExpressionType: (type: ExpressionQueryType) => void;
 }
 
-const Header: FC<HeaderProps> = ({ refId, queryType, onUpdateRefId, onUpdateExpressionType, onRemoveExpression }) => {
+const Header: FC<HeaderProps> = ({
+  refId,
+  queryType,
+  warning,
+  onUpdateRefId,
+  onUpdateExpressionType,
+  onRemoveExpression,
+}) => {
   const styles = useStyles2(getStyles);
   const [editMode, setEditMode] = useState<'refId' | 'expressionType' | false>(false);
 
@@ -192,6 +220,7 @@ const Header: FC<HeaderProps> = ({ refId, queryType, onUpdateRefId, onUpdateExpr
           )}
         </Stack>
         <Spacer />
+        {warning && <Badge text={'Warning'} color={'orange'} icon="exclamation-triangle" tooltip={warning} />}
         <IconButton name="trash-alt" variant="secondary" className={styles.mutedIcon} onClick={onRemoveExpression} />
       </Stack>
     </header>
@@ -220,6 +249,54 @@ const FrameRow: FC<FrameProps> = ({ frame, isAlertCondition }) => {
         <div className={styles.expression.resultValue}>{value}</div>
         {showFiring && <AlertStateTag state={PromAlertingRuleState.Firing} size="sm" />}
         {showNormal && <AlertStateTag state={PromAlertingRuleState.Inactive} size="sm" />}
+      </Stack>
+    </div>
+  );
+};
+
+const TimeseriesRow: FC<FrameProps & { index: number }> = ({ frame, index }) => {
+  const styles = useStyles2(getStyles);
+
+  const hasLabels = frame.fields[1].labels;
+  const name = hasLabels ? formatLabels(frame.fields[1].labels ?? {}) : 'Series ' + index;
+
+  const timestamps = frame.fields[0].values.toArray();
+
+  const getTimestampFromIndex = (index: number) => frame.fields[0].values.get(index);
+  const getValueFromIndex = (index: number) => frame.fields[1].values.get(index);
+
+  return (
+    <div className={styles.expression.resultsRow}>
+      <Stack direction="row" gap={1} alignItems="center">
+        <span className={cx(styles.mutedText, styles.expression.resultLabel)} title={name}>
+          {name}
+        </span>
+        <div className={styles.expression.resultValue}>
+          <HoverCard
+            placement="right"
+            wrapperClassName={styles.timeseriesTableWrapper}
+            content={
+              <table className={styles.timeseriesTable}>
+                <thead>
+                  <tr>
+                    <th>Timestamp</th>
+                    <th>Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {timestamps.map((_, index) => (
+                    <tr key={index}>
+                      <td className={styles.mutedText}>{dateTimeFormat(getTimestampFromIndex(index))}</td>
+                      <td className={styles.expression.resultValue}>{getValueFromIndex(index)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            }
+          >
+            <span>Time series data</span>
+          </HoverCard>
+        </div>
       </Stack>
     </div>
   );
@@ -323,5 +400,40 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gap: ${theme.spacing(1)};
 
     cursor: pointer;
+  `,
+  timeseriesTableWrapper: css`
+    max-height: 500px;
+    max-width: 300px;
+
+    overflow-y: scroll;
+
+    padding: 0 !important; // not sure why but style override doesn't work otherwise :( (Gilles)
+  `,
+  timeseriesTable: css`
+    table-layout: auto;
+
+    width: 100%;
+    height: 100%;
+
+    td,
+    th {
+      padding: ${theme.spacing(1)};
+    }
+
+    td {
+      background: ${theme.colors.background.primary};
+    }
+
+    th {
+      background: ${theme.colors.background.secondary};
+    }
+
+    tr {
+      border-bottom: 1px solid ${theme.colors.border.medium};
+
+      &:last-of-type {
+        border-bottom: none;
+      }
+    }
   `,
 });
