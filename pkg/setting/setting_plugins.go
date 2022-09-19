@@ -27,7 +27,6 @@ func extractPluginSettings(sections []*ini.Section) PluginSettings {
 func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 	pluginsSection := iniFile.Section("plugins")
 	cfg.PluginsEnableAlpha = pluginsSection.Key("enable_alpha").MustBool(false)
-	cfg.PluginNavLocation = pluginsSection.Key("nav_location").MustString("")
 	cfg.PluginsAppsSkipVerifyTLS = pluginsSection.Key("app_tls_skip_verify_insecure").MustBool(false)
 	cfg.PluginSettings = extractPluginSettings(iniFile.Sections())
 
@@ -38,6 +37,7 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 		cfg.PluginsAllowUnsigned = append(cfg.PluginsAllowUnsigned, plug)
 	}
 
+	cfg.PluginNavLocation = pluginsSection.Key("nav_location").MustString("")
 	cfg.PluginCatalogURL = pluginsSection.Key("plugin_catalog_url").MustString("https://grafana.com/grafana/plugins/")
 	cfg.PluginAdminEnabled = pluginsSection.Key("plugin_admin_enabled").MustBool(true)
 	cfg.PluginAdminExternalManageEnabled = pluginsSection.Key("plugin_admin_external_manage_enabled").MustBool(false)

@@ -229,7 +229,6 @@ type Cfg struct {
 	LogsPath           string
 	PluginsPath        string
 	BundledPluginsPath string
-	PluginNavLocation  string
 
 	// SMTP email settings
 	Smtp SmtpSettings
