@@ -61,10 +61,6 @@ func (fs *FS) Add(ctx context.Context, pluginID string, pluginArchive *zip.ReadC
 		})
 	}
 
-	fs.mu.Lock()
-	fs.store[pluginID] = pluginDir
-	fs.mu.Unlock()
-
 	return &ExtractedPluginArchive{
 		ID:           res.ID,
 		Version:      res.Info.Version,
