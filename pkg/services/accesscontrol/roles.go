@@ -117,6 +117,11 @@ var (
 				Action: ActionUsersQuotasList,
 				Scope:  ScopeGlobalUsersAll,
 			},
+			{
+				Action: ActionUsersPermissionsRead,
+				// TODO: Should it be ScopeGlobalUsersAll?
+				Scope: ScopeUsersAll,
+			},
 		},
 	}
 

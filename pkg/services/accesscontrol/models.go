@@ -315,6 +315,7 @@ const (
 	ActionUsersLogout            = "users:logout"
 	ActionUsersQuotasList        = "users.quotas:read"
 	ActionUsersQuotasUpdate      = "users.quotas:write"
+	ActionUsersPermissionsRead   = "users.permissions:read"
 
 	// Org actions
 	ActionOrgsRead             = "orgs:read"

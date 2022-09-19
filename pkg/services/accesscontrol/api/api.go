@@ -12,25 +12,28 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func NewAccessControlAPI(router routing.RouteRegister, service ac.Service) *AccessControlAPI {
+func NewAccessControlAPI(router routing.RouteRegister, accesscontrol ac.AccessControl, service ac.Service) *AccessControlAPI {
 	return &AccessControlAPI{
 		RouteRegister: router,
 		Service:       service,
+		AccessControl: accesscontrol,
 	}
 }
 
 type AccessControlAPI struct {
 	Service       ac.Service
+	AccessControl ac.AccessControl
 	RouteRegister routing.RouteRegister
 }
 
 func (api *AccessControlAPI) RegisterAPIEndpoints() {
+	authorize := ac.Middleware(api.AccessControl)
 	// Users
 	api.RouteRegister.Get("/api/access-control/user/permissions",
 		middleware.ReqSignedIn, routing.Wrap(api.getUsersPermissions))
-	// TODO: Action: users.permission:read Scope: users:id:<userID>
-	api.RouteRegister.Post("/api/access-control/user/:userID/evaluation",
-		middleware.ReqSignedIn, routing.Wrap(api.evaluateUsersPermissions))
+	api.RouteRegister.Post("/api/access-control/user/:userID/evaluation", authorize(middleware.ReqSignedIn,
+		ac.EvalPermission(ac.ActionUsersPermissionsRead, ac.Scope("users", "id", ac.Parameter(":userID")))),
+		routing.Wrap(api.evaluateUsersPermissions))
 }
 
 // GET /api/access-control/user/permissions

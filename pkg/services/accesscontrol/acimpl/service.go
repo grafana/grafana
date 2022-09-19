@@ -25,11 +25,11 @@ const (
 	cacheTTL = 10 * time.Second
 )
 
-func ProvideService(cfg *setting.Cfg, store db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService) (*Service, error) {
+func ProvideService(cfg *setting.Cfg, store db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService, accessControl accesscontrol.AccessControl) (*Service, error) {
 	service := ProvideOSSService(cfg, database.ProvideService(store), cache)
 
 	if !accesscontrol.IsDisabled(cfg) {
-		api.NewAccessControlAPI(routeRegister, service).RegisterAPIEndpoints()
+		api.NewAccessControlAPI(routeRegister, accessControl, service).RegisterAPIEndpoints()
 		if err := accesscontrol.DeclareFixedRoles(service); err != nil {
 			return nil, err
 		}
