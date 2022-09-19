@@ -441,13 +441,10 @@ csrf_additional_headers = X-Forwarded-Host
 ...
 ```
 
-### SAML login attempts fail with request response "login session has expired" or "invalid relay state"
+### SAML login attempts fail with request response "login session has expired"
 
 Accessing the Grafana login page from a URL that is not the root URL of the
-Grafana server can cause the instance to return the following errors:
-
-- "login session has expired"
-- "invalid relay state"
+Grafana server can cause the instance to return the following error: "login session has expired".
 
 If you are accessing grafana through a proxy server, ensure that cookies are correctly
 rewritten to the root URL of Grafana.
