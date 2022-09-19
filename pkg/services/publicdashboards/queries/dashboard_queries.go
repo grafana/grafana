@@ -106,8 +106,10 @@ func SanitizeMetadataFromQueryData(res *backend.QueryDataResponse) {
 	for k := range res.Responses {
 		frames := res.Responses[k].Frames
 		for i := range frames {
-			frames[i].Meta.ExecutedQueryString = ""
-			frames[i].Meta.Custom = nil
+			if frames[i].Meta != nil {
+				frames[i].Meta.ExecutedQueryString = ""
+				frames[i].Meta.Custom = nil
+			}
 		}
 	}
 }
