@@ -380,7 +380,7 @@ describe('AmRoutes', () => {
     });
   });
 
-  it('hides create and edit button if user does not have permission', () => {
+  it('hides create and edit button if user does not have permission', async () => {
     mocks.contextSrv.hasAccess.mockImplementation((action) =>
       [AccessControlAction.AlertingNotificationsRead, AccessControlAction.AlertingNotificationsRead].includes(
         action as AccessControlAction
@@ -388,8 +388,10 @@ describe('AmRoutes', () => {
     );
 
     renderAmRoutes();
-    expect(ui.newPolicyButton.query()).not.toBeInTheDocument();
-    expect(ui.editButton.query()).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(ui.newPolicyButton.query()).not.toBeInTheDocument();
+      expect(ui.editButton.query()).not.toBeInTheDocument();
+    });
   });
 
   it('Show error message if loading Alertmanager config fails', async () => {

@@ -14,12 +14,12 @@ import {
   Input,
   colors,
   ColorPicker,
-  Icon,
   ThemeContext,
   Button,
   Label,
   RadioButtonGroup,
   stylesFactory,
+  IconButton,
 } from '@grafana/ui';
 
 const modes: Array<SelectableValue<ThresholdsMode>> = [
@@ -198,7 +198,12 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
           </div>
         }
         suffix={
-          <Icon className={styles.trashIcon} name="trash-alt" onClick={() => this.onRemoveThreshold(threshold)} />
+          <IconButton
+            className={styles.trashIcon}
+            name="trash-alt"
+            aria-label="Remove threshold"
+            onClick={() => this.onRemoveThreshold(threshold)}
+          />
         }
       />
     );

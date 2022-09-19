@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { act } from 'react-dom/test-utils';
 import { openMenu } from 'react-select-event';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 
@@ -91,7 +92,9 @@ describe('AlertRuleList', () => {
     it('should update location', async () => {
       setup();
       const stateFilterSelect = screen.getByLabelText('States');
-      openMenu(stateFilterSelect);
+      act(() => {
+        openMenu(stateFilterSelect);
+      });
       await userEvent.click(screen.getByText('Not OK'));
       expect(locationService.getSearchObject().state).toBe('not_ok');
     });

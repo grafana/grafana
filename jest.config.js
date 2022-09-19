@@ -7,7 +7,7 @@ module.exports = {
   verbose: false,
   testEnvironment: 'jsdom',
   transform: {
-    '^.+\\.(ts|tsx|js|jsx)$': require.resolve('ts-jest'),
+    '^.+\\.(ts|tsx|js|jsx)$': [require.resolve('ts-jest'), { isolatedModules: true }],
   },
   transformIgnorePatterns: [
     'node_modules/(?!(ol)/)', // <- exclude the open layers library
@@ -20,9 +20,7 @@ module.exports = {
   testTimeout: 30000,
   resolver: `<rootDir>/public/test/jest-resolver.js`,
   setupFilesAfterEnv: ['./public/test/setupTests.ts'],
-  snapshotSerializers: ['enzyme-to-json/serializer'],
   globals: {
-    'ts-jest': { isolatedModules: true },
     __webpack_public_path__: '', // empty string
   },
   moduleNameMapper: {

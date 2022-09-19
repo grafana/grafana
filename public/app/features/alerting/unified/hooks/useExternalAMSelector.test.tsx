@@ -152,7 +152,7 @@ describe('useExternalDataSourceAlertmanagers', () => {
       dataSources: [dsSettings],
     });
 
-    const wrapper: React.FC = ({ children }) => <Provider store={store}>{children}</Provider>;
+    const wrapper = ({ children }: React.PropsWithChildren<{}>) => <Provider store={store}>{children}</Provider>;
 
     // Act
     const {
@@ -183,7 +183,7 @@ describe('useExternalDataSourceAlertmanagers', () => {
       };
     });
 
-    const wrapper: React.FC = ({ children }) => <Provider store={store}>{children}</Provider>;
+    const wrapper = ({ children }: React.PropsWithChildren<{}>) => <Provider store={store}>{children}</Provider>;
 
     // Act
     const {
@@ -214,7 +214,7 @@ describe('useExternalDataSourceAlertmanagers', () => {
       };
     });
 
-    const wrapper: React.FC = ({ children }) => <Provider store={store}>{children}</Provider>;
+    const wrapper = ({ children }: React.PropsWithChildren<{}>) => <Provider store={store}>{children}</Provider>;
 
     // Act
     const {
@@ -245,7 +245,7 @@ describe('useExternalDataSourceAlertmanagers', () => {
       };
     });
 
-    const wrapper: React.FC = ({ children }) => <Provider store={store}>{children}</Provider>;
+    const wrapper = ({ children }: React.PropsWithChildren<{}>) => <Provider store={store}>{children}</Provider>;
 
     // Act
     const {
@@ -276,7 +276,7 @@ describe('useExternalDataSourceAlertmanagers', () => {
       };
     });
 
-    const wrapper: React.FC = ({ children }) => <Provider store={store}>{children}</Provider>;
+    const wrapper = ({ children }: React.PropsWithChildren<{}>) => <Provider store={store}>{children}</Provider>;
 
     // Act
     const {
@@ -310,7 +310,7 @@ describe('useExternalDataSourceAlertmanagers', () => {
       };
     });
 
-    const wrapper: React.FC = ({ children }) => <Provider store={store}>{children}</Provider>;
+    const wrapper = ({ children }: React.PropsWithChildren<{}>) => <Provider store={store}>{children}</Provider>;
 
     // Act
     const {

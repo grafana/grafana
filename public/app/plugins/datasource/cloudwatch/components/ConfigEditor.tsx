@@ -11,10 +11,8 @@ import {
 } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { Input, InlineField } from '@grafana/ui';
-import { notifyApp } from 'app/core/actions';
-import { createWarningNotification } from 'app/core/copy/appNotification';
+import { useAppNotification } from 'app/core/copy/appNotification';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { store } from 'app/store/store';
 
 import { CloudWatchDatasource } from '../datasource';
 import { CloudWatchJsonData, CloudWatchSecureJsonData } from '../types';
@@ -120,21 +118,23 @@ export const ConfigEditor: FC<Props> = (props: Props) => {
 };
 
 function useAuthenticationWarning(jsonData: CloudWatchJsonData) {
-  const addWarning = (message: string) => {
-    store.dispatch(notifyApp(createWarningNotification('CloudWatch Authentication', message)));
-  };
+  const notifyApp = useAppNotification();
 
   useEffect(() => {
     if (jsonData.authType === 'arn') {
-      addWarning('Since grafana 7.3 authentication type "arn" is deprecated, falling back to default SDK provider');
+      notifyApp.warning(
+        'CloudWatch Authentication',
+        'Since grafana 7.3 authentication type "arn" is deprecated, falling back to default SDK provider'
+      );
     } else if (jsonData.authType === 'credentials' && !jsonData.profile && !jsonData.database) {
-      addWarning(
+      notifyApp.warning(
+        'CloudWatch Authentication',
         'As of grafana 7.3 authentication type "credentials" should be used only for shared file credentials. \
              If you don\'t have a credentials file, switch to the default SDK provider for extracting credentials \
              from environment variables or IAM roles'
       );
     }
-  }, [jsonData.authType, jsonData.database, jsonData.profile]);
+  }, [jsonData.authType, jsonData.database, jsonData.profile, notifyApp]);
 }
 
 function useDatasource(datasourceName: string, saved: boolean) {

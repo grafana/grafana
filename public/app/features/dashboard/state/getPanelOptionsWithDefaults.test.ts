@@ -60,12 +60,12 @@ describe('getPanelOptionsWithDefaults', () => {
       });
 
       expect(result).toMatchInlineSnapshot(`
-        Object {
-          "fieldConfig": Object {
-            "defaults": Object {},
-            "overrides": Array [],
+        {
+          "fieldConfig": {
+            "defaults": {},
+            "overrides": [],
           },
-          "options": Object {},
+          "options": {},
         }
       `);
     });
@@ -84,29 +84,29 @@ describe('getPanelOptionsWithDefaults', () => {
       });
 
       expect(result).toMatchInlineSnapshot(`
-        Object {
-          "fieldConfig": Object {
-            "defaults": Object {
-              "custom": Object {
+        {
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
                 "hideLines": false,
               },
-              "thresholds": Object {
+              "thresholds": {
                 "mode": "absolute",
-                "steps": Array [
-                  Object {
+                "steps": [
+                  {
                     "color": "green",
                     "value": -Infinity,
                   },
-                  Object {
+                  {
                     "color": "red",
                     "value": 80,
                   },
                 ],
               },
             },
-            "overrides": Array [],
+            "overrides": [],
           },
-          "options": Object {
+          "options": {
             "name": "hello",
             "number": 10,
             "showThresholds": true,
@@ -135,21 +135,21 @@ describe('getPanelOptionsWithDefaults', () => {
       });
 
       expect(result).toMatchInlineSnapshot(`
-        Object {
-          "fieldConfig": Object {
-            "defaults": Object {
-              "custom": Object {
+        {
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
                 "hideLines": false,
               },
               "decimals": 2,
-              "thresholds": Object {
+              "thresholds": {
                 "mode": "absolute",
-                "steps": Array [
-                  Object {
+                "steps": [
+                  {
                     "color": "green",
                     "value": -Infinity,
                   },
-                  Object {
+                  {
                     "color": "red",
                     "value": 80,
                   },
@@ -157,9 +157,9 @@ describe('getPanelOptionsWithDefaults', () => {
               },
               "unit": "bytes",
             },
-            "overrides": Array [],
+            "overrides": [],
           },
-          "options": Object {
+          "options": {
             "name": "hello",
             "number": 20,
             "showThresholds": false,
@@ -292,21 +292,21 @@ describe('getPanelOptionsWithDefaults', () => {
       });
 
       expect(result.fieldConfig.defaults).toMatchInlineSnapshot(`
-        Object {
-          "custom": Object {
+        {
+          "custom": {
             "customProp": 20,
-            "nested": Object {
+            "nested": {
               "nestedA": "A",
             },
           },
-          "thresholds": Object {
+          "thresholds": {
             "mode": "absolute",
-            "steps": Array [
-              Object {
+            "steps": [
+              {
                 "color": "green",
                 "value": -Infinity,
               },
-              Object {
+              {
                 "color": "red",
                 "value": 80,
               },

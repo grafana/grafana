@@ -75,7 +75,10 @@ describe('LokiQueryBuilder', () => {
     props.datasource.getDataSamples = jest.fn().mockResolvedValue([]);
 
     render(<LokiQueryBuilder {...props} query={query} />);
-    expect(await screen.findByText(EXPLAIN_LABEL_FILTER_CONTENT)).toBeInTheDocument();
+
+    await waitFor(async () => {
+      expect(await screen.findByText(EXPLAIN_LABEL_FILTER_CONTENT)).toBeInTheDocument();
+    });
   });
 
   it('does not shows explain section when showExplain is false', async () => {
@@ -87,8 +90,8 @@ describe('LokiQueryBuilder', () => {
     props.datasource.getDataSamples = jest.fn().mockResolvedValue([]);
 
     render(<LokiQueryBuilder {...props} query={query} />);
-    await waitFor(() => {
-      expect(screen.queryByText(EXPLAIN_LABEL_FILTER_CONTENT)).not.toBeInTheDocument();
+    await waitFor(async () => {
+      await expect(screen.queryByText(EXPLAIN_LABEL_FILTER_CONTENT)).not.toBeInTheDocument();
     });
   });
 });

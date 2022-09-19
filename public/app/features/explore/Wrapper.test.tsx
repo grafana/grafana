@@ -10,6 +10,7 @@ import { makeLogsQueryResponse, makeMetricsQueryResponse } from './spec/helper/q
 import { setupExplore, tearDown, waitForExplore } from './spec/helper/setup';
 import { splitOpen } from './state/main';
 import * as queryState from './state/query';
+import { act } from 'react-dom/test-utils';
 
 jest.mock('app/core/core', () => {
   return {
@@ -123,8 +124,10 @@ describe('Wrapper', () => {
 
       jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse('different log'));
 
-      locationService.partial({
-        left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="different"}' }]),
+      act(() => {
+        locationService.partial({
+          left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="different"}' }]),
+        });
       });
 
       // Editor renders the new query
@@ -143,8 +146,10 @@ describe('Wrapper', () => {
 
       jest.mocked(datasources.elastic.query).mockReturnValueOnce(makeMetricsQueryResponse());
 
-      locationService.partial({
-        left: JSON.stringify(['now-1h', 'now', 'elastic', { expr: 'other query' }]),
+      act(() => {
+        locationService.partial({
+          left: JSON.stringify(['now-1h', 'now', 'elastic', { expr: 'other query' }]),
+        });
       });
 
       // Editor renders the new query
@@ -239,9 +244,11 @@ describe('Wrapper', () => {
       jest.mocked(datasources.loki.query).mockReturnValue(makeLogsQueryResponse());
       jest.mocked(datasources.elastic.query).mockReturnValue(makeLogsQueryResponse());
 
-      locationService.partial({
-        left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]),
-        right: JSON.stringify(['now-1h', 'now', 'elastic', { expr: 'error' }]),
+      act(() => {
+        locationService.partial({
+          left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]),
+          right: JSON.stringify(['now-1h', 'now', 'elastic', { expr: 'error' }]),
+        });
       });
 
       // Editor renders the new query
@@ -261,7 +268,9 @@ describe('Wrapper', () => {
       // to work
       await screen.findByText(`loki Editor input: { label="value"}`);
 
-      store.dispatch(splitOpen<any>({ datasourceUid: 'elastic', query: { expr: 'error' } }) as any);
+      act(() => {
+        store.dispatch(splitOpen<any>({ datasourceUid: 'elastic', query: { expr: 'error' } }) as any);
+      });
 
       // Editor renders the new query
       await screen.findByText(`elastic Editor input: error`);
@@ -295,7 +304,9 @@ describe('Wrapper', () => {
       // to work
       await screen.findByText(`loki Editor input: { label="value"}`);
 
-      store.dispatch(splitOpen<any>({ datasourceUid: 'elastic', query: { expr: 'error' } }) as any);
+      act(() => {
+        store.dispatch(splitOpen<any>({ datasourceUid: 'elastic', query: { expr: 'error' } }) as any);
+      });
       await waitFor(() => expect(document.title).toEqual('Explore - loki | elastic - Grafana'));
     });
   });
@@ -460,9 +471,12 @@ describe('Wrapper', () => {
           }),
         })
       );
-      expect(urlParams).toBe(
-        'orgId=1&left={"datasource":"loki-uid","queries":[{"refId":"A","datasource":{"type":"logs","uid":"loki-uid"}}],"range":{"from":"now-1h","to":"now"}}'
-      );
+
+      await waitFor(() => {
+        expect(urlParams).toBe(
+          'orgId=1&left={"datasource":"loki-uid","queries":[{"refId":"A","datasource":{"type":"logs","uid":"loki-uid"}}],"range":{"from":"now-1h","to":"now"}}'
+        );
+      });
     });
   });
 

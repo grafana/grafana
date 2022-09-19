@@ -209,12 +209,12 @@ describe('runRequest', () => {
 
     it('should keep data for X and Y', () => {
       expect(ctx.results[2].series).toMatchInlineSnapshot(`
-        Array [
-          Object {
+        [
+          {
             "name": "DataX-1",
             "refId": "X",
           },
-          Object {
+          {
             "name": "DataY-2",
             "refId": "Y",
           },

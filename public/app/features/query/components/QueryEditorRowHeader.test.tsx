@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { openMenu } from 'react-select-event';
 
@@ -30,12 +31,13 @@ jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
 });
 
 describe('QueryEditorRowHeader', () => {
-  it('Can edit title', () => {
+  it('Can edit title', async () => {
     const scenario = renderScenario({});
-    screen.getByTestId('query-name-div').click();
+    const user = userEvent.setup();
+    await user.click(screen.getByTestId('query-name-div'));
 
     const input = screen.getByTestId('query-name-input');
-    fireEvent.change(input, { target: { value: 'new name' } });
+    await user.type(input, '{selectall}{backspace}new name');
     fireEvent.blur(input);
 
     expect(jest.mocked(scenario.props.onChange).mock.calls[0][0].refId).toBe('new name');
@@ -44,7 +46,8 @@ describe('QueryEditorRowHeader', () => {
   it('Show error when other query with same name exists', async () => {
     renderScenario({});
 
-    screen.getByTestId('query-name-div').click();
+    const user = userEvent.setup();
+    await user.click(screen.getByTestId('query-name-div'));
     const input = screen.getByTestId('query-name-input');
     fireEvent.change(input, { target: { value: 'B' } });
     const alert = await screen.findByRole('alert');
@@ -55,7 +58,8 @@ describe('QueryEditorRowHeader', () => {
   it('Show error when empty name is specified', async () => {
     renderScenario({});
 
-    screen.getByTestId('query-name-div').click();
+    const user = userEvent.setup();
+    await user.click(screen.getByTestId('query-name-div'));
     const input = screen.getByTestId('query-name-input');
     fireEvent.change(input, { target: { value: '' } });
     const alert = await screen.findByRole('alert');
@@ -79,7 +83,9 @@ describe('QueryEditorRowHeader', () => {
     renderScenario({ onChangeDataSource: () => {} });
 
     const dsSelect = screen.getByLabelText(selectors.components.DataSourcePicker.inputV2);
-    openMenu(dsSelect);
+    act(() => {
+      openMenu(dsSelect);
+    });
     expect(await screen.findByText('${dsVariable}')).toBeInTheDocument();
   });
 });

@@ -202,7 +202,7 @@ describe('RuleList', () => {
 
     await renderRuleList();
 
-    await waitFor(() => expect(mocks.api.fetchRules).toHaveBeenCalledTimes(4));
+    await waitFor(async () => await expect(mocks.api.fetchRules).toHaveBeenCalledTimes(4));
     const groups = await ui.ruleGroup.findAll();
     expect(groups).toHaveLength(5);
 
@@ -218,7 +218,11 @@ describe('RuleList', () => {
       'Failed to load rules state from Prometheus-broken: this datasource is broken'
     );
     await userEvent.click(ui.moreErrorsButton.get());
-    expect(errors).toHaveTextContent('Failed to load rules state from Prometheus-broken: this datasource is broken');
+    await waitFor(async () => {
+      await expect(errors).toHaveTextContent(
+        'Failed to load rules state from Prometheus-broken: this datasource is broken'
+      );
+    });
   });
 
   it('expand rule group, rule and alert details', async () => {

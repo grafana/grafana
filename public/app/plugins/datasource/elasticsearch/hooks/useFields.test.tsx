@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react-hooks';
-import React, { PropsWithChildren } from 'react';
+import React from 'react';
 import { from } from 'rxjs';
 
 import { getDefaultTimeRange } from '@grafana/data';
@@ -27,7 +27,7 @@ describe('useFields hook', () => {
 
     const getFields: ElasticDatasource['getFields'] = jest.fn(() => from([[]]));
 
-    const wrapper = ({ children }: PropsWithChildren<{}>) => (
+    const wrapper = (props: BucketAggregationType | MetricAggregationType) => (
       <ElasticsearchProvider
         datasource={{ getFields } as ElasticDatasource}
         query={query}
@@ -35,7 +35,7 @@ describe('useFields hook', () => {
         onChange={() => {}}
         onRunQuery={() => {}}
       >
-        {children}
+        {props}
       </ElasticsearchProvider>
     );
 

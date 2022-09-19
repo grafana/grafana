@@ -1,4 +1,4 @@
-import { render, screen, act } from '@testing-library/react';
+import { render, screen, act, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -52,7 +52,9 @@ describe('FolderSection', () => {
 
     it('shows the folder title as the header', async () => {
       render(<FolderSection section={mockSection} onTagSelected={mockOnTagSelected} />);
-      expect(await screen.findByRole('button', { name: mockSection.title })).toBeInTheDocument();
+      await waitFor(async () => {
+        expect(await screen.findByRole('button', { name: mockSection.title })).toBeInTheDocument();
+      });
     });
 
     describe('when renderStandaloneBody is set', () => {
@@ -118,7 +120,9 @@ describe('FolderSection', () => {
 
     it('shows the folder title as the header', async () => {
       render(<FolderSection section={mockSection} onTagSelected={mockOnTagSelected} />);
-      expect(await screen.findByRole('button', { name: mockSection.title })).toBeInTheDocument();
+      await waitFor(async () => {
+        expect(await screen.findByRole('button', { name: mockSection.title })).toBeInTheDocument();
+      });
     });
 
     describe('when renderStandaloneBody is set', () => {

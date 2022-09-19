@@ -1,10 +1,11 @@
-import { mount } from 'enzyme';
-import React, { ChangeEvent } from 'react';
+import { render } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import React from 'react';
 
 import { createTheme, ThresholdsMode } from '@grafana/data';
 import { mockThemeContext, colors } from '@grafana/ui';
 
-import { ThresholdsEditor, Props, thresholdsWithoutKey } from './ThresholdsEditor';
+import { ThresholdsEditor, Props } from './ThresholdsEditor';
 
 const setup = (propOverrides?: Partial<Props>) => {
   const props: Props = {
@@ -14,18 +15,8 @@ const setup = (propOverrides?: Partial<Props>) => {
 
   Object.assign(props, propOverrides);
 
-  const wrapper = mount(<ThresholdsEditor {...props} />);
-  const instance = wrapper.instance() as ThresholdsEditor;
-
-  return {
-    instance,
-    wrapper,
-  };
+  return render(<ThresholdsEditor {...props} />);
 };
-
-function getCurrentThresholds(editor: ThresholdsEditor) {
-  return thresholdsWithoutKey(editor.props.thresholds, editor.state.steps);
-}
 
 describe('ThresholdsEditor', () => {
   let restoreThemeContext: () => void;
@@ -39,31 +30,22 @@ describe('ThresholdsEditor', () => {
   });
 
   it('should render with base threshold', () => {
-    const { wrapper } = setup();
-    expect(wrapper.find('input').length).toBe(3);
-  });
-
-  describe('Initialization', () => {
-    it('should add a base threshold if missing', () => {
-      const { instance } = setup();
-      expect(getCurrentThresholds(instance).steps).toEqual([{ value: -Infinity, color: 'green' }]);
-    });
+    const wrapper = setup();
+    expect(wrapper.getByLabelText(/Threshold/)).toHaveValue('Base');
   });
 
   describe('Add threshold', () => {
-    it('should add threshold', () => {
-      const { instance } = setup();
+    it('should add threshold', async () => {
+      const wrapper = setup();
+      const user = userEvent.setup();
 
-      instance.onAddThreshold();
-
-      expect(getCurrentThresholds(instance).steps).toEqual([
-        { value: -Infinity, color: 'green' }, // 0
-        { value: 0, color: colors[1] }, // 1
-      ]);
+      expect(wrapper.getAllByLabelText(/Threshold/)).toHaveLength(1);
+      await user.click(wrapper.getByRole('button', { name: /Add threshold/ }));
+      expect(wrapper.getAllByLabelText(/Threshold/)).toHaveLength(2);
     });
 
-    it('should add another threshold above last', () => {
-      const { instance } = setup({
+    it('should add another threshold above last', async () => {
+      const wrapper = setup({
         thresholds: {
           mode: ThresholdsMode.Absolute,
           steps: [
@@ -73,18 +55,15 @@ describe('ThresholdsEditor', () => {
         },
       });
 
-      instance.onAddThreshold();
-
-      expect(getCurrentThresholds(instance).steps).toEqual([
-        { value: -Infinity, color: colors[0] }, // 0
-        { value: 50, color: colors[2] }, // 1
-        { value: 60, color: colors[3] }, // 2
-      ]);
+      const user = userEvent.setup();
+      await user.click(wrapper.getByRole('button', { name: /Add threshold/ }));
+      expect(wrapper.getAllByLabelText(/Threshold/)).toHaveLength(3);
+      expect(wrapper.getByLabelText(/Threshold 1/)).toHaveValue(60);
     });
   });
 
   describe('Remove threshold', () => {
-    it('should not remove threshold at index 0', () => {
+    it('should remove threshold', async () => {
       const thresholds = {
         mode: ThresholdsMode.Absolute,
         steps: [
@@ -93,35 +72,18 @@ describe('ThresholdsEditor', () => {
           { value: 75, color: '#6ED0E0' },
         ],
       };
-      const { instance } = setup({ thresholds });
 
-      instance.onRemoveThreshold(instance.state.steps[0]);
+      const wrapper = setup({ thresholds });
+      const user = userEvent.setup();
+      expect(wrapper.getAllByLabelText(/Threshold/)).toHaveLength(3);
 
-      expect(getCurrentThresholds(instance)).toEqual(thresholds);
-    });
-
-    it('should remove threshold', () => {
-      const thresholds = {
-        mode: ThresholdsMode.Absolute,
-        steps: [
-          { value: -Infinity, color: '#7EB26D' },
-          { value: 50, color: '#EAB839' },
-          { value: 75, color: '#6ED0E0' },
-        ],
-      };
-      const { instance } = setup({ thresholds });
-
-      instance.onRemoveThreshold(instance.state.steps[1]);
-
-      expect(getCurrentThresholds(instance).steps).toEqual([
-        { value: -Infinity, color: '#7EB26D' },
-        { value: 75, color: '#6ED0E0' },
-      ]);
+      await user.click(wrapper.getAllByLabelText('Remove threshold')[0]);
+      expect(wrapper.getAllByLabelText(/Threshold/)).toHaveLength(2);
     });
   });
 
   describe('change threshold value', () => {
-    it('should not change threshold at index 0', () => {
+    it('Base input should be disabled', () => {
       const thresholds = {
         mode: ThresholdsMode.Absolute,
         steps: [
@@ -130,17 +92,14 @@ describe('ThresholdsEditor', () => {
           { value: 75, color: '#6ED0E0' },
         ],
       };
-      const { instance } = setup({ thresholds });
 
-      const mockEvent = { target: { value: '12' } } as any as ChangeEvent<HTMLInputElement>;
-
-      instance.onChangeThresholdValue(mockEvent, instance.state.steps[0]);
-
-      expect(getCurrentThresholds(instance)).toEqual(thresholds);
+      const wrapper = setup({ thresholds });
+      const baseThresholdInput = wrapper.getByLabelText(/Threshold 3/);
+      expect(baseThresholdInput).toHaveValue('Base');
+      expect(baseThresholdInput).toBeDisabled();
     });
 
-    it('should update value', () => {
-      const { instance } = setup();
+    it('should update value', async () => {
       const thresholds = {
         mode: ThresholdsMode.Absolute,
         steps: [
@@ -149,26 +108,17 @@ describe('ThresholdsEditor', () => {
           { value: 75, color: '#6ED0E0', key: 3 },
         ],
       };
+      const wrapper = setup({ thresholds });
 
-      instance.state = {
-        steps: thresholds.steps,
-      };
-
-      const mockEvent = { target: { value: '78' } } as any as ChangeEvent<HTMLInputElement>;
-
-      instance.onChangeThresholdValue(mockEvent, thresholds.steps[1]);
-
-      expect(getCurrentThresholds(instance).steps).toEqual([
-        { value: -Infinity, color: '#7EB26D' },
-        { value: 75, color: '#6ED0E0' },
-        { value: 78, color: '#EAB839' },
-      ]);
+      const thresholdInput = wrapper.getByLabelText('Threshold 1');
+      const user = userEvent.setup();
+      await user.type(thresholdInput, '{selectall}{backspace}{backspace}78');
+      expect(thresholdInput).toHaveValue(78);
     });
   });
 
   describe('on blur threshold value', () => {
-    it('should resort rows and update indexes', () => {
-      const { instance } = setup();
+    it('should resort rows and update indexes', async () => {
       const thresholds = {
         mode: ThresholdsMode.Absolute,
         steps: [
@@ -177,24 +127,23 @@ describe('ThresholdsEditor', () => {
           { value: 75, color: '#6ED0E0', key: 3 },
         ],
       };
+      const wrapper = setup({ thresholds });
 
-      instance.setState({
-        steps: thresholds.steps,
-      });
+      let thresholdInputs = wrapper.getAllByLabelText(/Threshold/);
+      const user = userEvent.setup();
+      await user.click(thresholdInputs[0]);
+      await user.click(thresholdInputs[1]);
 
-      instance.onBlur();
-
-      expect(getCurrentThresholds(instance).steps).toEqual([
-        { value: -Infinity, color: '#7EB26D' },
-        { value: 75, color: '#6ED0E0' },
-        { value: 78, color: '#EAB839' },
-      ]);
+      thresholdInputs = wrapper.getAllByLabelText(/Threshold/);
+      expect(thresholdInputs[0]).toHaveValue(78);
+      expect(thresholdInputs[1]).toHaveValue(75);
+      expect(thresholdInputs[2]).toBeDisabled();
     });
   });
 
   describe('on load with invalid steps', () => {
     it('should exclude invalid steps and render a proper list', () => {
-      const { instance } = setup({
+      const wrapper = setup({
         thresholds: {
           mode: ThresholdsMode.Absolute,
           steps: [
@@ -208,11 +157,10 @@ describe('ThresholdsEditor', () => {
         },
       });
 
-      expect(getCurrentThresholds(instance).steps).toEqual([
-        { value: -Infinity, color: '#7EB26D' },
-        { value: 75, color: '#6ED0E0' },
-        { value: 78, color: '#EAB839' },
-      ]);
+      const thresholdInputs = wrapper.getAllByLabelText(/Threshold/);
+      expect(thresholdInputs[0]).toHaveValue(78);
+      expect(thresholdInputs[1]).toHaveValue(75);
+      expect(thresholdInputs[2]).toBeDisabled();
     });
   });
 });

@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import React, { FC } from 'react';
+import React from 'react';
 import { FormProvider, useForm, UseFormProps } from 'react-hook-form';
 
 import { ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
@@ -8,7 +8,7 @@ import { RuleFormValues } from '../../types/rule-form';
 
 import { ConditionField } from './ConditionField';
 
-const FormProviderWrapper: FC<UseFormProps> = ({ children, ...props }) => {
+const FormProviderWrapper = ({ children, ...props }: React.PropsWithChildren<UseFormProps>) => {
   const methods = useForm({ ...props });
   return <FormProvider {...methods}>{children}</FormProvider>;
 };
