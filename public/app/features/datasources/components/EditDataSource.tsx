@@ -1,10 +1,9 @@
 import { AnyAction } from '@reduxjs/toolkit';
 import React from 'react';
-import { useDispatch } from 'react-redux';
 
 import { DataSourcePluginMeta, DataSourceSettings as DataSourceSettingsType } from '@grafana/data';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
-import { DataSourceSettingsState, ThunkResult } from 'app/types';
+import { DataSourceSettingsState, useDispatch } from 'app/types';
 
 import {
   dataSourceLoaded,
@@ -85,8 +84,8 @@ export type ViewProps = {
   onDefaultChange: (isDefault: boolean) => AnyAction;
   onNameChange: (name: string) => AnyAction;
   onOptionsChange: (dataSource: DataSourceSettingsType) => AnyAction;
-  onTest: () => ThunkResult<void>;
-  onUpdate: (dataSource: DataSourceSettingsType) => ThunkResult<void>;
+  onTest: () => void;
+  onUpdate: (dataSource: DataSourceSettingsType) => Promise<void>;
 };
 
 export function EditDataSourceView({

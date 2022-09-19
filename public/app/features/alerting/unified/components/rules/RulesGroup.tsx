@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import pluralize from 'pluralize';
 import React, { FC, useEffect, useState } from 'react';
-import { useDispatch } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Badge, ConfirmModal, HorizontalGroup, Icon, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
+import { useDispatch } from 'app/types';
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { useFolder } from '../../hooks/useFolder';
