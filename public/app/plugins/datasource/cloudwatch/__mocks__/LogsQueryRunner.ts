@@ -16,7 +16,7 @@ export function setupMockedLogsQueryRunner({
   },
   variables,
   mockGetVariableName = true,
-}: { data?: BackendDataSourceResponse; variables?: any; mockGetVariableName?: boolean } = {}) {
+}: { data?: BackendDataSourceResponse; variables?: CustomVariableModel[]; mockGetVariableName?: boolean } = {}) {
   let templateService = new TemplateSrv();
   if (variables) {
     templateService = setupMockedTemplateService(variables);

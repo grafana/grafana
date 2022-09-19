@@ -77,8 +77,8 @@ export function setupMockedDataSource({
   const datasource = new CloudWatchDatasource(CloudWatchSettings, templateService, timeSrv);
   datasource.getVariables = () => ['test'];
 
-  datasource.getNamespaces = jest.fn().mockResolvedValue([]);
-  datasource.getRegions = jest.fn().mockResolvedValue([]);
+  datasource.api.getNamespaces = jest.fn().mockResolvedValue([]);
+  datasource.api.getRegions = jest.fn().mockResolvedValue([]);
   datasource.logsQueryRunner.defaultLogGroups = [];
   const fetchMock = jest.fn().mockReturnValue(of({}));
   setBackendSrv({
