@@ -136,9 +136,9 @@ export class ErrorBoundaryAlert extends PureComponent<ErrorBoundaryAlertProps> {
  * @public
  */
 export function withErrorBoundary<P extends {} = {}>(
-  Component: ComponentType<P>,
+  Component: ComponentType<React.PropsWithChildren<P>>,
   errorBoundaryProps: Omit<ErrorBoundaryAlertProps, 'children'> = {}
-): ComponentType<P> {
+): ComponentType<React.PropsWithChildren<P>> {
   const comp = (props: P) => (
     <ErrorBoundaryAlert {...errorBoundaryProps}>
       <Component {...props} />

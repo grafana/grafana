@@ -25,7 +25,7 @@ export interface TableSortByFieldState {
   desc?: boolean;
 }
 
-export interface TableCellProps extends CellProps<any> {
+export interface TableCellProps extends CellProps<{}, any> {
   tableStyles: TableStyles;
   cellProps: React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement>;
   field: Field;
@@ -37,7 +37,8 @@ export type CellComponent = FC<TableCellProps>;
 
 export type FooterItem = Array<KeyValue<string>> | string | undefined;
 
-export type GrafanaTableColumn = Column & {
+export type GrafanaTableColumn = Omit<Column, 'Cell'> & {
+  Cell: CellComponent;
   field: Field;
   sortType: 'number' | 'basic' | 'alphanumeric-insensitive';
   filter: (rows: Row[], id: string, filterValues?: SelectableValue[]) => SelectableValue[];

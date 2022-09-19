@@ -51,7 +51,7 @@ export const Dropdown = React.memo(({ children, overlay, placement }: Props) => 
                 timeout={{ appear: animationDuration, exit: 0, enter: 0 }}
                 classNames={animationStyles}
               >
-                {ReactUtils.renderOrCallToRender(overlay)}
+                {ReactUtils.renderOrCallToRender(overlay, {})}
               </CSSTransition>
             </div>
           </FocusScope>

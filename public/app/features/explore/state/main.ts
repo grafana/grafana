@@ -5,11 +5,11 @@ import { DataQuery, ExploreUrlState, serializeStateToUrlParam, SplitOpenOptions,
 import { DataSourceSrv, locationService } from '@grafana/runtime';
 import { GetExploreUrlArguments, stopQueryState } from 'app/core/utils/explore';
 import { PanelModel } from 'app/features/dashboard/state';
+import { ThunkResult } from 'app/types';
 import { ExploreId, ExploreItemState, ExploreState } from 'app/types/explore';
 
 import { RichHistoryResults } from '../../../core/history/RichHistoryStorage';
 import { RichHistorySearchFilters, RichHistorySettings } from '../../../core/utils/richHistoryTypes';
-import { ThunkResult } from '../../../types';
 import { TimeSrv } from '../../dashboard/services/TimeSrv';
 
 import { paneReducer } from './explorePane';
