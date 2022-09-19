@@ -260,34 +260,6 @@ function getLabels(selectorNode: SyntaxNode, text: string): Label[] {
   return labels;
 }
 
-// function getNodeChildren(node: SyntaxNode): SyntaxNode[] {
-//   let child: SyntaxNode | null = node.firstChild;
-//   const children: SyntaxNode[] = [];
-//   while (child !== null) {
-//     children.push(child);
-//     child = child.nextSibling;
-//   }
-//   return children;
-// }
-
-// function getNodeInSubtree(node: SyntaxNode, typeName: NodeTypeName): SyntaxNode | null {
-//   // first we try the current node
-//   if (node.type.name === typeName) {
-//     return node;
-//   }
-
-//   // then we try the children
-//   const children = getNodeChildren(node);
-//   for (const child of children) {
-//     const n = getNodeInSubtree(child, typeName);
-//     if (n !== null) {
-//       return n;
-//     }
-//   }
-
-//   return null;
-// }
-
 function resolvePipeError(node: SyntaxNode, text: string, pos: number): Situation | null {
   // for example `{level="info"} |`
   const exprNode = walk(node, [
