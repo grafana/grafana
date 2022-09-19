@@ -152,7 +152,7 @@ Loki log queries return the contents of the log lines. Querying and displaying l
 #### Log context
 
 When using a search expression as detailed above, you can retrieve the context surrounding your filtered results.
-By clicking the `Show Context` link on the filtered rows, you'll be able to investigate the log messages that came before and after the
+By clicking the `Show Context` button on the filtered rows, you'll be able to investigate the log messages that came before and after the
 log message you're interested in.
 
 #### Live tailing
