@@ -4,7 +4,7 @@ import tinycolor from 'tinycolor2';
 import { formattedValueToString, DisplayValue, FieldConfig, FieldType, VizOrientation } from '@grafana/data';
 import { GraphDrawStyle, GraphFieldConfig } from '@grafana/schema';
 
-import { getTextColorForBackground } from '../../utils';
+import { getTextColorForAlphaBackground } from '../../utils';
 import { calculateFontSize } from '../../utils/measureText';
 import { Sparkline } from '../Sparkline/Sparkline';
 
@@ -67,7 +67,7 @@ export abstract class BigValueLayout {
     }
 
     if (this.props.colorMode === BigValueColorMode.Background) {
-      styles.color = getTextColorForBackground(this.valueColor);
+      styles.color = getTextColorForAlphaBackground(this.valueColor, this.props.theme.isDark);
     }
 
     return styles;
@@ -91,7 +91,7 @@ export abstract class BigValueLayout {
         styles.color = this.valueColor;
         break;
       case BigValueColorMode.Background:
-        styles.color = getTextColorForBackground(this.valueColor);
+        styles.color = getTextColorForAlphaBackground(this.valueColor, this.props.theme.isDark);
         break;
       case BigValueColorMode.None:
         styles.color = this.props.theme.colors.text.primary;
