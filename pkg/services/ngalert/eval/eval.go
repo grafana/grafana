@@ -585,6 +585,9 @@ func (e *evaluatorImpl) Validate(ctx context.Context, user *user.SignedInUser, c
 		Ctx:                ctx,
 	}
 
+	if len(condition.Data) == 0 {
+		return errors.New("expression list is empty. must be at least 1 expression")
+	}
 	if len(condition.Condition) == 0 {
 		return errors.New("condition must not be empty")
 	}
