@@ -1,6 +1,15 @@
 import uPlot, { Axis } from 'uplot';
 
-import { dateTimeFormat, GrafanaTheme2, isBooleanUnit, systemDateFormats, TimeZone } from '@grafana/data';
+import {
+  dateTimeFormat,
+  DecimalCount,
+  GrafanaTheme2,
+  guessDecimals,
+  isBooleanUnit,
+  roundDecimals,
+  systemDateFormats,
+  TimeZone,
+} from '@grafana/data';
 import { AxisPlacement } from '@grafana/schema';
 
 import { measureText } from '../../../utils/measureText';
@@ -21,12 +30,15 @@ export interface AxisProps {
   ticks?: Axis.Ticks;
   filter?: Axis.Filter;
   space?: Axis.Space;
-  formatValue?: (v: any) => string;
+  formatValue?: (v: any, decimals?: DecimalCount) => string;
   incrs?: Axis.Incrs;
   splits?: Axis.Splits;
   values?: Axis.Values;
   isTime?: boolean;
   timeZone?: TimeZone;
+  color?: uPlot.Axis.Stroke;
+  border?: uPlot.Axis.Border;
+  decimals?: DecimalCount;
 }
 
 export const UPLOT_AXIS_FONT_SIZE = 12;
@@ -106,6 +118,9 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       theme,
       tickLabelRotation,
       size,
+      color,
+      border,
+      decimals,
     } = this.props;
 
     const font = `${UPLOT_AXIS_FONT_SIZE}px ${theme.typography.fontFamily}`;
@@ -116,10 +131,14 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       splits = [0, 1];
     }
 
+    if (decimals === 0) {
+      filter = (u, splits) => splits.map((v) => (Number.isInteger(v) ? v : null));
+    }
+
     let config: Axis = {
       scale: scaleKey,
       show,
-      stroke: theme.colors.text.primary,
+      stroke: color ?? theme.colors.text.primary,
       side: getUPlotSideFromAxis(placement),
       font,
       size:
@@ -147,7 +166,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
         ticks
       ),
       splits,
-      values: values,
+      values,
       space:
         space ??
         ((self, axisIdx, scaleMin, scaleMax, plotDim) => {
@@ -155,6 +174,10 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
         }),
       filter,
     };
+
+    if (border != null) {
+      config.border = border;
+    }
 
     if (label != null && label.length > 0) {
       config.label = label;
@@ -168,7 +191,10 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
     } else if (isTime) {
       config.values = formatTime;
     } else if (formatValue) {
-      config.values = (u: uPlot, vals: any[]) => vals.map(formatValue!);
+      config.values = (u: uPlot, splits, axisIdx, tickSpace, tickIncr) => {
+        let decimals = guessDecimals(roundDecimals(tickIncr, 6));
+        return splits.map((v) => formatValue!(v, decimals > 0 ? decimals : undefined));
+      };
     }
 
     // store timezone
@@ -219,7 +245,7 @@ export function formatTime(
     format = systemDateFormats.interval.month;
   }
 
-  return splits.map((v) => dateTimeFormat(v, { format, timeZone }));
+  return splits.map((v) => (v == null ? '' : dateTimeFormat(v, { format, timeZone })));
 }
 
 export function getUPlotSideFromAxis(axis: AxisPlacement) {

@@ -5,23 +5,31 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   DataSourceApi,
+  DataSourcePluginMeta,
   DataSourceRef,
-  PluginMeta,
 } from '@grafana/data';
 import { BackendDataSourceResponse, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
+
+import { MIXED_DATASOURCE_NAME } from '../../../plugins/datasource/mixed/MixedDataSource';
 
 export const PUBLIC_DATASOURCE = '-- Public --';
 
 export class PublicDashboardDataSource extends DataSourceApi<any> {
   constructor(datasource: DataSourceRef | string | DataSourceApi | null) {
+    let meta = {} as DataSourcePluginMeta;
+    if (PublicDashboardDataSource.isMixedDatasource(datasource)) {
+      meta.mixed = true;
+    }
+
     super({
       name: 'public-ds',
       id: 0,
       type: 'public-ds',
-      meta: {} as PluginMeta,
+      meta,
       uid: PublicDashboardDataSource.resolveUid(datasource),
       jsonData: {},
       access: 'proxy',
+      readOnly: true,
     });
 
     this.interval = '1min';
@@ -38,34 +46,27 @@ export class PublicDashboardDataSource extends DataSourceApi<any> {
     return datasource?.uid ?? PUBLIC_DATASOURCE;
   }
 
+  private static isMixedDatasource(datasource: DataSourceRef | string | DataSourceApi | null): boolean {
+    if (typeof datasource === 'string' || datasource === null) {
+      return false;
+    }
+
+    return datasource?.uid === MIXED_DATASOURCE_NAME;
+  }
+
   /**
    * Ideally final -- any other implementation may not work as expected
    */
   query(request: DataQueryRequest<any>): Observable<DataQueryResponse> {
-    const { intervalMs, maxDataPoints, range, requestId, publicDashboardAccessToken, panelId } = request;
-    let targets = request.targets;
-
-    const queries = targets.map((q) => {
-      return {
-        ...q,
-        publicDashboardAccessToken,
-        intervalMs,
-        maxDataPoints,
-      };
-    });
+    const { intervalMs, maxDataPoints, requestId, publicDashboardAccessToken, panelId } = request;
+    let queries: DataQuery[];
 
     // Return early if no queries exist
-    if (!queries.length) {
+    if (!request.targets.length) {
       return of({ data: [] });
     }
 
-    const body: any = { queries, publicDashboardAccessToken, panelId };
-
-    if (range) {
-      body.range = range;
-      body.from = range.from.valueOf().toString();
-      body.to = range.to.valueOf().toString();
-    }
+    const body: any = { intervalMs, maxDataPoints };
 
     return getBackendSrv()
       .fetch<BackendDataSourceResponse>({
@@ -76,7 +77,7 @@ export class PublicDashboardDataSource extends DataSourceApi<any> {
       })
       .pipe(
         switchMap((raw) => {
-          return of(toDataQueryResponse(raw, queries as DataQuery[]));
+          return of(toDataQueryResponse(raw, queries));
         }),
         catchError((err) => {
           return of(toDataQueryResponse(err));

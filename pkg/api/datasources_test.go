@@ -19,6 +19,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -517,10 +518,10 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 			// Create a middleware to pretend user is logged in
 			pretendSignInMiddleware := func(c *models.ReqContext) {
 				sc.context = c
-				sc.context.UserId = testUserID
-				sc.context.OrgId = testOrgID
+				sc.context.UserID = testUserID
+				sc.context.OrgID = testOrgID
 				sc.context.Login = testUserLogin
-				sc.context.OrgRole = models.ROLE_VIEWER
+				sc.context.OrgRole = org.RoleViewer
 				sc.context.IsSignedIn = true
 			}
 			sc.m.Use(pretendSignInMiddleware)

@@ -101,6 +101,9 @@ var (
 
 	// MAccessEvaluationCount is a metric gauge for total number of evaluation requests
 	MAccessEvaluationCount prometheus.Counter
+
+	// MPublicDashboardRequestCount is a metric counter for public dashboards requests
+	MPublicDashboardRequestCount prometheus.Counter
 )
 
 // Timers
@@ -410,6 +413,12 @@ func init() {
 		Namespace: ExporterName,
 	})
 
+	MPublicDashboardRequestCount = metricutil.NewCounterStartingAtZero(prometheus.CounterOpts{
+		Name:      "public_dashboard_request_count",
+		Help:      "counter for public dashboards requests",
+		Namespace: ExporterName,
+	})
+
 	MStatTotalDashboards = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_totals_dashboard",
 		Help:      "total amount of dashboards",
@@ -654,5 +663,6 @@ func initMetricVars() {
 		StatsTotalLibraryVariables,
 		StatsTotalDataKeys,
 		MStatTotalPublicDashboards,
+		MPublicDashboardRequestCount,
 	)
 }

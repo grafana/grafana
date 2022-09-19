@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import React, { ReactElement } from 'react';
-import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 
 import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
@@ -9,7 +8,7 @@ import { LoadingPlaceholder, Select, RadioButtonGroup, useStyles2, Tooltip } fro
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { StoreState } from 'app/types/store';
+import { useSelector } from 'app/types';
 
 import { HorizontalGroup } from '../components/HorizontalGroup';
 import { PluginList } from '../components/PluginList';
@@ -17,13 +16,12 @@ import { SearchField } from '../components/SearchField';
 import { Sorters } from '../helpers';
 import { useHistory } from '../hooks/useHistory';
 import { useGetAllWithFilters, useIsRemotePluginsAvailable, useDisplayMode } from '../state/hooks';
-import { PluginAdminRoutes, PluginListDisplayMode } from '../types';
+import { PluginListDisplayMode } from '../types';
 
 export default function Browse({ route }: GrafanaRouteComponentProps): ReactElement | null {
   const location = useLocation();
   const locationSearch = locationSearchToObject(location.search);
-  const navModelId = getNavModelId(route.routeName);
-  const navModel = useSelector((state: StoreState) => getNavModel(state.navIndex, navModelId));
+  const navModel = useSelector((state) => getNavModel(state.navIndex, 'plugins'));
   const { displayMode, setDisplayMode } = useDisplayMode();
   const styles = useStyles2(getStyles);
   const history = useHistory();
@@ -55,7 +53,7 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
     history.push({ query: { filterByType: value } });
   };
 
-  const onSearch = (q: any) => {
+  const onSearch = (q: string) => {
     history.push({ query: { filterBy: 'all', filterByType: 'all', q } });
   };
 
@@ -173,13 +171,3 @@ const getStyles = (theme: GrafanaTheme2) => ({
     }
   `,
 });
-
-// Because the component is used under multiple paths (/plugins and /admin/plugins) we need to get
-// the correct navModel from the store
-const getNavModelId = (routeName?: string) => {
-  if (routeName === PluginAdminRoutes.HomeAdmin || routeName === PluginAdminRoutes.BrowseAdmin) {
-    return 'admin-plugins';
-  }
-
-  return 'plugins';
-};

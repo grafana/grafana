@@ -217,7 +217,7 @@ function createDataQuery(query: RichHistoryLocalStorageDTO, individualQuery: Dat
     // ElasticSearch (maybe other datasoures too) before grafana7
     return JSON.parse(individualQuery);
   }
-  // prometehus (maybe other datasources too) before grafana7
+  // prometheus (maybe other datasources too) before grafana7
   return { expr: individualQuery, refId: letters[index] };
 }
 

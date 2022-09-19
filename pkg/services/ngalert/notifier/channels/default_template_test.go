@@ -2,7 +2,6 @@ package channels
 
 import (
 	"context"
-	"io/ioutil"
 	"net/url"
 	"os"
 	"testing"
@@ -56,7 +55,7 @@ func TestDefaultTemplateString(t *testing.T) {
 		},
 	}
 
-	f, err := ioutil.TempFile("/tmp", "template")
+	f, err := os.CreateTemp("/tmp", "template")
 	require.NoError(t, err)
 	defer func(f *os.File) {
 		_ = f.Close()
@@ -148,13 +147,13 @@ Labels:
 Annotations:
  - ann1 = annv1
 
-Source: http://localhost/alert1
+Source: [http://localhost/alert1](http://localhost/alert1)
 
-Silence: http://localhost/grafana/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1
+Silence: [http://localhost/grafana/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1](http://localhost/grafana/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1)
 
-Dashboard: http://localhost/grafana/d/dbuid123
+Dashboard: [http://localhost/grafana/d/dbuid123](http://localhost/grafana/d/dbuid123)
 
-Panel: http://localhost/grafana/d/dbuid123?viewPanel=puid123
+Panel: [http://localhost/grafana/d/dbuid123?viewPanel=puid123](http://localhost/grafana/d/dbuid123?viewPanel=puid123)
 
 
 
@@ -166,9 +165,9 @@ Labels:
 Annotations:
  - ann1 = annv2
 
-Source: http://localhost/alert2
+Source: [http://localhost/alert2](http://localhost/alert2)
 
-Silence: http://localhost/grafana/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval2
+Silence: [http://localhost/grafana/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval2](http://localhost/grafana/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval2)
 
 
 
@@ -183,13 +182,13 @@ Labels:
 Annotations:
  - ann1 = annv3
 
-Source: http://localhost/alert3
+Source: [http://localhost/alert3](http://localhost/alert3)
 
-Silence: http://localhost/grafana/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval3
+Silence: [http://localhost/grafana/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval3](http://localhost/grafana/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval3)
 
-Dashboard: http://localhost/grafana/d/dbuid456
+Dashboard: [http://localhost/grafana/d/dbuid456](http://localhost/grafana/d/dbuid456)
 
-Panel: http://localhost/grafana/d/dbuid456?viewPanel=puid456
+Panel: [http://localhost/grafana/d/dbuid456?viewPanel=puid456](http://localhost/grafana/d/dbuid456?viewPanel=puid456)
 
 
 
@@ -201,9 +200,9 @@ Labels:
 Annotations:
  - ann1 = annv4
 
-Source: http://localhost/alert4
+Source: [http://localhost/alert4](http://localhost/alert4)
 
-Silence: http://localhost/grafana/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval4
+Silence: [http://localhost/grafana/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval4](http://localhost/grafana/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval4)
 
 
 `,

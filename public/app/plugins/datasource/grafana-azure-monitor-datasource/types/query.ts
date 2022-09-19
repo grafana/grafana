@@ -6,6 +6,13 @@ export enum AzureQueryType {
   AzureMonitor = 'Azure Monitor',
   LogAnalytics = 'Azure Log Analytics',
   AzureResourceGraph = 'Azure Resource Graph',
+  SubscriptionsQuery = 'Azure Subscriptions',
+  ResourceGroupsQuery = 'Azure Resource Groups',
+  NamespacesQuery = 'Azure Namespaces',
+  ResourceNamesQuery = 'Azure Resource Names',
+  MetricNamesQuery = 'Azure Metric Names',
+  WorkspacesQuery = 'Azure Workspaces',
+  /** Deprecated */
   GrafanaTemplateVariableFn = 'Grafana Template Variable Function',
 }
 
@@ -25,20 +32,26 @@ export interface AzureMonitorQuery extends DataQuery {
   azureLogAnalytics?: AzureLogsQuery;
   azureResourceGraph?: AzureResourceGraphQuery;
   grafanaTemplateVariableFn?: GrafanaTemplateVariableQuery;
+
+  /** Template variables params */
+  resourceGroup?: string;
+  namespace?: string;
+  resource?: string;
 }
 
 /**
  * Azure Monitor Metrics sub-query properties
  */
 export interface AzureMetricQuery {
-  resourceUri?: string;
   resourceGroup?: string;
-
-  /** Resource type */
-  metricDefinition?: string;
-
   resourceName?: string;
+  /** metricNamespace is used as the resource type (or resource namespace).
+   * It's usually equal to the target metric namespace.
+   * Kept the name of the variable as metricNamespace to avoid backward incompatibility issues.
+   */
   metricNamespace?: string;
+  /** used as the value for the metricNamespace param when different from the resource namespace */
+  customNamespace?: string;
   metricName?: string;
   timeGrain?: string;
   aggregation?: string;
@@ -55,6 +68,12 @@ export interface AzureMetricQuery {
 
   /** @deprecated This property was migrated to dimensionFilters and should only be accessed in the migration */
   dimensionFilter?: string;
+
+  /** @deprecated Use metricNamespace instead */
+  metricDefinition?: string;
+
+  /** @deprecated Use resourceGroup, resourceName and metricNamespace instead */
+  resourceUri?: string;
 }
 
 /**
@@ -84,4 +103,11 @@ export interface AzureMetricDimension {
    * @deprecated filter is deprecated in favour of filters to support multiselect
    */
   filter?: string;
+}
+
+export interface AzureMetricResource {
+  subscription?: string;
+  resourceGroup?: string;
+  resourceName?: string;
+  metricNamespace?: string;
 }

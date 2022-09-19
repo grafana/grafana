@@ -38,12 +38,12 @@ func (ss *SecretsStoreImpl) GetDataKey(ctx context.Context, id string) (*secrets
 		return err
 	})
 
-	if !exists {
-		return nil, secrets.ErrDataKeyNotFound
-	}
-
 	if err != nil {
 		return nil, fmt.Errorf("failed getting data key: %w", err)
+	}
+
+	if !exists {
+		return nil, secrets.ErrDataKeyNotFound
 	}
 
 	return dataKey, nil

@@ -17,7 +17,7 @@ import { Subscription, throttleTime } from 'rxjs';
 import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/location';
 import { getColorDimension } from 'app/features/dimensions';
 import { defaultStyleConfig, StyleConfig, StyleDimensions } from '../../style/types';
-import { StyleEditor } from './StyleEditor';
+import { StyleEditor } from '../../editor/StyleEditor';
 import { getStyleConfigState } from '../../style/utils';
 import VectorLayer from 'ol/layer/Vector';
 import { isNumber } from 'lodash';

@@ -3,10 +3,8 @@ import { uniqueId } from 'lodash';
 import React, { useCallback } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
-import { EditorField, Stack } from '@grafana/experimental';
-import { Button, Select, useStyles2 } from '@grafana/ui';
+import { Button, EditorField, Select, Stack, useStyles2 } from '@grafana/ui';
 
-import { AGGREGATE_FNS } from '../../constants';
 import { QueryEditorExpressionType, QueryEditorFunctionExpression } from '../../expressions';
 import { SQLExpression } from '../../types';
 import { createFunctionField } from '../../utils/sql.utils';
@@ -15,11 +13,12 @@ interface SelectRowProps {
   sql: SQLExpression;
   onSqlChange: (sql: SQLExpression) => void;
   columns?: Array<SelectableValue<string>>;
+  functions?: Array<SelectableValue<string>>;
 }
 
 const asteriskValue = { label: '*', value: '*' };
 
-export function SelectRow({ sql, columns, onSqlChange }: SelectRowProps) {
+export function SelectRow({ sql, columns, onSqlChange, functions }: SelectRowProps) {
   const styles = useStyles2(getStyles);
   const columnsWithAsterisk = [asteriskValue, ...(columns || [])];
 
@@ -101,7 +100,7 @@ export function SelectRow({ sql, columns, onSqlChange }: SelectRowProps) {
                 isClearable
                 menuShouldPortal
                 allowCustomValue
-                options={aggregateFnOptions}
+                options={functions}
                 onChange={onAggregationChange(item, index)}
               />
             </EditorField>
@@ -132,10 +131,6 @@ export function SelectRow({ sql, columns, onSqlChange }: SelectRowProps) {
 const getStyles = () => {
   return { addButton: css({ alignSelf: 'flex-start' }) };
 };
-
-const aggregateFnOptions = AGGREGATE_FNS.map((v: { id: string; name: string; description: string }) =>
-  toOption(v.name)
-);
 
 function getColumnValue({ parameters }: QueryEditorFunctionExpression): SelectableValue<string> | null {
   const column = parameters?.find((p) => p.type === QueryEditorExpressionType.FunctionParameter);

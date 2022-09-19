@@ -19,40 +19,36 @@ keywords:
 
 # Use dashboards
 
-The dashboard UI has the following sections to allow you to customize the presentation of data.
+This topic provides an overview of dashboard features and shortcuts, and describes how to use dashboard search.
 
-{{< figure src="/static/img/docs/v50/dashboard_annotated.png" class="no-shadow" width="700px" >}}
+## Dashboard feature overview
 
-- **Zoom out time range** (1)
-- **Time picker dropdown** (2). Access relative time range options, auto refresh options and set custom absolute time ranges.
-- **Refresh option** (3) Click to trigger queries or set auto refresh.
-- **Dashboard panel** (4) Click the panel title to open panel menu.
-- **Graph legend** (5) Change series colors, y-axis and series visibility directly from the legend.
+The dashboard user interface provides a number of features that you can use to customize the presentation of your data.
 
-For more details, see [Dashboard header]({{< relref "#dashboard-header" >}}) and [Dashboard rows]({{< relref "#dashboard-rows" >}}).
+The following image and descriptions highlights all dashboards features.
 
-## Dashboard header
+{{< figure src="/static/img/docs/v91/dashboard-features/dashboard-features.png" width="700px" >}}
 
-The dashboard header has the following sections.
-
-{{< figure src="/static/img/docs/v50/top_nav_annotated.png" width="450px" >}}
-
-- **Dashboard title** (2): This also opens the dashboard search when clicked.
-- **Add panel** (3): Use this option to add a new panel or row to the current dashboard.
-- **Star dashboard** (4): Use this option to star (or unstar) the current dashboard. Starred dashboards show up on your own home dashboard by default. It is a convenient way to mark Dashboards that you're interested in.
-- **Share dashboard** (5): Use this option to share the current dashboard by link or snapshot. You can also export the dashboard definition from the share modal.
-- **Save dashboard** (6): Use this option to save the current dashboard using its current name.
-- **Settings** (7): Use this option to open dashboard settings. Here you change dashboard name, folder, tags as well as manage variables and annotation queries.
-
-## Dashboard panels
-
-The main building block of dashboard is the panel. You add new panels via the `Add panel` button at the top of the dashboard. This will add view at the top where you can choose if you want to add a new panel, row or library panel. Library panels are panels that can be shared (reused) in many dashboards. You can move panels around by just dragging the panel header. To resize panel use the lower right corner.
-
-## Dashboard rows
-
-A dashboard row is a logical divider within a dashboard. It is used to group panels together. Rows can be collapsed or expanded allowing you to hide parts of the dashboard. Panels inside a collapsed row will not issue any queries.
-
-Use the [repeating rows]({{< relref "../panels/add-panels-dynamically/configure-repeating-rows" >}}) to dynamically create rows based on a template variable.
+- **Grafana home** (1): Click the Grafana home icon to be redirected to the home page configured in the Grafana instance.
+- **Dashboard title** (2): When you click the dashboard title you can search for dashboard contained in the current folder.
+- **Share dashboard** (3): Use this option to share the current dashboard by link or snapshot. You can also export the dashboard definition from the share modal.
+- **Add panel** (4): Use this option to add a panel, dashboard row, or library panel to the current dashboard.
+- **Dashboard settings** (5): Use this option to change dashboard name, folder, and tags and manage variables and annotation queries.
+- **Time picker dropdown** (6): Click to select relative time range options and set custom absolute time ranges.
+- **Zoom out time range** (7): Click to zoom out the time range. For more information about how to use time range controls, refer to [Common time range controls](../time-range-controls/#common-time-range-controls).
+- **Refresh dashboard** (8): Click to immediately trigger queries and refresh dashboard data.
+- **Refresh dashboard time interval** (9): Click to select a dashboard auto refresh time interval.
+- **View mode** (10): Click to display the dashboard on a large screen such as a TV or a kiosk. View mode hides irrelevant information such as navigation menus. For more information about view mode, refer to [How to Create Kiosks to Display Dashboards on a TV](https://grafana.com/blog/2019/05/02/grafana-tutorial-how-to-create-kiosks-to-display-dashboards-on-a-tv/).
+- **Dashboard panel** (11): The primary building block of a dashboard is the panel. To add a new panel, dashboard row, or library panel, click **Add panel**.
+  - Library panels can be shared among many dashboards.
+  - To move a panel, drag the panel header to another location.
+  - To resize a panel, click and drag the lower right corner of the panel.
+- **Graph legend** (12): Change series colors, y-axis and series visibility directly from the legend.
+- **Search** (13): Click **Search** to search for dashboards by name or panel title.
+- **Dashboard row** (14): A dashboard row is a logical divider within a dashboard that groups panels together.
+  - Rows can be collapsed or expanded allowing you to hide parts of the dashboard.
+  - Panels inside a collapsed row do not issue queries.
+  - Use the [repeating rows]({{< relref "../panels/configure-panel-options/#configure-repeating-rows" >}}) to dynamically create rows based on a template variable.
 
 ## Keyboard shortcuts
 
@@ -66,7 +62,7 @@ Grafana has a number of keyboard shortcuts available. Press `?` or `h` on your k
 - `Ctrl+K`: Opens the command palette.
 - `Esc`: Exits panel when in fullscreen view or edit mode. Also returns you to the dashboard from dashboard settings.
 
-**Focused Panel**
+**Focused panel**
 
 By hovering over a panel with the mouse you can use some shortcuts that will target that panel.
 
@@ -77,24 +73,13 @@ By hovering over a panel with the mouse you can use some shortcuts that will tar
 - `pr`: Remove Panel
 - `pl`: Toggle panel legend
 
-## Dashboard Search
+## Dashboard search
 
-Dashboards can be searched by the dashboard name, filtered by one (or many) tags or filtered by starred status. The dashboard search is accessed through the dashboard picker, available in the dashboard top nav area. The dashboard search can also be opened by using the shortcut `F`.
+You can search for dashboards by dashboard name and by panel title. When you search for dashboards, the system returns all dashboards available within the Grafana instance, even if you do not have permission to view the contents of the dashboard.
 
-{{< figure src="/static/img/docs/v50/dashboard_search_annotated.png" width="700px" >}}
+### Search dashboards using dashboard name
 
-1. `Search Bar`: The search bar allows you to enter any string and search both database and file based dashboards in real-time.
-1. `Starred`: Here you find all your starred dashboards.
-1. `Recent`: Here you find the latest created dashboards.
-1. `Folders`: The tags filter allows you to filter the list by dashboard tags.
-1. `Root`: The root contains all dashboards that are not placed in a folder.
-1. `Tags`: The tags filter allows you to filter the list by dashboard tags.
-
-When using only a keyboard, you can use your keyboard arrow keys to navigate the results, hit enter to open the selected dashboard.
-
-### Find by dashboard name
-
-Begin typing any part of the desired dashboard names in the search bar. Search will return results for any partial string match in real-time, as you type.
+Begin typing any part of the dashboard name in the search bar. The search returns results for any partial string match in real-time, as you type.
 
 Dashboard search is:
 
@@ -102,14 +87,62 @@ Dashboard search is:
 - _Not_ case sensitive
 - Functional across stored _and_ file based dashboards.
 
-### Filter by Tag(s)
+> \*\*Note: You can use your keyboard arrow keys to navigate the results and press `Enter` to open the selected dashboard.
 
-Tags are a great way to organize your dashboards, especially as the number of dashboards grow. Tags can be added and managed in the dashboard `Settings`.
+The following image shows the search results when you search using dashboard name.
 
-To filter the dashboard list by tag, click on any tag appearing in the right column. The list may be further filtered by clicking on additional tags:
+{{< figure src="/static/img/docs/v91/dashboard-features/search-by-dashboard-name.png" width="700px" >}}
 
-Alternately, to see a list of all available tags, click the tags dropdown menu. All tags will be shown, and when a tag is selected, the dashboard search will be instantly filtered:
+### Search dashboards using panel title
 
-When using only a keyboard: `tab` to focus on the _tags_ link, `▼` down arrow key to find a tag and select with the `Enter` key.
+You can search for a dashboard by the title of a panel that appears in a dashboard.
+If a panel's title matches your search query, the dashboard appears in the search results.
 
-> **Note:** When multiple tags are selected, Grafana will show dashboards that include **all**.
+This feature is available by default in Grafana Cloud and in Grafana OSS v9.1 and higher, you access this feature by enabling the `panelTitleSearch` feature toggle.
+For more information about enabling panel title search, refer to [Enable the panelTitleSearch feature toggle.](#enable-panelTitleSearch-feature-toggle)
+
+The following image shows the search results when you search using panel title.
+
+{{< figure src="/static/img/docs/v91/dashboard-features/search-by-panel-title.png" width="700px" >}}
+
+#### Enable the panelTitleSearch feature toggle
+
+Complete the following steps to enable the `panelTitleSearch` feature toggle.
+
+**Before you begin:**
+
+- If you are running Grafana Enterprise with RBAC, enable [service accounts]({{< relref "../administration/service-accounts/" >}}).
+
+**To enable the panelTitleSearch feature toggle:**
+
+1. Open the Grafana [configuration file]({{< relref "../setup-grafana/configure-grafana/#configuration-file-location" >}}).
+
+1. Locate the [feature_toggles]({{< relref "../setup-grafana/configure-grafana/#feature_toggles" >}}) section.
+
+1. Add the following parameter to the `feature_toggles` section:
+
+   ```
+   [feature_toggles]
+   # enable features, separated by spaces
+   enable = dashboardPreviews
+   ```
+
+1. Save your changes and restart the Grafana server.
+
+### Filter dashboard search results by tag(s)
+
+Tags are a great way to organize your dashboards, especially as the number of dashboards grow. You can add and manage tags in dashboard `Settings`.
+
+When you select multiple tags, Grafana shows dashboards that include all selected tags.
+
+To filter dashboard search result by a tag, complete one of the following steps:
+
+- To filter dashboard search results by tag, click a tag that appears in the right column of the search results.
+
+  You can continue filtering by clicking additional tags.
+
+- To see a list of all available tags, click the **Filter by tags** dropdown menu and select a tag.
+
+  All tags will be shown, and when you select a tag, the dashboard search will be instantly filtered.
+
+> **Note:** When using only a keyboard, press the `tab` key and navigate to the **Filter by tag** drop-down menu, press the down arrow key `▼` to activate the menu and locate a tag, and press `Enter` to select the tag.

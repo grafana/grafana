@@ -122,7 +122,7 @@ export interface CloudRuleIdentifier {
   ruleSourceName: string;
   namespace: string;
   groupName: string;
-  rulerRuleHash: number;
+  rulerRuleHash: string;
 }
 export interface GrafanaRuleIdentifier {
   ruleSourceName: 'grafana';
@@ -134,7 +134,7 @@ export interface PrometheusRuleIdentifier {
   ruleSourceName: string;
   namespace: string;
   groupName: string;
-  ruleHash: number;
+  ruleHash: string;
 }
 
 export type RuleIdentifier = CloudRuleIdentifier | GrafanaRuleIdentifier | PrometheusRuleIdentifier;
@@ -158,7 +158,7 @@ interface EvalMatch {
 }
 
 export interface StateHistoryItemData {
-  noData: boolean;
+  noData?: boolean;
   evalMatches?: EvalMatch[];
 }
 

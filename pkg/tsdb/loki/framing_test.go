@@ -19,9 +19,9 @@ import (
 // but i wanted to test for all of them, to be sure.
 
 func TestSuccessResponse(t *testing.T) {
-	matrixQuery := lokiQuery{Expr: "up(ALERTS)", Step: time.Second * 42, QueryType: QueryTypeRange, Direction: DirectionBackward}
-	vectorQuery := lokiQuery{Expr: "query1", QueryType: QueryTypeInstant, Direction: DirectionBackward}
-	streamsQuery := lokiQuery{Expr: "query1", QueryType: QueryTypeRange, Direction: DirectionBackward}
+	matrixQuery := lokiQuery{Expr: "up(ALERTS)", Step: time.Second * 42, QueryType: QueryTypeRange, Direction: DirectionBackward, RefID: "mq"}
+	vectorQuery := lokiQuery{Expr: "query1", QueryType: QueryTypeInstant, Direction: DirectionBackward, RefID: "vq"}
+	streamsQuery := lokiQuery{Expr: "query1", QueryType: QueryTypeRange, Direction: DirectionBackward, RefID: "sq"}
 
 	tt := []struct {
 		name     string
@@ -48,6 +48,8 @@ func TestSuccessResponse(t *testing.T) {
 		{name: "parse a simple streams response", filepath: "streams_simple", query: streamsQuery},
 
 		{name: "parse a streams response with parse errors", filepath: "streams_parse_errors", query: streamsQuery},
+
+		{name: "parse an empty response", filepath: "empty", query: matrixQuery},
 	}
 
 	for _, test := range tt {
@@ -55,6 +57,7 @@ func TestSuccessResponse(t *testing.T) {
 			responseFileName := filepath.Join("testdata", test.filepath+".json")
 			goldenFileName := test.filepath + ".golden"
 
+			//nolint:gosec
 			bytes, err := os.ReadFile(responseFileName)
 			require.NoError(t, err)
 

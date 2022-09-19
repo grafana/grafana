@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import React, { FC, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -8,6 +7,7 @@ import { Alert, LinkButton, LoadingPlaceholder, useStyles2, withErrorBoundary } 
 import { Page } from 'app/core/components/Page/Page';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { useDispatch } from 'app/types';
 import { RuleIdentifier } from 'app/types/unified-alerting';
 
 import { AlertRuleForm } from './components/rule-editor/AlertRuleForm';
@@ -15,6 +15,7 @@ import { useIsRuleEditable } from './hooks/useIsRuleEditable';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchAllPromBuildInfoAction, fetchEditableRuleAction } from './state/actions';
 import { useRulesAccess } from './utils/accessControlHooks';
+import { initialAsyncRequestState } from './utils/redux';
 import * as ruleId from './utils/rule-id';
 
 interface ExistingRuleEditorProps {
@@ -22,7 +23,7 @@ interface ExistingRuleEditorProps {
 }
 
 const ExistingRuleEditor: FC<ExistingRuleEditorProps> = ({ identifier }) => {
-  useCleanup((state) => state.unifiedAlerting.ruleForm.existingRule);
+  useCleanup((state) => (state.unifiedAlerting.ruleForm.existingRule = initialAsyncRequestState));
   const { loading, result, error, dispatched } = useUnifiedAlertingSelector((state) => state.ruleForm.existingRule);
   const dispatch = useDispatch();
   const { isEditable } = useIsRuleEditable(ruleId.ruleIdentifierToRuleSourceName(identifier), result?.rule);

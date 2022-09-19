@@ -1,8 +1,8 @@
 import React, { FC, useMemo } from 'react';
-import { useDispatch } from 'react-redux';
 
 import { Alert } from '@grafana/ui';
 import { AlertManagerCortexConfig, Receiver } from 'app/plugins/datasource/alertmanager/types';
+import { useDispatch } from 'app/types';
 
 import { updateAlertManagerConfigAction } from '../../../state/actions';
 import { CloudChannelValues, ReceiverFormValues, CloudChannelMap } from '../../../types/receiver-form';
@@ -62,7 +62,9 @@ export const CloudReceiverForm: FC<Props> = ({ existing, alertManagerSourceName,
     [config, existing]
   );
 
-  const readOnly = isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName);
+  // this basically checks if we can manage the selected alert manager data source, either because it's a Grafana Managed one
+  // or a Mimir-based AlertManager
+  const isManageableAlertManagerDataSource = !isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName);
 
   return (
     <>
@@ -72,7 +74,8 @@ export const CloudReceiverForm: FC<Props> = ({ existing, alertManagerSourceName,
         </Alert>
       )}
       <ReceiverForm<CloudChannelValues>
-        readOnly={readOnly}
+        isEditable={isManageableAlertManagerDataSource}
+        isTestable={isManageableAlertManagerDataSource}
         config={config}
         onSubmit={onSubmit}
         initialValues={existingValue}

@@ -3,7 +3,10 @@ import React, { PureComponent } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { LogRowModel, TimeZone, dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
-import { LogMessageAnsi, getLogRowStyles, Icon, Button, Themeable2, withTheme2 } from '@grafana/ui';
+import { Icon, Button, Themeable2, withTheme2 } from '@grafana/ui';
+
+import { LogMessageAnsi } from '../logs/components/LogMessageAnsi';
+import { getLogRowStyles } from '../logs/components/getLogRowStyles';
 
 import { ElapsedTime } from './ElapsedTime';
 
@@ -119,14 +122,14 @@ class LiveLogs extends PureComponent<Props, State> {
         <table className={styles.fullWidth}>
           <tbody
             onScroll={isPaused ? undefined : this.onScroll}
-            className={cx(['logs-rows', styles.logsRowsLive])}
+            className={styles.logsRowsLive}
             ref={this.scrollContainerRef}
           >
             {this.rowsToRender().map((row: LogRowModel) => {
               return (
                 <tr className={cx(logsRow, styles.logsRowFade)} key={row.uid}>
-                  <td className={cx(logsRowLocalTime)}>{dateTimeFormat(row.timeEpochMs, { timeZone })}</td>
-                  <td className={cx(logsRowMessage)}>{row.hasAnsi ? <LogMessageAnsi value={row.raw} /> : row.entry}</td>
+                  <td className={logsRowLocalTime}>{dateTimeFormat(row.timeEpochMs, { timeZone })}</td>
+                  <td className={logsRowMessage}>{row.hasAnsi ? <LogMessageAnsi value={row.raw} /> : row.entry}</td>
                 </tr>
               );
             })}

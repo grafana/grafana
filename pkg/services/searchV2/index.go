@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"runtime"
@@ -15,6 +14,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/searchV2/dslookup"
 	"github.com/grafana/grafana/pkg/services/searchV2/extract"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/store"
@@ -32,7 +32,6 @@ type dashboardLoader interface {
 }
 
 type eventStore interface {
-	OnEvent(handler store.EventHandler)
 	GetLastEvent(ctx context.Context) (*store.EntityEvent, error)
 	GetAllEventsAfter(ctx context.Context, id int64) ([]*store.EntityEvent, error)
 }
@@ -82,28 +81,76 @@ func (i *orgIndex) readerForIndex(idxType indexType) (*bluge.Reader, func(), err
 }
 
 type searchIndex struct {
-	mu             sync.RWMutex
-	loader         dashboardLoader
-	perOrgIndex    map[int64]*orgIndex
-	eventStore     eventStore
-	logger         log.Logger
-	buildSignals   chan buildSignal
-	extender       DocumentExtender
-	folderIdLookup folderUIDLookup
-	syncCh         chan chan struct{}
+	mu                      sync.RWMutex
+	loader                  dashboardLoader
+	perOrgIndex             map[int64]*orgIndex
+	initializedOrgs         map[int64]bool
+	initialIndexingComplete bool
+	initializationMutex     sync.RWMutex
+	eventStore              eventStore
+	logger                  log.Logger
+	buildSignals            chan buildSignal
+	extender                DocumentExtender
+	folderIdLookup          folderUIDLookup
+	syncCh                  chan chan struct{}
 }
 
 func newSearchIndex(dashLoader dashboardLoader, evStore eventStore, extender DocumentExtender, folderIDs folderUIDLookup) *searchIndex {
 	return &searchIndex{
-		loader:         dashLoader,
-		eventStore:     evStore,
-		perOrgIndex:    map[int64]*orgIndex{},
-		logger:         log.New("searchIndex"),
-		buildSignals:   make(chan buildSignal),
-		extender:       extender,
-		folderIdLookup: folderIDs,
-		syncCh:         make(chan chan struct{}),
+		loader:          dashLoader,
+		eventStore:      evStore,
+		perOrgIndex:     map[int64]*orgIndex{},
+		initializedOrgs: map[int64]bool{},
+		logger:          log.New("searchIndex"),
+		buildSignals:    make(chan buildSignal),
+		extender:        extender,
+		folderIdLookup:  folderIDs,
+		syncCh:          make(chan chan struct{}),
 	}
+}
+
+func (i *searchIndex) isInitialized(_ context.Context, orgId int64) IsSearchReadyResponse {
+	i.initializationMutex.RLock()
+	orgInitialized := i.initializedOrgs[orgId]
+	initialInitComplete := i.initialIndexingComplete
+	i.initializationMutex.RUnlock()
+
+	if orgInitialized && initialInitComplete {
+		return IsSearchReadyResponse{IsReady: true}
+	}
+
+	if !initialInitComplete {
+		return IsSearchReadyResponse{IsReady: false, Reason: "initial-indexing-ongoing"}
+	}
+
+	i.triggerBuildingOrgIndex(orgId)
+	return IsSearchReadyResponse{IsReady: false, Reason: "org-indexing-ongoing"}
+}
+
+func (i *searchIndex) triggerBuildingOrgIndex(orgId int64) {
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		defer cancel()
+
+		doneIndexing := make(chan error, 1)
+		signal := buildSignal{orgID: orgId, done: doneIndexing}
+		select {
+		case i.buildSignals <- signal:
+		case <-ctx.Done():
+			i.logger.Warn("Failed to send a build signal to initialize org index", "orgId", orgId)
+			return
+		}
+		select {
+		case err := <-doneIndexing:
+			if err != nil {
+				i.logger.Error("Failed to build org index", "orgId", orgId, "error", err)
+			} else {
+				i.logger.Debug("Successfully built org index", "orgId", orgId)
+			}
+		case <-ctx.Done():
+			i.logger.Warn("Building org index timeout", "orgId", orgId)
+		}
+	}()
 }
 
 func (i *searchIndex) sync(ctx context.Context) error {
@@ -149,6 +196,10 @@ func (i *searchIndex) run(ctx context.Context, orgIDs []int64, reIndexSignalCh c
 
 	// Channel to handle signals about asynchronous full re-indexing completion.
 	reIndexDoneCh := make(chan int64, 1)
+
+	i.initializationMutex.Lock()
+	i.initialIndexingComplete = true
+	i.initializationMutex.Unlock()
 
 	for {
 		select {
@@ -356,7 +407,7 @@ func (i *searchIndex) reportSizeOfIndexDiskBackup(orgID int64) {
 	defer cancel()
 
 	// create a temp directory to store the index
-	tmpDir, err := ioutil.TempDir("", "grafana.dashboard_index")
+	tmpDir, err := os.MkdirTemp("", "grafana.dashboard_index")
 	if err != nil {
 		i.logger.Error("can't create temp dir", "error", err)
 		return
@@ -421,6 +472,10 @@ func (i *searchIndex) buildOrgIndex(ctx context.Context, orgID int64) (int, erro
 	}
 	i.perOrgIndex[orgID] = index
 	i.mu.Unlock()
+
+	i.initializationMutex.Lock()
+	i.initializedOrgs[orgID] = true
+	i.initializationMutex.Unlock()
 
 	if orgID == 1 {
 		go func() {
@@ -725,7 +780,7 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 	}
 
 	// key will allow name or uid
-	lookup, err := loadDatasourceLookup(ctx, orgID, l.sql)
+	lookup, err := dslookup.LoadDatasourceLookup(ctx, orgID, l.sql)
 	if err != nil {
 		return dashboards, err
 	}
@@ -812,69 +867,4 @@ type dashboardQueryResult struct {
 	Data     []byte
 	Created  time.Time
 	Updated  time.Time
-}
-
-type datasourceQueryResult struct {
-	UID       string `xorm:"uid"`
-	Type      string `xorm:"type"`
-	Name      string `xorm:"name"`
-	IsDefault bool   `xorm:"is_default"`
-}
-
-func loadDatasourceLookup(ctx context.Context, orgID int64, sql *sqlstore.SQLStore) (extract.DatasourceLookup, error) {
-	byUID := make(map[string]*extract.DataSourceRef, 50)
-	byName := make(map[string]*extract.DataSourceRef, 50)
-	var defaultDS *extract.DataSourceRef
-
-	err := sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		rows := make([]*datasourceQueryResult, 0)
-		sess.Table("data_source").
-			Where("org_id = ?", orgID).
-			Cols("uid", "name", "type", "is_default")
-
-		err := sess.Find(&rows)
-		if err != nil {
-			return err
-		}
-
-		for _, row := range rows {
-			ds := &extract.DataSourceRef{
-				UID:  row.UID,
-				Type: row.Type,
-			}
-			byUID[row.UID] = ds
-			byName[row.Name] = ds
-			if row.IsDefault {
-				defaultDS = ds
-			}
-		}
-
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	// Lookup by UID or name
-	return func(ref *extract.DataSourceRef) *extract.DataSourceRef {
-		if ref == nil {
-			return defaultDS
-		}
-		key := ""
-		if ref.UID != "" {
-			ds, ok := byUID[ref.UID]
-			if ok {
-				return ds
-			}
-			key = ref.UID
-		}
-		if key == "" {
-			return defaultDS
-		}
-		ds, ok := byUID[key]
-		if ok {
-			return ds
-		}
-		return byName[key]
-	}, err
 }

@@ -23,6 +23,12 @@ const profileRoutes: RouteDescriptor[] = [
       () => import(/* webpackChunkName: "SelectOrgPage" */ 'app/features/org/SelectOrgPage')
     ),
   },
+  {
+    path: '/profile/notifications',
+    component: SafeDynamicImport(
+      () => import(/* webpackChunkName: "NotificationsPage"*/ 'app/features/notifications/NotificationsPage')
+    ),
+  },
 ];
 
 export function getProfileRoutes(cfg = config): RouteDescriptor[] {

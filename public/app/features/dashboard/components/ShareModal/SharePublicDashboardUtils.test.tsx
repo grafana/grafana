@@ -1,10 +1,14 @@
 import { VariableModel } from 'app/features/variables/types';
 
+import { updateConfig } from '../../../../core/config';
+
 import {
   PublicDashboard,
   dashboardHasTemplateVariables,
   generatePublicDashboardUrl,
   publicDashboardPersisted,
+  getPublicDashboardConfigUrl,
+  savePublicDashboardConfigUrl,
 } from './SharePublicDashboardUtils';
 
 describe('dashboardHasTemplateVariables', () => {
@@ -21,9 +25,13 @@ describe('dashboardHasTemplateVariables', () => {
 });
 
 describe('generatePublicDashboardUrl', () => {
-  it('has the right uid', () => {
-    let pubdash = { accessToken: 'abcd1234' } as PublicDashboard;
-    expect(generatePublicDashboardUrl(pubdash)).toEqual(`${window.location.origin}/public-dashboards/abcd1234`);
+  it('uses the grafana config appUrl to generate the url', () => {
+    const appUrl = 'http://localhost/';
+    const accessToken = 'abcd1234';
+    updateConfig({ appUrl });
+    let pubdash = { accessToken } as PublicDashboard;
+
+    expect(generatePublicDashboardUrl(pubdash)).toEqual(`${appUrl}public-dashboards/${accessToken}`);
   });
 });
 
@@ -38,5 +46,17 @@ describe('publicDashboardPersisted', () => {
     expect(publicDashboardPersisted(pubdash)).toBe(false);
     pubdash = {} as PublicDashboard;
     expect(publicDashboardPersisted(pubdash)).toBe(false);
+  });
+});
+
+describe('getPublicDashboardConfigUrl', () => {
+  it('builds the correct url', () => {
+    expect(getPublicDashboardConfigUrl('abc1234')).toEqual('/api/dashboards/uid/abc1234/public-config');
+  });
+});
+
+describe('savePublicDashboardConfigUrl', () => {
+  it('builds the correct url', () => {
+    expect(savePublicDashboardConfigUrl('abc1234')).toEqual('/api/dashboards/uid/abc1234/public-config');
   });
 });

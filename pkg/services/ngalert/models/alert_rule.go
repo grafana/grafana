@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"strconv"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
@@ -23,6 +24,7 @@ var (
 	ErrRuleGroupNamespaceNotFound         = errors.New("rule group not found under this namespace")
 	ErrAlertRuleFailedValidation          = errors.New("invalid alert rule")
 	ErrAlertRuleUniqueConstraintViolation = errors.New("a conflicting alert rule is found: rule title under the same organisation and folder should be unique")
+	ErrQuotaReached                       = errors.New("quota has been exceeded")
 )
 
 // swagger:enum NoDataState
@@ -111,6 +113,15 @@ var (
 	}
 )
 
+// AlertRuleGroup is the base model for a rule group in unified alerting.
+type AlertRuleGroup struct {
+	Title      string
+	FolderUID  string
+	Interval   int64
+	Provenance Provenance
+	Rules      []AlertRule
+}
+
 // AlertRule is the model for alert rules in unified alerting.
 type AlertRule struct {
 	ID              int64 `xorm:"pk autoincr 'id'"`
@@ -136,17 +147,6 @@ type AlertRule struct {
 	Labels      map[string]string
 }
 
-type SchedulableAlertRule struct {
-	Title           string
-	UID             string `xorm:"uid"`
-	OrgID           int64  `xorm:"org_id"`
-	IntervalSeconds int64
-	Version         int64
-	NamespaceUID    string `xorm:"namespace_uid"`
-	RuleGroup       string
-	RuleGroupIndex  int `xorm:"rule_group_idx"`
-}
-
 type LabelOption func(map[string]string)
 
 func WithoutInternalLabels() LabelOption {
@@ -170,6 +170,14 @@ func (alertRule *AlertRule) GetLabels(opts ...LabelOption) map[string]string {
 	return labels
 }
 
+func (alertRule *AlertRule) GetEvalCondition() Condition {
+	return Condition{
+		Condition: alertRule.Condition,
+		OrgID:     alertRule.OrgID,
+		Data:      alertRule.Data,
+	}
+}
+
 // Diff calculates diff between two alert rules. Returns nil if two rules are equal. Otherwise, returns cmputil.DiffReport
 func (alertRule *AlertRule) Diff(rule *AlertRule, ignore ...string) cmputil.DiffReport {
 	var reporter cmputil.DiffReporter
@@ -188,10 +196,44 @@ func (alertRule *AlertRule) Diff(rule *AlertRule, ignore ...string) cmputil.Diff
 	return reporter.Diffs
 }
 
+// SetDashboardAndPanel will set the DashboardUID and PanlID
+// field be doing a lookup in the annotations. Errors when
+// the found annotations are not valid.
+func (alertRule *AlertRule) SetDashboardAndPanel() error {
+	if alertRule.Annotations == nil {
+		return nil
+	}
+	dashUID := alertRule.Annotations[DashboardUIDAnnotation]
+	panelID := alertRule.Annotations[PanelIDAnnotation]
+	if dashUID != "" && panelID == "" || dashUID == "" && panelID != "" {
+		return fmt.Errorf("both annotations %s and %s must be specified",
+			DashboardUIDAnnotation, PanelIDAnnotation)
+	}
+	if dashUID != "" {
+		panelIDValue, err := strconv.ParseInt(panelID, 10, 64)
+		if err != nil {
+			return fmt.Errorf("annotation %s must be a valid integer Panel ID",
+				PanelIDAnnotation)
+		}
+		alertRule.DashboardUID = &dashUID
+		alertRule.PanelID = &panelIDValue
+	}
+	return nil
+}
+
 // AlertRuleKey is the alert definition identifier
 type AlertRuleKey struct {
-	OrgID int64
-	UID   string
+	OrgID int64  `xorm:"org_id"`
+	UID   string `xorm:"uid"`
+}
+
+func (k AlertRuleKey) LogContext() []interface{} {
+	return []interface{}{"rule_uid", k.UID, "org_id", k.OrgID}
+}
+
+type AlertRuleKeyWithVersion struct {
+	Version      int64
+	AlertRuleKey `xorm:"extends"`
 }
 
 // AlertRuleGroupKey is the identifier of a group of alerts
@@ -217,11 +259,6 @@ func (alertRule *AlertRule) GetKey() AlertRuleKey {
 // GetGroupKey returns the identifier of a group the rule belongs to
 func (alertRule *AlertRule) GetGroupKey() AlertRuleGroupKey {
 	return AlertRuleGroupKey{OrgID: alertRule.OrgID, NamespaceUID: alertRule.NamespaceUID, RuleGroup: alertRule.RuleGroup}
-}
-
-// GetKey returns the alert definitions identifier
-func (alertRule *SchedulableAlertRule) GetKey() AlertRuleKey {
-	return AlertRuleKey{OrgID: alertRule.OrgID, UID: alertRule.UID}
 }
 
 // PreSave sets default values and loads the updated model for each alert query.
@@ -307,9 +344,10 @@ type ListAlertRulesQuery struct {
 }
 
 type GetAlertRulesForSchedulingQuery struct {
-	ExcludeOrgIDs []int64
+	PopulateFolders bool
 
-	Result []*SchedulableAlertRule
+	ResultRules         []*AlertRule
+	ResultFoldersTitles map[string]string
 }
 
 // ListNamespaceAlertRulesQuery is the query for listing namespace alert rules
@@ -363,7 +401,8 @@ func (c Condition) IsValid() bool {
 // There are several exceptions:
 // 1. Following fields are not patched and therefore will be ignored: AlertRule.ID, AlertRule.OrgID, AlertRule.Updated, AlertRule.Version, AlertRule.UID, AlertRule.DashboardUID, AlertRule.PanelID, AlertRule.Annotations and AlertRule.Labels
 // 2. There are fields that are patched together:
-//    - AlertRule.Condition and AlertRule.Data
+//   - AlertRule.Condition and AlertRule.Data
+//
 // If either of the pair is specified, neither is patched.
 func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRule) {
 	if ruleToPatch.Title == "" {

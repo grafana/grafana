@@ -9,7 +9,8 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
+	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/validations"
 
@@ -17,6 +18,8 @@ import (
 )
 
 func TestOpsGenieNotifier(t *testing.T) {
+	encryptionService := encryptionservice.SetupTestService(t)
+
 	t.Run("Parsing alert notification from settings", func(t *testing.T) {
 		t.Run("empty settings should return error", func(t *testing.T) {
 			json := `{ }`
@@ -28,7 +31,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			_, err := NewOpsGenieNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
+			_, err := NewOpsGenieNotifier(model, encryptionService.GetDecryptedValue, nil)
 			require.Error(t, err)
 		})
 
@@ -45,7 +48,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			not, err := NewOpsGenieNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
+			not, err := NewOpsGenieNotifier(model, encryptionService.GetDecryptedValue, nil)
 			opsgenieNotifier := not.(*OpsGenieNotifier)
 
 			require.Nil(t, err)
@@ -69,7 +72,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			_, err := NewOpsGenieNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
+			_, err := NewOpsGenieNotifier(model, encryptionService.GetDecryptedValue, nil)
 			require.Error(t, err)
 			require.Equal(t, reflect.TypeOf(err), reflect.TypeOf(alerting.ValidationError{}))
 			require.True(t, strings.HasSuffix(err.Error(), "Invalid value for sendTagsAs: \"not_a_valid_value\""))
@@ -93,7 +96,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 			}
 
 			notificationService := notifications.MockNotificationService()
-			notifier, notifierErr := NewOpsGenieNotifier(model, ossencryption.ProvideService().GetDecryptedValue, notificationService) // unhandled error
+			notifier, notifierErr := NewOpsGenieNotifier(model, encryptionService.GetDecryptedValue, notificationService) // unhandled error
 
 			opsgenieNotifier := notifier.(*OpsGenieNotifier)
 
@@ -103,7 +106,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 				Message:       "someMessage",
 				State:         models.AlertStateAlerting,
 				AlertRuleTags: tagPairs,
-			}, &validations.OSSPluginRequestValidator{}, nil, nil)
+			}, &validations.OSSPluginRequestValidator{}, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 			evalContext.IsTestRun = true
 
 			tags := make([]string, 0)
@@ -142,7 +145,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 			}
 
 			notificationService := notifications.MockNotificationService()
-			notifier, notifierErr := NewOpsGenieNotifier(model, ossencryption.ProvideService().GetDecryptedValue, notificationService) // unhandled error
+			notifier, notifierErr := NewOpsGenieNotifier(model, encryptionService.GetDecryptedValue, notificationService) // unhandled error
 
 			opsgenieNotifier := notifier.(*OpsGenieNotifier)
 
@@ -152,7 +155,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 				Message:       "someMessage",
 				State:         models.AlertStateAlerting,
 				AlertRuleTags: tagPairs,
-			}, nil, nil, nil)
+			}, nil, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 			evalContext.IsTestRun = true
 
 			tags := make([]string, 0)
@@ -191,7 +194,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 			}
 
 			notificationService := notifications.MockNotificationService()
-			notifier, notifierErr := NewOpsGenieNotifier(model, ossencryption.ProvideService().GetDecryptedValue, notificationService) // unhandled error
+			notifier, notifierErr := NewOpsGenieNotifier(model, encryptionService.GetDecryptedValue, notificationService) // unhandled error
 
 			opsgenieNotifier := notifier.(*OpsGenieNotifier)
 
@@ -201,7 +204,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 				Message:       "someMessage",
 				State:         models.AlertStateAlerting,
 				AlertRuleTags: tagPairs,
-			}, nil, nil, nil)
+			}, nil, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 			evalContext.IsTestRun = true
 
 			tags := make([]string, 0)

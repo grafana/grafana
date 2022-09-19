@@ -124,4 +124,43 @@ describe('createAggregationOperationWithParams', () => {
       },
     ]);
   });
+  it('returns correct query string using aggregation definitions with overrides and number type param', () => {
+    const def = createAggregationOperationWithParam(
+      'test_aggregation',
+      {
+        params: [{ name: 'K-value', type: 'number' }],
+        defaultParams: [5],
+      },
+      { category: 'test_category' }
+    );
+
+    const topKByDefinition = def[1];
+    expect(
+      topKByDefinition.renderer(
+        { id: '__topk_by', params: ['5', 'source', 'place'] },
+        def[1],
+        'rate({place="luna"} |= `` [5m])'
+      )
+    ).toBe('test_aggregation by(source, place) (5, rate({place="luna"} |= `` [5m]))');
+  });
+
+  it('returns correct query string using aggregation definitions with overrides and string type param', () => {
+    const def = createAggregationOperationWithParam(
+      'test_aggregation',
+      {
+        params: [{ name: 'Identifier', type: 'string' }],
+        defaultParams: ['count'],
+      },
+      { category: 'test_category' }
+    );
+
+    const countValueDefinition = def[1];
+    expect(
+      countValueDefinition.renderer(
+        { id: 'count_values', params: ['5', 'source', 'place'] },
+        def[1],
+        'rate({place="luna"} |= `` [5m])'
+      )
+    ).toBe('test_aggregation by(source, place) ("5", rate({place="luna"} |= `` [5m]))');
+  });
 });

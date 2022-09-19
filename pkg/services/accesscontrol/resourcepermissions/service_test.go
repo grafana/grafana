@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -38,7 +37,7 @@ func TestService_SetUserPermission(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			service, sql := setupTestEnvironment(t, []accesscontrol.Permission{}, Options{
 				Resource:             "dashboards",
-				Assignments:          Assignments{Users: true, ServiceAccounts: true},
+				Assignments:          Assignments{Users: true},
 				PermissionsToActions: nil,
 			})
 
@@ -159,10 +158,9 @@ func TestService_SetPermissions(t *testing.T) {
 			options: Options{
 				Resource: "dashboards",
 				Assignments: Assignments{
-					Users:           true,
-					Teams:           true,
-					BuiltInRoles:    true,
-					ServiceAccounts: true,
+					Users:        true,
+					Teams:        true,
+					BuiltInRoles: true,
 				},
 				PermissionsToActions: map[string][]string{
 					"View": {"dashboards:read"},
@@ -179,10 +177,9 @@ func TestService_SetPermissions(t *testing.T) {
 			options: Options{
 				Resource: "dashboards",
 				Assignments: Assignments{
-					Users:           true,
-					Teams:           true,
-					BuiltInRoles:    true,
-					ServiceAccounts: true,
+					Users:        true,
+					Teams:        true,
+					BuiltInRoles: true,
 				},
 				PermissionsToActions: map[string][]string{
 					"View": {"dashboards:read"},
@@ -222,13 +219,13 @@ func setupTestEnvironment(t *testing.T, permissions []accesscontrol.Permission, 
 	t.Helper()
 
 	sql := sqlstore.InitTestDB(t)
-	store := database.ProvideService(sql)
 	cfg := setting.NewCfg()
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
+	mock := accesscontrolmock.New().WithPermissions(permissions)
 	service, err := New(
 		ops, cfg, routing.NewRouteRegister(), license,
-		accesscontrolmock.New().WithPermissions(permissions), store, sql,
+		accesscontrolmock.New().WithPermissions(permissions), mock, sql,
 	)
 	require.NoError(t, err)
 

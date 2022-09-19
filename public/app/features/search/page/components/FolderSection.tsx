@@ -25,6 +25,7 @@ export interface DashboardSection {
 interface SectionHeaderProps {
   selection?: SelectionChecker;
   selectionToggle?: SelectionToggle;
+  onClickItem?: (e: React.MouseEvent<HTMLElement>) => void;
   onTagSelected: (tag: string) => void;
   section: DashboardSection;
   renderStandaloneBody?: boolean; // render the body on its own
@@ -34,6 +35,7 @@ interface SectionHeaderProps {
 export const FolderSection: FC<SectionHeaderProps> = ({
   section,
   selectionToggle,
+  onClickItem,
   onTagSelected,
   selection,
   renderStandaloneBody,
@@ -55,6 +57,7 @@ export const FolderSection: FC<SectionHeaderProps> = ({
       kind: ['dashboard'],
       location: section.uid,
       sort: 'name_sort',
+      limit: 1000, // this component does not have infinate scroll, so we need to load everything upfront
     };
     if (section.itemsUIDs) {
       query = {
@@ -137,6 +140,7 @@ export const FolderSection: FC<SectionHeaderProps> = ({
             }
           }}
           editable={Boolean(selection != null)}
+          onClickItem={onClickItem}
         />
       );
     });

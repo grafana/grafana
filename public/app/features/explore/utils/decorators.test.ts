@@ -12,7 +12,7 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { GraphDrawStyle, StackingMode } from '@grafana/schema';
-import TableModel from 'app/core/table_model';
+import TableModel from 'app/core/TableModel';
 import { ExplorePanelData } from 'app/types';
 
 import {

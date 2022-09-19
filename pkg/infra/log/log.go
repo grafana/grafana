@@ -7,21 +7,19 @@ package log
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	gokitlog "github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 	"github.com/go-stack/stack"
 	"github.com/mattn/go-isatty"
 	"gopkg.in/ini.v1"
 
-	"github.com/grafana/grafana/pkg/infra/log/level"
 	"github.com/grafana/grafana/pkg/infra/log/term"
 	"github.com/grafana/grafana/pkg/infra/log/text"
 	"github.com/grafana/grafana/pkg/util"
@@ -32,7 +30,7 @@ var (
 	loggersToReload []ReloadableHandler
 	root            *logManager
 	now             = time.Now
-	logTimeFormat   = "2006-01-02T15:04:05.99-0700"
+	logTimeFormat   = time.RFC3339Nano
 )
 
 const (
@@ -47,7 +45,7 @@ func init() {
 
 	// Use discard by default
 	format := func(w io.Writer) gokitlog.Logger {
-		return gokitlog.NewLogfmtLogger(gokitlog.NewSyncWriter(ioutil.Discard))
+		return gokitlog.NewLogfmtLogger(gokitlog.NewSyncWriter(io.Discard))
 	}
 	logger := level.NewFilter(format(os.Stderr), level.AllowInfo())
 	root = newManager(logger)
@@ -56,10 +54,9 @@ func init() {
 // logManager manage loggers
 type logManager struct {
 	*ConcreteLogger
-	loggersByName     map[string]*ConcreteLogger
-	logFilters        []logWithFilters
-	mutex             sync.RWMutex
-	gokitLogActivated bool
+	loggersByName map[string]*ConcreteLogger
+	logFilters    []logWithFilters
+	mutex         sync.RWMutex
 }
 
 func newManager(logger gokitlog.Logger) *logManager {
@@ -72,12 +69,6 @@ func newManager(logger gokitlog.Logger) *logManager {
 func (lm *logManager) initialize(loggers []logWithFilters) {
 	lm.mutex.Lock()
 	defer lm.mutex.Unlock()
-
-	if lm.gokitLogActivated {
-		level.SetLevelKeyAndValuesToGokitLog()
-		term.SetTimeFormatGokitLog()
-		logTimeFormat = time.RFC3339Nano
-	}
 
 	defaultLoggers := make([]gokitlog.Logger, len(loggers))
 	for index, logger := range loggers {
@@ -213,9 +204,12 @@ func (cl *ConcreteLogger) New(ctx ...interface{}) *ConcreteLogger {
 // name plus additional contextual information, you must use the
 // Logger interface New method for it to work as expected.
 // Example creating a shared logger:
-//   requestLogger := log.New("request-logger")
+//
+//	requestLogger := log.New("request-logger")
+//
 // Example creating a contextual logger:
-//   contextualLogger := requestLogger.New("username", "user123")
+//
+//	contextualLogger := requestLogger.New("username", "user123")
 func New(ctx ...interface{}) *ConcreteLogger {
 	if len(ctx) == 0 {
 		return root.New()
@@ -452,58 +446,9 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 		handler.maxLevel = leveloption
 		configLoggers = append(configLoggers, handler)
 	}
-
-	var err error
-	isOldLoggerActivated, err := isOldLoggerActivated(cfg)
-	root.gokitLogActivated = !isOldLoggerActivated
-
-	if err != nil {
-		return err
-	}
 	if len(configLoggers) > 0 {
 		root.initialize(configLoggers)
 	}
 
 	return nil
-}
-
-// This would be removed eventually, no need to make a fancy design.
-// For the sake of important cycle I just copied the function
-func isOldLoggerActivated(cfg *ini.File) (bool, error) {
-	section := cfg.Section("feature_toggles")
-	toggles, err := readFeatureTogglesFromInitFile(section)
-	if err != nil {
-		return false, err
-	}
-	return toggles["oldlog"], nil
-}
-
-func readFeatureTogglesFromInitFile(featureTogglesSection *ini.Section) (map[string]bool, error) {
-	featureToggles := make(map[string]bool, 10)
-
-	// parse the comma separated list in `enable`.
-	featuresTogglesStr := valueAsString(featureTogglesSection, "enable", "")
-	for _, feature := range util.SplitString(featuresTogglesStr) {
-		featureToggles[feature] = true
-	}
-
-	// read all other settings under [feature_toggles]. If a toggle is
-	// present in both the value in `enable` is overridden.
-	for _, v := range featureTogglesSection.Keys() {
-		if v.Name() == "enable" {
-			continue
-		}
-
-		b, err := strconv.ParseBool(v.Value())
-		if err != nil {
-			return featureToggles, err
-		}
-
-		featureToggles[v.Name()] = b
-	}
-	return featureToggles, nil
-}
-
-func valueAsString(section *ini.Section, keyName string, defaultValue string) string {
-	return section.Key(keyName).MustString(defaultValue)
 }

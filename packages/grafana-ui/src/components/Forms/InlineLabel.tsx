@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
-import React, { FunctionComponent } from 'react';
+import React, { FunctionComponent, useCallback } from 'react';
 
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-import { useTheme } from '../../themes';
+import { useStyles2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { PopoverContent, Tooltip } from '../Tooltip';
 
@@ -34,8 +34,10 @@ export const InlineLabel: FunctionComponent<Props> = ({
   as: Component = 'label',
   ...rest
 }) => {
-  const theme = useTheme();
-  const styles = getInlineLabelStyles(theme, transparent, width);
+  const styles = useStyles2(
+    useCallback((theme) => getInlineLabelStyles(theme, transparent, width), [transparent, width])
+  );
+
   return (
     <Component className={cx(styles.label, className)} {...rest}>
       {children}
@@ -48,31 +50,31 @@ export const InlineLabel: FunctionComponent<Props> = ({
   );
 };
 
-export const getInlineLabelStyles = (theme: GrafanaTheme, transparent = false, width?: number | 'auto') => {
+export const getInlineLabelStyles = (theme: GrafanaTheme2, transparent = false, width?: number | 'auto') => {
   return {
     label: css`
       display: flex;
       align-items: center;
       justify-content: space-between;
       flex-shrink: 0;
-      padding: 0 ${theme.spacing.sm};
-      font-weight: ${theme.typography.weight.semibold};
+      padding: 0 ${theme.spacing(1)};
+      font-weight: ${theme.typography.fontWeightMedium};
       font-size: ${theme.typography.size.sm};
-      background-color: ${transparent ? 'transparent' : theme.colors.bg2};
-      height: ${theme.height.md}px;
-      line-height: ${theme.height.md}px;
-      margin-right: ${theme.spacing.xs};
-      border-radius: ${theme.border.radius.md};
+      background-color: ${transparent ? 'transparent' : theme.colors.background.secondary};
+      height: ${theme.spacing(theme.components.height.md)};
+      line-height: ${theme.spacing(theme.components.height.md)};
+      margin-right: ${theme.spacing(0.5)};
+      border-radius: ${theme.shape.borderRadius(2)};
       border: none;
       width: ${width ? (width !== 'auto' ? `${8 * width}px` : width) : '100%'};
-      color: ${theme.colors.textHeading};
+      color: ${theme.colors.text.primary};
     `,
     icon: css`
-      color: ${theme.colors.textWeak};
+      color: ${theme.colors.text.secondary};
       margin-left: 10px;
 
       :hover {
-        color: ${theme.colors.text};
+        color: ${theme.colors.text.primary};
       }
     `,
   };
