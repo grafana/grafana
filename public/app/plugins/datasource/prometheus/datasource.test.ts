@@ -131,6 +131,7 @@ describe('PrometheusDatasource', () => {
 
   describe('customQueryParams', () => {
     const target = { expr: 'test{job="testjob"}', format: 'time_series', refId: '' };
+
     function makeQuery(target: PromQuery) {
       return {
         range: { from: time({ seconds: 63 }), to: time({ seconds: 183 }) },
@@ -140,19 +141,27 @@ describe('PrometheusDatasource', () => {
     }
 
     describe('with GET http method', () => {
-      const promDs = new PrometheusDatasource(
-        { ...instanceSettings, jsonData: { customQueryParameters: 'customQuery=123', httpMethod: 'GET' } as any },
-        templateSrvStub as any,
-        timeSrvStub as any
-      );
+      const getPromDs = (access: 'direct' | 'proxy') => {
+        return new PrometheusDatasource(
+          {
+            ...instanceSettings,
+            access,
+            jsonData: { customQueryParameters: 'customQuery=123', httpMethod: 'GET' } as any,
+          },
+          templateSrvStub as any,
+          timeSrvStub as any
+        );
+      };
 
       it('added to metadata request', () => {
+        const promDs = getPromDs('proxy');
         promDs.metadataRequest('/foo');
         expect(fetchMock.mock.calls.length).toBe(1);
         expect(fetchMock.mock.calls[0][0].url).toBe('/api/datasources/1/resources/foo?customQuery=123');
       });
 
       it('adds params to timeseries query', () => {
+        const promDs = getPromDs('direct');
         promDs.query(makeQuery(target));
         expect(fetchMock.mock.calls.length).toBe(1);
         expect(fetchMock.mock.calls[0][0].url).toBe(
@@ -160,6 +169,7 @@ describe('PrometheusDatasource', () => {
         );
       });
       it('adds params to exemplars query', () => {
+        const promDs = getPromDs('direct');
         promDs.query(makeQuery({ ...target, exemplar: true }));
         // We do also range query for single exemplars target
         expect(fetchMock.mock.calls.length).toBe(2);
@@ -168,6 +178,7 @@ describe('PrometheusDatasource', () => {
       });
 
       it('adds params to instant query', () => {
+        const promDs = getPromDs('direct');
         promDs.query(makeQuery({ ...target, instant: true }));
         expect(fetchMock.mock.calls.length).toBe(1);
         expect(fetchMock.mock.calls[0][0].url).toContain('&customQuery=123');
@@ -175,19 +186,31 @@ describe('PrometheusDatasource', () => {
     });
 
     describe('with POST http method', () => {
-      const promDs = new PrometheusDatasource(
-        { ...instanceSettings, jsonData: { customQueryParameters: 'customQuery=123', httpMethod: 'POST' } as any },
-        templateSrvStub as any,
-        timeSrvStub as any
-      );
+      const getPromDs = (access: 'direct' | 'proxy') => {
+        return new PrometheusDatasource(
+          {
+            ...instanceSettings,
+            access,
+            jsonData: { customQueryParameters: 'customQuery=123', httpMethod: 'POST' } as any,
+          },
+          templateSrvStub as any,
+          timeSrvStub as any
+        );
+      };
 
-      it('added to metadata request with non-POST endpoint', () => {
-        promDs.metadataRequest('/foo');
+      it('added to metadata request with non-POST endpoint ', () => {
+        const proxyPromDs = getPromDs('proxy');
+        proxyPromDs.metadataRequest('/foo');
         expect(fetchMock.mock.calls.length).toBe(1);
         expect(fetchMock.mock.calls[0][0].url).toBe('/api/datasources/1/resources/foo?customQuery=123');
+        const directPromDs = getPromDs('direct');
+        directPromDs.metadataRequest('/foo');
+        expect(fetchMock.mock.calls.length).toBe(2);
+        expect(fetchMock.mock.calls[1][0].url).toBe('proxied/foo?customQuery=123');
       });
 
       it('added to metadata request with POST endpoint', () => {
+        const promDs = getPromDs('proxy');
         promDs.metadataRequest('/api/v1/labels');
         expect(fetchMock.mock.calls.length).toBe(1);
         expect(fetchMock.mock.calls[0][0].url).toBe('/api/datasources/1/resources/api/v1/labels');
@@ -195,6 +218,7 @@ describe('PrometheusDatasource', () => {
       });
 
       it('adds params to timeseries query', () => {
+        const promDs = getPromDs('direct');
         promDs.query(makeQuery(target));
         expect(fetchMock.mock.calls.length).toBe(1);
         expect(fetchMock.mock.calls[0][0].url).toBe('proxied/api/v1/query_range');
@@ -206,7 +230,9 @@ describe('PrometheusDatasource', () => {
           start: 60,
         });
       });
+
       it('adds params to exemplars query', () => {
+        const promDs = getPromDs('direct');
         promDs.query(makeQuery({ ...target, exemplar: true }));
         // We do also range query for single exemplars target
         expect(fetchMock.mock.calls.length).toBe(2);
@@ -215,6 +241,7 @@ describe('PrometheusDatasource', () => {
       });
 
       it('adds params to instant query', () => {
+        const promDs = getPromDs('direct');
         promDs.query(makeQuery({ ...target, instant: true }));
         expect(fetchMock.mock.calls.length).toBe(1);
         expect(fetchMock.mock.calls[0][0].data.customQuery).toBe('123');
