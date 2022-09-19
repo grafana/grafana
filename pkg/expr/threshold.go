@@ -94,7 +94,7 @@ func (tc *ThresholdCommand) Execute(ctx context.Context, vars mathexp.Vars) (mat
 		return mathexp.Results{}, err
 	}
 
-	mathCommand, err := NewMathCommand("B", mathExpression)
+	mathCommand, err := NewMathCommand(tc.ReferenceVar, mathExpression)
 	if err != nil {
 		return mathexp.Results{}, err
 	}
