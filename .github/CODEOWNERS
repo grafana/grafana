@@ -191,3 +191,6 @@ lerna.json @grafana/frontend-ops
 /pkg/services/oauthtoken @grafana/grafana-authnz-team
 /pkg/services/teamguardian @grafana/grafana-authnz-team
 /pkg/services/serviceaccounts @grafana/grafana-authnz-team
+
+# Grafana Partnerships Team
+/pkg/infra/httpclient/httpclientprovider/sigv4_middleware.go @grafana/grafana-partnerships-team
