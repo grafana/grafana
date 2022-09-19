@@ -17,7 +17,7 @@ func BenchmarkAlertInstanceOperations(b *testing.B) {
 	b.StopTimer()
 	ctx := context.Background()
 	_, dbstore := tests.SetupTestEnv(b, baseIntervalSeconds)
-	dbstore.Cfg.BigDBStatements = true
+	dbstore.FeatureToggles.(*tests.FakeFeatures).BigTransactions = true
 
 	const mainOrgID int64 = 1
 
@@ -86,7 +86,7 @@ func TestIntegrationAlertInstanceBulkWrite(t *testing.T) {
 	}
 
 	for _, bigStmts := range []bool{false, true} {
-		dbstore.Cfg.BigDBStatements = bigStmts
+		dbstore.FeatureToggles.(*tests.FakeFeatures).BigTransactions = bigStmts
 		err := dbstore.SaveAlertInstances(ctx, instances...)
 		require.NoError(t, err)
 		t.Log("Finished database write")

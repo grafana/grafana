@@ -36,6 +36,18 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type FakeFeatures struct {
+	BigTransactions bool
+}
+
+func (f *FakeFeatures) IsEnabled(feature string) bool {
+	if feature == featuremgmt.FlagAlertingBigTransactions {
+		return f.BigTransactions
+	}
+
+	return false
+}
+
 // SetupTestEnv initializes a store to used by the tests.
 func SetupTestEnv(tb testing.TB, baseInterval time.Duration) (*ngalert.AlertNG, *store.DBstore) {
 	tb.Helper()
@@ -80,12 +92,13 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration) (*ngalert.AlertNG, 
 	)
 
 	ng, err := ngalert.ProvideService(
-		cfg, nil, nil, routing.NewRouteRegister(), sqlStore, nil, nil, nil, nil,
+		cfg, &FakeFeatures{}, nil, nil, routing.NewRouteRegister(), sqlStore, nil, nil, nil, nil,
 		secretsService, nil, m, folderService, ac, &dashboards.FakeDashboardService{}, nil, bus, ac,
 	)
 	require.NoError(tb, err)
 	return ng, &store.DBstore{
-		SQLStore: ng.SQLStore,
+		FeatureToggles: ng.FeatureToggles,
+		SQLStore:       ng.SQLStore,
 		Cfg: setting.UnifiedAlertingSettings{
 			BaseInterval: baseInterval * time.Second,
 		},

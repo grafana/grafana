@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"xorm.io/core"
@@ -92,7 +93,7 @@ func (st DBstore) ListAlertInstances(ctx context.Context, cmd *models.ListAlertI
 
 // SaveAlertInstances saves all the provided alert instances to the store.
 func (st DBstore) SaveAlertInstances(ctx context.Context, cmd ...models.AlertInstance) error {
-	if !st.Cfg.BigDBStatements {
+	if !st.FeatureToggles.IsEnabled(featuremgmt.FlagAlertingBigTransactions) {
 		// This mimics the replace code-path by calling SaveAlertInstance in a loop, with a transaction per call.
 		for _, c := range cmd {
 			err := st.SaveAlertInstance(ctx, c)

@@ -10,6 +10,11 @@ var (
 	// Register each toggle here
 	standardFeatureFlags = []FeatureFlag{
 		{
+			Name:        "alertingBigTransactions",
+			Description: "Use big transactions for alerting database writes",
+			State:       FeatureStateAlpha,
+		},
+		{
 			Name:        "trimDefaults",
 			Description: "Use cue schema to remove values that will be applied automatically",
 			State:       FeatureStateBeta,

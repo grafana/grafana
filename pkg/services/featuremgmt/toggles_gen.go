@@ -7,6 +7,10 @@
 package featuremgmt
 
 const (
+	// FlagAlertingBigTransactions
+	// Use big transactions for alerting database writes
+	FlagAlertingBigTransactions = "alertingBigTransactions"
+
 	// FlagTrimDefaults
 	// Use cue schema to remove values that will be applied automatically
 	FlagTrimDefaults = "trimDefaults"
