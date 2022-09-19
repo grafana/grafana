@@ -39,20 +39,18 @@ type SlackNotifier struct {
 }
 
 type slackSettings struct {
-	EndpointURL      string   `json:"endpointUrl,omitempty" yaml:"endpointUrl,omitempty"`
-	URL              string   `json:"url,omitempty" yaml:"url,omitempty"`
-	Token            string   `json:"token,omitempty" yaml:"token,omitempty"`
-	Recipient        string   `json:"recipient,omitempty" yaml:"recipient,omitempty"`
-	Text             string   `json:"text,omitempty" yaml:"text,omitempty"`
-	Title            string   `json:"title,omitempty" yaml:"title,omitempty"`
-	Username         string   `json:"username,omitempty" yaml:"username,omitempty"`
-	IconEmoji        string   `json:"icon_emoji,omitempty" yaml:"icon_emoji,omitempty"`
-	IconURL          string   `json:"icon_url,omitempty" yaml:"icon_url,omitempty"`
-	MentionChannel   string   `json:"mentionChannel,omitempty" yaml:"mentionChannel,omitempty"`
-	MentionUsersStr  string   `json:"mentionUsers,omitempty" yaml:"mentionUsers,omitempty"`
-	MentionUsers     []string `json:"-" yaml:"-"`
-	MentionGroupsStr string   `json:"mentionGroups,omitempty" yaml:"mentionGroups,omitempty"`
-	MentionGroups    []string `json:"-" yaml:"-"`
+	EndpointURL    string                `json:"endpointUrl,omitempty" yaml:"endpointUrl,omitempty"`
+	URL            string                `json:"url,omitempty" yaml:"url,omitempty"`
+	Token          string                `json:"token,omitempty" yaml:"token,omitempty"`
+	Recipient      string                `json:"recipient,omitempty" yaml:"recipient,omitempty"`
+	Text           string                `json:"text,omitempty" yaml:"text,omitempty"`
+	Title          string                `json:"title,omitempty" yaml:"title,omitempty"`
+	Username       string                `json:"username,omitempty" yaml:"username,omitempty"`
+	IconEmoji      string                `json:"icon_emoji,omitempty" yaml:"icon_emoji,omitempty"`
+	IconURL        string                `json:"icon_url,omitempty" yaml:"icon_url,omitempty"`
+	MentionChannel string                `json:"mentionChannel,omitempty" yaml:"mentionChannel,omitempty"`
+	MentionUsers   CommaSeparatedStrings `json:"mentionUsers,omitempty" yaml:"mentionUsers,omitempty"`
+	MentionGroups  CommaSeparatedStrings `json:"mentionGroups,omitempty" yaml:"mentionGroups,omitempty"`
 }
 
 // SlackFactory creates a new NotificationChannel that sends notifications to Slack.
@@ -99,20 +97,6 @@ func buildSlackNotifier(factoryConfig FactoryConfig) (*SlackNotifier, error) {
 	settings.Token = decryptFunc(context.Background(), channelConfig.SecureSettings, "token", settings.Token)
 	if settings.Token == "" && settings.URL == SlackAPIEndpoint {
 		return nil, errors.New("token must be specified when using the Slack chat API")
-	}
-	settings.MentionUsers = []string{}
-	for _, u := range strings.Split(settings.MentionUsersStr, ",") {
-		u = strings.TrimSpace(u)
-		if u != "" {
-			settings.MentionUsers = append(settings.MentionUsers, u)
-		}
-	}
-	settings.MentionGroups = []string{}
-	for _, g := range strings.Split(settings.MentionGroupsStr, ",") {
-		g = strings.TrimSpace(g)
-		if g != "" {
-			settings.MentionGroups = append(settings.MentionGroups, g)
-		}
 	}
 	if settings.Username == "" {
 		settings.Username = "Grafana"
