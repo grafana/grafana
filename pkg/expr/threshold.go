@@ -23,6 +23,10 @@ const (
 	ThresholdIsOutsideRange = "outside_range"
 )
 
+var (
+	supportedThresholdFuncs = []string{ThresholdIsAbove, ThresholdIsBelow, ThresholdIsWithinRange, ThresholdIsOutsideRange}
+)
+
 func NewThresholdCommand(refID, referenceVar, thresholdFunc string, conditions []float64) (*ThresholdCommand, error) {
 	return &ThresholdCommand{
 		RefID:         refID,
@@ -65,14 +69,13 @@ func UnmarshalThresholdCommand(rn *rawNode) (*ThresholdCommand, error) {
 
 	for _, condition := range conditions {
 		if !IsSupportedThresholdFunc(condition.Evaluator.Type) {
-			supportedThresholdFuncs := GetSupportedThresholdFuncs()
 			return nil, fmt.Errorf("expected threshold function to be one of %s, got %s", strings.Join(supportedThresholdFuncs, ", "), condition.Evaluator.Type)
 		}
 	}
 
 	// we only support one condition for now, we might want to turn this in to "OR" expressions later
-	if len(conditions) < 1 {
-		return nil, fmt.Errorf("threshold expression requires at least one condition")
+	if len(conditions) != 1 {
+		return nil, fmt.Errorf("threshold expression requires exactly one condition")
 	}
 	firstCondition := conditions[0]
 
@@ -115,16 +118,10 @@ func createMathExpression(referenceVar string, thresholdFunc string, args []floa
 	}
 }
 
-// GetSupportedThresholdFuncs returns collection of supported threshold function names
-func GetSupportedThresholdFuncs() []string {
-	return []string{ThresholdIsAbove, ThresholdIsBelow, ThresholdIsWithinRange, ThresholdIsOutsideRange}
-}
-
 func IsSupportedThresholdFunc(name string) bool {
-	availableThresholdFuncs := GetSupportedThresholdFuncs()
 	isSupported := false
 
-	for _, funcName := range availableThresholdFuncs {
+	for _, funcName := range supportedThresholdFuncs {
 		if funcName == name {
 			isSupported = true
 		}
