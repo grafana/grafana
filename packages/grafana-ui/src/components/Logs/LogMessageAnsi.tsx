@@ -101,5 +101,6 @@ export class UnThemedLogMessageAnsi extends PureComponent<Props, State> {
   }
 }
 
+/** @deprecated */
 export const LogMessageAnsi = withTheme2(UnThemedLogMessageAnsi);
 LogMessageAnsi.displayName = 'LogMessageAnsi';
