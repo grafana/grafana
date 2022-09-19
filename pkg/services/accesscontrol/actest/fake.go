@@ -36,6 +36,10 @@ func (f FakeService) RegisterFixedRoles(ctx context.Context) error {
 	return f.ExpectedErr
 }
 
+func (f FakeService) EvaluateUserPermissions(ctx context.Context, cmd accesscontrol.EvaluateUserPermissionCommand) (map[string]accesscontrol.Metadata, error) {
+	return nil, f.ExpectedErr
+}
+
 func (f FakeService) IsDisabled() bool {
 	return f.ExpectedDisabled
 }

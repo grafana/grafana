@@ -26,6 +26,8 @@ type Service interface {
 	registry.ProvidesUsageStats
 	// GetUserPermissions returns user permissions with only action and scope fields set.
 	GetUserPermissions(ctx context.Context, user *user.SignedInUser, options Options) ([]Permission, error)
+	// EvaluateUserPermissions returns user permissions with only action and scope fields set.
+	EvaluateUserPermissions(ctx context.Context, cmd EvaluateUserPermissionCommand) (map[string]Metadata, error)
 	// DeleteUserPermissions removes all permissions user has in org and all permission to that user
 	// If orgID is set to 0 remove permissions from all orgs
 	DeleteUserPermissions(ctx context.Context, orgID, userID int64) error

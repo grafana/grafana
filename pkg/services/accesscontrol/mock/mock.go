@@ -185,3 +185,7 @@ func (m *Mock) DeleteUserPermissions(ctx context.Context, orgID, userID int64) e
 	}
 	return nil
 }
+
+func (m *Mock) EvaluateUserPermissions(ctx context.Context, cmd accesscontrol.EvaluateUserPermissionCommand) (map[string]accesscontrol.Metadata, error) {
+	return nil, nil
+}

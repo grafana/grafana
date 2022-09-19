@@ -2,6 +2,7 @@ package acimpl
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -197,4 +198,46 @@ func permissionCacheKey(user *user.SignedInUser) (string, error) {
 		return "", err
 	}
 	return fmt.Sprintf("rbac-permissions-%s", key), nil
+}
+
+func (s *Service) EvaluateUserPermissions(ctx context.Context, cmd accesscontrol.EvaluateUserPermissionCommand) (map[string]accesscontrol.Metadata, error) {
+	// TODO validate inputsœ
+	signedInUser := &user.SignedInUser{
+		UserID:  cmd.UserID,
+		OrgID:   cmd.OrgID,
+		OrgRole: cmd.OrgRole,
+	}
+
+	permissions, err := s.GetUserPermissions(ctx, signedInUser, accesscontrol.Options{})
+	if err != nil {
+		return nil, err
+	}
+
+	signedInUser.Permissions[cmd.OrgID] = accesscontrol.GroupScopesByAction(permissions)
+
+	// Limit permissions to the action of interest
+	if cmd.Action != "" {
+		signedInUser.Permissions[cmd.OrgID] = map[string][]string{cmd.Action: signedInUser.Permissions[cmd.OrgID][cmd.Action]}
+	}
+
+	// Only checking for an action
+	if cmd.Action != "" && (cmd.Resource == "" || cmd.Attribute == "") {
+		_, ok := signedInUser.Permissions[cmd.OrgID][cmd.Action]
+		if !ok {
+			return map[string]accesscontrol.Metadata{}, nil
+		}
+		return map[string]accesscontrol.Metadata{"-": {cmd.Action: true}}, nil
+	}
+
+	// Compute metadata
+	if cmd.Resource != "" && cmd.Attribute != "" && len(cmd.UIDs) != 0 {
+		scopePrefix := accesscontrol.Scope(cmd.Resource, cmd.Attribute)
+		uids := map[string]bool{}
+		for _, uid := range cmd.UIDs {
+			uids[uid] = true
+		}
+		return accesscontrol.GetResourcesMetadata(ctx, signedInUser.Permissions[cmd.OrgID], scopePrefix, uids), nil
+	}
+
+	return nil, errors.New("action or resource required")
 }

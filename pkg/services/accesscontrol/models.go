@@ -268,6 +268,16 @@ type SetResourcePermissionCommand struct {
 	Permission  string
 }
 
+type EvaluateUserPermissionCommand struct {
+	OrgID     int64        `json:"-"`
+	UserID    int64        `json:"-"`
+	OrgRole   org.RoleType `json:"role"`
+	Action    string       `json:"action,omitempty"`
+	Resource  string       `json:"resource,omitempty"`
+	Attribute string       `json:"attribute,omitempty"`
+	UIDs      []string     `json:"uids,omitempty"`
+}
+
 const (
 	GlobalOrgID        = 0
 	FixedRolePrefix    = "fixed:"
