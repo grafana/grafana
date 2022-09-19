@@ -80,7 +80,7 @@ var (
 )
 
 func service(t *testing.T) *StandardSearchService {
-	service, ok := ProvideService(nil, nil, nil, accesscontrolmock.New()).(*StandardSearchService)
+	service, ok := ProvideService(nil, nil, nil, accesscontrolmock.New(), nil).(*StandardSearchService)
 	require.True(t, ok)
 	return service
 }
