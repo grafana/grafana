@@ -20,7 +20,7 @@
       }
     ],
     "no-restricted-imports": [
-      "error",
+      "warning",
       {
         "paths": [
           {
