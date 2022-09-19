@@ -33,6 +33,7 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 
 import { RowContextOptions } from '../../../features/logs/components/LogRowContextProvider';
 
+import LanguageProvider from './LanguageProvider';
 import { ElasticsearchAnnotationsQueryEditor } from './components/QueryEditor/AnnotationQueryEditor';
 import {
   BucketAggregation,
@@ -47,7 +48,6 @@ import {
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import { ElasticResponse } from './elastic_response';
 import { IndexPattern } from './index_pattern';
-import LanguageProvider from './language_provider';
 import { ElasticQueryBuilder } from './query_builder';
 import { defaultBucketAgg, hasMetricOfType } from './query_def';
 import { DataLinkConfig, ElasticsearchOptions, ElasticsearchQuery, TermsQuery } from './types';
