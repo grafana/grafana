@@ -52,7 +52,7 @@ export const LogGroupSelector: React.FC<LogGroupSelectorProps> = ({
         return [];
       }
       try {
-        const logGroups: string[] = await datasource.describeLogGroups({
+        const logGroups: string[] = await datasource.logsQueryRunner.describeLogGroups({
           refId,
           region,
           logGroupNamePrefix,
