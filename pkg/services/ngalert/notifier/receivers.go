@@ -8,7 +8,9 @@ import (
 	"sort"
 	"time"
 
+	"github.com/go-openapi/strfmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
@@ -195,6 +197,39 @@ func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 	}
 
 	return newTestReceiversResult(testAlert, append(invalid, results...), now), nil
+}
+
+func (am *Alertmanager) GetReceivers(ctx context.Context) apimodels.Receivers {
+	var receivers []*notify.Receiver
+	receivers = append(receivers, am.receivers...)
+	var apiReceivers apimodels.Receivers
+	for _, rcv := range receivers {
+		// Build integrations slice
+		var apiIntegrations []*models.Integration
+		for _, integration := range rcv.Integrations() {
+			lastNotify, lastNotifyDuration, lastNotifyError := integration.GetReport()
+			apiIntegrations = append(apiIntegrations, &models.Integration{
+				LastNotifyDuration: lastNotifyDuration.String(),
+				LastNotify:         strfmt.DateTime(lastNotify),
+				LastError: func() string {
+					if lastNotifyError != nil {
+						return lastNotifyError.Error()
+					}
+					return ""
+				}(),
+			})
+		}
+
+		active := rcv.Active()
+		name := rcv.Name()
+		apiReceivers = append(apiReceivers, apimodels.Receiver{
+			Active:       &active,
+			Integrations: apiIntegrations,
+			Name:         &name,
+		})
+	}
+
+	return apiReceivers
 }
 
 func newTestAlert(c apimodels.TestReceiversConfigBodyParams, startsAt, updatedAt time.Time) types.Alert {

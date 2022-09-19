@@ -142,6 +142,20 @@ import (
 //       400: ValidationError
 //       404: NotFound
 
+// swagger:route GET /api/alertmanager/grafana/config/api/v1/receivers alertmanager RouteGetGrafanaReceivers
+//
+// Get a list of all receivers.
+//
+//     Responses:
+//       200: receivers
+
+// swagger:route GET /api/alertmanager/{DatasourceUID}/config/api/v1/receivers alertmanager RouteGetReceivers
+//
+// Get a list of all receivers.
+//
+//     Responses:
+//       200: receivers
+
 // swagger:route POST /api/alertmanager/grafana/config/api/v1/receivers/test alertmanager RoutePostTestGrafanaReceivers
 //
 // Test Grafana managed receivers without saving them.
@@ -402,6 +416,9 @@ type AlertGroup = amv2.AlertGroup
 
 // swagger:model receiver
 type Receiver = amv2.Receiver
+
+// swagger:model receivers
+type Receivers = []amv2.Receiver
 
 // swagger:parameters RouteGetAMAlerts RouteGetAMAlertGroups RouteGetGrafanaAMAlerts RouteGetGrafanaAMAlertGroups
 type AlertsParams struct {

@@ -33,8 +33,10 @@ type AlertmanagerApi interface {
 	RouteGetGrafanaAMAlerts(*models.ReqContext) response.Response
 	RouteGetGrafanaAMStatus(*models.ReqContext) response.Response
 	RouteGetGrafanaAlertingConfig(*models.ReqContext) response.Response
+	RouteGetGrafanaReceivers(*models.ReqContext) response.Response
 	RouteGetGrafanaSilence(*models.ReqContext) response.Response
 	RouteGetGrafanaSilences(*models.ReqContext) response.Response
+	RouteGetReceivers(*models.ReqContext) response.Response
 	RouteGetSilence(*models.ReqContext) response.Response
 	RouteGetSilences(*models.ReqContext) response.Response
 	RoutePostAMAlerts(*models.ReqContext) response.Response
@@ -114,6 +116,9 @@ func (f *AlertmanagerApiHandler) RouteGetGrafanaAMStatus(ctx *models.ReqContext)
 func (f *AlertmanagerApiHandler) RouteGetGrafanaAlertingConfig(ctx *models.ReqContext) response.Response {
 	return f.handleRouteGetGrafanaAlertingConfig(ctx)
 }
+func (f *AlertmanagerApiHandler) RouteGetGrafanaReceivers(ctx *models.ReqContext) response.Response {
+	return f.handleRouteGetGrafanaReceivers(ctx)
+}
 func (f *AlertmanagerApiHandler) RouteGetGrafanaSilence(ctx *models.ReqContext) response.Response {
 	// Parse Path Parameters
 	silenceIdParam := web.Params(ctx.Req)[":SilenceId"]
@@ -121,6 +126,9 @@ func (f *AlertmanagerApiHandler) RouteGetGrafanaSilence(ctx *models.ReqContext) 
 }
 func (f *AlertmanagerApiHandler) RouteGetGrafanaSilences(ctx *models.ReqContext) response.Response {
 	return f.handleRouteGetGrafanaSilences(ctx)
+}
+func (f *AlertmanagerApiHandler) RouteGetReceivers(ctx *models.ReqContext) response.Response {
+	return f.handleRouteGetReceivers(ctx)
 }
 func (f *AlertmanagerApiHandler) RouteGetSilence(ctx *models.ReqContext) response.Response {
 	// Parse Path Parameters
@@ -331,6 +339,16 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApi, m *metrics
 			),
 		)
 		group.Get(
+			toMacaronPath("/api/alertmanager/grafana/config/api/v1/receivers"),
+			api.authorize(http.MethodGet, "/api/alertmanager/grafana/config/api/v1/receivers"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/alertmanager/grafana/config/api/v1/receivers",
+				srv.RouteGetGrafanaReceivers,
+				m,
+			),
+		)
+		group.Get(
 			toMacaronPath("/api/alertmanager/grafana/api/v2/silence/{SilenceId}"),
 			api.authorize(http.MethodGet, "/api/alertmanager/grafana/api/v2/silence/{SilenceId}"),
 			metrics.Instrument(
@@ -347,6 +365,16 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApi, m *metrics
 				http.MethodGet,
 				"/api/alertmanager/grafana/api/v2/silences",
 				srv.RouteGetGrafanaSilences,
+				m,
+			),
+		)
+		group.Get(
+			toMacaronPath("/api/alertmanager/{DatasourceUID}/config/api/v1/receivers"),
+			api.authorize(http.MethodGet, "/api/alertmanager/{DatasourceUID}/config/api/v1/receivers"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/alertmanager/{DatasourceUID}/config/api/v1/receivers",
+				srv.RouteGetReceivers,
 				m,
 			),
 		)

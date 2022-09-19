@@ -49,6 +49,9 @@ type Alertmanager interface {
 	GetAlerts(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.GettableAlerts, error)
 	GetAlertGroups(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.AlertGroups, error)
 
+	// Receivers
+	GetReceivers(ctx context.Context) apimodels.Receivers
+
 	// Testing
 	TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*notifier.TestReceiversResult, error)
 }

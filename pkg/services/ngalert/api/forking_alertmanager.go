@@ -131,6 +131,15 @@ func (f *AlertmanagerApiHandler) handleRoutePostAMAlerts(ctx *models.ReqContext,
 	return s.RoutePostAMAlerts(ctx, body)
 }
 
+func (f *AlertmanagerApiHandler) handleRouteGetReceivers(ctx *models.ReqContext) response.Response {
+	s, err := f.getService(ctx)
+	if err != nil {
+		return errorToResponse(err)
+	}
+
+	return s.RouteGetReceivers(ctx)
+}
+
 func (f *AlertmanagerApiHandler) handleRoutePostTestReceivers(ctx *models.ReqContext, body apimodels.TestReceiversConfigBodyParams, dsUID string) response.Response {
 	s, err := f.getService(ctx)
 	if err != nil {
@@ -185,6 +194,10 @@ func (f *AlertmanagerApiHandler) handleRoutePostGrafanaAlertingConfig(ctx *model
 		return errorToResponse(backendTypeDoesNotMatchPayloadTypeError(apimodels.GrafanaBackend, conf.AlertmanagerConfig.ReceiverType().String()))
 	}
 	return f.GrafanaSvc.RoutePostAlertingConfig(ctx, conf)
+}
+
+func (f *AlertmanagerApiHandler) handleRouteGetGrafanaReceivers(ctx *models.ReqContext) response.Response {
+	return f.GrafanaSvc.RouteGetReceivers(ctx)
 }
 
 func (f *AlertmanagerApiHandler) handleRoutePostTestGrafanaReceivers(ctx *models.ReqContext, conf apimodels.TestReceiversConfigBodyParams) response.Response {

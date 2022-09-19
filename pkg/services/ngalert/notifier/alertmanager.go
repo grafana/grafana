@@ -131,6 +131,9 @@ type Alertmanager struct {
 	orgID           int64
 
 	decryptFn channels.GetDecryptedValueFn
+
+	// TODO: where?
+	receivers []*notify.Receiver
 }
 
 func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store AlertingStore, kvStore kvstore.KVStore,
@@ -206,7 +209,7 @@ func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 	}()
 
 	// Initialize in-memory alerts
-	am.alerts, err = mem.NewAlerts(context.Background(), am.marker, memoryAlertsGCInterval, nil, am.logger)
+	am.alerts, err = mem.NewAlerts(context.Background(), am.marker, memoryAlertsGCInterval, nil, am.logger, m.Registerer)
 	if err != nil {
 		return nil, fmt.Errorf("unable to initialize the alert provider component of alerting: %w", err)
 	}
@@ -424,6 +427,8 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 	for name := range integrationsMap {
 		stage := am.createReceiverStage(name, integrationsMap[name], am.waitFunc, am.notificationLog)
 		routingStage[name] = notify.MultiStage{meshStage, silencingStage, timeMuteStage, inhibitionStage, stage}
+		// TODO: true?
+		am.receivers = append(am.receivers, notify.NewReceiver(name, true, integrationsMap[name]))
 	}
 
 	am.route = dispatch.NewRoute(cfg.AlertmanagerConfig.Route.AsAMRoute(), nil)
@@ -452,8 +457,8 @@ func (am *Alertmanager) WorkingDirPath() string {
 }
 
 // buildIntegrationsMap builds a map of name to the list of Grafana integration notifiers off of a list of receiver config.
-func (am *Alertmanager) buildIntegrationsMap(receivers []*apimodels.PostableApiReceiver, templates *template.Template) (map[string][]notify.Integration, error) {
-	integrationsMap := make(map[string][]notify.Integration, len(receivers))
+func (am *Alertmanager) buildIntegrationsMap(receivers []*apimodels.PostableApiReceiver, templates *template.Template) (map[string][]*notify.Integration, error) {
+	integrationsMap := make(map[string][]*notify.Integration, len(receivers))
 	for _, receiver := range receivers {
 		integrations, err := am.buildReceiverIntegrations(receiver, templates)
 		if err != nil {
@@ -466,8 +471,8 @@ func (am *Alertmanager) buildIntegrationsMap(receivers []*apimodels.PostableApiR
 }
 
 // buildReceiverIntegrations builds a list of integration notifiers off of a receiver config.
-func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableApiReceiver, tmpl *template.Template) ([]notify.Integration, error) {
-	var integrations []notify.Integration
+func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableApiReceiver, tmpl *template.Template) ([]*notify.Integration, error) {
+	var integrations []*notify.Integration
 	for i, r := range receiver.GrafanaManagedReceivers {
 		n, err := am.buildReceiverIntegration(r, tmpl)
 		if err != nil {
@@ -667,18 +672,18 @@ func (e AlertValidationError) Error() string {
 }
 
 // createReceiverStage creates a pipeline of stages for a receiver.
-func (am *Alertmanager) createReceiverStage(name string, integrations []notify.Integration, wait func() time.Duration, notificationLog notify.NotificationLog) notify.Stage {
+func (am *Alertmanager) createReceiverStage(name string, integrations []*notify.Integration, wait func() time.Duration, notificationLog notify.NotificationLog) notify.Stage {
 	var fs notify.FanoutStage
-	for i := range integrations {
+	for _, integration := range integrations {
 		recv := &nflogpb.Receiver{
 			GroupName:   name,
-			Integration: integrations[i].Name(),
-			Idx:         uint32(integrations[i].Index()),
+			Integration: integration.Name(),
+			Idx:         uint32(integration.Index()),
 		}
 		var s notify.MultiStage
 		s = append(s, notify.NewWaitStage(wait))
-		s = append(s, notify.NewDedupStage(&integrations[i], notificationLog, recv))
-		s = append(s, notify.NewRetryStage(integrations[i], name, am.stageMetrics))
+		s = append(s, notify.NewDedupStage(integration, notificationLog, recv))
+		s = append(s, notify.NewRetryStage(integration, name, am.stageMetrics))
 		s = append(s, notify.NewSetNotifiesStage(notificationLog, recv))
 
 		fs = append(fs, s)

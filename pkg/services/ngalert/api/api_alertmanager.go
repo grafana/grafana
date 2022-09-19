@@ -248,6 +248,16 @@ func (srv AlertmanagerSrv) RoutePostAMAlerts(_ *models.ReqContext, _ apimodels.P
 	return NotImplementedResp
 }
 
+func (srv AlertmanagerSrv) RouteGetReceivers(c *models.ReqContext) response.Response {
+	am, errResp := srv.AlertmanagerFor(c.OrgID)
+	if errResp != nil {
+		return errResp
+	}
+
+	rcvs := am.GetReceivers(c.Req.Context())
+	return response.JSON(http.StatusOK, rcvs)
+}
+
 func (srv AlertmanagerSrv) RoutePostTestReceivers(c *models.ReqContext, body apimodels.TestReceiversConfigBodyParams) response.Response {
 	if err := srv.crypto.LoadSecureSettings(c.Req.Context(), c.OrgID, body.Receivers); err != nil {
 		var unknownReceiverError UnknownReceiverError
