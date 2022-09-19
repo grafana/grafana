@@ -44,7 +44,7 @@ export function PluginSignatureDetailsBadge({ signatureType, signatureOrg = '' }
   );
 }
 
-export const DetailsBadge: React.FC = ({ children }) => {
+export const DetailsBadge = ({ children }: React.PropsWithChildren<{}>) => {
   const styles = useStyles2(getStyles);
 
   return <Badge color="green" className={styles.badge} text={<>{children}</>} />;

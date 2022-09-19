@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 
 import { NavModelItem } from '@grafana/data';
 import { Page } from 'app/core/components/Page/Page';
@@ -9,7 +9,7 @@ interface Props {
   pageNav?: NavModelItem;
 }
 
-export const AlertingPageWrapper: FC<Props> = ({ children, pageId, pageNav, isLoading }) => {
+export const AlertingPageWrapper = ({ children, pageId, pageNav, isLoading }: React.PropsWithChildren<Props>) => {
   return (
     <Page pageNav={pageNav} navId={pageId}>
       <Page.Contents isLoading={isLoading}>{children}</Page.Contents>

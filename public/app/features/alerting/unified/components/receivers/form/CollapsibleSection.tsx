@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { FC, useState } from 'react';
+import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { IconSize, useStyles2 } from '@grafana/ui';
@@ -13,7 +13,13 @@ interface Props {
   size?: IconSize;
 }
 
-export const CollapsibleSection: FC<Props> = ({ label, description, children, className, size = 'xl' }) => {
+export const CollapsibleSection = ({
+  label,
+  description,
+  children,
+  className,
+  size = 'xl',
+}: React.PropsWithChildren<Props>) => {
   const styles = useStyles2(getStyles);
   const [isCollapsed, setIsCollapsed] = useState(true);
 

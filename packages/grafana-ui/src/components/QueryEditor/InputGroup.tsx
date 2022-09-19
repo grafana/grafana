@@ -5,7 +5,7 @@ import { useStyles2 } from '../../themes';
 
 interface InputGroupProps {}
 
-export const InputGroup: React.FC<InputGroupProps> = ({ children }) => {
+export const InputGroup = ({ children }: React.PropsWithChildren<InputGroupProps>) => {
   const styles = useStyles2(getStyles);
 
   return <div className={styles.root}>{children}</div>;

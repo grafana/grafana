@@ -6,15 +6,15 @@ export const Trans: typeof OriginalTrans = ({ id, children }) => {
   return <>{children ?? id}</>;
 };
 
-export const Plural: React.FC = () => {
+export const Plural: React.FC<{}> = () => {
   throw new Error('Plural mock not implemented yet');
 };
 
-export const Select: React.FC = () => {
+export const Select: React.FC<{}> = () => {
   throw new Error('Select mock not implemented yet');
 };
 
-export const SelectOrdinal: React.FC = () => {
+export const SelectOrdinal: React.FC<{}> = () => {
   throw new Error('SelectOrdinal mock not implemented yet');
 };
 

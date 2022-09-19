@@ -10,7 +10,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   `,
 }));
 
-export const HelpToggle: React.FunctionComponent = ({ children }) => {
+export const HelpToggle = ({ children }: React.PropsWithChildren<{}>) => {
   const [isHelpVisible, setIsHelpVisible] = useState(false);
   const theme = useTheme();
   const styles = getStyles(theme);

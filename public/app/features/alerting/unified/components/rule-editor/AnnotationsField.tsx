@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { FC, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme } from '@grafana/data';
@@ -9,7 +9,7 @@ import { RuleFormValues } from '../../types/rule-form';
 
 import { AnnotationKeyInput } from './AnnotationKeyInput';
 
-const AnnotationsField: FC = () => {
+const AnnotationsField = () => {
   const styles = useStyles(getStyles);
   const {
     control,

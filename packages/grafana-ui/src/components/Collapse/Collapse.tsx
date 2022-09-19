@@ -123,7 +123,7 @@ export const ControlledCollapse: FunctionComponent<Props> = ({ isOpen, onToggle,
   );
 };
 
-export const Collapse: FunctionComponent<Props> = ({
+export const Collapse = ({
   isOpen,
   label,
   loading,
@@ -131,7 +131,7 @@ export const Collapse: FunctionComponent<Props> = ({
   onToggle,
   className,
   children,
-}) => {
+}: React.PropsWithChildren<Props>) => {
   const style = useStyles2(getStyles);
   const onClickToggle = () => {
     if (onToggle) {

@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import React, { FC, RefCallback } from 'react';
+import React, { RefCallback } from 'react';
 
 import { SelectableValue, toIconName } from '@grafana/data';
 
@@ -15,7 +15,7 @@ interface SelectMenuProps {
   innerProps: {};
 }
 
-export const SelectMenu: FC<SelectMenuProps> = ({ children, maxHeight, innerRef, innerProps }) => {
+export const SelectMenu = ({ children, maxHeight, innerRef, innerProps }: React.PropsWithChildren<SelectMenuProps>) => {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
 
@@ -40,7 +40,7 @@ interface SelectMenuOptionProps<T> {
   data: SelectableValue<T>;
 }
 
-export const SelectMenuOptions: FC<SelectMenuOptionProps<any>> = ({
+export const SelectMenuOptions = ({
   children,
   data,
   innerProps,
@@ -48,7 +48,7 @@ export const SelectMenuOptions: FC<SelectMenuOptionProps<any>> = ({
   isFocused,
   isSelected,
   renderOptionLabel,
-}) => {
+}: React.PropsWithChildren<SelectMenuOptionProps<any>>) => {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
   const icon = data.icon ? toIconName(data.icon) : undefined;

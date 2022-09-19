@@ -99,7 +99,7 @@ const RuleEditor: FC<RuleEditorProps> = ({ match }) => {
   return <AlertRuleForm />;
 };
 
-const AlertWarning: FC<{ title: string }> = ({ title, children }) => (
+const AlertWarning = ({ title, children }: React.PropsWithChildren<{ title: string }>) => (
   <Alert className={useStyles2(warningStyles).warning} severity="warning" title={title}>
     <p>{children}</p>
     <LinkButton href="alerting/list">To rule list</LinkButton>

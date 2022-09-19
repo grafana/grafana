@@ -17,7 +17,7 @@ interface Props {
   description?: string;
 }
 
-export const PanelTypeCard: React.FC<Props> = ({
+export const PanelTypeCard = ({
   isCurrent,
   title,
   plugin,
@@ -27,7 +27,7 @@ export const PanelTypeCard: React.FC<Props> = ({
   showBadge,
   description,
   children,
-}) => {
+}: React.PropsWithChildren<Props>) => {
   const styles = useStyles2(getStyles);
   const isDisabled = disabled || plugin.state === PluginState.deprecated;
   const cssClass = cx({
@@ -157,7 +157,7 @@ interface PanelPluginBadgeProps {
   plugin: PanelPluginMeta;
 }
 
-const PanelPluginBadge: React.FC<PanelPluginBadgeProps> = ({ plugin }) => {
+const PanelPluginBadge = ({ plugin }: PanelPluginBadgeProps) => {
   if (isUnsignedPluginSignature(plugin.signature)) {
     return <PluginSignatureBadge status={plugin.signature} />;
   }

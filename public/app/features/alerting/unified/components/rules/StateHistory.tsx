@@ -178,7 +178,7 @@ function renderTimestampCell(item: StateHistoryRow) {
   );
 }
 
-const LabelsWrapper: FC<{}> = ({ children }) => {
+const LabelsWrapper = ({ children }: React.PropsWithChildren<{}>) => {
   const { wrapper } = useStyles2(getStyles);
   return <div className={wrapper}>{children}</div>;
 };

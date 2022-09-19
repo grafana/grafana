@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -10,7 +10,7 @@ type Props = {
   state: State;
 };
 
-export const StateTag: FC<Props> = ({ children, state }) => {
+export const StateTag = ({ children, state }: React.PropsWithChildren<Props>) => {
   const styles = useStyles2(getStyles);
 
   return <span className={cx(styles.common, styles[state])}>{children || state}</span>;

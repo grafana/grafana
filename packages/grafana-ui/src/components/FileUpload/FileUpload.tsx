@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { FC, FormEvent, useCallback, useState } from 'react';
+import React, { FormEvent, useCallback, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -25,13 +25,13 @@ export interface Props {
   showFileName?: boolean;
 }
 
-export const FileUpload: FC<Props> = ({
+export const FileUpload = ({
   onFileUpload,
   className,
   children = 'Upload file',
   accept = '*',
   size = 'md',
-}) => {
+}: React.PropsWithChildren<Props>) => {
   const style = useStyles2(getStyles(size));
   const [fileName, setFileName] = useState('');
   const id = uuidv4();

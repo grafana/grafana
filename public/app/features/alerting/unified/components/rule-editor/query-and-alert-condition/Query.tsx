@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { Field, InputControl } from '@grafana/ui';
@@ -7,7 +7,7 @@ import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { ExpressionEditor } from '../ExpressionEditor';
 import { QueryEditor } from '../QueryEditor';
 
-export const Query: FC = () => {
+export const Query = () => {
   const {
     control,
     watch,

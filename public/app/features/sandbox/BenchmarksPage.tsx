@@ -1,8 +1,8 @@
-import React, { FC } from 'react';
+import React from 'react';
 
 import { EmotionPerfTest, VerticalGroup } from '@grafana/ui';
 
-export const BenchmarksPage: FC = () => {
+export const BenchmarksPage = () => {
   return (
     <VerticalGroup>
       <EmotionPerfTest />

@@ -13,7 +13,7 @@ interface StackProps {
   flexGrow?: CSSProperties['flexGrow'];
 }
 
-export const Stack: React.FC<StackProps> = ({ children, ...props }) => {
+export const Stack = ({ children, ...props }: React.PropsWithChildren<StackProps>) => {
   const styles = useStyles2(useCallback((theme) => getStyles(theme, props), [props]));
 
   return <div className={styles.root}>{children}</div>;

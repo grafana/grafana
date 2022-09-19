@@ -27,7 +27,7 @@ type ColorPickerTriggerRenderer = (props: {
 }) => React.ReactNode;
 
 export const colorPickerFactory = <T extends ColorPickerProps>(
-  popover: React.ComponentType<T>,
+  popover: React.ComponentType<React.PropsWithChildren<T>>,
   displayName = 'ColorPicker'
 ) => {
   return class ColorPicker extends Component<T & { children?: ColorPickerTriggerRenderer }, any> {

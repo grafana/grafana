@@ -1,18 +1,20 @@
 import React from 'react';
 
+import { TooltipDisplayMode } from '@grafana/schema';
+
 import { VizTooltipContentProps } from '../../VizTooltip';
 
 import { MultiModeGraphTooltip } from './MultiModeGraphTooltip';
 import { SingleModeGraphTooltip } from './SingleModeGraphTooltip';
 import { GraphDimensions } from './types';
 
-export const GraphTooltip: React.FC<VizTooltipContentProps<GraphDimensions>> = ({
-  mode = 'single',
+export const GraphTooltip = ({
+  mode = TooltipDisplayMode.Single,
   dimensions,
   activeDimensions,
   pos,
   timeZone,
-}) => {
+}: VizTooltipContentProps<GraphDimensions>) => {
   // When
   // [1] no active dimension or
   // [2] no xAxis position
