@@ -54,6 +54,7 @@ const ButtonSelectComponent = <T,>(props: Props<T>) => {
         {...buttonProps}
         {...restProps}
       >
+        {/** @ts-ignore */}
         {value?.label || value?.value}
       </ToolbarButton>
       {state.isOpen && (

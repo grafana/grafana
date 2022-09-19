@@ -1,7 +1,6 @@
-import { ComponentType } from 'enzyme';
 import { defaultsDeep } from 'lodash';
 
-import { PanelPluginMeta, PluginMeta, PluginType, PanelPlugin, PanelProps } from '@grafana/data';
+import { PanelPluginMeta, PluginMeta, PluginType, PanelPlugin } from '@grafana/data';
 
 export const getMockPlugins = (amount: number): PluginMeta[] => {
   const plugins = [];
@@ -38,7 +37,7 @@ export const getMockPlugins = (amount: number): PluginMeta[] => {
 
 export function getPanelPlugin(
   options: Partial<PanelPluginMeta>,
-  reactPanel?: ComponentType<PanelProps>,
+  reactPanel?: any, //todo fix,
   angularPanel?: any
 ): PanelPlugin {
   const plugin = new PanelPlugin(reactPanel!);

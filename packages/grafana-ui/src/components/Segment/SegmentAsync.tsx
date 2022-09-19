@@ -69,6 +69,7 @@ export function SegmentAsync<T>({
                 className
               )}
             >
+              {/** @ts-ignore **/}
               {label || placeholder}
             </InlineLabel>
           )
