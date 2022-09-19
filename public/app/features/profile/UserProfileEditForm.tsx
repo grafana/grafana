@@ -91,7 +91,7 @@ export const UserProfileEditForm: FC<Props> = ({ user, isSavingUser, updateProfi
 
 export default UserProfileEditForm;
 
-const InputSuffix: FC = () => {
+const InputSuffix = () => {
   return disableLoginForm ? (
     <Tooltip content="Login details locked because they are managed in another system.">
       <Icon name="lock" />
