@@ -1,8 +1,8 @@
 import { escapeLabelValueInExactSelector } from '../../../languageUtils';
 import { AGGREGATION_OPERATORS, RANGE_VEC_FUNCTIONS } from '../../../syntax';
 
+import { NeverCaseError } from './NeverCaseError';
 import type { Situation, Label } from './situation';
-import { NeverCaseError } from './util';
 // FIXME: we should not load this from the "outside", but we cannot do that while we have the "old" query-field too
 
 export type CompletionType =

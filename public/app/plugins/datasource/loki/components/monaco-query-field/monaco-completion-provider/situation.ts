@@ -2,7 +2,7 @@ import type { Tree, SyntaxNode } from '@lezer/common';
 
 import { parser } from '@grafana/lezer-logql';
 
-import { NeverCaseError } from './util';
+import { NeverCaseError } from './NeverCaseError';
 
 type Direction = 'parent' | 'firstChild' | 'lastChild' | 'nextSibling';
 type NodeTypeName =
