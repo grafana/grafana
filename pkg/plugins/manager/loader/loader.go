@@ -44,6 +44,7 @@ type Loader struct {
 	pluginRegistry     registry.Service
 	pluginInitializer  initializer.Initializer
 	signatureValidator signature.Validator
+	pluginStorage      storage.Manager
 	log                log.Logger
 
 	errs map[string]*plugins.SignatureError
@@ -51,17 +52,19 @@ type Loader struct {
 
 func ProvideService(cfg *config.Cfg, license models.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider) *Loader {
-	return New(cfg, license, authorizer, pluginRegistry, backendProvider)
+	return New(cfg, license, authorizer, pluginRegistry, backendProvider, storage.FileSystem(logger.NewLogger("loader.fs"), cfg.PluginsPath))
 }
 
 func New(cfg *config.Cfg, license models.Licensing, authorizer plugins.PluginLoaderAuthorizer,
-	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider) *Loader {
+	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider,
+	pluginStorage storage.Manager) *Loader {
 	return &Loader{
 		pluginFinder:       finder.New(),
 		pluginRegistry:     pluginRegistry,
 		processManager:     process.NewManager(pluginRegistry),
 		pluginInitializer:  initializer.New(cfg, backendProvider, license),
 		signatureValidator: signature.NewValidator(authorizer),
+		pluginStorage:      pluginStorage,
 		errs:               make(map[string]*plugins.SignatureError),
 		log:                log.New("plugin.loader"),
 	}
@@ -194,7 +197,7 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 	}
 
 	for _, p := range verifiedPlugins {
-		if err := l.registerAndStart(ctx, p); err != nil {
+		if err := l.load(ctx, p); err != nil {
 			l.log.Error("Could not start plugin", "pluginId", p.ID, "err", err)
 		}
 	}
@@ -212,18 +215,13 @@ func (l *Loader) Unload(ctx context.Context, pluginID string) error {
 		return plugins.ErrUninstallCorePlugin
 	}
 
-	pluginStorage := storage.FileSystem(logger.WithLogger(l.log), plugin.PluginDir)
-	if err := pluginStorage.Remove(ctx, pluginID); err != nil {
-		return err
-	}
-
-	if err := l.unregisterAndStop(ctx, plugin); err != nil {
+	if err := l.unload(ctx, plugin); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (l *Loader) registerAndStart(ctx context.Context, p *plugins.Plugin) error {
+func (l *Loader) load(ctx context.Context, p *plugins.Plugin) error {
 	if err := l.pluginRegistry.Add(ctx, p); err != nil {
 		return err
 	}
@@ -241,9 +239,10 @@ func (l *Loader) registerAndStart(ctx context.Context, p *plugins.Plugin) error 
 	return l.processManager.Start(ctx, p.ID)
 }
 
-func (l *Loader) unregisterAndStop(ctx context.Context, p *plugins.Plugin) error {
+func (l *Loader) unload(ctx context.Context, p *plugins.Plugin) error {
 	l.log.Debug("Stopping plugin process", "pluginId", p.ID)
 
+	// TODO confirm the sequence of events is safe
 	if err := l.processManager.Stop(ctx, p.ID); err != nil {
 		return err
 	}
@@ -252,6 +251,10 @@ func (l *Loader) unregisterAndStop(ctx context.Context, p *plugins.Plugin) error
 		return err
 	}
 	l.log.Debug("Plugin unregistered", "pluginId", p.ID)
+
+	if err := l.pluginStorage.Remove(ctx, p.ID); err != nil {
+		return err
+	}
 	return nil
 }
 

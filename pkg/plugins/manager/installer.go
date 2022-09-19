@@ -6,12 +6,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/logger"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 var _ plugins.Installer = (*PluginInstaller)(nil)
@@ -24,10 +24,9 @@ type PluginInstaller struct {
 	log            log.Logger
 }
 
-func ProvideInstaller(cfg *setting.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service,
+func ProvideInstaller(cfg *config.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service,
 	pluginRepo repo.Service) *PluginInstaller {
-	return New(pluginRegistry, pluginLoader, pluginRepo,
-		storage.FileSystem(logger.NewLogger("plugin.fs"), cfg.PluginsPath))
+	return New(pluginRegistry, pluginLoader, pluginRepo, storage.FileSystem(logger.NewLogger("installer.fs"), cfg.PluginsPath))
 }
 
 func New(pluginRegistry registry.Service, pluginLoader loader.Service, pluginRepo repo.Service,

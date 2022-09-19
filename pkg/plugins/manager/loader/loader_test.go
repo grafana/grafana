@@ -1128,7 +1128,7 @@ func Test_setPathsBasedOnApp(t *testing.T) {
 }
 
 func newLoader(cfg *config.Cfg) *Loader {
-	return New(cfg, &fakeLicensingService{}, signature.NewUnsignedAuthorizer(cfg), fakes.NewFakePluginRegistry(), provider.ProvideService(coreplugin.NewRegistry(make(map[string]backendplugin.PluginFactoryFunc))))
+	return New(cfg, &fakeLicensingService{}, signature.NewUnsignedAuthorizer(cfg), fakes.NewFakePluginRegistry(), provider.ProvideService(coreplugin.NewRegistry(make(map[string]backendplugin.PluginFactoryFunc))), fakes.NewFakePluginStorage())
 }
 
 type fakeLicensingService struct {

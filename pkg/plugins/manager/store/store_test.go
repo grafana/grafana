@@ -24,9 +24,9 @@ func TestStore_ProvideService(t *testing.T) {
 		}
 		cfg := &setting.Cfg{
 			BundledPluginsPath: "path1",
-			PluginsPath:        "path2",
 		}
 		pCfg := &config.Cfg{
+			PluginsPath: "path2",
 			PluginSettings: setting.PluginSettings{
 				"blah": map[string]string{
 					"path": "path3",

@@ -19,8 +19,7 @@ type Service struct {
 
 func ProvideService(gCfg *setting.Cfg, cfg *config.Cfg, pluginRegistry registry.Service,
 	pluginInstaller plugins.Installer) (*Service, error) {
-
-	for _, ps := range pluginSources(gCfg, cfg.PluginSettings) {
+	for _, ps := range pluginSources(gCfg, cfg) {
 		if err := pluginInstaller.AddFromSource(context.Background(), ps); err != nil {
 			return nil, err
 		}
@@ -120,11 +119,11 @@ func (s *Service) Routes() []*plugins.StaticRoute {
 	return staticRoutes
 }
 
-func pluginSources(cfg *setting.Cfg, ps map[string]map[string]string) []plugins.PluginSource {
+func pluginSources(gCfg *setting.Cfg, cfg *config.Cfg) []plugins.PluginSource {
 	return []plugins.PluginSource{
-		{Class: plugins.Core, Paths: corePluginPaths(cfg.StaticRootPath)},
-		{Class: plugins.Bundled, Paths: []string{cfg.BundledPluginsPath}},
-		{Class: plugins.External, Paths: append([]string{cfg.PluginsPath}, pluginSettingPaths(ps)...)},
+		{Class: plugins.Core, Paths: corePluginPaths(gCfg.StaticRootPath)},
+		{Class: plugins.Bundled, Paths: []string{gCfg.BundledPluginsPath}},
+		{Class: plugins.External, Paths: append([]string{cfg.PluginsPath}, pluginSettingPaths(cfg.PluginSettings)...)},
 	}
 }
 

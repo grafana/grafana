@@ -112,7 +112,7 @@ func TestIntegrationPluginManager(t *testing.T) {
 	pCfg := config.ProvideConfig(setting.ProvideProvider(cfg), cfg)
 	reg := registry.ProvideService()
 	l := loader.ProvideService(pCfg, license, signature.NewUnsignedAuthorizer(pCfg), reg, provider.ProvideService(coreRegistry))
-	inst := ProvideInstaller(cfg, reg, l, repo.ProvideService())
+	inst := ProvideInstaller(pCfg, reg, l, repo.ProvideService())
 	ps, err := store.ProvideService(cfg, pCfg, reg, inst)
 	require.NoError(t, err)
 

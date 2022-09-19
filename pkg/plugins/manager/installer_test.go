@@ -65,14 +65,11 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 				require.Equal(t, pluginV1.PluginDir, pluginDir)
 				return nil
 			},
-			Added: make(map[string]string),
 		}
 
 		inst := New(fakes.NewFakePluginRegistry(), loader, pluginRepo, fs)
 		err := inst.Add(context.Background(), pluginID, v1, plugins.CompatOpts{})
 		require.NoError(t, err)
-
-		require.Equal(t, zipNameV1, fs.Added[pluginID])
 
 		t.Run("Won't add if already exists", func(t *testing.T) {
 			inst.pluginRegistry = &fakes.FakePluginRegistry{
@@ -134,8 +131,6 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 
 			err = inst.Add(context.Background(), pluginID, v2, plugins.CompatOpts{})
 			require.NoError(t, err)
-
-			require.Equal(t, zipNameV2, fs.Added[pluginID])
 		})
 
 		t.Run("Removing an existing plugin", func(t *testing.T) {
