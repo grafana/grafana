@@ -1,15 +1,14 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import React, { useState } from 'react';
-import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, NavSection } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { Dropdown, FilterInput, Icon, Tooltip, useStyles2, toIconName } from '@grafana/ui';
+import { Dropdown, FilterInput, Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { useSearchQuery } from 'app/features/search/hooks/useSearchQuery';
-import { StoreState } from 'app/types';
+import { useSelector } from 'app/types';
 
 import { enrichConfigItems, enrichWithInteractionTracking } from '../NavBar/utils';
 import { OrgSwitcher } from '../OrgSwitcher';
@@ -21,7 +20,7 @@ export function TopSearchBar() {
   const styles = useStyles2(getStyles);
   const location = useLocation();
   const { query, onQueryChange } = useSearchQuery({});
-  const navBarTree = useSelector((state: StoreState) => state.navBarTree);
+  const navBarTree = useSelector((state) => state.navBarTree);
   const navTree = cloneDeep(navBarTree);
   const [showSwitcherModal, setShowSwitcherModal] = useState(false);
   const toggleSwitcherModal = () => {
@@ -44,9 +43,9 @@ export function TopSearchBar() {
     toggleSwitcherModal
   ).map((item) => enrichWithInteractionTracking(item, false));
 
+  const helpNode = configItems.find((item) => item.id === 'help');
   const profileNode = configItems.find((item) => item.id === 'profile');
   const signInNode = configItems.find((item) => item.id === 'signin');
-  const signInIconName = signInNode?.icon && toIconName(signInNode.icon);
 
   return (
     <div className={styles.container}>
@@ -65,11 +64,13 @@ export function TopSearchBar() {
         />
       </div>
       <div className={styles.actions}>
-        <Tooltip placement="bottom" content="Help menu (todo)">
-          <button className={styles.actionItem}>
-            <Icon name="question-circle" size="lg" />
-          </button>
-        </Tooltip>
+        {helpNode && (
+          <Dropdown overlay={<TopNavBarMenu node={helpNode} />}>
+            <button className={styles.actionItem}>
+              <Icon name="question-circle" size="lg" />
+            </button>
+          </Dropdown>
+        )}
         <Tooltip placement="bottom" content="Grafana news (todo)">
           <button className={styles.actionItem}>
             <Icon name="rss" size="lg" />
@@ -78,7 +79,7 @@ export function TopSearchBar() {
         {signInNode && (
           <Tooltip placement="bottom" content="Sign in">
             <a className={styles.actionItem} href={signInNode.url} target={signInNode.target}>
-              {signInIconName && <Icon name={signInIconName} size="lg" />}
+              {signInNode.icon && <Icon name={signInNode.icon} size="lg" />}
             </a>
           </Tooltip>
         )}

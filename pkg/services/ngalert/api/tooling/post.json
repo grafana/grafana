@@ -232,6 +232,19 @@
    ],
    "type": "object"
   },
+  "AlertingStatus": {
+   "properties": {
+    "alertmanagersChoice": {
+     "enum": [
+      "all",
+      "internal",
+      "external"
+     ],
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
   "ApiRuleNode": {
    "properties": {
     "alert": {
@@ -5553,6 +5566,26 @@
      }
     },
     "summary": "Get the discovered and dropped Alertmanagers of the user's organization based on the specified configuration.",
+    "tags": [
+     "configuration"
+    ]
+   }
+  },
+  "/api/v1/ngalert": {
+   "get": {
+    "description": "Get the status of the alerting engine",
+    "operationId": "RouteGetStatus",
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "200": {
+      "description": "AlertingStatus",
+      "schema": {
+       "$ref": "#/definitions/AlertingStatus"
+      }
+     }
+    },
     "tags": [
      "configuration"
     ]

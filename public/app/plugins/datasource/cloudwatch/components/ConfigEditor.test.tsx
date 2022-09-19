@@ -9,8 +9,6 @@ import { setupMockedDataSource } from '../__mocks__/CloudWatchDataSource';
 
 import { ConfigEditor, Props } from './ConfigEditor';
 
-const ds = setupMockedDataSource();
-
 jest.mock('app/features/plugins/datasource_srv', () => ({
   getDatasourceSrv: () => ({
     loadDatasource: jest.fn().mockResolvedValue({
@@ -20,9 +18,11 @@ jest.mock('app/features/plugins/datasource_srv', () => ({
           value: 'ap-east-1',
         },
       ]),
-      describeLogGroups: jest.fn().mockResolvedValue(['logGroup-foo', 'logGroup-bar']),
       getActualRegion: jest.fn().mockReturnValue('ap-east-1'),
       getVariables: jest.fn().mockReturnValue([]),
+      logsQueryRunner: {
+        describeLogGroups: jest.fn().mockResolvedValue(['logGroup-foo', 'logGroup-bar']),
+      },
     }),
   }),
 }));
@@ -31,10 +31,11 @@ jest.mock('./XrayLinkConfig', () => ({
   XrayLinkConfig: () => <></>,
 }));
 
+const putMock = jest.fn();
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({
-    put: jest.fn().mockResolvedValue({ datasource: ds.datasource }),
+    put: putMock,
   }),
 }));
 
@@ -86,6 +87,7 @@ const setup = (propOverrides?: object) => {
 describe('Render', () => {
   beforeEach(() => {
     jest.resetAllMocks();
+    putMock.mockImplementation(async () => ({ datasource: setupMockedDataSource().datasource }));
   });
   it('should render component', () => {
     const wrapper = setup();

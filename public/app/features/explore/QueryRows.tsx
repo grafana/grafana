@@ -1,10 +1,10 @@
 import { createSelector } from '@reduxjs/toolkit';
 import React, { useCallback, useMemo } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 
 import { CoreApp, DataQuery, DataSourceInstanceSettings } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { getNextRefIdChar } from 'app/core/utils/query';
+import { useDispatch, useSelector } from 'app/types';
 import { ExploreId } from 'app/types/explore';
 
 import { getDatasourceSrv } from '../plugins/datasource_srv';

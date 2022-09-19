@@ -11,7 +11,7 @@ import { getUserOrganizations, setUserOrganization } from './state/actions';
 
 const navModel = {
   main: {
-    icon: 'grafana',
+    icon: 'grafana' as const,
     subTitle: 'Preferences',
     text: 'Select active organization',
   },

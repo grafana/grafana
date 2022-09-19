@@ -1,13 +1,11 @@
 import React, { PureComponent } from 'react';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 
-import { NavModel } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Form, Spinner } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { connectWithCleanUp } from 'app/core/components/connectWithCleanUp';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { getNavModel } from 'app/core/selectors/navModel';
 import { NotificationChannelType, NotificationChannelDTO, StoreState } from 'app/types';
 
 import { NotificationChannelForm } from './components/NotificationChannelForm';
@@ -18,7 +16,6 @@ import { mapChannelsToSelectableValue, transformSubmitData, transformTestData } 
 interface OwnProps extends GrafanaRouteComponentProps<{ id: string }> {}
 
 interface ConnectedProps {
-  navModel: NavModel;
   notificationChannel: any;
   notificationChannelTypes: NotificationChannelType[];
 }
@@ -70,10 +67,10 @@ export class EditNotificationChannelPage extends PureComponent<Props> {
   };
 
   render() {
-    const { navModel, notificationChannel, notificationChannelTypes } = this.props;
+    const { notificationChannel, notificationChannelTypes } = this.props;
 
     return (
-      <Page navModel={navModel}>
+      <Page navId="channels">
         <Page.Contents>
           <h2 className="page-sub-heading">Edit notification channel</h2>
           {notificationChannel && notificationChannel.id > 0 ? (
@@ -119,7 +116,6 @@ export class EditNotificationChannelPage extends PureComponent<Props> {
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state) => {
   return {
-    navModel: getNavModel(state.navIndex, 'channels'),
     notificationChannel: state.notificationChannel.notificationChannel,
     notificationChannelTypes: state.notificationChannel.notificationChannelTypes,
   };
