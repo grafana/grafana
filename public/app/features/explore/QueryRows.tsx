@@ -74,7 +74,7 @@ export const QueryRows = ({ exploreId }: Props) => {
   };
 
   const onTriggerTracking = (action: string, queryStatus?: boolean) => {
-    const trackingLabels = {
+    const trackingLabels: { [key: string]: string } = {
       remove: 'grafana_explore_query_row_remove',
       copy: 'grafana_explore_query_row_copy',
       enableDisable: 'grafana_query-row_disable_enable',
