@@ -2,6 +2,7 @@ import React, { useCallback } from 'react';
 
 import { Button, HorizontalGroup } from '@grafana/ui';
 
+import { UpdateCorrelationParams } from '../types';
 import { useCorrelations } from '../useCorrelations';
 
 import { CorrelationDetailsFormPart } from './CorrelationDetailsFormPart';
@@ -18,7 +19,7 @@ export const EditCorrelationForm = ({ onUpdated, defaultValues, readOnly = false
   const { update } = useCorrelations();
 
   const onSubmit = useCallback(
-    async (correlation) => {
+    async (correlation: UpdateCorrelationParams) => {
       await update.execute(correlation);
       onUpdated();
     },

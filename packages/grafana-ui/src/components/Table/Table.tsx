@@ -1,7 +1,6 @@
-import React, { FC, memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { CSSProperties, FC, memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   Cell,
-  Column,
   TableState,
   useAbsoluteLayout,
   useFilters,
@@ -28,6 +27,7 @@ import {
   FooterItem,
   TableSortByActionCallback,
   TableSortByFieldState,
+  GrafanaTableColumn,
 } from './types';
 import { getColumns, sortCaseInsensitive, sortNumber } from './utils';
 
@@ -97,7 +97,7 @@ function useTableStateReducer({ onColumnResize, onSortByChange, data }: Props) {
   );
 }
 
-function getInitialState(initialSortBy: Props['initialSortBy'], columns: Column[]): Partial<TableState> {
+function getInitialState(initialSortBy: Props['initialSortBy'], columns: GrafanaTableColumn[]): Partial<TableState> {
   const state: Partial<TableState> = {};
 
   if (initialSortBy) {
@@ -247,7 +247,7 @@ export const Table: FC<Props> = memo((props: Props) => {
   });
 
   const RenderRow = React.useCallback(
-    ({ index: rowIndex, style }) => {
+    ({ index: rowIndex, style }: { index: number; style: CSSProperties }) => {
       let row = rows[rowIndex];
       if (enablePagination) {
         row = page[rowIndex];

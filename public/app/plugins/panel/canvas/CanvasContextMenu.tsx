@@ -29,13 +29,14 @@ export const CanvasContextMenu = ({ scene }: Props) => {
   const selectedElements = scene.selecto?.getSelectedTargets();
 
   const handleContextMenu = useCallback(
-    (event) => {
+    (event: Event) => {
+      const ev = event as MouseEvent;
       event.preventDefault();
       const shouldSelectElement = event.currentTarget !== scene.div;
       if (shouldSelectElement) {
         scene.select({ targets: [event.currentTarget as HTMLElement | SVGElement] });
       }
-      setAnchorPoint({ x: event.pageX, y: event.pageY });
+      setAnchorPoint({ x: ev.pageX, y: ev.pageY });
       setIsMenuVisible(true);
     },
     [scene]

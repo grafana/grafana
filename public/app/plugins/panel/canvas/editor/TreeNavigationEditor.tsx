@@ -1,5 +1,5 @@
 import { Global } from '@emotion/react';
-import Tree from 'rc-tree';
+import Tree, { TreeNodeProps } from 'rc-tree';
 import React, { Key, useEffect, useMemo, useState } from 'react';
 
 import { SelectableValue, StandardEditorProps } from '@grafana/data';
@@ -85,7 +85,7 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
     setAutoExpandParent(false);
   };
 
-  const switcherIcon = (obj: { isLeaf: boolean; expanded: boolean }) => {
+  const switcherIcon = (obj: TreeNodeProps) => {
     if (obj.isLeaf) {
       // TODO: Implement element specific icons
       return <></>;

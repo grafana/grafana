@@ -8,6 +8,7 @@ import { Button, Field, HorizontalGroup, PanelContainer, useStyles2 } from '@gra
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
+import { CreateCorrelationParams } from '../types';
 import { useCorrelations } from '../useCorrelations';
 
 import { CorrelationDetailsFormPart } from './CorrelationDetailsFormPart';
@@ -50,7 +51,7 @@ export const AddCorrelationForm = ({ onClose, onCreated }: Props) => {
   const { create } = useCorrelations();
 
   const onSubmit = useCallback(
-    async (correlation) => {
+    async (correlation: CreateCorrelationParams) => {
       await create.execute(correlation);
       onCreated();
     },

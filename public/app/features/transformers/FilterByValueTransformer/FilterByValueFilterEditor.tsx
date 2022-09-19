@@ -58,7 +58,7 @@ export const FilterByValueFilterEditor = (props: Props) => {
   );
 
   const onChangeMatcherOptions = useCallback(
-    (options) => {
+    (options: any) => {
       onChange({
         ...filter,
         config: {
