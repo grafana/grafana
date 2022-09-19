@@ -1,7 +1,7 @@
 import { cloneDeep } from 'lodash';
 import React, { PureComponent } from 'react';
 
-import { DataSourcePluginMeta, DataSourceSettings } from '@grafana/data';
+import { DataSourcePluginMeta, DataSourceSettings, FormAPI } from '@grafana/data';
 import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 
 import { GenericDataSourcePlugin } from '../types';
@@ -11,6 +11,7 @@ export interface Props {
   dataSource: DataSourceSettings;
   dataSourceMeta: DataSourcePluginMeta;
   onModelChange: (dataSource: DataSourceSettings) => void;
+  formApi: FormAPI;
 }
 
 export class DataSourcePluginSettings extends PureComponent<Props> {
@@ -80,6 +81,7 @@ export class DataSourcePluginSettings extends PureComponent<Props> {
           React.createElement(plugin.components.ConfigEditor, {
             options: dataSource,
             onOptionsChange: this.onModelChanged,
+            formApi: this.props.formApi,
           })}
       </div>
     );

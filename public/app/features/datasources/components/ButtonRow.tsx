@@ -39,7 +39,7 @@ export function ButtonRow({ canSave, canDelete, onDelete, onSubmit, onTest, expl
           type="submit"
           variant="primary"
           disabled={!canSave}
-          onClick={(event) => onSubmit(event)}
+          // onClick={(event) => onSubmit(event)}
           aria-label={selectors.pages.DataSource.saveAndTest}
         >
           Save &amp; test

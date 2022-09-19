@@ -3,6 +3,7 @@ import React from 'react';
 import { useDispatch } from 'react-redux';
 
 import { DataSourcePluginMeta, DataSourceSettings as DataSourceSettingsType } from '@grafana/data';
+import { Form } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { DataSourceSettingsState, ThunkResult } from 'app/types';
 
@@ -133,39 +134,44 @@ export function EditDataSourceView({
   }
 
   return (
-    <form onSubmit={onSubmit}>
-      {!hasWriteRights && <DataSourceMissingRightsMessage />}
-      {readOnly && <DataSourceReadOnlyMessage />}
-      {dataSourceMeta.state && <DataSourcePluginState state={dataSourceMeta.state} />}
+    <Form onSubmit={onSubmit}>
+      {(formApi) => (
+        <>
+          {!hasWriteRights && <DataSourceMissingRightsMessage />}
+          {readOnly && <DataSourceReadOnlyMessage />}
+          {dataSourceMeta.state && <DataSourcePluginState state={dataSourceMeta.state} />}
 
-      <CloudInfoBox dataSource={dataSource} />
+          <CloudInfoBox dataSource={dataSource} />
 
-      <BasicSettings
-        dataSourceName={dataSource.name}
-        isDefault={dataSource.isDefault}
-        onDefaultChange={onDefaultChange}
-        onNameChange={onNameChange}
-      />
+          <BasicSettings
+            dataSourceName={dataSource.name}
+            isDefault={dataSource.isDefault}
+            onDefaultChange={onDefaultChange}
+            onNameChange={onNameChange}
+          />
 
-      {plugin && (
-        <DataSourcePluginSettings
-          plugin={plugin}
-          dataSource={dataSource}
-          dataSourceMeta={dataSourceMeta}
-          onModelChange={onOptionsChange}
-        />
+          {plugin && (
+            <DataSourcePluginSettings
+              plugin={plugin}
+              dataSource={dataSource}
+              dataSourceMeta={dataSourceMeta}
+              onModelChange={onOptionsChange}
+              formApi={formApi}
+            />
+          )}
+
+          <DataSourceTestingStatus testingStatus={testingStatus} />
+
+          <ButtonRow
+            onSubmit={onSubmit}
+            onDelete={onDelete}
+            onTest={onTest}
+            exploreUrl={exploreUrl}
+            canSave={!readOnly && hasWriteRights}
+            canDelete={!readOnly && hasDeleteRights}
+          />
+        </>
       )}
-
-      <DataSourceTestingStatus testingStatus={testingStatus} />
-
-      <ButtonRow
-        onSubmit={onSubmit}
-        onDelete={onDelete}
-        onTest={onTest}
-        exploreUrl={exploreUrl}
-        canSave={!readOnly && hasWriteRights}
-        canDelete={!readOnly && hasDeleteRights}
-      />
-    </form>
+    </Form>
   );
 }

@@ -1,181 +1,190 @@
-import React, { FC, useEffect, useState } from 'react';
-import { useDebounce } from 'react-use';
+import React, { FC } from 'react';
 
-import { ConnectionConfig } from '@grafana/aws-sdk';
 import {
-  rangeUtil,
   DataSourcePluginOptionsEditorProps,
   onUpdateDatasourceJsonDataOption,
-  updateDatasourcePluginJsonDataOption,
-  updateDatasourcePluginOption,
+  onUpdateDatasourceJsonDataOptionSelect,
+  onUpdateDatasourceResetOption,
+  onUpdateDatasourceSecureJsonDataOption,
+  toOption,
 } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
-import { Input, InlineField } from '@grafana/ui';
-import { notifyApp } from 'app/core/actions';
-import { createWarningNotification } from 'app/core/copy/appNotification';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { store } from 'app/store/store';
+import { Input, InlineField, ButtonGroup, FieldSet, Select, ToolbarButton } from '@grafana/ui';
 
-import { CloudWatchDatasource } from '../datasource';
 import { CloudWatchJsonData, CloudWatchSecureJsonData } from '../types';
-
-import { LogGroupSelector } from './LogGroupSelector';
-import { XrayLinkConfig } from './XrayLinkConfig';
 
 export type Props = DataSourcePluginOptionsEditorProps<CloudWatchJsonData, CloudWatchSecureJsonData>;
 
 export const ConfigEditor: FC<Props> = (props: Props) => {
+  const regions: string[] = [
+    'af-south-1',
+    'ap-east-1',
+    'ap-northeast-1',
+    'ap-northeast-2',
+    'ap-northeast-3',
+    'ap-south-1',
+    'ap-southeast-1',
+    'ap-southeast-2',
+    'ca-central-1',
+    'cn-north-1',
+    'cn-northwest-1',
+    'eu-central-1',
+    'eu-north-1',
+    'eu-west-1',
+    'eu-west-2',
+    'eu-west-3',
+    'me-south-1',
+    'sa-east-1',
+    'us-east-1',
+    'us-east-2',
+    'us-gov-east-1',
+    'us-gov-west-1',
+    'us-iso-east-1',
+    'us-isob-east-1',
+    'us-west-1',
+    'us-west-2',
+  ];
+
   const { options } = props;
-  const { defaultLogGroups, logsTimeout, defaultRegion } = options.jsonData;
-  const [saved, setSaved] = useState(!!options.version && options.version > 1);
-
-  const datasource = useDatasource(options.name, saved);
-  useAuthenticationWarning(options.jsonData);
-  const logsTimeoutError = useTimoutValidation(logsTimeout);
-  useEffect(() => {
-    setSaved(false);
-  }, [
-    props.options.jsonData.assumeRoleArn,
-    props.options.jsonData.authType,
-    props.options.jsonData.defaultRegion,
-    props.options.jsonData.endpoint,
-    props.options.jsonData.externalId,
-    props.options.jsonData.profile,
-    props.options.secureJsonData?.accessKey,
-    props.options.secureJsonData?.secretKey,
-  ]);
-
-  const saveOptions = async (): Promise<void> => {
-    if (saved) {
-      return;
-    }
-    await getBackendSrv()
-      .put(`/api/datasources/${options.id}`, options)
-      .then((result: { datasource: any }) => {
-        updateDatasourcePluginOption(props, 'version', result.datasource.version);
-      });
-    setSaved(true);
-  };
+  console.log(props.formApi);
 
   return (
-    <>
-      <ConnectionConfig
-        {...props}
-        loadRegions={
-          datasource &&
-          (() => datasource!.getRegions().then((r) => r.filter((r) => r.value !== 'default').map((v) => v.value)))
-        }
+    <FieldSet label={'Connection Details'} data-testid="connection-config">
+      <InlineField
+        label="Authentication Provider"
+        labelWidth={28}
+        tooltip="Specify which AWS credentials chain to use."
+        required
       >
-        <InlineField label="Namespaces of Custom Metrics" labelWidth={28} tooltip="Namespaces of Custom Metrics.">
-          <Input
-            width={60}
-            placeholder="Namespace1,Namespace2"
-            value={options.jsonData.customMetricsNamespaces || ''}
-            onChange={onUpdateDatasourceJsonDataOption(props, 'customMetricsNamespaces')}
-          />
-        </InlineField>
-      </ConnectionConfig>
+        <Select
+          aria-label="Authentication Provider"
+          className="width-30"
+          value={'keys'}
+          options={[{ value: 'keys', label: 'Secret & keys' }]}
+          defaultValue={options.jsonData.authType}
+          onChange={(option) => {
+            onUpdateDatasourceJsonDataOptionSelect(props, 'authType')(option);
+          }}
+          menuShouldPortal={true}
+        />
+      </InlineField>
 
-      <h3 className="page-heading">CloudWatch Logs</h3>
-      <div className="gf-form-group">
+      <>
         <InlineField
-          label="Timeout"
+          label="Access Key ID"
           labelWidth={28}
-          tooltip='Custom timeout for CloudWatch Logs insights queries which have max concurrency limits. Default is 15 minutes. Must be a valid duration string, such as "15m" "30s" "2000ms" etc.'
-          invalid={Boolean(logsTimeoutError)}
+          required
+          invalid={props.formApi?.errors.accessKey}
+          error={props.formApi?.errors.accessKey && props.formApi?.errors.accessKey.message}
+        >
+          {props.options.secureJsonFields?.accessKey ? (
+            <ButtonGroup className="width-30">
+              <Input disabled placeholder="Configured" />
+              <ToolbarButton
+                icon="edit"
+                tooltip="Edit Access Key ID"
+                type="button"
+                onClick={onUpdateDatasourceResetOption(props as any, 'accessKey')}
+              />
+            </ButtonGroup>
+          ) : (
+            <Input
+              {...props.formApi?.register('accessKey', { required: 'Access key is required' })}
+              aria-label="Access Key ID"
+              className="twidth-30"
+              value={options.secureJsonData?.accessKey ?? ''}
+              onChange={onUpdateDatasourceSecureJsonDataOption(props, 'accessKey')}
+            />
+          )}
+        </InlineField>
+
+        <InlineField
+          label="Secret Access Key"
+          labelWidth={28}
+          required
+          invalid={props.formApi?.errors.secretKey}
+          error={props.formApi?.errors.secretKey && props.formApi?.errors.secretKey.message}
+        >
+          {props.options.secureJsonFields?.secretKey ? (
+            <ButtonGroup className="width-30">
+              <Input disabled placeholder="Configured" />
+              <ToolbarButton
+                icon="edit"
+                type="button"
+                tooltip="Edit Secret Access Key"
+                onClick={onUpdateDatasourceResetOption(props as any, 'secretKey')}
+              />
+            </ButtonGroup>
+          ) : (
+            <Input
+              {...props.formApi?.register('secretKey', { required: 'Secret key is required' })}
+              aria-label="Secret Access Key"
+              className="width-30"
+              value={options.secureJsonData?.secretKey ?? ''}
+              onChange={onUpdateDatasourceSecureJsonDataOption(props, 'secretKey')}
+            />
+          )}
+        </InlineField>
+
+        <InlineField
+          label="Assume Role ARN"
+          labelWidth={28}
+          tooltip="Optionally, specify the ARN of a role to assume. Specifying a role here will ensure that the selected authentication provider is used to assume the specified role rather than using the credentials directly. Leave blank if you don't need to assume a role at all"
         >
           <Input
-            width={60}
-            placeholder="15m"
-            value={options.jsonData.logsTimeout || ''}
-            onChange={onUpdateDatasourceJsonDataOption(props, 'logsTimeout')}
-            title={'The timeout must be a valid duration string, such as "15m" "30s" "2000ms" etc.'}
+            aria-label="Assume Role ARN"
+            className="width-30"
+            placeholder="arn:aws:iam:*"
+            value={options.jsonData.assumeRoleArn || ''}
+            onChange={onUpdateDatasourceJsonDataOption(props, 'assumeRoleArn')}
           />
         </InlineField>
         <InlineField
-          label="Default Log Groups"
+          label="External ID"
           labelWidth={28}
-          tooltip="Optionally, specify default log groups for CloudWatch Logs queries."
+          tooltip="If you are assuming a role in another account, that has been created with an external ID, specify the external ID here."
         >
-          <LogGroupSelector
-            region={defaultRegion ?? ''}
-            selectedLogGroups={defaultLogGroups ?? []}
-            datasource={datasource}
-            onChange={(logGroups) => {
-              updateDatasourcePluginJsonDataOption(props, 'defaultLogGroups', logGroups);
-            }}
-            onOpenMenu={saveOptions}
-            width={60}
-            saved={saved}
+          <Input
+            aria-label="External ID"
+            className="width-30"
+            placeholder="External ID"
+            value={options.jsonData.externalId || ''}
+            onChange={onUpdateDatasourceJsonDataOption(props, 'externalId')}
           />
         </InlineField>
-      </div>
-
-      <XrayLinkConfig
-        onChange={(uid) => updateDatasourcePluginJsonDataOption(props, 'tracingDatasourceUid', uid)}
-        datasourceUid={options.jsonData.tracingDatasourceUid}
-      />
-    </>
+        <InlineField label="Endpoint" labelWidth={28} tooltip="Optionally, specify a custom endpoint for the service">
+          <Input
+            aria-label="Endpoint"
+            className="width-30"
+            placeholder={'https://{service}.{region}.amazonaws.com'}
+            value={options.jsonData.endpoint || ''}
+            onChange={onUpdateDatasourceJsonDataOption(props, 'endpoint')}
+          />
+        </InlineField>
+        <InlineField
+          required
+          label="Default Region"
+          labelWidth={28}
+          tooltip="Specify the region, such as for US West (Oregon) use ` us-west-2 ` as the region."
+          invalid={props.formApi?.errors.region}
+          error={props.formApi?.errors.region && props.formApi?.errors.region.message}
+        >
+          <Select
+            {...props.formApi?.register('region', {
+              required: 'You need to specify a region.',
+              validate: async (v: any) => v,
+            })}
+            aria-label="Default Region"
+            className="width-30"
+            value={regions.map(toOption).find((region) => region.value === options.jsonData.defaultRegion)}
+            options={regions.map(toOption)}
+            defaultValue={options.jsonData.defaultRegion}
+            allowCustomValue={true}
+            onChange={onUpdateDatasourceJsonDataOptionSelect(props, 'defaultRegion')}
+            formatCreateLabel={(r) => `Use region: ${r}`}
+            menuShouldPortal={true}
+          />
+        </InlineField>
+      </>
+    </FieldSet>
   );
 };
-
-function useAuthenticationWarning(jsonData: CloudWatchJsonData) {
-  const addWarning = (message: string) => {
-    store.dispatch(notifyApp(createWarningNotification('CloudWatch Authentication', message)));
-  };
-
-  useEffect(() => {
-    if (jsonData.authType === 'arn') {
-      addWarning('Since grafana 7.3 authentication type "arn" is deprecated, falling back to default SDK provider');
-    } else if (jsonData.authType === 'credentials' && !jsonData.profile && !jsonData.database) {
-      addWarning(
-        'As of grafana 7.3 authentication type "credentials" should be used only for shared file credentials. \
-             If you don\'t have a credentials file, switch to the default SDK provider for extracting credentials \
-             from environment variables or IAM roles'
-      );
-    }
-  }, [jsonData.authType, jsonData.database, jsonData.profile]);
-}
-
-function useDatasource(datasourceName: string, saved: boolean) {
-  const [datasource, setDatasource] = useState<CloudWatchDatasource>();
-
-  useEffect(() => {
-    // reload the datasource when it's saved
-    if (!saved) {
-      return;
-    }
-    getDatasourceSrv()
-      .loadDatasource(datasourceName)
-      .then((datasource) => {
-        // It's really difficult to type .loadDatasource() because it's inherently untyped as it involves two JSON.parse()'s
-        // So a "as" type assertion here is a necessary evil.
-        setDatasource(datasource as CloudWatchDatasource);
-      });
-  }, [datasourceName, saved]);
-
-  return datasource;
-}
-
-function useTimoutValidation(value: string | undefined) {
-  const [err, setErr] = useState<undefined | string>(undefined);
-  useDebounce(
-    () => {
-      if (value) {
-        try {
-          rangeUtil.describeInterval(value);
-          setErr(undefined);
-        } catch (e) {
-          if (e instanceof Error) {
-            setErr(e.toString());
-          }
-        }
-      } else {
-        setErr(undefined);
-      }
-    },
-    350,
-    [value]
-  );
-  return err;
-}
