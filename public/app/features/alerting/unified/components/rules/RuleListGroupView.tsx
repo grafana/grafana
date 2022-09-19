@@ -1,5 +1,6 @@
-import React, { FC, useMemo } from 'react';
+import React, { FC, useEffect, useMemo } from 'react';
 
+import { logInfo } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
@@ -27,6 +28,10 @@ export const RuleListGroupView: FC<Props> = ({ namespaces, expandAll }) => {
       sorted.filter((ns) => isCloudRulesSource(ns.rulesSource)),
     ];
   }, [namespaces]);
+
+  useEffect(() => {
+    logInfo('loaded Alert Rules list');
+  }, []);
 
   return (
     <>
