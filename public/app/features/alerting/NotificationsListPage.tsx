@@ -1,4 +1,4 @@
-import React, { useState, FC, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import { getBackendSrv } from '@grafana/runtime';
@@ -11,7 +11,7 @@ import { AlertNotification } from 'app/types/alerting';
 
 import { ShowConfirmModalEvent } from '../../types/events';
 
-const NotificationsListPage: FC = () => {
+const NotificationsListPage = () => {
   const navModel = useNavModel('channels');
 
   const [notifications, setNotifications] = useState<AlertNotification[]>([]);
@@ -52,7 +52,7 @@ const NotificationsListPage: FC = () => {
   return (
     <Page navModel={navModel}>
       <Page.Contents>
-        {state.error && <p>{state.error}</p>}
+        {state.error && <p>{state.error.message}</p>}
         {!!notifications.length && (
           <>
             <div className="page-action-bar">

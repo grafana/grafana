@@ -163,7 +163,11 @@ export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps
                         padding: 5px 0;
                       `}
                     >
-                      {typeof item === 'string' && textUtil.hasAnsiCodes(item) ? <LogMessageAnsi value={item} /> : item}
+                      {typeof item === 'string' && textUtil.hasAnsiCodes(item) ? (
+                        <LogMessageAnsi value={item} />
+                      ) : (
+                        item.toString()
+                      )}
                     </div>
                   );
                 }}
