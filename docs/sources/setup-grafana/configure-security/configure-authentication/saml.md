@@ -467,4 +467,4 @@ This setting should be set to none to allow grafana session cookies to work corr
 cookie_secure = true
 ```
 
-Ensure cookie_secure is set to true to ensure that cookies are only sent over https.
+Ensure cookie_secure is set to true to ensure that cookies are only sent over HTTPS.
