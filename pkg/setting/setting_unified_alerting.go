@@ -83,6 +83,10 @@ type UnifiedAlertingSettings struct {
 	DefaultRuleEvaluationInterval time.Duration
 	Screenshots                   UnifiedAlertingScreenshotSettings
 	ReservedLabels                UnifiedAlertingReservedLabelSettings
+
+	// Experiments:
+	// Whether or not to use the "large" transactions for saving alert instances.
+	BigDBStatements bool
 }
 
 type UnifiedAlertingScreenshotSettings struct {
@@ -250,6 +254,9 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.MaxAttempts = uaMaxAttempts
 
 	uaCfg.BaseInterval = SchedulerBaseInterval
+
+	uaCfg.BigDBStatements = ua.Key("big_db_statements").MustBool(false)
+	cfg.Logger.Info("Alerting Database Large Transactions", "In Use", uaCfg.BigDBStatements)
 
 	uaMinInterval, err := gtime.ParseDuration(valueAsString(ua, "min_interval", uaCfg.BaseInterval.String()))
 	if err != nil || uaMinInterval == uaCfg.BaseInterval { // unified option is invalid duration or equals the default
