@@ -52,18 +52,18 @@ export const ElasticsearchProvider = ({
     reducer
   );
 
-  const [isUninitialized, setIsUninitialized] = useState(
-    !query.metrics || !query.bucketAggs || query.query === undefined
-  );
+  const isUninitialized = !query.metrics || !query.bucketAggs || query.query === undefined;
+
+  const [shouldRunInit, setShouldRunInit] = useState(isUninitialized);
 
   // This initializes the query by dispatching an init action to each reducer.
   // useStatelessReducer will then call `onChange` with the newly generated query
   useEffect(() => {
-    if (isUninitialized) {
+    if (shouldRunInit) {
       dispatch(initQuery());
-      setIsUninitialized(false);
+      setShouldRunInit(false);
     }
-  }, [isUninitialized, dispatch]);
+  }, [shouldRunInit, dispatch]);
 
   if (isUninitialized) {
     return null;
