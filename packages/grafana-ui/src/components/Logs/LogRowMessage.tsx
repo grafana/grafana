@@ -139,12 +139,6 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
     const restructuredEntry = restructureLog(raw, prettifyLogMessage);
     const styles = getStyles(theme);
 
-    const onShowContextClick = (e: React.SyntheticEvent<HTMLElement, Event>) => {
-      this.onContextToggle(e);
-
-      window.scrollTo(0, e.currentTarget.offsetTop);
-    };
-
     return (
       // When context is open, the position has to be NOT relative.
       // Setting the postion as inline-style to overwrite the more sepecific style definition from `style.logsRowMessage`.
@@ -176,7 +170,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
               onClick={(e) => e.stopPropagation()}
             >
               <Tooltip placement="top" content={'Show context'}>
-                <IconButton size="md" name="gf-show-context" onClick={onShowContextClick} />
+                <IconButton size="md" name="gf-show-context" onClick={this.onContextToggle} />
               </Tooltip>
               <Tooltip placement="top" content={'Copy'}>
                 <IconButton
