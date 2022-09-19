@@ -249,7 +249,7 @@ func TestWebhookNotifier(t *testing.T) {
 		{
 			name:         "Error in initing",
 			settings:     `{}`,
-			expInitError: `could not find url property in settings`,
+			expInitError: `required field 'url' is not specified`,
 		},
 	}
 
@@ -269,8 +269,16 @@ func TestWebhookNotifier(t *testing.T) {
 
 			webhookSender := mockNotificationService()
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-			decryptFn := secretsService.GetDecryptedValue
-			cfg, err := NewWebHookConfig(m, decryptFn)
+
+			fc := FactoryConfig{
+				Config:              m,
+				NotificationService: webhookSender,
+				DecryptFunc:         secretsService.GetDecryptedValue,
+				ImageStore:          &UnavailableImageStore{},
+				Template:            tmpl,
+			}
+
+			pn, err := buildWebhookNotifier(fc)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())
@@ -281,7 +289,6 @@ func TestWebhookNotifier(t *testing.T) {
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
 			ctx = notify.WithReceiverName(ctx, "my_receiver")
-			pn := NewWebHookNotifier(cfg, webhookSender, &UnavailableImageStore{}, tmpl)
 			ok, err := pn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.False(t, ok)
