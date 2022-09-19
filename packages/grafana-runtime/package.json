@@ -49,20 +49,20 @@
     "@grafana/tsconfig": "^1.2.0-rc1",
     "@rollup/plugin-commonjs": "22.0.1",
     "@rollup/plugin-node-resolve": "13.3.0",
-    "@testing-library/dom": "8.13.0",
-    "@testing-library/react": "12.1.4",
+    "@testing-library/dom": "8.18.0",
+    "@testing-library/react": "13.4.0",
     "@testing-library/user-event": "14.4.3",
     "@types/angular": "1.8.4",
     "@types/history": "4.7.11",
-    "@types/jest": "28.1.6",
+    "@types/jest": "29.0.3",
     "@types/lodash": "4.14.182",
-    "@types/react": "17.0.42",
-    "@types/react-dom": "17.0.14",
-    "@types/systemjs": "^0.20.6",
+    "@types/react": "18.0.20",
+    "@types/react-dom": "18.0.6",
+    "@types/systemjs": "^0.20.8",
     "esbuild": "0.15.7",
     "lodash": "4.17.21",
-    "react": "17.0.2",
-    "react-dom": "17.0.2",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
     "rimraf": "3.0.2",
     "rollup": "2.77.2",
     "rollup-plugin-dts": "^4.2.2",
@@ -70,10 +70,10 @@
     "rollup-plugin-node-externals": "^4.1.0",
     "rollup-plugin-sourcemaps": "0.6.3",
     "rollup-plugin-terser": "7.0.2",
-    "typescript": "4.8.2"
+    "typescript": "4.8.3"
   },
   "peerDependencies": {
-    "react": "17.0.2",
-    "react-dom": "17.0.2"
+    "react": "18.2.0",
+    "react-dom": "18.2.0"
   }
 }
