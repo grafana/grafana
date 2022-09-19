@@ -6,6 +6,8 @@ export interface PluginPageProps {
   pageNav?: NavModelItem;
   children: React.ReactNode;
   layout?: PageLayoutType;
+  /** When you want a single plugin page to in a core section */
+  navId: string;
 }
 
 export type PluginPageType = React.ComponentType<PluginPageProps>;
