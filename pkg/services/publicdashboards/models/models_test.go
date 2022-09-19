@@ -34,7 +34,7 @@ func TestBuildTimeSettings(t *testing.T) {
 		{
 			name:      "should use dashboard time even if pubdash time exists",
 			dashboard: &models.Dashboard{Data: dashboardData},
-			pubdash:   &PublicDashboard{TimeSettings: simplejson.NewFromAny(map[string]interface{}{"from": "now-12", "to": "now"})},
+			pubdash:   &PublicDashboard{TimeSettings: &TimeSettings{From: "now-12", To: "now"}},
 			timeResult: TimeSettings{
 				From: fromMs,
 				To:   toMs,

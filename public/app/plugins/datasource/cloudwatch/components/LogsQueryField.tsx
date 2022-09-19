@@ -70,7 +70,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
     const { query, datasource, onChange } = this.props;
 
     if (onChange) {
-      onChange({ ...query, logGroupNames: query.logGroupNames ?? datasource.defaultLogGroups });
+      onChange({ ...query, logGroupNames: query.logGroupNames ?? datasource.logsQueryRunner.defaultLogGroups });
     }
   };
 
@@ -136,7 +136,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
             inputEl={
               <LogGroupSelector
                 region={region}
-                selectedLogGroups={logGroupNames ?? datasource.defaultLogGroups}
+                selectedLogGroups={logGroupNames ?? datasource.logsQueryRunner.defaultLogGroups}
                 datasource={datasource}
                 onChange={function (logGroups: string[]): void {
                   onChange({ ...query, logGroupNames: logGroups });

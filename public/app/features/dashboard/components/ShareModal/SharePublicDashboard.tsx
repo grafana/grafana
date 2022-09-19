@@ -1,5 +1,7 @@
+import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useState } from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { reportInteraction } from '@grafana/runtime/src';
 import {
@@ -8,14 +10,19 @@ import {
   Checkbox,
   ClipboardButton,
   Field,
+  HorizontalGroup,
   FieldSet,
   Input,
   Label,
   LinkButton,
   Switch,
+  TimeRangeInput,
+  useStyles2,
+  VerticalGroup,
 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
+import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 import { dispatch } from 'app/store/store';
 
 import { contextSrv } from '../../../../core/services/context_srv';
@@ -43,6 +50,7 @@ interface Acknowledgements {
 export const SharePublicDashboard = (props: Props) => {
   const dashboardVariables = props.dashboard.getVariables();
   const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
+  const styles = useStyles2(getStyles);
 
   const hasWritePermissions = contextSrv.hasAccess(AccessControlAction.DashboardsPublicWrite, isOrgAdmin());
 
@@ -56,6 +64,11 @@ export const SharePublicDashboard = (props: Props) => {
     datasources: false,
     usage: false,
   });
+
+  const timeRange = getTimeRange(
+    { from: props.dashboard.getDefaultTime().from, to: props.dashboard.getDefaultTime().to },
+    props.dashboard.timezone
+  );
 
   useEffect(() => {
     reportInteraction('grafana_dashboards_public_share_viewed');
@@ -94,9 +107,7 @@ export const SharePublicDashboard = (props: Props) => {
   );
 
   // check if all conditions have been acknowledged
-  const acknowledged = () => {
-    return acknowledgements.public && acknowledgements.datasources && acknowledgements.usage;
-  };
+  const acknowledged = acknowledgements.public && acknowledgements.datasources && acknowledgements.usage;
 
   return (
     <>
@@ -115,133 +126,127 @@ export const SharePublicDashboard = (props: Props) => {
             To allow the current dashboard to be published publicly, toggle the switch. For now we do not support
             template variables or frontend datasources.
           </p>
-          We&apos;d love your feedback. To share, please comment on this{' '}
-          <a
-            href="https://github.com/grafana/grafana/discussions/49253"
-            target="_blank"
-            rel="noreferrer"
-            className="text-link"
-          >
-            GitHub discussion
-          </a>
-          .
+          <p>
+            We&apos;d love your feedback. To share, please comment on this{' '}
+            <a
+              href="https://github.com/grafana/grafana/discussions/49253"
+              target="_blank"
+              rel="noreferrer"
+              className="text-link"
+            >
+              GitHub discussion
+            </a>
+            .
+          </p>
           <hr />
-          <div>
-            Before you click Save, please acknowledge the following information: <br />
+          <div className={styles.checkboxes}>
+            <p>Before you click Save, please acknowledge the following information:</p>
             <FieldSet disabled={publicDashboardPersisted(publicDashboard) || !hasWritePermissions}>
-              <br />
-              <div>
-                <Checkbox
-                  label="Your entire dashboard will be public"
-                  value={acknowledgements.public}
-                  data-testid={selectors.WillBePublicCheckbox}
-                  onChange={(e) => onAcknowledge('public', e.currentTarget.checked)}
-                />
-              </div>
-              <br />
-              <div>
-                <Checkbox
-                  label="Publishing currently only works with a subset of datasources"
-                  value={acknowledgements.datasources}
-                  data-testid={selectors.LimitedDSCheckbox}
-                  onChange={(e) => onAcknowledge('datasources', e.currentTarget.checked)}
-                />
-                <LinkButton
-                  variant="primary"
-                  href="https://grafana.com/docs/grafana/latest/datasources/"
-                  target="_blank"
-                  fill="text"
-                  icon="info-circle"
-                  rel="noopener noreferrer"
-                  tooltip="Learn more about public datasources"
-                />
-              </div>
-              <br />
-              <Checkbox
-                label="Making your dashboard public will cause queries to run each time the dashboard is viewed which may increase costs"
-                value={acknowledgements.usage}
-                data-testid={selectors.CostIncreaseCheckbox}
-                onChange={(e) => onAcknowledge('usage', e.currentTarget.checked)}
-              />
-              <LinkButton
-                variant="primary"
-                href="https://grafana.com/docs/grafana/latest/enterprise/query-caching/"
-                target="_blank"
-                fill="text"
-                icon="info-circle"
-                rel="noopener noreferrer"
-                tooltip="Learn more about query caching"
-              />
-              <br />
-              <br />
+              <VerticalGroup spacing="md">
+                <HorizontalGroup spacing="none">
+                  <Checkbox
+                    label="Your entire dashboard will be public"
+                    value={acknowledgements.public}
+                    data-testid={selectors.WillBePublicCheckbox}
+                    onChange={(e) => onAcknowledge('public', e.currentTarget.checked)}
+                  />
+                  <LinkButton
+                    variant="primary"
+                    href="https://grafana.com/docs/grafana/latest/dashboards/dashboard-public/"
+                    target="_blank"
+                    fill="text"
+                    icon="info-circle"
+                    rel="noopener noreferrer"
+                    tooltip="Learn more about public dashboards"
+                  />
+                </HorizontalGroup>
+                <HorizontalGroup spacing="none">
+                  <Checkbox
+                    label="Publishing currently only works with a subset of datasources"
+                    value={acknowledgements.datasources}
+                    data-testid={selectors.LimitedDSCheckbox}
+                    onChange={(e) => onAcknowledge('datasources', e.currentTarget.checked)}
+                  />
+                  <LinkButton
+                    variant="primary"
+                    href="https://grafana.com/docs/grafana/latest/datasources/"
+                    target="_blank"
+                    fill="text"
+                    icon="info-circle"
+                    rel="noopener noreferrer"
+                    tooltip="Learn more about public datasources"
+                  />
+                </HorizontalGroup>
+                <HorizontalGroup spacing="none">
+                  <Checkbox
+                    label="Making your dashboard public will cause queries to run each time the dashboard is viewed which may increase costs"
+                    value={acknowledgements.usage}
+                    data-testid={selectors.CostIncreaseCheckbox}
+                    onChange={(e) => onAcknowledge('usage', e.currentTarget.checked)}
+                  />
+                  <LinkButton
+                    variant="primary"
+                    href="https://grafana.com/docs/grafana/latest/enterprise/query-caching/"
+                    target="_blank"
+                    fill="text"
+                    icon="info-circle"
+                    rel="noopener noreferrer"
+                    tooltip="Learn more about query caching"
+                  />
+                </HorizontalGroup>
+              </VerticalGroup>
             </FieldSet>
           </div>
+          <hr />
           <div>
-            <h4 className="share-modal-info-text">Public Dashboard Configuration</h4>
-            <FieldSet disabled={!hasWritePermissions}>
-              <Label description="The public dashboard uses the default time settings of the dashboard">
-                Time Range
-              </Label>
-              <div style={{ padding: '5px' }}>
-                <Input
-                  value={props.dashboard.getDefaultTime().from}
-                  disabled={true}
-                  addonBefore={
-                    <span style={{ width: '50px', display: 'flex', alignItems: 'center', padding: '5px' }}>From:</span>
-                  }
-                />
-                <Input
-                  value={props.dashboard.getDefaultTime().to}
-                  disabled={true}
-                  addonBefore={
-                    <span style={{ width: '50px', display: 'flex', alignItems: 'center', padding: '5px' }}>To:</span>
-                  }
-                />
-              </div>
-              <br />
-              <Field label="Enabled" description="Configures whether current dashboard can be available publicly">
-                <Switch
-                  disabled={dashboardHasTemplateVariables(dashboardVariables)}
-                  data-testid={selectors.EnableSwitch}
-                  value={publicDashboard?.isEnabled}
-                  onChange={() => {
-                    reportInteraction('grafana_dashboards_public_enable_clicked', {
-                      action: publicDashboard?.isEnabled ? 'disable' : 'enable',
-                    });
+            <h4 className="share-modal-info-text">Public dashboard configuration</h4>
+            <FieldSet disabled={!hasWritePermissions} className={styles.dashboardConfig}>
+              <VerticalGroup spacing="md">
+                <HorizontalGroup spacing="xs" justify="space-between">
+                  <Label description="The public dashboard uses the default time settings of the dashboard">
+                    Time Range
+                  </Label>
+                  <TimeRangeInput value={timeRange} disabled onChange={() => {}} />
+                </HorizontalGroup>
+                <HorizontalGroup spacing="xs" justify="space-between">
+                  <Label description="Configures whether current dashboard can be available publicly">Enabled</Label>
+                  <Switch
+                    disabled={dashboardHasTemplateVariables(dashboardVariables)}
+                    data-testid={selectors.EnableSwitch}
+                    value={publicDashboard?.isEnabled}
+                    onChange={() => {
+                      reportInteraction('grafana_dashboards_public_enable_clicked', {
+                        action: publicDashboard?.isEnabled ? 'disable' : 'enable',
+                      });
 
-                    setPublicDashboardConfig({
-                      ...publicDashboard,
-                      isEnabled: !publicDashboard.isEnabled,
-                    });
-                  }}
-                />
-              </Field>
-            </FieldSet>
-
-            <FieldSet>
-              {publicDashboardPersisted(publicDashboard) && publicDashboard.isEnabled && (
-                <Field label="Link URL">
-                  <Input
-                    value={generatePublicDashboardUrl(publicDashboard)}
-                    readOnly
-                    data-testid={selectors.CopyUrlInput}
-                    addonAfter={
-                      <ClipboardButton
-                        data-testid={selectors.CopyUrlButton}
-                        variant="primary"
-                        icon="copy"
-                        getText={() => {
-                          return generatePublicDashboardUrl(publicDashboard);
-                        }}
-                      >
-                        Copy
-                      </ClipboardButton>
-                    }
+                      setPublicDashboardConfig({
+                        ...publicDashboard,
+                        isEnabled: !publicDashboard.isEnabled,
+                      });
+                    }}
                   />
-                </Field>
-              )}
+                </HorizontalGroup>
+                {publicDashboardPersisted(publicDashboard) && publicDashboard.isEnabled && (
+                  <Field label="Link URL" className={styles.publicUrl}>
+                    <Input
+                      value={generatePublicDashboardUrl(publicDashboard)}
+                      readOnly
+                      data-testid={selectors.CopyUrlInput}
+                      addonAfter={
+                        <ClipboardButton
+                          data-testid={selectors.CopyUrlButton}
+                          variant="primary"
+                          icon="copy"
+                          getText={() => generatePublicDashboardUrl(publicDashboard)}
+                        >
+                          Copy
+                        </ClipboardButton>
+                      }
+                    />
+                  </Field>
+                )}
+              </VerticalGroup>
             </FieldSet>
-
             {hasWritePermissions ? (
               props.dashboard.hasUnsavedChanges() && (
                 <Alert
@@ -253,11 +258,11 @@ export const SharePublicDashboard = (props: Props) => {
               <Alert title="You don't have permissions to create or update a public dashboard" severity="warning" />
             )}
             <Button
-              disabled={!hasWritePermissions || !acknowledged() || props.dashboard.hasUnsavedChanges()}
+              disabled={!hasWritePermissions || !acknowledged || props.dashboard.hasUnsavedChanges()}
               onClick={onSavePublicConfig}
               data-testid={selectors.SaveConfigButton}
             >
-              Save Sharing Configuration
+              Save sharing configuration
             </Button>
           </div>
         </>
@@ -265,3 +270,20 @@ export const SharePublicDashboard = (props: Props) => {
     </>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  checkboxes: css`
+    margin: ${theme.spacing(2, 0)};
+  `,
+  timeRange: css`
+    padding: ${theme.spacing(1, 1)};
+    margin: ${theme.spacing(0, 0, 2, 0)};
+  `,
+  dashboardConfig: css`
+    margin: ${theme.spacing(0, 0, 3, 0)};
+  `,
+  publicUrl: css`
+    width: 100%;
+    margin-bottom: 0;
+  `,
+});

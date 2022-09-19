@@ -127,6 +127,10 @@ const (
 	// Enable command palette
 	FlagCommandPalette = "commandPalette"
 
+	// FlagCorrelations
+	// Correlations page
+	FlagCorrelations = "correlations"
+
 	// FlagCloudWatchDynamicLabels
 	// Use dynamic labels instead of alias patterns in CloudWatch datasource
 	FlagCloudWatchDynamicLabels = "cloudWatchDynamicLabels"
@@ -170,10 +174,6 @@ const (
 	// FlagUseLegacyHeatmapPanel
 	// Continue to use the angular/flot based heatmap panel
 	FlagUseLegacyHeatmapPanel = "useLegacyHeatmapPanel"
-
-	// FlagCloudMonitoringExperimentalUI
-	// Use grafana-experimental UI in Cloud Monitoring
-	FlagCloudMonitoringExperimentalUI = "cloudMonitoringExperimentalUI"
 
 	// FlagDisableSecretsCompatibility
 	// Disable duplicated secret storage in legacy tables

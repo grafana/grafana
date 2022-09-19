@@ -27,6 +27,7 @@ export const Page: PageType = ({
   toolbar,
   scrollTop,
   scrollRef,
+  ...otherProps
 }) => {
   const styles = useStyles2(getStyles);
   const navModel = usePageNav(navId, oldNavProp);
@@ -46,7 +47,7 @@ export const Page: PageType = ({
   }, [navModel, pageNav, chrome]);
 
   return (
-    <div className={cx(styles.wrapper, className)}>
+    <div className={cx(styles.wrapper, className)} {...otherProps}>
       {layout === PageLayoutType.Standard && (
         <div className={styles.panes}>
           {navModel && navModel.main.children && <SectionNav model={navModel} />}
@@ -69,6 +70,12 @@ export const Page: PageType = ({
             {children}
           </div>
         </CustomScrollbar>
+      )}
+      {layout === PageLayoutType.Custom && (
+        <>
+          {toolbar}
+          {children}
+        </>
       )}
     </div>
   );

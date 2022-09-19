@@ -29,33 +29,38 @@ type PluginSignature struct {
 
 type Docker struct {
 	ShouldSave    bool           `json:"shouldSave,omitempty"`
+	Distribution  []Distribution `json:"distribution,omitempty"`
 	Architectures []Architecture `json:"archs,omitempty"`
 }
 
-// Version represents the "version.json" that defines all of the different variables used to build Grafana
-type Version struct {
-	Variants                  []Variant       `json:"variants,omitempty"`
-	PluginSignature           PluginSignature `json:"pluginSignature,omitempty"`
-	Docker                    Docker          `json:"docker,omitempty"`
-	PackagesBucket            string          `json:"packagesBucket,omitempty"`
-	PackagesBucketEnterprise2 string          `json:"packagesBucketEnterprise2,omitempty"`
-	CDNAssetsBucket           string          `json:"CDNAssetsBucket,omitempty"`
-	CDNAssetsDir              string          `json:"CDNAssetsDir,omitempty"`
-	StorybookBucket           string          `json:"storybookBucket,omitempty"`
-	StorybookSrcDir           string          `json:"storybookSrcDir,omitempty"`
+type Buckets struct {
+	Artifacts            string `json:"artifacts,omitempty"`
+	ArtifactsEnterprise2 string `json:"artifactsEnterprise2,omitempty"`
+	CDNAssets            string `json:"CDNAssets,omitempty"`
+	CDNAssetsDir         string `json:"CDNAssetsDir,omitempty"`
+	Storybook            string `json:"storybook,omitempty"`
+	StorybookSrcDir      string `json:"storybookSrcDir,omitempty"`
+}
+
+// BuildConfig represents the struct that defines all of the different variables used to build Grafana
+type BuildConfig struct {
+	Variants        []Variant       `json:"variants,omitempty"`
+	PluginSignature PluginSignature `json:"pluginSignature,omitempty"`
+	Docker          Docker          `json:"docker,omitempty"`
+	Buckets         Buckets         `json:"buckets,omitempty"`
 }
 
 func (md *Metadata) GetReleaseMode() (ReleaseMode, error) {
 	return md.ReleaseMode, nil
 }
 
-// Versions is a map of versions. Each key of the Versions map is an event that uses the the config as the value for that key.
+// VersionMap is a map of versions. Each key of the Versions map is an event that uses the the config as the value for that key.
 // For example, the 'pull_request' key will have data in it that might cause Grafana to be built differently in a pull request,
 // than the way it will be built in 'main'
-type VersionMap map[VersionMode]Version
+type VersionMap map[VersionMode]BuildConfig
 
-// GetVersions reads the embedded config.json and decodes it.
-func GetVersion(mode VersionMode) (*Version, error) {
+// GetBuildConfig reads the embedded config.json and decodes it.
+func GetBuildConfig(mode VersionMode) (*BuildConfig, error) {
 	if v, ok := Versions[mode]; ok {
 		return &v, nil
 	}

@@ -15,7 +15,7 @@ import {
 } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
 
 import { LokiDatasource } from '../../datasource';
-import { escapeLabelValueInSelector } from '../../language_utils';
+import { escapeLabelValueInSelector } from '../../languageUtils';
 import logqlGrammar from '../../syntax';
 import { lokiQueryModeller } from '../LokiQueryModeller';
 import { buildVisualQueryFromString } from '../parsing';
