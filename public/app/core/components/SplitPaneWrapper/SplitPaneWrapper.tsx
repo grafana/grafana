@@ -79,6 +79,7 @@ export class SplitPaneWrapper extends PureComponent<Props> {
 
     if (Array.isArray(leftPaneComponents)) {
       return (
+        // @ts-ignore
         <SplitPane
           split="horizontal"
           maxSize={-200}
@@ -111,6 +112,7 @@ export class SplitPaneWrapper extends PureComponent<Props> {
     }
 
     return (
+      // @ts-ignore
       <SplitPane
         split="vertical"
         maxSize={-300}
