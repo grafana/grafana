@@ -11,8 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
-import { shallow } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 
 import TickLabels from './TickLabels';
@@ -23,37 +22,36 @@ describe('<TickLabels>', () => {
     duration: 5000,
   };
 
-  let wrapper;
   let ticks;
 
   beforeEach(() => {
-    wrapper = shallow(<TickLabels {...defaultProps} />);
-    ticks = wrapper.find('[data-test="tick"]');
+    render(<TickLabels {...defaultProps} />);
+    ticks = screen.getAllByTestId('tick');
   });
 
   it('renders the right number of ticks', () => {
-    expect(ticks.length).toBe(defaultProps.numTicks + 1);
+    expect(ticks).toHaveLength(defaultProps.numTicks + 1);
   });
 
   it('places the first tick on the left', () => {
-    const firstTick = ticks.first();
-    expect(firstTick.prop('style')).toEqual({ left: '0%' });
+    const firstTick = ticks[0];
+    expect(firstTick).toHaveStyle(`left: 0%;`);
   });
 
   it('places the last tick on the right', () => {
-    const lastTick = ticks.last();
-    expect(lastTick.prop('style')).toEqual({ right: '0%' });
+    const lastTick = ticks[ticks.length - 1];
+    expect(lastTick).toHaveStyle(`right: 0%;`);
   });
 
   it('places middle ticks at proper intervals', () => {
     const positions = ['25%', '50%', '75%'];
     positions.forEach((pos, i) => {
       const tick = ticks.at(i + 1);
-      expect(tick.prop('style')).toEqual({ left: pos });
+      expect(tick).toHaveStyle(`left: ${pos};`);
     });
   });
 
   it("doesn't explode if no trace is present", () => {
-    expect(() => shallow(<TickLabels {...defaultProps} trace={null} />)).not.toThrow();
+    expect(() => render(<TickLabels {...defaultProps} trace={null} />)).not.toThrow();
   });
 });

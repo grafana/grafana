@@ -3,14 +3,13 @@ import { FocusScope } from '@react-aria/focus';
 import { Location as HistoryLocation } from 'history';
 import { cloneDeep } from 'lodash';
 import React, { useState } from 'react';
-import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, NavModelItem, NavSection } from '@grafana/data';
 import { config, locationSearchToObject, locationService, reportInteraction } from '@grafana/runtime';
 import { Icon, useTheme2, CustomScrollbar } from '@grafana/ui';
 import { getKioskMode } from 'app/core/navigation/kiosk';
-import { StoreState } from 'app/types';
+import { useSelector } from 'app/types';
 
 import { OrgSwitcher } from '../OrgSwitcher';
 
@@ -35,7 +34,7 @@ const onOpenSearch = () => {
 };
 
 export const NavBar = React.memo(() => {
-  const navBarTree = useSelector((state: StoreState) => state.navBarTree);
+  const navBarTree = useSelector((state) => state.navBarTree);
   const theme = useTheme2();
   const styles = getStyles(theme);
   const location = useLocation();

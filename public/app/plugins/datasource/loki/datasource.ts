@@ -35,13 +35,13 @@ import {
   QueryFixAction,
 } from '@grafana/data';
 import { FetchError, config, DataSourceWithBackend } from '@grafana/runtime';
-import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import { queryLogsVolume } from 'app/core/logsModel';
 import { convertToWebSocketUrl } from 'app/core/utils/explore';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
 import { serializeParams } from '../../../core/utils/fetch';
+import { RowContextOptions } from '../../../features/logs/components/LogRowContextProvider';
 import { renderLegendFormat } from '../prometheus/legend';
 import { replaceVariables, returnVariables } from '../prometheus/querybuilder/shared/parsingUtils';
 
@@ -49,7 +49,7 @@ import LanguageProvider from './LanguageProvider';
 import { LiveStreams, LokiLiveTarget } from './LiveStreams';
 import { transformBackendResult } from './backendResultTransformer';
 import { LokiAnnotationsQueryEditor } from './components/AnnotationsQueryEditor';
-import { escapeLabelValueInSelector } from './language_utils';
+import { escapeLabelValueInSelector } from './languageUtils';
 import { labelNamesRegex, labelValuesRegex } from './migrations/variableQueryMigrations';
 import {
   addLabelFormatToQuery,
@@ -59,7 +59,7 @@ import {
   removeCommentsFromQuery,
 } from './modifyQuery';
 import { getQueryHints } from './queryHints';
-import { getNormalizedLokiQuery, isLogsQuery, isValidQuery } from './query_utils';
+import { getNormalizedLokiQuery, isLogsQuery, isValidQuery } from './queryUtils';
 import { sortDataFrameByTime } from './sortDataFrame';
 import { doLokiChannelStream } from './streaming';
 import {

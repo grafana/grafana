@@ -1035,17 +1035,6 @@ steps:
       - pkg/build/**
     repo:
     - grafana/grafana
-- image: grafana/drone-downstream
-  name: trigger-enterprise-downstream
-  settings:
-    params:
-    - SOURCE_BUILD_NUMBER=${DRONE_COMMIT}
-    - SOURCE_COMMIT=${DRONE_COMMIT}
-    repositories:
-    - grafana/grafana-enterprise@main
-    server: https://drone.grafana.net
-    token:
-      from_secret: drone_token
 - commands:
   - ./bin/build build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
@@ -1652,6 +1641,45 @@ trigger:
     - latest.json
   repo:
   - grafana/grafana
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on:
+- main-publish
+kind: pipeline
+name: main-trigger-downstream
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- image: grafana/drone-downstream
+  name: trigger-enterprise-downstream
+  settings:
+    params:
+    - SOURCE_BUILD_NUMBER=${DRONE_COMMIT}
+    - SOURCE_COMMIT=${DRONE_COMMIT}
+    repositories:
+    - grafana/grafana-enterprise@main
+    server: https://drone.grafana.net
+    token:
+      from_secret: drone_token
+trigger:
+  branch: main
+  event:
+  - push
+  paths:
+    exclude:
+    - '*.md'
+    - docs/**
+    - latest.json
 type: docker
 volumes:
 - host:
@@ -3038,10 +3066,16 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
-  - ./bin/grabpl artifacts docker fetch --version-tag ${TAG} --edition oss --base
-    alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.19.1
+  name: compile-build-cmd
+- commands:
+  - ./bin/build artifacts docker fetch --edition oss
   depends_on:
-  - grabpl
+  - compile-build-cmd
   environment:
     DOCKER_PASSWORD:
       from_secret: docker_password
@@ -3118,10 +3152,16 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
-  - ./bin/grabpl artifacts docker fetch --version-tag ${TAG} --edition enterprise
-    --base alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.19.1
+  name: compile-build-cmd
+- commands:
+  - ./bin/build artifacts docker fetch --edition enterprise
   depends_on:
-  - grabpl
+  - compile-build-cmd
   environment:
     DOCKER_PASSWORD:
       from_secret: docker_password
@@ -3181,10 +3221,16 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
-  - ./bin/grabpl artifacts docker fetch --version-tag ${TAG} --edition oss --base
-    alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.19.1
+  name: compile-build-cmd
+- commands:
+  - ./bin/build artifacts docker fetch --edition oss
   depends_on:
-  - grabpl
+  - compile-build-cmd
   environment:
     DOCKER_PASSWORD:
       from_secret: docker_password
@@ -3262,10 +3308,16 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
-  - ./bin/grabpl artifacts docker fetch --version-tag ${TAG} --edition enterprise
-    --base alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.19.1
+  name: compile-build-cmd
+- commands:
+  - ./bin/build artifacts docker fetch --edition enterprise
   depends_on:
-  - grabpl
+  - compile-build-cmd
   environment:
     DOCKER_PASSWORD:
       from_secret: docker_password
@@ -5060,6 +5112,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 1bbfd995ded7c2d1c0330ef2009691577a6613ec98df296fc8ec4388b9898e2d
+hmac: 3298924f36cbab63be3873f763ead9406f47dc8b98142678d69ea83b4012541c
 
 ...
