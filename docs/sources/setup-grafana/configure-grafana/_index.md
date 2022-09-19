@@ -1571,6 +1571,18 @@ Setting this to `true` turns off shared RPC spans. Leaving this available is the
 
 <hr>
 
+## [tracing.opentelemetry]
+
+Configure general parameters shared between OpenTelemetry providers.
+
+### custom_attributes
+
+Comma-separated list of attributes to include in all new spans, such as `key1:value1,key2:value2`.
+
+Can be set with the environment variable `OTEL_RESOURCE_ATTRIBUTES` (use `=` instead of `:` with the environment variable).
+
+<hr>
+
 ## [tracing.opentelemetry.jaeger]
 
 Configure Grafana's Jaeger client for distributed tracing.

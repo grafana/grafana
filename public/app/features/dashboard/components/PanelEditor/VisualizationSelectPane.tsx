@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import React, { FC, useCallback, useRef, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme, PanelData, SelectableValue } from '@grafana/data';
@@ -11,6 +10,7 @@ import { LS_VISUALIZATION_SELECT_TAB_KEY } from 'app/core/constants';
 import { PanelLibraryOptionsGroup } from 'app/features/library-panels/components/PanelLibraryOptionsGroup/PanelLibraryOptionsGroup';
 import { VisualizationSuggestions } from 'app/features/panel/components/VizTypePicker/VisualizationSuggestions';
 import { VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
+import { useDispatch, useSelector } from 'app/types';
 
 import { VizTypePicker } from '../../../panel/components/VizTypePicker/VizTypePicker';
 import { changePanelPlugin } from '../../../panel/state/actions';

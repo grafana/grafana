@@ -356,7 +356,7 @@ func (hs *HTTPServer) setupConfigNodes(c *models.ReqContext) ([]*dtos.NavLink, e
 		})
 	}
 
-	if hasAccess(ac.ReqOrgAdmin, correlations.ConfigurationPageAccess) {
+	if hs.Features.IsEnabled(featuremgmt.FlagCorrelations) && hasAccess(ac.ReqOrgAdmin, correlations.ConfigurationPageAccess) {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "Correlations",
 			Icon:        "gf-glue",

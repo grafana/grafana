@@ -27,10 +27,11 @@ import {
   QueryFixAction,
 } from '@grafana/data';
 import { BackendSrvRequest, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
-import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import { queryLogsVolume } from 'app/core/logsModel';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
+
+import { RowContextOptions } from '../../../features/logs/components/LogRowContextProvider';
 
 import { ElasticsearchAnnotationsQueryEditor } from './components/QueryEditor/AnnotationQueryEditor';
 import {
