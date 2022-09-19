@@ -86,7 +86,7 @@ export const QueryRows = ({ exploreId }: Props) => {
   return (
     <QueryEditorRows
       dsSettings={dsSettings}
-      onDatasourceChange={(ds: DataSourceInstanceSettings, query?: DataQuery) => onMixedDataSourceChange(ds, query)}
+      onDatasourceChange={(ds: DataSourceInstanceSettings, query: DataQuery) => onMixedDataSourceChange(ds, query)}
       queries={queries}
       onQueriesChange={onChange}
       onAddQuery={onAddQuery}
