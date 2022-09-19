@@ -225,6 +225,19 @@ export const Basic: ComponentStory<React.ComponentType<SegmentAsyncProps<string>
       action('onChange fired')(value);
     },
     onExpandedChange: (expanded) => action('onExpandedChange fired')({ expanded }),
+    noOptionMessageHandler: (state) => {
+      action('noOptionMessageHandler fired')(state);
+      if (state.loading) {
+        return 'Loading...';
+      }
+      if (state.error) {
+        return 'Failed to load options';
+      }
+      if (!Array.isArray(state.value) || state.value.length === 0) {
+        return 'No options found';
+      }
+      return '';
+    },
   };
 
   return (
