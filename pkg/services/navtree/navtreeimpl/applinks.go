@@ -65,6 +65,8 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *models.ReqCo
 }
 
 func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqContext, topNavEnabled bool, treeRoot *navtree.NavTreeRoot) *navtree.NavLink {
+	hasAccess := ac.HasAccess(s.accessControl, c)
+
 	appLink := &navtree.NavLink{
 		Text:       plugin.Name,
 		Id:         "plugin-page-" + plugin.ID,
@@ -80,10 +82,14 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 	}
 
 	for _, include := range plugin.Includes {
-		if !c.HasUserRole(include.Role) {
+		if include.IsRBACReady() && !hasAccess(ac.ReqHasRole(include.Role), ac.EvalPermission(include.Action)) {
+			s.log.Debug("plugin include is covered by RBAC, user doesn't have access",
+				"plugin", plugin.ID,
+				"include", include.Name)
+			continue
+		} else if !include.IsRBACReady() && !c.HasUserRole(include.Role) {
 			continue
 		}
-
 		if include.Type == "page" && include.AddToNav {
 			link := &navtree.NavLink{
 				Text: include.Name,

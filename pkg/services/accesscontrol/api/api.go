@@ -28,6 +28,7 @@ func (api *AccessControlAPI) RegisterAPIEndpoints() {
 	// Users
 	api.RouteRegister.Get("/api/access-control/user/permissions",
 		middleware.ReqSignedIn, routing.Wrap(api.getUsersPermissions))
+	// TODO: Action: users.permission:read Scope: users:id:<userID>
 	api.RouteRegister.Post("/api/access-control/user/:userID/evaluation",
 		middleware.ReqSignedIn, routing.Wrap(api.evaluateUsersPermissions))
 }
@@ -69,6 +70,3 @@ func (api *AccessControlAPI) evaluateUsersPermissions(c *models.ReqContext) resp
 
 	return response.JSON(http.StatusOK, metadata)
 }
-
-// Action: users.permission:read
-// Scope: users:id:<userID>
