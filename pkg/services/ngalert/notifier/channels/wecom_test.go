@@ -123,8 +123,16 @@ func TestWeComNotifier(t *testing.T) {
 
 			webhookSender := mockNotificationService()
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-			decryptFn := secretsService.GetDecryptedValue
-			cfg, err := NewWeComConfig(m, decryptFn)
+
+			fc := FactoryConfig{
+				Config:              m,
+				NotificationService: webhookSender,
+				DecryptFunc:         secretsService.GetDecryptedValue,
+				ImageStore:          nil,
+				Template:            tmpl,
+			}
+
+			pn, err := buildWecomNotifier(fc)
 			if c.expInitError != "" {
 				require.Equal(t, c.expInitError, err.Error())
 				return
@@ -133,7 +141,7 @@ func TestWeComNotifier(t *testing.T) {
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
-			pn := NewWeComNotifier(cfg, webhookSender, tmpl)
+
 			ok, err := pn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.False(t, ok)
