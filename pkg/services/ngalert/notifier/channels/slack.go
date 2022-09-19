@@ -66,18 +66,17 @@ func SlackFactory(fc FactoryConfig) (NotificationChannel, error) {
 }
 
 func buildSlackNotifier(factoryConfig FactoryConfig) (*SlackNotifier, error) {
-	channelConfig := factoryConfig.Config
 	decryptFunc := factoryConfig.DecryptFunc
 	var settings slackSettings
 	err := factoryConfig.Config.unmarshalSettings(&settings)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to unmarshal settings: %w", err)
 	}
 
 	if settings.EndpointURL == "" {
 		settings.EndpointURL = SlackAPIEndpoint
 	}
-	slackURL := decryptFunc(context.Background(), channelConfig.SecureSettings, "url", settings.URL)
+	slackURL := decryptFunc(context.Background(), factoryConfig.Config.SecureSettings, "url", settings.URL)
 	if slackURL == "" {
 		slackURL = settings.EndpointURL
 	}
@@ -94,7 +93,7 @@ func buildSlackNotifier(factoryConfig FactoryConfig) (*SlackNotifier, error) {
 	if settings.MentionChannel != "" && settings.MentionChannel != "here" && settings.MentionChannel != "channel" {
 		return nil, fmt.Errorf("invalid value for mentionChannel: %q", settings.MentionChannel)
 	}
-	settings.Token = decryptFunc(context.Background(), channelConfig.SecureSettings, "token", settings.Token)
+	settings.Token = decryptFunc(context.Background(), factoryConfig.Config.SecureSettings, "token", settings.Token)
 	if settings.Token == "" && settings.URL == SlackAPIEndpoint {
 		return nil, errors.New("token must be specified when using the Slack chat API")
 	}
