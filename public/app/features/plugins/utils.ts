@@ -2,7 +2,6 @@ import { Location as HistoryLocation } from 'history';
 
 import { GrafanaPlugin, NavIndex, NavModel, NavModelItem, PanelPluginMeta, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { getNavModel } from 'app/core/selectors/navModel';
 
 import { importPanelPluginFromMeta } from './importPanelPlugin';
 import { getPluginSettings } from './pluginSettings';
@@ -33,14 +32,28 @@ export async function loadPlugin(pluginId: string): Promise<GrafanaPlugin> {
   return result;
 }
 
-export function buildPluginSectionNav(location: HistoryLocation, pluginNav: NavModel | null, navIndex: NavIndex) {
+export function buildPluginSectionNav(
+  location: HistoryLocation,
+  pluginNav: NavModel | null,
+  navIndex: NavIndex,
+  pluginId: string
+) {
   // When topnav is disabled we only just show pluginNav like before
   if (!config.featureToggles.topnav) {
     return pluginNav;
   }
 
-  const originalSection = getNavModel(navIndex, 'apps').main;
-  const section = { ...originalSection };
+  const navTreeNodeForPlugin = navIndex[`plugin-page-${pluginId}`];
+  if (!navTreeNodeForPlugin) {
+    throw new Error('Plugin not found in navigation tree');
+  }
+
+  if (!navTreeNodeForPlugin.parentItem) {
+    throw new Error('Could not find plugin section');
+  }
+
+  const pluginSection = navTreeNodeForPlugin.parentItem;
+  const section = { ...pluginSection };
 
   // If we have plugin nav don't set active page in section as it will cause double breadcrumbs
   const currentUrl = config.appSubUrl + location.pathname + location.search;

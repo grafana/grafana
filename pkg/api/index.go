@@ -78,14 +78,15 @@ func (hs *HTTPServer) getProfileNode(c *models.ReqContext) *dtos.NavLink {
 	}
 }
 
-func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error) {
+func (hs *HTTPServer) addAppLinks(navTree []*dtos.NavLink, c *models.ReqContext) ([]*dtos.NavLink, error) {
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	enabledPlugins, err := hs.enabledPlugins(c.Req.Context(), c.OrgID)
 	if err != nil {
-		return nil, err
+		return navTree, err
 	}
 
 	appLinks := []*dtos.NavLink{}
+
 	for _, plugin := range enabledPlugins[plugins.App] {
 		if !plugin.Pinned {
 			continue
@@ -152,7 +153,16 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 			if len(appLink.Children) == 1 && appLink.Children[0].Url == appLink.Url {
 				appLink.Children = []*dtos.NavLink{}
 			}
-			appLinks = append(appLinks, appLink)
+
+			if navId, hasNavId := hs.Cfg.PluginAppNavIds[plugin.ID]; hasNavId {
+				if navNode := navlinks.FindById(navTree, navId); navNode != nil {
+					navNode.Children = append(navNode.Children, appLink)
+				} else {
+					hs.log.Error("Plugin app nav id not found", "pluginId", plugin.ID, "navId", navId)
+				}
+			} else {
+				appLinks = append(appLinks, appLink)
+			}
 		}
 	}
 
@@ -161,7 +171,23 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 			return appLinks[i].Text < appLinks[j].Text
 		})
 	}
-	return appLinks, nil
+
+	if hs.Features.IsEnabled(featuremgmt.FlagTopnav) {
+		appSection := &dtos.NavLink{
+			Text:        "Apps",
+			Icon:        "apps",
+			Description: "App plugins",
+			Id:          "apps",
+			Section:     dtos.NavSectionCore,
+			Children:    appLinks,
+			Url:         hs.Cfg.AppSubURL + "/apps",
+		}
+		navTree = append(navTree, appSection)
+	} else {
+		navTree = append(navTree, appLinks...)
+	}
+
+	return navTree, nil
 }
 
 func enableServiceAccount(hs *HTTPServer, c *models.ReqContext) bool {
@@ -247,26 +273,6 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 		navTree = append(navTree, hs.buildDataConnectionsNavLink(c))
 	}
 
-	appLinks, err := hs.getAppLinks(c)
-	if err != nil {
-		return nil, err
-	}
-
-	// When topnav is enabled we can test new information architecture where plugins live in Apps category
-	if hs.Features.IsEnabled(featuremgmt.FlagTopnav) {
-		navTree = append(navTree, &dtos.NavLink{
-			Text:        "Apps",
-			Icon:        "apps",
-			Description: "App plugins",
-			Id:          "apps",
-			Children:    appLinks,
-			Section:     dtos.NavSectionCore,
-			Url:         hs.Cfg.AppSubURL + "/apps",
-		})
-	} else {
-		navTree = append(navTree, appLinks...)
-	}
-
 	configNodes, err := hs.setupConfigNodes(c)
 	if err != nil {
 		return navTree, err
@@ -338,6 +344,11 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 	}
 
 	navTree = hs.addHelpLinks(navTree, c)
+
+	navTree, err = hs.addAppLinks(navTree, c)
+	if err != nil {
+		return nil, err
+	}
 
 	return navTree, nil
 }

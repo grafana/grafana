@@ -260,7 +260,9 @@ type Cfg struct {
 	CSPTemplate           string
 	AngularSupportEnabled bool
 
-	TempDataLifetime                 time.Duration
+	TempDataLifetime time.Duration
+
+	// Plugins
 	PluginsEnableAlpha               bool
 	PluginsAppsSkipVerifyTLS         bool
 	PluginSettings                   PluginSettings
@@ -269,8 +271,11 @@ type Cfg struct {
 	PluginCatalogHiddenPlugins       []string
 	PluginAdminEnabled               bool
 	PluginAdminExternalManageEnabled bool
-	DisableSanitizeHtml              bool
-	EnterpriseLicensePath            string
+	PluginAppNavIds                  map[string]string
+	PluginPageNavIdOverrides         []string
+
+	DisableSanitizeHtml   bool
+	EnterpriseLicensePath string
 
 	// Metrics
 	MetricsEndpointEnabled           bool
@@ -1069,6 +1074,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.readDateFormats()
 	cfg.readSentryConfig()
 	cfg.readGrafanaJavascriptAgentConfig()
+	cfg.readNavigationSettings()
 
 	if err := cfg.readLiveSettings(iniFile); err != nil {
 		return err

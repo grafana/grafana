@@ -39,7 +39,9 @@ export function AppRootPage({ match, queryParams, location }: Props) {
   const portalNode = useMemo(() => createHtmlPortalNode(), []);
   const { plugin, loading, pluginNav } = state;
   const sectionNav = useSelector(
-    createSelector(getNavIndex, (navIndex) => buildPluginSectionNav(location, pluginNav, navIndex))
+    createSelector(getNavIndex, (navIndex) =>
+      buildPluginSectionNav(location, pluginNav, navIndex, match.params.pluginId)
+    )
   );
   const context = useMemo(() => buildPluginPageContext(sectionNav), [sectionNav]);
 
@@ -53,12 +55,12 @@ export function AppRootPage({ match, queryParams, location }: Props) {
   );
 
   if (!plugin || match.params.pluginId !== plugin.meta.id) {
-    return <Page {...getLoadingPageProps()}>{loading && <PageLoader />}</Page>;
+    return <Page {...getLoadingPageProps(sectionNav)}>{loading && <PageLoader />}</Page>;
   }
 
   if (!plugin.root) {
     return (
-      <Page navModel={getWarningNav('Plugin load error')}>
+      <Page navModel={sectionNav ?? getWarningNav('Plugin load error')}>
         <div>No root app page component found</div>;
       </Page>
     );
@@ -120,9 +122,9 @@ const stateSlice = createSlice({
   },
 });
 
-function getLoadingPageProps(): Partial<PageProps> {
-  if (config.featureToggles.topnav) {
-    return { navId: 'apps' };
+function getLoadingPageProps(sectionNav: NavModel | null): Partial<PageProps> {
+  if (config.featureToggles.topnav && sectionNav) {
+    return { navModel: sectionNav };
   }
 
   const loading = { text: 'Loading plugin' };

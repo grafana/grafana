@@ -19,3 +19,18 @@ func GetServerAdminNode(children []*dtos.NavLink) *dtos.NavLink {
 		Children:     children,
 	}
 }
+
+func FindById(nodes []*dtos.NavLink, id string) *dtos.NavLink {
+	for _, child := range nodes {
+		if child.Id == id {
+			return child
+		} else if len(child.Children) > 0 {
+			found := FindById(child.Children, id)
+			if found != nil {
+				return found
+			}
+		}
+	}
+
+	return nil
+}
