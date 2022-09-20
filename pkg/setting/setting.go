@@ -136,6 +136,7 @@ var (
 
 	// analytics
 	GoogleAnalyticsId       string
+	GoogleAnalytics4Id      string
 	GoogleTagManagerId      string
 	RudderstackDataPlaneUrl string
 	RudderstackWriteKey     string
@@ -956,6 +957,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.CheckForGrafanaUpdates = analytics.Key("check_for_updates").MustBool(true)
 	cfg.CheckForPluginUpdates = analytics.Key("check_for_plugin_updates").MustBool(true)
 	GoogleAnalyticsId = analytics.Key("google_analytics_ua_id").String()
+	GoogleAnalytics4Id = analytics.Key("google_analytics_4_id").String()
 	GoogleTagManagerId = analytics.Key("google_tag_manager_id").String()
 	RudderstackWriteKey = analytics.Key("rudderstack_write_key").String()
 	RudderstackDataPlaneUrl = analytics.Key("rudderstack_data_plane_url").String()
