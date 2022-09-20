@@ -18,7 +18,7 @@ import { getFiscalYearStartMonth, getTimeZone } from '../profile/state/selectors
 import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
 import { changeDatasource } from './state/datasource';
-import { evenResizePane, maximizePane, splitClose, splitOpen } from './state/main';
+import { evenPaneResizeAction, maximizePaneAction, splitClose, splitOpen } from './state/main';
 import { cancelQueries, runQueries } from './state/query';
 import { isSplit } from './state/selectors';
 import { syncTimes, changeRefreshInterval } from './state/time';
@@ -140,9 +140,9 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
 
     const onClickResize = () => {
       if (isLargerExploreId) {
-        this.props.evenResizePane();
+        this.props.evenPaneResizeAction();
       } else {
-        this.props.maximizePane(exploreId);
+        this.props.maximizePaneAction({ exploreId: exploreId });
       }
     };
 
@@ -294,8 +294,8 @@ const mapDispatchToProps = {
   syncTimes,
   onChangeTimeZone: updateTimeZoneForSession,
   onChangeFiscalYearStartMonth: updateFiscalYearStartMonthForSession,
-  maximizePane,
-  evenResizePane,
+  maximizePaneAction,
+  evenPaneResizeAction,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);

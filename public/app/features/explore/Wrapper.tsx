@@ -21,7 +21,7 @@ import {
   resetExploreAction,
   richHistoryUpdatedAction,
   cleanupPaneAction,
-  changeLargerPane,
+  splitSizeUpdateAction,
 } from './state/main';
 
 const styles = {
@@ -54,7 +54,7 @@ const mapDispatchToProps = {
   resetExploreAction,
   richHistoryUpdatedAction,
   cleanupPaneAction,
-  changeLargerPane,
+  splitSizeUpdateAction,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -75,11 +75,11 @@ class WrapperUnconnected extends PureComponent<Props, WrapperState> {
     const { left, right } = this.props.queryParams;
 
     if (Boolean(left)) {
-      cleanupPaneAction({ exploreId: ExploreId.left });
+      this.props.cleanupPaneAction({ exploreId: ExploreId.left });
     }
 
     if (Boolean(right)) {
-      cleanupPaneAction({ exploreId: ExploreId.right });
+      this.props.cleanupPaneAction({ exploreId: ExploreId.right });
     }
 
     this.props.resetExploreAction({});
@@ -119,17 +119,19 @@ class WrapperUnconnected extends PureComponent<Props, WrapperState> {
     document.title = documentTitle;
   }
 
-  updateSplitSize(rightPaneWidth: number) {
+  updateSplitSize = (rightPaneWidth: number) => {
     const evenSplitWidth = window.innerWidth / 2;
     const areBothSimilar = inRange(rightPaneWidth, evenSplitWidth - 100, evenSplitWidth + 100);
     if (areBothSimilar) {
-      this.props.changeLargerPane(undefined);
+      this.props.splitSizeUpdateAction({ largerExploreId: undefined });
     } else {
-      this.props.changeLargerPane(rightPaneWidth > evenSplitWidth ? ExploreId.right : ExploreId.left);
+      this.props.splitSizeUpdateAction({
+        largerExploreId: rightPaneWidth > evenSplitWidth ? ExploreId.right : ExploreId.left,
+      });
     }
 
     this.setState({ rightPaneWidth });
-  }
+  };
 
   render() {
     const { left, right } = this.props.queryParams;
@@ -153,13 +155,7 @@ class WrapperUnconnected extends PureComponent<Props, WrapperState> {
       <div className={styles.pageScrollbarWrapper}>
         <ExploreActions exploreIdLeft={ExploreId.left} exploreIdRight={ExploreId.right} />
         <div className={styles.exploreWrapper}>
-          <SplitView
-            uiState={splitSizeObj}
-            minSize={this.minWidth}
-            onResize={(width: number) => {
-              this.updateSplitSize(width);
-            }}
-          >
+          <SplitView uiState={splitSizeObj} minSize={this.minWidth} onResize={this.updateSplitSize}>
             <ErrorBoundaryAlert style="page" key="LeftPane">
               <ExplorePaneContainer split={hasSplit} exploreId={ExploreId.left} urlQuery={left} />
             </ErrorBoundaryAlert>

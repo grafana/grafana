@@ -143,24 +143,6 @@ export function splitClose(itemId: ExploreId): ThunkResult<void> {
   };
 }
 
-export function changeLargerPane(largerExploreId?: ExploreId): ThunkResult<void> {
-  return (dispatch, getState) => {
-    dispatch(splitSizeUpdateAction({ largerExploreId }));
-  };
-}
-
-export function maximizePane(exploreId?: ExploreId): ThunkResult<void> {
-  return (dispatch, getState) => {
-    dispatch(maximizePaneAction({ exploreId }));
-  };
-}
-
-export function evenResizePane(): ThunkResult<void> {
-  return (dispatch, getState) => {
-    dispatch(evenPaneResizeAction());
-  };
-}
-
 export interface NavigateToExploreDependencies {
   getDataSourceSrv: () => DataSourceSrv;
   getTimeSrv: () => TimeSrv;
