@@ -81,7 +81,7 @@
     "@babel/plugin-proposal-optional-chaining": "7.18.9",
     "@babel/plugin-syntax-dynamic-import": "7.8.3",
     "@babel/plugin-transform-react-constant-elements": "7.18.9",
-    "@babel/plugin-transform-runtime": "7.18.9",
+    "@babel/plugin-transform-runtime": "7.19.1",
     "@babel/plugin-transform-typescript": "7.19.0",
     "@babel/preset-env": "7.19.0",
     "@babel/preset-react": "7.18.6",
