@@ -864,6 +864,20 @@ describe('LokiDatasource', () => {
       expect(queries[0].expr).toBe('{foo="bar"}');
     });
   });
+
+  describe('getDataSamples', () => {
+    it('hide request from inspector', () => {
+      const ds = createLokiDatasource(templateSrvStub);
+      const spy = jest.spyOn(ds, 'query').mockImplementation(() => of({} as DataQueryResponse));
+      ds.getDataSamples({ expr: '{job="bar"}', refId: 'A' });
+      expect(spy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          hideFromInspector: true,
+          requestId: 'log-samples',
+        })
+      );
+    });
+  });
 });
 
 describe('applyTemplateVariables', () => {

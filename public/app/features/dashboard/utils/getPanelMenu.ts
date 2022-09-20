@@ -1,7 +1,7 @@
 import { t } from '@lingui/macro';
 
 import { PanelMenuItem } from '@grafana/data';
-import { AngularComponent, getDataSourceSrv, locationService } from '@grafana/runtime';
+import { AngularComponent, getDataSourceSrv, locationService, reportInteraction } from '@grafana/runtime';
 import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -62,6 +62,10 @@ export function getPanelMenu(
     locationService.partial({
       inspect: panel.id,
       inspectTab: tab,
+    });
+
+    reportInteraction('grafana_panel_menu_inspect', {
+      tab: tab ?? InspectTab.Data,
     });
   };
 
@@ -172,14 +176,6 @@ export function getPanelMenu(
     onClick: (e: React.MouseEvent<any>) => onInspectPanel(InspectTab.JSON),
   });
 
-  // Only show for editors
-  if (panel.plugin && dashboard.meta.canEdit && !panel.plugin.meta.skipDataQuery) {
-    inspectMenu.push({
-      text: 'Support snapshot',
-      onClick: (e: React.MouseEvent) => onInspectPanel(InspectTab.Support),
-    });
-  }
-
   const inspectTextTranslation = t({
     id: 'panel.header-menu.inspect',
     message: `Inspect`,
@@ -195,8 +191,9 @@ export function getPanelMenu(
   });
 
   const subMenu: PanelMenuItem[] = [];
+  const canEdit = dashboard.canEditPanel(panel);
 
-  if (dashboard.canEditPanel(panel) && !(panel.isViewing || panel.isEditing)) {
+  if (canEdit && !(panel.isViewing || panel.isEditing)) {
     subMenu.push({
       text: 'Duplicate',
       onClick: onDuplicatePanel,
@@ -252,7 +249,19 @@ export function getPanelMenu(
     });
   }
 
-  if (!panel.isEditing && subMenu.length) {
+  // When editing hide most actions
+  if (panel.isEditing) {
+    subMenu.length = 0;
+  }
+
+  if (canEdit && panel.plugin && !panel.plugin.meta.skipDataQuery) {
+    subMenu.push({
+      text: 'Get help',
+      onClick: (e: React.MouseEvent) => onInspectPanel(InspectTab.Help),
+    });
+  }
+
+  if (subMenu.length) {
     const moreTextTranslation = t({
       id: 'panel.header-menu.more',
       message: `More...`,

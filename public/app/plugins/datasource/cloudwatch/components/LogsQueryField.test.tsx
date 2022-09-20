@@ -38,7 +38,7 @@ describe('CloudWatchLogsQueryField', () => {
   it('loads defaultLogGroups', async () => {
     const onRunQuery = jest.fn();
     const ds = setupMockedDataSource();
-    ds.datasource.defaultLogGroups = ['foo'];
+    ds.datasource.logsQueryRunner.defaultLogGroups = ['foo'];
 
     render(
       <CloudWatchLogsQueryField

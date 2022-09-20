@@ -9,6 +9,7 @@ import { Themeable2, withTheme2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { Page } from 'app/core/components/Page/Page';
 import { config } from 'app/core/config';
+import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getKioskMode } from 'app/core/navigation/kiosk';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -96,6 +97,8 @@ export interface State {
 }
 
 export class UnthemedDashboardPage extends PureComponent<Props, State> {
+  static contextType = GrafanaContext;
+
   private forceRouteReloadCounter = 0;
   state: State = this.getCleanState();
 
@@ -139,6 +142,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       routeName: this.props.route.routeName,
       fixUrl: !isPublic,
       accessToken: match.params.accessToken,
+      keybindingSrv: this.context.keybindings,
     });
 
     // small delay to start live updates
@@ -336,7 +340,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     }
 
     const inspectPanel = this.getInspectPanel();
-    const showSubMenu = !editPanel && kioskMode === KioskMode.Off && !this.props.queryParams.editview;
+    const showSubMenu = !editPanel && !kioskMode && !this.props.queryParams.editview;
 
     const toolbar = kioskMode !== KioskMode.Full && !queryParams.editview && (
       <header data-testid={selectors.pages.Dashboard.DashNav.navV2}>

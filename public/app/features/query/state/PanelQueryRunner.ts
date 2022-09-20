@@ -216,7 +216,7 @@ export class PanelQueryRunner {
     } = options;
 
     if (isSharedDashboardQuery(datasource)) {
-      this.pipeToSubject(runSharedRequest(options), panelId);
+      this.pipeToSubject(runSharedRequest(options, queries[0]), panelId);
       return;
     }
 
@@ -349,6 +349,11 @@ export class PanelQueryRunner {
       // The subject is a replay subject so anyone subscribing will get this last result
       this.subject.next(this.lastResult);
     }
+  }
+
+  /** Useful from tests */
+  setLastResult(data: PanelData) {
+    this.lastResult = data;
   }
 
   getLastResult(): PanelData | undefined {

@@ -108,3 +108,27 @@ func (s *Service) GetUserOrgList(ctx context.Context, query *org.GetUserOrgListQ
 func (s *Service) UpdateOrg(ctx context.Context, cmd *org.UpdateOrgCommand) error {
 	return s.store.Update(ctx, cmd)
 }
+
+// TODO: remove wrapper around sqlstore
+func (s *Service) Search(ctx context.Context, query *org.SearchOrgsQuery) ([]*org.OrgDTO, error) {
+	var res []*org.OrgDTO
+	q := &models.SearchOrgsQuery{
+		Query: query.Query,
+		Name:  query.Name,
+		Limit: query.Limit,
+		Page:  query.Page,
+		Ids:   query.IDs,
+	}
+	err := s.sqlStore.SearchOrgs(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, r := range q.Result {
+		res = append(res, &org.OrgDTO{
+			ID:   r.Id,
+			Name: r.Name,
+		})
+	}
+	return res, nil
+}
