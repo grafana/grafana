@@ -11570,6 +11570,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/gtag.js@npm:^0.0.11":
+  version: 0.0.11
+  resolution: "@types/gtag.js@npm:0.0.11"
+  checksum: fe3f0550f609a903fd23b2b7eae2771ad6c9f314c7458320759e8e328b2c148b7d3bff0462d05e3ffe6e800dbd4dfacf174cbeb29796b31813a8bb2fbecca1cc
+  languageName: node
+  linkType: hard
+
 "@types/hast@npm:^2.0.0":
   version: 2.3.4
   resolution: "@types/hast@npm:2.3.4"
@@ -22224,6 +22231,7 @@ __metadata:
     "@types/eslint": 8.4.5
     "@types/file-saver": 2.0.5
     "@types/google.analytics": ^0.0.42
+    "@types/gtag.js": ^0.0.11
     "@types/history": 4.7.11
     "@types/hoist-non-react-statics": 3.3.1
     "@types/jest": 28.1.6

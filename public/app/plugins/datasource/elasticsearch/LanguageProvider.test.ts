@@ -2,8 +2,8 @@ import { AbstractLabelOperator, AbstractQuery } from '@grafana/data';
 
 import { TemplateSrv } from '../../../features/templating/template_srv';
 
+import LanguageProvider from './LanguageProvider';
 import { ElasticDatasource } from './datasource';
-import LanguageProvider from './language_provider';
 import { createElasticDatasource } from './mocks';
 import { ElasticsearchQuery } from './types';
 

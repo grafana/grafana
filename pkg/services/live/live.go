@@ -76,7 +76,8 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	pluginStore plugins.Store, cacheService *localcache.CacheService,
 	dataSourceCache datasources.CacheService, sqlStore *sqlstore.SQLStore, secretsService secrets.Service,
 	usageStatsService usagestats.Service, queryDataService *query.Service, toggles featuremgmt.FeatureToggles,
-	accessControl accesscontrol.AccessControl, dashboardService dashboards.DashboardService, annotationsRepo annotations.Repository) (*GrafanaLive, error) {
+	accessControl accesscontrol.AccessControl, dashboardService dashboards.DashboardService, annotationsRepo annotations.Repository,
+	orgService org.Service) (*GrafanaLive, error) {
 	g := &GrafanaLive{
 		Cfg:                   cfg,
 		Features:              toggles,
@@ -93,6 +94,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 			Features: make(map[string]models.ChannelHandlerFactory),
 		},
 		usageStatsService: usageStatsService,
+		orgService:        orgService,
 	}
 
 	logger.Debug("GrafanaLive initialization", "ha", g.IsHA())
@@ -213,16 +215,16 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		// Pre-build/validate channel rules for all organizations on start.
 		// This can be unreasonable to have in production scenario with many
 		// organizations.
-		orgQuery := &models.SearchOrgsQuery{}
+		orgQuery := &org.SearchOrgsQuery{}
 
-		err := sqlStore.SearchOrgs(context.Background(), orgQuery)
+		result, err := orgService.Search(context.Background(), orgQuery)
 		if err != nil {
 			return nil, fmt.Errorf("can't get org list: %w", err)
 		}
-		for _, org := range orgQuery.Result {
-			_, _, err := channelRuleGetter.Get(org.Id, "")
+		for _, org := range result {
+			_, _, err := channelRuleGetter.Get(org.ID, "")
 			if err != nil {
-				return nil, fmt.Errorf("error building channel rules for org %d: %w", org.Id, err)
+				return nil, fmt.Errorf("error building channel rules for org %d: %w", org.ID, err)
 			}
 		}
 
@@ -413,6 +415,7 @@ type GrafanaLive struct {
 	SecretsService        secrets.Service
 	pluginStore           plugins.Store
 	queryDataService      *query.Service
+	orgService            org.Service
 
 	node         *centrifuge.Node
 	surveyCaller *survey.Caller
