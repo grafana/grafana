@@ -119,6 +119,7 @@ describe('SharePublic', () => {
     await screen.findByText('Welcome to Grafana public dashboards alpha!');
     expect(screen.getByText('Last 6 hours')).toBeInTheDocument();
   });
+
   it('renders default absolute time in input 2', async () => {
     config.featureToggles.publicDashboards = true;
     const mockDashboard = new DashboardModel({

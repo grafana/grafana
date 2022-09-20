@@ -1075,7 +1075,6 @@ func TestAlertRuleCRUD(t *testing.T) {
 				require.NoError(t, err)
 
 				assert.Equal(t, res.Message, tc.expectedMessage)
-				assert.NotEmpty(t, res.TraceID)
 
 				assert.Equal(t, http.StatusBadRequest, status)
 			})
@@ -2330,7 +2329,6 @@ func TestEval(t *testing.T) {
 			}
 			if tc.expectedMessage() != "" {
 				assert.Equal(t, tc.expectedMessage(), res.Message)
-				assert.NotEmpty(t, res.TraceID)
 			}
 		})
 	}
@@ -2513,7 +2511,6 @@ func TestEval(t *testing.T) {
 			}
 			if tc.expectedMessage() != "" {
 				require.Equal(t, tc.expectedMessage(), res.Message)
-				require.NotEmpty(t, res.TraceID)
 			}
 		})
 	}
