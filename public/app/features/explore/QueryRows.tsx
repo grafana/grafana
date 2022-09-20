@@ -3,6 +3,7 @@ import React, { useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { CoreApp, DataQuery } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { getNextRefIdChar } from 'app/core/utils/query';
 import { ExploreId } from 'app/types/explore';
 
@@ -66,6 +67,18 @@ export const QueryRows = ({ exploreId }: Props) => {
     [onChange, queries]
   );
 
+  const onQueryCopied = () => {
+    reportInteraction('grafana_explore_query_row_copy');
+  };
+
+  const onQueryRemoved = () => {
+    reportInteraction('grafana_explore_query_row_remove');
+  };
+
+  const onQueryToggled = (queryStatus?: boolean) => {
+    reportInteraction('grafana_query_row_toggle', queryStatus === undefined ? {} : { queryEnabled: queryStatus });
+  };
+
   return (
     <QueryEditorRows
       dsSettings={dsSettings}
@@ -73,6 +86,9 @@ export const QueryRows = ({ exploreId }: Props) => {
       onQueriesChange={onChange}
       onAddQuery={onAddQuery}
       onRunQueries={onRunQueries}
+      onQueryCopied={onQueryCopied}
+      onQueryRemoved={onQueryRemoved}
+      onQueryToggled={onQueryToggled}
       data={queryResponse}
       app={CoreApp.Explore}
       history={history}
