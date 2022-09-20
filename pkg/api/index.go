@@ -839,6 +839,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		AppUrl:                  appURL,
 		AppSubUrl:               appSubURL,
 		GoogleAnalyticsId:       setting.GoogleAnalyticsId,
+		GoogleAnalytics4Id:      setting.GoogleAnalytics4Id,
 		GoogleTagManagerId:      setting.GoogleTagManagerId,
 		BuildVersion:            setting.BuildVersion,
 		BuildCommit:             setting.BuildCommit,

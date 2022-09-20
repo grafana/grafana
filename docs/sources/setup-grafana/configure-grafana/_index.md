@@ -474,6 +474,10 @@ Set to false disables checking for new versions of installed plugins from https:
 If you want to track Grafana usage via Google analytics specify _your_ Universal
 Analytics ID here. By default this feature is disabled.
 
+### google_analytics_4_id
+
+If you want to track Grafana usage via Google Analytics 4 specify _your_ GA4 ID here. By default this feature is disabled.
+
 ### google_tag_manager_id
 
 Google Tag Manager ID, only enabled if you enter an ID here.
