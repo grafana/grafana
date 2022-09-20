@@ -13,7 +13,7 @@ import (
 	"github.com/benbjohnson/clock"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
@@ -98,7 +98,7 @@ func Test_maybeNewImage(t *testing.T) {
 			imageService := &CountingImageService{}
 			mgr := NewManager(log.NewNopLogger(), &metrics.State{}, nil,
 				&store.FakeRuleStore{}, &store.FakeInstanceStore{},
-				&dashboards.FakeDashboardService{}, imageService, clock.NewMock())
+				&dashboards.FakeDashboardService{}, imageService, clock.NewMock(), annotationstest.NewFakeAnnotationsRepo())
 			err := mgr.maybeTakeScreenshot(context.Background(), &ngmodels.AlertRule{}, test.state, test.oldState)
 			require.NoError(t, err)
 			if !test.shouldScreenshot {
@@ -156,9 +156,7 @@ func TestIsItStale(t *testing.T) {
 func TestClose(t *testing.T) {
 	instanceStore := &store.FakeInstanceStore{}
 	clk := clock.New()
-	st := NewManager(log.New("test_state_manager"), metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(), nil, nil, instanceStore, &dashboards.FakeDashboardService{}, &image.NotAvailableImageService{}, clk)
-	fakeAnnoRepo := store.NewFakeAnnotationsRepo()
-	annotations.SetRepository(fakeAnnoRepo)
+	st := NewManager(log.New("test_state_manager"), metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(), nil, nil, instanceStore, &dashboards.FakeDashboardService{}, &image.NotAvailableImageService{}, clk, annotationstest.NewFakeAnnotationsRepo())
 
 	_, rules := ngmodels.GenerateUniqueAlertRules(10, ngmodels.AlertRuleGen())
 	for _, rule := range rules {

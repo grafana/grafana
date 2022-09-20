@@ -76,6 +76,27 @@ type UpdateOrgCommand struct {
 	OrgId int64
 }
 
+type SearchOrgsQuery struct {
+	Query string
+	Name  string
+	Limit int
+	Page  int
+	IDs   []int64
+}
+
+type OrgDTO struct {
+	ID   int64  `json:"id"`
+	Name string `json:"name"`
+}
+
+type GetOrgByIdQuery struct {
+	ID int64
+}
+
+type GetOrgByNameQuery struct {
+	Name string
+}
+
 func (r RoleType) IsValid() bool {
 	return r == RoleViewer || r == RoleAdmin || r == RoleEditor
 }
