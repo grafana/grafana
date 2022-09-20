@@ -135,15 +135,22 @@ interface NotifiersTableProps {
 }
 
 function LastNotify({ lastNotify }: { lastNotify: string }) {
-  const lastNotifyDuration = lastNotify;
-  return (
-    <Stack alignItems="center">
-      <div>{dateTime(lastNotifyDuration).locale('en').fromNow(true)} ago</div>
-      <Icon name="clock-nine" />
-      <div>{dateTimeFormat(lastNotifyDuration, { format: 'YYYY-MM-DD HH:mm:ss' })}</div>
-    </Stack>
-  );
+  const lastNotifyDate = lastNotify;
+  const isLastNotifyNullDate = lastNotifyDate === '0001-01-01T00:00:00.000Z';
+
+  if (isLastNotifyNullDate) {
+    return <>{'-'}</>;
+  } else {
+    return (
+      <Stack alignItems="center">
+        <div>{`${dateTime(lastNotifyDate).locale('en').fromNow(true)} ago`}</div>
+        <Icon name="clock-nine" />
+        <div>{`${dateTimeFormat(lastNotifyDate, { format: 'YYYY-MM-DD HH:mm:ss' })}`}</div>
+      </Stack>
+    );
+  }
 }
+
 function NotifiersTable({ notifiersState }: NotifiersTableProps) {
   function getNotifierColumns(): NotifierTableColumnProps[] {
     return [
