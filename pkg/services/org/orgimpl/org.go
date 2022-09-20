@@ -18,10 +18,10 @@ type Service struct {
 	cfg   *setting.Cfg
 	log   log.Logger
 	// TODO remove sqlstore and use db.DB
-	sqlStore *sqlstore.SQLStore
+	sqlStore sqlstore.Store
 }
 
-func ProvideService(cfg *setting.Cfg, db *sqlstore.SQLStore) org.Service {
+func ProvideService(db sqlstore.Store, cfg *setting.Cfg) org.Service {
 	return &Service{
 		store: &sqlStore{
 			db:      db,
