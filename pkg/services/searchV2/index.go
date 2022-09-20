@@ -461,10 +461,11 @@ func (i *searchIndex) buildOrgIndex(ctx context.Context, orgID int64) (int, erro
 
 	i.logger.Info("Start building org index", "orgId", orgID)
 	dashboards, err := i.loader.LoadDashboards(ctx, orgID, "")
-	if err != nil {
-		return 0, fmt.Errorf("error loading dashboards: %w", err)
-	}
 	orgSearchIndexLoadTime := time.Since(started)
+
+	if err != nil {
+		return 0, fmt.Errorf("error loading dashboards: %w, elapsed: %s", err, orgSearchIndexLoadTime.String())
+	}
 	i.logger.Info("Finish loading org dashboards", "elapsed", orgSearchIndexLoadTime, "orgId", orgID)
 
 	dashboardExtender := i.extender.GetDashboardExtender(orgID)
