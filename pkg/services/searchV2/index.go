@@ -176,6 +176,8 @@ func (i *searchIndex) sync(ctx context.Context) error {
 }
 
 func (i *searchIndex) run(ctx context.Context, orgIDs []int64, reIndexSignalCh chan struct{}) error {
+	initialSetupCtx, initialSetupSpan := i.tracer.Start(ctx, "searchV2 initialSetup")
+
 	reIndexInterval := 5 * time.Minute
 	fullReIndexTimer := time.NewTimer(reIndexInterval)
 	defer fullReIndexTimer.Stop()
@@ -185,16 +187,18 @@ func (i *searchIndex) run(ctx context.Context, orgIDs []int64, reIndexSignalCh c
 	defer partialUpdateTimer.Stop()
 
 	var lastEventID int64
-	lastEvent, err := i.eventStore.GetLastEvent(ctx)
+	lastEvent, err := i.eventStore.GetLastEvent(initialSetupCtx)
 	if err != nil {
+		initialSetupSpan.End()
 		return err
 	}
 	if lastEvent != nil {
 		lastEventID = lastEvent.Id
 	}
 
-	err = i.buildInitialIndexes(ctx, orgIDs)
+	err = i.buildInitialIndexes(initialSetupCtx, orgIDs)
 	if err != nil {
+		initialSetupSpan.End()
 		return err
 	}
 
@@ -207,6 +211,8 @@ func (i *searchIndex) run(ctx context.Context, orgIDs []int64, reIndexSignalCh c
 	i.initializationMutex.Lock()
 	i.initialIndexingComplete = true
 	i.initializationMutex.Unlock()
+
+	initialSetupSpan.End()
 
 	for {
 		select {
@@ -802,6 +808,8 @@ func newSQLDashboardLoader(sql *sqlstore.SQLStore, tracer tracing.Tracer) *sqlDa
 
 func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, dashboardUID string) ([]dashboard, error) {
 	ctx, span := l.tracer.Start(ctx, "sqlDashboardLoader LoadDashboards")
+	span.SetAttributes("orgID", orgID, attribute.Key("orgID").Int64(orgID))
+
 	defer span.End()
 
 	var dashboards []dashboard
@@ -829,6 +837,8 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 	}
 
 	loadDatasourceCtx, loadDatasourceSpan := l.tracer.Start(ctx, "sqlDashboardLoader LoadDatasourceLookup")
+	loadDatasourceSpan.SetAttributes("orgID", orgID, attribute.Key("orgID").Int64(orgID))
+
 	// key will allow name or uid
 	lookup, err := dslookup.LoadDatasourceLookup(loadDatasourceCtx, orgID, l.sql)
 	if err != nil {
