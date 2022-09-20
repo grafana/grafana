@@ -10,6 +10,7 @@ import { useTheme2, ReactMonacoEditor, Monaco, monacoTypes } from '@grafana/ui';
 import { Props } from './MonacoQueryFieldProps';
 import { getOverrideServices } from './getOverrideServices';
 import { getCompletionProvider, getSuggestOptions } from './monaco-completion-provider';
+import { CompletionDataProvider } from './monaco-completion-provider/CompletionDataProvider';
 
 const options: monacoTypes.editor.IStandaloneEditorConstructionOptions = {
   codeLens: false,
@@ -118,21 +119,7 @@ const MonacoQueryField = ({ languageProvider, history, onBlur, onRunQuery, initi
           editor.onDidBlurEditorWidget(() => {
             onBlurRef.current(editor.getValue());
           });
-
-          // we construct a DataProvider object
-          const getSeriesLabels = (selector: string) =>
-            langProviderRef.current.getSeriesLabels(selector).then((data) => data ?? {});
-
-          const getHistory = () =>
-            Promise.resolve(historyRef.current.map((h) => h.query.expr).filter((expr) => expr !== undefined));
-
-          const getAllLabelNames = () => Promise.resolve(langProviderRef.current.getLabelKeys());
-
-          const getLabelValues = (labelName: string) => langProviderRef.current.getLabelValues(labelName);
-
-          const getLogInfo = (selector: string) => langProviderRef.current.getLogInfo(selector);
-
-          const dataProvider = { getSeriesLabels, getHistory, getAllLabelNames, getLabelValues, getLogInfo };
+          const dataProvider = new CompletionDataProvider(langProviderRef.current, historyRef.current);
           const completionProvider = getCompletionProvider(monaco, dataProvider);
 
           // completion-providers in monaco are not registered directly to editor-instances,

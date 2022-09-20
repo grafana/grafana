@@ -26,14 +26,6 @@ type Completion = {
   isSnippet?: boolean;
 };
 
-export type DataProvider = {
-  getHistory: () => Promise<string[]>;
-  getAllLabelNames: () => Promise<string[]>;
-  getLabelValues: (labelName: string) => Promise<string[]>;
-  getSeriesLabels: (selector: string) => Promise<Record<string, string[]>>;
-  getLogInfo: (selector: string) => Promise<{ extractedLabelKeys: string[]; hasJSON: boolean; hasLogfmt: boolean }>;
-};
-
 const LOG_COMPLETIONS: Completion[] = [
   {
     type: 'PATTERN',
@@ -87,12 +79,12 @@ const LINE_FILTER_COMPLETIONS: Completion[] = ['|=', '!=', '|~', '!~'].map((item
   isSnippet: true,
 }));
 
-async function getAllHistoryCompletions(dataProvider: DataProvider): Promise<Completion[]> {
+async function getAllHistoryCompletions(dataProvider: CompletionDataProvider): Promise<Completion[]> {
   const history = await dataProvider.getHistory();
 
   return history.map((expr) => ({
     type: 'HISTORY',
-    label: expr || '', // Can be undefined
+    label: expr,
     insertText: expr,
   }));
 }
@@ -105,16 +97,16 @@ function makeSelector(labels: Label[]): string {
   return `{${allLabelTexts.join(',')}}`;
 }
 
-async function getLabelNames(otherLabels: Label[], dataProvider: DataProvider): Promise<string[]> {
+async function getLabelNames(otherLabels: Label[], dataProvider: CompletionDataProvider): Promise<string[]> {
   if (otherLabels.length === 0) {
     // if there is no filtering, we have to use a special endpoint
     return dataProvider.getAllLabelNames();
   } else {
     const selector = makeSelector(otherLabels);
     const data = await dataProvider.getSeriesLabels(selector);
-    const possibleLabelNames = Object.keys(data); // all names from prometheus
+    const possibleLabelNames = Object.keys(data); // all names from datasource
     const usedLabelNames = new Set(otherLabels.map((l) => l.name)); // names used in the query
-    return possibleLabelNames.filter((l) => !usedLabelNames.has(l));
+    return possibleLabelNames.filter((label) => !usedLabelNames.has(label));
   }
 }
 
@@ -123,7 +115,7 @@ async function getLabelNamesForCompletions(
   triggerOnInsert: boolean,
   addExtractedLabels: boolean,
   otherLabels: Label[],
-  dataProvider: DataProvider
+  dataProvider: CompletionDataProvider
 ): Promise<Completion[]> {
   const labelNames = await getLabelNames(otherLabels, dataProvider);
   const result: Completion[] = labelNames.map((text) => ({
@@ -150,16 +142,23 @@ async function getLabelNamesForCompletions(
 
 async function getLabelNamesForSelectorCompletions(
   otherLabels: Label[],
-  dataProvider: DataProvider
+  dataProvider: CompletionDataProvider
 ): Promise<Completion[]> {
   return getLabelNamesForCompletions('=', true, false, otherLabels, dataProvider);
 }
 
-async function getInGroupingCompletions(otherLabels: Label[], dataProvider: DataProvider): Promise<Completion[]> {
+async function getInGroupingCompletions(
+  otherLabels: Label[],
+  dataProvider: CompletionDataProvider
+): Promise<Completion[]> {
   return getLabelNamesForCompletions('', false, true, otherLabels, dataProvider);
 }
 
-async function getLabelValues(labelName: string, otherLabels: Label[], dataProvider: DataProvider): Promise<string[]> {
+async function getLabelValues(
+  labelName: string,
+  otherLabels: Label[],
+  dataProvider: CompletionDataProvider
+): Promise<string[]> {
   if (otherLabels.length === 0) {
     // if there is no filtering, we have to use a special endpoint
     return dataProvider.getLabelValues(labelName);
@@ -173,7 +172,7 @@ async function getLabelValues(labelName: string, otherLabels: Label[], dataProvi
 async function getAfterSelectorCompletions(
   labels: Label[],
   afterPipe: boolean,
-  dataProvider: DataProvider
+  dataProvider: CompletionDataProvider
 ): Promise<Completion[]> {
   const result = await dataProvider.getLogInfo(makeSelector(labels));
   const allParsers = new Set(['json', 'logfmt', 'pattern', 'regexp', 'unpack']);
@@ -237,21 +236,23 @@ async function getLabelValuesForMetricCompletions(
   labelName: string,
   betweenQuotes: boolean,
   otherLabels: Label[],
-  dataProvider: DataProvider
+  dataProvider: CompletionDataProvider
 ): Promise<Completion[]> {
   const values = await getLabelValues(labelName, otherLabels, dataProvider);
   return values.map((text) => ({
     type: 'LABEL_VALUE',
     label: text,
-    insertText: betweenQuotes ? text : `"${text}"`, // FIXME: escaping strange characters?
+    insertText: betweenQuotes ? text : `"${text}"`,
   }));
 }
 
-export async function getCompletions(situation: Situation, dataProvider: DataProvider): Promise<Completion[]> {
+export async function getCompletions(
+  situation: Situation,
+  dataProvider: CompletionDataProvider
+): Promise<Completion[]> {
   switch (situation.type) {
     case 'AT_ROOT':
       const historyCompletions = await getAllHistoryCompletions(dataProvider);
-      // FIXME: find a good amount of history-items
       return [...historyCompletions, ...LOG_COMPLETIONS, ...AGGREGATION_COMPLETIONS, ...FUNCTION_COMPLETIONS];
     case 'IN_DURATION':
       return DURATION_COMPLETIONS;

@@ -1,7 +1,7 @@
 import type { Monaco, monacoTypes } from '@grafana/ui';
 
 import { NeverCaseError } from './NeverCaseError';
-import { getCompletions, DataProvider, CompletionType } from './completions';
+import { getCompletions, CompletionType } from './completions';
 import { getSituation } from './situation';
 
 // from: monacoTypes.languages.CompletionItemInsertTextRule.InsertAsSnippet
@@ -54,7 +54,7 @@ function getMonacoCompletionItemKind(type: CompletionType, monaco: Monaco): mona
 }
 export function getCompletionProvider(
   monaco: Monaco,
-  dataProvider: DataProvider
+  dataProvider: CompletionDataProvider
 ): monacoTypes.languages.CompletionItemProvider {
   const provideCompletionItems = (
     model: monacoTypes.editor.ITextModel,
