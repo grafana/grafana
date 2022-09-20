@@ -17,14 +17,16 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/fs"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
@@ -40,6 +42,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/preference/preftest"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -336,10 +339,11 @@ func setupSimpleHTTPServer(features *featuremgmt.FeatureManager) *HTTPServer {
 	cfg.IsFeatureToggleEnabled = features.IsEnabled
 
 	return &HTTPServer{
-		Cfg:           cfg,
-		Features:      features,
-		License:       &licensing.OSSLicensingService{},
-		AccessControl: accesscontrolmock.New().WithDisabled(),
+		Cfg:             cfg,
+		Features:        features,
+		License:         &licensing.OSSLicensingService{},
+		AccessControl:   accesscontrolmock.New().WithDisabled(),
+		annotationsRepo: annotationstest.NewFakeAnnotationsRepo(),
 	}
 }
 
@@ -378,9 +382,9 @@ func setupHTTPServerWithCfgDb(
 		acService = acmock
 	} else {
 		var err error
-		acService, err = ossaccesscontrol.ProvideService(cfg, database.ProvideService(db), routeRegister)
+		acService, err = acimpl.ProvideService(cfg, db, routeRegister, localcache.ProvideService())
 		require.NoError(t, err)
-		ac = ossaccesscontrol.ProvideAccessControl(cfg, acService)
+		ac = acimpl.ProvideAccessControl(cfg)
 	}
 
 	teamPermissionService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, routeRegister, db, ac, license, acService)
@@ -407,6 +411,8 @@ func setupHTTPServerWithCfgDb(
 		),
 		preferenceService: preftest.NewPreferenceServiceFake(),
 		userService:       userMock,
+		orgService:        orgtest.NewOrgServiceFake(),
+		annotationsRepo:   annotationstest.NewFakeAnnotationsRepo(),
 	}
 
 	for _, o := range options {

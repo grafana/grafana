@@ -52,7 +52,7 @@ export default class CloudWatchLink extends Component<Props, State> {
       source: query.logGroupNames ?? [],
     };
 
-    return encodeUrl(urlProps, datasource.getActualRegion(query.region));
+    return encodeUrl(urlProps, datasource.api.getActualRegion(query.region));
   }
 
   render() {

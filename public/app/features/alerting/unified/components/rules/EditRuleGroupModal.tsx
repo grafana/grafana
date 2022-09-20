@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import React, { useEffect, useMemo } from 'react';
-import { useDispatch } from 'react-redux';
 
 import { isValidGoDuration } from '@grafana/data';
 import { Modal, Button, Form, Field, Input, useStyles2 } from '@grafana/ui';
 import { useCleanup } from 'app/core/hooks/useCleanup';
+import { useDispatch } from 'app/types';
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
@@ -50,7 +50,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
     }
   }, [dispatched, loading, onClose, error]);
 
-  useCleanup((state) => state.unifiedAlerting.updateLotexNamespaceAndGroup);
+  useCleanup((state) => (state.unifiedAlerting.updateLotexNamespaceAndGroup = initialAsyncRequestState));
 
   const onSubmit = (values: FormValues) => {
     dispatch(

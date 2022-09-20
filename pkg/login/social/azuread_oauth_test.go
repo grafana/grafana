@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -16,12 +15,20 @@ import (
 	"gopkg.in/square/go-jose.v2/jwt"
 )
 
+func trueBoolPtr() *bool {
+	b := true
+	return &b
+}
+
+func falseBoolPtr() *bool {
+	b := false
+	return &b
+}
+
 func TestSocialAzureAD_UserInfo(t *testing.T) {
 	type fields struct {
-		SocialBase          *SocialBase
-		allowedGroups       []string
-		autoAssignOrgRole   string
-		roleAttributeStrict bool
+		SocialBase    *SocialBase
+		allowedGroups []string
 	}
 	type args struct {
 		client *http.Client
@@ -46,16 +53,15 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				ID:                "1234",
 			},
 			fields: fields{
-				autoAssignOrgRole: "Viewer",
+				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, "Viewer"),
 			},
 			want: &BasicUserInfo{
-				Id:      "1234",
-				Name:    "My Name",
-				Email:   "me@example.com",
-				Login:   "me@example.com",
-				Company: "",
-				Role:    "Viewer",
-				Groups:  []string{},
+				Id:     "1234",
+				Name:   "My Name",
+				Email:  "me@example.com",
+				Login:  "me@example.com",
+				Role:   "Viewer",
+				Groups: []string{},
 			},
 		},
 		{
@@ -86,16 +92,15 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				ID:                "1234",
 			},
 			fields: fields{
-				autoAssignOrgRole: "Viewer",
+				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, "Viewer"),
 			},
 			want: &BasicUserInfo{
-				Id:      "1234",
-				Name:    "My Name",
-				Email:   "me@example.com",
-				Login:   "me@example.com",
-				Company: "",
-				Role:    "Viewer",
-				Groups:  []string{},
+				Id:     "1234",
+				Name:   "My Name",
+				Email:  "me@example.com",
+				Login:  "me@example.com",
+				Role:   "Viewer",
+				Groups: []string{},
 			},
 		},
 		{
@@ -108,13 +113,12 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				ID:                "1234",
 			},
 			want: &BasicUserInfo{
-				Id:      "1234",
-				Name:    "My Name",
-				Email:   "me@example.com",
-				Login:   "me@example.com",
-				Company: "",
-				Role:    "Admin",
-				Groups:  []string{},
+				Id:     "1234",
+				Name:   "My Name",
+				Email:  "me@example.com",
+				Login:  "me@example.com",
+				Role:   "Admin",
+				Groups: []string{},
 			},
 		},
 		{
@@ -127,17 +131,19 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				ID:                "1234",
 			},
 			want: &BasicUserInfo{
-				Id:      "1234",
-				Name:    "My Name",
-				Email:   "me@example.com",
-				Login:   "me@example.com",
-				Company: "",
-				Role:    "Admin",
-				Groups:  []string{},
+				Id:     "1234",
+				Name:   "My Name",
+				Email:  "me@example.com",
+				Login:  "me@example.com",
+				Role:   "Admin",
+				Groups: []string{},
 			},
 		},
 		{
 			name: "Only other roles",
+			fields: fields{
+				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, "Viewer"),
+			},
 			claims: &azureClaims{
 				Email:             "me@example.com",
 				PreferredUsername: "",
@@ -146,13 +152,12 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				ID:                "1234",
 			},
 			want: &BasicUserInfo{
-				Id:      "1234",
-				Name:    "My Name",
-				Email:   "me@example.com",
-				Login:   "me@example.com",
-				Company: "",
-				Role:    "Viewer",
-				Groups:  []string{},
+				Id:     "1234",
+				Name:   "My Name",
+				Email:  "me@example.com",
+				Login:  "me@example.com",
+				Role:   "Viewer",
+				Groups: []string{},
 			},
 		},
 		{
@@ -165,16 +170,15 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				ID:                "1234",
 			},
 			fields: fields{
-				autoAssignOrgRole: "Editor",
+				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, "Editor"),
 			},
 			want: &BasicUserInfo{
-				Id:      "1234",
-				Name:    "My Name",
-				Email:   "me@example.com",
-				Login:   "me@example.com",
-				Company: "",
-				Role:    "Editor",
-				Groups:  []string{},
+				Id:     "1234",
+				Name:   "My Name",
+				Email:  "me@example.com",
+				Login:  "me@example.com",
+				Role:   "Editor",
+				Groups: []string{},
 			},
 		},
 		{
@@ -187,13 +191,12 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				ID:                "1234",
 			},
 			want: &BasicUserInfo{
-				Id:      "1234",
-				Name:    "My Name",
-				Email:   "me@example.com",
-				Login:   "me@example.com",
-				Company: "",
-				Role:    "Editor",
-				Groups:  []string{},
+				Id:     "1234",
+				Name:   "My Name",
+				Email:  "me@example.com",
+				Login:  "me@example.com",
+				Role:   "Editor",
+				Groups: []string{},
 			},
 		},
 		{
@@ -206,13 +209,75 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				ID:                "1234",
 			},
 			want: &BasicUserInfo{
-				Id:      "1234",
-				Name:    "My Name",
-				Email:   "me@example.com",
-				Login:   "me@example.com",
-				Company: "",
-				Role:    "Admin",
-				Groups:  []string{},
+				Id:     "1234",
+				Name:   "My Name",
+				Email:  "me@example.com",
+				Login:  "me@example.com",
+				Role:   "Admin",
+				Groups: []string{},
+			},
+		},
+		{
+			name:   "Grafana Admin but setting is disabled",
+			fields: fields{SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{AllowAssignGrafanaAdmin: false}, "Editor")},
+			claims: &azureClaims{
+				Email:             "me@example.com",
+				PreferredUsername: "",
+				Roles:             []string{"GrafanaAdmin"},
+				Name:              "My Name",
+				ID:                "1234",
+			},
+			want: &BasicUserInfo{
+				Id:             "1234",
+				Name:           "My Name",
+				Email:          "me@example.com",
+				Login:          "me@example.com",
+				Role:           "Admin",
+				Groups:         []string{},
+				IsGrafanaAdmin: nil,
+			},
+		},
+		{
+			name: "Editor roles in claim and GrafanaAdminAssignment enabled",
+			fields: fields{
+				SocialBase: newSocialBase("azuread",
+					&oauth2.Config{}, &OAuthInfo{AllowAssignGrafanaAdmin: true}, "")},
+			claims: &azureClaims{
+				Email:             "me@example.com",
+				PreferredUsername: "",
+				Roles:             []string{"Editor"},
+				Name:              "My Name",
+				ID:                "1234",
+			},
+			want: &BasicUserInfo{
+				Id:             "1234",
+				Name:           "My Name",
+				Email:          "me@example.com",
+				Login:          "me@example.com",
+				Role:           "Editor",
+				Groups:         []string{},
+				IsGrafanaAdmin: falseBoolPtr(),
+			},
+		},
+		{
+			name: "Grafana Admin and Editor roles in claim",
+			fields: fields{SocialBase: newSocialBase("azuread",
+				&oauth2.Config{}, &OAuthInfo{AllowAssignGrafanaAdmin: true}, "")},
+			claims: &azureClaims{
+				Email:             "me@example.com",
+				PreferredUsername: "",
+				Roles:             []string{"GrafanaAdmin", "Editor"},
+				Name:              "My Name",
+				ID:                "1234",
+			},
+			want: &BasicUserInfo{
+				Id:             "1234",
+				Name:           "My Name",
+				Email:          "me@example.com",
+				Login:          "me@example.com",
+				Role:           "Admin",
+				Groups:         []string{},
+				IsGrafanaAdmin: trueBoolPtr(),
 			},
 		},
 		{
@@ -234,8 +299,9 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Error if user is a member of allowed_groups",
 			fields: fields{
-				allowedGroups:     []string{"foo", "bar"},
-				autoAssignOrgRole: "Viewer",
+				allowedGroups: []string{"foo", "bar"},
+				SocialBase: newSocialBase("azuread",
+					&oauth2.Config{}, &OAuthInfo{AllowAssignGrafanaAdmin: false}, "Viewer"),
 			},
 			claims: &azureClaims{
 				Email:             "me@example.com",
@@ -246,13 +312,12 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				ID:                "1234",
 			},
 			want: &BasicUserInfo{
-				Id:      "1234",
-				Name:    "My Name",
-				Email:   "me@example.com",
-				Login:   "me@example.com",
-				Company: "",
-				Role:    "Viewer",
-				Groups:  []string{"foo"},
+				Id:     "1234",
+				Name:   "My Name",
+				Email:  "me@example.com",
+				Login:  "me@example.com",
+				Role:   "Viewer",
+				Groups: []string{"foo"},
 			},
 		},
 		{
@@ -283,7 +348,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Fetch empty role when strict attribute role is true and no match",
 			fields: fields{
-				roleAttributeStrict: true,
+				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{RoleAttributeStrict: true}, ""),
 			},
 			claims: &azureClaims{
 				Email:             "me@example.com",
@@ -299,7 +364,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Fetch empty role when strict attribute role is true and no role claims returned",
 			fields: fields{
-				roleAttributeStrict: true,
+				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{RoleAttributeStrict: true}, ""),
 			},
 			claims: &azureClaims{
 				Email:             "me@example.com",
@@ -313,13 +378,16 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 			wantErr: true,
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &SocialAzureAD{
-				SocialBase:          tt.fields.SocialBase,
-				allowedGroups:       tt.fields.allowedGroups,
-				autoAssignOrgRole:   tt.fields.autoAssignOrgRole,
-				roleAttributeStrict: tt.fields.roleAttributeStrict,
+				SocialBase:    tt.fields.SocialBase,
+				allowedGroups: tt.fields.allowedGroups,
+			}
+
+			if tt.fields.SocialBase == nil {
+				s.SocialBase = newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, "")
 			}
 
 			key := []byte("secret")
@@ -357,14 +425,10 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 					}
 				}
 				raw, err = jwt.Signed(sig).Claims(cl).Claims(tt.claims).CompactSerialize()
-				if err != nil {
-					t.Error(err)
-				}
+				require.NoError(t, err)
 			} else {
 				raw, err = jwt.Signed(sig).Claims(cl).CompactSerialize()
-				if err != nil {
-					t.Error(err)
-				}
+				require.NoError(t, err)
 			}
 
 			token := &oauth2.Token{
@@ -383,9 +447,8 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				t.Errorf("UserInfo() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("UserInfo() got = %v, want %v", got, tt.want)
-			}
+
+			require.EqualValues(t, tt.want, got)
 		})
 	}
 }

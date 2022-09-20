@@ -1,17 +1,18 @@
 import { css } from '@emotion/css';
 import React, { FC } from 'react';
 import { useForm, Validate } from 'react-hook-form';
-import { useDispatch } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Button, Field, FieldSet, Input, LinkButton, useStyles2 } from '@grafana/ui';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
+import { useDispatch } from 'app/types';
 
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { updateAlertManagerConfigAction } from '../../state/actions';
 import { makeAMLink } from '../../utils/misc';
+import { initialAsyncRequestState } from '../../utils/redux';
 import { ensureDefine } from '../../utils/templates';
 import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
 
@@ -38,7 +39,7 @@ export const TemplateForm: FC<Props> = ({ existing, alertManagerSourceName, conf
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
 
-  useCleanup((state) => state.unifiedAlerting.saveAMConfig);
+  useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
 
   const { loading, error } = useUnifiedAlertingSelector((state) => state.saveAMConfig);
 

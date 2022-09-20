@@ -117,7 +117,7 @@ Instead of hard-coding things like server, application, and sensor name in your 
 Variables are shown as drop-down select boxes at the top of the dashboard. These dropdowns make it easy to change the data
 being displayed in your dashboard.
 
-For more information, refer to [Variables and templates]({{< relref "../variables/" >}}).
+For more information, refer to [Variables and templates]({{< relref "../dashboards/variables/" >}}).
 
 Graphite 1.1 introduced tags and Grafana added support for Graphite queries with tags in version 5.0. To create a variable using tag values, use the Grafana functions `tags` and `tag_values`.
 
@@ -212,7 +212,7 @@ Example of a tag expression with regex formatting and using the Equal Tilde oper
 server=~${servers:regex}
 ```
 
-For more information, refer to [Advanced variable format options]({{< relref "../variables/advanced-variable-format-options/" >}}).
+For more information, refer to [Advanced variable format options]({{< relref "../dashboards/variables/variable-syntax/#advanced-variable-format-options" >}}).
 
 ## Annotations
 

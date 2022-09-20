@@ -45,11 +45,12 @@ type Manager struct {
 	instanceStore    store.InstanceStore
 	dashboardService dashboards.DashboardService
 	imageService     image.ImageService
+	AnnotationsRepo  annotations.Repository
 }
 
 func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL,
 	ruleStore store.RuleStore, instanceStore store.InstanceStore,
-	dashboardService dashboards.DashboardService, imageService image.ImageService, clock clock.Clock) *Manager {
+	dashboardService dashboards.DashboardService, imageService image.ImageService, clock clock.Clock, annotationsRepo annotations.Repository) *Manager {
 	manager := &Manager{
 		cache:            newCache(logger, metrics, externalURL),
 		quit:             make(chan struct{}),
@@ -61,6 +62,7 @@ func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL,
 		dashboardService: dashboardService,
 		imageService:     imageService,
 		clock:            clock,
+		AnnotationsRepo:  annotationsRepo,
 	}
 	go manager.recordMetrics()
 	return manager
@@ -73,7 +75,7 @@ func (st *Manager) Close(ctx context.Context) {
 
 func (st *Manager) Warm(ctx context.Context) {
 	st.log.Info("warming cache for startup")
-	st.ResetCache()
+	st.ResetAllStates()
 
 	orgIds, err := st.instanceStore.FetchOrgIds(ctx)
 	if err != nil {
@@ -149,20 +151,30 @@ func (st *Manager) Get(orgID int64, alertRuleUID, stateId string) (*State, error
 	return st.cache.get(orgID, alertRuleUID, stateId)
 }
 
-// ResetCache is used to ensure a clean cache on startup.
-func (st *Manager) ResetCache() {
+// ResetAllStates is used to ensure a clean cache on startup.
+func (st *Manager) ResetAllStates() {
 	st.cache.reset()
 }
 
-// RemoveByRuleUID deletes all entries in the state manager that match the given rule UID.
-func (st *Manager) RemoveByRuleUID(orgID int64, ruleUID string) {
-	st.cache.removeByRuleUID(orgID, ruleUID)
+// ResetStateByRuleUID deletes all entries in the state manager that match the given rule UID.
+func (st *Manager) ResetStateByRuleUID(ctx context.Context, ruleKey ngModels.AlertRuleKey) []*State {
+	logger := st.log.New(ruleKey.LogContext()...)
+	logger.Debug("resetting state of the rule")
+	states := st.cache.removeByRuleUID(ruleKey.OrgID, ruleKey.UID)
+	if len(states) > 0 {
+		err := st.instanceStore.DeleteAlertInstancesByRule(ctx, ruleKey)
+		if err != nil {
+			logger.Error("failed to delete states that belong to a rule from database", ruleKey.LogContext()...)
+		}
+	}
+	logger.Info("rules state was reset", "deleted_states", len(states))
+	return states
 }
 
 // ProcessEvalResults updates the current states that belong to a rule with the evaluation results.
 // if extraLabels is not empty, those labels will be added to every state. The extraLabels take precedence over rule labels and result labels
 func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels) []*State {
-	logger := st.log.New(alertRule.GetKey().LogContext())
+	logger := st.log.New(alertRule.GetKey().LogContext()...)
 	logger.Debug("state manager processing evaluation results", "resultCount", len(results))
 	var states []*State
 	processedResults := make(map[string]*State, len(results))
@@ -409,8 +421,7 @@ func (st *Manager) annotateState(ctx context.Context, alertRule *ngModels.AlertR
 		item.DashboardId = query.Result.Id
 	}
 
-	annotationRepo := annotations.GetRepository()
-	if err := annotationRepo.Save(item); err != nil {
+	if err := st.AnnotationsRepo.Save(ctx, item); err != nil {
 		st.log.Error("error saving alert annotation", "alertRuleUID", alertRule.UID, "err", err.Error())
 		return
 	}

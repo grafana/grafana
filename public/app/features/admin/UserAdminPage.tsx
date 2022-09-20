@@ -4,6 +4,7 @@ import { connect, ConnectedProps } from 'react-redux';
 import { NavModelItem } from '@grafana/data';
 import { featureEnabled } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
+import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { StoreState, UserDTO, UserOrg, UserSession, SyncInfo, UserAdminError, AccessControlAction } from 'app/types';
@@ -37,6 +38,8 @@ interface OwnProps extends GrafanaRouteComponentProps<{ id: string }> {
   isLoading: boolean;
   error?: UserAdminError;
 }
+
+const SyncedOAuthLabels: string[] = ['GitHub', 'GitLab', 'AzureAD', 'OAuth'];
 
 export class UserAdminPage extends PureComponent<Props> {
   async componentDidMount() {
@@ -105,6 +108,13 @@ export class UserAdminPage extends PureComponent<Props> {
     const isLDAPUser = user && user.isExternal && user.authLabels && user.authLabels.includes('LDAP');
     const canReadSessions = contextSrv.hasPermission(AccessControlAction.UsersAuthTokenList);
     const canReadLDAPStatus = contextSrv.hasPermission(AccessControlAction.LDAPStatusRead);
+    const isOAuthUserWithSkippableSync =
+      user?.isExternal && user?.authLabels?.some((r) => SyncedOAuthLabels.includes(r));
+    const isSAMLUser = user?.isExternal && user?.authLabels?.includes('SAML');
+    const isUserSynced =
+      (user?.isExternal && !(isOAuthUserWithSkippableSync || isSAMLUser)) ||
+      (!config.auth.OAuthSkipOrgRoleUpdateSync && isOAuthUserWithSkippableSync) ||
+      (!config.auth.SAMLSkipOrgRoleSync && isSAMLUser);
 
     const pageNav: NavModelItem = {
       text: user?.login ?? '',
@@ -137,7 +147,7 @@ export class UserAdminPage extends PureComponent<Props> {
             <UserOrgs
               user={user}
               orgs={orgs}
-              isExternalUser={user?.isExternal}
+              isExternalUser={isUserSynced}
               onOrgRemove={this.onOrgRemove}
               onOrgRoleChange={this.onOrgRoleChange}
               onOrgAdd={this.onOrgAdd}

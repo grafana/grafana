@@ -7,7 +7,6 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 
@@ -174,6 +173,24 @@ func (f *FakeRuleStore) GetAlertRulesGroupByRuleUID(_ context.Context, q *models
 	}
 	return nil
 }
+func (f *FakeRuleStore) GetAlertRulesKeysForScheduling(_ context.Context) ([]models.AlertRuleKeyWithVersion, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	f.RecordedOps = append(f.RecordedOps, GenericRecordedQuery{
+		Name:   "GetAlertRulesKeysForScheduling",
+		Params: []interface{}{},
+	})
+	result := make([]models.AlertRuleKeyWithVersion, 0, len(f.Rules))
+	for _, rules := range f.Rules {
+		for _, rule := range rules {
+			result = append(result, models.AlertRuleKeyWithVersion{
+				Version:      rule.Version,
+				AlertRuleKey: rule.GetKey(),
+			})
+		}
+	}
+	return result, nil
+}
 
 // For now, we're not implementing namespace filtering.
 func (f *FakeRuleStore) GetAlertRulesForScheduling(_ context.Context, q *models.GetAlertRulesForSchedulingQuery) error {
@@ -183,8 +200,23 @@ func (f *FakeRuleStore) GetAlertRulesForScheduling(_ context.Context, q *models.
 	if err := f.Hook(*q); err != nil {
 		return err
 	}
+	q.ResultFoldersTitles = make(map[string]string)
 	for _, rules := range f.Rules {
-		q.Result = append(q.Result, rules...)
+		for _, rule := range rules {
+			q.ResultRules = append(q.ResultRules, rule)
+			if !q.PopulateFolders {
+				continue
+			}
+			if _, ok := q.ResultFoldersTitles[rule.NamespaceUID]; !ok {
+				if folders, ok := f.Folders[rule.OrgID]; ok {
+					for _, folder := range folders {
+						if folder.Uid == rule.NamespaceUID {
+							q.ResultFoldersTitles[rule.NamespaceUID] = folder.Title
+						}
+					}
+				}
+			}
+		}
 	}
 	return nil
 }
@@ -404,6 +436,9 @@ func (f *FakeInstanceStore) FetchOrgIds(_ context.Context) ([]int64, error) { re
 func (f *FakeInstanceStore) DeleteAlertInstance(_ context.Context, _ int64, _, _ string) error {
 	return nil
 }
+func (f *FakeInstanceStore) DeleteAlertInstancesByRule(ctx context.Context, key models.AlertRuleKey) error {
+	return nil
+}
 
 func NewFakeAdminConfigStore(t *testing.T) *FakeAdminConfigStore {
 	t.Helper()
@@ -444,48 +479,4 @@ func (f *FakeAdminConfigStore) UpdateAdminConfiguration(cmd UpdateAdminConfigura
 	f.Configs[cmd.AdminConfiguration.OrgID] = cmd.AdminConfiguration
 
 	return nil
-}
-
-type FakeAnnotationsRepo struct {
-	mtx   sync.Mutex
-	Items []*annotations.Item
-}
-
-func NewFakeAnnotationsRepo() *FakeAnnotationsRepo {
-	return &FakeAnnotationsRepo{
-		Items: make([]*annotations.Item, 0),
-	}
-}
-
-func (repo *FakeAnnotationsRepo) Len() int {
-	repo.mtx.Lock()
-	defer repo.mtx.Unlock()
-	return len(repo.Items)
-}
-
-func (repo *FakeAnnotationsRepo) Delete(_ context.Context, params *annotations.DeleteParams) error {
-	return nil
-}
-
-func (repo *FakeAnnotationsRepo) Save(item *annotations.Item) error {
-	repo.mtx.Lock()
-	defer repo.mtx.Unlock()
-	repo.Items = append(repo.Items, item)
-
-	return nil
-}
-func (repo *FakeAnnotationsRepo) Update(_ context.Context, item *annotations.Item) error {
-	return nil
-}
-
-func (repo *FakeAnnotationsRepo) Find(_ context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
-	annotations := []*annotations.ItemDTO{{Id: 1}}
-	return annotations, nil
-}
-
-func (repo *FakeAnnotationsRepo) FindTags(_ context.Context, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
-	result := annotations.FindTagsResult{
-		Tags: []*annotations.TagsDTO{},
-	}
-	return result, nil
 }

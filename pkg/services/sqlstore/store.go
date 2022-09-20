@@ -2,15 +2,12 @@ package sqlstore
 
 import (
 	"context"
-	"time"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/user"
 )
-
-var timeNow = time.Now
 
 type Store interface {
 	GetAdminStats(ctx context.Context, query *models.GetAdminStatsQuery) error
@@ -26,9 +23,6 @@ type Store interface {
 	DeleteOrg(ctx context.Context, cmd *models.DeleteOrgCommand) error
 	GetOrgById(context.Context, *models.GetOrgByIdQuery) error
 	GetOrgByNameHandler(ctx context.Context, query *models.GetOrgByNameQuery) error
-	CreateLoginAttempt(ctx context.Context, cmd *models.CreateLoginAttemptCommand) error
-	GetUserLoginAttemptCount(ctx context.Context, query *models.GetUserLoginAttemptCountQuery) error
-	DeleteOldLoginAttempts(ctx context.Context, cmd *models.DeleteOldLoginAttemptsCommand) error
 	CreateUser(ctx context.Context, cmd user.CreateUserCommand) (*user.User, error)
 	SetUsingOrg(ctx context.Context, cmd *models.SetUsingOrgCommand) error
 	GetUserProfile(ctx context.Context, query *models.GetUserProfileQuery) error
@@ -68,14 +62,7 @@ type Store interface {
 	Sync() error
 	Reset() error
 	Quote(value string) string
-	UpdateTempUserStatus(ctx context.Context, cmd *models.UpdateTempUserStatusCommand) error
-	CreateTempUser(ctx context.Context, cmd *models.CreateTempUserCommand) error
-	UpdateTempUserWithEmailSent(ctx context.Context, cmd *models.UpdateTempUserWithEmailSentCommand) error
-	GetTempUsersQuery(ctx context.Context, query *models.GetTempUsersQuery) error
-	GetTempUserByCode(ctx context.Context, query *models.GetTempUserByCodeQuery) error
-	ExpireOldUserInvites(ctx context.Context, cmd *models.ExpireTempUsersCommand) error
 	GetDBHealthQuery(ctx context.Context, query *models.GetDBHealthQuery) error
-	SearchOrgs(ctx context.Context, query *models.SearchOrgsQuery) error
 	IsAdminOfTeams(ctx context.Context, query *models.IsAdminOfTeamsQuery) error
 	GetSqlxSession() *session.SessionDB
 }

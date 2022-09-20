@@ -33,6 +33,7 @@ To access Tempo settings, click the **Configuration** (gear) icon, then click **
 ### Trace to logs
 
 > **Note:** This feature is available in Grafana 7.4+.
+> Grafana Cloud users can access this feature by [opening a support ticket in the Cloud Portal](https://grafana.com/profile/org#support).
 
 This is a configuration for the [trace to logs feature]({{< relref "../explore/trace-integration/" >}}). Select target data source (at this moment limited to Loki or Splunk \[logs\] data sources) and select which tags will be used in the logs query.
 
@@ -49,6 +50,7 @@ This is a configuration for the [trace to logs feature]({{< relref "../explore/t
 ### Trace to metrics
 
 > **Note:** This feature is behind the `traceToMetrics` feature toggle.
+> Grafana Cloud users can access this feature by [opening a support ticket in the Cloud Portal](https://grafana.com/profile/org#support).
 
 To configure trace to metrics, select the target Prometheus data source and create any desired linked queries.
 

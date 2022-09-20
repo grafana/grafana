@@ -108,7 +108,7 @@ const FilterItem: React.FC<FilterItemProps> = (props) => {
       return [];
     }
 
-    return datasource
+    return datasource.api
       .getDimensionValues(query.region, namespace, metricName, filter.property.name, {})
       .then((result: Array<SelectableValue<string>>) => {
         return appendTemplateVariables(datasource, result);

@@ -82,6 +82,10 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   componentDidMount() {
+    const { data, query } = this.props;
+    const dataFilteredByRefId = filterPanelDataToQuery(data, query.refId);
+    this.setState({ data: dataFilteredByRefId });
+
     this.loadDatasource();
   }
 
@@ -226,7 +230,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   }
 
   renderPluginEditor = () => {
-    const { query, onChange, queries, onRunQuery, app = CoreApp.PanelEditor, history } = this.props;
+    const { query, onChange, queries, onRunQuery, onAddQuery, app = CoreApp.PanelEditor, history } = this.props;
     const { datasource, data } = this.state;
 
     if (datasource?.components?.QueryCtrl) {
@@ -244,6 +248,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
             datasource={datasource}
             onChange={onChange}
             onRunQuery={onRunQuery}
+            onAddQuery={onAddQuery}
             data={data}
             range={getTimeSrv().timeRange()}
             queries={queries}

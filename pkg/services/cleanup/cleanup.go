@@ -14,16 +14,19 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
+	"github.com/grafana/grafana/pkg/services/loginattempt"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/queryhistory"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 func ProvideService(cfg *setting.Cfg, serverLockService *serverlock.ServerLockService,
 	shortURLService shorturls.Service, sqlstore *sqlstore.SQLStore, queryHistoryService queryhistory.Service,
-	dashboardVersionService dashver.Service, dashSnapSvc dashboardsnapshots.Service, deleteExpiredImageService *image.DeleteExpiredService) *CleanUpService {
+	dashboardVersionService dashver.Service, dashSnapSvc dashboardsnapshots.Service, deleteExpiredImageService *image.DeleteExpiredService,
+	loginAttemptService loginattempt.Service, tempUserService tempuser.Service) *CleanUpService {
 	s := &CleanUpService{
 		Cfg:                       cfg,
 		ServerLockService:         serverLockService,
@@ -34,6 +37,8 @@ func ProvideService(cfg *setting.Cfg, serverLockService *serverlock.ServerLockSe
 		dashboardVersionService:   dashboardVersionService,
 		dashboardSnapshotService:  dashSnapSvc,
 		deleteExpiredImageService: deleteExpiredImageService,
+		loginAttemptService:       loginAttemptService,
+		tempUserService:           tempUserService,
 	}
 	return s
 }
@@ -48,6 +53,8 @@ type CleanUpService struct {
 	dashboardVersionService   dashver.Service
 	dashboardSnapshotService  dashboardsnapshots.Service
 	deleteExpiredImageService *image.DeleteExpiredService
+	loginAttemptService       loginattempt.Service
+	tempUserService           tempuser.Service
 }
 
 func (srv *CleanUpService) Run(ctx context.Context) error {
@@ -184,7 +191,7 @@ func (srv *CleanUpService) deleteOldLoginAttempts(ctx context.Context) {
 	cmd := models.DeleteOldLoginAttemptsCommand{
 		OlderThan: time.Now().Add(time.Minute * -10),
 	}
-	if err := srv.store.DeleteOldLoginAttempts(ctx, &cmd); err != nil {
+	if err := srv.loginAttemptService.DeleteOldLoginAttempts(ctx, &cmd); err != nil {
 		srv.log.Error("Problem deleting expired login attempts", "error", err.Error())
 	} else {
 		srv.log.Debug("Deleted expired login attempts", "rows affected", cmd.DeletedRows)
@@ -197,7 +204,7 @@ func (srv *CleanUpService) expireOldUserInvites(ctx context.Context) {
 	cmd := models.ExpireTempUsersCommand{
 		OlderThan: time.Now().Add(-maxInviteLifetime),
 	}
-	if err := srv.store.ExpireOldUserInvites(ctx, &cmd); err != nil {
+	if err := srv.tempUserService.ExpireOldUserInvites(ctx, &cmd); err != nil {
 		srv.log.Error("Problem expiring user invites", "error", err.Error())
 	} else {
 		srv.log.Debug("Expired user invites", "rows affected", cmd.NumExpired)

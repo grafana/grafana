@@ -45,6 +45,8 @@ The Derived Fields configuration allows you to:
 
 For example, you can use this functionality to link to your tracing backend directly from your logs, or link to a user profile page if a userId is present in the log line. These links appear in the [log details]({{< relref "../explore/logs-integration/#labels-and-detected-fields" >}}).
 
+> **Note:** Grafana Cloud users can request modifications to this feature by [opening a support ticket in the Cloud Portal](https://grafana.com/profile/org#support).
+
 Each derived field consists of:
 
 - **Name -** Shown in the log details as a label.
@@ -206,18 +208,19 @@ LogQL supports wrapping a log query with functions that allow for creating metri
 
 Instead of hard-coding things like server, application and sensor name in your metric queries, you can use variables in their place. Variables are shown as drop-down select boxes at the top of the dashboard. These drop-down boxes make it easy to change the data being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../variables/" >}}) documentation for an introduction to the templating feature and the different types of template variables.
+Check out the [Templating]({{< relref "../dashboards/variables" >}}) documentation for an introduction to the templating feature and the different types of template variables.
 
 ## Query variable
 
 Variable of the type _Query_ allows you to query Loki for a list labels or label values. The Loki data source plugin
-provides the following functions you can use in the `Query` input field.
+provides a form to select the type of values that can be expected for a given variable.
+The form has these options:
 
-| Name                                       | Description                                                                            |
-| ------------------------------------------ | -------------------------------------------------------------------------------------- |
-| `label_names()`                            | Returns a list of label names.                                                         |
-| `label_values(label)`                      | Returns a list of label values for the `label`.                                        |
-| `label_values(log stream selector, label)` | Returns a list of label values for the `label` in the specified `log stream selector`. |
+| Query Type   | Label        | Stream Selector       | Description                                                                            |
+| ------------ | ------------ | --------------------- | -------------------------------------------------------------------------------------- |
+| Label names  | Not required | Not required          | Returns a list of label names.                                                         |
+| Label values | `label`      |                       | Returns a list of label values for the `label`.                                        |
+| Label values | `label`      | `log stream selector` | Returns a list of label values for the `label` in the specified `log stream selector`. |
 
 ### Ad hoc filters variable
 
@@ -225,7 +228,7 @@ Loki supports the special ad hoc filters variable type. It allows you to specify
 
 ### Using interval and range variables
 
-You can use some global built-in variables in query variables; `$__interval`, `$__interval_ms`, `$__range`, `$__range_s` and `$__range_ms`. For more information, refer to [Global built-in variables]({{< relref "../variables/variable-types/global-variables/" >}}).
+You can use some global built-in variables in query variables; `$__interval`, `$__interval_ms`, `$__range`, `$__range_s` and `$__range_ms`. For more information, refer to [Global built-in variables]({{< relref "../dashboards/variables/add-template-variables/#global-variables/" >}}).
 
 ## Annotations
 

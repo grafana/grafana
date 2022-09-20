@@ -1,21 +1,16 @@
 import hoistNonReactStatics from 'hoist-non-react-statics';
 import React, { ComponentType, FunctionComponent, useEffect } from 'react';
-import { connect, MapDispatchToPropsParam, MapStateToPropsParam, useDispatch } from 'react-redux';
+import { connect, MapDispatchToPropsParam, MapStateToPropsParam } from 'react-redux';
 
-import { cleanUpAction, StateSelector } from '../actions/cleanUp';
+import { useDispatch } from 'app/types';
+
+import { cleanUpAction, CleanUpAction } from '../actions/cleanUp';
 
 export const connectWithCleanUp =
-  <
-    TStateProps extends {} = {},
-    TDispatchProps = {},
-    TOwnProps = {},
-    State = {},
-    TSelector extends object = {},
-    Statics = {}
-  >(
+  <TStateProps extends {} = {}, TDispatchProps = {}, TOwnProps = {}, State = {}, Statics = {}>(
     mapStateToProps: MapStateToPropsParam<TStateProps, TOwnProps, State>,
     mapDispatchToProps: MapDispatchToPropsParam<TDispatchProps, TOwnProps>,
-    stateSelector: StateSelector<TSelector>
+    cleanupAction: CleanUpAction
   ) =>
   (Component: ComponentType<any>) => {
     const ConnectedComponent = connect(
@@ -28,7 +23,7 @@ export const connectWithCleanUp =
       const dispatch = useDispatch();
       useEffect(() => {
         return function cleanUp() {
-          dispatch(cleanUpAction({ stateSelector }));
+          dispatch(cleanUpAction({ cleanupAction: cleanupAction }));
         };
       }, [dispatch]);
       // @ts-ignore

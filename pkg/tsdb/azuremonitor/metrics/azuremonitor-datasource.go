@@ -113,8 +113,13 @@ func (e *AzureMonitorDatasource) buildQueries(queries []backend.DataQuery, dsInf
 		params.Add("timespan", fmt.Sprintf("%v/%v", query.TimeRange.From.UTC().Format(time.RFC3339), query.TimeRange.To.UTC().Format(time.RFC3339)))
 		params.Add("interval", timeGrain)
 		params.Add("aggregation", azJSONModel.Aggregation)
-		params.Add("metricnames", azJSONModel.MetricName) // MetricName or MetricNames ?
-		params.Add("metricnamespace", azJSONModel.MetricNamespace)
+		params.Add("metricnames", azJSONModel.MetricName)
+
+		if azJSONModel.CustomNamespace != "" {
+			params.Add("metricnamespace", azJSONModel.CustomNamespace)
+		} else {
+			params.Add("metricnamespace", azJSONModel.MetricNamespace)
+		}
 
 		// old model
 		dimension := strings.TrimSpace(azJSONModel.Dimension)

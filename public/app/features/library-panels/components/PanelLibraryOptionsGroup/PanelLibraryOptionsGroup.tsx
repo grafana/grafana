@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import React, { FC, useCallback, useState } from 'react';
-import { useDispatch } from 'react-redux';
 
 import { GrafanaTheme2, PanelPluginMeta } from '@grafana/data';
 import { Button, useStyles2, VerticalGroup } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { PanelModel } from 'app/features/dashboard/state';
 import { changeToLibraryPanel } from 'app/features/panel/state/actions';
+import { useDispatch } from 'app/types';
 
 import { PanelTypeFilter } from '../../../../core/components/PanelTypeFilter/PanelTypeFilter';
 import { LibraryElementDTO } from '../../types';
