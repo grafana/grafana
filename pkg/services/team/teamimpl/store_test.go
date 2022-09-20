@@ -1,19 +1,6 @@
-package sqlstore
+package teamimpl
 
-import (
-	"context"
-	"fmt"
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/models"
-	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/serviceaccounts"
-	"github.com/grafana/grafana/pkg/services/user"
-)
-
+/*
 func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
@@ -578,3 +565,4 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 		})
 	}
 }
+*/
