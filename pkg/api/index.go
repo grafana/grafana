@@ -198,10 +198,6 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 
 		dashboardsUrl := "/dashboards"
 
-		if hs.Features.IsEnabled(featuremgmt.FlagTopnav) {
-			dashboardsUrl = "/dashboards/browse"
-		}
-
 		dashboardLink := &dtos.NavLink{
 			Text:       "Dashboards",
 			Id:         "dashboards",
@@ -524,7 +520,6 @@ func (hs *HTTPServer) buildDashboardNavLinks(c *models.ReqContext, hasEditPerm b
 	}
 
 	if hs.Features.IsEnabled(featuremgmt.FlagTopnav) {
-		browseNavLink.Url = hs.Cfg.AppSubURL + "/dashboards/browse"
 		browseNavLink.HideFromBreadcrumbs = true
 	}
 
