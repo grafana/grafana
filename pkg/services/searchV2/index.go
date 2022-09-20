@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/setting"
-	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/blugelabs/bluge"
 )
