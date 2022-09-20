@@ -6,6 +6,8 @@ import { VariableModel } from 'app/features/variables/types';
 import { dispatch } from 'app/store/store';
 import { DashboardDataDTO, DashboardMeta } from 'app/types/dashboard';
 
+import { DashboardModel } from '../../state';
+
 export interface PublicDashboard {
   accessToken?: string;
   isEnabled: boolean;
@@ -28,12 +30,12 @@ export const getPublicDashboardConfig = async (
 };
 
 export const savePublicDashboardConfig = async (
-  dashboardUid: string,
+  dashboard: DashboardModel,
   publicDashboardConfig: PublicDashboard,
   setPublicDashboard: React.Dispatch<React.SetStateAction<PublicDashboard>>
 ) => {
   const pdResp: PublicDashboard = await getBackendSrv().post(
-    savePublicDashboardConfigUrl(dashboardUid),
+    savePublicDashboardConfigUrl(dashboard.uid),
     publicDashboardConfig
   );
 
@@ -43,6 +45,12 @@ export const savePublicDashboardConfig = async (
 
   dispatch(notifyApp(createSuccessNotification('Dashboard sharing configuration saved')));
   setPublicDashboard(pdResp);
+
+  // Update runtime emta flag
+  dashboard.updateMeta({
+    publicDashboardUid: pdResp.uid,
+    publicDashboardEnabled: publicDashboardConfig.isEnabled,
+  });
 };
 
 export const getPublicDashboardConfigUrl = (dashboardUid: string) => {
