@@ -1,11 +1,10 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { reportInteraction } from '@grafana/runtime/src';
-import { HorizontalGroup, Spinner } from '@grafana/ui';
-import { Alert, Button, ClipboardButton, Field, Input, useStyles2 } from '@grafana/ui/src';
+import { Alert, Button, ClipboardButton, Field, HorizontalGroup, Input, useStyles2, Spinner } from '@grafana/ui/src';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -23,9 +22,15 @@ import { isOrgAdmin } from 'app/features/plugins/admin/permissions';
 import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types';
 
-import { Acknowledgements } from './SharePublicDashboardUtils';
+interface Props extends ShareModalTabProps {}
 
-export const SharePublicDashboard = (props: ShareModalTabProps) => {
+interface Acknowledgements {
+  public: boolean;
+  datasources: boolean;
+  usage: boolean;
+}
+
+export const SharePublicDashboard = (props: Props) => {
   const dashboardVariables = props.dashboard.getVariables();
   const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
   const styles = useStyles2(getStyles);
@@ -35,6 +40,7 @@ export const SharePublicDashboard = (props: ShareModalTabProps) => {
     data: publicDashboard,
     isError: isFetchingError,
   } = useGetPubDashConfigQuery(props.dashboard.uid);
+
   const [saveConfig, { isLoading: isSaveLoading }] = useSavePubDashConfigMutation();
 
   const [acknowledgements, setAcknowledgements] = useState<Acknowledgements>({
@@ -88,7 +94,7 @@ export const SharePublicDashboard = (props: ShareModalTabProps) => {
     }
 
     saveConfig({
-      dashboardUid: props.dashboard.uid,
+      dashboard: props.dashboard,
       payload: { ...publicDashboard!, isEnabled: enabledSwitch.isEnabled },
     });
   };

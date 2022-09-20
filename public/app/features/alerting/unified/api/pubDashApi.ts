@@ -5,6 +5,7 @@ import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime/src';
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { PublicDashboard } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
+import { DashboardModel } from 'app/features/dashboard/state';
 
 const backendSrvBaseQuery =
   ({ baseUrl }: { baseUrl: string } = { baseUrl: '' }): BaseQueryFn<BackendSrvRequest> =>
@@ -31,15 +32,21 @@ export const pubDashApi = createApi({
       }),
       providesTags: ['Config'],
     }),
-    savePubDashConfig: builder.mutation<PublicDashboard, { dashboardUid: string; payload: PublicDashboard }>({
+    savePubDashConfig: builder.mutation<PublicDashboard, { dashboard: DashboardModel; payload: PublicDashboard }>({
       query: (params) => ({
-        url: `/uid/${params.dashboardUid}/public-config`,
+        url: `/uid/${params.dashboard.uid}/public-config`,
         method: 'POST',
         data: params.payload,
       }),
-      async onQueryStarted(id, { dispatch, queryFulfilled }) {
-        await queryFulfilled;
+      async onQueryStarted({ dashboard, payload }, { dispatch, queryFulfilled }) {
+        const { data } = await queryFulfilled;
         dispatch(notifyApp(createSuccessNotification('Dashboard sharing configuration saved')));
+
+        // Update runtime meta flag
+        dashboard.updateMeta({
+          publicDashboardUid: data.uid,
+          publicDashboardEnabled: data.isEnabled,
+        });
       },
       invalidatesTags: ['Config'],
     }),

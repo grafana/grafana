@@ -40,7 +40,7 @@ func NewWeComConfig(config *NotificationChannelConfig, decryptFunc GetDecryptedV
 	return &WeComConfig{
 		NotificationChannelConfig: config,
 		URL:                       url,
-		Message:                   config.Settings.Get("message").MustString(`{{ template "default.message" .}}`),
+		Message:                   config.Settings.Get("message").MustString(DefaultMessageEmbed),
 		Title:                     config.Settings.Get("title").MustString(DefaultMessageTitleEmbed),
 	}, nil
 }

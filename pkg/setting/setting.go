@@ -295,6 +295,7 @@ type Cfg struct {
 	AdminUser                    string
 	AdminPassword                string
 	AdminEmail                   string
+	DisableSyncLock              bool
 
 	// AWS Plugin Auth
 	AWSAllowedAuthProviders []string
@@ -1287,6 +1288,9 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	if cfg.TokenRotationIntervalMinutes < 2 {
 		cfg.TokenRotationIntervalMinutes = 2
 	}
+
+	// Debug setting unlocking frontend auth sync lock. Users will still be reset on their next login.
+	cfg.DisableSyncLock = auth.Key("disable_sync_lock").MustBool(false)
 
 	DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
 	DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
