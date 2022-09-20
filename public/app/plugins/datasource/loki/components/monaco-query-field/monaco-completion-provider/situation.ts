@@ -2,8 +2,6 @@ import type { Tree, SyntaxNode } from '@lezer/common';
 
 import { parser } from '@grafana/lezer-logql';
 
-import { NeverCaseError } from './NeverCaseError';
-
 type Direction = 'parent' | 'firstChild' | 'lastChild' | 'nextSibling';
 type NodeTypeName =
   | '⚠' // this is used as error-name
@@ -26,18 +24,7 @@ type NodeTypeName =
 type Path = Array<[Direction, NodeTypeName]>;
 
 function move(node: SyntaxNode, direction: Direction): SyntaxNode | null {
-  switch (direction) {
-    case 'parent':
-      return node.parent;
-    case 'firstChild':
-      return node.firstChild;
-    case 'lastChild':
-      return node.lastChild;
-    case 'nextSibling':
-      return node.nextSibling;
-    default:
-      throw new NeverCaseError(direction);
-  }
+  return node[direction];
 }
 
 function walk(node: SyntaxNode, path: Path): SyntaxNode | null {
