@@ -1,9 +1,25 @@
 import { SyntaxNode } from '@lezer/common';
 import { escapeRegExp } from 'lodash';
 
-import { parser, LineFilter, PipeExact, PipeMatch, Filter, String } from '@grafana/lezer-logql';
+import {
+  parser,
+  LineFilter,
+  PipeExact,
+  PipeMatch,
+  Filter,
+  String,
+  LabelFormatExpr,
+  Selector,
+  PipelineExpr,
+  LabelParser,
+  JsonExpressionParser,
+  LabelFilter,
+  MetricExpr,
+  Matcher,
+  Identifier,
+} from '@grafana/lezer-logql';
 
-import { ErrorName } from '../prometheus/querybuilder/shared/parsingUtils';
+import { ErrorId } from '../prometheus/querybuilder/shared/parsingUtils';
 
 import { LokiQuery, LokiQueryType } from './types';
 
@@ -96,8 +112,8 @@ export function isValidQuery(query: string): boolean {
   let isValid = true;
   const tree = parser.parse(query);
   tree.iterate({
-    enter: (type): false | void => {
-      if (type.name === ErrorName) {
+    enter: ({ type }): false | void => {
+      if (type.id === ErrorId) {
         isValid = false;
       }
     },
@@ -109,8 +125,8 @@ export function isLogsQuery(query: string): boolean {
   let isLogsQuery = true;
   const tree = parser.parse(query);
   tree.iterate({
-    enter: (type): false | void => {
-      if (type.name === 'MetricExpr') {
+    enter: ({ type }): false | void => {
+      if (type.id === MetricExpr) {
         isLogsQuery = false;
       }
     },
@@ -122,8 +138,8 @@ export function isQueryWithParser(query: string): { queryWithParser: boolean; pa
   let parserCount = 0;
   const tree = parser.parse(query);
   tree.iterate({
-    enter: (type): false | void => {
-      if (type.name === 'LabelParser' || type.name === 'JsonExpressionParser') {
+    enter: ({ type }): false | void => {
+      if (type.id === LabelParser || type.id === JsonExpressionParser) {
         parserCount++;
       }
     },
@@ -135,9 +151,9 @@ export function isQueryPipelineErrorFiltering(query: string): boolean {
   let isQueryPipelineErrorFiltering = false;
   const tree = parser.parse(query);
   tree.iterate({
-    enter: ({ name, node }): false | void => {
-      if (name === 'LabelFilter') {
-        const label = node.getChild('Matcher')?.getChild('Identifier');
+    enter: ({ type, node }): false | void => {
+      if (type.id === LabelFilter) {
+        const label = node.getChild(Matcher)?.getChild(Identifier);
         if (label) {
           const labelName = query.substring(label.from, label.to);
           if (labelName === '__error__') {
@@ -155,8 +171,8 @@ export function isQueryWithLabelFormat(query: string): boolean {
   let queryWithLabelFormat = false;
   const tree = parser.parse(query);
   tree.iterate({
-    enter: (type): false | void => {
-      if (type.name === 'LabelFormatExpr') {
+    enter: ({ type }): false | void => {
+      if (type.id === LabelFormatExpr) {
         queryWithLabelFormat = true;
       }
     },
@@ -174,8 +190,8 @@ export function getLogQueryFromMetricsQuery(query: string): string {
   // Log query in metrics query composes of Selector & PipelineExpr
   let selector = '';
   tree.iterate({
-    enter: ({ name, from, to }): false | void => {
-      if (name === 'Selector') {
+    enter: ({ type, from, to }): false | void => {
+      if (type.id === Selector) {
         selector = query.substring(from, to);
         return false;
       }
@@ -184,8 +200,8 @@ export function getLogQueryFromMetricsQuery(query: string): string {
 
   let pipelineExpr = '';
   tree.iterate({
-    enter: ({ name, from, to }): false | void => {
-      if (name === 'PipelineExpr') {
+    enter: ({ type, from, to }): false | void => {
+      if (type.id === PipelineExpr) {
         pipelineExpr = query.substring(from, to);
         return false;
       }
