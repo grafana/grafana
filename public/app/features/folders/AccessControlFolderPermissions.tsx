@@ -36,7 +36,7 @@ export const AccessControlFolderPermissions = ({ uid, getFolderByUid, pageNav }:
   const canSetPermissions = contextSrv.hasPermission(AccessControlAction.FoldersPermissionsWrite);
 
   return (
-    <Page navId="dashboards" pageNav={pageNav.main}>
+    <Page navId="dashboards/browse" pageNav={pageNav.main}>
       <Page.Contents>
         <Permissions resource="folders" resourceId={uid} canSetPermissions={canSetPermissions} />
       </Page.Contents>

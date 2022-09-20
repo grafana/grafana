@@ -520,8 +520,7 @@ func (hs *HTTPServer) buildDashboardNavLinks(c *models.ReqContext, hasEditPerm b
 	}
 
 	if hs.Features.IsEnabled(featuremgmt.FlagTopnav) {
-		browseNavLink.HideFromBreadcrumbs = true
-		browseNavLink.HideFromTabs = true
+		browseNavLink.Url = hs.Cfg.AppSubURL + "/dashboards/browse"
 	}
 
 	dashboardChildNavs = append(dashboardChildNavs, browseNavLink)

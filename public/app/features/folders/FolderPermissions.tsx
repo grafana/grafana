@@ -88,7 +88,7 @@ export class FolderPermissions extends PureComponent<Props, State> {
 
     if (folder.id === 0) {
       return (
-        <Page navId="dashboards" pageNav={pageNav.main}>
+        <Page navId="dashboards/browse" pageNav={pageNav.main}>
           <Page.Contents isLoading={true}>
             <span />
           </Page.Contents>
