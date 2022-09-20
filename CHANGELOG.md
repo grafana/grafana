@@ -418,6 +418,17 @@ In Prometheus, browser access mode was deprecated in Grafana 7.4.0 and removed i
 - **Grafana/UI:** Add ColorPickerInput component. [#52222](https://github.com/grafana/grafana/pull/52222), [@Clarity-89](https://github.com/Clarity-89)
 - **Plugins:** Validate root URLs when signing private plugins via grafana-toolkit. [#51968](https://github.com/grafana/grafana/pull/51968), [@wbrowne](https://github.com/wbrowne)
 
+<!-- 9.0.9 START -->
+
+# 9.0.9 (2022-09-20)
+
+### Bug fixes
+
+- **AngularPanels:** Fixing changing angular panel options not taking having affect when coming back from panel edit. [#54834](https://github.com/grafana/grafana/pull/54834), [@grafanabot](https://github.com/grafanabot)
+- **FIX:** RBAC prevents deleting empty snapshots (#54385). [#54509](https://github.com/grafana/grafana/pull/54509), [@gamab](https://github.com/gamab)
+
+<!-- 9.0.9 END -->
+
 <!-- 9.0.8 START -->
 
 # 9.0.8 (2022-08-30)
