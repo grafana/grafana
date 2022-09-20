@@ -54,7 +54,7 @@ func (f *FakeOrgService) GetByNameHandler(ctx context.Context, query *org.GetOrg
 	return f.ExpectedOrg, f.ExpectedError
 }
 
-func (f *FakeOrgService) GetOrgByName(name string) (*org.Org, error) {
+func (f *FakeOrgService) GetByName(name string) (*org.Org, error) {
 	return f.ExpectedOrg, f.ExpectedError
 }
 
