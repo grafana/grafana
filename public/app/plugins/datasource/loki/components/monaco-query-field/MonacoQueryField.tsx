@@ -87,7 +87,7 @@ const MonacoQueryField = ({ languageProvider, history, onBlur, onRunQuery, initi
   const onRunQueryRef = useLatest(onRunQuery);
   const onBlurRef = useLatest(onBlur);
 
-  const autocompleteDisposeFun = useRef<(() => void) | null>(null);
+  const autocompleteCleanupCallback = useRef<(() => void) | null>(null);
 
   const theme = useTheme2();
   const styles = getStyles(theme);
@@ -95,7 +95,7 @@ const MonacoQueryField = ({ languageProvider, history, onBlur, onRunQuery, initi
   useEffect(() => {
     // when we unmount, we unregister the autocomplete-function, if it was registered
     return () => {
-      autocompleteDisposeFun.current?.();
+      autocompleteCleanupCallback.current?.();
     };
   }, []);
 
@@ -144,7 +144,7 @@ const MonacoQueryField = ({ languageProvider, history, onBlur, onRunQuery, initi
 
           const { dispose } = monaco.languages.registerCompletionItemProvider(LANG_ID, filteringCompletionProvider);
 
-          autocompleteDisposeFun.current = dispose;
+          autocompleteCleanupCallback.current = dispose;
           // this code makes the editor resize itself so that the content fits
           // (it will grow taller when necessary)
           // FIXME: maybe move this functionality into CodeEditor, like:
