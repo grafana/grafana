@@ -205,7 +205,12 @@ func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Respon
 		dto.Enabled = ps.Enabled
 		dto.Pinned = ps.Pinned
 		dto.JsonData = ps.JSONData
-		dto.SecureJsonFields = pluginsettings.ToSecureJsonFields(hs.PluginSettings.DecryptedValues(ps))
+
+		for k, v := range hs.PluginSettings.DecryptedValues(ps) {
+			if len(v) > 0 {
+				dto.SecureJsonFields[k] = true
+			}
+		}
 	}
 
 	update, exists := hs.pluginsUpdateChecker.HasUpdate(c.Req.Context(), plugin.ID)

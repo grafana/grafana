@@ -62,14 +62,7 @@ type Store interface {
 	Sync() error
 	Reset() error
 	Quote(value string) string
-	UpdateTempUserStatus(ctx context.Context, cmd *models.UpdateTempUserStatusCommand) error
-	CreateTempUser(ctx context.Context, cmd *models.CreateTempUserCommand) error
-	UpdateTempUserWithEmailSent(ctx context.Context, cmd *models.UpdateTempUserWithEmailSentCommand) error
-	GetTempUsersQuery(ctx context.Context, query *models.GetTempUsersQuery) error
-	GetTempUserByCode(ctx context.Context, query *models.GetTempUserByCodeQuery) error
-	ExpireOldUserInvites(ctx context.Context, cmd *models.ExpireTempUsersCommand) error
 	GetDBHealthQuery(ctx context.Context, query *models.GetDBHealthQuery) error
-	SearchOrgs(ctx context.Context, query *models.SearchOrgsQuery) error
 	IsAdminOfTeams(ctx context.Context, query *models.IsAdminOfTeamsQuery) error
 	GetSqlxSession() *session.SessionDB
 }
