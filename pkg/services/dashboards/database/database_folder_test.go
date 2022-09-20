@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -288,7 +289,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 
 			setup3 := func() {
 				sqlStore = sqlstore.InitTestDB(t)
-				dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles)
+				dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles, tagimpl.ProvideService(sqlStore))
 				folder1 = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, true, "prod")
 				folder2 = insertTestDashboard(t, dashboardStore, "2 test dash folder", 1, 0, true, "prod")
 				insertTestDashboard(t, dashboardStore, "folder in another org", 2, 0, true, "prod")
@@ -470,7 +471,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 			var sqlStore *sqlstore.SQLStore
 			var folder1, folder2 *models.Dashboard
 			sqlStore = sqlstore.InitTestDB(t)
-			dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles)
+			dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles, tagimpl.ProvideService(sqlStore))
 			folder2 = insertTestDashboard(t, dashboardStore, "TEST", orgId, 0, true, "prod")
 			_ = insertTestDashboard(t, dashboardStore, title, orgId, folder2.Id, false, "prod")
 			folder1 = insertTestDashboard(t, dashboardStore, title, orgId, 0, true, "prod")
@@ -509,7 +510,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 		t.Run("GetFolderByID", func(t *testing.T) {
 			var orgId int64 = 1
 			sqlStore := sqlstore.InitTestDB(t)
-			dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles)
+			dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles, tagimpl.ProvideService(sqlStore))
 			folder := insertTestDashboard(t, dashboardStore, "TEST", orgId, 0, true, "prod")
 			dash := insertTestDashboard(t, dashboardStore, "Very Unique Name", orgId, folder.Id, false, "prod")
 
@@ -542,7 +543,7 @@ func moveDashboard(t *testing.T, dashboardStore *DashboardStore, orgId int64, da
 		Dashboard: dashboard,
 		Overwrite: true,
 	}
-	dash, err := dashboardStore.SaveDashboard(cmd)
+	dash, err := dashboardStore.SaveDashboard(context.Background(), cmd)
 	require.NoError(t, err)
 
 	return dash

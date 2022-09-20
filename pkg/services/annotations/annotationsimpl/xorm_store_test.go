@@ -62,7 +62,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 				"title": "Dashboard 1",
 			}),
 		}
-		dashboard, err := dashboardStore.SaveDashboard(testDashboard1)
+		dashboard, err := dashboardStore.SaveDashboard(context.Background(), testDashboard1)
 		require.NoError(t, err)
 
 		testDashboard2 := models.SaveDashboardCommand{
@@ -72,7 +72,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 				"title": "Dashboard 2",
 			}),
 		}
-		dashboard2, err := dashboardStore.SaveDashboard(testDashboard2)
+		dashboard2, err := dashboardStore.SaveDashboard(context.Background(), testDashboard2)
 		require.NoError(t, err)
 
 		annotation := &annotations.Item{
@@ -394,7 +394,7 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 	}
 	sql := sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{})
 	repo := SQLAnnotationRepo{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql)}
-	dashboardStore := dashboardstore.ProvideDashboardStore(sql, featuremgmt.WithFeatures())
+	dashboardStore := dashboardstore.ProvideDashboardStore(sql, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql))
 
 	testDashboard1 := models.SaveDashboardCommand{
 		UserId: 1,
@@ -403,7 +403,7 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 			"title": "Dashboard 1",
 		}),
 	}
-	dashboard, err := dashboardStore.SaveDashboard(testDashboard1)
+	dashboard, err := dashboardStore.SaveDashboard(context.Background(), testDashboard1)
 	require.NoError(t, err)
 	dash1UID := dashboard.Uid
 
@@ -414,7 +414,7 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 			"title": "Dashboard 2",
 		}),
 	}
-	_, err = dashboardStore.SaveDashboard(testDashboard2)
+	_, err = dashboardStore.SaveDashboard(context.Background(), testDashboard2)
 	require.NoError(t, err)
 
 	dash1Annotation := &annotations.Item{

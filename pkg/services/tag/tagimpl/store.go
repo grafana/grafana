@@ -18,7 +18,7 @@ type sqlStore struct {
 
 func (s *sqlStore) EnsureTagsExist(ctx context.Context, tags []*tag.Tag) ([]*tag.Tag, error) {
 	var existingTag tag.Tag
-	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		for _, tag := range tags {
 			exists, err := sess.Table("tag").Where("`key`=? AND `value`=?", tag.Key, tag.Value).Get(&existingTag)
 			if err != nil {
