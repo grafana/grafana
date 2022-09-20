@@ -16,9 +16,10 @@ import { ElementState } from '../runtime/element';
 
 import { Align, TextBoxConfig, TextBoxData, VAlign } from './textBox';
 
+// eslint-disable-next-line
 const dummyFieldSettings: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {
   settings: {},
-} as any;
+} as StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings>;
 
 const MetricValueDisplay = (props: CanvasElementProps<TextBoxConfig, TextBoxData>) => {
   const { data, isSelected } = props;
@@ -42,11 +43,13 @@ const MetricValueDisplay = (props: CanvasElementProps<TextBoxConfig, TextBoxData
 const MetricValueEdit = (props: CanvasElementProps<TextBoxConfig, TextBoxData>) => {
   let { data, config } = props;
   const context = usePanelContext();
-  const panelData = context.instanceState?.scene?.data.series as DataFrame[];
+  let panelData: DataFrame[];
+  panelData = context.instanceState?.scene?.data.series;
 
   const onFieldChange = useCallback(
     (field) => {
-      const selectedElement = context.instanceState?.selected[0] as ElementState;
+      let selectedElement: ElementState;
+      selectedElement = context.instanceState?.selected[0];
       if (selectedElement) {
         const options = selectedElement.options;
         selectedElement.onChange({
