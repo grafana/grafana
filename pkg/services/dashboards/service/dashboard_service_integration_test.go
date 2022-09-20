@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -826,7 +827,7 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 			accesscontrolmock.NewMockedPermissionsService(),
 			accesscontrolmock.New(),
 		)
-		guardian.InitLegacyGuardian(sqlStore, service)
+		guardian.InitLegacyGuardian(sqlStore, service, &teamtest.FakeService{})
 
 		savedFolder := saveTestFolder(t, "Saved folder", testOrgID, sqlStore)
 		savedDashInFolder := saveTestDashboard(t, "Saved dash in folder", testOrgID, savedFolder.Id, sqlStore)

@@ -115,7 +115,7 @@ func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 	bodyJSON.Set("entity_id", groupKey.Hash())
 	bodyJSON.Set("entity_display_name", tmpl(DefaultMessageTitleEmbed))
 	bodyJSON.Set("timestamp", time.Now().Unix())
-	bodyJSON.Set("state_message", tmpl(`{{ template "default.message" . }}`))
+	bodyJSON.Set("state_message", tmpl(DefaultMessageEmbed))
 	bodyJSON.Set("monitoring_tool", "Grafana v"+setting.BuildVersion)
 
 	_ = withStoredImages(ctx, vn.log, vn.images,

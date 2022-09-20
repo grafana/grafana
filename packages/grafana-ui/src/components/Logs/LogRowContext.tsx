@@ -123,6 +123,7 @@ const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeader
   );
 };
 
+/** @deprecated will be removed in the next major version */
 export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps> = ({
   row,
   rows,
@@ -188,6 +189,7 @@ export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps
   );
 };
 
+/** @deprecated will be removed in the next major version */
 export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
   row,
   context,

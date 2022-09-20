@@ -55,6 +55,7 @@ import { Echo } from './core/services/echo/Echo';
 import { reportPerformance } from './core/services/echo/EchoSrv';
 import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
 import { ApplicationInsightsBackend } from './core/services/echo/backends/analytics/ApplicationInsightsBackend';
+import { GA4EchoBackend } from './core/services/echo/backends/analytics/GA4Backend';
 import { GAEchoBackend } from './core/services/echo/backends/analytics/GABackend';
 import { RudderstackBackend } from './core/services/echo/backends/analytics/RudderstackBackend';
 import { GrafanaJavascriptAgentBackend } from './core/services/echo/backends/grafana-javascript-agent/GrafanaJavascriptAgentBackend';
@@ -252,6 +253,14 @@ function initEchoSrv() {
     registerEchoBackend(
       new GAEchoBackend({
         googleAnalyticsId: config.googleAnalyticsId,
+      })
+    );
+  }
+
+  if (config.googleAnalytics4Id) {
+    registerEchoBackend(
+      new GA4EchoBackend({
+        googleAnalyticsId: config.googleAnalytics4Id,
       })
     );
   }

@@ -4467,6 +4467,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@daybrush/utils@npm:1.10.0":
+  version: 1.10.0
+  resolution: "@daybrush/utils@npm:1.10.0"
+  checksum: bd8401971012052c420046e45b143fa9a211a2dc80c782ebc930865df6da8da8544f683a2b8728862a97407ff48bd7eb02657279b19f261e95541818441023db
+  languageName: node
+  linkType: hard
+
 "@daybrush/utils@npm:1.6.0, @daybrush/utils@npm:^1.0.0, @daybrush/utils@npm:^1.1.1, @daybrush/utils@npm:^1.3.1, @daybrush/utils@npm:^1.4.0":
   version: 1.6.0
   resolution: "@daybrush/utils@npm:1.6.0"
@@ -4478,13 +4485,6 @@ __metadata:
   version: 1.7.1
   resolution: "@daybrush/utils@npm:1.7.1"
   checksum: 70c1d6a335c5152b17ff2325a11228e96ea1f0d818b5d2bc01a37b27736f11f39bd432ff3e3e31ab26ccb4033718e74b36d2791d5d32ccc6bf3c58aeb3913c83
-  languageName: node
-  linkType: hard
-
-"@daybrush/utils@npm:^1.9.1":
-  version: 1.9.1
-  resolution: "@daybrush/utils@npm:1.9.1"
-  checksum: b14ab6d26630657a76b6eace94fb1469a35df418bdca5b13c1e0f3f94985f0b8aca152f450ffe8e7b9f0059bf4ce489fc6acbb6790af3c5c8cfca2865ae0de3c
   languageName: node
   linkType: hard
 
@@ -11377,6 +11377,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/gtag.js@npm:^0.0.11":
+  version: 0.0.11
+  resolution: "@types/gtag.js@npm:0.0.11"
+  checksum: fe3f0550f609a903fd23b2b7eae2771ad6c9f314c7458320759e8e328b2c148b7d3bff0462d05e3ffe6e800dbd4dfacf174cbeb29796b31813a8bb2fbecca1cc
+  languageName: node
+  linkType: hard
+
 "@types/hast@npm:^2.0.0":
   version: 2.3.4
   resolution: "@types/hast@npm:2.3.4"
@@ -15717,12 +15724,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"centrifuge@npm:2.8.5":
-  version: 2.8.5
-  resolution: "centrifuge@npm:2.8.5"
+"centrifuge@npm:3.0.1":
+  version: 3.0.1
+  resolution: "centrifuge@npm:3.0.1"
   dependencies:
-    protobufjs: ^6.11.2
-  checksum: 27db6d3b92aa52fa7a5f7ac9a5643338bae0a231db61d791bbad0d4858a67f72991f12a63e6f042179bafd0854ebf832c42bde2ae5ddd2a26124d094c1d5cf65
+    events: ^3.3.0
+    protobufjs: ^6.11.3
+  checksum: cf17b63fe9c684f121348a8597da0686a1f45fff2f85eaed6a3452504caeb1098c1524b10f197fe3811a11199214b88b75f5935ac86cb9753146fcc0d11f418c
   languageName: node
   linkType: hard
 
@@ -20035,7 +20043,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"events@npm:^3.0.0, events@npm:^3.2.0":
+"events@npm:^3.0.0, events@npm:^3.2.0, events@npm:^3.3.0":
   version: 3.3.0
   resolution: "events@npm:3.3.0"
   checksum: f6f487ad2198aa41d878fa31452f1a3c00958f46e9019286ff4787c84aac329332ab45c9cdc8c445928fc6d7ded294b9e005a7fce9426488518017831b272780
@@ -21736,7 +21744,7 @@ __metadata:
     "@betterer/cli": 5.4.0
     "@betterer/eslint": 5.4.0
     "@betterer/regexp": 5.4.0
-    "@daybrush/utils": ^1.9.1
+    "@daybrush/utils": 1.10.0
     "@emotion/css": 11.9.0
     "@emotion/eslint-plugin": 11.7.0
     "@emotion/react": 11.9.3
@@ -21807,6 +21815,7 @@ __metadata:
     "@types/eslint": 8.4.5
     "@types/file-saver": 2.0.5
     "@types/google.analytics": ^0.0.42
+    "@types/gtag.js": ^0.0.11
     "@types/history": 4.7.11
     "@types/hoist-non-react-statics": 3.3.1
     "@types/jest": 29.0.3
@@ -21874,7 +21883,7 @@ __metadata:
     baron: 3.0.3
     brace: 0.11.1
     calculate-size: 1.1.1
-    centrifuge: 2.8.5
+    centrifuge: 3.0.1
     classnames: 2.3.1
     comlink: 4.3.1
     common-tags: 1.8.2
@@ -22001,6 +22010,7 @@ __metadata:
     reselect: 4.1.6
     rimraf: 3.0.2
     rst2html: "github:thoward/rst2html#990cb89f2a300cdd9151790be377c4c0840df809"
+    rudder-sdk-js: ^2.13.0
     rxjs: 7.5.6
     sass: 1.54.0
     sass-loader: 13.0.2
@@ -30733,7 +30743,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"protobufjs@npm:^6.11.2":
+"protobufjs@npm:^6.11.3":
   version: 6.11.3
   resolution: "protobufjs@npm:6.11.3"
   dependencies:
@@ -33460,6 +33470,13 @@ __metadata:
   dependencies:
     "@babel/runtime": ^7.1.2
   checksum: 8fd4956df234610bab11299adc7e12f82fc6f9770474f66e0c00bfa3c23bce9e4908476f802ad6d704c9158f503d8d17634af4221f941a3d613ee6d8995208ed
+  languageName: node
+  linkType: hard
+
+"rudder-sdk-js@npm:^2.13.0":
+  version: 2.13.0
+  resolution: "rudder-sdk-js@npm:2.13.0"
+  checksum: 36c5200d7f49b4871ebe082498cf9e3d358821fdda0e51d4a1f916dd26fc6e820eea7077e42b837cf7edcea81cce0b7b95f69bc81496c43b9f22957d42747c94
   languageName: node
   linkType: hard
 

@@ -122,6 +122,7 @@
     "@types/eslint": "8.4.5",
     "@types/file-saver": "2.0.5",
     "@types/google.analytics": "^0.0.42",
+    "@types/gtag.js": "^0.0.11",
     "@types/history": "4.7.11",
     "@types/hoist-non-react-statics": "3.3.1",
     "@types/jest": "29.0.3",
@@ -217,6 +218,7 @@
     "react-test-renderer": "18.2.0",
     "redux-mock-store": "1.5.4",
     "rimraf": "3.0.2",
+    "rudder-sdk-js": "^2.13.0",
     "sass": "1.54.0",
     "sass-loader": "13.0.2",
     "sinon": "14.0.0",
@@ -239,7 +241,7 @@
     "webpack-merge": "5.8.0"
   },
   "dependencies": {
-    "@daybrush/utils": "^1.9.1",
+    "@daybrush/utils": "1.10.0",
     "@emotion/css": "11.9.0",
     "@emotion/react": "11.9.3",
     "@grafana/agent-core": "0.4.0",
@@ -298,7 +300,7 @@
     "baron": "3.0.3",
     "brace": "0.11.1",
     "calculate-size": "1.1.1",
-    "centrifuge": "2.8.5",
+    "centrifuge": "3.0.1",
     "classnames": "2.3.1",
     "comlink": "4.3.1",
     "common-tags": "1.8.2",

@@ -1,8 +1,7 @@
-import React, { useCallback } from 'react';
+import React, { useEffect } from 'react';
 
 import { Button, HorizontalGroup } from '@grafana/ui';
 
-import { UpdateCorrelationParams } from '../types';
 import { useCorrelations } from '../useCorrelations';
 
 import { CorrelationDetailsFormPart } from './CorrelationDetailsFormPart';
@@ -16,17 +15,17 @@ interface Props {
 }
 
 export const EditCorrelationForm = ({ onUpdated, defaultValues, readOnly = false }: Props) => {
-  const { update } = useCorrelations();
+  const {
+    update: { execute, loading, error, value },
+  } = useCorrelations();
 
-  const onSubmit = useCallback(
-    async (correlation: UpdateCorrelationParams) => {
-      await update.execute(correlation);
+  useEffect(() => {
+    if (!error && !loading && value) {
       onUpdated();
-    },
-    [update, onUpdated]
-  );
+    }
+  }, [error, loading, value, onUpdated]);
 
-  const { handleSubmit, register } = useCorrelationForm<EditFormDTO>({ onSubmit, defaultValues });
+  const { handleSubmit, register } = useCorrelationForm<EditFormDTO>({ onSubmit: execute, defaultValues });
 
   return (
     <form onSubmit={readOnly ? (e) => e.preventDefault() : handleSubmit}>
@@ -36,12 +35,7 @@ export const EditCorrelationForm = ({ onUpdated, defaultValues, readOnly = false
 
       {!readOnly && (
         <HorizontalGroup justify="flex-end">
-          <Button
-            variant="primary"
-            icon={update.loading ? 'fa fa-spinner' : 'save'}
-            type="submit"
-            disabled={update.loading}
-          >
+          <Button variant="primary" icon={loading ? 'fa fa-spinner' : 'save'} type="submit" disabled={loading}>
             Save
           </Button>
         </HorizontalGroup>

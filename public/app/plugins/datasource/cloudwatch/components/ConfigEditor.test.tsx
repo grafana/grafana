@@ -18,12 +18,14 @@ declare global {
 jest.mock('app/features/plugins/datasource_srv', () => ({
   getDatasourceSrv: () => ({
     loadDatasource: jest.fn().mockResolvedValue({
-      getRegions: jest.fn().mockResolvedValue([
-        {
-          label: 'ap-east-1',
-          value: 'ap-east-1',
-        },
-      ]),
+      api: {
+        getRegions: jest.fn().mockResolvedValue([
+          {
+            label: 'ap-east-1',
+            value: 'ap-east-1',
+          },
+        ]),
+      },
       getActualRegion: jest.fn().mockReturnValue('ap-east-1'),
       getVariables: jest.fn().mockReturnValue([]),
       logsQueryRunner: {
