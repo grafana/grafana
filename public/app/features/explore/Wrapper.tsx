@@ -73,6 +73,7 @@ class WrapperUnconnected extends PureComponent<Props, WrapperState> {
 
   componentWillUnmount() {
     const { left, right } = this.props.queryParams;
+    this.props.resetExploreAction({});
 
     if (Boolean(left)) {
       this.props.cleanupPaneAction({ exploreId: ExploreId.left });
@@ -81,8 +82,6 @@ class WrapperUnconnected extends PureComponent<Props, WrapperState> {
     if (Boolean(right)) {
       this.props.cleanupPaneAction({ exploreId: ExploreId.right });
     }
-
-    this.props.resetExploreAction({});
   }
 
   componentDidMount() {
