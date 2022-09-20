@@ -17,55 +17,6 @@ import (
 
 const defaultDingdingMsgType = "link"
 
-type DingDingConfig struct {
-	*NotificationChannelConfig
-	MsgType string
-	Message string
-	URL     string
-}
-
-func NewDingDingConfig(config *NotificationChannelConfig) (*DingDingConfig, error) {
-	url := config.Settings.Get("url").MustString()
-	if url == "" {
-		return nil, errors.New("could not find url property in settings")
-	}
-	return &DingDingConfig{
-		NotificationChannelConfig: config,
-		MsgType:                   config.Settings.Get("msgType").MustString(defaultDingdingMsgType),
-		Message:                   config.Settings.Get("message").MustString(DefaultMessageEmbed),
-		URL:                       config.Settings.Get("url").MustString(),
-	}, nil
-}
-func DingDingFactory(fc FactoryConfig) (NotificationChannel, error) {
-	cfg, err := NewDingDingConfig(fc.Config)
-	if err != nil {
-		return nil, receiverInitError{
-			Reason: err.Error(),
-			Cfg:    *fc.Config,
-		}
-	}
-	return NewDingDingNotifier(cfg, fc.NotificationService, fc.Template), nil
-}
-
-// NewDingDingNotifier is the constructor for the Dingding notifier
-func NewDingDingNotifier(config *DingDingConfig, ns notifications.WebhookSender, t *template.Template) *DingDingNotifier {
-	return &DingDingNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   config.UID,
-			Name:                  config.Name,
-			Type:                  config.Type,
-			DisableResolveMessage: config.DisableResolveMessage,
-			Settings:              config.Settings,
-		}),
-		MsgType: config.MsgType,
-		Message: config.Message,
-		URL:     config.URL,
-		log:     log.New("alerting.notifier.dingding"),
-		tmpl:    t,
-		ns:      ns,
-	}
-}
-
 // DingDingNotifier is responsible for sending alert notifications to ding ding.
 type DingDingNotifier struct {
 	*Base
@@ -75,6 +26,40 @@ type DingDingNotifier struct {
 	tmpl    *template.Template
 	ns      notifications.WebhookSender
 	log     log.Logger
+}
+
+func DingDingFactory(fc FactoryConfig) (NotificationChannel, error) {
+	ch, err := buildDingDingNotifier(fc)
+	if err != nil {
+		return nil, receiverInitError{
+			Reason: err.Error(),
+			Cfg:    *fc.Config,
+		}
+	}
+	return ch, nil
+}
+
+func buildDingDingNotifier(fc FactoryConfig) (*DingDingNotifier, error) {
+	url := fc.Config.Settings.Get("url").MustString()
+	if url == "" {
+		return nil, errors.New("could not find url property in settings")
+	}
+
+	return &DingDingNotifier{
+		Base: NewBase(&models.AlertNotification{
+			Uid:                   fc.Config.UID,
+			Name:                  fc.Config.Name,
+			Type:                  fc.Config.Type,
+			DisableResolveMessage: fc.Config.DisableResolveMessage,
+			Settings:              fc.Config.Settings,
+		}),
+		MsgType: fc.Config.Settings.Get("msgType").MustString(defaultDingdingMsgType),
+		Message: fc.Config.Settings.Get("message").MustString(DefaultMessageEmbed),
+		URL:     fc.Config.Settings.Get("url").MustString(),
+		log:     log.New("alerting.notifier.dingding"),
+		tmpl:    fc.Template,
+		ns:      fc.NotificationService,
+	}, nil
 }
 
 // Notify sends the alert notification to dingding.

@@ -156,7 +156,12 @@ func TestDingdingNotifier(t *testing.T) {
 			}
 
 			webhookSender := mockNotificationService()
-			cfg, err := NewDingDingConfig(m)
+			fc := FactoryConfig{
+				Config:              m,
+				NotificationService: webhookSender,
+				Template:            tmpl,
+			}
+			pn, err := buildDingDingNotifier(fc)
 			if c.expInitError != "" {
 				require.Equal(t, c.expInitError, err.Error())
 				return
@@ -165,7 +170,6 @@ func TestDingdingNotifier(t *testing.T) {
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
-			pn := NewDingDingNotifier(cfg, webhookSender, tmpl)
 			ok, err := pn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.False(t, ok)
