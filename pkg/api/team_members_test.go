@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/teamguardian/database"
 	"github.com/grafana/grafana/pkg/services/teamguardian/manager"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -62,6 +63,7 @@ func TestTeamMembersAPIEndpoint_userLoggedIn(t *testing.T) {
 	sqlStore.Cfg = settings
 
 	hs.SQLStore = sqlStore
+	hs.teamService = teamimpl.ProvideService(sqlStore)
 	hs.License = &licensing.OSSLicensingService{}
 	hs.teamGuardian = &TeamGuardianMock{}
 	mock := mockstore.NewSQLStoreMock()
@@ -120,19 +122,20 @@ func createUser(db sqlstore.Store, orgId int64, t *testing.T) int64 {
 }
 
 func setupTeamTestScenario(userCount int, db sqlstore.Store, t *testing.T) int64 {
+	teamService := teamimpl.ProvideService(db.(*sqlstore.SQLStore)) // FIXME
 	user, err := db.CreateUser(context.Background(), user.CreateUserCommand{SkipOrgSetup: true, Login: testUserLogin})
 	require.NoError(t, err)
 	testOrg, err := db.CreateOrgWithMember("TestOrg", user.ID)
 	require.NoError(t, err)
 
-	team, err := db.CreateTeam("test", "test@test.com", testOrg.Id)
+	team, err := teamService.CreateTeam("test", "test@test.com", testOrg.Id)
 	require.NoError(t, err)
 
 	for i := 0; i < userCount; i++ {
 		userId := createUser(db, testOrg.Id, t)
 		require.NoError(t, err)
 
-		err = db.AddTeamMember(userId, testOrg.Id, team.Id, false, 0)
+		err = teamService.AddTeamMember(userId, testOrg.Id, team.Id, false, 0)
 		require.NoError(t, err)
 	}
 
@@ -153,7 +156,7 @@ func TestAddTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 	cfg.RBACEnabled = false
 	cfg.EditorsCanAdmin = true
 	sc := setupHTTPServerWithCfg(t, true, cfg)
-	guardian := manager.ProvideService(database.ProvideTeamGuardianStore(sc.db))
+	guardian := manager.ProvideService(database.ProvideTeamGuardianStore(sc.db, sc.teamService))
 	sc.hs.teamGuardian = guardian
 
 	teamMemberCount := 3
@@ -176,7 +179,7 @@ func TestAddTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 
-	err := sc.db.AddTeamMember(sc.initCtx.UserID, 1, 1, false, 0)
+	err := sc.teamService.AddTeamMember(sc.initCtx.UserID, 1, 1, false, 0)
 	require.NoError(t, err)
 	input = strings.NewReader(fmt.Sprintf(createTeamMemberCmd, newUserId))
 	t.Run("Team members cannot add team members", func(t *testing.T) {
@@ -184,7 +187,7 @@ func TestAddTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 
-	err = sc.db.UpdateTeamMember(context.Background(), &models.UpdateTeamMemberCommand{
+	err = sc.teamService.UpdateTeamMember(context.Background(), &models.UpdateTeamMemberCommand{
 		UserId:     sc.initCtx.UserID,
 		OrgId:      1,
 		TeamId:     1,
@@ -290,7 +293,7 @@ func TestUpdateTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 	cfg.RBACEnabled = false
 	cfg.EditorsCanAdmin = true
 	sc := setupHTTPServerWithCfg(t, true, cfg)
-	guardian := manager.ProvideService(database.ProvideTeamGuardianStore(sc.db))
+	guardian := manager.ProvideService(database.ProvideTeamGuardianStore(sc.db, sc.teamService))
 	sc.hs.teamGuardian = guardian
 
 	teamMemberCount := 3
@@ -311,7 +314,7 @@ func TestUpdateTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 
-	err := sc.db.AddTeamMember(sc.initCtx.UserID, 1, 1, false, 0)
+	err := sc.teamService.AddTeamMember(sc.initCtx.UserID, 1, 1, false, 0)
 	require.NoError(t, err)
 	input = strings.NewReader(fmt.Sprintf(updateTeamMemberCmd, 0))
 	t.Run("Team members cannot update team members", func(t *testing.T) {
@@ -319,7 +322,7 @@ func TestUpdateTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 
-	err = sc.db.UpdateTeamMember(context.Background(), &models.UpdateTeamMemberCommand{
+	err = sc.teamService.UpdateTeamMember(context.Background(), &models.UpdateTeamMemberCommand{
 		UserId:     sc.initCtx.UserID,
 		OrgId:      1,
 		TeamId:     1,
@@ -369,7 +372,7 @@ func TestDeleteTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 	cfg.RBACEnabled = false
 	cfg.EditorsCanAdmin = true
 	sc := setupHTTPServerWithCfg(t, true, cfg)
-	guardian := manager.ProvideService(database.ProvideTeamGuardianStore(sc.db))
+	guardian := manager.ProvideService(database.ProvideTeamGuardianStore(sc.db, sc.teamService))
 	sc.hs.teamGuardian = guardian
 
 	teamMemberCount := 3
@@ -388,14 +391,14 @@ func TestDeleteTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 
-	err := sc.db.AddTeamMember(sc.initCtx.UserID, 1, 1, false, 0)
+	err := sc.teamService.AddTeamMember(sc.initCtx.UserID, 1, 1, false, 0)
 	require.NoError(t, err)
 	t.Run("Team members cannot remove team members", func(t *testing.T) {
 		response := callAPI(sc.server, http.MethodDelete, fmt.Sprintf(teamMemberDeleteRoute, "1", "3"), nil, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 
-	err = sc.db.UpdateTeamMember(context.Background(), &models.UpdateTeamMemberCommand{
+	err = sc.teamService.UpdateTeamMember(context.Background(), &models.UpdateTeamMemberCommand{
 		UserId:     sc.initCtx.UserID,
 		OrgId:      1,
 		TeamId:     1,
