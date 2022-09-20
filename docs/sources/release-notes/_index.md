@@ -18,6 +18,7 @@ about deprecations, breaking changes as well as changes that relate to plugin de
 - [Release notes for 9.1.1]({{< relref "release-notes-9-1-1" >}})
 - [Release notes for 9.1.0]({{< relref "release-notes-9-1-0" >}})
 - [Release notes for 9.1.0-beta1]({{< relref "release-notes-9-1-0-beta1" >}})
+- [Release notes for 9.0.9]({{< relref "release-notes-9-0-9" >}})
 - [Release notes for 9.0.8]({{< relref "release-notes-9-0-8" >}})
 - [Release notes for 9.0.7]({{< relref "release-notes-9-0-7" >}})
 - [Release notes for 9.0.6]({{< relref "release-notes-9-0-6" >}})
