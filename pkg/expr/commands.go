@@ -136,7 +136,7 @@ func UnmarshalReduceCommand(rn *rawNode) (*ReduceCommand, error) {
 						return nil, fmt.Errorf("setting replaceWithValue must be a number, got %T", value)
 					}
 				default:
-					return nil, fmt.Errorf("reducer mode %s is not supported. Supported only: [dropNN,replaceNN]", mode)
+					return nil, fmt.Errorf("reducer mode '%s' is not supported. Supported only: [dropNN,replaceNN]", mode)
 				}
 			}
 		default:
@@ -239,7 +239,7 @@ func UnmarshalResampleCommand(rn *rawNode) (*ResampleCommand, error) {
 
 	rawUpsampler, ok := rn.Query["upsampler"]
 	if !ok {
-		return nil, errors.New("no downsampler specified in resample command")
+		return nil, errors.New("no upsampler specified in resample command")
 	}
 	upsampler, ok := rawUpsampler.(string)
 	if !ok {
