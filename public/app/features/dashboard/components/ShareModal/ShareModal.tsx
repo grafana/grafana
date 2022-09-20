@@ -62,7 +62,7 @@ function getTabs(props: Props) {
   }
 
   if (Boolean(config.featureToggles['publicDashboards'])) {
-    tabs.push({ label: 'Public Dashboard', value: 'share', component: SharePublicDashboard });
+    tabs.push({ label: 'Public dashboard', value: 'share', component: SharePublicDashboard });
   }
 
   return tabs;

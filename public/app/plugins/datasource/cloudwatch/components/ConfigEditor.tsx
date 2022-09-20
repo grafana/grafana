@@ -63,7 +63,7 @@ export const ConfigEditor: FC<Props> = (props: Props) => {
         {...props}
         loadRegions={
           datasource &&
-          (() => datasource!.getRegions().then((r) => r.filter((r) => r.value !== 'default').map((v) => v.value)))
+          (() => datasource.api.getRegions().then((r) => r.filter((r) => r.value !== 'default').map((v) => v.value)))
         }
       >
         <InlineField label="Namespaces of Custom Metrics" labelWidth={28} tooltip="Namespaces of Custom Metrics.">

@@ -25,8 +25,12 @@ const defaultTimeSrvMock = {
   }),
 };
 
+const defaultTemplateSrvMock = {
+  replace: (input: string) => input,
+};
+
 export function createLokiDatasource(
-  templateSrvMock: TemplateSrv,
+  templateSrvMock: Partial<TemplateSrv> = defaultTemplateSrvMock,
   settings: Partial<DataSourceInstanceSettings<LokiOptions>> = {},
   timeSrvStub = defaultTimeSrvMock
 ): LokiDatasource {

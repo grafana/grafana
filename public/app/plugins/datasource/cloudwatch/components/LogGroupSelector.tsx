@@ -52,7 +52,7 @@ export const LogGroupSelector: React.FC<LogGroupSelectorProps> = ({
         return [];
       }
       try {
-        const logGroups: string[] = await datasource.describeLogGroups({
+        const logGroups: string[] = await datasource.logsQueryRunner.describeLogGroups({
           refId,
           region,
           logGroupNamePrefix,
@@ -98,7 +98,7 @@ export const LogGroupSelector: React.FC<LogGroupSelectorProps> = ({
       }
 
       setLoadingLogGroups(true);
-      return fetchLogGroupOptions(datasource.getActualRegion(region))
+      return fetchLogGroupOptions(datasource.getActualRegion(region) ?? '')
         .then((logGroups) => {
           const newSelectedLogGroups = intersection(
             selectedLogGroups,

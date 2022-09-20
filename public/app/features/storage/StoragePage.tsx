@@ -155,9 +155,9 @@ export default function StoragePage(props: Props) {
       opts.push({ what: StorageView.History, text: 'History' });
     }
 
-    const canAddFolder = isFolder && path.startsWith('resources');
-    const canDelete = path.startsWith('resources/');
-    const canViewDashboard = config.featureToggles.dashboardsFromStorage && (isFolder || path.endsWith('.json'));
+    const canAddFolder = isFolder && (path.startsWith('resources') || path.startsWith('content'));
+    const canDelete = path.startsWith('resources/') || path.startsWith('content/');
+    const canViewDashboard = config.featureToggles.dashboardsFromStorage && path.startsWith('content/');
 
     const getErrorMessages = () => {
       return (
