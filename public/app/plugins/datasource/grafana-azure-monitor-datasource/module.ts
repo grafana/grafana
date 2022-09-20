@@ -30,12 +30,17 @@ getAppEvents().subscribe<DashboardLoadedEvent<AzureMonitorQuery>>(
         hidden: 0,
         visible: 0,
       },
+      [AzureQueryType.Trace]: {
+        hidden: 0,
+        visible: 0,
+      },
     };
     azureQueries.forEach((query) => {
       if (
         query.queryType === AzureQueryType.AzureMonitor ||
         query.queryType === AzureQueryType.LogAnalytics ||
-        query.queryType === AzureQueryType.AzureResourceGraph
+        query.queryType === AzureQueryType.AzureResourceGraph ||
+        query.queryType === AzureQueryType.Trace
       ) {
         stats[query.queryType][query.hide ? 'hidden' : 'visible']++;
       }

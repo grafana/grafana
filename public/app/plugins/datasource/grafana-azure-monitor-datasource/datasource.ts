@@ -51,6 +51,7 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     this.pseudoDatasource = {
       [AzureQueryType.AzureMonitor]: this.azureMonitorDatasource,
       [AzureQueryType.LogAnalytics]: this.azureLogAnalyticsDatasource,
+      [AzureQueryType.Trace]: this.azureLogAnalyticsDatasource,
       [AzureQueryType.AzureResourceGraph]: this.azureResourceGraphDatasource,
     };
 
@@ -216,6 +217,9 @@ function hasQueryForType(query: AzureMonitorQuery): boolean {
 
     case AzureQueryType.AzureResourceGraph:
       return !!query.azureResourceGraph;
+
+    case AzureQueryType.Trace:
+      return !!query.azureLogAnalytics;
 
     case AzureQueryType.GrafanaTemplateVariableFn:
       return !!query.grafanaTemplateVariableFn;

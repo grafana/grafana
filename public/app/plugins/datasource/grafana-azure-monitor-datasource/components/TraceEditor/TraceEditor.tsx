@@ -2,6 +2,7 @@ import React from 'react';
 
 import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/ui';
 
+import QueryBuilder from '../../azure_log_analytics/app_insights_traces/queryBuilder';
 import Datasource from '../../datasource';
 import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery } from '../../types';
 import ResourceField from '../ResourceField';
@@ -24,13 +25,16 @@ const TraceEditor: React.FC<TraceEditorProps> = ({
   onChange,
   setError,
 }) => {
+  const queryBuilder = new QueryBuilder('646c9c58c2594d53b4d3ce0075747863', query);
+  console.log(queryBuilder.buildTraceQuery());
+
   return (
     <span data-testid="azure-monitor-logs-query-editor-with-experimental-ui">
       <EditorRows>
         <EditorRow>
           <EditorFieldGroup>
             <ResourceField
-              query={query}
+              query={queryBuilder.buildTraceQuery()}
               datasource={datasource}
               inlineField={true}
               labelWidth={10}
