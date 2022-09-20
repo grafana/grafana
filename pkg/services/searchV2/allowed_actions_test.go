@@ -14,6 +14,7 @@ import (
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
 
@@ -80,7 +81,7 @@ var (
 )
 
 func service(t *testing.T) *StandardSearchService {
-	service, ok := ProvideService(nil, nil, nil, accesscontrolmock.New()).(*StandardSearchService)
+	service, ok := ProvideService(&setting.Cfg{Search: setting.SearchSettings{}}, nil, nil, accesscontrolmock.New()).(*StandardSearchService)
 	require.True(t, ok)
 	return service
 }
