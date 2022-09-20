@@ -45,8 +45,7 @@ type Props = OwnProps & ConnectedProps<typeof connector>;
 
 class UnConnectedExploreToolbar extends PureComponent<Props> {
   onChangeDatasource = async (dsSettings: DataSourceInstanceSettings) => {
-    const { changeDatasource, exploreId } = this.props;
-    changeDatasource(exploreId, dsSettings.uid, { importQueries: true });
+    this.props.changeDatasource(this.props.exploreId, dsSettings.uid, { importQueries: true });
   };
 
   onRunQuery = (loading = false) => {
@@ -171,11 +170,11 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
         >
           <ToolbarButtonRow>
             {!splitted ? (
-              <ToolbarButton tooltip="Split the pane" onClick={this.onOpenSplitView} icon="columns" disabled={isLive}>
+              <ToolbarButton title="Split" onClick={this.onOpenSplitView} icon="columns" disabled={isLive}>
                 Split
               </ToolbarButton>
             ) : (
-              <ToolbarButton tooltip="Close split pane" onClick={this.onCloseSplitView} icon="times">
+              <ToolbarButton title="Close split pane" onClick={this.onCloseSplitView} icon="times">
                 Close
               </ToolbarButton>
             )}
