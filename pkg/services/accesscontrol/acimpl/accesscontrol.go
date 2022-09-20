@@ -87,7 +87,12 @@ func (a *AccessControl) EvaluateUserPermissions(ctx context.Context, cmd accessc
 		return accesscontrol.GetResourcesMetadata(ctx, cmd.SignedInUser.Permissions[cmd.SignedInUser.OrgID], scopePrefix, uids), nil
 	}
 
-	return nil, errors.New("action or resource required")
+	return nil, &accesscontrol.ErrorInvalidEvaluationRequest{
+		Action:    cmd.Action,
+		Resource:  cmd.Resource,
+		Attribute: cmd.Attribute,
+		UIDs:      cmd.UIDs,
+	}
 }
 
 func (a *AccessControl) IsDisabled() bool {

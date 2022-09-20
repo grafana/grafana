@@ -170,13 +170,18 @@ func TestAccessControl_EvaluateUserPermissions(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "missing filtering field",
+			name: "missing filtering uids",
 			cmd: accesscontrol.EvaluateUserPermissionCommand{
 				SignedInUser: testUser(),
 				Resource:     "teams",
 				Attribute:    "id",
 				UIDs:         []string{},
 			},
+			wantErr: true,
+		},
+		{
+			name:    "missing all filtering fields",
+			cmd:     accesscontrol.EvaluateUserPermissionCommand{SignedInUser: testUser()},
 			wantErr: true,
 		},
 	}

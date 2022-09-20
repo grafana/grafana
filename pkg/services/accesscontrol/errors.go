@@ -43,3 +43,21 @@ func (e *ErrorActionPrefixMissing) Error() string {
 func (e *ErrorActionPrefixMissing) Unwrap() error {
 	return &ErrorInvalidRole{}
 }
+
+type ErrorInvalidEvaluationRequest struct {
+	Action    string
+	Resource  string
+	Attribute string
+	UIDs      []string
+}
+
+func (e *ErrorInvalidEvaluationRequest) Error() string {
+	switch {
+	case e.Action == "" && e.Resource == "" && e.Attribute == "" && len(e.UIDs) == 0:
+		return "no filtering field is set"
+	case e.Action == "":
+		return "all resource filtering fields must be set"
+	default:
+		return "none or all resource filtering fields must be set"
+	}
+}
