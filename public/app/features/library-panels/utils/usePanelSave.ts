@@ -1,11 +1,11 @@
 import { t } from '@lingui/macro';
 import { useEffect } from 'react';
-import { useDispatch } from 'react-redux';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
 import { isFetchError } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { PanelModel } from 'app/features/dashboard/state';
+import { useDispatch } from 'app/types';
 
 import {
   createPanelLibraryErrorNotification,
