@@ -16067,12 +16067,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"centrifuge@npm:2.8.5":
-  version: 2.8.5
-  resolution: "centrifuge@npm:2.8.5"
+"centrifuge@npm:3.0.1":
+  version: 3.0.1
+  resolution: "centrifuge@npm:3.0.1"
   dependencies:
-    protobufjs: ^6.11.2
-  checksum: 27db6d3b92aa52fa7a5f7ac9a5643338bae0a231db61d791bbad0d4858a67f72991f12a63e6f042179bafd0854ebf832c42bde2ae5ddd2a26124d094c1d5cf65
+    events: ^3.3.0
+    protobufjs: ^6.11.3
+  checksum: cf17b63fe9c684f121348a8597da0686a1f45fff2f85eaed6a3452504caeb1098c1524b10f197fe3811a11199214b88b75f5935ac86cb9753146fcc0d11f418c
   languageName: node
   linkType: hard
 
@@ -20546,7 +20547,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"events@npm:^3.0.0, events@npm:^3.2.0":
+"events@npm:^3.0.0, events@npm:^3.2.0, events@npm:^3.3.0":
   version: 3.3.0
   resolution: "events@npm:3.3.0"
   checksum: f6f487ad2198aa41d878fa31452f1a3c00958f46e9019286ff4787c84aac329332ab45c9cdc8c445928fc6d7ded294b9e005a7fce9426488518017831b272780
@@ -22389,7 +22390,7 @@ __metadata:
     baron: 3.0.3
     brace: 0.11.1
     calculate-size: 1.1.1
-    centrifuge: 2.8.5
+    centrifuge: 3.0.1
     classnames: 2.3.1
     comlink: 4.3.1
     common-tags: 1.8.2
@@ -31394,7 +31395,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"protobufjs@npm:^6.11.2":
+"protobufjs@npm:^6.11.3":
   version: 6.11.3
   resolution: "protobufjs@npm:6.11.3"
   dependencies:
