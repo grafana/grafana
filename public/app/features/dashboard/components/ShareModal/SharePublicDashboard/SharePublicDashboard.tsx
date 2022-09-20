@@ -13,6 +13,7 @@ import { AcknowledgeCheckboxes } from 'app/features/dashboard/components/ShareMo
 import { PubDashConfiguration } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/PubDashConfiguration';
 import { PubDashDescription } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/PubDashDescription';
 import {
+  Acknowledgements,
   dashboardHasTemplateVariables,
   generatePublicDashboardUrl,
   publicDashboardPersisted,
@@ -23,12 +24,6 @@ import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types';
 
 interface Props extends ShareModalTabProps {}
-
-interface Acknowledgements {
-  public: boolean;
-  datasources: boolean;
-  usage: boolean;
-}
 
 export const SharePublicDashboard = (props: Props) => {
   const dashboardVariables = props.dashboard.getVariables();
