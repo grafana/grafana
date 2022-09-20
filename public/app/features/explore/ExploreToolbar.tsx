@@ -183,14 +183,15 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
             ) : (
               <>
                 <ToolbarButton
-                  title={`${isLargerExploreId ? 'Narrow' : 'Widen'} pane`}
+                  tooltip={`${isLargerExploreId ? 'Narrow' : 'Widen'} pane`}
                   disabled={isLive}
                   onClick={onClickResize}
-                >
-                  {(exploreId === 'left' && isLargerExploreId) || (exploreId === 'right' && !isLargerExploreId)
-                    ? '<'
-                    : '>'}
-                </ToolbarButton>
+                  icon={
+                    (exploreId === 'left' && isLargerExploreId) || (exploreId === 'right' && !isLargerExploreId)
+                      ? 'angle-left'
+                      : 'angle-right'
+                  }
+                />
                 <ToolbarButton tooltip="Close split pane" onClick={this.onCloseSplitView} icon="times">
                   Close
                 </ToolbarButton>
