@@ -120,6 +120,7 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
     layer.scene.save();
 
     layer.reinitializeMoveable();
+    // TODO: Possibly init as edit mode here? (if item has inline edit functionality)
   };
 
   const onClearSelection = () => {

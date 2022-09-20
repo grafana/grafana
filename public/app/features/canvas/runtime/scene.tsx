@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import Moveable from 'moveable';
 import React, { CSSProperties } from 'react';
-import { ReplaySubject, Subject } from 'rxjs';
+import { BehaviorSubject, ReplaySubject, Subject } from 'rxjs';
 import { first } from 'rxjs/operators';
 import Selecto from 'selecto';
 
@@ -67,6 +67,8 @@ export class Scene {
 
   inlineEditingCallback?: () => void;
 
+  readonly editModeEnabled = new BehaviorSubject<boolean>(false);
+
   constructor(
     cfg: CanvasFrameOptions,
     enableEditing: boolean,
@@ -74,6 +76,14 @@ export class Scene {
     public onSave: (cfg: CanvasFrameOptions) => void
   ) {
     this.root = this.load(cfg, enableEditing, showAdvancedTypes);
+
+    // TODO: Unsubscribe from this (cleanup?)
+    this.editModeEnabled.subscribe((open) => {
+      if (!this.moveable) {
+        return;
+      }
+      this.moveable.draggable = !open;
+    });
   }
 
   getNextElementName = (isFrame = false) => {
@@ -339,7 +349,7 @@ export class Scene {
     });
 
     this.moveable = new Moveable(this.div!, {
-      draggable: allowChanges,
+      draggable: allowChanges && !this.editModeEnabled.getValue(),
       resizable: allowChanges,
       ables: [dimensionViewable, constraintViewable(this), settingsViewable(this)],
       props: {
@@ -350,6 +360,11 @@ export class Scene {
       origin: false,
       className: this.styles.selected,
     })
+      .on('click', (event) => {
+        if (event.isDouble && allowChanges && !this.editModeEnabled.getValue()) {
+          this.editModeEnabled.next(true);
+        }
+      })
       .on('clickGroup', (event) => {
         this.selecto!.clickTarget(event.inputEvent, event.inputTarget);
       })

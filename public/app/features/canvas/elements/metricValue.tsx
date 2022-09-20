@@ -1,5 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useCallback } from 'react';
+import { useObservable } from 'react-use';
+import { of } from 'rxjs';
 
 import { DataFrame, FieldNamePickerConfigSettings, GrafanaTheme2, StandardEditorsRegistryItem } from '@grafana/data';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
@@ -22,7 +24,12 @@ const MetricValueDisplay = (props: CanvasElementProps<TextBoxConfig, TextBoxData
   const { data } = props;
   const styles = useStyles2(getStyles(data));
 
-  if (!data?.text) {
+  const context = usePanelContext();
+  const scene = context.instanceState?.scene;
+
+  const isEditMode = useObservable<boolean>(scene?.editModeEnabled ?? of(false));
+
+  if (isEditMode && props.isSelected) {
     return <MetricValueInlineEdit {...props} />;
   }
   return (
@@ -56,6 +63,7 @@ const MetricValueInlineEdit = (props: CanvasElementProps<TextBoxConfig, TextBoxD
         // Force a re-render (update scene data after config update)
         const scene = context.instanceState?.scene;
         if (scene) {
+          scene.editModeEnabled.next(false);
           scene.updateData(scene.data);
         }
       }
@@ -106,6 +114,8 @@ export const metricValueItem: CanvasElementItem<TextBoxConfig, TextBoxData> = {
   description: 'Display a field value',
 
   display: MetricValueDisplay,
+
+  hasEditMode: true,
 
   defaultSize: {
     width: 260,
