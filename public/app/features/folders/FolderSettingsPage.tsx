@@ -87,7 +87,7 @@ export class FolderSettingsPage extends PureComponent<Props, State> {
     const { pageNav, folder } = this.props;
 
     return (
-      <Page navId="dashboards/browse" pageNav={pageNav.main}>
+      <Page navId="dashboards" pageNav={pageNav.main}>
         <Page.Contents isLoading={this.state.isLoading}>
           <h3 className="page-sub-heading">Folder settings</h3>
 

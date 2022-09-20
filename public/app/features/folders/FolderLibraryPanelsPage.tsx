@@ -38,7 +38,7 @@ export function FolderLibraryPanelsPage({ pageNav, getFolderByUid, folderUid, fo
   const [selected, setSelected] = useState<LibraryElementDTO | undefined>(undefined);
 
   return (
-    <Page navId="dashboards/browse" pageNav={pageNav.main}>
+    <Page navId="dashboards" pageNav={pageNav.main}>
       <Page.Contents isLoading={loading}>
         <LibraryPanelsSearch
           onClick={setSelected}

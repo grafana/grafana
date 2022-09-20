@@ -39,7 +39,7 @@ export const DashboardListPage: FC<Props> = memo(({ match, location }) => {
   }, [match.params.uid]);
 
   return (
-    <Page navId="dashboards/browse" pageNav={value?.pageNav}>
+    <Page navId="dashboards" pageNav={value?.pageNav}>
       <Page.Contents
         isLoading={loading}
         className={css`

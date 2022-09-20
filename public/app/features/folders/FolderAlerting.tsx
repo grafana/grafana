@@ -24,7 +24,7 @@ const FolderAlerting = ({ match }: OwnProps) => {
   const { loading } = useAsync(async () => dispatch(getFolderByUid(uid)), [getFolderByUid, uid]);
 
   return (
-    <Page navId="dashboards/browse" pageNav={pageNav.main}>
+    <Page navId="dashboards" pageNav={pageNav.main}>
       <Page.Contents isLoading={loading}>
         <AlertsFolderView folder={folder} />
       </Page.Contents>
