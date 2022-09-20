@@ -64,10 +64,10 @@ describe('Query Editor', () => {
     ]);
   });
 
-  it('should select first data source supporting alerting when there is no default data source', async function () {
+  it('should select first data source supporting alerting when there is no default data source', async () => {
     const dsServer = new MockDataSourceSrv({
-      postgres: mockDataSource({ name: 'postgres' }, { alerting: true }),
       influx: mockDataSource({ name: 'influx' }, { alerting: true }),
+      postgres: mockDataSource({ name: 'postgres' }, { alerting: true }),
       [ExpressionDatasourceUID]: instanceSettings,
     });
     dsServer.get = () => Promise.resolve(new MockDataSourceApi());
@@ -82,7 +82,30 @@ describe('Query Editor', () => {
     const select = await ui.dataSourcePicker.find();
 
     expect(queryRef).toHaveLength(2);
+    expect(queryRef[0]).toHaveTextContent('A');
+    expect(queryRef[1]).toHaveTextContent('B');
     expect(select).toHaveTextContent('influx'); // Alphabetical order
     expect(ui.noDataSourcesWarning.query()).not.toBeInTheDocument();
+  });
+
+  it('should select the default data source when specified', async () => {
+    const dsServer = new MockDataSourceSrv({
+      influx: mockDataSource({ name: 'influx' }, { alerting: true }),
+      postgres: mockDataSource({ name: 'postgres', isDefault: true }, { alerting: true }),
+      [ExpressionDatasourceUID]: instanceSettings,
+    });
+    dsServer.get = () => Promise.resolve(new MockDataSourceApi());
+
+    setDataSourceSrv(dsServer);
+
+    const defaultQueries = getDefaultQueries();
+
+    render(<QueryEditor onChange={() => null} value={defaultQueries} />);
+
+    const queryRef = await ui.queryNames.findAll();
+    const select = await ui.dataSourcePicker.find();
+
+    expect(queryRef).toHaveLength(2);
+    expect(select).toHaveTextContent('postgres'); // Default data source
   });
 });
