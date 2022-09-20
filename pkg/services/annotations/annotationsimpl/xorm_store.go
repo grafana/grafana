@@ -49,18 +49,18 @@ type SQLAnnotationRepo struct {
 }
 
 func (r *SQLAnnotationRepo) Add(ctx context.Context, item *annotations.Item) error {
-	return r.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		tags := tag.ParseTagPairs(item.Tags)
-		item.Tags = tag.JoinTagPairs(tags)
-		item.Created = timeNow().UnixNano() / int64(time.Millisecond)
-		item.Updated = item.Created
-		if item.Epoch == 0 {
-			item.Epoch = item.Created
-		}
-		if err := validateTimeRange(item); err != nil {
-			return err
-		}
+	tags := tag.ParseTagPairs(item.Tags)
+	item.Tags = tag.JoinTagPairs(tags)
+	item.Created = timeNow().UnixNano() / int64(time.Millisecond)
+	item.Updated = item.Created
+	if item.Epoch == 0 {
+		item.Epoch = item.Created
+	}
+	if err := validateTimeRange(item); err != nil {
+		return err
+	}
 
+	return r.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		if _, err := sess.Table("annotation").Insert(item); err != nil {
 			return err
 		}
@@ -70,13 +70,13 @@ func (r *SQLAnnotationRepo) Add(ctx context.Context, item *annotations.Item) err
 			if err != nil {
 				return err
 			}
+			spew.Dump("here is the annotation %v >>>>>>>>>>> %v", item)
 			for _, tag := range tags {
 				if _, err := sess.Exec("INSERT INTO annotation_tag (annotation_id, tag_id) VALUES(?,?)", item.Id, tag.Id); err != nil {
 					return err
 				}
 			}
 		}
-
 		return nil
 	})
 }

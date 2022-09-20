@@ -199,7 +199,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 			Overwrite: true,
 			UserId:    100,
 		}
-		_, err = dashboardStore.SaveDashboard(cmd)
+		_, err = dashboardStore.SaveDashboard(context.Background(), cmd)
 		require.NoError(t, err)
 
 		query := models.GetDashboardQuery{
@@ -275,7 +275,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 			}),
 		}
 
-		_, err := dashboardStore.SaveDashboard(cmd)
+		_, err := dashboardStore.SaveDashboard(context.Background(), cmd)
 		require.Equal(t, err, dashboards.ErrDashboardNotFound)
 	})
 
@@ -486,7 +486,7 @@ func TestIntegrationDashboardDataAccessGivenPluginWithImportedDashboards(t *test
 		t.Skip("skipping integration test")
 	}
 	sqlStore := sqlstore.InitTestDB(t)
-	dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles)
+	dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles, tagimpl.ProvideService(sqlStore))
 	pluginId := "test-app"
 
 	appFolder := insertTestDashboardForPlugin(t, dashboardStore, "app-test", 1, 0, true, pluginId)
@@ -508,7 +508,7 @@ func TestIntegrationDashboard_SortingOptions(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	sqlStore := sqlstore.InitTestDB(t)
-	dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles)
+	dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles, tagimpl.ProvideService(sqlStore))
 
 	dashB := insertTestDashboard(t, dashboardStore, "Beta", 1, 0, false)
 	dashA := insertTestDashboard(t, dashboardStore, "Alfa", 1, 0, false)
@@ -557,7 +557,7 @@ func TestIntegrationDashboard_Filter(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	sqlStore := sqlstore.InitTestDB(t)
-	dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles)
+	dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles, tagimpl.ProvideService(sqlStore))
 	insertTestDashboard(t, dashboardStore, "Alfa", 1, 0, false)
 	dashB := insertTestDashboard(t, dashboardStore, "Beta", 1, 0, false)
 	qNoFilter := &models.FindPersistedDashboardsQuery{
@@ -697,7 +697,7 @@ func insertTestDashboard(t *testing.T, dashboardStore *DashboardStore, title str
 			"tags":  tags,
 		}),
 	}
-	dash, err := dashboardStore.SaveDashboard(cmd)
+	dash, err := dashboardStore.SaveDashboard(context.Background(), cmd)
 	require.NoError(t, err)
 	require.NotNil(t, dash)
 	dash.Data.Set("id", dash.Id)
@@ -719,7 +719,7 @@ func insertTestDashboardForPlugin(t *testing.T, dashboardStore *DashboardStore, 
 		PluginId: pluginId,
 	}
 
-	dash, err := dashboardStore.SaveDashboard(cmd)
+	dash, err := dashboardStore.SaveDashboard(context.Background(), cmd)
 	require.NoError(t, err)
 
 	return dash

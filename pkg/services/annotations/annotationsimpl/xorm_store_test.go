@@ -53,7 +53,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 			assert.NoError(t, err)
 		})
 
-		dashboardStore := dashboardstore.ProvideDashboardStore(sql, featuremgmt.WithFeatures())
+		dashboardStore := dashboardstore.ProvideDashboardStore(sql, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql))
 
 		testDashboard1 := models.SaveDashboardCommand{
 			UserId: 1,
@@ -62,6 +62,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 				"title": "Dashboard 1",
 			}),
 		}
+
 		dashboard, err := dashboardStore.SaveDashboard(context.Background(), testDashboard1)
 		require.NoError(t, err)
 
@@ -97,7 +98,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 			Type:        "alert",
 			Epoch:       21, // Should swap epoch & epochEnd
 			EpochEnd:    20,
-			Tags:        []string{"outage", "error", "type:outage", "server:server-1"},
+			Tags:        []string{"outage", "type:outage", "server:server-1", "error"},
 		}
 		err = repo.Add(context.Background(), annotation2)
 		require.NoError(t, err)

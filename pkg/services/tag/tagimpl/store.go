@@ -17,17 +17,17 @@ type sqlStore struct {
 }
 
 func (s *sqlStore) EnsureTagsExist(ctx context.Context, tags []*tag.Tag) ([]*tag.Tag, error) {
-	var existingTag tag.Tag
-	err := s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		for _, tag := range tags {
-			exists, err := sess.Table("tag").Where("`key`=? AND `value`=?", tag.Key, tag.Value).Get(&existingTag)
+	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		for _, tagelement := range tags {
+			var existingTag tag.Tag
+			exists, err := sess.Table("tag").Where("`key`=? AND `value`=?", tagelement.Key, tagelement.Value).Get(&existingTag)
 			if err != nil {
 				return err
 			}
 			if exists {
-				tag.Id = existingTag.Id
+				tagelement.Id = existingTag.Id
 			} else {
-				_, err := sess.Table("tag").Insert(tag)
+				_, err := sess.Table("tag").Insert(tagelement)
 				if err != nil {
 					return err
 				}

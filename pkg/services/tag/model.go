@@ -5,7 +5,7 @@ import (
 )
 
 type Tag struct {
-	Id    int64
+	Id    int64 `xorm:"pk autoincr 'id'"`
 	Key   string
 	Value string
 }
