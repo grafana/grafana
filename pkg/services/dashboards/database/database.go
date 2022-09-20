@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/store"
+	tagmodel "github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -676,9 +677,9 @@ func (d *DashboardStore) deleteAlertByIdInternal(alertId int64, reason string, s
 	return nil
 }
 
-func EnsureTagsExist(sess *sqlstore.DBSession, tags []*models.Tag) ([]*models.Tag, error) {
+func EnsureTagsExist(sess *sqlstore.DBSession, tags []*tagmodel.Tag) ([]*tagmodel.Tag, error) {
 	for _, tag := range tags {
-		var existingTag models.Tag
+		var existingTag tagmodel.Tag
 
 		// check if it exists
 		exists, err := sess.Table("tag").Where("`key`=? AND `value`=?", tag.Key, tag.Value).Get(&existingTag)

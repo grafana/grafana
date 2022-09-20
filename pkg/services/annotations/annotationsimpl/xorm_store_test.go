@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 
@@ -27,7 +28,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	sql := sqlstore.InitTestDB(t)
-	repo := SQLAnnotationRepo{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test")}
+	repo := SQLAnnotationRepo{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql)}
 
 	testUser := &user.SignedInUser{
 		OrgID: 1,
@@ -392,7 +393,7 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	sql := sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{})
-	repo := SQLAnnotationRepo{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test")}
+	repo := SQLAnnotationRepo{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql)}
 	dashboardStore := dashboardstore.ProvideDashboardStore(sql, featuremgmt.WithFeatures())
 
 	testDashboard1 := models.SaveDashboardCommand{

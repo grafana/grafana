@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
+	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -41,15 +42,16 @@ func validateTimeRange(item *annotations.Item) error {
 }
 
 type SQLAnnotationRepo struct {
-	cfg *setting.Cfg
-	db  db.DB
-	log log.Logger
+	cfg        *setting.Cfg
+	db         db.DB
+	log        log.Logger
+	tagService tag.Service
 }
 
 func (r *SQLAnnotationRepo) Add(ctx context.Context, item *annotations.Item) error {
 	return r.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		tags := models.ParseTagPairs(item.Tags)
-		item.Tags = models.JoinTagPairs(tags)
+		tags := tag.ParseTagPairs(item.Tags)
+		item.Tags = tag.JoinTagPairs(tags)
 		item.Created = timeNow().UnixNano() / int64(time.Millisecond)
 		item.Updated = item.Created
 		if item.Epoch == 0 {
@@ -64,7 +66,7 @@ func (r *SQLAnnotationRepo) Add(ctx context.Context, item *annotations.Item) err
 		}
 
 		if item.Tags != nil {
-			tags, err := sqlstore.EnsureTagsExist(sess, tags)
+			tags, err := r.tagService.EnsureTagsExist(ctx, tags)
 			if err != nil {
 				return err
 			}
@@ -111,7 +113,7 @@ func (r *SQLAnnotationRepo) Update(ctx context.Context, item *annotations.Item) 
 		}
 
 		if item.Tags != nil {
-			tags, err := sqlstore.EnsureTagsExist(sess, models.ParseTagPairs(item.Tags))
+			tags, err := r.tagService.EnsureTagsExist(ctx, tag.ParseTagPairs(item.Tags))
 			if err != nil {
 				return err
 			}
@@ -205,7 +207,7 @@ func (r *SQLAnnotationRepo) Get(ctx context.Context, query *annotations.ItemQuer
 		if len(query.Tags) > 0 {
 			keyValueFilters := []string{}
 
-			tags := models.ParseTagPairs(query.Tags)
+			tags := tag.ParseTagPairs(query.Tags)
 			for _, tag := range tags {
 				if tag.Value == "" {
 					keyValueFilters = append(keyValueFilters, "(tag."+r.db.GetDialect().Quote("key")+" = ?)")
