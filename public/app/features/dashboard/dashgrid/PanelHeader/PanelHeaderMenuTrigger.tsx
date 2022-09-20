@@ -17,7 +17,7 @@ export const PanelHeaderMenuTrigger: FC<Props> = ({ children, ...divProps }) => 
 
   const onMenuToggle = useCallback(
     (event: MouseEvent<HTMLDivElement>) => {
-      if (!isClick(clickCoordinates, { x: event.clientX, y: event.clientY })) {
+      if (!isClick(clickCoordinates, eventToClickCoordinates(event))) {
         return;
       }
 
@@ -41,6 +41,8 @@ export const PanelHeaderMenuTrigger: FC<Props> = ({ children, ...divProps }) => 
 };
 
 function isClick(current: CartesianCoords2D, clicked: CartesianCoords2D, deadZone = 3.5): boolean {
+  // A "deadzone" radius is added so that if the cursor is moved within this radius
+  // between mousedown and mouseup, it's still considered a click and not a drag.
   const clickDistance = Math.sqrt((current.x - clicked.x) ** 2 + (current.y - clicked.y) ** 2);
   return clickDistance <= deadZone;
 }
