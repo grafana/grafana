@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -1441,7 +1442,7 @@ func updateFolderACL(t *testing.T, dashboardStore *database.DashboardStore, fold
 
 func scenarioWithLibraryPanel(t *testing.T, desc string, fn func(t *testing.T, sc scenarioContext)) {
 	store := mockstore.NewSQLStoreMock()
-	guardian.InitLegacyGuardian(store, &dashboards.FakeDashboardService{})
+	guardian.InitLegacyGuardian(store, &dashboards.FakeDashboardService{}, &teamtest.FakeService{})
 	t.Helper()
 
 	testScenario(t, desc, func(t *testing.T, sc scenarioContext) {

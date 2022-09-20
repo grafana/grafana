@@ -6,6 +6,7 @@ import { EditorField, EditorFieldGroup, EditorRow, EditorRows, EditorSwitch, Sel
 import { Dimensions } from '..';
 import { CloudWatchDatasource } from '../../datasource';
 import { useDimensionKeys, useMetrics, useNamespaces } from '../../hooks';
+import { standardStatistics } from '../../standardStatistics';
 import { MetricStat } from '../../types';
 import { appendTemplateVariables, toOption } from '../../utils/utils';
 
@@ -46,7 +47,7 @@ export function MetricStatEditor({
     if (!metricName) {
       return metricStat;
     }
-    await datasource.getMetrics(namespace, region).then((result: Array<SelectableValue<string>>) => {
+    await datasource.api.getMetrics(namespace, region).then((result: Array<SelectableValue<string>>) => {
       if (!result.find((metric) => metric.value === metricName)) {
         metricName = '';
       }
@@ -89,15 +90,15 @@ export function MetricStatEditor({
             <Select
               inputId={`${refId}-metric-stat-editor-select-statistic`}
               allowCustomValue
-              value={toOption(metricStat.statistic ?? datasource.standardStatistics[0])}
+              value={toOption(metricStat.statistic ?? standardStatistics[0])}
               options={appendTemplateVariables(
                 datasource,
-                datasource.standardStatistics.filter((s) => s !== metricStat.statistic).map(toOption)
+                standardStatistics.filter((s) => s !== metricStat.statistic).map(toOption)
               )}
               onChange={({ value: statistic }) => {
                 if (
                   !statistic ||
-                  (!datasource.standardStatistics.includes(statistic) &&
+                  (!standardStatistics.includes(statistic) &&
                     !/^p\d{2}(?:\.\d{1,2})?$/.test(statistic) &&
                     !statistic.startsWith('$'))
                 ) {

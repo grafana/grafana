@@ -1,6 +1,6 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = 'v3.0.6'
+grabpl_version = 'v3.0.7'
 build_image = 'grafana/build-container:1.6.2'
 publish_image = 'grafana/grafana-ci-deploy:1.3.3'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
@@ -164,10 +164,10 @@ def lint_drone_step():
         'name': 'lint-drone',
         'image': curl_image,
         'commands': [
-            './bin/grabpl verify-drone',
+            './bin/build verify-drone',
         ],
         'depends_on': [
-            'grabpl',
+            'compile-build-cmd',
         ],
     }
 
@@ -266,13 +266,13 @@ def store_storybook_step(edition, ver_mode, trigger=None):
     commands = []
     if ver_mode == 'release':
         commands.extend([
-            './bin/grabpl store-storybook --deployment latest --src-bucket grafana-prerelease --src-dir artifacts/storybook',
-            './bin/grabpl store-storybook --deployment ${DRONE_TAG} --src-bucket grafana-prerelease --src-dir artifacts/storybook',
+            './bin/build store-storybook --deployment latest',
+            './bin/build store-storybook --deployment ${DRONE_TAG}',
         ])
 
     else:
         # main pipelines should deploy storybook to grafana-storybook/canary public bucket
-        commands = ['./bin/grabpl store-storybook --deployment canary --src-bucket grafana-storybook', ]
+        commands = ['./bin/build store-storybook --deployment canary', ]
 
     step = {
         'name': 'store-storybook',
@@ -626,20 +626,6 @@ def codespell_step():
             'echo -e "unknwon\nreferer\nerrorstring\neror\niam\nwan" > words_to_ignore.txt',
             'codespell -I words_to_ignore.txt docs/',
             'rm words_to_ignore.txt',
-        ],
-    }
-
-
-def shellcheck_step():
-    return {
-        'name': 'shellcheck',
-        'image': build_image,
-        'depends_on': [
-            'grabpl',
-            'compile-build-cmd',
-        ],
-        'commands': [
-            './bin/build shellcheck',
         ],
     }
 

@@ -45,12 +45,6 @@ type Options struct {
 	ReloadCache bool
 }
 
-type Store interface {
-	// GetUserPermissions returns user permissions with only action and scope fields set.
-	GetUserPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]Permission, error)
-	DeleteUserPermissions(ctx context.Context, orgID, userID int64) error
-}
-
 type TeamPermissionsService interface {
 	GetPermissions(ctx context.Context, user *user.SignedInUser, resourceID string) ([]ResourcePermission, error)
 	SetUserPermission(ctx context.Context, orgID int64, user User, resourceID, permission string) (*ResourcePermission, error)
@@ -179,8 +173,8 @@ func BuildPermissionsMap(permissions []Permission) map[string]bool {
 // GroupScopesByAction will group scopes on action
 func GroupScopesByAction(permissions []Permission) map[string][]string {
 	m := make(map[string][]string)
-	for _, p := range permissions {
-		m[p.Action] = append(m[p.Action], p.Scope)
+	for i := range permissions {
+		m[permissions[i].Action] = append(m[permissions[i].Action], permissions[i].Scope)
 	}
 	return m
 }
@@ -222,4 +216,15 @@ func GetOrgRoles(user *user.SignedInUser) []string {
 	}
 
 	return roles
+}
+
+func BackgroundUser(name string, orgID int64, role org.RoleType, permissions []Permission) *user.SignedInUser {
+	return &user.SignedInUser{
+		OrgID:   orgID,
+		OrgRole: role,
+		Login:   "grafana_" + name,
+		Permissions: map[int64]map[string][]string{
+			orgID: GroupScopesByAction(permissions),
+		},
+	}
 }

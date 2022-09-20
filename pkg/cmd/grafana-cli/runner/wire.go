@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
+	pluginsCfg "github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
 	pluginDashboards "github.com/grafana/grafana/pkg/plugins/manager/dashboards"
@@ -115,6 +116,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/star/starimpl"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/sanitizer"
+	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/teamguardian"
 	teamguardianDatabase "github.com/grafana/grafana/pkg/services/teamguardian/database"
 	teamguardianManager "github.com/grafana/grafana/pkg/services/teamguardian/manager"
@@ -175,6 +177,7 @@ var wireSet = wire.NewSet(
 	updatechecker.ProvideGrafanaService,
 	updatechecker.ProvidePluginsService,
 	uss.ProvideService,
+	pluginsCfg.ProvideConfig,
 	registry.ProvideService,
 	wire.Bind(new(registry.Service), new(*registry.InMemory)),
 	repo.ProvideService,
@@ -317,6 +320,7 @@ var wireSet = wire.NewSet(
 	publicdashboardsApi.ProvideApi,
 	userimpl.ProvideService,
 	orgimpl.ProvideService,
+	teamimpl.ProvideService,
 	userauthimpl.ProvideService,
 	ngmetrics.ProvideServiceForTest,
 	wire.Bind(new(sqlstore.TeamStore), new(*sqlstore.SQLStore)),

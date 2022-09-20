@@ -67,7 +67,7 @@ func NewTelegramConfig(config *NotificationChannelConfig, fn GetDecryptedValueFn
 		NotificationChannelConfig: config,
 		BotToken:                  botToken,
 		ChatID:                    chatID,
-		Message:                   config.Settings.Get("message").MustString(`{{ template "default.message" . }}`),
+		Message:                   config.Settings.Get("message").MustString(DefaultMessageEmbed),
 	}, nil
 }
 
