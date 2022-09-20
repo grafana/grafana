@@ -79,6 +79,7 @@ func (hs *HTTPServer) getProfileNode(c *models.ReqContext) *dtos.NavLink {
 }
 
 func (hs *HTTPServer) addAppLinks(navTree []*dtos.NavLink, c *models.ReqContext) ([]*dtos.NavLink, error) {
+	topNavEnabled := hs.Features.IsEnabled(featuremgmt.FlagTopnav)
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	enabledPlugins, err := hs.enabledPlugins(c.Req.Context(), c.OrgID)
 	if err != nil {
@@ -154,10 +155,22 @@ func (hs *HTTPServer) addAppLinks(navTree []*dtos.NavLink, c *models.ReqContext)
 				appLink.Children = []*dtos.NavLink{}
 			}
 
-			if navId, hasNavId := hs.Cfg.PluginAppNavIds[plugin.ID]; hasNavId {
+			if navId, hasNavId := hs.Cfg.PluginAppNavIds[plugin.ID]; hasNavId && topNavEnabled {
 				if navNode := navlinks.FindById(navTree, navId); navNode != nil {
 					navNode.Children = append(navNode.Children, appLink)
 				} else {
+					// Lazily add this node
+					if navId == "monitoring" {
+						navTree = append(navTree, &dtos.NavLink{
+							Text:        "Monitoring",
+							Id:          "monitoring",
+							Description: "Monitoring and infrastructure apps",
+							Icon:        "monitor",
+							Section:     dtos.NavSectionCore,
+							Children:    []*dtos.NavLink{appLink},
+							Url:         hs.Cfg.AppSubURL + "/monitoring",
+						})
+					}
 					hs.log.Error("Plugin app nav id not found", "pluginId", plugin.ID, "navId", navId)
 				}
 			} else {
@@ -172,7 +185,7 @@ func (hs *HTTPServer) addAppLinks(navTree []*dtos.NavLink, c *models.ReqContext)
 		})
 	}
 
-	if hs.Features.IsEnabled(featuremgmt.FlagTopnav) {
+	if topNavEnabled && len(appLinks) > 0 {
 		appSection := &dtos.NavLink{
 			Text:        "Apps",
 			Icon:        "apps",

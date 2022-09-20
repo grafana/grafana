@@ -7,7 +7,8 @@ import (
 func (cfg *Cfg) readNavigationSettings() error {
 	sec := cfg.Raw.Section("navigation")
 	cfg.PluginAppNavIds = map[string]string{
-		"grafana-k8s-app": "alerting",
+		"grafana-k8s-app":                  "monitoring",
+		"grafana-synthetic-monitoring-app": "monitoring",
 	}
 
 	for _, key := range sec.Keys() {
