@@ -82,6 +82,11 @@ func (f *File) IsFolder() bool {
 	return f.MimeType == DirectoryMimeType
 }
 
+type FileVersionMeta struct {
+	Version string
+	Created time.Time
+}
+
 type FileMetadata struct {
 	Name       string
 	FullPath   string
@@ -91,6 +96,7 @@ type FileMetadata struct {
 	Size       int64
 	Properties map[string]string
 	Version    string
+	Versions   []FileVersionMeta
 }
 
 type Paging struct {

@@ -1,6 +1,8 @@
 package migrations
 
-import "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+import (
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+)
 
 func addDbFileStorageMigration(mg *migrator.Migrator) {
 	filesTable := migrator.Table{
@@ -65,20 +67,49 @@ func addDbFileStorageMigration(mg *migrator.Migrator) {
 		// SQLite uses a `BINARY` collation by default
 		Postgres("ALTER TABLE file ALTER COLUMN path TYPE VARCHAR(1024) COLLATE \"C\";")) // Collate C - sorting done based on character code byte values
 
-	mg.AddMigration("add contents_version column", migrator.NewAddColumnMigration(filesTable, &migrator.Column{
-		Name: "contents_version", Type: migrator.DB_Int, Nullable: false, Default: "1",
+	mg.AddMigration("add file_version column", migrator.NewAddColumnMigration(filesTable, &migrator.Column{
+		Name: "file_version", Type: migrator.DB_Int, Nullable: false, Default: "1",
 	}))
 
-	mg.AddMigration("add latest column", migrator.NewAddColumnMigration(filesTable, &migrator.Column{
-		Name: "latest", Type: migrator.DB_Bool, Nullable: false, Default: "1",
-	}))
+	// fileVersionTable columns , but there are two differences:
+	//    - the unique index
+	fileVersionTable := migrator.Table{
+		Name: "file_version",
+		Columns: []*migrator.Column{
+			{Name: "path", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false},
 
-	mg.AddMigration("remove unique path index", migrator.NewDropIndexMigration(filesTable, filesTable.Indices[0]))
-	mg.AddMigration("file table idx: path, contents_version natural pk", migrator.NewAddIndexMigration(filesTable, &migrator.Index{
-		Cols: []string{"path", "contents_version"}, Type: migrator.UniqueIndex,
-	}))
-	mg.AddMigration("file table idx: path, latest natural pk", migrator.NewAddIndexMigration(filesTable, &migrator.Index{
-		Cols: []string{"path", "latest"},
-	}))
+			// path_hash is used for indexing. we are using it to circumvent the max length limit of 191 for varchar2 fields in MySQL 5.6
+			{Name: "path_hash", Type: migrator.DB_NVarchar, Length: 64, Nullable: false},
 
+			// parent_folder_path_hash is an optimization for a common use case - list all files in a given folder
+			{Name: "parent_folder_path_hash", Type: migrator.DB_NVarchar, Length: 64, Nullable: false},
+
+			{Name: "contents", Type: migrator.DB_Blob, Nullable: false},
+
+			// HTTP Entity tag; md5 hash
+			{Name: "etag", Type: migrator.DB_NVarchar, Length: 32, Nullable: false},
+
+			// cache_control HTTP header
+			// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control
+			{Name: "cache_control", Type: migrator.DB_NVarchar, Length: 128, Nullable: false},
+
+			// content_disposition HTTP header - inline/attachment file display
+			// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Disposition
+			{Name: "content_disposition", Type: migrator.DB_NVarchar, Length: 128, Nullable: false},
+
+			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
+			{Name: "created", Type: migrator.DB_DateTime, Nullable: false},
+			{Name: "size", Type: migrator.DB_BigInt, Nullable: false},
+			{Name: "mime_type", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "file_version", Type: migrator.DB_Int, Nullable: false, Default: "1"},
+		},
+		Indices: []*migrator.Index{
+			{Cols: []string{"path_hash", "file_version"}, Type: migrator.UniqueIndex},
+		},
+	}
+
+	mg.AddMigration("create file_version table", migrator.NewAddTableMigration(fileVersionTable))
+	mg.AddMigration("file_version table idx: (path, version) natural pk", migrator.NewAddIndexMigration(fileVersionTable, fileVersionTable.Indices[0]))
+
+	mg.AddMigration("create file_version for each existing file", migrator.NewRawSQLMigration("insert into file_version select * from file"))
 }

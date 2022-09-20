@@ -32,12 +32,43 @@ type file struct {
 	Created              time.Time `xorm:"created"`
 	Size                 int64     `xorm:"size"`
 	MimeType             string    `xorm:"mime_type"`
-	Version              int       `xorm:"contents_version"`
-	Latest               bool      `xorm:"latest"`
+	Version              int       `xorm:"file_version"`
+}
+
+type fileVersion struct {
+	Path                 string    `xorm:"path"`
+	PathHash             string    `xorm:"path_hash"`
+	ParentFolderPathHash string    `xorm:"parent_folder_path_hash"`
+	Contents             []byte    `xorm:"contents"`
+	ETag                 string    `xorm:"etag"`
+	CacheControl         string    `xorm:"cache_control"`
+	ContentDisposition   string    `xorm:"content_disposition"`
+	Updated              time.Time `xorm:"updated"`
+	Created              time.Time `xorm:"created"`
+	Size                 int64     `xorm:"size"`
+	MimeType             string    `xorm:"mime_type"`
+	Version              int       `xorm:"file_version"`
+}
+
+func (f *file) asFileVersion() *fileVersion {
+	return &fileVersion{
+		Path:                 f.Path,
+		PathHash:             f.PathHash,
+		ParentFolderPathHash: f.ParentFolderPathHash,
+		Contents:             f.Contents,
+		ETag:                 f.ETag,
+		CacheControl:         f.CacheControl,
+		ContentDisposition:   f.ContentDisposition,
+		Updated:              f.Updated,
+		Created:              f.Created,
+		Size:                 f.Size,
+		MimeType:             f.MimeType,
+		Version:              f.Version,
+	}
 }
 
 var (
-	fileColsNoContents = []string{"contents_version", "path", "path_hash", "parent_folder_path_hash", "etag", "cache_control", "content_disposition", "updated", "created", "size", "mime_type"}
+	fileColsNoContents = []string{"file_version", "path", "path_hash", "parent_folder_path_hash", "etag", "cache_control", "content_disposition", "updated", "created", "size", "mime_type"}
 	allFileCols        = append([]string{"contents"}, fileColsNoContents...)
 )
 
@@ -71,6 +102,33 @@ func NewDbStorage(log log.Logger, db db.DB, filter PathFilter, rootFolder string
 		log: log,
 		db:  db,
 	}, filter, rootFolder)
+}
+
+type versionMeta struct {
+	PathHash string    `xorm:"path_hash"`
+	Version  int       `xorm:"file_version"`
+	Updated  time.Time `xorm:"updated"`
+}
+
+func (s dbFileStorage) getVersions(sess *sqlstore.DBSession, pathHashes []string) (map[string][]FileVersionMeta, error) {
+	versionsByPathHash := make(map[string][]FileVersionMeta)
+
+	entities := make([]*versionMeta, 0)
+	if err := sess.Table("file_version").In("path_hash", pathHashes).Find(&entities); err != nil {
+		return nil, err
+	}
+
+	for _, entity := range entities {
+		if _, ok := versionsByPathHash[entity.PathHash]; !ok {
+			versionsByPathHash[entity.PathHash] = make([]FileVersionMeta, 0)
+		}
+		versionsByPathHash[entity.PathHash] = append(versionsByPathHash[entity.PathHash], FileVersionMeta{
+			Version: fmt.Sprintf("%d", entity.Version),
+			Created: entity.Updated,
+		})
+	}
+
+	return versionsByPathHash, nil
 }
 
 func (s dbFileStorage) getProperties(sess *sqlstore.DBSession, pathHashes []string) (map[string]map[string]string, error) {
@@ -124,6 +182,23 @@ func (s dbFileStorage) Get(ctx context.Context, path string, options *GetFileOpt
 			metaProperties[meta[i].Key] = meta[i].Value
 		}
 
+		versionsByHash, err := s.getVersions(sess, []string{pathHash})
+		if err != nil {
+			return err
+		}
+
+		currentVersion := fmt.Sprintf("%d", table.Version)
+
+		var versions []FileVersionMeta
+		if foundVersions, ok := versionsByHash[pathHash]; ok {
+			versions = foundVersions
+		} else {
+			versions = []FileVersionMeta{{
+				Version: currentVersion,
+				Created: table.Created,
+			}}
+		}
+
 		contents := table.Contents
 		if contents == nil {
 			contents = make([]byte, 0)
@@ -135,6 +210,8 @@ func (s dbFileStorage) Get(ctx context.Context, path string, options *GetFileOpt
 				Name:       getName(table.Path),
 				FullPath:   table.Path,
 				Created:    table.Created,
+				Version:    currentVersion,
+				Versions:   versions,
 				Properties: metaProperties,
 				Modified:   table.Updated,
 				Size:       table.Size,
@@ -158,6 +235,11 @@ func (s dbFileStorage) Delete(ctx context.Context, filePath string) error {
 			return err
 		}
 
+		deletedFilesVersionsCount, err := sess.Table("file_version").Where("path_hash = ?", pathHash).Delete(&fileVersion{})
+		if err != nil {
+			return err
+		}
+
 		deletedMetaCount, err := sess.Table("file_meta").Where("path_hash = ?", pathHash).Delete(&fileMeta{})
 		if err != nil {
 			if rollErr := sess.Rollback(); rollErr != nil {
@@ -167,15 +249,11 @@ func (s dbFileStorage) Delete(ctx context.Context, filePath string) error {
 			return err
 		}
 
-		s.log.Info("Deleted file", "path", filePath, "deletedMetaCount", deletedMetaCount, "deletedFilesCount", deletedFilesCount)
+		s.log.Info("Deleted file", "path", filePath, "deletedMetaCount", deletedMetaCount, "deletedFilesCount", deletedFilesCount, "deletedFileVersionsCount", deletedFilesVersionsCount)
 		return err
 	})
 
 	return err
-}
-
-func (s dbFileStorage) dialectBool(val bool) string {
-	return s.db.GetDialect().BooleanStr(val)
 }
 
 func (s dbFileStorage) Upsert(ctx context.Context, cmd *UpsertFileCommand) error {
@@ -187,49 +265,46 @@ func (s dbFileStorage) Upsert(ctx context.Context, cmd *UpsertFileCommand) error
 
 	err = s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		existing := &file{}
-		exists, err := sess.Table("file").Where("path_hash = ? AND latest = ?", pathHash, s.dialectBool(true)).Get(existing)
+		exists, err := sess.Table("file").Where("path_hash = ?", pathHash).Get(existing)
 		if err != nil {
 			return err
 		}
 
-		contentsToInsert := make([]byte, 0)
-		if cmd.Contents != nil {
-			contentsToInsert = cmd.Contents
+		newVersion := 1
+		if exists {
+			if cmd.Contents != nil {
+				newVersion = existing.Version + 1
+			} else {
+				newVersion = existing.Version
+			}
 		}
 
 		if exists {
-			parentFolderPath := getParentFolderPath(cmd.Path)
-			parentFolderPathHash, err := createPathHash(parentFolderPath)
-			if err != nil {
-				return err
+			existing.Updated = now
+			if cmd.Contents != nil {
+				contents := cmd.Contents
+				existing.Contents = contents
+				existing.MimeType = cmd.MimeType
+				existing.ETag = createContentsHash(contents)
+				existing.ContentDisposition = cmd.ContentDisposition
+				existing.CacheControl = cmd.CacheControl
+				existing.Size = int64(len(contents))
+				existing.Version = newVersion
+
+				if _, err = sess.Insert(existing.asFileVersion()); err != nil {
+					return err
+				}
 			}
 
-			newFileVersion := &file{
-				Path:                 cmd.Path,
-				PathHash:             pathHash,
-				ParentFolderPathHash: parentFolderPathHash,
-				Contents:             contentsToInsert,
-				ContentDisposition:   cmd.ContentDisposition,
-				CacheControl:         cmd.CacheControl,
-				ETag:                 createContentsHash(contentsToInsert),
-				MimeType:             cmd.MimeType,
-				Size:                 int64(len(contentsToInsert)),
-				Updated:              now,
-				Created:              now,
-				Version:              existing.Version + 1,
-				Latest:               true,
-			}
-
-			_, err = sess.SQL("update file set latest = ? where path_hash = ?", s.dialectBool(false), pathHash).Query()
-			if err != nil {
-				return err
-			}
-
-			if _, err = sess.Table("file").Insert(newFileVersion); err != nil {
-				s.log.Error("failed to insert", "err", err, "oldVer", existing.Version, "newVer", newFileVersion.Version, "path", cmd.Path)
+			if _, err = sess.Where("path_hash = ?", pathHash).Update(existing); err != nil {
 				return err
 			}
 		} else {
+			contentsToInsert := make([]byte, 0)
+			if cmd.Contents != nil {
+				contentsToInsert = cmd.Contents
+			}
+
 			parentFolderPath := getParentFolderPath(cmd.Path)
 			parentFolderPathHash, err := createPathHash(parentFolderPath)
 			if err != nil {
@@ -245,16 +320,23 @@ func (s dbFileStorage) Upsert(ctx context.Context, cmd *UpsertFileCommand) error
 				CacheControl:         cmd.CacheControl,
 				ETag:                 createContentsHash(contentsToInsert),
 				MimeType:             cmd.MimeType,
+				Version:              1,
 				Size:                 int64(len(contentsToInsert)),
 				Updated:              now,
 				Created:              now,
 			}
+
 			if _, err = sess.Insert(file); err != nil {
 				return err
 			}
+
+			if _, err = sess.Insert(file.asFileVersion()); err != nil {
+				return err
+			}
+
 		}
 
-		if len(cmd.Properties) != 0 {
+		if cmd.Properties != nil {
 			if err = upsertProperties(s.db.GetDialect(), sess, now, cmd, pathHash); err != nil {
 				if rollbackErr := sess.Rollback(); rollbackErr != nil {
 					s.log.Error("failed while rolling back upsert", "path", cmd.Path)
@@ -318,7 +400,7 @@ func (s dbFileStorage) List(ctx context.Context, folderPath string, paging *Pagi
 				return err
 			}
 
-			exists, err := sess.Table("file").Where("path_hash = ? AND latest = ?", pagingFolderPathHash, s.dialectBool(true)).Exist()
+			exists, err := sess.Table("file").Where("path_hash = ?", pagingFolderPathHash).Exist()
 			if err != nil {
 				return err
 			}
@@ -343,7 +425,6 @@ func (s dbFileStorage) List(ctx context.Context, folderPath string, paging *Pagi
 
 		prefixHash, _ := createPathHash(lowerFolderPrefix)
 
-		sess.Where("latest = ?", s.dialectBool(true))
 		sess.Where("path_hash != ?", prefixHash)
 		parentHash, err := createPathHash(lowerFolderPath)
 		if err != nil {
@@ -409,19 +490,37 @@ func (s dbFileStorage) List(ctx context.Context, folderPath string, paging *Pagi
 			return err
 		}
 
+		versionsByPathHash, err := s.getVersions(sess, hashes)
+		if err != nil {
+			return err
+		}
+
 		files := make([]*File, 0)
 		for i := 0; i < foundLength; i++ {
 			var props map[string]string
-			path := strings.TrimSuffix(foundFiles[i].Path, Delimiter)
+			var versions []FileVersionMeta
 
+			path := strings.TrimSuffix(foundFiles[i].Path, Delimiter)
 			if hash, ok := pathToHash[path]; ok {
 				if foundProps, ok := propertiesByPathHash[hash]; ok {
 					props = foundProps
-				} else {
-					props = make(map[string]string)
 				}
-			} else {
+
+				if foundVersions, ok := versionsByPathHash[hash]; ok {
+					versions = foundVersions
+				}
+			}
+
+			if props == nil {
 				props = make(map[string]string)
+			}
+
+			currentVersion := fmt.Sprintf("%d", foundFiles[i].Version)
+			if versions == nil {
+				versions = []FileVersionMeta{{
+					Version: currentVersion,
+					Created: foundFiles[i].Created,
+				}}
 			}
 
 			var contents []byte
@@ -435,6 +534,8 @@ func (s dbFileStorage) List(ctx context.Context, folderPath string, paging *Pagi
 				FullPath:   path,
 				Created:    foundFiles[i].Created,
 				Properties: props,
+				Version:    currentVersion,
+				Versions:   versions,
 				Modified:   foundFiles[i].Updated,
 				Size:       foundFiles[i].Size,
 				MimeType:   foundFiles[i].MimeType,
