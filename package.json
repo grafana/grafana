@@ -246,7 +246,7 @@
     "webpack-merge": "5.8.0"
   },
   "dependencies": {
-    "@daybrush/utils": "^1.9.1",
+    "@daybrush/utils": "1.10.0",
     "@emotion/css": "11.9.0",
     "@emotion/react": "11.9.3",
     "@grafana/agent-core": "0.4.0",

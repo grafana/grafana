@@ -4617,6 +4617,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@daybrush/utils@npm:1.10.0":
+  version: 1.10.0
+  resolution: "@daybrush/utils@npm:1.10.0"
+  checksum: bd8401971012052c420046e45b143fa9a211a2dc80c782ebc930865df6da8da8544f683a2b8728862a97407ff48bd7eb02657279b19f261e95541818441023db
+  languageName: node
+  linkType: hard
+
 "@daybrush/utils@npm:1.6.0, @daybrush/utils@npm:^1.0.0, @daybrush/utils@npm:^1.1.1, @daybrush/utils@npm:^1.3.1, @daybrush/utils@npm:^1.4.0":
   version: 1.6.0
   resolution: "@daybrush/utils@npm:1.6.0"
@@ -4628,13 +4635,6 @@ __metadata:
   version: 1.7.1
   resolution: "@daybrush/utils@npm:1.7.1"
   checksum: 70c1d6a335c5152b17ff2325a11228e96ea1f0d818b5d2bc01a37b27736f11f39bd432ff3e3e31ab26ccb4033718e74b36d2791d5d32ccc6bf3c58aeb3913c83
-  languageName: node
-  linkType: hard
-
-"@daybrush/utils@npm:^1.9.1":
-  version: 1.9.1
-  resolution: "@daybrush/utils@npm:1.9.1"
-  checksum: b14ab6d26630657a76b6eace94fb1469a35df418bdca5b13c1e0f3f94985f0b8aca152f450ffe8e7b9f0059bf4ce489fc6acbb6790af3c5c8cfca2865ae0de3c
   languageName: node
   linkType: hard
 
@@ -22247,7 +22247,7 @@ __metadata:
     "@betterer/cli": 5.4.0
     "@betterer/eslint": 5.4.0
     "@betterer/regexp": 5.4.0
-    "@daybrush/utils": ^1.9.1
+    "@daybrush/utils": 1.10.0
     "@emotion/css": 11.9.0
     "@emotion/eslint-plugin": 11.7.0
     "@emotion/react": 11.9.3
