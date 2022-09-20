@@ -55,14 +55,20 @@ func TestNewAlertmanagerNotifier(t *testing.T) {
 			decryptFn := func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
 				return fallback
 			}
-			cfg, err := NewAlertmanagerConfig(m, decryptFn)
-			if c.expectedInitError != "" {
-				require.Equal(t, c.expectedInitError, err.Error())
-				return
+
+			fc := FactoryConfig{
+				Config:      m,
+				DecryptFunc: decryptFn,
+				ImageStore:  &UnavailableImageStore{},
+				Template:    tmpl,
+				Logger:      &FakeLogger{},
 			}
-			require.NoError(t, err)
-			sn := NewAlertmanagerNotifier(cfg, &channels.FakeLogger{}, &channels.UnavailableImageStore{}, tmpl, decryptFn)
-			require.NotNil(t, sn)
+			sn, err := buildAlertmanagerNotifier(fc)
+			if c.expectedInitError != "" {
+				require.ErrorContains(t, err, c.expectedInitError)
+			} else {
+				require.NotNil(t, sn)
+			}
 		})
 	}
 }
@@ -153,9 +159,16 @@ func TestAlertmanagerNotifier_Notify(t *testing.T) {
 			decryptFn := func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
 				return fallback
 			}
-			cfg, err := NewAlertmanagerConfig(m, decryptFn)
+			fc := FactoryConfig{
+				Config:      m,
+				DecryptFunc: decryptFn,
+				ImageStore:  images,
+				Template:    tmpl,
+				Logger:      &FakeLogger{},
+			}
+			sn, err := buildAlertmanagerNotifier(fc)
 			require.NoError(t, err)
-			sn := NewAlertmanagerNotifier(cfg, &channels.FakeLogger{}, images, tmpl, decryptFn)
+
 			var body []byte
 			origSendHTTPRequest := sendHTTPRequest
 			t.Cleanup(func() {
