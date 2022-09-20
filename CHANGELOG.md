@@ -1,3 +1,28 @@
+<!-- 8.5.13 START -->
+
+# 8.5.13 (2022-09-20)
+
+### Features and enhancements
+
+- **Plugins:** Expose @emotion/react to plugins to prevent load failures. [#55297](https://github.com/grafana/grafana/pull/55297), [@jackw](https://github.com/jackw)
+
+### Bug fixes
+
+- **AuthNZ:** Security fixes for CVE-2022-35957 and CVE-2022-36062. [#55495](https://github.com/grafana/grafana/pull/55495), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
+
+<!-- 8.5.13 END -->
+
+<!-- 8.5.11 START -->
+
+# 8.5.11 (2022-08-30)
+
+### Features and enhancements
+
+- **Rendering:** Add support for renderer token (#54425). [#54438](https://github.com/grafana/grafana/pull/54438), [@joanlopez](https://github.com/joanlopez)
+- **Alerting:** AlertingProxy to elevate permissions for request forwarded to data proxy when RBAC enabled. [#53681](https://github.com/grafana/grafana/pull/53681), [@yuri-tceretian](https://github.com/yuri-tceretian)
+
+<!-- 8.5.11 END -->
+
 <!-- 8.5.10 START -->
 
 # 8.5.10 (2022-08-08)
