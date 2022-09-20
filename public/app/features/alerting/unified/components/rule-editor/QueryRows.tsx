@@ -19,6 +19,7 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { EmptyQueryWrapper, QueryWrapper } from './QueryWrapper';
+import { errorFromSeries } from './util';
 
 interface Props {
   // The query configuration
@@ -214,6 +215,9 @@ export class QueryRows extends PureComponent<Props> {
                   };
                   const dsSettings = this.getDataSourceSettings(query);
 
+                  const isAlertCondition = this.props.condition === query.refId;
+                  const error = isAlertCondition ? errorFromSeries(data.series) : undefined;
+
                   if (!dsSettings) {
                     return (
                       <DatasourceNotFound
@@ -239,6 +243,7 @@ export class QueryRows extends PureComponent<Props> {
                       key={query.refId}
                       dsSettings={dsSettings}
                       data={data}
+                      error={error}
                       query={query}
                       onChangeQuery={this.onChangeQuery}
                       onRemoveQuery={this.onRemoveQuery}

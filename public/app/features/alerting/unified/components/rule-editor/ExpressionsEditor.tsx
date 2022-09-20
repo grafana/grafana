@@ -8,10 +8,12 @@ import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { Expression } from '../expressions/Expression';
 
+import { errorFromSeries } from './util';
+
 interface Props {
   condition: string | null;
   onSetCondition: (refId: string) => void;
-  panelData: Record<string, PanelData>;
+  panelData: Record<string, PanelData | undefined>;
   queries: AlertQuery[];
   onRemoveExpression: (refId: string) => void;
   onUpdateRefId: (oldRefId: string, newRefId: string) => void;
@@ -37,20 +39,28 @@ export const ExpressionsEditor: FC<Props> = ({
 
   return (
     <Stack direction="row" alignItems="stretch">
-      {expressionQueries.map((query) => (
-        <Expression
-          key={query.refId}
-          isAlertCondition={condition === query.refId}
-          data={panelData[query.refId]}
-          queries={queries}
-          query={query}
-          onSetCondition={onSetCondition}
-          onRemoveExpression={onRemoveExpression}
-          onUpdateRefId={onUpdateRefId}
-          onUpdateExpressionType={onUpdateExpressionType}
-          onChangeQuery={onUpdateQueryExpression}
-        />
-      ))}
+      {expressionQueries.map((query) => {
+        const data = panelData[query.refId];
+
+        const isAlertCondition = condition === query.refId;
+        const error = isAlertCondition && data ? errorFromSeries(data.series) : undefined;
+
+        return (
+          <Expression
+            key={query.refId}
+            isAlertCondition={isAlertCondition}
+            data={data}
+            error={error}
+            queries={queries}
+            query={query}
+            onSetCondition={onSetCondition}
+            onRemoveExpression={onRemoveExpression}
+            onUpdateRefId={onUpdateRefId}
+            onUpdateExpressionType={onUpdateExpressionType}
+            onChangeQuery={onUpdateQueryExpression}
+          />
+        );
+      })}
     </Stack>
   );
 };

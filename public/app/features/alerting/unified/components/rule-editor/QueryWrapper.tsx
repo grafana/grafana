@@ -26,6 +26,7 @@ import { VizWrapper } from './VizWrapper';
 
 interface Props {
   data: PanelData;
+  error?: Error;
   query: AlertQuery;
   queries: AlertQuery[];
   dsSettings: DataSourceInstanceSettings;
@@ -44,6 +45,7 @@ interface Props {
 
 export const QueryWrapper: FC<Props> = ({
   data,
+  error,
   dsSettings,
   index,
   onChangeDataSource,
@@ -90,7 +92,7 @@ export const QueryWrapper: FC<Props> = ({
   }
 
   // TODO add a warning label here too when the data looks like time series data and is used as an alert condition
-  function HeaderExtras({ query, index }: { query: AlertQuery; index: number }) {
+  function HeaderExtras({ query, error, index }: { query: AlertQuery; error?: Error; index: number }) {
     if (isExpressionQuery(query.model)) {
       return null;
     } else {
@@ -106,6 +108,7 @@ export const QueryWrapper: FC<Props> = ({
           <AlertConditionIndicator
             onSetCondition={() => onSetCondition(query.refId)}
             enabled={condition === query.refId}
+            error={error}
           />
         </Stack>
       );
@@ -128,7 +131,7 @@ export const QueryWrapper: FC<Props> = ({
         onAddQuery={() => onDuplicateQuery(cloneDeep(query))}
         onRunQuery={onRunQueries}
         queries={queries}
-        renderHeaderExtras={() => <HeaderExtras query={query} index={index} />}
+        renderHeaderExtras={() => <HeaderExtras query={query} index={index} error={error} />}
         app={CoreApp.UnifiedAlerting}
         visualization={
           data.state !== LoadingState.NotStarted ? (

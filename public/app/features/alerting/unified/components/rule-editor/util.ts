@@ -1,5 +1,7 @@
 import { ValidateResult } from 'react-hook-form';
 
+import { DataFrame } from '@grafana/data';
+import { isTimeSeries } from '@grafana/data/src/dataframe/utils';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
@@ -82,4 +84,15 @@ export function checkForPathSeparator(value: string): ValidateResult {
   }
 
   return true;
+}
+
+export function errorFromSeries(series: DataFrame[]): Error | undefined {
+  const isTimeSeriesResults = series.length && isTimeSeries(series);
+
+  let error;
+  if (isTimeSeriesResults) {
+    error = new Error('You cannot use time series data as an alert condition, consider adding a reduce expression.');
+  }
+
+  return error;
 }

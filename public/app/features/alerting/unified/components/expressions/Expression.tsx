@@ -4,7 +4,7 @@ import React, { FC, useCallback, useState } from 'react';
 
 import { DataFrame, dateTimeFormat, GrafanaTheme2, LoadingState, PanelData } from '@grafana/data';
 import { isTimeSeries } from '@grafana/data/src/dataframe/utils';
-import { AutoSizeInput, Badge, Icon, IconButton, Select, Stack, useStyles2 } from '@grafana/ui';
+import { AutoSizeInput, Icon, IconButton, Select, Stack, useStyles2 } from '@grafana/ui';
 import { ClassicConditions } from 'app/features/expressions/components/ClassicConditions';
 import { Math } from 'app/features/expressions/components/Math';
 import { Reduce } from 'app/features/expressions/components/Reduce';
@@ -22,6 +22,7 @@ import { formatLabels, getSeriesName, getSeriesValue } from './util';
 interface ExpressionProps {
   isAlertCondition?: boolean;
   data?: PanelData;
+  error?: Error;
   queries: AlertQuery[];
   query: ExpressionQuery;
   onSetCondition: (refId: string) => void;
@@ -35,6 +36,7 @@ export const Expression: FC<ExpressionProps> = ({
   queries = [],
   query,
   data,
+  error,
   isAlertCondition,
   onSetCondition,
   onUpdateRefId,
@@ -50,6 +52,7 @@ export const Expression: FC<ExpressionProps> = ({
   const hasResults = Array.isArray(data?.series) && !isLoading;
   const series = data?.series ?? [];
   const emptyResults = hasResults && series.length === 0;
+  const isTimeSeriesResults = hasResults && isTimeSeries(series);
 
   const alertCondition = isAlertCondition ?? false;
   const showSummary = isAlertCondition && hasResults;
@@ -86,22 +89,12 @@ export const Expression: FC<ExpressionProps> = ({
     [onChangeQuery, queries]
   );
 
-  // time series results should be visualized differently
-  // TODO add a warning if we're trying to alert on time series data
-  const isTimeSeriesResults = isTimeSeries(series);
-
-  let warning;
-  if (isTimeSeriesResults && isAlertCondition) {
-    warning = 'You cannot use time series data as an alert condition, consider adding a reduce expression.';
-  }
-
   return (
     <div className={cx(styles.expression.wrapper, alertCondition && styles.expression.alertCondition)}>
       <div className={styles.expression.stack}>
         <Header
           refId={query.refId}
           queryType={queryType}
-          warning={warning}
           onRemoveExpression={() => onRemoveExpression(query.refId)}
           onUpdateRefId={(newRefId) => onUpdateRefId(query.refId, newRefId)}
           onUpdateExpressionType={(type) => onUpdateExpressionType(query.refId, type)}
@@ -126,7 +119,11 @@ export const Expression: FC<ExpressionProps> = ({
         )}
         <div className={styles.footer}>
           <Stack direction="row" alignItems="center">
-            <AlertConditionIndicator onSetCondition={() => onSetCondition(query.refId)} enabled={alertCondition} />
+            <AlertConditionIndicator
+              onSetCondition={() => onSetCondition(query.refId)}
+              enabled={alertCondition}
+              error={error}
+            />
             <Spacer />
             {showSummary && (
               <PreviewSummary
@@ -149,20 +146,12 @@ const PreviewSummary: FC<{ firing: number; normal: number }> = ({ firing, normal
 interface HeaderProps {
   refId: string;
   queryType: ExpressionQueryType;
-  warning?: string;
   onUpdateRefId: (refId: string) => void;
   onRemoveExpression: () => void;
   onUpdateExpressionType: (type: ExpressionQueryType) => void;
 }
 
-const Header: FC<HeaderProps> = ({
-  refId,
-  queryType,
-  warning,
-  onUpdateRefId,
-  onUpdateExpressionType,
-  onRemoveExpression,
-}) => {
+const Header: FC<HeaderProps> = ({ refId, queryType, onUpdateRefId, onUpdateExpressionType, onRemoveExpression }) => {
   const styles = useStyles2(getStyles);
   /**
    * There are 3 edit modes:
@@ -228,7 +217,6 @@ const Header: FC<HeaderProps> = ({
           )}
         </Stack>
         <Spacer />
-        {warning && <Badge text={'Warning'} color={'orange'} icon="exclamation-triangle" tooltip={warning} />}
         <IconButton name="trash-alt" variant="secondary" className={styles.mutedIcon} onClick={onRemoveExpression} />
       </Stack>
     </header>
