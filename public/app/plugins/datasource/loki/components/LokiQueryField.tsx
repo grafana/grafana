@@ -189,9 +189,7 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
     } = this.props;
 
     const { labelsLoaded, labelBrowserVisible } = this.state;
-    const lokiLanguageProvider = datasource.languageProvider as LokiLanguageProvider;
-    const cleanText = datasource.languageProvider ? lokiLanguageProvider.cleanText : undefined;
-    const hasLogLabels = lokiLanguageProvider.getLabelKeys().length > 0;
+    const hasLogLabels = datasource.languageProvider.getLabelKeys().length > 0;
     const chooserText = getChooserText(labelsLoaded, hasLogLabels);
     const buttonDisabled = !(labelsLoaded && hasLogLabels);
 
@@ -225,7 +223,7 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
                   ) : (
                     <QueryField
                       additionalPlugins={this.plugins}
-                      cleanText={cleanText}
+                      cleanText={datasource.languageProvider.cleanText}
                       query={query.expr}
                       onTypeahead={this.onTypeahead}
                       onWillApplySuggestion={willApplySuggestion}
@@ -241,7 +239,7 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
               {labelBrowserVisible && (
                 <div className="gf-form">
                   <LokiLabelBrowser
-                    languageProvider={lokiLanguageProvider}
+                    languageProvider={datasource.languageProvider}
                     onChange={this.onChangeLabelBrowser}
                     lastUsedLabels={lastUsedLabels || []}
                     storeLastUsedLabels={onLastUsedLabelsSave}

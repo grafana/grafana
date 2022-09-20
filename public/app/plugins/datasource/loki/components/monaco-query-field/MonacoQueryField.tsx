@@ -76,11 +76,10 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-const MonacoQueryField = (props: Props) => {
+const MonacoQueryField = ({ languageProvider, history, onBlur, onRunQuery, initialValue }: Props) => {
   // we need only one instance of `overrideServices` during the lifetime of the react component
   const overrideServicesRef = useRef(getOverrideServices());
   const containerRef = useRef<HTMLDivElement>(null);
-  const { languageProvider, history, onBlur, onRunQuery, initialValue } = props;
 
   const langProviderRef = useLatest(languageProvider);
   const historyRef = useLatest(history);
@@ -194,9 +193,5 @@ const MonacoQueryField = (props: Props) => {
   );
 };
 
-// we will lazy-load this module using React.lazy,
-// and that only supports default-exports,
-// so we have to default-export this, even if
-// it is against the style-guidelines.
-
+// Default export for lazy load.
 export default MonacoQueryField;
