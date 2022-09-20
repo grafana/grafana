@@ -25,13 +25,15 @@ describe('LogGroupSelector', () => {
   });
 
   it('updates upstream query log groups on region change', async () => {
-    ds.datasource.describeLogGroups = jest.fn().mockImplementation(async (params: DescribeLogGroupsRequest) => {
-      if (params.region === 'region1') {
-        return Promise.resolve(['log_group_1']);
-      } else {
-        return Promise.resolve(['log_group_2']);
-      }
-    });
+    ds.datasource.logsQueryRunner.describeLogGroups = jest
+      .fn()
+      .mockImplementation(async (params: DescribeLogGroupsRequest) => {
+        if (params.region === 'region1') {
+          return Promise.resolve(['log_group_1']);
+        } else {
+          return Promise.resolve(['log_group_2']);
+        }
+      });
     const props = {
       ...defaultProps,
       selectedLogGroups: ['log_group_1'],
@@ -48,13 +50,15 @@ describe('LogGroupSelector', () => {
   });
 
   it('does not update upstream query log groups if saved is false', async () => {
-    ds.datasource.describeLogGroups = jest.fn().mockImplementation(async (params: DescribeLogGroupsRequest) => {
-      if (params.region === 'region1') {
-        return Promise.resolve(['log_group_1']);
-      } else {
-        return Promise.resolve(['log_group_2']);
-      }
-    });
+    ds.datasource.logsQueryRunner.describeLogGroups = jest
+      .fn()
+      .mockImplementation(async (params: DescribeLogGroupsRequest) => {
+        if (params.region === 'region1') {
+          return Promise.resolve(['log_group_1']);
+        } else {
+          return Promise.resolve(['log_group_2']);
+        }
+      });
     const props = {
       ...defaultProps,
       selectedLogGroups: ['log_group_1'],
@@ -94,12 +98,14 @@ describe('LogGroupSelector', () => {
     ];
     const testLimit = 10;
 
-    ds.datasource.describeLogGroups = jest.fn().mockImplementation(async (params: DescribeLogGroupsRequest) => {
-      const theLogGroups = allLogGroups
-        .filter((logGroupName) => logGroupName.startsWith(params.logGroupNamePrefix ?? ''))
-        .slice(0, Math.max(params.limit ?? testLimit, testLimit));
-      return Promise.resolve(theLogGroups);
-    });
+    ds.datasource.logsQueryRunner.describeLogGroups = jest
+      .fn()
+      .mockImplementation(async (params: DescribeLogGroupsRequest) => {
+        const theLogGroups = allLogGroups
+          .filter((logGroupName) => logGroupName.startsWith(params.logGroupNamePrefix ?? ''))
+          .slice(0, Math.max(params.limit ?? testLimit, testLimit));
+        return Promise.resolve(theLogGroups);
+      });
     const props = {
       ...defaultProps,
     };
@@ -123,7 +129,7 @@ describe('LogGroupSelector', () => {
 
   it('should render template variables a selectable option', async () => {
     lodash.debounce = jest.fn().mockImplementation((fn) => fn);
-    ds.datasource.describeLogGroups = jest.fn().mockResolvedValue([]);
+    ds.datasource.logsQueryRunner.describeLogGroups = jest.fn().mockResolvedValue([]);
     const onChange = jest.fn();
     const props = {
       ...defaultProps,
