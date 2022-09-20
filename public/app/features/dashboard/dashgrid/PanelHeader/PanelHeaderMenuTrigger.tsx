@@ -17,7 +17,7 @@ export const PanelHeaderMenuTrigger: FC<Props> = ({ children, ...divProps }) => 
 
   const onMenuToggle = useCallback(
     (event: MouseEvent<HTMLDivElement>) => {
-      if (!isClick(clickCoordinates, eventToClickCoordinates(event))) {
+      if (!isClick(clickCoordinates, { x: event.clientX, y: event.clientY })) {
         return;
       }
 
@@ -40,13 +40,14 @@ export const PanelHeaderMenuTrigger: FC<Props> = ({ children, ...divProps }) => 
   );
 };
 
-function isClick(current: CartesianCoords2D, clicked: CartesianCoords2D): boolean {
-  return clicked.x === current.x && clicked.y === current.y;
+function isClick(current: CartesianCoords2D, clicked: CartesianCoords2D, deadZone = 3.5): boolean {
+  const clickDistance = Math.sqrt((current.x - clicked.x) ** 2 + (current.y - clicked.y) ** 2);
+  return clickDistance <= deadZone;
 }
 
 function eventToClickCoordinates(event: MouseEvent<HTMLDivElement>): CartesianCoords2D {
   return {
-    x: Math.floor(event.clientX),
-    y: Math.floor(event.clientY),
+    x: event.clientX,
+    y: event.clientY,
   };
 }
