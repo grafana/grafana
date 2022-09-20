@@ -176,7 +176,7 @@ export function getDatasourceAPIUid(dataSourceName: string) {
 }
 
 export function getFirstCompatibleDataSource(): DataSourceInstanceSettings<DataSourceJsonData> | undefined {
-  return getRulesDataSources()[0];
+  return getDataSourceSrv().getList({ alerting: true })[0];
 }
 
 export function getDefaultOrFirstCompatibleDataSource(): DataSourceInstanceSettings<DataSourceJsonData> | undefined {
