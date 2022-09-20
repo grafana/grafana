@@ -1,6 +1,7 @@
 import { config } from '@grafana/runtime';
 
 import { BlugeSearcher } from './bluge';
+import { FrontendSearcher } from './frontend';
 import { SQLSearcher } from './sql';
 import { GrafanaSearcher } from './types';
 
@@ -11,6 +12,10 @@ export function getGrafanaSearcher(): GrafanaSearcher {
     const sqlSearcher = new SQLSearcher();
     const useBluge = config.featureToggles.panelTitleSearch;
     searcher = useBluge ? new BlugeSearcher(sqlSearcher) : sqlSearcher;
+
+    if (useBluge && location.search.indexOf('do-frontend-query')) {
+      searcher = new FrontendSearcher(searcher);
+    }
   }
   return searcher!;
 }
