@@ -18,6 +18,7 @@ import LogsQueryEditor from '../LogsQueryEditor';
 import NewMetricsQueryEditor from '../MetricsQueryEditor/MetricsQueryEditor';
 import { QueryHeader } from '../QueryHeader';
 import { Space } from '../Space';
+import TraceEditor from '../TraceEditor';
 
 import usePreparedQuery from './usePreparedQuery';
 
@@ -122,6 +123,18 @@ const EditorForQueryType: React.FC<EditorForQueryTypeProps> = ({
     case AzureQueryType.AzureResourceGraph:
       return (
         <ArgQueryEditor
+          subscriptionId={subscriptionId}
+          query={query}
+          datasource={datasource}
+          onChange={onChange}
+          variableOptionGroup={variableOptionGroup}
+          setError={setError}
+        />
+      );
+
+    case AzureQueryType.Trace:
+      return (
+        <TraceEditor
           subscriptionId={subscriptionId}
           query={query}
           datasource={datasource}
