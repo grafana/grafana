@@ -1,5 +1,6 @@
 import { configureStore as reduxConfigureStore } from '@reduxjs/toolkit';
 
+import { pubDashApi } from 'app/features/dashboard/api/pubDashApi';
 import { StoreState } from 'app/types/store';
 
 import { buildInitialState } from '../core/reducers/navModel';
@@ -20,7 +21,8 @@ export function configureStore(initialState?: Partial<StoreState>) {
     reducer: createRootReducer(),
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware({ thunk: true, serializableCheck: false, immutableCheck: false }).concat(
-        alertingApi.middleware
+        alertingApi.middleware,
+        pubDashApi.middleware
       ),
     devTools: process.env.NODE_ENV !== 'production',
     preloadedState: {
