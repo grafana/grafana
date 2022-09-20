@@ -21,7 +21,7 @@ const backendSrvBaseQuery =
 
 export const pubDashApi = createApi({
   reducerPath: 'pubDashApi',
-  baseQuery: retry(backendSrvBaseQuery({ baseUrl: '/api/dashboards' })),
+  baseQuery: retry(backendSrvBaseQuery({ baseUrl: '/api/dashboards' }), { maxRetries: 3 }),
   tagTypes: ['Config'],
   keepUnusedDataFor: 0,
   endpoints: (builder) => ({

@@ -19,7 +19,7 @@ module.exports = {
   setupFiles: ['jest-canvas-mock', './public/test/jest-shim.ts', './public/test/jest-setup.ts'],
   testTimeout: 30000,
   resolver: `<rootDir>/public/test/jest-resolver.js`,
-  setupFilesAfterEnv: ['./public/test/setupTests.ts'],
+  setupFilesAfterEnv: ['./public/test/setupTests.ts', './public/test/jest.setup.ts'],
   snapshotSerializers: ['enzyme-to-json/serializer'],
   globals: {
     'ts-jest': { isolatedModules: true },
