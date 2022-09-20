@@ -1,3 +1,27 @@
+<!-- 9.0.9 START -->
+
+# 9.0.9 (2022-09-20)
+
+### Bug fixes
+
+- **AngularPanels:** Fixing changing angular panel options not taking having affect when coming back from panel edit. [#54834](https://github.com/grafana/grafana/pull/54834), [@grafanabot](https://github.com/grafanabot)
+- **FIX:** RBAC prevents deleting empty snapshots (#54385). [#54509](https://github.com/grafana/grafana/pull/54509), [@gamab](https://github.com/gamab)
+
+<!-- 9.0.9 END -->
+
+<!-- 9.0.8 START -->
+
+# 9.0.8 (2022-08-30)
+
+### Features and enhancements
+
+- **Alerting:** Hide "no rules" message when we are fetching from data sources. [#53778](https://github.com/grafana/grafana/pull/53778), [@gillesdemey](https://github.com/gillesdemey)
+- **Rendering:** Add support for renderer token (#54425). [#54439](https://github.com/grafana/grafana/pull/54439), [@joanlopez](https://github.com/joanlopez)
+- **Reports:** Title is showing under panels. (Enterprise)
+- **Alerting:** AlertingProxy to elevate permissions for request forwarded to data proxy when RBAC enabled. [#53680](https://github.com/grafana/grafana/pull/53680), [@yuri-tceretian](https://github.com/yuri-tceretian)
+
+<!-- 9.0.8 END -->
+
 <!-- 9.0.7 START -->
 
 # 9.0.7 (2022-08-10)

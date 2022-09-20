@@ -10,6 +10,8 @@ weight: 10000
 Here you can find detailed release notes that list everything that is included in every release as well as notices
 about deprecations, breaking changes as well as changes that relate to plugin development.
 
+- [Release notes for 9.0.9]({{< relref "release-notes-9-0-9" >}})
+- [Release notes for 9.0.8]({{< relref "release-notes-9-0-8" >}})
 - [Release notes for 9.0.7]({{< relref "release-notes-9-0-7" >}})
 - [Release notes for 9.0.6]({{< relref "release-notes-9-0-6" >}})
 - [Release notes for 9.0.5]({{< relref "release-notes-9-0-5" >}})
