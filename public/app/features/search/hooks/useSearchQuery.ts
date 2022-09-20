@@ -43,7 +43,7 @@ export const useSearchQuery = (defaults: Partial<DashboardQuery>) => {
   };
 
   const onSelectSearchItem = () => {
-    dispatch(queryChange(''));
+    dispatch(clearFilters());
     locationService.partial(
       {
         search: null,
