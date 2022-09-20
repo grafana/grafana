@@ -1150,6 +1150,20 @@ In the Loki data source, for consistency and performance reasons, we changed how
 
 The dependency to [grafana/aws-sdk](https://github.com/grafana/grafana-aws-sdk-react) is moved from [grafana/ui](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/package.json) to the plugin. This means that any plugin that use SIGV4 auth need to pass a SIGV4 editor component as a prop to the `DataSourceHttpSettings` component. Issue [#43559](https://github.com/grafana/grafana/issues/43559)
 
+<!-- 8.5.13 START -->
+
+# 8.5.13 (2022-09-20)
+
+### Features and enhancements
+
+- **Plugins:** Expose @emotion/react to plugins to prevent load failures. [#55297](https://github.com/grafana/grafana/pull/55297), [@jackw](https://github.com/jackw)
+
+### Bug fixes
+
+- **AuthNZ:** Security fixes for CVE-2022-35957 and CVE-2022-36062. [#55495](https://github.com/grafana/grafana/pull/55495), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
+
+<!-- 8.5.13 END -->
+
 <!-- 8.5.11 START -->
 
 # 8.5.11 (2022-08-30)
