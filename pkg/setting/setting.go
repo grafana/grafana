@@ -295,7 +295,7 @@ type Cfg struct {
 	AdminUser                    string
 	AdminPassword                string
 	AdminEmail                   string
-	ManualOverrideSync           bool
+	DisableSyncLock              bool
 
 	// AWS Plugin Auth
 	AWSAllowedAuthProviders []string
@@ -1290,7 +1290,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	}
 
 	// Debug setting unlocking frontend auth sync lock. Users will still be reset on their next login.
-	cfg.ManualOverrideSync = auth.Key("manual_override_sync").MustBool(false)
+	cfg.DisableSyncLock = auth.Key("disable_sync_lock").MustBool(false)
 
 	DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
 	DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
