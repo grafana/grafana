@@ -1,6 +1,6 @@
 import { of } from 'rxjs';
 
-import { DataFrame } from '@grafana/data';
+import { CustomVariableModel, DataFrame } from '@grafana/data';
 import { BackendDataSourceResponse, getBackendSrv, setBackendSrv } from '@grafana/runtime';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
@@ -16,7 +16,7 @@ export function setupMockedLogsQueryRunner({
   },
   variables,
   mockGetVariableName = true,
-}: { data?: BackendDataSourceResponse; variables?: any; mockGetVariableName?: boolean } = {}) {
+}: { data?: BackendDataSourceResponse; variables?: CustomVariableModel[]; mockGetVariableName?: boolean } = {}) {
   let templateService = new TemplateSrv();
   if (variables) {
     templateService = setupMockedTemplateService(variables);
