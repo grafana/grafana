@@ -188,11 +188,11 @@ func (ccc *ConditionsCmd) Execute(ctx context.Context, vars mathexp.Vars) (mathe
 func UnmarshalConditionsCmd(rawQuery map[string]interface{}, refID string) (*ConditionsCmd, error) {
 	jsonFromM, err := json.Marshal(rawQuery["conditions"])
 	if err != nil {
-		return nil, fmt.Errorf("failed to remarshal as classic condition body: %w", err)
+		return nil, fmt.Errorf("failed to remarshal classic condition body: %w", err)
 	}
 	var ccj []ClassicConditionJSON
 	if err = json.Unmarshal(jsonFromM, &ccj); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal remarshaled as classic condition body: %w", err)
+		return nil, fmt.Errorf("failed to unmarshal remarshaled classic condition body: %w", err)
 	}
 
 	c := &ConditionsCmd{
