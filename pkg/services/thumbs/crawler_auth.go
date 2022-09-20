@@ -24,6 +24,7 @@ func ProvideCrawlerAuthSetupService(serviceAccounts serviceaccounts.Service, ser
 		log:                      log.New("oss_crawler_account_setup_service"),
 		sqlStore:                 sqlStore,
 		serviceAccountsStore:     serviceAccountsStore,
+		orgService:               orgService,
 	}
 }
 
