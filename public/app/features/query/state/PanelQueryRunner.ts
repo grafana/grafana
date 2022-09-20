@@ -370,8 +370,8 @@ async function getDataSource(
   scopedVars: ScopedVars,
   publicDashboardAccessToken?: string
 ): Promise<DataSourceApi> {
-  if (!publicDashboardAccessToken && datasource && (datasource as DataSourceApi).query) {
-    return datasource as DataSourceApi;
+  if (!publicDashboardAccessToken && datasource && typeof datasource === 'object' && 'query' in datasource) {
+    return datasource;
   }
 
   const ds = await getDatasourceSrv().get(datasource, scopedVars);

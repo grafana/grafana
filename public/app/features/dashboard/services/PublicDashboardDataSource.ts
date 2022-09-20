@@ -61,7 +61,9 @@ export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSour
       return DEFAULT_INTERVAL;
     }
 
-    return (datasource as DataSourceApi)?.interval ?? DEFAULT_INTERVAL;
+    const interval = 'interval' in datasource ? datasource.interval : undefined;
+
+    return interval ?? DEFAULT_INTERVAL;
   }
 
   /**
