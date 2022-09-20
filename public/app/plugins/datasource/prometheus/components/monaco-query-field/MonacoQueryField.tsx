@@ -201,6 +201,12 @@ const MonacoQueryField = (props: Props) => {
           editor.onDidContentSizeChange(updateElementHeight);
           updateElementHeight();
 
+          // If every change event triggers adding the current editor value to the onBlurRef then we're assured to have the correct value when we eventually run the query
+          // This change is being introduced to fix a bug where you can submit a query via shift+enter, but if you just clicked into another field and haven't un-blurred the active field, then the query that is run will be stale, as the reference is only updated with the value of the last blurred input.
+          editor.getModel()?.onDidChangeContent(() => {
+            onBlurRef.current(editor.getValue());
+          });
+
           // handle: shift + enter
           // FIXME: maybe move this functionality into CodeEditor?
           editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.Enter, () => {
