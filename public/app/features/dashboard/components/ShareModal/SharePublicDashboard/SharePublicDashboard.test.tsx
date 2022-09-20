@@ -1,20 +1,35 @@
 import { fireEvent, render, screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
 import { rest } from 'msw';
+import { setupServer } from 'msw/node';
 import React from 'react';
 import { Provider } from 'react-redux';
-import { server } from 'test/mocks/server';
 
+import 'whatwg-fetch';
 import { BootData } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { setEchoSrv } from '@grafana/runtime/src';
 import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
+import { Echo } from 'app/core/services/echo/Echo';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { configureStore } from 'app/store/configureStore';
 
-import { Echo } from '../../../../../core/services/echo/Echo';
 import { ShareModal } from '../ShareModal';
+
+const server = setupServer(
+  rest.get('/api/dashboards/uid/:uId/public-config', (req, res, ctx) => {
+    return res(
+      ctx.status(200),
+      ctx.json({
+        isEnabled: false,
+        uid: undefined,
+        dashboardUid: undefined,
+        accessToken: 'an-access-token',
+      })
+    );
+  })
+);
 
 jest.mock('@grafana/runtime', () => ({
   ...(jest.requireActual('@grafana/runtime') as unknown as object),
@@ -40,35 +55,6 @@ let originalBootData: BootData;
 let mockDashboard: DashboardModel;
 let mockPanel: PanelModel;
 
-beforeEach(() => {
-  config.featureToggles.publicDashboards = true;
-  mockDashboard = new DashboardModel({
-    uid: 'mockDashboardUid',
-  });
-
-  mockPanel = new PanelModel({
-    id: 'mockPanelId',
-  });
-
-  jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(true);
-  jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
-  jest.spyOn(contextSrv, 'hasRole').mockReturnValue(true);
-
-  server.use(
-    rest.get('/api/dashboards/uid/:uId/public-config', (req, res, ctx) => {
-      return res(
-        ctx.status(200),
-        ctx.json({
-          isEnabled: false,
-          uid: undefined,
-          dashboardUid: undefined,
-          accessToken: 'an-access-token',
-        })
-      );
-    })
-  );
-});
-
 beforeAll(() => {
   setEchoSrv(new Echo());
   originalBootData = config.bootData;
@@ -89,14 +75,33 @@ beforeAll(() => {
       },
     ],
   } as any;
+
+  server.listen({ onUnhandledRequest: 'bypass' });
 });
 
-afterEach(() => {
-  jest.restoreAllMocks();
+beforeEach(() => {
+  config.featureToggles.publicDashboards = true;
+  mockDashboard = new DashboardModel({
+    uid: 'mockDashboardUid',
+  });
+
+  mockPanel = new PanelModel({
+    id: 'mockPanelId',
+  });
+
+  jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(true);
+  jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+  jest.spyOn(contextSrv, 'hasRole').mockReturnValue(true);
 });
 
 afterAll(() => {
   config.bootData = originalBootData;
+  server.close();
+});
+
+afterEach(() => {
+  jest.restoreAllMocks();
+  server.resetHandlers();
 });
 
 describe('SharePublic', () => {
