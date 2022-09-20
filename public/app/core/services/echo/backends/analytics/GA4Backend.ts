@@ -51,12 +51,6 @@ export class GA4EchoBackend implements EchoBackend<PageviewEchoEvent, GA4EchoBac
 
     window.gtag('set', 'page_path', e.payload.page);
     window.gtag('event', 'page_view');
-
-    // const { userSignedIn, userId } = e.meta;
-    // if (userSignedIn && userId !== this.trackedUserId) {
-    //   this.trackedUserId = userId;
-    //   window.gtag('set', 'userId', userId);
-    // }
   };
 
   // Not using Echo buffering, addEvent above sends events to GA as soon as they appear
