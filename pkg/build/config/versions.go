@@ -88,6 +88,7 @@ var Versions = VersionMap{
 			Artifacts:            "grafana-downloads",
 			ArtifactsEnterprise2: "grafana-downloads-enterprise2",
 			CDNAssets:            "grafana-static-assets",
+			Storybook:            "grafana-storybook",
 		},
 	},
 	ReleaseBranchMode: {
@@ -151,6 +152,7 @@ var Versions = VersionMap{
 				Alpine,
 				Ubuntu,
 			},
+			PrereleaseBucket: "grafana-prerelease/artifacts/docker",
 		},
 		Buckets: Buckets{
 			Artifacts:            "grafana-prerelease/artifacts/downloads",

@@ -22281,6 +22281,7 @@ __metadata:
     angular-bindonce: 0.3.1
     angular-route: 1.8.3
     angular-sanitize: 1.8.3
+    ansicolor: 1.1.100
     app: "link:./public/app"
     autoprefixer: 10.4.7
     axios: 0.27.2
