@@ -108,6 +108,25 @@ func TestWeComNotifier(t *testing.T) {
 			settings:     `{}`,
 			expInitError: `could not find webhook URL in settings`,
 		},
+		{
+			name:     "Use default if optional fields are explicitly empty",
+			settings: `{"url": "http://localhost", "message": "", "title": ""}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh"},
+					},
+				},
+			},
+			expMsg: map[string]interface{}{
+				"markdown": map[string]interface{}{
+					"content": "# [FIRING:1]  (val1)\n**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n\n",
+				},
+				"msgtype": "markdown",
+			},
+			expMsgError: nil,
+		},
 	}
 
 	for _, c := range cases {

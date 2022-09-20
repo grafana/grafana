@@ -21,14 +21,18 @@ type wecomSettings struct {
 }
 
 func buildWecomSettings(factoryConfig FactoryConfig) (wecomSettings, error) {
-	var settings = wecomSettings{
-		Message: DefaultMessageEmbed,
-		Title:   DefaultMessageTitleEmbed,
-	}
+	var settings = wecomSettings{}
 
 	err := factoryConfig.Config.unmarshalSettings(&settings)
 	if err != nil {
 		return settings, fmt.Errorf("failed to unmarshal settings: %w", err)
+	}
+
+	if settings.Message == "" {
+		settings.Message = DefaultMessageEmbed
+	}
+	if settings.Title == "" {
+		settings.Title = DefaultMessageTitleEmbed
 	}
 
 	settings.URL = factoryConfig.DecryptFunc(context.Background(), factoryConfig.Config.SecureSettings, "url", settings.URL)
