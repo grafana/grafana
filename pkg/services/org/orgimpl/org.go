@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -18,18 +17,19 @@ type Service struct {
 	store store
 	cfg   *setting.Cfg
 	log   log.Logger
-	// TODO remove sqlstore
+	// TODO remove sqlstore and use db.DB
 	sqlStore *sqlstore.SQLStore
 }
 
-func ProvideService(db db.DB, cfg *setting.Cfg) org.Service {
+func ProvideService(cfg *setting.Cfg, db *sqlstore.SQLStore) org.Service {
 	return &Service{
 		store: &sqlStore{
 			db:      db,
 			dialect: db.GetDialect(),
 		},
-		cfg: cfg,
-		log: log.New("org service"),
+		cfg:      cfg,
+		log:      log.New("org service"),
+		sqlStore: db,
 	}
 }
 
