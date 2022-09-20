@@ -45,6 +45,7 @@ interface LogRowContextProviderProps {
     hasMoreContextRows: HasMoreContextRows;
     updateLimit: () => void;
     limit: number;
+    logsSortOrder?: LogsSortOrder | null;
   }) => JSX.Element;
 }
 
@@ -208,5 +209,6 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
     hasMoreContextRows,
     updateLimit: () => setLimit(limit + 10),
     limit,
+    logsSortOrder,
   });
 };

@@ -3,7 +3,7 @@ import React from 'react';
 
 import { LogRowModel } from '@grafana/data';
 
-import { LogRowContextGroup } from './LogRowContext';
+import { LogGroupPosition, LogRowContextGroup } from './LogRowContext';
 
 describe('LogRowContextGroup component', () => {
   it('should correctly render logs with ANSI', () => {
@@ -13,6 +13,7 @@ describe('LogRowContextGroup component', () => {
       canLoadMoreRows: false,
       row: {} as LogRowModel,
       className: '',
+      groupPosition: LogGroupPosition.Top,
     };
 
     render(

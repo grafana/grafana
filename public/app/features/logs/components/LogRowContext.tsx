@@ -1,11 +1,16 @@
 import { css, cx } from '@emotion/css';
 import React, { useRef, useState, useLayoutEffect, useEffect } from 'react';
 
-import { GrafanaTheme2, DataQueryError, LogRowModel, textUtil } from '@grafana/data';
+import { GrafanaTheme2, DataQueryError, LogRowModel, textUtil, LogsSortOrder } from '@grafana/data';
 import { useStyles2, Alert, ClickOutsideWrapper, CustomScrollbar, List } from '@grafana/ui';
 
 import { LogMessageAnsi } from './LogMessageAnsi';
 import { LogRowContextRows, LogRowContextQueryErrors, HasMoreContextRows } from './LogRowContextProvider';
+
+export enum LogGroupPosition {
+  Bottom = 'bottom',
+  Top = 'top',
+}
 
 interface LogRowContextProps {
   row: LogRowModel;
@@ -13,6 +18,7 @@ interface LogRowContextProps {
   wrapLogMessage: boolean;
   errors?: LogRowContextQueryErrors;
   hasMoreContextRows?: HasMoreContextRows;
+  logsSortOrder?: LogsSortOrder | null;
   onOutsideClick: () => void;
   onLoadMoreContext: () => void;
 }
@@ -74,13 +80,17 @@ interface LogRowContextGroupHeaderProps {
   row: LogRowModel;
   rows: Array<string | DataQueryError>;
   onLoadMoreContext: () => void;
+  groupPosition: LogGroupPosition;
   shouldScrollToBottom?: boolean;
   canLoadMoreRows?: boolean;
+  logsSortOrder?: LogsSortOrder | null;
 }
 interface LogRowContextGroupProps extends LogRowContextGroupHeaderProps {
   rows: Array<string | DataQueryError>;
+  groupPosition: LogGroupPosition;
   className?: string;
   error?: string;
+  logsSortOrder?: LogsSortOrder | null;
 }
 
 const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeaderProps> = ({
@@ -88,8 +98,25 @@ const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeader
   rows,
   onLoadMoreContext,
   canLoadMoreRows,
+  groupPosition,
+  logsSortOrder,
 }) => {
   const { header } = useStyles2(getLogRowContextStyles);
+
+  let logGroupPosition = '';
+  if (groupPosition === LogGroupPosition.Bottom) {
+    if (logsSortOrder === LogsSortOrder.Descending) {
+      logGroupPosition = 'before';
+    } else {
+      logGroupPosition = 'after';
+    }
+  } else {
+    if (logsSortOrder === LogsSortOrder.Ascending) {
+      logGroupPosition = 'before';
+    } else {
+      logGroupPosition = 'after';
+    }
+  }
 
   return (
     <div className={header}>
@@ -98,7 +125,7 @@ const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeader
           opacity: 0.6;
         `}
       >
-        Found {rows.length} rows.
+        Showing {rows.length} lines {logGroupPosition} match.
       </span>
       {(rows.length >= 10 || (rows.length > 10 && rows.length % 10 !== 0)) && canLoadMoreRows && (
         <span
@@ -126,6 +153,8 @@ export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps
   shouldScrollToBottom,
   canLoadMoreRows,
   onLoadMoreContext,
+  groupPosition,
+  logsSortOrder,
 }) => {
   const { commonStyles, logs } = useStyles2(getLogRowContextStyles);
   const [scrollTop, setScrollTop] = useState(0);
@@ -144,6 +173,8 @@ export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps
     rows,
     onLoadMoreContext,
     canLoadMoreRows,
+    groupPosition,
+    logsSortOrder,
   };
 
   return (
@@ -187,6 +218,7 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
   onLoadMoreContext,
   hasMoreContextRows,
   wrapLogMessage,
+  logsSortOrder,
 }) => {
   useEffect(() => {
     const handleEscKeyDown = (e: KeyboardEvent): void => {
@@ -215,6 +247,8 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
             shouldScrollToBottom
             canLoadMoreRows={hasMoreContextRows ? hasMoreContextRows.after : false}
             onLoadMoreContext={onLoadMoreContext}
+            groupPosition={LogGroupPosition.Top}
+            logsSortOrder={logsSortOrder}
           />
         )}
 
@@ -226,6 +260,8 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
             rows={context.before}
             error={errors && errors.before}
             className={beforeContext}
+            groupPosition={LogGroupPosition.Bottom}
+            logsSortOrder={logsSortOrder}
           />
         )}
       </div>
