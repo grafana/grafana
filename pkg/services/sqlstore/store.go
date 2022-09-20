@@ -2,15 +2,12 @@ package sqlstore
 
 import (
 	"context"
-	"time"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/user"
 )
-
-var timeNow = time.Now
 
 type Store interface {
 	GetAdminStats(ctx context.Context, query *models.GetAdminStatsQuery) error

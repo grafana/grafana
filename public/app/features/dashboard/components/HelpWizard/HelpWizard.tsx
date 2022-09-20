@@ -20,6 +20,7 @@ import {
   Select,
   ClipboardButton,
   Stack,
+  Icon,
 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { PanelModel } from 'app/features/dashboard/state';
@@ -32,7 +33,7 @@ interface Props {
   onClose: () => void;
 }
 
-export function SupportSnapshot({ panel, plugin, onClose }: Props) {
+export function HelpWizard({ panel, plugin, onClose }: Props) {
   const styles = useStyles2(getStyles);
   const service = useMemo(() => new SupportSnapshotService(panel), [panel]);
 
@@ -65,25 +66,33 @@ export function SupportSnapshot({ panel, plugin, onClose }: Props) {
   }
 
   const tabs = [
-    { label: 'Support', value: SnapshotTab.Support },
+    { label: 'Snapshot', value: SnapshotTab.Support },
     { label: 'Data', value: SnapshotTab.Data },
   ];
 
   return (
     <Drawer
-      title={`Support snapshot`}
+      title={`Get help with this panel`}
       width="90%"
       onClose={onClose}
       expandable
       scrollableContent
       subtitle={
         <Stack direction="column" gap={1}>
-          <span>
+          <Stack direction="row" gap={1}>
             <FeatureBadge featureState={FeatureState.beta} />
-          </span>
+            <a
+              href="https://grafana.com/docs/grafana/latest/troubleshooting/"
+              target="blank"
+              className="external-link"
+              rel="noopener noreferrer"
+            >
+              Troubleshooting docs <Icon name="external-link-alt" />
+            </a>
+          </Stack>
           <span className="muted">
-            A support snapshot contains the query response data and raw panel settings. Include this snapshot in support
-            requests to help identify issues faster
+            To request troubleshooting help, send a snapshot of this panel to Grafana Labs Technical Support. The
+            snapshot contains query response data and panel settings.
           </span>
         </Stack>
       }

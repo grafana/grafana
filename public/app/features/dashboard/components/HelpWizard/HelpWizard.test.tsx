@@ -6,7 +6,7 @@ import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
 
 import { PanelModel } from '../../state/PanelModel';
 
-import { SupportSnapshot } from './SupportSnapshot';
+import { HelpWizard } from './HelpWizard';
 
 function setup() {
   const panel = new PanelModel({});
@@ -26,11 +26,11 @@ function setup() {
   });
   panel.getQueryRunner().resendLastResult();
 
-  return render(<SupportSnapshot panel={panel} onClose={() => {}} plugin={panel.plugin} />);
+  return render(<HelpWizard panel={panel} onClose={() => {}} plugin={panel.plugin} />);
 }
 describe('SupportSnapshot', () => {
   it('Can render', async () => {
     setup();
-    expect(await screen.findByRole('button', { name: 'Dashboard (2.94 KiB)' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Dashboard (2.97 KiB)' })).toBeInTheDocument();
   });
 });
