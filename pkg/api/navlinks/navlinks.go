@@ -34,3 +34,15 @@ func FindById(nodes []*dtos.NavLink, id string) *dtos.NavLink {
 
 	return nil
 }
+
+func FilterOutById(nodes []*dtos.NavLink, id string) []*dtos.NavLink {
+	var result []*dtos.NavLink
+
+	for _, child := range nodes {
+		if child.Id != id {
+			result = append(result, child)
+		}
+	}
+
+	return result
+}

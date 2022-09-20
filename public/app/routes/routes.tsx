@@ -33,6 +33,10 @@ export function getAppRoutes(): RouteDescriptor[] {
           component: () => <NavLandingPage navId="apps" />,
         },
         {
+          path: '/alerts-and-incidents',
+          component: () => <NavLandingPage navId="alerts-and-incidents" />,
+        },
+        {
           path: '/a/:pluginId',
           exact: true,
           component: (props) => {

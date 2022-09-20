@@ -9,6 +9,8 @@ func (cfg *Cfg) readNavigationSettings() error {
 	cfg.PluginAppNavIds = map[string]string{
 		"grafana-k8s-app":                  "monitoring",
 		"grafana-synthetic-monitoring-app": "monitoring",
+		"grafana-ml-app":                   "alerts-and-incidents",
+		"grafana-incident-app":             "alerts-and-incidents",
 	}
 
 	for _, key := range sec.Keys() {

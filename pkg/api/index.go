@@ -171,6 +171,20 @@ func (hs *HTTPServer) addAppLinks(navTree []*dtos.NavLink, c *models.ReqContext)
 							Url:         hs.Cfg.AppSubURL + "/monitoring",
 						})
 					}
+					if navId == "alerts-and-incidents" {
+						alertingNode := navlinks.FindById(navTree, "alerting")
+						navTree = append(navTree, &dtos.NavLink{
+							Text:        "Alerts & incidents",
+							Id:          "alerts-and-incidents",
+							Description: "Alerting and incident management apps",
+							Icon:        "bell",
+							Section:     dtos.NavSectionCore,
+							Children:    []*dtos.NavLink{alertingNode, appLink},
+							Url:         hs.Cfg.AppSubURL + "/alerts-and-incidents",
+						})
+						// Remove alerting node from navTree roots
+						navTree = navlinks.FilterOutById(navTree, "alerting")
+					}
 					hs.log.Error("Plugin app nav id not found", "pluginId", plugin.ID, "navId", navId)
 				}
 			} else {
