@@ -9,13 +9,13 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strings"
 
 	"cuelang.org/go/cue/cuecontext"
 	"cuelang.org/go/cue/load"
 	"github.com/grafana/cuetsy"
-	gcgen "github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/thema"
+
+	gcgen "github.com/grafana/grafana/pkg/codegen"
 )
 
 var lib = thema.NewLibrary(cuecontext.New())
@@ -37,8 +37,7 @@ func main() {
 	}
 
 	// TODO this binds us to only having coremodels in a single directory. If we need more, compgen is the way
-	grootp := strings.Split(cwd, sep)
-	groot := filepath.Join(sep, filepath.Join(grootp[:len(grootp)-3]...))
+	groot := filepath.Dir(filepath.Dir(filepath.Dir(cwd))) // the working dir is <grafana_dir>/pkg/framework/coremodel. Going up 3 dirs we get the grafana root
 
 	cmroot := filepath.Join(groot, "pkg", "coremodel")
 	tsroot := filepath.Join(groot, "packages", "grafana-schema", "src", "schema")

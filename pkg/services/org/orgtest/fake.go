@@ -10,6 +10,7 @@ type FakeOrgService struct {
 	ExpectedOrgUserID  int64
 	ExpectedError      error
 	ExpectedUserOrgDTO []*org.UserOrgDTO
+	ExpectedOrgs       []*org.OrgDTO
 }
 
 func NewOrgServiceFake() *FakeOrgService {
@@ -38,4 +39,8 @@ func (f *FakeOrgService) GetUserOrgList(ctx context.Context, query *org.GetUserO
 
 func (f *FakeOrgService) UpdateOrg(ctx context.Context, cmd *org.UpdateOrgCommand) error {
 	return f.ExpectedError
+}
+
+func (f *FakeOrgService) Search(ctx context.Context, query *org.SearchOrgsQuery) ([]*org.OrgDTO, error) {
+	return f.ExpectedOrgs, f.ExpectedError
 }

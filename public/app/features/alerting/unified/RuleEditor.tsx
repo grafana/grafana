@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import React, { FC, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -8,6 +7,7 @@ import { Alert, LinkButton, LoadingPlaceholder, useStyles2, withErrorBoundary } 
 import { Page } from 'app/core/components/Page/Page';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { useDispatch } from 'app/types';
 import { RuleIdentifier } from 'app/types/unified-alerting';
 
 import { AlertRuleForm } from './components/rule-editor/AlertRuleForm';
