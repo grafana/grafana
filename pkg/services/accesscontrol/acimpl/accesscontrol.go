@@ -72,8 +72,6 @@ func (a *AccessControl) EvaluateUserPermissions(ctx context.Context, cmd accessc
 		cmd.SignedInUser.Permissions[cmd.SignedInUser.OrgID] = map[string][]string{cmd.Action: scopes}
 	}
 
-	filteringResources := cmd.Resource != "" && cmd.Attribute != "" && len(cmd.UIDs) != 0
-
 	// Only checking for an action
 	if cmd.Action != "" && (cmd.Resource == "" && cmd.Attribute == "" && len(cmd.UIDs) == 0) {
 		return map[string]accesscontrol.Metadata{"-": {cmd.Action: true}}, nil
