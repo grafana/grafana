@@ -98,6 +98,7 @@ const getStyles = (data: TextBoxData | undefined) => (theme: GrafanaTheme2) => (
     width: 100%;
     display: flex;
     align-items: center;
+    padding: 10px;
   `,
   span: css`
     display: table-cell;

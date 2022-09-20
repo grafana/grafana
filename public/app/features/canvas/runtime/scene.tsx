@@ -294,6 +294,7 @@ export class Scene {
     if (this.selecto) {
       this.selecto.setSelectedTargets(selection.targets);
       this.updateSelection(selection);
+      this.editModeEnabled.next(false);
     }
   };
 
@@ -456,7 +457,12 @@ export class Scene {
         .includes(selectedTarget.parentElement.parentElement);
 
       // Apply grabbing cursor while dragging, applyLayoutStylesToDiv() resets it to grab when done
-      if (this.isEditingEnabled && isTargetMoveableElement && this.selecto?.getSelectedTargets().length) {
+      if (
+        this.isEditingEnabled &&
+        !this.editModeEnabled.getValue() &&
+        isTargetMoveableElement &&
+        this.selecto?.getSelectedTargets().length
+      ) {
         this.selecto.getSelectedTargets()[0].style.cursor = 'grabbing';
       }
 
@@ -465,12 +471,15 @@ export class Scene {
         event.stop();
       }
     })
+      .on('select', () => {
+        this.editModeEnabled.next(false);
+      })
       .on('selectEnd', (event) => {
         targets = event.selected;
         this.updateSelection({ targets });
 
         if (event.isDragStart) {
-          if (this.isEditingEnabled && this.selecto?.getSelectedTargets().length) {
+          if (this.isEditingEnabled && !this.editModeEnabled.getValue() && this.selecto?.getSelectedTargets().length) {
             this.selecto.getSelectedTargets()[0].style.cursor = 'grabbing';
           }
           event.inputEvent.preventDefault();
