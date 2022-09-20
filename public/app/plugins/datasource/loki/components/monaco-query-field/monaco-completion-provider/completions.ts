@@ -88,18 +88,13 @@ const LINE_FILTER_COMPLETIONS: Completion[] = ['|=', '!=', '|~', '!~'].map((item
 }));
 
 async function getAllHistoryCompletions(dataProvider: DataProvider): Promise<Completion[]> {
-  // NOTE: we have this commented out currently, to make demonstrating autocomplete easier
-  return [];
+  const history = await dataProvider.getHistory();
 
-  // // function getAllHistoryCompletions(queryHistory: PromHistoryItem[]): Completion[] {
-  // // NOTE: the typescript types are wrong. historyItem.query.expr can be undefined
-  // const allHistory = await dataProvider.getHistory();
-  // // FIXME: find a better history-limit
-  // return allHistory.slice(0, 2).map((expr) => ({
-  //   type: 'HISTORY',
-  //   label: expr,
-  //   insertText: expr,
-  // }));
+  return history.map((expr) => ({
+    type: 'HISTORY',
+    label: expr || '', // Can be undefined
+    insertText: expr,
+  }));
 }
 
 function makeSelector(labels: Label[]): string {
