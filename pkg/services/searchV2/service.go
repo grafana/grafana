@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -69,8 +70,7 @@ func (s *StandardSearchService) IsReady(ctx context.Context, orgId int64) IsSear
 	return s.dashboardIndex.isInitialized(ctx, orgId)
 }
 
-func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore store.EntityEventsService,
-	ac accesscontrol.Service, orgService org.Service) SearchService {
+func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore store.EntityEventsService, ac accesscontrol.Service, tracer tracing.Tracer, features featuremgmt.FeatureToggles, orgService org.Service) SearchService {
 	extender := &NoopExtender{}
 	s := &StandardSearchService{
 		cfg: cfg,
@@ -85,6 +85,8 @@ func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore s
 			entityEventStore,
 			extender.GetDocumentExtender(),
 			newFolderIDLookup(sql),
+			tracer,
+			features,
 		),
 		logger:     log.New("searchV2"),
 		extender:   extender,
