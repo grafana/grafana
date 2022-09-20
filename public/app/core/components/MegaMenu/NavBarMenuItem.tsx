@@ -76,7 +76,6 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], isChild: P
   }),
   element: css({
     alignItems: 'center',
-    backgroundColor: isActive ? theme.colors.action.disabledBackground : undefined,
     boxSizing: 'border-box',
     color: isActive ? theme.colors.text.primary : theme.colors.text.secondary,
     padding: theme.spacing(1, 1, 1, isChild ? 7 : 0),
