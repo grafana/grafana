@@ -149,8 +149,8 @@ export class GeomapPanel extends Component<Props, State> {
     if (options.view !== oldOptions.view) {
       const [updatedSharedView, view] = this.initMapView(options.view, sharedView);
       sharedView = updatedSharedView;
-      // eslint-disable-next-line
-      this.map!.setView(view as View);
+
+      this.map!.setView(view!);
     }
 
     if (options.controls !== oldOptions.controls) {
@@ -173,7 +173,7 @@ export class GeomapPanel extends Component<Props, State> {
     const v = centerPointRegistry.getIfExists(this.props.options.view.id);
     if (v && v.id === MapCenterID.Fit) {
       const [, view] = this.initMapView(this.props.options.view);
-      this.map!.setView(view as View);
+      this.map!.setView(view!);
     }
   }
 
@@ -184,8 +184,7 @@ export class GeomapPanel extends Component<Props, State> {
     }
 
     if (!div) {
-      // eslint-disable-next-line
-      this.map = undefined as unknown as OpenLayersMap;
+      this.map = undefined;
       return;
     }
     const { options } = this.props;
@@ -206,7 +205,7 @@ export class GeomapPanel extends Component<Props, State> {
         layers.push(await initLayer(this, map, lyr, false));
       }
     } catch (ex) {
-      console.error('error loading layers', ex); // eslint-disable-line no-console
+      console.error('error loading layers', ex);
     }
 
     for (const lyr of layers) {
