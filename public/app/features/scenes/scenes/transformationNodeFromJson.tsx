@@ -1,8 +1,8 @@
 import { sceneFromJSON } from '../core/serialization';
 
 const model = {
-  key: '8cb33252-e13a-4d6b-9426-cc3dd039e164',
-  title: 'Transformation node test (from JSON)',
+  key: '8260a9bb-1990-40c1-9217-8d2b68d88bee',
+  title: 'Transformation node test',
   data: 'TODO: serialize Scene data?',
   inputs: [
     {
@@ -10,7 +10,7 @@ const model = {
         from: 'now-6h',
         to: 'now',
       },
-      key: 'de67bcd1-c62e-48ff-9e9a-20f1ad3fdae3',
+      key: 'a633f512-8b5c-4fee-ac0f-23296fadbd5f',
       inputParams: {},
       type: 'SceneTimeRange',
     },
@@ -25,10 +25,10 @@ const model = {
           scenarioId: 'random_walk',
         },
       ],
-      key: '651e7ad3-5c14-4d88-88ad-f5764061bb6e',
+      key: 'd36a8080-0ffb-4b68-8cc8-53eff4dc75ec',
       inputParams: {
         timeRange: {
-          $ref: 'de67bcd1-c62e-48ff-9e9a-20f1ad3fdae3',
+          $ref: 'a633f512-8b5c-4fee-ac0f-23296fadbd5f',
         },
       },
       type: 'SceneDataProviderNode',
@@ -42,10 +42,10 @@ const model = {
           },
         },
       ],
-      key: 'd07c0418-e622-49a0-a685-2d0c0cbf3939',
+      key: 'a5d87ae5-197c-4868-8a41-f1d460182e2b',
       inputParams: {
         data: {
-          $ref: 'cbd6da86-79e5-4543-b23c-e7808c0fb1da',
+          $ref: '5034821a-4fb0-4e43-86d3-3def301077f9',
         },
       },
       type: 'SceneDataTransformationNode',
@@ -59,10 +59,10 @@ const model = {
           },
         },
       ],
-      key: 'cbd6da86-79e5-4543-b23c-e7808c0fb1da',
+      key: '5034821a-4fb0-4e43-86d3-3def301077f9',
       inputParams: {
         data: {
-          $ref: '651e7ad3-5c14-4d88-88ad-f5764061bb6e',
+          $ref: 'd36a8080-0ffb-4b68-8cc8-53eff4dc75ec',
         },
       },
       type: 'SceneDataTransformationNode',
@@ -84,10 +84,10 @@ const model = {
           },
         },
       ],
-      key: '4fdb9db5-6a4b-4b17-88bc-887f5a304949',
+      key: '31a643bb-c67c-4d63-8fde-19bf4eb84115',
       inputParams: {
         data: {
-          $ref: 'cbd6da86-79e5-4543-b23c-e7808c0fb1da',
+          $ref: '5034821a-4fb0-4e43-86d3-3def301077f9',
         },
       },
       type: 'SceneDataTransformationNode',
@@ -97,57 +97,48 @@ const model = {
     root: [
       {
         direction: 'column',
-        key: '7f1b38b5-2cd0-43ca-ba6d-fbed0cd7a416',
-        inputParams: {},
-        type: 'SceneFlexLayout',
         children: [
           {
             direction: 'column',
-            key: 'a2291f32-5537-4181-b040-43b1385bf22d',
-            inputParams: {},
-            type: 'SceneFlexLayout',
             children: [
               {
                 size: {
                   ySizing: 'content',
                 },
-                key: '25300a62-243c-4a81-9dde-9e226c8d2334',
-                inputParams: {},
-                type: 'SceneFlexChild',
                 children: [
                   {
                     orientation: 'horizontal',
-                    key: '7dd2fd45-4fec-4e25-a23f-feaea1c27830',
+                    key: '81f96d5d-a501-48f2-b170-cdc2f34ab87d',
                     inputParams: {},
                     type: 'SceneToolbar',
                     children: [
                       {
-                        $ref: 'de67bcd1-c62e-48ff-9e9a-20f1ad3fdae3',
+                        inputParams: {
+                          timeRange: {
+                            $ref: 'a633f512-8b5c-4fee-ac0f-23296fadbd5f',
+                          },
+                        },
+                        key: '58be7e63-6d48-4918-a6ec-c351dd4fcabe',
+                        type: 'SceneTimePicker',
                       },
                     ],
                   },
                 ],
-              },
-              {
-                key: '64616e28-5310-40ee-a2cd-ff5eda7af9f6',
+                key: '525918eb-0873-4981-9d12-c207972e3d29',
                 inputParams: {},
                 type: 'SceneFlexChild',
+              },
+              {
                 children: [
                   {
                     direction: 'row',
-                    key: 'c12d4ed2-5db4-4d33-a86f-c5add03de5ff',
-                    inputParams: {},
-                    type: 'SceneFlexLayout',
                     children: [
                       {
-                        key: '28fd4b97-9505-4595-ae88-643f4d6d0197',
-                        inputParams: {},
-                        type: 'SceneFlexChild',
                         children: [
                           {
                             inputParams: {
                               data: {
-                                $ref: '651e7ad3-5c14-4d88-88ad-f5764061bb6e',
+                                $ref: 'd36a8080-0ffb-4b68-8cc8-53eff4dc75ec',
                               },
                             },
                             pluginId: 'timeseries',
@@ -157,125 +148,140 @@ const model = {
                                 displayMode: 'hidden',
                               },
                             },
-                            key: 'b367ea97-f29f-48b9-be17-157a9f80b2df',
+                            key: 'bf6e25f7-da0c-4da6-9d14-532fdb088821',
                             type: 'VizPanel',
                           },
                         ],
-                      },
-                      {
-                        key: '73f404c6-49d6-4feb-a48b-fbd7d5fb76e8',
+                        key: 'bc68a3e0-4dae-4626-aab0-9462f6e9eca6',
                         inputParams: {},
                         type: 'SceneFlexChild',
+                      },
+                      {
                         children: [
                           {
                             inputParams: {
                               data: {
-                                $ref: 'd07c0418-e622-49a0-a685-2d0c0cbf3939',
+                                $ref: 'a5d87ae5-197c-4868-8a41-f1d460182e2b',
                               },
                             },
                             pluginId: 'stat',
                             title: 'Limit + reduce',
-                            key: '12b1ae5b-e629-4754-88c8-89115de90c41',
+                            key: 'b223758a-6a0c-43e4-a29d-c40bfce4277c',
                             type: 'VizPanel',
                           },
                         ],
-                      },
-                      {
-                        key: 'e95c5675-8b0e-4bbc-8d6c-a2897e3ab6fc',
+                        key: '8c8db9f5-40b0-4b24-802e-642dd05ab757',
                         inputParams: {},
                         type: 'SceneFlexChild',
+                      },
+                      {
                         children: [
                           {
                             inputParams: {
                               data: {
-                                $ref: '4fdb9db5-6a4b-4b17-88bc-887f5a304949',
+                                $ref: '31a643bb-c67c-4d63-8fde-19bf4eb84115',
                               },
                             },
                             pluginId: 'table',
                             title: 'Reduce + organize',
-                            key: '25710d0e-5cb3-4f67-9982-f659d6678437',
+                            key: 'e2928ed4-892a-4139-9668-f98b68e87816',
                             type: 'VizPanel',
                           },
                         ],
+                        key: '6432acc4-a3a8-4789-a65d-0f5e36c1a678',
+                        inputParams: {},
+                        type: 'SceneFlexChild',
                       },
                     ],
+                    key: '1c060815-6aa7-4713-9856-4f53140d45c7',
+                    inputParams: {},
+                    type: 'SceneFlexLayout',
                   },
                 ],
+                key: 'f0e40d13-7d67-4e0d-8dac-0d02966466c9',
+                inputParams: {},
+                type: 'SceneFlexChild',
               },
               {
-                $ref: 'bcdc7867-7ba3-47ae-afdc-b3bb90ff37e1',
+                $ref: '8f379d1e-c4e3-4c04-9906-672cdae7b49a',
                 type: 'NestedScene',
               },
             ],
+            key: '56bfc1aa-53b6-498b-b7f6-97408f062ffa',
+            inputParams: {},
+            type: 'SceneFlexLayout',
           },
         ],
+        key: 'bcf7e548-59b4-4db6-a08a-dfdff126d270',
+        inputParams: {},
+        type: 'SceneFlexLayout',
       },
     ],
-    'bcdc7867-7ba3-47ae-afdc-b3bb90ff37e1': {
-      key: 'bcdc7867-7ba3-47ae-afdc-b3bb90ff37e1',
+    '8f379d1e-c4e3-4c04-9906-672cdae7b49a': {
+      key: '8f379d1e-c4e3-4c04-9906-672cdae7b49a',
       title: 'Nested transformation',
       data: 'TODO: serialize Scene data?',
       inputs: [
         {
-          $ref: '4fdb9db5-6a4b-4b17-88bc-887f5a304949',
+          $ref: '31a643bb-c67c-4d63-8fde-19bf4eb84115',
         },
         {
-          $ref: 'cbd6da86-79e5-4543-b23c-e7808c0fb1da',
+          $ref: '5034821a-4fb0-4e43-86d3-3def301077f9',
         },
         {
-          $ref: '651e7ad3-5c14-4d88-88ad-f5764061bb6e',
+          $ref: 'd36a8080-0ffb-4b68-8cc8-53eff4dc75ec',
         },
         {
-          $ref: 'de67bcd1-c62e-48ff-9e9a-20f1ad3fdae3',
+          $ref: 'a633f512-8b5c-4fee-ac0f-23296fadbd5f',
         },
       ],
       layout: {
         root: [
           {
             direction: 'row',
-            key: '50855d58-a50b-489e-88c6-69b13e82bcc5',
-            inputParams: {},
-            type: 'SceneFlexLayout',
             children: [
               {
-                key: '6ab68215-88e4-43e5-be3a-193911a0383b',
-                inputParams: {},
-                type: 'SceneFlexChild',
                 children: [
                   {
                     inputParams: {
                       data: {
-                        $ref: '4fdb9db5-6a4b-4b17-88bc-887f5a304949',
+                        $ref: '31a643bb-c67c-4d63-8fde-19bf4eb84115',
                       },
                     },
                     pluginId: 'table',
                     title: 'Chained transformers: reduce + organize',
                     options: {},
-                    key: '3cba0583-de78-4686-81c1-3ed45794240f',
+                    key: 'dc5b64dd-5b21-4203-8dba-005f76320782',
                     type: 'VizPanel',
                   },
                 ],
-              },
-              {
-                key: 'c103747e-5156-433d-aa38-efb4bbbd521e',
+                key: '490843fa-960c-4231-8891-fcf6abe91349',
                 inputParams: {},
                 type: 'SceneFlexChild',
+              },
+              {
                 children: [
                   {
                     inputParams: {
                       data: {
-                        $ref: '651e7ad3-5c14-4d88-88ad-f5764061bb6e',
+                        $ref: 'd36a8080-0ffb-4b68-8cc8-53eff4dc75ec',
                       },
                     },
                     pluginId: 'table',
                     title: 'Raw data',
                     options: {},
-                    key: 'a4eba661-d2fe-4f50-8761-71e0dbe15857',
+                    key: '8a5bf59c-891e-4f27-8898-32762b13caab',
                     type: 'VizPanel',
                   },
                 ],
+                key: '50e85a73-efcb-4838-b701-cef9cf8b137c',
+                inputParams: {},
+                type: 'SceneFlexChild',
               },
             ],
+            key: '46193663-5df6-4f68-affe-38356ddc98bb',
+            inputParams: {},
+            type: 'SceneFlexLayout',
           },
         ],
       },

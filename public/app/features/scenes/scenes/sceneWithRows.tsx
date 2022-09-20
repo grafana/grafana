@@ -3,6 +3,7 @@ import { getDefaultTimeRange } from '@grafana/data';
 import { NestedScene } from '../components/NestedScene';
 import { Scene } from '../components/Scene';
 import { SceneFlexChild, SceneFlexLayout } from '../components/SceneFlexLayout';
+import { SceneTimePicker } from '../components/SceneTimePicker';
 import { SceneToolbar } from '../components/SceneToolbar';
 import { VizPanel } from '../components/VizPanel';
 import { SceneDataProviderNode } from '../core/SceneDataProviderNode';
@@ -41,7 +42,7 @@ export function getScene(): Scene {
         children: [
           new SceneToolbar({
             orientation: 'horizontal',
-            children: [timeRange],
+            children: [new SceneTimePicker({ inputParams: { timeRange } })],
           }),
           new NestedScene({
             title: 'Overview',

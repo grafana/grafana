@@ -4,6 +4,7 @@ import { getDefaultTimeRange } from '@grafana/data';
 
 import { Scene } from '../components/Scene';
 import { SceneFlexChild, SceneFlexLayout } from '../components/SceneFlexLayout';
+import { SceneTimePicker } from '../components/SceneTimePicker';
 import { SceneTimeShiftNode } from '../components/SceneTimeShiftNode';
 import { SceneToolbar } from '../components/SceneToolbar';
 import { VizPanel } from '../components/VizPanel';
@@ -75,7 +76,11 @@ export function getScene(): Scene {
             children: [
               new SceneToolbar({
                 orientation: 'horizontal',
-                children: [timeRangeNode1, timeShiftNode, timeShiftNode1],
+                children: [
+                  new SceneTimePicker({ inputParams: { timeRange: timeRangeNode1 } }),
+                  timeShiftNode,
+                  timeShiftNode1,
+                ],
               }),
             ],
           }),

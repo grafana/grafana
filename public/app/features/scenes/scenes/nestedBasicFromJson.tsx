@@ -1,25 +1,20 @@
 import { sceneFromJSON } from '../core/serialization';
 
 const model = {
-  key: '58ffac0b-62bf-4673-9409-eeeac921a19b',
-  title: 'Nested Scene demo (from JSON)',
+  key: 'a8c16fc2-ea51-47e7-92e2-9d3b689e4637',
+  title: 'Nested Scene demo (isolated)',
   data: 'TODO: serialize Scene data?',
   inputs: [
     {
-      key: '94d745c9-7c8e-4234-bd98-e620ee643a61',
-      inputParams: {},
-      type: 'SceneTimeRange',
       range: {
         from: 'now-6h',
         to: 'now',
       },
+      key: '575ffdce-ed26-41cb-b7a3-972f8dbf7a09',
+      inputParams: {},
+      type: 'SceneTimeRange',
     },
     {
-      key: 'a3ebb3ff-dce8-40bd-8ef3-066fdbdeb7fa',
-      inputParams: {
-        timeRange: { $ref: '94d745c9-7c8e-4234-bd98-e620ee643a61' },
-      },
-      type: 'SceneDataProviderNode',
       queries: [
         {
           refId: 'A',
@@ -30,69 +25,54 @@ const model = {
           scenarioId: 'random_walk_table',
         },
       ],
+      key: '04430c0e-7782-47e9-9104-7509503a8f69',
+      inputParams: {
+        timeRange: {
+          $ref: '575ffdce-ed26-41cb-b7a3-972f8dbf7a09',
+        },
+      },
+      type: 'SceneDataProviderNode',
     },
   ],
   layout: {
     root: [
       {
         direction: 'column',
-        key: '8d42de22-be9a-417e-b42c-634959ab7af4',
-        type: 'SceneFlexLayout',
         children: [
           {
-            $ref: 'b30b9a3e-7112-4279-be52-00a913d161a0',
+            $ref: '7001d323-577d-4d0d-b019-cd9e526e0df4',
             type: 'NestedScene',
           },
         ],
+        key: 'dfa617e1-c733-4830-847b-38020401b992',
+        inputParams: {},
+        type: 'SceneFlexLayout',
       },
     ],
-    'b30b9a3e-7112-4279-be52-00a913d161a0': {
-      key: 'b30b9a3e-7112-4279-be52-00a913d161a0',
+    '7001d323-577d-4d0d-b019-cd9e526e0df4': {
+      key: '7001d323-577d-4d0d-b019-cd9e526e0df4',
       title: 'Inner scene',
       data: 'TODO: serialize Scene data?',
       inputs: [
         {
-          key: 'a3ebb3ff-dce8-40bd-8ef3-066fdbdeb7fa',
-          inputParams: {
-            timeRange: { $ref: '94d745c9-7c8e-4234-bd98-e620ee643a61' },
-          },
-          type: 'SceneDataProviderNode',
-          queries: [
-            {
-              refId: 'A',
-              datasource: {
-                uid: 'gdev-testdata',
-                type: 'testdata',
-              },
-              scenarioId: 'random_walk_table',
-            },
-          ],
+          $ref: '04430c0e-7782-47e9-9104-7509503a8f69',
         },
         {
-          key: '94d745c9-7c8e-4234-bd98-e620ee643a61',
-          inputParams: {},
-          type: 'SceneTimeRange',
-          range: {
-            from: 'now-6h',
-            to: 'now',
-          },
+          $ref: '575ffdce-ed26-41cb-b7a3-972f8dbf7a09',
         },
       ],
       layout: {
         root: [
           {
             direction: 'row',
-            key: 'b19e3502-3d3d-421d-9659-d32a05598630',
-            type: 'SceneFlexLayout',
             children: [
               {
-                key: '45772c3d-57b8-4bbc-b233-7338c720652a',
-                direction: 'row',
-                type: 'SceneFlexChild',
                 children: [
                   {
                     inputParams: {
-                      data: { $ref: 'a3ebb3ff-dce8-40bd-8ef3-066fdbdeb7fa' },
+                      data: {
+                        $ref: '04430c0e-7782-47e9-9104-7509503a8f69',
+                      },
                     },
                     key: '3',
                     pluginId: 'timeseries',
@@ -100,15 +80,17 @@ const model = {
                     type: 'VizPanel',
                   },
                 ],
+                key: '0915a0d5-59fd-478a-aeae-5afe62c2c5ef',
+                inputParams: {},
+                type: 'SceneFlexChild',
               },
               {
-                key: '1d29a557-8ae9-4891-844d-602d4dccf39f',
-                direction: 'row',
-                type: 'SceneFlexChild',
                 children: [
                   {
                     inputParams: {
-                      data: { $ref: 'a3ebb3ff-dce8-40bd-8ef3-066fdbdeb7fa' },
+                      data: {
+                        $ref: '04430c0e-7782-47e9-9104-7509503a8f69',
+                      },
                     },
                     key: '3',
                     pluginId: 'timeseries',
@@ -116,14 +98,26 @@ const model = {
                     type: 'VizPanel',
                   },
                 ],
+                key: '93c01afb-606f-4d20-8fbf-d78bb6a271b8',
+                inputParams: {},
+                type: 'SceneFlexChild',
               },
             ],
+            key: '4f0e1ef6-8d87-4dfb-8369-4dbbacf24731',
+            inputParams: {},
+            type: 'SceneFlexLayout',
           },
         ],
       },
       actions: [
         {
-          $ref: '94d745c9-7c8e-4234-bd98-e620ee643a61',
+          inputParams: {
+            timeRange: {
+              $ref: '575ffdce-ed26-41cb-b7a3-972f8dbf7a09',
+            },
+          },
+          key: '18234f80-3881-4908-bd44-9faa3fc83a6c',
+          type: 'SceneTimePicker',
         },
       ],
       isCollapsed: false,

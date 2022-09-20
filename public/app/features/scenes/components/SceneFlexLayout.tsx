@@ -60,11 +60,6 @@ interface SceneFlexLayoutState extends SceneLayoutState {
 
 export class SceneFlexChild extends SceneObjectBase<SceneFlexLayoutState> {
   static Component = FlexLayoutChildComponent;
-
-  toJSON() {
-    const { children, $editor, $variables, ...rest } = this.state;
-    return rest;
-  }
 }
 
 export class SceneFlexLayout extends SceneObjectBase<SceneFlexLayoutState> {
@@ -75,11 +70,6 @@ export class SceneFlexLayout extends SceneObjectBase<SceneFlexLayoutState> {
     this.setState({
       direction: this.state.direction === 'row' ? 'column' : 'row',
     });
-  }
-
-  toJSON() {
-    const { children, $editor, $variables, ...rest } = this.state;
-    return rest;
   }
 }
 

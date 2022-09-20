@@ -1,7 +1,7 @@
 import { sceneFromJSON } from '../core/serialization';
 
 const model = {
-  key: '6a68f718-f012-46cc-876d-d9f3544922ed',
+  key: '7502c2fd-f87c-44de-841b-0978e950a950',
   title: 'Scene with rows',
   data: 'TODO: serialize Scene data?',
   inputs: [
@@ -10,7 +10,7 @@ const model = {
         from: 'now-6h',
         to: 'now',
       },
-      key: '6ec67245-1073-4829-8a4f-7469d136ad0f',
+      key: 'ef8e3a1d-3bf3-4c28-87ac-2b40606eecba',
       inputParams: {},
       type: 'SceneTimeRange',
     },
@@ -25,10 +25,10 @@ const model = {
           scenarioId: 'random_walk',
         },
       ],
-      key: 'a49c7573-340e-4e80-9c32-5183c51e44eb',
+      key: '6bc160ab-1ed6-4b2b-a9c8-ca85ee0160c9',
       inputParams: {
         timeRange: {
-          $ref: '6ec67245-1073-4829-8a4f-7469d136ad0f',
+          $ref: 'ef8e3a1d-3bf3-4c28-87ac-2b40606eecba',
         },
       },
       type: 'SceneDataProviderNode',
@@ -44,10 +44,10 @@ const model = {
           scenarioId: 'random_walk_table',
         },
       ],
-      key: '787de44e-e266-4140-b935-663b3c6a449b',
+      key: '98b37db8-8639-4aab-ad56-4f6c8e922bbe',
       inputParams: {
         timeRange: {
-          $ref: '6ec67245-1073-4829-8a4f-7469d136ad0f',
+          $ref: 'ef8e3a1d-3bf3-4c28-87ac-2b40606eecba',
         },
       },
       type: 'SceneDataProviderNode',
@@ -57,91 +57,95 @@ const model = {
     root: [
       {
         direction: 'column',
-        key: '20865515-b2e9-4c31-ac2f-31f38a1e112f',
-        inputParams: {},
-        type: 'SceneFlexLayout',
         children: [
           {
             orientation: 'horizontal',
-            key: '73c00ec8-7dcd-4c6e-871b-4ce91d9193c0',
+            key: '42cd6dc8-e81c-42df-a951-ec7bdcb38916',
             inputParams: {},
             type: 'SceneToolbar',
             children: [
               {
-                $ref: '6ec67245-1073-4829-8a4f-7469d136ad0f',
+                inputParams: {
+                  timeRange: {
+                    $ref: 'ef8e3a1d-3bf3-4c28-87ac-2b40606eecba',
+                  },
+                },
+                key: 'cb65ab1b-e555-4403-b3a3-c564ed33ef5e',
+                type: 'SceneTimePicker',
               },
             ],
           },
           {
-            $ref: '350fbf49-5657-4c6e-adc7-f7a7af55b903',
+            $ref: 'ca59aa4e-1bc0-44d0-b195-5acfa88d778f',
             type: 'NestedScene',
           },
           {
-            $ref: 'e665bfdd-8057-4d4b-b719-c487b117ab5b',
+            $ref: '795d9620-b227-4070-88f5-3696f2db5abe',
             type: 'NestedScene',
           },
         ],
+        key: '1507c95d-5cdd-42b5-a16e-902bcd6c4ada',
+        inputParams: {},
+        type: 'SceneFlexLayout',
       },
     ],
-    '350fbf49-5657-4c6e-adc7-f7a7af55b903': {
-      key: '350fbf49-5657-4c6e-adc7-f7a7af55b903',
+    'ca59aa4e-1bc0-44d0-b195-5acfa88d778f': {
+      key: 'ca59aa4e-1bc0-44d0-b195-5acfa88d778f',
       title: 'Overview',
       data: 'TODO: serialize Scene data?',
       inputs: [
         {
-          $ref: 'a49c7573-340e-4e80-9c32-5183c51e44eb',
+          $ref: '6bc160ab-1ed6-4b2b-a9c8-ca85ee0160c9',
         },
         {
-          $ref: '6ec67245-1073-4829-8a4f-7469d136ad0f',
+          $ref: 'ef8e3a1d-3bf3-4c28-87ac-2b40606eecba',
         },
       ],
       layout: {
         root: [
           {
             direction: 'row',
-            key: '51186b1f-bc6f-4c73-985b-854a26705ff2',
-            inputParams: {},
-            type: 'SceneFlexLayout',
             children: [
               {
-                key: '2a51c377-bd0b-4360-8ca5-1d057b408056',
-                direction: 'row',
-                inputParams: {},
-                type: 'SceneFlexChild',
                 children: [
                   {
                     inputParams: {
                       data: {
-                        $ref: 'a49c7573-340e-4e80-9c32-5183c51e44eb',
+                        $ref: '6bc160ab-1ed6-4b2b-a9c8-ca85ee0160c9',
                       },
                     },
                     pluginId: 'timeseries',
                     title: 'Fill height',
-                    key: 'cdd8e8eb-b462-4de6-9b5d-bf622e655f4d',
+                    key: '4205abe7-e376-4d49-adb2-286f357c0cf3',
                     type: 'VizPanel',
                   },
                 ],
+                key: 'd6643d92-e069-4e26-af86-6d059ef33208',
+                inputParams: {},
+                type: 'SceneFlexChild',
               },
               {
-                key: 'a5f4eebb-f627-4410-928a-3ed9c12e809b',
-                direction: 'row',
-                inputParams: {},
-                type: 'SceneFlexChild',
                 children: [
                   {
                     inputParams: {
                       data: {
-                        $ref: 'a49c7573-340e-4e80-9c32-5183c51e44eb',
+                        $ref: '6bc160ab-1ed6-4b2b-a9c8-ca85ee0160c9',
                       },
                     },
                     pluginId: 'timeseries',
                     title: 'Fill height',
-                    key: '090865c8-e7b6-4802-9ceb-ae27d9b4eaa8',
+                    key: 'b917dccf-ad3e-449e-bf94-646f7d139bcc',
                     type: 'VizPanel',
                   },
                 ],
+                key: '236effb7-a356-40c8-a7ca-7d771287b040',
+                inputParams: {},
+                type: 'SceneFlexChild',
               },
             ],
+            key: '83e722ce-d51d-443b-a521-a323b044c995',
+            inputParams: {},
+            type: 'SceneFlexLayout',
           },
         ],
       },
@@ -150,68 +154,66 @@ const model = {
       canCollapse: true,
       canRemove: false,
     },
-    'e665bfdd-8057-4d4b-b719-c487b117ab5b': {
-      key: 'e665bfdd-8057-4d4b-b719-c487b117ab5b',
+    '795d9620-b227-4070-88f5-3696f2db5abe': {
+      key: '795d9620-b227-4070-88f5-3696f2db5abe',
       title: 'More server details',
       data: 'TODO: serialize Scene data?',
       inputs: [
         {
-          $ref: 'a49c7573-340e-4e80-9c32-5183c51e44eb',
+          $ref: '6bc160ab-1ed6-4b2b-a9c8-ca85ee0160c9',
         },
         {
-          $ref: '6ec67245-1073-4829-8a4f-7469d136ad0f',
+          $ref: 'ef8e3a1d-3bf3-4c28-87ac-2b40606eecba',
         },
         {
-          $ref: '787de44e-e266-4140-b935-663b3c6a449b',
+          $ref: '98b37db8-8639-4aab-ad56-4f6c8e922bbe',
         },
       ],
       layout: {
         root: [
           {
             direction: 'row',
-            key: 'a087cc08-cccc-4eed-b44f-8c2cc687a906',
-            inputParams: {},
-            type: 'SceneFlexLayout',
             children: [
               {
-                key: '3914268c-58c5-412d-bfe7-7f7647fe1ff3',
-                direction: 'row',
-                inputParams: {},
-                type: 'SceneFlexChild',
                 children: [
                   {
                     inputParams: {
                       data: {
-                        $ref: 'a49c7573-340e-4e80-9c32-5183c51e44eb',
+                        $ref: '6bc160ab-1ed6-4b2b-a9c8-ca85ee0160c9',
                       },
                     },
                     pluginId: 'timeseries',
                     title: 'Fill height',
-                    key: '64e059ab-a3da-4027-8315-53a99c250175',
+                    key: '0d286e1f-c364-4698-978e-d1adb455e4a3',
                     type: 'VizPanel',
                   },
                 ],
-              },
-              {
-                key: 'efb081d4-5ddb-42e9-9181-3ed6d2a2a394',
-                direction: 'row',
+                key: '5fa7132e-ccbb-4761-934e-34245c6f2267',
                 inputParams: {},
                 type: 'SceneFlexChild',
+              },
+              {
                 children: [
                   {
                     inputParams: {
                       data: {
-                        $ref: '787de44e-e266-4140-b935-663b3c6a449b',
+                        $ref: '98b37db8-8639-4aab-ad56-4f6c8e922bbe',
                       },
                     },
                     pluginId: 'table',
                     title: 'Fill height',
-                    key: '4043127c-33e8-42c0-9e68-1b6655ce33bc',
+                    key: '1fe19ec7-2a1f-41d6-ab9d-d12165482f6d',
                     type: 'VizPanel',
                   },
                 ],
+                key: 'b8f23779-e10e-4852-a409-4869db67daf9',
+                inputParams: {},
+                type: 'SceneFlexChild',
               },
             ],
+            key: 'dbec4636-ba0d-465d-b9fd-beed7992b4b9',
+            inputParams: {},
+            type: 'SceneFlexLayout',
           },
         ],
       },

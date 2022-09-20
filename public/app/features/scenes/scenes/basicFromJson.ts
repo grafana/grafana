@@ -1,7 +1,7 @@
 import { sceneFromJSON } from '../core/serialization';
 
 const model = {
-  key: 'cd6a15d7-b079-4e5c-a391-4962841d9b47',
+  key: '0db9f739-8097-48b6-ae4a-562c7745d0fb',
   title: 'Minimal example: Data + viz',
   data: 'TODO: serialize Scene data?',
   inputs: [
@@ -10,7 +10,7 @@ const model = {
         from: 'now-6h',
         to: 'now',
       },
-      key: '7dbf266f-c263-477b-bbcb-7dc16d07744a',
+      key: '4e1dcb80-0355-4408-87b2-209da20e74c8',
       inputParams: {},
       type: 'SceneTimeRange',
     },
@@ -25,9 +25,11 @@ const model = {
           scenarioId: 'random_walk',
         },
       ],
-      key: 'fda86f55-d29f-432f-891d-ff7fd9d0df72',
+      key: '7e35fb68-5d6f-4be7-a3f3-5ff0ad363b45',
       inputParams: {
-        timeRange: { $ref: '7dbf266f-c263-477b-bbcb-7dc16d07744a' },
+        timeRange: {
+          $ref: '4e1dcb80-0355-4408-87b2-209da20e74c8',
+        },
       },
       type: 'SceneDataProviderNode',
     },
@@ -35,11 +37,19 @@ const model = {
   layout: {
     root: [
       {
-        $ref: '7dbf266f-c263-477b-bbcb-7dc16d07744a',
+        inputParams: {
+          timeRange: {
+            $ref: '4e1dcb80-0355-4408-87b2-209da20e74c8',
+          },
+        },
+        key: 'd666b805-88d5-42c7-b913-e4db734352b0',
+        type: 'SceneTimePicker',
       },
       {
         inputParams: {
-          data: { $ref: 'fda86f55-d29f-432f-891d-ff7fd9d0df72' },
+          data: {
+            $ref: '7e35fb68-5d6f-4be7-a3f3-5ff0ad363b45',
+          },
         },
         pluginId: 'timeseries',
         title: 'Title',
@@ -48,7 +58,7 @@ const model = {
             displayMode: 'hidden',
           },
         },
-        key: '7d1e42e0-832e-41b3-963d-2e03d5713327',
+        key: '050de300-e16b-4b53-8c16-a7ad38bdef7d',
         type: 'VizPanel',
       },
     ],

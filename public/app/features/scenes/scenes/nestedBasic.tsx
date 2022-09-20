@@ -3,6 +3,7 @@ import { getDefaultTimeRange } from '@grafana/data';
 import { NestedScene } from '../components/NestedScene';
 import { Scene } from '../components/Scene';
 import { SceneFlexChild, SceneFlexLayout } from '../components/SceneFlexLayout';
+import { SceneTimePicker } from '../components/SceneTimePicker';
 import { VizPanel } from '../components/VizPanel';
 import { SceneDataProviderNode } from '../core/SceneDataProviderNode';
 import { SceneTimeRange } from '../core/SceneTimeRange';
@@ -49,7 +50,7 @@ export function getInnerScene(title: string) {
     canCollapse: true,
     canRemove: true,
     isCollapsed: false,
-    actions: [timeRangeNode],
+    actions: [new SceneTimePicker({ inputParams: { timeRange: timeRangeNode } })],
     children: [
       new SceneFlexLayout({
         direction: 'row',

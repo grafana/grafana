@@ -63,12 +63,6 @@ export class SceneTimeShiftNode extends SceneTimeRangeObject<SceneTimeShiftNodeS
 
     return next;
   }
-
-  toJSON() {
-    return {
-      timeShift: this.state.timeShift,
-    };
-  }
 }
 
 interface SceneTimeShiftNodeRendererProps extends SceneComponentProps<SceneTimeShiftNode> {}

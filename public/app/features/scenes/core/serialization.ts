@@ -3,6 +3,7 @@ import { NestedScene } from '../components/NestedScene';
 import { Scene } from '../components/Scene';
 import { SceneFlexChild, SceneFlexLayout } from '../components/SceneFlexLayout';
 import { flattenSceneNodes } from '../components/SceneInspectGraph';
+import { SceneTimePicker } from '../components/SceneTimePicker';
 import { SceneToolbar } from '../components/SceneToolbar';
 import { VizPanel } from '../components/VizPanel';
 import { SceneEditManager } from '../editor/SceneEditManager';
@@ -39,15 +40,12 @@ export function serializeInputParams(inputs: Record<string, SceneObject>) {
 }
 
 export function serializeLayout(node: SceneObject, isNested = false) {
+  debugger;
   if (node instanceof Scene || isNested) {
     return {
       layout: (node as SceneObject<SceneLayoutState>).state.children.map((child) => serializeLayout(child)),
     };
   }
-
-  // const serializedInputParams = isParametrizedState(node.state)
-  //   ? serializeInputParams(node.state.inputParams)
-  //   : undefined;
 
   if (node instanceof NestedScene) {
     return {
@@ -62,7 +60,7 @@ export function serializeLayout(node: SceneObject, isNested = false) {
     };
   }
 
-  if (isLayoutNode(node) && node.toJSON) {
+  if (isLayoutNode(node)) {
     if (node.state.children) {
       return {
         ...serializeNode(node),
@@ -71,12 +69,6 @@ export function serializeLayout(node: SceneObject, isNested = false) {
     }
 
     return serializeNode(node);
-    // {
-    //   ...node.toJSON(),
-    //   key: node.state.key,
-    //   type: node.constructor.name,
-    //   inputParams: serializedInputParams,
-    // };
   }
 }
 
@@ -85,11 +77,16 @@ export function serializeNode(node: SceneObject) {
     ? serializeInputParams(node.state.inputParams)
     : undefined;
 
-  const json = node.toJSON ? node.toJSON() : {};
+  const { $editor, $variables, key, ...nodeState } = node.state;
+
+  if (node.constructor.name === 'SceneFlexLayout') {
+    debugger;
+  }
+  const json = node.toJSON ? node.toJSON() : nodeState;
 
   return {
     ...json,
-    key: node.state.key,
+    key,
     inputParams: { ...serializedInputParams },
     type: node.constructor.name,
   };
@@ -120,9 +117,7 @@ export function serializeScene(scene: Scene | NestedScene, isNested = false, hoi
 
   dataNodesIdxs.forEach((idx) => {
     const child = children[idx];
-    if (child.toJSON) {
-      dataNodesMap.set(child.state.key!, serializeNode(child));
-    }
+    dataNodesMap.set(child.state.key!, serializeNode(child));
   });
 
   // To avoid data nodes duplication the nested scene inputs can be hoisted to the top level
@@ -273,9 +268,9 @@ function buildSceneChildren(
         case 'VizPanel':
           ctor = VizPanel;
           break;
-        case 'SceneTimeRange':
+        case 'SceneTimePicker':
           debugger;
-          ctor = SceneTimeRange;
+          ctor = SceneTimePicker;
           break;
         case 'SceneToolbar':
           ctor = SceneToolbar;
