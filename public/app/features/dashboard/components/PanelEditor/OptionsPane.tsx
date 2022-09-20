@@ -1,11 +1,10 @@
 import { css } from '@emotion/css';
 import React from 'react';
-import { useSelector } from 'react-redux';
 
 import { GrafanaTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { useStyles } from '@grafana/ui';
-import { StoreState } from 'app/types';
+import { useSelector } from 'app/types';
 
 import { OptionsPaneOptions } from './OptionsPaneOptions';
 import { VisualizationButton } from './VisualizationButton';
@@ -23,7 +22,7 @@ export const OptionsPane: React.FC<OptionPaneRenderProps> = ({
   instanceState,
 }) => {
   const styles = useStyles(getStyles);
-  const isVizPickerOpen = useSelector((state: StoreState) => state.panelEditor.isVizPickerOpen);
+  const isVizPickerOpen = useSelector((state) => state.panelEditor.isVizPickerOpen);
   const { data } = usePanelLatestData(panel, { withTransforms: true, withFieldConfig: false }, true);
 
   return (

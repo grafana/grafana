@@ -143,3 +143,22 @@ func (srv ConfigSrv) externalAlertmanagers(ctx context.Context, orgID int64) ([]
 	}
 	return alertmanagers, nil
 }
+
+func (srv ConfigSrv) RouteGetAlertingStatus(c *models.ReqContext) response.Response {
+	sendsAlertsTo := ngmodels.InternalAlertmanager
+
+	cfg, err := srv.store.GetAdminConfiguration(c.OrgID)
+	if err != nil && !errors.Is(err, store.ErrNoAdminConfiguration) {
+		msg := "failed to fetch configuration from the database"
+		srv.log.Error(msg, "err", err)
+		return ErrResp(http.StatusInternalServerError, err, msg)
+	}
+	if cfg != nil {
+		sendsAlertsTo = cfg.SendAlertsTo
+	}
+
+	resp := apimodels.AlertingStatus{
+		AlertmanagersChoice: apimodels.AlertmanagersChoice(sendsAlertsTo.String()),
+	}
+	return response.JSON(http.StatusOK, resp)
+}

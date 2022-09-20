@@ -1,9 +1,9 @@
 import React, { FC, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
 import { Redirect, Route, RouteChildrenProps, Switch, useLocation, useParams } from 'react-router-dom';
 
 import { NavModelItem } from '@grafana/data';
 import { Alert, LoadingPlaceholder, withErrorBoundary } from '@grafana/ui';
+import { useDispatch } from 'app/types';
 
 import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
