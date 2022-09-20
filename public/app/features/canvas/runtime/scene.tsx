@@ -362,7 +362,13 @@ export class Scene {
       className: this.styles.selected,
     })
       .on('click', (event) => {
-        if (event.isDouble && allowChanges && !this.editModeEnabled.getValue()) {
+        const targetedElement = this.findElementByTarget(event.target);
+        let elementSupportsEditing = false;
+        if (targetedElement) {
+          elementSupportsEditing = targetedElement.item.hasEditMode ?? false;
+        }
+
+        if (event.isDouble && allowChanges && !this.editModeEnabled.getValue() && elementSupportsEditing) {
           this.editModeEnabled.next(true);
         }
       })
