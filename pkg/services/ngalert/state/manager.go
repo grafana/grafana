@@ -45,11 +45,12 @@ type Manager struct {
 	instanceStore    store.InstanceStore
 	dashboardService dashboards.DashboardService
 	imageService     image.ImageService
+	AnnotationsRepo  annotations.Repository
 }
 
 func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL,
 	ruleStore store.RuleStore, instanceStore store.InstanceStore,
-	dashboardService dashboards.DashboardService, imageService image.ImageService, clock clock.Clock) *Manager {
+	dashboardService dashboards.DashboardService, imageService image.ImageService, clock clock.Clock, annotationsRepo annotations.Repository) *Manager {
 	manager := &Manager{
 		cache:            newCache(logger, metrics, externalURL),
 		quit:             make(chan struct{}),
@@ -61,6 +62,7 @@ func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL,
 		dashboardService: dashboardService,
 		imageService:     imageService,
 		clock:            clock,
+		AnnotationsRepo:  annotationsRepo,
 	}
 	go manager.recordMetrics()
 	return manager
@@ -419,8 +421,7 @@ func (st *Manager) annotateState(ctx context.Context, alertRule *ngModels.AlertR
 		item.DashboardId = query.Result.Id
 	}
 
-	annotationRepo := annotations.GetRepository()
-	if err := annotationRepo.Save(item); err != nil {
+	if err := st.AnnotationsRepo.Save(ctx, item); err != nil {
 		st.log.Error("error saving alert annotation", "alertRuleUID", alertRule.UID, "err", err.Error())
 		return
 	}

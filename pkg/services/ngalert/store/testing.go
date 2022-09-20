@@ -7,7 +7,6 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 
@@ -480,48 +479,4 @@ func (f *FakeAdminConfigStore) UpdateAdminConfiguration(cmd UpdateAdminConfigura
 	f.Configs[cmd.AdminConfiguration.OrgID] = cmd.AdminConfiguration
 
 	return nil
-}
-
-type FakeAnnotationsRepo struct {
-	mtx   sync.Mutex
-	Items []*annotations.Item
-}
-
-func NewFakeAnnotationsRepo() *FakeAnnotationsRepo {
-	return &FakeAnnotationsRepo{
-		Items: make([]*annotations.Item, 0),
-	}
-}
-
-func (repo *FakeAnnotationsRepo) Len() int {
-	repo.mtx.Lock()
-	defer repo.mtx.Unlock()
-	return len(repo.Items)
-}
-
-func (repo *FakeAnnotationsRepo) Delete(_ context.Context, params *annotations.DeleteParams) error {
-	return nil
-}
-
-func (repo *FakeAnnotationsRepo) Save(item *annotations.Item) error {
-	repo.mtx.Lock()
-	defer repo.mtx.Unlock()
-	repo.Items = append(repo.Items, item)
-
-	return nil
-}
-func (repo *FakeAnnotationsRepo) Update(_ context.Context, item *annotations.Item) error {
-	return nil
-}
-
-func (repo *FakeAnnotationsRepo) Find(_ context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
-	annotations := []*annotations.ItemDTO{{Id: 1}}
-	return annotations, nil
-}
-
-func (repo *FakeAnnotationsRepo) FindTags(_ context.Context, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
-	result := annotations.FindTagsResult{
-		Tags: []*annotations.TagsDTO{},
-	}
-	return result, nil
 }

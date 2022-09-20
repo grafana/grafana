@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { useDispatch } from 'react-redux';
+
+import { useDispatch } from 'app/types';
 
 import { cleanUpAction, CleanUpAction } from '../actions/cleanUp';
 

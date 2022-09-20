@@ -82,7 +82,7 @@ var (
 )
 
 func service(t *testing.T) *StandardSearchService {
-	service, ok := ProvideService(nil, nil, nil, accesscontrolmock.New(), tracing.InitializeTracerForTest(), featuremgmt.WithFeatures()).(*StandardSearchService)
+	service, ok := ProvideService(nil, nil, nil, accesscontrolmock.New(), tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(), nil).(*StandardSearchService)
 	require.True(t, ok)
 	return service
 }

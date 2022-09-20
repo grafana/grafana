@@ -12,8 +12,7 @@ import { IconButton } from '../IconButton/IconButton';
 import { LogLabelStats } from './LogLabelStats';
 import { getLogRowStyles } from './getLogRowStyles';
 
-//Components
-
+/** @deprecated will be removed in the next major version */
 export interface Props extends Themeable2 {
   parsedValue: string;
   parsedKey: string;
@@ -220,5 +219,6 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   }
 }
 
+/** @deprecated will be removed in the next major version */
 export const LogDetailsRow = withTheme2(UnThemedLogDetailsRow);
 LogDetailsRow.displayName = 'LogDetailsRow';
