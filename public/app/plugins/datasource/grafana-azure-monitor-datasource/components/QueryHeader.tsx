@@ -15,6 +15,7 @@ export const QueryHeader: React.FC<QueryTypeFieldProps> = ({ query, onQueryChang
     { value: AzureQueryType.AzureMonitor, label: 'Metrics' },
     { value: AzureQueryType.LogAnalytics, label: 'Logs' },
     { value: AzureQueryType.AzureResourceGraph, label: 'Azure Resource Graph' },
+    { value: AzureQueryType.Trace, label: 'Trace' },
   ];
 
   const handleChange = useCallback(
