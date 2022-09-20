@@ -22,10 +22,14 @@ func TestScreenshotImageService(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	screenshots := screenshot.NewMockScreenshotService(ctrl)
-	uploads := imguploader.NewMockImageUploader(ctrl)
-	images := store.NewFakeImageStore(t)
-	s := NewScreenshotImageService(log.NewNopLogger(), screenshots, images,
+	var (
+		images      = store.NewFakeImageStore(t)
+		limiter     = screenshot.NoOpRateLimiter{}
+		screenshots = screenshot.NewMockScreenshotService(ctrl)
+		uploads     = imguploader.NewMockImageUploader(ctrl)
+	)
+
+	s := NewScreenshotImageService(&limiter, log.NewNopLogger(), screenshots, images,
 		NewUploadingService(uploads, prometheus.NewRegistry()))
 
 	ctx := context.Background()

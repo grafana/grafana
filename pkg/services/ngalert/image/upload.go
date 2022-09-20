@@ -12,20 +12,20 @@ import (
 )
 
 type UploadingService struct {
-	uploader        imguploader.ImageUploader
-	uploadFailures  prometheus.Counter
-	uploadSuccesses prometheus.Counter
+	uploader  imguploader.ImageUploader
+	failures  prometheus.Counter
+	successes prometheus.Counter
 }
 
 func NewUploadingService(uploader imguploader.ImageUploader, r prometheus.Registerer) *UploadingService {
 	return &UploadingService{
 		uploader: uploader,
-		uploadFailures: promauto.With(r).NewCounter(prometheus.CounterOpts{
+		failures: promauto.With(r).NewCounter(prometheus.CounterOpts{
 			Name:      "image_upload_failures_total",
 			Namespace: "grafana",
 			Subsystem: "alerting",
 		}),
-		uploadSuccesses: promauto.With(r).NewCounter(prometheus.CounterOpts{
+		successes: promauto.With(r).NewCounter(prometheus.CounterOpts{
 			Name:      "image_upload_successes_total",
 			Namespace: "grafana",
 			Subsystem: "alerting",
@@ -38,10 +38,10 @@ func NewUploadingService(uploader imguploader.ImageUploader, r prometheus.Regist
 func (s *UploadingService) Upload(ctx context.Context, image ngmodels.Image) (ngmodels.Image, error) {
 	url, err := s.uploader.Upload(ctx, image.Path)
 	if err != nil {
-		defer s.uploadFailures.Inc()
+		defer s.failures.Inc()
 		return image, fmt.Errorf("failed to upload screenshot: %w", err)
 	}
 	image.URL = url
-	defer s.uploadSuccesses.Inc()
+	defer s.successes.Inc()
 	return image, nil
 }

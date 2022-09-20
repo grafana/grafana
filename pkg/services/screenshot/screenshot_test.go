@@ -2,55 +2,78 @@ package screenshot
 
 import (
 	"context"
-	"sync/atomic"
+	"fmt"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
-type mockSingleFlighter struct {
-	i    uint64
-	impl SingleFlight
-}
+func TestHeadlessScreenshotService(t *testing.T) {
+	c := gomock.NewController(t)
+	defer c.Finish()
 
-func (s *mockSingleFlighter) Do(ctx context.Context, opts ScreenshotOptions, fn captureFunc) (*Screenshot, error) {
-	atomic.AddUint64(&s.i, 1)
-	return s.impl.Do(ctx, opts, fn)
-}
+	d := dashboards.FakeDashboardService{}
+	r := rendering.NewMockService(c)
+	s := NewHeadlessScreenshotService(&d, r, prometheus.NewRegistry())
 
-func TestManagedScreenshotService(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
+	// a non-existent dashboard should return error
+	d.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Return(dashboards.ErrDashboardNotFound).Once()
 	ctx := context.Background()
-	opts := ScreenshotOptions{DashboardUID: "test", PanelID: 1}
-	screenshot := Screenshot{Path: "test.png"}
+	opts := ScreenshotOptions{}
+	screenshot, err := s.Take(ctx, opts)
+	assert.EqualError(t, err, "Dashboard not found")
+	assert.Nil(t, screenshot)
 
-	// set up mock expectations
-	cs := NewMockCaptureService(ctrl)
-	cs.EXPECT().Screenshot(ctx, opts).Return(&screenshot, nil)
-	// Can't use NewMockSingleFlight because captureFunc is not comparable
-	sf := mockSingleFlighter{impl: NewSingleFlight()}
-	tb := NewMockTokenBucket(ctrl)
-	// expect a token to be acquired and then returned
-	tb.EXPECT().Get(ctx).Return(true, nil)
-	tb.EXPECT().Done()
-	ch := NewMockCacheService(ctrl)
-	// expect a cache miss
-	ch.EXPECT().Get(ctx, opts).Return(nil, false)
-	// and then write back to the cache
-	ch.EXPECT().Set(ctx, opts, &screenshot).Return(nil)
+	d.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
+		q := args.Get(1).(*models.GetDashboardQuery)
+		q.Result = &models.Dashboard{Id: 1, Uid: "foo", Slug: "bar", OrgId: 2}
+	}).Return(nil)
 
-	s := NewManagedScreenshotService(cs, &sf, tb, ch, prometheus.DefaultRegisterer)
-	result, err := s.Take(ctx, opts)
+	renderOpts := rendering.Opts{
+		AuthOpts: rendering.AuthOpts{
+			OrgID:   2,
+			OrgRole: org.RoleAdmin,
+		},
+		ErrorOpts: rendering.ErrorOpts{
+			ErrorConcurrentLimitReached: true,
+			ErrorRenderUnavailable:      true,
+		},
+		TimeoutOpts: rendering.TimeoutOpts{
+			Timeout: DefaultTimeout,
+		},
+		Width:           DefaultWidth,
+		Height:          DefaultHeight,
+		Theme:           DefaultTheme,
+		Path:            "d-solo/foo/bar?orgId=2&panelId=4",
+		ConcurrentLimit: setting.AlertingRenderLimit,
+	}
+
+	opts.DashboardUID = "foo"
+	opts.PanelID = 4
+	r.EXPECT().
+		Render(ctx, renderOpts, nil).
+		Return(&rendering.RenderResult{FilePath: "panel.png"}, nil)
+	screenshot, err = s.Take(ctx, opts)
 	require.NoError(t, err)
-	assert.NotNil(t, result)
+	assert.Equal(t, Screenshot{Path: "panel.png"}, *screenshot)
 
-	// assert that SingleFlight was called
-	assert.Equal(t, uint64(1), atomic.LoadUint64(&sf.i))
+	// a timeout should return error
+	r.EXPECT().
+		Render(ctx, renderOpts, nil).
+		Return(nil, rendering.ErrTimeout)
+	screenshot, err = s.Take(ctx, opts)
+	assert.EqualError(t, err, fmt.Sprintf("failed to take screenshot: %s", rendering.ErrTimeout))
+	assert.Nil(t, screenshot)
 }
 
 func TestNoOpScreenshotService(t *testing.T) {

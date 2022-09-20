@@ -61,12 +61,12 @@ func (s *InmemCacheService) Set(_ context.Context, opts ScreenshotOptions, scree
 	return nil
 }
 
-type NoCacheService struct{}
+type NoOpCacheService struct{}
 
-func (s *NoCacheService) Get(_ context.Context, _ ScreenshotOptions) (*Screenshot, bool) {
+func (s *NoOpCacheService) Get(_ context.Context, _ ScreenshotOptions) (*Screenshot, bool) {
 	return nil, false
 }
 
-func (s *NoCacheService) Set(_ context.Context, _ ScreenshotOptions, _ *Screenshot) error {
+func (s *NoOpCacheService) Set(_ context.Context, _ ScreenshotOptions, _ *Screenshot) error {
 	return nil
 }
