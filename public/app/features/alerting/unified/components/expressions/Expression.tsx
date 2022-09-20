@@ -13,9 +13,10 @@ import { ExpressionQuery, ExpressionQueryType, gelTypes } from 'app/features/exp
 import { AlertQuery, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { HoverCard } from '../HoverCard';
+import { Spacer } from '../Spacer';
 import { AlertStateTag } from '../rules/AlertStateTag';
 
-import { AlertCondition } from './AlertCondition';
+import { AlertConditionIndicator } from './AlertConditionIndicator';
 import { formatLabels, getSeriesName, getSeriesValue } from './util';
 
 interface ExpressionProps {
@@ -61,7 +62,7 @@ export const Expression: FC<ExpressionProps> = ({
   const renderExpressionType = useCallback(
     (query: ExpressionQuery) => {
       // these are the refs we can choose from that don't include the current one
-      const availableRefIds = queries!
+      const availableRefIds = queries
         .filter((q) => query.refId !== q.refId)
         .map((q) => ({ value: q.refId, label: q.refId }));
 
@@ -125,7 +126,7 @@ export const Expression: FC<ExpressionProps> = ({
         )}
         <div className={styles.footer}>
           <Stack direction="row" alignItems="center">
-            <AlertCondition onSetCondition={() => onSetCondition(query.refId)} enabled={alertCondition} />
+            <AlertConditionIndicator onSetCondition={() => onSetCondition(query.refId)} enabled={alertCondition} />
             <Spacer />
             {showSummary && (
               <PreviewSummary
@@ -163,6 +164,13 @@ const Header: FC<HeaderProps> = ({
   onRemoveExpression,
 }) => {
   const styles = useStyles2(getStyles);
+  /**
+   * There are 3 edit modes:
+   *
+   * 1. "refId": Editing the refId (ie. A -> B)
+   * 2. "epressionType": Editing the type of the expression (ie. Reduce -> Math)
+   * 3. "false": This means we're not editing either of those
+   */
   const [editMode, setEditMode] = useState<'refId' | 'expressionType' | false>(false);
 
   const editing = editMode !== false;
@@ -301,9 +309,6 @@ const TimeseriesRow: FC<FrameProps & { index: number }> = ({ frame, index }) => 
     </div>
   );
 };
-
-// TODO: move this to design system or util file?
-const Spacer = () => <span style={{ flex: 1 }}></span>;
 
 const getStyles = (theme: GrafanaTheme2) => ({
   expression: {

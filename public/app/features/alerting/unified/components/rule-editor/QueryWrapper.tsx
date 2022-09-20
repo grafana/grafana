@@ -20,7 +20,7 @@ import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { TABLE, TIMESERIES } from '../../utils/constants';
 import { SupportedPanelPlugins } from '../PanelPluginsButtonGroup';
-import { AlertCondition } from '../expressions/AlertCondition';
+import { AlertConditionIndicator } from '../expressions/AlertConditionIndicator';
 
 import { VizWrapper } from './VizWrapper';
 
@@ -103,7 +103,10 @@ export const QueryWrapper: FC<Props> = ({
               onChange={(range) => onChangeTimeRange(range, index)}
             />
           )}
-          <AlertCondition onSetCondition={() => onSetCondition(query.refId)} enabled={condition === query.refId} />
+          <AlertConditionIndicator
+            onSetCondition={() => onSetCondition(query.refId)}
+            enabled={condition === query.refId}
+          />
         </Stack>
       );
     }

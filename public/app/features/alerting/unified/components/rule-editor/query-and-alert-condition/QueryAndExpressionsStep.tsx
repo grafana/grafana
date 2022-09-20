@@ -52,9 +52,7 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
   };
   const [{ queries }, dispatch] = useReducer(queriesAndExpressionsReducer, initialState);
 
-  const type = watch('type');
-  const condition = watch('condition');
-  const dataSourceName = watch('dataSourceName');
+  const [type, condition, dataSourceName] = watch(['type', 'condition', 'dataSourceName']);
 
   const isGrafanaManagedType = type === RuleFormType.grafana;
   const isCloudAlertRuleType = type === RuleFormType.cloudAlerting;

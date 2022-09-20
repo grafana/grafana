@@ -9,7 +9,7 @@ interface AlertConditionProps {
   onSetCondition: () => void;
 }
 
-export const AlertCondition: FC<AlertConditionProps> = ({ enabled = false, onSetCondition }) => {
+export const AlertConditionIndicator: FC<AlertConditionProps> = ({ enabled = false, onSetCondition }) => {
   const styles = useStyles2(getStyles);
 
   return enabled ? (
