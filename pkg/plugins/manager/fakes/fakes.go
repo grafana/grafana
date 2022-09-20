@@ -18,8 +18,6 @@ type FakePluginInstaller struct {
 	AddFunc func(ctx context.Context, pluginID, version string, opts plugins.CompatOpts) error
 	// Remove removes a plugin from the store.
 	RemoveFunc func(ctx context.Context, pluginID string) error
-	// AddFromSource adds a plugin to the store.
-	AddFromSourceFunc func(ctx context.Context, source plugins.PluginSource) error
 }
 
 func (i *FakePluginInstaller) Add(ctx context.Context, pluginID, version string, opts plugins.CompatOpts) error {
@@ -32,13 +30,6 @@ func (i *FakePluginInstaller) Add(ctx context.Context, pluginID, version string,
 func (i *FakePluginInstaller) Remove(ctx context.Context, pluginID string) error {
 	if i.RemoveFunc != nil {
 		return i.RemoveFunc(ctx, pluginID)
-	}
-	return nil
-}
-
-func (i *FakePluginInstaller) AddFromSource(ctx context.Context, source plugins.PluginSource) error {
-	if i.AddFromSourceFunc != nil {
-		return i.AddFromSourceFunc(ctx, source)
 	}
 	return nil
 }

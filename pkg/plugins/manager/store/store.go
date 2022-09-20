@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -18,9 +19,9 @@ type Service struct {
 }
 
 func ProvideService(gCfg *setting.Cfg, cfg *config.Cfg, pluginRegistry registry.Service,
-	pluginInstaller plugins.Installer) (*Service, error) {
+	pluginLoader loader.Service) (*Service, error) {
 	for _, ps := range pluginSources(gCfg, cfg) {
-		if err := pluginInstaller.AddFromSource(context.Background(), ps); err != nil {
+		if _, err := pluginLoader.Load(context.Background(), ps.Class, ps.Paths); err != nil {
 			return nil, err
 		}
 	}

@@ -121,21 +121,12 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 		pathsToScan = append(pathsToScan, depArchive.Path)
 	}
 
-	err = m.AddFromSource(ctx, plugins.PluginSource{Class: plugins.External, Paths: pathsToScan})
+	_, err = m.pluginLoader.Load(ctx, plugins.External, pathsToScan)
 	if err != nil {
 		m.log.Error("Could not load plugins", "paths", pathsToScan, "err", err)
 		return err
 	}
 
-	return nil
-}
-
-func (m *PluginInstaller) AddFromSource(ctx context.Context, source plugins.PluginSource) error {
-	_, err := m.pluginLoader.Load(ctx, source.Class, source.Paths)
-	if err != nil {
-		m.log.Error("Could not load plugins", "path", source.Paths, "err", err)
-		return err
-	}
 	return nil
 }
 

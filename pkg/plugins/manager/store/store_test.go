@@ -16,10 +16,10 @@ import (
 func TestStore_ProvideService(t *testing.T) {
 	t.Run("Plugin sources are added in order", func(t *testing.T) {
 		var addedPaths []string
-		inst := &fakes.FakePluginInstaller{
-			AddFromSourceFunc: func(ctx context.Context, source plugins.PluginSource) error {
-				addedPaths = append(addedPaths, source.Paths...)
-				return nil
+		l := &fakes.FakeLoader{
+			LoadFunc: func(ctx context.Context, class plugins.Class, paths []string) ([]*plugins.Plugin, error) {
+				addedPaths = append(addedPaths, paths...)
+				return nil, nil
 			},
 		}
 		cfg := &setting.Cfg{
@@ -34,7 +34,7 @@ func TestStore_ProvideService(t *testing.T) {
 			},
 		}
 
-		_, err := ProvideService(cfg, pCfg, fakes.NewFakePluginRegistry(), inst)
+		_, err := ProvideService(cfg, pCfg, fakes.NewFakePluginRegistry(), l)
 		require.NoError(t, err)
 		require.Equal(t, []string{"app/plugins/datasource", "app/plugins/panel", "path1", "path2", "path3"}, addedPaths)
 	})
