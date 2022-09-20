@@ -79,7 +79,7 @@ export class Scene {
 
     // TODO: Unsubscribe from this (cleanup?)
     this.editModeEnabled.subscribe((open) => {
-      if (!this.moveable) {
+      if (!this.moveable || !this.isEditingEnabled) {
         return;
       }
       this.moveable.draggable = !open;

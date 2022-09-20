@@ -21,7 +21,7 @@ const dummyFieldSettings: StandardEditorsRegistryItem<string, FieldNamePickerCon
 } as any;
 
 const MetricValueDisplay = (props: CanvasElementProps<TextBoxConfig, TextBoxData>) => {
-  const { data } = props;
+  const { data, isSelected } = props;
   const styles = useStyles2(getStyles(data));
 
   const context = usePanelContext();
@@ -29,18 +29,18 @@ const MetricValueDisplay = (props: CanvasElementProps<TextBoxConfig, TextBoxData
 
   const isEditMode = useObservable<boolean>(scene?.editModeEnabled ?? of(false));
 
-  if (isEditMode && props.isSelected) {
-    return <MetricValueInlineEdit {...props} />;
+  if (isEditMode && isSelected) {
+    return <MetricValueEdit {...props} />;
   }
   return (
     <div className={styles.container}>
-      <span className={styles.span}>{data?.text}</span>
+      <span className={styles.span}>{data?.text ? data.text : 'Double click to set field'}</span>
     </div>
   );
 };
 
-const MetricValueInlineEdit = (props: CanvasElementProps<TextBoxConfig, TextBoxData>) => {
-  let { data } = props;
+const MetricValueEdit = (props: CanvasElementProps<TextBoxConfig, TextBoxData>) => {
+  let { data, config } = props;
   const context = usePanelContext();
   const panelData = context.instanceState?.scene?.data.series as DataFrame[];
 
@@ -77,7 +77,7 @@ const MetricValueInlineEdit = (props: CanvasElementProps<TextBoxConfig, TextBoxD
       {panelData && (
         <FieldNamePicker
           context={{ data: panelData }}
-          value={props.config.text?.field ?? ''}
+          value={config.text?.field ?? ''}
           onChange={onFieldChange}
           item={dummyFieldSettings}
         />
@@ -138,6 +138,10 @@ export const metricValueItem: CanvasElementItem<TextBoxConfig, TextBoxData> = {
       color: {
         fixed: defaultBgColor,
       },
+    },
+    placement: {
+      top: 100,
+      left: 100,
     },
   }),
 

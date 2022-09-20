@@ -112,7 +112,7 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
     const newElementOptions = newItem.getNewOptions() as CanvasElementOptions;
     newElementOptions.type = newItem.id;
     if (newItem.defaultSize) {
-      newElementOptions.placement = { ...newItem.defaultSize };
+      newElementOptions.placement = { ...newElementOptions.placement, ...newItem.defaultSize };
     }
     const newElement = new ElementState(newItem, newElementOptions, layer);
     newElement.updateData(layer.scene.context);
@@ -120,7 +120,6 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
     layer.scene.save();
 
     layer.reinitializeMoveable();
-    // TODO: Possibly init as edit mode here? (if item has inline edit functionality)
   };
 
   const onClearSelection = () => {
