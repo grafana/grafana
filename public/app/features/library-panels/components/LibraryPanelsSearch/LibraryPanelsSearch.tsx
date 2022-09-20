@@ -172,7 +172,7 @@ const SearchControls = React.memo(
     );
   }
 );
-SearchControls.displayName = 'SearchRow';
+SearchControls.displayName = 'SearchControls';
 
 function getRowStyles(theme: GrafanaTheme2, variant = LibraryPanelsSearchVariant.Spacious) {
   const searchRowContainer = css`
