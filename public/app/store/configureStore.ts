@@ -33,6 +33,9 @@ export function configureStore(initialState?: Partial<StoreState>) {
   return store;
 }
 
+export type RootState = ReturnType<ReturnType<typeof configureStore>['getState']>;
+export type AppDispatch = ReturnType<typeof configureStore>['dispatch'];
+
 /*
 function getActionsToIgnoreSerializableCheckOn() {
   return [

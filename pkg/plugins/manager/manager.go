@@ -242,6 +242,12 @@ func (m *PluginManager) registerAndStart(ctx context.Context, p *plugins.Plugin)
 		m.log.Info("Plugin registered", "pluginID", p.ID)
 	}
 
+	if p.IsExternalPlugin() {
+		if err := m.pluginStorage.Register(ctx, p.ID, p.PluginDir); err != nil {
+			return err
+		}
+	}
+
 	return m.processManager.Start(ctx, p.ID)
 }
 

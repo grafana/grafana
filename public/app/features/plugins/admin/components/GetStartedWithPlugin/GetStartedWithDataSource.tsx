@@ -1,9 +1,9 @@
 import React, { useCallback } from 'react';
-import { useDispatch } from 'react-redux';
 
 import { DataSourcePluginMeta } from '@grafana/data';
 import { Button } from '@grafana/ui';
 import { addDataSource } from 'app/features/datasources/state/actions';
+import { useDispatch } from 'app/types';
 
 import { isDataSourceEditor } from '../../permissions';
 import { CatalogPlugin } from '../../types';

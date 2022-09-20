@@ -19,6 +19,18 @@
         "alphabetize": { "order": "asc" }
       }
     ],
+    "no-restricted-imports": [
+      "warn",
+      {
+        "paths": [
+          {
+            "name": "react-redux",
+            "importNames": ["useDispatch", "useSelector"],
+            "message": "Please import from app/types instead."
+          }
+        ]
+      }
+    ],
 
     // Use typescript's no-redeclare for compatibility with overrides
     "no-redeclare": "off",
