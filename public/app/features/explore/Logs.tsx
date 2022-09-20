@@ -211,7 +211,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
     this.props.onSetLogsVolumeEnabled(isOpen);
     reportInteraction('grafana_explore_logs_histogram_toggle_clicked', {
       datasourceType: this.props.datasourceType,
-      histogramType: this.props.logsVolumeData !== undefined ? 'fullRange' : 'logLinesBased',
       type: isOpen ? 'open' : 'close',
     });
   };
