@@ -884,6 +884,9 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 		dashboardQuerySpan.End()
 
 		_, readDashboardSpan := l.tracer.Start(ctx, "sqlDashboardLoader readDashboard")
+		readDashboardSpan.SetAttributes("orgID", orgID, attribute.Key("orgID").Int64(orgID))
+		readDashboardSpan.SetAttributes("dashboardCount", len(rows), attribute.Key("dashboardCount").Int(len(rows)))
+
 		for _, row := range rows {
 			info, err := extract.ReadDashboard(bytes.NewReader(row.Data), lookup)
 			if err != nil {
