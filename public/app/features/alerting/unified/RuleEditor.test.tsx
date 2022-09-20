@@ -409,11 +409,14 @@ describe('RuleEditor', () => {
       canSave: true,
     });
     const dataSources = {
-      default: mockDataSource({
-        type: 'prometheus',
-        name: 'Prom',
-        isDefault: true,
-      }),
+      default: mockDataSource(
+        {
+          type: 'prometheus',
+          name: 'Prom',
+          isDefault: true,
+        },
+        { alerting: true }
+      ),
     };
 
     const backendSrv = {
