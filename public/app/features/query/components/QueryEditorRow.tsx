@@ -57,7 +57,9 @@ interface Props<TQuery extends DataQuery> {
   history?: Array<HistoryItem<TQuery>>;
   eventBus?: EventBusExtended;
   alerting?: boolean;
-  onTriggerTracking?: (action: string, queryStatus?: boolean | undefined) => void;
+  onQueryCopied?: () => void;
+  onQueryRemoved?: () => void;
+  onQueryToggled?: (queryStatus?: boolean | undefined) => void;
 }
 
 interface State<TQuery extends DataQuery> {
@@ -275,31 +277,31 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   onRemoveQuery = () => {
-    const { onRemoveQuery, query, onTriggerTracking } = this.props;
+    const { onRemoveQuery, query, onQueryRemoved } = this.props;
     onRemoveQuery(query);
 
-    if (onTriggerTracking) {
-      onTriggerTracking('remove');
+    if (onQueryRemoved) {
+      onQueryRemoved();
     }
   };
 
   onCopyQuery = () => {
-    const { query, onAddQuery, onTriggerTracking } = this.props;
+    const { query, onAddQuery, onQueryCopied } = this.props;
     const copy = cloneDeep(query);
     onAddQuery(copy);
 
-    if (onTriggerTracking) {
-      onTriggerTracking('copy');
+    if (onQueryCopied) {
+      onQueryCopied();
     }
   };
 
   onDisableQuery = () => {
-    const { query, onChange, onRunQuery, onTriggerTracking } = this.props;
+    const { query, onChange, onRunQuery, onQueryToggled } = this.props;
     onChange({ ...query, hide: !query.hide });
     onRunQuery();
 
-    if (onTriggerTracking) {
-      onTriggerTracking('enableDisable', query.hide);
+    if (onQueryToggled) {
+      onQueryToggled(query.hide);
     }
   };
 

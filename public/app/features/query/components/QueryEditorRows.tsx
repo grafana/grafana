@@ -31,7 +31,9 @@ interface Props {
   app?: CoreApp;
   history?: Array<HistoryItem<DataQuery>>;
   eventBus?: EventBusExtended;
-  onTriggerTracking?: (action: string, queryStatus?: boolean | undefined) => void;
+  onQueryCopied?: () => void;
+  onQueryRemoved?: () => void;
+  onQueryToggled?: (queryStatus?: boolean | undefined) => void;
   onDatasourceChange?: (dataSource: DataSourceInstanceSettings, query: DataQuery) => void;
 }
 
@@ -135,8 +137,19 @@ export class QueryEditorRows extends PureComponent<Props> {
   };
 
   render() {
-    const { dsSettings, data, queries, app, history, eventBus, onAddQuery, onRunQueries, onTriggerTracking } =
-      this.props;
+    const {
+      dsSettings,
+      data,
+      queries,
+      app,
+      history,
+      eventBus,
+      onAddQuery,
+      onRunQueries,
+      onQueryCopied,
+      onQueryRemoved,
+      onQueryToggled,
+    } = this.props;
 
     return (
       <DragDropContext onDragStart={this.onDragStart} onDragEnd={this.onDragEnd}>
@@ -163,7 +176,9 @@ export class QueryEditorRows extends PureComponent<Props> {
                       onRemoveQuery={this.onRemoveQuery}
                       onAddQuery={onAddQuery}
                       onRunQuery={onRunQueries}
-                      onTriggerTracking={onTriggerTracking}
+                      onQueryCopied={onQueryCopied}
+                      onQueryRemoved={onQueryRemoved}
+                      onQueryToggled={onQueryToggled}
                       queries={queries}
                       app={app}
                       history={history}

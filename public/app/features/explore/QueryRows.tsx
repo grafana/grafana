@@ -73,14 +73,16 @@ export const QueryRows = ({ exploreId }: Props) => {
     dispatch(importQueries(exploreId, queries, queryDatasource, targetDS, query.refId));
   };
 
-  const onTriggerTracking = (action: string, queryStatus?: boolean) => {
-    const trackingLabels: { [key: string]: string } = {
-      remove: 'grafana_explore_query_row_remove',
-      copy: 'grafana_explore_query_row_copy',
-      enableDisable: 'grafana_query-row_disable_enable',
-    };
+  const onQueryCopied = () => {
+    reportInteraction('grafana_explore_query_row_copy');
+  };
 
-    reportInteraction(trackingLabels[action], queryStatus === undefined ? {} : { queryEnabled: queryStatus });
+  const onQueryRemoved = () => {
+    reportInteraction('grafana_explore_query_row_remove');
+  };
+
+  const onQueryToggled = (queryStatus?: boolean) => {
+    reportInteraction('grafana_query_row_toggle', queryStatus === undefined ? {} : { queryEnabled: queryStatus });
   };
 
   return (
@@ -91,7 +93,9 @@ export const QueryRows = ({ exploreId }: Props) => {
       onQueriesChange={onChange}
       onAddQuery={onAddQuery}
       onRunQueries={onRunQueries}
-      onTriggerTracking={onTriggerTracking}
+      onQueryCopied={onQueryCopied}
+      onQueryRemoved={onQueryRemoved}
+      onQueryToggled={onQueryToggled}
       data={queryResponse}
       app={CoreApp.Explore}
       history={history}
