@@ -63,6 +63,7 @@ type Store interface {
 	Reset() error
 	Quote(value string) string
 	GetDBHealthQuery(ctx context.Context, query *models.GetDBHealthQuery) error
+	SearchOrgs(ctx context.Context, query *models.SearchOrgsQuery) error
 	IsAdminOfTeams(ctx context.Context, query *models.IsAdminOfTeamsQuery) error
 	GetSqlxSession() *session.SessionDB
 }
