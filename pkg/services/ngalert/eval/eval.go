@@ -176,16 +176,16 @@ func getExprRequest(ctx AlertExecCtx, data []models.AlertQuery, now time.Time, d
 	for _, q := range data {
 		model, err := q.GetModel()
 		if err != nil {
-			return nil, fmt.Errorf("failed to get query model from expression %s: %w", q.RefID, err)
+			return nil, fmt.Errorf("failed to get query model from '%s': %w", q.RefID, err)
 		}
 		interval, err := q.GetIntervalDuration()
 		if err != nil {
-			return nil, fmt.Errorf("failed to retrieve intervalMs from expression %s: %w", q.RefID, err)
+			return nil, fmt.Errorf("failed to retrieve intervalMs from '%s': %w", q.RefID, err)
 		}
 
 		maxDatapoints, err := q.GetMaxDatapoints()
 		if err != nil {
-			return nil, fmt.Errorf("failed to retrieve maxDatapoints from the expression %s: %w", q.RefID, err)
+			return nil, fmt.Errorf("failed to retrieve maxDatapoints from '%s': %w", q.RefID, err)
 		}
 
 		ds, ok := datasources[q.DatasourceUID]
@@ -195,7 +195,7 @@ func getExprRequest(ctx AlertExecCtx, data []models.AlertQuery, now time.Time, d
 			} else {
 				ds, err = dsCacheService.GetDatasourceByUID(ctx.Ctx, q.DatasourceUID, ctx.User, true)
 				if err != nil {
-					return nil, fmt.Errorf("failed to build expression %s: %w", q.RefID, err)
+					return nil, fmt.Errorf("failed to build query '%s': %w", q.RefID, err)
 				}
 			}
 			datasources[q.DatasourceUID] = ds
