@@ -13,6 +13,7 @@ import { useSelector } from 'app/types';
 import { enrichConfigItems, enrichWithInteractionTracking } from '../NavBar/utils';
 import { OrgSwitcher } from '../OrgSwitcher';
 
+import { News } from './News';
 import { TopNavBarMenu } from './TopBar/TopNavBarMenu';
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
 
@@ -71,11 +72,11 @@ export function TopSearchBar() {
             </button>
           </Dropdown>
         )}
-        <Tooltip placement="bottom" content="Grafana news (todo)">
+        <News>
           <button className={styles.actionItem}>
             <Icon name="rss" size="lg" />
           </button>
-        </Tooltip>
+        </News>
         {signInNode && (
           <Tooltip placement="bottom" content="Sign in">
             <a className={styles.actionItem} href={signInNode.url} target={signInNode.target}>
