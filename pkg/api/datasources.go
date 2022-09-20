@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/adapters"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
+	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
@@ -687,11 +688,7 @@ func (hs *HTTPServer) convertModelToDtos(ctx context.Context, ds *datasources.Da
 
 	secrets, err := hs.DataSourcesService.DecryptedValues(ctx, ds)
 	if err == nil {
-		for k, v := range secrets {
-			if len(v) > 0 {
-				dto.SecureJsonFields[k] = true
-			}
-		}
+		dto.SecureJsonFields = pluginsettings.ToSecureJsonFields(secrets)
 	} else {
 		datasourcesLogger.Debug("Failed to retrieve datasource secrets to parse secure json fields", "error", err)
 	}

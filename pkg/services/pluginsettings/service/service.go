@@ -118,6 +118,10 @@ func (s *Service) DecryptedValues(ps *pluginsettings.DTO) map[string]string {
 	s.decryptionCache.Lock()
 	defer s.decryptionCache.Unlock()
 
+	if ps == nil {
+		return map[string]string{}
+	}
+
 	if item, present := s.decryptionCache.cache[ps.ID]; present && ps.Updated.Equal(item.updated) {
 		return item.json
 	}

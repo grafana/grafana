@@ -92,6 +92,15 @@ func TestService_DecryptedValuesCache(t *testing.T) {
 		require.Empty(t, password)
 		require.True(t, ok)
 	})
+
+	t.Run("When plugin settings is nil, empty values map should be returned", func(t *testing.T) {
+		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+		psService := ProvideService(nil, secretsService)
+
+		values := psService.DecryptedValues(nil)
+
+		require.Equal(t, 0, len(values))
+	})
 }
 
 func TestIntegrationPluginSettings(t *testing.T) {
