@@ -73,7 +73,7 @@ func (a *AccessControl) EvaluateUserPermissions(ctx context.Context, cmd accessc
 	}
 
 	// Only checking for an action
-	if cmd.Action != "" && (cmd.Resource == "" || cmd.Attribute == "") {
+	if cmd.Action != "" && (cmd.Resource == "" && cmd.Attribute == "") {
 		return map[string]accesscontrol.Metadata{"-": {cmd.Action: true}}, nil
 	}
 

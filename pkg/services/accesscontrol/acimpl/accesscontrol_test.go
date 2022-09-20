@@ -82,8 +82,8 @@ func TestAccessControl_Evaluate(t *testing.T) {
 }
 
 func TestAccessControl_EvaluateUserPermissions(t *testing.T) {
-	testUser := func() *user.SignedInUser {
-		return &user.SignedInUser{
+	testUser := func(opts ...func(*user.SignedInUser)) *user.SignedInUser {
+		user := &user.SignedInUser{
 			UserID:  1,
 			OrgID:   1,
 			OrgRole: "Viewer",
@@ -94,6 +94,10 @@ func TestAccessControl_EvaluateUserPermissions(t *testing.T) {
 				},
 			},
 		}
+		for _, fn := range opts {
+			fn(user)
+		}
+		return user
 	}
 	tests := []struct {
 		name    string
@@ -146,6 +150,34 @@ func TestAccessControl_EvaluateUserPermissions(t *testing.T) {
 				"1": {"teams:write": true},
 			},
 			wantErr: false,
+		},
+		{
+			name: "no permissions",
+			cmd: accesscontrol.EvaluateUserPermissionCommand{
+				SignedInUser: testUser(func(siu *user.SignedInUser) { siu.Permissions = nil }),
+			},
+			want:    map[string]accesscontrol.Metadata{},
+			wantErr: false,
+		},
+		{
+			name: "missing filtering field",
+			cmd: accesscontrol.EvaluateUserPermissionCommand{
+				SignedInUser: testUser(),
+				Action:       "teams:write",
+				Resource:     "teams",
+				UIDs:         []string{"1", "3"},
+			},
+			wantErr: true,
+		},
+		{
+			name: "missing filtering field",
+			cmd: accesscontrol.EvaluateUserPermissionCommand{
+				SignedInUser: testUser(),
+				Resource:     "teams",
+				Attribute:    "id",
+				UIDs:         []string{},
+			},
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
