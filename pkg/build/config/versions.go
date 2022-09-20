@@ -17,6 +17,9 @@ var Versions = VersionMap{
 			Architectures: []Architecture{
 				ArchAMD64,
 			},
+			Distribution: []Distribution{
+				Alpine,
+			},
 		},
 	},
 	MainMode: {
@@ -42,10 +45,17 @@ var Versions = VersionMap{
 				ArchARM64,
 				ArchARMv7, // GOARCH=ARM is used for both armv6 and armv7. They are differentiated by the GOARM variable.
 			},
+			Distribution: []Distribution{
+				Alpine,
+				Ubuntu,
+			},
 		},
-		PackagesBucket:            "grafana-downloads",
-		PackagesBucketEnterprise2: "grafana-downloads-enterprise2",
-		CDNAssetsBucket:           "grafana-static-assets",
+		Buckets: Buckets{
+			Artifacts:            "grafana-downloads",
+			ArtifactsEnterprise2: "grafana-downloads-enterprise2",
+			CDNAssets:            "grafana-static-assets",
+			Storybook:            "grafana-storybook",
+		},
 	},
 	CustomMode: {
 		Variants: []Variant{
@@ -70,10 +80,16 @@ var Versions = VersionMap{
 				ArchARM64,
 				ArchARMv7, // GOARCH=ARM is used for both armv6 and armv7. They are differentiated by the GOARM variable.
 			},
+			Distribution: []Distribution{
+				Alpine,
+				Ubuntu,
+			},
 		},
-		PackagesBucket:            "grafana-downloads",
-		PackagesBucketEnterprise2: "grafana-downloads-enterprise2",
-		CDNAssetsBucket:           "grafana-static-assets",
+		Buckets: Buckets{
+			Artifacts:            "grafana-downloads",
+			ArtifactsEnterprise2: "grafana-downloads-enterprise2",
+			CDNAssets:            "grafana-static-assets",
+		},
 	},
 	ReleaseBranchMode: {
 		Variants: []Variant{
@@ -98,10 +114,16 @@ var Versions = VersionMap{
 				ArchARM64,
 				ArchARMv7,
 			},
+			Distribution: []Distribution{
+				Alpine,
+				Ubuntu,
+			},
 		},
-		PackagesBucket:            "grafana-downloads",
-		PackagesBucketEnterprise2: "grafana-downloads-enterprise2",
-		CDNAssetsBucket:           "grafana-static-assets",
+		Buckets: Buckets{
+			Artifacts:            "grafana-downloads",
+			ArtifactsEnterprise2: "grafana-downloads-enterprise2",
+			CDNAssets:            "grafana-static-assets",
+		},
 	},
 	TagMode: {
 		Variants: []Variant{
@@ -126,11 +148,19 @@ var Versions = VersionMap{
 				ArchARM64,
 				ArchARMv7,
 			},
+			Distribution: []Distribution{
+				Alpine,
+				Ubuntu,
+			},
+			PrereleaseBucket: "grafana-prerelease/artifacts/docker",
 		},
-		PackagesBucket:  "grafana-prerelease/artifacts/downloads",
-		CDNAssetsBucket: "grafana-prerelease",
-		CDNAssetsDir:    "artifacts/static-assets",
-		StorybookBucket: "grafana-prerelease",
-		StorybookSrcDir: "artifacts/storybook",
+		Buckets: Buckets{
+			Artifacts:            "grafana-prerelease/artifacts/downloads",
+			ArtifactsEnterprise2: "grafana-prerelease/artifacts/downloads-enterprise2",
+			CDNAssets:            "grafana-prerelease",
+			CDNAssetsDir:         "artifacts/static-assets",
+			Storybook:            "grafana-prerelease",
+			StorybookSrcDir:      "artifacts/storybook",
+		},
 	},
 }

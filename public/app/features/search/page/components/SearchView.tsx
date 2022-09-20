@@ -164,8 +164,8 @@ export const SearchView = ({
   );
 
   const results = useAsync(() => {
-    // No need to query all dashboards if we are in folder view
-    if (layout === SearchLayout.Folders) {
+    // No need to query all dashboards if we are in search folder view
+    if (layout === SearchLayout.Folders && !folderDTO) {
       return Promise.resolve();
     }
 

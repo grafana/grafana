@@ -207,14 +207,22 @@ func (r *FakePluginRepo) GetPluginDownloadOptions(ctx context.Context, pluginID,
 }
 
 type FakePluginStorage struct {
-	AddFunc    func(_ context.Context, pluginID string, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error)
-	RemoveFunc func(_ context.Context, pluginID string) error
-	Added      map[string]string
-	Removed    map[string]int
+	AddFunc      func(_ context.Context, pluginID string, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error)
+	RegisterFunc func(_ context.Context, pluginID, pluginDir string) error
+	RemoveFunc   func(_ context.Context, pluginID string) error
+	Added        map[string]string
+	Removed      map[string]int
+}
+
+func (s *FakePluginStorage) Register(ctx context.Context, pluginID, pluginDir string) error {
+	s.Added[pluginID] = pluginDir
+	if s.RegisterFunc != nil {
+		return s.RegisterFunc(ctx, pluginID, pluginDir)
+	}
+	return nil
 }
 
 func (s *FakePluginStorage) Add(ctx context.Context, pluginID string, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
-	s.Added[pluginID] = z.File[0].Name
 	if s.AddFunc != nil {
 		return s.AddFunc(ctx, pluginID, z)
 	}

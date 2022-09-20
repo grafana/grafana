@@ -474,6 +474,10 @@ Set to false disables checking for new versions of installed plugins from https:
 If you want to track Grafana usage via Google analytics specify _your_ Universal
 Analytics ID here. By default this feature is disabled.
 
+### google_analytics_4_id
+
+If you want to track Grafana usage via Google Analytics 4 specify _your_ GA4 ID here. By default this feature is disabled.
+
 ### google_tag_manager_id
 
 Google Tag Manager ID, only enabled if you enter an ID here.
@@ -792,8 +796,13 @@ Administrators can increase this if they experience OAuth login state mismatch e
 ### oauth_skip_org_role_update_sync
 
 Skip forced assignment of OrgID `1` or `auto_assign_org_id` for external logins. Default is `false`.
-Use this setting to distribute users with external login to multiple organizations.
-Otherwise, the users' organization would get reset on every new login, for example, via AzureAD.
+Use this setting to allow users with external login to be manually assigned to multiple organizations.
+
+By default, the users' organization and role is reset on every new login.
+
+> **Warning**: Currently if no organization role mapping is found for a user, Grafana doesn't update the user's organization role.
+> With Grafana 10, if `oauth_skip_org_role_update_sync` option is set to `false`, users with no mapping will be
+> reset to the default organization role on every login. [See `auto_assign_org_role` option]({{< relref ".#auto_assign_org_role" >}}).
 
 ### api_key_max_seconds_to_live
 
@@ -1563,6 +1572,18 @@ Can be set with the environment variable and value `JAEGER_PROPAGATION=b3`.
 Default value is `false`.
 
 Setting this to `true` turns off shared RPC spans. Leaving this available is the most common setting when using Zipkin elsewhere in your infrastructure.
+
+<hr>
+
+## [tracing.opentelemetry]
+
+Configure general parameters shared between OpenTelemetry providers.
+
+### custom_attributes
+
+Comma-separated list of attributes to include in all new spans, such as `key1:value1,key2:value2`.
+
+Can be set with the environment variable `OTEL_RESOURCE_ATTRIBUTES` (use `=` instead of `:` with the environment variable).
 
 <hr>
 

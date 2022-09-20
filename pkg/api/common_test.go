@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
@@ -41,6 +42,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/preference/preftest"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -337,10 +339,11 @@ func setupSimpleHTTPServer(features *featuremgmt.FeatureManager) *HTTPServer {
 	cfg.IsFeatureToggleEnabled = features.IsEnabled
 
 	return &HTTPServer{
-		Cfg:           cfg,
-		Features:      features,
-		License:       &licensing.OSSLicensingService{},
-		AccessControl: accesscontrolmock.New().WithDisabled(),
+		Cfg:             cfg,
+		Features:        features,
+		License:         &licensing.OSSLicensingService{},
+		AccessControl:   accesscontrolmock.New().WithDisabled(),
+		annotationsRepo: annotationstest.NewFakeAnnotationsRepo(),
 	}
 }
 
@@ -408,6 +411,8 @@ func setupHTTPServerWithCfgDb(
 		),
 		preferenceService: preftest.NewPreferenceServiceFake(),
 		userService:       userMock,
+		orgService:        orgtest.NewOrgServiceFake(),
+		annotationsRepo:   annotationstest.NewFakeAnnotationsRepo(),
 	}
 
 	for _, o := range options {
