@@ -65,16 +65,15 @@ func (a *AccessControl) EvaluateUserPermissions(ctx context.Context, cmd accessc
 
 	// Limit permissions to the action of interest
 	if cmd.Action != "" {
-		cmd.SignedInUser.Permissions[cmd.SignedInUser.OrgID] = map[string][]string{
-			cmd.Action: cmd.SignedInUser.Permissions[cmd.SignedInUser.OrgID][cmd.Action]}
+		scopes, ok := cmd.SignedInUser.Permissions[cmd.SignedInUser.OrgID][cmd.Action]
+		if !ok {
+			return map[string]accesscontrol.Metadata{}, nil
+		}
+		cmd.SignedInUser.Permissions[cmd.SignedInUser.OrgID] = map[string][]string{cmd.Action: scopes}
 	}
 
 	// Only checking for an action
 	if cmd.Action != "" && (cmd.Resource == "" || cmd.Attribute == "") {
-		_, ok := cmd.SignedInUser.Permissions[cmd.SignedInUser.OrgID][cmd.Action]
-		if !ok {
-			return map[string]accesscontrol.Metadata{}, nil
-		}
 		return map[string]accesscontrol.Metadata{"-": {cmd.Action: true}}, nil
 	}
 
