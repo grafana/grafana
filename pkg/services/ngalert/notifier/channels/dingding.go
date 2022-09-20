@@ -20,12 +20,16 @@ const defaultDingdingMsgType = "link"
 // DingDingNotifier is responsible for sending alert notifications to ding ding.
 type DingDingNotifier struct {
 	*Base
-	MsgType string
-	URL     string
-	Message string
-	tmpl    *template.Template
-	ns      notifications.WebhookSender
-	log     log.Logger
+	settings dingDingSettings
+	tmpl     *template.Template
+	ns       notifications.WebhookSender
+	log      log.Logger
+}
+
+type dingDingSettings struct {
+	URL     string `json:"url,omitempty" yaml:"url,omitempty"`
+	MsgType string `json:"msgType,omitempty" yaml:"msgType,omitempty"`
+	Message string `json:"message,omitempty" yaml:"message,omitempty"`
 }
 
 func DingDingFactory(fc FactoryConfig) (NotificationChannel, error) {
@@ -40,9 +44,20 @@ func DingDingFactory(fc FactoryConfig) (NotificationChannel, error) {
 }
 
 func buildDingDingNotifier(fc FactoryConfig) (*DingDingNotifier, error) {
-	url := fc.Config.Settings.Get("url").MustString()
-	if url == "" {
+	var settings dingDingSettings
+	err := fc.Config.unmarshalSettings(&settings)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal settings: %w", err)
+	}
+
+	if settings.URL == "" {
 		return nil, errors.New("could not find url property in settings")
+	}
+	if settings.MsgType == "" {
+		settings.MsgType = defaultDingdingMsgType
+	}
+	if settings.Message == "" {
+		settings.Message = DefaultMessageEmbed
 	}
 
 	return &DingDingNotifier{
@@ -53,12 +68,10 @@ func buildDingDingNotifier(fc FactoryConfig) (*DingDingNotifier, error) {
 			DisableResolveMessage: fc.Config.DisableResolveMessage,
 			Settings:              fc.Config.Settings,
 		}),
-		MsgType: fc.Config.Settings.Get("msgType").MustString(defaultDingdingMsgType),
-		Message: fc.Config.Settings.Get("message").MustString(DefaultMessageEmbed),
-		URL:     fc.Config.Settings.Get("url").MustString(),
-		log:     log.New("alerting.notifier.dingding"),
-		tmpl:    fc.Template,
-		ns:      fc.NotificationService,
+		settings: settings,
+		log:      log.New("alerting.notifier.dingding"),
+		tmpl:     fc.Template,
+		ns:       fc.NotificationService,
 	}, nil
 }
 
@@ -80,11 +93,11 @@ func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 	var tmplErr error
 	tmpl, _ := TmplText(ctx, dd.tmpl, as, dd.log, &tmplErr)
 
-	message := tmpl(dd.Message)
+	message := tmpl(dd.settings.Message)
 	title := tmpl(DefaultMessageTitleEmbed)
 
 	var bodyMsg map[string]interface{}
-	if tmpl(dd.MsgType) == "actionCard" {
+	if tmpl(dd.settings.MsgType) == "actionCard" {
 		bodyMsg = map[string]interface{}{
 			"msgtype": "actionCard",
 			"actionCard": map[string]string{
@@ -112,10 +125,10 @@ func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 		tmplErr = nil
 	}
 
-	u := tmpl(dd.URL)
+	u := tmpl(dd.settings.URL)
 	if tmplErr != nil {
-		dd.log.Warn("failed to template DingDing URL", "err", tmplErr.Error(), "fallback", dd.URL)
-		u = dd.URL
+		dd.log.Warn("failed to template DingDing URL", "err", tmplErr.Error(), "fallback", dd.settings.URL)
+		u = dd.settings.URL
 	}
 
 	body, err := json.Marshal(bodyMsg)
