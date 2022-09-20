@@ -203,11 +203,11 @@ func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Respon
 		dto.Enabled = ps.Enabled
 		dto.Pinned = ps.Pinned
 		dto.JsonData = ps.JSONData
-	}
 
-	for k, v := range hs.PluginSettings.DecryptedValues(ps) {
-		if len(v) > 0 {
-			dto.SecureJsonFields[k] = true
+		for k, v := range hs.PluginSettings.DecryptedValues(ps) {
+			if len(v) > 0 {
+				dto.SecureJsonFields[k] = true
+			}
 		}
 	}
 
