@@ -26,7 +26,7 @@ import { VariableTextField } from './VariableTextField';
 import { VariableTypeSelect } from './VariableTypeSelect';
 import { VariableValuesPreview } from './VariableValuesPreview';
 import { changeVariableName, variableEditorMount, variableEditorUnMount } from './actions';
-import { OnPropChangeArguments } from './types';
+import { OnPropChangeArguments, VariableNameConstraints } from './types';
 
 const mapStateToProps = (state: StoreState, ownProps: OwnProps) => ({
   editor: getVariablesState(ownProps.identifier.rootStateKey, state).editor,
@@ -149,8 +149,9 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
                   onChange={this.onNameChange}
                   name="Name"
                   placeholder="name"
-                  required
                   testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2}
+                  maxLength={VariableNameConstraints.MaxSize}
+                  required
                 />
                 <VariableTypeSelect onChange={this.onTypeChange} type={this.props.variable.type} />
               </InlineFieldRow>
