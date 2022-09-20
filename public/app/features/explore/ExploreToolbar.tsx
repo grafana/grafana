@@ -38,7 +38,8 @@ type Props = OwnProps & ConnectedProps<typeof connector>;
 
 class UnConnectedExploreToolbar extends PureComponent<Props> {
   onChangeDatasource = async (dsSettings: DataSourceInstanceSettings) => {
-    this.props.changeDatasource(this.props.exploreId, dsSettings.uid, { importQueries: true });
+    const { changeDatasource, exploreId } = this.props;
+    changeDatasource(exploreId, dsSettings.uid, { importQueries: true });
   };
 
   onRunQuery = (loading = false) => {
@@ -58,6 +59,23 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
   onChangeTimeSync = () => {
     const { syncTimes, exploreId } = this.props;
     syncTimes(exploreId);
+  };
+
+  onCopyShortLink = async () => {
+    await createAndCopyShortLink(window.location.href);
+    reportInteraction('grafana_explore_shortened_link_clicked');
+  };
+
+  onOpenSplitView = () => {
+    const { split } = this.props;
+    split();
+    reportInteraction('grafana_explore_splitView_opened');
+  };
+
+  onCloseSplitView = () => {
+    const { closeSplit, exploreId } = this.props;
+    closeSplit(exploreId);
+    reportInteraction('grafana_explore_splitView_closed');
   };
 
   renderRefreshPicker = (showSmallTimePicker: boolean) => {
@@ -92,7 +110,6 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
   render() {
     const {
       datasourceMissing,
-      closeSplit,
       exploreId,
       loading,
       range,
@@ -102,7 +119,6 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
       syncedTimes,
       refreshInterval,
       onChangeTime,
-      split,
       hasLiveOption,
       isLive,
       isPaused,
@@ -143,7 +159,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
                 key="share"
                 tooltip="Copy shortened link"
                 icon="share-alt"
-                onClick={() => createAndCopyShortLink(window.location.href)}
+                onClick={this.onCopyShortLink}
                 aria-label="Copy shortened link"
               />
             ),
@@ -161,7 +177,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
         >
           <>
             {!splitted ? (
-              <ToolbarButton tooltip="Split the pane" onClick={() => split()} icon="columns" disabled={isLive}>
+              <ToolbarButton tooltip="Split the pane" onClick={this.onOpenSplitView} icon="columns" disabled={isLive}>
                 Split
               </ToolbarButton>
             ) : (
@@ -175,7 +191,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
                     ? '<'
                     : '>'}
                 </ToolbarButton>
-                <ToolbarButton title="Close split pane" onClick={() => closeSplit(exploreId)} icon="times">
+                <ToolbarButton tooltip="Close split pane" onClick={this.onCloseSplitView} icon="times">
                   Close
                 </ToolbarButton>
               </>

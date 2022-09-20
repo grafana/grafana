@@ -11,7 +11,7 @@ import { AppNotificationTimeout } from 'app/types';
 import memoizedDebounce from '../memoizedDebounce';
 import { CloudWatchJsonData, Dimensions, MetricRequest, MultiFilters, TSDBResponse } from '../types';
 
-export abstract class CloudWatchQueryRunner {
+export abstract class CloudWatchRequest {
   templateSrv: TemplateSrv;
   ref: DataSourceRef;
   dsQueryEndpoint = '/api/ds/query';
