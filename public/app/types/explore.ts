@@ -230,3 +230,6 @@ export interface ExplorePanelData extends PanelData {
   tableResult: DataFrame | null;
   logsResult: LogsModel | null;
 }
+
+export const TABLE_RESULTS_STYLES = ['default', 'raw'] as const;
+export type TableResultsStyle = typeof TABLE_RESULTS_STYLES[number];
