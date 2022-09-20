@@ -1,6 +1,7 @@
 import { NestedScene, SceneCollapser } from '../components/NestedScene';
 import { Scene } from '../components/Scene';
 import { SceneFlexChild, SceneFlexLayout } from '../components/SceneFlexLayout';
+import { SceneTimePicker } from '../components/SceneTimePicker';
 import { SceneTimeShiftNode } from '../components/SceneTimeShiftNode';
 import { SceneToolbar } from '../components/SceneToolbar';
 import { VizPanel } from '../components/VizPanel';
@@ -49,6 +50,7 @@ export function isLayoutNode(node: SceneObject): boolean {
     node instanceof NestedScene ||
     node instanceof SceneCollapser ||
     node instanceof SceneToolbar ||
-    node instanceof VizPanel
+    node instanceof VizPanel ||
+    node instanceof SceneTimePicker
   );
 }
