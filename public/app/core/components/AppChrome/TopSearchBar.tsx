@@ -1,11 +1,10 @@
 import { css } from '@emotion/css';
 import React from 'react';
-import { useSelector } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Dropdown, Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { StoreState } from 'app/types';
+import { useSelector } from 'app/types';
 
 import { TopNavBarMenu } from './TopBar/TopNavBarMenu';
 import { TopSearchBarInput } from './TopSearchBarInput';
@@ -13,7 +12,7 @@ import { TOP_BAR_LEVEL_HEIGHT } from './types';
 
 export function TopSearchBar() {
   const styles = useStyles2(getStyles);
-  const navIndex = useSelector((state: StoreState) => state.navIndex);
+  const navIndex = useSelector((state) => state.navIndex);
 
   const helpNode = navIndex['help'];
   const profileNode = navIndex['profile'];

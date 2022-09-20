@@ -57,6 +57,9 @@ interface Props<TQuery extends DataQuery> {
   history?: Array<HistoryItem<TQuery>>;
   eventBus?: EventBusExtended;
   alerting?: boolean;
+  onQueryCopied?: () => void;
+  onQueryRemoved?: () => void;
+  onQueryToggled?: (queryStatus?: boolean | undefined) => void;
 }
 
 interface State<TQuery extends DataQuery> {
@@ -274,18 +277,32 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   onRemoveQuery = () => {
-    this.props.onRemoveQuery(this.props.query);
+    const { onRemoveQuery, query, onQueryRemoved } = this.props;
+    onRemoveQuery(query);
+
+    if (onQueryRemoved) {
+      onQueryRemoved();
+    }
   };
 
   onCopyQuery = () => {
-    const copy = cloneDeep(this.props.query);
-    this.props.onAddQuery(copy);
+    const { query, onAddQuery, onQueryCopied } = this.props;
+    const copy = cloneDeep(query);
+    onAddQuery(copy);
+
+    if (onQueryCopied) {
+      onQueryCopied();
+    }
   };
 
   onDisableQuery = () => {
-    const { query } = this.props;
-    this.props.onChange({ ...query, hide: !query.hide });
-    this.props.onRunQuery();
+    const { query, onChange, onRunQuery, onQueryToggled } = this.props;
+    onChange({ ...query, hide: !query.hide });
+    onRunQuery();
+
+    if (onQueryToggled) {
+      onQueryToggled(query.hide);
+    }
   };
 
   onToggleHelp = () => {
