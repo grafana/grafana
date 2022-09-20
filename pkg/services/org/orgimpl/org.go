@@ -132,3 +132,114 @@ func (s *Service) Search(ctx context.Context, query *org.SearchOrgsQuery) ([]*or
 	}
 	return res, nil
 }
+
+// TODO: remove wrapper around sqlstore
+func (s *Service) GetByID(ctx context.Context, query *org.GetOrgByIdQuery) (*org.Org, error) {
+	q := &models.GetOrgByIdQuery{Id: query.ID}
+	err := s.sqlStore.GetOrgById(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	return &org.Org{
+		ID:       q.Result.Id,
+		Version:  q.Result.Version,
+		Name:     q.Result.Name,
+		Address1: q.Result.Address1,
+		Address2: q.Result.Address2,
+		City:     q.Result.City,
+		ZipCode:  q.Result.ZipCode,
+		State:    q.Result.State,
+		Country:  q.Result.Country,
+		Created:  q.Result.Created,
+		Updated:  q.Result.Updated,
+	}, nil
+}
+
+// TODO: remove wrapper around sqlstore
+func (s *Service) GetByNameHandler(ctx context.Context, query *org.GetOrgByNameQuery) (*org.Org, error) {
+	q := &models.GetOrgByNameQuery{Name: query.Name}
+	err := s.sqlStore.GetOrgByNameHandler(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	return &org.Org{
+		ID:       q.Result.Id,
+		Version:  q.Result.Version,
+		Name:     q.Result.Name,
+		Address1: q.Result.Address1,
+		Address2: q.Result.Address2,
+		City:     q.Result.City,
+		ZipCode:  q.Result.ZipCode,
+		State:    q.Result.State,
+		Country:  q.Result.Country,
+		Created:  q.Result.Created,
+		Updated:  q.Result.Updated,
+	}, nil
+}
+
+// TODO: remove wrapper around sqlstore
+func (s *Service) GetByName(name string) (*org.Org, error) {
+	orga, err := s.sqlStore.GetOrgByName(name)
+	if err != nil {
+		return nil, err
+	}
+	return &org.Org{
+		ID:       orga.Id,
+		Version:  orga.Version,
+		Name:     orga.Name,
+		Address1: orga.Address1,
+		Address2: orga.Address2,
+		City:     orga.City,
+		ZipCode:  orga.ZipCode,
+		State:    orga.State,
+		Country:  orga.Country,
+		Created:  orga.Created,
+		Updated:  orga.Updated,
+	}, nil
+}
+
+// TODO: remove wrapper around sqlstore
+func (s *Service) CreateWithMember(name string, userID int64) (*org.Org, error) {
+	orga, err := s.sqlStore.CreateOrgWithMember(name, userID)
+	if err != nil {
+		return nil, err
+	}
+	return &org.Org{
+		ID:       orga.Id,
+		Version:  orga.Version,
+		Name:     orga.Name,
+		Address1: orga.Address1,
+		Address2: orga.Address2,
+		City:     orga.City,
+		ZipCode:  orga.ZipCode,
+		State:    orga.State,
+		Country:  orga.Country,
+		Created:  orga.Created,
+		Updated:  orga.Updated,
+	}, nil
+}
+
+// TODO: remove wrapper around sqlstore
+func (s *Service) Create(ctx context.Context, cmd *org.CreateOrgCommand) (*org.Org, error) {
+	q := &models.CreateOrgCommand{
+		Name:   cmd.Name,
+		UserId: cmd.UserID,
+	}
+	err := s.sqlStore.CreateOrg(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	return &org.Org{
+		ID:       q.Result.Id,
+		Version:  q.Result.Version,
+		Name:     q.Result.Name,
+		Address1: q.Result.Address1,
+		Address2: q.Result.Address2,
+		City:     q.Result.City,
+		ZipCode:  q.Result.ZipCode,
+		State:    q.Result.State,
+		Country:  q.Result.Country,
+		Created:  q.Result.Created,
+		Updated:  q.Result.Updated,
+	}, nil
+}
