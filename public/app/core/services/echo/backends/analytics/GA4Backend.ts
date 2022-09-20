@@ -5,6 +5,12 @@ import { EchoBackend, EchoEventType, PageviewEchoEvent } from '@grafana/runtime'
 
 import { getUserIdentifier } from '../../utils';
 
+declare global {
+  interface Window {
+    dataLayer: unknown[];
+  }
+}
+
 export interface GA4EchoBackendOptions {
   googleAnalyticsId: string;
   user?: CurrentUserDTO;
@@ -25,11 +31,11 @@ export class GA4EchoBackend implements EchoBackend<PageviewEchoEvent, GA4EchoBac
 
     window.dataLayer = window.dataLayer || [];
     window.gtag = function gtag() {
-      dataLayer.push(arguments);
+      window.dataLayer.push(arguments);
     };
     window.gtag('js', new Date());
 
-    const configOptions = {};
+    const configOptions: Gtag.CustomParams = {};
 
     if (options.user) {
       configOptions.user_id = getUserIdentifier(options.user);
@@ -46,11 +52,11 @@ export class GA4EchoBackend implements EchoBackend<PageviewEchoEvent, GA4EchoBac
     window.gtag('set', 'page_path', e.payload.page);
     window.gtag('event', 'page_view');
 
-    const { userSignedIn, userId } = e.meta;
-    if (userSignedIn && userId !== this.trackedUserId) {
-      this.trackedUserId = userId;
-      window.gtag('set', 'userId', userId);
-    }
+    // const { userSignedIn, userId } = e.meta;
+    // if (userSignedIn && userId !== this.trackedUserId) {
+    //   this.trackedUserId = userId;
+    //   window.gtag('set', 'userId', userId);
+    // }
   };
 
   // Not using Echo buffering, addEvent above sends events to GA as soon as they appear
