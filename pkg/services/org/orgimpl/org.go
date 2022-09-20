@@ -18,18 +18,19 @@ type Service struct {
 	store store
 	cfg   *setting.Cfg
 	log   log.Logger
-	// TODO remove sqlstore
-	sqlStore *sqlstore.SQLStore
+	// TODO remove fallback
+	fallback *sqlstore.SQLStore
 }
 
-func ProvideService(db db.DB, cfg *setting.Cfg) org.Service {
+func ProvideService(db db.DB, cfg *setting.Cfg, fallback *sqlstore.SQLStore) org.Service {
 	return &Service{
 		store: &sqlStore{
 			db:      db,
 			dialect: db.GetDialect(),
 		},
-		cfg: cfg,
-		log: log.New("org service"),
+		cfg:      cfg,
+		log:      log.New("org service"),
+		fallback: fallback,
 	}
 }
 
@@ -90,7 +91,7 @@ func (s *Service) GetUserOrgList(ctx context.Context, query *org.GetUserOrgListQ
 	q := &models.GetUserOrgListQuery{
 		UserId: query.UserID,
 	}
-	err := s.sqlStore.GetUserOrgList(ctx, q)
+	err := s.fallback.GetUserOrgList(ctx, q)
 	if err != nil {
 		return nil, err
 	}
@@ -119,7 +120,7 @@ func (s *Service) Search(ctx context.Context, query *org.SearchOrgsQuery) ([]*or
 		Page:  query.Page,
 		Ids:   query.IDs,
 	}
-	err := s.sqlStore.SearchOrgs(ctx, q)
+	err := s.fallback.SearchOrgs(ctx, q)
 	if err != nil {
 		return nil, err
 	}
