@@ -51,13 +51,13 @@ import { addDataLinksToLogsResponse } from '../utils/datalinks';
 import { runWithRetry } from '../utils/logsRetry';
 import { increasingInterval } from '../utils/rxjs/increasingInterval';
 
-import { CloudWatchQueryRunner } from './CloudWatchQueryRunner';
+import { CloudWatchRequest } from './CloudWatchRequest';
 
 export const LOG_IDENTIFIER_INTERNAL = '__log__grafana_internal__';
 export const LOGSTREAM_IDENTIFIER_INTERNAL = '__logstream__grafana_internal__';
 
 // This class handles execution of CloudWatch logs query data queries
-export class CloudWatchLogsQueryRunner extends CloudWatchQueryRunner {
+export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
   logsTimeout: string;
   defaultLogGroups: string[];
   logQueries: Record<string, { id: string; region: string; statsQuery: boolean }> = {};
