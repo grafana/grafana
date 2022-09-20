@@ -173,6 +173,7 @@ func (hs *HTTPServer) ReqCanAdminTeams(c *models.ReqContext) bool {
 	return c.OrgRole == org.RoleAdmin || (hs.Cfg.EditorsCanAdmin && c.OrgRole == org.RoleEditor)
 }
 
+//nolint:gocyclo
 func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *pref.Preference) ([]*dtos.NavLink, error) {
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	var navTree []*dtos.NavLink
@@ -328,7 +329,8 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 		// Move server admin into Configuration and rename to administration
 		if configNode != nil && serverAdminNode != nil {
 			configNode.Text = "Administration"
-			serverAdminNode.Url = "/admin"
+			serverAdminNode.Url = "/admin/server"
+			serverAdminNode.HideFromTabs = false
 			configNode.Children = append(configNode.Children, serverAdminNode)
 			adminNodeIndex := len(navTree) - 1
 			navTree = navTree[:adminNodeIndex]
@@ -354,7 +356,7 @@ func (hs *HTTPServer) setupConfigNodes(c *models.ReqContext) ([]*dtos.NavLink, e
 		})
 	}
 
-	if hasAccess(ac.ReqOrgAdmin, correlations.ConfigurationPageAccess) {
+	if hs.Features.IsEnabled(featuremgmt.FlagCorrelations) && hasAccess(ac.ReqOrgAdmin, correlations.ConfigurationPageAccess) {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "Correlations",
 			Icon:        "gf-glue",
@@ -838,6 +840,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		AppUrl:                  appURL,
 		AppSubUrl:               appSubURL,
 		GoogleAnalyticsId:       setting.GoogleAnalyticsId,
+		GoogleAnalytics4Id:      setting.GoogleAnalytics4Id,
 		GoogleTagManagerId:      setting.GoogleTagManagerId,
 		BuildVersion:            setting.BuildVersion,
 		BuildCommit:             setting.BuildCommit,

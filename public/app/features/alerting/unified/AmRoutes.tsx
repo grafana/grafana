@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
-import { useDispatch } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, LoadingPlaceholder, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { Receiver } from 'app/plugins/datasource/alertmanager/types';
+import { useDispatch } from 'app/types';
 
 import { useCleanup } from '../../../core/hooks/useCleanup';
 

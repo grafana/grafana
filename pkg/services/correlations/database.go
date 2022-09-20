@@ -192,10 +192,6 @@ func (s CorrelationsService) getCorrelationsBySourceUID(ctx context.Context, cmd
 		return []Correlation{}, err
 	}
 
-	if len(correlations) == 0 {
-		return []Correlation{}, ErrCorrelationNotFound
-	}
-
 	return correlations, nil
 }
 
@@ -207,10 +203,6 @@ func (s CorrelationsService) getCorrelations(ctx context.Context, cmd GetCorrela
 	})
 	if err != nil {
 		return []Correlation{}, err
-	}
-
-	if len(correlations) == 0 {
-		return []Correlation{}, ErrCorrelationNotFound
 	}
 
 	return correlations, nil

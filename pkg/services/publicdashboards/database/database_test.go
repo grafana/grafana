@@ -19,7 +19,7 @@ import (
 )
 
 // This is what the db sets empty time settings to
-var DefaultTimeSettings, _ = simplejson.NewJson([]byte(`{}`))
+var DefaultTimeSettings = &TimeSettings{}
 
 // Default time to pass in with seconds rounded
 var DefaultTime = time.Now().UTC().Round(time.Second)
@@ -361,7 +361,7 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 			DashboardUid: savedDashboard.Uid,
 			OrgId:        savedDashboard.OrgId,
 			IsEnabled:    false,
-			TimeSettings: simplejson.NewFromAny(map[string]interface{}{"from": "now-8", "to": "now"}),
+			TimeSettings: &TimeSettings{From: "now-8", To: "now"},
 			UpdatedAt:    time.Now().UTC().Round(time.Second),
 			UpdatedBy:    8,
 		}
