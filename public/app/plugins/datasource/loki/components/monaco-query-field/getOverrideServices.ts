@@ -41,7 +41,7 @@ function makeStorageService() {
     getBoolean: (key: string, scope: unknown, fallbackValue?: boolean): boolean | undefined => {
       const val = strings.get(key);
       if (val !== undefined) {
-        // the interface-docs say the value will be converted
+        // the interface docs say the value will be converted
         // to a boolean but do not specify how, so we improvise
         return val === 'true';
       } else {
@@ -64,7 +64,7 @@ function makeStorageService() {
       scope: unknown,
       target: unknown
     ): void => {
-      // the interface-docs say if the value is nullish, it should act as delete
+      // the interface docs say if the value is nullish, it should act as delete
       if (value === null || value === undefined) {
         strings.delete(key);
       } else {
@@ -102,15 +102,11 @@ function makeStorageService() {
   };
 }
 
-let overrideServices: monacoTypes.editor.IEditorOverrideServices | null = null;
+let overrideServices: monacoTypes.editor.IEditorOverrideServices = {
+  storageService: makeStorageService(),
+};
 
 export function getOverrideServices(): monacoTypes.editor.IEditorOverrideServices {
-  // only have one instance of this for every query editor
-  if (overrideServices === null) {
-    overrideServices = {
-      storageService: makeStorageService(),
-    };
-  }
-
+  // One instance of this for every query editor
   return overrideServices;
 }
