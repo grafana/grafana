@@ -19670,6 +19670,7 @@ __metadata:
     sinon: 14.0.0
     slate: 0.47.9
     slate-plain-serializer: 0.7.11
+    slate-react: 0.22.10
     style-loader: 3.3.1
     stylelint: 14.8.2
     stylelint-config-prettier: 9.0.3
