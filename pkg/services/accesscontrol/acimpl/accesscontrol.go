@@ -79,7 +79,7 @@ func (a *AccessControl) EvaluateUserPermissions(ctx context.Context, cmd accessc
 
 	// Compute metadata
 	if cmd.Resource != "" && cmd.Attribute != "" && len(cmd.UIDs) != 0 {
-		scopePrefix := accesscontrol.Scope(cmd.Resource, cmd.Attribute)
+		scopePrefix := accesscontrol.Scope(cmd.Resource, cmd.Attribute, "")
 		uids := map[string]bool{}
 		for _, uid := range cmd.UIDs {
 			uids[uid] = true
