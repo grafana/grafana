@@ -301,7 +301,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
       logsVolumeEnabled,
       logsVolumeData,
       loadLogsVolumeData,
-      onSetLogsVolumeEnabled,
       loading = false,
       loadingState,
       onClickFilterLabel,
