@@ -1,12 +1,14 @@
-package sqlstore_test
+package annotationsimpl
 
 import (
 	"context"
 	"fmt"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -25,7 +27,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	sql := sqlstore.InitTestDB(t)
-	repo := sqlstore.NewSQLAnnotationRepo(sql)
+	repo := SQLAnnotationRepo{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test")}
 
 	testUser := &user.SignedInUser{
 		OrgID: 1,
@@ -81,7 +83,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 			Epoch:       10,
 			Tags:        []string{"outage", "error", "type:outage", "server:server-1"},
 		}
-		err = repo.Save(annotation)
+		err = repo.Add(context.Background(), annotation)
 		require.NoError(t, err)
 		assert.Greater(t, annotation.Id, int64(0))
 		assert.Equal(t, annotation.Epoch, annotation.EpochEnd)
@@ -96,7 +98,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 			EpochEnd:    20,
 			Tags:        []string{"outage", "error", "type:outage", "server:server-1"},
 		}
-		err = repo.Save(annotation2)
+		err = repo.Add(context.Background(), annotation2)
 		require.NoError(t, err)
 		assert.Greater(t, annotation2.Id, int64(0))
 		assert.Equal(t, int64(20), annotation2.Epoch)
@@ -110,7 +112,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 			Epoch:  15,
 			Tags:   []string{"deploy"},
 		}
-		err = repo.Save(organizationAnnotation1)
+		err = repo.Add(context.Background(), organizationAnnotation1)
 		require.NoError(t, err)
 		assert.Greater(t, organizationAnnotation1.Id, int64(0))
 
@@ -122,11 +124,11 @@ func TestIntegrationAnnotations(t *testing.T) {
 			Epoch:  17,
 			Tags:   []string{"rollback"},
 		}
-		err = repo.Save(globalAnnotation2)
+		err = repo.Add(context.Background(), globalAnnotation2)
 		require.NoError(t, err)
 		assert.Greater(t, globalAnnotation2.Id, int64(0))
 		t.Run("Can query for annotation by dashboard id", func(t *testing.T) {
-			items, err := repo.Find(context.Background(), &annotations.ItemQuery{
+			items, err := repo.Get(context.Background(), &annotations.ItemQuery{
 				OrgId:        1,
 				DashboardId:  dashboard.Id,
 				From:         0,
@@ -145,7 +147,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		})
 
 		t.Run("Can query for annotation by id", func(t *testing.T) {
-			items, err := repo.Find(context.Background(), &annotations.ItemQuery{
+			items, err := repo.Get(context.Background(), &annotations.ItemQuery{
 				OrgId:        1,
 				AnnotationId: annotation2.Id,
 				SignedInUser: testUser,
@@ -156,7 +158,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		})
 
 		t.Run("Should not find any when item is outside time range", func(t *testing.T) {
-			items, err := repo.Find(context.Background(), &annotations.ItemQuery{
+			items, err := repo.Get(context.Background(), &annotations.ItemQuery{
 				OrgId:        1,
 				DashboardId:  1,
 				From:         12,
@@ -168,7 +170,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		})
 
 		t.Run("Should not find one when tag filter does not match", func(t *testing.T) {
-			items, err := repo.Find(context.Background(), &annotations.ItemQuery{
+			items, err := repo.Get(context.Background(), &annotations.ItemQuery{
 				OrgId:        1,
 				DashboardId:  1,
 				From:         1,
@@ -181,7 +183,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		})
 
 		t.Run("Should not find one when type filter does not match", func(t *testing.T) {
-			items, err := repo.Find(context.Background(), &annotations.ItemQuery{
+			items, err := repo.Get(context.Background(), &annotations.ItemQuery{
 				OrgId:        1,
 				DashboardId:  1,
 				From:         1,
@@ -194,7 +196,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		})
 
 		t.Run("Should find one when all tag filters does match", func(t *testing.T) {
-			items, err := repo.Find(context.Background(), &annotations.ItemQuery{
+			items, err := repo.Get(context.Background(), &annotations.ItemQuery{
 				OrgId:        1,
 				DashboardId:  1,
 				From:         1,
@@ -207,7 +209,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		})
 
 		t.Run("Should find two annotations using partial match", func(t *testing.T) {
-			items, err := repo.Find(context.Background(), &annotations.ItemQuery{
+			items, err := repo.Get(context.Background(), &annotations.ItemQuery{
 				OrgId:        1,
 				From:         1,
 				To:           25,
@@ -220,7 +222,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		})
 
 		t.Run("Should find one when all key value tag filters does match", func(t *testing.T) {
-			items, err := repo.Find(context.Background(), &annotations.ItemQuery{
+			items, err := repo.Get(context.Background(), &annotations.ItemQuery{
 				OrgId:        1,
 				DashboardId:  1,
 				From:         1,
@@ -240,7 +242,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 				To:           15,
 				SignedInUser: testUser,
 			}
-			items, err := repo.Find(context.Background(), query)
+			items, err := repo.Get(context.Background(), query)
 			require.NoError(t, err)
 
 			annotationId := items[0].Id
@@ -252,7 +254,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			items, err = repo.Find(context.Background(), query)
+			items, err = repo.Get(context.Background(), query)
 			require.NoError(t, err)
 
 			assert.Equal(t, annotationId, items[0].Id)
@@ -268,7 +270,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 				To:           15,
 				SignedInUser: testUser,
 			}
-			items, err := repo.Find(context.Background(), query)
+			items, err := repo.Get(context.Background(), query)
 			require.NoError(t, err)
 
 			annotationId := items[0].Id
@@ -280,7 +282,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			items, err = repo.Find(context.Background(), query)
+			items, err = repo.Get(context.Background(), query)
 			require.NoError(t, err)
 
 			assert.Equal(t, annotationId, items[0].Id)
@@ -297,14 +299,14 @@ func TestIntegrationAnnotations(t *testing.T) {
 				To:           15,
 				SignedInUser: testUser,
 			}
-			items, err := repo.Find(context.Background(), query)
+			items, err := repo.Get(context.Background(), query)
 			require.NoError(t, err)
 
 			annotationId := items[0].Id
 			err = repo.Delete(context.Background(), &annotations.DeleteParams{Id: annotationId, OrgId: 1})
 			require.NoError(t, err)
 
-			items, err = repo.Find(context.Background(), query)
+			items, err = repo.Get(context.Background(), query)
 			require.NoError(t, err)
 			assert.Empty(t, items)
 		})
@@ -320,7 +322,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 				Tags:        []string{"test"},
 				PanelId:     20,
 			}
-			err = repo.Save(annotation3)
+			err = repo.Add(context.Background(), annotation3)
 			require.NoError(t, err)
 
 			query := &annotations.ItemQuery{
@@ -328,7 +330,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 				AnnotationId: annotation3.Id,
 				SignedInUser: testUser,
 			}
-			items, err := repo.Find(context.Background(), query)
+			items, err := repo.Get(context.Background(), query)
 			require.NoError(t, err)
 
 			dashboardId := items[0].DashboardId
@@ -336,13 +338,13 @@ func TestIntegrationAnnotations(t *testing.T) {
 			err = repo.Delete(context.Background(), &annotations.DeleteParams{DashboardId: dashboardId, PanelId: panelId, OrgId: 1})
 			require.NoError(t, err)
 
-			items, err = repo.Find(context.Background(), query)
+			items, err = repo.Get(context.Background(), query)
 			require.NoError(t, err)
 			assert.Empty(t, items)
 		})
 
 		t.Run("Should find tags by key", func(t *testing.T) {
-			result, err := repo.FindTags(context.Background(), &annotations.TagsQuery{
+			result, err := repo.GetTags(context.Background(), &annotations.TagsQuery{
 				OrgID: 1,
 				Tag:   "server",
 			})
@@ -353,7 +355,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		})
 
 		t.Run("Should find tags by value", func(t *testing.T) {
-			result, err := repo.FindTags(context.Background(), &annotations.TagsQuery{
+			result, err := repo.GetTags(context.Background(), &annotations.TagsQuery{
 				OrgID: 1,
 				Tag:   "outage",
 			})
@@ -366,7 +368,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		})
 
 		t.Run("Should not find tags in other org", func(t *testing.T) {
-			result, err := repo.FindTags(context.Background(), &annotations.TagsQuery{
+			result, err := repo.GetTags(context.Background(), &annotations.TagsQuery{
 				OrgID: 0,
 				Tag:   "server-1",
 			})
@@ -375,7 +377,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		})
 
 		t.Run("Should not find tags that do not exist", func(t *testing.T) {
-			result, err := repo.FindTags(context.Background(), &annotations.TagsQuery{
+			result, err := repo.GetTags(context.Background(), &annotations.TagsQuery{
 				OrgID: 0,
 				Tag:   "unknown:tag",
 			})
@@ -390,7 +392,7 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	sql := sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{})
-	repo := sqlstore.NewSQLAnnotationRepo(sql)
+	repo := SQLAnnotationRepo{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test")}
 	dashboardStore := dashboardstore.ProvideDashboardStore(sql, featuremgmt.WithFeatures())
 
 	testDashboard1 := models.SaveDashboardCommand{
@@ -419,7 +421,7 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 		DashboardId: 1,
 		Epoch:       10,
 	}
-	err = repo.Save(dash1Annotation)
+	err = repo.Add(context.Background(), dash1Annotation)
 	require.NoError(t, err)
 
 	dash2Annotation := &annotations.Item{
@@ -427,14 +429,14 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 		DashboardId: 2,
 		Epoch:       10,
 	}
-	err = repo.Save(dash2Annotation)
+	err = repo.Add(context.Background(), dash2Annotation)
 	require.NoError(t, err)
 
 	organizationAnnotation := &annotations.Item{
 		OrgId: 1,
 		Epoch: 10,
 	}
-	err = repo.Save(organizationAnnotation)
+	err = repo.Add(context.Background(), organizationAnnotation)
 	require.NoError(t, err)
 
 	user := &user.SignedInUser{
@@ -501,7 +503,7 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.description, func(t *testing.T) {
 			user.Permissions = map[int64]map[string][]string{1: tc.permissions}
-			results, err := repo.Find(context.Background(), &annotations.ItemQuery{
+			results, err := repo.Get(context.Background(), &annotations.ItemQuery{
 				OrgId:        1,
 				SignedInUser: user,
 			})
