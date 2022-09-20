@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { DateTime, GrafanaTheme2 } from '@grafana/data/src';
+import { GrafanaTheme2 } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { reportInteraction } from '@grafana/runtime/src';
 import { FieldSet, Label, Switch, TimeRangeInput, useStyles2, VerticalGroup } from '@grafana/ui/src';
 import { Layout } from '@grafana/ui/src/components/Layout/Layout';
-import { TimeModel } from 'app/features/dashboard/state/TimeModel';
+import { DashboardModel } from 'app/features/dashboard/state';
 import { useIsDesktop } from 'app/features/dashboard/utils/screen';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 
@@ -14,20 +14,20 @@ export const PubDashConfiguration = ({
   disabled,
   isPubDashEnabled,
   hasTemplateVariables,
-  time,
   onToggleEnabled,
+  dashboard,
 }: {
   disabled: boolean;
   isPubDashEnabled?: boolean;
   onToggleEnabled: () => void;
   hasTemplateVariables: boolean;
-  time: { from: DateTime | string; to: DateTime | string; timeZone: TimeModel };
+  dashboard: DashboardModel;
 }) => {
   const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
   const styles = useStyles2(getStyles);
   const isDesktop = useIsDesktop();
 
-  const timeRange = getTimeRange({ from: time.from, to: time.to }, time.timeZone);
+  const timeRange = getTimeRange(dashboard.getDefaultTime(), dashboard);
 
   return (
     <>

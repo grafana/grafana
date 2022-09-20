@@ -134,17 +134,13 @@ export const SharePublicDashboard = (props: Props) => {
             </div>
             <hr />
             <PubDashConfiguration
+              dashboard={props.dashboard}
               disabled={!hasWritePermissions || isLoading || isFetchingError}
               isPubDashEnabled={enabledSwitch.isEnabled}
               onToggleEnabled={() =>
                 setEnabledSwitch((prevState) => ({ isEnabled: !prevState.isEnabled, wasTocuhed: true }))
               }
               hasTemplateVariables={dashboardHasTemplateVariables(dashboardVariables)}
-              time={{
-                from: props.dashboard.getDefaultTime().from,
-                to: props.dashboard.getDefaultTime().to,
-                timeZone: props.dashboard.timezone,
-              }}
             />
             {publicDashboardPersisted(publicDashboard) && enabledSwitch.isEnabled && (
               <Field label="Link URL" className={styles.publicUrl}>
