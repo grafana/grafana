@@ -632,7 +632,6 @@ func (d *DashboardStore) updateAlerts(ctx context.Context, existingAlerts []*mod
 		}
 		return nil
 	})
-
 }
 
 func (d *DashboardStore) deleteMissingAlerts(alerts []*models.Alert, existingAlerts []*models.Alert, sess *sqlstore.DBSession) error {
