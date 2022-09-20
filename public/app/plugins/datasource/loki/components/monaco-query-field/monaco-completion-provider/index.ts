@@ -81,8 +81,7 @@ export function getCompletionProvider(
     const situation = getSituation(model.getValue(), offset);
     const completionsPromise = situation != null ? getCompletions(situation, dataProvider) : Promise.resolve([]);
     return completionsPromise.then((items) => {
-      console.log('completions', model.getValue(), offset, items);
-      // monaco by-default alphabetically orders the items.
+      // monaco by default alphabetically orders the items.
       // to stop it, we use a number-as-string sortkey,
       // so that monaco keeps the order we use
       const maxIndexDigits = items.length.toString().length;

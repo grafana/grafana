@@ -47,35 +47,32 @@ function getNodeText(node: SyntaxNode, text: string): string {
   return text.slice(node.from, node.to);
 }
 
-function parsePromQLStringLiteral(text: string): string {
-  // if it is a string-literal, it is inside quotes of some kind
+function parseStringLiteral(text: string): string {
+  // If it is a string-literal, it is inside quotes of some kind
   const inside = text.slice(1, text.length - 1);
 
-  // FIXME: support https://prometheus.io/docs/prometheus/latest/querying/basics/#string-literals
-  // FIXME: maybe check other promql code, if all is supported or not
+  // Very simple un-escaping:
 
-  // for now we do only some very simple un-escaping
-
-  // we start with double-quotes
+  // Double quotes
   if (text.startsWith('"') && text.endsWith('"')) {
     // NOTE: this is not 100% perfect, we only unescape the double-quote,
     // there might be other characters too
     return inside.replace(/\\"/, '"');
   }
 
-  // then single-quote
+  // Single quotes
   if (text.startsWith("'") && text.endsWith("'")) {
     // NOTE: this is not 100% perfect, we only unescape the single-quote,
     // there might be other characters too
     return inside.replace(/\\'/, "'");
   }
 
-  // then backticks
+  // Backticks
   if (text.startsWith('`') && text.endsWith('`')) {
     return inside;
   }
 
-  throw new Error('FIXME: invalid string literal');
+  throw new Error(`Invalid string literal: ${text}`);
 }
 
 export type LabelOperator = '=' | '!=' | '=~' | '!~';
@@ -212,10 +209,11 @@ function getLabel(matcherNode: SyntaxNode, text: string): Label | null {
   }
 
   const name = getNodeText(nameNode, text);
-  const value = parsePromQLStringLiteral(getNodeText(valueNode, text));
+  const value = parseStringLiteral(getNodeText(valueNode, text));
 
   return { name, value, op };
 }
+
 function getLabels(selectorNode: SyntaxNode, text: string): Label[] {
   if (selectorNode.type.name !== 'Selector') {
     return [];
@@ -302,7 +300,7 @@ function resolveLabelsForGrouping(node: SyntaxNode, text: string, pos: number): 
 }
 
 function resolveMatcher(node: SyntaxNode, text: string, pos: number): Situation | null {
-  // we can arrive here in two situation. `node` is either:
+  // we can arrive here for two reasons. `node` is either:
   // - a StringNode (like in `{job="^"}`)
   // - or an error node (like in `{job=^}`)
   const inStringNode = !node.type.isError;
@@ -330,9 +328,8 @@ function resolveMatcher(node: SyntaxNode, text: string, pos: number): Situation 
 
   let listNode = firstListNode;
 
-  // we keep going through the parent-nodes
-  // as long as they are Matchers.
-  // as soon as we reawch Selector, we stop
+  // we keep going through the parent-nodes as long as they are Matchers.
+  // as soon as we reach Selector, we stop
   let selectorNode: SyntaxNode | null = null;
   while (selectorNode === null) {
     const p = listNode.parent;
@@ -480,23 +477,19 @@ function getErrorNode(tree: Tree, text: string, cursorPos: number): SyntaxNode |
   const trimRightTextLen = text.trimRight().length;
   const pos = trimRightTextLen < cursorPos ? trimRightTextLen : cursorPos;
   const cur = tree.cursor(pos);
-  while (true) {
+  do {
     if (cur.from === pos && cur.to === pos) {
       const { node } = cur;
       if (node.type.isError) {
         return node;
       }
     }
-
-    if (!cur.next()) {
-      break;
-    }
-  }
+  } while (cur.next());
   return null;
 }
 
 export function getSituation(text: string, pos: number): Situation | null {
-  // there is a special-case when we are at the start of writing text,
+  // there is a special case when we are at the start of writing text,
   // so we handle that case first
 
   if (text === '') {
@@ -508,10 +501,10 @@ export function getSituation(text: string, pos: number): Situation | null {
   const tree = parser.parse(text);
 
   // if the tree contains error, it is very probable that
-  // our node is one of those error-nodes.
+  // our node is one of those error nodes.
   // also, if there are errors, the node lezer finds us,
   // might not be the best node.
-  // so first we check if there is an error-node at the cursor-position
+  // so first we check if there is an error node at the cursor position
   const maybeErrorNode = getErrorNode(tree, text, pos);
 
   const cur = maybeErrorNode != null ? maybeErrorNode.cursor() : tree.cursor(pos);
@@ -524,8 +517,6 @@ export function getSituation(text: string, pos: number): Situation | null {
   }
 
   for (let resolver of RESOLVERS) {
-    // i do not use a foreach because i want to stop as soon
-    // as i find something
     if (isPathMatch(resolver.path, names)) {
       return resolver.fun(currentNode, text, pos);
     }
