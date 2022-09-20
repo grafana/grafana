@@ -67,7 +67,7 @@ You can also paste a native emoji in the unit picker and pick it as a custom uni
 
 #### String units
 
-Grafana can sometime be too aggressive in parsing strings and displaying them as numbers. To make Grafana show the original string create a field override and add a unit property with the `String` unit.
+Grafana can sometimes be too aggressive in parsing strings and displaying them as numbers. To configure Grafana to show the original string value, create a field override and add a unit property with the `String` unit.
 
 ### Min
 
