@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -31,7 +31,7 @@ export function NavBarMenuItem({ children, icon, isActive, isChild, onClick, tar
   );
 
   let element = (
-    <button className={styles.element} onClick={onClick}>
+    <button className={cx(styles.button, styles.element)} onClick={onClick}>
       {linkContent}
     </button>
   );
@@ -55,6 +55,10 @@ export function NavBarMenuItem({ children, icon, isActive, isChild, onClick, tar
 NavBarMenuItem.displayName = 'NavBarMenuItem';
 
 const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], isChild: Props['isActive']) => ({
+  button: css({
+    backgroundColor: 'unset',
+    borderStyle: 'unset',
+  }),
   linkContent: css({
     alignItems: 'center',
     display: 'flex',
@@ -103,5 +107,6 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], isChild: P
   listItem: css({
     position: 'relative',
     display: 'flex',
+    width: '100%',
   }),
 });

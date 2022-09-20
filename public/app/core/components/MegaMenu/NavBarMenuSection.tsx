@@ -2,22 +2,26 @@ import { css, cx } from '@emotion/css';
 import React, { useState } from 'react';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { CollapsableSection, useStyles2 } from '@grafana/ui';
+import { Button, Icon, useStyles2 } from '@grafana/ui';
 
 import { NavBarItemIcon } from '../NavBar/NavBarItemIcon';
 import { NavFeatureHighlight } from '../NavBar/NavFeatureHighlight';
 import { hasChildMatch } from '../NavBar/utils';
+
+import { NavBarMenuItem } from './NavBarMenuItem';
 
 export function NavBarMenuSection({
   link,
   activeItem,
   children,
   className,
+  onClose,
 }: {
   link: NavModelItem;
   activeItem?: NavModelItem;
   children: React.ReactNode;
   className?: string;
+  onClose?: () => void;
 }) {
   const styles = useStyles2(getStyles);
   const FeatureHighlightWrapper = link.highlightText ? NavFeatureHighlight : React.Fragment;
@@ -26,13 +30,17 @@ export function NavBarMenuSection({
   const [sectionExpanded, setSectionExpanded] = useState(Boolean(hasActiveChild));
 
   return (
-    <li className={cx(styles.collapsibleSectionWrapper, className)}>
-      <CollapsableSection
-        isOpen={Boolean(sectionExpanded)}
-        onToggle={(isOpen) => setSectionExpanded(isOpen)}
-        className={cx(styles.collapseWrapper, { [styles.collapseWrapperActive]: isActive })}
-        contentClassName={styles.collapseContent}
-        label={
+    <>
+      <div className={cx(styles.collapsibleSectionWrapper, className)}>
+        <NavBarMenuItem
+          isActive={link === activeItem}
+          onClick={() => {
+            link.onClick?.();
+            onClose?.();
+          }}
+          target={link.target}
+          url={link.url}
+        >
           <div
             className={cx(styles.labelWrapper, {
               [styles.isActive]: isActive,
@@ -44,32 +52,36 @@ export function NavBarMenuSection({
             </FeatureHighlightWrapper>
             {link.text}
           </div>
-        }
-      >
-        {children}
-      </CollapsableSection>
-    </li>
+        </NavBarMenuItem>
+        <Button
+          aria-label={`${sectionExpanded ? 'Collapse' : 'Expand'} section`}
+          variant="secondary"
+          fill="text"
+          className={styles.collapseButton}
+          onClick={() => setSectionExpanded(!sectionExpanded)}
+        >
+          <Icon name={sectionExpanded ? 'angle-up' : 'angle-down'} />
+        </Button>
+      </div>
+      {sectionExpanded && children}
+    </>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
   collapsibleSectionWrapper: css({
-    position: 'relative',
     display: 'flex',
-    flexDirection: 'column',
   }),
-  collapseWrapper: css({
-    paddingLeft: theme.spacing(0),
-    paddingRight: theme.spacing(4.25),
-    minHeight: theme.spacing(6),
-    overflowWrap: 'anywhere',
-    alignItems: 'center',
-    color: theme.colors.text.secondary,
-    '&:hover, &:focus-within': {
+  collapseButton: css({
+    borderRadius: 0,
+    boxSizing: 'border-box',
+    height: '100%',
+
+    '&:hover, &:focus-visible': {
       backgroundColor: theme.colors.action.hover,
       color: theme.colors.text.primary,
     },
-    '&:focus-within': {
+    '&:focus-visible': {
       boxShadow: 'none',
       outline: `2px solid ${theme.colors.primary.main}`,
       outlineOffset: '-2px',

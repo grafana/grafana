@@ -27,7 +27,7 @@ export function NavBarMenuItemWrapper({
 
   if (linkHasChildren(link)) {
     return (
-      <NavBarMenuSection link={link} activeItem={activeItem}>
+      <NavBarMenuSection onClose={onClose} link={link} activeItem={activeItem}>
         <ul className={styles.children}>
           {link.children.map((childLink) => {
             const icon = childLink.icon ? toIconName(childLink.icon) : undefined;

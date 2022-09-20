@@ -4,7 +4,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { locationUtil, NavModel, NavModelItem, TimeRange, PageLayoutType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { Themeable2, withTheme2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { Page } from 'app/core/components/Page/Page';
@@ -446,7 +446,7 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
       pageNav.parentItem = pageNav.parentItem;
     }
   } else {
-    sectionNav = getNavModel(props.navIndex, 'dashboards');
+    sectionNav = getNavModel(props.navIndex, config.featureToggles.topnav ? 'dashboards/browse' : 'dashboards');
   }
 
   if (state.editPanel || state.viewPanel) {
