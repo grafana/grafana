@@ -207,6 +207,15 @@ class UnthemedLogs extends PureComponent<Props, State> {
     this.setState({ hiddenLogLevels });
   };
 
+  onToggleLogsVolumeCollapse = (isOpen: boolean) => {
+    this.props.onSetLogsVolumeEnabled(isOpen);
+    reportInteraction('grafana_explore_logs_histogram_toggle_clicked', {
+      datasourceType: this.props.datasourceType,
+      histogramType: this.props.logsVolumeData !== undefined ? 'fullRange' : 'logLinesBased',
+      type: isOpen ? 'open' : 'close',
+    });
+  };
+
   onClickScan = (event: React.SyntheticEvent) => {
     event.preventDefault();
     if (this.props.onStartScanning) {
@@ -337,7 +346,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
     return (
       <>
-        <Collapse label="Logs volume" collapsible isOpen={logsVolumeEnabled} onToggle={onSetLogsVolumeEnabled}>
+        <Collapse label="Logs volume" collapsible isOpen={logsVolumeEnabled} onToggle={this.onToggleLogsVolumeCollapse}>
           {logsVolumeEnabled && (
             <LogsVolumePanel
               absoluteRange={absoluteRange}
