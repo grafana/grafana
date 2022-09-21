@@ -269,7 +269,10 @@ export class UPlotConfigBuilder {
     const xAxis = axes.find((a) => a.props.scaleKey === 'x');
     const axesWithoutGridSet = axes.filter((a) => a.props.grid?.show === undefined);
     const firstValueAxisIdx = axesWithoutGridSet.findIndex(
-      (a) => a.props.placement === AxisPlacement.Left || (a.props.placement === AxisPlacement.Bottom && a !== xAxis)
+      (a) =>
+        a.props.placement === AxisPlacement.Left ||
+        a.props.placement === AxisPlacement.Right ||
+        (a.props.placement === AxisPlacement.Bottom && a !== xAxis)
     );
 
     // For all axes with no grid set, set the grid automatically (grid only for first left axis )
