@@ -164,7 +164,7 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden?: boolean) => {
     }),
     menuCollapseIcon: css({
       position: 'absolute',
-      top: '43px',
+      top: '20px',
       right: '0px',
       transform: `translateX(50%)`,
     }),

@@ -53,15 +53,17 @@ export function NavBarMenuSection({
             {link.text}
           </div>
         </NavBarMenuItem>
-        <Button
-          aria-label={`${sectionExpanded ? 'Collapse' : 'Expand'} section`}
-          variant="secondary"
-          fill="text"
-          className={styles.collapseButton}
-          onClick={() => setSectionExpanded(!sectionExpanded)}
-        >
-          <Icon name={sectionExpanded ? 'angle-up' : 'angle-down'} />
-        </Button>
+        {Boolean(link.children?.length) && (
+          <Button
+            aria-label={`${sectionExpanded ? 'Collapse' : 'Expand'} section`}
+            variant="secondary"
+            fill="text"
+            className={styles.collapseButton}
+            onClick={() => setSectionExpanded(!sectionExpanded)}
+          >
+            <Icon name={sectionExpanded ? 'angle-up' : 'angle-down'} size="xl" />
+          </Button>
+        )}
       </div>
       {sectionExpanded && children}
     </>
@@ -73,20 +75,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
   }),
   collapseButton: css({
-    borderRadius: 0,
-    boxSizing: 'border-box',
-    height: '100%',
-
-    '&:hover, &:focus-visible': {
-      backgroundColor: theme.colors.action.hover,
-      color: theme.colors.text.primary,
-    },
-    '&:focus-visible': {
-      boxShadow: 'none',
-      outline: `2px solid ${theme.colors.primary.main}`,
-      outlineOffset: '-2px',
-      transition: 'none',
-    },
+    color: theme.colors.text.disabled,
+    padding: theme.spacing(0, 0.5),
+    marginRight: theme.spacing(1),
   }),
   collapseWrapperActive: css({
     backgroundColor: theme.colors.action.disabledBackground,
@@ -100,6 +91,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gridAutoFlow: 'column',
     gridTemplateColumns: `${theme.spacing(7)} auto`,
     placeItems: 'center',
+    fontWeight: theme.typography.fontWeightMedium,
   }),
   isActive: css({
     color: theme.colors.text.primary,

@@ -5,8 +5,6 @@ import React from 'react';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { toIconName, useStyles2 } from '@grafana/ui';
 
-import { NavBarItemIcon } from '../NavBar/NavBarItemIcon';
-import { NavFeatureHighlight } from '../NavBar/NavFeatureHighlight';
 import menuItemTranslations from '../NavBar/navBarItem-translations';
 import { isMatchOrChildMatch } from '../NavBar/utils';
 
@@ -25,9 +23,20 @@ export function NavBarMenuItemWrapper({
   const { i18n } = useLingui();
   const styles = useStyles2(getStyles);
 
-  if (linkHasChildren(link)) {
+  if (link.emptyMessageId) {
+    const emptyMessageTranslated = i18n._(menuItemTranslations[link.emptyMessageId]);
     return (
-      <NavBarMenuSection onClose={onClose} link={link} activeItem={activeItem}>
+      <NavBarMenuSection link={link}>
+        <ul className={styles.children}>
+          <div className={styles.emptyMessage}>{emptyMessageTranslated}</div>
+        </ul>
+      </NavBarMenuSection>
+    );
+  }
+
+  return (
+    <NavBarMenuSection onClose={onClose} link={link} activeItem={activeItem}>
+      {linkHasChildren(link) && (
         <ul className={styles.children}>
           {link.children.map((childLink) => {
             const icon = childLink.icon ? toIconName(childLink.icon) : undefined;
@@ -51,41 +60,9 @@ export function NavBarMenuItemWrapper({
             );
           })}
         </ul>
-      </NavBarMenuSection>
-    );
-  } else if (link.emptyMessageId) {
-    const emptyMessageTranslated = i18n._(menuItemTranslations[link.emptyMessageId]);
-    return (
-      <NavBarMenuSection link={link}>
-        <ul className={styles.children}>
-          <div className={styles.emptyMessage}>{emptyMessageTranslated}</div>
-        </ul>
-      </NavBarMenuSection>
-    );
-  } else {
-    const FeatureHighlightWrapper = link.highlightText ? NavFeatureHighlight : React.Fragment;
-    return (
-      <NavBarMenuItem
-        isActive={activeItem === link}
-        icon={link.showIconInNavbar ? link.icon && toIconName(link.icon) : undefined}
-        onClick={() => {
-          link.onClick?.();
-          onClose();
-        }}
-        target={link.target}
-        url={link.url}
-      >
-        <div className={styles.itemWithoutMenuContent}>
-          <div className={styles.iconContainer}>
-            <FeatureHighlightWrapper>
-              <NavBarItemIcon link={link} />
-            </FeatureHighlightWrapper>
-          </div>
-          <span className={styles.linkText}>{link.text}</span>
-        </div>
-      </NavBarMenuItem>
-    );
-  }
+      )}
+    </NavBarMenuSection>
+  );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

@@ -52,6 +52,8 @@ export interface ThemeColorsBase<TColor> {
     selected: string;
     /** Used for hovered menu item / select option */
     hover: string;
+    /** Used highlight on larger items where a weaker contrast change is better */
+    hoverWeak: string;
     /** Used for button/colored background hover opacity */
     hoverOpacity: number;
     /** Used focused menu item / select option */
@@ -141,6 +143,7 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
 
   action = {
     hover: `rgba(${this.whiteBase}, 0.16)`,
+    hoverWeak: `rgba(${this.whiteBase}, 0.04)`,
     selected: `rgba(${this.whiteBase}, 0.12)`,
     focus: `rgba(${this.whiteBase}, 0.16)`,
     hoverOpacity: 0.08,
@@ -221,6 +224,7 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
 
   action = {
     hover: `rgba(${this.blackBase}, 0.12)`,
+    hoverWeak: `rgba(${this.blackBase}, 0.04)`,
     selected: `rgba(${this.blackBase}, 0.08)`,
     hoverOpacity: 0.08,
     focus: `rgba(${this.blackBase}, 0.12)`,
