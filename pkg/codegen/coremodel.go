@@ -23,9 +23,9 @@ import (
 	"github.com/grafana/thema/encoding/openapi"
 )
 
-// CoremodelDefinition contains the results of statically analyzing a Grafana
+// CoremodelDeclaration contains the results of statically analyzing a Grafana
 // directory for a Thema lineage.
-type CoremodelDefinition struct {
+type CoremodelDeclaration struct {
 	Lineage thema.Lineage
 	// Absolute path to the coremodel's coremodel.cue file.
 	LineagePath string
@@ -49,12 +49,12 @@ type CoremodelDefinition struct {
 // This loading approach is intended primarily for use with code generators, or
 // other use cases external to grafana-server backend. For code within
 // grafana-server, prefer lineage loaders provided in e.g. pkg/coremodel/*.
-func ExtractLineage(path string, lib thema.Library) (*CoremodelDefinition, error) {
+func ExtractLineage(path string, lib thema.Library) (*CoremodelDeclaration, error) {
 	if !filepath.IsAbs(path) {
 		return nil, fmt.Errorf("must provide an absolute path, got %q", path)
 	}
 
-	ec := &CoremodelDefinition{
+	ec := &CoremodelDeclaration{
 		LineagePath: path,
 	}
 
@@ -108,14 +108,14 @@ func ExtractLineage(path string, lib thema.Library) (*CoremodelDefinition, error
 }
 
 // toTemplateObj extracts creates a struct with all the useful strings for template generation.
-func (ls *CoremodelDefinition) toTemplateObj() tplVars {
-	lin := ls.Lineage
+func (cd *CoremodelDeclaration) toTemplateObj() tplVars {
+	lin := cd.Lineage
 	sch := thema.SchemaP(lin, thema.LatestVersion(lin))
 
 	return tplVars{
 		Name:        lin.Name(),
-		LineagePath: ls.RelativePath,
-		PkgPath:     filepath.ToSlash(filepath.Join("github.com/grafana/grafana", filepath.Dir(ls.RelativePath))),
+		LineagePath: cd.RelativePath,
+		PkgPath:     filepath.ToSlash(filepath.Join("github.com/grafana/grafana", filepath.Dir(cd.RelativePath))),
 		TitleName:   strings.Title(lin.Name()), // nolint
 		LatestSeqv:  sch.Version()[0],
 		LatestSchv:  sch.Version()[1],
@@ -142,11 +142,11 @@ var nonAPITypes = map[string]bool{
 
 // PathVersion returns the string path element to use for the latest schema.
 // "x" if not yet canonical, otherwise, "v<major>"
-func (ls *CoremodelDefinition) PathVersion() string {
-	if !ls.IsCanonical {
+func (cd *CoremodelDeclaration) PathVersion() string {
+	if !cd.IsCanonical {
 		return "x"
 	}
-	return fmt.Sprintf("v%v", thema.LatestVersion(ls.Lineage)[0])
+	return fmt.Sprintf("v%v", thema.LatestVersion(cd.Lineage)[0])
 }
 
 // GenerateGoCoremodel generates a standard Go model struct and coremodel
@@ -154,8 +154,8 @@ func (ls *CoremodelDefinition) PathVersion() string {
 //
 // The provided path must be a directory. Generated code files will be written
 // to that path. The final element of the path must match the Lineage.Name().
-func (ls *CoremodelDefinition) GenerateGoCoremodel(path string) (WriteDiffer, error) {
-	lin, lib := ls.Lineage, ls.Lineage.Library()
+func (cd *CoremodelDeclaration) GenerateGoCoremodel(path string) (WriteDiffer, error) {
+	lin, lib := cd.Lineage, cd.Lineage.Library()
 	_, name := filepath.Split(path)
 	if name != lin.Name() {
 		return nil, fmt.Errorf("lineage name %q must match final element of path, got %q", lin.Name(), path)
@@ -200,7 +200,7 @@ func (ls *CoremodelDefinition) GenerateGoCoremodel(path string) (WriteDiffer, er
 
 	buf := new(bytes.Buffer)
 	if err = tmpls.Lookup("autogen_header.tmpl").Execute(buf, tvars_autogen_header{
-		LineagePath:   ls.RelativePath,
+		LineagePath:   cd.RelativePath,
 		GeneratorPath: "pkg/framework/coremodel/gen.go", // FIXME hardcoding is not OK
 	}); err != nil {
 		return nil, fmt.Errorf("error executing header template: %w", err)
@@ -208,7 +208,7 @@ func (ls *CoremodelDefinition) GenerateGoCoremodel(path string) (WriteDiffer, er
 
 	fmt.Fprint(buf, "\n", gostr)
 
-	vars := ls.toTemplateObj()
+	vars := cd.toTemplateObj()
 	err = tmpls.Lookup("addenda.tmpl").Execute(buf, vars)
 	if err != nil {
 		panic(err)
@@ -238,8 +238,8 @@ type tplVars struct {
 	IsComposed             bool
 }
 
-func (ls *CoremodelDefinition) GenerateTypescriptCoremodel() (*tsast.File, error) {
-	schv := thema.SchemaP(ls.Lineage, thema.LatestVersion(ls.Lineage)).UnwrapCUE()
+func (cd *CoremodelDeclaration) GenerateTypescriptCoremodel() (*tsast.File, error) {
+	schv := thema.SchemaP(cd.Lineage, thema.LatestVersion(cd.Lineage)).UnwrapCUE()
 
 	tf, err := cuetsy.GenerateAST(schv, cuetsy.Config{
 		Export: true,
@@ -248,14 +248,14 @@ func (ls *CoremodelDefinition) GenerateTypescriptCoremodel() (*tsast.File, error
 		return nil, fmt.Errorf("cuetsy tf gen failed: %w", err)
 	}
 
-	top, err := cuetsy.GenerateSingleAST(strings.Title(ls.Lineage.Name()), schv, cuetsy.TypeInterface)
+	top, err := cuetsy.GenerateSingleAST(strings.Title(cd.Lineage.Name()), schv, cuetsy.TypeInterface)
 	if err != nil {
 		return nil, fmt.Errorf("cuetsy top gen failed: %s", cerrors.Details(err, nil))
 	}
 
 	buf := new(bytes.Buffer)
 	if err := tmpls.Lookup("autogen_header.tmpl").Execute(buf, tvars_autogen_header{
-		LineagePath:   ls.RelativePath,
+		LineagePath:   cd.RelativePath,
 		GeneratorPath: "pkg/framework/coremodel/gen.go", // FIXME hardcoding is not OK
 	}); err != nil {
 		return nil, fmt.Errorf("error executing header template: %w", err)
@@ -308,7 +308,7 @@ func (d prefixDropper) Visit(n ast.Node) ast.Visitor {
 // GenerateCoremodelRegistry produces Go files that define a registry with
 // references to all the Go code that is expected to be generated from the
 // provided lineages.
-func GenerateCoremodelRegistry(path string, ecl []*CoremodelDefinition) (WriteDiffer, error) {
+func GenerateCoremodelRegistry(path string, ecl []*CoremodelDeclaration) (WriteDiffer, error) {
 	var cml []tplVars
 	for _, ec := range ecl {
 		cml = append(cml, ec.toTemplateObj())

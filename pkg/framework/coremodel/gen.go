@@ -7,6 +7,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -56,7 +57,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	var lins []*gcgen.CoremodelDefinition
+	var lins []*gcgen.CoremodelDeclaration
 	for _, item := range items {
 		if item.IsDir() {
 			lin, err := gcgen.ExtractLineage(filepath.Join(cmroot, item.Name(), "coremodel.cue"), lib)
@@ -138,11 +139,11 @@ func main() {
 
 // generates the path relative to packages/grafana-schema/src at which the raw
 // type definitions should be exported for the latest schema of this type
-func rawTSGenPath(cm *gcgen.CoremodelDefinition) string {
+func rawTSGenPath(cm *gcgen.CoremodelDeclaration) string {
 	return fmt.Sprintf("raw/%s/%s/%s.gen.ts", cm.Lineage.Name(), cm.PathVersion(), cm.Lineage.Name())
 }
 
-func mkTSHeader(cm *gcgen.CoremodelDefinition) *ast.Comment {
+func mkTSHeader(cm *gcgen.CoremodelDeclaration) *ast.Comment {
 	v := gcgen.HeaderVars{
 		GeneratorPath: "pkg/framework/coremodel/gen.go",
 	}
@@ -150,8 +151,9 @@ func mkTSHeader(cm *gcgen.CoremodelDefinition) *ast.Comment {
 		v.LineagePath = cm.RelativePath
 	}
 	v.GeneratorPath = "pkg/framework/coremodel/gen.go"
-	comm := ts.CommentFromString(gcgen.GenGrafanaHeader(v), -1, false)
-	return &comm
+	return &ast.Comment{
+		Text: strings.TrimSpace(gcgen.GenGrafanaHeader(v)),
+	}
 }
 
 func genSharedSchemas(groot string) (gcgen.WriteDiffer, error) {
@@ -191,7 +193,7 @@ func genSharedSchemas(groot string) (gcgen.WriteDiffer, error) {
 }
 
 // TODO make this more generic and reusable
-func extractTSIndexVeneerElements(cm *gcgen.CoremodelDefinition, tf *ast.File) ([]ast.Decl, error) {
+func extractTSIndexVeneerElements(cm *gcgen.CoremodelDeclaration, tf *ast.File) ([]ast.Decl, error) {
 	lin := cm.Lineage
 	sch := thema.SchemaP(lin, thema.LatestVersion(lin))
 
@@ -260,30 +262,47 @@ func extractTSIndexVeneerElements(cm *gcgen.CoremodelDefinition, tf *ast.File) (
 	ret := make([]ast.Decl, 0)
 	if len(raw) > 0 {
 		ret = append(ret, ast.ExportSet{
-			TypeOnly: true,
-			Exports:  raw,
-			From:     ast.Str{Value: fmt.Sprintf("./raw/%s/%s/%s.gen", cm.Lineage.Name(), cm.PathVersion(), cm.Lineage.Name())},
+			CommentList: []ast.Comment{ts.CommentFromString(fmt.Sprintf("Raw generated types from %s entity type.", cm.Lineage.Name()), 80, false)},
+			TypeOnly:    true,
+			Exports:     raw,
+			From:        ast.Str{Value: fmt.Sprintf("./raw/%s/%s/%s.gen", cm.Lineage.Name(), cm.PathVersion(), cm.Lineage.Name())},
 		})
 	}
 	if len(rawD) > 0 {
 		ret = append(ret, ast.ExportSet{
-			TypeOnly: false,
-			Exports:  rawD,
-			From:     ast.Str{Value: fmt.Sprintf("./raw/%s/%s/%s.gen", cm.Lineage.Name(), cm.PathVersion(), cm.Lineage.Name())},
+			CommentList: []ast.Comment{ts.CommentFromString(fmt.Sprintf("Raw generated default consts from %s entity type.", cm.Lineage.Name()), 80, false)},
+			TypeOnly:    false,
+			Exports:     rawD,
+			From:        ast.Str{Value: fmt.Sprintf("./raw/%s/%s/%s.gen", cm.Lineage.Name(), cm.PathVersion(), cm.Lineage.Name())},
 		})
 	}
+	vfile := fmt.Sprintf("./veneer/%s", cm.Lineage.Name())
+	customstr := fmt.Sprintf(`// The following exported declarations correspond to %s schema-declared types marked as
+// @grafana(customVeneer="ts") in %s, version %s.
+//
+// The handwritten custom veneer file for these types is expected to be at
+// %s.ts.
+// This re-export declaration enforces that the handwritten veneer file exists,
+// and exports all the symbols in the list.
+//
+// TODO generate code such that tsc enforces type compatibility between raw and veneer decls`,
+		cm.Lineage.Name(), cm.RelativePath, thema.LatestVersion(cm.Lineage), filepath.Clean(path.Join("packages", "grafana-schema", "src", vfile)))
+
+	customComments := []ast.Comment{{Text: customstr}}
 	if len(custom) > 0 {
 		ret = append(ret, ast.ExportSet{
-			TypeOnly: true,
-			Exports:  custom,
-			From:     ast.Str{Value: fmt.Sprintf("./veneer/%s", cm.Lineage.Name())},
+			CommentList: customComments,
+			TypeOnly:    true,
+			Exports:     custom,
+			From:        ast.Str{Value: vfile},
 		})
 	}
 	if len(customD) > 0 {
 		ret = append(ret, ast.ExportSet{
-			TypeOnly: false,
-			Exports:  customD,
-			From:     ast.Str{Value: fmt.Sprintf("./veneer/%s", cm.Lineage.Name())},
+			CommentList: customComments,
+			TypeOnly:    false,
+			Exports:     customD,
+			From:        ast.Str{Value: vfile},
 		})
 	}
 

@@ -21,4 +21,7 @@ export interface FieldConfigSource<TOptions = Record<string, unknown>> extends r
   defaults: FieldConfig<TOptions>;
 }
 
-type checkPanel = Panel & raw.FieldConfig
+export const defaultDashboard: Partial<Dashboard> = raw.defaultDashboard;
+export const defaultPanel: Partial<Panel> = raw.defaultPanel;
+export const defaultFieldConfig: Partial<FieldConfig> = raw.defaultFieldConfig;
+export const defaultFieldConfigSource: Partial<FieldConfigSource> = raw.defaultFieldConfigSource;
