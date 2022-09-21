@@ -26,14 +26,18 @@ import (
 
 type DiscordNotifier struct {
 	*Base
-	log                log.Logger
-	ns                 notifications.WebhookSender
-	images             ImageStore
-	tmpl               *template.Template
-	Content            string
-	AvatarURL          string
-	WebhookURL         string
-	UseDiscordUsername bool
+	log      log.Logger
+	ns       notifications.WebhookSender
+	images   ImageStore
+	tmpl     *template.Template
+	settings discordSettings
+}
+
+type discordSettings struct {
+	URL                string `json:"url,omitempty" yaml:"url,omitempty"`
+	Message            string `json:"message,omitempty" yaml:"message,omitempty"`
+	AvatarURL          string `json:"avatar_url,omitempty" yaml:"avatar_url,omitempty"`
+	UseDiscordUsername bool   `json:"use_discord_username" yaml:"use_discord_username"`
 }
 
 const DiscordMaxEmbeds = 10
@@ -50,9 +54,17 @@ func DiscordFactory(fc FactoryConfig) (NotificationChannel, error) {
 }
 
 func buildDiscordNotifier(fc FactoryConfig) (*DiscordNotifier, error) {
-	discordURL := fc.Config.Settings.Get("url").MustString()
-	if discordURL == "" {
+	var settings discordSettings
+	err := fc.Config.unmarshalSettings(&settings)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal settings: %w", err)
+	}
+
+	if settings.URL == "" {
 		return nil, errors.New("could not find webhook url property in settings")
+	}
+	if settings.Message == "" {
+		settings.Message = DefaultMessageEmbed
 	}
 
 	return &DiscordNotifier{
@@ -64,14 +76,11 @@ func buildDiscordNotifier(fc FactoryConfig) (*DiscordNotifier, error) {
 			Settings:              fc.Config.Settings,
 			SecureSettings:        fc.Config.SecureSettings,
 		}),
-		Content:            fc.Config.Settings.Get("message").MustString(DefaultMessageEmbed),
-		AvatarURL:          fc.Config.Settings.Get("avatar_url").MustString(),
-		WebhookURL:         discordURL,
-		UseDiscordUsername: fc.Config.Settings.Get("use_discord_username").MustBool(false),
-		log:                log.New("alerting.notifier.discord"),
-		ns:                 fc.NotificationService,
-		images:             fc.ImageStore,
-		tmpl:               fc.Template,
+		settings: settings,
+		log:      log.New("alerting.notifier.discord"),
+		ns:       fc.NotificationService,
+		images:   fc.ImageStore,
+		tmpl:     fc.Template,
 	}, nil
 }
 
@@ -80,15 +89,15 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 
 	bodyJSON := simplejson.New()
 
-	if !d.UseDiscordUsername {
+	if !d.settings.UseDiscordUsername {
 		bodyJSON.Set("username", "Grafana")
 	}
 
 	var tmplErr error
 	tmpl, _ := TmplText(ctx, d.tmpl, as, d.log, &tmplErr)
 
-	if d.Content != "" {
-		bodyJSON.Set("content", tmpl(d.Content))
+	if d.settings.Message != "" {
+		bodyJSON.Set("content", tmpl(d.settings.Message))
 		if tmplErr != nil {
 			d.log.Warn("failed to template Discord notification content", "err", tmplErr.Error())
 			// Reset tmplErr for templating other fields.
@@ -96,11 +105,11 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		}
 	}
 
-	if d.AvatarURL != "" {
-		bodyJSON.Set("avatar_url", tmpl(d.AvatarURL))
+	if d.settings.AvatarURL != "" {
+		bodyJSON.Set("avatar_url", tmpl(d.settings.AvatarURL))
 		if tmplErr != nil {
-			d.log.Warn("failed to template Discord Avatar URL", "err", tmplErr.Error(), "fallback", d.AvatarURL)
-			bodyJSON.Set("avatar_url", d.AvatarURL)
+			d.log.Warn("failed to template Discord Avatar URL", "err", tmplErr.Error(), "fallback", d.settings.AvatarURL)
+			bodyJSON.Set("avatar_url", d.settings.AvatarURL)
 			tmplErr = nil
 		}
 	}
@@ -143,10 +152,10 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		tmplErr = nil
 	}
 
-	u := tmpl(d.WebhookURL)
+	u := tmpl(d.settings.URL)
 	if tmplErr != nil {
-		d.log.Warn("failed to template Discord URL", "err", tmplErr.Error(), "fallback", d.WebhookURL)
-		u = d.WebhookURL
+		d.log.Warn("failed to template Discord URL", "err", tmplErr.Error(), "fallback", d.settings.URL)
+		u = d.settings.URL
 	}
 
 	body, err := json.Marshal(bodyJSON)
