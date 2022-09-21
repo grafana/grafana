@@ -63,7 +63,7 @@ export function PluginDetailsHeader({ plugin, currentUrl, parentUrl }: Props): R
 
               {/* Links */}
               {plugin.details?.links.map((link: any) => (
-                <a key={link.name} href={link.url}>
+                <a key={link.name} className={styles.textUnderline} href={link.url}>
                   {link.name}
                 </a>
               ))}
