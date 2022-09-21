@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/org"
 )
@@ -130,3 +131,9 @@ type Stats struct {
 	ServiceAccounts int64 `xorm:"serviceaccounts"`
 	Tokens          int64 `xorm:"serviceaccount_tokens"`
 }
+
+// serviceAccountAccessEvaluator is used to protect the "Configuration > Service accounts" page access
+var AccessEvaluator = ac.EvalAny(
+	ac.EvalPermission(ActionRead),
+	ac.EvalPermission(ActionCreate),
+)

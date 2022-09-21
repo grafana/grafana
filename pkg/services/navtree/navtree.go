@@ -562,7 +562,7 @@ func (hs *ServiceImpl) buildDataConnectionsNavLink(c *models.ReqContext) *dtos.N
 func (hs *ServiceImpl) buildAdminNavLinks(c *models.ReqContext) []*dtos.NavLink {
 	hasAccess := ac.HasAccess(hs.accessControl, c)
 	hasGlobalAccess := ac.HasGlobalAccess(hs.accessControl, hs.accesscontrolService, c)
-	orgsAccessEvaluator := ac.EvalPermission(ActionOrgsRead)
+	orgsAccessEvaluator := ac.EvalPermission(ac.ActionOrgsRead)
 	adminNavLinks := []*dtos.NavLink{}
 
 	if hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll)) {

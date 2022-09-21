@@ -12,51 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 )
 
-const (
-	ActionProvisioningReload = "provisioning:reload"
-
-	ActionOrgsRead             = "orgs:read"
-	ActionOrgsPreferencesRead  = "orgs.preferences:read"
-	ActionOrgsQuotasRead       = "orgs.quotas:read"
-	ActionOrgsWrite            = "orgs:write"
-	ActionOrgsPreferencesWrite = "orgs.preferences:write"
-	ActionOrgsQuotasWrite      = "orgs.quotas:write"
-	ActionOrgsDelete           = "orgs:delete"
-	ActionOrgsCreate           = "orgs:create"
-)
-
-// teamsAccessEvaluator is used to protect the "Configuration > Teams" page access
-// grants access to a user when they can either create teams or can read and update a team
-var teamsAccessEvaluator = ac.EvalAny(
-	ac.EvalPermission(ac.ActionTeamsCreate),
-	ac.EvalAll(
-		ac.EvalPermission(ac.ActionTeamsRead),
-		ac.EvalAny(
-			ac.EvalPermission(ac.ActionTeamsWrite),
-			ac.EvalPermission(ac.ActionTeamsPermissionsWrite),
-		),
-	),
-)
-
-var orgPreferencesAccessEvaluator = ac.EvalAny(
-	ac.EvalAll(
-		ac.EvalPermission(ActionOrgsRead),
-		ac.EvalPermission(ActionOrgsWrite),
-	),
-	ac.EvalAll(
-		ac.EvalPermission(ActionOrgsPreferencesRead),
-		ac.EvalPermission(ActionOrgsPreferencesWrite),
-	),
-)
-
-var apiKeyAccessEvaluator = ac.EvalPermission(ac.ActionAPIKeyRead)
-
-// serviceAccountAccessEvaluator is used to protect the "Configuration > Service accounts" page access
-var serviceAccountAccessEvaluator = ac.EvalAny(
-	ac.EvalPermission(serviceaccounts.ActionRead),
-	ac.EvalPermission(serviceaccounts.ActionCreate),
-)
-
 func (hs *ServiceImpl) setupConfigNodes(c *models.ReqContext) ([]*dtos.NavLink, error) {
 	var configNodes []*dtos.NavLink
 
@@ -91,7 +46,7 @@ func (hs *ServiceImpl) setupConfigNodes(c *models.ReqContext) ([]*dtos.NavLink, 
 		})
 	}
 
-	if hasAccess(hs.ReqCanAdminTeams, teamsAccessEvaluator) {
+	if hasAccess(hs.ReqCanAdminTeams, ac.TeamsAccessEvaluator) {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "Teams",
 			Id:          "teams",
@@ -112,7 +67,7 @@ func (hs *ServiceImpl) setupConfigNodes(c *models.ReqContext) ([]*dtos.NavLink, 
 		})
 	}
 
-	if hasAccess(ac.ReqOrgAdmin, orgPreferencesAccessEvaluator) {
+	if hasAccess(ac.ReqOrgAdmin, ac.OrgPreferencesAccessEvaluator) {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "Preferences",
 			Id:          "org-settings",
@@ -129,7 +84,7 @@ func (hs *ServiceImpl) setupConfigNodes(c *models.ReqContext) ([]*dtos.NavLink, 
 	}
 
 	apiKeysHidden := hideApiKeys == "1" && len(apiKeys) == 0
-	if hasAccess(ac.ReqOrgAdmin, apiKeyAccessEvaluator) && !apiKeysHidden {
+	if hasAccess(ac.ReqOrgAdmin, ac.ApiKeyAccessEvaluator) && !apiKeysHidden {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "API keys",
 			Id:          "apikeys",
@@ -157,5 +112,5 @@ func (hs *ServiceImpl) ReqCanAdminTeams(c *models.ReqContext) bool {
 
 func enableServiceAccount(hs *ServiceImpl, c *models.ReqContext) bool {
 	hasAccess := ac.HasAccess(hs.accessControl, c)
-	return hasAccess(ac.ReqOrgAdmin, serviceAccountAccessEvaluator)
+	return hasAccess(ac.ReqOrgAdmin, serviceaccounts.AccessEvaluator)
 }
