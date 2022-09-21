@@ -18,9 +18,9 @@ import {
   MetricAggregationWithInlineScript,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { defaultBucketAgg, defaultMetricAgg, findMetricById, highlightTags } from './query_def';
+import { populateLogzioQuery } from './query_populator.logzio'; // LOGZ.IO GRAFANA CHANGE :: DEV-18135 populate query with logzio extensions
 import { ElasticsearchQuery, TermsQuery } from './types';
 import { convertOrderByToMetricId, getScriptValue } from './utils';
-import { populateLogzioQuery } from './query_populator.logzio'; // LOGZ.IO GRAFANA CHANGE :: DEV-18135 populate query with logzio extensions
 
 export class ElasticQueryBuilder {
   timeField: string;

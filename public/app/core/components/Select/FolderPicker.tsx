@@ -7,9 +7,9 @@ import { AsyncSelect } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { createFolder, getFolderById, searchFolders } from 'app/features/manage-dashboards/state/actions';
 
+import { DashboardSearchHit } from '../../../features/search/types';
 import { AccessControlAction, PermissionLevelString } from '../../../types';
 import appEvents from '../../app_events';
-import {DashboardSearchHit} from "../../../features/search/types";
 
 export type FolderPickerFilter = (hits: DashboardSearchHit[]) => DashboardSearchHit[];
 

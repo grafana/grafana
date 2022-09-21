@@ -44,8 +44,8 @@ exports[`no enzyme tests`] = {
     "packages/grafana-ui/src/components/Logs/LogRows.test.tsx:3121815234": [
       [0, 17, 13, "RegExp match", "2409514259"]
     ],
-    "packages/grafana-ui/src/components/QueryField/QueryField.test.tsx:375894800": [
-      [0, 19, 13, "RegExp match", "2409514259"]
+    "packages/grafana-ui/src/components/QueryField/QueryField.test.tsx:2976628669": [
+      [0, 26, 13, "RegExp match", "2409514259"]
     ],
     "packages/grafana-ui/src/components/Slider/Slider.test.tsx:751112695": [
       [0, 17, 13, "RegExp match", "2409514259"]
@@ -59,16 +59,16 @@ exports[`no enzyme tests`] = {
     "packages/grafana-ui/src/components/Typeahead/TypeaheadInfo.test.tsx:3512289373": [
       [0, 17, 13, "RegExp match", "2409514259"]
     ],
-    "packages/grafana-ui/src/slate-plugins/braces.test.tsx:1440546721": [
+    "packages/grafana-ui/src/slate-plugins/braces.test.tsx:1691463920": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
-    "packages/grafana-ui/src/slate-plugins/clear.test.tsx:1085648664": [
+    "packages/grafana-ui/src/slate-plugins/clear.test.tsx:3927593033": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
-    "packages/grafana-ui/src/slate-plugins/runner.test.tsx:446043290": [
+    "packages/grafana-ui/src/slate-plugins/runner.test.tsx:1123710822": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
-    "packages/grafana-ui/src/slate-plugins/suggestions.test.tsx:3654981205": [
+    "packages/grafana-ui/src/slate-plugins/suggestions.test.tsx:2682912140": [
       [0, 18, 13, "RegExp match", "2409514259"]
     ],
     "packages/jaeger-ui-components/src/TracePageHeader/SpanGraph/CanvasSpanGraph.test.js:1974748555": [

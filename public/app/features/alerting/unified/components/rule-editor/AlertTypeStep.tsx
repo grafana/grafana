@@ -8,6 +8,7 @@ import { Field, Icon, Input, InputControl, Label, Tooltip, useStyles2 } from '@g
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types';
 
+import { DashboardSearchHit } from '../../../../search/types';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 
 import { CloudRulesSourcePicker } from './CloudRulesSourcePicker';
@@ -16,7 +17,6 @@ import { RuleEditorSection } from './RuleEditorSection';
 import { Folder, RuleFolderPicker } from './RuleFolderPicker';
 import { RuleTypePicker } from './rule-types/RuleTypePicker';
 import { checkForPathSeparator } from './util';
-import { DashboardSearchHit } from "../../../../search/types";
 
 interface Props {
   editingExistingRule: boolean;
@@ -29,7 +29,7 @@ const recordingRuleNameValidationPattern = {
 };
 
 //LOGZIO GRAFANA CHANGE :: DEV-33636 - Blacklist folder selection options
-const blackListedFolderUids = ['logzio-dashboards-folder']
+const blackListedFolderUids = ['logzio-dashboards-folder'];
 //LOGZIO GRAFANA CHANGE :: end
 
 export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
@@ -52,42 +52,39 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
   const folder = watch('folder');
   const group = watch('group');
   const folderFilter = (hits: DashboardSearchHit[]) => {
-    return hits.filter(hit => !blackListedFolderUids.includes(hit.uid))
-  }
+    return hits.filter((hit) => !blackListedFolderUids.includes(hit.uid || ''));
+  };
 
-  if(group !== '' && newName !== null) {
-    if(folders.find((f: string) => f === group) === undefined) {
+  if (group !== '' && newName !== null) {
+    if (folders.find((f: string) => f === group) === undefined) {
       setNewName(null);
     }
   }
 
-  if(folder?.title && folders[0] !== folder?.title) {
+  if (folder?.title && folders[0] !== folder?.title) {
     setFolders([folder?.title, ...folders]);
   }
 
-  const onFolderChange = (d: {id: number, title: string}) => {
+  const onFolderChange = (d: { id: number; title: string }) => {
     let grp = group;
 
-    if(group !== '') {
-      if(group === d.title) {
+    if (group !== '') {
+      if (group === d.title) {
         grp = group;
-      }
-      else {
-        if(folders.find((f: string) => f === group) === undefined) {
+      } else {
+        if (folders.find((f: string) => f === group) === undefined) {
           grp = group;
-        }
-        else{
+        } else {
           grp = d.title;
         }
       }
-    }
-    else {
+    } else {
       grp = d.title;
     }
     setNewName(grp);
     setValue('group', grp);
     setValue('folder', d);
-  }
+  };
   // LOGZ.IO CHANGE :: Start
 
   const ruleFormType = watch('type');
@@ -201,8 +198,13 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
             <InputControl
               render={({ field: { ref, ...field } }) => (
                 <RuleFolderPicker
-                  inputId="folder" {...field} enableCreateNew={true} enableReset={true}
-                  onChange={onFolderChange} filter={folderFilter}/>  // LOGZ.IO CHANGE
+                  inputId="folder"
+                  {...field}
+                  enableCreateNew={true}
+                  enableReset={true}
+                  onChange={onFolderChange}
+                  filter={folderFilter}
+                /> // LOGZ.IO CHANGE
               )}
               name="folder"
               rules={{
