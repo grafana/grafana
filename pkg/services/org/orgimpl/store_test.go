@@ -54,6 +54,27 @@ func TestIntegrationOrgDataAccess(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	t.Run("Update org address", func(t *testing.T) {
+		// make sure ac2 has no org
+		ac2 := &org.Org{ID: 21, Name: "name", Version: 1, Created: time.Now(), Updated: time.Now()}
+		_, err := orgStore.Insert(context.Background(), ac2)
+		require.NoError(t, err)
+		err = orgStore.UpdateAddress(context.Background(), &org.UpdateOrgAddressCommand{
+			OrgID: ac2.ID,
+			Address: org.Address{
+				Address1: "address1",
+				Address2: "address2",
+				City:     "city",
+				ZipCode:  "zip",
+				State:    "state",
+				Country:  "country"},
+		})
+		require.NoError(t, err)
+		orga, err := orgStore.Get(context.Background(), ac2.ID)
+		require.NoError(t, err)
+		require.Equal(t, "address1", orga.Address1)
+	})
+
 	t.Run("Removing org", func(t *testing.T) {
 		// make sure ac2 has no org
 		ac2 := &org.Org{ID: 22, Name: "ac2", Version: 1, Created: time.Now(), Updated: time.Now()}
