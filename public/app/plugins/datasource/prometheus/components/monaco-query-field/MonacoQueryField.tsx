@@ -203,9 +203,9 @@ const MonacoQueryField = (props: Props) => {
           updateElementHeight();
 
           // Whenever the editor changes, lets save the last value so the next query for this editor will be up-to-date.
-          // This change is being introduced to fix a bug where you can submit a query via shift+enter, 
-          // but if you just clicked into another field and haven't un-blurred the active field, 
-          // then the query that is run will be stale, as the reference is only updated 
+          // This change is being introduced to fix a bug where you can submit a query via shift+enter,
+          // but if you just clicked into another field and haven't un-blurred the active field,
+          // then the query that is run will be stale, as the reference is only updated
           // with the value of the last blurred input.
           editor.getModel()?.onDidChangeContent(() => {
             onChangeRef.current(editor.getValue());
