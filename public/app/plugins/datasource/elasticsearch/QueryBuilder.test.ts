@@ -1,5 +1,5 @@
-import { ElasticQueryBuilder } from '../query_builder';
-import { ElasticsearchQuery } from '../types';
+import { ElasticQueryBuilder } from './QueryBuilder';
+import { ElasticsearchQuery } from './types';
 
 describe('ElasticQueryBuilder', () => {
   const builder = new ElasticQueryBuilder({ timeField: '@timestamp' }); // es2

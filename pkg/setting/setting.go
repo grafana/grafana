@@ -295,6 +295,7 @@ type Cfg struct {
 	AdminUser                    string
 	AdminPassword                string
 	AdminEmail                   string
+	DisableSyncLock              bool
 
 	// AWS Plugin Auth
 	AWSAllowedAuthProviders []string
@@ -453,6 +454,8 @@ type Cfg struct {
 	DashboardPreviews DashboardPreviewsSettings
 
 	Storage StorageSettings
+
+	Search SearchSettings
 
 	// Access Control
 	RBACEnabled         bool
@@ -1027,6 +1030,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 
 	cfg.DashboardPreviews = readDashboardPreviewsSettings(iniFile)
 	cfg.Storage = readStorageSettings(iniFile)
+	cfg.Search = readSearchSettings(iniFile)
 
 	if VerifyEmailEnabled && !cfg.Smtp.Enabled {
 		cfg.Logger.Warn("require_email_validation is enabled but smtp is disabled")
@@ -1287,6 +1291,9 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	if cfg.TokenRotationIntervalMinutes < 2 {
 		cfg.TokenRotationIntervalMinutes = 2
 	}
+
+	// Debug setting unlocking frontend auth sync lock. Users will still be reset on their next login.
+	cfg.DisableSyncLock = auth.Key("disable_sync_lock").MustBool(false)
 
 	DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
 	DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
