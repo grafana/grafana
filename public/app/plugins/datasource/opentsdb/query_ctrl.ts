@@ -76,10 +76,12 @@ export class OpenTsQueryCtrl extends QueryCtrl {
         .then(callback);
     };
 
+    // X move to OpenTsdbQueryEditor
     this.suggestTagKeys = (query: any, callback: any) => {
       this.datasource.suggestTagKeys(this.target.metric).then(callback);
     };
 
+    // X move to OpenTsdbQueryEditor
     this.suggestTagValues = (query: string, callback: any) => {
       this.datasource
         .metricFindQuery('suggest_tagv(' + query + ')')
@@ -88,6 +90,8 @@ export class OpenTsQueryCtrl extends QueryCtrl {
     };
   }
 
+  // consider refactoring, updating behavior
+  // for example, flipping a switch when adding filters runs the query before the filter is even added to the query
   targetBlur() {
     this.errors = this.validateTarget();
     this.refresh();
@@ -143,6 +147,7 @@ export class OpenTsQueryCtrl extends QueryCtrl {
     return;
   }
 
+  // X moved to FilterSection
   addFilter() {
     if (this.target.tags && size(this.target.tags) > 0) {
       this.errors.filters = 'Please remove tags to use filters, tags and filters are mutually exclusive.';
@@ -185,11 +190,13 @@ export class OpenTsQueryCtrl extends QueryCtrl {
     this.addFilterMode = false;
   }
 
+  // X moved to FilterSection
   removeFilter(index: number) {
     this.target.filters.splice(index, 1);
     this.targetBlur();
   }
 
+  // X moved to FilterSection
   editFilter(fil: { tagk: any; filter: any; type: any; groupBy: any }, index: number) {
     this.removeFilter(index);
     this.target.currentFilterKey = fil.tagk;
@@ -199,11 +206,13 @@ export class OpenTsQueryCtrl extends QueryCtrl {
     this.addFilter();
   }
 
+  // X moved to FilterSection
   closeAddFilterMode() {
     this.addFilterMode = false;
     return;
   }
 
+  // Possible refactor
   validateTarget() {
     const errs: any = {};
 

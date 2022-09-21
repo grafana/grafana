@@ -8,6 +8,7 @@ import OpenTsDatasource from '../datasource';
 import { OpenTsdbOptions, OpenTsdbQuery } from '../types';
 
 import { DownSample } from './DownSample';
+import { FilterSection } from './FilterSection';
 import { MetricSection } from './MetricSection';
 
 export type OpenTsdbQueryEditorProps = QueryEditorProps<OpenTsDatasource, OpenTsdbQuery, OpenTsdbOptions>;
@@ -32,7 +33,7 @@ export function OpenTsdbQueryEditor({
   // There is evidence that metrics had errors at one point,
   // but there is no evidence it is being handled in the fromt end,
   // just errors delivered from the backend
-  const [errors /*,setErrors*/] = useState<OpenTsdbErrors>({});
+  const [errors /*, setErrors */] = useState<OpenTsdbErrors>({});
 
   // Xaggregators: any;
   // aggregators are updated potentially by datasource.getAggregators()
@@ -64,20 +65,25 @@ export function OpenTsdbQueryEditor({
   // XtsdbVersion: any;
   const tsdbVersion: Number = datasource.tsdbVersion;
 
-  // aggreagator only exists in the query
+  // aggregator only exists in the query
   // Xaggregator: any;
 
-  // DownSample component
-  // downsampleInterval: any;
-  // downsampleAggregator: any;
-  // downsampleFillPolicy: any;
+  // XDownSample component
+  // XdownsampleInterval: any;
+  // XdownsampleAggregator: any;
+  // XdownsampleFillPolicy: any;
 
   // errors: any;
   // Xlet suggestMetrics: any;
-  // suggestTagKeys: any;
-  // suggestTagValues: any;
-  // addFilterMode = false;
-  // const [addFilterMode, setFilterMode] = useState<boolean>(false);
+  // XsuggestTagKeys: any;
+  // XsuggestTagValues: any;
+
+  // used in filter section
+  // XaddFilterMode = false;
+
+  // done in filters section
+  // Xconst [addFilterMode, setFilterMode] = useState<boolean>(false);
+
   // addTagMode = false;
   // const [addTagMode, setTagMode] = useState<boolean>(false);
 
@@ -111,6 +117,16 @@ export function OpenTsdbQueryEditor({
     return datasource.metricFindQuery('metrics()').then(getTextValues);
   }
 
+  // previously called as an autocomplete on every input,
+  // in this we call it once on init and filter in the MetricSection component
+  async function suggestTagValues(): Promise<Array<{ value: string; description: string }>> {
+    return datasource.metricFindQuery('suggest_tagv()').then(getTextValues);
+  }
+
+  async function suggestTagKeys(query: OpenTsdbQuery): Promise<string[]> {
+    return datasource.suggestTagKeys(query);
+  }
+
   function getTextValues(metrics: Array<{ text: string }>) {
     return metrics.map((value: { text: string }) => {
       return {
@@ -119,6 +135,33 @@ export function OpenTsdbQueryEditor({
       };
     });
   }
+
+  // POSSIBLE REFACTOR => validateQuery()
+  // pass in the query, update the errors state
+  // doesn't do anything with shouldDownsample
+  // error handling for tags here, move filter here?
+  // function validateQuery() {
+  // not used!!!
+  // if (query.shouldDownsample) {
+  //   try {
+  //     if (this.target.downsampleInterval) {
+  //       rangeUtil.describeInterval(this.target.downsampleInterval);
+  //     } else {
+  //       errs.downsampleInterval = "You must supply a downsample interval (e.g. '1m' or '1h').";
+  //     }
+  //   } catch (err) {
+  //     if (err instanceof Error) {
+  //       errs.downsampleInterval = err.message;
+  //     }
+  //   }
+  // }
+
+  // if (this.target.tags && has(this.target.tags, this.target.currentTagKey)) {
+  //   errs.tags = "Duplicate tag key '" + this.target.currentTagKey + "'.";
+  // }
+
+  // return errs;
+  // }
 
   return (
     <div className={styles.container} data-testid={testIds.editor}>
@@ -138,6 +181,16 @@ export function OpenTsdbQueryEditor({
           fillPolicies={fillPolicies}
           tsdbVersion={tsdbVersion}
         />
+        {tsdbVersion >= 2 && (
+          <FilterSection
+            query={query}
+            onChange={onChange}
+            onRunQuery={onRunQuery}
+            filterTypes={filterTypes}
+            suggestTagValues={suggestTagValues}
+            suggestTagKeys={suggestTagKeys}
+          />
+        )}
         <div>WIP</div>
         <div>Errors: {errors.toString()}</div>
         <div>FillPolicies: {fillPolicies[0].toString()}</div>

@@ -13,6 +13,12 @@ export interface OpenTsdbQuery extends DataQuery {
   downsampleFillPolicy?: string;
   disableDownsampling?: boolean;
 
+  //filters
+  filters?: OpenTsdbFilter[];
+
+  //tags
+  tags?: OpenTsdbTag[];
+
   // annotation attrs
   fromAnnotations?: boolean;
   isGlobal?: boolean;
@@ -32,3 +38,12 @@ export type LegacyAnnotation = {
   target?: string;
   name?: string;
 };
+
+export type OpenTsdbFilter = {
+  type: string;
+  tagk: string;
+  filter: string;
+  groupBy: boolean;
+};
+
+export type OpenTsdbTag = {};

@@ -242,7 +242,8 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
     return getBackendSrv().fetch(options);
   }
 
-  suggestTagKeys(metric: string | number) {
+  suggestTagKeys(query: OpenTsdbQuery) {
+    const metric = query.metric ?? '';
     return Promise.resolve(this.tagKeys[metric] || []);
   }
 
@@ -489,6 +490,7 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
   }
 
   convertTargetToQuery(target: any, options: any, tsdbVersion: number) {
+    // all great but REMOVE ANGULAR
     if (!target.metric || target.hide) {
       return null;
     }
@@ -537,6 +539,8 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
     }
 
     if (target.filters && target.filters.length > 0) {
+      // get rid of this angular thing!
+      // https://docs.angularjs.org/api/ng/function/angular.copy
       query.filters = angular.copy(target.filters);
       if (query.filters) {
         for (const filterKey in query.filters) {
@@ -548,6 +552,7 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
         }
       }
     } else {
+      // get rid of this angular thing!
       query.tags = angular.copy(target.tags);
       if (query.tags) {
         for (const tagKey in query.tags) {
