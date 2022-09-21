@@ -110,8 +110,10 @@ func TestMakeAlertRule(t *testing.T) {
 
 			require.NoError(t, err)
 			require.Len(t, ar.Title, DefaultFieldMaxLength)
-			uniq := ar.Title[len(ar.Title)-11:]
-			require.Regexp(t, "^_.{10}$", uniq)
+			parts := strings.Split(ar.Title, "_")
+			require.Len(t, parts, 2)
+			require.GreaterOrEqual(t, 9, len(parts[1]), "unique identifier should be longer than 9 characters")
+			require.Equal(t, DefaultFieldMaxLength-1, len(parts[0])+len(parts[1]), "truncated name + underscore + unique identifier should together be DefaultFieldMaxLength")
 			require.Equal(t, ar.Title, ar.RuleGroup)
 		})
 	})
