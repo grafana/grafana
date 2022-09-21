@@ -68,7 +68,7 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
 
   async handleRegionsQuery() {
     const regions = await this.api.getRegions();
-    return regions.map((s: { label: string; value: string }) => ({
+    return regions.map((s) => ({
       text: s.label,
       value: s.value,
       expandable: true,
@@ -77,7 +77,7 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
 
   async handleNamespacesQuery() {
     const namespaces = await this.api.getNamespaces();
-    return namespaces.map((s: { label: string; value: string }) => ({
+    return namespaces.map((s) => ({
       text: s.label,
       value: s.value,
       expandable: true,
@@ -86,7 +86,7 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
 
   async handleMetricsQuery({ namespace, region }: VariableQuery) {
     const metrics = await this.api.getMetrics(namespace, region);
-    return metrics.map((s: { label: string; value: string }) => ({
+    return metrics.map((s) => ({
       text: s.label,
       value: s.value,
       expandable: true,
@@ -95,7 +95,7 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
 
   async handleDimensionKeysQuery({ namespace, region }: VariableQuery) {
     const keys = await this.api.getDimensionKeys(namespace, region);
-    return keys.map((s: { label: string; value: string }) => ({
+    return keys.map((s) => ({
       text: s.label,
       value: s.value,
       expandable: true,
@@ -107,7 +107,7 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
       return [];
     }
     const keys = await this.api.getDimensionValues(region, namespace, metricName, dimensionKey, dimensionFilters ?? {});
-    return keys.map((s: { label: string; value: string }) => ({
+    return keys.map((s) => ({
       text: s.label,
       value: s.value,
       expandable: true,
@@ -119,7 +119,7 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
       return [];
     }
     const ids = await this.api.getEbsVolumeIds(region, instanceID);
-    return ids.map((s: { label: string; value: string }) => ({
+    return ids.map((s) => ({
       text: s.label,
       value: s.value,
       expandable: true,
@@ -131,7 +131,7 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
       return [];
     }
     const values = await this.api.getEc2InstanceAttribute(region, attributeName, ec2Filters ?? {});
-    return values.map((s: { label: string; value: string }) => ({
+    return values.map((s) => ({
       text: s.label,
       value: s.value,
       expandable: true,
@@ -143,7 +143,7 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
       return [];
     }
     const keys = await this.api.getResourceARNs(region, resourceType, tags ?? {});
-    return keys.map((s: { label: string; value: string }) => ({
+    return keys.map((s) => ({
       text: s.label,
       value: s.value,
       expandable: true,
