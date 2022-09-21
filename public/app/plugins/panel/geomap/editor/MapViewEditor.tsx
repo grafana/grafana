@@ -1,46 +1,22 @@
 import { toLonLat } from 'ol/proj';
-import React, { FC, useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback } from 'react';
 
 import { StandardEditorProps, SelectableValue } from '@grafana/data';
-import { Button, InlineField, InlineFieldRow, RadioButtonGroup, Select, VerticalGroup } from '@grafana/ui';
+import { Button, InlineField, InlineFieldRow, Select, VerticalGroup } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
 import { GeomapPanelOptions, MapViewConfig, GeomapInstanceState } from '../types';
 import { centerPointRegistry, MapCenterID } from '../view';
 
-export const MapViewEditor: FC<
-  StandardEditorProps<MapViewConfig, unknown, GeomapPanelOptions, GeomapInstanceState>
-> = ({ value, onChange, context }) => {
+import { CoordinatesMapViewEditor } from './CoordinatesMapViewEditor';
+import { FitMapViewEditor } from './FitMapViewEditor';
+
+export const MapViewEditor = ({
+  value,
+  onChange,
+  context,
+}: StandardEditorProps<MapViewConfig, unknown, GeomapPanelOptions, GeomapInstanceState>) => {
   const labelWidth = 10;
-
-  // Data scope options for 'Fit to data'
-  enum DataScopeValues {
-    all = 'all',
-    layer = 'layer',
-    last = 'last',
-  }
-  enum DataScopeLabels {
-    all = 'All layers',
-    layer = 'Layer',
-    last = 'Last value',
-  }
-  const ScopeOptions = Object.values(DataScopeValues);
-  const DataScopeOptions: Array<SelectableValue<DataScopeValues>> = ScopeOptions.map((r) => ({
-    label: DataScopeLabels[r],
-    value: r,
-  }));
-
-  // Populate layers as select options
-  const layers: Array<SelectableValue<string>> = [];
-  if (context.options && context.options.layers) {
-    for (let i = 0; i < context.options.layers.length; i++) {
-      layers.push({
-        label: context.options.layers[i].name,
-        value: context.options.layers[i].name,
-        description: undefined,
-      });
-    }
-  }
 
   const views = useMemo(() => {
     const ids: string[] = [];
@@ -86,13 +62,6 @@ export const MapViewEditor: FC<
     [value, onChange]
   );
 
-  const onSelectLayer = useCallback(
-    (selection: SelectableValue<string>) => {
-      onChange({ ...value, layer: selection.value });
-    },
-    [value, onChange]
-  );
-
   return (
     <>
       <InlineFieldRow>
@@ -100,95 +69,11 @@ export const MapViewEditor: FC<
           <Select options={views.options} value={views.current} onChange={onSelectView} />
         </InlineField>
       </InlineFieldRow>
-      {value?.id === MapCenterID.Coordinates && (
-        <>
-          <InlineFieldRow>
-            <InlineField label="Latitude" labelWidth={labelWidth} grow={true}>
-              <NumberInput
-                value={value.lat}
-                min={-90}
-                max={90}
-                step={0.001}
-                onChange={(v) => {
-                  onChange({ ...value, lat: v });
-                }}
-              />
-            </InlineField>
-          </InlineFieldRow>
-          <InlineFieldRow>
-            <InlineField label="Longitude" labelWidth={labelWidth} grow={true}>
-              <NumberInput
-                value={value.lon}
-                min={-180}
-                max={180}
-                step={0.001}
-                onChange={(v) => {
-                  onChange({ ...value, lon: v });
-                }}
-              />
-            </InlineField>
-          </InlineFieldRow>
-        </>
+      {value.id === MapCenterID.Coordinates && (
+        <CoordinatesMapViewEditor labelWidth={labelWidth} value={value} onChange={onChange} />
       )}
-      {value?.id === MapCenterID.Fit && (
-        <>
-          <InlineFieldRow>
-            <InlineField label="Data" labelWidth={labelWidth} grow={true}>
-              <RadioButtonGroup
-                value={
-                  value?.allLayers
-                    ? DataScopeValues.all
-                    : !value?.allLayers && value.lastOnly
-                    ? DataScopeValues.last
-                    : DataScopeValues.layer
-                }
-                options={DataScopeOptions}
-                onChange={(v) => {
-                  if (v !== DataScopeValues.all && !value.layer) {
-                    onChange({
-                      ...value,
-                      allLayers: v === String(DataScopeValues.all),
-                      lastOnly: v === String(DataScopeValues.last),
-                      layer: layers[0].value,
-                    });
-                  } else {
-                    onChange({
-                      ...value,
-                      allLayers: v === String(DataScopeValues.all),
-                      lastOnly: v === String(DataScopeValues.last),
-                    });
-                  }
-                }}
-              ></RadioButtonGroup>
-            </InlineField>
-          </InlineFieldRow>
-          {!value?.allLayers && (
-            <InlineFieldRow>
-              <InlineField label="Layer" labelWidth={labelWidth} grow={true}>
-                <Select options={layers} onChange={onSelectLayer} placeholder={layers[0].label} />
-              </InlineField>
-            </InlineFieldRow>
-          )}
-          {!value?.lastOnly && (
-            <InlineFieldRow>
-              <InlineField
-                label="Padding"
-                labelWidth={labelWidth}
-                grow={true}
-                tooltip="sets padding in relative percent beyond data extent"
-              >
-                <NumberInput
-                  value={value?.padding ?? 5}
-                  min={0}
-                  step={1}
-                  onChange={(v) => {
-                    onChange({ ...value, padding: v });
-                  }}
-                />
-              </InlineField>
-            </InlineFieldRow>
-          )}
-        </>
+      {value.id === MapCenterID.Fit && (
+        <FitMapViewEditor labelWidth={labelWidth} value={value} onChange={onChange} context={context} />
       )}
 
       <InlineFieldRow>

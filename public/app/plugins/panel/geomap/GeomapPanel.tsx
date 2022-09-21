@@ -150,7 +150,9 @@ export class GeomapPanel extends Component<Props, State> {
       const [updatedSharedView, view] = this.initMapView(options.view, sharedView);
       sharedView = updatedSharedView;
 
-      this.map!.setView(view!);
+      if (this.map && view) {
+        this.map.setView(view);
+      }
     }
 
     if (options.controls !== oldOptions.controls) {
@@ -173,7 +175,10 @@ export class GeomapPanel extends Component<Props, State> {
     const v = centerPointRegistry.getIfExists(this.props.options.view.id);
     if (v && v.id === MapCenterID.Fit) {
       const [, view] = this.initMapView(this.props.options.view);
-      this.map!.setView(view!);
+
+      if (this.map && view) {
+        this.map.setView(view);
+      }
     }
   }
 
