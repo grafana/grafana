@@ -516,7 +516,7 @@ func TestMarshalConflictUser(t *testing.T) {
 			inputRow: "+ id: 4, email: userduplicatetest1@test.com, login: userduplicatetest1@test.com, last_seen_at: 2012-07-26T16:08:11Z, auth_module:",
 			expectedUser: ConflictingUser{
 				Direction:  "+",
-				Id:         "4",
+				Id:         4,
 				Email:      "userduplicatetest1@test.com",
 				Login:      "userduplicatetest1@test.com",
 				LastSeenAt: "2012-07-26T16:08:11Z",
@@ -528,7 +528,7 @@ func TestMarshalConflictUser(t *testing.T) {
 			inputRow: "+ id: 1, email: userduplicatetest1@test.com, login: user_duplicate_test_1_login",
 			expectedUser: ConflictingUser{
 				Direction: "+",
-				Id:        "1",
+				Id:        1,
 				Email:     "userduplicatetest1@test.com",
 				Login:     "user_duplicate_test_1_login",
 			},

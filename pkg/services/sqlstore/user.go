@@ -751,11 +751,11 @@ func (ss *SQLStore) DeleteUserInSession(ctx context.Context, sess *DBSession, cm
 func deleteUserInTransaction(ss *SQLStore, sess *DBSession, cmd *models.DeleteUserCommand) error {
 	// Check if user exists
 	usr := user.User{ID: cmd.UserId}
-	has, err := sess.Where(NotServiceAccountFilter(ss)).Get(&usr)
+	exists, err := sess.Where(NotServiceAccountFilter(ss)).Get(&usr)
 	if err != nil {
 		return err
 	}
-	if !has {
+	if !exists {
 		return user.ErrUserNotFound
 	}
 	for _, sql := range UserDeletions() {
@@ -764,7 +764,6 @@ func deleteUserInTransaction(ss *SQLStore, sess *DBSession, cmd *models.DeleteUs
 			return err
 		}
 	}
-
 	return deleteUserAccessControl(sess, cmd.UserId)
 }
 

@@ -7,9 +7,9 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"strconv"
 	"strings"
 
+	"cuelang.org/go/pkg/strconv"
 	"github.com/fatih/color"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
@@ -150,7 +150,7 @@ func runValidateConflictUsersFile() func(context *cli.Context) error {
 		}
 		validErr := getValidConflictUsers(&resolver, b)
 		if validErr != nil {
-			return fmt.Errorf("could not validate file with error %s", err)
+			return fmt.Errorf("could not validate file with error %s", validErr)
 		}
 		logger.Info("File validation complete without errors.\n\n File can be used with ingesting command `ingest-file`.\n\n")
 		return nil
@@ -229,7 +229,7 @@ func getValidConflictUsers(r *ConflictResolver, b []byte) error {
 	for block, users := range r.Blocks {
 		previouslySeenBlock[block] = true
 		for _, u := range users {
-			previouslySeenIds[strings.ToLower(u.Id)] = true
+			previouslySeenIds[strings.ToLower(fmt.Sprintf("%d", u.Id))] = true
 			previouslySeenEmails[strings.ToLower(u.Email)] = true
 		}
 	}
@@ -272,12 +272,6 @@ func getValidConflictUsers(r *ConflictResolver, b []byte) error {
 			}
 			if !previouslySeenEmails[strings.ToLower(newUser.Email)] {
 				return fmt.Errorf("not valid email: %s, email not in previous conflicts seen", newUser.Email)
-			}
-			if strings.ToLower(newUser.Email) != newUser.Email {
-				return fmt.Errorf("not valid email: %s for user: %s, email needs to be lowercased", newUser.Email, newUser.Id)
-			}
-			if strings.ToLower(newUser.Login) != newUser.Login {
-				return fmt.Errorf("not valid login for user: %s, login needs to be lowercased", newUser.Id)
 			}
 			// valid entry
 			newConflicts = append(newConflicts, *newUser)
@@ -327,11 +321,16 @@ func (r *ConflictResolver) showChanges() {
 			continue
 		}
 		for _, user := range users {
+			// TODO:
+			// FIX SO THAT CHANGES WILL SHOW FOR THE + USER
+			// RIGHT NOW IT REQUIRES TO BE ORDERED WHICH IS NOT TO BE TRUE
+			if user.Direction == "+" {
+			}
 			if !startOfBlock[block] {
 				fileString += "IDENTIFIED user conflict\n"
 				fileString += fmt.Sprintf("%s\n", block)
 				fileString += "The permissions, roles and ownership will be transferred to the user below.\n"
-				fileString += fmt.Sprintf("id: %s, email: %s, login: %s\n", user.Id, user.Email, user.Login)
+				fileString += fmt.Sprintf("id: %d, email: %s, login: %s\n", user.Id, user.Email, user.Login)
 				fileString += "\n"
 				startOfBlock[block] = true
 				continue
@@ -341,7 +340,7 @@ func (r *ConflictResolver) showChanges() {
 				fileString += "The following user(s) will be deleted and their permissions transferred.\n"
 				startOfEndBlock[block] = true
 			}
-			fileString += fmt.Sprintf("id: %s, email: %s, login: %s\n", user.Id, user.Email, user.Login)
+			fileString += fmt.Sprintf("id: %d, email: %s, login: %s\n", user.Id, user.Email, user.Login)
 		}
 		fileString += "\n\n"
 	}
@@ -353,7 +352,7 @@ func (r *ConflictResolver) showChanges() {
 // with different formats depending on the usecase
 type Formatter func(format string, a ...interface{}) string
 
-func shouldDiscardBlock(seenUsersInBlock map[string]string, block string, user ConflictingUser) bool {
+func shouldDiscardBlock(seenUsersInBlock map[int64]string, block string, user ConflictingUser) bool {
 	// loop through users to see if we should skip this block
 	// we have some more tricky scenarios where we have more than two users that can have conflicts with each other
 	// we have made the approach to discard any users that we have seen
@@ -371,7 +370,7 @@ func shouldDiscardBlock(seenUsersInBlock map[string]string, block string, user C
 // NOTE: currently this function assumes that the users are in order of grouping already
 func (r *ConflictResolver) BuildConflictBlocks(users ConflictingUsers, f Formatter) {
 	discardedBlocks := make(map[string]bool)
-	seenUsersToBlock := make(map[string]string)
+	seenUsersToBlock := make(map[int64]string)
 	blocks := make(map[string]ConflictingUsers)
 	for _, user := range users {
 		// conflict blocks is how we identify a conflict in the user base.
@@ -420,7 +419,7 @@ func (r *ConflictResolver) logDiscardedUsers() {
 	keys := make([]string, 0, len(r.DiscardedBlocks))
 	for block := range r.DiscardedBlocks {
 		for _, u := range r.Blocks[block] {
-			keys = append(keys, u.Id)
+			keys = append(keys, fmt.Sprintf("%d", u.Id))
 		}
 	}
 	warn := color.YellowString("Note: We discarded some conflicts that have multiple conflicting types involved.")
@@ -462,11 +461,11 @@ func (r *ConflictResolver) ToStringPresentation() string {
 			if !startOfBlock[block] {
 				fileString += fmt.Sprintf("%s\n", block)
 				startOfBlock[block] = true
-				fileString += fmt.Sprintf("+ id: %s, email: %s, login: %s, last_seen_at: %s, auth_module: %s\n", user.Id, user.Email, user.Login, user.LastSeenAt, user.AuthModule)
+				fileString += fmt.Sprintf("+ id: %d, email: %s, login: %s, last_seen_at: %s, auth_module: %s\n", user.Id, user.Email, user.Login, user.LastSeenAt, user.AuthModule)
 				continue
 			}
 			// mergable users
-			fileString += fmt.Sprintf("- id: %s, email: %s, login: %s, last_seen_at: %s, auth_module: %s\n", user.Id, user.Email, user.Login, user.LastSeenAt, user.AuthModule)
+			fileString += fmt.Sprintf("- id: %d, email: %s, login: %s, last_seen_at: %s, auth_module: %s\n", user.Id, user.Email, user.Login, user.LastSeenAt, user.AuthModule)
 		}
 	}
 	return fileString
@@ -482,7 +481,7 @@ type ConflictResolver struct {
 
 type ConflictingUser struct {
 	Direction     string `xorm:"direction"`
-	Id            string `xorm:"id"`
+	Id            int64  `xorm:"id"`
 	Email         string `xorm:"email"`
 	Login         string `xorm:"login"`
 	LastSeenAt    string `xorm:"last_seen_at"`
@@ -514,7 +513,11 @@ func (c *ConflictingUser) Marshal(filerow string) error {
 	id := strings.Split(values[0], ":")
 	email := strings.Split(values[1], ":")
 	login := strings.Split(values[2], ":")
-	c.Id = id[1]
+	intId, err := strconv.ParseInt(id[1], 10, 64)
+	if err != nil {
+		return fmt.Errorf("could not convert to int: %e", err)
+	}
+	c.Id = intId
 	c.Email = email[1]
 	c.ConflictEmail = email[1]
 	c.Login = login[1]
@@ -580,89 +583,68 @@ func conflictingUserEntriesSQL(s *sqlstore.SQLStore) string {
 }
 
 func (r *ConflictResolver) MergeConflictingUsers(ctx context.Context, ss *sqlstore.SQLStore) error {
+	// creating a session for each block of users
+	// we want to rollback incase something happens during update / delete
+	sess := ss.NewSession(ctx)
+	defer sess.Close()
+	err := sess.Begin()
+	if err != nil {
+		return fmt.Errorf("could not open a sess: %w", err)
+	}
 	for block, users := range r.Blocks {
+		var mainConflictUser ConflictingUser
+		var fromUserIds []int64
 		if len(users) < 2 {
 			return fmt.Errorf("not enough users to perform merge, found %d for id %s, should be at least 2", len(users), block)
 		}
-
-		// creating a session for each block of users
-		// we want to rollback incase something happens during update / delete
-		sess := ss.NewSession(ctx)
-		defer sess.Close()
-		err := sess.Begin()
-		if err != nil {
-			return fmt.Errorf("could not open a sess: %w", err)
+		// finding the ids of main and fromUsers
+		for _, u := range users {
+			if u.Direction == "+" {
+				mainConflictUser = u
+			} else if u.Direction == "-" {
+				fromUserIds = append(fromUserIds, u.Id)
+			}
 		}
-		err = ss.InTransaction(ctx, func(ctx context.Context) error {
-			var intoUser user.User
-			var intoUserId int64
-			var fromUserIds []int64
-			for _, u := range users {
-				if u.Direction == "+" {
-					id, err := strconv.ParseInt(u.Id, 10, 64)
-					if err != nil {
-						return fmt.Errorf("could not convert id in +")
-					}
-					intoUserId = id
-				} else if u.Direction == "-" {
-					id, err := strconv.ParseInt(u.Id, 10, 64)
-					if err != nil {
-						return fmt.Errorf("could not convert id in -")
-					}
-					fromUserIds = append(fromUserIds, id)
-				}
+		// check if main user exists
+		u := &user.User{ID: mainConflictUser.Id}
+		exists, err := sess.Where(sqlstore.NotServiceAccountFilter(ss)).Get(u)
+		if err != nil {
+			return fmt.Errorf("error while looking for main user")
+		}
+		if !exists {
+			return fmt.Errorf("could not find mainuser: %e", err)
+		}
+		// other users should be deleted
+		for _, fromUserId := range fromUserIds {
+			fromUser := &user.User{ID: fromUserId}
+			has, err := sess.Where(sqlstore.NotServiceAccountFilter(ss)).Get(fromUser)
+			if err != nil {
+				return fmt.Errorf("error while getting user %e", err)
 			}
-			if _, err := sess.ID(intoUserId).Where(sqlstore.NotServiceAccountFilter(ss)).Get(&intoUser); err != nil {
-				return fmt.Errorf("could not find intoUser: %w", err)
+			if !has {
+				return user.ErrUserNotFound
 			}
-
-			for _, fromUserId := range fromUserIds {
-				var fromUser user.User
-				if _, err := sess.ID(fromUserId).Where(sqlstore.NotServiceAccountFilter(ss)).Get(&fromUser); err != nil {
-					return fmt.Errorf("could not find from userId: %w", err)
-				}
-
-				// update all tables fromUserIds to intoUserIds
-				for _, sql := range userUpdates() {
-					_, err := sess.Exec(sql, intoUser.ID, fromUser.ID)
-					if err != nil {
-						return fmt.Errorf("error during updating userIds: %w", err)
-					}
-				}
-
-				// delete the user
-				delErr := ss.DeleteUserInSession(ctx, sess, &models.DeleteUserCommand{UserId: fromUserId})
-				if delErr != nil {
-					return fmt.Errorf("error during deletion of user: %w", delErr)
-				}
+			delErr := ss.DeleteUserInSession(ctx, sess, &models.DeleteUserCommand{UserId: fromUserId})
+			if delErr != nil {
+				return fmt.Errorf("could not delete user: %e", delErr)
 			}
 			return nil
-		})
-		if err != nil {
-			return fmt.Errorf("unable to perform db operation on useridentification: %s: %w", block, err)
 		}
 		commitErr := sess.Commit()
 		if commitErr != nil {
-			return fmt.Errorf("could not commit operation for useridentification %s: %w", block, commitErr)
+			return fmt.Errorf("could not commit operation for useridentification %s: %e", block, commitErr)
+		}
+		// update the main user
+		err = ss.UpdateUser(ctx, &models.UpdateUserCommand{
+			UserId: mainConflictUser.Id,
+			Email:  strings.ToLower(mainConflictUser.Email),
+			Login:  strings.ToLower(mainConflictUser.Login),
+		})
+		if err != nil {
+			return fmt.Errorf("could not update main user: %e", err)
 		}
 	}
 	return nil
-}
-
-func userUpdates() []string {
-	updates := []string{
-		"UPDATE star set user_id = ? WHERE user_id = ?",
-		// commented out as their is a unique constraint on the table for user id
-		// "UPDATE org_user set user_id ? WHERE user_id = ?",
-
-		"UPDATE dashboard_acl set user_id = ? WHERE user_id = ?",
-		"UPDATE preferences set user_id = ? WHERE user_id = ?",
-		"UPDATE team_member set user_id = ? WHERE user_id = ?",
-		"UPDATE user_auth set user_id = ? WHERE user_id = ?",
-		"UPDATE user_auth_token set user_id = ? WHERE user_id = ?",
-		"UPDATE quota set user_id = ? WHERE user_id = ?",
-	}
-	return updates
 }
 
 func notServiceAccount(ss *sqlstore.SQLStore) string {
