@@ -1,6 +1,6 @@
 import React from 'react';
 
-export const PubDashDescription = () => (
+export const Description = () => (
   <>
     <p>
       To allow the current dashboard to be published publicly, toggle the switch. For now we do not support template

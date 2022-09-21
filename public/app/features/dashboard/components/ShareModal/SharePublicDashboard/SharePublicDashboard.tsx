@@ -10,8 +10,8 @@ import { createErrorNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useGetConfigQuery, useSaveConfigMutation } from 'app/features/dashboard/api/publicDashboardApi';
 import { AcknowledgeCheckboxes } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/AcknowledgeCheckboxes';
-import { PubDashConfiguration } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/PubDashConfiguration';
-import { PubDashDescription } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/PubDashDescription';
+import { Configuration } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/Configuration';
+import { Description } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/Description';
 import {
   Acknowledgements,
   dashboardHasTemplateVariables,
@@ -121,7 +121,7 @@ export const SharePublicDashboard = (props: Props) => {
           </Alert>
         ) : (
           <>
-            <PubDashDescription />
+            <Description />
             <hr />
             <div className={styles.checkboxes}>
               <AcknowledgeCheckboxes
@@ -133,7 +133,7 @@ export const SharePublicDashboard = (props: Props) => {
               />
             </div>
             <hr />
-            <PubDashConfiguration
+            <Configuration
               dashboard={props.dashboard}
               disabled={!hasWritePermissions || isLoading || isFetchingError}
               isPubDashEnabled={enabledSwitch.isEnabled}

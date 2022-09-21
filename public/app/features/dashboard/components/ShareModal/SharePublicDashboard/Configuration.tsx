@@ -10,7 +10,7 @@ import { DashboardModel } from 'app/features/dashboard/state';
 import { useIsDesktop } from 'app/features/dashboard/utils/screen';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 
-export const PubDashConfiguration = ({
+export const Configuration = ({
   disabled,
   isPubDashEnabled,
   hasTemplateVariables,
