@@ -294,7 +294,7 @@ describe('RuleEditor', () => {
             grafana_alert: {
               condition: 'B',
               data: getDefaultQueries(),
-              exec_err_state: 'Alerting',
+              exec_err_state: GrafanaAlertStateDecision.Error,
               no_data_state: 'NoData',
               title: 'my great new rule',
             },
@@ -412,11 +412,14 @@ describe('RuleEditor', () => {
     };
 
     const dataSources = {
-      default: mockDataSource({
-        type: 'prometheus',
-        name: 'Prom',
-        isDefault: true,
-      }),
+      default: mockDataSource(
+        {
+          type: 'prometheus',
+          name: 'Prom',
+          isDefault: true,
+        },
+        { alerting: true }
+      ),
     };
 
     jest.spyOn(backendSrv, 'getFolderByUid').mockResolvedValue({
@@ -447,7 +450,7 @@ describe('RuleEditor', () => {
                 namespace_id: 1,
                 condition: 'B',
                 data: getDefaultQueries(),
-                exec_err_state: GrafanaAlertStateDecision.Alerting,
+                exec_err_state: GrafanaAlertStateDecision.Error,
                 no_data_state: GrafanaAlertStateDecision.NoData,
                 title: 'my great new rule',
               },
@@ -505,7 +508,7 @@ describe('RuleEditor', () => {
               uid,
               condition: 'B',
               data: getDefaultQueries(),
-              exec_err_state: 'Alerting',
+              exec_err_state: GrafanaAlertStateDecision.Error,
               no_data_state: 'NoData',
               title: 'my great new rule',
             },
