@@ -8,6 +8,7 @@ import { Badge, ConfirmModal, HorizontalGroup, Icon, Spinner, Tooltip, useStyles
 import { useDispatch } from 'app/types';
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 
+import { LogMessages } from '../../Analytics';
 import { useFolder } from '../../hooks/useFolder';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { deleteRulesGroupAction } from '../../state/actions';
@@ -182,7 +183,7 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll, 
 
   const closeEditModal = (saved = false) => {
     if (!saved) {
-      logInfo('leaving rule group edit without saving');
+      logInfo(LogMessages.leavingRuleGroupEdit);
     }
     setIsEditingGroup(false);
   };
