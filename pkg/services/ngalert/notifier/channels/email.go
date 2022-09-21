@@ -3,6 +3,7 @@ package channels
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/url"
 	"os"
 	"path"
@@ -21,22 +22,18 @@ import (
 // alert notifications over email.
 type EmailNotifier struct {
 	*Base
-	Addresses   []string
-	SingleEmail bool
-	Message     string
-	Subject     string
-	log         log.Logger
-	ns          notifications.EmailSender
-	images      ImageStore
-	tmpl        *template.Template
+	settings emailSettings
+	log      log.Logger
+	ns       notifications.EmailSender
+	images   ImageStore
+	tmpl     *template.Template
 }
 
-type EmailConfig struct {
-	*NotificationChannelConfig
-	SingleEmail bool
-	Addresses   []string
-	Message     string
-	Subject     string
+type emailSettings struct {
+	Addresses   string `json:"addresses,omitempty" yaml:"addresses,omitempty"`
+	Message     string `json:"message,omitempty" yaml:"message,omitempty"`
+	Subject     string `json:"subject,omitempty" yaml:"subject,omitempty"`
+	SingleEmail bool   `json:"singleEmail,omitempty" yaml:"singleEmail,omitempty"`
 }
 
 func EmailFactory(fc FactoryConfig) (NotificationChannel, error) {
@@ -51,12 +48,18 @@ func EmailFactory(fc FactoryConfig) (NotificationChannel, error) {
 }
 
 func buildEmailNotifier(fc FactoryConfig) (*EmailNotifier, error) {
-	addressesString := fc.Config.Settings.Get("addresses").MustString()
-	if addressesString == "" {
+	var settings emailSettings
+	err := fc.Config.unmarshalSettings(&settings)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal settings: %w", err)
+	}
+
+	if settings.Addresses == "" {
 		return nil, errors.New("could not find addresses in settings")
 	}
-	// split addresses with a few different ways
-	addresses := util.SplitEmails(addressesString)
+	if settings.Subject == "" {
+		settings.Subject = DefaultMessageTitleEmbed
+	}
 
 	return &EmailNotifier{
 		Base: NewBase(&models.AlertNotification{
@@ -66,14 +69,11 @@ func buildEmailNotifier(fc FactoryConfig) (*EmailNotifier, error) {
 			DisableResolveMessage: fc.Config.DisableResolveMessage,
 			Settings:              fc.Config.Settings,
 		}),
-		Addresses:   addresses,
-		SingleEmail: fc.Config.Settings.Get("singleEmail").MustBool(false),
-		Message:     fc.Config.Settings.Get("message").MustString(),
-		Subject:     fc.Config.Settings.Get("subject").MustString(DefaultMessageTitleEmbed),
-		log:         log.New("alerting.notifier.email"),
-		ns:          fc.NotificationService,
-		images:      fc.ImageStore,
-		tmpl:        fc.Template,
+		settings: settings,
+		log:      log.New("alerting.notifier.email"),
+		ns:       fc.NotificationService,
+		images:   fc.ImageStore,
+		tmpl:     fc.Template,
 	}, nil
 }
 
@@ -82,7 +82,7 @@ func (en *EmailNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bo
 	var tmplErr error
 	tmpl, data := TmplText(ctx, en.tmpl, alerts, en.log, &tmplErr)
 
-	subject := tmpl(en.Subject)
+	subject := tmpl(en.settings.Subject)
 	alertPageURL := en.tmpl.ExternalURL.String()
 	ruleURL := en.tmpl.ExternalURL.String()
 	u, err := url.Parse(en.tmpl.ExternalURL.String())
@@ -114,12 +114,15 @@ func (en *EmailNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bo
 			return nil
 		}, alerts...)
 
+	// split addresses with a few different ways
+	addresses := util.SplitEmails(en.settings.Addresses)
+
 	cmd := &models.SendEmailCommandSync{
 		SendEmailCommand: models.SendEmailCommand{
 			Subject: subject,
 			Data: map[string]interface{}{
 				"Title":             subject,
-				"Message":           tmpl(en.Message),
+				"Message":           tmpl(en.settings.Message),
 				"Status":            data.Status,
 				"Alerts":            data.Alerts,
 				"GroupLabels":       data.GroupLabels,
@@ -130,8 +133,8 @@ func (en *EmailNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bo
 				"AlertPageUrl":      alertPageURL,
 			},
 			EmbeddedFiles: embeddedFiles,
-			To:            en.Addresses,
-			SingleEmail:   en.SingleEmail,
+			To:            addresses,
+			SingleEmail:   en.settings.SingleEmail,
 			Template:      "ng_alert_notification",
 		},
 	}
