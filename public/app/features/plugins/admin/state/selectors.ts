@@ -1,6 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit';
 
-import { PluginError, PluginErrorCode, unEscapeStringFromRegex } from '@grafana/data';
+import { PluginError, PluginErrorCode, PluginType, unEscapeStringFromRegex } from '@grafana/data';
 
 import { RequestStatus, PluginCatalogStoreState, PluginTypeFilterOption } from '../types';
 
@@ -21,8 +21,17 @@ const selectInstalled = (filterBy: string) =>
 
 const findByInstallAndType = (filterBy: string, filterByType: PluginTypeFilterOption) =>
   createSelector(selectInstalled(filterBy), (plugins) =>
-    plugins.filter((plugin) => filterByType === 'all' || plugin.type === filterByType)
+    plugins.filter(
+      (plugin) =>
+        filterByType === 'all' ||
+        plugin.type === filterByType ||
+        (filterByType === 'app' && isAppPluginType(plugin.type))
+    )
   );
+
+const isAppPluginType = (type: PluginType | undefined) => {
+  return type === PluginType.renderer || type === PluginType.secretsmanager;
+};
 
 const findByKeyword = (searchBy: string) =>
   createSelector(selectAll, (plugins) => {
