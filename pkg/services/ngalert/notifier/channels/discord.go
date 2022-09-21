@@ -36,68 +36,43 @@ type DiscordNotifier struct {
 	UseDiscordUsername bool
 }
 
-type DiscordConfig struct {
-	*NotificationChannelConfig
-	Content            string
-	AvatarURL          string
-	WebhookURL         string
-	UseDiscordUsername bool
-}
-
-type discordAttachment struct {
-	url       string
-	reader    io.ReadCloser
-	name      string
-	alertName string
-	state     model.AlertStatus
-}
-
 const DiscordMaxEmbeds = 10
 
-func NewDiscordConfig(config *NotificationChannelConfig) (*DiscordConfig, error) {
-	discordURL := config.Settings.Get("url").MustString()
-	if discordURL == "" {
-		return nil, errors.New("could not find webhook url property in settings")
-	}
-	return &DiscordConfig{
-		NotificationChannelConfig: config,
-		Content:                   config.Settings.Get("message").MustString(DefaultMessageEmbed),
-		AvatarURL:                 config.Settings.Get("avatar_url").MustString(),
-		WebhookURL:                discordURL,
-		UseDiscordUsername:        config.Settings.Get("use_discord_username").MustBool(false),
-	}, nil
-}
-
 func DiscordFactory(fc FactoryConfig) (NotificationChannel, error) {
-	cfg, err := NewDiscordConfig(fc.Config)
+	ch, err := buildDiscordNotifier(fc)
 	if err != nil {
 		return nil, receiverInitError{
 			Reason: err.Error(),
 			Cfg:    *fc.Config,
 		}
 	}
-	return NewDiscordNotifier(cfg, fc.NotificationService, fc.ImageStore, fc.Template), nil
+	return ch, nil
 }
 
-func NewDiscordNotifier(config *DiscordConfig, ns notifications.WebhookSender, images ImageStore, t *template.Template) *DiscordNotifier {
+func buildDiscordNotifier(fc FactoryConfig) (*DiscordNotifier, error) {
+	discordURL := fc.Config.Settings.Get("url").MustString()
+	if discordURL == "" {
+		return nil, errors.New("could not find webhook url property in settings")
+	}
+
 	return &DiscordNotifier{
 		Base: NewBase(&models.AlertNotification{
-			Uid:                   config.UID,
-			Name:                  config.Name,
-			Type:                  config.Type,
-			DisableResolveMessage: config.DisableResolveMessage,
-			Settings:              config.Settings,
-			SecureSettings:        config.SecureSettings,
+			Uid:                   fc.Config.UID,
+			Name:                  fc.Config.Name,
+			Type:                  fc.Config.Type,
+			DisableResolveMessage: fc.Config.DisableResolveMessage,
+			Settings:              fc.Config.Settings,
+			SecureSettings:        fc.Config.SecureSettings,
 		}),
-		Content:            config.Content,
-		AvatarURL:          config.AvatarURL,
-		WebhookURL:         config.WebhookURL,
+		Content:            fc.Config.Settings.Get("message").MustString(DefaultMessageEmbed),
+		AvatarURL:          fc.Config.Settings.Get("avatar_url").MustString(),
+		WebhookURL:         discordURL,
+		UseDiscordUsername: fc.Config.Settings.Get("use_discord_username").MustBool(false),
 		log:                log.New("alerting.notifier.discord"),
-		ns:                 ns,
-		images:             images,
-		tmpl:               t,
-		UseDiscordUsername: config.UseDiscordUsername,
-	}
+		ns:                 fc.NotificationService,
+		images:             fc.ImageStore,
+		tmpl:               fc.Template,
+	}, nil
 }
 
 func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
@@ -193,6 +168,14 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 
 func (d DiscordNotifier) SendResolved() bool {
 	return !d.GetDisableResolveMessage()
+}
+
+type discordAttachment struct {
+	url       string
+	reader    io.ReadCloser
+	name      string
+	alertName string
+	state     model.AlertStatus
 }
 
 func (d DiscordNotifier) constructAttachments(ctx context.Context, as []*types.Alert, embedQuota int) []discordAttachment {

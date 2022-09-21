@@ -270,17 +270,22 @@ func TestDiscordNotifier(t *testing.T) {
 			}
 
 			webhookSender := mockNotificationService()
-			cfg, err := NewDiscordConfig(m)
+			fc := FactoryConfig{
+				Config:              m,
+				ImageStore:          &UnavailableImageStore{},
+				NotificationService: webhookSender,
+				Template:            tmpl,
+			}
+
+			dn, err := buildDiscordNotifier(fc)
 			if c.expInitError != "" {
 				require.Equal(t, c.expInitError, err.Error())
 				return
 			}
 			require.NoError(t, err)
-			imageStore := &UnavailableImageStore{}
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
-			dn := NewDiscordNotifier(cfg, webhookSender, imageStore, tmpl)
 			ok, err := dn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.False(t, ok)
