@@ -46,17 +46,17 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
     }
   }, [item.highlightId]);
 
-  const { hoverProps } = useHover({
-    onHoverChange: (isHovering) => {
-      if (isHovering) {
-        state.open();
-        setMenuIdOpen(item.id);
-      } else {
-        state.close();
-        setMenuIdOpen(undefined);
-      }
-    },
-  });
+  const { hoverProps } = useHover({});
+
+  hoverProps.onPointerEnter = () => {
+    state.open();
+    setMenuIdOpen(item.id);
+  };
+
+  hoverProps.onPointerLeave = () => {
+    state.close();
+    setMenuIdOpen(undefined);
+  };
 
   useEffect(() => {
     // close the menu when changing submenus
