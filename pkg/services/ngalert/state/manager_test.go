@@ -2189,7 +2189,7 @@ func TestStaleResults(t *testing.T) {
 		clk := clock.NewMock()
 		clk.Set(time.Now())
 
-		st := state.NewManager(log.New("test_stale_results_handler"), testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, clk)
+		st := state.NewManager(log.New("test_stale_results_handler"), testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, clk, annotationstest.NewFakeAnnotationsRepo())
 
 		orgID := rand.Int63()
 		rule := tests.CreateTestAlertRule(t, ctx, dbstore, 10, orgID)
