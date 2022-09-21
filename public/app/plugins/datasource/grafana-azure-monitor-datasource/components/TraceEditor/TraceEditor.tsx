@@ -59,7 +59,9 @@ const TraceEditor: React.FC<TraceEditorProps> = ({
                 const opIdQuery = event.target?.value;
                 console.log(opIdQuery);
                 setOperationId(opIdQuery);
-                query.operationId = event.target?.value;
+                if (query.azureLogAnalytics) {
+                  query.azureLogAnalytics.operationId = event.target?.value;
+                }
                 onChange(query);
               }}
               value={operationId}

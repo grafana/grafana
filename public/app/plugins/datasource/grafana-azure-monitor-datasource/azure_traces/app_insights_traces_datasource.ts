@@ -25,7 +25,7 @@ export default class AzureTracesDatasource extends AzureLogAnalyticsDatasource {
 
   query(request: DataQueryRequest<AzureMonitorQuery>): Observable<DataQueryResponse> {
     console.log(request);
-    this.operationId = request.targets[0].operationId ?? '';
+    this.operationId = request.targets[0].azureLogAnalytics?.operationId ?? '';
     // only take the first query
     const target = this.buildTraceQuery(request.targets[0]);
 
@@ -90,7 +90,7 @@ export default class AzureTracesDatasource extends AzureLogAnalyticsDatasource {
   convertServiceTags(serviceTags: Field[]) {
     const stValues = serviceTags[0]?.values;
     if (!stValues) {
-      return [];
+      return [] as unknown as Vector<TraceKeyValuePair[]>;
     }
     const newVals = [];
     for (const stValue of stValues.toArray()) {

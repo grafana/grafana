@@ -38,9 +38,6 @@ export interface AzureMonitorQuery extends DataQuery {
   resourceGroup?: string;
   namespace?: string;
   resource?: string;
-
-  /** Trace params */
-  operationId?: string;
 }
 
 /**
@@ -89,6 +86,9 @@ export interface AzureLogsQuery {
   resource?: string;
 
   workspace?: string;
+
+  /** Trace params */
+  operationId?: string;
 }
 
 /**
