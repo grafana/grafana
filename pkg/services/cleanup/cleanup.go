@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -64,7 +66,7 @@ type CleanUpService struct {
 
 type cleanUpJob struct {
 	name string
-	fn   func(context.Context, log.Logger)
+	fn   func(context.Context)
 }
 
 func (j cleanUpJob) String() string {
@@ -72,7 +74,7 @@ func (j cleanUpJob) String() string {
 }
 
 func (srv *CleanUpService) Run(ctx context.Context) error {
-	srv.cleanUpTmpFiles(ctx, srv.log)
+	srv.cleanUpTmpFiles(ctx)
 
 	ticker := time.NewTicker(time.Minute * 10)
 	for {
@@ -90,8 +92,6 @@ func (srv *CleanUpService) clean(ctx context.Context) {
 	start := time.Now()
 	ctx, span := srv.tracer.Start(ctx, "cleanup background job")
 	defer span.End()
-	tID := tracing.TraceIDFromContext(ctx, false)
-	logger := srv.log.New("traceID", tID)
 	ctx, cancelFn := context.WithTimeout(ctx, timeout)
 	defer cancelFn()
 
@@ -107,6 +107,7 @@ func (srv *CleanUpService) clean(ctx context.Context) {
 		{"delete old login attempts", srv.deleteOldLoginAttempts},
 	}
 
+	logger := srv.log.FromContext(ctx)
 	logger.Debug("Starting cleanup jobs", "jobs", fmt.Sprintf("%v", cleanupJobs))
 
 	for _, j := range cleanupJobs {
@@ -115,14 +116,15 @@ func (srv *CleanUpService) clean(ctx context.Context) {
 			return
 		}
 		ctx, span := srv.tracer.Start(ctx, j.name)
-		j.fn(ctx, logger)
+		j.fn(ctx)
 		span.End()
 	}
 
 	logger.Info("Completed cleanup jobs", "duration", time.Since(start))
 }
 
-func (srv *CleanUpService) cleanUpOldAnnotations(ctx context.Context, logger log.Logger) {
+func (srv *CleanUpService) cleanUpOldAnnotations(ctx context.Context) {
+	logger := srv.log.FromContext(ctx)
 	cleaner := annotations.GetAnnotationCleaner()
 	affected, affectedTags, err := cleaner.CleanAnnotations(ctx, srv.Cfg)
 	if err != nil && !errors.Is(err, context.DeadlineExceeded) {
@@ -132,7 +134,7 @@ func (srv *CleanUpService) cleanUpOldAnnotations(ctx context.Context, logger log
 	}
 }
 
-func (srv *CleanUpService) cleanUpTmpFiles(ctx context.Context, logger log.Logger) {
+func (srv *CleanUpService) cleanUpTmpFiles(ctx context.Context) {
 	folders := []string{
 		srv.Cfg.ImagesDir,
 		srv.Cfg.CSVsDir,
@@ -140,12 +142,13 @@ func (srv *CleanUpService) cleanUpTmpFiles(ctx context.Context, logger log.Logge
 
 	for _, f := range folders {
 		ctx, span := srv.tracer.Start(ctx, fmt.Sprintf("removing old temporary items from directory: %s", strconv.Quote(f)))
-		srv.cleanUpTmpFolder(ctx, logger, f)
+		srv.cleanUpTmpFolder(ctx, f)
 		span.End()
 	}
 }
 
-func (srv *CleanUpService) cleanUpTmpFolder(ctx context.Context, logger log.Logger, folder string) {
+func (srv *CleanUpService) cleanUpTmpFolder(ctx context.Context, folder string) {
+	logger := srv.log.FromContext(ctx)
 	if _, err := os.Stat(folder); os.IsNotExist(err) {
 		return
 	}
@@ -190,7 +193,8 @@ func (srv *CleanUpService) shouldCleanupTempFile(filemtime time.Time, now time.T
 	return filemtime.Add(srv.Cfg.TempDataLifetime).Before(now)
 }
 
-func (srv *CleanUpService) deleteExpiredSnapshots(ctx context.Context, logger log.Logger) {
+func (srv *CleanUpService) deleteExpiredSnapshots(ctx context.Context) {
+	logger := srv.log.FromContext(ctx)
 	cmd := dashboardsnapshots.DeleteExpiredSnapshotsCommand{}
 	if err := srv.dashboardSnapshotService.DeleteExpiredSnapshots(ctx, &cmd); err != nil {
 		logger.Error("Failed to delete expired snapshots", "error", err.Error())
@@ -199,7 +203,8 @@ func (srv *CleanUpService) deleteExpiredSnapshots(ctx context.Context, logger lo
 	}
 }
 
-func (srv *CleanUpService) deleteExpiredDashboardVersions(ctx context.Context, logger log.Logger) {
+func (srv *CleanUpService) deleteExpiredDashboardVersions(ctx context.Context) {
+	logger := srv.log.FromContext(ctx)
 	cmd := dashver.DeleteExpiredVersionsCommand{}
 	if err := srv.dashboardVersionService.DeleteExpired(ctx, &cmd); err != nil {
 		logger.Error("Failed to delete expired dashboard versions", "error", err.Error())
@@ -208,7 +213,8 @@ func (srv *CleanUpService) deleteExpiredDashboardVersions(ctx context.Context, l
 	}
 }
 
-func (srv *CleanUpService) deleteExpiredImages(ctx context.Context, logger log.Logger) {
+func (srv *CleanUpService) deleteExpiredImages(ctx context.Context) {
+	logger := srv.log.FromContext(ctx)
 	if !srv.Cfg.UnifiedAlerting.IsEnabled() {
 		return
 	}
@@ -219,17 +225,19 @@ func (srv *CleanUpService) deleteExpiredImages(ctx context.Context, logger log.L
 	}
 }
 
-func (srv *CleanUpService) deleteOldLoginAttempts(ctx context.Context, logger log.Logger) {
+func (srv *CleanUpService) deleteOldLoginAttempts(ctx context.Context) {
+	logger := srv.log.FromContext(ctx)
 	err := srv.ServerLockService.LockAndExecute(ctx, "delete old login attempts",
 		time.Minute*10, func(context.Context) {
-			srv.deleteOldLoginAttemptsWithoutLock(ctx, logger)
+			srv.deleteOldLoginAttemptsWithoutLock(ctx)
 		})
 	if err != nil {
 		logger.Error("failed to lock and execute cleanup of old login attempts", "error", err)
 	}
 }
 
-func (srv *CleanUpService) deleteOldLoginAttemptsWithoutLock(ctx context.Context, logger log.Logger) {
+func (srv *CleanUpService) deleteOldLoginAttemptsWithoutLock(ctx context.Context) {
+	logger := srv.log.FromContext(ctx)
 	if srv.Cfg.DisableBruteForceLoginProtection {
 		return
 	}
@@ -244,7 +252,8 @@ func (srv *CleanUpService) deleteOldLoginAttemptsWithoutLock(ctx context.Context
 	}
 }
 
-func (srv *CleanUpService) expireOldUserInvites(ctx context.Context, logger log.Logger) {
+func (srv *CleanUpService) expireOldUserInvites(ctx context.Context) {
+	logger := srv.log.FromContext(ctx)
 	maxInviteLifetime := srv.Cfg.UserInviteMaxLifetime
 
 	cmd := models.ExpireTempUsersCommand{
@@ -258,7 +267,8 @@ func (srv *CleanUpService) expireOldUserInvites(ctx context.Context, logger log.
 	}
 }
 
-func (srv *CleanUpService) deleteStaleShortURLs(ctx context.Context, logger log.Logger) {
+func (srv *CleanUpService) deleteStaleShortURLs(ctx context.Context) {
+	logger := srv.log.FromContext(ctx)
 	cmd := models.DeleteShortUrlCommand{
 		OlderThan: time.Now().Add(-time.Hour * 24 * 7),
 	}
@@ -269,7 +279,8 @@ func (srv *CleanUpService) deleteStaleShortURLs(ctx context.Context, logger log.
 	}
 }
 
-func (srv *CleanUpService) deleteStaleQueryHistory(ctx context.Context, logger log.Logger) {
+func (srv *CleanUpService) deleteStaleQueryHistory(ctx context.Context) {
+	logger := srv.log.FromContext(ctx)
 	// Delete query history from 14+ days ago with exception of starred queries
 	maxQueryHistoryLifetime := time.Hour * 24 * 14
 	olderThan := time.Now().Add(-maxQueryHistoryLifetime).Unix()
