@@ -56,7 +56,7 @@ func (r *SQLAnnotationRepo) Add(ctx context.Context, item *annotations.Item) err
 	if item.Epoch == 0 {
 		item.Epoch = item.Created
 	}
-	if err := validateTimeRange(item); err != nil {
+	if err := r.validateItem(item); err != nil {
 		return err
 	}
 
