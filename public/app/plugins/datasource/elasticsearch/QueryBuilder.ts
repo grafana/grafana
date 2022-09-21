@@ -15,7 +15,7 @@ import {
   MetricAggregation,
   MetricAggregationWithInlineScript,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
-import { defaultBucketAgg, defaultMetricAgg, findMetricById, highlightTags } from './query_def';
+import { defaultBucketAgg, defaultMetricAgg, findMetricById, highlightTags } from './queryDef';
 import { ElasticsearchQuery, TermsQuery } from './types';
 import { convertOrderByToMetricId, getScriptValue } from './utils';
 
