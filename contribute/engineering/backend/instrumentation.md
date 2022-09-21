@@ -49,7 +49,7 @@ When to use which log level?
 - **Debug:** Informational messages of high frequency and/or less-important messages during normal operations.
 - **Info:** Informational messages of low frequency and/or important messages.
 - **Warning:** Should in normal cases not be used/needed. If used should be actionable.
-- **Error:** Error messages indicating some operation failed (with an error).
+- **Error:** Error messages indicating some operation failed (with an error) and the program didn't have a way of handle the error.
 
 ### Contextual logging
 
