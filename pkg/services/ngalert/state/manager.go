@@ -68,9 +68,8 @@ func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL,
 	return manager
 }
 
-func (st *Manager) Close(ctx context.Context) {
+func (st *Manager) Close() {
 	st.quit <- struct{}{}
-	st.flushState(ctx)
 }
 
 func (st *Manager) Warm(ctx context.Context) {
@@ -317,28 +316,6 @@ func (st *Manager) Put(states []*State) {
 	for _, s := range states {
 		st.set(s)
 	}
-}
-
-// flushState dumps the entire state to the database
-func (st *Manager) flushState(ctx context.Context) {
-	t := st.clock.Now()
-	st.log.Info("flushing the state")
-	st.cache.mtxStates.Lock()
-	defer st.cache.mtxStates.Unlock()
-	totalStates, errorsCnt := 0, 0
-	for _, orgStates := range st.cache.states {
-		for _, ruleStates := range orgStates {
-			for _, state := range ruleStates {
-				err := st.saveState(ctx, state)
-				totalStates++
-				if err != nil {
-					st.log.Error("failed to save alert state", append(state.GetRuleKey().LogContext(), "labels", state.Labels.String(), "state", state.State.String(), "err", err.Error()))
-					errorsCnt++
-				}
-			}
-		}
-	}
-	st.log.Info("the state has been flushed", "total_instances", totalStates, "errors", errorsCnt, "took", st.clock.Since(t))
 }
 
 func (st *Manager) saveState(ctx context.Context, s *State) error {
