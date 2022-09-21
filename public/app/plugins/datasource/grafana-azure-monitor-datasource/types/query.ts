@@ -86,6 +86,8 @@ export interface AzureLogsQuery {
   resource?: string;
 
   workspace?: string;
+
+  operationId?: string;
 }
 
 /**
