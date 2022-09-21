@@ -65,9 +65,9 @@ function renderFooterCell(column: ColumnInstance, tableStyles: TableStyles, heig
   }
 
   return (
-    <th className={tableStyles.headerCell} {...footerProps}>
+    <div className={tableStyles.headerCell} {...footerProps}>
       {column.render('Footer')}
-    </th>
+    </div>
   );
 }
 
