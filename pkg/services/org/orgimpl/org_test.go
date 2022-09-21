@@ -91,7 +91,3 @@ func (f *FakeOrgStore) UpdateAddress(ctx context.Context, cmd *org.UpdateOrgAddr
 func (f *FakeOrgStore) Delete(ctx context.Context, cmd *org.DeleteOrgCommand) error {
 	return f.ExpectedError
 }
-
-func (f *FakeOrgStore) getOrCreate(ctx context.Context, orgName string, autoAssignOrg bool, autoAssignOrgId int) (int64, error) {
-	return 0, f.ExpectedError
-}
