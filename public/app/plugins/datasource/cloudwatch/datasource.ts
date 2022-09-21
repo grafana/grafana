@@ -48,7 +48,6 @@ export class CloudWatchDatasource
 
   private metricsQueryRunner: CloudWatchMetricsQueryRunner;
   private annotationQueryRunner: CloudWatchAnnotationQueryRunner;
-  // this member should be private too, but we need to fix https://github.com/grafana/grafana/issues/55243 to enable that
   logsQueryRunner: CloudWatchLogsQueryRunner;
   api: CloudWatchAPI;
 
@@ -170,7 +169,7 @@ export class CloudWatchDatasource
 
   getActualRegion(region?: string) {
     if (region === 'default' || region === undefined || region === '') {
-      return this.defaultRegion;
+      return this.defaultRegion ?? '';
     }
     return region;
   }

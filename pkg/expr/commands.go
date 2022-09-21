@@ -171,6 +171,8 @@ func (gr *ReduceCommand) Execute(_ context.Context, vars mathexp.Vars) (mathexp.
 				Text:     fmt.Sprintf("Reduce operation is not needed. Input query or expression %s is already reduced data.", gr.VarToReduce),
 			})
 			newRes.Values = append(newRes.Values, copyV)
+		case mathexp.NoData:
+			newRes.Values = append(newRes.Values, v.New())
 		default:
 			return newRes, fmt.Errorf("can only reduce type series, got type %v", val.Type())
 		}
