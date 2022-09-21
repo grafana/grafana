@@ -1,16 +1,21 @@
-
-import * as raw from "../raw/dashboard/x/dashboard.gen";
+import * as raw from '../raw/dashboard/x/dashboard.gen';
 
 export interface Dashboard extends raw.Dashboard {
-  panels?: Array<Panel | raw.RowPanel | {
-    type: 'graph';
-  } | {
-    type: 'heatmap';
-  }>;
+  panels?: Array<
+    | Panel
+    | raw.RowPanel
+    | {
+        type: 'graph';
+      }
+    | {
+        type: 'heatmap';
+      }
+  >;
 }
 
-export interface Panel<TOptions = Record<string, unknown>, TCustomFieldConfig = Record<string, unknown>> extends raw.Panel {
-  fieldConfig: FieldConfigSource<TCustomFieldConfig>
+export interface Panel<TOptions = Record<string, unknown>, TCustomFieldConfig = Record<string, unknown>>
+  extends raw.Panel {
+  fieldConfig: FieldConfigSource<TCustomFieldConfig>;
 }
 
 export interface FieldConfig<TOptions = Record<string, unknown>> extends raw.FieldConfig {
