@@ -273,12 +273,6 @@ func getValidConflictUsers(r *ConflictResolver, b []byte) error {
 			if !previouslySeenEmails[strings.ToLower(newUser.Email)] {
 				return fmt.Errorf("not valid email: %s, email not in previous conflicts seen", newUser.Email)
 			}
-			if strings.ToLower(newUser.Email) != newUser.Email {
-				return fmt.Errorf("not valid email: %s for user: %s, email needs to be lowercased", newUser.Email, newUser.Id)
-			}
-			if strings.ToLower(newUser.Login) != newUser.Login {
-				return fmt.Errorf("not valid login for user: %s, login needs to be lowercased", newUser.Id)
-			}
 			// valid entry
 			newConflicts = append(newConflicts, *newUser)
 		case strings.HasPrefix(row, "-"):
@@ -584,6 +578,9 @@ func (r *ConflictResolver) MergeConflictingUsers(ctx context.Context, ss *sqlsto
 		if len(users) < 2 {
 			return fmt.Errorf("not enough users to perform merge, found %d for id %s, should be at least 2", len(users), block)
 		}
+		var intoUser user.User
+		var intoUserId int64
+		var fromUserIds []int64
 
 		// creating a session for each block of users
 		// we want to rollback incase something happens during update / delete
@@ -594,9 +591,6 @@ func (r *ConflictResolver) MergeConflictingUsers(ctx context.Context, ss *sqlsto
 			return fmt.Errorf("could not open a sess: %w", err)
 		}
 		err = ss.InTransaction(ctx, func(ctx context.Context) error {
-			var intoUser user.User
-			var intoUserId int64
-			var fromUserIds []int64
 			for _, u := range users {
 				if u.Direction == "+" {
 					id, err := strconv.ParseInt(u.Id, 10, 64)
@@ -644,6 +638,15 @@ func (r *ConflictResolver) MergeConflictingUsers(ctx context.Context, ss *sqlsto
 		commitErr := sess.Commit()
 		if commitErr != nil {
 			return fmt.Errorf("could not commit operation for useridentification %s: %w", block, commitErr)
+		}
+		updateMainCommand := &models.UpdateUserCommand{
+			UserId: intoUser.ID,
+			Login:  intoUser.Login,
+			Email:  intoUser.Email,
+		}
+		updateErr := ss.UpdateUser(ctx, updateMainCommand)
+		if updateErr != nil {
+			return fmt.Errorf("could not update user: %w", updateErr)
 		}
 	}
 	return nil
