@@ -49,6 +49,8 @@ func TestReadDashboard(t *testing.T) {
 			}
 
 			if !info.IsDir() && strings.HasSuffix(path, ".json") {
+				// Ignore gosec warning G304 since it's a test
+				// nolint:gosec
 				body, err := os.ReadFile(path)
 				if err != nil {
 					return err
@@ -76,6 +78,9 @@ func TestReadDashboard(t *testing.T) {
 					}
 
 					gpath := "testdata/gdev-walk-" + strings.ReplaceAll(obj.UID, "/", "-")
+
+					// Ignore gosec warning G304 since it's a test
+					// nolint:gosec
 					golden, _ := os.ReadFile(gpath)
 
 					if !bytes.Equal(out, golden) {
