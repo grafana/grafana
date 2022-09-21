@@ -2,6 +2,7 @@ package correlations
 
 import (
 	"errors"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
