@@ -29,6 +29,7 @@ export const QueryOperationRowHeader: React.FC<QueryOperationRowHeaderProps> = (
   titleElement,
 }: QueryOperationRowHeaderProps) => {
   const styles = useStyles2(getStyles);
+  console.log('onRowToggle', onRowToggle);
 
   return (
     <div className={styles.header}>
@@ -40,6 +41,7 @@ export const QueryOperationRowHeader: React.FC<QueryOperationRowHeaderProps> = (
           className={styles.collapseIcon}
           onClick={onRowToggle}
           type="button"
+          aria-expanded={isContentVisible}
         />
         {titleElement && (
           <div className={styles.titleWrapper} onClick={onRowToggle} aria-label="Query operation row title">
