@@ -12,6 +12,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -235,10 +237,16 @@ func createService(t *testing.T, cfg setting.Cfg, sqlStore sqlstore.Store, withD
 		sqlStore = sqlstore.InitTestDB(t)
 	}
 
+	tracer, err := tracing.ProvideService(&cfg)
+	if err != nil {
+		panic(err)
+	}
+
 	return ProvideService(
 		&cfg,
 		&fakePluginStore{},
 		kvstore.ProvideService(sqlStore),
 		routing.NewRouteRegister(),
+		tracer,
 	)
 }
