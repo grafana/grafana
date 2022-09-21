@@ -239,12 +239,13 @@ steps:
   image: grafana/build-container:1.6.2
   name: wire-install
 - commands:
+  - apt-get update && apt-get install make
   - make lint-go
   depends_on:
   - wire-install
   environment:
     CGO_ENABLED: "1"
-  image: grafana/build-container:1.6.2
+  image: golang:1.19.1
   name: lint-backend
 trigger:
   event:
@@ -1034,12 +1035,13 @@ steps:
   image: grafana/build-container:1.6.2
   name: wire-install
 - commands:
+  - apt-get update && apt-get install make
   - make lint-go
   depends_on:
   - wire-install
   environment:
     CGO_ENABLED: "1"
-  image: grafana/build-container:1.6.2
+  image: golang:1.19.1
   name: lint-backend
 - commands:
   - ./bin/build verify-drone
@@ -2200,12 +2202,13 @@ steps:
   image: golang:1.19.1
   name: compile-build-cmd
 - commands:
+  - apt-get update && apt-get install make
   - make lint-go
   depends_on:
   - wire-install
   environment:
     CGO_ENABLED: "1"
-  image: grafana/build-container:1.6.2
+  image: golang:1.19.1
   name: lint-backend
 - commands:
   - yarn run prettier:check
@@ -2857,12 +2860,13 @@ steps:
   image: grafana/build-container:1.6.2
   name: verify-gen-cue
 - commands:
+  - apt-get update && apt-get install make
   - make lint-go
   depends_on:
   - wire-install
   environment:
     CGO_ENABLED: "1"
-  image: grafana/build-container:1.6.2
+  image: golang:1.19.1
   name: lint-backend
 - commands:
   - yarn run prettier:check
@@ -2896,12 +2900,13 @@ steps:
   image: grafana/build-container:1.6.2
   name: test-frontend
 - commands:
+  - apt-get update && apt-get install make
   - make lint-go
   depends_on:
   - wire-install
   environment:
     CGO_ENABLED: "1"
-  image: grafana/build-container:1.6.2
+  image: golang:1.19.1
   name: lint-backend-enterprise2
 - commands:
   - go test -tags=pro -covermode=atomic -timeout=30m ./pkg/...
@@ -4165,12 +4170,13 @@ steps:
   image: golang:1.19.1
   name: compile-build-cmd
 - commands:
+  - apt-get update && apt-get install make
   - make lint-go
   depends_on:
   - wire-install
   environment:
     CGO_ENABLED: "1"
-  image: grafana/build-container:1.6.2
+  image: golang:1.19.1
   name: lint-backend
 - commands:
   - yarn run prettier:check
@@ -4786,12 +4792,13 @@ steps:
   image: grafana/build-container:1.6.2
   name: verify-gen-cue
 - commands:
+  - apt-get update && apt-get install make
   - make lint-go
   depends_on:
   - wire-install
   environment:
     CGO_ENABLED: "1"
-  image: grafana/build-container:1.6.2
+  image: golang:1.19.1
   name: lint-backend
 - commands:
   - yarn run prettier:check
@@ -4825,12 +4832,13 @@ steps:
   image: grafana/build-container:1.6.2
   name: test-frontend
 - commands:
+  - apt-get update && apt-get install make
   - make lint-go
   depends_on:
   - wire-install
   environment:
     CGO_ENABLED: "1"
-  image: grafana/build-container:1.6.2
+  image: golang:1.19.1
   name: lint-backend-enterprise2
 - commands:
   - go test -tags=pro -covermode=atomic -timeout=30m ./pkg/...
@@ -5263,6 +5271,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: b5ee6e9533a47ff6b790790a091bfc21ed27fd4fe12006bd3967530acfab1d05
+hmac: a37b4d779d7265b5ebedd51201d333bd5cdd422badae90abed2b7aa295aca7dd
 
 ...
