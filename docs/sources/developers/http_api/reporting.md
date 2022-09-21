@@ -300,7 +300,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 | dashboard.uid                  | string    | Dashboard UID.                                           |
 | timeRange.from                 | string    | Dashboard time range from.                               |
 | timeRange.to                   | string    | Dashboard time range to.                                 |
-| reportVariables.<variableName> | string    | Specifies the name of the dashboard's template variable. |
+| reportVariables.<variableName> | string    | Key-value pairs containing the template variables for this report, in JSON format. If empty, the template variables from the report's dashboard will be used.  |
 
 ### Example response
 
