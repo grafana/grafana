@@ -102,7 +102,7 @@ func TestWebhookNotifier(t *testing.T) {
 				"username": "user1",
 				"password": "mysecret",
 				"httpMethod": "PUT",
-				"maxAlerts": 2
+				"maxAlerts": "2"
 			}`,
 			alerts: []*types.Alert{
 				{
@@ -242,7 +242,7 @@ func TestWebhookNotifier(t *testing.T) {
 				"password": "mysecret",
 				"authorization_credentials": "mysecret",
 				"httpMethod": "POST",
-				"maxAlerts": 2
+				"maxAlerts": "2"
 			}`,
 			expInitError: "both HTTP Basic Authentication and Authorization Header are set, only 1 is permitted",
 		},

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
@@ -22,18 +23,19 @@ import (
 // alert notifications as webhooks.
 type WebhookNotifier struct {
 	*Base
-	log      log.Logger
-	ns       notifications.WebhookSender
-	images   ImageStore
-	tmpl     *template.Template
-	orgID    int64
-	settings webhookSettings
+	log       log.Logger
+	ns        notifications.WebhookSender
+	images    ImageStore
+	tmpl      *template.Template
+	orgID     int64
+	maxAlerts int
+	settings  webhookSettings
 }
 
 type webhookSettings struct {
-	URL        string `json:"url,omitempty" yaml:"url,omitempty"`
-	HTTPMethod string `json:"httpmethod,omitempty" yaml:"httpmethod,omitempty"`
-	MaxAlerts  int    `json:"maxAlerts,omitempty" yaml:"maxAlerts,omitempty"`
+	URL        string      `json:"url,omitempty" yaml:"url,omitempty"`
+	HTTPMethod string      `json:"httpmethod,omitempty" yaml:"httpmethod,omitempty"`
+	MaxAlerts  interface{} `json:"maxAlerts,omitempty" yaml:"maxAlerts,omitempty"`
 
 	// Authorization Header.
 	AuthorizationScheme      string `json:"authorization_scheme,omitempty" yaml:"authorization_scheme,omitempty"`
@@ -85,6 +87,24 @@ func buildWebhookNotifier(factoryConfig FactoryConfig) (*WebhookNotifier, error)
 	if err != nil {
 		return nil, err
 	}
+
+	logger := log.New("alerting.notifier.webhook")
+	maxAlerts := 0
+	if settings.MaxAlerts != nil {
+		switch value := settings.MaxAlerts.(type) {
+		case int:
+			maxAlerts = value
+		case string:
+			maxAlerts, err = strconv.Atoi(value)
+			if err != nil {
+				logger.Warn("failed to convert setting maxAlerts to integer. Using default", "err", err, "original", value)
+				maxAlerts = 0
+			}
+		default:
+			logger.Warn("unexpected type of setting maxAlerts. Expected integer. Using default", "type", fmt.Sprintf("%T", settings.MaxAlerts))
+		}
+	}
+
 	return &WebhookNotifier{
 		Base: NewBase(&models.AlertNotification{
 			Uid:                   factoryConfig.Config.UID,
@@ -93,12 +113,13 @@ func buildWebhookNotifier(factoryConfig FactoryConfig) (*WebhookNotifier, error)
 			DisableResolveMessage: factoryConfig.Config.DisableResolveMessage,
 			Settings:              factoryConfig.Config.Settings,
 		}),
-		orgID:    factoryConfig.Config.OrgID,
-		log:      log.New("alerting.notifier.webhook"),
-		ns:       factoryConfig.NotificationService,
-		images:   factoryConfig.ImageStore,
-		tmpl:     factoryConfig.Template,
-		settings: settings,
+		orgID:     factoryConfig.Config.OrgID,
+		log:       logger,
+		ns:        factoryConfig.NotificationService,
+		images:    factoryConfig.ImageStore,
+		tmpl:      factoryConfig.Template,
+		maxAlerts: maxAlerts,
+		settings:  settings,
 	}, nil
 }
 
@@ -126,7 +147,7 @@ func (wn *WebhookNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 		return false, err
 	}
 
-	as, numTruncated := truncateAlerts(wn.settings.MaxAlerts, as)
+	as, numTruncated := truncateAlerts(wn.maxAlerts, as)
 	var tmplErr error
 	tmpl, data := TmplText(ctx, wn.tmpl, as, wn.log, &tmplErr)
 
