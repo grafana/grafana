@@ -17,7 +17,7 @@ import {
   TopMetrics,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
-import * as queryDef from './query_def';
+import * as queryDef from './queryDef';
 import { ElasticsearchAggregation, ElasticsearchQuery } from './types';
 import { describeMetric, getScriptValue } from './utils';
 

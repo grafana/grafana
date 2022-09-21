@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 
@@ -27,7 +28,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	sql := sqlstore.InitTestDB(t)
-	repo := SQLAnnotationRepo{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test")}
+	repo := SQLAnnotationRepo{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql)}
 
 	testUser := &user.SignedInUser{
 		OrgID: 1,
@@ -52,7 +53,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 			assert.NoError(t, err)
 		})
 
-		dashboardStore := dashboardstore.ProvideDashboardStore(sql, featuremgmt.WithFeatures())
+		dashboardStore := dashboardstore.ProvideDashboardStore(sql, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql))
 
 		testDashboard1 := models.SaveDashboardCommand{
 			UserId: 1,
@@ -61,7 +62,8 @@ func TestIntegrationAnnotations(t *testing.T) {
 				"title": "Dashboard 1",
 			}),
 		}
-		dashboard, err := dashboardStore.SaveDashboard(testDashboard1)
+
+		dashboard, err := dashboardStore.SaveDashboard(context.Background(), testDashboard1)
 		require.NoError(t, err)
 
 		testDashboard2 := models.SaveDashboardCommand{
@@ -71,7 +73,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 				"title": "Dashboard 2",
 			}),
 		}
-		dashboard2, err := dashboardStore.SaveDashboard(testDashboard2)
+		dashboard2, err := dashboardStore.SaveDashboard(context.Background(), testDashboard2)
 		require.NoError(t, err)
 
 		annotation := &annotations.Item{
@@ -96,7 +98,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 			Type:        "alert",
 			Epoch:       21, // Should swap epoch & epochEnd
 			EpochEnd:    20,
-			Tags:        []string{"outage", "error", "type:outage", "server:server-1"},
+			Tags:        []string{"outage", "type:outage", "server:server-1", "error"},
 		}
 		err = repo.Add(context.Background(), annotation2)
 		require.NoError(t, err)
@@ -392,8 +394,8 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	sql := sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{})
-	repo := SQLAnnotationRepo{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test")}
-	dashboardStore := dashboardstore.ProvideDashboardStore(sql, featuremgmt.WithFeatures())
+	repo := SQLAnnotationRepo{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql)}
+	dashboardStore := dashboardstore.ProvideDashboardStore(sql, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql))
 
 	testDashboard1 := models.SaveDashboardCommand{
 		UserId: 1,
@@ -402,7 +404,7 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 			"title": "Dashboard 1",
 		}),
 	}
-	dashboard, err := dashboardStore.SaveDashboard(testDashboard1)
+	dashboard, err := dashboardStore.SaveDashboard(context.Background(), testDashboard1)
 	require.NoError(t, err)
 	dash1UID := dashboard.Uid
 
@@ -413,7 +415,7 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 			"title": "Dashboard 2",
 		}),
 	}
-	_, err = dashboardStore.SaveDashboard(testDashboard2)
+	_, err = dashboardStore.SaveDashboard(context.Background(), testDashboard2)
 	require.NoError(t, err)
 
 	dash1Annotation := &annotations.Item{

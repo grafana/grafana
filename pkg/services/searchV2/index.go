@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/searchV2/extract"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/store"
+	"github.com/grafana/grafana/pkg/setting"
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/blugelabs/bluge"
@@ -98,9 +99,10 @@ type searchIndex struct {
 	syncCh                  chan chan struct{}
 	tracer                  tracing.Tracer
 	features                featuremgmt.FeatureToggles
+	settings                setting.SearchSettings
 }
 
-func newSearchIndex(dashLoader dashboardLoader, evStore eventStore, extender DocumentExtender, folderIDs folderUIDLookup, tracer tracing.Tracer, features featuremgmt.FeatureToggles) *searchIndex {
+func newSearchIndex(dashLoader dashboardLoader, evStore eventStore, extender DocumentExtender, folderIDs folderUIDLookup, tracer tracing.Tracer, features featuremgmt.FeatureToggles, settings setting.SearchSettings) *searchIndex {
 	return &searchIndex{
 		loader:          dashLoader,
 		eventStore:      evStore,
@@ -113,6 +115,7 @@ func newSearchIndex(dashLoader dashboardLoader, evStore eventStore, extender Doc
 		syncCh:          make(chan chan struct{}),
 		tracer:          tracer,
 		features:        features,
+		settings:        settings,
 	}
 }
 
@@ -176,13 +179,14 @@ func (i *searchIndex) sync(ctx context.Context) error {
 }
 
 func (i *searchIndex) run(ctx context.Context, orgIDs []int64, reIndexSignalCh chan struct{}) error {
+	i.logger.Info("Initializing SearchV2", "dashboardLoadingBatchSize", i.settings.DashboardLoadingBatchSize, "fullReindexInterval", i.settings.FullReindexInterval, "indexUpdateInterval", i.settings.IndexUpdateInterval)
 	initialSetupCtx, initialSetupSpan := i.tracer.Start(ctx, "searchV2 initialSetup")
 
 	reIndexInterval := 5 * time.Minute
 	fullReIndexTimer := time.NewTimer(reIndexInterval)
 	defer fullReIndexTimer.Stop()
 
-	partialUpdateInterval := 5 * time.Second
+	partialUpdateInterval := i.settings.IndexUpdateInterval
 	partialUpdateTimer := time.NewTimer(partialUpdateInterval)
 	defer partialUpdateTimer.Stop()
 
@@ -473,10 +477,11 @@ func (i *searchIndex) buildOrgIndex(ctx context.Context, orgID int64) (int, erro
 
 	i.logger.Info("Start building org index", "orgId", orgID)
 	dashboards, err := i.loader.LoadDashboards(ctx, orgID, "")
-	if err != nil {
-		return 0, fmt.Errorf("error loading dashboards: %w", err)
-	}
 	orgSearchIndexLoadTime := time.Since(started)
+
+	if err != nil {
+		return 0, fmt.Errorf("error loading dashboards: %w, elapsed: %s", err, orgSearchIndexLoadTime.String())
+	}
 	i.logger.Info("Finish loading org dashboards", "elapsed", orgSearchIndexLoadTime, "orgId", orgID)
 
 	dashboardExtender := i.extender.GetDashboardExtender(orgID)
@@ -798,13 +803,14 @@ func (i *searchIndex) updateDashboard(ctx context.Context, orgID int64, index *o
 }
 
 type sqlDashboardLoader struct {
-	sql    *sqlstore.SQLStore
-	logger log.Logger
-	tracer tracing.Tracer
+	sql      *sqlstore.SQLStore
+	logger   log.Logger
+	tracer   tracing.Tracer
+	settings setting.SearchSettings
 }
 
-func newSQLDashboardLoader(sql *sqlstore.SQLStore, tracer tracing.Tracer) *sqlDashboardLoader {
-	return &sqlDashboardLoader{sql: sql, logger: log.New("sqlDashboardLoader"), tracer: tracer}
+func newSQLDashboardLoader(sql *sqlstore.SQLStore, tracer tracing.Tracer, settings setting.SearchSettings) *sqlDashboardLoader {
+	return &sqlDashboardLoader{sql: sql, logger: log.New("sqlDashboardLoader"), tracer: tracer, settings: settings}
 }
 
 func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, dashboardUID string) ([]dashboard, error) {
@@ -818,7 +824,7 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 	limit := 1
 
 	if dashboardUID == "" {
-		limit = 200
+		limit = l.settings.DashboardLoadingBatchSize
 		dashboards = make([]dashboard, 0, limit+1)
 
 		// Add the root folder ID (does not exist in SQL).
