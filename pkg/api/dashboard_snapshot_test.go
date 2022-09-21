@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/team/teamtest"
 )
 
 func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
@@ -70,10 +71,11 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 				hs := &HTTPServer{dashboardsnapshotsService: setUpSnapshotTest(t, 0, "")}
 				sc.handlerFunc = hs.DeleteDashboardSnapshot
 
+				teamSvc := &teamtest.FakeService{}
 				dashSvc := dashboards.NewFakeDashboardService(t)
 				dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Return(nil).Maybe()
 
-				guardian.InitLegacyGuardian(sc.sqlStore, dashSvc)
+				guardian.InitLegacyGuardian(sc.sqlStore, dashSvc, teamSvc)
 				sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"key": "12345"}).exec()
 
 				assert.Equal(t, 403, sc.resp.Code)
@@ -107,6 +109,7 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 	})
 
 	t.Run("When user is editor and dashboard has default ACL", func(t *testing.T) {
+		teamSvc := &teamtest.FakeService{}
 		dashSvc := &dashboards.FakeDashboardService{}
 		dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
 			q := args.Get(1).(*models.GetDashboardACLInfoListQuery)
@@ -118,7 +121,7 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 
 		loggedInUserScenarioWithRole(t, "Should be able to delete a snapshot when calling DELETE on", "DELETE",
 			"/api/snapshots/12345", "/api/snapshots/:key", org.RoleEditor, func(sc *scenarioContext) {
-				guardian.InitLegacyGuardian(sc.sqlStore, dashSvc)
+				guardian.InitLegacyGuardian(sc.sqlStore, dashSvc, teamSvc)
 				var externalRequest *http.Request
 				ts := setupRemoteServer(func(rw http.ResponseWriter, req *http.Request) {
 					rw.WriteHeader(200)

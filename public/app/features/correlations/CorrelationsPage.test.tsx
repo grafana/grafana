@@ -119,11 +119,8 @@ const renderWithContext = async (
     },
     fetch: (options: BackendSrvRequest) => {
       return new Observable((s) => {
-        if (correlations.length) {
-          s.next(merge(createFetchResponse({ url: options.url, data: correlations })));
-        } else {
-          s.error(merge(createFetchError({ config: { url: options.url }, status: 404 })));
-        }
+        s.next(merge(createFetchResponse({ url: options.url, data: correlations })));
+
         s.complete();
       });
     },
