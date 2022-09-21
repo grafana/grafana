@@ -207,7 +207,7 @@ Content-Length: 940
 ### Status Codes
 
 - **200** – OK
-- **400** – Bad request (invalid report id).
+- **400** – Bad request (invalid report ID).
 - **403** – Forbidden (access denied to a dashboard used in the report).
 - **404** – Not found (such report does not exist).
 - **500** – Unexpected error or server misconfiguration. Refer to server logs for more details.
@@ -295,12 +295,12 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 #### Report dashboard Schema
 
-| Field name                     | Data type | Description                                              |
-| ------------------------------ | --------- | -------------------------------------------------------- |
-| dashboard.uid                  | string    | Dashboard UID.                                           |
-| timeRange.from                 | string    | Dashboard time range from.                               |
-| timeRange.to                   | string    | Dashboard time range to.                                 |
-| reportVariables.<variableName> | string    | Key-value pairs containing the template variables for this report, in JSON format. If empty, the template variables from the report's dashboard will be used.  |
+| Field name                     | Data type | Description                                                                                                                                                   |
+| ------------------------------ | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| dashboard.uid                  | string    | Dashboard UID.                                                                                                                                                |
+| timeRange.from                 | string    | Dashboard time range from.                                                                                                                                    |
+| timeRange.to                   | string    | Dashboard time range to.                                                                                                                                      |
+| reportVariables.<variableName> | string    | Key-value pairs containing the template variables for this report, in JSON format. If empty, the template variables from the report's dashboard will be used. |
 
 ### Example response
 
@@ -317,11 +317,137 @@ Content-Length: 35
 
 ### Status Codes
 
-- **200** – Report was sent.
-- **400** – Bad request (invalid json, missing content-type, missing or invalid fields, etc.).
-- **401** - Authentication failed, refer to [Authentication API]({{< relref "auth/" >}}).
-- **403** - User is authenticated but is not authorized to generate the report.
-- **404** - Report not found.
+- **200** – OK
+- **400** – Bad request (invalid json, missing or invalid fields values, etc.).
+- **403** - Forbidden (access denied to a dashboard used in the report).
+- **500** - Unexpected error or server misconfiguration. Refer to server logs for more details
+
+## Update a report
+
+`PUT /api/reports/:id`
+
+#### Required permissions
+
+See note in the [introduction]({{< ref "#reporting-api" >}}) for an explanation.
+
+| Action        | Scope |
+| ------------- | ----- |
+| reports:write | n/a   |
+
+### Example request
+
+See [JSON body schema]({{< ref "#json-body-schema" >}}) for fields description.
+
+```http
+GET /api/reports HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+{
+	"name": "Updated Report",
+	"recipients": "tania.batieva@grafana.com",
+	"replyTo": "",
+	"message": "Hello, please, find the report attached",
+	"schedule": {
+		"frequency": "hourly",
+		"timeZone": "Africa/Cairo",
+		"workdaysOnly": true,
+		"startDate": "2022-10-10T10:00:00+02:00",
+		"endDate": "2022-11-20T19:00:00+02:00"
+	},
+	"options": {
+		"orientation": "landscape",
+		"layout": "grid",
+		"timeRange": {
+			"from": "",
+			"to": ""
+		}
+	},
+	"enableDashboardUrl": true,
+	"enableCsv": false,
+	"state": "scheduled",
+	"dashboards": [
+		{
+			"dashboard": {
+				"id": 463,
+				"uid": "7MeksYbmk",
+				"name": "Alerting with TestData"
+			},
+			"timeRange": {
+				"from": "2022-08-08T15:00:00+02:00",
+				"to": "2022-09-02T17:00:00+02:00"
+			},
+			"reportVariables": {
+				"varibale1": "Value1"
+			}
+		}
+	],
+	"formats": [
+		"pdf",
+		"csv"
+	]
+}
+```
+
+### Example response
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: 28
+
+{
+	"message": "Report updated"
+}
+```
+
+### Status Codes
+
+- **200** – OK
+- **400** – Bad request (invalid json, missing or invalid fields values, etc.).
+- **403** – Forbidden (access denied to a dashboard used in the report).
+- **404** – Not found (such report does not exist).
+- **500** – Unexpected error or server misconfiguration. Refer to server logs for more details.
+
+## Delete a report
+
+`DELETE /api/reports/:id`
+
+#### Required permissions
+
+See note in the [introduction]({{< ref "#reporting-api" >}}) for an explanation.
+
+| Action         | Scope |
+| -------------- | ----- |
+| reports:delete |       |
+
+### Example request
+
+```http
+GET /api/reports/6 HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+### Example response
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: 39
+
+{
+	"message": "Report config was removed"
+}
+```
+
+### Status Codes
+
+- **200** – OK
+- **400** – Bad request (invalid report ID).
+- **404** - Not found (report with this ID does not exist).
 - **500** - Unexpected error or server misconfiguration. Refer to server logs for more details
 
 ## Send a report
@@ -418,9 +544,9 @@ Content-Length: 1840
 
 ### Status Codes
 
-- **200** – Report was sent.
+- **200** – OK
 - **400** – Bad request (invalid json, missing content-type, missing or invalid fields, etc.).
 - **401** - Authentication failed, refer to [Authentication API]({{< relref "auth/" >}}).
-- **403** - User is authenticated but is not authorized to generate the report.
-- **404** - Report not found.
+- **403** - Forbidden.
+- **404** - Not found.
 - **500** - Unexpected error or server misconfiguration. Refer to server logs for more details
