@@ -19,13 +19,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/queryhistory"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 func ProvideService(cfg *setting.Cfg, serverLockService *serverlock.ServerLockService,
 	shortURLService shorturls.Service, sqlstore *sqlstore.SQLStore, queryHistoryService queryhistory.Service,
 	dashboardVersionService dashver.Service, dashSnapSvc dashboardsnapshots.Service, deleteExpiredImageService *image.DeleteExpiredService,
-	loginAttemptService loginattempt.Service) *CleanUpService {
+	loginAttemptService loginattempt.Service, tempUserService tempuser.Service) *CleanUpService {
 	s := &CleanUpService{
 		Cfg:                       cfg,
 		ServerLockService:         serverLockService,
@@ -37,6 +38,7 @@ func ProvideService(cfg *setting.Cfg, serverLockService *serverlock.ServerLockSe
 		dashboardSnapshotService:  dashSnapSvc,
 		deleteExpiredImageService: deleteExpiredImageService,
 		loginAttemptService:       loginAttemptService,
+		tempUserService:           tempUserService,
 	}
 	return s
 }
@@ -52,6 +54,7 @@ type CleanUpService struct {
 	dashboardSnapshotService  dashboardsnapshots.Service
 	deleteExpiredImageService *image.DeleteExpiredService
 	loginAttemptService       loginattempt.Service
+	tempUserService           tempuser.Service
 }
 
 func (srv *CleanUpService) Run(ctx context.Context) error {
@@ -201,7 +204,7 @@ func (srv *CleanUpService) expireOldUserInvites(ctx context.Context) {
 	cmd := models.ExpireTempUsersCommand{
 		OlderThan: time.Now().Add(-maxInviteLifetime),
 	}
-	if err := srv.store.ExpireOldUserInvites(ctx, &cmd); err != nil {
+	if err := srv.tempUserService.ExpireOldUserInvites(ctx, &cmd); err != nil {
 		srv.log.Error("Problem expiring user invites", "error", err.Error())
 	} else {
 		srv.log.Debug("Expired user invites", "rows affected", cmd.NumExpired)

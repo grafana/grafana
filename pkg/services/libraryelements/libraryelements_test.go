@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -378,7 +379,7 @@ func validateAndUnMarshalArrayResponse(t *testing.T, resp response.Response) lib
 func scenarioWithPanel(t *testing.T, desc string, fn func(t *testing.T, sc scenarioContext)) {
 	t.Helper()
 	store := mockstore.NewSQLStoreMock()
-	guardian.InitLegacyGuardian(store, &dashboards.FakeDashboardService{})
+	guardian.InitLegacyGuardian(store, &dashboards.FakeDashboardService{}, &teamtest.FakeService{})
 
 	testScenario(t, desc, func(t *testing.T, sc scenarioContext) {
 		command := getCreatePanelCommand(sc.folder.Id, "Text - Library Panel")
@@ -415,7 +416,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			sqlStore.Cfg, dashboardStore, nil,
 			features, folderPermissions, dashboardPermissions, ac,
 		)
-		guardian.InitLegacyGuardian(sqlStore, dashboardService)
+		guardian.InitLegacyGuardian(sqlStore, dashboardService, &teamtest.FakeService{})
 		service := LibraryElementService{
 			Cfg:      sqlStore.Cfg,
 			SQLStore: sqlStore,
