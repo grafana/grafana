@@ -15,7 +15,7 @@ weight: 900
 
 > **Note:** Available in [Grafana Enterprise]({{< relref "../../grafana-enterprise" >}}) version 7.4 and later, and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
 
-By exporting usage logs to Loki, you can directly query them and create dashboards of the information that matters to you most, such as dashboard errors, most active organizations, or your top-10 most-used queries. This configuration is done for you in Grafana Cloud, with provisioned dashboards. Read about them [here]({{< ref "/docs/grafana-cloud/usage-insights" >}}).
+By exporting usage logs to Loki, you can directly query them and create dashboards of the information that matters to you most, such as dashboard errors, most active organizations, or your top-10 most-used queries. This configuration is done for you in Grafana Cloud, with provisioned dashboards. Read about them in the [Grafana Cloud documentation](/docs/grafana-cloud/usage-insights/).
 
 ## Usage insights logs
 
