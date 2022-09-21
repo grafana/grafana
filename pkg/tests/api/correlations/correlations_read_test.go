@@ -3,6 +3,7 @@ package correlations
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"io"
 	"net/http"
 	"testing"
@@ -73,6 +74,10 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 		SourceUID: dsWithCorrelations.Uid,
 		TargetUID: dsWithCorrelations.Uid,
 		OrgId:     dsWithCorrelations.OrgId,
+		Config: simplejson.NewFromAny(map[string]interface{}{
+			"field":  "foo",
+			"target": "test",
+		}),
 	})
 
 	createDsCommand = &datasources.AddDataSourceCommand{
