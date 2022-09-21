@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"xorm.io/core"
 )
 
 type InstanceStore interface {
@@ -21,8 +20,8 @@ type InstanceStore interface {
 	DeleteAlertInstancesByRule(ctx context.Context, key models.AlertRuleKey) error
 }
 
-// GetAlertInstance is a handler for retrieving an alert instance based on OrgId, AlertDefintionID, and
-// the hash of the labels.
+// GetAlertInstance is a handler for retrieving an alert instance based on
+// OrgId, AlertDefintionID, and the hash of the labels.
 func (st DBstore) GetAlertInstance(ctx context.Context, cmd *models.GetAlertInstanceQuery) error {
 	return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		instance := models.AlertInstance{}
@@ -43,7 +42,8 @@ func (st DBstore) GetAlertInstance(ctx context.Context, cmd *models.GetAlertInst
 
 		has, err := sess.SQL(s.String(), params...).Get(&instance)
 		if !has {
-			return fmt.Errorf("instance not found for labels %v (hash: %v), alert rule %v (org %v)", cmd.Labels, hash, cmd.RuleUID, cmd.RuleOrgID)
+			return fmt.Errorf("instance not found for labels %v (hash: %v), alert rule %v (org %v)",
+				cmd.Labels, hash, cmd.RuleUID, cmd.RuleOrgID)
 		}
 		if err != nil {
 			return err
@@ -103,118 +103,81 @@ func (st DBstore) SaveAlertInstances(ctx context.Context, cmd ...models.AlertIns
 		}
 		return nil
 	} else {
-		// The function starts a single transaction and batches writes into
-		// statements with `maxRows` instances per statements. This makes for a
-		// fairly efficient transaction without creating statements that are too long
-		// for some databases to process. For example, SQLite has a limit of 999
-		// variables per write.
-		err := st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-			keyNames := []string{"rule_org_id", "rule_uid", "labels_hash"}
-			fieldNames := []string{
-				"rule_org_id", "rule_uid", "labels", "labels_hash", "current_state",
-				"current_reason", "current_state_since", "current_state_end", "last_eval_time",
-			}
-			fieldsPerRow := len(fieldNames)
-			maxRows := 20
-			maxArgs := maxRows * fieldsPerRow
+		//  Batches write into statements with `maxRows` instances per statements.
+		//  This makes sure we don't create  statements that are too long for some
+		//  databases to process. For example, SQLite has a limit of 999 variables
+		//  per write.
+		keyNames := []string{"rule_org_id", "rule_uid", "labels_hash"}
+		fieldNames := []string{
+			"rule_org_id", "rule_uid", "labels", "labels_hash", "current_state",
+			"current_reason", "current_state_since", "current_state_end", "last_eval_time",
+		}
+		fieldsPerRow := len(fieldNames)
+		maxRows := 20
+		maxArgs := maxRows * fieldsPerRow
 
-			// bigStmt is a prepared statement for a statement that upserts maxRows
-			// into the database. For a large number of instances, it will be used
-			// repeatedly.
-			var bigStmt *core.Stmt
-			defer func() {
-				if bigStmt != nil {
-					closeErr := bigStmt.Close()
-					if closeErr != nil {
-						st.Logger.Warn("failed to close db connection", "err", closeErr)
-					}
-				}
-			}()
-
-			// Prepare our big SQL statement on-demand, instead of initializing up-front
-			getBigStatement := func() (*core.Stmt, error) {
-				if bigStmt != nil {
-					return bigStmt, nil
-				}
-
-				bigUpsertSQL, err := st.SQLStore.Dialect.UpsertMultipleSQL(
-					"alert_instance", keyNames, fieldNames, maxRows)
-				if err != nil {
-					return nil, err
-				}
-
-				bigStmt, err = sess.DB().Prepare(bigUpsertSQL)
-				if err != nil {
-					bigStmt = nil
-				}
-
-				return bigStmt, err
-			}
-
-			// Generate batches of `maxRows` and write the statements when full.
-			args := make([]interface{}, 0, maxArgs)
-			for _, alertInstance := range cmd {
-				labelTupleJSON, err := alertInstance.Labels.StringKey()
-				if err != nil {
-					return err
-				}
-
-				if err := models.ValidateAlertInstance(alertInstance); err != nil {
-					return err
-				}
-
-				args = append(args,
-					alertInstance.RuleOrgID, alertInstance.RuleUID, labelTupleJSON, alertInstance.LabelsHash,
-					alertInstance.CurrentState, alertInstance.CurrentReason, alertInstance.CurrentStateSince.Unix(),
-					alertInstance.CurrentStateEnd.Unix(), alertInstance.LastEvalTime.Unix())
-
-				// If we've reached the maximum batch size, write to the database.
-				if len(args) >= maxArgs {
-					stmt, err := getBigStatement()
-					if err != nil {
-						return err
-					}
-
-					if _, err = stmt.ExecContext(ctx, args...); err != nil {
-						return err
-					}
-
-					// Reset args so we can re-use the allocated space.
-					args = args[:0]
-				}
-			}
-
-			// Write the final batch of up to maxRows in size.
-			if len(args) != 0 && len(args)%fieldsPerRow == 0 {
-				upsertSQL, err := st.SQLStore.Dialect.UpsertMultipleSQL(
-					"alert_instance", keyNames, fieldNames, len(args)/fieldsPerRow)
-				if err != nil {
-					return err
-				}
-
-				stmt, err := sess.DB().Prepare(upsertSQL)
-				if err != nil {
-					return err
-				}
-
-				_, err = stmt.ExecContext(ctx, args...)
-				closeErr := stmt.Close()
-				if closeErr != nil {
-					st.Logger.Warn("failed to close db connection", "err", closeErr)
-				}
-
-				if err != nil {
-					return err
-				}
-			} else if len(args) != 0 {
-				return fmt.Errorf("failed to upsert alert instances. Last statements had %v fields, which is not a multiple of the number of fields, %v", len(args), fieldsPerRow)
-			}
-
-			return nil
-		})
-
+		bigUpsertSQL, err := st.SQLStore.Dialect.UpsertMultipleSQL(
+			"alert_instance", keyNames, fieldNames, maxRows)
 		if err != nil {
 			return err
+		}
+
+		// Args contains the SQL statement, and the values to fill into the SQL statement.
+		args := make([]interface{}, 0, maxArgs)
+		args = append(args, bigUpsertSQL)
+		values := func(a []interface{}) int {
+			return len(a) - 1
+		}
+
+		// Generate batches of `maxRows` and write the statements when full.
+		for _, alertInstance := range cmd {
+			labelTupleJSON, err := alertInstance.Labels.StringKey()
+			if err != nil {
+				return err
+			}
+
+			if err := models.ValidateAlertInstance(alertInstance); err != nil {
+				return err
+			}
+
+			args = append(args,
+				alertInstance.RuleOrgID, alertInstance.RuleUID, labelTupleJSON, alertInstance.LabelsHash,
+				alertInstance.CurrentState, alertInstance.CurrentReason, alertInstance.CurrentStateSince.Unix(),
+				alertInstance.CurrentStateEnd.Unix(), alertInstance.LastEvalTime.Unix())
+
+			// If we've reached the maximum batch size, write to the database.
+			if values(args) >= maxArgs {
+				err = st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+					_, err := sess.Exec(args...)
+					return err
+				})
+				if err != nil {
+					return fmt.Errorf("failed to save alert instances: %w", err)
+				}
+
+				// Reset args so we can re-use the allocated interface pointers.
+				args = args[:1]
+			}
+		}
+
+		// Write the final batch of up to maxRows in size.
+		if values(args) != 0 && values(args)%fieldsPerRow == 0 {
+			upsertSQL, err := st.SQLStore.Dialect.UpsertMultipleSQL(
+				"alert_instance", keyNames, fieldNames, values(args)/fieldsPerRow)
+			if err != nil {
+				return err
+			}
+
+			args[0] = upsertSQL
+			err = st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+				_, err := sess.Exec(args...)
+				return err
+			})
+			if err != nil {
+				return fmt.Errorf("failed to save alert instances: %w", err)
+			}
+		} else if values(args) != 0 {
+			return fmt.Errorf("failed to upsert alert instances. Last statements had %v fields, which is not a multiple of the number of fields, %v", len(args), fieldsPerRow)
 		}
 
 		return nil

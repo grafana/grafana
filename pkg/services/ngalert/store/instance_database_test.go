@@ -17,7 +17,7 @@ func BenchmarkAlertInstanceOperations(b *testing.B) {
 	b.StopTimer()
 	ctx := context.Background()
 	_, dbstore := tests.SetupTestEnv(b, baseIntervalSeconds)
-	dbstore.FeatureToggles.(*tests.FakeFeatures).BigTransactions = true
+	dbstore.FeatureToggles.(*tests.FakeFeatures).BigTransactions = false
 
 	const mainOrgID int64 = 1
 
@@ -59,7 +59,7 @@ func TestIntegrationAlertInstanceBulkWrite(t *testing.T) {
 	_, dbstore := tests.SetupTestEnv(t, baseIntervalSeconds)
 
 	orgIDs := []int64{1, 2, 3, 4, 5}
-	counts := []int{20_000, 200, 503, 0, 1257}
+	counts := []int{20_000, 200, 503, 0, 1256}
 	instances := []models.AlertInstance{}
 	keys := []models.AlertInstanceKey{}
 
