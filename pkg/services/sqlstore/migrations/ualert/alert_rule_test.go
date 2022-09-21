@@ -112,7 +112,7 @@ func TestMakeAlertRule(t *testing.T) {
 			require.Len(t, ar.Title, DefaultFieldMaxLength)
 			parts := strings.SplitN(ar.Title, "_", 2)
 			require.Len(t, parts, 2)
-			require.GreaterOrEqual(t, 9, len(parts[1]), "unique identifier should be longer than 9 characters")
+			require.Greater(t, len(parts[1]), 8, "unique identifier should be longer than 9 characters")
 			require.Equal(t, DefaultFieldMaxLength-1, len(parts[0])+len(parts[1]), "truncated name + underscore + unique identifier should together be DefaultFieldMaxLength")
 			require.Equal(t, ar.Title, ar.RuleGroup)
 		})
