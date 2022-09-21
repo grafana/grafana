@@ -52,7 +52,7 @@ func (hs *ServiceImpl) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error
 		}
 
 		if hs.features.IsEnabled(featuremgmt.FlagTopnav) {
-			appLink.Url = path.Join(hs.cfg.AppSubURL, "a", plugin.ID)
+			appLink.Url = hs.cfg.AppSubURL + "/a/" + plugin.ID
 		} else {
 			appLink.Url = path.Join(hs.cfg.AppSubURL, plugin.DefaultNavURL)
 		}
