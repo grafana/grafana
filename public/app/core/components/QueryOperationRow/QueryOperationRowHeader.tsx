@@ -29,7 +29,6 @@ export const QueryOperationRowHeader: React.FC<QueryOperationRowHeaderProps> = (
   titleElement,
 }: QueryOperationRowHeaderProps) => {
   const styles = useStyles2(getStyles);
-  console.log('onRowToggle', onRowToggle);
 
   return (
     <div className={styles.header}>
