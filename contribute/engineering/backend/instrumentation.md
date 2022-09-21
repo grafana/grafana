@@ -17,22 +17,22 @@ import (
 
 logger := log.New("my-logger")
 logger.Debug("Debug msg")
-logger.Warning("Warning msg")
 logger.Info("Info msg")
-logger.Error("Error msg", "error", fmt.Errorf("BOOM))
+logger.Warning("Warning msg")
+logger.Error("Error msg", "error", fmt.Errorf("BOOM"))
 ```
 
 ### Naming conventions
 
 Consider naming the logger using lowercase characters, e.g. `log.New("my-logger")` using snake_case or kebab-case styling.
 
-Consider to prefix the logger name with an area name if using different loggers across a feature/common packages, e.g. `log.New("plugin.loader")` and `log.New("plugin.client")`.
+Consider prefixing the logger name with an area name when using different loggers across a feature or related packages, e.g. `log.New("plugin.loader")` and `log.New("plugin.client")`.
 
-Start the log message with a capital letter, e.g. `logger.Info("Hello world")` instead of `logger.Info("hello world")`.
+Start the log message with a capital letter, e.g. `logger.Info("Hello world")` instead of `logger.Info("hello world")`. The log message should be an identifier for the log entry, avoid parameterization in favor of key-value pairs for additional data.
 
 Use snake_case style when naming log keys, e.g. _remote_addr_ instead of _remoteAddr_.
 
-Use the key _error_ when logging Go errors, e.g. `logger.Error("Something failed", "error", fmt.Errorf("BOOM))`.
+Use the key _error_ when logging Go errors, e.g. `logger.Error("Something failed", "error", fmt.Errorf("BOOM"))`.
 
 ### Log levels
 
@@ -40,8 +40,8 @@ When to use which log level?
 
 - **Debug:** Informational messages of high frequency and/or less-important messages during normal operations.
 - **Info:** Informational messages of low frequency and/or important messages.
-- **Error:** Error messages indicating some operation failed (with an error).
 - **Warning:** Should in normal cases not be used/needed. If used should be actionable.
+- **Error:** Error messages indicating some operation failed (with an error).
 
 ### Contextual logging
 
@@ -62,9 +62,9 @@ var logger = log.New("my-logger")
 func doSomething(ctx context.Context) {
   ctxLogger := logger.FromContext(ctx)
   ctxLogger.Debug("Debug msg")
-  ctxLogger.Warning("Warning msg")
   ctxLogger.Info("Info msg")
-  ctxLogger.Error("Error msg", "error", fmt.Errorf("BOOM))
+  ctxLogger.Warning("Warning msg")
+  ctxLogger.Error("Error msg", "error", fmt.Errorf("BOOM"))
 }
 ```
 
