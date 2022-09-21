@@ -92,5 +92,4 @@ func (x *SummaryTable) Add(obj models.RawObject, summary models.ObjectSummary) {
 			summary.Labels[k],
 		)
 	}
-
 }
