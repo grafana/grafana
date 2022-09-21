@@ -15,19 +15,19 @@ export function LinksSettings({ dashboard, sectionNav, editIndex }: SettingsPage
   const [isNew, setIsNew] = useState<boolean>(false);
 
   const onGoBack = () => {
-    locationService.partial({ editIndex: undefined });
     setIsNew(false);
+    locationService.partial({ editIndex: undefined });
   };
 
   const onNew = () => {
     dashboard.links = [...dashboard.links, { ...newLink }];
-    locationService.partial({ editIndex: dashboard.links.length - 1 });
     setIsNew(true);
+    locationService.partial({ editIndex: dashboard.links.length - 1 });
   };
 
   const onEdit = (idx: number) => {
-    locationService.partial({ editIndex: idx });
     setIsNew(false);
+    locationService.partial({ editIndex: idx });
   };
 
   const isEditing = editIndex !== undefined;
@@ -45,7 +45,7 @@ export function LinksSettings({ dashboard, sectionNav, editIndex }: SettingsPage
   return (
     <Page navModel={sectionNav} pageNav={pageNav}>
       {!isEditing && <LinkSettingsList dashboard={dashboard} onNew={onNew} onEdit={onEdit} />}
-      {isEditing && <LinkSettingsEdit dashboard={dashboard} editLinkIdx={editIndex!} onGoBack={onGoBack} />}
+      {isEditing && <LinkSettingsEdit dashboard={dashboard} editLinkIdx={editIndex} onGoBack={onGoBack} />}
     </Page>
   );
 }
