@@ -1,7 +1,6 @@
 import React, { FC } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { getDataSourceSrv } from '@grafana/runtime/src';
 import { Field, InputControl } from '@grafana/ui';
 
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
@@ -21,9 +20,7 @@ export const Query: FC = () => {
   const isCloudAlertRuleType = type === RuleFormType.cloudAlerting;
   const isRecordingRuleType = type === RuleFormType.cloudRecording;
 
-  const dsSettings = getDataSourceSrv().getInstanceSettings(dataSourceName);
-
-  const showCloudExpressionEditor = (isRecordingRuleType || isCloudAlertRuleType) && dsSettings;
+  const showCloudExpressionEditor = (isRecordingRuleType || isCloudAlertRuleType) && dataSourceName;
 
   return (
     <div>
@@ -33,7 +30,7 @@ export const Query: FC = () => {
           <InputControl
             name="expression"
             render={({ field: { ref, ...field } }) => {
-              return <ExpressionEditor {...field} dsSettings={dsSettings} />;
+              return <ExpressionEditor {...field} dataSourceName={dataSourceName} />;
             }}
             control={control}
             rules={{

@@ -6,6 +6,7 @@ import { DataFrame, GrafanaTheme2 } from '@grafana/data/src';
 import { Icon, TagList, Tooltip, useStyles2 } from '@grafana/ui/src';
 
 import { GrafanaAlertState, isGrafanaAlertState, Labels } from '../../../../../types/unified-alerting-dto';
+import { labelsToTags } from '../../utils/labels';
 import { AlertStateTag } from '../rules/AlertStateTag';
 
 interface AlertPreviewInstance {
@@ -61,6 +62,10 @@ export function CloudAlertPreview({ previewSeries }: CloudAlertPreviewProps) {
       {previewSeries.map(mapDataFrameToAlertPreview).map(({ instances }, index) => {
         return (
           <table key={index} className={styles.table}>
+            <caption>
+              <div>Alerts preview</div>
+              <span>Preview based on the result of running the query for this moment.</span>
+            </caption>
             <thead>
               <tr>
                 <th>State</th>
@@ -70,11 +75,13 @@ export function CloudAlertPreview({ previewSeries }: CloudAlertPreviewProps) {
             </thead>
             <tbody>
               {instances.map(({ state, info, labels }) => {
+                const instanceTags = labelsToTags(labels);
+
                 return (
                   <tr key={index}>
                     <td>{<AlertStateTag state={state} />}</td>
                     <td>
-                      <TagList tags={Object.entries(labels).map(([key, value]) => `${key}=${value}`)} />
+                      <TagList tags={instanceTags} className={styles.tagList} />
                     </td>
                     <td>
                       {info && (
@@ -97,27 +104,40 @@ export function CloudAlertPreview({ previewSeries }: CloudAlertPreviewProps) {
 const getStyles = (theme: GrafanaTheme2) => ({
   table: css`
     width: 100%;
+    margin: ${theme.spacing(2, 0)};
+
+    caption {
+      caption-side: top;
+      color: ${theme.colors.text.primary};
+
+      & > span {
+        font-size: ${theme.typography.bodySmall.fontSize};
+        color: ${theme.colors.text.secondary};
+      }
+    }
 
     td,
     th {
-      padding: ${theme.spacing(1, 0)};
+      padding: ${theme.spacing(1, 1)};
     }
 
     td + td,
     th + th {
-      padding-left: ${theme.spacing(1)};
+      padding-left: ${theme.spacing(3)};
     }
 
-    thead th:nth-child(1) {
-      width: 80px;
-    }
+    thead th {
+      &:nth-child(1) {
+        width: 80px;
+      }
 
-    thead th:nth-child(2) {
-      width: auto;
-    }
+      &:nth-child(2) {
+        width: auto;
+      }
 
-    thead th:nth-child(3) {
-      width: 40px;
+      &:nth-child(3) {
+        width: 40px;
+      }
     }
 
     td:nth-child(3) {
@@ -127,5 +147,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     tbody tr:nth-child(2n + 1) {
       background-color: ${theme.colors.background.secondary};
     }
+  `,
+  tagList: css`
+    justify-content: flex-start;
   `,
 });

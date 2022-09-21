@@ -3,7 +3,7 @@ import { noop } from 'lodash';
 import React, { FC, useCallback, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
-import { CoreApp, DataQuery, DataSourceInstanceSettings, GrafanaTheme2, LoadingState } from '@grafana/data';
+import { CoreApp, DataQuery, GrafanaTheme2, LoadingState } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Alert, Button, useStyles2 } from '@grafana/ui';
 import { LokiQuery } from 'app/plugins/datasource/loki/types';
@@ -15,13 +15,13 @@ import { usePreview } from './PreviewRule';
 export interface ExpressionEditorProps {
   value?: string;
   onChange: (value: string) => void;
-  dsSettings: DataSourceInstanceSettings; // will be a prometheus or loki datasource
+  dataSourceName: string; // will be a prometheus or loki datasource
 }
 
-export const ExpressionEditor: FC<ExpressionEditorProps> = ({ value, onChange, dsSettings }) => {
+export const ExpressionEditor: FC<ExpressionEditorProps> = ({ value, onChange, dataSourceName }) => {
   const styles = useStyles2(getStyles);
 
-  const { mapToValue, mapToQuery } = useQueryMappers(dsSettings.name);
+  const { mapToValue, mapToQuery } = useQueryMappers(dataSourceName);
   const dataQuery = mapToQuery({ refId: 'A', hide: false }, value);
 
   const {
@@ -29,8 +29,8 @@ export const ExpressionEditor: FC<ExpressionEditorProps> = ({ value, onChange, d
     loading,
     value: dataSource,
   } = useAsync(() => {
-    return getDataSourceSrv().get(dsSettings);
-  }, [dsSettings]);
+    return getDataSourceSrv().get(dataSourceName);
+  }, [dataSourceName]);
 
   const onChangeQuery = useCallback(
     (query: DataQuery) => {
@@ -45,7 +45,7 @@ export const ExpressionEditor: FC<ExpressionEditorProps> = ({ value, onChange, d
     onPreview();
   };
 
-  if (loading || dataSource?.name !== dsSettings.name) {
+  if (loading || dataSource?.name !== dataSourceName) {
     return null;
   }
 
@@ -79,13 +79,9 @@ export const ExpressionEditor: FC<ExpressionEditorProps> = ({ value, onChange, d
         <Button type="button" onClick={onRunQueriesClick} disabled={alertPreview?.data.state === LoadingState.Loading}>
           Preview alerts
         </Button>
-        {previewLoaded && (
+        {previewLoaded && !previewHasAlerts && (
           <Alert title="Alerts preview" severity="info" className={styles.previewAlert}>
-            {previewHasAlerts ? (
-              <>Preview based on the result of running the query for this moment.</>
-            ) : (
-              <>There are no firing alerts for your query.</>
-            )}
+            There are no firing alerts for your query.
           </Alert>
         )}
         {previewHasAlerts && <CloudAlertPreview previewSeries={previewSeries} />}
