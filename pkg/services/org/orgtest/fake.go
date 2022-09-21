@@ -73,6 +73,6 @@ func (f *FakeOrgService) Delete(ctx context.Context, cmd *org.DeleteOrgCommand) 
 	return f.ExpectedError
 }
 
-func (f *FakeOrgService) getOrCreate(ctx context.Context, orgName string) (int64, error) {
+func (f *FakeOrgService) GetOrCreate(ctx context.Context, orgName string) (int64, error) {
 	return 0, f.ExpectedError
 }
