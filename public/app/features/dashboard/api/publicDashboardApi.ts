@@ -26,13 +26,13 @@ export const publicDashboardApi = createApi({
   tagTypes: ['Config'],
   keepUnusedDataFor: 0,
   endpoints: (builder) => ({
-    getPubDashConfig: builder.query<PublicDashboard, string>({
+    getConfig: builder.query<PublicDashboard, string>({
       query: (dashboardUid) => ({
         url: `/uid/${dashboardUid}/public-config`,
       }),
       providesTags: ['Config'],
     }),
-    savePubDashConfig: builder.mutation<PublicDashboard, { dashboard: DashboardModel; payload: PublicDashboard }>({
+    saveConfig: builder.mutation<PublicDashboard, { dashboard: DashboardModel; payload: PublicDashboard }>({
       query: (params) => ({
         url: `/uid/${params.dashboard.uid}/public-config`,
         method: 'POST',
@@ -53,4 +53,4 @@ export const publicDashboardApi = createApi({
   }),
 });
 
-export const { useGetPubDashConfigQuery, useSavePubDashConfigMutation } = publicDashboardApi;
+export const { useGetConfigQuery, useSaveConfigMutation } = publicDashboardApi;

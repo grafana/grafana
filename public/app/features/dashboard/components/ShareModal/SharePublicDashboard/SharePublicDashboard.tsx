@@ -8,7 +8,7 @@ import { Alert, Button, ClipboardButton, Field, HorizontalGroup, Input, useStyle
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
-import { useGetPubDashConfigQuery, useSavePubDashConfigMutation } from 'app/features/dashboard/api/publicDashboardApi';
+import { useGetConfigQuery, useSaveConfigMutation } from 'app/features/dashboard/api/publicDashboardApi';
 import { AcknowledgeCheckboxes } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/AcknowledgeCheckboxes';
 import { PubDashConfiguration } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/PubDashConfiguration';
 import { PubDashDescription } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/PubDashDescription';
@@ -34,9 +34,9 @@ export const SharePublicDashboard = (props: Props) => {
     isLoading: isFetchingLoading,
     data: publicDashboard,
     isError: isFetchingError,
-  } = useGetPubDashConfigQuery(props.dashboard.uid);
+  } = useGetConfigQuery(props.dashboard.uid);
 
-  const [saveConfig, { isLoading: isSaveLoading }] = useSavePubDashConfigMutation();
+  const [saveConfig, { isLoading: isSaveLoading }] = useSaveConfigMutation();
 
   const [acknowledgements, setAcknowledgements] = useState<Acknowledgements>({
     public: false,
@@ -138,7 +138,7 @@ export const SharePublicDashboard = (props: Props) => {
               disabled={!hasWritePermissions || isLoading || isFetchingError}
               isPubDashEnabled={enabledSwitch.isEnabled}
               onToggleEnabled={() =>
-                setEnabledSwitch((prevState) => ({ isEnabled: !prevState.isEnabled, wasTocuhed: true }))
+                setEnabledSwitch((prevState) => ({ isEnabled: !prevState.isEnabled, wasTouched: true }))
               }
               hasTemplateVariables={dashboardHasTemplateVariables(dashboardVariables)}
             />
