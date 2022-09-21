@@ -12,32 +12,24 @@ type Props = {
 };
 
 export const CoordinatesMapViewEditor = ({ labelWidth, value, onChange }: Props) => {
+  const onLatitudeChange = (latitude: number | undefined) => {
+    onChange({ ...value, lat: latitude });
+  };
+
+  const onLongitudeChange = (longitude: number | undefined) => {
+    onChange({ ...value, lon: longitude });
+  };
+
   return (
     <>
       <InlineFieldRow>
         <InlineField label="Latitude" labelWidth={labelWidth} grow={true}>
-          <NumberInput
-            value={value.lat}
-            min={-90}
-            max={90}
-            step={0.001}
-            onChange={(v) => {
-              onChange({ ...value, lat: v });
-            }}
-          />
+          <NumberInput value={value.lat} min={-90} max={90} step={0.001} onChange={onLatitudeChange} />
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
         <InlineField label="Longitude" labelWidth={labelWidth} grow={true}>
-          <NumberInput
-            value={value.lon}
-            min={-180}
-            max={180}
-            step={0.001}
-            onChange={(v) => {
-              onChange({ ...value, lon: v });
-            }}
-          />
+          <NumberInput value={value.lon} min={-180} max={180} step={0.001} onChange={onLongitudeChange} />
         </InlineField>
       </InlineFieldRow>
     </>
