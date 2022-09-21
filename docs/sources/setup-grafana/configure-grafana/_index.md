@@ -1380,7 +1380,7 @@ Configures the batch size for the annotation clean-up job. This setting is used 
 
 ### tags_length
 
-Enforces the maximum allowed length of the tags for any newly introduced annotations. It can be between 1 and 4096 (inclusive). Default value is 500. Setting it to a higher value would impact performance therefore is not recommended.
+Enforces the maximum allowed length of the tags for any newly introduced annotations. It can be between 500 and 4096 (inclusive). Default value is 500. Setting it to a higher value would impact performance therefore is not recommended.
 
 ## [annotations.dashboard]
 

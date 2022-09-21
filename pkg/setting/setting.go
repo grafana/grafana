@@ -598,13 +598,16 @@ func (cfg *Cfg) readAnnotationSettings() error {
 	section := cfg.Raw.Section("annotations")
 	cfg.AnnotationCleanupJobBatchSize = section.Key("cleanupjob_batchsize").MustInt64(100)
 	cfg.AnnotationMaximumTagsLength = section.Key("tags_length").MustInt64(500)
-	// ensure that the configuration does not exceed the respective column size
-	if cfg.AnnotationMaximumTagsLength > 4096 {
+	switch {
+	case cfg.AnnotationMaximumTagsLength > 4096:
+		// ensure that the configuration does not exceed the respective column size
 		return fmt.Errorf("[annotations.tags_length] configuration exceeds the maximum allowed (4096)")
-	}
-
-	if cfg.AnnotationMaximumTagsLength > 500 {
+	case cfg.AnnotationMaximumTagsLength > 500:
 		cfg.Logger.Warn("[annotations.tags_length] is too high; this may affect the performance")
+
+	case cfg.AnnotationMaximumTagsLength < 500:
+		cfg.Logger.Warn("[annotations.tags_length] is too low; the minimum allowed (500) is enforced")
+		cfg.AnnotationMaximumTagsLength = 500
 	}
 
 	dashboardAnnotation := cfg.Raw.Section("annotations.dashboard")
