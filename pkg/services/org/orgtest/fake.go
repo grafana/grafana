@@ -64,3 +64,15 @@ func (f *FakeOrgService) CreateWithMember(name string, userID int64) (*org.Org, 
 func (f *FakeOrgService) Create(ctx context.Context, cmd *org.CreateOrgCommand) (*org.Org, error) {
 	return f.ExpectedOrg, f.ExpectedError
 }
+
+func (f *FakeOrgService) UpdateAddress(ctx context.Context, cmd *org.UpdateOrgAddressCommand) error {
+	return f.ExpectedError
+}
+
+func (f *FakeOrgService) Delete(ctx context.Context, cmd *org.DeleteOrgCommand) error {
+	return f.ExpectedError
+}
+
+func (f *FakeOrgService) GetOrCreate(ctx context.Context, orgName string) (int64, error) {
+	return 0, f.ExpectedError
+}

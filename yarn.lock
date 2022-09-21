@@ -7397,12 +7397,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lezer/lr@npm:1.0.0":
-  version: 1.0.0
-  resolution: "@lezer/lr@npm:1.0.0"
+"@lezer/lr@npm:1.2.3":
+  version: 1.2.3
+  resolution: "@lezer/lr@npm:1.2.3"
   dependencies:
     "@lezer/common": ^1.0.0
-  checksum: 1365a2d1fa0a40815a03a635506a0215475b778d8b8907d274b8ee4b0732fcb7266799b50db7c4517254da1d245c153c348fd0d7b1db93b7d66926b9c538ee43
+  checksum: 118db077d32f6eb9d6b219c766d7e5715c6c004d89d76ed0137ea2a364aeca67f21dc5924ea67a649b5de1d13bfbb85571923b38536e6995820eb0a5c8844594
   languageName: node
   linkType: hard
 
@@ -22261,7 +22261,7 @@ __metadata:
     "@kusto/monaco-kusto": 5.1.8
     "@lezer/common": 1.0.0
     "@lezer/highlight": ^1.0.0
-    "@lezer/lr": 1.0.0
+    "@lezer/lr": 1.2.3
     "@lingui/cli": 3.14.0
     "@lingui/core": 3.14.0
     "@lingui/macro": 3.14.0

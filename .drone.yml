@@ -153,12 +153,6 @@ steps:
   image: alpine:3.15.6
   name: identify-runner
 - commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.7/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
-- commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   depends_on: []
   environment:
@@ -180,14 +174,6 @@ steps:
   - verify-gen-cue
   image: grafana/build-container:1.6.2
   name: wire-install
-- commands:
-  - make lint-go
-  depends_on:
-  - wire-install
-  environment:
-    CGO_ENABLED: "1"
-  image: grafana/build-container:1.6.2
-  name: lint-backend
 - commands:
   - go test -short -covermode=atomic -timeout=30m ./pkg/...
   depends_on:
@@ -211,6 +197,66 @@ trigger:
     - pkg/**
     - packaging/**
     - .drone.yml
+    - conf/**
+    - go.sum
+    - go.mod
+    - public/app/plugins/**/plugin.json
+    - devenv/**
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on: []
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: pr-lint-backend
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.15.6
+  name: identify-runner
+- commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.19.1
+  name: compile-build-cmd
+- commands:
+  - make gen-go
+  depends_on: []
+  image: grafana/build-container:1.6.2
+  name: wire-install
+- commands:
+  - apt-get update && apt-get install make
+  - make lint-go
+  depends_on:
+  - wire-install
+  environment:
+    CGO_ENABLED: "1"
+  image: golang:1.19.1
+  name: lint-backend
+trigger:
+  event:
+  - pull_request
+  paths:
+    exclude:
+    - docs/**
+    - '*.md'
+    include:
+    - pkg/**
+    - packaging/**
     - conf/**
     - go.sum
     - go.mod
@@ -909,12 +955,6 @@ steps:
   image: alpine:3.15.6
   name: identify-runner
 - commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.7/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
-- commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   depends_on: []
   environment:
@@ -937,14 +977,6 @@ steps:
   image: grafana/build-container:1.6.2
   name: wire-install
 - commands:
-  - make lint-go
-  depends_on:
-  - wire-install
-  environment:
-    CGO_ENABLED: "1"
-  image: grafana/build-container:1.6.2
-  name: lint-backend
-- commands:
   - go test -short -covermode=atomic -timeout=30m ./pkg/...
   depends_on:
   - wire-install
@@ -956,6 +988,60 @@ steps:
   - wire-install
   image: grafana/build-container:1.6.2
   name: test-backend-integration
+trigger:
+  branch: main
+  event:
+  - push
+  paths:
+    exclude:
+    - '*.md'
+    - docs/**
+    - latest.json
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on: []
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: main-lint-backend
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.15.6
+  name: identify-runner
+- commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.19.1
+  name: compile-build-cmd
+- commands:
+  - make gen-go
+  depends_on: []
+  image: grafana/build-container:1.6.2
+  name: wire-install
+- commands:
+  - apt-get update && apt-get install make
+  - make lint-go
+  depends_on:
+  - wire-install
+  environment:
+    CGO_ENABLED: "1"
+  image: golang:1.19.1
+  name: lint-backend
 - commands:
   - ./bin/build verify-drone
   depends_on:
@@ -2115,12 +2201,13 @@ steps:
   image: golang:1.19.1
   name: compile-build-cmd
 - commands:
+  - apt-get update && apt-get install make
   - make lint-go
   depends_on:
   - wire-install
   environment:
     CGO_ENABLED: "1"
-  image: grafana/build-container:1.6.2
+  image: golang:1.19.1
   name: lint-backend
 - commands:
   - yarn run prettier:check
@@ -2772,12 +2859,13 @@ steps:
   image: grafana/build-container:1.6.2
   name: verify-gen-cue
 - commands:
+  - apt-get update && apt-get install make
   - make lint-go
   depends_on:
   - wire-install
   environment:
     CGO_ENABLED: "1"
-  image: grafana/build-container:1.6.2
+  image: golang:1.19.1
   name: lint-backend
 - commands:
   - yarn run prettier:check
@@ -2811,12 +2899,13 @@ steps:
   image: grafana/build-container:1.6.2
   name: test-frontend
 - commands:
+  - apt-get update && apt-get install make
   - make lint-go
   depends_on:
   - wire-install
   environment:
     CGO_ENABLED: "1"
-  image: grafana/build-container:1.6.2
+  image: golang:1.19.1
   name: lint-backend-enterprise2
 - commands:
   - go test -tags=pro -covermode=atomic -timeout=30m ./pkg/...
@@ -4080,12 +4169,13 @@ steps:
   image: golang:1.19.1
   name: compile-build-cmd
 - commands:
+  - apt-get update && apt-get install make
   - make lint-go
   depends_on:
   - wire-install
   environment:
     CGO_ENABLED: "1"
-  image: grafana/build-container:1.6.2
+  image: golang:1.19.1
   name: lint-backend
 - commands:
   - yarn run prettier:check
@@ -4701,12 +4791,13 @@ steps:
   image: grafana/build-container:1.6.2
   name: verify-gen-cue
 - commands:
+  - apt-get update && apt-get install make
   - make lint-go
   depends_on:
   - wire-install
   environment:
     CGO_ENABLED: "1"
-  image: grafana/build-container:1.6.2
+  image: golang:1.19.1
   name: lint-backend
 - commands:
   - yarn run prettier:check
@@ -4740,12 +4831,13 @@ steps:
   image: grafana/build-container:1.6.2
   name: test-frontend
 - commands:
+  - apt-get update && apt-get install make
   - make lint-go
   depends_on:
   - wire-install
   environment:
     CGO_ENABLED: "1"
-  image: grafana/build-container:1.6.2
+  image: golang:1.19.1
   name: lint-backend-enterprise2
 - commands:
   - go test -tags=pro -covermode=atomic -timeout=30m ./pkg/...
@@ -5178,6 +5270,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: b08cb03f133c943a789bf6abf7f2645536598e4d8a5a86b34b9231db8afc8ff4
+hmac: a17adc518f8ba4ea5c123bf440adf9aceec5e7ba5d9fdae9e467dbd1ec91fd46
 
 ...
