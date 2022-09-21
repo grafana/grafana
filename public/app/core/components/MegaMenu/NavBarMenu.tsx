@@ -100,7 +100,7 @@ export function NavBarMenu({ activeItem, navItems, searchBarHidden, onClose }: P
         in={isOpen}
         unmountOnExit={true}
         classNames={animStyles.backdrop}
-        timeout={animationSpeed}
+        timeout={{ enter: animationSpeed, exit: 0 }}
       >
         <div ref={backdropRef} className={styles.backdrop} {...underlayProps} />
       </CSSTransition>
