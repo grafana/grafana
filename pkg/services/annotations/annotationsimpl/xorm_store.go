@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -70,7 +69,6 @@ func (r *SQLAnnotationRepo) Add(ctx context.Context, item *annotations.Item) err
 			if err != nil {
 				return err
 			}
-			spew.Dump("here is the annotation %v >>>>>>>>>>> %v", item)
 			for _, tag := range tags {
 				if _, err := sess.Exec("INSERT INTO annotation_tag (annotation_id, tag_id) VALUES(?,?)", item.Id, tag.Id); err != nil {
 					return err
@@ -251,8 +249,6 @@ func (r *SQLAnnotationRepo) Get(ctx context.Context, query *annotations.ItemQuer
 
 		// order of ORDER BY arguments match the order of a sql index for performance
 		sql.WriteString(" ORDER BY a.org_id, a.epoch_end DESC, a.epoch DESC" + r.db.GetDialect().Limit(query.Limit) + " ) dt on dt.id = annotation.id")
-
-		spew.Dump(">>>> query: ", sql.String())
 		if err := sess.SQL(sql.String(), params...).Find(&items); err != nil {
 			items = nil
 			return err
