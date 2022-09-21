@@ -164,7 +164,7 @@ func (f *FolderServiceImpl) CreateFolder(ctx context.Context, user *user.SignedI
 		return nil, toFolderError(err)
 	}
 
-	dash, err := f.dashboardStore.SaveDashboard(*saveDashboardCmd)
+	dash, err := f.dashboardStore.SaveDashboard(ctx, *saveDashboardCmd)
 	if err != nil {
 		return nil, toFolderError(err)
 	}
@@ -228,7 +228,7 @@ func (f *FolderServiceImpl) UpdateFolder(ctx context.Context, user *user.SignedI
 		return toFolderError(err)
 	}
 
-	dash, err := f.dashboardStore.SaveDashboard(*saveDashboardCmd)
+	dash, err := f.dashboardStore.SaveDashboard(ctx, *saveDashboardCmd)
 	if err != nil {
 		return toFolderError(err)
 	}

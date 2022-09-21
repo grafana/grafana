@@ -84,6 +84,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/store"
+	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/teamguardian"
 	tempUser "github.com/grafana/grafana/pkg/services/temp_user"
@@ -193,6 +194,7 @@ type HTTPServer struct {
 	teamService            team.Service
 	accesscontrolService   accesscontrol.Service
 	annotationsRepo        annotations.Repository
+	tagService             tag.Service
 }
 
 type ServerOptions struct {
@@ -232,7 +234,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	secretsPluginMigrator spm.SecretMigrationProvider, secretsStore secretsKV.SecretsKVStore,
 	publicDashboardsApi *publicdashboardsApi.Api, userService user.Service, tempUserService tempUser.Service,
 	loginAttemptService loginAttempt.Service, orgService org.Service, teamService team.Service,
-	accesscontrolService accesscontrol.Service, dashboardThumbsService dashboardThumbs.Service, annotationRepo annotations.Repository,
+	accesscontrolService accesscontrol.Service, dashboardThumbsService dashboardThumbs.Service, annotationRepo annotations.Repository, tagService tag.Service,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -330,6 +332,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		teamService:                  teamService,
 		accesscontrolService:         accesscontrolService,
 		annotationsRepo:              annotationRepo,
+		tagService:                   tagService,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
