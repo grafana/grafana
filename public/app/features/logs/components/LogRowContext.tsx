@@ -103,6 +103,8 @@ const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeader
 }) => {
   const { header } = useStyles2(getLogRowContextStyles);
 
+  // determine the position in time for this LogGroup by taking the ordering of
+  // logs and position of the component itself into account.
   let logGroupPosition = '';
   if (groupPosition === LogGroupPosition.Bottom) {
     if (logsSortOrder === LogsSortOrder.Descending) {
