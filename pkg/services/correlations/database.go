@@ -16,6 +16,19 @@ func (s CorrelationsService) createCorrelation(ctx context.Context, cmd CreateCo
 		TargetUID:   cmd.TargetUID,
 		Label:       cmd.Label,
 		Description: cmd.Description,
+		Config:      cmd.Config,
+	}
+
+	// Version 1: Empty configurations for backwards compatibility
+	v1Config := correlation.Config == nil || correlation.Config.Interface() == nil
+	// Version 2: field + target config are required
+	v2Config := false
+	if !v1Config {
+		v2Config = correlation.Config.Get("field").Interface() != nil && correlation.Config.Get("target").Interface() != nil
+	}
+
+	if !v1Config && !v2Config {
+		return Correlation{}, ErrIncorrectConfigStructure
 	}
 
 	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *sqlstore.DBSession) error {

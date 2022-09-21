@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -145,6 +145,7 @@ func makeCreateCorrelationCommand(correlation map[string]interface{}, SourceUid 
 		TargetUID:         targetUID,
 		Label:             correlation["label"].(string),
 		Description:       correlation["description"].(string),
+		Config:            simplejson.NewFromAny(correlation["config"]),
 		OrgId:             OrgId,
 		SkipReadOnlyCheck: true,
 	}, nil

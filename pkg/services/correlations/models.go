@@ -2,6 +2,7 @@ package correlations
 
 import (
 	"errors"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 var (
@@ -11,6 +12,7 @@ var (
 	ErrCorrelationFailedGenerateUniqueUid = errors.New("failed to generate unique correlation UID")
 	ErrCorrelationNotFound                = errors.New("correlation not found")
 	ErrUpdateCorrelationEmptyParams       = errors.New("not enough parameters to edit correlation")
+	ErrIncorrectConfigStructure           = errors.New("incorrect config structure, it should contain field and target properties")
 )
 
 // Correlation is the model for correlations definitions
@@ -29,7 +31,8 @@ type Correlation struct {
 	Label string `json:"label" xorm:"label"`
 	// Description of the correlation
 	// example: Logs to Traces
-	Description string `json:"description" xorm:"description"`
+	Description string           `json:"description" xorm:"description"`
+	Config      *simplejson.Json `json:"config" xorm:"config"`
 }
 
 // CreateCorrelationResponse is the response struct for CreateCorrelationCommand
@@ -56,6 +59,8 @@ type CreateCorrelationCommand struct {
 	// Optional description of the correlation
 	// example: Logs to Traces
 	Description string `json:"description"`
+	// Arbitrary configuration object handled in frontend
+	Config *simplejson.Json `json:"config"`
 }
 
 // swagger:model
