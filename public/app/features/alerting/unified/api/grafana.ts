@@ -65,13 +65,13 @@ export function fetchContactPointsState(alertManagerSourceName: String): Promise
     //     "integrations": [ // Can be multiple of the same type. Are identified by the index.
     //       {
     //         "lastError": "establish connection to server: dial tcp: lookup smtp.example.org on 8.8.8.8:53: no such host",
-    //         "lastNotify": "2022-07-08 17:42:44.998893 +0000 UTC",
+    //         "lastNotify": "2022-09-19T15:34:40.696Z",
     //         "lastNotifyDuration": "117.2455ms",
     //         "name": "email[0]"
     //       },
     //       {
     //         "lastError": "establish connection to server: dial tcp: lookup smtp.example.org on 8.8.8.8:53: no such host",
-    //         "lastNotify": "2022-07-08 17:42:44.998893 +0000 UTC",
+    //         "lastNotify": "2022-09-19T15:34:40.696Z",
     //         "lastNotifyDuration": "117.2455ms",
     //         "name": "email[1]"
     //       }
@@ -82,7 +82,7 @@ export function fetchContactPointsState(alertManagerSourceName: String): Promise
     //     "active": true, // Whether the contact point is used or not.
     //     "integrations": [ // Can be multiple of the same type. Are identified by the index.
     //       {
-    //         "lastNotify": "2022-07-08 17:42:44.998893 +0000 UTC",
+    //         "lastNotify": "0001-01-01T00:00:00.000Z",
     //         "lastNotifyDuration": "117.2455ms",
     //         "name": "email[0]"
     //       }
