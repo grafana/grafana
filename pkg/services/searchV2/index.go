@@ -182,7 +182,7 @@ func (i *searchIndex) run(ctx context.Context, orgIDs []int64, reIndexSignalCh c
 	i.logger.Info("Initializing SearchV2", "dashboardLoadingBatchSize", i.settings.DashboardLoadingBatchSize, "fullReindexInterval", i.settings.FullReindexInterval, "indexUpdateInterval", i.settings.IndexUpdateInterval)
 	initialSetupCtx, initialSetupSpan := i.tracer.Start(ctx, "searchV2 initialSetup")
 
-	reIndexInterval := 5 * time.Minute
+	reIndexInterval := i.settings.FullReindexInterval
 	fullReIndexTimer := time.NewTimer(reIndexInterval)
 	defer fullReIndexTimer.Stop()
 
