@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import React, { useEffect } from 'react';
 import { usePrevious } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { useStyles2, TabsBar, TabContent, Tab, Alert, toIconName } from '@grafana/ui';
+import { useStyles2, TabContent, Alert, toIconName } from '@grafana/ui';
 import { Layout } from '@grafana/ui/src/components/Layout/Layout';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -55,7 +55,7 @@ export default function PluginDetails({ match, queryParams }: Props): JSX.Elemen
 
   if (isFetchLoading || isFetchDetailsLoading) {
     return (
-      <Page>
+      <Page navId="plugins">
         <Loader />
       </Page>
     );
@@ -72,29 +72,24 @@ export default function PluginDetails({ match, queryParams }: Props): JSX.Elemen
     );
   }
 
-  return (
-    <Page>
+  const pageNav: NavModelItem = {
+    text: plugin.name,
+    img: plugin.info.logos.small,
+    breadcrumbs: [{ title: 'Plugins', url: parentUrl }],
+    children: tabs.map((tab) => ({
+      text: tab.label,
+      icon: toIconName(tab.icon ?? ''),
+      url: tab.href,
+      active: tab.id === pageId,
+    })),
+    headerExtra: () => (
       <PluginDetailsHeader currentUrl={`${url}?page=${pageId}`} parentUrl={parentUrl} plugin={plugin} />
-      {/* Tab navigation */}
-      <div>
-        <div className="page-container">
-          <TabsBar hideBorder>
-            {tabs.map((tab: PluginDetailsTab) => {
-              return (
-                <Tab
-                  key={tab.label}
-                  label={tab.label}
-                  href={tab.href}
-                  icon={toIconName(tab.icon ?? '')}
-                  active={tab.id === pageId}
-                />
-              );
-            })}
-          </TabsBar>
-        </div>
-      </div>
+    ),
+  };
+
+  return (
+    <Page navId="plugins" pageNav={pageNav}>
       <Page.Contents>
-        {/* Active tab */}
         <TabContent className={styles.tabContent}>
           <PluginDetailsSignature plugin={plugin} className={styles.alert} />
           <PluginDetailsDisabledError plugin={plugin} className={styles.alert} />
@@ -108,8 +103,7 @@ export default function PluginDetails({ match, queryParams }: Props): JSX.Elemen
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
     alert: css`
-      margin: ${theme.spacing(3)};
-      margin-bottom: 0;
+      margin-bottom: ${theme.spacing(2)};
     `,
     // Needed due to block formatting context
     tabContent: css`

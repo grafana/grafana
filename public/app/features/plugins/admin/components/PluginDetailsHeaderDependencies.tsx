@@ -60,7 +60,6 @@ export function PluginDetailsHeaderDependencies({
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
     dependencyTitle: css`
-      font-weight: ${theme.typography.fontWeightBold};
       margin-right: ${theme.spacing(0.5)};
 
       &::after {

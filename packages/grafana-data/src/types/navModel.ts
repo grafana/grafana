@@ -36,6 +36,8 @@ export interface NavModelItem extends NavLinkDTO {
   highlightId?: string;
   tabSuffix?: ComponentType<{ className?: string }>;
   hideFromBreadcrumbs?: boolean;
+  /** To render custom things between title and child tabs */
+  headerExtra?: ComponentType;
 }
 
 export enum NavSection {
