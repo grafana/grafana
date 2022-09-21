@@ -75,12 +75,16 @@ export default class TempoLanguageProvider extends LanguageProvider {
     tagName = tagName.split('=')[0];
 
     const response = await this.request(`/api/search/tag/${tagName}/values`, []);
+    // Values that contain a space must be wrapped in quotes for the query to return results.
+    // Wrap all values in quotes as this has no negative impact on values that don't contain a space.
+    const tagValues = response.tagValues.map((value: string) => `"${value}"`);
+
     const suggestions: CompletionItemGroup[] = [];
 
-    if (response && response.tagValues) {
+    if (response && tagValues) {
       suggestions.push({
         label: `Tag Values`,
-        items: response.tagValues.map((tagValue: string) => ({ label: tagValue })),
+        items: tagValues.map((tagValue: string) => ({ label: tagValue })),
       });
     }
     return { suggestions };
