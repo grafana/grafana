@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 
-import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/ui';
+import { EditorFieldGroup, EditorRow, EditorRows, Input } from '@grafana/ui';
 
 import Datasource from '../../datasource';
 import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery } from '../../types';
+import { Field } from '../Field';
 import ResourceField from '../ResourceField';
 import { ResourceRowType } from '../ResourcePicker/types';
 
@@ -24,6 +25,7 @@ const TraceEditor: React.FC<TraceEditorProps> = ({
   onChange,
   setError,
 }) => {
+  const [operationId, setOperationId] = useState('');
   return (
     <span data-testid="azure-monitor-logs-query-editor-with-experimental-ui">
       <EditorRows>
@@ -33,7 +35,7 @@ const TraceEditor: React.FC<TraceEditorProps> = ({
               query={query}
               datasource={datasource}
               inlineField={true}
-              labelWidth={10}
+              labelWidth={15}
               subscriptionId={subscriptionId}
               variableOptionGroup={variableOptionGroup}
               onQueryChange={onChange}
@@ -48,6 +50,18 @@ const TraceEditor: React.FC<TraceEditorProps> = ({
               queryType="logs"
             />
           </EditorFieldGroup>
+        </EditorRow>
+        <EditorRow>
+          <Field label="Operation ID" inlineField labelWidth={15}>
+            <Input
+              placeholder="Operation ID"
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                const query = event.target?.value;
+                setOperationId(query);
+              }}
+              value={operationId}
+            />
+          </Field>
         </EditorRow>
       </EditorRows>
     </span>
