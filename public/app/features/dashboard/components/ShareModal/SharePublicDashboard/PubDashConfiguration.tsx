@@ -35,7 +35,7 @@ export const PubDashConfiguration = ({
       <FieldSet disabled={disabled} className={styles.dashboardConfig}>
         <VerticalGroup spacing="md">
           <Layout orientation={isDesktop ? 0 : 1} spacing="xs" justify="space-between">
-            <Label description="The public dashboard uses the default time settings of the dashboard">Time Range</Label>
+            <Label description="The public dashboard uses the default time settings of the dashboard">Time range</Label>
             <TimeRangeInput value={timeRange} disabled onChange={() => {}} />
           </Layout>
           <Layout orientation={isDesktop ? 0 : 1} spacing="xs" justify="space-between">

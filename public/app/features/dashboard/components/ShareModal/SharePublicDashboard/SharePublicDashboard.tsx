@@ -8,7 +8,7 @@ import { Alert, Button, ClipboardButton, Field, HorizontalGroup, Input, useStyle
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
-import { useGetPubDashConfigQuery, useSavePubDashConfigMutation } from 'app/features/dashboard/api/pubDashApi';
+import { useGetPubDashConfigQuery, useSavePubDashConfigMutation } from 'app/features/dashboard/api/publicDashboardApi';
 import { AcknowledgeCheckboxes } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/AcknowledgeCheckboxes';
 import { PubDashConfiguration } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/PubDashConfiguration';
 import { PubDashDescription } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/PubDashDescription';
@@ -45,7 +45,7 @@ export const SharePublicDashboard = (props: Props) => {
   });
   const [enabledSwitch, setEnabledSwitch] = useState({
     isEnabled: false,
-    wasTocuhed: false,
+    wasTouched: false,
   });
 
   useEffect(() => {
@@ -74,7 +74,7 @@ export const SharePublicDashboard = (props: Props) => {
       props.dashboard.hasUnsavedChanges() ||
       isLoading ||
       isFetchingError ||
-      (!publicDashboardPersisted(publicDashboard) && !enabledSwitch.wasTocuhed),
+      (!publicDashboardPersisted(publicDashboard) && !enabledSwitch.wasTouched),
     [hasWritePermissions, acknowledged, props.dashboard, isLoading, isFetchingError, enabledSwitch, publicDashboard]
   );
 

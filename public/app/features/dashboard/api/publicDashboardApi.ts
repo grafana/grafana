@@ -20,8 +20,8 @@ const backendSrvBaseQuery =
     }
   };
 
-export const pubDashApi = createApi({
-  reducerPath: 'pubDashApi',
+export const publicDashboardApi = createApi({
+  reducerPath: 'publicDashboardApi',
   baseQuery: retry(backendSrvBaseQuery({ baseUrl: '/api/dashboards' }), { maxRetries: 3 }),
   tagTypes: ['Config'],
   keepUnusedDataFor: 0,
@@ -53,4 +53,4 @@ export const pubDashApi = createApi({
   }),
 });
 
-export const { useGetPubDashConfigQuery, useSavePubDashConfigMutation } = pubDashApi;
+export const { useGetPubDashConfigQuery, useSavePubDashConfigMutation } = publicDashboardApi;

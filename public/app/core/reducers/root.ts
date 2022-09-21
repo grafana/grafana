@@ -4,7 +4,7 @@ import sharedReducers from 'app/core/reducers';
 import ldapReducers from 'app/features/admin/state/reducers';
 import alertingReducers from 'app/features/alerting/state/reducers';
 import apiKeysReducers from 'app/features/api-keys/state/reducers';
-import { pubDashApi } from 'app/features/dashboard/api/pubDashApi';
+import { publicDashboardApi } from 'app/features/dashboard/api/publicDashboardApi';
 import panelEditorReducers from 'app/features/dashboard/components/PanelEditor/state/reducers';
 import dashboardReducers from 'app/features/dashboard/state/reducers';
 import dataSourcesReducers from 'app/features/datasources/state/reducers';
@@ -47,7 +47,7 @@ const rootReducers = {
   ...searchQueryReducer,
   plugins: pluginsReducer,
   [alertingApi.reducerPath]: alertingApi.reducer,
-  [pubDashApi.reducerPath]: pubDashApi.reducer,
+  [publicDashboardApi.reducerPath]: publicDashboardApi.reducer,
 };
 
 const addedReducers = {};

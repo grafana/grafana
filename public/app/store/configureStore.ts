@@ -1,6 +1,6 @@
 import { configureStore as reduxConfigureStore } from '@reduxjs/toolkit';
 
-import { pubDashApi } from 'app/features/dashboard/api/pubDashApi';
+import { publicDashboardApi } from 'app/features/dashboard/api/publicDashboardApi';
 import { StoreState } from 'app/types/store';
 
 import { buildInitialState } from '../core/reducers/navModel';
@@ -22,7 +22,7 @@ export function configureStore(initialState?: Partial<StoreState>) {
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware({ thunk: true, serializableCheck: false, immutableCheck: false }).concat(
         alertingApi.middleware,
-        pubDashApi.middleware
+        publicDashboardApi.middleware
       ),
     devTools: process.env.NODE_ENV !== 'production',
     preloadedState: {
