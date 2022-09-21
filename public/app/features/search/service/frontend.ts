@@ -4,7 +4,7 @@ import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { DashboardQueryResult, GrafanaSearcher, QueryResponse, SearchQuery } from '.';
 
 export class FrontendSearcher implements GrafanaSearcher {
-  full = new Map<string, FullResultCache>();
+  readonly cache = new Map<string, FullResultCache>();
 
   constructor(private parent: GrafanaSearcher) {}
 
@@ -18,8 +18,8 @@ export class FrontendSearcher implements GrafanaSearcher {
     }
 
     // TODO -- make sure we refresh after a while
-    let dash = await this.getDashboards();
-    const view = dash.search(query.query);
+    const all = await this.getCache(query.kind);
+    const view = all.search(query.query);
     return {
       isItemLoaded: () => true,
       loadMoreItems: async (startIndex: number, stopIndex: number): Promise<void> => {},
@@ -28,18 +28,20 @@ export class FrontendSearcher implements GrafanaSearcher {
     };
   }
 
-  async getDashboards(): Promise<FullResultCache> {
-    let res = this.full.get('dashboard');
+  async getCache(kind?: string[]): Promise<FullResultCache> {
+    const key = kind ? kind.join(',') : '*';
+    let res = this.cache.get(key);
     if (res) {
       return Promise.resolve(res);
     }
+
     const v = await this.parent.search({
-      kind: ['dashboard'],
+      kind, // match the request
       limit: 5000, // max for now
     });
 
     res = new FullResultCache(v.view);
-    this.full.set('dashboard', res);
+    this.cache.set(key, res);
     return res;
   }
 
@@ -74,7 +76,7 @@ class FullResultCache {
 
   // single instance that is mutated for each response (not great, but OK for now)
   search(query?: string): DataFrameView<DashboardQueryResult> {
-    if (!query?.length) {
+    if (!query?.length || query === '*') {
       return this.full;
     }
     const match = query.toLowerCase();
