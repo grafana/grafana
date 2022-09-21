@@ -60,7 +60,7 @@ export function NavBarMenu({ activeItem, navItems, searchBarHidden, onClose }: P
         in={isOpen}
         unmountOnExit={true}
         classNames={animStyles.overlay}
-        timeout={animationSpeed}
+        timeout={{ enter: animationSpeed, exit: 0 }}
         onExited={onClose}
       >
         <div data-testid="navbarmenu" ref={ref} {...overlayProps} {...dialogProps} className={styles.container}>
@@ -220,15 +220,11 @@ const getAnimStyles = (theme: GrafanaTheme2, animationDuration: number) => {
       enter: css(backdropClosed),
       enterActive: css(backdropTransition, backdropOpen),
       enterDone: css(backdropOpen),
-      exit: css(backdropOpen),
-      exitActive: css(backdropTransition, backdropClosed),
     },
     overlay: {
       enter: css(overlayClosed),
       enterActive: css(overlayTransition, overlayOpen),
       enterDone: css(overlayOpen),
-      exit: css(overlayOpen),
-      exitActive: css(overlayTransition, overlayClosed),
     },
   };
 };
