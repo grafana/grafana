@@ -62,6 +62,7 @@ func TestIntegrationOrgDataAccess(t *testing.T) {
 		err = orgStore.Delete(context.Background(), &org.DeleteOrgCommand{ID: ac2.ID})
 		require.NoError(t, err)
 
+		// TODO: this part of the test will be added when we move RemoveOrgUser to org store
 		// // remove ac2 user from ac1 org
 		// remCmd := models.RemoveOrgUserCommand{OrgId: ac1.OrgID, UserId: ac2.ID, ShouldDeleteOrphanedUser: true}
 		// err = orgStore.RemoveOrgUser(context.Background(), &remCmd)
