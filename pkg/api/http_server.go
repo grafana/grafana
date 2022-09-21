@@ -330,6 +330,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		loginAttemptService:          loginAttemptService,
 		orgService:                   orgService,
 		teamService:                  teamService,
+		navTreeService:               navTreeService,
 		accesscontrolService:         accesscontrolService,
 	}
 	if hs.Listener != nil {
