@@ -30,15 +30,15 @@ Prefix the logger name with an area name when using different loggers across a f
 
 Start the log message with a capital letter, e.g. `logger.Info("Hello world")` instead of `logger.Info("hello world")`. The log message should be an identifier for the log entry, avoid parameterization in favor of key-value pairs for additional data.
 
-Prefer using camelCase style when naming log keys, e.g. _remoteAddr_, to be consistent with Go identifiers. 
+Prefer using camelCase style when naming log keys, e.g. _remoteAddr_, to be consistent with Go identifiers.
 
 Use the key _error_ when logging Go errors, e.g. `logger.Error("Something failed", "error", fmt.Errorf("BOOM"))`.
 
 ### Validate and sanitize input coming from user input
 
-If log messages or key/value pairs originates from user input they **should** be validated and sanitized. 
+If log messages or key/value pairs originates from user input they **should** be validated and sanitized.
 
-Be **careful** to not expose any sensitive information in log messages e.g. secrets, credentials etc. It's especially easy to do by mistake when including a struct as value. 
+Be **careful** to not expose any sensitive information in log messages e.g. secrets, credentials etc. It's especially easy to do by mistake when including a struct as value.
 
 ### Log levels
 
@@ -112,9 +112,9 @@ There are many possible types of metrics that can be tracked. One popular method
 
 Use the namespace _grafana_ as that would prefix any defined metric names with `grafana_`. This will make it clear for operators that any metric named `grafana_*` belongs to Grafana.
 
-Use snake_case style when naming metrics, e.g. _http_request_duration_seconds_ instead of _httpRequestDurationSeconds_.
+Use snake*case style when naming metrics, e.g. \_http_request_duration_seconds* instead of _httpRequestDurationSeconds_.
 
-Use snake_case style when naming labels, e.g. _status_code_ instead of _statusCode_.
+Use snake*case style when naming labels, e.g. \_status_code* instead of _statusCode_.
 
 If metric type is a _counter_, name it with a `_total` suffix, e.g. _http_requests_total_.
 
