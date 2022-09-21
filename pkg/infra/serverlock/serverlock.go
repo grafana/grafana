@@ -60,7 +60,7 @@ func (sl *ServerLockService) LockAndExecute(ctx context.Context, actionName stri
 	}
 
 	if acquiredLock {
-		sl.executeFunc(ctx, fn)
+		sl.executeFunc(ctx, actionName, fn)
 	}
 
 	ctxLogger.Debug("LockAndExecute finished", "actionName", actionName, "acquiredLock", acquiredLock, "duration", time.Since(start))
@@ -151,7 +151,7 @@ func (sl *ServerLockService) LockExecuteAndRelease(ctx context.Context, actionNa
 		return err
 	}
 
-	sl.executeFunc(ctx, fn)
+	sl.executeFunc(ctx, actionName, fn)
 
 	err = sl.releaseLock(ctx, actionName)
 	if err != nil {
@@ -253,15 +253,15 @@ func (sl *ServerLockService) isLockWithinInterval(lock *serverLock, maxInterval 
 	return false
 }
 
-func (sl ServerLockService) executeFunc(ctx context.Context, fn func(ctx context.Context)) {
+func (sl ServerLockService) executeFunc(ctx context.Context, actionName string, fn func(ctx context.Context)) {
 	start := time.Now()
 	ctx, span := sl.tracer.Start(ctx, "ServerLockService.executeFunc")
 	defer span.End()
 
 	ctxLogger := sl.log.FromContext(ctx)
-	ctxLogger.Debug("Start execution")
+	ctxLogger.Debug("Start execution", "actionName", actionName)
 
 	fn(ctx)
 
-	ctxLogger.Debug("Execution finished", "duration", time.Since(start))
+	ctxLogger.Debug("Execution finished", "actionName", actionName, "duration", time.Since(start))
 }
