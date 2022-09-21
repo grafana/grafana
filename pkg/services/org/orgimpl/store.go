@@ -21,7 +21,7 @@ type store interface {
 	DeleteUserFromAll(context.Context, int64) error
 	Update(ctx context.Context, cmd *org.UpdateOrgCommand) error
 
-	// TO BE REFACTORED
+	// TO BE REFACTORED - move logic to service methods and leave CRUD methods for store
 	UpdateAddress(context.Context, *org.UpdateOrgAddressCommand) error
 	Delete(context.Context, *org.DeleteOrgCommand) error
 }
@@ -148,7 +148,7 @@ func isOrgNameTaken(name string, existingId int64, sess *sqlstore.DBSession) (bo
 	return false, nil
 }
 
-// TODO: refactor
+// TODO: refactor move logic to service method
 func (ss *sqlStore) UpdateAddress(ctx context.Context, cmd *org.UpdateOrgAddressCommand) error {
 	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		org := models.Org{
@@ -176,7 +176,7 @@ func (ss *sqlStore) UpdateAddress(ctx context.Context, cmd *org.UpdateOrgAddress
 	})
 }
 
-// TODO: refactor
+// TODO: refactor move logic to service method
 func (ss *sqlStore) Delete(ctx context.Context, cmd *org.DeleteOrgCommand) error {
 	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		if res, err := sess.Query("SELECT 1 from org WHERE id=?", cmd.ID); err != nil {
