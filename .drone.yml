@@ -1,5 +1,7 @@
 ---
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: pr-verify-drone
 node:
@@ -43,6 +45,8 @@ volumes:
   name: docker
 ---
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: pr-test-frontend
 node:
@@ -126,6 +130,8 @@ volumes:
   name: docker
 ---
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: pr-test-backend
 node:
@@ -234,6 +240,8 @@ volumes:
   name: docker
 ---
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: pr-build-e2e
 node:
@@ -483,6 +491,8 @@ volumes:
   name: docker
 ---
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: pr-integration-tests
 node:
@@ -604,6 +614,8 @@ volumes:
     medium: memory
 ---
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: pr-docs
 node:
@@ -701,6 +713,8 @@ volumes:
   name: docker
 ---
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: main-docs
 node:
@@ -793,6 +807,8 @@ volumes:
   name: docker
 ---
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: main-test-frontend
 node:
@@ -868,6 +884,8 @@ volumes:
   name: docker
 ---
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: main-test-backend
 node:
@@ -970,6 +988,8 @@ volumes:
   name: docker
 ---
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: main-build-e2e-publish
 node:
@@ -1380,6 +1400,8 @@ volumes:
   name: docker
 ---
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: main-integration-tests
 node:
@@ -1494,6 +1516,8 @@ depends_on:
 - main-test-backend
 - main-build-e2e-publish
 - main-integration-tests
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: main-windows
 platform:
@@ -1585,6 +1609,8 @@ depends_on:
 - main-build-e2e-publish
 - main-integration-tests
 - main-windows
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: main-publish
 node:
@@ -1679,6 +1705,8 @@ trigger:
 type: docker
 ---
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: release-oss-build-e2e-publish
 node:
@@ -1984,6 +2012,8 @@ volumes:
     medium: memory
 ---
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: release-oss-test
 node:
@@ -2110,6 +2140,8 @@ volumes:
   name: docker
 ---
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: release-oss-integration-tests
 node:
@@ -2221,6 +2253,8 @@ depends_on:
 - release-oss-build-e2e-publish
 - release-oss-test
 - release-oss-integration-tests
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: release-oss-windows
 platform:
@@ -3047,6 +3081,8 @@ volumes:
   name: docker
 ---
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: publish-docker-oss-public
 node:
@@ -3125,6 +3161,8 @@ volumes:
   name: docker
 ---
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: publish-docker-enterprise-public
 node:
@@ -3186,6 +3224,8 @@ volumes:
   name: docker
 ---
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: publish-docker-oss-security
 node:
@@ -3265,6 +3305,8 @@ volumes:
   name: docker
 ---
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: publish-docker-enterprise-security
 node:
@@ -3327,6 +3369,8 @@ volumes:
   name: docker
 ---
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: publish-artifacts-security
 node:
@@ -3365,6 +3409,8 @@ volumes:
   name: docker
 ---
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: publish-artifacts-public
 node:
@@ -3403,6 +3449,8 @@ volumes:
   name: docker
 ---
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: publish-npm-packages-public
 node:
@@ -3461,6 +3509,8 @@ depends_on:
 - publish-artifacts-public
 - publish-docker-oss-public
 - publish-docker-enterprise-public
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: publish-packages-oss
 node:
@@ -3536,6 +3586,8 @@ depends_on:
 - publish-artifacts-public
 - publish-docker-oss-public
 - publish-docker-enterprise-public
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: publish-packages-enterprise
 node:
@@ -3608,6 +3660,8 @@ volumes:
   name: docker
 ---
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: publish-artifacts-page
 node:
@@ -3643,6 +3697,8 @@ volumes:
   name: docker
 ---
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: release-branch-oss-build-e2e-publish
 node:
@@ -3919,6 +3975,8 @@ volumes:
     medium: memory
 ---
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: release-branch-oss-test
 node:
@@ -4039,6 +4097,8 @@ volumes:
   name: docker
 ---
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: release-branch-oss-integration-tests
 node:
@@ -4144,6 +4204,8 @@ depends_on:
 - release-branch-oss-build-e2e-publish
 - release-branch-oss-test
 - release-branch-oss-integration-tests
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: release-branch-oss-windows
 platform:
@@ -5100,6 +5162,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: f8c3274434ad2e4a4a67a25e927256d22ba0dd49f99a9eb498b2bf0f88835933
+hmac: a7ca4f48908eb28e4d433026b5f3b8b2f9b4ec9808040cded18ee453e40f6fb8
 
 ...
