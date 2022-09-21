@@ -236,7 +236,7 @@ func extractTSIndexVeneerElements(cm *gcgen.CoremodelDeclaration, tf *ast.File) 
 			}
 			var has bool
 			for _, tgt := range cust {
-				has = has || tgt.langTarget == "ts"
+				has = has || tgt.target == "type"
 			}
 			if has {
 				custom = append(custom, *pair.T)
@@ -276,17 +276,17 @@ func extractTSIndexVeneerElements(cm *gcgen.CoremodelDeclaration, tf *ast.File) 
 			From:        ast.Str{Value: fmt.Sprintf("./raw/%s/%s/%s.gen", cm.Lineage.Name(), cm.PathVersion(), cm.Lineage.Name())},
 		})
 	}
-	vfile := fmt.Sprintf("./veneer/%s", cm.Lineage.Name())
-	customstr := fmt.Sprintf(`// The following exported declarations correspond to %s schema-declared types marked as
-// @grafana(customVeneer="ts") in %s, version %s.
+	vtfile := fmt.Sprintf("./veneer/%s.types", cm.Lineage.Name())
+	customstr := fmt.Sprintf(`// The following exported declarations correspond to types in the %s@%s schema with
+// attribute @grafana(TSVeneer="type"). (lineage declared in file: %s)
 //
-// The handwritten custom veneer file for these types is expected to be at
+// The handwritten file for these type and default veneers is expected to be at
 // %s.ts.
 // This re-export declaration enforces that the handwritten veneer file exists,
 // and exports all the symbols in the list.
 //
 // TODO generate code such that tsc enforces type compatibility between raw and veneer decls`,
-		cm.Lineage.Name(), cm.RelativePath, thema.LatestVersion(cm.Lineage), filepath.Clean(path.Join("packages", "grafana-schema", "src", vfile)))
+		cm.Lineage.Name(), thema.LatestVersion(cm.Lineage), cm.RelativePath, filepath.Clean(path.Join("packages", "grafana-schema", "src", vtfile)))
 
 	customComments := []ast.Comment{{Text: customstr}}
 	if len(custom) > 0 {
@@ -294,7 +294,7 @@ func extractTSIndexVeneerElements(cm *gcgen.CoremodelDeclaration, tf *ast.File) 
 			CommentList: customComments,
 			TypeOnly:    true,
 			Exports:     custom,
-			From:        ast.Str{Value: vfile},
+			From:        ast.Str{Value: vtfile},
 		})
 	}
 	if len(customD) > 0 {
@@ -302,7 +302,7 @@ func extractTSIndexVeneerElements(cm *gcgen.CoremodelDeclaration, tf *ast.File) 
 			CommentList: customComments,
 			TypeOnly:    false,
 			Exports:     customD,
-			From:        ast.Str{Value: vfile},
+			From:        ast.Str{Value: vtfile},
 		})
 	}
 
@@ -336,8 +336,8 @@ func findDeclNode(name string, tf *ast.File) declPair {
 	return p
 }
 
-type veneerAttr struct {
-	langTarget string
+type tsVeneerAttr struct {
+	target string
 }
 
 func walk(v cue.Value, before func(cue.Path, cue.Value) bool, after func(cue.Path, cue.Value)) {
@@ -390,51 +390,51 @@ func appendPath(p cue.Path, sel cue.Selector) cue.Path {
 	return cue.MakePath(append(p.Selectors(), sel)...)
 }
 
-var allowedLangTargets = map[string]bool{
-	"go": true,
-	"ts": true,
+var allowedTSVeneers = map[string]bool{
+	"type": true,
 }
 
-func allowedLangTargetsString() string {
+func allowedTSVeneersString() string {
 	var list []string
-	for tgt := range allowedLangTargets {
+	for tgt := range allowedTSVeneers {
 		list = append(list, tgt)
 	}
 	sort.Strings(list)
 
-	return strings.Join(list, ", ")
+	return strings.Join(list, "|")
 }
 
-func getCustomVeneerAttr(v cue.Value) ([]veneerAttr, error) {
-	var attrs []veneerAttr
+func getCustomVeneerAttr(v cue.Value) ([]tsVeneerAttr, error) {
+	var attrs []tsVeneerAttr
 	for _, a := range v.Attributes(cue.ValueAttr) {
 		if a.Name() != "grafana" {
 			continue
 		}
 		for i := 0; i < a.NumArgs(); i++ {
 			key, av := a.Arg(i)
-			if key != "customVeneer" {
-				return nil, valError(v, "attribute 'grafana' only allows the arg 'customVeneer'")
+			if key != "TSVeneer" {
+				return nil, valError(v, "attribute 'grafana' only allows the arg 'TSVeneer'")
 			}
 
+			aterr := valError(v, "@grafana(TSVeneer=\"x\") requires one or more of the following separated veneer types for x: %s", allowedTSVeneersString())
 			var some bool
 			for _, tgt := range strings.Split(av, "|") {
 				some = true
-				if !allowedLangTargets[tgt] {
-					return nil, valError(v, "@grafana(customVeneer=\"x\") expects one or more of the following | separated target languages for x: %s", allowedLangTargetsString())
+				if !allowedTSVeneers[tgt] {
+					return nil, aterr
 				}
-				attrs = append(attrs, veneerAttr{
-					langTarget: tgt,
+				attrs = append(attrs, tsVeneerAttr{
+					target: tgt,
 				})
 			}
 			if !some {
-				return nil, valError(v, "@grafana(customVeneer=\"x\" requires at least one pipe-separated target language to be specified from the allowed set: %s", allowedLangTargetsString())
+				return nil, aterr
 			}
 		}
 	}
 
 	sort.Slice(attrs, func(i, j int) bool {
-		return attrs[i].langTarget < attrs[j].langTarget
+		return attrs[i].target < attrs[j].target
 	})
 
 	return attrs, nil

@@ -4,7 +4,7 @@
 //
 // Run `make gen-cue` from repository root to regenerate.
 
-// Raw generated types from dashboard entity type
+// Raw generated types from dashboard entity type.
 export type {
   AnnotationQuery,
   VariableModel,
@@ -32,7 +32,7 @@ export type {
   RowPanel
 } from './raw/dashboard/x/dashboard.gen';
 
-// Raw generated default consts from dashboard entity type
+// Raw generated default consts from dashboard entity type.
 export {
   defaultAnnotationQuery,
   defaultDashboardLink,
@@ -43,34 +43,34 @@ export {
   defaultRowPanel
 } from './raw/dashboard/x/dashboard.gen';
 
-// The following exported declarations correspond to dashboard schema-declared types marked as
-// @grafana(customVeneer="ts") in pkg/coremodel/dashboard/coremodel.cue, version 0.0.
+// The following exported declarations correspond to types in the dashboard@0.0 schema with
+// attribute @grafana(TSVeneer="type"). (lineage declared in file: pkg/coremodel/dashboard/coremodel.cue)
 //
-// The handwritten custom veneer file for these types is expected to be at
-// packages/grafana-schema/src/veneer/dashboard.ts.
+// The handwritten file for these type and default veneers is expected to be at
+// packages/grafana-schema/src/veneer/dashboard.types.ts.
 // This re-export declaration enforces that the handwritten veneer file exists,
 // and exports all the symbols in the list.
 //
-// TODO generate code so that tsc enforces type compatibility between raw and veneer types
+// TODO generate code such that tsc enforces type compatibility between raw and veneer decls
 export type {
   Dashboard,
   Panel,
   FieldConfigSource,
   FieldConfig
-} from './veneer/dashboard';
+} from './veneer/dashboard.types';
 
-// The following exported declarations correspond to dashboard schema-declared types marked as
-// @grafana(customVeneer="ts") in pkg/coremodel/dashboard/coremodel.cue, version 0.0.
+// The following exported declarations correspond to types in the dashboard@0.0 schema with
+// attribute @grafana(TSVeneer="type"). (lineage declared in file: pkg/coremodel/dashboard/coremodel.cue)
 //
-// The handwritten custom veneer file for these types is expected to be at
-// packages/grafana-schema/src/veneer/dashboard.ts.
+// The handwritten file for these type and default veneers is expected to be at
+// packages/grafana-schema/src/veneer/dashboard.types.ts.
 // This re-export declaration enforces that the handwritten veneer file exists,
 // and exports all the symbols in the list.
 //
-// TODO generate code so that tsc enforces type compatibility between raw and veneer types
+// TODO generate code such that tsc enforces type compatibility between raw and veneer decls
 export {
   defaultDashboard,
   defaultPanel,
   defaultFieldConfigSource,
   defaultFieldConfig
-} from './veneer/dashboard';
+} from './veneer/dashboard.types';
