@@ -1,7 +1,6 @@
 import * as H from 'history';
 import { each, find } from 'lodash';
 import React, { useContext, useEffect, useState } from 'react';
-import { useDispatch } from 'react-redux';
 import { Prompt } from 'react-router-dom';
 
 import { locationService } from '@grafana/runtime';
@@ -10,6 +9,7 @@ import { appEvents } from 'app/core/app_events';
 import { contextSrv } from 'app/core/services/context_srv';
 import { SaveLibraryPanelModal } from 'app/features/library-panels/components/SaveLibraryPanelModal/SaveLibraryPanelModal';
 import { PanelModelWithLibraryPanel } from 'app/features/library-panels/types';
+import { useDispatch } from 'app/types';
 import { DashboardSavedEvent } from 'app/types/events';
 
 import { DashboardModel } from '../../state/DashboardModel';

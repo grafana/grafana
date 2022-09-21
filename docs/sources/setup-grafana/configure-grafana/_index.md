@@ -474,6 +474,10 @@ Set to false disables checking for new versions of installed plugins from https:
 If you want to track Grafana usage via Google analytics specify _your_ Universal
 Analytics ID here. By default this feature is disabled.
 
+### google_analytics_4_id
+
+If you want to track Grafana usage via Google Analytics 4 specify _your_ GA4 ID here. By default this feature is disabled.
+
 ### google_tag_manager_id
 
 Google Tag Manager ID, only enabled if you enter an ID here.
@@ -1568,6 +1572,18 @@ Can be set with the environment variable and value `JAEGER_PROPAGATION=b3`.
 Default value is `false`.
 
 Setting this to `true` turns off shared RPC spans. Leaving this available is the most common setting when using Zipkin elsewhere in your infrastructure.
+
+<hr>
+
+## [tracing.opentelemetry]
+
+Configure general parameters shared between OpenTelemetry providers.
+
+### custom_attributes
+
+Comma-separated list of attributes to include in all new spans, such as `key1:value1,key2:value2`.
+
+Can be set with the environment variable `OTEL_RESOURCE_ATTRIBUTES` (use `=` instead of `:` with the environment variable).
 
 <hr>
 

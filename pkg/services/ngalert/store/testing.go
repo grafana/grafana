@@ -4,16 +4,67 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"strings"
 	"sync"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 
 	models2 "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
+
+func NewFakeImageStore(t *testing.T) *FakeImageStore {
+	return &FakeImageStore{
+		t:      t,
+		images: make(map[string]*models.Image),
+	}
+}
+
+type FakeImageStore struct {
+	t      *testing.T
+	mtx    sync.Mutex
+	images map[string]*models.Image
+}
+
+func (s *FakeImageStore) GetImage(_ context.Context, token string) (*models.Image, error) {
+	s.mtx.Lock()
+	defer s.mtx.Unlock()
+	if image, ok := s.images[token]; ok {
+		return image, nil
+	}
+	return nil, models.ErrImageNotFound
+}
+
+func (s *FakeImageStore) GetImages(_ context.Context, tokens []string) ([]models.Image, []string, error) {
+	s.mtx.Lock()
+	defer s.mtx.Unlock()
+	images := make([]models.Image, 0, len(tokens))
+	for _, token := range tokens {
+		if image, ok := s.images[token]; ok {
+			images = append(images, *image)
+		}
+	}
+	if len(images) < len(tokens) {
+		return images, unmatchedTokens(tokens, images), models.ErrImageNotFound
+	}
+	return images, nil, nil
+}
+
+func (s *FakeImageStore) SaveImage(_ context.Context, image *models.Image) error {
+	s.mtx.Lock()
+	defer s.mtx.Unlock()
+	if image.ID == 0 {
+		image.ID = int64(len(s.images)) + 1
+	}
+	if image.Token == "" {
+		tmp := strings.Split(image.Path, ".")
+		image.Token = strings.Join(tmp[:len(tmp)-1], ".")
+	}
+	s.images[image.Token] = image
+	return nil
+}
 
 func NewFakeRuleStore(t *testing.T) *FakeRuleStore {
 	return &FakeRuleStore{
@@ -480,48 +531,4 @@ func (f *FakeAdminConfigStore) UpdateAdminConfiguration(cmd UpdateAdminConfigura
 	f.Configs[cmd.AdminConfiguration.OrgID] = cmd.AdminConfiguration
 
 	return nil
-}
-
-type FakeAnnotationsRepo struct {
-	mtx   sync.Mutex
-	Items []*annotations.Item
-}
-
-func NewFakeAnnotationsRepo() *FakeAnnotationsRepo {
-	return &FakeAnnotationsRepo{
-		Items: make([]*annotations.Item, 0),
-	}
-}
-
-func (repo *FakeAnnotationsRepo) Len() int {
-	repo.mtx.Lock()
-	defer repo.mtx.Unlock()
-	return len(repo.Items)
-}
-
-func (repo *FakeAnnotationsRepo) Delete(_ context.Context, params *annotations.DeleteParams) error {
-	return nil
-}
-
-func (repo *FakeAnnotationsRepo) Save(item *annotations.Item) error {
-	repo.mtx.Lock()
-	defer repo.mtx.Unlock()
-	repo.Items = append(repo.Items, item)
-
-	return nil
-}
-func (repo *FakeAnnotationsRepo) Update(_ context.Context, item *annotations.Item) error {
-	return nil
-}
-
-func (repo *FakeAnnotationsRepo) Find(_ context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
-	annotations := []*annotations.ItemDTO{{Id: 1}}
-	return annotations, nil
-}
-
-func (repo *FakeAnnotationsRepo) FindTags(_ context.Context, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
-	result := annotations.FindTagsResult{
-		Tags: []*annotations.TagsDTO{},
-	}
-	return result, nil
 }
