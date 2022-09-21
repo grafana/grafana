@@ -6,11 +6,7 @@ import React from 'react';
 import { News } from './News';
 
 const setup = () => {
-  const { container } = render(
-    <News>
-      <button type="button"> News Drawer</button>
-    </News>
-  );
+  const { container } = render(<News />);
 
   return { container };
 };
@@ -25,7 +21,7 @@ describe('News', () => {
   it('should render the drawer when the drawer button is clicked', async () => {
     setup();
 
-    await userEvent.click(screen.getByRole('button', { name: /news drawer/i }));
+    await userEvent.click(screen.getByRole('button'));
     expect(screen.getByRole('article')).toBeInTheDocument();
     expect(screen.getByRole('link')).toHaveAttribute('href', 'https://www.example.net/2022/02/10/something-fake/');
   });

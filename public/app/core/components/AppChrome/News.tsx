@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
 
-import { Drawer } from '@grafana/ui';
+import { Drawer, Icon } from '@grafana/ui';
 
 import { NewsItem } from './NewsItem';
 
-export function News({ children }: { children: React.ReactElement }) {
+interface NewsProps {
+  buttonCss?: string;
+}
+
+export function News({ buttonCss }: NewsProps) {
   const [showNewsDrawer, setShowNewsDrawer] = useState(false);
 
   const onChildClick = () => {
@@ -13,9 +17,11 @@ export function News({ children }: { children: React.ReactElement }) {
 
   return (
     <>
-      {React.cloneElement(children, { onClick: onChildClick })}
+      <button className={buttonCss} onClick={onChildClick}>
+        <Icon name="rss" size="lg" />
+      </button>
       {showNewsDrawer && (
-        <Drawer scrollableContent onClose={() => setShowNewsDrawer(false)}>
+        <Drawer title="Latest from the blog" scrollableContent onClose={() => setShowNewsDrawer(false)}>
           <NewsItem />
         </Drawer>
       )}

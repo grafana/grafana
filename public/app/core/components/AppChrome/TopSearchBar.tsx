@@ -37,11 +37,7 @@ export function TopSearchBar() {
             </button>
           </Dropdown>
         )}
-        <News>
-          <button className={styles.actionItem}>
-            <Icon name="rss" size="lg" />
-          </button>
-        </News>
+        <News buttonCss={styles.actionItem} />
         {signInNode && (
           <Tooltip placement="bottom" content="Sign in">
             <a className={styles.actionItem} href={signInNode.url} target={signInNode.target}>
