@@ -30,9 +30,15 @@ Prefix the logger name with an area name when using different loggers across a f
 
 Start the log message with a capital letter, e.g. `logger.Info("Hello world")` instead of `logger.Info("hello world")`. The log message should be an identifier for the log entry, avoid parameterization in favor of key-value pairs for additional data.
 
-Use snake_case style when naming log keys, e.g. _remote_addr_ instead of _remoteAddr_.
+Prefer using camelCase style when naming log keys, e.g. _remoteAddr_, to be consistent with Go identifiers. 
 
 Use the key _error_ when logging Go errors, e.g. `logger.Error("Something failed", "error", fmt.Errorf("BOOM"))`.
+
+### Validate and sanitize input coming from user input
+
+If log messages or key/value pairs originates from user input they **should** be validated and sanitized. 
+
+Be **careful** to not expose any sensitive information in log messages e.g. secrets, credentials etc. It's especially easy to do by mistake when including a struct as value. 
 
 ### Log levels
 
@@ -96,11 +102,11 @@ Metrics are quantifiable measurements that reflect the health and performance of
 
 Consider using metrics to provide real-time insight into the state of resources. If you want to know how responsive your application is or identify anomalies that could be early signs of a performance issue, metrics are a key source of visibility.
 
-There are many possible types of metrics that can be tracked. One popular method for defining metrics is the [RED method](https://grafana.com/blog/2018/08/02/the-red-method-how-to-instrument-your-services/).
-
 ### Metric types
 
 See [Prometheus metric types](https://prometheus.io/docs/concepts/metric_types/) for a list and description of the different metric types you can use and when to use them.
+
+There are many possible types of metrics that can be tracked. One popular method for defining metrics is the [RED method](https://grafana.com/blog/2018/08/02/the-red-method-how-to-instrument-your-services/).
 
 ### Naming conventions
 
