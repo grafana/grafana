@@ -44,7 +44,7 @@ func TestUnmarshalThresholdCommand(t *testing.T) {
 				"conditions": []
 			}`,
 			shouldError:   true,
-			expectedError: "requires at least one condition",
+			expectedError: "requires exactly one condition",
 		},
 		{
 			description: "unmarshal with missing conditions should error",
@@ -54,7 +54,7 @@ func TestUnmarshalThresholdCommand(t *testing.T) {
 				"conditions": []
 			}`,
 			shouldError:   true,
-			expectedError: "requires at least one condition",
+			expectedError: "requires exactly one condition",
 		},
 		{
 			description: "unmarshal with unsupported threshold function",
