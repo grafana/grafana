@@ -6,29 +6,26 @@ import { useAsync } from 'react-use';
 
 import { AppEvents, SelectableValue, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useStyles2, ActionMeta, AsyncSelect, Input, InputActionMeta, Icon, Stack, Tooltip } from '@grafana/ui';
+import { useStyles2, ActionMeta, AsyncSelect, Input, InputActionMeta } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/services/context_srv';
 import { createFolder, getFolderById, searchFolders } from 'app/features/manage-dashboards/state/actions';
 import { DashboardSearchHit } from 'app/features/search/types';
 import { AccessControlAction, PermissionLevelString } from 'app/types';
 
-const SlashesWarning = () => {
-  const styles = useStyles2(getStyles);
-  const onClick = () => window.open('https://github.com/grafana/grafana/issues/42947', '_blank');
-  return (
-    <Stack gap={0.5}>
-      <div className={styles.slashNotAllowed}>Folders with &apos;/&apos; character are not allowed.</div>
-      <Tooltip placement="top" content={'Link to the Github issue'} theme="info">
-        <Icon name="info-circle" size="xs" className={styles.infoIcon} onClick={onClick} />
-      </Tooltip>
-    </Stack>
-  );
-};
-
 export type FolderPickerFilter = (hits: DashboardSearchHit[]) => DashboardSearchHit[];
 
 export const ADD_NEW_FOLER_OPTION = '+ Add new';
+
+export interface FolderWarning {
+  warningCondition: (value: string) => boolean;
+  warningComponent: () => JSX.Element;
+}
+
+export interface CustomAdd {
+  dissallowValues: boolean;
+  isAllowedValue?: (value: string) => boolean;
+}
 
 export interface Props {
   onChange: ($folder: { title: string; id: number }) => void;
@@ -44,8 +41,9 @@ export interface Props {
   showRoot?: boolean;
   onClear?: () => void;
   accessControlMetadata?: boolean;
-  customAdd?: boolean;
-  dissalowSlashes?: boolean;
+  customAdd?: CustomAdd;
+  folderWarning?: FolderWarning;
+
   /**
    * Skips loading all folders in order to find the folder matching
    * the folder where the dashboard is stored.
@@ -58,7 +56,6 @@ export interface Props {
 }
 export type SelectedFolder = SelectableValue<number>;
 const VALUE_FOR_ADD = -10;
-const containsSlashes = (str: string): boolean => str.indexOf('/') !== -1;
 
 export function FolderPicker(props: Props) {
   const {
@@ -78,7 +75,7 @@ export function FolderPicker(props: Props) {
     skipInitialLoad,
     accessControlMetadata,
     customAdd,
-    dissalowSlashes,
+    folderWarning,
   } = props;
 
   const [folder, setFolder] = useState<SelectedFolder | null>(null);
@@ -89,16 +86,11 @@ export function FolderPicker(props: Props) {
   const styles = useStyles2(getStyles);
 
   const isClearable = typeof onClear === 'function';
-  const isUsingSlashes = containsSlashes(inputValue);
 
   const getOptions = useCallback(
     async (query: string) => {
       const searchHits = await searchFolders(query, permissionLevel, accessControlMetadata);
-      const options: Array<SelectableValue<number>> = mapSearchHitsToOptions(
-        searchHits,
-        Boolean(dissalowSlashes),
-        filter
-      );
+      const options: Array<SelectableValue<number>> = mapSearchHitsToOptions(searchHits, filter);
 
       const hasAccess =
         contextSrv.hasAccess(AccessControlAction.DashboardsWrite, contextSrv.isEditor) ||
@@ -116,7 +108,7 @@ export function FolderPicker(props: Props) {
       ) {
         Boolean(initialTitle) && options.unshift({ label: initialTitle, value: initialFolderId });
       }
-      if (enableCreateNew && customAdd) {
+      if (enableCreateNew && Boolean(customAdd)) {
         return [...options, { value: VALUE_FOR_ADD, label: ADD_NEW_FOLER_OPTION, title: query }];
       } else {
         return options;
@@ -133,7 +125,6 @@ export function FolderPicker(props: Props) {
       filter,
       enableCreateNew,
       customAdd,
-      dissalowSlashes,
     ]
   );
 
@@ -176,7 +167,7 @@ export function FolderPicker(props: Props) {
   useEffect(() => {
     // if this is not the same as our initial value notify parent
     if (folder && folder.value !== initialFolderId) {
-      !isCreatingNew && onChange({ id: folder.value!, title: folder.label! });
+      !isCreatingNew && folder.value && folder.label && onChange({ id: folder.value, title: folder.label });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [folder, initialFolderId]);
@@ -229,7 +220,7 @@ export function FolderPicker(props: Props) {
 
   const createNewFolder = useCallback(
     async (folderName: string) => {
-      if (dissalowSlashes && containsSlashes(folderName)) {
+      if (folderWarning?.warningCondition(folderName)) {
         return false;
       }
       const newFolder = await createFolder({ title: folderName });
@@ -247,12 +238,13 @@ export function FolderPicker(props: Props) {
 
       return folder;
     },
-    [onFolderChange, dissalowSlashes]
+    [folderWarning, onFolderChange]
   );
 
   const onKeyDown = useCallback(
     (event: React.KeyboardEvent) => {
-      if (event.key === 'Enter' && containsSlashes(newFolderValue)) {
+      const dissalowValues = Boolean(customAdd?.dissallowValues);
+      if (event.key === 'Enter' && dissalowValues && !customAdd?.isAllowedValue!(newFolderValue)) {
         event.preventDefault();
         return;
       }
@@ -269,7 +261,7 @@ export function FolderPicker(props: Props) {
         }
       }
     },
-    [newFolderValue, createNewFolder, folder?.title, rootName]
+    [customAdd?.dissallowValues, customAdd?.isAllowedValue, newFolderValue, createNewFolder, folder?.title, rootName]
   );
 
   const onNewFolderChange = (e: FormEvent<HTMLInputElement>) => {
@@ -293,12 +285,27 @@ export function FolderPicker(props: Props) {
     }
     return;
   };
-  const newValueContainsSlashes = containsSlashes(newFolderValue);
+
+  const FolderWarningWhenCreating = () => {
+    if (folderWarning?.warningCondition(newFolderValue)) {
+      return <folderWarning.warningComponent />;
+    } else {
+      return null;
+    }
+  };
+
+  const FolderWarningWhenSearching = () => {
+    if (folderWarning?.warningCondition(inputValue)) {
+      return <folderWarning.warningComponent />;
+    } else {
+      return null;
+    }
+  };
 
   if (isCreatingNew) {
     return (
       <>
-        {dissalowSlashes && newValueContainsSlashes && <SlashesWarning />}
+        <FolderWarningWhenCreating />
         <div className={styles.newFolder}>Press enter to create the new folder.</div>
         <Input
           aria-label={'aria-label'}
@@ -315,7 +322,7 @@ export function FolderPicker(props: Props) {
   } else {
     return (
       <div data-testid={selectors.components.FolderPicker.containerV2}>
-        {dissalowSlashes && isUsingSlashes && <SlashesWarning />}
+        <FolderWarningWhenSearching />
         <AsyncSelect
           inputId={inputId}
           aria-label={selectors.components.FolderPicker.input}
@@ -325,7 +332,7 @@ export function FolderPicker(props: Props) {
           inputValue={inputValue}
           onInputChange={onInputChange}
           value={folder}
-          allowCustomValue={enableCreateNew && !customAdd}
+          allowCustomValue={enableCreateNew && !Boolean(customAdd)}
           loadOptions={debouncedSearch}
           onChange={onFolderChange}
           onCreateOption={createNewFolder}
@@ -336,15 +343,9 @@ export function FolderPicker(props: Props) {
   }
 }
 
-function mapSearchHitsToOptions(hits: DashboardSearchHit[], filterSlashes: boolean, filter?: FolderPickerFilter) {
+function mapSearchHitsToOptions(hits: DashboardSearchHit[], filter?: FolderPickerFilter) {
   const filteredHits = filter ? filter(hits) : hits;
-  if (filterSlashes) {
-    return filteredHits
-      .filter((value: DashboardSearchHit) => !containsSlashes(value.title ?? ''))
-      .map((hit) => ({ label: hit.title, value: hit.id }));
-  } else {
-    return filteredHits.map((hit) => ({ label: hit.title, value: hit.id }));
-  }
+  return filteredHits.map((hit) => ({ label: hit.title, value: hit.id }));
 }
 interface Args {
   getFolder: typeof getFolderById;
@@ -370,16 +371,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: ${theme.colors.warning.main};
     font-size: ${theme.typography.bodySmall.fontSize};
     padding-bottom: ${theme.spacing(1)};
-  `,
-  slashNotAllowed: css`
-    color: ${theme.colors.warning.main};
-    font-size: 12px;
-    margin-bottom: 2px;
-  `,
-  infoIcon: css`
-    color: ${theme.colors.warning.main};
-    font-size: 12px;
-    margin-bottom: 2px;
-    cursor: pointer;
   `,
 });

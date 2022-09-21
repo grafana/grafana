@@ -15,7 +15,7 @@ import { RuleForm, RuleFormType, RuleFormValues } from '../../types/rule-form';
 import AnnotationsField from './AnnotationsField';
 import { GroupAndNamespaceFields } from './GroupAndNamespaceFields';
 import { RuleEditorSection } from './RuleEditorSection';
-import { RuleFolderPicker, Folder } from './RuleFolderPicker';
+import { RuleFolderPicker, Folder, containsSlashes } from './RuleFolderPicker';
 import { checkForPathSeparator } from './util';
 
 const recordingRuleNameValidationPattern = {
@@ -172,7 +172,10 @@ const useRuleFolderFilter = (existingRuleForm: RuleForm | null) => {
   );
 
   return useCallback<FolderPickerFilter>(
-    (folderHits) => folderHits.filter(isSearchHitAvailable),
+    (folderHits) =>
+      folderHits
+        .filter(isSearchHitAvailable)
+        .filter((value: DashboardSearchHit) => !containsSlashes(value.title ?? '')),
     [isSearchHitAvailable]
   );
 };
