@@ -24,9 +24,9 @@ logger.Error("Error msg", "error", fmt.Errorf("BOOM"))
 
 ### Naming conventions
 
-Consider naming the logger using lowercase characters, e.g. `log.New("my-logger")` using snake_case or kebab-case styling.
+Name the logger using lowercase characters, e.g. `log.New("my-logger")` using snake_case or kebab-case styling.
 
-Consider prefixing the logger name with an area name when using different loggers across a feature or related packages, e.g. `log.New("plugin.loader")` and `log.New("plugin.client")`.
+Prefix the logger name with an area name when using different loggers across a feature or related packages, e.g. `log.New("plugin.loader")` and `log.New("plugin.client")`.
 
 Start the log message with a capital letter, e.g. `logger.Info("Hello world")` instead of `logger.Info("hello world")`. The log message should be an identifier for the log entry, avoid parameterization in favor of key-value pairs for additional data.
 
