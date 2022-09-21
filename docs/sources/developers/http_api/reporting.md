@@ -297,7 +297,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 | Field name                     | Data type | Description                                              |
 | ------------------------------ | --------- | -------------------------------------------------------- |
-| dashboard.uid                  | string    | Dashboard uid.                                           |
+| dashboard.uid                  | string    | Dashboard UID.                                           |
 | timeRange.from                 | string    | Dashboard time range from.                               |
 | timeRange.to                   | string    | Dashboard time range to.                                 |
 | reportVariables.<variableName> | string    | Specifies the name of the dashboard's template variable. |
