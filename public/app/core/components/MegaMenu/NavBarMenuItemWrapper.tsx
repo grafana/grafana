@@ -23,7 +23,7 @@ export function NavBarMenuItemWrapper({
   const { i18n } = useLingui();
   const styles = useStyles2(getStyles);
 
-  if (link.emptyMessageId) {
+  if (link.emptyMessageId && !linkHasChildren(link)) {
     const emptyMessageTranslated = i18n._(menuItemTranslations[link.emptyMessageId]);
     return (
       <NavBarMenuSection link={link}>
