@@ -17,7 +17,6 @@ import {
   UrlQueryValue,
 } from '@grafana/data';
 import { RefreshEvent, TimeRangeUpdatedEvent } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -126,7 +125,7 @@ export class DashboardModel implements TimeModel {
     lastRefresh: true,
   };
 
-  constructor(data: Dashboard, meta?: DashboardMeta, private getVariablesFromState: GetVariables = getVariablesByKey) {
+  constructor(data: any, meta?: DashboardMeta, private getVariablesFromState: GetVariables = getVariablesByKey) {
     if (!data) {
       data = {};
     }
