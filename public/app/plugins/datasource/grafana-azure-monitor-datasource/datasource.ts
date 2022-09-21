@@ -16,6 +16,7 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 import AzureLogAnalyticsDatasource from './azure_log_analytics/azure_log_analytics_datasource';
 import AzureMonitorDatasource from './azure_monitor/azure_monitor_datasource';
 import AzureResourceGraphDatasource from './azure_resource_graph/azure_resource_graph_datasource';
+import AzureTracesDatasource from './azure_traces/app_insights_traces_datasource';
 import ResourcePickerData from './resourcePicker/resourcePickerData';
 import { AzureDataSourceJsonData, AzureMonitorQuery, AzureQueryType } from './types';
 import migrateAnnotation from './utils/migrateAnnotation';
@@ -29,11 +30,16 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
 
   azureMonitorDatasource: AzureMonitorDatasource;
   azureLogAnalyticsDatasource: AzureLogAnalyticsDatasource;
+  azureTracesDatasource: AzureTracesDatasource;
   resourcePickerData: ResourcePickerData;
   azureResourceGraphDatasource: AzureResourceGraphDatasource;
 
   pseudoDatasource: {
-    [key in AzureQueryType]?: AzureMonitorDatasource | AzureLogAnalyticsDatasource | AzureResourceGraphDatasource;
+    [key in AzureQueryType]?:
+      | AzureMonitorDatasource
+      | AzureLogAnalyticsDatasource
+      | AzureResourceGraphDatasource
+      | AzureTracesDatasource;
   } = {};
 
   declare optionsKey: Record<AzureQueryType, string>;
@@ -46,12 +52,13 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     this.azureMonitorDatasource = new AzureMonitorDatasource(instanceSettings);
     this.azureLogAnalyticsDatasource = new AzureLogAnalyticsDatasource(instanceSettings);
     this.azureResourceGraphDatasource = new AzureResourceGraphDatasource(instanceSettings);
+    this.azureTracesDatasource = new AzureTracesDatasource(instanceSettings);
     this.resourcePickerData = new ResourcePickerData(instanceSettings);
 
     this.pseudoDatasource = {
       [AzureQueryType.AzureMonitor]: this.azureMonitorDatasource,
       [AzureQueryType.LogAnalytics]: this.azureLogAnalyticsDatasource,
-      [AzureQueryType.Trace]: this.azureLogAnalyticsDatasource,
+      [AzureQueryType.Trace]: this.azureTracesDatasource,
       [AzureQueryType.AzureResourceGraph]: this.azureResourceGraphDatasource,
     };
 
