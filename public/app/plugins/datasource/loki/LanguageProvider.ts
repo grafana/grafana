@@ -1,7 +1,6 @@
 import { chain, difference } from 'lodash';
 import LRU from 'lru-cache';
 import Prism, { Grammar } from 'prismjs';
-import { lastValueFrom } from 'rxjs';
 
 import {
   dateTime,
@@ -9,9 +8,7 @@ import {
   LanguageProvider,
   HistoryItem,
   AbstractQuery,
-  CoreApp,
   DataFrame,
-  DataQueryRequest,
   FieldType,
   getParser,
   LogsParsers,
@@ -25,6 +22,7 @@ import {
 } from 'app/plugins/datasource/prometheus/language_utils';
 
 import { LokiDatasource } from './datasource';
+import { extractLogParserFromDataFrame } from './responseUtils';
 import syntax, { FUNCTIONS, PIPE_PARSERS, PIPE_OPERATORS } from './syntax';
 import { LokiQuery, LokiQueryType } from './types';
 
@@ -73,48 +71,6 @@ export function addHistoryMetadata(item: CompletionItem, history: LokiHistoryIte
     ...item,
     documentation: hint,
   };
-}
-
-function extractLogInfo(frame: DataFrame): { extractedLabelKeys: string[]; hasLogfmt: boolean; hasJSON: boolean } {
-  const lineField = frame.fields.find((field) => field.type === FieldType.string);
-  if (lineField == null) {
-    return { extractedLabelKeys: [], hasJSON: false, hasLogfmt: false };
-  }
-
-  const texts: string[] = lineField.values.toArray();
-
-  let hasJSON = false;
-  let hasLogfmt = false;
-
-  const keys = new Set<string>();
-  texts.forEach((text) => {
-    const parser = getParser(text);
-    if (parser === LogsParsers.JSON) {
-      // FIXME: we javascript-parse here, we should call Loki probably
-      parser
-        .getFields(text)
-        .map((field) => parser.getLabelFromField(field))
-        .forEach((key) => {
-          keys.add(key);
-        });
-      hasJSON = true;
-    }
-    if (parser === LogsParsers.logfmt) {
-      // FIXME: we javascript-parse here, we should call Loki probably
-      parser
-        .getFields(text)
-        .map((field) => parser.getLabelFromField(field))
-        .forEach((key) => {
-          keys.add(key);
-        });
-      hasLogfmt = true;
-    }
-  });
-
-  const extractedLabelKeys = Array.from(keys);
-  extractedLabelKeys.sort();
-
-  return { extractedLabelKeys, hasLogfmt, hasJSON };
 }
 
 export default class LokiLanguageProvider extends LanguageProvider {
@@ -518,36 +474,16 @@ export default class LokiLanguageProvider extends LanguageProvider {
   }
 
   async getLogInfo(selector: string): Promise<{ extractedLabelKeys: string[]; hasJSON: boolean; hasLogfmt: boolean }> {
-    const request: DataQueryRequest<LokiQuery> = {
-      requestId: 'LOKI_LOG_INFO',
-      interval: '1s',
-      intervalMs: 1000,
-      range: this.datasource.getTimeRange(),
-      scopedVars: {},
-      timezone: 'UTC', // FIXME
-      app: CoreApp.Explore, // FIXME
-      startTime: 0, // FIXME
-      targets: [
-        {
-          refId: 'A',
-          expr: selector,
-          maxLines: 5, // FIXME
-        },
-      ],
-    };
-    return lastValueFrom(this.datasource.query(request)).then(
-      (response) => {
-        const frame: DataFrame | undefined = response.data[0];
-        if (frame == null) {
-          return { extractedLabelKeys: [], hasJSON: false, hasLogfmt: false };
-        }
-        return extractLogInfo(frame);
-      },
-      (error) => {
-        // TODO: better error handling
-        console.error(error);
-        return { extractedLabelKeys: [], hasJSON: false, hasLogfmt: false };
-      }
-    );
+    let series = [];
+    try {
+      series = await this.datasource.getDataSamples({ expr: selector, refId: 'data-samples' });
+    } catch (e) {
+      return { extractedLabelKeys: [], hasJSON: false, hasLogfmt: false };
+    }
+
+    const { hasLogfmt, hasJSON } = extractLogParserFromDataFrame(series[0]);
+
+    // TODO: figure out extractedLabelKeys
+    return { extractedLabelKeys: [], hasJSON, hasLogfmt };
   }
 }
