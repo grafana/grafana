@@ -3,11 +3,11 @@ package correlations
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"io"
 	"net/http"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/org"
