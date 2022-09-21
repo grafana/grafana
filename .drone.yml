@@ -257,7 +257,6 @@ trigger:
     include:
     - pkg/**
     - packaging/**
-    - .drone.yml
     - conf/**
     - go.sum
     - go.mod
@@ -5271,6 +5270,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: a37b4d779d7265b5ebedd51201d333bd5cdd422badae90abed2b7aa295aca7dd
+hmac: a17adc518f8ba4ea5c123bf440adf9aceec5e7ba5d9fdae9e467dbd1ec91fd46
 
 ...
