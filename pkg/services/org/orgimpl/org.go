@@ -254,7 +254,6 @@ func (s *Service) Delete(ctx context.Context, cmd *org.DeleteOrgCommand) error {
 	return s.store.Delete(ctx, cmd)
 }
 
-// TODO: refactor
 func (s *Service) GetOrCreate(ctx context.Context, orgName string) (int64, error) {
 	var orga *org.Org
 	var err error

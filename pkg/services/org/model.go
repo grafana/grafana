@@ -98,7 +98,7 @@ type GetOrgByNameQuery struct {
 }
 
 type UpdateOrgAddressCommand struct {
-	OrgID int64
+	OrgID int64 `xorm:"org_id"`
 	Address
 }
 
@@ -112,7 +112,7 @@ type Address struct {
 }
 
 type DeleteOrgCommand struct {
-	ID int64
+	ID int64 `xorm:"id"`
 }
 
 func (r RoleType) IsValid() bool {
