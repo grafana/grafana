@@ -51,6 +51,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/team"
+	"github.com/grafana/grafana/pkg/services/team/teamimpl"
+	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
@@ -297,6 +300,7 @@ type accessControlScenarioContext struct {
 	cfg *setting.Cfg
 
 	dashboardsStore dashboards.Store
+	teamService     team.Service
 }
 
 func setAccessControlPermissions(acmock *accesscontrolmock.Mock, perms []accesscontrol.Permission, org int64) {
@@ -366,6 +370,7 @@ func setupHTTPServerWithCfgDb(
 
 	license := &licensing.OSSLicensingService{}
 	routeRegister := routing.NewRouteRegister()
+	teamService := teamimpl.ProvideService(db)
 	dashboardsStore := dashboardsstore.ProvideDashboardStore(db, featuremgmt.WithFeatures())
 
 	var acmock *accesscontrolmock.Mock
@@ -412,6 +417,7 @@ func setupHTTPServerWithCfgDb(
 		preferenceService: preftest.NewPreferenceServiceFake(),
 		userService:       userMock,
 		orgService:        orgtest.NewOrgServiceFake(),
+		teamService:       teamService,
 		annotationsRepo:   annotationstest.NewFakeAnnotationsRepo(),
 	}
 
@@ -447,6 +453,7 @@ func setupHTTPServerWithCfgDb(
 		db:              db,
 		cfg:             cfg,
 		dashboardsStore: dashboardsStore,
+		teamService:     teamService,
 		usermock:        userMock,
 	}
 }
@@ -524,11 +531,12 @@ func setUp(confs ...setUpConf) *HTTPServer {
 		}
 	}
 	store.ExpectedTeamsByUser = []*models.TeamDTO{}
+	teamSvc := &teamtest.FakeService{}
 	dashSvc := &dashboards.FakeDashboardService{}
 	dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
 		q := args.Get(1).(*models.GetDashboardACLInfoListQuery)
 		q.Result = aclMockResp
 	}).Return(nil)
-	guardian.InitLegacyGuardian(store, dashSvc)
+	guardian.InitLegacyGuardian(store, dashSvc, teamSvc)
 	return hs
 }

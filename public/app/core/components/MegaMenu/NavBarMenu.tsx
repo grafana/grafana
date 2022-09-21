@@ -55,6 +55,7 @@ export function NavBarMenu({ activeItem, navItems, searchBarHidden, onClose }: P
   return (
     <OverlayContainer>
       <CSSTransition
+        nodeRef={ref}
         in={isOpen}
         unmountOnExit={true}
         classNames={animStyles.overlay}
@@ -93,7 +94,13 @@ export function NavBarMenu({ activeItem, navItems, searchBarHidden, onClose }: P
           </FocusScope>
         </div>
       </CSSTransition>
-      <CSSTransition in={isOpen} unmountOnExit={true} classNames={animStyles.backdrop} timeout={animationSpeed}>
+      <CSSTransition
+        nodeRef={backdropRef}
+        in={isOpen}
+        unmountOnExit={true}
+        classNames={animStyles.backdrop}
+        timeout={animationSpeed}
+      >
         <div ref={backdropRef} className={styles.backdrop} {...underlayProps} />
       </CSSTransition>
     </OverlayContainer>
