@@ -6,6 +6,8 @@ Guidance, conventions and best practices for instrumenting Grafana using logs, m
 
 Logs are files that record events, warnings and errors as they occur within a software environment. Most logs include contextual information, such as the time an event occurred and which user or endpoint was associated with it.
 
+### Usage
+
 Use the _pkg/infra/log_ package to create a named structured logger. Example:
 
 ```go
@@ -147,6 +149,67 @@ If you want to guarantee the existence of metrics before any observations has ha
 ## Traces
 
 A distributed trace is data that tracks an application request as it flows through the various parts of an application. The trace records how long it takes each application component to process the request and pass the result to the next component. Traces can also identify which parts of the application trigger an error.
+
+### Usage
+
+Grafana currently supports two tracing implementations, [OpenTelemetry](https://opentelemetry.io/) and [OpenTracing](https://opentracing.io/). OpenTracing is deprecated, but still supported until we remove it. The two different implementations implements the `Tracer` and `Span` interfaces, defined in the _pkg/infra/tracing_ package, which you can use to create traces and spans. To get a hold of a `Tracer` you would need to get it injected as dependency into your service, see [Services](../../architecture/backend/services.md) for more details.
+
+Example:
+
+```go
+import (
+   "fmt"
+
+   "github.com/grafana/grafana/pkg/infra/tracing"
+   "go.opentelemetry.io/otel/attribute"
+)
+
+type MyService struct {
+   tracer tracing.Tracer
+}
+
+func ProvideService(tracer tracing.Tracer) *MyService {
+   return &MyService{
+      tracer: tracer,
+   }
+}
+
+func (s *MyService) Hello(ctx context.Context, name string) (string, error) {
+   ctx, span := s.tracer.Start(ctx, "MyService.Hello")
+   // this make sure the span is marked as finished when this
+   // method ends to allow the span to be flushed and sent to
+   // storage backend.
+   defer span.End()
+
+   // Add some event to show Events usage
+   span.AddEvents(
+      []string{"message"},
+      []tracing.EventValue{
+         {Str: "checking name..."},
+      })
+
+   if name == "" {
+      err := fmt.Errorf("name cannot be empty")
+
+      // record err as an exception span event for this span
+      span.RecordError(err)
+      return "", err
+   }
+
+   // Add some other event to show Events usage
+   span.AddEvents(
+      []string{"message"},
+      []tracing.EventValue{
+         {Str: "name checked"},
+      })
+
+   // Add attribute to show Attributes usage
+   span.SetAttributes("my_service.name", name, attribute.Key("my_service.name").String(name))
+
+   return fmt.Sprintf("Hello %s", name), nil
+}
+
+```
 
 ### Naming conventions
 
