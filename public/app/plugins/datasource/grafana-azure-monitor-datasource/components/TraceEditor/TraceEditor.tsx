@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 import { EditorFieldGroup, EditorRow, EditorRows, Input } from '@grafana/ui';
 
@@ -38,7 +38,7 @@ const TraceEditor: React.FC<TraceEditorProps> = ({
               query={query}
               datasource={datasource}
               inlineField={true}
-              labelWidth={10}
+              labelWidth={15}
               subscriptionId={subscriptionId}
               variableOptionGroup={variableOptionGroup}
               onQueryChange={onChange}
