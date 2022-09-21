@@ -30,8 +30,11 @@ func TestEmailNotifier(t *testing.T) {
 			Type:     "email",
 			Settings: settingsJSON,
 		}
+		fc := FactoryConfig{
+			Config: model,
+		}
 
-		_, err := NewEmailConfig(model)
+		_, err := buildEmailNotifier(fc)
 		require.Error(t, err)
 	})
 
@@ -44,13 +47,18 @@ func TestEmailNotifier(t *testing.T) {
 		require.NoError(t, err)
 
 		emailSender := mockNotificationService()
-		cfg, err := NewEmailConfig(&NotificationChannelConfig{
-			Name:     "ops",
-			Type:     "email",
-			Settings: settingsJSON,
-		})
+		fc := FactoryConfig{
+			Config: &NotificationChannelConfig{
+				Name:     "ops",
+				Type:     "email",
+				Settings: settingsJSON,
+			},
+			NotificationService: emailSender,
+			ImageStore:          &UnavailableImageStore{},
+			Template:            tmpl,
+		}
+		emailNotifier, err := buildEmailNotifier(fc)
 		require.NoError(t, err)
-		emailNotifier := NewEmailNotifier(cfg, emailSender, &UnavailableImageStore{}, tmpl)
 
 		alerts := []*types.Alert{
 			{
@@ -263,7 +271,7 @@ func TestEmailNotifierIntegration(t *testing.T) {
 	}
 }
 
-func createSut(t *testing.T, messageTmpl string, subjectTmpl string, emailTmpl *template.Template, ns notifications.EmailSender) *EmailNotifier {
+func createSut(t *testing.T, messageTmpl string, subjectTmpl string, emailTmpl *template.Template, ns *notifications.NotificationService) *EmailNotifier {
 	t.Helper()
 
 	json := `{
@@ -278,15 +286,20 @@ func createSut(t *testing.T, messageTmpl string, subjectTmpl string, emailTmpl *
 	if subjectTmpl != "" {
 		settingsJSON.Set("subject", subjectTmpl)
 	}
+	require.NoError(t, err)
 
+	fc := FactoryConfig{
+		Config: &NotificationChannelConfig{
+			Name:     "ops",
+			Type:     "email",
+			Settings: settingsJSON,
+		},
+		NotificationService: ns,
+		ImageStore:          &UnavailableImageStore{},
+		Template:            emailTmpl,
+	}
+	emailNotifier, err := buildEmailNotifier(fc)
 	require.NoError(t, err)
-	cfg, err := NewEmailConfig(&NotificationChannelConfig{
-		Name:     "ops",
-		Type:     "email",
-		Settings: settingsJSON,
-	})
-	require.NoError(t, err)
-	emailNotifier := NewEmailNotifier(cfg, ns, &UnavailableImageStore{}, emailTmpl)
 
 	return emailNotifier
 }

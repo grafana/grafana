@@ -40,52 +40,41 @@ type EmailConfig struct {
 }
 
 func EmailFactory(fc FactoryConfig) (NotificationChannel, error) {
-	cfg, err := NewEmailConfig(fc.Config)
+	ch, err := buildEmailNotifier(fc)
 	if err != nil {
 		return nil, receiverInitError{
 			Reason: err.Error(),
 			Cfg:    *fc.Config,
 		}
 	}
-	return NewEmailNotifier(cfg, fc.NotificationService, fc.ImageStore, fc.Template), nil
+	return ch, nil
 }
 
-func NewEmailConfig(config *NotificationChannelConfig) (*EmailConfig, error) {
-	addressesString := config.Settings.Get("addresses").MustString()
+func buildEmailNotifier(fc FactoryConfig) (*EmailNotifier, error) {
+	addressesString := fc.Config.Settings.Get("addresses").MustString()
 	if addressesString == "" {
 		return nil, errors.New("could not find addresses in settings")
 	}
 	// split addresses with a few different ways
 	addresses := util.SplitEmails(addressesString)
-	return &EmailConfig{
-		NotificationChannelConfig: config,
-		SingleEmail:               config.Settings.Get("singleEmail").MustBool(false),
-		Message:                   config.Settings.Get("message").MustString(),
-		Subject:                   config.Settings.Get("subject").MustString(DefaultMessageTitleEmbed),
-		Addresses:                 addresses,
-	}, nil
-}
 
-// NewEmailNotifier is the constructor function
-// for the EmailNotifier.
-func NewEmailNotifier(config *EmailConfig, ns notifications.EmailSender, images ImageStore, t *template.Template) *EmailNotifier {
 	return &EmailNotifier{
 		Base: NewBase(&models.AlertNotification{
-			Uid:                   config.UID,
-			Name:                  config.Name,
-			Type:                  config.Type,
-			DisableResolveMessage: config.DisableResolveMessage,
-			Settings:              config.Settings,
+			Uid:                   fc.Config.UID,
+			Name:                  fc.Config.Name,
+			Type:                  fc.Config.Type,
+			DisableResolveMessage: fc.Config.DisableResolveMessage,
+			Settings:              fc.Config.Settings,
 		}),
-		Addresses:   config.Addresses,
-		SingleEmail: config.SingleEmail,
-		Message:     config.Message,
-		Subject:     config.Subject,
+		Addresses:   addresses,
+		SingleEmail: fc.Config.Settings.Get("singleEmail").MustBool(false),
+		Message:     fc.Config.Settings.Get("message").MustString(),
+		Subject:     fc.Config.Settings.Get("subject").MustString(DefaultMessageTitleEmbed),
 		log:         log.New("alerting.notifier.email"),
-		ns:          ns,
-		images:      images,
-		tmpl:        t,
-	}
+		ns:          fc.NotificationService,
+		images:      fc.ImageStore,
+		tmpl:        fc.Template,
+	}, nil
 }
 
 // Notify sends the alert notification.
