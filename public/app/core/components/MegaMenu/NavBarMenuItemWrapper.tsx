@@ -103,7 +103,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   emptyMessage: css({
     color: theme.colors.text.secondary,
     fontStyle: 'italic',
-    padding: theme.spacing(1, 1.5),
+    padding: theme.spacing(1, 1.5, 1, 7),
   }),
 });
 

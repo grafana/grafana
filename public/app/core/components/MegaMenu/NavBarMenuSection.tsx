@@ -72,6 +72,7 @@ export function NavBarMenuSection({
 
 const getStyles = (theme: GrafanaTheme2) => ({
   collapsibleSectionWrapper: css({
+    alignItems: 'center',
     display: 'flex',
   }),
   collapseButton: css({
