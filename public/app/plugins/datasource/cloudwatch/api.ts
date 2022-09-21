@@ -1,30 +1,42 @@
-import { DataSourceInstanceSettings } from '@grafana/data';
-import { getBackendSrv, BackendSrv } from '@grafana/runtime';
+import { DataSourceInstanceSettings, SelectableValue } from '@grafana/data';
+import { getBackendSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { CloudWatchRequest } from './query-runner/CloudWatchRequest';
-import { CloudWatchJsonData, Dimensions } from './types';
+import { CloudWatchJsonData, DescribeLogGroupsRequest, Dimensions, MultiFilters } from './types';
+
+export interface SelectableResourceValue extends SelectableValue<string> {
+  text: string;
+}
 
 export class CloudWatchAPI extends CloudWatchRequest {
-  private backendSrv: BackendSrv;
   constructor(instanceSettings: DataSourceInstanceSettings<CloudWatchJsonData>, templateSrv: TemplateSrv) {
     super(instanceSettings, templateSrv);
-    this.backendSrv = getBackendSrv();
   }
 
-  resourceRequest(subtype: string, parameters?: any): Promise<Array<{ text: any; label: any; value: any }>> {
-    return this.backendSrv.get(`/api/datasources/${this.instanceSettings.id}/resources/${subtype}`, parameters);
+  resourceRequest(
+    subtype: string,
+    parameters?: Record<string, string | string[] | number>
+  ): Promise<SelectableResourceValue[]> {
+    return getBackendSrv().get(`/api/datasources/${this.instanceSettings.id}/resources/${subtype}`, parameters);
   }
 
-  getRegions(): Promise<Array<{ label: string; value: string; text: string }>> {
-    return this.resourceRequest('regions').then((regions: any) => [
+  getRegions() {
+    return this.resourceRequest('regions').then((regions) => [
       { label: 'default', value: 'default', text: 'default' },
-      ...regions,
+      ...regions.filter((r) => r.value),
     ]);
   }
 
   getNamespaces() {
     return this.resourceRequest('namespaces');
+  }
+
+  async describeLogGroups(params: DescribeLogGroupsRequest) {
+    return this.resourceRequest('log-groups', {
+      ...params,
+      region: this.templateSrv.replace(this.getActualRegion(params.region)),
+    });
   }
 
   async getMetrics(namespace: string | undefined, region?: string) {
@@ -38,7 +50,7 @@ export class CloudWatchAPI extends CloudWatchRequest {
     });
   }
 
-  async getAllMetrics(region: string): Promise<Array<{ metricName: string; namespace: string }>> {
+  async getAllMetrics(region: string): Promise<Array<{ metricName?: string; namespace: string }>> {
     const values = await this.resourceRequest('all-metrics', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
     });
@@ -93,7 +105,7 @@ export class CloudWatchAPI extends CloudWatchRequest {
     });
   }
 
-  getEc2InstanceAttribute(region: string, attributeName: string, filters: any) {
+  getEc2InstanceAttribute(region: string, attributeName: string, filters: MultiFilters) {
     return this.resourceRequest('ec2-instance-attribute', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       attributeName: this.templateSrv.replace(attributeName),
@@ -101,7 +113,7 @@ export class CloudWatchAPI extends CloudWatchRequest {
     });
   }
 
-  getResourceARNs(region: string, resourceType: string, tags: any) {
+  getResourceARNs(region: string, resourceType: string, tags: MultiFilters) {
     return this.resourceRequest('resource-arns', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       resourceType: this.templateSrv.replace(resourceType),

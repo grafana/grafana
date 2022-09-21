@@ -228,7 +228,7 @@ func (hs *HTTPServer) PostGraphiteAnnotation(c *models.ReqContext) response.Resp
 		Tags:   tagsArray,
 	}
 
-	if err := hs.annotationsRepo.Save(context.Background(), &item); err != nil {
+	if err := hs.annotationsRepo.Save(c.Req.Context(), &item); err != nil {
 		return response.ErrOrFallback(500, "Failed to save Graphite annotation", err)
 	}
 
