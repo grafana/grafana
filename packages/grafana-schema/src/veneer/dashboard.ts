@@ -1,5 +1,5 @@
 
-import * as raw from "../schema/dashboard/dashboard.gen";
+import * as raw from "../raw/dashboard/x/dashboard.gen";
 
 export interface Dashboard extends raw.Dashboard {
   panels?: Array<Panel | raw.RowPanel | {
@@ -14,9 +14,11 @@ export interface Panel<TOptions = Record<string, unknown>, TCustomFieldConfig = 
 }
 
 export interface FieldConfig<TOptions = Record<string, unknown>> extends raw.FieldConfig {
-  custom?: TOptions;
+  custom?: TOptions & Record<string, unknown>;
 }
 
 export interface FieldConfigSource<TOptions = Record<string, unknown>> extends raw.FieldConfigSource {
   defaults: FieldConfig<TOptions>;
 }
+
+type checkPanel = Panel & raw.FieldConfig

@@ -12,6 +12,8 @@ seqs: [
 	{
 		schemas: [
 			{// 0.0
+			  @grafana(customVeneer="ts")
+
 				// Unique numeric identifier for the dashboard.
 				// TODO must isolate or remove identifiers local to a Grafana instance...?
 				id?: int64
@@ -335,7 +337,7 @@ seqs: [
 					options: {...} @reviewme()
 
 					fieldConfig: #FieldConfigSource
-				} @cuetsy(kind="interface") @grafana(customVeneer) @reviewme()
+				} @cuetsy(kind="interface") @grafana(customVeneer="ts") @reviewme()
 
 				#FieldConfigSource: {
 					defaults: #FieldConfig
@@ -343,7 +345,7 @@ seqs: [
 						matcher: #MatcherConfig
 						properties: [...#DynamicConfigValue]
 					}] @reviewme()
-				} @cuetsy(kind="interface") @grafana(customVeneer) @reviewme()
+				} @cuetsy(kind="interface") @grafana(customVeneer="ts") @reviewme()
 
 				#MatcherConfig: {
 					id:       string | *"" @reviewme()
@@ -394,13 +396,13 @@ seqs: [
 					// Map numeric values to states
 					thresholds?: #ThresholdsConfig @reviewme()
 
-					//   // Map values to a display color
+					// Map values to a display color
 					color?: #FieldColor @reviewme()
 
-					//   // Used when reducing field values
+					// Used when reducing field values
 					//   nullValueMode?: NullValueMode
 
-					//   // The behavior when clicking on a result
+					// The behavior when clicking on a result
 					links?: [...] @reviewme()
 
 					// Alternative to empty string
@@ -409,7 +411,7 @@ seqs: [
 					// custom is specified by the PanelFieldConfig field
 					// in panel plugin schemas.
 					custom?: {...} @reviewme()
-				} @cuetsy(kind="interface") @grafana(customVeneer) @reviewme()
+				} @cuetsy(kind="interface") @grafana(customVeneer="ts") @reviewme()
 
 				// Row panel
 				#RowPanel: {

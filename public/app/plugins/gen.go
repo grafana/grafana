@@ -138,7 +138,3 @@ func main() {
 func isDatasource(pt *codegen.PluginTree) bool {
 	return string((*pfs.Tree)(pt).RootPlugin().Meta().Type) == "datasource"
 }
-
-// func generateTSVeneer(ptrees []codegen.PluginTree) (codegen.WriteDiffer, error) {
-//
-// }

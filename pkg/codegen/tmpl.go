@@ -1,6 +1,7 @@
 package codegen
 
 import (
+	"bytes"
 	"embed"
 	"text/template"
 	"time"
@@ -64,3 +65,14 @@ type (
 		}
 	}
 )
+
+type HeaderVars = tvars_autogen_header
+
+// GenGrafanaHeader creates standard header elements for generated Grafana files.
+func GenGrafanaHeader(vars HeaderVars) string {
+	buf := new(bytes.Buffer)
+	if err := tmpls.Lookup("autogen_header.tmpl").Execute(buf, vars); err != nil {
+		panic(err)
+	}
+	return buf.String()
+}

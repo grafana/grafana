@@ -446,7 +446,7 @@ type FieldConfig struct {
 	// True if data source field supports ad-hoc filters
 	Filterable *bool `json:"filterable,omitempty"`
 
-	// // The behavior when clicking on a result
+	// The behavior when clicking on a result
 	Links *[]interface{} `json:"links,omitempty"`
 
 	// Convert input values into a display string
@@ -501,7 +501,7 @@ type FieldConfigSource struct {
 		// True if data source field supports ad-hoc filters
 		Filterable *bool `json:"filterable,omitempty"`
 
-		// // The behavior when clicking on a result
+		// The behavior when clicking on a result
 		Links *[]interface{} `json:"links,omitempty"`
 
 		// Convert input values into a display string
@@ -643,7 +643,7 @@ type Panel struct {
 			// True if data source field supports ad-hoc filters
 			Filterable *bool `json:"filterable,omitempty"`
 
-			// // The behavior when clicking on a result
+			// The behavior when clicking on a result
 			Links *[]interface{} `json:"links,omitempty"`
 
 			// Convert input values into a display string

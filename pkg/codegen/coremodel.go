@@ -17,14 +17,15 @@ import (
 	"github.com/deepmap/oapi-codegen/pkg/codegen"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/grafana/cuetsy"
+	tsast "github.com/grafana/cuetsy/ts/ast"
 	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/thema"
 	"github.com/grafana/thema/encoding/openapi"
 )
 
-// ExtractedLineage contains the results of statically analyzing a Grafana
+// CoremodelDefinition contains the results of statically analyzing a Grafana
 // directory for a Thema lineage.
-type ExtractedLineage struct {
+type CoremodelDefinition struct {
 	Lineage thema.Lineage
 	// Absolute path to the coremodel's coremodel.cue file.
 	LineagePath string
@@ -48,12 +49,12 @@ type ExtractedLineage struct {
 // This loading approach is intended primarily for use with code generators, or
 // other use cases external to grafana-server backend. For code within
 // grafana-server, prefer lineage loaders provided in e.g. pkg/coremodel/*.
-func ExtractLineage(path string, lib thema.Library) (*ExtractedLineage, error) {
+func ExtractLineage(path string, lib thema.Library) (*CoremodelDefinition, error) {
 	if !filepath.IsAbs(path) {
 		return nil, fmt.Errorf("must provide an absolute path, got %q", path)
 	}
 
-	ec := &ExtractedLineage{
+	ec := &CoremodelDefinition{
 		LineagePath: path,
 	}
 
@@ -107,7 +108,7 @@ func ExtractLineage(path string, lib thema.Library) (*ExtractedLineage, error) {
 }
 
 // toTemplateObj extracts creates a struct with all the useful strings for template generation.
-func (ls *ExtractedLineage) toTemplateObj() tplVars {
+func (ls *CoremodelDefinition) toTemplateObj() tplVars {
 	lin := ls.Lineage
 	sch := thema.SchemaP(lin, thema.LatestVersion(lin))
 
@@ -131,7 +132,7 @@ func isAPIType(name string) bool {
 
 // FIXME specifying coremodel canonicality DOES NOT belong here - it should be part of the coremodel declaration.
 var canonicalCoremodels = map[string]bool{
-	"dashboard": true,
+	"dashboard": false,
 }
 
 // FIXME this also needs to be moved into coremodel metadata
@@ -139,12 +140,21 @@ var nonAPITypes = map[string]bool{
 	"pluginmeta": true,
 }
 
+// PathVersion returns the string path element to use for the latest schema.
+// "x" if not yet canonical, otherwise, "v<major>"
+func (ls *CoremodelDefinition) PathVersion() string {
+	if !ls.IsCanonical {
+		return "x"
+	}
+	return fmt.Sprintf("v%v", thema.LatestVersion(ls.Lineage)[0])
+}
+
 // GenerateGoCoremodel generates a standard Go model struct and coremodel
 // implementation from a coremodel CUE declaration.
 //
 // The provided path must be a directory. Generated code files will be written
 // to that path. The final element of the path must match the Lineage.Name().
-func (ls *ExtractedLineage) GenerateGoCoremodel(path string) (WriteDiffer, error) {
+func (ls *CoremodelDefinition) GenerateGoCoremodel(path string) (WriteDiffer, error) {
 	lin, lib := ls.Lineage, ls.Lineage.Library()
 	_, name := filepath.Split(path)
 	if name != lin.Name() {
@@ -228,19 +238,14 @@ type tplVars struct {
 	IsComposed             bool
 }
 
-func (ls *ExtractedLineage) GenerateTypescriptCoremodel(path string) (WriteDiffer, error) {
-	_, name := filepath.Split(path)
-	if name != ls.Lineage.Name() {
-		return nil, fmt.Errorf("lineage name %q must match final element of path, got %q", ls.Lineage.Name(), path)
-	}
-
+func (ls *CoremodelDefinition) GenerateTypescriptCoremodel() (*tsast.File, error) {
 	schv := thema.SchemaP(ls.Lineage, thema.LatestVersion(ls.Lineage)).UnwrapCUE()
 
-	parts, err := cuetsy.GenerateAST(schv, cuetsy.Config{
-		Export: ls.IsCanonical,
+	tf, err := cuetsy.GenerateAST(schv, cuetsy.Config{
+		Export: true,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("cuetsy parts gen failed: %w", err)
+		return nil, fmt.Errorf("cuetsy tf gen failed: %w", err)
 	}
 
 	top, err := cuetsy.GenerateSingleAST(strings.Title(ls.Lineage.Name()), schv, cuetsy.TypeInterface)
@@ -248,38 +253,23 @@ func (ls *ExtractedLineage) GenerateTypescriptCoremodel(path string) (WriteDiffe
 		return nil, fmt.Errorf("cuetsy top gen failed: %s", cerrors.Details(err, nil))
 	}
 
-	// TODO until cuetsy can toposort its outputs, put the top/parent type at the bottom of the file.
-	parts.Nodes = append(parts.Nodes, top.T)
-	if top.D != nil {
-		parts.Nodes = append(parts.Nodes, top.D)
-	}
-
-	var strb strings.Builder
-	var str string
-	fpath := ls.Lineage.Name() + ".gen.ts"
-	if err := tmpls.Lookup("autogen_header.tmpl").Execute(&strb, tvars_autogen_header{
+	buf := new(bytes.Buffer)
+	if err := tmpls.Lookup("autogen_header.tmpl").Execute(buf, tvars_autogen_header{
 		LineagePath:   ls.RelativePath,
 		GeneratorPath: "pkg/framework/coremodel/gen.go", // FIXME hardcoding is not OK
 	}); err != nil {
 		return nil, fmt.Errorf("error executing header template: %w", err)
 	}
-
-	if !ls.IsCanonical {
-		fpath = fmt.Sprintf("%s_experimental.gen.ts", ls.Lineage.Name())
-		strb.WriteString(`
-// This model is a WIP and not yet canonical. Consequently, its members are
-// not exported to exclude it from grafana-schema's public API surface.
-
-`)
-		strb.WriteString(fmt.Sprint(parts))
-	} else {
-		strb.WriteString(fmt.Sprint(parts))
-		str = strb.String()
+	tf.Doc = &tsast.Comment{
+		Text: buf.String(),
 	}
 
-	wd := NewWriteDiffer()
-	wd[filepath.Join(path, fpath)] = []byte(str)
-	return wd, nil
+	// TODO until cuetsy can toposort its outputs, put the top/parent type at the bottom of the file.
+	tf.Nodes = append(tf.Nodes, top.T)
+	if top.D != nil {
+		tf.Nodes = append(tf.Nodes, top.D)
+	}
+	return tf, nil
 }
 
 type prefixDropper struct {
@@ -318,7 +308,7 @@ func (d prefixDropper) Visit(n ast.Node) ast.Visitor {
 // GenerateCoremodelRegistry produces Go files that define a registry with
 // references to all the Go code that is expected to be generated from the
 // provided lineages.
-func GenerateCoremodelRegistry(path string, ecl []*ExtractedLineage) (WriteDiffer, error) {
+func GenerateCoremodelRegistry(path string, ecl []*CoremodelDefinition) (WriteDiffer, error) {
 	var cml []tplVars
 	for _, ec := range ecl {
 		cml = append(cml, ec.toTemplateObj())
