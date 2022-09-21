@@ -1026,7 +1026,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 						},
 					},
 				},
-				expectedMessage: "invalid rule specification at index [0]: failed to validate condition of alert rule AlwaysFiring: failed to build expression A: data source not found",
+				expectedMessage: "invalid rule specification at index [0]: failed to validate condition of alert rule AlwaysFiring: failed to build query 'A': data source not found",
 			},
 			{
 				desc:      "alert rule with invalid condition",
@@ -2300,7 +2300,7 @@ func TestEval(t *testing.T) {
 				if setting.IsEnterprise {
 					return "user is not authorized to query one or many data sources used by the rule"
 				}
-				return "invalid condition: failed to build expression A: data source not found"
+				return "invalid condition: failed to build query 'A': data source not found"
 			},
 			expectedResponse: func() string { return "" },
 		},
@@ -2483,7 +2483,7 @@ func TestEval(t *testing.T) {
 				if setting.IsEnterprise {
 					return "user is not authorized to query one or many data sources used by the rule"
 				}
-				return "Failed to evaluate queries and expressions: failed to execute conditions: failed to build expression A: data source not found"
+				return "Failed to evaluate queries and expressions: failed to execute conditions: failed to build query 'A': data source not found"
 			},
 		},
 	}
