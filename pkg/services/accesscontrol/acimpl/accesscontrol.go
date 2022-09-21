@@ -57,7 +57,7 @@ func (a *AccessControl) RegisterScopeAttributeResolver(prefix string, resolver a
 	a.resolvers.AddScopeAttributeResolver(prefix, resolver)
 }
 
-func (a *AccessControl) EvaluateUserPermissions(ctx context.Context, cmd accesscontrol.EvaluateUserPermissionCommand) (map[string]accesscontrol.Metadata, error) {
+func (a *AccessControl) EvaluateMetadata(ctx context.Context, cmd accesscontrol.EvaluateUserPermissionCommand) (map[string]accesscontrol.Metadata, error) {
 	if !verifyPermissions(cmd.SignedInUser) {
 		a.log.Warn("no permissions set for user", "userID", cmd.SignedInUser.UserID, "orgID", cmd.SignedInUser.OrgID)
 		return map[string]accesscontrol.Metadata{}, nil

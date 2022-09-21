@@ -15,8 +15,8 @@ import (
 type AccessControl interface {
 	// Evaluate evaluates access to the given resources.
 	Evaluate(ctx context.Context, user *user.SignedInUser, evaluator Evaluator) (bool, error)
-	// EvaluateUserPermissions returns the user's RBAC metadata given an action and a set of resources
-	EvaluateUserPermissions(ctx context.Context, cmd EvaluateUserPermissionCommand) (map[string]Metadata, error)
+	// EvaluateMetadata returns the user's RBAC metadata given an action and a set of resources
+	EvaluateMetadata(ctx context.Context, cmd EvaluateUserPermissionCommand) (map[string]Metadata, error)
 	// RegisterScopeAttributeResolver allows the caller to register a scope resolver for a
 	// specific scope prefix (ex: datasources:name:)
 	RegisterScopeAttributeResolver(prefix string, resolver ScopeAttributeResolver)

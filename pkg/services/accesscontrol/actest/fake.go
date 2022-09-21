@@ -56,7 +56,7 @@ func (f FakeAccessControl) Evaluate(ctx context.Context, user *user.SignedInUser
 	return f.ExpectedEvaluate, f.ExpectedErr
 }
 
-func (f FakeAccessControl) EvaluateUserPermissions(ctx context.Context, cmd accesscontrol.EvaluateUserPermissionCommand) (map[string]accesscontrol.Metadata, error) {
+func (f FakeAccessControl) EvaluateMetadata(ctx context.Context, cmd accesscontrol.EvaluateUserPermissionCommand) (map[string]accesscontrol.Metadata, error) {
 	return nil, f.ExpectedErr
 }
 

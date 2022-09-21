@@ -34,10 +34,10 @@ func (api *AccessControlAPI) RegisterAPIEndpoints() {
 	// Users
 	api.RouteRegister.Get("/api/access-control/user/permissions",
 		middleware.ReqSignedIn, routing.Wrap(api.getUsersPermissions))
-	api.RouteRegister.Post("/api/access-control/user/evaluation", middleware.ReqSignedIn, routing.Wrap(api.evaluateSelfPermissions))
+	api.RouteRegister.Post("/api/access-control/user/evaluation", middleware.ReqSignedIn, routing.Wrap(api.evaluateSelfMetadata))
 	api.RouteRegister.Post("/api/access-control/user/:userID/evaluation", authorize(middleware.ReqSignedIn,
 		ac.EvalPermission(ac.ActionUsersPermissionsRead, ac.Scope("users", "id", ac.Parameter(":userID")))),
-		routing.Wrap(api.evaluateUserPermissions))
+		routing.Wrap(api.evaluateMetadata))
 }
 
 // GET /api/access-control/user/permissions
@@ -53,7 +53,7 @@ func (api *AccessControlAPI) getUsersPermissions(c *models.ReqContext) response.
 }
 
 // POST /api/access-control/user/evaluation
-func (api *AccessControlAPI) evaluateSelfPermissions(c *models.ReqContext) response.Response {
+func (api *AccessControlAPI) evaluateSelfMetadata(c *models.ReqContext) response.Response {
 	var cmd ac.EvaluateUserPermissionCommand
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.JSON(http.StatusBadRequest, err)
@@ -69,7 +69,7 @@ func (api *AccessControlAPI) evaluateSelfPermissions(c *models.ReqContext) respo
 	cmd.OrgRole = c.OrgRole
 
 	// Compute metadata
-	metadata, err := api.AccessControl.EvaluateUserPermissions(c.Req.Context(), cmd)
+	metadata, err := api.AccessControl.EvaluateMetadata(c.Req.Context(), cmd)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "could not evaluate user permissions", err)
 	}
@@ -78,7 +78,7 @@ func (api *AccessControlAPI) evaluateSelfPermissions(c *models.ReqContext) respo
 }
 
 // POST /api/access-control/user/:userId/evaluation
-func (api *AccessControlAPI) evaluateUserPermissions(c *models.ReqContext) response.Response {
+func (api *AccessControlAPI) evaluateMetadata(c *models.ReqContext) response.Response {
 	// Parse request
 	reloadCache := c.QueryBool("reloadcache")
 
@@ -107,7 +107,7 @@ func (api *AccessControlAPI) evaluateUserPermissions(c *models.ReqContext) respo
 	}
 
 	// Compute metadata
-	metadata, err := api.AccessControl.EvaluateUserPermissions(c.Req.Context(), cmd)
+	metadata, err := api.AccessControl.EvaluateMetadata(c.Req.Context(), cmd)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "could not evaluate user permissions", err)
 	}

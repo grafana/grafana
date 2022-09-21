@@ -81,7 +81,7 @@ func TestAccessControl_Evaluate(t *testing.T) {
 	}
 }
 
-func TestAccessControl_EvaluateUserPermissions(t *testing.T) {
+func TestAccessControl_EvaluateMetadata(t *testing.T) {
 	testUser := func(opts ...func(*user.SignedInUser)) *user.SignedInUser {
 		user := &user.SignedInUser{
 			UserID:  1,
@@ -189,7 +189,7 @@ func TestAccessControl_EvaluateUserPermissions(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ac := ProvideAccessControl(setting.NewCfg())
 
-			metadata, err := ac.EvaluateUserPermissions(context.Background(), tt.cmd)
+			metadata, err := ac.EvaluateMetadata(context.Background(), tt.cmd)
 			if tt.wantErr {
 				require.Error(t, err)
 			}
