@@ -56,8 +56,11 @@ const TraceEditor: React.FC<TraceEditorProps> = ({
             <Input
               placeholder="Operation ID"
               onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                const query = event.target?.value;
-                setOperationId(query);
+                const opIdQuery = event.target?.value;
+                console.log(opIdQuery);
+                setOperationId(opIdQuery);
+                query.operationId = event.target?.value;
+                onChange(query);
               }}
               value={operationId}
             />

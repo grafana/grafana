@@ -20,10 +20,12 @@ export default class AzureTracesDatasource extends AzureLogAnalyticsDatasource {
   operationId: string;
   constructor(instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>) {
     super(instanceSettings);
-    this.operationId = '646c9c58c2594d53b4d3ce0075747863';
+    this.operationId = '';
   }
 
   query(request: DataQueryRequest<AzureMonitorQuery>): Observable<DataQueryResponse> {
+    console.log(request);
+    this.operationId = request.targets[0].operationId ?? '';
     // only take the first query
     const target = this.buildTraceQuery(request.targets[0]);
 
@@ -36,7 +38,7 @@ export default class AzureTracesDatasource extends AzureLogAnalyticsDatasource {
     );
   }
   buildTraceQuery(target: AzureMonitorQuery): AzureMonitorQuery {
-    if (!target.azureLogAnalytics) {
+    if (!target.azureLogAnalytics || !this.operationId || this.operationId === '') {
       return { ...target };
     }
     const queryString = `union *
@@ -59,10 +61,11 @@ export default class AzureTracesDatasource extends AzureLogAnalyticsDatasource {
   }
 
   convertResponseToTrace(res: DataQueryResponse): DataQueryResponse {
-    const fields: Field[] = res.data[0].fields;
-    const serviceTags = fields.filter((field: Field) => {
-      return field.name === 'serviceTags';
-    });
+    const fields: Field[] = res.data[0]?.fields ?? [];
+    const serviceTags =
+      fields.filter((field: Field) => {
+        return field.name === 'serviceTags';
+      }) ?? [];
     const transformedST = this.convertServiceTags(serviceTags);
     const newFields: Field[] = fields.map((field) => {
       if (field.name === 'serviceTags') {
@@ -85,7 +88,10 @@ export default class AzureTracesDatasource extends AzureLogAnalyticsDatasource {
   }
 
   convertServiceTags(serviceTags: Field[]) {
-    const stValues = serviceTags[0].values;
+    const stValues = serviceTags[0]?.values;
+    if (!stValues) {
+      return [];
+    }
     const newVals = [];
     for (const stValue of stValues.toArray()) {
       const jsonObj = JSON.parse(stValue);

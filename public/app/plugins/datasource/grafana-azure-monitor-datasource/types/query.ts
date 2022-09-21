@@ -38,6 +38,9 @@ export interface AzureMonitorQuery extends DataQuery {
   resourceGroup?: string;
   namespace?: string;
   resource?: string;
+
+  /** Trace params */
+  operationId?: string;
 }
 
 /**
