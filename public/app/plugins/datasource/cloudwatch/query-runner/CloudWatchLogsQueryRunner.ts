@@ -425,13 +425,6 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     };
   };
 
-  async describeLogGroups(params: DescribeLogGroupsRequest): Promise<string[]> {
-    const dataFrames = await lastValueFrom(this.makeLogActionRequest('DescribeLogGroups', [params]));
-
-    const logGroupNames = dataFrames[0]?.fields[0]?.values.toArray() ?? [];
-    return logGroupNames;
-  }
-
   async describeAllLogGroups(params: DescribeLogGroupsRequest): Promise<string[]> {
     const dataFrames = await lastValueFrom(this.makeLogActionRequest('DescribeAllLogGroups', [params]));
 
