@@ -293,7 +293,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 | formats            | []string  | Specified what kind of attachment to generate for the report - `csv`, `pdf`, `image`. `pdf` is the default one.                                                                                                                                                                                                                                                                                                                                   |
 | dashboards         | []object  | Dashboards to generate a report for.<br/> [Dashboard object schema](#dashboard-schema).                                                                                                                                                                                                                                                                                                                                                           |
 
-#### Dashboard Schema
+#### Report dashboard Schema
 
 | Field name                     | Data type | Description                                              |
 | ------------------------------ | --------- | -------------------------------------------------------- |
