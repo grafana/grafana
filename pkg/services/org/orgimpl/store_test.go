@@ -54,7 +54,7 @@ func TestIntegrationOrgDataAccess(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("Removing user from org should delete user completely if in no other org", func(t *testing.T) {
+	t.Run("Removing org", func(t *testing.T) {
 		// make sure ac2 has no org
 		ac2 := &org.Org{ID: 22, Name: "ac2", Version: 1, Created: time.Now(), Updated: time.Now()}
 		_, err := orgStore.Insert(context.Background(), ac2)
@@ -63,6 +63,7 @@ func TestIntegrationOrgDataAccess(t *testing.T) {
 		require.NoError(t, err)
 
 		// TODO: this part of the test will be added when we move RemoveOrgUser to org store
+		// "Removing user from org should delete user completely if in no other org"
 		// // remove ac2 user from ac1 org
 		// remCmd := models.RemoveOrgUserCommand{OrgId: ac1.OrgID, UserId: ac2.ID, ShouldDeleteOrphanedUser: true}
 		// err = orgStore.RemoveOrgUser(context.Background(), &remCmd)
