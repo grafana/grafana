@@ -156,7 +156,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		}
 		err = repo.Save(badAnnotation)
 		require.Error(t, err)
-		require.ErrorIs(t, err, annotations.ErrBaseBadRequest)
+		require.ErrorIs(t, err, annotations.ErrBaseTagLimitExceeded)
 
 		t.Run("Can query for annotation by id", func(t *testing.T) {
 			items, err := repo.Find(context.Background(), &annotations.ItemQuery{

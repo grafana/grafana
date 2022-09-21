@@ -390,7 +390,7 @@ func (r *SQLAnnotationRepo) validateItem(item *annotations.Item) error {
 func (r *SQLAnnotationRepo) validateTagsLength(item *annotations.Item) error {
 	tagsStr := fmt.Sprintf("%v", item.Tags)
 	if len(tagsStr) > int(r.maximumTagsLength) {
-		return annotations.ErrBaseBadRequest.Errorf("tags length exceeds the maximum allowed: modify the configuration to increase it")
+		return annotations.ErrBaseTagLimitExceeded.Errorf("tags length exceeds the maximum allowed: modify the configuration to increase it")
 	}
 	return nil
 }

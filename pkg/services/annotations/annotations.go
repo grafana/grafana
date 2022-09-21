@@ -11,8 +11,8 @@ import (
 )
 
 var (
-	ErrTimerangeMissing = errors.New("missing timerange")
-	ErrBaseBadRequest   = errutil.NewBase(errutil.StatusBadRequest, "annotations.bad-request")
+	ErrTimerangeMissing     = errors.New("missing timerange")
+	ErrBaseTagLimitExceeded = errutil.NewBase(errutil.StatusBadRequest, "annotations.tag-limit-exceeded", errutil.WithPublicMessage("Tags length exceeds the maximum allowed."))
 )
 
 type Repository interface {

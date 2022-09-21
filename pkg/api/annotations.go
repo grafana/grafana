@@ -158,7 +158,7 @@ func (hs *HTTPServer) PostAnnotation(c *models.ReqContext) response.Response {
 		if errors.Is(err, annotations.ErrTimerangeMissing) {
 			return response.Error(400, "Failed to save annotation", err)
 		}
-		return response.Error(500, "Failed to save annotation", err)
+		return response.ErrOrFallback(500, "Failed to save annotation", err)
 	}
 
 	startID := item.Id
@@ -235,7 +235,7 @@ func (hs *HTTPServer) PostGraphiteAnnotation(c *models.ReqContext) response.Resp
 	}
 
 	if err := repo.Save(&item); err != nil {
-		return response.Error(500, "Failed to save Graphite annotation", err)
+		return response.ErrOrFallback(500, "Failed to save Graphite annotation", err)
 	}
 
 	return response.JSON(http.StatusOK, util.DynMap{
@@ -289,7 +289,7 @@ func (hs *HTTPServer) UpdateAnnotation(c *models.ReqContext) response.Response {
 	}
 
 	if err := repo.Update(c.Req.Context(), &item); err != nil {
-		return response.Error(500, "Failed to update annotation", err)
+		return response.ErrOrFallback(500, "Failed to update annotation", err)
 	}
 
 	return response.Success("Annotation updated")
@@ -297,7 +297,7 @@ func (hs *HTTPServer) UpdateAnnotation(c *models.ReqContext) response.Response {
 
 // swagger:route PATCH /annotations/{annotation_id} annotations patchAnnotation
 //
-// Patch Annotation
+// # Patch Annotation
 //
 // Updates one or more properties of an annotation that matches the specified ID.
 // This operation currently supports updating of the `text`, `tags`, `time` and `timeEnd` properties.
@@ -357,7 +357,7 @@ func (hs *HTTPServer) PatchAnnotation(c *models.ReqContext) response.Response {
 	}
 
 	if err := repo.Update(c.Req.Context(), &existing); err != nil {
-		return response.Error(500, "Failed to update annotation", err)
+		return response.ErrOrFallback(500, "Failed to update annotation", err)
 	}
 
 	return response.Success("Annotation patched")
