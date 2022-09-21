@@ -85,7 +85,6 @@ func (proxy *PluginProxy) HandleRequest() {
 		return
 	}
 
-	traceID := tracing.TraceIDFromContext(proxy.ctx.Req.Context(), false)
 	proxyErrorLogger := logger.New(
 		"userId", proxy.ctx.UserID,
 		"orgId", proxy.ctx.OrgID,
@@ -93,7 +92,6 @@ func (proxy *PluginProxy) HandleRequest() {
 		"path", proxy.ctx.Req.URL.Path,
 		"remote_addr", proxy.ctx.RemoteAddr(),
 		"referer", proxy.ctx.Req.Referer(),
-		"traceID", traceID,
 	)
 
 	reverseProxy := proxyutil.NewReverseProxy(
@@ -164,7 +162,7 @@ func (proxy PluginProxy) director(req *http.Request) {
 	}
 
 	if err := setBodyContent(req, proxy.matchedRoute, data); err != nil {
-		logger.Error("Failed to set plugin route body content", "error", err)
+		logger.FromContext(req.Context()).Error("Failed to set plugin route body content", "error", err)
 	}
 }
 
@@ -182,7 +180,8 @@ func (proxy PluginProxy) logRequest() {
 		}
 	}
 
-	logger.Info("Proxying incoming request",
+	ctxLogger := logger.FromContext(proxy.ctx.Req.Context())
+	ctxLogger.Info("Proxying incoming request",
 		"userid", proxy.ctx.UserID,
 		"orgid", proxy.ctx.OrgID,
 		"username", proxy.ctx.Login,

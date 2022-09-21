@@ -105,7 +105,7 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 		}
 
 		if hs.Features.IsEnabled(featuremgmt.FlagTopnav) {
-			appLink.Url = path.Join(hs.Cfg.AppSubURL, "a", plugin.ID)
+			appLink.Url = hs.Cfg.AppSubURL + "/a/" + plugin.ID
 		} else {
 			appLink.Url = path.Join(hs.Cfg.AppSubURL, plugin.DefaultNavURL)
 		}
@@ -356,7 +356,7 @@ func (hs *HTTPServer) setupConfigNodes(c *models.ReqContext) ([]*dtos.NavLink, e
 		})
 	}
 
-	if hasAccess(ac.ReqOrgAdmin, correlations.ConfigurationPageAccess) {
+	if hs.Features.IsEnabled(featuremgmt.FlagCorrelations) && hasAccess(ac.ReqOrgAdmin, correlations.ConfigurationPageAccess) {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "Correlations",
 			Icon:        "gf-glue",
@@ -521,6 +521,7 @@ func (hs *HTTPServer) buildDashboardNavLinks(c *models.ReqContext, hasEditPerm b
 			Text: "Browse", Id: "dashboards/browse", Url: hs.Cfg.AppSubURL + "/dashboards", Icon: "sitemap",
 		})
 	}
+
 	dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
 		Text: "Playlists", Id: "dashboards/playlists", Url: hs.Cfg.AppSubURL + "/playlists", Icon: "presentation-play",
 	})
@@ -840,6 +841,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		AppUrl:                  appURL,
 		AppSubUrl:               appSubURL,
 		GoogleAnalyticsId:       setting.GoogleAnalyticsId,
+		GoogleAnalytics4Id:      setting.GoogleAnalytics4Id,
 		GoogleTagManagerId:      setting.GoogleTagManagerId,
 		BuildVersion:            setting.BuildVersion,
 		BuildCommit:             setting.BuildCommit,

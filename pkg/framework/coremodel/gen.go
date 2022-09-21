@@ -10,7 +10,6 @@ import (
 	"path"
 	"path/filepath"
 	"sort"
-	"strings"
 
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/cuecontext"
@@ -21,6 +20,8 @@ import (
 	"github.com/grafana/cuetsy/ts/ast"
 	gcgen "github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/thema"
+
+	gcgen "github.com/grafana/grafana/pkg/codegen"
 )
 
 var lib = thema.NewLibrary(cuecontext.New())

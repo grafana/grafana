@@ -20,6 +20,10 @@ type store interface {
 	InsertOrgUser(context.Context, *org.OrgUser) (int64, error)
 	DeleteUserFromAll(context.Context, int64) error
 	Update(ctx context.Context, cmd *org.UpdateOrgCommand) error
+
+	// TO BE REFACTORED - move logic to service methods and leave CRUD methods for store
+	UpdateAddress(context.Context, *org.UpdateOrgAddressCommand) error
+	Delete(context.Context, *org.DeleteOrgCommand) error
 }
 
 type sqlStore struct {
@@ -142,4 +146,74 @@ func isOrgNameTaken(name string, existingId int64, sess *sqlstore.DBSession) (bo
 	}
 
 	return false, nil
+}
+
+// TODO: refactor move logic to service method
+func (ss *sqlStore) UpdateAddress(ctx context.Context, cmd *org.UpdateOrgAddressCommand) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		org := models.Org{
+			Address1: cmd.Address1,
+			Address2: cmd.Address2,
+			City:     cmd.City,
+			ZipCode:  cmd.ZipCode,
+			State:    cmd.State,
+			Country:  cmd.Country,
+
+			Updated: time.Now(),
+		}
+
+		if _, err := sess.ID(cmd.OrgID).Update(&org); err != nil {
+			return err
+		}
+
+		sess.PublishAfterCommit(&events.OrgUpdated{
+			Timestamp: org.Updated,
+			Id:        org.Id,
+			Name:      org.Name,
+		})
+
+		return nil
+	})
+}
+
+// TODO: refactor move logic to service method
+func (ss *sqlStore) Delete(ctx context.Context, cmd *org.DeleteOrgCommand) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		if res, err := sess.Query("SELECT 1 from org WHERE id=?", cmd.ID); err != nil {
+			return err
+		} else if len(res) != 1 {
+			return models.ErrOrgNotFound
+		}
+
+		deletes := []string{
+			"DELETE FROM star WHERE EXISTS (SELECT 1 FROM dashboard WHERE org_id = ? AND star.dashboard_id = dashboard.id)",
+			"DELETE FROM dashboard_tag WHERE EXISTS (SELECT 1 FROM dashboard WHERE org_id = ? AND dashboard_tag.dashboard_id = dashboard.id)",
+			"DELETE FROM dashboard WHERE org_id = ?",
+			"DELETE FROM api_key WHERE org_id = ?",
+			"DELETE FROM data_source WHERE org_id = ?",
+			"DELETE FROM org_user WHERE org_id = ?",
+			"DELETE FROM org WHERE id = ?",
+			"DELETE FROM temp_user WHERE org_id = ?",
+			"DELETE FROM ngalert_configuration WHERE org_id = ?",
+			"DELETE FROM alert_configuration WHERE org_id = ?",
+			"DELETE FROM alert_instance WHERE rule_org_id = ?",
+			"DELETE FROM alert_notification WHERE org_id = ?",
+			"DELETE FROM alert_notification_state WHERE org_id = ?",
+			"DELETE FROM alert_rule WHERE org_id = ?",
+			"DELETE FROM alert_rule_tag WHERE EXISTS (SELECT 1 FROM alert WHERE alert.org_id = ? AND alert.id = alert_rule_tag.alert_id)",
+			"DELETE FROM alert_rule_version WHERE rule_org_id = ?",
+			"DELETE FROM alert WHERE org_id = ?",
+			"DELETE FROM annotation WHERE org_id = ?",
+			"DELETE FROM kv_store WHERE org_id = ?",
+		}
+
+		for _, sql := range deletes {
+			_, err := sess.Exec(sql, cmd.ID)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
 }

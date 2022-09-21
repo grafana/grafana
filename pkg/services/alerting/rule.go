@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/tag"
 )
 
 var unitMultiplier = map[string]int{
@@ -53,7 +54,7 @@ type Rule struct {
 	State               models.AlertStateType
 	Conditions          []Condition
 	Notifications       []string
-	AlertRuleTags       []*models.Tag
+	AlertRuleTags       []*tag.Tag
 
 	StateChanges int64
 }

@@ -8,6 +8,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { ShowModalReactEvent } from '../../../types/events';
 import appEvents from '../../app_events';
 import { getFooterLinks } from '../Footer/Footer';
+import { OrgSwitcher } from '../OrgSwitcher';
 import { HelpModal } from '../help/HelpModal';
 
 export const SEARCH_ITEM_ID = 'search';
@@ -22,21 +23,21 @@ export const getForcedLoginUrl = (url: string) => {
   return `${getConfig().appSubUrl}${url.split('?')[0]}?${queryParams.toString()}`;
 };
 
-export const enrichConfigItems = (
-  items: NavModelItem[],
-  location: Location<unknown>,
-  toggleOrgSwitcher: () => void
-) => {
+export const enrichConfigItems = (items: NavModelItem[], location: Location<unknown>) => {
   const { isSignedIn, user } = contextSrv;
   const onOpenShortcuts = () => {
     appEvents.publish(new ShowModalReactEvent({ component: HelpModal }));
+  };
+
+  const onOpenOrgSwitcher = () => {
+    appEvents.publish(new ShowModalReactEvent({ component: OrgSwitcher }));
   };
 
   if (user && user.orgCount > 1) {
     const profileNode = items.find((bottomNavItem) => bottomNavItem.id === 'profile');
     if (profileNode) {
       profileNode.showOrgSwitcher = true;
-      profileNode.subTitle = `Current Org.: ${user?.orgName}`;
+      profileNode.subTitle = `Organization: ${user?.orgName}`;
     }
   }
 
@@ -53,7 +54,7 @@ export const enrichConfigItems = (
     });
   }
 
-  items.forEach((link, index) => {
+  items.forEach((link) => {
     let menuItems = link.children || [];
 
     if (link.id === 'help') {
@@ -75,7 +76,7 @@ export const enrichConfigItems = (
           id: 'switch-organization',
           text: 'Switch organization',
           icon: 'arrow-random',
-          onClick: toggleOrgSwitcher,
+          onClick: onOpenOrgSwitcher,
         },
       ];
     }
@@ -99,7 +100,19 @@ export const enrichWithInteractionTracking = (item: NavModelItem, expandedState:
 };
 
 export const isMatchOrChildMatch = (itemToCheck: NavModelItem, searchItem?: NavModelItem) => {
-  return Boolean(itemToCheck === searchItem || itemToCheck.children?.some((child) => child === searchItem));
+  return Boolean(itemToCheck === searchItem || hasChildMatch(itemToCheck, searchItem));
+};
+
+export const hasChildMatch = (itemToCheck: NavModelItem, searchItem?: NavModelItem): boolean => {
+  return Boolean(
+    itemToCheck.children?.some((child) => {
+      if (child === searchItem) {
+        return true;
+      } else {
+        return hasChildMatch(child, searchItem);
+      }
+    })
+  );
 };
 
 const stripQueryParams = (url?: string) => {
