@@ -383,7 +383,9 @@ To troubleshoot and get more log information, enable SAML debug logging in the c
 filters = saml.auth:debug
 ```
 
-## Known issues
+## Troubleshooting
+
+Following are common issues found in configuring SAML authentication in Grafana and how to resolve them.
 
 ### SAML authentication fails with error:
 
@@ -438,3 +440,31 @@ csrf_trusted_origins = https://grafana.example.com
 csrf_additional_headers = X-Forwarded-Host
 ...
 ```
+
+### SAML login attempts fail with request response "login session has expired"
+
+Accessing the Grafana login page from a URL that is not the root URL of the
+Grafana server can cause the instance to return the following error: "login session has expired".
+
+If you are accessing grafana through a proxy server, ensure that cookies are correctly
+rewritten to the root URL of Grafana.
+Cookies must be set on the same url as the `root_url` of Grafana. This is normally the reverse proxy's domain/address.
+
+Review the cookie settings in your proxy server configuration to ensure that cookies are
+not being discarded
+
+Review the following settings in your grafana config:
+
+```ini
+[security]
+cookie_samesite = none
+```
+
+This setting should be set to none to allow grafana session cookies to work correctly with redirects.
+
+```ini
+[security]
+cookie_secure = true
+```
+
+Ensure cookie_secure is set to true to ensure that cookies are only sent over HTTPS.

@@ -11,8 +11,9 @@ import { CustomScrollbar, Icon, IconButton, useTheme2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
 import { TOP_BAR_LEVEL_HEIGHT } from '../AppChrome/types';
-import { NavItem } from '../NavBar/NavBarMenu';
 import { NavBarToggle } from '../NavBar/NavBarToggle';
+
+import { NavBarMenuItemWrapper } from './NavBarMenuItemWrapper';
 
 const MENU_WIDTH = '350px';
 
@@ -59,7 +60,7 @@ export function NavBarMenu({ activeItem, navItems, searchBarHidden, onClose }: P
         in={isOpen}
         unmountOnExit={true}
         classNames={animStyles.overlay}
-        timeout={animationSpeed}
+        timeout={{ enter: animationSpeed, exit: 0 }}
         onExited={onClose}
       >
         <div data-testid="navbarmenu" ref={ref} {...overlayProps} {...dialogProps} className={styles.container}>
@@ -86,7 +87,7 @@ export function NavBarMenu({ activeItem, navItems, searchBarHidden, onClose }: P
               <CustomScrollbar showScrollIndicators hideHorizontalTrack>
                 <ul className={styles.itemList}>
                   {navItems.map((link) => (
-                    <NavItem link={link} onClose={onMenuClose} activeItem={activeItem} key={link.text} />
+                    <NavBarMenuItemWrapper link={link} onClose={onMenuClose} activeItem={activeItem} key={link.text} />
                   ))}
                 </ul>
               </CustomScrollbar>
@@ -121,18 +122,17 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden?: boolean) => {
       position: 'fixed',
       right: 0,
       top: topPosition,
-      zIndex: theme.zIndex.navbarFixed - 2,
+      zIndex: theme.zIndex.modalBackdrop,
     }),
     container: css({
       display: 'flex',
       bottom: 0,
       flexDirection: 'column',
       left: 0,
-      paddingTop: theme.spacing(1),
       marginRight: theme.spacing(1.5),
       right: 0,
       // Needs to below navbar should we change the navbarFixed? add add a new level?
-      zIndex: theme.zIndex.navbarFixed - 1,
+      zIndex: theme.zIndex.modal,
       position: 'fixed',
       top: topPosition,
       backgroundColor: theme.colors.background.primary,
@@ -151,7 +151,7 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden?: boolean) => {
       borderBottom: `1px solid ${theme.colors.border.weak}`,
       display: 'flex',
       justifyContent: 'space-between',
-      padding: theme.spacing(1, 2, 2),
+      padding: theme.spacing(1, 2),
       [theme.breakpoints.up('md')]: {
         display: 'none',
       },
@@ -159,11 +159,12 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden?: boolean) => {
     itemList: css({
       display: 'grid',
       gridAutoRows: `minmax(${theme.spacing(6)}, auto)`,
+      gridTemplateColumns: `minmax(${MENU_WIDTH}, auto)`,
       minWidth: MENU_WIDTH,
     }),
     menuCollapseIcon: css({
       position: 'absolute',
-      top: '43px',
+      top: '20px',
       right: '0px',
       transform: `translateX(50%)`,
     }),
@@ -219,15 +220,11 @@ const getAnimStyles = (theme: GrafanaTheme2, animationDuration: number) => {
       enter: css(backdropClosed),
       enterActive: css(backdropTransition, backdropOpen),
       enterDone: css(backdropOpen),
-      exit: css(backdropOpen),
-      exitActive: css(backdropTransition, backdropClosed),
     },
     overlay: {
       enter: css(overlayClosed),
       enterActive: css(overlayTransition, overlayOpen),
       enterDone: css(overlayOpen),
-      exit: css(overlayOpen),
-      exitActive: css(overlayTransition, overlayClosed),
     },
   };
 };
