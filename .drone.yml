@@ -91,17 +91,6 @@ steps:
   image: golang:1.19.1
   name: compile-build-cmd
 - commands:
-  - yarn run prettier:check
-  - yarn run lint
-  - yarn run i18n:compile
-  - yarn run typecheck
-  depends_on:
-  - yarn-install
-  environment:
-    TEST_MAX_WORKERS: 50%
-  image: grafana/build-container:1.6.2
-  name: lint-frontend
-- commands:
   - yarn betterer ci
   depends_on:
   - yarn-install
@@ -116,6 +105,58 @@ steps:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.6.2
   name: test-frontend
+trigger:
+  event:
+  - pull_request
+  paths:
+    exclude:
+    - docs/**
+    - '*.md'
+    - pkg/**
+    - packaging/**
+    - go.sum
+    - go.mod
+    include: []
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on: []
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: pr-lint-frontend
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.15.6
+  name: identify-runner
+- commands:
+  - yarn install --immutable
+  depends_on: []
+  image: grafana/build-container:1.6.2
+  name: yarn-install
+- commands:
+  - yarn run prettier:check
+  - yarn run lint
+  - yarn run i18n:compile
+  - yarn run typecheck
+  depends_on:
+  - yarn-install
+  environment:
+    TEST_MAX_WORKERS: 50%
+  image: grafana/build-container:1.6.2
+  name: lint-frontend
 trigger:
   event:
   - pull_request
@@ -896,17 +937,6 @@ steps:
   image: golang:1.19.1
   name: compile-build-cmd
 - commands:
-  - yarn run prettier:check
-  - yarn run lint
-  - yarn run i18n:compile
-  - yarn run typecheck
-  depends_on:
-  - yarn-install
-  environment:
-    TEST_MAX_WORKERS: 50%
-  image: grafana/build-container:1.6.2
-  name: lint-frontend
-- commands:
   - yarn betterer ci
   depends_on:
   - yarn-install
@@ -921,6 +951,55 @@ steps:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.6.2
   name: test-frontend
+trigger:
+  branch: main
+  event:
+  - push
+  paths:
+    exclude:
+    - '*.md'
+    - docs/**
+    - latest.json
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on: []
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: main-lint-frontend
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.15.6
+  name: identify-runner
+- commands:
+  - yarn install --immutable
+  depends_on: []
+  image: grafana/build-container:1.6.2
+  name: yarn-install
+- commands:
+  - yarn run prettier:check
+  - yarn run lint
+  - yarn run i18n:compile
+  - yarn run typecheck
+  depends_on:
+  - yarn-install
+  environment:
+    TEST_MAX_WORKERS: 50%
+  image: grafana/build-container:1.6.2
+  name: lint-frontend
 trigger:
   branch: main
   event:
@@ -5270,6 +5349,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: a17adc518f8ba4ea5c123bf440adf9aceec5e7ba5d9fdae9e467dbd1ec91fd46
+hmac: 51941c93ec6753cf788db7ecefc8ffc63549ec675b23ae98fc27bcd7a22cddbb
 
 ...
