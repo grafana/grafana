@@ -105,19 +105,13 @@ const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeader
 
   // determine the position in time for this LogGroup by taking the ordering of
   // logs and position of the component itself into account.
-  let logGroupPosition = '';
+  let logGroupPosition = 'after';
   if (groupPosition === LogGroupPosition.Bottom) {
     if (logsSortOrder === LogsSortOrder.Descending) {
       logGroupPosition = 'before';
-    } else {
-      logGroupPosition = 'after';
     }
-  } else {
-    if (logsSortOrder === LogsSortOrder.Ascending) {
-      logGroupPosition = 'before';
-    } else {
-      logGroupPosition = 'after';
-    }
+  } else if (logsSortOrder === LogsSortOrder.Ascending) {
+    logGroupPosition = 'before';
   }
 
   return (
