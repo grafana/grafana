@@ -8,6 +8,9 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/searchV2/extract"
@@ -60,11 +63,7 @@ func initTestIndexFromDashesExtended(t *testing.T, dashboards []dashboard, exten
 	dashboardLoader := &testDashboardLoader{
 		dashboards: dashboards,
 	}
-	index := newSearchIndex(
-		dashboardLoader,
-		&store.MockEntityEventsService{},
-		extender,
-		func(ctx context.Context, folderId int64) (string, error) { return "x", nil })
+	index := newSearchIndex(dashboardLoader, &store.MockEntityEventsService{}, extender, func(ctx context.Context, folderId int64) (string, error) { return "x", nil }, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(), setting.SearchSettings{})
 	require.NotNil(t, index)
 	numDashboards, err := index.buildOrgIndex(context.Background(), testOrgID)
 	require.NoError(t, err)
@@ -682,6 +681,54 @@ func TestDashboardIndex_MultiTermPrefixMatch(t *testing.T) {
 				"x not y",
 			),
 			query: "Prometheus stat",
+		},
+		{
+			dashboards: dashboardsWithTitles(
+				"Loki Tests - Bar Gauge 2",
+				"Loki 2.0",
+				"Loki 2.0 Stats",
+				"Loki 20.0",
+				"Loki Second Word",
+				"Loki Stats",
+				"dynamic (2)",
+				"Loki histogram",
+				"Loki histogram2",
+				"roci-simple-2",
+				"x not y",
+			),
+			query: "Loki 2.",
+		},
+		{
+			dashboards: dashboardsWithTitles(
+				"Loki Tests - Bar Gauge 2",
+				"Loki 2.0",
+				"Loki 2.0 Stats",
+				"Loki 20.0",
+				"Loki Second Word",
+				"Loki Stats",
+				"dynamic (2)",
+				"Loki histogram",
+				"Loki histogram2",
+				"roci-simple-2",
+				"x not y",
+			),
+			query: "Lok",
+		},
+		{
+			dashboards: dashboardsWithTitles(
+				"Loki Tests - Bar Gauge 2",
+				"Loki 2.0",
+				"Loki 2.0 Stats",
+				"Loki 20.0",
+				"Loki Second Word",
+				"Loki Stats",
+				"dynamic (2)",
+				"Loki histogram",
+				"Loki histogram2",
+				"roci-simple-2",
+				"x not y",
+			),
+			query: "Loki stats",
 		},
 	}
 

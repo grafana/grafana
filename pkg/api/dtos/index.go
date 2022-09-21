@@ -12,6 +12,7 @@ type IndexViewData struct {
 	AppUrl                  string
 	AppSubUrl               string
 	GoogleAnalyticsId       string
+	GoogleAnalytics4Id      string
 	GoogleTagManagerId      string
 	NavTree                 []*NavLink
 	BuildVersion            string

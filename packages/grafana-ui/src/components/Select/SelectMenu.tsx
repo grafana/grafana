@@ -1,11 +1,11 @@
 import { cx } from '@emotion/css';
 import React, { FC, RefCallback } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue, toIconName } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
-import { Icon, toIconName } from '../Icon/Icon';
+import { Icon } from '../Icon/Icon';
 
 import { getSelectStyles } from './getSelectStyles';
 

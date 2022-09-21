@@ -13,7 +13,7 @@ import (
 	"github.com/benbjohnson/clock"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
@@ -98,7 +98,7 @@ func Test_maybeNewImage(t *testing.T) {
 			imageService := &CountingImageService{}
 			mgr := NewManager(log.NewNopLogger(), &metrics.State{}, nil,
 				&store.FakeRuleStore{}, &store.FakeInstanceStore{},
-				&dashboards.FakeDashboardService{}, imageService, clock.NewMock())
+				&dashboards.FakeDashboardService{}, imageService, clock.NewMock(), annotationstest.NewFakeAnnotationsRepo())
 			err := mgr.maybeTakeScreenshot(context.Background(), &ngmodels.AlertRule{}, test.state, test.oldState)
 			require.NoError(t, err)
 			if !test.shouldScreenshot {
@@ -111,7 +111,7 @@ func Test_maybeNewImage(t *testing.T) {
 	}
 }
 
-func TestStateIsStale(t *testing.T) {
+func TestIsItStale(t *testing.T) {
 	now := time.Now()
 	intervalSeconds := rand.Int63n(10) + 5
 
@@ -148,7 +148,7 @@ func TestStateIsStale(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			require.Equal(t, tc.expectedResult, stateIsStale(now, tc.lastEvaluation, intervalSeconds))
+			require.Equal(t, tc.expectedResult, isItStale(now, tc.lastEvaluation, intervalSeconds))
 		})
 	}
 }
@@ -156,9 +156,7 @@ func TestStateIsStale(t *testing.T) {
 func TestClose(t *testing.T) {
 	instanceStore := &store.FakeInstanceStore{}
 	clk := clock.New()
-	st := NewManager(log.New("test_state_manager"), metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(), nil, nil, instanceStore, &dashboards.FakeDashboardService{}, &image.NotAvailableImageService{}, clk)
-	fakeAnnoRepo := store.NewFakeAnnotationsRepo()
-	annotations.SetRepository(fakeAnnoRepo)
+	st := NewManager(log.New("test_state_manager"), metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(), nil, nil, instanceStore, &dashboards.FakeDashboardService{}, &image.NotAvailableImageService{}, clk, annotationstest.NewFakeAnnotationsRepo())
 
 	_, rules := ngmodels.GenerateUniqueAlertRules(10, ngmodels.AlertRuleGen())
 	for _, rule := range rules {
@@ -178,10 +176,10 @@ func TestClose(t *testing.T) {
 	st.Close(context.Background())
 
 	t.Run("should flush the state to store", func(t *testing.T) {
-		savedStates := make(map[string]ngmodels.AlertInstance)
+		savedStates := make(map[string]ngmodels.SaveAlertInstanceCommand)
 		for _, op := range instanceStore.RecordedOps {
 			switch q := op.(type) {
-			case ngmodels.AlertInstance:
+			case ngmodels.SaveAlertInstanceCommand:
 				cacheId, err := q.Labels.StringKey()
 				require.NoError(t, err)
 				savedStates[cacheId] = q

@@ -168,7 +168,7 @@ function getMarkers(viewStart: number, viewEnd: number, from: number, to: number
     <div
       className={cx(styles.TimelineViewingLayerDragged, styles.TimelineViewingLayerDraggedDraggingLeft, cls)}
       style={{ left, width }}
-      data-test-id="Dragged"
+      data-testid="Dragged"
     />
   );
 }
@@ -265,13 +265,13 @@ export default class TimelineViewingLayer extends React.PureComponent<TimelineVi
         onMouseDown={this._draggerReframe.handleMouseDown}
         onMouseLeave={this._draggerReframe.handleMouseLeave}
         onMouseMove={this._draggerReframe.handleMouseMove}
-        data-test-id="TimelineViewingLayer"
+        data-testid="TimelineViewingLayer"
       >
         {cusrorPosition != null && (
           <div
             className={styles.TimelineViewingLayerCursorGuide}
             style={{ left: cusrorPosition }}
-            data-test-id="TimelineViewingLayer--cursorGuide"
+            data-testid="TimelineViewingLayer--cursorGuide"
           />
         )}
         {reframe != null && getMarkers(viewStart, viewEnd, reframe.anchor, reframe.shift, false)}

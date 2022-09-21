@@ -58,6 +58,11 @@ export class GrafanaJavascriptAgentBackend
       },
       instrumentations,
       transports: [new EchoSrvTransport()],
+      ignoreErrors: [
+        'ResizeObserver loop limit exceeded',
+        'ResizeObserver loop completed',
+        'Non-Error exception captured with keys',
+      ],
     };
     this.agentInstance = initializeAgent(grafanaJavaScriptAgentOptions);
 

@@ -258,6 +258,20 @@ func (e DatasourcePermissionsService) MapActions(permission accesscontrol.Resour
 	return ""
 }
 
+var (
+	ServiceAccountEditActions = []string{
+		serviceaccounts.ActionRead,
+		serviceaccounts.ActionWrite,
+	}
+	ServiceAccountAdminActions = []string{
+		serviceaccounts.ActionRead,
+		serviceaccounts.ActionWrite,
+		serviceaccounts.ActionDelete,
+		serviceaccounts.ActionPermissionsRead,
+		serviceaccounts.ActionPermissionsWrite,
+	}
+)
+
 type ServiceAccountPermissionsService struct {
 	*resourcepermissions.Service
 }
@@ -283,8 +297,8 @@ func ProvideServiceAccountPermissions(
 			BuiltInRoles: false,
 		},
 		PermissionsToActions: map[string][]string{
-			"Edit":  {serviceaccounts.ActionRead, serviceaccounts.ActionWrite},
-			"Admin": {serviceaccounts.ActionRead, serviceaccounts.ActionWrite, serviceaccounts.ActionDelete, serviceaccounts.ActionPermissionsRead, serviceaccounts.ActionPermissionsWrite},
+			"Edit":  ServiceAccountEditActions,
+			"Admin": ServiceAccountAdminActions,
 		},
 		ReaderRoleName: "Service account permission reader",
 		WriterRoleName: "Service account permission writer",

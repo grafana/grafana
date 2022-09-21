@@ -13,6 +13,7 @@ import (
 	"github.com/blugelabs/bluge/search/aggregations"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
@@ -24,7 +25,6 @@ const (
 	documentFieldName        = "name"
 	documentFieldName_sort   = "name_sort"
 	documentFieldName_ngram  = "name_ngram"
-	documentFieldDescription = "description"
 	documentFieldLocation    = "location" // parent path
 	documentFieldPanelType   = "panel_type"
 	documentFieldTransformer = "transformer"
@@ -232,13 +232,10 @@ func newSearchDocument(uid string, name string, descr string, url string) *bluge
 		doc.AddField(bluge.NewTextField(documentFieldName_ngram, name).WithAnalyzer(ngramIndexAnalyzer))
 
 		// Don't add a field for empty names
-		sortStr := strings.Trim(strings.ToUpper(name), " ")
+		sortStr := formatForNameSortField(name)
 		if len(sortStr) > 0 {
 			doc.AddField(bluge.NewKeywordField(documentFieldName_sort, sortStr).Sortable())
 		}
-	}
-	if descr != "" {
-		doc.AddField(bluge.NewTextField(documentFieldDescription, descr).SearchTermPositions())
 	}
 	if url != "" {
 		doc.AddField(bluge.NewKeywordField(documentFieldURL, url).StoreValue())
@@ -353,7 +350,7 @@ func getDashboardLocation(index *orgIndex, dashboardUID string) (string, bool, e
 	return dashboardLocation, found, err
 }
 
-//nolint: gocyclo
+//nolint:gocyclo
 func doSearchQuery(
 	ctx context.Context,
 	logger log.Logger,
@@ -435,21 +432,19 @@ func doSearchQuery(
 			fullQuery.AddShould(bluge.NewMatchAllQuery())
 		}
 	} else {
-		// The actual se
-		bq := bluge.NewBooleanQuery().
-			AddShould(bluge.NewMatchQuery(q.Query).SetField(documentFieldName).SetBoost(6)).
-			AddShould(bluge.NewMatchQuery(q.Query).SetField(documentFieldDescription).SetBoost(3)).
-			AddShould(bluge.NewMatchQuery(q.Query).
+		bq := bluge.NewBooleanQuery()
+
+		bq.AddShould(NewSubstringQuery(formatForNameSortField(q.Query)).
+			SetField(documentFieldName_sort).
+			SetBoost(6))
+
+		if shouldUseNgram(q) {
+			bq.AddShould(bluge.NewMatchQuery(q.Query).
 				SetField(documentFieldName_ngram).
 				SetOperator(bluge.MatchQueryOperatorAnd). // all terms must match
 				SetAnalyzer(ngramQueryAnalyzer).SetBoost(1))
+		}
 
-		if len(q.Query) > 4 {
-			bq.AddShould(bluge.NewFuzzyQuery(q.Query).SetField(documentFieldName)).SetBoost(1.5)
-		}
-		if len(q.Query) > ngramEdgeFilterMaxLength && !strings.Contains(q.Query, " ") {
-			bq.AddShould(bluge.NewPrefixQuery(strings.ToLower(q.Query)).SetField(documentFieldName)).SetBoost(6)
-		}
 		fullQuery.AddMust(bq)
 	}
 
@@ -662,6 +657,25 @@ func doSearchQuery(
 	}
 
 	return response
+}
+
+func shouldUseNgram(q DashboardQuery) bool {
+	var tokens []string
+	if len(q.Query) > ngramEdgeFilterMaxLength {
+		tokens = strings.Fields(q.Query)
+		for _, k := range tokens {
+			// ngram will never match if at least one input token exceeds the max token length,
+			// as all tokens must match simultaneously with the `bluge.MatchQueryOperatorAnd` operator
+			if len(k) > ngramEdgeFilterMaxLength {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func formatForNameSortField(name string) string {
+	return strings.Trim(strings.ToUpper(name), " ")
 }
 
 func getLocationLookupInfo(ctx context.Context, reader *bluge.Reader, uids map[string]bool) map[string]locationItem {
