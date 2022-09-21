@@ -17,6 +17,7 @@ import { RuleDetailsMatchingInstances } from './RuleDetailsMatchingInstances';
 
 interface Props {
   rule: CombinedRule;
+  isMobileScreen?: boolean;
 }
 
 // The limit is set to 15 in order to upkeep the good performance
@@ -24,7 +25,7 @@ interface Props {
 // We don't want to paginate the instances list on the alert list page
 const INSTANCES_DISPLAY_LIMIT = 15;
 
-export const RuleDetails: FC<Props> = ({ rule }) => {
+export const RuleDetails: FC<Props> = ({ rule, isMobileScreen }: Props) => {
   const styles = useStyles2(getStyles);
   const {
     namespace: { rulesSource },
@@ -34,7 +35,7 @@ export const RuleDetails: FC<Props> = ({ rule }) => {
 
   return (
     <div>
-      <RuleDetailsActionButtons rule={rule} rulesSource={rulesSource} />
+      <RuleDetailsActionButtons rule={rule} rulesSource={rulesSource} isCollapsible isMobileScreen={isMobileScreen} />
       <div className={styles.wrapper}>
         <div className={styles.leftSide}>
           {<EvaluationBehaviorSummary rule={rule} />}

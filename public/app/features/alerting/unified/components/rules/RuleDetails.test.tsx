@@ -10,7 +10,7 @@ import { AccessControlAction } from 'app/types';
 import { CombinedRule } from 'app/types/unified-alerting';
 
 import { useIsRuleEditable } from '../../hooks/useIsRuleEditable';
-import { mockCombinedRule, mockDataSource, mockPromAlertingRule, mockRulerAlertingRule } from '../../mocks';
+import { mockCombinedRule } from '../../mocks';
 
 import { RuleDetails } from './RuleDetails';
 
@@ -55,28 +55,6 @@ describe('RuleDetails RBAC', () => {
       expect(ui.actionButtons.delete.query()).not.toBeInTheDocument();
     });
 
-    it('Should render Edit button for users with the update permission', () => {
-      // Arrange
-      mocks.useIsRuleEditable.mockReturnValue({ loading: false, isEditable: true });
-
-      // Act
-      renderRuleDetails(grafanaRule);
-
-      // Assert
-      expect(ui.actionButtons.edit.query()).toBeInTheDocument();
-    });
-
-    it('Should render Delete button for users with the delete permission', () => {
-      // Arrange
-      mocks.useIsRuleEditable.mockReturnValue({ loading: false, isRemovable: true });
-
-      // Act
-      renderRuleDetails(grafanaRule);
-
-      // Assert
-      expect(ui.actionButtons.delete.query()).toBeInTheDocument();
-    });
-
     it('Should not render Silence button for users wihout the instance create permission', () => {
       // Arrange
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
@@ -101,53 +79,6 @@ describe('RuleDetails RBAC', () => {
       expect(ui.actionButtons.silence.query()).toBeInTheDocument();
     });
   });
-
-  describe('Cloud rules action buttons', () => {
-    const cloudRule = getCloudRule({ name: 'Cloud' });
-    it('Should not render Edit button for users without the update permission', () => {
-      // Arrange
-      mocks.useIsRuleEditable.mockReturnValue({ loading: false, isEditable: false });
-
-      // Act
-      renderRuleDetails(cloudRule);
-
-      // Assert
-      expect(ui.actionButtons.edit.query()).not.toBeInTheDocument();
-    });
-
-    it('Should not render Delete button for users without the delete permission', () => {
-      // Arrange
-      mocks.useIsRuleEditable.mockReturnValue({ loading: false, isRemovable: false });
-
-      // Act
-      renderRuleDetails(cloudRule);
-
-      // Assert
-      expect(ui.actionButtons.delete.query()).not.toBeInTheDocument();
-    });
-
-    it('Should render Edit button for users with the update permission', () => {
-      // Arrange
-      mocks.useIsRuleEditable.mockReturnValue({ loading: false, isEditable: true });
-
-      // Act
-      renderRuleDetails(cloudRule);
-
-      // Assert
-      expect(ui.actionButtons.edit.query()).toBeInTheDocument();
-    });
-
-    it('Should render Delete button for users with the delete permission', () => {
-      // Arrange
-      mocks.useIsRuleEditable.mockReturnValue({ loading: false, isRemovable: true });
-
-      // Act
-      renderRuleDetails(cloudRule);
-
-      // Assert
-      expect(ui.actionButtons.delete.query()).toBeInTheDocument();
-    });
-  });
 });
 
 function renderRuleDetails(rule: CombinedRule) {
@@ -169,19 +100,6 @@ function getGrafanaRule(override?: Partial<CombinedRule>) {
       name: 'Grafana',
       rulesSource: 'grafana',
     },
-    ...override,
-  });
-}
-
-function getCloudRule(override?: Partial<CombinedRule>) {
-  return mockCombinedRule({
-    namespace: {
-      groups: [],
-      name: 'Cortex',
-      rulesSource: mockDataSource(),
-    },
-    promRule: mockPromAlertingRule(),
-    rulerRule: mockRulerAlertingRule(),
     ...override,
   });
 }

@@ -31,7 +31,9 @@ export const RuleListStateSection: FC<Props> = ({ rules, state, defaultCollapsed
         />
         {alertStateToReadable(state)} ({rules.length})
       </h4>
-      {!collapsed && <RulesTable className={styles.rulesTable} rules={rules} showGroupColumn={true} />}
+      {!collapsed && (
+        <RulesTable className={styles.rulesTable} rules={rules} showGroupColumn={true} showActionsColumn={true} />
+      )}
     </>
   );
 };

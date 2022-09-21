@@ -23,9 +23,11 @@ import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
 interface Props {
   rule: CombinedRule;
   rulesSource: RulesSource;
+  isCollapsible?: boolean;
+  isMobileScreen?: boolean;
 }
 
-export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
+export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource, isCollapsible, isMobileScreen }: Props) => {
   const dispatch = useDispatch();
   const location = useLocation();
   const notifyApp = useAppNotification();
@@ -143,104 +145,120 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
     }
   }
 
-  if (alertmanagerSourceName && contextSrv.hasAccess(AccessControlAction.AlertingInstanceCreate, contextSrv.isEditor)) {
-    leftButtons.push(
-      <LinkButton
-        className={style.button}
-        size="xs"
-        key="silence"
-        icon="bell-slash"
-        target="__blank"
-        href={makeRuleBasedSilenceLink(alertmanagerSourceName, rule)}
-      >
-        Silence
-      </LinkButton>
-    );
-  }
-
-  if (alertId) {
-    leftButtons.push(
-      <Fragment key="history">
-        <Button className={style.button} size="xs" icon="history" onClick={() => showStateHistoryModal()}>
-          Show state history
-        </Button>
-        {StateHistoryModal}
-      </Fragment>
-    );
-  }
-
-  if (!isViewMode) {
-    rightButtons.push(
-      <LinkButton
-        className={style.button}
-        size="xs"
-        key="view"
-        variant="secondary"
-        icon="eye"
-        href={createViewLink(rulesSource, rule, returnTo)}
-      >
-        View
-      </LinkButton>
-    );
-  }
-
-  if (isEditable && rulerRule && !isFederated && !isProvisioned) {
-    const sourceName = getRulesSourceName(rulesSource);
-    const identifier = ruleId.fromRulerRule(sourceName, namespace.name, group.name, rulerRule);
-
-    const editURL = urlUtil.renderUrl(
-      `${config.appSubUrl}/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/edit`,
-      {
-        returnTo,
-      }
-    );
-
-    if (isViewMode) {
-      rightButtons.push(
-        <ClipboardButton
-          key="copy"
-          icon="copy"
-          onClipboardError={(copiedText) => {
-            notifyApp.error('Error while copying URL', copiedText);
-          }}
+  if (isCollapsible) {
+    if (
+      alertmanagerSourceName &&
+      contextSrv.hasAccess(AccessControlAction.AlertingInstanceCreate, contextSrv.isEditor)
+    ) {
+      leftButtons.push(
+        <LinkButton
           className={style.button}
-          size="sm"
-          getText={buildShareUrl}
+          size="xs"
+          key="silence"
+          icon="bell-slash"
+          target="__blank"
+          href={makeRuleBasedSilenceLink(alertmanagerSourceName, rule)}
         >
-          Copy link to rule
-        </ClipboardButton>
+          Silence
+        </LinkButton>
       );
     }
 
-    rightButtons.push(
-      <LinkButton className={style.button} size="xs" key="edit" variant="secondary" icon="pen" href={editURL}>
-        Edit
-      </LinkButton>
-    );
+    if (alertId) {
+      leftButtons.push(
+        <Fragment key="history">
+          <Button className={style.button} size="xs" icon="history" onClick={() => showStateHistoryModal()}>
+            Show state history
+          </Button>
+          {StateHistoryModal}
+        </Fragment>
+      );
+    }
   }
 
-  if (isRemovable && rulerRule && !isFederated && !isProvisioned) {
-    rightButtons.push(
-      <Button
-        className={style.button}
-        size="xs"
-        type="button"
-        key="delete"
-        variant="secondary"
-        icon="trash-alt"
-        onClick={() => setRuleToDelete(rule)}
-      >
-        Delete
-      </Button>
-    );
+  if (!isCollapsible || isMobileScreen) {
+    if (!isViewMode) {
+      rightButtons.push(
+        <LinkButton
+          className={isMobileScreen ? style.button : style.buttonCollapsed}
+          size="xs"
+          key="view"
+          variant="secondary"
+          icon="eye"
+          href={createViewLink(rulesSource, rule, returnTo)}
+        >
+          View
+        </LinkButton>
+      );
+    }
+
+    if (isEditable && rulerRule && !isFederated && !isProvisioned) {
+      const sourceName = getRulesSourceName(rulesSource);
+      const identifier = ruleId.fromRulerRule(sourceName, namespace.name, group.name, rulerRule);
+
+      const editURL = urlUtil.renderUrl(
+        `${config.appSubUrl}/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/edit`,
+        {
+          returnTo,
+        }
+      );
+
+      if (isViewMode) {
+        rightButtons.push(
+          <ClipboardButton
+            key="copy"
+            icon="copy"
+            onClipboardError={(copiedText) => {
+              notifyApp.error('Error while copying URL', copiedText);
+            }}
+            className={style.button}
+            size="sm"
+            getText={buildShareUrl}
+          >
+            Copy link to rule
+          </ClipboardButton>
+        );
+      }
+
+      rightButtons.push(
+        <LinkButton
+          className={isMobileScreen ? style.button : style.buttonCollapsed}
+          size="xs"
+          key="edit"
+          variant="secondary"
+          icon="pen"
+          href={editURL}
+        >
+          Edit
+        </LinkButton>
+      );
+    }
+
+    if (isRemovable && rulerRule && !isFederated && !isProvisioned) {
+      rightButtons.push(
+        <Button
+          className={isMobileScreen ? style.button : style.buttonCollapsed}
+          size="xs"
+          type="button"
+          key="delete"
+          variant="secondary"
+          icon="trash-alt"
+          onClick={() => setRuleToDelete(rule)}
+        >
+          Delete
+        </Button>
+      );
+    }
   }
 
   if (leftButtons.length || rightButtons.length) {
     return (
       <>
-        <div className={style.wrapper}>
+        <div className={!isCollapsible && !isViewMode ? style.wrapperCollapsed : style.wrapper}>
           <HorizontalGroup width="auto">{leftButtons.length ? leftButtons : <div />}</HorizontalGroup>
-          <HorizontalGroup width="auto">{rightButtons.length ? rightButtons : <div />}</HorizontalGroup>
+          <HorizontalGroup wrap={!isCollapsible} width="auto">
+            {rightButtons.length ? rightButtons : <div />}
+          </HorizontalGroup>
         </div>
         {!!ruleToDelete && (
           <ConfirmModal
@@ -276,6 +294,16 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   button: css`
     height: 24px;
     margin-top: ${theme.spacing(1)};
+    font-size: ${theme.typography.size.sm};
+  `,
+  wrapperCollapsed: css`
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  `,
+  buttonCollapsed: css`
+    height: 24px;
     font-size: ${theme.typography.size.sm};
   `,
 });

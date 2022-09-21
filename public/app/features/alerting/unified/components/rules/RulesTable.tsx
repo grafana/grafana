@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { FC, useMemo } from 'react';
+import React, { FC, useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -17,6 +17,7 @@ import { Tokenize } from '../Tokenize';
 
 import { RuleConfigStatus } from './RuleConfigStatus';
 import { RuleDetails } from './RuleDetails';
+import { RuleDetailsActionButtons } from './RuleDetailsActionButtons';
 import { RuleHealth } from './RuleHealth';
 import { RuleState } from './RuleState';
 
@@ -28,6 +29,7 @@ interface Props {
   showGuidelines?: boolean;
   showGroupColumn?: boolean;
   showSummaryColumn?: boolean;
+  showActionsColumn?: boolean;
   emptyMessage?: string;
   className?: string;
 }
@@ -39,10 +41,21 @@ export const RulesTable: FC<Props> = ({
   emptyMessage = 'No rules found.',
   showGroupColumn = false,
   showSummaryColumn = false,
-}) => {
+  showActionsColumn = false,
+}: Props) => {
   const styles = useStyles2(getStyles);
 
   const wrapperClass = cx(styles.wrapper, className, { [styles.wrapperMargin]: showGuidelines });
+
+  const [screenWidth, setScreenWidth] = useState(window.innerWidth);
+  const isMobileScreen = screenWidth < 900;
+
+  useEffect(() => {
+    const resizeListener = () => {
+      setScreenWidth(window.innerWidth);
+    };
+    window.addEventListener('resize', resizeListener);
+  }, [screenWidth]);
 
   const items = useMemo((): RuleTableItemProps[] => {
     const seenKeys: string[] = [];
@@ -59,7 +72,7 @@ export const RulesTable: FC<Props> = ({
     });
   }, [rules]);
 
-  const columns = useColumns(showSummaryColumn, showGroupColumn);
+  const columns = useColumns(showSummaryColumn, showGroupColumn, showActionsColumn && !isMobileScreen);
 
   if (!rules.length) {
     return <div className={cx(wrapperClass, styles.emptyMessage)}>{emptyMessage}</div>;
@@ -73,7 +86,7 @@ export const RulesTable: FC<Props> = ({
         cols={columns}
         isExpandable={true}
         items={items}
-        renderExpandedContent={({ data: rule }) => <RuleDetails rule={rule} />}
+        renderExpandedContent={({ data: rule }) => <RuleDetails rule={rule} isMobileScreen={isMobileScreen} />}
         pagination={{ itemsPerPage: DEFAULT_PER_PAGE_PAGINATION }}
         paginationStyles={styles.pagination}
       />
@@ -106,7 +119,7 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   `,
 });
 
-function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean) {
+function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean, showActionsColumn: boolean) {
   const { hasRuler, rulerRulesLoaded } = useHasRuler();
 
   return useMemo((): RuleTableColumnProps[] => {
@@ -194,6 +207,18 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean) {
         size: 5,
       });
     }
+    if (showActionsColumn) {
+      columns.push({
+        id: 'actions',
+        label: 'Actions',
+        renderCell: ({ data: rule }) => {
+          const { namespace } = rule;
+          const { rulesSource } = namespace;
+          return <RuleDetailsActionButtons rule={rule} rulesSource={rulesSource} />;
+        },
+        size: 5,
+      });
+    }
     return columns;
-  }, [hasRuler, rulerRulesLoaded, showSummaryColumn, showGroupColumn]);
+  }, [hasRuler, rulerRulesLoaded, showSummaryColumn, showGroupColumn, showActionsColumn]);
 }
