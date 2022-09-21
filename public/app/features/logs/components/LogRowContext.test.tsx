@@ -16,11 +16,7 @@ describe('LogRowContextGroup component', () => {
       groupPosition: LogGroupPosition.Top,
     };
 
-    render(
-      <div>
-        <LogRowContextGroup {...defaultProps} />
-      </div>
-    );
+    render(<LogRowContextGroup {...defaultProps} />);
     expect(screen.getAllByTestId('ansiLogLine')).toHaveLength(2);
   });
 
@@ -40,11 +36,7 @@ describe('LogRowContextGroup component', () => {
       logsSortOrder,
     };
 
-    render(
-      <div>
-        <LogRowContextGroup {...defaultProps} />
-      </div>
-    );
+    render(<LogRowContextGroup {...defaultProps} />);
 
     expect(await screen.findByText(`Showing 3 lines ${expected} match.`)).toBeInTheDocument();
   });
