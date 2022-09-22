@@ -324,7 +324,6 @@ func TestQuery_ResourceRequest_DescribeAllLogGroups(t *testing.T) {
 		assert.Equal(t, stringsToSuggestData([]string{
 			"group_a", "group_b", "group_c", "group_x", "group_y", "group_z",
 		}), suggestDataResponse)
-
 	})
 }
 
