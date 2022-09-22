@@ -12,11 +12,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 )
 
-func (hs *ServiceImpl) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error) {
-	hasAccess := ac.HasAccess(hs.accessControl, c)
+func (s *ServiceImpl) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error) {
+	hasAccess := ac.HasAccess(s.accessControl, c)
 	appLinks := []*dtos.NavLink{}
 
-	pss, err := hs.pluginSettings.GetPluginSettings(c.Req.Context(), &pluginsettings.GetArgs{OrgID: c.OrgID})
+	pss, err := s.pluginSettings.GetPluginSettings(c.Req.Context(), &pluginsettings.GetArgs{OrgID: c.OrgID})
 	if err != nil {
 		return nil, err
 	}
@@ -33,7 +33,7 @@ func (hs *ServiceImpl) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error
 		return false
 	}
 
-	for _, plugin := range hs.pluginStore.Plugins(c.Req.Context(), plugins.App) {
+	for _, plugin := range s.pluginStore.Plugins(c.Req.Context(), plugins.App) {
 		if !isPluginEnabled(plugin) {
 			continue
 		}
@@ -51,10 +51,10 @@ func (hs *ServiceImpl) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error
 			SortWeight: dtos.WeightPlugin,
 		}
 
-		if hs.features.IsEnabled(featuremgmt.FlagTopnav) {
-			appLink.Url = hs.cfg.AppSubURL + "/a/" + plugin.ID
+		if s.features.IsEnabled(featuremgmt.FlagTopnav) {
+			appLink.Url = s.cfg.AppSubURL + "/a/" + plugin.ID
 		} else {
-			appLink.Url = path.Join(hs.cfg.AppSubURL, plugin.DefaultNavURL)
+			appLink.Url = path.Join(s.cfg.AppSubURL, plugin.DefaultNavURL)
 		}
 
 		for _, include := range plugin.Includes {
@@ -66,15 +66,15 @@ func (hs *ServiceImpl) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error
 				var link *dtos.NavLink
 				if len(include.Path) > 0 {
 					link = &dtos.NavLink{
-						Url:  hs.cfg.AppSubURL + include.Path,
+						Url:  s.cfg.AppSubURL + include.Path,
 						Text: include.Name,
 					}
-					if include.DefaultNav && !hs.features.IsEnabled(featuremgmt.FlagTopnav) {
+					if include.DefaultNav && !s.features.IsEnabled(featuremgmt.FlagTopnav) {
 						appLink.Url = link.Url // Overwrite the hardcoded page logic
 					}
 				} else {
 					link = &dtos.NavLink{
-						Url:  hs.cfg.AppSubURL + "/plugins/" + plugin.ID + "/page/" + include.Slug,
+						Url:  s.cfg.AppSubURL + "/plugins/" + plugin.ID + "/page/" + include.Slug,
 						Text: include.Name,
 					}
 				}
@@ -86,7 +86,7 @@ func (hs *ServiceImpl) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error
 				dboardURL := include.DashboardURLPath()
 				if dboardURL != "" {
 					link := &dtos.NavLink{
-						Url:  path.Join(hs.cfg.AppSubURL, dboardURL),
+						Url:  path.Join(s.cfg.AppSubURL, dboardURL),
 						Text: include.Name,
 					}
 					appLink.Children = append(appLink.Children, link)

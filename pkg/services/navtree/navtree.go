@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -35,12 +34,12 @@ type ServiceImpl struct {
 	starService          star.Service
 	features             *featuremgmt.FeatureManager
 	dashboardService     dashboards.DashboardService
-	accesscontrolService accesscontrol.Service
+	accesscontrolService ac.Service
 	kvStore              kvstore.KVStore
 	apiKeyService        apikey.Service
 }
 
-func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStore plugins.Store, pluginSettings pluginsettings.Service, starService star.Service, features *featuremgmt.FeatureManager, dashboardService dashboards.DashboardService, accesscontrolService accesscontrol.Service, kvStore kvstore.KVStore, apiKeyService apikey.Service) Service {
+func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStore plugins.Store, pluginSettings pluginsettings.Service, starService star.Service, features *featuremgmt.FeatureManager, dashboardService dashboards.DashboardService, accesscontrolService ac.Service, kvStore kvstore.KVStore, apiKeyService apikey.Service) Service {
 	return &ServiceImpl{
 		cfg:                  cfg,
 		log:                  log.New("navtree service"),
@@ -57,12 +56,12 @@ func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStor
 }
 
 //nolint:gocyclo
-func (srv *ServiceImpl) GetNavTree(c *models.ReqContext, hasEditPerm bool, prefs *pref.Preference) ([]*dtos.NavLink, error) {
-	hasAccess := ac.HasAccess(srv.accessControl, c)
+func (s *ServiceImpl) GetNavTree(c *models.ReqContext, hasEditPerm bool, prefs *pref.Preference) ([]*dtos.NavLink, error) {
+	hasAccess := ac.HasAccess(s.accessControl, c)
 	var navTree []*dtos.NavLink
 
 	if hasAccess(ac.ReqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsRead)) {
-		starredItemsLinks, err := srv.buildStarredItemsNavLinks(c, prefs)
+		starredItemsLinks, err := s.buildStarredItemsNavLinks(c, prefs)
 		if err != nil {
 			return nil, err
 		}
@@ -77,7 +76,7 @@ func (srv *ServiceImpl) GetNavTree(c *models.ReqContext, hasEditPerm bool, prefs
 			EmptyMessageId: "starred-empty",
 		})
 
-		dashboardChildLinks := srv.buildDashboardNavLinks(c, hasEditPerm)
+		dashboardChildLinks := s.buildDashboardNavLinks(c, hasEditPerm)
 
 		dashboardsUrl := "/dashboards"
 
@@ -86,13 +85,13 @@ func (srv *ServiceImpl) GetNavTree(c *models.ReqContext, hasEditPerm bool, prefs
 			Id:         "dashboards",
 			SubTitle:   "Manage dashboards and folders",
 			Icon:       "apps",
-			Url:        srv.cfg.AppSubURL + dashboardsUrl,
+			Url:        s.cfg.AppSubURL + dashboardsUrl,
 			SortWeight: dtos.WeightDashboard,
 			Section:    dtos.NavSectionCore,
 			Children:   dashboardChildLinks,
 		}
 
-		if srv.features.IsEnabled(featuremgmt.FlagTopnav) {
+		if s.features.IsEnabled(featuremgmt.FlagTopnav) {
 			dashboardLink.Id = "dashboards/browse"
 		}
 
@@ -111,32 +110,32 @@ func (srv *ServiceImpl) GetNavTree(c *models.ReqContext, hasEditPerm bool, prefs
 			Icon:       "compass",
 			SortWeight: dtos.WeightExplore,
 			Section:    dtos.NavSectionCore,
-			Url:        srv.cfg.AppSubURL + "/explore",
+			Url:        s.cfg.AppSubURL + "/explore",
 		})
 	}
 
-	navTree = srv.addProfile(navTree, c)
+	navTree = s.addProfile(navTree, c)
 
-	_, uaIsDisabledForOrg := srv.cfg.UnifiedAlerting.DisabledOrgs[c.OrgID]
-	uaVisibleForOrg := srv.cfg.UnifiedAlerting.IsEnabled() && !uaIsDisabledForOrg
+	_, uaIsDisabledForOrg := s.cfg.UnifiedAlerting.DisabledOrgs[c.OrgID]
+	uaVisibleForOrg := s.cfg.UnifiedAlerting.IsEnabled() && !uaIsDisabledForOrg
 
 	if setting.AlertingEnabled != nil && *setting.AlertingEnabled {
-		navTree = append(navTree, srv.buildLegacyAlertNavLinks(c)...)
+		navTree = append(navTree, s.buildLegacyAlertNavLinks(c)...)
 	} else if uaVisibleForOrg {
-		navTree = append(navTree, srv.buildAlertNavLinks(c, hasEditPerm)...)
+		navTree = append(navTree, s.buildAlertNavLinks(c, hasEditPerm)...)
 	}
 
-	if srv.features.IsEnabled(featuremgmt.FlagDataConnectionsConsole) {
-		navTree = append(navTree, srv.buildDataConnectionsNavLink(c))
+	if s.features.IsEnabled(featuremgmt.FlagDataConnectionsConsole) {
+		navTree = append(navTree, s.buildDataConnectionsNavLink(c))
 	}
 
-	appLinks, err := srv.getAppLinks(c)
+	appLinks, err := s.getAppLinks(c)
 	if err != nil {
 		return nil, err
 	}
 
 	// When topnav is enabled we can test new information architecture where plugins live in Apps category
-	if srv.features.IsEnabled(featuremgmt.FlagTopnav) {
+	if s.features.IsEnabled(featuremgmt.FlagTopnav) {
 		navTree = append(navTree, &dtos.NavLink{
 			Text:        "Apps",
 			Icon:        "apps",
@@ -144,35 +143,35 @@ func (srv *ServiceImpl) GetNavTree(c *models.ReqContext, hasEditPerm bool, prefs
 			Id:          "apps",
 			Children:    appLinks,
 			Section:     dtos.NavSectionCore,
-			Url:         srv.cfg.AppSubURL + "/apps",
+			Url:         s.cfg.AppSubURL + "/apps",
 		})
 	} else {
 		navTree = append(navTree, appLinks...)
 	}
 
-	configNodes, err := srv.setupConfigNodes(c)
+	configNodes, err := s.setupConfigNodes(c)
 	if err != nil {
 		return navTree, err
 	}
 
-	if srv.features.IsEnabled(featuremgmt.FlagLivePipeline) {
+	if s.features.IsEnabled(featuremgmt.FlagLivePipeline) {
 		liveNavLinks := []*dtos.NavLink{}
 
 		liveNavLinks = append(liveNavLinks, &dtos.NavLink{
-			Text: "Status", Id: "live-status", Url: srv.cfg.AppSubURL + "/live", Icon: "exchange-alt",
+			Text: "Status", Id: "live-status", Url: s.cfg.AppSubURL + "/live", Icon: "exchange-alt",
 		})
 		liveNavLinks = append(liveNavLinks, &dtos.NavLink{
-			Text: "Pipeline", Id: "live-pipeline", Url: srv.cfg.AppSubURL + "/live/pipeline", Icon: "arrow-to-right",
+			Text: "Pipeline", Id: "live-pipeline", Url: s.cfg.AppSubURL + "/live/pipeline", Icon: "arrow-to-right",
 		})
 		liveNavLinks = append(liveNavLinks, &dtos.NavLink{
-			Text: "Cloud", Id: "live-cloud", Url: srv.cfg.AppSubURL + "/live/cloud", Icon: "cloud-upload",
+			Text: "Cloud", Id: "live-cloud", Url: s.cfg.AppSubURL + "/live/cloud", Icon: "cloud-upload",
 		})
 		navTree = append(navTree, &dtos.NavLink{
 			Id:           "live",
 			Text:         "Live",
 			SubTitle:     "Event streaming",
 			Icon:         "exchange-alt",
-			Url:          srv.cfg.AppSubURL + "/live",
+			Url:          s.cfg.AppSubURL + "/live",
 			Children:     liveNavLinks,
 			Section:      dtos.NavSectionConfig,
 			HideFromTabs: true,
@@ -193,7 +192,7 @@ func (srv *ServiceImpl) GetNavTree(c *models.ReqContext, hasEditPerm bool, prefs
 			SortWeight: dtos.WeightConfig,
 			Children:   configNodes,
 		}
-		if srv.features.IsEnabled(featuremgmt.FlagTopnav) {
+		if s.features.IsEnabled(featuremgmt.FlagTopnav) {
 			configNode.Url = "/admin"
 		} else {
 			configNode.Url = configNodes[0].Url
@@ -201,14 +200,14 @@ func (srv *ServiceImpl) GetNavTree(c *models.ReqContext, hasEditPerm bool, prefs
 		navTree = append(navTree, configNode)
 	}
 
-	adminNavLinks := srv.buildAdminNavLinks(c)
+	adminNavLinks := s.buildAdminNavLinks(c)
 
 	if len(adminNavLinks) > 0 {
 		serverAdminNode = navlinks.GetServerAdminNode(adminNavLinks)
 		navTree = append(navTree, serverAdminNode)
 	}
 
-	if srv.features.IsEnabled(featuremgmt.FlagTopnav) {
+	if s.features.IsEnabled(featuremgmt.FlagTopnav) {
 		// Move server admin into Configuration and rename to administration
 		if configNode != nil && serverAdminNode != nil {
 			configNode.Text = "Administration"
@@ -220,15 +219,15 @@ func (srv *ServiceImpl) GetNavTree(c *models.ReqContext, hasEditPerm bool, prefs
 		}
 	}
 
-	navTree = srv.addHelpLinks(navTree, c)
+	navTree = s.addHelpLinks(navTree, c)
 
 	return navTree, nil
 }
 
-func (hs *ServiceImpl) addHelpLinks(navTree []*dtos.NavLink, c *models.ReqContext) []*dtos.NavLink {
+func (s *ServiceImpl) addHelpLinks(navTree []*dtos.NavLink, c *models.ReqContext) []*dtos.NavLink {
 	if setting.HelpEnabled {
 		helpVersion := fmt.Sprintf(`%s v%s (%s)`, setting.ApplicationName, setting.BuildVersion, setting.BuildCommit)
-		if hs.cfg.AnonymousHideVersion && !c.IsSignedIn {
+		if s.cfg.AnonymousHideVersion && !c.IsSignedIn {
 			helpVersion = setting.ApplicationName
 		}
 
@@ -246,14 +245,14 @@ func (hs *ServiceImpl) addHelpLinks(navTree []*dtos.NavLink, c *models.ReqContex
 	return navTree
 }
 
-func (hs *ServiceImpl) addProfile(navTree []*dtos.NavLink, c *models.ReqContext) []*dtos.NavLink {
+func (s *ServiceImpl) addProfile(navTree []*dtos.NavLink, c *models.ReqContext) []*dtos.NavLink {
 	if setting.ProfileEnabled && c.IsSignedIn {
-		navTree = append(navTree, hs.getProfileNode(c))
+		navTree = append(navTree, s.getProfileNode(c))
 	}
 	return navTree
 }
 
-func (hs *ServiceImpl) getProfileNode(c *models.ReqContext) *dtos.NavLink {
+func (s *ServiceImpl) getProfileNode(c *models.ReqContext) *dtos.NavLink {
 	// Only set login if it's different from the name
 	var login string
 	if c.SignedInUser.Login != c.SignedInUser.NameOrFallback() {
@@ -263,17 +262,17 @@ func (hs *ServiceImpl) getProfileNode(c *models.ReqContext) *dtos.NavLink {
 
 	children := []*dtos.NavLink{
 		{
-			Text: "Preferences", Id: "profile/settings", Url: hs.cfg.AppSubURL + "/profile", Icon: "sliders-v-alt",
+			Text: "Preferences", Id: "profile/settings", Url: s.cfg.AppSubURL + "/profile", Icon: "sliders-v-alt",
 		},
 	}
 
 	children = append(children, &dtos.NavLink{
-		Text: "Notification history", Id: "profile/notifications", Url: hs.cfg.AppSubURL + "/profile/notifications", Icon: "bell",
+		Text: "Notification history", Id: "profile/notifications", Url: s.cfg.AppSubURL + "/profile/notifications", Icon: "bell",
 	})
 
 	if setting.AddChangePasswordLink() {
 		children = append(children, &dtos.NavLink{
-			Text: "Change password", Id: "profile/password", Url: hs.cfg.AppSubURL + "/profile/password",
+			Text: "Change password", Id: "profile/password", Url: s.cfg.AppSubURL + "/profile/password",
 			Icon: "lock",
 		})
 	}
@@ -283,7 +282,7 @@ func (hs *ServiceImpl) getProfileNode(c *models.ReqContext) *dtos.NavLink {
 		children = append(children, &dtos.NavLink{
 			Text:         "Sign out",
 			Id:           "sign-out",
-			Url:          hs.cfg.AppSubURL + "/logout",
+			Url:          s.cfg.AppSubURL + "/logout",
 			Icon:         "arrow-from-right",
 			Target:       "_self",
 			HideFromTabs: true,
@@ -295,7 +294,7 @@ func (hs *ServiceImpl) getProfileNode(c *models.ReqContext) *dtos.NavLink {
 		SubTitle:   login,
 		Id:         "profile",
 		Img:        gravatarURL,
-		Url:        hs.cfg.AppSubURL + "/profile",
+		Url:        s.cfg.AppSubURL + "/profile",
 		Section:    dtos.NavSectionConfig,
 		SortWeight: dtos.WeightProfile,
 		Children:   children,
@@ -303,14 +302,14 @@ func (hs *ServiceImpl) getProfileNode(c *models.ReqContext) *dtos.NavLink {
 	}
 }
 
-func (srv *ServiceImpl) buildStarredItemsNavLinks(c *models.ReqContext, prefs *pref.Preference) ([]*dtos.NavLink, error) {
+func (s *ServiceImpl) buildStarredItemsNavLinks(c *models.ReqContext, prefs *pref.Preference) ([]*dtos.NavLink, error) {
 	starredItemsChildNavs := []*dtos.NavLink{}
 
 	query := star.GetUserStarsQuery{
 		UserID: c.SignedInUser.UserID,
 	}
 
-	starredDashboardResult, err := srv.starService.GetByUser(c.Req.Context(), &query)
+	starredDashboardResult, err := s.starService.GetByUser(c.Req.Context(), &query)
 	if err != nil {
 		return nil, err
 	}
@@ -327,7 +326,7 @@ func (srv *ServiceImpl) buildStarredItemsNavLinks(c *models.ReqContext, prefs *p
 			Id:    dashboardId,
 			OrgId: c.OrgID,
 		}
-		err := srv.dashboardService.GetDashboard(c.Req.Context(), query)
+		err := s.dashboardService.GetDashboard(c.Req.Context(), query)
 		if err == nil {
 			starredDashboards = append(starredDashboards, query.Result)
 		}
@@ -349,43 +348,43 @@ func (srv *ServiceImpl) buildStarredItemsNavLinks(c *models.ReqContext, prefs *p
 	return starredItemsChildNavs, nil
 }
 
-func (hs *ServiceImpl) buildDashboardNavLinks(c *models.ReqContext, hasEditPerm bool) []*dtos.NavLink {
-	hasAccess := ac.HasAccess(hs.accessControl, c)
+func (s *ServiceImpl) buildDashboardNavLinks(c *models.ReqContext, hasEditPerm bool) []*dtos.NavLink {
+	hasAccess := ac.HasAccess(s.accessControl, c)
 	hasEditPermInAnyFolder := func(c *models.ReqContext) bool {
 		return hasEditPerm
 	}
 
 	dashboardChildNavs := []*dtos.NavLink{}
-	if !hs.features.IsEnabled(featuremgmt.FlagTopnav) {
+	if !s.features.IsEnabled(featuremgmt.FlagTopnav) {
 		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
-			Text: "Browse", Id: "dashboards/browse", Url: hs.cfg.AppSubURL + "/dashboards", Icon: "sitemap",
+			Text: "Browse", Id: "dashboards/browse", Url: s.cfg.AppSubURL + "/dashboards", Icon: "sitemap",
 		})
 	}
 	dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
-		Text: "Playlists", Id: "dashboards/playlists", Url: hs.cfg.AppSubURL + "/playlists", Icon: "presentation-play",
+		Text: "Playlists", Id: "dashboards/playlists", Url: s.cfg.AppSubURL + "/playlists", Icon: "presentation-play",
 	})
 
 	if c.IsSignedIn {
 		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
 			Text: "Snapshots",
 			Id:   "dashboards/snapshots",
-			Url:  hs.cfg.AppSubURL + "/dashboard/snapshots",
+			Url:  s.cfg.AppSubURL + "/dashboard/snapshots",
 			Icon: "camera",
 		})
 
 		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
 			Text: "Library panels",
 			Id:   "dashboards/library-panels",
-			Url:  hs.cfg.AppSubURL + "/library-panels",
+			Url:  s.cfg.AppSubURL + "/library-panels",
 			Icon: "library-panel",
 		})
 	}
 
-	if hs.features.IsEnabled(featuremgmt.FlagScenes) {
+	if s.features.IsEnabled(featuremgmt.FlagScenes) {
 		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
 			Text: "Scenes",
 			Id:   "scenes",
-			Url:  hs.cfg.AppSubURL + "/scenes",
+			Url:  s.cfg.AppSubURL + "/scenes",
 			Icon: "apps",
 		})
 	}
@@ -397,36 +396,36 @@ func (hs *ServiceImpl) buildDashboardNavLinks(c *models.ReqContext, hasEditPerm 
 
 		if hasAccess(hasEditPermInAnyFolder, ac.EvalPermission(dashboards.ActionDashboardsCreate)) {
 			dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
-				Text: "New dashboard", Icon: "plus", Url: hs.cfg.AppSubURL + "/dashboard/new", HideFromTabs: true, Id: "dashboards/new", ShowIconInNavbar: true,
+				Text: "New dashboard", Icon: "plus", Url: s.cfg.AppSubURL + "/dashboard/new", HideFromTabs: true, Id: "dashboards/new", ShowIconInNavbar: true,
 			})
 		}
 
 		if hasAccess(ac.ReqOrgAdminOrEditor, ac.EvalPermission(dashboards.ActionFoldersCreate)) {
 			dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
 				Text: "New folder", SubTitle: "Create a new folder to organize your dashboards", Id: "dashboards/folder/new",
-				Icon: "plus", Url: hs.cfg.AppSubURL + "/dashboards/folder/new", HideFromTabs: true, ShowIconInNavbar: true,
+				Icon: "plus", Url: s.cfg.AppSubURL + "/dashboards/folder/new", HideFromTabs: true, ShowIconInNavbar: true,
 			})
 		}
 
 		if hasAccess(hasEditPermInAnyFolder, ac.EvalPermission(dashboards.ActionDashboardsCreate)) {
 			dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
 				Text: "Import", SubTitle: "Import dashboard from file or Grafana.com", Id: "dashboards/import", Icon: "plus",
-				Url: hs.cfg.AppSubURL + "/dashboard/import", HideFromTabs: true, ShowIconInNavbar: true,
+				Url: s.cfg.AppSubURL + "/dashboard/import", HideFromTabs: true, ShowIconInNavbar: true,
 			})
 		}
 	}
 	return dashboardChildNavs
 }
 
-func (hs *ServiceImpl) buildLegacyAlertNavLinks(c *models.ReqContext) []*dtos.NavLink {
+func (s *ServiceImpl) buildLegacyAlertNavLinks(c *models.ReqContext) []*dtos.NavLink {
 	var alertChildNavs []*dtos.NavLink
 	alertChildNavs = append(alertChildNavs, &dtos.NavLink{
-		Text: "Alert rules", Id: "alert-list", Url: hs.cfg.AppSubURL + "/alerting/list", Icon: "list-ul",
+		Text: "Alert rules", Id: "alert-list", Url: s.cfg.AppSubURL + "/alerting/list", Icon: "list-ul",
 	})
 
 	if c.HasRole(org.RoleEditor) {
 		alertChildNavs = append(alertChildNavs, &dtos.NavLink{
-			Text: "Notification channels", Id: "channels", Url: hs.cfg.AppSubURL + "/alerting/notifications",
+			Text: "Notification channels", Id: "channels", Url: s.cfg.AppSubURL + "/alerting/notifications",
 			Icon: "comment-alt-share",
 		})
 	}
@@ -441,41 +440,41 @@ func (hs *ServiceImpl) buildLegacyAlertNavLinks(c *models.ReqContext) []*dtos.Na
 		SortWeight: dtos.WeightAlerting,
 	}
 
-	if hs.features.IsEnabled(featuremgmt.FlagTopnav) {
-		alertNav.Url = hs.cfg.AppSubURL + "/alerting"
+	if s.features.IsEnabled(featuremgmt.FlagTopnav) {
+		alertNav.Url = s.cfg.AppSubURL + "/alerting"
 	} else {
-		alertNav.Url = hs.cfg.AppSubURL + "/alerting/list"
+		alertNav.Url = s.cfg.AppSubURL + "/alerting/list"
 	}
 
 	return []*dtos.NavLink{&alertNav}
 }
 
-func (hs *ServiceImpl) buildAlertNavLinks(c *models.ReqContext, hasEditPerm bool) []*dtos.NavLink {
-	hasAccess := ac.HasAccess(hs.accessControl, c)
+func (s *ServiceImpl) buildAlertNavLinks(c *models.ReqContext, hasEditPerm bool) []*dtos.NavLink {
+	hasAccess := ac.HasAccess(s.accessControl, c)
 	var alertChildNavs []*dtos.NavLink
 
 	if hasAccess(ac.ReqViewer, ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead), ac.EvalPermission(ac.ActionAlertingRuleExternalRead))) {
 		alertChildNavs = append(alertChildNavs, &dtos.NavLink{
-			Text: "Alert rules", Id: "alert-list", Url: hs.cfg.AppSubURL + "/alerting/list", Icon: "list-ul",
+			Text: "Alert rules", Id: "alert-list", Url: s.cfg.AppSubURL + "/alerting/list", Icon: "list-ul",
 		})
 	}
 
 	if hasAccess(ac.ReqOrgAdminOrEditor, ac.EvalAny(ac.EvalPermission(ac.ActionAlertingNotificationsRead), ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead))) {
 		alertChildNavs = append(alertChildNavs, &dtos.NavLink{
-			Text: "Contact points", Id: "receivers", Url: hs.cfg.AppSubURL + "/alerting/notifications",
+			Text: "Contact points", Id: "receivers", Url: s.cfg.AppSubURL + "/alerting/notifications",
 			Icon: "comment-alt-share", SubTitle: "Manage the settings of your contact points",
 		})
-		alertChildNavs = append(alertChildNavs, &dtos.NavLink{Text: "Notification policies", Id: "am-routes", Url: hs.cfg.AppSubURL + "/alerting/routes", Icon: "sitemap"})
+		alertChildNavs = append(alertChildNavs, &dtos.NavLink{Text: "Notification policies", Id: "am-routes", Url: s.cfg.AppSubURL + "/alerting/routes", Icon: "sitemap"})
 	}
 
 	if hasAccess(ac.ReqViewer, ac.EvalAny(ac.EvalPermission(ac.ActionAlertingInstanceRead), ac.EvalPermission(ac.ActionAlertingInstancesExternalRead))) {
-		alertChildNavs = append(alertChildNavs, &dtos.NavLink{Text: "Silences", Id: "silences", Url: hs.cfg.AppSubURL + "/alerting/silences", Icon: "bell-slash"})
-		alertChildNavs = append(alertChildNavs, &dtos.NavLink{Text: "Alert groups", Id: "groups", Url: hs.cfg.AppSubURL + "/alerting/groups", Icon: "layer-group"})
+		alertChildNavs = append(alertChildNavs, &dtos.NavLink{Text: "Silences", Id: "silences", Url: s.cfg.AppSubURL + "/alerting/silences", Icon: "bell-slash"})
+		alertChildNavs = append(alertChildNavs, &dtos.NavLink{Text: "Alert groups", Id: "groups", Url: s.cfg.AppSubURL + "/alerting/groups", Icon: "layer-group"})
 	}
 
 	if c.OrgRole == org.RoleAdmin {
 		alertChildNavs = append(alertChildNavs, &dtos.NavLink{
-			Text: "Admin", Id: "alerting-admin", Url: hs.cfg.AppSubURL + "/alerting/admin",
+			Text: "Admin", Id: "alerting-admin", Url: s.cfg.AppSubURL + "/alerting/admin",
 			Icon: "cog",
 		})
 	}
@@ -489,7 +488,7 @@ func (hs *ServiceImpl) buildAlertNavLinks(c *models.ReqContext, hasEditPerm bool
 
 		alertChildNavs = append(alertChildNavs, &dtos.NavLink{
 			Text: "New alert rule", SubTitle: "Create an alert rule", Id: "alert",
-			Icon: "plus", Url: hs.cfg.AppSubURL + "/alerting/new", HideFromTabs: true, ShowIconInNavbar: true,
+			Icon: "plus", Url: s.cfg.AppSubURL + "/alerting/new", HideFromTabs: true, ShowIconInNavbar: true,
 		})
 	}
 
@@ -504,10 +503,10 @@ func (hs *ServiceImpl) buildAlertNavLinks(c *models.ReqContext, hasEditPerm bool
 			SortWeight: dtos.WeightAlerting,
 		}
 
-		if hs.features.IsEnabled(featuremgmt.FlagTopnav) {
-			alertNav.Url = hs.cfg.AppSubURL + "/alerting"
+		if s.features.IsEnabled(featuremgmt.FlagTopnav) {
+			alertNav.Url = s.cfg.AppSubURL + "/alerting"
 		} else {
-			alertNav.Url = hs.cfg.AppSubURL + "/alerting/list"
+			alertNav.Url = s.cfg.AppSubURL + "/alerting/list"
 		}
 
 		return []*dtos.NavLink{&alertNav}
@@ -515,12 +514,12 @@ func (hs *ServiceImpl) buildAlertNavLinks(c *models.ReqContext, hasEditPerm bool
 	return nil
 }
 
-func (hs *ServiceImpl) buildDataConnectionsNavLink(c *models.ReqContext) *dtos.NavLink {
+func (s *ServiceImpl) buildDataConnectionsNavLink(c *models.ReqContext) *dtos.NavLink {
 	var children []*dtos.NavLink
 	var navLink *dtos.NavLink
 
 	baseId := "data-connections"
-	baseUrl := hs.cfg.AppSubURL + "/" + baseId
+	baseUrl := s.cfg.AppSubURL + "/" + baseId
 
 	children = append(children, &dtos.NavLink{
 		Id:          baseId + "-datasources",
@@ -559,43 +558,43 @@ func (hs *ServiceImpl) buildDataConnectionsNavLink(c *models.ReqContext) *dtos.N
 	return navLink
 }
 
-func (hs *ServiceImpl) buildAdminNavLinks(c *models.ReqContext) []*dtos.NavLink {
-	hasAccess := ac.HasAccess(hs.accessControl, c)
-	hasGlobalAccess := ac.HasGlobalAccess(hs.accessControl, hs.accesscontrolService, c)
+func (s *ServiceImpl) buildAdminNavLinks(c *models.ReqContext) []*dtos.NavLink {
+	hasAccess := ac.HasAccess(s.accessControl, c)
+	hasGlobalAccess := ac.HasGlobalAccess(s.accessControl, s.accesscontrolService, c)
 	orgsAccessEvaluator := ac.EvalPermission(ac.ActionOrgsRead)
 	adminNavLinks := []*dtos.NavLink{}
 
 	if hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll)) {
 		adminNavLinks = append(adminNavLinks, &dtos.NavLink{
-			Text: "Users", Id: "global-users", Url: hs.cfg.AppSubURL + "/admin/users", Icon: "user",
+			Text: "Users", Id: "global-users", Url: s.cfg.AppSubURL + "/admin/users", Icon: "user",
 		})
 	}
 
 	if hasGlobalAccess(ac.ReqGrafanaAdmin, orgsAccessEvaluator) {
 		adminNavLinks = append(adminNavLinks, &dtos.NavLink{
-			Text: "Orgs", Id: "global-orgs", Url: hs.cfg.AppSubURL + "/admin/orgs", Icon: "building",
+			Text: "Orgs", Id: "global-orgs", Url: s.cfg.AppSubURL + "/admin/orgs", Icon: "building",
 		})
 	}
 
 	if hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionSettingsRead)) {
 		adminNavLinks = append(adminNavLinks, &dtos.NavLink{
-			Text: "Settings", Id: "server-settings", Url: hs.cfg.AppSubURL + "/admin/settings", Icon: "sliders-v-alt",
+			Text: "Settings", Id: "server-settings", Url: s.cfg.AppSubURL + "/admin/settings", Icon: "sliders-v-alt",
 		})
 	}
 
-	if hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionSettingsRead)) && hs.features.IsEnabled(featuremgmt.FlagStorage) {
+	if hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionSettingsRead)) && s.features.IsEnabled(featuremgmt.FlagStorage) {
 		adminNavLinks = append(adminNavLinks, &dtos.NavLink{
 			Text:        "Storage",
 			Id:          "storage",
 			Description: "Manage file storage",
 			Icon:        "cube",
-			Url:         hs.cfg.AppSubURL + "/admin/storage",
+			Url:         s.cfg.AppSubURL + "/admin/storage",
 		})
 	}
 
-	if hs.cfg.LDAPEnabled && hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionLDAPStatusRead)) {
+	if s.cfg.LDAPEnabled && hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionLDAPStatusRead)) {
 		adminNavLinks = append(adminNavLinks, &dtos.NavLink{
-			Text: "LDAP", Id: "ldap", Url: hs.cfg.AppSubURL + "/admin/ldap", Icon: "book",
+			Text: "LDAP", Id: "ldap", Url: s.cfg.AppSubURL + "/admin/ldap", Icon: "book",
 		})
 	}
 

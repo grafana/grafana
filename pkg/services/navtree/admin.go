@@ -12,27 +12,27 @@ import (
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 )
 
-func (hs *ServiceImpl) setupConfigNodes(c *models.ReqContext) ([]*dtos.NavLink, error) {
+func (s *ServiceImpl) setupConfigNodes(c *models.ReqContext) ([]*dtos.NavLink, error) {
 	var configNodes []*dtos.NavLink
 
-	hasAccess := ac.HasAccess(hs.accessControl, c)
+	hasAccess := ac.HasAccess(s.accessControl, c)
 	if hasAccess(ac.ReqOrgAdmin, datasources.ConfigurationPageAccess) {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "Data sources",
 			Icon:        "database",
 			Description: "Add and configure data sources",
 			Id:          "datasources",
-			Url:         hs.cfg.AppSubURL + "/datasources",
+			Url:         s.cfg.AppSubURL + "/datasources",
 		})
 	}
 
-	if hs.features.IsEnabled(featuremgmt.FlagCorrelations) && hasAccess(ac.ReqOrgAdmin, correlations.ConfigurationPageAccess) {
+	if s.features.IsEnabled(featuremgmt.FlagCorrelations) && hasAccess(ac.ReqOrgAdmin, correlations.ConfigurationPageAccess) {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "Correlations",
 			Icon:        "gf-glue",
 			Description: "Add and configure correlations",
 			Id:          "correlations",
-			Url:         hs.cfg.AppSubURL + "/datasources/correlations",
+			Url:         s.cfg.AppSubURL + "/datasources/correlations",
 		})
 	}
 
@@ -42,28 +42,28 @@ func (hs *ServiceImpl) setupConfigNodes(c *models.ReqContext) ([]*dtos.NavLink, 
 			Id:          "users",
 			Description: "Manage org members",
 			Icon:        "user",
-			Url:         hs.cfg.AppSubURL + "/org/users",
+			Url:         s.cfg.AppSubURL + "/org/users",
 		})
 	}
 
-	if hasAccess(hs.ReqCanAdminTeams, ac.TeamsAccessEvaluator) {
+	if hasAccess(s.ReqCanAdminTeams, ac.TeamsAccessEvaluator) {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "Teams",
 			Id:          "teams",
 			Description: "Manage org groups",
 			Icon:        "users-alt",
-			Url:         hs.cfg.AppSubURL + "/org/teams",
+			Url:         s.cfg.AppSubURL + "/org/teams",
 		})
 	}
 
 	// FIXME: while we don't have a permissions for listing plugins the legacy check has to stay as a default
-	if plugins.ReqCanAdminPlugins(hs.cfg)(c) || hasAccess(plugins.ReqCanAdminPlugins(hs.cfg), plugins.AdminAccessEvaluator) {
+	if plugins.ReqCanAdminPlugins(s.cfg)(c) || hasAccess(plugins.ReqCanAdminPlugins(s.cfg), plugins.AdminAccessEvaluator) {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "Plugins",
 			Id:          "plugins",
 			Description: "View and configure plugins",
 			Icon:        "plug",
-			Url:         hs.cfg.AppSubURL + "/plugins",
+			Url:         s.cfg.AppSubURL + "/plugins",
 		})
 	}
 
@@ -73,12 +73,12 @@ func (hs *ServiceImpl) setupConfigNodes(c *models.ReqContext) ([]*dtos.NavLink, 
 			Id:          "org-settings",
 			Description: "Organization preferences",
 			Icon:        "sliders-v-alt",
-			Url:         hs.cfg.AppSubURL + "/org",
+			Url:         s.cfg.AppSubURL + "/org",
 		})
 	}
 
-	hideApiKeys, _, _ := hs.kvStore.Get(c.Req.Context(), c.OrgID, "serviceaccounts", "hideApiKeys")
-	apiKeys, err := hs.apiKeyService.GetAllAPIKeys(c.Req.Context(), c.OrgID)
+	hideApiKeys, _, _ := s.kvStore.Get(c.Req.Context(), c.OrgID, "serviceaccounts", "hideApiKeys")
+	apiKeys, err := s.apiKeyService.GetAllAPIKeys(c.Req.Context(), c.OrgID)
 	if err != nil {
 		return nil, err
 	}
@@ -90,17 +90,17 @@ func (hs *ServiceImpl) setupConfigNodes(c *models.ReqContext) ([]*dtos.NavLink, 
 			Id:          "apikeys",
 			Description: "Create & manage API keys",
 			Icon:        "key-skeleton-alt",
-			Url:         hs.cfg.AppSubURL + "/org/apikeys",
+			Url:         s.cfg.AppSubURL + "/org/apikeys",
 		})
 	}
 
-	if enableServiceAccount(hs, c) {
+	if enableServiceAccount(s, c) {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "Service accounts",
 			Id:          "serviceaccounts",
 			Description: "Manage service accounts",
 			Icon:        "gf-service-account",
-			Url:         hs.cfg.AppSubURL + "/org/serviceaccounts",
+			Url:         s.cfg.AppSubURL + "/org/serviceaccounts",
 		})
 	}
 	return configNodes, nil
