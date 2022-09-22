@@ -106,7 +106,7 @@ func (hs *HTTPServer) addAppLinks(navTree []*dtos.NavLink, c *models.ReqContext)
 			SortWeight: dtos.WeightPlugin,
 		}
 
-		if hs.Features.IsEnabled(featuremgmt.FlagTopnav) {
+		if topNavEnabled {
 			appLink.Url = path.Join(hs.Cfg.AppSubURL, "a", plugin.ID)
 		} else {
 			appLink.Url = path.Join(hs.Cfg.AppSubURL, plugin.DefaultNavURL)
@@ -134,7 +134,14 @@ func (hs *HTTPServer) addAppLinks(navTree []*dtos.NavLink, c *models.ReqContext)
 					}
 				}
 				link.Icon = include.Icon
-				appLink.Children = append(appLink.Children, link)
+				if sectionForPageID, ok := hs.Cfg.NavigationNavIdOverrides[include.Path]; ok {
+					if sectionForPage := navlinks.FindById(navTree, sectionForPageID); sectionForPage != nil {
+						link.Id = "standalone-plugin-page-" + include.Path
+						sectionForPage.Children = append(sectionForPage.Children, link)
+					}
+				} else {
+					appLink.Children = append(appLink.Children, link)
+				}
 			}
 
 			if include.Type == "dashboard" && include.AddToNav {
@@ -155,7 +162,7 @@ func (hs *HTTPServer) addAppLinks(navTree []*dtos.NavLink, c *models.ReqContext)
 				appLink.Children = []*dtos.NavLink{}
 			}
 
-			if navId, hasNavId := hs.Cfg.PluginAppNavIds[plugin.ID]; hasNavId && topNavEnabled {
+			if navId, hasNavId := hs.Cfg.NavigationAppNavIds[plugin.ID]; hasNavId && topNavEnabled {
 				if navNode := navlinks.FindById(navTree, navId); navNode != nil {
 					navNode.Children = append(navNode.Children, appLink)
 				} else {
@@ -165,7 +172,7 @@ func (hs *HTTPServer) addAppLinks(navTree []*dtos.NavLink, c *models.ReqContext)
 							Text:        "Monitoring",
 							Id:          "monitoring",
 							Description: "Monitoring and infrastructure apps",
-							Icon:        "monitor",
+							Icon:        "heart-rate",
 							Section:     dtos.NavSectionCore,
 							Children:    []*dtos.NavLink{appLink},
 							Url:         hs.Cfg.AppSubURL + "/monitoring",

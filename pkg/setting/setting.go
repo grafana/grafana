@@ -223,12 +223,13 @@ type Cfg struct {
 	Packaging string
 
 	// Paths
-	HomePath           string
-	ProvisioningPath   string
-	DataPath           string
-	LogsPath           string
-	PluginsPath        string
-	BundledPluginsPath string
+	HomePath              string
+	ProvisioningPath      string
+	DataPath              string
+	LogsPath              string
+	PluginsPath           string
+	BundledPluginsPath    string
+	EnterpriseLicensePath string
 
 	// SMTP email settings
 	Smtp SmtpSettings
@@ -271,11 +272,13 @@ type Cfg struct {
 	PluginCatalogHiddenPlugins       []string
 	PluginAdminEnabled               bool
 	PluginAdminExternalManageEnabled bool
-	PluginAppNavIds                  map[string]string
-	PluginPageNavIdOverrides         []string
 
-	DisableSanitizeHtml   bool
-	EnterpriseLicensePath string
+	// Navigation
+	NavigationAppNavIds      map[string]string
+	NavigationNavIdOverrides map[string]string
+
+	// Panels
+	DisableSanitizeHtml bool
 
 	// Metrics
 	MetricsEndpointEnabled           bool

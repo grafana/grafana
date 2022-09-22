@@ -12,18 +12,18 @@ func TestNavigationSettingDefaults(t *testing.T) {
 	err := cfg.readNavigationSettings()
 	require.NoError(t, err)
 
-	require.Equal(t, "alerting", cfg.PluginAppNavIds["grafana-k8s-app"])
+	require.Equal(t, "alerting", cfg.NavigationAppNavIds["grafana-k8s-app"])
 }
 
 func TestNavigationSettings(t *testing.T) {
 	cfg := NewCfg()
-	sec, _ := cfg.Raw.NewSection("navigation")
-	_, _ = sec.NewKey("app_nav_id_grafana-k8s-app", "dashboards")
-	_, _ = sec.NewKey("app_nav_id_other-app", "admin")
+	sec, _ := cfg.Raw.NewSection("navigation.apps")
+	_, _ = sec.NewKey("nav_id_grafana-k8s-app", "dashboards")
+	_, _ = sec.NewKey("nav_id_other-app", "admin")
 
 	err := cfg.readNavigationSettings()
 	require.NoError(t, err)
 
-	require.Equal(t, "dashboards", cfg.PluginAppNavIds["grafana-k8s-app"])
-	require.Equal(t, "admin", cfg.PluginAppNavIds["other-app"])
+	require.Equal(t, "dashboards", cfg.NavigationAppNavIds["grafana-k8s-app"])
+	require.Equal(t, "admin", cfg.NavigationAppNavIds["other-app"])
 }

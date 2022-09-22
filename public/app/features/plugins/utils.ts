@@ -43,17 +43,7 @@ export function buildPluginSectionNav(
     return pluginNav;
   }
 
-  const navTreeNodeForPlugin = navIndex[`plugin-page-${pluginId}`];
-  if (!navTreeNodeForPlugin) {
-    throw new Error('Plugin not found in navigation tree');
-  }
-
-  if (!navTreeNodeForPlugin.parentItem) {
-    throw new Error('Could not find plugin section');
-  }
-
-  const pluginSection = navTreeNodeForPlugin.parentItem;
-  const section = { ...pluginSection };
+  const section = { ...getPluginSection(location, navIndex, pluginId) };
 
   // If we have plugin nav don't set active page in section as it will cause double breadcrumbs
   const currentUrl = config.appSubUrl + location.pathname + location.search;
@@ -80,4 +70,26 @@ export function buildPluginSectionNav(
   });
 
   return { main: section, node: activePage ?? section };
+}
+
+// TODO make work for sub pages
+export function getPluginSection(location: HistoryLocation, navIndex: NavIndex, pluginId: string): NavModelItem {
+  // First check if this page exist in navIndex using path, some plugin pages are not under their own section
+  const byPath = navIndex[`standalone-plugin-page-${location.pathname}`];
+  if (byPath) {
+    const parent = byPath.parentItem!;
+    // in case the standalone page is in nested section
+    return parent.parentItem ?? parent;
+  }
+
+  const navTreeNodeForPlugin = navIndex[`plugin-page-${pluginId}`];
+  if (!navTreeNodeForPlugin) {
+    throw new Error('Plugin not found in navigation tree');
+  }
+
+  if (!navTreeNodeForPlugin.parentItem) {
+    throw new Error('Could not find plugin section');
+  }
+
+  return navTreeNodeForPlugin.parentItem;
 }
