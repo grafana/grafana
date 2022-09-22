@@ -4,7 +4,7 @@ import flatten from 'app/core/utils/flatten';
 import { ElasticsearchQuery } from '../types';
 
 import { ElasticResponse } from './ElasticResponse';
-import { highlightTags } from './query_def';
+import { highlightTags } from './queryDef';
 
 describe('ElasticResponse', () => {
   let targets: ElasticsearchQuery[];

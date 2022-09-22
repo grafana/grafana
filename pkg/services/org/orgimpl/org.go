@@ -243,3 +243,45 @@ func (s *Service) Create(ctx context.Context, cmd *org.CreateOrgCommand) (*org.O
 		Updated:  q.Result.Updated,
 	}, nil
 }
+
+// TODO: refactor service to call store CRUD method
+func (s *Service) UpdateAddress(ctx context.Context, cmd *org.UpdateOrgAddressCommand) error {
+	return s.store.UpdateAddress(ctx, cmd)
+}
+
+// TODO: refactor service to call store CRUD method
+func (s *Service) Delete(ctx context.Context, cmd *org.DeleteOrgCommand) error {
+	return s.store.Delete(ctx, cmd)
+}
+
+func (s *Service) GetOrCreate(ctx context.Context, orgName string) (int64, error) {
+	var orga *org.Org
+	var err error
+	if s.cfg.AutoAssignOrg {
+		orga, err = s.store.Get(ctx, int64(s.cfg.AutoAssignOrgId))
+		if err != nil {
+			return 0, err
+		}
+
+		if s.cfg.AutoAssignOrgId != 1 {
+			s.log.Error("Could not create user: organization ID does not exist", "orgID",
+				s.cfg.AutoAssignOrgId)
+			return 0, fmt.Errorf("could not create user: organization ID %d does not exist",
+				s.cfg.AutoAssignOrgId)
+		}
+
+		orga.Name = MainOrgName
+		orga.ID = int64(s.cfg.AutoAssignOrgId)
+	} else {
+		orga.Name = orgName
+	}
+
+	orga.Created = time.Now()
+	orga.Updated = time.Now()
+
+	_, err = s.store.Insert(ctx, orga)
+	if err != nil {
+		return 0, err
+	}
+	return orga.ID, nil
+}

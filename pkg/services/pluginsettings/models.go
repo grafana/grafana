@@ -16,6 +16,14 @@ type DTO struct {
 	Updated        time.Time
 }
 
+type InfoDTO struct {
+	PluginID      string
+	OrgID         int64
+	Enabled       bool
+	Pinned        bool
+	PluginVersion string
+}
+
 type UpdateArgs struct {
 	Enabled                 bool
 	Pinned                  bool

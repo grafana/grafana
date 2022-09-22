@@ -1,4 +1,4 @@
-import { isPipelineAgg, isPipelineAggWithMultipleBucketPaths } from '../query_def';
+import { isPipelineAgg, isPipelineAggWithMultipleBucketPaths } from './queryDef';
 
 describe('ElasticQueryDef', () => {
   describe('isPipelineMetric', () => {
