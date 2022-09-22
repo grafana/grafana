@@ -82,9 +82,7 @@ export default function PluginDetails({ match, queryParams }: Props): JSX.Elemen
       url: tab.href,
       active: tab.id === pageId,
     })),
-    headerExtra: () => (
-      <PluginDetailsHeader currentUrl={`${url}?page=${pageId}`} parentUrl={parentUrl} plugin={plugin} />
-    ),
+    headerExtra: () => <PluginDetailsHeader plugin={plugin} />,
   };
 
   return (

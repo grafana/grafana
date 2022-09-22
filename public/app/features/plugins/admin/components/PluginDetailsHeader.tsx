@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -14,12 +14,10 @@ import { PluginDetailsHeaderDependencies } from './PluginDetailsHeaderDependenci
 import { PluginDetailsHeaderSignature } from './PluginDetailsHeaderSignature';
 
 type Props = {
-  currentUrl: string;
-  parentUrl: string;
   plugin: CatalogPlugin;
 };
 
-export function PluginDetailsHeader({ plugin, currentUrl, parentUrl }: Props): React.ReactElement {
+export function PluginDetailsHeader({ plugin }: Props): React.ReactElement {
   const styles = useStyles2(getStyles);
   const latestCompatibleVersion = getLatestCompatibleVersion(plugin.details?.versions);
   const version = plugin.installedVersion || latestCompatibleVersion?.version;
@@ -55,11 +53,7 @@ export function PluginDetailsHeader({ plugin, currentUrl, parentUrl }: Props): R
 
         {plugin.isDisabled && <PluginDisabledBadge error={plugin.error!} />}
 
-        <PluginDetailsHeaderDependencies
-          plugin={plugin}
-          latestCompatibleVersion={latestCompatibleVersion}
-          className={cx(styles.headerInformationRow)}
-        />
+        <PluginDetailsHeaderDependencies plugin={plugin} latestCompatibleVersion={latestCompatibleVersion} />
       </div>
 
       <HorizontalGroup height="auto">
