@@ -128,6 +128,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
             panel_type_changed: panel!.type !== updates.type,
             panel_id_changed: panel!.id !== updates.id,
             panel_grid_pos_changed: !isEqual(panel!.gridPos, updates.gridPos),
+            panel_targets_changed: !isEqual(panel!.targets, updates.targets),
           });
 
           panel!.restoreModel(updates);
