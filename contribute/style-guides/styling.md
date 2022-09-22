@@ -12,15 +12,7 @@ For styling components, use [Emotion's `css` function](https://emotion.sh/docs/e
 import React from 'react';
 import { css } from '@emotion/css';
 
-const ComponentA = () => (
-  <div
-    className={css`
-      background: red;
-    `}
-  >
-    As red as you can get
-  </div>
-);
+const ComponentA = () => <div className={css({ background: 'red' })}>As red as you can get</div>;
 ```
 
 ### Styling with theme
@@ -42,9 +34,11 @@ const Foo: FC<FooProps> = () => {
   return <div className={styles}>...</div>;
 };
 
-const getStyles = (theme: GrafanaTheme) => css`
-  padding: ${theme.spacing.md};
-`;
+const getStyles = (theme: GrafanaTheme2) => ({
+  fooWrapper: css({
+    padding: theme.spacing(1, 2), // will result in 8px 16px padding
+  }),
+});
 ```
 
 ### Styling complex components
@@ -55,7 +49,7 @@ Let's say you need to style a component that has a different background dependin
 
 ```tsx
 import React from 'react';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { selectThemeVariant, stylesFactory, useTheme } from '@grafana/ui';
 
@@ -65,10 +59,10 @@ interface ComponentAProps {
 
 const ComponentA: React.FC<ComponentAProps> = ({ isActive }) => {
   const theme = useTheme();
-  const styles = getStyles(theme, isActive);
+  const styles = getStyles(theme);
 
   return (
-    <div className={styles.wrapper}>
+    <div className={cx(styles.wrapper, isActive && styles.active)}>
       As red as you can get
       <i className={styles.icon} />
     </div>
@@ -76,42 +70,20 @@ const ComponentA: React.FC<ComponentAProps> = ({ isActive }) => {
 };
 
 // Mind, that you can pass multiple arguments, theme included
-const getStyles = stylesFactory((theme: GrafanaTheme, isActive: boolean) => {
-  const backgroundColor = isActive ? theme.colors.red : theme.colors.blue;
-
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
-    wrapper: css`
-      background: ${backgroundColor};
-    `,
-    icon: css`
-      font-size: ${theme.typography.size.sm};
-    `,
+    wrapper: css({
+      background: theme.colors.background.secondary;
+    }),
+    active: css({
+      background: theme.colors.primary.main,
+      text: theme.colors.primary.contrastText,
+    },
+    icon: css({
+      fontSize: theme.typography.bodySmall.fontSize;
+    })
   };
 });
 ```
 
 For more information about themes at Grafana please see the [themes guide](./themes.md).
-
-### Composing class names
-
-For class composition, use [Emotion's `cx` function](https://emotion.sh/docs/emotion#cx).
-
-```tsx
-import React from 'react';
-import { css, cx } from '@emotion/css';
-
-interface Props {
-  className?: string;
-}
-
-function ComponentA({ className }: Props) {
-  const finalClassName = cx(
-    className,
-    css`
-      background: red;
-    `
-  );
-
-  return <div className={finalClassName}>As red as you can ge</div>;
-}
-```
