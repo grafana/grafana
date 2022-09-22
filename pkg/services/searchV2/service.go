@@ -77,10 +77,11 @@ func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore s
 			ac:  ac,
 		},
 		dashboardIndex: newSearchIndex(
-			newSQLDashboardLoader(sql),
+			newSQLDashboardLoader(sql, cfg.Search),
 			entityEventStore,
 			extender.GetDocumentExtender(),
 			newFolderIDLookup(sql),
+			cfg.Search,
 		),
 		logger:    log.New("searchV2"),
 		extender:  extender,
