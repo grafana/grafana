@@ -144,12 +144,12 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
   };
 
   render() {
-    const { theme, split, exploreId, initialized } = this.props;
+    const { theme, split, exploreId, initialized, isFromCompactUrl } = this.props;
     const styles = getStyles(theme);
     const exploreClass = cx(styles.explore, split && styles.exploreSplit);
     return (
       <div className={exploreClass} ref={this.getRef} data-testid={selectors.pages.Explore.General.container}>
-        {initialized && <Explore exploreId={exploreId} />}
+        {initialized && <Explore exploreId={exploreId} isFromCompactUrl={isFromCompactUrl} />}
       </div>
     );
   }
@@ -175,6 +175,7 @@ function mapStateToProps(state: StoreState, props: OwnProps) {
     initialRange,
     panelsState,
     orgId: state.user.orgId,
+    isFromCompactUrl: urlState.isFromCompactUrl || false,
   };
 }
 

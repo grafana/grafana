@@ -8,9 +8,18 @@ import { Unsubscribable } from 'rxjs';
 
 import { AbsoluteTimeRange, DataQuery, GrafanaTheme2, LoadingState, QueryFixAction, RawTimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Collapse, CustomScrollbar, ErrorBoundaryAlert, Themeable2, withTheme2, PanelContainer } from '@grafana/ui';
+import {
+  Collapse,
+  CustomScrollbar,
+  ErrorBoundaryAlert,
+  Themeable2,
+  withTheme2,
+  PanelContainer,
+  Alert,
+} from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, FilterItem } from '@grafana/ui/src/components/Table/types';
 import appEvents from 'app/core/app_events';
+import { FadeIn } from 'app/core/components/Animations/FadeIn';
 import { supportedFeatures } from 'app/core/history/richHistoryStorageProvider';
 import { getNodeGraphDataFrames } from 'app/plugins/panel/nodeGraph/utils';
 import { StoreState } from 'app/types';
@@ -70,6 +79,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 
 export interface ExploreProps extends Themeable2 {
   exploreId: ExploreId;
+  isFromCompactUrl: boolean;
   theme: GrafanaTheme2;
 }
 
@@ -227,6 +237,17 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     return <NoData />;
   }
 
+  renderCompactUrlWarning() {
+    return (
+      <FadeIn in={true} duration={100}>
+        <Alert severity="warning" title="Compact URL Deprecation Notice" topSpacing={2}>
+          The URL that brought you here was a compact URL - this format will soon be deprecated. Please replace the URL
+          previously saved with the URL available now.
+        </Alert>
+      </FadeIn>
+    );
+  }
+
   renderGraphPanel(width: number) {
     const { graphResult, absoluteRange, timeZone, splitOpen, queryResponse, loading, theme, graphStyle } = this.props;
     const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
@@ -329,6 +350,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       showTrace,
       showNodeGraph,
       timeZone,
+      isFromCompactUrl,
     } = this.props;
     const { openDrawer } = this.state;
     const styles = getStyles(theme);
@@ -353,6 +375,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         scrollRefCallback={(scrollElement) => (this.scrollElement = scrollElement || undefined)}
       >
         <ExploreToolbar exploreId={exploreId} onChangeTime={this.onChangeTime} topOfViewRef={this.topOfViewRef} />
+        {isFromCompactUrl ? this.renderCompactUrlWarning() : null}
         {datasourceMissing ? this.renderEmptyState(styles.exploreContainer) : null}
         {datasourceInstance && (
           <div className={cx(styles.exploreContainer)}>
@@ -479,4 +502,7 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-export default compose(connector, withTheme2)(Explore) as React.ComponentType<{ exploreId: ExploreId }>;
+export default compose(connector, withTheme2)(Explore) as React.ComponentType<{
+  exploreId: ExploreId;
+  isFromCompactUrl: boolean;
+}>;
