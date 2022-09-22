@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -19,6 +20,7 @@ func createTestableServerLock(t *testing.T) *ServerLockService {
 
 	return &ServerLockService{
 		SQLStore: store,
+		tracer:   tracing.InitializeTracerForTest(),
 		log:      log.New("test-logger"),
 	}
 }
