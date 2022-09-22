@@ -272,7 +272,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 }
 ```
 
-#### JSON Body Schema
+#### Config JSON Body Schema
 
 | Field name         | Data type | Description                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | ------------------ | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -291,13 +291,13 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 | layout             | string    | Can be `grid` or `simple`.                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | enableDashboardUrl | bool      | Adds a dashbaord url to the bottom of the report email.                                                                                                                                                                                                                                                                                                                                                                                           |
 | formats            | []string  | Specified what kind of attachment to generate for the report - `csv`, `pdf`, `image`. `pdf` is the default one.                                                                                                                                                                                                                                                                                                                                   |
-| dashboards         | []object  | Dashboards to generate a report for.<br/> [Dashboard object schema](#dashboard-schema).                                                                                                                                                                                                                                                                                                                                                           |
+| dashboards         | []object  | Dashboards to generate a report for.<br/> See "Report Dashboard Schema" section below.                                                                                                                                                                                                                                                                                                                                                            |
 
-#### Report dashboard Schema
+#### Report Dashboard Schema
 
 | Field name                     | Data type | Description                                                                                                                                                   |
 | ------------------------------ | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| dashboard.uid                  | string    | Dashboard UID.                                                                                                                                                |
+| dashboard.uid                  | string    | Dashboard [UID](../dashboard#identifier-id-vs-unique-identifier-uid).                                                                                         |
 | timeRange.from                 | string    | Dashboard time range from.                                                                                                                                    |
 | timeRange.to                   | string    | Dashboard time range to.                                                                                                                                      |
 | reportVariables.<variableName> | string    | Key-value pairs containing the template variables for this report, in JSON format. If empty, the template variables from the report's dashboard will be used. |
@@ -330,13 +330,13 @@ Content-Length: 35
 
 See note in the [introduction]({{< ref "#reporting-api" >}}) for an explanation.
 
-| Action        | Scope |
-| ------------- | ----- |
-| reports:write | n/a   |
+| Action        | Scope                                                     |
+| ------------- | --------------------------------------------------------- |
+| reports:write | reports:\*</br>reports:id:\*</br>reports:1(single report) |
 
 ### Example request
 
-See [JSON body schema]({{< ref "#create-a-report" >}}) for fields description.
+See [JSON body schema]({{< ref "#config-json-body-schema" >}}) for fields description.
 
 ```http
 GET /api/reports HTTP/1.1
@@ -418,9 +418,9 @@ Content-Length: 28
 
 See note in the [introduction]({{< ref "#reporting-api" >}}) for an explanation.
 
-| Action         | Scope |
-| -------------- | ----- |
-| reports:delete |       |
+| Action         | Scope                                                     |
+| -------------- | --------------------------------------------------------- |
+| reports:delete | reports:\*</br>reports:id:\*</br>reports:1(single report) |
 
 ### Example request
 
@@ -452,10 +452,6 @@ Content-Length: 39
 
 ## Send a report
 
-> Only available in Grafana Enterprise v7.0+.
-
-> This API endpoint is experimental and may be deprecated in a future release. On deprecation, a migration strategy will be provided and the endpoint will remain functional until the next major release of Grafana.
-
 `POST /api/reports/email`
 
 Generate and send a report. This API waits for the report to be generated before returning. We recommend that you set the client's timeout to at least 60 seconds.
@@ -484,11 +480,11 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 #### JSON Body Schema
 
-| Field name          | Data type | Description                                                                                                                                              |
-| ------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| id                  | string    | ID of the report to send. It is the same as in the URL when editing a report, not to be confused with the ID of the dashboard. Required.                 |
-| emails              | string    | Comma-separated list of emails to which to send the report to. Overrides the emails from the report. Required if **useEmailsFromReport** is not present. |
-| useEmailsFromReport | boolean   | Send the report to the emails specified in the report. Required if **emails** is not present.                                                            |
+| Field name          | Data type | Description                                                                                                                                            |
+| ------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| id                  | string    | ID of the report to send. It is the same as in the URL when editing a report, not to be confused with the ID of the dashboard. Required.               |
+| emails              | string    | Comma-separated list of emails to which to send the report to. Overrides the emails from the report. Required if `useEmailsFromReport` is not present. |
+| useEmailsFromReport | boolean   | Send the report to the emails specified in the report. Required if `emails` is not present.                                                            |
 
 ### Example response
 
@@ -513,7 +509,7 @@ Content-Length: 29
 
 `GET /api/reports/settings`
 
-Returns reports branding settings. They are global and used across all the reports.
+Returns reports branding settings that are global and used across all the reports.
 
 #### Required permissions
 
@@ -593,13 +589,13 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 #### JSON Body Schema
 
-| Field name               | Data type | Description                                                                                                                                                                                                                                                                        |
-| ------------------------ | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| branding.reportLogoUrl   | string    | URL of an image used as a logo on every page of the report.                                                                                                                                                                                                                        |
-| branding.emailLogoUrl    | string    | URL of an image used as a logo in the email.                                                                                                                                                                                                                                       |
-| branding.emailFooterMode | string    | Can be `sent-by` or `none`.<br/>`sent-by` adds a "Sent by <branding.emailFooterText>" footer link to the email. Requires specifying values in `branding.emailFooterText` and `branding.emailFooterLink` fields.<br/>`none` suppresses adding a "Sent by" footer link to the email. |
-| branding.emailFooterText | string    | Text of a URL added to the email "Sent by" footer.                                                                                                                                                                                                                                 |
-| branding.emailFooterLink | string    | URL address value added to the email "Sent by" footer.                                                                                                                                                                                                                             |
+| Field name               | Data type | Description                                                                                                                                                                                                                                                                          |
+| ------------------------ | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| branding.reportLogoUrl   | string    | URL of an image used as a logo on every page of the report.                                                                                                                                                                                                                          |
+| branding.emailLogoUrl    | string    | URL of an image used as a logo in the email.                                                                                                                                                                                                                                         |
+| branding.emailFooterMode | string    | Can be `sent-by` or `none`.<br/>`sent-by` adds a "Sent by <`branding.emailFooterText`>" footer link to the email. Requires specifying values in `branding.emailFooterText` and `branding.emailFooterLink` fields.<br/>`none` suppresses adding a "Sent by" footer link to the email. |
+| branding.emailFooterText | string    | Text of a URL added to the email "Sent by" footer.                                                                                                                                                                                                                                   |
+| branding.emailFooterLink | string    | URL address value added to the email "Sent by" footer.                                                                                                                                                                                                                               |
 
 ### Example response
 
@@ -635,7 +631,7 @@ See note in the [introduction]({{< ref "#reporting-api" >}}) for an explanation.
 
 ### Example request
 
-See [JSON body schema]({{< ref "#create-a-report" >}}) for fields description.
+See [JSON body schema]({{< ref "#config-json-body-schema" >}}) for fields description.
 
 ```http
 POST /api/reports/test-email HTTP/1.1
@@ -706,7 +702,7 @@ Content-Length: 29
 
 `GET /api/reports/render/image/:dashboardUID`
 
-Renders an image of a dashboard with a given [UID](dashboard/#identifier-id-vs-unique-identifier-uid).
+Renders an image of a dashboard with a given [UID](../dashboard#identifier-id-vs-unique-identifier-uid).
 
 ### Example request
 
@@ -746,7 +742,7 @@ See note in the [introduction]({{< ref "#reporting-api" >}}) for an explanation.
 
 | Action       | Scope |
 | ------------ | ----- |
-| reports:read |       |
+| reports:read | n/a   |
 
 ### Example request
 
