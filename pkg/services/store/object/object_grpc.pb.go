@@ -22,7 +22,11 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ObjectStoreClient interface {
-	Write(ctx context.Context, in *WriteObjectRequest, opts ...grpc.CallOption) (*RawObject, error)
+	Read(ctx context.Context, in *ReadObjectRequest, opts ...grpc.CallOption) (*ReadObjectResponse, error)
+	Write(ctx context.Context, in *WriteObjectRequest, opts ...grpc.CallOption) (*WriteObjectResponse, error)
+	Delete(ctx context.Context, in *DeleteObjectRequest, opts ...grpc.CallOption) (*DeleteObjectResponse, error)
+	History(ctx context.Context, in *ObjectHistoryRequest, opts ...grpc.CallOption) (*ObjectHistoryResponse, error)
+	Search(ctx context.Context, in *ObjectSearchRequest, opts ...grpc.CallOption) (*ObjectSearchResponse, error)
 }
 
 type objectStoreClient struct {
@@ -33,9 +37,45 @@ func NewObjectStoreClient(cc grpc.ClientConnInterface) ObjectStoreClient {
 	return &objectStoreClient{cc}
 }
 
-func (c *objectStoreClient) Write(ctx context.Context, in *WriteObjectRequest, opts ...grpc.CallOption) (*RawObject, error) {
-	out := new(RawObject)
+func (c *objectStoreClient) Read(ctx context.Context, in *ReadObjectRequest, opts ...grpc.CallOption) (*ReadObjectResponse, error) {
+	out := new(ReadObjectResponse)
+	err := c.cc.Invoke(ctx, "/object.ObjectStore/Read", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *objectStoreClient) Write(ctx context.Context, in *WriteObjectRequest, opts ...grpc.CallOption) (*WriteObjectResponse, error) {
+	out := new(WriteObjectResponse)
 	err := c.cc.Invoke(ctx, "/object.ObjectStore/Write", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *objectStoreClient) Delete(ctx context.Context, in *DeleteObjectRequest, opts ...grpc.CallOption) (*DeleteObjectResponse, error) {
+	out := new(DeleteObjectResponse)
+	err := c.cc.Invoke(ctx, "/object.ObjectStore/Delete", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *objectStoreClient) History(ctx context.Context, in *ObjectHistoryRequest, opts ...grpc.CallOption) (*ObjectHistoryResponse, error) {
+	out := new(ObjectHistoryResponse)
+	err := c.cc.Invoke(ctx, "/object.ObjectStore/History", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *objectStoreClient) Search(ctx context.Context, in *ObjectSearchRequest, opts ...grpc.CallOption) (*ObjectSearchResponse, error) {
+	out := new(ObjectSearchResponse)
+	err := c.cc.Invoke(ctx, "/object.ObjectStore/Search", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -46,15 +86,31 @@ func (c *objectStoreClient) Write(ctx context.Context, in *WriteObjectRequest, o
 // All implementations should embed UnimplementedObjectStoreServer
 // for forward compatibility
 type ObjectStoreServer interface {
-	Write(context.Context, *WriteObjectRequest) (*RawObject, error)
+	Read(context.Context, *ReadObjectRequest) (*ReadObjectResponse, error)
+	Write(context.Context, *WriteObjectRequest) (*WriteObjectResponse, error)
+	Delete(context.Context, *DeleteObjectRequest) (*DeleteObjectResponse, error)
+	History(context.Context, *ObjectHistoryRequest) (*ObjectHistoryResponse, error)
+	Search(context.Context, *ObjectSearchRequest) (*ObjectSearchResponse, error)
 }
 
 // UnimplementedObjectStoreServer should be embedded to have forward compatible implementations.
 type UnimplementedObjectStoreServer struct {
 }
 
-func (UnimplementedObjectStoreServer) Write(context.Context, *WriteObjectRequest) (*RawObject, error) {
+func (UnimplementedObjectStoreServer) Read(context.Context, *ReadObjectRequest) (*ReadObjectResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Read not implemented")
+}
+func (UnimplementedObjectStoreServer) Write(context.Context, *WriteObjectRequest) (*WriteObjectResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Write not implemented")
+}
+func (UnimplementedObjectStoreServer) Delete(context.Context, *DeleteObjectRequest) (*DeleteObjectResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
+}
+func (UnimplementedObjectStoreServer) History(context.Context, *ObjectHistoryRequest) (*ObjectHistoryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method History not implemented")
+}
+func (UnimplementedObjectStoreServer) Search(context.Context, *ObjectSearchRequest) (*ObjectSearchResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Search not implemented")
 }
 
 // UnsafeObjectStoreServer may be embedded to opt out of forward compatibility for this service.
@@ -66,6 +122,24 @@ type UnsafeObjectStoreServer interface {
 
 func RegisterObjectStoreServer(s grpc.ServiceRegistrar, srv ObjectStoreServer) {
 	s.RegisterService(&ObjectStore_ServiceDesc, srv)
+}
+
+func _ObjectStore_Read_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReadObjectRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ObjectStoreServer).Read(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/object.ObjectStore/Read",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ObjectStoreServer).Read(ctx, req.(*ReadObjectRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _ObjectStore_Write_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -86,6 +160,60 @@ func _ObjectStore_Write_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ObjectStore_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteObjectRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ObjectStoreServer).Delete(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/object.ObjectStore/Delete",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ObjectStoreServer).Delete(ctx, req.(*DeleteObjectRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ObjectStore_History_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ObjectHistoryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ObjectStoreServer).History(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/object.ObjectStore/History",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ObjectStoreServer).History(ctx, req.(*ObjectHistoryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ObjectStore_Search_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ObjectSearchRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ObjectStoreServer).Search(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/object.ObjectStore/Search",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ObjectStoreServer).Search(ctx, req.(*ObjectSearchRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ObjectStore_ServiceDesc is the grpc.ServiceDesc for ObjectStore service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -94,8 +222,24 @@ var ObjectStore_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*ObjectStoreServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
+			MethodName: "Read",
+			Handler:    _ObjectStore_Read_Handler,
+		},
+		{
 			MethodName: "Write",
 			Handler:    _ObjectStore_Write_Handler,
+		},
+		{
+			MethodName: "Delete",
+			Handler:    _ObjectStore_Delete_Handler,
+		},
+		{
+			MethodName: "History",
+			Handler:    _ObjectStore_History_Handler,
+		},
+		{
+			MethodName: "Search",
+			Handler:    _ObjectStore_Search_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
