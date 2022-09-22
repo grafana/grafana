@@ -170,11 +170,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
   // bad
   ElementWrapper: css`...`,
   // bad
-  ["element-wrapper"]: css`...`,
+  ['element-wrapper']: css`...`,
 
   // good
   elementWrapper: css({
-    padding: theme.spacing(1,2),
+    padding: theme.spacing(1, 2),
     background: theme.colors.background.secondary,
   }),
 });
