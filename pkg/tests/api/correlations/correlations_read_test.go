@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -74,10 +73,10 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 		SourceUID: dsWithCorrelations.Uid,
 		TargetUID: dsWithCorrelations.Uid,
 		OrgId:     dsWithCorrelations.OrgId,
-		Config: simplejson.NewFromAny(map[string]interface{}{
-			"field":  "foo",
-			"target": "test",
-		}),
+		Config: correlations.CorrelationConfig{
+			Field:  "foo",
+			Target: struct{}{},
+		},
 	})
 
 	createDsCommand = &datasources.AddDataSourceCommand{

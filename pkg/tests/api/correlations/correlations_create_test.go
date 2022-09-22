@@ -252,7 +252,7 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 					"label": "%s",
 					"config": {
 						"field": "fieldName",
-						"target": "target"
+						"target": { "expr": "foo" }
 					}
 				}`, writableDs, description, label),
 			user: adminUser,
@@ -271,6 +271,7 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 		require.Equal(t, writableDs, response.Result.TargetUID)
 		require.Equal(t, description, response.Result.Description)
 		require.Equal(t, label, response.Result.Label)
+		require.Equal(t, "fieldName", response.Result.Config.Field)
 
 		require.NoError(t, res.Body.Close())
 	})
@@ -285,12 +286,12 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 					"description": "%s",
 					"label": "%s",
 					"config": {
-						"foo": "bar"
+						"field": 2
 					}
 				}`, writableDs, description, label),
 			user: adminUser,
 		})
-		require.Equal(t, http.StatusInternalServerError, res.StatusCode)
+		require.Equal(t, http.StatusBadRequest, res.StatusCode)
 
 		responseBody, err := io.ReadAll(res.Body)
 		require.NoError(t, err)
@@ -299,8 +300,7 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 		err = json.Unmarshal(responseBody, &response)
 		require.NoError(t, err)
 
-		require.Contains(t, response.Message, "Failed to add correlation")
-		require.Contains(t, response.Error, "incorrect config structure")
+		require.Contains(t, response.Message, "bad request data")
 
 		require.NoError(t, res.Body.Close())
 	})
