@@ -24,7 +24,7 @@ func ProvideSearchHTTPService(search SearchService) SearchHTTPService {
 }
 
 func (s *searchHTTPService) RegisterHTTPRoutes(storageRoute routing.RouteRegister) {
-	storageRoute.Post("/search-query", middleware.ReqSignedIn, routing.Wrap(s.doQuery))
+	storageRoute.Post("/", middleware.ReqSignedIn, routing.Wrap(s.doQuery))
 }
 
 func (s *searchHTTPService) doQuery(c *models.ReqContext) response.Response {

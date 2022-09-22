@@ -17,7 +17,7 @@ import { DashboardQueryResult, GrafanaSearcher, QueryResponse, SearchQuery, Sear
 // and that it can not serve any search requests. We are temporarily using the old SQL Search API as a fallback when that happens.
 const loadingFrameName = 'Loading';
 
-const searchURI = 'api/search-query';
+const searchURI = 'api/search-v2';
 
 export class BlugeSearcher implements GrafanaSearcher {
   constructor(private fallbackSearcher: GrafanaSearcher) {}

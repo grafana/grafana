@@ -260,7 +260,7 @@ func (hs *HTTPServer) registerRoutes() {
 		}
 
 		if hs.Features.IsEnabled(featuremgmt.FlagPanelTitleSearch) {
-			apiRoute.Group("/", hs.SearchV2HTTPService.RegisterHTTPRoutes)
+			apiRoute.Group("/search-v2", hs.SearchV2HTTPService.RegisterHTTPRoutes)
 		}
 
 		// current org
