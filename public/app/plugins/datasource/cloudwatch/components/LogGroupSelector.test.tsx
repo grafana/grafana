@@ -4,6 +4,8 @@ import lodash from 'lodash'; // eslint-disable-line lodash/import-scope
 import React from 'react';
 import { openMenu, select } from 'react-select-event';
 
+import { toOption } from '@grafana/data';
+
 import { setupMockedDataSource } from '../__mocks__/CloudWatchDataSource';
 import { DescribeLogGroupsRequest } from '../types';
 
@@ -25,15 +27,13 @@ describe('LogGroupSelector', () => {
   });
 
   it('updates upstream query log groups on region change', async () => {
-    ds.datasource.logsQueryRunner.describeLogGroups = jest
-      .fn()
-      .mockImplementation(async (params: DescribeLogGroupsRequest) => {
-        if (params.region === 'region1') {
-          return Promise.resolve(['log_group_1']);
-        } else {
-          return Promise.resolve(['log_group_2']);
-        }
-      });
+    ds.datasource.api.describeLogGroups = jest.fn().mockImplementation(async (params: DescribeLogGroupsRequest) => {
+      if (params.region === 'region1') {
+        return Promise.resolve(['log_group_1'].map(toOption));
+      } else {
+        return Promise.resolve(['log_group_2'].map(toOption));
+      }
+    });
     const props = {
       ...defaultProps,
       selectedLogGroups: ['log_group_1'],
@@ -50,15 +50,13 @@ describe('LogGroupSelector', () => {
   });
 
   it('does not update upstream query log groups if saved is false', async () => {
-    ds.datasource.logsQueryRunner.describeLogGroups = jest
-      .fn()
-      .mockImplementation(async (params: DescribeLogGroupsRequest) => {
-        if (params.region === 'region1') {
-          return Promise.resolve(['log_group_1']);
-        } else {
-          return Promise.resolve(['log_group_2']);
-        }
-      });
+    ds.datasource.api.describeLogGroups = jest.fn().mockImplementation(async (params: DescribeLogGroupsRequest) => {
+      if (params.region === 'region1') {
+        return Promise.resolve(['log_group_1'].map(toOption));
+      } else {
+        return Promise.resolve(['log_group_2'].map(toOption));
+      }
+    });
     const props = {
       ...defaultProps,
       selectedLogGroups: ['log_group_1'],
@@ -98,14 +96,12 @@ describe('LogGroupSelector', () => {
     ];
     const testLimit = 10;
 
-    ds.datasource.logsQueryRunner.describeLogGroups = jest
-      .fn()
-      .mockImplementation(async (params: DescribeLogGroupsRequest) => {
-        const theLogGroups = allLogGroups
-          .filter((logGroupName) => logGroupName.startsWith(params.logGroupNamePrefix ?? ''))
-          .slice(0, Math.max(params.limit ?? testLimit, testLimit));
-        return Promise.resolve(theLogGroups);
-      });
+    ds.datasource.api.describeLogGroups = jest.fn().mockImplementation(async (params: DescribeLogGroupsRequest) => {
+      const theLogGroups = allLogGroups
+        .filter((logGroupName) => logGroupName.startsWith(params.logGroupNamePrefix ?? ''))
+        .slice(0, Math.max(params.limit ?? testLimit, testLimit));
+      return Promise.resolve(theLogGroups.map(toOption));
+    });
     const props = {
       ...defaultProps,
     };
@@ -129,7 +125,7 @@ describe('LogGroupSelector', () => {
 
   it('should render template variables a selectable option', async () => {
     lodash.debounce = jest.fn().mockImplementation((fn) => fn);
-    ds.datasource.logsQueryRunner.describeLogGroups = jest.fn().mockResolvedValue([]);
+    ds.datasource.api.describeLogGroups = jest.fn().mockResolvedValue([]);
     const onChange = jest.fn();
     const props = {
       ...defaultProps,
