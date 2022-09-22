@@ -24,6 +24,8 @@ The panel that you send includes all query response data and all visualizations 
 
    Grafana opens a standalone support dashboard that contains the data you are sending to Grafana Labs Technical Support.
 
+   ![Support panel](/static/img/docs/tables/support-panel.png)
+
 1. To send the panel data to Grafana Labs via Github:
 
    a. Click **Copy for Github**.
