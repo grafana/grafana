@@ -58,7 +58,7 @@ Content-Length: 1840
 		"dashboardName": "Alerting with TestData",
 		"dashboardUid": "",
 		"name": "Report 2",
-		"recipients": "user@example.com",
+		"recipients": "example-report@grafana.com",
 		"replyTo": "",
 		"message": "Hi, \nPlease find attached a PDF status report. If you have any questions, feel free to contact me!\nBest,",
 		"schedule": {
@@ -152,7 +152,7 @@ Content-Length: 940
 	"dashboardName": "Alerting with TestData",
 	"dashboardUid": "",
 	"name": "Report 2",
-	"recipients": "report@example.com",
+	"recipients": "example-report@grafana.com",
 	"replyTo": "",
 	"message": "Hi, \nPlease find attached a PDF status report. If you have any questions, feel free to contact me!\nBest,",
 	"schedule": {
@@ -234,7 +234,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 {
 	"name": "Report 4",
-	"recipients": "tania.batieva@grafana>.com",
+	"recipients": "texample-report@grafana.com",
 	"replyTo": "",
 	"message": "Hello, please, find the report attached",
 	"schedule": {
@@ -272,7 +272,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 }
 ```
 
-### JSON Body Schema
+#### JSON Body Schema
 
 | Field name         | Data type | Description                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | ------------------ | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -336,7 +336,7 @@ See note in the [introduction]({{< ref "#reporting-api" >}}) for an explanation.
 
 ### Example request
 
-See [JSON body schema]({{< ref "#json-body-schema" >}}) for fields description.
+See [JSON body schema]({{< ref "#create-a-report" >}}) for fields description.
 
 ```http
 GET /api/reports HTTP/1.1
@@ -346,7 +346,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 {
 	"name": "Updated Report",
-	"recipients": "tania.batieva@grafana.com",
+	"recipients": "example-report@grafana.com",
 	"replyTo": "",
 	"message": "Hello, please, find the report attached",
 	"schedule": {
@@ -482,7 +482,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 }
 ```
 
-### JSON Body Schema
+#### JSON Body Schema
 
 | Field name          | Data type | Description                                                                                                                                              |
 | ------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -509,11 +509,236 @@ Content-Length: 29
 - **404** - Report not found.
 - **500** - Unexpected error or server misconfiguration. Refer to server logs for more details.
 
-# SEPARATOR --------------------
+## Get reports branding settings
 
-## <ENDPOINT>
+`GET /api/reports/settings`
 
-`GET /api/reports/:id`
+Returns reports branding settings. They are global and used across all the reports.
+
+#### Required permissions
+
+See note in the [introduction]({{< ref "#reporting-api" >}}) for an explanation.
+
+| Action                | Scope |
+| --------------------- | ----- |
+| reports.settings:read | n/a   |
+
+### Example request
+
+```http
+GET /api/reports/settings HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+### Example response
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: 181
+
+{
+	"id": 1,
+	"userId": 1,
+	"orgId": 1,
+	"branding": {
+		"reportLogoUrl": "",
+		"emailLogoUrl": "",
+		"emailFooterMode": "sent-by",
+		"emailFooterText": "Grafana Labs",
+		"emailFooterLink": "https://grafana.com/"
+	}
+}
+```
+
+### Status Codes
+
+- **200** – OK
+- **500** - Unexpected error or server misconfiguration. Refer to server logs for more detail
+
+## Save reports branding settings
+
+`POST /api/reports/settings`
+
+Creates settings if they don't exist, otherwise updates them. These settings are global and used across all the reports.
+
+#### Required permissions
+
+See note in the [introduction]({{< ref "#reporting-api" >}}) for an explanation.
+
+| Action                 | Scope |
+| ---------------------- | ----- |
+| reports.settings:write | n/a   |
+
+### Example request
+
+```http
+POST /api/reports/settings HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+{
+	"branding": {
+		"reportLogoUrl": "https://grafana.com/reportLogo.jpg",
+		"emailLogoUrl": "https://grafana.com/emailLogo.jpg",
+		"emailFooterMode": "sent-by",
+		"emailFooterText": "Grafana Labs",
+		"emailFooterLink": "https://grafana.com/"
+	}
+}
+```
+
+#### JSON Body Schema
+
+| Field name               | Data type | Description                                                                                                                                                                                                                                                                        |
+| ------------------------ | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| branding.reportLogoUrl   | string    | URL of an image used as a logo on every page of the report.                                                                                                                                                                                                                        |
+| branding.emailLogoUrl    | string    | URL of an image used as a logo in the email.                                                                                                                                                                                                                                       |
+| branding.emailFooterMode | string    | Can be `sent-by` or `none`.<br/>`sent-by` adds a "Sent by <branding.emailFooterText>" footer link to the email. Requires specifying values in `branding.emailFooterText` and `branding.emailFooterLink` fields.<br/>`none` suppresses adding a "Sent by" footer link to the email. |
+| branding.emailFooterText | string    | Text of a URL added to the email "Sent by" footer.                                                                                                                                                                                                                                 |
+| branding.emailFooterLink | string    | URL address value added to the email "Sent by" footer.                                                                                                                                                                                                                             |
+
+### Example response
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: 35
+
+{
+	"message": "Report settings saved"
+}
+```
+
+### Status Codes
+
+- **200** – OK
+- **400** – Bad request (invalid json, missing or invalid fields values, etc.).
+- **500** - Unexpected error or server misconfiguration. Refer to server logs for more detail
+
+## Send a test email
+
+`POST /api/reports/test-email`
+
+Sends a test email with a report without persisting it in the database.
+
+#### Required permissions
+
+See note in the [introduction]({{< ref "#reporting-api" >}}) for an explanation.
+
+| Action       | Scope |
+| ------------ | ----- |
+| reports:send | n/a   |
+
+### Example request
+
+See [JSON body schema]({{< ref "#create-a-report" >}}) for fields description.
+
+```http
+POST /api/reports/test-email HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+{{
+	"name": "Report 4",
+	"recipients": "example-report@grafana.com",
+	"replyTo": "",
+	"message": "Hello, please, find the report attached",
+	"schedule": {
+		"startDate": "2022-10-02T10:00:00+02:00",
+		"endDate": "2022-11-02T20:00:00+02:00",
+		"frequency": "daily",
+		"intervalFrequency": "",
+		"intervalAmount": 0,
+		"workdaysOnly": true,
+		"timeZone": "Europe/Warsaw"
+	},
+	"options": {
+		"orientation": "landscape",
+		"layout": "grid"
+	},
+	"enableDashboardUrl": true,
+	"dashboards": [
+		{
+			"dashboard": {
+				"uid": "7MeksYbmk",
+			},
+			"timeRange": {
+				"from": "2022-08-08T15:00:00+02:00",
+				"to": "2022-09-02T17:00:00+02:00"
+			},
+			"reportVariables": {
+				"varibale1": "Value1"
+			}
+		}
+	],
+	"formats": [
+		"pdf",
+		"csv"
+	]
+}
+```
+
+### Example response
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: 29
+
+{
+	"message": "Test email sent"
+}
+```
+
+### Status Codes
+
+- **200** – OK
+- **400** – Bad request (invalid json, missing or invalid fields values, etc.).
+- **403** - Forbidden (access denied to a dashboard used in the report).
+- **500** - Unexpected error or server misconfiguration. Refer to server logs for more details
+
+## Render a dashboard image
+
+`GET /api/reports/render/image/:dashboardUID`
+
+Renders an image of a dashboard with a given [UID](dashboard/#identifier-id-vs-unique-identifier-uid).
+
+### Example request
+
+```http
+GET /api/reports/render/image/GuI4dAWVz HTTP/1.1
+Accept: image/*
+Content-Type: image/*
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+### Example response
+
+```http
+HTTP/1.1 200 OK
+Content-Type: image/png
+Content-Length: 25922
+```
+
+### Status Codes
+
+- **200** – OK
+- **400** – Bad request (invalid json, missing or invalid fields values, etc.).
+- **401** - Authentication failed, refer to [Authentication API]({{< relref "auth/" >}}).
+- **403** - Forbidden.
+- **404** - Not found.
+- **500** - Unexpected error or server misconfiguration. Refer to server logs for more detail
+
+## Render PDF report for multiple dashboards
+
+`GET /api/reports/render/pdfs`
+
+Renders a PDF of one or more dashboards.
 
 #### Required permissions
 
@@ -527,8 +752,8 @@ See note in the [introduction]({{< ref "#reporting-api" >}}) for an explanation.
 
 ```http
 GET /api/reports HTTP/1.1
-Accept: application/json
-Content-Type: application/json
+Accept: image/*
+Content-Type: image/*
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 ```
 
@@ -536,17 +761,15 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 ```http
 HTTP/1.1 200 OK
-Content-Type: application/json
+Content-Type: image/png
 Content-Length: 1840
-
-<PUT_HERE>
 ```
 
 ### Status Codes
 
 - **200** – OK
-- **400** – Bad request (invalid json, missing content-type, missing or invalid fields, etc.).
+- **400** – Bad request (invalid json, missing or invalid fields values, etc.).
 - **401** - Authentication failed, refer to [Authentication API]({{< relref "auth/" >}}).
 - **403** - Forbidden.
 - **404** - Not found.
-- **500** - Unexpected error or server misconfiguration. Refer to server logs for more details
+- **500** - Unexpected error or server misconfiguration. Refer to server logs for more detail
