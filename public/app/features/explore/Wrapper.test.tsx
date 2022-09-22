@@ -291,7 +291,6 @@ describe('Wrapper', () => {
       fireEvent.mouseUp(resizer);
       widenButton = await screen.findAllByLabelText('Widen pane');
       narrowButton = await screen.queryAllByLabelText('Narrow pane');
-      panes = screen.getAllByRole('main');
       expect(widenButton.length).toBe(1);
       expect(narrowButton.length).toBe(1);
       // the autosizer is mocked so there is no actual resize here
