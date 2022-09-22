@@ -16,7 +16,7 @@ type RepositoryImpl struct {
 
 func ProvideService(db db.DB, cfg *setting.Cfg, tagService tag.Service) *RepositoryImpl {
 	return &RepositoryImpl{
-		store: &SQLAnnotationRepo{
+		store: &xormRepositoryImpl{
 			cfg:        cfg,
 			db:         db,
 			log:        log.New("annotations"),

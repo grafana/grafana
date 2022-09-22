@@ -40,14 +40,14 @@ func validateTimeRange(item *annotations.Item) error {
 	return nil
 }
 
-type SQLAnnotationRepo struct {
+type xormRepositoryImpl struct {
 	cfg        *setting.Cfg
 	db         db.DB
 	log        log.Logger
 	tagService tag.Service
 }
 
-func (r *SQLAnnotationRepo) Add(ctx context.Context, item *annotations.Item) error {
+func (r *xormRepositoryImpl) Add(ctx context.Context, item *annotations.Item) error {
 	tags := tag.ParseTagPairs(item.Tags)
 	item.Tags = tag.JoinTagPairs(tags)
 	item.Created = timeNow().UnixNano() / int64(time.Millisecond)
@@ -79,7 +79,7 @@ func (r *SQLAnnotationRepo) Add(ctx context.Context, item *annotations.Item) err
 	})
 }
 
-func (r *SQLAnnotationRepo) Update(ctx context.Context, item *annotations.Item) error {
+func (r *xormRepositoryImpl) Update(ctx context.Context, item *annotations.Item) error {
 	return r.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var (
 			isExist bool
@@ -132,7 +132,7 @@ func (r *SQLAnnotationRepo) Update(ctx context.Context, item *annotations.Item) 
 	})
 }
 
-func (r *SQLAnnotationRepo) Get(ctx context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
+func (r *xormRepositoryImpl) Get(ctx context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
 	var sql bytes.Buffer
 	params := make([]interface{}, 0)
 	items := make([]*annotations.ItemDTO, 0)
@@ -291,7 +291,7 @@ func getAccessControlFilter(user *user.SignedInUser) (string, []interface{}, err
 	return strings.Join(filters, " OR "), params, nil
 }
 
-func (r *SQLAnnotationRepo) Delete(ctx context.Context, params *annotations.DeleteParams) error {
+func (r *xormRepositoryImpl) Delete(ctx context.Context, params *annotations.DeleteParams) error {
 	return r.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var (
 			sql        string
@@ -327,7 +327,7 @@ func (r *SQLAnnotationRepo) Delete(ctx context.Context, params *annotations.Dele
 	})
 }
 
-func (r *SQLAnnotationRepo) GetTags(ctx context.Context, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
+func (r *xormRepositoryImpl) GetTags(ctx context.Context, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
 	var items []*annotations.Tag
 	err := r.db.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		if query.Limit == 0 {
@@ -377,4 +377,65 @@ func (r *SQLAnnotationRepo) GetTags(ctx context.Context, query *annotations.Tags
 	}
 
 	return annotations.FindTagsResult{Tags: tags}, nil
+}
+
+func (r *xormRepositoryImpl) CleanAnnotations(ctx context.Context, cfg setting.AnnotationCleanupSettings, annotationType string) (int64, error) {
+	var totalAffected int64
+	if cfg.MaxAge > 0 {
+		cutoffDate := time.Now().Add(-cfg.MaxAge).UnixNano() / int64(time.Millisecond)
+		deleteQuery := `DELETE FROM annotation WHERE id IN (SELECT id FROM (SELECT id FROM annotation WHERE %s AND created < %v ORDER BY id DESC %s) a)`
+		sql := fmt.Sprintf(deleteQuery, annotationType, cutoffDate, r.db.GetDialect().Limit(r.cfg.AnnotationCleanupJobBatchSize))
+
+		affected, err := r.executeUntilDoneOrCancelled(ctx, sql)
+		totalAffected += affected
+		if err != nil {
+			return totalAffected, err
+		}
+	}
+
+	if cfg.MaxCount > 0 {
+		deleteQuery := `DELETE FROM annotation WHERE id IN (SELECT id FROM (SELECT id FROM annotation WHERE %s ORDER BY id DESC %s) a)`
+		sql := fmt.Sprintf(deleteQuery, annotationType, r.db.GetDialect().LimitOffset(r.cfg.AnnotationCleanupJobBatchSize, cfg.MaxCount))
+		affected, err := r.executeUntilDoneOrCancelled(ctx, sql)
+		totalAffected += affected
+		return totalAffected, err
+	}
+
+	return totalAffected, nil
+}
+
+func (r *xormRepositoryImpl) CleanOrphanedAnnotationTags(ctx context.Context) (int64, error) {
+	deleteQuery := `DELETE FROM annotation_tag WHERE id IN ( SELECT id FROM (SELECT id FROM annotation_tag WHERE NOT EXISTS (SELECT 1 FROM annotation a WHERE annotation_id = a.id) %s) a)`
+	sql := fmt.Sprintf(deleteQuery, r.db.GetDialect().Limit(r.cfg.AnnotationCleanupJobBatchSize))
+	return r.executeUntilDoneOrCancelled(ctx, sql)
+}
+
+func (r *xormRepositoryImpl) executeUntilDoneOrCancelled(ctx context.Context, sql string) (int64, error) {
+	var totalAffected int64
+	for {
+		select {
+		case <-ctx.Done():
+			return totalAffected, ctx.Err()
+		default:
+			var affected int64
+			err := r.db.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
+				res, err := session.Exec(sql)
+				if err != nil {
+					return err
+				}
+
+				affected, err = res.RowsAffected()
+				totalAffected += affected
+
+				return err
+			})
+			if err != nil {
+				return totalAffected, err
+			}
+
+			if affected == 0 {
+				return totalAffected, nil
+			}
+		}
+	}
 }
