@@ -325,7 +325,6 @@ var wireSet = wire.NewSet(
 	teamimpl.ProvideService,
 	userauthimpl.ProvideService,
 	ngmetrics.ProvideServiceForTest,
-	wire.Bind(new(sqlstore.TeamStore), new(*sqlstore.SQLStore)),
 	notifications.MockNotificationService,
 	wire.Bind(new(notifications.TempUserStore), new(*mockstore.SQLStoreMock)),
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationServiceMock)),

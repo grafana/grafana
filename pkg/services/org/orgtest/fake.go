@@ -58,10 +58,7 @@ func (f *FakeOrgService) GetByName(name string) (*org.Org, error) {
 	return f.ExpectedOrg, f.ExpectedError
 }
 
-func (f *FakeOrgService) CreateWithMember(name string, userID int64) (*org.Org, error) {
-	return f.ExpectedOrg, f.ExpectedError
-}
-func (f *FakeOrgService) Create(ctx context.Context, cmd *org.CreateOrgCommand) (*org.Org, error) {
+func (f *FakeOrgService) CreateWithMember(ctx context.Context, cmd *org.CreateOrgCommand) (*org.Org, error) {
 	return f.ExpectedOrg, f.ExpectedError
 }
 
