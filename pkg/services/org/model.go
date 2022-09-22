@@ -149,6 +149,13 @@ type OrgUserDTO struct {
 	IsDisabled    bool            `json:"isDisabled"`
 }
 
+type RemoveOrgUserCommand struct {
+	UserID                   int64
+	OrgID                    int64
+	ShouldDeleteOrphanedUser bool
+	UserWasDeleted           bool
+}
+
 func (r RoleType) IsValid() bool {
 	return r == RoleViewer || r == RoleAdmin || r == RoleEditor
 }

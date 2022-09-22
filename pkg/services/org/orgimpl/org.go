@@ -235,6 +235,12 @@ func (s *Service) UpdateOrgUser(ctx context.Context, cmd *org.UpdateOrgUserComma
 }
 
 // TODO: remove wrapper around sqlstore
-func (s *Service) GetOrgUsers(ctx context.Context, query *models.GetOrgUsersQuery) error {
-	return s.sqlStore.GetOrgUsers(ctx, query)
+func (s *Service) RemoveOrgUser(ctx context.Context, cmd *org.RemoveOrgUserCommand) error {
+	c := &models.RemoveOrgUserCommand{
+		UserId:                   cmd.UserID,
+		OrgId:                    cmd.OrgID,
+		ShouldDeleteOrphanedUser: cmd.ShouldDeleteOrphanedUser,
+		UserWasDeleted:           cmd.UserWasDeleted,
+	}
+	return s.sqlStore.RemoveOrgUser(ctx, c)
 }
