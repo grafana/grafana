@@ -200,15 +200,19 @@ func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 }
 
 func (am *Alertmanager) GetReceivers(ctx context.Context) apimodels.Receivers {
-	var receivers []*notify.Receiver
-	receivers = append(receivers, am.receivers...)
+	// Copy the slice to avoid having a pointer to the same underlying array.
+	am.reloadConfigMtx.RLock()
+	receivers := make([]*notify.Receiver, len(am.receivers))
+	copy(receivers, am.receivers)
+	am.reloadConfigMtx.RUnlock()
+
 	var apiReceivers apimodels.Receivers
 	for _, rcv := range receivers {
-		// Build integrations slice
-		var apiIntegrations []*models.Integration
+		// Build integrations slice for each receiver
+		var integrations []*models.Integration
 		for _, integration := range rcv.Integrations() {
 			lastNotify, lastNotifyDuration, lastNotifyError := integration.GetReport()
-			apiIntegrations = append(apiIntegrations, &models.Integration{
+			integrations = append(integrations, &models.Integration{
 				LastNotifyDuration: lastNotifyDuration.String(),
 				LastNotify:         strfmt.DateTime(lastNotify),
 				LastError: func() string {
@@ -224,7 +228,7 @@ func (am *Alertmanager) GetReceivers(ctx context.Context) apimodels.Receivers {
 		name := rcv.Name()
 		apiReceivers = append(apiReceivers, apimodels.Receiver{
 			Active:       &active,
-			Integrations: apiIntegrations,
+			Integrations: integrations,
 			Name:         &name,
 		})
 	}
