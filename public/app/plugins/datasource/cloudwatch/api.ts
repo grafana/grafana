@@ -39,6 +39,13 @@ export class CloudWatchAPI extends CloudWatchRequest {
     });
   }
 
+  async describeAllLogGroups(params: DescribeLogGroupsRequest) {
+    return this.resourceRequest('all-log-groups', {
+      ...params,
+      region: this.templateSrv.replace(this.getActualRegion(params.region)),
+    });
+  }
+
   async getMetrics(namespace: string | undefined, region?: string) {
     if (!namespace) {
       return [];
