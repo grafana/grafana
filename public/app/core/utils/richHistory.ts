@@ -12,6 +12,7 @@ import {
 import { dispatch } from 'app/store/store';
 import { RichHistoryQuery } from 'app/types/explore';
 
+import { config } from '../config';
 import RichHistoryLocalStorage from '../history/RichHistoryLocalStorage';
 import RichHistoryRemoteStorage from '../history/RichHistoryRemoteStorage';
 import {
@@ -264,7 +265,7 @@ export function mapQueriesToHeadings(query: RichHistoryQuery[], sortOrder: SortO
  */
 export function createDatasourcesList() {
   return getDataSourceSrv()
-    .getList()
+    .getList({ mixed: config.featureToggles.exploreMixedDatasource === true })
     .map((dsSettings) => {
       return {
         name: dsSettings.name,

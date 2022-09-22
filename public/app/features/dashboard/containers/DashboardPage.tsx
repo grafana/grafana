@@ -2,13 +2,13 @@ import { cx } from '@emotion/css';
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { locationUtil, NavModel, NavModelItem, TimeRange } from '@grafana/data';
+import { locationUtil, NavModel, NavModelItem, TimeRange, PageLayoutType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { Themeable2, withTheme2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { Page } from 'app/core/components/Page/Page';
-import { PageLayoutType } from 'app/core/components/Page/types';
+import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getKioskMode } from 'app/core/navigation/kiosk';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -53,6 +53,7 @@ export type DashboardPageRouteSearchParams = {
   from?: string;
   to?: string;
   refresh?: string;
+  kiosk?: string | true;
 };
 
 export const mapStateToProps = (state: StoreState) => ({
@@ -85,7 +86,7 @@ export interface State {
   editPanel: PanelModel | null;
   viewPanel: PanelModel | null;
   updateScrollTop?: number;
-  rememberScrollTop: number;
+  rememberScrollTop?: number;
   showLoadingState: boolean;
   panelNotFound: boolean;
   editPanelAccessDenied: boolean;
@@ -95,6 +96,8 @@ export interface State {
 }
 
 export class UnthemedDashboardPage extends PureComponent<Props, State> {
+  static contextType = GrafanaContext;
+
   private forceRouteReloadCounter = 0;
   state: State = this.getCleanState();
 
@@ -103,7 +106,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       editPanel: null,
       viewPanel: null,
       showLoadingState: false,
-      rememberScrollTop: 0,
       panelNotFound: false,
       editPanelAccessDenied: false,
     };
@@ -139,6 +141,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       routeName: this.props.route.routeName,
       fixUrl: !isPublic,
       accessToken: match.params.accessToken,
+      keybindingSrv: this.context.keybindings,
     });
 
     // small delay to start live updates
@@ -227,54 +230,58 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       return state;
     }
 
-    state = updateStatePageNavFromProps(props, state);
+    const updatedState = { ...state };
 
     // Entering edit mode
     if (!state.editPanel && urlEditPanelId) {
       const panel = dashboard.getPanelByUrlId(urlEditPanelId);
-      if (!panel) {
-        return { ...state, panelNotFound: true };
-      }
-
-      if (dashboard.canEditPanel(panel)) {
-        return { ...state, editPanel: panel, rememberScrollTop: state.scrollElement?.scrollTop };
+      if (panel) {
+        if (dashboard.canEditPanel(panel)) {
+          updatedState.editPanel = panel;
+          updatedState.rememberScrollTop = state.scrollElement?.scrollTop;
+        } else {
+          updatedState.editPanelAccessDenied = true;
+        }
       } else {
-        return { ...state, editPanelAccessDenied: true };
+        updatedState.panelNotFound = true;
       }
     }
     // Leaving edit mode
     else if (state.editPanel && !urlEditPanelId) {
-      return { ...state, editPanel: null, updateScrollTop: state.rememberScrollTop };
+      updatedState.editPanel = null;
+      updatedState.updateScrollTop = state.rememberScrollTop;
     }
 
     // Entering view mode
     if (!state.viewPanel && urlViewPanelId) {
       const panel = dashboard.getPanelByUrlId(urlViewPanelId);
-      if (!panel) {
-        return { ...state, panelNotFound: urlEditPanelId };
+      if (panel) {
+        // This mutable state feels wrong to have in getDerivedStateFromProps
+        // Should move this state out of dashboard in the future
+        dashboard.initViewPanel(panel);
+        updatedState.viewPanel = panel;
+        updatedState.rememberScrollTop = state.scrollElement?.scrollTop;
+        updatedState.updateScrollTop = 0;
+      } else {
+        updatedState.panelNotFound = true;
       }
-
-      // This mutable state feels wrong to have in getDerivedStateFromProps
-      // Should move this state out of dashboard in the future
-      dashboard.initViewPanel(panel);
-
-      return { ...state, viewPanel: panel, rememberScrollTop: state.scrollElement?.scrollTop, updateScrollTop: 0 };
     }
     // Leaving view mode
     else if (state.viewPanel && !urlViewPanelId) {
       // This mutable state feels wrong to have in getDerivedStateFromProps
       // Should move this state out of dashboard in the future
       dashboard.exitViewPanel(state.viewPanel);
-
-      return { ...state, viewPanel: null, updateScrollTop: state.rememberScrollTop };
+      updatedState.viewPanel = null;
+      updatedState.updateScrollTop = state.rememberScrollTop;
     }
 
     // if we removed url edit state, clear any panel not found state
     if (state.panelNotFound || (state.editPanelAccessDenied && !urlEditPanelId)) {
-      return { ...state, panelNotFound: false, editPanelAccessDenied: false };
+      updatedState.panelNotFound = false;
+      updatedState.editPanelAccessDenied = false;
     }
 
-    return state;
+    return updateStatePageNavFromProps(props, updatedState);
   }
 
   onAddPanel = () => {
@@ -325,14 +332,14 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   render() {
     const { dashboard, initError, queryParams, isPublic } = this.props;
     const { editPanel, viewPanel, updateScrollTop, pageNav, sectionNav } = this.state;
-    const kioskMode = !isPublic ? getKioskMode() : KioskMode.Full;
+    const kioskMode = !isPublic ? getKioskMode(this.props.queryParams) : KioskMode.Full;
 
     if (!dashboard || !pageNav || !sectionNav) {
       return <DashboardLoading initPhase={this.props.initPhase} />;
     }
 
     const inspectPanel = this.getInspectPanel();
-    const showSubMenu = !editPanel && kioskMode === KioskMode.Off && !this.props.queryParams.editview;
+    const showSubMenu = !editPanel && !kioskMode && !this.props.queryParams.editview;
 
     const toolbar = kioskMode !== KioskMode.Full && !queryParams.editview && (
       <header data-testid={selectors.pages.Dashboard.DashNav.navV2}>
@@ -348,14 +355,19 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       </header>
     );
 
+    const pageClassName = cx({
+      'panel-in-fullscreen': Boolean(viewPanel),
+      'page-hidden': Boolean(queryParams.editview || editPanel),
+    });
+
     return (
       <>
         <Page
           navModel={sectionNav}
           pageNav={pageNav}
-          layout={PageLayoutType.Dashboard}
+          layout={PageLayoutType.Canvas}
           toolbar={toolbar}
-          className={cx(viewPanel && 'panel-in-fullscreen', queryParams.editview && 'dashboard-content--hidden')}
+          className={pageClassName}
           scrollRef={this.setScrollRef}
           scrollTop={updateScrollTop}
         >
@@ -371,8 +383,16 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           <DashboardGrid dashboard={dashboard} viewPanel={viewPanel} editPanel={editPanel} />
 
           {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}
-          {editPanel && <PanelEditor dashboard={dashboard} sourcePanel={editPanel} tab={this.props.queryParams.tab} />}
         </Page>
+        {editPanel && (
+          <PanelEditor
+            dashboard={dashboard}
+            sourcePanel={editPanel}
+            tab={this.props.queryParams.tab}
+            sectionNav={sectionNav}
+            pageNav={pageNav}
+          />
+        )}
         {queryParams.editview && (
           <DashboardSettings
             dashboard={dashboard}
@@ -426,7 +446,15 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
       pageNav.parentItem = pageNav.parentItem;
     }
   } else {
-    sectionNav = getNavModel(props.navIndex, 'dashboards');
+    sectionNav = getNavModel(props.navIndex, config.featureToggles.topnav ? 'dashboards/browse' : 'dashboards');
+  }
+
+  if (state.editPanel || state.viewPanel) {
+    pageNav = {
+      ...pageNav,
+      text: `${state.editPanel ? 'Edit' : 'View'} panel`,
+      parentItem: pageNav,
+    };
   }
 
   if (state.pageNav === pageNav && state.sectionNav === sectionNav) {

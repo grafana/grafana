@@ -43,8 +43,10 @@ export interface FeatureToggles {
   export?: boolean;
   azureMonitorResourcePickerForMetrics?: boolean;
   explore2Dashboard?: boolean;
+  exploreMixedDatasource?: boolean;
   tracing?: boolean;
   commandPalette?: boolean;
+  correlations?: boolean;
   cloudWatchDynamicLabels?: boolean;
   datasourceQueryMultiStatus?: boolean;
   traceToMetrics?: boolean;
@@ -56,7 +58,6 @@ export interface FeatureToggles {
   canvasPanelNesting?: boolean;
   scenes?: boolean;
   useLegacyHeatmapPanel?: boolean;
-  cloudMonitoringExperimentalUI?: boolean;
   disableSecretsCompatibility?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
   dataConnectionsConsole?: boolean;
@@ -64,4 +65,7 @@ export interface FeatureToggles {
   topnav?: boolean;
   customBranding?: boolean;
   traceqlEditor?: boolean;
+  redshiftAsyncQueryDataSupport?: boolean;
+  athenaAsyncQueryDataSupport?: boolean;
+  increaseInMemDatabaseQueryCache?: boolean;
 }

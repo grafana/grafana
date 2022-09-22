@@ -31,10 +31,13 @@ export function NavBarMenuItem({
   const theme = useTheme2();
   const styles = getStyles(theme, isActive);
   const elStyle = cx(styles.element, styleOverrides);
+
   const linkContent = (
     <div className={styles.linkContent}>
       {icon && <Icon data-testid="dropdown-child-icon" name={icon} />}
+
       <div className={styles.linkText}>{text}</div>
+
       {target === '_blank' && (
         <Icon data-testid="external-link-icon" name="external-link-alt" className={styles.externalLinkIcon} />
       )}

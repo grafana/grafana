@@ -60,6 +60,10 @@ const setup = (propOverrides?: object) => {
 };
 
 describe('Render', () => {
+  beforeEach(() => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
   it('should render component', () => {
     expect(() => setup()).not.toThrow();
   });

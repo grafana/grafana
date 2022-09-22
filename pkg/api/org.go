@@ -18,7 +18,7 @@ import (
 
 // swagger:route GET /org org getCurrentOrg
 //
-// Get current Organization
+// Get current Organization.
 //
 // Responses:
 // 200: getCurrentOrgResponse
@@ -301,7 +301,7 @@ func (hs *HTTPServer) DeleteOrgByID(c *models.ReqContext) response.Response {
 
 // swagger:route GET /orgs orgs searchOrgs
 //
-// Search all Organizations
+// Search all Organizations.
 //
 // Security:
 // - basic:
@@ -320,18 +320,19 @@ func (hs *HTTPServer) SearchOrgs(c *models.ReqContext) response.Response {
 
 	page := c.QueryInt("page")
 
-	query := models.SearchOrgsQuery{
+	query := org.SearchOrgsQuery{
 		Query: c.Query("query"),
 		Name:  c.Query("name"),
 		Page:  page,
 		Limit: perPage,
 	}
 
-	if err := hs.SQLStore.SearchOrgs(c.Req.Context(), &query); err != nil {
+	result, err := hs.orgService.Search(c.Req.Context(), &query)
+	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to search orgs", err)
 	}
 
-	return response.JSON(http.StatusOK, query.Result)
+	return response.JSON(http.StatusOK, result)
 }
 
 // swagger:parameters updateCurrentOrgAddress

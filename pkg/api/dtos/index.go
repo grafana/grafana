@@ -12,6 +12,7 @@ type IndexViewData struct {
 	AppUrl                  string
 	AppSubUrl               string
 	GoogleAnalyticsId       string
+	GoogleAnalytics4Id      string
 	GoogleTagManagerId      string
 	NavTree                 []*NavLink
 	BuildVersion            string
@@ -71,6 +72,7 @@ type NavLink struct {
 	HideFromMenu     bool       `json:"hideFromMenu,omitempty"`
 	HideFromTabs     bool       `json:"hideFromTabs,omitempty"`
 	ShowIconInNavbar bool       `json:"showIconInNavbar,omitempty"`
+	RoundIcon        bool       `json:"roundIcon,omitempty"`
 	Children         []*NavLink `json:"children,omitempty"`
 	HighlightText    string     `json:"highlightText,omitempty"`
 	HighlightID      string     `json:"highlightId,omitempty"`

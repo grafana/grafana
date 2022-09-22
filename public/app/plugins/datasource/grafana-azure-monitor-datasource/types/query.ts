@@ -45,8 +45,13 @@ export interface AzureMonitorQuery extends DataQuery {
 export interface AzureMetricQuery {
   resourceGroup?: string;
   resourceName?: string;
-  /** Resource type */
+  /** metricNamespace is used as the resource type (or resource namespace).
+   * It's usually equal to the target metric namespace.
+   * Kept the name of the variable as metricNamespace to avoid backward incompatibility issues.
+   */
   metricNamespace?: string;
+  /** used as the value for the metricNamespace param when different from the resource namespace */
+  customNamespace?: string;
   metricName?: string;
   timeGrain?: string;
   aggregation?: string;

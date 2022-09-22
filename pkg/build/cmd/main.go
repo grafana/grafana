@@ -11,7 +11,6 @@ import (
 
 func main() {
 	app := cli.NewApp()
-
 	app.Commands = cli.Commands{
 		{
 			Name:      "build-backend",
@@ -23,6 +22,40 @@ func main() {
 				&variantsFlag,
 				&editionFlag,
 				&buildIDFlag,
+			},
+		},
+		{
+			Name:      "build-frontend-packages",
+			Usage:     "Build front-end packages",
+			ArgsUsage: "[version]",
+			Action:    BuildFrontendPackages,
+			Flags: []cli.Flag{
+				&jobsFlag,
+				&editionFlag,
+				&buildIDFlag,
+				&noInstallDepsFlag,
+			},
+		},
+		{
+			Name:   "e2e-tests",
+			Usage:  "Run Grafana e2e tests",
+			Action: EndToEndTests,
+			Flags: []cli.Flag{
+				&triesFlag,
+				&cli.IntFlag{
+					Name:  "port",
+					Value: 3001,
+					Usage: "Specify the server port",
+				},
+				&cli.StringFlag{
+					Name:  "suite",
+					Usage: "Specify the end-to-end tests suite to be used",
+				},
+				&cli.StringFlag{
+					Name:  "host",
+					Value: "grafana-server",
+					Usage: "Specify the server host",
+				},
 			},
 		},
 		{
@@ -73,6 +106,54 @@ func main() {
 				&signingAdminFlag,
 				&signFlag,
 				&noInstallDepsFlag,
+			},
+		},
+		{
+			Name:      "publish-metrics",
+			Usage:     "Publish a set of metrics from stdin",
+			ArgsUsage: "<api-key>",
+			Action:    ArgCountWrapper(1, PublishMetrics),
+		},
+		{
+			Name:   "verify-drone",
+			Usage:  "Verify Drone configuration",
+			Action: VerifyDrone,
+		},
+		{
+			Name:   "export-version",
+			Usage:  "Exports version in dist/grafana.version",
+			Action: ExportVersion,
+		},
+		{
+			Name:   "store-storybook",
+			Usage:  "Integrity check for storybook build",
+			Action: StoreStorybook,
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:  "deployment",
+					Usage: "Kind of deployment (e.g. canary/latest)",
+				},
+			},
+		},
+		{
+			Name:  "artifacts",
+			Usage: "Handle Grafana artifacts",
+			Subcommands: cli.Commands{
+				{
+					Name:  "docker",
+					Usage: "Handle Grafana Docker images",
+					Subcommands: cli.Commands{
+						{
+							Name:      "fetch",
+							Usage:     "Fetch Grafana Docker images",
+							ArgsUsage: "[version]",
+							Action:    ArgCountWrapper(1, FetchImages),
+							Flags: []cli.Flag{
+								&editionFlag,
+							},
+						},
+					},
+				},
 			},
 		},
 	}

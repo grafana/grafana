@@ -19,6 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/preference/preftest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/team/teamimpl"
+	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -30,14 +32,15 @@ func TestTeamAPIEndpoint(t *testing.T) {
 		hs.Cfg.EditorsCanAdmin = true
 		store := sqlstore.InitTestDB(t)
 		store.Cfg = hs.Cfg
+		hs.teamService = teamimpl.ProvideService(store)
 		hs.SQLStore = store
 		mock := &mockstore.SQLStoreMock{}
 
 		loggedInUserScenarioWithRole(t, "When admin is calling GET on", "GET", "/api/teams/search", "/api/teams/search",
 			org.RoleAdmin, func(sc *scenarioContext) {
-				_, err := hs.SQLStore.CreateTeam("team1", "", 1)
+				_, err := hs.teamService.CreateTeam("team1", "", 1)
 				require.NoError(t, err)
-				_, err = hs.SQLStore.CreateTeam("team2", "", 1)
+				_, err = hs.teamService.CreateTeam("team2", "", 1)
 				require.NoError(t, err)
 
 				sc.handlerFunc = hs.SearchTeams
@@ -53,13 +56,13 @@ func TestTeamAPIEndpoint(t *testing.T) {
 
 		loggedInUserScenario(t, "When editor (with editors_can_admin) is calling GET on", "/api/teams/search",
 			"/api/teams/search", func(sc *scenarioContext) {
-				team1, err := hs.SQLStore.CreateTeam("team1", "", 1)
+				team1, err := hs.teamService.CreateTeam("team1", "", 1)
 				require.NoError(t, err)
-				_, err = hs.SQLStore.CreateTeam("team2", "", 1)
+				_, err = hs.teamService.CreateTeam("team2", "", 1)
 				require.NoError(t, err)
 
 				// Adding the test user to the teams in order for him to list them
-				err = hs.SQLStore.AddTeamMember(testUserID, testOrgID, team1.Id, false, 0)
+				err = hs.teamService.AddTeamMember(testUserID, testOrgID, team1.Id, false, 0)
 				require.NoError(t, err)
 
 				sc.handlerFunc = hs.SearchTeams
@@ -75,15 +78,15 @@ func TestTeamAPIEndpoint(t *testing.T) {
 
 		loggedInUserScenario(t, "When editor (with editors_can_admin) calling GET with pagination on",
 			"/api/teams/search", "/api/teams/search", func(sc *scenarioContext) {
-				team1, err := hs.SQLStore.CreateTeam("team1", "", 1)
+				team1, err := hs.teamService.CreateTeam("team1", "", 1)
 				require.NoError(t, err)
-				team2, err := hs.SQLStore.CreateTeam("team2", "", 1)
+				team2, err := hs.teamService.CreateTeam("team2", "", 1)
 				require.NoError(t, err)
 
 				// Adding the test user to the teams in order for him to list them
-				err = hs.SQLStore.AddTeamMember(testUserID, testOrgID, team1.Id, false, 0)
+				err = hs.teamService.AddTeamMember(testUserID, testOrgID, team1.Id, false, 0)
 				require.NoError(t, err)
-				err = hs.SQLStore.AddTeamMember(testUserID, testOrgID, team2.Id, false, 0)
+				err = hs.teamService.AddTeamMember(testUserID, testOrgID, team2.Id, false, 0)
 				require.NoError(t, err)
 
 				sc.handlerFunc = hs.SearchTeams
@@ -102,6 +105,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 		hs := setupSimpleHTTPServer(nil)
 		hs.Cfg.EditorsCanAdmin = true
 		hs.SQLStore = mockstore.NewSQLStoreMock()
+		hs.teamService = &teamtest.FakeService{}
 		teamName := "team foo"
 
 		addTeamMemberCalled := 0
@@ -216,7 +220,7 @@ func TestTeamAPIEndpoint_SearchTeams_RBAC(t *testing.T) {
 	sc := setupHTTPServer(t, true)
 	// Seed three teams
 	for i := 1; i <= 3; i++ {
-		_, err := sc.db.CreateTeam(fmt.Sprintf("team%d", i), fmt.Sprintf("team%d@example.org", i), 1)
+		_, err := sc.teamService.CreateTeam(fmt.Sprintf("team%d", i), fmt.Sprintf("team%d@example.org", i), 1)
 		require.NoError(t, err)
 	}
 
@@ -260,7 +264,7 @@ func TestTeamAPIEndpoint_GetTeamByID_RBAC(t *testing.T) {
 	sc := setupHTTPServer(t, true)
 	sc.db = sqlstore.InitTestDB(t)
 
-	_, err := sc.db.CreateTeam("team1", "team1@example.org", 1)
+	_, err := sc.teamService.CreateTeam("team1", "team1@example.org", 1)
 	require.NoError(t, err)
 
 	setInitCtxSignedInViewer(sc.initCtx)
@@ -289,7 +293,7 @@ func TestTeamAPIEndpoint_GetTeamByID_RBAC(t *testing.T) {
 func TestTeamAPIEndpoint_UpdateTeam_RBAC(t *testing.T) {
 	sc := setupHTTPServer(t, true)
 	sc.db = sqlstore.InitTestDB(t)
-	_, err := sc.db.CreateTeam("team1", "", 1)
+	_, err := sc.teamService.CreateTeam("team1", "", 1)
 
 	require.NoError(t, err)
 
@@ -302,7 +306,7 @@ func TestTeamAPIEndpoint_UpdateTeam_RBAC(t *testing.T) {
 		assert.Equal(t, http.StatusOK, response.Code)
 
 		teamQuery := &models.GetTeamByIdQuery{OrgId: 1, SignedInUser: sc.initCtx.SignedInUser, Id: 1, Result: &models.TeamDTO{}}
-		err := sc.db.GetTeamById(context.Background(), teamQuery)
+		err := sc.teamService.GetTeamById(context.Background(), teamQuery)
 		require.NoError(t, err)
 		assert.Equal(t, "MyTestTeam1", teamQuery.Result.Name)
 	})
@@ -314,7 +318,7 @@ func TestTeamAPIEndpoint_UpdateTeam_RBAC(t *testing.T) {
 		assert.Equal(t, http.StatusOK, response.Code)
 
 		teamQuery := &models.GetTeamByIdQuery{OrgId: 1, SignedInUser: sc.initCtx.SignedInUser, Id: 1, Result: &models.TeamDTO{}}
-		err := sc.db.GetTeamById(context.Background(), teamQuery)
+		err := sc.teamService.GetTeamById(context.Background(), teamQuery)
 		require.NoError(t, err)
 		assert.Equal(t, "MyTestTeam2", teamQuery.Result.Name)
 	})
@@ -326,7 +330,7 @@ func TestTeamAPIEndpoint_UpdateTeam_RBAC(t *testing.T) {
 		assert.Equal(t, http.StatusForbidden, response.Code)
 
 		teamQuery := &models.GetTeamByIdQuery{OrgId: 1, SignedInUser: sc.initCtx.SignedInUser, Id: 1, Result: &models.TeamDTO{}}
-		err := sc.db.GetTeamById(context.Background(), teamQuery)
+		err := sc.teamService.GetTeamById(context.Background(), teamQuery)
 		assert.NoError(t, err)
 		assert.Equal(t, "MyTestTeam2", teamQuery.Result.Name)
 	})
@@ -338,7 +342,7 @@ func TestTeamAPIEndpoint_UpdateTeam_RBAC(t *testing.T) {
 func TestTeamAPIEndpoint_DeleteTeam_RBAC(t *testing.T) {
 	sc := setupHTTPServer(t, true)
 	sc.db = sqlstore.InitTestDB(t)
-	_, err := sc.db.CreateTeam("team1", "", 1)
+	_, err := sc.teamService.CreateTeam("team1", "", 1)
 	require.NoError(t, err)
 
 	setInitCtxSignedInViewer(sc.initCtx)
@@ -349,7 +353,7 @@ func TestTeamAPIEndpoint_DeleteTeam_RBAC(t *testing.T) {
 		assert.Equal(t, http.StatusForbidden, response.Code)
 
 		teamQuery := &models.GetTeamByIdQuery{OrgId: 1, SignedInUser: sc.initCtx.SignedInUser, Id: 1, Result: &models.TeamDTO{}}
-		err := sc.db.GetTeamById(context.Background(), teamQuery)
+		err := sc.teamService.GetTeamById(context.Background(), teamQuery)
 		require.NoError(t, err)
 	})
 
@@ -359,7 +363,7 @@ func TestTeamAPIEndpoint_DeleteTeam_RBAC(t *testing.T) {
 		assert.Equal(t, http.StatusOK, response.Code)
 
 		teamQuery := &models.GetTeamByIdQuery{OrgId: 1, SignedInUser: sc.initCtx.SignedInUser, Id: 1, Result: &models.TeamDTO{}}
-		err := sc.db.GetTeamById(context.Background(), teamQuery)
+		err := sc.teamService.GetTeamById(context.Background(), teamQuery)
 		require.ErrorIs(t, err, models.ErrTeamNotFound)
 	})
 }
@@ -370,7 +374,7 @@ func TestTeamAPIEndpoint_DeleteTeam_RBAC(t *testing.T) {
 func TestTeamAPIEndpoint_GetTeamPreferences_RBAC(t *testing.T) {
 	sc := setupHTTPServer(t, true)
 	sc.db = sqlstore.InitTestDB(t)
-	_, err := sc.db.CreateTeam("team1", "", 1)
+	_, err := sc.teamService.CreateTeam("team1", "", 1)
 
 	sqlstore := mockstore.NewSQLStoreMock()
 	sc.hs.SQLStore = sqlstore
@@ -409,7 +413,7 @@ func TestTeamAPIEndpoint_UpdateTeamPreferences_RBAC(t *testing.T) {
 	prefService.ExpectedPreference = &pref.Preference{Theme: "dark"}
 	sc.hs.preferenceService = prefService
 
-	_, err := sc.db.CreateTeam("team1", "", 1)
+	_, err := sc.teamService.CreateTeam("team1", "", 1)
 
 	require.NoError(t, err)
 

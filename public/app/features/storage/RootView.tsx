@@ -35,10 +35,10 @@ export function RootView({ root, onPathChange }: Props) {
   }
 
   const roots = useMemo(() => {
-    const all = storage.value;
-    if (searchQuery?.length && all) {
+    let show = storage.value ?? [];
+    if (searchQuery?.length) {
       const lower = searchQuery.toLowerCase();
-      return all.filter((r) => {
+      show = show.filter((r) => {
         const v = r.config;
         const isMatch = v.name.toLowerCase().indexOf(lower) >= 0 || v.description.toLowerCase().indexOf(lower) >= 0;
         if (isMatch) {
@@ -47,29 +47,26 @@ export function RootView({ root, onPathChange }: Props) {
         return false;
       });
     }
-    return all ?? [];
+
+    const base: StorageInfo[] = [];
+    const content: StorageInfo[] = [];
+    for (const r of show ?? []) {
+      if (r.config.underContentRoot) {
+        content.push(r);
+      } else if (r.config.prefix !== 'content') {
+        base.push(r);
+      }
+    }
+    return { base, content };
   }, [searchQuery, storage]);
 
-  return (
-    <div>
-      <div className="page-action-bar">
-        <div className="gf-form gf-form--grow">
-          <FilterInput placeholder="Search Storage" value={searchQuery} onChange={setSearchQuery} />
-        </div>
-        <Button className="pull-right" onClick={() => onPathChange('', StorageView.AddRoot)}>
-          Add Root
-        </Button>
-        {config.featureToggles.export && (
-          <Button className="pull-right" onClick={() => onPathChange('', StorageView.Export)}>
-            Export
-          </Button>
-        )}
-      </div>
+  const renderRoots = (pfix: string, roots: StorageInfo[]) => {
+    return (
       <VerticalGroup>
         {roots.map((s) => {
           const ok = s.ready;
           return (
-            <Card key={s.config.prefix} href={ok ? `admin/storage/${s.config.prefix}/` : undefined}>
+            <Card key={s.config.prefix} href={ok ? `admin/storage/${pfix}${s.config.prefix}/` : undefined}>
               <Card.Heading>{s.config.name}</Card.Heading>
               <Card.Meta className={styles.clickable}>
                 {s.config.description}
@@ -91,6 +88,31 @@ export function RootView({ root, onPathChange }: Props) {
           );
         })}
       </VerticalGroup>
+    );
+  };
+
+  return (
+    <div>
+      <div className="page-action-bar">
+        <div className="gf-form gf-form--grow">
+          <FilterInput placeholder="Search Storage" value={searchQuery} onChange={setSearchQuery} />
+        </div>
+        <Button className="pull-right" onClick={() => onPathChange('', StorageView.AddRoot)}>
+          Add Root
+        </Button>
+        {config.featureToggles.export && (
+          <Button className="pull-right" onClick={() => onPathChange('', StorageView.Export)}>
+            Export
+          </Button>
+        )}
+      </div>
+
+      <div>{renderRoots('', roots.base)}</div>
+
+      <div>
+        <h3>Content</h3>
+        {renderRoots('content/', roots.content)}
+      </div>
     </div>
   );
 }

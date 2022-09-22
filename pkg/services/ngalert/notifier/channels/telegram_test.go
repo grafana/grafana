@@ -3,6 +3,7 @@ package channels
 import (
 	"context"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -74,6 +75,25 @@ func TestTelegramNotifier(t *testing.T) {
 			expMsg: map[string]string{
 				"parse_mode": "html",
 				"text":       "__Custom Firing__\n2 Firing\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSource: a URL\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val2\nAnnotations:\n - ann1 = annv2\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval2\n",
+			},
+			expMsgError: nil,
+		}, {
+			name: "Truncate long message",
+			settings: `{
+				"bottoken": "abcdefgh0123456789",
+				"chatid": "someid",
+				"message": "{{ .CommonLabels.alertname }}"
+			}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels: model.LabelSet{"alertname": model.LabelValue(strings.Repeat("1", 4097))},
+					},
+				},
+			},
+			expMsg: map[string]string{
+				"parse_mode": "html",
+				"text":       strings.Repeat("1", 4096-3) + "...",
 			},
 			expMsgError: nil,
 		}, {

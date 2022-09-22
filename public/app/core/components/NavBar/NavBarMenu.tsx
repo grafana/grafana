@@ -9,10 +9,9 @@ import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { CollapsableSection, CustomScrollbar, Icon, IconButton, IconName, useStyles2, useTheme2 } from '@grafana/ui';
+import { CollapsableSection, CustomScrollbar, Icon, IconButton, toIconName, useStyles2, useTheme2 } from '@grafana/ui';
 
-import { Branding } from '../Branding/Branding';
-
+import { NavBarItemIcon } from './NavBarItemIcon';
 import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
 import { NavBarMenuItem } from './NavBarMenuItem';
 import { NavBarToggle } from './NavBarToggle';
@@ -36,6 +35,7 @@ export function NavBarMenu({ activeItem, isOpen, navItems, onClose, setMenuAnima
   const ANIMATION_DURATION = theme.transitions.duration.standard;
   const animStyles = getAnimStyles(theme, ANIMATION_DURATION);
   const ref = useRef(null);
+  const backdropRef = useRef(null);
   const { dialogProps } = useDialog({}, ref);
 
   const { overlayProps, underlayProps } = useOverlay(
@@ -51,6 +51,7 @@ export function NavBarMenu({ activeItem, isOpen, navItems, onClose, setMenuAnima
     <OverlayContainer>
       <FocusScope contain restoreFocus autoFocus>
         <CSSTransition
+          nodeRef={ref}
           onEnter={() => setMenuAnimationInProgress(true)}
           onExited={() => setMenuAnimationInProgress(false)}
           appear={isOpen}
@@ -89,8 +90,14 @@ export function NavBarMenu({ activeItem, isOpen, navItems, onClose, setMenuAnima
           </div>
         </CSSTransition>
       </FocusScope>
-      <CSSTransition appear={isOpen} in={isOpen} classNames={animStyles.backdrop} timeout={ANIMATION_DURATION}>
-        <div className={styles.backdrop} {...underlayProps} />
+      <CSSTransition
+        nodeRef={backdropRef}
+        appear={isOpen}
+        in={isOpen}
+        classNames={animStyles.backdrop}
+        timeout={ANIMATION_DURATION}
+      >
+        <div className={styles.backdrop} {...underlayProps} ref={backdropRef} />
       </CSSTransition>
     </OverlayContainer>
   );
@@ -236,14 +243,15 @@ export function NavItem({
     return (
       <CollapsibleNavItem onClose={onClose} link={link} isActive={isMatchOrChildMatch(link, activeItem)}>
         <ul className={styles.children}>
-          {link.children.map(
-            (childLink) =>
+          {link.children.map((childLink) => {
+            const icon = childLink.icon ? toIconName(childLink.icon) : undefined;
+            return (
               !childLink.divider && (
                 <NavBarMenuItem
                   key={`${link.text}-${childLink.text}`}
                   isActive={activeItem === childLink}
                   isDivider={childLink.divider}
-                  icon={childLink.showIconInNavbar ? (childLink.icon as IconName) : undefined}
+                  icon={childLink.showIconInNavbar ? icon : undefined}
                   onClick={() => {
                     childLink.onClick?.();
                     onClose();
@@ -255,7 +263,8 @@ export function NavItem({
                   isMobile={true}
                 />
               )
-          )}
+            );
+          })}
         </ul>
       </CollapsibleNavItem>
     );
@@ -286,7 +295,9 @@ export function NavItem({
         >
           <div className={styles.itemWithoutMenuContent}>
             <div className={styles.iconContainer}>
-              <FeatureHighlightWrapper>{getLinkIcon(link)}</FeatureHighlightWrapper>
+              <FeatureHighlightWrapper>
+                <NavBarItemIcon link={link} />
+              </FeatureHighlightWrapper>
             </div>
             <span className={styles.linkText}>{link.text}</span>
           </div>
@@ -377,7 +388,9 @@ function CollapsibleNavItem({
         className={styles.collapsibleMenuItem}
         elClassName={styles.collapsibleIcon}
       >
-        <FeatureHighlightWrapper>{getLinkIcon(link)}</FeatureHighlightWrapper>
+        <FeatureHighlightWrapper>
+          <NavBarItemIcon link={link} />
+        </FeatureHighlightWrapper>
       </NavBarItemWithoutMenu>
       <div className={styles.collapsibleSectionWrapper}>
         <CollapsableSection
@@ -455,14 +468,4 @@ const getCollapsibleStyles = (theme: GrafanaTheme2) => ({
 
 function linkHasChildren(link: NavModelItem): link is NavModelItem & { children: NavModelItem[] } {
   return Boolean(link.children && link.children.length > 0);
-}
-
-function getLinkIcon(link: NavModelItem) {
-  if (link.icon === 'grafana') {
-    return <Branding.MenuLogo />;
-  } else if (link.icon) {
-    return <Icon name={link.icon as IconName} size="xl" />;
-  } else {
-    return <img src={link.img} alt={`${link.text} logo`} height="24" width="24" style={{ borderRadius: '50%' }} />;
-  }
 }
