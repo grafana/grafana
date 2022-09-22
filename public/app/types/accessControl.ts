@@ -117,7 +117,6 @@ export enum AccessControlAction {
   ActionAPIKeysDelete = 'apikeys:delete',
 
   PluginsInstall = 'plugins:install',
-  PluginsRead = 'plugins:read',
   PluginsWrite = 'plugins:write',
 }
 

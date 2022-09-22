@@ -87,7 +87,6 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     isEnterprise: status === 'enterprise',
     type: typeCode,
     error: error?.errorCode,
-    accessControl: plugin?.accessControl,
   };
 }
 

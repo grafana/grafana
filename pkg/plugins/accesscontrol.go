@@ -21,13 +21,6 @@ var (
 	ScopeProvider = ac.NewScopeProvider("plugins")
 )
 
-// Protects install endpoints
-func InstallEvaluator(pluginID string) ac.Evaluator {
-	return ac.EvalAll(
-		ac.EvalPermission(ActionInstall),
-		ac.EvalPermission(ActionRead, ScopeProvider.GetResourceScope(pluginID)))
-}
-
 // Protects access to the Configuration > Plugins page
 func AdminAccessEvaluator(cfg *setting.Cfg) ac.Evaluator {
 	// This preserves the legacy behavior
@@ -67,7 +60,7 @@ func DeclareRBACRoles(service ac.Service, cfg *setting.Cfg) error {
 			Description: "Access application plugins (still enforcing the organization role)",
 			Group:       "Plugins",
 			Permissions: []ac.Permission{
-				{Action: ActionAppAccess, Scope: ScopeProvider.GetResourceAllIDScope()},
+				{Action: ActionAppAccess, Scope: ScopeProvider.GetResourceAllScope()},
 			},
 		},
 		Grants: []string{string(org.RoleViewer)},
@@ -81,7 +74,7 @@ func DeclareRBACRoles(service ac.Service, cfg *setting.Cfg) error {
 			Description: "List plugins",
 			Group:       "Plugins",
 			Permissions: []ac.Permission{
-				{Action: ActionRead, Scope: ScopeProvider.GetResourceAllIDScope()},
+				{Action: ActionRead, Scope: ScopeProvider.GetResourceAllScope()},
 			},
 		},
 		Grants: []string{string(org.RoleViewer)},
@@ -93,7 +86,7 @@ func DeclareRBACRoles(service ac.Service, cfg *setting.Cfg) error {
 			Description: "Enable and disable plugins and edit plugins' settings",
 			Group:       "Plugins",
 			Permissions: []ac.Permission{
-				{Action: ActionWrite, Scope: ScopeProvider.GetResourceAllIDScope()},
+				{Action: ActionWrite, Scope: ScopeProvider.GetResourceAllScope()},
 			},
 		},
 		Grants: []string{string(org.RoleAdmin)},
