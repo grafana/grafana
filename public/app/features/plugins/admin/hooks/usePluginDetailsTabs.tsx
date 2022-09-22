@@ -1,98 +1,123 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { GrafanaPlugin, PluginIncludeType, PluginType } from '@grafana/data';
+import { GrafanaPlugin, NavModelItem, PluginIncludeType, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { toIconName } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types';
 
+import { PluginDetailsHeader } from '../components/PluginDetailsHeader';
 import { usePluginConfig } from '../hooks/usePluginConfig';
 import { isOrgAdmin } from '../permissions';
-import { CatalogPlugin, PluginDetailsTab, PluginTabIds, PluginTabLabels } from '../types';
+import { CatalogPlugin, PluginTabIds, PluginTabLabels } from '../types';
 
 type ReturnType = {
   error: Error | undefined;
   loading: boolean;
-  tabs: PluginDetailsTab[];
-  defaultTab: string;
+  navModel: NavModelItem;
+  activePageId: PluginTabIds | string;
 };
 
-export const usePluginDetailsTabs = (plugin?: CatalogPlugin, defaultTabs: PluginDetailsTab[] = []): ReturnType => {
+export const usePluginDetailsTabs = (plugin?: CatalogPlugin, pageId?: PluginTabIds): ReturnType => {
   const { loading, error, value: pluginConfig } = usePluginConfig(plugin);
   const { pathname } = useLocation();
   const defaultTab = useDefaultPage(plugin, pluginConfig);
-
+  const parentUrl = pathname.substring(0, pathname.lastIndexOf('/'));
   const isPublished = Boolean(plugin?.isPublished);
 
-  const tabs = useMemo(() => {
+  const currentPageId = pageId || defaultTab;
+  const navModelChildren = useMemo(() => {
     const canConfigurePlugins =
       plugin && contextSrv.hasAccessInMetadata(AccessControlAction.PluginsWrite, plugin, isOrgAdmin());
-    const tabs: PluginDetailsTab[] = [...defaultTabs];
-
+    const navModelChildren: NavModelItem[] = [];
     if (isPublished) {
-      tabs.push({
-        label: PluginTabLabels.VERSIONS,
-        icon: 'history',
+      navModelChildren.push({
+        text: PluginTabLabels.VERSIONS,
         id: PluginTabIds.VERSIONS,
-        href: `${pathname}?page=${PluginTabIds.VERSIONS}`,
+        icon: toIconName('history'),
+        url: `${pathname}?page=${PluginTabIds.VERSIONS}`,
+        active: PluginTabIds.VERSIONS === currentPageId,
       });
     }
 
     // Not extending the tabs with the config pages if the plugin is not installed
     if (!pluginConfig) {
-      return tabs;
+      return navModelChildren;
     }
 
     if (config.featureToggles.panelTitleSearch && pluginConfig.meta.type === PluginType.panel) {
-      tabs.push({
-        label: PluginTabLabels.USAGE,
+      navModelChildren.push({
+        text: PluginTabLabels.USAGE,
         icon: 'list-ul',
         id: PluginTabIds.USAGE,
-        href: `${pathname}?page=${PluginTabIds.USAGE}`,
+        url: `${pathname}?page=${PluginTabIds.USAGE}`,
+        active: PluginTabIds.USAGE === currentPageId,
       });
     }
 
     if (canConfigurePlugins) {
       if (pluginConfig.meta.type === PluginType.app) {
         if (pluginConfig.angularConfigCtrl) {
-          tabs.push({
-            label: 'Config',
+          navModelChildren.push({
+            text: 'Config',
             icon: 'cog',
             id: PluginTabIds.CONFIG,
-            href: `${pathname}?page=${PluginTabIds.CONFIG}`,
+            url: `${pathname}?page=${PluginTabIds.CONFIG}`,
+            active: PluginTabIds.CONFIG === currentPageId,
           });
         }
 
         if (pluginConfig.configPages) {
-          for (const page of pluginConfig.configPages) {
-            tabs.push({
-              label: page.title,
-              icon: page.icon,
-              id: page.id,
-              href: `${pathname}?page=${page.id}`,
+          for (const configPage of pluginConfig.configPages) {
+            navModelChildren.push({
+              text: configPage.title,
+              icon: configPage.icon,
+              id: configPage.id,
+              url: `${pathname}?page=${configPage.id}`,
+              active: configPage.id === currentPageId,
             });
           }
         }
 
         if (pluginConfig.meta.includes?.find((include) => include.type === PluginIncludeType.dashboard)) {
-          tabs.push({
-            label: 'Dashboards',
+          navModelChildren.push({
+            text: 'Dashboards',
             icon: 'apps',
             id: PluginTabIds.DASHBOARDS,
-            href: `${pathname}?page=${PluginTabIds.DASHBOARDS}`,
+            url: `${pathname}?page=${PluginTabIds.DASHBOARDS}`,
+            active: PluginTabIds.DASHBOARDS === currentPageId,
           });
         }
       }
     }
+    return navModelChildren;
+  }, [plugin, pluginConfig, pathname, isPublished, currentPageId]);
 
-    return tabs;
-  }, [plugin, pluginConfig, defaultTabs, pathname, isPublished]);
+  const navModel: NavModelItem = {
+    text: plugin?.name ?? '',
+    img: plugin?.info.logos.small,
+    breadcrumbs: [{ title: 'Plugins', url: parentUrl }],
+    children: [
+      {
+        text: PluginTabLabels.OVERVIEW,
+        icon: 'file-alt',
+        id: PluginTabIds.OVERVIEW,
+        url: `${pathname}?page=${PluginTabIds.OVERVIEW}`,
+        active: PluginTabIds.OVERVIEW === currentPageId,
+      },
+      ...navModelChildren,
+    ],
+    headerExtra: () => {
+      return plugin ? <PluginDetailsHeader plugin={plugin} /> : null;
+    },
+  };
 
   return {
     error,
     loading,
-    tabs,
-    defaultTab,
+    navModel,
+    activePageId: currentPageId,
   };
 };
 
