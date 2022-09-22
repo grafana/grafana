@@ -1,7 +1,7 @@
 import { DataFrameView, FieldCache, KeyValue, MutableDataFrame } from '@grafana/data';
 import flatten from 'app/core/utils/flatten';
 
-import { ElasticsearchQuery } from '../types';
+import { ElasticsearchQuery } from './types';
 
 import { ElasticResponse } from './ElasticResponse';
 import { highlightTags } from './queryDef';
