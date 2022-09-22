@@ -1,28 +1,44 @@
 import { css } from '@emotion/css';
 import React, { FC, useState } from 'react';
-import { useFormContext, RegisterOptions } from 'react-hook-form';
+import { RegisterOptions, useFormContext } from 'react-hook-form';
 
-import { parseDuration, durationToMilliseconds, GrafanaTheme2 } from '@grafana/data';
+import { durationToMilliseconds, GrafanaTheme2, parseDuration } from '@grafana/data';
 import { Field, InlineLabel, Input, InputControl, useStyles2 } from '@grafana/ui';
 
 import { RuleFormValues } from '../../types/rule-form';
-import { positiveDurationValidationPattern, durationValidationPattern } from '../../utils/time';
+import { checkEvaluationIntervalGlobalLimit } from '../../utils/config';
+import {
+  durationValidationPattern,
+  parseDurationToMilliseconds,
+  positiveDurationValidationPattern,
+} from '../../utils/time';
 import { CollapseToggle } from '../CollapseToggle';
+import { EvaluationIntervalLimitExceeded } from '../InvalidIntervalWarning';
 
 import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
-import { GrafanaConditionEvalWarning } from './GrafanaConditionEvalWarning';
 import { PreviewRule } from './PreviewRule';
 import { RuleEditorSection } from './RuleEditorSection';
 
 const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
 
-const forValidationOptions: RegisterOptions = {
+const forValidationOptions = (evaluateEvery: string): RegisterOptions => ({
   required: {
     value: true,
     message: 'Required.',
   },
   pattern: durationValidationPattern,
-};
+  validate: (value) => {
+    const millisFor = parseDurationToMilliseconds(value);
+    const millisEvery = parseDurationToMilliseconds(evaluateEvery);
+
+    // 0 is a special value meaning for equals evaluation interval
+    if (millisFor === 0) {
+      return true;
+    }
+
+    return millisFor >= millisEvery ? true : 'For must be greater than or equal to evaluate every.';
+  },
+});
 
 const evaluateEveryValidationOptions: RegisterOptions = {
   required: {
@@ -51,7 +67,10 @@ export const GrafanaEvaluationBehavior: FC = () => {
   const {
     register,
     formState: { errors },
+    watch,
   } = useFormContext<RuleFormValues>();
+
+  const { exceedsLimit: exceedsGlobalEvaluationLimit } = checkEvaluationIntervalGlobalLimit(watch('evaluateEvery'));
 
   const evaluateEveryId = 'eval-every-input';
   const evaluateForId = 'eval-for-input';
@@ -71,7 +90,15 @@ export const GrafanaEvaluationBehavior: FC = () => {
           >
             Evaluate every
           </InlineLabel>
-          <Input id={evaluateEveryId} width={8} {...register('evaluateEvery', evaluateEveryValidationOptions)} />
+          <Field
+            className={styles.inlineField}
+            error={errors.evaluateEvery?.message}
+            invalid={!!errors.evaluateEvery}
+            validationMessageHorizontalOverflow={true}
+          >
+            <Input id={evaluateEveryId} width={8} {...register('evaluateEvery', evaluateEveryValidationOptions)} />
+          </Field>
+
           <InlineLabel
             htmlFor={evaluateForId}
             width={7}
@@ -85,11 +112,15 @@ export const GrafanaEvaluationBehavior: FC = () => {
             invalid={!!errors.evaluateFor?.message}
             validationMessageHorizontalOverflow={true}
           >
-            <Input id={evaluateForId} width={8} {...register('evaluateFor', forValidationOptions)} />
+            <Input
+              id={evaluateForId}
+              width={8}
+              {...register('evaluateFor', forValidationOptions(watch('evaluateEvery')))}
+            />
           </Field>
         </div>
       </Field>
-      <GrafanaConditionEvalWarning />
+      {exceedsGlobalEvaluationLimit && <EvaluationIntervalLimitExceeded />}
       <CollapseToggle
         isCollapsed={!showErrorHandling}
         onToggle={(collapsed) => setShowErrorHandling(!collapsed)}
@@ -147,5 +178,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   collapseToggle: css`
     margin: ${theme.spacing(2, 0, 2, -1)};
+  `,
+  globalLimitValue: css`
+    font-weight: ${theme.typography.fontWeightBold};
   `,
 });

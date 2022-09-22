@@ -32,12 +32,14 @@ type cmdCreateFolder struct {
 }
 
 type cmdDeleteFolder struct {
-	path  string
-	error *cmdErrorOutput
+	path    string
+	error   *cmdErrorOutput
+	options *DeleteFolderOptions
 }
 
 type queryGetInput struct {
-	path string
+	path    string
+	options *GetFileOptions
 }
 
 type fileNameCheck struct {
@@ -175,7 +177,7 @@ func handleCommand(t *testing.T, ctx context.Context, cmd interface{}, cmdName s
 		}
 		expectedErr = c.error
 	case cmdDeleteFolder:
-		err = fs.DeleteFolder(ctx, c.path)
+		err = fs.DeleteFolder(ctx, c.path, c.options)
 		if c.error == nil {
 			require.NoError(t, err, "%s: should be able to delete %s", cmdName, c.path)
 		}
@@ -269,15 +271,18 @@ func handleQuery(t *testing.T, ctx context.Context, query interface{}, queryName
 	switch q := query.(type) {
 	case queryGet:
 		inputPath := q.input.path
-		file, err := fs.Get(ctx, inputPath)
+		options := q.input.options
+		file, fileFound, err := fs.Get(ctx, inputPath, options)
 		require.NoError(t, err, "%s: should be able to get file %s", queryName, inputPath)
 
 		if q.checks != nil && len(q.checks) > 0 {
 			require.NotNil(t, file, "%s %s", queryName, inputPath)
+			require.True(t, fileFound, "%s %s", queryName, inputPath)
 			require.Equal(t, strings.ToLower(inputPath), strings.ToLower(file.FullPath), "%s %s", queryName, inputPath)
 			runChecks(t, queryName, inputPath, file, q.checks)
 		} else {
 			require.Nil(t, file, "%s %s", queryName, inputPath)
+			require.False(t, fileFound, "%s %s", queryName, inputPath)
 		}
 	case queryListFiles:
 		inputPath := q.input.path

@@ -60,12 +60,6 @@ describe('DashboardPrompt', () => {
     expect(hasChanges(dash, original)).toBe(false);
   });
 
-  it('Should ignore .iteration changes', () => {
-    const { original, dash } = getTestContext();
-    dash.iteration = new Date().getTime() + 1;
-    expect(hasChanges(dash, original)).toBe(false);
-  });
-
   it('Should ignore row collapse change', () => {
     const { original, dash } = getTestContext();
     dash.toggleRow(dash.panels[1]);

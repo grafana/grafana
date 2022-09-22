@@ -11,11 +11,10 @@ import { Props, TeamList } from './TeamList';
 import { getMockTeam, getMultipleMockTeams } from './__mocks__/teamMocks';
 import { setSearchQuery, setTeamsSearchPage } from './state/reducers';
 
-jest.mock('app/core/config', () => {
-  return {
-    featureToggles: { accesscontrol: false },
-  };
-});
+jest.mock('app/core/config', () => ({
+  ...jest.requireActual('app/core/config'),
+  featureToggles: { accesscontrol: false },
+}));
 
 const setup = (propOverrides?: object) => {
   const props: Props = {

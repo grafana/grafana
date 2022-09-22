@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
 import React, { useRef, useState, useLayoutEffect, useEffect } from 'react';
 
-import { GrafanaTheme, DataQueryError, LogRowModel, textUtil } from '@grafana/data';
+import { GrafanaTheme2, DataQueryError, LogRowModel, textUtil } from '@grafana/data';
 
-import { useStyles, useTheme } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { Alert } from '../Alert/Alert';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
@@ -22,7 +22,7 @@ interface LogRowContextProps {
   onLoadMoreContext: () => void;
 }
 
-const getLogRowContextStyles = (theme: GrafanaTheme, wrapLogMessage?: boolean) => {
+const getLogRowContextStyles = (theme: GrafanaTheme2, wrapLogMessage?: boolean) => {
   /**
    * This is workaround for displaying uncropped context when we have unwrapping log messages.
    * We are using margins to correctly position context. Because non-wrapped logs have always 1 line of log
@@ -53,10 +53,10 @@ const getLogRowContextStyles = (theme: GrafanaTheme, wrapLogMessage?: boolean) =
       height: 250px;
       z-index: ${theme.zIndex.dropdown};
       overflow: hidden;
-      background: ${theme.colors.bg1};
-      box-shadow: 0 0 10px ${theme.colors.dropdownShadow};
-      border: 1px solid ${theme.colors.bg2};
-      border-radius: ${theme.border.radius.md};
+      background: ${theme.colors.background.primary};
+      box-shadow: 0 0 10px ${theme.v1.palette.black};
+      border: 1px solid ${theme.colors.background.secondary};
+      border-radius: ${theme.shape.borderRadius(2)};
       width: 100%;
     `,
     header: css`
@@ -64,7 +64,7 @@ const getLogRowContextStyles = (theme: GrafanaTheme, wrapLogMessage?: boolean) =
       padding: 0 10px;
       display: flex;
       align-items: center;
-      background: ${theme.colors.bg2};
+      background: ${theme.colors.background.secondary};
     `,
     logs: css`
       height: 220px;
@@ -94,7 +94,7 @@ const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeader
   onLoadMoreContext,
   canLoadMoreRows,
 }) => {
-  const { header } = useStyles(getLogRowContextStyles);
+  const { header } = useStyles2(getLogRowContextStyles);
 
   return (
     <div className={header}>
@@ -123,6 +123,7 @@ const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeader
   );
 };
 
+/** @deprecated will be removed in the next major version */
 export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps> = ({
   row,
   rows,
@@ -132,7 +133,7 @@ export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps
   canLoadMoreRows,
   onLoadMoreContext,
 }) => {
-  const { commonStyles, logs } = useStyles(getLogRowContextStyles);
+  const { commonStyles, logs } = useStyles2(getLogRowContextStyles);
   const [scrollTop, setScrollTop] = useState(0);
   const listContainerRef = useRef<HTMLDivElement>() as React.RefObject<HTMLDivElement>;
 
@@ -184,6 +185,7 @@ export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps
   );
 };
 
+/** @deprecated will be removed in the next major version */
 export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
   row,
   context,
@@ -204,8 +206,7 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
       document.removeEventListener('keydown', handleEscKeyDown, false);
     };
   }, [onOutsideClick]);
-  const theme = useTheme();
-  const { afterContext, beforeContext } = getLogRowContextStyles(theme, wrapLogMessage);
+  const { afterContext, beforeContext } = useStyles2((theme) => getLogRowContextStyles(theme, wrapLogMessage));
 
   return (
     <ClickOutsideWrapper onClick={onOutsideClick}>

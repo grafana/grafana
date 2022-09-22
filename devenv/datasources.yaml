@@ -247,6 +247,13 @@ datasources:
     access: proxy
     url: http://localhost:3100
     editable: false
+    correlations:
+      - targetUID: gdev-jaeger
+        label: "Jaeger traces"
+        description: "Related traces stored in Jaeger"
+      - targetUID: gdev-zipkin
+        label: "Zipkin traces"
+        description: "Related traces stored in Zipkin"
     jsonData:
       manageAlerts: false
       derivedFields:
@@ -277,5 +284,5 @@ datasources:
     type: tempo
     uid: gdev-tempo
     access: proxy
-    url: http://localhost:3101
+    url: http://localhost:3200
     editable: false

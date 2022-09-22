@@ -35,6 +35,7 @@ interface Props {
 interface State {
   panelDataByRefId: Record<string, PanelData>;
 }
+
 export class QueryEditor extends PureComponent<Props, State> {
   private runner: AlertingQueryRunner;
   private queries: AlertQuery[];
@@ -100,12 +101,16 @@ export class QueryEditor extends PureComponent<Props, State> {
   onNewExpressionQuery = () => {
     const { queries } = this;
 
+    const lastQuery = queries.at(-1);
+    const defaultParams = lastQuery ? [lastQuery.refId] : [];
+
     this.onChangeQueries(
       addQuery(queries, {
         datasourceUid: ExpressionDatasourceUID,
         model: expressionDatasource.newQuery({
           type: ExpressionQueryType.classic,
-          conditions: [defaultCondition],
+          conditions: [{ ...defaultCondition, query: { params: defaultParams } }],
+          expression: lastQuery?.refId,
         }),
       })
     );
@@ -175,7 +180,10 @@ export class QueryEditor extends PureComponent<Props, State> {
   }
 }
 
-const addQuery = (queries: AlertQuery[], queryToAdd: Pick<AlertQuery, 'model' | 'datasourceUid'>): AlertQuery[] => {
+const addQuery = (
+  queries: AlertQuery[],
+  queryToAdd: Pick<AlertQuery, 'model' | 'datasourceUid' | 'relativeTimeRange'>
+): AlertQuery[] => {
   const refId = getNextRefIdChar(queries);
 
   const query: AlertQuery = {
@@ -187,7 +195,7 @@ const addQuery = (queries: AlertQuery[], queryToAdd: Pick<AlertQuery, 'model' | 
       hide: false,
       refId,
     },
-    relativeTimeRange: defaultTimeRange(queryToAdd.model),
+    relativeTimeRange: queryToAdd.relativeTimeRange || defaultTimeRange(queryToAdd.model),
   };
 
   return [...queries, query];

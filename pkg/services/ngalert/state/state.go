@@ -36,6 +36,13 @@ type State struct {
 	Error                error
 }
 
+func (a *State) GetRuleKey() models.AlertRuleKey {
+	return models.AlertRuleKey{
+		OrgID: a.OrgID,
+		UID:   a.AlertRuleUID,
+	}
+}
+
 type Evaluation struct {
 	EvaluationTime  time.Time
 	EvaluationState eval.State
@@ -122,6 +129,12 @@ func (a *State) resultError(alertRule *models.AlertRule, result eval.Result) {
 
 	switch a.State {
 	case eval.Alerting, eval.Error:
+		// We must set the state here as the state can change both from Alerting
+		// to Error and from Error to Alerting. This can happen when the datasource
+		// is unavailable or queries against the datasource returns errors, and is
+		// then resolved as soon as the datasource is available and queries return
+		// without error
+		a.State = execErrState
 		a.setEndsAt(alertRule, result)
 	case eval.Pending:
 		if result.EvaluatedAt.Sub(a.StartsAt) >= alertRule.For {
@@ -161,12 +174,18 @@ func (a *State) resultNoData(alertRule *models.AlertRule, result eval.Result) {
 }
 
 func (a *State) NeedsSending(resendDelay time.Duration) bool {
-	if a.State == eval.Pending || a.State == eval.Normal && !a.Resolved {
+	switch a.State {
+	case eval.Pending:
+		// We do not send notifications for pending states
 		return false
+	case eval.Normal:
+		// We should send a notification if the state is Normal because it was resolved
+		return a.Resolved
+	default:
+		// We should send, and re-send notifications, each time LastSentAt is <= LastEvaluationTime + resendDelay
+		nextSent := a.LastSentAt.Add(resendDelay)
+		return nextSent.Before(a.LastEvaluationTime) || nextSent.Equal(a.LastEvaluationTime)
 	}
-	// if LastSentAt is before or equal to LastEvaluationTime + resendDelay, send again
-	nextSent := a.LastSentAt.Add(resendDelay)
-	return nextSent.Before(a.LastEvaluationTime) || nextSent.Equal(a.LastEvaluationTime)
 }
 
 func (a *State) Equals(b *State) bool {

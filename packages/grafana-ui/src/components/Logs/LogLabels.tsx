@@ -1,49 +1,20 @@
 import { css, cx } from '@emotion/css';
 import React, { FunctionComponent } from 'react';
 
-import { GrafanaTheme, Labels } from '@grafana/data';
+import { GrafanaTheme2, Labels } from '@grafana/data';
 
-import { stylesFactory } from '../../themes';
-import { withTheme } from '../../themes/ThemeContext';
-import { Themeable } from '../../types/theme';
+import { useStyles2 } from '../../themes/ThemeContext';
 
 // Levels are already encoded in color, filename is a Loki-ism
 const HIDDEN_LABELS = ['level', 'lvl', 'filename'];
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  return {
-    logsLabels: css`
-      display: flex;
-      flex-wrap: wrap;
-      font-size: ${theme.typography.size.xs};
-    `,
-    logsLabel: css`
-      label: logs-label;
-      display: flex;
-      padding: 0 2px;
-      background-color: ${theme.colors.bg2};
-      border-radius: ${theme.border.radius};
-      margin: 1px 4px 0 0;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      overflow: hidden;
-    `,
-    logsLabelValue: css`
-      label: logs-label__value;
-      display: inline-block;
-      max-width: 20em;
-      text-overflow: ellipsis;
-      overflow: hidden;
-    `,
-  };
-});
-
-interface Props extends Themeable {
+interface Props {
   labels: Labels;
 }
 
-export const UnThemedLogLabels: FunctionComponent<Props> = ({ labels, theme }) => {
-  const styles = getStyles(theme);
+/** @deprecated will be removed in the next major version */
+export const LogLabels: FunctionComponent<Props> = ({ labels }) => {
+  const styles = useStyles2(getStyles);
   const displayLabels = Object.keys(labels).filter((label) => !label.startsWith('_') && !HIDDEN_LABELS.includes(label));
 
   if (displayLabels.length === 0) {
@@ -74,5 +45,30 @@ export const UnThemedLogLabels: FunctionComponent<Props> = ({ labels, theme }) =
   );
 };
 
-export const LogLabels = withTheme(UnThemedLogLabels);
-LogLabels.displayName = 'LogLabels';
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    logsLabels: css`
+      display: flex;
+      flex-wrap: wrap;
+      font-size: ${theme.typography.size.xs};
+    `,
+    logsLabel: css`
+      label: logs-label;
+      display: flex;
+      padding: 0 2px;
+      background-color: ${theme.colors.background.secondary};
+      border-radius: ${theme.shape.borderRadius(1)};
+      margin: 1px 4px 0 0;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
+    `,
+    logsLabelValue: css`
+      label: logs-label__value;
+      display: inline-block;
+      max-width: 20em;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    `,
+  };
+};

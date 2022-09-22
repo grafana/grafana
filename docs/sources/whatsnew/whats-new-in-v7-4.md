@@ -38,10 +38,10 @@ Apart from major performance improvements, the new Time series panel implements 
 The following documentation topics were added for this feature:
 
 - [Time series panel]({{< relref "../visualizations/time-series/" >}})
-- [Graph time series as lines]({{< relref "../visualizations/time-series/graph-time-series-as-lines/" >}})
-- [Graph time series as bars]({{< relref "../visualizations/time-series/graph-time-series-as-bars/" >}})
-- [Graph time series as points]({{< relref "../visualizations/time-series/graph-time-series-as-points/" >}})
-- [Change axis display]({{< relref "../visualizations/time-series/change-axis-display/" >}})
+- [Graph time series as lines]({{< relref "../visualizations/time-series#line-style" >}})
+- [Graph time series as bars]({{< relref "../visualizations/time-series#bar-alignment" >}})
+- [Graph time series as points]({{< relref "../visualizations/time-series#show-points" >}})
+- [Change axis display]({{< relref "../visualizations/time-series#axis-options" >}})
 
 ### Node graph panel visualization (Beta)
 
@@ -61,7 +61,7 @@ The following transformations were added in Grafana 7.4.
 
 The _Sort by_ transformation allows you to sort data before sending it to the visualization.
 
-For more information, refer to [Sort by]({{< relref "../panels/transform-data/transformation-functions/#sort-by" >}}).
+For more information, refer to [Sort by]({{< relref "../panels/transform-data/" >}}).
 
 #### Filter data by value transform
 
@@ -69,13 +69,13 @@ The new _Filter data by value_ transformation allows you to filter your data dir
 
 This transformation is very useful if your data source does not natively filter by values. You might also use this to narrow values to display if you are using a shared query.
 
-For more information, refer to [Filter data by value]({{< relref "../panels/transform-data/transformation-functions/#filter-data-by-value" >}}).
+For more information, refer to [Filter data by value]({{< relref "../panels/transform-data/#filter-data-by-value" >}}).
 
 ### New override option
 
 On the Overrides tab, you can now set properties for fields returned by a specific query.
 
-For more information, refer to [About field overrides]({{< relref "../panels/override-field-values/about-field-overrides/" >}}).
+For more information, refer to [About field overrides]({{< relref "../panels/configure-overrides" >}}).
 
 ### Exemplar support
 
@@ -113,8 +113,6 @@ For more information, refer to [About expressions]({{< relref "../panels/query-a
 You can now provide detailed information to alert notification recipients by injecting alert label data as template variables into an alert notification. Labels that exist from the evaluation of the alert query can be used in the alert rule name and in the alert notification message fields using the `${Label}` syntax. The alert label data is automatically injected into the notification fields when the alert is in the alerting state. When there are multiple unique values for the same label, the values are comma-separated.
 
 {{< figure src="/static/img/docs/alerting/alert-notification-template-7-4.png" max-width="700px" caption="Variable support in alert notifications" >}}
-
-For more information, refer to the [alert notification docs]({{< ref "/docs/grafana/v8.5/alerting/old-alerting/add-notification-template/" >}}).
 
 ### Content security policy support
 
@@ -185,7 +183,7 @@ For more information on adding a query editor help component to your plugin, ref
 
 The variables list has an additional column indicating whether variables are referenced in queries and panel names or not. The dependencies graph provides an easy way to check variable dependencies. You can click on a variable name within the graph to make updates to the variable as needed.
 
-For more information, refer to [Inspect variables and their dependencies]({{< relref "../variables/inspect-variable/" >}}).
+For more information, refer to [Inspect variables and their dependencies]({{< relref "../dashboards/variables/inspect-variable/" >}}).
 
 ## Grafana Enterprise features
 
@@ -193,13 +191,13 @@ These features are included in the Grafana Enterprise edition.
 
 ### Licensing changes
 
-When determining a user’s role for billing purposes, a user who has the ability to edit and save dashboards is considered an Editor. This includes any user who is an Editor or Admin at the Org level, and who has granted Admin or Edit permissions via [Dashboard permissions]({{< relref "../administration/manage-users-and-permissions/about-users-and-permissions/#dashboard-permissions" >}}).
+When determining a user’s role for billing purposes, a user who has the ability to edit and save dashboards is considered an Editor. This includes any user who is an Editor or Admin at the Org level, and who has granted Admin or Edit permissions via [Dashboard permissions]({{< relref "../administration/user-management/manage-dashboard-permissions/" >}}).
 
 After the number of Viewers or Editors has reached its license limit, only Admins will see a banner in Grafana indicating that the license limit has been reached. Previously, all users saw the banner.
 
 Grafana Enterprise license tokens update automatically on a daily basis, which means you no longer need to manually update your license, and the process for adding additional users to a license is smoother than it was before.
 
-Refer to [Licensing restrictions]({{< relref "../enterprise/license/license-restrictions/" >}}) for more information.
+Refer to [Licensing restrictions]({{< relref "../administration/enterprise-licensing#license-restrictions" >}}) for more information.
 
 ### Export usage insights to Loki
 
@@ -219,7 +217,7 @@ Also, a counter for audit log writing actions with status (success / failure) an
 
 You can now select a font, other than the default, for Unicode-based scripts. As a result, an automatically generated PDF of a dashboard, which contains for example Chinese or Cyrillic text, can display them. Because the size of a report increases as additional fonts are added, this feature is not on by default.
 
-[Reporting]({{< relref "../enterprise/reporting/#rendering-configuration" >}}) was updated as a result of this change.
+[Reporting]({{< relref "../dashboards/share-dashboards-panels/#rendering-configuration" >}}) was updated as a result of this change.
 
 ### Request security
 

@@ -2,6 +2,8 @@ package org
 
 import (
 	"errors"
+	"fmt"
+	"strings"
 	"time"
 )
 
@@ -39,9 +41,9 @@ type OrgUser struct {
 type RoleType string
 
 const (
-	ROLE_VIEWER RoleType = "Viewer"
-	ROLE_EDITOR RoleType = "Editor"
-	ROLE_ADMIN  RoleType = "Admin"
+	RoleViewer RoleType = "Viewer"
+	RoleEditor RoleType = "Editor"
+	RoleAdmin  RoleType = "Admin"
 )
 
 type CreateOrgCommand struct {
@@ -57,4 +59,112 @@ type GetOrgIDForNewUserCommand struct {
 	OrgID        int64
 	OrgName      string
 	SkipOrgSetup bool
+}
+
+type GetUserOrgListQuery struct {
+	UserID int64
+}
+
+type UserOrgDTO struct {
+	OrgID int64    `json:"orgId"`
+	Name  string   `json:"name"`
+	Role  RoleType `json:"role"`
+}
+
+type UpdateOrgCommand struct {
+	Name  string
+	OrgId int64
+}
+
+type SearchOrgsQuery struct {
+	Query string
+	Name  string
+	Limit int
+	Page  int
+	IDs   []int64
+}
+
+type OrgDTO struct {
+	ID   int64  `json:"id"`
+	Name string `json:"name"`
+}
+
+type GetOrgByIdQuery struct {
+	ID int64
+}
+
+type GetOrgByNameQuery struct {
+	Name string
+}
+
+type UpdateOrgAddressCommand struct {
+	OrgID int64 `xorm:"org_id"`
+	Address
+}
+
+type Address struct {
+	Address1 string `json:"address1"`
+	Address2 string `json:"address2"`
+	City     string `json:"city"`
+	ZipCode  string `json:"zipCode"`
+	State    string `json:"state"`
+	Country  string `json:"country"`
+}
+
+type DeleteOrgCommand struct {
+	ID int64 `xorm:"id"`
+}
+
+func (r RoleType) IsValid() bool {
+	return r == RoleViewer || r == RoleAdmin || r == RoleEditor
+}
+
+func (r RoleType) Includes(other RoleType) bool {
+	if r == RoleAdmin {
+		return true
+	}
+
+	if r == RoleEditor {
+		return other != RoleAdmin
+	}
+
+	return r == other
+}
+
+func (r RoleType) Children() []RoleType {
+	switch r {
+	case RoleAdmin:
+		return []RoleType{RoleEditor, RoleViewer}
+	case RoleEditor:
+		return []RoleType{RoleViewer}
+	default:
+		return nil
+	}
+}
+
+func (r RoleType) Parents() []RoleType {
+	switch r {
+	case RoleEditor:
+		return []RoleType{RoleAdmin}
+	case RoleViewer:
+		return []RoleType{RoleEditor, RoleAdmin}
+	default:
+		return nil
+	}
+}
+
+func (r *RoleType) UnmarshalText(data []byte) error {
+	// make sure "viewer" and "Viewer" are both correct
+	str := strings.Title(string(data))
+
+	*r = RoleType(str)
+	if !r.IsValid() {
+		if (*r) != "" {
+			return fmt.Errorf("invalid role value: %s", *r)
+		}
+
+		*r = RoleViewer
+	}
+
+	return nil
 }

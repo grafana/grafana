@@ -11,7 +11,7 @@ interface Props {
   entitiesInfo: PipeLineEntitiesInfo;
 }
 
-export const RuleSettingsEditor: React.FC<Props> = ({ onChange, value, ruleType, entitiesInfo }) => {
+export const RuleSettingsEditor = ({ onChange, value, ruleType, entitiesInfo }: Props) => {
   return (
     <>
       <Select

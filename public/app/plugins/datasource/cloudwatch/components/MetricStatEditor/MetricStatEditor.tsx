@@ -1,12 +1,12 @@
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorField, EditorFieldGroup, EditorRow, EditorRows, EditorSwitch } from '@grafana/experimental';
-import { Select } from '@grafana/ui';
+import { EditorField, EditorFieldGroup, EditorRow, EditorRows, EditorSwitch, Select } from '@grafana/ui';
 
 import { Dimensions } from '..';
 import { CloudWatchDatasource } from '../../datasource';
 import { useDimensionKeys, useMetrics, useNamespaces } from '../../hooks';
+import { standardStatistics } from '../../standardStatistics';
 import { MetricStat } from '../../types';
 import { appendTemplateVariables, toOption } from '../../utils/utils';
 
@@ -47,7 +47,7 @@ export function MetricStatEditor({
     if (!metricName) {
       return metricStat;
     }
-    await datasource.getMetrics(namespace, region).then((result: Array<SelectableValue<string>>) => {
+    await datasource.api.getMetrics(namespace, region).then((result: Array<SelectableValue<string>>) => {
       if (!result.find((metric) => metric.value === metricName)) {
         metricName = '';
       }
@@ -62,7 +62,7 @@ export function MetricStatEditor({
           <EditorField label="Namespace" width={26}>
             <Select
               aria-label="Namespace"
-              value={metricStat.namespace}
+              value={metricStat?.namespace && toOption(metricStat.namespace)}
               allowCustomValue
               options={namespaces}
               onChange={({ value: namespace }) => {
@@ -75,7 +75,7 @@ export function MetricStatEditor({
           <EditorField label="Metric name" width={16}>
             <Select
               aria-label="Metric name"
-              value={metricStat.metricName || null}
+              value={metricStat?.metricName && toOption(metricStat.metricName)}
               allowCustomValue
               options={metrics}
               onChange={({ value: metricName }) => {
@@ -90,15 +90,15 @@ export function MetricStatEditor({
             <Select
               inputId={`${refId}-metric-stat-editor-select-statistic`}
               allowCustomValue
-              value={toOption(metricStat.statistic ?? datasource.standardStatistics[0])}
+              value={toOption(metricStat.statistic ?? standardStatistics[0])}
               options={appendTemplateVariables(
                 datasource,
-                datasource.standardStatistics.filter((s) => s !== metricStat.statistic).map(toOption)
+                standardStatistics.filter((s) => s !== metricStat.statistic).map(toOption)
               )}
               onChange={({ value: statistic }) => {
                 if (
                   !statistic ||
-                  (!datasource.standardStatistics.includes(statistic) &&
+                  (!standardStatistics.includes(statistic) &&
                     !/^p\d{2}(?:\.\d{1,2})?$/.test(statistic) &&
                     !statistic.startsWith('$'))
                 ) {

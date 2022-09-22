@@ -4,8 +4,6 @@
 // To regenerate, run "make gen-cue" from the repository root.
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
-
 export enum AxisPlacement {
   Auto = 'auto',
   Bottom = 'bottom',
@@ -13,6 +11,11 @@ export enum AxisPlacement {
   Left = 'left',
   Right = 'right',
   Top = 'top',
+}
+
+export enum AxisColorMode {
+  Series = 'series',
+  Text = 'text',
 }
 
 export enum VisibilityMode {
@@ -43,6 +46,7 @@ export enum ScaleDistribution {
   Linear = 'linear',
   Log = 'log',
   Ordinal = 'ordinal',
+  Symlog = 'symlog',
 }
 
 export enum GraphGradientMode {
@@ -113,11 +117,14 @@ export interface PointsConfig {
 }
 
 export interface ScaleDistributionConfig {
+  linearThreshold?: number;
   log?: number;
   type: ScaleDistribution;
 }
 
 export interface AxisConfig {
+  axisCenteredZero?: boolean;
+  axisColorMode?: AxisColorMode;
   axisGridShow?: boolean;
   axisLabel?: string;
   axisPlacement?: AxisPlacement;
@@ -201,6 +208,14 @@ export interface OptionsWithLegend {
   legend: VizLegendOptions;
 }
 
+export interface OptionsWithTimezones {
+  timezone?: string[];
+}
+
+export const defaultOptionsWithTimezones: Partial<OptionsWithTimezones> = {
+  timezone: [],
+};
+
 export interface OptionsWithTextFormatting {
   text?: VizTextDisplayOptions;
 }
@@ -274,6 +289,7 @@ export interface VizLegendOptions {
   displayMode: LegendDisplayMode;
   isVisible?: boolean;
   placement: LegendPlacement;
+  showLegend: boolean;
   sortBy?: string;
   sortDesc?: boolean;
   width?: number;

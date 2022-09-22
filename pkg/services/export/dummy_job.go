@@ -20,6 +20,7 @@ type dummyExportJob struct {
 	cfg           ExportConfig
 	broadcaster   statusBroadcaster
 	stopRequested bool
+	total         int
 }
 
 func startDummyExportJob(cfg ExportConfig, broadcaster statusBroadcaster) (Job, error) {
@@ -31,9 +32,10 @@ func startDummyExportJob(cfg ExportConfig, broadcaster statusBroadcaster) (Job, 
 			Running: true,
 			Target:  "git export",
 			Started: time.Now().UnixMilli(),
-			Count:   int64(math.Round(10 + rand.Float64()*20)),
-			Current: 0,
+			Count:   make(map[string]int, 10),
+			Index:   0,
 		},
+		total: int(math.Round(10 + rand.Float64()*20)),
 	}
 
 	broadcaster(job.status)
@@ -74,12 +76,12 @@ func (e *dummyExportJob) start() {
 	for t := range ticker.C {
 		e.statusMu.Lock()
 		e.status.Changed = t.UnixMilli()
-		e.status.Current++
-		e.status.Last = fmt.Sprintf("ITEM: %d", e.status.Current)
+		e.status.Index++
+		e.status.Last = fmt.Sprintf("ITEM: %d", e.status.Index)
 		e.statusMu.Unlock()
 
 		// Wait till we are done
-		shouldStop := e.stopRequested || e.status.Current >= e.status.Count
+		shouldStop := e.stopRequested || e.status.Index >= e.total
 		e.broadcaster(e.status)
 
 		if shouldStop {

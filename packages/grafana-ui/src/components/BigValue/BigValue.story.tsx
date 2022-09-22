@@ -16,7 +16,7 @@ import {
 } from './BigValue';
 import mdx from './BigValue.mdx';
 
-export default {
+const meta: Meta = {
   title: 'Visualizations/BigValue',
   component: BigValue,
   decorators: [withCenteredStory],
@@ -48,7 +48,7 @@ export default {
     },
     color: { control: 'color' },
   },
-} as Meta;
+};
 
 interface StoryProps extends Partial<Props> {
   numeric: number;
@@ -110,3 +110,5 @@ Basic.args = {
   color: 'red',
   textMode: BigValueTextMode.Auto,
 };
+
+export default meta;

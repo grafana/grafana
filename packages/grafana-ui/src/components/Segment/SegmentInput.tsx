@@ -2,7 +2,7 @@ import { cx, css } from '@emotion/css';
 import React, { HTMLProps, useRef, useState } from 'react';
 import useClickAway from 'react-use/lib/useClickAway';
 
-import { useStyles } from '../../themes';
+import { useStyles2 } from '../../themes';
 import { measureText } from '../../utils/measureText';
 import { InlineLabel } from '../Forms/InlineLabel';
 
@@ -10,7 +10,9 @@ import { getSegmentStyles } from './styles';
 
 import { useExpandableLabel, SegmentProps } from '.';
 
-export interface SegmentInputProps<T> extends SegmentProps<T>, Omit<HTMLProps<HTMLInputElement>, 'value' | 'onChange'> {
+export interface SegmentInputProps<T>
+  extends Omit<SegmentProps<T>, 'allowCustomValue' | 'allowEmptyValue'>,
+    Omit<HTMLProps<HTMLInputElement>, 'value' | 'onChange'> {
   value: string | number;
   onChange: (text: string | number) => void;
 }
@@ -33,7 +35,7 @@ export function SegmentInput<T>({
   const [value, setValue] = useState<number | string>(initialValue);
   const [inputWidth, setInputWidth] = useState<number>(measureText((initialValue || '').toString(), FONT_SIZE).width);
   const [Label, , expanded, setExpanded] = useExpandableLabel(autofocus, onExpandedChange);
-  const styles = useStyles(getSegmentStyles);
+  const styles = useStyles2(getSegmentStyles);
 
   useClickAway(ref, () => {
     setExpanded(false);

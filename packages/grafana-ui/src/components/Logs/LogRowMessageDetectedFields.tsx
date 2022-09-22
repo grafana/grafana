@@ -1,14 +1,15 @@
-import { cx, css } from '@emotion/css';
+import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
 
 import { LogRowModel, Field, LinkModel } from '@grafana/data';
 
-import { withTheme } from '../../themes/index';
-import { Themeable } from '../../types/theme';
+import { withTheme2 } from '../../themes/index';
+import { Themeable2 } from '../../types/theme';
 
 import { getAllFields } from './logParser';
 
-export interface Props extends Themeable {
+/** @deprecated will be removed in the next major version */
+export interface Props extends Themeable2 {
   row: LogRowModel;
   showDetectedFields: string[];
   wrapLogMessage: boolean;
@@ -19,12 +20,11 @@ class UnThemedLogRowMessageDetectedFields extends PureComponent<Props> {
   render() {
     const { row, showDetectedFields, getFieldLinks, wrapLogMessage } = this.props;
     const fields = getAllFields(row, getFieldLinks);
-    const wrapClassName = cx(
-      wrapLogMessage &&
-        css`
-          white-space: pre-wrap;
-        `
-    );
+    const wrapClassName = wrapLogMessage
+      ? ''
+      : css`
+          white-space: nowrap;
+        `;
 
     const line = showDetectedFields
       .map((parsedKey) => {
@@ -46,5 +46,6 @@ class UnThemedLogRowMessageDetectedFields extends PureComponent<Props> {
   }
 }
 
-export const LogRowMessageDetectedFields = withTheme(UnThemedLogRowMessageDetectedFields);
+/** @deprecated will be removed in the next major version */
+export const LogRowMessageDetectedFields = withTheme2(UnThemedLogRowMessageDetectedFields);
 LogRowMessageDetectedFields.displayName = 'LogRowMessageDetectedFields';

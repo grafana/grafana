@@ -15,10 +15,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -82,6 +84,7 @@ func TestAddDataSource_InvalidURL(t *testing.T) {
 	sc := setupScenarioContext(t, "/api/datasources")
 	hs := &HTTPServer{
 		DataSourcesService: &dataSourcesServiceMock{},
+		Cfg:                setting.NewCfg(),
 	}
 
 	sc.m.Post(sc.url, routing.Wrap(func(c *models.ReqContext) response.Response {
@@ -108,6 +111,7 @@ func TestAddDataSource_URLWithoutProtocol(t *testing.T) {
 		DataSourcesService: &dataSourcesServiceMock{
 			expectedDatasource: &datasources.DataSource{},
 		},
+		Cfg: setting.NewCfg(),
 	}
 
 	sc := setupScenarioContext(t, "/api/datasources")
@@ -127,10 +131,42 @@ func TestAddDataSource_URLWithoutProtocol(t *testing.T) {
 	assert.Equal(t, 200, sc.resp.Code)
 }
 
+// Using a custom header whose name matches the name specified for auth proxy header should fail
+func TestAddDataSource_InvalidJSONData(t *testing.T) {
+	hs := &HTTPServer{
+		DataSourcesService: &dataSourcesServiceMock{},
+		Cfg:                setting.NewCfg(),
+	}
+
+	sc := setupScenarioContext(t, "/api/datasources")
+
+	hs.Cfg = setting.NewCfg()
+	hs.Cfg.AuthProxyEnabled = true
+	hs.Cfg.AuthProxyHeaderName = "X-AUTH-PROXY-HEADER"
+	jsonData := simplejson.New()
+	jsonData.Set("httpHeaderName1", hs.Cfg.AuthProxyHeaderName)
+
+	sc.m.Post(sc.url, routing.Wrap(func(c *models.ReqContext) response.Response {
+		c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
+			Name:     "Test",
+			Url:      "localhost:5432",
+			Access:   "direct",
+			Type:     "test",
+			JsonData: jsonData,
+		})
+		return hs.AddDataSource(c)
+	}))
+
+	sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
+
+	assert.Equal(t, 400, sc.resp.Code)
+}
+
 // Updating data sources with invalid URLs should lead to an error.
 func TestUpdateDataSource_InvalidURL(t *testing.T) {
 	hs := &HTTPServer{
 		DataSourcesService: &dataSourcesServiceMock{},
+		Cfg:                setting.NewCfg(),
 	}
 	sc := setupScenarioContext(t, "/api/datasources/1234")
 
@@ -149,6 +185,35 @@ func TestUpdateDataSource_InvalidURL(t *testing.T) {
 	assert.Equal(t, 400, sc.resp.Code)
 }
 
+// Using a custom header whose name matches the name specified for auth proxy header should fail
+func TestUpdateDataSource_InvalidJSONData(t *testing.T) {
+	hs := &HTTPServer{
+		DataSourcesService: &dataSourcesServiceMock{},
+		Cfg:                setting.NewCfg(),
+	}
+	sc := setupScenarioContext(t, "/api/datasources/1234")
+
+	hs.Cfg.AuthProxyEnabled = true
+	hs.Cfg.AuthProxyHeaderName = "X-AUTH-PROXY-HEADER"
+	jsonData := simplejson.New()
+	jsonData.Set("httpHeaderName1", hs.Cfg.AuthProxyHeaderName)
+
+	sc.m.Put(sc.url, routing.Wrap(func(c *models.ReqContext) response.Response {
+		c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
+			Name:     "Test",
+			Url:      "localhost:5432",
+			Access:   "direct",
+			Type:     "test",
+			JsonData: jsonData,
+		})
+		return hs.AddDataSource(c)
+	}))
+
+	sc.fakeReqWithParams("PUT", sc.url, map[string]string{}).exec()
+
+	assert.Equal(t, 400, sc.resp.Code)
+}
+
 // Updating data sources with URLs not specifying protocol should work.
 func TestUpdateDataSource_URLWithoutProtocol(t *testing.T) {
 	const name = "Test"
@@ -158,6 +223,7 @@ func TestUpdateDataSource_URLWithoutProtocol(t *testing.T) {
 		DataSourcesService: &dataSourcesServiceMock{
 			expectedDatasource: &datasources.DataSource{},
 		},
+		Cfg: setting.NewCfg(),
 	}
 
 	sc := setupScenarioContext(t, "/api/datasources/1234")
@@ -517,10 +583,10 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 			// Create a middleware to pretend user is logged in
 			pretendSignInMiddleware := func(c *models.ReqContext) {
 				sc.context = c
-				sc.context.UserId = testUserID
-				sc.context.OrgId = testOrgID
+				sc.context.UserID = testUserID
+				sc.context.OrgID = testOrgID
 				sc.context.Login = testUserLogin
-				sc.context.OrgRole = models.ROLE_VIEWER
+				sc.context.OrgRole = org.RoleViewer
 				sc.context.IsSignedIn = true
 			}
 			sc.m.Use(pretendSignInMiddleware)

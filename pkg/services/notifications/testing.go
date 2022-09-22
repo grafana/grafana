@@ -30,3 +30,11 @@ func NewFakeDisconnectedMailer() *FakeDisconnectedMailer {
 func (fdm *FakeDisconnectedMailer) Send(messages ...*Message) (int, error) {
 	return 0, fmt.Errorf("connect: connection refused")
 }
+
+// NetClient is used to export original in test.
+var NetClient = &netClient
+
+// SetWebhookClient is used to mock in test.
+func SetWebhookClient(client WebhookClient) {
+	netClient = client
+}

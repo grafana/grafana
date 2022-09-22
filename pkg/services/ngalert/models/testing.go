@@ -6,6 +6,10 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+
+	"github.com/grafana/grafana/pkg/expr"
+	models2 "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -38,19 +42,11 @@ func AlertRuleGen(mutators ...AlertRuleMutator) func() *AlertRule {
 
 		var annotations map[string]string = nil
 		if rand.Int63()%2 == 0 {
-			qty := rand.Intn(5)
-			annotations = make(map[string]string, qty)
-			for i := 0; i < qty; i++ {
-				annotations[util.GenerateShortUID()] = util.GenerateShortUID()
-			}
+			annotations = GenerateAlertLabels(rand.Intn(5), "ann-")
 		}
 		var labels map[string]string = nil
 		if rand.Int63()%2 == 0 {
-			qty := rand.Intn(5)
-			labels = make(map[string]string, qty)
-			for i := 0; i < qty; i++ {
-				labels[util.GenerateShortUID()] = util.GenerateShortUID()
-			}
+			labels = GenerateAlertLabels(rand.Intn(5), "lbl-")
 		}
 
 		var dashUID *string = nil
@@ -91,6 +87,11 @@ func AlertRuleGen(mutators ...AlertRuleMutator) func() *AlertRule {
 	}
 }
 
+func WithNotEmptyLabels(count int, prefix string) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.Labels = GenerateAlertLabels(count, prefix)
+	}
+}
 func WithUniqueID() AlertRuleMutator {
 	usedID := make(map[int64]struct{})
 	return func(rule *AlertRule) {
@@ -133,6 +134,26 @@ func WithSequentialGroupIndex() AlertRuleMutator {
 	}
 }
 
+func WithOrgID(orgId int64) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.OrgID = orgId
+	}
+}
+
+func WithNamespace(namespace *models2.Folder) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.NamespaceUID = namespace.Uid
+	}
+}
+
+func GenerateAlertLabels(count int, prefix string) data.Labels {
+	labels := make(data.Labels, count)
+	for i := 0; i < count; i++ {
+		labels[prefix+"key-"+util.GenerateShortUID()] = prefix + "value-" + util.GenerateShortUID()
+	}
+	return labels
+}
+
 func GenerateAlertQuery() AlertQuery {
 	f := rand.Intn(10) + 5
 	t := rand.Intn(f)
@@ -168,6 +189,11 @@ func GenerateUniqueAlertRules(count int, f func() *AlertRule) (map[string]*Alert
 	return uIDs, result
 }
 
+// GenerateAlertRulesSmallNonEmpty generates 1 to 5 rules using the provided generator
+func GenerateAlertRulesSmallNonEmpty(f func() *AlertRule) []*AlertRule {
+	return GenerateAlertRules(rand.Intn(4)+1, f)
+}
+
 // GenerateAlertRules generates many random alert rules. Does not guarantee that rules are unique (by UID)
 func GenerateAlertRules(count int, f func() *AlertRule) []*AlertRule {
 	result := make([]*AlertRule, 0, count)
@@ -178,7 +204,15 @@ func GenerateAlertRules(count int, f func() *AlertRule) []*AlertRule {
 	return result
 }
 
-// GenerateGroupKey generates many random alert rules. Does not guarantee that rules are unique (by UID)
+// GenerateRuleKey generates a random alert rule key
+func GenerateRuleKey(orgID int64) AlertRuleKey {
+	return AlertRuleKey{
+		OrgID: orgID,
+		UID:   util.GenerateShortUID(),
+	}
+}
+
+// GenerateGroupKey generates a random group key
 func GenerateGroupKey(orgID int64) AlertRuleGroupKey {
 	return AlertRuleGroupKey{
 		OrgID:        orgID,
@@ -242,4 +276,46 @@ func CopyRule(r *AlertRule) *AlertRule {
 	}
 
 	return &result
+}
+
+func CreateClassicConditionExpression(refID string, inputRefID string, reducer string, operation string, threshold int) AlertQuery {
+	return AlertQuery{
+		RefID:         refID,
+		QueryType:     expr.DatasourceType,
+		DatasourceUID: expr.OldDatasourceUID,
+		// the format corresponds to model `ClassicConditionJSON` in /pkg/expr/classic/classic.go
+		Model: json.RawMessage(fmt.Sprintf(`
+		{
+			"refId": "%[1]s",
+            "hide": false,
+            "type": "classic_conditions",
+            "datasource": {
+                "uid": "%[6]s",
+                "type": "%[7]s"
+            },
+            "conditions": [
+                {
+                    "type": "query",
+                    "evaluator": {
+                        "params": [
+                            %[4]d
+                        ],
+                        "type": "%[3]s"
+                    },
+                    "operator": {
+                        "type": "and"
+                    },
+                    "query": {
+                        "params": [
+                            "%[2]s"
+                        ]
+                    },
+                    "reducer": {
+                        "params": [],
+                        "type": "%[5]s"
+                    }
+                }
+            ]
+		}`, refID, inputRefID, operation, threshold, reducer, expr.OldDatasourceUID, expr.DatasourceType)),
+	}
 }

@@ -25,13 +25,19 @@ export function CellActions({ field, cell, previewMode, onCellFilterAdded }: Cel
   };
 
   const onFilterFor = useCallback(
-    (event: React.MouseEvent<HTMLButtonElement>) =>
-      onCellFilterAdded({ key: field.name, operator: FILTER_FOR_OPERATOR, value: cell.value }),
+    (event: React.MouseEvent<HTMLButtonElement>) => {
+      if (onCellFilterAdded) {
+        onCellFilterAdded({ key: field.name, operator: FILTER_FOR_OPERATOR, value: cell.value });
+      }
+    },
     [cell, field, onCellFilterAdded]
   );
   const onFilterOut = useCallback(
-    (event: React.MouseEvent<HTMLButtonElement>) =>
-      onCellFilterAdded({ key: field.name, operator: FILTER_OUT_OPERATOR, value: cell.value }),
+    (event: React.MouseEvent<HTMLButtonElement>) => {
+      if (onCellFilterAdded) {
+        onCellFilterAdded({ key: field.name, operator: FILTER_OUT_OPERATOR, value: cell.value });
+      }
+    },
     [cell, field, onCellFilterAdded]
   );
 

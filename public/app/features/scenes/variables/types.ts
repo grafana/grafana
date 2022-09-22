@@ -1,9 +1,9 @@
 import { LoadingState } from '@grafana/data';
 import { VariableHide } from 'app/features/variables/types';
 
-import { SceneObject, SceneObjectState } from '../core/types';
+import { SceneObject, SceneObjectStatePlain } from '../core/types';
 
-export interface SceneVariableState extends SceneObjectState {
+export interface SceneVariableState extends SceneObjectStatePlain {
   name: string;
   hide?: VariableHide;
   skipUrlSync?: boolean;
@@ -15,7 +15,7 @@ export interface SceneVariableState extends SceneObjectState {
 
 export interface SceneVariable extends SceneObject<SceneVariableState> {}
 
-export interface SceneVariableSetState extends SceneObjectState {
+export interface SceneVariableSetState extends SceneObjectStatePlain {
   variables: SceneVariable[];
 }
 

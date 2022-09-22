@@ -1,6 +1,6 @@
-import { NavSection } from '@grafana/data';
+import { NavSection, NavIndex } from '@grafana/data';
 
-export default {
+export const navIndex: NavIndex = {
   dashboards: {
     id: 'dashboards',
     text: 'Dashboards',
@@ -1454,7 +1454,7 @@ export default {
       },
       {
         text: 'Configuration',
-        icon: 'fa fa-cog',
+        icon: 'cog',
         url: '/plugins/basic-app',
       },
     ],

@@ -38,11 +38,13 @@ func setupDBAndSettingsForAccessControlQuotaTests(t *testing.T, sc accessControl
 	setting.Quota = sc.hs.Cfg.Quota
 
 	// Create two orgs with the context user
-	setupOrgsDBForAccessControlTests(t, sc.db, *sc.initCtx.SignedInUser, 2)
+	setupOrgsDBForAccessControlTests(t, sc.db, sc, 2)
 }
 
 func TestAPIEndpoint_GetCurrentOrgQuotas_LegacyAccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true, false)
+	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
+	sc := setupHTTPServerWithCfg(t, true, cfg)
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	setupDBAndSettingsForAccessControlQuotaTests(t, sc)
@@ -60,13 +62,13 @@ func TestAPIEndpoint_GetCurrentOrgQuotas_LegacyAccessControl(t *testing.T) {
 }
 
 func TestAPIEndpoint_GetCurrentOrgQuotas_AccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
+	sc := setupHTTPServer(t, true)
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	setupDBAndSettingsForAccessControlQuotaTests(t, sc)
 
 	t.Run("AccessControl allows viewing CurrentOrgQuotas with correct permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: ActionOrgsQuotasRead}}, sc.initCtx.OrgId)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: ActionOrgsQuotasRead}}, sc.initCtx.OrgID)
 		response := callAPI(sc.server, http.MethodGet, getCurrentOrgQuotasURL, nil, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 	})
@@ -76,14 +78,16 @@ func TestAPIEndpoint_GetCurrentOrgQuotas_AccessControl(t *testing.T) {
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 	t.Run("AccessControl prevents viewing CurrentOrgQuotas with incorrect permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: "orgs:invalid"}}, sc.initCtx.OrgId)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: "orgs:invalid"}}, sc.initCtx.OrgID)
 		response := callAPI(sc.server, http.MethodGet, getCurrentOrgQuotasURL, nil, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 }
 
 func TestAPIEndpoint_GetOrgQuotas_LegacyAccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true, false)
+	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
+	sc := setupHTTPServerWithCfg(t, true, cfg)
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	setupDBAndSettingsForAccessControlQuotaTests(t, sc)
@@ -101,22 +105,23 @@ func TestAPIEndpoint_GetOrgQuotas_LegacyAccessControl(t *testing.T) {
 }
 
 func TestAPIEndpoint_GetOrgQuotas_AccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
-	setInitCtxSignedInViewer(sc.initCtx)
-
+	sc := setupHTTPServer(t, true)
 	setupDBAndSettingsForAccessControlQuotaTests(t, sc)
 
 	t.Run("AccessControl allows viewing another org quotas with correct permissions", func(t *testing.T) {
+		setInitCtxSignedInViewer(sc.initCtx)
 		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: ActionOrgsQuotasRead}}, 2)
 		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(getOrgsQuotasURL, 2), nil, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 	})
 	t.Run("AccessControl prevents viewing another org quotas with correct permissions in another org", func(t *testing.T) {
+		setInitCtxSignedInViewer(sc.initCtx)
 		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: ActionOrgsQuotasRead}}, 1)
 		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(getOrgsQuotasURL, 2), nil, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 	t.Run("AccessControl prevents viewing another org quotas with incorrect permissions", func(t *testing.T) {
+		setInitCtxSignedInViewer(sc.initCtx)
 		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: "orgs:invalid"}}, 2)
 		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(getOrgsQuotasURL, 2), nil, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
@@ -124,7 +129,9 @@ func TestAPIEndpoint_GetOrgQuotas_AccessControl(t *testing.T) {
 }
 
 func TestAPIEndpoint_PutOrgQuotas_LegacyAccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true, false)
+	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
+	sc := setupHTTPServerWithCfg(t, true, cfg)
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	setupDBAndSettingsForAccessControlQuotaTests(t, sc)
@@ -144,13 +151,12 @@ func TestAPIEndpoint_PutOrgQuotas_LegacyAccessControl(t *testing.T) {
 }
 
 func TestAPIEndpoint_PutOrgQuotas_AccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
-	setInitCtxSignedInViewer(sc.initCtx)
-
+	sc := setupHTTPServer(t, true)
 	setupDBAndSettingsForAccessControlQuotaTests(t, sc)
 
 	input := strings.NewReader(testUpdateOrgQuotaCmd)
 	t.Run("AccessControl allows updating another org quotas with correct permissions", func(t *testing.T) {
+		setInitCtxSignedInViewer(sc.initCtx)
 		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: ActionOrgsQuotasWrite}}, 2)
 		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(putOrgsQuotasURL, 2, "org_user"), input, t)
 		assert.Equal(t, http.StatusOK, response.Code)
@@ -158,6 +164,7 @@ func TestAPIEndpoint_PutOrgQuotas_AccessControl(t *testing.T) {
 
 	input = strings.NewReader(testUpdateOrgQuotaCmd)
 	t.Run("AccessControl prevents updating another org quotas with correct permissions in another org", func(t *testing.T) {
+		setInitCtxSignedInViewer(sc.initCtx)
 		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: ActionOrgsQuotasWrite}}, 1)
 		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(putOrgsQuotasURL, 2, "org_user"), input, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
@@ -165,6 +172,7 @@ func TestAPIEndpoint_PutOrgQuotas_AccessControl(t *testing.T) {
 
 	input = strings.NewReader(testUpdateOrgQuotaCmd)
 	t.Run("AccessControl prevents updating another org quotas with incorrect permissions", func(t *testing.T) {
+		setInitCtxSignedInViewer(sc.initCtx)
 		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: "orgs:invalid"}}, 2)
 		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(putOrgsQuotasURL, 2, "org_user"), input, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)

@@ -14,6 +14,6 @@ export const reportPerformance = (metric: string, value: number) => {
   });
 };
 
-// Sentry will process the error, adding it's own metadata, applying any sampling rules,
+// Sentry will process the error, adding its own metadata, applying any sampling rules,
 // then push it to EchoSrv as SentryEvent
 export const reportError = (error: Error) => captureException(error);

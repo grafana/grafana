@@ -3,8 +3,7 @@ import React, { FunctionComponent, useMemo } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
-import { AccessoryButton, InputGroup } from '@grafana/experimental';
-import { Select, stylesFactory, useTheme2 } from '@grafana/ui';
+import { AccessoryButton, InputGroup, Select, stylesFactory, useTheme2 } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../datasource';
 import { Dimensions, MetricStat } from '../../types';
@@ -51,7 +50,7 @@ export const FilterItem: FunctionComponent<Props> = ({
       return [];
     }
 
-    return datasource
+    return datasource.api
       .getDimensionValues(region, namespace, metricName, filter.key, dimensionsExcludingCurrentKey)
       .then((result: Array<SelectableValue<string>>) => {
         if (result.length && !disableExpressions) {

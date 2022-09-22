@@ -65,14 +65,14 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
   const sanitizeQuery = async (query: VariableQuery) => {
     let { metricName, dimensionKey, dimensionFilters, namespace, region } = query;
     if (metricName) {
-      await datasource.getMetrics(namespace, region).then((result: Array<SelectableValue<string>>) => {
+      await datasource.api.getMetrics(namespace, region).then((result: Array<SelectableValue<string>>) => {
         if (!result.find((metric) => metric.value === metricName)) {
           metricName = '';
         }
       });
     }
     if (dimensionKey) {
-      await datasource.getDimensionKeys(namespace, region).then((result: Array<SelectableValue<string>>) => {
+      await datasource.api.getDimensionKeys(namespace, region).then((result: Array<SelectableValue<string>>) => {
         if (!result.find((key) => key.value === dimensionKey)) {
           dimensionKey = '';
           dimensionFilters = {};
@@ -122,6 +122,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
           onChange={(value: string) => onNamespaceChange(value)}
           label="Namespace"
           inputId={`variable-query-namespace-${query.refId}`}
+          allowCustomValue
         />
       )}
       {parsedQuery.queryType === VariableQueryType.DimensionValues && (
@@ -132,6 +133,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
             onChange={(value: string) => onQueryChange({ ...parsedQuery, metricName: value })}
             label="Metric"
             inputId={`variable-query-metric-${query.refId}`}
+            allowCustomValue
           />
           <VariableQueryField
             value={dimensionKey || null}
@@ -139,6 +141,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
             onChange={(value: string) => onQueryChange({ ...parsedQuery, dimensionKey: value })}
             label="Dimension key"
             inputId={`variable-query-dimension-key-${query.refId}`}
+            allowCustomValue
           />
           <InlineField label="Dimensions" labelWidth={20} tooltip="Dimensions to filter the returned values on">
             <Dimensions

@@ -24,7 +24,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 )
 
-//Internal interval and range variables
+// Internal interval and range variables
 const (
 	varInterval     = "$__interval"
 	varIntervalMs   = "$__interval_ms"
@@ -34,8 +34,8 @@ const (
 	varRateInterval = "$__rate_interval"
 )
 
-//Internal interval and range variables with {} syntax
-//Repetitive code, we should have functionality to unify these
+// Internal interval and range variables with {} syntax
+// Repetitive code, we should have functionality to unify these
 const (
 	varIntervalAlt     = "${__interval}"
 	varIntervalMsAlt   = "${__interval_ms}"
@@ -362,14 +362,14 @@ func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data
 			tags[string(k)] = string(v)
 		}
 		timeField := data.NewFieldFromFieldType(data.FieldTypeTime, len(v.Values))
-		valueField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, len(v.Values))
+		valueField := data.NewFieldFromFieldType(data.FieldTypeFloat64, len(v.Values))
 
 		for i, k := range v.Values {
 			timeField.Set(i, k.Timestamp.Time().UTC())
 			value := float64(k.Value)
 
 			if !math.IsNaN(value) {
-				valueField.Set(i, &value)
+				valueField.Set(i, value)
 			}
 		}
 

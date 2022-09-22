@@ -72,6 +72,14 @@ type BackgroundProvider interface {
 
 // Migrator is responsible for secrets migrations like re-encrypting or rolling back secrets.
 type Migrator interface {
-	ReEncryptSecrets(ctx context.Context) error
-	RollBackSecrets(ctx context.Context) error
+	// ReEncryptSecrets decrypts and re-encrypts the secrets with most recent
+	// available data key. If a secret-specific decryption / re-encryption fails,
+	// it does not stop, but returns false as the first return (success or not)
+	// at the end of the process.
+	ReEncryptSecrets(ctx context.Context) (bool, error)
+	// RollBackSecrets decrypts and re-encrypts the secrets using the legacy
+	// encryption. If a secret-specific decryption / re-encryption fails, it
+	// does not stop, but returns false as the first return (success or not)
+	// at the end of the process.
+	RollBackSecrets(ctx context.Context) (bool, error)
 }
