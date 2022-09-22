@@ -180,7 +180,6 @@ func (alertRule *AlertRule) GetLabels(opts ...LabelOption) map[string]string {
 func (alertRule *AlertRule) GetEvalCondition() Condition {
 	return Condition{
 		Condition: alertRule.Condition,
-		OrgID:     alertRule.OrgID,
 		Data:      alertRule.Data,
 	}
 }
@@ -392,7 +391,6 @@ type Condition struct {
 	// Condition is the RefID of the query or expression from
 	// the Data property to get the results for.
 	Condition string `json:"condition"`
-	OrgID     int64  `json:"-"`
 
 	// Data is an array of data source queries and/or server side expressions.
 	Data []AlertQuery `json:"data"`
