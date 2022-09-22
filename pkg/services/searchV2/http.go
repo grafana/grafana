@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
@@ -28,6 +29,18 @@ func (s *searchHTTPService) RegisterHTTPRoutes(storageRoute routing.RouteRegiste
 }
 
 func (s *searchHTTPService) doQuery(c *models.ReqContext) response.Response {
+	searchReadinessCheckResp := s.search.IsReady(c.Req.Context(), c.OrgID)
+	if !searchReadinessCheckResp.IsReady {
+		bytes, err := (&data.Frame{
+			Name: "Loading",
+		}).MarshalJSON()
+
+		if err != nil {
+			return response.Error(500, "error marshalling response", err)
+		}
+		return response.JSON(200, bytes)
+	}
+
 	body, err := io.ReadAll(c.Req.Body)
 	if err != nil {
 		return response.Error(500, "error reading bytes", err)
