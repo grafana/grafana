@@ -54,6 +54,7 @@ var Versions = VersionMap{
 			Artifacts:            "grafana-downloads",
 			ArtifactsEnterprise2: "grafana-downloads-enterprise2",
 			CDNAssets:            "grafana-static-assets",
+			Storybook:            "grafana-storybook",
 		},
 	},
 	CustomMode: {
@@ -88,7 +89,6 @@ var Versions = VersionMap{
 			Artifacts:            "grafana-downloads",
 			ArtifactsEnterprise2: "grafana-downloads-enterprise2",
 			CDNAssets:            "grafana-static-assets",
-			Storybook:            "grafana-storybook",
 		},
 	},
 	ReleaseBranchMode: {
