@@ -86,6 +86,7 @@ pkg/tsdb/testdatasource/sims/ @grafana/grafana-edge-squad
 /pkg/plugins @grafana/plugins-platform-backend
 /pkg/services/datasourceproxy @grafana/plugins-platform-backend
 /pkg/services/datasources @grafana/plugins-platform-backend
+/pkg/plugins/pfs @grafana/plugins-platform-backend @grafana/grafana-as-code
 
 # Dashboard previews / crawler (behind feature flag)
 /pkg/services/thumbs @grafana/grafana-edge-squad
@@ -194,3 +195,8 @@ lerna.json @grafana/frontend-ops
 
 # Grafana Partnerships Team
 /pkg/infra/httpclient/httpclientprovider/sigv4_middleware.go @grafana/grafana-partnerships-team
+
+# Schema framework and code generation
+/pkg/codegen @grafana/grafana-as-code
+/pkg/framework/coremodel @grafana/grafana-as-code
+/public/app/plugins/*gen.go @grafana/grafana-as-code

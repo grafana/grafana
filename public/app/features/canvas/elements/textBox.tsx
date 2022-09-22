@@ -23,7 +23,7 @@ export enum VAlign {
   Bottom = 'bottom',
 }
 
-interface TextBoxData {
+export interface TextBoxData {
   text?: string;
   color?: string;
   size?: number; // 0 or missing will "auto size"
@@ -31,7 +31,7 @@ interface TextBoxData {
   valign: VAlign;
 }
 
-interface TextBoxConfig {
+export interface TextBoxConfig {
   text?: TextDimensionConfig;
   color?: ColorDimensionConfig;
   size?: number; // 0 or missing will "auto size"

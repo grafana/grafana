@@ -145,6 +145,8 @@ describe('Browse list of plugins', () => {
         getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1', type: PluginType.app }),
         getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2', type: PluginType.datasource }),
         getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3', type: PluginType.panel }),
+        getCatalogPluginMock({ id: 'plugin-4', name: 'Plugin 4', type: PluginType.secretsmanager }),
+        getCatalogPluginMock({ id: 'plugin-5', name: 'Plugin 5', type: PluginType.renderer }),
       ]);
 
       await waitFor(() => expect(queryByText('Plugin 2')).toBeInTheDocument());
@@ -152,6 +154,8 @@ describe('Browse list of plugins', () => {
       // Other plugin types shouldn't be shown
       expect(queryByText('Plugin 1')).not.toBeInTheDocument();
       expect(queryByText('Plugin 3')).not.toBeInTheDocument();
+      expect(queryByText('Plugin 4')).not.toBeInTheDocument();
+      expect(queryByText('Plugin 5')).not.toBeInTheDocument();
     });
 
     it('should list only panel plugins when filtering by panel', async () => {
@@ -159,6 +163,8 @@ describe('Browse list of plugins', () => {
         getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1', type: PluginType.app }),
         getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2', type: PluginType.datasource }),
         getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3', type: PluginType.panel }),
+        getCatalogPluginMock({ id: 'plugin-4', name: 'Plugin 4', type: PluginType.secretsmanager }),
+        getCatalogPluginMock({ id: 'plugin-5', name: 'Plugin 5', type: PluginType.renderer }),
       ]);
 
       await waitFor(() => expect(queryByText('Plugin 3')).toBeInTheDocument());
@@ -166,6 +172,8 @@ describe('Browse list of plugins', () => {
       // Other plugin types shouldn't be shown
       expect(queryByText('Plugin 1')).not.toBeInTheDocument();
       expect(queryByText('Plugin 2')).not.toBeInTheDocument();
+      expect(queryByText('Plugin 4')).not.toBeInTheDocument();
+      expect(queryByText('Plugin 5')).not.toBeInTheDocument();
     });
 
     it('should list only app plugins when filtering by app', async () => {
@@ -180,6 +188,16 @@ describe('Browse list of plugins', () => {
       // Other plugin types shouldn't be shown
       expect(queryByText('Plugin 2')).not.toBeInTheDocument();
       expect(queryByText('Plugin 3')).not.toBeInTheDocument();
+    });
+
+    it('should also list secretsmanager and renderer plugins when filtering by app', async () => {
+      const { queryByText } = renderBrowse('/plugins?filterBy=all&filterByType=app', [
+        getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1', type: PluginType.secretsmanager }),
+        getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2', type: PluginType.renderer }),
+      ]);
+
+      await waitFor(() => expect(queryByText('Plugin 1')).toBeInTheDocument());
+      await waitFor(() => expect(queryByText('Plugin 2')).toBeInTheDocument());
     });
   });
 

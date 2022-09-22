@@ -2,7 +2,7 @@
 
 import { toUtc, getLocale, setLocale, dateTime } from '@grafana/data';
 
-import { IndexPattern } from '../index_pattern';
+import { IndexPattern } from './IndexPattern';
 
 describe('IndexPattern', () => {
   const originalLocale = getLocale();
