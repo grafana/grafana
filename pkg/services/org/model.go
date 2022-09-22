@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"strings"
 	"time"
-
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 // Typed errors
@@ -133,18 +131,6 @@ type UpdateOrgUserCommand struct {
 
 	OrgID  int64 `json:"-"`
 	UserID int64 `json:"-"`
-}
-
-type GetOrgUsersQuery struct {
-	UserID int64
-	OrgID  int64
-	Query  string
-	Limit  int
-	// Flag used to allow oss edition to query users without access control
-	DontEnforceAccessControl bool
-
-	User   *user.SignedInUser
-	Result []*OrgUserDTO
 }
 
 type OrgUserDTO struct {
