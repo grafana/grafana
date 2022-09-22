@@ -28,6 +28,7 @@ import { DashboardPrompt } from '../components/DashboardPrompt/DashboardPrompt';
 import { DashboardSettings } from '../components/DashboardSettings';
 import { PanelInspector } from '../components/Inspector/PanelInspector';
 import { PanelEditor } from '../components/PanelEditor/PanelEditor';
+import { PubdashFooter } from '../components/PubdashFooter';
 import { SubMenu } from '../components/SubMenu/SubMenu';
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { liveTimer } from '../dashgrid/liveTimer';
@@ -266,7 +267,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
         updatedState.panelNotFound = true;
       }
     }
-    // Leaving view mode
+    // Leaving view modex
     else if (state.viewPanel && !urlViewPanelId) {
       // This mutable state feels wrong to have in getDerivedStateFromProps
       // Should move this state out of dashboard in the future
@@ -401,6 +402,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
             sectionNav={sectionNav}
           />
         )}
+        {isPublic && <PubdashFooter />}
       </>
     );
   }
