@@ -1,4 +1,4 @@
-package navtree
+package navtreeimpl
 
 import (
 	"github.com/grafana/grafana/pkg/api/dtos"

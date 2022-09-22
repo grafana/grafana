@@ -1,4 +1,4 @@
-package navtree
+package navtreeimpl
 
 import (
 	"path"
