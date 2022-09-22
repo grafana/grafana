@@ -55,14 +55,13 @@ export const ExpressionEditor: FC<ExpressionEditorProps> = ({ value, onChange, d
   }
 
   const previewLoaded = alertPreview?.data.state === LoadingState.Done;
-  // The preview API returns arrays with empty elements when there are no firing alerts
-  const previewHasAlerts = alertPreview?.data.series.every((frame) =>
-    frame.fields.every((field) => field.values.length > 0)
-  );
 
   const QueryEditor = dataSource?.components?.QueryEditor;
 
-  const previewSeries = alertPreview?.data.series ?? [];
+  // The Preview endpoint returns the preview as a single-element array of data frames
+  const previewDataFrame = alertPreview?.data?.series?.find((s) => s.name === 'evaluation results');
+  // The preview API returns arrays with empty elements when there are no firing alerts
+  const previewHasAlerts = previewDataFrame && previewDataFrame.fields.some((field) => field.values.length > 0);
 
   return (
     <>
@@ -84,7 +83,7 @@ export const ExpressionEditor: FC<ExpressionEditorProps> = ({ value, onChange, d
             There are no firing alerts for your query.
           </Alert>
         )}
-        {previewHasAlerts && <CloudAlertPreview previewSeries={previewSeries} />}
+        {previewHasAlerts && <CloudAlertPreview preview={previewDataFrame} />}
       </div>
     </>
   );
