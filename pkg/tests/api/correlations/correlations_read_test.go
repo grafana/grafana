@@ -42,21 +42,21 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 
 	t.Run("Get all correlations", func(t *testing.T) {
 		// Running this here before creating a correlation in order to test this path.
-		t.Run("If no correlation exists it should return 404", func(t *testing.T) {
+		t.Run("If no correlation exists it should return 200", func(t *testing.T) {
 			res := ctx.Get(GetParams{
 				url:  "/api/datasources/correlations",
 				user: adminUser,
 			})
-			require.Equal(t, http.StatusNotFound, res.StatusCode)
+			require.Equal(t, http.StatusOK, res.StatusCode)
 
 			responseBody, err := io.ReadAll(res.Body)
 			require.NoError(t, err)
 
-			var response errorResponseBody
+			var response []correlations.Correlation
 			err = json.Unmarshal(responseBody, &response)
 			require.NoError(t, err)
 
-			require.Equal(t, "No correlation found", response.Message)
+			require.Len(t, response, 0)
 
 			require.NoError(t, res.Body.Close())
 		})
@@ -183,21 +183,21 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 			require.NoError(t, res.Body.Close())
 		})
 
-		t.Run("If no correlation exists it should return 404", func(t *testing.T) {
+		t.Run("If no correlation exists it should return 200", func(t *testing.T) {
 			res := ctx.Get(GetParams{
 				url:  fmt.Sprintf("/api/datasources/uid/%s/correlations", dsWithoutCorrelations.Uid),
 				user: adminUser,
 			})
-			require.Equal(t, http.StatusNotFound, res.StatusCode)
+			require.Equal(t, http.StatusOK, res.StatusCode)
 
 			responseBody, err := io.ReadAll(res.Body)
 			require.NoError(t, err)
 
-			var response errorResponseBody
+			var response []correlations.Correlation
 			err = json.Unmarshal(responseBody, &response)
 			require.NoError(t, err)
 
-			require.Equal(t, "No correlation found", response.Message)
+			require.Len(t, response, 0)
 
 			require.NoError(t, res.Body.Close())
 		})

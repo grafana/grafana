@@ -1,25 +1,28 @@
-import React, { useEffect } from 'react';
+import React, { Suspense, useEffect } from 'react';
 // @ts-ignore
 import Drop from 'tether-drop';
 
 import { locationSearchToObject, navigationLogger, reportPageview } from '@grafana/runtime';
+import { ErrorBoundary } from '@grafana/ui';
 
 import { useGrafana } from '../context/GrafanaContext';
-import { keybindingSrv } from '../services/keybindingSrv';
 
+import { GrafanaRouteError } from './GrafanaRouteError';
+import { GrafanaRouteLoading } from './GrafanaRouteLoading';
 import { GrafanaRouteComponentProps, RouteDescriptor } from './types';
 
 export interface Props extends Omit<GrafanaRouteComponentProps, 'queryParams'> {}
 
 export function GrafanaRoute(props: Props) {
-  const { chrome } = useGrafana();
+  const { chrome, keybindings } = useGrafana();
 
-  chrome.registerRouteRender(props.route);
+  chrome.setMatchedRoute(props.route);
 
   useEffect(() => {
+    keybindings.clearAndInitGlobalBindings();
+
     updateBodyClassNames(props.route);
     cleanupDOM();
-    reportPageview();
     navigationLogger('GrafanaRoute', false, 'Mounted', props.match);
 
     return () => {
@@ -31,12 +34,6 @@ export function GrafanaRoute(props: Props) {
   }, []);
 
   useEffect(() => {
-    // unbinds all and re-bind global keybindins
-    keybindingSrv.reset();
-    keybindingSrv.initGlobals();
-  }, [chrome, props.route]);
-
-  useEffect(() => {
     cleanupDOM();
     reportPageview();
     navigationLogger('GrafanaRoute', false, 'Updated', props);
@@ -44,7 +41,21 @@ export function GrafanaRoute(props: Props) {
 
   navigationLogger('GrafanaRoute', false, 'Rendered', props.route);
 
-  return <props.route.component {...props} queryParams={locationSearchToObject(props.location.search)} />;
+  return (
+    <ErrorBoundary>
+      {({ error, errorInfo }) => {
+        if (error) {
+          return <GrafanaRouteError error={error} errorInfo={errorInfo} />;
+        }
+
+        return (
+          <Suspense fallback={<GrafanaRouteLoading />}>
+            <props.route.component {...props} queryParams={locationSearchToObject(props.location.search)} />
+          </Suspense>
+        );
+      }}
+    </ErrorBoundary>
+  );
 }
 
 function getPageClasses(route: RouteDescriptor) {

@@ -160,7 +160,7 @@ func (wn *WebhookNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 		TruncatedAlerts: numTruncated,
 		OrgID:           wn.orgID,
 		Title:           tmpl(DefaultMessageTitleEmbed),
-		Message:         tmpl(`{{ template "default.message" . }}`),
+		Message:         tmpl(DefaultMessageEmbed),
 	}
 	if types.Alerts(as...).Status() == model.AlertFiring {
 		msg.State = string(models.AlertStateAlerting)
