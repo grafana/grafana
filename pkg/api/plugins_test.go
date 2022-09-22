@@ -101,8 +101,8 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 }
 
 func Test_PluginsInstallAndUninstall_AccessControl(t *testing.T) {
-	canInstall := []ac.Permission{{Action: plugins.ActionInstall}}
-	cannotInstall := []ac.Permission{{Action: "plugins:cannotinstall"}}
+	canInstall := []ac.Permission{{Action: plugins.ActionInstall, Scope: plugins.ScopeProvider.GetResourceScope("test")}}
+	cannotInstall := []ac.Permission{{Action: plugins.ActionInstall, Scope: plugins.ScopeProvider.GetResourceScope("not-test")}}
 
 	type testCase struct {
 		expectedCode                     int

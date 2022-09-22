@@ -381,6 +381,8 @@ func (hs *HTTPServer) GetPluginErrorsList(_ *models.ReqContext) response.Respons
 }
 
 func (hs *HTTPServer) InstallPlugin(c *models.ReqContext) response.Response {
+	// TODO Grant other permissions to the user on the plugin upon install
+	// if the user is real (! anonymous user)
 	dto := dtos.InstallPluginCommand{}
 	if err := web.Bind(c.Req, &dto); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)

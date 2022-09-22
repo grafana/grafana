@@ -98,7 +98,7 @@ func DeclareRBACRoles(service ac.Service, cfg *setting.Cfg) error {
 			Description: "Install, uninstall plugins",
 			Group:       "Plugins",
 			Permissions: []ac.Permission{
-				{Action: ActionInstall},
+				{Action: ActionInstall, Scope: ScopeProvider.GetResourceAllScope()},
 			},
 		},
 		Grants: []string{ac.RoleGrafanaAdmin},
