@@ -267,7 +267,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
         updatedState.panelNotFound = true;
       }
     }
-    // Leaving view modex
+    // Leaving view mode
     else if (state.viewPanel && !urlViewPanelId) {
       // This mutable state feels wrong to have in getDerivedStateFromProps
       // Should move this state out of dashboard in the future
