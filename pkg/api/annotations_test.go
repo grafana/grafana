@@ -17,11 +17,13 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/team/teamtest"
 )
 
 func TestAnnotationsAPIEndpoint(t *testing.T) {
@@ -73,8 +75,6 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 				mock := mockstore.NewSQLStoreMock()
 				loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/annotations/1",
 					"/api/annotations/:annotationId", role, func(sc *scenarioContext) {
-						fakeAnnoRepo = NewFakeAnnotationsRepo()
-						annotations.SetRepository(fakeAnnoRepo)
 						sc.handlerFunc = hs.DeleteAnnotationByID
 						sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 						assert.Equal(t, 403, sc.resp.Code)
@@ -103,8 +103,6 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 				mock := mockstore.NewSQLStoreMock()
 				loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/annotations/1",
 					"/api/annotations/:annotationId", role, func(sc *scenarioContext) {
-						fakeAnnoRepo = NewFakeAnnotationsRepo()
-						annotations.SetRepository(fakeAnnoRepo)
 						sc.handlerFunc = hs.DeleteAnnotationByID
 						sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 						assert.Equal(t, 200, sc.resp.Code)
@@ -178,8 +176,6 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 				loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/annotations/1",
 					"/api/annotations/:annotationId", role, func(sc *scenarioContext) {
 						setUpACL()
-						fakeAnnoRepo = NewFakeAnnotationsRepo()
-						annotations.SetRepository(fakeAnnoRepo)
 						sc.handlerFunc = hs.DeleteAnnotationByID
 						sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 						assert.Equal(t, 403, sc.resp.Code)
@@ -211,8 +207,6 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 				loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/annotations/1",
 					"/api/annotations/:annotationId", role, func(sc *scenarioContext) {
 						setUpACL()
-						fakeAnnoRepo = NewFakeAnnotationsRepo()
-						annotations.SetRepository(fakeAnnoRepo)
 						sc.handlerFunc = hs.DeleteAnnotationByID
 						sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 						assert.Equal(t, 200, sc.resp.Code)
@@ -286,59 +280,6 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 	})
 }
 
-type fakeAnnotationsRepo struct {
-	annotations map[int64]annotations.Item
-}
-
-func NewFakeAnnotationsRepo() *fakeAnnotationsRepo {
-	return &fakeAnnotationsRepo{
-		annotations: map[int64]annotations.Item{},
-	}
-}
-
-func (repo *fakeAnnotationsRepo) Delete(_ context.Context, params *annotations.DeleteParams) error {
-	if params.Id != 0 {
-		delete(repo.annotations, params.Id)
-	} else {
-		for _, v := range repo.annotations {
-			if params.DashboardId == v.DashboardId && params.PanelId == v.PanelId {
-				delete(repo.annotations, v.Id)
-			}
-		}
-	}
-
-	return nil
-}
-func (repo *fakeAnnotationsRepo) Save(item *annotations.Item) error {
-	if item.Id == 0 {
-		item.Id = int64(len(repo.annotations) + 1)
-	}
-	repo.annotations[item.Id] = *item
-	return nil
-}
-func (repo *fakeAnnotationsRepo) Update(_ context.Context, item *annotations.Item) error {
-	return nil
-}
-func (repo *fakeAnnotationsRepo) Find(_ context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
-	if annotation, has := repo.annotations[query.AnnotationId]; has {
-		return []*annotations.ItemDTO{{Id: annotation.Id, DashboardId: annotation.DashboardId}}, nil
-	}
-	annotations := []*annotations.ItemDTO{{Id: 1, DashboardId: 0}}
-	return annotations, nil
-}
-func (repo *fakeAnnotationsRepo) FindTags(_ context.Context, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
-	result := annotations.FindTagsResult{
-		Tags: []*annotations.TagsDTO{},
-	}
-	return result, nil
-}
-
-func (repo *fakeAnnotationsRepo) LoadItems() {
-
-}
-
-var fakeAnnoRepo *fakeAnnotationsRepo
-
 func postAnnotationScenario(t *testing.T, desc string, url string, routePattern string, role org.RoleType,
 	cmd dtos.PostAnnotationsCmd, store sqlstore.Store, dashSvc dashboards.DashboardService, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
@@ -357,9 +298,6 @@ func postAnnotationScenario(t *testing.T, desc string, url string, routePattern 
 
 			return hs.PostAnnotation(c)
 		})
-
-		fakeAnnoRepo = NewFakeAnnotationsRepo()
-		annotations.SetRepository(fakeAnnoRepo)
 
 		sc.m.Post(routePattern, sc.defaultHandler)
 
@@ -387,9 +325,6 @@ func putAnnotationScenario(t *testing.T, desc string, url string, routePattern s
 			return hs.UpdateAnnotation(c)
 		})
 
-		fakeAnnoRepo = NewFakeAnnotationsRepo()
-		annotations.SetRepository(fakeAnnoRepo)
-
 		sc.m.Put(routePattern, sc.defaultHandler)
 
 		fn(sc)
@@ -414,9 +349,6 @@ func patchAnnotationScenario(t *testing.T, desc string, url string, routePattern
 
 			return hs.PatchAnnotation(c)
 		})
-
-		fakeAnnoRepo = NewFakeAnnotationsRepo()
-		annotations.SetRepository(fakeAnnoRepo)
 
 		sc.m.Patch(routePattern, sc.defaultHandler)
 
@@ -443,9 +375,6 @@ func deleteAnnotationsScenario(t *testing.T, desc string, url string, routePatte
 			return hs.MassDeleteAnnotations(c)
 		})
 
-		fakeAnnoRepo = NewFakeAnnotationsRepo()
-		annotations.SetRepository(fakeAnnoRepo)
-
 		sc.m.Post(routePattern, sc.defaultHandler)
 
 		fn(sc)
@@ -461,11 +390,8 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 	dashboardAnnotation := &annotations.Item{Id: 1, DashboardId: 1}
 	organizationAnnotation := &annotations.Item{Id: 2, DashboardId: 0}
 
-	fakeAnnoRepo = NewFakeAnnotationsRepo()
-	_ = fakeAnnoRepo.Save(dashboardAnnotation)
-	_ = fakeAnnoRepo.Save(organizationAnnotation)
-
-	annotations.SetRepository(fakeAnnoRepo)
+	_ = sc.hs.annotationsRepo.Save(context.Background(), dashboardAnnotation)
+	_ = sc.hs.annotationsRepo.Save(context.Background(), organizationAnnotation)
 
 	postOrganizationCmd := dtos.PostAnnotationsCmd{
 		Time:    1000,
@@ -788,7 +714,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			setUpRBACGuardian(t)
 			sc.acmock.
-				RegisterScopeAttributeResolver(AnnotationTypeScopeResolver())
+				RegisterScopeAttributeResolver(AnnotationTypeScopeResolver(sc.hs.annotationsRepo))
 			setAccessControlPermissions(sc.acmock, tt.args.permissions, sc.initCtx.OrgID)
 
 			r := callAPI(sc.server, tt.args.method, tt.args.url, tt.args.body, t)
@@ -835,13 +761,11 @@ func TestService_AnnotationTypeScopeResolver(t *testing.T) {
 	dashboardAnnotation := annotations.Item{Id: 1, DashboardId: 1}
 	organizationAnnotation := annotations.Item{Id: 2}
 
-	fakeAnnoRepo = NewFakeAnnotationsRepo()
-	_ = fakeAnnoRepo.Save(&dashboardAnnotation)
-	_ = fakeAnnoRepo.Save(&organizationAnnotation)
+	fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()
+	_ = fakeAnnoRepo.Save(context.Background(), &dashboardAnnotation)
+	_ = fakeAnnoRepo.Save(context.Background(), &organizationAnnotation)
 
-	annotations.SetRepository(fakeAnnoRepo)
-
-	prefix, resolver := AnnotationTypeScopeResolver()
+	prefix, resolver := AnnotationTypeScopeResolver(fakeAnnoRepo)
 	require.Equal(t, "annotations:id:", prefix)
 
 	for _, tc := range testCases {
@@ -986,11 +910,8 @@ func TestAPI_MassDeleteAnnotations_AccessControl(t *testing.T) {
 			dashboardAnnotation := &annotations.Item{Id: 1, DashboardId: 1}
 			organizationAnnotation := &annotations.Item{Id: 2, DashboardId: 0}
 
-			fakeAnnoRepo = NewFakeAnnotationsRepo()
-			_ = fakeAnnoRepo.Save(dashboardAnnotation)
-			_ = fakeAnnoRepo.Save(organizationAnnotation)
-
-			annotations.SetRepository(fakeAnnoRepo)
+			_ = sc.hs.annotationsRepo.Save(context.Background(), dashboardAnnotation)
+			_ = sc.hs.annotationsRepo.Save(context.Background(), organizationAnnotation)
 
 			r := callAPI(sc.server, tt.args.method, tt.args.url, tt.args.body, t)
 			assert.Equalf(t, tt.want, r.Code, "Annotations API(%v)", tt.args.url)
@@ -1002,7 +923,7 @@ func setUpACL() {
 	viewerRole := org.RoleViewer
 	editorRole := org.RoleEditor
 	store := mockstore.NewSQLStoreMock()
-	store.ExpectedTeamsByUser = []*models.TeamDTO{}
+	teamSvc := &teamtest.FakeService{}
 	dashSvc := &dashboards.FakeDashboardService{}
 	dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
 		q := args.Get(1).(*models.GetDashboardACLInfoListQuery)
@@ -1012,7 +933,7 @@ func setUpACL() {
 		}
 	}).Return(nil)
 
-	guardian.InitLegacyGuardian(store, dashSvc)
+	guardian.InitLegacyGuardian(store, dashSvc, teamSvc)
 }
 
 func setUpRBACGuardian(t *testing.T) {
