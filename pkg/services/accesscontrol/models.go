@@ -426,7 +426,7 @@ func BuiltInRolesWithParents(builtInRoles []string) map[string]struct{} {
 
 // Evaluators
 
-// teamsAccessEvaluator is used to protect the "Configuration > Teams" page access
+// TeamsAccessEvaluator is used to protect the "Configuration > Teams" page access
 // grants access to a user when they can either create teams or can read and update a team
 var TeamsAccessEvaluator = EvalAny(
 	EvalPermission(ActionTeamsCreate),
@@ -439,7 +439,7 @@ var TeamsAccessEvaluator = EvalAny(
 	),
 )
 
-// teamsEditAccessEvaluator is used to protect the "Configuration > Teams > edit" page access
+// TeamsEditAccessEvaluator is used to protect the "Configuration > Teams > edit" page access
 var TeamsEditAccessEvaluator = EvalAll(
 	EvalPermission(ActionTeamsRead),
 	EvalAny(
@@ -449,7 +449,7 @@ var TeamsEditAccessEvaluator = EvalAll(
 	),
 )
 
-// orgPreferencesAccessEvaluator is used to protect the "Configure > Preferences" page access
+// OrgPreferencesAccessEvaluator is used to protect the "Configure > Preferences" page access
 var OrgPreferencesAccessEvaluator = EvalAny(
 	EvalAll(
 		EvalPermission(ActionOrgsRead),
@@ -461,15 +461,15 @@ var OrgPreferencesAccessEvaluator = EvalAny(
 	),
 )
 
-// orgsAccessEvaluator is used to protect the "Server Admin > Orgs" page access
+// OrgsAccessEvaluator is used to protect the "Server Admin > Orgs" page access
 // (you need to have read access to update or delete orgs; read is the minimum)
 var OrgsAccessEvaluator = EvalPermission(ActionOrgsRead)
 
-// orgsCreateAccessEvaluator is used to protect the "Server Admin > Orgs > New Org" page access
+// OrgsCreateAccessEvaluator is used to protect the "Server Admin > Orgs > New Org" page access
 var OrgsCreateAccessEvaluator = EvalAll(
 	EvalPermission(ActionOrgsRead),
 	EvalPermission(ActionOrgsCreate),
 )
 
-// apiKeyAccessEvaluator is used to protect the "Configuration > API keys" page access
+// ApiKeyAccessEvaluator is used to protect the "Configuration > API keys" page access
 var ApiKeyAccessEvaluator = EvalPermission(ActionAPIKeyRead)

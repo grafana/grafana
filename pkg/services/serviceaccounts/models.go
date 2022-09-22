@@ -131,7 +131,7 @@ type Stats struct {
 	Tokens          int64 `xorm:"serviceaccount_tokens"`
 }
 
-// serviceAccountAccessEvaluator is used to protect the "Configuration > Service accounts" page access
+// AccessEvaluator is used to protect the "Configuration > Service accounts" page access
 var AccessEvaluator = accesscontrol.EvalAny(
 	accesscontrol.EvalPermission(ActionRead),
 	accesscontrol.EvalPermission(ActionCreate),

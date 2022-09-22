@@ -106,11 +106,11 @@ func (s *ServiceImpl) setupConfigNodes(c *models.ReqContext) ([]*dtos.NavLink, e
 	return configNodes, nil
 }
 
-func (hs *ServiceImpl) ReqCanAdminTeams(c *models.ReqContext) bool {
-	return c.OrgRole == org.RoleAdmin || (hs.cfg.EditorsCanAdmin && c.OrgRole == org.RoleEditor)
+func (s *ServiceImpl) ReqCanAdminTeams(c *models.ReqContext) bool {
+	return c.OrgRole == org.RoleAdmin || (s.cfg.EditorsCanAdmin && c.OrgRole == org.RoleEditor)
 }
 
-func enableServiceAccount(hs *ServiceImpl, c *models.ReqContext) bool {
-	hasAccess := ac.HasAccess(hs.accessControl, c)
+func enableServiceAccount(s *ServiceImpl, c *models.ReqContext) bool {
+	hasAccess := ac.HasAccess(s.accessControl, c)
 	return hasAccess(ac.ReqOrgAdmin, serviceaccounts.AccessEvaluator)
 }
