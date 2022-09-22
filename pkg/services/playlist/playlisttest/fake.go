@@ -8,7 +8,7 @@ import (
 
 type FakePlaylistService struct {
 	ExpectedPlaylist      *playlist.Playlist
-	ExpectedPlaylistDTO   *playlist.PlaylistDTO
+	ExpectedPlaylistDTO   *playlist.Playlist
 	ExpectedPlaylistItems []playlist.PlaylistItem
 	ExpectedPlaylists     playlist.Playlists
 	ExpectedError         error
@@ -22,7 +22,7 @@ func (f *FakePlaylistService) Create(context.Context, *playlist.CreatePlaylistCo
 	return f.ExpectedPlaylist, f.ExpectedError
 }
 
-func (f *FakePlaylistService) Update(context.Context, *playlist.UpdatePlaylistCommand) (*playlist.PlaylistDTO, error) {
+func (f *FakePlaylistService) Update(context.Context, *playlist.UpdatePlaylistCommand) (*playlist.Playlist, error) {
 	return f.ExpectedPlaylistDTO, f.ExpectedError
 }
 

@@ -12,5 +12,5 @@ type store interface {
 	Get(context.Context, *playlist.GetPlaylistByUidQuery) (*playlist.Playlist, error)
 	GetItems(context.Context, *playlist.GetPlaylistItemsByUidQuery) ([]playlist.PlaylistItem, error)
 	List(context.Context, *playlist.GetPlaylistsQuery) (playlist.Playlists, error)
-	Update(context.Context, *playlist.UpdatePlaylistCommand) (*playlist.PlaylistDTO, error)
+	Update(context.Context, *playlist.UpdatePlaylistCommand) (*playlist.Playlist, error)
 }

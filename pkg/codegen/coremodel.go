@@ -17,9 +17,10 @@ import (
 	"github.com/deepmap/oapi-codegen/pkg/codegen"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/grafana/cuetsy"
-	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/thema"
 	"github.com/grafana/thema/encoding/openapi"
+
+	"github.com/grafana/grafana/pkg/cuectx"
 )
 
 // ExtractedLineage contains the results of statically analyzing a Grafana

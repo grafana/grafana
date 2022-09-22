@@ -31,7 +31,7 @@ func (s *Service) Create(ctx context.Context, cmd *playlist.CreatePlaylistComman
 	return s.store.Insert(ctx, cmd)
 }
 
-func (s *Service) Update(ctx context.Context, cmd *playlist.UpdatePlaylistCommand) (*playlist.PlaylistDTO, error) {
+func (s *Service) Update(ctx context.Context, cmd *playlist.UpdatePlaylistCommand) (*playlist.Playlist, error) {
 	return s.store.Update(ctx, cmd)
 }
 

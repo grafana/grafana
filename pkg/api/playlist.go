@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 
+	coremodel "github.com/grafana/grafana/pkg/coremodel/playlist"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
@@ -82,32 +84,31 @@ func (hs *HTTPServer) GetPlaylist(c *models.ReqContext) response.Response {
 
 	playlistDTOs, _ := hs.LoadPlaylistItemDTOs(c.Req.Context(), uid, c.OrgID)
 
-	dto := &playlist.PlaylistDTO{
+	dto := &playlist.Playlist{
 		Id:       p.Id,
-		UID:      p.UID,
+		Uid:      p.UID,
 		Name:     p.Name,
 		Interval: p.Interval,
-		OrgId:    p.OrgId,
 		Items:    playlistDTOs,
 	}
 
 	return response.JSON(http.StatusOK, dto)
 }
 
-func (hs *HTTPServer) LoadPlaylistItemDTOs(ctx context.Context, uid string, orgId int64) ([]playlist.PlaylistItemDTO, error) {
+func (hs *HTTPServer) LoadPlaylistItemDTOs(ctx context.Context, uid string, orgId int64) ([]playlist.PlaylistItem, error) {
 	playlistitems, err := hs.LoadPlaylistItems(ctx, uid, orgId)
 
 	if err != nil {
 		return nil, err
 	}
 
-	playlistDTOs := make([]playlist.PlaylistItemDTO, 0)
+	playlistDTOs := make([]playlist.PlaylistItem, 0)
 
 	for _, item := range playlistitems {
-		playlistDTOs = append(playlistDTOs, playlist.PlaylistItemDTO{
+		playlistDTOs = append(playlistDTOs, playlist.PlaylistItem{
 			Id:         item.Id,
 			PlaylistId: item.PlaylistId,
-			Type:       item.Type,
+			Type:       coremodel.ItemsType(item.Type),
 			Value:      item.Value,
 			Order:      item.Order,
 			Title:      item.Title,
@@ -314,14 +315,14 @@ type SearchPlaylistsResponse struct {
 type GetPlaylistResponse struct {
 	// The response message
 	// in: body
-	Body *playlist.PlaylistDTO `json:"body"`
+	Body *playlist.Playlist `json:"body"`
 }
 
 // swagger:response getPlaylistItemsResponse
 type GetPlaylistItemsResponse struct {
 	// The response message
 	// in: body
-	Body []playlist.PlaylistItemDTO `json:"body"`
+	Body []playlist.PlaylistItem `json:"body"`
 }
 
 // swagger:response getPlaylistDashboardsResponse
@@ -335,7 +336,7 @@ type GetPlaylistDashboardsResponse struct {
 type UpdatePlaylistResponse struct {
 	// The response message
 	// in: body
-	Body *playlist.PlaylistDTO `json:"body"`
+	Body *playlist.Playlist `json:"body"`
 }
 
 // swagger:response createPlaylistResponse

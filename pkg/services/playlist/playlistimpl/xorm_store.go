@@ -52,8 +52,8 @@ func (s *sqlStore) Insert(ctx context.Context, cmd *playlist.CreatePlaylistComma
 	return &p, err
 }
 
-func (s *sqlStore) Update(ctx context.Context, cmd *playlist.UpdatePlaylistCommand) (*playlist.PlaylistDTO, error) {
-	dto := playlist.PlaylistDTO{}
+func (s *sqlStore) Update(ctx context.Context, cmd *playlist.UpdatePlaylistCommand) (*playlist.Playlist, error) {
+	dto := playlist.Playlist{}
 	err := s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		p := playlist.Playlist{
 			UID:      cmd.UID,
@@ -69,7 +69,7 @@ func (s *sqlStore) Update(ctx context.Context, cmd *playlist.UpdatePlaylistComma
 		}
 		p.Id = existingPlaylist.Id
 
-		dto = playlist.PlaylistDTO{
+		dto = playlist.Playlist{
 
 			Id:       p.Id,
 			UID:      p.UID,
