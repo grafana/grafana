@@ -242,7 +242,7 @@ export type RequestInfo = {
 
 export type PluginDetailsTab = {
   label: PluginTabLabels | string;
-  icon?: IconName | string;
+  icon?: IconName;
   id: PluginTabIds | string;
   href?: string;
 };

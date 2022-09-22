@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { PluginIncludeType, PluginType } from '@grafana/data';
+import { GrafanaPlugin, PluginIncludeType, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types';
@@ -19,14 +19,16 @@ type ReturnType = {
 
 export const usePluginDetailsTabs = (plugin?: CatalogPlugin, defaultTabs: PluginDetailsTab[] = []): ReturnType => {
   const { loading, error, value: pluginConfig } = usePluginConfig(plugin);
-  const isPublished = Boolean(plugin?.isPublished);
   const { pathname } = useLocation();
+  const defaultTab = useDefaultPage(plugin, pluginConfig);
 
-  const [tabs, defaultTab] = useMemo(() => {
+  const isPublished = Boolean(plugin?.isPublished);
+
+  const tabs = useMemo(() => {
     const canConfigurePlugins =
       plugin && contextSrv.hasAccessInMetadata(AccessControlAction.PluginsWrite, plugin, isOrgAdmin());
     const tabs: PluginDetailsTab[] = [...defaultTabs];
-    let defaultTab;
+
     if (isPublished) {
       tabs.push({
         label: PluginTabLabels.VERSIONS,
@@ -38,8 +40,7 @@ export const usePluginDetailsTabs = (plugin?: CatalogPlugin, defaultTabs: Plugin
 
     // Not extending the tabs with the config pages if the plugin is not installed
     if (!pluginConfig) {
-      defaultTab = PluginTabIds.OVERVIEW;
-      return [tabs, defaultTab];
+      return tabs;
     }
 
     if (config.featureToggles.panelTitleSearch && pluginConfig.meta.type === PluginType.panel) {
@@ -60,7 +61,6 @@ export const usePluginDetailsTabs = (plugin?: CatalogPlugin, defaultTabs: Plugin
             id: PluginTabIds.CONFIG,
             href: `${pathname}?page=${PluginTabIds.CONFIG}`,
           });
-          defaultTab = PluginTabIds.CONFIG;
         }
 
         if (pluginConfig.configPages) {
@@ -71,9 +71,6 @@ export const usePluginDetailsTabs = (plugin?: CatalogPlugin, defaultTabs: Plugin
               id: page.id,
               href: `${pathname}?page=${page.id}`,
             });
-            if (!defaultTab) {
-              defaultTab = page.id;
-            }
           }
         }
 
@@ -88,11 +85,7 @@ export const usePluginDetailsTabs = (plugin?: CatalogPlugin, defaultTabs: Plugin
       }
     }
 
-    if (!defaultTab) {
-      defaultTab = PluginTabIds.OVERVIEW;
-    }
-
-    return [tabs, defaultTab];
+    return tabs;
   }, [plugin, pluginConfig, defaultTabs, pathname, isPublished]);
 
   return {
@@ -102,3 +95,25 @@ export const usePluginDetailsTabs = (plugin?: CatalogPlugin, defaultTabs: Plugin
     defaultTab,
   };
 };
+
+function useDefaultPage(plugin: CatalogPlugin | undefined, pluginConfig: GrafanaPlugin | undefined | null) {
+  if (!plugin || !pluginConfig) {
+    return PluginTabIds.OVERVIEW;
+  }
+
+  const hasAccess = contextSrv.hasAccessInMetadata(AccessControlAction.PluginsWrite, plugin, isOrgAdmin());
+
+  if (!hasAccess || pluginConfig.meta.type !== PluginType.app) {
+    return PluginTabIds.OVERVIEW;
+  }
+
+  if (pluginConfig.angularConfigCtrl) {
+    return PluginTabIds.CONFIG;
+  }
+
+  if (pluginConfig.configPages?.length) {
+    return pluginConfig.configPages[0].id;
+  }
+
+  return PluginTabIds.OVERVIEW;
+}

@@ -4,7 +4,7 @@ import { usePrevious } from 'react-use';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { useStyles2, TabContent, Alert, toIconName } from '@grafana/ui';
+import { useStyles2, TabContent, Alert } from '@grafana/ui';
 import { Layout } from '@grafana/ui/src/components/Layout/Layout';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -27,6 +27,7 @@ export default function PluginDetails({ match, queryParams }: Props): JSX.Elemen
     url,
   } = match;
   const parentUrl = url.substring(0, url.lastIndexOf('/'));
+
   const defaultTabs: PluginDetailsTab[] = [
     {
       label: PluginTabLabels.OVERVIEW,
@@ -78,7 +79,7 @@ export default function PluginDetails({ match, queryParams }: Props): JSX.Elemen
     breadcrumbs: [{ title: 'Plugins', url: parentUrl }],
     children: tabs.map((tab) => ({
       text: tab.label,
-      icon: toIconName(tab.icon ?? ''),
+      icon: tab.icon,
       url: tab.href,
       active: tab.id === pageId,
     })),
