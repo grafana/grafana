@@ -3,7 +3,6 @@ package object
 import (
 	"bytes"
 	"fmt"
-	"sort"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -25,7 +24,7 @@ func NewDashboardObjectReader(lookup dslookup.DatasourceLookup) object.ObjectRea
 			return summary, err
 		}
 
-		refs := newReferenceAccumulator()
+		refs := object.NewReferenceAccumulator()
 		url := fmt.Sprintf("/d/%s/%s", obj.UID, models.SlugifyTitle(dash.Title))
 		summary.Name = dash.Title
 		summary.Description = dash.Description
@@ -38,7 +37,7 @@ func NewDashboardObjectReader(lookup dslookup.DatasourceLookup) object.ObjectRea
 		}
 
 		for _, panel := range dash.Panels {
-			refP := newReferenceAccumulator()
+			refP := object.NewReferenceAccumulator()
 			p := object.NestedObjectSummary{
 				UID:  obj.UID + "#" + strconv.FormatInt(panel.ID, 10),
 				Kind: "panel",
@@ -48,58 +47,22 @@ func NewDashboardObjectReader(lookup dslookup.DatasourceLookup) object.ObjectRea
 			p.URL = fmt.Sprintf("%s?viewPanel=%d", url, panel.ID)
 			p.Fields = make(map[string]interface{}, 0)
 
-			refP.add("panel", panel.Type, "")
+			refP.Add("panel", panel.Type, "")
 			for _, v := range panel.Datasource {
-				refs.add("ds", v.Type, v.UID) // dashboard refs
-				refP.add("ds", v.Type, v.UID) // panel refs
+				refs.Add("ds", v.Type, v.UID) // dashboard refs
+				refP.Add("ds", v.Type, v.UID) // panel refs
 			}
 
 			for _, v := range panel.Transformer {
-				refP.add("transformer", v, "")
+				refP.Add("transformer", v, "")
 			}
 
-			refs.add("panel", panel.Type, "")
-			p.References = refP.get()
+			refs.Add("panel", panel.Type, "")
+			p.References = refP.Get()
 			summary.Nested = append(summary.Nested, p)
 		}
 
-		summary.References = refs.get()
+		summary.References = refs.Get()
 		return summary, nil
 	}
-}
-
-type referenceAccumulator struct {
-	refs map[string]object.ExternalReference
-}
-
-func newReferenceAccumulator() referenceAccumulator {
-	return referenceAccumulator{
-		refs: make(map[string]object.ExternalReference),
-	}
-}
-
-func (x *referenceAccumulator) add(kind string, sub string, uid string) {
-	key := fmt.Sprintf("%s/%s/%s", kind, sub, uid)
-	_, ok := x.refs[key]
-	if !ok {
-		x.refs[key] = object.ExternalReference{
-			Kind: kind,
-			Type: sub,
-			UID:  uid,
-		}
-	}
-}
-
-func (x *referenceAccumulator) get() []object.ExternalReference {
-	keys := make([]string, 0, len(x.refs))
-	for k := range x.refs {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-
-	refs := make([]object.ExternalReference, len(keys))
-	for i, key := range keys {
-		refs[i] = x.refs[key]
-	}
-	return refs
 }
