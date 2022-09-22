@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import Moveable from 'moveable';
 import React, { CSSProperties } from 'react';
-import { BehaviorSubject, ReplaySubject, Subject } from 'rxjs';
+import { BehaviorSubject, ReplaySubject, Subject, Subscription } from 'rxjs';
 import { first } from 'rxjs/operators';
 import Selecto from 'selecto';
 
@@ -68,6 +68,7 @@ export class Scene {
   inlineEditingCallback?: () => void;
 
   readonly editModeEnabled = new BehaviorSubject<boolean>(false);
+  subscription: Subscription;
 
   constructor(
     cfg: CanvasFrameOptions,
@@ -77,8 +78,7 @@ export class Scene {
   ) {
     this.root = this.load(cfg, enableEditing, showAdvancedTypes);
 
-    // TODO: Unsubscribe from this (cleanup?)
-    this.editModeEnabled.subscribe((open) => {
+    this.subscription = this.editModeEnabled.subscribe((open) => {
       if (!this.moveable || !this.isEditingEnabled) {
         return;
       }
