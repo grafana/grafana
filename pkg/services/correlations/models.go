@@ -11,18 +11,25 @@ var (
 	ErrCorrelationFailedGenerateUniqueUid = errors.New("failed to generate unique correlation UID")
 	ErrCorrelationNotFound                = errors.New("correlation not found")
 	ErrUpdateCorrelationEmptyParams       = errors.New("not enough parameters to edit correlation")
-	ErrIncorrectConfigStructure           = errors.New("incorrect config structure, it should contain field and target properties")
 )
 
-// Correlation is the model for correlations configuration
+// Correlation's target data query specific to target data source (Correlation.TargetUID)
+// swagger:model
 type CorrelationConfigTarget struct{}
 
+// Correlation configuration
+// swagger:model
 type CorrelationConfig struct {
+	// Field used to attach the correlation link
+	// required:true
 	Field  string                  `json:"field"`
+	// Target data query
+	// required:true
 	Target CorrelationConfigTarget `json:"target"`
 }
 
 // Correlation is the model for correlations definitions
+// swagger:model
 type Correlation struct {
 	// Unique identifier of the correlation
 	// example: 50xhMlg9k
@@ -40,6 +47,7 @@ type Correlation struct {
 	// example: Logs to Traces
 	Description string `json:"description" xorm:"description"`
 	// Correlation Configuration
+	// example: { field: "job", target: { query: "job=app" } }
 	Config CorrelationConfig `json:"config" xorm:"jsonb config"`
 }
 
@@ -68,6 +76,7 @@ type CreateCorrelationCommand struct {
 	// example: Logs to Traces
 	Description string `json:"description"`
 	// Arbitrary configuration object handled in frontend
+	// example: { field: "job", target: { query: "job=app" } }
 	Config CorrelationConfig `json:"config"`
 }
 

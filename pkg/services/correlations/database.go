@@ -212,7 +212,6 @@ func (s CorrelationsService) getCorrelations(ctx context.Context, cmd GetCorrela
 func (s CorrelationsService) deleteCorrelationsBySourceUID(ctx context.Context, cmd DeleteCorrelationsBySourceUIDCommand) error {
 	return s.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
 		_, err := session.Delete(&Correlation{SourceUID: cmd.SourceUID})
-		s.log.Warn("THE ERROR IS IN THE QUERY")
 		return err
 	})
 }
