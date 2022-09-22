@@ -16,7 +16,6 @@
 /contribute/ @grafana/docs-squad
 /docs/sources/developers/plugins/ @grafana/docs-squad @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
 /docs/sources/developers/plugins/backend @grafana/docs-squad @grafana/plugins-platform-backend
-# Enterprise: Ursula Kallio
 # Administration, data sources, querying, release updates: Garrett Guillotte
 # Set up, dashboards/visualization, best practices: Chris Moyer
 # Alerting: Brenda Muir
@@ -25,7 +24,7 @@
 /docs/sources/best-practices/ @chri2547
 /docs/sources/dashboards/ @chri2547
 /docs/sources/datasources/ @gguillotte-grafana
-/docs/sources/enterprise/ @osg-grafana @grafana/docs-squad
+/docs/sources/enterprise/ @gguillotte-grafana
 /docs/sources/explore/ @gguillotte-grafana
 /docs/sources/getting-started/ @chri2547
 /docs/sources/old-alerting @brendamuir
