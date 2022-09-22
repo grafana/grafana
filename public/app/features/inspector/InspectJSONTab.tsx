@@ -11,7 +11,7 @@ import { Button, CodeEditor, Field, Select } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 
-import { getPanelDataFrames } from '../dashboard/components/SupportSnapshot/utils';
+import { getPanelDataFrames } from '../dashboard/components/HelpWizard/utils';
 import { getPanelInspectorStyles } from '../inspector/styles';
 
 import { InspectTab } from './types';
@@ -153,10 +153,9 @@ export class InspectJSONTab extends PureComponent<Props, State> {
     }
   };
 
-  onShowSupportWizard = () => {
-    reportInteraction('grafana_panel_inspect_json_supportWizard_clicked');
+  onShowHelpWizard = () => {
     const queryParms = locationService.getSearch();
-    queryParms.set('inspectTab', InspectTab.Support.toString());
+    queryParms.set('inspectTab', InspectTab.Help.toString());
     locationService.push('?' + queryParms.toString());
   };
 
@@ -189,7 +188,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
             </Button>
           )}
           {show === ShowContent.DataFrames && (
-            <Button className={styles.toolbarItem} onClick={this.onShowSupportWizard}>
+            <Button className={styles.toolbarItem} onClick={this.onShowHelpWizard}>
               Support
             </Button>
           )}

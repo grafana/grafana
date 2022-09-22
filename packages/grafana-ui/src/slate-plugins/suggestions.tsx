@@ -143,6 +143,8 @@ export function SuggestionsPlugin({
 
         const preserveSuffix = suggestion.kind === 'function';
         const move = suggestion.move || 0;
+        const moveForward = move > 0 ? move : 0;
+        const moveBackward = move < 0 ? -move : 0;
 
         const { typeaheadPrefix, typeaheadText, typeaheadContext } = state;
 
@@ -180,7 +182,8 @@ export function SuggestionsPlugin({
           .deleteBackward(backward)
           .deleteForward(forward)
           .insertText(suggestionText)
-          .moveForward(move)
+          .moveForward(moveForward)
+          .moveBackward(moveBackward)
           .focus();
 
         return editor;

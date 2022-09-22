@@ -4,15 +4,20 @@ import (
 	"bytes"
 	"fmt"
 	"io/fs"
+	"path"
 	"path/filepath"
 	"sort"
 	"strings"
-	"text/template"
 
 	"cuelang.org/go/cue/ast"
+	"cuelang.org/go/pkg/encoding/yaml"
+	"github.com/deepmap/oapi-codegen/pkg/codegen"
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/grafana/cuetsy"
+	"github.com/grafana/grafana/pkg/framework/coremodel"
 	"github.com/grafana/grafana/pkg/plugins/pfs"
 	"github.com/grafana/thema"
+	"github.com/grafana/thema/encoding/openapi"
 )
 
 // CUE import paths, mapped to corresponding TS import paths. An empty value
@@ -92,13 +97,20 @@ type PluginTreeOrErr struct {
 }
 
 // PluginTree is a pfs.Tree. It exists so we can add methods for code generation to it.
+//
+// It is, for now, tailored specifically to Grafana core's codegen needs.
 type PluginTree pfs.Tree
 
 func (pt *PluginTree) GenerateTS(path string) (WriteDiffer, error) {
 	t := (*pfs.Tree)(pt)
 
 	// TODO replace with cuetsy's TS AST
-	f := &tsFile{}
+	f := &tvars_cuetsy_multi{
+		Header: tvars_autogen_header{
+			GeneratorPath: "public/app/plugins/gen.go", // FIXME hardcoding is not OK
+			LineagePath:   "models.cue",
+		},
+	}
 
 	pi := t.RootPlugin()
 	slotimps := pi.SlotImplementations()
@@ -120,24 +132,18 @@ func (pt *PluginTree) GenerateTS(path string) (WriteDiffer, error) {
 			ModelName: slotname,
 		}
 
-		// TODO this is hardcoded for now, but should ultimately be a property of
-		// whether the slot is a grouped lineage:
-		// https://github.com/grafana/thema/issues/62
-		switch slotname {
-		case "Panel", "DSConfig":
+		if isGroupLineage(slotname) {
 			b, err := cuetsy.Generate(sch.UnwrapCUE(), cuetsy.Config{})
 			if err != nil {
 				return nil, fmt.Errorf("%s: error translating %s lineage to TypeScript: %w", path, slotname, err)
 			}
 			sec.Body = string(b)
-		case "Query":
+		} else {
 			a, err := cuetsy.GenerateSingleAST(strings.Title(lin.Name()), sch.UnwrapCUE(), cuetsy.TypeInterface)
 			if err != nil {
 				return nil, fmt.Errorf("%s: error translating %s lineage to TypeScript: %w", path, slotname, err)
 			}
 			sec.Body = fmt.Sprint(a)
-		default:
-			panic("unrecognized slot name: " + slotname)
 		}
 
 		f.Sections = append(f.Sections, sec)
@@ -145,12 +151,266 @@ func (pt *PluginTree) GenerateTS(path string) (WriteDiffer, error) {
 
 	wd := NewWriteDiffer()
 	var buf bytes.Buffer
-	err := tsSectionTemplate.Execute(&buf, f)
+	err := tmpls.Lookup("cuetsy_multi.tmpl").Execute(&buf, f)
 	if err != nil {
 		return nil, fmt.Errorf("%s: error executing plugin TS generator template: %w", path, err)
 	}
 	wd[filepath.Join(path, "models.gen.ts")] = buf.Bytes()
 	return wd, nil
+}
+
+func isGroupLineage(slotname string) bool {
+	sl, has := coremodel.AllSlots()[slotname]
+	if !has {
+		panic("unknown slotname name: " + slotname)
+	}
+	return sl.IsGroup()
+}
+
+type GoGenConfig struct {
+	// Types indicates whether corresponding Go types should be generated from the
+	// latest version in the lineage(s).
+	Types bool
+
+	// ThemaBindings indicates whether Thema bindings (an implementation of
+	// ["github.com/grafana/thema".LineageFactory]) should be generated for
+	// lineage(s).
+	ThemaBindings bool
+
+	// DocPathPrefix allows the caller to optionally specify a path to be prefixed
+	// onto paths generated for documentation. This is useful for io/fs-based code
+	// generators, which typically only have knowledge of paths relative to the fs.FS
+	// root, typically an encapsulated subpath, but docs are easier to understand when
+	// paths are relative to a repository root.
+	//
+	// Note that all paths are normalized to use slashes, regardless of the
+	// OS running the code generator.
+	DocPathPrefix string
+}
+
+func (pt *PluginTree) GenerateGo(path string, cfg GoGenConfig) (WriteDiffer, error) {
+	t := (*pfs.Tree)(pt)
+	wd := NewWriteDiffer()
+
+	all := t.SubPlugins()
+	if all == nil {
+		all = make(map[string]pfs.PluginInfo)
+	}
+	all[""] = t.RootPlugin()
+	for subpath, plug := range all {
+		fullp := filepath.Join(path, subpath)
+		if cfg.Types {
+			gwd, err := genGoTypes(plug, path, subpath, cfg.DocPathPrefix)
+			if err != nil {
+				return nil, fmt.Errorf("error generating go types for %s: %w", fullp, err)
+			}
+			if err = wd.Merge(gwd); err != nil {
+				return nil, fmt.Errorf("error merging file set to generate for %s: %w", fullp, err)
+			}
+		}
+		if cfg.ThemaBindings {
+			twd, err := genThemaBindings(plug, path, subpath, cfg.DocPathPrefix)
+			if err != nil {
+				return nil, fmt.Errorf("error generating thema bindings for %s: %w", fullp, err)
+			}
+			if err = wd.Merge(twd); err != nil {
+				return nil, fmt.Errorf("error merging file set to generate for %s: %w", fullp, err)
+			}
+		}
+	}
+
+	return wd, nil
+}
+
+func genGoTypes(plug pfs.PluginInfo, path, subpath, prefix string) (WriteDiffer, error) {
+	wd := NewWriteDiffer()
+	for slotname, lin := range plug.SlotImplementations() {
+		lowslot := strings.ToLower(slotname)
+		lib := lin.Library()
+		sch := thema.SchemaP(lin, thema.LatestVersion(lin))
+
+		// FIXME gotta hack this out of thema in order to deal with our custom imports :scream:
+		f, err := openapi.GenerateSchema(sch, nil)
+		if err != nil {
+			return nil, fmt.Errorf("thema openapi generation failed: %w", err)
+		}
+
+		str, err := yaml.Marshal(lib.Context().BuildFile(f))
+		if err != nil {
+			return nil, fmt.Errorf("cue-yaml marshaling failed: %w", err)
+		}
+
+		loader := openapi3.NewLoader()
+		oT, err := loader.LoadFromData([]byte(str))
+		if err != nil {
+			return nil, fmt.Errorf("loading generated openapi failed; %w", err)
+		}
+
+		buf := new(bytes.Buffer)
+		if err = tmpls.Lookup("autogen_header.tmpl").Execute(buf, tvars_autogen_header{
+			GeneratorPath:  "public/app/plugins/gen.go", // FIXME hardcoding is not OK
+			LineagePath:    filepath.ToSlash(filepath.Join(prefix, subpath, "models.cue")),
+			LineageCUEPath: slotname,
+			GenLicense:     true,
+		}); err != nil {
+			return nil, fmt.Errorf("error generating file header: %w", err)
+		}
+
+		cgopt := codegen.Options{
+			GenerateTypes: true,
+			SkipPrune:     true,
+			SkipFmt:       true,
+			UserTemplates: map[string]string{
+				"imports.tmpl": "package {{ .PackageName }}",
+				"typedef.tmpl": tmplTypedef,
+			},
+		}
+		if isGroupLineage(slotname) {
+			cgopt.ExcludeSchemas = []string{lin.Name()}
+		}
+
+		gostr, err := codegen.Generate(oT, lin.Name(), cgopt)
+		if err != nil {
+			return nil, fmt.Errorf("openapi generation failed: %w", err)
+		}
+		fmt.Fprint(buf, gostr)
+
+		finalpath := filepath.Join(path, subpath, fmt.Sprintf("types_%s_gen.go", lowslot))
+		byt, err := postprocessGoFile(genGoFile{
+			path:   finalpath,
+			walker: makePrefixDropper(strings.Title(lin.Name()), slotname),
+			in:     buf.Bytes(),
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		wd[finalpath] = byt
+	}
+
+	return wd, nil
+}
+
+func genThemaBindings(plug pfs.PluginInfo, path, subpath, prefix string) (WriteDiffer, error) {
+	wd := NewWriteDiffer()
+	bindings := make([]tvars_plugin_lineage_binding, 0)
+	for slotname, lin := range plug.SlotImplementations() {
+		lv := thema.LatestVersion(lin)
+		bindings = append(bindings, tvars_plugin_lineage_binding{
+			SlotName:   slotname,
+			LatestMajv: lv[0],
+			LatestMinv: lv[1],
+		})
+	}
+
+	buf := new(bytes.Buffer)
+	if err := tmpls.Lookup("plugin_lineage_file.tmpl").Execute(buf, tvars_plugin_lineage_file{
+		PackageName: sanitizePluginId(plug.Meta().Id),
+		PluginType:  string(plug.Meta().Type),
+		PluginID:    plug.Meta().Id,
+		SlotImpls:   bindings,
+		HasModels:   len(bindings) != 0,
+		Header: tvars_autogen_header{
+			GeneratorPath: "public/app/plugins/gen.go", // FIXME hardcoding is not OK
+			GenLicense:    true,
+			LineagePath:   filepath.Join(prefix, subpath),
+		},
+	}); err != nil {
+		return nil, fmt.Errorf("error executing plugin lineage file template: %w", err)
+	}
+
+	fullpath := filepath.Join(path, subpath, "pfs_gen.go")
+	if byt, err := postprocessGoFile(genGoFile{
+		path: fullpath,
+		in:   buf.Bytes(),
+	}); err != nil {
+		return nil, err
+	} else {
+		wd[fullpath] = byt
+	}
+
+	return wd, nil
+}
+
+// Plugin IDs are allowed to contain characters that aren't allowed in CUE
+// package names, Go package names, TS or Go type names, etc.
+// TODO expose this as standard
+func sanitizePluginId(s string) string {
+	return strings.Map(func(r rune) rune {
+		switch {
+		case r >= 'a' && r <= 'z':
+			fallthrough
+		case r >= 'A' && r <= 'Z':
+			fallthrough
+		case r >= '0' && r <= '9':
+			fallthrough
+		case r == '_':
+			return r
+		case r == '-':
+			return '_'
+		default:
+			return -1
+		}
+	}, s)
+}
+
+// FIXME unexport this and refactor, this is way too one-off to be in here
+func GenPluginTreeList(trees []TreeAndPath, prefix, target string, ref bool) (WriteDiffer, error) {
+	buf := new(bytes.Buffer)
+	vars := tvars_plugin_registry{
+		Header: tvars_autogen_header{
+			GenLicense: true,
+		},
+		Plugins: make([]struct {
+			PkgName, Path, ImportPath string
+			NoAlias                   bool
+		}, 0, len(trees)),
+	}
+
+	type tpl struct {
+		PkgName, Path, ImportPath string
+		NoAlias                   bool
+	}
+
+	// No sub-plugin support here. If we never allow subplugins in core, that's probably fine.
+	// But still worth noting.
+	for _, pt := range trees {
+		rp := (*pfs.Tree)(pt.Tree).RootPlugin()
+		vars.Plugins = append(vars.Plugins, tpl{
+			PkgName:    sanitizePluginId(rp.Meta().Id),
+			NoAlias:    sanitizePluginId(rp.Meta().Id) != filepath.Base(pt.Path),
+			ImportPath: filepath.ToSlash(filepath.Join(prefix, pt.Path)),
+			Path:       path.Join(append(strings.Split(prefix, "/")[3:], pt.Path)...),
+		})
+	}
+
+	tmplname := "plugin_registry.tmpl"
+	if ref {
+		tmplname = "plugin_registry_ref.tmpl"
+	}
+
+	if err := tmpls.Lookup(tmplname).Execute(buf, vars); err != nil {
+		return nil, fmt.Errorf("failed executing plugin registry template: %w", err)
+	}
+
+	byt, err := postprocessGoFile(genGoFile{
+		path: target,
+		in:   buf.Bytes(),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error postprocessing plugin registry: %w", err)
+	}
+
+	wd := NewWriteDiffer()
+	wd[target] = byt
+	return wd, nil
+}
+
+// FIXME unexport this and refactor, this is way too one-off to be in here
+type TreeAndPath struct {
+	Tree *PluginTree
+	// path relative to path prefix UUUGHHH (basically {panel,datasource}/<dir>}
+	Path string
 }
 
 // TODO convert this to use cuetsy ts types, once import * form is supported
@@ -182,11 +442,6 @@ func convertImport(im *ast.ImportSpec) *tsImport {
 	return tsim
 }
 
-type tsFile struct {
-	Imports  []*tsImport
-	Sections []tsSection
-}
-
 type tsSection struct {
 	V         thema.SyntacticVersion
 	ModelName string
@@ -197,15 +452,3 @@ type tsImport struct {
 	Ident string
 	Pkg   string
 }
-
-var tsSectionTemplate = template.Must(template.New("cuetsymulti").Parse(`//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// This file is autogenerated. DO NOT EDIT.
-//
-// To regenerate, run "make gen-cue" from the repository root.
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-{{range .Imports}}
-import * as {{.Ident}} from '{{.Pkg}}';{{end}}
-{{range .Sections}}{{if ne .ModelName "" }}
-export const {{.ModelName}}ModelVersion = Object.freeze([{{index .V 0}}, {{index .V 1}}]);
-{{end}}
-{{.Body}}{{end}}`))

@@ -6,13 +6,14 @@ import { TimeZone, LogsDedupStrategy, LogRowModel, Field, LinkModel, LogsSortOrd
 import { withTheme2 } from '../../themes/index';
 import { Themeable2 } from '../../types/theme';
 
-//Components
 import { LogRow } from './LogRow';
 import { RowContextOptions } from './LogRowContextProvider';
 import { getLogRowStyles } from './getLogRowStyles';
 
+/** @deprecated will be removed in the next major version */
 export const PREVIEW_LIMIT = 100;
 
+/** @deprecated will be removed in the next major version */
 export interface Props extends Themeable2 {
   logRows?: LogRowModel[];
   deduplicatedRows?: LogRowModel[];
@@ -188,5 +189,6 @@ class UnThemedLogRows extends PureComponent<Props, State> {
   }
 }
 
+/** @deprecated will be removed in the next major version */
 export const LogRows = withTheme2(UnThemedLogRows);
 LogRows.displayName = 'LogsRows';

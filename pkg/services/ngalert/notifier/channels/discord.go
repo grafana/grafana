@@ -61,7 +61,7 @@ func NewDiscordConfig(config *NotificationChannelConfig) (*DiscordConfig, error)
 	}
 	return &DiscordConfig{
 		NotificationChannelConfig: config,
-		Content:                   config.Settings.Get("message").MustString(`{{ template "default.message" . }}`),
+		Content:                   config.Settings.Get("message").MustString(DefaultMessageEmbed),
 		AvatarURL:                 config.Settings.Get("avatar_url").MustString(),
 		WebhookURL:                discordURL,
 		UseDiscordUsername:        config.Settings.Get("use_discord_username").MustBool(false),

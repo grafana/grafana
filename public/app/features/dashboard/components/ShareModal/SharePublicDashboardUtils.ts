@@ -1,9 +1,12 @@
 import { getBackendSrv } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
+import { getConfig } from 'app/core/config';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { VariableModel } from 'app/features/variables/types';
 import { dispatch } from 'app/store/store';
 import { DashboardDataDTO, DashboardMeta } from 'app/types/dashboard';
+
+import { DashboardModel } from '../../state';
 
 export interface PublicDashboard {
   accessToken?: string;
@@ -27,12 +30,12 @@ export const getPublicDashboardConfig = async (
 };
 
 export const savePublicDashboardConfig = async (
-  dashboardUid: string,
+  dashboard: DashboardModel,
   publicDashboardConfig: PublicDashboard,
   setPublicDashboard: React.Dispatch<React.SetStateAction<PublicDashboard>>
 ) => {
   const pdResp: PublicDashboard = await getBackendSrv().post(
-    savePublicDashboardConfigUrl(dashboardUid),
+    savePublicDashboardConfigUrl(dashboard.uid),
     publicDashboardConfig
   );
 
@@ -42,6 +45,12 @@ export const savePublicDashboardConfig = async (
 
   dispatch(notifyApp(createSuccessNotification('Dashboard sharing configuration saved')));
   setPublicDashboard(pdResp);
+
+  // Update runtime emta flag
+  dashboard.updateMeta({
+    publicDashboardUid: pdResp.uid,
+    publicDashboardEnabled: publicDashboardConfig.isEnabled,
+  });
 };
 
 export const getPublicDashboardConfigUrl = (dashboardUid: string) => {
@@ -61,6 +70,14 @@ export const publicDashboardPersisted = (publicDashboard: PublicDashboard): bool
   return publicDashboard.uid !== '' && publicDashboard.uid !== undefined;
 };
 
+/**
+ * Generate the public dashboard url. Uses the appUrl from the Grafana boot config, so urls will also be correct
+ * when Grafana is hosted on a subpath.
+ *
+ * All app urls from the Grafana boot config end with a slash.
+ *
+ * @param publicDashboard
+ */
 export const generatePublicDashboardUrl = (publicDashboard: PublicDashboard): string => {
-  return `${window.location.origin}/public-dashboards/${publicDashboard.accessToken}`;
+  return `${getConfig().appUrl}public-dashboards/${publicDashboard.accessToken}`;
 };

@@ -6,6 +6,8 @@ package server
 import (
 	"github.com/google/wire"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl"
 
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/playlist/playlistimpl"
@@ -35,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
+	pluginsCfg "github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
 	pluginDashboards "github.com/grafana/grafana/pkg/plugins/manager/dashboards"
@@ -120,9 +123,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/star/starimpl"
 	"github.com/grafana/grafana/pkg/services/store"
+	"github.com/grafana/grafana/pkg/services/tag"
+	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
+	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/teamguardian"
 	teamguardianDatabase "github.com/grafana/grafana/pkg/services/teamguardian/database"
 	teamguardianManager "github.com/grafana/grafana/pkg/services/teamguardian/manager"
+	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/services/temp_user/tempuserimpl"
 	"github.com/grafana/grafana/pkg/services/thumbs"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
@@ -151,6 +158,8 @@ import (
 var wireBasicSet = wire.NewSet(
 	legacydataservice.ProvideService,
 	wire.Bind(new(legacydata.RequestHandler), new(*legacydataservice.Service)),
+	annotationsimpl.ProvideService,
+	wire.Bind(new(annotations.Repository), new(*annotationsimpl.RepositoryImpl)),
 	alerting.ProvideAlertStore,
 	alerting.ProvideAlertEngine,
 	wire.Bind(new(alerting.UsageStatsQuerier), new(*alerting.AlertEngine)),
@@ -174,6 +183,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(usagestats.Service), new(*uss.UsageStats)),
 	registry.ProvideService,
 	wire.Bind(new(registry.Service), new(*registry.InMemory)),
+	pluginsCfg.ProvideConfig,
 	repo.ProvideService,
 	wire.Bind(new(repo.Service), new(*repo.Manager)),
 	manager.ProvideService,
@@ -328,6 +338,7 @@ var wireBasicSet = wire.NewSet(
 	publicdashboardsApi.ProvideApi,
 	userimpl.ProvideService,
 	orgimpl.ProvideService,
+	teamimpl.ProvideService,
 	tempuserimpl.ProvideService,
 	dashboardthumbsimpl.ProvideService,
 	loginattemptimpl.ProvideService,
@@ -339,6 +350,9 @@ var wireBasicSet = wire.NewSet(
 	userauthimpl.ProvideService,
 	acimpl.ProvideAccessControl,
 	wire.Bind(new(accesscontrol.AccessControl), new(*acimpl.AccessControl)),
+	wire.Bind(new(notifications.TempUserStore), new(tempuser.Service)),
+	tagimpl.ProvideService,
+	wire.Bind(new(tag.Service), new(*tagimpl.Service)),
 )
 
 var wireSet = wire.NewSet(
@@ -346,7 +360,6 @@ var wireSet = wire.NewSet(
 	sqlstore.ProvideService,
 	wire.Bind(new(sqlstore.TeamStore), new(*sqlstore.SQLStore)),
 	ngmetrics.ProvideService,
-	wire.Bind(new(notifications.TempUserStore), new(*sqlstore.SQLStore)),
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationService)),
 	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationService)),
 	wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationService)),
@@ -363,7 +376,6 @@ var wireTestSet = wire.NewSet(
 	wire.Bind(new(sqlstore.TeamStore), new(*sqlstore.SQLStore)),
 
 	notifications.MockNotificationService,
-	wire.Bind(new(notifications.TempUserStore), new(*mockstore.SQLStoreMock)),
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationServiceMock)),
 	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationServiceMock)),
 	wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationServiceMock)),
