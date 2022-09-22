@@ -1,39 +1,45 @@
 import {
   DataQuery,
+  DataSourceRef,
+  getDefaultRelativeTimeRange,
+  IntervalValues,
   rangeUtil,
   RelativeTimeRange,
   ScopedVars,
-  getDefaultRelativeTimeRange,
   TimeRange,
-  IntervalValues,
-  DataSourceRef,
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { contextSrv } from 'app/core/services/context_srv';
+import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import { getNextRefIdChar } from 'app/core/utils/query';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
 import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
+  AlertQuery,
   Annotations,
   GrafanaAlertStateDecision,
-  AlertQuery,
   Labels,
   PostableRuleGrafanaRuleDTO,
+  RulerAlertingRuleDTO,
+  RulerRecordingRuleDTO,
   RulerRuleDTO,
 } from 'app/types/unified-alerting-dto';
+
 import { EvalFunction } from '../../state/alertDef';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
+
+import { getRulesAccess } from './access-control';
 import { Annotation } from './constants';
-import { isGrafanaRulesSource } from './datasource';
+import { getDefaultOrFirstCompatibleDataSource, isGrafanaRulesSource } from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
 import { isAlertingRulerRule, isGrafanaRulerRule, isRecordingRulerRule } from './rules';
 import { parseInterval } from './time';
-import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 
-export const getDefaultFormValues = (): RuleFormValues =>
-  Object.freeze({
+export const getDefaultFormValues = (): RuleFormValues => {
+  const { canCreateGrafanaRules, canCreateCloudRules } = getRulesAccess();
+
+  return Object.freeze({
     name: '',
     labels: [{ key: '', value: '' }],
     annotations: [
@@ -42,24 +48,25 @@ export const getDefaultFormValues = (): RuleFormValues =>
       { key: Annotation.runbookURL, value: '' },
     ],
     dataSourceName: null,
-    type: !contextSrv.isEditor ? RuleFormType.grafana : undefined, // viewers can't create prom alerts
+    type: canCreateGrafanaRules ? RuleFormType.grafana : canCreateCloudRules ? RuleFormType.cloudAlerting : undefined, // viewers can't create prom alerts
+    group: '',
 
     // grafana
     folder: null,
     queries: [],
     condition: '',
     noDataState: GrafanaAlertStateDecision.NoData,
-    execErrState: GrafanaAlertStateDecision.Alerting,
+    execErrState: GrafanaAlertStateDecision.Error,
     evaluateEvery: '1m',
     evaluateFor: '5m',
 
     // cortex / loki
-    group: '',
     namespace: '',
     expression: '',
     forTime: 1,
     forTimeUnit: 'm',
   });
+};
 
 export function formValuesToRulerRuleDTO(values: RuleFormValues): RulerRuleDTO {
   const { name, expression, forTime, forTimeUnit, type } = values;
@@ -115,6 +122,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         ...defaultFormValues,
         name: ga.title,
         type: RuleFormType.grafana,
+        group: group.name,
         evaluateFor: rule.for || '0',
         evaluateEvery: group.interval || defaultFormValues.evaluateEvery,
         noDataState: ga.no_data_state,
@@ -130,32 +138,26 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
     }
   } else {
     if (isAlertingRulerRule(rule)) {
-      const [forTime, forTimeUnit] = rule.for
-        ? parseInterval(rule.for)
-        : [defaultFormValues.forTime, defaultFormValues.forTimeUnit];
+      const alertingRuleValues = alertingRulerRuleToRuleForm(rule);
+
       return {
         ...defaultFormValues,
-        name: rule.alert,
+        ...alertingRuleValues,
         type: RuleFormType.cloudAlerting,
         dataSourceName: ruleSourceName,
         namespace,
         group: group.name,
-        expression: rule.expr,
-        forTime,
-        forTimeUnit,
-        annotations: listifyLabelsOrAnnotations(rule.annotations),
-        labels: listifyLabelsOrAnnotations(rule.labels),
       };
     } else if (isRecordingRulerRule(rule)) {
+      const recordingRuleValues = recordingRulerRuleToRuleForm(rule);
+
       return {
         ...defaultFormValues,
-        name: rule.record,
+        ...recordingRuleValues,
         type: RuleFormType.cloudRecording,
         dataSourceName: ruleSourceName,
         namespace,
         group: group.name,
-        expression: rule.expr,
-        labels: listifyLabelsOrAnnotations(rule.labels),
       };
     } else {
       throw new Error('Unexpected type of rule for cloud rules source');
@@ -163,8 +165,37 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
   }
 }
 
+export function alertingRulerRuleToRuleForm(
+  rule: RulerAlertingRuleDTO
+): Pick<RuleFormValues, 'name' | 'forTime' | 'forTimeUnit' | 'expression' | 'annotations' | 'labels'> {
+  const defaultFormValues = getDefaultFormValues();
+
+  const [forTime, forTimeUnit] = rule.for
+    ? parseInterval(rule.for)
+    : [defaultFormValues.forTime, defaultFormValues.forTimeUnit];
+
+  return {
+    name: rule.alert,
+    expression: rule.expr,
+    forTime,
+    forTimeUnit,
+    annotations: listifyLabelsOrAnnotations(rule.annotations),
+    labels: listifyLabelsOrAnnotations(rule.labels),
+  };
+}
+
+export function recordingRulerRuleToRuleForm(
+  rule: RulerRecordingRuleDTO
+): Pick<RuleFormValues, 'name' | 'expression' | 'labels'> {
+  return {
+    name: rule.record,
+    expression: rule.expr,
+    labels: listifyLabelsOrAnnotations(rule.labels),
+  };
+}
+
 export const getDefaultQueries = (): AlertQuery[] => {
-  const dataSource = getDataSourceSrv().getInstanceSettings('default');
+  const dataSource = getDefaultOrFirstCompatibleDataSource();
 
   if (!dataSource) {
     return [getDefaultExpression('A')];
@@ -214,6 +245,7 @@ const getDefaultExpression = (refId: string): AlertQuery => {
         },
       },
     ],
+    expression: 'A',
   };
 
   return {

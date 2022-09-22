@@ -4,10 +4,13 @@ import (
 	"context"
 	"errors"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
+	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/loginattempt"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 var (
@@ -26,15 +29,28 @@ var (
 
 var loginLogger = log.New("login")
 
-var AuthenticateUserFunc = AuthenticateUser
+type Authenticator interface {
+	AuthenticateUser(context.Context, *models.LoginUserQuery) error
+}
 
-func Init() {
-	bus.AddHandler("auth", AuthenticateUser)
+type AuthenticatorService struct {
+	loginService        login.Service
+	loginAttemptService loginattempt.Service
+	userService         user.Service
+}
+
+func ProvideService(store sqlstore.Store, loginService login.Service, loginAttemptService loginattempt.Service, userService user.Service) *AuthenticatorService {
+	a := &AuthenticatorService{
+		loginService:        loginService,
+		loginAttemptService: loginAttemptService,
+		userService:         userService,
+	}
+	return a
 }
 
 // AuthenticateUser authenticates the user via username & password
-func AuthenticateUser(ctx context.Context, query *models.LoginUserQuery) error {
-	if err := validateLoginAttempts(ctx, query); err != nil {
+func (a *AuthenticatorService) AuthenticateUser(ctx context.Context, query *models.LoginUserQuery) error {
+	if err := validateLoginAttempts(ctx, query, a.loginAttemptService); err != nil {
 		return err
 	}
 
@@ -46,18 +62,18 @@ func AuthenticateUser(ctx context.Context, query *models.LoginUserQuery) error {
 	var err error
 
 	if isGrafanaLoginEnabled {
-		err = loginUsingGrafanaDB(ctx, query)
+		err = loginUsingGrafanaDB(ctx, query, a.userService)
 	}
 
-	if isGrafanaLoginEnabled && (err == nil || (!errors.Is(err, models.ErrUserNotFound) && !errors.Is(err, ErrInvalidCredentials) &&
+	if isGrafanaLoginEnabled && (err == nil || (!errors.Is(err, user.ErrUserNotFound) && !errors.Is(err, ErrInvalidCredentials) &&
 		!errors.Is(err, ErrUserDisabled))) {
 		query.AuthModule = "grafana"
 		return err
 	}
 
-	ldapEnabled, ldapErr := loginUsingLDAP(ctx, query)
+	ldapEnabled, ldapErr := loginUsingLDAP(ctx, query, a.loginService)
 	if ldapEnabled {
-		query.AuthModule = models.AuthModuleLDAP
+		query.AuthModule = login.LDAPAuthModule
 		if ldapErr == nil || !errors.Is(ldapErr, ldap.ErrInvalidCredentials) {
 			return ldapErr
 		}
@@ -68,7 +84,7 @@ func AuthenticateUser(ctx context.Context, query *models.LoginUserQuery) error {
 	}
 
 	if errors.Is(err, ErrInvalidCredentials) || errors.Is(err, ldap.ErrInvalidCredentials) {
-		if err := saveInvalidLoginAttempt(ctx, query); err != nil {
+		if err := saveInvalidLoginAttempt(ctx, query, a.loginAttemptService); err != nil {
 			loginLogger.Error("Failed to save invalid login attempt", "err", err)
 		}
 

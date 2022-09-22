@@ -1,10 +1,13 @@
-import { Input, InlineField, Select, InlineSwitch } from '@grafana/ui';
 import { uniqueId } from 'lodash';
 import React, { useRef } from 'react';
+
+import { Input, InlineField, Select, InlineSwitch } from '@grafana/ui';
+
 import { useDispatch } from '../../../../hooks/useStatelessReducer';
-import { movingAvgModelOptions } from '../../../../query_def';
+import { movingAvgModelOptions } from '../../../../queryDef';
 import { isEWMAMovingAverage, isHoltMovingAverage, isHoltWintersMovingAverage, MovingAverage } from '../aggregations';
 import { changeMetricSetting } from '../state/actions';
+
 import { SettingField } from './SettingField';
 
 interface Props {
@@ -23,7 +26,6 @@ export const MovingAverageSettingsEditor = ({ metric }: Props) => {
       <InlineField label="Model" labelWidth={16}>
         <Select
           inputId={`${baseId}-model`}
-          menuShouldPortal
           onChange={(value) => dispatch(changeMetricSetting({ metric, settingName: 'model', newValue: value.value }))}
           options={movingAvgModelOptions}
           value={metric.settings?.model}

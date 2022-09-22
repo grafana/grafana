@@ -1,10 +1,19 @@
 import { cloneDeep } from 'lodash';
-import { StoreState, ThunkResult } from 'app/types';
+
+import { DataSourceRef } from '@grafana/data';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { AdHocVariableFilter, AdHocVariableModel } from 'app/features/variables/types';
+import { StoreState, ThunkResult } from 'app/types';
+
 import { changeVariableEditorExtended } from '../editor/reducer';
-import { addVariable, changeVariableProp } from '../state/sharedReducer';
+import { isAdHoc } from '../guard';
+import { variableUpdated } from '../state/actions';
+import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { getLastKey, getNewVariableIndex, getVariable, getVariablesState } from '../state/selectors';
+import { addVariable, changeVariableProp } from '../state/sharedReducer';
 import { AddVariable, KeyedVariableIdentifier } from '../state/types';
+import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
+
 import {
   AdHocVariabelFilterUpdate,
   filterAdded,
@@ -13,13 +22,6 @@ import {
   filterUpdated,
   initialAdHocVariableModelState,
 } from './reducer';
-import { AdHocVariableFilter, AdHocVariableModel } from 'app/features/variables/types';
-import { variableUpdated } from '../state/actions';
-import { isAdHoc } from '../guard';
-import { DataSourceRef, getDataSourceRef } from '@grafana/data';
-import { getAdhocVariableEditorState } from '../editor/selectors';
-import { toKeyedAction } from '../state/keyedVariablesReducer';
-import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 export interface AdHocTableOptions {
   datasource: DataSourceRef;
@@ -98,8 +100,6 @@ export const changeVariableDatasource = (
   datasource?: DataSourceRef
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const { editor } = getVariablesState(identifier.rootStateKey, getState());
-    const extended = getAdhocVariableEditorState(editor);
     const variable = getVariable(identifier, getState());
     dispatch(
       toKeyedAction(
@@ -120,41 +120,11 @@ export const changeVariableDatasource = (
         identifier.rootStateKey,
         changeVariableEditorExtended({
           infoText: message,
-          dataSources: extended?.dataSources ?? [],
         })
       )
     );
   };
 };
-
-export const initAdHocVariableEditor =
-  (key: string): ThunkResult<void> =>
-  (dispatch) => {
-    const dataSources = getDatasourceSrv().getList({ metrics: true, variables: true });
-    const selectable = dataSources.reduce(
-      (all: Array<{ text: string; value: DataSourceRef | null }>, ds) => {
-        if (ds.meta.mixed) {
-          return all;
-        }
-
-        const text = ds.isDefault ? `${ds.name} (default)` : ds.name;
-        const value = getDataSourceRef(ds);
-        all.push({ text, value });
-
-        return all;
-      },
-      [{ text: '', value: {} }]
-    );
-
-    dispatch(
-      toKeyedAction(
-        key,
-        changeVariableEditorExtended({
-          dataSources: selectable,
-        })
-      )
-    );
-  };
 
 const createAdHocVariable = (options: AdHocTableOptions): ThunkResult<void> => {
   return (dispatch, getState) => {

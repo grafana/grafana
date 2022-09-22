@@ -1,7 +1,8 @@
-import { DataTransformerID } from './ids';
-import { filterFramesTransformer, FilterOptions } from './filter';
 import { DataTransformerInfo } from '../../types/transformations';
 import { FrameMatcherID } from '../matchers/ids';
+
+import { filterFramesTransformer, FilterOptions } from './filter';
+import { DataTransformerID } from './ids';
 
 export interface FilterFramesByRefIdTransformerOptions {
   include?: string;

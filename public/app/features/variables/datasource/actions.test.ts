@@ -1,22 +1,23 @@
 import { DataSourceInstanceSettings } from '@grafana/data';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
-import { getRootReducer, RootReducerType } from '../state/helpers';
+import { getMockPlugin } from '../../plugins/__mocks__/pluginMocks';
 import { variableAdapters } from '../adapters';
-import { createDataSourceVariableAdapter } from './adapter';
+import { changeVariableEditorExtended } from '../editor/reducer';
+import { datasourceBuilder } from '../shared/testing/builders';
+import { getDataSourceInstanceSetting } from '../shared/testing/helpers';
+import { getRootReducer, RootReducerType } from '../state/helpers';
+import { toKeyedAction } from '../state/keyedVariablesReducer';
+import { addVariable, setCurrentVariableValue } from '../state/sharedReducer';
+import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
+
 import {
   DataSourceVariableActionDependencies,
   initDataSourceVariableEditor,
   updateDataSourceVariableOptions,
 } from './actions';
-import { getMockPlugin } from '../../plugins/__mocks__/pluginMocks';
+import { createDataSourceVariableAdapter } from './adapter';
 import { createDataSourceOptions } from './reducer';
-import { addVariable, setCurrentVariableValue } from '../state/sharedReducer';
-import { changeVariableEditorExtended } from '../editor/reducer';
-import { datasourceBuilder } from '../shared/testing/builders';
-import { getDataSourceInstanceSetting } from '../shared/testing/helpers';
-import { toKeyedAction } from '../state/keyedVariablesReducer';
-import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 interface Args {
   sources?: DataSourceInstanceSettings[];

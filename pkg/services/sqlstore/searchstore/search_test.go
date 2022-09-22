@@ -5,14 +5,18 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -21,14 +25,14 @@ const (
 )
 
 func TestBuilder_EqualResults_Basic(t *testing.T) {
-	user := &models.SignedInUser{
-		UserId:  1,
-		OrgId:   1,
-		OrgRole: models.ROLE_EDITOR,
+	user := &user.SignedInUser{
+		UserID:  1,
+		OrgID:   1,
+		OrgRole: org.RoleEditor,
 	}
 
 	db := setupTestEnvironment(t)
-	dashIds := createDashboards(t, db, 0, 1, user.OrgId)
+	dashIds := createDashboards(t, db, 0, 1, user.OrgID)
 	require.Len(t, dashIds, 1)
 
 	// create one dashboard in another organization that shouldn't
@@ -37,13 +41,13 @@ func TestBuilder_EqualResults_Basic(t *testing.T) {
 
 	builder := &searchstore.Builder{
 		Filters: []interface{}{
-			searchstore.OrgFilter{OrgId: user.OrgId},
+			searchstore.OrgFilter{OrgId: user.OrgID},
 			searchstore.TitleSorter{},
 		},
 		Dialect: db.Dialect,
 	}
 
-	res := []sqlstore.DashboardSearchProjection{}
+	res := []dashboards.DashboardSearchProjection{}
 	err := db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		sql, params := builder.ToSQL(limit, page)
 		return sess.SQL(sql, params...).Find(&res)
@@ -52,7 +56,7 @@ func TestBuilder_EqualResults_Basic(t *testing.T) {
 
 	assert.Len(t, res, 1)
 	res[0].UID = ""
-	assert.EqualValues(t, []sqlstore.DashboardSearchProjection{
+	assert.EqualValues(t, []dashboards.DashboardSearchProjection{
 		{
 			ID:    dashIds[0],
 			Title: "A",
@@ -63,26 +67,26 @@ func TestBuilder_EqualResults_Basic(t *testing.T) {
 }
 
 func TestBuilder_Pagination(t *testing.T) {
-	user := &models.SignedInUser{
-		UserId:  1,
-		OrgId:   1,
-		OrgRole: models.ROLE_VIEWER,
+	user := &user.SignedInUser{
+		UserID:  1,
+		OrgID:   1,
+		OrgRole: org.RoleViewer,
 	}
 
 	db := setupTestEnvironment(t)
-	createDashboards(t, db, 0, 25, user.OrgId)
+	createDashboards(t, db, 0, 25, user.OrgID)
 
 	builder := &searchstore.Builder{
 		Filters: []interface{}{
-			searchstore.OrgFilter{OrgId: user.OrgId},
+			searchstore.OrgFilter{OrgId: user.OrgID},
 			searchstore.TitleSorter{},
 		},
 		Dialect: db.Dialect,
 	}
 
-	resPg1 := []sqlstore.DashboardSearchProjection{}
-	resPg2 := []sqlstore.DashboardSearchProjection{}
-	resPg3 := []sqlstore.DashboardSearchProjection{}
+	resPg1 := []dashboards.DashboardSearchProjection{}
+	resPg2 := []dashboards.DashboardSearchProjection{}
+	resPg3 := []dashboards.DashboardSearchProjection{}
 	err := db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		sql, params := builder.ToSQL(15, 1)
 		err := sess.SQL(sql, params...).Find(&resPg1)
@@ -109,33 +113,33 @@ func TestBuilder_Pagination(t *testing.T) {
 }
 
 func TestBuilder_Permissions(t *testing.T) {
-	user := &models.SignedInUser{
-		UserId:  1,
-		OrgId:   1,
-		OrgRole: models.ROLE_VIEWER,
+	user := &user.SignedInUser{
+		UserID:  1,
+		OrgID:   1,
+		OrgRole: org.RoleViewer,
 	}
 
 	db := setupTestEnvironment(t)
-	createDashboards(t, db, 0, 1, user.OrgId)
+	createDashboards(t, db, 0, 1, user.OrgID)
 
 	level := models.PERMISSION_EDIT
 
 	builder := &searchstore.Builder{
 		Filters: []interface{}{
-			searchstore.OrgFilter{OrgId: user.OrgId},
+			searchstore.OrgFilter{OrgId: user.OrgID},
 			searchstore.TitleSorter{},
 			permissions.DashboardPermissionFilter{
 				Dialect:         db.Dialect,
 				OrgRole:         user.OrgRole,
-				OrgId:           user.OrgId,
-				UserId:          user.UserId,
+				OrgId:           user.OrgID,
+				UserId:          user.UserID,
 				PermissionLevel: level,
 			},
 		},
 		Dialect: db.Dialect,
 	}
 
-	res := []sqlstore.DashboardSearchProjection{}
+	res := []dashboards.DashboardSearchProjection{}
 	err := db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		sql, params := builder.ToSQL(limit, page)
 		return sess.SQL(sql, params...).Find(&res)

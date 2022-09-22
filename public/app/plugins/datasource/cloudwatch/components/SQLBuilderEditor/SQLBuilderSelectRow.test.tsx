@@ -1,9 +1,11 @@
-import React from 'react';
-import { selectOptionInTest } from '@grafana/ui';
 import { act, render, screen } from '@testing-library/react';
-import { CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType, SQLExpression } from '../../types';
+import React from 'react';
+import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
+
 import { setupMockedDataSource } from '../../__mocks__/CloudWatchDataSource';
 import { QueryEditorExpressionType, QueryEditorPropertyType } from '../../expressions';
+import { CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType, SQLExpression } from '../../types';
+
 import SQLBuilderSelectRow from './SQLBuilderSelectRow';
 
 const { datasource } = setupMockedDataSource();
@@ -58,15 +60,15 @@ const metrics = [
 
 describe('Cloudwatch SQLBuilderSelectRow', () => {
   beforeEach(() => {
-    datasource.getNamespaces = jest.fn().mockResolvedValue(namespaces);
-    datasource.getMetrics = jest.fn().mockResolvedValue([]);
-    datasource.getDimensionKeys = jest.fn().mockResolvedValue([]);
-    datasource.getDimensionValues = jest.fn().mockResolvedValue([]);
+    datasource.api.getNamespaces = jest.fn().mockResolvedValue(namespaces);
+    datasource.api.getMetrics = jest.fn().mockResolvedValue([]);
+    datasource.api.getDimensionKeys = jest.fn().mockResolvedValue([]);
+    datasource.api.getDimensionValues = jest.fn().mockResolvedValue([]);
     onQueryChange.mockReset();
   });
 
   it('Should not reset metricName when selecting a namespace if metric exist in new namespace', async () => {
-    datasource.getMetrics = jest.fn().mockResolvedValue(metrics);
+    datasource.api.getMetrics = jest.fn().mockResolvedValue(metrics);
 
     await act(async () => {
       render(<SQLBuilderSelectRow {...baseProps} />);
@@ -101,7 +103,7 @@ describe('Cloudwatch SQLBuilderSelectRow', () => {
   });
 
   it('Should reset metricName when selecting a namespace if metric does not exist in new namespace', async () => {
-    datasource.getMetrics = jest.fn().mockImplementation((namespace: string, region: string) => {
+    datasource.api.getMetrics = jest.fn().mockImplementation((namespace: string, region: string) => {
       let mockMetrics =
         namespace === 'n1' && region === baseProps.query.region
           ? metrics

@@ -1,7 +1,9 @@
 import { css, cx } from '@emotion/css';
+import React, { FC, ReactNode } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { Card, useStyles2 } from '@grafana/ui';
-import React, { FC, ReactNode } from 'react';
+
 import { RuleFormType } from '../../../types/rule-form';
 
 interface Props extends SharedProps {

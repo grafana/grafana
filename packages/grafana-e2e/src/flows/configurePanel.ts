@@ -1,5 +1,6 @@
-import { e2e } from '../index';
+import { e2e } from '..';
 import { getScenarioContext } from '../support/scenarioContext';
+
 import { selectOption } from './selectOption';
 import { setDashboardTimeRange } from './setDashboardTimeRange';
 import { TimeRangeConfig } from './setTimeRange';
@@ -147,7 +148,7 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
     //e2e().wait('@chartData');
 
     // Avoid annotations flakiness
-    e2e.components.RefreshPicker.runButton().should('be.visible').click();
+    e2e.components.RefreshPicker.runButtonV2().first().should('be.visible').click({ force: true });
 
     e2e().wait('@chartData');
 

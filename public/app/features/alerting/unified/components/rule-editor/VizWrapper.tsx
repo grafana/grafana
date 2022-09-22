@@ -1,14 +1,16 @@
+import { css } from '@emotion/css';
 import React, { FC, useEffect, useMemo, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import { css } from '@emotion/css';
+
 import { FieldConfigSource, GrafanaTheme2, PanelData, ThresholdsConfig } from '@grafana/data';
 import { PanelRenderer } from '@grafana/runtime';
-import { PanelContext, PanelContextProvider, useStyles2 } from '@grafana/ui';
 import { GraphFieldConfig, GraphTresholdsStyleMode } from '@grafana/schema';
+import { PanelContext, PanelContextProvider, useStyles2 } from '@grafana/ui';
+import appEvents from 'app/core/app_events';
 import { PanelOptions } from 'app/plugins/panel/table/models.gen';
+
 import { useVizHeight } from '../../hooks/useVizHeight';
 import { SupportedPanelPlugins, PanelPluginsButtonGroup } from '../PanelPluginsButtonGroup';
-import appEvents from 'app/core/app_events';
 
 interface Props {
   data: PanelData;

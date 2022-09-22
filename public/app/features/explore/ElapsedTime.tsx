@@ -1,5 +1,6 @@
 import React, { FC, useState, useEffect } from 'react';
 import { useInterval } from 'react-use';
+
 import { Time, TimeProps } from './Time';
 
 const INTERVAL = 150;

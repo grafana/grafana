@@ -1,8 +1,11 @@
-import { Field, GrafanaTheme, LinkModel } from '@grafana/data';
 import { css } from '@emotion/css';
 import React from 'react';
-import { useStyles } from '../../themes';
+
+import { Field, GrafanaTheme2, LinkModel } from '@grafana/data';
+
+import { useStyles2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
+
 import { DataLinkButton } from './DataLinkButton';
 
 type Props = {
@@ -13,7 +16,7 @@ type Props = {
  * @internal
  */
 export function FieldLinkList({ links }: Props) {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   if (links.length === 1) {
     return <DataLinkButton link={links[0]} />;
@@ -40,21 +43,21 @@ export function FieldLinkList({ links }: Props) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
     flex-basis: 150px;
     width: 100px;
-    margin-top: ${theme.spacing.sm};
+    margin-top: ${theme.spacing(1)};
   `,
   externalLinksHeading: css`
-    color: ${theme.colors.textWeak};
-    font-weight: ${theme.typography.weight.regular};
+    color: ${theme.colors.text.secondary};
+    font-weight: ${theme.typography.fontWeightRegular};
     font-size: ${theme.typography.size.sm};
     margin: 0;
   `,
   externalLink: css`
-    color: ${theme.colors.linkExternal};
-    font-weight: ${theme.typography.weight.regular};
+    color: ${theme.colors.text.link};
+    font-weight: ${theme.typography.fontWeightRegular};
     display: block;
     white-space: nowrap;
     overflow: hidden;
@@ -65,7 +68,7 @@ const getStyles = (theme: GrafanaTheme) => ({
     }
 
     div {
-      margin-right: ${theme.spacing.sm};
+      margin-right: ${theme.spacing(1)};
     }
   `,
 });

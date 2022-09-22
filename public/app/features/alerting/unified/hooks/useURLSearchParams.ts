@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
+
 import { locationService } from '@grafana/runtime';
 
 export function useURLSearchParams(): [

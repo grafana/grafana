@@ -1,8 +1,9 @@
-import React, { MouseEventHandler } from 'react';
-import { GrafanaTheme2, isUnsignedPluginSignature, PanelPluginMeta, PluginState } from '@grafana/data';
-import { IconButton, PluginSignatureBadge, useStyles2 } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
+import React, { MouseEventHandler } from 'react';
+
+import { GrafanaTheme2, isUnsignedPluginSignature, PanelPluginMeta, PluginState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { IconButton, PluginSignatureBadge, useStyles2 } from '@grafana/ui';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 
 interface Props {
@@ -28,9 +29,10 @@ export const PanelTypeCard: React.FC<Props> = ({
   children,
 }) => {
   const styles = useStyles2(getStyles);
+  const isDisabled = disabled || plugin.state === PluginState.deprecated;
   const cssClass = cx({
     [styles.item]: true,
-    [styles.disabled]: disabled || plugin.state === PluginState.deprecated,
+    [styles.itemDisabled]: isDisabled,
     [styles.current]: isCurrent,
   });
 
@@ -38,18 +40,18 @@ export const PanelTypeCard: React.FC<Props> = ({
     <div
       className={cssClass}
       aria-label={selectors.components.PluginVisualization.item(plugin.name)}
-      onClick={disabled ? undefined : onClick}
+      onClick={isDisabled ? undefined : onClick}
       title={isCurrent ? 'Click again to close this section' : plugin.name}
     >
-      <img className={styles.img} src={plugin.info.logos.small} alt="" />
+      <img className={cx(styles.img, { [styles.disabled]: isDisabled })} src={plugin.info.logos.small} alt="" />
 
-      <div className={styles.itemContent}>
+      <div className={cx(styles.itemContent, { [styles.disabled]: isDisabled })}>
         <div className={styles.name}>{title}</div>
         {description ? <span className={styles.description}>{description}</span> : null}
         {children}
       </div>
       {showBadge && (
-        <div className={cx(styles.badge, disabled && styles.disabled)}>
+        <div className={cx(styles.badge, { [styles.disabled]: isDisabled })}>
           <PanelPluginBadge plugin={plugin} />
         </div>
       )}
@@ -99,13 +101,21 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: relative;
       padding: ${theme.spacing(0, 1)};
     `,
+    itemDisabled: css`
+      cursor: default;
+
+      &,
+      &:hover {
+        background: ${theme.colors.action.disabledBackground};
+      }
+    `,
     current: css`
       label: currentVisualizationItem;
       border: 1px solid ${theme.colors.primary.border};
       background: ${theme.colors.action.selected};
     `,
     disabled: css`
-      opacity: 0.2;
+      opacity: ${theme.colors.action.disabledOpacity};
       filter: grayscale(1);
       cursor: default;
       pointer-events: none;
@@ -137,6 +147,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       background: ${theme.colors.background.primary};
     `,
     deleteButton: css`
+      cursor: pointer;
       margin-left: auto;
     `,
   };

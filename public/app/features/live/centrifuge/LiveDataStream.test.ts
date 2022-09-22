@@ -1,3 +1,6 @@
+import { mapValues } from 'lodash';
+import { Observable, Subject, Subscription, Unsubscribable } from 'rxjs';
+
 import {
   DataFrameJSON,
   dataFrameToJSON,
@@ -11,13 +14,12 @@ import {
   LiveChannelScope,
   LoadingState,
 } from '@grafana/data';
-import { Observable, Subject, Subscription, Unsubscribable } from 'rxjs';
-import { DataStreamHandlerDeps, LiveDataStream } from './LiveDataStream';
-import { mapValues } from 'lodash';
 import { StreamingFrameAction } from '@grafana/runtime';
-import { isStreamingResponseData, StreamingResponseData, StreamingResponseDataType } from '../data/utils';
+
 import { StreamingDataFrame } from '../data/StreamingDataFrame';
-import mockConsole, { RestoreConsole } from 'jest-mock-console';
+import { isStreamingResponseData, StreamingResponseData, StreamingResponseDataType } from '../data/utils';
+
+import { DataStreamHandlerDeps, LiveDataStream } from './LiveDataStream';
 
 type SubjectsInsteadOfObservables<T> = {
   [key in keyof T]: T[key] extends Observable<infer U> ? Subject<U> : T[key];
@@ -120,14 +122,12 @@ const dummyErrorMessage = 'dummy-error';
 describe('LiveDataStream', () => {
   jest.useFakeTimers();
 
-  let restoreConsole: RestoreConsole | undefined;
-
   beforeEach(() => {
-    restoreConsole = mockConsole();
+    jest.spyOn(console, 'log').mockImplementation(jest.fn);
   });
 
   afterEach(() => {
-    restoreConsole?.();
+    jest.clearAllMocks();
   });
 
   const expectValueCollectionState = <T>(
@@ -350,6 +350,7 @@ describe('LiveDataStream', () => {
           values: [undefined, 'y'], //  bug in streamingDataFrame - fix!
         },
       ]);
+      expect(StreamingDataFrame.deserialize(data.frame).length).toEqual(2);
     });
 
     it('should emit a full frame if received a status live channel event with error', async () => {
@@ -366,6 +367,7 @@ describe('LiveDataStream', () => {
       const response = valuesCollection.lastValue();
 
       expectErrorResponse(response, StreamingResponseDataType.FullFrame);
+      expect(StreamingDataFrame.deserialize(response.data[0].frame).length).toEqual(2); // contains previously populated values
     });
 
     it('should buffer new values until subscriber is ready', async () => {
@@ -428,6 +430,7 @@ describe('LiveDataStream', () => {
           values: [2, 3],
         },
       ]);
+      expect(StreamingDataFrame.deserialize(response.data[0].frame).length).toEqual(2);
     });
 
     it(`should reduce buffer to a full frame with last error if one or more errors occur during subscriber's unavailability`, async () => {
@@ -576,6 +579,8 @@ describe('LiveDataStream', () => {
           values: ['y'],
         },
       ]);
+      const deserializedFrame = StreamingDataFrame.deserialize(data.frame);
+      expect(deserializedFrame.length).toEqual(1);
     });
 
     it('should emit a full frame if received a status live channel event with error', async () => {
@@ -592,6 +597,7 @@ describe('LiveDataStream', () => {
       const response = valuesCollection.lastValue();
 
       expectErrorResponse(response, StreamingResponseDataType.FullFrame);
+      expect(StreamingDataFrame.deserialize(response.data[0].frame).length).toEqual(0);
     });
 
     it('should buffer new values until subscriber is ready', async () => {
@@ -651,6 +657,8 @@ describe('LiveDataStream', () => {
           values: [3],
         },
       ]);
+      const data = response.data[0] as StreamingResponseData<StreamingResponseDataType.FullFrame>;
+      expect(StreamingDataFrame.deserialize(data.frame).length).toEqual(1);
     });
 
     it(`should reduce buffer to an empty full frame with last error if one or more errors occur during subscriber's unavailability`, async () => {
@@ -685,6 +693,7 @@ describe('LiveDataStream', () => {
           values: [],
         },
       ]);
+      expect(StreamingDataFrame.deserialize(response.data[0].frame).length).toEqual(0);
     });
 
     it('should ignore messages without payload', async () => {
@@ -748,6 +757,7 @@ describe('LiveDataStream', () => {
           values: ['y'], //  bug in streamingDataFrame - fix!
         },
       ]);
+      expect(StreamingDataFrame.deserialize(response.data[0].frame).length).toEqual(1);
     });
   });
 

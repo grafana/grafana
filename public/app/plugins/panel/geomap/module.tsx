@@ -1,13 +1,15 @@
 import React from 'react';
+
 import { PanelPlugin } from '@grafana/data';
-import { GeomapInstanceState, GeomapPanel } from './GeomapPanel';
-import { MapViewEditor } from './editor/MapViewEditor';
-import { defaultView, GeomapPanelOptions } from './types';
-import { mapPanelChangedHandler, mapMigrationHandler } from './migrations';
-import { getLayerEditor } from './editor/layerEditor';
-import { LayersEditor } from './editor/LayersEditor';
 import { config } from '@grafana/runtime';
 import { commonOptionsBuilder } from '@grafana/ui';
+
+import { GeomapPanel } from './GeomapPanel';
+import { LayersEditor } from './editor/LayersEditor';
+import { MapViewEditor } from './editor/MapViewEditor';
+import { getLayerEditor } from './editor/layerEditor';
+import { mapPanelChangedHandler, mapMigrationHandler } from './migrations';
+import { defaultView, GeomapPanelOptions, TooltipMode, GeomapInstanceState } from './types';
 
 export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
   .setNoPadding()
@@ -38,12 +40,15 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
       defaultValue: defaultView.shared,
     });
 
+    // eslint-disable-next-line
     const state = context.instanceState as GeomapInstanceState;
     if (!state?.layers) {
       // TODO? show spinner?
     } else {
+      const layersCategory = ['Map layers'];
+      const basemapCategory = ['Basemap layer'];
       builder.addCustomEditor({
-        category: ['Data layer'],
+        category: layersCategory,
         id: 'layers',
         path: '',
         name: '',
@@ -55,7 +60,7 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
         builder.addNestedOptions(
           getLayerEditor({
             state: selected,
-            category: ['Data layer'],
+            category: layersCategory,
             basemaps: false,
           })
         );
@@ -64,18 +69,18 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
       const baselayer = state.layers[0];
       if (config.geomapDisableCustomBaseLayer) {
         builder.addCustomEditor({
-          category: ['Base layer'],
+          category: basemapCategory,
           id: 'layers',
           path: '',
           name: '',
           // eslint-disable-next-line react/display-name
-          editor: () => <div>The base layer is configured by the server admin.</div>,
+          editor: () => <div>The basemap layer is configured by the server admin.</div>,
         });
       } else if (baselayer) {
         builder.addNestedOptions(
           getLayerEditor({
             state: baselayer,
-            category: ['Base layer'],
+            category: basemapCategory,
             basemaps: true,
           })
         );
@@ -115,9 +120,28 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
       })
       .addBooleanSwitch({
         category,
+        path: 'controls.showMeasure',
+        name: 'Show measure tools',
+        description: 'Show tools for making measurements on the map',
+        defaultValue: false,
+      })
+      .addBooleanSwitch({
+        category,
         path: 'controls.showDebug',
         name: 'Show debug',
         description: 'Show map info',
         defaultValue: false,
+      })
+      .addRadio({
+        category,
+        path: 'tooltip.mode',
+        name: 'Tooltip',
+        defaultValue: TooltipMode.Details,
+        settings: {
+          options: [
+            { label: 'None', value: TooltipMode.None, description: 'Show contents on click, not hover' },
+            { label: 'Details', value: TooltipMode.Details, description: 'Show popup on hover' },
+          ],
+        },
       });
   });

@@ -1,13 +1,26 @@
-+++
-title = "Application Insights deprecation"
-description = "Template to provision the Azure Monitor data source"
-keywords = ["grafana", "microsoft", "azure", "monitor", "application", "insights", "log", "analytics", "guide"]
-weight = 999
-+++
+---
+aliases:
+  - /docs/grafana/latest/datasources/azuremonitor/deprecated-application-insights/
+description: Template to provision the Azure Monitor data source
+keywords:
+  - grafana
+  - microsoft
+  - azure
+  - monitor
+  - application
+  - insights
+  - log
+  - analytics
+  - guide
+title: Application Insights deprecation
+weight: 999
+---
 
 # Deprecated Application Insights and Insights Analytics
 
-Application Insights and Insights Analytics are two ways to query the same Azure Application Insights data, which can also be queried from Metrics and Logs. In Grafana 8.0, Application Insights and Insights Analytics are deprecated and made read-only in favor of querying this data through Metrics and Logs. Existing queries will continue to work, but you cannot edit them. New panels are not able to use Application Insights or Insights Analytics.
+Application Insights and Insights Analytics are two ways to query the same Azure Application Insights data, which can also be queried from Metrics and Logs. In Grafana 8.0, Application Insights and Insights Analytics were deprecated and made read-only in favor of querying this data through Metrics and Logs.
+
+These query methods were completely removed in Grafana 9.0.
 
 Azure Monitor Metrics and Azure Monitor Logs do not use Application Insights API keys, so make sure the data source is configured with an Azure AD app registration that has access to Application Insights.
 

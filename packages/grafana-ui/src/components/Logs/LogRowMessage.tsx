@@ -1,20 +1,22 @@
-import React, { PureComponent } from 'react';
-import tinycolor from 'tinycolor2';
 import { css, cx } from '@emotion/css';
-import { LogRowModel, findHighlightChunksInText, GrafanaTheme2 } from '@grafana/data';
 import memoizeOne from 'memoize-one';
-
-// @ts-ignore
+import React, { PureComponent } from 'react';
 import Highlighter from 'react-highlight-words';
-import { LogRowContextQueryErrors, HasMoreContextRows, LogRowContextRows } from './LogRowContextProvider';
-import { Themeable2 } from '../../types/theme';
+import tinycolor from 'tinycolor2';
+
+import { LogRowModel, findHighlightChunksInText, GrafanaTheme2 } from '@grafana/data';
+
 import { withTheme2 } from '../../themes/index';
+import { Themeable2 } from '../../types/theme';
+import { IconButton } from '../IconButton/IconButton';
+import { Tooltip } from '../Tooltip/Tooltip';
+
+import { LogMessageAnsi } from './LogMessageAnsi';
+import { LogRowContext } from './LogRowContext';
+import { LogRowContextQueryErrors, HasMoreContextRows, LogRowContextRows } from './LogRowContextProvider';
 import { getLogRowStyles } from './getLogRowStyles';
 
-//Components
-import { LogRowContext } from './LogRowContext';
-import { LogMessageAnsi } from './LogMessageAnsi';
-
+/** @deprecated will be removed in the next major version */
 export const MAX_CHARACTERS = 100000;
 
 interface Props extends Themeable2 {
@@ -51,6 +53,24 @@ const getStyles = (theme: GrafanaTheme2) => {
     contextNewline: css`
       display: block;
       margin-left: 0px;
+    `,
+    contextButton: css`
+      display: flex;
+      flex-wrap: nowrap;
+      flex-direction: row;
+      align-content: flex-end;
+      justify-content: space-evenly;
+      align-items: center;
+      position: absolute;
+      right: -8px;
+      top: 0;
+      bottom: auto;
+      width: 80px;
+      height: 36px;
+      background: ${theme.colors.background.primary};
+      box-shadow: ${theme.shadows.z3};
+      padding: ${theme.spacing(0, 0, 0, 0.5)};
+      z-index: 100;
     `,
   };
 };
@@ -116,12 +136,12 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
     const style = getLogRowStyles(theme, row.logLevel);
     const { hasAnsi, raw } = row;
     const restructuredEntry = restructureLog(raw, prettifyLogMessage);
-
-    const highlightClassName = cx([style.logsRowMatchHighLight]);
     const styles = getStyles(theme);
 
     return (
-      <td className={style.logsRowMessage}>
+      // When context is open, the position has to be NOT relative.
+      // Setting the postion as inline-style to overwrite the more sepecific style definition from `style.logsRowMessage`.
+      <td style={contextIsOpen ? { position: 'unset' } : undefined} className={style.logsRowMessage}>
         <div
           className={cx({ [styles.positionRelative]: wrapLogMessage }, { [styles.horizontalScroll]: !wrapLogMessage })}
         >
@@ -141,14 +161,23 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
             />
           )}
           <span className={cx(styles.positionRelative, { [styles.rowWithContext]: contextIsOpen })}>
-            {renderLogMessage(hasAnsi, restructuredEntry, row.searchWords, highlightClassName)}
+            {renderLogMessage(hasAnsi, restructuredEntry, row.searchWords, style.logsRowMatchHighLight)}
           </span>
-          {showContextToggle?.(row) && (
+          {!contextIsOpen && showContextToggle?.(row) && (
             <span
-              onClick={this.onContextToggle}
-              className={cx('log-row-context', style.context, { [styles.contextNewline]: !wrapLogMessage })}
+              className={cx('log-row-context', style.context, styles.contextButton)}
+              onClick={(e) => e.stopPropagation()}
             >
-              {contextIsOpen ? 'Hide' : 'Show'} context
+              <Tooltip placement="top" content={'Show context'}>
+                <IconButton size="md" name="gf-show-context" onClick={this.onContextToggle} />
+              </Tooltip>
+              <Tooltip placement="top" content={'Copy'}>
+                <IconButton
+                  size="md"
+                  name="copy"
+                  onClick={() => navigator.clipboard.writeText(JSON.stringify(restructuredEntry))}
+                />
+              </Tooltip>
             </span>
           )}
         </div>
@@ -157,5 +186,6 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
   }
 }
 
+/** @deprecated will be removed in the next major version */
 export const LogRowMessage = withTheme2(UnThemedLogRowMessage);
 LogRowMessage.displayName = 'LogRowMessage';

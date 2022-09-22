@@ -1,0 +1,51 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`groupStateByLabels should group a list by labels 1`] = `
+Object {
+  "{cpu=0, type=cpu}": Array [
+    Object {
+      "data": Object {},
+      "id": "1",
+      "state": "alerting",
+      "stringifiedLabels": "{cpu=0, type=cpu}",
+      "text": "CPU Usage  - Alerting",
+      "timestamp": 1658834395024,
+    },
+  ],
+  "{cpu=1, type=cpu}": Array [
+    Object {
+      "data": Object {},
+      "id": "2",
+      "state": "ok",
+      "stringifiedLabels": "{cpu=1, type=cpu}",
+      "text": "CPU Usage  - Normal",
+      "timestamp": 1658834346935,
+    },
+  ],
+}
+`;
+
+exports[`groupStateByLabels should group a list by labels even if the alert rule name has {} 1`] = `
+Object {
+  "{cpu=0, type=cpu}": Array [
+    Object {
+      "data": Object {},
+      "id": "1",
+      "state": "alerting",
+      "stringifiedLabels": "{cpu=0, type=cpu}",
+      "text": "CPU Usage {some} {curly stuff}  - Alerting",
+      "timestamp": 1658834395024,
+    },
+  ],
+  "{cpu=1, type=cpu}": Array [
+    Object {
+      "data": Object {},
+      "id": "2",
+      "state": "ok",
+      "stringifiedLabels": "{cpu=1, type=cpu}",
+      "text": "CPU Usage {some} {curly stuff}  - Normal",
+      "timestamp": 1658834346935,
+    },
+  ],
+}
+`;

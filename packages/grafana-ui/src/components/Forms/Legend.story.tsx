@@ -1,10 +1,11 @@
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React from 'react';
-import { Meta, Story } from '@storybook/react';
 
 import { Legend } from '@grafana/ui';
+
 import mdx from './Legend.mdx';
 
-export default {
+const meta: ComponentMeta<typeof Legend> = {
   title: 'Forms/Legend',
   component: Legend,
   parameters: {
@@ -18,11 +19,13 @@ export default {
   argTypes: {
     children: { name: 'Label' },
   },
-} as Meta;
+};
 
-export const Basic: Story = (args) => {
+export const Basic: ComponentStory<typeof Legend> = (args) => {
   return <Legend>{args.children}</Legend>;
 };
 Basic.args = {
   children: 'Form section',
 };
+
+export default meta;

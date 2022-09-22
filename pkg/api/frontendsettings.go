@@ -2,13 +2,16 @@ package api
 
 import (
 	"context"
+	"net/http"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/util"
@@ -21,12 +24,12 @@ func (hs *HTTPServer) GetFrontendSettings(c *models.ReqContext) {
 		return
 	}
 
-	c.JSON(200, settings)
+	c.JSON(http.StatusOK, settings)
 }
 
 // getFrontendSettingsMap returns a json object with all the settings needed for front end initialisation.
 func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]interface{}, error) {
-	enabledPlugins, err := hs.enabledPlugins(c.Req.Context(), c.OrgId)
+	enabledPlugins, err := hs.enabledPlugins(c.Req.Context(), c.OrgID)
 	if err != nil {
 		return nil, err
 	}
@@ -85,6 +88,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 	}
 
 	hasAccess := accesscontrol.HasAccess(hs.AccessControl, c)
+	secretsManagerPluginEnabled := kvstore.EvaluateRemoteSecretsPlugin(c.Req.Context(), hs.secretsPluginManager, hs.Cfg) == nil
 
 	jsonObj := map[string]interface{}{
 		"defaultDatasource":                   defaultDS,
@@ -96,6 +100,8 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"allowOrgCreate":                      (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
 		"authProxyEnabled":                    setting.AuthProxyEnabled,
 		"ldapEnabled":                         hs.Cfg.LDAPEnabled,
+		"jwtHeaderName":                       hs.Cfg.JWTAuthHeaderName,
+		"jwtUrlLogin":                         hs.Cfg.JWTAuthURLLogin,
 		"alertingEnabled":                     setting.AlertingEnabled,
 		"alertingErrorOrTimeout":              setting.AlertingErrorOrTimeout,
 		"alertingNoDataOrNullValues":          setting.AlertingNoDataOrNullValues,
@@ -104,13 +110,19 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"autoAssignOrg":                       setting.AutoAssignOrg,
 		"verifyEmailEnabled":                  setting.VerifyEmailEnabled,
 		"sigV4AuthEnabled":                    setting.SigV4AuthEnabled,
+		"azureAuthEnabled":                    setting.AzureAuthEnabled,
+		"rbacEnabled":                         hs.Cfg.RBACEnabled,
 		"exploreEnabled":                      setting.ExploreEnabled,
+		"helpEnabled":                         setting.HelpEnabled,
+		"profileEnabled":                      setting.ProfileEnabled,
 		"queryHistoryEnabled":                 hs.Cfg.QueryHistoryEnabled,
 		"googleAnalyticsId":                   setting.GoogleAnalyticsId,
+		"googleAnalytics4Id":                  setting.GoogleAnalytics4Id,
 		"rudderstackWriteKey":                 setting.RudderstackWriteKey,
 		"rudderstackDataPlaneUrl":             setting.RudderstackDataPlaneUrl,
 		"rudderstackSdkUrl":                   setting.RudderstackSdkUrl,
 		"rudderstackConfigUrl":                setting.RudderstackConfigUrl,
+		"feedbackLinksEnabled":                hs.Cfg.FeedbackLinksEnabled,
 		"applicationInsightsConnectionString": hs.Cfg.ApplicationInsightsConnectionString,
 		"applicationInsightsEndpointUrl":      hs.Cfg.ApplicationInsightsEndpointUrl,
 		"disableLoginForm":                    setting.DisableLoginForm,
@@ -125,6 +137,11 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"editorsCanAdmin":                     hs.Cfg.EditorsCanAdmin,
 		"disableSanitizeHtml":                 hs.Cfg.DisableSanitizeHtml,
 		"pluginsToPreload":                    pluginsToPreload,
+		"auth": map[string]interface{}{
+			"OAuthSkipOrgRoleUpdateSync": hs.Cfg.OAuthSkipOrgRoleUpdateSync,
+			"SAMLSkipOrgRoleSync":        hs.Cfg.SectionWithEnvOverrides("auth.saml").Key("skip_org_role_sync").MustBool(false),
+			"DisableSyncLock":            hs.Cfg.DisableSyncLock,
+		},
 		"buildInfo": map[string]interface{}{
 			"hideVersion":   hideVersion,
 			"version":       version,
@@ -143,10 +160,12 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"enabledFeatures": hs.License.EnabledFeatures(),
 		},
 		"featureToggles":                   hs.Features.GetEnabled(c.Req.Context()),
-		"rendererAvailable":                hs.RenderService.IsAvailable(),
+		"rendererAvailable":                hs.RenderService.IsAvailable(c.Req.Context()),
 		"rendererVersion":                  hs.RenderService.Version(),
+		"secretsManagerPluginEnabled":      secretsManagerPluginEnabled,
 		"http2Enabled":                     hs.Cfg.Protocol == setting.HTTP2Scheme,
 		"sentry":                           hs.Cfg.Sentry,
+		"grafanaJavascriptAgent":           hs.Cfg.GrafanaJavascriptAgent,
 		"pluginCatalogURL":                 hs.Cfg.PluginCatalogURL,
 		"pluginAdminEnabled":               hs.Cfg.PluginAdminEnabled,
 		"pluginAdminExternalManageEnabled": hs.Cfg.PluginAdminEnabled && hs.Cfg.PluginAdminExternalManageEnabled,
@@ -168,6 +187,9 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"enabled": hs.Cfg.SectionWithEnvOverrides("reporting").Key("enabled").MustBool(true),
 		},
 		"unifiedAlertingEnabled": hs.Cfg.UnifiedAlerting.Enabled,
+		"unifiedAlerting": map[string]interface{}{
+			"minInterval": hs.Cfg.UnifiedAlerting.MinInterval.String(),
+		},
 	}
 
 	if hs.ThumbService != nil {
@@ -185,11 +207,11 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 }
 
 func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins EnabledPlugins) (map[string]plugins.DataSourceDTO, error) {
-	orgDataSources := make([]*models.DataSource, 0)
+	orgDataSources := make([]*datasources.DataSource, 0)
 
-	if c.OrgId != 0 {
-		query := models.GetDataSourcesQuery{OrgId: c.OrgId, DataSourceLimit: hs.Cfg.DataSourceLimit}
-		err := hs.SQLStore.GetDataSources(c.Req.Context(), &query)
+	if c.OrgID != 0 {
+		query := datasources.GetDataSourcesQuery{OrgId: c.OrgID, DataSourceLimit: hs.Cfg.DataSourceLimit}
+		err := hs.DataSourcesService.GetDataSources(c.Req.Context(), &query)
 
 		if err != nil {
 			return nil, err
@@ -208,7 +230,7 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 	for _, ds := range orgDataSources {
 		url := ds.Url
 
-		if ds.Access == models.DS_ACCESS_PROXY {
+		if ds.Access == datasources.DS_ACCESS_PROXY {
 			url = "/api/datasources/proxy/" + strconv.FormatInt(ds.Id, 10)
 		}
 
@@ -220,6 +242,7 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 			URL:       url,
 			IsDefault: ds.IsDefault,
 			Access:    string(ds.Access),
+			ReadOnly:  ds.ReadOnly,
 		}
 
 		plugin, exists := enabledPlugins.Get(plugins.DataSource, ds.Type)
@@ -242,35 +265,50 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 			dsDTO.JSONData = ds.JsonData.MustMap()
 		}
 
-		if ds.Access == models.DS_ACCESS_DIRECT {
+		if ds.Access == datasources.DS_ACCESS_DIRECT {
 			if ds.BasicAuth {
+				password, err := hs.DataSourcesService.DecryptedBasicAuthPassword(c.Req.Context(), ds)
+				if err != nil {
+					return nil, err
+				}
+
 				dsDTO.BasicAuth = util.GetBasicAuthHeader(
 					ds.BasicAuthUser,
-					hs.DataSourcesService.DecryptedBasicAuthPassword(ds),
+					password,
 				)
 			}
 			if ds.WithCredentials {
 				dsDTO.WithCredentials = ds.WithCredentials
 			}
 
-			if ds.Type == models.DS_INFLUXDB_08 {
+			if ds.Type == datasources.DS_INFLUXDB_08 {
+				password, err := hs.DataSourcesService.DecryptedPassword(c.Req.Context(), ds)
+				if err != nil {
+					return nil, err
+				}
+
 				dsDTO.Username = ds.User
-				dsDTO.Password = hs.DataSourcesService.DecryptedPassword(ds)
+				dsDTO.Password = password
 				dsDTO.URL = url + "/db/" + ds.Database
 			}
 
-			if ds.Type == models.DS_INFLUXDB {
+			if ds.Type == datasources.DS_INFLUXDB {
+				password, err := hs.DataSourcesService.DecryptedPassword(c.Req.Context(), ds)
+				if err != nil {
+					return nil, err
+				}
+
 				dsDTO.Username = ds.User
-				dsDTO.Password = hs.DataSourcesService.DecryptedPassword(ds)
+				dsDTO.Password = password
 				dsDTO.URL = url
 			}
 		}
 
-		if (ds.Type == models.DS_INFLUXDB) || (ds.Type == models.DS_ES) {
+		if (ds.Type == datasources.DS_INFLUXDB) || (ds.Type == datasources.DS_ES) {
 			dsDTO.Database = ds.Database
 		}
 
-		if ds.Type == models.DS_PROMETHEUS {
+		if ds.Type == datasources.DS_PROMETHEUS {
 			// add unproxied server URL for link to Prometheus web UI
 			ds.JsonData.Set("directUrl", ds.Url)
 		}
@@ -393,8 +431,8 @@ func (hs *HTTPServer) enabledPlugins(ctx context.Context, orgID int64) (EnabledP
 	return ep, nil
 }
 
-func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[string]*pluginsettings.DTO, error) {
-	pluginSettings := make(map[string]*pluginsettings.DTO)
+func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[string]*pluginsettings.InfoDTO, error) {
+	pluginSettings := make(map[string]*pluginsettings.InfoDTO)
 
 	// fill settings from database
 	if pss, err := hs.PluginSettings.GetPluginSettings(ctx, &pluginsettings.GetArgs{OrgID: orgID}); err != nil {
@@ -413,11 +451,12 @@ func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[stri
 		}
 
 		// add new setting which is enabled depending on if AutoEnabled: true
-		pluginSetting := &pluginsettings.DTO{
-			PluginID: plugin.ID,
-			OrgID:    orgID,
-			Enabled:  plugin.AutoEnabled,
-			Pinned:   plugin.AutoEnabled,
+		pluginSetting := &pluginsettings.InfoDTO{
+			PluginID:      plugin.ID,
+			OrgID:         orgID,
+			Enabled:       plugin.AutoEnabled,
+			Pinned:        plugin.AutoEnabled,
+			PluginVersion: plugin.Info.Version,
 		}
 
 		pluginSettings[plugin.ID] = pluginSetting
@@ -431,10 +470,12 @@ func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[stri
 		}
 
 		// add new setting which is enabled by default
-		pluginSetting := &pluginsettings.DTO{
-			PluginID: plugin.ID,
-			OrgID:    orgID,
-			Enabled:  true,
+		pluginSetting := &pluginsettings.InfoDTO{
+			PluginID:      plugin.ID,
+			OrgID:         orgID,
+			Enabled:       true,
+			Pinned:        false,
+			PluginVersion: plugin.Info.Version,
 		}
 
 		// if plugin is included in an app, check app settings

@@ -1,5 +1,6 @@
+import { render } from '@testing-library/react';
 import React from 'react';
-import { shallow } from 'enzyme';
+
 import {
   DisplayValue,
   VizOrientation,
@@ -10,6 +11,7 @@ import {
   getDisplayProcessor,
   createTheme,
 } from '@grafana/data';
+
 import {
   BarGauge,
   Props,
@@ -59,17 +61,6 @@ function getProps(propOverrides?: Partial<Props>): Props {
   Object.assign(props, propOverrides);
   return props;
 }
-
-const setup = (propOverrides?: object) => {
-  const props = getProps(propOverrides);
-  const wrapper = shallow(<BarGauge {...props} />);
-  const instance = wrapper.instance() as BarGauge;
-
-  return {
-    instance,
-    wrapper,
-  };
-};
 
 function getValue(value: number, title?: string): DisplayValue {
   return { numeric: value, text: value.toString(), title: title };
@@ -167,6 +158,10 @@ describe('BarGauge', () => {
 
     it('-30 to 30 and value 30', () => {
       expect(getValuePercent(30, -30, 30)).toEqual(1);
+    });
+
+    it('returns 0 if the min, max and value are all the same value', () => {
+      expect(getValuePercent(25, 25, 25)).toEqual(0);
     });
   });
 
@@ -313,8 +308,8 @@ describe('BarGauge', () => {
 
   describe('Render with basic options', () => {
     it('should render', () => {
-      const { wrapper } = setup();
-      expect(wrapper).toMatchSnapshot();
+      const props = getProps();
+      expect(() => render(<BarGauge {...props} />)).not.toThrow();
     });
   });
 

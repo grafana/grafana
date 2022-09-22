@@ -1,5 +1,7 @@
 import { Feature } from 'ol';
+
 import { ComparisonOperation } from '../types';
+
 import { checkFeatureMatchesStyleRule } from './checkFeatureMatchesStyleRule';
 
 describe('check if feature matches style rule', () => {

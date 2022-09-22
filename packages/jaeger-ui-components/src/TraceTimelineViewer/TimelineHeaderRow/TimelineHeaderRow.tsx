@@ -12,20 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import * as React from 'react';
 import { css } from '@emotion/css';
 import cx from 'classnames';
-import { useStyles2 } from '@grafana/ui';
+import * as React from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
+
+import { autoColor } from '../../Theme';
+import { ubFlex, ubPx2 } from '../../uberUtilityStyles';
+import Ticks from '../Ticks';
+import TimelineRow from '../TimelineRow';
+import { TUpdateViewRangeTimeFunction, ViewRangeTime, ViewRangeTimeUpdate } from '../types';
 
 import { TimelineCollapser } from './TimelineCollapser';
 import TimelineColumnResizer from './TimelineColumnResizer';
 import TimelineViewingLayer from './TimelineViewingLayer';
-import Ticks from '../Ticks';
-import TimelineRow from '../TimelineRow';
-import { TUpdateViewRangeTimeFunction, ViewRangeTime, ViewRangeTimeUpdate } from '../types';
-import { autoColor } from '../../Theme';
-import { ubFlex, ubPx2 } from '../../uberUtilityStyles';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -87,7 +89,7 @@ export default function TimelineHeaderRow(props: TimelineHeaderRowProps) {
   const [viewStart, viewEnd] = viewRangeTime.current;
   const styles = useStyles2(getStyles);
   return (
-    <TimelineRow className={styles.TimelineHeaderRow} data-test-id="TimelineHeaderRow">
+    <TimelineRow className={styles.TimelineHeaderRow} data-testid="TimelineHeaderRow">
       <TimelineRow.Cell className={cx(ubFlex, ubPx2, styles.TimelineHeaderWrapper)} width={nameColumnWidth}>
         <h4 className={styles.TimelineHeaderRowTitle}>Service &amp; Operation</h4>
         <TimelineCollapser

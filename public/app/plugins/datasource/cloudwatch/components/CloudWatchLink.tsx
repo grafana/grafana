@@ -1,10 +1,11 @@
 import React, { Component } from 'react';
 
-import { CloudWatchLogsQuery } from '../types';
 import { PanelData } from '@grafana/data';
 import { Icon } from '@grafana/ui';
+
 import { encodeUrl, AwsUrl } from '../aws_url';
 import { CloudWatchDatasource } from '../datasource';
+import { CloudWatchLogsQuery } from '../types';
 
 interface Props {
   query: CloudWatchLogsQuery;
@@ -51,7 +52,7 @@ export default class CloudWatchLink extends Component<Props, State> {
       source: query.logGroupNames ?? [],
     };
 
-    return encodeUrl(urlProps, datasource.getActualRegion(query.region));
+    return encodeUrl(urlProps, datasource.api.getActualRegion(query.region));
   }
 
   render() {

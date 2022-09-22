@@ -14,6 +14,7 @@ import (
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	ol "github.com/opentracing/opentracing-go/log"
+	"github.com/uber/jaeger-client-go"
 	jaegercfg "github.com/uber/jaeger-client-go/config"
 	"github.com/uber/jaeger-client-go/zipkin"
 	"go.opentelemetry.io/otel/attribute"
@@ -27,29 +28,61 @@ const (
 )
 
 func ProvideService(cfg *setting.Cfg) (Tracer, error) {
+	ts, ots, err := parseSettings(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	log.RegisterContextualLogProvider(func(ctx context.Context) ([]interface{}, bool) {
+		if traceID := TraceIDFromContext(ctx, false); traceID != "" {
+			return []interface{}{"traceID", traceID}, true
+		}
+
+		return nil, false
+	})
+
+	if ts.enabled {
+		return ts, ts.initJaegerGlobalTracer()
+	}
+
+	return ots, ots.initOpentelemetryTracer()
+}
+
+func parseSettings(cfg *setting.Cfg) (*Opentracing, *Opentelemetry, error) {
 	ts := &Opentracing{
 		Cfg: cfg,
 		log: log.New("tracing"),
 	}
-
-	if err := ts.parseSettings(); err != nil {
-		return nil, err
+	err := ts.parseSettings()
+	if err != nil {
+		return ts, nil, err
 	}
-
 	if ts.enabled {
-		return ts, ts.initGlobalTracer()
+		cfg.Logger.Warn("[Deprecated] the configuration setting 'tracing.jaeger' is deprecated, please use 'tracing.opentelemetry.jaeger' instead")
+		return ts, nil, nil
 	}
 
 	ots := &Opentelemetry{
 		Cfg: cfg,
 		log: log.New("tracing"),
 	}
+	err = ots.parseSettingsOpentelemetry()
+	return ts, ots, err
+}
 
-	if err := ots.parseSettingsOpentelemetry(); err != nil {
-		return nil, err
+type traceKey struct{}
+type traceValue struct {
+	ID        string
+	IsSampled bool
+}
+
+func TraceIDFromContext(c context.Context, requireSampled bool) string {
+	v := c.Value(traceKey{})
+	// Return traceID if a) it is present and b) it is sampled when requireSampled param is true
+	if trace, ok := v.(traceValue); ok && (!requireSampled || trace.IsSampled) {
+		return trace.ID
 	}
-
-	return ots, ots.initOpentelemetryTracer()
+	return ""
 }
 
 type Opentracing struct {
@@ -120,7 +153,7 @@ func (ts *Opentracing) initJaegerCfg() (jaegercfg.Configuration, error) {
 	return cfg, nil
 }
 
-func (ts *Opentracing) initGlobalTracer() error {
+func (ts *Opentracing) initJaegerGlobalTracer() error {
 	cfg, err := ts.initJaegerCfg()
 	if err != nil {
 		return err
@@ -172,6 +205,9 @@ func (ts *Opentracing) Run(ctx context.Context) error {
 func (ts *Opentracing) Start(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, Span) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, spanName)
 	opentracingSpan := OpentracingSpan{span: span}
+	if sctx, ok := span.Context().(jaeger.SpanContext); ok {
+		ctx = context.WithValue(ctx, traceKey{}, traceValue{sctx.TraceID().String(), sctx.IsSampled()})
+	}
 	return ctx, opentracingSpan
 }
 

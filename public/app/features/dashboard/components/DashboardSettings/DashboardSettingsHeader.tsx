@@ -1,4 +1,6 @@
 import React from 'react';
+
+import { config } from '@grafana/runtime';
 import { Icon, HorizontalGroup } from '@grafana/ui';
 
 type Props = {
@@ -8,6 +10,10 @@ type Props = {
 };
 
 export const DashboardSettingsHeader: React.FC<Props> = ({ onGoBack, isEditing, title }) => {
+  if (config.featureToggles.topnav) {
+    return null;
+  }
+
   return (
     <div className="dashboard-settings__header">
       <HorizontalGroup align="center" justify="space-between">

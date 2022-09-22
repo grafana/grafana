@@ -1,7 +1,7 @@
 import { once, chain, difference } from 'lodash';
 import LRU from 'lru-cache';
-import { Value } from 'slate';
 import Prism from 'prismjs';
+import { Value } from 'slate';
 
 import {
   AbstractLabelMatcher,
@@ -11,8 +11,10 @@ import {
   HistoryItem,
   LanguageProvider,
 } from '@grafana/data';
+import { BackendSrvRequest } from '@grafana/runtime';
 import { CompletionItem, CompletionItemGroup, SearchFunctionType, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
 
+import { PrometheusDatasource } from './datasource';
 import {
   addLimitInfo,
   extractLabelMatchers,
@@ -24,8 +26,6 @@ import {
   toPromLikeQuery,
 } from './language_utils';
 import PromqlSyntax, { FUNCTIONS, RATE_RANGES } from './promql';
-
-import { PrometheusDatasource } from './datasource';
 import { PromMetricsMetadata, PromQuery } from './types';
 
 const DEFAULT_KEYS = ['job', 'instance'];
@@ -121,9 +121,9 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     return PromqlSyntax;
   }
 
-  request = async (url: string, defaultValue: any, params = {}): Promise<any> => {
+  request = async (url: string, defaultValue: any, params = {}, options?: Partial<BackendSrvRequest>): Promise<any> => {
     try {
-      const res = await this.datasource.metadataRequest(url, params);
+      const res = await this.datasource.metadataRequest(url, params, options);
       return res.data.data;
     } catch (error) {
       console.error(error);
@@ -146,7 +146,9 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   };
 
   async loadMetricsMetadata() {
-    this.metricsMetadata = fixSummariesMetadata(await this.request('/api/v1/metadata', {}));
+    this.metricsMetadata = fixSummariesMetadata(
+      await this.request('/api/v1/metadata', {}, {}, { showErrorAlert: false })
+    );
   }
 
   getLabelKeys(): string[] {
@@ -496,7 +498,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   }
 
   /**
-   * Fetch labels for a series. This is cached by it's args but also by the global timeRange currently selected as
+   * Fetch labels for a series. This is cached by its args but also by the global timeRange currently selected as
    * they can change over requested time.
    * @param name
    * @param withName

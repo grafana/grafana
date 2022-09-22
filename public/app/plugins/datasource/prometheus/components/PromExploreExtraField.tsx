@@ -1,11 +1,14 @@
+import { css, cx } from '@emotion/css';
+import { isEqual } from 'lodash';
 import React, { memo, useCallback } from 'react';
 import { usePrevious } from 'react-use';
-import { isEqual } from 'lodash';
-import { css, cx } from '@emotion/css';
+
 import { InlineFormLabel, RadioButtonGroup } from '@grafana/ui';
-import { PromQuery } from '../types';
-import { PromExemplarField } from './PromExemplarField';
+
 import { PrometheusDatasource } from '../datasource';
+import { PromQuery } from '../types';
+
+import { PromExemplarField } from './PromExemplarField';
 
 export interface PromExploreExtraFieldProps {
   query: PromQuery;

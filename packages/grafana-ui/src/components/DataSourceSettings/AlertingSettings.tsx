@@ -1,11 +1,14 @@
-import { DataSourceInstanceSettings, DataSourceJsonData, DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import React, { useMemo } from 'react';
-import { Switch } from '../Forms/Legacy/Switch/Switch';
+
+import { DataSourceInstanceSettings, DataSourceJsonData, DataSourcePluginOptionsEditorProps } from '@grafana/data';
+
+import { InlineSwitch } from '../../components/Switch/Switch';
 import { InlineField } from '../Forms/InlineField';
 import { InlineFieldRow } from '../Forms/InlineFieldRow';
 import { Select } from '../Select/Select';
 
-interface Props<T> extends Pick<DataSourcePluginOptionsEditorProps<T>, 'options' | 'onOptionsChange'> {
+interface Props<T extends DataSourceJsonData>
+  extends Pick<DataSourcePluginOptionsEditorProps<T>, 'options' | 'onOptionsChange'> {
   alertmanagerDataSources: Array<DataSourceInstanceSettings<DataSourceJsonData>>;
 }
 
@@ -35,17 +38,17 @@ export function AlertingSettings<T extends AlertingConfig>({
       <div className="gf-form-group">
         <div className="gf-form-inline">
           <div className="gf-form">
-            <Switch
-              label="Manage alerts via Alerting UI"
-              labelClass="width-13"
-              checked={options.jsonData.manageAlerts !== false}
-              onChange={(event) =>
-                onOptionsChange({
-                  ...options,
-                  jsonData: { ...options.jsonData, manageAlerts: event!.currentTarget.checked },
-                })
-              }
-            />
+            <InlineField labelWidth={26} label="Manage alerts via Alerting UI">
+              <InlineSwitch
+                value={options.jsonData.manageAlerts !== false}
+                onChange={(event) =>
+                  onOptionsChange({
+                    ...options,
+                    jsonData: { ...options.jsonData, manageAlerts: event!.currentTarget.checked },
+                  })
+                }
+              />
+            </InlineField>
           </div>
         </div>
         <InlineFieldRow>
@@ -56,7 +59,6 @@ export function AlertingSettings<T extends AlertingConfig>({
           >
             <Select
               width={29}
-              menuShouldPortal
               options={alertmanagerOptions}
               onChange={(value) =>
                 onOptionsChange({ ...options, jsonData: { ...options.jsonData, alertmanagerUid: value?.value } })

@@ -1,9 +1,12 @@
-import { Matcher, MatcherOperator } from 'app/plugins/datasource/alertmanager/types';
-import { Labels } from '@grafana/data';
-import { parseMatcher } from './alertmanager';
 import { uniqBy } from 'lodash';
+
+import { Labels } from '@grafana/data';
+import { Matcher, MatcherOperator } from 'app/plugins/datasource/alertmanager/types';
+import { Alert } from 'app/types/unified-alerting';
+
 import { MatcherFieldValue } from '../types/silence-form';
-import { CombinedRule } from 'app/types/unified-alerting';
+
+import { parseMatcher } from './alertmanager';
 
 // Parses a list of entries like like "['foo=bar', 'baz=~bad*']" into SilenceMatcher[]
 export function parseQueryParamMatchers(matcherPairs: string[]): Matcher[] {
@@ -27,42 +30,60 @@ export const getMatcherQueryParams = (labels: Labels) => {
   return matcherUrlParams;
 };
 
-interface MatchedRule {
+interface MatchedInstance {
   id: string;
   data: {
-    matchedRule: CombinedRule;
+    matchedInstance: Alert;
   };
 }
 
-export const findAlertRulesWithMatchers = (rules: CombinedRule[], matchers: MatcherFieldValue[]): MatchedRule[] => {
-  const hasMatcher = (rule: CombinedRule, matcher: MatcherFieldValue) => {
-    return Object.entries(rule.labels).some(([key, value]) => {
+export const findAlertInstancesWithMatchers = (
+  instances: Alert[],
+  matchers: MatcherFieldValue[]
+): MatchedInstance[] => {
+  const anchorRegex = (regexpString: string): RegExp => {
+    // Silence matchers are always fully anchored in the Alertmanager: https://github.com/prometheus/alertmanager/pull/748
+    if (!regexpString.startsWith('^')) {
+      regexpString = '^' + regexpString;
+    }
+    if (!regexpString.endsWith('$')) {
+      regexpString = regexpString + '$';
+    }
+    return new RegExp(regexpString);
+  };
+
+  const matchesInstance = (instance: Alert, matcher: MatcherFieldValue) => {
+    return Object.entries(instance.labels).some(([key, value]) => {
       if (!matcher.name || !matcher.value) {
         return false;
       }
-      if (matcher.operator === MatcherOperator.equal) {
-        return matcher.name === key && matcher.value === value;
+      if (matcher.name !== key) {
+        return false;
       }
-      if (matcher.operator === MatcherOperator.notEqual) {
-        return matcher.name === key && matcher.value !== value;
+      switch (matcher.operator) {
+        case MatcherOperator.equal:
+          return matcher.value === value;
+        case MatcherOperator.notEqual:
+          return matcher.value !== value;
+        case MatcherOperator.regex:
+          const regex = anchorRegex(matcher.value);
+          return regex.test(value);
+        case MatcherOperator.notRegex:
+          const negregex = anchorRegex(matcher.value);
+          return !negregex.test(value);
+        default:
+          return false;
       }
-      if (matcher.operator === MatcherOperator.regex) {
-        return matcher.name === key && matcher.value.match(value);
-      }
-      if (matcher.operator === MatcherOperator.notRegex) {
-        return matcher.name === key && !matcher.value.match(value);
-      }
-      return false;
     });
   };
 
-  const filteredRules = rules.filter((rule) => {
-    return matchers.every((matcher) => hasMatcher(rule, matcher));
+  const filteredInstances = instances.filter((instance) => {
+    return matchers.every((matcher) => matchesInstance(instance, matcher));
   });
-  const mappedRules = filteredRules.map((rule) => ({
-    id: `${rule.namespace}-${rule.name}`,
-    data: { matchedRule: rule },
+  const mappedInstances = filteredInstances.map((instance) => ({
+    id: `${instance.activeAt}-${instance.value}`,
+    data: { matchedInstance: instance },
   }));
 
-  return mappedRules;
+  return mappedInstances;
 };

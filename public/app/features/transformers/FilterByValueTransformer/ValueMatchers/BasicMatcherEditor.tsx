@@ -1,6 +1,8 @@
 import React, { useCallback, useState } from 'react';
-import { Input } from '@grafana/ui';
+
 import { ValueMatcherID, BasicValueMatcherOptions } from '@grafana/data';
+import { Input } from '@grafana/ui';
+
 import { ValueMatcherEditorConfig, ValueMatcherUIProps, ValueMatcherUIRegistryItem } from './types';
 import { convertToType } from './utils';
 
@@ -97,7 +99,7 @@ export const getBasicValueMatchersUI = (): Array<ValueMatcherUIRegistryItem<Basi
       id: ValueMatcherID.regex,
       component: basicMatcherEditor<string>({
         validator: () => true,
-        converter: (value: any) => String(value),
+        converter: (value) => String(value),
       }),
     },
   ];

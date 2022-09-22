@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 )
 
@@ -99,12 +100,20 @@ func (ccc *ConditionsCmd) Execute(ctx context.Context, vars mathexp.Vars) (mathe
 		nilReducedCount := 0
 		firingCount := 0
 		for _, val := range querySeriesSet.Values {
-			series, ok := val.(mathexp.Series)
-			if !ok {
+			var reducedNum mathexp.Number
+			var name string
+			switch v := val.(type) {
+			case mathexp.Series:
+				reducedNum = c.Reducer.Reduce(v)
+				name = v.GetName()
+			case mathexp.Number:
+				reducedNum = v
+				if len(v.Frame.Fields) > 0 {
+					name = v.Frame.Fields[0].Name
+				}
+			default:
 				return newRes, fmt.Errorf("can only reduce type series, got type %v", val.Type())
 			}
-
-			reducedNum := c.Reducer.Reduce(series)
 
 			// TODO handle error / no data signals
 			thisCondNoDataFound := reducedNum.GetFloat64Value() == nil
@@ -118,7 +127,7 @@ func (ccc *ConditionsCmd) Execute(ctx context.Context, vars mathexp.Vars) (mathe
 			if evalRes {
 				match := EvalMatch{
 					Value:  reducedNum.GetFloat64Value(),
-					Metric: series.GetName(),
+					Metric: name,
 				}
 				if reducedNum.GetLabels() != nil {
 					match.Labels = reducedNum.GetLabels().Copy()
@@ -194,19 +203,19 @@ func UnmarshalConditionsCmd(rawQuery map[string]interface{}, refID string) (*Con
 		cond := condition{}
 
 		if i > 0 && cj.Operator.Type != "and" && cj.Operator.Type != "or" {
-			return nil, fmt.Errorf("classic condition %v operator must be `and` or `or`", i+1)
+			return nil, fmt.Errorf("condition %v operator must be `and` or `or`", i+1)
 		}
 		cond.Operator = cj.Operator.Type
 
 		if len(cj.Query.Params) == 0 || cj.Query.Params[0] == "" {
-			return nil, fmt.Errorf("classic condition %v is missing the query refID argument", i+1)
+			return nil, fmt.Errorf("condition %v is missing the query refID argument", i+1)
 		}
 
 		cond.QueryRefID = cj.Query.Params[0]
 
 		cond.Reducer = classicReducer(cj.Reducer.Type)
 		if !cond.Reducer.ValidReduceFunc() {
-			return nil, fmt.Errorf("reducer '%v' in condition %v is not a valid reducer", cond.Reducer, i+1)
+			return nil, fmt.Errorf("invalid reducer '%v' in condition %v", cond.Reducer, i+1)
 		}
 
 		cond.Evaluator, err = newAlertEvaluator(cj.Evaluator)

@@ -64,6 +64,7 @@ type LibraryElementDTO struct {
 	ID          int64                 `json:"id"`
 	OrgID       int64                 `json:"orgId"`
 	FolderID    int64                 `json:"folderId"`
+	FolderUID   string                `json:"folderUid"`
 	UID         string                `json:"uid"`
 	Name        string                `json:"name"`
 	Kind        int64                 `json:"kind"`
@@ -114,10 +115,11 @@ type libraryElementConnection struct {
 
 // libraryElementConnectionWithMeta is the model for library element connections with meta.
 type libraryElementConnectionWithMeta struct {
-	ID             int64 `xorm:"pk autoincr 'id'"`
-	ElementID      int64 `xorm:"element_id"`
-	Kind           int64 `xorm:"kind"`
-	ConnectionID   int64 `xorm:"connection_id"`
+	ID             int64  `xorm:"pk autoincr 'id'"`
+	ElementID      int64  `xorm:"element_id"`
+	Kind           int64  `xorm:"kind"`
+	ConnectionID   int64  `xorm:"connection_id"`
+	ConnectionUID  string `xorm:"connection_uid"`
 	Created        time.Time
 	CreatedBy      int64
 	CreatedByName  string
@@ -126,12 +128,13 @@ type libraryElementConnectionWithMeta struct {
 
 // LibraryElementConnectionDTO is the frontend DTO for element connections.
 type LibraryElementConnectionDTO struct {
-	ID           int64                     `json:"id"`
-	Kind         int64                     `json:"kind"`
-	ElementID    int64                     `json:"elementId"`
-	ConnectionID int64                     `json:"connectionId"`
-	Created      time.Time                 `json:"created"`
-	CreatedBy    LibraryElementDTOMetaUser `json:"createdBy"`
+	ID            int64                     `json:"id"`
+	Kind          int64                     `json:"kind"`
+	ElementID     int64                     `json:"elementId"`
+	ConnectionID  int64                     `json:"connectionId"`
+	ConnectionUID string                    `json:"connectionUid"`
+	Created       time.Time                 `json:"created"`
+	CreatedBy     LibraryElementDTOMetaUser `json:"createdBy"`
 }
 
 var (
@@ -162,6 +165,8 @@ var (
 type CreateLibraryElementCommand struct {
 	// ID of the folder where the library element is stored.
 	FolderID int64 `json:"folderId"`
+	// UID of the folder where the library element is stored.
+	FolderUID *string `json:"folderUid"`
 	// Name of the library element.
 	Name string `json:"name"`
 	// The JSON model for the library element.
@@ -181,6 +186,8 @@ type CreateLibraryElementCommand struct {
 type PatchLibraryElementCommand struct {
 	// ID of the folder where the library element is stored.
 	FolderID int64 `json:"folderId" binding:"Default(-1)"`
+	// UID of the folder where the library element is stored.
+	FolderUID *string `json:"folderUid"`
 	// Name of the library element.
 	Name string `json:"name"`
 	// The JSON model for the library element.

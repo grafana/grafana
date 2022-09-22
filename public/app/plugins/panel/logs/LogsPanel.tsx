@@ -1,6 +1,6 @@
-import React, { useCallback, useMemo, useRef, useLayoutEffect, useState } from 'react';
 import { css } from '@emotion/css';
-import { LogRows, CustomScrollbar, LogLabels, useStyles2, usePanelContext } from '@grafana/ui';
+import React, { useCallback, useMemo, useRef, useLayoutEffect, useState } from 'react';
+
 import {
   PanelProps,
   Field,
@@ -11,17 +11,22 @@ import {
   DataHoverClearEvent,
   DataHoverEvent,
 } from '@grafana/data';
-import { Options } from './types';
-import { dataFrameToLogsModel, dedupLogRows } from 'app/core/logs_model';
+import { CustomScrollbar, useStyles2, usePanelContext } from '@grafana/ui';
+import { dataFrameToLogsModel, dedupLogRows, COMMON_LABELS } from 'app/core/logsModel';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
-import { COMMON_LABELS } from '../../../core/logs_model';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
+
+import { LogLabels } from '../../../features/logs/components/LogLabels';
+import { LogRows } from '../../../features/logs/components/LogRows';
+
+import { Options } from './types';
 
 interface LogsPanelProps extends PanelProps<Options> {}
 
 export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
   data,
   timeZone,
+  fieldConfig,
   options: {
     showLabels,
     showTime,
@@ -83,7 +88,7 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
   );
 
   if (!data || logRows.length === 0) {
-    return <PanelDataErrorView panelId={id} data={data} needsStringField />;
+    return <PanelDataErrorView fieldConfig={fieldConfig} panelId={id} data={data} needsStringField />;
   }
 
   const renderCommonLabels = () => (

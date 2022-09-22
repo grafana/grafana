@@ -1,12 +1,14 @@
-import { AsyncMultiSelect, InlineField, SegmentAsync, Select } from '@grafana/ui';
+import { css } from '@emotion/css';
 import React, { FunctionComponent } from 'react';
-import { useDispatch } from '../../../../hooks/useStatelessReducer';
+
+import { SelectableValue } from '@grafana/data';
+import { AsyncMultiSelect, InlineField, SegmentAsync, Select } from '@grafana/ui';
+
 import { useFields } from '../../../../hooks/useFields';
+import { useDispatch } from '../../../../hooks/useStatelessReducer';
+import { orderOptions } from '../../BucketAggregationsEditor/utils';
 import { TopMetrics } from '../aggregations';
 import { changeMetricSetting } from '../state/actions';
-import { orderOptions } from '../../BucketAggregationsEditor/utils';
-import { css } from '@emotion/css';
-import { SelectableValue } from '@grafana/data';
 
 interface Props {
   metric: TopMetrics;
@@ -23,7 +25,6 @@ export const TopMetricsSettingsEditor: FunctionComponent<Props> = ({ metric }) =
     <>
       <InlineField label="Metrics" labelWidth={16}>
         <AsyncMultiSelect
-          menuShouldPortal
           onChange={(e) =>
             dispatch(
               changeMetricSetting({
@@ -41,7 +42,6 @@ export const TopMetricsSettingsEditor: FunctionComponent<Props> = ({ metric }) =
       </InlineField>
       <InlineField label="Order" labelWidth={16}>
         <Select
-          menuShouldPortal
           onChange={(e) => dispatch(changeMetricSetting({ metric, settingName: 'order', newValue: e.value }))}
           options={orderOptions}
           value={metric.settings?.order}

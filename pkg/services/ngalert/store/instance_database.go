@@ -15,6 +15,7 @@ type InstanceStore interface {
 	SaveAlertInstance(ctx context.Context, cmd *models.SaveAlertInstanceCommand) error
 	FetchOrgIds(ctx context.Context) ([]int64, error)
 	DeleteAlertInstance(ctx context.Context, orgID int64, ruleUID, labelsHash string) error
+	DeleteAlertInstancesByRule(ctx context.Context, key models.AlertRuleKey) error
 }
 
 // GetAlertInstance is a handler for retrieving an alert instance based on OrgId, AlertDefintionID, and
@@ -54,7 +55,7 @@ func (st DBstore) GetAlertInstance(ctx context.Context, cmd *models.GetAlertInst
 // based on various filters.
 func (st DBstore) ListAlertInstances(ctx context.Context, cmd *models.ListAlertInstancesQuery) error {
 	return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		alertInstances := make([]*models.ListAlertInstancesQueryResult, 0)
+		alertInstances := make([]*models.AlertInstance, 0)
 
 		s := strings.Builder{}
 		params := make([]interface{}, 0)
@@ -72,6 +73,10 @@ func (st DBstore) ListAlertInstances(ctx context.Context, cmd *models.ListAlertI
 
 		if cmd.State != "" {
 			addToQuery(` AND current_state = ?`, cmd.State)
+		}
+
+		if cmd.StateReason != "" {
+			addToQuery(` AND current_reason = ?`, cmd.StateReason)
 		}
 
 		if err := sess.SQL(s.String(), params...).Find(&alertInstances); err != nil {
@@ -97,6 +102,7 @@ func (st DBstore) SaveAlertInstance(ctx context.Context, cmd *models.SaveAlertIn
 			Labels:            cmd.Labels,
 			LabelsHash:        labelsHash,
 			CurrentState:      cmd.State,
+			CurrentReason:     cmd.StateReason,
 			CurrentStateSince: cmd.CurrentStateSince,
 			CurrentStateEnd:   cmd.CurrentStateEnd,
 			LastEvalTime:      cmd.LastEvalTime,
@@ -106,12 +112,12 @@ func (st DBstore) SaveAlertInstance(ctx context.Context, cmd *models.SaveAlertIn
 			return err
 		}
 
-		params := append(make([]interface{}, 0), alertInstance.RuleOrgID, alertInstance.RuleUID, labelTupleJSON, alertInstance.LabelsHash, alertInstance.CurrentState, alertInstance.CurrentStateSince.Unix(), alertInstance.CurrentStateEnd.Unix(), alertInstance.LastEvalTime.Unix())
+		params := append(make([]interface{}, 0), alertInstance.RuleOrgID, alertInstance.RuleUID, labelTupleJSON, alertInstance.LabelsHash, alertInstance.CurrentState, alertInstance.CurrentReason, alertInstance.CurrentStateSince.Unix(), alertInstance.CurrentStateEnd.Unix(), alertInstance.LastEvalTime.Unix())
 
 		upsertSQL := st.SQLStore.Dialect.UpsertSQL(
 			"alert_instance",
 			[]string{"rule_org_id", "rule_uid", "labels_hash"},
-			[]string{"rule_org_id", "rule_uid", "labels", "labels_hash", "current_state", "current_state_since", "current_state_end", "last_eval_time"})
+			[]string{"rule_org_id", "rule_uid", "labels", "labels_hash", "current_state", "current_reason", "current_state_since", "current_state_end", "last_eval_time"})
 		_, err = sess.SQL(upsertSQL, params...).Query()
 		if err != nil {
 			return err
@@ -151,5 +157,12 @@ func (st DBstore) DeleteAlertInstance(ctx context.Context, orgID int64, ruleUID,
 			return err
 		}
 		return nil
+	})
+}
+
+func (st DBstore) DeleteAlertInstancesByRule(ctx context.Context, key models.AlertRuleKey) error {
+	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		_, err := sess.Exec("DELETE FROM alert_instance WHERE rule_org_id = ? AND rule_uid = ?", key.OrgID, key.UID)
+		return err
 	})
 }

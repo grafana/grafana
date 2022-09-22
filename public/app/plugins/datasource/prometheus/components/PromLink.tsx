@@ -1,9 +1,10 @@
 import { map } from 'lodash';
 import React, { FC, useEffect, useState, memo } from 'react';
 
+import { DataQueryRequest, PanelData, ScopedVars, textUtil, rangeUtil } from '@grafana/data';
+
 import { PrometheusDatasource } from '../datasource';
 import { PromQuery } from '../types';
-import { DataQueryRequest, PanelData, ScopedVars, textUtil, rangeUtil } from '@grafana/data';
 
 interface Props {
   datasource: PrometheusDatasource;

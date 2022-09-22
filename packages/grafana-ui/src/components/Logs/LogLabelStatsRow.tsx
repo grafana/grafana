@@ -1,16 +1,18 @@
-import React, { FunctionComponent } from 'react';
 import { css, cx } from '@emotion/css';
-import { GrafanaTheme } from '@grafana/data';
-import { useStyles } from '../../themes/ThemeContext';
+import React, { FunctionComponent } from 'react';
 
-const getStyles = (theme: GrafanaTheme) => ({
+import { GrafanaTheme2 } from '@grafana/data';
+
+import { useStyles2 } from '../../themes/ThemeContext';
+
+const getStyles = (theme: GrafanaTheme2) => ({
   logsStatsRow: css`
     label: logs-stats-row;
-    margin: ${parseInt(theme.spacing.d, 10) / 1.75}px 0;
+    margin: ${parseInt(theme.spacing(2), 10) / 1.75}px 0;
   `,
   logsStatsRowActive: css`
     label: logs-stats-row--active;
-    color: ${theme.colors.textBlue};
+    color: ${theme.colors.primary.text};
     position: relative;
   `,
   logsStatsRowLabel: css`
@@ -39,16 +41,17 @@ const getStyles = (theme: GrafanaTheme) => ({
     label: logs-stats-row__bar;
     height: 4px;
     overflow: hidden;
-    background: ${theme.colors.textFaint};
+    background: ${theme.colors.text.disabled};
   `,
   logsStatsRowInnerBar: css`
     label: logs-stats-row__innerbar;
     height: 4px;
     overflow: hidden;
-    background: ${theme.colors.bgBlue1};
+    background: ${theme.colors.primary.main};
   `,
 });
 
+/** @deprecated will be removed in the next major version */
 export interface Props {
   active?: boolean;
   count: number;
@@ -56,8 +59,9 @@ export interface Props {
   value?: string;
 }
 
+/** @deprecated will be removed in the next major version */
 export const LogLabelStatsRow: FunctionComponent<Props> = ({ active, count, proportion, value }) => {
-  const style = useStyles(getStyles);
+  const style = useStyles2(getStyles);
   const percent = `${Math.round(proportion * 100)}%`;
   const barStyle = { width: percent };
   const className = active ? cx([style.logsStatsRow, style.logsStatsRowActive]) : cx([style.logsStatsRow]);

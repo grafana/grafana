@@ -1,11 +1,12 @@
-import { SearchFunctionMap } from '../utils/searchFunctions';
 import { render } from 'enzyme';
-import { SuggestionsPlugin } from './suggestions';
-import { Plugin as SlatePlugin } from '@grafana/slate-react';
-import { SearchFunctionType } from '../utils';
+import _ from 'lodash'; // eslint-disable-line lodash/import-scope
+import { Plugin as SlatePlugin } from 'slate-react';
+
 import { CompletionItemGroup, SuggestionsState } from '../types';
-// eslint-disable-next-line lodash/import-scope
-import _ from 'lodash';
+import { SearchFunctionType } from '../utils';
+import { SearchFunctionMap } from '../utils/searchFunctions';
+
+import { SuggestionsPlugin } from './suggestions';
 
 jest.spyOn(_, 'debounce').mockImplementation((func: (...args: any) => any) => {
   return Object.assign(func, { cancel: jest.fn(), flush: jest.fn() });

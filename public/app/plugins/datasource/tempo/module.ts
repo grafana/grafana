@@ -1,8 +1,9 @@
 import { DataSourcePlugin } from '@grafana/data';
+
 import CheatSheet from './CheatSheet';
+import { TempoQueryField } from './QueryEditor/QueryField';
 import { ConfigEditor } from './configuration/ConfigEditor';
 import { TempoDatasource } from './datasource';
-import { TempoQueryField } from './QueryEditor/QueryField';
 
 export const plugin = new DataSourcePlugin(TempoDatasource)
   .setQueryEditor(TempoQueryField)

@@ -1,11 +1,13 @@
+import { css } from '@emotion/css';
 import React, { FC, useCallback, useState } from 'react';
+
+import { GrafanaTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { useStyles } from '@grafana/ui';
-import { GrafanaTheme } from '@grafana/data';
-import { css } from '@emotion/css';
+
+import { VariableQueryEditorProps } from '../types';
 
 import { VariableTextAreaField } from './VariableTextAreaField';
-import { VariableQueryEditorProps } from '../types';
 
 export const LEGACY_VARIABLE_QUERY_EDITOR_NAME = 'Grafana-LegacyVariableQueryEditor';
 

@@ -20,10 +20,15 @@ func TestExecutor_parseToAnnotations(t *testing.T) {
 		"atext {{resource.label.zone}}")
 	require.NoError(t, err)
 
-	require.Len(t, res.Frames, 3)
+	require.Len(t, res.Frames, 1)
+	assert.Equal(t, "time", res.Frames[0].Fields[0].Name)
 	assert.Equal(t, "title", res.Frames[0].Fields[1].Name)
 	assert.Equal(t, "tags", res.Frames[0].Fields[2].Name)
 	assert.Equal(t, "text", res.Frames[0].Fields[3].Name)
+	assert.Equal(t, 9, res.Frames[0].Fields[0].Len())
+	assert.Equal(t, 9, res.Frames[0].Fields[1].Len())
+	assert.Equal(t, 9, res.Frames[0].Fields[2].Len())
+	assert.Equal(t, 9, res.Frames[0].Fields[3].Len())
 }
 
 func TestCloudMonitoringExecutor_parseToAnnotations_emptyTimeSeries(t *testing.T) {
@@ -37,7 +42,15 @@ func TestCloudMonitoringExecutor_parseToAnnotations_emptyTimeSeries(t *testing.T
 	err := query.parseToAnnotations(res, response, "atitle", "atext")
 	require.NoError(t, err)
 
-	require.Len(t, res.Frames, 0)
+	require.Len(t, res.Frames, 1)
+	assert.Equal(t, "time", res.Frames[0].Fields[0].Name)
+	assert.Equal(t, "title", res.Frames[0].Fields[1].Name)
+	assert.Equal(t, "tags", res.Frames[0].Fields[2].Name)
+	assert.Equal(t, "text", res.Frames[0].Fields[3].Name)
+	assert.Equal(t, 0, res.Frames[0].Fields[0].Len())
+	assert.Equal(t, 0, res.Frames[0].Fields[1].Len())
+	assert.Equal(t, 0, res.Frames[0].Fields[2].Len())
+	assert.Equal(t, 0, res.Frames[0].Fields[3].Len())
 }
 
 func TestCloudMonitoringExecutor_parseToAnnotations_noPointsInSeries(t *testing.T) {
@@ -53,5 +66,13 @@ func TestCloudMonitoringExecutor_parseToAnnotations_noPointsInSeries(t *testing.
 	err := query.parseToAnnotations(res, response, "atitle", "atext")
 	require.NoError(t, err)
 
-	require.Len(t, res.Frames, 0)
+	require.Len(t, res.Frames, 1)
+	assert.Equal(t, "time", res.Frames[0].Fields[0].Name)
+	assert.Equal(t, "title", res.Frames[0].Fields[1].Name)
+	assert.Equal(t, "tags", res.Frames[0].Fields[2].Name)
+	assert.Equal(t, "text", res.Frames[0].Fields[3].Name)
+	assert.Equal(t, 0, res.Frames[0].Fields[0].Len())
+	assert.Equal(t, 0, res.Frames[0].Fields[1].Len())
+	assert.Equal(t, 0, res.Frames[0].Fields[2].Len())
+	assert.Equal(t, 0, res.Frames[0].Fields[3].Len())
 }

@@ -1,9 +1,17 @@
-import { SelectableValue } from '@grafana/data';
 import React from 'react';
 
-import { Alignment, GroupBy, LabelFilter, Metrics, Preprocessor } from '.';
+import { SelectableValue } from '@grafana/data';
+import { EditorRow } from '@grafana/ui';
+
 import CloudMonitoringDatasource from '../datasource';
 import { CustomMetaData, MetricDescriptor, MetricQuery, SLOQuery } from '../types';
+
+import { AliasBy } from './AliasBy';
+import { Alignment } from './Alignment';
+import { GroupBy } from './GroupBy';
+import { LabelFilter } from './LabelFilter';
+import { Metrics } from './Metrics';
+import { Preprocessor } from './Preprocessor';
 
 export interface Props {
   refId: string;
@@ -29,12 +37,13 @@ function Editor({
   return (
     <Metrics
       refId={refId}
-      templateSrv={datasource.templateSrv}
       projectName={query.projectName}
       metricType={query.metricType}
       templateVariableOptions={variableOptionGroup.options}
       datasource={datasource}
       onChange={onMetricTypeChange}
+      onProjectChange={onChange}
+      query={query}
     >
       {(metric) => (
         <>
@@ -44,23 +53,32 @@ function Editor({
             onChange={(filters: string[]) => onChange({ ...query, filters })}
             variableOptionGroup={variableOptionGroup}
           />
-          <Preprocessor metricDescriptor={metric} query={query} onChange={onChange} />
-          <GroupBy
-            refId={refId}
-            labels={Object.keys(labels)}
-            query={query}
-            onChange={onChange}
-            variableOptionGroup={variableOptionGroup}
-            metricDescriptor={metric}
-          />
-          <Alignment
-            refId={refId}
-            datasource={datasource}
-            templateVariableOptions={variableOptionGroup.options}
-            query={query}
-            customMetaData={customMetaData}
-            onChange={onChange}
-          />
+          <EditorRow>
+            <Preprocessor metricDescriptor={metric} query={query} onChange={onChange} />
+            <GroupBy
+              refId={refId}
+              labels={Object.keys(labels)}
+              query={query}
+              onChange={onChange}
+              variableOptionGroup={variableOptionGroup}
+              metricDescriptor={metric}
+            />
+            <Alignment
+              refId={refId}
+              datasource={datasource}
+              templateVariableOptions={variableOptionGroup.options}
+              query={query}
+              customMetaData={customMetaData}
+              onChange={onChange}
+            />
+            <AliasBy
+              refId={refId}
+              value={query.aliasBy}
+              onChange={(aliasBy) => {
+                onChange({ ...query, aliasBy });
+              }}
+            />
+          </EditorRow>
         </>
       )}
     </Metrics>

@@ -1,9 +1,10 @@
-import { isString, escape } from 'lodash';
 import $ from 'jquery';
+import { isString, escape } from 'lodash';
+
 import coreModule from 'app/angular/core_module';
+import { ContextSrv } from 'app/core/services/context_srv';
 import alertDef from 'app/features/alerting/state/alertDef';
 import { DashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { ContextSrv } from 'app/core/services/context_srv';
 
 /** @ngInject */
 export function annotationTooltipDirective(
@@ -59,7 +60,7 @@ export function annotationTooltipDirective(
       `;
 
       // Show edit icon only for users with at least Editor role
-      if (event.id && dashboard?.canAddAnnotations()) {
+      if (event.id && dashboard?.canEditAnnotations(event.dashboardId)) {
         header += `
           <span class="pointer graph-annotation__edit-icon" ng-click="onEdit()">
             <i class="fa fa-pencil-square"></i>

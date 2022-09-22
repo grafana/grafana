@@ -6,14 +6,16 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/multildap"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -37,10 +39,10 @@ type LDAPAttribute struct {
 
 // RoleDTO is a serializer for mapped roles from LDAP
 type LDAPRoleDTO struct {
-	OrgId   int64           `json:"orgId"`
-	OrgName string          `json:"orgName"`
-	OrgRole models.RoleType `json:"orgRole"`
-	GroupDN string          `json:"groupDN"`
+	OrgId   int64        `json:"orgId"`
+	OrgName string       `json:"orgName"`
+	OrgRole org.RoleType `json:"orgRole"`
+	GroupDN string       `json:"groupDN"`
 }
 
 // LDAPUserDTO is a serializer for users mapped from LDAP
@@ -64,23 +66,24 @@ type LDAPServerDTO struct {
 }
 
 // FetchOrgs fetches the organization(s) information by executing a single query to the database. Then, populating the DTO with the information retrieved.
-func (user *LDAPUserDTO) FetchOrgs(ctx context.Context, sqlstore sqlstore.Store) error {
+func (user *LDAPUserDTO) FetchOrgs(ctx context.Context, orga org.Service) error {
 	orgIds := []int64{}
 
 	for _, or := range user.OrgRoles {
 		orgIds = append(orgIds, or.OrgId)
 	}
 
-	q := &models.SearchOrgsQuery{}
-	q.Ids = orgIds
+	q := &org.SearchOrgsQuery{}
+	q.IDs = orgIds
 
-	if err := sqlstore.SearchOrgs(ctx, q); err != nil {
+	result, err := orga.Search(ctx, q)
+	if err != nil {
 		return err
 	}
 
 	orgNamesById := map[int64]string{}
-	for _, org := range q.Result {
-		orgNamesById[org.Id] = org.Name
+	for _, org := range result {
+		orgNamesById[org.ID] = org.Name
 	}
 
 	for i, orgDTO := range user.OrgRoles {
@@ -100,7 +103,20 @@ func (user *LDAPUserDTO) FetchOrgs(ctx context.Context, sqlstore sqlstore.Store)
 	return nil
 }
 
-// ReloadLDAPCfg reloads the LDAP configuration
+// swagger:route POST /admin/ldap/reload admin_ldap reloadLDAPCfg
+//
+// Reloads the LDAP configuration.
+//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `ldap.config:reload`.
+//
+// Security:
+// - basic:
+//
+// Responses:
+// 200: okResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (hs *HTTPServer) ReloadLDAPCfg(c *models.ReqContext) response.Response {
 	if !ldap.IsEnabled() {
 		return response.Error(http.StatusBadRequest, "LDAP is not enabled", nil)
@@ -113,7 +129,20 @@ func (hs *HTTPServer) ReloadLDAPCfg(c *models.ReqContext) response.Response {
 	return response.Success("LDAP config reloaded")
 }
 
-// GetLDAPStatus attempts to connect to all the configured LDAP servers and returns information on whenever they're available or not.
+// swagger:route GET /admin/ldap/status admin_ldap getLDAPStatus
+//
+// Attempts to connect to all the configured LDAP servers and returns information on whenever they're available or not.
+//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `ldap.status:read`.
+//
+// Security:
+// - basic:
+//
+// Responses:
+// 200: okResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (hs *HTTPServer) GetLDAPStatus(c *models.ReqContext) response.Response {
 	if !ldap.IsEnabled() {
 		return response.Error(http.StatusBadRequest, "LDAP is not enabled", nil)
@@ -153,7 +182,20 @@ func (hs *HTTPServer) GetLDAPStatus(c *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, serverDTOs)
 }
 
-// PostSyncUserWithLDAP enables a single Grafana user to be synchronized against LDAP
+// swagger:route POST /admin/ldap/sync/{user_id} admin_ldap postSyncUserWithLDAP
+//
+// Enables a single Grafana user to be synchronized against LDAP.
+//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `ldap.user:sync`.
+//
+// Security:
+// - basic:
+//
+// Responses:
+// 200: okResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) response.Response {
 	if !ldap.IsEnabled() {
 		return response.Error(http.StatusBadRequest, "LDAP is not enabled", nil)
@@ -169,37 +211,38 @@ func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) response.Respon
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
-	query := models.GetUserByIdQuery{Id: userId}
+	query := user.GetUserByIDQuery{ID: userId}
 
-	if err := hs.SQLStore.GetUserById(c.Req.Context(), &query); err != nil { // validate the userId exists
-		if errors.Is(err, models.ErrUserNotFound) {
-			return response.Error(404, models.ErrUserNotFound.Error(), nil)
+	usr, err := hs.userService.GetByID(c.Req.Context(), &query)
+	if err != nil { // validate the userId exists
+		if errors.Is(err, user.ErrUserNotFound) {
+			return response.Error(404, user.ErrUserNotFound.Error(), nil)
 		}
 
 		return response.Error(500, "Failed to get user", err)
 	}
 
-	authModuleQuery := &models.GetAuthInfoQuery{UserId: query.Result.Id, AuthModule: models.AuthModuleLDAP}
+	authModuleQuery := &models.GetAuthInfoQuery{UserId: usr.ID, AuthModule: login.LDAPAuthModule}
 	if err := hs.authInfoService.GetAuthInfo(c.Req.Context(), authModuleQuery); err != nil { // validate the userId comes from LDAP
-		if errors.Is(err, models.ErrUserNotFound) {
-			return response.Error(404, models.ErrUserNotFound.Error(), nil)
+		if errors.Is(err, user.ErrUserNotFound) {
+			return response.Error(404, user.ErrUserNotFound.Error(), nil)
 		}
 
 		return response.Error(500, "Failed to get user", err)
 	}
 
 	ldapServer := newLDAP(ldapConfig.Servers)
-	user, _, err := ldapServer.User(query.Result.Login)
+	userInfo, _, err := ldapServer.User(usr.Login)
 	if err != nil {
 		if errors.Is(err, multildap.ErrDidNotFindUser) { // User was not in the LDAP server - we need to take action:
-			if hs.Cfg.AdminUser == query.Result.Login { // User is *the* Grafana Admin. We cannot disable it.
-				errMsg := fmt.Sprintf(`Refusing to sync grafana super admin "%s" - it would be disabled`, query.Result.Login)
+			if hs.Cfg.AdminUser == usr.Login { // User is *the* Grafana Admin. We cannot disable it.
+				errMsg := fmt.Sprintf(`Refusing to sync grafana super admin "%s" - it would be disabled`, usr.Login)
 				ldapLogger.Error(errMsg)
 				return response.Error(http.StatusBadRequest, errMsg, err)
 			}
 
 			// Since the user was not in the LDAP server. Let's disable it.
-			err := login.DisableExternalUser(c.Req.Context(), query.Result.Login)
+			err := hs.Login.DisableExternalUser(c.Req.Context(), usr.Login)
 			if err != nil {
 				return response.Error(http.StatusInternalServerError, "Failed to disable the user", err)
 			}
@@ -218,8 +261,13 @@ func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) response.Respon
 
 	upsertCmd := &models.UpsertUserCommand{
 		ReqContext:    c,
-		ExternalUser:  user,
+		ExternalUser:  userInfo,
 		SignupAllowed: hs.Cfg.LDAPAllowSignup,
+		UserLookupParams: models.UserLookupParams{
+			UserID: &usr.ID, // Upsert by ID only
+			Email:  nil,
+			Login:  nil,
+		},
 	}
 
 	err = hs.Login.UpsertUser(c.Req.Context(), upsertCmd)
@@ -230,7 +278,20 @@ func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) response.Respon
 	return response.Success("User synced successfully")
 }
 
-// GetUserFromLDAP finds an user based on a username in LDAP. This helps illustrate how would the particular user be mapped in Grafana when synced.
+// swagger:route GET /admin/ldap/{user_name} admin_ldap getUserFromLDAP
+//
+// Finds an user based on a username in LDAP. This helps illustrate how would the particular user be mapped in Grafana when synced.
+//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `ldap.user:read`.
+//
+// Security:
+// - basic:
+//
+// Responses:
+// 200: okResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (hs *HTTPServer) GetUserFromLDAP(c *models.ReqContext) response.Response {
 	if !ldap.IsEnabled() {
 		return response.Error(http.StatusBadRequest, "LDAP is not enabled", nil)
@@ -241,7 +302,7 @@ func (hs *HTTPServer) GetUserFromLDAP(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "Failed to obtain the LDAP configuration", err)
 	}
 
-	ldap := newLDAP(ldapConfig.Servers)
+	multiLDAP := newLDAP(ldapConfig.Servers)
 
 	username := web.Params(c.Req)[":username"]
 
@@ -249,9 +310,8 @@ func (hs *HTTPServer) GetUserFromLDAP(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "Validation error. You must specify an username", nil)
 	}
 
-	user, serverConfig, err := ldap.User(username)
-
-	if user == nil {
+	user, serverConfig, err := multiLDAP.User(username)
+	if user == nil || err != nil {
 		return response.Error(http.StatusNotFound, "No user was found in the LDAP server(s) with that username", err)
 	}
 
@@ -268,54 +328,43 @@ func (hs *HTTPServer) GetUserFromLDAP(c *models.ReqContext) response.Response {
 		IsDisabled:     user.IsDisabled,
 	}
 
-	orgRoles := []LDAPRoleDTO{}
-
-	// Need to iterate based on the config groups as only the first match for an org is used
-	// We are showing all matches as that should help in understanding why one match wins out
-	// over another.
-	for _, configGroup := range serverConfig.Groups {
-		for _, userGroup := range user.Groups {
-			if configGroup.GroupDN == userGroup {
-				r := &LDAPRoleDTO{GroupDN: configGroup.GroupDN, OrgId: configGroup.OrgId, OrgRole: configGroup.OrgRole}
-				orgRoles = append(orgRoles, *r)
-				break
-			}
-		}
-		//}
-	}
-
-	// Then, we find what we did not match by inspecting the list of groups returned from
-	// LDAP against what we have already matched above.
+	unmappedUserGroups := map[string]struct{}{}
 	for _, userGroup := range user.Groups {
-		var matched bool
+		unmappedUserGroups[strings.ToLower(userGroup)] = struct{}{}
+	}
 
-		for _, orgRole := range orgRoles {
-			if orgRole.GroupDN == userGroup { // we already matched it
-				matched = true
-				break
-			}
+	orgIDs := []int64{} // IDs of the orgs the user is a member of
+	orgRolesMap := map[int64]org.RoleType{}
+	for _, group := range serverConfig.Groups {
+		// only use the first match for each org
+		if orgRolesMap[group.OrgId] != "" {
+			continue
 		}
 
-		if !matched {
-			r := &LDAPRoleDTO{GroupDN: userGroup}
-			orgRoles = append(orgRoles, *r)
+		if ldap.IsMemberOf(user.Groups, group.GroupDN) {
+			orgRolesMap[group.OrgId] = group.OrgRole
+			u.OrgRoles = append(u.OrgRoles, LDAPRoleDTO{GroupDN: group.GroupDN,
+				OrgId: group.OrgId, OrgRole: group.OrgRole})
+			delete(unmappedUserGroups, strings.ToLower(group.GroupDN))
+			orgIDs = append(orgIDs, group.OrgId)
 		}
 	}
 
-	u.OrgRoles = orgRoles
+	for userGroup := range unmappedUserGroups {
+		u.OrgRoles = append(u.OrgRoles, LDAPRoleDTO{GroupDN: userGroup})
+	}
 
 	ldapLogger.Debug("mapping org roles", "orgsRoles", u.OrgRoles)
-	err = u.FetchOrgs(c.Req.Context(), hs.SQLStore)
-	if err != nil {
+	if err := u.FetchOrgs(c.Req.Context(), hs.orgService); err != nil {
 		return response.Error(http.StatusBadRequest, "An organization was not found - Please verify your LDAP configuration", err)
 	}
 
-	u.Teams, err = hs.ldapGroups.GetTeams(user.Groups)
+	u.Teams, err = hs.ldapGroups.GetTeams(user.Groups, orgIDs)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Unable to find the teams for this user", err)
 	}
 
-	return response.JSON(200, u)
+	return response.JSON(http.StatusOK, u)
 }
 
 // splitName receives the full name of a user and splits it into two parts: A name and a surname.
@@ -330,4 +379,18 @@ func splitName(name string) (string, string) {
 	default:
 		return names[0], names[1]
 	}
+}
+
+// swagger:parameters getUserFromLDAP
+type GetLDAPUserParams struct {
+	// in:path
+	// required:true
+	UserName string `json:"user_name"`
+}
+
+// swagger:parameters postSyncUserWithLDAP
+type SyncLDAPUserParams struct {
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
 }

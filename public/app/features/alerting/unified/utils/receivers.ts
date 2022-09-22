@@ -1,7 +1,8 @@
+import { capitalize } from 'lodash';
+
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
 import { GrafanaManagedReceiverConfig, Receiver } from 'app/plugins/datasource/alertmanager/types';
 import { NotifierDTO } from 'app/types';
-import { capitalize } from 'lodash';
 
 // extract notifier type name to count map, eg { Slack: 1, Email: 2 }
 

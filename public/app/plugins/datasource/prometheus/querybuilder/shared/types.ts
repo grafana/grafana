@@ -2,8 +2,9 @@
  * Shared types that can be reused by Loki and other data sources
  */
 
-import { DataSourceApi, RegistryItem, SelectableValue } from '@grafana/data';
 import { ComponentType } from 'react';
+
+import { DataSourceApi, RegistryItem, SelectableValue } from '@grafana/data';
 
 export interface QueryBuilderLabelFilter {
   label: string;
@@ -32,7 +33,7 @@ export interface QueryBuilderOperationDef<T = any> extends RegistryItem {
   renderer: QueryBuilderOperationRenderer;
   addOperationHandler: QueryBuilderAddOperationHandler<T>;
   paramChangedHandler?: QueryBuilderOnParamChangedHandler;
-  explainHandler?: (op: QueryBuilderOperation, def: QueryBuilderOperationDef<T>) => string;
+  explainHandler?: QueryBuilderExplainOperationHandler;
   changeTypeHandler?: (op: QueryBuilderOperation, newDef: QueryBuilderOperationDef<T>) => QueryBuilderOperation;
 }
 
@@ -41,6 +42,8 @@ export type QueryBuilderAddOperationHandler<T> = (
   query: T,
   modeller: VisualQueryModeller
 ) => T;
+
+export type QueryBuilderExplainOperationHandler = (op: QueryBuilderOperation, def: QueryBuilderOperationDef) => string;
 
 export type QueryBuilderOnParamChangedHandler = (
   index: number,
@@ -67,6 +70,7 @@ export interface QueryBuilderOperationParamDef {
   description?: string;
   minWidth?: number;
   editor?: ComponentType<QueryBuilderOperationParamEditorProps>;
+  runQueryOnEnter?: boolean;
 }
 
 export interface QueryBuilderOperationEditorProps {
@@ -95,7 +99,6 @@ export interface QueryBuilderOperationParamEditorProps {
 export enum QueryEditorMode {
   Code = 'code',
   Builder = 'builder',
-  Explain = 'explain',
 }
 
 export interface VisualQueryModeller {

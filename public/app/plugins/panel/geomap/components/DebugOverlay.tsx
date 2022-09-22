@@ -1,12 +1,14 @@
-import React, { PureComponent } from 'react';
-import { Map } from 'ol';
-import { transform } from 'ol/proj';
-import { stylesFactory } from '@grafana/ui';
-import { GrafanaTheme } from '@grafana/data';
 import { css } from '@emotion/css';
-import { config } from 'app/core/config';
-import tinycolor from 'tinycolor2';
+import { Map } from 'ol';
 import { Coordinate } from 'ol/coordinate';
+import { transform } from 'ol/proj';
+import React, { PureComponent } from 'react';
+import tinycolor from 'tinycolor2';
+
+import { GrafanaTheme } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors/src';
+import { stylesFactory } from '@grafana/ui';
+import { config } from 'app/core/config';
 
 interface Props {
   map: Map;
@@ -42,7 +44,7 @@ export class DebugOverlay extends PureComponent<Props, State> {
     const { zoom, center } = this.state;
 
     return (
-      <div className={this.style.infoWrap}>
+      <div className={this.style.infoWrap} aria-label={selectors.components.DebugOverlay.wrapper}>
         <table>
           <tbody>
             <tr>

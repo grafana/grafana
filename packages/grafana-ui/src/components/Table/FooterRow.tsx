@@ -1,27 +1,31 @@
 import React from 'react';
 import { ColumnInstance, HeaderGroup } from 'react-table';
+
 import { selectors } from '@grafana/e2e-selectors';
-import { getTableStyles, TableStyles } from './styles';
+
 import { useStyles2 } from '../../themes';
-import { FooterItem } from './types';
+
 import { EmptyCell, FooterCell } from './FooterCell';
+import { getTableStyles, TableStyles } from './styles';
+import { FooterItem } from './types';
 
 export interface FooterRowProps {
   totalColumnsWidth: number;
   footerGroups: HeaderGroup[];
   footerValues: FooterItem[];
+  isPaginationVisible: boolean;
   height: number;
 }
 
 export const FooterRow = (props: FooterRowProps) => {
-  const { totalColumnsWidth, footerGroups, height } = props;
+  const { totalColumnsWidth, footerGroups, height, isPaginationVisible } = props;
   const e2eSelectorsTable = selectors.components.Panels.Visualization.Table;
   const tableStyles = useStyles2(getTableStyles);
 
   return (
-    <table
+    <div
       style={{
-        position: 'absolute',
+        position: isPaginationVisible ? 'relative' : 'absolute',
         width: totalColumnsWidth ? `${totalColumnsWidth}px` : '100%',
         bottom: '0px',
       }}
@@ -29,22 +33,20 @@ export const FooterRow = (props: FooterRowProps) => {
       {footerGroups.map((footerGroup: HeaderGroup) => {
         const { key, ...footerGroupProps } = footerGroup.getFooterGroupProps();
         return (
-          <tfoot
+          <div
             className={tableStyles.tfoot}
             {...footerGroupProps}
             key={key}
             data-testid={e2eSelectorsTable.footer}
             style={height ? { height: `${height}px` } : undefined}
           >
-            <tr>
-              {footerGroup.headers.map((column: ColumnInstance, index: number) =>
-                renderFooterCell(column, tableStyles, height)
-              )}
-            </tr>
-          </tfoot>
+            {footerGroup.headers.map((column: ColumnInstance, index: number) =>
+              renderFooterCell(column, tableStyles, height)
+            )}
+          </div>
         );
       })}
-    </table>
+    </div>
   );
 };
 
@@ -63,9 +65,9 @@ function renderFooterCell(column: ColumnInstance, tableStyles: TableStyles, heig
   }
 
   return (
-    <th className={tableStyles.headerCell} {...footerProps}>
+    <div className={tableStyles.headerCell} {...footerProps}>
       {column.render('Footer')}
-    </th>
+    </div>
   );
 }
 

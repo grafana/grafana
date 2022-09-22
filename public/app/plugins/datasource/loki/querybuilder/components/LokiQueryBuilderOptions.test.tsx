@@ -1,8 +1,10 @@
-import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { LokiQuery, LokiQueryType } from '../../types';
-import { LokiQueryBuilderOptions } from './LokiQueryBuilderOptions';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
+
+import { LokiQuery, LokiQueryType } from '../../types';
+
+import { LokiQueryBuilderOptions } from './LokiQueryBuilderOptions';
 
 describe('LokiQueryBuilderOptions', () => {
   it('Can change query type', async () => {
@@ -25,7 +27,7 @@ describe('LokiQueryBuilderOptions', () => {
     screen.getByTitle('Click to edit options').click();
 
     const element = screen.getByLabelText('Legend');
-    userEvent.type(element, 'asd');
+    await userEvent.type(element, 'asd');
     fireEvent.keyDown(element, { key: 'Enter', code: 'Enter', charCode: 13 });
 
     expect(props.onChange).toHaveBeenCalledWith({

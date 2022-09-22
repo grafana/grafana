@@ -24,6 +24,7 @@ export interface TableFooterCalc {
   show: boolean;
   reducer: string[]; // actually 1 value
   fields?: string[];
+  enablePagination?: boolean;
 }
 
 export const defaultPanelOptions: PanelOptions = {

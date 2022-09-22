@@ -1,4 +1,5 @@
-import { SelectableValue } from './../../../../../../../packages/grafana-data/src/types/select';
+import { SelectableValue } from '@grafana/data';
+
 import { SCHEMA } from '../../cloudwatch-sql/language';
 import {
   QueryEditorExpressionType,

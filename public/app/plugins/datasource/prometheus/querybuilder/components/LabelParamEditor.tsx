@@ -1,10 +1,11 @@
-import { SelectableValue, toOption } from '@grafana/data';
-import { Select } from '@grafana/ui';
 import React, { useState } from 'react';
-import { PrometheusDatasource } from '../../datasource';
+
+import { DataSourceApi, SelectableValue, toOption } from '@grafana/data';
+import { Select } from '@grafana/ui';
+
 import { promQueryModeller } from '../PromQueryModeller';
 import { getOperationParamId } from '../shared/operationUtils';
-import { QueryBuilderOperationParamEditorProps } from '../shared/types';
+import { QueryBuilderLabelFilter, QueryBuilderOperationParamEditorProps } from '../shared/types';
 import { PromVisualQuery } from '../types';
 
 export function LabelParamEditor({
@@ -23,12 +24,11 @@ export function LabelParamEditor({
   return (
     <Select
       inputId={getOperationParamId(operationIndex, index)}
-      menuShouldPortal
       autoFocus={value === '' ? true : undefined}
       openMenuOnFocus
       onOpenMenu={async () => {
         setState({ isLoading: true });
-        const options = await loadGroupByLabels(query as PromVisualQuery, datasource as PrometheusDatasource);
+        const options = await loadGroupByLabels(query, datasource);
         setState({ options, isLoading: undefined });
       }}
       isLoading={state.isLoading}
@@ -44,11 +44,16 @@ export function LabelParamEditor({
 
 async function loadGroupByLabels(
   query: PromVisualQuery,
-  datasource: PrometheusDatasource
+  datasource: DataSourceApi
 ): Promise<Array<SelectableValue<any>>> {
-  const labels = [{ label: '__name__', op: '=', value: query.metric }, ...query.labels];
-  const expr = promQueryModeller.renderLabels(labels);
+  let labels: QueryBuilderLabelFilter[] = query.labels;
 
+  // This function is used by both Prometheus and Loki and this the only difference.
+  if (datasource.type === 'prometheus') {
+    labels = [{ label: '__name__', op: '=', value: query.metric }, ...query.labels];
+  }
+
+  const expr = promQueryModeller.renderLabels(labels);
   const result = await datasource.languageProvider.fetchSeriesLabels(expr);
 
   return Object.keys(result).map((x) => ({

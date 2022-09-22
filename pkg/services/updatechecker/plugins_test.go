@@ -2,7 +2,7 @@ package updatechecker
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
@@ -154,7 +154,7 @@ func TestPluginUpdateChecker_checkForUpdates(t *testing.T) {
 			httpClient: &fakeHTTPClient{
 				fakeResp: jsonResp,
 			},
-			log: &fakeLogger{},
+			log: log.NewNopLogger(),
 		}
 
 		svc.checkForUpdates(context.Background())
@@ -190,7 +190,7 @@ func (c *fakeHTTPClient) Get(url string) (*http.Response, error) {
 	c.requestURL = url
 
 	resp := &http.Response{
-		Body: ioutil.NopCloser(strings.NewReader(c.fakeResp)),
+		Body: io.NopCloser(strings.NewReader(c.fakeResp)),
 	}
 
 	return resp, nil
@@ -215,11 +215,3 @@ func (pr fakePluginStore) Plugins(_ context.Context, _ ...plugins.Type) []plugin
 	}
 	return result
 }
-
-type fakeLogger struct {
-	log.Logger
-}
-
-func (l *fakeLogger) Debug(_ string, _ ...interface{}) {}
-
-func (l *fakeLogger) Warn(_ string, _ ...interface{}) {}

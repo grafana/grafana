@@ -1,34 +1,50 @@
+import { t } from '@lingui/macro';
 import React, { PureComponent } from 'react';
-import { chain } from 'lodash';
-import { AppEvents, PanelData, SelectableValue } from '@grafana/data';
-import { Button, CodeEditor, Field, Select } from '@grafana/ui';
 import AutoSizer from 'react-virtualized-auto-sizer';
+import { firstValueFrom } from 'rxjs';
+
+import { AppEvents, PanelData, SelectableValue, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { locationService } from '@grafana/runtime';
+import { Button, CodeEditor, Field, Select } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+
+import { getPanelDataFrames } from '../dashboard/components/HelpWizard/utils';
 import { getPanelInspectorStyles } from '../inspector/styles';
+
+import { InspectTab } from './types';
 
 enum ShowContent {
   PanelJSON = 'panel',
-  DataJSON = 'data',
-  DataStructure = 'structure',
+  PanelData = 'data',
+  DataFrames = 'frames',
 }
 
 const options: Array<SelectableValue<ShowContent>> = [
   {
-    label: 'Panel JSON',
-    description: 'The model saved in the dashboard JSON that configures how everything works.',
+    label: t({ id: 'dashboard.inspect-json.panel-json-label', message: 'Panel JSON' }),
+    description: t({
+      id: 'dashboard.inspect-json.panel-json-description',
+      message: 'The model saved in the dashboard JSON that configures how everything works.',
+    }),
     value: ShowContent.PanelJSON,
   },
   {
-    label: 'Data',
-    description: 'The raw model passed to the panel visualization',
-    value: ShowContent.DataJSON,
+    label: t({ id: 'dashboard.inspect-json.panel-data-label', message: 'Panel data' }),
+    description: t({
+      id: 'dashboard.inspect-json.panel-data-description',
+      message: 'The raw model passed to the panel visualization',
+    }),
+    value: ShowContent.PanelData,
   },
   {
-    label: 'DataFrame structure',
-    description: 'Response info without any values',
-    value: ShowContent.DataStructure,
+    label: t({ id: 'dashboard.inspect-json.dataframe-label', message: 'DataFrame JSON (from Query)' }),
+    description: t({
+      id: 'dashboard.inspect-json.dataframe-description',
+      message: 'Raw data without transformations and field config applied. ',
+    }),
+    value: ShowContent.DataFrames,
   },
 ];
 
@@ -50,15 +66,15 @@ export class InspectJSONTab extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
     this.hasPanelJSON = !!(props.panel && props.dashboard);
-    // If we are in panel, we want to show PanelJSON, otherwise show DataJSON
+    // If we are in panel, we want to show PanelJSON, otherwise show DataFrames
     this.state = {
-      show: this.hasPanelJSON ? ShowContent.PanelJSON : ShowContent.DataJSON,
+      show: this.hasPanelJSON ? ShowContent.PanelJSON : ShowContent.DataFrames,
       text: this.hasPanelJSON ? getPrettyJSON(props.panel!.getSaveModel()) : getPrettyJSON(props.data),
     };
   }
 
-  onSelectChanged = (item: SelectableValue<ShowContent>) => {
-    const show = this.getJSONObject(item.value!);
+  onSelectChanged = async (item: SelectableValue<ShowContent>) => {
+    const show = await this.getJSONObject(item.value!);
     const text = getPrettyJSON(show);
     this.setState({ text, show: item.value! });
   };
@@ -68,33 +84,32 @@ export class InspectJSONTab extends PureComponent<Props, State> {
     this.setState({ text });
   };
 
-  getJSONObject(show: ShowContent) {
+  async getJSONObject(show: ShowContent) {
     const { data, panel } = this.props;
-    if (show === ShowContent.DataJSON) {
+    if (show === ShowContent.PanelData) {
       return data;
     }
 
-    if (show === ShowContent.DataStructure) {
-      const series = data?.series;
-      if (!series) {
-        return { note: 'Missing Response Data' };
+    if (show === ShowContent.DataFrames) {
+      let d = data;
+
+      // do not include transforms and
+      if (panel && data?.state === LoadingState.Done) {
+        d = await firstValueFrom(
+          panel.getQueryRunner().getData({
+            withFieldConfig: false,
+            withTransforms: false,
+          })
+        );
       }
-      return data!.series.map((frame) => {
-        const { table, fields, ...rest } = frame as any; // remove 'table' from arrow response
-        return {
-          ...rest,
-          fields: frame.fields.map((field) => {
-            return chain(field).omit('values').omit('state').omit('display').value();
-          }),
-        };
-      });
+      return getPanelDataFrames(d);
     }
 
     if (this.hasPanelJSON && show === ShowContent.PanelJSON) {
       return panel!.getSaveModel();
     }
 
-    return { note: `Unknown Object: ${show}` };
+    return { note: t({ id: 'dashboard.inspect-json.unknown', message: `Unknown Object: ${show}` }) };
   }
 
   onApplyPanelModel = () => {
@@ -119,6 +134,12 @@ export class InspectJSONTab extends PureComponent<Props, State> {
     }
   };
 
+  onShowHelpWizard = () => {
+    const queryParms = locationService.getSearch();
+    queryParms.set('inspectTab', InspectTab.Help.toString());
+    locationService.push('?' + queryParms.toString());
+  };
+
   render() {
     const { dashboard } = this.props;
     const { show, text } = this.state;
@@ -131,18 +152,25 @@ export class InspectJSONTab extends PureComponent<Props, State> {
     return (
       <div className={styles.wrap}>
         <div className={styles.toolbar} aria-label={selectors.components.PanelInspector.Json.content}>
-          <Field label="Select source" className="flex-grow-1">
+          <Field
+            label={t({ id: 'dashboard.inspect-json.select-source', message: 'Select source' })}
+            className="flex-grow-1"
+          >
             <Select
               inputId="select-source-dropdown"
               options={jsonOptions}
               value={selected}
               onChange={this.onSelectChanged}
-              menuShouldPortal
             />
           </Field>
           {this.hasPanelJSON && isPanelJSON && canEdit && (
             <Button className={styles.toolbarItem} onClick={this.onApplyPanelModel}>
               Apply
+            </Button>
+          )}
+          {show === ShowContent.DataFrames && (
+            <Button className={styles.toolbarItem} onClick={this.onShowHelpWizard}>
+              Support
             </Button>
           )}
         </div>

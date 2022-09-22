@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 // DatasourceAlertUsage is a hash where the key represents the
@@ -28,7 +29,7 @@ type UsageStatsQuerier interface {
 // configured in Grafana.
 func (e *AlertEngine) QueryUsageStats(ctx context.Context) (*UsageStats, error) {
 	cmd := &models.GetAllAlertsQuery{}
-	err := e.sqlStore.GetAllAlertQueryHandler(ctx, cmd)
+	err := e.AlertStore.GetAllAlertQueryHandler(ctx, cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -62,8 +63,8 @@ func (e *AlertEngine) mapRulesToUsageStats(ctx context.Context, rules []*models.
 	// map of datsource types and frequency
 	result := map[string]int{}
 	for k, v := range typeCount {
-		query := &models.GetDataSourceQuery{Id: k}
-		err := e.sqlStore.GetDataSource(ctx, query)
+		query := &datasources.GetDataSourceQuery{Id: k}
+		err := e.datasourceService.GetDataSource(ctx, query)
 		if err != nil {
 			return map[string]int{}, nil
 		}

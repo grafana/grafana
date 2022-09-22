@@ -317,4 +317,19 @@ describe('PromQueryModeller', () => {
       })
     ).toBe('metric_a / on(le, foo) metric_b');
   });
+
+  it('can render bool in binary ops', () => {
+    expect(
+      modeller.renderQuery({
+        metric: 'cluster_namespace_slug_dialer_name',
+        labels: [],
+        operations: [
+          {
+            id: '__less_or_equal',
+            params: [2, true],
+          },
+        ],
+      })
+    ).toBe('cluster_namespace_slug_dialer_name <= bool 2');
+  });
 });

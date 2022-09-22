@@ -1,5 +1,6 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
+
 import { ErrorContainer, ErrorContainerProps } from './ErrorContainer';
 
 describe('ErrorContainer', () => {
@@ -11,7 +12,7 @@ describe('ErrorContainer', () => {
           error: 'Error data content',
         },
         message: 'Error message',
-        status: 'Error status',
+        status: 500,
         statusText: 'Error status text',
         refId: 'A',
       },
@@ -30,7 +31,7 @@ describe('ErrorContainer', () => {
           message: 'Error data message',
           error: 'Error data content',
         },
-        status: 'Error status',
+        status: 500,
         statusText: 'Error status text',
         refId: 'A',
       },

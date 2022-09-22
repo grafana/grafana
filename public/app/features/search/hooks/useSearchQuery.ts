@@ -1,63 +1,97 @@
-import { FormEvent, useCallback, useReducer } from 'react';
 import { debounce } from 'lodash';
+import { FormEvent } from 'react';
+
 import { SelectableValue } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { defaultQuery, defaultQueryParams, queryReducer } from '../reducers/searchQueryReducer';
-import {
-  ADD_TAG,
-  CLEAR_FILTERS,
-  LAYOUT_CHANGE,
-  QUERY_CHANGE,
-  SET_TAGS,
-  TOGGLE_SORT,
-  TOGGLE_STARRED,
-} from '../reducers/actionTypes';
-import { DashboardQuery, SearchLayout } from '../types';
-import { hasFilters, parseRouteParams } from '../utils';
+import { useDispatch, useSelector } from 'app/types';
 
-const updateLocation = debounce((query) => locationService.partial(query), 300);
+import {
+  defaultQueryParams,
+  queryChange,
+  setTags,
+  addTag,
+  datasourceChange,
+  toggleStarred,
+  removeStarred,
+  clearFilters,
+  toggleSort,
+  layoutChange,
+} from '../reducers/searchQueryReducer';
+import { DashboardQuery, SearchLayout } from '../types';
+import { hasFilters } from '../utils';
+
+const updateLocation = debounce((query) => locationService.partial(query, true), 300);
 
 export const useSearchQuery = (defaults: Partial<DashboardQuery>) => {
-  const queryParams = parseRouteParams(locationService.getSearchObject());
-  const initialState = { ...defaultQuery, ...defaults, ...queryParams };
-  const [query, dispatch] = useReducer(queryReducer, initialState);
+  const query = useSelector((state) => state.searchQuery);
+  const dispatch = useDispatch();
 
   const onQueryChange = (query: string) => {
-    dispatch({ type: QUERY_CHANGE, payload: query });
+    dispatch(queryChange(query));
     updateLocation({ query });
   };
 
+  const onCloseSearch = () => {
+    locationService.partial(
+      {
+        search: null,
+        folder: null,
+        ...defaultQueryParams,
+      },
+      true
+    );
+  };
+
+  const onSelectSearchItem = () => {
+    dispatch(queryChange(''));
+    locationService.partial(
+      {
+        search: null,
+        folder: null,
+        ...defaultQueryParams,
+      },
+      true
+    );
+  };
+
   const onTagFilterChange = (tags: string[]) => {
-    dispatch({ type: SET_TAGS, payload: tags });
+    dispatch(setTags(tags));
     updateLocation({ tag: tags });
   };
 
-  const onTagAdd = useCallback(
-    (tag: string) => {
-      dispatch({ type: ADD_TAG, payload: tag });
-      updateLocation({ tag: [...query.tag, tag] });
-    },
-    [query.tag]
-  );
+  const onDatasourceChange = (datasource?: string) => {
+    dispatch(datasourceChange(datasource));
+    updateLocation({ datasource });
+  };
+
+  const onTagAdd = (tag: string) => {
+    dispatch(addTag(tag));
+    updateLocation({ tag: [...query.tag, tag] });
+  };
 
   const onClearFilters = () => {
-    dispatch({ type: CLEAR_FILTERS });
+    dispatch(clearFilters());
     updateLocation(defaultQueryParams);
   };
 
   const onStarredFilterChange = (e: FormEvent<HTMLInputElement>) => {
     const starred = (e.target as HTMLInputElement).checked;
-    dispatch({ type: TOGGLE_STARRED, payload: starred });
+    dispatch(toggleStarred(starred));
     updateLocation({ starred: starred || null });
   };
 
+  const onClearStarred = () => {
+    dispatch(removeStarred());
+    updateLocation({ starred: null });
+  };
+
   const onSortChange = (sort: SelectableValue | null) => {
-    dispatch({ type: TOGGLE_SORT, payload: sort });
+    dispatch(toggleSort(sort));
     updateLocation({ sort: sort?.value, layout: SearchLayout.List });
   };
 
   const onLayoutChange = (layout: SearchLayout) => {
-    dispatch({ type: LAYOUT_CHANGE, payload: layout });
+    dispatch(layoutChange(layout));
     if (layout === SearchLayout.Folders) {
       updateLocation({ layout, sort: null });
       return;
@@ -72,8 +106,12 @@ export const useSearchQuery = (defaults: Partial<DashboardQuery>) => {
     onClearFilters,
     onTagFilterChange,
     onStarredFilterChange,
+    onClearStarred,
     onTagAdd,
     onSortChange,
     onLayoutChange,
+    onDatasourceChange,
+    onCloseSearch,
+    onSelectSearchItem,
   };
 };

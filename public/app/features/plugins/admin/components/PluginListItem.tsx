@@ -1,10 +1,13 @@
-import React from 'react';
 import { css, cx } from '@emotion/css';
+import React from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
+import { Icon, useStyles2 } from '@grafana/ui';
+
 import { CatalogPlugin, PluginIconName, PluginListDisplayMode } from '../types';
+
 import { PluginListItemBadges } from './PluginListItemBadges';
 import { PluginLogo } from './PluginLogo';
-import { Icon, useStyles2 } from '@grafana/ui';
 
 export const LOGO_SIZE = '48px';
 

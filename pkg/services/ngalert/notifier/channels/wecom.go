@@ -6,69 +6,80 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
-	"github.com/prometheus/alertmanager/template"
 )
 
-type WeComConfig struct {
-	*NotificationChannelConfig
-	URL     string
-	Message string
+type wecomSettings struct {
+	URL     string `json:"url" yaml:"url"`
+	Message string `json:"message,omitempty" yaml:"message,omitempty"`
+	Title   string `json:"title,omitempty" yaml:"title,omitempty"`
+}
+
+func buildWecomSettings(factoryConfig FactoryConfig) (wecomSettings, error) {
+	var settings = wecomSettings{}
+
+	err := factoryConfig.Config.unmarshalSettings(&settings)
+	if err != nil {
+		return settings, fmt.Errorf("failed to unmarshal settings: %w", err)
+	}
+
+	if settings.Message == "" {
+		settings.Message = DefaultMessageEmbed
+	}
+	if settings.Title == "" {
+		settings.Title = DefaultMessageTitleEmbed
+	}
+
+	settings.URL = factoryConfig.DecryptFunc(context.Background(), factoryConfig.Config.SecureSettings, "url", settings.URL)
+	if settings.URL == "" {
+		return settings, errors.New("could not find webhook URL in settings")
+	}
+	return settings, nil
 }
 
 func WeComFactory(fc FactoryConfig) (NotificationChannel, error) {
-	cfg, err := NewWeComConfig(fc.Config, fc.DecryptFunc)
+	ch, err := buildWecomNotifier(fc)
 	if err != nil {
 		return nil, receiverInitError{
 			Reason: err.Error(),
 			Cfg:    *fc.Config,
 		}
 	}
-	return NewWeComNotifier(cfg, fc.NotificationService, fc.Template), nil
+	return ch, nil
 }
 
-func NewWeComConfig(config *NotificationChannelConfig, decryptFunc GetDecryptedValueFn) (*WeComConfig, error) {
-	url := decryptFunc(context.Background(), config.SecureSettings, "url", config.Settings.Get("url").MustString())
-	if url == "" {
-		return nil, errors.New("could not find webhook URL in settings")
+func buildWecomNotifier(factoryConfig FactoryConfig) (*WeComNotifier, error) {
+	settings, err := buildWecomSettings(factoryConfig)
+	if err != nil {
+		return nil, err
 	}
-	return &WeComConfig{
-		NotificationChannelConfig: config,
-		URL:                       url,
-		Message:                   config.Settings.Get("message").MustString(`{{ template "default.message" .}}`),
-	}, nil
-}
-
-// NewWeComNotifier is the constructor for WeCom notifier.
-func NewWeComNotifier(config *WeComConfig, ns notifications.WebhookSender, t *template.Template) *WeComNotifier {
 	return &WeComNotifier{
 		Base: NewBase(&models.AlertNotification{
-			Uid:                   config.UID,
-			Name:                  config.Name,
-			Type:                  config.Type,
-			DisableResolveMessage: config.DisableResolveMessage,
-			Settings:              config.Settings,
+			Uid:                   factoryConfig.Config.UID,
+			Name:                  factoryConfig.Config.Name,
+			Type:                  factoryConfig.Config.Type,
+			DisableResolveMessage: factoryConfig.Config.DisableResolveMessage,
+			Settings:              factoryConfig.Config.Settings,
 		}),
-		URL:     config.URL,
-		Message: config.Message,
-		log:     log.New("alerting.notifier.wecom"),
-		ns:      ns,
-		tmpl:    t,
-	}
+		tmpl:     factoryConfig.Template,
+		log:      log.New("alerting.notifier.wecom"),
+		ns:       factoryConfig.NotificationService,
+		settings: settings,
+	}, nil
 }
 
 // WeComNotifier is responsible for sending alert notifications to WeCom.
 type WeComNotifier struct {
 	*Base
-	URL     string
-	Message string
-	tmpl    *template.Template
-	log     log.Logger
-	ns      notifications.WebhookSender
+	tmpl     *template.Template
+	log      log.Logger
+	ns       notifications.WebhookSender
+	settings wecomSettings
 }
 
 // Notify send an alert notification to WeCom.
@@ -82,8 +93,8 @@ func (w *WeComNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, e
 		"msgtype": "markdown",
 	}
 	content := fmt.Sprintf("# %s\n%s\n",
-		tmpl(DefaultMessageTitleEmbed),
-		tmpl(w.Message),
+		tmpl(w.settings.Title),
+		tmpl(w.settings.Message),
 	)
 
 	bodyMsg["markdown"] = map[string]interface{}{
@@ -96,12 +107,12 @@ func (w *WeComNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, e
 	}
 
 	cmd := &models.SendWebhookSync{
-		Url:  w.URL,
+		Url:  w.settings.URL,
 		Body: string(body),
 	}
 
 	if err := w.ns.SendWebhookSync(ctx, cmd); err != nil {
-		w.log.Error("failed to send WeCom webhook", "error", err, "notification", w.Name)
+		w.log.Error("failed to send WeCom webhook", "err", err, "notification", w.Name)
 		return false, err
 	}
 

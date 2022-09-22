@@ -1,10 +1,13 @@
-import React, { useCallback } from 'react';
 import { css, cx } from '@emotion/css';
+import React, { useCallback } from 'react';
+
+import { formattedValueToString, GrafanaTheme2 } from '@grafana/data';
+
+import { styleMixins } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
+
 import { VizLegendSeriesIcon } from './VizLegendSeriesIcon';
 import { VizLegendItem } from './types';
-import { useStyles2 } from '../../themes/ThemeContext';
-import { styleMixins } from '../../themes';
-import { formattedValueToString, GrafanaTheme2 } from '@grafana/data';
 
 export interface Props {
   key?: React.Key;
@@ -120,7 +123,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       align-items: center;
     `,
     value: css`
-      text-align: left;
+      text-align: right;
     `,
     yAxisLabel: css`
       color: ${theme.colors.text.secondary};

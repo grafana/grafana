@@ -1497,7 +1497,7 @@
               "subscription": ""
             }
           ],
-          "title": "Max Available Bytes Sent and Trend  Line",
+          "title": "Max Available Bytes Sent and Trend Line",
           "transformations": [
             {
               "id": "organize",
@@ -1979,7 +1979,7 @@
               "subscription": ""
             }
           ],
-          "title": "Max Available Bytes Recieved and Trend  Line",
+          "title": "Max Available Bytes Received and Trend Line",
           "transformations": [
             {
               "id": "organize",
@@ -2654,6 +2654,7 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "Azure VM Monitoring - VM Insights by Resource Group",
+  "title": "Azure / Insights / Virtual Machines by Resource Group",
+  "uid": "AzVmInsightsByRG",
   "version": 9
 }

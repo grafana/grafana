@@ -1,6 +1,8 @@
+import { css, cx } from '@emotion/css';
+import { isEqual } from 'lodash';
 import React, { PureComponent } from 'react';
 import { Unsubscribable, PartialObserver } from 'rxjs';
-import { Alert, stylesFactory, Button, JSONFormatter, CustomScrollbar, CodeEditor } from '@grafana/ui';
+
 import {
   GrafanaTheme,
   PanelProps,
@@ -15,12 +17,13 @@ import {
   applyFieldOverrides,
   LiveChannelAddress,
 } from '@grafana/data';
-import { TablePanel } from '../table/TablePanel';
-import { LivePanelOptions, MessageDisplayMode } from './types';
 import { config, getGrafanaLiveSrv } from '@grafana/runtime';
-import { css, cx } from '@emotion/css';
-import { isEqual } from 'lodash';
+import { Alert, stylesFactory, Button, JSONFormatter, CustomScrollbar, CodeEditor } from '@grafana/ui';
 import { StreamingDataFrame } from 'app/features/live/data/StreamingDataFrame';
+
+import { TablePanel } from '../table/TablePanel';
+
+import { LivePanelOptions, MessageDisplayMode } from './types';
 
 interface Props extends PanelProps<LivePanelOptions> {}
 
@@ -314,6 +317,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     `,
     [LiveChannelConnectionState.Connected]: css`
       border: 1px solid ${theme.palette.brandSuccess};
+    `,
+    [LiveChannelConnectionState.Connecting]: css`
+      border: 1px solid ${theme.palette.brandWarning};
     `,
     [LiveChannelConnectionState.Disconnected]: css`
       border: 1px solid ${theme.palette.brandWarning};

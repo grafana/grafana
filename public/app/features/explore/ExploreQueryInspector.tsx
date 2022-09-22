@@ -1,15 +1,18 @@
-import React from 'react';
-import { TabbedContainer, TabConfig } from '@grafana/ui';
-import { TimeZone } from '@grafana/data';
-import { runQueries } from './state/query';
-import { StoreState, ExploreItemState, ExploreId } from 'app/types';
+import React, { useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
+
+import { CoreApp, TimeZone } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime/src';
+import { TabbedContainer, TabConfig } from '@grafana/ui';
 import { ExploreDrawer } from 'app/features/explore/ExploreDrawer';
-import { InspectJSONTab } from 'app/features/inspector/InspectJSONTab';
-import { QueryInspector } from 'app/features/inspector/QueryInspector';
-import { InspectStatsTab } from 'app/features/inspector/InspectStatsTab';
 import { InspectDataTab } from 'app/features/inspector/InspectDataTab';
 import { InspectErrorTab } from 'app/features/inspector/InspectErrorTab';
+import { InspectJSONTab } from 'app/features/inspector/InspectJSONTab';
+import { InspectStatsTab } from 'app/features/inspector/InspectStatsTab';
+import { QueryInspector } from 'app/features/inspector/QueryInspector';
+import { StoreState, ExploreItemState, ExploreId } from 'app/types';
+
+import { runQueries } from './state/query';
 
 interface DispatchProps {
   width: number;
@@ -24,6 +27,10 @@ export function ExploreQueryInspector(props: Props) {
   const { loading, width, onClose, queryResponse, timeZone } = props;
   const dataFrames = queryResponse?.series || [];
   const error = queryResponse?.error;
+
+  useEffect(() => {
+    reportInteraction('grafana_explore_query_inspector_opened');
+  }, []);
 
   const statsTab: TabConfig = {
     label: 'Stats',
@@ -49,6 +56,7 @@ export function ExploreQueryInspector(props: Props) {
         isLoading={loading}
         options={{ withTransforms: false, withFieldConfig: false }}
         timeZone={timeZone}
+        app={CoreApp.Explore}
       />
     ),
   };
@@ -71,7 +79,7 @@ export function ExploreQueryInspector(props: Props) {
     tabs.push(errorTab);
   }
   return (
-    <ExploreDrawer width={width} onResize={() => {}}>
+    <ExploreDrawer width={width}>
       <TabbedContainer tabs={tabs} onClose={onClose} closeIconTooltip="Close query inspector" />
     </ExploreDrawer>
   );

@@ -1,16 +1,18 @@
-import React, { PureComponent } from 'react';
 import { css, cx } from '@emotion/css';
+import React, { PureComponent } from 'react';
+
 import { Field, LinkModel, LogLabelStatsModel, GrafanaTheme2 } from '@grafana/data';
 
-import { Themeable2 } from '../../types/theme';
 import { withTheme2 } from '../../themes/index';
+import { Themeable2 } from '../../types/theme';
+import { ClipboardButton } from '../ClipboardButton/ClipboardButton';
+import { DataLinkButton } from '../DataLinks/DataLinkButton';
+import { IconButton } from '../IconButton/IconButton';
+
+import { LogLabelStats } from './LogLabelStats';
 import { getLogRowStyles } from './getLogRowStyles';
 
-//Components
-import { LogLabelStats } from './LogLabelStats';
-import { IconButton } from '../IconButton/IconButton';
-import { DataLinkButton } from '../DataLinks/DataLinkButton';
-
+/** @deprecated will be removed in the next major version */
 export interface Props extends Themeable2 {
   parsedValue: string;
   parsedKey: string;
@@ -29,6 +31,7 @@ interface State {
   showFieldsStats: boolean;
   fieldCount: number;
   fieldStats: LogLabelStatsModel[] | null;
+  mouseOver: boolean;
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -50,18 +53,27 @@ const getStyles = (theme: GrafanaTheme2) => {
     showingField: css`
       color: ${theme.colors.primary.text};
     `,
+    hoverValueCopy: css`
+      margin: ${theme.spacing(0, 0, 0, 1.2)};
+      position: absolute;
+      top: 0px;
+      justify-content: center;
+      border-radius: 20px;
+      width: 26px;
+      height: 26px;
+    `,
     wrapLine: css`
       label: wrapLine;
       white-space: pre-wrap;
     `,
   };
 };
-
 class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   state: State = {
     showFieldsStats: false,
     fieldCount: 0,
     fieldStats: null,
+    mouseOver: false,
   };
 
   showField = () => {
@@ -110,6 +122,11 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     });
   }
 
+  hoverValueCopy() {
+    const mouseOver = !this.state.mouseOver;
+    this.setState({ mouseOver });
+  }
+
   render() {
     const {
       theme,
@@ -124,7 +141,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
       onClickFilterLabel,
       onClickFilterOutLabel,
     } = this.props;
-    const { showFieldsStats, fieldStats, fieldCount } = this.state;
+    const { showFieldsStats, fieldStats, fieldCount, mouseOver } = this.state;
     const styles = getStyles(theme);
     const style = getLogRowStyles(theme);
 
@@ -164,8 +181,23 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
 
         {/* Key - value columns */}
         <td className={style.logDetailsLabel}>{parsedKey}</td>
-        <td className={cx(styles.wordBreakAll, wrapLogMessage && styles.wrapLine)}>
+        <td
+          className={cx(styles.wordBreakAll, wrapLogMessage && styles.wrapLine)}
+          onMouseEnter={this.hoverValueCopy.bind(this)}
+          onMouseLeave={this.hoverValueCopy.bind(this)}
+        >
           {parsedValue}
+          {mouseOver && (
+            <ClipboardButton
+              getText={() => parsedValue}
+              title="Copy value to clipboard"
+              fill="text"
+              variant="secondary"
+              icon="copy"
+              size="sm"
+              className={styles.hoverValueCopy}
+            />
+          )}
           {links?.map((link) => (
             <span key={link.title}>
               &nbsp;
@@ -187,5 +219,6 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   }
 }
 
+/** @deprecated will be removed in the next major version */
 export const LogDetailsRow = withTheme2(UnThemedLogDetailsRow);
 LogDetailsRow.displayName = 'LogDetailsRow';

@@ -1,19 +1,20 @@
-import { css } from '@emotion/css';
-import { DataSourceApi, GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Button, Icon, Tooltip, useStyles2 } from '@grafana/ui';
-import React from 'react';
+import { css, cx } from '@emotion/css';
+import React, { useEffect, useState } from 'react';
 import { Draggable } from 'react-beautiful-dnd';
-import {
-  VisualQueryModeller,
-  QueryBuilderOperation,
-  QueryBuilderOperationParamValue,
-  QueryBuilderOperationDef,
-  QueryBuilderOperationParamDef,
-} from '../shared/types';
+
+import { DataSourceApi, GrafanaTheme2 } from '@grafana/data';
+import { Button, Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+
 import { OperationHeader } from './OperationHeader';
 import { getOperationParamEditor } from './OperationParamEditor';
 import { getOperationParamId } from './operationUtils';
+import {
+  QueryBuilderOperation,
+  QueryBuilderOperationDef,
+  QueryBuilderOperationParamDef,
+  QueryBuilderOperationParamValue,
+  VisualQueryModeller,
+} from './types';
 
 export interface Props {
   operation: QueryBuilderOperation;
@@ -24,6 +25,8 @@ export interface Props {
   onChange: (index: number, update: QueryBuilderOperation) => void;
   onRemove: (index: number) => void;
   onRunQuery: () => void;
+  flash?: boolean;
+  highlight?: boolean;
 }
 
 export function OperationEditor({
@@ -35,9 +38,13 @@ export function OperationEditor({
   queryModeller,
   query,
   datasource,
+  flash,
+  highlight,
 }: Props) {
   const styles = useStyles2(getStyles);
   const def = queryModeller.getOperationDef(operation.id);
+  const shouldFlash = useFlash(flash);
+
   if (!def) {
     return <span>Operation {operation.id} not found</span>;
   }
@@ -122,7 +129,7 @@ export function OperationEditor({
     <Draggable draggableId={`operation-${index}`} index={index}>
       {(provided) => (
         <div
-          className={styles.card}
+          className={cx(styles.card, (shouldFlash || highlight) && styles.cardHighlight)}
           ref={provided.innerRef}
           {...provided.draggableProps}
           data-testid={`operations.${index}.wrapper`}
@@ -148,6 +155,29 @@ export function OperationEditor({
       )}
     </Draggable>
   );
+}
+
+/**
+ * When flash is switched on makes sure it is switched of right away, so we just flash the highlight and then fade
+ * out.
+ * @param flash
+ */
+function useFlash(flash?: boolean) {
+  const [keepFlash, setKeepFlash] = useState(true);
+  useEffect(() => {
+    let t: any;
+    if (flash) {
+      t = setTimeout(() => {
+        setKeepFlash(false);
+      }, 1000);
+    } else {
+      setKeepFlash(true);
+    }
+
+    return () => clearTimeout(t);
+  }, [flash]);
+
+  return keepFlash && flash;
 }
 
 function renderAddRestParamButton(
@@ -198,9 +228,18 @@ const getStyles = (theme: GrafanaTheme2) => {
       borderRadius: theme.shape.borderRadius(1),
       marginBottom: theme.spacing(1),
       position: 'relative',
+      transition: 'all 0.5s ease-in 0s',
+    }),
+    cardHighlight: css({
+      boxShadow: `0px 0px 4px 0px ${theme.colors.primary.border}`,
+      border: `1px solid ${theme.colors.primary.border}`,
     }),
     infoIcon: css({
       marginLeft: theme.spacing(0.5),
+      color: theme.colors.text.secondary,
+      ':hover': {
+        color: theme.colors.text.primary,
+      },
     }),
     body: css({
       margin: theme.spacing(1, 1, 0.5, 1),

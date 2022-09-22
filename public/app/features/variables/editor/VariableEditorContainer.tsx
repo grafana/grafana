@@ -1,21 +1,22 @@
-import { selectors } from '@grafana/e2e-selectors';
-import { Button, Icon } from '@grafana/ui';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import React, { MouseEvent, PureComponent } from 'react';
+import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { bindActionCreators } from 'redux';
 
+import { locationService } from '@grafana/runtime';
+import { Page } from 'app/core/components/PageNew/Page';
+import { SettingsPageProps } from 'app/features/dashboard/components/DashboardSettings/types';
+
 import { StoreState, ThunkDispatch } from '../../../types';
-import { VariablesDependenciesButton } from '../inspect/VariablesDependenciesButton';
 import { VariablesUnknownTable } from '../inspect/VariablesUnknownTable';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { getEditorVariables, getVariablesState } from '../state/selectors';
 import { changeVariableOrder, duplicateVariable, removeVariable } from '../state/sharedReducer';
 import { KeyedVariableIdentifier } from '../state/types';
 import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
-import { switchToEditMode, switchToListMode, switchToNewMode } from './actions';
+
 import { VariableEditorEditor } from './VariableEditorEditor';
 import { VariableEditorList } from './VariableEditorList';
+import { createNewVariable, initListMode } from './actions';
 
 const mapStateToProps = (state: StoreState, ownProps: OwnProps) => {
   const { uid } = ownProps.dashboard;
@@ -30,7 +31,7 @@ const mapStateToProps = (state: StoreState, ownProps: OwnProps) => {
 
 const mapDispatchToProps = (dispatch: ThunkDispatch) => {
   return {
-    ...bindActionCreators({ switchToNewMode, switchToEditMode, switchToListMode }, dispatch),
+    ...bindActionCreators({ createNewVariable, initListMode }, dispatch),
     changeVariableOrder: (identifier: KeyedVariableIdentifier, fromIndex: number, toIndex: number) =>
       dispatch(
         toKeyedAction(
@@ -53,30 +54,24 @@ const mapDispatchToProps = (dispatch: ThunkDispatch) => {
   };
 };
 
-interface OwnProps {
-  dashboard: DashboardModel;
-}
+interface OwnProps extends SettingsPageProps {}
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
 type Props = OwnProps & ConnectedProps<typeof connector>;
 
 class VariableEditorContainerUnconnected extends PureComponent<Props> {
-  componentDidMount(): void {
-    this.props.switchToListMode(this.props.dashboard.uid);
+  componentDidMount() {
+    this.props.initListMode(this.props.dashboard.uid);
   }
 
-  onChangeToListMode = (event: MouseEvent<HTMLAnchorElement>) => {
-    event.preventDefault();
-    this.props.switchToListMode(this.props.dashboard.uid);
-  };
-
   onEditVariable = (identifier: KeyedVariableIdentifier) => {
-    this.props.switchToEditMode(identifier);
+    const index = this.props.variables.findIndex((x) => x.id === identifier.id);
+    locationService.partial({ editIndex: index });
   };
 
   onNewVariable = () => {
-    this.props.switchToNewMode(this.props.dashboard.uid);
+    this.props.createNewVariable(this.props.dashboard.uid);
   };
 
   onChangeVariableOrder = (identifier: KeyedVariableIdentifier, fromIndex: number, toIndex: number) => {
@@ -92,41 +87,12 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
   };
 
   render() {
-    const variableToEdit = this.props.variables.find((s) => s.id === this.props.idInEditor) ?? null;
+    const { editIndex, variables } = this.props;
+    const variableToEdit = editIndex != null ? variables[editIndex] : undefined;
+    const subPageNav = variableToEdit ? { text: variableToEdit.name } : undefined;
 
     return (
-      <div>
-        <div className="page-action-bar">
-          <h3 className="dashboard-settings__header">
-            <a
-              onClick={this.onChangeToListMode}
-              aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.headerLink}
-            >
-              Variables
-            </a>
-            {this.props.idInEditor && (
-              <span>
-                <Icon name="angle-right" />
-                Edit
-              </span>
-            )}
-          </h3>
-
-          <div className="page-action-bar__spacer" />
-          {this.props.variables.length > 0 && variableToEdit === null && (
-            <>
-              <VariablesDependenciesButton variables={this.props.variables} />
-              <Button
-                type="button"
-                onClick={this.onNewVariable}
-                aria-label={selectors.pages.Dashboard.Settings.Variables.List.newButton}
-              >
-                New
-              </Button>
-            </>
-          )}
-        </div>
-
+      <Page navModel={this.props.sectionNav} pageNav={subPageNav}>
         {!variableToEdit && (
           <VariableEditorList
             variables={this.props.variables}
@@ -143,7 +109,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
           <VariablesUnknownTable variables={this.props.variables} dashboard={this.props.dashboard} />
         )}
         {variableToEdit && <VariableEditorEditor identifier={toKeyedVariableIdentifier(variableToEdit)} />}
-      </div>
+      </Page>
     );
   }
 }

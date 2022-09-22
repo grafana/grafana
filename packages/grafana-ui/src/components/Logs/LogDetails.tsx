@@ -1,6 +1,7 @@
-import React, { PureComponent } from 'react';
-import memoizeOne from 'memoize-one';
 import { css, cx } from '@emotion/css';
+import memoizeOne from 'memoize-one';
+import React, { PureComponent } from 'react';
+
 import {
   calculateFieldStats,
   calculateLogsLabelStats,
@@ -12,16 +13,16 @@ import {
   GrafanaTheme2,
 } from '@grafana/data';
 
-import { Themeable2 } from '../../types/theme';
 import { withTheme2 } from '../../themes/index';
+import { Themeable2 } from '../../types/theme';
+import { Icon } from '../Icon/Icon';
+import { Tooltip } from '../Tooltip/Tooltip';
+
+import { LogDetailsRow } from './LogDetailsRow';
 import { getLogRowStyles } from './getLogRowStyles';
 import { getAllFields } from './logParser';
 
-//Components
-import { LogDetailsRow } from './LogDetailsRow';
-import { Tooltip } from '../Tooltip/Tooltip';
-import { Icon } from '../Icon/Icon';
-
+/** @deprecated will be removed in the next major version */
 export interface Props extends Themeable2 {
   row: LogRowModel;
   showDuplicates: boolean;
@@ -174,5 +175,6 @@ class UnThemedLogDetails extends PureComponent<Props> {
   }
 }
 
+/** @deprecated will be removed in the next major version */
 export const LogDetails = withTheme2(UnThemedLogDetails);
 LogDetails.displayName = 'LogDetails';

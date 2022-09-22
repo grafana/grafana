@@ -1,15 +1,16 @@
-import React from 'react';
-import { GrafanaTheme } from '@grafana/data';
-import { useStyles } from '@grafana/ui';
 import { css } from '@emotion/css';
+import React from 'react';
+
+import { GrafanaTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { VisualizationButton } from './VisualizationButton';
+import { useStyles } from '@grafana/ui';
+import { useSelector } from 'app/types';
+
 import { OptionsPaneOptions } from './OptionsPaneOptions';
-import { useSelector } from 'react-redux';
-import { StoreState } from 'app/types';
+import { VisualizationButton } from './VisualizationButton';
 import { VisualizationSelectPane } from './VisualizationSelectPane';
-import { usePanelLatestData } from './usePanelLatestData';
 import { OptionPaneRenderProps } from './types';
+import { usePanelLatestData } from './usePanelLatestData';
 
 export const OptionsPane: React.FC<OptionPaneRenderProps> = ({
   plugin,
@@ -21,7 +22,7 @@ export const OptionsPane: React.FC<OptionPaneRenderProps> = ({
   instanceState,
 }) => {
   const styles = useStyles(getStyles);
-  const isVizPickerOpen = useSelector((state: StoreState) => state.panelEditor.isVizPickerOpen);
+  const isVizPickerOpen = useSelector((state) => state.panelEditor.isVizPickerOpen);
   const { data } = usePanelLatestData(panel, { withTransforms: true, withFieldConfig: false }, true);
 
   return (

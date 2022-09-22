@@ -17,6 +17,7 @@ const defaultProps = {
   requestNestedRows: jest.fn(),
   onRowSelectedChange: jest.fn(),
   selectableEntryTypes: [],
+  scrollIntoView: false,
 };
 
 describe('NestedRow', () => {

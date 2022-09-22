@@ -6,12 +6,11 @@ import {
   SetFieldConfigOptionsArgs,
 } from '@grafana/data';
 import { LineStyle, VisibilityMode } from '@grafana/schema';
-
 import { commonOptionsBuilder, graphFieldOptions } from '@grafana/ui';
-import { LineStyleEditor } from '../timeseries/LineStyleEditor';
-import { ScatterFieldConfig, ScatterLineMode } from './models.gen';
 
-const categoryStyles = undefined; // ['Scatter styles'];
+import { LineStyleEditor } from '../timeseries/LineStyleEditor';
+
+import { ScatterFieldConfig, ScatterLineMode } from './models.gen';
 
 export function getScatterFieldConfig(cfg: ScatterFieldConfig): SetFieldConfigOptionsArgs<ScatterFieldConfig> {
   return {
@@ -33,7 +32,6 @@ export function getScatterFieldConfig(cfg: ScatterFieldConfig): SetFieldConfigOp
         .addRadio({
           path: 'point',
           name: 'Points',
-          category: categoryStyles,
           defaultValue: cfg.point,
           settings: {
             options: graphFieldOptions.showPoints,
@@ -41,8 +39,7 @@ export function getScatterFieldConfig(cfg: ScatterFieldConfig): SetFieldConfigOp
         })
         .addSliderInput({
           path: 'pointSize.fixed',
-          name: 'Point size',
-          category: categoryStyles,
+          name: 'Size',
           defaultValue: cfg.pointSize?.fixed,
           settings: {
             min: 1,
@@ -54,7 +51,6 @@ export function getScatterFieldConfig(cfg: ScatterFieldConfig): SetFieldConfigOp
         .addRadio({
           path: 'line',
           name: 'Lines',
-          category: categoryStyles,
           defaultValue: cfg.line,
           settings: {
             options: [
@@ -67,7 +63,6 @@ export function getScatterFieldConfig(cfg: ScatterFieldConfig): SetFieldConfigOp
           id: 'lineStyle',
           path: 'lineStyle',
           name: 'Line style',
-          category: categoryStyles,
           showIf: (c) => c.line !== ScatterLineMode.None,
           editor: LineStyleEditor,
           override: LineStyleEditor,
@@ -77,7 +72,6 @@ export function getScatterFieldConfig(cfg: ScatterFieldConfig): SetFieldConfigOp
         .addSliderInput({
           path: 'lineWidth',
           name: 'Line width',
-          category: categoryStyles,
           defaultValue: cfg.lineWidth,
           settings: {
             min: 0,

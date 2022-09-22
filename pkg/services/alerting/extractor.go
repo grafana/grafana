@@ -22,18 +22,20 @@ type DashAlertExtractor interface {
 type DashAlertExtractorService struct {
 	datasourcePermissionsService permissions.DatasourcePermissionsService
 	datasourceService            datasources.DataSourceService
+	alertStore                   AlertStore
 	log                          log.Logger
 }
 
-func ProvideDashAlertExtractorService(datasourcePermissionsService permissions.DatasourcePermissionsService, datasourceService datasources.DataSourceService) *DashAlertExtractorService {
+func ProvideDashAlertExtractorService(datasourcePermissionsService permissions.DatasourcePermissionsService, datasourceService datasources.DataSourceService, store AlertStore) *DashAlertExtractorService {
 	return &DashAlertExtractorService{
 		datasourcePermissionsService: datasourcePermissionsService,
 		datasourceService:            datasourceService,
+		alertStore:                   store,
 		log:                          log.New("alerting.extractor"),
 	}
 }
 
-func (e *DashAlertExtractorService) lookupQueryDataSource(ctx context.Context, panel *simplejson.Json, panelQuery *simplejson.Json, orgID int64) (*models.DataSource, error) {
+func (e *DashAlertExtractorService) lookupQueryDataSource(ctx context.Context, panel *simplejson.Json, panelQuery *simplejson.Json, orgID int64) (*datasources.DataSource, error) {
 	dsName := ""
 	dsUid := ""
 
@@ -50,14 +52,14 @@ func (e *DashAlertExtractorService) lookupQueryDataSource(ctx context.Context, p
 	}
 
 	if dsName == "" && dsUid == "" {
-		query := &models.GetDefaultDataSourceQuery{OrgId: orgID}
+		query := &datasources.GetDefaultDataSourceQuery{OrgId: orgID}
 		if err := e.datasourceService.GetDefaultDataSource(ctx, query); err != nil {
 			return nil, err
 		}
 		return query.Result, nil
 	}
 
-	query := &models.GetDataSourceQuery{Name: dsName, Uid: dsUid, OrgId: orgID}
+	query := &datasources.GetDataSourceQuery{Name: dsName, Uid: dsUid, OrgId: orgID}
 	if err := e.datasourceService.GetDataSource(ctx, query); err != nil {
 		return nil, err
 	}
@@ -206,9 +208,9 @@ func (e *DashAlertExtractorService) getAlertFromPanels(ctx context.Context, json
 				return nil, err
 			}
 
-			dsFilterQuery := models.DatasourcesPermissionFilterQuery{
+			dsFilterQuery := datasources.DatasourcesPermissionFilterQuery{
 				User:        dashAlertInfo.User,
-				Datasources: []*models.DataSource{datasource},
+				Datasources: []*datasources.DataSource{datasource},
 			}
 
 			if err := e.datasourcePermissionsService.FilterDatasourcesBasedOnQueryPermissions(ctx, &dsFilterQuery); err != nil {
@@ -216,7 +218,7 @@ func (e *DashAlertExtractorService) getAlertFromPanels(ctx context.Context, json
 					return nil, err
 				}
 			} else if len(dsFilterQuery.Result) == 0 {
-				return nil, models.ErrDataSourceAccessDenied
+				return nil, datasources.ErrDataSourceAccessDenied
 			}
 
 			jsonQuery.SetPath([]string{"datasourceId"}, datasource.Id)
@@ -231,7 +233,7 @@ func (e *DashAlertExtractorService) getAlertFromPanels(ctx context.Context, json
 		alert.Settings = jsonAlert
 
 		// validate
-		_, err = NewRuleFromDBAlert(ctx, alert, logTranslationFailures)
+		_, err = NewRuleFromDBAlert(ctx, e.alertStore, alert, logTranslationFailures)
 		if err != nil {
 			return nil, err
 		}

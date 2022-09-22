@@ -1,40 +1,43 @@
-import React from 'react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { noop } from 'lodash';
-import { shallow } from 'enzyme';
+import React from 'react';
+
 import { SecondaryActions } from './SecondaryActions';
 
-const addQueryRowButtonSelector = '[aria-label="Add row button"]';
-const richHistoryButtonSelector = '[aria-label="Rich history button"]';
-const queryInspectorButtonSelector = '[aria-label="Query inspector button"]';
-
 describe('SecondaryActions', () => {
-  it('should render component two buttons', () => {
-    const wrapper = shallow(
+  it('should render component with three buttons', () => {
+    render(
       <SecondaryActions
         onClickAddQueryRowButton={noop}
         onClickRichHistoryButton={noop}
         onClickQueryInspectorButton={noop}
       />
     );
-    expect(wrapper.find(addQueryRowButtonSelector)).toHaveLength(1);
-    expect(wrapper.find(richHistoryButtonSelector)).toHaveLength(1);
+
+    expect(screen.getByRole('button', { name: /Add row button/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Rich history button/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Query inspector button/i })).toBeInTheDocument();
   });
 
-  it('should not render add row button if addQueryRowButtonHidden=true', () => {
-    const wrapper = shallow(
+  it('should not render hidden elements', () => {
+    render(
       <SecondaryActions
         addQueryRowButtonHidden={true}
+        richHistoryRowButtonHidden={true}
         onClickAddQueryRowButton={noop}
         onClickRichHistoryButton={noop}
         onClickQueryInspectorButton={noop}
       />
     );
-    expect(wrapper.find(addQueryRowButtonSelector)).toHaveLength(0);
-    expect(wrapper.find(richHistoryButtonSelector)).toHaveLength(1);
+
+    expect(screen.queryByRole('button', { name: /Add row button/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Rich history button/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Query inspector button/i })).toBeInTheDocument();
   });
 
   it('should disable add row button if addQueryRowButtonDisabled=true', () => {
-    const wrapper = shallow(
+    render(
       <SecondaryActions
         addQueryRowButtonDisabled={true}
         onClickAddQueryRowButton={noop}
@@ -42,14 +45,20 @@ describe('SecondaryActions', () => {
         onClickQueryInspectorButton={noop}
       />
     );
-    expect(wrapper.find(addQueryRowButtonSelector).props().disabled).toBe(true);
+
+    expect(screen.getByRole('button', { name: /Add row button/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /Rich history button/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Query inspector button/i })).toBeInTheDocument();
   });
 
-  it('should map click handlers correctly', () => {
+  it('should map click handlers correctly', async () => {
+    const user = userEvent.setup();
+
     const onClickAddRow = jest.fn();
     const onClickHistory = jest.fn();
     const onClickQueryInspector = jest.fn();
-    const wrapper = shallow(
+
+    render(
       <SecondaryActions
         onClickAddQueryRowButton={onClickAddRow}
         onClickRichHistoryButton={onClickHistory}
@@ -57,13 +66,13 @@ describe('SecondaryActions', () => {
       />
     );
 
-    wrapper.find(addQueryRowButtonSelector).simulate('click');
-    expect(onClickAddRow).toBeCalled();
+    await user.click(screen.getByRole('button', { name: /Add row button/i }));
+    expect(onClickAddRow).toBeCalledTimes(1);
 
-    wrapper.find(richHistoryButtonSelector).simulate('click');
-    expect(onClickHistory).toBeCalled();
+    await user.click(screen.getByRole('button', { name: /Rich history button/i }));
+    expect(onClickHistory).toBeCalledTimes(1);
 
-    wrapper.find(queryInspectorButtonSelector).simulate('click');
-    expect(onClickQueryInspector).toBeCalled();
+    await user.click(screen.getByRole('button', { name: /Query inspector button/i }));
+    expect(onClickQueryInspector).toBeCalledTimes(1);
   });
 });

@@ -1,8 +1,10 @@
-import React from 'react';
-import { GrafanaTheme2, GraphSeriesValue } from '@grafana/data';
 import { css, cx } from '@emotion/css';
-import { SeriesIcon } from '../VizLegend/SeriesIcon';
+import React from 'react';
+
+import { GrafanaTheme2, GraphSeriesValue } from '@grafana/data';
+
 import { useStyles2 } from '../../themes';
+import { SeriesIcon } from '../VizLegend/SeriesIcon';
 
 /**
  * @public
@@ -54,7 +56,7 @@ export const SeriesTableRow: React.FC<SeriesTableRowProps> = ({ color, label, va
   const styles = useStyles2(getSeriesTableRowStyles);
 
   return (
-    <div className={cx(styles.seriesTableRow, isActive && styles.activeSeries)}>
+    <div data-testid="SeriesTableRow" className={cx(styles.seriesTableRow, isActive && styles.activeSeries)}>
       {color && (
         <div className={styles.seriesTableCell}>
           <SeriesIcon color={color} className={styles.icon} />

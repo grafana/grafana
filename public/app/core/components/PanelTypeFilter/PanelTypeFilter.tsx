@@ -1,8 +1,9 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import { GrafanaTheme2, PanelPluginMeta, SelectableValue } from '@grafana/data';
-import { getAllPanelPluginMeta } from 'app/features/panel/state/util';
-import { Icon, Button, MultiSelect, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
+import React, { useCallback, useMemo, useState } from 'react';
+
+import { GrafanaTheme2, PanelPluginMeta, SelectableValue } from '@grafana/data';
+import { Icon, Button, MultiSelect, useStyles2 } from '@grafana/ui';
+import { getAllPanelPluginMeta } from 'app/features/panel/state/util';
 
 export interface Props {
   onChange: (plugins: PanelPluginMeta[]) => void;
@@ -10,9 +11,7 @@ export interface Props {
 }
 
 export const PanelTypeFilter = ({ onChange: propsOnChange, maxMenuHeight }: Props): JSX.Element => {
-  const plugins = useMemo<PanelPluginMeta[]>(() => {
-    return getAllPanelPluginMeta();
-  }, []);
+  const plugins = useMemo<PanelPluginMeta[]>(() => getAllPanelPluginMeta(), []);
   const options = useMemo(
     () =>
       plugins
@@ -23,12 +22,7 @@ export const PanelTypeFilter = ({ onChange: propsOnChange, maxMenuHeight }: Prop
   const [value, setValue] = useState<Array<SelectableValue<PanelPluginMeta>>>([]);
   const onChange = useCallback(
     (plugins: Array<SelectableValue<PanelPluginMeta>>) => {
-      const changedPlugins = [];
-      for (const plugin of plugins) {
-        if (plugin.value) {
-          changedPlugins.push(plugin.value);
-        }
-      }
+      const changedPlugins = plugins.filter((p) => p.value).map((p) => p.value!);
       propsOnChange(changedPlugins);
       setValue(plugins);
     },
@@ -54,7 +48,7 @@ export const PanelTypeFilter = ({ onChange: propsOnChange, maxMenuHeight }: Prop
         <Button
           size="xs"
           icon="trash-alt"
-          variant="link"
+          fill="text"
           className={styles.clear}
           onClick={() => onChange([])}
           aria-label="Clear types"
@@ -62,7 +56,7 @@ export const PanelTypeFilter = ({ onChange: propsOnChange, maxMenuHeight }: Prop
           Clear types
         </Button>
       )}
-      <MultiSelect menuShouldPortal {...selectOptions} prefix={<Icon name="filter" />} aria-label="Panel Type filter" />
+      <MultiSelect {...selectOptions} prefix={<Icon name="filter" />} aria-label="Panel Type filter" />
     </div>
   );
 };

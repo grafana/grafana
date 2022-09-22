@@ -1,10 +1,13 @@
 import { configureStore as reduxConfigureStore } from '@reduxjs/toolkit';
-import { setStore } from './store';
+
+import { publicDashboardApi } from 'app/features/dashboard/api/publicDashboardApi';
 import { StoreState } from 'app/types/store';
-import { addReducer, createRootReducer } from '../core/reducers/root';
+
 import { buildInitialState } from '../core/reducers/navModel';
-import { ThunkMiddlewareFor } from '@reduxjs/toolkit/src/getDefaultMiddleware';
-import { AnyAction } from 'redux';
+import { addReducer, createRootReducer } from '../core/reducers/root';
+import { alertingApi } from '../features/alerting/unified/api/alertingApi';
+
+import { setStore } from './store';
 
 export function addRootReducer(reducers: any) {
   // this is ok now because we add reducers before configureStore is called
@@ -14,14 +17,13 @@ export function addRootReducer(reducers: any) {
 }
 
 export function configureStore(initialState?: Partial<StoreState>) {
-  const store = reduxConfigureStore<
-    StoreState,
-    AnyAction,
-    ReadonlyArray<ThunkMiddlewareFor<StoreState, { thunk: true }>>
-  >({
+  const store = reduxConfigureStore({
     reducer: createRootReducer(),
     middleware: (getDefaultMiddleware) =>
-      getDefaultMiddleware({ thunk: true, serializableCheck: false, immutableCheck: false }),
+      getDefaultMiddleware({ thunk: true, serializableCheck: false, immutableCheck: false }).concat(
+        alertingApi.middleware,
+        publicDashboardApi.middleware
+      ),
     devTools: process.env.NODE_ENV !== 'production',
     preloadedState: {
       navIndex: buildInitialState(),
@@ -32,6 +34,9 @@ export function configureStore(initialState?: Partial<StoreState>) {
   setStore(store);
   return store;
 }
+
+export type RootState = ReturnType<ReturnType<typeof configureStore>['getState']>;
+export type AppDispatch = ReturnType<typeof configureStore>['dispatch'];
 
 /*
 function getActionsToIgnoreSerializableCheckOn() {

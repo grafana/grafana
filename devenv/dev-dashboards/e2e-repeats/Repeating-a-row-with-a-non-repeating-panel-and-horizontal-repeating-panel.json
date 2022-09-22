@@ -3,7 +3,10 @@
     "list": [
       {
         "builtIn": 1,
-        "datasource": "-- Grafana --",
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
@@ -21,12 +24,16 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "iteration": 1640181157128,
+  "id": 85,
   "links": [],
   "liveNow": false,
   "panels": [
     {
       "collapsed": false,
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -36,7 +43,7 @@
       "id": 2,
       "panels": [],
       "repeat": "row",
-      "title": "Row title $row",
+      "title": "Row $row",
       "type": "row"
     },
     {
@@ -111,7 +118,7 @@
           "sort": "none"
         }
       },
-      "title": "Panel Title",
+      "title": "Row $row non-repeating panel",
       "type": "timeseries"
     },
     {
@@ -188,11 +195,11 @@
       },
       "repeat": "horizontal",
       "repeatDirection": "h",
-      "title": "Horizontal repeating $horizontal",
+      "title": "Row $row repeating panel $horizontal",
       "type": "timeseries"
     }
   ],
-  "schemaVersion": 34,
+  "schemaVersion": 36,
   "style": "dark",
   "tags": [],
   "templating": {
@@ -330,6 +337,6 @@
   "timezone": "utc",
   "title": "Repeating a row with a non-repeating panel and horizontal repeating panel",
   "uid": "k3PEoCpnk",
-  "version": 3,
+  "version": 1,
   "weekStart": ""
 }

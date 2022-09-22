@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React from 'react';
 import { css } from '@emotion/css';
+import React from 'react';
+
 import { useStyles2 } from '@grafana/ui';
 
 import { formatDuration } from '../../utils/date';
@@ -49,7 +50,7 @@ export default function TickLabels(props: TickLabelsProps) {
     const portion = i / numTicks;
     const style = portion === 1 ? { right: '0%' } : { left: `${portion * 100}%` };
     ticks.push(
-      <div key={portion} className={styles.TickLabelsLabel} style={style} data-test="tick">
+      <div key={portion} className={styles.TickLabelsLabel} style={style} data-testid="tick">
         {formatDuration(duration * portion)}
       </div>
     );

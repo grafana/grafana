@@ -1,10 +1,13 @@
+import { ComponentMeta } from '@storybook/react';
 import React from 'react';
-import { InlineFieldRow } from './InlineFieldRow';
-import mdx from './InlineFieldRow.mdx';
-import { InlineField } from './InlineField';
+
 import { Input } from '../Input/Input';
 
-export default {
+import { InlineField } from './InlineField';
+import { InlineFieldRow } from './InlineFieldRow';
+import mdx from './InlineFieldRow.mdx';
+
+const meta: ComponentMeta<typeof InlineFieldRow> = {
   title: 'Forms/InlineFieldRow',
   component: InlineFieldRow,
   parameters: {
@@ -39,3 +42,5 @@ export const single = () => {
     </div>
   );
 };
+
+export default meta;

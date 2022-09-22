@@ -1,18 +1,21 @@
-import React, { useEffect, useState, useMemo } from 'react';
 import { css } from '@emotion/css';
+import React, { useEffect, useState, useMemo } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Button, ConfirmModal, TextArea, HorizontalGroup, Field, Form, useStyles2 } from '@grafana/ui';
+import { useDispatch } from 'app/types';
+
 import { useAlertManagerSourceName } from '../../hooks/useAlertManagerSourceName';
-import { AlertManagerPicker } from '../AlertManagerPicker';
-import { GRAFANA_RULES_SOURCE_NAME, isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
-import { useDispatch } from 'react-redux';
+import { useAlertManagersByPermission } from '../../hooks/useAlertManagerSources';
+import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import {
   deleteAlertManagerConfigAction,
   fetchAlertManagerConfigAction,
   updateAlertManagerConfigAction,
 } from '../../state/actions';
-import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
+import { GRAFANA_RULES_SOURCE_NAME, isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
 import { initialAsyncRequestState } from '../../utils/redux';
+import { AlertManagerPicker } from '../AlertManagerPicker';
 
 interface FormValues {
   configJSON: string;
@@ -20,7 +23,9 @@ interface FormValues {
 
 export default function AlertmanagerConfig(): JSX.Element {
   const dispatch = useDispatch();
-  const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName();
+  const alertManagers = useAlertManagersByPermission('notification');
+  const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName(alertManagers);
+
   const [showConfirmDeleteAMConfig, setShowConfirmDeleteAMConfig] = useState(false);
   const { loading: isDeleting } = useUnifiedAlertingSelector((state) => state.deleteAMConfig);
   const { loading: isSaving } = useUnifiedAlertingSelector((state) => state.saveAMConfig);
@@ -73,7 +78,11 @@ export default function AlertmanagerConfig(): JSX.Element {
 
   return (
     <div className={styles.container}>
-      <AlertManagerPicker current={alertManagerSourceName} onChange={setAlertManagerSourceName} />
+      <AlertManagerPicker
+        current={alertManagerSourceName}
+        onChange={setAlertManagerSourceName}
+        dataSources={alertManagers}
+      />
       {loadingError && !loading && (
         <Alert severity="error" title="Error loading Alertmanager configuration">
           {loadingError.message || 'Unknown error.'}
@@ -103,7 +112,7 @@ export default function AlertmanagerConfig(): JSX.Element {
                           JSON.parse(v);
                           return true;
                         } catch (e) {
-                          return e.message;
+                          return e instanceof Error ? e.message : 'Invalid JSON.';
                         }
                       },
                     })}

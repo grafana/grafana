@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import * as spanSelectors from './span';
 import traceGenerator from '../demo/trace-generators';
+
+import * as spanSelectors from './span';
 
 const generatedTrace = traceGenerator.trace({ numberOfSpans: 45 });
 

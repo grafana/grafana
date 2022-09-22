@@ -18,6 +18,8 @@ import (
 func TestVictoropsNotifier(t *testing.T) {
 	tmpl := templateForTests(t)
 
+	images := newFakeImageStore(2)
+
 	externalURL, err := url.Parse("http://localhost")
 	require.NoError(t, err)
 	tmpl.ExternalURL = externalURL
@@ -31,13 +33,13 @@ func TestVictoropsNotifier(t *testing.T) {
 		expMsgError  error
 	}{
 		{
-			name:     "One alert",
+			name:     "A single alert with image",
 			settings: `{"url": "http://localhost"}`,
 			alerts: []*types.Alert{
 				{
 					Alert: model.Alert{
 						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
-						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh", "__alertImageToken__": "test-image-1"},
 					},
 				},
 			},
@@ -45,14 +47,41 @@ func TestVictoropsNotifier(t *testing.T) {
 				"alert_url":           "http://localhost/alerting/list",
 				"entity_display_name": "[FIRING:1]  (val1)",
 				"entity_id":           "6e3538104c14b583da237e9693b76debbc17f0f8058ef20492e5853096cf8733",
+				"image_url":           "https://www.example.com/test-image-1.jpg",
 				"message_type":        "CRITICAL",
 				"monitoring_tool":     "Grafana v" + setting.BuildVersion,
 				"state_message":       "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
 			},
 			expMsgError: nil,
 		}, {
-			name:     "Multiple alerts",
+			name:     "Multiple alerts with images",
 			settings: `{"url": "http://localhost"}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__alertImageToken__": "test-image-1"},
+					},
+				}, {
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val2"},
+						Annotations: model.LabelSet{"ann1": "annv2", "__alertImageToken__": "test-image-2"},
+					},
+				},
+			},
+			expMsg: map[string]interface{}{
+				"alert_url":           "http://localhost/alerting/list",
+				"entity_display_name": "[FIRING:2]  ",
+				"entity_id":           "6e3538104c14b583da237e9693b76debbc17f0f8058ef20492e5853096cf8733",
+				"image_url":           "https://www.example.com/test-image-1.jpg",
+				"message_type":        "CRITICAL",
+				"monitoring_tool":     "Grafana v" + setting.BuildVersion,
+				"state_message":       "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val2\nAnnotations:\n - ann1 = annv2\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval2\n",
+			},
+			expMsgError: nil,
+		}, {
+			name:     "Custom message",
+			settings: `{"url": "http://localhost", "messageType": "Alerts firing: {{ len .Alerts.Firing }}"}`,
 			alerts: []*types.Alert{
 				{
 					Alert: model.Alert{
@@ -70,9 +99,59 @@ func TestVictoropsNotifier(t *testing.T) {
 				"alert_url":           "http://localhost/alerting/list",
 				"entity_display_name": "[FIRING:2]  ",
 				"entity_id":           "6e3538104c14b583da237e9693b76debbc17f0f8058ef20492e5853096cf8733",
-				"message_type":        "CRITICAL",
+				"message_type":        "ALERTS FIRING: 2",
 				"monitoring_tool":     "Grafana v" + setting.BuildVersion,
 				"state_message":       "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val2\nAnnotations:\n - ann1 = annv2\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval2\n",
+			},
+			expMsgError: nil,
+		}, {
+			name:     "Missing field in template",
+			settings: `{"url": "http://localhost", "messageType": "custom template {{ .NotAField }} bad template"}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1"},
+					},
+				}, {
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val2"},
+						Annotations: model.LabelSet{"ann1": "annv2"},
+					},
+				},
+			},
+			expMsg: map[string]interface{}{
+				"alert_url":           "http://localhost/alerting/list",
+				"entity_display_name": "",
+				"entity_id":           "6e3538104c14b583da237e9693b76debbc17f0f8058ef20492e5853096cf8733",
+				"message_type":        "CUSTOM TEMPLATE ",
+				"monitoring_tool":     "Grafana v" + setting.BuildVersion,
+				"state_message":       "",
+			},
+			expMsgError: nil,
+		}, {
+			name:     "Invalid template",
+			settings: `{"url": "http://localhost", "messageType": "custom template {{ {.NotAField }} bad template"}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1"},
+					},
+				}, {
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val2"},
+						Annotations: model.LabelSet{"ann1": "annv2"},
+					},
+				},
+			},
+			expMsg: map[string]interface{}{
+				"alert_url":           "http://localhost/alerting/list",
+				"entity_display_name": "",
+				"entity_id":           "6e3538104c14b583da237e9693b76debbc17f0f8058ef20492e5853096cf8733",
+				"message_type":        "CRITICAL",
+				"monitoring_tool":     "Grafana v" + setting.BuildVersion,
+				"state_message":       "",
 			},
 			expMsgError: nil,
 		}, {
@@ -104,7 +183,7 @@ func TestVictoropsNotifier(t *testing.T) {
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
-			pn := NewVictoropsNotifier(cfg, webhookSender, tmpl)
+			pn := NewVictoropsNotifier(cfg, images, webhookSender, tmpl)
 			ok, err := pn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.False(t, ok)
@@ -114,6 +193,8 @@ func TestVictoropsNotifier(t *testing.T) {
 			}
 			require.NoError(t, err)
 			require.True(t, ok)
+
+			require.NotEmpty(t, webhookSender.Webhook.Url)
 
 			// Remove the non-constant timestamp
 			j, err := simplejson.NewJson([]byte(webhookSender.Webhook.Body))

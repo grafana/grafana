@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
-import { config } from 'app/core/config';
+
 import { stylesFactory } from '@grafana/ui';
+import { config } from 'app/core/config';
 
 export const getPanelInspectorStyles = stylesFactory(() => {
   return {
@@ -25,6 +26,7 @@ export const getPanelInspectorStyles = stylesFactory(() => {
     content: css`
       flex-grow: 1;
       height: 100%;
+      overflow: scroll;
     `,
     editor: css`
       font-family: monospace;

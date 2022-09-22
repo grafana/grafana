@@ -1,6 +1,7 @@
 import EventEmitter from 'eventemitter3';
 import { Unsubscribable, Observable } from 'rxjs';
 import { filter } from 'rxjs/operators';
+
 import {
   EventBus,
   LegacyEmitter,

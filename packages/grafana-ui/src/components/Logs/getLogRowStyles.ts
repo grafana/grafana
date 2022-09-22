@@ -1,10 +1,13 @@
 import { css } from '@emotion/css';
-import { GrafanaTheme2, LogLevel } from '@grafana/data';
-import { styleMixins, stylesFactory } from '../../themes';
 
-export const getLogRowStyles = stylesFactory((theme: GrafanaTheme2, logLevel?: LogLevel) => {
+import { GrafanaTheme2, LogLevel } from '@grafana/data';
+
+import { styleMixins } from '../../themes';
+
+/** @deprecated will be removed in the next major version */
+export const getLogRowStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
   let logColor = theme.isLight ? theme.v1.palette.gray5 : theme.v1.palette.gray2;
-  const hoverBgColor = styleMixins.hoverColor(theme.colors.background.primary, theme);
+  const hoverBgColor = styleMixins.hoverColor(theme.colors.background.secondary, theme);
 
   switch (logLevel) {
     case LogLevel.crit:
@@ -35,13 +38,8 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme2, logLevel?: L
       label: logs-row__match-highlight;
       background: inherit;
       padding: inherit;
-      color: ${theme.colors.warning.main};
-      background-color: rgba(${theme.colors.warning.main}, 0.1);
-    `,
-    logsRowMatchHighLightPreview: css`
-      label: logs-row__match-highlight--preview;
-      background-color: rgba(${theme.colors.warning.main}, 0.2);
-      border-bottom-style: dotted;
+      color: ${theme.components.textHighlight.text}
+      background-color: ${theme.components.textHighlight};
     `,
     logsRowsTable: css`
       label: logs-rows;
@@ -78,9 +76,10 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme2, logLevel?: L
       }
 
       > td {
+        position: relative;
         padding-right: ${theme.spacing(1)};
-        border-top: ${theme.v1.border.width.sm} solid transparent;
-        border-bottom: ${theme.v1.border.width.sm} solid transparent;
+        border-top: 1px solid transparent;
+        border-bottom: 1px solid transparent;
         height: 100%;
       }
 
@@ -96,7 +95,6 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme2, logLevel?: L
     `,
     logsRowLevel: css`
       label: logs-row__level;
-      position: relative;
       max-width: 10px;
       cursor: default;
       &::after {
@@ -115,7 +113,6 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme2, logLevel?: L
     `,
     logsRowToggleDetails: css`
       label: logs-row-toggle-details__level;
-      position: relative;
       font-size: 9px;
       padding-top: 5px;
       max-width: 15px;
@@ -128,6 +125,11 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme2, logLevel?: L
       label: logs-row__labels;
       white-space: nowrap;
       max-width: 22em;
+
+      /* This is to make the labels vertical align */
+      > span {
+        margin-top: 0.75px;
+      }
     `,
     logsRowMessage: css`
       label: logs-row__message;
@@ -181,4 +183,4 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme2, logLevel?: L
       }
     `,
   };
-});
+};

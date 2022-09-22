@@ -16,7 +16,6 @@ import (
 	"github.com/lib/pq"
 	"github.com/mattn/go-sqlite3"
 	"github.com/prometheus/client_golang/prometheus"
-	cw "github.com/weaveworks/common/tracing"
 	"xorm.io/core"
 )
 
@@ -83,7 +82,7 @@ func (h *databaseQueryWrapper) instrument(ctx context.Context, status string, qu
 	elapsed := time.Since(begin)
 
 	histogram := databaseQueryHistogram.WithLabelValues(status)
-	if traceID, ok := cw.ExtractSampledTraceID(ctx); ok {
+	if traceID := tracing.TraceIDFromContext(ctx, true); traceID != "" {
 		// Need to type-convert the Observer to an
 		// ExemplarObserver. This will always work for a
 		// HistogramVec.
@@ -94,6 +93,8 @@ func (h *databaseQueryWrapper) instrument(ctx context.Context, status string, qu
 		histogram.Observe(elapsed.Seconds())
 	}
 
+	ctx = log.IncDBCallCounter(ctx)
+
 	_, span := h.tracer.Start(ctx, "database query")
 	defer span.End()
 
@@ -103,14 +104,23 @@ func (h *databaseQueryWrapper) instrument(ctx context.Context, status string, qu
 		span.AddEvents([]string{"error"}, []tracing.EventValue{{Str: err.Error()}})
 	}
 
-	h.log.Debug("query finished", "status", status, "elapsed time", elapsed, "sql", query, "error", err)
+	ctxLogger := h.log.FromContext(ctx)
+	ctxLogger.Debug("query finished", "status", status, "elapsed time", elapsed, "sql", query, "error", err)
 }
 
 // OnError will be called if any error happens
 func (h *databaseQueryWrapper) OnError(ctx context.Context, err error, query string, args ...interface{}) error {
-	status := "error"
+	// Not a user error: driver is telling sql package that an
+	// optional interface method is not implemented. There is
+	// nothing to instrument here.
 	// https://golang.org/pkg/database/sql/driver/#ErrSkip
-	if err == nil || errors.Is(err, driver.ErrSkip) {
+	// https://github.com/DataDog/dd-trace-go/issues/270
+	if errors.Is(err, driver.ErrSkip) {
+		return nil
+	}
+
+	status := "error"
+	if err == nil {
 		status = "success"
 	}
 

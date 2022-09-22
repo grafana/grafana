@@ -7,14 +7,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/mail"
 	"regexp"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"golang.org/x/oauth2"
 )
 
@@ -27,8 +26,6 @@ type SocialGenericOAuth struct {
 	emailAttributePath   string
 	loginAttributePath   string
 	nameAttributePath    string
-	roleAttributePath    string
-	roleAttributeStrict  bool
 	groupsAttributePath  string
 	idTokenAttributeName string
 	teamIdsAttributePath string
@@ -147,12 +144,14 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 		}
 
 		if userInfo.Role == "" {
-			role, err := s.extractRole(data)
-			if err != nil {
-				s.log.Warn("Failed to extract role", "error", err)
-			} else if role != "" {
+			role, grafanaAdmin := s.extractRoleAndAdmin(data.rawJSON, []string{}, true)
+			if role != "" {
 				s.log.Debug("Setting user info role from extracted role")
+
 				userInfo.Role = role
+				if s.allowAssignGrafanaAdmin {
+					userInfo.IsGrafanaAdmin = &grafanaAdmin
+				}
 			}
 		}
 
@@ -167,6 +166,10 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 		}
 	}
 
+	if s.roleAttributeStrict && !userInfo.Role.IsValid() {
+		return nil, ErrInvalidBasicRole
+	}
+
 	if userInfo.Email == "" {
 		var err error
 		userInfo.Email, err = s.FetchPrivateEmail(client)
@@ -179,10 +182,6 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 	if userInfo.Login == "" {
 		s.log.Debug("Defaulting to using email for user info login", "email", userInfo.Email)
 		userInfo.Login = userInfo.Email
-	}
-
-	if s.roleAttributeStrict && !models.RoleType(userInfo.Role).IsValid() {
-		return nil, errors.New("invalid role")
 	}
 
 	if !s.IsTeamMember(client) {
@@ -259,7 +258,7 @@ func (s *SocialGenericOAuth) extractFromToken(token *oauth2.Token) *UserInfoJson
 				s.log.Warn("Failed closing zlib reader", "error", err)
 			}
 		}()
-		rawJSON, err = ioutil.ReadAll(fr)
+		rawJSON, err = io.ReadAll(fr)
 		if err != nil {
 			s.log.Error("Error decompressing payload", "error", err)
 			return nil
@@ -355,19 +354,6 @@ func (s *SocialGenericOAuth) extractUserName(data *UserInfoJson) string {
 	return ""
 }
 
-func (s *SocialGenericOAuth) extractRole(data *UserInfoJson) (string, error) {
-	if s.roleAttributePath == "" {
-		return "", nil
-	}
-
-	role, err := s.searchJSONForStringAttr(s.roleAttributePath, data.rawJSON)
-
-	if err != nil {
-		return "", err
-	}
-	return role, nil
-}
-
 func (s *SocialGenericOAuth) extractGroups(data *UserInfoJson) ([]string, error) {
 	if s.groupsAttributePath == "" {
 		return []string{}, nil
@@ -388,7 +374,7 @@ func (s *SocialGenericOAuth) FetchPrivateEmail(client *http.Client) (string, err
 	response, err := s.httpGet(client, fmt.Sprintf(s.apiUrl+"/emails"))
 	if err != nil {
 		s.log.Error("Error getting email address", "url", s.apiUrl+"/emails", "error", err)
-		return "", errutil.Wrap("Error getting email address", err)
+		return "", fmt.Errorf("%v: %w", "Error getting email address", err)
 	}
 
 	var records []Record
@@ -402,7 +388,7 @@ func (s *SocialGenericOAuth) FetchPrivateEmail(client *http.Client) (string, err
 		err = json.Unmarshal(response.Body, &data)
 		if err != nil {
 			s.log.Error("Error decoding email addresses response", "raw_json", string(response.Body), "error", err)
-			return "", errutil.Wrap("Error decoding email addresses response", err)
+			return "", fmt.Errorf("%v: %w", "Error decoding email addresses response", err)
 		}
 
 		records = data.Values

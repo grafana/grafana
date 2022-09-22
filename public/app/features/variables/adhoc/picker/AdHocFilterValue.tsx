@@ -1,7 +1,9 @@
 import React, { FC } from 'react';
-import { SegmentAsync } from '@grafana/ui';
-import { getDatasourceSrv } from '../../../plugins/datasource_srv';
+
 import { DataSourceRef, MetricFindValue, SelectableValue } from '@grafana/data';
+import { SegmentAsync } from '@grafana/ui';
+
+import { getDatasourceSrv } from '../../../plugins/datasource_srv';
 
 interface Props {
   datasource: DataSourceRef;
@@ -9,15 +11,24 @@ interface Props {
   filterValue?: string;
   onChange: (item: SelectableValue<string>) => void;
   placeHolder?: string;
+  disabled?: boolean;
 }
 
-export const AdHocFilterValue: FC<Props> = ({ datasource, onChange, filterKey, filterValue, placeHolder }) => {
+export const AdHocFilterValue: FC<Props> = ({
+  datasource,
+  disabled,
+  onChange,
+  filterKey,
+  filterValue,
+  placeHolder,
+}) => {
   const loadValues = () => fetchFilterValues(datasource, filterKey);
 
   return (
     <div className="gf-form" data-testid="AdHocFilterValue-value-wrapper">
       <SegmentAsync
         className="query-segment-value"
+        disabled={disabled}
         placeholder={placeHolder}
         value={filterValue}
         onChange={onChange}

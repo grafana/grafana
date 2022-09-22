@@ -1,5 +1,6 @@
-import { sharedSingleStatMigrationHandler, sharedSingleStatPanelChangedHandler } from './SingleStatBaseOptions';
 import { PanelModel } from '@grafana/data';
+
+import { sharedSingleStatMigrationHandler, sharedSingleStatPanelChangedHandler } from './SingleStatBaseOptions';
 
 describe('sharedSingleStatMigrationHandler', () => {
   it('from old valueOptions model without pluginVersion', () => {
@@ -180,7 +181,7 @@ describe('sharedSingleStatMigrationHandler', () => {
   });
 
   it('change from angular singlestat with no enabled gauge', () => {
-    const old: any = {
+    const old = {
       angular: {
         format: 'ms',
         decimals: 7,
@@ -199,7 +200,7 @@ describe('sharedSingleStatMigrationHandler', () => {
   });
 
   it('change from angular singlestat with tableColumn set', () => {
-    const old: any = {
+    const old = {
       angular: {
         tableColumn: 'info',
       },
@@ -211,7 +212,7 @@ describe('sharedSingleStatMigrationHandler', () => {
   });
 
   it('change from angular singlestat with no enabled gauge', () => {
-    const old: any = {
+    const old = {
       angular: {
         format: 'ms',
         decimals: 7,

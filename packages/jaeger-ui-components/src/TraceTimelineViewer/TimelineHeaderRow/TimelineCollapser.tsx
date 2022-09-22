@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { IconButton, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
 import React from 'react';
+
+import { IconButton, useStyles2 } from '@grafana/ui';
 
 const getStyles = () => {
   return {
@@ -39,7 +40,7 @@ export function TimelineCollapser(props: CollapserProps) {
   const { onExpandAll, onExpandOne, onCollapseAll, onCollapseOne } = props;
   const styles = useStyles2(getStyles);
   return (
-    <div className={styles.TimelineCollapser} data-test-id="TimelineCollapser">
+    <div className={styles.TimelineCollapser} data-testid="TimelineCollapser">
       <IconButton tooltip="Expand +1" size="xl" tooltipPlacement="top" name="angle-down" onClick={onExpandOne} />
       <IconButton tooltip="Collapse +1" size="xl" tooltipPlacement="top" name="angle-right" onClick={onCollapseOne} />
       <IconButton

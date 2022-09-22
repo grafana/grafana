@@ -1,14 +1,16 @@
 import { from, of, OperatorFunction } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
-import { QueryVariableModel } from '../types';
+import { FieldType, getFieldDisplayName, isDataFrame, MetricFindValue, PanelData } from '@grafana/data';
+import { getProcessedDataFrames } from 'app/features/query/state/runRequest';
+
 import { ThunkDispatch } from '../../../types';
 import { validateVariableSelectionState } from '../state/actions';
-import { FieldType, getFieldDisplayName, isDataFrame, MetricFindValue, PanelData } from '@grafana/data';
-import { updateVariableOptions } from './reducer';
-import { getTemplatedRegex, toKeyedVariableIdentifier, toVariablePayload } from '../utils';
-import { getProcessedDataFrames } from 'app/features/query/state/runRequest';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
+import { QueryVariableModel } from '../types';
+import { getTemplatedRegex, toKeyedVariableIdentifier, toVariablePayload } from '../utils';
+
+import { updateVariableOptions } from './reducer';
 
 export function toMetricFindValues(): OperatorFunction<PanelData, MetricFindValue[]> {
   return (source) =>

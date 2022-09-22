@@ -1,5 +1,5 @@
-import { Team, TeamsState, TeamState, TeamMember, OrgRole, TeamPermissionLevel } from 'app/types';
 import { User } from 'app/core/services/context_srv';
+import { Team, TeamsState, TeamState, TeamMember, OrgRole, TeamPermissionLevel } from 'app/types';
 
 export const getSearchQuery = (state: TeamsState) => state.searchQuery;
 export const getSearchMemberQuery = (state: TeamState) => state.searchMemberQuery;

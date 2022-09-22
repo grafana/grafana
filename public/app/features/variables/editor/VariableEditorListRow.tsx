@@ -1,14 +1,15 @@
 import { css } from '@emotion/css';
+import React, { ReactElement } from 'react';
+import { Draggable } from 'react-beautiful-dnd';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Icon, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
-import React, { ReactElement } from 'react';
-import { Draggable } from 'react-beautiful-dnd';
 
 import { hasOptions, isAdHoc, isQuery } from '../guard';
-import { getVariableUsages, UsagesToNetwork, VariableUsageTree } from '../inspect/utils';
 import { VariableUsagesButton } from '../inspect/VariableUsagesButton';
+import { getVariableUsages, UsagesToNetwork, VariableUsageTree } from '../inspect/utils';
 import { KeyedVariableIdentifier } from '../state/types';
 import { VariableModel } from '../types';
 import { toKeyedVariableIdentifier } from '../utils';

@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import * as React from 'react';
+
 import NewWindowIcon from './NewWindowIcon';
 
 type Link = {

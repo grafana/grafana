@@ -1,6 +1,8 @@
 import React, { ChangeEvent, FC } from 'react';
+
 import { SelectableValue } from '@grafana/data';
 import { InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
+
 import { downsamplingTypes, ExpressionQuery, upsamplingTypes } from '../types';
 
 interface Props {
@@ -34,7 +36,7 @@ export const Resample: FC<Props> = ({ labelWidth, onChange, refIds, query }) => 
     <>
       <InlineFieldRow>
         <InlineField label="Input" labelWidth={labelWidth}>
-          <Select menuShouldPortal onChange={onRefIdChange} options={refIds} value={query.expression} width={20} />
+          <Select onChange={onRefIdChange} options={refIds} value={query.expression} width={20} />
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
@@ -42,22 +44,10 @@ export const Resample: FC<Props> = ({ labelWidth, onChange, refIds, query }) => 
           <Input onChange={onWindowChange} value={query.window} width={15} />
         </InlineField>
         <InlineField label="Downsample">
-          <Select
-            menuShouldPortal
-            options={downsamplingTypes}
-            value={downsampler}
-            onChange={onSelectDownsampler}
-            width={25}
-          />
+          <Select options={downsamplingTypes} value={downsampler} onChange={onSelectDownsampler} width={25} />
         </InlineField>
         <InlineField label="Upsample">
-          <Select
-            menuShouldPortal
-            options={upsamplingTypes}
-            value={upsampler}
-            onChange={onSelectUpsampler}
-            width={25}
-          />
+          <Select options={upsamplingTypes} value={upsampler} onChange={onSelectUpsampler} width={25} />
         </InlineField>
       </InlineFieldRow>
     </>
