@@ -28,7 +28,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	sql := sqlstore.InitTestDB(t)
-	repo := SQLAnnotationRepo{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql)}
+	repo := xormRepositoryImpl{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql)}
 
 	testUser := &user.SignedInUser{
 		OrgID: 1,
@@ -394,7 +394,7 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	sql := sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{})
-	repo := SQLAnnotationRepo{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql)}
+	repo := xormRepositoryImpl{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql)}
 	dashboardStore := dashboardstore.ProvideDashboardStore(sql, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql))
 
 	testDashboard1 := models.SaveDashboardCommand{
