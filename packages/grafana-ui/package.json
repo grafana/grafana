@@ -165,7 +165,7 @@
     "babel-loader": "8.2.5",
     "common-tags": "1.8.2",
     "css-loader": "6.7.1",
-    "css-minimizer-webpack-plugin": "4.0.0",
+    "css-minimizer-webpack-plugin": "4.1.0",
     "csstype": "3.1.0",
     "enzyme": "3.11.0",
     "esbuild": "0.15.7",
