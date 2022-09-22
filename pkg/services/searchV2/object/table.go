@@ -62,11 +62,11 @@ func (x *SummaryTable) Add(obj object.RawObject, summary object.ObjectSummary) {
 	)
 
 	// Add summary table
-	fieldsJson, _ := json.Marshal(summary.Fields)
+	//	fieldsJson, _ := json.Marshal(summary.Fields)
 	x.Summary.AppendRow(
 		obj.UID,
 		summary.Name,
-		json.RawMessage(fieldsJson),
+		json.RawMessage(summary.FieldsJSON),
 	)
 
 	// Add references

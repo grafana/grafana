@@ -1,0 +1,140 @@
+syntax = "proto3";
+package object;
+
+option go_package = "./;object";
+
+// Will be replaced with something from the SDK
+message UserInfo {
+  int64 id = 1; // internal grafana ID
+  string login = 2; // string ID? 
+}
+
+// Raw saved object metadata
+message RawObject {
+  // Unique ID for this object
+  string UID = 1;
+
+  // Identify the object kind.  This kind will be used to apply a schema to the body and
+  // will trigger additional indexing behavior.
+  string kind = 2;
+
+  // Time in millies since epoch that the object was first saved
+  int64 created = 3;
+
+  // Time in millies since epoch that the object was last modified
+  int64 updated = 4;
+
+  // Who created the object
+  UserInfo createdBy = 5;
+
+  // Who modified the object
+  UserInfo updatedBy = 6; 
+
+  // Content Length
+  int64 size = 7;
+
+  // MD5 digest of the Body
+  string ETag = 8;
+
+  // Raw bytes of the storage object.  The kind+schema will ensure
+  bytes body = 9;
+
+	// A small set of properties managed by raw storage layer.  The kind+schema will define val
+	map<string,string> properties = 10;
+
+	// object version (might be commit hash, or number)
+	string version = 11;
+
+  // last time the object status was checked with an external system (provisioning/git)
+  int64 syncTime = 12;
+
+  // optional "save" or "commit" message from the author
+	string comment = 13;
+}
+
+// Consistent properties exposed a search engine
+message ObjectSummary {
+  string UID = 1;
+  string kind = 2;
+
+  // Object display name
+  string name = 3;
+
+  // Optional description
+  string description = 4;
+
+  // Searchable key, value pairs -- "tags" are represented as keys with know value
+  map<string,string> labels = 5;
+
+  // Optional URL
+  string URL = 6;
+
+  // Error info 
+  ObjectErrorInfo error = 7; 
+
+  // map[string]interface{} -- values depend on kind
+  bytes fieldsJSON = 8; // :(
+
+  // Object references
+  repeated ExternalReference references = 9;
+
+  // Used when the raw object body defines multiple 'things'
+  repeated ObjectSummary nested = 10;
+}
+
+
+// Searchable fields extracted from the object
+message ObjectErrorInfo {
+  int64 code = 1; // TODO... registry somewhere...  should be limited to most severe issues
+  string message = 2;
+  string details = 3;
+}
+
+
+message ExternalReference {
+  // datasource, panel
+  string kind = 1;
+
+  // prometheus / heatmap
+  string type = 2;
+
+  // Unique ID for this object
+  string UID = 3;
+}
+
+//-----------------------------------------------
+// Write request/response
+//-----------------------------------------------
+
+message WriteObjectRequest {
+  string UID = 1;
+  string kind = 2;
+
+  // The raw object body
+  bytes body = 9;
+
+  // Message that can be seen when exploring object history
+  string comment = 13;
+
+	// Raw properties from storage
+	map<string,string> properties = 10;
+
+	// Used for optimistic locking.  If missing, the previous version will be replaced regardless
+  string previousVersion = 4;
+}
+
+message WriteObjectRespoonse {
+  // Error info -- if exists, the save did not happen
+  ObjectErrorInfo error = 1;
+
+  // Object details with the body removed
+  RawObject raw = 2; 
+
+  // Extracted info used for search
+  ObjectSummary summary = 3;
+}
+
+// Obviously incomplete, but good to start somewhere!
+service ObjectStore {
+  rpc Write(WriteObjectRequest) returns (RawObject);
+}

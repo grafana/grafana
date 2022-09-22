@@ -15,12 +15,14 @@ func NewDashboardSummaryBuilder(lookup dslookup.DatasourceLookup) object.ObjectS
 	return func(obj object.RawObject) (object.ObjectSummary, error) {
 		summary := object.ObjectSummary{
 			Labels: make(map[string]string),
-			Fields: make(map[string]interface{}),
+			//	Fields: make(map[string]interface{}),
 		}
 		stream := bytes.NewBuffer(obj.Body)
 		dash, err := extract.ReadDashboard(stream, lookup)
 		if err != nil {
-			summary.Error = err.Error()
+			summary.Error = &object.ObjectErrorInfo{
+				Message: err.Error(),
+			}
 			return summary, err
 		}
 
@@ -32,20 +34,20 @@ func NewDashboardSummaryBuilder(lookup dslookup.DatasourceLookup) object.ObjectS
 		for _, v := range dash.Tags {
 			summary.Labels[v] = ""
 		}
-		if len(dash.TemplateVars) > 0 {
-			summary.Fields["hasTemplateVars"] = true
-		}
+		// if len(dash.TemplateVars) > 0 {
+		// 	summary.Fields["hasTemplateVars"] = true
+		// }
 
 		for _, panel := range dash.Panels {
 			refP := object.NewReferenceAccumulator()
-			p := object.NestedObjectSummary{
+			p := &object.ObjectSummary{
 				UID:  obj.UID + "#" + strconv.FormatInt(panel.ID, 10),
 				Kind: "panel",
 			}
 			p.Name = panel.Title
 			p.Description = panel.Description
 			p.URL = fmt.Sprintf("%s?viewPanel=%d", url, panel.ID)
-			p.Fields = make(map[string]interface{}, 0)
+			//p.Fields = make(map[string]interface{}, 0)
 
 			refP.Add("panel", panel.Type, "")
 			for _, v := range panel.Datasource {
