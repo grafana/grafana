@@ -6,10 +6,10 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { CloudWatchAnnotationQuery, CloudWatchJsonData, CloudWatchQuery } from '../types';
 
-import { CloudWatchQueryRunner } from './CloudWatchQueryRunner';
+import { CloudWatchRequest } from './CloudWatchRequest';
 
 // This class handles execution of CloudWatch annotation queries
-export class CloudWatchAnnotationQueryRunner extends CloudWatchQueryRunner {
+export class CloudWatchAnnotationQueryRunner extends CloudWatchRequest {
   constructor(instanceSettings: DataSourceInstanceSettings<CloudWatchJsonData>, templateSrv: TemplateSrv) {
     super(instanceSettings, templateSrv);
   }

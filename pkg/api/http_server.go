@@ -84,6 +84,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/store"
+	"github.com/grafana/grafana/pkg/services/tag"
+	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/teamguardian"
 	tempUser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/services/thumbs"
@@ -189,8 +191,10 @@ type HTTPServer struct {
 	dashboardThumbsService dashboardThumbs.Service
 	loginAttemptService    loginAttempt.Service
 	orgService             org.Service
+	teamService            team.Service
 	accesscontrolService   accesscontrol.Service
 	annotationsRepo        annotations.Repository
+	tagService             tag.Service
 }
 
 type ServerOptions struct {
@@ -228,8 +232,9 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	playlistService playlist.Service, apiKeyService apikey.Service, kvStore kvstore.KVStore,
 	secretsMigrator secrets.Migrator, secretsPluginManager plugins.SecretsPluginManager, secretsService secrets.Service,
 	secretsPluginMigrator spm.SecretMigrationProvider, secretsStore secretsKV.SecretsKVStore,
-	publicDashboardsApi *publicdashboardsApi.Api, userService user.Service, tempUserService tempUser.Service, loginAttemptService loginAttempt.Service, orgService org.Service,
-	accesscontrolService accesscontrol.Service, dashboardThumbsService dashboardThumbs.Service, annotationRepo annotations.Repository,
+	publicDashboardsApi *publicdashboardsApi.Api, userService user.Service, tempUserService tempUser.Service,
+	loginAttemptService loginAttempt.Service, orgService org.Service, teamService team.Service,
+	accesscontrolService accesscontrol.Service, dashboardThumbsService dashboardThumbs.Service, annotationRepo annotations.Repository, tagService tag.Service,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -324,8 +329,10 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		dashboardThumbsService:       dashboardThumbsService,
 		loginAttemptService:          loginAttemptService,
 		orgService:                   orgService,
+		teamService:                  teamService,
 		accesscontrolService:         accesscontrolService,
 		annotationsRepo:              annotationRepo,
+		tagService:                   tagService,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")

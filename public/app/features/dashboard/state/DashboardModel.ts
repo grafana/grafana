@@ -25,7 +25,7 @@ import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
 import { GetVariables, getVariablesByKey } from 'app/features/variables/state/selectors';
 import { CoreEvents, DashboardMeta, KioskMode } from 'app/types';
-import { DashboardPanelsChangedEvent, RenderEvent } from 'app/types/events';
+import { DashboardMetaChangedEvent, DashboardPanelsChangedEvent, RenderEvent } from 'app/types/events';
 
 import { appEvents } from '../../../core/core';
 import { dispatch } from '../../../store/store';
@@ -478,6 +478,11 @@ export class DashboardModel implements TimeModel {
     this.sortPanelsByGridPos();
 
     this.events.publish(new DashboardPanelsChangedEvent());
+  }
+
+  updateMeta(updates: Partial<DashboardMeta>) {
+    this.meta = { ...this.meta, ...updates };
+    this.events.publish(new DashboardMetaChangedEvent());
   }
 
   sortPanelsByGridPos() {

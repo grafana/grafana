@@ -297,6 +297,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
                   className="gf-form-label query-keyword pointer"
                   onClick={this.onClickChooserButton}
                   disabled={buttonDisabled}
+                  type="button"
                 >
                   {chooserText}
                   <Icon name={labelBrowserVisible ? 'angle-down' : 'angle-right'} />

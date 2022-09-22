@@ -646,7 +646,6 @@ func createService(ac *acMock.Mock, store *store.FakeRuleStore, scheduler schedu
 	return &RulerSrv{
 		xactManager:     store,
 		store:           store,
-		DatasourceCache: nil,
 		QuotaService:    nil,
 		provenanceStore: provisioning.NewFakeProvisioningStore(),
 		scheduleService: scheduler,
