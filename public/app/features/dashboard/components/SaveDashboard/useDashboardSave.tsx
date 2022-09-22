@@ -36,7 +36,7 @@ export const useDashboardSave = (dashboard: DashboardModel) => {
 
   const notifyApp = useAppNotification();
   useEffect(() => {
-    if (state.error) {
+    if (state.error && !state.loading) {
       notifyApp.error(state.error.message ?? 'Error saving dashboard');
     }
     if (state.value) {
