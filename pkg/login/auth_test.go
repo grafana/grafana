@@ -7,11 +7,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/loginattempt"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -39,7 +39,8 @@ func TestAuthenticateUser(t *testing.T) {
 		mockLoginAttemptValidation(nil, sc)
 		sc.loginUserQuery.Cfg.DisableLogin = true
 
-		err := AuthenticateUserFunc(context.Background(), sc.loginUserQuery)
+		a := AuthenticatorService{loginAttemptService: nil, loginService: &logintest.LoginServiceFake{}}
+		err := a.AuthenticateUser(context.Background(), sc.loginUserQuery)
 
 		require.EqualError(t, err, ErrNoAuthProvider.Error())
 		assert.True(t, sc.loginAttemptValidationWasCalled)
