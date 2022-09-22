@@ -16,13 +16,7 @@ func (s CorrelationsService) createCorrelation(ctx context.Context, cmd CreateCo
 		TargetUID:   cmd.TargetUID,
 		Label:       cmd.Label,
 		Description: cmd.Description,
-	}
-
-	if cmd.Config != nil && cmd.Config.Interface() != nil {
-		if cmd.Config.Get("field").Interface() == nil || cmd.Config.Get("target").Interface() == nil {
-			return Correlation{}, ErrIncorrectConfigStructure
-		}
-		correlation.Config = cmd.Config
+		Config:      cmd.Config,
 	}
 
 	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *sqlstore.DBSession) error {
@@ -218,6 +212,7 @@ func (s CorrelationsService) getCorrelations(ctx context.Context, cmd GetCorrela
 func (s CorrelationsService) deleteCorrelationsBySourceUID(ctx context.Context, cmd DeleteCorrelationsBySourceUIDCommand) error {
 	return s.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
 		_, err := session.Delete(&Correlation{SourceUID: cmd.SourceUID})
+		s.log.Warn("THE ERROR IS IN THE QUERY")
 		return err
 	})
 }

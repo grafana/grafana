@@ -5,7 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
+	jsoniter "github.com/json-iterator/go"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -135,21 +136,37 @@ func (dc *DatasourceProvisioner) applyChanges(ctx context.Context, configPath st
 	return nil
 }
 
-func makeCreateCorrelationCommand(correlation map[string]interface{}, SourceUid string, OrgId int64) (correlations.CreateCorrelationCommand, error) {
+func makeCreateCorrelationCommand(correlation map[string]interface{}, SourceUID string, OrgId int64) (correlations.CreateCorrelationCommand, error) {
+	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	targetUID, ok := correlation["targetUID"].(string)
 	if !ok {
 		return correlations.CreateCorrelationCommand{}, fmt.Errorf("correlation missing targetUID")
 	}
 
-	return correlations.CreateCorrelationCommand{
-		SourceUID:         SourceUid,
+	createCommand := correlations.CreateCorrelationCommand{
+		SourceUID:         SourceUID,
 		TargetUID:         targetUID,
 		Label:             correlation["label"].(string),
 		Description:       correlation["description"].(string),
-		Config:            simplejson.NewFromAny(correlation["config"]),
 		OrgId:             OrgId,
 		SkipReadOnlyCheck: true,
-	}, nil
+	}
+
+	if correlation["config"] != nil {
+		jsonbody, err := json.Marshal(correlation["config"])
+		if err != nil {
+			return correlations.CreateCorrelationCommand{}, err
+		}
+
+		config := correlations.CorrelationConfig{}
+		if err := json.Unmarshal(jsonbody, &config); err != nil {
+			return correlations.CreateCorrelationCommand{}, err
+		}
+
+		createCommand.Config = config
+	}
+
+	return createCommand, nil
 }
 
 func (dc *DatasourceProvisioner) deleteDatasources(ctx context.Context, dsToDelete []*deleteDatasourceConfig) error {
