@@ -21,12 +21,12 @@ seqs: [
 				// FIXME: Is this based on a standardized format or what options are available? Can datemath be used?
 				interval: string | *"5m"
 				// The ordered list of items that the playlist will iterate over.
-				items?: [...#Items]
+				items?: [...#PlaylistItems]
 
 				///////////////////////////////////////
 				// Definitions (referenced above) are declared below
 
-				#Items: {
+				#PlaylistItems: {
 					// FIXME: The prefixDropper removes playlist from playlist_id, that doesn't work for us since it'll mean we'll have Id twice.
 					// ID of the playlist item for internal use by Grafana. Deprecated.
 					id: int64

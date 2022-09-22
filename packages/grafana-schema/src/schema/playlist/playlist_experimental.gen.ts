@@ -14,6 +14,8 @@ interface Playlist {
   id: number;
   interval: string;
   items?: {
+    id: number;
+    playlist_id: number;
     type: ('dashboard_by_id' | 'dashboard_by_tag');
     value: string;
     title: string;
