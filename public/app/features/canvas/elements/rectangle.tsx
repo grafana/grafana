@@ -23,7 +23,7 @@ export enum VAlign {
   Bottom = 'bottom',
 }
 
-interface TextBoxData {
+interface RectangleData {
   text?: string;
   color?: string;
   size?: number; // 0 or missing will "auto size"
@@ -31,7 +31,7 @@ interface TextBoxData {
   valign: VAlign;
 }
 
-interface TextBoxConfig {
+interface RectangleConfig {
   text?: TextDimensionConfig;
   color?: ColorDimensionConfig;
   size?: number; // 0 or missing will "auto size"
@@ -39,7 +39,7 @@ interface TextBoxConfig {
   valign: VAlign;
 }
 
-class TextBoxDisplay extends PureComponent<CanvasElementProps<TextBoxConfig, TextBoxData>> {
+class RectangleDisplay extends PureComponent<CanvasElementProps<RectangleConfig, RectangleData>> {
   render() {
     const { data } = this.props;
     const styles = getStyles(config.theme2, data);
@@ -65,12 +65,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, data) => ({
     color: ${data?.color};
   `,
 }));
-export const textBoxItem: CanvasElementItem<TextBoxConfig, TextBoxData> = {
-  id: 'text-box',
-  name: 'Text',
-  description: 'Text box',
+export const rectangleItem: CanvasElementItem<RectangleConfig, RectangleData> = {
+  id: 'rectangle',
+  name: 'Rectangle',
+  description: 'Rectangle',
 
-  display: TextBoxDisplay,
+  display: RectangleDisplay,
 
   defaultSize: {
     width: 240,
@@ -94,8 +94,8 @@ export const textBoxItem: CanvasElementItem<TextBoxConfig, TextBoxData> = {
   }),
 
   // Called when data changes
-  prepareData: (ctx: DimensionContext, cfg: TextBoxConfig) => {
-    const data: TextBoxData = {
+  prepareData: (ctx: DimensionContext, cfg: RectangleConfig) => {
+    const data: RectangleData = {
       text: cfg.text ? ctx.getText(cfg.text).value() : '',
       align: cfg.align ?? Align.Center,
       valign: cfg.valign ?? VAlign.Middle,
@@ -111,7 +111,7 @@ export const textBoxItem: CanvasElementItem<TextBoxConfig, TextBoxData> = {
 
   // Heatmap overlay options
   registerOptionsUI: (builder) => {
-    const category = ['Text box'];
+    const category = ['Rectangle'];
     builder
       .addCustomEditor({
         category,
