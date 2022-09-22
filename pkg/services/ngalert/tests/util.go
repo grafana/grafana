@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -61,7 +62,7 @@ func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *
 	m := metrics.NewNGAlert(prometheus.NewRegistry())
 	sqlStore := sqlstore.InitTestDB(t)
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
-	dashboardStore := databasestore.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures())
+	dashboardStore := databasestore.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
 
 	ac := acmock.New()
 	features := featuremgmt.WithFeatures()

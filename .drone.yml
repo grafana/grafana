@@ -2,6 +2,8 @@
 clone:
   retries: 3
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: pr-verify-drone
 node:
@@ -54,6 +56,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: pr-test-frontend
 node:
@@ -133,6 +137,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: pr-test-backend
 node:
@@ -146,12 +152,6 @@ steps:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.15.6
   name: identify-runner
-- commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.7/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   depends_on: []
@@ -174,14 +174,6 @@ steps:
   - verify-gen-cue
   image: grafana/build-container:1.6.2
   name: wire-install
-- commands:
-  - make lint-go
-  depends_on:
-  - wire-install
-  environment:
-    CGO_ENABLED: "1"
-  image: grafana/build-container:1.6.2
-  name: lint-backend
 - commands:
   - go test -short -covermode=atomic -timeout=30m ./pkg/...
   depends_on:
@@ -219,6 +211,68 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: pr-lint-backend
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.15.6
+  name: identify-runner
+- commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.19.1
+  name: compile-build-cmd
+- commands:
+  - make gen-go
+  depends_on: []
+  image: grafana/build-container:1.6.2
+  name: wire-install
+- commands:
+  - apt-get update && apt-get install make
+  - make lint-go
+  depends_on:
+  - wire-install
+  environment:
+    CGO_ENABLED: "1"
+  image: golang:1.19.1
+  name: lint-backend
+trigger:
+  event:
+  - pull_request
+  paths:
+    exclude:
+    - docs/**
+    - '*.md'
+    include:
+    - pkg/**
+    - packaging/**
+    - conf/**
+    - go.sum
+    - go.mod
+    - public/app/plugins/**/plugin.json
+    - devenv/**
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: pr-build-e2e
 node:
@@ -466,6 +520,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: pr-integration-tests
 node:
@@ -589,6 +645,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: pr-docs
 node:
@@ -673,6 +731,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: pr-shellcheck
 node:
@@ -714,6 +774,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: main-docs
 node:
@@ -799,6 +861,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: main-test-frontend
 node:
@@ -875,6 +939,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: main-test-backend
 node:
@@ -888,12 +954,6 @@ steps:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.15.6
   name: identify-runner
-- commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.7/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   depends_on: []
@@ -917,14 +977,6 @@ steps:
   image: grafana/build-container:1.6.2
   name: wire-install
 - commands:
-  - make lint-go
-  depends_on:
-  - wire-install
-  environment:
-    CGO_ENABLED: "1"
-  image: grafana/build-container:1.6.2
-  name: lint-backend
-- commands:
   - go test -short -covermode=atomic -timeout=30m ./pkg/...
   depends_on:
   - wire-install
@@ -936,6 +988,60 @@ steps:
   - wire-install
   image: grafana/build-container:1.6.2
   name: test-backend-integration
+trigger:
+  branch: main
+  event:
+  - push
+  paths:
+    exclude:
+    - '*.md'
+    - docs/**
+    - latest.json
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on: []
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: main-lint-backend
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.15.6
+  name: identify-runner
+- commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.19.1
+  name: compile-build-cmd
+- commands:
+  - make gen-go
+  depends_on: []
+  image: grafana/build-container:1.6.2
+  name: wire-install
+- commands:
+  - apt-get update && apt-get install make
+  - make lint-go
+  depends_on:
+  - wire-install
+  environment:
+    CGO_ENABLED: "1"
+  image: golang:1.19.1
+  name: lint-backend
 - commands:
   - ./bin/build verify-drone
   depends_on:
@@ -960,6 +1066,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: main-build-e2e-publish
 node:
@@ -1367,6 +1475,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: main-integration-tests
 node:
@@ -1488,6 +1598,8 @@ depends_on:
 - main-test-backend
 - main-build-e2e-publish
 - main-integration-tests
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: main-windows
 platform:
@@ -1586,6 +1698,8 @@ depends_on:
 - main-build-e2e-publish
 - main-integration-tests
 - main-windows
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: main-publish
 node:
@@ -1651,6 +1765,8 @@ clone:
   retries: 3
 depends_on:
 - main-publish
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: main-trigger-downstream
 node:
@@ -1727,6 +1843,8 @@ type: docker
 clone:
   retries: 3
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: release-oss-build-e2e-publish
 node:
@@ -2033,6 +2151,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: release-oss-test
 node:
@@ -2081,12 +2201,13 @@ steps:
   image: golang:1.19.1
   name: compile-build-cmd
 - commands:
+  - apt-get update && apt-get install make
   - make lint-go
   depends_on:
   - wire-install
   environment:
     CGO_ENABLED: "1"
-  image: grafana/build-container:1.6.2
+  image: golang:1.19.1
   name: lint-backend
 - commands:
   - yarn run prettier:check
@@ -2137,6 +2258,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: release-oss-integration-tests
 node:
@@ -2250,6 +2373,8 @@ depends_on:
 - release-oss-build-e2e-publish
 - release-oss-test
 - release-oss-integration-tests
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: release-oss-windows
 platform:
@@ -2734,12 +2859,13 @@ steps:
   image: grafana/build-container:1.6.2
   name: verify-gen-cue
 - commands:
+  - apt-get update && apt-get install make
   - make lint-go
   depends_on:
   - wire-install
   environment:
     CGO_ENABLED: "1"
-  image: grafana/build-container:1.6.2
+  image: golang:1.19.1
   name: lint-backend
 - commands:
   - yarn run prettier:check
@@ -2773,12 +2899,13 @@ steps:
   image: grafana/build-container:1.6.2
   name: test-frontend
 - commands:
+  - apt-get update && apt-get install make
   - make lint-go
   depends_on:
   - wire-install
   environment:
     CGO_ENABLED: "1"
-  image: grafana/build-container:1.6.2
+  image: golang:1.19.1
   name: lint-backend-enterprise2
 - commands:
   - go test -tags=pro -covermode=atomic -timeout=30m ./pkg/...
@@ -3050,6 +3177,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: publish-docker-oss-public
 node:
@@ -3136,6 +3265,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: publish-docker-enterprise-public
 node:
@@ -3205,6 +3336,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: publish-docker-oss-security
 node:
@@ -3292,6 +3425,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: publish-docker-enterprise-security
 node:
@@ -3362,6 +3497,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: publish-artifacts-security
 node:
@@ -3402,6 +3539,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: publish-artifacts-public
 node:
@@ -3442,6 +3581,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: publish-npm-packages-public
 node:
@@ -3502,6 +3643,8 @@ depends_on:
 - publish-artifacts-public
 - publish-docker-oss-public
 - publish-docker-enterprise-public
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: publish-packages-oss
 node:
@@ -3581,6 +3724,8 @@ depends_on:
 - publish-artifacts-public
 - publish-docker-oss-public
 - publish-docker-enterprise-public
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: publish-packages-enterprise
 node:
@@ -3658,6 +3803,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: publish-artifacts-page
 node:
@@ -3695,6 +3842,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: release-branch-oss-build-e2e-publish
 node:
@@ -3970,6 +4119,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: release-branch-oss-test
 node:
@@ -4018,12 +4169,13 @@ steps:
   image: golang:1.19.1
   name: compile-build-cmd
 - commands:
+  - apt-get update && apt-get install make
   - make lint-go
   depends_on:
   - wire-install
   environment:
     CGO_ENABLED: "1"
-  image: grafana/build-container:1.6.2
+  image: golang:1.19.1
   name: lint-backend
 - commands:
   - yarn run prettier:check
@@ -4068,6 +4220,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: release-branch-oss-integration-tests
 node:
@@ -4175,6 +4329,8 @@ depends_on:
 - release-branch-oss-build-e2e-publish
 - release-branch-oss-test
 - release-branch-oss-integration-tests
+image_pull_secrets:
+- dockerconfigjson
 kind: pipeline
 name: release-branch-oss-windows
 platform:
@@ -4635,12 +4791,13 @@ steps:
   image: grafana/build-container:1.6.2
   name: verify-gen-cue
 - commands:
+  - apt-get update && apt-get install make
   - make lint-go
   depends_on:
   - wire-install
   environment:
     CGO_ENABLED: "1"
-  image: grafana/build-container:1.6.2
+  image: golang:1.19.1
   name: lint-backend
 - commands:
   - yarn run prettier:check
@@ -4674,12 +4831,13 @@ steps:
   image: grafana/build-container:1.6.2
   name: test-frontend
 - commands:
+  - apt-get update && apt-get install make
   - make lint-go
   depends_on:
   - wire-install
   environment:
     CGO_ENABLED: "1"
-  image: grafana/build-container:1.6.2
+  image: golang:1.19.1
   name: lint-backend-enterprise2
 - commands:
   - go test -tags=pro -covermode=atomic -timeout=30m ./pkg/...
@@ -5112,6 +5270,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 3298924f36cbab63be3873f763ead9406f47dc8b98142678d69ea83b4012541c
+hmac: a17adc518f8ba4ea5c123bf440adf9aceec5e7ba5d9fdae9e467dbd1ec91fd46
 
 ...

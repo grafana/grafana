@@ -65,10 +65,7 @@ export const SharePublicDashboard = (props: Props) => {
     usage: false,
   });
 
-  const timeRange = getTimeRange(
-    { from: props.dashboard.getDefaultTime().from, to: props.dashboard.getDefaultTime().to },
-    props.dashboard.timezone
-  );
+  const timeRange = getTimeRange(props.dashboard.getDefaultTime(), props.dashboard);
 
   useEffect(() => {
     reportInteraction('grafana_dashboards_public_share_viewed');
@@ -96,7 +93,7 @@ export const SharePublicDashboard = (props: Props) => {
       return;
     }
 
-    savePublicDashboardConfig(props.dashboard.uid, publicDashboard, setPublicDashboardConfig).catch();
+    savePublicDashboardConfig(props.dashboard, publicDashboard, setPublicDashboardConfig).catch();
   };
 
   const onAcknowledge = useCallback(

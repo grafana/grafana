@@ -123,6 +123,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/star/starimpl"
 	"github.com/grafana/grafana/pkg/services/store"
+	"github.com/grafana/grafana/pkg/services/tag"
+	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/teamguardian"
 	teamguardianDatabase "github.com/grafana/grafana/pkg/services/teamguardian/database"
@@ -349,6 +351,8 @@ var wireBasicSet = wire.NewSet(
 	acimpl.ProvideAccessControl,
 	wire.Bind(new(accesscontrol.AccessControl), new(*acimpl.AccessControl)),
 	wire.Bind(new(notifications.TempUserStore), new(tempuser.Service)),
+	tagimpl.ProvideService,
+	wire.Bind(new(tag.Service), new(*tagimpl.Service)),
 )
 
 var wireSet = wire.NewSet(
