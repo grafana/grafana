@@ -14,7 +14,6 @@ type Service interface {
 	GetByID(context.Context, *GetOrgByIdQuery) (*Org, error)
 	GetByNameHandler(context.Context, *GetOrgByNameQuery) (*Org, error)
 	GetByName(string) (*Org, error)
-	CreateWithMember(string, int64) (*Org, error)
 	Create(context.Context, *CreateOrgCommand) (*Org, error)
 	UpdateAddress(context.Context, *UpdateOrgAddressCommand) error
 	Delete(context.Context, *DeleteOrgCommand) error
