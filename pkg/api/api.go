@@ -370,8 +370,8 @@ func (hs *HTTPServer) registerRoutes() {
 
 		if hs.Cfg.PluginAdminEnabled && !hs.Cfg.PluginAdminExternalManageEnabled {
 			apiRoute.Group("/plugins", func(pluginRoute routing.RouteRegister) {
-				pluginRoute.Post("/:pluginId/install", authorize(reqGrafanaAdmin, plugins.InstallEvaluator(ac.Parameter(":pluginId"))), routing.Wrap(hs.InstallPlugin))
-				pluginRoute.Post("/:pluginId/uninstall", authorize(reqGrafanaAdmin, plugins.InstallEvaluator(ac.Parameter(":pluginId"))), routing.Wrap(hs.UninstallPlugin))
+				pluginRoute.Post("/:pluginId/install", authorize(reqGrafanaAdmin, ac.EvalPermission(plugins.ActionInstall)), routing.Wrap(hs.InstallPlugin))
+				pluginRoute.Post("/:pluginId/uninstall", authorize(reqGrafanaAdmin, ac.EvalPermission(plugins.ActionInstall)), routing.Wrap(hs.UninstallPlugin))
 			})
 		}
 
@@ -640,7 +640,6 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/render/*", reqSignedIn, hs.RenderToPng)
 
 	// grafana.net proxy
-	r.Get("/api/gnet/plugins/", reqSignedIn, hs.ListGnetPlugins)
 	r.Any("/api/gnet/*", reqSignedIn, hs.ProxyGnetRequest)
 
 	// Gravatar service
