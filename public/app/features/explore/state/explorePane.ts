@@ -99,6 +99,7 @@ export interface InitializeExplorePayload {
   range: TimeRange;
   history: HistoryItem[];
   datasourceInstance?: DataSourceApi;
+  isFromCompactUrl?: boolean;
 }
 export const initializeExploreAction = createAction<InitializeExplorePayload>('explore/initializeExplore');
 
@@ -147,7 +148,8 @@ export function initializeExplore(
   range: TimeRange,
   containerWidth: number,
   eventBridge: EventBusExtended,
-  panelsState?: ExplorePanelsState
+  panelsState?: ExplorePanelsState,
+  isFromCompactUrl?: boolean
 ): ThunkResult<void> {
   return async (dispatch, getState) => {
     const exploreDatasources = getDataSourceSrv().getList();
@@ -170,6 +172,7 @@ export function initializeExplore(
         range,
         datasourceInstance: instance,
         history,
+        isFromCompactUrl,
       })
     );
     if (panelsState !== undefined) {
@@ -292,7 +295,8 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
   }
 
   if (initializeExploreAction.match(action)) {
-    const { containerWidth, eventBridge, queries, range, datasourceInstance, history } = action.payload;
+    const { containerWidth, eventBridge, queries, range, datasourceInstance, history, isFromCompactUrl } =
+      action.payload;
 
     return {
       ...state,
@@ -307,6 +311,7 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
       datasourceMissing: !datasourceInstance,
       queryResponse: createEmptyQueryResponse(),
       cache: [],
+      isFromCompactUrl: isFromCompactUrl || false,
     };
   }
 

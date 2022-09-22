@@ -71,7 +71,16 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
   }
 
   async componentDidMount() {
-    const { initialized, exploreId, initialDatasource, initialQueries, initialRange, panelsState, orgId } = this.props;
+    const {
+      initialized,
+      exploreId,
+      initialDatasource,
+      initialQueries,
+      initialRange,
+      panelsState,
+      orgId,
+      isFromCompactUrl,
+    } = this.props;
     const width = this.el?.offsetWidth ?? 0;
     // initialize the whole explore first time we mount and if browser history contains a change in datasource
     if (!initialized) {
@@ -116,7 +125,8 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
         initialRange,
         width,
         this.exploreEvents,
-        panelsState
+        panelsState,
+        isFromCompactUrl
       );
     }
   }
@@ -144,12 +154,12 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
   };
 
   render() {
-    const { theme, split, exploreId, initialized, isFromCompactUrl } = this.props;
+    const { theme, split, exploreId, initialized } = this.props;
     const styles = getStyles(theme);
     const exploreClass = cx(styles.explore, split && styles.exploreSplit);
     return (
       <div className={exploreClass} ref={this.getRef} data-testid={selectors.pages.Explore.General.container}>
-        {initialized && <Explore exploreId={exploreId} isFromCompactUrl={isFromCompactUrl} />}
+        {initialized && <Explore exploreId={exploreId} />}
       </div>
     );
   }

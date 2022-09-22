@@ -8,6 +8,7 @@ import { Unsubscribable } from 'rxjs';
 
 import { AbsoluteTimeRange, DataQuery, GrafanaTheme2, LoadingState, QueryFixAction, RawTimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { reportInteraction } from '@grafana/runtime';
 import {
   Collapse,
   CustomScrollbar,
@@ -79,7 +80,6 @@ const getStyles = (theme: GrafanaTheme2) => {
 
 export interface ExploreProps extends Themeable2 {
   exploreId: ExploreId;
-  isFromCompactUrl: boolean;
   theme: GrafanaTheme2;
 }
 
@@ -238,6 +238,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 
   renderCompactUrlWarning() {
+    reportInteraction('grafana_explore_compact_notice');
     return (
       <FadeIn in={true} duration={100}>
         <Alert severity="warning" title="Compact URL Deprecation Notice" topSpacing={2}>
@@ -464,6 +465,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showNodeGraph,
     loading,
     graphStyle,
+    isFromCompactUrl,
   } = item;
 
   return {
@@ -484,6 +486,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showNodeGraph,
     loading,
     graphStyle,
+    isFromCompactUrl: isFromCompactUrl || false,
   };
 }
 
@@ -504,5 +507,4 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 
 export default compose(connector, withTheme2)(Explore) as React.ComponentType<{
   exploreId: ExploreId;
-  isFromCompactUrl: boolean;
 }>;
