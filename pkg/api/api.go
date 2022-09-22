@@ -259,6 +259,10 @@ func (hs *HTTPServer) registerRoutes() {
 			apiRoute.Group("/storage", hs.StorageService.RegisterHTTPRoutes)
 		}
 
+		if hs.Features.IsEnabled(featuremgmt.FlagPanelTitleSearch) {
+			apiRoute.Group("/search-v2", hs.SearchV2HTTPService.RegisterHTTPRoutes)
+		}
+
 		// current org
 		apiRoute.Group("/org", func(orgRoute routing.RouteRegister) {
 			userIDScope := ac.Scope("users", "id", ac.Parameter(":userId"))

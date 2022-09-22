@@ -235,6 +235,7 @@ var wireBasicSet = wire.NewSet(
 	datasourceproxy.ProvideService,
 	search.ProvideService,
 	searchV2.ProvideService,
+	searchV2.ProvideSearchHTTPService,
 	store.ProvideService,
 	export.ProvideService,
 	live.ProvideService,
