@@ -50,7 +50,7 @@ type CreateOrgCommand struct {
 	Name string `json:"name" binding:"Required"`
 
 	// initial admin user for account
-	UserID int64 `json:"-"`
+	UserID int64 `json:"-" xorm:"user_id"`
 }
 
 type GetOrgIDForNewUserCommand struct {
@@ -62,11 +62,11 @@ type GetOrgIDForNewUserCommand struct {
 }
 
 type GetUserOrgListQuery struct {
-	UserID int64
+	UserID int64 `xorm:"user_id"`
 }
 
 type UserOrgDTO struct {
-	OrgID int64    `json:"orgId"`
+	OrgID int64    `json:"orgId" xorm:"org_id"`
 	Name  string   `json:"name"`
 	Role  RoleType `json:"role"`
 }
@@ -81,11 +81,11 @@ type SearchOrgsQuery struct {
 	Name  string
 	Limit int
 	Page  int
-	IDs   []int64
+	IDs   []int64 `xorm:"ids"`
 }
 
 type OrgDTO struct {
-	ID   int64  `json:"id"`
+	ID   int64  `json:"id" xorm:"id"`
 	Name string `json:"name"`
 }
 
@@ -167,4 +167,25 @@ func (r *RoleType) UnmarshalText(data []byte) error {
 	}
 
 	return nil
+}
+
+type ByOrgName []*UserOrgDTO
+
+// Len returns the length of an array of organisations.
+func (o ByOrgName) Len() int {
+	return len(o)
+}
+
+// Swap swaps two indices of an array of organizations.
+func (o ByOrgName) Swap(i, j int) {
+	o[i], o[j] = o[j], o[i]
+}
+
+// Less returns whether element i of an array of organizations is less than element j.
+func (o ByOrgName) Less(i, j int) bool {
+	if strings.ToLower(o[i].Name) < strings.ToLower(o[j].Name) {
+		return true
+	}
+
+	return o[i].Name < o[j].Name
 }
