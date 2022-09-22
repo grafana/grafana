@@ -13,16 +13,15 @@ var (
 	ErrUpdateCorrelationEmptyParams       = errors.New("not enough parameters to edit correlation")
 )
 
-// Correlation's target data query specific to target data source (Correlation.TargetUID)
+// CorrelationConfigTarget is the target data query specific to target data source (Correlation.TargetUID)
 // swagger:model
 type CorrelationConfigTarget struct{}
 
-// Correlation configuration
 // swagger:model
 type CorrelationConfig struct {
 	// Field used to attach the correlation link
 	// required:true
-	Field  string                  `json:"field"`
+	Field string `json:"field"`
 	// Target data query
 	// required:true
 	Target CorrelationConfigTarget `json:"target"`

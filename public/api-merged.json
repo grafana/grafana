@@ -11342,7 +11342,6 @@
       }
     },
     "CorrelationConfig": {
-      "description": "Correlation configuration",
       "type": "object",
       "required": [
         "field",
@@ -11359,7 +11358,7 @@
       }
     },
     "CorrelationConfigTarget": {
-      "description": "Correlation's target data query specific to target data source (Correlation.TargetUID)",
+      "description": "CorrelationConfigTarget is the target data query specific to target data source (Correlation.TargetUID)",
       "type": "object"
     },
     "CreateAlertNotificationCommand": {
