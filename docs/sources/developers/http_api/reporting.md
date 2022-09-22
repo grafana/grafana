@@ -114,6 +114,7 @@ Content-Length: 1840
 ### Status Codes
 
 - **200** – OK
+- **401** - Authentication failed, refer to [Authentication API]({{< relref "auth/" >}}).
 - **500** – Unexpected error or server misconfiguration. Refer to server logs for more details.
 
 ## Get a report
@@ -124,9 +125,9 @@ Content-Length: 1840
 
 See note in the [introduction]({{< ref "#reporting-api" >}}) for an explanation.
 
-| Action       | Scope                                                         |
-| ------------ | ------------------------------------------------------------- |
-| reports:read | reports:\*<br>reports:id:\*<br>reports:id:1 (single report)\* |
+| Action       | Scope                                                      |
+| ------------ | ---------------------------------------------------------- |
+| reports:read | reports:\*<br>reports:id:\*<br>reports:id:1(single report) |
 
 ### Example request
 
@@ -208,7 +209,8 @@ Content-Length: 940
 
 - **200** – OK
 - **400** – Bad request (invalid report ID).
-- **403** – Forbidden (access denied to a dashboard used in the report).
+- **401** - Authentication failed, refer to [Authentication API]({{< relref "auth/" >}}).
+- **403** – Forbidden (access denied to a report or a dashboard used in the report).
 - **404** – Not found (such report does not exist).
 - **500** – Unexpected error or server misconfiguration. Refer to server logs for more details.
 
@@ -319,7 +321,7 @@ Content-Length: 35
 
 - **200** – OK
 - **400** – Bad request (invalid json, missing or invalid fields values, etc.).
-- **403** - Forbidden (access denied to a dashboard used in the report).
+- **403** - Forbidden (access denied to a report or a dashboard used in the report).
 - **500** - Unexpected error or server misconfiguration. Refer to server logs for more details
 
 ## Update a report
@@ -406,7 +408,8 @@ Content-Length: 28
 
 - **200** – OK
 - **400** – Bad request (invalid json, missing or invalid fields values, etc.).
-- **403** – Forbidden (access denied to a dashboard used in the report).
+- **401** - Authentication failed, refer to [Authentication API]({{< relref "auth/" >}}).
+- **403** – Forbidden (access denied to a report or a dashboard used in the report).
 - **404** – Not found (such report does not exist).
 - **500** – Unexpected error or server misconfiguration. Refer to server logs for more details.
 
@@ -447,6 +450,7 @@ Content-Length: 39
 
 - **200** – OK
 - **400** – Bad request (invalid report ID).
+- **401** - Authentication failed, refer to [Authentication API]({{< relref "auth/" >}}).
 - **404** - Not found (report with this ID does not exist).
 - **500** - Unexpected error or server misconfiguration. Refer to server logs for more details
 
@@ -501,7 +505,7 @@ Content-Length: 29
 - **200** – Report was sent.
 - **400** – Bad request (invalid json, missing content-type, missing or invalid fields, etc.).
 - **401** - Authentication failed, refer to [Authentication API]({{< relref "auth/" >}}).
-- **403** - User is authenticated but is not authorized to generate the report.
+- **403** - Forbidden (access denied to a report or a dashboard used in the report).
 - **404** - Report not found.
 - **500** - Unexpected error or server misconfiguration. Refer to server logs for more details.
 
@@ -552,6 +556,7 @@ Content-Length: 181
 ### Status Codes
 
 - **200** – OK
+- **401** - Authentication failed, refer to [Authentication API]({{< relref "auth/" >}}).
 - **500** - Unexpected error or server misconfiguration. Refer to server logs for more detail
 
 ## Save reports branding settings
@@ -589,13 +594,13 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 #### JSON Body Schema
 
-| Field name               | Data type | Description                                                                                                                                                                                                                                                                          |
-| ------------------------ | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| branding.reportLogoUrl   | string    | URL of an image used as a logo on every page of the report.                                                                                                                                                                                                                          |
-| branding.emailLogoUrl    | string    | URL of an image used as a logo in the email.                                                                                                                                                                                                                                         |
-| branding.emailFooterMode | string    | Can be `sent-by` or `none`.<br/>`sent-by` adds a "Sent by <`branding.emailFooterText`>" footer link to the email. Requires specifying values in `branding.emailFooterText` and `branding.emailFooterLink` fields.<br/>`none` suppresses adding a "Sent by" footer link to the email. |
-| branding.emailFooterText | string    | Text of a URL added to the email "Sent by" footer.                                                                                                                                                                                                                                   |
-| branding.emailFooterLink | string    | URL address value added to the email "Sent by" footer.                                                                                                                                                                                                                               |
+| Field name               | Data type | Description                                                                                                                                                                                                                                                                        |
+| ------------------------ | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| branding.reportLogoUrl   | string    | URL of an image used as a logo on every page of the report.                                                                                                                                                                                                                        |
+| branding.emailLogoUrl    | string    | URL of an image used as a logo in the email.                                                                                                                                                                                                                                       |
+| branding.emailFooterMode | string    | Can be `sent-by` or `none`.<br/>`sent-by` adds a "Sent by `branding.emailFooterText`" footer link to the email. Requires specifying values in `branding.emailFooterText` and `branding.emailFooterLink` fields.<br/>`none` suppresses adding a "Sent by" footer link to the email. |
+| branding.emailFooterText | string    | Text of a URL added to the email "Sent by" footer.                                                                                                                                                                                                                                 |
+| branding.emailFooterLink | string    | URL address value added to the email "Sent by" footer.                                                                                                                                                                                                                             |
 
 ### Example response
 
@@ -613,6 +618,7 @@ Content-Length: 35
 
 - **200** – OK
 - **400** – Bad request (invalid json, missing or invalid fields values, etc.).
+- **401** - Authentication failed, refer to [Authentication API]({{< relref "auth/" >}}).
 - **500** - Unexpected error or server misconfiguration. Refer to server logs for more detail
 
 ## Send a test email
@@ -695,5 +701,6 @@ Content-Length: 29
 
 - **200** – OK
 - **400** – Bad request (invalid json, missing or invalid fields values, etc.).
-- **403** - Forbidden (access denied to a dashboard used in the report).
+- **401** - Authentication failed, refer to [Authentication API]({{< relref "auth/" >}}).
+- **403** - Forbidden (access denied to a report or a dashboard used in the report).
 - **500** - Unexpected error or server misconfiguration. Refer to server logs for more details
