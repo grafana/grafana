@@ -585,6 +585,7 @@ func (ss *SQLStore) GetSignedInUser(ctx context.Context, query *models.GetSigned
 }
 
 // GetTeamsByUser is used by the Guardian when checking a users' permissions
+// TODO: use team.Service after user service is split
 func (ss *SQLStore) GetTeamsByUser(ctx context.Context, query *models.GetTeamsByUserQuery) error {
 	return ss.WithDbSession(ctx, func(sess *DBSession) error {
 		query.Result = make([]*models.TeamDTO, 0)

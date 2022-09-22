@@ -264,6 +264,7 @@ func createDummyACL(t *testing.T, sqlStore *SQLStore, dashboardPermission *Dashb
 	}
 
 	if dashboardPermission.Team {
+		// TODO: Restore/refactor sqlBuilder tests after user, org and team services are split
 		t.Skip("Creating team: skip, team service is moved")
 	}
 
