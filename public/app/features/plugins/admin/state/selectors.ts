@@ -30,7 +30,7 @@ const findByInstallAndType = (filterBy: string, filterByType: PluginTypeFilterOp
   );
 
 const isAppPluginType = (type: PluginType | undefined) => {
-  return type === PluginType.renderer || type === PluginType.secretsmanager;
+  return type === PluginType.renderer || type === PluginType.secretsmanager || type === PluginType.app;
 };
 
 const findByKeyword = (searchBy: string) =>
