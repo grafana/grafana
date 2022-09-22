@@ -49,4 +49,4 @@ In addition to the data sources that you have configured in your Grafana instanc
 
 ## Data source plugins
 
-You can install additional data sources as plugins. To view available data source plugins, see the [Grafana Plugins catalog](https://grafana.com/plugins). To build your own, see the ["Build a data source plugin"](https://grafana.com/tutorials/build-a-data-source-plugin/) tutorial.
+You can install additional data sources as plugins. To view available data source plugins, see the [Grafana Plugins catalog](https://grafana.com/plugins). To build your own, see the ["Build a data source plugin"](https://grafana.com/tutorials/build-a-data-source-plugin/) tutorial and our documentation about [building a plugin](/developers/plugins/).
