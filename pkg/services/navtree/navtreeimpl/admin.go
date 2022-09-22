@@ -1,23 +1,23 @@
 package navtreeimpl
 
 import (
-	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 )
 
-func (s *ServiceImpl) setupConfigNodes(c *models.ReqContext) ([]*dtos.NavLink, error) {
-	var configNodes []*dtos.NavLink
+func (s *ServiceImpl) setupConfigNodes(c *models.ReqContext) ([]*navtree.NavLink, error) {
+	var configNodes []*navtree.NavLink
 
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	if hasAccess(ac.ReqOrgAdmin, datasources.ConfigurationPageAccess) {
-		configNodes = append(configNodes, &dtos.NavLink{
+		configNodes = append(configNodes, &navtree.NavLink{
 			Text:        "Data sources",
 			Icon:        "database",
 			Description: "Add and configure data sources",
@@ -27,7 +27,7 @@ func (s *ServiceImpl) setupConfigNodes(c *models.ReqContext) ([]*dtos.NavLink, e
 	}
 
 	if s.features.IsEnabled(featuremgmt.FlagCorrelations) && hasAccess(ac.ReqOrgAdmin, correlations.ConfigurationPageAccess) {
-		configNodes = append(configNodes, &dtos.NavLink{
+		configNodes = append(configNodes, &navtree.NavLink{
 			Text:        "Correlations",
 			Icon:        "gf-glue",
 			Description: "Add and configure correlations",
@@ -37,7 +37,7 @@ func (s *ServiceImpl) setupConfigNodes(c *models.ReqContext) ([]*dtos.NavLink, e
 	}
 
 	if hasAccess(ac.ReqOrgAdmin, ac.EvalPermission(ac.ActionOrgUsersRead)) {
-		configNodes = append(configNodes, &dtos.NavLink{
+		configNodes = append(configNodes, &navtree.NavLink{
 			Text:        "Users",
 			Id:          "users",
 			Description: "Manage org members",
@@ -47,7 +47,7 @@ func (s *ServiceImpl) setupConfigNodes(c *models.ReqContext) ([]*dtos.NavLink, e
 	}
 
 	if hasAccess(s.ReqCanAdminTeams, ac.TeamsAccessEvaluator) {
-		configNodes = append(configNodes, &dtos.NavLink{
+		configNodes = append(configNodes, &navtree.NavLink{
 			Text:        "Teams",
 			Id:          "teams",
 			Description: "Manage org groups",
@@ -58,7 +58,7 @@ func (s *ServiceImpl) setupConfigNodes(c *models.ReqContext) ([]*dtos.NavLink, e
 
 	// FIXME: while we don't have a permissions for listing plugins the legacy check has to stay as a default
 	if plugins.ReqCanAdminPlugins(s.cfg)(c) || hasAccess(plugins.ReqCanAdminPlugins(s.cfg), plugins.AdminAccessEvaluator) {
-		configNodes = append(configNodes, &dtos.NavLink{
+		configNodes = append(configNodes, &navtree.NavLink{
 			Text:        "Plugins",
 			Id:          "plugins",
 			Description: "View and configure plugins",
@@ -68,7 +68,7 @@ func (s *ServiceImpl) setupConfigNodes(c *models.ReqContext) ([]*dtos.NavLink, e
 	}
 
 	if hasAccess(ac.ReqOrgAdmin, ac.OrgPreferencesAccessEvaluator) {
-		configNodes = append(configNodes, &dtos.NavLink{
+		configNodes = append(configNodes, &navtree.NavLink{
 			Text:        "Preferences",
 			Id:          "org-settings",
 			Description: "Organization preferences",
@@ -85,7 +85,7 @@ func (s *ServiceImpl) setupConfigNodes(c *models.ReqContext) ([]*dtos.NavLink, e
 
 	apiKeysHidden := hideApiKeys == "1" && len(apiKeys) == 0
 	if hasAccess(ac.ReqOrgAdmin, ac.ApiKeyAccessEvaluator) && !apiKeysHidden {
-		configNodes = append(configNodes, &dtos.NavLink{
+		configNodes = append(configNodes, &navtree.NavLink{
 			Text:        "API keys",
 			Id:          "apikeys",
 			Description: "Create & manage API keys",
@@ -95,7 +95,7 @@ func (s *ServiceImpl) setupConfigNodes(c *models.ReqContext) ([]*dtos.NavLink, e
 	}
 
 	if enableServiceAccount(s, c) {
-		configNodes = append(configNodes, &dtos.NavLink{
+		configNodes = append(configNodes, &navtree.NavLink{
 			Text:        "Service accounts",
 			Id:          "serviceaccounts",
 			Description: "Manage service accounts",

@@ -4,17 +4,17 @@ import (
 	"path"
 	"sort"
 
-	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 )
 
-func (s *ServiceImpl) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error) {
+func (s *ServiceImpl) getAppLinks(c *models.ReqContext) ([]*navtree.NavLink, error) {
 	hasAccess := ac.HasAccess(s.accessControl, c)
-	appLinks := []*dtos.NavLink{}
+	appLinks := []*navtree.NavLink{}
 
 	pss, err := s.pluginSettings.GetPluginSettings(c.Req.Context(), &pluginsettings.GetArgs{OrgID: c.OrgID})
 	if err != nil {
@@ -43,12 +43,12 @@ func (s *ServiceImpl) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 			continue
 		}
 
-		appLink := &dtos.NavLink{
+		appLink := &navtree.NavLink{
 			Text:       plugin.Name,
 			Id:         "plugin-page-" + plugin.ID,
 			Img:        plugin.Info.Logos.Small,
-			Section:    dtos.NavSectionPlugin,
-			SortWeight: dtos.WeightPlugin,
+			Section:    navtree.NavSectionPlugin,
+			SortWeight: navtree.WeightPlugin,
 		}
 
 		if s.features.IsEnabled(featuremgmt.FlagTopnav) {
@@ -63,9 +63,9 @@ func (s *ServiceImpl) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 			}
 
 			if include.Type == "page" && include.AddToNav {
-				var link *dtos.NavLink
+				var link *navtree.NavLink
 				if len(include.Path) > 0 {
-					link = &dtos.NavLink{
+					link = &navtree.NavLink{
 						Url:  s.cfg.AppSubURL + include.Path,
 						Text: include.Name,
 					}
@@ -73,7 +73,7 @@ func (s *ServiceImpl) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 						appLink.Url = link.Url // Overwrite the hardcoded page logic
 					}
 				} else {
-					link = &dtos.NavLink{
+					link = &navtree.NavLink{
 						Url:  s.cfg.AppSubURL + "/plugins/" + plugin.ID + "/page/" + include.Slug,
 						Text: include.Name,
 					}
@@ -85,7 +85,7 @@ func (s *ServiceImpl) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 			if include.Type == "dashboard" && include.AddToNav {
 				dboardURL := include.DashboardURLPath()
 				if dboardURL != "" {
-					link := &dtos.NavLink{
+					link := &navtree.NavLink{
 						Url:  path.Join(s.cfg.AppSubURL, dboardURL),
 						Text: include.Name,
 					}
@@ -97,7 +97,7 @@ func (s *ServiceImpl) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 		if len(appLink.Children) > 0 {
 			// If we only have one child and it's the app default nav then remove it from children
 			if len(appLink.Children) == 1 && appLink.Children[0].Url == appLink.Url {
-				appLink.Children = []*dtos.NavLink{}
+				appLink.Children = []*navtree.NavLink{}
 			}
 			appLinks = append(appLinks, appLink)
 		}
