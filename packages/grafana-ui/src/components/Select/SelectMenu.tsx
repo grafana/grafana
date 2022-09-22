@@ -1,5 +1,7 @@
 import { cx } from '@emotion/css';
 import React, { FC, RefCallback } from 'react';
+import { MenuListProps } from 'react-select';
+import { FixedSizeList as List } from 'react-window';
 
 import { SelectableValue, toIconName } from '@grafana/data';
 
@@ -29,6 +31,44 @@ export const SelectMenu: FC<SelectMenuProps> = ({ children, maxHeight, innerRef,
 };
 
 SelectMenu.displayName = 'SelectMenu';
+
+const VIRTUAL_LIST_ITEM_HEIGHT = 32;
+
+// a virtualize version of the SelectMenu, descriptions for SelectableValue options not supported since those are of a variable height
+// and are hidden by an overflow style
+export const VirtualizedSelectMenu: FC<MenuListProps<SelectableValue>> = ({
+  children,
+  maxHeight,
+  options,
+  getValue,
+}) => {
+  const theme = useTheme2();
+  const styles = getSelectStyles(theme);
+  const [value] = getValue();
+
+  const valueIndex = value ? options.findIndex((option: SelectableValue<unknown>) => option.value === value.value) : 0;
+  const initialOffset = valueIndex * VIRTUAL_LIST_ITEM_HEIGHT;
+
+  if (!Array.isArray(children)) {
+    return null;
+  }
+
+  return (
+    <List
+      className={styles.menu}
+      height={maxHeight}
+      width="100%"
+      aria-label="Select options menu"
+      itemCount={children.length}
+      itemSize={VIRTUAL_LIST_ITEM_HEIGHT}
+      initialScrollOffset={initialOffset}
+    >
+      {({ index, style }) => <div style={{ ...style, overflow: 'hidden' }}>{children[index]}</div>}
+    </List>
+  );
+};
+
+VirtualizedSelectMenu.displayName = 'VirtualizedSelectMenu';
 
 interface SelectMenuOptionProps<T> {
   isDisabled: boolean;

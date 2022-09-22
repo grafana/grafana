@@ -77,6 +77,8 @@ export interface SelectCommonProps<T> {
   renderControl?: ControlComponent<T>;
   tabSelectsValue?: boolean;
   value?: T | SelectValue<T> | null;
+  /** Will wrap the MenuList in a react-window FixedSizeVirtualList for improved performance, does not support options with "description" properties */
+  virtualized?: boolean;
   /** Sets the width to a multiple of 8px. Should only be used with inline forms. Setting width of the container is preferred in other cases.*/
   width?: number | 'auto';
   isOptionDisabled?: () => boolean;
