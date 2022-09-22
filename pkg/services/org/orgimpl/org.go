@@ -85,14 +85,17 @@ func (s *Service) DeleteUserFromAll(ctx context.Context, userID int64) error {
 	return s.store.DeleteUserFromAll(ctx, userID)
 }
 
+// TODO: refactor service to call store CRUD method
 func (s *Service) GetUserOrgList(ctx context.Context, query *org.GetUserOrgListQuery) ([]*org.UserOrgDTO, error) {
 	return s.store.GetUserOrgList(ctx, query)
 }
 
+// TODO: refactor service to call store CRUD method
 func (s *Service) UpdateOrg(ctx context.Context, cmd *org.UpdateOrgCommand) error {
 	return s.store.Update(ctx, cmd)
 }
 
+// TODO: refactor service to call store CRUD method
 func (s *Service) Search(ctx context.Context, query *org.SearchOrgsQuery) ([]*org.OrgDTO, error) {
 	return s.store.Search(ctx, query)
 }
@@ -162,9 +165,9 @@ func (s *Service) GetByName(name string) (*org.Org, error) {
 	}, nil
 }
 
-// TODO: remove wrapper around sqlstore
-func (s *Service) Create(ctx context.Context, cmd *org.CreateOrgCommand) (*org.Org, error) {
-	return s.store.Create(ctx, cmd)
+// TODO: refactor service to call store CRUD method
+func (s *Service) CreateWithMember(ctx context.Context, cmd *org.CreateOrgCommand) (*org.Org, error) {
+	return s.store.CreateWithMember(ctx, cmd)
 }
 
 // TODO: refactor service to call store CRUD method

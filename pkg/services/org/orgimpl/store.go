@@ -28,7 +28,7 @@ type store interface {
 	Delete(context.Context, *org.DeleteOrgCommand) error
 	GetUserOrgList(context.Context, *org.GetUserOrgListQuery) ([]*org.UserOrgDTO, error)
 	Search(context.Context, *org.SearchOrgsQuery) ([]*org.OrgDTO, error)
-	Create(context.Context, *org.CreateOrgCommand) (*org.Org, error)
+	CreateWithMember(context.Context, *org.CreateOrgCommand) (*org.Org, error)
 }
 
 type sqlStore struct {
@@ -280,7 +280,7 @@ func (ss *sqlStore) Search(ctx context.Context, query *org.SearchOrgsQuery) ([]*
 }
 
 // CreateWithMember creates an organization with a certain name and a certain user as member.
-func (ss *sqlStore) Create(ctx context.Context, cmd *org.CreateOrgCommand) (*org.Org, error) {
+func (ss *sqlStore) CreateWithMember(ctx context.Context, cmd *org.CreateOrgCommand) (*org.Org, error) {
 	orga := org.Org{
 		Name:    cmd.Name,
 		Created: time.Now(),

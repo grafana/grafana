@@ -2,6 +2,7 @@ package orgimpl
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -94,6 +95,58 @@ func TestIntegrationOrgDataAccess(t *testing.T) {
 		// err = orgStore.GetSignedInUser(context.Background(), &models.GetSignedInUserQuery{UserId: ac2.ID})
 		// require.Equal(t, err, user.ErrUserNotFound)
 	})
+
+	t.Run("Given we have organizations, we can query them by IDs", func(t *testing.T) {
+		var err error
+		var cmd *org.CreateOrgCommand
+		ids := []int64{}
+
+		for i := 1; i < 4; i++ {
+			cmd = &org.CreateOrgCommand{Name: fmt.Sprint("Org #", i)}
+			result, err := orgStore.CreateWithMember(context.Background(), cmd)
+			require.NoError(t, err)
+
+			ids = append(ids, result.ID)
+		}
+
+		query := &org.SearchOrgsQuery{IDs: ids}
+		result, err := orgStore.Search(context.Background(), query)
+		require.NoError(t, err)
+		require.Equal(t, len(result), 3)
+	})
+
+	t.Run("Given we have organizations, we can limit and paginate search", func(t *testing.T) {
+		ss = sqlstore.InitTestDB(t)
+		for i := 1; i < 4; i++ {
+			cmd := &org.CreateOrgCommand{Name: fmt.Sprint("Orga #", i)}
+			_, err := orgStore.CreateWithMember(context.Background(), cmd)
+			require.NoError(t, err)
+		}
+
+		t.Run("Should be able to search with defaults", func(t *testing.T) {
+			query := &org.SearchOrgsQuery{}
+			result, err := orgStore.Search(context.Background(), query)
+
+			require.NoError(t, err)
+			require.Equal(t, len(result), 3)
+		})
+
+		t.Run("Should be able to limit search", func(t *testing.T) {
+			query := &org.SearchOrgsQuery{Limit: 1}
+			result, err := orgStore.Search(context.Background(), query)
+
+			require.NoError(t, err)
+			require.Equal(t, len(result), 1)
+		})
+
+		t.Run("Should be able to limit and paginate search", func(t *testing.T) {
+			query := &org.SearchOrgsQuery{Limit: 2, Page: 1}
+			result, err := orgStore.Search(context.Background(), query)
+
+			require.NoError(t, err)
+			require.Equal(t, len(result), 1)
+		})
+	})
 }
 
 func TestIntegrationOrgUserDataAccess(t *testing.T) {
@@ -103,7 +156,8 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 
 	ss := sqlstore.InitTestDB(t)
 	orgUserStore := sqlStore{
-		db: ss,
+		db:      ss,
+		dialect: ss.GetDialect(),
 	}
 
 	t.Run("org user inserted", func(t *testing.T) {

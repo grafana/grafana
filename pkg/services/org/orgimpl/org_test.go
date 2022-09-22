@@ -102,6 +102,6 @@ func (f *FakeOrgStore) Search(ctx context.Context, query *org.SearchOrgsQuery) (
 	return f.ExpectedOrgs, f.ExpectedError
 }
 
-func (f *FakeOrgStore) Create(ctx context.Context, cmd *org.CreateOrgCommand) (*org.Org, error) {
+func (f *FakeOrgStore) CreateWithMember(ctx context.Context, cmd *org.CreateOrgCommand) (*org.Org, error) {
 	return f.ExpectedOrg, f.ExpectedError
 }
