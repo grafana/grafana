@@ -263,7 +263,7 @@
     "@kusto/monaco-kusto": "5.1.8",
     "@lezer/common": "1.0.0",
     "@lezer/highlight": "^1.0.0",
-    "@lezer/lr": "1.0.0",
+    "@lezer/lr": "1.2.3",
     "@lingui/core": "3.14.0",
     "@lingui/react": "3.14.0",
     "@opentelemetry/api": "1.2.0",
