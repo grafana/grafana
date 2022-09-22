@@ -340,9 +340,16 @@ You can specify multiple organizations both for the IdP and Grafana:
 - `org_mapping = Engineering:2, Sales:2` to map users from `Engineering` and `Sales` to `2` in Grafana.
 - `org_mapping = Engineering:2, Engineering:3` to assign `Engineering` to both `2` and `3` in Grafana.
 
-You can use `*` as an Organization if you want all your users to be in some organizations with a default role:
+You can use `*` as the SAML Organization if you want all your users to be in some Grafana organizations with a default role:
 
 - `org_mapping = *:2:Editor` to map all users to `2` in Grafana as Editors.
+
+> **Note:** Available in Grafana version 9.2 and later.
+
+You can use `*` as the Grafana organization in the mapping if you want all users from a given SAML Organization to be added to all existing Grafana organizations.
+
+- `org_mapping = Engineering:*` to map users from `Engineering` to all existing Grafana organizations.
+- `org_mapping = Administration:*:Admin` to map users from `Administration` to all existing Grafana organizations as Admins.
 
 ### Configure allowed organizations
 
