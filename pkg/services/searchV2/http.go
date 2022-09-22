@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type SearchHTTPService interface {
@@ -31,6 +32,10 @@ func (s *searchHTTPService) RegisterHTTPRoutes(storageRoute routing.RouteRegiste
 func (s *searchHTTPService) doQuery(c *models.ReqContext) response.Response {
 	searchReadinessCheckResp := s.search.IsReady(c.Req.Context(), c.OrgID)
 	if !searchReadinessCheckResp.IsReady {
+		dashboardSearchNotServedRequestsCounter.With(prometheus.Labels{
+			"reason": searchReadinessCheckResp.Reason,
+		}).Inc()
+
 		bytes, err := (&data.Frame{
 			Name: "Loading",
 		}).MarshalJSON()

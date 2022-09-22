@@ -24,8 +24,17 @@ import (
 )
 
 var (
-	namespace                             = "grafana"
-	subsystem                             = "search"
+	namespace                               = "grafana"
+	subsystem                               = "search"
+	dashboardSearchNotServedRequestsCounter = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Name:      "dashboard_search_requests_not_served_total",
+			Help:      "A counter for dashboard search requests that could not be served due to an ongoing search engine indexing",
+		},
+		[]string{"reason"},
+	)
 	dashboardSearchFailureRequestsCounter = promauto.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: namespace,
