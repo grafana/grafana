@@ -11,8 +11,8 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/searchV2/dslookup"
+	"github.com/grafana/grafana/pkg/services/store/object"
 	"github.com/stretchr/testify/require"
 )
 
@@ -56,7 +56,7 @@ func TestReadDashboard(t *testing.T) {
 					return err
 				}
 
-				obj := models.RawObject{
+				obj := object.RawObject{
 					UID:     path[len(devdash):],
 					Size:    info.Size(),
 					Updated: info.ModTime().UnixMilli(),

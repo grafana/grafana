@@ -15,12 +15,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/searchV2/dslookup"
 	"github.com/grafana/grafana/pkg/services/searchV2/object"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/store"
+	obj "github.com/grafana/grafana/pkg/services/store/object"
 	"github.com/grafana/grafana/pkg/setting"
 	"go.opentelemetry.io/otel/attribute"
 
@@ -55,7 +55,7 @@ type dashboard struct {
 	updated  time.Time
 
 	// Use generic structure
-	summary *models.ObjectSummary
+	summary *obj.ObjectSummary
 }
 
 // buildSignal is sent when search index is accessed in organization for which
@@ -839,7 +839,7 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 			slug:     "",
 			created:  time.Now(),
 			updated:  time.Now(),
-			summary: &models.ObjectSummary{
+			summary: &obj.ObjectSummary{
 				//ID:    0,
 				Name: "General",
 			},
@@ -900,7 +900,7 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 		reader := object.NewDashboardObjectReader(lookup)
 
 		for _, row := range rows {
-			obj := models.RawObject{
+			obj := obj.RawObject{
 				UID:  row.Uid,
 				Kind: "dashboard",
 				Body: row.Data,

@@ -1,4 +1,4 @@
-package models
+package object
 
 // RawObject maps pretty closely to raw blob storage
 type RawObject struct {
@@ -26,6 +26,7 @@ type RawObject struct {
 }
 
 // ObjectSummary is derived from a RawObject and should not depend on system state
+// The summary is used for a unified search and listings objects since the fully
 type ObjectSummary struct {
 	Name        string            `json:"name,omitempty"`
 	Description string            `json:"description,omitempty"`

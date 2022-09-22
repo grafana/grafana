@@ -9,11 +9,12 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/searchV2/dslookup"
 	"github.com/grafana/grafana/pkg/services/searchV2/extract"
+	"github.com/grafana/grafana/pkg/services/store/object"
 )
 
-func NewDashboardObjectReader(lookup dslookup.DatasourceLookup) models.ObjectReader {
-	return func(obj models.RawObject) (models.ObjectSummary, error) {
-		summary := models.ObjectSummary{
+func NewDashboardObjectReader(lookup dslookup.DatasourceLookup) object.ObjectReader {
+	return func(obj object.RawObject) (object.ObjectSummary, error) {
+		summary := object.ObjectSummary{
 			Labels: make(map[string]string),
 			Fields: make(map[string]interface{}),
 		}
@@ -38,7 +39,7 @@ func NewDashboardObjectReader(lookup dslookup.DatasourceLookup) models.ObjectRea
 
 		for _, panel := range dash.Panels {
 			refP := newReferenceAccumulator()
-			p := models.NestedObjectSummary{
+			p := object.NestedObjectSummary{
 				UID:  obj.UID + "#" + strconv.FormatInt(panel.ID, 10),
 				Kind: "panel",
 			}
@@ -68,12 +69,12 @@ func NewDashboardObjectReader(lookup dslookup.DatasourceLookup) models.ObjectRea
 }
 
 type referenceAccumulator struct {
-	refs map[string]models.ExternalReference
+	refs map[string]object.ExternalReference
 }
 
 func newReferenceAccumulator() referenceAccumulator {
 	return referenceAccumulator{
-		refs: make(map[string]models.ExternalReference),
+		refs: make(map[string]object.ExternalReference),
 	}
 }
 
@@ -81,7 +82,7 @@ func (x *referenceAccumulator) add(kind string, sub string, uid string) {
 	key := fmt.Sprintf("%s/%s/%s", kind, sub, uid)
 	_, ok := x.refs[key]
 	if !ok {
-		x.refs[key] = models.ExternalReference{
+		x.refs[key] = object.ExternalReference{
 			Kind: kind,
 			Type: sub,
 			UID:  uid,
@@ -89,14 +90,14 @@ func (x *referenceAccumulator) add(kind string, sub string, uid string) {
 	}
 }
 
-func (x *referenceAccumulator) get() []models.ExternalReference {
+func (x *referenceAccumulator) get() []object.ExternalReference {
 	keys := make([]string, 0, len(x.refs))
 	for k := range x.refs {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
 
-	refs := make([]models.ExternalReference, len(keys))
+	refs := make([]object.ExternalReference, len(keys))
 	for i, key := range keys {
 		refs[i] = x.refs[key]
 	}
