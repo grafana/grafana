@@ -202,6 +202,7 @@ export function fillOptionsPaneItems(
               item={pluginOption}
               context={context}
               id={pluginOption.id}
+              testId={pluginOption.testId}
             />
           );
         },

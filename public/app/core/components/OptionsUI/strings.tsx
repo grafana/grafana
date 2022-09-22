@@ -51,12 +51,12 @@ export class StringArrayEditor extends React.PureComponent<Props, State> {
   };
 
   render() {
-    const { value, item } = this.props;
+    const { value, item, testId } = this.props;
     const { showAdd } = this.state;
     const styles = getStyles(getTheme());
     const placeholder = item.settings?.placeholder || 'Add text';
     return (
-      <div>
+      <div data-testid={testId}>
         {value.map((v, index) => {
           return (
             <Input

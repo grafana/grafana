@@ -97,6 +97,7 @@ export interface StringFieldConfigSettings {
   expandTemplateVars?: boolean;
   useTextarea?: boolean;
   rows?: number;
+  testId?: string;
 }
 
 export const stringOverrideProcessor = (

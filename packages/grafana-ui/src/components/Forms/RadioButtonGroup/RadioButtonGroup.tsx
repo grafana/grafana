@@ -21,6 +21,7 @@ export interface RadioButtonGroupProps<T> {
   fullWidth?: boolean;
   className?: string;
   autoFocus?: boolean;
+  testId?: string;
 }
 
 export function RadioButtonGroup<T>({
@@ -35,6 +36,7 @@ export function RadioButtonGroup<T>({
   className,
   fullWidth = false,
   autoFocus = false,
+  testId,
 }: RadioButtonGroupProps<T>) {
   const handleOnChange = useCallback(
     (option: SelectableValue) => {
@@ -88,6 +90,7 @@ export function RadioButtonGroup<T>({
             description={opt.description}
             fullWidth={fullWidth}
             ref={value === opt.value ? activeButtonRef : undefined}
+            data-testid={testId}
           >
             {icon && <Icon name={icon} className={styles.icon} />}
             {opt.imgUrl && <img src={opt.imgUrl} alt={opt.label} className={styles.img} />}

@@ -49,6 +49,11 @@ export interface OptionEditorConfig<TOptions, TSettings = any, TValue = any> {
   defaultValue?: TValue;
 
   /**
+   * Id will be set the on data-testid property of the editor
+   */
+  testId?: string;
+
+  /**
    * Function that enables configuration of when option editor should be shown based on current panel option properties.
    */
   showIf?: (currentOptions: TOptions, data?: DataFrame[]) => boolean | undefined;
