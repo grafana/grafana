@@ -473,11 +473,12 @@ export default class LokiLanguageProvider extends LanguageProvider {
     return labelValues ?? [];
   }
 
-  async getLogInfo(selector: string): Promise<{ extractedLabelKeys: string[]; hasJSON: boolean; hasLogfmt: boolean }> {
-    let series = [];
-    try {
-      series = await this.datasource.getDataSamples({ expr: selector, refId: 'data-samples' });
-    } catch (e) {
+  async getParserAndLabelKeys(
+    selector: string
+  ): Promise<{ extractedLabelKeys: string[]; hasJSON: boolean; hasLogfmt: boolean }> {
+    const series = await this.datasource.getDataSamples({ expr: selector, refId: 'data-samples' });
+
+    if (!series.length) {
       return { extractedLabelKeys: [], hasJSON: false, hasLogfmt: false };
     }
 

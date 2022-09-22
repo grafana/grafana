@@ -42,8 +42,8 @@ export class CompletionDataProvider {
     return data[labelName] ?? [];
   }
 
-  async getLogInfo(labels: Label[]) {
-    return await this.languageProvider.getLogInfo(this.buildSelector(labels));
+  async getParserAndLabelKeys(labels: Label[]) {
+    return await this.languageProvider.getParserAndLabelKeys(this.buildSelector(labels));
   }
 
   getSeriesLabels(labels: Label[]) {

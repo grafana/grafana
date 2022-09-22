@@ -104,7 +104,7 @@ async function getLabelNamesForCompletions(
   }));
 
   if (addExtractedLabels) {
-    const { extractedLabelKeys } = await dataProvider.getLogInfo(otherLabels);
+    const { extractedLabelKeys } = await dataProvider.getParserAndLabelKeys(otherLabels);
     extractedLabelKeys.forEach((key) => {
       result.push({
         type: 'LABEL_NAME',
@@ -137,7 +137,7 @@ async function getAfterSelectorCompletions(
   afterPipe: boolean,
   dataProvider: CompletionDataProvider
 ): Promise<Completion[]> {
-  const result = await dataProvider.getLogInfo(labels);
+  const result = await dataProvider.getParserAndLabelKeys(labels);
   const allParsers = new Set(['json', 'logfmt', 'pattern', 'regexp', 'unpack']);
   const completions: Completion[] = [];
   const prefix = afterPipe ? '' : '| ';
