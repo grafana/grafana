@@ -213,6 +213,8 @@ var wireBasicSet = wire.NewSet(
 	httpclientprovider.New,
 	wire.Bind(new(httpclient.Provider), new(*sdkhttpclient.Provider)),
 	serverlock.ProvideService,
+	annotationsimpl.ProvideCleanupService,
+	wire.Bind(new(annotations.Cleaner), new(*annotationsimpl.CleanupServiceImpl)),
 	cleanup.ProvideService,
 	shorturls.ProvideService,
 	wire.Bind(new(shorturls.Service), new(*shorturls.ShortURLService)),
@@ -358,7 +360,6 @@ var wireBasicSet = wire.NewSet(
 var wireSet = wire.NewSet(
 	wireBasicSet,
 	sqlstore.ProvideService,
-	wire.Bind(new(sqlstore.TeamStore), new(*sqlstore.SQLStore)),
 	ngmetrics.ProvideService,
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationService)),
 	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationService)),
@@ -373,7 +374,6 @@ var wireTestSet = wire.NewSet(
 	ProvideTestEnv,
 	sqlstore.ProvideServiceForTests,
 	ngmetrics.ProvideServiceForTest,
-	wire.Bind(new(sqlstore.TeamStore), new(*sqlstore.SQLStore)),
 
 	notifications.MockNotificationService,
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationServiceMock)),
