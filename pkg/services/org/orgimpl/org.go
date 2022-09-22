@@ -211,3 +211,30 @@ func (s *Service) GetOrCreate(ctx context.Context, orgName string) (int64, error
 	}
 	return orga.ID, nil
 }
+
+// TODO: remove wrapper around sqlstore
+func (s *Service) AddOrgUser(ctx context.Context, cmd *org.AddOrgUserCommand) error {
+	c := &models.AddOrgUserCommand{
+		LoginOrEmail:              cmd.LoginOrEmail,
+		OrgId:                     cmd.OrgID,
+		UserId:                    cmd.UserID,
+		Role:                      cmd.Role,
+		AllowAddingServiceAccount: cmd.AllowAddingServiceAccount,
+	}
+	return s.sqlStore.AddOrgUser(ctx, c)
+}
+
+// TODO: remove wrapper around sqlstore
+func (s *Service) UpdateOrgUser(ctx context.Context, cmd *org.UpdateOrgUserCommand) error {
+	c := &models.UpdateOrgUserCommand{
+		UserId: cmd.UserID,
+		OrgId:  cmd.OrgID,
+		Role:   cmd.Role,
+	}
+	return s.sqlStore.UpdateOrgUser(ctx, c)
+}
+
+// TODO: remove wrapper around sqlstore
+func (s *Service) GetOrgUsers(ctx context.Context, query *models.GetOrgUsersQuery) error {
+	return s.sqlStore.GetOrgUsers(ctx, query)
+}
