@@ -118,6 +118,10 @@ func (r *RoleDTO) Global() bool {
 	return r.OrgID == GlobalOrgID
 }
 
+func (r *RoleDTO) IsManaged() bool {
+	return strings.HasPrefix(r.Name, ManagedRolePrefix)
+}
+
 func (r *RoleDTO) IsFixed() bool {
 	return strings.HasPrefix(r.Name, FixedRolePrefix)
 }

@@ -11,7 +11,9 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
+	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/services/validations"
 
 	"github.com/stretchr/testify/require"
@@ -142,7 +144,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 			Name:    "someRule",
 			Message: "someMessage",
 			State:   models.AlertStateAlerting,
-		}, &validations.OSSPluginRequestValidator{}, nil, nil, nil)
+		}, &validations.OSSPluginRequestValidator{}, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 		evalContext.IsTestRun = true
 
 		payloadJSON, err := pagerdutyNotifier.buildEventPayload(evalContext)
@@ -198,7 +200,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 			ID:    0,
 			Name:  "someRule",
 			State: models.AlertStateAlerting,
-		}, &validations.OSSPluginRequestValidator{}, nil, nil, nil)
+		}, &validations.OSSPluginRequestValidator{}, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 		evalContext.IsTestRun = true
 
 		payloadJSON, err := pagerdutyNotifier.buildEventPayload(evalContext)
@@ -256,7 +258,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 			Name:    "someRule",
 			Message: "someMessage",
 			State:   models.AlertStateAlerting,
-		}, &validations.OSSPluginRequestValidator{}, nil, nil, nil)
+		}, &validations.OSSPluginRequestValidator{}, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 		evalContext.IsTestRun = true
 		evalContext.EvalMatches = []*alerting.EvalMatch{
 			{
@@ -327,7 +329,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 			Name:    "someRule",
 			Message: "someMessage",
 			State:   models.AlertStateAlerting,
-			AlertRuleTags: []*models.Tag{
+			AlertRuleTags: []*tag.Tag{
 				{Key: "keyOnly"},
 				{Key: "group", Value: "aGroup"},
 				{Key: "class", Value: "aClass"},
@@ -335,7 +337,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				{Key: "severity", Value: "warning"},
 				{Key: "dedup_key", Value: "key-" + strings.Repeat("x", 260)},
 			},
-		}, &validations.OSSPluginRequestValidator{}, nil, nil, nil)
+		}, &validations.OSSPluginRequestValidator{}, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 		evalContext.ImagePublicURL = "http://somewhere.com/omg_dont_panic.png"
 		evalContext.IsTestRun = true
 
@@ -407,14 +409,14 @@ func TestPagerdutyNotifier(t *testing.T) {
 			Name:    "someRule",
 			Message: "someMessage",
 			State:   models.AlertStateAlerting,
-			AlertRuleTags: []*models.Tag{
+			AlertRuleTags: []*tag.Tag{
 				{Key: "keyOnly"},
 				{Key: "group", Value: "aGroup"},
 				{Key: "class", Value: "aClass"},
 				{Key: "component", Value: "aComponent"},
 				{Key: "severity", Value: "info"},
 			},
-		}, &validations.OSSPluginRequestValidator{}, nil, nil, nil)
+		}, &validations.OSSPluginRequestValidator{}, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 		evalContext.ImagePublicURL = "http://somewhere.com/omg_dont_panic.png"
 		evalContext.IsTestRun = true
 
@@ -486,14 +488,14 @@ func TestPagerdutyNotifier(t *testing.T) {
 			Name:    "someRule",
 			Message: "someMessage",
 			State:   models.AlertStateAlerting,
-			AlertRuleTags: []*models.Tag{
+			AlertRuleTags: []*tag.Tag{
 				{Key: "keyOnly"},
 				{Key: "group", Value: "aGroup"},
 				{Key: "class", Value: "aClass"},
 				{Key: "component", Value: "aComponent"},
 				{Key: "severity", Value: "llama"},
 			},
-		}, &validations.OSSPluginRequestValidator{}, nil, nil, nil)
+		}, &validations.OSSPluginRequestValidator{}, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 		evalContext.ImagePublicURL = "http://somewhere.com/omg_dont_panic.png"
 		evalContext.IsTestRun = true
 
