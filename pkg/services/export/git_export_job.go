@@ -12,8 +12,10 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -23,6 +25,9 @@ type gitExportJob struct {
 	logger                    log.Logger
 	sql                       *sqlstore.SQLStore
 	dashboardsnapshotsService dashboardsnapshots.Service
+	datasourceService         datasources.DataSourceService
+	playlistService           playlist.Service
+	orgService                org.Service
 	rootDir                   string
 
 	statusMu    sync.Mutex
@@ -32,12 +37,18 @@ type gitExportJob struct {
 	helper      *commitHelper
 }
 
-func startGitExportJob(cfg ExportConfig, sql *sqlstore.SQLStore, dashboardsnapshotsService dashboardsnapshots.Service, rootDir string, orgID int64, broadcaster statusBroadcaster) (Job, error) {
+func startGitExportJob(cfg ExportConfig, sql *sqlstore.SQLStore,
+	dashboardsnapshotsService dashboardsnapshots.Service, rootDir string, orgID int64,
+	broadcaster statusBroadcaster, playlistService playlist.Service, orgService org.Service,
+	datasourceService datasources.DataSourceService) (Job, error) {
 	job := &gitExportJob{
 		logger:                    log.New("git_export_job"),
 		cfg:                       cfg,
 		sql:                       sql,
 		dashboardsnapshotsService: dashboardsnapshotsService,
+		playlistService:           playlistService,
+		orgService:                orgService,
+		datasourceService:         datasourceService,
 		rootDir:                   rootDir,
 		broadcaster:               broadcaster,
 		status: ExportStatus{
@@ -134,19 +145,19 @@ func (e *gitExportJob) doExportWithHistory() error {
 		},
 	}
 
-	cmd := &models.SearchOrgsQuery{}
-	err = e.sql.SearchOrgs(e.helper.ctx, cmd)
+	cmd := &org.SearchOrgsQuery{}
+	result, err := e.orgService.Search(e.helper.ctx, cmd)
 	if err != nil {
 		return err
 	}
 
 	// Export each org
-	for _, org := range cmd.Result {
-		if len(cmd.Result) > 1 {
-			e.helper.orgDir = path.Join(e.rootDir, fmt.Sprintf("org_%d", org.Id))
+	for _, org := range result {
+		if len(result) > 1 {
+			e.helper.orgDir = path.Join(e.rootDir, fmt.Sprintf("org_%d", org.ID))
 			e.status.Count["orgs"] += 1
 		}
-		err = e.helper.initOrg(e.sql, org.Id)
+		err = e.helper.initOrg(e.sql, org.ID)
 		if err != nil {
 			return err
 		}

@@ -12,7 +12,7 @@ import { AccessControlAction, Role, StoreState, Team } from 'app/types';
 import { connectWithCleanUp } from '../../core/components/connectWithCleanUp';
 
 import { deleteTeam, loadTeams } from './state/actions';
-import { setSearchQuery, setTeamsSearchPage } from './state/reducers';
+import { initialTeamsState, setSearchQuery, setTeamsSearchPage } from './state/reducers';
 import { getSearchQuery, getTeams, getTeamsCount, getTeamsSearchPage, isPermissionTeamAdmin } from './state/selectors';
 
 const pageLimit = 30;
@@ -73,13 +73,8 @@ export class TeamList extends PureComponent<Props, State> {
     const canDelete = contextSrv.hasAccessInMetadata(AccessControlAction.ActionTeamsDelete, team, isTeamAdmin);
     const canReadTeam = contextSrv.hasAccessInMetadata(AccessControlAction.ActionTeamsRead, team, isTeamAdmin);
     const canSeeTeamRoles = contextSrv.hasAccessInMetadata(AccessControlAction.ActionTeamsRolesList, team, false);
-    const canUpdateTeamRoles =
-      contextSrv.hasAccess(AccessControlAction.ActionTeamsRolesAdd, false) ||
-      contextSrv.hasAccess(AccessControlAction.ActionTeamsRolesRemove, false);
     const displayRolePicker =
-      contextSrv.licensedAccessControlEnabled() &&
-      contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesList) &&
-      contextSrv.hasPermission(AccessControlAction.ActionRolesList);
+      contextSrv.licensedAccessControlEnabled() && contextSrv.hasPermission(AccessControlAction.ActionRolesList);
 
     return (
       <tr key={team.id}>
@@ -114,11 +109,7 @@ export class TeamList extends PureComponent<Props, State> {
           )}
         </td>
         {displayRolePicker && (
-          <td>
-            {canSeeTeamRoles && (
-              <TeamRolePicker teamId={team.id} roleOptions={this.state.roleOptions} disabled={!canUpdateTeamRoles} />
-            )}
-          </td>
+          <td>{canSeeTeamRoles && <TeamRolePicker teamId={team.id} roleOptions={this.state.roleOptions} />}</td>
         )}
         <td className="text-right">
           <DeleteButton
@@ -250,4 +241,8 @@ const mapDispatchToProps = {
   setTeamsSearchPage,
 };
 
-export default connectWithCleanUp(mapStateToProps, mapDispatchToProps, (state) => state.teams)(TeamList);
+export default connectWithCleanUp(
+  mapStateToProps,
+  mapDispatchToProps,
+  (state) => (state.teams = initialTeamsState)
+)(TeamList);

@@ -11,20 +11,25 @@ import {
   DataQueryError,
 } from '@grafana/data';
 
+/** @deprecated will be removed in the next major version */
 export interface RowContextOptions {
   direction?: 'BACKWARD' | 'FORWARD';
   limit?: number;
 }
 
+/** @deprecated will be removed in the next major version */
 export interface LogRowContextRows {
   before?: string[];
   after?: string[];
 }
+
+/** @deprecated will be removed in the next major version */
 export interface LogRowContextQueryErrors {
   before?: string;
   after?: string;
 }
 
+/** @deprecated will be removed in the next major version */
 export interface HasMoreContextRows {
   before: boolean;
   after: boolean;
@@ -48,6 +53,7 @@ interface LogRowContextProviderProps {
   }) => JSX.Element;
 }
 
+/** @deprecated will be removed in the next major version */
 export const getRowContexts = async (
   getRowContext: (row: LogRowModel, options?: RowContextOptions) => Promise<DataQueryResponse>,
   row: LogRowModel,
@@ -73,7 +79,7 @@ export const getRowContexts = async (
       return [];
     }
 
-    const data: any[] = [];
+    const data = [];
     for (let index = 0; index < dataResult.data.length; index++) {
       const dataFrame = toDataFrame(dataResult.data[index]);
       const fieldCache = new FieldCache(dataFrame);
@@ -130,6 +136,7 @@ export const getRowContexts = async (
   };
 };
 
+/** @deprecated will be removed in the next major version */
 export const LogRowContextProvider: React.FunctionComponent<LogRowContextProviderProps> = ({
   getRowContext,
   row,
@@ -166,7 +173,7 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
   // The side effect changes the hasMoreContextRows state if there are more context rows before or after the current result
   useEffect(() => {
     if (value) {
-      setResult((currentResult: any) => {
+      setResult((currentResult) => {
         let hasMoreLogsBefore = true,
           hasMoreLogsAfter = true;
 

@@ -12,6 +12,7 @@ import (
 	"github.com/benbjohnson/clock"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -95,7 +96,7 @@ func Test_maybeNewImage(t *testing.T) {
 			imageService := &CountingImageService{}
 			mgr := NewManager(log.NewNopLogger(), &metrics.State{}, nil,
 				&store.FakeRuleStore{}, &store.FakeInstanceStore{},
-				&dashboards.FakeDashboardService{}, imageService, clock.NewMock())
+				&dashboards.FakeDashboardService{}, imageService, clock.NewMock(), annotationstest.NewFakeAnnotationsRepo())
 			err := mgr.maybeTakeScreenshot(context.Background(), &ngmodels.AlertRule{}, test.state, test.oldState)
 			require.NoError(t, err)
 			if !test.shouldScreenshot {

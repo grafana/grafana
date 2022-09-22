@@ -1,8 +1,8 @@
-import React, { createRef } from 'react';
+import React, { Component, createRef } from 'react';
 import uPlot, { AlignedData, Options } from 'uplot';
 
 import { PlotProps } from './types';
-import { DEFAULT_PLOT_CONFIG, pluginLog } from './utils';
+import { pluginLog } from './utils';
 
 function sameDims(prevProps: PlotProps, nextProps: PlotProps) {
   return nextProps.width === prevProps.width && nextProps.height === prevProps.height;
@@ -36,7 +36,7 @@ type UPlotChartState = {
  * Receives a data frame that is x-axis aligned, as of https://github.com/leeoniya/uPlot/tree/master/docs#data-format
  * Exposes context for uPlot instance access
  */
-export class UPlotChart extends React.Component<PlotProps, UPlotChartState> {
+export class UPlotChart extends Component<PlotProps, UPlotChartState> {
   plotContainer = createRef<HTMLDivElement>();
   plotCanvasBBox = createRef<DOMRect>();
 
@@ -65,10 +65,8 @@ export class UPlotChart extends React.Component<PlotProps, UPlotChartState> {
     });
 
     const config: Options = {
-      ...DEFAULT_PLOT_CONFIG,
       width: this.props.width,
       height: this.props.height,
-      ms: 1 as 1,
       ...this.props.config.getConfig(),
     };
 

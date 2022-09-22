@@ -17,11 +17,11 @@
 'use strict';
 
 // accessible variables in this scope
-var window, document, ARGS, $, jQuery, moment, kbn;
+let window, document, ARGS, $, jQuery, moment, kbn;
 
 return function (callback) {
   // Setup some variables
-  var dashboard;
+  let dashboard;
 
   // Initialize a skeleton with nothing but a rows array and service object
   dashboard = {
@@ -40,8 +40,8 @@ return function (callback) {
     to: 'now',
   };
 
-  var rows = 1;
-  var seriesName = 'argName';
+  let rows = 1;
+  let seriesName = 'argName';
 
   if (!_.isUndefined(ARGS.rows)) {
     rows = parseInt(ARGS.rows, 10);

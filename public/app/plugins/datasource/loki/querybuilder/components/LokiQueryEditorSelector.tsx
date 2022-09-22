@@ -4,7 +4,6 @@ import { CoreApp, LoadingState, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal, EditorHeader, EditorRows, FlexItem, InlineSelect, Space } from '@grafana/ui';
-import { FeedbackLink } from 'app/plugins/datasource/prometheus/querybuilder/shared/FeedbackLink';
 import { QueryEditorModeToggle } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryEditorModeToggle';
 import { QueryHeaderSwitch } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryHeaderSwitch';
 import { QueryEditorMode } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
@@ -51,7 +50,7 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
 
       if (newEditorMode === QueryEditorMode.Builder) {
         const result = buildVisualQueryFromString(query.expr || '');
-        // If there are errors, give user a chance to decide if they want to go to builder as that can loose some data.
+        // If there are errors, give user a chance to decide if they want to go to builder as that can lose some data.
         if (result.errors.length) {
           setParseModalOpen(true);
           return;
@@ -81,7 +80,7 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
       <ConfirmModal
         isOpen={parseModalOpen}
         title="Query parsing"
-        body="There were errors while trying to parse the query. Continuing to visual builder may loose some parts of the query."
+        body="There were errors while trying to parse the query. Continuing to visual builder may lose some parts of the query."
         confirmText="Continue"
         onConfirm={() => {
           onChange({ ...query, editorMode: QueryEditorMode.Builder });
@@ -92,15 +91,35 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
       <EditorHeader>
         <InlineSelect
           value={null}
+          onOpenMenu={() => {
+            const visualQuery = buildVisualQueryFromString(query.expr || '');
+            reportInteraction('grafana_loki_query_patterns_opened', {
+              version: 'v1',
+              app: app ?? '',
+              editorMode: query.editorMode,
+              preSelectedOperationsCount: visualQuery.query.operations.length,
+              preSelectedLabelsCount: visualQuery.query.labels.length,
+            });
+          }}
           placeholder="Query patterns"
           aria-label={selectors.components.QueryBuilder.queryPatterns}
           allowCustomValue
           onChange={({ value }: SelectableValue<LokiQueryPattern>) => {
-            const result = buildVisualQueryFromString(query.expr || '');
-            result.query.operations = value?.operations!;
+            const visualQuery = buildVisualQueryFromString(query.expr || '');
+            reportInteraction('grafana_loki_query_patterns_selected', {
+              version: 'v1',
+              app: app ?? '',
+              editorMode: query.editorMode,
+              selectedPattern: value?.name,
+              preSelectedOperationsCount: visualQuery.query.operations.length,
+              preSelectedLabelsCount: visualQuery.query.labels.length,
+            });
+
+            // Update operations
+            visualQuery.query.operations = value?.operations!;
             onChange({
               ...query,
-              expr: lokiQueryModeller.renderQuery(result.query),
+              expr: lokiQueryModeller.renderQuery(visualQuery.query),
             });
           }}
           options={lokiQueryModeller.getQueryPatterns().map((x) => ({ label: x.name, value: x }))}
@@ -109,7 +128,6 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
         {editorMode === QueryEditorMode.Builder && (
           <>
             <QueryHeaderSwitch label="Raw query" value={rawQuery} onChange={onQueryPreviewChange} />
-            <FeedbackLink feedbackUrl="https://github.com/grafana/grafana/discussions/50785" />
           </>
         )}
         <FlexItem grow={1} />
@@ -129,7 +147,7 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
       <Space v={0.5} />
       <EditorRows>
         {editorMode === QueryEditorMode.Code && (
-          <LokiQueryCodeEditor {...props} onChange={onChangeInternal} showExplain={explain} />
+          <LokiQueryCodeEditor {...props} query={query} onChange={onChangeInternal} showExplain={explain} />
         )}
         {editorMode === QueryEditorMode.Builder && (
           <LokiQueryBuilderContainer

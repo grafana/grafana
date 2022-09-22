@@ -1,8 +1,8 @@
 import { uniq } from 'lodash';
 
+import { DataSourceInstanceSettings } from '@grafana/data';
 import { DataSourceWithBackend } from '@grafana/runtime';
 
-import { DataSourceInstanceSettings } from '../../../../../../packages/grafana-data/src';
 import {
   locationDisplayNames,
   logsSupportedLocationsKusto,
@@ -346,9 +346,12 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
     const subscriptions = await this.getSubscriptions();
     let supportedMetricNamespaces: string[] = [];
     for await (const subscription of subscriptions) {
-      const namespaces = await this.azureMonitorDatasource.getMetricNamespaces({
-        resourceUri: `/subscriptions/${subscription.id}`,
-      });
+      const namespaces = await this.azureMonitorDatasource.getMetricNamespaces(
+        {
+          resourceUri: `/subscriptions/${subscription.id}`,
+        },
+        false
+      );
       if (namespaces) {
         const namespaceVals = namespaces.map((namespace) => `"${namespace.value.toLocaleLowerCase()}"`);
         supportedMetricNamespaces = supportedMetricNamespaces.concat(namespaceVals);

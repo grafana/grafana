@@ -1,3 +1,4 @@
+import { Map as OpenLayersMap } from 'ol';
 import { FeatureLike } from 'ol/Feature';
 import BaseLayer from 'ol/layer/Base';
 import Units from 'ol/proj/Units';
@@ -26,6 +27,9 @@ export interface ControlsOptions {
 
   // Show debug
   showDebug?: boolean;
+
+  // Show measure
+  showMeasure?: boolean;
 }
 
 export enum TooltipMode {
@@ -44,6 +48,10 @@ export interface MapViewConfig {
   zoom?: number;
   minZoom?: number;
   maxZoom?: number;
+  padding?: number;
+  allLayers?: boolean;
+  lastOnly?: boolean;
+  layer?: string;
   shared?: boolean;
 }
 
@@ -52,6 +60,7 @@ export const defaultView: MapViewConfig = {
   lat: 0,
   lon: 0,
   zoom: 1,
+  allLayers: true,
 };
 
 /** Support hide from legend/tooltip */
@@ -66,14 +75,31 @@ export interface GeomapPanelOptions {
   layers: MapLayerOptions[];
   tooltip: TooltipOptions;
 }
+
 export interface FeatureStyleConfig {
   style?: StyleConfig;
   check?: FeatureRuleConfig;
 }
+
 export interface FeatureRuleConfig {
   property: string;
   operation: ComparisonOperation;
   value: string | boolean | number;
+}
+
+export interface GeomapLayerActions {
+  selectLayer: (uid: string) => void;
+  deleteLayer: (uid: string) => void;
+  addlayer: (type: string) => void;
+  reorder: (src: number, dst: number) => void;
+  canRename: (v: string) => boolean;
+}
+
+export interface GeomapInstanceState {
+  map?: OpenLayersMap;
+  layers: MapLayerState[];
+  selected: number;
+  actions: GeomapLayerActions;
 }
 
 export enum ComparisonOperation {
@@ -88,7 +114,7 @@ export enum ComparisonOperation {
 //-------------------
 // Runtime model
 //-------------------
-export interface MapLayerState<TConfig = any> extends LayerElement {
+export interface MapLayerState<TConfig = unknown> extends LayerElement {
   options: MapLayerOptions<TConfig>;
   handler: MapLayerHandler;
   layer: BaseLayer; // the openlayers instance

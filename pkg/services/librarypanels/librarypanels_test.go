@@ -21,8 +21,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
+	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -1279,14 +1282,14 @@ type scenarioContext struct {
 	ctx            context.Context
 	service        Service
 	elementService libraryelements.Service
-	user           *models.SignedInUser
+	user           *user.SignedInUser
 	folder         *models.Folder
 	initialResult  libraryPanelResult
 	sqlStore       *sqlstore.SQLStore
 }
 
 type folderACLItem struct {
-	roleType   models.RoleType
+	roleType   org.RoleType
 	permission models.PermissionType
 }
 
@@ -1364,19 +1367,20 @@ func getExpected(t *testing.T, res libraryelements.LibraryElementDTO, UID string
 	}
 }
 
-func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user *models.SignedInUser, dash *models.Dashboard, folderID int64) *models.Dashboard {
+func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user *user.SignedInUser, dash *models.Dashboard, folderID int64) *models.Dashboard {
 	dash.FolderId = folderID
 	dashItem := &dashboards.SaveDashboardDTO{
 		Dashboard: dash,
 		Message:   "",
-		OrgId:     user.OrgId,
+		OrgId:     user.OrgID,
 		User:      user,
 		Overwrite: false,
 	}
 
-	dashboardStore := database.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures())
+	dashboardStore := database.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
 	dashAlertService := alerting.ProvideDashAlertExtractorService(nil, nil, nil)
 	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
 	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
 	ac := acmock.New()
 	service := dashboardservice.ProvideDashboardService(
@@ -1389,22 +1393,23 @@ func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user *models.Sig
 	return dashboard
 }
 
-func createFolderWithACL(t *testing.T, sqlStore *sqlstore.SQLStore, title string, user *models.SignedInUser,
+func createFolderWithACL(t *testing.T, sqlStore *sqlstore.SQLStore, title string, user *user.SignedInUser,
 	items []folderACLItem) *models.Folder {
 	t.Helper()
 
 	ac := acmock.New()
 	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
 	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
 	features := featuremgmt.WithFeatures()
 	folderPermissions := acmock.NewMockedPermissionsService()
 	dashboardPermissions := acmock.NewMockedPermissionsService()
-	dashboardStore := database.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures())
+	dashboardStore := database.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
 	d := dashboardservice.ProvideDashboardService(cfg, dashboardStore, nil, features, folderPermissions, dashboardPermissions, ac)
 	s := dashboardservice.ProvideFolderService(cfg, d, dashboardStore, nil, features, folderPermissions, ac, busmock.New())
 
 	t.Logf("Creating folder with title and UID %q", title)
-	folder, err := s.CreateFolder(context.Background(), user, user.OrgId, title, title)
+	folder, err := s.CreateFolder(context.Background(), user, user.OrgID, title, title)
 	require.NoError(t, err)
 
 	updateFolderACL(t, dashboardStore, folder.Id, items)
@@ -1438,7 +1443,7 @@ func updateFolderACL(t *testing.T, dashboardStore *database.DashboardStore, fold
 
 func scenarioWithLibraryPanel(t *testing.T, desc string, fn func(t *testing.T, sc scenarioContext)) {
 	store := mockstore.NewSQLStoreMock()
-	guardian.InitLegacyGuardian(store, &dashboards.FakeDashboardService{})
+	guardian.InitLegacyGuardian(store, &dashboards.FakeDashboardService{}, &teamtest.FakeService{})
 	t.Helper()
 
 	testScenario(t, desc, func(t *testing.T, sc scenarioContext) {
@@ -1488,10 +1493,11 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 
 	t.Run(desc, func(t *testing.T) {
 		cfg := setting.NewCfg()
+		cfg.RBACEnabled = false
 		orgID := int64(1)
-		role := models.ROLE_ADMIN
+		role := org.RoleAdmin
 		sqlStore := sqlstore.InitTestDB(t)
-		dashboardStore := database.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures())
+		dashboardStore := database.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
 
 		features := featuremgmt.WithFeatures()
 		ac := acmock.New()
@@ -1514,12 +1520,12 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			LibraryElementService: elementService,
 		}
 
-		usr := &models.SignedInUser{
-			UserId:     1,
+		usr := &user.SignedInUser{
+			UserID:     1,
 			Name:       "Signed In User",
 			Login:      "signed_in_user",
 			Email:      "signed.in.user@test.com",
-			OrgId:      orgID,
+			OrgID:      orgID,
 			OrgRole:    role,
 			LastSeenAt: time.Now(),
 		}

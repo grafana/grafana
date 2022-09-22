@@ -19,7 +19,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/multildap"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -258,7 +260,7 @@ func (auth *AuthProxy) LoginViaLDAP(reqCtx *models.ReqContext) (int64, error) {
 func (auth *AuthProxy) loginViaHeader(reqCtx *models.ReqContext) (int64, error) {
 	header := auth.getDecodedHeader(reqCtx, auth.cfg.AuthProxyHeaderName)
 	extUser := &models.ExternalUserInfo{
-		AuthModule: "authproxy",
+		AuthModule: login.AuthProxyAuthModule,
 		AuthId:     header,
 	}
 
@@ -284,9 +286,9 @@ func (auth *AuthProxy) loginViaHeader(reqCtx *models.ReqContext) (int64, error) 
 		case "Role":
 			// If Role header is specified, we update the user role of the default org
 			if header != "" {
-				rt := models.RoleType(header)
+				rt := org.RoleType(header)
 				if rt.IsValid() {
-					extUser.OrgRoles = map[int64]models.RoleType{}
+					extUser.OrgRoles = map[int64]org.RoleType{}
 					orgID := int64(1)
 					if setting.AutoAssignOrg && setting.AutoAssignOrgId > 0 {
 						orgID = int64(setting.AutoAssignOrgId)
@@ -344,7 +346,7 @@ func (auth *AuthProxy) headersIterator(reqCtx *models.ReqContext, fn func(field 
 }
 
 // GetSignedInUser gets full signed in user info.
-func (auth *AuthProxy) GetSignedInUser(userID int64, orgID int64) (*models.SignedInUser, error) {
+func (auth *AuthProxy) GetSignedInUser(userID int64, orgID int64) (*user.SignedInUser, error) {
 	query := &models.GetSignedInUserQuery{
 		OrgId:  orgID,
 		UserId: userID,

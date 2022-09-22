@@ -24,7 +24,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 )
 
-//Internal interval and range variables
+// Internal interval and range variables
 const (
 	varInterval     = "$__interval"
 	varIntervalMs   = "$__interval_ms"
@@ -34,8 +34,8 @@ const (
 	varRateInterval = "$__rate_interval"
 )
 
-//Internal interval and range variables with {} syntax
-//Repetitive code, we should have functionality to unify these
+// Internal interval and range variables with {} syntax
+// Repetitive code, we should have functionality to unify these
 const (
 	varIntervalAlt     = "${__interval}"
 	varIntervalMsAlt   = "${__interval_ms}"

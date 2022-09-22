@@ -60,7 +60,7 @@ func TestContactPointService(t *testing.T) {
 		require.Equal(t, "slack", cps[1].Type)
 	})
 
-	t.Run("it's possbile to use a custom uid", func(t *testing.T) {
+	t.Run("it's possible to use a custom uid", func(t *testing.T) {
 		customUID := "1337"
 		sut := createContactPointServiceSut(secretsService)
 		newCp := createTestContactPoint()
@@ -75,7 +75,7 @@ func TestContactPointService(t *testing.T) {
 		require.Equal(t, customUID, cps[1].UID)
 	})
 
-	t.Run("it's not possbile to use the same uid twice", func(t *testing.T) {
+	t.Run("it's not possible to use the same uid twice", func(t *testing.T) {
 		customUID := "1337"
 		sut := createContactPointServiceSut(secretsService)
 		newCp := createTestContactPoint()
@@ -319,6 +319,16 @@ func TestStitchReceivers(t *testing.T) {
 			},
 			expModified: true,
 			expCfg: definitions.PostableApiAlertingConfig{
+				Config: definitions.Config{
+					Route: &definitions.Route{
+						Receiver: "receiver-1",
+						Routes: []*definitions.Route{
+							{
+								Receiver: "receiver-1",
+							},
+						},
+					},
+				},
 				Receivers: []*definitions.PostableApiReceiver{
 					{
 						Receiver: config.Receiver{
@@ -362,7 +372,7 @@ func TestStitchReceivers(t *testing.T) {
 			},
 		},
 		{
-			name: "rename with only one receiver in group, renames group",
+			name: "rename with only one receiver in group, renames group and references",
 			new: &definitions.PostableGrafanaReceiver{
 				UID:  "abc",
 				Name: "new-receiver",
@@ -370,6 +380,16 @@ func TestStitchReceivers(t *testing.T) {
 			},
 			expModified: true,
 			expCfg: definitions.PostableApiAlertingConfig{
+				Config: definitions.Config{
+					Route: &definitions.Route{
+						Receiver: "new-receiver",
+						Routes: []*definitions.Route{
+							{
+								Receiver: "new-receiver",
+							},
+						},
+					},
+				},
 				Receivers: []*definitions.PostableApiReceiver{
 					{
 						Receiver: config.Receiver{
@@ -421,6 +441,16 @@ func TestStitchReceivers(t *testing.T) {
 			},
 			expModified: true,
 			expCfg: definitions.PostableApiAlertingConfig{
+				Config: definitions.Config{
+					Route: &definitions.Route{
+						Receiver: "receiver-1",
+						Routes: []*definitions.Route{
+							{
+								Receiver: "receiver-1",
+							},
+						},
+					},
+				},
 				Receivers: []*definitions.PostableApiReceiver{
 					{
 						Receiver: config.Receiver{
@@ -472,6 +502,16 @@ func TestStitchReceivers(t *testing.T) {
 			},
 			expModified: true,
 			expCfg: definitions.PostableApiAlertingConfig{
+				Config: definitions.Config{
+					Route: &definitions.Route{
+						Receiver: "receiver-1",
+						Routes: []*definitions.Route{
+							{
+								Receiver: "receiver-1",
+							},
+						},
+					},
+				},
 				Receivers: []*definitions.PostableApiReceiver{
 					{
 						Receiver: config.Receiver{
@@ -533,6 +573,16 @@ func TestStitchReceivers(t *testing.T) {
 			},
 			expModified: true,
 			expCfg: definitions.PostableApiAlertingConfig{
+				Config: definitions.Config{
+					Route: &definitions.Route{
+						Receiver: "receiver-1",
+						Routes: []*definitions.Route{
+							{
+								Receiver: "receiver-1",
+							},
+						},
+					},
+				},
 				Receivers: []*definitions.PostableApiReceiver{
 					{
 						Receiver: config.Receiver{
@@ -604,6 +654,16 @@ func TestStitchReceivers(t *testing.T) {
 func createTestConfigWithReceivers() *definitions.PostableUserConfig {
 	return &definitions.PostableUserConfig{
 		AlertmanagerConfig: definitions.PostableApiAlertingConfig{
+			Config: definitions.Config{
+				Route: &definitions.Route{
+					Receiver: "receiver-1",
+					Routes: []*definitions.Route{
+						{
+							Receiver: "receiver-1",
+						},
+					},
+				},
+			},
 			Receivers: []*definitions.PostableApiReceiver{
 				{
 					Receiver: config.Receiver{
@@ -652,6 +712,16 @@ func createTestConfigWithReceivers() *definitions.PostableUserConfig {
 func createInconsistentTestConfigWithReceivers() *definitions.PostableUserConfig {
 	return &definitions.PostableUserConfig{
 		AlertmanagerConfig: definitions.PostableApiAlertingConfig{
+			Config: definitions.Config{
+				Route: &definitions.Route{
+					Receiver: "receiver-1",
+					Routes: []*definitions.Route{
+						{
+							Receiver: "receiver-1",
+						},
+					},
+				},
+			},
 			Receivers: []*definitions.PostableApiReceiver{
 				{
 					Receiver: config.Receiver{

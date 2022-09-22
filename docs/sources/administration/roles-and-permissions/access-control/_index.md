@@ -4,6 +4,7 @@ aliases:
   - /docs/grafana/latest/enterprise/access-control/
   - /docs/grafana/latest/enterprise/access-control/about-rbac/
   - /docs/grafana/latest/enterprise/access-control/roles/
+  - /docs/grafana/latest/administration/roles-and-permissions/access-control/
 description: Role-based access control (RBAC) provides a standardized way of granting,
   changing, and revoking access so that users can view and modify Grafana resources,
   such as users and reports.
@@ -14,7 +15,7 @@ weight: 120
 
 # Role-based access control (RBAC)
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../enterprise/" >}}) and [Grafana Cloud Advanced]({{< ref "/docs/grafana-cloud" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced]({{< ref "/docs/grafana-cloud" >}}).
 
 RBAC provides a standardized way of granting, changing, and revoking access when it comes to viewing and modifying Grafana resources, such as dashboards, reports, and administrative settings.
 
@@ -82,12 +83,12 @@ Assign fixed roles when the basic roles do not meet your permission requirements
 - [Dashboards and folders]({{< relref "../../../dashboards/" >}})
 - [Data sources]({{< relref "../../../datasources/" >}})
 - [Explore]({{< relref "../../../explore/" >}})
-- [Folders]({{< relref "../../../dashboards/dashboard-folders/" >}})
+- [Folders]({{< relref "../../../dashboards/manage-dashboards/#create-a-dashboard-folder" >}})
 - [LDAP]({{< relref "../../../setup-grafana/configure-security/configure-authentication/ldap/" >}})
 - [Licenses]({{< relref "../../stats-and-license/" >}})
 - [Organizations]({{< relref "../../organization-management/" >}})
 - [Provisioning]({{< relref "../../provisioning/" >}})
-- [Reports]({{< relref "../../../enterprise/reporting/" >}})
+- [Reports]({{< relref "../../../dashboards/create-reports/" >}})
 - [Roles]({{< relref "../../" >}})
 - [Settings]({{< relref "../../../enterprise/settings-updates/" >}})
 - [Service accounts]({{< relref "../../service-accounts/" >}})

@@ -30,10 +30,9 @@ const getStyle = (theme: GrafanaTheme2) => ({
   warn: css`
     display: inline-flex;
     flex-direction: row;
-    color: ${theme.colors.warning.text};
+    align-items: center;
+    gap: ${theme.spacing(1)};
 
-    & > * + * {
-      margin-left: ${theme.spacing(1)};
-    }
+    color: ${theme.colors.warning.text};
   `,
 });

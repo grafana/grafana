@@ -79,3 +79,15 @@ func (f *FakeOrgStore) InsertOrgUser(ctx context.Context, org *org.OrgUser) (int
 func (f *FakeOrgStore) DeleteUserFromAll(ctx context.Context, userID int64) error {
 	return f.ExpectedError
 }
+
+func (f *FakeOrgStore) Update(ctx context.Context, cmd *org.UpdateOrgCommand) error {
+	return f.ExpectedError
+}
+
+func (f *FakeOrgStore) UpdateAddress(ctx context.Context, cmd *org.UpdateOrgAddressCommand) error {
+	return f.ExpectedError
+}
+
+func (f *FakeOrgStore) Delete(ctx context.Context, cmd *org.DeleteOrgCommand) error {
+	return f.ExpectedError
+}

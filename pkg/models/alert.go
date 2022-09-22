@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/tag"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type AlertStateType string
@@ -114,15 +116,15 @@ func (a *Alert) ContainsUpdates(other *Alert) bool {
 	return result
 }
 
-func (a *Alert) GetTagsFromSettings() []*Tag {
-	tags := []*Tag{}
+func (a *Alert) GetTagsFromSettings() []*tag.Tag {
+	tags := []*tag.Tag{}
 	if a.Settings != nil {
 		if data, ok := a.Settings.CheckGet("alertRuleTags"); ok {
 			for tagNameString, tagValue := range data.MustMap() {
 				// MustMap() already guarantees the return of a `map[string]interface{}`.
 				// Therefore we only need to verify that tagValue is a String.
 				tagValueString := simplejson.NewFromAny(tagValue).MustString()
-				tags = append(tags, &Tag{Key: tagNameString, Value: tagValueString})
+				tags = append(tags, &tag.Tag{Key: tagNameString, Value: tagValueString})
 			}
 		}
 	}
@@ -159,7 +161,7 @@ type GetAlertsQuery struct {
 	PanelId      int64
 	Limit        int64
 	Query        string
-	User         *SignedInUser
+	User         *user.SignedInUser
 
 	Result []*AlertListItemDTO
 }

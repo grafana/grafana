@@ -2,7 +2,7 @@ package updatechecker
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
@@ -190,7 +190,7 @@ func (c *fakeHTTPClient) Get(url string) (*http.Response, error) {
 	c.requestURL = url
 
 	resp := &http.Response{
-		Body: ioutil.NopCloser(strings.NewReader(c.fakeResp)),
+		Body: io.NopCloser(strings.NewReader(c.fakeResp)),
 	}
 
 	return resp, nil

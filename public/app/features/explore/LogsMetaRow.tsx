@@ -1,8 +1,10 @@
 import React from 'react';
 
 import { LogsDedupStrategy, LogsMetaItem, LogsMetaKind, LogRowModel } from '@grafana/data';
-import { Button, Tooltip, LogLabels } from '@grafana/ui';
-import { MAX_CHARACTERS } from '@grafana/ui/src/components/Logs/LogRowMessage';
+import { Button, Tooltip } from '@grafana/ui';
+
+import { LogLabels } from '../logs/components/LogLabels';
+import { MAX_CHARACTERS } from '../logs/components/LogRowMessage';
 
 import { MetaInfoText, MetaItemProps } from './MetaInfoText';
 
@@ -18,7 +20,7 @@ export type Props = {
   clearDetectedFields: () => void;
 };
 
-export const LogsMetaRow: React.FC<Props> = React.memo(
+export const LogsMetaRow = React.memo(
   ({
     meta,
     dedupStrategy,
@@ -29,7 +31,7 @@ export const LogsMetaRow: React.FC<Props> = React.memo(
     forceEscape,
     onEscapeNewlines,
     logRows,
-  }) => {
+  }: Props) => {
     const logsMetaItem: Array<LogsMetaItem | MetaItemProps> = [...meta];
 
     // Add deduplication info

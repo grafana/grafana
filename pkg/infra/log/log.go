@@ -5,9 +5,9 @@
 package log
 
 import (
+	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
@@ -32,6 +32,7 @@ var (
 	root            *logManager
 	now             = time.Now
 	logTimeFormat   = time.RFC3339Nano
+	ctxLogProviders = []ContextualLogProviderFunc{}
 )
 
 const (
@@ -46,7 +47,7 @@ func init() {
 
 	// Use discard by default
 	format := func(w io.Writer) gokitlog.Logger {
-		return gokitlog.NewLogfmtLogger(gokitlog.NewSyncWriter(ioutil.Discard))
+		return gokitlog.NewLogfmtLogger(gokitlog.NewSyncWriter(io.Discard))
 	}
 	logger := level.NewFilter(format(os.Stderr), level.AllowInfo())
 	root = newManager(logger)
@@ -191,6 +192,22 @@ func (cl *ConcreteLogger) log(msg string, logLevel level.Value, args ...interfac
 	return cl.Log(append([]interface{}{level.Key(), logLevel, "msg", msg}, args...)...)
 }
 
+func (cl *ConcreteLogger) FromContext(ctx context.Context) Logger {
+	args := []interface{}{}
+
+	for _, p := range ctxLogProviders {
+		if pArgs, exists := p(ctx); exists {
+			args = append(args, pArgs...)
+		}
+	}
+
+	if len(args) > 0 {
+		return cl.New(args...)
+	}
+
+	return cl
+}
+
 func (cl *ConcreteLogger) New(ctx ...interface{}) *ConcreteLogger {
 	if len(ctx) == 0 {
 		root.New()
@@ -205,9 +222,12 @@ func (cl *ConcreteLogger) New(ctx ...interface{}) *ConcreteLogger {
 // name plus additional contextual information, you must use the
 // Logger interface New method for it to work as expected.
 // Example creating a shared logger:
-//   requestLogger := log.New("request-logger")
+//
+//	requestLogger := log.New("request-logger")
+//
 // Example creating a contextual logger:
-//   contextualLogger := requestLogger.New("username", "user123")
+//
+//	contextualLogger := requestLogger.New("username", "user123")
 func New(ctx ...interface{}) *ConcreteLogger {
 	if len(ctx) == 0 {
 		return root.New()
@@ -239,6 +259,15 @@ func WithPrefix(ctxLogger *ConcreteLogger, ctx ...interface{}) *ConcreteLogger {
 // WithSuffix adds context that will be appended at the end of the log message
 func WithSuffix(ctxLogger *ConcreteLogger, ctx ...interface{}) *ConcreteLogger {
 	return with(ctxLogger, gokitlog.WithSuffix, ctx)
+}
+
+// ContextualLogProviderFunc contextual log provider function definition.
+type ContextualLogProviderFunc func(ctx context.Context) ([]interface{}, bool)
+
+// RegisterContextualLogProvider registers a ContextualLogProviderFunc
+// that will be used to provide context when Logger.FromContext is called.
+func RegisterContextualLogProvider(mw ContextualLogProviderFunc) {
+	ctxLogProviders = append(ctxLogProviders, mw)
 }
 
 var logLevels = map[string]level.Option{

@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -113,8 +113,13 @@ func (e *AzureMonitorDatasource) buildQueries(queries []backend.DataQuery, dsInf
 		params.Add("timespan", fmt.Sprintf("%v/%v", query.TimeRange.From.UTC().Format(time.RFC3339), query.TimeRange.To.UTC().Format(time.RFC3339)))
 		params.Add("interval", timeGrain)
 		params.Add("aggregation", azJSONModel.Aggregation)
-		params.Add("metricnames", azJSONModel.MetricName) // MetricName or MetricNames ?
-		params.Add("metricnamespace", azJSONModel.MetricNamespace)
+		params.Add("metricnames", azJSONModel.MetricName)
+
+		if azJSONModel.CustomNamespace != "" {
+			params.Add("metricnamespace", azJSONModel.CustomNamespace)
+		} else {
+			params.Add("metricnamespace", azJSONModel.MetricNamespace)
+		}
 
 		// old model
 		dimension := strings.TrimSpace(azJSONModel.Dimension)
@@ -234,7 +239,7 @@ func (e *AzureMonitorDatasource) createRequest(ctx context.Context, dsInfo types
 }
 
 func (e *AzureMonitorDatasource) unmarshalResponse(res *http.Response) (types.AzureMonitorResponse, error) {
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return types.AzureMonitorResponse{}, err
 	}
@@ -445,9 +450,12 @@ func formatAzureMonitorLegendKey(alias string, resourceName string, metricName s
 }
 
 // Map values from:
-//   https://docs.microsoft.com/en-us/rest/api/monitor/metrics/list#unit
+//
+//	https://docs.microsoft.com/en-us/rest/api/monitor/metrics/list#unit
+//
 // to
-//   https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts#L24
+//
+//	https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts#L24
 func toGrafanaUnit(unit string) string {
 	switch unit {
 	case "BitsPerSecond":

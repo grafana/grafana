@@ -11,7 +11,7 @@ import (
 )
 
 func (hs *HTTPServer) GetCurrentOrgQuotas(c *models.ReqContext) response.Response {
-	return hs.getOrgQuotasHelper(c, c.OrgId)
+	return hs.getOrgQuotasHelper(c, c.OrgID)
 }
 
 // swagger:route GET /orgs/{org_id}/quotas orgs getOrgQuota
@@ -19,7 +19,7 @@ func (hs *HTTPServer) GetCurrentOrgQuotas(c *models.ReqContext) response.Respons
 // Fetch Organization quota.
 //
 // If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `orgs.quotas:read` and scope `org:id:1` (orgIDScope).
-//list
+//
 // Responses:
 // 200: getQuotaResponse
 // 401: unauthorisedError

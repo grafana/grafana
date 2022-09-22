@@ -27,7 +27,6 @@ export interface FeatureToggles {
   queryOverLive?: boolean;
   panelTitleSearch?: boolean;
   tempoApmTable?: boolean;
-  prometheus_azure_auth?: boolean;
   prometheusAzureOverrideAudience?: boolean;
   influxdbBackendMigration?: boolean;
   showFeatureFlagsInUI?: boolean;
@@ -44,8 +43,10 @@ export interface FeatureToggles {
   export?: boolean;
   azureMonitorResourcePickerForMetrics?: boolean;
   explore2Dashboard?: boolean;
+  exploreMixedDatasource?: boolean;
   tracing?: boolean;
   commandPalette?: boolean;
+  correlations?: boolean;
   cloudWatchDynamicLabels?: boolean;
   datasourceQueryMultiStatus?: boolean;
   traceToMetrics?: boolean;
@@ -57,11 +58,14 @@ export interface FeatureToggles {
   canvasPanelNesting?: boolean;
   scenes?: boolean;
   useLegacyHeatmapPanel?: boolean;
-  cloudMonitoringExperimentalUI?: boolean;
   disableSecretsCompatibility?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
   dataConnectionsConsole?: boolean;
   internationalization?: boolean;
   topnav?: boolean;
   customBranding?: boolean;
+  traceqlEditor?: boolean;
+  redshiftAsyncQueryDataSupport?: boolean;
+  athenaAsyncQueryDataSupport?: boolean;
+  increaseInMemDatabaseQueryCache?: boolean;
 }

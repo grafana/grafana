@@ -3,26 +3,32 @@ import memoizeOne from 'memoize-one';
 import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { DataQuery, ExploreUrlState, EventBusExtended, EventBusSrv, GrafanaTheme2 } from '@grafana/data';
+import { ExploreUrlState, EventBusExtended, EventBusSrv, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Themeable2, withTheme2 } from '@grafana/ui';
+import { config } from 'app/core/config';
 import store from 'app/core/store';
 import {
   DEFAULT_RANGE,
   ensureQueries,
+  queryDatasourceDetails,
   getTimeRange,
   getTimeRangeFromUrl,
   lastUsedDatasourceKeyForOrgId,
   parseUrlState,
 } from 'app/core/utils/explore';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { StoreState } from 'app/types';
 import { ExploreId } from 'app/types/explore';
 
+import { getDatasourceSrv } from '../plugins/datasource_srv';
 import { getFiscalYearStartMonth, getTimeZone } from '../profile/state/selectors';
 
 import Explore from './Explore';
 import { initializeExplore, refreshExplore } from './state/explorePane';
-import { lastSavedUrl, cleanupPaneAction } from './state/main';
+import { lastSavedUrl, cleanupPaneAction, stateSave } from './state/main';
+import { importQueries } from './state/query';
+import { loadAndInitDatasource } from './state/utils';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -53,7 +59,7 @@ interface Props extends OwnProps, ConnectedProps<typeof connector> {}
  * of state based on URL changes and preventing any infinite loops.
  */
 class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
-  el: any;
+  el: HTMLDivElement | null = null;
   exploreEvents: EventBusExtended;
 
   constructor(props: Props) {
@@ -64,16 +70,49 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
     };
   }
 
-  componentDidMount() {
-    const { initialized, exploreId, initialDatasource, initialQueries, initialRange, panelsState } = this.props;
+  async componentDidMount() {
+    const { initialized, exploreId, initialDatasource, initialQueries, initialRange, panelsState, orgId } = this.props;
     const width = this.el?.offsetWidth ?? 0;
-
     // initialize the whole explore first time we mount and if browser history contains a change in datasource
     if (!initialized) {
+      let queriesDatasourceOverride = undefined;
+      let rootDatasourceOverride = undefined;
+      // if this is starting with no queries and an initial datasource exists (but is not mixed), look up the ref to use it (initial datasource can be a UID or name here)
+      if ((!initialQueries || initialQueries.length === 0) && initialDatasource) {
+        const isDSMixed =
+          initialDatasource === MIXED_DATASOURCE_NAME || initialDatasource.uid === MIXED_DATASOURCE_NAME;
+        if (!isDSMixed) {
+          const { instance } = await loadAndInitDatasource(orgId, initialDatasource);
+          queriesDatasourceOverride = instance.getRef();
+        }
+      }
+
+      let queries = await ensureQueries(initialQueries, queriesDatasourceOverride); // this will return an empty array if there are no datasources
+
+      const queriesDatasourceDetails = queryDatasourceDetails(queries);
+      if (!queriesDatasourceDetails.noneHaveDatasource) {
+        if (!queryDatasourceDetails(queries).allDatasourceSame) {
+          if (config.featureToggles.exploreMixedDatasource) {
+            rootDatasourceOverride = await getDatasourceSrv().get(MIXED_DATASOURCE_NAME);
+          } else {
+            // if we have mixed queries but the mixed datasource feature is not on, change the datasource to the first query that has one
+            const changeDatasourceUid = queries.find((query) => query.datasource?.uid)!.datasource!.uid;
+            if (changeDatasourceUid) {
+              rootDatasourceOverride = changeDatasourceUid;
+              const datasource = await getDatasourceSrv().get(changeDatasourceUid);
+              const datasourceInit = await getDatasourceSrv().get(initialDatasource);
+              await this.props.importQueries(exploreId, queries, datasourceInit, datasource);
+              await this.props.stateSave({ replace: true });
+              queries = this.props.initialQueries;
+            }
+          }
+        }
+      }
+
       this.props.initializeExplore(
         exploreId,
-        initialDatasource,
-        initialQueries,
+        rootDatasourceOverride || queries[0]?.datasource || initialDatasource,
+        queries,
         initialRange,
         width,
         this.exploreEvents,
@@ -100,7 +139,7 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
     }
   };
 
-  getRef = (el: any) => {
+  getRef = (el: HTMLDivElement) => {
     this.el = el;
   };
 
@@ -116,7 +155,6 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
   }
 }
 
-const ensureQueriesMemoized = memoizeOne(ensureQueries);
 const getTimeRangeFromUrlMemoized = memoizeOne(getTimeRangeFromUrl);
 
 function mapStateToProps(state: StoreState, props: OwnProps) {
@@ -126,7 +164,6 @@ function mapStateToProps(state: StoreState, props: OwnProps) {
 
   const { datasource, queries, range: urlRange, panelsState } = (urlState || {}) as ExploreUrlState;
   const initialDatasource = datasource || store.get(lastUsedDatasourceKeyForOrgId(state.user.orgId));
-  const initialQueries: DataQuery[] = ensureQueriesMemoized(queries);
   const initialRange = urlRange
     ? getTimeRangeFromUrlMemoized(urlRange, timeZone, fiscalYearStartMonth)
     : getTimeRange(timeZone, DEFAULT_RANGE, fiscalYearStartMonth);
@@ -134,9 +171,10 @@ function mapStateToProps(state: StoreState, props: OwnProps) {
   return {
     initialized: state.explore[props.exploreId]?.initialized,
     initialDatasource,
-    initialQueries,
+    initialQueries: queries,
     initialRange,
     panelsState,
+    orgId: state.user.orgId,
   };
 }
 
@@ -144,6 +182,8 @@ const mapDispatchToProps = {
   initializeExplore,
   refreshExplore,
   cleanupPaneAction,
+  importQueries,
+  stateSave,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);

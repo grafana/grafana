@@ -11,9 +11,11 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -23,14 +25,14 @@ const (
 )
 
 func TestBuilder_EqualResults_Basic(t *testing.T) {
-	user := &models.SignedInUser{
-		UserId:  1,
-		OrgId:   1,
-		OrgRole: models.ROLE_EDITOR,
+	user := &user.SignedInUser{
+		UserID:  1,
+		OrgID:   1,
+		OrgRole: org.RoleEditor,
 	}
 
 	db := setupTestEnvironment(t)
-	dashIds := createDashboards(t, db, 0, 1, user.OrgId)
+	dashIds := createDashboards(t, db, 0, 1, user.OrgID)
 	require.Len(t, dashIds, 1)
 
 	// create one dashboard in another organization that shouldn't
@@ -39,7 +41,7 @@ func TestBuilder_EqualResults_Basic(t *testing.T) {
 
 	builder := &searchstore.Builder{
 		Filters: []interface{}{
-			searchstore.OrgFilter{OrgId: user.OrgId},
+			searchstore.OrgFilter{OrgId: user.OrgID},
 			searchstore.TitleSorter{},
 		},
 		Dialect: db.Dialect,
@@ -65,18 +67,18 @@ func TestBuilder_EqualResults_Basic(t *testing.T) {
 }
 
 func TestBuilder_Pagination(t *testing.T) {
-	user := &models.SignedInUser{
-		UserId:  1,
-		OrgId:   1,
-		OrgRole: models.ROLE_VIEWER,
+	user := &user.SignedInUser{
+		UserID:  1,
+		OrgID:   1,
+		OrgRole: org.RoleViewer,
 	}
 
 	db := setupTestEnvironment(t)
-	createDashboards(t, db, 0, 25, user.OrgId)
+	createDashboards(t, db, 0, 25, user.OrgID)
 
 	builder := &searchstore.Builder{
 		Filters: []interface{}{
-			searchstore.OrgFilter{OrgId: user.OrgId},
+			searchstore.OrgFilter{OrgId: user.OrgID},
 			searchstore.TitleSorter{},
 		},
 		Dialect: db.Dialect,
@@ -111,26 +113,26 @@ func TestBuilder_Pagination(t *testing.T) {
 }
 
 func TestBuilder_Permissions(t *testing.T) {
-	user := &models.SignedInUser{
-		UserId:  1,
-		OrgId:   1,
-		OrgRole: models.ROLE_VIEWER,
+	user := &user.SignedInUser{
+		UserID:  1,
+		OrgID:   1,
+		OrgRole: org.RoleViewer,
 	}
 
 	db := setupTestEnvironment(t)
-	createDashboards(t, db, 0, 1, user.OrgId)
+	createDashboards(t, db, 0, 1, user.OrgID)
 
 	level := models.PERMISSION_EDIT
 
 	builder := &searchstore.Builder{
 		Filters: []interface{}{
-			searchstore.OrgFilter{OrgId: user.OrgId},
+			searchstore.OrgFilter{OrgId: user.OrgID},
 			searchstore.TitleSorter{},
 			permissions.DashboardPermissionFilter{
 				Dialect:         db.Dialect,
 				OrgRole:         user.OrgRole,
-				OrgId:           user.OrgId,
-				UserId:          user.UserId,
+				OrgId:           user.OrgID,
+				UserId:          user.UserID,
 				PermissionLevel: level,
 			},
 		},

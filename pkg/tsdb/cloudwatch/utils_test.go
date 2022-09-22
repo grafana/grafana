@@ -15,6 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -23,14 +24,17 @@ type fakeCWLogsClient struct {
 
 	calls logsQueryCalls
 
-	logGroups      cloudwatchlogs.DescribeLogGroupsOutput
+	logGroups      []cloudwatchlogs.DescribeLogGroupsOutput
 	logGroupFields cloudwatchlogs.GetLogGroupFieldsOutput
 	queryResults   cloudwatchlogs.GetQueryResultsOutput
+
+	logGroupsIndex int
 }
 
 type logsQueryCalls struct {
 	startQueryWithContext []*cloudwatchlogs.StartQueryInput
 	getEventsWithContext  []*cloudwatchlogs.GetLogEventsInput
+	describeLogGroups     []*cloudwatchlogs.DescribeLogGroupsInput
 }
 
 func (m *fakeCWLogsClient) GetQueryResultsWithContext(ctx context.Context, input *cloudwatchlogs.GetQueryResultsInput, option ...request.Option) (*cloudwatchlogs.GetQueryResultsOutput, error) {
@@ -51,8 +55,17 @@ func (m *fakeCWLogsClient) StopQueryWithContext(ctx context.Context, input *clou
 	}, nil
 }
 
+func (m *fakeCWLogsClient) DescribeLogGroups(input *cloudwatchlogs.DescribeLogGroupsInput) (*cloudwatchlogs.DescribeLogGroupsOutput, error) {
+	m.calls.describeLogGroups = append(m.calls.describeLogGroups, input)
+	output := &m.logGroups[m.logGroupsIndex]
+	m.logGroupsIndex++
+	return output, nil
+}
+
 func (m *fakeCWLogsClient) DescribeLogGroupsWithContext(ctx context.Context, input *cloudwatchlogs.DescribeLogGroupsInput, option ...request.Option) (*cloudwatchlogs.DescribeLogGroupsOutput, error) {
-	return &m.logGroups, nil
+	output := &m.logGroups[m.logGroupsIndex]
+	m.logGroupsIndex++
+	return output, nil
 }
 
 func (m *fakeCWLogsClient) GetLogGroupFieldsWithContext(ctx context.Context, input *cloudwatchlogs.GetLogGroupFieldsInput, option ...request.Option) (*cloudwatchlogs.GetLogGroupFieldsOutput, error) {
@@ -188,9 +201,8 @@ type fakeCheckHealthClient struct {
 	cloudwatchiface.CloudWatchAPI
 	cloudwatchlogsiface.CloudWatchLogsAPI
 
-	listMetricsPages             func(input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool) error
-	describeLogGroupsWithContext func(ctx aws.Context, input *cloudwatchlogs.DescribeLogGroupsInput,
-		options ...request.Option) (*cloudwatchlogs.DescribeLogGroupsOutput, error)
+	listMetricsPages  func(input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool) error
+	describeLogGroups func(input *cloudwatchlogs.DescribeLogGroupsInput) (*cloudwatchlogs.DescribeLogGroupsOutput, error)
 }
 
 func (c fakeCheckHealthClient) ListMetricsPages(input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool) error {
@@ -200,9 +212,9 @@ func (c fakeCheckHealthClient) ListMetricsPages(input *cloudwatch.ListMetricsInp
 	return nil
 }
 
-func (c fakeCheckHealthClient) DescribeLogGroupsWithContext(ctx aws.Context, input *cloudwatchlogs.DescribeLogGroupsInput, options ...request.Option) (*cloudwatchlogs.DescribeLogGroupsOutput, error) {
-	if c.describeLogGroupsWithContext != nil {
-		return c.describeLogGroupsWithContext(ctx, input, options...)
+func (c fakeCheckHealthClient) DescribeLogGroups(input *cloudwatchlogs.DescribeLogGroupsInput) (*cloudwatchlogs.DescribeLogGroupsOutput, error) {
+	if c.describeLogGroups != nil {
+		return c.describeLogGroups(input)
 	}
 	return nil, nil
 }
@@ -242,4 +254,13 @@ func (s *fakeSessionCache) GetSession(c awsds.SessionConfig) (*session.Session, 
 	return &session.Session{
 		Config: &aws.Config{},
 	}, nil
+}
+
+type mockedCallResourceResponseSenderForOauth struct {
+	Response *backend.CallResourceResponse
+}
+
+func (s *mockedCallResourceResponseSenderForOauth) Send(resp *backend.CallResourceResponse) error {
+	s.Response = resp
+	return nil
 }

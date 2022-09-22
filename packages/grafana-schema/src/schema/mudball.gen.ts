@@ -4,8 +4,6 @@
 // To regenerate, run "make gen-cue" from the repository root.
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
-
 export enum AxisPlacement {
   Auto = 'auto',
   Bottom = 'bottom',
@@ -48,6 +46,7 @@ export enum ScaleDistribution {
   Linear = 'linear',
   Log = 'log',
   Ordinal = 'ordinal',
+  Symlog = 'symlog',
 }
 
 export enum GraphGradientMode {
@@ -118,6 +117,7 @@ export interface PointsConfig {
 }
 
 export interface ScaleDistributionConfig {
+  linearThreshold?: number;
   log?: number;
   type: ScaleDistribution;
 }
@@ -168,6 +168,7 @@ export interface GraphThresholdsStyleConfig {
 export type LegendPlacement = ('bottom' | 'right');
 
 export enum LegendDisplayMode {
+  Hidden = 'hidden',
   List = 'list',
   Table = 'table',
 }
@@ -208,11 +209,11 @@ export interface OptionsWithLegend {
 }
 
 export interface OptionsWithTimezones {
-  timezones?: string[];
+  timezone?: string[];
 }
 
 export const defaultOptionsWithTimezones: Partial<OptionsWithTimezones> = {
-  timezones: [],
+  timezone: [],
 };
 
 export interface OptionsWithTextFormatting {

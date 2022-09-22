@@ -1,5 +1,5 @@
 import { isEqual } from 'lodash';
-import React, { createRef } from 'react';
+import React, { createRef, PureComponent } from 'react';
 import ReactDOM from 'react-dom';
 import { FixedSizeList } from 'react-window';
 
@@ -30,7 +30,7 @@ export interface State {
   typeaheadIndex: number | null;
 }
 
-export class Typeahead extends React.PureComponent<Props, State> {
+export class Typeahead extends PureComponent<Props, State> {
   static contextType = ThemeContext;
   context!: React.ContextType<typeof ThemeContext>;
   listRef = createRef<FixedSizeList>();
@@ -209,7 +209,7 @@ interface PortalProps {
   style: string;
 }
 
-class Portal extends React.PureComponent<PortalProps, {}> {
+class Portal extends PureComponent<PortalProps, {}> {
   node: HTMLElement;
 
   constructor(props: PortalProps) {
