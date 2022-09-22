@@ -74,6 +74,11 @@ export class InspectJSONTab extends PureComponent<Props, State> {
     };
   }
 
+  componentDidMount() {
+    // when opening the inspector we want to report the interaction
+    reportInteraction(`grafana_panel_inspect_json_panelJSON_clicked`);
+  }
+
   onSelectChanged = async (item: SelectableValue<ShowContent>) => {
     const show = await this.getJSONObject(item.value!);
     const text = getPrettyJSON(show);
@@ -88,10 +93,13 @@ export class InspectJSONTab extends PureComponent<Props, State> {
   async getJSONObject(show: ShowContent) {
     const { data, panel } = this.props;
     if (show === ShowContent.PanelData) {
+      reportInteraction('grafana_panel_inspect_json_panelData_clicked');
       return data;
     }
 
     if (show === ShowContent.DataFrames) {
+      reportInteraction('grafana_panel_inspect_json_dataFrame_clicked');
+
       let d = data;
 
       // do not include transforms and
@@ -107,6 +115,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
     }
 
     if (this.hasPanelJSON && show === ShowContent.PanelJSON) {
+      reportInteraction('grafana_panel_inspect_json_panelJSON_clicked');
       return panel!.getSaveModel();
     }
 
@@ -124,7 +133,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
           dashboard!.shouldUpdateDashboardPanelFromJSON(updates, panel!);
 
           //Report relevant updates
-          reportInteraction('grafana_panel_inspect_apply_clicked', {
+          reportInteraction('grafana_panel_inspect_json_apply_clicked', {
             panel_type_changed: panel!.type !== updates.type,
             panel_id_changed: panel!.id !== updates.id,
             panel_grid_pos_changed: !isEqual(panel!.gridPos, updates.gridPos),
@@ -145,6 +154,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
   };
 
   onShowSupportWizard = () => {
+    reportInteraction('grafana_panel_inspect_json_supportWizard_clicked');
     const queryParms = locationService.getSearch();
     queryParms.set('inspectTab', InspectTab.Support.toString());
     locationService.push('?' + queryParms.toString());
