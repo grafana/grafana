@@ -55,7 +55,7 @@ func NewGoogleChatConfig(config *NotificationChannelConfig) (*GoogleChatConfig, 
 	return &GoogleChatConfig{
 		NotificationChannelConfig: config,
 		URL:                       url,
-		Content:                   config.Settings.Get("message").MustString(`{{ template "default.message" . }}`),
+		Content:                   config.Settings.Get("message").MustString(DefaultMessageEmbed),
 	}, nil
 }
 

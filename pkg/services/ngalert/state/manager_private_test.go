@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
 	"github.com/benbjohnson/clock"
@@ -16,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
-	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -151,44 +149,4 @@ func TestIsItStale(t *testing.T) {
 			require.Equal(t, tc.expectedResult, isItStale(now, tc.lastEvaluation, intervalSeconds))
 		})
 	}
-}
-
-func TestClose(t *testing.T) {
-	instanceStore := &store.FakeInstanceStore{}
-	clk := clock.New()
-	st := NewManager(log.New("test_state_manager"), metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(), nil, nil, instanceStore, &dashboards.FakeDashboardService{}, &image.NotAvailableImageService{}, clk, annotationstest.NewFakeAnnotationsRepo())
-
-	_, rules := ngmodels.GenerateUniqueAlertRules(10, ngmodels.AlertRuleGen())
-	for _, rule := range rules {
-		results := eval.GenerateResults(rand.Intn(4)+1, eval.ResultGen(eval.WithEvaluatedAt(clk.Now())))
-		_ = st.ProcessEvalResults(context.Background(), clk.Now(), rule, results, ngmodels.GenerateAlertLabels(rand.Intn(4), "extra_"))
-	}
-	var states []*State
-	for _, org := range st.cache.states {
-		for _, rule := range org {
-			for _, state := range rule {
-				states = append(states, state)
-			}
-		}
-	}
-
-	instanceStore.RecordedOps = nil
-	st.Close(context.Background())
-
-	t.Run("should flush the state to store", func(t *testing.T) {
-		savedStates := make(map[string]ngmodels.SaveAlertInstanceCommand)
-		for _, op := range instanceStore.RecordedOps {
-			switch q := op.(type) {
-			case ngmodels.SaveAlertInstanceCommand:
-				cacheId, err := q.Labels.StringKey()
-				require.NoError(t, err)
-				savedStates[cacheId] = q
-			}
-		}
-
-		require.Len(t, savedStates, len(states))
-		for _, s := range states {
-			require.Contains(t, savedStates, s.CacheId)
-		}
-	})
 }
