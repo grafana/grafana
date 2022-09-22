@@ -897,7 +897,7 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 		readDashboardSpan.SetAttributes("orgID", orgID, attribute.Key("orgID").Int64(orgID))
 		readDashboardSpan.SetAttributes("dashboardCount", len(rows), attribute.Key("dashboardCount").Int(len(rows)))
 
-		reader := object.NewDashboardObjectReader(lookup)
+		reader := object.NewDashboardSummaryBuilder(lookup)
 
 		for _, row := range rows {
 			obj := obj.RawObject{

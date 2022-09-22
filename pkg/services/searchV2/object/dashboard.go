@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/object"
 )
 
-func NewDashboardObjectReader(lookup dslookup.DatasourceLookup) object.ObjectReader {
+func NewDashboardSummaryBuilder(lookup dslookup.DatasourceLookup) object.ObjectSummaryBuilder {
 	return func(obj object.RawObject) (object.ObjectSummary, error) {
 		summary := object.ObjectSummary{
 			Labels: make(map[string]string),

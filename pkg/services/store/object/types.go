@@ -30,6 +30,9 @@ type RawObject struct {
 	Version     string `json:"version,omitempty"`  // commit hash, incrementing number (as string)
 	SyncTime    int64  `json:"syncTime,omitempty"` // when was the object synced from external source (provisioning or git)
 	SaveMessage string `json:"message,omitempty"`  // the commit message when this was saved
+
+	// struct can not be extended
+	_ interface{}
 }
 
 // ObjectSummary is derived from a RawObject and should not depend on system state
@@ -49,6 +52,9 @@ type ObjectSummary struct {
 
 	// Optional references to external things
 	References []ExternalReference `json:"references,omitempty"`
+
+	// struct can not be extended
+	_ interface{}
 }
 
 // Nested sub types
@@ -57,6 +63,9 @@ type NestedObjectSummary struct {
 	Kind string `json:"kind,omitempty"`
 
 	ObjectSummary
+
+	// struct can not be extended
+	_ interface{}
 }
 
 // links to other resources
@@ -66,5 +75,6 @@ type ExternalReference struct {
 	UID  string `json:"uid,omitempty"`  // path
 }
 
-// ObjectReader can inspect an object body and return an indexable summary
-type ObjectReader = func(obj RawObject) (ObjectSummary, error)
+// ObjectSummaryBuilder will read an object and create the summary.
+// This should not include values that depend on system state, only the raw object
+type ObjectSummaryBuilder = func(obj RawObject) (ObjectSummary, error)

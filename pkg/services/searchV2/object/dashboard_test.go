@@ -36,7 +36,7 @@ func dsLookup() dslookup.DatasourceLookup {
 func TestReadDashboard(t *testing.T) {
 	devdash := "../../../../devenv/dev-dashboards/"
 
-	reader := NewDashboardObjectReader(dsLookup())
+	reader := NewDashboardSummaryBuilder(dsLookup())
 	failed := make([]string, 0, 10)
 	table := newSummaryTable()
 
