@@ -21,6 +21,7 @@ function setup(dashboard: DashboardModel) {
     },
   };
 
+  // Need to use DashboardSettings here as it's responsible for fetching the state back from location
   return render(
     <GrafanaContext.Provider value={getGrafanaContextMock()}>
       <Router history={locationService.getHistory()}>
