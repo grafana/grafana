@@ -42,14 +42,14 @@ export default class AzureTracesDatasource extends AzureLogAnalyticsDatasource {
     }
     const queryString = `set truncationmaxrecords=10000;
     set truncationmaxsize=67108864;
-    union isfuzzy=true AppEvents,AppPageViews,AppRequests,AppDependencies,AppExceptions,AppAvailabilityResults
-    | where TimeGenerated > $__timeFrom and TimeGenerated < $__timeTo
-    | where (OperationId != '' and OperationId == '${this.operationId}') or (Properties.ai_legacyRootId != '' and Properties.ai_legacyRootId == '${this.operationId}')
-    | extend duration = toreal(column_ifexists("DurationMs", 0)), Id = column_ifexists("Id", ""), serviceName = column_ifexists("Name", column_ifexists("ProblemId", ""))
+    union isfuzzy=true customEvents,pageViews,requests,dependencies,exceptions,availabilityResults
+    | where timestamp > $__timeFrom and timestamp < $__timeTo
+    | where (operation_Id != '' and operation_Id == '${this.operationId}') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == '${this.operationId}')
     | extend duration = iff(isnull(duration), toreal(0), duration)
-    | extend spanID = iff(isempty(Id), tostring(new_guid()), Id)
-    | project OperationId, ParentId, spanID, duration, TimeGenerated, serviceName, Properties
-    | project-rename traceID = OperationId, parentSpanID = ParentId, startTime = TimeGenerated, serviceTags = Properties`;
+        | extend spanID = iff(isempty(id), tostring(new_guid()), id)
+        | extend serviceName = iff(isempty(name), column_ifexists("problemId", ""), name)
+        | project operation_Id, operation_ParentId, itemType, spanID, duration, timestamp, serviceName, customDimensions
+        | project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, serviceTags = customDimensions`;
 
     return {
       ...target,
