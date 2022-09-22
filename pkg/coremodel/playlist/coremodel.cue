@@ -29,9 +29,9 @@ seqs: [
 				#Items: {
 					// FIXME: The prefixDropper removes playlist from playlist_id, that doesn't work for us since it'll mean we'll have Id twice.
 					// ID of the playlist item for internal use by Grafana. Deprecated.
-					//id: int64
+					id: int64
 					// PlaylistID for the playlist containing the item. Deprecated.
-					//playlist_id: int64
+					playlist_id: int64
 
 					// Type of the item.
 					type: "dashboard_by_id" | "dashboard_by_tag"
