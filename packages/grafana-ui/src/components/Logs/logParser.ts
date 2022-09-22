@@ -16,6 +16,8 @@ type FieldDef = {
 /**
  * Returns all fields for log row which consists of fields we parse from the message itself and additional fields
  * found in the dataframe (they may contain links).
+ *
+ * @deprecated will be removed in the next major version
  */
 export const getAllFields = memoizeOne(
   (row: LogRowModel, getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>) => {

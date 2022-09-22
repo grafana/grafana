@@ -72,7 +72,7 @@ func NewSensuGoConfig(config *NotificationChannelConfig, decryptFunc GetDecrypte
 		Namespace:                 config.Settings.Get("namespace").MustString(),
 		Handler:                   config.Settings.Get("handler").MustString(),
 		APIKey:                    apikey,
-		Message:                   config.Settings.Get("message").MustString(`{{ template "default.message" .}}`),
+		Message:                   config.Settings.Get("message").MustString(DefaultMessageEmbed),
 	}, nil
 }
 

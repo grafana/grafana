@@ -76,6 +76,45 @@ type UpdateOrgCommand struct {
 	OrgId int64
 }
 
+type SearchOrgsQuery struct {
+	Query string
+	Name  string
+	Limit int
+	Page  int
+	IDs   []int64
+}
+
+type OrgDTO struct {
+	ID   int64  `json:"id"`
+	Name string `json:"name"`
+}
+
+type GetOrgByIdQuery struct {
+	ID int64
+}
+
+type GetOrgByNameQuery struct {
+	Name string
+}
+
+type UpdateOrgAddressCommand struct {
+	OrgID int64 `xorm:"org_id"`
+	Address
+}
+
+type Address struct {
+	Address1 string `json:"address1"`
+	Address2 string `json:"address2"`
+	City     string `json:"city"`
+	ZipCode  string `json:"zipCode"`
+	State    string `json:"state"`
+	Country  string `json:"country"`
+}
+
+type DeleteOrgCommand struct {
+	ID int64 `xorm:"id"`
+}
+
 func (r RoleType) IsValid() bool {
 	return r == RoleViewer || r == RoleAdmin || r == RoleEditor
 }
