@@ -19,6 +19,8 @@ interface AlertPreview {
   instances: AlertPreviewInstance[];
 }
 
+// Alerts previews come in a DataFrame format which is more suited for displaying time series data
+// In order to display a list of tags we need to transform DataFrame into set of labels
 function mapDataFrameToAlertPreview({ fields }: DataFrame): AlertPreview {
   const labelFields = fields.filter((field) => !['State', 'Info'].includes(field.name));
   const stateFieldIndex = fields.findIndex((field) => field.name === 'State');
@@ -35,10 +37,11 @@ function mapDataFrameToAlertPreview({ fields }: DataFrame): AlertPreview {
       fields[labelIndex].name,
       fields[labelIndex].values.get(index),
     ]);
-    const state = fields[stateFieldIndex].values.get(index);
-    const info = fields[infoFieldIndex].values.get(index);
+    const state = fields[stateFieldIndex]?.values?.get(index);
+    const info = fields[infoFieldIndex]?.values?.get(index);
 
-    if (labelValues.length > 0 && isGrafanaAlertState(state)) {
+    const hasAlertingInstance = labelValues.length > 0 && isGrafanaAlertState(state);
+    if (hasAlertingInstance) {
       instances.push({
         state: state,
         info: info,

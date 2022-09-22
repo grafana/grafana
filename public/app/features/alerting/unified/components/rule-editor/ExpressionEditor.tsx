@@ -93,7 +93,7 @@ export const ExpressionEditor: FC<ExpressionEditorProps> = ({ value, onChange, d
 const getStyles = (theme: GrafanaTheme2) => ({
   preview: css`
     padding: ${theme.spacing(2, 0)};
-    max-width: ${theme.breakpoints.values.md}px;
+    max-width: ${theme.breakpoints.values.xl}px;
   `,
   previewAlert: css`
     margin: ${theme.spacing(1, 0)};
