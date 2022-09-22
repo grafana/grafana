@@ -34,7 +34,7 @@ type WebhookNotifier struct {
 
 type webhookSettings struct {
 	URL        string      `json:"url,omitempty" yaml:"url,omitempty"`
-	HTTPMethod string      `json:"httpmethod,omitempty" yaml:"httpmethod,omitempty"`
+	HTTPMethod string      `json:"httpMethod,omitempty" yaml:"httpMethod,omitempty"`
 	MaxAlerts  interface{} `json:"maxAlerts,omitempty" yaml:"maxAlerts,omitempty"`
 
 	// Authorization Header.
