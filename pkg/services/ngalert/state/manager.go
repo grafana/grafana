@@ -182,7 +182,7 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 		states = append(states, s)
 		processedResults[s.CacheId] = s
 	}
-	st.staleResultsHandler(ctx, evaluatedAt, alertRule, processedResults)
+	resolvedStates := st.staleResultsHandler(ctx, evaluatedAt, alertRule, processedResults)
 	if len(states) > 0 {
 		logger.Debug("saving new states to the database", "count", len(states))
 		for _, state := range states {
@@ -191,7 +191,7 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 			}
 		}
 	}
-	return states
+	return append(states, resolvedStates...)
 }
 
 // Maybe take a screenshot. Do it if:
@@ -404,7 +404,8 @@ func (st *Manager) annotateState(ctx context.Context, alertRule *ngModels.AlertR
 	}
 }
 
-func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, states map[string]*State) {
+func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, states map[string]*State) []*State {
+	var resolvedStates []*State
 	allStates := st.GetStatesForRuleUID(alertRule.OrgID, alertRule.UID)
 	for _, s := range allStates {
 		_, ok := states[s.CacheId]
@@ -422,12 +423,20 @@ func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Tim
 			}
 
 			if s.State == eval.Alerting {
+				previousState := InstanceStateAndReason{State: s.State, Reason: s.StateReason}
+				s.State = eval.Normal
+				s.StateReason = ngModels.StateReasonMissingSeries
+				s.EndsAt = evaluatedAt
+				s.Resolved = true
 				st.annotateState(ctx, alertRule, s.Labels, evaluatedAt,
-					InstanceStateAndReason{State: eval.Normal, Reason: ""},
-					InstanceStateAndReason{State: s.State, Reason: s.StateReason})
+					InstanceStateAndReason{State: eval.Normal, Reason: s.StateReason},
+					previousState,
+				)
+				resolvedStates = append(resolvedStates, s)
 			}
 		}
 	}
+	return resolvedStates
 }
 
 func isItStale(evaluatedAt time.Time, lastEval time.Time, intervalSeconds int64) bool {

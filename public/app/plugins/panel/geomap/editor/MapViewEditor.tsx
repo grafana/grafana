@@ -1,5 +1,5 @@
 import { toLonLat } from 'ol/proj';
-import React, { FC, useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback } from 'react';
 
 import { StandardEditorProps, SelectableValue } from '@grafana/data';
 import { Button, InlineField, InlineFieldRow, Select, VerticalGroup } from '@grafana/ui';
@@ -8,9 +8,14 @@ import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 import { GeomapPanelOptions, MapViewConfig, GeomapInstanceState } from '../types';
 import { centerPointRegistry, MapCenterID } from '../view';
 
-export const MapViewEditor: FC<
-  StandardEditorProps<MapViewConfig, unknown, GeomapPanelOptions, GeomapInstanceState>
-> = ({ value, onChange, context }) => {
+import { CoordinatesMapViewEditor } from './CoordinatesMapViewEditor';
+import { FitMapViewEditor } from './FitMapViewEditor';
+
+export const MapViewEditor = ({
+  value,
+  onChange,
+  context,
+}: StandardEditorProps<MapViewConfig, unknown, GeomapPanelOptions, GeomapInstanceState>) => {
   const labelWidth = 10;
 
   const views = useMemo(() => {
@@ -64,39 +69,15 @@ export const MapViewEditor: FC<
           <Select options={views.options} value={views.current} onChange={onSelectView} />
         </InlineField>
       </InlineFieldRow>
-      {value?.id === MapCenterID.Coordinates && (
-        <>
-          <InlineFieldRow>
-            <InlineField label="Latitude" labelWidth={labelWidth} grow={true}>
-              <NumberInput
-                value={value.lat}
-                min={-90}
-                max={90}
-                step={0.001}
-                onChange={(v) => {
-                  onChange({ ...value, lat: v });
-                }}
-              />
-            </InlineField>
-          </InlineFieldRow>
-          <InlineFieldRow>
-            <InlineField label="Longitude" labelWidth={labelWidth} grow={true}>
-              <NumberInput
-                value={value.lon}
-                min={-180}
-                max={180}
-                step={0.001}
-                onChange={(v) => {
-                  onChange({ ...value, lon: v });
-                }}
-              />
-            </InlineField>
-          </InlineFieldRow>
-        </>
+      {value.id === MapCenterID.Coordinates && (
+        <CoordinatesMapViewEditor labelWidth={labelWidth} value={value} onChange={onChange} />
+      )}
+      {value.id === MapCenterID.Fit && (
+        <FitMapViewEditor labelWidth={labelWidth} value={value} onChange={onChange} context={context} />
       )}
 
       <InlineFieldRow>
-        <InlineField label="Zoom" labelWidth={labelWidth} grow={true}>
+        <InlineField label={value?.id === MapCenterID.Fit ? 'Max Zoom' : 'Zoom'} labelWidth={labelWidth} grow={true}>
           <NumberInput
             value={value?.zoom ?? 1}
             min={1}
