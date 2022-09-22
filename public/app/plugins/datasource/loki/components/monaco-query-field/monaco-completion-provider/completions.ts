@@ -137,12 +137,12 @@ async function getAfterSelectorCompletions(
   afterPipe: boolean,
   dataProvider: CompletionDataProvider
 ): Promise<Completion[]> {
-  const result = await dataProvider.getParserAndLabelKeys(labels);
+  const { extractedLabelKeys, hasJSON, hasLogfmt } = await dataProvider.getParserAndLabelKeys(labels);
   const allParsers = new Set(['json', 'logfmt', 'pattern', 'regexp', 'unpack']);
   const completions: Completion[] = [];
   const prefix = afterPipe ? '' : '| ';
-  const hasLevelInExtractedLabels = result.extractedLabelKeys.some((key) => key === 'level');
-  if (result.hasJSON) {
+  const hasLevelInExtractedLabels = extractedLabelKeys.some((key) => key === 'level');
+  if (hasJSON) {
     allParsers.delete('json');
     const explanation = hasLevelInExtractedLabels ? 'use to get log-levels in the histogram' : 'detected';
     completions.push({
@@ -152,7 +152,7 @@ async function getAfterSelectorCompletions(
     });
   }
 
-  if (result.hasLogfmt) {
+  if (hasLogfmt) {
     allParsers.delete('logfmt');
     const explanation = hasLevelInExtractedLabels ? 'get detected levels in the histogram' : 'detected';
     completions.push({
@@ -171,7 +171,7 @@ async function getAfterSelectorCompletions(
     });
   });
 
-  result.extractedLabelKeys.forEach((key) => {
+  extractedLabelKeys.forEach((key) => {
     completions.push({
       type: 'LINE_FILTER',
       label: `unwrap ${key} (detected)`,
