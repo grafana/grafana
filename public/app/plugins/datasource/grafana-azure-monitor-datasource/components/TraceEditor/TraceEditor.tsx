@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
+import React from 'react';
 
 import { EditorFieldGroup, EditorRow, EditorRows, Input } from '@grafana/ui';
 
 import Datasource from '../../datasource';
-import { AzureLogsQuery, AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery } from '../../types';
+import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery } from '../../types';
 import { Field } from '../Field';
 import ResourceField from '../ResourceField';
 import { ResourceRowType } from '../ResourcePicker/types';
 
 interface TraceEditorProps {
-  query: AzureLogsQuery;
+  query: AzureMonitorQuery;
   datasource: Datasource;
   subscriptionId?: string;
   onChange: (newQuery: AzureMonitorQuery) => void;
@@ -59,7 +59,11 @@ const TraceEditor: React.FC<TraceEditorProps> = ({
         </EditorRow>
         <EditorRow>
           <Field label="Operation ID" inlineField labelWidth={15}>
-            <Input placeholder="Operation ID" onChange={onOperationIdChange} value={query.operationId} />
+            <Input
+              placeholder="Operation ID"
+              onChange={onOperationIdChange}
+              value={query.azureLogAnalytics?.operationId ?? ''}
+            />
           </Field>
         </EditorRow>
       </EditorRows>

@@ -24,7 +24,6 @@ export default class AzureTracesDatasource extends AzureLogAnalyticsDatasource {
   }
 
   query(request: DataQueryRequest<AzureMonitorQuery>): Observable<DataQueryResponse> {
-    console.log(request);
     this.operationId = request.targets[0].azureLogAnalytics?.operationId ?? '';
     // only take the first query
     const target = this.buildTraceQuery(request.targets[0]);
@@ -41,10 +40,12 @@ export default class AzureTracesDatasource extends AzureLogAnalyticsDatasource {
     if (!target.azureLogAnalytics || !this.operationId || this.operationId === '') {
       return { ...target };
     }
-    const queryString = `union *
-        | where operation_Id == '${this.operationId}' or customDimensions.ai_legacyRootId == '${this.operationId}'
-        | where timestamp > $__timeFrom and timestamp < $__timeTo
-        | extend duration = iff(isnull(duration), toreal(0), duration)
+    const queryString = `set truncationmaxrecords=10000;
+    set truncationmaxsize=67108864;
+    union isfuzzy=true customEvents,pageViews,requests,dependencies,exceptions,availabilityResults
+    | where timestamp > $__timeFrom and timestamp < $__timeTo
+    | where (operation_Id != '' and operation_Id == '${this.operationId}') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == '${this.operationId}')
+    | extend duration = iff(isnull(duration), toreal(0), duration)
         | extend spanID = iff(isempty(id), tostring(new_guid()), id)
         | extend serviceName = iff(isempty(name), column_ifexists("problemId", ""), name)
         | project operation_Id, operation_ParentId, itemType, spanID, duration, timestamp, serviceName, customDimensions
