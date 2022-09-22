@@ -111,6 +111,9 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
     const newItem = canvasElementRegistry.getIfExists(sel.value) ?? notFoundItem;
     const newElementOptions = newItem.getNewOptions() as CanvasElementOptions;
     newElementOptions.type = newItem.id;
+    if (newItem.defaultSize) {
+      newElementOptions.placement = { ...newElementOptions.placement, ...newItem.defaultSize };
+    }
     const newElement = new ElementState(newItem, newElementOptions, layer);
     newElement.updateData(layer.scene.context);
     layer.elements.push(newElement);
