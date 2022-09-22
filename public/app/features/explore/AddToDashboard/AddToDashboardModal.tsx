@@ -1,7 +1,6 @@
 import { partial } from 'lodash';
 import React, { useEffect, useState } from 'react';
 import { DeepMap, FieldError, useForm } from 'react-hook-form';
-import { useSelector } from 'react-redux';
 
 import { locationUtil, SelectableValue } from '@grafana/data';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
@@ -9,7 +8,7 @@ import { Alert, Button, Field, InputControl, Modal, RadioButtonGroup } from '@gr
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { contextSrv } from 'app/core/services/context_srv';
 import { removeDashboardToFetchFromLocalStorage } from 'app/features/dashboard/state/initDashboard';
-import { ExploreId, AccessControlAction } from 'app/types';
+import { ExploreId, AccessControlAction, useSelector } from 'app/types';
 
 import { getExploreItemSelector } from '../state/selectors';
 

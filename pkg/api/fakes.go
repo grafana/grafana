@@ -86,10 +86,16 @@ type fakePluginSettings struct {
 }
 
 // GetPluginSettings returns all Plugin Settings for the provided Org
-func (ps *fakePluginSettings) GetPluginSettings(ctx context.Context, args *pluginsettings.GetArgs) ([]*pluginsettings.DTO, error) {
-	res := []*pluginsettings.DTO{}
+func (ps *fakePluginSettings) GetPluginSettings(_ context.Context, _ *pluginsettings.GetArgs) ([]*pluginsettings.InfoDTO, error) {
+	res := []*pluginsettings.InfoDTO{}
 	for _, dto := range ps.plugins {
-		res = append(res, dto)
+		res = append(res, &pluginsettings.InfoDTO{
+			PluginID:      dto.PluginID,
+			OrgID:         dto.OrgID,
+			Enabled:       dto.Enabled,
+			Pinned:        dto.Pinned,
+			PluginVersion: dto.PluginVersion,
+		})
 	}
 	return res, nil
 }
