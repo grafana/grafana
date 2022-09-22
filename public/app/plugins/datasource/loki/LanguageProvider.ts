@@ -2,17 +2,7 @@ import { chain, difference } from 'lodash';
 import LRU from 'lru-cache';
 import Prism, { Grammar } from 'prismjs';
 
-import {
-  dateTime,
-  AbsoluteTimeRange,
-  LanguageProvider,
-  HistoryItem,
-  AbstractQuery,
-  DataFrame,
-  FieldType,
-  getParser,
-  LogsParsers,
-} from '@grafana/data';
+import { dateTime, AbsoluteTimeRange, LanguageProvider, HistoryItem, AbstractQuery } from '@grafana/data';
 import { CompletionItem, TypeaheadInput, TypeaheadOutput, CompletionItemGroup } from '@grafana/ui';
 import {
   extractLabelMatchers,
