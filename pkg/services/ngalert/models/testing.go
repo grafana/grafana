@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
+	"github.com/grafana/grafana/pkg/expr"
 	models2 "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -275,4 +276,46 @@ func CopyRule(r *AlertRule) *AlertRule {
 	}
 
 	return &result
+}
+
+func CreateClassicConditionExpression(refID string, inputRefID string, reducer string, operation string, threshold int) AlertQuery {
+	return AlertQuery{
+		RefID:         refID,
+		QueryType:     expr.DatasourceType,
+		DatasourceUID: expr.OldDatasourceUID,
+		// the format corresponds to model `ClassicConditionJSON` in /pkg/expr/classic/classic.go
+		Model: json.RawMessage(fmt.Sprintf(`
+		{
+			"refId": "%[1]s",
+            "hide": false,
+            "type": "classic_conditions",
+            "datasource": {
+                "uid": "%[6]s",
+                "type": "%[7]s"
+            },
+            "conditions": [
+                {
+                    "type": "query",
+                    "evaluator": {
+                        "params": [
+                            %[4]d
+                        ],
+                        "type": "%[3]s"
+                    },
+                    "operator": {
+                        "type": "and"
+                    },
+                    "query": {
+                        "params": [
+                            "%[2]s"
+                        ]
+                    },
+                    "reducer": {
+                        "params": [],
+                        "type": "%[5]s"
+                    }
+                }
+            ]
+		}`, refID, inputRefID, operation, threshold, reducer, expr.OldDatasourceUID, expr.DatasourceType)),
+	}
 }

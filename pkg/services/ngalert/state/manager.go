@@ -68,9 +68,8 @@ func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL,
 	return manager
 }
 
-func (st *Manager) Close(ctx context.Context) {
+func (st *Manager) Close() {
 	st.quit <- struct{}{}
-	st.flushState(ctx)
 }
 
 func (st *Manager) Warm(ctx context.Context) {
@@ -183,14 +182,12 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 		states = append(states, s)
 		processedResults[s.CacheId] = s
 	}
-
-	st.cleanupStaleResults(ctx, evaluatedAt, alertRule, processedResults)
+	resolvedStates := st.staleResultsHandler(ctx, evaluatedAt, alertRule, processedResults)
 	if len(states) > 0 {
 		logger.Debug("saving new states to the database", "count", len(states))
 		_, _ = st.saveAlertStates(ctx, states...)
 	}
-
-	return states
+	return append(states, resolvedStates...)
 }
 
 // Maybe take a screenshot. Do it if:
@@ -317,46 +314,6 @@ func (st *Manager) Put(states []*State) {
 	}
 }
 
-// flushState dumps the entire state to the database
-func (st *Manager) flushState(ctx context.Context) {
-	t := st.clock.Now()
-	st.log.Info("flushing the state")
-	st.cache.mtxStates.Lock()
-	defer st.cache.mtxStates.Unlock()
-
-	totalStates, errorsCnt := 0, 0
-	stateBatchSize := 512 // 4KiB, 8 bytes per pointer
-	stateSlice := make([]*State, 0, stateBatchSize)
-
-	writeBatch := func() {
-		if len(stateSlice) > 0 {
-			savedCount, failedCount := st.saveAlertStates(ctx, stateSlice...)
-			errorsCnt += failedCount
-			totalStates += savedCount
-			stateSlice = stateSlice[:0]
-		}
-	}
-
-	for _, orgStates := range st.cache.states {
-		for _, ruleStates := range orgStates {
-			// Flush the state batch if we would go over the batch size when adding the next loop.
-			if len(ruleStates)+len(stateSlice) > stateBatchSize {
-				writeBatch()
-			}
-
-			for _, state := range ruleStates {
-				// Take everything for a single rule, even if it exceeds the batch
-				// size. We'd like to flush everything for one rule as a unit.
-				stateSlice = append(stateSlice, state)
-			}
-		}
-	}
-
-	writeBatch()
-
-	st.log.Info("the state has been flushed", "total_instances", totalStates, "errors", errorsCnt, "took", st.clock.Since(t))
-}
-
 // TODO: Is the `State` type necessary? Should it embed the instance?
 func (st *Manager) saveAlertStates(ctx context.Context, states ...*State) (saved, failed int) {
 	st.log.Debug("saving alert states", "count", len(states))
@@ -477,12 +434,8 @@ func (st *Manager) annotateState(ctx context.Context, alertRule *ngModels.AlertR
 	}
 }
 
-func (st *Manager) cleanupStaleResults(
-	ctx context.Context,
-	evaluatedAt time.Time,
-	alertRule *ngModels.AlertRule,
-	newStates map[string]*State,
-) {
+func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, newStates map[string]*State) []*State {
+	var resolvedStates []*State
 	allStates := st.GetStatesForRuleUID(alertRule.OrgID, alertRule.UID)
 	toDelete := make([]ngModels.AlertInstanceKey, 0)
 
@@ -500,9 +453,16 @@ func (st *Manager) cleanupStaleResults(
 			toDelete = append(toDelete, ngModels.AlertInstanceKey{RuleOrgID: s.OrgID, RuleUID: s.AlertRuleUID, LabelsHash: labelsHash})
 
 			if s.State == eval.Alerting {
+				previousState := InstanceStateAndReason{State: s.State, Reason: s.StateReason}
+				s.State = eval.Normal
+				s.StateReason = ngModels.StateReasonMissingSeries
+				s.EndsAt = evaluatedAt
+				s.Resolved = true
 				st.annotateState(ctx, alertRule, s.Labels, evaluatedAt,
-					InstanceStateAndReason{State: eval.Normal, Reason: ""},
-					InstanceStateAndReason{State: s.State, Reason: s.StateReason})
+					InstanceStateAndReason{State: eval.Normal, Reason: s.StateReason},
+					previousState,
+				)
+				resolvedStates = append(resolvedStates, s)
 			}
 		}
 	}
@@ -511,6 +471,7 @@ func (st *Manager) cleanupStaleResults(
 		st.log.Error("unable to delete stale instances from database", "err", err.Error(),
 			"orgID", alertRule.OrgID, "alertRuleUID", alertRule.UID, "count", len(toDelete))
 	}
+	return resolvedStates
 }
 
 func stateIsStale(evaluatedAt time.Time, lastEval time.Time, intervalSeconds int64) bool {
