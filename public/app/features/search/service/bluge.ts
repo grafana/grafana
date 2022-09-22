@@ -17,6 +17,8 @@ import { DashboardQueryResult, GrafanaSearcher, QueryResponse, SearchQuery, Sear
 // and that it can not serve any search requests. We are temporarily using the old SQL Search API as a fallback when that happens.
 const loadingFrameName = 'Loading';
 
+const searchURI = 'api/search-query';
+
 export class BlugeSearcher implements GrafanaSearcher {
   constructor(private fallbackSearcher: GrafanaSearcher) {}
 
@@ -49,7 +51,7 @@ export class BlugeSearcher implements GrafanaSearcher {
       limit: 1, // 0 would be better, but is ignored by the backend
     };
 
-    const frame = toDataFrame(await getBackendSrv().post('api/search-query', req));
+    const frame = toDataFrame(await getBackendSrv().post(searchURI, req));
 
     if (frame?.name === loadingFrameName) {
       return this.fallbackSearcher.tags(query);
@@ -90,7 +92,7 @@ export class BlugeSearcher implements GrafanaSearcher {
       limit: query.limit ?? firstPageSize,
     };
 
-    const rsp = await getBackendSrv().post('api/search-query', req);
+    const rsp = await getBackendSrv().post(searchURI, req);
 
     const first = rsp ? toDataFrame(rsp) : { fields: [], length: 0 };
 
@@ -137,7 +139,7 @@ export class BlugeSearcher implements GrafanaSearcher {
           return;
         }
         const frame = toDataFrame(
-          await getBackendSrv().post('api/search-query', {
+          await getBackendSrv().post(searchURI, {
             ...(req ?? {}),
             from,
             limit: nextPageSizes,
