@@ -175,4 +175,39 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 		err := orgUserStore.DeleteUserFromAll(context.Background(), 1)
 		require.NoError(t, err)
 	})
+
+	// TODO: these test will be added when store will be CRUD
+	// t.Run("Given single org mode", func(t *testing.T) {
+	// 	sqlStore.Cfg.AutoAssignOrg = true
+	// 	sqlStore.Cfg.AutoAssignOrgId = 1
+	// 	sqlStore.Cfg.AutoAssignOrgRole = "Viewer"
+
+	// 	t.Run("Users should be added to default organization", func(t *testing.T) {
+	// 		ac1cmd := user.CreateUserCommand{Login: "ac1", Email: "ac1@test.com", Name: "ac1 name"}
+	// 		ac2cmd := user.CreateUserCommand{Login: "ac2", Email: "ac2@test.com", Name: "ac2 name"}
+
+	// 		ac1, err := sqlStore.CreateUser(context.Background(), ac1cmd)
+	// 		require.NoError(t, err)
+	// 		ac2, err := sqlStore.CreateUser(context.Background(), ac2cmd)
+	// 		require.NoError(t, err)
+
+	// 		q1 := models.GetUserOrgListQuery{UserId: ac1.ID}
+	// 		q2 := models.GetUserOrgListQuery{UserId: ac2.ID}
+	// 		err = sqlStore.GetUserOrgList(context.Background(), &q1)
+	// 		require.NoError(t, err)
+	// 		err = sqlStore.GetUserOrgList(context.Background(), &q2)
+	// 		require.NoError(t, err)
+
+	// 		require.Equal(t, q1.Result[0].OrgId, q2.Result[0].OrgId)
+	// 		require.Equal(t, string(q1.Result[0].Role), "Viewer")
+	// 	})
+	// })
+
+	// t.Run("Can get user organizations", func(t *testing.T) {
+	// 	query := models.GetUserOrgListQuery{UserId: ac2.ID}
+	// 	err := sqlStore.GetUserOrgList(context.Background(), &query)
+
+	// 	require.NoError(t, err)
+	// 	require.Equal(t, len(query.Result), 2)
+	// })
 }
