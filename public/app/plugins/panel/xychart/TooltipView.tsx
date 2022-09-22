@@ -2,7 +2,6 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import {
-  arrayUtils,
   DataFrame,
   Field,
   formattedValueToString,
@@ -11,20 +10,25 @@ import {
   LinkModel,
   TimeRange,
 } from '@grafana/data';
-import { SortOrder } from '@grafana/schema';
-import {
-  LinkButton,
-  SeriesIcon,
-  TooltipDisplayMode,
-  usePanelContext,
-  useStyles2,
-  VerticalGroup,
-  VizTooltipOptions,
-} from '@grafana/ui';
+import { LinkButton, usePanelContext, useStyles2, VerticalGroup, VizTooltipOptions } from '@grafana/ui';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 
 import { ScatterSeriesConfig, SeriesMapping } from './models.gen';
 import { ScatterSeries } from './types';
+
+interface YValue {
+  name: string;
+  val: number;
+  field: Field;
+  color: string;
+}
+
+interface ExtraFacets {
+  colorFacetFieldName: string;
+  sizeFacetFieldName: string;
+  colorFacetValue: number;
+  sizeFacetValue: number;
+}
 
 export interface Props {
   allSeries: ScatterSeries[];
@@ -65,128 +69,57 @@ export const TooltipView = ({
     range,
   });
 
-  let yValues = [];
-  let extraFacets: string | any[] = [];
-  if (options.mode === TooltipDisplayMode.Single) {
-    if (seriesMapping === SeriesMapping.Manual && manualSeriesConfigs) {
-      const colorFacetFieldName = manualSeriesConfigs[hoveredPointIndex].pointColor?.field;
-      const sizeFacetFieldName = manualSeriesConfigs[hoveredPointIndex].pointSize?.field;
+  let yValue: YValue | null = null;
+  let extraFacets: ExtraFacets | null = null;
+  if (seriesMapping === SeriesMapping.Manual && manualSeriesConfigs) {
+    const colorFacetFieldName = manualSeriesConfigs[hoveredPointIndex].pointColor?.field ?? '';
+    const sizeFacetFieldName = manualSeriesConfigs[hoveredPointIndex].pointSize?.field ?? '';
 
-      const colorFacet = colorFacetFieldName ? frame.fields.find((f) => f.name === colorFacetFieldName) : undefined;
-      const sizeFacet = sizeFacetFieldName ? frame.fields.find((f) => f.name === sizeFacetFieldName) : undefined;
+    const colorFacet = colorFacetFieldName ? frame.fields.find((f) => f.name === colorFacetFieldName) : undefined;
+    const sizeFacet = sizeFacetFieldName ? frame.fields.find((f) => f.name === sizeFacetFieldName) : undefined;
 
-      extraFacets = [
-        {
-          colorFacetFieldName,
-          sizeFacetFieldName,
-          colorFacetValue: colorFacet?.values.get(rowIndex),
-          sizeFacetValue: sizeFacet?.values.get(rowIndex),
-        },
-      ];
-    }
-
-    yValues = [
-      {
-        name: getFieldDisplayName(yField, frame),
-        val: yField.values.get(rowIndex),
-        field: yField,
-        color: series.pointColor(frame),
-      },
-    ];
-  } else {
-    if (seriesMapping === SeriesMapping.Manual && manualSeriesConfigs) {
-      extraFacets = allSeries.map((series, i) => {
-        const colorFacetFieldName = manualSeriesConfigs[i].pointColor?.field;
-        const sizeFacetFieldName = manualSeriesConfigs[i].pointSize?.field;
-
-        const frame = series.frame(data);
-
-        const colorFacet = colorFacetFieldName ? frame.fields.find((f) => f.name === colorFacetFieldName) : undefined;
-        const sizeFacet = sizeFacetFieldName ? frame.fields.find((f) => f.name === sizeFacetFieldName) : undefined;
-
-        return {
-          colorFacetFieldName,
-          sizeFacetFieldName,
-          colorFacetValue: colorFacet?.values.get(rowIndex),
-          sizeFacetValue: sizeFacet?.values.get(rowIndex),
-        };
-      });
-    }
-
-    yValues = allSeries
-      .map((series, i) => {
-        const frame = series.frame(data);
-        const seriesXField = series.x(frame);
-
-        if (seriesXField.name !== xField.name) {
-          return null;
-        }
-
-        const seriesYField: Field = series.y(frame);
-
-        return {
-          name: getFieldDisplayName(seriesYField, frame),
-          val: seriesYField.values.get(rowIndex),
-          field: seriesYField,
-          color: allSeries[i].pointColor(frame),
-        };
-      })
-      .filter((v) => v != null);
+    extraFacets = {
+      colorFacetFieldName,
+      sizeFacetFieldName,
+      colorFacetValue: colorFacet?.values.get(rowIndex),
+      sizeFacetValue: sizeFacet?.values.get(rowIndex),
+    };
   }
 
-  if (options.sort !== SortOrder.None) {
-    const sortFn = arrayUtils.sortValues(options.sort);
-
-    yValues.sort((a, b) => {
-      return sortFn(a!.val, b!.val);
-    });
-  }
-
-  let activePointIndex = -1;
-  activePointIndex = yValues.findIndex((v) => v!.name === series.name);
+  yValue = {
+    name: getFieldDisplayName(yField, frame),
+    val: yField.values.get(rowIndex),
+    field: yField,
+    color: series.pointColor(frame) as string,
+  };
 
   return (
     <>
-      <div className={style.xVal} aria-label="x-val">
-        {xField.name}: {fmt(frame.fields[0], xField.values.get(rowIndex))}
-      </div>
       <table className={style.infoWrap}>
+        <tr>
+          <th colSpan={2} style={{ backgroundColor: yValue.color }}></th>
+        </tr>
         <tbody>
-          {yValues.map((el, index) => {
-            let color = null;
-            if (typeof el!.color === 'string') {
-              color = el!.color;
-            }
-
-            return (
-              <>
-                <tr key={`${index}/${rowIndex}`} className={index === activePointIndex ? style.highlight : ''}>
-                  <th>{color && <SeriesIcon color={color} className={style.icon} />}</th>
-                  <th>Y - {el!.name}:</th>
-                  <td>{fmt(el!.field, el!.val)}</td>
-                </tr>
-                {extraFacets.length > 0 && (
-                  <>
-                    {extraFacets[index].colorFacetFieldName && (
-                      <tr
-                        key={`${index}/${rowIndex}/color`}
-                        className={index === activePointIndex ? style.highlight : ''}
-                      >
-                        <th></th>
-                        <th>Color - {extraFacets[index].colorFacetFieldName}:</th>
-                        <td>{extraFacets[index].colorFacetValue}</td>
-                      </tr>
-                    )}
-                    <tr key={`${index}/${rowIndex}/size`} className={index === activePointIndex ? style.highlight : ''}>
-                      <th></th>
-                      <th>Size - {extraFacets[index].sizeFacetFieldName}:</th>
-                      <td>{extraFacets[index].sizeFacetValue}</td>
-                    </tr>
-                  </>
-                )}
-              </>
-            );
-          })}
+          <tr>
+            <th>X - {xField.name}</th>
+            <td>{fmt(frame.fields[0], xField.values.get(rowIndex))}</td>
+          </tr>
+          <tr>
+            <th>Y - {yValue.name}:</th>
+            <td>{fmt(yValue.field, yValue.val)}</td>
+          </tr>
+          {extraFacets !== null && extraFacets.colorFacetFieldName && (
+            <tr>
+              <th>Color - {extraFacets.colorFacetFieldName}:</th>
+              <td>{extraFacets.colorFacetValue}</td>
+            </tr>
+          )}
+          {extraFacets !== null && extraFacets.sizeFacetFieldName && (
+            <tr>
+              <th>Size - {extraFacets.sizeFacetFieldName}:</th>
+              <td>{extraFacets.sizeFacetValue}</td>
+            </tr>
+          )}
           {links.length > 0 && (
             <tr>
               <td colSpan={2}>
