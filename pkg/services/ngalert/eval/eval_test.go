@@ -20,7 +20,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 		{
 			desc: "zero valued single instance is single Normal state result",
 			execResults: ExecutionResults{
-				Cond: []*data.Frame{
+				Condition: []*data.Frame{
 					data.NewFrame("", data.NewField("", nil, []*float64{ptr.Float64(0)})),
 				},
 			},
@@ -34,7 +34,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 		{
 			desc: "non-zero valued single instance is single Alerting state result",
 			execResults: ExecutionResults{
-				Cond: []*data.Frame{
+				Condition: []*data.Frame{
 					data.NewFrame("", data.NewField("", nil, []*float64{ptr.Float64(1)})),
 				},
 			},
@@ -48,7 +48,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 		{
 			desc: "nil value single instance is single a NoData state result",
 			execResults: ExecutionResults{
-				Cond: []*data.Frame{
+				Condition: []*data.Frame{
 					data.NewFrame("", data.NewField("", nil, []*float64{nil})),
 				},
 			},
@@ -85,7 +85,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 		{
 			desc: "frame with no fields produces a NoData state result",
 			execResults: ExecutionResults{
-				Cond: []*data.Frame{
+				Condition: []*data.Frame{
 					data.NewFrame(""),
 				},
 			},
@@ -99,7 +99,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 		{
 			desc: "empty field produces a NoData state result",
 			execResults: ExecutionResults{
-				Cond: []*data.Frame{
+				Condition: []*data.Frame{
 					data.NewFrame("", data.NewField("", nil, []*float64{})),
 				},
 			},
@@ -113,7 +113,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 		{
 			desc: "empty field with labels produces a NoData state result with labels",
 			execResults: ExecutionResults{
-				Cond: []*data.Frame{
+				Condition: []*data.Frame{
 					data.NewFrame("", data.NewField("", data.Labels{"a": "b"}, []*float64{})),
 				},
 			},
@@ -128,7 +128,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 		{
 			desc: "malformed frame (unequal lengths) produces Error state result",
 			execResults: ExecutionResults{
-				Cond: []*data.Frame{
+				Condition: []*data.Frame{
 					data.NewFrame("",
 						data.NewField("", nil, []*float64{ptr.Float64(23)}),
 						data.NewField("", nil, []*float64{}),
@@ -146,7 +146,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 		{
 			desc: "too many fields produces Error state result",
 			execResults: ExecutionResults{
-				Cond: []*data.Frame{
+				Condition: []*data.Frame{
 					data.NewFrame("",
 						data.NewField("", nil, []*float64{}),
 						data.NewField("", nil, []*float64{}),
@@ -164,7 +164,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 		{
 			desc: "more than one row produces Error state result",
 			execResults: ExecutionResults{
-				Cond: []*data.Frame{
+				Condition: []*data.Frame{
 					data.NewFrame("",
 						data.NewField("", nil, []*float64{ptr.Float64(2), ptr.Float64(3)}),
 					),
@@ -181,7 +181,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 		{
 			desc: "time fields (looks like time series) returns error",
 			execResults: ExecutionResults{
-				Cond: []*data.Frame{
+				Condition: []*data.Frame{
 					data.NewFrame("",
 						data.NewField("", nil, []time.Time{}),
 					),
@@ -198,7 +198,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 		{
 			desc: "non []*float64 field will produce Error state result",
 			execResults: ExecutionResults{
-				Cond: []*data.Frame{
+				Condition: []*data.Frame{
 					data.NewFrame("",
 						data.NewField("", nil, []float64{2}),
 					),
@@ -215,7 +215,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 		{
 			desc: "duplicate labels produce a single Error state result",
 			execResults: ExecutionResults{
-				Cond: []*data.Frame{
+				Condition: []*data.Frame{
 					data.NewFrame("",
 						data.NewField("", nil, []*float64{ptr.Float64(1)}),
 					),
@@ -235,7 +235,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 		{
 			desc: "error that produce duplicate empty labels produce a single Error state result",
 			execResults: ExecutionResults{
-				Cond: []*data.Frame{
+				Condition: []*data.Frame{
 					data.NewFrame("",
 						data.NewField("", data.Labels{"a": "b"}, []float64{2}),
 					),
@@ -255,7 +255,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 		{
 			desc: "certain errors will produce multiple mixed Error and other state results",
 			execResults: ExecutionResults{
-				Cond: []*data.Frame{
+				Condition: []*data.Frame{
 					data.NewFrame("",
 						data.NewField("", nil, []float64{3}),
 					),

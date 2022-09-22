@@ -73,8 +73,8 @@ func (e *invalidEvalResultFormatError) Unwrap() error {
 // ExecutionResults contains the unevaluated results from executing
 // a condition.
 type ExecutionResults struct {
-	// Cond contains the results of the condition
-	Cond data.Frames
+	// Condition contains the results of the condition
+	Condition data.Frames
 
 	// Results contains the results of all queries, reduce and math expressions
 	Results map[string]data.Frames
@@ -275,13 +275,13 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 		}
 
 		if refID == c.Condition {
-			result.Cond = res.Frames
+			result.Condition = res.Frames
 		}
 		result.Results[refID] = res.Frames
 	}
 
 	// add capture values as data frame metadata to each result (frame) that has matching labels.
-	for _, frame := range result.Cond {
+	for _, frame := range result.Condition {
 		// classic conditions already have metadata set and only have one value, there's no need to add anything in this case.
 		if frame.Meta != nil && frame.Meta.Custom != nil {
 			if _, ok := frame.Meta.Custom.([]classic.EvalMatch); ok {
@@ -428,12 +428,12 @@ func evaluateExecutionResult(execResults ExecutionResults, ts time.Time) Results
 		return evalResults
 	}
 
-	if len(execResults.Cond) == 0 {
+	if len(execResults.Condition) == 0 {
 		appendNoData(nil)
 		return evalResults
 	}
 
-	for _, f := range execResults.Cond {
+	for _, f := range execResults.Condition {
 		rowLen, err := f.RowLen()
 		if err != nil {
 			appendErrRes(&invalidEvalResultFormatError{refID: f.RefID, reason: "unable to get frame row length", err: err})
