@@ -392,9 +392,17 @@ func (r *xormRepositoryImpl) validateItem(item *annotations.Item) error {
 }
 
 func (r *xormRepositoryImpl) validateTagsLength(item *annotations.Item) error {
-	tagsStr := fmt.Sprintf("%v", item.Tags)
-	if len(tagsStr) > int(r.maximumTagsLength) {
-		return annotations.ErrBaseTagLimitExceeded.Errorf("tags length exceeds the maximum allowed: modify the configuration to increase it")
+	estimatedTagsLength := 1 // leading: [
+	for i, t := range item.Tags {
+		if i == 0 {
+			estimatedTagsLength += len(t) + 2 // quotes
+		} else {
+			estimatedTagsLength += len(t) + 3 // leading comma and quotes
+		}
+	}
+	estimatedTagsLength += 1 // trailing: ]
+	if estimatedTagsLength > int(r.maximumTagsLength) {
+		return annotations.ErrBaseTagLimitExceeded.Errorf("tags length (%d) exceeds the maximum allowed (%d): modify the configuration to increase it", estimatedTagsLength, r.maximumTagsLength)
 	}
 	return nil
 }
