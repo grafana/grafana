@@ -58,6 +58,7 @@ func GetServerAdminNode(children []*NavLink) *NavLink {
 	return &NavLink{
 		Text:         "Server admin",
 		SubTitle:     "Manage all users and orgs",
+		Description:  "Manage server-wide settings and access to resources such as organizations, users, and licenses",
 		HideFromTabs: true,
 		Id:           "admin",
 		Icon:         "shield",

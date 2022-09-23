@@ -40,7 +40,7 @@ func (s *ServiceImpl) setupConfigNodes(c *models.ReqContext) ([]*navtree.NavLink
 		configNodes = append(configNodes, &navtree.NavLink{
 			Text:        "Users",
 			Id:          "users",
-			Description: "Manage org members",
+			Description: "Invite and assign roles to users",
 			Icon:        "user",
 			Url:         s.cfg.AppSubURL + "/org/users",
 		})
@@ -50,7 +50,7 @@ func (s *ServiceImpl) setupConfigNodes(c *models.ReqContext) ([]*navtree.NavLink
 		configNodes = append(configNodes, &navtree.NavLink{
 			Text:        "Teams",
 			Id:          "teams",
-			Description: "Manage org groups",
+			Description: "Groups of users that have common dashboard and permission needs",
 			Icon:        "users-alt",
 			Url:         s.cfg.AppSubURL + "/org/teams",
 		})
@@ -61,7 +61,7 @@ func (s *ServiceImpl) setupConfigNodes(c *models.ReqContext) ([]*navtree.NavLink
 		configNodes = append(configNodes, &navtree.NavLink{
 			Text:        "Plugins",
 			Id:          "plugins",
-			Description: "View and configure plugins",
+			Description: "Extend the Grafana experience with plugins",
 			Icon:        "plug",
 			Url:         s.cfg.AppSubURL + "/plugins",
 		})
@@ -71,7 +71,7 @@ func (s *ServiceImpl) setupConfigNodes(c *models.ReqContext) ([]*navtree.NavLink
 		configNodes = append(configNodes, &navtree.NavLink{
 			Text:        "Preferences",
 			Id:          "org-settings",
-			Description: "Organization preferences",
+			Description: "Manage preferences across an organization",
 			Icon:        "sliders-v-alt",
 			Url:         s.cfg.AppSubURL + "/org",
 		})
@@ -88,7 +88,7 @@ func (s *ServiceImpl) setupConfigNodes(c *models.ReqContext) ([]*navtree.NavLink
 		configNodes = append(configNodes, &navtree.NavLink{
 			Text:        "API keys",
 			Id:          "apikeys",
-			Description: "Create & manage API keys",
+			Description: "Manage and create API keys that are used to interact with Grafana HTTP APIs",
 			Icon:        "key-skeleton-alt",
 			Url:         s.cfg.AppSubURL + "/org/apikeys",
 		})
@@ -98,7 +98,7 @@ func (s *ServiceImpl) setupConfigNodes(c *models.ReqContext) ([]*navtree.NavLink
 		configNodes = append(configNodes, &navtree.NavLink{
 			Text:        "Service accounts",
 			Id:          "serviceaccounts",
-			Description: "Manage service accounts",
+			Description: "Use service accounts to run automated workloads in Grafana",
 			Icon:        "gf-service-account",
 			Url:         s.cfg.AppSubURL + "/org/serviceaccounts",
 		})

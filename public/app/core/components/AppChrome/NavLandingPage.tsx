@@ -40,7 +40,7 @@ export function NavLandingPage({ navId }: Props) {
               <div style={{ display: 'flex', alignItems: 'center' }}>
                 <h2 className={styles.nestedTitle}>{child.text}</h2>
               </div>
-              <div className={styles.nestedDescription}>{child.subTitle}</div>
+              <div className={styles.nestedDescription}>{child.description}</div>
               <div className={styles.grid}>
                 {child.children?.map((child) => (
                   <NavLandingPageCard
