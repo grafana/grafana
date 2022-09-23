@@ -53,7 +53,7 @@ func newField(name string, p data.FieldType) *data.Field {
 	return f
 }
 
-func (x *SummaryTable) Add(obj object.RawObject, summary object.ObjectSummary) {
+func (x *SummaryTable) Add(obj *object.RawObject, summary object.ObjectSummary) {
 	x.Raw.AppendRow(
 		obj.UID,
 		obj.Kind,
@@ -62,11 +62,11 @@ func (x *SummaryTable) Add(obj object.RawObject, summary object.ObjectSummary) {
 	)
 
 	// Add summary table
-	//	fieldsJson, _ := json.Marshal(summary.Fields)
+	fieldsJson, _ := json.Marshal(summary.Fields)
 	x.Summary.AppendRow(
 		obj.UID,
 		summary.Name,
-		json.RawMessage(summary.FieldsJSON),
+		json.RawMessage(fieldsJson),
 	)
 
 	// Add references

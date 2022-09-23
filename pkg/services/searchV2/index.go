@@ -900,7 +900,7 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 		reader := object.NewDashboardSummaryBuilder(lookup)
 
 		for _, row := range rows {
-			obj := obj.RawObject{
+			obj := &obj.RawObject{
 				UID:  row.Uid,
 				Kind: "dashboard",
 				Body: row.Data,

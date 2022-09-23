@@ -18,17 +18,11 @@ message RawObject {
   // will trigger additional indexing behavior.
   string kind = 2;
 
-  // Time in millies since epoch that the object was first saved
-  int64 created = 3;
-
-  // Time in millies since epoch that the object was last modified
-  int64 updated = 4;
-
-  // Who created the object
-  UserInfo createdBy = 5;
+  // Time in millies since epoch that the object was modified
+  int64 modified = 3;
 
   // Who modified the object
-  UserInfo updatedBy = 6; 
+  UserInfo modified_by = 5;
 
   // Content Length
   int64 size = 7;
@@ -51,37 +45,6 @@ message RawObject {
   // optional "save" or "commit" message from the author
   string comment = 13;
 }
-
-// Consistent properties exposed a search engine
-message ObjectSummary {
-  string UID = 1;
-  string kind = 2;
-
-  // Object display name
-  string name = 3;
-
-  // Optional description
-  string description = 4;
-
-  // Searchable key, value pairs -- "tags" are represented as keys with know value
-  map<string,string> labels = 5;
-
-  // Optional URL
-  string URL = 6;
-
-  // Error info 
-  ObjectErrorInfo error = 7; 
-
-  // map[string]interface{} -- values depend on kind
-  bytes fieldsJSON = 8; // :(
-
-  // Object references
-  repeated ExternalReference references = 9;
-
-  // Used when the raw object body defines multiple 'things'
-  repeated ObjectSummary nested = 10;
-}
-
 
 // Searchable fields extracted from the object
 message ObjectErrorInfo {
@@ -115,18 +78,18 @@ message ReadObjectRequest {
   string version = 3;
 
   // Include the full body bytes
-  bool withBody = 4;
+  bool with_body = 4;
 
   // Include derived summary metadata
-  bool withSummary = 5;
+  bool with_summary = 5;
 }
 
 message ReadObjectResponse {
   // Object details with the body removed
   RawObject object = 2; 
 
-  // Extracted info used for search
-  ObjectSummary summary = 3;
+  // Object summary as JSON
+  bytes summary_json = 3;
 }
 
 //-----------------------------------------------
@@ -147,7 +110,7 @@ message WriteObjectRequest {
   map<string,string> properties = 10;
 
   // Used for optimistic locking.  If missing, the previous version will be replaced regardless
-  string previousVersion = 4;
+  string previous_version = 4;
 }
 
 message WriteObjectResponse {
@@ -157,8 +120,8 @@ message WriteObjectResponse {
   // Object details with the body removed
   RawObject object = 2; 
 
-  // Extracted info used for search
-  ObjectSummary summary = 3;
+  // Object summary as JSON
+  bytes summary_json = 3;
 }
 
 //-----------------------------------------------
@@ -170,7 +133,7 @@ message DeleteObjectRequest {
   string kind = 2;
 
   // Used for optimistic locking.  If missing, the previous version will be replaced regardless
-  string previousVersion = 4;
+  string previous_version = 4;
 }
 
 message DeleteObjectResponse {
@@ -183,7 +146,7 @@ message DeleteObjectResponse {
 
 message ObjectHistoryRequest {
   // Starting from the requested page
-  string nextPageToken = 4;
+  string next_page_token = 4;
 
   // Maximum number of items to return
   int64 limit = 3; 
@@ -200,7 +163,7 @@ message ObjectHistoryResponse {
   repeated RawObject object = 1;
 
   // More results exist... pass this in the next request
-  string nextPageToken = 3;
+  string   next_page_token = 3;
 }
 
 
@@ -210,7 +173,7 @@ message ObjectHistoryResponse {
 
 message ObjectSearchRequest {
   // Starting from the requested page (other query parameters must match!)
-  string nextPageToken = 1;
+  string next_page_token = 1;
 
   // Maximum number of items to return
   int64 limit = 2; 
@@ -238,14 +201,14 @@ message ObjectSearchRequest {
   repeated string fields = 9;
 
   // Return the full body in each payload
-  bool withBody = 10;
+  bool with_body = 10;
 }
 
 message ObjectSearchResponse {
   repeated RawObject results = 1;
 
   // More results exist... pass this in the next request
-  string nextPageToken = 3;
+  string next_page_token = 3;
 }
 
 
