@@ -47,8 +47,12 @@ type NavLink struct {
 	EmptyMessageId   string     `json:"emptyMessageId,omitempty"`
 }
 
-// NavIDCfg is the id for org configuration navigation node
-const NavIDCfg = "cfg"
+const (
+	NavIDCfg                = "cfg" // NavIDCfg is the id for org configuration navigation node
+	NavIDAlertsAndIncidents = "alerts-and-incidents"
+	NavIDAlerting           = "alerting"
+	NavIDMonitoring         = "monitoring"
+)
 
 type NavTreeRoot struct {
 	Children []*NavLink

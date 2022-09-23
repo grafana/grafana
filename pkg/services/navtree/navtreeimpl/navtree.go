@@ -453,7 +453,7 @@ func (s *ServiceImpl) buildAlertNavLinks(c *models.ReqContext, hasEditPerm bool)
 		var alertNav = navtree.NavLink{
 			Text:       "Alerting",
 			SubTitle:   "Alert rules and notifications",
-			Id:         "alerting",
+			Id:         navtree.NavIDAlerting,
 			Icon:       "bell",
 			Children:   alertChildNavs,
 			Section:    navtree.NavSectionCore,

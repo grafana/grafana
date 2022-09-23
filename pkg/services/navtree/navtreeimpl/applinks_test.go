@@ -99,10 +99,10 @@ func TestAddAppLinks(t *testing.T) {
 		require.Equal(t, "plugin-page-test-app", treeRoot.Children[0].Children[0].Id)
 	})
 
-	t.Run("Add monitoring section if plugin exists that wants to live there", func(t *testing.T) {
+	t.Run("Should add monitoring section if plugin exists that wants to live there", func(t *testing.T) {
 		service.features = featuremgmt.WithFeatures(featuremgmt.FlagTopnav)
 		service.cfg.NavigationAppNavIds = map[string]string{
-			"test-app": "monitoring",
+			"test-app": navtree.NavIDMonitoring,
 		}
 
 		treeRoot := navtree.NavTreeRoot{}
@@ -111,5 +111,21 @@ func TestAddAppLinks(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "Monitoring", treeRoot.Children[0].Text)
 		require.Equal(t, "Test app name", treeRoot.Children[0].Children[0].Text)
+	})
+
+	t.Run("Should add Alerts and incidents section if plugin exists that wants to live there", func(t *testing.T) {
+		service.features = featuremgmt.WithFeatures(featuremgmt.FlagTopnav)
+		service.cfg.NavigationAppNavIds = map[string]string{
+			"test-app": navtree.NavIDAlertsAndIncidents,
+		}
+
+		treeRoot := navtree.NavTreeRoot{}
+		treeRoot.AddSection(&navtree.NavLink{Id: navtree.NavIDAlerting, Text: "Alerting"})
+
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+		require.Equal(t, "Alerts & incidents", treeRoot.Children[0].Text)
+		require.Equal(t, "Alerting", treeRoot.Children[0].Children[0].Text)
+		require.Equal(t, "Test app name", treeRoot.Children[0].Children[1].Text)
 	})
 }

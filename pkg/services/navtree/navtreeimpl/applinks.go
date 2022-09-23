@@ -47,103 +47,8 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *models.ReqCo
 			continue
 		}
 
-		appLink := &navtree.NavLink{
-			Text:       plugin.Name,
-			Id:         "plugin-page-" + plugin.ID,
-			Img:        plugin.Info.Logos.Small,
-			Section:    navtree.NavSectionPlugin,
-			SortWeight: navtree.WeightPlugin,
-		}
-
-		if s.features.IsEnabled(featuremgmt.FlagTopnav) {
-			appLink.Url = s.cfg.AppSubURL + "/a/" + plugin.ID
-		} else {
-			appLink.Url = path.Join(s.cfg.AppSubURL, plugin.DefaultNavURL)
-		}
-
-		for _, include := range plugin.Includes {
-			if !c.HasUserRole(include.Role) {
-				continue
-			}
-
-			if include.Type == "page" && include.AddToNav {
-				link := &navtree.NavLink{
-					Text: include.Name,
-					Icon: include.Icon,
-				}
-
-				if len(include.Path) > 0 {
-					link.Url = s.cfg.AppSubURL + include.Path
-					if include.DefaultNav && !topNavEnabled {
-						appLink.Url = link.Url // Overwrite the hardcoded page logic
-					}
-				} else {
-					link.Url = s.cfg.AppSubURL + "/plugins/" + plugin.ID + "/page/" + include.Slug
-				}
-
-				if sectionForPageID, ok := s.cfg.NavigationNavIdOverrides[include.Path]; ok {
-					if sectionForPage := treeRoot.FindById(sectionForPageID); sectionForPage != nil {
-						link.Id = "standalone-plugin-page-" + include.Path
-						sectionForPage.Children = append(sectionForPage.Children, link)
-					}
-				} else {
-					appLink.Children = append(appLink.Children, link)
-				}
-			}
-
-			if include.Type == "dashboard" && include.AddToNav {
-				dboardURL := include.DashboardURLPath()
-				if dboardURL != "" {
-					link := &navtree.NavLink{
-						Url:  path.Join(s.cfg.AppSubURL, dboardURL),
-						Text: include.Name,
-					}
-					appLink.Children = append(appLink.Children, link)
-				}
-			}
-		}
-
-		if len(appLink.Children) > 0 {
-			// If we only have one child and it's the app default nav then remove it from children
-			if len(appLink.Children) == 1 && appLink.Children[0].Url == appLink.Url {
-				appLink.Children = []*navtree.NavLink{}
-			}
-
-			if navId, hasNavId := s.cfg.NavigationAppNavIds[plugin.ID]; hasNavId && topNavEnabled {
-				if navNode := treeRoot.FindById(navId); navNode != nil {
-					navNode.Children = append(navNode.Children, appLink)
-				} else {
-					// Lazily add this node
-					if navId == "monitoring" {
-						treeRoot.AddSection(&navtree.NavLink{
-							Text:        "Monitoring",
-							Id:          "monitoring",
-							Description: "Monitoring and infrastructure apps",
-							Icon:        "heart-rate",
-							Section:     navtree.NavSectionCore,
-							Children:    []*navtree.NavLink{appLink},
-							Url:         s.cfg.AppSubURL + "/monitoring",
-						})
-					}
-					if navId == "alerts-and-incidents" {
-						alertingNode := treeRoot.FindById("alerting")
-						treeRoot.AddSection(&navtree.NavLink{
-							Text:        "Alerts & incidents",
-							Id:          "alerts-and-incidents",
-							Description: "Alerting and incident management apps",
-							Icon:        "bell",
-							Section:     navtree.NavSectionCore,
-							Children:    []*navtree.NavLink{alertingNode, appLink},
-							Url:         s.cfg.AppSubURL + "/alerts-and-incidents",
-						})
-						// Remove alerting node from navTree roots
-						treeRoot.RemoveSection(alertingNode)
-					}
-					s.log.Error("Plugin app nav id not found", "pluginId", plugin.ID, "navId", navId)
-				}
-			} else {
-				appLinks = append(appLinks, appLink)
-			}
+		if appNode := s.processAppPlugin(plugin, c, topNavEnabled, treeRoot); appNode != nil {
+			appLinks = append(appLinks, appNode)
 		}
 	}
 
@@ -166,6 +71,109 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *models.ReqCo
 	} else {
 		for _, appLink := range appLinks {
 			treeRoot.AddSection(appLink)
+		}
+	}
+
+	return nil
+}
+
+func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqContext, topNavEnabled bool, treeRoot *navtree.NavTreeRoot) *navtree.NavLink {
+	appLink := &navtree.NavLink{
+		Text:       plugin.Name,
+		Id:         "plugin-page-" + plugin.ID,
+		Img:        plugin.Info.Logos.Small,
+		Section:    navtree.NavSectionPlugin,
+		SortWeight: navtree.WeightPlugin,
+	}
+
+	if s.features.IsEnabled(featuremgmt.FlagTopnav) {
+		appLink.Url = s.cfg.AppSubURL + "/a/" + plugin.ID
+	} else {
+		appLink.Url = path.Join(s.cfg.AppSubURL, plugin.DefaultNavURL)
+	}
+
+	for _, include := range plugin.Includes {
+		if !c.HasUserRole(include.Role) {
+			continue
+		}
+
+		if include.Type == "page" && include.AddToNav {
+			link := &navtree.NavLink{
+				Text: include.Name,
+				Icon: include.Icon,
+			}
+
+			if len(include.Path) > 0 {
+				link.Url = s.cfg.AppSubURL + include.Path
+				if include.DefaultNav && !topNavEnabled {
+					appLink.Url = link.Url
+				}
+			} else {
+				link.Url = s.cfg.AppSubURL + "/plugins/" + plugin.ID + "/page/" + include.Slug
+			}
+
+			if sectionForPageID, ok := s.cfg.NavigationNavIdOverrides[include.Path]; ok {
+				if sectionForPage := treeRoot.FindById(sectionForPageID); sectionForPage != nil {
+					link.Id = "standalone-plugin-page-" + include.Path
+					sectionForPage.Children = append(sectionForPage.Children, link)
+				}
+			} else {
+				appLink.Children = append(appLink.Children, link)
+			}
+		}
+
+		if include.Type == "dashboard" && include.AddToNav {
+			dboardURL := include.DashboardURLPath()
+			if dboardURL != "" {
+				link := &navtree.NavLink{
+					Url:  path.Join(s.cfg.AppSubURL, dboardURL),
+					Text: include.Name,
+				}
+				appLink.Children = append(appLink.Children, link)
+			}
+		}
+	}
+
+	if len(appLink.Children) > 0 {
+		// If we only have one child and it's the app default nav then remove it from children
+		if len(appLink.Children) == 1 && appLink.Children[0].Url == appLink.Url {
+			appLink.Children = []*navtree.NavLink{}
+		}
+
+		alertingNode := treeRoot.FindById("alerting")
+
+		if navId, hasNavId := s.cfg.NavigationAppNavIds[plugin.ID]; hasNavId && topNavEnabled {
+			if navNode := treeRoot.FindById(navId); navNode != nil {
+				navNode.Children = append(navNode.Children, appLink)
+			} else {
+				if navId == navtree.NavIDMonitoring {
+					treeRoot.AddSection(&navtree.NavLink{
+						Text:        "Monitoring",
+						Id:          navtree.NavIDMonitoring,
+						Description: "Monitoring and infrastructure apps",
+						Icon:        "heart-rate",
+						Section:     navtree.NavSectionCore,
+						Children:    []*navtree.NavLink{appLink},
+						Url:         s.cfg.AppSubURL + "/monitoring",
+					})
+				}
+
+				if navId == navtree.NavIDAlertsAndIncidents && alertingNode != nil {
+					treeRoot.AddSection(&navtree.NavLink{
+						Text:        "Alerts & incidents",
+						Id:          navtree.NavIDAlertsAndIncidents,
+						Description: "Alerting and incident management apps",
+						Icon:        "bell",
+						Section:     navtree.NavSectionCore,
+						Children:    []*navtree.NavLink{alertingNode, appLink},
+						Url:         s.cfg.AppSubURL + "/alerts-and-incidents",
+					})
+					treeRoot.RemoveSection(alertingNode)
+				}
+				s.log.Error("Plugin app nav id not found", "pluginId", plugin.ID, "navId", navId)
+			}
+		} else {
+			return appLink
 		}
 	}
 
