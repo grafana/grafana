@@ -3,7 +3,6 @@ package orgtest
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
@@ -85,7 +84,7 @@ func (f *FakeOrgService) UpdateOrgUser(ctx context.Context, cmd *org.UpdateOrgUs
 	return f.ExpectedError
 }
 
-func (f *FakeOrgService) GetOrgUsers(ctx context.Context, query *models.GetOrgUsersQuery) ([]*org.OrgUserDTO, error) {
+func (f *FakeOrgService) GetOrgUsers(ctx context.Context, query *org.GetOrgUsersQuery) ([]*org.OrgUserDTO, error) {
 	return f.ExpectedOrgUsers, f.ExpectedError
 }
 
