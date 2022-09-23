@@ -323,6 +323,10 @@ var (
 			RequiresDevMode: true,
 		},
 		{
+			Name:        "showDashboardValidationWarnings",
+			Description: "Show warnings when Dashboards do not validate against the schema",
+		},
+		{
 			Name:        "mysqlAnsiQuotes",
 			Description: "Use double quote to escape keyword in Mysql query",
 			State:       FeatureStateAlpha,
