@@ -104,6 +104,9 @@ var (
 
 	// MPublicDashboardRequestCount is a metric counter for public dashboards requests
 	MPublicDashboardRequestCount prometheus.Counter
+
+	// MPublicDashboardDatasourceQuerySuccess is a metric counter for successful queries labelled by datasource
+	MPublicDashboardDatasourceQuerySuccess *prometheus.CounterVec
 )
 
 // Timers
@@ -419,6 +422,12 @@ func init() {
 		Namespace: ExporterName,
 	})
 
+	MPublicDashboardDatasourceQuerySuccess = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name:      "public_dashboard_datasource_query_success",
+		Help:      "counter for queries to public dashboard datasources labelled by datasource type and success status success/failed",
+		Namespace: ExporterName,
+	}, []string{"datasource", "status"})
+
 	MStatTotalDashboards = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_totals_dashboard",
 		Help:      "total amount of dashboards",
@@ -664,5 +673,6 @@ func initMetricVars() {
 		StatsTotalDataKeys,
 		MStatTotalPublicDashboards,
 		MPublicDashboardRequestCount,
+		MPublicDashboardDatasourceQuerySuccess,
 	)
 }
