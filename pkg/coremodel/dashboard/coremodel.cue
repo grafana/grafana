@@ -230,6 +230,7 @@ seqs: [
 				#SpecialValueMap: {
 					type: #MappingType & "special"
 					options: {
+						match: "true" | "false"
 						pattern: string
 						result:  #ValueMappingResult
 					}

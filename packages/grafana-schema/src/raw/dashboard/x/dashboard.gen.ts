@@ -257,6 +257,7 @@ export interface RegexMap {
  */
 export interface SpecialValueMap {
   options: {
+    match: ('true' | 'false');
     pattern: string;
     result: ValueMappingResult;
   };

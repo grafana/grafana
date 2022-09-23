@@ -123,6 +123,13 @@ const (
 	RowPanelTypeRow RowPanelType = "row"
 )
 
+// Defines values for SpecialValueMapOptionsMatch.
+const (
+	SpecialValueMapOptionsMatchFalse SpecialValueMapOptionsMatch = "false"
+
+	SpecialValueMapOptionsMatchTrue SpecialValueMapOptionsMatch = "true"
+)
+
 // Defines values for SpecialValueMapType.
 const (
 	SpecialValueMapTypeSpecial SpecialValueMapType = "special"
@@ -832,7 +839,8 @@ type RowPanelType string
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
 type SpecialValueMap struct {
 	Options struct {
-		Pattern string `json:"pattern"`
+		Match   SpecialValueMapOptionsMatch `json:"match"`
+		Pattern string                      `json:"pattern"`
 		Result  struct {
 			Color *string `json:"color,omitempty"`
 			Icon  *string `json:"icon,omitempty"`
@@ -842,6 +850,12 @@ type SpecialValueMap struct {
 	} `json:"options"`
 	Type SpecialValueMapType `json:"type"`
 }
+
+// SpecialValueMapOptionsMatch is the Go representation of a SpecialValueMap.Options.Match.
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
+// Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
+type SpecialValueMapOptionsMatch string
 
 // SpecialValueMapType is the Go representation of a SpecialValueMap.Type.
 //
