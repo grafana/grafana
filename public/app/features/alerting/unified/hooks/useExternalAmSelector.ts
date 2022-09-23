@@ -1,12 +1,11 @@
 import { countBy, keyBy } from 'lodash';
-import { useSelector } from 'react-redux';
 
 import { DataSourceInstanceSettings, DataSourceJsonData, DataSourceSettings } from '@grafana/data';
 import { AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
+import { useSelector } from 'app/types';
 
-import { StoreState } from '../../../../types';
-import { getAlertManagerDataSources } from '../utils/datasource';
 import { alertmanagerApi } from '../api/alertmanager';
+import { getAlertManagerDataSources } from '../utils/datasource';
 
 const SUFFIX_REGEX = /\/api\/v[1|2]\/alerts/i;
 type AlertmanagerConfig = { url: string; status: string; actualUrl: string };
@@ -69,7 +68,7 @@ export function useExternalDataSourceAlertmanagers(): ExternalDataSourceAM[] {
 
   const externalDsAlertManagers = getAlertManagerDataSources().filter((ds) => ds.jsonData.handleGrafanaManagedAlerts);
 
-  const alertmanagerDatasources = useSelector((state: StoreState) =>
+  const alertmanagerDatasources = useSelector((state) =>
     keyBy(
       state.dataSources.dataSources.filter((ds) => ds.type === 'alertmanager'),
       (ds) => ds.uid

@@ -63,7 +63,6 @@ func TestTestReceivers(t *testing.T) {
 		res := Response{}
 		err = json.Unmarshal(b, &res)
 		require.NoError(t, err)
-		require.NotEmpty(t, res.TraceID)
 	})
 
 	t.Run("assert working receiver returns OK", func(t *testing.T) {

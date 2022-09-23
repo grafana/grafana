@@ -6,7 +6,7 @@ import { RadioButtonGroup, Select, AutoSizeInput, EditorField, EditorRow } from 
 import { QueryOptionGroup } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryOptionGroup';
 
 import { preprocessMaxLines, queryTypeOptions, RESOLUTION_OPTIONS } from '../../components/LokiOptionFields';
-import { isLogsQuery } from '../../query_utils';
+import { isLogsQuery } from '../../queryUtils';
 import { LokiQuery, LokiQueryType } from '../../types';
 
 export interface Props {

@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useDispatch } from 'react-redux';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import {
@@ -18,7 +17,9 @@ import {
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { loadDataSources } from 'app/features/datasources/state/actions';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
+import { useDispatch } from 'app/types';
 
+import { alertmanagerApi } from '../../api/alertmanager';
 import { useExternalAmSelector, useExternalDataSourceAlertmanagers } from '../../hooks/useExternalAmSelector';
 import // addExternalAlertmanagersAction,
 // fetchExternalAlertmanagersAction,
@@ -27,7 +28,6 @@ import // addExternalAlertmanagersAction,
 
 import { AddAlertManagerModal } from './AddAlertManagerModal';
 import { ExternalAlertmanagerDataSources } from './ExternalAlertmanagerDataSources';
-import { alertmanagerApi } from '../../api/alertmanager';
 
 const alertmanagerChoices: Array<SelectableValue<AlertmanagerChoice>> = [
   { value: AlertmanagerChoice.Internal, label: 'Only Internal' },
@@ -85,7 +85,7 @@ export const ExternalAlertmanagers = () => {
       //
       setDeleteModalState({ open: false, index: 0 });
     },
-    [externalAlertManagers, dispatch, alertmanagersChoice]
+    [externalAlertManagers, saveExternalAlertManagers, alertmanagersChoice]
   );
 
   const onEdit = useCallback(() => {
