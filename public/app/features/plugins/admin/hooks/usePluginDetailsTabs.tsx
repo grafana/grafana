@@ -3,7 +3,6 @@ import { useLocation } from 'react-router-dom';
 
 import { GrafanaPlugin, NavModelItem, PluginIncludeType, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { toIconName } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types';
 
@@ -35,7 +34,7 @@ export const usePluginDetailsTabs = (plugin?: CatalogPlugin, pageId?: PluginTabI
       navModelChildren.push({
         text: PluginTabLabels.VERSIONS,
         id: PluginTabIds.VERSIONS,
-        icon: toIconName('history'),
+        icon: 'history',
         url: `${pathname}?page=${PluginTabIds.VERSIONS}`,
         active: PluginTabIds.VERSIONS === currentPageId,
       });
@@ -56,41 +55,44 @@ export const usePluginDetailsTabs = (plugin?: CatalogPlugin, pageId?: PluginTabI
       });
     }
 
-    if (canConfigurePlugins) {
-      if (pluginConfig.meta.type === PluginType.app) {
-        if (pluginConfig.angularConfigCtrl) {
-          navModelChildren.push({
-            text: 'Config',
-            icon: 'cog',
-            id: PluginTabIds.CONFIG,
-            url: `${pathname}?page=${PluginTabIds.CONFIG}`,
-            active: PluginTabIds.CONFIG === currentPageId,
-          });
-        }
+    if (!canConfigurePlugins) {
+      return navModelChildren;
+    }
 
-        if (pluginConfig.configPages) {
-          for (const configPage of pluginConfig.configPages) {
-            navModelChildren.push({
-              text: configPage.title,
-              icon: configPage.icon,
-              id: configPage.id,
-              url: `${pathname}?page=${configPage.id}`,
-              active: configPage.id === currentPageId,
-            });
-          }
-        }
+    if (pluginConfig.meta.type === PluginType.app) {
+      if (pluginConfig.angularConfigCtrl) {
+        navModelChildren.push({
+          text: 'Config',
+          icon: 'cog',
+          id: PluginTabIds.CONFIG,
+          url: `${pathname}?page=${PluginTabIds.CONFIG}`,
+          active: PluginTabIds.CONFIG === currentPageId,
+        });
+      }
 
-        if (pluginConfig.meta.includes?.find((include) => include.type === PluginIncludeType.dashboard)) {
+      if (pluginConfig.configPages) {
+        for (const configPage of pluginConfig.configPages) {
           navModelChildren.push({
-            text: 'Dashboards',
-            icon: 'apps',
-            id: PluginTabIds.DASHBOARDS,
-            url: `${pathname}?page=${PluginTabIds.DASHBOARDS}`,
-            active: PluginTabIds.DASHBOARDS === currentPageId,
+            text: configPage.title,
+            icon: configPage.icon,
+            id: configPage.id,
+            url: `${pathname}?page=${configPage.id}`,
+            active: configPage.id === currentPageId,
           });
         }
       }
+
+      if (pluginConfig.meta.includes?.find((include) => include.type === PluginIncludeType.dashboard)) {
+        navModelChildren.push({
+          text: 'Dashboards',
+          icon: 'apps',
+          id: PluginTabIds.DASHBOARDS,
+          url: `${pathname}?page=${PluginTabIds.DASHBOARDS}`,
+          active: PluginTabIds.DASHBOARDS === currentPageId,
+        });
+      }
     }
+
     return navModelChildren;
   }, [plugin, pluginConfig, pathname, isPublished, currentPageId]);
 
