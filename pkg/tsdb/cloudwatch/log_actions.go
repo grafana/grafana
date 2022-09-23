@@ -126,10 +126,6 @@ func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, model LogQuer
 
 	var data *data.Frame = nil
 	switch model.SubType {
-	case "DescribeLogGroups":
-		data, err = e.handleDescribeLogGroups(ctx, logsClient, model)
-	case "DescribeAllLogGroups":
-		data, err = e.handleDescribeAllLogGroups(ctx, logsClient, model)
 	case "GetLogGroupFields":
 		data, err = e.handleGetLogGroupFields(ctx, logsClient, model, query.RefID)
 	case "StartQuery":
@@ -201,74 +197,6 @@ func (e *cloudWatchExecutor) handleGetLogEvents(ctx context.Context, logsClient 
 	messageField := data.NewField("line", nil, messages)
 
 	return data.NewFrame("logEvents", timestampField, messageField), nil
-}
-
-func (e *cloudWatchExecutor) handleDescribeLogGroups(ctx context.Context,
-	logsClient cloudwatchlogsiface.CloudWatchLogsAPI, parameters LogQueryJson) (*data.Frame, error) {
-	logGroupLimit := defaultLogGroupLimit
-	if parameters.Limit != nil && *parameters.Limit != 0 {
-		logGroupLimit = *parameters.Limit
-	}
-
-	var response *cloudwatchlogs.DescribeLogGroupsOutput = nil
-	var err error
-	if len(parameters.LogGroupNamePrefix) == 0 {
-		response, err = logsClient.DescribeLogGroupsWithContext(ctx, &cloudwatchlogs.DescribeLogGroupsInput{
-			Limit: aws.Int64(logGroupLimit),
-		})
-	} else {
-		response, err = logsClient.DescribeLogGroupsWithContext(ctx, &cloudwatchlogs.DescribeLogGroupsInput{
-			Limit:              aws.Int64(logGroupLimit),
-			LogGroupNamePrefix: aws.String(parameters.LogGroupNamePrefix),
-		})
-	}
-	if err != nil || response == nil {
-		return nil, err
-	}
-
-	logGroupNames := make([]*string, 0)
-	for _, logGroup := range response.LogGroups {
-		logGroupNames = append(logGroupNames, logGroup.LogGroupName)
-	}
-
-	groupNamesField := data.NewField("logGroupName", nil, logGroupNames)
-	frame := data.NewFrame("logGroups", groupNamesField)
-
-	return frame, nil
-}
-
-func (e *cloudWatchExecutor) handleDescribeAllLogGroups(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI, parameters LogQueryJson) (*data.Frame, error) {
-	var namePrefix, nextToken *string
-	if len(parameters.LogGroupNamePrefix) != 0 {
-		namePrefix = aws.String(parameters.LogGroupNamePrefix)
-	}
-
-	var response *cloudwatchlogs.DescribeLogGroupsOutput
-	var err error
-	logGroupNames := []*string{}
-	for {
-		response, err = logsClient.DescribeLogGroupsWithContext(ctx, &cloudwatchlogs.DescribeLogGroupsInput{
-			LogGroupNamePrefix: namePrefix,
-			NextToken:          nextToken,
-			Limit:              aws.Int64(defaultLogGroupLimit),
-		})
-		if err != nil || response == nil {
-			return nil, err
-		}
-
-		for _, logGroup := range response.LogGroups {
-			logGroupNames = append(logGroupNames, logGroup.LogGroupName)
-		}
-
-		if response.NextToken == nil {
-			break
-		}
-		nextToken = response.NextToken
-	}
-
-	groupNamesField := data.NewField("logGroupName", nil, logGroupNames)
-	frame := data.NewFrame("logGroups", groupNamesField)
-	return frame, nil
 }
 
 func (e *cloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,

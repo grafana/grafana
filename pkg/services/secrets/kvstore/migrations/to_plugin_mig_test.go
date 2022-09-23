@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretskvs "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
@@ -65,14 +66,14 @@ func TestFatalPluginErr_MigrationTestWithErrorDeletingUnifiedSecrets(t *testing.
 	assert.False(t, isFatal)
 }
 
-func addSecretToSqlStore(t *testing.T, sqlSecretStore *secretskvs.SecretsKVStoreSQL, ctx context.Context, orgId int64, namespace1 string, typ string, value string) {
+func addSecretToSqlStore(t *testing.T, sqlSecretStore secretskvs.SecretsKVStore, ctx context.Context, orgId int64, namespace1 string, typ string, value string) {
 	t.Helper()
 	err := sqlSecretStore.Set(ctx, orgId, namespace1, typ, value)
 	require.NoError(t, err)
 }
 
 // validates that secrets on the sql store were deleted.
-func validateSqlSecretWasDeleted(t *testing.T, sqlSecretStore *secretskvs.SecretsKVStoreSQL, ctx context.Context, orgId int64, namespace1 string, typ string) {
+func validateSqlSecretWasDeleted(t *testing.T, sqlSecretStore secretskvs.SecretsKVStore, ctx context.Context, orgId int64, namespace1 string, typ string) {
 	t.Helper()
 	res, err := sqlSecretStore.Keys(ctx, orgId, namespace1, typ)
 	require.NoError(t, err)
@@ -88,7 +89,7 @@ func validateSecretWasStoredInPlugin(t *testing.T, secretsStore secretskvs.Secre
 }
 
 // Set up services used in migration
-func setupTestMigrateToPluginService(t *testing.T) (*MigrateToPluginService, secretskvs.SecretsKVStore, *secretskvs.SecretsKVStoreSQL) {
+func setupTestMigrateToPluginService(t *testing.T) (*MigrateToPluginService, secretskvs.SecretsKVStore, secretskvs.SecretsKVStore) {
 	t.Helper()
 
 	rawCfg := `
@@ -99,7 +100,8 @@ func setupTestMigrateToPluginService(t *testing.T) (*MigrateToPluginService, sec
 	require.NoError(t, err)
 	cfg := &setting.Cfg{Raw: raw}
 	// this would be the plugin - mocked at the moment
-	secretsStoreForPlugin := secretskvs.NewFakeSecretsKVStore()
+	fallbackStore := secretskvs.WithCache(secretskvs.NewFakeSQLSecretsKVStore(t), time.Minute*5, time.Minute*5)
+	secretsStoreForPlugin := secretskvs.WithCache(secretskvs.NewFakePluginSecretsKVStore(t, featuremgmt.WithFeatures(), fallbackStore), time.Minute*5, time.Minute*5)
 
 	// this is to init the sql secret store inside the migration
 	sqlStore := sqlstore.InitTestDB(t)
@@ -114,11 +116,7 @@ func setupTestMigrateToPluginService(t *testing.T) (*MigrateToPluginService, sec
 		manager,
 	)
 
-	secretsSql := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
-
-	err = secretsStoreForPlugin.SetFallback(secretsSql)
-	require.NoError(t, err)
-	return migratorService, secretsStoreForPlugin, secretsSql
+	return migratorService, secretsStoreForPlugin, fallbackStore
 }
 
 func setupTestMigratorServiceWithDeletionError(
@@ -128,7 +126,7 @@ func setupTestMigratorServiceWithDeletionError(
 	kvstore kvstore.KVStore,
 ) *MigrateToPluginService {
 	t.Helper()
-	secretskvs.ResetPlugin()
+	t.Cleanup(secretskvs.ResetPlugin)
 	cfg := secretskvs.SetupTestConfig(t)
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	manager := secretskvs.NewFakeSecretsPluginManager(t, false)
@@ -146,7 +144,7 @@ func setupTestMigratorServiceWithDeletionError(
 	err := fallback.Set(context.Background(), orgId, str, str, "bogus")
 	require.NoError(t, err)
 	fallback.DeletionError(true)
-	err = secretskv.SetFallback(fallback)
+	err = secretskvs.ReplaceFallback(t, secretskv, fallback)
 	require.NoError(t, err)
 	return migratorService
 }

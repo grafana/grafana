@@ -35,6 +35,7 @@ export default function createMockQuery(overrides?: Partial<AzureMonitorQuery>):
       dimensionFilters: [],
       metricName: 'Metric A',
       metricNamespace: 'Microsoft.Compute/virtualMachines',
+      customNamespace: '',
       resourceGroup: 'grafanastaging',
       resourceName: 'grafana',
       timeGrain: 'auto',

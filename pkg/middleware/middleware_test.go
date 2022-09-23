@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
+	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
@@ -81,6 +82,11 @@ func TestMiddleWareSecurityHeaders(t *testing.T) {
 func TestMiddlewareContext(t *testing.T) {
 	const noCache = "no-cache"
 
+	configureJWTAuthHeader := func(cfg *setting.Cfg) {
+		cfg.JWTAuthEnabled = true
+		cfg.JWTAuthHeaderName = "Authorization"
+	}
+
 	middlewareScenario(t, "middleware should add context to injector", func(t *testing.T, sc *scenarioContext) {
 		sc.fakeReq("GET", "/").exec()
 		assert.NotNil(t, sc.context)
@@ -113,7 +119,7 @@ func TestMiddlewareContext(t *testing.T) {
 			data := &dtos.IndexViewData{
 				User:     &dtos.CurrentUser{},
 				Settings: map[string]interface{}{},
-				NavTree:  []*dtos.NavLink{},
+				NavTree:  []*navtree.NavLink{},
 			}
 			t.Log("Calling HTML", "data", data)
 			c.HTML(http.StatusOK, "index-template", data)
@@ -164,6 +170,22 @@ func TestMiddlewareContext(t *testing.T) {
 		assert.Equal(t, orgID, sc.context.OrgID)
 		assert.Equal(t, org.RoleEditor, sc.context.OrgRole)
 	})
+
+	middlewareScenario(t, "Valid API key with JWT enabled", func(t *testing.T, sc *scenarioContext) {
+		const orgID int64 = 12
+		keyhash, err := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
+		require.NoError(t, err)
+
+		sc.apiKeyService.ExpectedAPIKey = &apikey.APIKey{OrgId: orgID, Role: org.RoleEditor, Key: keyhash}
+
+		sc.fakeReq("GET", "/").withValidApiKey().exec()
+
+		require.Equal(t, 200, sc.resp.Code)
+
+		assert.True(t, sc.context.IsSignedIn)
+		assert.Equal(t, orgID, sc.context.OrgID)
+		assert.Equal(t, org.RoleEditor, sc.context.OrgRole)
+	}, configureJWTAuthHeader)
 
 	middlewareScenario(t, "Valid API key, but does not match DB hash", func(t *testing.T, sc *scenarioContext) {
 		const keyhash = "Something_not_matching"

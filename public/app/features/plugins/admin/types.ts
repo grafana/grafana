@@ -6,11 +6,13 @@ import {
   PluginSignatureType,
   PluginDependencies,
   PluginErrorCode,
+  WithAccessControlMetadata,
 } from '@grafana/data';
 import { IconName } from '@grafana/ui';
 import { StoreState, PluginsState } from 'app/types';
 
 export type PluginTypeCode = 'app' | 'panel' | 'datasource';
+export type PluginTypeFilterOption = PluginTypeCode | 'all';
 
 export enum PluginListDisplayMode {
   Grid = 'grid',
@@ -31,7 +33,7 @@ export enum PluginIconName {
   secretsmanager = 'key-skeleton-alt',
 }
 
-export interface CatalogPlugin {
+export interface CatalogPlugin extends WithAccessControlMetadata {
   description: string;
   downloads: number;
   hasUpdate: boolean;
@@ -124,7 +126,7 @@ export type RemotePlugin = {
   versionStatus: string;
 };
 
-export type LocalPlugin = {
+export type LocalPlugin = WithAccessControlMetadata & {
   category: string;
   defaultNavUrl: string;
   dev?: boolean;

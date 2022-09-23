@@ -1458,7 +1458,7 @@ export const navIndex: NavIndex = {
       },
       {
         text: 'Configuration',
-        icon: 'fa fa-cog',
+        icon: 'cog',
         url: '/plugins/basic-app',
       },
     ],

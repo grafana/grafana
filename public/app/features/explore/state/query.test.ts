@@ -40,6 +40,25 @@ import { makeExplorePaneState } from './utils';
 
 const { testRange, defaultInitialState } = createDefaultInitialState();
 
+const datasources: DataSourceApi[] = [
+  {
+    name: 'testDs',
+    type: 'postgres',
+    uid: 'ds1',
+    getRef: () => {
+      return { type: 'postgres', uid: 'ds1' };
+    },
+  } as DataSourceApi<DataQuery, DataSourceJsonData, {}>,
+  {
+    name: 'testDs2',
+    type: 'postgres',
+    uid: 'ds2',
+    getRef: () => {
+      return { type: 'postgres', uid: 'ds2' };
+    },
+  } as DataSourceApi<DataQuery, DataSourceJsonData, {}>,
+];
+
 jest.mock('app/features/dashboard/services/TimeSrv', () => ({
   ...jest.requireActual('app/features/dashboard/services/TimeSrv'),
   getTimeSrv: () => ({
@@ -53,6 +72,11 @@ jest.mock('@grafana/runtime', () => ({
   getTemplateSrv: () => ({
     updateTimeRange: jest.fn(),
   }),
+  getDataSourceSrv: () => {
+    return {
+      get: (uid?: string) => datasources.find((ds) => ds.uid === uid) || datasources[0],
+    };
+  },
 }));
 
 function setupQueryResponse(state: StoreState) {
@@ -154,25 +178,6 @@ describe('running queries', () => {
 describe('importing queries', () => {
   describe('when importing queries between the same type of data source', () => {
     it('remove datasource property from all of the queries', async () => {
-      const datasources: DataSourceApi[] = [
-        {
-          name: 'testDs',
-          type: 'postgres',
-          uid: 'ds1',
-          getRef: () => {
-            return { type: 'postgres', uid: 'ds1' };
-          },
-        } as DataSourceApi<DataQuery, DataSourceJsonData, {}>,
-        {
-          name: 'testDs2',
-          type: 'postgres',
-          uid: 'ds2',
-          getRef: () => {
-            return { type: 'postgres', uid: 'ds2' };
-          },
-        } as DataSourceApi<DataQuery, DataSourceJsonData, {}>,
-      ];
-
       const { dispatch, getState }: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
         ...(defaultInitialState as any),
         explore: {

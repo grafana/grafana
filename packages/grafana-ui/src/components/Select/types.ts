@@ -76,7 +76,7 @@ export interface SelectCommonProps<T> {
   /** Use a custom element to control Select. A proper ref to the renderControl is needed if 'portal' isn't set to null*/
   renderControl?: ControlComponent<T>;
   tabSelectsValue?: boolean;
-  value?: SelectValue<T> | null;
+  value?: T | SelectValue<T> | null;
   /** Sets the width to a multiple of 8px. Should only be used with inline forms. Setting width of the container is preferred in other cases.*/
   width?: number | 'auto';
   isOptionDisabled?: () => boolean;

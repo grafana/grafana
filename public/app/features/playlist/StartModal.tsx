@@ -1,17 +1,17 @@
-import React, { FC, useState } from 'react';
+import React, { useState } from 'react';
 
 import { SelectableValue, UrlQueryMap, urlUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { Button, Checkbox, Field, FieldSet, Modal, RadioButtonGroup } from '@grafana/ui';
 
-import { PlaylistDTO, PlaylistMode } from './types';
+import { Playlist, PlaylistMode } from './types';
 
-export interface StartModalProps {
-  playlist: PlaylistDTO;
+export interface Props {
+  playlist: Playlist;
   onDismiss: () => void;
 }
 
-export const StartModal: FC<StartModalProps> = ({ playlist, onDismiss }) => {
+export const StartModal = ({ playlist, onDismiss }: Props) => {
   const [mode, setMode] = useState<PlaylistMode>(false);
   const [autoFit, setAutofit] = useState(false);
 

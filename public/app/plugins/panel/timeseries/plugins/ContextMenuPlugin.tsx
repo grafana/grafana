@@ -6,7 +6,6 @@ import { CartesianCoords2D, DataFrame, getFieldDisplayName, InterpolateFunction,
 import {
   ContextMenu,
   GraphContextMenuHeader,
-  IconName,
   MenuItemProps,
   MenuItemsGroup,
   MenuGroup,
@@ -153,7 +152,7 @@ export const ContextMenuPlugin: React.FC<ContextMenuPluginProps> = ({
             items: i.items.map((j) => {
               return {
                 ...j,
-                onClick: (e?: React.SyntheticEvent<HTMLElement>) => {
+                onClick: (e?: React.MouseEvent<HTMLElement>) => {
                   if (!coords) {
                     return;
                   }
@@ -263,7 +262,7 @@ export const ContextMenuView: React.FC<ContextMenuViewProps> = ({
                   ariaLabel: link.title,
                   url: link.href,
                   target: link.target,
-                  icon: `${link.target === '_self' ? 'link' : 'external-link-alt'}` as IconName,
+                  icon: link.target === '_self' ? 'link' : 'external-link-alt',
                   onClick: link.onClick,
                 };
               }),

@@ -10,9 +10,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	datasourcesService "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -82,8 +85,8 @@ func GenerateDatasourcePermissions(b *testing.B, db *sqlstore.SQLStore, ac *stor
 			Access: datasources.DS_ACCESS_DIRECT,
 			Url:    "http://test",
 		}
-
-		_ = db.AddDataSource(context.Background(), addDSCommand)
+		dsStore := datasourcesService.CreateStore(db, log.New("publicdashboards.test"))
+		_ = dsStore.AddDataSource(context.Background(), addDSCommand)
 		dataSources = append(dataSources, addDSCommand.Result.Id)
 	}
 
@@ -131,6 +134,7 @@ func GenerateDatasourcePermissions(b *testing.B, db *sqlstore.SQLStore, ac *stor
 }
 
 func generateTeamsAndUsers(b *testing.B, db *sqlstore.SQLStore, users int) ([]int64, []int64) {
+	teamSvc := teamimpl.ProvideService(db, db.Cfg)
 	numberOfTeams := int(math.Ceil(float64(users) / UsersPerTeam))
 	globalUserId := 0
 
@@ -140,7 +144,7 @@ func generateTeamsAndUsers(b *testing.B, db *sqlstore.SQLStore, users int) ([]in
 		// Create team
 		teamName := fmt.Sprintf("%s%v", "team", i)
 		teamEmail := fmt.Sprintf("%s@example.org", teamName)
-		team, err := db.CreateTeam(teamName, teamEmail, 1)
+		team, err := teamSvc.CreateTeam(teamName, teamEmail, 1)
 		require.NoError(b, err)
 		teamId := team.Id
 		teamIds = append(teamIds, teamId)
@@ -157,7 +161,7 @@ func generateTeamsAndUsers(b *testing.B, db *sqlstore.SQLStore, users int) ([]in
 			globalUserId++
 			userIds = append(userIds, userId)
 
-			err = db.AddTeamMember(userId, 1, teamId, false, 1)
+			err = teamSvc.AddTeamMember(userId, 1, teamId, false, 1)
 			require.NoError(b, err)
 		}
 	}

@@ -106,7 +106,7 @@ func (m *mockStore) UpdatePluginSettingPluginVersion(_ context.Context, _ *plugi
 	return nil
 }
 
-func (m *mockStore) GetPluginSettings(_ context.Context, _ *pluginsettings.GetArgs) ([]*pluginsettings.DTO, error) {
+func (m *mockStore) GetPluginSettings(_ context.Context, _ *pluginsettings.GetArgs) ([]*pluginsettings.InfoDTO, error) {
 	return nil, nil
 }
 

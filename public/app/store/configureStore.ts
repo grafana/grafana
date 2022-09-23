@@ -1,5 +1,6 @@
 import { configureStore as reduxConfigureStore } from '@reduxjs/toolkit';
 
+import { publicDashboardApi } from 'app/features/dashboard/api/publicDashboardApi';
 import { StoreState } from 'app/types/store';
 
 import { buildInitialState } from '../core/reducers/navModel';
@@ -20,7 +21,8 @@ export function configureStore(initialState?: Partial<StoreState>) {
     reducer: createRootReducer(),
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware({ thunk: true, serializableCheck: false, immutableCheck: false }).concat(
-        alertingApi.middleware
+        alertingApi.middleware,
+        publicDashboardApi.middleware
       ),
     devTools: process.env.NODE_ENV !== 'production',
     preloadedState: {
@@ -32,6 +34,9 @@ export function configureStore(initialState?: Partial<StoreState>) {
   setStore(store);
   return store;
 }
+
+export type RootState = ReturnType<ReturnType<typeof configureStore>['getState']>;
+export type AppDispatch = ReturnType<typeof configureStore>['dispatch'];
 
 /*
 function getActionsToIgnoreSerializableCheckOn() {
