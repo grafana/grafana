@@ -34,6 +34,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   logoImg: css`
     height: 100%;
-    padding: 2px 0 4px 0;
+    padding: ${theme.spacing(0.25, 0, 0.5, 0)};
   `,
 });
