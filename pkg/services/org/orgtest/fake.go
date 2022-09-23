@@ -8,12 +8,13 @@ import (
 )
 
 type FakeOrgService struct {
-	ExpectedOrgUserID  int64
-	ExpectedError      error
-	ExpectedUserOrgDTO []*org.UserOrgDTO
-	ExpectedOrgs       []*org.OrgDTO
-	ExpectedOrg        *org.Org
-	ExpectedOrgUsers   []*org.OrgUserDTO
+	ExpectedOrgUserID            int64
+	ExpectedError                error
+	ExpectedUserOrgDTO           []*org.UserOrgDTO
+	ExpectedOrgs                 []*org.OrgDTO
+	ExpectedOrg                  *org.Org
+	ExpectedOrgUsers             []*org.OrgUserDTO
+	ExpectedSearchOrgUsersResult *org.SearchOrgUsersQueryResult
 }
 
 func NewOrgServiceFake() *FakeOrgService {
@@ -90,4 +91,8 @@ func (f *FakeOrgService) GetOrgUsers(ctx context.Context, query *models.GetOrgUs
 
 func (f *FakeOrgService) RemoveOrgUser(ctx context.Context, cmd *org.RemoveOrgUserCommand) error {
 	return f.ExpectedError
+}
+
+func (f *FakeOrgService) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
+	return f.ExpectedSearchOrgUsersResult, f.ExpectedError
 }
