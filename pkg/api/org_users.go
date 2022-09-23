@@ -288,13 +288,13 @@ func (hs *HTTPServer) SearchOrgUsersWithPaging(c *models.ReqContext) response.Re
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) UpdateOrgUserForCurrentOrg(c *models.ReqContext) response.Response {
-	cmd := models.UpdateOrgUserCommand{}
+	cmd := org.UpdateOrgUserCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	cmd.OrgId = c.OrgID
+	cmd.OrgID = c.OrgID
 	var err error
-	cmd.UserId, err = strconv.ParseInt(web.Params(c.Req)[":userId"], 10, 64)
+	cmd.UserID, err = strconv.ParseInt(web.Params(c.Req)[":userId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "userId is invalid", err)
 	}
@@ -315,30 +315,30 @@ func (hs *HTTPServer) UpdateOrgUserForCurrentOrg(c *models.ReqContext) response.
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) UpdateOrgUser(c *models.ReqContext) response.Response {
-	cmd := models.UpdateOrgUserCommand{}
+	cmd := org.UpdateOrgUserCommand{}
 	var err error
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	cmd.OrgId, err = strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
+	cmd.OrgID, err = strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "orgId is invalid", err)
 	}
-	cmd.UserId, err = strconv.ParseInt(web.Params(c.Req)[":userId"], 10, 64)
+	cmd.UserID, err = strconv.ParseInt(web.Params(c.Req)[":userId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "userId is invalid", err)
 	}
 	return hs.updateOrgUserHelper(c, cmd)
 }
 
-func (hs *HTTPServer) updateOrgUserHelper(c *models.ReqContext, cmd models.UpdateOrgUserCommand) response.Response {
+func (hs *HTTPServer) updateOrgUserHelper(c *models.ReqContext, cmd org.UpdateOrgUserCommand) response.Response {
 	if !cmd.Role.IsValid() {
 		return response.Error(400, "Invalid role specified", nil)
 	}
 	if !c.OrgRole.Includes(cmd.Role) && !c.IsGrafanaAdmin {
 		return response.Error(http.StatusForbidden, "Cannot assign a role higher than user's role", nil)
 	}
-	if err := hs.SQLStore.UpdateOrgUser(c.Req.Context(), &cmd); err != nil {
+	if err := hs.orgService.UpdateOrgUser(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, models.ErrLastOrgAdmin) {
 			return response.Error(400, "Cannot change role so that there is no organization admin left", nil)
 		}
