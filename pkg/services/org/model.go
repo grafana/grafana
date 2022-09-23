@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	roletypes "github.com/grafana/grafana/pkg/models/role_types"
+	"github.com/grafana/grafana/pkg/models/roletype"
 )
 
 // Typed errors
@@ -38,7 +38,7 @@ type OrgUser struct {
 	Updated time.Time
 }
 
-type RoleType = roletypes.RoleType
+type RoleType = roletype.RoleType
 
 const (
 	RoleViewer RoleType = "Viewer"

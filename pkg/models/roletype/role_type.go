@@ -1,4 +1,4 @@
-package roletypes
+package roletype
 
 import (
 	"fmt"
