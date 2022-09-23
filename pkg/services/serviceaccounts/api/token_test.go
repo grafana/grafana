@@ -55,7 +55,7 @@ func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 	store := sqlstore.InitTestDB(t)
 	apiKeyService := apikeyimpl.ProvideService(store, store.Cfg)
 	kvStore := kvstore.ProvideService(store)
-	saStore := database.ProvideServiceAccountsStore(store, apiKeyService, kvStore)
+	saStore := database.ProvideServiceAccountsStore(store, apiKeyService, kvStore, nil)
 	svcmock := tests.ServiceAccountMock{}
 	sa := tests.SetupUserServiceAccount(t, store, tests.TestUser{Login: "sa", IsServiceAccount: true})
 
@@ -173,7 +173,7 @@ func TestServiceAccountsAPI_DeleteToken(t *testing.T) {
 	apiKeyService := apikeyimpl.ProvideService(store, store.Cfg)
 	kvStore := kvstore.ProvideService(store)
 	svcMock := &tests.ServiceAccountMock{}
-	saStore := database.ProvideServiceAccountsStore(store, apiKeyService, kvStore)
+	saStore := database.ProvideServiceAccountsStore(store, apiKeyService, kvStore, nil)
 	sa := tests.SetupUserServiceAccount(t, store, tests.TestUser{Login: "sa", IsServiceAccount: true})
 
 	type testCreateSAToken struct {

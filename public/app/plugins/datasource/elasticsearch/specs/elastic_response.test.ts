@@ -2,7 +2,7 @@ import { Column, DataFrameView, Field, FieldCache, KeyValue, MutableDataFrame } 
 import flatten from 'app/core/utils/flatten';
 
 import { ElasticResponse } from '../elastic_response';
-import { highlightTags } from '../query_def';
+import { highlightTags } from '../queryDef';
 import { ElasticsearchQuery } from '../types';
 
 describe('ElasticResponse', () => {

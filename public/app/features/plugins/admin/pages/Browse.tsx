@@ -16,7 +16,7 @@ import { SearchField } from '../components/SearchField';
 import { Sorters } from '../helpers';
 import { useHistory } from '../hooks/useHistory';
 import { useGetAllWithFilters, useIsRemotePluginsAvailable, useDisplayMode } from '../state/hooks';
-import { PluginListDisplayMode } from '../types';
+import { PluginListDisplayMode, PluginTypeFilterOption } from '../types';
 
 export default function Browse({ route }: GrafanaRouteComponentProps): ReactElement | null {
   const location = useLocation();
@@ -28,7 +28,7 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
   const remotePluginsAvailable = useIsRemotePluginsAvailable();
   const query = (locationSearch.q as string) || '';
   const filterBy = (locationSearch.filterBy as string) || 'installed';
-  const filterByType = (locationSearch.filterByType as string) || 'all';
+  const filterByType: PluginTypeFilterOption = (locationSearch.filterByType as PluginTypeFilterOption) || 'all';
   const sortBy = (locationSearch.sortBy as Sorters) || Sorters.nameAsc;
   const { isLoading, error, plugins } = useGetAllWithFilters({
     query,
@@ -49,7 +49,7 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
     history.push({ query: { filterBy: value } });
   };
 
-  const onFilterByTypeChange = (value: string) => {
+  const onFilterByTypeChange = (value: PluginTypeFilterOption) => {
     history.push({ query: { filterByType: value } });
   };
 
@@ -71,7 +71,7 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
           <HorizontalGroup wrap className={styles.actionBar}>
             {/* Filter by type */}
             <div>
-              <RadioButtonGroup
+              <RadioButtonGroup<PluginTypeFilterOption>
                 value={filterByType}
                 onChange={onFilterByTypeChange}
                 options={[

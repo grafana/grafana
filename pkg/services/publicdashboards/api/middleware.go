@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
@@ -11,6 +12,12 @@ import (
 
 func SetPublicDashboardFlag() func(c *models.ReqContext) {
 	return func(c *models.ReqContext) {
+		// TODO: Find a better place to set this, or rename this function
+		orgIDValue := c.Req.URL.Query().Get("orgId")
+		orgID, err := strconv.ParseInt(orgIDValue, 10, 64)
+		if err == nil && orgID > 0 && orgID != c.OrgID {
+			c.OrgID = orgID
+		}
 		c.IsPublicDashboardView = true
 	}
 }
