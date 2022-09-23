@@ -456,6 +456,6 @@ func (m *SQLStoreMock) GetAPIKeyByHash(ctx context.Context, hash string) (*apike
 	return nil, m.ExpectedError
 }
 
-func (m *SQLStoreMock) GetSqlxSession() *session.SessionDB {
+func (m *SQLStoreMock) GetSqlxSession(_ bool) *session.SessionDB {
 	return nil
 }

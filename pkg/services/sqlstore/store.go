@@ -52,5 +52,5 @@ type Store interface {
 	Quote(value string) string
 	GetDBHealthQuery(ctx context.Context, query *models.GetDBHealthQuery) error
 	SearchOrgs(ctx context.Context, query *models.SearchOrgsQuery) error
-	GetSqlxSession() *session.SessionDB
+	GetSqlxSession(bool) *session.SessionDB
 }

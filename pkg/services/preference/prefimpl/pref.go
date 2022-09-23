@@ -23,8 +23,9 @@ func ProvideService(db db.DB, cfg *setting.Cfg, features *featuremgmt.FeatureMan
 		features: features,
 	}
 	if cfg.IsFeatureToggleEnabled("newDBLibrary") {
+		debugSQL := cfg.Raw.Section("database").Key("log_queries").MustBool(false)
 		service.store = &sqlxStore{
-			sess: db.GetSqlxSession(),
+			sess: db.GetSqlxSession(debugSQL),
 		}
 	} else {
 		service.store = &sqlStore{

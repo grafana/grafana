@@ -9,7 +9,7 @@ import (
 func TestIntegrationSQLxGetDashboardVersion(t *testing.T) {
 	testIntegrationGetDashboardVersion(t, func(ss *sqlstore.SQLStore) store {
 		return &sqlxStore{
-			sess: ss.GetSqlxSession(),
+			sess: ss.GetSqlxSession(false),
 		}
 	})
 }

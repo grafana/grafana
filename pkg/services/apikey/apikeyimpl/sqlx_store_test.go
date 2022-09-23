@@ -8,6 +8,6 @@ import (
 
 func TestIntegrationSQLxApiKeyDataAccess(t *testing.T) {
 	testIntegrationApiKeyDataAccess(t, func(ss *sqlstore.SQLStore) store {
-		return &sqlxStore{sess: ss.GetSqlxSession(), cfg: ss.Cfg}
+		return &sqlxStore{sess: ss.GetSqlxSession(false), cfg: ss.Cfg}
 	})
 }
