@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 
 import { Drawer, Icon } from '@grafana/ui';
+import { DEFAULT_FEED_URL } from 'app/plugins/panel/news/constants';
 
-import { NewsItem } from './NewsItem';
+import { NewsWrapper } from './NewsWrapper';
 
-interface NewsProps {
+interface NewsContainerProps {
   buttonCss?: string;
 }
 
-export function News({ buttonCss }: NewsProps) {
+export function NewsContainer({ buttonCss }: NewsContainerProps) {
   const [showNewsDrawer, setShowNewsDrawer] = useState(false);
 
   const onChildClick = () => {
@@ -22,7 +23,7 @@ export function News({ buttonCss }: NewsProps) {
       </button>
       {showNewsDrawer && (
         <Drawer title="Latest from the blog" scrollableContent onClose={() => setShowNewsDrawer(false)}>
-          <NewsItem />
+          <NewsWrapper feedUrl={DEFAULT_FEED_URL} />
         </Drawer>
       )}
     </>

@@ -3,10 +3,10 @@ import userEvent from '@testing-library/user-event';
 import fs from 'fs';
 import React from 'react';
 
-import { News } from './News';
+import { NewsContainer } from './NewsContainer';
 
 const setup = () => {
-  const { container } = render(<News />);
+  const { container } = render(<NewsContainer />);
 
   return { container };
 };
