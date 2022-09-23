@@ -68,8 +68,8 @@ func (uss *UsageStats) Run(ctx context.Context) error {
 	for {
 		select {
 		case <-sendReportTicker.C:
-			if err := uss.sendUsageStats(ctx); err != nil {
-				uss.log.Warn("Failed to send usage stats", "error", err)
+			if traceID, err := uss.sendUsageStats(ctx); err != nil {
+				uss.log.Warn("Failed to send usage stats", "error", err, "traceID", traceID)
 			}
 
 			lastSent = time.Now()
