@@ -174,6 +174,12 @@ var (
 	// Profile UI
 	ProfileEnabled bool
 
+	// News Feed Icon
+	NewsFeedEnabled bool
+
+	// News Feed URL
+	NewsFeedUrl string
+
 	// Grafana.NET URL
 	GrafanaComUrl string
 
@@ -990,6 +996,10 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 
 	profile := iniFile.Section("profile")
 	ProfileEnabled = profile.Key("enabled").MustBool(true)
+
+	news := iniFile.Section("news")
+	NewsFeedEnabled = news.Key("news_feed_enabled").MustBool(true)
+	NewsFeedUrl = news.Key("news_feed_url").String()
 
 	queryHistory := iniFile.Section("query_history")
 	cfg.QueryHistoryEnabled = queryHistory.Key("enabled").MustBool(true)

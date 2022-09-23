@@ -1439,6 +1439,16 @@ Configures the Profile section.
 
 Enable or disable the Profile section. Default is `enabled`.
 
+## [news]
+
+### news_feed_enabled
+
+Enable the news feed section. Default is `false`
+
+#### news_feed_url
+
+Feed used in the news drawer. Default is `https://grafana.com/blog/news.xml`
+
 ## [query_history]
 
 Configures Query history in Explore.

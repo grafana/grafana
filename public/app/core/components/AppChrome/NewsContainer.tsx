@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 import { Drawer, Icon } from '@grafana/ui';
-import { DEFAULT_FEED_URL } from 'app/plugins/panel/news/constants';
+import config from 'app/core/config';
 
 import { NewsWrapper } from './NewsWrapper';
 
@@ -23,7 +23,7 @@ export function NewsContainer({ buttonCss }: NewsContainerProps) {
       </button>
       {showNewsDrawer && (
         <Drawer title="Latest from the blog" scrollableContent onClose={() => setShowNewsDrawer(false)}>
-          <NewsWrapper feedUrl={DEFAULT_FEED_URL} />
+          <NewsWrapper feedUrl={config.newsFeedUrl} />
         </Drawer>
       )}
     </>
