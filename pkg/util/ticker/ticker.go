@@ -1,4 +1,4 @@
-package alerting
+package ticker
 
 import (
 	"fmt"
@@ -7,7 +7,6 @@ import (
 	"github.com/benbjohnson/clock"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/alerting/metrics"
 )
 
 // Ticker is a ticker to power the alerting scheduler. it's like a time.Ticker, except:
@@ -20,12 +19,12 @@ type Ticker struct {
 	clock    clock.Clock
 	last     time.Time
 	interval time.Duration
-	metrics  *metrics.Ticker
+	metrics  *TickerMetrics
 	stopCh   chan struct{}
 }
 
 // NewTicker returns a Ticker that ticks on interval marks (or very shortly after) starting at c.Now(), and never drops ticks. interval should not be negative or zero.
-func NewTicker(c clock.Clock, interval time.Duration, metric *metrics.Ticker) *Ticker {
+func NewTicker(c clock.Clock, interval time.Duration, metric *TickerMetrics) *Ticker {
 	if interval <= 0 {
 		panic(fmt.Errorf("non-positive interval [%v] is not allowed", interval))
 	}

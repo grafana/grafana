@@ -1,18 +1,18 @@
-package metrics
+package ticker
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
-type Ticker struct {
+type TickerMetrics struct {
 	LastTickTime    prometheus.Gauge
 	NextTickTime    prometheus.Gauge
 	IntervalSeconds prometheus.Gauge
 }
 
-func NewTickerMetrics(reg prometheus.Registerer) *Ticker {
-	return &Ticker{
+func NewTickerMetrics(reg prometheus.Registerer) *TickerMetrics {
+	return &TickerMetrics{
 		LastTickTime: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
 			Namespace: "grafana",
 			Subsystem: "alerting",
