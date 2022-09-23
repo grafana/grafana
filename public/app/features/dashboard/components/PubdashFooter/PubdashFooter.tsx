@@ -26,7 +26,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: 100%;
     background-color: ${colorManipulator.alpha(theme.colors.background.canvas, 0.7)};
     text-align: right;
-    font-size: 1rem;
+    font-size: ${theme.typography.body.fontSize};
     z-index: 100000;
   `,
   logoText: css`
