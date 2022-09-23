@@ -20,4 +20,12 @@ const formatLabels = (labels: Labels): string => {
     .join(', ');
 };
 
-export { getSeriesName, getSeriesValue, formatLabels };
+const isEmptySeries = (series: DataFrame[]): boolean => {
+  const isEmpty = series.every((serie) =>
+    serie.fields.every((field) => field.values.toArray().every((value) => value == null))
+  );
+
+  return isEmpty;
+};
+
+export { getSeriesName, getSeriesValue, formatLabels, isEmptySeries };

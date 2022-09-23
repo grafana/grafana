@@ -87,7 +87,11 @@ export function checkForPathSeparator(value: string): ValidateResult {
 }
 
 export function errorFromSeries(series: DataFrame[]): Error | undefined {
-  const isTimeSeriesResults = series.length && isTimeSeries(series);
+  if (series.length === 0) {
+    return;
+  }
+
+  const isTimeSeriesResults = isTimeSeries(series);
 
   let error;
   if (isTimeSeriesResults) {
@@ -95,4 +99,11 @@ export function errorFromSeries(series: DataFrame[]): Error | undefined {
   }
 
   return error;
+}
+
+export function warningFromSeries(series: DataFrame[]): Error | undefined {
+  const notices = series[0]?.meta?.notices ?? [];
+  const warning = notices.find((notice) => notice.severity === 'warning')?.text;
+
+  return warning ? new Error(warning) : undefined;
 }

@@ -8,7 +8,7 @@ import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { Expression } from '../expressions/Expression';
 
-import { errorFromSeries } from './util';
+import { errorFromSeries, warningFromSeries } from './util';
 
 interface Props {
   condition: string | null;
@@ -44,6 +44,7 @@ export const ExpressionsEditor: FC<Props> = ({
 
         const isAlertCondition = condition === query.refId;
         const error = isAlertCondition && data ? errorFromSeries(data.series) : undefined;
+        const warning = isAlertCondition && data ? warningFromSeries(data.series) : undefined;
 
         return (
           <Expression
@@ -51,6 +52,7 @@ export const ExpressionsEditor: FC<Props> = ({
             isAlertCondition={isAlertCondition}
             data={data}
             error={error}
+            warning={warning}
             queries={queries}
             query={query}
             onSetCondition={onSetCondition}

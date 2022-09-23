@@ -17,12 +17,13 @@ import { Spacer } from '../Spacer';
 import { AlertStateTag } from '../rules/AlertStateTag';
 
 import { AlertConditionIndicator } from './AlertConditionIndicator';
-import { formatLabels, getSeriesName, getSeriesValue } from './util';
+import { formatLabels, getSeriesName, getSeriesValue, isEmptySeries } from './util';
 
 interface ExpressionProps {
   isAlertCondition?: boolean;
   data?: PanelData;
   error?: Error;
+  warning?: Error;
   queries: AlertQuery[];
   query: ExpressionQuery;
   onSetCondition: (refId: string) => void;
@@ -37,6 +38,7 @@ export const Expression: FC<ExpressionProps> = ({
   query,
   data,
   error,
+  warning,
   isAlertCondition,
   onSetCondition,
   onUpdateRefId,
@@ -51,8 +53,10 @@ export const Expression: FC<ExpressionProps> = ({
   const isLoading = data && Object.values(data).some((d) => Boolean(d) && d.state === LoadingState.Loading);
   const hasResults = Array.isArray(data?.series) && !isLoading;
   const series = data?.series ?? [];
-  const emptyResults = hasResults && series.length === 0;
-  const isTimeSeriesResults = hasResults && isTimeSeries(series);
+
+  // sometime we receive results where every value is just "null" when noData occurs
+  const emptyResults = hasResults && isEmptySeries(series);
+  const isTimeSeriesResults = !emptyResults && isTimeSeries(series);
 
   const alertCondition = isAlertCondition ?? false;
   const showSummary = isAlertCondition && hasResults;
@@ -102,18 +106,19 @@ export const Expression: FC<ExpressionProps> = ({
         <div className={styles.expression.body}>{renderExpressionType(query)}</div>
         {hasResults && (
           <div className={styles.expression.results}>
-            {isTimeSeriesResults ? (
+            {!emptyResults && isTimeSeriesResults && (
               <div>
                 {series.map((frame, index) => (
                   <TimeseriesRow key={uniqueId()} frame={frame} index={index} isAlertCondition={isAlertCondition} />
                 ))}
               </div>
-            ) : (
-              series.map((frame) => (
-                // There's no way to uniquely identify a frame that doesn't cause render bugs :/ (Gilles)
-                <FrameRow key={uniqueId()} frame={frame} isAlertCondition={alertCondition} />
-              ))
             )}
+            {!emptyResults &&
+              !isTimeSeriesResults &&
+              series.map((frame, index) => (
+                // There's no way to uniquely identify a frame that doesn't cause render bugs :/ (Gilles)
+                <FrameRow key={uniqueId()} frame={frame} index={index} isAlertCondition={alertCondition} />
+              ))}
             {emptyResults && <div className={cx(styles.expression.noData, styles.mutedText)}>No data</div>}
           </div>
         )}
@@ -123,6 +128,7 @@ export const Expression: FC<ExpressionProps> = ({
               onSetCondition={() => onSetCondition(query.refId)}
               enabled={alertCondition}
               error={error}
+              warning={warning}
             />
             <Spacer />
             {showSummary && (
@@ -225,12 +231,13 @@ const Header: FC<HeaderProps> = ({ refId, queryType, onUpdateRefId, onUpdateExpr
 
 interface FrameProps extends Pick<ExpressionProps, 'isAlertCondition'> {
   frame: DataFrame;
+  index: number;
 }
 
-const FrameRow: FC<FrameProps> = ({ frame, isAlertCondition }) => {
+const FrameRow: FC<FrameProps> = ({ frame, index, isAlertCondition }) => {
   const styles = useStyles2(getStyles);
 
-  const name = getSeriesName(frame);
+  const name = getSeriesName(frame) || 'Series ' + index;
   const value = getSeriesValue(frame);
 
   const showFiring = isAlertCondition && value !== 0;
