@@ -11,49 +11,54 @@ message UserInfo {
 
 // Raw saved object metadata
 message RawObject {
-  // Unique ID for this object
+  // Unique ID
   string UID = 1;
 
   // Identify the object kind.  This kind will be used to apply a schema to the body and
   // will trigger additional indexing behavior.
   string kind = 2;
 
-  // Time in millies since epoch that the object was modified
+  // Time in epoch milliseconds that the object was modified
   int64 modified = 3;
 
   // Who modified the object
-  UserInfo modified_by = 5;
+  UserInfo modified_by = 4;
 
   // Content Length
-  int64 size = 7;
+  int64 size = 5;
 
   // MD5 digest of the Body
-  string ETag = 8;
+  string ETag = 6;
 
   // Raw bytes of the storage object.  The kind+schema will ensure
-  bytes body = 9;
+  bytes body = 7;
 
   // A small set of properties managed by raw storage layer.  The kind+schema will define val
-  map<string,string> properties = 10;
+  map<string,string> properties = 8;
 
   // object version (might be commit hash, or number)
-  string version = 11;
+  string version = 9;
 
-  // last time the object status was checked with an external system (provisioning/git)
-  int64 syncTime = 12;
+  // optional "save" or "commit" message
+  string comment = 10;
 
-  // optional "save" or "commit" message from the author
-  string comment = 13;
+  // Time in epoch milliseconds that the object was last synced with an external system (provisioning/git)
+  int64 sync_time = 11;
 }
 
-// Searchable fields extracted from the object
+// Report error while working with objects
 message ObjectErrorInfo {
-  int64 code = 1; // TODO... registry somewhere...  should be limited to most severe issues
+  // Match an error code registry?
+  int64 code = 1;
+
+  // Simple error display
   string message = 2;
-  string details = 3;
+
+  // Details encoded in JSON
+  bytes details_json = 3;
 }
 
-
+// Reference to 
 message ExternalReference {
   // datasource, panel
   string kind = 1;
@@ -86,10 +91,10 @@ message ReadObjectRequest {
 
 message ReadObjectResponse {
   // Object details with the body removed
-  RawObject object = 2; 
+  RawObject object = 1; 
 
   // Object summary as JSON
-  bytes summary_json = 3;
+  bytes summary_json = 2;
 }
 
 //-----------------------------------------------
@@ -101,16 +106,16 @@ message WriteObjectRequest {
   string kind = 2;
 
   // The raw object body
-  bytes body = 9;
+  bytes body = 3;
 
   // Message that can be seen when exploring object history
-  string comment = 13;
+  string comment = 4;
 
   // Raw properties from storage
-  map<string,string> properties = 10;
+  map<string,string> properties = 5;
 
   // Used for optimistic locking.  If missing, the previous version will be replaced regardless
-  string previous_version = 4;
+  string previous_version = 6;
 }
 
 message WriteObjectResponse {
@@ -133,7 +138,7 @@ message DeleteObjectRequest {
   string kind = 2;
 
   // Used for optimistic locking.  If missing, the previous version will be replaced regardless
-  string previous_version = 4;
+  string previous_version = 3;
 }
 
 message DeleteObjectResponse {
@@ -145,25 +150,31 @@ message DeleteObjectResponse {
 //-----------------------------------------------
 
 message ObjectHistoryRequest {
-  // Starting from the requested page
-  string next_page_token = 4;
-
-  // Maximum number of items to return
-  int64 limit = 3; 
-
   // Object identifier
   string UID = 1;
 
   // type of object we are listing
   string kind = 2;
+
+  // Maximum number of items to return
+  int64 limit = 3; 
+
+  // Starting from the requested page
+  string next_page_token = 5;
 }
 
 message ObjectHistoryResponse {
   // Object metadata without the raw bytes
   repeated RawObject object = 1;
 
+  // All users who have edited the object
+  repeated UserInfo authors = 2;
+
+  // The object creation time
+  int64 created_time = 3; 
+
   // More results exist... pass this in the next request
-  string   next_page_token = 3;
+  string next_page_token = 4;
 }
 
 
@@ -208,7 +219,7 @@ message ObjectSearchResponse {
   repeated RawObject results = 1;
 
   // More results exist... pass this in the next request
-  string next_page_token = 3;
+  string next_page_token = 2;
 }
 
 
