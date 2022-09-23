@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/org"
+	roletypes "github.com/grafana/grafana/pkg/models/role_types"
 )
 
 type HelpFlags1 uint64
@@ -196,7 +196,7 @@ type SignedInUser struct {
 	UserID             int64 `xorm:"user_id"`
 	OrgID              int64 `xorm:"org_id"`
 	OrgName            string
-	OrgRole            org.RoleType
+	OrgRole            roletypes.RoleType
 	ExternalAuthModule string
 	ExternalAuthID     string
 	Login              string
@@ -268,7 +268,7 @@ func (u *SignedInUser) ToUserDisplayDTO() *UserDisplayDTO {
 	}
 }
 
-func (u *SignedInUser) HasRole(role org.RoleType) bool {
+func (u *SignedInUser) HasRole(role roletypes.RoleType) bool {
 	if u.IsGrafanaAdmin {
 		return true
 	}
