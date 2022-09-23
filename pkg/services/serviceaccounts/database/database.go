@@ -66,10 +66,10 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, org
 			return errUser
 		}
 
-		errAddOrgUser := s.sqlStore.AddOrgUser(ctx, &models.AddOrgUserCommand{
+		errAddOrgUser := s.orgService.AddOrgUser(ctx, &org.AddOrgUserCommand{
 			Role:                      role,
-			OrgId:                     orgId,
-			UserId:                    newSA.ID,
+			OrgID:                     orgId,
+			UserID:                    newSA.ID,
 			AllowAddingServiceAccount: true,
 		})
 		if errAddOrgUser != nil {
