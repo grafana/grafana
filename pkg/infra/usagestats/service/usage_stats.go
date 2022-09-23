@@ -11,15 +11,14 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel/attribute"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 )
 
 var usageStatsURL = "https://stats.grafana.org/grafana-usage-report"
 
 func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, error) {
-	tID := tracing.TraceIDFromContext(ctx, false)
 	version := strings.ReplaceAll(uss.Cfg.BuildVersion, ".", "_")
 	metrics := map[string]interface{}{}
 
@@ -46,17 +45,19 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 		metrics["stats.valid_license.count"] = 0
 	}
 
-	uss.log.Debug("collected usage states", "traceID", tID, "metricCount", len(metrics), "version", report.Version, "os", report.Os, "arch", report.Arch, "edition", report.Edition)
+	uss.log.FromContext(ctx).Debug("collected usage states", "metricCount", len(metrics), "version", report.Version, "os", report.Os, "arch", report.Arch, "edition", report.Edition)
 	return report, nil
 }
 
 func (uss *UsageStats) gatherMetrics(ctx context.Context, metrics map[string]interface{}) {
-	ctx, span := uss.tracer.Start(ctx, "gathering metrics")
+	ctx, span := uss.tracer.Start(ctx, "UsageStats.GatherLoop")
 	defer span.End()
 	totC, errC := 0, 0
 	for _, fn := range uss.externalMetrics {
+		ctx, span := uss.tracer.Start(ctx, "UsageStats.Gather")
 		fnName := runtime.FuncForPC(reflect.ValueOf(fn).Pointer()).Name()
-		ctx, span := uss.tracer.Start(ctx, "gathering metrics from "+fnName)
+		span.SetAttributes("usageStats.function", fnName, attribute.Key("UsageStats.Function").String(fnName))
+
 		fnMetrics, err := fn(ctx)
 		span.End()
 		totC++
@@ -82,10 +83,10 @@ func (uss *UsageStats) sendUsageStats(ctx context.Context) error {
 	if !uss.Cfg.ReportingEnabled {
 		return nil
 	}
-	ctx, span := uss.tracer.Start(ctx, "send usage stats background job")
+	ctx, span := uss.tracer.Start(ctx, "UsageStats.BackgroundJob")
 	defer span.End()
 
-	uss.log.Debug("Sending anonymous usage stats", "url", usageStatsURL, "traceID", tracing.TraceIDFromContext(ctx, false))
+	uss.log.FromContext(ctx).Debug("Sending anonymous usage stats", "url", usageStatsURL)
 
 	report, err := uss.GetUsageReport(ctx)
 	if err != nil {
