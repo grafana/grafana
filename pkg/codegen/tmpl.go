@@ -5,8 +5,6 @@ import (
 	"embed"
 	"text/template"
 	"time"
-
-	"github.com/grafana/cuetsy/ts/ast"
 )
 
 // All the parsed templates in the tmpl subdirectory
@@ -50,10 +48,6 @@ type (
 		RootCUE     bool
 		SlotImpls   []tvars_plugin_lineage_binding
 		Header      tvars_autogen_header
-	}
-	tvars_cuetsy_multi struct {
-		Header tvars_autogen_header
-		Body   ast.File
 	}
 	tvars_plugin_registry struct {
 		Header  tvars_autogen_header

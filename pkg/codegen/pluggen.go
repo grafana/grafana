@@ -152,10 +152,7 @@ func (pt *PluginTree) GenerateTypeScriptAST() (*tsast.File, error) {
 			if err != nil {
 				return nil, fmt.Errorf("error translating %s lineage to TypeScript: %w", slotname, err)
 			}
-
-			for _, decl := range tsf.Nodes {
-				f.Nodes = append(f.Nodes, decl)
-			}
+			f.Nodes = append(f.Nodes, tsf.Nodes...)
 		} else {
 			pair, err := cuetsy.GenerateSingleAST(strings.Title(lin.Name()), sch.UnwrapCUE(), cuetsy.TypeInterface)
 			if err != nil {
