@@ -3,17 +3,17 @@ package orgtest
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
 type FakeOrgService struct {
-	ExpectedOrgUserID  int64
-	ExpectedError      error
-	ExpectedUserOrgDTO []*org.UserOrgDTO
-	ExpectedOrgs       []*org.OrgDTO
-	ExpectedOrg        *org.Org
-	ExpectedOrgUsers   []*org.OrgUserDTO
+	ExpectedOrgUserID            int64
+	ExpectedError                error
+	ExpectedUserOrgDTO           []*org.UserOrgDTO
+	ExpectedOrgs                 []*org.OrgDTO
+	ExpectedOrg                  *org.Org
+	ExpectedOrgUsers             []*org.OrgUserDTO
+	ExpectedSearchOrgUsersResult *org.SearchOrgUsersQueryResult
 }
 
 func NewOrgServiceFake() *FakeOrgService {
@@ -84,10 +84,14 @@ func (f *FakeOrgService) UpdateOrgUser(ctx context.Context, cmd *org.UpdateOrgUs
 	return f.ExpectedError
 }
 
-func (f *FakeOrgService) GetOrgUsers(ctx context.Context, query *models.GetOrgUsersQuery) ([]*org.OrgUserDTO, error) {
+func (f *FakeOrgService) GetOrgUsers(ctx context.Context, query *org.GetOrgUsersQuery) ([]*org.OrgUserDTO, error) {
 	return f.ExpectedOrgUsers, f.ExpectedError
 }
 
 func (f *FakeOrgService) RemoveOrgUser(ctx context.Context, cmd *org.RemoveOrgUserCommand) error {
 	return f.ExpectedError
+}
+
+func (f *FakeOrgService) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
+	return f.ExpectedSearchOrgUsersResult, f.ExpectedError
 }
