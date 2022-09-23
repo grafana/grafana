@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware/csrf"
 	"github.com/grafana/grafana/pkg/services/searchV2"
+	"github.com/grafana/grafana/pkg/services/userauth"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -199,6 +200,7 @@ type HTTPServer struct {
 	accesscontrolService   accesscontrol.Service
 	annotationsRepo        annotations.Repository
 	tagService             tag.Service
+	userAuthService        userauth.Service
 }
 
 type ServerOptions struct {
@@ -240,6 +242,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	loginAttemptService loginAttempt.Service, orgService org.Service, teamService team.Service,
 	accesscontrolService accesscontrol.Service, dashboardThumbsService dashboardThumbs.Service, navTreeService navtree.Service,
 	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService,
+	userAuthService userauth.Service,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -340,6 +343,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		accesscontrolService:         accesscontrolService,
 		annotationsRepo:              annotationRepo,
 		tagService:                   tagService,
+		userAuthService:              userAuthService,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
@@ -592,7 +596,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m.Use(hs.frontendLogEndpoints())
 
 	m.UseMiddleware(hs.ContextHandler.Middleware)
-	m.Use(middleware.OrgRedirect(hs.Cfg, hs.SQLStore))
+	m.Use(middleware.OrgRedirect(hs.Cfg, hs.userService))
 	m.Use(accesscontrol.LoadPermissionsMiddleware(hs.accesscontrolService))
 
 	// needs to be after context handler

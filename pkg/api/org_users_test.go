@@ -352,8 +352,7 @@ func TestGetOrgUsersAPIEndpoint_AccessControlMetadata(t *testing.T) {
 			cfg.RBACEnabled = tc.enableAccessControl
 			sc := setupHTTPServerWithCfg(t, false, cfg, func(hs *HTTPServer) {
 				hs.userService = userimpl.ProvideService(
-					hs.SQLStore, nil, nil, nil, nil,
-					nil, nil, nil, nil, nil, hs.SQLStore.(*sqlstore.SQLStore),
+					hs.SQLStore, nil, cfg, hs.SQLStore.(*sqlstore.SQLStore),
 				)
 			})
 			setupOrgUsersDBForAccessControlTests(t, sc.db)
@@ -456,8 +455,7 @@ func TestGetOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			cfg.RBACEnabled = tc.enableAccessControl
 			sc := setupHTTPServerWithCfg(t, false, cfg, func(hs *HTTPServer) {
 				hs.userService = userimpl.ProvideService(
-					hs.SQLStore, nil, nil, nil, nil,
-					nil, nil, nil, nil, nil, hs.SQLStore.(*sqlstore.SQLStore),
+					hs.SQLStore, nil, cfg, hs.SQLStore.(*sqlstore.SQLStore),
 				)
 			})
 			setInitCtxSignedInUser(sc.initCtx, tc.user)
@@ -561,10 +559,10 @@ func TestPostOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			cfg.RBACEnabled = tc.enableAccessControl
 			sc := setupHTTPServerWithCfg(t, false, cfg, func(hs *HTTPServer) {
 				hs.userService = userimpl.ProvideService(
-					hs.SQLStore, nil, nil, nil, nil,
-					nil, nil, nil, nil, nil, hs.SQLStore.(*sqlstore.SQLStore),
+					hs.SQLStore, nil, cfg, hs.SQLStore.(*sqlstore.SQLStore),
 				)
 			})
+
 			setupOrgUsersDBForAccessControlTests(t, sc.db)
 			setInitCtxSignedInUser(sc.initCtx, tc.user)
 
@@ -687,8 +685,7 @@ func TestOrgUsersAPIEndpointWithSetPerms_AccessControl(t *testing.T) {
 			sc := setupHTTPServer(t, true, func(hs *HTTPServer) {
 				hs.tempUserService = tempuserimpl.ProvideService(hs.SQLStore)
 				hs.userService = userimpl.ProvideService(
-					hs.SQLStore, nil, nil, nil, nil,
-					nil, nil, nil, nil, nil, hs.SQLStore.(*sqlstore.SQLStore),
+					hs.SQLStore, nil, nil, hs.SQLStore.(*sqlstore.SQLStore),
 				)
 			})
 			setInitCtxSignedInViewer(sc.initCtx)
@@ -804,12 +801,7 @@ func TestPatchOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.RBACEnabled = tc.enableAccessControl
-			sc := setupHTTPServerWithCfg(t, false, cfg, func(hs *HTTPServer) {
-				hs.userService = userimpl.ProvideService(
-					hs.SQLStore, nil, nil, nil, nil,
-					nil, nil, nil, nil, nil, hs.SQLStore.(*sqlstore.SQLStore),
-				)
-			})
+			sc := setupHTTPServerWithCfg(t, false, cfg)
 			setupOrgUsersDBForAccessControlTests(t, sc.db)
 			setInitCtxSignedInUser(sc.initCtx, tc.user)
 
@@ -826,13 +818,13 @@ func TestPatchOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 				require.NoError(t, err)
 				assert.Equal(t, tc.expectedMessage, message)
 
-				getUserQuery := models.GetSignedInUserQuery{
-					UserId: tc.targetUserId,
-					OrgId:  tc.targetOrg,
+				getUserQuery := user.GetSignedInUserQuery{
+					UserID: tc.targetUserId,
+					OrgID:  tc.targetOrg,
 				}
-				err = sc.db.GetSignedInUser(context.Background(), &getUserQuery)
+				usr, err := sc.userService.GetSignedInUser(context.Background(), &getUserQuery)
 				require.NoError(t, err)
-				assert.Equal(t, tc.expectedUserRole, getUserQuery.Result.OrgRole)
+				assert.Equal(t, tc.expectedUserRole, usr.OrgRole)
 			}
 		})
 	}
@@ -933,8 +925,7 @@ func TestDeleteOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			cfg.RBACEnabled = tc.enableAccessControl
 			sc := setupHTTPServerWithCfg(t, false, cfg, func(hs *HTTPServer) {
 				hs.userService = userimpl.ProvideService(
-					hs.SQLStore, nil, nil, nil, nil,
-					nil, nil, nil, nil, nil, hs.SQLStore.(*sqlstore.SQLStore),
+					hs.SQLStore, nil, cfg, hs.SQLStore.(*sqlstore.SQLStore),
 				)
 			})
 			setupOrgUsersDBForAccessControlTests(t, sc.db)
