@@ -39,8 +39,9 @@ const getStyles = (theme: GrafanaTheme2) => {
 
   return {
     breadcrumb: css({
-      alignItems: 'center',
-      display: 'flex',
+      display: 'block',
+      textOverflow: 'ellipsis',
+      overflow: 'hidden',
       padding: theme.spacing(0, 0.5),
       whiteSpace: 'nowrap',
     }),
@@ -53,7 +54,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
       color: theme.colors.text.primary,
       display: 'flex',
+      flex: 1,
       fontWeight: theme.typography.fontWeightMedium,
+      minWidth: 0,
+      maxWidth: 'max-content',
 
       // logic for small screens
       // hide any breadcrumbs that aren't the second to last child (the parent)

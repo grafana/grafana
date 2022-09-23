@@ -156,7 +156,7 @@ func TestOrgUsersAPIEndpoint_LegacyAccessControl_FolderAdmin(t *testing.T) {
 			"tags":  "prod",
 		}),
 	}
-	folder, err := sc.dashboardsStore.SaveDashboard(cmd)
+	folder, err := sc.dashboardsStore.SaveDashboard(context.Background(), cmd)
 	require.NoError(t, err)
 	require.NotNil(t, folder)
 

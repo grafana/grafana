@@ -65,7 +65,7 @@ export class CloudWatchDatasource
     this.metricsQueryRunner = new CloudWatchMetricsQueryRunner(instanceSettings, templateSrv);
     this.logsQueryRunner = new CloudWatchLogsQueryRunner(instanceSettings, templateSrv, timeSrv);
     this.annotationQueryRunner = new CloudWatchAnnotationQueryRunner(instanceSettings, templateSrv);
-    this.variables = new CloudWatchVariableSupport(this.api, this.logsQueryRunner);
+    this.variables = new CloudWatchVariableSupport(this.api);
     this.annotations = CloudWatchAnnotationSupport;
   }
 

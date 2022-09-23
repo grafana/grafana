@@ -4,6 +4,7 @@ package eval
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"runtime/debug"
 	"sort"
@@ -29,6 +30,8 @@ type Evaluator interface {
 	ConditionEval(ctx context.Context, user *user.SignedInUser, condition models.Condition, now time.Time) Results
 	// QueriesAndExpressionsEval executes queries and expressions and returns the result.
 	QueriesAndExpressionsEval(ctx context.Context, user *user.SignedInUser, data []models.AlertQuery, now time.Time) (*backend.QueryDataResponse, error)
+	// Validate validates that the condition is correct. Returns nil if the condition is correct. Otherwise, error that describes the failure
+	Validate(ctx context.Context, user *user.SignedInUser, condition models.Condition) error
 }
 
 type evaluatorImpl struct {
@@ -173,16 +176,16 @@ func getExprRequest(ctx AlertExecCtx, data []models.AlertQuery, now time.Time, d
 	for _, q := range data {
 		model, err := q.GetModel()
 		if err != nil {
-			return nil, fmt.Errorf("failed to get query model: %w", err)
+			return nil, fmt.Errorf("failed to get query model from '%s': %w", q.RefID, err)
 		}
 		interval, err := q.GetIntervalDuration()
 		if err != nil {
-			return nil, fmt.Errorf("failed to retrieve intervalMs from the model: %w", err)
+			return nil, fmt.Errorf("failed to retrieve intervalMs from '%s': %w", q.RefID, err)
 		}
 
 		maxDatapoints, err := q.GetMaxDatapoints()
 		if err != nil {
-			return nil, fmt.Errorf("failed to retrieve maxDatapoints from the model: %w", err)
+			return nil, fmt.Errorf("failed to retrieve maxDatapoints from '%s': %w", q.RefID, err)
 		}
 
 		ds, ok := datasources[q.DatasourceUID]
@@ -192,7 +195,7 @@ func getExprRequest(ctx AlertExecCtx, data []models.AlertQuery, now time.Time, d
 			} else {
 				ds, err = dsCacheService.GetDatasourceByUID(ctx.Ctx, q.DatasourceUID, ctx.User, true)
 				if err != nil {
-					return nil, err
+					return nil, fmt.Errorf("failed to build query '%s': %w", q.RefID, err)
 				}
 			}
 			datasources[q.DatasourceUID] = ds
@@ -572,4 +575,37 @@ func (e *evaluatorImpl) QueriesAndExpressionsEval(ctx context.Context, user *use
 	}
 
 	return execResult, nil
+}
+
+func (e *evaluatorImpl) Validate(ctx context.Context, user *user.SignedInUser, condition models.Condition) error {
+	evalctx := AlertExecCtx{
+		User:               user,
+		ExpressionsEnabled: e.cfg.ExpressionsEnabled,
+		Log:                e.log,
+		Ctx:                ctx,
+	}
+
+	if len(condition.Data) == 0 {
+		return errors.New("expression list is empty. must be at least 1 expression")
+	}
+	if len(condition.Condition) == 0 {
+		return errors.New("condition must not be empty")
+	}
+
+	req, err := getExprRequest(evalctx, condition.Data, time.Now(), e.dataSourceCache)
+	if err != nil {
+		return err
+	}
+	pipeline, err := e.expressionService.BuildPipeline(req)
+	if err != nil {
+		return err
+	}
+	conditions := make([]string, 0, len(pipeline))
+	for _, node := range pipeline {
+		if node.RefID() == condition.Condition {
+			return nil
+		}
+		conditions = append(conditions, node.RefID())
+	}
+	return fmt.Errorf("condition %s does not exist, must be one of %v", condition.Condition, conditions)
 }
