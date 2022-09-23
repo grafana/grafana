@@ -4,7 +4,7 @@ import Plain from 'slate-plain-serializer';
 import QueryField from './query_field';
 import debounce from 'lodash/debounce';
 import { DOMUtil } from '@grafana/ui';
-import { Editor as CoreEditor } from 'slate';
+import { Editor } from 'slate-react';
 
 import { KEYWORDS, functionTokens, operatorTokens, grafanaMacros } from './kusto/kusto';
 // import '../sass/editor.base.scss';
@@ -196,7 +196,7 @@ export default class KustoQueryField extends QueryField {
     }
   };
 
-  applyTypeahead = (editor: CoreEditor, suggestion: { text: any; type: string; deleteBackwards: any }): CoreEditor => {
+  applyTypeahead = (editor: Editor, suggestion: { text: any; type: string; deleteBackwards: any }): Editor => {
     const { typeaheadPrefix, typeaheadContext, typeaheadText } = this.state;
     let suggestionText = suggestion.text || suggestion;
     const move = 0;

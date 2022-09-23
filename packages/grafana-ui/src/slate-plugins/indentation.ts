@@ -1,6 +1,7 @@
-import { RangeJSON, Range as SlateRange, Editor as CoreEditor } from 'slate';
-import { Plugin } from '@grafana/slate-react';
 import { isKeyHotkey } from 'is-hotkey';
+import React from 'react';
+import { RangeJSON, Range as SlateRange } from 'slate';
+import { Editor, Plugin } from 'slate-react';
 
 const isIndentLeftHotkey = isKeyHotkey('mod+[');
 const isShiftTabHotkey = isKeyHotkey('shift+tab');
@@ -8,7 +9,7 @@ const isIndentRightHotkey = isKeyHotkey('mod+]');
 
 const SLATE_TAB = '  ';
 
-const handleTabKey = (event: KeyboardEvent, editor: CoreEditor, next: Function): void => {
+const handleTabKey = (event: React.KeyboardEvent<Element>, editor: Editor, next: Function): void => {
   const {
     startBlock,
     endBlock,
@@ -30,7 +31,7 @@ const handleTabKey = (event: KeyboardEvent, editor: CoreEditor, next: Function):
   }
 };
 
-const handleIndent = (editor: CoreEditor, indentDirection: 'left' | 'right') => {
+const handleIndent = (editor: Editor, indentDirection: 'left' | 'right') => {
   const curSelection = editor.value.selection;
   const selectedBlocks = editor.value.document.getLeafBlocksAtRange(curSelection).toArray();
 
@@ -73,17 +74,16 @@ const handleIndent = (editor: CoreEditor, indentDirection: 'left' | 'right') => 
 // Clears the rest of the line after the caret
 export function IndentationPlugin(): Plugin {
   return {
-    onKeyDown(event: Event, editor: CoreEditor, next: Function) {
-      const keyEvent = event as KeyboardEvent;
-      if (isIndentLeftHotkey(keyEvent) || isShiftTabHotkey(keyEvent)) {
-        keyEvent.preventDefault();
+    onKeyDown(event, editor, next) {
+      if (isIndentLeftHotkey(event.nativeEvent) || isShiftTabHotkey(event.nativeEvent)) {
+        event.preventDefault();
         handleIndent(editor, 'left');
-      } else if (isIndentRightHotkey(keyEvent)) {
-        keyEvent.preventDefault();
+      } else if (isIndentRightHotkey(event.nativeEvent)) {
+        event.preventDefault();
         handleIndent(editor, 'right');
-      } else if (keyEvent.key === 'Tab') {
-        keyEvent.preventDefault();
-        handleTabKey(keyEvent, editor, next);
+      } else if (event.key === 'Tab') {
+        event.preventDefault();
+        handleTabKey(event, editor, next);
       } else {
         return next();
       }

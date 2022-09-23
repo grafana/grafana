@@ -17,7 +17,8 @@ import {
 
 // Utils & Services
 // dom also includes Element polyfills
-import { Editor, Node, Plugin } from 'slate';
+import { Node, Plugin } from 'slate';
+import { Editor } from 'slate-react';
 import syntax from '../syntax';
 
 // Types
@@ -89,7 +90,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
     hint: undefined,
   };
 
-  plugins: Plugin[];
+  plugins: Array<Plugin<Editor>>;
 
   constructor(props: CloudWatchLogsQueryFieldProps, context: React.Context<any>) {
     super(props, context);

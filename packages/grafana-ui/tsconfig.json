@@ -4,7 +4,6 @@
     "declarationDir": "dist",
     "outDir": "compiled",
     "paths": {
-      "@grafana/slate-react": ["slate-react"],
       "@grafana/ui": ["."]
     },
     "rootDirs": [".", "stories"],

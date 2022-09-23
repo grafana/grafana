@@ -4,7 +4,6 @@
     "baseUrl": "public/",
     "outDir": "public/dist",
     "paths": {
-      "@grafana/slate-react": ["../node_modules/@types/slate-react"],
       "app": ["app/"],
       "sass": ["sass/"]
     },

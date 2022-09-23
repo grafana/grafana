@@ -8,15 +8,12 @@ import jquery from 'jquery';
 // Experimental module exports
 import prismjs from 'prismjs';
 import slate from 'slate';
-// @ts-ignore
-import slateReact from '@grafana/slate-react';
-// @ts-ignore
+import slateReact from 'slate-react';
 import slatePlain from 'slate-plain-serializer';
 import react from 'react';
 import reactDom from 'react-dom';
 import * as reactRedux from 'react-redux';
 import * as redux from 'redux';
-
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import TableModel from 'app/core/table_model';
@@ -94,7 +91,8 @@ exposeToPlugin('rxjs/operators', rxjsOperators);
 // Experimental modules
 exposeToPlugin('prismjs', prismjs);
 exposeToPlugin('slate', slate);
-exposeToPlugin('@grafana/slate-react', slateReact);
+exposeToPlugin('slate-react', slateReact);
+exposeToPlugin('@grafana/slate-react', slateReact); // for backwards compatibility with older plugins
 exposeToPlugin('slate-plain-serializer', slatePlain);
 exposeToPlugin('react', react);
 exposeToPlugin('react-dom', reactDom);
