@@ -2,7 +2,6 @@ package gpg
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -21,7 +20,8 @@ func writeRpmMacros(homeDir, gpgPassPath string) error {
 %%_gpgbin /usr/bin/gpg
 %%__gpg_sign_cmd %%{__gpg} gpg --batch --yes --pinentry-mode loopback --no-armor --passphrase-file %s --no-secmem-warning -u "%%{_gpg_name}" -sbo %%{__signature_filename} %%{__plaintext_filename}
 `, homeDir, gpgPassPath)
-	if err := ioutil.WriteFile(fpath, []byte(content), 0600); err != nil {
+	//nolint:gosec
+	if err := os.WriteFile(fpath, []byte(content), 0600); err != nil {
 		return fmt.Errorf("failed to write %q: %w", fpath, err)
 	}
 
@@ -64,7 +64,8 @@ func Import(cfg config.Config) error {
 	if err != nil {
 		return err
 	}
-	if err := ioutil.WriteFile(filepath.Join(homeDir, ".rpmdb", "pubkeys", "grafana.key"), gpgPub, 0400); err != nil {
+	//nolint:gosec
+	if err := os.WriteFile(filepath.Join(homeDir, ".rpmdb", "pubkeys", "grafana.key"), gpgPub, 0400); err != nil {
 		return fmt.Errorf("failed to write pub key to ~/.rpmdb: %w", err)
 	}
 

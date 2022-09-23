@@ -3,7 +3,6 @@ package gpg
 import (
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 
@@ -11,7 +10,7 @@ import (
 )
 
 func createTempFile(sfx string) (string, error) {
-	f, err := ioutil.TempFile("", fmt.Sprintf("*-%s", sfx))
+	f, err := os.CreateTemp("", fmt.Sprintf("*-%s", sfx))
 	if err != nil {
 		return "", err
 	}
@@ -62,13 +61,13 @@ func LoadGPGKeys(cfg *config.Config) error {
 		return fmt.Errorf("couldn't decode $GPG_PUB_KEY: %w", err)
 	}
 
-	if err := ioutil.WriteFile(cfg.GPGPrivateKey, append(gpgPrivKeyB, '\n'), 0400); err != nil {
+	if err := os.WriteFile(cfg.GPGPrivateKey, append(gpgPrivKeyB, '\n'), 0400); err != nil {
 		return fmt.Errorf("failed to write GPG private key file: %w", err)
 	}
-	if err := ioutil.WriteFile(cfg.GPGPublicKey, append(gpgPubKeyB, '\n'), 0400); err != nil {
+	if err := os.WriteFile(cfg.GPGPublicKey, append(gpgPubKeyB, '\n'), 0400); err != nil {
 		return fmt.Errorf("failed to write GPG public key file: %w", err)
 	}
-	if err := ioutil.WriteFile(cfg.GPGPassPath, []byte(gpgPass+"\n"), 0400); err != nil {
+	if err := os.WriteFile(cfg.GPGPassPath, []byte(gpgPass+"\n"), 0400); err != nil {
 		return fmt.Errorf("failed to write GPG password file: %w", err)
 	}
 

@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -102,14 +101,16 @@ func packageGrafana(
 	}
 	if !exists {
 		log.Printf("directory %s doesn't exist - creating...", distDir)
-		if err := os.MkdirAll(distDir, 0755); err != nil {
+		//nolint
+		if err := os.MkdirAll(distDir, 0750); err != nil {
 			return fmt.Errorf("couldn't create dist: %w", err)
 		}
 	}
 
 	var m pluginsManifest
 	manifestPath := filepath.Join(grafanaDir, "plugins-bundled", "external.json")
-	manifestB, err := ioutil.ReadFile(manifestPath)
+	//nolint:gosec
+	manifestB, err := os.ReadFile(manifestPath)
 	if err != nil {
 		return fmt.Errorf("failed to open plugins manifest %q: %w", manifestPath, err)
 	}
@@ -181,6 +182,7 @@ func signRPMPackages(edition config.Edition, cfg config.Config, grafanaDir strin
 
 	rpmArgs := append([]string{"--addsign"}, rpms...)
 	log.Printf("Invoking rpm with args: %+v", rpmArgs)
+	//nolint:gosec
 	cmd := exec.Command("rpm", rpmArgs...)
 	if output, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("failed to sign RPM packages: %s", output)
@@ -193,6 +195,7 @@ func signRPMPackages(edition config.Edition, cfg config.Config, grafanaDir strin
 	// The output changed between rpm versions
 	reOutput := regexp.MustCompile("(?:digests signatures OK)|(?:pgp.+OK)")
 	for _, p := range rpms {
+		//nolint:gosec
 		cmd := exec.Command("rpm", "-K", p)
 		output, err := cmd.CombinedOutput()
 		if err != nil {
@@ -242,11 +245,16 @@ func checksumPackages(grafanaDir string, edition config.Edition) error {
 }
 
 func shaFile(fpath string) error {
+	//nolint:gosec
 	fd, err := os.Open(fpath)
 	if err != nil {
 		return fmt.Errorf("failed to open %q: %w", fpath, err)
 	}
-	defer fd.Close()
+	defer func() {
+		if err := fd.Close(); err != nil {
+			log.Println(err)
+		}
+	}()
 
 	h := sha256.New()
 	_, err = io.Copy(h, fd)
@@ -254,17 +262,18 @@ func shaFile(fpath string) error {
 		return fmt.Errorf("failed to read %q: %w", fpath, err)
 	}
 
+	//nolint:gosec
 	out, err := os.Create(fpath + ".sha256")
 	if err != nil {
 		return fmt.Errorf("failed to create %q: %w", fpath+".sha256", err)
 	}
+	defer func() {
+		if err := out.Close(); err != nil {
+			log.Println("failed to close file", out.Name())
+		}
+	}()
 
 	if _, err = fmt.Fprintf(out, "%x\n", h.Sum(nil)); err != nil {
-		_ = out.Close()
-		return fmt.Errorf("failed to write %q: %w", out.Name(), err)
-	}
-
-	if err := out.Close(); err != nil {
 		return fmt.Errorf("failed to write %q: %w", out.Name(), err)
 	}
 
@@ -276,12 +285,14 @@ func createPackage(srcDir string, options linuxPackageOptions) error {
 	cliBinary := "grafana-cli"
 	serverBinary := "grafana-server"
 
-	packageRoot, err := ioutil.TempDir("", "grafana-linux-pack")
+	packageRoot, err := os.MkdirTemp("", "grafana-linux-pack")
 	if err != nil {
 		return fmt.Errorf("failed to create temporary directory: %w", err)
 	}
 	defer func() {
-		os.RemoveAll(packageRoot)
+		if err := os.RemoveAll(packageRoot); err != nil {
+			log.Println(err)
+		}
 	}()
 
 	for _, dname := range []string{
@@ -293,7 +304,8 @@ func createPackage(srcDir string, options linuxPackageOptions) error {
 		"usr/sbin",
 	} {
 		dpath := filepath.Join(packageRoot, dname)
-		if err := os.MkdirAll(dpath, 0775); err != nil {
+		//nolint
+		if err := os.MkdirAll(dpath, 0750); err != nil {
 			return fmt.Errorf("failed to make directory %q: %w", dpath, err)
 		}
 	}
@@ -321,7 +333,8 @@ func createPackage(srcDir string, options linuxPackageOptions) error {
 	if err := os.RemoveAll(homeBinDir); err != nil {
 		return fmt.Errorf("failed to remove %q: %w", homeBinDir, err)
 	}
-	if err := os.MkdirAll(homeBinDir, 0775); err != nil {
+	//nolint
+	if err := os.MkdirAll(homeBinDir, 0750); err != nil {
 		return fmt.Errorf("failed to make directory %q: %w", homeBinDir, err)
 	}
 	// The grafana-cli binary is exposed through a wrapper to ensure a proper
@@ -409,6 +422,7 @@ func executeFPM(options linuxPackageOptions, packageRoot, srcDir string) error {
 		cmdStr = fmt.Sprintf("source %q && %s", rvmPath, cmdStr)
 		log.Printf("Sourcing %q before running fpm", rvmPath)
 	}
+	//nolint:gosec
 	cmd := exec.Command("/bin/bash", "-c", cmdStr)
 	cmd.Dir = options.grafanaDir
 	if output, err := cmd.CombinedOutput(); err != nil {
@@ -433,13 +447,14 @@ func copyPubDir(grafanaDir, tmpDir string) error {
 // copyBinaries copies binaries from grafanaDir into tmpDir.
 func copyBinaries(grafanaDir, tmpDir string, args grafana.BuildArgs, edition config.Edition) error {
 	tgtDir := filepath.Join(tmpDir, "bin")
-	if err := os.MkdirAll(tgtDir, 0775); err != nil {
+	//nolint
+	if err := os.MkdirAll(tgtDir, 0750); err != nil {
 		return fmt.Errorf("failed to make directory %q: %w", tgtDir, err)
 	}
 
 	binDir := filepath.Join(grafanaDir, "bin", grafana.BinaryFolder(edition, args))
 
-	files, err := ioutil.ReadDir(binDir)
+	files, err := os.ReadDir(binDir)
 	if err != nil {
 		return fmt.Errorf("failed to list files in %q: %w", binDir, err)
 	}
@@ -462,15 +477,21 @@ func copyBinaries(grafanaDir, tmpDir string, args grafana.BuildArgs, edition con
 
 // copyScripts copies scripts from grafanaDir into tmpDir.
 func copyScripts(grafanaDir, tmpDir string) error {
-	if err := os.MkdirAll(filepath.Join(tmpDir, "scripts"), 0775); err != nil {
+	//nolint
+	if err := os.MkdirAll(filepath.Join(tmpDir, "scripts"), 0750); err != nil {
 		return fmt.Errorf("failed to create dir %q: %w", filepath.Join(tmpDir, "scripts"), err)
 	}
 	scriptsDir := filepath.Join(grafanaDir, "scripts")
-	infos, err := ioutil.ReadDir(scriptsDir)
+	infos, err := os.ReadDir(scriptsDir)
 	if err != nil {
 		return fmt.Errorf("failed to list files in %q: %w", scriptsDir, err)
 	}
-	for _, info := range infos {
+	for _, file := range infos {
+		info, err := file.Info()
+		if err != nil {
+			return err
+		}
+
 		if info.IsDir() {
 			continue
 		}
@@ -493,12 +514,13 @@ func copyScripts(grafanaDir, tmpDir string) error {
 
 // copyConfFiles copies configuration files from grafanaDir into tmpDir.
 func copyConfFiles(grafanaDir, tmpDir string) error {
-	if err := os.MkdirAll(filepath.Join(tmpDir, "conf"), 0775); err != nil {
+	//nolint:gosec
+	if err := os.MkdirAll(filepath.Join(tmpDir, "conf"), 0750); err != nil {
 		return fmt.Errorf("failed to create dir %q: %w", filepath.Join(tmpDir, "conf"), err)
 	}
 
 	confDir := filepath.Join(grafanaDir, "conf")
-	infos, err := ioutil.ReadDir(confDir)
+	infos, err := os.ReadDir(confDir)
 	if err != nil {
 		return fmt.Errorf("failed to list files in %q: %w", confDir, err)
 	}
@@ -528,7 +550,8 @@ func copyPlugins(ctx context.Context, v config.Variant, grafanaDir, tmpDir strin
 		return err
 	}
 	if !exists {
-		if err := os.MkdirAll(tgtDir, 0775); err != nil {
+		//nolint:gosec
+		if err := os.MkdirAll(tgtDir, 0750); err != nil {
 			return err
 		}
 	}
@@ -540,7 +563,8 @@ func copyPlugins(ctx context.Context, v config.Variant, grafanaDir, tmpDir strin
 		dstDir := filepath.Join(tgtDir, fmt.Sprintf("%s-%s", pm.Name, pm.Version))
 		log.Printf("Copying external plugin %q to %q...", srcDir, dstDir)
 
-		jsonB, err := ioutil.ReadFile(filepath.Join(srcDir, "plugin.json"))
+		//nolint:gosec
+		jsonB, err := os.ReadFile(filepath.Join(srcDir, "plugin.json"))
 		if err != nil {
 			return fmt.Errorf("failed to read %q: %w", filepath.Join(srcDir, "plugin.json"), err)
 		}
@@ -585,6 +609,7 @@ func copyPlugins(ctx context.Context, v config.Variant, grafanaDir, tmpDir strin
 
 			if info.IsDir() {
 				log.Printf("Making directory %q", dstPath)
+				//nolint:gosec
 				return os.MkdirAll(dstPath, info.Mode())
 			}
 
@@ -625,13 +650,13 @@ func copyInternalPlugins(pluginsDir, tmpDir string) error {
 		return err
 	}
 	if !exists {
-		if err := os.MkdirAll(tgtDir, 0775); err != nil {
+		if err := os.MkdirAll(tgtDir, 0750); err != nil {
 			return err
 		}
 	}
 
 	// Copy over internal plugins.
-	fis, err := ioutil.ReadDir(srcDir)
+	fis, err := os.ReadDir(srcDir)
 	if err != nil {
 		return fmt.Errorf("failed to list internal plugins in %q: %w", srcDir, err)
 	}
@@ -673,11 +698,15 @@ func realPackageVariant(ctx context.Context, v config.Variant, edition config.Ed
 	default:
 	}
 
-	tmpDir, err := ioutil.TempDir("", "")
+	tmpDir, err := os.MkdirTemp("", "")
 	if err != nil {
 		return fmt.Errorf("failed to create temporary directory: %w", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() {
+		if err := os.RemoveAll(tmpDir); err != nil {
+			log.Println(err)
+		}
+	}()
 
 	args := grafana.VariantBuildArgs(v)
 
@@ -699,7 +728,7 @@ func realPackageVariant(ctx context.Context, v config.Variant, edition config.Ed
 
 	if v == config.VariantWindowsAmd64 {
 		toolsDir := filepath.Join(tmpDir, "tools")
-		if err := os.MkdirAll(toolsDir, 0775); err != nil {
+		if err := os.MkdirAll(toolsDir, 0750); err != nil {
 			return fmt.Errorf("failed to create tools dir %q: %w", toolsDir, err)
 		}
 
@@ -709,7 +738,7 @@ func realPackageVariant(ctx context.Context, v config.Variant, edition config.Ed
 		}
 	}
 
-	if err := ioutil.WriteFile(filepath.Join(tmpDir, "VERSION"), []byte(version), 0664); err != nil {
+	if err := os.WriteFile(filepath.Join(tmpDir, "VERSION"), []byte(version), 0664); err != nil {
 		return fmt.Errorf("failed to write %s/VERSION: %w", tmpDir, err)
 	}
 
@@ -872,7 +901,7 @@ func createArchive(srcDir string, edition config.Edition, v config.Variant, vers
 	}
 	if !exists {
 		log.Printf("directory %s doesn't exist - creating...", distDir)
-		if err := os.MkdirAll(distDir, 0755); err != nil {
+		if err := os.MkdirAll(distDir, 0750); err != nil {
 			return fmt.Errorf("couldn't create dist: %w", err)
 		}
 	}
@@ -891,16 +920,27 @@ func createArchive(srcDir string, edition config.Edition, v config.Variant, vers
 
 func createZip(srcDir, version, variantStr, sfx, grafanaDir string) error {
 	fpath := filepath.Join(grafanaDir, "dist", fmt.Sprintf("grafana%s-%s.%s.zip", sfx, version, variantStr))
+	//nolint:gosec
 	tgt, err := os.Create(fpath)
 	if err != nil {
 		return fmt.Errorf("failed to create %q: %w", fpath, err)
 	}
-	defer tgt.Close()
+	defer func() {
+		if err := tgt.Close(); err != nil {
+			log.Println(err)
+		}
+	}()
+
+	//nolint:gosec
 	if err := os.Chmod(fpath, 0664); err != nil {
 		return fmt.Errorf("failed to set permissions on %q: %w", fpath, err)
 	}
 	zipWriter := zip.NewWriter(tgt)
-	defer zipWriter.Close()
+	defer func() {
+		if err := zipWriter.Close(); err != nil {
+			log.Println(err)
+		}
+	}()
 
 	for _, fname := range []string{"LICENSE", "README.md", "NOTICE.md"} {
 		fpath := filepath.Join(grafanaDir, fname)
@@ -919,15 +959,20 @@ func createZip(srcDir, version, variantStr, sfx, grafanaDir string) error {
 		if err != nil {
 			return fmt.Errorf("failed writing zip header: %w", err)
 		}
+		//nolint:gosec
 		src, err := os.Open(fpath)
 		if err != nil {
 			return fmt.Errorf("failed to open %q: %w", fname, err)
 		}
 		if _, err := io.Copy(w, src); err != nil {
-			src.Close()
+			if err := src.Close(); err != nil {
+				log.Println(err)
+			}
 			return fmt.Errorf("failed writing zip entry: %w", err)
 		}
-		src.Close()
+		if err := src.Close(); err != nil {
+			log.Println(err)
+		}
 	}
 	if err := filepath.Walk(srcDir, func(fpath string, fi os.FileInfo, err error) error {
 		if err != nil {
@@ -958,15 +1003,20 @@ func createZip(srcDir, version, variantStr, sfx, grafanaDir string) error {
 			return nil
 		}
 
+		//nolint:gosec
 		src, err := os.Open(fpath)
 		if err != nil {
 			return fmt.Errorf("failed to open %q: %w", fpath, err)
 		}
 		if _, err := io.Copy(w, src); err != nil {
-			src.Close()
+			if err := src.Close(); err != nil {
+				log.Println(err)
+			}
 			return fmt.Errorf("failed writing zip entry: %w", err)
 		}
-		src.Close()
+		if err := src.Close(); err != nil {
+			log.Println(err)
+		}
 		return nil
 	}); err != nil {
 		return fmt.Errorf("failed to traverse directory %q: %w", srcDir, err)
@@ -983,13 +1033,21 @@ func createZip(srcDir, version, variantStr, sfx, grafanaDir string) error {
 	return nil
 }
 
+//nolint
 func createTarball(srcDir, version, variantStr, sfx, grafanaDir string) error {
 	fpath := filepath.Join(grafanaDir, "dist", fmt.Sprintf("grafana%s-%s.%s.tar.gz", sfx, version, variantStr))
+	//nolint:gosec
 	tgt, err := os.Create(fpath)
 	if err != nil {
 		return fmt.Errorf("failed to create %q: %w", fpath, err)
 	}
-	defer tgt.Close()
+	defer func() {
+		if err := tgt.Close(); err != nil {
+			log.Println(err)
+		}
+	}()
+
+	//nolint:gosec
 	if err := os.Chmod(fpath, 0664); err != nil {
 		return fmt.Errorf("failed to set permissions on %q: %w", fpath, err)
 	}
@@ -997,9 +1055,17 @@ func createTarball(srcDir, version, variantStr, sfx, grafanaDir string) error {
 	if err != nil {
 		return fmt.Errorf("failed to create gzip writer: %w", err)
 	}
-	defer gzWriter.Close()
+	defer func() {
+		if err := gzWriter.Close(); err != nil {
+			log.Println(err)
+		}
+	}()
 	tarWriter := tar.NewWriter(gzWriter)
-	defer tarWriter.Close()
+	defer func() {
+		if err := tarWriter.Close(); err != nil {
+			log.Println(err)
+		}
+	}()
 
 	for _, fname := range []string{"LICENSE", "README.md", "NOTICE.md"} {
 		fpath := filepath.Join(grafanaDir, fname)
@@ -1015,15 +1081,20 @@ func createTarball(srcDir, version, variantStr, sfx, grafanaDir string) error {
 		if err := tarWriter.WriteHeader(hdr); err != nil {
 			return fmt.Errorf("failed writing tar header: %w", err)
 		}
+		//nolint:gosec
 		src, err := os.Open(fpath)
 		if err != nil {
 			return fmt.Errorf("failed to open %q: %w", fname, err)
 		}
 		if _, err := io.Copy(tarWriter, src); err != nil {
-			src.Close()
+			if err := src.Close(); err != nil {
+				log.Println(err)
+			}
 			return fmt.Errorf("failed writing tar entry: %w", err)
 		}
-		src.Close()
+		if err := src.Close(); err != nil {
+			log.Println(err)
+		}
 	}
 	if err := filepath.Walk(srcDir, func(fpath string, fi os.FileInfo, err error) error {
 		if err != nil {
@@ -1055,15 +1126,21 @@ func createTarball(srcDir, version, variantStr, sfx, grafanaDir string) error {
 			return nil
 		}
 
+		//nolint:gosec
 		src, err := os.Open(fpath)
 		if err != nil {
 			return fmt.Errorf("failed to open %q: %w", fpath, err)
 		}
 		if _, err := io.Copy(tarWriter, src); err != nil {
-			src.Close()
+			if err := src.Close(); err != nil {
+				log.Println(err)
+			}
 			return fmt.Errorf("failed writing tar entry: %w", err)
 		}
-		src.Close()
+		if err := src.Close(); err != nil {
+			log.Println(err)
+		}
+
 		return nil
 	}); err != nil {
 		return fmt.Errorf("failed to traverse directory %q: %w", srcDir, err)

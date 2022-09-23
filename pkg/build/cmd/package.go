@@ -70,5 +70,4 @@ func Package(c *cli.Context) error {
 
 	log.Println("Successfully packaged Grafana!")
 	return nil
-
 }
