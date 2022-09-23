@@ -2,9 +2,19 @@ import { css } from '@emotion/css';
 import React, { FC, useState, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Link, Switch, HorizontalGroup, ClipboardButton, InlineLabel, LinkButton, Icon, Tag, useStyles2 } from '@grafana/ui';
 import {
-    generatePublicDashboardUrl,
+  Link,
+  Switch,
+  HorizontalGroup,
+  ClipboardButton,
+  InlineLabel,
+  LinkButton,
+  Icon,
+  Tag,
+  useStyles2,
+} from '@grafana/ui';
+import {
+  generatePublicDashboardUrl,
   ListPublicDashboardResponse,
   listPublicDashboards,
 } from 'app/features/dashboard/components/ShareModal/SharePublicDashboardUtils';
@@ -27,55 +37,55 @@ export const PublicDashboardListTable: FC = () => {
     listPublicDashboards(setPublicDashboards).catch();
   }, []);
 
-  function togglePublicDashboard() {}
+  //function togglePublicDashboard() {}
 
   //function publicDashboardLinks(pd: ListPublicDashboardResponse) {
-    //if (pd.isEnabled) {
-      //return (
-        //<>
+  //if (pd.isEnabled) {
+  //return (
+  //<>
 
-          //<HorizontalGroup justify="flex-end">
-          //<LinkButton href={generatePublicDashboardUrl(pd.accessToken)}>
-            //<Icon  name="external-link-alt" size="sm" />
-          //</LinkButton>
+  //<HorizontalGroup justify="flex-end">
+  //<LinkButton href={generatePublicDashboardUrl(pd.accessToken)}>
+  //<Icon  name="external-link-alt" size="sm" />
+  //</LinkButton>
 
-          //<ClipboardButton
-            //size="xs"
-            //variant="primary"
-            //icon="copy"
-            //getText={() => {
-              //return generatePublicDashboardUrl(pd.accessToken);
-            //}}
-          //>
-            //Copy
-          //</ClipboardButton>
-          //</HorizontalGroup>
-        //</>
-      //);
-    //} else {
-      //return (
-        //<Link className={styles.link} href={generatePublicDashboardUrl(pd.accessToken)}>
-          ///public-dashboards/{pd.accessToken}
-        //</Link>
-      //);
-    //}
+  //<ClipboardButton
+  //size="xs"
+  //variant="primary"
+  //icon="copy"
+  //getText={() => {
+  //return generatePublicDashboardUrl(pd.accessToken);
+  //}}
+  //>
+  //Copy
+  //</ClipboardButton>
+  //</HorizontalGroup>
+  //</>
+  //);
+  //} else {
+  //return (
+  //<Link className={styles.link} href={generatePublicDashboardUrl(pd.accessToken)}>
+  ///public-dashboards/{pd.accessToken}
+  //</Link>
+  //);
   //}
-  
+  //}
+
   function renderEnabledTag(pd: ListPublicDashboardResponse) {
-    let label = pd.isEnabled ? "enabled" : "disabled"
-    let color = pd.isEnabled ? 20 : 15 // 20 = green /  15 = red
-    return <Tag name={label} colorIndex={color}/>
+    let label = pd.isEnabled ? 'enabled' : 'disabled';
+    let color = pd.isEnabled ? 20 : 15; // 20 = green /  15 = red
+    return <Tag name={label} colorIndex={color} />;
   }
 
   function renderViewLink(pd: ListPublicDashboardResponse) {
-    let url = pd.isEnabled ? generatePublicDashboardUrl(pd.accessToken) : "#"
-    let title = pd.isEnabled ? "View public dashboard" : "Public dashboard is disabled"
-    let pointerDisabled = !pd.isEnabled ? "none"
+    let url = pd.isEnabled ? generatePublicDashboardUrl(pd.accessToken) : '#';
+    let title = pd.isEnabled ? 'View public dashboard' : 'Public dashboard is disabled';
+    //let pointerEnabled = pd.isEnabled ? "auto" : "none"
     return (
-      <Link href={url} style={{display: "inline", pointerEvents: pointerDisabled }} title={title} target="_blank">
+      <Link href={url} style={{ display: 'inline' }} title={title} target="_blank">
         <Icon name="external-link-alt" />
       </Link>
-    )
+    );
   }
 
   return (
@@ -98,10 +108,13 @@ export const PublicDashboardListTable: FC = () => {
               </td>
               <td>{renderEnabledTag(pd)}</td>
               <td>
-              {renderViewLink(pd)}
-                &nbsp;
-                &nbsp;
-                <Link href={generatePublicDashboardUrl(pd.accessToken)} style={{display: "inline"}} title="Disable public dashboard">
+                {renderViewLink(pd)}
+                &nbsp; &nbsp;
+                <Link
+                  href={generatePublicDashboardUrl(pd.accessToken)}
+                  style={{ display: 'inline' }}
+                  title="Disable public dashboard"
+                >
                   <Icon name="eye-slash" />
                 </Link>
               </td>
