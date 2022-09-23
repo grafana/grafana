@@ -27,7 +27,7 @@ describe('NavLandingPage', () => {
   const mockChild3 = {
     text: 'Child 3',
     id: 'child3',
-    subTitle: 'Child 3 subtitle',
+    description: 'Child 3 subtitle',
     url: 'mock-section-url/child3',
     hideFromTabs: true,
     children: [
@@ -86,9 +86,9 @@ describe('NavLandingPage', () => {
     expect(screen.getByRole('heading', { name: mockChild3.text })).toBeInTheDocument();
   });
 
-  it('renders the subTitle for a nested section', () => {
+  it('renders the description for a nested section', () => {
     setup();
-    expect(screen.getByText(mockChild3.subTitle)).toBeInTheDocument();
+    expect(screen.getByText(mockChild3.description)).toBeInTheDocument();
   });
 
   it('renders a link for a nested child', () => {
