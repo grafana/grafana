@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware/csrf"
+	"github.com/grafana/grafana/pkg/services/searchV2"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -61,6 +62,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/live/pushhttp"
 	"github.com/grafana/grafana/pkg/services/login"
 	loginAttempt "github.com/grafana/grafana/pkg/services/loginattempt"
+	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -111,6 +113,7 @@ type HTTPServer struct {
 	Features                     *featuremgmt.FeatureManager
 	SettingsProvider             setting.Provider
 	HooksService                 *hooks.HooksService
+	navTreeService               navtree.Service
 	CacheService                 *localcache.CacheService
 	DataSourceCache              datasources.CacheService
 	AuthTokenService             models.UserTokenService
@@ -137,6 +140,7 @@ type HTTPServer struct {
 	ThumbService                 thumbs.Service
 	ExportService                export.ExportService
 	StorageService               store.StorageService
+	SearchV2HTTPService          searchV2.SearchHTTPService
 	ContextHandler               *contexthandler.ContextHandler
 	SQLStore                     sqlstore.Store
 	AlertEngine                  *alerting.AlertEngine
@@ -234,7 +238,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	secretsPluginMigrator spm.SecretMigrationProvider, secretsStore secretsKV.SecretsKVStore,
 	publicDashboardsApi *publicdashboardsApi.Api, userService user.Service, tempUserService tempUser.Service,
 	loginAttemptService loginAttempt.Service, orgService org.Service, teamService team.Service,
-	accesscontrolService accesscontrol.Service, dashboardThumbsService dashboardThumbs.Service, annotationRepo annotations.Repository, tagService tag.Service,
+	accesscontrolService accesscontrol.Service, dashboardThumbsService dashboardThumbs.Service, navTreeService navtree.Service,
+	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -273,6 +278,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		Login:                        loginService,
 		AccessControl:                accessControl,
 		DataProxy:                    dataSourceProxy,
+		SearchV2HTTPService:          searchv2HTTPService,
 		SearchService:                searchService,
 		ExportService:                exportService,
 		Live:                         live,
@@ -330,6 +336,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		loginAttemptService:          loginAttemptService,
 		orgService:                   orgService,
 		teamService:                  teamService,
+		navTreeService:               navTreeService,
 		accesscontrolService:         accesscontrolService,
 		annotationsRepo:              annotationRepo,
 		tagService:                   tagService,
