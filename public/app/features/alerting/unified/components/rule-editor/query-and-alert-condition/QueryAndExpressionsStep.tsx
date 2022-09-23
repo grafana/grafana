@@ -170,6 +170,7 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
           {/* Data Queries */}
           <QueryEditor
             queries={dataQueries}
+            onRunQueries={runQueries}
             onChangeQueries={onChangeQueries}
             onDuplicateQuery={onDuplicateQuery}
             panelData={panelData}

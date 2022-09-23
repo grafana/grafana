@@ -25,6 +25,7 @@ interface Props {
   // The query configuration
   queries: AlertQuery[];
   data: Record<string, PanelData>;
+  onRunQueries: () => void;
 
   // Query editing
   onQueriesChange: (queries: AlertQuery[]) => void;
@@ -253,7 +254,7 @@ export class QueryRows extends PureComponent<Props> {
                       onChangeTimeRange={this.onChangeTimeRange}
                       thresholds={thresholdByRefId[query.refId]}
                       onChangeThreshold={this.onChangeThreshold}
-                      onRunQueries={() => {}}
+                      onRunQueries={this.props.onRunQueries}
                       condition={this.props.condition}
                       onSetCondition={this.props.onSetCondition}
                     />

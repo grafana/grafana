@@ -10,6 +10,7 @@ import { QueryRows } from './QueryRows';
 interface Props {
   panelData: Record<string, PanelData>;
   queries: AlertQuery[];
+  onRunQueries: () => void;
   onChangeQueries: (queries: AlertQuery[]) => void;
   onDuplicateQuery: (query: AlertQuery) => void;
   condition: string | null;
@@ -19,6 +20,7 @@ interface Props {
 export const QueryEditor: FC<Props> = ({
   queries,
   panelData,
+  onRunQueries,
   onChangeQueries,
   onDuplicateQuery,
   condition,
@@ -31,6 +33,7 @@ export const QueryEditor: FC<Props> = ({
       <QueryRows
         data={panelData}
         queries={queries}
+        onRunQueries={onRunQueries}
         onQueriesChange={onChangeQueries}
         onDuplicateQuery={onDuplicateQuery}
         condition={condition}
