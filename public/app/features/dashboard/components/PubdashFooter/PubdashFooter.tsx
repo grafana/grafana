@@ -10,7 +10,7 @@ export default function PubdashFooter() {
   return (
     <div className={styles.footer}>
       <span className={styles.logoText}>
-        <a href="https://grafana.com/" target="blank">
+        <a href="https://grafana.com/" target="_blank"  rel="noreferrer noopener">
           powered by Grafana <img className={styles.logoImg} src="public/img/grafana_icon.svg"></img>
         </a>
       </span>
