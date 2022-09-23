@@ -3,7 +3,7 @@ import { NavModelItem } from '@grafana/data';
 import { Breadcrumb } from './types';
 
 export function buildBreadcrumbs(sectionNav: NavModelItem, pageNav?: NavModelItem) {
-  const crumbs: Breadcrumb[] = [{ icon: 'home-alt', href: '/', text: 'Home' }];
+  const crumbs: Breadcrumb[] = [{ href: '/', text: 'Home' }];
 
   function addCrumbs(node: NavModelItem) {
     if (node.parentItem) {

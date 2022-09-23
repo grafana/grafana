@@ -1,17 +1,11 @@
-import { DashboardQuery, SearchQueryParams, SearchAction, SearchLayout } from '../types';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import {
-  ADD_TAG,
-  CLEAR_FILTERS,
-  LAYOUT_CHANGE,
-  QUERY_CHANGE,
-  REMOVE_STARRED,
-  REMOVE_TAG,
-  SET_TAGS,
-  DATASOURCE_CHANGE,
-  TOGGLE_SORT,
-  TOGGLE_STARRED,
-} from './actionTypes';
+import { SelectableValue } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
+
+import { SEARCH_SELECTED_LAYOUT } from '../constants';
+import { DashboardQuery, SearchQueryParams, SearchLayout } from '../types';
+import { parseRouteParams } from '../utils';
 
 export const defaultQuery: DashboardQuery = {
   query: '',
@@ -30,41 +24,84 @@ export const defaultQueryParams: SearchQueryParams = {
   layout: null,
 };
 
-export const queryReducer = (state: DashboardQuery, action: SearchAction) => {
-  switch (action.type) {
-    case QUERY_CHANGE:
-      return { ...state, query: action.payload };
-    case REMOVE_TAG:
-      return { ...state, tag: state.tag.filter((t) => t !== action.payload) };
-    case SET_TAGS:
-      return { ...state, tag: action.payload };
-    case ADD_TAG: {
+const queryParams = parseRouteParams(locationService.getSearchObject());
+const initialState = { ...defaultQuery, ...queryParams };
+const selectedLayout = localStorage.getItem(SEARCH_SELECTED_LAYOUT) as SearchLayout;
+if (!queryParams.layout?.length && selectedLayout?.length) {
+  initialState.layout = selectedLayout;
+}
+
+const searchQuerySlice = createSlice({
+  name: 'searchQuery',
+  initialState,
+  reducers: {
+    queryChange: (state, action: PayloadAction<string>) => {
+      state.query = action.payload;
+    },
+    removeTag: (state, action: PayloadAction<string>) => {
+      state.tag = state.tag.filter((tag) => tag !== action.payload);
+    },
+    setTags: (state, action: PayloadAction<string[]>) => {
+      state.tag = action.payload;
+    },
+    addTag: (state, action: PayloadAction<string>) => {
       const tag = action.payload;
-      return tag && !state.tag.includes(tag) ? { ...state, tag: [...state.tag, tag] } : state;
-    }
-    case DATASOURCE_CHANGE:
-      return { ...state, datasource: action.payload };
-    case TOGGLE_STARRED:
-      return { ...state, starred: action.payload };
-    case REMOVE_STARRED:
-      return { ...state, starred: false };
-    case CLEAR_FILTERS:
-      return { ...state, query: '', tag: [], starred: false, sort: null };
-    case TOGGLE_SORT: {
+      if (tag && !state.tag.includes(tag)) {
+        state.tag.push(tag);
+      }
+    },
+    datasourceChange: (state, action: PayloadAction<string | undefined>) => {
+      state.datasource = action.payload;
+    },
+    toggleStarred: (state, action: PayloadAction<boolean>) => {
+      state.starred = action.payload;
+    },
+    removeStarred: (state) => {
+      state.starred = false;
+    },
+    clearFilters: (state) => {
+      state.tag = [];
+      state.starred = false;
+      state.sort = null;
+      state.query = '';
+    },
+    toggleSort: (state, action: PayloadAction<SelectableValue | null>) => {
       const sort = action.payload;
       if (state.layout === SearchLayout.Folders) {
-        return { ...state, sort, layout: SearchLayout.List };
+        state.sort = sort;
+        state.layout = SearchLayout.List;
+      } else {
+        state.sort = sort;
       }
-      return { ...state, sort };
-    }
-    case LAYOUT_CHANGE: {
+    },
+    layoutChange: (state, action: PayloadAction<SearchLayout>) => {
       const layout = action.payload;
       if (state.sort && layout === SearchLayout.Folders) {
-        return { ...state, layout, sort: null, prevSort: state.sort };
+        state.layout = layout;
+        state.prevSort = state.sort;
+        state.sort = null;
+      } else {
+        state.layout = layout;
+        state.sort = state.prevSort;
       }
-      return { ...state, layout, sort: state.prevSort };
-    }
-    default:
-      return state;
-  }
+    },
+  },
+});
+
+export const {
+  queryChange,
+  removeTag,
+  setTags,
+  addTag,
+  datasourceChange,
+  toggleStarred,
+  removeStarred,
+  clearFilters,
+  toggleSort,
+  layoutChange,
+} = searchQuerySlice.actions;
+export const searchQueryReducer = searchQuerySlice.reducer;
+
+export default {
+  searchQuery: searchQueryReducer,
 };

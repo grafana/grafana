@@ -14,10 +14,7 @@ import {
 } from './selectors';
 
 const adhocExtended: AdHocVariableEditorState = {
-  dataSources: [
-    { text: 'Prometheus', value: null }, // default datasource
-    { text: 'Loki', value: { type: 'loki-ds', uid: 'abc' } },
-  ],
+  infoText: 'infoText',
 };
 
 const datasourceExtended: DataSourceVariableEditorState = {

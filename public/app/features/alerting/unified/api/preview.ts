@@ -12,52 +12,53 @@ import {
 import { getBackendSrv, toDataQueryError } from '@grafana/runtime';
 
 import {
-  CloudPreviewRuleRequest,
-  GrafanaPreviewRuleRequest,
   isCloudPreviewRequest,
   isGrafanaPreviewRequest,
   PreviewRuleRequest,
   PreviewRuleResponse,
 } from '../types/preview';
 import { RuleFormType } from '../types/rule-form';
+import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 export function previewAlertRule(request: PreviewRuleRequest): Observable<PreviewRuleResponse> {
   if (isCloudPreviewRequest(request)) {
-    return previewCloudAlertRule(request);
+    return fetchAlertRulePreview(request, request.dataSourceUid, RuleFormType.cloudAlerting);
   }
 
   if (isGrafanaPreviewRequest(request)) {
-    return previewGrafanaAlertRule(request);
+    return fetchAlertRulePreview(request, GRAFANA_RULES_SOURCE_NAME, RuleFormType.grafana);
   }
 
   throw new Error('unsupported preview rule request');
 }
 
-type GrafanaPreviewRuleResponse = {
+type AlertRulePreviewResponse = {
   instances: DataFrameJSON[];
 };
 
-function previewGrafanaAlertRule(request: GrafanaPreviewRuleRequest): Observable<PreviewRuleResponse> {
-  const type = RuleFormType.grafana;
-
+function fetchAlertRulePreview(
+  request: PreviewRuleRequest,
+  dataSourceUid: string,
+  ruleType: RuleFormType
+): Observable<PreviewRuleResponse> {
   return withLoadingIndicator({
-    whileLoading: createResponse(type),
+    whileLoading: createResponse(ruleType),
     source: getBackendSrv()
-      .fetch<GrafanaPreviewRuleResponse>({
+      .fetch<AlertRulePreviewResponse>({
         method: 'POST',
-        url: `/api/v1/rule/test/grafana`,
+        url: `/api/v1/rule/test/${dataSourceUid}`,
         data: request,
       })
       .pipe(
         map(({ data }) => {
-          return createResponse(type, {
+          return createResponse(ruleType, {
             state: LoadingState.Done,
             series: data.instances.map(dataFrameFromJSON),
           });
         }),
         catchError((error: Error) => {
           return of(
-            createResponse(type, {
+            createResponse(ruleType, {
               state: LoadingState.Error,
               error: toDataQueryError(error),
             })
@@ -78,8 +79,4 @@ function createResponse(ruleType: RuleFormType, data: Partial<PanelData> = {}): 
       ...data,
     },
   };
-}
-
-function previewCloudAlertRule(request: CloudPreviewRuleRequest): Observable<PreviewRuleResponse> {
-  throw new Error('preview for cloud alerting rules is not implemented');
 }

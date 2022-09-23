@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting/metrics"
+	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/encryption"
@@ -48,6 +49,7 @@ type AlertEngine struct {
 	dashAlertExtractor DashAlertExtractor
 	dashboardService   dashboards.DashboardService
 	datasourceService  datasources.DataSourceService
+	annotationsRepo    annotations.Repository
 }
 
 // IsDisabled returns true if the alerting service is disabled for this instance.
@@ -59,7 +61,7 @@ func (e *AlertEngine) IsDisabled() bool {
 func ProvideAlertEngine(renderer rendering.Service, requestValidator models.PluginRequestValidator,
 	dataService legacydata.RequestHandler, usageStatsService usagestats.Service, encryptionService encryption.Internal,
 	notificationService *notifications.NotificationService, tracer tracing.Tracer, store AlertStore, cfg *setting.Cfg,
-	dashAlertExtractor DashAlertExtractor, dashboardService dashboards.DashboardService, cacheService *localcache.CacheService, dsService datasources.DataSourceService) *AlertEngine {
+	dashAlertExtractor DashAlertExtractor, dashboardService dashboards.DashboardService, cacheService *localcache.CacheService, dsService datasources.DataSourceService, annotationsRepo annotations.Repository) *AlertEngine {
 	e := &AlertEngine{
 		Cfg:                cfg,
 		RenderService:      renderer,
@@ -71,6 +73,7 @@ func ProvideAlertEngine(renderer rendering.Service, requestValidator models.Plug
 		dashAlertExtractor: dashAlertExtractor,
 		dashboardService:   dashboardService,
 		datasourceService:  dsService,
+		annotationsRepo:    annotationsRepo,
 	}
 	e.execQueue = make(chan *Job, 1000)
 	e.scheduler = newScheduler()
@@ -193,7 +196,7 @@ func (e *AlertEngine) processJob(attemptID int, attemptChan chan int, cancelChan
 	alertCtx, cancelFn := context.WithTimeout(context.Background(), setting.AlertingEvaluationTimeout)
 	cancelChan <- cancelFn
 	alertCtx, span := e.tracer.Start(alertCtx, "alert execution")
-	evalContext := NewEvalContext(alertCtx, job.Rule, e.RequestValidator, e.AlertStore, e.dashboardService, e.datasourceService)
+	evalContext := NewEvalContext(alertCtx, job.Rule, e.RequestValidator, e.AlertStore, e.dashboardService, e.datasourceService, e.annotationsRepo)
 	evalContext.Ctx = alertCtx
 
 	go func() {

@@ -14,4 +14,5 @@ type DB interface {
 	NewSession(ctx context.Context) *sqlstore.DBSession
 	GetDialect() migrator.Dialect
 	GetSqlxSession() *session.SessionDB
+	InTransaction(ctx context.Context, fn func(ctx context.Context) error) error
 }

@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import React, { FC, useMemo, useState } from 'react';
 import { FormProvider, useForm, UseFormWatch } from 'react-hook-form';
-import { useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -9,6 +8,7 @@ import { Button, ConfirmModal, CustomScrollbar, PageToolbar, Spinner, useStyles2
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { useDispatch } from 'app/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
@@ -65,7 +65,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
   const showStep2 = Boolean(type && (type === RuleFormType.grafana || !!dataSourceName));
 
   const submitState = useUnifiedAlertingSelector((state) => state.ruleForm.saveRule) || initialAsyncRequestState;
-  useCleanup((state) => state.unifiedAlerting.ruleForm.saveRule);
+  useCleanup((state) => (state.unifiedAlerting.ruleForm.saveRule = initialAsyncRequestState));
 
   const submit = (values: RuleFormValues, exitOnSave: boolean) => {
     dispatch(

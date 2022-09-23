@@ -45,11 +45,12 @@ type Manager struct {
 	instanceStore    store.InstanceStore
 	dashboardService dashboards.DashboardService
 	imageService     image.ImageService
+	AnnotationsRepo  annotations.Repository
 }
 
 func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL,
 	ruleStore store.RuleStore, instanceStore store.InstanceStore,
-	dashboardService dashboards.DashboardService, imageService image.ImageService, clock clock.Clock) *Manager {
+	dashboardService dashboards.DashboardService, imageService image.ImageService, clock clock.Clock, annotationsRepo annotations.Repository) *Manager {
 	manager := &Manager{
 		cache:            newCache(logger, metrics, externalURL),
 		quit:             make(chan struct{}),
@@ -61,19 +62,19 @@ func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL,
 		dashboardService: dashboardService,
 		imageService:     imageService,
 		clock:            clock,
+		AnnotationsRepo:  annotationsRepo,
 	}
 	go manager.recordMetrics()
 	return manager
 }
 
-func (st *Manager) Close(ctx context.Context) {
+func (st *Manager) Close() {
 	st.quit <- struct{}{}
-	st.flushState(ctx)
 }
 
 func (st *Manager) Warm(ctx context.Context) {
 	st.log.Info("warming cache for startup")
-	st.ResetCache()
+	st.ResetAllStates()
 
 	orgIds, err := st.instanceStore.FetchOrgIds(ctx)
 	if err != nil {
@@ -149,20 +150,30 @@ func (st *Manager) Get(orgID int64, alertRuleUID, stateId string) (*State, error
 	return st.cache.get(orgID, alertRuleUID, stateId)
 }
 
-// ResetCache is used to ensure a clean cache on startup.
-func (st *Manager) ResetCache() {
+// ResetAllStates is used to ensure a clean cache on startup.
+func (st *Manager) ResetAllStates() {
 	st.cache.reset()
 }
 
-// RemoveByRuleUID deletes all entries in the state manager that match the given rule UID.
-func (st *Manager) RemoveByRuleUID(orgID int64, ruleUID string) {
-	st.cache.removeByRuleUID(orgID, ruleUID)
+// ResetStateByRuleUID deletes all entries in the state manager that match the given rule UID.
+func (st *Manager) ResetStateByRuleUID(ctx context.Context, ruleKey ngModels.AlertRuleKey) []*State {
+	logger := st.log.New(ruleKey.LogContext()...)
+	logger.Debug("resetting state of the rule")
+	states := st.cache.removeByRuleUID(ruleKey.OrgID, ruleKey.UID)
+	if len(states) > 0 {
+		err := st.instanceStore.DeleteAlertInstancesByRule(ctx, ruleKey)
+		if err != nil {
+			logger.Error("failed to delete states that belong to a rule from database", ruleKey.LogContext()...)
+		}
+	}
+	logger.Info("rules state was reset", "deleted_states", len(states))
+	return states
 }
 
 // ProcessEvalResults updates the current states that belong to a rule with the evaluation results.
 // if extraLabels is not empty, those labels will be added to every state. The extraLabels take precedence over rule labels and result labels
 func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels) []*State {
-	logger := st.log.New(alertRule.GetKey().LogContext())
+	logger := st.log.New(alertRule.GetKey().LogContext()...)
 	logger.Debug("state manager processing evaluation results", "resultCount", len(results))
 	var states []*State
 	processedResults := make(map[string]*State, len(results))
@@ -171,7 +182,7 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 		states = append(states, s)
 		processedResults[s.CacheId] = s
 	}
-	st.staleResultsHandler(ctx, evaluatedAt, alertRule, processedResults)
+	resolvedStates := st.staleResultsHandler(ctx, evaluatedAt, alertRule, processedResults)
 	if len(states) > 0 {
 		logger.Debug("saving new states to the database", "count", len(states))
 		for _, state := range states {
@@ -180,7 +191,7 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 			}
 		}
 	}
-	return states
+	return append(states, resolvedStates...)
 }
 
 // Maybe take a screenshot. Do it if:
@@ -307,28 +318,6 @@ func (st *Manager) Put(states []*State) {
 	}
 }
 
-// flushState dumps the entire state to the database
-func (st *Manager) flushState(ctx context.Context) {
-	t := st.clock.Now()
-	st.log.Info("flushing the state")
-	st.cache.mtxStates.Lock()
-	defer st.cache.mtxStates.Unlock()
-	totalStates, errorsCnt := 0, 0
-	for _, orgStates := range st.cache.states {
-		for _, ruleStates := range orgStates {
-			for _, state := range ruleStates {
-				err := st.saveState(ctx, state)
-				totalStates++
-				if err != nil {
-					st.log.Error("failed to save alert state", append(state.GetRuleKey().LogContext(), "labels", state.Labels.String(), "state", state.State.String(), "err", err.Error()))
-					errorsCnt++
-				}
-			}
-		}
-	}
-	st.log.Info("the state has been flushed", "total_instances", totalStates, "errors", errorsCnt, "took", st.clock.Since(t))
-}
-
 func (st *Manager) saveState(ctx context.Context, s *State) error {
 	cmd := ngModels.SaveAlertInstanceCommand{
 		RuleOrgID:         s.OrgID,
@@ -409,14 +398,14 @@ func (st *Manager) annotateState(ctx context.Context, alertRule *ngModels.AlertR
 		item.DashboardId = query.Result.Id
 	}
 
-	annotationRepo := annotations.GetRepository()
-	if err := annotationRepo.Save(item); err != nil {
+	if err := st.AnnotationsRepo.Save(ctx, item); err != nil {
 		st.log.Error("error saving alert annotation", "alertRuleUID", alertRule.UID, "err", err.Error())
 		return
 	}
 }
 
-func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, states map[string]*State) {
+func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, states map[string]*State) []*State {
+	var resolvedStates []*State
 	allStates := st.GetStatesForRuleUID(alertRule.OrgID, alertRule.UID)
 	for _, s := range allStates {
 		_, ok := states[s.CacheId]
@@ -434,12 +423,20 @@ func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Tim
 			}
 
 			if s.State == eval.Alerting {
+				previousState := InstanceStateAndReason{State: s.State, Reason: s.StateReason}
+				s.State = eval.Normal
+				s.StateReason = ngModels.StateReasonMissingSeries
+				s.EndsAt = evaluatedAt
+				s.Resolved = true
 				st.annotateState(ctx, alertRule, s.Labels, evaluatedAt,
-					InstanceStateAndReason{State: eval.Normal, Reason: ""},
-					InstanceStateAndReason{State: s.State, Reason: s.StateReason})
+					InstanceStateAndReason{State: eval.Normal, Reason: s.StateReason},
+					previousState,
+				)
+				resolvedStates = append(resolvedStates, s)
 			}
 		}
 	}
+	return resolvedStates
 }
 
 func isItStale(evaluatedAt time.Time, lastEval time.Time, intervalSeconds int64) bool {

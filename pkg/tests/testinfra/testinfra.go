@@ -189,6 +189,8 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	require.NoError(t, err)
 	_, err = serverSect.NewKey("port", "0")
 	require.NoError(t, err)
+	_, err = serverSect.NewKey("static_root_path", publicDir)
+	require.NoError(t, err)
 
 	anonSect, err := cfg.NewSection("auth.anonymous")
 	require.NoError(t, err)
@@ -200,6 +202,11 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	_, err = alertingSect.NewKey("notification_timeout_seconds", "1")
 	require.NoError(t, err)
 	_, err = alertingSect.NewKey("max_attempts", "3")
+	require.NoError(t, err)
+
+	rbacSect, err := cfg.NewSection("rbac")
+	require.NoError(t, err)
+	_, err = rbacSect.NewKey("permission_cache", "false")
 	require.NoError(t, err)
 
 	getOrCreateSection := func(name string) (*ini.Section, error) {

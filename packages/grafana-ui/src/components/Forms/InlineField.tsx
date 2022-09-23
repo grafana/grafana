@@ -37,6 +37,7 @@ export const InlineField: FC<Props> = ({
   invalid,
   loading,
   disabled,
+  required,
   className,
   htmlFor,
   grow,
@@ -59,7 +60,7 @@ export const InlineField: FC<Props> = ({
         htmlFor={inputId}
         transparent={transparent}
       >
-        {label}
+        {`${label}${required ? ' *' : ''}`}
       </InlineLabel>
     ) : (
       label

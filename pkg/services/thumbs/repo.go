@@ -9,13 +9,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	dashboardthumbs "github.com/grafana/grafana/pkg/services/dashboard_thumbs"
 	"github.com/grafana/grafana/pkg/services/searchV2"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-func newThumbnailRepo(store *sqlstore.SQLStore, search searchV2.SearchService) thumbnailRepo {
+func newThumbnailRepo(thumbsService dashboardthumbs.Service, search searchV2.SearchService) thumbnailRepo {
 	repo := &sqlThumbnailRepository{
-		store:  store,
+		store:  thumbsService,
 		search: search,
 		log:    log.New("thumbnails_repo"),
 	}
@@ -23,7 +23,7 @@ func newThumbnailRepo(store *sqlstore.SQLStore, search searchV2.SearchService) t
 }
 
 type sqlThumbnailRepository struct {
-	store  *sqlstore.SQLStore
+	store  dashboardthumbs.Service
 	search searchV2.SearchService
 	log    log.Logger
 }

@@ -20,7 +20,7 @@ menuTitle: Manage dashboard links
 weight: 400
 ---
 
-# Manage dasboard links
+# Manage dashboard links
 
 You can use links to navigate between commonly-used dashboards or to connect others to your visualizations. Links let you create shortcuts to other dashboards, panels, and even external websites.
 

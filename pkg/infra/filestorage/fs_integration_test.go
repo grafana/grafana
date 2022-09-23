@@ -859,6 +859,19 @@ func TestIntegrationFsStorage(t *testing.T) {
 							fContents(pngImage),
 						),
 					},
+					queryGet{
+						input: queryGetInput{
+							path:    "/file.png",
+							options: &GetFileOptions{WithContents: false},
+						},
+						checks: checks(
+							fName("FILE.png"),
+							fMimeType("image/png"),
+							fProperties(map[string]string{"a": "av", "b": "bv"}),
+							fSize(pngImageSize),
+							fContents(emptyContents),
+						),
+					},
 				},
 			},
 			{

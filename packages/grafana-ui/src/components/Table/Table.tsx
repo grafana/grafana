@@ -132,6 +132,8 @@ export const Table: FC<Props> = memo((props: Props) => {
   } = props;
 
   const listRef = useRef<FixedSizeList>(null);
+  const tableDivRef = useRef<HTMLDivElement>(null);
+  const fixedSizeListScrollbarRef = useRef<HTMLDivElement>(null);
   const tableStyles = useStyles2(getTableStyles);
   const headerHeight = noHeader ? 0 : tableStyles.cellHeight;
 
@@ -221,6 +223,29 @@ export const Table: FC<Props> = memo((props: Props) => {
     setPageSize(pageSize);
   }, [pageSize, setPageSize]);
 
+  useEffect(() => {
+    // To have the custom vertical scrollbar always visible (https://github.com/grafana/grafana/issues/52136),
+    // we need to bring the element from the FixedSizeList scope to the outer Table container scope,
+    // because the FixedSizeList scope has overflow. By moving scrollbar to container scope we will have
+    // it always visible since the entire width is in view.
+
+    // Select the scrollbar element from the FixedSizeList scope
+    const listVerticalScrollbarHTML = (fixedSizeListScrollbarRef.current as HTMLDivElement)?.querySelector(
+      '.track-vertical'
+    );
+
+    // Select Table custom scrollbars
+    const tableScrollbarView = (tableDivRef.current as HTMLDivElement)?.firstChild;
+
+    //If they exists, move the scrollbar element to the Table container scope
+    if (tableScrollbarView && listVerticalScrollbarHTML) {
+      listVerticalScrollbarHTML?.remove();
+      (tableScrollbarView as HTMLDivElement).querySelector(':scope > .track-vertical')?.remove();
+
+      (tableScrollbarView as HTMLDivElement).append(listVerticalScrollbarHTML as Node);
+    }
+  });
+
   const RenderRow = React.useCallback(
     ({ index: rowIndex, style }) => {
       let row = rows[rowIndex];
@@ -291,21 +316,25 @@ export const Table: FC<Props> = memo((props: Props) => {
   };
 
   return (
-    <div {...getTableProps()} className={tableStyles.table} aria-label={ariaLabel} role="table">
-      <CustomScrollbar onScroll={handleScroll}>
+    <div {...getTableProps()} className={tableStyles.table} aria-label={ariaLabel} role="table" ref={tableDivRef}>
+      <CustomScrollbar hideVerticalTrack={true}>
         <div className={tableStyles.tableContentWrapper(totalColumnsWidth)}>
           {!noHeader && <HeaderRow headerGroups={headerGroups} showTypeIcons={showTypeIcons} />}
           {itemCount > 0 ? (
-            <FixedSizeList
-              height={listHeight}
-              itemCount={itemCount}
-              itemSize={tableStyles.rowHeight}
-              width={'100%'}
-              ref={listRef}
-              style={{ overflow: undefined }}
-            >
-              {RenderRow}
-            </FixedSizeList>
+            <div ref={fixedSizeListScrollbarRef}>
+              <CustomScrollbar onScroll={handleScroll} hideHorizontalTrack={true}>
+                <FixedSizeList
+                  height={listHeight}
+                  itemCount={itemCount}
+                  itemSize={tableStyles.rowHeight}
+                  width={'100%'}
+                  ref={listRef}
+                  style={{ overflow: undefined }}
+                >
+                  {RenderRow}
+                </FixedSizeList>
+              </CustomScrollbar>
+            </div>
           ) : (
             <div style={{ height: height - headerHeight }} className={tableStyles.noData}>
               No data

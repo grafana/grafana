@@ -6,13 +6,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/util"
-
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func NewStore(sql *sqlstore.SQLStore) *store {
@@ -208,14 +207,7 @@ func (s *store) setResourcePermission(
 		return nil, err
 	}
 
-	rawSQL := `
-	SELECT
-		p.*
-	FROM permission as p
-		INNER JOIN role r on r.id = p.role_id
-	WHERE r.id = ?
-		AND p.scope = ?
-	`
+	rawSQL := `SELECT p.* FROM permission as p INNER JOIN role r on r.id = p.role_id WHERE r.id = ? AND p.scope = ?`
 
 	var current []accesscontrol.Permission
 	scope := accesscontrol.Scope(cmd.Resource, cmd.ResourceAttribute, cmd.ResourceID)
@@ -228,11 +220,9 @@ func (s *store) setResourcePermission(
 		missing[a] = struct{}{}
 	}
 
-	var keep []int64
 	var remove []int64
 	for _, p := range current {
 		if _, ok := missing[p.Action]; ok {
-			keep = append(keep, p.ID)
 			delete(missing, p.Action)
 		} else if !ok {
 			remove = append(remove, p.ID)
@@ -243,15 +233,11 @@ func (s *store) setResourcePermission(
 		return nil, err
 	}
 
-	for action := range missing {
-		id, err := s.createResourcePermission(sess, role.ID, action, cmd.Resource, cmd.ResourceID, cmd.ResourceAttribute)
-		if err != nil {
-			return nil, err
-		}
-		keep = append(keep, id)
+	if err := s.createPermissions(sess, role.ID, cmd.Resource, cmd.ResourceID, cmd.ResourceAttribute, missing); err != nil {
+		return nil, err
 	}
 
-	permissions, err := s.getResourcePermissionsByIds(sess, cmd.Resource, cmd.ResourceID, cmd.ResourceAttribute, keep)
+	permissions, err := s.getPermissions(sess, cmd.Resource, cmd.ResourceID, cmd.ResourceAttribute, role.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -274,18 +260,6 @@ func (s *store) GetResourcePermissions(ctx context.Context, orgID int64, query G
 	})
 
 	return result, err
-}
-
-func (s *store) createResourcePermission(sess *sqlstore.DBSession, roleID int64, action, resource, resourceID, resourceAttribute string) (int64, error) {
-	permission := managedPermission(action, resource, resourceID, resourceAttribute)
-	permission.RoleID = roleID
-	permission.Created = time.Now()
-	permission.Updated = time.Now()
-
-	if _, err := sess.Insert(&permission); err != nil {
-		return 0, err
-	}
-	return permission.ID, nil
 }
 
 func (s *store) getResourcePermissions(sess *sqlstore.DBSession, orgID int64, query GetResourcePermissionsQuery) ([]accesscontrol.ResourcePermission, error) {
@@ -582,11 +556,25 @@ func (s *store) getOrCreateManagedRole(sess *sqlstore.DBSession, orgID int64, na
 	return &role, nil
 }
 
-func (s *store) getResourcePermissionsByIds(sess *sqlstore.DBSession, resource, resourceID, resourceAttribute string, ids []int64) ([]flatResourcePermission, error) {
-	var result []flatResourcePermission
-	if len(ids) == 0 {
-		return result, nil
+func generateNewRoleUID(sess *sqlstore.DBSession, orgID int64) (string, error) {
+	for i := 0; i < 3; i++ {
+		uid := util.GenerateShortUID()
+
+		exists, err := sess.Where("org_id=? AND uid=?", orgID, uid).Get(&accesscontrol.Role{})
+		if err != nil {
+			return "", err
+		}
+
+		if !exists {
+			return uid, nil
+		}
 	}
+
+	return "", fmt.Errorf("failed to generate uid")
+}
+
+func (s *store) getPermissions(sess *sqlstore.DBSession, resource, resourceID, resourceAttribute string, roleID int64) ([]flatResourcePermission, error) {
+	var result []flatResourcePermission
 	rawSql := `
 	SELECT
 		p.*,
@@ -605,36 +593,32 @@ func (s *store) getResourcePermissionsByIds(sess *sqlstore.DBSession, resource, 
 		LEFT JOIN user_role ur ON r.id = ur.role_id
 		LEFT JOIN ` + s.sql.Dialect.Quote("user") + ` u ON ur.user_id = u.id
 		LEFT JOIN builtin_role br ON r.id = br.role_id
-	WHERE p.id IN (?` + strings.Repeat(",?", len(ids)-1) + `)
+	WHERE r.id = ? AND p.scope = ?
 	`
-
-	args := make([]interface{}, 0, len(ids)+1)
-	for _, id := range ids {
-		args = append(args, id)
-	}
-
-	if err := sess.SQL(rawSql, args...).Find(&result); err != nil {
+	if err := sess.SQL(rawSql, roleID, accesscontrol.Scope(resource, resourceAttribute, resourceID)).Find(&result); err != nil {
 		return nil, err
 	}
 
 	return result, nil
 }
 
-func generateNewRoleUID(sess *sqlstore.DBSession, orgID int64) (string, error) {
-	for i := 0; i < 3; i++ {
-		uid := util.GenerateShortUID()
-
-		exists, err := sess.Where("org_id=? AND uid=?", orgID, uid).Get(&accesscontrol.Role{})
-		if err != nil {
-			return "", err
-		}
-
-		if !exists {
-			return uid, nil
-		}
+func (s *store) createPermissions(sess *sqlstore.DBSession, roleID int64, resource, resourceID, resourceAttribute string, actions map[string]struct{}) error {
+	if len(actions) == 0 {
+		return nil
+	}
+	var permissions []accesscontrol.Permission
+	for action := range actions {
+		p := managedPermission(action, resource, resourceID, resourceAttribute)
+		p.RoleID = roleID
+		p.Created = time.Now()
+		p.Updated = time.Now()
+		permissions = append(permissions, p)
 	}
 
-	return "", fmt.Errorf("failed to generate uid")
+	if _, err := sess.InsertMulti(&permissions); err != nil {
+		return err
+	}
+	return nil
 }
 
 func deletePermissions(sess *sqlstore.DBSession, ids []int64) error {

@@ -4,6 +4,7 @@ aliases:
   - /docs/grafana/latest/enterprise/access-control/
   - /docs/grafana/latest/enterprise/access-control/about-rbac/
   - /docs/grafana/latest/enterprise/access-control/roles/
+  - /docs/grafana/latest/administration/roles-and-permissions/access-control/
 description: Role-based access control (RBAC) provides a standardized way of granting,
   changing, and revoking access so that users can view and modify Grafana resources,
   such as users and reports.
@@ -82,12 +83,12 @@ Assign fixed roles when the basic roles do not meet your permission requirements
 - [Dashboards and folders]({{< relref "../../../dashboards/" >}})
 - [Data sources]({{< relref "../../../datasources/" >}})
 - [Explore]({{< relref "../../../explore/" >}})
-- [Folders]({{< relref "../../../dashboards/dashboard-folders/" >}})
+- [Folders]({{< relref "../../../dashboards/manage-dashboards/#create-a-dashboard-folder" >}})
 - [LDAP]({{< relref "../../../setup-grafana/configure-security/configure-authentication/ldap/" >}})
 - [Licenses]({{< relref "../../stats-and-license/" >}})
 - [Organizations]({{< relref "../../organization-management/" >}})
 - [Provisioning]({{< relref "../../provisioning/" >}})
-- [Reports]({{< relref "../../../enterprise/reporting/" >}})
+- [Reports]({{< relref "../../../dashboards/create-reports/" >}})
 - [Roles]({{< relref "../../" >}})
 - [Settings]({{< relref "../../../enterprise/settings-updates/" >}})
 - [Service accounts]({{< relref "../../service-accounts/" >}})

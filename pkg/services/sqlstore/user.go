@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"sort"
@@ -114,9 +115,9 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args user.C
 		IsDisabled:       args.IsDisabled,
 		OrgID:            orgID,
 		EmailVerified:    args.EmailVerified,
-		Created:          time.Now(),
-		Updated:          time.Now(),
-		LastSeenAt:       time.Now().AddDate(-10, 0, 0),
+		Created:          TimeNow(),
+		Updated:          TimeNow(),
+		LastSeenAt:       TimeNow().AddDate(-10, 0, 0),
 		IsServiceAccount: args.IsServiceAccount,
 	}
 
@@ -159,8 +160,8 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args user.C
 			OrgId:   orgID,
 			UserId:  usr.ID,
 			Role:    org.RoleAdmin,
-			Created: time.Now(),
-			Updated: time.Now(),
+			Created: TimeNow(),
+			Updated: TimeNow(),
 		}
 
 		if ss.Cfg.AutoAssignOrg && !usr.IsAdmin {
@@ -179,7 +180,7 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args user.C
 	return usr, nil
 }
 
-//  deprecated method, use only for tests
+// deprecated method, use only for tests
 func (ss *SQLStore) CreateUser(ctx context.Context, cmd user.CreateUserCommand) (*user.User, error) {
 	var user user.User
 	createErr := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) (err error) {
@@ -314,7 +315,7 @@ func (ss *SQLStore) UpdateUser(ctx context.Context, cmd *models.UpdateUserComman
 			Email:   cmd.Email,
 			Login:   cmd.Login,
 			Theme:   cmd.Theme,
-			Updated: time.Now(),
+			Updated: TimeNow(),
 		}
 
 		if _, err := sess.ID(cmd.UserId).Where(notServiceAccountFilter(ss)).Update(&user); err != nil {
@@ -343,7 +344,7 @@ func (ss *SQLStore) ChangeUserPassword(ctx context.Context, cmd *models.ChangeUs
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		user := user.User{
 			Password: cmd.NewPassword,
-			Updated:  time.Now(),
+			Updated:  TimeNow(),
 		}
 
 		_, err := sess.ID(cmd.UserId).Where(notServiceAccountFilter(ss)).Update(&user)
@@ -355,7 +356,7 @@ func (ss *SQLStore) UpdateUserLastSeenAt(ctx context.Context, cmd *models.Update
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		user := user.User{
 			ID:         cmd.UserId,
-			LastSeenAt: time.Now(),
+			LastSeenAt: TimeNow(),
 		}
 
 		_, err := sess.ID(cmd.UserId).Update(&user)
@@ -581,6 +582,56 @@ func (ss *SQLStore) GetSignedInUser(ctx context.Context, query *models.GetSigned
 		query.Result = &usr
 		return err
 	})
+}
+
+// GetTeamsByUser is used by the Guardian when checking a users' permissions
+// TODO: use team.Service after user service is split
+func (ss *SQLStore) GetTeamsByUser(ctx context.Context, query *models.GetTeamsByUserQuery) error {
+	return ss.WithDbSession(ctx, func(sess *DBSession) error {
+		query.Result = make([]*models.TeamDTO, 0)
+
+		var sql bytes.Buffer
+		var params []interface{}
+		params = append(params, query.OrgId, query.UserId)
+
+		sql.WriteString(getTeamSelectSQLBase([]string{}))
+		sql.WriteString(` INNER JOIN team_member on team.id = team_member.team_id`)
+		sql.WriteString(` WHERE team.org_id = ? and team_member.user_id = ?`)
+
+		if !ac.IsDisabled(ss.Cfg) {
+			acFilter, err := ac.Filter(query.SignedInUser, "team.id", "teams:id:", ac.ActionTeamsRead)
+			if err != nil {
+				return err
+			}
+			sql.WriteString(` and` + acFilter.Where)
+			params = append(params, acFilter.Args...)
+		}
+
+		err := sess.SQL(sql.String(), params...).Find(&query.Result)
+		return err
+	})
+}
+
+func getTeamMemberCount(filteredUsers []string) string {
+	if len(filteredUsers) > 0 {
+		return `(SELECT COUNT(*) FROM team_member
+			INNER JOIN ` + dialect.Quote("user") + ` ON team_member.user_id = ` + dialect.Quote("user") + `.id
+			WHERE team_member.team_id = team.id AND ` + dialect.Quote("user") + `.login NOT IN (?` +
+			strings.Repeat(",?", len(filteredUsers)-1) + ")" +
+			`) AS member_count `
+	}
+
+	return "(SELECT COUNT(*) FROM team_member WHERE team_member.team_id = team.id) AS member_count "
+}
+
+func getTeamSelectSQLBase(filteredUsers []string) string {
+	return `SELECT
+		team.id as id,
+		team.org_id,
+		team.name as name,
+		team.email as email, ` +
+		getTeamMemberCount(filteredUsers) +
+		` FROM team as team `
 }
 
 func (ss *SQLStore) SearchUsers(ctx context.Context, query *models.SearchUsersQuery) error {
@@ -849,7 +900,7 @@ func (ss *SQLStore) SetUserHelpFlag(ctx context.Context, cmd *models.SetUserHelp
 		user := user.User{
 			ID:         cmd.UserId,
 			HelpFlags1: cmd.HelpFlags1,
-			Updated:    time.Now(),
+			Updated:    TimeNow(),
 		}
 
 		_, err := sess.ID(cmd.UserId).Cols("help_flags1").Update(&user)

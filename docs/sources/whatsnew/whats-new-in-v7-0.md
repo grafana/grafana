@@ -137,7 +137,7 @@ In Grafana 7.0 we are maturing our panel and front-end datasource plugins platfo
 
 Plugins can use the same React components that the Grafana team uses to build Grafana. Using these components means the Grafana team will support and improve them continually and make your plugin as polished as the rest of Grafana’s UI. The new [`@grafana/ui` components library](https://developers.grafana.com/ui) is documented with Storybook (visual documentation) and is available on NPM.
 
-The `@grafana/data`, `@grafana/runtime`, `@grafana/e2e packages` (also available via NPM) aim to simplify the way plugins are developed. We want to deliver a set of [reliable APIs](https://grafana.com/docs/grafana/latest/packages_api/) for plugin developers.
+The `@grafana/data`, `@grafana/runtime`, `@grafana/e2e packages` (also available via NPM) aim to simplify the way plugins are developed. We want to deliver a set of [reliable APIs](https://grafana.com/docs/grafana/v7.0/packages_api/) for plugin developers.
 
 With [@grafana/toolkit](https://www.npmjs.com/package/@grafana/toolkit) we are delivering a simple CLI that helps plugin authors quickly scaffold, develop and test their plugins without worrying about configuration details. A plugin author no longer needs to be a grunt or webpack expert to build their plugin.
 
@@ -190,7 +190,7 @@ It was released as a beta feature in Grafana 6.7. The feedback has been really p
 
 ## Time zone support
 
-You can now override the [time zone]({{< relref "../dashboards/time-range-controls/#dashboard-time-settings" >}}) used to display date and time values in a dashboard. One benefit of this is that you can specify the local time zone of the service or system that you are monitoring which can be helpful when monitoring a system or service that operates across several time zones.
+You can now override the [time zone]({{< relref "../dashboards/manage-dashboards/#dashboard-time-settings" >}}) used to display date and time values in a dashboard. One benefit of this is that you can specify the local time zone of the service or system that you are monitoring which can be helpful when monitoring a system or service that operates across several time zones.
 
 ## Alerting and deep linking for Azure Log Analytics
 
@@ -215,7 +215,7 @@ This includes problems like:
 
 ### Usage insights and Presence indicator
 
-This release includes a series of features that build on our new usage analytics engine. This “Grafana about Grafana” feature will help our large customers get better insight into the behavior and utilization of their users, dashboards, and data sources. The improved [dashboard search]({{< relref "../enterprise/usage-insights/#improved-dashboard-search" >}}) allows you to sort dashboards by usage and errors. When a user opens a dashboard, they will see a [presence indicator]({{< relref "../enterprise/usage-insights/#presence-indicator" >}}) of who else is viewing the same dashboard. And finally [Dashboard insights]({{< relref "../enterprise/usage-insights/#dashboard-insights" >}}) allows you to view recent dashboard usage.
+This release includes a series of features that build on our new usage analytics engine. This “Grafana about Grafana” feature will help our large customers get better insight into the behavior and utilization of their users, dashboards, and data sources. The improved [dashboard search]({{< relref "../dashboards/assess-dashboard-usage/#sort-dashboards-by-using-insights-data" >}}) allows you to sort dashboards by usage and errors. When a user opens a dashboard, they will see a [presence indicator]({{< relref "../dashboards/assess-dashboard-usage/#presence-indicator" >}}) of who else is viewing the same dashboard. And finally [Dashboard insights]({{< relref "../dashboards/assess-dashboard-usage/#dashboard-insights" >}}) allows you to view recent dashboard usage.
 
 {{< figure src="/static/img/docs/v70/presence_indicator.jpg" max-width="1024px" caption="Grafana Enterprise - Presence indicator" >}}
 

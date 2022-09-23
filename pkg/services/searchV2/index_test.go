@@ -6,7 +6,11 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/searchV2/extract"
@@ -59,11 +63,7 @@ func initTestIndexFromDashesExtended(t *testing.T, dashboards []dashboard, exten
 	dashboardLoader := &testDashboardLoader{
 		dashboards: dashboards,
 	}
-	index := newSearchIndex(
-		dashboardLoader,
-		&store.MockEntityEventsService{},
-		extender,
-		func(ctx context.Context, folderId int64) (string, error) { return "x", nil })
+	index := newSearchIndex(dashboardLoader, &store.MockEntityEventsService{}, extender, func(ctx context.Context, folderId int64) (string, error) { return "x", nil }, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(), setting.SearchSettings{})
 	require.NotNil(t, index)
 	numDashboards, err := index.buildOrgIndex(context.Background(), testOrgID)
 	require.NoError(t, err)
@@ -80,6 +80,33 @@ func checkSearchResponseExtended(t *testing.T, fileName string, index *orgIndex,
 	t.Helper()
 	resp := doSearchQuery(context.Background(), testLogger, index, filter, query, extender, "/pfix")
 	experimental.CheckGoldenJSONResponse(t, "testdata", fileName, resp, true)
+}
+
+func getFrameWithNames(resp *backend.DataResponse) *data.Frame {
+	if resp == nil || len(resp.Frames) == 0 {
+		return nil
+	}
+
+	frame := resp.Frames[0]
+	nameField, idx := frame.FieldByName(documentFieldName)
+	if nameField.Len() == 0 || idx == -1 {
+		return nil
+	}
+
+	scoreField, _ := frame.FieldByName("score")
+	return data.NewFrame("ordering frame", nameField, scoreField)
+}
+
+func checkSearchResponseOrdering(t *testing.T, fileName string, index *orgIndex, filter ResourceFilter, query DashboardQuery) {
+	t.Helper()
+	checkSearchResponseOrderingExtended(t, fileName, index, filter, query, &NoopQueryExtender{})
+}
+
+func checkSearchResponseOrderingExtended(t *testing.T, fileName string, index *orgIndex, filter ResourceFilter, query DashboardQuery, extender QueryExtender) {
+	t.Helper()
+	query.Explain = true
+	resp := doSearchQuery(context.Background(), testLogger, index, filter, query, extender, "/pfix")
+	experimental.CheckGoldenJSONFrame(t, "testdata", fileName, getFrameWithNames(resp), true)
 }
 
 var testDashboards = []dashboard{
@@ -581,4 +608,136 @@ func TestDashboardIndex_CamelCaseNgram(t *testing.T) {
 			DashboardQuery{Query: "tork"},
 		)
 	})
+}
+
+func dashboardsWithTitles(names ...string) []dashboard {
+	out := make([]dashboard, 0)
+	for i, name := range names {
+		no := int64(i + 1)
+		out = append(out, dashboard{
+			id:  no,
+			uid: fmt.Sprintf("%d", no),
+			info: &extract.DashboardInfo{
+				Title: name,
+			},
+		})
+	}
+
+	return out
+}
+
+func TestDashboardIndex_MultiTermPrefixMatch(t *testing.T) {
+	var tests = []struct {
+		dashboards []dashboard
+		query      string
+	}{
+		{
+			dashboards: dashboardsWithTitles(
+				"Panel Tests - Bar Gauge 2",
+				"Prometheus 2.0",
+				"Prometheus 2.0 Stats",
+				"Prometheus 20.0",
+				"Prometheus Second Word",
+				"Prometheus Stats",
+				"dynamic (2)",
+				"prometheus histogram",
+				"prometheus histogram2",
+				"roci-simple-2",
+				"x not y",
+			),
+			query: "Prometheus 2.",
+		},
+		{
+			dashboards: dashboardsWithTitles(
+				"From AAA",
+				"Grafana Dev Overview & Home",
+				"Home automation",
+				"Prometheus 2.0",
+				"Prometheus 2.0 Stats",
+				"Prometheus 20.0",
+				"Prometheus Stats",
+				"Transforms - config from query",
+				"iot-testing",
+				"prom style with exemplars",
+				"prop history",
+				"simple frame",
+				"with-hide-from",
+				"xy broke",
+			),
+			query: "Prome",
+		},
+		{
+			dashboards: dashboardsWithTitles(
+				"Panel Tests - Bar Gauge 2",
+				"Prometheus 2.0",
+				"Prometheus 2.0 Stats",
+				"Prometheus 20.0",
+				"Prometheus Second Word",
+				"Prometheus Stats",
+				"dynamic (2)",
+				"prometheus histogram",
+				"prometheus histogram2",
+				"roci-simple-2",
+				"x not y",
+			),
+			query: "Prometheus stat",
+		},
+		{
+			dashboards: dashboardsWithTitles(
+				"Loki Tests - Bar Gauge 2",
+				"Loki 2.0",
+				"Loki 2.0 Stats",
+				"Loki 20.0",
+				"Loki Second Word",
+				"Loki Stats",
+				"dynamic (2)",
+				"Loki histogram",
+				"Loki histogram2",
+				"roci-simple-2",
+				"x not y",
+			),
+			query: "Loki 2.",
+		},
+		{
+			dashboards: dashboardsWithTitles(
+				"Loki Tests - Bar Gauge 2",
+				"Loki 2.0",
+				"Loki 2.0 Stats",
+				"Loki 20.0",
+				"Loki Second Word",
+				"Loki Stats",
+				"dynamic (2)",
+				"Loki histogram",
+				"Loki histogram2",
+				"roci-simple-2",
+				"x not y",
+			),
+			query: "Lok",
+		},
+		{
+			dashboards: dashboardsWithTitles(
+				"Loki Tests - Bar Gauge 2",
+				"Loki 2.0",
+				"Loki 2.0 Stats",
+				"Loki 20.0",
+				"Loki Second Word",
+				"Loki Stats",
+				"dynamic (2)",
+				"Loki histogram",
+				"Loki histogram2",
+				"roci-simple-2",
+				"x not y",
+			),
+			query: "Loki stats",
+		},
+	}
+
+	for i, tt := range tests {
+		t.Run(fmt.Sprintf("ordering-tests-%d-[%s]", i+1, tt.query), func(t *testing.T) {
+			index := initTestOrgIndexFromDashes(t, tt.dashboards)
+			checkSearchResponseOrdering(t, filepath.Base(t.Name()), index, testAllowAllFilter,
+				DashboardQuery{Query: tt.query},
+			)
+		})
+	}
 }

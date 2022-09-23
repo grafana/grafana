@@ -9,6 +9,7 @@ import (
 	"mime/multipart"
 	"os"
 
+	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
@@ -66,7 +67,7 @@ func NewTelegramConfig(config *NotificationChannelConfig, fn GetDecryptedValueFn
 		NotificationChannelConfig: config,
 		BotToken:                  botToken,
 		ChatID:                    chatID,
-		Message:                   config.Settings.Get("message").MustString(`{{ template "default.message" . }}`),
+		Message:                   config.Settings.Get("message").MustString(DefaultMessageEmbed),
 	}, nil
 }
 
@@ -158,8 +159,14 @@ func (tn *TelegramNotifier) buildTelegramMessage(ctx context.Context, as []*type
 	}()
 
 	tmpl, _ := TmplText(ctx, tn.tmpl, as, tn.log, &tmplErr)
+	// Telegram supports 4096 chars max
+	messageText, truncated := notify.Truncate(tmpl(tn.Message), 4096)
+	if truncated {
+		tn.log.Warn("Telegram message too long, truncate message", "original_message", tn.Message)
+	}
+
 	m := make(map[string]string)
-	m["text"] = tmpl(tn.Message)
+	m["text"] = messageText
 	m["parse_mode"] = "html"
 	return m, nil
 }

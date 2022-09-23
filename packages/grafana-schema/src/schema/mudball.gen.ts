@@ -46,6 +46,7 @@ export enum ScaleDistribution {
   Linear = 'linear',
   Log = 'log',
   Ordinal = 'ordinal',
+  Symlog = 'symlog',
 }
 
 export enum GraphGradientMode {
@@ -116,6 +117,7 @@ export interface PointsConfig {
 }
 
 export interface ScaleDistributionConfig {
+  linearThreshold?: number;
   log?: number;
   type: ScaleDistribution;
 }

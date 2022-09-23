@@ -678,12 +678,16 @@ export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataS
 ): Observable<DataQueryResponse> {
   const timespan = options.range.to.valueOf() - options.range.from.valueOf();
   const intervalInfo = getIntervalInfo(logsVolumeRequest.scopedVars, timespan);
+
   logsVolumeRequest.interval = intervalInfo.interval;
   logsVolumeRequest.scopedVars.__interval = { value: intervalInfo.interval, text: intervalInfo.interval };
+
   if (intervalInfo.intervalMs !== undefined) {
     logsVolumeRequest.intervalMs = intervalInfo.intervalMs;
     logsVolumeRequest.scopedVars.__interval_ms = { value: intervalInfo.intervalMs, text: intervalInfo.intervalMs };
   }
+
+  logsVolumeRequest.hideFromInspector = true;
 
   return new Observable((observer) => {
     let rawLogsVolume: DataFrame[] = [];

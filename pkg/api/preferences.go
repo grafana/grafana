@@ -31,11 +31,15 @@ func (hs *HTTPServer) SetHomeDashboard(c *models.ReqContext) response.Response {
 	dashboardID := cmd.HomeDashboardID
 	if cmd.HomeDashboardUID != nil {
 		query := models.GetDashboardQuery{Uid: *cmd.HomeDashboardUID}
-		err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
-		if err != nil {
-			return response.Error(404, "Dashboard not found", err)
+		if query.Uid == "" {
+			dashboardID = 0 // clear the value
+		} else {
+			err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
+			if err != nil {
+				return response.Error(404, "Dashboard not found", err)
+			}
+			dashboardID = query.Result.Id
 		}
-		dashboardID = query.Result.Id
 	}
 
 	cmd.HomeDashboardID = dashboardID
@@ -122,11 +126,16 @@ func (hs *HTTPServer) updatePreferencesFor(ctx context.Context, orgID, userID, t
 	dashboardID := dtoCmd.HomeDashboardID
 	if dtoCmd.HomeDashboardUID != nil {
 		query := models.GetDashboardQuery{Uid: *dtoCmd.HomeDashboardUID, OrgId: orgID}
-		err := hs.DashboardService.GetDashboard(ctx, &query)
-		if err != nil {
-			return response.Error(404, "Dashboard not found", err)
+		if query.Uid == "" {
+			// clear the value
+			dashboardID = 0
+		} else {
+			err := hs.DashboardService.GetDashboard(ctx, &query)
+			if err != nil {
+				return response.Error(404, "Dashboard not found", err)
+			}
+			dashboardID = query.Result.Id
 		}
-		dashboardID = query.Result.Id
 	}
 	dtoCmd.HomeDashboardID = dashboardID
 
@@ -176,11 +185,17 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 	dashboardID := dtoCmd.HomeDashboardID
 	if dtoCmd.HomeDashboardUID != nil {
 		query := models.GetDashboardQuery{Uid: *dtoCmd.HomeDashboardUID, OrgId: orgID}
-		err := hs.DashboardService.GetDashboard(ctx, &query)
-		if err != nil {
-			return response.Error(404, "Dashboard not found", err)
+		if query.Uid == "" {
+			// clear the value
+			defaultDash := int64(0)
+			dashboardID = &defaultDash
+		} else {
+			err := hs.DashboardService.GetDashboard(ctx, &query)
+			if err != nil {
+				return response.Error(404, "Dashboard not found", err)
+			}
+			dashboardID = &query.Result.Id
 		}
-		dashboardID = &query.Result.Id
 	}
 	dtoCmd.HomeDashboardID = dashboardID
 

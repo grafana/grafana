@@ -37,4 +37,4 @@ to the embedded text.
 
 ## Variables
 
-[Variables]({{< relref "../variables/syntax/" >}}) in the content will be expanded for display.
+[Variables]({{< relref "../dashboards/variables/variable-syntax" >}}) in the content will be expanded for display.

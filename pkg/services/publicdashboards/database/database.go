@@ -2,7 +2,7 @@ package database
 
 import (
 	"context"
-	"fmt"
+	"encoding/json"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -57,7 +57,6 @@ func (d *PublicDashboardStoreImpl) ListPublicDashboards(ctx context.Context, org
 	})
 
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 
@@ -141,6 +140,31 @@ func (d *PublicDashboardStoreImpl) GenerateNewPublicDashboardUid(ctx context.Con
 	return uid, nil
 }
 
+// Retrieves public dashboard configuration by Uid
+func (d *PublicDashboardStoreImpl) GetPublicDashboardByUid(ctx context.Context, uid string) (*PublicDashboard, error) {
+	if uid == "" {
+		return nil, nil
+	}
+
+	var found bool
+	pdRes := &PublicDashboard{Uid: uid}
+	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		var err error
+		found, err = sess.Get(pdRes)
+		return err
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !found {
+		return nil, nil
+	}
+
+	return pdRes, err
+}
+
 // Retrieves public dashboard configuration
 func (d *PublicDashboardStoreImpl) GetPublicDashboardConfig(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error) {
 	if dashboardUid == "" {
@@ -166,7 +190,11 @@ func (d *PublicDashboardStoreImpl) GetPublicDashboardConfig(ctx context.Context,
 }
 
 // Persists public dashboard configuration
-func (d *PublicDashboardStoreImpl) SavePublicDashboardConfig(ctx context.Context, cmd SavePublicDashboardConfigCommand) (*PublicDashboard, error) {
+func (d *PublicDashboardStoreImpl) SavePublicDashboardConfig(ctx context.Context, cmd SavePublicDashboardConfigCommand) error {
+	if cmd.PublicDashboard.DashboardUid == "" {
+		return dashboards.ErrDashboardIdentifierNotSet
+	}
+
 	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		_, err := sess.UseBool("is_enabled").Insert(&cmd.PublicDashboard)
 		if err != nil {
@@ -176,17 +204,13 @@ func (d *PublicDashboardStoreImpl) SavePublicDashboardConfig(ctx context.Context
 		return nil
 	})
 
-	if err != nil {
-		return nil, err
-	}
-
-	return &cmd.PublicDashboard, nil
+	return err
 }
 
 // updates existing public dashboard configuration
 func (d *PublicDashboardStoreImpl) UpdatePublicDashboardConfig(ctx context.Context, cmd SavePublicDashboardConfigCommand) error {
 	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		timeSettingsJSON, err := cmd.PublicDashboard.TimeSettings.MarshalJSON()
+		timeSettingsJSON, err := json.Marshal(cmd.PublicDashboard.TimeSettings)
 		if err != nil {
 			return err
 		}

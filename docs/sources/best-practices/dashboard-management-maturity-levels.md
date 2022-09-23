@@ -35,7 +35,7 @@ How can you tell you are here?
 
 - Prevent sprawl by using template variables. For example, you don't need a separate dashboard for each node, you can use query variables. Even better, you can make the data source a template variable too, so you can reuse the same dashboard across different clusters and monitoring backends.
 
-  Refer to the list of [Variable examples]({{< relref "../variables/variable-examples/" >}}) if you want some ideas.
+  Refer to the list of [Variable examples]({{< relref "../dashboards/variables/#examples-of-templates-and-variables" >}}) if you want some ideas.
 
 - Methodical dashboards according to an [observability strategy]({{< relref "common-observability-strategies/" >}}).
 - Hierarchical dashboards with drill-downs to the next level.
@@ -63,7 +63,7 @@ At this stage, you have optimized your dashboard management use with a consisten
 - Actively reducing sprawl.
   - Regularly review existing dashboards to make sure they are still relevant.
   - Only approved dashboards added to master dashboard list.
-  - Tracking dashboard use. If you're an Enterprise user, you can take advantage of [Usage insights]({{< relref "../enterprise/usage-insights/" >}}).
+  - Tracking dashboard use. If you're an Enterprise user, you can take advantage of [Usage insights]({{< relref "../dashboards/assess-dashboard-usage/" >}}).
 - Consistency by design.
 - Use scripting libraries to generate dashboards, ensure consistency in pattern and style.
   - grafonnet (Jsonnet)

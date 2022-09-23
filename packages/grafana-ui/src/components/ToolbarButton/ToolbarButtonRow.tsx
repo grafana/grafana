@@ -57,7 +57,7 @@ export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(
         });
       }
       return () => intersectionObserver.disconnect();
-    }, []);
+    }, [children]);
 
     return (
       <div ref={containerRef} className={cx(styles.container, className)} {...rest}>
@@ -128,5 +128,6 @@ const getStyles = (theme: GrafanaTheme2, overflowButtonOrder: number, alignment:
   childWrapper: css`
     align-items: center;
     display: flex;
+    gap: ${theme.spacing(1)};
   `,
 });

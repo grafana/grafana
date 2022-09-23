@@ -51,6 +51,7 @@ export interface ScatterSeries {
 
   label: VisibilityMode;
   labelValue: DimensionValues<string>;
+  show: boolean;
 
   hints: {
     pointSize: ScaleDimensionConfig;

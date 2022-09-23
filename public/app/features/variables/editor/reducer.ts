@@ -1,13 +1,12 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { DataSourceApi, DataSourceRef } from '@grafana/data';
+import { DataSourceApi } from '@grafana/data';
 
 import { VariablePayload } from '../state/types';
 import { VariableQueryEditorType } from '../types';
 
 export interface AdHocVariableEditorState {
   infoText?: string;
-  dataSources: Array<{ text: string; value: DataSourceRef | null }>;
 }
 
 export interface DataSourceVariableEditorState {

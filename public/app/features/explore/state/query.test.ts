@@ -40,6 +40,25 @@ import { makeExplorePaneState } from './utils';
 
 const { testRange, defaultInitialState } = createDefaultInitialState();
 
+const datasources: DataSourceApi[] = [
+  {
+    name: 'testDs',
+    type: 'postgres',
+    uid: 'ds1',
+    getRef: () => {
+      return { type: 'postgres', uid: 'ds1' };
+    },
+  } as DataSourceApi<DataQuery, DataSourceJsonData, {}>,
+  {
+    name: 'testDs2',
+    type: 'postgres',
+    uid: 'ds2',
+    getRef: () => {
+      return { type: 'postgres', uid: 'ds2' };
+    },
+  } as DataSourceApi<DataQuery, DataSourceJsonData, {}>,
+];
+
 jest.mock('app/features/dashboard/services/TimeSrv', () => ({
   ...jest.requireActual('app/features/dashboard/services/TimeSrv'),
   getTimeSrv: () => ({
@@ -53,6 +72,11 @@ jest.mock('@grafana/runtime', () => ({
   getTemplateSrv: () => ({
     updateTimeRange: jest.fn(),
   }),
+  getDataSourceSrv: () => {
+    return {
+      get: (uid?: string) => datasources.find((ds) => ds.uid === uid) || datasources[0],
+    };
+  },
 }));
 
 function setupQueryResponse(state: StoreState) {
@@ -159,7 +183,7 @@ describe('importing queries', () => {
         explore: {
           [ExploreId.left]: {
             ...defaultInitialState.explore[ExploreId.left],
-            datasourceInstance: { name: 'testDs', type: 'postgres' },
+            datasourceInstance: datasources[0],
           },
         },
       });
@@ -168,18 +192,18 @@ describe('importing queries', () => {
         importQueries(
           ExploreId.left,
           [
-            { datasource: { type: 'postgresql' }, refId: 'refId_A' },
-            { datasource: { type: 'postgresql' }, refId: 'refId_B' },
+            { datasource: { type: 'postgresql', uid: 'ds1' }, refId: 'refId_A' },
+            { datasource: { type: 'postgresql', uid: 'ds1' }, refId: 'refId_B' },
           ],
-          { name: 'Postgres1', type: 'postgres' } as DataSourceApi<DataQuery, DataSourceJsonData, {}>,
-          { name: 'Postgres2', type: 'postgres' } as DataSourceApi<DataQuery, DataSourceJsonData, {}>
+          datasources[0],
+          datasources[1]
         )
       );
 
       expect(getState().explore[ExploreId.left].queries[0]).toHaveProperty('refId', 'refId_A');
       expect(getState().explore[ExploreId.left].queries[1]).toHaveProperty('refId', 'refId_B');
-      expect(getState().explore[ExploreId.left].queries[0]).not.toHaveProperty('datasource');
-      expect(getState().explore[ExploreId.left].queries[1]).not.toHaveProperty('datasource');
+      expect(getState().explore[ExploreId.left].queries[0]).toHaveProperty('datasource.uid', 'ds2');
+      expect(getState().explore[ExploreId.left].queries[1]).toHaveProperty('datasource.uid', 'ds2');
     });
   });
 });

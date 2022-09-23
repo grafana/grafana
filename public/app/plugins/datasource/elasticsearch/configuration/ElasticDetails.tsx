@@ -3,10 +3,9 @@ import { valid } from 'semver';
 
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { FieldSet, InlineField, Input, Select, InlineSwitch } from '@grafana/ui';
+import { isTruthy } from 'app/core/utils/types';
 
 import { ElasticsearchOptions, Interval } from '../types';
-
-import { isTruthy } from './utils';
 
 const indexPatternTypes: Array<SelectableValue<'none' | Interval>> = [
   { label: 'No pattern', value: 'none' },

@@ -1,24 +1,24 @@
-import { DataFrameView, FieldCache, KeyValue, MutableDataFrame } from '@grafana/data';
+import { Column, DataFrameView, Field, FieldCache, KeyValue, MutableDataFrame } from '@grafana/data';
 import flatten from 'app/core/utils/flatten';
 
 import { ElasticResponse } from '../elastic_response';
-import { highlightTags } from '../query_def';
+import { highlightTags } from '../queryDef';
 import { ElasticsearchQuery } from '../types';
 
 describe('ElasticResponse', () => {
   let targets: ElasticsearchQuery[];
-  let response: any;
-  let result: any;
+  let response: {
+    responses: unknown[];
+  };
+  let result: {
+    data: MockedResultData[];
+  };
 
   describe('refId matching', () => {
     // We default to the old table structure to ensure backward compatibility,
     // therefore we only process responses as DataFrames when there's at least one
     // raw_data (new) query type.
     // We should test if refId gets populated wether there's such type of query or not
-    interface MockedQueryData {
-      target: ElasticsearchQuery;
-      response: any;
-    }
 
     const countQuery: MockedQueryData = {
       target: {
@@ -304,7 +304,9 @@ describe('ElasticResponse', () => {
   });
 
   describe('simple query count & avg aggregation', () => {
-    let result: any;
+    let result: {
+      data: MockedResultData[];
+    };
 
     beforeEach(() => {
       targets = [
@@ -356,7 +358,9 @@ describe('ElasticResponse', () => {
   });
 
   describe('single group by query one metric', () => {
-    let result: any;
+    let result: {
+      data: MockedResultData[];
+    };
 
     beforeEach(() => {
       targets = [
@@ -414,7 +418,9 @@ describe('ElasticResponse', () => {
   });
 
   describe('single group by query two metrics', () => {
-    let result: any;
+    let result: {
+      data: MockedResultData[];
+    };
 
     beforeEach(() => {
       targets = [
@@ -477,7 +483,9 @@ describe('ElasticResponse', () => {
   });
 
   describe('with percentiles ', () => {
-    let result: any;
+    let result: {
+      data: MockedResultData[];
+    };
 
     beforeEach(() => {
       targets = [
@@ -525,7 +533,9 @@ describe('ElasticResponse', () => {
   });
 
   describe('with extended_stats', () => {
-    let result: any;
+    let result: {
+      data: MockedResultData[];
+    };
 
     beforeEach(() => {
       targets = [
@@ -674,7 +684,9 @@ describe('ElasticResponse', () => {
   });
 
   describe('single group by with alias pattern', () => {
-    let result: any;
+    let result: {
+      data: MockedResultData[];
+    };
 
     beforeEach(() => {
       targets = [
@@ -744,7 +756,9 @@ describe('ElasticResponse', () => {
   });
 
   describe('histogram response', () => {
-    let result: any;
+    let result: {
+      data: MockedResultData[];
+    };
 
     beforeEach(() => {
       targets = [
@@ -780,7 +794,9 @@ describe('ElasticResponse', () => {
   });
 
   describe('with two filters agg', () => {
-    let result: any;
+    let result: {
+      data: MockedResultData[];
+    };
 
     beforeEach(() => {
       targets = [
@@ -952,7 +968,9 @@ describe('ElasticResponse', () => {
   });
 
   describe('No group by time with percentiles ', () => {
-    let result: any;
+    let result: {
+      data: MockedResultData[];
+    };
 
     beforeEach(() => {
       targets = [
@@ -1047,6 +1065,9 @@ describe('ElasticResponse', () => {
   });
 
   describe('Raw documents query', () => {
+    let result: {
+      data: Array<MockedResultData<{ [key: string]: string | undefined }>>;
+    };
     beforeEach(() => {
       targets = [
         {
@@ -1092,7 +1113,9 @@ describe('ElasticResponse', () => {
   });
 
   describe('with bucket_script ', () => {
-    let result: any;
+    let result: {
+      data: MockedResultData[];
+    };
 
     beforeEach(() => {
       targets = [
@@ -1159,7 +1182,9 @@ describe('ElasticResponse', () => {
   });
 
   describe('terms with bucket_script and two scripts', () => {
-    let result: any;
+    let result: {
+      data: MockedResultData[];
+    };
 
     beforeEach(() => {
       targets = [
@@ -1380,12 +1405,7 @@ describe('ElasticResponse', () => {
         expect(r._id).toEqual(response.responses[0].hits.hits[i]._id);
         expect(r._type).toEqual(response.responses[0].hits.hits[i]._type);
         expect(r._index).toEqual(response.responses[0].hits.hits[i]._index);
-        expect(r._source).toEqual(
-          flatten(
-            response.responses[0].hits.hits[i]._source,
-            null as unknown as { delimiter?: any; maxDepth?: any; safe?: any }
-          )
-        );
+        expect(r._source).toEqual(flatten(response.responses[0].hits.hits[i]._source));
       }
 
       // Make a map from the histogram results
@@ -1398,7 +1418,7 @@ describe('ElasticResponse', () => {
         hist[row.Time] = row.Value;
       }
 
-      response.responses[0].aggregations['2'].buckets.forEach((bucket: any) => {
+      response.responses[0].aggregations['2'].buckets.forEach((bucket) => {
         expect(hist[bucket.key]).toEqual(bucket.doc_count);
       });
     });
@@ -1469,3 +1489,41 @@ describe('ElasticResponse', () => {
     });
   });
 });
+
+interface MockedElasticResponse {
+  aggregations?: {
+    [key: string]: {
+      buckets: Array<{
+        doc_count?: number;
+        key: string | number;
+        [key: string]: unknown;
+      }>;
+    };
+  };
+  hits?: {
+    total: number;
+    hits: Array<{
+      _id?: string;
+      _type?: string;
+      _index?: string;
+      _source: { sourceProp: string };
+      fields: { fieldProp: string };
+    }>;
+  };
+}
+
+interface MockedQueryData {
+  target: ElasticsearchQuery;
+  response: MockedElasticResponse;
+}
+
+interface MockedResultData<T = number[]> {
+  refId: string;
+  target: string;
+  datapoints: T[];
+  type: string;
+  rows: number[][];
+  total: number;
+  fields: Field[];
+  columns: Column[];
+}

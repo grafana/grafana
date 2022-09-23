@@ -135,7 +135,7 @@ export class ErrorBoundaryAlert extends PureComponent<ErrorBoundaryAlertProps> {
  *
  * @public
  */
-export function withErrorBoundary<P = {}>(
+export function withErrorBoundary<P extends {} = {}>(
   Component: ComponentType<P>,
   errorBoundaryProps: Omit<ErrorBoundaryAlertProps, 'children'> = {}
 ): ComponentType<P> {

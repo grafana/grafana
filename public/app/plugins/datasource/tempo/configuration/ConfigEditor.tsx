@@ -14,7 +14,7 @@ import { ServiceGraphSettings } from './ServiceGraphSettings';
 
 export type Props = DataSourcePluginOptionsEditorProps;
 
-export const ConfigEditor: React.FC<Props> = ({ options, onOptionsChange }) => {
+export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
   return (
     <>
       <DataSourceHttpSettings

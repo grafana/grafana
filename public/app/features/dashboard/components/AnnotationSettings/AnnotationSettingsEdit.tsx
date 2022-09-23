@@ -19,7 +19,7 @@ type Props = {
 
 export const newAnnotationName = 'New annotation';
 
-export const AnnotationSettingsEdit: React.FC<Props> = ({ editIdx, dashboard }) => {
+export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
   const [annotation, setAnnotation] = useState(dashboard.annotations.list[editIdx]);
 
   const { value: ds } = useAsync(() => {

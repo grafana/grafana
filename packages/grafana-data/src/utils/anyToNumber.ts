@@ -5,7 +5,7 @@ import { toNumber } from 'lodash';
  *
  * @internal
  * */
-export function anyToNumber(value: any): number {
+export function anyToNumber(value: unknown): number {
   if (typeof value === 'number') {
     return value;
   }

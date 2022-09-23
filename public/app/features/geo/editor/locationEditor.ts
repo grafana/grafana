@@ -5,6 +5,7 @@ import {
   FrameGeometrySourceMode,
   PanelOptionsEditorBuilder,
 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors/src';
 import { GazetteerPathEditor } from 'app/features/geo/editor/GazetteerPathEditor';
 
 export function addLocationFields<TOptions>(
@@ -20,10 +21,26 @@ export function addLocationFields<TOptions>(
     defaultValue: FrameGeometrySourceMode.Auto,
     settings: {
       options: [
-        { value: FrameGeometrySourceMode.Auto, label: 'Auto' },
-        { value: FrameGeometrySourceMode.Coords, label: 'Coords' },
-        { value: FrameGeometrySourceMode.Geohash, label: 'Geohash' },
-        { value: FrameGeometrySourceMode.Lookup, label: 'Lookup' },
+        {
+          value: FrameGeometrySourceMode.Auto,
+          label: 'Auto',
+          ariaLabel: selectors.components.Transforms.SpatialOperations.location.autoOption,
+        },
+        {
+          value: FrameGeometrySourceMode.Coords,
+          label: 'Coords',
+          ariaLabel: selectors.components.Transforms.SpatialOperations.location.coords.option,
+        },
+        {
+          value: FrameGeometrySourceMode.Geohash,
+          label: 'Geohash',
+          ariaLabel: selectors.components.Transforms.SpatialOperations.location.geohash.option,
+        },
+        {
+          value: FrameGeometrySourceMode.Lookup,
+          label: 'Lookup',
+          ariaLabel: selectors.components.Transforms.SpatialOperations.location.lookup.option,
+        },
       ],
     },
   });

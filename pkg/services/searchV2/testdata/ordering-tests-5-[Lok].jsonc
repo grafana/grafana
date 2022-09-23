@@ -1,0 +1,71 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] 
+//  Name: ordering frame
+//  Dimensions: 2 Fields by 8 Rows
+//  +--------------------------+-------------------+
+//  | Name: name               | Name: score       |
+//  | Labels:                  | Labels:           |
+//  | Type: []string           | Type: []float64   |
+//  +--------------------------+-------------------+
+//  | Loki 2.0                 | 8.386497572003142 |
+//  | Loki 20.0                | 8.351238737232393 |
+//  | Loki Stats               | 8.289644692681875 |
+//  | Loki 2.0 Stats           | 8.237634633059454 |
+//  | Loki histogram           | 8.237634633059454 |
+//  | Loki histogram2          | 8.214550743132483 |
+//  | Loki Second Word         | 8.173207674966303 |
+//  | Loki Tests - Bar Gauge 2 | 8.105690026892566 |
+//  +--------------------------+-------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "frames": [
+    {
+      "schema": {
+        "name": "ordering frame",
+        "fields": [
+          {
+            "name": "name",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "score",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            "Loki 2.0",
+            "Loki 20.0",
+            "Loki Stats",
+            "Loki 2.0 Stats",
+            "Loki histogram",
+            "Loki histogram2",
+            "Loki Second Word",
+            "Loki Tests - Bar Gauge 2"
+          ],
+          [
+            8.386497572003142,
+            8.351238737232393,
+            8.289644692681875,
+            8.237634633059454,
+            8.237634633059454,
+            8.214550743132483,
+            8.173207674966303,
+            8.105690026892566
+          ]
+        ]
+      }
+    }
+  ]
+}

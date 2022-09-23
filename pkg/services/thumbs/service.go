@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	dashboardthumbs "github.com/grafana/grafana/pkg/services/dashboard_thumbs"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
 	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/segmentio/encoding/json"
@@ -76,14 +77,14 @@ type crawlerScheduleOptions struct {
 func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	lockService *serverlock.ServerLockService, renderService rendering.Service,
 	gl *live.GrafanaLive, store *sqlstore.SQLStore, authSetupService CrawlerAuthSetupService,
-	dashboardService dashboards.DashboardService, searchService searchV2.SearchService,
+	dashboardService dashboards.DashboardService, dashboardThumbsService dashboardthumbs.Service, searchService searchV2.SearchService,
 	dsPermissionsService permissions.DatasourcePermissionsService, licensing models.Licensing) Service {
 	if !features.IsEnabled(featuremgmt.FlagDashboardPreviews) {
 		return &dummyService{}
 	}
 	logger := log.New("previews_service")
 
-	thumbnailRepo := newThumbnailRepo(store, searchService)
+	thumbnailRepo := newThumbnailRepo(dashboardThumbsService, searchService)
 
 	canRunCrawler := true
 
@@ -317,7 +318,7 @@ func (hs *thumbService) GetDashboardPreviewsSetupSettings(c *models.ReqContext) 
 }
 
 func (hs *thumbService) getDashboardPreviewsSetupSettings(ctx context.Context) dashboardPreviewsSetupConfig {
-	systemRequirements := hs.getSystemRequirements()
+	systemRequirements := hs.getSystemRequirements(ctx)
 	thumbnailsExist, err := hs.thumbnailRepo.doThumbnailsExist(ctx)
 
 	if err != nil {
@@ -333,8 +334,8 @@ func (hs *thumbService) getDashboardPreviewsSetupSettings(ctx context.Context) d
 	}
 }
 
-func (hs *thumbService) getSystemRequirements() dashboardPreviewsSystemRequirements {
-	res, err := hs.renderingService.HasCapability(rendering.ScalingDownImages)
+func (hs *thumbService) getSystemRequirements(ctx context.Context) dashboardPreviewsSystemRequirements {
+	res, err := hs.renderingService.HasCapability(ctx, rendering.ScalingDownImages)
 	if err != nil {
 		hs.log.Error("Error when verifying dashboard previews system requirements thumbnail", "err", err.Error())
 		return dashboardPreviewsSystemRequirements{

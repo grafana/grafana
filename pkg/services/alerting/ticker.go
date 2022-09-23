@@ -11,10 +11,10 @@ import (
 )
 
 // Ticker is a ticker to power the alerting scheduler. it's like a time.Ticker, except:
-// * it doesn't drop ticks for slow receivers, rather, it queues up.  so that callers are in control to instrument what's going on.
-// * it ticks on interval marks or very shortly after. this provides a predictable load pattern
-//   (this shouldn't cause too much load contention issues because the next steps in the pipeline just process at their own pace)
-// * the timestamps are used to mark "last datapoint to query for" and as such, are a configurable amount of seconds in the past
+//   - it doesn't drop ticks for slow receivers, rather, it queues up.  so that callers are in control to instrument what's going on.
+//   - it ticks on interval marks or very shortly after. this provides a predictable load pattern
+//     (this shouldn't cause too much load contention issues because the next steps in the pipeline just process at their own pace)
+//   - the timestamps are used to mark "last datapoint to query for" and as such, are a configurable amount of seconds in the past
 type Ticker struct {
 	C        chan time.Time
 	clock    clock.Clock

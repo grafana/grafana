@@ -325,7 +325,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.Equal(t, firstLevel.Aggregation.Type, "date_histogram")
 			hAgg := firstLevel.Aggregation.Aggregation.(*es.DateHistogramAgg)
 			require.Equal(t, hAgg.Field, "@timestamp")
-			require.Equal(t, hAgg.FixedInterval, "$__interval")
+			require.Equal(t, hAgg.FixedInterval, "$__interval_msms")
 			require.Equal(t, hAgg.MinDocCount, 2)
 
 			t.Run("Should not include time_zone when timeZone is utc", func(t *testing.T) {

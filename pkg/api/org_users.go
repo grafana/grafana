@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -18,7 +19,7 @@ import (
 
 // swagger:route POST /org/users org addOrgUserToCurrentOrg
 //
-// Add a new user to the current organization
+// Add a new user to the current organization.
 //
 // Adds a global user to the current organization.
 //
@@ -31,17 +32,17 @@ import (
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) AddOrgUserToCurrentOrg(c *models.ReqContext) response.Response {
-	cmd := models.AddOrgUserCommand{}
+	cmd := org.AddOrgUserCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	cmd.OrgId = c.OrgID
+	cmd.OrgID = c.OrgID
 	return hs.addOrgUserHelper(c, cmd)
 }
 
 // swagger:route POST /orgs/{org_id}/users orgs addOrgUser
 //
-// Add a new user to the current organization
+// Add a new user to the current organization.
 //
 // Adds a global user to the current organization.
 //
@@ -54,20 +55,20 @@ func (hs *HTTPServer) AddOrgUserToCurrentOrg(c *models.ReqContext) response.Resp
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) AddOrgUser(c *models.ReqContext) response.Response {
-	cmd := models.AddOrgUserCommand{}
+	cmd := org.AddOrgUserCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
 	var err error
-	cmd.OrgId, err = strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
+	cmd.OrgID, err = strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "orgId is invalid", err)
 	}
 	return hs.addOrgUserHelper(c, cmd)
 }
 
-func (hs *HTTPServer) addOrgUserHelper(c *models.ReqContext, cmd models.AddOrgUserCommand) response.Response {
+func (hs *HTTPServer) addOrgUserHelper(c *models.ReqContext, cmd org.AddOrgUserCommand) response.Response {
 	if !cmd.Role.IsValid() {
 		return response.Error(400, "Invalid role specified", nil)
 	}
@@ -81,13 +82,13 @@ func (hs *HTTPServer) addOrgUserHelper(c *models.ReqContext, cmd models.AddOrgUs
 		return response.Error(404, "User not found", nil)
 	}
 
-	cmd.UserId = userToAdd.ID
+	cmd.UserID = userToAdd.ID
 
-	if err := hs.SQLStore.AddOrgUser(c.Req.Context(), &cmd); err != nil {
+	if err := hs.orgService.AddOrgUser(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, models.ErrOrgUserAlreadyAdded) {
 			return response.JSON(409, util.DynMap{
 				"message": "User is already member of this organization",
-				"userId":  cmd.UserId,
+				"userId":  cmd.UserID,
 			})
 		}
 		return response.Error(500, "Could not add user to organization", err)
@@ -95,7 +96,7 @@ func (hs *HTTPServer) addOrgUserHelper(c *models.ReqContext, cmd models.AddOrgUs
 
 	return response.JSON(http.StatusOK, util.DynMap{
 		"message": "User added to organization",
-		"userId":  cmd.UserId,
+		"userId":  cmd.UserID,
 	})
 }
 
@@ -275,7 +276,7 @@ func (hs *HTTPServer) SearchOrgUsersWithPaging(c *models.ReqContext) response.Re
 
 // swagger:route PATCH /org/users/{user_id} org updateOrgUserForCurrentOrg
 //
-// Updates the given user
+// Updates the given user.
 //
 // If you are running Grafana Enterprise and have Fine-grained access control enabled
 // you need to have a permission with action: `org.users.role:update` with scope `users:*`.
@@ -349,7 +350,7 @@ func (hs *HTTPServer) updateOrgUserHelper(c *models.ReqContext, cmd models.Updat
 
 // swagger:route DELETE /org/users/{user_id} org removeOrgUserForCurrentOrg
 //
-// Delete user in current organization
+// Delete user in current organization.
 //
 // If you are running Grafana Enterprise and have Fine-grained access control enabled
 // you need to have a permission with action: `org.users:remove` with scope `users:*`.
@@ -375,7 +376,7 @@ func (hs *HTTPServer) RemoveOrgUserForCurrentOrg(c *models.ReqContext) response.
 
 // swagger:route DELETE /orgs/{org_id}/users/{user_id} orgs removeOrgUser
 //
-// Delete user in current organization
+// Delete user in current organization.
 //
 // If you are running Grafana Enterprise and have Fine-grained access control enabled
 // you need to have a permission with action: `org.users:remove` with scope `users:*`.

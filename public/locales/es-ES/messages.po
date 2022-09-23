@@ -725,10 +725,6 @@ msgid "shared-preferences.fields.home-dashboard-placeholder"
 msgstr ""
 
 #: public/app/core/components/SharedPreferences/SharedPreferences.tsx
-msgid "shared-preferences.fields.home-dashboard-tooltip"
-msgstr ""
-
-#: public/app/core/components/SharedPreferences/SharedPreferences.tsx
 msgid "shared-preferences.fields.locale-label"
 msgstr ""
 
