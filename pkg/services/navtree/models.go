@@ -50,22 +50,28 @@ type NavLink struct {
 // NavIDCfg is the id for org configuration navigation node
 const NavIDCfg = "cfg"
 
-func GetServerAdminNode(children []*NavLink) *NavLink {
-	url := ""
-	if len(children) > 0 {
-		url = children[0].Url
+type NavTreeRoot struct {
+	Children []*NavLink
+}
+
+func (root *NavTreeRoot) AddSection(node *NavLink) {
+	root.Children = append(root.Children, node)
+}
+
+func (root *NavTreeRoot) RemoveSection(node *NavLink) {
+	var result []*NavLink
+
+	for _, child := range root.Children {
+		if child != node {
+			result = append(result, child)
+		}
 	}
-	return &NavLink{
-		Text:         "Server admin",
-		SubTitle:     "Manage all users and orgs",
-		HideFromTabs: true,
-		Id:           "admin",
-		Icon:         "shield",
-		Url:          url,
-		SortWeight:   WeightAdmin,
-		Section:      NavSectionConfig,
-		Children:     children,
-	}
+
+	root.Children = result
+}
+
+func (root *NavTreeRoot) FindById(id string) *NavLink {
+	return FindById(root.Children, id)
 }
 
 func FindById(nodes []*NavLink, id string) *NavLink {
@@ -81,16 +87,4 @@ func FindById(nodes []*NavLink, id string) *NavLink {
 	}
 
 	return nil
-}
-
-func FilterOutById(nodes []*NavLink, id string) []*NavLink {
-	var result []*NavLink
-
-	for _, child := range nodes {
-		if child.Id != id {
-			result = append(result, child)
-		}
-	}
-
-	return result
 }

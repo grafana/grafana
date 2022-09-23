@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 )
 
-func (s *ServiceImpl) setupConfigNodes(c *models.ReqContext) ([]*navtree.NavLink, error) {
+func (s *ServiceImpl) getOrgAdminNode(c *models.ReqContext) (*navtree.NavLink, error) {
 	var configNodes []*navtree.NavLink
 
 	hasAccess := ac.HasAccess(s.accessControl, c)
@@ -103,7 +103,86 @@ func (s *ServiceImpl) setupConfigNodes(c *models.ReqContext) ([]*navtree.NavLink
 			Url:         s.cfg.AppSubURL + "/org/serviceaccounts",
 		})
 	}
-	return configNodes, nil
+
+	if len(configNodes) == 0 {
+		return nil, nil
+	}
+
+	configNode := &navtree.NavLink{
+		Id:         navtree.NavIDCfg,
+		Text:       "Configuration",
+		SubTitle:   "Organization: " + c.OrgName,
+		Icon:       "cog",
+		Url:        configNodes[0].Url,
+		Section:    navtree.NavSectionConfig,
+		SortWeight: navtree.WeightConfig,
+		Children:   configNodes,
+	}
+
+	if s.features.IsEnabled(featuremgmt.FlagTopnav) {
+		configNode.Url = "/admin"
+	} else {
+		configNode.Url = configNodes[0].Url
+	}
+
+	return configNode, nil
+}
+
+func (s *ServiceImpl) getServerAdminNode(c *models.ReqContext) *navtree.NavLink {
+	hasAccess := ac.HasAccess(s.accessControl, c)
+	hasGlobalAccess := ac.HasGlobalAccess(s.accessControl, s.accesscontrolService, c)
+	orgsAccessEvaluator := ac.EvalPermission(ac.ActionOrgsRead)
+	adminNavLinks := []*navtree.NavLink{}
+
+	if hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll)) {
+		adminNavLinks = append(adminNavLinks, &navtree.NavLink{
+			Text: "Users", Id: "global-users", Url: s.cfg.AppSubURL + "/admin/users", Icon: "user",
+		})
+	}
+
+	if hasGlobalAccess(ac.ReqGrafanaAdmin, orgsAccessEvaluator) {
+		adminNavLinks = append(adminNavLinks, &navtree.NavLink{
+			Text: "Orgs", Id: "global-orgs", Url: s.cfg.AppSubURL + "/admin/orgs", Icon: "building",
+		})
+	}
+
+	if hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionSettingsRead)) {
+		adminNavLinks = append(adminNavLinks, &navtree.NavLink{
+			Text: "Settings", Id: "server-settings", Url: s.cfg.AppSubURL + "/admin/settings", Icon: "sliders-v-alt",
+		})
+	}
+
+	if hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionSettingsRead)) && s.features.IsEnabled(featuremgmt.FlagStorage) {
+		adminNavLinks = append(adminNavLinks, &navtree.NavLink{
+			Text:        "Storage",
+			Id:          "storage",
+			Description: "Manage file storage",
+			Icon:        "cube",
+			Url:         s.cfg.AppSubURL + "/admin/storage",
+		})
+	}
+
+	if s.cfg.LDAPEnabled && hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionLDAPStatusRead)) {
+		adminNavLinks = append(adminNavLinks, &navtree.NavLink{
+			Text: "LDAP", Id: "ldap", Url: s.cfg.AppSubURL + "/admin/ldap", Icon: "book",
+		})
+	}
+
+	if len(adminNavLinks) == 0 {
+		return nil
+	}
+
+	return &navtree.NavLink{
+		Text:         "Server admin",
+		SubTitle:     "Manage all users and orgs",
+		HideFromTabs: true,
+		Id:           "admin",
+		Icon:         "shield",
+		Url:          adminNavLinks[0].Url,
+		SortWeight:   navtree.WeightAdmin,
+		Section:      navtree.NavSectionConfig,
+		Children:     adminNavLinks,
+	}
 }
 
 func (s *ServiceImpl) ReqCanAdminTeams(c *models.ReqContext) bool {

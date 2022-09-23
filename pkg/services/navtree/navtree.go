@@ -6,5 +6,5 @@ import (
 )
 
 type Service interface {
-	GetNavTree(c *models.ReqContext, hasEditPerm bool, prefs *pref.Preference) ([]*NavLink, error)
+	GetNavTree(c *models.ReqContext, hasEditPerm bool, prefs *pref.Preference) (*NavTreeRoot, error)
 }

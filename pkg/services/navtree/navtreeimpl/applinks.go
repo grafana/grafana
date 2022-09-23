@@ -12,14 +12,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 )
 
-func (s *ServiceImpl) addAppLinks(treeRoots []*navtree.NavLink, c *models.ReqContext) ([]*navtree.NavLink, error) {
+func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *models.ReqContext) error {
 	topNavEnabled := s.features.IsEnabled(featuremgmt.FlagTopnav)
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	appLinks := []*navtree.NavLink{}
 
 	pss, err := s.pluginSettings.GetPluginSettings(c.Req.Context(), &pluginsettings.GetArgs{OrgID: c.OrgID})
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	isPluginEnabled := func(plugin plugins.PluginDTO) bool {
@@ -81,7 +81,7 @@ func (s *ServiceImpl) addAppLinks(treeRoots []*navtree.NavLink, c *models.ReqCon
 				}
 				link.Icon = include.Icon
 				if sectionForPageID, ok := s.cfg.NavigationNavIdOverrides[include.Path]; ok {
-					if sectionForPage := navtree.FindById(treeRoots, sectionForPageID); sectionForPage != nil {
+					if sectionForPage := treeRoot.FindById(sectionForPageID); sectionForPage != nil {
 						link.Id = "standalone-plugin-page-" + include.Path
 						sectionForPage.Children = append(sectionForPage.Children, link)
 					}
@@ -109,12 +109,12 @@ func (s *ServiceImpl) addAppLinks(treeRoots []*navtree.NavLink, c *models.ReqCon
 			}
 
 			if navId, hasNavId := s.cfg.NavigationAppNavIds[plugin.ID]; hasNavId && topNavEnabled {
-				if navNode := navtree.FindById(treeRoots, navId); navNode != nil {
+				if navNode := treeRoot.FindById(navId); navNode != nil {
 					navNode.Children = append(navNode.Children, appLink)
 				} else {
 					// Lazily add this node
 					if navId == "monitoring" {
-						treeRoots = append(treeRoots, &navtree.NavLink{
+						treeRoot.AddSection(&navtree.NavLink{
 							Text:        "Monitoring",
 							Id:          "monitoring",
 							Description: "Monitoring and infrastructure apps",
@@ -125,8 +125,8 @@ func (s *ServiceImpl) addAppLinks(treeRoots []*navtree.NavLink, c *models.ReqCon
 						})
 					}
 					if navId == "alerts-and-incidents" {
-						alertingNode := navtree.FindById(treeRoots, "alerting")
-						treeRoots = append(treeRoots, &navtree.NavLink{
+						alertingNode := treeRoot.FindById("alerting")
+						treeRoot.AddSection(&navtree.NavLink{
 							Text:        "Alerts & incidents",
 							Id:          "alerts-and-incidents",
 							Description: "Alerting and incident management apps",
@@ -136,7 +136,7 @@ func (s *ServiceImpl) addAppLinks(treeRoots []*navtree.NavLink, c *models.ReqCon
 							Url:         s.cfg.AppSubURL + "/alerts-and-incidents",
 						})
 						// Remove alerting node from navTree roots
-						treeRoots = navtree.FilterOutById(treeRoots, "alerting")
+						treeRoot.RemoveSection(alertingNode)
 					}
 					s.log.Error("Plugin app nav id not found", "pluginId", plugin.ID, "navId", navId)
 				}
@@ -152,5 +152,5 @@ func (s *ServiceImpl) addAppLinks(treeRoots []*navtree.NavLink, c *models.ReqCon
 		})
 	}
 
-	return treeRoots, nil
+	return nil
 }
