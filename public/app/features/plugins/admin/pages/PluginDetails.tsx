@@ -1,9 +1,7 @@
 import { css } from '@emotion/css';
-import React, { useEffect } from 'react';
-import { usePrevious } from 'react-use';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
 import { useStyles2, TabContent, Alert } from '@grafana/ui';
 import { Layout } from '@grafana/ui/src/components/Layout/Layout';
 import { Page } from 'app/core/components/Page/Page';
@@ -32,17 +30,6 @@ export default function PluginDetails({ match, queryParams }: Props): JSX.Elemen
   const { isLoading: isFetchLoading } = useFetchStatus();
   const { isLoading: isFetchDetailsLoading } = useFetchDetailsStatus();
   const styles = useStyles2(getStyles);
-  const prevTabs = usePrevious(navModel);
-
-  // If an app plugin is uninstalled we need to reset the active tab when the config / dashboards tabs are removed.
-  useEffect(() => {
-    const hasUninstalledWithConfigPages = prevTabs && prevTabs.children!.length > navModel.children!.length;
-    const isViewingAConfigPage = activePageId !== PluginTabIds.OVERVIEW && activePageId !== PluginTabIds.VERSIONS;
-
-    if (hasUninstalledWithConfigPages && isViewingAConfigPage) {
-      locationService.replace(`${url}?page=${PluginTabIds.OVERVIEW}`);
-    }
-  }, [activePageId, url, navModel, prevTabs]);
 
   if (isFetchLoading || isFetchDetailsLoading) {
     return (
