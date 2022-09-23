@@ -133,7 +133,14 @@ var sendUsageStats = func(uss *UsageStats, ctx context.Context, data *bytes.Buff
 	defer span.End()
 
 	client := http.Client{Timeout: 5 * time.Second}
-	resp, err := client.Post(usageStatsURL, "application/json", data)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, usageStatsURL, data)
+	if err != nil {
+		span.SetStatus(codes.Error, fmt.Sprintf("failed to create request for usage stats: %v", err))
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	uss.tracer.Inject(ctx, req.Header, span)
+	resp, err := client.Do(req)
 	if err != nil {
 		span.SetStatus(codes.Error, fmt.Sprintf("failed to send usage stats: %v", err))
 		return err
