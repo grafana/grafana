@@ -78,14 +78,13 @@ export const CanvasContextMenu = ({ scene }: Props) => {
     );
 
     const editElementMenuItem = () => {
-      const onClickEditElementMenuItem = () => {
-        scene.editModeEnabled.next(true);
-        closeContextMenu();
-      };
-
       if (selectedElements?.length === 1) {
-        const element = scene.findElementByTarget(selectedElements[0]);
+        const onClickEditElementMenuItem = () => {
+          scene.editModeEnabled.next(true);
+          closeContextMenu();
+        };
 
+        const element = scene.findElementByTarget(selectedElements[0]);
         return (
           element &&
           element.item.hasEditMode && (
