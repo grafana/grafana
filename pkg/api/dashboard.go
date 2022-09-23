@@ -752,6 +752,60 @@ func (hs *HTTPServer) GetDashboardVersion(c *models.ReqContext) response.Respons
 	return response.JSON(http.StatusOK, dashVersionMeta)
 }
 
+type ValidateDashboardResponse struct {
+	IsValid bool   `json:"isValid"`
+	Message string `json:"message,omitempty"`
+}
+
+type ValidateDashboardCommandLol struct {
+	Dashboard string `json:"dashboard" binding:"Required"`
+}
+
+func (hs *HTTPServer) ValidateDashboard(c *models.ReqContext) response.Response {
+	cmd := ValidateDashboardCommandLol{}
+
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
+	cm := hs.Coremodels.Dashboard()
+
+	dashboardBytes := []byte(cmd.Dashboard)
+	dashboardJson, err := simplejson.NewJson(dashboardBytes)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "unable to parse dashboard", err)
+	}
+
+	schemaVersion, err := dashboardJson.Get("schemaVersion").Int()
+
+	isValid := false
+	validationMessage := ""
+
+	// Only try to validate if the schemaVersion is at least the handoff version
+	// (the minimum schemaVersion against which the dashboard schema is known to
+	// work), or if schemaVersion is absent (which will happen once the Thema
+	// schema becomes canonical).
+	if err != nil || schemaVersion >= dashboard.HandoffSchemaVersion {
+		v, _ := cuectx.JSONtoCUE("dashboard.json", dashboardBytes)
+		_, validationErr := cm.CurrentSchema().Validate(v)
+
+		if validationErr == nil {
+			isValid = true
+		} else {
+			validationMessage = validationErr.Error()
+		}
+	} else {
+		validationMessage = "invalid schema version"
+	}
+
+	respData := &ValidateDashboardResponse{
+		IsValid: isValid,
+		Message: validationMessage,
+	}
+
+	return response.JSON(http.StatusOK, respData)
+}
+
 // swagger:route POST /dashboards/calculate-diff dashboards calculateDashboardDiff
 //
 // Perform diff on two dashboards.
