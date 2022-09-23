@@ -17,27 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-type ErrCaseInsensitiveLoginConflict struct {
-	users []user.User
-}
-
-func (e *ErrCaseInsensitiveLoginConflict) Unwrap() error {
-	return user.ErrCaseInsensitive
-}
-
-func (e *ErrCaseInsensitiveLoginConflict) Error() string {
-	n := len(e.users)
-
-	userStrings := make([]string, 0, n)
-	for _, v := range e.users {
-		userStrings = append(userStrings, fmt.Sprintf("%s (email:%s, id:%d)", v.Login, v.Email, v.ID))
-	}
-
-	return fmt.Sprintf(
-		"Found a conflict in user login information. %d users already exist with either the same login or email: [%s].",
-		n, strings.Join(userStrings, ", "))
-}
-
 func (ss *SQLStore) getOrgIDForNewUser(sess *DBSession, args user.CreateUserCommand) (int64, error) {
 	if ss.Cfg.AutoAssignOrg && args.OrgID != 0 {
 		if err := verifyExistingOrg(sess, args.OrgID); err != nil {
@@ -63,7 +42,7 @@ func (ss *SQLStore) userCaseInsensitiveLoginConflict(ctx context.Context, sess *
 	}
 
 	if len(users) > 1 {
-		return &ErrCaseInsensitiveLoginConflict{users}
+		return &user.ErrCaseInsensitiveLoginConflict{Users: users}
 	}
 
 	return nil
