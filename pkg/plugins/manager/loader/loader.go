@@ -52,18 +52,19 @@ type Loader struct {
 
 func ProvideService(cfg *config.Cfg, license models.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider) *Loader {
-	return New(cfg, license, authorizer, pluginRegistry, backendProvider, storage.FileSystem(logger.NewLogger("loader.fs"), cfg.PluginsPath))
+	return New(cfg, license, authorizer, pluginRegistry, backendProvider, process.NewManager(pluginRegistry),
+		storage.FileSystem(logger.NewLogger("loader.fs"), cfg.PluginsPath))
 }
 
 func New(cfg *config.Cfg, license models.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider,
-	pluginStorage storage.Manager) *Loader {
+	processManager process.Service, pluginStorage storage.Manager) *Loader {
 	return &Loader{
 		pluginFinder:       finder.New(),
 		pluginRegistry:     pluginRegistry,
-		processManager:     process.NewManager(pluginRegistry),
 		pluginInitializer:  initializer.New(cfg, backendProvider, license),
 		signatureValidator: signature.NewValidator(authorizer),
+		processManager:     processManager,
 		pluginStorage:      pluginStorage,
 		errs:               make(map[string]*plugins.SignatureError),
 		log:                log.New("plugin.loader"),

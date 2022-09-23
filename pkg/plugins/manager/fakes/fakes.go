@@ -254,16 +254,20 @@ func (r *FakePluginRepo) GetPluginDownloadOptions(ctx context.Context, pluginID,
 }
 
 type FakePluginStorage struct {
+	Store        map[string]struct{}
 	AddFunc      func(_ context.Context, pluginID string, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error)
 	RegisterFunc func(_ context.Context, pluginID, pluginDir string) error
 	RemoveFunc   func(_ context.Context, pluginID string) error
 }
 
 func NewFakePluginStorage() *FakePluginStorage {
-	return &FakePluginStorage{}
+	return &FakePluginStorage{
+		Store: map[string]struct{}{},
+	}
 }
 
 func (s *FakePluginStorage) Register(ctx context.Context, pluginID, pluginDir string) error {
+	s.Store[pluginID] = struct{}{}
 	if s.RegisterFunc != nil {
 		return s.RegisterFunc(ctx, pluginID, pluginDir)
 	}
@@ -271,6 +275,7 @@ func (s *FakePluginStorage) Register(ctx context.Context, pluginID, pluginDir st
 }
 
 func (s *FakePluginStorage) Add(ctx context.Context, pluginID string, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
+	s.Store[pluginID] = struct{}{}
 	if s.AddFunc != nil {
 		return s.AddFunc(ctx, pluginID, z)
 	}
@@ -278,6 +283,7 @@ func (s *FakePluginStorage) Add(ctx context.Context, pluginID string, z *zip.Rea
 }
 
 func (s *FakePluginStorage) Remove(ctx context.Context, pluginID string) error {
+	delete(s.Store, pluginID)
 	if s.RemoveFunc != nil {
 		return s.RemoveFunc(ctx, pluginID)
 	}
@@ -312,4 +318,64 @@ func (m *FakeProcessManager) Stop(ctx context.Context, pluginID string) error {
 		return m.StopFunc(ctx, pluginID)
 	}
 	return nil
+}
+
+type FakeBackendProcessProvider struct {
+	Requested map[string]int
+	Invoked   map[string]int
+}
+
+func NewFakeBackendProcessProvider() *FakeBackendProcessProvider {
+	return &FakeBackendProcessProvider{
+		Requested: make(map[string]int),
+		Invoked:   make(map[string]int),
+	}
+}
+
+func (pr *FakeBackendProcessProvider) BackendFactory(_ context.Context, p *plugins.Plugin) backendplugin.PluginFactoryFunc {
+	pr.Requested[p.ID]++
+	return func(pluginID string, _ log.Logger, _ []string) (backendplugin.Plugin, error) {
+		pr.Invoked[pluginID]++
+		return &FakePluginClient{}, nil
+	}
+}
+
+type FakeLicensingService struct {
+	TokenRaw string
+}
+
+func NewFakeLicensingService() *FakeLicensingService {
+	return &FakeLicensingService{}
+}
+
+func (t *FakeLicensingService) Expiry() int64 {
+	return 0
+}
+
+func (t *FakeLicensingService) Edition() string {
+	return ""
+}
+
+func (t *FakeLicensingService) StateInfo() string {
+	return ""
+}
+
+func (t *FakeLicensingService) ContentDeliveryPrefix() string {
+	return ""
+}
+
+func (t *FakeLicensingService) LicenseURL(_ bool) string {
+	return ""
+}
+
+func (t *FakeLicensingService) Environment() map[string]string {
+	return map[string]string{"GF_ENTERPRISE_LICENSE_TEXT": t.TokenRaw}
+}
+
+func (*FakeLicensingService) EnabledFeatures() map[string]bool {
+	return map[string]bool{}
+}
+
+func (*FakeLicensingService) FeatureEnabled(_ string) bool {
+	return false
 }
