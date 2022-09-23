@@ -9,7 +9,8 @@ interface EditorListProps<T> {
   renderItem: (
     item: Partial<T>,
     onChangeItem: (item: Partial<T>) => void,
-    onDeleteItem: () => void
+    onDeleteItem: () => void,
+    index: number
   ) => React.ReactElement;
   onChange: (items: Array<Partial<T>>) => void;
 }
@@ -39,7 +40,8 @@ export function EditorList<T>({ items, renderItem, onChange }: EditorListProps<T
           {renderItem(
             item,
             (newItem) => onChangeItem(index, newItem),
-            () => onDeleteItem(index)
+            () => onDeleteItem(index),
+            index
           )}
         </div>
       ))}
