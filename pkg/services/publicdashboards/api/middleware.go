@@ -2,7 +2,6 @@ package api
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
@@ -10,14 +9,30 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
+// Adds orgId to context based on org of public dashboard
+func SetPublicDashboardOrgIdOnContext(publicDashboardService publicdashboards.Service) func(c *models.ReqContext) {
+	return func(c *models.ReqContext) {
+		// Check access token is present on the request
+		accessToken, _ := web.Params(c.Req)[":accessToken"]
+		if accessToken == "" {
+			return
+		}
+
+		// Get public dashboard
+		pd, _, err := publicDashboardService.GetPublicDashboard(c.Req.Context(), accessToken)
+		if err != nil || pd == nil {
+			return
+		}
+
+		if pd.IsEnabled {
+			c.OrgID = pd.OrgId
+		}
+	}
+}
+
+// Adds public dashboard flag on context
 func SetPublicDashboardFlag() func(c *models.ReqContext) {
 	return func(c *models.ReqContext) {
-		// TODO: Find a better place to set this, or rename this function
-		orgIDValue := c.Req.URL.Query().Get("orgId")
-		orgID, err := strconv.ParseInt(orgIDValue, 10, 64)
-		if err == nil && orgID > 0 && orgID != c.OrgID {
-			c.OrgID = orgID
-		}
 		c.IsPublicDashboardView = true
 	}
 }
