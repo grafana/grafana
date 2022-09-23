@@ -424,23 +424,11 @@ func (m *mockSocial) GetOAuthProviders() map[string]bool {
 	return m.OAuthProviders
 }
 
-type fakePluginStore struct {
-	plugins.Store
-
-	plugins map[string]plugins.PluginDTO
-}
-
-func (pr fakePluginStore) Plugin(_ context.Context, pluginID string) (plugins.PluginDTO, bool) {
-	p, exists := pr.plugins[pluginID]
-
-	return p, exists
-}
-
 func setupSomeDataSourcePlugins(t *testing.T, s *Service) {
 	t.Helper()
 
-	s.plugins = &fakePluginStore{
-		plugins: map[string]plugins.PluginDTO{
+	s.plugins = &plugins.FakePluginStore{
+		PluginMap: map[string]plugins.PluginDTO{
 			datasources.DS_ES: {
 				Signature: "internal",
 			},
@@ -457,19 +445,6 @@ func setupSomeDataSourcePlugins(t *testing.T, s *Service) {
 	}
 }
 
-func (pr fakePluginStore) Plugins(_ context.Context, pluginTypes ...plugins.Type) []plugins.PluginDTO {
-	var result []plugins.PluginDTO
-	for _, v := range pr.plugins {
-		for _, t := range pluginTypes {
-			if v.Type == t {
-				result = append(result, v)
-			}
-		}
-	}
-
-	return result
-}
-
 func createService(t testing.TB, cfg *setting.Cfg, store sqlstore.Store, opts ...func(*serviceOptions)) *Service {
 	t.Helper()
 
@@ -484,7 +459,7 @@ func createService(t testing.TB, cfg *setting.Cfg, store sqlstore.Store, opts ..
 		cfg,
 		store,
 		&mockSocial{},
-		&fakePluginStore{},
+		&plugins.FakePluginStore{},
 		featuremgmt.WithFeatures("feature1", "feature2"),
 		o.datasources,
 		httpclient.NewProvider(),

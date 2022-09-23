@@ -1,6 +1,7 @@
 package navtreeimpl
 
 import (
+	"fmt"
 	"path"
 	"sort"
 
@@ -36,11 +37,13 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *models.ReqCo
 
 	for _, plugin := range s.pluginStore.Plugins(c.Req.Context(), plugins.App) {
 		if !isPluginEnabled(plugin) {
+			fmt.Printf("not enabled")
 			continue
 		}
 
 		if !hasAccess(ac.ReqSignedIn,
 			ac.EvalPermission(plugins.ActionAppAccess, plugins.ScopeProvider.GetResourceScope(plugin.ID))) {
+			fmt.Printf("not permission")
 			continue
 		}
 
@@ -150,6 +153,22 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *models.ReqCo
 		sort.SliceStable(appLinks, func(i, j int) bool {
 			return appLinks[i].Text < appLinks[j].Text
 		})
+	}
+
+	if topNavEnabled {
+		treeRoot.AddSection(&navtree.NavLink{
+			Text:        "Apps",
+			Icon:        "apps",
+			Description: "App plugins",
+			Id:          "apps",
+			Children:    appLinks,
+			Section:     navtree.NavSectionCore,
+			Url:         s.cfg.AppSubURL + "/apps",
+		})
+	} else {
+		for _, appLink := range appLinks {
+			treeRoot.AddSection(appLink)
+		}
 	}
 
 	return nil

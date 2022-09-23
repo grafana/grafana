@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/framework/coremodel/registry"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
@@ -58,7 +59,7 @@ func TestGetHomeDashboard(t *testing.T) {
 
 	hs := &HTTPServer{
 		Cfg:                     cfg,
-		pluginStore:             &fakePluginStore{},
+		pluginStore:             &plugins.FakePluginStore{},
 		SQLStore:                mockstore.NewSQLStoreMock(),
 		preferenceService:       prefService,
 		dashboardVersionService: dashboardVersionService,
@@ -141,7 +142,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 		hs := &HTTPServer{
 			Cfg:                     setting.NewCfg(),
-			pluginStore:             &fakePluginStore{},
+			pluginStore:             &plugins.FakePluginStore{},
 			SQLStore:                mockSQLStore,
 			AccessControl:           accesscontrolmock.New(),
 			Features:                featuremgmt.WithFeatures(),
@@ -1027,7 +1028,7 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 			QuotaService: &quotaimpl.Service{
 				Cfg: cfg,
 			},
-			pluginStore:           &fakePluginStore{},
+			pluginStore:           &plugins.FakePluginStore{},
 			LibraryPanelService:   &mockLibraryPanelService{},
 			LibraryElementService: &mockLibraryElementService{},
 			DashboardService:      dashboardService,

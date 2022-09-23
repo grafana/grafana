@@ -181,8 +181,8 @@ func Test_GetPluginAssets(t *testing.T) {
 				requestedFile: {},
 			},
 		}
-		service := &fakePluginStore{
-			plugins: map[string]plugins.PluginDTO{
+		service := &plugins.FakePluginStore{
+			PluginMap: map[string]plugins.PluginDTO{
 				pluginID: p,
 			},
 		}
@@ -206,8 +206,8 @@ func Test_GetPluginAssets(t *testing.T) {
 			},
 			PluginDir: pluginDir,
 		}
-		service := &fakePluginStore{
-			plugins: map[string]plugins.PluginDTO{
+		service := &plugins.FakePluginStore{
+			PluginMap: map[string]plugins.PluginDTO{
 				pluginID: p,
 			},
 		}
@@ -229,8 +229,8 @@ func Test_GetPluginAssets(t *testing.T) {
 			},
 			PluginDir: pluginDir,
 		}
-		service := &fakePluginStore{
-			plugins: map[string]plugins.PluginDTO{
+		service := &plugins.FakePluginStore{
+			PluginMap: map[string]plugins.PluginDTO{
 				pluginID: p,
 			},
 		}
@@ -254,8 +254,8 @@ func Test_GetPluginAssets(t *testing.T) {
 			},
 			PluginDir: pluginDir,
 		}
-		service := &fakePluginStore{
-			plugins: map[string]plugins.PluginDTO{
+		service := &plugins.FakePluginStore{
+			PluginMap: map[string]plugins.PluginDTO{
 				pluginID: p,
 			},
 		}
@@ -277,8 +277,8 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for an non-existing plugin", func(t *testing.T) {
-		service := &fakePluginStore{
-			plugins: map[string]plugins.PluginDTO{},
+		service := &plugins.FakePluginStore{
+			PluginMap: map[string]plugins.PluginDTO{},
 		}
 		l := &logtest.Fake{}
 
@@ -298,8 +298,8 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for a core plugin's file", func(t *testing.T) {
-		service := &fakePluginStore{
-			plugins: map[string]plugins.PluginDTO{
+		service := &plugins.FakePluginStore{
+			PluginMap: map[string]plugins.PluginDTO{
 				pluginID: {
 					Class: plugins.Core,
 				},
@@ -398,7 +398,7 @@ func (c *fakePluginClient) QueryData(ctx context.Context, req *backend.QueryData
 }
 
 func Test_PluginsList_AccessControl(t *testing.T) {
-	pluginStore := fakePluginStore{plugins: map[string]plugins.PluginDTO{
+	pluginStore := plugins.FakePluginStore{PluginMap: map[string]plugins.PluginDTO{
 		"test-app": {
 			PluginDir:     "/grafana/plugins/test-app/dist",
 			Class:         "external",
@@ -434,7 +434,7 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 			},
 		},
 	}}
-	pluginSettings := fakePluginSettings{plugins: map[string]*pluginsettings.DTO{
+	pluginSettings := pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
 		"test-app": {ID: 0, OrgID: 1, PluginID: "test-app", PluginVersion: "1.0.0", Enabled: true},
 		"mysql":    {ID: 0, OrgID: 1, PluginID: "mysql", PluginVersion: "", Enabled: true}},
 	}
