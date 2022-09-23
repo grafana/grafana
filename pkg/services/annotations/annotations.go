@@ -5,10 +5,12 @@ import (
 	"errors"
 
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var (
-	ErrTimerangeMissing = errors.New("missing timerange")
+	ErrTimerangeMissing     = errors.New("missing timerange")
+	ErrBaseTagLimitExceeded = errutil.NewBase(errutil.StatusBadRequest, "annotations.tag-limit-exceeded", errutil.WithPublicMessage("Tags length exceeds the maximum allowed."))
 )
 
 type Repository interface {
