@@ -303,9 +303,7 @@ describe('CorrelationsPage', () => {
       fireEvent.click(screen.getByRole('button', { name: /add$/i }));
 
       // Waits for the form to be removed, meaning the correlation got successfully saved
-      await waitFor(() => {
-        expect(screen.queryByRole('button', { name: /add$/i })).not.toBeInTheDocument();
-      });
+      await waitForElementToBeRemoved(() => screen.queryByRole('button', { name: /add$/i }));
 
       // the table showing correlations should have appeared
       expect(screen.getByRole('table')).toBeInTheDocument();
@@ -431,9 +429,7 @@ describe('CorrelationsPage', () => {
       fireEvent.click(screen.getByRole('button', { name: /add$/i }));
 
       // the form should get removed after successful submissions
-      await waitFor(() => {
-        expect(screen.queryByRole('button', { name: /add$/i })).not.toBeInTheDocument();
-      });
+      await waitForElementToBeRemoved(() => screen.queryByRole('button', { name: /add$/i }));
     });
 
     it('correctly closes the form when clicking on the close icon', async () => {
@@ -443,9 +439,7 @@ describe('CorrelationsPage', () => {
 
       fireEvent.click(screen.getByRole('button', { name: /close$/i }));
 
-      await waitFor(() => {
-        expect(screen.queryByRole('button', { name: /add$/i })).not.toBeInTheDocument();
-      });
+      expect(screen.queryByRole('button', { name: /add$/i })).not.toBeInTheDocument();
     });
 
     it('correctly deletes correlations', async () => {
@@ -465,9 +459,7 @@ describe('CorrelationsPage', () => {
 
       fireEvent.click(confirmButton);
 
-      await waitFor(() => {
-        expect(screen.queryByRole('cell', { name: /some label/i })).not.toBeInTheDocument();
-      });
+      await waitForElementToBeRemoved(() => screen.queryByRole('cell', { name: /some label$/i }));
     });
 
     it('correctly edits correlations', async () => {
