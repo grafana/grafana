@@ -257,6 +257,8 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 
 	// cache for folders created for dashboards that have custom permissions
 	folderCache := make(map[string]*dashboard)
+	// cache for the general folders
+	generalFolderCache := make(map[int64]*dashboard)
 
 	// Store of newly created rules to later create routes
 	rulesPerOrg := make(map[int64]map[string]dashAlert)
@@ -333,7 +335,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 			}
 			folder = &f
 		default:
-			f, ok := folderCache[GENERAL_FOLDER]
+			f, ok := generalFolderCache[dash.OrgId]
 			if !ok {
 				// get or create general folder
 				f, err = folderHelper.getOrCreateGeneralFolder(dash.OrgId)
@@ -343,7 +345,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 						AlertId: da.Id,
 					}
 				}
-				folderCache[GENERAL_FOLDER] = f
+				generalFolderCache[dash.OrgId] = f
 			}
 			// No need to assign default permissions to general folder
 			// because they are included to the query result if it's a folder with no permissions
