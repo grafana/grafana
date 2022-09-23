@@ -1,4 +1,4 @@
-import { SceneObjectBase } from './SceneObjectBase';
+import { SceneContextObject } from './SceneContextObject';
 import { SceneLayoutChild, SceneObject, SceneObjectStatePlain } from './types';
 
 interface TestSceneState extends SceneObjectStatePlain {
@@ -8,7 +8,7 @@ interface TestSceneState extends SceneObjectStatePlain {
   actions?: SceneObject[];
 }
 
-class TestScene extends SceneObjectBase<TestSceneState> {}
+class TestScene extends SceneContextObject<TestSceneState> {}
 
 describe('SceneObject', () => {
   it('Can clone', () => {

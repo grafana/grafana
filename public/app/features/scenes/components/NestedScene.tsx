@@ -4,7 +4,7 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
 
-import { SceneObjectBase } from '../core/SceneObjectBase';
+import { SceneContextObject } from '../core/SceneContextObject';
 import { SceneObject, SceneLayoutChildState, SceneComponentProps, SceneLayout } from '../core/types';
 
 interface NestedSceneState extends SceneLayoutChildState {
@@ -16,7 +16,7 @@ interface NestedSceneState extends SceneLayoutChildState {
   actions?: SceneObject[];
 }
 
-export class NestedScene extends SceneObjectBase<NestedSceneState> {
+export class NestedScene extends SceneContextObject<NestedSceneState> {
   static Component = NestedSceneRenderer;
 
   onToggle = () => {

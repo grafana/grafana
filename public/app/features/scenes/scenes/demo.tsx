@@ -1,5 +1,3 @@
-import { getDefaultTimeRange } from '@grafana/data';
-
 import { Scene } from '../components/Scene';
 import { SceneCanvasText } from '../components/SceneCanvasText';
 import { SceneFlexLayout } from '../components/SceneFlexLayout';
@@ -7,7 +5,6 @@ import { ScenePanelRepeater } from '../components/ScenePanelRepeater';
 import { SceneTimePicker } from '../components/SceneTimePicker';
 import { SceneToolbarInput } from '../components/SceneToolbarButton';
 import { VizPanel } from '../components/VizPanel';
-import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneEditManager } from '../editor/SceneEditManager';
 import { SceneQueryRunner } from '../querying/SceneQueryRunner';
 
@@ -50,7 +47,6 @@ export function getFlexLayoutTest(): Scene {
       ],
     }),
     $editor: new SceneEditManager({}),
-    $timeRange: new SceneTimeRange(getDefaultTimeRange()),
     $data: new SceneQueryRunner({
       queries: [
         {
@@ -115,7 +111,6 @@ export function getScenePanelRepeaterTest(): Scene {
       }),
     }),
     $editor: new SceneEditManager({}),
-    $timeRange: new SceneTimeRange(getDefaultTimeRange()),
     $data: queryRunner,
     actions: [
       new SceneToolbarInput({

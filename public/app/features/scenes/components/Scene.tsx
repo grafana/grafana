@@ -6,7 +6,7 @@ import { PageToolbar, ToolbarButton } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/Page/Page';
 
-import { SceneObjectBase } from '../core/SceneObjectBase';
+import { SceneContextObject } from '../core/SceneContextObject';
 import { SceneComponentProps, SceneObjectStatePlain, SceneObject } from '../core/types';
 import { UrlSyncManager } from '../services/UrlSyncManager';
 
@@ -17,7 +17,7 @@ interface SceneState extends SceneObjectStatePlain {
   isEditing?: boolean;
 }
 
-export class Scene extends SceneObjectBase<SceneState> {
+export class Scene extends SceneContextObject<SceneState> {
   static Component = SceneRenderer;
   urlSyncManager?: UrlSyncManager;
 

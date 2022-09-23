@@ -98,7 +98,9 @@ export interface SceneEditor extends SceneObject<SceneEditorState> {
   onSelectObject(model: SceneObject): void;
 }
 
-export interface SceneTimeRangeState extends SceneObjectStatePlain, TimeRange {}
+export interface SceneTimeRangeState extends SceneObjectStatePlain {
+  range: TimeRange;
+}
 export interface SceneTimeRange extends SceneObject<SceneTimeRangeState> {
   onTimeRangeChange(timeRange: TimeRange): void;
   onIntervalChanged(interval: string): void;
@@ -117,4 +119,10 @@ export function isSceneObject(obj: any): obj is SceneObject {
 export interface SceneObjectWithUrlSync extends SceneObject {
   getUrlState(): UrlQueryMap;
   updateFromUrl(values: UrlQueryMap): void;
+}
+
+/** Standard query execution context */
+export interface StandardSceneObjectContext {
+  timeRange: SceneTimeRange;
+  variables: any[];
 }

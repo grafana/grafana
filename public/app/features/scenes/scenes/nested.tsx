@@ -1,11 +1,8 @@
-import { getDefaultTimeRange } from '@grafana/data';
-
 import { NestedScene } from '../components/NestedScene';
 import { Scene } from '../components/Scene';
 import { SceneFlexLayout } from '../components/SceneFlexLayout';
 import { SceneTimePicker } from '../components/SceneTimePicker';
 import { VizPanel } from '../components/VizPanel';
-import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneQueryRunner } from '../querying/SceneQueryRunner';
 
 export function getNestedScene(): Scene {
@@ -22,7 +19,6 @@ export function getNestedScene(): Scene {
         getInnerScene('Inner scene'),
       ],
     }),
-    $timeRange: new SceneTimeRange(getDefaultTimeRange()),
     $data: new SceneQueryRunner({
       queries: [
         {
@@ -55,7 +51,6 @@ export function getInnerScene(title: string) {
         }),
       ],
     }),
-    $timeRange: new SceneTimeRange(getDefaultTimeRange()),
     $data: new SceneQueryRunner({
       queries: [
         {

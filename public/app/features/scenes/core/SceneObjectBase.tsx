@@ -7,6 +7,7 @@ import { useForceUpdate } from '@grafana/ui';
 
 import { SceneComponentWrapper } from './SceneComponentWrapper';
 import { SceneObjectStateChangedEvent } from './events';
+import { isContextObject } from './typeguards';
 import {
   SceneDataState,
   SceneObject,
@@ -16,6 +17,7 @@ import {
   isSceneObject,
   SceneObjectState,
   SceneLayoutChild,
+  StandardSceneObjectContext,
 } from './types';
 
 export abstract class SceneObjectBase<TState extends SceneObjectState = {}> implements SceneObject<TState> {
@@ -122,20 +124,23 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
     return useSceneObjectState(this);
   }
 
-  /**
-   * Will walk up the scene object graph to the closest $timeRange scene object
-   */
-  getTimeRange(): SceneTimeRange {
-    const { $timeRange } = this.state;
-    if ($timeRange) {
-      return $timeRange;
+  getContext: () => StandardSceneObjectContext = () => {
+    if (isContextObject(this)) {
+      return this.ctx;
     }
 
     if (this.parent) {
-      return this.parent.getTimeRange();
+      return this.parent.getContext();
     }
 
-    throw new Error('No time range found in scene tree');
+    throw new Error('No context found in scene tree');
+  };
+
+  /**
+   * Will walk up the scene object graph to the closest context object
+   */
+  getTimeRange(): SceneTimeRange {
+    return this.getContext().timeRange;
   }
 
   /**
