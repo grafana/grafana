@@ -65,6 +65,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 				require.Equal(t, pluginV1.PluginDir, pluginDir)
 				return nil
 			},
+			Store: map[string]struct{}{},
 		}
 
 		inst := New(fakes.NewFakePluginRegistry(), loader, pluginRepo, fs)
