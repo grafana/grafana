@@ -3918,7 +3918,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/runtime@npm:7.19.0":
+"@babel/runtime-corejs3@npm:^7.10.2":
+  version: 7.19.1
+  resolution: "@babel/runtime-corejs3@npm:7.19.1"
+  dependencies:
+    core-js-pure: ^3.25.1
+    regenerator-runtime: ^0.13.4
+  checksum: 38a1e8fcd2ba1f76c951259c98a5a11052123923adbf30ec8b2fec202dbbe38c6db61658ef9398e00c30f799e2e54ea036e56a09f43229261918bf5ec1b7d03a
+  languageName: node
+  linkType: hard
+
+"@babel/runtime@npm:7.19.0, @babel/runtime@npm:^7.18.9":
   version: 7.19.0
   resolution: "@babel/runtime@npm:7.19.0"
   dependencies:
@@ -14326,6 +14336,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"aria-query@npm:^4.2.2":
+  version: 4.2.2
+  resolution: "aria-query@npm:4.2.2"
+  dependencies:
+    "@babel/runtime": ^7.10.2
+    "@babel/runtime-corejs3": ^7.10.2
+  checksum: 38401a9a400f26f3dcc24b84997461a16b32869a9893d323602bed8da40a8bcc0243b8d2880e942249a1496cea7a7de769e93d21c0baa439f01e1ee936fed665
+  languageName: node
+  linkType: hard
+
 "aria-query@npm:^5.0.0":
   version: 5.0.0
   resolution: "aria-query@npm:5.0.0"
@@ -14609,6 +14629,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"ast-types-flow@npm:^0.0.7":
+  version: 0.0.7
+  resolution: "ast-types-flow@npm:0.0.7"
+  checksum: a26dcc2182ffee111cad7c471759b0bda22d3b7ebacf27c348b22c55f16896b18ab0a4d03b85b4020dce7f3e634b8f00b593888f622915096ea1927fa51866c4
+  languageName: node
+  linkType: hard
+
 "ast-types@npm:^0.14.2":
   version: 0.14.2
   resolution: "ast-types@npm:0.14.2"
@@ -14759,6 +14786,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"axe-core@npm:^4.4.3":
+  version: 4.4.3
+  resolution: "axe-core@npm:4.4.3"
+  checksum: c3ea000d9ace3ba0bc747c8feafc24b0de62a0f7d93021d0f77b19c73fca15341843510f6170da563d51535d6cfb7a46c5fc0ea36170549dbb44b170208450a2
+  languageName: node
+  linkType: hard
+
 "axios@npm:0.27.2":
   version: 0.27.2
   resolution: "axios@npm:0.27.2"
@@ -14784,6 +14818,13 @@ __metadata:
   dependencies:
     follow-redirects: ^1.14.8
   checksum: d9eb58ff4bc0b36a04783fc9ff760e9245c829a5a1052ee7ca6013410d427036b1d10d04e7380c02f3508c5eaf3485b1ae67bd2adbfec3683704745c8d7a6e1a
+  languageName: node
+  linkType: hard
+
+"axobject-query@npm:^2.2.0":
+  version: 2.2.0
+  resolution: "axobject-query@npm:2.2.0"
+  checksum: 96b8c7d807ca525f41ad9b286186e2089b561ba63a6d36c3e7d73dc08150714660995c7ad19cda05784458446a0793b45246db45894631e13853f48c1aa3117f
   languageName: node
   linkType: hard
 
@@ -17315,6 +17356,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"core-js-pure@npm:^3.25.1":
+  version: 3.25.2
+  resolution: "core-js-pure@npm:3.25.2"
+  checksum: 8940d844f3a2474b9f51478341b682cb86d998723337f249424a7cdedd321dd2568cb0fbc459bb0f98a9427d23d1a3050aa44644ac2301fe380308ebecd6f28e
+  languageName: node
+  linkType: hard
+
 "core-js-pure@npm:^3.8.1":
   version: 3.19.0
   resolution: "core-js-pure@npm:3.19.0"
@@ -18467,6 +18515,13 @@ __metadata:
     es5-ext: ^0.10.50
     type: ^1.0.1
   checksum: 49ca0639c7b822db670de93d4fbce44b4aa072cd848c76292c9978a8cd0fff1028763020ff4b0f147bd77bfe29b4c7f82e0f71ade76b2a06100543cdfd948d19
+  languageName: node
+  linkType: hard
+
+"damerau-levenshtein@npm:^1.0.8":
+  version: 1.0.8
+  resolution: "damerau-levenshtein@npm:1.0.8"
+  checksum: d240b7757544460ae0586a341a53110ab0a61126570ef2d8c731e3eab3f0cb6e488e2609e6a69b46727635de49be20b071688698744417ff1b6c1d7ccd03e0de
   languageName: node
   linkType: hard
 
@@ -20201,6 +20256,29 @@ __metadata:
   peerDependencies:
     eslint: ^7.0.0 || ^8.0.0
   checksum: ea1e6942d60c3e6e25352ee6f549743598a3f181337d07b63a41ab1f000d564834cc7f1f02cf23c05c237ffbe6925170da90131821afbcbe01e42a3fec6e2415
+  languageName: node
+  linkType: hard
+
+"eslint-plugin-jsx-a11y@npm:6.6.1":
+  version: 6.6.1
+  resolution: "eslint-plugin-jsx-a11y@npm:6.6.1"
+  dependencies:
+    "@babel/runtime": ^7.18.9
+    aria-query: ^4.2.2
+    array-includes: ^3.1.5
+    ast-types-flow: ^0.0.7
+    axe-core: ^4.4.3
+    axobject-query: ^2.2.0
+    damerau-levenshtein: ^1.0.8
+    emoji-regex: ^9.2.2
+    has: ^1.0.3
+    jsx-ast-utils: ^3.3.2
+    language-tags: ^1.0.5
+    minimatch: ^3.1.2
+    semver: ^6.3.0
+  peerDependencies:
+    eslint: ^3 || ^4 || ^5 || ^6 || ^7 || ^8
+  checksum: baae7377f0e25a0cc9b34dc333a3dc6ead9ee8365e445451eff554c3ca267a0a6cb88127fe90395c578ab1b92cfed246aef7dc8d2b48b603389e10181799e144
   languageName: node
   linkType: hard
 
@@ -22498,6 +22576,7 @@ __metadata:
     eslint-plugin-import: ^2.26.0
     eslint-plugin-jest: 26.6.0
     eslint-plugin-jsdoc: 39.3.3
+    eslint-plugin-jsx-a11y: 6.6.1
     eslint-plugin-lodash: 7.4.0
     eslint-plugin-react: 7.31.0
     eslint-plugin-react-hooks: 4.6.0
@@ -26378,6 +26457,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"jsx-ast-utils@npm:^3.3.2":
+  version: 3.3.3
+  resolution: "jsx-ast-utils@npm:3.3.3"
+  dependencies:
+    array-includes: ^3.1.5
+    object.assign: ^4.1.3
+  checksum: a2ed78cac49a0f0c4be8b1eafe3c5257a1411341d8e7f1ac740debae003de04e5f6372bfcfbd9d082e954ffd99aac85bcda85b7c6bc11609992483f4cdc0f745
+  languageName: node
+  linkType: hard
+
 "junk@npm:^3.1.0":
   version: 3.1.0
   resolution: "junk@npm:3.1.0"
@@ -26516,6 +26605,22 @@ __metadata:
   version: 0.25.0
   resolution: "known-css-properties@npm:0.25.0"
   checksum: 1e6860b9cb8f671fc913f0a94a04c278769d9d8ac69f7975986440ef19825bdc26d8833e59ef7ef7ec3d4984e28e4f73e7bf99b9deb24803841d39135c26a1e6
+  languageName: node
+  linkType: hard
+
+"language-subtag-registry@npm:~0.3.2":
+  version: 0.3.22
+  resolution: "language-subtag-registry@npm:0.3.22"
+  checksum: 8ab70a7e0e055fe977ac16ea4c261faec7205ac43db5e806f72e5b59606939a3b972c4bd1e10e323b35d6ffa97c3e1c4c99f6553069dad2dfdd22020fa3eb56a
+  languageName: node
+  linkType: hard
+
+"language-tags@npm:^1.0.5":
+  version: 1.0.5
+  resolution: "language-tags@npm:1.0.5"
+  dependencies:
+    language-subtag-registry: ~0.3.2
+  checksum: c81b5d8b9f5f9cfd06ee71ada6ddfe1cf83044dd5eeefcd1e420ad491944da8957688db4a0a9bc562df4afdc2783425cbbdfd152c01d93179cf86888903123cf
   languageName: node
   linkType: hard
 
@@ -29087,6 +29192,18 @@ __metadata:
     has-symbols: ^1.0.1
     object-keys: ^1.1.1
   checksum: d621d832ed7b16ac74027adb87196804a500d80d9aca536fccb7ba48d33a7e9306a75f94c1d29cbfa324bc091bfc530bc24789568efdaee6a47fcfa298993814
+  languageName: node
+  linkType: hard
+
+"object.assign@npm:^4.1.3":
+  version: 4.1.4
+  resolution: "object.assign@npm:4.1.4"
+  dependencies:
+    call-bind: ^1.0.2
+    define-properties: ^1.1.4
+    has-symbols: ^1.0.3
+    object-keys: ^1.1.1
+  checksum: 76cab513a5999acbfe0ff355f15a6a125e71805fcf53de4e9d4e082e1989bdb81d1e329291e1e4e0ae7719f0e4ef80e88fb2d367ae60500d79d25a6224ac8864
   languageName: node
   linkType: hard
 
