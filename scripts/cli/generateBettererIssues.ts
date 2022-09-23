@@ -42,6 +42,11 @@ const argv = yargs(hideBin(process.argv))
     describe: 'Name of the betterer test to produce the report for',
     type: 'string',
   })
+  .option('test-message', {
+    alias: 'm',
+    describe: 'Filter issues containing this message',
+    type: 'string',
+  })
   .option('single-owner', {
     type: 'boolean',
     alias: 's',
@@ -90,14 +95,20 @@ async function main() {
 
     for (const _fileName in testResults.details) {
       const fileName = _fileName.replace(process.cwd() + '/', '');
-      const details = testResults.details[_fileName];
+      const _details = testResults.details[_fileName];
       let ownersForFile = owners.getOwner(fileName);
 
       if (args.singleOwner) {
         ownersForFile = [ownersForFile[0]];
       }
 
-      const numberOfIssues = details.length;
+      const filterByMessage = args.testMessage?.length ? args.testMessage.toLowerCase() : undefined;
+
+      const filteredDetails = filterByMessage
+        ? _details.filter((v) => v.message.toLowerCase().includes(filterByMessage))
+        : _details;
+
+      const numberOfIssues = filteredDetails.length;
 
       for (const owner of ownersForFile) {
         if (!filesByOwner[owner]) {
@@ -107,7 +118,7 @@ async function main() {
         filesByOwner[owner].push({
           fileName,
           issueCount: numberOfIssues,
-          issues: details,
+          issues: filteredDetails,
         });
       }
     }
