@@ -14,6 +14,8 @@ type Cfg struct {
 
 	DevMode bool
 
+	PluginsPath string
+
 	PluginSettings       setting.PluginSettings
 	PluginsAllowUnsigned []string
 
@@ -52,6 +54,7 @@ func NewCfg(settingProvider setting.Provider, grafanaCfg *setting.Cfg) *Cfg {
 
 	return &Cfg{
 		log:                     logger,
+		PluginsPath:             grafanaCfg.PluginsPath,
 		BuildVersion:            grafanaCfg.BuildVersion,
 		DevMode:                 settingProvider.KeyValue("", "app_mode").MustBool(grafanaCfg.Env == setting.Dev),
 		EnterpriseLicensePath:   settingProvider.KeyValue("enterprise", "license_path").MustString(grafanaCfg.EnterpriseLicensePath),

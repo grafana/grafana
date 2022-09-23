@@ -16,10 +16,10 @@ type Store interface {
 	Plugins(ctx context.Context, pluginTypes ...Type) []PluginDTO
 }
 
-type Manager interface {
-	// Add adds a plugin to the store.
+type Installer interface {
+	// Add adds a new plugin.
 	Add(ctx context.Context, pluginID, version string, opts CompatOpts) error
-	// Remove removes a plugin from the store.
+	// Remove removes an existing plugin.
 	Remove(ctx context.Context, pluginID string) error
 }
 

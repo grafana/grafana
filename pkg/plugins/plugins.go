@@ -81,6 +81,10 @@ func (p PluginDTO) IsCorePlugin() bool {
 	return p.Class == Core
 }
 
+func (p PluginDTO) IsExternalPlugin() bool {
+	return p.Class == External
+}
+
 func (p PluginDTO) IsSecretsManager() bool {
 	return p.JSONData.Type == SecretsManager
 }
