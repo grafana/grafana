@@ -114,8 +114,8 @@ func (hs *HTTPServer) addOrgUserHelper(c *models.ReqContext, cmd org.AddOrgUserC
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *models.ReqContext) response.Response {
-	result, err := hs.getOrgUsersHelper(c, &models.GetOrgUsersQuery{
-		OrgId: c.OrgID,
+	result, err := hs.getOrgUsersHelper(c, &org.GetOrgUsersQuery{
+		OrgID: c.OrgID,
 		Query: c.Query("query"),
 		Limit: c.QueryInt("limit"),
 		User:  c.SignedInUser,
@@ -143,8 +143,8 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *models.ReqContext) response.Re
 // 500: internalServerError
 
 func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *models.ReqContext) response.Response {
-	orgUsers, err := hs.getOrgUsersHelper(c, &models.GetOrgUsersQuery{
-		OrgId:                    c.OrgID,
+	orgUsers, err := hs.getOrgUsersHelper(c, &org.GetOrgUsersQuery{
+		OrgID:                    c.OrgID,
 		Query:                    c.Query("query"),
 		Limit:                    c.QueryInt("limit"),
 		User:                     c.SignedInUser,
@@ -159,9 +159,9 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *models.ReqContext) respo
 
 	for _, u := range orgUsers {
 		result = append(result, &dtos.UserLookupDTO{
-			UserID:    u.UserId,
+			UserID:    u.UserID,
 			Login:     u.Login,
-			AvatarURL: u.AvatarUrl,
+			AvatarURL: u.AvatarURL,
 		})
 	}
 
@@ -189,8 +189,8 @@ func (hs *HTTPServer) GetOrgUsers(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "orgId is invalid", err)
 	}
 
-	result, err := hs.getOrgUsersHelper(c, &models.GetOrgUsersQuery{
-		OrgId: orgId,
+	result, err := hs.getOrgUsersHelper(c, &org.GetOrgUsersQuery{
+		OrgID: orgId,
 		Query: "",
 		Limit: 0,
 		User:  c.SignedInUser,
@@ -203,28 +203,29 @@ func (hs *HTTPServer) GetOrgUsers(c *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, result)
 }
 
-func (hs *HTTPServer) getOrgUsersHelper(c *models.ReqContext, query *models.GetOrgUsersQuery, signedInUser *user.SignedInUser) ([]*models.OrgUserDTO, error) {
-	if err := hs.SQLStore.GetOrgUsers(c.Req.Context(), query); err != nil {
+func (hs *HTTPServer) getOrgUsersHelper(c *models.ReqContext, query *org.GetOrgUsersQuery, signedInUser *user.SignedInUser) ([]*org.OrgUserDTO, error) {
+	result, err := hs.orgService.GetOrgUsers(c.Req.Context(), query)
+	if err != nil {
 		return nil, err
 	}
 
-	filteredUsers := make([]*models.OrgUserDTO, 0, len(query.Result))
+	filteredUsers := make([]*org.OrgUserDTO, 0, len(result))
 	userIDs := map[string]bool{}
-	for _, user := range query.Result {
+	for _, user := range result {
 		if dtos.IsHiddenUser(user.Login, signedInUser, hs.Cfg) {
 			continue
 		}
-		user.AvatarUrl = dtos.GetGravatarUrl(user.Email)
+		user.AvatarURL = dtos.GetGravatarUrl(user.Email)
 
-		userIDs[fmt.Sprint(user.UserId)] = true
+		userIDs[fmt.Sprint(user.UserID)] = true
 		filteredUsers = append(filteredUsers, user)
 	}
 
 	// Get accesscontrol metadata for users in the target org
-	accessControlMetadata := hs.getMultiAccessControlMetadata(c, query.OrgId, "users:id:", userIDs)
+	accessControlMetadata := hs.getMultiAccessControlMetadata(c, query.OrgID, "users:id:", userIDs)
 	if len(accessControlMetadata) > 0 {
 		for i := range filteredUsers {
-			filteredUsers[i].AccessControl = accessControlMetadata[fmt.Sprint(filteredUsers[i].UserId)]
+			filteredUsers[i].AccessControl = accessControlMetadata[fmt.Sprint(filteredUsers[i].UserID)]
 		}
 	}
 
