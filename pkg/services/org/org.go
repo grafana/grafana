@@ -18,4 +18,7 @@ type Service interface {
 	UpdateAddress(context.Context, *UpdateOrgAddressCommand) error
 	Delete(context.Context, *DeleteOrgCommand) error
 	GetOrCreate(context.Context, string) (int64, error)
+	AddOrgUser(context.Context, *AddOrgUserCommand) error
+	UpdateOrgUser(context.Context, *UpdateOrgUserCommand) error
+	RemoveOrgUser(context.Context, *RemoveOrgUserCommand) error
 }

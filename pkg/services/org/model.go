@@ -115,6 +115,47 @@ type DeleteOrgCommand struct {
 	ID int64 `xorm:"id"`
 }
 
+type AddOrgUserCommand struct {
+	LoginOrEmail string   `json:"loginOrEmail" binding:"Required"`
+	Role         RoleType `json:"role" binding:"Required"`
+
+	OrgID  int64 `json:"-"`
+	UserID int64 `json:"-"`
+
+	// internal use: avoid adding service accounts to orgs via user routes
+	AllowAddingServiceAccount bool `json:"-"`
+}
+
+type UpdateOrgUserCommand struct {
+	Role RoleType `json:"role" binding:"Required"`
+
+	OrgID  int64 `json:"-"`
+	UserID int64 `json:"-"`
+}
+
+type OrgUserDTO struct {
+	OrgID         int64           `json:"orgId"`
+	UserID        int64           `json:"userId"`
+	Email         string          `json:"email"`
+	Name          string          `json:"name"`
+	AvatarURL     string          `json:"avatarUrl"`
+	Login         string          `json:"login"`
+	Role          string          `json:"role"`
+	LastSeenAt    time.Time       `json:"lastSeenAt"`
+	Updated       time.Time       `json:"-"`
+	Created       time.Time       `json:"-"`
+	LastSeenAtAge string          `json:"lastSeenAtAge"`
+	AccessControl map[string]bool `json:"accessControl,omitempty"`
+	IsDisabled    bool            `json:"isDisabled"`
+}
+
+type RemoveOrgUserCommand struct {
+	UserID                   int64
+	OrgID                    int64
+	ShouldDeleteOrphanedUser bool
+	UserWasDeleted           bool
+}
+
 func (r RoleType) IsValid() bool {
 	return r == RoleViewer || r == RoleAdmin || r == RoleEditor
 }

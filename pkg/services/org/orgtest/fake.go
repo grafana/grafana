@@ -3,6 +3,7 @@ package orgtest
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
@@ -12,6 +13,7 @@ type FakeOrgService struct {
 	ExpectedUserOrgDTO []*org.UserOrgDTO
 	ExpectedOrgs       []*org.OrgDTO
 	ExpectedOrg        *org.Org
+	ExpectedOrgUsers   []*org.OrgUserDTO
 }
 
 func NewOrgServiceFake() *FakeOrgService {
@@ -72,4 +74,20 @@ func (f *FakeOrgService) Delete(ctx context.Context, cmd *org.DeleteOrgCommand) 
 
 func (f *FakeOrgService) GetOrCreate(ctx context.Context, orgName string) (int64, error) {
 	return 0, f.ExpectedError
+}
+
+func (f *FakeOrgService) AddOrgUser(ctx context.Context, cmd *org.AddOrgUserCommand) error {
+	return f.ExpectedError
+}
+
+func (f *FakeOrgService) UpdateOrgUser(ctx context.Context, cmd *org.UpdateOrgUserCommand) error {
+	return f.ExpectedError
+}
+
+func (f *FakeOrgService) GetOrgUsers(ctx context.Context, query *models.GetOrgUsersQuery) ([]*org.OrgUserDTO, error) {
+	return f.ExpectedOrgUsers, f.ExpectedError
+}
+
+func (f *FakeOrgService) RemoveOrgUser(ctx context.Context, cmd *org.RemoveOrgUserCommand) error {
+	return f.ExpectedError
 }
