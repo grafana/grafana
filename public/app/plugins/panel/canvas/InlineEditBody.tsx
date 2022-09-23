@@ -41,6 +41,20 @@ export function InlineEditBody() {
           );
         }
       }
+
+      builder.addBooleanSwitch({
+        path: 'inlineEditing',
+        name: 'Inline editing',
+        description: 'Enable editing the panel directly',
+        defaultValue: true,
+      });
+
+      builder.addBooleanSwitch({
+        path: 'showAdvancedTypes',
+        name: 'Show advanced element types',
+        description: '',
+        defaultValue: false,
+      });
     };
 
     return getOptionsPaneCategoryDescriptor(
@@ -53,7 +67,12 @@ export function InlineEditBody() {
     );
   }, [instanceState, activePanel]);
 
-  return <>{pane.categories.map((p) => renderOptionsPaneCategoryDescriptor(p))}</>;
+  return (
+    <>
+      {pane.categories.map((p) => renderOptionsPaneCategoryDescriptor(p))}
+      {pane.items.map((item) => item.render())}
+    </>
+  );
 }
 
 // Recursively render options
