@@ -46,16 +46,13 @@ export const MegaMenu = React.memo<Props>(({ onClose, searchBarHidden }) => {
     location
   ).map((item) => enrichWithInteractionTracking(item, true));
 
-  const activeItem = getActiveItem(navTree, location.pathname);
+  const navItems = [homeItem, ...coreItems, ...pluginItems, ...configItems];
+
+  const activeItem = getActiveItem(navItems, location.pathname);
 
   return (
     <div className={styles.menuWrapper}>
-      <NavBarMenu
-        activeItem={activeItem}
-        navItems={[homeItem, ...coreItems, ...pluginItems, ...configItems]}
-        onClose={onClose}
-        searchBarHidden={searchBarHidden}
-      />
+      <NavBarMenu activeItem={activeItem} navItems={navItems} onClose={onClose} searchBarHidden={searchBarHidden} />
     </div>
   );
 });
