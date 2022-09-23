@@ -402,7 +402,10 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
             sectionNav={sectionNav}
           />
         )}
-        {isPublic && <PubdashFooter />}
+        {
+          // TODO: assess if there are other places where we may want a footer, which may reveal a better place to add this
+          isPublic && <PubdashFooter />
+        }
       </>
     );
   }
