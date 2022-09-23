@@ -6544,15 +6544,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@kusto/monaco-kusto@npm:5.1.8":
-  version: 5.1.8
-  resolution: "@kusto/monaco-kusto@npm:5.1.8"
+"@kusto/monaco-kusto@npm:5.2.0":
+  version: 5.2.0
+  resolution: "@kusto/monaco-kusto@npm:5.2.0"
   dependencies:
     "@kusto/language-service": 0.0.36
     "@kusto/language-service-next": 0.0.57
   peerDependencies:
     monaco-editor: 0.33.0
-  checksum: cb48d25dc9343d7dbe2c4086eee163eea6d9bf9e7f0f7fad2c2574a0f2d7c9bc114a01d6f81917a8ede4355d706b07d00e2cc07200f22bfeeb3b5f70d34e85d4
+  checksum: 173b04ec40bf6a85762fe75e10b0be3b19c22aa7151c244f10562dd91792b2f32966187630e825ed9aa661aea142a114083907183b2b1d5618ad6a7d4a77282b
   languageName: node
   linkType: hard
 
@@ -22354,7 +22354,7 @@ __metadata:
     "@grafana/tsconfig": ^1.2.0-rc1
     "@grafana/ui": "workspace:*"
     "@jaegertracing/jaeger-ui-components": "workspace:*"
-    "@kusto/monaco-kusto": 5.1.8
+    "@kusto/monaco-kusto": 5.2.0
     "@lezer/common": 1.0.0
     "@lezer/highlight": ^1.0.0
     "@lezer/lr": 1.2.3
