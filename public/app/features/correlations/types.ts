@@ -4,12 +4,18 @@ export interface AddCorrelationResponse {
 
 export type GetCorrelationsResponse = Correlation[];
 
+export interface CorrelationConfig {
+  field: string;
+  target: object;
+}
+
 export interface Correlation {
   uid: string;
   sourceUID: string;
   targetUID: string;
   label?: string;
   description?: string;
+  config: CorrelationConfig;
 }
 
 export type RemoveCorrelationParams = Pick<Correlation, 'sourceUID' | 'uid'>;

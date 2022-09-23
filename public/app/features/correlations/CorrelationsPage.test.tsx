@@ -1,9 +1,10 @@
-import { render, waitFor, screen, fireEvent } from '@testing-library/react';
+import { render, waitFor, screen, fireEvent, waitForElementToBeRemoved } from '@testing-library/react';
 import { merge, uniqueId } from 'lodash';
 import React from 'react';
 import { DeepPartial } from 'react-hook-form';
 import { Provider } from 'react-redux';
 import { Observable } from 'rxjs';
+import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { DataSourcePluginMeta } from '@grafana/data';
@@ -127,7 +128,16 @@ const renderWithContext = async (
   } as unknown as BackendSrv;
   const grafanaContext = getGrafanaContextMock({ backend });
 
-  setDataSourceSrv(new MockDataSourceSrv(datasources));
+  const dsServer = new MockDataSourceSrv(datasources);
+  dsServer.get = (name: string) => {
+    const dsApi = new MockDataSourceApi(name);
+    dsApi.components = {
+      QueryEditor: () => <>{name} query editor</>,
+    };
+    return Promise.resolve(dsApi);
+  };
+
+  setDataSourceSrv(dsServer);
 
   render(
     <Provider store={configureStore({})}>
@@ -194,6 +204,9 @@ describe('CorrelationsPage', () => {
 
       fireEvent.click(CTAButton);
 
+      // wait for the form to be rendered and query editor to be mounted
+      await waitForElementToBeRemoved(() => screen.queryByText(/loading query editor/i));
+
       // form's submit button
       expect(screen.getByRole('button', { name: /add$/i })).toBeInTheDocument();
     });
@@ -217,6 +230,10 @@ describe('CorrelationsPage', () => {
       // set target datasource picker value
       fireEvent.keyDown(screen.getByLabelText(/^target$/i), { keyCode: 40 });
       fireEvent.click(screen.getByText('prometheus'));
+
+      fireEvent.change(screen.getByRole('textbox', { name: /target field/i }), { target: { value: 'Line' } });
+
+      await waitForElementToBeRemoved(() => screen.queryByText(/loading query editor/i));
 
       fireEvent.click(screen.getByRole('button', { name: /add$/i }));
 
@@ -275,7 +292,7 @@ describe('CorrelationsPage', () => {
             }
           ),
         },
-        [{ sourceUID: 'loki', targetUID: 'loki', uid: '1', label: 'Some label' }]
+        [{ sourceUID: 'loki', targetUID: 'loki', uid: '1', label: 'Some label', config: { field: 'line', target: {} } }]
       );
     });
 
@@ -300,6 +317,10 @@ describe('CorrelationsPage', () => {
       // set target datasource picker value
       fireEvent.keyDown(screen.getByLabelText(/^target$/i), { keyCode: 40 });
       fireEvent.click(screen.getByText('elastic'));
+
+      fireEvent.change(screen.getByRole('textbox', { name: /target field/i }), { target: { value: 'Line' } });
+
+      await waitForElementToBeRemoved(() => screen.queryByText(/loading query editor/i));
 
       fireEvent.click(screen.getByRole('button', { name: /add$/i }));
 
@@ -345,6 +366,8 @@ describe('CorrelationsPage', () => {
       const rowExpanderButton = screen.getByRole('button', { name: /toggle row expanded/i });
       fireEvent.click(rowExpanderButton);
 
+      await waitForElementToBeRemoved(() => screen.queryByText(/loading query editor/i));
+
       fireEvent.change(screen.getByRole('textbox', { name: /label/i }), { target: { value: 'edited label' } });
       fireEvent.change(screen.getByRole('textbox', { name: /description/i }), {
         target: { value: 'edited description' },
@@ -361,7 +384,9 @@ describe('CorrelationsPage', () => {
   });
 
   describe('Read only correlations', () => {
-    const correlations = [{ sourceUID: 'loki', targetUID: 'loki', uid: '1', label: 'Some label' }];
+    const correlations = [
+      { sourceUID: 'loki', targetUID: 'loki', uid: '1', label: 'Some label', config: { field: 'line', target: {} } },
+    ];
 
     beforeEach(async () => {
       await renderWithContext(
@@ -392,6 +417,9 @@ describe('CorrelationsPage', () => {
       const rowExpanderButton = screen.getByRole('button', { name: /toggle row expanded/i });
 
       fireEvent.click(rowExpanderButton);
+
+      // wait for the form to be rendered and query editor to be mounted
+      await waitForElementToBeRemoved(() => screen.queryByText(/loading query editor/i));
 
       // form elements should be readonly
       const labelInput = screen.getByRole('textbox', { name: /label/i });
