@@ -611,8 +611,7 @@ func (cfg *Cfg) readAnnotationSettings() error {
 		// ensure that the configuration does not exceed the respective column size
 		return fmt.Errorf("[annotations.tags_length] configuration exceeds the maximum allowed (4096)")
 	case cfg.AnnotationMaximumTagsLength > 500:
-		cfg.Logger.Warn("[annotations.tags_length] is too high; this may affect the performance")
-
+		cfg.Logger.Info("[annotations.tags_length] has been increased from its default value; this may affect the performance", "tagLength", cfg.AnnotationMaximumTagsLength)
 	case cfg.AnnotationMaximumTagsLength < 500:
 		cfg.Logger.Warn("[annotations.tags_length] is too low; the minimum allowed (500) is enforced")
 		cfg.AnnotationMaximumTagsLength = 500
