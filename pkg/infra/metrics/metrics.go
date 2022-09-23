@@ -4,6 +4,7 @@ import (
 	"runtime"
 
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
+	pubdash "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -422,11 +423,11 @@ func init() {
 		Namespace: ExporterName,
 	})
 
-	MPublicDashboardDatasourceQuerySuccess = prometheus.NewCounterVec(prometheus.CounterOpts{
+	MPublicDashboardDatasourceQuerySuccess = metricutil.NewCounterVecStartingAtZero(prometheus.CounterOpts{
 		Name:      "public_dashboard_datasource_query_success",
 		Help:      "counter for queries to public dashboard datasources labelled by datasource type and success status success/failed",
 		Namespace: ExporterName,
-	}, []string{"datasource", "status"})
+	}, []string{"datasource", "status"}, map[string][]string{"status": pubdash.QueryResultStatuses})
 
 	MStatTotalDashboards = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_totals_dashboard",

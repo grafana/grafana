@@ -24,6 +24,12 @@ func (e PublicDashboardErr) Error() string {
 	return "Dashboard Error"
 }
 
+// Pubdash logging and metrics
+const QuerySuccess = "success"
+const QueryFailure = "failure"
+
+var QueryResultStatuses = []string{QuerySuccess, QueryFailure}
+
 var (
 	ErrPublicDashboardFailedGenerateUniqueUid = PublicDashboardErr{
 		Reason:     "failed to generate unique public dashboard id",

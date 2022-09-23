@@ -3,10 +3,8 @@ package service
 import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/models"
 )
-
-const QuerySuccess = "success"
-const QueryFailure = "failed"
 
 /**
 A place to record relevant logs and metrics within the service layer of public dashboards
@@ -15,13 +13,13 @@ A place to record relevant logs and metrics within the service layer of public d
 func LogQuerySuccess(datasources []string, log log.Logger) {
 	log.Info("Successfully queried datasources for public dashboard", "datasources", datasources)
 	label := getLabelName(datasources)
-	metrics.MPublicDashboardDatasourceQuerySuccess.WithLabelValues(label, QuerySuccess).Inc()
+	metrics.MPublicDashboardDatasourceQuerySuccess.WithLabelValues(label, models.QuerySuccess).Inc()
 }
 
 func LogQueryFailure(datasources []string, log log.Logger, err error) {
 	log.Error("Error querying datasources for public dashboard", "error", err.Error(), "datasources", datasources)
 	label := getLabelName(datasources)
-	metrics.MPublicDashboardDatasourceQuerySuccess.WithLabelValues(label, QueryFailure).Inc()
+	metrics.MPublicDashboardDatasourceQuerySuccess.WithLabelValues(label, models.QueryFailure).Inc()
 }
 
 func getLabelName(datasources []string) string {
