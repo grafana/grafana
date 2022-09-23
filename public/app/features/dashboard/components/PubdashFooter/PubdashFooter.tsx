@@ -30,7 +30,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     z-index: 100000;
   `,
   logoText: css`
-    margin-right: 5px;
+    margin-right: ${theme.spacing(1)};
   `,
   logoImg: css`
     height: 100%;
