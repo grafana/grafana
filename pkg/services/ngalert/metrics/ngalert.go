@@ -199,7 +199,7 @@ func newSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Buckets:   []float64{0.1, 0.25, 0.5, 1, 2, 5, 10},
 			},
 		),
-		Ticker: ticker.NewTickerMetrics(r),
+		Ticker: ticker.NewTickerMetrics(r, "alerting"),
 		EvaluationMissed: promauto.With(r).NewCounterVec(
 			prometheus.CounterOpts{
 				Namespace: Namespace,

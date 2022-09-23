@@ -11,23 +11,23 @@ type TickerMetrics struct {
 	IntervalSeconds prometheus.Gauge
 }
 
-func NewTickerMetrics(reg prometheus.Registerer) *TickerMetrics {
+func NewTickerMetrics(reg prometheus.Registerer, subsystem string) *TickerMetrics {
 	return &TickerMetrics{
 		LastTickTime: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
 			Namespace: "grafana",
-			Subsystem: "alerting",
+			Subsystem: subsystem,
 			Name:      "ticker_last_consumed_tick_timestamp_seconds",
 			Help:      "Timestamp of the last consumed tick in seconds.",
 		}),
 		NextTickTime: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
 			Namespace: "grafana",
-			Subsystem: "alerting",
+			Subsystem: subsystem,
 			Name:      "ticker_next_tick_timestamp_seconds",
 			Help:      "Timestamp of the next tick in seconds before it is consumed.",
 		}),
 		IntervalSeconds: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
 			Namespace: "grafana",
-			Subsystem: "alerting",
+			Subsystem: subsystem,
 			Name:      "ticker_interval_seconds",
 			Help:      "Interval at which the ticker is meant to tick.",
 		}),

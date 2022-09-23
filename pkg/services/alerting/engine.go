@@ -90,7 +90,7 @@ func ProvideAlertEngine(renderer rendering.Service, requestValidator models.Plug
 // Run starts the alerting service background process.
 func (e *AlertEngine) Run(ctx context.Context) error {
 	reg := prometheus.WrapRegistererWithPrefix("legacy_", prometheus.DefaultRegisterer)
-	e.ticker = ticker.NewTicker(clock.New(), 1*time.Second, ticker.NewTickerMetrics(reg))
+	e.ticker = ticker.NewTicker(clock.New(), 1*time.Second, ticker.NewTickerMetrics(reg, "alerting"))
 	defer e.ticker.Stop()
 	alertGroup, ctx := errgroup.WithContext(ctx)
 	alertGroup.Go(func() error { return e.alertingTicker(ctx) })

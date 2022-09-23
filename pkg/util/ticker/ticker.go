@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
-// Ticker is a ticker to power the alerting scheduler. it's like a time.Ticker, except:
+// Ticker emits ticks at regular time intervals. it's like a time.Ticker, except:
 //   - it doesn't drop ticks for slow receivers, rather, it queues up.  so that callers are in control to instrument what's going on.
 //   - it ticks on interval marks or very shortly after. this provides a predictable load pattern
 //     (this shouldn't cause too much load contention issues because the next steps in the pipeline just process at their own pace)
