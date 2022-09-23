@@ -23,7 +23,7 @@ export interface FolderWarning {
 }
 
 export interface CustomAdd {
-  dissallowValues: boolean;
+  disallowValues: boolean;
   isAllowedValue?: (value: string) => boolean;
 }
 
@@ -81,7 +81,7 @@ export function FolderPicker(props: Props) {
   const [folder, setFolder] = useState<SelectedFolder | null>(null);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [inputValue, setInputValue] = useState('');
-  const [newFolderValue, setNewFolderValue] = useState(folder?.title || '');
+  const [newFolderValue, setNewFolderValue] = useState(folder?.title ?? '');
 
   const styles = useStyles2(getStyles);
 
@@ -243,7 +243,7 @@ export function FolderPicker(props: Props) {
 
   const onKeyDown = useCallback(
     (event: React.KeyboardEvent) => {
-      const dissalowValues = Boolean(customAdd?.dissallowValues);
+      const dissalowValues = Boolean(customAdd?.disallowValues);
       if (event.key === 'Enter' && dissalowValues && !customAdd?.isAllowedValue!(newFolderValue)) {
         event.preventDefault();
         return;
@@ -261,7 +261,7 @@ export function FolderPicker(props: Props) {
         }
       }
     },
-    [customAdd?.dissallowValues, customAdd?.isAllowedValue, newFolderValue, createNewFolder, folder?.title, rootName]
+    [customAdd?.disallowValues, customAdd?.isAllowedValue, newFolderValue, createNewFolder, folder?.title, rootName]
   );
 
   const onNewFolderChange = (e: FormEvent<HTMLInputElement>) => {

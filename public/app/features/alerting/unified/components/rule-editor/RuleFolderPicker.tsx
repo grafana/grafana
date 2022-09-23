@@ -43,7 +43,7 @@ export function RuleFolderPicker(props: RuleFolderPickerProps) {
   };
 
   const customAdd: CustomAdd = {
-    dissallowValues: true,
+    disallowValues: true,
     isAllowedValue: (value) => !containsSlashes(value),
   };
 
