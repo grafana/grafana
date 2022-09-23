@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/team/teamtest"
 )
 
 func TestAnnotationsAPIEndpoint(t *testing.T) {
@@ -922,7 +923,7 @@ func setUpACL() {
 	viewerRole := org.RoleViewer
 	editorRole := org.RoleEditor
 	store := mockstore.NewSQLStoreMock()
-	store.ExpectedTeamsByUser = []*models.TeamDTO{}
+	teamSvc := &teamtest.FakeService{}
 	dashSvc := &dashboards.FakeDashboardService{}
 	dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
 		q := args.Get(1).(*models.GetDashboardACLInfoListQuery)
@@ -932,7 +933,7 @@ func setUpACL() {
 		}
 	}).Return(nil)
 
-	guardian.InitLegacyGuardian(store, dashSvc)
+	guardian.InitLegacyGuardian(store, dashSvc, teamSvc)
 }
 
 func setUpRBACGuardian(t *testing.T) {

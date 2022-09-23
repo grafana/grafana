@@ -220,4 +220,5 @@ export interface GrafanaConfig {
 export interface AuthSettings {
   OAuthSkipOrgRoleUpdateSync?: boolean;
   SAMLSkipOrgRoleSync?: boolean;
+  DisableSyncLock?: boolean;
 }

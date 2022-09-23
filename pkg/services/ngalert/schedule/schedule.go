@@ -307,7 +307,7 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 			// waiting for all rule evaluation routines to stop
 			waitErr := dispatcherGroup.Wait()
 			// close the state manager and flush the state
-			sch.stateManager.Close(ctx)
+			sch.stateManager.Close()
 			return waitErr
 		}
 	}

@@ -101,7 +101,7 @@ func buildSlackNotifier(factoryConfig FactoryConfig) (*SlackNotifier, error) {
 		settings.Username = "Grafana"
 	}
 	if settings.Text == "" {
-		settings.Text = `{{ template "default.message" . }}`
+		settings.Text = DefaultMessageEmbed
 	}
 	if settings.Title == "" {
 		settings.Title = DefaultMessageTitleEmbed

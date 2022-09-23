@@ -44,24 +44,20 @@ type secureJSONDecryptionCache struct {
 	sync.Mutex
 }
 
-func (s *Service) GetPluginSettings(ctx context.Context, args *pluginsettings.GetArgs) ([]*pluginsettings.DTO, error) {
-	ps, err := s.getPluginSettings(ctx, args.OrgID)
+func (s *Service) GetPluginSettings(ctx context.Context, args *pluginsettings.GetArgs) ([]*pluginsettings.InfoDTO, error) {
+	ps, err := s.getPluginSettingsInfo(ctx, args.OrgID)
 	if err != nil {
 		return nil, err
 	}
 
-	var result []*pluginsettings.DTO
+	var result []*pluginsettings.InfoDTO
 	for _, p := range ps {
-		result = append(result, &pluginsettings.DTO{
-			ID:             p.Id,
-			OrgID:          p.OrgId,
-			PluginID:       p.PluginId,
-			PluginVersion:  p.PluginVersion,
-			JSONData:       p.JsonData,
-			SecureJSONData: p.SecureJsonData,
-			Enabled:        p.Enabled,
-			Pinned:         p.Pinned,
-			Updated:        p.Updated,
+		result = append(result, &pluginsettings.InfoDTO{
+			OrgID:         p.OrgID,
+			PluginID:      p.PluginID,
+			PluginVersion: p.PluginVersion,
+			Enabled:       p.Enabled,
+			Pinned:        p.Pinned,
 		})
 	}
 
@@ -140,7 +136,7 @@ func (s *Service) DecryptedValues(ps *pluginsettings.DTO) map[string]string {
 	return json
 }
 
-func (s *Service) getPluginSettings(ctx context.Context, orgID int64) ([]*models.PluginSetting, error) {
+func (s *Service) getPluginSettingsInfo(ctx context.Context, orgID int64) ([]*models.PluginSettingInfo, error) {
 	sql := `SELECT org_id, plugin_id, enabled, pinned, plugin_version FROM plugin_setting `
 	params := make([]interface{}, 0)
 
@@ -149,7 +145,7 @@ func (s *Service) getPluginSettings(ctx context.Context, orgID int64) ([]*models
 		params = append(params, orgID)
 	}
 
-	var rslt []*models.PluginSetting
+	var rslt []*models.PluginSettingInfo
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		return sess.SQL(sql, params...).Find(&rslt)
 	})

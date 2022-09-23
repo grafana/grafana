@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import React, { useState } from 'react';
+import React from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, NavModelItem, NavSection } from '@grafana/data';
@@ -22,11 +22,6 @@ export const MegaMenu = React.memo<Props>(({ onClose, searchBarHidden }) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
   const location = useLocation();
-  const [showSwitcherModal, setShowSwitcherModal] = useState(false);
-
-  const toggleSwitcherModal = () => {
-    setShowSwitcherModal(!showSwitcherModal);
-  };
 
   const homeItem: NavModelItem = enrichWithInteractionTracking(
     {
@@ -48,8 +43,7 @@ export const MegaMenu = React.memo<Props>(({ onClose, searchBarHidden }) => {
     .map((item) => enrichWithInteractionTracking(item, true));
   const configItems = enrichConfigItems(
     navTree.filter((item) => item.section === NavSection.Config && item && item.id !== 'help' && item.id !== 'profile'),
-    location,
-    toggleSwitcherModal
+    location
   ).map((item) => enrichWithInteractionTracking(item, true));
 
   const activeItem = getActiveItem(navTree, location.pathname);

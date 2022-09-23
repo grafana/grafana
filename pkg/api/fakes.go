@@ -9,8 +9,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 )
 
-type fakePluginManager struct {
-	plugins.Manager
+type fakePluginInstaller struct {
+	plugins.Installer
 
 	plugins map[string]fakePlugin
 }
@@ -20,7 +20,11 @@ type fakePlugin struct {
 	version  string
 }
 
-func (pm *fakePluginManager) Add(_ context.Context, pluginID, version string, _ plugins.CompatOpts) error {
+func NewFakePluginInstaller() *fakePluginInstaller {
+	return &fakePluginInstaller{plugins: map[string]fakePlugin{}}
+}
+
+func (pm *fakePluginInstaller) Add(_ context.Context, pluginID, version string, _ plugins.CompatOpts) error {
 	pm.plugins[pluginID] = fakePlugin{
 		pluginID: pluginID,
 		version:  version,
@@ -28,7 +32,7 @@ func (pm *fakePluginManager) Add(_ context.Context, pluginID, version string, _ 
 	return nil
 }
 
-func (pm *fakePluginManager) Remove(_ context.Context, pluginID string) error {
+func (pm *fakePluginInstaller) Remove(_ context.Context, pluginID string) error {
 	delete(pm.plugins, pluginID)
 	return nil
 }
@@ -86,10 +90,16 @@ type fakePluginSettings struct {
 }
 
 // GetPluginSettings returns all Plugin Settings for the provided Org
-func (ps *fakePluginSettings) GetPluginSettings(ctx context.Context, args *pluginsettings.GetArgs) ([]*pluginsettings.DTO, error) {
-	res := []*pluginsettings.DTO{}
+func (ps *fakePluginSettings) GetPluginSettings(_ context.Context, _ *pluginsettings.GetArgs) ([]*pluginsettings.InfoDTO, error) {
+	res := []*pluginsettings.InfoDTO{}
 	for _, dto := range ps.plugins {
-		res = append(res, dto)
+		res = append(res, &pluginsettings.InfoDTO{
+			PluginID:      dto.PluginID,
+			OrgID:         dto.OrgID,
+			Enabled:       dto.Enabled,
+			Pinned:        dto.Pinned,
+			PluginVersion: dto.PluginVersion,
+		})
 	}
 	return res, nil
 }
