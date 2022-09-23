@@ -13,7 +13,7 @@ export function getGrafanaSearcher(): GrafanaSearcher {
     const useBluge = config.featureToggles.panelTitleSearch;
     searcher = useBluge ? new BlugeSearcher(sqlSearcher) : sqlSearcher;
 
-    if (useBluge && location.search.indexOf('do-frontend-query')) {
+    if (useBluge && location.search.includes('do-frontend-query')) {
       searcher = new FrontendSearcher(searcher);
     }
   }
