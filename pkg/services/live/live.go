@@ -99,19 +99,14 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 
 	logger.Debug("GrafanaLive initialization", "ha", g.IsHA())
 
-	// We use default config here as starting point. Default config contains
-	// reasonable values for available options.
-	scfg := centrifuge.DefaultConfig
-
-	// scfg.LogLevel = centrifuge.LogLevelDebug
-	scfg.LogHandler = handleLog
-	scfg.LogLevel = centrifuge.LogLevelError
-	scfg.MetricsNamespace = "grafana_live"
-
 	// Node is the core object in Centrifuge library responsible for many useful
 	// things. For example Node allows to publish messages to channels from server
 	// side with its Publish method.
-	node, err := centrifuge.New(scfg)
+	node, err := centrifuge.New(centrifuge.Config{
+		LogHandler:       handleLog,
+		LogLevel:         centrifuge.LogLevelError,
+		MetricsNamespace: "grafana_live",
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -312,12 +307,9 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		})
 
 		client.OnDisconnect(func(e centrifuge.DisconnectEvent) {
-			reason := "normal"
-			if e.Disconnect != nil {
-				reason = e.Disconnect.Reason
-				if e.Disconnect.Code == 3001 { // Shutdown
-					return
-				}
+			reason := e.Disconnect.Reason
+			if e.Disconnect.Code == 3001 { // Shutdown
+				return
 			}
 			logger.Debug("Client disconnected", "user", client.UserID(), "client", client.ID(), "reason", reason, "elapsed", time.Since(connectedAt))
 		})
@@ -339,6 +331,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 
 	// Use a pure websocket transport.
 	wsHandler := centrifuge.NewWebsocketHandler(node, centrifuge.WebsocketConfig{
+		ProtocolVersion: centrifuge.ProtocolVersion2,
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
 		CheckOrigin:     checkOrigin,
@@ -711,10 +704,11 @@ func (g *GrafanaLive) handleOnSubscribe(ctx context.Context, client *centrifuge.
 	logger.Debug("Client subscribed", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
 	return centrifuge.SubscribeReply{
 		Options: centrifuge.SubscribeOptions{
-			Presence:  reply.Presence,
-			JoinLeave: reply.JoinLeave,
-			Recover:   reply.Recover,
-			Data:      reply.Data,
+			EmitPresence:   reply.Presence,
+			EmitJoinLeave:  reply.JoinLeave,
+			PushJoinLeave:  reply.JoinLeave,
+			EnableRecovery: reply.Recover,
+			Data:           reply.Data,
 		},
 	}, nil
 }

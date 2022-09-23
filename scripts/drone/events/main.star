@@ -47,6 +47,16 @@ load(
     'enterprise_downstream_pipeline',
 )
 
+load(
+    'scripts/drone/pipelines/lint_backend.star',
+    'lint_backend_pipeline',
+)
+
+load(
+    'scripts/drone/pipelines/lint_frontend.star',
+    'lint_frontend_pipeline',
+)
+
 load('scripts/drone/vault.star', 'from_secret')
 
 
@@ -83,7 +93,9 @@ def main_pipelines(edition):
     pipelines = [
         docs_pipelines(edition, ver_mode, trigger_docs_main()),
         test_frontend(trigger, ver_mode),
+        lint_frontend_pipeline(trigger, ver_mode),
         test_backend(trigger, ver_mode),
+        lint_backend_pipeline(trigger, ver_mode),
         build_e2e(trigger, ver_mode, edition),
         integration_tests(trigger, ver_mode, edition),
         windows(trigger, edition, ver_mode),

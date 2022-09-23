@@ -19,18 +19,7 @@ type Repository interface {
 	FindTags(ctx context.Context, query *TagsQuery) (FindTagsResult, error)
 }
 
-// AnnotationCleaner is responsible for cleaning up old annotations
-type AnnotationCleaner interface {
-	CleanAnnotations(ctx context.Context, cfg *setting.Cfg) (int64, int64, error)
-}
-
-// var repositoryInstance Repository
-var cleanerInstance AnnotationCleaner
-
-func GetAnnotationCleaner() AnnotationCleaner {
-	return cleanerInstance
-}
-
-func SetAnnotationCleaner(rep AnnotationCleaner) {
-	cleanerInstance = rep
+// Cleaner is responsible for cleaning up old annotations
+type Cleaner interface {
+	Run(ctx context.Context, cfg *setting.Cfg) (int64, int64, error)
 }
