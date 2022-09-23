@@ -1,6 +1,6 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = 'v3.0.7'
+grabpl_version = 'v3.0.10'
 build_image = 'grafana/build-container:1.6.2'
 publish_image = 'grafana/grafana-ci-deploy:1.3.3'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
@@ -207,7 +207,7 @@ def enterprise_downstream_step(edition, ver_mode):
 def lint_backend_step(edition):
     return {
         'name': 'lint-backend' + enterprise2_suffix(edition),
-        'image': build_image,
+        'image': go_image,
         'environment': {
             # We need CGO because of go-sqlite3
             'CGO_ENABLED': '1',
@@ -216,6 +216,7 @@ def lint_backend_step(edition):
             'wire-install',
         ],
         'commands': [
+            'apt-get update && apt-get install make',
             # Don't use Make since it will re-download the linters
             'make lint-go',
         ],

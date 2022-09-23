@@ -84,11 +84,10 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     showingHelp: false,
   };
 
-  componentDidMount() {
+  async componentDidMount() {
     const { data, query } = this.props;
     const dataFilteredByRefId = filterPanelDataToQuery(data, query.refId);
     this.setState({ data: dataFilteredByRefId });
-
     this.loadDatasource();
   }
 
