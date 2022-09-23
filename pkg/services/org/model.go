@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 // Typed errors
@@ -154,6 +155,33 @@ type RemoveOrgUserCommand struct {
 	OrgID                    int64
 	ShouldDeleteOrphanedUser bool
 	UserWasDeleted           bool
+}
+
+type GetOrgUsersQuery struct {
+	UserID int64
+	OrgID  int64
+	Query  string
+	Limit  int
+	// Flag used to allow oss edition to query users without access control
+	DontEnforceAccessControl bool
+
+	User *user.SignedInUser
+}
+
+type SearchOrgUsersQuery struct {
+	OrgID int64
+	Query string
+	Page  int
+	Limit int
+
+	User *user.SignedInUser
+}
+
+type SearchOrgUsersQueryResult struct {
+	TotalCount int64         `json:"totalCount"`
+	OrgUsers   []*OrgUserDTO `json:"OrgUsers"`
+	Page       int           `json:"page"`
+	PerPage    int           `json:"perPage"`
 }
 
 type ByOrgName []*UserOrgDTO
