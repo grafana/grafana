@@ -34,7 +34,7 @@ import {
   MetricRequest,
 } from '../types';
 
-import { CloudWatchQueryRunner } from './CloudWatchQueryRunner';
+import { CloudWatchRequest } from './CloudWatchRequest';
 
 const displayAlert = (datasourceName: string, region: string) =>
   store.dispatch(
@@ -47,9 +47,8 @@ const displayAlert = (datasourceName: string, region: string) =>
       )
     )
   );
-
 // This class handles execution of CloudWatch metrics query data queries
-export class CloudWatchMetricsQueryRunner extends CloudWatchQueryRunner {
+export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
   debouncedAlert: (datasourceName: string, region: string) => void = memoizedDebounce(
     displayAlert,
     AppNotificationTimeout.Error

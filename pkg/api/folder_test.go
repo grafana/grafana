@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web/webtest"
@@ -237,13 +238,14 @@ func createFolderScenario(t *testing.T, desc string, url string, routePattern st
 	setUpRBACGuardian(t)
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		aclMockResp := []*models.DashboardACLInfoDTO{}
+		teamSvc := &teamtest.FakeService{}
 		dashSvc := &dashboards.FakeDashboardService{}
 		dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
 			q := args.Get(1).(*models.GetDashboardACLInfoListQuery)
 			q.Result = aclMockResp
 		}).Return(nil)
 		store := mockstore.NewSQLStoreMock()
-		guardian.InitLegacyGuardian(store, dashSvc)
+		guardian.InitLegacyGuardian(store, dashSvc, teamSvc)
 		hs := HTTPServer{
 			AccessControl: acmock.New(),
 			folderService: folderService,
