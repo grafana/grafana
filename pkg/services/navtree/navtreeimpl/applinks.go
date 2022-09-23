@@ -37,7 +37,6 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *models.ReqCo
 
 	for _, plugin := range s.pluginStore.Plugins(c.Req.Context(), plugins.App) {
 		if !isPluginEnabled(plugin) {
-			fmt.Printf("not enabled")
 			continue
 		}
 
@@ -112,8 +111,8 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 				link.Url = s.cfg.AppSubURL + "/plugins/" + plugin.ID + "/page/" + include.Slug
 			}
 
-			if sectionForPageID, ok := s.cfg.NavigationNavIdOverrides[include.Path]; ok {
-				if sectionForPage := treeRoot.FindById(sectionForPageID); sectionForPage != nil {
+			if pathConfig, ok := s.cfg.NavigationAppPathConfig[include.Path]; ok {
+				if sectionForPage := treeRoot.FindById(pathConfig.SectionID); sectionForPage != nil {
 					link.Id = "standalone-plugin-page-" + include.Path
 					sectionForPage.Children = append(sectionForPage.Children, link)
 				}
@@ -142,11 +141,13 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 
 		alertingNode := treeRoot.FindById("alerting")
 
-		if navId, hasNavId := s.cfg.NavigationAppNavIds[plugin.ID]; hasNavId && topNavEnabled {
-			if navNode := treeRoot.FindById(navId); navNode != nil {
+		if navConfig, hasOverride := s.cfg.NavigationAppConfig[plugin.ID]; hasOverride && topNavEnabled {
+			appLink.SortWeight = navConfig.SortWeight
+
+			if navNode := treeRoot.FindById(navConfig.SectionID); navNode != nil {
 				navNode.Children = append(navNode.Children, appLink)
 			} else {
-				if navId == navtree.NavIDMonitoring {
+				if navConfig.SectionID == navtree.NavIDMonitoring {
 					treeRoot.AddSection(&navtree.NavLink{
 						Text:        "Monitoring",
 						Id:          navtree.NavIDMonitoring,
@@ -158,7 +159,7 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 					})
 				}
 
-				if navId == navtree.NavIDAlertsAndIncidents && alertingNode != nil {
+				if navConfig.SectionID == navtree.NavIDAlertsAndIncidents && alertingNode != nil {
 					treeRoot.AddSection(&navtree.NavLink{
 						Text:        "Alerts & incidents",
 						Id:          navtree.NavIDAlertsAndIncidents,
@@ -170,7 +171,7 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 					})
 					treeRoot.RemoveSection(alertingNode)
 				}
-				s.log.Error("Plugin app nav id not found", "pluginId", plugin.ID, "navId", navId)
+				s.log.Error("Plugin app nav id not found", "pluginId", plugin.ID, "navId", navConfig.SectionID)
 			}
 		} else {
 			return appLink

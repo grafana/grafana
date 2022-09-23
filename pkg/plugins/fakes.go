@@ -5,13 +5,17 @@ import "context"
 type FakePluginStore struct {
 	Store
 
-	PluginMap map[string]PluginDTO
+	PluginList []PluginDTO
 }
 
 func (pr FakePluginStore) Plugin(_ context.Context, pluginID string) (PluginDTO, bool) {
-	p, exists := pr.PluginMap[pluginID]
+	for _, v := range pr.PluginList {
+		if v.ID == pluginID {
+			return v, true
+		}
+	}
 
-	return p, exists
+	return PluginDTO{}, false
 }
 
 func (pr FakePluginStore) Plugins(_ context.Context, pluginTypes ...Type) []PluginDTO {
@@ -19,7 +23,8 @@ func (pr FakePluginStore) Plugins(_ context.Context, pluginTypes ...Type) []Plug
 	if len(pluginTypes) == 0 {
 		pluginTypes = PluginTypes
 	}
-	for _, v := range pr.PluginMap {
+
+	for _, v := range pr.PluginList {
 		for _, t := range pluginTypes {
 			if v.Type == t {
 				result = append(result, v)

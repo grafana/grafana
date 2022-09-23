@@ -428,7 +428,7 @@ func setupSomeDataSourcePlugins(t *testing.T, s *Service) {
 	t.Helper()
 
 	s.plugins = &plugins.FakePluginStore{
-		PluginMap: map[string]plugins.PluginDTO{
+		PluginList: map[string]plugins.PluginDTO{
 			datasources.DS_ES: {
 				Signature: "internal",
 			},

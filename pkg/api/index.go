@@ -3,7 +3,6 @@ package api
 import (
 	"fmt"
 	"net/http"
-	"sort"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -115,7 +114,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		FavIcon:                 "public/img/fav32.png",
 		AppleTouchIcon:          "public/img/apple-touch-icon.png",
 		AppTitle:                "Grafana",
-		NavTree:                 navTree.Children,
+		NavTree:                 navTree,
 		Sentry:                  &hs.Cfg.Sentry,
 		Nonce:                   c.RequestNonce,
 		ContentDeliveryURL:      hs.Cfg.GetContentDeliveryURL(hs.License.ContentDeliveryPrefix()),
@@ -150,9 +149,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 
 	hs.HooksService.RunIndexDataHooks(&data, c)
 
-	sort.SliceStable(data.NavTree, func(i, j int) bool {
-		return data.NavTree[i].SortWeight < data.NavTree[j].SortWeight
-	})
+	data.NavTree.Sort()
 
 	return &data, nil
 }

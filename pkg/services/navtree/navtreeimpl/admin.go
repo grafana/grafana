@@ -176,7 +176,7 @@ func (s *ServiceImpl) getServerAdminNode(c *models.ReqContext) *navtree.NavLink 
 		Text:         "Server admin",
 		SubTitle:     "Manage all users and orgs",
 		HideFromTabs: true,
-		Id:           "admin",
+		Id:           navtree.NavIDAdmin,
 		Icon:         "shield",
 		Url:          adminNavLinks[0].Url,
 		SortWeight:   navtree.WeightAdmin,

@@ -25,32 +25,50 @@ func TestAddAppLinks(t *testing.T) {
 		{Action: plugins.ActionAppAccess, Scope: "*"},
 	}
 
-	pluginSettings := pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
-		"test-app": {ID: 0, OrgID: 1, PluginID: "test-app", PluginVersion: "1.0.0", Enabled: true},
-	}}
-
-	testApp := plugins.PluginDTO{
+	testApp1 := plugins.PluginDTO{
 		JSONData: plugins.JSONData{
-			ID:   "test-app",
-			Name: "Test app name",
+			ID:   "test-app1",
+			Name: "Test app1 name",
 			Type: plugins.App,
 			Includes: []*plugins.Includes{
 				{
 					Name:       "Hello",
-					Path:       "/a/test-app/catalog",
+					Path:       "/a/test-app1/catalog",
 					Type:       "page",
 					AddToNav:   true,
 					DefaultNav: true,
 				},
 				{
 					Name:     "Hello",
-					Path:     "/a/test-app/page2",
+					Path:     "/a/test-app1/page2",
 					Type:     "page",
 					AddToNav: true,
 				},
 			},
 		},
 	}
+
+	testApp2 := plugins.PluginDTO{
+		JSONData: plugins.JSONData{
+			ID:   "test-app2",
+			Name: "Test app2 name",
+			Type: plugins.App,
+			Includes: []*plugins.Includes{
+				{
+					Name:       "Hello",
+					Path:       "/a/quick-app/catalog",
+					Type:       "page",
+					AddToNav:   true,
+					DefaultNav: true,
+				},
+			},
+		},
+	}
+
+	pluginSettings := pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
+		testApp1.ID: {ID: 0, OrgID: 1, PluginID: testApp1.ID, PluginVersion: "1.0.0", Enabled: true},
+		testApp2.ID: {ID: 0, OrgID: 1, PluginID: testApp2.ID, PluginVersion: "1.0.0", Enabled: true},
+	}}
 
 	service := ServiceImpl{
 		log:            log.New("navtree"),
@@ -59,9 +77,7 @@ func TestAddAppLinks(t *testing.T) {
 		pluginSettings: &pluginSettings,
 		features:       featuremgmt.WithFeatures(),
 		pluginStore: plugins.FakePluginStore{
-			PluginMap: map[string]plugins.PluginDTO{
-				"test-app": testApp,
-			},
+			PluginList: []plugins.PluginDTO{testApp1, testApp2},
 		},
 	}
 
@@ -69,9 +85,9 @@ func TestAddAppLinks(t *testing.T) {
 		treeRoot := navtree.NavTreeRoot{}
 		err := service.addAppLinks(&treeRoot, reqCtx)
 		require.NoError(t, err)
-		require.Equal(t, "Test app name", treeRoot.Children[0].Text)
-		require.Equal(t, "/a/test-app/catalog", treeRoot.Children[0].Url)
-		require.Equal(t, "/a/test-app/page2", treeRoot.Children[0].Children[1].Url)
+		require.Equal(t, "Test app1 name", treeRoot.Children[0].Text)
+		require.Equal(t, "/a/test-app1/catalog", treeRoot.Children[0].Url)
+		require.Equal(t, "/a/test-app1/page2", treeRoot.Children[0].Children[1].Url)
 	})
 
 	t.Run("Should move apps to Apps category when topnav is enabled", func(t *testing.T) {
@@ -80,29 +96,29 @@ func TestAddAppLinks(t *testing.T) {
 		err := service.addAppLinks(&treeRoot, reqCtx)
 		require.NoError(t, err)
 		require.Equal(t, "Apps", treeRoot.Children[0].Text)
-		require.Equal(t, "Test app name", treeRoot.Children[0].Children[0].Text)
+		require.Equal(t, "Test app1 name", treeRoot.Children[0].Children[0].Text)
 	})
 
 	t.Run("Should move apps that have specific nav id configured to correct section", func(t *testing.T) {
 		service.features = featuremgmt.WithFeatures(featuremgmt.FlagTopnav)
-		service.cfg.NavigationAppNavIds = map[string]string{
-			"test-app": "admin",
+		service.cfg.NavigationAppConfig = map[string]setting.NavigationAppConfig{
+			"test-app1": {SectionID: navtree.NavIDAdmin},
 		}
 
 		treeRoot := navtree.NavTreeRoot{}
 		treeRoot.AddSection(&navtree.NavLink{
-			Id: "admin",
+			Id: navtree.NavIDAdmin,
 		})
 
 		err := service.addAppLinks(&treeRoot, reqCtx)
 		require.NoError(t, err)
-		require.Equal(t, "plugin-page-test-app", treeRoot.Children[0].Children[0].Id)
+		require.Equal(t, "plugin-page-test-app1", treeRoot.Children[0].Children[0].Id)
 	})
 
 	t.Run("Should add monitoring section if plugin exists that wants to live there", func(t *testing.T) {
 		service.features = featuremgmt.WithFeatures(featuremgmt.FlagTopnav)
-		service.cfg.NavigationAppNavIds = map[string]string{
-			"test-app": navtree.NavIDMonitoring,
+		service.cfg.NavigationAppConfig = map[string]setting.NavigationAppConfig{
+			"test-app1": {SectionID: navtree.NavIDMonitoring},
 		}
 
 		treeRoot := navtree.NavTreeRoot{}
@@ -110,13 +126,13 @@ func TestAddAppLinks(t *testing.T) {
 		err := service.addAppLinks(&treeRoot, reqCtx)
 		require.NoError(t, err)
 		require.Equal(t, "Monitoring", treeRoot.Children[0].Text)
-		require.Equal(t, "Test app name", treeRoot.Children[0].Children[0].Text)
+		require.Equal(t, "Test app1 name", treeRoot.Children[0].Children[0].Text)
 	})
 
 	t.Run("Should add Alerts and incidents section if plugin exists that wants to live there", func(t *testing.T) {
 		service.features = featuremgmt.WithFeatures(featuremgmt.FlagTopnav)
-		service.cfg.NavigationAppNavIds = map[string]string{
-			"test-app": navtree.NavIDAlertsAndIncidents,
+		service.cfg.NavigationAppConfig = map[string]setting.NavigationAppConfig{
+			"test-app1": {SectionID: navtree.NavIDAlertsAndIncidents},
 		}
 
 		treeRoot := navtree.NavTreeRoot{}
@@ -126,6 +142,24 @@ func TestAddAppLinks(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "Alerts & incidents", treeRoot.Children[0].Text)
 		require.Equal(t, "Alerting", treeRoot.Children[0].Children[0].Text)
-		require.Equal(t, "Test app name", treeRoot.Children[0].Children[1].Text)
+		require.Equal(t, "Test app1 name", treeRoot.Children[0].Children[1].Text)
+	})
+
+	t.Run("Should be able to control app sort order with SortWeight", func(t *testing.T) {
+		service.features = featuremgmt.WithFeatures(featuremgmt.FlagTopnav)
+		service.cfg.NavigationAppConfig = map[string]setting.NavigationAppConfig{
+			"test-app2": {SectionID: navtree.NavIDMonitoring, SortWeight: 1},
+			"test-app1": {SectionID: navtree.NavIDMonitoring, SortWeight: 2},
+		}
+
+		treeRoot := navtree.NavTreeRoot{}
+
+		err := service.addAppLinks(&treeRoot, reqCtx)
+
+		treeRoot.Sort()
+
+		require.NoError(t, err)
+		require.Equal(t, "Test app2 name", treeRoot.Children[0].Children[0].Text)
+		require.Equal(t, "Test app1 name", treeRoot.Children[0].Children[1].Text)
 	})
 }

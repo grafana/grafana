@@ -12,7 +12,7 @@ func TestNavigationSettingDefaults(t *testing.T) {
 	err := cfg.readNavigationSettings()
 	require.NoError(t, err)
 
-	require.Equal(t, "alerting", cfg.NavigationAppNavIds["grafana-k8s-app"])
+	require.Equal(t, "alerting", cfg.NavigationAppConfig["grafana-k8s-app"])
 }
 
 func TestNavigationSettings(t *testing.T) {
@@ -24,6 +24,6 @@ func TestNavigationSettings(t *testing.T) {
 	err := cfg.readNavigationSettings()
 	require.NoError(t, err)
 
-	require.Equal(t, "dashboards", cfg.NavigationAppNavIds["grafana-k8s-app"])
-	require.Equal(t, "admin", cfg.NavigationAppNavIds["other-app"])
+	require.Equal(t, "dashboards", cfg.NavigationAppConfig["grafana-k8s-app"])
+	require.Equal(t, "admin", cfg.NavigationAppConfig["other-app"])
 }

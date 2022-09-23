@@ -20,7 +20,7 @@ func TestPluginUpdateChecker_HasUpdate(t *testing.T) {
 				"test-ds": "1.0.0",
 			},
 			pluginStore: plugins.FakePluginStore{
-				PluginMap: map[string]plugins.PluginDTO{
+				PluginList: map[string]plugins.PluginDTO{
 					"test-ds": {
 						JSONData: plugins.JSONData{
 							Info: plugins.Info{Version: "0.9.0"},
@@ -42,7 +42,7 @@ func TestPluginUpdateChecker_HasUpdate(t *testing.T) {
 				"test-app":   "0.0.1",
 			},
 			pluginStore: plugins.FakePluginStore{
-				PluginMap: map[string]plugins.PluginDTO{
+				PluginList: map[string]plugins.PluginDTO{
 					"test-ds": {
 						JSONData: plugins.JSONData{
 							Info: plugins.Info{Version: "0.9.0"},
@@ -81,7 +81,7 @@ func TestPluginUpdateChecker_HasUpdate(t *testing.T) {
 				"test-panel": "0.9.0",
 			},
 			pluginStore: plugins.FakePluginStore{
-				PluginMap: map[string]plugins.PluginDTO{
+				PluginList: map[string]plugins.PluginDTO{
 					"test-ds": {
 						JSONData: plugins.JSONData{
 							Info: plugins.Info{Version: "1.0.0"},
@@ -123,7 +123,7 @@ func TestPluginUpdateChecker_checkForUpdates(t *testing.T) {
 				"test-app": "1.0.0",
 			},
 			pluginStore: plugins.FakePluginStore{
-				PluginMap: map[string]plugins.PluginDTO{
+				PluginList: map[string]plugins.PluginDTO{
 					"test-ds": {
 						JSONData: plugins.JSONData{
 							ID:   "test-ds",

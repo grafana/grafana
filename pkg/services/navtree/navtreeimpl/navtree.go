@@ -175,6 +175,7 @@ func (s *ServiceImpl) GetNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 			orgAdminNode.Text = "Administration"
 			serverAdminNode.Url = "/admin/server"
 			serverAdminNode.HideFromTabs = false
+			serverAdminNode.SortWeight = 0
 			orgAdminNode.Children = append(orgAdminNode.Children, serverAdminNode)
 			treeRoot.RemoveSection(serverAdminNode)
 		}

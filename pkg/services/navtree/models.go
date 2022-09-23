@@ -1,5 +1,10 @@
 package navtree
 
+import (
+	"encoding/json"
+	"sort"
+)
+
 const (
 	// These weights may be used by an extension to reliably place
 	// itself in relation to a particular item in the menu. The weights
@@ -25,6 +30,14 @@ const (
 	NavSectionConfig string = "config"
 )
 
+const (
+	NavIDCfg                = "cfg" // NavIDCfg is the id for org configuration navigation node
+	NavIDAdmin              = "admin"
+	NavIDAlertsAndIncidents = "alerts-and-incidents"
+	NavIDAlerting           = "alerting"
+	NavIDMonitoring         = "monitoring"
+)
+
 type NavLink struct {
 	Id               string     `json:"id,omitempty"`
 	Text             string     `json:"text"`
@@ -47,12 +60,9 @@ type NavLink struct {
 	EmptyMessageId   string     `json:"emptyMessageId,omitempty"`
 }
 
-const (
-	NavIDCfg                = "cfg" // NavIDCfg is the id for org configuration navigation node
-	NavIDAlertsAndIncidents = "alerts-and-incidents"
-	NavIDAlerting           = "alerting"
-	NavIDMonitoring         = "monitoring"
-)
+func (node *NavLink) Sort() {
+	Sort(node.Children)
+}
 
 type NavTreeRoot struct {
 	Children []*NavLink
@@ -76,6 +86,23 @@ func (root *NavTreeRoot) RemoveSection(node *NavLink) {
 
 func (root *NavTreeRoot) FindById(id string) *NavLink {
 	return FindById(root.Children, id)
+}
+
+func (root *NavTreeRoot) Sort() {
+	Sort(root.Children)
+}
+
+func (root *NavTreeRoot) MarshalJSON() ([]byte, error) {
+	return json.Marshal(root.Children)
+}
+
+func Sort(nodes []*NavLink) {
+	sort.SliceStable(nodes, func(i, j int) bool {
+		return nodes[i].SortWeight < nodes[j].SortWeight
+	})
+	for _, child := range nodes {
+		child.Sort()
+	}
 }
 
 func FindById(nodes []*NavLink, id string) *NavLink {

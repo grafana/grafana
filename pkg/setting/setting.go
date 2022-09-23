@@ -275,8 +275,8 @@ type Cfg struct {
 	PluginAdminExternalManageEnabled bool
 
 	// Navigation
-	NavigationAppNavIds      map[string]string
-	NavigationNavIdOverrides map[string]string
+	NavigationAppConfig     map[string]NavigationAppConfig
+	NavigationAppPathConfig map[string]NavigationAppConfig
 
 	// Panels
 	DisableSanitizeHtml bool

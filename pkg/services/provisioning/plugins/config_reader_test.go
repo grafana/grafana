@@ -48,7 +48,7 @@ func TestConfigReader(t *testing.T) {
 
 	t.Run("Can read correct properties", func(t *testing.T) {
 		pm := plugins.FakePluginStore{
-			PluginMap: map[string]plugins.PluginDTO{
+			PluginList: map[string]plugins.PluginDTO{
 				"test-plugin":   {},
 				"test-plugin-2": {},
 			},
