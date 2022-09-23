@@ -8,8 +8,8 @@ type NavigationAppConfig struct {
 func (cfg *Cfg) readNavigationSettings() error {
 	//sec := cfg.Raw.Section("navigation")
 	cfg.NavigationAppConfig = map[string]NavigationAppConfig{
-		"grafana-synthetic-monitoring-app": {SectionID: "monitoring"},
-		"grafana-k8s-app":                  {SectionID: "monitoring"},
+		"grafana-k8s-app":                  {SectionID: "monitoring", SortWeight: 1},
+		"grafana-synthetic-monitoring-app": {SectionID: "monitoring", SortWeight: 2},
 		"grafana-ml-app":                   {SectionID: "alerts-and-incidents"},
 		"grafana-incident-app":             {SectionID: "alerts-and-incidents"},
 	}
