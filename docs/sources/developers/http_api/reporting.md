@@ -54,9 +54,6 @@ Content-Length: 1840
 		"id": 2,
 		"userId": 1,
 		"orgId": 1,
-		"dashboardId": 0,
-		"dashboardName": "Alerting with TestData",
-		"dashboardUid": "",
 		"name": "Report 2",
 		"recipients": "example-report@grafana.com",
 		"replyTo": "",
@@ -69,21 +66,13 @@ Content-Length: 1840
 			"intervalAmount": 0,
 			"workdaysOnly": false,
 			"dayOfMonth": "2",
-			"day": "sunday",
-			"hour": 0,
-			"minute": 0,
 			"timeZone": "Europe/Warsaw"
 		},
 		"options": {
 			"orientation": "landscape",
 			"layout": "grid",
-			"timeRange": {
-				"from": "",
-				"to": ""
-			}
 		},
 		"enableDashboardUrl": true,
-		"enableCsv": false,
 		"state": "scheduled",
 		"dashboards": [
 			{
@@ -91,10 +80,6 @@ Content-Length: 1840
 					"id": 463,
 					"uid": "7MeksYbmk",
 					"name": "Alerting with TestData"
-				},
-				"timeRange": {
-					"from": "",
-					"to": ""
 				},
 				"reportVariables": {
 					"namefilter": "TestData"
@@ -149,9 +134,6 @@ Content-Length: 940
 	"id": 2,
 	"userId": 1,
 	"orgId": 1,
-	"dashboardId": 0,
-	"dashboardName": "Alerting with TestData",
-	"dashboardUid": "",
 	"name": "Report 2",
 	"recipients": "example-report@grafana.com",
 	"replyTo": "",
@@ -164,21 +146,13 @@ Content-Length: 940
 		"intervalAmount": 0,
 		"workdaysOnly": false,
 		"dayOfMonth": "2",
-		"day": "sunday",
-		"hour": 0,
-		"minute": 0,
 		"timeZone": "Europe/Warsaw"
 	},
 	"options": {
 		"orientation": "landscape",
 		"layout": "grid",
-		"timeRange": {
-			"from": "",
-			"to": ""
-		}
 	},
 	"enableDashboardUrl": true,
-	"enableCsv": false,
 	"state": "scheduled",
 	"dashboards": [
 		{
@@ -292,7 +266,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 | orientation        | string    | Can be `portrait` or `landscape`.                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | layout             | string    | Can be `grid` or `simple`.                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | enableDashboardUrl | bool      | Adds a dashbaord url to the bottom of the report email.                                                                                                                                                                                                                                                                                                                                                                                           |
-| formats            | []string  | Specified what kind of attachment to generate for the report - `csv`, `pdf`, `image`. `pdf` is the default one.                                                                                                                                                                                                                                                                                                                                   |
+| formats            | []string  | Specified what kind of attachment to generate for the report - `csv`, `pdf`, `image`.<br/>`pdf` is the default one.<br/>`csv` attaches a CSV file for each table panel.<br/>`image` embeds an image of a dashboard into the email's body.                                                                                                                                                                                                         |
 | dashboards         | []object  | Dashboards to generate a report for.<br/> See "Report Dashboard Schema" section below.                                                                                                                                                                                                                                                                                                                                                            |
 
 #### Report Dashboard Schema
@@ -361,13 +335,8 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 	"options": {
 		"orientation": "landscape",
 		"layout": "grid",
-		"timeRange": {
-			"from": "",
-			"to": ""
-		}
 	},
 	"enableDashboardUrl": true,
-	"enableCsv": false,
 	"state": "scheduled",
 	"dashboards": [
 		{
@@ -594,13 +563,13 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 #### JSON Body Schema
 
-| Field name               | Data type | Description                                                                                                                                                                                                                                                                        |
-| ------------------------ | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| branding.reportLogoUrl   | string    | URL of an image used as a logo on every page of the report.                                                                                                                                                                                                                        |
-| branding.emailLogoUrl    | string    | URL of an image used as a logo in the email.                                                                                                                                                                                                                                       |
-| branding.emailFooterMode | string    | Can be `sent-by` or `none`.<br/>`sent-by` adds a "Sent by `branding.emailFooterText`" footer link to the email. Requires specifying values in `branding.emailFooterText` and `branding.emailFooterLink` fields.<br/>`none` suppresses adding a "Sent by" footer link to the email. |
-| branding.emailFooterText | string    | Text of a URL added to the email "Sent by" footer.                                                                                                                                                                                                                                 |
-| branding.emailFooterLink | string    | URL address value added to the email "Sent by" footer.                                                                                                                                                                                                                             |
+| Field name               | Data type | Description                                                                                                                                                                                                                                                                            |
+| ------------------------ | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| branding.reportLogoUrl   | string    | URL of an image used as a logo on every page of the report.                                                                                                                                                                                                                            |
+| branding.emailLogoUrl    | string    | URL of an image used as a logo in the email.                                                                                                                                                                                                                                           |
+| branding.emailFooterMode | string    | Can be `sent-by` or `none`.<br/>`sent-by` adds a "Sent by `branding.emailFooterText`" footer link to the email. Requires specifying values in the `branding.emailFooterText` and `branding.emailFooterLink` fields.<br/>`none` suppresses adding a "Sent by" footer link to the email. |
+| branding.emailFooterText | string    | Text of a URL added to the email "Sent by" footer.                                                                                                                                                                                                                                     |
+| branding.emailFooterLink | string    | URL address value added to the email "Sent by" footer.                                                                                                                                                                                                                                 |
 
 ### Example response
 
