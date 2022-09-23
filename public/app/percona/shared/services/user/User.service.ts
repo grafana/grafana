@@ -2,7 +2,7 @@ import { CancelToken } from 'axios';
 
 import { api } from 'app/percona/shared/helpers/api';
 
-import { UserStatusResponse } from './User.types';
+import { UserStatusResponse, UserDetailsResponse, UserDetailsPutPayload } from './User.types';
 
 const BASE_URL = '/v1/Platform';
 
@@ -15,5 +15,10 @@ export const UserService = {
       cancelToken
     );
     return is_platform_user;
+  },
+  getUserDetails: async (): Promise<UserDetailsResponse> => await api.get('/v1/user', true),
+  async setProductTourCompleted(completed: boolean): Promise<UserDetailsResponse> {
+    const payload: UserDetailsPutPayload = { product_tour_completed: completed };
+    return await api.put('/v1/user', payload);
   },
 };

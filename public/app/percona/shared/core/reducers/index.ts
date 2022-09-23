@@ -26,10 +26,11 @@ import { Settings, SettingsAPIChangePayload } from 'app/percona/settings/Setting
 import { PlatformService } from 'app/percona/settings/components/Platform/Platform.service';
 import { api } from 'app/percona/shared/helpers/api';
 
-import { UserService } from '../services/user/User.service';
+import { SETTINGS_TIMEOUT } from '../constants';
+import { ServerInfo } from '../types';
 
-import { SETTINGS_TIMEOUT } from './constants';
-import { ServerInfo } from './types';
+import perconaUserReducers from './user';
+export * from './user';
 
 const initialSettingsState: Settings = {
   updatesDisabled: true,
@@ -67,44 +68,6 @@ const initialSettingsState: Settings = {
   },
   isConnectedToPortal: false,
 };
-
-export interface PerconaUserState {
-  isAuthorized: boolean;
-  isPlatformUser: boolean;
-}
-
-export const initialUserState: PerconaUserState = {
-  isAuthorized: false,
-  isPlatformUser: false,
-};
-
-const perconaUserSlice = createSlice({
-  name: 'perconaUser',
-  initialState: initialUserState,
-  reducers: {
-    setAuthorized: (state, action: PayloadAction<boolean>): PerconaUserState => ({
-      ...state,
-      isAuthorized: action.payload,
-    }),
-    setIsPlatformUser: (state, action: PayloadAction<boolean>): PerconaUserState => ({
-      ...state,
-      isPlatformUser: action.payload,
-    }),
-  },
-});
-
-export const { setAuthorized, setIsPlatformUser } = perconaUserSlice.actions;
-
-export const fetchUserStatusAction = createAsyncThunk(
-  'percona/fetchUserStatus',
-  (_, thunkAPI): Promise<void> =>
-    withSerializedError(
-      (async () => {
-        const isPlatformUser = await UserService.getUserStatus(undefined, true);
-        thunkAPI.dispatch(setIsPlatformUser(isPlatformUser));
-      })()
-    )
-);
 
 export const fetchSettingsAction = createAsyncThunk(
   'percona/fetchSettings',
@@ -159,8 +122,6 @@ export const updateSettingsAction = createAsyncThunk(
       }
     )
 );
-
-export const perconaUserReducers = perconaUserSlice.reducer;
 
 const toKubernetesListModel = (
   response: KubernetesListAPI,

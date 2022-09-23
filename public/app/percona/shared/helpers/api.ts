@@ -63,6 +63,16 @@ export class ApiRequest {
         throw e;
       });
   }
+
+  async put<T, B>(path: string, body: B): Promise<T> {
+    return this.axiosInstance
+      .put<T>(path, body)
+      .then((response): T => response.data)
+      .catch((e) => {
+        // Notify.error(e.message);
+        throw e;
+      });
+  }
 }
 
 export const api = new ApiRequest({});
