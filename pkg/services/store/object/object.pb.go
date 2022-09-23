@@ -26,7 +26,9 @@ type UserInfo struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id    int64  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`      // internal grafana ID
+	// internal grafana user ID
+	Id int64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	// login name
 	Login string `protobuf:"bytes,2,opt,name=login,proto3" json:"login,omitempty"` // string ID?
 }
 
@@ -93,17 +95,28 @@ type RawObject struct {
 	ModifiedBy *UserInfo `protobuf:"bytes,4,opt,name=modified_by,json=modifiedBy,proto3" json:"modified_by,omitempty"`
 	// Content Length
 	Size int64 `protobuf:"varint,5,opt,name=size,proto3" json:"size,omitempty"`
-	// MD5 digest of the Body
+	// MD5 digest of the body
 	ETag string `protobuf:"bytes,6,opt,name=ETag,proto3" json:"ETag,omitempty"`
-	// Raw bytes of the storage object.  The kind+schema will ensure
+	// Raw bytes of the storage object.  The kind will determine what is a valid payload
 	Body []byte `protobuf:"bytes,7,opt,name=body,proto3" json:"body,omitempty"`
-	// A small set of properties managed by raw storage layer.  The kind+schema will define val
+	// A small set of properties managed by raw storage layer.  The kind can lookup a schema
+	// that can enforce valid keys and the meanings
 	Properties map[string]string `protobuf:"bytes,8,rep,name=properties,proto3" json:"properties,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	// object version (might be commit hash, or number)
+	// The version will change when the object is saved.
+	//
+	// NOTE: although this could be a known key in properties, this currently exists in the
+	// dashboard+dashboard_version tables, and seems better as an explicit flat result
+	// rather than one pulled out from the properties map
 	Version string `protobuf:"bytes,9,opt,name=version,proto3" json:"version,omitempty"`
 	// optional "save" or "commit" message
+	//
+	// NOTE: although this could be a known key in properties, this currently exists in the
+	// dashboard_version table, and seems better as an explicit flat result from a "history" query
 	Comment string `protobuf:"bytes,10,opt,name=comment,proto3" json:"comment,omitempty"`
 	// Time in epoch milliseconds that the object was last synced with an external system (provisioning/git)
+	//
+	// NOTE: although this could be a known key in properties (as a string value?), this currently exists
+	// in the dashboard_provisioning table
 	SyncTime int64 `protobuf:"varint,11,opt,name=sync_time,json=syncTime,proto3" json:"sync_time,omitempty"`
 }
 
@@ -217,6 +230,7 @@ func (x *RawObject) GetSyncTime() int64 {
 }
 
 // Report error while working with objects
+// NOTE: real systems at scale will contain errors.
 type ObjectErrorInfo struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -283,16 +297,18 @@ func (x *ObjectErrorInfo) GetDetailsJson() []byte {
 	return nil
 }
 
-// Reference to
+// Reference to another object outside itself
+// This message is derived from the object body and can be used to search for references.
+// This does not represent a method to declare a reference to another object.
 type ExternalReference struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// datasource, panel
+	// datasource (instance), dashboard (instance),
 	Kind string `protobuf:"bytes,1,opt,name=kind,proto3" json:"kind,omitempty"`
-	// prometheus / heatmap
-	Type string `protobuf:"bytes,2,opt,name=type,proto3" json:"type,omitempty"`
+	// prometheus / heatmap, heatamp|prometheus
+	Type string `protobuf:"bytes,2,opt,name=type,proto3" json:"type,omitempty"` // flavor
 	// Unique ID for this object
 	UID string `protobuf:"bytes,3,opt,name=UID,proto3" json:"UID,omitempty"`
 }
@@ -494,7 +510,9 @@ type WriteObjectRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	UID  string `protobuf:"bytes,1,opt,name=UID,proto3" json:"UID,omitempty"`
+	// Object identifier
+	UID string `protobuf:"bytes,1,opt,name=UID,proto3" json:"UID,omitempty"`
+	// Object kind
 	Kind string `protobuf:"bytes,2,opt,name=kind,proto3" json:"kind,omitempty"`
 	// The raw object body
 	Body []byte `protobuf:"bytes,3,opt,name=body,proto3" json:"body,omitempty"`
@@ -651,7 +669,9 @@ type DeleteObjectRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	UID  string `protobuf:"bytes,1,opt,name=UID,proto3" json:"UID,omitempty"`
+	// Object identifier
+	UID string `protobuf:"bytes,1,opt,name=UID,proto3" json:"UID,omitempty"`
+	// Object kind
 	Kind string `protobuf:"bytes,2,opt,name=kind,proto3" json:"kind,omitempty"`
 	// Used for optimistic locking.  If missing, the previous version will be replaced regardless
 	PreviousVersion string `protobuf:"bytes,3,opt,name=previous_version,json=previousVersion,proto3" json:"previous_version,omitempty"`
@@ -764,7 +784,7 @@ type ObjectHistoryRequest struct {
 
 	// Object identifier
 	UID string `protobuf:"bytes,1,opt,name=UID,proto3" json:"UID,omitempty"`
-	// type of object we are listing
+	// Object kind
 	Kind string `protobuf:"bytes,2,opt,name=kind,proto3" json:"kind,omitempty"`
 	// Maximum number of items to return
 	Limit int64 `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`

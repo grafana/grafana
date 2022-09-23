@@ -5,7 +5,10 @@ option go_package = "./;object";
 
 // Will be replaced with something from the SDK
 message UserInfo {
-  int64 id = 1; // internal grafana ID
+  // internal grafana user ID
+  int64 id = 1;
+
+  // login name
   string login = 2; // string ID? 
 }
 
@@ -27,26 +30,38 @@ message RawObject {
   // Content Length
   int64 size = 5;
 
-  // MD5 digest of the Body
+  // MD5 digest of the body
   string ETag = 6;
 
-  // Raw bytes of the storage object.  The kind+schema will ensure
+  // Raw bytes of the storage object.  The kind will determine what is a valid payload
   bytes body = 7;
 
-  // A small set of properties managed by raw storage layer.  The kind+schema will define val
+  // A small set of properties managed by raw storage layer.  The kind can lookup a schema
+  // that can enforce valid keys and the meanings
   map<string,string> properties = 8;
 
-  // object version (might be commit hash, or number)
+  // The version will change when the object is saved. 
+  //
+  // NOTE: although this could be a known key in properties, this currently exists in the
+  // dashboard+dashboard_version tables, and seems better as an explicit flat result 
+  // rather than one pulled out from the properties map
   string version = 9;
 
   // optional "save" or "commit" message
+  //
+  // NOTE: although this could be a known key in properties, this currently exists in the
+  // dashboard_version table, and seems better as an explicit flat result from a "history" query
   string comment = 10;
 
   // Time in epoch milliseconds that the object was last synced with an external system (provisioning/git)
+  //
+  // NOTE: although this could be a known key in properties (as a string value?), this currently exists 
+  // in the dashboard_provisioning table
   int64 sync_time = 11;
 }
 
 // Report error while working with objects
+// NOTE: real systems at scale will contain errors.
 message ObjectErrorInfo {
   // Match an error code registry?
   int64 code = 1;
@@ -58,18 +73,19 @@ message ObjectErrorInfo {
   bytes details_json = 3;
 }
 
-// Reference to 
+// Reference to another object outside itself
+// This message is derived from the object body and can be used to search for references.
+// This does not represent a method to declare a reference to another object.
 message ExternalReference {
-  // datasource, panel
+  // datasource (instance), dashboard (instance),
   string kind = 1;
 
-  // prometheus / heatmap
-  string type = 2;
+  // prometheus / heatmap, heatamp|prometheus
+  string type = 2;  // flavor
 
   // Unique ID for this object
   string UID = 3;
 }
-
 
 //-----------------------------------------------
 // Get request/response
@@ -102,7 +118,10 @@ message ReadObjectResponse {
 //-----------------------------------------------
 
 message WriteObjectRequest {
+  // Object identifier
   string UID = 1;
+
+  // Object kind
   string kind = 2;
 
   // The raw object body
@@ -134,7 +153,10 @@ message WriteObjectResponse {
 //-----------------------------------------------
 
 message DeleteObjectRequest {
+  // Object identifier
   string UID = 1;
+
+  // Object kind
   string kind = 2;
 
   // Used for optimistic locking.  If missing, the previous version will be replaced regardless
@@ -153,7 +175,7 @@ message ObjectHistoryRequest {
   // Object identifier
   string UID = 1;
 
-  // type of object we are listing
+  // Object kind
   string kind = 2;
 
   // Maximum number of items to return
