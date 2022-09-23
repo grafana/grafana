@@ -248,7 +248,7 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (m
 		if len(qr.Frames) == 1 {
 			frame := qr.Frames[0]
 			// Handle Untyped NoData
-			if len(frame.Fields) == 0 {
+			if len(frame.Fields) == 0 || frame.Fields[0].Len() == 0 {
 				return mathexp.Results{Values: mathexp.Values{mathexp.NoData{Frame: frame}}}, nil
 			}
 
