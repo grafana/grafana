@@ -77,9 +77,29 @@ export const CanvasContextMenu = ({ scene }: Props) => {
       />
     );
 
+    const editElementMenuItem = () => {
+      const onClickEditElementMenuItem = () => {
+        scene.editModeEnabled.next(true);
+        closeContextMenu();
+      };
+
+      if (selectedElements?.length === 1) {
+        const element = scene.findElementByTarget(selectedElements[0]);
+
+        return (
+          element &&
+          element.item.hasEditMode && (
+            <MenuItem label="Edit" onClick={onClickEditElementMenuItem} className={styles.menuItem} />
+          )
+        );
+      }
+      return null;
+    };
+
     if (selectedElements && selectedElements.length >= 1) {
       return (
         <>
+          {editElementMenuItem()}
           <MenuItem
             label="Delete"
             onClick={() => {
