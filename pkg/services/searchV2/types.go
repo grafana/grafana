@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/user"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
@@ -42,7 +41,6 @@ type SearchService interface {
 	registry.CanBeDisabled
 	registry.BackgroundService
 	DoDashboardQuery(ctx context.Context, user *backend.User, orgId int64, query DashboardQuery) *backend.DataResponse
-	doDashboardQuery(ctx context.Context, user *user.SignedInUser, orgId int64, query DashboardQuery) *backend.DataResponse
 	IsReady(ctx context.Context, orgId int64) IsSearchReadyResponse
 	RegisterDashboardIndexExtender(ext DashboardIndexExtender)
 	TriggerReIndex()

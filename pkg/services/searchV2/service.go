@@ -24,17 +24,8 @@ import (
 )
 
 var (
-	namespace                               = "grafana"
-	subsystem                               = "search"
-	dashboardSearchNotServedRequestsCounter = promauto.NewCounterVec(
-		prometheus.CounterOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "dashboard_search_requests_not_served_total",
-			Help:      "A counter for dashboard search requests that could not be served due to an ongoing search engine indexing",
-		},
-		[]string{"reason"},
-	)
+	namespace                             = "grafana"
+	subsystem                             = "search"
 	dashboardSearchFailureRequestsCounter = promauto.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: namespace,
@@ -203,21 +194,7 @@ func (s *StandardSearchService) getUser(ctx context.Context, backendUser *backen
 
 func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *backend.User, orgID int64, q DashboardQuery) *backend.DataResponse {
 	start := time.Now()
-
-	signedInUser, err := s.getUser(ctx, user, orgID)
-
-	if err != nil {
-		dashboardSearchFailureRequestsCounter.With(prometheus.Labels{
-			"reason": "get_user_error",
-		}).Inc()
-
-		duration := time.Since(start).Seconds()
-		dashboardSearchFailureRequestsDuration.Observe(duration)
-
-		return &backend.DataResponse{Error: err}
-	}
-
-	query := s.doDashboardQuery(ctx, signedInUser, orgID, q)
+	query := s.doDashboardQuery(ctx, user, orgID, q)
 
 	duration := time.Since(start).Seconds()
 	if query.Error != nil {
@@ -229,8 +206,16 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 	return query
 }
 
-func (s *StandardSearchService) doDashboardQuery(ctx context.Context, signedInUser *user.SignedInUser, orgID int64, q DashboardQuery) *backend.DataResponse {
+func (s *StandardSearchService) doDashboardQuery(ctx context.Context, user *backend.User, orgID int64, q DashboardQuery) *backend.DataResponse {
 	rsp := &backend.DataResponse{}
+	signedInUser, err := s.getUser(ctx, user, orgID)
+	if err != nil {
+		dashboardSearchFailureRequestsCounter.With(prometheus.Labels{
+			"reason": "get_user_error",
+		}).Inc()
+		rsp.Error = err
+		return rsp
+	}
 
 	filter, err := s.auth.GetDashboardReadFilter(signedInUser)
 	if err != nil {
