@@ -67,22 +67,20 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *models.ReqCo
 			}
 
 			if include.Type == "page" && include.AddToNav {
-				var link *navtree.NavLink
+				link := &navtree.NavLink{
+					Text: include.Name,
+					Icon: include.Icon,
+				}
+
 				if len(include.Path) > 0 {
-					link = &navtree.NavLink{
-						Url:  s.cfg.AppSubURL + include.Path,
-						Text: include.Name,
-					}
+					link.Url = s.cfg.AppSubURL + include.Path
 					if include.DefaultNav && !topNavEnabled {
 						appLink.Url = link.Url // Overwrite the hardcoded page logic
 					}
 				} else {
-					link = &navtree.NavLink{
-						Url:  s.cfg.AppSubURL + "/plugins/" + plugin.ID + "/page/" + include.Slug,
-						Text: include.Name,
-					}
+					link.Url = s.cfg.AppSubURL + "/plugins/" + plugin.ID + "/page/" + include.Slug
 				}
-				link.Icon = include.Icon
+
 				if sectionForPageID, ok := s.cfg.NavigationNavIdOverrides[include.Path]; ok {
 					if sectionForPage := treeRoot.FindById(sectionForPageID); sectionForPage != nil {
 						link.Id = "standalone-plugin-page-" + include.Path
