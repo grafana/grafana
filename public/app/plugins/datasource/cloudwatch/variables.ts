@@ -7,12 +7,11 @@ import { CloudWatchAPI } from './api';
 import { VariableQueryEditor } from './components/VariableQueryEditor/VariableQueryEditor';
 import { CloudWatchDatasource } from './datasource';
 import { migrateVariableQuery } from './migrations/variableQueryMigrations';
-import { CloudWatchLogsQueryRunner } from './query-runner/CloudWatchLogsQueryRunner';
 import { standardStatistics } from './standardStatistics';
 import { VariableQuery, VariableQueryType } from './types';
 
 export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchDatasource, VariableQuery> {
-  constructor(private readonly api: CloudWatchAPI, private readonly logsQueryRunner: CloudWatchLogsQueryRunner) {
+  constructor(private readonly api: CloudWatchAPI) {
     super();
     this.query = this.query.bind(this);
   }
@@ -55,13 +54,13 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
   }
 
   async handleLogGroupsQuery({ region, logGroupPrefix }: VariableQuery) {
-    const logGroups: string[] = await this.logsQueryRunner.describeAllLogGroups({
+    const logGroups = await this.api.describeAllLogGroups({
       region,
       logGroupNamePrefix: logGroupPrefix,
     });
     return logGroups.map((s) => ({
-      text: s,
-      value: s,
+      text: s.value,
+      value: s.value,
       expandable: true,
     }));
   }

@@ -16,7 +16,9 @@ Each data source has a specific Query Editor that is customized for the features
 
 ## Supported data sources
 
-The following data sources are officially supported:
+> **Note:** For a list of all data source plugins created by Grafana Labs, view the [plugin catalog](https://grafana.com/grafana/plugins/?type=datasource) and select the "Data sources" and "Grafana Labs created" filters. For a list of all Enterprise-level plugins, which have additional support, also enable the [Enterprise filter](https://grafana.com/grafana/plugins/?enterprise=1&type=datasource).
+
+These data sources have additional documentation:
 
 - [Alertmanager]({{< relref "./alertmanager/" >}})
 - [AWS CloudWatch]({{< relref "./aws-cloudwatch/" >}})
@@ -36,7 +38,7 @@ The following data sources are officially supported:
 - [Tempo]({{< relref "./tempo/" >}})
 - [Testdata]({{< relref "./testdata/" >}})
 
-In addition to the data sources that you have configured in your Grafana, there are three special data sources available:
+In addition to the data sources that you have configured in your Grafana instance, there are three special data sources available:
 
 - **Grafana -** A built-in data source that generates random walk data. Useful for testing visualizations and running experiments.
 - **Mixed -** Select this to query multiple data sources in the same panel. When this data source is selected, Grafana allows you to select a data source for every new query that you add.
@@ -47,4 +49,4 @@ In addition to the data sources that you have configured in your Grafana, there 
 
 ## Data source plugins
 
-Since Grafana 3.0 you can install data sources as plugins. Check out [Grafana.com/plugins](https://grafana.com/plugins) for more data sources.
+You can install additional data sources as plugins. To view available data source plugins, see the [Grafana Plugins catalog](https://grafana.com/plugins). To build your own, see the ["Build a data source plugin"](https://grafana.com/tutorials/build-a-data-source-plugin/) tutorial and our documentation about [building a plugin](/developers/plugins/).

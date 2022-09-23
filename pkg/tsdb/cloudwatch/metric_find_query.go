@@ -685,6 +685,42 @@ func (e *cloudWatchExecutor) handleGetLogGroups(pluginCtx backend.PluginContext,
 
 	return result, nil
 }
+func (e *cloudWatchExecutor) handleGetAllLogGroups(pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
+	var nextToken *string
+
+	logGroupNamePrefix := parameters.Get("logGroupNamePrefix")
+
+	var err error
+	logsClient, err := e.getCWLogsClient(pluginCtx, parameters.Get("region"))
+	if err != nil {
+		return nil, err
+	}
+
+	var response *cloudwatchlogs.DescribeLogGroupsOutput
+	result := make([]suggestData, 0)
+	for {
+		response, err = logsClient.DescribeLogGroups(&cloudwatchlogs.DescribeLogGroupsInput{
+			LogGroupNamePrefix: aws.String(logGroupNamePrefix),
+			NextToken:          nextToken,
+			Limit:              aws.Int64(defaultLogGroupLimit),
+		})
+		if err != nil || response == nil {
+			return nil, err
+		}
+
+		for _, logGroup := range response.LogGroups {
+			logGroupName := *logGroup.LogGroupName
+			result = append(result, suggestData{Text: logGroupName, Value: logGroupName, Label: logGroupName})
+		}
+
+		if response.NextToken == nil {
+			break
+		}
+		nextToken = response.NextToken
+	}
+
+	return result, nil
+}
 
 func isDuplicate(nameList []string, target string) bool {
 	for _, name := range nameList {

@@ -121,6 +121,7 @@ export class CanvasPanel extends Component<Props, State> {
   }
 
   componentWillUnmount() {
+    this.scene.subscription.unsubscribe();
     this.subs.unsubscribe();
     isInlineEditOpen = false;
     canvasInstances = canvasInstances.filter((ci) => ci.props.id !== activeCanvasPanel?.props.id);

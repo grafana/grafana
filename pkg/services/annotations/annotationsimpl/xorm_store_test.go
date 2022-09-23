@@ -30,7 +30,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 	}
 	sql := sqlstore.InitTestDB(t)
 	var maximumTagsLength int64 = 60
-	repo := SQLAnnotationRepo{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql), maximumTagsLength: maximumTagsLength}
+	repo := xormRepositoryImpl{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql), maximumTagsLength: maximumTagsLength}
 
 	testUser := &user.SignedInUser{
 		OrgID: 1,
@@ -409,7 +409,7 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 	}
 	sql := sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{})
 	var maximumTagsLength int64 = 60
-	repo := SQLAnnotationRepo{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql), maximumTagsLength: maximumTagsLength}
+	repo := xormRepositoryImpl{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql), maximumTagsLength: maximumTagsLength}
 	dashboardStore := dashboardstore.ProvideDashboardStore(sql, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql))
 
 	testDashboard1 := models.SaveDashboardCommand{
