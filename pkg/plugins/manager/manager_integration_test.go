@@ -49,7 +49,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
 )
 
-func TestIntegrationPluginManager_Run(t *testing.T) {
+func TestIntegrationPluginManager(t *testing.T) {
 	t.Helper()
 
 	staticRootPath, err := filepath.Abs("../../../public/")
@@ -110,16 +110,15 @@ func TestIntegrationPluginManager_Run(t *testing.T) {
 
 	pCfg := config.ProvideConfig(setting.ProvideProvider(cfg), cfg)
 	reg := registry.ProvideService()
-	pm, err := ProvideService(pCfg, cfg, reg, loader.New(pCfg, license, signature.NewUnsignedAuthorizer(pCfg),
-		provider.ProvideService(coreRegistry)), nil)
+	l := loader.ProvideService(pCfg, license, signature.NewUnsignedAuthorizer(pCfg), reg, provider.ProvideService(coreRegistry))
+	ps, err := store.ProvideService(cfg, pCfg, reg, l)
 	require.NoError(t, err)
-	ps := store.ProvideService(reg)
 
 	ctx := context.Background()
 	verifyCorePluginCatalogue(t, ctx, ps)
 	verifyBundledPlugins(t, ctx, ps)
 	verifyPluginStaticRoutes(t, ctx, ps)
-	verifyBackendProcesses(t, pm.pluginRegistry.Plugins(ctx))
+	verifyBackendProcesses(t, reg.Plugins(ctx))
 	verifyPluginQuery(t, ctx, client.ProvideService(reg))
 }
 
