@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -23,6 +24,7 @@ func ProvideService(
 	quotaService quota.Service,
 	authInfoService login.AuthInfoService,
 	accessControl accesscontrol.Service,
+	orgService org.Service,
 ) *Implementation {
 	s := &Implementation{
 		SQLStore:        sqlStore,
@@ -30,6 +32,7 @@ func ProvideService(
 		QuotaService:    quotaService,
 		AuthInfoService: authInfoService,
 		accessControl:   accessControl,
+		orgService:      orgService,
 	}
 	return s
 }
@@ -41,6 +44,7 @@ type Implementation struct {
 	QuotaService    quota.Service
 	TeamSync        login.TeamSyncFunc
 	accessControl   accesscontrol.Service
+	orgService      org.Service
 }
 
 // CreateUser creates inserts a new one.
@@ -298,8 +302,8 @@ func (ls *Implementation) syncOrgRoles(ctx context.Context, usr *user.User, extU
 		}
 
 		// add role
-		cmd := &models.AddOrgUserCommand{UserId: usr.ID, Role: orgRole, OrgId: orgId}
-		err := ls.SQLStore.AddOrgUser(ctx, cmd)
+		cmd := &org.AddOrgUserCommand{UserID: usr.ID, Role: orgRole, OrgID: orgId}
+		err := ls.orgService.AddOrgUser(ctx, cmd)
 		if err != nil && !errors.Is(err, models.ErrOrgNotFound) {
 			return err
 		}

@@ -17,6 +17,16 @@ export type FolderPickerFilter = (hits: DashboardSearchHit[]) => DashboardSearch
 
 export const ADD_NEW_FOLER_OPTION = '+ Add new';
 
+export interface FolderWarning {
+  warningCondition: (value: string) => boolean;
+  warningComponent: () => JSX.Element;
+}
+
+export interface CustomAdd {
+  disallowValues: boolean;
+  isAllowedValue?: (value: string) => boolean;
+}
+
 export interface Props {
   onChange: ($folder: { title: string; id: number }) => void;
   enableCreateNew?: boolean;
@@ -31,7 +41,9 @@ export interface Props {
   showRoot?: boolean;
   onClear?: () => void;
   accessControlMetadata?: boolean;
-  customAdd?: boolean;
+  customAdd?: CustomAdd;
+  folderWarning?: FolderWarning;
+
   /**
    * Skips loading all folders in order to find the folder matching
    * the folder where the dashboard is stored.
@@ -63,12 +75,17 @@ export function FolderPicker(props: Props) {
     skipInitialLoad,
     accessControlMetadata,
     customAdd,
+    folderWarning,
   } = props;
-  const isClearable = typeof onClear === 'function';
+
   const [folder, setFolder] = useState<SelectedFolder | null>(null);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
-  const styles = useStyles2(getStyles);
   const [inputValue, setInputValue] = useState('');
+  const [newFolderValue, setNewFolderValue] = useState(folder?.title ?? '');
+
+  const styles = useStyles2(getStyles);
+
+  const isClearable = typeof onClear === 'function';
 
   const getOptions = useCallback(
     async (query: string) => {
@@ -91,7 +108,7 @@ export function FolderPicker(props: Props) {
       ) {
         Boolean(initialTitle) && options.unshift({ label: initialTitle, value: initialFolderId });
       }
-      if (enableCreateNew && customAdd) {
+      if (enableCreateNew && Boolean(customAdd)) {
         return [...options, { value: VALUE_FOR_ADD, label: ADD_NEW_FOLER_OPTION, title: query }];
       } else {
         return options;
@@ -150,7 +167,7 @@ export function FolderPicker(props: Props) {
   useEffect(() => {
     // if this is not the same as our initial value notify parent
     if (folder && folder.value !== initialFolderId) {
-      !isCreatingNew && onChange({ id: folder.value!, title: folder.label! });
+      !isCreatingNew && folder.value && folder.label && onChange({ id: folder.value, title: folder.label });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [folder, initialFolderId]);
@@ -183,6 +200,7 @@ export function FolderPicker(props: Props) {
           id: VALUE_FOR_ADD,
           title: inputValue,
         });
+        setNewFolderValue(inputValue);
       } else {
         if (!newFolder) {
           newFolder = { value: 0, label: rootName };
@@ -202,6 +220,9 @@ export function FolderPicker(props: Props) {
 
   const createNewFolder = useCallback(
     async (folderName: string) => {
+      if (folderWarning?.warningCondition(folderName)) {
+        return false;
+      }
       const newFolder = await createFolder({ title: folderName });
       let folder: SelectableValue<number> = { value: -1, label: 'Not created' };
 
@@ -217,11 +238,17 @@ export function FolderPicker(props: Props) {
 
       return folder;
     },
-    [onFolderChange]
+    [folderWarning, onFolderChange]
   );
 
   const onKeyDown = useCallback(
     (event: React.KeyboardEvent) => {
+      const dissalowValues = Boolean(customAdd?.disallowValues);
+      if (event.key === 'Enter' && dissalowValues && !customAdd?.isAllowedValue!(newFolderValue)) {
+        event.preventDefault();
+        return;
+      }
+
       switch (event.key) {
         case 'Enter': {
           createNewFolder(folder?.title!);
@@ -234,11 +261,12 @@ export function FolderPicker(props: Props) {
         }
       }
     },
-    [createNewFolder, folder, rootName]
+    [customAdd?.disallowValues, customAdd?.isAllowedValue, newFolderValue, createNewFolder, folder?.title, rootName]
   );
 
   const onNewFolderChange = (e: FormEvent<HTMLInputElement>) => {
     const value = e.currentTarget.value;
+    setNewFolderValue(value);
     setFolder({ id: -1, title: value });
   };
 
@@ -258,25 +286,43 @@ export function FolderPicker(props: Props) {
     return;
   };
 
+  const FolderWarningWhenCreating = () => {
+    if (folderWarning?.warningCondition(newFolderValue)) {
+      return <folderWarning.warningComponent />;
+    } else {
+      return null;
+    }
+  };
+
+  const FolderWarningWhenSearching = () => {
+    if (folderWarning?.warningCondition(inputValue)) {
+      return <folderWarning.warningComponent />;
+    } else {
+      return null;
+    }
+  };
+
   if (isCreatingNew) {
     return (
       <>
+        <FolderWarningWhenCreating />
+        <div className={styles.newFolder}>Press enter to create the new folder.</div>
         <Input
           aria-label={'aria-label'}
           width={30}
           autoFocus={true}
-          value={folder?.title || ''}
+          value={newFolderValue}
           onChange={onNewFolderChange}
           onKeyDown={onKeyDown}
           placeholder="Press enter to confirm new folder."
           onBlur={onBlur}
         />
-        <div className={styles.newFolder}>Press enter to create the new folder.</div>
       </>
     );
   } else {
     return (
       <div data-testid={selectors.components.FolderPicker.containerV2}>
+        <FolderWarningWhenSearching />
         <AsyncSelect
           inputId={inputId}
           aria-label={selectors.components.FolderPicker.input}
@@ -286,7 +332,7 @@ export function FolderPicker(props: Props) {
           inputValue={inputValue}
           onInputChange={onInputChange}
           value={folder}
-          allowCustomValue={enableCreateNew && !customAdd}
+          allowCustomValue={enableCreateNew && !Boolean(customAdd)}
           loadOptions={debouncedSearch}
           onChange={onFolderChange}
           onCreateOption={createNewFolder}
@@ -324,6 +370,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   newFolder: css`
     color: ${theme.colors.warning.main};
     font-size: ${theme.typography.bodySmall.fontSize};
-    padding-top: ${theme.spacing(1)};
+    padding-bottom: ${theme.spacing(1)};
   `,
 });

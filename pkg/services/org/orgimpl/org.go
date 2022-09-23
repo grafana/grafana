@@ -211,3 +211,113 @@ func (s *Service) GetOrCreate(ctx context.Context, orgName string) (int64, error
 	}
 	return orga.ID, nil
 }
+
+// TODO: remove wrapper around sqlstore
+func (s *Service) AddOrgUser(ctx context.Context, cmd *org.AddOrgUserCommand) error {
+	c := &models.AddOrgUserCommand{
+		LoginOrEmail:              cmd.LoginOrEmail,
+		OrgId:                     cmd.OrgID,
+		UserId:                    cmd.UserID,
+		Role:                      cmd.Role,
+		AllowAddingServiceAccount: cmd.AllowAddingServiceAccount,
+	}
+	return s.sqlStore.AddOrgUser(ctx, c)
+}
+
+// TODO: remove wrapper around sqlstore
+func (s *Service) UpdateOrgUser(ctx context.Context, cmd *org.UpdateOrgUserCommand) error {
+	c := &models.UpdateOrgUserCommand{
+		UserId: cmd.UserID,
+		OrgId:  cmd.OrgID,
+		Role:   cmd.Role,
+	}
+	return s.sqlStore.UpdateOrgUser(ctx, c)
+}
+
+// TODO: remove wrapper around sqlstore
+func (s *Service) RemoveOrgUser(ctx context.Context, cmd *org.RemoveOrgUserCommand) error {
+	c := &models.RemoveOrgUserCommand{
+		UserId:                   cmd.UserID,
+		OrgId:                    cmd.OrgID,
+		ShouldDeleteOrphanedUser: cmd.ShouldDeleteOrphanedUser,
+		UserWasDeleted:           cmd.UserWasDeleted,
+	}
+	return s.sqlStore.RemoveOrgUser(ctx, c)
+}
+
+// TODO: remove wrapper around sqlstore
+func (s *Service) GetOrgUsers(ctx context.Context, query *org.GetOrgUsersQuery) ([]*org.OrgUserDTO, error) {
+	q := &models.GetOrgUsersQuery{
+		UserID:                   query.UserID,
+		OrgId:                    query.OrgID,
+		Query:                    query.Query,
+		Limit:                    query.Limit,
+		DontEnforceAccessControl: query.DontEnforceAccessControl,
+		User:                     query.User,
+	}
+	err := s.sqlStore.GetOrgUsers(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]*org.OrgUserDTO, 0)
+	for _, user := range q.Result {
+		result = append(result, &org.OrgUserDTO{
+			OrgID:         user.OrgId,
+			UserID:        user.UserId,
+			Login:         user.Login,
+			Email:         user.Email,
+			Name:          user.Name,
+			AvatarURL:     user.AvatarUrl,
+			Role:          user.Role,
+			LastSeenAt:    user.LastSeenAt,
+			LastSeenAtAge: user.LastSeenAtAge,
+			Updated:       user.Updated,
+			Created:       user.Created,
+			AccessControl: user.AccessControl,
+			IsDisabled:    user.IsDisabled,
+		})
+	}
+	return result, nil
+}
+
+// TODO: remove wrapper around sqlstore
+func (s *Service) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
+	q := &models.SearchOrgUsersQuery{
+		OrgID: query.OrgID,
+		Query: query.Query,
+		Page:  query.Page,
+		Limit: query.Limit,
+		User:  query.User,
+	}
+	err := s.sqlStore.SearchOrgUsers(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+
+	result := &org.SearchOrgUsersQueryResult{
+		TotalCount: q.Result.TotalCount,
+		OrgUsers:   make([]*org.OrgUserDTO, 0),
+		Page:       q.Result.Page,
+		PerPage:    q.Result.PerPage,
+	}
+
+	for _, user := range q.Result.OrgUsers {
+		result.OrgUsers = append(result.OrgUsers, &org.OrgUserDTO{
+			OrgID:         user.OrgId,
+			UserID:        user.UserId,
+			Login:         user.Login,
+			Email:         user.Email,
+			Name:          user.Name,
+			AvatarURL:     user.AvatarUrl,
+			Role:          user.Role,
+			LastSeenAt:    user.LastSeenAt,
+			LastSeenAtAge: user.LastSeenAtAge,
+			Updated:       user.Updated,
+			Created:       user.Created,
+			AccessControl: user.AccessControl,
+			IsDisabled:    user.IsDisabled,
+		})
+	}
+	return result, nil
+}
