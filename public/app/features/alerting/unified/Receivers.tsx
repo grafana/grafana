@@ -3,8 +3,8 @@ import pluralize from 'pluralize';
 import React, { FC, useEffect } from 'react';
 import { Redirect, Route, RouteChildrenProps, Switch, useLocation, useParams } from 'react-router-dom';
 
-import { NavModelItem, GrafanaTheme2} from '@grafana/data';
-import { Alert, LoadingPlaceholder, withErrorBoundary, useStyles2, Icon, Stack} from '@grafana/ui';
+import { NavModelItem, GrafanaTheme2 } from '@grafana/data';
+import { Alert, LoadingPlaceholder, withErrorBoundary, useStyles2, Icon, Stack } from '@grafana/ui';
 import { useDispatch } from 'app/types';
 
 import { AlertManagerPicker } from './components/AlertManagerPicker';

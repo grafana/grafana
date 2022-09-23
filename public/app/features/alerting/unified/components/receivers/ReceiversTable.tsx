@@ -134,16 +134,22 @@ interface NotifiersTableProps {
   notifiersState: NotifiersState;
 }
 
-function LastNotify({ lastNotify }: { lastNotify: string }) {
-  const lastNotifyDuration = lastNotify;
-  return (
-    <Stack alignItems="center">
-      <div>{dateTime(lastNotifyDuration).locale('en').fromNow(true)} ago</div>
-      <Icon name="clock-nine" />
-      <div>{dateTimeFormat(lastNotifyDuration, { format: 'YYYY-MM-DD HH:mm:ss' })}</div>
-    </Stack>
-  );
+function LastNotify({ lastNotifyDate }: { lastNotifyDate: string }) {
+  const isLastNotifyNullDate = lastNotifyDate === '0001-01-01T00:00:00.000Z';
+
+  if (isLastNotifyNullDate) {
+    return <>{'-'}</>;
+  } else {
+    return (
+      <Stack alignItems="center">
+        <div>{`${dateTime(lastNotifyDate).locale('en').fromNow(true)} ago`}</div>
+        <Icon name="clock-nine" />
+        <div>{`${dateTimeFormat(lastNotifyDate, { format: 'YYYY-MM-DD HH:mm:ss' })}`}</div>
+      </Stack>
+    );
+  }
 }
+
 function NotifiersTable({ notifiersState }: NotifiersTableProps) {
   function getNotifierColumns(): NotifierTableColumnProps[] {
     return [
@@ -164,7 +170,7 @@ function NotifiersTable({ notifiersState }: NotifiersTableProps) {
       {
         id: 'lastNotify',
         label: 'Last delivery attempt',
-        renderCell: ({ data: { lastNotify } }) => <LastNotify lastNotify={lastNotify} />,
+        renderCell: ({ data: { lastNotify } }) => <LastNotify lastNotifyDate={lastNotify} />,
         size: 3,
       },
       {
