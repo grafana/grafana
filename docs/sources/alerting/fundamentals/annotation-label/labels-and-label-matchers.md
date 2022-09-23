@@ -30,6 +30,8 @@ A label matchers consists of 3 distinct parts, the **label**, the **value** and 
 | `=~`     | Select labels that regex-match the value.          |
 | `!~`     | Select labels that do not regex-match the value.   |
 
+In case of multiple label matchers, they are combined using AND logical operator, meaning all matchers need to match in order to link a rule to a policy.
+
 ## Example of a label matcher
 
 Imagine we've defined the following set of labels for our alert.
@@ -42,3 +44,4 @@ In this situation,
 - A label matcher defined as `foo!=bar` will _not_ match this alert rule.
 - A label matcher defined as `id=~[0-9]+` will match this alert rule.
 - A label matcher defined as `baz!~[0-9]+` will match this alert rule.
+- Two label matchers defined as `foo=bar` and `id=~[0-9]+` will match this alert rule.
