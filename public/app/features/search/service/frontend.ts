@@ -33,7 +33,13 @@ export class FrontendSearcher implements GrafanaSearcher {
 
     const cacheHit = this.cache.get(key);
     if (cacheHit) {
-      return cacheHit;
+      try {
+        return await cacheHit;
+      } catch (e) {
+        // delete the cache key so that the next request will retry
+        this.cache.delete(key);
+        return new FullResultCache(new DataFrameView({ name: 'error', fields: [], length: 0 }));
+      }
     }
 
     const resultPromise = this.parent
@@ -41,12 +47,8 @@ export class FrontendSearcher implements GrafanaSearcher {
         kind, // match the request
         limit: 5000, // max for now
       })
-      .then((res) => new FullResultCache(res.view))
-      .catch((err) => {
-        // TODO we need to refetch on error
-        console.error(err);
-        return new FullResultCache(new DataFrameView({ name: 'error', fields: [], length: 0 }));
-      });
+      .then((res) => new FullResultCache(res.view));
+
     this.cache.set(key, resultPromise);
     return resultPromise;
   }
