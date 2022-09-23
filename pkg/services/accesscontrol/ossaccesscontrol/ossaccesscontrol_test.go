@@ -87,7 +87,7 @@ func TestEvaluatingPermissions(t *testing.T) {
 				{evaluator: accesscontrol.EvalPermission(accesscontrol.ActionUsersCreate, accesscontrol.ScopeGlobalUsersAll)},
 			},
 			evalResult:  false,
-			expectedErr: accesscontrol.ErrResolverNotFound,
+			expectedErr: nil,
 		},
 	}
 	for _, tc := range testCases {
