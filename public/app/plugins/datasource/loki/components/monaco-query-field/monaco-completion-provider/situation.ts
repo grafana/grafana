@@ -474,9 +474,9 @@ function getErrorNode(tree: Tree, text: string, cursorPos: number): SyntaxNode |
   // sometimes the cursor is a couple spaces after the end of the expression.
   // to account for this situation, we "move" the cursor position back,
   // so that there are no spaces between the end-of-expression and the cursor
-  const trimRightTextLen = text.trimRight().length;
+  const trimRightTextLen = text.trimEnd().length;
   const pos = trimRightTextLen < cursorPos ? trimRightTextLen : cursorPos;
-  const cur = tree.cursor(pos);
+  const cur = tree.cursorAt(pos);
   do {
     if (cur.from === pos && cur.to === pos) {
       const { node } = cur;
@@ -507,7 +507,7 @@ export function getSituation(text: string, pos: number): Situation | null {
   // so first we check if there is an error node at the cursor position
   const maybeErrorNode = getErrorNode(tree, text, pos);
 
-  const cur = maybeErrorNode != null ? maybeErrorNode.cursor() : tree.cursor(pos);
+  const cur = maybeErrorNode != null ? maybeErrorNode.cursor() : tree.cursorAt(pos);
 
   const currentNode = cur.node;
 

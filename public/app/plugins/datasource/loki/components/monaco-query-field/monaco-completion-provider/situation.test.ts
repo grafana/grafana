@@ -27,9 +27,9 @@ function assertSituation(situation: string, expectedSituation: Situation | null)
 
 describe('situation', () => {
   it('handles things', () => {
-    // assertSituation('^', {
-    //   type: 'EMPTY',
-    // });
+    assertSituation('^', {
+      type: 'EMPTY',
+    });
 
     assertSituation('s^', {
       type: 'AT_ROOT',
