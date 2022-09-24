@@ -143,3 +143,29 @@ export function isValidGoDuration(durationString: string): boolean {
 
   return true;
 }
+
+/**
+ * parseIntervalSecondsSingleUnit parses duration number in seconds into single unit string
+ * For example '650s', '1m', '10m', '70m', '2h'
+ * @param duration - number in seconds to convert. For example 60, 120, 3600
+ *
+ * @public
+ */
+export function parseIntervalSecondsSingleUnit(duration?: number): string | undefined {
+  const timeUnits = [
+    { unit: 's', value: 1 },
+    { unit: 'm', value: 60 },
+    { unit: 'h', value: 3600 },
+    { unit: 'd', value: 86400 },
+    { unit: 'w', value: 604800 },
+  ];
+  if (duration) {
+    for (const item of timeUnits.reverse()) {
+      let rounded = duration % item.value;
+      if (rounded === 0) {
+        return duration / item.value + item.unit;
+      }
+    }
+  }
+  return undefined;
+}

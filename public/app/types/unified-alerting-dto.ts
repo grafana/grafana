@@ -197,6 +197,7 @@ export interface GrafanaRuleDefinition extends PostableGrafanaRuleDefinition {
   namespace_uid: string;
   namespace_id: number;
   provenance?: string;
+  intervalSeconds?: number;
 }
 
 export interface RulerGrafanaRuleDTO {
