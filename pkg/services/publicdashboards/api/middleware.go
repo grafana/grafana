@@ -31,10 +31,8 @@ func SetPublicDashboardOrgIdOnContext(publicDashboardService publicdashboards.Se
 }
 
 // Adds public dashboard flag on context
-func SetPublicDashboardFlag() func(c *models.ReqContext) {
-	return func(c *models.ReqContext) {
-		c.IsPublicDashboardView = true
-	}
+func SetPublicDashboardFlag(c *models.ReqContext) {
+	c.IsPublicDashboardView = true
 }
 
 func RequiresValidAccessToken(publicDashboardService publicdashboards.Service) func(c *models.ReqContext) {
@@ -43,7 +41,7 @@ func RequiresValidAccessToken(publicDashboardService publicdashboards.Service) f
 
 		// Check access token is present on the request
 		if !ok || accessToken == "" {
-			c.JsonApiErr(http.StatusBadRequest, "Invalid access token", nil)
+			c.JsonApiErr(http.StatusNotFound, "Invalid access token", nil)
 			return
 		}
 

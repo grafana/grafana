@@ -181,7 +181,7 @@ func (d *PublicDashboardStoreImpl) SavePublicDashboardConfig(ctx context.Context
 	return err
 }
 
-// updates existing public dashboard configuration
+// Updates existing public dashboard configuration
 func (d *PublicDashboardStoreImpl) UpdatePublicDashboardConfig(ctx context.Context, cmd SavePublicDashboardConfigCommand) error {
 	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		timeSettingsJSON, err := json.Marshal(cmd.PublicDashboard.TimeSettings)
@@ -206,6 +206,7 @@ func (d *PublicDashboardStoreImpl) UpdatePublicDashboardConfig(ctx context.Conte
 	return err
 }
 
+//Responds true if public dashboard for a dashboard exists and isEnabled
 func (d *PublicDashboardStoreImpl) PublicDashboardEnabled(ctx context.Context, dashboardUid string) (bool, error) {
 	hasPublicDashboard := false
 	err := d.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
@@ -224,6 +225,8 @@ func (d *PublicDashboardStoreImpl) PublicDashboardEnabled(ctx context.Context, d
 	return hasPublicDashboard, err
 }
 
+// Responds true if accessToken exists and isEnabled. May be renamed in the
+// future
 func (d *PublicDashboardStoreImpl) AccessTokenExists(ctx context.Context, accessToken string) (bool, error) {
 	hasPublicDashboard := false
 	err := d.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
