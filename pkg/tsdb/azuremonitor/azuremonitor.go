@@ -99,18 +99,14 @@ func NewInstanceSettings(cfg *setting.Cfg, clientProvider *httpclient.Provider, 
 			return nil, fmt.Errorf("error getting credentials: %w", err)
 		}
 
-		routesForModel := routes[cloud]
+		customizedCloudSettings, err := getCustomizedCloudSettings(cloud, settings.JSONData)
+		if err != nil {
+			return nil, fmt.Errorf("error getting credentials: %w", err)
+		}
 
-		if cloud == "AzureCustomizedCloud" {
-			customizedCloudSettings := types.AzureMonitorCustomizedCloudSettings{}
-			err = json.Unmarshal(settings.JSONData, &customizedCloudSettings)
-			if err != nil {
-				return nil, fmt.Errorf("error getting customized cloud settings: %w", err)
-			}
-			if customizedCloudSettings.CustomizedRoutes == nil {
-				return nil, fmt.Errorf("unable to instantiate routes, customizedRoutes must be set")
-			}
-			routesForModel = customizedCloudSettings.CustomizedRoutes
+		routesForModel, err := getAzureRoutes(cloud, customizedCloudSettings)
+		if err != nil {
+			return nil, err
 		}
 
 		credentials, err := getAzureCredentials(cfg, jsonData, settings.DecryptedSecureJSONData)
@@ -138,6 +134,31 @@ func NewInstanceSettings(cfg *setting.Cfg, clientProvider *httpclient.Provider, 
 		}
 
 		return model, nil
+	}
+}
+
+func getCustomizedCloudSettings(cloud string, jsonData json.RawMessage) (types.AzureMonitorCustomizedCloudSettings, error) {
+	if cloud == "AzureCustomizedCloud" {
+		customizedCloudSettings := types.AzureMonitorCustomizedCloudSettings{}
+		err := json.Unmarshal(jsonData, &customizedCloudSettings)
+		if err != nil {
+			return types.AzureMonitorCustomizedCloudSettings{}, fmt.Errorf("error getting customized cloud settings: %w", err)
+		}
+		return customizedCloudSettings, nil
+	} else {
+		return types.AzureMonitorCustomizedCloudSettings{}, nil
+	}
+}
+
+func getAzureRoutes(cloud string, customizedCloudSettings types.AzureMonitorCustomizedCloudSettings) (map[string]types.AzRoute, error) {
+	if cloud == "AzureCustomizedCloud" {
+		if customizedCloudSettings.CustomizedRoutes == nil {
+			return nil, fmt.Errorf("unable to instantiate routes, customizedRoutes must be set")
+		}
+		azureRoutes := customizedCloudSettings.CustomizedRoutes
+		return azureRoutes, nil
+	} else {
+		return routes[cloud], nil
 	}
 }
 
