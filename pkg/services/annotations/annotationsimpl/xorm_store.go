@@ -41,10 +41,11 @@ func validateTimeRange(item *annotations.Item) error {
 }
 
 type xormRepositoryImpl struct {
-	cfg        *setting.Cfg
-	db         db.DB
-	log        log.Logger
-	tagService tag.Service
+	cfg               *setting.Cfg
+	db                db.DB
+	log               log.Logger
+	maximumTagsLength int64
+	tagService        tag.Service
 }
 
 func (r *xormRepositoryImpl) Add(ctx context.Context, item *annotations.Item) error {
@@ -55,7 +56,7 @@ func (r *xormRepositoryImpl) Add(ctx context.Context, item *annotations.Item) er
 	if item.Epoch == 0 {
 		item.Epoch = item.Created
 	}
-	if err := validateTimeRange(item); err != nil {
+	if err := r.validateItem(item); err != nil {
 		return err
 	}
 
@@ -106,10 +107,6 @@ func (r *xormRepositoryImpl) Update(ctx context.Context, item *annotations.Item)
 			existing.EpochEnd = item.EpochEnd
 		}
 
-		if err := validateTimeRange(existing); err != nil {
-			return err
-		}
-
 		if item.Tags != nil {
 			tags, err := r.tagService.EnsureTagsExist(ctx, tag.ParseTagPairs(item.Tags))
 			if err != nil {
@@ -126,6 +123,10 @@ func (r *xormRepositoryImpl) Update(ctx context.Context, item *annotations.Item)
 		}
 
 		existing.Tags = item.Tags
+
+		if err := r.validateItem(existing); err != nil {
+			return err
+		}
 
 		_, err = sess.Table("annotation").ID(existing.Id).Cols("epoch", "text", "epoch_end", "updated", "tags").Update(existing)
 		return err
@@ -377,6 +378,33 @@ func (r *xormRepositoryImpl) GetTags(ctx context.Context, query *annotations.Tag
 	}
 
 	return annotations.FindTagsResult{Tags: tags}, nil
+}
+
+func (r *xormRepositoryImpl) validateItem(item *annotations.Item) error {
+	if err := validateTimeRange(item); err != nil {
+		return err
+	}
+
+	if err := r.validateTagsLength(item); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *xormRepositoryImpl) validateTagsLength(item *annotations.Item) error {
+	estimatedTagsLength := 1 // leading: [
+	for i, t := range item.Tags {
+		if i == 0 {
+			estimatedTagsLength += len(t) + 2 // quotes
+		} else {
+			estimatedTagsLength += len(t) + 3 // leading comma and quotes
+		}
+	}
+	estimatedTagsLength += 1 // trailing: ]
+	if estimatedTagsLength > int(r.maximumTagsLength) {
+		return annotations.ErrBaseTagLimitExceeded.Errorf("tags length (%d) exceeds the maximum allowed (%d): modify the configuration to increase it", estimatedTagsLength, r.maximumTagsLength)
+	}
+	return nil
 }
 
 func (r *xormRepositoryImpl) CleanAnnotations(ctx context.Context, cfg setting.AnnotationCleanupSettings, annotationType string) (int64, error) {
