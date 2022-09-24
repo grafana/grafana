@@ -4,20 +4,42 @@ import React, { FC, useState, useEffect } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import {
   Link,
-  Switch,
-  HorizontalGroup,
-  ClipboardButton,
-  InlineLabel,
-  LinkButton,
+  //Switch,
+  //HorizontalGroup,
+  //ClipboardButton,
+  //InlineLabel,
+  //LinkButton,
   Icon,
   Tag,
   useStyles2,
 } from '@grafana/ui';
-import {
-  generatePublicDashboardUrl,
-  ListPublicDashboardResponse,
-  listPublicDashboards,
-} from 'app/features/dashboard/components/ShareModal/SharePublicDashboardUtils';
+import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+import { generatePublicDashboardUrl } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
+
+export interface ListPublicDashboardResponse {
+  uid: string;
+  accessToken: string;
+  dashboardUid: string;
+  title: string;
+  isEnabled: boolean;
+}
+
+export const listPublicDashboards = async (
+  setPublicDashboards: React.Dispatch<React.SetStateAction<ListPublicDashboardResponse[]>>
+) => {
+  const resp: ListPublicDashboardResponse[] = await getBackendSrv().get(listPublicDashboardsUrl());
+  setPublicDashboards(resp.sort((a, b) => Number(b.isEnabled) - Number(a.isEnabled)));
+};
+
+export const listPublicDashboardsUrl = () => {
+  return `/api/dashboards/public`;
+};
+
+//describe('listPublicDashboardsUrl', () => {
+//it('has the correct url', () => {
+//expect(listPublicDashboardsUrl()).toEqual('/api/dashboards/public');
+//});
+//});
 
 function getStyles(theme: GrafanaTheme2) {
   return {
