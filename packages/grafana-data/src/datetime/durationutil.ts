@@ -161,8 +161,8 @@ export function parseIntervalSecondsSingleUnit(duration?: number): string | unde
   ];
   if (duration) {
     for (const item of timeUnits.reverse()) {
-      let reminder = duration % item.value;
-      if (reminder === 0) {
+      let remainder = duration % item.value;
+      if (remainder === 0) {
         return duration / item.value + item.unit;
       }
     }
