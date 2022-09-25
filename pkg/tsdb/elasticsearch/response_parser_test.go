@@ -691,17 +691,17 @@ func TestResponseParser(t *testing.T) {
 			frame := dataframes[0]
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
-			require.Equal(t, frame.Fields[0].Len(), 2)
+			require.Equal(t, frame.Fields[0].Len(), 1)
 			require.Equal(t, frame.Fields[1].Name, "value")
-			require.Equal(t, frame.Fields[1].Len(), 2)
+			require.Equal(t, frame.Fields[1].Len(), 1)
 			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "Average")
 
 			frame = dataframes[1]
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
-			require.Equal(t, frame.Fields[0].Len(), 2)
+			require.Equal(t, frame.Fields[0].Len(), 1)
 			require.Equal(t, frame.Fields[1].Name, "value")
-			require.Equal(t, frame.Fields[1].Len(), 2)
+			require.Equal(t, frame.Fields[1].Len(), 1)
 			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "Count")
 		})
 
