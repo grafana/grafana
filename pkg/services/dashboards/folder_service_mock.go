@@ -18,7 +18,7 @@ type FakeFolderService struct {
 }
 
 // CreateFolder provides a mock function with given fields: ctx, user, orgID, title, uid
-func (_m *FakeFolderService) CreateFolder(ctx context.Context, usr *user.SignedInUser, orgID int64, title string, uid string) (*models.Folder, error) {
+func (_m *FakeFolderService) CreateFolder(ctx context.Context, usr *user.SignedInUser, orgID int64, title string, uid, folderUID string) (*models.Folder, error) {
 	ret := _m.Called(ctx, usr, orgID, title, uid)
 
 	var r0 *models.Folder

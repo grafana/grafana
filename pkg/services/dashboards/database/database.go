@@ -115,9 +115,9 @@ func (d *DashboardStore) GetFolderByUID(ctx context.Context, orgID int64, uid st
 		return nil, dashboards.ErrDashboardIdentifierNotSet
 	}
 
-	dashboard := models.Dashboard{OrgId: orgID, FolderId: 0, Uid: uid}
+	dashboard := models.Dashboard{OrgId: orgID, Uid: uid}
 	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		has, err := sess.Table(&models.Dashboard{}).Where("is_folder = " + d.sqlStore.Dialect.BooleanStr(true)).Where("folder_id=0").Get(&dashboard)
+		has, err := sess.Table(&models.Dashboard{}).Where("is_folder = " + d.sqlStore.Dialect.BooleanStr(true)).Get(&dashboard)
 		if err != nil {
 			return err
 		}

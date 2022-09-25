@@ -135,13 +135,21 @@ func (f *FolderServiceImpl) GetFolderByTitle(ctx context.Context, user *user.Sig
 	return dashFolder, nil
 }
 
-func (f *FolderServiceImpl) CreateFolder(ctx context.Context, user *user.SignedInUser, orgID int64, title, uid string) (*models.Folder, error) {
+func (f *FolderServiceImpl) CreateFolder(ctx context.Context, user *user.SignedInUser, orgID int64, title, uid, folderUID string) (*models.Folder, error) {
 	dashFolder := models.NewDashboardFolder(title)
 	dashFolder.OrgId = orgID
 
 	trimmedUID := strings.TrimSpace(uid)
 	if trimmedUID == accesscontrol.GeneralFolderUID {
 		return nil, dashboards.ErrFolderInvalidUID
+	}
+	folderUID = strings.TrimSpace(folderUID)
+	if folderUID != "" {
+		folder, err := f.GetFolderByUID(ctx, user, orgID, folderUID)
+		if err != nil {
+			return nil, err
+		}
+		dashFolder.FolderId = folder.Id
 	}
 
 	dashFolder.SetUid(trimmedUID)

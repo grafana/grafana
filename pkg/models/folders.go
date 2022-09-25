@@ -73,8 +73,9 @@ func (cmd *UpdateFolderCommand) UpdateDashboardModel(dashFolder *Dashboard, orgI
 //
 
 type CreateFolderCommand struct {
-	Uid   string `json:"uid"`
-	Title string `json:"title"`
+	Uid       string `json:"uid"`
+	Title     string `json:"title"`
+	FolderUID string `json:"folderUid"`
 
 	Result *Folder `json:"-"`
 }

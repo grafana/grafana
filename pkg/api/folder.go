@@ -118,7 +118,7 @@ func (hs *HTTPServer) CreateFolder(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	folder, err := hs.folderService.CreateFolder(c.Req.Context(), c.SignedInUser, c.OrgID, cmd.Title, cmd.Uid)
+	folder, err := hs.folderService.CreateFolder(c.Req.Context(), c.SignedInUser, c.OrgID, cmd.Title, cmd.Uid, cmd.FolderUID)
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}

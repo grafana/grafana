@@ -87,10 +87,6 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 		return nil, dashboards.ErrDashboardTitleEmpty
 	}
 
-	if dash.IsFolder && dash.FolderId > 0 {
-		return nil, dashboards.ErrDashboardFolderCannotHaveParent
-	}
-
 	if dash.IsFolder && strings.EqualFold(dash.Title, models.RootFolderName) {
 		return nil, dashboards.ErrDashboardFolderNameExists
 	}
