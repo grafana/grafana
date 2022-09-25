@@ -114,6 +114,7 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 			if pathConfig, ok := s.cfg.NavigationAppPathConfig[include.Path]; ok {
 				if sectionForPage := treeRoot.FindById(pathConfig.SectionID); sectionForPage != nil {
 					link.Id = "standalone-plugin-page-" + include.Path
+					link.SortWeight = pathConfig.SortWeight
 					sectionForPage.Children = append(sectionForPage.Children, link)
 				}
 			} else {
