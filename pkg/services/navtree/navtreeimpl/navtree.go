@@ -55,7 +55,6 @@ func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStor
 func (s *ServiceImpl) GetNavTree(c *models.ReqContext, hasEditPerm bool, prefs *pref.Preference) (*navtree.NavTreeRoot, error) {
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	treeRoot := &navtree.NavTreeRoot{}
-	topNavEnabled := s.features.IsEnabled(featuremgmt.FlagTopnav)
 
 	if hasAccess(ac.ReqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsRead)) {
 		starredItemsLinks, err := s.buildStarredItemsNavLinks(c, prefs)
@@ -168,18 +167,6 @@ func (s *ServiceImpl) GetNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 
 	if serverAdminNode != nil {
 		treeRoot.AddSection(serverAdminNode)
-	}
-
-	if topNavEnabled {
-		// Move server admin into org admin and rename to administration
-		if orgAdminNode != nil && serverAdminNode != nil {
-			orgAdminNode.Text = "Administration"
-			serverAdminNode.Url = "/admin/server"
-			serverAdminNode.HideFromTabs = false
-			serverAdminNode.SortWeight = 0
-			orgAdminNode.Children = append(orgAdminNode.Children, serverAdminNode)
-			treeRoot.RemoveSection(serverAdminNode)
-		}
 	}
 
 	s.addHelpLinks(treeRoot, c)

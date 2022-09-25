@@ -20,9 +20,10 @@ func TestPluginUpdateChecker_HasUpdate(t *testing.T) {
 				"test-ds": "1.0.0",
 			},
 			pluginStore: plugins.FakePluginStore{
-				PluginList: map[string]plugins.PluginDTO{
-					"test-ds": {
+				PluginList: []plugins.PluginDTO{
+					{
 						JSONData: plugins.JSONData{
+							ID:   "test-ds",
 							Info: plugins.Info{Version: "0.9.0"},
 						},
 					},
@@ -42,19 +43,22 @@ func TestPluginUpdateChecker_HasUpdate(t *testing.T) {
 				"test-app":   "0.0.1",
 			},
 			pluginStore: plugins.FakePluginStore{
-				PluginList: map[string]plugins.PluginDTO{
-					"test-ds": {
+				PluginList: []plugins.PluginDTO{
+					{
 						JSONData: plugins.JSONData{
+							ID:   "test-ds",
 							Info: plugins.Info{Version: "0.9.0"},
 						},
 					},
-					"test-panel": {
+					{
 						JSONData: plugins.JSONData{
+							ID:   "test-panel",
 							Info: plugins.Info{Version: "0.9.0"},
 						},
 					},
-					"test-app": {
+					{
 						JSONData: plugins.JSONData{
+							ID:   "test-app",
 							Info: plugins.Info{Version: "0.9.0"},
 						},
 					},
@@ -81,9 +85,10 @@ func TestPluginUpdateChecker_HasUpdate(t *testing.T) {
 				"test-panel": "0.9.0",
 			},
 			pluginStore: plugins.FakePluginStore{
-				PluginList: map[string]plugins.PluginDTO{
-					"test-ds": {
+				PluginList: []plugins.PluginDTO{
+					{
 						JSONData: plugins.JSONData{
+							ID:   "test-app",
 							Info: plugins.Info{Version: "1.0.0"},
 						},
 					},
@@ -123,26 +128,26 @@ func TestPluginUpdateChecker_checkForUpdates(t *testing.T) {
 				"test-app": "1.0.0",
 			},
 			pluginStore: plugins.FakePluginStore{
-				PluginList: map[string]plugins.PluginDTO{
-					"test-ds": {
+				PluginList: []plugins.PluginDTO{
+					{
 						JSONData: plugins.JSONData{
 							ID:   "test-ds",
 							Info: plugins.Info{Version: "0.9.0"},
 						},
 					},
-					"test-app": {
+					{
 						JSONData: plugins.JSONData{
 							ID:   "test-app",
 							Info: plugins.Info{Version: "0.5.0"},
 						},
 					},
-					"test-panel": {
+					{
 						JSONData: plugins.JSONData{
 							ID:   "test-panel",
 							Info: plugins.Info{Version: "2.5.7"},
 						},
 					},
-					"test-core-panel": {
+					{
 						Class: plugins.Core,
 						JSONData: plugins.JSONData{
 							ID:   "test-core-panel",

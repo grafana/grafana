@@ -104,25 +104,14 @@ func (s *ServiceImpl) getOrgAdminNode(c *models.ReqContext) (*navtree.NavLink, e
 		})
 	}
 
-	if len(configNodes) == 0 {
-		return nil, nil
-	}
-
 	configNode := &navtree.NavLink{
 		Id:         navtree.NavIDCfg,
 		Text:       "Configuration",
 		SubTitle:   "Organization: " + c.OrgName,
 		Icon:       "cog",
-		Url:        configNodes[0].Url,
 		Section:    navtree.NavSectionConfig,
 		SortWeight: navtree.WeightConfig,
 		Children:   configNodes,
-	}
-
-	if s.features.IsEnabled(featuremgmt.FlagTopnav) {
-		configNode.Url = "/admin"
-	} else {
-		configNode.Url = configNodes[0].Url
 	}
 
 	return configNode, nil
@@ -168,21 +157,22 @@ func (s *ServiceImpl) getServerAdminNode(c *models.ReqContext) *navtree.NavLink 
 		})
 	}
 
-	if len(adminNavLinks) == 0 {
-		return nil
-	}
-
-	return &navtree.NavLink{
+	adminNode := &navtree.NavLink{
 		Text:         "Server admin",
 		Description:  "Manage server-wide settings and access to resources such as organizations, users, and licenses",
 		HideFromTabs: true,
 		Id:           navtree.NavIDAdmin,
 		Icon:         "shield",
-		Url:          adminNavLinks[0].Url,
 		SortWeight:   navtree.WeightAdmin,
 		Section:      navtree.NavSectionConfig,
 		Children:     adminNavLinks,
 	}
+
+	if len(adminNavLinks) > 0 {
+		adminNode.Url = adminNavLinks[0].Url
+	}
+
+	return adminNode
 }
 
 func (s *ServiceImpl) ReqCanAdminTeams(c *models.ReqContext) bool {

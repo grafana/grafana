@@ -88,6 +88,46 @@ func (root *NavTreeRoot) FindById(id string) *NavLink {
 	return FindById(root.Children, id)
 }
 
+func (root *NavTreeRoot) RemoveEmptyAdminSectionsAndApplyNewInformationArchitecture(topNavEnabled bool) {
+	// Remove server admin node if it has no children or set the url to first child
+	if node := root.FindById(NavIDAdmin); node != nil {
+		if len(node.Children) == 0 {
+			root.RemoveSection(node)
+		} else {
+			node.Url = node.Children[0].Url
+		}
+	}
+
+	if topNavEnabled {
+		orgAdminNode := root.FindById(NavIDCfg)
+
+		if orgAdminNode != nil {
+			orgAdminNode.Url = "/admin"
+			orgAdminNode.Text = "Administration"
+		}
+
+		if serverAdminNode := root.FindById(NavIDAdmin); serverAdminNode != nil {
+			serverAdminNode.Url = "/admin/settings"
+			serverAdminNode.Text = "Server admin"
+
+			if orgAdminNode != nil {
+				orgAdminNode.Children = append(orgAdminNode.Children, serverAdminNode)
+				root.RemoveSection(serverAdminNode)
+			}
+		}
+	}
+
+	// Remove top level cfg / administration node if it has no children (needs to be after topnav new info archicture logic above that moves server admin into it)
+	// Remove server admin node if it has no children or set the url to first child
+	if node := root.FindById(NavIDCfg); node != nil {
+		if len(node.Children) == 0 {
+			root.RemoveSection(node)
+		} else if !topNavEnabled {
+			node.Url = node.Children[0].Url
+		}
+	}
+}
+
 func (root *NavTreeRoot) Sort() {
 	Sort(root.Children)
 }

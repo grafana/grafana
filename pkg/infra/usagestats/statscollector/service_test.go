@@ -428,19 +428,11 @@ func setupSomeDataSourcePlugins(t *testing.T, s *Service) {
 	t.Helper()
 
 	s.plugins = &plugins.FakePluginStore{
-		PluginList: map[string]plugins.PluginDTO{
-			datasources.DS_ES: {
-				Signature: "internal",
-			},
-			datasources.DS_PROMETHEUS: {
-				Signature: "internal",
-			},
-			datasources.DS_GRAPHITE: {
-				Signature: "internal",
-			},
-			datasources.DS_MYSQL: {
-				Signature: "internal",
-			},
+		PluginList: []plugins.PluginDTO{
+			{JSONData: plugins.JSONData{ID: datasources.DS_ES}, Signature: "internal"},
+			{JSONData: plugins.JSONData{ID: datasources.DS_PROMETHEUS}, Signature: "internal"},
+			{JSONData: plugins.JSONData{ID: datasources.DS_GRAPHITE}, Signature: "internal"},
+			{JSONData: plugins.JSONData{ID: datasources.DS_MYSQL}, Signature: "internal"},
 		},
 	}
 }

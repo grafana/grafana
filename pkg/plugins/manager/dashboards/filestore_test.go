@@ -191,9 +191,10 @@ func setupPluginDashboardsForTest(t *testing.T) *FileStoreManager {
 
 	return &FileStoreManager{
 		pluginStore: &plugins.FakePluginStore{
-			PluginList: map[string]plugins.PluginDTO{
-				"pluginWithoutDashboards": {
+			PluginList: []plugins.PluginDTO{
+				{
 					JSONData: plugins.JSONData{
+						ID: "pluginWithoutDashboards",
 						Includes: []*plugins.Includes{
 							{
 								Type: "page",
@@ -201,9 +202,10 @@ func setupPluginDashboardsForTest(t *testing.T) *FileStoreManager {
 						},
 					},
 				},
-				"pluginWithDashboards": {
+				{
 					PluginDir: "plugins/plugin-id",
 					JSONData: plugins.JSONData{
+						ID: "pluginWithDashboards",
 						Includes: []*plugins.Includes{
 							{
 								Type: "page",

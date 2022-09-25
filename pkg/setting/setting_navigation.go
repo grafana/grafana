@@ -5,7 +5,7 @@ type NavigationAppConfig struct {
 	SortWeight int64
 }
 
-func (cfg *Cfg) readNavigationSettings() error {
+func (cfg *Cfg) readNavigationSettings() {
 	//sec := cfg.Raw.Section("navigation")
 	cfg.NavigationAppConfig = map[string]NavigationAppConfig{
 		"grafana-k8s-app":                  {SectionID: "monitoring", SortWeight: 1},
@@ -24,6 +24,4 @@ func (cfg *Cfg) readNavigationSettings() error {
 	// 		cfg.NavigationAppConfig[pluginId] = sec.Key(key.Name()).MustString("")
 	// 	}
 	// }
-
-	return nil
 }

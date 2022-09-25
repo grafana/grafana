@@ -48,9 +48,9 @@ func TestConfigReader(t *testing.T) {
 
 	t.Run("Can read correct properties", func(t *testing.T) {
 		pm := plugins.FakePluginStore{
-			PluginList: map[string]plugins.PluginDTO{
-				"test-plugin":   {},
-				"test-plugin-2": {},
+			PluginList: []plugins.PluginDTO{
+				{JSONData: plugins.JSONData{ID: "test-plugin"}},
+				{JSONData: plugins.JSONData{ID: "test-plugin-2"}},
 			},
 		}
 
