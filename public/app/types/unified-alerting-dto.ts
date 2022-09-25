@@ -23,6 +23,10 @@ type GrafanaAlertStateReason = ` (${string})` | '';
 
 export type GrafanaAlertStateWithReason = `${GrafanaAlertState}${GrafanaAlertStateReason}`;
 
+export function isGrafanaAlertState(state: string): state is GrafanaAlertState {
+  return Object.values(GrafanaAlertState).some((promState) => promState === state);
+}
+
 /** We need this to disambiguate the union PromAlertingRuleState | GrafanaAlertStateWithReason
  */
 export function isAlertStateWithReason(

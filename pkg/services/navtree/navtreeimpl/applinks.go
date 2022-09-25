@@ -61,7 +61,7 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *models.ReqCo
 		treeRoot.AddSection(&navtree.NavLink{
 			Text:        "Apps",
 			Icon:        "apps",
-			Description: "App plugins",
+			Description: "App plugins that extend the Grafana experience",
 			Id:          "apps",
 			Children:    appLinks,
 			Section:     navtree.NavSectionCore,

@@ -3,6 +3,7 @@ package annotationsimpl
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -28,7 +29,8 @@ func TestIntegrationAnnotations(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	sql := sqlstore.InitTestDB(t)
-	repo := xormRepositoryImpl{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql)}
+	var maximumTagsLength int64 = 60
+	repo := xormRepositoryImpl{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql), maximumTagsLength: maximumTagsLength}
 
 	testUser := &user.SignedInUser{
 		OrgID: 1,
@@ -147,6 +149,18 @@ func TestIntegrationAnnotations(t *testing.T) {
 			assert.GreaterOrEqual(t, items[0].Updated, int64(0))
 			assert.Equal(t, items[0].Updated, items[0].Created)
 		})
+
+		badAnnotation := &annotations.Item{
+			OrgId:  1,
+			UserId: 1,
+			Text:   "rollback",
+			Type:   "",
+			Epoch:  17,
+			Tags:   []string{strings.Repeat("a", int(maximumTagsLength+1))},
+		}
+		err = repo.Add(context.Background(), badAnnotation)
+		require.Error(t, err)
+		require.ErrorIs(t, err, annotations.ErrBaseTagLimitExceeded)
 
 		t.Run("Can query for annotation by id", func(t *testing.T) {
 			items, err := repo.Get(context.Background(), &annotations.ItemQuery{
@@ -394,7 +408,8 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	sql := sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{})
-	repo := xormRepositoryImpl{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql)}
+	var maximumTagsLength int64 = 60
+	repo := xormRepositoryImpl{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql), maximumTagsLength: maximumTagsLength}
 	dashboardStore := dashboardstore.ProvideDashboardStore(sql, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql))
 
 	testDashboard1 := models.SaveDashboardCommand{

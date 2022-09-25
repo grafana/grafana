@@ -40,7 +40,7 @@ func (s *ServiceImpl) getOrgAdminNode(c *models.ReqContext) (*navtree.NavLink, e
 		configNodes = append(configNodes, &navtree.NavLink{
 			Text:        "Users",
 			Id:          "users",
-			Description: "Manage org members",
+			Description: "Invite and assign roles to users",
 			Icon:        "user",
 			Url:         s.cfg.AppSubURL + "/org/users",
 		})
@@ -50,7 +50,7 @@ func (s *ServiceImpl) getOrgAdminNode(c *models.ReqContext) (*navtree.NavLink, e
 		configNodes = append(configNodes, &navtree.NavLink{
 			Text:        "Teams",
 			Id:          "teams",
-			Description: "Manage org groups",
+			Description: "Groups of users that have common dashboard and permission needs",
 			Icon:        "users-alt",
 			Url:         s.cfg.AppSubURL + "/org/teams",
 		})
@@ -61,7 +61,7 @@ func (s *ServiceImpl) getOrgAdminNode(c *models.ReqContext) (*navtree.NavLink, e
 		configNodes = append(configNodes, &navtree.NavLink{
 			Text:        "Plugins",
 			Id:          "plugins",
-			Description: "View and configure plugins",
+			Description: "Extend the Grafana experience with plugins",
 			Icon:        "plug",
 			Url:         s.cfg.AppSubURL + "/plugins",
 		})
@@ -71,7 +71,7 @@ func (s *ServiceImpl) getOrgAdminNode(c *models.ReqContext) (*navtree.NavLink, e
 		configNodes = append(configNodes, &navtree.NavLink{
 			Text:        "Preferences",
 			Id:          "org-settings",
-			Description: "Organization preferences",
+			Description: "Manage preferences across an organization",
 			Icon:        "sliders-v-alt",
 			Url:         s.cfg.AppSubURL + "/org",
 		})
@@ -88,7 +88,7 @@ func (s *ServiceImpl) getOrgAdminNode(c *models.ReqContext) (*navtree.NavLink, e
 		configNodes = append(configNodes, &navtree.NavLink{
 			Text:        "API keys",
 			Id:          "apikeys",
-			Description: "Create & manage API keys",
+			Description: "Manage and create API keys that are used to interact with Grafana HTTP APIs",
 			Icon:        "key-skeleton-alt",
 			Url:         s.cfg.AppSubURL + "/org/apikeys",
 		})
@@ -98,7 +98,7 @@ func (s *ServiceImpl) getOrgAdminNode(c *models.ReqContext) (*navtree.NavLink, e
 		configNodes = append(configNodes, &navtree.NavLink{
 			Text:        "Service accounts",
 			Id:          "serviceaccounts",
-			Description: "Manage service accounts",
+			Description: "Use service accounts to run automated workloads in Grafana",
 			Icon:        "gf-service-account",
 			Url:         s.cfg.AppSubURL + "/org/serviceaccounts",
 		})
@@ -136,19 +136,19 @@ func (s *ServiceImpl) getServerAdminNode(c *models.ReqContext) *navtree.NavLink 
 
 	if hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll)) {
 		adminNavLinks = append(adminNavLinks, &navtree.NavLink{
-			Text: "Users", Id: "global-users", Url: s.cfg.AppSubURL + "/admin/users", Icon: "user",
+			Text: "Users", Description: "Manage and create users across the whole Grafana server", Id: "global-users", Url: s.cfg.AppSubURL + "/admin/users", Icon: "user",
 		})
 	}
 
 	if hasGlobalAccess(ac.ReqGrafanaAdmin, orgsAccessEvaluator) {
 		adminNavLinks = append(adminNavLinks, &navtree.NavLink{
-			Text: "Orgs", Id: "global-orgs", Url: s.cfg.AppSubURL + "/admin/orgs", Icon: "building",
+			Text: "Organizations", Description: "Isolated instances of Grafana running on the same server", Id: "global-orgs", Url: s.cfg.AppSubURL + "/admin/orgs", Icon: "building",
 		})
 	}
 
 	if hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionSettingsRead)) {
 		adminNavLinks = append(adminNavLinks, &navtree.NavLink{
-			Text: "Settings", Id: "server-settings", Url: s.cfg.AppSubURL + "/admin/settings", Icon: "sliders-v-alt",
+			Text: "Settings", Description: "View the settings defined in your Grafana config", Id: "server-settings", Url: s.cfg.AppSubURL + "/admin/settings", Icon: "sliders-v-alt",
 		})
 	}
 
@@ -174,7 +174,7 @@ func (s *ServiceImpl) getServerAdminNode(c *models.ReqContext) *navtree.NavLink 
 
 	return &navtree.NavLink{
 		Text:         "Server admin",
-		SubTitle:     "Manage all users and orgs",
+		Description:  "Manage server-wide settings and access to resources such as organizations, users, and licenses",
 		HideFromTabs: true,
 		Id:           navtree.NavIDAdmin,
 		Icon:         "shield",

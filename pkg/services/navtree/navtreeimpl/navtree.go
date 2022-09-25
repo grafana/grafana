@@ -78,14 +78,15 @@ func (s *ServiceImpl) GetNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 		dashboardsUrl := "/dashboards"
 
 		dashboardLink := &navtree.NavLink{
-			Text:       "Dashboards",
-			Id:         "dashboards",
-			SubTitle:   "Manage dashboards and folders",
-			Icon:       "apps",
-			Url:        s.cfg.AppSubURL + dashboardsUrl,
-			SortWeight: navtree.WeightDashboard,
-			Section:    navtree.NavSectionCore,
-			Children:   dashboardChildLinks,
+			Text:        "Dashboards",
+			Id:          "dashboards",
+			Description: "Create and manage dashboards to visualize your data",
+			SubTitle:    "Manage dashboards and folders",
+			Icon:        "apps",
+			Url:         s.cfg.AppSubURL + dashboardsUrl,
+			SortWeight:  navtree.WeightDashboard,
+			Section:     navtree.NavSectionCore,
+			Children:    dashboardChildLinks,
 		}
 
 		if s.features.IsEnabled(featuremgmt.FlagTopnav) {
@@ -319,22 +320,24 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *models.ReqContext, hasEditPerm b
 		})
 	}
 	dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
-		Text: "Playlists", Id: "dashboards/playlists", Url: s.cfg.AppSubURL + "/playlists", Icon: "presentation-play",
+		Text: "Playlists", Description: "Groups of dashboards that are displayed in a sequence", Id: "dashboards/playlists", Url: s.cfg.AppSubURL + "/playlists", Icon: "presentation-play",
 	})
 
 	if c.IsSignedIn {
 		dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
-			Text: "Snapshots",
-			Id:   "dashboards/snapshots",
-			Url:  s.cfg.AppSubURL + "/dashboard/snapshots",
-			Icon: "camera",
+			Text:        "Snapshots",
+			Description: "Interactive, publically available, point-in-time representations of dashboards",
+			Id:          "dashboards/snapshots",
+			Url:         s.cfg.AppSubURL + "/dashboard/snapshots",
+			Icon:        "camera",
 		})
 
 		dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
-			Text: "Library panels",
-			Id:   "dashboards/library-panels",
-			Url:  s.cfg.AppSubURL + "/library-panels",
-			Icon: "library-panel",
+			Text:        "Library panels",
+			Description: "Reusable panels that can be added to multiple dashboards",
+			Id:          "dashboards/library-panels",
+			Url:         s.cfg.AppSubURL + "/library-panels",
+			Icon:        "library-panel",
 		})
 	}
 
@@ -389,13 +392,14 @@ func (s *ServiceImpl) buildLegacyAlertNavLinks(c *models.ReqContext) *navtree.Na
 	}
 
 	var alertNav = navtree.NavLink{
-		Text:       "Alerting",
-		SubTitle:   "Alert rules and notifications",
-		Id:         "alerting-legacy",
-		Icon:       "bell",
-		Children:   alertChildNavs,
-		Section:    navtree.NavSectionCore,
-		SortWeight: navtree.WeightAlerting,
+		Text:        "Alerting",
+		Description: "Learn about problems in your systems moments after they occur",
+		SubTitle:    "Alert rules and notifications",
+		Id:          "alerting-legacy",
+		Icon:        "bell",
+		Children:    alertChildNavs,
+		Section:     navtree.NavSectionCore,
+		SortWeight:  navtree.WeightAlerting,
 	}
 
 	if s.features.IsEnabled(featuremgmt.FlagTopnav) {
@@ -413,21 +417,21 @@ func (s *ServiceImpl) buildAlertNavLinks(c *models.ReqContext, hasEditPerm bool)
 
 	if hasAccess(ac.ReqViewer, ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead), ac.EvalPermission(ac.ActionAlertingRuleExternalRead))) {
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-			Text: "Alert rules", Id: "alert-list", Url: s.cfg.AppSubURL + "/alerting/list", Icon: "list-ul",
+			Text: "Alert rules", Description: "Rules that determine whether an alert will fire", Id: "alert-list", Url: s.cfg.AppSubURL + "/alerting/list", Icon: "list-ul",
 		})
 	}
 
 	if hasAccess(ac.ReqOrgAdminOrEditor, ac.EvalAny(ac.EvalPermission(ac.ActionAlertingNotificationsRead), ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead))) {
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-			Text: "Contact points", Id: "receivers", Url: s.cfg.AppSubURL + "/alerting/notifications",
+			Text: "Contact points", Description: "Decide how your contacts are notified when an alert fires", Id: "receivers", Url: s.cfg.AppSubURL + "/alerting/notifications",
 			Icon: "comment-alt-share", SubTitle: "Manage the settings of your contact points",
 		})
-		alertChildNavs = append(alertChildNavs, &navtree.NavLink{Text: "Notification policies", Id: "am-routes", Url: s.cfg.AppSubURL + "/alerting/routes", Icon: "sitemap"})
+		alertChildNavs = append(alertChildNavs, &navtree.NavLink{Text: "Notification policies", Description: "Determine how alerts are routed to contact points", Id: "am-routes", Url: s.cfg.AppSubURL + "/alerting/routes", Icon: "sitemap"})
 	}
 
 	if hasAccess(ac.ReqViewer, ac.EvalAny(ac.EvalPermission(ac.ActionAlertingInstanceRead), ac.EvalPermission(ac.ActionAlertingInstancesExternalRead))) {
-		alertChildNavs = append(alertChildNavs, &navtree.NavLink{Text: "Silences", Id: "silences", Url: s.cfg.AppSubURL + "/alerting/silences", Icon: "bell-slash"})
-		alertChildNavs = append(alertChildNavs, &navtree.NavLink{Text: "Alert groups", Id: "groups", Url: s.cfg.AppSubURL + "/alerting/groups", Icon: "layer-group"})
+		alertChildNavs = append(alertChildNavs, &navtree.NavLink{Text: "Silences", Description: "Stop notifications from one or more alerting rules", Id: "silences", Url: s.cfg.AppSubURL + "/alerting/silences", Icon: "bell-slash"})
+		alertChildNavs = append(alertChildNavs, &navtree.NavLink{Text: "Alert groups", Description: "See grouped alerts from an Alertmanager instance", Id: "groups", Url: s.cfg.AppSubURL + "/alerting/groups", Icon: "layer-group"})
 	}
 
 	if c.OrgRole == org.RoleAdmin {
@@ -452,13 +456,14 @@ func (s *ServiceImpl) buildAlertNavLinks(c *models.ReqContext, hasEditPerm bool)
 
 	if len(alertChildNavs) > 0 {
 		var alertNav = navtree.NavLink{
-			Text:       "Alerting",
-			SubTitle:   "Alert rules and notifications",
-			Id:         navtree.NavIDAlerting,
-			Icon:       "bell",
-			Children:   alertChildNavs,
-			Section:    navtree.NavSectionCore,
-			SortWeight: navtree.WeightAlerting,
+			Text:        "Alerting",
+			Description: "Learn about problems in your systems moments after they occur",
+			SubTitle:    "Alert rules and notifications",
+			Id:          navtree.NavIDAlerting,
+			Icon:        "bell",
+			Children:    alertChildNavs,
+			Section:     navtree.NavSectionCore,
+			SortWeight:  navtree.WeightAlerting,
 		}
 
 		if s.features.IsEnabled(featuremgmt.FlagTopnav) {
