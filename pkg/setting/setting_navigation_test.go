@@ -11,7 +11,7 @@ func TestNavigationSettingDefaults(t *testing.T) {
 	_, _ = cfg.Raw.NewSection("navigation")
 	cfg.readNavigationSettings()
 
-	require.Equal(t, "alerting", cfg.NavigationAppConfig["grafana-k8s-app"])
+	require.Equal(t, "alerting", cfg.NavigationAppConfig["grafana-k8s-app"].SectionID)
 }
 
 func TestNavigationSettings(t *testing.T) {
@@ -22,6 +22,6 @@ func TestNavigationSettings(t *testing.T) {
 
 	cfg.readNavigationSettings()
 
-	require.Equal(t, "dashboards", cfg.NavigationAppConfig["grafana-k8s-app"])
-	require.Equal(t, "admin", cfg.NavigationAppConfig["other-app"])
+	require.Equal(t, "dashboards", cfg.NavigationAppConfig["grafana-k8s-app"].SectionID)
+	require.Equal(t, "admin", cfg.NavigationAppConfig["other-app"].SectionID)
 }

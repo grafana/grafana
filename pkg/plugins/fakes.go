@@ -1,6 +1,8 @@
 package plugins
 
-import "context"
+import (
+	"context"
+)
 
 type FakePluginStore struct {
 	Store
