@@ -22,6 +22,7 @@ func (e *cloudWatchExecutor) newResourceMux() *http.ServeMux {
 	mux.HandleFunc("/ec2-instance-attribute", handleResourceReq(e.handleGetEc2InstanceAttribute))
 	mux.HandleFunc("/resource-arns", handleResourceReq(e.handleGetResourceArns))
 	mux.HandleFunc("/log-groups", handleResourceReq(e.handleGetLogGroups))
+	mux.HandleFunc("/all-log-groups", handleResourceReq(e.handleGetAllLogGroups))
 	return mux
 }
 

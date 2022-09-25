@@ -27,12 +27,15 @@ export function PluginDetailsHeader({ plugin }: Props): React.ReactElement {
       {plugin.description && <div className={styles.description}>{plugin.description}</div>}
 
       <div className={styles.headerInformationRow}>
+        {/* Version */}
+        {Boolean(version) && <span>Version: {version}</span>}
+
         {/* Org name */}
-        <span>{plugin.orgName}</span>
+        <span>From: {plugin.orgName}</span>
 
         {/* Links */}
         {plugin.details?.links.map((link: any) => (
-          <a key={link.name} href={link.url}>
+          <a key={link.name} href={link.url} className="external-link">
             {link.name}
           </a>
         ))}
@@ -44,9 +47,6 @@ export function PluginDetailsHeader({ plugin }: Props): React.ReactElement {
             {` ${new Intl.NumberFormat().format(plugin.downloads)}`}{' '}
           </span>
         )}
-
-        {/* Version */}
-        {Boolean(version) && <span>v{version}</span>}
 
         {/* Signature information */}
         <PluginDetailsHeaderSignature plugin={plugin} />
@@ -72,7 +72,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       margin-bottom: ${theme.spacing(1)};
     `,
     description: css`
-      margin-bottom: ${theme.spacing(1)};
+      margin: ${theme.spacing(-1, 0, 1)};
     `,
     breadcrumb: css`
       font-size: ${theme.typography.h2.fontSize};

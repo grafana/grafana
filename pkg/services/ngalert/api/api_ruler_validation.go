@@ -88,7 +88,6 @@ func validateRuleNode(
 	if len(ruleNode.GrafanaManagedAlert.Data) != 0 {
 		cond := ngmodels.Condition{
 			Condition: ruleNode.GrafanaManagedAlert.Condition,
-			OrgID:     orgId,
 			Data:      ruleNode.GrafanaManagedAlert.Data,
 		}
 		if err := conditionValidator(cond); err != nil {

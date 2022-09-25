@@ -11,7 +11,7 @@ export interface Props {
 
 export function PageHeader({ navItem, subTitle }: Props) {
   const styles = useStyles2(getStyles);
-  const sub = subTitle ?? navItem.subTitle;
+  const sub = subTitle ?? navItem.description;
 
   return (
     <>
