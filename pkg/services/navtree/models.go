@@ -31,11 +31,13 @@ const (
 )
 
 const (
+	NavIDDashboards         = "dashboards"
 	NavIDCfg                = "cfg" // NavIDCfg is the id for org configuration navigation node
 	NavIDAdmin              = "admin"
 	NavIDAlertsAndIncidents = "alerts-and-incidents"
 	NavIDAlerting           = "alerting"
 	NavIDMonitoring         = "monitoring"
+	NavIDReporting          = "reports"
 )
 
 type NavLink struct {
@@ -88,7 +90,7 @@ func (root *NavTreeRoot) FindById(id string) *NavLink {
 	return FindById(root.Children, id)
 }
 
-func (root *NavTreeRoot) RemoveEmptyAdminSectionsAndApplyNewInformationArchitecture(topNavEnabled bool) {
+func (root *NavTreeRoot) RemoveEmptySectionsAndApplyNewInformationArchitecture(topNavEnabled bool) {
 	// Remove server admin node if it has no children or set the url to first child
 	if node := root.FindById(NavIDAdmin); node != nil {
 		if len(node.Children) == 0 {
@@ -109,10 +111,19 @@ func (root *NavTreeRoot) RemoveEmptyAdminSectionsAndApplyNewInformationArchitect
 		if serverAdminNode := root.FindById(NavIDAdmin); serverAdminNode != nil {
 			serverAdminNode.Url = "/admin/settings"
 			serverAdminNode.Text = "Server admin"
+			serverAdminNode.SortWeight = 10000
 
 			if orgAdminNode != nil {
 				orgAdminNode.Children = append(orgAdminNode.Children, serverAdminNode)
 				root.RemoveSection(serverAdminNode)
+			}
+		}
+
+		// Move reports into dashboards
+		if reports := root.FindById(NavIDReporting); reports != nil {
+			if dashboards := root.FindById(NavIDDashboards); dashboards != nil {
+				dashboards.Children = append(dashboards.Children, reports)
+				root.RemoveSection(reports)
 			}
 		}
 	}
@@ -150,8 +161,7 @@ func FindById(nodes []*NavLink, id string) *NavLink {
 		if child.Id == id {
 			return child
 		} else if len(child.Children) > 0 {
-			found := FindById(child.Children, id)
-			if found != nil {
+			if found := FindById(child.Children, id); found != nil {
 				return found
 			}
 		}

@@ -158,14 +158,13 @@ func (s *ServiceImpl) getServerAdminNode(c *models.ReqContext) *navtree.NavLink 
 	}
 
 	adminNode := &navtree.NavLink{
-		Text:         "Server admin",
-		Description:  "Manage server-wide settings and access to resources such as organizations, users, and licenses",
-		HideFromTabs: true,
-		Id:           navtree.NavIDAdmin,
-		Icon:         "shield",
-		SortWeight:   navtree.WeightAdmin,
-		Section:      navtree.NavSectionConfig,
-		Children:     adminNavLinks,
+		Text:        "Server admin",
+		Description: "Manage server-wide settings and access to resources such as organizations, users, and licenses",
+		Id:          navtree.NavIDAdmin,
+		Icon:        "shield",
+		SortWeight:  navtree.WeightAdmin,
+		Section:     navtree.NavSectionConfig,
+		Children:    adminNavLinks,
 	}
 
 	if len(adminNavLinks) > 0 {

@@ -78,7 +78,7 @@ func (s *ServiceImpl) GetNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 
 		dashboardLink := &navtree.NavLink{
 			Text:        "Dashboards",
-			Id:          "dashboards",
+			Id:          navtree.NavIDDashboards,
 			Description: "Create and manage dashboards to visualize your data",
 			SubTitle:    "Manage dashboards and folders",
 			Icon:        "apps",

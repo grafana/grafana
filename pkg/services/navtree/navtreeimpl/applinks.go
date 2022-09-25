@@ -158,9 +158,7 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 						Children:    []*navtree.NavLink{appLink},
 						Url:         s.cfg.AppSubURL + "/monitoring",
 					})
-				}
-
-				if navConfig.SectionID == navtree.NavIDAlertsAndIncidents && alertingNode != nil {
+				} else if navConfig.SectionID == navtree.NavIDAlertsAndIncidents && alertingNode != nil {
 					treeRoot.AddSection(&navtree.NavLink{
 						Text:        "Alerts & incidents",
 						Id:          navtree.NavIDAlertsAndIncidents,
@@ -171,8 +169,9 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 						Url:         s.cfg.AppSubURL + "/alerts-and-incidents",
 					})
 					treeRoot.RemoveSection(alertingNode)
+				} else {
+					s.log.Error("Plugin app nav id not found", "pluginId", plugin.ID, "navId", navConfig.SectionID)
 				}
-				s.log.Error("Plugin app nav id not found", "pluginId", plugin.ID, "navId", navConfig.SectionID)
 			}
 		} else {
 			return appLink
