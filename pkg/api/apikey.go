@@ -94,7 +94,7 @@ func (hs *HTTPServer) DeleteAPIKey(c *models.ReqContext) response.Response {
 //
 // Creates an API key.
 //
-// Will return details of the created API key
+// Will return details of the created API key.
 //
 // Responses:
 // 200: postAPIkeyResponse

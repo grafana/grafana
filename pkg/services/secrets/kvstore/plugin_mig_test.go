@@ -63,7 +63,6 @@ func validateSecretWasStoreInPlugin(t *testing.T, secretsStore SecretsKVStore, c
 	require.Equal(t, 1, len(resPlugin))
 }
 
-//
 func setupTestMigratorService(t *testing.T) (*PluginSecretMigrationService, SecretsKVStore, *secretsKVStoreSQL) {
 	t.Helper()
 

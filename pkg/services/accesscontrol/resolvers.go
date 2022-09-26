@@ -120,7 +120,7 @@ func getScopeCacheKey(orgID int64, scope string) string {
 	return fmt.Sprintf("%s-%v", scope, orgID)
 }
 
-//ScopeInjector inject request params into the templated scopes. e.g. "settings:" + eval.Parameters(":id")
+// ScopeInjector inject request params into the templated scopes. e.g. "settings:" + eval.Parameters(":id")
 func ScopeInjector(params ScopeParams) ScopeAttributeMutator {
 	return func(_ context.Context, scope string) ([]string, error) {
 		tmpl, err := template.New("scope").Parse(scope)

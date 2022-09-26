@@ -91,6 +91,7 @@ func newAlertRuleInfo(parent context.Context) *alertRuleInfo {
 // Returns a tuple where first element is
 //   - true when message was sent
 //   - false when the send operation is stopped
+//
 // the second element contains a dropped message that was sent by a concurrent sender.
 func (a *alertRuleInfo) eval(t time.Time, rule *models.AlertRule) (bool, *evaluation) {
 	// read the channel in unblocking manner to make sure that there is no concurrent send operation.
