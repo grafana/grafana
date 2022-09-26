@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sort"
 
 	"testing"
 
@@ -109,6 +110,109 @@ func TestBuildConflictBlock(t *testing.T) {
 				if tc.wantDiscardedBlock != "" {
 					require.Equal(t, true, r.DiscardedBlocks[tc.wantDiscardedBlock])
 				}
+			}
+		})
+	}
+}
+
+func TestBuildConflictBlockFromFileRepresentation(t *testing.T) {
+	type testBuildConflictBlock struct {
+		desc                string
+		users               []user.User
+		fileString          string
+		expectedBlocks      []string
+		expectedIdsInBlocks map[string][]string
+	}
+	testOrgID := 1
+	m := make(map[string][]string)
+	conflict1 := "conflict: test"
+	conflict2 := "conflict: test2"
+	m[conflict1] = []string{"2", "3"}
+	m[conflict2] = []string{"4", "5", "6"}
+	testCases := []testBuildConflictBlock{
+		{
+			desc: "should be able to parse the fileString containing the conflicts",
+			users: []user.User{
+				{
+					Email: "test",
+					Login: "test",
+					OrgID: int64(testOrgID),
+				},
+				{
+					Email: "TEST",
+					Login: "TEST",
+					OrgID: int64(testOrgID),
+				},
+				{
+					Email: "test2",
+					Login: "test2",
+					OrgID: int64(testOrgID),
+				},
+				{
+					Email: "TEST2",
+					Login: "TEST2",
+					OrgID: int64(testOrgID),
+				},
+				{
+					Email: "Test2",
+					Login: "Test2",
+					OrgID: int64(testOrgID),
+				},
+			},
+			fileString: `conflict: test
+- id: 2, email: test, login: test, last_seen_at: 2012-09-19T08:31:20Z, auth_module:
++ id: 3, email: TEST, login: TEST, last_seen_at: 2012-09-19T08:31:29Z, auth_module:
+conflict: test2
+- id: 4, email: test2, login: test2, last_seen_at: 2012-09-19T08:31:41Z, auth_module:
++ id: 5, email: TEST2, login: TEST2, last_seen_at: 2012-09-19T08:31:51Z, auth_module:
+- id: 6, email: Test2, login: Test2, last_seen_at: 2012-09-19T08:32:03Z, auth_module: `,
+			expectedBlocks:      []string{"conflict: test", "conflict: test2"},
+			expectedIdsInBlocks: m,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			// Restore after destructive operation
+			sqlStore := sqlstore.InitTestDB(t)
+
+			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
+				for _, u := range tc.users {
+					cmd := user.CreateUserCommand{
+						Email: u.Email,
+						Name:  u.Name,
+						Login: u.Login,
+						OrgID: int64(testOrgID),
+					}
+					_, err := sqlStore.CreateUser(context.Background(), cmd)
+					require.NoError(t, err)
+				}
+
+				conflicts, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
+				r := ConflictResolver{Users: conflicts}
+				r.BuildConflictBlocks(conflicts, fmt.Sprintf)
+				require.NoError(t, err)
+				validErr := getValidConflictUsers(&r, []byte(tc.fileString))
+				require.NoError(t, validErr)
+				require.Equal(t, len(r.ValidUsers), 5)
+				keys := make([]string, 0)
+				for k := range r.Blocks {
+					keys = append(keys, k)
+				}
+				sort.Strings(keys)
+				require.Equal(t, keys, tc.expectedBlocks)
+
+				// checking for parsing of ids
+				conflict1Ids := []string{}
+				for _, u := range r.Blocks[conflict1] {
+					conflict1Ids = append(conflict1Ids, u.Id)
+				}
+				require.Equal(t, tc.expectedIdsInBlocks[conflict1], conflict1Ids)
+				// checking for parsing of ids
+				conflict2Ids := []string{}
+				for _, u := range r.Blocks[conflict2] {
+					conflict2Ids = append(conflict2Ids, u.Id)
+				}
+				require.Equal(t, tc.expectedIdsInBlocks[conflict2], conflict2Ids)
 			}
 		})
 	}
@@ -501,6 +605,102 @@ func TestMergeUser(t *testing.T) {
 			require.Equal(t, 1, len(q1.Result))
 			require.Equal(t, userWithLowerCase.ID, teamMember.UserId)
 			require.Equal(t, userWithLowerCase.Email, teamMember.Email)
+		}
+	})
+}
+
+func TestMergeUserFromNewFileInput(t *testing.T) {
+	t.Run("should be able to merge users after choosing a different user to keep", func(t *testing.T) {
+		// Restore after destructive operation
+		sqlStore := sqlstore.InitTestDB(t)
+
+		type testBuildConflictBlock struct {
+			desc                string
+			users               []user.User
+			fileString          string
+			expectedBlocks      []string
+			expectedIdsInBlocks map[string][]string
+		}
+		testOrgID := 1
+		m := make(map[string][]string)
+		conflict1 := "conflict: test"
+		conflict2 := "conflict: test2"
+		m[conflict1] = []string{"2", "3"}
+		m[conflict2] = []string{"4", "5", "6"}
+		testCases := []testBuildConflictBlock{
+			{
+				desc: "should be able to parse the fileString containing the conflicts",
+				users: []user.User{
+					{
+						Email: "test",
+						Login: "test",
+						OrgID: int64(testOrgID),
+					},
+					{
+						Email: "TEST",
+						Login: "TEST",
+						OrgID: int64(testOrgID),
+					},
+					{
+						Email: "test2",
+						Login: "test2",
+						OrgID: int64(testOrgID),
+					},
+					{
+						Email: "TEST2",
+						Login: "TEST2",
+						OrgID: int64(testOrgID),
+					},
+					{
+						Email: "Test2",
+						Login: "Test2",
+						OrgID: int64(testOrgID),
+					},
+				},
+				fileString: `conflict: test
+- id: 1, email: test, login: test, last_seen_at: 2012-09-19T08:31:20Z, auth_module:
++ id: 2, email: TEST, login: TEST, last_seen_at: 2012-09-19T08:31:29Z, auth_module:
+conflict: test2
+- id: 3, email: test2, login: test2, last_seen_at: 2012-09-19T08:31:41Z, auth_module:
++ id: 4, email: TEST2, login: TEST2, last_seen_at: 2012-09-19T08:31:51Z, auth_module:
+- id: 5, email: Test2, login: Test2, last_seen_at: 2012-09-19T08:32:03Z, auth_module: `,
+				expectedBlocks:      []string{"conflict: test", "conflict: test2"},
+				expectedIdsInBlocks: m,
+			},
+		}
+		for _, tc := range testCases {
+
+			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
+				for _, u := range tc.users {
+					cmd := user.CreateUserCommand{
+						Email: u.Email,
+						Name:  u.Name,
+						Login: u.Login,
+						OrgID: int64(testOrgID),
+					}
+					_, err := sqlStore.CreateUser(context.Background(), cmd)
+					require.NoError(t, err)
+				}
+				// add additional user with conflicting login where DOMAIN is upper case
+				conflictUsers, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
+				require.NoError(t, err)
+				r := ConflictResolver{}
+				r.BuildConflictBlocks(conflictUsers, fmt.Sprintf)
+				require.NoError(t, err)
+				// validation to get newConflicts
+				// edited file
+				// b, err := os.ReadFile(tmpFile.Name())
+				// mocked file input
+				b := tc.fileString
+				require.NoError(t, err)
+				validErr := getValidConflictUsers(&r, []byte(b))
+				require.NoError(t, validErr)
+				require.Equal(t, 5, len(r.ValidUsers))
+
+				// test starts here
+				err = r.MergeConflictingUsers(context.Background(), sqlStore)
+				require.NoError(t, err)
+			}
 		}
 	})
 }

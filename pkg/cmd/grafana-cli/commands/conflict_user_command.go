@@ -223,11 +223,9 @@ func generateConflictUsersFile(r *ConflictResolver) (*os.File, error) {
 func getValidConflictUsers(r *ConflictResolver, b []byte) error {
 	newConflicts := make(ConflictingUsers, 0)
 	// need to verify that id or email exists
-	previouslySeenBlock := map[string]bool{}
 	previouslySeenIds := map[string]bool{}
 	previouslySeenEmails := map[string]bool{}
-	for block, users := range r.Blocks {
-		previouslySeenBlock[block] = true
+	for _, users := range r.Blocks {
 		for _, u := range users {
 			previouslySeenIds[strings.ToLower(u.Id)] = true
 			previouslySeenEmails[strings.ToLower(u.Email)] = true
@@ -252,43 +250,20 @@ func getValidConflictUsers(r *ConflictResolver, b []byte) error {
 		}
 		if !entryRow {
 			// block row
-
-			// evaluate that the blocks, actually exists since last time
-			// example
 			// conflict: hej
-			// + id: 1, email: HEJ, login: hej, last_seen_at: 2012
-			if !previouslySeenBlock[row] {
-				return fmt.Errorf("did not recognize block \n%s\n\n terminated validation", row)
-			}
 			continue
 		}
 
-		switch {
-		case strings.HasPrefix(row, "+"):
-			newUser := &ConflictingUser{}
-			err := newUser.Marshal(row)
-			if err != nil {
-				return fmt.Errorf("could not parse the content of the file with error %e", err)
-			}
-			if !previouslySeenEmails[strings.ToLower(newUser.Email)] {
-				return fmt.Errorf("not valid email: %s, email not in previous conflicts seen", newUser.Email)
-			}
-			// valid entry
-			newConflicts = append(newConflicts, *newUser)
-		case strings.HasPrefix(row, "-"):
-			newUser := &ConflictingUser{}
-			err := newUser.Marshal(row)
-			if err != nil {
-				return fmt.Errorf("could not parse the content of the file with error %e", err)
-			}
-			if !previouslySeenEmails[strings.ToLower(newUser.Email)] {
-				return fmt.Errorf("not valid email, email not in previous list")
-			}
-			// valid entry
-			newConflicts = append(newConflicts, *newUser)
-		default:
-			return fmt.Errorf("filerow not identified, not valid file")
+		newUser := &ConflictingUser{}
+		err := newUser.Marshal(row)
+		if err != nil {
+			return fmt.Errorf("could not parse the content of the file with error %e", err)
 		}
+		if !previouslySeenEmails[strings.ToLower(newUser.Email)] {
+			return fmt.Errorf("not valid email: %s, email not in previous conflicts seen", newUser.Email)
+		}
+		// valid entry
+		newConflicts = append(newConflicts, *newUser)
 	}
 	// TODO:
 	// make a human readable form for how we interpret the newConflicts
@@ -299,47 +274,55 @@ func getValidConflictUsers(r *ConflictResolver, b []byte) error {
 	return nil
 }
 
+/*
+hej@test.com+hej@test.com
+all of the permissions, roles and ownership will be transferred to the user.
++ id: 1, email: hej@test.com, login: hej@test.com
+these user(s) will be deleted and their permissions transferred.
+- id: 2, email: HEJ@TEST.COM, login: HEJ@TEST.COM
+- id: 3, email: hej@TEST.com, login: hej@TEST.com
+*/
 func (r *ConflictResolver) showChanges() {
 	if len(r.ValidUsers) == 0 {
 		fmt.Printf("no changes will take place as we have no valid users to merge.\n")
 		return
 	}
-	/*
-		hej@test.com+hej@test.com
-		all of the permissions, roles and ownership will be transferred to the user.
-		+ id: 1, email: hej@test.com, login: hej@test.com
-		these user(s) will be deleted and their permissions transferred.
-		- id: 2, email: HEJ@TEST.COM, login: HEJ@TEST.COM
-		- id: 3, email: hej@TEST.com, login: hej@TEST.com
-	*/
-	startOfBlock := make(map[string]bool)
-	startOfEndBlock := make(map[string]bool)
-	fileString := ""
+
+	var fileString string
+	fmt.Printf("conflicts will be merged with the following changes:\n")
 	for block, users := range r.Blocks {
 		if _, ok := r.DiscardedBlocks[block]; ok {
 			// skip block
 			continue
 		}
+
+		// looping as we want to can get these out of order (meaning the + and -)
+		var mainUser ConflictingUser
+		for _, u := range users {
+			if u.Direction == "+" {
+				mainUser = u
+				break
+			}
+		}
+		fileString += "IDENTIFIED user conflict\n"
+		fileString += fmt.Sprintf("%s\n", block)
+		fileString += "The permissions, roles and ownership will be transferred to the user below.\n"
+		fileString += fmt.Sprintf("id: %s, email: %s, login: %s\n", mainUser.Id, mainUser.Email, mainUser.Login)
+		fileString += "\n"
+		fileString += "\n"
+		fileString += "The following user(s) will be deleted and their permissions transferred.\n"
 		for _, user := range users {
-			if !startOfBlock[block] {
-				fileString += "IDENTIFIED user conflict\n"
-				fileString += fmt.Sprintf("%s\n", block)
-				fileString += "The permissions, roles and ownership will be transferred to the user below.\n"
-				fileString += fmt.Sprintf("id: %s, email: %s, login: %s\n", user.Id, user.Email, user.Login)
-				fileString += "\n"
-				startOfBlock[block] = true
+			if user.Id == mainUser.Id {
 				continue
 			}
 			// mergable users
-			if !startOfEndBlock[block] {
-				fileString += "The following user(s) will be deleted and their permissions transferred.\n"
-				startOfEndBlock[block] = true
-			}
 			fileString += fmt.Sprintf("id: %s, email: %s, login: %s\n", user.Id, user.Email, user.Login)
 		}
-		fileString += "\n\n"
+		fileString += "\n"
+		fileString += "\n"
+
 	}
-	logger.Info("Changes that will take place\n\n")
+	logger.Info("\n\nChanges that will take place\n\n")
 	logger.Infof(fileString)
 }
 
@@ -581,6 +564,7 @@ func (r *ConflictResolver) MergeConflictingUsers(ctx context.Context, ss *sqlsto
 		var intoUser user.User
 		var intoUserId int64
 		var fromUserIds []int64
+		fmt.Printf("block: %s, users: %v\n\n", block, users)
 
 		// creating a session for each block of users
 		// we want to rollback incase something happens during update / delete
@@ -590,50 +574,49 @@ func (r *ConflictResolver) MergeConflictingUsers(ctx context.Context, ss *sqlsto
 		if err != nil {
 			return fmt.Errorf("could not open a sess: %w", err)
 		}
-		err = ss.InTransaction(ctx, func(ctx context.Context) error {
-			for _, u := range users {
-				if u.Direction == "+" {
-					id, err := strconv.ParseInt(u.Id, 10, 64)
-					if err != nil {
-						return fmt.Errorf("could not convert id in +")
-					}
-					intoUserId = id
-				} else if u.Direction == "-" {
-					id, err := strconv.ParseInt(u.Id, 10, 64)
-					if err != nil {
-						return fmt.Errorf("could not convert id in -")
-					}
-					fromUserIds = append(fromUserIds, id)
+		for _, u := range users {
+			if u.Direction == "+" {
+				id, err := strconv.ParseInt(u.Id, 10, 64)
+				if err != nil {
+					return fmt.Errorf("could not convert id in +")
 				}
+				intoUserId = id
+			} else if u.Direction == "-" {
+				id, err := strconv.ParseInt(u.Id, 10, 64)
+				if err != nil {
+					return fmt.Errorf("could not convert id in -")
+				}
+				fromUserIds = append(fromUserIds, id)
 			}
-			if _, err := sess.ID(intoUserId).Where(sqlstore.NotServiceAccountFilter(ss)).Get(&intoUser); err != nil {
-				return fmt.Errorf("could not find intoUser: %w", err)
+		}
+		fmt.Printf("fromUserIds: %v, intoUserId: %d\n\n", fromUserIds, intoUserId)
+		if _, err := sess.ID(intoUserId).Where(sqlstore.NotServiceAccountFilter(ss)).Get(&intoUser); err != nil {
+			return fmt.Errorf("could not find intoUser: %w", err)
+		}
+
+		for _, fromUserId := range fromUserIds {
+			var fromUser user.User
+			exists, err := sess.ID(fromUserId).Where(sqlstore.NotServiceAccountFilter(ss)).Get(&fromUser)
+			if err != nil {
+				return fmt.Errorf("could not find fromUser: %w", err)
+			}
+			if !exists {
+				fmt.Printf("user with id %d does not exist, skipping\n", fromUserId)
 			}
 
-			for _, fromUserId := range fromUserIds {
-				var fromUser user.User
-				if _, err := sess.ID(fromUserId).Where(sqlstore.NotServiceAccountFilter(ss)).Get(&fromUser); err != nil {
-					return fmt.Errorf("could not find from userId: %w", err)
-				}
-
-				// update all tables fromUserIds to intoUserIds
-				for _, sql := range userUpdates() {
-					_, err := sess.Exec(sql, intoUser.ID, fromUser.ID)
-					if err != nil {
-						return fmt.Errorf("error during updating userIds: %w", err)
-					}
-				}
-
-				// delete the user
-				delErr := ss.DeleteUserInSession(ctx, sess, &models.DeleteUserCommand{UserId: fromUserId})
-				if delErr != nil {
-					return fmt.Errorf("error during deletion of user: %w", delErr)
-				}
+			// update all tables fromUserIds to intoUserIds
+			// for _, sql := range userUpdates() {
+			// 	_, err := sess.Exec(sql, intoUser.ID, fromUser.ID)
+			// 	if err != nil {
+			// 		return fmt.Errorf("error during updating userIds: %w", err)
+			// 	}
+			// }
+			// // delete the user
+			fmt.Printf("deleting user fromUserId %d\n", fromUser.ID)
+			delErr := ss.DeleteUserInSession(ctx, sess, &models.DeleteUserCommand{UserId: fromUserId})
+			if delErr != nil {
+				return fmt.Errorf("error during deletion of user: %w", delErr)
 			}
-			return nil
-		})
-		if err != nil {
-			return fmt.Errorf("unable to perform db operation on useridentification: %s: %w", block, err)
 		}
 		commitErr := sess.Commit()
 		if commitErr != nil {
@@ -641,8 +624,8 @@ func (r *ConflictResolver) MergeConflictingUsers(ctx context.Context, ss *sqlsto
 		}
 		updateMainCommand := &models.UpdateUserCommand{
 			UserId: intoUser.ID,
-			Login:  intoUser.Login,
-			Email:  intoUser.Email,
+			Login:  strings.ToLower(intoUser.Login),
+			Email:  strings.ToLower(intoUser.Email),
 		}
 		updateErr := ss.UpdateUser(ctx, updateMainCommand)
 		if updateErr != nil {
