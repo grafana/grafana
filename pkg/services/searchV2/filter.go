@@ -20,8 +20,8 @@ type entityKind string
 
 const (
 	entityKindPanel      entityKind = object.StandardKindPanel
-	entityKindDashboard  entityKind = object.StandardKindFolder
-	entityKindFolder     entityKind = object.StandardKindDashboard
+	entityKindDashboard  entityKind = object.StandardKindDashboard
+	entityKindFolder     entityKind = object.StandardKindFolder
 	entityKindDatasource entityKind = object.StandardKindDataSource
 )
 
