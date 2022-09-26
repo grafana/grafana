@@ -1,10 +1,12 @@
-package models
+package dashboardthumbs
 
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
+
+	"github.com/grafana/grafana/pkg/models"
 )
 
 type ThumbnailKind string
@@ -82,7 +84,7 @@ type DashboardThumbnail struct {
 	State            ThumbnailState `json:"state"`
 	PanelId          int64          `json:"panelId,omitempty"`
 	Kind             ThumbnailKind  `json:"kind"`
-	Theme            Theme          `json:"theme"`
+	Theme            models.Theme   `json:"theme"`
 	Image            []byte         `json:"image"`
 	MimeType         string         `json:"mimeType"`
 	Updated          time.Time      `json:"updated"`
@@ -99,7 +101,7 @@ type DashboardThumbnailMeta struct {
 	OrgId        int64
 	PanelID      int64
 	Kind         ThumbnailKind
-	Theme        Theme
+	Theme        models.Theme
 }
 
 type GetDashboardThumbnailCommand struct {
@@ -125,7 +127,7 @@ type FindDashboardThumbnailCountCommand struct {
 type FindDashboardsWithStaleThumbnailsCommand struct {
 	IncludeManuallyUploadedThumbnails bool
 	IncludeThumbnailsWithEmptyDsUIDs  bool
-	Theme                             Theme
+	Theme                             models.Theme
 	Kind                              ThumbnailKind
 	Result                            []*DashboardWithStaleThumbnail
 }
