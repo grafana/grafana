@@ -85,4 +85,21 @@ describe('buildPluginSectionNav', () => {
     expect(result?.main.text).toBe('Admin');
     expect(result?.node.text).toBe('Standalone page');
   });
+
+  it('Should throw error if app not found in navtree', () => {
+    config.featureToggles.topnav = true;
+    const action = () => {
+      buildPluginSectionNav({} as HistoryLocation, pluginNav, navIndex, 'app3');
+    };
+    expect(action).toThrowError();
+  });
+
+  it('Should throw error if app has no section', () => {
+    config.featureToggles.topnav = true;
+    app1.parentItem = undefined;
+    const action = () => {
+      buildPluginSectionNav({} as HistoryLocation, pluginNav, navIndex, 'app1');
+    };
+    expect(action).toThrowError();
+  });
 });
