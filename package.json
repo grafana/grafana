@@ -194,7 +194,7 @@
     "fork-ts-checker-webpack-plugin": "7.2.13",
     "fs-extra": "10.1.0",
     "glob": "8.0.3",
-    "html-loader": "4.1.0",
+    "html-loader": "4.2.0",
     "html-webpack-plugin": "5.5.0",
     "http-server": "14.1.1",
     "husky": "8.0.1",
