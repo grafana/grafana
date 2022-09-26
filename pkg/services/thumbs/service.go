@@ -69,7 +69,7 @@ type crawlerScheduleOptions struct {
 	tickerInterval   time.Duration
 	maxCrawlDuration time.Duration
 	crawlerMode      CrawlerMode
-	thumbnailKind    models.ThumbnailKind
+	thumbnailKind    dashboardthumbs.ThumbnailKind
 	themes           []models.Theme
 	auth             CrawlerAuth
 }
@@ -124,7 +124,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 			crawlInterval:    cfg.DashboardPreviews.SchedulerInterval,
 			maxCrawlDuration: cfg.DashboardPreviews.MaxCrawlDuration,
 			crawlerMode:      CrawlerModeThumbs,
-			thumbnailKind:    models.ThumbnailKindDefault,
+			thumbnailKind:    dashboardthumbs.ThumbnailKindDefault,
 			themes:           []models.Theme{models.ThemeDark, models.ThemeLight},
 			auth:             crawlerAuth,
 		},
@@ -157,7 +157,7 @@ func (hs *thumbService) Enabled() bool {
 func (hs *thumbService) parseImageReq(c *models.ReqContext, checkSave bool) *previewRequest {
 	params := web.Params(c.Req)
 
-	kind, err := models.ParseThumbnailKind(params[":kind"])
+	kind, err := dashboardthumbs.ParseThumbnailKind(params[":kind"])
 	if err != nil {
 		c.JSON(400, map[string]string{"error": "invalid size"})
 		return nil
@@ -191,7 +191,7 @@ func (hs *thumbService) parseImageReq(c *models.ReqContext, checkSave bool) *pre
 }
 
 type updateThumbnailStateRequest struct {
-	State models.ThumbnailState `json:"state" binding:"Required"`
+	State dashboardthumbs.ThumbnailState `json:"state" binding:"Required"`
 }
 
 func (hs *thumbService) UpdateThumbnailState(c *models.ReqContext) {
@@ -209,11 +209,11 @@ func (hs *thumbService) UpdateThumbnailState(c *models.ReqContext) {
 		return
 	}
 
-	err = hs.thumbnailRepo.updateThumbnailState(c.Req.Context(), body.State, models.DashboardThumbnailMeta{
+	err = hs.thumbnailRepo.updateThumbnailState(c.Req.Context(), body.State, dashboardthumbs.DashboardThumbnailMeta{
 		DashboardUID: req.UID,
 		OrgId:        req.OrgID,
 		Theme:        req.Theme,
-		Kind:         models.ThumbnailKindDefault,
+		Kind:         dashboardthumbs.ThumbnailKindDefault,
 	})
 
 	if err != nil {
@@ -232,11 +232,11 @@ func (hs *thumbService) GetImage(c *models.ReqContext) {
 		return // already returned value
 	}
 
-	res, err := hs.thumbnailRepo.getThumbnail(c.Req.Context(), models.DashboardThumbnailMeta{
+	res, err := hs.thumbnailRepo.getThumbnail(c.Req.Context(), dashboardthumbs.DashboardThumbnailMeta{
 		DashboardUID: req.UID,
 		OrgId:        req.OrgID,
 		Theme:        req.Theme,
-		Kind:         models.ThumbnailKindDefault,
+		Kind:         dashboardthumbs.ThumbnailKindDefault,
 	})
 
 	if errors.Is(err, dashboards.ErrDashboardThumbnailNotFound) {
@@ -269,7 +269,7 @@ func (hs *thumbService) GetImage(c *models.ReqContext) {
 	}
 }
 
-func (hs *thumbService) hasAccessToPreview(c *models.ReqContext, res *models.DashboardThumbnail, req *previewRequest) bool {
+func (hs *thumbService) hasAccessToPreview(c *models.ReqContext, res *dashboardthumbs.DashboardThumbnail, req *previewRequest) bool {
 	if !hs.licensing.FeatureEnabled("accesscontrol.enforcement") {
 		return true
 	}
@@ -402,12 +402,12 @@ func (hs *thumbService) SetImage(c *models.ReqContext) {
 		return
 	}
 
-	_, err = hs.thumbnailRepo.saveFromBytes(c.Req.Context(), fileBytes, getMimeType(handler.Filename), models.DashboardThumbnailMeta{
+	_, err = hs.thumbnailRepo.saveFromBytes(c.Req.Context(), fileBytes, getMimeType(handler.Filename), dashboardthumbs.DashboardThumbnailMeta{
 		DashboardUID: req.UID,
 		OrgId:        req.OrgID,
 		Theme:        req.Theme,
 		Kind:         req.Kind,
-	}, models.DashboardVersionForManualThumbnailUpload, dsUids)
+	}, dashboardthumbs.DashboardVersionForManualThumbnailUpload, dsUids)
 
 	if err != nil {
 		c.JSON(400, map[string]string{"error": "error saving thumbnail file"})
@@ -432,7 +432,7 @@ func (hs *thumbService) StartCrawler(c *models.ReqContext) response.Response {
 		cmd.Mode = CrawlerModeThumbs
 	}
 
-	go hs.runOnDemandCrawl(context.Background(), cmd.Theme, cmd.Mode, models.ThumbnailKindDefault, rendering.AuthOpts{
+	go hs.runOnDemandCrawl(context.Background(), cmd.Theme, cmd.Mode, dashboardthumbs.ThumbnailKindDefault, rendering.AuthOpts{
 		OrgID:   c.OrgID,
 		UserID:  c.UserID,
 		OrgRole: c.OrgRole,
@@ -494,7 +494,7 @@ func (hs *thumbService) getDashboardId(c *models.ReqContext, uid string) (int64,
 	return query.Result.Id, nil
 }
 
-func (hs *thumbService) runOnDemandCrawl(parentCtx context.Context, theme models.Theme, mode CrawlerMode, kind models.ThumbnailKind, authOpts rendering.AuthOpts) {
+func (hs *thumbService) runOnDemandCrawl(parentCtx context.Context, theme models.Theme, mode CrawlerMode, kind dashboardthumbs.ThumbnailKind, authOpts rendering.AuthOpts) {
 	if !hs.canRunCrawler {
 		return
 	}
