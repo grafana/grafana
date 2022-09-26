@@ -7,6 +7,7 @@ export enum ExpressionQueryType {
   reduce = 'reduce',
   resample = 'resample',
   classic = 'classic_conditions',
+  threshold = 'threshold',
 }
 
 export const gelTypes: Array<SelectableValue<ExpressionQueryType>> = [
@@ -31,6 +32,12 @@ export const gelTypes: Array<SelectableValue<ExpressionQueryType>> = [
     label: 'Classic condition',
     description:
       'Takes one or more time series returned from a query or an expression and checks if any of the series match the condition.',
+  },
+  {
+    value: ExpressionQueryType.threshold,
+    label: 'Threshold',
+    description:
+      'Takes one or more time series returned from a query or an expression and checks if any of the series match the threshold condition.',
   },
 ];
 
@@ -78,6 +85,13 @@ export const upsamplingTypes: Array<SelectableValue<string>> = [
   { value: 'pad', label: 'pad', description: 'fill with the last known value' },
   { value: 'backfilling', label: 'backfilling', description: 'fill with the next known value' },
   { value: 'fillna', label: 'fillna', description: 'Fill with NaNs' },
+];
+
+export const thresholdFunctions: Array<SelectableValue<EvalFunction>> = [
+  { value: EvalFunction.IsAbove, label: 'Is above' },
+  { value: EvalFunction.IsBelow, label: 'Is below' },
+  { value: EvalFunction.IsWithinRange, label: 'Is within range' },
+  { value: EvalFunction.IsOutsideRange, label: 'Is outside range' },
 ];
 
 /**
