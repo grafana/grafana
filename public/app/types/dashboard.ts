@@ -27,6 +27,7 @@ export interface DashboardMeta {
   provisioned?: boolean;
   provisionedExternalId?: string;
   isStarred?: boolean;
+  isHome?: boolean;
   showSettings?: boolean;
   expires?: string;
   isFolder?: boolean;

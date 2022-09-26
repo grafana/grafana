@@ -152,7 +152,15 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 		hs.getAnnotationPermissionsByScope(c, &annotationPermissions.Organization, accesscontrol.ScopeAnnotationsTypeOrganization)
 	}
 
+	prefsQuery := pref.GetPreferenceWithDefaultsQuery{OrgID: c.OrgID, UserID: c.SignedInUser.UserID, Teams: c.Teams}
+	preference, err := hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)
+	if err != nil {
+		preference.HomeDashboardID = 0
+		return response.Error(500, "Failed to get preferences", err)
+	}
+
 	meta := dtos.DashboardMeta{
+		IsHome:                 dash.Id == preference.HomeDashboardID,
 		IsStarred:              isStarred,
 		Slug:                   dash.Slug,
 		Type:                   models.DashTypeDB,
