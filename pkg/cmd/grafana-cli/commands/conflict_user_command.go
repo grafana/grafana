@@ -236,8 +236,8 @@ func getValidConflictUsers(r *ConflictResolver, b []byte) error {
 		}
 	}
 
-	// tested in https://regex101.com/r/Vgoe3r/1
-	diffPattern := `^\+|\-`
+	// tested in https://regex101.com/r/una3zC/1
+	diffPattern := `^[+-]`
 	// compiling since in a loop
 	matchingExpression, err := regexp.Compile(diffPattern)
 	if err != nil {
