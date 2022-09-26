@@ -421,7 +421,7 @@ describe('Plugin details page', () => {
     });
 
     it('should display grafana dependencies for a plugin if they are available', async () => {
-      const { queryByText } = renderPluginDetails({
+      const { queryByText, findByRole } = renderPluginDetails({
         id,
         details: {
           pluginDependencies: [],
@@ -460,7 +460,7 @@ describe('Plugin details page', () => {
       });
 
       // Wait for the install controls to be loaded
-      await waitFor(() => expect(queryByText(PluginTabLabels.OVERVIEW)).toBeInTheDocument());
+      expect(await findByRole('tab', { name: `Tab ${PluginTabLabels.OVERVIEW}` })).toBeInTheDocument();
 
       // Open the confirmation modal
       await userEvent.click(getByRole('button', { name: /uninstall/i }));
@@ -703,20 +703,18 @@ describe('Plugin details page', () => {
     });
 
     it('should not display versions tab for plugins not published to gcom', async () => {
-      const { queryByText } = renderPluginDetails({
+      const { findByRole } = renderPluginDetails({
         name: 'Akumuli',
         isInstalled: true,
         type: PluginType.app,
         isPublished: false,
       });
 
-      await waitFor(() => expect(queryByText(PluginTabLabels.OVERVIEW)).toBeInTheDocument());
-
-      expect(queryByText(PluginTabLabels.VERSIONS)).toBeNull();
+      expect(await findByRole('tab', { name: `Tab ${PluginTabLabels.VERSIONS}` })).not.toBeInTheDocument();
     });
 
     it('should not display update for plugins not published to gcom', async () => {
-      const { queryByText, queryByRole } = renderPluginDetails({
+      const { findByRole, queryByRole } = renderPluginDetails({
         name: 'Akumuli',
         isInstalled: true,
         hasUpdate: true,
@@ -724,13 +722,13 @@ describe('Plugin details page', () => {
         isPublished: false,
       });
 
-      await waitFor(() => expect(queryByText(PluginTabLabels.OVERVIEW)).toBeInTheDocument());
+      expect(await findByRole('tab', { name: `Tab ${PluginTabLabels.OVERVIEW}` })).toBeInTheDocument();
 
       expect(queryByRole('button', { name: /update/i })).not.toBeInTheDocument();
     });
 
     it('should not display install for plugins not published to gcom', async () => {
-      const { queryByText, queryByRole } = renderPluginDetails({
+      const { findByRole, queryByRole } = renderPluginDetails({
         name: 'Akumuli',
         isInstalled: false,
         hasUpdate: false,
@@ -738,13 +736,13 @@ describe('Plugin details page', () => {
         isPublished: false,
       });
 
-      await waitFor(() => expect(queryByText(PluginTabLabels.OVERVIEW)).toBeInTheDocument());
+      expect(await findByRole('tab', { name: `Tab ${PluginTabLabels.OVERVIEW}` })).toBeInTheDocument();
 
       expect(queryByRole('button', { name: /^install/i })).not.toBeInTheDocument();
     });
 
     it('should not display uninstall for plugins not published to gcom', async () => {
-      const { queryByText, queryByRole } = renderPluginDetails({
+      const { findByRole, queryByRole } = renderPluginDetails({
         name: 'Akumuli',
         isInstalled: true,
         hasUpdate: false,
@@ -752,7 +750,7 @@ describe('Plugin details page', () => {
         isPublished: false,
       });
 
-      await waitFor(() => expect(queryByText(PluginTabLabels.OVERVIEW)).toBeInTheDocument());
+      expect(await findByRole('tab', { name: `Tab ${PluginTabLabels.OVERVIEW}` })).toBeInTheDocument();
 
       expect(queryByRole('button', { name: /uninstall/i })).not.toBeInTheDocument();
     });
@@ -768,25 +766,25 @@ describe('Plugin details page', () => {
     });
 
     it("should not display an install button for a plugin that isn't installed", async () => {
-      const { queryByRole, queryByText } = renderPluginDetails({ id, isInstalled: false });
+      const { queryByRole, findByRole } = renderPluginDetails({ id, isInstalled: false });
 
-      await waitFor(() => expect(queryByText(PluginTabLabels.OVERVIEW)).toBeInTheDocument());
+      expect(await findByRole('tab', { name: `Tab ${PluginTabLabels.OVERVIEW}` })).toBeInTheDocument();
 
       expect(queryByRole('button', { name: /^install/i })).not.toBeInTheDocument();
     });
 
     it('should not display an uninstall button for an already installed plugin', async () => {
-      const { queryByRole, queryByText } = renderPluginDetails({ id, isInstalled: true });
+      const { queryByRole, findByRole } = renderPluginDetails({ id, isInstalled: true });
 
-      await waitFor(() => expect(queryByText(PluginTabLabels.OVERVIEW)).toBeInTheDocument());
+      expect(await findByRole('tab', { name: `Tab ${PluginTabLabels.OVERVIEW}` })).toBeInTheDocument();
 
       expect(queryByRole('button', { name: /uninstall/i })).not.toBeInTheDocument();
     });
 
     it('should not display update or uninstall buttons for a plugin with update', async () => {
-      const { queryByRole, queryByText } = renderPluginDetails({ id, isInstalled: true, hasUpdate: true });
+      const { queryByRole, findByRole } = renderPluginDetails({ id, isInstalled: true, hasUpdate: true });
 
-      await waitFor(() => expect(queryByText(PluginTabLabels.OVERVIEW)).toBeInTheDocument());
+      expect(await findByRole('tab', { name: `Tab ${PluginTabLabels.OVERVIEW}` })).toBeInTheDocument();
 
       expect(queryByRole('button', { name: /update/i })).not.toBeInTheDocument();
       expect(queryByRole('button', { name: /uninstall/i })).not.toBeInTheDocument();
@@ -794,11 +792,10 @@ describe('Plugin details page', () => {
 
     it('should not display an install button for enterprise plugins if license is valid', async () => {
       config.licenseInfo.enabledFeatures = { 'enterprise.plugins': true };
-      const { queryByRole, queryByText } = renderPluginDetails({ id, isInstalled: false, isEnterprise: true });
+      const { findByRole } = renderPluginDetails({ id, isInstalled: false, isEnterprise: true });
 
-      await waitFor(() => expect(queryByText(PluginTabLabels.OVERVIEW)).toBeInTheDocument());
-
-      expect(queryByRole('button', { name: /^install/i })).not.toBeInTheDocument();
+      expect(await findByRole('tab', { name: `Tab ${PluginTabLabels.OVERVIEW}` })).toBeInTheDocument();
+      expect(await findByRole('button', { name: /^install/i })).not.toBeInTheDocument();
     });
   });
 
