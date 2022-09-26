@@ -49,8 +49,16 @@ export function buildPluginSectionNav(
   const currentUrl = config.appSubUrl + location.pathname + location.search;
   let activePage: NavModelItem | undefined;
 
-  // Set active page
+  // Find and set active page
   section.children = (section?.children ?? []).map((child) => {
+    if (currentUrl.startsWith(child.url ?? '')) {
+      activePage = {
+        ...child,
+        active: true,
+      };
+      return activePage;
+    }
+
     if (child.children) {
       return {
         ...child,
