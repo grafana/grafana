@@ -428,7 +428,7 @@ var dashboardsWithFolders = []dashboard{
 		folderID: 1,
 		summary: &object.ObjectSummary{
 			Name: "Dashboard in folder 1",
-			Nested: []object.ObjectSummary{
+			Nested: []*object.ObjectSummary{
 				newNestedPanel(1, "Panel 1"),
 				newNestedPanel(2, "Panel 2"),
 			},
@@ -440,7 +440,7 @@ var dashboardsWithFolders = []dashboard{
 		folderID: 1,
 		summary: &object.ObjectSummary{
 			Name: "Dashboard in folder 2",
-			Nested: []object.ObjectSummary{
+			Nested: []*object.ObjectSummary{
 				newNestedPanel(3, "Panel 3"),
 			},
 		},
@@ -450,7 +450,7 @@ var dashboardsWithFolders = []dashboard{
 		uid: "4",
 		summary: &object.ObjectSummary{
 			Name: "One more dash",
-			Nested: []object.ObjectSummary{
+			Nested: []*object.ObjectSummary{
 				newNestedPanel(4, "Panel 4"),
 			},
 		},
@@ -507,7 +507,7 @@ var dashboardsWithPanels = []dashboard{
 		uid: "1",
 		summary: &object.ObjectSummary{
 			Name: "My Dash",
-			Nested: []object.ObjectSummary{
+			Nested: []*object.ObjectSummary{
 				newNestedPanel(1, "Panel 1"),
 				newNestedPanel(2, "Panel 2"),
 			},
@@ -515,8 +515,8 @@ var dashboardsWithPanels = []dashboard{
 	},
 }
 
-func newNestedPanel(id int64, name string) object.ObjectSummary {
-	summary := object.ObjectSummary{
+func newNestedPanel(id int64, name string) *object.ObjectSummary {
+	summary := &object.ObjectSummary{
 		Kind: "panel",
 		UID:  fmt.Sprintf("???#%d", id),
 	}
