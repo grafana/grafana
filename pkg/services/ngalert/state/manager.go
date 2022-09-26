@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+
 	"github.com/grafana/grafana/pkg/services/screenshot"
 )
 
@@ -42,14 +43,14 @@ type Manager struct {
 	ResendDelay time.Duration
 
 	ruleStore        store.RuleStore
-	instanceStore    store.InstanceStore
+	instanceStore    InstanceStore
 	dashboardService dashboards.DashboardService
 	imageService     image.ImageService
 	AnnotationsRepo  annotations.Repository
 }
 
 func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL,
-	ruleStore store.RuleStore, instanceStore store.InstanceStore,
+	ruleStore store.RuleStore, instanceStore InstanceStore,
 	dashboardService dashboards.DashboardService, imageService image.ImageService, clock clock.Clock, annotationsRepo annotations.Repository) *Manager {
 	manager := &Manager{
 		cache:            newCache(logger, metrics, externalURL),
