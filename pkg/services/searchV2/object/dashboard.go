@@ -40,7 +40,7 @@ func NewDashboardSummaryBuilder(lookup dslookup.DatasourceLookup) object.ObjectS
 		}
 
 		for _, panel := range dash.Panels {
-			refP := object.NewReferenceAccumulator()
+			panelRefs := object.NewReferenceAccumulator()
 			p := object.ObjectSummary{
 				UID:  obj.UID + "#" + strconv.FormatInt(panel.ID, 10),
 				Kind: "panel",
