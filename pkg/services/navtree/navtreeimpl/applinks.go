@@ -3,6 +3,8 @@ package navtreeimpl
 import (
 	"path"
 	"sort"
+	"strconv"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -16,6 +18,10 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *models.ReqCo
 	topNavEnabled := s.features.IsEnabled(featuremgmt.FlagTopnav)
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	appLinks := []*navtree.NavLink{}
+
+	if len(s.navigationAppConfig) == 0 {
+		s.readNavigationSettings()
+	}
 
 	pss, err := s.pluginSettings.GetPluginSettings(c.Req.Context(), &pluginsettings.GetArgs{OrgID: c.OrgID})
 	if err != nil {
@@ -109,7 +115,7 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 				link.Url = s.cfg.AppSubURL + "/plugins/" + plugin.ID + "/page/" + include.Slug
 			}
 
-			if pathConfig, ok := s.cfg.NavigationAppPathConfig[include.Path]; ok {
+			if pathConfig, ok := s.navigationAppPathConfig[include.Path]; ok {
 				if sectionForPage := treeRoot.FindById(pathConfig.SectionID); sectionForPage != nil {
 					link.Id = "standalone-plugin-page-" + include.Path
 					link.SortWeight = pathConfig.SortWeight
@@ -138,9 +144,9 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 			appLink.Children = []*navtree.NavLink{}
 		}
 
-		alertingNode := treeRoot.FindById("alerting")
+		alertingNode := treeRoot.FindById(navtree.NavIDAlerting)
 
-		if navConfig, hasOverride := s.cfg.NavigationAppConfig[plugin.ID]; hasOverride && topNavEnabled {
+		if navConfig, hasOverride := s.navigationAppConfig[plugin.ID]; hasOverride && topNavEnabled {
 			appLink.SortWeight = navConfig.SortWeight
 
 			if navNode := treeRoot.FindById(navConfig.SectionID); navNode != nil {
@@ -177,4 +183,37 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 	}
 
 	return nil
+}
+
+func (s *ServiceImpl) readNavigationSettings() {
+	s.navigationAppConfig = map[string]NavigationAppConfig{
+		"grafana-k8s-app":                  {SectionID: navtree.NavIDMonitoring, SortWeight: 1},
+		"grafana-synthetic-monitoring-app": {SectionID: navtree.NavIDMonitoring, SortWeight: 2},
+		"grafana-oncall-app":               {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 1},
+		"grafana-incident-app":             {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 2},
+		"grafana-ml-app":                   {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 3},
+	}
+
+	s.navigationAppPathConfig = map[string]NavigationAppConfig{
+		"/a/grafana-auth-app": {SectionID: navtree.NavIDCfg, SortWeight: 7},
+	}
+
+	sec := s.cfg.Raw.Section("navigation.apps")
+
+	for _, key := range sec.Keys() {
+		if strings.HasPrefix(key.Name(), "nav_id_") {
+			pluginId := strings.Replace(key.Name(), "nav_id_", "", 1)
+			// Support <id> <weight> value
+			values := strings.Split(sec.Key(key.Name()).MustString(""), " ")
+
+			appCfg := &NavigationAppConfig{SectionID: values[0]}
+			if len(values) > 1 {
+				if weight, err := strconv.ParseInt(values[1], 10, 64); err == nil {
+					appCfg.SortWeight = weight
+				}
+			}
+
+			s.navigationAppConfig[pluginId] = *appCfg
+		}
+	}
 }

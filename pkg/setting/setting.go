@@ -274,10 +274,6 @@ type Cfg struct {
 	PluginAdminEnabled               bool
 	PluginAdminExternalManageEnabled bool
 
-	// Navigation
-	NavigationAppConfig     map[string]NavigationAppConfig
-	NavigationAppPathConfig map[string]NavigationAppConfig
-
 	// Panels
 	DisableSanitizeHtml bool
 
@@ -1100,7 +1096,6 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.readDateFormats()
 	cfg.readSentryConfig()
 	cfg.readGrafanaJavascriptAgentConfig()
-	cfg.readNavigationSettings()
 
 	if err := cfg.readLiveSettings(iniFile); err != nil {
 		return err

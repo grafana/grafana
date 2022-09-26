@@ -33,6 +33,15 @@ type ServiceImpl struct {
 	accesscontrolService ac.Service
 	kvStore              kvstore.KVStore
 	apiKeyService        apikey.Service
+
+	// Navigation
+	navigationAppConfig     map[string]NavigationAppConfig
+	navigationAppPathConfig map[string]NavigationAppConfig
+}
+
+type NavigationAppConfig struct {
+	SectionID  string
+	SortWeight int64
 }
 
 func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStore plugins.Store, pluginSettings pluginsettings.Service, starService star.Service, features *featuremgmt.FeatureManager, dashboardService dashboards.DashboardService, accesscontrolService ac.Service, kvStore kvstore.KVStore, apiKeyService apikey.Service) navtree.Service {
@@ -298,7 +307,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *models.ReqContext, hasEditPerm b
 
 	if !s.features.IsEnabled(featuremgmt.FlagTopnav) {
 		dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
-			Text: "Browse", Id: "dashboards/browse", Url: s.cfg.AppSubURL + "/dashboards", Icon: "sitemap",
+			Text: "Browse", Id: navtree.NavIDDashboardsBrowse, Url: s.cfg.AppSubURL + "/dashboards", Icon: "sitemap",
 		})
 	}
 

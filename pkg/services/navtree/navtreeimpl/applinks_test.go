@@ -101,7 +101,7 @@ func TestAddAppLinks(t *testing.T) {
 
 	t.Run("Should move apps that have specific nav id configured to correct section", func(t *testing.T) {
 		service.features = featuremgmt.WithFeatures(featuremgmt.FlagTopnav)
-		service.cfg.NavigationAppConfig = map[string]setting.NavigationAppConfig{
+		service.navigationAppConfig = map[string]NavigationAppConfig{
 			"test-app1": {SectionID: navtree.NavIDAdmin},
 		}
 
@@ -117,7 +117,7 @@ func TestAddAppLinks(t *testing.T) {
 
 	t.Run("Should add monitoring section if plugin exists that wants to live there", func(t *testing.T) {
 		service.features = featuremgmt.WithFeatures(featuremgmt.FlagTopnav)
-		service.cfg.NavigationAppConfig = map[string]setting.NavigationAppConfig{
+		service.navigationAppConfig = map[string]NavigationAppConfig{
 			"test-app1": {SectionID: navtree.NavIDMonitoring},
 		}
 
@@ -131,7 +131,7 @@ func TestAddAppLinks(t *testing.T) {
 
 	t.Run("Should add Alerts and incidents section if plugin exists that wants to live there", func(t *testing.T) {
 		service.features = featuremgmt.WithFeatures(featuremgmt.FlagTopnav)
-		service.cfg.NavigationAppConfig = map[string]setting.NavigationAppConfig{
+		service.navigationAppConfig = map[string]NavigationAppConfig{
 			"test-app1": {SectionID: navtree.NavIDAlertsAndIncidents},
 		}
 
@@ -147,7 +147,7 @@ func TestAddAppLinks(t *testing.T) {
 
 	t.Run("Should be able to control app sort order with SortWeight", func(t *testing.T) {
 		service.features = featuremgmt.WithFeatures(featuremgmt.FlagTopnav)
-		service.cfg.NavigationAppConfig = map[string]setting.NavigationAppConfig{
+		service.navigationAppConfig = map[string]NavigationAppConfig{
 			"test-app2": {SectionID: navtree.NavIDMonitoring, SortWeight: 1},
 			"test-app1": {SectionID: navtree.NavIDMonitoring, SortWeight: 2},
 		}
@@ -161,5 +161,37 @@ func TestAddAppLinks(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "Test app2 name", treeRoot.Children[0].Children[0].Text)
 		require.Equal(t, "Test app1 name", treeRoot.Children[0].Children[1].Text)
+	})
+}
+
+func TestReadingNavigationSettings(t *testing.T) {
+
+	t.Run("Should include defaults", func(t *testing.T) {
+		service := ServiceImpl{
+			cfg: setting.NewCfg(),
+		}
+
+		_, _ = service.cfg.Raw.NewSection("navigation.apps")
+		service.readNavigationSettings()
+
+		require.Equal(t, "monitoring", service.navigationAppConfig["grafana-k8s-app"].SectionID)
+	})
+
+	t.Run("Can add additional overrides via ini system", func(t *testing.T) {
+		service := ServiceImpl{
+			cfg: setting.NewCfg(),
+		}
+
+		sec, _ := service.cfg.Raw.NewSection("navigation.apps")
+		_, _ = sec.NewKey("nav_id_grafana-k8s-app", "dashboards")
+		_, _ = sec.NewKey("nav_id_other-app", "admin 12")
+
+		service.readNavigationSettings()
+
+		require.Equal(t, "dashboards", service.navigationAppConfig["grafana-k8s-app"].SectionID)
+		require.Equal(t, "admin", service.navigationAppConfig["other-app"].SectionID)
+
+		require.Equal(t, int64(0), service.navigationAppConfig["grafana-k8s-app"].SortWeight)
+		require.Equal(t, int64(12), service.navigationAppConfig["other-app"].SortWeight)
 	})
 }
