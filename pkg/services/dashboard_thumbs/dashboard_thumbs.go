@@ -2,14 +2,12 @@ package dashboardthumbs
 
 import (
 	"context"
-
-	"github.com/grafana/grafana/pkg/models"
 )
 
 type Service interface {
-	GetThumbnail(ctx context.Context, query *models.GetDashboardThumbnailCommand) (*models.DashboardThumbnail, error)
-	SaveThumbnail(ctx context.Context, cmd *models.SaveDashboardThumbnailCommand) (*models.DashboardThumbnail, error)
-	UpdateThumbnailState(ctx context.Context, cmd *models.UpdateThumbnailStateCommand) error
-	FindThumbnailCount(ctx context.Context, cmd *models.FindDashboardThumbnailCountCommand) (int64, error)
-	FindDashboardsWithStaleThumbnails(ctx context.Context, cmd *models.FindDashboardsWithStaleThumbnailsCommand) ([]*models.DashboardWithStaleThumbnail, error)
+	GetThumbnail(ctx context.Context, query *GetDashboardThumbnailCommand) (*DashboardThumbnail, error)
+	SaveThumbnail(ctx context.Context, cmd *SaveDashboardThumbnailCommand) (*DashboardThumbnail, error)
+	UpdateThumbnailState(ctx context.Context, cmd *UpdateThumbnailStateCommand) error
+	FindThumbnailCount(ctx context.Context, cmd *FindDashboardThumbnailCountCommand) (int64, error)
+	FindDashboardsWithStaleThumbnails(ctx context.Context, cmd *FindDashboardsWithStaleThumbnailsCommand) ([]*DashboardWithStaleThumbnail, error)
 }

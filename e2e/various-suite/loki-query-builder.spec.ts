@@ -45,7 +45,9 @@ describe('Loki query builder', () => {
     e2e().contains(dataSourceName).scrollIntoView().should('be.visible').click();
 
     // Start in builder mode, click and choose query pattern
-    e2e.components.QueryBuilder.queryPatterns().click().type('Log query with parsing{enter}');
+    e2e.components.QueryBuilder.queryPatterns().click();
+    e2e().contains('Log query starters').click();
+    e2e().contains('Use this query').click();
     e2e().contains('No pipeline errors').should('be.visible');
     e2e().contains('Logfmt').should('be.visible');
     e2e().contains('{} | logfmt | __error__=``').should('be.visible');

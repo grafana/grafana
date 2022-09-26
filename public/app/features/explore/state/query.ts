@@ -45,7 +45,7 @@ import { decorateData } from '../utils/decorators';
 import { addHistoryItem, historyUpdatedAction, loadRichHistory } from './history';
 import { stateSave } from './main';
 import { updateTime } from './time';
-import { createCacheKey, getResultsFromCache } from './utils';
+import { createCacheKey, getResultsFromCache, storeLogsVolumeEnabled } from './utils';
 
 //
 // Actions and Payloads
@@ -107,6 +107,10 @@ export interface QueryStoreSubscriptionPayload {
 
 export const queryStoreSubscriptionAction = createAction<QueryStoreSubscriptionPayload>(
   'explore/queryStoreSubscription'
+);
+
+const setLogsVolumeEnabledAction = createAction<{ exploreId: ExploreId; enabled: boolean }>(
+  'explore/setLogsVolumeEnabledAction'
 );
 
 export interface StoreLogsVolumeDataProvider {
@@ -415,6 +419,7 @@ export const runQueries = (
       refreshInterval,
       absoluteRange,
       cache,
+      logsVolumeEnabled,
     } = exploreItemState;
     let newQuerySub;
 
@@ -550,6 +555,12 @@ export const runQueries = (
         );
         dispatch(cleanLogsVolumeAction({ exploreId }));
       } else if (hasLogsVolumeSupport(datasourceInstance)) {
+        // we always prepare the logsVolumeProvider,
+        // but we only load it, if the logs-volume-histogram is enabled.
+        // (we need to have the logsVolumeProvider always actual,
+        // even when the visuals are disabled, because when the user
+        // enables the visuals again, we need to load the histogram,
+        // so we need the provider)
         const sourceRequest = {
           ...transaction.request,
           requestId: transaction.request.requestId + '_log_volume',
@@ -564,7 +575,9 @@ export const runQueries = (
         const { logsVolumeData, absoluteRange } = getState().explore[exploreId]!;
         if (!canReuseLogsVolumeData(logsVolumeData, queries, absoluteRange)) {
           dispatch(cleanLogsVolumeAction({ exploreId }));
-          dispatch(loadLogsVolumeData(exploreId));
+          if (logsVolumeEnabled) {
+            dispatch(loadLogsVolumeData(exploreId));
+          }
         }
       } else {
         dispatch(
@@ -670,6 +683,16 @@ export function loadLogsVolumeData(exploreId: ExploreId): ThunkResult<void> {
   };
 }
 
+export function setLogsVolumeEnabled(exploreId: ExploreId, enabled: boolean): ThunkResult<void> {
+  return (dispatch, getState) => {
+    dispatch(setLogsVolumeEnabledAction({ exploreId, enabled }));
+    storeLogsVolumeEnabled(enabled);
+    if (enabled) {
+      dispatch(loadLogsVolumeData(exploreId));
+    }
+  };
+}
+
 //
 // Reducer
 //
@@ -754,6 +777,20 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     return {
       ...state,
       querySubscription,
+    };
+  }
+
+  if (setLogsVolumeEnabledAction.match(action)) {
+    const { enabled } = action.payload;
+    if (!enabled && state.logsVolumeDataSubscription) {
+      state.logsVolumeDataSubscription.unsubscribe();
+    }
+    return {
+      ...state,
+      logsVolumeEnabled: enabled,
+      // NOTE: the dataProvider is not cleared, we may need it later,
+      // if the user re-enables the histogram-visualization
+      logsVolumeData: undefined,
     };
   }
 

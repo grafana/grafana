@@ -397,9 +397,21 @@ type pluginsSettingsServiceMock struct {
 	err                   error
 }
 
-func (s *pluginsSettingsServiceMock) GetPluginSettings(_ context.Context, args *pluginsettings.GetArgs) ([]*pluginsettings.DTO, error) {
+func (s *pluginsSettingsServiceMock) GetPluginSettings(_ context.Context, args *pluginsettings.GetArgs) ([]*pluginsettings.InfoDTO, error) {
 	s.getPluginSettingsArgs = append(s.getPluginSettingsArgs, args.OrgID)
-	return s.storedPluginSettings, s.err
+
+	var res []*pluginsettings.InfoDTO
+	for _, ps := range s.storedPluginSettings {
+		res = append(res, &pluginsettings.InfoDTO{
+			PluginID:      ps.PluginID,
+			OrgID:         ps.OrgID,
+			Enabled:       ps.Enabled,
+			Pinned:        ps.Pinned,
+			PluginVersion: ps.PluginVersion,
+		})
+	}
+
+	return res, s.err
 }
 
 func (s *pluginsSettingsServiceMock) GetPluginSettingByPluginID(_ context.Context, args *pluginsettings.GetByPluginIDArgs) (*pluginsettings.DTO, error) {

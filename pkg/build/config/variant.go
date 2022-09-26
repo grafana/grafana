@@ -15,6 +15,18 @@ const (
 	VariantWindowsAmd64   Variant = "windows-amd64"
 )
 
+var AllVariants = []Variant{
+	VariantArmV6,
+	VariantArmV7,
+	VariantArmV7Musl,
+	VariantArm64,
+	VariantArm64Musl,
+	VariantDarwinAmd64,
+	VariantWindowsAmd64,
+	VariantLinuxAmd64,
+	VariantLinuxAmd64Musl,
+}
+
 // Architecture is an allowed value in the GOARCH environment variable.
 type Architecture string
 

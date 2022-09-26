@@ -116,11 +116,11 @@ export class SQLCompletionItemProvider extends CompletionItemProvider {
                 this.templateSrv.replace(namespaceToken?.value.replace(/\"/g, '')),
                 this.templateSrv.replace(this.region)
               );
-              metrics.map((m) => addSuggestion(m.value));
+              metrics.forEach((m) => m.value && addSuggestion(m.value));
             } else {
               // If no namespace is specified in the query, just list all metrics
               const metrics = await this.api.getAllMetrics(this.templateSrv.replace(this.region));
-              uniq(metrics.map((m) => m.metricName)).map((m) => addSuggestion(m, { insertText: m }));
+              uniq(metrics.map((m) => m.metricName)).forEach((m) => m && addSuggestion(m, { insertText: m }));
             }
           }
           break;
@@ -186,8 +186,8 @@ export class SQLCompletionItemProvider extends CompletionItemProvider {
                 metricNameToken?.value ?? ''
               );
               keys.map((m) => {
-                const key = /[\s\.-]/.test(m.value) ? `"${m.value}"` : m.value;
-                addSuggestion(key);
+                const key = /[\s\.-]/.test(m.value ?? '') ? `"${m.value}"` : m.value;
+                key && addSuggestion(key);
               });
             }
           }

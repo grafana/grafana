@@ -100,7 +100,19 @@ export const enrichWithInteractionTracking = (item: NavModelItem, expandedState:
 };
 
 export const isMatchOrChildMatch = (itemToCheck: NavModelItem, searchItem?: NavModelItem) => {
-  return Boolean(itemToCheck === searchItem || itemToCheck.children?.some((child) => child === searchItem));
+  return Boolean(itemToCheck === searchItem || hasChildMatch(itemToCheck, searchItem));
+};
+
+export const hasChildMatch = (itemToCheck: NavModelItem, searchItem?: NavModelItem): boolean => {
+  return Boolean(
+    itemToCheck.children?.some((child) => {
+      if (child === searchItem) {
+        return true;
+      } else {
+        return hasChildMatch(child, searchItem);
+      }
+    })
+  );
 };
 
 const stripQueryParams = (url?: string) => {

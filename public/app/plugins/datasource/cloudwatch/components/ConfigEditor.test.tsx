@@ -4,6 +4,7 @@ import React from 'react';
 import selectEvent from 'react-select-event';
 
 import { AwsAuthType } from '@grafana/aws-sdk';
+import { toOption } from '@grafana/data';
 
 import { setupMockedDataSource } from '../__mocks__/CloudWatchDataSource';
 
@@ -13,6 +14,7 @@ jest.mock('app/features/plugins/datasource_srv', () => ({
   getDatasourceSrv: () => ({
     loadDatasource: jest.fn().mockResolvedValue({
       api: {
+        describeLogGroups: jest.fn().mockResolvedValue(['logGroup-foo', 'logGroup-bar'].map(toOption)),
         getRegions: jest.fn().mockResolvedValue([
           {
             label: 'ap-east-1',
@@ -22,9 +24,6 @@ jest.mock('app/features/plugins/datasource_srv', () => ({
       },
       getActualRegion: jest.fn().mockReturnValue('ap-east-1'),
       getVariables: jest.fn().mockReturnValue([]),
-      logsQueryRunner: {
-        describeLogGroups: jest.fn().mockResolvedValue(['logGroup-foo', 'logGroup-bar']),
-      },
     }),
   }),
 }));
