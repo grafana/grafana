@@ -808,6 +808,8 @@ func (hs *HTTPServer) ValidateDashboard(c *models.ReqContext) response.Response 
 		Message: validationMessage,
 	}
 
+	// We respond with StatusOK even when the dashboard failed validation we were
+	// able to "task failed successfully" on an invalid dashboard
 	return response.JSON(http.StatusOK, respData)
 }
 

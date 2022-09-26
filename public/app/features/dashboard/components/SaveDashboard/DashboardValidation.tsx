@@ -26,18 +26,24 @@ function DashboardValidation({ dashboard }: DashboardValidationProps) {
   if (loading) {
     alert = <Alert severity="info" title="Checking dashboard validity" />;
   } else if (value) {
+    // API will respond with status 200 even if the dashboard is invalid.
     if (!value.isValid) {
       alert = (
-        <Alert severity="warning" title="Dashboard failed validation">
+        <Alert severity="warning" title="Dashboard failed schema validation">
+          <p>
+            Validation is provided for development purposes and should be safe to ignore. If you are a Grafana
+            developer, consider checking and updating the dashboard schema
+          </p>
           <div className={styles.error}>{value.message}</div>
         </Alert>
       );
     }
   } else {
+    // non-200 response from the API. This shouldn't happen normally
     const errorMessage = error?.message ?? error?.toString?.() ?? 'Unknown error';
     alert = (
       <Alert severity="info" title="Error checking dashboard validity">
-        <div className={styles.error}>{errorMessage}</div>
+        <p className={styles.error}>{errorMessage}</p>
       </Alert>
     );
   }
@@ -54,6 +60,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginTop: theme.spacing(1),
   }),
   error: css({
+    fontFamily: theme.typography.fontFamilyMonospace,
     whiteSpace: 'pre-wrap',
     overflowX: 'auto',
     maxWidth: '100%',
