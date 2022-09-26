@@ -27,7 +27,6 @@ export const Filter: FC<Props> = ({ column, field, tableStyles }) => {
   if (!field || !field.config.custom?.filterable) {
     return null;
   }
-  console.log(ref.current);
   return (
     <span
       className={cx(tableStyles.headerFilter, filterEnabled ? styles.filterIconEnabled : styles.filterIconDisabled)}
