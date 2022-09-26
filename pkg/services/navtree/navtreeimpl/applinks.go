@@ -1,7 +1,6 @@
 package navtreeimpl
 
 import (
-	"fmt"
 	"path"
 	"sort"
 
@@ -42,7 +41,6 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *models.ReqCo
 
 		if !hasAccess(ac.ReqSignedIn,
 			ac.EvalPermission(plugins.ActionAppAccess, plugins.ScopeProvider.GetResourceScope(plugin.ID))) {
-			fmt.Printf("not permission")
 			continue
 		}
 

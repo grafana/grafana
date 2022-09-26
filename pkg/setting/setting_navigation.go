@@ -11,7 +11,6 @@ type NavigationAppConfig struct {
 }
 
 func (cfg *Cfg) readNavigationSettings() {
-
 	cfg.NavigationAppConfig = map[string]NavigationAppConfig{
 		"grafana-k8s-app":                  {SectionID: "monitoring", SortWeight: 1},
 		"grafana-synthetic-monitoring-app": {SectionID: "monitoring", SortWeight: 2},
