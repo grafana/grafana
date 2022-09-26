@@ -1,14 +1,13 @@
 import { css, cx } from '@emotion/css';
 import React from 'react';
-import { Controller, useFormContext, useWatch } from 'react-hook-form';
-import { useAsync } from 'react-use';
+import { useFormContext, useWatch } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
-import { Field, Input, TextArea, useStyles2, LoadingPlaceholder, Alert } from '@grafana/ui';
+import { Field, Input, TextArea, useStyles2 } from '@grafana/ui';
 
 import { Correlation } from '../types';
 
+import { QueryEditorField } from './QueryEditorField';
 import { FormDTO } from './types';
 
 const getInputId = (inputName: string, correlation?: CorrelationBaseData) => {
@@ -42,19 +41,6 @@ export function CorrelationDetailsFormPart({ readOnly = false, correlation }: Pr
   } = useFormContext<FormDTO>();
   const targetUID: string | undefined = useWatch({ name: 'targetUID' }) || correlation?.targetUID;
 
-  const {
-    value: datasource,
-    loading: dsLoading,
-    error,
-  } = useAsync(async () => {
-    if (!targetUID) {
-      return;
-    }
-    return getDataSourceSrv().get(targetUID);
-  }, [targetUID]);
-
-  const QuerEditor = datasource?.components?.QueryEditor;
-
   return (
     <>
       <Field label="Label" className={styles.label}>
@@ -87,44 +73,13 @@ export function CorrelationDetailsFormPart({ readOnly = false, correlation }: Pr
         />
       </Field>
 
-      <Field
-        label="Query"
+      <QueryEditorField
+        name="config.target"
+        dsUid={targetUID}
         invalid={!!errors?.config?.target}
         // @ts-expect-error react-hook-form's errors do not work well with object types
         error={errors?.config?.target?.message}
-      >
-        <Controller
-          name="config.target"
-          // FIXME: this won't be needed when the API will return the default config
-          defaultValue={{}}
-          rules={{
-            validate: {
-              hasQueryEditor: () =>
-                QuerEditor !== undefined || 'The selected target data source must export a query editor.',
-            },
-          }}
-          render={({ field: { value, onChange } }) => {
-            if (dsLoading) {
-              return <LoadingPlaceholder text="Loading query editor..." />;
-            }
-            if (error) {
-              return <Alert title="Error loading data source">The selected data source could not be loaded.</Alert>;
-            }
-            if (!datasource) {
-              return (
-                <Alert title="No data source selected" severity="info">
-                  Please select a target data source first.
-                </Alert>
-              );
-            }
-            if (!QuerEditor) {
-              return <Alert title="Data source does not export a query editor."></Alert>;
-            }
-
-            return <QuerEditor onRunQuery={() => {}} onChange={onChange} datasource={datasource} query={value} />;
-          }}
-        />
-      </Field>
+      />
     </>
   );
 }
