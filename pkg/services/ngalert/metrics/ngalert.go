@@ -55,7 +55,7 @@ type Scheduler struct {
 	SchedulableAlertRules               prometheus.Gauge
 	SchedulableAlertRulesHash           prometheus.Gauge
 	UpdateSchedulableAlertRulesDuration prometheus.Histogram
-	Ticker                              *ticker.TickerMetrics
+	Ticker                              *ticker.Metrics
 	EvaluationMissed                    *prometheus.CounterVec
 }
 
@@ -199,7 +199,7 @@ func newSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Buckets:   []float64{0.1, 0.25, 0.5, 1, 2, 5, 10},
 			},
 		),
-		Ticker: ticker.NewTickerMetrics(r, "alerting"),
+		Ticker: ticker.NewMetrics(r, "alerting"),
 		EvaluationMissed: promauto.With(r).NewCounterVec(
 			prometheus.CounterOpts{
 				Namespace: Namespace,

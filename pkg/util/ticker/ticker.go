@@ -19,12 +19,12 @@ type Ticker struct {
 	clock    clock.Clock
 	last     time.Time
 	interval time.Duration
-	metrics  *TickerMetrics
+	metrics  *Metrics
 	stopCh   chan struct{}
 }
 
 // NewTicker returns a Ticker that ticks on interval marks (or very shortly after) starting at c.Now(), and never drops ticks. interval should not be negative or zero.
-func NewTicker(c clock.Clock, interval time.Duration, metric *TickerMetrics) *Ticker {
+func NewTicker(c clock.Clock, interval time.Duration, metric *Metrics) *Ticker {
 	if interval <= 0 {
 		panic(fmt.Errorf("non-positive interval [%v] is not allowed", interval))
 	}

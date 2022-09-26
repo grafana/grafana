@@ -51,7 +51,7 @@ func TestTicker(t *testing.T) {
 		interval := time.Duration(rand.Int63n(100)+10) * time.Second
 		clk := clock.NewMock()
 		clk.Add(interval) // align clock with the start tick
-		ticker := NewTicker(clk, interval, NewTickerMetrics(prometheus.NewRegistry(), "test"))
+		ticker := NewTicker(clk, interval, NewMetrics(prometheus.NewRegistry(), "test"))
 
 		ticks := rand.Intn(9) + 1
 		jitter := rand.Int63n(int64(interval) - 1)
@@ -85,7 +85,7 @@ func TestTicker(t *testing.T) {
 	t.Run("should not put anything to channel until it's time", func(t *testing.T) {
 		clk := clock.NewMock()
 		interval := time.Duration(rand.Int63n(9)+1) * time.Second
-		ticker := NewTicker(clk, interval, NewTickerMetrics(prometheus.NewRegistry(), "test"))
+		ticker := NewTicker(clk, interval, NewMetrics(prometheus.NewRegistry(), "test"))
 		expectedTick := clk.Now().Add(interval)
 		for {
 			require.Empty(t, ticker.C)
@@ -102,7 +102,7 @@ func TestTicker(t *testing.T) {
 	t.Run("should put the tick in the channel immediately if it is behind", func(t *testing.T) {
 		clk := clock.NewMock()
 		interval := time.Duration(rand.Int63n(9)+1) * time.Second
-		ticker := NewTicker(clk, interval, NewTickerMetrics(prometheus.NewRegistry(), "test"))
+		ticker := NewTicker(clk, interval, NewMetrics(prometheus.NewRegistry(), "test"))
 
 		//  We can expect the first tick to be at a consistent interval. Take a snapshot of the clock now, before we advance it.
 		expectedTick := clk.Now().Add(interval)
@@ -131,7 +131,7 @@ func TestTicker(t *testing.T) {
 		clk.Set(time.Now())
 		interval := time.Duration(rand.Int63n(9)+1) * time.Second
 		registry := prometheus.NewPedanticRegistry()
-		ticker := NewTicker(clk, interval, NewTickerMetrics(registry, "test"))
+		ticker := NewTicker(clk, interval, NewMetrics(registry, "test"))
 		expectedTick := getStartTick(clk, interval).Add(interval)
 
 		expectedMetricFmt := `# HELP grafana_test_ticker_interval_seconds Interval at which the ticker is meant to tick.
@@ -174,7 +174,7 @@ func TestTicker(t *testing.T) {
 		t.Run("when it waits for the next tick", func(t *testing.T) {
 			clk := clock.NewMock()
 			interval := time.Duration(rand.Int63n(9)+1) * time.Second
-			ticker := NewTicker(clk, interval, NewTickerMetrics(prometheus.NewRegistry(), "test"))
+			ticker := NewTicker(clk, interval, NewMetrics(prometheus.NewRegistry(), "test"))
 			clk.Add(interval)
 			readChanOrFail(t, ticker.C)
 			ticker.Stop()
@@ -185,7 +185,7 @@ func TestTicker(t *testing.T) {
 		t.Run("when it waits for the tick to be consumed", func(t *testing.T) {
 			clk := clock.NewMock()
 			interval := time.Duration(rand.Int63n(9)+1) * time.Second
-			ticker := NewTicker(clk, interval, NewTickerMetrics(prometheus.NewRegistry(), "test"))
+			ticker := NewTicker(clk, interval, NewMetrics(prometheus.NewRegistry(), "test"))
 			clk.Add(interval)
 			ticker.Stop()
 			require.Empty(t, ticker.C)
@@ -194,7 +194,7 @@ func TestTicker(t *testing.T) {
 		t.Run("multiple times", func(t *testing.T) {
 			clk := clock.NewMock()
 			interval := time.Duration(rand.Int63n(9)+1) * time.Second
-			ticker := NewTicker(clk, interval, NewTickerMetrics(prometheus.NewRegistry(), "test"))
+			ticker := NewTicker(clk, interval, NewMetrics(prometheus.NewRegistry(), "test"))
 			ticker.Stop()
 			ticker.Stop()
 			ticker.Stop()

@@ -5,14 +5,14 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
-type TickerMetrics struct {
+type Metrics struct {
 	LastTickTime    prometheus.Gauge
 	NextTickTime    prometheus.Gauge
 	IntervalSeconds prometheus.Gauge
 }
 
-func NewTickerMetrics(reg prometheus.Registerer, subsystem string) *TickerMetrics {
-	return &TickerMetrics{
+func NewMetrics(reg prometheus.Registerer, subsystem string) *Metrics {
+	return &Metrics{
 		LastTickTime: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
 			Namespace: "grafana",
 			Subsystem: subsystem,
