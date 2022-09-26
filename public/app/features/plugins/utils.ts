@@ -51,14 +51,6 @@ export function buildPluginSectionNav(
 
   // Find and set active page
   section.children = (section?.children ?? []).map((child) => {
-    if (currentUrl.startsWith(child.url ?? '')) {
-      activePage = {
-        ...child,
-        active: true,
-      };
-      return activePage;
-    }
-
     if (child.children) {
       return {
         ...child,
@@ -73,6 +65,14 @@ export function buildPluginSectionNav(
           return pluginPage;
         }),
       };
+    } else {
+      if (currentUrl.startsWith(child.url ?? '')) {
+        activePage = {
+          ...child,
+          active: true,
+        };
+        return activePage;
+      }
     }
     return child;
   });

@@ -21,17 +21,33 @@ describe('buildPluginSectionNav', () => {
       },
     ],
   };
+
   const appsSection = {
     text: 'apps',
     id: 'apps',
     children: [app1],
   };
 
+  const adminSection: NavModelItem = {
+    text: 'Admin',
+    id: 'admin',
+    children: [],
+  };
+
+  const standalonePluginPage = {
+    id: 'standalone-plugin-page-/a/app2/config',
+    text: 'Standalone page',
+    parentItem: adminSection,
+  };
+
+  adminSection.children = [standalonePluginPage];
+
   app1.parentItem = appsSection;
 
   const navIndex: NavIndex = {
     apps: appsSection,
     [app1.id!]: appsSection.children[0],
+    [standalonePluginPage.id]: standalonePluginPage,
   };
 
   it('Should return pluginNav if topnav is disabled', () => {
@@ -56,5 +72,17 @@ describe('buildPluginSectionNav', () => {
     );
     expect(result?.main.children![0].children![1].active).toBe(true);
     expect(result?.node.text).toBe('page2');
+  });
+
+  it('Should handle standalone page', () => {
+    config.featureToggles.topnav = true;
+    const result = buildPluginSectionNav(
+      { pathname: '/a/app2/config', search: '' } as HistoryLocation,
+      pluginNav,
+      navIndex,
+      'app2'
+    );
+    expect(result?.main.text).toBe('Admin');
+    expect(result?.node.text).toBe('Standalone page');
   });
 });
