@@ -20,6 +20,7 @@ export function PageHeader({ navItem, subTitle }: Props) {
         {navItem.text}
       </h1>
       {sub && <div className={styles.pageSubTitle}>{sub}</div>}
+      {navItem.headerExtra && <navItem.headerExtra />}
     </>
   );
 }
