@@ -25,7 +25,7 @@ func TestAuthenticator_Authenticate(t *testing.T) {
 		a := newAuthenticator(s, &fakeUserService{OrgRole: org.RoleAdmin})
 		ctx, err := setupContext()
 		require.NoError(t, err)
-		ctx, err = a.authenticate(ctx)
+		_, err = a.authenticate(ctx)
 		require.NoError(t, err)
 	})
 
@@ -40,7 +40,7 @@ func TestAuthenticator_Authenticate(t *testing.T) {
 		a := newAuthenticator(s, &fakeUserService{OrgRole: org.RoleEditor})
 		ctx, err := setupContext()
 		require.NoError(t, err)
-		ctx, err = a.authenticate(ctx)
+		_, err = a.authenticate(ctx)
 		require.NotNil(t, err)
 	})
 
@@ -60,12 +60,10 @@ func TestAuthenticator_Authenticate(t *testing.T) {
 		require.NotEmpty(t, md["authorization"])
 		ctx, err = a.authenticate(ctx)
 		require.NoError(t, err)
-
 		md, ok = metadata.FromIncomingContext(ctx)
 		require.True(t, ok)
 		require.Empty(t, md["authorization"])
 	})
-
 }
 
 type fakeAPIKey struct {
