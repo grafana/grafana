@@ -104,6 +104,7 @@ export class OpenTsQueryCtrl extends QueryCtrl {
     });
   }
 
+  // X moved to tag section
   addTag() {
     if (this.target.filters && this.target.filters.length > 0) {
       this.errors.tags = 'Please remove filters to use tags, tags and filters are mutually exclusive.';
@@ -130,11 +131,13 @@ export class OpenTsQueryCtrl extends QueryCtrl {
     this.addTagMode = false;
   }
 
+  // X moved to tag section
   removeTag(key: string | number) {
     delete this.target.tags[key];
     this.targetBlur();
   }
 
+  // X moved to tag section
   editTag(key: string | number, value: any) {
     this.removeTag(key);
     this.target.currentTagKey = key;
@@ -142,6 +145,7 @@ export class OpenTsQueryCtrl extends QueryCtrl {
     this.addTag();
   }
 
+  // X moved to tag section
   closeAddTagMode() {
     this.addTagMode = false;
     return;

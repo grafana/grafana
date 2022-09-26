@@ -10,6 +10,7 @@ import { OpenTsdbOptions, OpenTsdbQuery } from '../types';
 import { DownSample } from './DownSample';
 import { FilterSection } from './FilterSection';
 import { MetricSection } from './MetricSection';
+import { TagSection } from './TagSection';
 
 export type OpenTsdbQueryEditorProps = QueryEditorProps<OpenTsDatasource, OpenTsdbQuery, OpenTsdbOptions>;
 export type OpenTsdbErrors = {
@@ -63,7 +64,7 @@ export function OpenTsdbQueryEditor({
     'regexp',
   ]);
   // XtsdbVersion: any;
-  const tsdbVersion: Number = datasource.tsdbVersion;
+  const tsdbVersion: number = datasource.tsdbVersion;
 
   // aggregator only exists in the query
   // Xaggregator: any;
@@ -191,6 +192,14 @@ export function OpenTsdbQueryEditor({
             suggestTagKeys={suggestTagKeys}
           />
         )}
+        <TagSection
+          query={query}
+          onChange={onChange}
+          onRunQuery={onRunQuery}
+          suggestTagValues={suggestTagValues}
+          suggestTagKeys={suggestTagKeys}
+          tsdbVersion={tsdbVersion}
+        />
         <div>WIP</div>
         <div>Errors: {errors.toString()}</div>
         <div>FillPolicies: {fillPolicies[0].toString()}</div>

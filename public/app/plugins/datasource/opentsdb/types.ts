@@ -16,8 +16,8 @@ export interface OpenTsdbQuery extends DataQuery {
   //filters
   filters?: OpenTsdbFilter[];
 
-  //tags
-  tags?: OpenTsdbTag[];
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+  tags?: any;
 
   // annotation attrs
   fromAnnotations?: boolean;
@@ -45,5 +45,3 @@ export type OpenTsdbFilter = {
   filter: string;
   groupBy: boolean;
 };
-
-export type OpenTsdbTag = {};
