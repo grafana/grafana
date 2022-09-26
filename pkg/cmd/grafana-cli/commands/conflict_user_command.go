@@ -214,6 +214,10 @@ func generateConflictUsersFile(r *ConflictResolver) (*os.File, error) {
 	if err != nil {
 		return nil, err
 	}
+	documentation := `# This file is a diff file that can be used to resolve conflicting users.\n`
+	if _, err := tmpFile.Write([]byte(documentation)); err != nil {
+		return nil, err
+	}
 	if _, err := tmpFile.Write([]byte(r.ToStringPresentation())); err != nil {
 		return nil, err
 	}
