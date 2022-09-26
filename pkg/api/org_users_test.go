@@ -127,7 +127,7 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 		err := json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 		require.NoError(t, err)
 
-		assert.Len(t, len(resp.OrgUsers), 1)
+		assert.Len(t, resp.OrgUsers, 1)
 		assert.Equal(t, int64(3), resp.TotalCount)
 		assert.Equal(t, 2, resp.PerPage)
 		assert.Equal(t, 2, resp.Page)
