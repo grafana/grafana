@@ -22,7 +22,7 @@ func TestAuthenticator_Authenticate(t *testing.T) {
 			Name:             "Admin API Key",
 			ServiceAccountId: &serviceAccountId,
 		}, nil)
-		a := NewAuthenticator(s, &fakeUserService{OrgRole: org.RoleAdmin})
+		a := newAuthenticator(s, &fakeUserService{OrgRole: org.RoleAdmin})
 		ctx, err := setupContext()
 		require.NoError(t, err)
 		ctx, err = a.authenticate(ctx)
@@ -37,7 +37,7 @@ func TestAuthenticator_Authenticate(t *testing.T) {
 			Name:             "Admin API Key",
 			ServiceAccountId: &serviceAccountId,
 		}, nil)
-		a := NewAuthenticator(s, &fakeUserService{OrgRole: org.RoleEditor})
+		a := newAuthenticator(s, &fakeUserService{OrgRole: org.RoleEditor})
 		ctx, err := setupContext()
 		require.NoError(t, err)
 		ctx, err = a.authenticate(ctx)
@@ -52,7 +52,7 @@ func TestAuthenticator_Authenticate(t *testing.T) {
 			Name:             "Admin API Key",
 			ServiceAccountId: &serviceAccountId,
 		}, nil)
-		a := NewAuthenticator(s, &fakeUserService{OrgRole: org.RoleAdmin})
+		a := newAuthenticator(s, &fakeUserService{OrgRole: org.RoleAdmin})
 		ctx, err := setupContext()
 		require.NoError(t, err)
 		md, ok := metadata.FromIncomingContext(ctx)

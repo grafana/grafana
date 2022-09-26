@@ -41,7 +41,7 @@ func ProvideService(cfg *setting.Cfg, apiKey apikey.Service, userService user.Se
 	// Default auth is admin token check, but this can be overridden by
 	// services which implement ServiceAuthFuncOverride interface.
 	// See https://github.com/grpc-ecosystem/go-grpc-middleware/blob/master/auth/auth.go#L30.
-	authenticator := NewAuthenticator(apiKey, userService)
+	authenticator := newAuthenticator(apiKey, userService)
 	opts = append(opts, []grpc.ServerOption{
 		grpc.StreamInterceptor(grpcAuth.StreamServerInterceptor(authenticator.authenticate)),
 		grpc.UnaryInterceptor(grpcAuth.UnaryServerInterceptor(authenticator.authenticate)),
