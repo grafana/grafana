@@ -215,7 +215,7 @@ describe('Plugin details page', () => {
       const installedVersion = '1.3.443';
       const { queryByText } = renderPluginDetails({ id, installedVersion });
 
-      await waitFor(() => expect(queryByText(installedVersion)).toBeInTheDocument());
+      await waitFor(() => expect(queryByText(`Version: ${installedVersion}`)).toBeInTheDocument());
     });
 
     it('should display the latest compatible version in the header if a plugin is not installed', async () => {
@@ -231,8 +231,8 @@ describe('Plugin details page', () => {
       };
 
       const { queryByText } = renderPluginDetails({ id, details });
-      await waitFor(() => expect(queryByText('1.1.1')).toBeInTheDocument());
-      await waitFor(() => expect(queryByText(/>=8.0.0/i)).toBeInTheDocument());
+      expect(await waitFor(() => queryByText('Version: 1.1.1'))).toBeInTheDocument();
+      expect(await waitFor(() => queryByText(/>=8.0.0/i))).toBeInTheDocument();
     });
 
     it('should display description in the header', async () => {
@@ -288,7 +288,7 @@ describe('Plugin details page', () => {
         },
       ];
 
-      const { queryByText, getByRole } = renderPluginDetails(
+      const { findByRole, queryByText, getByRole } = renderPluginDetails(
         {
           id,
           details: {
@@ -300,7 +300,8 @@ describe('Plugin details page', () => {
       );
 
       // Check if version information is available
-      await waitFor(() => expect(queryByText(/version history/i)).toBeInTheDocument());
+      // await waitFor(() => expect(queryByText(/version history/i)).toBeInTheDocument());
+      expect(await findByRole('tab', { name: `Tab ${PluginTabLabels.VERSIONS}` })).toBeInTheDocument();
 
       // Check the column headers
       expect(getByRole('columnheader', { name: /version/i })).toBeInTheDocument();
@@ -703,14 +704,14 @@ describe('Plugin details page', () => {
     });
 
     it('should not display versions tab for plugins not published to gcom', async () => {
-      const { findByRole } = renderPluginDetails({
+      const { queryByRole } = renderPluginDetails({
         name: 'Akumuli',
         isInstalled: true,
         type: PluginType.app,
         isPublished: false,
       });
 
-      expect(await findByRole('tab', { name: `Tab ${PluginTabLabels.VERSIONS}` })).not.toBeInTheDocument();
+      expect(await queryByRole('tab', { name: `Tab ${PluginTabLabels.VERSIONS}` })).not.toBeInTheDocument();
     });
 
     it('should not display update for plugins not published to gcom', async () => {
@@ -791,11 +792,10 @@ describe('Plugin details page', () => {
     });
 
     it('should not display an install button for enterprise plugins if license is valid', async () => {
-      config.licenseInfo.enabledFeatures = { 'enterprise.plugins': true };
-      const { findByRole } = renderPluginDetails({ id, isInstalled: false, isEnterprise: true });
+      const { findByRole, queryByRole } = renderPluginDetails({ id, isInstalled: false, isEnterprise: true });
 
       expect(await findByRole('tab', { name: `Tab ${PluginTabLabels.OVERVIEW}` })).toBeInTheDocument();
-      expect(await findByRole('button', { name: /^install/i })).not.toBeInTheDocument();
+      expect(await queryByRole('button', { name: /^install/i })).not.toBeInTheDocument();
     });
   });
 
