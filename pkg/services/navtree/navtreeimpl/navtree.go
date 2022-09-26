@@ -126,7 +126,9 @@ func (s *ServiceImpl) GetNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 			treeRoot.AddSection(legacyAlertSection)
 		}
 	} else if uaVisibleForOrg {
-		treeRoot.AddSection(s.buildAlertNavLinks(c, hasEditPerm))
+		if alertingSection := s.buildAlertNavLinks(c, hasEditPerm); alertingSection != nil {
+			treeRoot.AddSection(alertingSection)
+		}
 	}
 
 	if s.features.IsEnabled(featuremgmt.FlagDataConnectionsConsole) {
