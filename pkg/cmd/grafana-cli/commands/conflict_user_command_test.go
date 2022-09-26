@@ -10,6 +10,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/team/teamimpl"
+	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -530,7 +532,8 @@ func TestMergeUser(t *testing.T) {
 	t.Run("should be able to merge user", func(t *testing.T) {
 		// Restore after destructive operation
 		sqlStore := sqlstore.InitTestDB(t)
-		team1, err := sqlStore.CreateTeam("team1 name", "", 1)
+		teamSvc := teamimpl.ProvideService(sqlStore, setting.NewCfg())
+		team1, err := teamSvc.CreateTeam("team1 name", "", 1)
 		require.Nil(t, err)
 		const testOrgID int64 = 1
 
@@ -555,7 +558,7 @@ func TestMergeUser(t *testing.T) {
 			userWithUpperCase, err := sqlStore.CreateUser(context.Background(), dupUserEmailcmd)
 			require.NoError(t, err)
 			// this is the user we want to update to another team
-			err = sqlStore.AddTeamMember(userWithUpperCase.ID, testOrgID, team1.Id, false, 0)
+			err = teamSvc.AddTeamMember(userWithUpperCase.ID, testOrgID, team1.Id, false, 0)
 			require.NoError(t, err)
 
 			// get users
@@ -589,7 +592,7 @@ func TestMergeUser(t *testing.T) {
 
 			// test that we have updated the tables with userWithLowerCaseEmail
 			q1 := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team1.Id, SignedInUser: signedInUser}
-			err = sqlStore.GetTeamMembers(context.Background(), q1)
+			err = teamSvc.GetTeamMembers(context.Background(), q1)
 			require.NoError(t, err)
 			require.Equal(t, 1, len(q1.Result))
 			teamMember := q1.Result[0]
