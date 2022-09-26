@@ -421,7 +421,7 @@ describe('Plugin details page', () => {
     });
 
     it('should display grafana dependencies for a plugin if they are available', async () => {
-      const { queryByText, findByRole } = renderPluginDetails({
+      const { queryByText } = renderPluginDetails({
         id,
         details: {
           pluginDependencies: [],
@@ -440,7 +440,7 @@ describe('Plugin details page', () => {
       // @ts-ignore
       api.uninstallPlugin = jest.fn();
 
-      const { queryByText, getByRole } = renderPluginDetails({
+      const { queryByText, getByRole, findByRole } = renderPluginDetails({
         id,
         name: 'Akumuli',
         isInstalled: true,
