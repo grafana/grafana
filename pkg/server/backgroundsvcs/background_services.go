@@ -45,12 +45,12 @@ func ProvideBackgroundServiceRegistry(
 	thumbnailsService thumbs.Service, StorageService store.StorageService, searchService searchV2.SearchService, entityEventsService store.EntityEventsService,
 	saService *samanager.ServiceAccountsService, authInfoService *authinfoservice.Implementation,
 	grpcServerProvider grpcserver.Provider,
-	healthGRPCService *grpcserver.HealthService,
 	secretMigrationProvider secretsMigrations.SecretMigrationProvider,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service, _ *alerting.AlertNotificationService,
 	_ serviceaccounts.Service, _ *guardian.Provider,
 	_ *plugindashboardsservice.DashboardUpdater, _ *sanitizer.Provider,
+	_ *grpcserver.HealthService,
 ) *BackgroundServiceRegistry {
 	return NewBackgroundServiceRegistry(
 		httpServer,
@@ -76,7 +76,6 @@ func ProvideBackgroundServiceRegistry(
 		searchService,
 		entityEventsService,
 		grpcServerProvider,
-		healthGRPCService,
 		saService,
 		authInfoService,
 		processManager,
