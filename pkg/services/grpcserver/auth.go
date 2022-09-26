@@ -32,8 +32,8 @@ func NewAuthenticator(apiKey apikey.Service, userService user.Service) *Authenti
 	}
 }
 
-// Authenticate checks that a token exists and is valid. It stores the user
-// metadata in the returned context and removes the token from the context.
+// Authenticate checks that a token exists and is valid, and then removes the token from the
+// authorization header in the context.
 func (a *Authenticator) authenticate(ctx context.Context) (context.Context, error) {
 	return a.tokenAuth(ctx)
 }
