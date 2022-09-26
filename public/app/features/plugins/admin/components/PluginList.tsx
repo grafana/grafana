@@ -26,7 +26,7 @@ export const PluginList = ({ plugins, displayMode }: Props) => {
   return (
     <div className={cx(styles.container, { [styles.list]: isList })} data-testid="plugin-list">
       {plugins
-        .filter((plugin) => contextSrv.hasAccessInMetadata(AccessControlAction.PluginsInstall, plugin, true))
+        .filter((plugin) => contextSrv.hasAccessInMetadata(AccessControlAction.PluginsRead, plugin, true))
         .map((plugin) => (
           <PluginListItem key={plugin.id} plugin={plugin} pathName={pathName} displayMode={displayMode} />
         ))}
