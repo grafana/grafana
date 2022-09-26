@@ -947,6 +947,7 @@ func TestDeleteOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 					hs.SQLStore, nil, nil, nil, nil,
 					nil, nil, nil, nil, nil, hs.SQLStore.(*sqlstore.SQLStore),
 				)
+				hs.orgService = orgimpl.ProvideService(hs.SQLStore, cfg)
 			})
 			setupOrgUsersDBForAccessControlTests(t, sc.db)
 			setInitCtxSignedInUser(sc.initCtx, tc.user)

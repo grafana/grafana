@@ -368,9 +368,9 @@ func (hs *HTTPServer) RemoveOrgUserForCurrentOrg(c *models.ReqContext) response.
 		return response.Error(http.StatusBadRequest, "userId is invalid", err)
 	}
 
-	return hs.removeOrgUserHelper(c.Req.Context(), &models.RemoveOrgUserCommand{
-		UserId:                   userId,
-		OrgId:                    c.OrgID,
+	return hs.removeOrgUserHelper(c.Req.Context(), &org.RemoveOrgUserCommand{
+		UserID:                   userId,
+		OrgID:                    c.OrgID,
 		ShouldDeleteOrphanedUser: true,
 	})
 }
@@ -397,14 +397,14 @@ func (hs *HTTPServer) RemoveOrgUser(c *models.ReqContext) response.Response {
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "orgId is invalid", err)
 	}
-	return hs.removeOrgUserHelper(c.Req.Context(), &models.RemoveOrgUserCommand{
-		UserId: userId,
-		OrgId:  orgId,
+	return hs.removeOrgUserHelper(c.Req.Context(), &org.RemoveOrgUserCommand{
+		UserID: userId,
+		OrgID:  orgId,
 	})
 }
 
-func (hs *HTTPServer) removeOrgUserHelper(ctx context.Context, cmd *models.RemoveOrgUserCommand) response.Response {
-	if err := hs.SQLStore.RemoveOrgUser(ctx, cmd); err != nil {
+func (hs *HTTPServer) removeOrgUserHelper(ctx context.Context, cmd *org.RemoveOrgUserCommand) response.Response {
+	if err := hs.orgService.RemoveOrgUser(ctx, cmd); err != nil {
 		if errors.Is(err, models.ErrLastOrgAdmin) {
 			return response.Error(400, "Cannot remove last organization admin", nil)
 		}
@@ -413,15 +413,15 @@ func (hs *HTTPServer) removeOrgUserHelper(ctx context.Context, cmd *models.Remov
 
 	if cmd.UserWasDeleted {
 		// This should be called from appropriate service when moved
-		if err := hs.accesscontrolService.DeleteUserPermissions(ctx, accesscontrol.GlobalOrgID, cmd.UserId); err != nil {
-			hs.log.Warn("failed to delete permissions for user", "userID", cmd.UserId, "orgID", accesscontrol.GlobalOrgID, "err", err)
+		if err := hs.accesscontrolService.DeleteUserPermissions(ctx, accesscontrol.GlobalOrgID, cmd.UserID); err != nil {
+			hs.log.Warn("failed to delete permissions for user", "userID", cmd.UserID, "orgID", accesscontrol.GlobalOrgID, "err", err)
 		}
 		return response.Success("User deleted")
 	}
 
 	// This should be called from appropriate service when moved
-	if err := hs.accesscontrolService.DeleteUserPermissions(ctx, cmd.OrgId, cmd.UserId); err != nil {
-		hs.log.Warn("failed to delete permissions for user", "userID", cmd.UserId, "orgID", cmd.OrgId, "err", err)
+	if err := hs.accesscontrolService.DeleteUserPermissions(ctx, cmd.OrgID, cmd.UserID); err != nil {
+		hs.log.Warn("failed to delete permissions for user", "userID", cmd.UserID, "orgID", cmd.OrgID, "err", err)
 	}
 
 	return response.Success("User removed from organization")
