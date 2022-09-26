@@ -118,6 +118,7 @@ export enum AccessControlAction {
 
   PluginsInstall = 'plugins:install',
   PluginsWrite = 'plugins:write',
+  PluginsRead = 'plugins:read',
 }
 
 export interface Role {
