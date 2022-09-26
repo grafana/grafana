@@ -333,7 +333,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *models.ReqContext, hasEditPerm b
 		})
 	}
 
-	if hasEditPerm {
+	if hasEditPerm && !s.features.IsEnabled(featuremgmt.FlagTopnav) {
 		dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 			Text: "Divider", Divider: true, Id: "divider", HideFromTabs: true,
 		})
@@ -358,6 +358,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *models.ReqContext, hasEditPerm b
 			})
 		}
 	}
+
 	return dashboardChildNavs
 }
 
