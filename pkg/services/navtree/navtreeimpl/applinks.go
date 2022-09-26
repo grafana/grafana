@@ -214,5 +214,4 @@ func (s *ServiceImpl) readNavigationSettings() {
 
 		s.navigationAppConfig[pluginId] = *appCfg
 	}
-
 }
