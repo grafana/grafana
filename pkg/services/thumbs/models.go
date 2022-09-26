@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
+	dashboardthumbs "github.com/grafana/grafana/pkg/services/dashboard_thumbs"
 )
 
 type CrawlerMode string
@@ -31,10 +32,10 @@ const (
 )
 
 type previewRequest struct {
-	OrgID int64                `json:"orgId"`
-	UID   string               `json:"uid"`
-	Kind  models.ThumbnailKind `json:"kind"`
-	Theme models.Theme         `json:"theme"`
+	OrgID int64                         `json:"orgId"`
+	UID   string                        `json:"uid"`
+	Kind  dashboardthumbs.ThumbnailKind `json:"kind"`
+	Theme models.Theme                  `json:"theme"`
 }
 
 type crawlCmd struct {
@@ -65,7 +66,7 @@ type dashboardPreviewsSetupConfig struct {
 type dashRenderer interface {
 
 	// Run Assumes you have already authenticated as admin.
-	Run(ctx context.Context, auth CrawlerAuth, mode CrawlerMode, theme models.Theme, kind models.ThumbnailKind) error
+	Run(ctx context.Context, auth CrawlerAuth, mode CrawlerMode, theme models.Theme, kind dashboardthumbs.ThumbnailKind) error
 
 	// Assumes you have already authenticated as admin.
 	Stop() (crawlStatus, error)
@@ -77,10 +78,10 @@ type dashRenderer interface {
 }
 
 type thumbnailRepo interface {
-	updateThumbnailState(ctx context.Context, state models.ThumbnailState, meta models.DashboardThumbnailMeta) error
+	updateThumbnailState(ctx context.Context, state dashboardthumbs.ThumbnailState, meta dashboardthumbs.DashboardThumbnailMeta) error
 	doThumbnailsExist(ctx context.Context) (bool, error)
-	saveFromFile(ctx context.Context, filePath string, meta models.DashboardThumbnailMeta, dashboardVersion int, dsUids []string) (int64, error)
-	saveFromBytes(ctx context.Context, bytes []byte, mimeType string, meta models.DashboardThumbnailMeta, dashboardVersion int, dsUids []string) (int64, error)
-	getThumbnail(ctx context.Context, meta models.DashboardThumbnailMeta) (*models.DashboardThumbnail, error)
-	findDashboardsWithStaleThumbnails(ctx context.Context, theme models.Theme, thumbnailKind models.ThumbnailKind) ([]*models.DashboardWithStaleThumbnail, error)
+	saveFromFile(ctx context.Context, filePath string, meta dashboardthumbs.DashboardThumbnailMeta, dashboardVersion int, dsUids []string) (int64, error)
+	saveFromBytes(ctx context.Context, bytes []byte, mimeType string, meta dashboardthumbs.DashboardThumbnailMeta, dashboardVersion int, dsUids []string) (int64, error)
+	getThumbnail(ctx context.Context, meta dashboardthumbs.DashboardThumbnailMeta) (*dashboardthumbs.DashboardThumbnail, error)
+	findDashboardsWithStaleThumbnails(ctx context.Context, theme models.Theme, thumbnailKind dashboardthumbs.ThumbnailKind) ([]*dashboardthumbs.DashboardWithStaleThumbnail, error)
 }
