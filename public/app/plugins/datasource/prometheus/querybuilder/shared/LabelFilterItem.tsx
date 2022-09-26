@@ -58,7 +58,10 @@ export function LabelFilterItem({
     return uniqBy([...selectedOptions, ...labelValues], 'value');
   };
 
-  // This is necessary to show invalid state on the value in label input
+  /**
+   * !important here is necessary to show invalid border on all 4 sides of select.
+   * Without it, the invalid state is only visible on 3 sides as the right side is overridden in InputGroup.
+   */
   const invalidClassNameOverride = invalidLabel
     ? css`
         margin-left: 0 !important;
