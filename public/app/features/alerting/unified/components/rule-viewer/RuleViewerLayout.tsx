@@ -14,7 +14,7 @@ type Props = {
 const defaultPageNav: Partial<NavModelItem> = {
   icon: 'bell',
   id: 'alert-rule-view',
-  breadcrumbs: [{ title: 'Alerting', url: 'alerting/list' }],
+  breadcrumbs: [{ title: 'Alert rules', url: 'alerting/list' }],
 };
 
 export function RuleViewerLayout(props: Props): JSX.Element | null {
