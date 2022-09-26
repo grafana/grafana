@@ -399,6 +399,8 @@ func setupHTTPServerWithCfgDb(
 	// Create minimal HTTP Server
 	userMock := usertest.NewUserServiceFake()
 	userMock.ExpectedUser = &user.User{ID: 1}
+	orgMock := orgtest.NewOrgServiceFake()
+	orgMock.ExpectedOrg = &org.Org{}
 	hs := &HTTPServer{
 		Cfg:                    cfg,
 		Features:               features,
@@ -417,7 +419,7 @@ func setupHTTPServerWithCfgDb(
 		),
 		preferenceService: preftest.NewPreferenceServiceFake(),
 		userService:       userMock,
-		orgService:        orgtest.NewOrgServiceFake(),
+		orgService:        orgMock,
 		teamService:       teamService,
 		annotationsRepo:   annotationstest.NewFakeAnnotationsRepo(),
 	}
