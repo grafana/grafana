@@ -31,7 +31,7 @@ longer supported. We refer to these as [Differences]({{< relref "#differences" >
 
 5. Unlike legacy dashboard alerts where images in notifications are enabled per contact point, images in notifications for Grafana Alerting must be enabled in the Grafana configuration, either in the configuration file or environment variables, and are enabled for either all or no contact points. Please refer to the [documentation for images in notifications]({{< relref "../images-in-notifications" >}}).
 
-6. Grafana Alerting does not support pausing the evaluation of alert rules. Therefore, after the migration all paused rules will become active, which can cause unexpected notifications to be sent.  
+6. Grafana Alerting does not support pausing the evaluation of alert rules. After migration, all paused alert rules will become active, which may cause unexpected notifications to be sent.  
 
 ## Limitations
 
