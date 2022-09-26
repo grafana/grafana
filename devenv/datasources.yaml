@@ -129,18 +129,8 @@ datasources:
       logLevelField: level
       logMessageField: line
       esVersion: 8.1.4
-      
-  - name: gdev-elasticsearch-v8-logs
-    type: elasticsearch
-    access: proxy
-    database: "[logs-]YYYY.MM.DD"
-    url: http://localhost:9200
-    jsonData:
-      interval: Daily
-      timeField: "@timestamp"
-      esVersion: 8.1.4
 
-  - name: gdev-elasticsearch-v8-filebeat
+  - name: gdev-elasticsearch-filebeat
     type: elasticsearch
     access: proxy
     database: "[filebeat-]YYYY.MM.DD"
@@ -153,7 +143,7 @@ datasources:
       logMessageField: message
       logLevelField: fields.level
 
-  - name: gdev-elasticsearch-v8-metricbeat
+  - name: gdev-elasticsearch-metricbeat
     type: elasticsearch
     access: proxy
     database: "[metricbeat-]YYYY.MM.DD"
