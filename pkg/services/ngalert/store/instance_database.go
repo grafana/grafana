@@ -9,15 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-type InstanceStore interface {
-	GetAlertInstance(ctx context.Context, cmd *models.GetAlertInstanceQuery) error
-	ListAlertInstances(ctx context.Context, cmd *models.ListAlertInstancesQuery) error
-	SaveAlertInstance(ctx context.Context, cmd *models.SaveAlertInstanceCommand) error
-	FetchOrgIds(ctx context.Context) ([]int64, error)
-	DeleteAlertInstance(ctx context.Context, orgID int64, ruleUID, labelsHash string) error
-	DeleteAlertInstancesByRule(ctx context.Context, key models.AlertRuleKey) error
-}
-
 // GetAlertInstance is a handler for retrieving an alert instance based on OrgId, AlertDefintionID, and
 // the hash of the labels.
 func (st DBstore) GetAlertInstance(ctx context.Context, cmd *models.GetAlertInstanceQuery) error {
