@@ -295,7 +295,7 @@ type accessControlScenarioContext struct {
 	usermock *usertest.FakeUserService
 
 	// db is a test database initialized with InitTestDB
-	db sqlstore.Store
+	db *sqlstore.SQLStore
 
 	// cfg is the setting provider
 	cfg *setting.Cfg

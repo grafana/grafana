@@ -296,7 +296,7 @@ var (
 // setupOrgUsersDBForAccessControlTests creates three users placed in two orgs
 // Org1: testServerAdminViewer, testEditorOrg1
 // Org2: testServerAdminViewer, testAdminOrg2
-func setupOrgUsersDBForAccessControlTests(t *testing.T, db sqlstore.Store) {
+func setupOrgUsersDBForAccessControlTests(t *testing.T, db *sqlstore.SQLStore) {
 	t.Helper()
 
 	var err error
