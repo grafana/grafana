@@ -121,6 +121,22 @@
         ],
         "summary": "Update a custom role.",
         "operationId": "updateRole",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateRoleCommand"
+            }
+          },
+          {
+            "type": "string",
+            "name": "roleUID",
+            "in": "path",
+            "required": true
+          }
+        ],
         "responses": {
           "200": {
             "$ref": "#/responses/getRoleResponse"
@@ -147,6 +163,24 @@
         ],
         "summary": "Delete a custom role.",
         "operationId": "deleteRole",
+        "parameters": [
+          {
+            "type": "boolean",
+            "name": "force",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "name": "global",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "roleUID",
+            "in": "path",
+            "required": true
+          }
+        ],
         "responses": {
           "200": {
             "$ref": "#/responses/okResponse"
@@ -172,6 +206,14 @@
         ],
         "summary": "Get role assignments.",
         "operationId": "getRoleAssignments",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "roleUID",
+            "in": "path",
+            "required": true
+          }
+        ],
         "responses": {
           "200": {
             "$ref": "#/responses/getRoleAssignmentsResponse"
@@ -195,6 +237,22 @@
         ],
         "summary": "Set role assignments.",
         "operationId": "setRoleAssignments",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "roleUID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/SetRoleAssignmentsCommand"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "$ref": "#/responses/setRoleAssignmentsResponse"
@@ -13369,6 +13427,35 @@
         }
       }
     },
+    "RoleAssignmentsDTO": {
+      "type": "object",
+      "properties": {
+        "role_uid": {
+          "type": "string"
+        },
+        "service_accounts": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "teams": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "users": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      }
+    },
     "RoleDTO": {
       "type": "object",
       "properties": {
@@ -13669,6 +13756,32 @@
           "type": "string",
           "format": "date-time",
           "example": "2022-03-21T14:35:33Z"
+        }
+      }
+    },
+    "SetRoleAssignmentsCommand": {
+      "type": "object",
+      "properties": {
+        "service_accounts": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "teams": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "users": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
         }
       }
     },
@@ -15549,6 +15662,12 @@
         }
       }
     },
+    "getRoleAssignmentsResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/RoleAssignmentsDTO"
+      }
+    },
     "getRoleResponse": {
       "description": "",
       "schema": {
@@ -15952,6 +16071,12 @@
       "description": "",
       "schema": {
         "$ref": "#/definitions/SearchUserQueryResult"
+      }
+    },
+    "setRoleAssignmentsResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/RoleAssignmentsDTO"
       }
     },
     "testAlertResponse": {

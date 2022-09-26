@@ -1731,6 +1731,21 @@
           }
         },
         "description": "(empty)"
+      },
+      "validateDashboardResponse": {
+        "description": "(empty)",
+        "headers": {
+          "isValid": {
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          "message": {
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
       }
     },
     "schemas": {
@@ -14510,6 +14525,29 @@
         "summary": "Get a specific dashboard version using UID.",
         "tags": [
           "dashboard_versions"
+        ]
+      }
+    },
+    "/dashboards/validate": {
+      "post": {
+        "description": "Validates a dashboard JSON against the schema",
+        "operationId": "validateDashboard",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/validateDashboardResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "tags": [
+          "dashboards"
         ]
       }
     },
