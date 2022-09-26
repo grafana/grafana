@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { useMemo } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { Alert, Field, FieldSet, Input, Button, LinkButton, useStyles2 } from '@grafana/ui';
 import {
   AlertmanagerConfig,
@@ -58,6 +58,12 @@ const useDefaultValues = (muteTiming?: MuteTimeInterval): MuteTimingFields => {
   }, [muteTiming]);
 };
 
+const defaultPageNav: Partial<NavModelItem> = {
+  icon: 'sitemap',
+  id: 'alert-rule-view',
+  breadcrumbs: [{ title: 'Alerting', url: 'alerting/routes' }],
+};
+
 const MuteTimingForm = ({ muteTiming, showError, provenance }: Props) => {
   const dispatch = useDispatch();
   const alertManagers = useAlertManagersByPermission('notification');
@@ -104,7 +110,10 @@ const MuteTimingForm = ({ muteTiming, showError, provenance }: Props) => {
   };
 
   return (
-    <AlertingPageWrapper pageId="am-routes">
+    <AlertingPageWrapper
+      pageId="am-routes"
+      pageNav={{ ...defaultPageNav, text: muteTiming ? 'Edit mute timing' : 'New mute timing' }}
+    >
       <AlertManagerPicker
         current={alertManagerSourceName}
         onChange={setAlertManagerSourceName}
