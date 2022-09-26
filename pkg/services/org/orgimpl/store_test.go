@@ -6,8 +6,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
 )
 
@@ -210,4 +212,79 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 	// 	require.NoError(t, err)
 	// 	require.Equal(t, len(query.Result), 2)
 	// })
+
+	t.Run("Update org users", func(t *testing.T) {
+		_, err := orgUserStore.InsertOrgUser(context.Background(), &org.OrgUser{
+			ID:      1,
+			OrgID:   1,
+			UserID:  1,
+			Created: time.Now(),
+			Updated: time.Now(),
+		})
+		require.NoError(t, err)
+
+		cmd := &org.UpdateOrgUserCommand{
+			Role:   org.RoleAdmin,
+			UserID: 1,
+			OrgID:  1,
+		}
+		err = orgUserStore.UpdateOrgUser(context.Background(), cmd)
+		require.NoError(t, err)
+	})
+}
+
+// This test will be refactore after the CRUD store  refactor
+func TestSQLStore_AddOrgUser(t *testing.T) {
+	var orgID int64 = 1
+	store := sqlstore.InitTestDB(t)
+
+	// create org and admin
+	_, err := store.CreateUser(context.Background(), user.CreateUserCommand{
+		Login: "admin",
+		OrgID: orgID,
+	})
+	require.NoError(t, err)
+
+	// create a service account with no org
+	sa, err := store.CreateUser(context.Background(), user.CreateUserCommand{
+		Login:            "sa-no-org",
+		IsServiceAccount: true,
+		SkipOrgSetup:     true,
+	})
+
+	require.NoError(t, err)
+	require.Equal(t, int64(-1), sa.OrgID)
+
+	// assign the sa to the org but without the override. should fail
+	err = store.AddOrgUser(context.Background(), &models.AddOrgUserCommand{
+		Role:   "Viewer",
+		OrgId:  orgID,
+		UserId: sa.ID,
+	})
+	require.Error(t, err)
+
+	// assign the sa to the org with the override. should succeed
+	err = store.AddOrgUser(context.Background(), &models.AddOrgUserCommand{
+		Role:                      "Viewer",
+		OrgId:                     orgID,
+		UserId:                    sa.ID,
+		AllowAddingServiceAccount: true,
+	})
+
+	require.NoError(t, err)
+
+	// assert the org has been correctly set
+	saFound := new(user.User)
+	err = store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		has, err := sess.ID(sa.ID).Get(saFound)
+		if err != nil {
+			return err
+		} else if !has {
+			return user.ErrUserNotFound
+		}
+		return nil
+	})
+
+	require.NoError(t, err)
+	require.Equal(t, saFound.OrgID, orgID)
 }

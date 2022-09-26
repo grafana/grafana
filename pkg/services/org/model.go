@@ -120,8 +120,8 @@ type AddOrgUserCommand struct {
 	LoginOrEmail string   `json:"loginOrEmail" binding:"Required"`
 	Role         RoleType `json:"role" binding:"Required"`
 
-	OrgID  int64 `json:"-"`
-	UserID int64 `json:"-"`
+	OrgID  int64 `json:"-" xorm:"org_id"`
+	UserID int64 `json:"-" xorm:"user_id"`
 
 	// internal use: avoid adding service accounts to orgs via user routes
 	AllowAddingServiceAccount bool `json:"-"`
