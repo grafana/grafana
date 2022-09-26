@@ -12,7 +12,7 @@ message UserInfo {
   string login = 2; // string ID? 
 }
 
-// Raw saved object metadata
+// The canonical object/document data -- this represents the raw bytes and storage level metadata
 message RawObject {
   // Unique ID
   string UID = 1;
@@ -36,23 +36,24 @@ message RawObject {
   // Raw bytes of the storage object.  The kind will determine what is a valid payload
   bytes body = 7;
 
-  // The version will change when the object is saved. 
+  // The version will change when the object is saved. It is not necessarily sortable
   //
-  // NOTE: although this could be a known key in properties, this currently exists in the
-  // dashboard+dashboard_version tables, and seems better as an explicit flat result 
-  // rather than one pulled out from the properties map
-  string version = 9;
+  // NOTE: currently managed by the dashboard+dashboard_version tables
+  string version = 8;
 
   // optional "save" or "commit" message
   //
-  // NOTE: although this could be a known key in properties, this currently exists in the
-  // dashboard_version table, and seems better as an explicit flat result from a "history" query
-  string comment = 10;
+  // NOTE: currently managed by the dashboard_version table, and will be returned from a "history" command
+  string comment = 9;
+
+  // Location (path/repo/etc) that defines the canonocal form
+  //
+  // NOTE: currently managed by the dashboard_provisioning table
+  string sync_src = 10;
 
   // Time in epoch milliseconds that the object was last synced with an external system (provisioning/git)
   //
-  // NOTE: although this could be a known key in properties (as a string value?), this currently exists 
-  // in the dashboard_provisioning table
+  // NOTE: currently managed by the dashboard_provisioning table
   int64 sync_time = 11;
 }
 
@@ -216,7 +217,8 @@ message ObjectSearchRequest {
   // Must match all labels
   map<string,string> labels = 6;
 
-  // Find items that match an explicit reference
+  // Find items that meet reference constraints
+  // All references must have a kind+uid (type is not used)
   repeated ExternalReference reference = 7;
 
   // Sorting instructions `field ASC/DESC`
