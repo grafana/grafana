@@ -752,17 +752,20 @@ func (hs *HTTPServer) GetDashboardVersion(c *models.ReqContext) response.Respons
 	return response.JSON(http.StatusOK, dashVersionMeta)
 }
 
-type ValidateDashboardResponse struct {
-	IsValid bool   `json:"isValid"`
-	Message string `json:"message,omitempty"`
-}
-
-type ValidateDashboardCommandLol struct {
-	Dashboard string `json:"dashboard" binding:"Required"`
-}
-
+// swagger:route POST /dashboards/validate dashboards validateDashboard
+//
+// Validates a dashboard JSON against the schema
+//
+// Produces:
+// - application/json
+//
+// Responses:
+// 200: validateDashboardResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (hs *HTTPServer) ValidateDashboard(c *models.ReqContext) response.Response {
-	cmd := ValidateDashboardCommandLol{}
+	cmd := models.ValidateDashboardCommand{}
 
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -770,6 +773,8 @@ func (hs *HTTPServer) ValidateDashboard(c *models.ReqContext) response.Response 
 
 	cm := hs.Coremodels.Dashboard()
 
+	// POST api recieves dashboard as a string of json (so line numbers for errors stay consistent),
+	// but we need to parse the schema version out of it
 	dashboardBytes := []byte(cmd.Dashboard)
 	dashboardJson, err := simplejson.NewJson(dashboardBytes)
 	if err != nil {
@@ -1238,4 +1243,10 @@ type DashboardVersionsResponse struct {
 type DashboardVersionResponse struct {
 	// in: body
 	Body *dashver.DashboardVersionMeta `json:"body"`
+}
+
+// swagger:response validateDashboardResponse
+type ValidateDashboardResponse struct {
+	IsValid bool   `json:"isValid"`
+	Message string `json:"message,omitempty"`
 }

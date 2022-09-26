@@ -225,7 +225,7 @@ type SaveDashboardCommand struct {
 }
 
 type ValidateDashboardCommand struct {
-	Dashboard *simplejson.Json `json:"dashboard" binding:"Required"`
+	Dashboard string `json:"dashboard" binding:"Required"`
 }
 
 type TrimDashboardCommand struct {
