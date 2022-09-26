@@ -246,7 +246,7 @@ func (hs *HTTPServer) SearchOrgUsersWithPaging(c *models.ReqContext) response.Re
 		page = 1
 	}
 
-	query := &models.SearchOrgUsersQuery{
+	query := &org.SearchOrgUsersQuery{
 		OrgID: c.OrgID,
 		Query: c.Query("query"),
 		Page:  page,
@@ -254,25 +254,26 @@ func (hs *HTTPServer) SearchOrgUsersWithPaging(c *models.ReqContext) response.Re
 		User:  c.SignedInUser,
 	}
 
-	if err := hs.SQLStore.SearchOrgUsers(ctx, query); err != nil {
+	result, err := hs.orgService.SearchOrgUsers(ctx, query)
+	if err != nil {
 		return response.Error(500, "Failed to get users for current organization", err)
 	}
 
-	filteredUsers := make([]*models.OrgUserDTO, 0, len(query.Result.OrgUsers))
-	for _, user := range query.Result.OrgUsers {
+	filteredUsers := make([]*org.OrgUserDTO, 0, len(result.OrgUsers))
+	for _, user := range result.OrgUsers {
 		if dtos.IsHiddenUser(user.Login, c.SignedInUser, hs.Cfg) {
 			continue
 		}
-		user.AvatarUrl = dtos.GetGravatarUrl(user.Email)
+		user.AvatarURL = dtos.GetGravatarUrl(user.Email)
 
 		filteredUsers = append(filteredUsers, user)
 	}
 
-	query.Result.OrgUsers = filteredUsers
-	query.Result.Page = page
-	query.Result.PerPage = perPage
+	result.OrgUsers = filteredUsers
+	result.Page = page
+	result.PerPage = perPage
 
-	return response.JSON(http.StatusOK, query.Result)
+	return response.JSON(http.StatusOK, result)
 }
 
 // swagger:route PATCH /org/users/{user_id} org updateOrgUserForCurrentOrg
