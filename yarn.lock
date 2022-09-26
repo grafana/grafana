@@ -5666,7 +5666,7 @@ __metadata:
     common-tags: 1.8.2
     core-js: 3.25.1
     css-loader: 6.7.1
-    css-minimizer-webpack-plugin: 4.0.0
+    css-minimizer-webpack-plugin: 4.1.0
     csstype: 3.1.0
     d3: 5.15.0
     date-fns: 2.29.1
@@ -17721,9 +17721,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"css-minimizer-webpack-plugin@npm:4.0.0":
-  version: 4.0.0
-  resolution: "css-minimizer-webpack-plugin@npm:4.0.0"
+"css-minimizer-webpack-plugin@npm:4.1.0":
+  version: 4.1.0
+  resolution: "css-minimizer-webpack-plugin@npm:4.1.0"
   dependencies:
     cssnano: ^5.1.8
     jest-worker: ^27.5.1
@@ -17742,7 +17742,9 @@ __metadata:
       optional: true
     esbuild:
       optional: true
-  checksum: 18487ee9aacdb0cc4e9fc1921f5d7a519c94203332b845b9a6d95434365d275fafff7dbfe21355347b8bbb8266078b7e60f7bac771f15eb30dfed5a29016debc
+    lightningcss:
+      optional: true
+  checksum: bf3c9e9ca4ab23ab139dac2fdfb1daeee2c60455aa314c91745038d01c188107a2108269ff2f2c82c41bc0d342b636a962826646c3c098946f15edd8ed98f42e
   languageName: node
   linkType: hard
 
@@ -22560,7 +22562,7 @@ __metadata:
     copy-webpack-plugin: 9.0.1
     core-js: 3.25.1
     css-loader: 6.7.1
-    css-minimizer-webpack-plugin: 4.0.0
+    css-minimizer-webpack-plugin: 4.1.0
     cypress: 9.5.1
     d3: 5.15.0
     d3-force: ^2.1.1
