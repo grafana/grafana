@@ -274,6 +274,74 @@ func getValidConflictUsers(r *ConflictResolver, b []byte) error {
 	return nil
 }
 
+func (r *ConflictResolver) MergeConflictingUsers(ctx context.Context, ss *sqlstore.SQLStore) error {
+	for block, users := range r.Blocks {
+		if len(users) < 2 {
+			return fmt.Errorf("not enough users to perform merge, found %d for id %s, should be at least 2", len(users), block)
+		}
+		var intoUser user.User
+		var intoUserId int64
+		var fromUserIds []int64
+
+		// creating a session for each block of users
+		// we want to rollback incase something happens during update / delete
+		sess := ss.NewSession(ctx)
+		defer sess.Close()
+		err := sess.Begin()
+		if err != nil {
+			return fmt.Errorf("could not open a sess: %w", err)
+		}
+		for _, u := range users {
+			if u.Direction == "+" {
+				id, err := strconv.ParseInt(u.Id, 10, 64)
+				if err != nil {
+					return fmt.Errorf("could not convert id in +")
+				}
+				intoUserId = id
+			} else if u.Direction == "-" {
+				id, err := strconv.ParseInt(u.Id, 10, 64)
+				if err != nil {
+					return fmt.Errorf("could not convert id in -")
+				}
+				fromUserIds = append(fromUserIds, id)
+			}
+		}
+		if _, err := sess.ID(intoUserId).Where(sqlstore.NotServiceAccountFilter(ss)).Get(&intoUser); err != nil {
+			return fmt.Errorf("could not find intoUser: %w", err)
+		}
+
+		for _, fromUserId := range fromUserIds {
+			var fromUser user.User
+			exists, err := sess.ID(fromUserId).Where(sqlstore.NotServiceAccountFilter(ss)).Get(&fromUser)
+			if err != nil {
+				return fmt.Errorf("could not find fromUser: %w", err)
+			}
+			if !exists {
+				fmt.Printf("user with id %d does not exist, skipping\n", fromUserId)
+			}
+			// // delete the user
+			delErr := ss.DeleteUserInSession(ctx, sess, &models.DeleteUserCommand{UserId: fromUserId})
+			if delErr != nil {
+				return fmt.Errorf("error during deletion of user: %w", delErr)
+			}
+		}
+		commitErr := sess.Commit()
+		if commitErr != nil {
+			return fmt.Errorf("could not commit operation for useridentification %s: %w", block, commitErr)
+		}
+		updateMainCommand := &models.UpdateUserCommand{
+			UserId: intoUser.ID,
+			Login:  strings.ToLower(intoUser.Login),
+			Email:  strings.ToLower(intoUser.Email),
+		}
+		updateErr := ss.UpdateUser(ctx, updateMainCommand)
+		if updateErr != nil {
+			return fmt.Errorf("could not update user: %w", updateErr)
+		}
+	}
+	return nil
+}
+
 /*
 hej@test.com+hej@test.com
 all of the permissions, roles and ownership will be transferred to the user.
@@ -284,12 +352,12 @@ these user(s) will be deleted and their permissions transferred.
 */
 func (r *ConflictResolver) showChanges() {
 	if len(r.ValidUsers) == 0 {
-		fmt.Printf("no changes will take place as we have no valid users to merge.\n")
+		fmt.Printf("no changes will take place as we have no valid users.\n")
 		return
 	}
 
 	var fileString string
-	fmt.Printf("conflicts will be merged with the following changes:\n")
+	fmt.Printf("Changes:\n")
 	for block, users := range r.Blocks {
 		if _, ok := r.DiscardedBlocks[block]; ok {
 			// skip block
@@ -306,11 +374,11 @@ func (r *ConflictResolver) showChanges() {
 		}
 		fileString += "IDENTIFIED user conflict\n"
 		fileString += fmt.Sprintf("%s\n", block)
-		fileString += "The permissions, roles and ownership will be transferred to the user below.\n"
+		fileString += "Kepp the following user.\n"
 		fileString += fmt.Sprintf("id: %s, email: %s, login: %s\n", mainUser.Id, mainUser.Email, mainUser.Login)
 		fileString += "\n"
 		fileString += "\n"
-		fileString += "The following user(s) will be deleted and their permissions transferred.\n"
+		fileString += "The following user(s) will be deleted.\n"
 		for _, user := range users {
 			if user.Id == mainUser.Id {
 				continue
@@ -554,101 +622,6 @@ func conflictingUserEntriesSQL(s *sqlstore.SQLStore) string {
 		AND (u1.` + notServiceAccount(s) + `)
 	ORDER BY conflict_email, conflict_login, u1.id`
 	return sqlQuery
-}
-
-func (r *ConflictResolver) MergeConflictingUsers(ctx context.Context, ss *sqlstore.SQLStore) error {
-	for block, users := range r.Blocks {
-		if len(users) < 2 {
-			return fmt.Errorf("not enough users to perform merge, found %d for id %s, should be at least 2", len(users), block)
-		}
-		var intoUser user.User
-		var intoUserId int64
-		var fromUserIds []int64
-		fmt.Printf("block: %s, users: %v\n\n", block, users)
-
-		// creating a session for each block of users
-		// we want to rollback incase something happens during update / delete
-		sess := ss.NewSession(ctx)
-		defer sess.Close()
-		err := sess.Begin()
-		if err != nil {
-			return fmt.Errorf("could not open a sess: %w", err)
-		}
-		for _, u := range users {
-			if u.Direction == "+" {
-				id, err := strconv.ParseInt(u.Id, 10, 64)
-				if err != nil {
-					return fmt.Errorf("could not convert id in +")
-				}
-				intoUserId = id
-			} else if u.Direction == "-" {
-				id, err := strconv.ParseInt(u.Id, 10, 64)
-				if err != nil {
-					return fmt.Errorf("could not convert id in -")
-				}
-				fromUserIds = append(fromUserIds, id)
-			}
-		}
-		fmt.Printf("fromUserIds: %v, intoUserId: %d\n\n", fromUserIds, intoUserId)
-		if _, err := sess.ID(intoUserId).Where(sqlstore.NotServiceAccountFilter(ss)).Get(&intoUser); err != nil {
-			return fmt.Errorf("could not find intoUser: %w", err)
-		}
-
-		for _, fromUserId := range fromUserIds {
-			var fromUser user.User
-			exists, err := sess.ID(fromUserId).Where(sqlstore.NotServiceAccountFilter(ss)).Get(&fromUser)
-			if err != nil {
-				return fmt.Errorf("could not find fromUser: %w", err)
-			}
-			if !exists {
-				fmt.Printf("user with id %d does not exist, skipping\n", fromUserId)
-			}
-
-			// update all tables fromUserIds to intoUserIds
-			// for _, sql := range userUpdates() {
-			// 	_, err := sess.Exec(sql, intoUser.ID, fromUser.ID)
-			// 	if err != nil {
-			// 		return fmt.Errorf("error during updating userIds: %w", err)
-			// 	}
-			// }
-			// // delete the user
-			fmt.Printf("deleting user fromUserId %d\n", fromUser.ID)
-			delErr := ss.DeleteUserInSession(ctx, sess, &models.DeleteUserCommand{UserId: fromUserId})
-			if delErr != nil {
-				return fmt.Errorf("error during deletion of user: %w", delErr)
-			}
-		}
-		commitErr := sess.Commit()
-		if commitErr != nil {
-			return fmt.Errorf("could not commit operation for useridentification %s: %w", block, commitErr)
-		}
-		updateMainCommand := &models.UpdateUserCommand{
-			UserId: intoUser.ID,
-			Login:  strings.ToLower(intoUser.Login),
-			Email:  strings.ToLower(intoUser.Email),
-		}
-		updateErr := ss.UpdateUser(ctx, updateMainCommand)
-		if updateErr != nil {
-			return fmt.Errorf("could not update user: %w", updateErr)
-		}
-	}
-	return nil
-}
-
-func userUpdates() []string {
-	updates := []string{
-		"UPDATE star set user_id = ? WHERE user_id = ?",
-		// commented out as their is a unique constraint on the table for user id
-		// "UPDATE org_user set user_id ? WHERE user_id = ?",
-
-		"UPDATE dashboard_acl set user_id = ? WHERE user_id = ?",
-		"UPDATE preferences set user_id = ? WHERE user_id = ?",
-		"UPDATE team_member set user_id = ? WHERE user_id = ?",
-		"UPDATE user_auth set user_id = ? WHERE user_id = ?",
-		"UPDATE user_auth_token set user_id = ? WHERE user_id = ?",
-		"UPDATE quota set user_id = ? WHERE user_id = ?",
-	}
-	return updates
 }
 
 func notServiceAccount(ss *sqlstore.SQLStore) string {
