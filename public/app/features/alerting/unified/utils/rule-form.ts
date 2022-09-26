@@ -56,7 +56,7 @@ export const getDefaultFormValues = (): RuleFormValues => {
     queries: [],
     condition: '',
     noDataState: GrafanaAlertStateDecision.NoData,
-    execErrState: GrafanaAlertStateDecision.Alerting,
+    execErrState: GrafanaAlertStateDecision.Error,
     evaluateEvery: '1m',
     evaluateFor: '5m',
 

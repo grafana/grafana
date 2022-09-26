@@ -25,14 +25,17 @@ type ServiceAccountsStoreImpl struct {
 	kvStore       kvstore.KVStore
 	log           log.Logger
 	userService   user.Service
+	orgService    org.Service
 }
 
-func ProvideServiceAccountsStore(store *sqlstore.SQLStore, apiKeyService apikey.Service, kvStore kvstore.KVStore) *ServiceAccountsStoreImpl {
+func ProvideServiceAccountsStore(store *sqlstore.SQLStore, apiKeyService apikey.Service,
+	kvStore kvstore.KVStore, orgService org.Service) *ServiceAccountsStoreImpl {
 	return &ServiceAccountsStoreImpl{
 		sqlStore:      store,
 		apiKeyService: apiKeyService,
 		kvStore:       kvStore,
 		log:           log.New("serviceaccounts.store"),
+		orgService:    orgService,
 	}
 }
 
@@ -63,10 +66,10 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, org
 			return errUser
 		}
 
-		errAddOrgUser := s.sqlStore.AddOrgUser(ctx, &models.AddOrgUserCommand{
+		errAddOrgUser := s.orgService.AddOrgUser(ctx, &org.AddOrgUserCommand{
 			Role:                      role,
-			OrgId:                     orgId,
-			UserId:                    newSA.ID,
+			OrgID:                     orgId,
+			UserID:                    newSA.ID,
 			AllowAddingServiceAccount: true,
 		})
 		if errAddOrgUser != nil {

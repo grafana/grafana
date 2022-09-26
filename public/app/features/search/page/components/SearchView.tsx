@@ -163,7 +163,14 @@ export const SearchView = ({
     []
   );
 
-  const results = useAsync(() => doSearch(query, searchQuery, includePanels, eventTrackingNamespace), [searchQuery]);
+  const results = useAsync(() => {
+    // No need to query all dashboards if we are in search folder view
+    if (layout === SearchLayout.Folders && !folderDTO) {
+      return Promise.resolve();
+    }
+
+    return doSearch(query, searchQuery, includePanels, eventTrackingNamespace);
+  }, [searchQuery, layout]);
 
   const clearSelection = useCallback(() => {
     searchSelection.items.clear();

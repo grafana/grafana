@@ -17,6 +17,9 @@ var ErrInvalidRootFile = errors.New("plugin.json is invalid")
 //   - A required slot for its type is not implemented (e.g. panel plugin does not implemented Panel)
 var ErrImplementedSlots = errors.New("slot implementation not allowed for this plugin type")
 
+// ErrInvalidCUE indicates that a plugin's model.cue file contained invalid CUE.
+var ErrInvalidCUE = errors.New("CUE syntax error")
+
 // ErrInvalidLineage indicates that the plugin contains an invalid lineage
 // declaration, according to Thema's validation rules in
 // ["github.com/grafana/thema".BindLineage].

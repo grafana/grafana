@@ -165,8 +165,8 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 				Groups: []string{"https://github.com/orgs/github/teams/justice-league", "@github/justice-league"},
 			},
 		},
-		{
-			name:              "auto assign org role",
+		{ // Case that's going to change with Grafana 10
+			name:              "No fallback to default org role (will change in Grafana 10)",
 			roleAttributePath: "",
 			userRawJSON:       testGHUserJSON,
 			autoAssignOrgRole: "Editor",
@@ -176,7 +176,7 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 				Name:   "monalisa octocat",
 				Email:  "octocat@github.com",
 				Login:  "octocat",
-				Role:   "Editor",
+				Role:   "",
 				Groups: []string{"https://github.com/orgs/github/teams/justice-league", "@github/justice-league"},
 			},
 		},

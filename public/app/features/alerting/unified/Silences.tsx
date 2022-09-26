@@ -1,9 +1,9 @@
 import React, { FC, useCallback, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
 import { Redirect, Route, RouteChildrenProps, Switch, useLocation } from 'react-router-dom';
 
 import { Alert, LoadingPlaceholder, withErrorBoundary } from '@grafana/ui';
 import { Silence } from 'app/plugins/datasource/alertmanager/types';
+import { useDispatch } from 'app/types';
 
 import { featureDiscoveryApi } from './api/featureDiscoveryApi';
 import { AlertManagerPicker } from './components/AlertManagerPicker';

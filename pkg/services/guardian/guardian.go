@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -48,6 +49,7 @@ type dashboardGuardianImpl struct {
 	ctx              context.Context
 	store            sqlstore.Store
 	dashboardService dashboards.DashboardService
+	teamService      team.Service
 }
 
 // New factory for creating a new dashboard guardian instance
@@ -56,7 +58,7 @@ var New = func(ctx context.Context, dashId int64, orgId int64, user *user.Signed
 	panic("no guardian factory implementation provided")
 }
 
-func newDashboardGuardian(ctx context.Context, dashId int64, orgId int64, user *user.SignedInUser, store sqlstore.Store, dashSvc dashboards.DashboardService) *dashboardGuardianImpl {
+func newDashboardGuardian(ctx context.Context, dashId int64, orgId int64, user *user.SignedInUser, store sqlstore.Store, dashSvc dashboards.DashboardService, teamSvc team.Service) *dashboardGuardianImpl {
 	return &dashboardGuardianImpl{
 		user:             user,
 		dashId:           dashId,
@@ -65,6 +67,7 @@ func newDashboardGuardian(ctx context.Context, dashId int64, orgId int64, user *
 		ctx:              ctx,
 		store:            store,
 		dashboardService: dashSvc,
+		teamService:      teamSvc,
 	}
 }
 
@@ -276,7 +279,7 @@ func (g *dashboardGuardianImpl) getTeams() ([]*models.TeamDTO, error) {
 	}
 
 	query := models.GetTeamsByUserQuery{OrgId: g.orgId, UserId: g.user.UserID, SignedInUser: g.user}
-	err := g.store.GetTeamsByUser(g.ctx, &query)
+	err := g.teamService.GetTeamsByUser(g.ctx, &query)
 
 	g.teams = query.Result
 	return query.Result, err

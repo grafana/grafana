@@ -1,6 +1,12 @@
 
 apiVersion: 1
 
+deleteDatasources:
+  - name: gdev-elasticsearch-v7-metrics
+  - name: gdev-elasticsearch-v7-logs
+  - name: gdev-elasticsearch-v7-metricbeat
+  - name: gdev-elasticsearch-v7-filebeat
+
 datasources:
   - name: gdev-graphite
     type: graphite
@@ -61,49 +67,38 @@ datasources:
       tsdbResolution: 1
       tsdbVersion: 1
 
-  - name: gdev-elasticsearch-v7-metrics
-    type: elasticsearch
-    access: proxy
-    database: "[metrics-]YYYY.MM.DD"
-    url: http://elasticsearch7:9200
-    jsonData:
-      timeInterval: 10s
-      interval: Daily
-      timeField: "@timestamp"
-      esVersion: 70
-
-  - name: gdev-elasticsearch-v7-logs
+  - name: gdev-elasticsearch
     type: elasticsearch
     access: proxy
     database: "[logs-]YYYY.MM.DD"
-    url: http://elasticsearch7:9200
+    url: http://elasticsearch:9200
     jsonData:
       interval: Daily
       timeField: "@timestamp"
-      esVersion: 70
+      esVersion: 8.1.4
 
-  - name: gdev-elasticsearch-v7-filebeat
+  - name: gdev-elasticsearch-filebeat
     type: elasticsearch
     access: proxy
     database: "[filebeat-]YYYY.MM.DD"
-    url: http://elasticsearch7:9200
+    url: http://elasticsearch:9200
     jsonData:
       interval: Daily
       timeField: "@timestamp"
-      esVersion: 70
+      esVersion: 8.1.4
       timeInterval: "10s"
       logMessageField: message
       logLevelField: fields.level
 
-  - name: gdev-elasticsearch-v7-metricbeat
+  - name: gdev-elasticsearch-metricbeat
     type: elasticsearch
     access: proxy
     database: "[metricbeat-]YYYY.MM.DD"
-    url: http://elasticsearch7:9200
+    url: http://elasticsearch:9200
     jsonData:
       interval: Daily
       timeField: "@timestamp"
-      esVersion: 70
+      esVersion: 8.1.4
       timeInterval: "10s"
 
   - name: gdev-mysql

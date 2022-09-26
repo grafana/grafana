@@ -52,7 +52,6 @@ function mapStateToProps(state: StoreState) {
 
 const defaultPageProps = {
   navId: 'apikeys',
-  subTitle: 'Manage and create API keys that are used to interact with Grafana HTTP APIs.',
 };
 
 const mapDispatchToProps = {

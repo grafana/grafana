@@ -63,7 +63,7 @@ export class CanvasPanel extends Component<Props, State> {
     this.scene.inlineEditingCallback = this.openInlineEdit;
 
     this.subs.add(
-      this.props.eventBus.subscribe(PanelEditEnteredEvent, (evt) => {
+      this.props.eventBus.subscribe(PanelEditEnteredEvent, (evt: PanelEditEnteredEvent) => {
         // Remove current selection when entering edit mode for any panel in dashboard
         this.scene.clearCurrentSelection();
         this.closeInlineEdit();
@@ -71,9 +71,14 @@ export class CanvasPanel extends Component<Props, State> {
     );
 
     this.subs.add(
-      this.props.eventBus.subscribe(PanelEditExitedEvent, (evt) => {
+      this.props.eventBus.subscribe(PanelEditExitedEvent, (evt: PanelEditExitedEvent) => {
         if (this.props.id === evt.payload) {
           this.needsReload = true;
+          this.scene.load(
+            this.props.options.root,
+            this.props.options.inlineEditing,
+            this.props.options.showAdvancedTypes
+          );
         }
       })
     );
@@ -116,6 +121,7 @@ export class CanvasPanel extends Component<Props, State> {
   }
 
   componentWillUnmount() {
+    this.scene.subscription.unsubscribe();
     this.subs.unsubscribe();
     isInlineEditOpen = false;
     canvasInstances = canvasInstances.filter((ci) => ci.props.id !== activeCanvasPanel?.props.id);
