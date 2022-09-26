@@ -52,15 +52,15 @@ func NewDashboardSummaryBuilder(lookup dslookup.DatasourceLookup) object.ObjectS
 
 			panelRefs.Add("panel", panel.Type, "")
 			for _, v := range panel.Datasource {
-				dashboardRefs.Add("ds", v.Type, v.UID)
-				panelRefs.Add("ds", v.Type, v.UID)
+				dashboardRefs.Add(object.StandardKindDataSource, v.Type, v.UID)
+				panelRefs.Add(object.StandardKindDataSource, v.Type, v.UID)
 			}
 
 			for _, v := range panel.Transformer {
-				panelRefs.Add("transformer", v, "")
+				panelRefs.Add(object.StandardKindTransform, v, "")
 			}
 
-			dashboardRefs.Add("panel", panel.Type, "")
+			dashboardRefs.Add(object.StandardKindPanel, panel.Type, "")
 			p.References = panelRefs.Get()
 			summary.Nested = append(summary.Nested, p)
 		}
