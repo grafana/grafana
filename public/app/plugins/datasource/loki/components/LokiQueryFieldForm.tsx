@@ -15,6 +15,7 @@ import {
 // Utils & Services
 // dom also includes Element polyfills
 import { Plugin, Node } from 'slate';
+import { Editor } from 'slate-react';
 import { LokiLabelBrowser } from './LokiLabelBrowser';
 
 // Types
@@ -75,7 +76,7 @@ interface LokiQueryFieldFormState {
 }
 
 export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormProps, LokiQueryFieldFormState> {
-  plugins: Plugin[];
+  plugins: Array<Plugin<Editor>>;
 
   constructor(props: LokiQueryFieldFormProps) {
     super(props);

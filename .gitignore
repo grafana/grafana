@@ -98,6 +98,7 @@ debug.test
 
 /scripts/build/release_publisher/release_publisher
 *.patch
+!patches/slate-dev-environment*.patch
 
 # Ignoring frontend packages specifics
 /packages/**/dist

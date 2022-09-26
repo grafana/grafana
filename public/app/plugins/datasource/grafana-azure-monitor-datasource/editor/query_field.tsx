@@ -3,8 +3,8 @@ import { BracesPlugin, ClearPlugin, RunnerPlugin, NewlinePlugin } from '@grafana
 import Typeahead from './typeahead';
 import { getKeybindingSrv, KeybindingSrv } from 'app/core/services/keybindingSrv';
 
-import { Block, Document, Text, Value, Editor as CoreEditor } from 'slate';
-import { Editor } from '@grafana/slate-react';
+import { Block, Document, Text, Value } from 'slate';
+import { Editor } from 'slate-react';
 import Plain from 'slate-plain-serializer';
 import ReactDOM from 'react-dom';
 import React from 'react';
@@ -111,9 +111,8 @@ class QueryField extends React.Component<any, any> {
     }
   };
 
-  onKeyDown = (event: Event, editor: CoreEditor, next: Function) => {
+  onKeyDown = (keyboardEvent: React.KeyboardEvent<Element>, editor: Editor, next: Function) => {
     const { typeaheadIndex, suggestions } = this.state;
-    const keyboardEvent = event as KeyboardEvent;
 
     switch (keyboardEvent.key) {
       case 'Escape': {
@@ -186,7 +185,7 @@ class QueryField extends React.Component<any, any> {
   };
 
   applyTypeahead = (
-    editor?: CoreEditor,
+    editor?: Editor,
     suggestion?: { text: any; type: string; deleteBackwards: any }
   ): { value: Value } => {
     return { value: new Value() };
@@ -204,7 +203,7 @@ class QueryField extends React.Component<any, any> {
     );
   };
 
-  handleBlur = (event: Event, editor: CoreEditor, next: Function) => {
+  handleBlur = (event: React.FocusEvent<Element>, editor: Editor, next: Function) => {
     const { onBlur } = this.props;
     // If we dont wait here, menu clicks wont work because the menu
     // will be gone.
@@ -216,7 +215,7 @@ class QueryField extends React.Component<any, any> {
     return next();
   };
 
-  handleFocus = (event: Event, editor: CoreEditor, next: Function) => {
+  handleFocus = (event: React.FocusEvent<Element>, editor: Editor, next: Function) => {
     const { onFocus } = this.props;
     if (onFocus) {
       onFocus();

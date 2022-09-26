@@ -1,7 +1,8 @@
 import _ from 'lodash';
 import React, { ReactNode } from 'react';
-
 import { Plugin } from 'slate';
+import { Editor } from 'slate-react';
+
 import {
   ButtonCascader,
   CascaderOption,
@@ -133,8 +134,8 @@ interface PromQueryFieldState {
 }
 
 class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryFieldState> {
-  plugins: Plugin[];
-  languageProviderInitializationPromise: CancelablePromise<any>;
+  plugins: Array<Plugin<Editor>>;
+  declare languageProviderInitializationPromise: CancelablePromise<any>;
 
   constructor(props: PromQueryFieldProps, context: React.Context<any>) {
     super(props, context);

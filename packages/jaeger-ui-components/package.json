@@ -23,7 +23,7 @@
     "@types/moment": "^2.13.0",
     "@types/react-icons": "2.2.7",
     "@types/recompose": "^0.30.7",
-    "@types/slate-react": "0.22.5",
+    "@types/slate-react": "0.22.9",
     "chance": "^1.0.10",
     "classnames": "^2.2.5",
     "combokeys": "^3.0.0",

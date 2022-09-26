@@ -1,5 +1,4 @@
-import { Plugin } from '@grafana/slate-react';
-import { Editor as CoreEditor } from 'slate';
+import { Plugin } from 'slate-react';
 
 const getCopiedText = (textBlocks: string[], startOffset: number, endOffset: number) => {
   if (!textBlocks.length) {
@@ -10,11 +9,15 @@ const getCopiedText = (textBlocks: string[], startOffset: number, endOffset: num
   return textBlocks.join('\n').slice(startOffset, excludingLastLineLength + endOffset);
 };
 
+// Remove unicode special symbol - byte order mark (BOM), U+FEFF.
+const removeBom = (str: string | undefined): string | undefined => {
+  return str?.replace(/[\uFEFF]/g, '');
+};
+
 export function ClipboardPlugin(): Plugin {
   const clipboardPlugin: Plugin = {
-    onCopy(event: Event, editor: CoreEditor, next: () => any) {
-      const clipEvent = event as ClipboardEvent;
-      clipEvent.preventDefault();
+    onCopy(event, editor, next) {
+      event.preventDefault();
 
       const { document, selection } = editor.value;
       const {
@@ -26,22 +29,21 @@ export function ClipboardPlugin(): Plugin {
         .toArray()
         .map((block) => block.text);
 
-      const copiedText = getCopiedText(selectedBlocks, startOffset, endOffset);
-      if (copiedText && clipEvent.clipboardData) {
-        clipEvent.clipboardData.setData('Text', copiedText);
+      const copiedText = removeBom(getCopiedText(selectedBlocks, startOffset, endOffset));
+      if (copiedText && event.clipboardData) {
+        event.clipboardData.setData('Text', copiedText);
       }
 
       return true;
     },
 
-    onPaste(event: Event, editor: CoreEditor, next: () => any) {
-      const clipEvent = event as ClipboardEvent;
-      clipEvent.preventDefault();
-      if (clipEvent.clipboardData) {
-        const pastedValue = clipEvent.clipboardData.getData('Text');
-        const lines = pastedValue.split('\n');
+    onPaste(event, editor, next) {
+      event.preventDefault();
+      if (event.clipboardData) {
+        const pastedValue = removeBom(event.clipboardData.getData('Text'));
+        const lines = pastedValue?.split('\n');
 
-        if (lines.length) {
+        if (lines && lines.length) {
           editor.insertText(lines[0]);
           for (const line of lines.slice(1)) {
             editor.splitBlock().insertText(line);
@@ -55,9 +57,8 @@ export function ClipboardPlugin(): Plugin {
 
   return {
     ...clipboardPlugin,
-    onCut(event: Event, editor: CoreEditor, next: () => any) {
-      const clipEvent = event as ClipboardEvent;
-      clipboardPlugin.onCopy!(clipEvent, editor, next);
+    onCut(event, editor, next) {
+      clipboardPlugin.onCopy!(event, editor, next);
       editor.deleteAtRange(editor.value.selection);
 
       return true;
