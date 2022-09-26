@@ -122,9 +122,15 @@ func (root *NavTreeRoot) RemoveEmptySectionsAndApplyNewInformationArchitecture(t
 		// Move reports into dashboards
 		if reports := root.FindById(NavIDReporting); reports != nil {
 			if dashboards := root.FindById(NavIDDashboards); dashboards != nil {
+				reports.SortWeight = 0
 				dashboards.Children = append(dashboards.Children, reports)
 				root.RemoveSection(reports)
 			}
+		}
+
+		// Change id of dashboards
+		if dashboards := root.FindById(NavIDDashboards); dashboards != nil {
+			dashboards.Id = "dashboards/browse"
 		}
 	}
 

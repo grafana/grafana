@@ -7,7 +7,6 @@ import (
 )
 
 func TestNavigationSettings(t *testing.T) {
-
 	t.Run("Should include defaults", func(t *testing.T) {
 		cfg := NewCfg()
 		_, _ = cfg.Raw.NewSection("navigation.apps")

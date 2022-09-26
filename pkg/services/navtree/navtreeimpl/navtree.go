@@ -74,22 +74,16 @@ func (s *ServiceImpl) GetNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 
 		dashboardChildLinks := s.buildDashboardNavLinks(c, hasEditPerm)
 
-		dashboardsUrl := "/dashboards"
-
 		dashboardLink := &navtree.NavLink{
 			Text:        "Dashboards",
 			Id:          navtree.NavIDDashboards,
 			Description: "Create and manage dashboards to visualize your data",
 			SubTitle:    "Manage dashboards and folders",
 			Icon:        "apps",
-			Url:         s.cfg.AppSubURL + dashboardsUrl,
+			Url:         s.cfg.AppSubURL + "/dashboards",
 			SortWeight:  navtree.WeightDashboard,
 			Section:     navtree.NavSectionCore,
 			Children:    dashboardChildLinks,
-		}
-
-		if s.features.IsEnabled(featuremgmt.FlagTopnav) {
-			dashboardLink.Id = "dashboards/browse"
 		}
 
 		treeRoot.AddSection(dashboardLink)
@@ -301,11 +295,13 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *models.ReqContext, hasEditPerm b
 	}
 
 	dashboardChildNavs := []*navtree.NavLink{}
+
 	if !s.features.IsEnabled(featuremgmt.FlagTopnav) {
 		dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 			Text: "Browse", Id: "dashboards/browse", Url: s.cfg.AppSubURL + "/dashboards", Icon: "sitemap",
 		})
 	}
+
 	dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 		Text: "Playlists", Description: "Groups of dashboards that are displayed in a sequence", Id: "dashboards/playlists", Url: s.cfg.AppSubURL + "/playlists", Icon: "presentation-play",
 	})

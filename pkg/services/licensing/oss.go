@@ -64,5 +64,6 @@ func ProvideService(cfg *setting.Cfg, hooksService *hooks.HooksService) *OSSLice
 			})
 		}
 	})
+
 	return l
 }
