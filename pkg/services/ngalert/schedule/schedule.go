@@ -68,7 +68,7 @@ type schedule struct {
 
 	clock clock.Clock
 
-	ticker *ticker.Ticker
+	ticker *ticker.T
 
 	// evalApplied is only used for tests: test code can set it to non-nil
 	// function, and then it'll be called from the event loop whenever the
@@ -119,7 +119,7 @@ type SchedulerCfg struct {
 
 // NewScheduler returns a new schedule.
 func NewScheduler(cfg SchedulerCfg, appURL *url.URL, stateManager *state.Manager) *schedule {
-	ticker := ticker.NewTicker(cfg.C, cfg.Cfg.BaseInterval, cfg.Metrics.Ticker)
+	ticker := ticker.New(cfg.C, cfg.Cfg.BaseInterval, cfg.Metrics.Ticker)
 
 	sch := schedule{
 		registry:              alertRuleInfoRegistry{alertRuleInfo: make(map[ngmodels.AlertRuleKey]*alertRuleInfo)},
@@ -449,7 +449,7 @@ func (sch *schedule) overrideCfg(cfg SchedulerCfg) {
 	sch.clock = cfg.C
 	sch.baseInterval = cfg.Cfg.BaseInterval
 	sch.ticker.Stop()
-	sch.ticker = ticker.NewTicker(cfg.C, cfg.Cfg.BaseInterval, cfg.Metrics.Ticker)
+	sch.ticker = ticker.New(cfg.C, cfg.Cfg.BaseInterval, cfg.Metrics.Ticker)
 	sch.evalAppliedFunc = cfg.EvalAppliedFunc
 	sch.stopAppliedFunc = cfg.StopAppliedFunc
 }
