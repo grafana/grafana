@@ -280,16 +280,16 @@ func (ls *Implementation) syncOrgRoles(ctx context.Context, usr *user.User, extU
 	deleteOrgIds := []int64{}
 
 	// update existing org roles
-	for _, org := range orgsQuery.Result {
-		handledOrgIds[org.OrgId] = true
+	for _, orga := range orgsQuery.Result {
+		handledOrgIds[orga.OrgId] = true
 
-		extRole := extUser.OrgRoles[org.OrgId]
+		extRole := extUser.OrgRoles[orga.OrgId]
 		if extRole == "" {
-			deleteOrgIds = append(deleteOrgIds, org.OrgId)
-		} else if extRole != org.Role {
+			deleteOrgIds = append(deleteOrgIds, orga.OrgId)
+		} else if extRole != orga.Role {
 			// update role
-			cmd := &models.UpdateOrgUserCommand{OrgId: org.OrgId, UserId: usr.ID, Role: extRole}
-			if err := ls.SQLStore.UpdateOrgUser(ctx, cmd); err != nil {
+			cmd := &org.UpdateOrgUserCommand{OrgID: orga.OrgId, UserID: usr.ID, Role: extRole}
+			if err := ls.orgService.UpdateOrgUser(ctx, cmd); err != nil {
 				return err
 			}
 		}
