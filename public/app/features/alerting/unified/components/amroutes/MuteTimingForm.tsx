@@ -60,8 +60,7 @@ const useDefaultValues = (muteTiming?: MuteTimeInterval): MuteTimingFields => {
 
 const defaultPageNav: Partial<NavModelItem> = {
   icon: 'sitemap',
-  id: 'alert-rule-view',
-  breadcrumbs: [{ title: 'Alerting', url: 'alerting/routes' }],
+  breadcrumbs: [{ title: 'Notification Policies', url: 'alerting/routes' }],
 };
 
 const MuteTimingForm = ({ muteTiming, showError, provenance }: Props) => {
@@ -112,7 +111,11 @@ const MuteTimingForm = ({ muteTiming, showError, provenance }: Props) => {
   return (
     <AlertingPageWrapper
       pageId="am-routes"
-      pageNav={{ ...defaultPageNav, text: muteTiming ? 'Edit mute timing' : 'New mute timing' }}
+      pageNav={{
+        ...defaultPageNav,
+        id: muteTiming ? 'alert-policy-edit' : 'alert-policy-new',
+        text: muteTiming ? 'Edit mute timing' : 'New mute timing',
+      }}
     >
       <AlertManagerPicker
         current={alertManagerSourceName}
