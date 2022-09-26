@@ -6,6 +6,8 @@ import { GrafanaTheme } from '@grafana/data';
 import { stylesFactory } from '@grafana/ui';
 import { config } from 'app/core/config';
 
+import { SplitView } from './SplitView';
+
 enum Pane {
   Right,
   Top,
@@ -100,8 +102,6 @@ export class SplitPaneWrapper extends PureComponent<Props> {
   render() {
     const { rightPaneVisible, rightPaneComponents, uiState } = this.props;
     // Limit options pane width to 90% of screen.
-    const styles = getStyles(config.theme);
-
     // Need to handle when width is relative. ie a percentage of the viewport
     const rightPaneSize =
       uiState.rightPaneSize <= 1 ? uiState.rightPaneSize * window.innerWidth : uiState.rightPaneSize;
@@ -111,18 +111,10 @@ export class SplitPaneWrapper extends PureComponent<Props> {
     }
 
     return (
-      <SplitPane
-        split="vertical"
-        maxSize={-300}
-        size={rightPaneSize}
-        primary="second"
-        resizerClassName={styles.resizerV}
-        onDragStarted={() => (document.body.style.cursor = 'col-resize')}
-        onDragFinished={(size) => this.onDragFinished(Pane.Right, size)}
-      >
+      <SplitView uiState={{ rightPaneSize }}>
         {this.renderHorizontalSplit()}
         {rightPaneComponents}
-      </SplitPane>
+      </SplitView>
     );
   }
 }

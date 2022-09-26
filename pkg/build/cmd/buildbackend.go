@@ -26,7 +26,7 @@ func BuildBackend(ctx *cli.Context) error {
 		}
 	)
 
-	mode, err := config.GetVersion(metadata.ReleaseMode.Mode)
+	buildConfig, err := config.GetBuildConfig(metadata.ReleaseMode.Mode)
 	if err != nil {
 		return fmt.Errorf("could not get version / package info for mode '%s': %w", metadata.ReleaseMode.Mode, err)
 	}
@@ -34,7 +34,7 @@ func BuildBackend(ctx *cli.Context) error {
 	const grafanaDir = "."
 
 	log.Printf("Building Grafana back-end, version %q, %s edition, variants [%v]",
-		version, edition, mode.Variants)
+		version, edition, buildConfig.Variants)
 
 	p := syncutil.NewWorkerPool(cfg.NumWorkers)
 	defer p.Close()
@@ -44,7 +44,7 @@ func BuildBackend(ctx *cli.Context) error {
 	}
 
 	g, _ := errutil.GroupWithContext(ctx.Context)
-	for _, variant := range mode.Variants {
+	for _, variant := range buildConfig.Variants {
 		variant := variant
 
 		opts := grafana.BuildVariantOpts{

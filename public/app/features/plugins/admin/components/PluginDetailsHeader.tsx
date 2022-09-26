@@ -64,7 +64,7 @@ export function PluginDetailsHeader({ plugin, currentUrl, parentUrl }: Props): R
               {/* Links */}
               {plugin.details?.links.map((link: any) => (
                 <a key={link.name} href={link.url}>
-                  {link.name}
+                  <Icon name="external-link-alt" size="sm" /> {link.name}
                 </a>
               ))}
 

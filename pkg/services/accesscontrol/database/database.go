@@ -13,12 +13,12 @@ const (
 	globalOrgID = 0
 )
 
-func ProvideService(sqlStore *sqlstore.SQLStore) *AccessControlStore {
-	return &AccessControlStore{sqlStore}
+func ProvideService(sql sqlstore.Store) *AccessControlStore {
+	return &AccessControlStore{sql}
 }
 
 type AccessControlStore struct {
-	sql *sqlstore.SQLStore
+	sql sqlstore.Store
 }
 
 func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]accesscontrol.Permission, error) {

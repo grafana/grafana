@@ -1,5 +1,6 @@
 import { ComponentType } from 'react';
 
+import { LinkTarget } from './dataLink';
 import { IconName } from './icon';
 
 export interface NavLinkDTO {
@@ -11,7 +12,7 @@ export interface NavLinkDTO {
   icon?: IconName;
   img?: string;
   url?: string;
-  target?: string;
+  target?: LinkTarget;
   sortWeight?: number;
   divider?: boolean;
   hideFromMenu?: boolean;

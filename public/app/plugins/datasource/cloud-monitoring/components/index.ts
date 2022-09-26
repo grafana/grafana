@@ -9,7 +9,7 @@ export { AlignmentPeriodLabel } from './AlignmentPeriodLabel';
 export { AliasBy } from './AliasBy';
 export { Aggregation } from './Aggregation';
 export { MetricQueryEditor } from './MetricQueryEditor';
-export { SLOQueryEditor } from './SLO/SLOQueryEditor';
+export { SLOQueryEditor } from './SLOQueryEditor';
 export { MQLQueryEditor } from './MQLQueryEditor';
 export { VariableQueryField, QueryEditorRow, QueryEditorField } from './Fields';
 export { VisualMetricQueryEditor } from './VisualMetricQueryEditor';

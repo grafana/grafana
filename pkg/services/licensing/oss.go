@@ -4,6 +4,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/hooks"
+	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -56,7 +57,7 @@ func ProvideService(cfg *setting.Cfg, hooksService *hooks.HooksService) *OSSLice
 	l.HooksService.AddIndexDataHook(func(indexData *dtos.IndexViewData, req *models.ReqContext) {
 		for _, node := range indexData.NavTree {
 			if node.Id == "admin" {
-				node.Children = append(node.Children, &dtos.NavLink{
+				node.Children = append(node.Children, &navtree.NavLink{
 					Text: "Stats and license",
 					Id:   "upgrading",
 					Url:  l.LicenseURL(req.IsGrafanaAdmin),

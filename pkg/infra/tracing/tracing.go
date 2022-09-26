@@ -33,6 +33,14 @@ func ProvideService(cfg *setting.Cfg) (Tracer, error) {
 		return nil, err
 	}
 
+	log.RegisterContextualLogProvider(func(ctx context.Context) ([]interface{}, bool) {
+		if traceID := TraceIDFromContext(ctx, false); traceID != "" {
+			return []interface{}{"traceID", traceID}, true
+		}
+
+		return nil, false
+	})
+
 	if ts.enabled {
 		return ts, ts.initJaegerGlobalTracer()
 	}

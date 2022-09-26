@@ -116,6 +116,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/star/starimpl"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/sanitizer"
+	"github.com/grafana/grafana/pkg/services/tag"
+	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
+	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/teamguardian"
 	teamguardianDatabase "github.com/grafana/grafana/pkg/services/teamguardian/database"
 	teamguardianManager "github.com/grafana/grafana/pkg/services/teamguardian/manager"
@@ -181,14 +184,14 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(registry.Service), new(*registry.InMemory)),
 	repo.ProvideService,
 	wire.Bind(new(repo.Service), new(*repo.Manager)),
-	manager.ProvideService,
-	wire.Bind(new(plugins.Manager), new(*manager.PluginManager)),
-	wire.Bind(new(plugins.RendererManager), new(*manager.PluginManager)),
-	wire.Bind(new(plugins.SecretsPluginManager), new(*manager.PluginManager)),
+	manager.ProvideInstaller,
+	wire.Bind(new(plugins.Installer), new(*manager.PluginInstaller)),
 	client.ProvideService,
 	wire.Bind(new(plugins.Client), new(*client.Service)),
 	managerStore.ProvideService,
 	wire.Bind(new(plugins.Store), new(*managerStore.Service)),
+	wire.Bind(new(plugins.RendererManager), new(*managerStore.Service)),
+	wire.Bind(new(plugins.SecretsPluginManager), new(*managerStore.Service)),
 	wire.Bind(new(plugins.StaticRouteResolver), new(*managerStore.Service)),
 	pluginDashboards.ProvideFileStoreManager,
 	wire.Bind(new(pluginDashboards.FileStore), new(*pluginDashboards.FileStoreManager)),
@@ -319,9 +322,9 @@ var wireSet = wire.NewSet(
 	publicdashboardsApi.ProvideApi,
 	userimpl.ProvideService,
 	orgimpl.ProvideService,
+	teamimpl.ProvideService,
 	userauthimpl.ProvideService,
 	ngmetrics.ProvideServiceForTest,
-	wire.Bind(new(sqlstore.TeamStore), new(*sqlstore.SQLStore)),
 	notifications.MockNotificationService,
 	wire.Bind(new(notifications.TempUserStore), new(*mockstore.SQLStoreMock)),
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationServiceMock)),
@@ -334,6 +337,8 @@ var wireSet = wire.NewSet(
 	opentsdb.ProvideService,
 	acimpl.ProvideAccessControl,
 	wire.Bind(new(accesscontrol.AccessControl), new(*acimpl.AccessControl)),
+	tagimpl.ProvideService,
+	wire.Bind(new(tag.Service), new(*tagimpl.Service)),
 )
 
 func Initialize(cfg *setting.Cfg) (Runner, error) {

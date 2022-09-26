@@ -1,7 +1,7 @@
 import { createAction } from '@reduxjs/toolkit';
 import { AnyAction } from 'redux';
 
-import { ExploreUrlState, serializeStateToUrlParam, SplitOpen, UrlQueryMap } from '@grafana/data';
+import { DataQuery, ExploreUrlState, serializeStateToUrlParam, SplitOpenOptions, UrlQueryMap } from '@grafana/data';
 import { DataSourceSrv, locationService } from '@grafana/runtime';
 import { GetExploreUrlArguments, stopQueryState } from 'app/core/utils/explore';
 import { PanelModel } from 'app/features/dashboard/state';
@@ -36,6 +36,16 @@ export const richHistorySearchFiltersUpdatedAction = createAction<{
   exploreId: ExploreId;
   filters?: RichHistorySearchFilters;
 }>('explore/richHistorySearchFiltersUpdatedAction');
+
+export const splitSizeUpdateAction = createAction<{
+  largerExploreId?: ExploreId;
+}>('explore/splitSizeUpdateAction');
+
+export const maximizePaneAction = createAction<{
+  exploreId?: ExploreId;
+}>('explore/maximizePaneAction');
+
+export const evenPaneResizeAction = createAction('explore/evenPaneResizeAction');
 
 /**
  * Resets state for explore.
@@ -101,7 +111,7 @@ export const lastSavedUrl: UrlQueryMap = {};
  * or uses values from options arg. This does only navigation each pane is then responsible for initialization from
  * the URL.
  */
-export const splitOpen: SplitOpen = (options): ThunkResult<void> => {
+export const splitOpen = <T extends DataQuery = DataQuery>(options?: SplitOpenOptions<T>): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const leftState: ExploreItemState = getState().explore[ExploreId.left];
     const leftUrlState = getUrlStateFromPaneState(leftState);
@@ -173,6 +183,9 @@ export const initialExploreState: ExploreState = {
   richHistoryStorageFull: false,
   richHistoryLimitExceededWarningShown: false,
   richHistoryMigrationFailed: false,
+  largerExploreId: undefined,
+  maxedExploreId: undefined,
+  evenSplitPanes: true,
 };
 
 /**
@@ -189,6 +202,38 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     return {
       ...state,
       ...targetSplit,
+      largerExploreId: undefined,
+      maxedExploreId: undefined,
+      evenSplitPanes: true,
+    };
+  }
+
+  if (splitSizeUpdateAction.match(action)) {
+    const { largerExploreId } = action.payload;
+    return {
+      ...state,
+      largerExploreId,
+      maxedExploreId: undefined,
+      evenSplitPanes: largerExploreId === undefined,
+    };
+  }
+
+  if (maximizePaneAction.match(action)) {
+    const { exploreId } = action.payload;
+    return {
+      ...state,
+      largerExploreId: exploreId,
+      maxedExploreId: exploreId,
+      evenSplitPanes: false,
+    };
+  }
+
+  if (evenPaneResizeAction.match(action)) {
+    return {
+      ...state,
+      largerExploreId: undefined,
+      maxedExploreId: undefined,
+      evenSplitPanes: true,
     };
   }
 

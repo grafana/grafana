@@ -18,8 +18,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/temp_user/tempuserimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
@@ -45,10 +48,16 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
 	sqlStore.Cfg = settings
 	hs.SQLStore = sqlStore
+	orgService := orgtest.NewOrgServiceFake()
+	hs.orgService = orgService
 	mock := mockstore.NewSQLStoreMock()
 	loggedInUserScenario(t, "When calling GET on", "api/org/users", "api/org/users", func(sc *scenarioContext) {
 		setUpGetOrgUsersDB(t, sqlStore)
-
+		orgService.ExpectedOrgUsers = []*org.OrgUserDTO{
+			{Login: testUserLogin, Email: "testUser@grafana.com"},
+			{Login: "user1", Email: "user1@grafana.com"},
+			{Login: "user2", Email: "user2@grafana.com"},
+		}
 		sc.handlerFunc = hs.GetOrgUsersForCurrentOrg
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 
@@ -155,7 +164,7 @@ func TestOrgUsersAPIEndpoint_LegacyAccessControl_FolderAdmin(t *testing.T) {
 			"tags":  "prod",
 		}),
 	}
-	folder, err := sc.dashboardsStore.SaveDashboard(cmd)
+	folder, err := sc.dashboardsStore.SaveDashboard(context.Background(), cmd)
 	require.NoError(t, err)
 	require.NotNil(t, folder)
 
@@ -184,9 +193,9 @@ func TestOrgUsersAPIEndpoint_LegacyAccessControl_TeamAdmin(t *testing.T) {
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	// Setup store teams
-	team1, err := sc.db.CreateTeam("testteam1", "testteam1@example.org", testOrgID)
+	team1, err := sc.teamService.CreateTeam("testteam1", "testteam1@example.org", testOrgID)
 	require.NoError(t, err)
-	err = sc.db.AddTeamMember(testUserID, testOrgID, team1.Id, false, models.PERMISSION_ADMIN)
+	err = sc.teamService.AddTeamMember(testUserID, testOrgID, team1.Id, false, models.PERMISSION_ADMIN)
 	require.NoError(t, err)
 
 	response := callAPI(sc.server, http.MethodGet, "/api/org/users/lookup", nil, t)
@@ -354,6 +363,7 @@ func TestGetOrgUsersAPIEndpoint_AccessControlMetadata(t *testing.T) {
 					hs.SQLStore, nil, nil, nil, nil,
 					nil, nil, nil, nil, nil, hs.SQLStore.(*sqlstore.SQLStore),
 				)
+				hs.orgService = orgimpl.ProvideService(hs.SQLStore, cfg)
 			})
 			setupOrgUsersDBForAccessControlTests(t, sc.db)
 			setInitCtxSignedInUser(sc.initCtx, tc.user)
@@ -458,6 +468,7 @@ func TestGetOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 					hs.SQLStore, nil, nil, nil, nil,
 					nil, nil, nil, nil, nil, hs.SQLStore.(*sqlstore.SQLStore),
 				)
+				hs.orgService = orgimpl.ProvideService(hs.SQLStore, cfg)
 			})
 			setInitCtxSignedInUser(sc.initCtx, tc.user)
 			setupOrgUsersDBForAccessControlTests(t, sc.db)
@@ -684,6 +695,7 @@ func TestOrgUsersAPIEndpointWithSetPerms_AccessControl(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			sc := setupHTTPServer(t, true, func(hs *HTTPServer) {
+				hs.tempUserService = tempuserimpl.ProvideService(hs.SQLStore)
 				hs.userService = userimpl.ProvideService(
 					hs.SQLStore, nil, nil, nil, nil,
 					nil, nil, nil, nil, nil, hs.SQLStore.(*sqlstore.SQLStore),
@@ -807,6 +819,7 @@ func TestPatchOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 					hs.SQLStore, nil, nil, nil, nil,
 					nil, nil, nil, nil, nil, hs.SQLStore.(*sqlstore.SQLStore),
 				)
+				hs.orgService = orgimpl.ProvideService(hs.SQLStore, cfg)
 			})
 			setupOrgUsersDBForAccessControlTests(t, sc.db)
 			setInitCtxSignedInUser(sc.initCtx, tc.user)

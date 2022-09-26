@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
@@ -50,16 +51,14 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 			action, testCase.expectedHTTPStatus, testCase.pluginAdminEnabled, testCase.pluginAdminExternalManageEnabled)
 	}
 
-	pm := &fakePluginManager{
-		plugins: make(map[string]fakePlugin),
-	}
+	inst := NewFakePluginInstaller()
 	for _, tc := range tcs {
 		srv := SetupAPITestServer(t, func(hs *HTTPServer) {
 			hs.Cfg = &setting.Cfg{
 				PluginAdminEnabled:               tc.pluginAdminEnabled,
 				PluginAdminExternalManageEnabled: tc.pluginAdminExternalManageEnabled,
 			}
-			hs.pluginManager = pm
+			hs.pluginInstaller = inst
 			hs.QuotaService = quotatest.NewQuotaServiceFake()
 		})
 
@@ -77,7 +76,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 			require.Equal(t, tc.expectedHTTPStatus, resp.StatusCode)
 
 			if tc.expectedHTTPStatus == 200 {
-				require.Equal(t, fakePlugin{pluginID: "test", version: "1.0.2"}, pm.plugins["test"])
+				require.Equal(t, fakePlugin{pluginID: "test", version: "1.0.2"}, inst.plugins["test"])
 			}
 		})
 
@@ -95,7 +94,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 			require.Equal(t, tc.expectedHTTPStatus, resp.StatusCode)
 
 			if tc.expectedHTTPStatus == 200 {
-				require.Empty(t, pm.plugins)
+				require.Empty(t, inst.plugins)
 			}
 		})
 	}
@@ -124,10 +123,6 @@ func Test_PluginsInstallAndUninstall_AccessControl(t *testing.T) {
 			action, tc.expectedCode, tc.pluginAdminEnabled, tc.pluginAdminExternalManageEnabled, tc.permissions)
 	}
 
-	pm := &fakePluginManager{
-		plugins: make(map[string]fakePlugin),
-	}
-
 	for _, tc := range tcs {
 		sc := setupHTTPServerWithCfg(t, true, &setting.Cfg{
 			RBACEnabled:                      true,
@@ -135,7 +130,7 @@ func Test_PluginsInstallAndUninstall_AccessControl(t *testing.T) {
 			PluginAdminExternalManageEnabled: tc.pluginAdminExternalManageEnabled})
 		setInitCtxSignedInViewer(sc.initCtx)
 		setAccessControlPermissions(sc.acmock, tc.permissions, sc.initCtx.OrgID)
-		sc.hs.pluginManager = pm
+		sc.hs.pluginInstaller = NewFakePluginInstaller()
 
 		t.Run(testName("Install", tc), func(t *testing.T) {
 			input := strings.NewReader("{ \"version\": \"1.0.2\" }")
@@ -319,11 +314,10 @@ func Test_GetPluginAssets(t *testing.T) {
 }
 
 func TestMakePluginResourceRequest(t *testing.T) {
-	pluginClient := &fakePluginClient{}
 	hs := HTTPServer{
 		Cfg:          setting.NewCfg(),
 		log:          log.New(),
-		pluginClient: pluginClient,
+		pluginClient: &fakePluginClient{},
 	}
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	resp := httptest.NewRecorder()

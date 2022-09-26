@@ -106,7 +106,7 @@ func NewPushoverConfig(config *NotificationChannelConfig, decryptFunc GetDecrypt
 		AlertingSound:             config.Settings.Get("sound").MustString(),
 		OKSound:                   config.Settings.Get("okSound").MustString(),
 		Upload:                    config.Settings.Get("uploadImage").MustBool(true),
-		Message:                   config.Settings.Get("message").MustString(`{{ template "default.message" .}}`),
+		Message:                   config.Settings.Get("message").MustString(DefaultMessageEmbed),
 	}, nil
 }
 

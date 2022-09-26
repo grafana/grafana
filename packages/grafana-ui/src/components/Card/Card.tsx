@@ -97,7 +97,7 @@ const Heading = ({ children, className, 'aria-label': ariaLabel }: ChildProps & 
           {children}
         </a>
       ) : onClick ? (
-        <button onClick={onClick} className={styles.linkHack} aria-label={ariaLabel}>
+        <button onClick={onClick} className={styles.linkHack} aria-label={ariaLabel} type="button">
           {children}
         </button>
       ) : (

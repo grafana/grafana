@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/validations"
 
@@ -52,7 +53,7 @@ func TestDingDingNotifier(t *testing.T) {
 				&alerting.Rule{
 					State:   models.AlertStateAlerting,
 					Message: `{host="localhost"}`,
-				}, &validations.OSSPluginRequestValidator{}, nil, nil, nil)
+				}, &validations.OSSPluginRequestValidator{}, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 			_, err = notifier.genBody(evalContext, "")
 			require.Nil(t, err)
 		})

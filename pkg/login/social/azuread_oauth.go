@@ -68,10 +68,11 @@ func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*Bas
 		return nil, ErrEmailNotFound
 	}
 
-	role, grafanaAdmin := claims.extractRoleAndAdmin(s.autoAssignOrgRole, s.roleAttributeStrict)
-	if role == "" {
+	role, grafanaAdmin := s.extractRoleAndAdmin(&claims)
+	if s.roleAttributeStrict && !role.IsValid() {
 		return nil, ErrInvalidBasicRole
 	}
+
 	logger.Debug("AzureAD OAuth: extracted role", "email", email, "role", role)
 
 	groups, err := extractGroups(client, claims, token)
@@ -94,7 +95,7 @@ func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*Bas
 		Name:           claims.Name,
 		Email:          email,
 		Login:          email,
-		Role:           string(role),
+		Role:           role,
 		IsGrafanaAdmin: isGrafanaAdmin,
 		Groups:         groups,
 	}, nil
@@ -127,22 +128,12 @@ func (claims *azureClaims) extractEmail() string {
 }
 
 // extractRoleAndAdmin extracts the role from the claims and returns the role and whether the user is a Grafana admin.
-func (claims *azureClaims) extractRoleAndAdmin(autoAssignRole string, strictMode bool) (org.RoleType, bool) {
+func (s *SocialAzureAD) extractRoleAndAdmin(claims *azureClaims) (org.RoleType, bool) {
 	if len(claims.Roles) == 0 {
-		if strictMode {
-			return org.RoleType(""), false
-		}
-
-		return org.RoleType(autoAssignRole), false
+		return s.defaultRole(false), false
 	}
 
-	roleOrder := []org.RoleType{
-		RoleGrafanaAdmin,
-		org.RoleAdmin,
-		org.RoleEditor,
-		org.RoleViewer,
-	}
-
+	roleOrder := []org.RoleType{RoleGrafanaAdmin, org.RoleAdmin, org.RoleEditor, org.RoleViewer}
 	for _, role := range roleOrder {
 		if found := hasRole(claims.Roles, role); found {
 			if role == RoleGrafanaAdmin {
@@ -153,11 +144,7 @@ func (claims *azureClaims) extractRoleAndAdmin(autoAssignRole string, strictMode
 		}
 	}
 
-	if strictMode {
-		return org.RoleType(""), false
-	}
-
-	return org.RoleViewer, false
+	return s.defaultRole(false), false
 }
 
 func hasRole(roles []string, role org.RoleType) bool {

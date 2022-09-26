@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware/csrf"
+	"github.com/grafana/grafana/pkg/services/searchV2"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -37,6 +38,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/comments"
@@ -60,6 +62,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/live/pushhttp"
 	"github.com/grafana/grafana/pkg/services/login"
 	loginAttempt "github.com/grafana/grafana/pkg/services/loginattempt"
+	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -83,6 +86,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/store"
+	"github.com/grafana/grafana/pkg/services/tag"
+	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/teamguardian"
 	tempUser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/services/thumbs"
@@ -108,6 +113,7 @@ type HTTPServer struct {
 	Features                     *featuremgmt.FeatureManager
 	SettingsProvider             setting.Provider
 	HooksService                 *hooks.HooksService
+	navTreeService               navtree.Service
 	CacheService                 *localcache.CacheService
 	DataSourceCache              datasources.CacheService
 	AuthTokenService             models.UserTokenService
@@ -121,7 +127,7 @@ type HTTPServer struct {
 	PluginRequestValidator       models.PluginRequestValidator
 	pluginClient                 plugins.Client
 	pluginStore                  plugins.Store
-	pluginManager                plugins.Manager
+	pluginInstaller              plugins.Installer
 	pluginDashboardService       plugindashboards.Service
 	pluginStaticRouteResolver    plugins.StaticRouteResolver
 	pluginErrorResolver          plugins.ErrorResolver
@@ -134,6 +140,7 @@ type HTTPServer struct {
 	ThumbService                 thumbs.Service
 	ExportService                export.ExportService
 	StorageService               store.StorageService
+	SearchV2HTTPService          searchV2.SearchHTTPService
 	ContextHandler               *contexthandler.ContextHandler
 	SQLStore                     sqlstore.Store
 	AlertEngine                  *alerting.AlertEngine
@@ -188,7 +195,10 @@ type HTTPServer struct {
 	dashboardThumbsService dashboardThumbs.Service
 	loginAttemptService    loginAttempt.Service
 	orgService             org.Service
+	teamService            team.Service
 	accesscontrolService   accesscontrol.Service
+	annotationsRepo        annotations.Repository
+	tagService             tag.Service
 }
 
 type ServerOptions struct {
@@ -200,7 +210,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	cacheService *localcache.CacheService, sqlStore *sqlstore.SQLStore, alertEngine *alerting.AlertEngine,
 	pluginRequestValidator models.PluginRequestValidator, pluginStaticRouteResolver plugins.StaticRouteResolver,
 	pluginDashboardService plugindashboards.Service, pluginStore plugins.Store, pluginClient plugins.Client,
-	pluginErrorResolver plugins.ErrorResolver, pluginManager plugins.Manager, settingsProvider setting.Provider,
+	pluginErrorResolver plugins.ErrorResolver, pluginInstaller plugins.Installer, settingsProvider setting.Provider,
 	dataSourceCache datasources.CacheService, userTokenService models.UserTokenService,
 	cleanUpService *cleanup.CleanUpService, shortURLService shorturls.Service, queryHistoryService queryhistory.Service, correlationsService correlations.Service,
 	thumbService thumbs.Service, remoteCache *remotecache.RemoteCache, provisioningService provisioning.ProvisioningService,
@@ -226,8 +236,10 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	playlistService playlist.Service, apiKeyService apikey.Service, kvStore kvstore.KVStore,
 	secretsMigrator secrets.Migrator, secretsPluginManager plugins.SecretsPluginManager, secretsService secrets.Service,
 	secretsPluginMigrator spm.SecretMigrationProvider, secretsStore secretsKV.SecretsKVStore,
-	publicDashboardsApi *publicdashboardsApi.Api, userService user.Service, tempUserService tempUser.Service, loginAttemptService loginAttempt.Service, orgService org.Service,
-	accesscontrolService accesscontrol.Service, dashboardThumbsService dashboardThumbs.Service,
+	publicDashboardsApi *publicdashboardsApi.Api, userService user.Service, tempUserService tempUser.Service,
+	loginAttemptService loginAttempt.Service, orgService org.Service, teamService team.Service,
+	accesscontrolService accesscontrol.Service, dashboardThumbsService dashboardThumbs.Service, navTreeService navtree.Service,
+	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -243,7 +255,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		SQLStore:                     sqlStore,
 		AlertEngine:                  alertEngine,
 		PluginRequestValidator:       pluginRequestValidator,
-		pluginManager:                pluginManager,
+		pluginInstaller:              pluginInstaller,
 		pluginClient:                 pluginClient,
 		pluginStore:                  pluginStore,
 		pluginStaticRouteResolver:    pluginStaticRouteResolver,
@@ -266,6 +278,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		Login:                        loginService,
 		AccessControl:                accessControl,
 		DataProxy:                    dataSourceProxy,
+		SearchV2HTTPService:          searchv2HTTPService,
 		SearchService:                searchService,
 		ExportService:                exportService,
 		Live:                         live,
@@ -322,7 +335,11 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		dashboardThumbsService:       dashboardThumbsService,
 		loginAttemptService:          loginAttemptService,
 		orgService:                   orgService,
+		teamService:                  teamService,
+		navTreeService:               navTreeService,
 		accesscontrolService:         accesscontrolService,
+		annotationsRepo:              annotationRepo,
+		tagService:                   tagService,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
@@ -330,7 +347,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	hs.registerRoutes()
 
 	// Register access control scope resolver for annotations
-	hs.AccessControl.RegisterScopeAttributeResolver(AnnotationTypeScopeResolver())
+	hs.AccessControl.RegisterScopeAttributeResolver(AnnotationTypeScopeResolver(hs.annotationsRepo))
 
 	if err := hs.declareFixedRoles(); err != nil {
 		return nil, err

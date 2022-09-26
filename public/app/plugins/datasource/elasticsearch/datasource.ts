@@ -27,11 +27,15 @@ import {
   QueryFixAction,
 } from '@grafana/data';
 import { BackendSrvRequest, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
-import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import { queryLogsVolume } from 'app/core/logsModel';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
+import { RowContextOptions } from '../../../features/logs/components/LogRowContextProvider';
+
+import { IndexPattern } from './IndexPattern';
+import LanguageProvider from './LanguageProvider';
+import { ElasticQueryBuilder } from './QueryBuilder';
 import { ElasticsearchAnnotationsQueryEditor } from './components/QueryEditor/AnnotationQueryEditor';
 import {
   BucketAggregation,
@@ -45,10 +49,7 @@ import {
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import { ElasticResponse } from './elastic_response';
-import { IndexPattern } from './index_pattern';
-import LanguageProvider from './language_provider';
-import { ElasticQueryBuilder } from './query_builder';
-import { defaultBucketAgg, hasMetricOfType } from './query_def';
+import { defaultBucketAgg, hasMetricOfType } from './queryDef';
 import { DataLinkConfig, ElasticsearchOptions, ElasticsearchQuery, TermsQuery } from './types';
 import { coerceESVersion, getScriptValue, isSupportedVersion } from './utils';
 

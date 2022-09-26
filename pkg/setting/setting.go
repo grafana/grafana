@@ -136,6 +136,7 @@ var (
 
 	// analytics
 	GoogleAnalyticsId       string
+	GoogleAnalytics4Id      string
 	GoogleTagManagerId      string
 	RudderstackDataPlaneUrl string
 	RudderstackWriteKey     string
@@ -294,6 +295,7 @@ type Cfg struct {
 	AdminUser                    string
 	AdminPassword                string
 	AdminEmail                   string
+	DisableSyncLock              bool
 
 	// AWS Plugin Auth
 	AWSAllowedAuthProviders []string
@@ -372,6 +374,7 @@ type Cfg struct {
 
 	// Annotations
 	AnnotationCleanupJobBatchSize      int64
+	AnnotationMaximumTagsLength        int64
 	AlertingAnnotationCleanupSetting   AnnotationCleanupSettings
 	DashboardAnnotationCleanupSettings AnnotationCleanupSettings
 	APIAnnotationCleanupSettings       AnnotationCleanupSettings
@@ -452,6 +455,8 @@ type Cfg struct {
 	DashboardPreviews DashboardPreviewsSettings
 
 	Storage StorageSettings
+
+	Search SearchSettings
 
 	// Access Control
 	RBACEnabled         bool
@@ -597,9 +602,20 @@ func (cfg *Cfg) readGrafanaEnvironmentMetrics() error {
 	return nil
 }
 
-func (cfg *Cfg) readAnnotationSettings() {
+func (cfg *Cfg) readAnnotationSettings() error {
 	section := cfg.Raw.Section("annotations")
 	cfg.AnnotationCleanupJobBatchSize = section.Key("cleanupjob_batchsize").MustInt64(100)
+	cfg.AnnotationMaximumTagsLength = section.Key("tags_length").MustInt64(500)
+	switch {
+	case cfg.AnnotationMaximumTagsLength > 4096:
+		// ensure that the configuration does not exceed the respective column size
+		return fmt.Errorf("[annotations.tags_length] configuration exceeds the maximum allowed (4096)")
+	case cfg.AnnotationMaximumTagsLength > 500:
+		cfg.Logger.Info("[annotations.tags_length] has been increased from its default value; this may affect the performance", "tagLength", cfg.AnnotationMaximumTagsLength)
+	case cfg.AnnotationMaximumTagsLength < 500:
+		cfg.Logger.Warn("[annotations.tags_length] is too low; the minimum allowed (500) is enforced")
+		cfg.AnnotationMaximumTagsLength = 500
+	}
 
 	dashboardAnnotation := cfg.Raw.Section("annotations.dashboard")
 	apiIAnnotation := cfg.Raw.Section("annotations.api")
@@ -620,6 +636,8 @@ func (cfg *Cfg) readAnnotationSettings() {
 	cfg.AlertingAnnotationCleanupSetting = newAnnotationCleanupSettings(alertingSection, "max_annotation_age")
 	cfg.DashboardAnnotationCleanupSettings = newAnnotationCleanupSettings(dashboardAnnotation, "max_age")
 	cfg.APIAnnotationCleanupSettings = newAnnotationCleanupSettings(apiIAnnotation, "max_age")
+
+	return nil
 }
 
 func (cfg *Cfg) readExpressionsSettings() {
@@ -956,6 +974,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.CheckForGrafanaUpdates = analytics.Key("check_for_updates").MustBool(true)
 	cfg.CheckForPluginUpdates = analytics.Key("check_for_plugin_updates").MustBool(true)
 	GoogleAnalyticsId = analytics.Key("google_analytics_ua_id").String()
+	GoogleAnalytics4Id = analytics.Key("google_analytics_4_id").String()
 	GoogleTagManagerId = analytics.Key("google_tag_manager_id").String()
 	RudderstackWriteKey = analytics.Key("rudderstack_write_key").String()
 	RudderstackDataPlaneUrl = analytics.Key("rudderstack_data_plane_url").String()
@@ -1015,7 +1034,10 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.readSessionConfig()
 	cfg.readSmtpSettings()
 	cfg.readQuotaSettings()
-	cfg.readAnnotationSettings()
+	if err := cfg.readAnnotationSettings(); err != nil {
+		return err
+	}
+
 	cfg.readExpressionsSettings()
 	if err := cfg.readGrafanaEnvironmentMetrics(); err != nil {
 		return err
@@ -1025,6 +1047,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 
 	cfg.DashboardPreviews = readDashboardPreviewsSettings(iniFile)
 	cfg.Storage = readStorageSettings(iniFile)
+	cfg.Search = readSearchSettings(iniFile)
 
 	if VerifyEmailEnabled && !cfg.Smtp.Enabled {
 		cfg.Logger.Warn("require_email_validation is enabled but smtp is disabled")
@@ -1285,6 +1308,9 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	if cfg.TokenRotationIntervalMinutes < 2 {
 		cfg.TokenRotationIntervalMinutes = 2
 	}
+
+	// Debug setting unlocking frontend auth sync lock. Users will still be reset on their next login.
+	cfg.DisableSyncLock = auth.Key("disable_sync_lock").MustBool(false)
 
 	DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
 	DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)

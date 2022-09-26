@@ -172,6 +172,16 @@ func (api *API) authorize(method, path string) web.Handler {
 	case http.MethodPost + "/api/alertmanager/{DatasourceUID}/config/api/v1/receivers/test":
 		eval = ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":DatasourceUID")))
 
+	case http.MethodGet + "/api/v1/ngalert":
+		// let user with any alerting permission access this API
+		eval = ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingInstanceRead),
+			ac.EvalPermission(ac.ActionAlertingInstancesExternalRead),
+			ac.EvalPermission(ac.ActionAlertingRuleRead),
+			ac.EvalPermission(ac.ActionAlertingRuleExternalRead),
+			ac.EvalPermission(ac.ActionAlertingNotificationsRead),
+			ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead),
+		)
 	// Raw Alertmanager Config Paths
 	case http.MethodDelete + "/api/v1/ngalert/admin_config",
 		http.MethodGet + "/api/v1/ngalert/admin_config",

@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
+	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
@@ -118,7 +119,7 @@ func TestMiddlewareContext(t *testing.T) {
 			data := &dtos.IndexViewData{
 				User:     &dtos.CurrentUser{},
 				Settings: map[string]interface{}{},
-				NavTree:  []*dtos.NavLink{},
+				NavTree:  []*navtree.NavLink{},
 			}
 			t.Log("Calling HTML", "data", data)
 			c.HTML(http.StatusOK, "index-template", data)
