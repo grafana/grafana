@@ -300,7 +300,6 @@ describe('Plugin details page', () => {
       );
 
       // Check if version information is available
-      // await waitFor(() => expect(queryByText(/version history/i)).toBeInTheDocument());
       expect(await findByRole('tab', { name: `Tab ${PluginTabLabels.VERSIONS}` })).toBeInTheDocument();
 
       // Check the column headers
