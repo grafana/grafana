@@ -773,7 +773,7 @@ func (hs *HTTPServer) ValidateDashboard(c *models.ReqContext) response.Response 
 
 	cm := hs.Coremodels.Dashboard()
 
-	// POST api recieves dashboard as a string of json (so line numbers for errors stay consistent),
+	// POST api receives dashboard as a string of json (so line numbers for errors stay consistent),
 	// but we need to parse the schema version out of it
 	dashboardBytes := []byte(cmd.Dashboard)
 	dashboardJson, err := simplejson.NewJson(dashboardBytes)
