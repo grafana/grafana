@@ -171,6 +171,26 @@ conflict: test2
 			expectedBlocks:      []string{"conflict: test", "conflict: test2"},
 			expectedIdsInBlocks: m,
 		},
+		{
+			desc: "should be able to parse the fileString containing the conflicts 123",
+			users: []user.User{
+				{
+					Email: "saml-misi@example.org",
+					Login: "saml-misi",
+					OrgID: int64(testOrgID),
+				},
+				{
+					Email: "saml-misi@example",
+					Login: "saml-Misi",
+					OrgID: int64(testOrgID),
+				},
+			},
+			fileString: `conflict: saml-misi
++ id: 5, email: saml-misi@example.org, login: saml-misi, last_seen_at: 2022-09-22T12:00:49Z, auth_module: auth.saml
+- id: 15, email: saml-misi@example, login: saml-Misi, last_seen_at: 2012-09-26T11:31:32Z, auth_module:`,
+			expectedBlocks:      []string{"conflict: saml-misi"},
+			expectedIdsInBlocks: map[string][]string{"conflict: saml-misi": {"5", "15"}},
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
@@ -195,13 +215,12 @@ conflict: test2
 				require.NoError(t, err)
 				validErr := getValidConflictUsers(&r, []byte(tc.fileString))
 				require.NoError(t, validErr)
-				require.Equal(t, len(r.ValidUsers), 5)
 				keys := make([]string, 0)
 				for k := range r.Blocks {
 					keys = append(keys, k)
 				}
 				sort.Strings(keys)
-				require.Equal(t, keys, tc.expectedBlocks)
+				require.Equal(t, tc.expectedBlocks, keys)
 
 				// checking for parsing of ids
 				conflict1Ids := []string{}
@@ -696,7 +715,6 @@ conflict: test2
 				require.NoError(t, err)
 				validErr := getValidConflictUsers(&r, []byte(b))
 				require.NoError(t, validErr)
-				require.Equal(t, 5, len(r.ValidUsers))
 
 				// test starts here
 				err = r.MergeConflictingUsers(context.Background(), sqlStore)
