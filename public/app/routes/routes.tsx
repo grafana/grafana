@@ -21,8 +21,6 @@ import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamic
 import { RouteDescriptor } from '../core/navigation/types';
 import { getPublicDashboardRoutes } from '../features/dashboard/routes';
 
-import { pluginHasRootPage } from './utils';
-
 export const extraRoutes: RouteDescriptor[] = [];
 
 export function getAppRoutes(): RouteDescriptor[] {
@@ -43,18 +41,9 @@ export function getAppRoutes(): RouteDescriptor[] {
         {
           path: '/a/:pluginId',
           exact: true,
-          component: (props) => {
-            const hasRoot = pluginHasRootPage(props.match.params.pluginId, config.bootData.navTree);
-            const hasQueryParams = Object.keys(props.queryParams).length > 0;
-            if (hasRoot || hasQueryParams) {
-              const AppRootPage = SafeDynamicImport(
-                () => import(/* webpackChunkName: "AppRootPage" */ 'app/features/plugins/components/AppRootPage')
-              );
-              return <AppRootPage {...props} />;
-            } else {
-              return <NavLandingPage navId={`plugin-page-${props.match.params.pluginId}`} />;
-            }
-          },
+          component: SafeDynamicImport(
+            () => import(/* webpackChunkName: "AppRootPage" */ 'app/features/plugins/components/AppRootPage')
+          ),
         },
       ]
     : [];

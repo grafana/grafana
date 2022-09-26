@@ -108,7 +108,7 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 
 			if len(include.Path) > 0 {
 				link.Url = s.cfg.AppSubURL + include.Path
-				if include.DefaultNav && !topNavEnabled {
+				if include.DefaultNav {
 					appLink.Url = link.Url
 				}
 			} else {
