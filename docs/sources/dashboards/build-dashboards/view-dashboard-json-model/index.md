@@ -2,6 +2,7 @@
 aliases:
   - /docs/grafana/latest/dashboards/json-model/
   - /docs/grafana/latest/reference/dashboard/
+  - /docs/grafana/next/dashboards/build-dashboards/view-dashboard-json-model/
 keywords:
   - grafana
   - dashboard
@@ -9,7 +10,7 @@ keywords:
   - json
   - model
 title: JSON model
-weight: 1200
+weight: 700
 ---
 
 # Dashboard JSON model
