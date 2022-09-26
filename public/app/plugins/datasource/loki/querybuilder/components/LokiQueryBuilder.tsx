@@ -78,7 +78,7 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, onChange
   const labelFilterRequired: boolean = useMemo(() => {
     const { labels, operations: op } = query;
     if (!labels.length && op.length) {
-      // Filter is required when operations are present (line contains operation is exception)
+      // Filter is required when operations are present (empty line contains operation is exception)
       if (op.length === 1 && op[0].id === LokiOperationId.LineContains && op[0].params[0] === '') {
         return false;
       }
