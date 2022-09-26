@@ -81,7 +81,9 @@ Object {
         "conditions": Array [
           Object {
             "evaluator": Object {
-              "params": Array [],
+              "params": Array [
+                0,
+              ],
               "type": "gt",
             },
             "operator": Object {
@@ -103,10 +105,10 @@ Object {
           "type": "__expr__",
           "uid": "-100",
         },
-        "expression": "$B > 0",
+        "expression": "B",
         "hide": false,
         "refId": "C",
-        "type": "math",
+        "type": "threshold",
       },
       "queryType": "",
       "refId": "C",

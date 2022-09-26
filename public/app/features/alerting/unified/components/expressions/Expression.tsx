@@ -9,6 +9,7 @@ import { ClassicConditions } from 'app/features/expressions/components/ClassicCo
 import { Math } from 'app/features/expressions/components/Math';
 import { Reduce } from 'app/features/expressions/components/Reduce';
 import { Resample } from 'app/features/expressions/components/Resample';
+import { Threshold } from 'app/features/expressions/components/Threshold';
 import { ExpressionQuery, ExpressionQueryType, gelTypes } from 'app/features/expressions/types';
 import { AlertQuery, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
@@ -85,6 +86,9 @@ export const Expression: FC<ExpressionProps> = ({
 
         case ExpressionQueryType.classic:
           return <ClassicConditions onChange={onChangeQuery} query={query} refIds={availableRefIds} />;
+
+        case ExpressionQueryType.threshold:
+          return <Threshold onChange={onChangeQuery} query={query} labelWidth={'auto'} refIds={availableRefIds} />;
 
         default:
           return <>Expression not supported: {query.type}</>;

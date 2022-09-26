@@ -252,10 +252,10 @@ const getDefaultExpressions = (...refIds: [string, string]): AlertQuery[] => {
     expression: 'A',
   };
 
-  const mathExpression: ExpressionQuery = {
+  const thresholdExpression: ExpressionQuery = {
     refId: refTwo,
     hide: false,
-    type: ExpressionQueryType.math,
+    type: ExpressionQueryType.threshold,
     datasource: {
       uid: ExpressionDatasourceUID,
       type: ExpressionDatasourceRef.type,
@@ -264,7 +264,7 @@ const getDefaultExpressions = (...refIds: [string, string]): AlertQuery[] => {
       {
         type: 'query',
         evaluator: {
-          params: [],
+          params: [0],
           type: EvalFunction.IsAbove,
         },
         operator: {
@@ -279,7 +279,7 @@ const getDefaultExpressions = (...refIds: [string, string]): AlertQuery[] => {
         },
       },
     ],
-    expression: `$${refOne} > 0`,
+    expression: refOne,
   };
 
   return [
@@ -293,7 +293,7 @@ const getDefaultExpressions = (...refIds: [string, string]): AlertQuery[] => {
       refId: refTwo,
       datasourceUid: ExpressionDatasourceUID,
       queryType: '',
-      model: mathExpression,
+      model: thresholdExpression,
     },
   ];
 };
@@ -380,14 +380,14 @@ export const panelToRuleFormValues = async (
   }
 
   if (!queries.find((query) => query.datasourceUid === ExpressionDatasourceUID)) {
-    const [reduceExpression, _mathExpression] = getDefaultExpressions(getNextRefIdChar(queries), '-');
+    const [reduceExpression, _thresholdExpression] = getDefaultExpressions(getNextRefIdChar(queries), '-');
     queries.push(reduceExpression);
 
-    const [_reduceExpression, mathExpression] = getDefaultExpressions(
+    const [_reduceExpression, thresholdExpression] = getDefaultExpressions(
       reduceExpression.refId,
       getNextRefIdChar(queries)
     );
-    queries.push(mathExpression);
+    queries.push(thresholdExpression);
   }
 
   const { folderId, folderTitle } = dashboard.meta;
