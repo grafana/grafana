@@ -577,20 +577,18 @@ func TestMergeUser(t *testing.T) {
 			err = r.MergeConflictingUsers(context.Background(), sqlStore)
 			require.NoError(t, err)
 
-			t.Logf("testing getting user with uppercase")
 			// user with uppercaseemail should not exist
 			query := &models.GetUserByIdQuery{Id: userWithUpperCase.ID}
 			err = sqlStore.GetUserById(context.Background(), query)
 			require.Error(t, user.ErrUserNotFound, err)
 
-			testUser := &user.SignedInUser{OrgID: testOrgID, Permissions: map[int64]map[string][]string{1: {
+			signedInUser := &user.SignedInUser{OrgID: testOrgID, Permissions: map[int64]map[string][]string{1: {
 				ac.ActionTeamsRead:    []string{ac.ScopeTeamsAll},
 				ac.ActionOrgUsersRead: []string{ac.ScopeUsersAll},
 			}}}
-			t.Logf("testing getting team member")
 
 			// test that we have updated the tables with userWithLowerCaseEmail
-			q1 := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team1.Id, SignedInUser: testUser}
+			q1 := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team1.Id, SignedInUser: signedInUser}
 			err = sqlStore.GetTeamMembers(context.Background(), q1)
 			require.NoError(t, err)
 			require.Equal(t, 1, len(q1.Result))
@@ -599,7 +597,7 @@ func TestMergeUser(t *testing.T) {
 			require.Equal(t, userWithLowerCase.Email, teamMember.Email)
 
 			// test that we have updated the tables with userWithLowerCaseEmail
-			q2 := &models.GetOrgUsersQuery{OrgId: testOrgID, User: testUser}
+			q2 := &models.GetOrgUsersQuery{OrgId: testOrgID, User: signedInUser}
 			err = sqlStore.GetOrgUsers(context.Background(), q2)
 			require.NoError(t, err)
 			require.Equal(t, 1, len(q1.Result))
@@ -632,13 +630,13 @@ func TestMergeUserFromNewFileInput(t *testing.T) {
 				desc: "should be able to parse the fileString containing the conflicts",
 				users: []user.User{
 					{
-						Email: "test",
-						Login: "test",
+						Email: "TEST",
+						Login: "TEST",
 						OrgID: int64(testOrgID),
 					},
 					{
-						Email: "TEST",
-						Login: "TEST",
+						Email: "test",
+						Login: "test",
 						OrgID: int64(testOrgID),
 					},
 					{

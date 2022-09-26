@@ -189,7 +189,7 @@ func runIngestConflictUsersFile() func(context *cli.Context) error {
 		}
 		validErr := getValidConflictUsers(&resolver, b)
 		if validErr != nil {
-			return fmt.Errorf("could not validate file with error %s", err)
+			return fmt.Errorf("could not validate file with error %s", validErr)
 		}
 		// should we rebuild blocks here?
 		// kind of a weird thing maybe?
@@ -289,7 +289,7 @@ func (r *ConflictResolver) MergeConflictingUsers(ctx context.Context, ss *sqlsto
 		defer sess.Close()
 		err := sess.Begin()
 		if err != nil {
-			return fmt.Errorf("could not open a sess: %w", err)
+			return fmt.Errorf("could not open a db session: %w", err)
 		}
 		for _, u := range users {
 			if u.Direction == "+" {
