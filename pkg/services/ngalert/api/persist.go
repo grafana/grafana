@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
+// RuleStore is the interface for persisting alert rules and instances
 type RuleStore interface {
 	GetUserVisibleNamespaces(context.Context, int64, *user.SignedInUser) (map[string]*models.Folder, error)
 	GetNamespaceByTitle(context.Context, string, int64, *user.SignedInUser, bool) (*models.Folder, error)
