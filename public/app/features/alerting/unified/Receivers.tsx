@@ -5,11 +5,10 @@ import { NavModelItem } from '@grafana/data';
 import { Alert, LoadingPlaceholder, withErrorBoundary } from '@grafana/ui';
 import { useDispatch } from 'app/types';
 
-import { AlertmanagerChoice } from '../../../plugins/datasource/alertmanager/types';
-
 import { alertmanagerApi } from './api/alertmanagerApi';
 import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
+import { GrafanaAlertmanagerDisabledWarning } from './components/GrafanaAlertmanagerDisabledWarning';
 import { NoAlertManagerWarning } from './components/NoAlertManagerWarning';
 import { EditReceiverView } from './components/receivers/EditReceiverView';
 import { EditTemplateView } from './components/receivers/EditTemplateView';
@@ -92,12 +91,10 @@ const Receivers: FC = () => {
           {error.message || 'Unknown error.'}
         </Alert>
       )}
-      {alertmanagerChoice === AlertmanagerChoice.External && alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME && (
-        <Alert title="Grafana Alertmanager is currently disabled">
-          Grafana is configured to sent alerts to external Alertmanagers only Changing Grafana Alertmanager
-          configuration will not affect your alerts!
-        </Alert>
-      )}
+      <GrafanaAlertmanagerDisabledWarning
+        alertmanagerChoice={alertmanagerChoice}
+        currentAlertmanager={alertManagerSourceName}
+      />
       {loading && !config && <LoadingPlaceholder text="loading configuration..." />}
       {config && !error && (
         <Switch>
