@@ -202,41 +202,42 @@ function prepSeries(options: XYChartOptions, frames: DataFrame[]): ScatterSeries
   }
 
   if (options.seriesMapping === 'manual') {
-    if (options.series?.length) {
-      const scatterSeries: ScatterSeries[] = [];
+    if (!options.series?.length) {
+      throw 'Missing series config';
+    }
 
-      for (const series of options.series) {
-        if (!series?.x) {
-          throw 'Select X dimension';
-        }
+    const scatterSeries: ScatterSeries[] = [];
 
-        if (!series?.y) {
-          throw 'Select Y dimension';
-        }
-
-        for (let frameIndex = 0; frameIndex < frames.length; frameIndex++) {
-          const frame = frames[frameIndex];
-          const xIndex = findFieldIndex(frame, series.x);
-
-          if (xIndex != null) {
-            // TODO: this should find multiple y fields
-            const yIndex = findFieldIndex(frame, series.y);
-
-            if (yIndex == null) {
-              throw 'Y must be in the same frame as X';
-            }
-
-            const dims: Dims = {
-              pointColorFixed: series.pointColor?.fixed,
-              pointColorIndex: findFieldIndex(frame, series.pointColor?.field),
-              pointSizeConfig: series.pointSize,
-              pointSizeIndex: findFieldIndex(frame, series.pointSize?.field),
-            };
-            scatterSeries.push(getScatterSeries(seriesIndex++, frames, frameIndex, xIndex, yIndex, dims));
-          }
-        }
+    for (const series of options.series) {
+      if (!series?.x) {
+        throw 'Select X dimension';
       }
 
+      if (!series?.y) {
+        throw 'Select Y dimension';
+      }
+
+      for (let frameIndex = 0; frameIndex < frames.length; frameIndex++) {
+        const frame = frames[frameIndex];
+        const xIndex = findFieldIndex(frame, series.x);
+
+        if (xIndex != null) {
+          // TODO: this should find multiple y fields
+          const yIndex = findFieldIndex(frame, series.y);
+
+          if (yIndex == null) {
+            throw 'Y must be in the same frame as X';
+          }
+
+          const dims: Dims = {
+            pointColorFixed: series.pointColor?.fixed,
+            pointColorIndex: findFieldIndex(frame, series.pointColor?.field),
+            pointSizeConfig: series.pointSize,
+            pointSizeIndex: findFieldIndex(frame, series.pointSize?.field),
+          };
+          scatterSeries.push(getScatterSeries(seriesIndex++, frames, frameIndex, xIndex, yIndex, dims));
+        }
+      }
       return scatterSeries;
     }
   }

@@ -73,7 +73,9 @@ export const XYChartPanel2: React.FC<Props> = (props: Props) => {
       isToolTipOpen
     );
 
-    if (info.series.length && props.data.series) {
+    if (info.error) {
+      setError(info.error);
+    } else if (info.series.length && props.data.series) {
       setBuilder(info.builder);
       setSeries(info.series);
       setFacets(() => prepData(info, props.data.series));
