@@ -50,22 +50,22 @@ func NewDashboardSummaryBuilder(lookup dslookup.DatasourceLookup) object.ObjectS
 			p.URL = fmt.Sprintf("%s?viewPanel=%d", url, panel.ID)
 			p.Fields = make(map[string]interface{}, 0)
 
-			refP.Add("panel", panel.Type, "")
+			panelRefs.Add("panel", panel.Type, "")
 			for _, v := range panel.Datasource {
-				refs.Add("ds", v.Type, v.UID) // dashboard refs
-				refP.Add("ds", v.Type, v.UID) // panel refs
+				dashboardRefs.Add("ds", v.Type, v.UID)
+				panelRefs.Add("ds", v.Type, v.UID)
 			}
 
 			for _, v := range panel.Transformer {
-				refP.Add("transformer", v, "")
+				panelRefs.Add("transformer", v, "")
 			}
 
-			refs.Add("panel", panel.Type, "")
-			p.References = refP.Get()
+			dashboardRefs.Add("panel", panel.Type, "")
+			p.References = panelRefs.Get()
 			summary.Nested = append(summary.Nested, p)
 		}
 
-		summary.References = refs.Get()
+		summary.References = dashboardRefs.Get()
 		return summary, nil
 	}
 }
