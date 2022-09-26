@@ -4,12 +4,12 @@ import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, LinkButton, LoadingPlaceholder, useStyles2, withErrorBoundary } from '@grafana/ui';
-import { Page } from 'app/core/components/Page/Page';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { useDispatch } from 'app/types';
 import { RuleIdentifier } from 'app/types/unified-alerting';
 
+import { RuleEditorWrapper } from './RuleEditorWrapper';
 import { AlertRuleForm } from './components/rule-editor/AlertRuleForm';
 import { useIsRuleEditable } from './hooks/useIsRuleEditable';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
@@ -35,20 +35,14 @@ const ExistingRuleEditor: FC<ExistingRuleEditorProps> = ({ identifier }) => {
   }, [dispatched, dispatch, identifier]);
 
   if (loading || isEditable === undefined) {
-    return (
-      <Page.Contents>
-        <LoadingPlaceholder text="Loading rule..." />
-      </Page.Contents>
-    );
+    return <LoadingPlaceholder text="Loading rule..." />;
   }
 
   if (error) {
     return (
-      <Page.Contents>
-        <Alert severity="error" title="Failed to load rule">
-          {error.message}
-        </Alert>
-      </Page.Contents>
+      <Alert severity="error" title="Failed to load rule">
+        {error.message}
+      </Alert>
     );
   }
 
@@ -76,27 +70,27 @@ const RuleEditor: FC<RuleEditorProps> = ({ match }) => {
 
   const { canCreateGrafanaRules, canCreateCloudRules, canEditRules } = useRulesAccess();
 
-  if (!identifier && !canCreateGrafanaRules && !canCreateCloudRules) {
-    return <AlertWarning title="Cannot create rules">Sorry! You are not allowed to create rules.</AlertWarning>;
-  }
+  const getContent = () => {
+    if (!identifier && !canCreateGrafanaRules && !canCreateCloudRules) {
+      return <AlertWarning title="Cannot create rules">Sorry! You are not allowed to create rules.</AlertWarning>;
+    }
 
-  if (identifier && !canEditRules(identifier.ruleSourceName)) {
-    return <AlertWarning title="Cannot edit rules">Sorry! You are not allowed to edit rules.</AlertWarning>;
-  }
+    if (identifier && !canEditRules(identifier.ruleSourceName)) {
+      return <AlertWarning title="Cannot edit rules">Sorry! You are not allowed to edit rules.</AlertWarning>;
+    }
 
-  if (loading) {
-    return (
-      <Page.Contents>
-        <LoadingPlaceholder text="Loading..." />
-      </Page.Contents>
-    );
-  }
+    if (loading) {
+      return <LoadingPlaceholder text="Loading..." />;
+    }
 
-  if (identifier) {
-    return <ExistingRuleEditor key={id} identifier={identifier} />;
-  }
+    if (identifier) {
+      return <ExistingRuleEditor key={id} identifier={identifier} />;
+    }
 
-  return <AlertRuleForm />;
+    return <AlertRuleForm />;
+  };
+
+  return <RuleEditorWrapper edit={Boolean(identifier)}>{getContent()}</RuleEditorWrapper>;
 };
 
 const AlertWarning: FC<{ title: string }> = ({ title, children }) => (
