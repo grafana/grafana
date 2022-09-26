@@ -43,7 +43,6 @@ export function RuleViewerLayoutContent({ children, padding = 2 }: ContentProps)
 const getPageStyles = (theme: GrafanaTheme2) => {
   return {
     content: css`
-      margin: ${theme.spacing(0, 2, 2)};
       max-width: ${theme.breakpoints.values.xxl}px;
     `,
   };
