@@ -36,10 +36,6 @@ message RawObject {
   // Raw bytes of the storage object.  The kind will determine what is a valid payload
   bytes body = 7;
 
-  // A small set of properties managed by raw storage layer.  The kind can lookup a schema
-  // that can enforce valid keys and the meanings
-  map<string,string> properties = 8;
-
   // The version will change when the object is saved. 
   //
   // NOTE: although this could be a known key in properties, this currently exists in the
@@ -129,9 +125,6 @@ message WriteObjectRequest {
 
   // Message that can be seen when exploring object history
   string comment = 4;
-
-  // Raw properties from storage
-  map<string,string> properties = 5;
 
   // Used for optimistic locking.  If missing, the previous version will be replaced regardless
   string previous_version = 6;
@@ -223,8 +216,8 @@ message ObjectSearchRequest {
   // Must match all labels
   map<string,string> labels = 6;
 
-  // Find items that match a given reference
-  ExternalReference reference = 7;
+  // Find items that match an explicit reference
+  repeated ExternalReference reference = 7;
 
   // Sorting instructions `field ASC/DESC`
   repeated string sort = 8;
