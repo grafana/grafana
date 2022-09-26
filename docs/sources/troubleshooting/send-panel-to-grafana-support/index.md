@@ -40,4 +40,4 @@ The panel that you send includes all query response data and all visualizations 
 
    Grafana downloads the support dashboard to a TXT file.
 
-   b. Attach the TXT file to a support ticket that you send to [Grafana Labs Technical Support](LINK?).
+   b. Attach the TXT file to a support ticket that you send to Grafana Labs Technical Support.
