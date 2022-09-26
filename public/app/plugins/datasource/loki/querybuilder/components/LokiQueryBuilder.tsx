@@ -75,7 +75,7 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, onChange
     return values ? values.map((v) => escapeLabelValueInSelector(v, forLabel.op)) : []; // Escape values in return
   };
 
-  const labelFilterRequiredError: boolean = useMemo(() => {
+  const labelFilterRequired: boolean = useMemo(() => {
     const { labels, operations: op } = query;
     if (!labels.length && op.length) {
       // Filter is required when operations are present (line contains operation is exception)
