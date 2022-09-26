@@ -158,14 +158,13 @@ func (ng *AlertNG) init() error {
 	ng.AlertsRouter = alertsRouter
 
 	schedCfg := schedule.SchedulerCfg{
-		Cfg:           ng.Cfg.UnifiedAlerting,
-		C:             clk,
-		Logger:        ng.Log,
-		Evaluator:     eval.NewEvaluator(ng.Cfg, ng.Log, ng.DataSourceCache, ng.ExpressionService),
-		InstanceStore: store,
-		RuleStore:     store,
-		Metrics:       ng.Metrics.GetSchedulerMetrics(),
-		AlertSender:   alertsRouter,
+		Cfg:         ng.Cfg.UnifiedAlerting,
+		C:           clk,
+		Logger:      ng.Log,
+		Evaluator:   eval.NewEvaluator(ng.Cfg, ng.Log, ng.DataSourceCache, ng.ExpressionService),
+		RuleStore:   store,
+		Metrics:     ng.Metrics.GetSchedulerMetrics(),
+		AlertSender: alertsRouter,
 	}
 
 	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), appUrl, store, store, ng.dashboardService, ng.imageService, clk, ng.annotationsRepo)
@@ -198,7 +197,6 @@ func (ng *AlertNG) init() error {
 		DataProxy:            ng.DataProxy,
 		QuotaService:         ng.QuotaService,
 		TransactionManager:   store,
-		InstanceStore:        store,
 		RuleStore:            store,
 		AlertingStore:        store,
 		AdminConfigStore:     store,

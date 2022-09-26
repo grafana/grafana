@@ -460,38 +460,6 @@ func (f *FakeRuleStore) IncreaseVersionForAllRulesInNamespace(_ context.Context,
 	return result, nil
 }
 
-type FakeInstanceStore struct {
-	mtx         sync.Mutex
-	RecordedOps []interface{}
-}
-
-func (f *FakeInstanceStore) GetAlertInstance(_ context.Context, q *models.GetAlertInstanceQuery) error {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-	f.RecordedOps = append(f.RecordedOps, *q)
-	return nil
-}
-func (f *FakeInstanceStore) ListAlertInstances(_ context.Context, q *models.ListAlertInstancesQuery) error {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-	f.RecordedOps = append(f.RecordedOps, *q)
-	return nil
-}
-func (f *FakeInstanceStore) SaveAlertInstance(_ context.Context, q *models.SaveAlertInstanceCommand) error {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-	f.RecordedOps = append(f.RecordedOps, *q)
-	return nil
-}
-
-func (f *FakeInstanceStore) FetchOrgIds(_ context.Context) ([]int64, error) { return []int64{}, nil }
-func (f *FakeInstanceStore) DeleteAlertInstance(_ context.Context, _ int64, _, _ string) error {
-	return nil
-}
-func (f *FakeInstanceStore) DeleteAlertInstancesByRule(ctx context.Context, key models.AlertRuleKey) error {
-	return nil
-}
-
 func NewFakeAdminConfigStore(t *testing.T) *FakeAdminConfigStore {
 	t.Helper()
 	return &FakeAdminConfigStore{Configs: map[int64]*models.AdminConfiguration{}}
