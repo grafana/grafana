@@ -1,18 +1,18 @@
 ---
 aliases:
   - /docs/grafana/latest/troubleshooting/send-panel-to-grafana-support/
-description: Learn how to send a panel to Grafana support for troubleshooting
+description: Learn how to send a panel to Grafana Labs support for troubleshooting
 keywords:
   - grafana
   - troubleshooting
   - support
   - dashboards
-title: Send a panel to Grafana support
+title: Send a panel to Grafana Labs support
 menutitle: Send panel to support
 weight: 100
 ---
 
-# Send a panel to Grafana support
+# Send a panel to Grafana Labs support
 
 When you encounter problems with any of your visualizations, you can send the panel JSON model to Grafana Labs Technical Support and request help with troubleshooting your issue.
 
@@ -24,7 +24,9 @@ The panel that you send includes all query response data and all visualizations 
 
    Grafana opens a standalone support dashboard that contains the data you are sending to Grafana Labs Technical Support.
 
-   ![Support panel](/static/img/docs/tables/support-panel.png)
+   If you enable iframes, the support dashboard includes the visualization that looks similar to the following image.
+
+   ![Support panel](/static/img/docs/troubleshooting/grafana-support-panel.png)
 
 1. To send the panel data to Grafana Labs via Github:
 
@@ -38,4 +40,4 @@ The panel that you send includes all query response data and all visualizations 
 
    Grafana downloads the support dashboard to a TXT file.
 
-b. Attach the TXT file to a support ticket that you send to [Grafana Labs Technical Support](LINK?).
+   b. Attach the TXT file to a support ticket that you send to [Grafana Labs Technical Support](LINK?).
