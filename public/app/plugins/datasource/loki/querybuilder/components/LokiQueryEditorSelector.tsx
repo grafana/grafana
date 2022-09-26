@@ -1,9 +1,9 @@
 import React, { SyntheticEvent, useCallback, useEffect, useState } from 'react';
 
-import { CoreApp, LoadingState, SelectableValue } from '@grafana/data';
+import { CoreApp, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, ConfirmModal, EditorHeader, EditorRows, FlexItem, InlineSelect, Space } from '@grafana/ui';
+import { Button, ConfirmModal, EditorHeader, EditorRows, FlexItem, Space } from '@grafana/ui';
 import { QueryEditorModeToggle } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryEditorModeToggle';
 import { QueryHeaderSwitch } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryHeaderSwitch';
 import { QueryEditorMode } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
@@ -15,18 +15,18 @@ import {
 } from '../../../prometheus/querybuilder/shared/hooks/useFlag';
 import { LokiQueryEditorProps } from '../../components/types';
 import { LokiQuery } from '../../types';
-import { lokiQueryModeller } from '../LokiQueryModeller';
 import { buildVisualQueryFromString } from '../parsing';
 import { changeEditorMode, getQueryWithDefaults } from '../state';
-import { LokiQueryPattern } from '../types';
 
 import { LokiQueryBuilderContainer } from './LokiQueryBuilderContainer';
 import { LokiQueryBuilderOptions } from './LokiQueryBuilderOptions';
 import { LokiQueryCodeEditor } from './LokiQueryCodeEditor';
+import { QueryPatternsModal } from './QueryPatternsModal';
 
 export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) => {
-  const { onChange, onRunQuery, data, app } = props;
+  const { onChange, onRunQuery, onAddQuery, data, app, queries } = props;
   const [parseModalOpen, setParseModalOpen] = useState(false);
+  const [queryPatternsModalOpen, setQueryPatternsModalOpen] = useState(false);
   const [dataIsStale, setDataIsStale] = useState(false);
   const { flag: explain, setFlag: setExplain } = useFlag(lokiQueryEditorExplainKey);
   const { flag: rawQuery, setFlag: setRawQuery } = useFlag(lokiQueryEditorRawQueryKey, true);
@@ -88,42 +88,35 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
         }}
         onDismiss={() => setParseModalOpen(false)}
       />
+      <QueryPatternsModal
+        isOpen={queryPatternsModalOpen}
+        onClose={() => setQueryPatternsModalOpen(false)}
+        query={query}
+        queries={queries}
+        app={app}
+        onChange={onChange}
+        onAddQuery={onAddQuery}
+      />
       <EditorHeader>
-        <InlineSelect
-          value={null}
-          onOpenMenu={() => {
+        <Button
+          aria-label={selectors.components.QueryBuilder.queryPatterns}
+          variant="secondary"
+          size="sm"
+          onClick={() => {
+            setQueryPatternsModalOpen((prevValue) => !prevValue);
+
             const visualQuery = buildVisualQueryFromString(query.expr || '');
             reportInteraction('grafana_loki_query_patterns_opened', {
-              version: 'v1',
+              version: 'v2',
               app: app ?? '',
               editorMode: query.editorMode,
               preSelectedOperationsCount: visualQuery.query.operations.length,
               preSelectedLabelsCount: visualQuery.query.labels.length,
             });
           }}
-          placeholder="Query patterns"
-          aria-label={selectors.components.QueryBuilder.queryPatterns}
-          allowCustomValue
-          onChange={({ value }: SelectableValue<LokiQueryPattern>) => {
-            const visualQuery = buildVisualQueryFromString(query.expr || '');
-            reportInteraction('grafana_loki_query_patterns_selected', {
-              version: 'v1',
-              app: app ?? '',
-              editorMode: query.editorMode,
-              selectedPattern: value?.name,
-              preSelectedOperationsCount: visualQuery.query.operations.length,
-              preSelectedLabelsCount: visualQuery.query.labels.length,
-            });
-
-            // Update operations
-            visualQuery.query.operations = value?.operations!;
-            onChange({
-              ...query,
-              expr: lokiQueryModeller.renderQuery(visualQuery.query),
-            });
-          }}
-          options={lokiQueryModeller.getQueryPatterns().map((x) => ({ label: x.name, value: x }))}
-        />
+        >
+          Kick start your query
+        </Button>
         <QueryHeaderSwitch label="Explain" value={explain} onChange={onExplainChange} />
         {editorMode === QueryEditorMode.Builder && (
           <>
