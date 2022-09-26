@@ -5,4 +5,6 @@ export const LogMessages = {
   alertRuleFromPanel: 'creating alert rule from panel',
   alertRuleFromScratch: 'creating alert rule from scratch',
   clickingAlertStateFilters: 'clicking alert state filters',
+  cancelSavingAlertRule: 'user canceled alert rule creation',
+  successSavingAlertRule: 'alert rule saved successfully',
 };
