@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -35,6 +36,7 @@ func Test_syncOrgRoles_doesNotBreakWhenTryingToRemoveLastOrgAdmin(t *testing.T) 
 		AuthInfoService: authInfoMock,
 		SQLStore:        store,
 		userService:     usertest.NewUserServiceFake(),
+		orgService:      orgtest.NewOrgServiceFake(),
 	}
 
 	err := login.syncOrgRoles(context.Background(), &user, &externalUser)
@@ -55,11 +57,15 @@ func Test_syncOrgRoles_whenTryingToRemoveLastOrgLogsError(t *testing.T) {
 		ExpectedOrgListResponse: createResponseWithOneErrLastOrgAdminItem(),
 	}
 
+	orgService := orgtest.NewOrgServiceFake()
+	orgService.ExpectedError = models.ErrLastOrgAdmin
+
 	login := Implementation{
 		QuotaService:    &quotaimpl.Service{},
 		AuthInfoService: authInfoMock,
 		SQLStore:        store,
 		userService:     usertest.NewUserServiceFake(),
+		orgService:      orgService,
 	}
 
 	err := login.syncOrgRoles(context.Background(), &user, &externalUser)
