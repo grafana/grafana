@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -1542,7 +1541,7 @@ func readGRPCServerSettings(cfg *Cfg, iniFile *ini.File) error {
 			}
 		} else {
 			// Use temporary file path for a unix domain socket.
-			tf, err := ioutil.TempFile("", "gf_grpc_server_api")
+			tf, err := os.CreateTemp("", "gf_grpc_server_api")
 			if err != nil {
 				return fmt.Errorf("%s error creating tmp file: %v", errPrefix, err)
 			}
