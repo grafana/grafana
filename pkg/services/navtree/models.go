@@ -155,8 +155,18 @@ func (root *NavTreeRoot) MarshalJSON() ([]byte, error) {
 
 func Sort(nodes []*NavLink) {
 	sort.SliceStable(nodes, func(i, j int) bool {
-		return nodes[i].SortWeight < nodes[j].SortWeight
+		iw := nodes[i].SortWeight
+		if iw == 0 {
+			iw = int64(i) + 1
+		}
+		jw := nodes[j].SortWeight
+		if jw == 0 {
+			jw = int64(j) + 1
+		}
+
+		return iw < jw
 	})
+
 	for _, child := range nodes {
 		child.Sort()
 	}

@@ -11,7 +11,7 @@ type NavigationAppConfig struct {
 }
 
 func (cfg *Cfg) readNavigationSettings() {
-	sec := cfg.Raw.Section("navigation.apps")
+
 	cfg.NavigationAppConfig = map[string]NavigationAppConfig{
 		"grafana-k8s-app":                  {SectionID: "monitoring", SortWeight: 1},
 		"grafana-synthetic-monitoring-app": {SectionID: "monitoring", SortWeight: 2},
@@ -20,8 +20,10 @@ func (cfg *Cfg) readNavigationSettings() {
 	}
 
 	cfg.NavigationAppPathConfig = map[string]NavigationAppConfig{
-		"/a/myorgid-simple-app/catalog": {SectionID: "cfg"},
+		"/a/grafana-auth-app": {SectionID: "cfg", SortWeight: 7},
 	}
+
+	sec := cfg.Raw.Section("navigation.apps")
 
 	for _, key := range sec.Keys() {
 		if strings.HasPrefix(key.Name(), "nav_id_") {
