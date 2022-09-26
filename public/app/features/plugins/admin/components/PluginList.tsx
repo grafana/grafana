@@ -5,6 +5,8 @@ import { useLocation } from 'react-router-dom';
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
+import { contextSrv } from 'app/core/core';
+import { AccessControlAction } from 'app/types';
 
 import { CatalogPlugin, PluginListDisplayMode } from '../types';
 
@@ -23,9 +25,11 @@ export const PluginList = ({ plugins, displayMode }: Props) => {
 
   return (
     <div className={cx(styles.container, { [styles.list]: isList })} data-testid="plugin-list">
-      {plugins.map((plugin) => (
-        <PluginListItem key={plugin.id} plugin={plugin} pathName={pathName} displayMode={displayMode} />
-      ))}
+      {plugins
+        .filter((plugin) => contextSrv.hasAccessInMetadata(AccessControlAction.PluginsRead, plugin, true))
+        .map((plugin) => (
+          <PluginListItem key={plugin.id} plugin={plugin} pathName={pathName} displayMode={displayMode} />
+        ))}
     </div>
   );
 };
