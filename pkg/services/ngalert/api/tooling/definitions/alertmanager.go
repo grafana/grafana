@@ -420,6 +420,9 @@ type Receiver = amv2.Receiver
 // swagger:model receivers
 type Receivers = []amv2.Receiver
 
+// swagger:model integration
+type Integration = amv2.Integration
+
 // swagger:parameters RouteGetAMAlerts RouteGetAMAlertGroups RouteGetGrafanaAMAlerts RouteGetGrafanaAMAlertGroups
 type AlertsParams struct {
 

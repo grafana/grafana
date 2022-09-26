@@ -729,7 +729,7 @@ func TestNotificationChannels(t *testing.T) {
 	channels.GetBoundary = func() string { return "abcd" }
 
 	env.NotificationService.EmailHandlerSync = mockEmail.sendEmailCommandHandlerSync
-	// As we are using a NotificationService mock here, but he test expects real NotificationService -
+	// As we are using a NotificationService mock here, but the test expects real NotificationService -
 	// we try to issue a real POST request here
 	env.NotificationService.WebhookHandler = func(_ context.Context, cmd *models.SendWebhookSync) error {
 		if res, err := http.Post(cmd.Url, "", strings.NewReader(cmd.Body)); err == nil {
@@ -771,11 +771,32 @@ func TestNotificationChannels(t *testing.T) {
 		re := regexp.MustCompile(`"uid":"([\w|-]*)"`)
 		e := getExpAlertmanagerConfigFromAPI(mockChannel.server.Addr)
 		require.JSONEq(t, e, string(re.ReplaceAll([]byte(b), []byte(`"uid":""`))))
+
+		// Check the receivers API. No errors nor attempts to notify should be registered.
+		receiversURL := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/receivers", grafanaListedAddr)
+		resp = getRequest(t, receiversURL, http.StatusOK)
+		b = getBody(t, resp.Body)
+
+		var receivers apimodels.Receivers
+		err := json.Unmarshal([]byte(b), &receivers)
+		require.NoError(t, err)
+		for _, rcv := range receivers {
+			require.NotNil(t, rcv.Name)
+			require.NotNil(t, rcv.Active)
+			require.NotEmpty(t, rcv.Integrations)
+			for _, integration := range rcv.Integrations {
+				require.NotNil(t, integration.Name)
+				require.NotNil(t, integration.SendResolved)
+				require.Equal(t, "", integration.LastError)
+				require.Zero(t, integration.LastNotify)
+				require.Equal(t, "0s", integration.LastNotifyDuration)
+			}
+		}
+
 	}
 
 	{
 		// Create rules that will fire as quickly as possible
-
 		originalFunction := store.GenerateNewAlertRuleUID
 		t.Cleanup(func() {
 			store.GenerateNewAlertRuleUID = originalFunction
@@ -792,12 +813,48 @@ func TestNotificationChannels(t *testing.T) {
 	// Eventually, we'll get all the desired alerts.
 	// nolint:gosec
 	require.Eventually(t, func() bool {
+		// TODO: not waiting for the failed notifications, flaky test?
 		return mockChannel.totalNotifications() >= len(nonEmailAlertNames) && len(mockEmail.emails) >= 1
 	}, 30*time.Second, 1*time.Second)
 
 	mockChannel.matchesExpNotifications(t, expNonEmailNotifications)
 	require.Equal(t, expEmailNotifications, mockEmail.emails)
 	require.NoError(t, mockChannel.Close())
+
+	// Check the receivers API. Errors are expected, attempts to deliver notifications should be registered.
+	receiversURL := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/receivers", grafanaListedAddr)
+	resp := getRequest(t, receiversURL, http.StatusOK)
+	b := getBody(t, resp.Body)
+
+	var receivers apimodels.Receivers
+	err := json.Unmarshal([]byte(b), &receivers)
+	require.NoError(t, err)
+	for _, rcv := range receivers {
+		require.NotNil(t, rcv.Name)
+		require.NotNil(t, rcv.Active)
+		require.NotEmpty(t, rcv.Integrations)
+		// We don't have test alerts for the default notifier, continue iterating.
+		if *rcv.Name == "grafana-default-email" {
+			continue
+		}
+
+		for _, integration := range rcv.Integrations {
+			require.NotNil(t, integration.Name)
+			require.NotNil(t, integration.SendResolved)
+			require.NotZero(t, integration.LastNotify)
+			require.NotEqual(t, "0s", integration.LastNotifyDuration)
+
+			// Check whether we're expecting an error on this integration.
+			if expErr, ok := expNotificationErrors[*rcv.Name]; ok {
+				for _, integration := range rcv.Integrations {
+					require.Equal(t, expErr, integration.LastError)
+				}
+			} else {
+				// We're not expecting en error.
+				require.Equal(t, "", integration.LastError)
+			}
+		}
+	}
 
 	{
 		// Delete the configuration; so it returns the default configuration.
@@ -860,6 +917,10 @@ var emailAlertNames = []string{
 	"EmailAlert",
 }
 
+var failedAlertNames = []string{
+	"SlackFailedAlert",
+}
+
 func getRulesConfig(t *testing.T) string {
 	t.Helper()
 	interval, err := model.ParseDuration("10s")
@@ -870,7 +931,10 @@ func getRulesConfig(t *testing.T) string {
 	}
 
 	// Create rules that will fire as quickly as possible for all the routes.
-	for _, alertName := range append(nonEmailAlertNames, emailAlertNames...) {
+	rulesToCreate := append(nonEmailAlertNames, emailAlertNames...)
+	rulesToCreate = append(rulesToCreate, failedAlertNames...)
+
+	for _, alertName := range rulesToCreate {
 		rules.Rules = append(rules.Rules, apimodels.PostableExtendedRuleNode{
 			GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 				Title:     alertName,
@@ -1125,6 +1189,16 @@ const alertmanagerConfig = `
             "alertname=\"SlackAlert2\""
           ]
         },
+		{
+		  "receiver": "slack_failed_recv",
+		  "group_wait": "0s",
+		  "group_by": [
+			"alertname"
+		  ],
+		  "matchers": [
+			"alertname=\"SlackFailedAlert\""
+		  ]
+		},
         {
           "receiver": "pagerduty_recv",
           "group_wait": "0s",
@@ -1274,7 +1348,7 @@ const alertmanagerConfig = `
           "matchers": [
             "alertname=\"TelegramAlert\""
           ]
-        }
+		}
       ]
     },
     "receivers": [
@@ -1484,7 +1558,7 @@ const alertmanagerConfig = `
           }
         ]
       },
-      {
+	  {
         "name": "slack_recv1",
         "grafana_managed_receiver_configs": [
           {
@@ -1507,8 +1581,8 @@ const alertmanagerConfig = `
             }
           }
         ]
-      },
-      {
+      },   
+	  {
         "name": "slack_recv2",
         "grafana_managed_receiver_configs": [
           {
@@ -1525,6 +1599,23 @@ const alertmanagerConfig = `
           }
         ]
       },
+	  {
+		"name": "slack_failed_recv",
+		"grafana_managed_receiver_configs": [
+		  {
+            "name": "slack_failed_test",
+            "type": "slack",
+            "settings": {
+              "recipient": "#test-channel",
+              "username": "test",
+              "text": "Integration Test"
+            },
+            "secureSettings": {
+              "url": "htt://127.0.0.1:8080/slack_failed_recv/slack_failed_test"
+            }
+          }
+		]
+	  },
       {
         "name": "pagerduty_recv",
         "grafana_managed_receiver_configs": [
@@ -1588,6 +1679,16 @@ var expAlertmanagerConfigFromAPI = `
           ],
           "matchers": [
             "alertname=\"SlackAlert2\""
+          ]
+        },
+		{
+          "receiver": "slack_failed_recv",
+          "group_wait": "0s",
+          "group_by": [
+            "alertname"
+          ],
+          "matchers": [
+            "alertname=\"SlackFailedAlert\""
           ]
         },
         {
@@ -1739,7 +1840,7 @@ var expAlertmanagerConfigFromAPI = `
           "matchers": [
             "alertname=\"TelegramAlert\""
           ]
-        }
+		}
       ]
     },
     "templates": null,
@@ -1987,7 +2088,7 @@ var expAlertmanagerConfigFromAPI = `
           }
         ]
       },
-      {
+	  {
         "name": "slack_recv1",
         "grafana_managed_receiver_configs": [
           {
@@ -2032,6 +2133,25 @@ var expAlertmanagerConfigFromAPI = `
           }
         ]
       },
+	  {
+		"name": "slack_failed_recv",
+		"grafana_managed_receiver_configs": [
+		  {
+            "uid": "",
+            "name": "slack_failed_test",
+            "type": "slack",
+            "disableResolveMessage": false,
+            "settings": {
+              "recipient": "#test-channel",
+              "username": "test",
+			  "text": "Integration Test"
+            },
+            "secureFields": {
+			  "url": true
+            }
+          }
+		]
+	  },
       {
         "name": "pagerduty_recv",
         "grafana_managed_receiver_configs": [
@@ -2435,4 +2555,9 @@ var expNonEmailNotifications = map[string][]string{
 		  }
 		]`,
 	},
+}
+
+// expNotificationErrors maps a receiver name with its expected error string.
+var expNotificationErrors = map[string]string{
+	"slack_failed_recv": `Post "htt://127.0.0.1:8080/slack_failed_recv/slack_failed_test": unsupported protocol scheme "htt"`,
 }

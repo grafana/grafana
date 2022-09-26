@@ -208,11 +208,15 @@ func (am *Alertmanager) GetReceivers(ctx context.Context) apimodels.Receivers {
 
 	var apiReceivers apimodels.Receivers
 	for _, rcv := range receivers {
-		// Build integrations slice for each receiver
+		// Build integrations slice for each receiver.
 		var integrations []*models.Integration
 		for _, integration := range rcv.Integrations() {
+			name := integration.Name()
+			sendResolved := integration.SendResolved()
 			lastNotify, lastNotifyDuration, lastNotifyError := integration.GetReport()
-			integrations = append(integrations, &models.Integration{
+			integrations = append(integrations, &apimodels.Integration{
+				Name:               &name,
+				SendResolved:       &sendResolved,
 				LastNotifyDuration: lastNotifyDuration.String(),
 				LastNotify:         strfmt.DateTime(lastNotify),
 				LastError: func() string {
