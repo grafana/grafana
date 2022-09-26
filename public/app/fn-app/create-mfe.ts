@@ -14,8 +14,6 @@ import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv';
 import fn_app from 'app/fn_app';
 
-import { FnGlobalState } from '../core/reducers/fn-slice';
-
 import { FNDashboardProps, FailedToMountGrafanaErrorName } from './types';
 
 /**
@@ -78,9 +76,7 @@ class createMfe {
     return () => fn_app.init();
   }
 
-  private loadFnTheme = () => {
-    const theme = this.theme;
-
+  private static loadFnTheme = (theme: FNDashboardProps['theme']) => {
     createMfe.logger('Trying to load theme...', theme);
 
     config.theme2 = createTheme({
@@ -125,7 +121,7 @@ class createMfe {
         try {
           const mfe = new createMfe(props);
 
-          mfe.loadFnTheme();
+          createMfe.loadFnTheme(props.theme);
 
           ReactDOM.render(React.createElement(component, { ...props }), mfe.container, () => {
             createMfe.logger('Successfully mounted grafana.');
@@ -171,8 +167,12 @@ class createMfe {
   }
 
   static updateFnApp() {
-    const lifeCycleFn: FrameworkLifeCycles['update'] = (props: FnGlobalState) => {
-      createMfe.logger('Trying to update grafana...');
+    const lifeCycleFn: FrameworkLifeCycles['update'] = (props: Pick<FNDashboardProps, 'theme'>) => {
+      createMfe.logger('Trying to update grafana with theme:', props.theme);
+
+      if (props.theme) {
+        createMfe.loadFnTheme(props.theme);
+      }
 
       return Promise.resolve(false);
     };
