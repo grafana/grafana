@@ -7,7 +7,7 @@ import { useDispatch } from 'app/types';
 
 import { AlertmanagerChoice } from '../../../plugins/datasource/alertmanager/types';
 
-import { alertmanagerApi } from './api/alertmanager';
+import { alertmanagerApi } from './api/alertmanagerApi';
 import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { NoAlertManagerWarning } from './components/NoAlertManagerWarning';

@@ -1,5 +1,4 @@
 import { renderHook } from '@testing-library/react-hooks';
-import { rest } from 'msw';
 import { setupServer } from 'msw/node';
 import React from 'react';
 import { Provider } from 'react-redux';
@@ -9,14 +8,10 @@ import 'whatwg-fetch';
 import { DataSourceJsonData, DataSourceSettings } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
-import {
-  AlertmanagerChoice,
-  AlertManagerDataSourceJsonData,
-  ExternalAlertmanagerConfig,
-  ExternalAlertmanagersResponse,
-} from 'app/plugins/datasource/alertmanager/types';
+import { AlertmanagerChoice, AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
 
 import { mockDataSource, mockDataSourcesStore, mockStore } from '../mocks';
+import { mockAlertmanagerConfigResponse, mockAlertmanagersResponse } from '../mocks/alertmanagerApi';
 
 import { useExternalAmSelector, useExternalDataSourceAlertmanagers } from './useExternalAmSelector';
 
@@ -41,13 +36,13 @@ afterAll(() => {
 
 describe('useExternalAmSelector', () => {
   it('should have one in pending', async () => {
-    mockAlertmanagersResponse({
+    mockAlertmanagersResponse(server, {
       data: {
         activeAlertManagers: [],
         droppedAlertManagers: [],
       },
     });
-    mockAlertmanagerConfigResponse({
+    mockAlertmanagerConfigResponse(server, {
       alertmanagers: ['some/url/to/am'],
       alertmanagersChoice: AlertmanagerChoice.All,
     });
@@ -69,13 +64,13 @@ describe('useExternalAmSelector', () => {
   });
 
   it('should have one active, one pending', async () => {
-    mockAlertmanagersResponse({
+    mockAlertmanagersResponse(server, {
       data: {
         activeAlertManagers: [{ url: 'some/url/to/am/api/v2/alerts' }],
         droppedAlertManagers: [],
       },
     });
-    mockAlertmanagerConfigResponse({
+    mockAlertmanagerConfigResponse(server, {
       alertmanagers: ['some/url/to/am', 'some/url/to/am1'],
       alertmanagersChoice: AlertmanagerChoice.All,
     });
@@ -102,13 +97,13 @@ describe('useExternalAmSelector', () => {
   });
 
   it('should have two active', async () => {
-    mockAlertmanagersResponse({
+    mockAlertmanagersResponse(server, {
       data: {
         activeAlertManagers: [{ url: 'some/url/to/am/api/v2/alerts' }, { url: 'some/url/to/am1/api/v2/alerts' }],
         droppedAlertManagers: [],
       },
     });
-    mockAlertmanagerConfigResponse({
+    mockAlertmanagerConfigResponse(server, {
       alertmanagers: ['some/url/to/am', 'some/url/to/am1'],
       alertmanagersChoice: AlertmanagerChoice.All,
     });
@@ -135,13 +130,13 @@ describe('useExternalAmSelector', () => {
   });
 
   it('should have one active, one dropped, one pending', async () => {
-    mockAlertmanagersResponse({
+    mockAlertmanagersResponse(server, {
       data: {
         activeAlertManagers: [{ url: 'some/url/to/am/api/v2/alerts' }],
         droppedAlertManagers: [{ url: 'some/dropped/url/api/v2/alerts' }],
       },
     });
-    mockAlertmanagerConfigResponse({
+    mockAlertmanagerConfigResponse(server, {
       alertmanagers: ['some/url/to/am', 'some/url/to/am1'],
       alertmanagersChoice: AlertmanagerChoice.All,
     });
@@ -173,7 +168,7 @@ describe('useExternalAmSelector', () => {
   });
 
   it('The number of alert managers should match config entries when there are multiple entries of the same url', async () => {
-    mockAlertmanagersResponse({
+    mockAlertmanagersResponse(server, {
       data: {
         activeAlertManagers: [
           { url: 'same/url/to/am/api/v2/alerts' },
@@ -183,7 +178,7 @@ describe('useExternalAmSelector', () => {
         droppedAlertManagers: [],
       },
     });
-    mockAlertmanagerConfigResponse({
+    mockAlertmanagerConfigResponse(server, {
       alertmanagers: ['same/url/to/am', 'same/url/to/am', 'same/url/to/am'],
       alertmanagersChoice: AlertmanagerChoice.All,
     });
@@ -230,7 +225,7 @@ describe('useExternalDataSourceAlertmanagers', () => {
       dataSources: [dsSettings],
     });
 
-    mockAlertmanagersResponse({ data: { activeAlertManagers: [], droppedAlertManagers: [] } });
+    mockAlertmanagersResponse(server, { data: { activeAlertManagers: [], droppedAlertManagers: [] } });
 
     const wrapper: React.FC = ({ children }) => <Provider store={store}>{children}</Provider>;
 
@@ -258,7 +253,7 @@ describe('useExternalDataSourceAlertmanagers', () => {
       state.dataSources.dataSources = [dsSettings];
     });
 
-    mockAlertmanagersResponse({
+    mockAlertmanagersResponse(server, {
       data: {
         activeAlertManagers: [{ url: 'http://grafana.com/api/v2/alerts' }],
         droppedAlertManagers: [],
@@ -291,7 +286,7 @@ describe('useExternalDataSourceAlertmanagers', () => {
       state.dataSources.dataSources = [dsSettings];
     });
 
-    mockAlertmanagersResponse({
+    mockAlertmanagersResponse(server, {
       data: {
         activeAlertManagers: [],
         droppedAlertManagers: [{ url: 'http://grafana.com/api/v2/alerts' }],
@@ -324,7 +319,7 @@ describe('useExternalDataSourceAlertmanagers', () => {
       state.dataSources.dataSources = [dsSettings];
     });
 
-    mockAlertmanagersResponse({
+    mockAlertmanagersResponse(server, {
       data: {
         activeAlertManagers: [],
         droppedAlertManagers: [],
@@ -357,7 +352,7 @@ describe('useExternalDataSourceAlertmanagers', () => {
       state.dataSources.dataSources = [dsSettings];
     });
 
-    mockAlertmanagersResponse({
+    mockAlertmanagersResponse(server, {
       data: {
         activeAlertManagers: [{ url: 'http://localhost:9093/api/v2/alerts' }],
         droppedAlertManagers: [],
@@ -380,7 +375,7 @@ describe('useExternalDataSourceAlertmanagers', () => {
 
   it('Should have inconclusive state when there are many Alertmanagers of the same URL', async () => {
     // Arrange
-    mockAlertmanagersResponse({
+    mockAlertmanagersResponse(server, {
       data: {
         activeAlertManagers: [{ url: 'http://grafana.com/api/v2/alerts' }, { url: 'http://grafana.com/api/v2/alerts' }],
         droppedAlertManagers: [],
@@ -412,22 +407,6 @@ describe('useExternalDataSourceAlertmanagers', () => {
     expect(result.current[0].statusInconclusive).toBe(true);
   });
 });
-
-function mockAlertmanagersResponse(response: ExternalAlertmanagersResponse) {
-  server.use(
-    rest.get('/api/v1/ngalert/alertmanagers', (req, res, ctx) =>
-      res(ctx.status(200), ctx.json<ExternalAlertmanagersResponse>(response))
-    )
-  );
-}
-
-function mockAlertmanagerConfigResponse(response: ExternalAlertmanagerConfig) {
-  server.use(
-    rest.get('/api/v1/ngalert/admin_config', (req, res, ctx) =>
-      res(ctx.status(200), ctx.json<ExternalAlertmanagerConfig>(response))
-    )
-  );
-}
 
 function setupAlertmanagerDataSource(partialDsSettings?: Partial<DataSourceSettings<AlertManagerDataSourceJsonData>>) {
   const dsCommonConfig = {

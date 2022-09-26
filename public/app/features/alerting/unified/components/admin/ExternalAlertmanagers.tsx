@@ -19,7 +19,7 @@ import { loadDataSources } from 'app/features/datasources/state/actions';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
 
-import { alertmanagerApi } from '../../api/alertmanager';
+import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { useExternalAmSelector, useExternalDataSourceAlertmanagers } from '../../hooks/useExternalAmSelector';
 import // addExternalAlertmanagersAction,
 // fetchExternalAlertmanagersAction,

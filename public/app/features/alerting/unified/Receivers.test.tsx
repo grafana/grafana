@@ -1,21 +1,29 @@
 import { render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { setupServer } from 'msw/node';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 import { byLabelText, byPlaceholderText, byRole, byTestId, byText } from 'testing-library-selector';
 
-import { locationService, setDataSourceSrv } from '@grafana/runtime';
+import { locationService, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
 import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import store from 'app/core/store';
-import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
+import {
+  AlertmanagerChoice,
+  AlertManagerDataSourceJsonData,
+  AlertManagerImplementation,
+} from 'app/plugins/datasource/alertmanager/types';
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types';
 
+import 'whatwg-fetch';
+
 import Receivers from './Receivers';
-import { updateAlertManagerConfig, fetchAlertManagerConfig, fetchStatus, testReceivers } from './api/alertmanager';
+import { fetchAlertManagerConfig, fetchStatus, testReceivers, updateAlertManagerConfig } from './api/alertmanager';
 import { discoverAlertmanagerFeatures } from './api/buildInfo';
 import { fetchNotifiers } from './api/grafana';
 import {
@@ -25,6 +33,7 @@ import {
   someCloudAlertManagerStatus,
   someGrafanaAlertManagerConfig,
 } from './mocks';
+import { mockAlertmanagerChoiceResponse } from './mocks/alertmanagerApi';
 import { grafanaNotifiersMock } from './mocks/grafana-notifiers';
 import { getAllDataSources } from './utils/config';
 import { ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, ALERTMANAGER_NAME_QUERY_KEY } from './utils/constants';
@@ -128,7 +137,19 @@ const clickSelectOption = async (selectElement: HTMLElement, optionText: string)
 document.addEventListener('click', interceptLinkClicks);
 
 describe('Receivers', () => {
+  const server = setupServer();
+
+  beforeAll(() => {
+    setBackendSrv(backendSrv);
+    server.listen({ onUnhandledRequest: 'error' });
+  });
+
+  afterAll(() => {
+    server.close();
+  });
+
   beforeEach(() => {
+    server.resetHandlers();
     jest.resetAllMocks();
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     mocks.api.fetchNotifiers.mockResolvedValue(grafanaNotifiersMock);
@@ -152,6 +173,8 @@ describe('Receivers', () => {
   });
 
   it('Template and receiver tables are rendered, alertmanager can be selected', async () => {
+    mockAlertmanagerChoiceResponse(server, { alertmanagersChoice: AlertmanagerChoice.All });
+
     mocks.api.fetchConfig.mockImplementation((name) =>
       Promise.resolve(name === GRAFANA_RULES_SOURCE_NAME ? someGrafanaAlertManagerConfig : someCloudAlertManagerConfig)
     );
@@ -193,6 +216,8 @@ describe('Receivers', () => {
   });
 
   it('Grafana receiver can be tested', async () => {
+    mockAlertmanagerChoiceResponse(server, { alertmanagersChoice: AlertmanagerChoice.All });
+
     mocks.api.fetchConfig.mockResolvedValue(someGrafanaAlertManagerConfig);
 
     await renderReceivers();
@@ -249,6 +274,8 @@ describe('Receivers', () => {
   });
 
   it('Grafana receiver can be created', async () => {
+    mockAlertmanagerChoiceResponse(server, { alertmanagersChoice: AlertmanagerChoice.All });
+
     mocks.api.fetchConfig.mockResolvedValue(someGrafanaAlertManagerConfig);
     mocks.api.updateConfig.mockResolvedValue();
     await renderReceivers();
@@ -311,6 +338,8 @@ describe('Receivers', () => {
   });
 
   it('Hides create contact point button for users without permission', () => {
+    mockAlertmanagerChoiceResponse(server, { alertmanagersChoice: AlertmanagerChoice.All });
+
     mocks.api.fetchConfig.mockResolvedValue(someGrafanaAlertManagerConfig);
     mocks.api.updateConfig.mockResolvedValue();
     mocks.contextSrv.hasAccess.mockImplementation((action) =>
@@ -324,6 +353,8 @@ describe('Receivers', () => {
   });
 
   it('Cloud alertmanager receiver can be edited', async () => {
+    mockAlertmanagerChoiceResponse(server, { alertmanagersChoice: AlertmanagerChoice.All });
+
     mocks.api.fetchConfig.mockResolvedValue(someCloudAlertManagerConfig);
     mocks.api.updateConfig.mockResolvedValue();
     await renderReceivers('CloudManager');
@@ -418,6 +449,8 @@ describe('Receivers', () => {
   });
 
   it('Prometheus Alertmanager receiver cannot be edited', async () => {
+    mockAlertmanagerChoiceResponse(server, { alertmanagersChoice: AlertmanagerChoice.All });
+
     mocks.api.fetchStatus.mockResolvedValue({
       ...someCloudAlertManagerStatus,
       config: someCloudAlertManagerConfig.alertmanager_config,
@@ -455,6 +488,7 @@ describe('Receivers', () => {
   });
 
   it('Loads config from status endpoint if there is no user config', async () => {
+    mockAlertmanagerChoiceResponse(server, { alertmanagersChoice: AlertmanagerChoice.All });
     // loading an empty config with make it fetch config from status endpoint
     mocks.api.fetchConfig.mockResolvedValue({
       template_files: {},
@@ -476,6 +510,8 @@ describe('Receivers', () => {
   });
 
   it('Shows an empty config when config returns an error and the AM supports lazy config initialization', async () => {
+    mockAlertmanagerChoiceResponse(server, { alertmanagersChoice: AlertmanagerChoice.All });
+
     mocks.api.discoverAlertmanagerFeatures.mockResolvedValue({ lazyConfigInit: true });
     mocks.api.fetchConfig.mockRejectedValue({ message: 'alertmanager storage object not found' });
 

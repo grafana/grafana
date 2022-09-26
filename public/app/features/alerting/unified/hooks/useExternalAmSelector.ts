@@ -4,7 +4,7 @@ import { DataSourceInstanceSettings, DataSourceJsonData, DataSourceSettings } fr
 import { AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
 import { useSelector } from 'app/types';
 
-import { alertmanagerApi } from '../api/alertmanager';
+import { alertmanagerApi } from '../api/alertmanagerApi';
 import { getAlertManagerDataSources } from '../utils/datasource';
 
 const SUFFIX_REGEX = /\/api\/v[1|2]\/alerts/i;
