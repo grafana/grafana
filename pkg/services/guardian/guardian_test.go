@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -706,7 +707,7 @@ func TestGuardianGetHiddenACL(t *testing.T) {
 				UserID: 1,
 				Login:  "user1",
 			}
-			g := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, dashSvc)
+			g := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, dashSvc, &teamtest.FakeService{})
 
 			hiddenACL, err := g.GetHiddenACL(cfg)
 			require.NoError(t, err)
@@ -722,7 +723,7 @@ func TestGuardianGetHiddenACL(t *testing.T) {
 				Login:          "user1",
 				IsGrafanaAdmin: true,
 			}
-			g := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, &dashboards.FakeDashboardService{})
+			g := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, &dashboards.FakeDashboardService{}, &teamtest.FakeService{})
 
 			hiddenACL, err := g.GetHiddenACL(cfg)
 			require.NoError(t, err)
@@ -756,7 +757,7 @@ func TestGuardianGetACLWithoutDuplicates(t *testing.T) {
 				UserID: 1,
 				Login:  "user1",
 			}
-			g := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, dashSvc)
+			g := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, dashSvc, &teamtest.FakeService{})
 
 			acl, err := g.GetACLWithoutDuplicates()
 			require.NoError(t, err)

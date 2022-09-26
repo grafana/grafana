@@ -1,6 +1,6 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = 'v3.0.6'
+grabpl_version = 'v3.0.10'
 build_image = 'grafana/build-container:1.6.2'
 publish_image = 'grafana/grafana-ci-deploy:1.3.3'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
@@ -164,10 +164,10 @@ def lint_drone_step():
         'name': 'lint-drone',
         'image': curl_image,
         'commands': [
-            './bin/grabpl verify-drone',
+            './bin/build verify-drone',
         ],
         'depends_on': [
-            'grabpl',
+            'compile-build-cmd',
         ],
     }
 
@@ -207,7 +207,7 @@ def enterprise_downstream_step(edition, ver_mode):
 def lint_backend_step(edition):
     return {
         'name': 'lint-backend' + enterprise2_suffix(edition),
-        'image': build_image,
+        'image': go_image,
         'environment': {
             # We need CGO because of go-sqlite3
             'CGO_ENABLED': '1',
@@ -216,6 +216,7 @@ def lint_backend_step(edition):
             'wire-install',
         ],
         'commands': [
+            'apt-get update && apt-get install make',
             # Don't use Make since it will re-download the linters
             'make lint-go',
         ],
@@ -266,13 +267,13 @@ def store_storybook_step(edition, ver_mode, trigger=None):
     commands = []
     if ver_mode == 'release':
         commands.extend([
-            './bin/grabpl store-storybook --deployment latest --src-bucket grafana-prerelease --src-dir artifacts/storybook',
-            './bin/grabpl store-storybook --deployment ${DRONE_TAG} --src-bucket grafana-prerelease --src-dir artifacts/storybook',
+            './bin/build store-storybook --deployment latest',
+            './bin/build store-storybook --deployment ${DRONE_TAG}',
         ])
 
     else:
         # main pipelines should deploy storybook to grafana-storybook/canary public bucket
-        commands = ['./bin/grabpl store-storybook --deployment canary --src-bucket grafana-storybook', ]
+        commands = ['./bin/build store-storybook --deployment canary', ]
 
     step = {
         'name': 'store-storybook',
@@ -630,20 +631,6 @@ def codespell_step():
     }
 
 
-def shellcheck_step():
-    return {
-        'name': 'shellcheck',
-        'image': build_image,
-        'depends_on': [
-            'grabpl',
-            'compile-build-cmd',
-        ],
-        'commands': [
-            './bin/build shellcheck',
-        ],
-    }
-
-
 def package_step(edition, ver_mode, include_enterprise2=False, variants=None):
     deps = [
         'build-plugins',
@@ -678,7 +665,7 @@ def package_step(edition, ver_mode, include_enterprise2=False, variants=None):
     # TODO: Use percentage for jobs
     if ver_mode == 'release':
         cmds = [
-            '{}./bin/grabpl package --jobs 8 --edition {} '.format(test_args, edition) + \
+            '{}./bin/build package --jobs 8 --edition {} '.format(test_args, edition) + \
             '{} ${{DRONE_TAG}}'.format(
                 sign_args
             ),
@@ -686,7 +673,7 @@ def package_step(edition, ver_mode, include_enterprise2=False, variants=None):
     else:
         build_no = '${DRONE_BUILD_NUMBER}'
         cmds = [
-            '{}./bin/grabpl package --jobs 8 --edition {} '.format(test_args, edition) + \
+            '{}./bin/build package --jobs 8 --edition {} '.format(test_args, edition) + \
             '--build-id {}{}{}'.format(build_no, variants_str, sign_args),
         ]
 

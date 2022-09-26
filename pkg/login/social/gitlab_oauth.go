@@ -89,7 +89,7 @@ func (s *SocialGitlab) GetGroupsPage(client *http.Client, url string) ([]string,
 	return fullPaths, next
 }
 
-func (s *SocialGitlab) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
+func (s *SocialGitlab) UserInfo(client *http.Client, _ *oauth2.Token) (*BasicUserInfo, error) {
 	var data struct {
 		Id       int
 		Username string
@@ -113,7 +113,7 @@ func (s *SocialGitlab) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 
 	groups := s.GetGroups(client)
 
-	role, grafanaAdmin := s.extractRoleAndAdmin(response.Body, groups)
+	role, grafanaAdmin := s.extractRoleAndAdmin(response.Body, groups, true)
 	if s.roleAttributeStrict && !role.IsValid() {
 		return nil, ErrInvalidBasicRole
 	}
@@ -129,7 +129,7 @@ func (s *SocialGitlab) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 		Login:          data.Username,
 		Email:          data.Email,
 		Groups:         groups,
-		Role:           string(role),
+		Role:           role,
 		IsGrafanaAdmin: isGrafanaAdmin,
 	}
 

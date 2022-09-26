@@ -13,6 +13,7 @@ import (
 
 	"github.com/go-kit/log/level"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/org"
 )
 
 func newLogger(name string, lev string) log.Logger {
@@ -251,7 +252,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			OAuth2Extra             interface{}
 			RoleAttributePath       string
 			ExpectedEmail           string
-			ExpectedRole            string
+			ExpectedRole            org.RoleType
 			ExpectedGrafanaAdmin    *bool
 		}{
 			{

@@ -34,7 +34,7 @@ func (a *AccessControl) Evaluate(ctx context.Context, user *user.SignedInUser, e
 	metrics.MAccessEvaluationCount.Inc()
 
 	if !verifyPermissions(user) {
-		a.log.Warn("no permissions set for user", "userID", user.UserID, "orgID", user.OrgID)
+		a.log.Warn("no permissions set for user", "userID", user.UserID, "orgID", user.OrgID, "login", user.Login)
 		return false, nil
 	}
 	// Test evaluation without scope resolver first, this will prevent 403 for wildcard scopes when resource does not exist

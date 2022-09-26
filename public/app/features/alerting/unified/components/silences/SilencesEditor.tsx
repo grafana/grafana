@@ -2,7 +2,6 @@ import { css, cx } from '@emotion/css';
 import { pickBy } from 'lodash';
 import React, { FC, useMemo, useState } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
-import { useDispatch } from 'react-redux';
 import { useDebounce } from 'react-use';
 
 import {
@@ -18,6 +17,7 @@ import { config } from '@grafana/runtime';
 import { Button, Field, FieldSet, Input, LinkButton, TextArea, useStyles2 } from '@grafana/ui';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { MatcherOperator, Silence, SilenceCreatePayload } from 'app/plugins/datasource/alertmanager/types';
+import { useDispatch } from 'app/types';
 
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';

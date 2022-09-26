@@ -3,7 +3,6 @@ package grpcserver
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"google.golang.org/grpc/health"
@@ -35,16 +34,4 @@ func ProvideHealthService(cfg *setting.Cfg, grpcServerProvider Provider) (*Healt
 		cfg:          cfg,
 		healthServer: hs,
 	}, nil
-}
-
-func (s *HealthService) Run(ctx context.Context) error {
-	<-ctx.Done()
-	return ctx.Err()
-}
-
-func (s *HealthService) IsDisabled() bool {
-	if s.cfg == nil {
-		return true
-	}
-	return !s.cfg.IsFeatureToggleEnabled(featuremgmt.FlagGrpcServer)
 }

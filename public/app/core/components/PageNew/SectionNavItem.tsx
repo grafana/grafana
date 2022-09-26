@@ -68,7 +68,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     activeStyle: css`
       label: activeTabStyle;
       color: ${theme.colors.text.primary};
-      background-color: ${theme.colors.action.disabledBackground};
+      background: ${theme.colors.emphasize(theme.colors.background.canvas, 0.03)};
       border-radius: ${theme.shape.borderRadius(2)};
       font-weight: ${theme.typography.fontWeightMedium};
 

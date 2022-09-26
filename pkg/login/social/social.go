@@ -228,7 +228,7 @@ type BasicUserInfo struct {
 	Name           string
 	Email          string
 	Login          string
-	Role           string
+	Role           org.RoleType
 	IsGrafanaAdmin *bool // nil will avoid overriding user's set server admin setting
 	Groups         []string
 }
@@ -312,13 +312,9 @@ type groupStruct struct {
 	Groups []string `json:"groups"`
 }
 
-func (s *SocialBase) extractRoleAndAdmin(rawJSON []byte, groups []string) (org.RoleType, bool) {
+func (s *SocialBase) extractRoleAndAdmin(rawJSON []byte, groups []string, legacy bool) (org.RoleType, bool) {
 	if s.roleAttributePath == "" {
-		if s.autoAssignOrgRole != "" {
-			return org.RoleType(s.autoAssignOrgRole), false
-		}
-
-		return "", false
+		return s.defaultRole(legacy), false
 	}
 
 	role, err := s.searchJSONForStringAttr(s.roleAttributePath, rawJSON)
@@ -333,7 +329,29 @@ func (s *SocialBase) extractRoleAndAdmin(rawJSON []byte, groups []string) (org.R
 		}
 	}
 
-	return "", false
+	return s.defaultRole(legacy), false
+}
+
+// defaultRole returns the default role for the user based on the autoAssignOrgRole setting
+// if legacy is enabled "" is returned indicating the previous role assignment is used.
+func (s *SocialBase) defaultRole(legacy bool) org.RoleType {
+	if s.roleAttributeStrict {
+		s.log.Debug("RoleAttributeStrict is set, returning no role.")
+		return ""
+	}
+
+	if s.autoAssignOrgRole != "" && !legacy {
+		s.log.Debug("No role found, returning default.")
+		return org.RoleType(s.autoAssignOrgRole)
+	}
+
+	if legacy {
+		s.log.Warn("No valid role found. Skipping role sync. " +
+			"In Grafana 10, this will result in the user being assigned the default role and overriding manual assignment. " +
+			"If role sync is not desired, set oauth_skip_org_role_update_sync to false")
+	}
+
+	return ""
 }
 
 // match grafana admin role and translate to org role and bool.

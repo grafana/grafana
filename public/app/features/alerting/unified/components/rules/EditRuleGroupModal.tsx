@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import React, { useEffect, useMemo } from 'react';
-import { useDispatch } from 'react-redux';
 
 import { isValidGoDuration } from '@grafana/data';
 import { Modal, Button, Form, Field, Input, useStyles2 } from '@grafana/ui';
 import { useCleanup } from 'app/core/hooks/useCleanup';
+import { useDispatch } from 'app/types';
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
@@ -18,7 +18,7 @@ import { EvaluationIntervalLimitExceeded } from '../InvalidIntervalWarning';
 interface ModalProps {
   namespace: CombinedRuleNamespace;
   group: CombinedRuleGroup;
-  onClose: () => void;
+  onClose: (saved?: boolean) => void;
 }
 
 interface FormValues {
@@ -46,7 +46,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
   // close modal if successfully saved
   useEffect(() => {
     if (dispatched && !loading && !error) {
-      onClose();
+      onClose(true);
     }
   }, [dispatched, loading, onClose, error]);
 
@@ -123,7 +123,13 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
             )}
 
             <Modal.ButtonRow>
-              <Button variant="secondary" type="button" disabled={loading} onClick={onClose} fill="outline">
+              <Button
+                variant="secondary"
+                type="button"
+                disabled={loading}
+                onClick={() => onClose(false)}
+                fill="outline"
+              >
                 Close
               </Button>
               <Button type="submit" disabled={!isDirty || loading}>

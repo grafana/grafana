@@ -17,30 +17,30 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// Authenticator can authenticate GRPC requests.
-type Authenticator struct {
+// authenticator can authenticate GRPC requests.
+type authenticator struct {
 	logger      log.Logger
 	APIKey      apikey.Service
 	UserService user.Service
 }
 
-func NewAuthenticator(apiKey apikey.Service, userService user.Service) *Authenticator {
-	return &Authenticator{
+func newAuthenticator(apiKey apikey.Service, userService user.Service) *authenticator {
+	return &authenticator{
 		logger:      log.New("grpc-server-authenticator"),
 		APIKey:      apiKey,
 		UserService: userService,
 	}
 }
 
-// Authenticate checks that a token exists and is valid. It stores the user
-// metadata in the returned context and removes the token from the context.
-func (a *Authenticator) authenticate(ctx context.Context) (context.Context, error) {
+// Authenticate checks that a token exists and is valid, and then removes the token from the
+// authorization header in the context.
+func (a *authenticator) authenticate(ctx context.Context) (context.Context, error) {
 	return a.tokenAuth(ctx)
 }
 
 const tokenPrefix = "Bearer "
 
-func (a *Authenticator) tokenAuth(ctx context.Context) (context.Context, error) {
+func (a *authenticator) tokenAuth(ctx context.Context) (context.Context, error) {
 	auth, err := extractAuthorization(ctx)
 	if err != nil {
 		return ctx, err
@@ -65,7 +65,7 @@ func (a *Authenticator) tokenAuth(ctx context.Context) (context.Context, error) 
 	return newCtx, nil
 }
 
-func (a *Authenticator) validateToken(ctx context.Context, keyString string) error {
+func (a *authenticator) validateToken(ctx context.Context, keyString string) error {
 	decoded, err := apikeygenprefix.Decode(keyString)
 	if err != nil {
 		return err

@@ -224,7 +224,7 @@ func (s *CorrelationsService) getCorrelationHandler(c *models.ReqContext) respon
 			return response.Error(http.StatusNotFound, "Source data source not found", err)
 		}
 
-		return response.Error(http.StatusInternalServerError, "Failed to update correlation", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get correlation", err)
 	}
 
 	return response.JSON(http.StatusOK, correlation)
@@ -270,7 +270,7 @@ func (s *CorrelationsService) getCorrelationsBySourceUIDHandler(c *models.ReqCon
 			return response.Error(http.StatusNotFound, "Source data source not found", err)
 		}
 
-		return response.Error(http.StatusInternalServerError, "Failed to update correlation", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get correlations", err)
 	}
 
 	return response.JSON(http.StatusOK, correlations)
@@ -309,7 +309,7 @@ func (s *CorrelationsService) getCorrelationsHandler(c *models.ReqContext) respo
 			return response.Error(http.StatusNotFound, "No correlation found", err)
 		}
 
-		return response.Error(http.StatusInternalServerError, "Failed to update correlation", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get correlations", err)
 	}
 
 	return response.JSON(http.StatusOK, correlations)
