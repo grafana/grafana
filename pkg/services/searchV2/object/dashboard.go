@@ -27,7 +27,7 @@ func NewDashboardSummaryBuilder(lookup dslookup.DatasourceLookup) object.ObjectS
 			return summary, err
 		}
 
-		refs := object.NewReferenceAccumulator()
+		dashboardRefs := object.NewReferenceAccumulator()
 		url := fmt.Sprintf("/d/%s/%s", obj.UID, models.SlugifyTitle(dash.Title))
 		summary.Name = dash.Title
 		summary.Description = dash.Description
