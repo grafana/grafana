@@ -774,7 +774,7 @@ func TestNotificationChannels(t *testing.T) {
 
 		// Check the receivers API. No errors nor attempts to notify should be registered.
 		receiversURL := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/receivers", grafanaListedAddr)
-		resp = getRequest(t, receiversURL, http.StatusOK)
+		resp = getRequest(t, receiversURL, http.StatusOK) // nolint
 		b = getBody(t, resp.Body)
 
 		var receivers apimodels.Receivers
@@ -792,7 +792,6 @@ func TestNotificationChannels(t *testing.T) {
 				require.Equal(t, "0s", integration.LastNotifyDuration)
 			}
 		}
-
 	}
 
 	{
@@ -823,7 +822,7 @@ func TestNotificationChannels(t *testing.T) {
 
 	// Check the receivers API. Errors are expected, attempts to deliver notifications should be registered.
 	receiversURL := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/receivers", grafanaListedAddr)
-	resp := getRequest(t, receiversURL, http.StatusOK)
+	resp := getRequest(t, receiversURL, http.StatusOK) // nolint
 	b := getBody(t, resp.Body)
 
 	var receivers apimodels.Receivers

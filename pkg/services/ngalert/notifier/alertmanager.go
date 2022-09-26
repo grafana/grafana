@@ -132,7 +132,6 @@ type Alertmanager struct {
 
 	decryptFn channels.GetDecryptedValueFn
 
-	// TODO: where?
 	receivers []*notify.Receiver
 }
 
