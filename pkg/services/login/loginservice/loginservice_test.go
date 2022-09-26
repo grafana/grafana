@@ -58,6 +58,8 @@ func Test_syncOrgRoles_whenTryingToRemoveLastOrgLogsError(t *testing.T) {
 	}
 
 	orgService := orgtest.NewOrgServiceFake()
+	orgService.ExpectedError = models.ErrLastOrgAdmin
+
 	login := Implementation{
 		QuotaService:    &quotaimpl.Service{},
 		AuthInfoService: authInfoMock,
