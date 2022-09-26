@@ -1,4 +1,4 @@
-package sqlstore
+package annotationsimpl
 
 import (
 	"context"
@@ -7,16 +7,17 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestAnnotationCleanUp(t *testing.T) {
-	fakeSQL := InitTestDB(t)
+	fakeSQL := sqlstore.InitTestDB(t)
 
 	t.Cleanup(func() {
-		err := fakeSQL.WithDbSession(context.Background(), func(session *DBSession) error {
+		err := fakeSQL.WithDbSession(context.Background(), func(session *sqlstore.DBSession) error {
 			_, err := session.Exec("DELETE FROM annotation")
 			return err
 		})
@@ -87,8 +88,10 @@ func TestAnnotationCleanUp(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			cleaner := &AnnotationCleanupService{batchSize: 1, log: log.New("test-logger"), sqlstore: fakeSQL}
-			affectedAnnotations, affectedAnnotationTags, err := cleaner.CleanAnnotations(context.Background(), test.cfg)
+			cfg := setting.NewCfg()
+			cfg.AnnotationCleanupJobBatchSize = 1
+			cleaner := ProvideCleanupService(fakeSQL, cfg)
+			affectedAnnotations, affectedAnnotationTags, err := cleaner.Run(context.Background(), test.cfg)
 			require.NoError(t, err)
 
 			assert.Equal(t, test.affectedAnnotations, affectedAnnotations)
@@ -108,10 +111,10 @@ func TestAnnotationCleanUp(t *testing.T) {
 }
 
 func TestOldAnnotationsAreDeletedFirst(t *testing.T) {
-	fakeSQL := InitTestDB(t)
+	fakeSQL := sqlstore.InitTestDB(t)
 
 	t.Cleanup(func() {
-		err := fakeSQL.WithDbSession(context.Background(), func(session *DBSession) error {
+		err := fakeSQL.WithDbSession(context.Background(), func(session *sqlstore.DBSession) error {
 			_, err := session.Exec("DELETE FROM annotation")
 			return err
 		})
@@ -142,8 +145,10 @@ func TestOldAnnotationsAreDeletedFirst(t *testing.T) {
 	require.NoError(t, err, "cannot insert annotation")
 
 	// run the clean up task to keep one annotation.
-	cleaner := &AnnotationCleanupService{batchSize: 1, log: log.New("test-logger"), sqlstore: fakeSQL}
-	_, err = cleaner.cleanAnnotations(context.Background(), setting.AnnotationCleanupSettings{MaxCount: 1}, alertAnnotationType)
+	cfg := setting.NewCfg()
+	cfg.AnnotationCleanupJobBatchSize = 1
+	cleaner := &xormRepositoryImpl{cfg: cfg, log: log.New("test-logger"), db: fakeSQL}
+	_, err = cleaner.CleanAnnotations(context.Background(), setting.AnnotationCleanupSettings{MaxCount: 1}, alertAnnotationType)
 	require.NoError(t, err)
 
 	// assert that the last annotations were kept
@@ -156,7 +161,7 @@ func TestOldAnnotationsAreDeletedFirst(t *testing.T) {
 	require.Equal(t, int64(0), countOld, "the two first annotations should have been deleted")
 }
 
-func assertAnnotationCount(t *testing.T, fakeSQL *SQLStore, sql string, expectedCount int64) {
+func assertAnnotationCount(t *testing.T, fakeSQL *sqlstore.SQLStore, sql string, expectedCount int64) {
 	t.Helper()
 
 	session := fakeSQL.NewSession(context.Background())
@@ -166,7 +171,7 @@ func assertAnnotationCount(t *testing.T, fakeSQL *SQLStore, sql string, expected
 	require.Equal(t, expectedCount, count)
 }
 
-func assertAnnotationTagCount(t *testing.T, fakeSQL *SQLStore, expectedCount int64) {
+func assertAnnotationTagCount(t *testing.T, fakeSQL *sqlstore.SQLStore, expectedCount int64) {
 	t.Helper()
 
 	session := fakeSQL.NewSession(context.Background())
@@ -177,7 +182,7 @@ func assertAnnotationTagCount(t *testing.T, fakeSQL *SQLStore, expectedCount int
 	require.Equal(t, expectedCount, count)
 }
 
-func createTestAnnotations(t *testing.T, sqlstore *SQLStore, expectedCount int, oldAnnotations int) {
+func createTestAnnotations(t *testing.T, sqlstore *sqlstore.SQLStore, expectedCount int, oldAnnotations int) {
 	t.Helper()
 
 	cutoffDate := time.Now()

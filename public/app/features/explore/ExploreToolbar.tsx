@@ -18,7 +18,7 @@ import { getFiscalYearStartMonth, getTimeZone } from '../profile/state/selectors
 import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
 import { changeDatasource } from './state/datasource';
-import { splitClose, splitOpen } from './state/main';
+import { evenPaneResizeAction, maximizePaneAction, splitClose, splitOpen } from './state/main';
 import { cancelQueries, runQueries } from './state/query';
 import { isSplit } from './state/selectors';
 import { syncTimes, changeRefreshInterval } from './state/time';
@@ -126,6 +126,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
       onChangeTimeZone,
       onChangeFiscalYearStartMonth,
       topOfViewRef,
+      largerExploreId,
     } = this.props;
 
     const showSmallDataSourcePicker = (splitted ? containerWidth < 700 : containerWidth < 800) || false;
@@ -135,12 +136,23 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
       contextSrv.hasAccess(AccessControlAction.DashboardsCreate, contextSrv.isEditor) ||
       contextSrv.hasAccess(AccessControlAction.DashboardsWrite, contextSrv.isEditor);
 
+    const isLargerExploreId = largerExploreId === exploreId;
+
+    const onClickResize = () => {
+      if (isLargerExploreId) {
+        this.props.evenPaneResizeAction();
+      } else {
+        this.props.maximizePaneAction({ exploreId: exploreId });
+      }
+    };
+
     return (
       <div ref={topOfViewRef}>
         <PageToolbar
           aria-label="Explore toolbar"
           title={exploreId === ExploreId.left ? 'Explore' : undefined}
           pageIcon={exploreId === ExploreId.left ? 'compass' : undefined}
+          buttonOverflowAlignment="left"
           leftItems={[
             exploreId === ExploreId.left && (
               <DashNavButton
@@ -169,9 +181,21 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
                 Split
               </ToolbarButton>
             ) : (
-              <ToolbarButton tooltip="Close split pane" onClick={this.onCloseSplitView} icon="times">
-                Close
-              </ToolbarButton>
+              <>
+                <ToolbarButton
+                  tooltip={`${isLargerExploreId ? 'Narrow' : 'Widen'} pane`}
+                  disabled={isLive}
+                  onClick={onClickResize}
+                  icon={
+                    (exploreId === 'left' && isLargerExploreId) || (exploreId === 'right' && !isLargerExploreId)
+                      ? 'angle-left'
+                      : 'angle-right'
+                  }
+                />
+                <ToolbarButton tooltip="Close split pane" onClick={this.onCloseSplitView} icon="times">
+                  Close
+                </ToolbarButton>
+              </>
             )}
 
             {config.featureToggles.explore2Dashboard && showExploreToDashboard && (
@@ -234,7 +258,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
 }
 
 const mapStateToProps = (state: StoreState, { exploreId }: OwnProps) => {
-  const { syncedTimes } = state.explore;
+  const { syncedTimes, largerExploreId } = state.explore;
   const exploreItem = state.explore[exploreId]!;
   const { datasourceInstance, datasourceMissing, range, refreshInterval, loading, isLive, isPaused, containerWidth } =
     exploreItem;
@@ -256,6 +280,7 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps) => {
     isPaused,
     syncedTimes,
     containerWidth,
+    largerExploreId,
   };
 };
 
@@ -269,6 +294,8 @@ const mapDispatchToProps = {
   syncTimes,
   onChangeTimeZone: updateTimeZoneForSession,
   onChangeFiscalYearStartMonth: updateFiscalYearStartMonthForSession,
+  maximizePaneAction,
+  evenPaneResizeAction,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);

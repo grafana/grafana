@@ -32,7 +32,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 		hs.Cfg.EditorsCanAdmin = true
 		store := sqlstore.InitTestDB(t)
 		store.Cfg = hs.Cfg
-		hs.teamService = teamimpl.ProvideService(store)
+		hs.teamService = teamimpl.ProvideService(store, hs.Cfg)
 		hs.SQLStore = store
 		mock := &mockstore.SQLStoreMock{}
 

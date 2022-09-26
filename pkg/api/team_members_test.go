@@ -40,7 +40,8 @@ func (t *TeamGuardianMock) DeleteByUser(ctx context.Context, userID int64) error
 func setUpGetTeamMembersHandler(t *testing.T, sqlStore *sqlstore.SQLStore) {
 	const testOrgID int64 = 1
 	var userCmd user.CreateUserCommand
-	team, err := sqlStore.CreateTeam("group1 name", "test1@test.com", testOrgID)
+	teamSvc := teamimpl.ProvideService(sqlStore, setting.NewCfg())
+	team, err := teamSvc.CreateTeam("group1 name", "test1@test.com", testOrgID)
 	require.NoError(t, err)
 	for i := 0; i < 3; i++ {
 		userCmd = user.CreateUserCommand{
@@ -51,7 +52,7 @@ func setUpGetTeamMembersHandler(t *testing.T, sqlStore *sqlstore.SQLStore) {
 		// user
 		user, err := sqlStore.CreateUser(context.Background(), userCmd)
 		require.NoError(t, err)
-		err = sqlStore.AddTeamMember(user.ID, testOrgID, team.Id, false, 1)
+		err = teamSvc.AddTeamMember(user.ID, testOrgID, team.Id, false, 1)
 		require.NoError(t, err)
 	}
 }
@@ -63,7 +64,7 @@ func TestTeamMembersAPIEndpoint_userLoggedIn(t *testing.T) {
 	sqlStore.Cfg = settings
 
 	hs.SQLStore = sqlStore
-	hs.teamService = teamimpl.ProvideService(sqlStore)
+	hs.teamService = teamimpl.ProvideService(sqlStore, settings)
 	hs.License = &licensing.OSSLicensingService{}
 	hs.teamGuardian = &TeamGuardianMock{}
 	mock := mockstore.NewSQLStoreMock()
@@ -122,7 +123,7 @@ func createUser(db sqlstore.Store, orgId int64, t *testing.T) int64 {
 }
 
 func setupTeamTestScenario(userCount int, db sqlstore.Store, t *testing.T) int64 {
-	teamService := teamimpl.ProvideService(db.(*sqlstore.SQLStore)) // FIXME
+	teamService := teamimpl.ProvideService(db.(*sqlstore.SQLStore), setting.NewCfg()) // FIXME
 	user, err := db.CreateUser(context.Background(), user.CreateUserCommand{SkipOrgSetup: true, Login: testUserLogin})
 	require.NoError(t, err)
 	testOrg, err := db.CreateOrgWithMember("TestOrg", user.ID)
