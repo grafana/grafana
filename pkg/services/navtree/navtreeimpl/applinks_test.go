@@ -183,8 +183,8 @@ func TestReadingNavigationSettings(t *testing.T) {
 		}
 
 		sec, _ := service.cfg.Raw.NewSection("navigation.apps")
-		_, _ = sec.NewKey("nav_id_grafana-k8s-app", "dashboards")
-		_, _ = sec.NewKey("nav_id_other-app", "admin 12")
+		_, _ = sec.NewKey("grafana-k8s-app", "dashboards")
+		_, _ = sec.NewKey("other-app", "admin 12")
 
 		service.readNavigationSettings()
 

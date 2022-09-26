@@ -201,19 +201,18 @@ func (s *ServiceImpl) readNavigationSettings() {
 	sec := s.cfg.Raw.Section("navigation.apps")
 
 	for _, key := range sec.Keys() {
-		if strings.HasPrefix(key.Name(), "nav_id_") {
-			pluginId := strings.Replace(key.Name(), "nav_id_", "", 1)
-			// Support <id> <weight> value
-			values := strings.Split(sec.Key(key.Name()).MustString(""), " ")
+		pluginId := key.Name()
+		// Support <id> <weight> value
+		values := strings.Split(sec.Key(key.Name()).MustString(""), " ")
 
-			appCfg := &NavigationAppConfig{SectionID: values[0]}
-			if len(values) > 1 {
-				if weight, err := strconv.ParseInt(values[1], 10, 64); err == nil {
-					appCfg.SortWeight = weight
-				}
+		appCfg := &NavigationAppConfig{SectionID: values[0]}
+		if len(values) > 1 {
+			if weight, err := strconv.ParseInt(values[1], 10, 64); err == nil {
+				appCfg.SortWeight = weight
 			}
-
-			s.navigationAppConfig[pluginId] = *appCfg
 		}
+
+		s.navigationAppConfig[pluginId] = *appCfg
 	}
+
 }
