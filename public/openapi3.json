@@ -19475,7 +19475,7 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "# Create service account",
+        "summary": "Create service account",
         "tags": [
           "service_accounts"
         ]
@@ -19541,7 +19541,7 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "# Search service accounts with paging",
+        "summary": "Search service accounts with paging",
         "tags": [
           "service_accounts"
         ]
@@ -19579,7 +19579,7 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "# Delete service account",
+        "summary": "Delete service account",
         "tags": [
           "service_accounts"
         ]
@@ -19618,7 +19618,7 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "# Get single serviceaccount by Id",
+        "summary": "Get single serviceaccount by Id",
         "tags": [
           "service_accounts"
         ]
@@ -19667,7 +19667,7 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "# Update service account",
+        "summary": "Update service account",
         "tags": [
           "service_accounts"
         ]
@@ -19705,7 +19705,7 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "# Get service account tokens",
+        "summary": "Get service account tokens",
         "tags": [
           "service_accounts"
         ]
@@ -19757,7 +19757,7 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "# CreateNewToken adds a token to a service account",
+        "summary": "CreateNewToken adds a token to a service account",
         "tags": [
           "service_accounts"
         ]
@@ -19807,7 +19807,7 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "# DeleteToken deletes service account tokens",
+        "summary": "DeleteToken deletes service account tokens",
         "tags": [
           "service_accounts"
         ]
