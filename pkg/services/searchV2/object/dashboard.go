@@ -27,7 +27,7 @@ func NewDashboardSummaryBuilder(lookup dslookup.DatasourceLookup) object.ObjectS
 			return summary, err
 		}
 
-		refs := object.NewReferenceAccumulator()
+		dashboardRefs := object.NewReferenceAccumulator()
 		url := fmt.Sprintf("/d/%s/%s", obj.UID, models.SlugifyTitle(dash.Title))
 		summary.Name = dash.Title
 		summary.Description = dash.Description
@@ -40,8 +40,8 @@ func NewDashboardSummaryBuilder(lookup dslookup.DatasourceLookup) object.ObjectS
 		}
 
 		for _, panel := range dash.Panels {
-			refP := object.NewReferenceAccumulator()
-			p := object.ObjectSummary{
+			panelRefs := object.NewReferenceAccumulator()
+			p := &object.ObjectSummary{
 				UID:  obj.UID + "#" + strconv.FormatInt(panel.ID, 10),
 				Kind: "panel",
 			}
@@ -50,22 +50,22 @@ func NewDashboardSummaryBuilder(lookup dslookup.DatasourceLookup) object.ObjectS
 			p.URL = fmt.Sprintf("%s?viewPanel=%d", url, panel.ID)
 			p.Fields = make(map[string]interface{}, 0)
 
-			refP.Add("panel", panel.Type, "")
+			panelRefs.Add("panel", panel.Type, "")
 			for _, v := range panel.Datasource {
-				refs.Add("ds", v.Type, v.UID) // dashboard refs
-				refP.Add("ds", v.Type, v.UID) // panel refs
+				dashboardRefs.Add(object.StandardKindDataSource, v.Type, v.UID)
+				panelRefs.Add(object.StandardKindDataSource, v.Type, v.UID)
 			}
 
 			for _, v := range panel.Transformer {
-				refP.Add("transformer", v, "")
+				panelRefs.Add(object.StandardKindTransform, v, "")
 			}
 
-			refs.Add("panel", panel.Type, "")
-			p.References = refP.Get()
+			dashboardRefs.Add(object.StandardKindPanel, panel.Type, "")
+			p.References = panelRefs.Get()
 			summary.Nested = append(summary.Nested, p)
 		}
 
-		summary.References = refs.Get()
+		summary.References = dashboardRefs.Get()
 		return summary, nil
 	}
 }

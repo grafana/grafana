@@ -2,7 +2,6 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import {
-  arrayUtils,
   DataFrame,
   Field,
   formattedValueToString,
@@ -11,30 +10,47 @@ import {
   LinkModel,
   TimeRange,
 } from '@grafana/data';
-import { SortOrder } from '@grafana/schema';
-import {
-  LinkButton,
-  SeriesIcon,
-  TooltipDisplayMode,
-  usePanelContext,
-  useStyles2,
-  VerticalGroup,
-  VizTooltipOptions,
-} from '@grafana/ui';
+import { LinkButton, usePanelContext, useStyles2, VerticalGroup, VizTooltipOptions } from '@grafana/ui';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 
+import { ScatterSeriesConfig, SeriesMapping } from './models.gen';
 import { ScatterSeries } from './types';
+
+interface YValue {
+  name: string;
+  val: number;
+  field: Field;
+  color: string;
+}
+
+interface ExtraFacets {
+  colorFacetFieldName: string;
+  sizeFacetFieldName: string;
+  colorFacetValue: number;
+  sizeFacetValue: number;
+}
 
 export interface Props {
   allSeries: ScatterSeries[];
   data: DataFrame[]; // source data
+  manualSeriesConfigs: ScatterSeriesConfig[] | undefined;
   rowIndex?: number; // the hover row
+  seriesMapping: SeriesMapping;
   hoveredPointIndex: number; // the hovered point
   options: VizTooltipOptions;
   range: TimeRange;
 }
 
-export const TooltipView = ({ allSeries, data, rowIndex, hoveredPointIndex, options, range }: Props) => {
+export const TooltipView = ({
+  allSeries,
+  data,
+  manualSeriesConfigs,
+  seriesMapping,
+  rowIndex,
+  hoveredPointIndex,
+  options,
+  range,
+}: Props) => {
   const style = useStyles2(getStyles);
   const { onSplitOpen } = usePanelContext();
 
@@ -53,72 +69,57 @@ export const TooltipView = ({ allSeries, data, rowIndex, hoveredPointIndex, opti
     range,
   });
 
-  let yValues = [];
-  if (options.mode === TooltipDisplayMode.Single) {
-    yValues = [
-      {
-        name: getFieldDisplayName(yField, frame),
-        val: yField.values.get(rowIndex),
-        field: yField,
-        color: series.pointColor(frame),
-      },
-    ];
-  } else {
-    yValues = allSeries
-      .map((series, i) => {
-        const frame = series.frame(data);
-        const seriesXField = series.x(frame);
+  let yValue: YValue | null = null;
+  let extraFacets: ExtraFacets | null = null;
+  if (seriesMapping === SeriesMapping.Manual && manualSeriesConfigs) {
+    const colorFacetFieldName = manualSeriesConfigs[hoveredPointIndex].pointColor?.field ?? '';
+    const sizeFacetFieldName = manualSeriesConfigs[hoveredPointIndex].pointSize?.field ?? '';
 
-        if (seriesXField.name !== xField.name) {
-          return null;
-        }
+    const colorFacet = colorFacetFieldName ? frame.fields.find((f) => f.name === colorFacetFieldName) : undefined;
+    const sizeFacet = sizeFacetFieldName ? frame.fields.find((f) => f.name === sizeFacetFieldName) : undefined;
 
-        const seriesYField = series.y(frame);
-
-        return {
-          name: getFieldDisplayName(seriesYField, frame),
-          val: seriesYField.values.get(rowIndex),
-          field: seriesYField,
-          color: allSeries[i].pointColor(frame),
-        };
-      })
-      .filter((v) => v != null);
+    extraFacets = {
+      colorFacetFieldName,
+      sizeFacetFieldName,
+      colorFacetValue: colorFacet?.values.get(rowIndex),
+      sizeFacetValue: sizeFacet?.values.get(rowIndex),
+    };
   }
 
-  if (options.sort !== SortOrder.None) {
-    const sortFn = arrayUtils.sortValues(options.sort);
-
-    yValues.sort((a, b) => {
-      return sortFn(a!.val, b!.val);
-    });
-  }
-
-  let activePointIndex = -1;
-  activePointIndex = yValues.findIndex((v) => v!.name === series.name);
+  yValue = {
+    name: getFieldDisplayName(yField, frame),
+    val: yField.values.get(rowIndex),
+    field: yField,
+    color: series.pointColor(frame) as string,
+  };
 
   return (
     <>
-      <div className={style.xVal} aria-label="x-val">
-        {fmt(frame.fields[0], xField.values.get(rowIndex))}
-      </div>
       <table className={style.infoWrap}>
+        <tr>
+          <th colSpan={2} style={{ backgroundColor: yValue.color }}></th>
+        </tr>
         <tbody>
-          {yValues.map((el, index) => {
-            let color = null;
-            if (typeof el!.color === 'string') {
-              color = el!.color;
-            }
-
-            return (
-              <tr key={`${index}/${rowIndex}`} className={index === activePointIndex ? style.highlight : ''}>
-                <th>
-                  {color && <SeriesIcon color={color} className={style.icon} />}
-                  {el!.name}:
-                </th>
-                <td>{fmt(el!.field, el!.val)}</td>
-              </tr>
-            );
-          })}
+          <tr>
+            <th>{xField.name}</th>
+            <td>{fmt(frame.fields[0], xField.values.get(rowIndex))}</td>
+          </tr>
+          <tr>
+            <th>{yValue.name}:</th>
+            <td>{fmt(yValue.field, yValue.val)}</td>
+          </tr>
+          {extraFacets !== null && extraFacets.colorFacetFieldName && (
+            <tr>
+              <th>{extraFacets.colorFacetFieldName}:</th>
+              <td>{extraFacets.colorFacetValue}</td>
+            </tr>
+          )}
+          {extraFacets !== null && extraFacets.sizeFacetFieldName && (
+            <tr>
+              <th>{extraFacets.sizeFacetFieldName}:</th>
+              <td>{extraFacets.sizeFacetValue}</td>
+            </tr>
+          )}
           {links.length > 0 && (
             <tr>
               <td colSpan={2}>

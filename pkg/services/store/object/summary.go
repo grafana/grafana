@@ -15,7 +15,7 @@ type ObjectSummary struct {
 	Fields map[string]interface{} `json:"fields,omitempty"` // Saved as JSON, returned in results, but values not sortable
 
 	// eg: panels within dashboard
-	Nested []ObjectSummary `json:"nested,omitempty"`
+	Nested []*ObjectSummary `json:"nested,omitempty"`
 
 	// Optional references to external things
 	References []*ExternalReference `json:"references,omitempty"`

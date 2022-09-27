@@ -2825,6 +2825,9 @@
       "Correlation": {
         "description": "Correlation is the model for correlations definitions",
         "properties": {
+          "config": {
+            "$ref": "#/components/schemas/CorrelationConfig"
+          },
           "description": {
             "description": "Description of the correlation",
             "example": "Logs to Traces",
@@ -2851,6 +2854,26 @@
             "type": "string"
           }
         },
+        "type": "object"
+      },
+      "CorrelationConfig": {
+        "properties": {
+          "field": {
+            "description": "Field used to attach the correlation link",
+            "type": "string"
+          },
+          "target": {
+            "$ref": "#/components/schemas/CorrelationConfigTarget"
+          }
+        },
+        "required": [
+          "field",
+          "target"
+        ],
+        "type": "object"
+      },
+      "CorrelationConfigTarget": {
+        "description": "CorrelationConfigTarget is the target data query specific to target data source (Correlation.TargetUID)",
         "type": "object"
       },
       "CreateAlertNotificationCommand": {
@@ -2891,6 +2914,9 @@
       "CreateCorrelationCommand": {
         "description": "CreateCorrelationCommand is the command for creating a correlation",
         "properties": {
+          "config": {
+            "$ref": "#/components/schemas/CorrelationConfig"
+          },
           "description": {
             "description": "Optional description of the correlation",
             "example": "Logs to Traces",

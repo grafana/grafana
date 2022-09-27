@@ -54,6 +54,8 @@ export function IconDisplay(props: CanvasElementProps) {
     fill: data?.fill,
     stroke: data?.strokeColor,
     strokeWidth: data?.stroke,
+    height: '100%',
+    width: '100%',
   };
 
   return (
