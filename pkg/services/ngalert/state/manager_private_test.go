@@ -95,7 +95,7 @@ func Test_maybeNewImage(t *testing.T) {
 		t.Run(test.description, func(t *testing.T) {
 			imageService := &CountingImageService{}
 			mgr := NewManager(log.NewNopLogger(), &metrics.State{}, nil,
-				&store.FakeRuleStore{}, &store.FakeInstanceStore{},
+				&store.FakeRuleStore{}, &FakeInstanceStore{},
 				&dashboards.FakeDashboardService{}, imageService, clock.NewMock(), annotationstest.NewFakeAnnotationsRepo())
 			err := mgr.maybeTakeScreenshot(context.Background(), &ngmodels.AlertRule{}, test.state, test.oldState)
 			require.NoError(t, err)

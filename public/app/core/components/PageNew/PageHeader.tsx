@@ -11,7 +11,7 @@ export interface Props {
 
 export function PageHeader({ navItem, subTitle }: Props) {
   const styles = useStyles2(getStyles);
-  const sub = subTitle ?? navItem.subTitle;
+  const sub = subTitle ?? navItem.description;
 
   return (
     <>
@@ -20,6 +20,7 @@ export function PageHeader({ navItem, subTitle }: Props) {
         {navItem.text}
       </h1>
       {sub && <div className={styles.pageSubTitle}>{sub}</div>}
+      {navItem.headerExtra && <navItem.headerExtra />}
     </>
   );
 }

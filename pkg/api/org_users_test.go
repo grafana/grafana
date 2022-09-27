@@ -18,6 +18,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/temp_user/tempuserimpl"
@@ -46,10 +48,17 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
 	sqlStore.Cfg = settings
 	hs.SQLStore = sqlStore
+	orgService := orgtest.NewOrgServiceFake()
+	orgService.ExpectedSearchOrgUsersResult = &org.SearchOrgUsersQueryResult{}
+	hs.orgService = orgService
 	mock := mockstore.NewSQLStoreMock()
 	loggedInUserScenario(t, "When calling GET on", "api/org/users", "api/org/users", func(sc *scenarioContext) {
 		setUpGetOrgUsersDB(t, sqlStore)
-
+		orgService.ExpectedOrgUsers = []*org.OrgUserDTO{
+			{Login: testUserLogin, Email: "testUser@grafana.com"},
+			{Login: "user1", Email: "user1@grafana.com"},
+			{Login: "user2", Email: "user2@grafana.com"},
+		}
 		sc.handlerFunc = hs.GetOrgUsersForCurrentOrg
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 
@@ -64,12 +73,28 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 	loggedInUserScenario(t, "When calling GET on", "api/org/users/search", "api/org/users/search", func(sc *scenarioContext) {
 		setUpGetOrgUsersDB(t, sqlStore)
 
+		orgService.ExpectedSearchOrgUsersResult = &org.SearchOrgUsersQueryResult{
+			OrgUsers: []*org.OrgUserDTO{
+				{
+					Login: "user1",
+				},
+				{
+					Login: "user2",
+				},
+				{
+					Login: "user3",
+				},
+			},
+			TotalCount: 3,
+			PerPage:    1000,
+			Page:       1,
+		}
 		sc.handlerFunc = hs.SearchOrgUsersWithPaging
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 
 		require.Equal(t, http.StatusOK, sc.resp.Code)
 
-		var resp models.SearchOrgUsersQueryResult
+		var resp org.SearchOrgUsersQueryResult
 		err := json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 		require.NoError(t, err)
 
@@ -82,12 +107,23 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 	loggedInUserScenario(t, "When calling GET with page and limit query parameters on", "api/org/users/search", "api/org/users/search", func(sc *scenarioContext) {
 		setUpGetOrgUsersDB(t, sqlStore)
 
+		orgService.ExpectedSearchOrgUsersResult = &org.SearchOrgUsersQueryResult{
+			OrgUsers: []*org.OrgUserDTO{
+				{
+					Login: "user1",
+				},
+			},
+			TotalCount: 3,
+			PerPage:    2,
+			Page:       2,
+		}
+
 		sc.handlerFunc = hs.SearchOrgUsersWithPaging
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{"perpage": "2", "page": "2"}).exec()
 
 		require.Equal(t, http.StatusOK, sc.resp.Code)
 
-		var resp models.SearchOrgUsersQueryResult
+		var resp org.SearchOrgUsersQueryResult
 		err := json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 		require.NoError(t, err)
 
@@ -355,6 +391,7 @@ func TestGetOrgUsersAPIEndpoint_AccessControlMetadata(t *testing.T) {
 					hs.SQLStore, nil, nil, nil, nil,
 					nil, nil, nil, nil, nil, hs.SQLStore.(*sqlstore.SQLStore),
 				)
+				hs.orgService = orgimpl.ProvideService(hs.SQLStore, cfg)
 			})
 			setupOrgUsersDBForAccessControlTests(t, sc.db)
 			setInitCtxSignedInUser(sc.initCtx, tc.user)
@@ -459,6 +496,7 @@ func TestGetOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 					hs.SQLStore, nil, nil, nil, nil,
 					nil, nil, nil, nil, nil, hs.SQLStore.(*sqlstore.SQLStore),
 				)
+				hs.orgService = orgimpl.ProvideService(hs.SQLStore, cfg)
 			})
 			setInitCtxSignedInUser(sc.initCtx, tc.user)
 			setupOrgUsersDBForAccessControlTests(t, sc.db)
@@ -809,6 +847,7 @@ func TestPatchOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 					hs.SQLStore, nil, nil, nil, nil,
 					nil, nil, nil, nil, nil, hs.SQLStore.(*sqlstore.SQLStore),
 				)
+				hs.orgService = orgimpl.ProvideService(hs.SQLStore, cfg)
 			})
 			setupOrgUsersDBForAccessControlTests(t, sc.db)
 			setInitCtxSignedInUser(sc.initCtx, tc.user)
@@ -936,6 +975,7 @@ func TestDeleteOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 					hs.SQLStore, nil, nil, nil, nil,
 					nil, nil, nil, nil, nil, hs.SQLStore.(*sqlstore.SQLStore),
 				)
+				hs.orgService = orgimpl.ProvideService(hs.SQLStore, cfg)
 			})
 			setupOrgUsersDBForAccessControlTests(t, sc.db)
 			setInitCtxSignedInUser(sc.initCtx, tc.user)
