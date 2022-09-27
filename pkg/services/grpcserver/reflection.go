@@ -9,7 +9,8 @@ import (
 	"google.golang.org/grpc/reflection/grpc_reflection_v1alpha"
 )
 
-// ReflectionService implements GRPC Reflection Checking Protocol:
+// ReflectionService implements the gRPC Server Reflection Protocol:
+// https://github.com/grpc/grpc/blob/master/doc/server-reflection.md
 type ReflectionService struct {
 	cfg              *setting.Cfg
 	reflectionServer *reflectionServer
