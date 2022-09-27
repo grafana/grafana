@@ -8,14 +8,13 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
-	"google.golang.org/grpc"
 )
 
 type DatasourceService struct {
@@ -24,64 +23,50 @@ type DatasourceService struct {
 }
 
 func ProvideDatasourceService(cfg *setting.Cfg, grpcServerProvider Provider, pluginsClient plugins.Client, dataSourceCache datasources.CacheService, dataSourceService datasources.DataSourceService) (*DatasourceService, error) {
+	server := &DatasourceServer{
+		logger:            log.New("grpc-server-datasource"),
+		pluginClient:      pluginsClient,
+		dataSourceCache:   dataSourceCache,
+		dataSourceService: dataSourceService,
+	}
+	pluginv2.RegisterDataServer(grpcServerProvider.GetServer(), server)
 	return &DatasourceService{
-		cfg: cfg,
-		server: &DatasourceServer{
-			pluginClient:      pluginsClient,
-			dataSourceCache:   dataSourceCache,
-			dataSourceService: dataSourceService,
-		},
+		cfg:    cfg,
+		server: server,
 	}, nil
 }
 
-func (s *DatasourceService) Run(ctx context.Context) error {
-	<-ctx.Done()
-	return ctx.Err()
-}
-
-func (s *DatasourceService) IsDisabled() bool {
-	if s.cfg == nil {
-		return true
-	}
-	return !s.cfg.IsFeatureToggleEnabled(featuremgmt.FlagGrpcServer)
-}
-
 type DatasourceServer struct {
+	logger            log.Logger
 	pluginClient      plugins.Client
 	dataSourceCache   datasources.CacheService
 	dataSourceService datasources.DataSourceService
 }
 
 // QueryData handles multiple queries and returns multiple responses.
-func (s *DatasourceServer) QueryData(ctx context.Context, in *pluginv2.QueryDataRequest, opts ...grpc.CallOption) (*pluginv2.QueryDataResponse, error) {
-	var ds *datasources.DataSource
+func (s *DatasourceServer) QueryData(ctx context.Context, in *pluginv2.QueryDataRequest) (*pluginv2.QueryDataResponse, error) {
 	req := backend.FromProto().QueryDataRequest(in)
 	user := adapters.SignedInUserFromBackendUser(req.PluginContext.User)
+	user.OrgID = req.PluginContext.OrgID
 
-	for _, query := range req.Queries {
-		sj, err := simplejson.NewJson(query.JSON)
-		if err != nil {
-			continue
-		}
-		ds, _ = s.getDataSourceFromQuery(ctx, user, false, sj)
-	}
-
-	if ds == nil {
-		return nil, fmt.Errorf("failed to get data source")
-	}
-
-	instanceSettings, err := adapters.ModelToInstanceSettings(ds, s.decryptSecureJsonDataFn(ctx))
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert data source to instance settings: %w", err)
-	}
-	req.PluginContext.DataSourceInstanceSettings = instanceSettings
-
-	res, err := s.pluginClient.QueryData(ctx, req)
+	requests, err := s.buildRequests(ctx, user, req)
 	if err != nil {
 		return nil, err
 	}
 
-	return backend.ToProto().QueryDataResponse(res)
+	response := backend.NewQueryDataResponse()
+
+	for _, req := range requests {
+		res, err := s.pluginClient.QueryData(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+		for refID, res := range res.Responses {
+			response.Responses[refID] = res
+		}
+	}
+
+	return backend.ToProto().QueryDataResponse(response)
 }
 
 // TODO: can this be shared with the query service?
@@ -120,6 +105,46 @@ func (s *DatasourceServer) getDataSourceFromQuery(ctx context.Context, signedInU
 	}
 
 	return nil, fmt.Errorf("missing data source ID/UID")
+}
+
+func (s *DatasourceServer) buildRequests(ctx context.Context, u *user.SignedInUser, req *backend.QueryDataRequest) ([]*backend.QueryDataRequest, error) {
+	requests := make(map[string]*backend.QueryDataRequest)
+	for _, query := range req.Queries {
+		sj, err := simplejson.NewJson(query.JSON)
+		if err != nil {
+			return nil, err
+		}
+
+		ds, err := s.getDataSourceFromQuery(ctx, u, false, sj)
+		if err != nil {
+			return nil, err
+		}
+
+		r, ok := requests[ds.Uid]
+		if !ok {
+			instanceSettings, err := adapters.ModelToInstanceSettings(ds, s.decryptSecureJsonDataFn(ctx))
+			if err != nil {
+				return nil, err
+			}
+			r = &backend.QueryDataRequest{
+				PluginContext: req.PluginContext,
+				Headers:       req.Headers,
+				Queries:       make([]backend.DataQuery, 0),
+			}
+			r.PluginContext.PluginID = ds.Type
+			r.PluginContext.DataSourceInstanceSettings = instanceSettings
+			requests[ds.Uid] = r
+		}
+
+		requests[ds.Uid].Queries = append(r.Queries, query)
+	}
+
+	reqs := make([]*backend.QueryDataRequest, 0)
+	for _, req := range requests {
+		reqs = append(reqs, req)
+	}
+
+	return reqs, nil
 }
 
 // TODO: can this be shared with the query service?
