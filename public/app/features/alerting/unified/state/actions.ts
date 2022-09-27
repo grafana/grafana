@@ -456,7 +456,7 @@ export const fetchGrafanaNotifiersAction = createAsyncThunk(
 
 export const fetchContactPointsStateAction = createAsyncThunk(
   'unifiedalerting/fetchContactPointsState',
-  (alertManagerSourceName: string): Promise<ContactPointsState | undefined> =>
+  (alertManagerSourceName: string): Promise<ContactPointsState> =>
     withSerializedError(fetchContactPointsState(alertManagerSourceName))
 );
 

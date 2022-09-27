@@ -65,7 +65,7 @@ function isContactPointsStateNotAvailable(error: FetchError) {
   return error.status === 404;
 }
 
-export async function fetchContactPointsState(alertManagerSourceName: string): Promise<ContactPointsState | undefined> {
+export async function fetchContactPointsState(alertManagerSourceName: string): Promise<ContactPointsState> {
   try {
     const response = await lastValueFrom(
       getBackendSrv().fetch<ReceiversStateDTO[]>({
