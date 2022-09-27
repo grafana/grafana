@@ -56,10 +56,6 @@ func (f *FakeOrgService) GetByNameHandler(ctx context.Context, query *org.GetOrg
 	return f.ExpectedOrg, f.ExpectedError
 }
 
-func (f *FakeOrgService) GetByName(ctx context.Context, name string) (*org.Org, error) {
-	return f.ExpectedOrg, f.ExpectedError
-}
-
 func (f *FakeOrgService) CreateWithMember(ctx context.Context, cmd *org.CreateOrgCommand) (*org.Org, error) {
 	return f.ExpectedOrg, f.ExpectedError
 }

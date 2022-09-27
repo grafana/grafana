@@ -13,7 +13,6 @@ type Service interface {
 	Search(context.Context, *SearchOrgsQuery) ([]*OrgDTO, error)
 	GetByID(context.Context, *GetOrgByIdQuery) (*Org, error)
 	GetByNameHandler(context.Context, *GetOrgByNameQuery) (*Org, error)
-	GetByName(context.Context, string) (*Org, error)
 	CreateWithMember(context.Context, *CreateOrgCommand) (*Org, error)
 	UpdateAddress(context.Context, *UpdateOrgAddressCommand) error
 	Delete(context.Context, *DeleteOrgCommand) error

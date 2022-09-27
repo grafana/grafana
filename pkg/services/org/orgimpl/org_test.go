@@ -126,7 +126,3 @@ func (f *FakeOrgStore) GetByID(ctx context.Context, query *org.GetOrgByIdQuery) 
 func (f *FakeOrgStore) GetByNameHandler(ctx context.Context, query *org.GetOrgByNameQuery) (*org.Org, error) {
 	return f.ExpectedOrg, f.ExpectedError
 }
-
-func (f *FakeOrgStore) GetByName(ctx context.Context, name string) (*org.Org, error) {
-	return f.ExpectedOrg, f.ExpectedError
-}

@@ -111,10 +111,6 @@ func (s *Service) GetByNameHandler(ctx context.Context, query *org.GetOrgByNameQ
 	return s.store.GetByNameHandler(ctx, query)
 }
 
-func (s *Service) GetByName(ctx context.Context, name string) (*org.Org, error) {
-	return s.store.GetByName(ctx, name)
-}
-
 // TODO: refactor service to call store CRUD method
 func (s *Service) CreateWithMember(ctx context.Context, cmd *org.CreateOrgCommand) (*org.Org, error) {
 	return s.store.CreateWithMember(ctx, cmd)
