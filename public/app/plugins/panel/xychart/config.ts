@@ -43,7 +43,7 @@ export function getScatterFieldConfig(cfg: ScatterFieldConfig): SetFieldConfigOp
         })
         .addSliderInput({
           path: 'pointSize.fixed',
-          name: 'Size',
+          name: 'Point size',
           defaultValue: cfg.pointSize?.fixed,
           settings: {
             min: 1,
