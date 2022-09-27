@@ -58,12 +58,10 @@ const RawList = ({ listItemData, listKey }: RawListProps) => {
   }
 
   /**
-   * @todo do we have a method to transform the dataFrame formatting back into valid promQL?
    * @param value
    */
   const transformCopyValue = (value: string): string => {
     if (value === '∞') {
-      //negative infinity?
       return '+Inf';
     }
     return value;
