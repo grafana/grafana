@@ -6,13 +6,14 @@ import { firstValueFrom } from 'rxjs';
 
 import { AppEvents, PanelData, SelectableValue, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { locationService, reportInteraction } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { Button, CodeEditor, Field, Select } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 
 import { getPanelDataFrames } from '../dashboard/components/HelpWizard/utils';
 import { getPanelInspectorStyles } from '../inspector/styles';
+import { reportPanelInspectInteraction } from '../search/page/reporting';
 
 import { InspectTab } from './types';
 
@@ -76,7 +77,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
 
   componentDidMount() {
     // when opening the inspector we want to report the interaction
-    reportInteraction(`grafana_panel_inspect_json_panelJSON_clicked`);
+    reportPanelInspectInteraction(InspectTab.JSON, 'panelJSON');
   }
 
   onSelectChanged = async (item: SelectableValue<ShowContent>) => {
@@ -93,12 +94,12 @@ export class InspectJSONTab extends PureComponent<Props, State> {
   async getJSONObject(show: ShowContent) {
     const { data, panel } = this.props;
     if (show === ShowContent.PanelData) {
-      reportInteraction('grafana_panel_inspect_json_panelData_clicked');
+      reportPanelInspectInteraction(InspectTab.JSON, 'panelData');
       return data;
     }
 
     if (show === ShowContent.DataFrames) {
-      reportInteraction('grafana_panel_inspect_json_dataFrame_clicked');
+      reportPanelInspectInteraction(InspectTab.JSON, 'dataFrame');
 
       let d = data;
 
@@ -115,7 +116,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
     }
 
     if (this.hasPanelJSON && show === ShowContent.PanelJSON) {
-      reportInteraction('grafana_panel_inspect_json_panelJSON_clicked');
+      reportPanelInspectInteraction(InspectTab.JSON, 'panelJSON');
       return panel!.getSaveModel();
     }
 
@@ -133,7 +134,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
           dashboard!.shouldUpdateDashboardPanelFromJSON(updates, panel!);
 
           //Report relevant updates
-          reportInteraction('grafana_panel_inspect_json_apply_clicked', {
+          reportPanelInspectInteraction(InspectTab.JSON, 'apply', {
             panel_type_changed: panel!.type !== updates.type,
             panel_id_changed: panel!.id !== updates.id,
             panel_grid_pos_changed: !isEqual(panel!.gridPos, updates.gridPos),
@@ -154,6 +155,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
   };
 
   onShowHelpWizard = () => {
+    reportPanelInspectInteraction(InspectTab.JSON, 'supportWizard');
     const queryParms = locationService.getSearch();
     queryParms.set('inspectTab', InspectTab.Help.toString());
     locationService.push('?' + queryParms.toString());
