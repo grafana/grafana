@@ -374,16 +374,6 @@ func setUsingOrgInTransaction(sess *DBSession, userID int64, orgID int64) error 
 	return err
 }
 
-func removeUserOrg(sess *DBSession, userID int64) error {
-	user := user.User{
-		ID:    userID,
-		OrgID: 0,
-	}
-
-	_, err := sess.ID(userID).MustCols("org_id").Update(&user)
-	return err
-}
-
 func (ss *SQLStore) GetUserProfile(ctx context.Context, query *models.GetUserProfileQuery) error {
 	return ss.WithDbSession(ctx, func(sess *DBSession) error {
 		var usr user.User
