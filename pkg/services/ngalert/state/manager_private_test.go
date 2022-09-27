@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
 
 // Not for parallel tests.
@@ -95,7 +94,7 @@ func Test_maybeNewImage(t *testing.T) {
 		t.Run(test.description, func(t *testing.T) {
 			imageService := &CountingImageService{}
 			mgr := NewManager(log.NewNopLogger(), &metrics.State{}, nil,
-				&store.FakeRuleStore{}, &FakeInstanceStore{},
+				&FakeRuleReader{}, &FakeInstanceStore{},
 				&dashboards.FakeDashboardService{}, imageService, clock.NewMock(), annotationstest.NewFakeAnnotationsRepo())
 			err := mgr.maybeTakeScreenshot(context.Background(), &ngmodels.AlertRule{}, test.state, test.oldState)
 			require.NoError(t, err)
