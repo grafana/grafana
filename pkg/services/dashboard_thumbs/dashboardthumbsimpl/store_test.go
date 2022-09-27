@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	dashboardthumbs "github.com/grafana/grafana/pkg/services/dashboard_thumbs"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -15,7 +16,7 @@ import (
 )
 
 var theme = models.ThemeDark
-var kind = models.ThumbnailKindDefault
+var kind = dashboardthumbs.ThumbnailKindDefault
 
 func TestIntegrationSqlStorage(t *testing.T) {
 	if testing.Short() {
@@ -38,7 +39,7 @@ func TestIntegrationSqlStorage(t *testing.T) {
 		thumb := getThumbnail(t, store, dash.Uid, dash.OrgId)
 
 		require.Positive(t, thumb.Id)
-		require.Equal(t, models.ThumbnailStateDefault, thumb.State)
+		require.Equal(t, dashboardthumbs.ThumbnailStateDefault, thumb.State)
 		require.Equal(t, dash.Version, thumb.DashboardVersion)
 	})
 
@@ -62,7 +63,7 @@ func TestIntegrationSqlStorage(t *testing.T) {
 
 		upsertTestDashboardThumbnail(t, store, dash.Uid, dash.OrgId, dash.Version)
 
-		cmd := models.FindDashboardsWithStaleThumbnailsCommand{
+		cmd := dashboardthumbs.FindDashboardsWithStaleThumbnailsCommand{
 			Kind:  kind,
 			Theme: theme,
 		}
@@ -77,7 +78,7 @@ func TestIntegrationSqlStorage(t *testing.T) {
 
 		upsertTestDashboardThumbnail(t, store, dash.Uid, dash.OrgId, dash.Version)
 
-		cmd := models.FindDashboardsWithStaleThumbnailsCommand{
+		cmd := dashboardthumbs.FindDashboardsWithStaleThumbnailsCommand{
 			Kind:                             kind,
 			IncludeThumbnailsWithEmptyDsUIDs: true,
 			Theme:                            theme,
@@ -92,9 +93,9 @@ func TestIntegrationSqlStorage(t *testing.T) {
 		setup()
 		dash := insertTestDashboard(t, sqlStore, "test dash 23", 1, savedFolder.Id, false, "prod", "webapp")
 		upsertTestDashboardThumbnail(t, store, dash.Uid, dash.OrgId, dash.Version)
-		updateThumbnailState(t, store, dash.Uid, dash.OrgId, models.ThumbnailStateStale)
+		updateThumbnailState(t, store, dash.Uid, dash.OrgId, dashboardthumbs.ThumbnailStateStale)
 
-		cmd := models.FindDashboardsWithStaleThumbnailsCommand{
+		cmd := dashboardthumbs.FindDashboardsWithStaleThumbnailsCommand{
 			Kind:  kind,
 			Theme: theme,
 		}
@@ -108,10 +109,10 @@ func TestIntegrationSqlStorage(t *testing.T) {
 		setup()
 		dash := insertTestDashboard(t, sqlStore, "test dash 23", 1, savedFolder.Id, false, "prod", "webapp")
 		upsertTestDashboardThumbnail(t, store, dash.Uid, dash.OrgId, dash.Version)
-		updateThumbnailState(t, store, dash.Uid, dash.OrgId, models.ThumbnailStateStale)
+		updateThumbnailState(t, store, dash.Uid, dash.OrgId, dashboardthumbs.ThumbnailStateStale)
 		upsertTestDashboardThumbnail(t, store, dash.Uid, dash.OrgId, dash.Version)
 
-		cmd := models.FindDashboardsWithStaleThumbnailsCommand{
+		cmd := dashboardthumbs.FindDashboardsWithStaleThumbnailsCommand{
 			Kind:  kind,
 			Theme: theme,
 		}
@@ -124,7 +125,7 @@ func TestIntegrationSqlStorage(t *testing.T) {
 		setup()
 		dash := insertTestDashboard(t, sqlStore, "test dash 23", 1, savedFolder.Id, false, "prod", "webapp")
 
-		cmd := models.FindDashboardsWithStaleThumbnailsCommand{
+		cmd := dashboardthumbs.FindDashboardsWithStaleThumbnailsCommand{
 			Kind:  kind,
 			Theme: theme,
 		}
@@ -143,7 +144,7 @@ func TestIntegrationSqlStorage(t *testing.T) {
 			"tags": "different-tag",
 		})
 
-		cmd := models.FindDashboardsWithStaleThumbnailsCommand{
+		cmd := dashboardthumbs.FindDashboardsWithStaleThumbnailsCommand{
 			Kind:  kind,
 			Theme: theme,
 		}
@@ -157,13 +158,13 @@ func TestIntegrationSqlStorage(t *testing.T) {
 		setup()
 		dash := insertTestDashboard(t, sqlStore, "test dash 23", 1, savedFolder.Id, false, "prod", "webapp")
 		upsertTestDashboardThumbnail(t, store, dash.Uid, dash.OrgId, dash.Version)
-		updateThumbnailState(t, store, dash.Uid, dash.OrgId, models.ThumbnailStateLocked)
+		updateThumbnailState(t, store, dash.Uid, dash.OrgId, dashboardthumbs.ThumbnailStateLocked)
 
 		updateTestDashboard(t, sqlStore, dash, map[string]interface{}{
 			"tags": "different-tag",
 		})
 
-		cmd := models.FindDashboardsWithStaleThumbnailsCommand{
+		cmd := dashboardthumbs.FindDashboardsWithStaleThumbnailsCommand{
 			Kind:  kind,
 			Theme: theme,
 		}
@@ -175,13 +176,13 @@ func TestIntegrationSqlStorage(t *testing.T) {
 	t.Run("Should not return dashboards with manually uploaded thumbnails by default", func(t *testing.T) {
 		setup()
 		dash := insertTestDashboard(t, sqlStore, "test dash 23", 1, savedFolder.Id, false, "prod", "webapp")
-		upsertTestDashboardThumbnail(t, store, dash.Uid, dash.OrgId, models.DashboardVersionForManualThumbnailUpload)
+		upsertTestDashboardThumbnail(t, store, dash.Uid, dash.OrgId, dashboardthumbs.DashboardVersionForManualThumbnailUpload)
 
 		updateTestDashboard(t, sqlStore, dash, map[string]interface{}{
 			"tags": "different-tag",
 		})
 
-		cmd := models.FindDashboardsWithStaleThumbnailsCommand{
+		cmd := dashboardthumbs.FindDashboardsWithStaleThumbnailsCommand{
 			Kind:  kind,
 			Theme: theme,
 		}
@@ -193,13 +194,13 @@ func TestIntegrationSqlStorage(t *testing.T) {
 	t.Run("Should return dashboards with manually uploaded thumbnails if requested", func(t *testing.T) {
 		setup()
 		dash := insertTestDashboard(t, sqlStore, "test dash 23", 1, savedFolder.Id, false, "prod", "webapp")
-		upsertTestDashboardThumbnail(t, store, dash.Uid, dash.OrgId, models.DashboardVersionForManualThumbnailUpload)
+		upsertTestDashboardThumbnail(t, store, dash.Uid, dash.OrgId, dashboardthumbs.DashboardVersionForManualThumbnailUpload)
 
 		updateTestDashboard(t, sqlStore, dash, map[string]interface{}{
 			"tags": "different-tag",
 		})
 
-		cmd := models.FindDashboardsWithStaleThumbnailsCommand{
+		cmd := dashboardthumbs.FindDashboardsWithStaleThumbnailsCommand{
 			Kind:                              kind,
 			Theme:                             theme,
 			IncludeManuallyUploadedThumbnails: true,
@@ -221,17 +222,17 @@ func TestIntegrationSqlStorage(t *testing.T) {
 			"tags": "different-tag",
 		})
 
-		cmd := models.FindDashboardThumbnailCountCommand{}
+		cmd := dashboardthumbs.FindDashboardThumbnailCountCommand{}
 		res, err := store.Count(context.Background(), &cmd)
 		require.NoError(t, err)
 		require.Equal(t, res, int64(2))
 	})
 }
 
-func getThumbnail(t *testing.T, store store, dashboardUID string, orgId int64) *models.DashboardThumbnail {
+func getThumbnail(t *testing.T, store store, dashboardUID string, orgId int64) *dashboardthumbs.DashboardThumbnail {
 	t.Helper()
-	cmd := models.GetDashboardThumbnailCommand{
-		DashboardThumbnailMeta: models.DashboardThumbnailMeta{
+	cmd := dashboardthumbs.GetDashboardThumbnailCommand{
+		DashboardThumbnailMeta: dashboardthumbs.DashboardThumbnailMeta{
 			DashboardUID: dashboardUID,
 			OrgId:        orgId,
 			PanelID:      0,
@@ -245,10 +246,10 @@ func getThumbnail(t *testing.T, store store, dashboardUID string, orgId int64) *
 	return thumb
 }
 
-func upsertTestDashboardThumbnail(t *testing.T, store store, dashboardUID string, orgId int64, dashboardVersion int) *models.DashboardThumbnail {
+func upsertTestDashboardThumbnail(t *testing.T, store store, dashboardUID string, orgId int64, dashboardVersion int) *dashboardthumbs.DashboardThumbnail {
 	t.Helper()
-	cmd := models.SaveDashboardThumbnailCommand{
-		DashboardThumbnailMeta: models.DashboardThumbnailMeta{
+	cmd := dashboardthumbs.SaveDashboardThumbnailCommand{
+		DashboardThumbnailMeta: dashboardthumbs.DashboardThumbnailMeta{
 			DashboardUID: dashboardUID,
 			OrgId:        orgId,
 			PanelID:      0,
@@ -266,10 +267,10 @@ func upsertTestDashboardThumbnail(t *testing.T, store store, dashboardUID string
 	return dash
 }
 
-func updateThumbnailState(t *testing.T, store store, dashboardUID string, orgId int64, state models.ThumbnailState) {
+func updateThumbnailState(t *testing.T, store store, dashboardUID string, orgId int64, state dashboardthumbs.ThumbnailState) {
 	t.Helper()
-	cmd := models.UpdateThumbnailStateCommand{
-		DashboardThumbnailMeta: models.DashboardThumbnailMeta{
+	cmd := dashboardthumbs.UpdateThumbnailStateCommand{
+		DashboardThumbnailMeta: dashboardthumbs.DashboardThumbnailMeta{
 			DashboardUID: dashboardUID,
 			OrgId:        orgId,
 			PanelID:      0,

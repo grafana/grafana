@@ -289,6 +289,8 @@ const (
 	TypeResample
 	// TypeClassicConditions is the CMDType for the classic condition operation.
 	TypeClassicConditions
+	// TypeThreshold is the CMDType for checking if a threshold has been crossed
+	TypeThreshold
 )
 
 func (gt CommandType) String() string {
@@ -317,6 +319,8 @@ func ParseCommandType(s string) (CommandType, error) {
 		return TypeResample, nil
 	case "classic_conditions":
 		return TypeClassicConditions, nil
+	case "threshold":
+		return TypeThreshold, nil
 	default:
 		return TypeUnknown, fmt.Errorf("'%v' is not a recognized expression type", s)
 	}

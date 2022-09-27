@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
@@ -18,19 +19,21 @@ type UsageStats struct {
 	RouteRegister routing.RouteRegister
 	pluginStore   plugins.Store
 
-	log log.Logger
+	log    log.Logger
+	tracer tracing.Tracer
 
 	externalMetrics     []usagestats.MetricsFunc
 	sendReportCallbacks []usagestats.SendReportCallbackFunc
 }
 
-func ProvideService(cfg *setting.Cfg, pluginStore plugins.Store, kvStore kvstore.KVStore, routeRegister routing.RouteRegister) *UsageStats {
+func ProvideService(cfg *setting.Cfg, pluginStore plugins.Store, kvStore kvstore.KVStore, routeRegister routing.RouteRegister, tracer tracing.Tracer) *UsageStats {
 	s := &UsageStats{
 		Cfg:           cfg,
 		RouteRegister: routeRegister,
 		pluginStore:   pluginStore,
 		kvStore:       kvstore.WithNamespace(kvStore, 0, "infra.usagestats"),
 		log:           log.New("infra.usagestats"),
+		tracer:        tracer,
 	}
 
 	s.registerAPIEndpoints()
@@ -65,8 +68,8 @@ func (uss *UsageStats) Run(ctx context.Context) error {
 	for {
 		select {
 		case <-sendReportTicker.C:
-			if err := uss.sendUsageStats(ctx); err != nil {
-				uss.log.Warn("Failed to send usage stats", "error", err)
+			if traceID, err := uss.sendUsageStats(ctx); err != nil {
+				uss.log.Warn("Failed to send usage stats", "error", err, "traceID", traceID)
 			}
 
 			lastSent = time.Now()
