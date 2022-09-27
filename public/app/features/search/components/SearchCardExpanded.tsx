@@ -33,6 +33,7 @@ export function SearchCardExpanded({ className, imageHeight, imageWidth, item, l
         {hasImage ? (
           <img
             loading="lazy"
+            alt=""
             className={styles.image}
             src={imageSrc}
             onLoad={() => setHasImage(true)}

@@ -34,7 +34,7 @@ export const URLPickerTab = (props: Props) => {
         <Field label="Preview">
           <div className={styles.iconPreview}>
             {mediaType === MediaType.Icon && <SVG src={imgSrc} className={styles.img} />}
-            {mediaType === MediaType.Image && newValue && <img src={imgSrc} className={styles.img} />}
+            {mediaType === MediaType.Image && newValue && <img src={imgSrc} alt="" className={styles.img} />}
           </div>
         </Field>
         <Label>{shortName}</Label>

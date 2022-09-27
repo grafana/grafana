@@ -302,7 +302,14 @@ function makeDataSourceColumn(
                     onDatasourceChange(settings.uid);
                   }}
                 >
-                  <img src={icon} width={14} height={14} title={settings.type} className={iconClass} />
+                  <img
+                    src={icon}
+                    alt="datasource logo"
+                    width={14}
+                    height={14}
+                    title={settings.type}
+                    className={iconClass}
+                  />
                   {settings.name}
                 </span>
               );

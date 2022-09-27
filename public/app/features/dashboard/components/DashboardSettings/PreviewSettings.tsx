@@ -70,10 +70,10 @@ export class PreviewSettings extends PureComponent<Props, State> {
             </tr>
             <tr>
               <td>
-                <img src={getThumbnailURL(uid, false)} style={imgstyle} />
+                <img src={getThumbnailURL(uid, false)} alt="" style={imgstyle} />
               </td>
               <td>
-                <img src={getThumbnailURL(uid, true)} style={imgstyle} />
+                <img src={getThumbnailURL(uid, true)} alt="" style={imgstyle} />
               </td>
             </tr>
             <tr>
