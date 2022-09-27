@@ -3555,6 +3555,7 @@ steps:
   failure: ignore
   image: us.gcr.io/kubernetes-dev/package-publish:latest
   name: publish-linux-packages
+  privileged: true
   settings:
     access_key_id:
       from_secret: packages_access_key_id
@@ -3632,6 +3633,7 @@ steps:
   failure: ignore
   image: us.gcr.io/kubernetes-dev/package-publish:latest
   name: publish-linux-packages
+  privileged: true
   settings:
     access_key_id:
       from_secret: packages_access_key_id
@@ -5162,6 +5164,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 9a0091729b405e9ce087fa83b81048ac82e345cc9b48dffeb3e2a3957d6d8449
+hmac: 1589abf9aa24456fc7c990e0da911821417e64c25a3fa983063904e3336c31d0
 
 ...
