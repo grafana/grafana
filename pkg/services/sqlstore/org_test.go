@@ -202,24 +202,6 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 					require.NoError(t, err)
 				})
 
-				t.Run("Can update org user role", func(t *testing.T) {
-					updateCmd := models.UpdateOrgUserCommand{OrgId: ac1.OrgID, UserId: ac2.ID, Role: org.RoleAdmin}
-					err = sqlStore.UpdateOrgUser(context.Background(), &updateCmd)
-					require.NoError(t, err)
-
-					orgUsersQuery := models.GetOrgUsersQuery{
-						OrgId: ac1.OrgID,
-						User: &user.SignedInUser{
-							OrgID:       ac1.OrgID,
-							Permissions: map[int64]map[string][]string{ac1.OrgID: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
-						},
-					}
-					err = sqlStore.GetOrgUsers(context.Background(), &orgUsersQuery)
-					require.NoError(t, err)
-
-					require.EqualValues(t, orgUsersQuery.Result[1].Role, org.RoleAdmin)
-				})
-
 				t.Run("Can get logged in user projection", func(t *testing.T) {
 					query := models.GetSignedInUserQuery{UserId: ac2.ID}
 					err := sqlStore.GetSignedInUser(context.Background(), &query)
@@ -240,54 +222,6 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 
 					require.NoError(t, err)
 					require.Equal(t, len(query.Result), 2)
-				})
-
-				t.Run("Can get organization users", func(t *testing.T) {
-					query := models.GetOrgUsersQuery{
-						OrgId: ac1.OrgID,
-						User: &user.SignedInUser{
-							OrgID:       ac1.OrgID,
-							Permissions: map[int64]map[string][]string{ac1.OrgID: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
-						},
-					}
-					err := sqlStore.GetOrgUsers(context.Background(), &query)
-
-					require.NoError(t, err)
-					require.Equal(t, len(query.Result), 2)
-					require.Equal(t, query.Result[0].Role, "Admin")
-				})
-
-				t.Run("Can get organization users with query", func(t *testing.T) {
-					query := models.GetOrgUsersQuery{
-						OrgId: ac1.OrgID,
-						Query: "ac1",
-						User: &user.SignedInUser{
-							OrgID:       ac1.OrgID,
-							Permissions: map[int64]map[string][]string{ac1.OrgID: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
-						},
-					}
-					err := sqlStore.GetOrgUsers(context.Background(), &query)
-
-					require.NoError(t, err)
-					require.Equal(t, len(query.Result), 1)
-					require.Equal(t, query.Result[0].Email, ac1.Email)
-				})
-
-				t.Run("Can get organization users with query and limit", func(t *testing.T) {
-					query := models.GetOrgUsersQuery{
-						OrgId: ac1.OrgID,
-						Query: "ac",
-						Limit: 1,
-						User: &user.SignedInUser{
-							OrgID:       ac1.OrgID,
-							Permissions: map[int64]map[string][]string{ac1.OrgID: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
-						},
-					}
-					err := sqlStore.GetOrgUsers(context.Background(), &query)
-
-					require.NoError(t, err)
-					require.Equal(t, len(query.Result), 1)
-					require.Equal(t, query.Result[0].Email, ac1.Email)
 				})
 
 				t.Run("Can set using org", func(t *testing.T) {
@@ -341,12 +275,6 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 					require.Equal(t, err, models.ErrLastOrgAdmin)
 				})
 
-				t.Run("Cannot update role so no one is admin user", func(t *testing.T) {
-					cmd := models.UpdateOrgUserCommand{OrgId: ac1.OrgID, UserId: ac1.ID, Role: org.RoleViewer}
-					err := sqlStore.UpdateOrgUser(context.Background(), &cmd)
-					require.Equal(t, err, models.ErrLastOrgAdmin)
-				})
-
 				t.Run("Given an org user with dashboard permissions", func(t *testing.T) {
 					ac3cmd := user.CreateUserCommand{Login: "ac3", Email: "ac3@test.com", Name: "ac3 name", IsAdmin: false}
 					ac3, err := sqlStore.CreateUser(context.Background(), ac3cmd)
@@ -360,17 +288,6 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 
 					err = sqlStore.AddOrgUser(context.Background(), &orgUserCmd)
 					require.NoError(t, err)
-
-					query := models.GetOrgUsersQuery{
-						OrgId: ac1.OrgID,
-						User: &user.SignedInUser{
-							OrgID:       ac1.OrgID,
-							Permissions: map[int64]map[string][]string{ac1.OrgID: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
-						},
-					}
-					err = sqlStore.GetOrgUsers(context.Background(), &query)
-					require.NoError(t, err)
-					// require.Equal(t, len(query.Result), 3)
 
 					dash1 := insertTestDashboard(t, sqlStore, "1 test dash", ac1.OrgID, 0, false, "prod", "webapp")
 					dash2 := insertTestDashboard(t, sqlStore, "2 test dash", ac3.OrgID, 0, false, "prod", "webapp")

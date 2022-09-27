@@ -148,7 +148,7 @@ func (ls *Implementation) UpsertUser(ctx context.Context, cmd *models.UpsertUser
 
 	// Sync isGrafanaAdmin permission
 	if extUser.IsGrafanaAdmin != nil && *extUser.IsGrafanaAdmin != cmd.Result.IsAdmin {
-		if errPerms := ls.SQLStore.UpdateUserPermissions(cmd.Result.ID, *extUser.IsGrafanaAdmin); errPerms != nil {
+		if errPerms := ls.userService.UpdatePermissions(cmd.Result.ID, *extUser.IsGrafanaAdmin); errPerms != nil {
 			return errPerms
 		}
 	}
@@ -334,9 +334,9 @@ func (ls *Implementation) syncOrgRoles(ctx context.Context, usr *user.User, extU
 			break
 		}
 
-		return ls.SQLStore.SetUsingOrg(ctx, &models.SetUsingOrgCommand{
-			UserId: usr.ID,
-			OrgId:  usr.OrgID,
+		return ls.userService.SetUsingOrg(ctx, &user.SetUsingOrgCommand{
+			UserID: usr.ID,
+			OrgID:  usr.OrgID,
 		})
 	}
 

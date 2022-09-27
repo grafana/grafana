@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -198,7 +199,7 @@ func setupOrgsDBForAccessControlTests(t *testing.T, db sqlstore.Store, c accessC
 	setInitCtxSignedInViewer(c.initCtx)
 	u := *c.initCtx.SignedInUser
 	u.OrgID = orgID
-	c.usermock.ExpectedSignedInUser = &u
+	c.userService.(*usertest.FakeUserService).ExpectedSignedInUser = &u
 
 	// Create `orgsCount` orgs
 	for i := 1; i <= int(orgID); i++ {

@@ -1028,6 +1028,7 @@ def publish_linux_packages_step(edition):
         'depends_on': [
             'grabpl'
         ],
+        'privileged': True,
         'failure': 'ignore', # While we're testing it
         'settings': {
             'access_key_id': from_secret('packages_access_key_id'),
