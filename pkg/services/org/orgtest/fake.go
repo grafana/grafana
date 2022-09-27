@@ -52,11 +52,7 @@ func (f *FakeOrgService) GetByID(ctx context.Context, query *org.GetOrgByIdQuery
 	return f.ExpectedOrg, f.ExpectedError
 }
 
-func (f *FakeOrgService) GetByNameHandler(ctx context.Context, query *org.GetOrgByNameQuery) (*org.Org, error) {
-	return f.ExpectedOrg, f.ExpectedError
-}
-
-func (f *FakeOrgService) GetByName(name string) (*org.Org, error) {
+func (f *FakeOrgService) GetByName(ctx context.Context, query *org.GetOrgByNameQuery) (*org.Org, error) {
 	return f.ExpectedOrg, f.ExpectedError
 }
 
