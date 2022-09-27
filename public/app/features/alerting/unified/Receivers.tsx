@@ -36,7 +36,7 @@ const NotificationError: FC<NotificationErrorProps> = ({ errorCount }: Notificat
   const styles = useStyles2(getStyles);
 
   return (
-    <div className={styles.warning}>
+    <div className={styles.warning} data-testid="receivers-notification-error">
       <Stack alignItems="flex-end" direction="column">
         <Stack alignItems="center">
           <Icon name="exclamation-triangle" />
