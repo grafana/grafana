@@ -195,38 +195,18 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 						require.Equal(t, query.Result.OrgName, "ac1@test.com")
 					})
 
-					t.Run("Should set last org as current when removing user from current", func(t *testing.T) {
-						remCmd := models.RemoveOrgUserCommand{OrgId: ac1.OrgID, UserId: ac2.ID}
-						err := sqlStore.RemoveOrgUser(context.Background(), &remCmd)
-						require.NoError(t, err)
+					// TODO: This test should be moved to user store
+					// t.Run("Should set last org as current when removing user from current", func(t *testing.T) {
+					// 	remCmd := models.RemoveOrgUserCommand{OrgId: ac1.OrgID, UserId: ac2.ID}
+					// 	err := sqlStore.RemoveOrgUser(context.Background(), &remCmd)
+					// 	require.NoError(t, err)
 
-						query := models.GetSignedInUserQuery{UserId: ac2.ID}
-						err = sqlStore.GetSignedInUser(context.Background(), &query)
+					// 	query := models.GetSignedInUserQuery{UserId: ac2.ID}
+					// 	err = sqlStore.GetSignedInUser(context.Background(), &query)
 
-						require.NoError(t, err)
-						require.Equal(t, query.Result.OrgID, ac2.OrgID)
-					})
-				})
-
-				t.Run("Removing user from org should delete user completely if in no other org", func(t *testing.T) {
-					// make sure ac2 has no org
-					err := sqlStore.DeleteOrg(context.Background(), &models.DeleteOrgCommand{Id: ac2.OrgID})
-					require.NoError(t, err)
-
-					// remove ac2 user from ac1 org
-					remCmd := models.RemoveOrgUserCommand{OrgId: ac1.OrgID, UserId: ac2.ID, ShouldDeleteOrphanedUser: true}
-					err = sqlStore.RemoveOrgUser(context.Background(), &remCmd)
-					require.NoError(t, err)
-					require.True(t, remCmd.UserWasDeleted)
-
-					err = sqlStore.GetSignedInUser(context.Background(), &models.GetSignedInUserQuery{UserId: ac2.ID})
-					require.Equal(t, err, user.ErrUserNotFound)
-				})
-
-				t.Run("Cannot delete last admin org user", func(t *testing.T) {
-					cmd := models.RemoveOrgUserCommand{OrgId: ac1.OrgID, UserId: ac1.ID}
-					err := sqlStore.RemoveOrgUser(context.Background(), &cmd)
-					require.Equal(t, err, models.ErrLastOrgAdmin)
+					// 	require.NoError(t, err)
+					// 	require.Equal(t, query.Result.OrgID, ac2.OrgID)
+					// })
 				})
 
 				t.Run("Given an org user with dashboard permissions", func(t *testing.T) {
@@ -256,31 +236,32 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 					})
 					require.NoError(t, err)
 
-					t.Run("When org user is deleted", func(t *testing.T) {
-						cmdRemove := models.RemoveOrgUserCommand{OrgId: ac1.OrgID, UserId: ac3.ID}
-						err := sqlStore.RemoveOrgUser(context.Background(), &cmdRemove)
-						require.NoError(t, err)
+					// TODO: should be moved to dashboard service
+					// t.Run("When org user is deleted", func(t *testing.T) {
+					// 	cmdRemove := models.RemoveOrgUserCommand{OrgId: ac1.OrgID, UserId: ac3.ID}
+					// 	err := sqlStore.RemoveOrgUser(context.Background(), &cmdRemove)
+					// 	require.NoError(t, err)
 
-						t.Run("Should remove dependent permissions for deleted org user", func(t *testing.T) {
-							permQuery := &models.GetDashboardACLInfoListQuery{DashboardID: dash1.Id, OrgID: ac1.OrgID}
+					// 	t.Run("Should remove dependent permissions for deleted org user", func(t *testing.T) {
+					// 		permQuery := &models.GetDashboardACLInfoListQuery{DashboardID: dash1.Id, OrgID: ac1.OrgID}
 
-							err = getDashboardACLInfoList(sqlStore, permQuery)
-							require.NoError(t, err)
+					// 		err = getDashboardACLInfoList(sqlStore, permQuery)
+					// 		require.NoError(t, err)
 
-							require.Equal(t, len(permQuery.Result), 0)
-						})
+					// 		require.Equal(t, len(permQuery.Result), 0)
+					// 	})
 
-						t.Run("Should not remove dashboard permissions for same user in another org", func(t *testing.T) {
-							permQuery := &models.GetDashboardACLInfoListQuery{DashboardID: dash2.Id, OrgID: ac3.OrgID}
+					// 	t.Run("Should not remove dashboard permissions for same user in another org", func(t *testing.T) {
+					// 		permQuery := &models.GetDashboardACLInfoListQuery{DashboardID: dash2.Id, OrgID: ac3.OrgID}
 
-							err = getDashboardACLInfoList(sqlStore, permQuery)
-							require.NoError(t, err)
+					// 		err = getDashboardACLInfoList(sqlStore, permQuery)
+					// 		require.NoError(t, err)
 
-							require.Equal(t, len(permQuery.Result), 1)
-							require.Equal(t, permQuery.Result[0].OrgId, ac3.OrgID)
-							require.Equal(t, permQuery.Result[0].UserId, ac3.ID)
-						})
-					})
+					// 		require.Equal(t, len(permQuery.Result), 1)
+					// 		require.Equal(t, permQuery.Result[0].OrgId, ac3.OrgID)
+					// 		require.Equal(t, permQuery.Result[0].UserId, ac3.ID)
+					// 	})
+					// })
 				})
 			})
 		})

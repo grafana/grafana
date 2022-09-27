@@ -318,12 +318,33 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 			require.Equal(t, result[0].Email, ac1.Email)
 		})
 		t.Run("Cannot update role so no one is admin user", func(t *testing.T) {
-			remCmd := models.RemoveOrgUserCommand{OrgId: ac1.OrgID, UserId: ac2.ID, ShouldDeleteOrphanedUser: true}
-			err := ss.RemoveOrgUser(context.Background(), &remCmd)
+			remCmd := org.RemoveOrgUserCommand{OrgID: ac1.OrgID, UserID: ac2.ID, ShouldDeleteOrphanedUser: true}
+			err := orgUserStore.RemoveOrgUser(context.Background(), &remCmd)
 			require.NoError(t, err)
 			cmd := org.UpdateOrgUserCommand{OrgID: ac1.OrgID, UserID: ac1.ID, Role: org.RoleViewer}
 			err = orgUserStore.UpdateOrgUser(context.Background(), &cmd)
 			require.Equal(t, models.ErrLastOrgAdmin, err)
+		})
+
+		t.Run("Removing user from org should delete user completely if in no other org", func(t *testing.T) {
+			// make sure ac2 has no org
+			err := ss.DeleteOrg(context.Background(), &models.DeleteOrgCommand{Id: ac2.OrgID})
+			require.NoError(t, err)
+
+			// remove ac2 user from ac1 org
+			remCmd := org.RemoveOrgUserCommand{OrgID: ac1.OrgID, UserID: ac2.ID, ShouldDeleteOrphanedUser: true}
+			err = orgUserStore.RemoveOrgUser(context.Background(), &remCmd)
+			require.NoError(t, err)
+			require.True(t, remCmd.UserWasDeleted)
+
+			err = ss.GetSignedInUser(context.Background(), &models.GetSignedInUserQuery{UserId: ac2.ID})
+			require.Equal(t, err, user.ErrUserNotFound)
+		})
+
+		t.Run("Cannot delete last admin org user", func(t *testing.T) {
+			cmd := org.RemoveOrgUserCommand{OrgID: ac1.OrgID, UserID: ac1.ID}
+			err := orgUserStore.RemoveOrgUser(context.Background(), &cmd)
+			require.Equal(t, err, models.ErrLastOrgAdmin)
 		})
 	})
 
@@ -679,4 +700,55 @@ func TestSQLStore_SearchOrgUsers(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestSQLStore_RemoveOrgUser(t *testing.T) {
+	store := sqlstore.InitTestDB(t)
+	orgUserStore := sqlStore{
+		db:      store,
+		dialect: store.GetDialect(),
+		cfg:     setting.NewCfg(),
+	}
+	// create org and admin
+	_, err := store.CreateUser(context.Background(), user.CreateUserCommand{
+		Login: "admin",
+		OrgID: 1,
+	})
+	require.NoError(t, err)
+
+	// create a user with no org
+	_, err = store.CreateUser(context.Background(), user.CreateUserCommand{
+		Login:        "user",
+		OrgID:        1,
+		SkipOrgSetup: true,
+	})
+	require.NoError(t, err)
+
+	// assign the user to the org
+	err = orgUserStore.AddOrgUser(context.Background(), &org.AddOrgUserCommand{
+		Role:   "Viewer",
+		OrgID:  1,
+		UserID: 2,
+	})
+	require.NoError(t, err)
+
+	// assert the org has been assigned
+	user := &models.GetUserByIdQuery{Id: 2}
+	err = store.GetUserById(context.Background(), user)
+	require.NoError(t, err)
+	require.Equal(t, user.Result.OrgID, int64(1))
+
+	// remove the user org
+	err = orgUserStore.RemoveOrgUser(context.Background(), &org.RemoveOrgUserCommand{
+		UserID:                   2,
+		OrgID:                    1,
+		ShouldDeleteOrphanedUser: false,
+	})
+	require.NoError(t, err)
+
+	// assert the org has been removed
+	user = &models.GetUserByIdQuery{Id: 2}
+	err = store.GetUserById(context.Background(), user)
+	require.NoError(t, err)
+	require.Equal(t, user.Result.OrgID, int64(0))
 }
