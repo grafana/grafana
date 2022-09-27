@@ -164,7 +164,7 @@ func TestIntegrationOrgDataAccess(t *testing.T) {
 
 		t.Run("Get org by handler name", func(t *testing.T) {
 			query := &org.GetOrgByNameQuery{Name: "Orga #1"}
-			result, err := orgStore.GetByNameHandler(context.Background(), query)
+			result, err := orgStore.GetByName(context.Background(), query)
 
 			require.NoError(t, err)
 			assert.Equal(t, int64(1), result.ID)

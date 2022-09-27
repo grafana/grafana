@@ -106,8 +106,8 @@ func (s *Service) GetByID(ctx context.Context, query *org.GetOrgByIdQuery) (*org
 	return s.store.GetByID(ctx, query)
 }
 
-func (s *Service) GetByNameHandler(ctx context.Context, query *org.GetOrgByNameQuery) (*org.Org, error) {
-	return s.store.GetByNameHandler(ctx, query)
+func (s *Service) GetByName(ctx context.Context, query *org.GetOrgByNameQuery) (*org.Org, error) {
+	return s.store.GetByName(ctx, query)
 }
 
 // TODO: refactor service to call store CRUD method
