@@ -98,7 +98,7 @@ func TestIntegrationAccessTokenExists(t *testing.T) {
 }
 
 // PublicDashboardEnabled
-func TestIntegrationGetPublicDashboard(t *testing.T) {
+func TestIntegrationPublicDashboardEnabled(t *testing.T) {
 	var sqlStore *sqlstore.SQLStore
 	var dashboardStore *dashboardsDB.DashboardStore
 	var publicdashboardStore *PublicDashboardStoreImpl
@@ -156,7 +156,7 @@ func TestIntegrationGetPublicDashboard(t *testing.T) {
 	})
 }
 
-// GetPublicDashboardWithDashboard
+// GetPublicDashboard
 func TestIntegrationGetPublicDashboard(t *testing.T) {
 	var sqlStore *sqlstore.SQLStore
 	var dashboardStore *dashboardsDB.DashboardStore
@@ -220,7 +220,7 @@ func TestIntegrationGetPublicDashboard(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		_, _, err = publicdashboardStore.GetPublicDashboardWithDashboard(context.Background(), "abc1234")
+		_, _, err = publicdashboardStore.GetPublicDashboard(context.Background(), "abc1234")
 		require.Error(t, dashboards.ErrDashboardNotFound, err)
 	})
 }
