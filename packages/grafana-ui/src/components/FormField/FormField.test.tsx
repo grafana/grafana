@@ -24,7 +24,7 @@ describe('FormField', () => {
 
   it('should render a custom inputEl instead if specified', () => {
     setup({
-      inputEl: <input role="checkbox" />,
+      inputEl: <input type="checkbox" />,
     });
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
     expect(screen.getByRole('checkbox')).toBeInTheDocument();

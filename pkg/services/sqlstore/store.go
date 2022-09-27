@@ -19,8 +19,6 @@ type Store interface {
 	GetOrgByName(name string) (*models.Org, error)
 	CreateOrg(ctx context.Context, cmd *models.CreateOrgCommand) error
 	CreateOrgWithMember(name string, userID int64) (models.Org, error)
-	UpdateOrgAddress(ctx context.Context, cmd *models.UpdateOrgAddressCommand) error
-	DeleteOrg(ctx context.Context, cmd *models.DeleteOrgCommand) error
 	GetOrgById(context.Context, *models.GetOrgByIdQuery) error
 	GetOrgByNameHandler(ctx context.Context, query *models.GetOrgByNameQuery) error
 	CreateUser(ctx context.Context, cmd user.CreateUserCommand) (*user.User, error)
@@ -41,8 +39,6 @@ type Store interface {
 	GetGlobalQuotaByTarget(ctx context.Context, query *models.GetGlobalQuotaByTargetQuery) error
 	WithTransactionalDbSession(ctx context.Context, callback DBTransactionFunc) error
 	InTransaction(ctx context.Context, fn func(ctx context.Context) error) error
-	SearchOrgUsers(ctx context.Context, query *models.SearchOrgUsersQuery) error
-	RemoveOrgUser(ctx context.Context, cmd *models.RemoveOrgUserCommand) error
 	Migrate(bool) error
 	Sync() error
 	Reset() error

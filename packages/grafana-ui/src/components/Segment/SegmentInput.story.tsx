@@ -1,8 +1,10 @@
 import { action } from '@storybook/addon-actions';
-import { ComponentMeta } from '@storybook/react';
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React, { useState } from 'react';
 
 import { SegmentInput, Icon, SegmentSection } from '@grafana/ui';
+
+import { SegmentInputProps } from './SegmentInput';
 
 const SegmentFrame = ({ children }: any) => (
   <>
@@ -95,6 +97,42 @@ export const InputWithAutoFocus = () => {
       </a>
     </SegmentFrame>
   );
+};
+
+export const Basic: ComponentStory<React.ComponentType<SegmentInputProps<string | number>>> = (
+  args: SegmentInputProps<string | number>
+) => {
+  const [value, setValue] = useState(args.value);
+
+  const props: SegmentInputProps<string | number> = {
+    ...args,
+    value,
+    onChange: (value) => {
+      setValue(value);
+      action('onChange fired')({ value });
+    },
+    onExpandedChange: (expanded) => action('onExpandedChange fired')({ expanded }),
+  };
+
+  return (
+    <SegmentSection label="Segment:">
+      <SegmentInput<string | number> {...props} />
+    </SegmentSection>
+  );
+};
+
+Basic.parameters = {
+  controls: {
+    exclude: ['value', 'onChange', 'Component', 'className', 'onExpandedChange'],
+  },
+};
+
+Basic.args = {
+  value: 'Initial input value',
+  placeholder: 'Placeholder text',
+  disabled: false,
+  autofocus: false,
+  inputPlaceholder: 'Start typing...',
 };
 
 export default meta;
