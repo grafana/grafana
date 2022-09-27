@@ -1,6 +1,7 @@
 import {
   ArrayVector,
   DataFrame,
+  DataFrameJSON,
   DataFrameView,
   getDisplayProcessor,
   SelectableValue,
@@ -20,7 +21,7 @@ const loadingFrameName = 'Loading';
 const searchURI = 'api/search-v2';
 
 type SearchAPIResponse = {
-  frames: unknown[];
+  frames: DataFrameJSON[];
 };
 
 export class BlugeSearcher implements GrafanaSearcher {
