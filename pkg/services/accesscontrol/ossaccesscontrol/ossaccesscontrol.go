@@ -2,6 +2,7 @@ package ossaccesscontrol
 
 import (
 	"context"
+	"errors"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -101,6 +102,9 @@ func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.Si
 
 	resolvedEvaluator, err := evaluator.MutateScopes(ctx, ac.scopeResolvers.GetScopeAttributeMutator(user.OrgId))
 	if err != nil {
+		if errors.Is(err, accesscontrol.ErrResolverNotFound) {
+			return false, nil
+		}
 		return false, err
 	}
 	return resolvedEvaluator.Evaluate(user.Permissions[user.OrgId]), nil
