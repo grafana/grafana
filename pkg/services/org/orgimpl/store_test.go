@@ -459,15 +459,9 @@ func TestSQLStore_GetOrgUsers(t *testing.T) {
 			result, err := orgUserStore.GetOrgUsers(context.Background(), tt.query)
 			require.NoError(t, err)
 			require.Len(t, result, tt.expectedNumUsers)
-			fmt.Println(len(result), "RESULT")
-			if len(result) >= 1 {
-				fmt.Println(result[0].UserID, "LDKDKD")
-			}
 
 			if !hasWildcardScope(tt.query.User, accesscontrol.ActionOrgUsersRead) {
 				for _, u := range result {
-					fmt.Println(u, "res")
-					// fmt.Println(t, tt.query.User.Permissions[tt.query.User.OrgID][ac.ActionOrgUsersRead], "THIIIIIS", fmt.Sprintf("users:id:%d", u.UserID))
 					assert.Contains(t, tt.query.User.Permissions[tt.query.User.OrgID][accesscontrol.ActionOrgUsersRead], fmt.Sprintf("users:id:%d", u.UserID))
 				}
 			}
@@ -486,7 +480,6 @@ func seedOrgUsers(t *testing.T, orgUserStore store, store *sqlstore.SQLStore, nu
 		require.NoError(t, err)
 
 		if i != 1 {
-			fmt.Println(user.ID, "userID")
 			err = orgUserStore.AddOrgUser(context.Background(), &org.AddOrgUserCommand{
 				Role:   "Viewer",
 				OrgID:  1,
