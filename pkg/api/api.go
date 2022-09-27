@@ -155,6 +155,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/playlists/*", reqSignedIn, hs.Index)
 	r.Get("/alerting/", reqSignedIn, hs.Index)
 	r.Get("/alerting/*", reqSignedIn, hs.Index)
+	r.Get("/library-panels/", reqSignedIn, hs.Index)
 
 	// sign up
 	r.Get("/verify", hs.Index)
@@ -257,6 +258,10 @@ func (hs *HTTPServer) registerRoutes() {
 
 		if hs.Features.IsEnabled(featuremgmt.FlagStorage) {
 			apiRoute.Group("/storage", hs.StorageService.RegisterHTTPRoutes)
+		}
+
+		if hs.Features.IsEnabled(featuremgmt.FlagPanelTitleSearch) {
+			apiRoute.Group("/search-v2", hs.SearchV2HTTPService.RegisterHTTPRoutes)
 		}
 
 		// current org

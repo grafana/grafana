@@ -2,9 +2,11 @@ package org
 
 import (
 	"errors"
-	"fmt"
 	"strings"
 	"time"
+
+	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 // Typed errors
@@ -37,8 +39,7 @@ type OrgUser struct {
 	Updated time.Time
 }
 
-// swagger:enum RoleType
-type RoleType string
+type RoleType = roletype.RoleType
 
 const (
 	RoleViewer RoleType = "Viewer"
@@ -115,58 +116,72 @@ type DeleteOrgCommand struct {
 	ID int64 `xorm:"id"`
 }
 
-func (r RoleType) IsValid() bool {
-	return r == RoleViewer || r == RoleAdmin || r == RoleEditor
+type AddOrgUserCommand struct {
+	LoginOrEmail string   `json:"loginOrEmail" binding:"Required"`
+	Role         RoleType `json:"role" binding:"Required"`
+
+	OrgID  int64 `json:"-" xorm:"org_id"`
+	UserID int64 `json:"-" xorm:"user_id"`
+
+	// internal use: avoid adding service accounts to orgs via user routes
+	AllowAddingServiceAccount bool `json:"-"`
 }
 
-func (r RoleType) Includes(other RoleType) bool {
-	if r == RoleAdmin {
-		return true
-	}
+type UpdateOrgUserCommand struct {
+	Role RoleType `json:"role" binding:"Required"`
 
-	if r == RoleEditor {
-		return other != RoleAdmin
-	}
-
-	return r == other
+	OrgID  int64 `json:"-"`
+	UserID int64 `json:"-"`
 }
 
-func (r RoleType) Children() []RoleType {
-	switch r {
-	case RoleAdmin:
-		return []RoleType{RoleEditor, RoleViewer}
-	case RoleEditor:
-		return []RoleType{RoleViewer}
-	default:
-		return nil
-	}
+type OrgUserDTO struct {
+	OrgID         int64           `json:"orgId" xorm:"org_id"`
+	UserID        int64           `json:"userId" xorm:"user_id"`
+	Email         string          `json:"email"`
+	Name          string          `json:"name"`
+	AvatarURL     string          `json:"avatarUrl" xorm:"avatar_url"`
+	Login         string          `json:"login"`
+	Role          string          `json:"role"`
+	LastSeenAt    time.Time       `json:"lastSeenAt"`
+	Updated       time.Time       `json:"-"`
+	Created       time.Time       `json:"-"`
+	LastSeenAtAge string          `json:"lastSeenAtAge"`
+	AccessControl map[string]bool `json:"accessControl,omitempty"`
+	IsDisabled    bool            `json:"isDisabled"`
 }
 
-func (r RoleType) Parents() []RoleType {
-	switch r {
-	case RoleEditor:
-		return []RoleType{RoleAdmin}
-	case RoleViewer:
-		return []RoleType{RoleEditor, RoleAdmin}
-	default:
-		return nil
-	}
+type RemoveOrgUserCommand struct {
+	UserID                   int64 `xorm:"user_id"`
+	OrgID                    int64 `xorm:"org_id"`
+	ShouldDeleteOrphanedUser bool
+	UserWasDeleted           bool
 }
 
-func (r *RoleType) UnmarshalText(data []byte) error {
-	// make sure "viewer" and "Viewer" are both correct
-	str := strings.Title(string(data))
+type GetOrgUsersQuery struct {
+	UserID int64 `xorm:"user_id"`
+	OrgID  int64 `xorm:"org_id"`
+	Query  string
+	Limit  int
+	// Flag used to allow oss edition to query users without access control
+	DontEnforceAccessControl bool
 
-	*r = RoleType(str)
-	if !r.IsValid() {
-		if (*r) != "" {
-			return fmt.Errorf("invalid role value: %s", *r)
-		}
+	User *user.SignedInUser
+}
 
-		*r = RoleViewer
-	}
+type SearchOrgUsersQuery struct {
+	OrgID int64 `xorm:"org_id"`
+	Query string
+	Page  int
+	Limit int
 
-	return nil
+	User *user.SignedInUser
+}
+
+type SearchOrgUsersQueryResult struct {
+	TotalCount int64         `json:"totalCount"`
+	OrgUsers   []*OrgUserDTO `json:"OrgUsers"`
+	Page       int           `json:"page"`
+	PerPage    int           `json:"perPage"`
 }
 
 type ByOrgName []*UserOrgDTO
