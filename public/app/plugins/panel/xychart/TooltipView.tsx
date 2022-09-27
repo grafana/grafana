@@ -101,22 +101,22 @@ export const TooltipView = ({
         </tr>
         <tbody>
           <tr>
-            <th>X - {xField.name}</th>
+            <th>{xField.name}</th>
             <td>{fmt(frame.fields[0], xField.values.get(rowIndex))}</td>
           </tr>
           <tr>
-            <th>Y - {yValue.name}:</th>
+            <th>{yValue.name}:</th>
             <td>{fmt(yValue.field, yValue.val)}</td>
           </tr>
           {extraFacets !== null && extraFacets.colorFacetFieldName && (
             <tr>
-              <th>Color - {extraFacets.colorFacetFieldName}:</th>
+              <th>{extraFacets.colorFacetFieldName}:</th>
               <td>{extraFacets.colorFacetValue}</td>
             </tr>
           )}
           {extraFacets !== null && extraFacets.sizeFacetFieldName && (
             <tr>
-              <th>Size - {extraFacets.sizeFacetFieldName}:</th>
+              <th>{extraFacets.sizeFacetFieldName}:</th>
               <td>{extraFacets.sizeFacetValue}</td>
             </tr>
           )}
