@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/tokens"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -40,7 +41,7 @@ func RequiresValidAccessToken(publicDashboardService publicdashboards.Service) f
 		accessToken, ok := web.Params(c.Req)[":accessToken"]
 
 		// Check access token is present on the request
-		if !ok || accessToken == "" {
+		if !ok || !tokens.IsValidAccessToken(accessToken) {
 			c.JsonApiErr(http.StatusNotFound, "Invalid access token", nil)
 			return
 		}
@@ -54,7 +55,7 @@ func RequiresValidAccessToken(publicDashboardService publicdashboards.Service) f
 		}
 
 		if !exists {
-			c.JsonApiErr(http.StatusBadRequest, "Invalid access token", nil)
+			c.JsonApiErr(http.StatusNotFound, "Invalid access token", nil)
 			return
 		}
 	}

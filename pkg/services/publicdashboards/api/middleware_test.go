@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/tokens"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
@@ -15,6 +16,8 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
+
+var validAccessToken, _ = tokens.GenerateAccessToken()
 
 func TestRequiresValidAccessToken(t *testing.T) {
 	tests := []struct {
@@ -38,25 +41,31 @@ func TestRequiresValidAccessToken(t *testing.T) {
 			Path:                 "/api/public/ma/events/myAccesstoken",
 			AccessTokenExists:    true,
 			AccessTokenExistsErr: nil,
-			AccessToken:          "myaccesstoken",
+			AccessToken:          validAccessToken,
 			ExpectedResponseCode: http.StatusOK,
 		},
-
-		// OWEN should this be a 404?
 		{
-			Name:                 "Returns 400 when public dashboard with access token does not exist",
+			Name:                 "Returns 404 when public dashboard with access token does not exist",
 			Path:                 "/api/public/ma/events/myAccesstoken",
 			AccessTokenExists:    false,
 			AccessTokenExistsErr: nil,
-			AccessToken:          "myaccesstoken",
-			ExpectedResponseCode: http.StatusBadRequest,
+			AccessToken:          validAccessToken,
+			ExpectedResponseCode: http.StatusNotFound,
+		},
+		{
+			Name:                 "Returns 404 when invalid access token",
+			Path:                 "/api/public/ma/events/myAccesstoken",
+			AccessTokenExists:    false,
+			AccessTokenExistsErr: nil,
+			AccessToken:          "invalidAccessToken",
+			ExpectedResponseCode: http.StatusNotFound,
 		},
 		{
 			Name:                 "Returns 500 when public dashboard service gives an error",
 			Path:                 "/api/public/ma/events/myAccesstoken",
 			AccessTokenExists:    false,
 			AccessTokenExistsErr: fmt.Errorf("error not found"),
-			AccessToken:          "myaccesstoken",
+			AccessToken:          validAccessToken,
 			ExpectedResponseCode: http.StatusInternalServerError,
 		},
 	}

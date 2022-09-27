@@ -5,7 +5,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 func ValidateSavePublicDashboard(dto *SavePublicDashboardConfigDTO, dashboard *models.Dashboard) error {
@@ -32,12 +31,4 @@ func ValidateQueryPublicDashboardRequest(req PublicDashboardQueryDTO) error {
 	}
 
 	return nil
-}
-
-func ValidAccesStoken(token string) bool {
-	if token == "" || !util.IsValidShortUID(token) {
-		return false
-	}
-
-	return true
 }
