@@ -87,14 +87,14 @@ export const InputWithAutoFocus = () => {
       {inputComponents.map((InputComponent: any, i: number) => (
         <InputComponent initialValue="test" key={i} />
       ))}
-      <a
+      <button
         className="gf-form-label query-part"
         onClick={() => {
           setInputComponents([...inputComponents, InputComponent]);
         }}
       >
         <Icon name="plus" />
-      </a>
+      </button>
     </SegmentFrame>
   );
 };
