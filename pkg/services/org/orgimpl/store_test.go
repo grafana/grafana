@@ -119,7 +119,7 @@ func TestIntegrationOrgDataAccess(t *testing.T) {
 		query := &org.SearchOrgsQuery{IDs: ids}
 		result, err := orgStore.Search(context.Background(), query)
 		require.NoError(t, err)
-		require.Equal(t, len(result), 3)
+		assert.Equal(t, 3, len(result))
 	})
 
 	t.Run("Given we have organizations, we can limit and paginate search", func(t *testing.T) {
@@ -135,7 +135,7 @@ func TestIntegrationOrgDataAccess(t *testing.T) {
 			result, err := orgStore.Search(context.Background(), query)
 
 			require.NoError(t, err)
-			require.Equal(t, len(result), 3)
+			assert.Equal(t, 3, len(result))
 		})
 
 		t.Run("Should be able to limit search", func(t *testing.T) {
@@ -143,7 +143,7 @@ func TestIntegrationOrgDataAccess(t *testing.T) {
 			result, err := orgStore.Search(context.Background(), query)
 
 			require.NoError(t, err)
-			require.Equal(t, len(result), 1)
+			assert.Equal(t, 1, len(result))
 		})
 
 		t.Run("Should be able to limit and paginate search", func(t *testing.T) {
@@ -151,7 +151,23 @@ func TestIntegrationOrgDataAccess(t *testing.T) {
 			result, err := orgStore.Search(context.Background(), query)
 
 			require.NoError(t, err)
-			require.Equal(t, len(result), 1)
+			assert.Equal(t, 1, len(result))
+		})
+
+		t.Run("Get org by ID", func(t *testing.T) {
+			query := &org.GetOrgByIdQuery{ID: 1}
+			result, err := orgStore.GetByID(context.Background(), query)
+
+			require.NoError(t, err)
+			assert.Equal(t, "Orga #1", result.Name)
+		})
+
+		t.Run("Get org by handler name", func(t *testing.T) {
+			query := &org.GetOrgByNameQuery{Name: "Orga #1"}
+			result, err := orgStore.GetByName(context.Background(), query)
+
+			require.NoError(t, err)
+			assert.Equal(t, int64(1), result.ID)
 		})
 	})
 }

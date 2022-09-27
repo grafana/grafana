@@ -120,6 +120,14 @@ func (f *FakeOrgStore) GetOrgUsers(ctx context.Context, query *org.GetOrgUsersQu
 	return f.ExpectedOrgUsers, f.ExpectedError
 }
 
+func (f *FakeOrgStore) GetByID(ctx context.Context, query *org.GetOrgByIdQuery) (*org.Org, error) {
+	return f.ExpectedOrg, f.ExpectedError
+}
+
+func (f *FakeOrgStore) GetByName(ctx context.Context, query *org.GetOrgByNameQuery) (*org.Org, error) {
+	return f.ExpectedOrg, f.ExpectedError
+}
+
 func (f *FakeOrgStore) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
 	return f.ExpectedSearchOrgUsersQueryResult, f.ExpectedError
 }
