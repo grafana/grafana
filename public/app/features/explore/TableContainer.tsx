@@ -128,7 +128,7 @@ export class TableContainer extends PureComponent<Props, TableContainerState> {
 
     return (
       <Collapse label={label} loading={loading} isOpen>
-        {dataFrame?.length && this.state.resultsStyle === TABLE_RESULTS_STYLE.default && (
+        {dataFrame?.length && this.state.resultsStyle === TABLE_RESULTS_STYLE.table && (
           <Table
             ariaLabel={ariaLabel}
             data={dataFrame}
