@@ -20,7 +20,7 @@ import {StoreState, TABLE_RESULTS_STYLE} from 'app/types';
 import { ExploreId, ExploreItemState, TABLE_RESULTS_STYLES, TableResultsStyle } from 'app/types/explore';
 
 import { MetaInfoText } from './MetaInfoText';
-import { RawList } from './RawList';
+import RawList from './RawList';
 import { splitOpen } from './state/main';
 import { getFieldLinksForExplore } from './utils/links';
 
@@ -37,7 +37,7 @@ interface TableContainerState {
 }
 
 export type instantQueryRawVirtualizedListData = {Value: string, __name__: string, [index: string]: string};
-type instantQueryMetricList = { [index: string]: { [index: string]: {[index: string]: string, Value: string} } };
+type instantQueryMetricList = { [index: string]: { [index: string]: instantQueryRawVirtualizedListData } };
 
 function mapStateToProps(state: StoreState, { exploreId }: TableContainerProps) {
   const explore = state.explore;
@@ -223,7 +223,8 @@ export class TableContainer extends PureComponent<Props, TableContainerState> {
 
     metricNames.forEach(function (metric: string, i: number) {
       metricList[metric] = {};
-      metricList[metric][i] = {} as instantQueryRawVirtualizedListData;
+      const formattedMetric: instantQueryRawVirtualizedListData = metricList[metric][i] ?? {};
+
       for (const field of metricLabels) {
         const label = field.name;
 
@@ -232,7 +233,7 @@ export class TableContainer extends PureComponent<Props, TableContainerState> {
           if (typeof field?.display === 'function') {
             const stringValue = formattedValueToString(field?.display(field.values.get(i)));
             if (stringValue) {
-              metricList[metric][i][label] = stringValue;
+              formattedMetric[label] = stringValue;
             }
           } else {
             console.warn('Field display method is missing!');
@@ -241,7 +242,7 @@ export class TableContainer extends PureComponent<Props, TableContainerState> {
       }
 
       outputList.push({
-        ...metricList[metric][i],
+        ...formattedMetric,
         __name__: metric,
       })
     });

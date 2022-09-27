@@ -54,7 +54,7 @@ interface RawListProps {
 
 type ListValue = {key: string, value: string};
 
-export const RawList = ({ listItemData, listKey }: RawListProps) => {
+const RawList = ({ listItemData, listKey }: RawListProps) => {
   const { Value, __name__, ...AllLabels } = listItemData;
 
   const [_, copyToClipboard] = useCopyToClipboard();
@@ -104,6 +104,8 @@ export const RawList = ({ listItemData, listKey }: RawListProps) => {
     </div>
   );
 };
+
+export default RawList
 
 /**
  *
