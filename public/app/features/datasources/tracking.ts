@@ -10,7 +10,7 @@ import { reportInteraction } from '@grafana/runtime';
  * - Time spent on the config page
  *
  * Changelog:
- * - v9.2.0 : logging datasource, datasource_uid, grafana version
+ * - v9.1.7 : logging datasource, datasource_uid, grafana version
  */
 export const trackDataSourceCreated = (props: DataSourceCreatedProps) => {
   reportInteraction('grafana_ds_add_datasource_clicked', props);
@@ -22,6 +22,8 @@ type DataSourceCreatedProps = {
   datasource_uid: string;
   /** The datasource type (e.g. Cloudwatch, Loki, Prometheus) */
   datasource: string;
+  /** The datasource version (especially interesting in external plugins - core plugins are aligned with grafana version) */
+  datasource_version?: string;
 };
 
 /**
@@ -33,7 +35,7 @@ type DataSourceCreatedProps = {
  * - Time spent on the config page
  *
  * Changelog:
- * - v9.2.0 : logging datasource, datasource_uid, grafana version and success
+ * - v9.1.7 : logging datasource, datasource_uid, grafana version and success
  */
 export const trackDataSourceTested = (props: DataSourceTestedProps) => {
   reportInteraction('grafana_ds_test_datasource_clicked', props);
@@ -45,6 +47,8 @@ type DataSourceTestedProps = {
   datasource_uid: string;
   /** The datasource type (e.g. Cloudwatch, Loki, Prometheus) */
   datasource: string;
+  /** The datasource version (especially interesting in external plugins - core plugins are aligned with grafana version) */
+  datasource_version?: string;
   /** Whether or not the datasource test succeeded = the datasource was successfully configured */
   success: boolean;
 };
