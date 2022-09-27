@@ -107,7 +107,7 @@ func (dc *NotificationProvisioner) mergeNotifications(ctx context.Context, notif
 	for _, notification := range notificationToMerge {
 		if notification.OrgID == 0 && notification.OrgName != "" {
 			getOrg := org.GetOrgByNameQuery{Name: notification.OrgName}
-			res, err := dc.orgService.GetByNameHandler(ctx, getOrg)
+			res, err := dc.orgService.GetByNameHandler(ctx, &getOrg)
 			if err != nil {
 				return err
 			}

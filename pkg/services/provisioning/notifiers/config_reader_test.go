@@ -13,6 +13,7 @@ import (
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 
 	"github.com/stretchr/testify/require"
@@ -32,10 +33,11 @@ var (
 )
 
 func TestNotificationAsConfig(t *testing.T) {
-	var orgService org.Service
 	var sqlStore *sqlstore.SQLStore
 	var ns *alerting.AlertNotificationService
 	logger := log.New("fake.log")
+	orgService := orgtest.NewOrgServiceFake()
+	orgService.ExpectedOrg = &org.Org{}
 
 	encryptionService := encryptionservice.SetupTestService(t)
 

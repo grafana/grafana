@@ -62,7 +62,7 @@ func (hs *HTTPServer) GetOrgByID(c *models.ReqContext) response.Response {
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) GetOrgByName(c *models.ReqContext) response.Response {
-	orga, err := hs.orgService.GetByName(web.Params(c.Req)[":name"])
+	orga, err := hs.orgService.GetByNameHandler(c.Req.Context(), &org.GetOrgByNameQuery{Name: web.Params(c.Req)[":name"]})
 	if err != nil {
 		if errors.Is(err, models.ErrOrgNotFound) {
 			return response.Error(http.StatusNotFound, "Organization not found", err)
