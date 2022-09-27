@@ -232,8 +232,8 @@ func (d *DashboardStore) UpdateDashboardACL(ctx context.Context, dashboardID int
 }
 
 func (d *DashboardStore) SaveAlerts(ctx context.Context, dashID int64, alerts []*models.Alert) error {
-	return d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		existingAlerts, err := GetAlertsByDashboardId2(dashID, sess)
+	return d.sqlStore.InTransaction(ctx, func(ctx context.Context) error {
+		existingAlerts, err := d.GetAlertsByDashboardId2(ctx, dashID)
 		if err != nil {
 			return err
 		}
@@ -242,7 +242,7 @@ func (d *DashboardStore) SaveAlerts(ctx context.Context, dashID int64, alerts []
 			return err
 		}
 
-		if err := d.deleteMissingAlerts(existingAlerts, alerts, sess); err != nil {
+		if err := d.deleteMissingAlerts(ctx, existingAlerts, alerts); err != nil {
 			return err
 		}
 
@@ -562,14 +562,14 @@ func saveProvisionedData(sess *sqlstore.DBSession, provisioning *models.Dashboar
 	return err
 }
 
-func GetAlertsByDashboardId2(dashboardId int64, sess *sqlstore.DBSession) ([]*models.Alert, error) {
+func (d *DashboardStore) GetAlertsByDashboardId2(ctx context.Context, dashboardId int64) ([]*models.Alert, error) {
 	alerts := make([]*models.Alert, 0)
-	err := sess.Where("dashboard_id = ?", dashboardId).Find(&alerts)
-
+	err := d.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		return sess.Where("dashboard_id = ?", dashboardId).Find(&alerts)
+	})
 	if err != nil {
 		return []*models.Alert{}, err
 	}
-
 	return alerts, nil
 }
 
@@ -634,27 +634,28 @@ func (d *DashboardStore) updateAlerts(ctx context.Context, existingAlerts []*mod
 	})
 }
 
-func (d *DashboardStore) deleteMissingAlerts(alerts []*models.Alert, existingAlerts []*models.Alert, sess *sqlstore.DBSession) error {
-	for _, missingAlert := range alerts {
-		missing := true
+func (d *DashboardStore) deleteMissingAlerts(ctx context.Context, alerts []*models.Alert, existingAlerts []*models.Alert) error {
+	return d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		for _, missingAlert := range alerts {
+			missing := true
 
-		for _, k := range existingAlerts {
-			if missingAlert.PanelId == k.PanelId {
-				missing = false
-				break
+			for _, k := range existingAlerts {
+				if missingAlert.PanelId == k.PanelId {
+					missing = false
+					break
+				}
+			}
+
+			if missing {
+				if err := d.deleteAlertByIdInternal(missingAlert.Id, "Removed from dashboard", sess); err != nil {
+					// No use trying to delete more, since we're in a transaction and it will be
+					// rolled back on error.
+					return err
+				}
 			}
 		}
-
-		if missing {
-			if err := d.deleteAlertByIdInternal(missingAlert.Id, "Removed from dashboard", sess); err != nil {
-				// No use trying to delete more, since we're in a transaction and it will be
-				// rolled back on error.
-				return err
-			}
-		}
-	}
-
-	return nil
+		return nil
+	})
 }
 
 func (d *DashboardStore) deleteAlertByIdInternal(alertId int64, reason string, sess *sqlstore.DBSession) error {
