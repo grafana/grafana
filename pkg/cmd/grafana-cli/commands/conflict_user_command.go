@@ -204,7 +204,7 @@ func runIngestConflictUsersFile() func(context *cli.Context) error {
 		if err != nil {
 			return fmt.Errorf("not able to merge with %e", err)
 		}
-		logger.Info("\n\nconflicts merged.\n")
+		logger.Info("\n\nconflicts resolved.\n")
 		return nil
 	}
 }
@@ -572,6 +572,7 @@ type ConflictResolver struct {
 }
 
 type ConflictingUser struct {
+	// direction is the +/- which indicates if we should keep or delete the user
 	Direction     string `xorm:"direction"`
 	ID            string `xorm:"id"`
 	Email         string `xorm:"email"`
@@ -609,21 +610,21 @@ func (c *ConflictingUser) Marshal(filerow string) error {
 	c.Email = email[1]
 	c.Login = login[1]
 
+	// which conflict
+	conflictEmail := strings.Split(values[3], ":")
+	conflictLogin := strings.Split(values[4], ":")
+	c.ConflictEmail = conflictEmail[1]
+	c.ConflictLogin = conflictLogin[1]
+
 	// why trim values, 2022-08-20:19:17:12
-	lastSeenAt := strings.TrimPrefix(values[3], "last_seen_at:")
-	authModule := strings.Split(values[4], ":")
+	lastSeenAt := strings.TrimPrefix(values[5], "last_seen_at:")
+	authModule := strings.Split(values[6], ":")
 	if len(authModule) < 2 {
 		c.AuthModule = ""
 	} else {
 		c.AuthModule = authModule[1]
 	}
 	c.LastSeenAt = lastSeenAt
-
-	// which conflict
-	conflictEmail := strings.Split(values[5], ":")
-	conflictLogin := strings.Split(values[6], ":")
-	c.ConflictEmail = conflictEmail[1]
-	c.ConflictLogin = conflictLogin[1]
 
 	return nil
 }

@@ -142,11 +142,6 @@ func TestBuildConflictBlockFromFileRepresentation(t *testing.T) {
 		expectedIdsInBlocks map[string][]string
 	}
 	testOrgID := 1
-	m := make(map[string][]string)
-	conflict1 := "conflict: test"
-	conflict2 := "conflict: test2"
-	m[conflict1] = []string{"2", "3"}
-	m[conflict2] = []string{"4", "5", "6"}
 	testCases := []testBuildConflictBlock{
 		{
 			desc: "should be able to parse the fileString containing the conflicts",
@@ -185,7 +180,7 @@ conflict: test2
 + id: 5, email: TEST2, login: TEST2, conflict_email: true, conflict_login: true, last_seen_at: 2012-09-19T08:31:51Z, auth_module:
 - id: 6, email: Test2, login: Test2, conflict_email: true, conflict_login: true, last_seen_at: 2012-09-19T08:32:03Z, auth_module: `,
 			expectedBlocks:      []string{"conflict: test", "conflict: test2"},
-			expectedIdsInBlocks: m,
+			expectedIdsInBlocks: map[string][]string{"conflict: test": {"2", "3"}, "conflict: test2": {"4", "5", "6"}},
 		},
 		{
 			desc: "should be able to parse the fileString containing the conflicts 123",
@@ -238,18 +233,15 @@ conflict: test2
 				sort.Strings(keys)
 				require.Equal(t, tc.expectedBlocks, keys)
 
-				// checking for parsing of ids
-				conflict1Ids := []string{}
-				for _, u := range r.Blocks[conflict1] {
-					conflict1Ids = append(conflict1Ids, u.ID)
+				// we want to validate the ids in the blocks
+				for _, block := range tc.expectedBlocks {
+					// checking for parsing of ids
+					conflictIds := []string{}
+					for _, u := range r.Blocks[block] {
+						conflictIds = append(conflictIds, u.ID)
+					}
+					require.Equal(t, tc.expectedIdsInBlocks[block], conflictIds)
 				}
-				require.Equal(t, tc.expectedIdsInBlocks[conflict1], conflict1Ids)
-				// checking for parsing of ids
-				conflict2Ids := []string{}
-				for _, u := range r.Blocks[conflict2] {
-					conflict2Ids = append(conflict2Ids, u.ID)
-				}
-				require.Equal(t, tc.expectedIdsInBlocks[conflict2], conflict2Ids)
 			}
 		})
 	}
