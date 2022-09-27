@@ -12,7 +12,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+
+	// ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -320,9 +321,10 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 		})
 		t.Run("Cannot update role so no one is admin user", func(t *testing.T) {
 			remCmd := models.RemoveOrgUserCommand{OrgId: ac1.OrgID, UserId: ac2.ID, ShouldDeleteOrphanedUser: true}
-			ss.RemoveOrgUser(context.Background(), &remCmd)
+			err := ss.RemoveOrgUser(context.Background(), &remCmd)
+			require.NoError(t, err)
 			cmd := org.UpdateOrgUserCommand{OrgID: ac1.OrgID, UserID: ac1.ID, Role: org.RoleViewer}
-			err := orgUserStore.UpdateOrgUser(context.Background(), &cmd)
+			err = orgUserStore.UpdateOrgUser(context.Background(), &cmd)
 			require.Equal(t, models.ErrLastOrgAdmin, err)
 		})
 	})
@@ -407,7 +409,7 @@ func TestSQLStore_GetOrgUsers(t *testing.T) {
 				OrgID: 1,
 				User: &user.SignedInUser{
 					OrgID:       1,
-					Permissions: map[int64]map[string][]string{1: {ac.ActionOrgUsersRead: {ac.ScopeUsersAll}}},
+					Permissions: map[int64]map[string][]string{1: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
 				},
 			},
 			expectedNumUsers: 10,
@@ -418,7 +420,7 @@ func TestSQLStore_GetOrgUsers(t *testing.T) {
 				OrgID: 1,
 				User: &user.SignedInUser{
 					OrgID:       1,
-					Permissions: map[int64]map[string][]string{1: {ac.ActionOrgUsersRead: {""}}},
+					Permissions: map[int64]map[string][]string{1: {accesscontrol.ActionOrgUsersRead: {""}}},
 				},
 			},
 			expectedNumUsers: 0,
@@ -429,7 +431,7 @@ func TestSQLStore_GetOrgUsers(t *testing.T) {
 				OrgID: 1,
 				User: &user.SignedInUser{
 					OrgID: 1,
-					Permissions: map[int64]map[string][]string{1: {ac.ActionOrgUsersRead: {
+					Permissions: map[int64]map[string][]string{1: {accesscontrol.ActionOrgUsersRead: {
 						"users:id:1",
 						"users:id:5",
 						"users:id:9",
@@ -462,11 +464,11 @@ func TestSQLStore_GetOrgUsers(t *testing.T) {
 				fmt.Println(result[0].UserID, "LDKDKD")
 			}
 
-			if !hasWildcardScope(tt.query.User, ac.ActionOrgUsersRead) {
+			if !hasWildcardScope(tt.query.User, accesscontrol.ActionOrgUsersRead) {
 				for _, u := range result {
 					fmt.Println(u, "res")
 					// fmt.Println(t, tt.query.User.Permissions[tt.query.User.OrgID][ac.ActionOrgUsersRead], "THIIIIIS", fmt.Sprintf("users:id:%d", u.UserID))
-					assert.Contains(t, tt.query.User.Permissions[tt.query.User.OrgID][ac.ActionOrgUsersRead], fmt.Sprintf("users:id:%d", u.UserID))
+					assert.Contains(t, tt.query.User.Permissions[tt.query.User.OrgID][accesscontrol.ActionOrgUsersRead], fmt.Sprintf("users:id:%d", u.UserID))
 				}
 			}
 		})
@@ -547,7 +549,7 @@ func TestSQLStore_GetOrgUsers_PopulatesCorrectly(t *testing.T) {
 		UserID: newUser.ID,
 		User: &user.SignedInUser{
 			OrgID:       1,
-			Permissions: map[int64]map[string][]string{1: {ac.ActionOrgUsersRead: {ac.ScopeUsersAll}}},
+			Permissions: map[int64]map[string][]string{1: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
 		},
 	}
 	result, err := orgUserStore.GetOrgUsers(context.Background(), query)
