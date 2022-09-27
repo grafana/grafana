@@ -105,14 +105,14 @@ func parseFolderFilter(query searchLibraryElementsQuery) FolderFilter {
 		}
 	}
 
-	folderUIDs = strings.Split(query.folderFilterUID, ",")
+	folderUIDs = strings.Split(query.folderFilterUIDs, ",")
 
-	for _, folderUID := range folderUIDs {					
+	for _, folderUID := range folderUIDs {
 		if isUIDGeneralFolder(folderUID) {
 			includeGeneralFolder = true
 			break
 		}
-	}	
+	}
 
 	return FolderFilter{
 		includeGeneralFolder: includeGeneralFolder,
@@ -138,6 +138,18 @@ func (f *FolderFilter) writeFolderFilterSQL(includeGeneral bool, builder *sqlsto
 	if len(params) > 0 {
 		sql.WriteString(` AND le.folder_id IN (?` + strings.Repeat(",?", len(params)-1) + ")")
 		builder.Write(sql.String(), params...)
+	}
+
+	paramsUIDs := make([]interface{}, 0)
+	for _, folderUID := range f.folderUIDs {
+		if !includeGeneral && isUIDGeneralFolder(folderUID) {
+			continue
+		}
+		paramsUIDs = append(paramsUIDs, folderUID)
+	}
+	if len(paramsUIDs) > 0 {
+		sql.WriteString(` AND le.folder_uid IN (?` + strings.Repeat(",?", len(paramsUIDs)-1) + ")")
+		builder.Write(sql.String(), paramsUIDs...)
 	}
 
 	return nil

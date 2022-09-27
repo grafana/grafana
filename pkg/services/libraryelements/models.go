@@ -206,15 +206,15 @@ type PatchLibraryElementCommand struct {
 
 // searchLibraryElementsQuery is the query used for searching for Elements
 type searchLibraryElementsQuery struct {
-	perPage       int
-	page          int
-	searchString  string
-	sortDirection string
-	kind          int
-	typeFilter    string
-	excludeUID    string
-	folderFilter  string
-	folderFilterUID  string
+	perPage          int
+	page             int
+	searchString     string
+	sortDirection    string
+	kind             int
+	typeFilter       string
+	excludeUID       string
+	folderFilter     string
+	folderFilterUIDs string
 }
 
 // LibraryElementResponse is a response struct for LibraryElementDTO.
