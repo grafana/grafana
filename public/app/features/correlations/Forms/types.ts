@@ -8,5 +8,4 @@ export interface FormDTO {
   config: CorrelationConfig;
 }
 
-type FormDTOWithoutTarget = Omit<FormDTO, 'targetUID' | 'sourceUID'>;
-export type EditFormDTO = FormDTOWithoutTarget;
+export type EditFormDTO = Omit<FormDTO, 'targetUID' | 'sourceUID'>;

@@ -23,7 +23,7 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
     }
     return getDataSourceSrv().get(dsUid);
   }, [dsUid]);
-  const QuerEditor = datasource?.components?.QueryEditor;
+  const QueryEditor = datasource?.components?.QueryEditor;
 
   return (
     <Field label="Query" invalid={invalid} error={error}>
@@ -34,7 +34,7 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
         rules={{
           validate: {
             hasQueryEditor: () =>
-              QuerEditor !== undefined || 'The selected target data source must export a query editor.',
+              QueryEditor !== undefined || 'The selected target data source must export a query editor.',
           },
         }}
         render={({ field: { value, onChange } }) => {
@@ -51,11 +51,11 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
               </Alert>
             );
           }
-          if (!QuerEditor) {
+          if (!QueryEditor) {
             return <Alert title="Data source does not export a query editor."></Alert>;
           }
 
-          return <QuerEditor onRunQuery={() => {}} onChange={onChange} datasource={datasource} query={value} />;
+          return <QueryEditor onRunQuery={() => {}} onChange={onChange} datasource={datasource} query={value} />;
         }}
       />
     </Field>
