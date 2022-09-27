@@ -3,7 +3,6 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Dropdown, Icon, Tooltip, useStyles2 } from '@grafana/ui';
-import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { useSelector } from 'app/types';
 
@@ -38,7 +37,7 @@ export function TopSearchBar() {
             </button>
           </Dropdown>
         )}
-        {config.newsFeedEnabled && <NewsContainer buttonCss={styles.actionItem} />}
+        <NewsContainer buttonCss={styles.actionItem} />
         {signInNode && (
           <Tooltip placement="bottom" content="Sign in">
             <a className={styles.actionItem} href={signInNode.url} target={signInNode.target}>

@@ -115,8 +115,6 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"exploreEnabled":                      setting.ExploreEnabled,
 		"helpEnabled":                         setting.HelpEnabled,
 		"profileEnabled":                      setting.ProfileEnabled,
-		"newsFeedEnabled":                     setting.NewsFeedEnabled,
-		"newsFeedUrl":                         setting.NewsFeedUrl,
 		"queryHistoryEnabled":                 hs.Cfg.QueryHistoryEnabled,
 		"googleAnalyticsId":                   setting.GoogleAnalyticsId,
 		"googleAnalytics4Id":                  setting.GoogleAnalytics4Id,
