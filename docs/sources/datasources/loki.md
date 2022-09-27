@@ -232,7 +232,7 @@ You can use some global built-in variables in query variables; `$__interval`, `$
 
 ## Annotations
 
-You can use any non-metric Loki query as a source for [annotations]({{< relref "../dashboards/annotations/" >}}). Log content will be used as annotation text and your log stream labels as tags, so there is no need for additional mapping.
+You can use any non-metric Loki query as a source for [annotations]({{< relref "../dashboards/build-dashboards/annotate-visualizations" >}}). Log content will be used as annotation text and your log stream labels as tags, so there is no need for additional mapping.
 
 ## Configure the data source with provisioning
 

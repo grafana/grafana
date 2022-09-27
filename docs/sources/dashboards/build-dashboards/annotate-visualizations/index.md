@@ -2,16 +2,18 @@
 aliases:
   - /docs/grafana/latest/dashboards/annotations/
   - /docs/grafana/latest/reference/annotations/
+  - /docs/grafana/next/dashboards/build-dashboards/annotate-visualizations/
 keywords:
   - grafana
   - annotations
   - documentation
   - guide
-title: Annotations
-weight: 9
+title: Annotate visualizations
+menuTitle: Annotate visualizations
+weight: 600
 ---
 
-# Annotations
+# Annotate visualizations
 
 Annotations provide a way to mark points on the graph with rich events. When you hover over an annotation
 you can get event description and event tags. The text field can include links to other systems with more detail.
@@ -20,7 +22,7 @@ you can get event description and event tags. The text field can include links t
 
 ## Native annotations
 
-Grafana comes with a native annotation store and the ability to add annotation events directly from the graph panel or via the [HTTP API]({{< relref "../developers/http_api/annotations/" >}}).
+Grafana comes with a native annotation store and the ability to add annotation events directly from the graph panel or via the [HTTP API]({{< relref "../../../developers/http_api/annotations/" >}}).
 
 ### Add annotation
 
@@ -94,4 +96,4 @@ to show.
 
 ### Annotation query details
 
-The annotation query options are different for each data source. For information about annotations in a specific data source, refer to the specific [data source]({{< relref "../datasources/" >}}) topic.
+The annotation query options are different for each data source. For information about annotations in a specific data source, refer to the specific [data source]({{< relref "../../../datasources/" >}}) topic.
