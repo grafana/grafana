@@ -45,7 +45,7 @@ type NavigationAppConfig struct {
 }
 
 func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStore plugins.Store, pluginSettings pluginsettings.Service, starService star.Service, features *featuremgmt.FeatureManager, dashboardService dashboards.DashboardService, accesscontrolService ac.Service, kvStore kvstore.KVStore, apiKeyService apikey.Service) navtree.Service {
-	return &ServiceImpl{
+	service := &ServiceImpl{
 		cfg:                  cfg,
 		log:                  log.New("navtree service"),
 		accessControl:        accessControl,
@@ -58,6 +58,10 @@ func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStor
 		kvStore:              kvStore,
 		apiKeyService:        apiKeyService,
 	}
+
+	service.readNavigationSettings()
+
+	return service
 }
 
 //nolint:gocyclo

@@ -4,7 +4,6 @@ import (
 	"path"
 	"sort"
 	"strconv"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -12,16 +11,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *models.ReqContext) error {
 	topNavEnabled := s.features.IsEnabled(featuremgmt.FlagTopnav)
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	appLinks := []*navtree.NavLink{}
-
-	if len(s.navigationAppConfig) == 0 {
-		s.readNavigationSettings()
-	}
 
 	pss, err := s.pluginSettings.GetPluginSettings(c.Req.Context(), &pluginsettings.GetArgs{OrgID: c.OrgID})
 	if err != nil {
@@ -203,7 +199,7 @@ func (s *ServiceImpl) readNavigationSettings() {
 	for _, key := range sec.Keys() {
 		pluginId := key.Name()
 		// Support <id> <weight> value
-		values := strings.Split(sec.Key(key.Name()).MustString(""), " ")
+		values := util.SplitString(sec.Key(key.Name()).MustString(""))
 
 		appCfg := &NavigationAppConfig{SectionID: values[0]}
 		if len(values) > 1 {
