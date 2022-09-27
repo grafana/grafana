@@ -1,5 +1,5 @@
-import { locationUtil } from '@grafana/data';
-import { locationSearchToObject, locationService, navigationLogger } from '@grafana/runtime';
+import { locationUtil, urlUtil } from '@grafana/data';
+import { locationService, navigationLogger } from '@grafana/runtime';
 import { config } from 'app/core/config';
 
 export function interceptLinkClicks(e: MouseEvent) {
@@ -15,7 +15,7 @@ export function interceptLinkClicks(e: MouseEvent) {
     const target = anchor.getAttribute('target');
 
     if (href && !target) {
-      const params = locationSearchToObject(href.split('?')[1]);
+      const params = urlUtil.parseKeyValue(href.split('?')[1]);
       const orgIdChange = params.orgId && Number(params.orgId) !== config.bootData.user.orgId;
       navigationLogger('utils', false, 'intercepting link click', e);
       e.preventDefault();
