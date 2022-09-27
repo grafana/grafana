@@ -69,7 +69,6 @@ type API struct {
 	TransactionManager   provisioning.TransactionManager
 	ProvenanceStore      provisioning.ProvisioningStore
 	RuleStore            store.RuleStore
-	InstanceStore        store.InstanceStore
 	AlertingStore        AlertingStore
 	AdminConfigStore     store.AdminConfigurationStore
 	DataProxy            *datasourceproxy.DataSourceProxyService

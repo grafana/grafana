@@ -25,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests"
 )
 
@@ -1981,7 +1980,7 @@ func TestProcessEvalResults(t *testing.T) {
 
 	for _, tc := range testCases {
 		fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()
-		st := state.NewManager(log.New("test_state_manager"), testMetrics.GetStateMetrics(), nil, nil, &store.FakeInstanceStore{}, &dashboards.FakeDashboardService{}, &image.NotAvailableImageService{}, clock.New(), fakeAnnoRepo)
+		st := state.NewManager(log.New("test_state_manager"), testMetrics.GetStateMetrics(), nil, nil, &state.FakeInstanceStore{}, &dashboards.FakeDashboardService{}, &image.NotAvailableImageService{}, clock.New(), fakeAnnoRepo)
 		t.Run(tc.desc, func(t *testing.T) {
 			for _, res := range tc.evalResults {
 				_ = st.ProcessEvalResults(context.Background(), evaluationTime, tc.alertRule, res, data.Labels{
@@ -2007,7 +2006,7 @@ func TestProcessEvalResults(t *testing.T) {
 	}
 
 	t.Run("should save state to database", func(t *testing.T) {
-		instanceStore := &store.FakeInstanceStore{}
+		instanceStore := &state.FakeInstanceStore{}
 		clk := clock.New()
 		st := state.NewManager(log.New("test_state_manager"), testMetrics.GetStateMetrics(), nil, nil, instanceStore, &dashboards.FakeDashboardService{}, &image.NotAvailableImageService{}, clk, annotationstest.NewFakeAnnotationsRepo())
 		rule := models.AlertRuleGen()()

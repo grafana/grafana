@@ -120,8 +120,8 @@ type AddOrgUserCommand struct {
 	LoginOrEmail string   `json:"loginOrEmail" binding:"Required"`
 	Role         RoleType `json:"role" binding:"Required"`
 
-	OrgID  int64 `json:"-"`
-	UserID int64 `json:"-"`
+	OrgID  int64 `json:"-" xorm:"org_id"`
+	UserID int64 `json:"-" xorm:"user_id"`
 
 	// internal use: avoid adding service accounts to orgs via user routes
 	AllowAddingServiceAccount bool `json:"-"`
@@ -135,11 +135,11 @@ type UpdateOrgUserCommand struct {
 }
 
 type OrgUserDTO struct {
-	OrgID         int64           `json:"orgId"`
-	UserID        int64           `json:"userId"`
+	OrgID         int64           `json:"orgId" xorm:"org_id"`
+	UserID        int64           `json:"userId" xorm:"user_id"`
 	Email         string          `json:"email"`
 	Name          string          `json:"name"`
-	AvatarURL     string          `json:"avatarUrl"`
+	AvatarURL     string          `json:"avatarUrl" xorm:"avatar_url"`
 	Login         string          `json:"login"`
 	Role          string          `json:"role"`
 	LastSeenAt    time.Time       `json:"lastSeenAt"`
@@ -158,8 +158,8 @@ type RemoveOrgUserCommand struct {
 }
 
 type GetOrgUsersQuery struct {
-	UserID int64
-	OrgID  int64
+	UserID int64 `xorm:"pk autoincr 'user_id'"`
+	OrgID  int64 `xorm:"org_id"`
 	Query  string
 	Limit  int
 	// Flag used to allow oss edition to query users without access control

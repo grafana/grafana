@@ -57,7 +57,7 @@
     "betterer:stats": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/reportBettererStats.ts"
   },
   "grafana": {
-    "whatsNewUrl": "https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v9-1/",
+    "whatsNewUrl": "https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v9-2/",
     "releaseNotesUrl": "https://grafana.com/docs/grafana/next/release-notes/"
   },
   "lint-staged": {
@@ -175,7 +175,7 @@
     "babel-plugin-macros": "3.1.0",
     "copy-webpack-plugin": "9.0.1",
     "css-loader": "6.7.1",
-    "css-minimizer-webpack-plugin": "4.0.0",
+    "css-minimizer-webpack-plugin": "4.1.0",
     "cypress": "9.5.1",
     "enzyme": "3.11.0",
     "enzyme-to-json": "3.6.2",
@@ -194,7 +194,7 @@
     "fork-ts-checker-webpack-plugin": "7.2.13",
     "fs-extra": "10.1.0",
     "glob": "8.0.3",
-    "html-loader": "4.1.0",
+    "html-loader": "4.2.0",
     "html-webpack-plugin": "5.5.0",
     "http-server": "14.1.1",
     "husky": "8.0.1",
