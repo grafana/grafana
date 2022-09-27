@@ -463,9 +463,6 @@ type Cfg struct {
 	// Access Control
 	RBACEnabled         bool
 	RBACPermissionCache bool
-	// Undocumented option as a backup in case removing builtin-role assignment
-	// fails
-	RBACBuiltInRoleAssignmentEnabled bool
 	// Enable Permission validation during role creation and provisioning
 	RBACPermissionValidationEnabled bool
 	// GRPC Server.
