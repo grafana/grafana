@@ -60,6 +60,7 @@ type FakeOrgStore struct {
 	ExpectedError    error
 	ExpectedUserOrgs []*org.UserOrgDTO
 	ExpectedOrgs     []*org.OrgDTO
+	ExpectedOrgUsers []*org.OrgUserDTO
 }
 
 func newOrgStoreFake() *FakeOrgStore {
@@ -104,4 +105,16 @@ func (f *FakeOrgStore) Search(ctx context.Context, query *org.SearchOrgsQuery) (
 
 func (f *FakeOrgStore) CreateWithMember(ctx context.Context, cmd *org.CreateOrgCommand) (*org.Org, error) {
 	return f.ExpectedOrg, f.ExpectedError
+}
+
+func (f *FakeOrgStore) AddOrgUser(ctx context.Context, cmd *org.AddOrgUserCommand) error {
+	return f.ExpectedError
+}
+
+func (f *FakeOrgStore) UpdateOrgUser(ctx context.Context, cmd *org.UpdateOrgUserCommand) error {
+	return f.ExpectedError
+}
+
+func (f *FakeOrgStore) GetOrgUsers(ctx context.Context, query *org.GetOrgUsersQuery) ([]*org.OrgUserDTO, error) {
+	return f.ExpectedOrgUsers, f.ExpectedError
 }
