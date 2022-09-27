@@ -868,6 +868,8 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 		teamService := &teamtest.FakeService{}
 		dashboardService := dashboards.NewFakeDashboardService(t)
+		prefService := preftest.NewPreferenceServiceFake()
+		prefService.ExpectedPreference = &pref.Preference{}
 
 		dataValue, err := simplejson.NewJson([]byte(`{"id": 1, "editable": true, "style": "dark"}`))
 		require.NoError(t, err)
@@ -909,6 +911,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				LibraryElementService:        &mockLibraryElementService{},
 				dashboardProvisioningService: mockDashboardProvisioningService{},
 				SQLStore:                     mockSQLStore,
+				preferenceService:            prefService,
 				AccessControl:                accesscontrolmock.New(),
 				DashboardService:             dashboardService,
 				Features:                     featuremgmt.WithFeatures(),
@@ -939,6 +942,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 		dashboardStore = database.ProvideDashboardStore(sql, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql))
 	}
 
+	prefService := preftest.NewPreferenceServiceFake()
 	libraryPanelsService := mockLibraryPanelService{}
 	libraryElementsService := mockLibraryElementService{}
 	cfg := setting.NewCfg()
@@ -954,11 +958,14 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 		)
 	}
 
+	prefService.ExpectedPreference = &pref.Preference{}
+
 	hs := &HTTPServer{
 		Cfg:                   cfg,
 		LibraryPanelService:   &libraryPanelsService,
 		LibraryElementService: &libraryElementsService,
 		SQLStore:              sc.sqlStore,
+		preferenceService:     prefService,
 		ProvisioningService:   provisioningService,
 		AccessControl:         accesscontrolmock.New(),
 		dashboardProvisioningService: service.ProvideDashboardService(
