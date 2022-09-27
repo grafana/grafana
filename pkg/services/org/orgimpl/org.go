@@ -22,13 +22,16 @@ type Service struct {
 }
 
 func ProvideService(db sqlstore.Store, cfg *setting.Cfg) org.Service {
+	log := log.New("org service")
 	return &Service{
 		store: &sqlStore{
 			db:      db,
 			dialect: db.GetDialect(),
+			log:     log,
+			cfg:     cfg,
 		},
 		cfg:      cfg,
-		log:      log.New("org service"),
+		log:      log,
 		sqlStore: db,
 	}
 }
@@ -212,26 +215,14 @@ func (s *Service) GetOrCreate(ctx context.Context, orgName string) (int64, error
 	return orga.ID, nil
 }
 
-// TODO: remove wrapper around sqlstore
+// TODO: refactor service to call store CRUD method
 func (s *Service) AddOrgUser(ctx context.Context, cmd *org.AddOrgUserCommand) error {
-	c := &models.AddOrgUserCommand{
-		LoginOrEmail:              cmd.LoginOrEmail,
-		OrgId:                     cmd.OrgID,
-		UserId:                    cmd.UserID,
-		Role:                      cmd.Role,
-		AllowAddingServiceAccount: cmd.AllowAddingServiceAccount,
-	}
-	return s.sqlStore.AddOrgUser(ctx, c)
+	return s.store.AddOrgUser(ctx, cmd)
 }
 
-// TODO: remove wrapper around sqlstore
+// TODO: refactor service to call store CRUD method
 func (s *Service) UpdateOrgUser(ctx context.Context, cmd *org.UpdateOrgUserCommand) error {
-	c := &models.UpdateOrgUserCommand{
-		UserId: cmd.UserID,
-		OrgId:  cmd.OrgID,
-		Role:   cmd.Role,
-	}
-	return s.sqlStore.UpdateOrgUser(ctx, c)
+	return s.store.UpdateOrgUser(ctx, cmd)
 }
 
 // TODO: remove wrapper around sqlstore
@@ -245,40 +236,9 @@ func (s *Service) RemoveOrgUser(ctx context.Context, cmd *org.RemoveOrgUserComma
 	return s.sqlStore.RemoveOrgUser(ctx, c)
 }
 
-// TODO: remove wrapper around sqlstore
+// TODO: refactor service to call store CRUD method
 func (s *Service) GetOrgUsers(ctx context.Context, query *org.GetOrgUsersQuery) ([]*org.OrgUserDTO, error) {
-	q := &models.GetOrgUsersQuery{
-		UserID:                   query.UserID,
-		OrgId:                    query.OrgID,
-		Query:                    query.Query,
-		Limit:                    query.Limit,
-		DontEnforceAccessControl: query.DontEnforceAccessControl,
-		User:                     query.User,
-	}
-	err := s.sqlStore.GetOrgUsers(ctx, q)
-	if err != nil {
-		return nil, err
-	}
-
-	result := make([]*org.OrgUserDTO, 0)
-	for _, user := range q.Result {
-		result = append(result, &org.OrgUserDTO{
-			OrgID:         user.OrgId,
-			UserID:        user.UserId,
-			Login:         user.Login,
-			Email:         user.Email,
-			Name:          user.Name,
-			AvatarURL:     user.AvatarUrl,
-			Role:          user.Role,
-			LastSeenAt:    user.LastSeenAt,
-			LastSeenAtAge: user.LastSeenAtAge,
-			Updated:       user.Updated,
-			Created:       user.Created,
-			AccessControl: user.AccessControl,
-			IsDisabled:    user.IsDisabled,
-		})
-	}
-	return result, nil
+	return s.store.GetOrgUsers(ctx, query)
 }
 
 // TODO: remove wrapper around sqlstore
