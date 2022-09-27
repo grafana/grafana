@@ -159,8 +159,8 @@ func (s *queryDataServer) decryptSecureJsonDataFn(ctx context.Context) func(ds *
 	}
 }
 
-// SignedInUserFromBackendUser converts the backend plugin's model
-// to Grafana's SignedInUser model
+// SignedInUserFromBackendUser converts the backend plugin's model to Grafana's SignedInUser model
+// This is temporary until we have a better user/token delegation system implemented
 func signedInUserFromBackendUser(bu *backend.User) *user.SignedInUser {
 	if bu == nil {
 		return nil
