@@ -16,7 +16,6 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/reflection"
 )
 
 type Provider interface {
@@ -51,9 +50,7 @@ func ProvideService(cfg *setting.Cfg, apiKey apikey.Service, userService user.Se
 		opts = append(opts, grpc.Creds(credentials.NewTLS(cfg.GRPCServerTLSConfig)))
 	}
 
-	grpcServer := grpc.NewServer(opts...)
-	reflection.Register(grpcServer)
-	s.server = grpcServer
+	s.server = grpc.NewServer(opts...)
 	return s, nil
 }
 
