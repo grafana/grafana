@@ -54,7 +54,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/correlations"
-	"github.com/grafana/grafana/pkg/services/dashboard_thumbs/dashboardthumbsimpl"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	dashboardimportservice "github.com/grafana/grafana/pkg/services/dashboardimport/service"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -132,6 +131,7 @@ import (
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/services/temp_user/tempuserimpl"
 	"github.com/grafana/grafana/pkg/services/thumbs"
+	"github.com/grafana/grafana/pkg/services/thumbs/dashboardthumbsimpl"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/services/userauth/userauthimpl"
@@ -177,6 +177,7 @@ var wireBasicSet = wire.NewSet(
 	hooks.ProvideService,
 	kvstore.ProvideService,
 	localcache.ProvideService,
+	dashboardthumbsimpl.ProvideService,
 	updatechecker.ProvideGrafanaService,
 	updatechecker.ProvidePluginsService,
 	uss.ProvideService,
@@ -345,7 +346,6 @@ var wireBasicSet = wire.NewSet(
 	grpcserver.ProvideHealthService,
 	teamimpl.ProvideService,
 	tempuserimpl.ProvideService,
-	dashboardthumbsimpl.ProvideService,
 	loginattemptimpl.ProvideService,
 	userauthimpl.ProvideService,
 	secretsMigrations.ProvideDataSourceMigrationService,
