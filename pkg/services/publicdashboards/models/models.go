@@ -24,7 +24,6 @@ func (e PublicDashboardErr) Error() string {
 	return "Dashboard Error"
 }
 
-// Pubdash logging and metrics
 const QuerySuccess = "success"
 const QueryFailure = "failure"
 
