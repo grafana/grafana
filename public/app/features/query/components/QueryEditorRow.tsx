@@ -475,7 +475,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
           actions={this.renderActions}
           onOpen={this.onOpen}
         >
-          <div className={rowClasses}>
+          <div className={rowClasses} id={id}>
             <ErrorBoundaryAlert>
               {showingHelp && DatasourceCheatsheet && (
                 <OperationRowHelp>
