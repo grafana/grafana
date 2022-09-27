@@ -44,7 +44,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/comments"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/correlations"
-	dashboardThumbs "github.com/grafana/grafana/pkg/services/dashboard_thumbs"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
@@ -192,7 +191,7 @@ type HTTPServer struct {
 
 	userService            user.Service
 	tempUserService        tempUser.Service
-	dashboardThumbsService dashboardThumbs.Service
+	dashboardThumbsService thumbs.DBThumbService
 	loginAttemptService    loginAttempt.Service
 	orgService             org.Service
 	teamService            team.Service
@@ -238,7 +237,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	secretsPluginMigrator spm.SecretMigrationProvider, secretsStore secretsKV.SecretsKVStore,
 	publicDashboardsApi *publicdashboardsApi.Api, userService user.Service, tempUserService tempUser.Service,
 	loginAttemptService loginAttempt.Service, orgService org.Service, teamService team.Service,
-	accesscontrolService accesscontrol.Service, dashboardThumbsService dashboardThumbs.Service, navTreeService navtree.Service,
+	accesscontrolService accesscontrol.Service, dashboardThumbsService thumbs.DBThumbService, navTreeService navtree.Service,
 	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
