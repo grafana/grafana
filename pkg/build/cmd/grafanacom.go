@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -17,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/grafana/grafana/pkg/build/gcloud"
 	"github.com/grafana/grafana/pkg/build/gcloud/storage"
-	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 )
 
@@ -89,7 +89,7 @@ func GrafanaCom(c *cli.Context) error {
 		return cli.NewExitError(err.Error(), 1)
 	}
 
-	log.Info().Msg("Successfully published packages to grafana.com!")
+	log.Println("Successfully published packages to grafana.com!")
 	return nil
 }
 
@@ -124,11 +124,11 @@ func getReleaseURLs() (string, string, error) {
 
 // publishPackages publishes packages to grafana.com.
 func publishPackages(cfg PublishConfig) error {
-	log.Info().Msgf("Publishing Grafana packages, version %s, %s edition, %s mode, dryRun: %v, simulating: %v...",
+	log.Printf("Publishing Grafana packages, version %s, %s edition, %s mode, dryRun: %v, simulating: %v...\n",
 		cfg.Version, cfg.Edition, cfg.ReleaseMode.Mode, cfg.DryRun, cfg.SimulateRelease)
 
 	versionStr := fmt.Sprintf("v%s", cfg.Version)
-	log.Info().Msgf("Creating release %s at grafana.com...", versionStr)
+	log.Printf("Creating release %s at grafana.com...\n", versionStr)
 
 	var sfx string
 	var pth string
@@ -239,9 +239,9 @@ func postRequest(cfg PublishConfig, pth string, obj interface{}, descr string) e
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", cfg.GrafanaAPIKey))
 	req.Header.Add("Content-Type", "application/json")
 
-	log.Info().Msgf("Posting to grafana.com API, %s - JSON: %s", u, string(jsonB))
+	log.Printf("Posting to grafana.com API, %s - JSON: %s\n", u, string(jsonB))
 	if cfg.SimulateRelease {
-		log.Info().Msgf("Only simulating request")
+		log.Println("Only simulating request")
 		return nil
 	}
 
@@ -257,14 +257,14 @@ func postRequest(cfg PublishConfig, pth string, obj interface{}, descr string) e
 		}
 
 		if strings.Contains(string(body), "already exists") || strings.Contains(string(body), "Nothing to update") {
-			log.Info().Msgf("Already exists: %s", descr)
+			log.Printf("Already exists: %s\n", descr)
 			return nil
 		}
 
 		return fmt.Errorf("failed posting to %s (%s): %s", u, descr, resp.Status)
 	}
 
-	log.Info().Msgf("Successfully posted to grafana.com API, %s", u)
+	log.Printf("Successfully posted to grafana.com API, %s\n", u)
 
 	return nil
 }
