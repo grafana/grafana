@@ -231,5 +231,9 @@ export interface ExplorePanelData extends PanelData {
   logsResult: LogsModel | null;
 }
 
-export const TABLE_RESULTS_STYLES = ['default', 'raw'] as const;
+export enum TABLE_RESULTS_STYLE {
+  default='default',
+  raw='raw'
+}
+export const TABLE_RESULTS_STYLES = [TABLE_RESULTS_STYLE.default, TABLE_RESULTS_STYLE.raw] as const;
 export type TableResultsStyle = typeof TABLE_RESULTS_STYLES[number];

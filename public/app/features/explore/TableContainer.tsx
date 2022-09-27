@@ -16,13 +16,13 @@ import { Collapse, RadioButtonGroup, stylesFactory, Table } from '@grafana/ui';
 import { FilterItem } from '@grafana/ui/src/components/Table/types';
 import { config } from 'app/core/config';
 import { PANEL_BORDER } from 'app/core/constants';
-import { StoreState } from 'app/types';
+import {StoreState, TABLE_RESULTS_STYLE} from 'app/types';
 import { ExploreId, ExploreItemState, TABLE_RESULTS_STYLES, TableResultsStyle } from 'app/types/explore';
 
 import { MetaInfoText } from './MetaInfoText';
+import { RawList } from './RawList';
 import { splitOpen } from './state/main';
 import { getFieldLinksForExplore } from './utils/links';
-import { RawList } from './RawList';
 
 interface TableContainerProps {
   ariaLabel?: string;
@@ -35,6 +35,9 @@ interface TableContainerProps {
 interface TableContainerState {
   resultsStyle: TableResultsStyle;
 }
+
+export type instantQueryRawVirtualizedListData = {Value: string, __name__: string, [index: string]: string};
+type instantQueryMetricList = { [index: string]: { [index: string]: {[index: string]: string, Value: string} } };
 
 function mapStateToProps(state: StoreState, { exploreId }: TableContainerProps) {
   const explore = state.explore;
@@ -54,63 +57,25 @@ const getStyles = stylesFactory(() => {
       height: 100%;
       overflow: scroll;
     `,
-    rowsWrapper: css`
-      width: 100%;
-    `,
-
-    rowWrapper: css`
-      border-bottom:1px solid #ccc;
-      display: flex;
-      justify-content: space-between;
-      padding:10px 6px;
-    `,
-    rowLabelWrap: css`
-      display: flex;
-    `,
-    rowHeading: css`
-      color: green;
-    `,
-    rowValue: css``,
-    rowContent: css``,
-    metricName: css`
-      /* @todo replace mockup styles */
-      color: red;
-    `,
-    metricEquals: css``,
-    metricQuote: css``,
-    metricValue: css`
-      /* @todo replace mockup styles */
-      font-weight: bold;
-    `,
   };
 });
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
 type Props = TableContainerProps & ConnectedProps<typeof connector>;
-// type ListItem = [string, { [index: string]: string; Value: string }];
 
 export class TableContainer extends PureComponent<Props, TableContainerState> {
   private styles: ReturnType<
     () => {
-      rowsWrapper: string;
+    //@todo delete extra markup after we know what we need to target
       wrapper: string;
-      rowWrapper: string;
-      rowLabelWrap: string;
-      rowHeading: string;
-      rowValue: string;
-      rowContent: string;
-      metricName: string;
-      metricEquals: string;
-      metricQuote: string;
-      metricValue: string;
     }
   >;
 
   constructor(props: Props) {
     super(props);
     this.state = {
-      resultsStyle: 'raw',
+      resultsStyle: TABLE_RESULTS_STYLE.raw,
     };
     this.styles = getStyles();
   }
@@ -143,7 +108,7 @@ export class TableContainer extends PureComponent<Props, TableContainerState> {
 
     return (
       <div className={spacing}>
-        {this.state.resultsStyle === 'raw' ? 'Raw' : 'Table'}
+        {this.state.resultsStyle === TABLE_RESULTS_STYLE.raw ? 'Raw' : 'Table'}
         <RadioButtonGroup
           size="sm"
           options={ALL_GRAPH_STYLE_OPTIONS}
@@ -154,6 +119,14 @@ export class TableContainer extends PureComponent<Props, TableContainerState> {
     );
   };
 
+  estimateItemSize = (): number => {
+    const width = window.innerWidth;
+    if(width <= 320) {return 200;}
+    if(width <= 720) {return 140}
+
+    return 80;
+  }
+
   renderTable = () => {
     const { onCellFilterAdded, tableResult, width, splitOpen, range, ariaLabel, timeZone } = this.props;
     const height = this.getTableHeight();
@@ -161,12 +134,13 @@ export class TableContainer extends PureComponent<Props, TableContainerState> {
     let dataFrame = cloneDeep(tableResult);
 
     if (dataFrame?.length && dataFrame) {
-      if (this.state.resultsStyle === 'raw') {
-        const items = this.getListItemsFromDataFrame(dataFrame);
+      if (this.state.resultsStyle === TABLE_RESULTS_STYLE.raw) {
+        // const olditems = this.getListItemsFromDataFrame(dataFrame);
+        const items = this.getListItemsFromDataFrameNew(dataFrame);
 
         return (
           <>
-            {/* @todo temporarily borrowing this from the prometheus API for debugging, remove? */}
+            {/* @todo temporarily borrowing this from the prometheus API for debugging, review with UX */}
             <div>Result series: {items.length}</div>
 
             {/* @todo these are arbitrary numbers */}
@@ -176,14 +150,12 @@ export class TableContainer extends PureComponent<Props, TableContainerState> {
               itemSize={(index: number) => {
                 return 42;
               }}
-              estimatedItemSize={42}
               height={600}
               width="100%"
             >
               {({ index, style }) => (
                 <div style={{ ...style, overflow: 'hidden' }}>
-                  {/* @ts-ignore */}
-                  <RawList listItemData={items[index]} />
+                  <RawList listKey={index} listItemData={items[index]} />
                 </div>
               )}
             </List>
@@ -230,39 +202,51 @@ export class TableContainer extends PureComponent<Props, TableContainerState> {
     return <MetaInfoText metaItems={[{ value: '0 series returned' }]} />;
   };
 
+
   /**
-   * @todo looks like this is only returning a single value for each series instead of the default prom behavior
+   * Prepare dataframe for consumption by virtualized list component
    * @param dataFrame
    * @private
    */
-  private getListItemsFromDataFrame(dataFrame: DataFrame) {
-    let metricList: { [index: string]: { [index: string]: string } } = {};
+  private getListItemsFromDataFrameNew(dataFrame: DataFrame): instantQueryRawVirtualizedListData[] {
+    const metricList: instantQueryMetricList = {};
+    const outputList: instantQueryRawVirtualizedListData[] = [];
 
     // Filter out time
     const newFields = dataFrame.fields.filter((field) => !['Time'].includes(field.name));
 
+    // Get name from each series
     const metricNames: string[] = newFields.find((field) => ['__name__'].includes(field.name))?.values?.toArray() ?? [];
 
+    // Get everything that isn't the name from each series
     const metricLabels = dataFrame.fields.filter((field) => !['__name__'].includes(field.name));
 
     metricNames.forEach(function (metric: string, i: number) {
+      metricList[metric] = {};
+      metricList[metric][i] = {} as instantQueryRawVirtualizedListData;
       for (const field of metricLabels) {
         const label = field.name;
-        if (metric && metricList[metric] === undefined) {
-          metricList[metric] = {};
-        }
 
-        if(label !== 'Time'){
-          //@ts-ignore
-          const stringValue = formattedValueToString(field?.display(field.values.get(i)));
-          if(stringValue){
-            metricList[metric][label] = stringValue;
+        if (label !== 'Time') {
+          // Initialize the objects
+          if (typeof field?.display === 'function') {
+            const stringValue = formattedValueToString(field?.display(field.values.get(i)));
+            if (stringValue) {
+              metricList[metric][i][label] = stringValue;
+            }
+          } else {
+            console.warn('Field display method is missing!');
           }
         }
       }
+
+      outputList.push({
+        ...metricList[metric][i],
+        __name__: metric,
+      })
     });
 
-    return Object.entries(metricList);
+    return outputList;
   }
 
   render() {
