@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/reflection"
