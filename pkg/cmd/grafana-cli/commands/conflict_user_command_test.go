@@ -173,12 +173,12 @@ func TestBuildConflictBlockFromFileRepresentation(t *testing.T) {
 				},
 			},
 			fileString: `conflict: test
-- id: 2, email: test, login: test, conflict_email: true, conflict_login: true, last_seen_at: 2012-09-19T08:31:20Z, auth_module:
-+ id: 3, email: TEST, login: TEST, conflict_email: true, conflict_login: true, last_seen_at: 2012-09-19T08:31:29Z, auth_module:
+- id: 2, email: test, login: test, last_seen_at: 2012-09-19T08:31:20Z, auth_module: , conflict_email: true, conflict_login: true
++ id: 3, email: TEST, login: TEST, last_seen_at: 2012-09-19T08:31:29Z, auth_module: , conflict_email: true, conflict_login: true
 conflict: test2
-- id: 4, email: test2, login: test2, conflict_email: true, conflict_login: true, last_seen_at: 2012-09-19T08:31:41Z, auth_module:
-+ id: 5, email: TEST2, login: TEST2, conflict_email: true, conflict_login: true, last_seen_at: 2012-09-19T08:31:51Z, auth_module:
-- id: 6, email: Test2, login: Test2, conflict_email: true, conflict_login: true, last_seen_at: 2012-09-19T08:32:03Z, auth_module: `,
+- id: 4, email: test2, login: test2, last_seen_at: 2012-09-19T08:31:41Z, auth_module: , conflict_email: true, conflict_login: true
++ id: 5, email: TEST2, login: TEST2, last_seen_at: 2012-09-19T08:31:51Z, auth_module: , conflict_email: true, conflict_login: true
+- id: 6, email: Test2, login: Test2, last_seen_at: 2012-09-19T08:32:03Z, auth_module: , conflict_email: true, conflict_login: true`,
 			expectedBlocks:      []string{"conflict: test", "conflict: test2"},
 			expectedIdsInBlocks: map[string][]string{"conflict: test": {"2", "3"}, "conflict: test2": {"4", "5", "6"}},
 		},
@@ -197,8 +197,8 @@ conflict: test2
 				},
 			},
 			fileString: `conflict: saml-misi
-+ id: 5, email: saml-misi@example.org, login: saml-misi, conflict_email: , conflict_login: true, last_seen_at: 2022-09-22T12:00:49Z, auth_module: auth.saml
-- id: 15, email: saml-misi@example, login: saml-Misi, conflict_email: , conflict_login: true, last_seen_at: 2012-09-26T11:31:32Z, auth_module:`,
++ id: 5, email: saml-misi@example.org, login: saml-misi, last_seen_at: 2022-09-22T12:00:49Z, auth_module: auth.saml, conflict_email: , conflict_login: true
+- id: 15, email: saml-misi@example, login: saml-Misi, last_seen_at: 2012-09-26T11:31:32Z, auth_module: , conflict_email: , conflict_login: true`,
 			expectedBlocks:      []string{"conflict: saml-misi"},
 			expectedIdsInBlocks: map[string][]string{"conflict: saml-misi": {"5", "15"}},
 		},
@@ -226,6 +226,8 @@ conflict: test2
 				require.NoError(t, err)
 				validErr := getValidConflictUsers(&r, []byte(tc.fileString))
 				require.NoError(t, validErr)
+
+				// test starts here
 				keys := make([]string, 0)
 				for k := range r.Blocks {
 					keys = append(keys, k)
@@ -408,10 +410,11 @@ func TestGetConflictingUsers(t *testing.T) {
 
 func TestGenerateConflictingUsersFile(t *testing.T) {
 	type testGenerateConflictUsers struct {
-		desc               string
-		users              []user.User
-		wantDiscardedBlock string
-		wantBlocks         []string
+		desc                   string
+		users                  []user.User
+		expectedDiscardedBlock string
+		expectedBlocks         []string
+		expectedEmailInBlocks  map[string][]string
 	}
 	testOrgID := 1
 	testCases := []testGenerateConflictUsers{
@@ -454,11 +457,17 @@ func TestGenerateConflictingUsersFile(t *testing.T) {
 					OrgID: int64(testOrgID),
 				},
 			},
-			wantBlocks:         []string{"conflict: ldap-admin", "conflict: user_duplicate_test_login"},
-			wantDiscardedBlock: "conflict: user2",
+			expectedBlocks: []string{"conflict: ldap-admin", "conflict: user_duplicate_test_login", "conflict: oauth-admin@example.org", "conflict: user2"},
+			expectedEmailInBlocks: map[string][]string{
+				"conflict: ldap-admin":                {"ldap-admin", "xo"},
+				"conflict: user_duplicate_test_login": {"user1", "user2"},
+				"conflict: oauth-admin@example.org":   {"oauth-admin@EXAMPLE.ORG", "oauth-admin@example.org"},
+				"conflict: user2":                     {"USER2", "user2"},
+			},
+			expectedDiscardedBlock: "conflict: user2",
 		},
 		{
-			desc: "should get one block with only 3 users",
+			desc: "should get only one block with 3 users",
 			users: []user.User{
 				{
 					Email: "ldap-editor",
@@ -476,7 +485,8 @@ func TestGenerateConflictingUsersFile(t *testing.T) {
 					OrgID: int64(testOrgID),
 				},
 			},
-			wantBlocks: []string{"conflict: ldap-editor"},
+			expectedBlocks:        []string{"conflict: ldap-editor"},
+			expectedEmailInBlocks: map[string][]string{"conflict: ldap-editor": {"ldap-editor", "LDAP-EDITOR", "No confli"}},
 		},
 	}
 	for _, tc := range testCases {
@@ -498,13 +508,31 @@ func TestGenerateConflictingUsersFile(t *testing.T) {
 				require.NoError(t, err)
 				r := ConflictResolver{}
 				r.BuildConflictBlocks(m, fmt.Sprintf)
-				if tc.wantDiscardedBlock != "" {
-					require.Equal(t, true, r.DiscardedBlocks[tc.wantDiscardedBlock])
+				if tc.expectedDiscardedBlock != "" {
+					require.Equal(t, true, r.DiscardedBlocks[tc.expectedDiscardedBlock])
 				}
-				if tc.wantBlock != "" {
-					_, exists := r.Blocks[tc.wantBlock]
-					require.Equal(t, true, exists)
-					require.Equal(t, tc.wantNumberOfUsers, len(r.Blocks[tc.wantBlock]))
+
+				// test starts here
+				keys := make([]string, 0)
+				for k := range r.Blocks {
+					keys = append(keys, k)
+				}
+				expectedBlocks := tc.expectedBlocks
+				sort.Strings(keys)
+				sort.Strings(expectedBlocks)
+				require.Equal(t, expectedBlocks, keys)
+
+				// we want to validate the ids in the blocks
+				for _, block := range tc.expectedBlocks {
+					// checking for parsing of ids
+					conflictEmails := []string{}
+					for _, u := range r.Blocks[block] {
+						conflictEmails = append(conflictEmails, u.Email)
+					}
+					expectedEmailsInBlock := tc.expectedEmailInBlocks[block]
+					sort.Strings(conflictEmails)
+					sort.Strings(expectedEmailsInBlock)
+					require.Equal(t, expectedEmailsInBlock, conflictEmails)
 				}
 			}
 		})

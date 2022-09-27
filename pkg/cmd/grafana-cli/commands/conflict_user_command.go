@@ -386,8 +386,7 @@ func (r *ConflictResolver) showChanges() {
 		return
 	}
 
-	var fileString string
-	fmt.Printf("Changes:\n")
+	var b strings.Builder
 	for block, users := range r.Blocks {
 		if _, ok := r.DiscardedBlocks[block]; ok {
 			// skip block
@@ -402,26 +401,25 @@ func (r *ConflictResolver) showChanges() {
 				break
 			}
 		}
-		fileString += "IDENTIFIED user conflict\n"
-		fileString += fmt.Sprintf("%s\n", block)
-		fileString += "Kepp the following user.\n"
-		fileString += fmt.Sprintf("id: %s, email: %s, login: %s\n", mainUser.ID, mainUser.Email, mainUser.Login)
-		fileString += "\n"
-		fileString += "\n"
-		fileString += "The following user(s) will be deleted.\n"
+		b.WriteString("Keep the following user.\n")
+		b.WriteString(fmt.Sprintf("%s\n", block))
+		b.WriteString(fmt.Sprintf("id: %s, email: %s, login: %s\n", mainUser.ID, mainUser.Email, mainUser.Login))
+		b.WriteString("\n")
+		b.WriteString("\n")
+		b.WriteString("The following user(s) will be deleted.\n")
 		for _, user := range users {
 			if user.ID == mainUser.ID {
 				continue
 			}
 			// mergable users
-			fileString += fmt.Sprintf("id: %s, email: %s, login: %s\n", user.ID, user.Email, user.Login)
+			b.WriteString(fmt.Sprintf("id: %s, email: %s, login: %s\n", user.ID, user.Email, user.Login))
 		}
-		fileString += "\n"
-		fileString += "\n"
+		b.WriteString("\n")
+		b.WriteString("\n")
 
 	}
 	logger.Info("\n\nChanges that will take place\n\n")
-	logger.Infof(fileString)
+	logger.Infof(b.String())
 }
 
 // Formatter make it possible for us to write to terminal and to a file
@@ -537,26 +535,26 @@ func (r *ConflictResolver) ToStringPresentation() string {
 			if !startOfBlock[block] {
 				fileString += fmt.Sprintf("%s\n", block)
 				startOfBlock[block] = true
-				fileString += fmt.Sprintf("+ id: %s, email: %s, login: %s, conflict_email: %s, conflict_login: %s, last_seen_at: %s, auth_module: %s\n",
+				fileString += fmt.Sprintf("+ id: %s, email: %s, login: %s, last_seen_at: %s, auth_module: %s, conflict_email: %s, conflict_login: %s\n",
 					user.ID,
 					user.Email,
 					user.Login,
-					user.ConflictEmail,
-					user.ConflictLogin,
 					user.LastSeenAt,
 					user.AuthModule,
+					user.ConflictEmail,
+					user.ConflictLogin,
 				)
 				continue
 			}
 			// mergeable users
-			fileString += fmt.Sprintf("- id: %s, email: %s, login: %s, conflict_email: %s, conflict_login: %s, last_seen_at: %s, auth_module: %s\n",
+			fileString += fmt.Sprintf("- id: %s, email: %s, login: %s, last_seen_at: %s, auth_module: %s, conflict_email: %s, conflict_login: %s\n",
 				user.ID,
 				user.Email,
 				user.Login,
-				user.ConflictEmail,
-				user.ConflictLogin,
 				user.LastSeenAt,
 				user.AuthModule,
+				user.ConflictEmail,
+				user.ConflictLogin,
 			)
 		}
 	}
@@ -610,21 +608,21 @@ func (c *ConflictingUser) Marshal(filerow string) error {
 	c.Email = email[1]
 	c.Login = login[1]
 
-	// which conflict
-	conflictEmail := strings.Split(values[3], ":")
-	conflictLogin := strings.Split(values[4], ":")
-	c.ConflictEmail = conflictEmail[1]
-	c.ConflictLogin = conflictLogin[1]
-
 	// why trim values, 2022-08-20:19:17:12
-	lastSeenAt := strings.TrimPrefix(values[5], "last_seen_at:")
-	authModule := strings.Split(values[6], ":")
+	lastSeenAt := strings.TrimPrefix(values[3], "last_seen_at:")
+	authModule := strings.Split(values[4], ":")
 	if len(authModule) < 2 {
 		c.AuthModule = ""
 	} else {
 		c.AuthModule = authModule[1]
 	}
 	c.LastSeenAt = lastSeenAt
+
+	// which conflict
+	conflictEmail := strings.Split(values[5], ":")
+	conflictLogin := strings.Split(values[6], ":")
+	c.ConflictEmail = conflictEmail[1]
+	c.ConflictLogin = conflictLogin[1]
 
 	return nil
 }
