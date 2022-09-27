@@ -75,6 +75,7 @@ import (
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/export"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
@@ -187,14 +188,14 @@ var wireBasicSet = wire.NewSet(
 	pluginsCfg.ProvideConfig,
 	repo.ProvideService,
 	wire.Bind(new(repo.Service), new(*repo.Manager)),
-	manager.ProvideService,
-	wire.Bind(new(plugins.Manager), new(*manager.PluginManager)),
-	wire.Bind(new(plugins.RendererManager), new(*manager.PluginManager)),
-	wire.Bind(new(plugins.SecretsPluginManager), new(*manager.PluginManager)),
+	manager.ProvideInstaller,
+	wire.Bind(new(plugins.Installer), new(*manager.PluginInstaller)),
 	client.ProvideService,
 	wire.Bind(new(plugins.Client), new(*client.Service)),
 	managerStore.ProvideService,
 	wire.Bind(new(plugins.Store), new(*managerStore.Service)),
+	wire.Bind(new(plugins.RendererManager), new(*managerStore.Service)),
+	wire.Bind(new(plugins.SecretsPluginManager), new(*managerStore.Service)),
 	wire.Bind(new(plugins.StaticRouteResolver), new(*managerStore.Service)),
 	pluginDashboards.ProvideFileStoreManager,
 	wire.Bind(new(pluginDashboards.FileStore), new(*pluginDashboards.FileStoreManager)),
@@ -342,16 +343,18 @@ var wireBasicSet = wire.NewSet(
 	publicdashboardsApi.ProvideApi,
 	userimpl.ProvideService,
 	orgimpl.ProvideService,
+	grpcserver.ProvideService,
+	grpcserver.ProvideHealthService,
 	teamimpl.ProvideService,
 	tempuserimpl.ProvideService,
 	dashboardthumbsimpl.ProvideService,
 	loginattemptimpl.ProvideService,
+	userauthimpl.ProvideService,
 	secretsMigrations.ProvideDataSourceMigrationService,
 	secretsMigrations.ProvideMigrateToPluginService,
 	secretsMigrations.ProvideMigrateFromPluginService,
 	secretsMigrations.ProvideSecretMigrationProvider,
 	wire.Bind(new(secretsMigrations.SecretMigrationProvider), new(*secretsMigrations.SecretMigrationProviderImpl)),
-	userauthimpl.ProvideService,
 	acimpl.ProvideAccessControl,
 	navtreeimpl.ProvideService,
 	wire.Bind(new(accesscontrol.AccessControl), new(*acimpl.AccessControl)),

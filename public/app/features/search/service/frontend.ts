@@ -4,7 +4,7 @@ import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { DashboardQueryResult, GrafanaSearcher, QueryResponse, SearchQuery } from '.';
 
 export class FrontendSearcher implements GrafanaSearcher {
-  readonly cache = new Map<string, FullResultCache>();
+  readonly cache = new Map<string, Promise<FullResultCache>>();
 
   constructor(private parent: GrafanaSearcher) {}
 
@@ -29,20 +29,28 @@ export class FrontendSearcher implements GrafanaSearcher {
   }
 
   async getCache(kind?: string[]): Promise<FullResultCache> {
-    const key = kind ? kind.join(',') : '*';
-    let res = this.cache.get(key);
-    if (res) {
-      return Promise.resolve(res);
+    const key = kind ? kind.sort().join(',') : '*';
+
+    const cacheHit = this.cache.get(key);
+    if (cacheHit) {
+      try {
+        return await cacheHit;
+      } catch (e) {
+        // delete the cache key so that the next request will retry
+        this.cache.delete(key);
+        return new FullResultCache(new DataFrameView({ name: 'error', fields: [], length: 0 }));
+      }
     }
 
-    const v = await this.parent.search({
-      kind, // match the request
-      limit: 5000, // max for now
-    });
+    const resultPromise = this.parent
+      .search({
+        kind, // match the request
+        limit: 5000, // max for now
+      })
+      .then((res) => new FullResultCache(res.view));
 
-    res = new FullResultCache(v.view);
-    this.cache.set(key, res);
-    return res;
+    this.cache.set(key, resultPromise);
+    return resultPromise;
   }
 
   async starred(query: SearchQuery): Promise<QueryResponse> {

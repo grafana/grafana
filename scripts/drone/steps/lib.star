@@ -1,6 +1,6 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = 'v3.0.7'
+grabpl_version = 'v3.0.10'
 build_image = 'grafana/build-container:1.6.2'
 publish_image = 'grafana/grafana-ci-deploy:1.3.3'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
@@ -665,7 +665,7 @@ def package_step(edition, ver_mode, include_enterprise2=False, variants=None):
     # TODO: Use percentage for jobs
     if ver_mode == 'release':
         cmds = [
-            '{}./bin/grabpl package --jobs 8 --edition {} '.format(test_args, edition) + \
+            '{}./bin/build package --jobs 8 --edition {} '.format(test_args, edition) + \
             '{} ${{DRONE_TAG}}'.format(
                 sign_args
             ),
@@ -673,7 +673,7 @@ def package_step(edition, ver_mode, include_enterprise2=False, variants=None):
     else:
         build_no = '${DRONE_BUILD_NUMBER}'
         cmds = [
-            '{}./bin/grabpl package --jobs 8 --edition {} '.format(test_args, edition) + \
+            '{}./bin/build package --jobs 8 --edition {} '.format(test_args, edition) + \
             '--build-id {}{}{}'.format(build_no, variants_str, sign_args),
         ]
 
