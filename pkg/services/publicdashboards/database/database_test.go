@@ -98,7 +98,7 @@ func TestIntegrationAccessTokenExists(t *testing.T) {
 }
 
 // PublicDashboardEnabled
-func TestIntegrationGetPublicDashboardWithDashboard(t *testing.T) {
+func TestIntegrationGetPublicDashboard(t *testing.T) {
 	var sqlStore *sqlstore.SQLStore
 	var dashboardStore *dashboardsDB.DashboardStore
 	var publicdashboardStore *PublicDashboardStoreImpl
