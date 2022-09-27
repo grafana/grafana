@@ -148,7 +148,7 @@ func (f *FolderFilter) writeFolderFilterSQL(includeGeneral bool, builder *sqlsto
 		paramsUIDs = append(paramsUIDs, folderUID)
 	}
 	if len(paramsUIDs) > 0 {
-		sql.WriteString(` AND le.folder_uid IN (?` + strings.Repeat(",?", len(paramsUIDs)-1) + ")")
+		sql.WriteString(` AND dashboard.uid IN (?` + strings.Repeat(",?", len(paramsUIDs)-1) + ")")
 		builder.Write(sql.String(), paramsUIDs...)
 	}
 
