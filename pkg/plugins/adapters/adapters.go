@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -55,19 +54,5 @@ func BackendUserFromSignedInUser(su *user.SignedInUser) *backend.User {
 		Name:  su.Name,
 		Email: su.Email,
 		Role:  string(su.OrgRole),
-	}
-}
-
-// SignedInUserFromBackendUser converts the backend plugin's model
-// to Grafana's SignedInUser model
-func SignedInUserFromBackendUser(bu *backend.User) *user.SignedInUser {
-	if bu == nil {
-		return nil
-	}
-	return &user.SignedInUser{
-		Login:   bu.Login,
-		Name:    bu.Name,
-		Email:   bu.Email,
-		OrgRole: org.RoleType(bu.Role),
 	}
 }
