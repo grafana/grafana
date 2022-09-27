@@ -22,13 +22,16 @@ type Service struct {
 }
 
 func ProvideService(db sqlstore.Store, cfg *setting.Cfg) org.Service {
+	log := log.New("org service")
 	return &Service{
 		store: &sqlStore{
 			db:      db,
 			dialect: db.GetDialect(),
+			log:     log,
+			cfg:     cfg,
 		},
 		cfg:      cfg,
-		log:      log.New("org service"),
+		log:      log,
 		sqlStore: db,
 	}
 }
@@ -233,40 +236,9 @@ func (s *Service) RemoveOrgUser(ctx context.Context, cmd *org.RemoveOrgUserComma
 	return s.sqlStore.RemoveOrgUser(ctx, c)
 }
 
-// TODO: remove wrapper around sqlstore
+// TODO: refactor service to call store CRUD method
 func (s *Service) GetOrgUsers(ctx context.Context, query *org.GetOrgUsersQuery) ([]*org.OrgUserDTO, error) {
-	q := &models.GetOrgUsersQuery{
-		UserID:                   query.UserID,
-		OrgId:                    query.OrgID,
-		Query:                    query.Query,
-		Limit:                    query.Limit,
-		DontEnforceAccessControl: query.DontEnforceAccessControl,
-		User:                     query.User,
-	}
-	err := s.sqlStore.GetOrgUsers(ctx, q)
-	if err != nil {
-		return nil, err
-	}
-
-	result := make([]*org.OrgUserDTO, 0)
-	for _, user := range q.Result {
-		result = append(result, &org.OrgUserDTO{
-			OrgID:         user.OrgId,
-			UserID:        user.UserId,
-			Login:         user.Login,
-			Email:         user.Email,
-			Name:          user.Name,
-			AvatarURL:     user.AvatarUrl,
-			Role:          user.Role,
-			LastSeenAt:    user.LastSeenAt,
-			LastSeenAtAge: user.LastSeenAtAge,
-			Updated:       user.Updated,
-			Created:       user.Created,
-			AccessControl: user.AccessControl,
-			IsDisabled:    user.IsDisabled,
-		})
-	}
-	return result, nil
+	return s.store.GetOrgUsers(ctx, query)
 }
 
 // TODO: remove wrapper around sqlstore

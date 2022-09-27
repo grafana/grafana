@@ -4,15 +4,20 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/events"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 const MainOrgName = "Main Org."
@@ -32,11 +37,15 @@ type store interface {
 	CreateWithMember(context.Context, *org.CreateOrgCommand) (*org.Org, error)
 	AddOrgUser(context.Context, *org.AddOrgUserCommand) error
 	UpdateOrgUser(context.Context, *org.UpdateOrgUserCommand) error
+	GetOrgUsers(context.Context, *org.GetOrgUsersQuery) ([]*org.OrgUserDTO, error)
 }
 
 type sqlStore struct {
 	db      db.DB
 	dialect migrator.Dialect
+	//TODO: moved to service
+	log log.Logger
+	cfg *setting.Cfg
 }
 
 func (ss *sqlStore) Get(ctx context.Context, orgID int64) (*org.Org, error) {
@@ -427,4 +436,81 @@ func validateOneAdminLeftInOrg(orgID int64, sess *sqlstore.DBSession) error {
 	}
 
 	return err
+}
+
+func (ss *sqlStore) GetOrgUsers(ctx context.Context, query *org.GetOrgUsersQuery) ([]*org.OrgUserDTO, error) {
+	result := make([]*org.OrgUserDTO, 0)
+	err := ss.db.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		sess := dbSession.Table("org_user")
+		sess.Join("INNER", ss.dialect.Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", ss.dialect.Quote("user")))
+
+		whereConditions := make([]string, 0)
+		whereParams := make([]interface{}, 0)
+
+		whereConditions = append(whereConditions, "org_user.org_id = ?")
+		whereParams = append(whereParams, query.OrgID)
+
+		if query.UserID != 0 {
+			whereConditions = append(whereConditions, "org_user.user_id = ?")
+			whereParams = append(whereParams, query.UserID)
+		}
+
+		whereConditions = append(whereConditions, fmt.Sprintf("%s.is_service_account = ?", ss.dialect.Quote("user")))
+		whereParams = append(whereParams, ss.dialect.BooleanStr(false))
+
+		if query.User == nil {
+			ss.log.Warn("Query user not set for filtering.")
+		}
+
+		if !query.DontEnforceAccessControl && !accesscontrol.IsDisabled(ss.cfg) {
+			acFilter, err := accesscontrol.Filter(query.User, "org_user.user_id", "users:id:", accesscontrol.ActionOrgUsersRead)
+			if err != nil {
+				return err
+			}
+			whereConditions = append(whereConditions, acFilter.Where)
+			whereParams = append(whereParams, acFilter.Args...)
+		}
+
+		if query.Query != "" {
+			queryWithWildcards := "%" + query.Query + "%"
+			whereConditions = append(whereConditions, "(email "+ss.dialect.LikeStr()+" ? OR name "+ss.dialect.LikeStr()+" ? OR login "+ss.dialect.LikeStr()+" ?)")
+			whereParams = append(whereParams, queryWithWildcards, queryWithWildcards, queryWithWildcards)
+		}
+
+		if len(whereConditions) > 0 {
+			sess.Where(strings.Join(whereConditions, " AND "), whereParams...)
+		}
+
+		if query.Limit > 0 {
+			sess.Limit(query.Limit, 0)
+		}
+
+		sess.Cols(
+			"org_user.org_id",
+			"org_user.user_id",
+			"user.email",
+			"user.name",
+			"user.login",
+			"org_user.role",
+			"user.last_seen_at",
+			"user.created",
+			"user.updated",
+			"user.is_disabled",
+		)
+		sess.Asc("user.email", "user.login")
+
+		if err := sess.Find(&result); err != nil {
+			return err
+		}
+
+		for _, user := range result {
+			user.LastSeenAtAge = util.GetAgeString(user.LastSeenAt)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }

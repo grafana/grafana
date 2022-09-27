@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -14,130 +13,6 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/user"
 )
-
-type getOrgUsersTestCase struct {
-	desc             string
-	query            *models.GetOrgUsersQuery
-	expectedNumUsers int
-}
-
-func TestSQLStore_GetOrgUsers(t *testing.T) {
-	tests := []getOrgUsersTestCase{
-		{
-			desc: "should return all users",
-			query: &models.GetOrgUsersQuery{
-				OrgId: 1,
-				User: &user.SignedInUser{
-					OrgID:       1,
-					Permissions: map[int64]map[string][]string{1: {ac.ActionOrgUsersRead: {ac.ScopeUsersAll}}},
-				},
-			},
-			expectedNumUsers: 10,
-		},
-		{
-			desc: "should return no users",
-			query: &models.GetOrgUsersQuery{
-				OrgId: 1,
-				User: &user.SignedInUser{
-					OrgID:       1,
-					Permissions: map[int64]map[string][]string{1: {ac.ActionOrgUsersRead: {""}}},
-				},
-			},
-			expectedNumUsers: 0,
-		},
-		{
-			desc: "should return some users",
-			query: &models.GetOrgUsersQuery{
-				OrgId: 1,
-				User: &user.SignedInUser{
-					OrgID: 1,
-					Permissions: map[int64]map[string][]string{1: {ac.ActionOrgUsersRead: {
-						"users:id:1",
-						"users:id:5",
-						"users:id:9",
-					}}},
-				},
-			},
-			expectedNumUsers: 3,
-		},
-	}
-
-	store := InitTestDB(t, InitTestDBOpt{})
-	store.Cfg.IsEnterprise = true
-	defer func() {
-		store.Cfg.IsEnterprise = false
-	}()
-	seedOrgUsers(t, store, 10)
-
-	for _, tt := range tests {
-		t.Run(tt.desc, func(t *testing.T) {
-			err := store.GetOrgUsers(context.Background(), tt.query)
-			require.NoError(t, err)
-			require.Len(t, tt.query.Result, tt.expectedNumUsers)
-
-			if !hasWildcardScope(tt.query.User, ac.ActionOrgUsersRead) {
-				for _, u := range tt.query.Result {
-					assert.Contains(t, tt.query.User.Permissions[tt.query.User.OrgID][ac.ActionOrgUsersRead], fmt.Sprintf("users:id:%d", u.UserId))
-				}
-			}
-		})
-	}
-}
-
-func TestSQLStore_GetOrgUsers_PopulatesCorrectly(t *testing.T) {
-	// The millisecond part is not stored in the DB
-	constNow := time.Date(2022, 8, 17, 20, 34, 58, 0, time.UTC)
-	MockTimeNow(constNow)
-	defer ResetTimeNow()
-
-	store := InitTestDB(t, InitTestDBOpt{})
-	_, err := store.CreateUser(context.Background(), user.CreateUserCommand{
-		Login: "Admin",
-		Email: "admin@localhost",
-		OrgID: 1,
-	})
-	require.NoError(t, err)
-
-	newUser, err := store.CreateUser(context.Background(), user.CreateUserCommand{
-		Login:      "Viewer",
-		Email:      "viewer@localhost",
-		OrgID:      1,
-		IsDisabled: true,
-		Name:       "Viewer Localhost",
-	})
-	require.NoError(t, err)
-
-	err = store.AddOrgUser(context.Background(), &models.AddOrgUserCommand{
-		Role:   "Viewer",
-		OrgId:  1,
-		UserId: newUser.ID,
-	})
-	require.NoError(t, err)
-
-	query := &models.GetOrgUsersQuery{
-		OrgId:  1,
-		UserID: newUser.ID,
-		User: &user.SignedInUser{
-			OrgID:       1,
-			Permissions: map[int64]map[string][]string{1: {ac.ActionOrgUsersRead: {ac.ScopeUsersAll}}},
-		},
-	}
-	err = store.GetOrgUsers(context.Background(), query)
-	require.NoError(t, err)
-	require.Len(t, query.Result, 1)
-
-	actual := query.Result[0]
-	assert.Equal(t, int64(1), actual.OrgId)
-	assert.Equal(t, newUser.ID, actual.UserId)
-	assert.Equal(t, "viewer@localhost", actual.Email)
-	assert.Equal(t, "Viewer Localhost", actual.Name)
-	assert.Equal(t, "Viewer", actual.Login)
-	assert.Equal(t, "Viewer", actual.Role)
-	assert.Equal(t, constNow.AddDate(-10, 0, 0), actual.LastSeenAt)
-	assert.Equal(t, constNow, actual.Created)
-	assert.Equal(t, constNow, actual.Updated)
-	assert.Equal(t, true, actual.IsDisabled)
-}
 
 type searchOrgUsersTestCase struct {
 	desc             string

@@ -588,13 +588,6 @@ func TestPostOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 				var message util.DynMap
 				err := json.NewDecoder(response.Body).Decode(&message)
 				require.NoError(t, err)
-
-				getUsersQuery := models.GetOrgUsersQuery{OrgId: tc.targetOrg, User: &user.SignedInUser{
-					OrgID:       tc.targetOrg,
-					Permissions: map[int64]map[string][]string{tc.targetOrg: {"org.users:read": {"users:*"}}},
-				}}
-				err = sc.db.GetOrgUsers(context.Background(), &getUsersQuery)
-				require.NoError(t, err)
 			}
 		})
 	}
@@ -960,22 +953,6 @@ func TestDeleteOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 				err := json.NewDecoder(response.Body).Decode(&message)
 				require.NoError(t, err)
 				assert.Equal(t, tc.expectedMessage, message)
-
-				getUsersQuery := models.GetOrgUsersQuery{
-					OrgId: tc.targetOrg,
-					User: &user.SignedInUser{
-						OrgID:       tc.targetOrg,
-						Permissions: map[int64]map[string][]string{tc.targetOrg: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
-					},
-				}
-				err = sc.db.GetOrgUsers(context.Background(), &getUsersQuery)
-				require.NoError(t, err)
-				assert.Len(t, getUsersQuery.Result, tc.expectedUserCount)
-
-				// check all permissions for user is removed in org
-				permission, err := sc.hs.accesscontrolService.GetUserPermissions(context.Background(), &user.SignedInUser{UserID: tc.targetUserId, OrgID: tc.targetOrg}, accesscontrol.Options{})
-				require.NoError(t, err)
-				assert.Len(t, permission, 0)
 			}
 		})
 	}
