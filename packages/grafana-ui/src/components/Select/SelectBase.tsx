@@ -22,7 +22,7 @@ import { ValueContainer } from './ValueContainer';
 import { getSelectStyles } from './getSelectStyles';
 import { useCustomSelectStyles } from './resetSelectStyles';
 import { ActionMeta, SelectBaseProps } from './types';
-import { cleanValue, findSelectedValue } from './utils';
+import { cleanValue, findSelectedValue, omitDescriptions } from './utils';
 
 interface ExtraValuesIndicatorProps {
   maxVisibleValues?: number | undefined;
@@ -242,7 +242,7 @@ export function SelectBase<T>({
     onFocus,
     formatOptionLabel,
     openMenuOnFocus,
-    options,
+    options: virtualized ? omitDescriptions(options) : options,
     placeholder,
     prefix,
     renderControl,

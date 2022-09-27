@@ -1,4 +1,5 @@
 import { cx } from '@emotion/css';
+import { max } from 'lodash';
 import React, { FC, RefCallback } from 'react';
 import { MenuListProps } from 'react-select';
 import { FixedSizeList as List } from 'react-window';
@@ -32,10 +33,17 @@ export const SelectMenu: FC<SelectMenuProps> = ({ children, maxHeight, innerRef,
 
 SelectMenu.displayName = 'SelectMenu';
 
-const VIRTUAL_LIST_ITEM_HEIGHT = 32;
+const VIRTUAL_LIST_ITEM_HEIGHT = 37;
+const VIRTUAL_LIST_WIDTH_ESTIMATE_MULTIPLIER = 7;
 
-// a virtualize version of the SelectMenu, descriptions for SelectableValue options not supported since those are of a variable height
-// and are hidden by an overflow style
+// A virtualized version of the SelectMenu, descriptions for SelectableValue options not supported since those are of a variable height.
+//
+// To support the virtualized list we have to "guess" the width of the menu container based on the longest available option.
+// the reason for this is because all of the options will be positioned absolute, this takes them out of the document and no space
+// is created for them, thus the container can't grow to accomodate.
+//
+// VIRTUAL_LIST_ITEM_HEIGHT and WIDTH_ESTIMATE_MULTIPLIER are both magic numbers.
+// Some characters (such as emojis and other unicode characters) may consist of multiple code points in which case the width would be inaccurate (but larger than needed).
 export const VirtualizedSelectMenu: FC<MenuListProps<SelectableValue>> = ({
   children,
   maxHeight,
@@ -53,11 +61,14 @@ export const VirtualizedSelectMenu: FC<MenuListProps<SelectableValue>> = ({
     return null;
   }
 
+  const longestOption = max(options.map((option) => option.label?.length)) ?? 0;
+  const widthEstimate = longestOption * VIRTUAL_LIST_WIDTH_ESTIMATE_MULTIPLIER;
+
   return (
     <List
       className={styles.menu}
       height={maxHeight}
-      width="100%"
+      width={widthEstimate}
       aria-label="Select options menu"
       itemCount={children.length}
       itemSize={VIRTUAL_LIST_ITEM_HEIGHT}
