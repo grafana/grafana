@@ -54,7 +54,7 @@
     "jsx-a11y/heading-has-content": "error",
     "jsx-a11y/html-has-lang": "error",
     "jsx-a11y/iframe-has-title": "off",
-    "jsx-a11y/img-redundant-alt": "off",
+    "jsx-a11y/img-redundant-alt": "error",
     "jsx-a11y/interactive-supports-focus": [
       "off",
       {
