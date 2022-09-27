@@ -56,6 +56,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -209,7 +210,7 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHa
 	renderSvc := &fakeRenderService{}
 	authJWTSvc := models.NewFakeJWTService()
 	tracer := tracing.InitializeTracerForTest()
-	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginservice.LoginServiceMock{}, sqlStore)
+	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginservice.LoginServiceMock{}, &usertest.FakeUserService{}, sqlStore)
 	loginService := &logintest.LoginServiceFake{}
 	authenticator := &logintest.AuthenticatorFake{}
 	ctxHdlr := contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, sqlStore, tracer, authProxy, loginService, nil, authenticator, usertest.NewUserServiceFake())
@@ -292,8 +293,6 @@ type accessControlScenarioContext struct {
 	// acmock is an accesscontrol mock used to fake users rights.
 	acmock *accesscontrolmock.Mock
 
-	usermock *usertest.FakeUserService
-
 	// db is a test database initialized with InitTestDB
 	db *sqlstore.SQLStore
 
@@ -302,6 +301,7 @@ type accessControlScenarioContext struct {
 
 	dashboardsStore dashboards.Store
 	teamService     team.Service
+	userService     user.Service
 }
 
 func setAccessControlPermissions(acmock *accesscontrolmock.Mock, perms []accesscontrol.Permission, org int64) {
@@ -378,6 +378,8 @@ func setupHTTPServerWithCfgDb(
 	var ac accesscontrol.AccessControl
 	var acService accesscontrol.Service
 
+	var userSvc user.Service
+
 	// Defining the accesscontrol service has to be done before registering routes
 	if useFakeAccessControl {
 		acmock = accesscontrolmock.New()
@@ -386,19 +388,18 @@ func setupHTTPServerWithCfgDb(
 		}
 		ac = acmock
 		acService = acmock
+		userSvc = &usertest.FakeUserService{}
 	} else {
 		var err error
 		acService, err = acimpl.ProvideService(cfg, db, routeRegister, localcache.ProvideService())
 		require.NoError(t, err)
 		ac = acimpl.ProvideAccessControl(cfg)
+		userSvc = userimpl.ProvideService(db, nil, cfg, db)
 	}
-
-	teamPermissionService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, routeRegister, db, ac, license, acService, teamService)
+	teamPermissionService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, routeRegister, db, ac, license, acService, teamService, userSvc)
 	require.NoError(t, err)
 
 	// Create minimal HTTP Server
-	userMock := usertest.NewUserServiceFake()
-	userMock.ExpectedUser = &user.User{ID: 1}
 	hs := &HTTPServer{
 		Cfg:                    cfg,
 		Features:               features,
@@ -416,7 +417,7 @@ func setupHTTPServerWithCfgDb(
 			accesscontrolmock.NewMockedPermissionsService(), accesscontrolmock.NewMockedPermissionsService(), ac,
 		),
 		preferenceService: preftest.NewPreferenceServiceFake(),
-		userService:       userMock,
+		userService:       userSvc,
 		orgService:        orgtest.NewOrgServiceFake(),
 		teamService:       teamService,
 		annotationsRepo:   annotationstest.NewFakeAnnotationsRepo(),
@@ -455,7 +456,7 @@ func setupHTTPServerWithCfgDb(
 		cfg:             cfg,
 		dashboardsStore: dashboardsStore,
 		teamService:     teamService,
-		usermock:        userMock,
+		userService:     userSvc,
 	}
 }
 
