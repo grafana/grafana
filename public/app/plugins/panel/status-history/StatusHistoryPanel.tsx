@@ -46,6 +46,7 @@ export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
   const [coords, setCoords] = useState<{ viewport: CartesianCoords2D; canvas: CartesianCoords2D } | null>(null);
   const [focusedSeriesIdx, setFocusedSeriesIdx] = useState<number | null>(null);
   const [focusedPointIdx, setFocusedPointIdx] = useState<number | null>(null);
+  const [isActive, setIsActive] = useState<boolean>(false);
   const [shouldDisplayCloseButton, setShouldDisplayCloseButton] = useState<boolean>(false);
 
   const onCloseToolTip = () => {
@@ -179,6 +180,8 @@ export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
             setCoords,
             setHover,
             isToolTipOpen,
+            isActive,
+            setIsActive,
           });
         }
 
