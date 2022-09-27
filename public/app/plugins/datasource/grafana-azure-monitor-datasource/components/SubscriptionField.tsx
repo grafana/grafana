@@ -56,9 +56,12 @@ const SubscriptionField: React.FC<SubscriptionFieldProps> = ({
         return;
       }
 
-      query.subscriptions = change.map((c) => c.value ?? '');
+      let newQuery: AzureMonitorQuery = {
+        ...query,
+        subscriptions: change.map((c) => c.value ?? ''),
+      };
 
-      onQueryChange(query);
+      onQueryChange(newQuery);
     },
     [query, onQueryChange]
   );
