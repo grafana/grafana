@@ -1,6 +1,7 @@
 package object
 
 // NOTE this is just a temporary registry/list so we can use constants
+// TODO replace with codegen from kind schema system
 
 const StandardKindDashboard = "dashboard"
 const StandardKindFolder = "folder"
