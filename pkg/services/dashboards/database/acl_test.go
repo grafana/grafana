@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
+	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
 )
@@ -189,7 +190,8 @@ func TestIntegrationDashboardACLDataAccess(t *testing.T) {
 
 		t.Run("Should be able to add a user permission for a team", func(t *testing.T) {
 			setup(t)
-			team1, err := sqlStore.CreateTeam("group1 name", "", 1)
+			teamSvc := teamimpl.ProvideService(sqlStore, sqlStore.Cfg)
+			team1, err := teamSvc.CreateTeam("group1 name", "", 1)
 			require.Nil(t, err)
 
 			err = updateDashboardACL(t, dashboardStore, savedFolder.Id, models.DashboardACL{
@@ -210,7 +212,8 @@ func TestIntegrationDashboardACLDataAccess(t *testing.T) {
 
 		t.Run("Should be able to update an existing permission for a team", func(t *testing.T) {
 			setup(t)
-			team1, err := sqlStore.CreateTeam("group1 name", "", 1)
+			teamSvc := teamimpl.ProvideService(sqlStore, sqlStore.Cfg)
+			team1, err := teamSvc.CreateTeam("group1 name", "", 1)
 			require.Nil(t, err)
 			err = updateDashboardACL(t, dashboardStore, savedFolder.Id, models.DashboardACL{
 				OrgID:       1,

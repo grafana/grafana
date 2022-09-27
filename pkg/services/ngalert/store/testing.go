@@ -171,9 +171,6 @@ func (f *FakeRuleStore) DeleteAlertRulesByUID(_ context.Context, orgID int64, UI
 	return nil
 }
 
-func (f *FakeRuleStore) DeleteAlertInstancesByRuleUID(_ context.Context, _ int64, _ string) error {
-	return nil
-}
 func (f *FakeRuleStore) GetAlertRuleByUID(_ context.Context, q *models.GetAlertRuleByUIDQuery) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
@@ -328,25 +325,6 @@ func (f *FakeRuleStore) ListAlertRules(_ context.Context, q *models.ListAlertRul
 	return nil
 }
 
-func (f *FakeRuleStore) GetRuleGroups(_ context.Context, q *models.ListRuleGroupsQuery) error {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-	f.RecordedOps = append(f.RecordedOps, *q)
-
-	m := make(map[string]struct{})
-	for _, rules := range f.Rules {
-		for _, rule := range rules {
-			m[rule.RuleGroup] = struct{}{}
-		}
-	}
-
-	for s := range m {
-		q.Result = append(q.Result, s)
-	}
-
-	return nil
-}
-
 func (f *FakeRuleStore) GetUserVisibleNamespaces(_ context.Context, orgID int64, _ *user.SignedInUser) (map[string]*models2.Folder, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
@@ -458,38 +436,6 @@ func (f *FakeRuleStore) IncreaseVersionForAllRulesInNamespace(_ context.Context,
 		}
 	}
 	return result, nil
-}
-
-type FakeInstanceStore struct {
-	mtx         sync.Mutex
-	RecordedOps []interface{}
-}
-
-func (f *FakeInstanceStore) GetAlertInstance(_ context.Context, q *models.GetAlertInstanceQuery) error {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-	f.RecordedOps = append(f.RecordedOps, *q)
-	return nil
-}
-func (f *FakeInstanceStore) ListAlertInstances(_ context.Context, q *models.ListAlertInstancesQuery) error {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-	f.RecordedOps = append(f.RecordedOps, *q)
-	return nil
-}
-func (f *FakeInstanceStore) SaveAlertInstance(_ context.Context, q *models.SaveAlertInstanceCommand) error {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-	f.RecordedOps = append(f.RecordedOps, *q)
-	return nil
-}
-
-func (f *FakeInstanceStore) FetchOrgIds(_ context.Context) ([]int64, error) { return []int64{}, nil }
-func (f *FakeInstanceStore) DeleteAlertInstance(_ context.Context, _ int64, _, _ string) error {
-	return nil
-}
-func (f *FakeInstanceStore) DeleteAlertInstancesByRule(ctx context.Context, key models.AlertRuleKey) error {
-	return nil
 }
 
 func NewFakeAdminConfigStore(t *testing.T) *FakeAdminConfigStore {

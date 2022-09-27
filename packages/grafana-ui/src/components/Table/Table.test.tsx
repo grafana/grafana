@@ -200,7 +200,7 @@ describe('Table', () => {
 
       expect(within(getTable()).getAllByRole('row')).toHaveLength(9);
 
-      await userEvent.click(within(getColumnHeader(/number/)).getByRole('filterIcon'));
+      await userEvent.click(within(getColumnHeader(/number/)).getByRole('button', { name: '' }));
       await userEvent.click(screen.getByLabelText('1'));
       await userEvent.click(screen.getByText('Ok'));
 

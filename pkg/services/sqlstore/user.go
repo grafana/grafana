@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"sort"
@@ -15,27 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
-
-type ErrCaseInsensitiveLoginConflict struct {
-	users []user.User
-}
-
-func (e *ErrCaseInsensitiveLoginConflict) Unwrap() error {
-	return user.ErrCaseInsensitive
-}
-
-func (e *ErrCaseInsensitiveLoginConflict) Error() string {
-	n := len(e.users)
-
-	userStrings := make([]string, 0, n)
-	for _, v := range e.users {
-		userStrings = append(userStrings, fmt.Sprintf("%s (email:%s, id:%d)", v.Login, v.Email, v.ID))
-	}
-
-	return fmt.Sprintf(
-		"Found a conflict in user login information. %d users already exist with either the same login or email: [%s].",
-		n, strings.Join(userStrings, ", "))
-}
 
 func (ss *SQLStore) getOrgIDForNewUser(sess *DBSession, args user.CreateUserCommand) (int64, error) {
 	if ss.Cfg.AutoAssignOrg && args.OrgID != 0 {
@@ -62,7 +42,7 @@ func (ss *SQLStore) userCaseInsensitiveLoginConflict(ctx context.Context, sess *
 	}
 
 	if len(users) > 1 {
-		return &ErrCaseInsensitiveLoginConflict{users}
+		return &user.ErrCaseInsensitiveLoginConflict{Users: users}
 	}
 
 	return nil
@@ -394,16 +374,6 @@ func setUsingOrgInTransaction(sess *DBSession, userID int64, orgID int64) error 
 	return err
 }
 
-func removeUserOrg(sess *DBSession, userID int64) error {
-	user := user.User{
-		ID:    userID,
-		OrgID: 0,
-	}
-
-	_, err := sess.ID(userID).MustCols("org_id").Update(&user)
-	return err
-}
-
 func (ss *SQLStore) GetUserProfile(ctx context.Context, query *models.GetUserProfileQuery) error {
 	return ss.WithDbSession(ctx, func(sess *DBSession) error {
 		var usr user.User
@@ -581,6 +551,56 @@ func (ss *SQLStore) GetSignedInUser(ctx context.Context, query *models.GetSigned
 		query.Result = &usr
 		return err
 	})
+}
+
+// GetTeamsByUser is used by the Guardian when checking a users' permissions
+// TODO: use team.Service after user service is split
+func (ss *SQLStore) GetTeamsByUser(ctx context.Context, query *models.GetTeamsByUserQuery) error {
+	return ss.WithDbSession(ctx, func(sess *DBSession) error {
+		query.Result = make([]*models.TeamDTO, 0)
+
+		var sql bytes.Buffer
+		var params []interface{}
+		params = append(params, query.OrgId, query.UserId)
+
+		sql.WriteString(getTeamSelectSQLBase([]string{}))
+		sql.WriteString(` INNER JOIN team_member on team.id = team_member.team_id`)
+		sql.WriteString(` WHERE team.org_id = ? and team_member.user_id = ?`)
+
+		if !ac.IsDisabled(ss.Cfg) {
+			acFilter, err := ac.Filter(query.SignedInUser, "team.id", "teams:id:", ac.ActionTeamsRead)
+			if err != nil {
+				return err
+			}
+			sql.WriteString(` and` + acFilter.Where)
+			params = append(params, acFilter.Args...)
+		}
+
+		err := sess.SQL(sql.String(), params...).Find(&query.Result)
+		return err
+	})
+}
+
+func getTeamMemberCount(filteredUsers []string) string {
+	if len(filteredUsers) > 0 {
+		return `(SELECT COUNT(*) FROM team_member
+			INNER JOIN ` + dialect.Quote("user") + ` ON team_member.user_id = ` + dialect.Quote("user") + `.id
+			WHERE team_member.team_id = team.id AND ` + dialect.Quote("user") + `.login NOT IN (?` +
+			strings.Repeat(",?", len(filteredUsers)-1) + ")" +
+			`) AS member_count `
+	}
+
+	return "(SELECT COUNT(*) FROM team_member WHERE team_member.team_id = team.id) AS member_count "
+}
+
+func getTeamSelectSQLBase(filteredUsers []string) string {
+	return `SELECT
+		team.id as id,
+		team.org_id,
+		team.name as name,
+		team.email as email, ` +
+		getTeamMemberCount(filteredUsers) +
+		` FROM team as team `
 }
 
 func (ss *SQLStore) SearchUsers(ctx context.Context, query *models.SearchUsersQuery) error {
