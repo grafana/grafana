@@ -656,12 +656,12 @@ func conflictingUserEntriesSQL(s *sqlstore.SQLStore) string {
 	u1.last_seen_at,
 	user_auth.auth_module,
 		( SELECT
-			true
+			'true'
 		FROM
 			` + userDialect + `
 		WHERE (LOWER(u1.email) = LOWER(u2.email)) AND(u1.email != u2.email)) AS conflict_email,
 		( SELECT
-			true
+			'true'
 		FROM
 			` + userDialect + `
 		WHERE (LOWER(u1.login) = LOWER(u2.login) AND(u1.login != u2.login))) AS conflict_login

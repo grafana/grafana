@@ -287,9 +287,6 @@ func TestGetConflictingUsers(t *testing.T) {
 			},
 			want: 2,
 		},
-		// TODO:
-		// refactor the sql to get 3 users from this test
-		// if this is changed, one needs to correct the filerepresentation
 		{
 			desc: "should be 5 conflicting users, each conflict gets 2 users",
 			users: []user.User{
@@ -414,8 +411,7 @@ func TestGenerateConflictingUsersFile(t *testing.T) {
 		desc               string
 		users              []user.User
 		wantDiscardedBlock string
-		wantBlock          string
-		wantNumberOfUsers  int
+		wantBlocks         []string
 	}
 	testOrgID := 1
 	testCases := []testGenerateConflictUsers{
@@ -458,7 +454,7 @@ func TestGenerateConflictingUsersFile(t *testing.T) {
 					OrgID: int64(testOrgID),
 				},
 			},
-			wantBlock:          "conflict: ldap-admin",
+			wantBlocks:         []string{"conflict: ldap-admin", "conflict: user_duplicate_test_login"},
 			wantDiscardedBlock: "conflict: user2",
 		},
 		{
@@ -480,8 +476,7 @@ func TestGenerateConflictingUsersFile(t *testing.T) {
 					OrgID: int64(testOrgID),
 				},
 			},
-			wantBlock:         "conflict: ldap-editor",
-			wantNumberOfUsers: 3,
+			wantBlocks: []string{"conflict: ldap-editor"},
 		},
 	}
 	for _, tc := range testCases {
