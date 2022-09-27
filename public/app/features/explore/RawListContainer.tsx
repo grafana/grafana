@@ -7,7 +7,8 @@ import { DataFrame, formattedValueToString } from '@grafana/data/src';
 import { stylesFactory } from '@grafana/ui/src';
 
 import RawList from './RawList';
-import { instantQueryRawVirtualizedListData } from './TableContainer';
+
+export type instantQueryRawVirtualizedListData = { Value: string; __name__: string; [index: string]: string };
 
 export interface RawListContainerProps {
   tableResult: DataFrame;

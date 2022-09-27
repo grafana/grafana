@@ -11,7 +11,7 @@ function getTable(): HTMLElement {
 }
 
 function getTableToggle(): HTMLElement {
-  return screen.getAllByRole('switch')[0];
+  return screen.getAllByRole('radio')[0];
 }
 
 function getRowsData(rows: HTMLElement[]): Object[] {

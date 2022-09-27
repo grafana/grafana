@@ -5,8 +5,8 @@ import { useCopyToClipboard } from 'react-use';
 import { GrafanaTheme } from '@grafana/data/src';
 import { IconButton, useStyles } from '@grafana/ui/src';
 
+import { instantQueryRawVirtualizedListData } from './RawListContainer';
 import RawListItem from './RawListItem';
-import { instantQueryRawVirtualizedListData } from './TableContainer';
 
 interface RawListProps {
   listItemData: instantQueryRawVirtualizedListData;

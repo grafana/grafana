@@ -27,9 +27,6 @@ interface TableContainerState {
   resultsStyle: TableResultsStyle;
 }
 
-export type instantQueryRawVirtualizedListData = { Value: string; __name__: string; [index: string]: string };
-// type instantQueryMetricList = { [index: string]: { [index: string]: instantQueryRawVirtualizedListData } };
-
 function mapStateToProps(state: StoreState, { exploreId }: TableContainerProps) {
   const explore = state.explore;
   const item: ExploreItemState = explore[exploreId] as ExploreItemState;
