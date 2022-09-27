@@ -1,13 +1,17 @@
-import { screen, render, within } from '@testing-library/react';
+import { screen, render, within, fireEvent } from '@testing-library/react';
 import React from 'react';
 
 import { DataFrame, toDataFrame, FieldType, InternalTimeZones } from '@grafana/data';
-import { ExploreId } from 'app/types/explore';
+import { ExploreId, TABLE_RESULTS_STYLE } from 'app/types/explore';
 
 import { TableContainer } from './TableContainer';
 
 function getTable(): HTMLElement {
   return screen.getAllByRole('table')[0];
+}
+
+function getTableToggle(): HTMLElement {
+  return screen.getAllByRole('switch')[0];
 }
 
 function getRowsData(rows: HTMLElement[]): Object[] {
@@ -56,11 +60,15 @@ const defaultProps = {
   splitOpen: (() => {}) as any,
   range: {} as any,
   timeZone: InternalTimeZones.utc,
+  resultsStyle: TABLE_RESULTS_STYLE.raw,
 };
 
 describe('TableContainer', () => {
   it('should render component', () => {
     render(<TableContainer {...defaultProps} />);
+    expect(screen.queryAllByRole('table').length).toBe(0);
+    fireEvent.click(getTableToggle());
+
     expect(getTable()).toBeInTheDocument();
     const rows = within(getTable()).getAllByRole('row');
     expect(rows).toHaveLength(5);
@@ -84,6 +92,8 @@ describe('TableContainer', () => {
 
   it('should update time when timezone changes', () => {
     const { rerender } = render(<TableContainer {...defaultProps} />);
+    expect(screen.queryAllByRole('table').length).toBe(0);
+    fireEvent.click(getTableToggle());
     const rowsBeforeChange = within(getTable()).getAllByRole('row');
     expect(getRowsData(rowsBeforeChange)).toEqual([
       { time: '2021-01-01 00:00:00', text: 'test_string_1' },
