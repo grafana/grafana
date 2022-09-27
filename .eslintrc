@@ -93,7 +93,7 @@
     "jsx-a11y/role-has-required-aria-props": "off",
     "jsx-a11y/role-supports-aria-props": "off",
     "jsx-a11y/scope": "error",
-    "jsx-a11y/tabindex-no-positive": "off"
+    "jsx-a11y/tabindex-no-positive": "error"
   },
   "overrides": [
     {
