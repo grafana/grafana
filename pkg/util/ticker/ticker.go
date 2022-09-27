@@ -1,4 +1,4 @@
-package alerting
+package ticker
 
 import (
 	"fmt"
@@ -7,29 +7,28 @@ import (
 	"github.com/benbjohnson/clock"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/alerting/metrics"
 )
 
-// Ticker is a ticker to power the alerting scheduler. it's like a time.Ticker, except:
+// Ticker emits ticks at regular time intervals. it's like a time.Ticker, except:
 //   - it doesn't drop ticks for slow receivers, rather, it queues up.  so that callers are in control to instrument what's going on.
 //   - it ticks on interval marks or very shortly after. this provides a predictable load pattern
 //     (this shouldn't cause too much load contention issues because the next steps in the pipeline just process at their own pace)
 //   - the timestamps are used to mark "last datapoint to query for" and as such, are a configurable amount of seconds in the past
-type Ticker struct {
+type T struct {
 	C        chan time.Time
 	clock    clock.Clock
 	last     time.Time
 	interval time.Duration
-	metrics  *metrics.Ticker
+	metrics  *Metrics
 	stopCh   chan struct{}
 }
 
 // NewTicker returns a Ticker that ticks on interval marks (or very shortly after) starting at c.Now(), and never drops ticks. interval should not be negative or zero.
-func NewTicker(c clock.Clock, interval time.Duration, metric *metrics.Ticker) *Ticker {
+func New(c clock.Clock, interval time.Duration, metric *Metrics) *T {
 	if interval <= 0 {
 		panic(fmt.Errorf("non-positive interval [%v] is not allowed", interval))
 	}
-	t := &Ticker{
+	t := &T{
 		C:        make(chan time.Time),
 		clock:    c,
 		last:     getStartTick(c, interval),
@@ -47,7 +46,7 @@ func getStartTick(clk clock.Clock, interval time.Duration) time.Time {
 	return time.Unix(0, nano-(nano%interval.Nanoseconds()))
 }
 
-func (t *Ticker) run() {
+func (t *T) run() {
 	logger := log.New("ticker")
 	logger.Info("starting", "first_tick", t.last.Add(t.interval))
 LOOP:
@@ -77,7 +76,7 @@ LOOP:
 }
 
 // Stop stops the ticker. It does not close the C channel
-func (t *Ticker) Stop() {
+func (t *T) Stop() {
 	select {
 	case t.stopCh <- struct{}{}:
 	default:

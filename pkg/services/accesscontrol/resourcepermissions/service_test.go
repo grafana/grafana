@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -223,12 +224,13 @@ func setupTestEnvironment(t *testing.T, permissions []accesscontrol.Permission, 
 	sql := sqlstore.InitTestDB(t)
 	cfg := setting.NewCfg()
 	teamSvc := teamimpl.ProvideService(sql, cfg)
+	userSvc := userimpl.ProvideService(sql, nil, cfg, sql)
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
 	mock := accesscontrolmock.New().WithPermissions(permissions)
 	service, err := New(
 		ops, cfg, routing.NewRouteRegister(), license,
-		accesscontrolmock.New().WithPermissions(permissions), mock, sql, teamSvc,
+		accesscontrolmock.New().WithPermissions(permissions), mock, sql, teamSvc, userSvc,
 	)
 	require.NoError(t, err)
 

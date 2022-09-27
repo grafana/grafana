@@ -38,9 +38,9 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 	createSchedule := func(
 		evalAppliedChan chan time.Time,
 		senderMock *AlertsSenderMock,
-	) (*schedule, *store.FakeRuleStore, *store.FakeInstanceStore, prometheus.Gatherer) {
+	) (*schedule, *store.FakeRuleStore, *state.FakeInstanceStore, prometheus.Gatherer) {
 		ruleStore := store.NewFakeRuleStore(t)
-		instanceStore := &store.FakeInstanceStore{}
+		instanceStore := &state.FakeInstanceStore{}
 
 		registry := prometheus.NewPedanticRegistry()
 		sch := setupScheduler(t, ruleStore, instanceStore, registry, senderMock, nil)
@@ -481,7 +481,7 @@ func TestSchedule_DeleteAlertRule(t *testing.T) {
 	})
 }
 
-func setupScheduler(t *testing.T, rs *store.FakeRuleStore, is *store.FakeInstanceStore, registry *prometheus.Registry, senderMock *AlertsSenderMock, evalMock *eval.FakeEvaluator) *schedule {
+func setupScheduler(t *testing.T, rs *store.FakeRuleStore, is *state.FakeInstanceStore, registry *prometheus.Registry, senderMock *AlertsSenderMock, evalMock *eval.FakeEvaluator) *schedule {
 	t.Helper()
 
 	mockedClock := clock.NewMock()
@@ -492,7 +492,7 @@ func setupScheduler(t *testing.T, rs *store.FakeRuleStore, is *store.FakeInstanc
 	}
 
 	if is == nil {
-		is = &store.FakeInstanceStore{}
+		is = &state.FakeInstanceStore{}
 	}
 
 	var evaluator eval.Evaluator = evalMock
