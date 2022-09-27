@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 )
 
@@ -34,16 +35,18 @@ type PluginProvisioner struct {
 	cfgProvider    configReader
 	store          Store
 	pluginSettings pluginsettings.Service
+	orgService     org.Service
 }
 
 func (ap *PluginProvisioner) apply(ctx context.Context, cfg *pluginsAsConfig) error {
 	for _, app := range cfg.Apps {
 		if app.OrgID == 0 && app.OrgName != "" {
-			getOrgQuery := &models.GetOrgByNameQuery{Name: app.OrgName}
-			if err := ap.store.GetOrgByNameHandler(ctx, getOrgQuery); err != nil {
+			getOrgQuery := &org.GetOrgByNameQuery{Name: app.OrgName}
+			res, err := ap.orgService.GetByName(ctx, getOrgQuery)
+			if err != nil {
 				return err
 			}
-			app.OrgID = getOrgQuery.Result.Id
+			app.OrgID = res.ID
 		} else if app.OrgID < 0 {
 			app.OrgID = 1
 		}
