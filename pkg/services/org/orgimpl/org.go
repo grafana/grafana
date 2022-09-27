@@ -225,15 +225,9 @@ func (s *Service) UpdateOrgUser(ctx context.Context, cmd *org.UpdateOrgUserComma
 	return s.store.UpdateOrgUser(ctx, cmd)
 }
 
-// TODO: remove wrapper around sqlstore
+// TODO: refactor service to call store CRUD method
 func (s *Service) RemoveOrgUser(ctx context.Context, cmd *org.RemoveOrgUserCommand) error {
-	c := &models.RemoveOrgUserCommand{
-		UserId:                   cmd.UserID,
-		OrgId:                    cmd.OrgID,
-		ShouldDeleteOrphanedUser: cmd.ShouldDeleteOrphanedUser,
-		UserWasDeleted:           cmd.UserWasDeleted,
-	}
-	return s.sqlStore.RemoveOrgUser(ctx, c)
+	return s.store.RemoveOrgUser(ctx, cmd)
 }
 
 // TODO: refactor service to call store CRUD method

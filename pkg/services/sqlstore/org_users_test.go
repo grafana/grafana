@@ -2,7 +2,6 @@ package sqlstore
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -111,25 +110,4 @@ func TestSQLStore_RemoveOrgUser(t *testing.T) {
 	err = store.GetUserById(context.Background(), user)
 	require.NoError(t, err)
 	require.Equal(t, user.Result.OrgID, int64(0))
-}
-
-func seedOrgUsers(t *testing.T, store *SQLStore, numUsers int) {
-	t.Helper()
-	// Seed users
-	for i := 1; i <= numUsers; i++ {
-		user, err := store.CreateUser(context.Background(), user.CreateUserCommand{
-			Login: fmt.Sprintf("user-%d", i),
-			OrgID: 1,
-		})
-		require.NoError(t, err)
-
-		if i != 1 {
-			err = store.AddOrgUser(context.Background(), &models.AddOrgUserCommand{
-				Role:   "Viewer",
-				OrgId:  1,
-				UserId: user.ID,
-			})
-			require.NoError(t, err)
-		}
-	}
 }

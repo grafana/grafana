@@ -151,8 +151,8 @@ type OrgUserDTO struct {
 }
 
 type RemoveOrgUserCommand struct {
-	UserID                   int64
-	OrgID                    int64
+	UserID                   int64 `xorm:"user_id"`
+	OrgID                    int64 `xorm:"org_id"`
 	ShouldDeleteOrphanedUser bool
 	UserWasDeleted           bool
 }

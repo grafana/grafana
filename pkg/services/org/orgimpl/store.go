@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -39,6 +40,7 @@ type store interface {
 	UpdateOrgUser(context.Context, *org.UpdateOrgUserCommand) error
 	GetOrgUsers(context.Context, *org.GetOrgUsersQuery) ([]*org.OrgUserDTO, error)
 	SearchOrgUsers(context.Context, *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error)
+	RemoveOrgUser(context.Context, *org.RemoveOrgUserCommand) error
 }
 
 type sqlStore struct {
@@ -596,4 +598,164 @@ func (ss *sqlStore) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUser
 		return nil, err
 	}
 	return &result, nil
+}
+
+func (ss *sqlStore) RemoveOrgUser(ctx context.Context, cmd *org.RemoveOrgUserCommand) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		// check if user exists
+		var usr user.User
+		if exists, err := sess.ID(cmd.UserID).Where(ss.notServiceAccountFilter()).Get(&usr); err != nil {
+			return err
+		} else if !exists {
+			return user.ErrUserNotFound
+		}
+
+		deletes := []string{
+			"DELETE FROM org_user WHERE org_id=? and user_id=?",
+			"DELETE FROM dashboard_acl WHERE org_id=? and user_id = ?",
+			"DELETE FROM team_member WHERE org_id=? and user_id = ?",
+			"DELETE FROM query_history_star WHERE org_id=? and user_id = ?",
+		}
+
+		for _, sql := range deletes {
+			_, err := sess.Exec(sql, cmd.OrgID, cmd.UserID)
+			if err != nil {
+				return err
+			}
+		}
+
+		// validate that after delete, there is at least one user with admin role in org
+		if err := validateOneAdminLeftInOrg(cmd.OrgID, sess); err != nil {
+			return err
+		}
+
+		// check user other orgs and update user current org
+		var userOrgs []*models.UserOrgDTO
+		sess.Table("org_user")
+		sess.Join("INNER", "org", "org_user.org_id=org.id")
+		sess.Where("org_user.user_id=?", usr.ID)
+		sess.Cols("org.name", "org_user.role", "org_user.org_id")
+		err := sess.Find(&userOrgs)
+
+		if err != nil {
+			return err
+		}
+
+		if len(userOrgs) > 0 {
+			hasCurrentOrgSet := false
+			for _, userOrg := range userOrgs {
+				if usr.OrgID == userOrg.OrgId {
+					hasCurrentOrgSet = true
+					break
+				}
+			}
+
+			if !hasCurrentOrgSet {
+				err = setUsingOrgInTransaction(sess, usr.ID, userOrgs[0].OrgId)
+				if err != nil {
+					return err
+				}
+			}
+		} else if cmd.ShouldDeleteOrphanedUser {
+			// no other orgs, delete the full user
+			if err := ss.deleteUserInTransaction(sess, &models.DeleteUserCommand{UserId: usr.ID}); err != nil {
+				return err
+			}
+
+			cmd.UserWasDeleted = true
+		} else {
+			// no orgs, but keep the user -> clean up orgId
+			err = removeUserOrg(sess, usr.ID)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+}
+
+func (ss *sqlStore) deleteUserInTransaction(sess *sqlstore.DBSession, cmd *models.DeleteUserCommand) error {
+	// Check if user exists
+	usr := user.User{ID: cmd.UserId}
+	has, err := sess.Where(ss.notServiceAccountFilter()).Get(&usr)
+	if err != nil {
+		return err
+	}
+	if !has {
+		return user.ErrUserNotFound
+	}
+	for _, sql := range ss.userDeletions() {
+		_, err := sess.Exec(sql, cmd.UserId)
+		if err != nil {
+			return err
+		}
+	}
+
+	return deleteUserAccessControl(sess, cmd.UserId)
+}
+
+func deleteUserAccessControl(sess *sqlstore.DBSession, userID int64) error {
+	// Delete user role assignments
+	if _, err := sess.Exec("DELETE FROM user_role WHERE user_id = ?", userID); err != nil {
+		return err
+	}
+
+	// Delete permissions that are scoped to user
+	if _, err := sess.Exec("DELETE FROM permission WHERE scope = ?", accesscontrol.Scope("users", "id", strconv.FormatInt(userID, 10))); err != nil {
+		return err
+	}
+
+	var roleIDs []int64
+	if err := sess.SQL("SELECT id FROM role WHERE name = ?", accesscontrol.ManagedUserRoleName(userID)).Find(&roleIDs); err != nil {
+		return err
+	}
+
+	if len(roleIDs) == 0 {
+		return nil
+	}
+
+	query := "DELETE FROM permission WHERE role_id IN(? " + strings.Repeat(",?", len(roleIDs)-1) + ")"
+	args := make([]interface{}, 0, len(roleIDs)+1)
+	args = append(args, query)
+	for _, id := range roleIDs {
+		args = append(args, id)
+	}
+
+	// Delete managed user permissions
+	if _, err := sess.Exec(args...); err != nil {
+		return err
+	}
+
+	// Delete managed user roles
+	if _, err := sess.Exec("DELETE FROM role WHERE name = ?", accesscontrol.ManagedUserRoleName(userID)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (ss *sqlStore) userDeletions() []string {
+	deletes := []string{
+		"DELETE FROM star WHERE user_id = ?",
+		"DELETE FROM " + ss.dialect.Quote("user") + " WHERE id = ?",
+		"DELETE FROM org_user WHERE user_id = ?",
+		"DELETE FROM dashboard_acl WHERE user_id = ?",
+		"DELETE FROM preferences WHERE user_id = ?",
+		"DELETE FROM team_member WHERE user_id = ?",
+		"DELETE FROM user_auth WHERE user_id = ?",
+		"DELETE FROM user_auth_token WHERE user_id = ?",
+		"DELETE FROM quota WHERE user_id = ?",
+	}
+	return deletes
+}
+
+func removeUserOrg(sess *sqlstore.DBSession, userID int64) error {
+	user := user.User{
+		ID:    userID,
+		OrgID: 0,
+	}
+
+	_, err := sess.ID(userID).MustCols("org_id").Update(&user)
+	return err
 }
