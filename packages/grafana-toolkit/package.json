@@ -18,21 +18,18 @@
   "bin": {
     "grafana-toolkit": "./bin/grafana-toolkit.js"
   },
-  "publishConfig": {
-    "bin": {
-      "grafana-toolkit": "./dist/bin/grafana-toolkit.js"
-    },
-    "access": "public"
-  },
   "files": [
-    "dist",
-    "README.md",
-    "CHANGELOG.md"
+    "config",
+    "src",
+    "sass",
+    "./README.md",
+    "./CHANGELOG.md"
   ],
   "scripts": {
     "build": "grafana-toolkit toolkit:build",
-    "clean": "rimraf ./dist ./compiled ./package.tgz",
-    "precommit": "npm run lint & npm run typecheck",
+    "clean": "rimraf ./dist ./compiled ./sass ./package.tgz",
+    "prepack": "mv ./src ./src_bak && cp ./dist/src ./src",
+    "postpack": "rimraf ./src && mv ./src_bak ./src",
     "typecheck": "tsc --noEmit"
   },
   "main": "src/index.ts",
