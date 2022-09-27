@@ -5,10 +5,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
-
-	"github.com/stretchr/testify/require"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestIntegrationUserDataAccess(t *testing.T) {
@@ -17,7 +18,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	}
 
 	ss := sqlstore.InitTestDB(t)
-	userStore := sqlStore{db: ss}
+	userStore := ProvideStore(ss, setting.NewCfg())
 
 	t.Run("user not found", func(t *testing.T) {
 		_, err := userStore.Get(context.Background(),
