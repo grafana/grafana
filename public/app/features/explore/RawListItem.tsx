@@ -6,43 +6,41 @@ import { useStyles } from '@grafana/ui/src';
 
 import { RawListValue } from './RawList';
 
-/* @todo replace mockup styles */
-const getStyles = (theme: GrafanaTheme) => ({
-  rowsWrapper: css`
-    width: 100%;
-  `,
-  rowWrapper: css`
-    border-bottom: 1px solid #ccc;
-    display: flex;
-    justify-content: space-between;
-    padding: 10px 6px;
-  `,
-  rowLabelWrap: css`
-    display: flex;
-    white-space: nowrap;
-    overflow-x: scroll;
-    -ms-overflow-style: none; /* IE and Edge */
-    scrollbar-width: none; /* Firefox */
+const getStyles = (theme: GrafanaTheme) => {
+  const reddish = theme.isDark ? '#ce9178' : '#a31515';
+  const greenish = theme.isDark ? '#73bf69' : '#56a64b';
 
-    &::-webkit-scrollbar {
-      display: none; /* Chrome, Safari and Opera */
-    }
-  `,
-  rowHeading: css`
-    color: green;
-  `,
-  rowValue: css`
-    padding-left: 0.75em;
-    font-weight: bold;
-  `,
-  rowContent: css``,
-  metricName: css`
-    color: red;
-  `,
-  metricEquals: css``,
-  metricQuote: css``,
-  metricValue: css``,
-});
+  return {
+    rowsWrapper: css`
+      width: 100%;
+    `,
+    rowWrapper: css`
+      border-bottom: 1px solid #ccc;
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 6px;
+    `,
+    rowLabelWrap: css`
+      display: flex;
+      white-space: nowrap;
+      overflow-x: scroll;
+      -ms-overflow-style: none; /* IE and Edge */
+      scrollbar-width: none; /* Firefox */
+
+      &::-webkit-scrollbar {
+        display: none; /* Chrome, Safari and Opera */
+      }
+    `,
+    metricName: css`
+      color: ${greenish};
+    `,
+    metricEquals: css``,
+    metricQuote: css``,
+    metricValue: css`
+      color: ${reddish};
+    `,
+  };
+};
 
 const RawListItem = ({ value, index, length }: { value: RawListValue; index: number; length: number }) => {
   const styles = useStyles(getStyles);

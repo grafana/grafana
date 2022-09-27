@@ -15,7 +15,6 @@ interface RawListProps {
 
 export type RawListValue = { key: string; value: string };
 
-/* @todo replace mockup styles */
 const getStyles = (theme: GrafanaTheme) => ({
   rowWrapper: css`
     border-bottom: 1px solid #ccc;
@@ -34,14 +33,10 @@ const getStyles = (theme: GrafanaTheme) => ({
       display: none; /* Chrome, Safari and Opera */
     }
   `,
-  rowHeading: css`
-    color: green;
-  `,
   rowValue: css`
     padding-left: 0.75em;
     font-weight: bold;
   `,
-  rowContent: css``,
 });
 
 const RawList = ({ listItemData, listKey }: RawListProps) => {
@@ -82,9 +77,9 @@ const RawList = ({ listItemData, listKey }: RawListProps) => {
     <div key={listKey} className={styles.rowWrapper}>
       <span className={styles.rowLabelWrap}>
         <IconButton tooltip="Copy to clipboard" onClick={() => copyToClipboard(stringRep)} name="copy" />
-        <span className={styles.rowHeading}>{__name__}</span>
+        <span>{__name__}</span>
         <span>{`{`}</span>
-        <span className={styles.rowContent}>
+        <span>
           {attributeValues.map((value, index) => (
             <RawListItem value={value} key={index} index={index} length={attributeValues.length} />
           ))}

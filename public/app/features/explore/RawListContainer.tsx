@@ -86,7 +86,6 @@ const RawListContainer = (props: RawListContainerProps) => {
   return (
     // We don't use testids around here, how should we target this element in tests?
     <section data-testid={'raw-list-container'}>
-      {/* @todo temporarily borrowing this from the prometheus API for debugging, review with UX */}
       <div>Result series: {items.length}</div>
 
       <List
