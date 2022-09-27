@@ -24,11 +24,6 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 	}
 	t.Run("Testing Account DB Access", func(t *testing.T) {
 		sqlStore := InitTestDB(t)
-		testUser := &user.SignedInUser{
-			Permissions: map[int64]map[string][]string{
-				1: {accesscontrol.ActionOrgUsersRead: []string{accesscontrol.ScopeUsersAll}},
-			},
-		}
 
 		t.Run("Given we have organizations, we can query them by IDs", func(t *testing.T) {
 			var err error
@@ -106,47 +101,6 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 
 				require.Equal(t, q1.Result[0].OrgId, q2.Result[0].OrgId)
 				require.Equal(t, string(q1.Result[0].Role), "Viewer")
-			})
-		})
-
-		t.Run("Given single org and 2 users inserted", func(t *testing.T) {
-			sqlStore = InitTestDB(t)
-			sqlStore.Cfg.AutoAssignOrg = true
-			sqlStore.Cfg.AutoAssignOrgId = 1
-			sqlStore.Cfg.AutoAssignOrgRole = "Viewer"
-
-			ac1cmd := user.CreateUserCommand{Login: "ac1", Email: "ac1@test.com", Name: "ac1 name"}
-			ac2cmd := user.CreateUserCommand{Login: "ac2", Email: "ac2@test.com", Name: "ac2 name"}
-
-			ac1, err := sqlStore.CreateUser(context.Background(), ac1cmd)
-			testUser.OrgID = ac1.OrgID
-			require.NoError(t, err)
-			_, err = sqlStore.CreateUser(context.Background(), ac2cmd)
-			require.NoError(t, err)
-
-			t.Run("Can get organization users paginated with query", func(t *testing.T) {
-				query := models.SearchOrgUsersQuery{
-					OrgID: ac1.OrgID,
-					Page:  1,
-					User:  testUser,
-				}
-				err = sqlStore.SearchOrgUsers(context.Background(), &query)
-
-				require.NoError(t, err)
-				require.Equal(t, len(query.Result.OrgUsers), 2)
-			})
-
-			t.Run("Can get organization users paginated and limited", func(t *testing.T) {
-				query := models.SearchOrgUsersQuery{
-					OrgID: ac1.OrgID,
-					Limit: 1,
-					Page:  1,
-					User:  testUser,
-				}
-				err = sqlStore.SearchOrgUsers(context.Background(), &query)
-
-				require.NoError(t, err)
-				require.Equal(t, len(query.Result.OrgUsers), 1)
 			})
 		})
 

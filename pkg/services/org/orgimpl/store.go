@@ -38,6 +38,7 @@ type store interface {
 	AddOrgUser(context.Context, *org.AddOrgUserCommand) error
 	UpdateOrgUser(context.Context, *org.UpdateOrgUserCommand) error
 	GetOrgUsers(context.Context, *org.GetOrgUsersQuery) ([]*org.OrgUserDTO, error)
+	SearchOrgUsers(context.Context, *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error)
 }
 
 type sqlStore struct {
@@ -513,4 +514,86 @@ func (ss *sqlStore) GetOrgUsers(ctx context.Context, query *org.GetOrgUsersQuery
 		return nil, err
 	}
 	return result, nil
+}
+
+func (ss *sqlStore) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
+	result := org.SearchOrgUsersQueryResult{
+		OrgUsers: make([]*org.OrgUserDTO, 0),
+	}
+	err := ss.db.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		sess := dbSession.Table("org_user")
+		sess.Join("INNER", ss.dialect.Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", ss.dialect.Quote("user")))
+
+		whereConditions := make([]string, 0)
+		whereParams := make([]interface{}, 0)
+
+		whereConditions = append(whereConditions, "org_user.org_id = ?")
+		whereParams = append(whereParams, query.OrgID)
+
+		whereConditions = append(whereConditions, fmt.Sprintf("%s.is_service_account = %s", ss.dialect.Quote("user"), ss.dialect.BooleanStr(false)))
+
+		if !accesscontrol.IsDisabled(ss.cfg) {
+			acFilter, err := accesscontrol.Filter(query.User, "org_user.user_id", "users:id:", accesscontrol.ActionOrgUsersRead)
+			if err != nil {
+				return err
+			}
+			whereConditions = append(whereConditions, acFilter.Where)
+			whereParams = append(whereParams, acFilter.Args...)
+		}
+
+		if query.Query != "" {
+			queryWithWildcards := "%" + query.Query + "%"
+			whereConditions = append(whereConditions, "(email "+ss.dialect.LikeStr()+" ? OR name "+ss.dialect.LikeStr()+" ? OR login "+ss.dialect.LikeStr()+" ?)")
+			whereParams = append(whereParams, queryWithWildcards, queryWithWildcards, queryWithWildcards)
+		}
+
+		if len(whereConditions) > 0 {
+			sess.Where(strings.Join(whereConditions, " AND "), whereParams...)
+		}
+
+		if query.Limit > 0 {
+			offset := query.Limit * (query.Page - 1)
+			sess.Limit(query.Limit, offset)
+		}
+
+		sess.Cols(
+			"org_user.org_id",
+			"org_user.user_id",
+			"user.email",
+			"user.name",
+			"user.login",
+			"org_user.role",
+			"user.last_seen_at",
+		)
+		sess.Asc("user.email", "user.login")
+
+		if err := sess.Find(&result.OrgUsers); err != nil {
+			return err
+		}
+
+		// get total count
+		orgUser := org.OrgUser{}
+		countSess := dbSession.Table("org_user").
+			Join("INNER", ss.dialect.Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", ss.dialect.Quote("user")))
+
+		if len(whereConditions) > 0 {
+			countSess.Where(strings.Join(whereConditions, " AND "), whereParams...)
+		}
+
+		count, err := countSess.Count(&orgUser)
+		if err != nil {
+			return err
+		}
+		result.TotalCount = count
+
+		for _, user := range result.OrgUsers {
+			user.LastSeenAtAge = util.GetAgeString(user.LastSeenAt)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &result, nil
 }
