@@ -70,20 +70,6 @@ message ObjectErrorInfo {
   bytes details_json = 3;
 }
 
-// Reference to another object outside itself
-// This message is derived from the object body and can be used to search for references.
-// This does not represent a method to declare a reference to another object.
-message ExternalReference {
-  // datasource (instance), dashboard (instance),
-  string kind = 1;
-
-  // prometheus / heatmap, heatamp|prometheus
-  string type = 2;  // flavor
-
-  // Unique ID for this object
-  string UID = 3;
-}
-
 //-----------------------------------------------
 // Get request/response
 //-----------------------------------------------
