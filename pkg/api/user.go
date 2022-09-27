@@ -254,7 +254,7 @@ func (hs *HTTPServer) GetUserTeams(c *models.ReqContext) response.Response {
 func (hs *HTTPServer) getUserTeamList(c *models.ReqContext, orgID int64, userID int64) response.Response {
 	query := models.GetTeamsByUserQuery{OrgId: orgID, UserId: userID, SignedInUser: c.SignedInUser}
 
-	if err := hs.SQLStore.GetTeamsByUser(c.Req.Context(), &query); err != nil {
+	if err := hs.teamService.GetTeamsByUser(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "Failed to get user teams", err)
 	}
 

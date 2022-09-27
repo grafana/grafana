@@ -476,6 +476,30 @@ describe('createSpanLinkFactory', () => {
         )}`
       );
     });
+
+    it('with adjusted start and end time', () => {
+      const splitOpenFn = jest.fn();
+      const createLink = createSpanLinkFactory({
+        splitOpenFn,
+        traceToMetricsOptions: {
+          datasourceUid: 'prom1Uid',
+          queries: [{ query: 'customQuery' }],
+          spanStartTimeShift: '-1h',
+          spanEndTimeShift: '1h',
+        },
+      });
+      expect(createLink).toBeDefined();
+
+      const links = createLink!(createTraceSpan());
+      const linkDef = links?.metricLinks?.[0];
+
+      expect(linkDef).toBeDefined();
+      expect(linkDef!.href).toBe(
+        `/explore?left=${encodeURIComponent(
+          '{"range":{"from":"2020-10-14T00:00:00.000Z","to":"2020-10-14T02:00:01.000Z"},"datasource":"prom1Uid","queries":[{"expr":"customQuery","refId":"A"}],"panelsState":{}}'
+        )}`
+      );
+    });
   });
 
   it('correctly interpolates span attributes', () => {

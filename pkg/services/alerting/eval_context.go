@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/setting"
@@ -42,11 +43,12 @@ type EvalContext struct {
 	Store             AlertStore
 	dashboardService  dashboards.DashboardService
 	DatasourceService datasources.DataSourceService
+	annotationRepo    annotations.Repository
 }
 
 // NewEvalContext is the EvalContext constructor.
 func NewEvalContext(alertCtx context.Context, rule *Rule, requestValidator models.PluginRequestValidator,
-	alertStore AlertStore, dashboardService dashboards.DashboardService, dsService datasources.DataSourceService) *EvalContext {
+	alertStore AlertStore, dashboardService dashboards.DashboardService, dsService datasources.DataSourceService, annotationRepo annotations.Repository) *EvalContext {
 	return &EvalContext{
 		Ctx:               alertCtx,
 		StartTime:         time.Now(),
@@ -60,6 +62,7 @@ func NewEvalContext(alertCtx context.Context, rule *Rule, requestValidator model
 		Store:             alertStore,
 		dashboardService:  dashboardService,
 		DatasourceService: dsService,
+		annotationRepo:    annotationRepo,
 	}
 }
 

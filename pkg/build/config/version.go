@@ -28,9 +28,10 @@ type PluginSignature struct {
 }
 
 type Docker struct {
-	ShouldSave    bool           `json:"shouldSave,omitempty"`
-	Distribution  []Distribution `json:"distribution,omitempty"`
-	Architectures []Architecture `json:"archs,omitempty"`
+	ShouldSave       bool           `json:"shouldSave,omitempty"`
+	Distribution     []Distribution `json:"distribution,omitempty"`
+	Architectures    []Architecture `json:"archs,omitempty"`
+	PrereleaseBucket string         `json:"prereleaseBucket,omitempty"`
 }
 
 type Buckets struct {

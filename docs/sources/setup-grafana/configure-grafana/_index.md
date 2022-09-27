@@ -474,6 +474,10 @@ Set to false disables checking for new versions of installed plugins from https:
 If you want to track Grafana usage via Google analytics specify _your_ Universal
 Analytics ID here. By default this feature is disabled.
 
+### google_analytics_4_id
+
+If you want to track Grafana usage via Google Analytics 4 specify _your_ GA4 ID here. By default this feature is disabled.
+
 ### google_tag_manager_id
 
 Google Tag Manager ID, only enabled if you enter an ID here.
@@ -1382,6 +1386,10 @@ Configures max number of alert annotations that Grafana stores. Default value is
 ### cleanupjob_batchsize
 
 Configures the batch size for the annotation clean-up job. This setting is used for dashboard, API, and alert annotations.
+
+### tags_length
+
+Enforces the maximum allowed length of the tags for any newly introduced annotations. It can be between 500 and 4096 (inclusive). Default value is 500. Setting it to a higher value would impact performance therefore is not recommended.
 
 ## [annotations.dashboard]
 

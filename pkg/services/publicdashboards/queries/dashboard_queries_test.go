@@ -3,6 +3,8 @@ package queries
 import (
 	"testing"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/stretchr/testify/require"
 )
@@ -509,5 +511,57 @@ func TestGroupQueriesByDataSource(t *testing.T) {
             "legendFormat": "",
             "refId": "B"
 		}`))})
+	})
+}
+
+func TestSanitizeMetadataFromQueryData(t *testing.T) {
+	t.Run("can remove metadata from query", func(t *testing.T) {
+		fakeResponse := &backend.QueryDataResponse{
+			Responses: backend.Responses{
+				"A": backend.DataResponse{
+					Frames: data.Frames{
+						&data.Frame{
+							Name: "1",
+							Meta: &data.FrameMeta{
+								ExecutedQueryString: "Test1",
+								Custom: map[string]string{
+									"test1": "test1",
+								},
+							},
+						},
+						&data.Frame{
+							Name: "2",
+							Meta: &data.FrameMeta{
+								ExecutedQueryString: "Test2",
+								Custom: map[string]string{
+									"test2": "test2",
+								},
+							},
+						},
+					},
+				},
+				"B": backend.DataResponse{
+					Frames: data.Frames{
+						&data.Frame{
+							Name: "3",
+							Meta: &data.FrameMeta{
+								ExecutedQueryString: "Test3",
+								Custom: map[string]string{
+									"test3": "test3",
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+		SanitizeMetadataFromQueryData(fakeResponse)
+		for k := range fakeResponse.Responses {
+			frames := fakeResponse.Responses[k].Frames
+			for i := range frames {
+				require.Empty(t, frames[i].Meta.ExecutedQueryString)
+				require.Empty(t, frames[i].Meta.Custom)
+			}
+		}
 	})
 }

@@ -21,7 +21,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -38,9 +38,9 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 	createSchedule := func(
 		evalAppliedChan chan time.Time,
 		senderMock *AlertsSenderMock,
-	) (*schedule, *store.FakeRuleStore, *store.FakeInstanceStore, prometheus.Gatherer) {
+	) (*schedule, *store.FakeRuleStore, *state.FakeInstanceStore, prometheus.Gatherer) {
 		ruleStore := store.NewFakeRuleStore(t)
-		instanceStore := &store.FakeInstanceStore{}
+		instanceStore := &state.FakeInstanceStore{}
 
 		registry := prometheus.NewPedanticRegistry()
 		sch := setupScheduler(t, ruleStore, instanceStore, registry, senderMock, nil)
@@ -481,11 +481,9 @@ func TestSchedule_DeleteAlertRule(t *testing.T) {
 	})
 }
 
-func setupScheduler(t *testing.T, rs *store.FakeRuleStore, is *store.FakeInstanceStore, registry *prometheus.Registry, senderMock *AlertsSenderMock, evalMock *eval.FakeEvaluator) *schedule {
+func setupScheduler(t *testing.T, rs *store.FakeRuleStore, is *state.FakeInstanceStore, registry *prometheus.Registry, senderMock *AlertsSenderMock, evalMock *eval.FakeEvaluator) *schedule {
 	t.Helper()
 
-	fakeAnnoRepo := store.NewFakeAnnotationsRepo()
-	annotations.SetRepository(fakeAnnoRepo)
 	mockedClock := clock.NewMock()
 	logger := log.New("ngalert schedule test")
 
@@ -494,7 +492,7 @@ func setupScheduler(t *testing.T, rs *store.FakeRuleStore, is *store.FakeInstanc
 	}
 
 	if is == nil {
-		is = &store.FakeInstanceStore{}
+		is = &state.FakeInstanceStore{}
 	}
 
 	var evaluator eval.Evaluator = evalMock
@@ -531,7 +529,7 @@ func setupScheduler(t *testing.T, rs *store.FakeRuleStore, is *store.FakeInstanc
 		Metrics:     m.GetSchedulerMetrics(),
 		AlertSender: senderMock,
 	}
-	st := state.NewManager(schedCfg.Logger, m.GetStateMetrics(), nil, rs, is, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, mockedClock)
+	st := state.NewManager(schedCfg.Logger, m.GetStateMetrics(), nil, rs, is, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, mockedClock, annotationstest.NewFakeAnnotationsRepo())
 	return NewScheduler(schedCfg, appUrl, st)
 }
 

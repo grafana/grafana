@@ -86,7 +86,7 @@ func (ln *LineNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, e
 		"%s\n%s\n\n%s",
 		tmpl(DefaultMessageTitleEmbed),
 		ruleURL,
-		tmpl(`{{ template "default.message" . }}`),
+		tmpl(DefaultMessageEmbed),
 	)
 	if tmplErr != nil {
 		ln.log.Warn("failed to template Line message", "err", tmplErr.Error())

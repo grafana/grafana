@@ -202,3 +202,26 @@ the correct teams.
 You can reference Azure AD groups by group object ID, like `8bab1c86-8fba-33e5-2089-1d1c80ec267d`.
 
 To learn more, refer to the [Team Sync]({{< relref "../configure-team-sync/" >}}) documentation.
+
+## Common troubleshooting
+
+Here are some common issues and particulars you can run into when
+configuring Azure AD authentication in Grafana.
+
+### Users with over 200 Group assignments
+
+> Supported in Grafana v8.5 and later versions.
+
+To ensure that the token size doesn't exceed HTTP header size limits,
+Azure AD limits the number of object IDs that it includes in the groups claim.
+If a user is member of more groups than the
+overage limit (200), then
+Azure AD does not emit the groups claim in the token and emits a group overage claim instead.
+
+> More information in [Groups overage claim](https://learn.microsoft.com/en-us/azure/active-directory/develop/id-tokens#groups-overage-claim)
+
+If Grafana receives a token with a group overage claim instead of a groups claim,
+Grafana attempts to retrieve the user's group membership by calling the included endpoint.
+
+> Note: The token must include the `GroupMember.Read.All` permission for group overage claim calls to succeed.
+> Admin consent may be required for this permission.

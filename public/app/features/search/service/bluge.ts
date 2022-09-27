@@ -1,10 +1,13 @@
-import { lastValueFrom } from 'rxjs';
-
-import { ArrayVector, DataFrame, DataFrameView, getDisplayProcessor, SelectableValue } from '@grafana/data';
+import {
+  ArrayVector,
+  DataFrame,
+  DataFrameView,
+  getDisplayProcessor,
+  SelectableValue,
+  toDataFrame,
+} from '@grafana/data';
 import { config, getBackendSrv } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
-import { getGrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
-import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 import { replaceCurrentFolderQuery } from './utils';
 
@@ -13,6 +16,8 @@ import { DashboardQueryResult, GrafanaSearcher, QueryResponse, SearchQuery, Sear
 // The backend returns an empty frame with a special name to indicate that the indexing engine is being rebuilt,
 // and that it can not serve any search requests. We are temporarily using the old SQL Search API as a fallback when that happens.
 const loadingFrameName = 'Loading';
+
+const searchURI = 'api/search-v2';
 
 export class BlugeSearcher implements GrafanaSearcher {
   constructor(private fallbackSearcher: GrafanaSearcher) {}
@@ -38,35 +43,22 @@ export class BlugeSearcher implements GrafanaSearcher {
   }
 
   async tags(query: SearchQuery): Promise<TermCount[]> {
-    const ds = await getGrafanaDatasource();
-    const target = {
-      refId: 'TagsQuery',
-      queryType: GrafanaQueryType.Search,
-      search: {
-        ...query,
-        query: query.query ?? '*',
-        sort: undefined, // no need to sort the initial query results (not used)
-        facet: [{ field: 'tag' }],
-        limit: 1, // 0 would be better, but is ignored by the backend
-      },
+    const req = {
+      ...query,
+      query: query.query ?? '*',
+      sort: undefined, // no need to sort the initial query results (not used)
+      facet: [{ field: 'tag' }],
+      limit: 1, // 0 would be better, but is ignored by the backend
     };
 
-    const data = (
-      await lastValueFrom(
-        ds.query({
-          targets: [target],
-        } as any)
-      )
-    ).data as DataFrame[];
+    const frame = toDataFrame(await getBackendSrv().post(searchURI, req));
 
-    if (data?.[0]?.name === loadingFrameName) {
+    if (frame?.name === loadingFrameName) {
       return this.fallbackSearcher.tags(query);
     }
 
-    for (const frame of data) {
-      if (frame.fields[0].name === 'tag') {
-        return getTermCountsFrom(frame);
-      }
+    if (frame.fields[0].name === 'tag') {
+      return getTermCountsFrom(frame);
     }
     return [];
   }
@@ -94,23 +86,15 @@ export class BlugeSearcher implements GrafanaSearcher {
 
   async doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
     query = await replaceCurrentFolderQuery(query);
-    const ds = await getGrafanaDatasource();
-    const target = {
-      refId: 'Search',
-      queryType: GrafanaQueryType.Search,
-      search: {
-        ...query,
-        query: query.query ?? '*',
-        limit: query.limit ?? firstPageSize,
-      },
+    const req = {
+      ...query,
+      query: query.query ?? '*',
+      limit: query.limit ?? firstPageSize,
     };
-    const rsp = await lastValueFrom(
-      ds.query({
-        targets: [target],
-      } as any)
-    );
 
-    const first = (rsp.data?.[0] as DataFrame) ?? { fields: [], length: 0 };
+    const rsp = await getBackendSrv().post(searchURI, req);
+
+    const first = rsp ? toDataFrame(rsp) : { fields: [], length: 0 };
 
     if (first.name === loadingFrameName) {
       return this.fallbackSearcher.search(query);
@@ -154,24 +138,13 @@ export class BlugeSearcher implements GrafanaSearcher {
         if (from >= meta.count) {
           return;
         }
-        const frame = (
-          await lastValueFrom(
-            ds.query({
-              targets: [
-                {
-                  ...target,
-                  search: {
-                    ...(target?.search ?? {}),
-                    from,
-                    limit: nextPageSizes,
-                  },
-                  refId: 'Page',
-                  facet: undefined,
-                },
-              ],
-            } as any)
-          )
-        ).data?.[0] as DataFrame;
+        const frame = toDataFrame(
+          await getBackendSrv().post(searchURI, {
+            ...(req ?? {}),
+            from,
+            limit: nextPageSizes,
+          })
+        );
 
         if (!frame) {
           console.log('no results', frame);

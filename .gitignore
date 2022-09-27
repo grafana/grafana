@@ -40,6 +40,8 @@ tsconfig.tsbuildinfo
 # Enterprise devenv
 /devenv/docker/blocks/grafana-enterprise
 /devenv/docker/blocks/saml-enterprise
+# This is the new place of the block, but I leave the previous here for a while
+/devenv/docker/blocks/auth/saml-enterprise
 
 /tmp
 tools/phantomjs/phantomjs
@@ -73,6 +75,7 @@ public/css/*.min.css
 
 # devenv
 /devenv/docker-compose.yaml
+/devenv/docker-compose.override.yaml
 /devenv/.env
 /devenv/docker/blocks/tempo/tempo-data/
 

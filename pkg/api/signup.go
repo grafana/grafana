@@ -51,7 +51,7 @@ func (hs *HTTPServer) SignUp(c *models.ReqContext) response.Response {
 	}
 	cmd.RemoteAddr = c.Req.RemoteAddr
 
-	if err := hs.SQLStore.CreateTempUser(c.Req.Context(), &cmd); err != nil {
+	if err := hs.tempUserService.CreateTempUser(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to create signup", err)
 	}
 
@@ -116,7 +116,7 @@ func (hs *HTTPServer) SignUpStep2(c *models.ReqContext) response.Response {
 
 	// check for pending invites
 	invitesQuery := models.GetTempUsersQuery{Email: form.Email, Status: models.TmpUserInvitePending}
-	if err := hs.SQLStore.GetTempUsersQuery(c.Req.Context(), &invitesQuery); err != nil {
+	if err := hs.tempUserService.GetTempUsersQuery(c.Req.Context(), &invitesQuery); err != nil {
 		return response.Error(500, "Failed to query database for invites", err)
 	}
 
@@ -141,7 +141,7 @@ func (hs *HTTPServer) SignUpStep2(c *models.ReqContext) response.Response {
 func (hs *HTTPServer) verifyUserSignUpEmail(ctx context.Context, email string, code string) (bool, response.Response) {
 	query := models.GetTempUserByCodeQuery{Code: code}
 
-	if err := hs.SQLStore.GetTempUserByCode(ctx, &query); err != nil {
+	if err := hs.tempUserService.GetTempUserByCode(ctx, &query); err != nil {
 		if errors.Is(err, models.ErrTempUserNotFound) {
 			return false, response.Error(404, "Invalid email verification code", nil)
 		}

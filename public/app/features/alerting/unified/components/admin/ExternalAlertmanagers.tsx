@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import {
@@ -18,6 +17,7 @@ import {
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { loadDataSources } from 'app/features/datasources/state/actions';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
+import { useDispatch, useSelector } from 'app/types';
 import { StoreState } from 'app/types/store';
 
 import { useExternalAmSelector, useExternalDataSourceAlertmanagers } from '../../hooks/useExternalAmSelector';
