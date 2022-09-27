@@ -28,6 +28,7 @@ func TestBuildConflictBlock(t *testing.T) {
 		users               []user.User
 		expectedBlock       string
 		wantDiscardedBlock  string
+		wantConflictUser    *ConflictingUser
 		wantedNumberOfUsers int
 	}
 	testOrgID := 1
@@ -61,31 +62,40 @@ func TestBuildConflictBlock(t *testing.T) {
 			wantedNumberOfUsers: 3,
 		},
 		{
-			desc: "should get two blocks",
+			desc: "should get conflict_email true and conflict_login empty string",
 			users: []user.User{
 				{
-					Email: "test",
-					Login: "test",
+					Email: "conflict@email",
+					Login: "login",
 					OrgID: int64(testOrgID),
 				},
 				{
-					Email: "TEST",
-					Login: "TEST",
-					OrgID: int64(testOrgID),
-				},
-				{
-					Email: "test2",
-					Login: "test2",
-					OrgID: int64(testOrgID),
-				},
-				{
-					Email: "TEST2",
-					Login: "TEST2",
+					Email: "conflict@EMAIL",
+					Login: "plainlogin",
 					OrgID: int64(testOrgID),
 				},
 			},
-			expectedBlock:       "conflict: test",
+			expectedBlock:       "conflict: conflict@email",
 			wantedNumberOfUsers: 2,
+			wantConflictUser:    &ConflictingUser{ConflictEmail: "true", ConflictLogin: ""},
+		},
+		{
+			desc: "should get conflict_email empty string and conflict_login true",
+			users: []user.User{
+				{
+					Email: "regular@email",
+					Login: "CONFLICTLOGIN",
+					OrgID: int64(testOrgID),
+				},
+				{
+					Email: "regular-no-conflict@email",
+					Login: "conflictlogin",
+					OrgID: int64(testOrgID),
+				},
+			},
+			expectedBlock:       "conflict: conflictlogin",
+			wantedNumberOfUsers: 2,
+			wantConflictUser:    &ConflictingUser{ConflictEmail: "", ConflictLogin: "true"},
 		},
 	}
 	for _, tc := range testCases {
@@ -111,6 +121,12 @@ func TestBuildConflictBlock(t *testing.T) {
 				require.Equal(t, tc.wantedNumberOfUsers, len(r.Blocks[tc.expectedBlock]))
 				if tc.wantDiscardedBlock != "" {
 					require.Equal(t, true, r.DiscardedBlocks[tc.wantDiscardedBlock])
+				}
+				if tc.wantConflictUser != nil {
+					for _, u := range m {
+						require.Equal(t, tc.wantConflictUser.ConflictEmail, u.ConflictEmail)
+						require.Equal(t, tc.wantConflictUser.ConflictLogin, u.ConflictLogin)
+					}
 				}
 			}
 		})
@@ -162,12 +178,12 @@ func TestBuildConflictBlockFromFileRepresentation(t *testing.T) {
 				},
 			},
 			fileString: `conflict: test
-- id: 2, email: test, login: test, last_seen_at: 2012-09-19T08:31:20Z, auth_module:
-+ id: 3, email: TEST, login: TEST, last_seen_at: 2012-09-19T08:31:29Z, auth_module:
+- id: 2, email: test, login: test, conflict_email: true, conflict_login: true, last_seen_at: 2012-09-19T08:31:20Z, auth_module:
++ id: 3, email: TEST, login: TEST, conflict_email: true, conflict_login: true, last_seen_at: 2012-09-19T08:31:29Z, auth_module:
 conflict: test2
-- id: 4, email: test2, login: test2, last_seen_at: 2012-09-19T08:31:41Z, auth_module:
-+ id: 5, email: TEST2, login: TEST2, last_seen_at: 2012-09-19T08:31:51Z, auth_module:
-- id: 6, email: Test2, login: Test2, last_seen_at: 2012-09-19T08:32:03Z, auth_module: `,
+- id: 4, email: test2, login: test2, conflict_email: true, conflict_login: true, last_seen_at: 2012-09-19T08:31:41Z, auth_module:
++ id: 5, email: TEST2, login: TEST2, conflict_email: true, conflict_login: true, last_seen_at: 2012-09-19T08:31:51Z, auth_module:
+- id: 6, email: Test2, login: Test2, conflict_email: true, conflict_login: true, last_seen_at: 2012-09-19T08:32:03Z, auth_module: `,
 			expectedBlocks:      []string{"conflict: test", "conflict: test2"},
 			expectedIdsInBlocks: m,
 		},
@@ -186,8 +202,8 @@ conflict: test2
 				},
 			},
 			fileString: `conflict: saml-misi
-+ id: 5, email: saml-misi@example.org, login: saml-misi, last_seen_at: 2022-09-22T12:00:49Z, auth_module: auth.saml
-- id: 15, email: saml-misi@example, login: saml-Misi, last_seen_at: 2012-09-26T11:31:32Z, auth_module:`,
++ id: 5, email: saml-misi@example.org, login: saml-misi, conflict_email: , conflict_login: true, last_seen_at: 2022-09-22T12:00:49Z, auth_module: auth.saml
+- id: 15, email: saml-misi@example, login: saml-Misi, conflict_email: , conflict_login: true, last_seen_at: 2012-09-26T11:31:32Z, auth_module:`,
 			expectedBlocks:      []string{"conflict: saml-misi"},
 			expectedIdsInBlocks: map[string][]string{"conflict: saml-misi": {"5", "15"}},
 		},
@@ -225,13 +241,13 @@ conflict: test2
 				// checking for parsing of ids
 				conflict1Ids := []string{}
 				for _, u := range r.Blocks[conflict1] {
-					conflict1Ids = append(conflict1Ids, u.Id)
+					conflict1Ids = append(conflict1Ids, u.ID)
 				}
 				require.Equal(t, tc.expectedIdsInBlocks[conflict1], conflict1Ids)
 				// checking for parsing of ids
 				conflict2Ids := []string{}
 				for _, u := range r.Blocks[conflict2] {
-					conflict2Ids = append(conflict2Ids, u.Id)
+					conflict2Ids = append(conflict2Ids, u.ID)
 				}
 				require.Equal(t, tc.expectedIdsInBlocks[conflict2], conflict2Ids)
 			}
@@ -450,6 +466,7 @@ func TestGenerateConflictingUsersFile(t *testing.T) {
 					OrgID: int64(testOrgID),
 				},
 			},
+			wantBlock:          "conflict: ldap-admin",
 			wantDiscardedBlock: "conflict: user2",
 		},
 		{
@@ -732,24 +749,29 @@ func TestMarshalConflictUser(t *testing.T) {
 	}{
 		{
 			name:     "should be able to marshal expected input row",
-			inputRow: "+ id: 4, email: userduplicatetest1@test.com, login: userduplicatetest1@test.com, last_seen_at: 2012-07-26T16:08:11Z, auth_module:",
+			inputRow: "+ id: 4, email: userduplicatetest1@test.com, login: userduplicatetest1, last_seen_at: 2012-07-26T16:08:11Z, auth_module: auth.saml, conflict_email: true, conflict_login: ",
 			expectedUser: ConflictingUser{
-				Direction:  "+",
-				Id:         "4",
-				Email:      "userduplicatetest1@test.com",
-				Login:      "userduplicatetest1@test.com",
-				LastSeenAt: "2012-07-26T16:08:11Z",
-				AuthModule: "",
+				Direction:     "+",
+				ID:            "4",
+				Email:         "userduplicatetest1@test.com",
+				Login:         "userduplicatetest1",
+				LastSeenAt:    "2012-07-26T16:08:11Z",
+				AuthModule:    "auth.saml",
+				ConflictEmail: "true",
+				ConflictLogin: "",
 			},
 		},
 		{
 			name:     "should be able to marshal expected input row",
-			inputRow: "+ id: 1, email: userduplicatetest1@test.com, login: user_duplicate_test_1_login",
+			inputRow: "+ id: 1, email: userduplicatetest1@test.com, login: user_duplicate_test_1_login, , last_seen_at: 2012-07-26T16:08:11Z, auth_module: , conflict_email: , conflict_login: true",
 			expectedUser: ConflictingUser{
-				Direction: "+",
-				Id:        "1",
-				Email:     "userduplicatetest1@test.com",
-				Login:     "user_duplicate_test_1_login",
+				Direction:     "+",
+				ID:            "1",
+				Email:         "userduplicatetest1@test.com",
+				Login:         "user_duplicate_test_1_login",
+				AuthModule:    "",
+				ConflictEmail: "",
+				ConflictLogin: "true",
 			},
 		},
 	}
@@ -759,10 +781,12 @@ func TestMarshalConflictUser(t *testing.T) {
 			err := user.Marshal(tc.inputRow)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedUser.Direction, user.Direction)
-			require.Equal(t, tc.expectedUser.Id, user.Id)
+			require.Equal(t, tc.expectedUser.ID, user.ID)
 			require.Equal(t, tc.expectedUser.Email, user.Email)
 			require.Equal(t, tc.expectedUser.Login, user.Login)
 			require.Equal(t, tc.expectedUser.LastSeenAt, user.LastSeenAt)
+			require.Equal(t, tc.expectedUser.ConflictEmail, user.ConflictEmail)
+			require.Equal(t, tc.expectedUser.ConflictLogin, user.ConflictLogin)
 		})
 	}
 }
