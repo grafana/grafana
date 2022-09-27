@@ -207,15 +207,15 @@ func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, 
 
 	res, err := pd.QueryDataService.QueryDataMultipleSources(ctx, anonymousUser, skipCache, metricReq, true)
 
-	// We want to track which datasources were successful and which were not
 	reqDatasources := metricReq.GetUniqueDatasourceTypes()
 	if err != nil {
-		pd.log.Error("Error querying datasources for public dashboard", "error", err.Error(), "datasources", reqDatasources)
+		LogQueryFailure(reqDatasources, pd.log, err)
 		return nil, err
 	}
+	LogQuerySuccess(reqDatasources, pd.log)
 
-	pd.log.Info("Successfully queried datasources for public dashboard", "datasources", reqDatasources)
 	queries.SanitizeMetadataFromQueryData(res)
+
 	return res, nil
 }
 
