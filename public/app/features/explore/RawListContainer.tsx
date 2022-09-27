@@ -37,7 +37,14 @@ const getListItemsFromDataFrameNew = (dataFrame: DataFrame): instantQueryRawVirt
   const newFields = dataFrame.fields.filter((field) => !['Time'].includes(field.name));
 
   // Get name from each series
-  const metricNames: string[] = newFields.find((field) => ['__name__'].includes(field.name))?.values?.toArray() ?? [];
+  // const metricNames: string[] = newFields.find((field) => ['__name__'].includes(field.name))?.values?.toArray() ?? [''];
+  let metricNames: string[] = newFields.find((field) => field.name === '__name__')?.values.toArray() ?? [];
+  // const metricNames: string[] = doesMetricHaveNames ?
+  if (!metricNames.length) {
+    // These results do not have series labels
+    // Matching the native prometheus UI which appears to only show the permutations of the first field in the query result.
+    metricNames = Array(newFields[0].values.length).fill('');
+  }
 
   // Get everything that isn't the name from each series
   const metricLabels = dataFrame.fields.filter((field) => !['__name__'].includes(field.name));
@@ -81,7 +88,9 @@ const RawListContainer = (props: RawListContainerProps) => {
   let dataFrame = cloneDeep(tableResult);
   const styles = getRawListContainerStyles();
 
+  console.log('dataFrame', dataFrame);
   const items = getListItemsFromDataFrameNew(dataFrame);
+  console.log('items', items);
 
   return (
     // We don't use testids around here, how should we target this element in tests?
