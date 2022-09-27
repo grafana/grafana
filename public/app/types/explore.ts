@@ -232,8 +232,8 @@ export interface ExplorePanelData extends PanelData {
 }
 
 export enum TABLE_RESULTS_STYLE {
-  default='default',
-  raw='raw'
+  default = 'default',
+  raw = 'raw',
 }
 export const TABLE_RESULTS_STYLES = [TABLE_RESULTS_STYLE.default, TABLE_RESULTS_STYLE.raw] as const;
 export type TableResultsStyle = typeof TABLE_RESULTS_STYLES[number];
