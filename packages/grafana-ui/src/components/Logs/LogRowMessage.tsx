@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import * as LosslessJSON from 'lossless-json';
 import memoizeOne from 'memoize-one';
 import React, { PureComponent } from 'react';
 import Highlighter from 'react-highlight-words';
@@ -104,7 +105,7 @@ function renderLogMessage(
 const restructureLog = memoizeOne((line: string, prettifyLogMessage: boolean): string => {
   if (prettifyLogMessage) {
     try {
-      return JSON.stringify(JSON.parse(line), undefined, 2);
+      return LosslessJSON.stringify(LosslessJSON.parse(line), undefined, 2);
     } catch (error) {
       return line;
     }

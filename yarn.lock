@@ -5637,6 +5637,7 @@ __metadata:
     "@types/jest": 28.1.6
     "@types/jquery": 3.5.14
     "@types/lodash": 4.14.182
+    "@types/lossless-json": ^1
     "@types/mock-raf": 1.0.3
     "@types/node": 16.11.45
     "@types/prismjs": 1.26.0
@@ -5678,6 +5679,7 @@ __metadata:
     is-hotkey: 0.2.0
     jquery: 3.6.0
     lodash: 4.17.21
+    lossless-json: ^1.0.5
     memoize-one: 6.0.0
     mock-raf: 1.0.1
     moment: 2.29.4
@@ -11940,6 +11942,13 @@ __metadata:
   version: 4.0.2
   resolution: "@types/long@npm:4.0.2"
   checksum: d16cde7240d834cf44ba1eaec49e78ae3180e724cd667052b194a372f350d024cba8dd3f37b0864931683dab09ca935d52f0c4c1687178af5ada9fc85b0635f4
+  languageName: node
+  linkType: hard
+
+"@types/lossless-json@npm:^1":
+  version: 1.0.1
+  resolution: "@types/lossless-json@npm:1.0.1"
+  checksum: c256b17b9ac339d4bb4724f0bc3df2199af7c89457b6a68b282d19ce76f2e0433df2559198c1a4026174251d4932602f2c994224d20ee959dcb200a9a07a9dd5
   languageName: node
   linkType: hard
 
@@ -27152,6 +27161,13 @@ __metadata:
   bin:
     loose-envify: cli.js
   checksum: 6517e24e0cad87ec9888f500c5b5947032cdfe6ef65e1c1936a0c48a524b81e65542c9c3edc91c97d5bddc806ee2a985dbc79be89215d613b1de5db6d1cfe6f4
+  languageName: node
+  linkType: hard
+
+"lossless-json@npm:^1.0.5":
+  version: 1.0.5
+  resolution: "lossless-json@npm:1.0.5"
+  checksum: c26a231aaaa334dda42ef74ccf01a8558d15de815fd72fd3e47c549da11e3f47ae8f57c5ea26a298473844f889d1645a8b7835d507db430887dd598e9b0a6648
   languageName: node
   linkType: hard
 
