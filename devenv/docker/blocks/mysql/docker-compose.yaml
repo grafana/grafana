@@ -16,7 +16,7 @@
       FD_DATASOURCE: mysql
       FD_PORT: 3306
 
-  mysql-exporeter:
+  mysql-exporter:
     image: prom/mysqld-exporter
     ports:
       - "9104:9104"
