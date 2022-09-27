@@ -4,12 +4,13 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/models"
-	publicDashboardModels "github.com/grafana/grafana/pkg/services/publicdashboards/models"
+	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
+	"github.com/grafana/grafana/pkg/util"
 )
 
-func ValidateSavePublicDashboard(dto *publicDashboardModels.SavePublicDashboardConfigDTO, dashboard *models.Dashboard) error {
+func ValidateSavePublicDashboard(dto *SavePublicDashboardConfigDTO, dashboard *models.Dashboard) error {
 	if hasTemplateVariables(dashboard) {
-		return publicDashboardModels.ErrPublicDashboardHasTemplateVariables
+		return ErrPublicDashboardHasTemplateVariables
 	}
 
 	return nil
@@ -21,7 +22,7 @@ func hasTemplateVariables(dashboard *models.Dashboard) bool {
 	return len(templateVariables) > 0
 }
 
-func ValidateQueryPublicDashboardRequest(req publicDashboardModels.PublicDashboardQueryDTO) error {
+func ValidateQueryPublicDashboardRequest(req PublicDashboardQueryDTO) error {
 	if req.IntervalMs < 0 {
 		return fmt.Errorf("intervalMS should be greater than 0")
 	}
@@ -31,4 +32,12 @@ func ValidateQueryPublicDashboardRequest(req publicDashboardModels.PublicDashboa
 	}
 
 	return nil
+}
+
+func ValidAccesStoken(token string) bool {
+	if token == "" || !util.IsValidShortUID(token) {
+		return false
+	}
+
+	return true
 }
