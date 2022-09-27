@@ -35,7 +35,7 @@ export function NewsWrapper({ feedUrl }: NewsWrapperProps) {
       {({ width }) => (
         <div style={{ width: `${width}px` }}>
           {state.value.map((data, index) => (
-            <News showImage key={index} width={600} data={data} />
+            <News showImage key={index} width={width} data={data} />
           ))}
         </div>
       )}

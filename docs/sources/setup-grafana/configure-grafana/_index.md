@@ -1447,7 +1447,7 @@ Enable or disable the Profile section. Default is `enabled`.
 
 ### news_feed_enabled
 
-Enable the news feed section. Default is `false`
+Enable the news feed section. Default is `true`
 
 #### news_feed_url
 
