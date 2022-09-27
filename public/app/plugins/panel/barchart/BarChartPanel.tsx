@@ -310,7 +310,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
 
         return (
           <Portal>
-            {hover && coords && (
+            {hover && coords && focusedSeriesIdx && (
               <VizTooltipContainer
                 position={{ x: coords.viewport.x, y: coords.viewport.y }}
                 offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}
