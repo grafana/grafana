@@ -590,16 +590,22 @@ const prepConfig = (
     range: (u, min, max) => [min, max],
   });
 
+  // why does this fall back to '' instead of null or undef?
+  let xAxisLabel = xField.config.custom.axisLabel;
+
   builder.addAxis({
     scaleKey: 'x',
     placement:
       xField.config.custom?.axisPlacement !== AxisPlacement.Hidden ? AxisPlacement.Bottom : AxisPlacement.Hidden,
     show: xField.config.custom?.axisPlacement !== AxisPlacement.Hidden,
     theme,
-    label: xField.config.custom.axisLabel,
+    label:
+      xAxisLabel == null || xAxisLabel === ''
+        ? getFieldDisplayName(xField, scatterSeries[0].frame(frames), frames)
+        : xAxisLabel,
   });
 
-  scatterSeries.forEach((s) => {
+  scatterSeries.forEach((s, si) => {
     let frame = s.frame(frames);
     let field = s.y(frame);
 
@@ -618,11 +624,17 @@ const prepConfig = (
     });
 
     if (field.config.custom?.axisPlacement !== AxisPlacement.Hidden) {
+      // why does this fall back to '' instead of null or undef?
+      let yAxisLabel = field.config.custom?.axisLabel;
+
       builder.addAxis({
         scaleKey,
         theme,
         placement: field.config.custom?.axisPlacement,
-        label: field.config.custom.axisLabel,
+        label:
+          yAxisLabel == null || yAxisLabel === ''
+            ? getFieldDisplayName(field, scatterSeries[si].frame(frames), frames)
+            : yAxisLabel,
         values: (u, splits) => splits.map((s) => field.display!(s).text),
       });
     }
