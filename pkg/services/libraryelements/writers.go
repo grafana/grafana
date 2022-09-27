@@ -72,15 +72,18 @@ func writeExcludeSQL(query searchLibraryElementsQuery, builder *sqlstore.SQLBuil
 type FolderFilter struct {
 	includeGeneralFolder bool
 	folderIDs            []string
+	folderUIDs           []string
 	parseError           error
 }
 
 func parseFolderFilter(query searchLibraryElementsQuery) FolderFilter {
 	folderIDs := make([]string, 0)
+	folderUIDs := make([]string, 0)
 	if len(strings.TrimSpace(query.folderFilter)) == 0 {
 		return FolderFilter{
 			includeGeneralFolder: true,
 			folderIDs:            folderIDs,
+			folderUIDs:           folderUIDs,
 			parseError:           nil,
 		}
 	}
@@ -102,9 +105,19 @@ func parseFolderFilter(query searchLibraryElementsQuery) FolderFilter {
 		}
 	}
 
+	folderUIDs = strings.Split(query.folderFilterUID, ",")
+
+	for _, folderUID := range folderUIDs {					
+		if isUIDGeneralFolder(folderUID) {
+			includeGeneralFolder = true
+			break
+		}
+	}	
+
 	return FolderFilter{
 		includeGeneralFolder: includeGeneralFolder,
 		folderIDs:            folderIDs,
+		folderUIDs:           folderUIDs,
 		parseError:           nil,
 	}
 }

@@ -214,6 +214,7 @@ type searchLibraryElementsQuery struct {
 	typeFilter    string
 	excludeUID    string
 	folderFilter  string
+	folderFilterUID  string
 }
 
 // LibraryElementResponse is a response struct for LibraryElementDTO.
