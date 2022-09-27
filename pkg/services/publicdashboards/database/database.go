@@ -53,7 +53,8 @@ func (d *PublicDashboardStoreImpl) GetDashboard(ctx context.Context, dashboardUi
 	return dashboard, err
 }
 
-// Retrieves public dashboard configuration
+// Retrieves public dashboard. This method makes 2 queries to the db so that in the
+// even that the underlying dashboard is missing it will return a 404.
 func (d *PublicDashboardStoreImpl) GetPublicDashboard(ctx context.Context, accessToken string) (*PublicDashboard, *models.Dashboard, error) {
 	if accessToken == "" {
 		return nil, nil, ErrPublicDashboardIdentifierNotSet
