@@ -1,10 +1,10 @@
-package dashboardthumbs
+package thumbs
 
 import (
 	"context"
 )
 
-type Service interface {
+type DashboardThumbService interface {
 	GetThumbnail(ctx context.Context, query *GetDashboardThumbnailCommand) (*DashboardThumbnail, error)
 	SaveThumbnail(ctx context.Context, cmd *SaveDashboardThumbnailCommand) (*DashboardThumbnail, error)
 	UpdateThumbnailState(ctx context.Context, cmd *UpdateThumbnailStateCommand) error
