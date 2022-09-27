@@ -36,7 +36,7 @@ type ConditionValidator interface {
 type RulerSrv struct {
 	xactManager        provisioning.TransactionManager
 	provenanceStore    provisioning.ProvisioningStore
-	store              store.RuleStore
+	store              RuleStore
 	QuotaService       quota.Service
 	scheduleService    schedule.ScheduleService
 	log                log.Logger

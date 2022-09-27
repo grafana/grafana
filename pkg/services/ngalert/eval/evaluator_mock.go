@@ -51,10 +51,10 @@ type FakeEvaluator_ConditionEval_Call struct {
 }
 
 // ConditionEval is a helper method to define mock.On call
-//  - ctx context.Context
-//  - _a1 *user.SignedInUser
-//  - condition models.Condition
-//  - now time.Time
+//   - ctx context.Context
+//   - _a1 *user.SignedInUser
+//   - condition models.Condition
+//   - now time.Time
 func (_e *FakeEvaluator_Expecter) ConditionEval(ctx interface{}, _a1 interface{}, condition interface{}, now interface{}) *FakeEvaluator_ConditionEval_Call {
 	return &FakeEvaluator_ConditionEval_Call{Call: _e.mock.On("ConditionEval", ctx, _a1, condition, now)}
 }
@@ -100,10 +100,10 @@ type FakeEvaluator_QueriesAndExpressionsEval_Call struct {
 }
 
 // QueriesAndExpressionsEval is a helper method to define mock.On call
-//  - ctx context.Context
-//  - _a1 *user.SignedInUser
-//  - data []models.AlertQuery
-//  - now time.Time
+//   - ctx context.Context
+//   - _a1 *user.SignedInUser
+//   - data []models.AlertQuery
+//   - now time.Time
 func (_e *FakeEvaluator_Expecter) QueriesAndExpressionsEval(ctx interface{}, _a1 interface{}, data interface{}, now interface{}) *FakeEvaluator_QueriesAndExpressionsEval_Call {
 	return &FakeEvaluator_QueriesAndExpressionsEval_Call{Call: _e.mock.On("QueriesAndExpressionsEval", ctx, _a1, data, now)}
 }
@@ -140,9 +140,9 @@ type FakeEvaluator_Validate_Call struct {
 }
 
 // Validate is a helper method to define mock.On call
-//  - ctx context.Context
-//  - _a1 *user.SignedInUser
-//  - condition models.Condition
+//   - ctx context.Context
+//   - _a1 *user.SignedInUser
+//   - condition models.Condition
 func (_e *FakeEvaluator_Expecter) Validate(ctx interface{}, _a1 interface{}, condition interface{}) *FakeEvaluator_Validate_Call {
 	return &FakeEvaluator_Validate_Call{Call: _e.mock.On("Validate", ctx, _a1, condition)}
 }

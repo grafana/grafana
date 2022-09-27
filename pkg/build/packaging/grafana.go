@@ -1033,7 +1033,7 @@ func createZip(srcDir, version, variantStr, sfx, grafanaDir string) error {
 	return nil
 }
 
-//nolint
+// nolint
 func createTarball(srcDir, version, variantStr, sfx, grafanaDir string) error {
 	fpath := filepath.Join(grafanaDir, "dist", fmt.Sprintf("grafana%s-%s.%s.tar.gz", sfx, version, variantStr))
 	//nolint:gosec
