@@ -313,14 +313,14 @@ func (ls *Implementation) syncOrgRoles(ctx context.Context, usr *user.User, extU
 	for _, orgId := range deleteOrgIds {
 		logger.Debug("Removing user's organization membership as part of syncing with OAuth login",
 			"userId", usr.ID, "orgId", orgId)
-		cmd := &models.RemoveOrgUserCommand{OrgId: orgId, UserId: usr.ID}
-		if err := ls.SQLStore.RemoveOrgUser(ctx, cmd); err != nil {
+		cmd := &org.RemoveOrgUserCommand{OrgID: orgId, UserID: usr.ID}
+		if err := ls.orgService.RemoveOrgUser(ctx, cmd); err != nil {
 			if errors.Is(err, models.ErrLastOrgAdmin) {
-				logger.Error(err.Error(), "userId", cmd.UserId, "orgId", cmd.OrgId)
+				logger.Error(err.Error(), "userId", cmd.UserID, "orgId", cmd.OrgID)
 				continue
 			}
-			if err := ls.accessControl.DeleteUserPermissions(ctx, orgId, cmd.UserId); err != nil {
-				logger.Warn("failed to delete permissions for user", "userID", cmd.UserId, "orgID", orgId)
+			if err := ls.accessControl.DeleteUserPermissions(ctx, orgId, cmd.UserID); err != nil {
+				logger.Warn("failed to delete permissions for user", "userID", cmd.UserID, "orgID", orgId)
 			}
 
 			return err

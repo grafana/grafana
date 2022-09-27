@@ -49,6 +49,7 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 	sqlStore.Cfg = settings
 	hs.SQLStore = sqlStore
 	orgService := orgtest.NewOrgServiceFake()
+	orgService.ExpectedSearchOrgUsersResult = &org.SearchOrgUsersQueryResult{}
 	hs.orgService = orgService
 	mock := mockstore.NewSQLStoreMock()
 	loggedInUserScenario(t, "When calling GET on", "api/org/users", "api/org/users", func(sc *scenarioContext) {
@@ -72,12 +73,28 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 	loggedInUserScenario(t, "When calling GET on", "api/org/users/search", "api/org/users/search", func(sc *scenarioContext) {
 		setUpGetOrgUsersDB(t, sqlStore)
 
+		orgService.ExpectedSearchOrgUsersResult = &org.SearchOrgUsersQueryResult{
+			OrgUsers: []*org.OrgUserDTO{
+				{
+					Login: "user1",
+				},
+				{
+					Login: "user2",
+				},
+				{
+					Login: "user3",
+				},
+			},
+			TotalCount: 3,
+			PerPage:    1000,
+			Page:       1,
+		}
 		sc.handlerFunc = hs.SearchOrgUsersWithPaging
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 
 		require.Equal(t, http.StatusOK, sc.resp.Code)
 
-		var resp models.SearchOrgUsersQueryResult
+		var resp org.SearchOrgUsersQueryResult
 		err := json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 		require.NoError(t, err)
 
@@ -90,12 +107,23 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 	loggedInUserScenario(t, "When calling GET with page and limit query parameters on", "api/org/users/search", "api/org/users/search", func(sc *scenarioContext) {
 		setUpGetOrgUsersDB(t, sqlStore)
 
+		orgService.ExpectedSearchOrgUsersResult = &org.SearchOrgUsersQueryResult{
+			OrgUsers: []*org.OrgUserDTO{
+				{
+					Login: "user1",
+				},
+			},
+			TotalCount: 3,
+			PerPage:    2,
+			Page:       2,
+		}
+
 		sc.handlerFunc = hs.SearchOrgUsersWithPaging
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{"perpage": "2", "page": "2"}).exec()
 
 		require.Equal(t, http.StatusOK, sc.resp.Code)
 
-		var resp models.SearchOrgUsersQueryResult
+		var resp org.SearchOrgUsersQueryResult
 		err := json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 		require.NoError(t, err)
 
@@ -947,6 +975,7 @@ func TestDeleteOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 					hs.SQLStore, nil, nil, nil, nil,
 					nil, nil, nil, nil, nil, hs.SQLStore.(*sqlstore.SQLStore),
 				)
+				hs.orgService = orgimpl.ProvideService(hs.SQLStore, cfg)
 			})
 			setupOrgUsersDBForAccessControlTests(t, sc.db)
 			setInitCtxSignedInUser(sc.initCtx, tc.user)
