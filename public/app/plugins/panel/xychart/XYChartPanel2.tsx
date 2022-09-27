@@ -26,7 +26,7 @@ import { FacetedData } from '@grafana/ui/src/components/uPlot/types';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 
 import { TooltipView } from './TooltipView';
-import { XYChartOptions } from './models.gen';
+import { SeriesMapping, XYChartOptions } from './models.gen';
 import { prepData, prepScatter, ScatterPanelInfo } from './scatter';
 import { ScatterHoverEvent, ScatterSeries } from './types';
 
@@ -101,7 +101,8 @@ export const XYChartPanel2: React.FC<Props> = (props: Props) => {
     const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
     const theme = config.theme2;
 
-    for (const s of series) {
+    for (let si = 0; si < series.length; si++) {
+      const s = series[si];
       const frame = s.frame(props.data.series);
       if (frame) {
         for (const item of s.legend()) {
@@ -168,6 +169,10 @@ export const XYChartPanel2: React.FC<Props> = (props: Props) => {
           };
 
           item.disabled = !(s.show ?? true);
+
+          if (props.options.seriesMapping === SeriesMapping.Manual) {
+            item.label = props.options.series?.[si]?.name ?? `Series ${si + 1}`;
+          }
 
           items.push(item);
         }
