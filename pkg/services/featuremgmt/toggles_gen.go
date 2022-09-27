@@ -199,6 +199,10 @@ const (
 	// Replaces whitelabeling with the new custom branding feature
 	FlagCustomBranding = "customBranding"
 
+	// FlagGrpcServer
+	// Run GRPC server
+	FlagGrpcServer = "grpcServer"
+
 	// FlagTraceqlEditor
 	// Show the TraceQL editor in the explore page
 	FlagTraceqlEditor = "traceqlEditor"

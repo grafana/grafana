@@ -295,7 +295,7 @@ type accessControlScenarioContext struct {
 	usermock *usertest.FakeUserService
 
 	// db is a test database initialized with InitTestDB
-	db sqlstore.Store
+	db *sqlstore.SQLStore
 
 	// cfg is the setting provider
 	cfg *setting.Cfg
@@ -371,7 +371,7 @@ func setupHTTPServerWithCfgDb(
 
 	license := &licensing.OSSLicensingService{}
 	routeRegister := routing.NewRouteRegister()
-	teamService := teamimpl.ProvideService(db)
+	teamService := teamimpl.ProvideService(db, cfg)
 	dashboardsStore := dashboardsstore.ProvideDashboardStore(db, featuremgmt.WithFeatures(), tagimpl.ProvideService(db))
 
 	var acmock *accesscontrolmock.Mock
@@ -393,7 +393,7 @@ func setupHTTPServerWithCfgDb(
 		ac = acimpl.ProvideAccessControl(cfg)
 	}
 
-	teamPermissionService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, routeRegister, db, ac, license, acService)
+	teamPermissionService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, routeRegister, db, ac, license, acService, teamService)
 	require.NoError(t, err)
 
 	// Create minimal HTTP Server

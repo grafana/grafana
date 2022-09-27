@@ -7,11 +7,13 @@ import (
 )
 
 type FakeOrgService struct {
-	ExpectedOrgUserID  int64
-	ExpectedError      error
-	ExpectedUserOrgDTO []*org.UserOrgDTO
-	ExpectedOrgs       []*org.OrgDTO
-	ExpectedOrg        *org.Org
+	ExpectedOrgUserID            int64
+	ExpectedError                error
+	ExpectedUserOrgDTO           []*org.UserOrgDTO
+	ExpectedOrgs                 []*org.OrgDTO
+	ExpectedOrg                  *org.Org
+	ExpectedOrgUsers             []*org.OrgUserDTO
+	ExpectedSearchOrgUsersResult *org.SearchOrgUsersQueryResult
 }
 
 func NewOrgServiceFake() *FakeOrgService {
@@ -58,10 +60,7 @@ func (f *FakeOrgService) GetByName(name string) (*org.Org, error) {
 	return f.ExpectedOrg, f.ExpectedError
 }
 
-func (f *FakeOrgService) CreateWithMember(name string, userID int64) (*org.Org, error) {
-	return f.ExpectedOrg, f.ExpectedError
-}
-func (f *FakeOrgService) Create(ctx context.Context, cmd *org.CreateOrgCommand) (*org.Org, error) {
+func (f *FakeOrgService) CreateWithMember(ctx context.Context, cmd *org.CreateOrgCommand) (*org.Org, error) {
 	return f.ExpectedOrg, f.ExpectedError
 }
 
@@ -75,4 +74,24 @@ func (f *FakeOrgService) Delete(ctx context.Context, cmd *org.DeleteOrgCommand) 
 
 func (f *FakeOrgService) GetOrCreate(ctx context.Context, orgName string) (int64, error) {
 	return 0, f.ExpectedError
+}
+
+func (f *FakeOrgService) AddOrgUser(ctx context.Context, cmd *org.AddOrgUserCommand) error {
+	return f.ExpectedError
+}
+
+func (f *FakeOrgService) UpdateOrgUser(ctx context.Context, cmd *org.UpdateOrgUserCommand) error {
+	return f.ExpectedError
+}
+
+func (f *FakeOrgService) GetOrgUsers(ctx context.Context, query *org.GetOrgUsersQuery) ([]*org.OrgUserDTO, error) {
+	return f.ExpectedOrgUsers, f.ExpectedError
+}
+
+func (f *FakeOrgService) RemoveOrgUser(ctx context.Context, cmd *org.RemoveOrgUserCommand) error {
+	return f.ExpectedError
+}
+
+func (f *FakeOrgService) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
+	return f.ExpectedSearchOrgUsersResult, f.ExpectedError
 }
