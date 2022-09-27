@@ -9,7 +9,7 @@ import { stylesFactory } from '@grafana/ui/src';
 import RawList from './RawList';
 import { instantQueryRawVirtualizedListData } from './TableContainer';
 
-interface RawListContainerProps {
+export interface RawListContainerProps {
   tableResult: DataFrame;
 }
 
@@ -24,6 +24,10 @@ const getRawListContainerStyles = stylesFactory(() => {
   };
 });
 
+/**
+ * transform dataFrame to instantQueryRawVirtualizedListData
+ * @param dataFrame
+ */
 const getListItemsFromDataFrameNew = (dataFrame: DataFrame): instantQueryRawVirtualizedListData[] => {
   const metricList: instantQueryMetricList = {};
   const outputList: instantQueryRawVirtualizedListData[] = [];
@@ -66,20 +70,24 @@ const getListItemsFromDataFrameNew = (dataFrame: DataFrame): instantQueryRawVirt
   return outputList;
 };
 
+/**
+ * The container that provides the virtualized list to the child components
+ * @param props
+ * @constructor
+ */
 const RawListContainer = (props: RawListContainerProps) => {
   const { tableResult } = props;
   let dataFrame = cloneDeep(tableResult);
   const styles = getRawListContainerStyles();
 
-  // const olditems = this.getListItemsFromDataFrame(dataFrame);
   const items = getListItemsFromDataFrameNew(dataFrame);
 
   return (
-    <>
+    // We don't use testids around here, how should we target this element in tests?
+    <section data-testid={'raw-list-container'}>
       {/* @todo temporarily borrowing this from the prometheus API for debugging, review with UX */}
       <div>Result series: {items.length}</div>
 
-      {/* @todo these are arbitrary numbers */}
       <List
         itemCount={items.length}
         className={styles.wrapper}
@@ -90,12 +98,12 @@ const RawListContainer = (props: RawListContainerProps) => {
         width="100%"
       >
         {({ index, style }) => (
-          <div style={{ ...style, overflow: 'hidden' }}>
+          <div role="row" style={{ ...style, overflow: 'hidden' }}>
             <RawList listKey={index} listItemData={items[index]} />
           </div>
         )}
       </List>
-    </>
+    </section>
   );
 };
 
