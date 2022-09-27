@@ -992,20 +992,6 @@
         }
       }
     },
-    "/api/alertmanager/{DatasourceUID}/config/api/v1/receivers": {
-      "get": {
-        "tags": [
-          "alertmanager"
-        ],
-        "summary": "Get a list of all receivers.",
-        "operationId": "RouteGetReceivers",
-        "responses": {
-          "200": {
-            "$ref": "#/responses/receivers"
-          }
-        }
-      }
-    },
     "/api/alertmanager/{DatasourceUID}/config/api/v1/receivers/test": {
       "post": {
         "tags": [
@@ -5822,7 +5808,6 @@
       }
     },
     "alertGroup": {
-      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -5847,6 +5832,7 @@
       "$ref": "#/definitions/alertGroup"
     },
     "alertGroups": {
+      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
@@ -5952,6 +5938,7 @@
       }
     },
     "gettableAlert": {
+      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": [
         "labels",
@@ -6008,6 +5995,7 @@
       "$ref": "#/definitions/gettableAlert"
     },
     "gettableAlerts": {
+      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
@@ -6015,7 +6003,6 @@
       "$ref": "#/definitions/gettableAlerts"
     },
     "gettableSilence": {
-      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -6065,6 +6052,7 @@
       "$ref": "#/definitions/gettableSilence"
     },
     "gettableSilences": {
+      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
@@ -6076,7 +6064,7 @@
       "type": "object",
       "required": [
         "name",
-        "sendResolve"
+        "sendResolved"
       ],
       "properties": {
         "lastError": {
@@ -6084,8 +6072,9 @@
           "type": "string"
         },
         "lastNotify": {
-          "description": "last notify",
-          "type": "string"
+          "description": "last notify\nFormat: date-time",
+          "type": "string",
+          "format": "date-time"
         },
         "lastNotifyDuration": {
           "description": "last notify duration",
@@ -6095,11 +6084,12 @@
           "description": "name",
           "type": "string"
         },
-        "sendResolve": {
-          "description": "send resolve",
+        "sendResolved": {
+          "description": "send resolved",
           "type": "boolean"
         }
-      }
+      },
+      "$ref": "#/definitions/integration"
     },
     "labelSet": {
       "description": "LabelSet label set",
@@ -6206,6 +6196,7 @@
       }
     },
     "postableSilence": {
+      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",
@@ -6244,6 +6235,7 @@
       "$ref": "#/definitions/postableSilence"
     },
     "receiver": {
+      "description": "Receiver receiver",
       "type": "object",
       "required": [
         "active",

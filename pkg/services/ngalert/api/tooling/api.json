@@ -3513,14 +3513,14 @@
    "type": "array"
   },
   "integration": {
-   "description": "Integration integration",
    "properties": {
     "lastError": {
      "description": "last error",
      "type": "string"
     },
     "lastNotify": {
-     "description": "last notify",
+     "description": "last notify\nFormat: date-time",
+     "format": "date-time",
      "type": "string"
     },
     "lastNotifyDuration": {
@@ -3531,14 +3531,14 @@
      "description": "name",
      "type": "string"
     },
-    "sendResolve": {
-     "description": "send resolve",
+    "sendResolved": {
+     "description": "send resolved",
      "type": "boolean"
     }
    },
    "required": [
     "name",
-    "sendResolve"
+    "sendResolved"
    ],
    "type": "object"
   },
@@ -3685,6 +3685,7 @@
    "type": "object"
   },
   "receiver": {
+   "description": "Receiver receiver",
    "properties": {
     "active": {
      "description": "active",

@@ -200,14 +200,11 @@ func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 }
 
 func (am *Alertmanager) GetReceivers(ctx context.Context) apimodels.Receivers {
-	// Copy the slice to avoid having a pointer to the same underlying array.
 	am.reloadConfigMtx.RLock()
-	receivers := make([]*notify.Receiver, len(am.receivers))
-	copy(receivers, am.receivers)
-	am.reloadConfigMtx.RUnlock()
+	defer am.reloadConfigMtx.RUnlock()
 
 	var apiReceivers apimodels.Receivers
-	for _, rcv := range receivers {
+	for _, rcv := range am.receivers {
 		// Build integrations slice for each receiver.
 		var integrations []*models.Integration
 		for _, integration := range rcv.Integrations() {

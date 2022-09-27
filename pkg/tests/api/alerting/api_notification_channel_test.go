@@ -820,7 +820,7 @@ func TestNotificationChannels(t *testing.T) {
 	require.Equal(t, expEmailNotifications, mockEmail.emails)
 	require.NoError(t, mockChannel.Close())
 
-	// Check the receivers API. Errors are expected, attempts to deliver notifications should be registered.
+	// Check the receivers API. Errors and inactive receivers are expected, attempts to deliver notifications should be registered.
 	receiversURL := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/receivers", grafanaListedAddr)
 	resp := getRequest(t, receiversURL, http.StatusOK) // nolint
 	b := getBody(t, resp.Body)
@@ -829,9 +829,22 @@ func TestNotificationChannels(t *testing.T) {
 	err := json.Unmarshal([]byte(b), &receivers)
 	require.NoError(t, err)
 	for _, rcv := range receivers {
+		var expActive bool
+		if _, ok := expInactiveReceivers[*rcv.Name]; !ok {
+			expActive = true
+		}
+		var expErr bool
+		if _, ok := expNotificationErrors[*rcv.Name]; ok {
+			expErr = true
+		}
+
 		require.NotNil(t, rcv.Name)
 		require.NotNil(t, rcv.Active)
 		require.NotEmpty(t, rcv.Integrations)
+		if expActive {
+			require.True(t, *rcv.Active)
+		}
+
 		// We don't have test alerts for the default notifier, continue iterating.
 		if *rcv.Name == "grafana-default-email" {
 			continue
@@ -840,16 +853,23 @@ func TestNotificationChannels(t *testing.T) {
 		for _, integration := range rcv.Integrations {
 			require.NotNil(t, integration.Name)
 			require.NotNil(t, integration.SendResolved)
-			require.NotZero(t, integration.LastNotify)
-			require.NotEqual(t, "0s", integration.LastNotifyDuration)
+
+			// If the receiver is not active, no attempts to send notifications should be registered.
+			fmt.Println("Receiver:", *rcv.Name)
+			if expActive {
+				require.NotZero(t, integration.LastNotify)
+				require.NotEqual(t, "0s", integration.LastNotifyDuration)
+			} else {
+				require.Zero(t, integration.LastNotify)
+				require.Equal(t, "0s", integration.LastNotifyDuration)
+			}
 
 			// Check whether we're expecting an error on this integration.
-			if expErr, ok := expNotificationErrors[*rcv.Name]; ok {
+			if expErr {
 				for _, integration := range rcv.Integrations {
-					require.Equal(t, expErr, integration.LastError)
+					require.Equal(t, expNotificationErrors[*rcv.Name], integration.LastError)
 				}
 			} else {
-				// We're not expecting en error.
 				require.Equal(t, "", integration.LastError)
 			}
 		}
@@ -1196,6 +1216,16 @@ const alertmanagerConfig = `
 		  ],
 		  "matchers": [
 			"alertname=\"SlackFailedAlert\""
+		  ]
+		},
+		{
+		  "receiver": "slack_inactive_recv",
+		  "group_wait": "0s",
+		  "group_by": [
+			"alertname"
+		  ],
+		  "matchers": [
+			"alertname=\"Inactive\""
 		  ]
 		},
         {
@@ -1615,6 +1645,22 @@ const alertmanagerConfig = `
           }
 		]
 	  },
+	  {
+        "name": "slack_inactive_recv",
+        "grafana_managed_receiver_configs": [
+          {
+            "name": "inactive",
+            "type": "slack",
+            "settings": {
+              "recipient": "#inactive-channel",
+              "username": "Integration Test"
+            },
+            "secureSettings": {
+              "token": "myfullysecrettoken"
+            }
+          }
+        ]
+      },
       {
         "name": "pagerduty_recv",
         "grafana_managed_receiver_configs": [
@@ -1690,7 +1736,16 @@ var expAlertmanagerConfigFromAPI = `
             "alertname=\"SlackFailedAlert\""
           ]
         },
-        {
+   		{
+          "receiver": "slack_inactive_recv",
+          "group_wait": "0s",
+          "group_by": [
+            "alertname"
+          ],
+          "matchers": [
+            "alertname=\"Inactive\""
+          ]
+        },     {
           "receiver": "pagerduty_recv",
           "group_wait": "0s",
           "group_by": [
@@ -2151,6 +2206,24 @@ var expAlertmanagerConfigFromAPI = `
           }
 		]
 	  },
+	  {
+		"name": "slack_inactive_recv",
+		"grafana_managed_receiver_configs": [
+		  {
+            "uid": "",
+            "name": "inactive",
+            "type": "slack",
+            "disableResolveMessage": false,
+            "settings": {
+              "recipient": "#inactive-channel",
+			  "username": "Integration Test"
+            },
+            "secureFields": {
+			  "token": true
+            }
+          }
+		]
+	  },
       {
         "name": "pagerduty_recv",
         "grafana_managed_receiver_configs": [
@@ -2559,4 +2632,9 @@ var expNonEmailNotifications = map[string][]string{
 // expNotificationErrors maps a receiver name with its expected error string.
 var expNotificationErrors = map[string]string{
 	"slack_failed_recv": `Post "htt://127.0.0.1:8080/slack_failed_recv/slack_failed_test": unsupported protocol scheme "htt"`,
+}
+
+// expNotificationErrors maps a receiver name with its expected error string.
+var expInactiveReceivers = map[string]struct{}{
+	"slack_inactive_recv": {},
 }

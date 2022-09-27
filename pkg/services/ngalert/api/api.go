@@ -51,8 +51,6 @@ type Alertmanager interface {
 
 	// Receivers
 	GetReceivers(ctx context.Context) apimodels.Receivers
-
-	// Testing
 	TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*notifier.TestReceiversResult, error)
 }
 

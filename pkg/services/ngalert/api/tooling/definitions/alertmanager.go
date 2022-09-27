@@ -149,13 +149,6 @@ import (
 //     Responses:
 //       200: receivers
 
-// swagger:route GET /api/alertmanager/{DatasourceUID}/config/api/v1/receivers alertmanager RouteGetReceivers
-//
-// Get a list of all receivers.
-//
-//     Responses:
-//       200: receivers
-
 // swagger:route POST /api/alertmanager/grafana/config/api/v1/receivers/test alertmanager RoutePostTestGrafanaReceivers
 //
 // Test Grafana managed receivers without saving them.

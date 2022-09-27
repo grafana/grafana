@@ -118,6 +118,8 @@ type Alertmanager struct {
 	silencer *silence.Silencer
 	silences *silence.Silences
 
+	receivers []*notify.Receiver
+
 	// muteTimes is a map where the key is the name of the mute_time_interval
 	// and the value represents all configured time_interval(s)
 	muteTimes map[string][]timeinterval.TimeInterval
@@ -131,8 +133,6 @@ type Alertmanager struct {
 	orgID           int64
 
 	decryptFn channels.GetDecryptedValueFn
-
-	receivers []*notify.Receiver
 }
 
 func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store AlertingStore, kvStore kvstore.KVStore,
@@ -423,15 +423,19 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 	inhibitionStage := notify.NewMuteStage(am.inhibitor)
 	timeMuteStage := notify.NewTimeMuteStage(am.muteTimes)
 	silencingStage := notify.NewMuteStage(am.silencer)
-	for name := range integrationsMap {
-		stage := am.createReceiverStage(name, integrationsMap[name], am.waitFunc, am.notificationLog)
-		routingStage[name] = notify.MultiStage{meshStage, silencingStage, timeMuteStage, inhibitionStage, stage}
-		// TODO: true?
-		am.receivers = append(am.receivers, notify.NewReceiver(name, true, integrationsMap[name]))
-	}
 
 	am.route = dispatch.NewRoute(cfg.AlertmanagerConfig.Route.AsAMRoute(), nil)
 	am.dispatcher = dispatch.NewDispatcher(am.alerts, am.route, routingStage, am.marker, am.timeoutFunc, &nilLimits{}, am.logger, am.dispatcherMetrics)
+
+	// Check which receivers are active and create the receiver stage.
+	activeReceivers := am.getActiveReceiversMap(am.route)
+	for name := range integrationsMap {
+		stage := am.createReceiverStage(name, integrationsMap[name], am.waitFunc, am.notificationLog)
+		routingStage[name] = notify.MultiStage{meshStage, silencingStage, timeMuteStage, inhibitionStage, stage}
+		_, isActive := activeReceivers[name]
+
+		am.receivers = append(am.receivers, notify.NewReceiver(name, isActive, integrationsMap[name]))
+	}
 
 	am.wg.Add(1)
 	go func() {
@@ -688,6 +692,16 @@ func (am *Alertmanager) createReceiverStage(name string, integrations []*notify.
 		fs = append(fs, s)
 	}
 	return fs
+}
+
+func (am *Alertmanager) getActiveReceiversMap(r *dispatch.Route) map[string]struct{} {
+	receiversMap := make(map[string]struct{})
+	visitFunc := func(r *dispatch.Route) {
+		receiversMap[r.RouteOpts.Receiver] = struct{}{}
+	}
+	r.Walk(visitFunc)
+
+	return receiversMap
 }
 
 func (am *Alertmanager) waitFunc() time.Duration {

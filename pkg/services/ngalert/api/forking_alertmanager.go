@@ -131,15 +131,6 @@ func (f *AlertmanagerApiHandler) handleRoutePostAMAlerts(ctx *models.ReqContext,
 	return s.RoutePostAMAlerts(ctx, body)
 }
 
-func (f *AlertmanagerApiHandler) handleRouteGetReceivers(ctx *models.ReqContext) response.Response {
-	s, err := f.getService(ctx)
-	if err != nil {
-		return errorToResponse(err)
-	}
-
-	return s.RouteGetReceivers(ctx)
-}
-
 func (f *AlertmanagerApiHandler) handleRoutePostTestReceivers(ctx *models.ReqContext, body apimodels.TestReceiversConfigBodyParams, dsUID string) response.Response {
 	s, err := f.getService(ctx)
 	if err != nil {

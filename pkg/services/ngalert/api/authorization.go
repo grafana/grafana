@@ -171,8 +171,6 @@ func (api *API) authorize(method, path string) web.Handler {
 		eval = ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":DatasourceUID")))
 	case http.MethodPost + "/api/alertmanager/{DatasourceUID}/config/api/v1/alerts":
 		eval = ac.EvalPermission(ac.ActionAlertingNotificationsExternalWrite, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":DatasourceUID")))
-	case http.MethodGet + "/api/alertmanager/{DatasourceUID}/config/api/v1/receivers":
-		eval = ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":DatasourceUID")))
 	case http.MethodPost + "/api/alertmanager/{DatasourceUID}/config/api/v1/receivers/test":
 		eval = ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":DatasourceUID")))
 

@@ -3269,7 +3269,6 @@
    "type": "object"
   },
   "alertGroup": {
-   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -3293,6 +3292,7 @@
    "type": "object"
   },
   "alertGroups": {
+   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
@@ -3397,6 +3397,7 @@
    "type": "object"
   },
   "gettableAlert": {
+   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -3452,13 +3453,13 @@
    "type": "object"
   },
   "gettableAlerts": {
+   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
    "type": "array"
   },
   "gettableSilence": {
-   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3507,6 +3508,7 @@
    "type": "object"
   },
   "gettableSilences": {
+   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
@@ -3520,7 +3522,8 @@
      "type": "string"
     },
     "lastNotify": {
-     "description": "last notify",
+     "description": "last notify\nFormat: date-time",
+     "format": "date-time",
      "type": "string"
     },
     "lastNotifyDuration": {
@@ -3531,14 +3534,14 @@
      "description": "name",
      "type": "string"
     },
-    "sendResolve": {
-     "description": "send resolve",
+    "sendResolved": {
+     "description": "send resolved",
      "type": "boolean"
     }
    },
    "required": [
     "name",
-    "sendResolve"
+    "sendResolved"
    ],
    "type": "object"
   },
@@ -3647,6 +3650,7 @@
    "type": "array"
   },
   "postableSilence": {
+   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3684,6 +3688,7 @@
    "type": "object"
   },
   "receiver": {
+   "description": "Receiver receiver",
    "properties": {
     "active": {
      "description": "active",
@@ -4773,20 +4778,6 @@
       }
      }
     },
-    "tags": [
-     "alertmanager"
-    ]
-   }
-  },
-  "/api/alertmanager/{DatasourceUID}/config/api/v1/receivers": {
-   "get": {
-    "operationId": "RouteGetReceivers",
-    "responses": {
-     "200": {
-      "$ref": "#/responses/receivers"
-     }
-    },
-    "summary": "Get a list of all receivers.",
     "tags": [
      "alertmanager"
     ]
