@@ -10,6 +10,7 @@ import { OpenTsdbOptions, OpenTsdbQuery } from '../types';
 import { DownSample } from './DownSample';
 import { FilterSection } from './FilterSection';
 import { MetricSection } from './MetricSection';
+import { RateSection } from './RateSection';
 import { TagSection } from './TagSection';
 
 export type OpenTsdbQueryEditorProps = QueryEditorProps<OpenTsDatasource, OpenTsdbQuery, OpenTsdbOptions>;
@@ -34,7 +35,7 @@ export function OpenTsdbQueryEditor({
   // There is evidence that metrics had errors at one point,
   // but there is no evidence it is being handled in the fromt end,
   // just errors delivered from the backend
-  const [errors /*, setErrors */] = useState<OpenTsdbErrors>({});
+  // const [errors /*, setErrors */] = useState<OpenTsdbErrors>({});
 
   // Xaggregators: any;
   // aggregators are updated potentially by datasource.getAggregators()
@@ -200,11 +201,7 @@ export function OpenTsdbQueryEditor({
           suggestTagKeys={suggestTagKeys}
           tsdbVersion={tsdbVersion}
         />
-        <div>WIP</div>
-        <div>Errors: {errors.toString()}</div>
-        <div>FillPolicies: {fillPolicies[0].toString()}</div>
-        <div>FilterTypes: {filterTypes[0].toString()}</div>
-        <div>Version: {tsdbVersion.toString()}</div>
+        <RateSection query={query} onChange={onChange} onRunQuery={onRunQuery} tsdbVersion={tsdbVersion} />
       </div>
     </div>
   );

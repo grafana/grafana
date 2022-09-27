@@ -14,7 +14,7 @@ const tsdbVersions = [
   { label: '==2.3', value: 3 },
 ];
 
-const setup = (tsdbVersion: Number, propOverrides?: Object) => {
+const setup = (tsdbVersion: number, propOverrides?: Object) => {
   const query: OpenTsdbQuery = {
     metric: '',
     refId: 'A',

@@ -24,6 +24,13 @@ export interface OpenTsdbQuery extends DataQuery {
   isGlobal?: boolean;
   target?: string;
   name?: string;
+
+  // rate
+  shouldComputeRate?: boolean;
+  isCounter?: boolean;
+  counterMax?: string;
+  counterResetValue?: string;
+  explicitTags?: boolean;
 }
 
 export interface OpenTsdbOptions extends DataSourceJsonData {

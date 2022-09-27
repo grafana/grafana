@@ -1,7 +1,6 @@
 import { size } from 'lodash';
 import React, { useCallback, useState } from 'react';
 
-// import { toOption } from '@grafana/data';
 import { SelectableValue, toOption } from '@grafana/data';
 import { InlineLabel, Select, InlineFormLabel, InlineSwitch, Icon } from '@grafana/ui';
 

@@ -11,7 +11,7 @@ export interface DownSampleProps {
   onRunQuery: () => void;
   aggregators: string[];
   fillPolicies: string[];
-  tsdbVersion: Number;
+  tsdbVersion: number;
 }
 
 export function DownSample({ query, onChange, onRunQuery, aggregators, fillPolicies, tsdbVersion }: DownSampleProps) {
