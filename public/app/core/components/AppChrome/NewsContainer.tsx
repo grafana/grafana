@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { useToggle } from 'react-use';
 
 import { Drawer, Icon } from '@grafana/ui';
 import { DEFAULT_FEED_URL } from 'app/plugins/panel/news/constants';
@@ -10,10 +11,10 @@ interface NewsContainerProps {
 }
 
 export function NewsContainer({ buttonCss }: NewsContainerProps) {
-  const [showNewsDrawer, setShowNewsDrawer] = useState(false);
+  const [showNewsDrawer, onToggleShowNewsDrawer] = useToggle(false);
 
   const onChildClick = () => {
-    setShowNewsDrawer(true);
+    onToggleShowNewsDrawer(true);
   };
 
   return (
@@ -22,7 +23,7 @@ export function NewsContainer({ buttonCss }: NewsContainerProps) {
         <Icon name="rss" size="lg" />
       </button>
       {showNewsDrawer && (
-        <Drawer title="Latest from the blog" scrollableContent onClose={() => setShowNewsDrawer(false)}>
+        <Drawer title="Latest from the blog" scrollableContent onClose={onToggleShowNewsDrawer}>
           <NewsWrapper feedUrl={DEFAULT_FEED_URL} />
         </Drawer>
       )}
