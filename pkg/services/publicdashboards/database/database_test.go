@@ -52,8 +52,8 @@ func TestIntegrationGetDashboard(t *testing.T) {
 	})
 }
 
-// GetPublicDashboard
-func TestIntegrationGetPublicDashboard(t *testing.T) {
+// AccessTokenExists
+func TestIntegrationAccessTokenExists(t *testing.T) {
 	var sqlStore *sqlstore.SQLStore
 	var dashboardStore *dashboardsDB.DashboardStore
 	var publicdashboardStore *PublicDashboardStoreImpl
@@ -95,6 +95,21 @@ func TestIntegrationGetPublicDashboard(t *testing.T) {
 		require.NoError(t, err)
 		require.False(t, res)
 	})
+}
+
+// PublicDashboardEnabled
+func TestIntegrationGetPublicDashboardWithDashboard(t *testing.T) {
+	var sqlStore *sqlstore.SQLStore
+	var dashboardStore *dashboardsDB.DashboardStore
+	var publicdashboardStore *PublicDashboardStoreImpl
+	var savedDashboard *models.Dashboard
+
+	setup := func() {
+		sqlStore = sqlstore.InitTestDB(t)
+		dashboardStore = dashboardsDB.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
+		publicdashboardStore = ProvideStore(sqlStore)
+		savedDashboard = insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
+	}
 
 	t.Run("PublicDashboardEnabled Will return true when dashboard has at least one enabled public dashboard", func(t *testing.T) {
 		setup()
@@ -139,6 +154,21 @@ func TestIntegrationGetPublicDashboard(t *testing.T) {
 
 		require.False(t, res)
 	})
+}
+
+// GetPublicDashboardWithDashboard
+func TestIntegrationGetPublicDashboard(t *testing.T) {
+	var sqlStore *sqlstore.SQLStore
+	var dashboardStore *dashboardsDB.DashboardStore
+	var publicdashboardStore *PublicDashboardStoreImpl
+	var savedDashboard *models.Dashboard
+
+	setup := func() {
+		sqlStore = sqlstore.InitTestDB(t)
+		dashboardStore = dashboardsDB.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
+		publicdashboardStore = ProvideStore(sqlStore)
+		savedDashboard = insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
+	}
 
 	t.Run("returns PublicDashboard and Dashboard", func(t *testing.T) {
 		setup()
@@ -190,7 +220,7 @@ func TestIntegrationGetPublicDashboard(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		_, _, err = publicdashboardStore.GetPublicDashboard(context.Background(), "abc1234")
+		_, _, err = publicdashboardStore.GetPublicDashboardWithDashboard(context.Background(), "abc1234")
 		require.Error(t, dashboards.ErrDashboardNotFound, err)
 	})
 }
@@ -310,6 +340,7 @@ func TestIntegrationSavePublicDashboardConfig(t *testing.T) {
 	})
 }
 
+// UpdatePublicDashboardConfig
 func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 	var sqlStore *sqlstore.SQLStore
 	var dashboardStore *dashboardsDB.DashboardStore
@@ -389,6 +420,7 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 	})
 }
 
+// helper function insertTestDashboard
 func insertTestDashboard(t *testing.T, dashboardStore *dashboardsDB.DashboardStore, title string, orgId int64,
 	folderId int64, isFolder bool, tags ...interface{}) *models.Dashboard {
 	t.Helper()
