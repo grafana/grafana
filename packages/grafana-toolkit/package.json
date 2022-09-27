@@ -23,7 +23,8 @@
     "src",
     "sass",
     "./README.md",
-    "./CHANGELOG.md"
+    "./CHANGELOG.md",
+    "LICENSE_APACHE2"
   ],
   "scripts": {
     "build": "grafana-toolkit toolkit:build",
