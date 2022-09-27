@@ -110,6 +110,18 @@ message ReadObjectResponse {
   bytes summary_json = 2;
 }
 
+//------------------------------------------------------
+// Make many read requests at once (by Kind+ID+version)
+//------------------------------------------------------
+
+message BatchReadObjectRequest {
+  repeated ReadObjectRequest batch = 3;
+}
+
+message BatchReadObjectResponse {
+  repeated ReadObjectResponse results = 1;
+}
+
 //-----------------------------------------------
 // Write request/response
 //-----------------------------------------------
@@ -217,19 +229,15 @@ message ObjectSearchRequest {
   // Must match all labels
   map<string,string> labels = 6;
 
-  // Find items that meet reference constraints
-  // All references must have a kind+uid (type is not used)
-  repeated ExternalReference reference = 7;
-
   // Sorting instructions `field ASC/DESC`
-  repeated string sort = 8;
+  repeated string sort = 7;
 
   // TODO, limit the set of fields we actually want returned
   // Only supported in the QueryResponse flavor?
-  repeated string fields = 9;
+  repeated string fields = 8;
 
   // Return the full body in each payload
-  bool with_body = 10;
+  bool with_body = 9;
 }
 
 message ObjectSearchResponse {
@@ -248,6 +256,7 @@ message ObjectSearchResponse {
 // for now it will only work with an admin API key
 service ObjectStore {
   rpc Read(ReadObjectRequest) returns (ReadObjectResponse);
+  rpc BatchRead(BatchReadObjectRequest) returns (BatchReadObjectResponse);
   rpc Write(WriteObjectRequest) returns (WriteObjectResponse);
   rpc Delete(DeleteObjectRequest) returns (DeleteObjectResponse);
   rpc History(ObjectHistoryRequest) returns (ObjectHistoryResponse);

@@ -23,6 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ObjectStoreClient interface {
 	Read(ctx context.Context, in *ReadObjectRequest, opts ...grpc.CallOption) (*ReadObjectResponse, error)
+	BatchRead(ctx context.Context, in *BatchReadObjectRequest, opts ...grpc.CallOption) (*BatchReadObjectResponse, error)
 	Write(ctx context.Context, in *WriteObjectRequest, opts ...grpc.CallOption) (*WriteObjectResponse, error)
 	Delete(ctx context.Context, in *DeleteObjectRequest, opts ...grpc.CallOption) (*DeleteObjectResponse, error)
 	History(ctx context.Context, in *ObjectHistoryRequest, opts ...grpc.CallOption) (*ObjectHistoryResponse, error)
@@ -40,6 +41,15 @@ func NewObjectStoreClient(cc grpc.ClientConnInterface) ObjectStoreClient {
 func (c *objectStoreClient) Read(ctx context.Context, in *ReadObjectRequest, opts ...grpc.CallOption) (*ReadObjectResponse, error) {
 	out := new(ReadObjectResponse)
 	err := c.cc.Invoke(ctx, "/object.ObjectStore/Read", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *objectStoreClient) BatchRead(ctx context.Context, in *BatchReadObjectRequest, opts ...grpc.CallOption) (*BatchReadObjectResponse, error) {
+	out := new(BatchReadObjectResponse)
+	err := c.cc.Invoke(ctx, "/object.ObjectStore/BatchRead", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -87,6 +97,7 @@ func (c *objectStoreClient) Search(ctx context.Context, in *ObjectSearchRequest,
 // for forward compatibility
 type ObjectStoreServer interface {
 	Read(context.Context, *ReadObjectRequest) (*ReadObjectResponse, error)
+	BatchRead(context.Context, *BatchReadObjectRequest) (*BatchReadObjectResponse, error)
 	Write(context.Context, *WriteObjectRequest) (*WriteObjectResponse, error)
 	Delete(context.Context, *DeleteObjectRequest) (*DeleteObjectResponse, error)
 	History(context.Context, *ObjectHistoryRequest) (*ObjectHistoryResponse, error)
@@ -99,6 +110,9 @@ type UnimplementedObjectStoreServer struct {
 
 func (UnimplementedObjectStoreServer) Read(context.Context, *ReadObjectRequest) (*ReadObjectResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Read not implemented")
+}
+func (UnimplementedObjectStoreServer) BatchRead(context.Context, *BatchReadObjectRequest) (*BatchReadObjectResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BatchRead not implemented")
 }
 func (UnimplementedObjectStoreServer) Write(context.Context, *WriteObjectRequest) (*WriteObjectResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Write not implemented")
@@ -138,6 +152,24 @@ func _ObjectStore_Read_Handler(srv interface{}, ctx context.Context, dec func(in
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ObjectStoreServer).Read(ctx, req.(*ReadObjectRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ObjectStore_BatchRead_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BatchReadObjectRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ObjectStoreServer).BatchRead(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/object.ObjectStore/BatchRead",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ObjectStoreServer).BatchRead(ctx, req.(*BatchReadObjectRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -224,6 +256,10 @@ var ObjectStore_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Read",
 			Handler:    _ObjectStore_Read_Handler,
+		},
+		{
+			MethodName: "BatchRead",
+			Handler:    _ObjectStore_BatchRead_Handler,
 		},
 		{
 			MethodName: "Write",
