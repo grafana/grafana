@@ -2,18 +2,15 @@ import { css, cx } from '@emotion/css';
 import { FocusScope } from '@react-aria/focus';
 import { useTour } from '@reactour/tour';
 import { cloneDeep } from 'lodash';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, NavModelItem, NavSection } from '@grafana/data';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Icon, useTheme2 } from '@grafana/ui';
-import { updateNavIndex } from 'app/core/actions';
 import { Branding } from 'app/core/components/Branding/Branding';
 import { getKioskMode } from 'app/core/navigation/kiosk';
-import { initialState, updateNavTree } from 'app/core/reducers/navBarTree';
-import { getPerconaSettings, getPerconaUser } from 'app/percona/shared/core/selectors';
 import { KioskMode, StoreState } from 'app/types';
 
 import { OrgSwitcher } from '../OrgSwitcher';
@@ -24,28 +21,14 @@ import { NavBarMenu } from './NavBarMenu';
 import { NavBarMenuPortalContainer } from './NavBarMenuPortalContainer';
 import { NavBarScrollContainer } from './NavBarScrollContainer';
 import { NavBarToggle } from './NavBarToggle';
-import {
-  getPmmSettingsPage,
-  PMM_ADD_INSTANCE_PAGE,
-  PMM_BACKUP_PAGE,
-  PMM_DBAAS_PAGE,
-  PMM_ENTITLEMENTS_PAGE,
-  PMM_ENVIRONMENT_OVERVIEW_PAGE,
-  PMM_INVENTORY_PAGE,
-  PMM_STT_PAGE,
-  PMM_TICKETS_PAGE,
-} from './constants';
 import { NavBarContext } from './context';
 import {
-  buildIntegratedAlertingMenuItem,
-  buildInventoryAndSettings,
   enrichConfigItems,
   enrichWithClickDispatch,
   enrichWithInteractionTracking,
   getActiveItem,
   isMatchOrInnerMatch,
   isSearchActive,
-  removeAlertingMenuItem,
   SEARCH_ITEM_ID,
 } from './utils';
 
@@ -61,9 +44,6 @@ export const NavBar = React.memo(() => {
   const location = useLocation();
   const dispatch = useDispatch();
   const kiosk = getKioskMode();
-  const { result } = useSelector(getPerconaSettings);
-  const { alertingEnabled, sttEnabled, dbaasEnabled, backupEnabled } = result!;
-  const { isPlatformUser, isAuthorized } = useSelector(getPerconaUser);
   const [showSwitcherModal, setShowSwitcherModal] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuAnimationInProgress, setMenuAnimationInProgress] = useState(false);
@@ -114,55 +94,6 @@ export const NavBar = React.memo(() => {
     .map((item) => enrichWithClickDispatch(item, dispatch, dispatchOffset));
 
   const activeItem = isSearchActive(location) ? searchItem : getActiveItem(navTree, location.pathname);
-  const iaMenuItem = alertingEnabled ? buildIntegratedAlertingMenuItem(coreItems) : removeAlertingMenuItem(coreItems);
-
-  // @PERCONA
-  // All these dispatches are our pages
-  dispatch(updateNavIndex(getPmmSettingsPage(alertingEnabled)));
-  dispatch(updateNavIndex(PMM_STT_PAGE));
-  dispatch(updateNavIndex(PMM_DBAAS_PAGE));
-  dispatch(updateNavIndex(PMM_BACKUP_PAGE));
-  dispatch(updateNavIndex(PMM_INVENTORY_PAGE));
-  dispatch(updateNavIndex(PMM_ADD_INSTANCE_PAGE));
-  dispatch(updateNavIndex(PMM_TICKETS_PAGE));
-  dispatch(updateNavIndex(PMM_ENTITLEMENTS_PAGE));
-  dispatch(updateNavIndex(PMM_ENVIRONMENT_OVERVIEW_PAGE));
-
-  if (iaMenuItem) {
-    dispatch(updateNavIndex(iaMenuItem));
-  }
-
-  // @PERCONA
-  useEffect(() => {
-    const updatedNavTree = cloneDeep(initialState);
-
-    // @PERCONA
-    if (isPlatformUser) {
-      updatedNavTree.push(PMM_ENTITLEMENTS_PAGE);
-      updatedNavTree.push(PMM_TICKETS_PAGE);
-      updatedNavTree.push(PMM_ENVIRONMENT_OVERVIEW_PAGE);
-    }
-
-    // @PERCONA
-    if (isAuthorized) {
-      buildInventoryAndSettings(updatedNavTree);
-
-      if (sttEnabled) {
-        updatedNavTree.push(PMM_STT_PAGE);
-      }
-
-      if (dbaasEnabled) {
-        updatedNavTree.push(PMM_DBAAS_PAGE);
-      }
-
-      if (backupEnabled) {
-        updatedNavTree.push(PMM_BACKUP_PAGE);
-      }
-    }
-
-    dispatch(updateNavTree({ items: updatedNavTree }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [result, isAuthorized, isPlatformUser]);
 
   if (kiosk !== KioskMode.Off) {
     return null;

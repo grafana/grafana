@@ -240,3 +240,15 @@ export const PMM_ENVIRONMENT_OVERVIEW_PAGE: NavModelItem = {
   url: `${config.appSubUrl}/environment-overview`,
   section: NavSection.Core,
 };
+
+/**
+ * Mapping of menu items id to folders name.
+ *
+ * Folders are created based on the folder name in grafana-dashboards.
+ */
+export const NAV_FOLDER_MAP: Record<string, string> = {
+  system: 'OS',
+  mysql: 'MySQL',
+  mongo: 'MongoDB',
+  postgre: 'PostgreSQL',
+};

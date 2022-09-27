@@ -282,6 +282,10 @@ function deleteFolder(uid: string, showSuccessAlert: boolean) {
   });
 }
 
+export function fetchFolders() {
+  return getBackendSrv().get('/api/folders');
+}
+
 export function createFolder(payload: any) {
   return getBackendSrv().post('/api/folders', payload);
 }

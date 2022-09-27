@@ -19,6 +19,7 @@ import { isPmmAdmin } from '../../helpers/permissions';
 
 import { Messages } from './PerconaBootstrapper.messages';
 import { getStyles } from './PerconaBootstrapper.styles';
+import PerconaNavigation from './PerconaNavigation/PerconaNavigation';
 
 // This component is only responsible for populating the store with Percona's settings initially
 export const PerconaBootstrapper = () => {
@@ -82,50 +83,53 @@ export const PerconaBootstrapper = () => {
     }
   }, [dispatch, isLoggedIn, setCurrentStep, setIsOpen, setSteps]);
 
-  return isLoggedIn && showTour ? (
-    <Modal onDismiss={dismissModal} isOpen={modalIsOpen} title={Messages.title}>
-      <div className={styles.iconContainer}>
-        <Icon type="mono" name="pmm-logo" className={styles.svg} />
-      </div>
-      <p>
-        <strong>{Messages.pmm}</strong>
-        {Messages.pmmIs}
-      </p>
-      <p>
-        {Messages.pmmEnables}
-        <ul className={styles.list}>
-          <li>{Messages.spotCriticalPerformance}</li>
-          <li>{Messages.ensureDbPerformance}</li>
-          <li>{Messages.backup}</li>
-        </ul>
-      </p>
-      <p>
-        {Messages.moreInfo}
-        <a
-          href="https://docs.percona.com/percona-monitoring-and-management/index.html"
-          target="_blank"
-          rel="noreferrer noopener"
-          className={styles.docsLink}
-        >
-          {Messages.pmmOnlineHelp}
-        </a>
-        .
-      </p>
-      <HorizontalGroup justify="center" spacing="md">
-        <Button onClick={startTour} size="lg" className={styles.callToAction}>
-          {Messages.startTour}
-        </Button>
-      </HorizontalGroup>
-      <HorizontalGroup justify="flex-end" spacing="md">
-        <Button variant="secondary" onClick={finishTour}>
-          {Messages.skip}
-        </Button>
-        <Button variant="secondary" onClick={() => setModalIsOpen(false)}>
-          {Messages.checkLater}
-        </Button>
-      </HorizontalGroup>
-    </Modal>
-  ) : (
-    <></>
+  return (
+    <>
+      <PerconaNavigation />
+      {isLoggedIn && showTour && (
+        <Modal onDismiss={dismissModal} isOpen={modalIsOpen} title={Messages.title}>
+          <div className={styles.iconContainer}>
+            <Icon type="mono" name="pmm-logo" className={styles.svg} />
+          </div>
+          <p>
+            <strong>{Messages.pmm}</strong>
+            {Messages.pmmIs}
+          </p>
+          <p>
+            {Messages.pmmEnables}
+            <ul className={styles.list}>
+              <li>{Messages.spotCriticalPerformance}</li>
+              <li>{Messages.ensureDbPerformance}</li>
+              <li>{Messages.backup}</li>
+            </ul>
+          </p>
+          <p>
+            {Messages.moreInfo}
+            <a
+              href="https://docs.percona.com/percona-monitoring-and-management/index.html"
+              target="_blank"
+              rel="noreferrer noopener"
+              className={styles.docsLink}
+            >
+              {Messages.pmmOnlineHelp}
+            </a>
+            .
+          </p>
+          <HorizontalGroup justify="center" spacing="md">
+            <Button onClick={startTour} size="lg" className={styles.callToAction}>
+              {Messages.startTour}
+            </Button>
+          </HorizontalGroup>
+          <HorizontalGroup justify="flex-end" spacing="md">
+            <Button variant="secondary" onClick={finishTour}>
+              {Messages.skip}
+            </Button>
+            <Button variant="secondary" onClick={() => setModalIsOpen(false)}>
+              {Messages.checkLater}
+            </Button>
+          </HorizontalGroup>
+        </Modal>
+      )}
+    </>
   );
 };
