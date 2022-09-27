@@ -76,7 +76,7 @@ type crawlerScheduleOptions struct {
 func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	lockService *serverlock.ServerLockService, renderService rendering.Service,
 	gl *live.GrafanaLive, store *sqlstore.SQLStore, authSetupService CrawlerAuthSetupService,
-	dashboardService dashboards.DashboardService, dashboardThumbsService DBThumbService, searchService searchV2.SearchService,
+	dashboardService dashboards.DashboardService, dashboardThumbsService DashboardThumbService, searchService searchV2.SearchService,
 	dsPermissionsService permissions.DatasourcePermissionsService, licensing models.Licensing) Service {
 	if !features.IsEnabled(featuremgmt.FlagDashboardPreviews) {
 		return &dummyService{}

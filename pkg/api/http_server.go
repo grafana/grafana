@@ -191,7 +191,7 @@ type HTTPServer struct {
 
 	userService            user.Service
 	tempUserService        tempUser.Service
-	dashboardThumbsService thumbs.DBThumbService
+	dashboardThumbsService thumbs.DashboardThumbService
 	loginAttemptService    loginAttempt.Service
 	orgService             org.Service
 	teamService            team.Service
@@ -237,7 +237,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	secretsPluginMigrator spm.SecretMigrationProvider, secretsStore secretsKV.SecretsKVStore,
 	publicDashboardsApi *publicdashboardsApi.Api, userService user.Service, tempUserService tempUser.Service,
 	loginAttemptService loginAttempt.Service, orgService org.Service, teamService team.Service,
-	accesscontrolService accesscontrol.Service, dashboardThumbsService thumbs.DBThumbService, navTreeService navtree.Service,
+	accesscontrolService accesscontrol.Service, dashboardThumbsService thumbs.DashboardThumbService, navTreeService navtree.Service,
 	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env

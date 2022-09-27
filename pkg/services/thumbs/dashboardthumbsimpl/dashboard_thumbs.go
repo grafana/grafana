@@ -11,7 +11,7 @@ type Service struct {
 	store store
 }
 
-func ProvideService(db db.DB) thumbs.DBThumbService {
+func ProvideService(db db.DB) thumbs.DashboardThumbService {
 	return &Service{
 		store: &xormStore{db: db},
 	}

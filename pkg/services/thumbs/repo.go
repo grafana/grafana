@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/searchV2"
 )
 
-func newThumbnailRepo(thumbsService DBThumbService, search searchV2.SearchService) thumbnailRepo {
+func newThumbnailRepo(thumbsService DashboardThumbService, search searchV2.SearchService) thumbnailRepo {
 	repo := &sqlThumbnailRepository{
 		store:  thumbsService,
 		search: search,
@@ -22,7 +22,7 @@ func newThumbnailRepo(thumbsService DBThumbService, search searchV2.SearchServic
 }
 
 type sqlThumbnailRepository struct {
-	store  DBThumbService
+	store  DashboardThumbService
 	search searchV2.SearchService
 	log    log.Logger
 }
