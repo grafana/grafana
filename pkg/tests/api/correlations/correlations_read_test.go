@@ -1,6 +1,7 @@
 package correlations
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -10,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
 )
@@ -82,6 +84,27 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 	}
 	ctx.createDs(createDsCommand)
 	dsWithoutCorrelations := createDsCommand.Result
+
+	// This creates 2 records in the correlation table that should never be returned by the API.
+	// Given all tests in this file work on the assumption that only a single correlation exists,
+	// this covers the case where bad data exists in the database.
+	err := ctx.env.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		created, err := sess.InsertMulti(&[]correlations.Correlation{
+			{
+				UID:       "uid-1",
+				SourceUID: dsWithoutCorrelations.Uid,
+				TargetUID: "THIS-DOES-NOT_EXIST",
+			},
+			{
+				UID:       "uid-2",
+				SourceUID: "THIS-DOES-NOT_EXIST",
+				TargetUID: dsWithoutCorrelations.Uid,
+			},
+		})
+		require.Equal(t, int64(2), created)
+		return err
+	})
+	require.NoError(t, err)
 
 	t.Run("Get all correlations", func(t *testing.T) {
 		t.Run("Unauthenticated users shouldn't be able to read correlations", func(t *testing.T) {

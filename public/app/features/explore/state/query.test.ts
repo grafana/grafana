@@ -35,6 +35,7 @@ import {
   scanStartAction,
   scanStopAction,
   storeLogsVolumeDataProviderAction,
+  setLogsVolumeEnabled,
 } from './query';
 import { makeExplorePaneState } from './utils';
 
@@ -464,6 +465,35 @@ describe('reducer', () => {
       expect(getState().explore[ExploreId.left].logsVolumeData).toBeDefined();
       expect(getState().explore[ExploreId.left].logsVolumeData!.state).toBe(LoadingState.Done);
       expect(getState().explore[ExploreId.left].logsVolumeDataProvider).toBeUndefined();
+    });
+
+    it('do not load logsVolume data when disabled', async () => {
+      // turn logsvolume off
+      dispatch(setLogsVolumeEnabled(ExploreId.left, false));
+      expect(getState().explore[ExploreId.left].logsVolumeEnabled).toBe(false);
+
+      // verify that if we run a query, it will not do logsvolume, but the Provider will still be set
+      await dispatch(runQueries(ExploreId.left));
+      expect(getState().explore[ExploreId.left].logsVolumeData).toBeUndefined();
+      expect(getState().explore[ExploreId.left].logsVolumeDataSubscription).toBeUndefined();
+      expect(getState().explore[ExploreId.left].logsVolumeDataProvider).toBeDefined();
+    });
+
+    it('load logsVolume data when it gets enabled', async () => {
+      // first it is disabled
+      dispatch(setLogsVolumeEnabled(ExploreId.left, false));
+
+      // runQueries sets up the logsVolume query, but does not run it
+      await dispatch(runQueries(ExploreId.left));
+      expect(getState().explore[ExploreId.left].logsVolumeDataProvider).toBeDefined();
+
+      // we turn logsvolume on
+      await dispatch(setLogsVolumeEnabled(ExploreId.left, true));
+
+      // verify it was turned on
+      expect(getState().explore[ExploreId.left].logsVolumeEnabled).toBe(true);
+
+      expect(getState().explore[ExploreId.left].logsVolumeDataSubscription).toBeDefined();
     });
   });
 });

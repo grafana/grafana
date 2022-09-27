@@ -8,7 +8,11 @@ import { DataFrame, DataFrameView, formatLabels, Labels } from '@grafana/data';
 import { LiveStreams } from './LiveStreams';
 import { LokiTailResponse } from './types';
 
-let fakeSocket: Subject<any>;
+interface ErrorException extends Error {
+  code?: number;
+}
+
+let fakeSocket: Subject<LokiTailResponse>;
 jest.mock('rxjs/webSocket', () => {
   return {
     __esModule: true,
@@ -32,7 +36,7 @@ describe('Live Stream Tests', () => {
   };
 
   it('reads the values into the buffer', (done) => {
-    fakeSocket = new Subject<any>();
+    fakeSocket = new Subject<LokiTailResponse>();
     const labels: Labels = { job: 'varlogs' };
     const target = makeTarget('fake', labels);
     const stream = new LiveStreams().getStream(target);
@@ -69,7 +73,7 @@ describe('Live Stream Tests', () => {
   });
 
   it('returns the same subscription if the url matches existing one', () => {
-    fakeSocket = new Subject<any>();
+    fakeSocket = new Subject<LokiTailResponse>();
     const liveStreams = new LiveStreams();
     const stream1 = liveStreams.getStream(makeTarget('url_to_match'));
     const stream2 = liveStreams.getStream(makeTarget('url_to_match'));
@@ -77,7 +81,7 @@ describe('Live Stream Tests', () => {
   });
 
   it('returns new subscription when the previous unsubscribed', () => {
-    fakeSocket = new Subject<any>();
+    fakeSocket = new Subject<LokiTailResponse>();
     const liveStreams = new LiveStreams();
     const stream1 = liveStreams.getStream(makeTarget('url_to_match'));
     const subscription = stream1.subscribe({
@@ -91,9 +95,9 @@ describe('Live Stream Tests', () => {
 
   it('returns new subscription when the previous is unsubscribed and correctly unsubscribes from source', () => {
     let unsubscribed = false;
-    fakeSocket = new Observable(() => {
+    const fakeSocket = new Observable(() => {
       return () => (unsubscribed = true);
-    }) as any;
+    });
     jest.spyOn(rxJsWebSocket, 'webSocket').mockReturnValue(fakeSocket as rxJsWebSocket.WebSocketSubject<unknown>);
 
     const liveStreams = new LiveStreams();
@@ -105,7 +109,7 @@ describe('Live Stream Tests', () => {
     expect(unsubscribed).toBe(true);
   });
   it('should reconnect when abnormal error', async () => {
-    const abnormalError = new Error('weird error') as any;
+    const abnormalError = new Error('weird error') as ErrorException;
     abnormalError.code = 1006;
     const logStreamBeforeError = of({
       streams: [
@@ -127,7 +131,7 @@ describe('Live Stream Tests', () => {
     });
     const errorStream = throwError(abnormalError);
     let retries = 0;
-    fakeSocket = of({}).pipe(
+    const fakeSocket = of({}).pipe(
       mergeMap(() => {
         // When subscribed first time, return logStream and errorStream
         if (retries++ === 0) {
@@ -136,7 +140,7 @@ describe('Live Stream Tests', () => {
         // When re-subsribed after abnormal error, return just logStream
         return logStreamAfterError;
       })
-    ) as any;
+    );
     jest.spyOn(rxJsWebSocket, 'webSocket').mockReturnValue(fakeSocket as rxJsWebSocket.WebSocketSubject<unknown>);
     const liveStreams = new LiveStreams();
     await expect(liveStreams.getStream(makeTarget('url_to_match'), 100)).toEmitValuesWith((received) => {

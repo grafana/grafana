@@ -31,7 +31,7 @@ import (
 func ProvideService(cfg *setting.Cfg, serverLockService *serverlock.ServerLockService,
 	shortURLService shorturls.Service, sqlstore *sqlstore.SQLStore, queryHistoryService queryhistory.Service,
 	dashboardVersionService dashver.Service, dashSnapSvc dashboardsnapshots.Service, deleteExpiredImageService *image.DeleteExpiredService,
-	loginAttemptService loginattempt.Service, tempUserService tempuser.Service, tracer tracing.Tracer) *CleanUpService {
+	loginAttemptService loginattempt.Service, tempUserService tempuser.Service, tracer tracing.Tracer, annotationCleaner annotations.Cleaner) *CleanUpService {
 	s := &CleanUpService{
 		Cfg:                       cfg,
 		ServerLockService:         serverLockService,
@@ -45,6 +45,7 @@ func ProvideService(cfg *setting.Cfg, serverLockService *serverlock.ServerLockSe
 		loginAttemptService:       loginAttemptService,
 		tempUserService:           tempUserService,
 		tracer:                    tracer,
+		annotationCleaner:         annotationCleaner,
 	}
 	return s
 }
@@ -62,6 +63,7 @@ type CleanUpService struct {
 	deleteExpiredImageService *image.DeleteExpiredService
 	loginAttemptService       loginattempt.Service
 	tempUserService           tempuser.Service
+	annotationCleaner         annotations.Cleaner
 }
 
 type cleanUpJob struct {
@@ -125,8 +127,7 @@ func (srv *CleanUpService) clean(ctx context.Context) {
 
 func (srv *CleanUpService) cleanUpOldAnnotations(ctx context.Context) {
 	logger := srv.log.FromContext(ctx)
-	cleaner := annotations.GetAnnotationCleaner()
-	affected, affectedTags, err := cleaner.CleanAnnotations(ctx, srv.Cfg)
+	affected, affectedTags, err := srv.annotationCleaner.Run(ctx, srv.Cfg)
 	if err != nil && !errors.Is(err, context.DeadlineExceeded) {
 		logger.Error("failed to clean up old annotations", "error", err)
 	} else {
