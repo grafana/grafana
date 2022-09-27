@@ -38,6 +38,9 @@ type store interface {
 	AddOrgUser(context.Context, *org.AddOrgUserCommand) error
 	UpdateOrgUser(context.Context, *org.UpdateOrgUserCommand) error
 	GetOrgUsers(context.Context, *org.GetOrgUsersQuery) ([]*org.OrgUserDTO, error)
+	GetByID(context.Context, *org.GetOrgByIdQuery) (*org.Org, error)
+	GetByNameHandler(context.Context, *org.GetOrgByNameQuery) (*org.Org, error)
+	GetByName(context.Context, string) (*org.Org, error)
 }
 
 type sqlStore struct {
@@ -513,4 +516,61 @@ func (ss *sqlStore) GetOrgUsers(ctx context.Context, query *org.GetOrgUsersQuery
 		return nil, err
 	}
 	return result, nil
+}
+
+func (ss *sqlStore) GetByID(ctx context.Context, query *org.GetOrgByIdQuery) (*org.Org, error) {
+	var orga org.Org
+	err := ss.db.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		exists, err := dbSession.ID(query.ID).Get(&orga)
+		if err != nil {
+			return err
+		}
+
+		if !exists {
+			return models.ErrOrgNotFound
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &orga, nil
+}
+
+func (ss *sqlStore) GetByNameHandler(ctx context.Context, query *org.GetOrgByNameQuery) (*org.Org, error) {
+	var orga org.Org
+	err := ss.db.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		exists, err := dbSession.Where("name=?", query.Name).Get(&orga)
+		if err != nil {
+			return err
+		}
+
+		if !exists {
+			return models.ErrOrgNotFound
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &orga, nil
+}
+
+// GetOrgByName gets an organization by name.
+func (ss *sqlStore) GetByName(ctx context.Context, name string) (*org.Org, error) {
+	var orga org.Org
+	err := ss.db.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		exists, err := dbSession.Where("name=?", name).Get(&orga)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			return models.ErrOrgNotFound
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &orga, nil
 }

@@ -118,3 +118,15 @@ func (f *FakeOrgStore) UpdateOrgUser(ctx context.Context, cmd *org.UpdateOrgUser
 func (f *FakeOrgStore) GetOrgUsers(ctx context.Context, query *org.GetOrgUsersQuery) ([]*org.OrgUserDTO, error) {
 	return f.ExpectedOrgUsers, f.ExpectedError
 }
+
+func (f *FakeOrgStore) GetByID(ctx context.Context, query *org.GetOrgByIdQuery) (*org.Org, error) {
+	return f.ExpectedOrg, f.ExpectedError
+}
+
+func (f *FakeOrgStore) GetByNameHandler(ctx context.Context, query *org.GetOrgByNameQuery) (*org.Org, error) {
+	return f.ExpectedOrg, f.ExpectedError
+}
+
+func (f *FakeOrgStore) GetByName(ctx context.Context, name string) (*org.Org, error) {
+	return f.ExpectedOrg, f.ExpectedError
+}
