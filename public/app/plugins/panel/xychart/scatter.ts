@@ -238,8 +238,9 @@ function prepSeries(options: XYChartOptions, frames: DataFrame[]): ScatterSeries
           scatterSeries.push(getScatterSeries(seriesIndex++, frames, frameIndex, xIndex, yIndex, dims));
         }
       }
-      return scatterSeries;
     }
+
+    return scatterSeries;
   }
 
   // Default behavior
