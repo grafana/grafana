@@ -4,10 +4,12 @@ import React from 'react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
 
-import { PluginType, escapeStringForRegex } from '@grafana/data';
+import { PluginType, escapeStringForRegex, WithAccessControlMetadata } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
+import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
+import { AccessControlAction } from 'app/types';
 
 import { getCatalogPluginMock, getPluginsStateMock } from '../__mocks__';
 import { fetchRemotePlugins } from '../state/actions';
@@ -23,6 +25,20 @@ jest.mock('@grafana/runtime', () => {
   mockedRuntime.config.buildInfo.version = 'v8.1.0';
 
   return mockedRuntime;
+});
+
+jest.mock('app/core/services/context_srv', () => {
+  const originMock = jest.requireActual('app/core/services/context_srv');
+
+  return {
+    ...originMock,
+    contextSrv: {
+      ...originMock.context_srv,
+      user: {},
+      hasAccess: jest.fn(() => true),
+      hasAccessInMetadata: jest.fn(() => true),
+    },
+  };
 });
 
 const renderBrowse = (
@@ -180,6 +196,35 @@ describe('Browse list of plugins', () => {
       // Other plugin types shouldn't be shown
       expect(queryByText('Plugin 2')).not.toBeInTheDocument();
       expect(queryByText('Plugin 3')).not.toBeInTheDocument();
+    });
+
+    it('should list only app plugins user is allowed to see', async () => {
+      // Set mock to check presence of an action
+      (contextSrv.hasAccessInMetadata as jest.Mock).mockImplementation(
+        (action: string, object: WithAccessControlMetadata, fallBack: boolean) => {
+          return !!object.accessControl?.[action];
+        }
+      );
+
+      const { queryByText } = renderBrowse('/plugins?filterBy=all&filterByType=app', [
+        getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1', type: PluginType.app }),
+        getCatalogPluginMock({
+          id: 'plugin-2',
+          name: 'Plugin 2',
+          type: PluginType.app,
+          accessControl: { [AccessControlAction.PluginsRead]: true },
+        }),
+        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3', type: PluginType.app }),
+      ]);
+
+      await waitFor(() => expect(queryByText('Plugin 2')).toBeInTheDocument());
+
+      // Other plugin types shouldn't be shown
+      expect(queryByText('Plugin 1')).not.toBeInTheDocument();
+      expect(queryByText('Plugin 3')).not.toBeInTheDocument();
+
+      // Reset mock
+      (contextSrv.hasAccessInMetadata as jest.Mock).mockImplementation(() => true);
     });
   });
 
