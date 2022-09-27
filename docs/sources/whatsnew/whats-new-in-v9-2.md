@@ -25,13 +25,13 @@ If you'd prefer to dig into the details, check out the complete [changelog](http
 _Available in beta in Grafana Open Source._
 
 Dashboard panel issues can occur for all kinds of reasons, from problems processing data to issues with rendering or configuration.
-Shorten your communication time when reporting issues and requesting help from Grafana Labs by grabbing a panel's query response data and panel settings.
+Shorten your communication time when reporting issues and requesting help from Grafana Labs by retrieving a panel's query response data and panel settings.
 This will help the support team reproduce, diagnose, and fix the issue as quickly as possible.
 See our [documentation](https://grafana.com/docs/grafana/latest/troubleshooting/send-panel-to-grafana-support/) for more info.
 
 For details, see [GitHub issue #55005](https://github.com/grafana/grafana/issues/55005) and ["Send a panel to Grafana Labs support"](https://grafana.com/docs/grafana/latest/troubleshooting/send-panel-to-grafana-support/) in the documentation.
 
-Screenshot
+{{< figure src="/static/img/docs/panels/panel-help-9-2.gif" max-width="750px" caption="Retrieving a panel's query response data and panel settings" >}}
 
 ## Support for Google Analytics 4 properties
 
@@ -81,7 +81,7 @@ Beyond bug fixes, we're excited to share some new features:
 
 We have added the ability to use [expressions](https://grafana.com/docs/grafana/latest/panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions/) for your public dashboards.
 
-Screenshot
+{{< figure src="/static/img/docs/dashboards/public-dashboards-expressions-9-2.png" max-width="750px" caption="Using expressions in a public dashboard" >}}
 
 ### Public dashboard usage insights
 
@@ -89,7 +89,7 @@ _Available in Experimental in Grafana Enterprise._
 
 Usage Insights now has a "Public Dashboards" tab, which tracks how many people are viewing your public dashboard and how many queries have ran, and counts errors.
 
-Screenshot
+{{< figure src="/static/img/docs/dashboards/public-dashboards-usage-insights-9-2.png" max-width="750px" caption="Usage Insights for a public dashboard" >}}
 
 ### Use RBAC to allow any user to share dashboards publicly
 
@@ -98,7 +98,7 @@ _RBAC is available in Grafana Enterprise and Cloud Advanced._
 We have introduced a new role called "Public Dashboard writer" that grants access to publish new public dashboards to additional roles and users.
 By default, only admins can share dashboards publicly.
 
-Screenshot
+{{< figure src="/static/img/docs/dashboards/public-dashboards-writer-role-9-2.png" max-width="750px" caption="The Public Dashboard writer role for users" >}}
 
 ## Revamped UI for Google Cloud monitoring
 
@@ -109,7 +109,7 @@ This new interface provides a more consistent experience as you switch between d
 It also groups query builder items together more logically, so it's easier to write queries.
 In the case of Cloud monitoring, the query builder's groupings should more closely match the groupings in Google's Cloud console.
 
-Screenshot
+{{< figure src="/static/img/docs/queries/gcloud-data-source-query-grouping-9-2.png" max-width="750px" caption="Query builder groupings for Google Cloud monitoring" >}}
 
 ## App Plugins: better handling for secure fields
 
@@ -124,9 +124,9 @@ For details on using this functionality, see [GitHub pull request #55313](https:
 Transformations allow you to shape raw data from data sources, like metrics series or GitHub issues, so that you can visualize them as clearly as possible.
 We have extended the Join transformation to support both inner and outer JOINs, which work similarly to SQL inner and outer JOINs.
 
-Also, you can now click on the `x` to clear values in the select fields for the Outer Join and Grouping to Matrix transformations as expected.
+{{< figure src="/static/img/docs/transformations/transform-outer-join-9-2.png" max-width="750px" caption="Query builder groupings for Google Cloud monitoring" >}}
 
-Screenshot
+Also, you can now click on the `x` to clear values in the select fields for the Outer Join and Grouping to Matrix transformations as expected.
 
 ## Custom branding previews
 
@@ -139,7 +139,7 @@ In v9.2, you can preview what your customized Grafana will look like on the cust
 
 Turn on the custom branding configuration page and API with the `customBranding` [feature toggle](https://grafana.com/docs/grafana/latest/packages_api/data/featuretoggles/), and learn more about what you can do with custom branding in our [documentation](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/configure-custom-branding/).
 
-Screenshot
+{{< figure src="/static/img/docs/enterprise/custom-branding-preview-9-2.png" max-width="750px" caption="Previewing a custom branding configuration" >}}
 
 ## Simplified UI to create template variable queries for Loki data source
 
@@ -149,7 +149,7 @@ We have significantly simplified and improved the way you can create template va
 Use drop-downs to choose query type, label, and stream selector, without needing to worry about templating query syntax.
 For more information, refer to [Loki data source documentation](https://grafana.com/docs/grafana/latest/datasources/loki/#query-variable).
 
-Screenshot
+{{< figure src="/static/img/docs/queries/loki-template-variable-queries-9-2.png" max-width="750px" caption="Creating a template variable query for Loki" >}}
 
 ## Authentication and authorization
 
@@ -161,7 +161,7 @@ You can now leave a team empty without any users, or have only Members in a team
 This helps you sync teams and users from a single sign-on provider like Active Directory or Okta, or if you use teams as collections of permissions.
 Previously, teams required at least one Admin user to be in a team.
 
-Screenshot
+{{< figure src="/static/img/docs/manage-users/member-only-team-9-2.png" max-width="750px" caption="Creating a team without an Admin user" >}}
 
 ### Role-based access control is easier to use
 
@@ -172,14 +172,14 @@ _Generally available in Grafana Enterprise and Grafana Cloud Advanced._
 You can now choose a team's roles and permissions when creating a new team or editing an existing team, which helps you grant permissions to teams more efficiently.
 Previously, you could assign roles only when looking at a list of all teams.
 
-Screenshot
+{{< figure src="/static/img/docs/manage-users/team-role-assignment-during-creation-9-2.png" max-width="750px" caption="Assigning roles to a team when creating it" >}}
 
 #### RBAC: Organize custom roles into groups
 
 If you create many custom roles in Grafana – for example, different roles for editing specific dashboards or folders, or specific roles for certain teams in your company – you can now organize them into groups for more efficient navigation, browsing, and custom role assignment.
 For more information on custom roles, see the [documentation](https://grafana.com/docs/grafana/latest/developers/http_api/access_control/#create-a-new-custom-role).
 
-Screenshot
+{{< figure src="/static/img/docs/manage-users/rbac-groups-9-2.png" max-width="750px" caption="Organizing custom roles into RBAC groups" >}}
 
 #### RBAC: Terraform resource for assigning fixed and custom roles to users, teams, and service accounts
 
