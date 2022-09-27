@@ -5284,6 +5284,36 @@ trigger:
   event: cron
 type: docker
 ---
+clone:
+  retries: 3
+kind: pipeline
+name: grafana-com-nightly
+platform:
+  arch: amd64
+  os: linux
+steps:
+- commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.10/grabpl
+  - chmod +x bin/grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: grabpl
+- commands:
+  - ./bin/grabpl publish grafana-com --edition oss
+  depends_on:
+  - grabpl
+  environment:
+    GCP_KEY:
+      from_secret: gcp_key
+    GRAFANA_COM_API_KEY:
+      from_secret: grafana_api_key
+  image: grafana/grafana-ci-deploy:1.3.3
+  name: post-to-grafana-com
+trigger:
+  cron: grafana-com-nightly
+  event: cron
+type: docker
+---
 get:
   name: .dockerconfigjson
   path: secret/data/common/gcr
@@ -5351,6 +5381,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: d30e53c2f89e9e08cb75b2f003c11aeb0f8391e6bf3ea2be65cdeb5a33ab4d43
+hmac: 774fd382b75b0860cc64326952818257df858a0f59144ad9ed978c984b94fd0e
 
 ...

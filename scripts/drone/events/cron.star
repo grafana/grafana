@@ -1,4 +1,5 @@
-load('scripts/drone/vault.star', 'from_secret')
+load('scripts/drone/vault.star', 'from_secret', 'pull_secret')
+load('scripts/drone/steps/lib.star', 'publish_image', 'download_grabpl_step')
 
 aquasec_trivy_image = 'aquasec/trivy:0.21.0'
 
@@ -77,3 +78,25 @@ def slack_job_failed_step(channel, image):
             'status': 'failure'
         }
     }
+
+def post_to_grafana_com_step():
+    return {
+            'name': 'post-to-grafana-com',
+            'image': publish_image,
+            'environment': {
+                'GRAFANA_COM_API_KEY': from_secret('grafana_api_key'),
+                'GCP_KEY': from_secret('gcp_key'),
+            },
+            'depends_on': ['grabpl'],
+            'commands': ['./bin/grabpl publish grafana-com --edition oss'],
+        }
+
+def post_to_grafana_com_pipeline():
+    return cron_job_pipeline(
+            cronName='grafana-com-nightly',
+            name='grafana-com-nightly',
+            steps=[
+                download_grabpl_step(),
+                post_to_grafana_com_step(),
+            ])
+
