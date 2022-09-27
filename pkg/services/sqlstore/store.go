@@ -39,8 +39,6 @@ type Store interface {
 	GetGlobalQuotaByTarget(ctx context.Context, query *models.GetGlobalQuotaByTargetQuery) error
 	WithTransactionalDbSession(ctx context.Context, callback DBTransactionFunc) error
 	InTransaction(ctx context.Context, fn func(ctx context.Context) error) error
-	SearchOrgUsers(ctx context.Context, query *models.SearchOrgUsersQuery) error
-	RemoveOrgUser(ctx context.Context, cmd *models.RemoveOrgUserCommand) error
 	Migrate(bool) error
 	Sync() error
 	Reset() error

@@ -225,15 +225,9 @@ func (s *Service) UpdateOrgUser(ctx context.Context, cmd *org.UpdateOrgUserComma
 	return s.store.UpdateOrgUser(ctx, cmd)
 }
 
-// TODO: remove wrapper around sqlstore
+// TODO: refactor service to call store CRUD method
 func (s *Service) RemoveOrgUser(ctx context.Context, cmd *org.RemoveOrgUserCommand) error {
-	c := &models.RemoveOrgUserCommand{
-		UserId:                   cmd.UserID,
-		OrgId:                    cmd.OrgID,
-		ShouldDeleteOrphanedUser: cmd.ShouldDeleteOrphanedUser,
-		UserWasDeleted:           cmd.UserWasDeleted,
-	}
-	return s.sqlStore.RemoveOrgUser(ctx, c)
+	return s.store.RemoveOrgUser(ctx, cmd)
 }
 
 // TODO: refactor service to call store CRUD method
@@ -241,43 +235,7 @@ func (s *Service) GetOrgUsers(ctx context.Context, query *org.GetOrgUsersQuery) 
 	return s.store.GetOrgUsers(ctx, query)
 }
 
-// TODO: remove wrapper around sqlstore
+// TODO: refactor service to call store CRUD method
 func (s *Service) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
-	q := &models.SearchOrgUsersQuery{
-		OrgID: query.OrgID,
-		Query: query.Query,
-		Page:  query.Page,
-		Limit: query.Limit,
-		User:  query.User,
-	}
-	err := s.sqlStore.SearchOrgUsers(ctx, q)
-	if err != nil {
-		return nil, err
-	}
-
-	result := &org.SearchOrgUsersQueryResult{
-		TotalCount: q.Result.TotalCount,
-		OrgUsers:   make([]*org.OrgUserDTO, 0),
-		Page:       q.Result.Page,
-		PerPage:    q.Result.PerPage,
-	}
-
-	for _, user := range q.Result.OrgUsers {
-		result.OrgUsers = append(result.OrgUsers, &org.OrgUserDTO{
-			OrgID:         user.OrgId,
-			UserID:        user.UserId,
-			Login:         user.Login,
-			Email:         user.Email,
-			Name:          user.Name,
-			AvatarURL:     user.AvatarUrl,
-			Role:          user.Role,
-			LastSeenAt:    user.LastSeenAt,
-			LastSeenAtAge: user.LastSeenAtAge,
-			Updated:       user.Updated,
-			Created:       user.Created,
-			AccessControl: user.AccessControl,
-			IsDisabled:    user.IsDisabled,
-		})
-	}
-	return result, nil
+	return s.store.SearchOrgUsers(ctx, query)
 }
