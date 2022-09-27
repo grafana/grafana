@@ -21,8 +21,8 @@ import IoArrowRightA from 'react-icons/lib/io/arrow-right-a';
 import { GrafanaTheme2, TraceKeyValuePair } from '@grafana/data';
 import { stylesFactory, withTheme2 } from '@grafana/ui';
 
+import { DURATION, NONE, TAG } from '../../../../public/app/core/components/SpanBarSettings/SpanBarSettings';
 import { autoColor } from '../Theme';
-import { DURATION, NONE, TAG } from '../settings/SpanBarSettings';
 import { SpanBarOptions, SpanLinkFunc, TNil } from '../types';
 import { SpanLinks } from '../types/links';
 import { TraceSpan } from '../types/trace';

@@ -19,10 +19,10 @@ import { GrafanaTheme2, LinkModel, TimeZone } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { stylesFactory, withTheme2 } from '@grafana/ui';
 
+import { SpanBarOptions } from '../../../../public/app/core/components/SpanBarSettings/SpanBarSettings';
 import { Accessors } from '../ScrollManager';
 import { autoColor } from '../Theme';
 import { merge as mergeShortcuts } from '../keyboard-shortcuts';
-import { SpanBarOptions } from '../settings/SpanBarSettings';
 import { SpanLinkFunc, TNil } from '../types';
 import TTraceTimeline from '../types/TTraceTimeline';
 import { TraceSpan, Trace, TraceLog, TraceKeyValuePair, TraceLink, TraceSpanReference } from '../types/trace';
