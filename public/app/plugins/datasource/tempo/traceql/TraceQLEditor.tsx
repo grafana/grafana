@@ -64,7 +64,7 @@ function setupPlaceholder(editor: monacoTypes.editor.IStandaloneCodeEditor, mona
     {
       range: new monaco.Range(1, 1, 1, 1),
       options: {
-        className: styles.placeholder,
+        className: styles.placeholder, // The placeholder text is in styles.placeholder
         isWholeLine: true,
       },
     },
