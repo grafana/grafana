@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -47,7 +47,7 @@ func (hs *HTTPServer) ListGnetPlugins(c *models.ReqContext) {
 		}
 
 		rewriteResponse := func(b []byte) {
-			body := ioutil.NopCloser(bytes.NewReader(b))
+			body := io.NopCloser(bytes.NewReader(b))
 			r.Body = body
 			r.ContentLength = int64(len(b))
 			r.Header.Set("Content-Length", strconv.Itoa(len(b)))
@@ -136,7 +136,7 @@ func (*HTTPServer) parsePluginList(r *http.Response, b []byte) (map[string]inter
 }
 
 func (*HTTPServer) readBody(r *http.Response) ([]byte, error) {
-	b, errRead := ioutil.ReadAll(r.Body)
+	b, errRead := io.ReadAll(r.Body)
 	if errRead != nil {
 		return nil, errRead
 	}
