@@ -171,9 +171,6 @@ func (f *FakeRuleStore) DeleteAlertRulesByUID(_ context.Context, orgID int64, UI
 	return nil
 }
 
-func (f *FakeRuleStore) DeleteAlertInstancesByRuleUID(_ context.Context, _ int64, _ string) error {
-	return nil
-}
 func (f *FakeRuleStore) GetAlertRuleByUID(_ context.Context, q *models.GetAlertRuleByUIDQuery) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
@@ -323,25 +320,6 @@ func (f *FakeRuleStore) ListAlertRules(_ context.Context, q *models.ListAlertRul
 			continue
 		}
 		q.Result = append(q.Result, r)
-	}
-
-	return nil
-}
-
-func (f *FakeRuleStore) GetRuleGroups(_ context.Context, q *models.ListRuleGroupsQuery) error {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-	f.RecordedOps = append(f.RecordedOps, *q)
-
-	m := make(map[string]struct{})
-	for _, rules := range f.Rules {
-		for _, rule := range rules {
-			m[rule.RuleGroup] = struct{}{}
-		}
-	}
-
-	for s := range m {
-		q.Result = append(q.Result, s)
 	}
 
 	return nil
