@@ -465,9 +465,17 @@ func setupHTTPServerWithCfgDb(
 }
 
 func callAPI(server *web.Mux, method, path string, body io.Reader, t *testing.T) *httptest.ResponseRecorder {
+	return callAPIWithOpts(t, server, method, path, body, func(req *http.Request) {
+		req.Header.Set("Content-Type", "application/json")
+	})
+}
+
+func callAPIWithOpts(t *testing.T, server *web.Mux, method, path string, body io.Reader, opts ...func(*http.Request)) *httptest.ResponseRecorder {
 	req, err := http.NewRequest(method, path, body)
 	require.NoError(t, err)
-	req.Header.Set("Content-Type", "application/json")
+	for _, opt := range opts {
+		opt(req)
+	}
 	recorder := httptest.NewRecorder()
 	server.ServeHTTP(recorder, req)
 	return recorder

@@ -1,0 +1,180 @@
+{
+	"items": [
+	  {
+		"status": "enterprise",
+		"id": 713,
+		"typeId": 1,
+		"typeName": "Application",
+		"typeCode": "app",
+		"slug": "grafana-enterprise-logs-app",
+		"name": "Grafana Enterprise Logs",
+		"description": "",
+		"version": "2.6.0",
+		"versionStatus": "active",
+		"versionSignatureType": "grafana",
+		"versionSignedByOrg": "grafana",
+		"versionSignedByOrgName": "Grafana Labs",
+		"userId": 0,
+		"orgId": 5000,
+		"orgName": "Grafana Labs",
+		"orgSlug": "grafana",
+		"orgUrl": "https://grafana.org",
+		"url": "https://github.com/grafana/gex-plugins/plugins/grafana-enterprise-logs-app",
+		"createdAt": "2021-02-17T14:15:16.000Z",
+		"updatedAt": "2022-07-28T18:23:44.000Z",
+		"downloads": 198691,
+		"verified": false,
+		"featured": 0,
+		"internal": false,
+		"downloadSlug": "grafana-enterprise-logs-app",
+		"popularity": 0.0051,
+		"signatureType": "grafana",
+		"packages": {
+		  "any": {
+			"md5": "650abe49929afd9bd58ae5ffe8fd2d29",
+			"sha256": "6506c8a8e04d1920dcf70538723ce2fbb82e12af4f6e20a094244da1e7b21a4d",
+			"packageName": "any",
+			"downloadUrl": "/api/plugins/grafana-enterprise-logs-app/versions/2.6.0/download"
+		  }
+		},
+		"links": [
+		  {
+			"rel": "self",
+			"href": "/plugins/grafana-enterprise-logs-app"
+		  },
+		  {
+			"rel": "versions",
+			"href": "/plugins/grafana-enterprise-logs-app/versions"
+		  },
+		  {
+			"rel": "latest",
+			"href": "/plugins/grafana-enterprise-logs-app/versions/2.6.0"
+		  },
+		  {
+			"rel": "download",
+			"href": "/plugins/grafana-enterprise-logs-app/versions/2.6.0/download"
+		  }
+		]
+	  },
+	  {
+		"status": "enterprise",
+		"id": 664,
+		"typeId": 1,
+		"typeName": "Application",
+		"typeCode": "app",
+		"slug": "grafana-metrics-enterprise-app",
+		"name": "Grafana Enterprise Metrics",
+		"description": "",
+		"version": "3.6.3",
+		"versionStatus": "active",
+		"versionSignatureType": "grafana",
+		"versionSignedByOrg": "grafana",
+		"versionSignedByOrgName": "Grafana Labs",
+		"userId": 0,
+		"orgId": 5000,
+		"orgName": "Grafana Labs",
+		"orgSlug": "grafana",
+		"orgUrl": "https://grafana.org",
+		"url": "https://github.com/grafana/gex-plugins/plugins/grafana-metrics-enterprise-app",
+		"createdAt": "2020-09-21T20:30:41.000Z",
+		"updatedAt": "2022-09-23T17:16:58.000Z",
+		"downloads": 114530,
+		"verified": false,
+		"featured": 0,
+		"internal": false,
+		"downloadSlug": "grafana-metrics-enterprise-app",
+		"popularity": 0.0516,
+		"signatureType": "grafana",
+		"packages": {
+		  "any": {
+			"md5": "4a0bec612f6a9a38410311791c1e6c03",
+			"sha256": "db1705c5c86fde1e5212bb02577eb1a77c974b0bae712d6ad1f21050cd18f1cd",
+			"packageName": "any",
+			"downloadUrl": "/api/plugins/grafana-metrics-enterprise-app/versions/3.6.3/download"
+		  }
+		},
+		"links": [
+		  {
+			"rel": "self",
+			"href": "/plugins/grafana-metrics-enterprise-app"
+		  },
+		  {
+			"rel": "versions",
+			"href": "/plugins/grafana-metrics-enterprise-app/versions"
+		  },
+		  {
+			"rel": "latest",
+			"href": "/plugins/grafana-metrics-enterprise-app/versions/3.6.3"
+		  },
+		  {
+			"rel": "download",
+			"href": "/plugins/grafana-metrics-enterprise-app/versions/3.6.3/download"
+		  }
+		]
+	  },
+	  {
+		"status": "enterprise",
+		"id": 761,
+		"typeId": 1,
+		"typeName": "Application",
+		"typeCode": "app",
+		"slug": "grafana-enterprise-traces-app",
+		"name": "Grafana Enterprise Traces",
+		"description": "",
+		"version": "1.1.0",
+		"versionStatus": "active",
+		"versionSignatureType": "grafana",
+		"versionSignedByOrg": "grafana",
+		"versionSignedByOrgName": "Grafana Labs",
+		"userId": 0,
+		"orgId": 5000,
+		"orgName": "Grafana Labs",
+		"orgSlug": "grafana",
+		"orgUrl": "https://grafana.org",
+		"url": "https://github.com/grafana/gex-plugins/plugins/grafana-enterprise-traces-app",
+		"createdAt": "2021-11-09T14:53:07.000Z",
+		"updatedAt": "2022-05-02T23:32:58.000Z",
+		"downloads": 163422,
+		"verified": false,
+		"featured": 0,
+		"internal": false,
+		"downloadSlug": "grafana-enterprise-traces-app",
+		"popularity": 0.003,
+		"signatureType": "grafana",
+		"packages": {
+		  "any": {
+			"md5": "4046306c978c71f657295f07a4c76bc0",
+			"sha256": "2da5276d5f32cea74f1d23f8f627937f31e86283f06edc017b6e36df0db34d48",
+			"packageName": "any",
+			"downloadUrl": "/api/plugins/grafana-enterprise-traces-app/versions/1.1.0/download"
+		  }
+		},
+		"links": [
+		  {
+			"rel": "self",
+			"href": "/plugins/grafana-enterprise-traces-app"
+		  },
+		  {
+			"rel": "versions",
+			"href": "/plugins/grafana-enterprise-traces-app/versions"
+		  },
+		  {
+			"rel": "latest",
+			"href": "/plugins/grafana-enterprise-traces-app/versions/1.1.0"
+		  },
+		  {
+			"rel": "download",
+			"href": "/plugins/grafana-enterprise-traces-app/versions/1.1.0/download"
+		  }
+		]
+	  }
+	],
+	"orderBy": "weight",
+	"direction": "asc",
+	"links": [
+	  {
+	    "rel": "self",
+	    "href": "/plugins"
+	  }
+	]
+}

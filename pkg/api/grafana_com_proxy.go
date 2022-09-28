@@ -41,9 +41,10 @@ func (hs *HTTPServer) ListGnetPlugins(c *models.ReqContext) {
 			return nil
 		}
 
-		b, errReadBody := hs.readBody(r)
-		if errReadBody != nil {
-			return errReadBody
+		b, errRead := hs.readGNETResponseBody(r)
+		if errRead != nil {
+			hs.log.Warn("error reading gnet plugin list", "error", errRead)
+			return nil
 		}
 
 		rewriteResponse := func(b []byte) {
@@ -53,19 +54,25 @@ func (hs *HTTPServer) ListGnetPlugins(c *models.ReqContext) {
 			r.Header.Set("Content-Length", strconv.Itoa(len(b)))
 		}
 
-		pluginList, errPluginList := hs.parsePluginList(r, b)
-		if errPluginList != nil {
-			return errPluginList
+		pluginList := map[string]interface{}{}
+		if errUnmarshal := json.Unmarshal(b, &pluginList); errUnmarshal != nil {
+			hs.log.Warn("error parsing gnet plugin list", "error", errUnmarshal)
+			rewriteResponse(b)
+			return nil
 		}
 
 		ok := hs.addMetadataToGNETPluginList(pluginList, c)
 		if !ok {
+			hs.log.Warn("could not add metadata to gnet plugins list")
 			rewriteResponse(b)
+			return nil
 		}
 
 		newBody, errMarshal := json.Marshal(pluginList)
 		if errMarshal != nil {
+			hs.log.Warn("could not add marshal modified gnet plugin list", "err", errMarshal)
 			rewriteResponse(b)
+			return nil
 		}
 
 		if r.Header.Get("Content-Encoding") == "gzip" {
@@ -116,35 +123,22 @@ func (*HTTPServer) addMetadataToGNETPluginList(pluginList map[string]interface{}
 	return true
 }
 
-func (*HTTPServer) parsePluginList(r *http.Response, b []byte) (map[string]interface{}, error) {
-	pluginList := map[string]interface{}{}
-	if r.Header.Get("Content-Encoding") == "gzip" {
+func (*HTTPServer) readGNETResponseBody(r *http.Response) ([]byte, error) {
+	var reader io.ReadCloser
+	switch r.Header.Get("Content-Encoding") {
+	case "gzip":
+		var errGzip error
+		reader, errGzip = gzip.NewReader(r.Body)
+		if errGzip != nil {
+			return nil, errGzip
+		}
 		r.Header.Del("Content-Length")
-		zr, errUnzip := gzip.NewReader(bytes.NewReader(b))
-		if errUnzip != nil {
-			return nil, errUnzip
-		}
-		if errDecode := json.NewDecoder(zr).Decode(&pluginList); errDecode != nil {
-			return nil, errDecode
-		}
-	} else {
-		if errUnmarshal := json.Unmarshal(b, &pluginList); errUnmarshal != nil {
-			return nil, errUnmarshal
-		}
+	default:
+		reader = r.Body
 	}
-	return pluginList, nil
-}
+	defer reader.Close()
 
-func (*HTTPServer) readBody(r *http.Response) ([]byte, error) {
-	b, errRead := io.ReadAll(r.Body)
-	if errRead != nil {
-		return nil, errRead
-	}
-	errClose := r.Body.Close()
-	if errClose != nil {
-		return nil, errClose
-	}
-	return b, nil
+	return io.ReadAll(reader)
 }
 
 func ReverseProxyGnetReq(logger log.Logger, proxyPath string, version string) *httputil.ReverseProxy {
