@@ -129,3 +129,15 @@ func (f *FakeUserStore) GetByLogin(ctx context.Context, query *user.GetUserByLog
 func (f *FakeUserStore) GetByEmail(ctx context.Context, query *user.GetUserByEmailQuery) (*user.User, error) {
 	return f.ExpectedUser, f.ExpectedError
 }
+
+func (f *FakeUserStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) error {
+	return f.ExpectedError
+}
+
+func (f *FakeUserStore) ChangePassword(ctx context.Context, cmd *user.ChangeUserPasswordCommand) error {
+	return f.ExpectedError
+}
+
+func (f *FakeUserStore) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLastSeenAtCommand) error {
+	return f.ExpectedError
+}
