@@ -305,7 +305,7 @@ func calculatePrometheusInterval(model *QueryModel, timeInterval string, query b
 		return time.Duration(0), err
 	}
 	calculatedInterval := intervalCalculator.Calculate(query.TimeRange, minInterval, query.MaxDataPoints)
-	safeInterval := intervalCalculator.CalculateSafeInterval(query.TimeRange, int64(11000))
+	safeInterval := intervalCalculator.CalculateSafeInterval(query.TimeRange, int64(safeRes))
 
 	adjustedInterval := safeInterval.Value
 	if calculatedInterval.Value > safeInterval.Value {
@@ -366,21 +366,6 @@ func interpolateVariables(model *QueryModel, interval time.Duration, timeRange t
 	expr = strings.ReplaceAll(expr, varRangeAlt, strconv.FormatInt(rangeSRounded, 10)+"s")
 	expr = strings.ReplaceAll(expr, varRateIntervalAlt, rateInterval.String())
 	return expr
-}
-
-func isVariableInterval(interval string) bool {
-	if interval == varInterval || interval == varIntervalMs || interval == varRateInterval {
-		return true
-	}
-	//Repetitive code, we should have functionality to unify these
-	if interval == varIntervalAlt || interval == varIntervalMsAlt || interval == varRateIntervalAlt {
-		return true
-	}
-	return false
-}
-
-func alignTimeRange(t time.Time, step time.Duration, offset int64) time.Time {
-	return time.Unix(int64(math.Floor((float64(t.Unix()+offset)/step.Seconds()))*step.Seconds()-float64(offset)), 0)
 }
 
 func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data.Frames) data.Frames {
@@ -645,4 +630,21 @@ func newDataFrame(name string, typ string, fields ...*data.Field) *data.Frame {
 	}
 
 	return frame
+}
+
+func alignTimeRange(t time.Time, step time.Duration, offset int64) time.Time {
+	offsetNano := float64(offset * 1e9)
+	stepNano := float64(step.Nanoseconds())
+	return time.Unix(0, int64(math.Floor((float64(t.UnixNano())+offsetNano)/stepNano)*stepNano-offsetNano))
+}
+
+func isVariableInterval(interval string) bool {
+	if interval == varInterval || interval == varIntervalMs || interval == varRateInterval {
+		return true
+	}
+	//Repetitive code, we should have functionality to unify these
+	if interval == varIntervalAlt || interval == varIntervalMsAlt || interval == varRateIntervalAlt {
+		return true
+	}
+	return false
 }
