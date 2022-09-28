@@ -80,18 +80,18 @@ func (hs *HTTPServer) GetRecipeList(c *models.ReqContext) response.Response {
 
 func (hs *HTTPServer) GetRecipeByID(c *models.ReqContext) response.Response {
 	recipeID := web.Params(c.Req)[":recipeId"]
+	recipe := FindRecipeById(recipes, recipeID)
 
-	for _, recipe := range recipes {
-		if recipe.Id == recipeID {
-			return response.JSON(http.StatusOK, recipe)
-		}
-	}
-
-	return response.JSON(http.StatusNotFound, nil)
+	return response.JSON(http.StatusNotFound, &recipe)
 }
 
 func (hs *HTTPServer) InstallRecipe(c *models.ReqContext) response.Response {
 	recipeID := web.Params(c.Req)[":recipeId"]
+	recipe := FindRecipeById(recipes, recipeID)
+
+	if recipe == nil {
+		return response.Error(http.StatusNotFound, "Plugin recipe not found with the same id", nil)
+	}
 
 	return response.Success("Plugin settings updated")
 }
@@ -102,6 +102,16 @@ func (hs *HTTPServer) UninstallRecipe(c *models.ReqContext) response.Response {
 
 func (hs *HTTPServer) GetRecipeStatus(c *models.ReqContext) response.Response {
 	return response.Success("Plugin settings updated")
+}
+
+func FindRecipeById(recipes []Recipe, id string) *Recipe {
+	for _, recipe := range recipes {
+		if recipe.Id == id {
+			return &recipe
+		}
+	}
+
+	return nil
 }
 
 // func installRecipe(p *RecipeStep) {
