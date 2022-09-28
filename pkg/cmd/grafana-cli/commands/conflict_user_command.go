@@ -411,7 +411,7 @@ func (r *ConflictResolver) showChanges() {
 			if user.ID == mainUser.ID {
 				continue
 			}
-			// mergable users
+			// mergeable users
 			b.WriteString(fmt.Sprintf("id: %s, email: %s, login: %s\n", user.ID, user.Email, user.Login))
 		}
 		b.WriteString("\n")
