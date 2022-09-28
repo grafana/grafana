@@ -37,13 +37,16 @@ export function buildPluginSectionNav(
   pluginNav: NavModel | null,
   navIndex: NavIndex,
   pluginId: string
-) {
+): NavModel | undefined {
   // When topnav is disabled we only just show pluginNav like before
   if (!config.featureToggles.topnav) {
-    return pluginNav;
+    return pluginNav ?? undefined;
   }
 
-  const section = { ...getPluginSection(location, navIndex, pluginId) };
+  const section = getPluginSection(location, navIndex, pluginId);
+  if (!section) {
+    return undefined;
+  }
 
   // If we have plugin nav don't set active page in section as it will cause double breadcrumbs
   const currentUrl = config.appSubUrl + location.pathname + location.search;
@@ -90,14 +93,15 @@ export function getPluginSection(location: HistoryLocation, navIndex: NavIndex, 
     return parent.parentItem ?? parent;
   }
 
+  // Some plugins like cloud home don't have any precense in the navtree so we need to allow those
   const navTreeNodeForPlugin = navIndex[`plugin-page-${pluginId}`];
   if (!navTreeNodeForPlugin) {
-    throw new Error('Plugin not found in navigation tree');
+    return { id: 'root-plugin-page', text: 'Root plugin page', hideFromBreadcrumbs: true };
   }
 
   if (!navTreeNodeForPlugin.parentItem) {
     throw new Error('Could not find plugin section');
   }
 
-  return navTreeNodeForPlugin.parentItem;
+  return { ...navTreeNodeForPlugin.parentItem };
 }

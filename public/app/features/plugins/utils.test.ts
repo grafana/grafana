@@ -86,12 +86,10 @@ describe('buildPluginSectionNav', () => {
     expect(result?.node.text).toBe('Standalone page');
   });
 
-  it('Should throw error if app not found in navtree', () => {
+  it('Should not throw error just return null for plugins that dont exist in navtree', () => {
     config.featureToggles.topnav = true;
-    const action = () => {
-      buildPluginSectionNav({} as HistoryLocation, pluginNav, navIndex, 'app3');
-    };
-    expect(action).toThrowError();
+    const result = buildPluginSectionNav({} as HistoryLocation, pluginNav, navIndex, 'app3');
+    expect(result).toBeNull();
   });
 
   it('Should throw error if app has no section', () => {

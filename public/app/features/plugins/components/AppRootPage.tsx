@@ -8,7 +8,6 @@ import { AppEvents, AppPlugin, AppPluginMeta, KeyValue, NavModel, PluginType } f
 import { config } from '@grafana/runtime';
 import { getNotFoundNav, getWarningNav, getExceptionNav } from 'app/angular/services/nav_model_srv';
 import { Page } from 'app/core/components/Page/Page';
-import { PageProps } from 'app/core/components/Page/types';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { appEvents } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -55,7 +54,7 @@ export function AppRootPage({ match, queryParams, location }: Props) {
   );
 
   if (!plugin || match.params.pluginId !== plugin.meta.id) {
-    return <Page {...getLoadingPageProps(sectionNav)}>{loading && <PageLoader />}</Page>;
+    return <Page navModel={sectionNav}>{loading && <PageLoader />}</Page>;
   }
 
   if (!plugin.root) {
@@ -121,18 +120,6 @@ const stateSlice = createSlice({
     },
   },
 });
-
-function getLoadingPageProps(sectionNav: NavModel | null): Partial<PageProps> {
-  if (config.featureToggles.topnav && sectionNav) {
-    return { navModel: sectionNav };
-  }
-
-  const loading = { text: 'Loading plugin' };
-
-  return {
-    navModel: { main: loading, node: loading },
-  };
-}
 
 async function loadAppPlugin(pluginId: string, dispatch: React.Dispatch<AnyAction>) {
   try {

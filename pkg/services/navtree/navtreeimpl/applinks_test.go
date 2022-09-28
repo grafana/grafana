@@ -165,6 +165,7 @@ func TestAddAppLinks(t *testing.T) {
 }
 
 func TestReadingNavigationSettings(t *testing.T) {
+
 	t.Run("Should include defaults", func(t *testing.T) {
 		service := ServiceImpl{
 			cfg: setting.NewCfg(),
