@@ -20,7 +20,6 @@ import {
   variableEditorMounted,
   variableEditorUnMounted,
 } from './reducer';
-import { VariableNameConstraints } from './types';
 
 export const variableEditorMount = (identifier: KeyedVariableIdentifier): ThunkResult<void> => {
   return async (dispatch) => {
@@ -48,10 +47,6 @@ export const changeVariableName = (identifier: KeyedVariableIdentifier, newName:
 
     if (!newName.match(/^\w+$/)) {
       errorText = 'Only word and digit characters are allowed in variable names';
-    }
-
-    if (newName.length > VariableNameConstraints.MaxSize) {
-      errorText = 'Variable name cannot be bigger than 50 characters';
     }
 
     const variables = getVariablesByKey(uid, getState());
