@@ -61,11 +61,27 @@ const defaultProps = {
   range: {} as any,
   timeZone: InternalTimeZones.utc,
   resultsStyle: TABLE_RESULTS_STYLE.raw,
+  isPrometheus: false,
 };
 
 describe('TableContainer', () => {
   it('should render component', () => {
     render(<TableContainer {...defaultProps} />);
+
+    expect(getTable()).toBeInTheDocument();
+    const rows = within(getTable()).getAllByRole('row');
+    expect(rows).toHaveLength(5);
+    expect(getRowsData(rows)).toEqual([
+      { time: '2021-01-01 00:00:00', text: 'test_string_1' },
+      { time: '2021-01-01 03:00:00', text: 'test_string_2' },
+      { time: '2021-01-01 01:00:00', text: 'test_string_3' },
+      { time: '2021-01-01 02:00:00', text: 'test_string_4' },
+    ]);
+  });
+
+  it('should render component for prometheus', () => {
+    render(<TableContainer {...defaultProps} isPrometheus={true} />);
+
     expect(screen.queryAllByRole('table').length).toBe(0);
     fireEvent.click(getTableToggle());
 
@@ -92,8 +108,6 @@ describe('TableContainer', () => {
 
   it('should update time when timezone changes', () => {
     const { rerender } = render(<TableContainer {...defaultProps} />);
-    expect(screen.queryAllByRole('table').length).toBe(0);
-    fireEvent.click(getTableToggle());
     const rowsBeforeChange = within(getTable()).getAllByRole('row');
     expect(getRowsData(rowsBeforeChange)).toEqual([
       { time: '2021-01-01 00:00:00', text: 'test_string_1' },
