@@ -158,6 +158,7 @@ export interface ExploreItemState {
   showLogs?: boolean;
   showMetrics?: boolean;
   showTable?: boolean;
+  showRawPrometheus?: boolean;
   showTrace?: boolean;
   showNodeGraph?: boolean;
 
@@ -226,6 +227,7 @@ export interface ExplorePanelData extends PanelData {
   logsFrames: DataFrame[];
   traceFrames: DataFrame[];
   nodeGraphFrames: DataFrame[];
+  rawPrometheusFrames: DataFrame[];
   graphResult: DataFrame[] | null;
   tableResult: DataFrame | null;
   logsResult: LogsModel | null;

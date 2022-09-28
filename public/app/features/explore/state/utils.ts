@@ -80,6 +80,7 @@ export const createEmptyQueryResponse = (): ExplorePanelData => ({
   traceFrames: [],
   nodeGraphFrames: [],
   tableFrames: [],
+  rawPrometheusFrames: [],
   graphResult: null,
   logsResult: null,
   tableResult: null,

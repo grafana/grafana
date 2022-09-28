@@ -249,10 +249,11 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     );
   }
 
-  renderTablePanel(width: number) {
+  renderTablePanel(width: number, rawPrometheus = false) {
     const { exploreId, datasourceInstance, timeZone } = this.props;
     return (
       <TableContainer
+        showRawPrometheus={rawPrometheus}
         ariaLabel={selectors.pages.Explore.General.table}
         width={width}
         exploreId={exploreId}
@@ -325,6 +326,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       theme,
       showMetrics,
       showTable,
+      showRawPrometheus,
       showLogs,
       showTrace,
       showNodeGraph,
@@ -343,6 +345,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         queryResponse.graphFrames,
         queryResponse.nodeGraphFrames,
         queryResponse.tableFrames,
+        queryResponse.rawPrometheusFrames,
         queryResponse.traceFrames,
       ].every((e) => e.length === 0);
 
@@ -385,6 +388,9 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                         <>
                           {showMetrics && graphResult && (
                             <ErrorBoundaryAlert>{this.renderGraphPanel(width)}</ErrorBoundaryAlert>
+                          )}
+                          {showRawPrometheus && (
+                            <ErrorBoundaryAlert>{this.renderTablePanel(width, true)}</ErrorBoundaryAlert>
                           )}
                           {showTable && <ErrorBoundaryAlert>{this.renderTablePanel(width)}</ErrorBoundaryAlert>}
                           {showLogs && <ErrorBoundaryAlert>{this.renderLogsPanel(width)}</ErrorBoundaryAlert>}
@@ -441,6 +447,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showNodeGraph,
     loading,
     graphStyle,
+    showRawPrometheus,
   } = item;
 
   return {
@@ -459,6 +466,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showTable,
     showTrace,
     showNodeGraph,
+    showRawPrometheus,
     loading,
     graphStyle,
   };

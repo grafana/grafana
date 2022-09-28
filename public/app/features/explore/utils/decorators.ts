@@ -27,6 +27,7 @@ import { preProcessPanelData } from '../../query/state/runRequest';
 export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData => {
   const graphFrames: DataFrame[] = [];
   const tableFrames: DataFrame[] = [];
+  const rawPrometheusFrames: DataFrame[] = [];
   const logsFrames: DataFrame[] = [];
   const traceFrames: DataFrame[] = [];
   const nodeGraphFrames: DataFrame[] = [];
@@ -44,6 +45,9 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
         break;
       case 'table':
         tableFrames.push(frame);
+        break;
+      case 'rawPrometheus':
+        rawPrometheusFrames.push(frame);
         break;
       case 'nodeGraph':
         nodeGraphFrames.push(frame);
@@ -66,6 +70,7 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
     logsFrames,
     traceFrames,
     nodeGraphFrames,
+    rawPrometheusFrames,
     graphResult: null,
     tableResult: null,
     logsResult: null,
@@ -86,7 +91,9 @@ export const decorateWithGraphResult = (data: ExplorePanelData): ExplorePanelDat
  * multiple results and so this should be used with mergeMap or similar to unbox the internal observable.
  */
 export const decorateWithTableResult = (data: ExplorePanelData): Observable<ExplorePanelData> => {
-  if (data.tableFrames.length === 0) {
+  const tableFrames = data.tableFrames.length ? data.tableFrames : data.rawPrometheusFrames;
+
+  if (tableFrames.length === 0) {
     return of({ ...data, tableResult: null });
   }
 
@@ -103,14 +110,14 @@ export const decorateWithTableResult = (data: ExplorePanelData): Observable<Expl
     return 0;
   });
 
-  const hasOnlyTimeseries = data.tableFrames.every((df) => isTimeSeries(df));
+  const hasOnlyTimeseries = tableFrames.every((df) => isTimeSeries(df));
 
   // If we have only timeseries we do join on default time column which makes more sense. If we are showing
   // non timeseries or some mix of data we are not trying to join on anything and just try to merge them in
   // single table, which may not make sense in most cases, but it's up to the user to query something sensible.
   const transformer = hasOnlyTimeseries
-    ? of(data.tableFrames).pipe(standardTransformers.joinByFieldTransformer.operator({}))
-    : of(data.tableFrames).pipe(standardTransformers.mergeTransformer.operator({}));
+    ? of(tableFrames).pipe(standardTransformers.joinByFieldTransformer.operator({}))
+    : of(tableFrames).pipe(standardTransformers.mergeTransformer.operator({}));
 
   return transformer.pipe(
     map((frames) => {

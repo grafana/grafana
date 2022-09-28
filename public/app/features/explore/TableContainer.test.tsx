@@ -61,7 +61,7 @@ const defaultProps = {
   range: {} as any,
   timeZone: InternalTimeZones.utc,
   resultsStyle: TABLE_RESULTS_STYLE.raw,
-  isPrometheus: false,
+  showRawPrometheus: false,
 };
 
 describe('TableContainer', () => {
@@ -80,7 +80,7 @@ describe('TableContainer', () => {
   });
 
   it('should render component for prometheus', () => {
-    render(<TableContainer {...defaultProps} isPrometheus={true} />);
+    render(<TableContainer {...defaultProps} showRawPrometheus={true} />);
 
     expect(screen.queryAllByRole('table').length).toBe(0);
     fireEvent.click(getTableToggle());

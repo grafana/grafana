@@ -59,6 +59,7 @@ function setup(error: DataQueryError) {
     graphResult: null,
     logsResult: null,
     tableResult: null,
+    rawPrometheusFrames: [],
   };
   render(
     <Provider store={store}>

@@ -10,8 +10,6 @@ import { PANEL_BORDER } from 'app/core/constants';
 import { StoreState, TABLE_RESULTS_STYLE } from 'app/types';
 import { ExploreId, ExploreItemState, TABLE_RESULTS_STYLES, TableResultsStyle } from 'app/types/explore';
 
-import { PrometheusDatasource } from '../../plugins/datasource/prometheus/datasource';
-
 import { MetaInfoText } from './MetaInfoText';
 import RawListContainer from './RawListContainer';
 import { splitOpen } from './state/main';
@@ -23,11 +21,11 @@ interface TableContainerProps {
   width: number;
   timeZone: TimeZone;
   onCellFilterAdded?: (filter: FilterItem) => void;
-  isPrometheus?: boolean;
+  showRawPrometheus: boolean;
 }
 
 interface TableContainerState {
-  resultsStyle?: TableResultsStyle;
+  resultsStyle: TableResultsStyle;
 }
 
 function mapStateToProps(state: StoreState, { exploreId }: TableContainerProps) {
@@ -36,8 +34,7 @@ function mapStateToProps(state: StoreState, { exploreId }: TableContainerProps) 
   const { loading: loadingInState, tableResult, range } = item;
   const loading = tableResult && tableResult.length > 0 ? false : loadingInState;
 
-  const isPrometheus = item.datasourceInstance instanceof PrometheusDatasource;
-  return { loading, tableResult, range, isPrometheus };
+  return { loading, tableResult, range };
 }
 
 const mapDispatchToProps = {
@@ -51,7 +48,7 @@ type Props = TableContainerProps & ConnectedProps<typeof connector>;
 export class TableContainer extends PureComponent<Props, TableContainerState> {
   constructor(props: Props) {
     super(props);
-    if (props.isPrometheus) {
+    if (props.showRawPrometheus) {
       this.state = {
         resultsStyle: TABLE_RESULTS_STYLE.raw,
       };

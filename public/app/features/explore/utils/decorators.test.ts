@@ -83,6 +83,7 @@ const createExplorePanelData = (args: Partial<ExplorePanelData>): ExplorePanelDa
     tableResult: undefined as unknown as null,
     traceFrames: [],
     nodeGraphFrames: [],
+    rawPrometheusFrames: [],
   };
 
   return { ...defaults, ...args };

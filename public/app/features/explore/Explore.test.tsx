@@ -83,6 +83,7 @@ const dummyProps: Props = {
   splitOpen: (() => {}) as any,
   changeGraphStyle: () => {},
   graphStyle: 'lines',
+  showRawPrometheus: false,
 };
 
 jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {

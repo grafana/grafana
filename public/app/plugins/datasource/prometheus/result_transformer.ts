@@ -210,7 +210,7 @@ export function transformDFToTable(dfs: DataFrame[]): DataFrame[] {
     return {
       refId,
       fields,
-      meta: { ...dfs[0].meta, preferredVisualisationType: 'table' as PreferredVisualisationType },
+      meta: { ...dfs[0].meta, preferredVisualisationType: 'rawPrometheus' as PreferredVisualisationType },
       length: timeField.values.length,
     };
   });
@@ -245,7 +245,7 @@ export function transform(
     valueWithRefId: transformOptions.target.valueWithRefId,
     meta: {
       // Fix for showing of Prometheus results in Explore table
-      preferredVisualisationType: transformOptions.query.instant ? 'table' : 'graph',
+      preferredVisualisationType: transformOptions.query.instant ? 'rawPrometheus' : 'graph',
     },
   };
   const prometheusResult = response.data.data;

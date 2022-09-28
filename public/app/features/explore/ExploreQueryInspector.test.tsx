@@ -48,6 +48,7 @@ const setup = (propOverrides = {}) => {
       graphResult: null,
       logsResult: null,
       tableResult: null,
+      rawPrometheusFrames: [],
     },
     runQueries: jest.fn(),
     ...propOverrides,
