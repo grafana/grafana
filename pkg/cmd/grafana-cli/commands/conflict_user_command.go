@@ -413,7 +413,6 @@ func (r *ConflictResolver) showChanges() {
 		}
 		b.WriteString("\n")
 		b.WriteString("\n")
-
 	}
 	logger.Info("\n\nChanges that will take place\n\n")
 	logger.Infof(b.String())
