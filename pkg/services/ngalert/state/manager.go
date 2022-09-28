@@ -83,7 +83,12 @@ func (st *Manager) Warm(ctx context.Context) {
 		st.log.Error("unable to fetch orgIds", "msg", err.Error())
 	}
 
-	var states []*State
+	type ruleWithState struct {
+		rule   *ngModels.AlertRule
+		states *ruleStates
+	}
+
+	states := make(map[ngModels.AlertRuleKey]*ruleWithState)
 	for _, orgId := range orgIds {
 		// Get Rules
 		ruleCmd := ngModels.ListAlertRulesQuery{
@@ -93,9 +98,8 @@ func (st *Manager) Warm(ctx context.Context) {
 			st.log.Error("unable to fetch previous state", "msg", err.Error())
 		}
 
-		ruleByUID := make(map[string]*ngModels.AlertRule, len(ruleCmd.Result))
 		for _, rule := range ruleCmd.Result {
-			ruleByUID[rule.UID] = rule
+			states[rule.GetKey()] = &ruleWithState{rule: rule, states: nil}
 		}
 
 		// Get Instances
@@ -106,11 +110,22 @@ func (st *Manager) Warm(ctx context.Context) {
 			st.log.Error("unable to fetch previous state", "msg", err.Error())
 		}
 
+		var lastRuleWithState *ruleWithState // entries are likely to be sorted by rule UID
 		for _, entry := range cmd.Result {
-			ruleForEntry, ok := ruleByUID[entry.RuleUID]
-			if !ok {
-				st.log.Error("rule not found for instance, ignoring", "rule", entry.RuleUID)
-				continue
+			if lastRuleWithState == nil || lastRuleWithState.rule.UID == entry.RuleUID && lastRuleWithState.rule.OrgID == entry.RuleOrgID {
+				var ok bool
+				lastRuleWithState, ok = states[ngModels.AlertRuleKey{
+					OrgID: entry.RuleOrgID,
+					UID:   entry.RuleUID,
+				}]
+				if !ok {
+					st.log.Error("rule not found for instance, ignoring", "rule", entry.RuleUID)
+					continue
+				}
+			}
+
+			if lastRuleWithState.states == nil {
+				lastRuleWithState.states = &ruleStates{states: make(map[string]*State)}
 			}
 
 			lbs := map[string]string(entry.Labels)
@@ -118,9 +133,9 @@ func (st *Manager) Warm(ctx context.Context) {
 			if err != nil {
 				st.log.Error("error getting cacheId for entry", "msg", err.Error())
 			}
-			stateForEntry := &State{
-				AlertRuleUID:         entry.RuleUID,
-				OrgID:                entry.RuleOrgID,
+			lastRuleWithState.states.states[cacheId] = &State{
+				AlertRuleUID:         lastRuleWithState.rule.UID,
+				OrgID:                lastRuleWithState.rule.OrgID,
 				CacheId:              cacheId,
 				Labels:               lbs,
 				State:                translateInstanceState(entry.CurrentState),
@@ -129,14 +144,16 @@ func (st *Manager) Warm(ctx context.Context) {
 				StartsAt:             entry.CurrentStateSince,
 				EndsAt:               entry.CurrentStateEnd,
 				LastEvaluationTime:   entry.LastEvalTime,
-				Annotations:          ruleForEntry.Annotations,
+				Annotations:          lastRuleWithState.rule.Annotations,
 			}
-			states = append(states, stateForEntry)
 		}
 	}
 
-	for _, s := range states {
-		st.set(s)
+	for ruleKey, s := range states {
+		if s.states == nil {
+			continue
+		}
+		st.cache.setRuleStates(ruleKey, s.states)
 	}
 }
 

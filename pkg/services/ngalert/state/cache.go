@@ -161,6 +161,17 @@ func (c *cache) set(entry *State) {
 	rs.states[entry.CacheId] = entry
 }
 
+func (c *cache) setRuleStates(key ngModels.AlertRuleKey, entry *ruleStates) {
+	c.mtxStates.Lock()
+	defer c.mtxStates.Unlock()
+	orgStates, ok := c.states[key.OrgID]
+	if !ok {
+		orgStates = make(map[string]*ruleStates)
+		c.states[key.OrgID] = orgStates
+	}
+	orgStates[key.UID] = entry
+}
+
 func (c *cache) get(orgID int64, alertRuleUID, stateId string) (*State, error) {
 	c.mtxStates.RLock()
 	defer c.mtxStates.RUnlock()
