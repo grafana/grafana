@@ -17,11 +17,13 @@ import (
 	"github.com/grafana/thema"
 )
 
-// Defines values for PlaylistItemsType.
+// Defines values for PlaylistItemType.
 const (
-	PlaylistItemsTypeDashboardById PlaylistItemsType = "dashboard_by_id"
+	PlaylistItemTypeDashboardById PlaylistItemType = "dashboard_by_id"
 
-	PlaylistItemsTypeDashboardByTag PlaylistItemsType = "dashboard_by_tag"
+	PlaylistItemTypeDashboardByTag PlaylistItemType = "dashboard_by_tag"
+
+	PlaylistItemTypeDashboardByUid PlaylistItemType = "dashboard_by_uid"
 )
 
 // Model is the Go representation of a playlist.
@@ -29,15 +31,12 @@ const (
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
 type Model struct {
-	// Unique playlist identifier for internal use, set by Grafana.
-	Id int64 `json:"id"`
-
 	// Interval sets the time between switching views in a playlist.
 	// FIXME: Is this based on a standardized format or what options are available? Can datemath be used?
 	Interval string `json:"interval"`
 
 	// The ordered list of items that the playlist will iterate over.
-	Items *[]PlaylistItems `json:"items,omitempty"`
+	Items *[]PlaylistItem `json:"items,omitempty"`
 
 	// Name of the playlist.
 	Name string `json:"name"`
@@ -47,26 +46,13 @@ type Model struct {
 	Uid string `json:"uid"`
 }
 
-// PlaylistItems is the Go representation of a playlist.Items.
+// PlaylistItem is the Go representation of a playlist.Item.
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
-type PlaylistItems struct {
-	// FIXME: The prefixDropper removes playlist from playlist_id, that doesn't work for us since it'll mean we'll have Id twice.
-	// ID of the playlist item for internal use by Grafana. Deprecated.
-	Id int64 `json:"id"`
-
-	// Order is the position in the list for the item. Deprecated.
-	Order int `json:"order"`
-
-	// ID for the playlist containing the item. Deprecated.
-	PlaylistId int64 `json:"playlist_id"`
-
-	// Title is the human-readable identifier for the playlist item.
-	Title string `json:"title"`
-
+type PlaylistItem struct {
 	// Type of the item.
-	Type PlaylistItemsType `json:"type"`
+	Type PlaylistItemType `json:"type"`
 
 	// Value depends on type and describes the playlist item.
 	//
@@ -82,7 +68,7 @@ type PlaylistItems struct {
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
-type PlaylistItemsType string
+type PlaylistItemType string
 
 //go:embed coremodel.cue
 var cueFS embed.FS
