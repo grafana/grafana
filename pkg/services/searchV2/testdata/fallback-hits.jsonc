@@ -5,6 +5,11 @@
 //      "custom": {
 //          "count": 5,
 //          "locationInfo": {
+//              "F1": {
+//                  "name": "Folder1",
+//                  "kind": "folder",
+//                  "url": "http://f1"
+//              },
 //              "general": {
 //                  "name": "General",
 //                  "kind": "folder",
@@ -20,10 +25,10 @@
 //  | Labels:        | Labels:        | Labels:        | Labels:          | Labels:        | Labels:                  | Labels:                 | Labels:        |
 //  | Type: []string | Type: []string | Type: []string | Type: []string   | Type: []string | Type: []*json.RawMessage | Type: []json.RawMessage | Type: []string |
 //  +----------------+----------------+----------------+------------------+----------------+--------------------------+-------------------------+----------------+
-//  | dashboard      | A              | CCAA           |                  |                | ["BB","AA"]              |                         | general        |
-//  | dashboard      | B              | AABB           |                  |                | ["CC","AA"]              |                         | general        |
-//  | dashboard      | C              | BBAA           |                  |                | ["EE","AA","BB"]         |                         | general        |
-//  | dashboard      | D              | bbAAa          |                  |                | ["EE","AA","BB"]         |                         | general        |
+//  | dashboard      | A              | CCAA           |                  | http://A       | ["BB","AA"]              |                         | general        |
+//  | dashboard      | B              | AABB           |                  |                | ["CC","AA"]              |                         | F1             |
+//  | dashboard      | C              | BBAA           |                  | http://C       | ["EE","AA","BB"]         |                         | general        |
+//  | dashboard      | D              | bbAAa          |                  | http://D       | ["EE","AA","BB"]         |                         | general        |
 //  | folder         | E              | FOLDER         |                  |                | null                     |                         | general        |
 //  +----------------+----------------+----------------+------------------+----------------+--------------------------+-------------------------+----------------+
 //  
@@ -39,6 +44,11 @@
           "custom": {
             "count": 5,
             "locationInfo": {
+              "F1": {
+                "name": "Folder1",
+                "kind": "folder",
+                "url": "http://f1"
+              },
               "general": {
                 "name": "General",
                 "kind": "folder",
@@ -146,10 +156,10 @@
             ""
           ],
           [
+            "http://A",
             "",
-            "",
-            "",
-            "",
+            "http://C",
+            "http://D",
             ""
           ],
           [
@@ -182,7 +192,7 @@
           ],
           [
             "general",
-            "general",
+            "F1",
             "general",
             "general",
             "general"
