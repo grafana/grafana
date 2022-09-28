@@ -16,8 +16,9 @@ import (
 )
 
 type ruleStates struct {
-	mtx    sync.Mutex
-	states map[string]*State
+	mtx                sync.Mutex
+	currentRuleVersion int64
+	states             map[string]*State
 }
 
 type cache struct {

@@ -125,7 +125,7 @@ func (st *Manager) Warm(ctx context.Context) {
 			}
 
 			if lastRuleWithState.states == nil {
-				lastRuleWithState.states = &ruleStates{states: make(map[string]*State)}
+				lastRuleWithState.states = &ruleStates{states: make(map[string]*State), currentRuleVersion: lastRuleWithState.rule.Version}
 			}
 
 			lbs := map[string]string(entry.Labels)
@@ -188,17 +188,40 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 	logger.Debug("state manager processing evaluation results", "resultCount", len(results))
 	var states []*State
 	processedResults := make(map[string]*State, len(results))
+
 	currentStates := st.cache.getOrCreateRuleStates(alertRule)
 
 	currentStates.mtx.Lock()
 
-	for _, result := range results {
-		s := st.setNextState(ctx, currentStates, alertRule, result, extraLabels)
-		states = append(states, s)
-		processedResults[s.CacheId] = s
+	var obsoleteStates []*State
+	// If rule was updated then the current state (if it is still exists) can be discarded
+	if currentStates.currentRuleVersion < alertRule.Version {
+		if len(currentStates.states) > 0 {
+			st.log.Info("rule version has changed. resetting the current state")
+			obsoleteStates = make([]*State, 0, len(currentStates.states))
+			for _, state := range currentStates.states {
+				if state.State != eval.Pending && state.State != eval.Normal {
+					state.State = eval.Normal
+					state.Resolved = true
+					state.StateReason = "RuleVersionChange" // TODO make const
+				}
+				obsoleteStates = append(obsoleteStates, state)
+			}
+			currentStates.states = make(map[string]*State)
+		}
+		currentStates.currentRuleVersion = alertRule.Version
+	}
+
+	if currentStates.currentRuleVersion > alertRule.Version {
+		st.log.Warn("The current state version is greater than the rule version. Ignoring the results", append(alertRule.GetKey().LogContext(), "stateVersion", currentStates.currentRuleVersion, "ruleVersion", alertRule.Version)...)
+	} else {
+		for _, result := range results {
+			s := st.setNextState(ctx, currentStates, alertRule, result, extraLabels)
+			states = append(states, s)
+			processedResults[s.CacheId] = s
+		}
 	}
 	resolvedStates := st.staleResultsHandler(ctx, currentStates, evaluatedAt, alertRule, processedResults)
-
 	currentStates.mtx.Unlock()
 
 	if len(states) > 0 {
@@ -209,7 +232,7 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 			}
 		}
 	}
-	return append(states, resolvedStates...)
+	return append(append(states, resolvedStates...), obsoleteStates...)
 }
 
 // Maybe take a screenshot. Do it if:
