@@ -3,18 +3,17 @@ import { cloneDeep } from 'lodash';
 import React from 'react';
 import { VariableSizeList as List } from 'react-window';
 
-import { DataFrame, formattedValueToString } from '@grafana/data/src';
+import { DataFrame } from '@grafana/data/src';
 import { stylesFactory } from '@grafana/ui/src';
 
 import RawList from './RawList';
+import { getRawPrometheusListItemsFromDataFrame } from './utils/getRawPrometheusListItemsFromDataFrame';
 
 export type instantQueryRawVirtualizedListData = { Value: string; __name__: string; [index: string]: string };
 
 export interface RawListContainerProps {
   tableResult: DataFrame;
 }
-
-type instantQueryMetricList = { [index: string]: { [index: string]: instantQueryRawVirtualizedListData } };
 
 const getRawListContainerStyles = stylesFactory(() => {
   return {
@@ -26,59 +25,6 @@ const getRawListContainerStyles = stylesFactory(() => {
 });
 
 /**
- * transform dataFrame to instantQueryRawVirtualizedListData
- * @param dataFrame
- */
-const getListItemsFromDataFrameNew = (dataFrame: DataFrame): instantQueryRawVirtualizedListData[] => {
-  const metricList: instantQueryMetricList = {};
-  const outputList: instantQueryRawVirtualizedListData[] = [];
-
-  // Filter out time
-  const newFields = dataFrame.fields.filter((field) => !['Time'].includes(field.name));
-
-  // Get name from each series
-  // const metricNames: string[] = newFields.find((field) => ['__name__'].includes(field.name))?.values?.toArray() ?? [''];
-  let metricNames: string[] = newFields.find((field) => field.name === '__name__')?.values.toArray() ?? [];
-  // const metricNames: string[] = doesMetricHaveNames ?
-  if (!metricNames.length) {
-    // These results do not have series labels
-    // Matching the native prometheus UI which appears to only show the permutations of the first field in the query result.
-    metricNames = Array(newFields[0].values.length).fill('');
-  }
-
-  // Get everything that isn't the name from each series
-  const metricLabels = dataFrame.fields.filter((field) => !['__name__'].includes(field.name));
-
-  metricNames.forEach(function (metric: string, i: number) {
-    metricList[metric] = {};
-    const formattedMetric: instantQueryRawVirtualizedListData = metricList[metric][i] ?? {};
-
-    for (const field of metricLabels) {
-      const label = field.name;
-
-      if (label !== 'Time') {
-        // Initialize the objects
-        if (typeof field?.display === 'function') {
-          const stringValue = formattedValueToString(field?.display(field.values.get(i)));
-          if (stringValue) {
-            formattedMetric[label] = stringValue;
-          }
-        } else {
-          console.warn('Field display method is missing!');
-        }
-      }
-    }
-
-    outputList.push({
-      ...formattedMetric,
-      __name__: metric,
-    });
-  });
-
-  return outputList;
-};
-
-/**
  * The container that provides the virtualized list to the child components
  * @param props
  * @constructor
@@ -87,7 +33,7 @@ const RawListContainer = (props: RawListContainerProps) => {
   const { tableResult } = props;
   let dataFrame = cloneDeep(tableResult);
   const styles = getRawListContainerStyles();
-  const items = getListItemsFromDataFrameNew(dataFrame);
+  const items = getRawPrometheusListItemsFromDataFrame(dataFrame);
 
   return (
     // We don't use testids around here, how should we target this element in tests?
@@ -97,7 +43,7 @@ const RawListContainer = (props: RawListContainerProps) => {
       <List
         itemCount={items.length}
         className={styles.wrapper}
-        itemSize={(index: number) => {
+        itemSize={() => {
           return 42;
         }}
         height={600}
