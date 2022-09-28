@@ -16,10 +16,10 @@ type sqlxStore struct {
 func (s *sqlxStore) EnsureTagsExist(ctx context.Context, tags []*tag.Tag) ([]*tag.Tag, error) {
 	for _, tagelement := range tags {
 		var existingTag tag.Tag
-		err := s.sess.Get(ctx, &existingTag, "SELECT * FROM table tag WHERE key=? AND value=?", tagelement.Key, tagelement.Value)
+		err := s.sess.Get(ctx, &existingTag, `SELECT * FROM tag WHERE "key"=? AND "value"=?`, tagelement.Key, tagelement.Value)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
-				tagelement.Id, err = s.sess.ExecWithReturningId(ctx, `INSERT INTO tag (Key, Value) VALUES (?, ?)`, tagelement.Key, tagelement.Value)
+				tagelement.Id, err = s.sess.ExecWithReturningId(ctx, `INSERT INTO tag ("key", "value") VALUES (?, ?)`, tagelement.Key, tagelement.Value)
 				if err != nil {
 					return tags, err
 				}
