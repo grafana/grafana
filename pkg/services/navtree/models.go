@@ -1,5 +1,10 @@
 package navtree
 
+import (
+	"encoding/json"
+	"sort"
+)
+
 const (
 	// These weights may be used by an extension to reliably place
 	// itself in relation to a particular item in the menu. The weights
@@ -25,6 +30,17 @@ const (
 	NavSectionConfig string = "config"
 )
 
+const (
+	NavIDDashboards         = "dashboards"
+	NavIDDashboardsBrowse   = "dashboards/browse"
+	NavIDCfg                = "cfg" // NavIDCfg is the id for org configuration navigation node
+	NavIDAdmin              = "admin"
+	NavIDAlertsAndIncidents = "alerts-and-incidents"
+	NavIDAlerting           = "alerting"
+	NavIDMonitoring         = "monitoring"
+	NavIDReporting          = "reports"
+)
+
 type NavLink struct {
 	Id               string     `json:"id,omitempty"`
 	Text             string     `json:"text"`
@@ -47,24 +63,126 @@ type NavLink struct {
 	EmptyMessageId   string     `json:"emptyMessageId,omitempty"`
 }
 
-// NavIDCfg is the id for org configuration navigation node
-const NavIDCfg = "cfg"
+func (node *NavLink) Sort() {
+	Sort(node.Children)
+}
 
-func GetServerAdminNode(children []*NavLink) *NavLink {
-	url := ""
-	if len(children) > 0 {
-		url = children[0].Url
+type NavTreeRoot struct {
+	Children []*NavLink
+}
+
+func (root *NavTreeRoot) AddSection(node *NavLink) {
+	root.Children = append(root.Children, node)
+}
+
+func (root *NavTreeRoot) RemoveSection(node *NavLink) {
+	var result []*NavLink
+
+	for _, child := range root.Children {
+		if child != node {
+			result = append(result, child)
+		}
 	}
-	return &NavLink{
-		Text:         "Server admin",
-		SubTitle:     "Manage all users and orgs",
-		Description:  "Manage server-wide settings and access to resources such as organizations, users, and licenses",
-		HideFromTabs: true,
-		Id:           "admin",
-		Icon:         "shield",
-		Url:          url,
-		SortWeight:   WeightAdmin,
-		Section:      NavSectionConfig,
-		Children:     children,
+
+	root.Children = result
+}
+
+func (root *NavTreeRoot) FindById(id string) *NavLink {
+	return FindById(root.Children, id)
+}
+
+func (root *NavTreeRoot) RemoveEmptySectionsAndApplyNewInformationArchitecture(topNavEnabled bool) {
+	// Remove server admin node if it has no children or set the url to first child
+	if node := root.FindById(NavIDAdmin); node != nil {
+		if len(node.Children) == 0 {
+			root.RemoveSection(node)
+		} else {
+			node.Url = node.Children[0].Url
+		}
 	}
+
+	if topNavEnabled {
+		orgAdminNode := root.FindById(NavIDCfg)
+
+		if orgAdminNode != nil {
+			orgAdminNode.Url = "/admin"
+			orgAdminNode.Text = "Administration"
+		}
+
+		if serverAdminNode := root.FindById(NavIDAdmin); serverAdminNode != nil {
+			serverAdminNode.Url = "/admin/settings"
+			serverAdminNode.Text = "Server admin"
+			serverAdminNode.SortWeight = 10000
+
+			if orgAdminNode != nil {
+				orgAdminNode.Children = append(orgAdminNode.Children, serverAdminNode)
+				root.RemoveSection(serverAdminNode)
+			}
+		}
+
+		// Move reports into dashboards
+		if reports := root.FindById(NavIDReporting); reports != nil {
+			if dashboards := root.FindById(NavIDDashboards); dashboards != nil {
+				reports.SortWeight = 0
+				dashboards.Children = append(dashboards.Children, reports)
+				root.RemoveSection(reports)
+			}
+		}
+
+		// Change id of dashboards
+		if dashboards := root.FindById(NavIDDashboards); dashboards != nil {
+			dashboards.Id = "dashboards/browse"
+		}
+	}
+
+	// Remove top level cfg / administration node if it has no children (needs to be after topnav new info archicture logic above that moves server admin into it)
+	// Remove server admin node if it has no children or set the url to first child
+	if node := root.FindById(NavIDCfg); node != nil {
+		if len(node.Children) == 0 {
+			root.RemoveSection(node)
+		} else if !topNavEnabled {
+			node.Url = node.Children[0].Url
+		}
+	}
+}
+
+func (root *NavTreeRoot) Sort() {
+	Sort(root.Children)
+}
+
+func (root *NavTreeRoot) MarshalJSON() ([]byte, error) {
+	return json.Marshal(root.Children)
+}
+
+func Sort(nodes []*NavLink) {
+	sort.SliceStable(nodes, func(i, j int) bool {
+		iw := nodes[i].SortWeight
+		if iw == 0 {
+			iw = int64(i) + 1
+		}
+		jw := nodes[j].SortWeight
+		if jw == 0 {
+			jw = int64(j) + 1
+		}
+
+		return iw < jw
+	})
+
+	for _, child := range nodes {
+		child.Sort()
+	}
+}
+
+func FindById(nodes []*NavLink, id string) *NavLink {
+	for _, child := range nodes {
+		if child.Id == id {
+			return child
+		} else if len(child.Children) > 0 {
+			if found := FindById(child.Children, id); found != nil {
+				return found
+			}
+		}
+	}
+
+	return nil
 }
