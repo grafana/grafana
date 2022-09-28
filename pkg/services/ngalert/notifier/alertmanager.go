@@ -694,6 +694,7 @@ func (am *Alertmanager) createReceiverStage(name string, integrations []*notify.
 	return fs
 }
 
+// getActiveReceiversMap returns all receivers that are in use by a route.
 func (am *Alertmanager) getActiveReceiversMap(r *dispatch.Route) map[string]struct{} {
 	receiversMap := make(map[string]struct{})
 	visitFunc := func(r *dispatch.Route) {
