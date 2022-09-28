@@ -86,6 +86,7 @@ func DeclareRBACRoles(service ac.Service, cfg *setting.Cfg) error {
 			Description: "Enable and disable plugins and edit plugins' settings",
 			Group:       "Plugins",
 			Permissions: []ac.Permission{
+				{Action: ActionRead, Scope: ScopeProvider.GetResourceAllScope()},
 				{Action: ActionWrite, Scope: ScopeProvider.GetResourceAllScope()},
 			},
 		},
@@ -98,6 +99,7 @@ func DeclareRBACRoles(service ac.Service, cfg *setting.Cfg) error {
 			Description: "Install, uninstall plugins",
 			Group:       "Plugins",
 			Permissions: []ac.Permission{
+				{Action: ActionRead, Scope: ScopeProvider.GetResourceAllScope()},
 				{Action: ActionInstall},
 			},
 		},
