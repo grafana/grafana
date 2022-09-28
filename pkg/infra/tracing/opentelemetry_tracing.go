@@ -293,9 +293,7 @@ func (s OpentelemetrySpan) SetStatus(code codes.Code, description string) {
 }
 
 func (s OpentelemetrySpan) RecordError(err error, options ...trace.EventOption) {
-	for _, o := range options {
-		s.span.RecordError(err, o)
-	}
+	s.span.RecordError(err, options...)
 }
 
 func (s OpentelemetrySpan) AddEvents(keys []string, values []EventValue) {
