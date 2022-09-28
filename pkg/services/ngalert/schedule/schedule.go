@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"net/url"
 	"time"
 
@@ -315,13 +316,15 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 	logger := sch.log.New(key.LogContext()...)
 	logger.Debug("alert rule routine started")
 
+	sch.stateManager.InitStateForTheRule(key)
+
 	orgID := fmt.Sprint(key.OrgID)
 	evalTotal := sch.metrics.EvalTotal.WithLabelValues(orgID)
 	evalDuration := sch.metrics.EvalDuration.WithLabelValues(orgID)
 	evalTotalFailures := sch.metrics.EvalFailures.WithLabelValues(orgID)
 
-	clearState := func() {
-		states := sch.stateManager.ResetStateByRuleUID(grafanaCtx, key)
+	clearState := func(ctx context.Context, lastVersion int64) {
+		states := sch.stateManager.ResetStateByRuleUID(grafanaCtx, key, lastVersion)
 		expiredAlerts := FromAlertsStateToStoppedAlert(states, sch.appURL, sch.clock)
 		if len(expiredAlerts.PostableAlerts) > 0 {
 			sch.alertsSender.Send(key, expiredAlerts)
@@ -380,23 +383,13 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 	}
 
 	evalRunning := false
-	var currentRuleVersion int64 = 0
 	defer sch.stopApplied(key)
 	for {
 		select {
 		// used by external services (API) to notify that rule is updated.
 		case lastVersion := <-updateCh:
-			// sometimes it can happen when, for example, the rule evaluation took so long,
-			// and there were two concurrent messages in updateCh and evalCh, and the eval's one got processed first.
-			// therefore, at the time when message from updateCh is processed the current rule will have
-			// at least the same version (or greater) and the state created for the new version of the rule.
-			if currentRuleVersion >= int64(lastVersion) {
-				logger.Info("skip updating rule because its current version is actual", "version", currentRuleVersion, "new_version", lastVersion)
-				continue
-			}
-			logger.Info("clearing the state of the rule because version has changed", "version", currentRuleVersion, "new_version", lastVersion)
 			// clear the state. So the next evaluation will start from the scratch.
-			clearState()
+			clearState(grafanaCtx, int64(lastVersion))
 		// evalCh - used by the scheduler to signal that evaluation is needed.
 		case ctx, ok := <-evalCh:
 			if !ok {
@@ -415,15 +408,6 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 				}()
 
 				err := retryIfError(func(attempt int64) error {
-					newVersion := ctx.rule.Version
-					// fetch latest alert rule version
-					if currentRuleVersion != newVersion {
-						if currentRuleVersion > 0 { // do not clean up state if the eval loop has just started.
-							logger.Debug("got a new version of alert rule. Clear up the state and refresh extra labels", "version", currentRuleVersion, "new_version", newVersion)
-							clearState()
-						}
-						currentRuleVersion = newVersion
-					}
 					evaluate(grafanaCtx, attempt, ctx)
 					return nil
 				})
@@ -434,7 +418,8 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		case <-grafanaCtx.Done():
 			// clean up the state only if the reason for stopping the evaluation loop is that the rule was deleted
 			if errors.Is(grafanaCtx.Err(), errRuleDeleted) {
-				clearState()
+				clearState(context.Background(), math.MaxInt64)
+				sch.stateManager.DeleteRuleStates(grafanaCtx, key)
 			}
 			logger.Debug("stopping alert rule routine")
 			return nil
