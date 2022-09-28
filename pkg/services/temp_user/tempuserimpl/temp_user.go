@@ -6,13 +6,21 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Service struct {
 	store store
 }
 
-func ProvideService(db db.DB) tempuser.Service {
+func ProvideService(db db.DB, cfg *setting.Cfg) tempuser.Service {
+	if cfg.IsFeatureToggleEnabled("newDBLibrary") {
+		return &Service{
+			store: &sqlxStore{
+				sess: db.GetSqlxSession(),
+			},
+		}
+	}
 	return &Service{
 		store: &xormStore{db: db},
 	}

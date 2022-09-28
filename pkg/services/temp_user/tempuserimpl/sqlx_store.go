@@ -2,10 +2,11 @@ package tempuserimpl
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 )
 
@@ -19,6 +20,7 @@ func (ss *sqlxStore) UpdateTempUserStatus(ctx context.Context, cmd *models.Updat
 }
 
 func (ss *sqlxStore) CreateTempUser(ctx context.Context, cmd *models.CreateTempUserCommand) error {
+	now := time.Now()
 	user := &models.TempUser{
 		Email:           cmd.Email,
 		Name:            cmd.Name,
@@ -28,9 +30,10 @@ func (ss *sqlxStore) CreateTempUser(ctx context.Context, cmd *models.CreateTempU
 		Status:          cmd.Status,
 		RemoteAddr:      cmd.RemoteAddr,
 		InvitedByUserId: cmd.InvitedByUserId,
-		EmailSentOn:     time.Now(),
-		Created:         time.Now().Unix(),
-		Updated:         time.Now().Unix(),
+		EmailSentOn:     now,
+		Created:         now.Unix(),
+		Updated:         now.Unix(),
+		Version:         0,
 	}
 	query := `INSERT INTO temp_user (
 		email, 
@@ -43,10 +46,14 @@ func (ss *sqlxStore) CreateTempUser(ctx context.Context, cmd *models.CreateTempU
 		invited_by_user_id,
 		email_sent_on,
 		created,
-		updated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+		updated, 
+		version,
+		email_sent) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	var err error
 	user.Id, err = ss.sess.ExecWithReturningId(
-		ctx, query, user.Email, user.Name, user.OrgId, user.Code, user.Role, user.Status, user.RemoteAddr, user.InvitedByUserId, user.EmailSentOn, user.Created, user.Updated)
+		ctx, query, user.Email, user.Name, user.OrgId, user.Code,
+		user.Role, user.Status, user.RemoteAddr, user.InvitedByUserId,
+		user.EmailSentOn, &now, now, user.Version, user.EmailSent)
 	cmd.Result = user
 	return err
 }
@@ -72,8 +79,8 @@ func (ss *sqlxStore) GetTempUsersQuery(ctx context.Context, query *models.GetTem
 					u.name			  as invited_by_name,
 					u.email			  as invited_by_email
 			    FROM "temp_user" as tu
-					LEFT OUTER JOIN "user" as u on u.id = tu.invited_by_user_id
-					WHERE tu.status=?`
+				LEFT OUTER JOIN "user" as u on u.id = tu.invited_by_user_id
+				WHERE tu.status=?`
 	params := []interface{}{string(query.Status)}
 
 	if query.OrgId > 0 {
@@ -87,61 +94,47 @@ func (ss *sqlxStore) GetTempUsersQuery(ctx context.Context, query *models.GetTem
 	}
 
 	rawSQL += " ORDER BY tu.created desc"
-	
-	return ss.db.WithDbSession(ctx, func(dbSess *sqlstore.DBSession) error {
+	query.Result = make([]*models.TempUserDTO, 0)
 
-		
-
-		query.Result = make([]*models.TempUserDTO, 0)
-		sess := dbSess.SQL(rawSQL, params...)
-		err := sess.Find(&query.Result)
-		return err
-	})
+	return ss.sess.Select(ctx, &query.Result, rawSQL, params...)
 }
 
 func (ss *sqlxStore) GetTempUserByCode(ctx context.Context, query *models.GetTempUserByCodeQuery) error {
-	return ss.db.WithDbSession(ctx, func(dbSess *sqlstore.DBSession) error {
-		var rawSQL = `SELECT
-	                tu.id             as id,
-	                tu.org_id         as org_id,
-	                tu.email          as email,
-									tu.name           as name,
-									tu.role           as role,
-									tu.code           as code,
-									tu.status         as status,
-									tu.email_sent     as email_sent,
-									tu.email_sent_on  as email_sent_on,
-									tu.created				as created,
-									u.login						as invited_by_login,
-									u.name						as invited_by_name,
-									u.email						as invited_by_email
-	                FROM ` + ss.db.GetDialect().Quote("temp_user") + ` as tu
-									LEFT OUTER JOIN ` + ss.db.GetDialect().Quote("user") + ` as u on u.id = tu.invited_by_user_id
-	                WHERE tu.code=?`
-
-		var tempUser models.TempUserDTO
-		sess := dbSess.SQL(rawSQL, query.Code)
-		has, err := sess.Get(&tempUser)
-
-		if err != nil {
-			return err
-		} else if !has {
+	var rawSQL = `SELECT
+						tu.id             as id,
+						tu.org_id         as org_id,
+						tu.email          as email,
+						tu.name           as name,
+						tu.role           as role,
+						tu.code           as code,
+						tu.status         as status,
+						tu.email_sent     as email_sent,
+						tu.email_sent_on  as email_sent_on,
+						tu.created		  as created,
+						u.login			  as invited_by_login,
+						u.name			  as invited_by_name,
+						u.email			  as invited_by_email
+					FROM "temp_user" as tu
+					LEFT OUTER JOIN "user" as u on u.id = tu.invited_by_user_id
+					WHERE tu.code=?`
+	var tempUser models.TempUserDTO
+	err := ss.sess.Get(ctx, &tempUser, rawSQL, query.Code)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
 			return models.ErrTempUserNotFound
 		}
-
+	} else {
 		query.Result = &tempUser
-		return err
-	})
+	}
+	return err
 }
 
 func (ss *sqlxStore) ExpireOldUserInvites(ctx context.Context, cmd *models.ExpireTempUsersCommand) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		var rawSQL = "UPDATE temp_user SET status = ?, updated = ? WHERE created <= ? AND status in (?, ?)"
-		if result, err := sess.Exec(rawSQL, string(models.TmpUserExpired), time.Now().Unix(), cmd.OlderThan.Unix(), string(models.TmpUserSignUpStarted), string(models.TmpUserInvitePending)); err != nil {
-			return err
-		} else if cmd.NumExpired, err = result.RowsAffected(); err != nil {
-			return err
-		}
-		return nil
-	})
+	rawSQL := "UPDATE temp_user SET status = ?, updated = ? WHERE created <= ? AND status in (?, ?)"
+	if result, err := ss.sess.Exec(ctx, rawSQL, string(models.TmpUserExpired), time.Now().Unix(), cmd.OlderThan.Unix(), string(models.TmpUserSignUpStarted), string(models.TmpUserInvitePending)); err != nil {
+		return err
+	} else if cmd.NumExpired, err = result.RowsAffected(); err != nil {
+		return err
+	}
+	return nil
 }

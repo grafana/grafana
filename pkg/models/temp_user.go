@@ -24,22 +24,22 @@ const (
 
 // TempUser holds data for org invites and unconfirmed sign ups
 type TempUser struct {
-	Id              int64
-	OrgId           int64
-	Version         int
-	Email           string
-	Name            string
-	Role            org.RoleType
-	InvitedByUserId int64
-	Status          TempUserStatus
+	Id              int64          `db:"id"`
+	OrgId           int64          `db:"org_id"`
+	Version         int            `db:"version"`
+	Email           string         `db:"email"`
+	Name            string         `db:"name"`
+	Role            org.RoleType   `db:"role"`
+	InvitedByUserId int64          `db:"invited_by_user_id"`
+	Status          TempUserStatus `db:"status"`
 
-	EmailSent   bool
-	EmailSentOn time.Time
-	Code        string
-	RemoteAddr  string
+	EmailSent   bool      `db:"email_sent"`
+	EmailSentOn time.Time `db:"email_sent_on"`
+	Code        string    `db:"code"`
+	RemoteAddr  string    `db:"remote_addr"`
 
-	Created int64
-	Updated int64
+	Created int64 `db:"created"`
+	Updated int64 `db:"updated"`
 }
 
 // ---------------------
@@ -88,18 +88,18 @@ type GetTempUserByCodeQuery struct {
 }
 
 type TempUserDTO struct {
-	Id             int64          `json:"id"`
-	OrgId          int64          `json:"orgId"`
-	Name           string         `json:"name"`
-	Email          string         `json:"email"`
-	Role           org.RoleType   `json:"role"`
-	InvitedByLogin string         `json:"invitedByLogin"`
-	InvitedByEmail string         `json:"invitedByEmail"`
-	InvitedByName  string         `json:"invitedByName"`
-	Code           string         `json:"code"`
-	Status         TempUserStatus `json:"status"`
-	Url            string         `json:"url"`
-	EmailSent      bool           `json:"emailSent"`
-	EmailSentOn    time.Time      `json:"emailSentOn"`
-	Created        time.Time      `json:"createdOn"`
+	Id             int64          `json:"id" db:"id"`
+	OrgId          int64          `json:"orgId" db:"org_id"`
+	Name           string         `json:"name" db:"name"`
+	Email          string         `json:"email" db:"email"`
+	Role           org.RoleType   `json:"role" db:"role"`
+	InvitedByLogin string         `json:"invitedByLogin" db:"invited_by_login"`
+	InvitedByEmail string         `json:"invitedByEmail" db:"invited_by_email"`
+	InvitedByName  string         `json:"invitedByName" db:"invited_by_name"`
+	Code           string         `json:"code" db:"code"`
+	Status         TempUserStatus `json:"status" db:"status"`
+	Url            string         `json:"url" db:"url"`
+	EmailSent      bool           `json:"emailSent" db:"email_sent"`
+	EmailSentOn    time.Time      `json:"emailSentOn" db:"email_sent_on"`
+	Created        time.Time      `json:"createdOn" db:"created"`
 }

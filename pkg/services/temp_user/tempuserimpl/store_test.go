@@ -10,7 +10,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestIntegrationTempUserCommandsAndQueries(t *testing.T) {
+type getStore func(*sqlstore.SQLStore) store
+
+func testIntegrationTempUserCommandsAndQueries(t *testing.T, fn getStore) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -24,7 +26,7 @@ func TestIntegrationTempUserCommandsAndQueries(t *testing.T) {
 	}
 	setup := func(t *testing.T) {
 		db := sqlstore.InitTestDB(t)
-		store = &xormStore{db: db}
+		store = fn(db)
 		err := store.CreateTempUser(context.Background(), &cmd)
 		require.Nil(t, err)
 	}
