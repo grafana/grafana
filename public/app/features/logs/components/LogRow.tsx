@@ -122,7 +122,8 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     context?: LogRowContextRows,
     errors?: LogRowContextQueryErrors,
     hasMoreContextRows?: HasMoreContextRows,
-    updateLimit?: () => void
+    updateLimit?: () => void,
+    logsSortOrder?: LogsSortOrder | null
   ) {
     const {
       getRows,
@@ -213,6 +214,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               prettifyLogMessage={prettifyLogMessage}
               onToggleContext={this.toggleContext}
               scrollElement={this.props.scrollElement}
+              logsSortOrder={logsSortOrder}
             />
           )}
         </tr>
@@ -244,8 +246,8 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       return (
         <>
           <LogRowContextProvider row={row} getRowContext={getRowContext} logsSortOrder={logsSortOrder}>
-            {({ result, errors, hasMoreContextRows, updateLimit }) => {
-              return <>{this.renderLogRow(result, errors, hasMoreContextRows, updateLimit)}</>;
+            {({ result, errors, hasMoreContextRows, updateLimit, logsSortOrder }) => {
+              return <>{this.renderLogRow(result, errors, hasMoreContextRows, updateLimit, logsSortOrder)}</>;
             }}
           </LogRowContextProvider>
         </>

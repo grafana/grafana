@@ -2,6 +2,7 @@ package userimpl
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
@@ -77,6 +78,14 @@ func TestUserService(t *testing.T) {
 		err := userService.Delete(context.Background(), &user.DeleteUserCommand{UserID: 1})
 		require.NoError(t, err)
 	})
+
+	t.Run("GetByID - email conflict", func(t *testing.T) {
+		userService.cfg.CaseInsensitiveLogin = true
+		userStore.ExpectedError = errors.New("email conflict")
+		query := user.GetUserByIDQuery{}
+		_, err := userService.GetByID(context.Background(), &query)
+		require.Error(t, err)
+	})
 }
 
 type FakeUserStore struct {
@@ -111,4 +120,12 @@ func (f *FakeUserStore) GetByID(context.Context, int64) (*user.User, error) {
 
 func (f *FakeUserStore) CaseInsensitiveLoginConflict(context.Context, string, string) error {
 	return f.ExpectedError
+}
+
+func (f *FakeUserStore) GetByLogin(ctx context.Context, query *user.GetUserByLoginQuery) (*user.User, error) {
+	return f.ExpectedUser, f.ExpectedError
+}
+
+func (f *FakeUserStore) GetByEmail(ctx context.Context, query *user.GetUserByEmailQuery) (*user.User, error) {
+	return f.ExpectedUser, f.ExpectedError
 }
