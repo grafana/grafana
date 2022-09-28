@@ -67,10 +67,14 @@ export function InlineEditBody() {
     );
   }, [instanceState, activePanel]);
 
+  const topLevelItemsContainerStyle = {
+    marginLeft: 15,
+  };
+
   return (
     <>
       {pane.categories.map((p) => renderOptionsPaneCategoryDescriptor(p))}
-      {pane.items.map((item) => item.render())}
+      <div style={topLevelItemsContainerStyle}>{pane.items.map((item) => item.render())}</div>
     </>
   );
 }
