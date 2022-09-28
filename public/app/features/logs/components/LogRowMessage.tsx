@@ -4,7 +4,7 @@ import React, { PureComponent } from 'react';
 import Highlighter from 'react-highlight-words';
 import tinycolor from 'tinycolor2';
 
-import { LogRowModel, findHighlightChunksInText, GrafanaTheme2, LogsSortOrder } from '@grafana/data';
+import { LogRowModel, findHighlightChunksInText, GrafanaTheme2, LogsSortOrder, CoreApp } from '@grafana/data';
 import { withTheme2, Themeable2, IconButton, Tooltip } from '@grafana/ui';
 
 import { LogMessageAnsi } from './LogMessageAnsi';
@@ -23,7 +23,7 @@ interface Props extends Themeable2 {
   errors?: LogRowContextQueryErrors;
   context?: LogRowContextRows;
   showRowMenu?: boolean;
-  isInDashboard?: boolean;
+  app?: CoreApp;
   showContextToggle?: (row?: LogRowModel) => boolean;
   getRows: () => LogRowModel[];
   onToggleContext: () => void;
@@ -130,7 +130,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
       wrapLogMessage,
       prettifyLogMessage,
       onToggleContext,
-      isInDashboard,
+      app,
       logsSortOrder,
       showContextToggle,
     } = this.props;
@@ -139,7 +139,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
     const { hasAnsi, raw } = row;
     const restructuredEntry = restructureLog(raw, prettifyLogMessage);
     const shouldShowContextToggle = showContextToggle ? showContextToggle(row) : false;
-    const styles = getStyles(theme, shouldShowContextToggle, isInDashboard);
+    const styles = getStyles(theme, shouldShowContextToggle, app === CoreApp.Dashboard);
 
     return (
       // When context is open, the position has to be NOT relative.

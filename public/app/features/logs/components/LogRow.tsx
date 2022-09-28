@@ -12,6 +12,7 @@ import {
   checkLogsError,
   escapeUnescapedString,
   GrafanaTheme2,
+  CoreApp,
 } from '@grafana/data';
 import { styleMixins, withTheme2, Themeable2, Icon, Tooltip } from '@grafana/ui';
 
@@ -43,7 +44,7 @@ interface Props extends Themeable2 {
   forceEscape?: boolean;
   showDetectedFields?: string[];
   showRowMenu?: boolean;
-  isInDashboard?: boolean;
+  app?: CoreApp;
   getRows: () => LogRowModel[];
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
@@ -146,7 +147,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       getFieldLinks,
       forceEscape,
       onLogRowHover,
-      isInDashboard,
+      app,
     } = this.props;
     const { showDetails, showContext } = this.state;
     const style = getLogRowStyles(theme, row.logLevel);
@@ -217,7 +218,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               wrapLogMessage={wrapLogMessage}
               prettifyLogMessage={prettifyLogMessage}
               onToggleContext={this.toggleContext}
-              isInDashboard={isInDashboard}
+              app={app}
               logsSortOrder={logsSortOrder}
             />
           )}
