@@ -287,8 +287,6 @@ func (st *Manager) setNextState(ctx context.Context, ruleStates *ruleStates, ale
 			"err", err)
 	}
 
-	st.set(currentState)
-
 	shouldUpdateAnnotation := oldState != currentState.State || oldReason != currentState.StateReason
 	if shouldUpdateAnnotation {
 		go st.annotateState(ctx, alertRule, currentState.Labels, result.EvaluatedAt, InstanceStateAndReason{State: currentState.State, Reason: currentState.StateReason}, InstanceStateAndReason{State: oldState, Reason: oldReason})
