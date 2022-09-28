@@ -8,8 +8,7 @@ import { initialKeyedVariablesState, toKeyedAction } from '../state/keyedVariabl
 import * as selectors from '../state/selectors';
 import { addVariable } from '../state/sharedReducer';
 
-import { getNextAvailableId, initListMode, createNewVariable, changeVariableName } from './actions';
-import { changeVariableNameFailed } from './reducer';
+import { getNextAvailableId, initListMode, createNewVariable } from './actions';
 
 describe('getNextAvailableId', () => {
   describe('when called with a custom type and there is already 2 variables', () => {
@@ -41,26 +40,6 @@ describe('createNewVariable', () => {
     expect(mockDispatch).toHaveBeenCalledTimes(1);
     expect(mockDispatch.mock.calls[0][0]).toEqual(
       toKeyedAction('null', addVariable({ data: { global: false, index: 0, model }, type: 'constant', id: mockId }))
-    );
-  });
-
-  it('should not be bigger than 50 characteres', () => {
-    jest.spyOn(selectors, 'getVariablesByKey').mockReturnValue([]);
-    jest.spyOn(selectors, 'getNewVariableIndex').mockReturnValue(0);
-    const defaultId = 'constant0';
-    const newMockId = 'constant0constant0constant0constant0constant0constant0';
-    const mockGetState = jest.fn().mockReturnValue({ templating: initialKeyedVariablesState });
-    const mockDispatch = jest.fn();
-    const model = { ...initialConstantVariableModelState, name: defaultId, id: defaultId, rootStateKey: 'abcDashId' };
-
-    createNewVariable('abcDashId', 'constant')(mockDispatch, mockGetState, undefined);
-    changeVariableName(model, newMockId)(mockDispatch, mockGetState, undefined);
-
-    expect(mockDispatch.mock.calls[1][0]).toEqual(
-      toKeyedAction(
-        'abcDashId',
-        changeVariableNameFailed({ newName: newMockId, errorText: 'Variable name cannot be bigger than 50 characters' })
-      )
     );
   });
 });
