@@ -46,13 +46,14 @@ type Manager struct {
 	dashboardService dashboards.DashboardService
 	imageService     image.ImageService
 	AnnotationsRepo  annotations.Repository
+	externalURL      *url.URL
 }
 
 func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL,
 	ruleStore RuleReader, instanceStore InstanceStore,
 	dashboardService dashboards.DashboardService, imageService image.ImageService, clock clock.Clock, annotationsRepo annotations.Repository) *Manager {
 	manager := &Manager{
-		cache:            newCache(logger, metrics, externalURL),
+		cache:            newCache(logger, metrics),
 		quit:             make(chan struct{}),
 		ResendDelay:      ResendDelay, // TODO: make this configurable
 		log:              logger,
@@ -63,6 +64,7 @@ func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL,
 		imageService:     imageService,
 		clock:            clock,
 		AnnotationsRepo:  annotationsRepo,
+		externalURL:      externalURL,
 	}
 	go manager.recordMetrics()
 	return manager
@@ -178,12 +180,19 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 	logger.Debug("state manager processing evaluation results", "resultCount", len(results))
 	var states []*State
 	processedResults := make(map[string]*State, len(results))
+	currentStates := st.cache.getOrCreateRuleStates(alertRule)
+
+	currentStates.mtx.Lock()
+
 	for _, result := range results {
-		s := st.setNextState(ctx, alertRule, result, extraLabels)
+		s := st.setNextState(ctx, currentStates, alertRule, result, extraLabels)
 		states = append(states, s)
 		processedResults[s.CacheId] = s
 	}
-	resolvedStates := st.staleResultsHandler(ctx, evaluatedAt, alertRule, processedResults)
+	resolvedStates := st.staleResultsHandler(ctx, currentStates, evaluatedAt, alertRule, processedResults)
+
+	currentStates.mtx.Unlock()
+
 	if len(states) > 0 {
 		logger.Debug("saving new states to the database", "count", len(states))
 		for _, state := range states {
@@ -227,8 +236,8 @@ func (st *Manager) maybeTakeScreenshot(
 }
 
 // Set the current state based on evaluation results
-func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels) *State {
-	currentState := st.getOrCreate(ctx, alertRule, result, extraLabels)
+func (st *Manager) setNextState(ctx context.Context, ruleStates *ruleStates, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels) *State {
+	currentState := ruleStates.getOrCreate(ctx, st.log, alertRule, result, extraLabels, st.externalURL)
 
 	currentState.LastEvaluationTime = result.EvaluatedAt
 	currentState.EvaluationDuration = result.EvaluationDuration
@@ -405,10 +414,9 @@ func (st *Manager) annotateState(ctx context.Context, alertRule *ngModels.AlertR
 	}
 }
 
-func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, states map[string]*State) []*State {
+func (st *Manager) staleResultsHandler(ctx context.Context, ruleStates *ruleStates, evaluatedAt time.Time, alertRule *ngModels.AlertRule, states map[string]*State) []*State {
 	var resolvedStates []*State
-	allStates := st.GetStatesForRuleUID(alertRule.OrgID, alertRule.UID)
-	for _, s := range allStates {
+	for _, s := range ruleStates.states {
 		_, ok := states[s.CacheId]
 		if !ok && isItStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds) {
 			st.log.Debug("removing stale state entry", "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID, "cacheID", s.CacheId)
