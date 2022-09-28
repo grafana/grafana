@@ -132,20 +132,21 @@ export class TableContainer extends PureComponent<Props, TableContainerState> {
 
     return (
       <Collapse label={label} loading={loading} isOpen>
-        {dataFrame?.length && (!this.state?.resultsStyle || this.state?.resultsStyle === TABLE_RESULTS_STYLE.table) && (
-          <Table
-            ariaLabel={ariaLabel}
-            data={dataFrame}
-            width={tableWidth}
-            height={height}
-            onCellFilterAdded={onCellFilterAdded}
-          />
-        )}
+        {dataFrame?.length && (
+          <>
+            {this.state?.resultsStyle === TABLE_RESULTS_STYLE.table && (
+              <Table
+                ariaLabel={ariaLabel}
+                data={dataFrame}
+                width={tableWidth}
+                height={height}
+                onCellFilterAdded={onCellFilterAdded}
+              />
+            )}
 
-        {dataFrame?.length && this.state?.resultsStyle === TABLE_RESULTS_STYLE.raw && (
-          <RawListContainer tableResult={dataFrame} />
+            {this.state?.resultsStyle === TABLE_RESULTS_STYLE.raw && <RawListContainer tableResult={dataFrame} />}
+          </>
         )}
-
         {!dataFrame?.length && <MetaInfoText metaItems={[{ value: '0 series returned' }]} />}
       </Collapse>
     );

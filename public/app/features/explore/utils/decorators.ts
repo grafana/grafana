@@ -87,10 +87,11 @@ export const decorateWithGraphResult = (data: ExplorePanelData): ExplorePanelDat
 
 /**
  * This processing returns Observable because it uses Transformer internally which result type is also Observable.
- * In this case the transformer should return single result but it is possible that in the future it could return
+ * In this case the transformer should return single result, but it is possible that in the future it could return
  * multiple results and so this should be used with mergeMap or similar to unbox the internal observable.
  */
 export const decorateWithTableResult = (data: ExplorePanelData): Observable<ExplorePanelData> => {
+  // Prometheus has a custom frame visualization alongside the table view, but they both handle the data the same
   const tableFrames = data.tableFrames.length ? data.tableFrames : data.rawPrometheusFrames;
 
   if (tableFrames.length === 0) {

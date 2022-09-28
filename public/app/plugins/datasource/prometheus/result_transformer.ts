@@ -210,6 +210,7 @@ export function transformDFToTable(dfs: DataFrame[]): DataFrame[] {
     return {
       refId,
       fields,
+      // Prometheus specific UI for instant queries
       meta: { ...dfs[0].meta, preferredVisualisationType: 'rawPrometheus' as PreferredVisualisationType },
       length: timeField.values.length,
     };
