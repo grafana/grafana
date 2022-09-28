@@ -262,7 +262,7 @@ func getValidConflictUsers(r *ConflictResolver, b []byte) error {
 	// compiling since in a loop
 	matchingExpression, err := regexp.Compile(diffPattern)
 	if err != nil {
-		return fmt.Errorf("unable to complie regex %s: %w", diffPattern, err)
+		return fmt.Errorf("unable to compile regex %s: %w", diffPattern, err)
 	}
 	for _, row := range strings.Split(string(b), "\n") {
 		if row == "" {
