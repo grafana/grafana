@@ -114,7 +114,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       forceEscape,
       onLogRowHover,
     } = this.props;
-    const { renderAll } = this.state;
+    const { renderAll, contextIsOpen } = this.state;
     const { logsRowsTable } = getLogRowStyles(theme);
     const dedupedRows = deduplicatedRows ? deduplicatedRows : logRows;
     const hasData = logRows && logRows.length > 0;
@@ -143,7 +143,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 getRowContext={getRowContext}
                 row={row}
                 showContextToggle={showContextToggle}
-                showRowMenu={!this.state.contextIsOpen}
+                showRowMenu={!contextIsOpen}
                 showDuplicates={showDuplicates}
                 showLabels={showLabels}
                 showTime={showTime}
@@ -172,7 +172,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 getRowContext={getRowContext}
                 row={row}
                 showContextToggle={showContextToggle}
-                showRowMenu={!this.state.contextIsOpen}
+                showRowMenu={!contextIsOpen}
                 showDuplicates={showDuplicates}
                 showLabels={showLabels}
                 showTime={showTime}
