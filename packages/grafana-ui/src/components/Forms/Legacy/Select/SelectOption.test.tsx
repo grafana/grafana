@@ -1,6 +1,6 @@
-import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { OptionProps } from 'react-select';
+import renderer from 'react-test-renderer';
 
 import SelectOption from './SelectOption';
 
@@ -33,23 +33,20 @@ const model: OptionProps<any> = {
   type: 'option',
   children: 'Model title',
   className: 'class-for-user-picker',
-  alt: '',
 };
 
 describe('SelectOption', () => {
   it('renders correctly', () => {
-    const tree = (
-      <SelectOption
-        {...model}
-        data={{
-          imgUrl: 'url/to/avatar',
-        }}
-      />
-    );
-
-    render(tree);
-    const imageRendered = screen.getByRole('img');
-    expect(imageRendered).toHaveAttribute('src', 'url/to/avatar');
-    expect(imageRendered).toHaveAttribute('alt', '');
+    const tree = renderer
+      .create(
+        <SelectOption
+          {...model}
+          data={{
+            imgUrl: 'url/to/avatar',
+          }}
+        />
+      )
+      .toJSON();
+    expect(tree).toMatchSnapshot();
   });
 });
