@@ -275,9 +275,6 @@ func getValidConflictUsers(r *ConflictResolver, b []byte) error {
 			continue
 		}
 		entryRow := matchingExpression.Match([]byte(row))
-		if err != nil {
-			return fmt.Errorf("could not identify the row")
-		}
 		if !entryRow {
 			// block row
 			// conflict: hej
@@ -621,9 +618,16 @@ func (c *ConflictingUser) Marshal(filerow string) error {
 	// which conflict
 	conflictEmail := strings.Split(values[5], ":")
 	conflictLogin := strings.Split(values[6], ":")
-	c.ConflictEmail = conflictEmail[1]
-	c.ConflictLogin = conflictLogin[1]
-
+	if len(conflictEmail) < 2 {
+		c.ConflictEmail = ""
+	} else {
+		c.ConflictEmail = conflictEmail[1]
+	}
+	if len(conflictLogin) < 2 {
+		c.ConflictLogin = ""
+	} else {
+		c.ConflictLogin = conflictLogin[1]
+	}
 	return nil
 }
 

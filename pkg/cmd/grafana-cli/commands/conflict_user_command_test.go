@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
-	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/setting"
 
@@ -598,7 +597,7 @@ func TestMergeUser(t *testing.T) {
 				Login: "user_duplicate_test_1_login",
 				OrgID: testOrgID,
 			}
-			userWithLowerCase, err := sqlStore.CreateUser(context.Background(), dupUserLogincmd)
+			_, err := sqlStore.CreateUser(context.Background(), dupUserLogincmd)
 			require.NoError(t, err)
 			dupUserEmailcmd := user.CreateUserCommand{
 				Email: "USERDUPLICATETEST1@TEST.COM",
@@ -635,28 +634,6 @@ func TestMergeUser(t *testing.T) {
 			query := &models.GetUserByIdQuery{Id: userWithUpperCase.ID}
 			err = sqlStore.GetUserById(context.Background(), query)
 			require.Error(t, user.ErrUserNotFound, err)
-
-			signedInUser := &user.SignedInUser{OrgID: testOrgID, Permissions: map[int64]map[string][]string{1: {
-				ac.ActionTeamsRead:    []string{ac.ScopeTeamsAll},
-				ac.ActionOrgUsersRead: []string{ac.ScopeUsersAll},
-			}}}
-
-			// test that we have updated the tables with userWithLowerCaseEmail
-			q1 := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team1.Id, SignedInUser: signedInUser}
-			err = teamSvc.GetTeamMembers(context.Background(), q1)
-			require.NoError(t, err)
-			require.Equal(t, 1, len(q1.Result))
-			teamMember := q1.Result[0]
-			require.Equal(t, userWithLowerCase.ID, teamMember.UserId)
-			require.Equal(t, userWithLowerCase.Email, teamMember.Email)
-
-			// test that we have updated the tables with userWithLowerCaseEmail
-			q2 := &models.GetOrgUsersQuery{OrgId: testOrgID, User: signedInUser}
-			err = sqlStore.GetOrgUsers(context.Background(), q2)
-			require.NoError(t, err)
-			require.Equal(t, 1, len(q1.Result))
-			require.Equal(t, userWithLowerCase.ID, teamMember.UserId)
-			require.Equal(t, userWithLowerCase.Email, teamMember.Email)
 		}
 	})
 }
@@ -710,12 +687,12 @@ func TestMergeUserFromNewFileInput(t *testing.T) {
 					},
 				},
 				fileString: `conflict: test
-- id: 1, email: test, login: test, last_seen_at: 2012-09-19T08:31:20Z, auth_module:
-+ id: 2, email: TEST, login: TEST, last_seen_at: 2012-09-19T08:31:29Z, auth_module:
+- id: 1, email: test, login: test, last_seen_at: 2012-09-19T08:31:20Z, auth_module:, conflict_email: true, conflict_login: true
++ id: 2, email: TEST, login: TEST, last_seen_at: 2012-09-19T08:31:29Z, auth_module:, conflict_email: true, conflict_login: true
 conflict: test2
-- id: 3, email: test2, login: test2, last_seen_at: 2012-09-19T08:31:41Z, auth_module:
-+ id: 4, email: TEST2, login: TEST2, last_seen_at: 2012-09-19T08:31:51Z, auth_module:
-- id: 5, email: Test2, login: Test2, last_seen_at: 2012-09-19T08:32:03Z, auth_module: `,
+- id: 3, email: test2, login: test2, last_seen_at: 2012-09-19T08:31:41Z, auth_module: , conflict_email: true, conflict_login: true
++ id: 4, email: TEST2, login: TEST2, last_seen_at: 2012-09-19T08:31:51Z, auth_module: , conflict_email: true, conflict_login: true
+- id: 5, email: Test2, login: Test2, last_seen_at: 2012-09-19T08:32:03Z, auth_module: , conflict_email: true, conflict_login: true`,
 				expectedBlocks:      []string{"conflict: test", "conflict: test2"},
 				expectedIdsInBlocks: m,
 			},
@@ -778,12 +755,13 @@ func TestMarshalConflictUser(t *testing.T) {
 		},
 		{
 			name:     "should be able to marshal expected input row",
-			inputRow: "+ id: 1, email: userduplicatetest1@test.com, login: user_duplicate_test_1_login, , last_seen_at: 2012-07-26T16:08:11Z, auth_module: , conflict_email: , conflict_login: true",
+			inputRow: "+ id: 1, email: userduplicatetest1@test.com, login: user_duplicate_test_1_login, last_seen_at: 2012-07-26T16:08:11Z, auth_module: , conflict_email: , conflict_login: true",
 			expectedUser: ConflictingUser{
 				Direction:     "+",
 				ID:            "1",
 				Email:         "userduplicatetest1@test.com",
 				Login:         "user_duplicate_test_1_login",
+				LastSeenAt:    "2012-07-26T16:08:11Z",
 				AuthModule:    "",
 				ConflictEmail: "",
 				ConflictLogin: "true",
