@@ -21,6 +21,7 @@ import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
 import config from 'app/core/config';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { getNextRefIdChar } from 'app/core/utils/query';
+import { SavedQueryRef } from 'app/features/query-library/api/SavedQueriesApi';
 import { QueryGroupOptions } from 'app/types';
 import {
   PanelOptionsChangedEvent,
@@ -131,6 +132,21 @@ const defaults: any = {
     overrides: [],
   },
   title: '',
+  savedQueryLink: null,
+};
+
+export type SavedQueryVariable<T = unknown> = {
+  type: 'text' | 'datasource' | string; // TODO: enumify
+  name: string;
+  current: {
+    // current.value follows the structure from dashboard variables
+    value: T;
+  };
+};
+
+export type SavedQueryLink = {
+  ref: SavedQueryRef;
+  variables: SavedQueryVariable[];
 };
 
 export class PanelModel implements DataConfigSource, IPanelModel {
@@ -155,6 +171,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   datasource: DataSourceRef | null = null;
   thresholds?: any;
   pluginVersion?: string;
+  savedQueryLink: SavedQueryLink | null = null;
 
   snapshotData?: DataFrameDTO[];
   timeFrom?: any;
@@ -508,6 +525,18 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       uid: dataSource.uid,
       type: dataSource.type,
     };
+
+    if (options.savedQueryUid) {
+      this.savedQueryLink = {
+        ref: {
+          uid: options.savedQueryUid,
+        },
+        variables: [],
+      };
+    } else {
+      this.savedQueryLink = null;
+    }
+
     this.cacheTimeout = options.cacheTimeout;
     this.timeFrom = options.timeRange?.from;
     this.timeShift = options.timeRange?.shift;

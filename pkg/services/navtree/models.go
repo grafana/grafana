@@ -14,6 +14,7 @@ const (
 	WeightSavedItems = (iota - 20) * 100
 	WeightCreate
 	WeightDashboard
+	WeightQueryLibrary
 	WeightExplore
 	WeightAlerting
 	WeightDataConnections

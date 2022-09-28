@@ -118,6 +118,18 @@ func (s *ServiceImpl) GetNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 		})
 	}
 
+	if s.features.IsEnabled(featuremgmt.FlagQueryLibrary) && s.features.IsEnabled(featuremgmt.FlagPanelTitleSearch) {
+		treeRoot.AddSection(&navtree.NavLink{
+			Text:       "Query Library",
+			Id:         "query",
+			SubTitle:   "Store, import, export and manage your team queries in an easy way.",
+			Icon:       "file-search-alt",
+			SortWeight: navtree.WeightQueryLibrary,
+			Section:    navtree.NavSectionCore,
+			Url:        s.cfg.AppSubURL + "/query-library",
+		})
+	}
+
 	if setting.ProfileEnabled && c.IsSignedIn {
 		treeRoot.AddSection(s.getProfileNode(c))
 	}

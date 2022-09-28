@@ -14,15 +14,26 @@ import { catchError, filter, map, mergeMap, retryWhen, share, takeUntil, tap, th
 import { v4 as uuidv4 } from 'uuid';
 
 import { AppEvents, DataQueryErrorType } from '@grafana/data';
-import { BackendSrv as BackendService, BackendSrvRequest, config, FetchError, FetchResponse } from '@grafana/runtime';
+import {
+  BackendSrv as BackendService,
+  BackendSrvRequest,
+  config,
+  FetchError,
+  FetchResponse,
+  getDataSourceSrv,
+} from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { getConfig } from 'app/core/config';
 import { loadUrlToken } from 'app/core/utils/urlToken';
 import { DashboardSearchItem } from 'app/features/search/types';
 import { getGrafanaStorage } from 'app/features/storage/storage';
 import { TokenRevokedModal } from 'app/features/users/TokenRevokedModal';
+import { getGrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { DashboardDTO, FolderDTO } from 'app/types';
 
+import { isQueryWithMixedDatasource } from '../../features/query-library/api/SavedQueriesApi';
+import { getSavedQuerySrv } from '../../features/query-library/api/SavedQueriesSrv';
 import { ShowModalReactEvent } from '../../types/events';
 import {
   isContentTypeApplicationJson,
@@ -443,11 +454,68 @@ export class BackendSrv implements BackendService {
     return this.get('/api/search', query);
   }
 
-  getDashboardByUid(uid: string): Promise<DashboardDTO> {
+  // TODO: move this to the backend
+  async withUpdatedQueries(dashboardDto: DashboardDTO): Promise<DashboardDTO> {
+    if (!Array.isArray(dashboardDto?.dashboard?.panels)) {
+      return dashboardDto;
+    }
+
+    const savedQueryRefs = dashboardDto.dashboard.panels?.map((p) => p?.savedQueryLink?.ref).filter(Boolean);
+    console.log(`found ${savedQueryRefs?.length} refs: ${JSON.stringify(savedQueryRefs)}`);
+
+    if (!savedQueryRefs?.length) {
+      return dashboardDto;
+    }
+
+    const savedQueries = await getSavedQuerySrv().getSavedQueries(savedQueryRefs);
+
+    const defaultDataSource = getDataSourceSrv().getInstanceSettings('default');
+    const grafanaDs = await getGrafanaDatasource();
+    const defaultDsRef = {
+      uid: defaultDataSource?.uid ?? grafanaDs.uid,
+      type: defaultDataSource?.type ?? grafanaDs.type,
+    };
+
+    dashboardDto.dashboard.panels
+      ?.filter((p) => Boolean(p.savedQueryLink?.ref))
+      .forEach((p) => {
+        const savedQuery = savedQueries.find((s) => s.uid === p.savedQueryLink.ref.uid);
+        if (savedQuery) {
+          p.targets = savedQuery.queries;
+          if (!savedQuery.queries.length) {
+            p.datasource = defaultDsRef;
+          } else if (isQueryWithMixedDatasource(savedQuery)) {
+            p.datasource = {
+              uid: MIXED_DATASOURCE_NAME,
+              type: 'datasource',
+            };
+          } else {
+            const firstQuery = savedQuery.queries[0];
+            if (firstQuery.datasource) {
+              p.datasource = {
+                uid: firstQuery.datasource.uid,
+                type: firstQuery.datasource.type,
+              };
+            } else {
+              p.datasource = {
+                uid: MIXED_DATASOURCE_NAME,
+                type: 'datasource',
+              };
+            }
+          }
+        }
+      });
+
+    return dashboardDto;
+  }
+
+  async getDashboardByUid(uid: string): Promise<DashboardDTO> {
     if (uid.indexOf('/') > 0 && config.featureToggles.dashboardsFromStorage) {
       return getGrafanaStorage().getDashboard(uid);
     }
-    return this.get<DashboardDTO>(`/api/dashboards/uid/${uid}`);
+
+    const dashboardDTO = await this.get<DashboardDTO>(`/api/dashboards/uid/${uid}`);
+    return config.featureToggles.queryLibrary ? this.withUpdatedQueries(dashboardDTO) : dashboardDTO;
   }
 
   getPublicDashboardByUid(uid: string) {
