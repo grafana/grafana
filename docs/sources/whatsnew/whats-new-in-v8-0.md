@@ -59,7 +59,7 @@ The Bar chart panel is a new visualization that supports categorical data. It on
 
 To use it with time series you first have to add a **Reduce** transform.
 
-For more information, refer to [Bar chart visualization]({{< relref "../visualizations/bar-chart/" >}}).
+For more information, refer to [Bar chart visualization]({{< relref "../dashboards/configure-panels-visualizations/visualizations/bar-chart/" >}}).
 
 ### State timeline visualization (beta)
 
@@ -73,11 +73,11 @@ Example with string values:
 With time series data and thresholds:
 {{< figure src="/static/img/docs/v8/state_timeline_time_series.png" max-width="800px" caption="state timeline with time series" >}}
 
-For more information, refer to [State timeline visualization]({{< relref "../visualizations/state-timeline/" >}}).
+For more information, refer to [State timeline visualization]({{< relref "../dashboards/configure-panels-visualizations/visualizations/state-timeline/" >}}).
 
 ### Status history visualization (beta)
 
-A sister panel to the state timeline is the new Status history panel visualization. It can display periodic states in a grid view. It supports both numerical, string, or boolean states. You can assign colors using value mappings, thresholds, or gradient color. For more information, refer to [Status history]({{< relref "../visualizations/status-history/" >}}).
+A sister panel to the state timeline is the new Status history panel visualization. It can display periodic states in a grid view. It supports both numerical, string, or boolean states. You can assign colors using value mappings, thresholds, or gradient color. For more information, refer to [Status history]({{< relref "../dashboards/configure-panels-visualizations/visualizations/status-history/" >}}).
 schemes.
 
 ![Status grid visualization](/static/img/docs/status-grid/status-grid-8-0.png)
@@ -88,20 +88,20 @@ This hidden feature of the old Graph panel is now a standalone visualization. It
 
 {{< figure src="/static/img/docs/histogram/histogram-8-0.png" max-width="1025px" caption="Histogram example" >}}
 
-For more information, refer to [Histogram]({{< relref "../visualizations/histogram/" >}})
+For more information, refer to [Histogram]({{< relref "../dashboards/configure-panels-visualizations/visualizations/histogram/" >}})
 
 ### Time series visualization updates
 
 The Time series is out of beta! We are removing the `Beta` tag and graduating the Time series visualization to a stable state.
 
 - **Time series** is now the default visualization option, replacing the **Graph (old)**.
-- The Time series panel now supports stacking. For more information, refer to [Graph stacked time series]({{< relref "../visualizations/time-series#stack-series" >}}).
+- The Time series panel now supports stacking. For more information, refer to [Graph stacked time series]({{< relref "../dashboards/configure-panels-visualizations/visualizations/time-series#stack-series" >}}).
 - You can now add alerts in the Time series panel, just like the old Graph panel.
-- Updated [connect null values]({{< relref "../visualizations/time-series#connect-null-values" >}}) options.
+- Updated [connect null values]({{< relref "../dashboards/configure-panels-visualizations/visualizations/time-series#connect-null-values" >}}) options.
 - We added support for a shared crosshair and a tooltip that’s now smarter when it comes to data display in the tooltip.
 - Various performance improvements.
 
-[Time series panel]({{< relref "../visualizations/time-series/" >}}) topics have been updated as a result of these changes.
+[Time series panel]({{< relref "../dashboards/configure-panels-visualizations/visualizations/time-series/" >}}) topics have been updated as a result of these changes.
 
 ### Node graph visualization updates
 
@@ -109,7 +109,7 @@ You can now expand the node graph for the displayed trace when using the Trace t
 
 We also added a grid view and the ability to explore hidden nodes.
 
-[Tracing in Explore]({{< relref "../explore/trace-integration/" >}}) and [Node graph]({{< relref "../visualizations/node-graph/" >}}) were updated as a result of these changes.
+[Tracing in Explore]({{< relref "../explore/trace-integration/" >}}) and [Node graph]({{< relref "../dashboards/configure-panels-visualizations/visualizations/node-graph/" >}}) were updated as a result of these changes.
 
 ### Pie chart visualization updates
 
@@ -121,7 +121,7 @@ Lots of panel editor improvements, heavily informed by user research and communi
 
 - All options are now shown in a single pane.
 - You can now search panel options.
-- The Value mappings feature has been completely redesigned. For more information, refer to [Configure value mappings]({{< relref "../panels/configure-value-mappings/" >}}).
+- The Value mappings feature has been completely redesigned. For more information, refer to [Configure value mappings]({{< relref "../dashboards/configure-panels-visualizations/configure-value-mappings/" >}}).
 - New **Table view** option is always available.
 
 The [Panels]({{< relref "../panels/" >}}) section has been updated to reflect these changes.
