@@ -4,16 +4,16 @@ import (
 	"bytes"
 	"crypto"
 	"fmt"
-	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/grafana/grafana/pkg/build/packaging"
 	"github.com/grafana/grafana/pkg/infra/fs"
-	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/armor"
 	"golang.org/x/crypto/openpgp/packet"
@@ -33,13 +33,10 @@ func updateRPMRepo(cfg PublishConfig, workDir string) error {
 		return err
 	}
 
-	repoRoot, err := ioutil.TempDir("", "rpm-repo")
-	if err != nil {
-		return err
-	}
+	repoRoot := path.Join(os.TempDir(), "rpm-repo")
 	defer func() {
 		if err := os.RemoveAll(repoRoot); err != nil {
-			log.Warn().Msgf("Failed to remove %q: %s", repoRoot, err.Error())
+			log.Printf("Failed to remove %q: %s\n", repoRoot, err.Error())
 		}
 	}()
 
@@ -50,7 +47,8 @@ func updateRPMRepo(cfg PublishConfig, workDir string) error {
 	folderURI := fmt.Sprintf("gs://%s/%s/%s", cfg.RPMRepoBucket, strings.ToLower(string(cfg.Edition)), repoName)
 
 	// Download the RPM database
-	log.Info().Msgf("Downloading RPM database from GCS (%s)...", folderURI)
+	log.Printf("Downloading RPM database from GCS (%s)...\n", folderURI)
+	//nolint:gosec
 	cmd := exec.Command("gsutil", "-m", "rsync", "-r", "-d", folderURI, repoRoot)
 	if output, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("failed to download RPM database from GCS: %w\n%s", err, output)
@@ -85,6 +83,7 @@ func updateRPMRepo(cfg PublishConfig, workDir string) error {
 		}
 	}
 
+	//nolint:gosec
 	cmd = exec.Command("createrepo", repoRoot)
 	if output, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("failed to create repo at %q: %w\n%s", repoRoot, err, output)
@@ -98,12 +97,13 @@ func updateRPMRepo(cfg PublishConfig, workDir string) error {
 
 	// Sync packages first to avoid cache misses
 	if cfg.DryRun {
-		log.Info().Msgf("Simulating upload of RPMs to GCS (%s)", folderURI)
+		log.Printf("Simulating upload of RPMs to GCS (%s)\n", folderURI)
 	} else {
-		log.Info().Msgf("Uploading RPMs to GCS (%s)...", folderURI)
+		log.Printf("Uploading RPMs to GCS (%s)...\n", folderURI)
 		args := []string{"-m", "cp"}
 		args = append(args, rpms...)
 		args = append(args, folderURI)
+		//nolint:gosec
 		cmd = exec.Command("gsutil", args...)
 		if output, err := cmd.CombinedOutput(); err != nil {
 			return fmt.Errorf("failed to upload RPMs to GCS: %w\n%s", err, output)
@@ -111,15 +111,17 @@ func updateRPMRepo(cfg PublishConfig, workDir string) error {
 	}
 
 	if cfg.DryRun {
-		log.Info().Msgf("Simulating upload of RPM repo metadata to GCS (%s)", folderURI)
+		log.Printf("Simulating upload of RPM repo metadata to GCS (%s)\n", folderURI)
 	} else {
-		log.Info().Msgf("Uploading RPM repo metadata to GCS (%s)...", folderURI)
+		log.Printf("Uploading RPM repo metadata to GCS (%s)...\n", folderURI)
+		//nolint:gosec
 		cmd = exec.Command("gsutil", "-m", "rsync", "-r", "-d", repoRoot, folderURI)
 		if output, err := cmd.CombinedOutput(); err != nil {
 			return fmt.Errorf("failed to upload RPM repo metadata to GCS: %w\n%s", err, output)
 		}
 		allRepoResources := fmt.Sprintf("%s/**/*", folderURI)
-		log.Info().Msgf("Setting cache ttl for RPM repo resources on GCS (%s)...", allRepoResources)
+		log.Printf("Setting cache ttl for RPM repo resources on GCS (%s)...\n", allRepoResources)
+		//nolint:gosec
 		cmd = exec.Command("gsutil", "-m", "setmeta", "-h", CacheSettings+cfg.TTL, allRepoResources)
 		if output, err := cmd.CombinedOutput(); err != nil {
 			return fmt.Errorf("failed to set cache ttl for RPM repo resources on GCS: %w\n%s", err, output)
@@ -157,13 +159,14 @@ func downloadRPMs(cfg PublishConfig, workDir string) error {
 
 	u := fmt.Sprintf("gs://%s/%s/%s/grafana%s-%s-*.*.rpm*", cfg.Bucket,
 		strings.ToLower(string(cfg.Edition)), ReleaseFolder, sfx, version)
-	log.Info().Msgf("Downloading RPM packages %q...", u)
+	log.Printf("Downloading RPM packages %q...\n", u)
 	args := []string{
 		"-m",
 		"cp",
 		u,
 		workDir,
 	}
+	//nolint:gosec
 	cmd := exec.Command("gsutil", args...)
 	if output, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("failed to download RPM packages %q: %w\n%s", u, err, output)
@@ -177,7 +180,12 @@ func getPublicKey(cfg PublishConfig) (*packet.PublicKey, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to open %q: %w", cfg.GPGPublicKey, err)
 	}
-	defer f.Close()
+	defer func(f *os.File) {
+		err := f.Close()
+		if err != nil {
+			return
+		}
+	}(f)
 
 	block, err := armor.Decode(f)
 	if err != nil {
@@ -207,9 +215,14 @@ func getPrivateKey(cfg PublishConfig) (*packet.PrivateKey, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to open %q: %w", cfg.GPGPrivateKey, err)
 	}
-	defer f.Close()
+	defer func(f *os.File) {
+		err := f.Close()
+		if err != nil {
+			return
+		}
+	}(f)
 
-	passphraseB, err := ioutil.ReadFile(cfg.GPGPassPath)
+	passphraseB, err := os.ReadFile(cfg.GPGPassPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read %q: %w", cfg.GPGPrivateKey, err)
 	}
@@ -248,7 +261,7 @@ func signRPMRepo(repoRoot string, cfg PublishConfig) error {
 		return fmt.Errorf("private or public key is empty")
 	}
 
-	log.Info().Msgf("Signing RPM repo")
+	log.Printf("Signing RPM repo")
 
 	pubKey, err := getPublicKey(cfg)
 	if err != nil {
@@ -314,17 +327,31 @@ func signRPMRepo(repoRoot string, cfg PublishConfig) error {
 		},
 	}
 
+	// Ignore gosec G304 as this function is only used in the build process.
+	//nolint:gosec
 	freader, err := os.Open(filepath.Join(repoRoot, "repodata", "repomd.xml"))
 	if err != nil {
 		return err
 	}
-	defer freader.Close()
+	defer func(freader *os.File) {
+		err := freader.Close()
+		if err != nil {
+			return
+		}
+	}(freader)
 
+	// Ignore gosec G304 as this function is only used in the build process.
+	//nolint:gosec
 	sigwriter, err := os.Create(filepath.Join(repoRoot, "repodata", "repomd.xml.asc"))
 	if err != nil {
 		return err
 	}
-	defer sigwriter.Close()
+	defer func(sigwriter *os.File) {
+		err := sigwriter.Close()
+		if err != nil {
+			return
+		}
+	}(sigwriter)
 
 	if err := openpgp.ArmoredDetachSignText(sigwriter, &signer, freader, nil); err != nil {
 		return fmt.Errorf("failed to write PGP signature: %w", err)

@@ -9,7 +9,6 @@ const (
 	ReleaseBranchMode VersionMode = "branch"
 	PullRequestMode   VersionMode = "pull_request"
 	CustomMode        VersionMode = "custom"
-	CronjobMode       VersionMode = "cron"
 )
 
 const (
@@ -18,7 +17,6 @@ const (
 	Push        = "push"
 	Custom      = "custom"
 	Promote     = "promote"
-	Cronjob     = "cron"
 )
 
 const (

@@ -2,16 +2,16 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/grafana/grafana/pkg/build/packaging"
 	"github.com/grafana/grafana/pkg/infra/fs"
-	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 )
 
@@ -48,7 +48,7 @@ func writeAptlyConf(dbDir, repoDir string) error {
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(filepath.Join(home, ".aptly.conf"), []byte(aptlyConf), 0600)
+	return os.WriteFile(filepath.Join(home, ".aptly.conf"), []byte(aptlyConf), 0600)
 }
 
 // downloadDebs downloads Deb packages.
@@ -83,13 +83,14 @@ func downloadDebs(cfg PublishConfig, workDir string) error {
 
 	u := fmt.Sprintf("gs://%s/%s/%s/grafana%s_%s_*.deb*", cfg.Bucket,
 		strings.ToLower(string(cfg.Edition)), ReleaseFolder, sfx, version)
-	log.Info().Msgf("Downloading Deb packages %q...", u)
+	log.Printf("Downloading Deb packages %q...\n", u)
 	args := []string{
 		"-m",
 		"cp",
 		u,
 		workDir,
 	}
+	//nolint:gosec
 	cmd := exec.Command("gsutil", args...)
 	if output, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("failed to download Deb packages %q: %w\n%s", u, err, output)
@@ -122,13 +123,10 @@ func updateDebRepo(cfg PublishConfig, workDir string) error {
 		repoName = "beta"
 	}
 
-	repoRoot, err := ioutil.TempDir("", "deb-repo")
-	if err != nil {
-		return err
-	}
+	repoRoot := path.Join(os.TempDir(), "deb-repo")
 	defer func() {
 		if err := os.RemoveAll(repoRoot); err != nil {
-			log.Warn().Msgf("Failed to remove temporary directory %q: %s", repoRoot, err.Error())
+			log.Printf("Failed to remove temporary directory %q: %s\n", repoRoot, err.Error())
 		}
 	}()
 
@@ -136,7 +134,7 @@ func updateDebRepo(cfg PublishConfig, workDir string) error {
 	repoDir := filepath.Join(repoRoot, "repo")
 	tmpDir := filepath.Join(repoRoot, "tmp")
 	for _, dpath := range []string{dbDir, repoDir, tmpDir} {
-		if err := os.MkdirAll(dpath, 0775); err != nil {
+		if err := os.MkdirAll(dpath, 0750); err != nil {
 			return err
 		}
 	}
@@ -147,7 +145,8 @@ func updateDebRepo(cfg PublishConfig, workDir string) error {
 
 	// Download the Debian repo database
 	u := fmt.Sprintf("gs://%s/%s", cfg.DebDBBucket, strings.ToLower(string(cfg.Edition)))
-	log.Info().Msgf("Downloading Debian repo database from %s...", u)
+	log.Printf("Downloading Debian repo database from %s...\n", u)
+	//nolint:gosec
 	cmd := exec.Command("gsutil", "-m", "rsync", "-r", "-d", u, dbDir)
 	if output, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("failed to download Debian repo database: %w\n%s", err, output)
@@ -157,10 +156,11 @@ func updateDebRepo(cfg PublishConfig, workDir string) error {
 		return err
 	}
 
-	log.Info().Msgf("Updating local Debian package repository...")
+	log.Println("Updating local Debian package repository...")
 	// Update published local repository. This assumes that there exists already a local, published repo.
 	for _, tp := range []string{"stable", "beta"} {
 		passArg := fmt.Sprintf("-passphrase-file=%s", cfg.GPGPassPath)
+		//nolint:gosec
 		cmd := exec.Command("aptly", "publish", "update", "-batch", passArg, "-force-overwrite", tp,
 			"filesystem:repo:grafana")
 		if output, err := cmd.CombinedOutput(); err != nil {
@@ -171,9 +171,10 @@ func updateDebRepo(cfg PublishConfig, workDir string) error {
 	// Update database in GCS
 	u = fmt.Sprintf("gs://%s/%s", cfg.DebDBBucket, strings.ToLower(string(cfg.Edition)))
 	if cfg.DryRun {
-		log.Info().Msgf("Simulating upload of Debian repo database to GCS (%s)", u)
+		log.Printf("Simulating upload of Debian repo database to GCS (%s)\n", u)
 	} else {
-		log.Info().Msgf("Uploading Debian repo database to GCS (%s)...", u)
+		log.Printf("Uploading Debian repo database to GCS (%s)...\n", u)
+		//nolint:gosec
 		cmd = exec.Command("gsutil", "-m", "rsync", "-r", "-d", dbDir, u)
 		if output, err := cmd.CombinedOutput(); err != nil {
 			return cli.NewExitError(fmt.Sprintf("failed to upload Debian repo database to GCS: %s", output), 1)
@@ -184,15 +185,17 @@ func updateDebRepo(cfg PublishConfig, workDir string) error {
 	u = fmt.Sprintf("gs://%s/%s/deb", cfg.DebRepoBucket, strings.ToLower(string(cfg.Edition)))
 	grafDir := filepath.Join(repoDir, "grafana")
 	if cfg.DryRun {
-		log.Info().Msgf("Simulating upload of Debian repo resources to GCS (%s)", u)
+		log.Printf("Simulating upload of Debian repo resources to GCS (%s)\n", u)
 	} else {
-		log.Info().Msgf("Uploading Debian repo resources to GCS (%s)...", u)
+		log.Printf("Uploading Debian repo resources to GCS (%s)...\n", u)
+		//nolint:gosec
 		cmd = exec.Command("gsutil", "-m", "rsync", "-r", "-d", grafDir, u)
 		if output, err := cmd.CombinedOutput(); err != nil {
 			return cli.NewExitError(fmt.Sprintf("failed to upload Debian repo resources to GCS: %s", output), 1)
 		}
 		allRepoResources := fmt.Sprintf("%s/**/*", u)
-		log.Info().Msgf("Setting cache ttl for Debian repo resources on GCS (%s)...", allRepoResources)
+		log.Printf("Setting cache ttl for Debian repo resources on GCS (%s)...\n", allRepoResources)
+		//nolint:gosec
 		cmd = exec.Command("gsutil", "-m", "setmeta", "-h", CacheSettings+cfg.TTL, allRepoResources)
 		if output, err := cmd.CombinedOutput(); err != nil {
 			return cli.NewExitError(fmt.Sprintf("failed to set cache ttl for Debian repo resources on GCS: %s", output), 1)
@@ -212,7 +215,7 @@ func addPkgsToRepo(cfg PublishConfig, workDir, tmpDir, repoName string) error {
 		return fmt.Errorf("unsupported edition %q", cfg.Edition)
 	}
 
-	log.Info().Msgf("Adding packages to Debian %q repo...", repoName)
+	log.Printf("Adding packages to Debian %q repo...\n", repoName)
 	// TODO: Be more specific about filename pattern
 	debs, err := filepath.Glob(filepath.Join(workDir, fmt.Sprintf("grafana%s*.deb", sfx)))
 	if err != nil {
@@ -230,6 +233,7 @@ func addPkgsToRepo(cfg PublishConfig, workDir, tmpDir, repoName string) error {
 		}
 	}
 	// XXX: Adds too many packages in enterprise (Arve: What does this mean exactly?)
+	//nolint:gosec
 	cmd := exec.Command("aptly", "repo", "add", "-force-replace", repoName, tmpDir)
 	if output, err := cmd.CombinedOutput(); err != nil {
 		return cli.NewExitError(fmt.Sprintf("failed to add packages to local Debian repository: %s", output), 1)

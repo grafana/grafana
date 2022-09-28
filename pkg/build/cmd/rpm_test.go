@@ -1,13 +1,11 @@
 package main
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/grafana/build-pipeline/pkg/config"
-	"github.com/grafana/build-pipeline/pkg/subcmd/publishpackages"
+	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/stretchr/testify/require"
 )
 
@@ -179,20 +177,20 @@ func TestSignRPMRepo(t *testing.T) {
 	repoDir := t.TempDir()
 	workDir := t.TempDir()
 	pubKeyPath := filepath.Join(workDir, "pub.key")
-	err := ioutil.WriteFile(pubKeyPath, []byte(pubKey), 0600)
+	err := os.WriteFile(pubKeyPath, []byte(pubKey), 0600)
 	require.NoError(t, err)
 	privKeyPath := filepath.Join(workDir, "priv.key")
-	err = ioutil.WriteFile(privKeyPath, []byte(privKey), 0600)
+	err = os.WriteFile(privKeyPath, []byte(privKey), 0600)
 	require.NoError(t, err)
 	passPhrasePath := filepath.Join(workDir, "passphrase")
-	err = ioutil.WriteFile(passPhrasePath, []byte(passPhrase), 0600)
+	err = os.WriteFile(passPhrasePath, []byte(passPhrase), 0600)
 	require.NoError(t, err)
 	err = os.Mkdir(filepath.Join(repoDir, "repodata"), 0700)
 	require.NoError(t, err)
-	err = ioutil.WriteFile(filepath.Join(repoDir, "repodata", "repomd.xml"), []byte("<xml></xml>"), 0600)
+	err = os.WriteFile(filepath.Join(repoDir, "repodata", "repomd.xml"), []byte("<xml></xml>"), 0600)
 	require.NoError(t, err)
 
-	cfg := publishpackages.PublishConfig{
+	cfg := PublishConfig{
 		Config: config.Config{
 			GPGPrivateKey: privKeyPath,
 			GPGPublicKey:  pubKeyPath,
