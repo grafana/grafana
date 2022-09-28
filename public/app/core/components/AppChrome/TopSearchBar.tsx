@@ -51,7 +51,7 @@ export function TopSearchBar() {
         {profileNode && (
           <Dropdown overlay={<TopNavBarMenu node={profileNode} />}>
             <button className={styles.actionItem}>
-              <img src={contextSrv.user.gravatarUrl} alt="user avatar profile" />
+              <img src={contextSrv.user.gravatarUrl} alt="User avatar" />
             </button>
           </Dropdown>
         )}

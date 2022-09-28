@@ -130,7 +130,13 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked, onC
           onClick={onCheckboxClick}
         />
         {hasImage ? (
-          <img loading="lazy" className={styles.image} src={imageSrc} alt="" onError={() => setHasImage(false)} />
+          <img
+            loading="lazy"
+            className={styles.image}
+            src={imageSrc}
+            alt="Preview of dashboard"
+            onError={() => setHasImage(false)}
+          />
         ) : (
           <div className={styles.imagePlaceholder}>
             {item.icon ? (

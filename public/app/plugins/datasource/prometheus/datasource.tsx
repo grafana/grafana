@@ -924,7 +924,7 @@ export class PrometheusDatasource
             <img
               style={{ width: 14, height: 14, verticalAlign: 'text-bottom' }}
               src={LOGOS[buildInfo.application ?? PromApplication.Prometheus]}
-              alt="datasource subtype logo"
+              alt=""
             />{' '}
             {buildInfo.application ? AppDisplayNames[buildInfo.application] : 'Unknown'}
           </span>
