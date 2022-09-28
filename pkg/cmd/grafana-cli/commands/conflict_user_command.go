@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/urfave/cli/v2"
 )
@@ -356,12 +357,13 @@ func (r *ConflictResolver) MergeConflictingUsers(ctx context.Context, ss *sqlsto
 		if commitErr != nil {
 			return fmt.Errorf("could not commit operation for useridentification %s: %w", block, commitErr)
 		}
-		updateMainCommand := &models.UpdateUserCommand{
-			UserId: intoUser.ID,
+		userStore := userimpl.ProvideStore(ss, setting.NewCfg())
+		updateMainCommand := &user.UpdateUserCommand{
+			UserID: intoUser.ID,
 			Login:  strings.ToLower(intoUser.Login),
 			Email:  strings.ToLower(intoUser.Email),
 		}
-		updateErr := ss.UpdateUser(ctx, updateMainCommand)
+		updateErr := userStore.Update(ctx, updateMainCommand)
 		if updateErr != nil {
 			return fmt.Errorf("could not update user: %w", updateErr)
 		}
