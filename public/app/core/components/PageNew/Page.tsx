@@ -1,6 +1,7 @@
 // Libraries
 import { css, cx } from '@emotion/css';
 import React, { useEffect } from 'react';
+import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { CustomScrollbar, useStyles2 } from '@grafana/ui';
@@ -15,6 +16,7 @@ import { PageContents } from './PageContents';
 import { PageHeader } from './PageHeader';
 import { PageTabs } from './PageTabs';
 import { SectionNav } from './SectionNav';
+import { SectionNavToggle } from './SectionNavToggle';
 
 export const Page: PageType = ({
   navId,
@@ -32,6 +34,7 @@ export const Page: PageType = ({
   const styles = useStyles2(getStyles);
   const navModel = usePageNav(navId, oldNavProp);
   const { chrome } = useGrafana();
+  const [isSectionNavExpanded, setSectionNavExpanded] = useLocalStorage<boolean>('grafana.sectionNav.expanded', true);
 
   usePageTitle(navModel, pageNav);
 
@@ -50,7 +53,16 @@ export const Page: PageType = ({
     <div className={cx(styles.wrapper, className)} {...otherProps}>
       {layout === PageLayoutType.Standard && (
         <div className={styles.panes}>
-          {navModel && navModel.main.children && <SectionNav model={navModel} />}
+          {navModel && navModel.main.children && (
+            <>
+              <SectionNav model={navModel} isExpanded={Boolean(isSectionNavExpanded)} />
+              <SectionNavToggle
+                className={styles.collapseIcon}
+                isExpanded={Boolean(isSectionNavExpanded)}
+                onClick={() => setSectionNavExpanded(!isSectionNavExpanded)}
+              />
+            </>
+          )}
           <div className={styles.pageContent}>
             <CustomScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
               <div className={styles.pageInner}>
@@ -94,6 +106,18 @@ const getStyles = (theme: GrafanaTheme2) => {
     : '0 0.6px 1.5px -1px rgb(0 0 0 / 8%),0 2px 4px rgb(0 0 0 / 6%),0 5px 10px -1px rgb(0 0 0 / 5%)';
 
   return {
+    collapseIcon: css({
+      border: `1px solid ${theme.colors.border.weak}`,
+      transform: 'translateX(50%)',
+      top: theme.spacing(8),
+      right: theme.spacing(-1),
+
+      [theme.breakpoints.down('md')]: {
+        left: '50%',
+        transform: 'translate(-50%, 50%) rotate(90deg)',
+        top: theme.spacing(2),
+      },
+    }),
     wrapper: css`
       height: 100%;
       display: flex;
