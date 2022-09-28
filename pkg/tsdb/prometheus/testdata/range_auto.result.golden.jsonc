@@ -7,7 +7,7 @@
 //      },
 //      "executedQueryString": "Expr: histogram_quantile(0.95, sum(rate(tns_request_duration_seconds_bucket[1m0s])) by (le))\nStep: 1s"
 //  }
-//  Name: __auto
+//  Name: histogram_quantile(0.95, sum(rate(tns_request_duration_seconds_bucket[1m0s])) by (le))
 //  Dimensions: 2 Fields by 301 Rows
 //  +-----------------------------------+----------------------+
 //  | Name: Time                        | Name: Value          |
@@ -32,7 +32,7 @@
   "frames": [
     {
       "schema": {
-        "name": "__auto",
+        "name": "histogram_quantile(0.95, sum(rate(tns_request_duration_seconds_bucket[1m0s])) by (le))",
         "meta": {
           "type": "timeseries-many",
           "custom": {
@@ -59,7 +59,7 @@
             },
             "labels": {},
             "config": {
-              "displayNameFromDS": "__auto"
+              "displayNameFromDS": "histogram_quantile(0.95, sum(rate(tns_request_duration_seconds_bucket[1m0s])) by (le))"
             }
           }
         ]
