@@ -30,7 +30,7 @@ A label matchers consists of 3 distinct parts, the **label**, the **value** and 
 | `=~`     | Select labels that regex-match the value.          |
 | `!~`     | Select labels that do not regex-match the value.   |
 
-In case of multiple label matchers, they are combined using AND logical operator, meaning all matchers need to match in order to link a rule to a policy.
+If you are using multiple label matchers, they are combined using the AND logical operator. This means that all matchers must match in order to link a rule to a policy.
 
 ## Example of a label matcher
 
