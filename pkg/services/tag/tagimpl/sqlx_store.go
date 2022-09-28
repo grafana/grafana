@@ -14,12 +14,12 @@ type sqlxStore struct {
 }
 
 func (s *sqlxStore) EnsureTagsExist(ctx context.Context, tags []*tag.Tag) ([]*tag.Tag, error) {
-	for _, tagelement := range tags {
+	for _, tagElement := range tags {
 		var existingTag tag.Tag
-		err := s.sess.Get(ctx, &existingTag, `SELECT * FROM tag WHERE "key"=? AND "value"=?`, tagelement.Key, tagelement.Value)
+		err := s.sess.Get(ctx, &existingTag, `SELECT * FROM tag WHERE "key"=? AND "value"=?`, tagElement.Key, tagElement.Value)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
-				tagelement.Id, err = s.sess.ExecWithReturningId(ctx, `INSERT INTO tag ("key", "value") VALUES (?, ?)`, tagelement.Key, tagelement.Value)
+				tagElement.Id, err = s.sess.ExecWithReturningId(ctx, `INSERT INTO tag ("key", "value") VALUES (?, ?)`, tagElement.Key, tagElement.Value)
 				if err != nil {
 					return tags, err
 				}
@@ -27,7 +27,7 @@ func (s *sqlxStore) EnsureTagsExist(ctx context.Context, tags []*tag.Tag) ([]*ta
 				return tags, err
 			}
 		} else {
-			tagelement.Id = existingTag.Id
+			tagElement.Id = existingTag.Id
 		}
 	}
 	return tags, nil
