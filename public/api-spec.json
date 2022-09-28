@@ -10403,6 +10403,9 @@
       "description": "Correlation is the model for correlations definitions",
       "type": "object",
       "properties": {
+        "config": {
+          "$ref": "#/definitions/CorrelationConfig"
+        },
         "description": {
           "description": "Description of the correlation",
           "type": "string",
@@ -10429,6 +10432,26 @@
           "example": "50xhMlg9k"
         }
       }
+    },
+    "CorrelationConfig": {
+      "type": "object",
+      "required": [
+        "field",
+        "target"
+      ],
+      "properties": {
+        "field": {
+          "description": "Field used to attach the correlation link",
+          "type": "string"
+        },
+        "target": {
+          "$ref": "#/definitions/CorrelationConfigTarget"
+        }
+      }
+    },
+    "CorrelationConfigTarget": {
+      "description": "CorrelationConfigTarget is the target data query specific to target data source (Correlation.TargetUID)",
+      "type": "object"
     },
     "CreateAlertNotificationCommand": {
       "type": "object",
@@ -10469,6 +10492,9 @@
       "description": "CreateCorrelationCommand is the command for creating a correlation",
       "type": "object",
       "properties": {
+        "config": {
+          "$ref": "#/definitions/CorrelationConfig"
+        },
         "description": {
           "description": "Optional description of the correlation",
           "type": "string",

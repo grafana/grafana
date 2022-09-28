@@ -28,7 +28,6 @@ export function NavLandingPage({ navId }: Props) {
                 <NavLandingPageCard
                   key={child.id}
                   description={child.description}
-                  icon={child.icon}
                   text={child.text}
                   url={child.url ?? ''}
                 />
@@ -46,7 +45,6 @@ export function NavLandingPage({ navId }: Props) {
                   <NavLandingPageCard
                     key={child.id}
                     description={child.description}
-                    icon={child.icon}
                     text={child.text}
                     url={child.url ?? ''}
                   />
@@ -68,10 +66,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   grid: css({
     display: 'grid',
-    gap: theme.spacing(2),
+    gap: theme.spacing(3),
     gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-    gridAutoRows: '200px',
-    padding: theme.spacing(2, 1),
+    gridAutoRows: '130px',
+    padding: theme.spacing(2, 0),
   }),
   nestedTitle: css({
     margin: theme.spacing(2, 0),

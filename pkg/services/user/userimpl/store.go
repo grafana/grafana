@@ -5,10 +5,12 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/events"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type store interface {
@@ -23,6 +25,17 @@ type store interface {
 type sqlStore struct {
 	db      db.DB
 	dialect migrator.Dialect
+	logger  log.Logger
+	cfg     *setting.Cfg
+}
+
+func ProvideStore(db db.DB, cfg *setting.Cfg) sqlStore {
+	return sqlStore{
+		db:      db,
+		dialect: db.GetDialect(),
+		cfg:     cfg,
+		logger:  log.New("user.store"),
+	}
 }
 
 func (ss *sqlStore) Insert(ctx context.Context, cmd *user.User) (int64, error) {

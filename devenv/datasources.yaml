@@ -52,6 +52,7 @@ datasources:
       implementation: prometheus
 
   - name: gdev-prometheus
+    uid: gdev-prometheus
     type: prometheus
     access: proxy
     url: http://localhost:9090
@@ -237,6 +238,13 @@ datasources:
       - targetUID: gdev-zipkin
         label: "Zipkin traces"
         description: "Related traces stored in Zipkin"
+      - targetUID: gdev-prometheus
+        label: "Logs to metrics"
+        description: "Related metrics stored in Prometheus"
+        config:
+          target:
+            expr: "{ job=\"test\" }"
+          field: "labels"
     jsonData:
       manageAlerts: false
       derivedFields:

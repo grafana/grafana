@@ -162,30 +162,6 @@ func (pc *FakePluginClient) RunStream(_ context.Context, _ *backend.RunStreamReq
 	return backendplugin.ErrMethodNotImplemented
 }
 
-type FakePluginStore struct {
-	Store map[string]plugins.PluginDTO
-}
-
-func NewFakePluginStore() *FakePluginStore {
-	return &FakePluginStore{
-		Store: make(map[string]plugins.PluginDTO),
-	}
-}
-
-func (f *FakePluginStore) Plugin(_ context.Context, id string) (plugins.PluginDTO, bool) {
-	p, exists := f.Store[id]
-	return p, exists
-}
-
-func (f *FakePluginStore) Plugins(_ context.Context, _ ...plugins.Type) []plugins.PluginDTO {
-	var res []plugins.PluginDTO
-	for _, p := range f.Store {
-		res = append(res, p)
-	}
-
-	return res
-}
-
 type FakePluginRegistry struct {
 	Store map[string]*plugins.Plugin
 }
