@@ -42,6 +42,7 @@ interface Props extends Themeable2 {
   logsSortOrder?: LogsSortOrder | null;
   forceEscape?: boolean;
   showDetectedFields?: string[];
+  scrollElement?: HTMLDivElement | undefined;
   getRows: () => LogRowModel[];
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
@@ -209,6 +210,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               wrapLogMessage={wrapLogMessage}
               prettifyLogMessage={prettifyLogMessage}
               onToggleContext={this.toggleContext}
+              scrollElement={this.props.scrollElement}
             />
           )}
         </tr>

@@ -24,6 +24,7 @@ interface Props extends Themeable2 {
   prettifyLogMessage: boolean;
   errors?: LogRowContextQueryErrors;
   context?: LogRowContextRows;
+  scrollElement?: HTMLDivElement | undefined;
   showContextToggle?: (row?: LogRowModel) => boolean;
   getRows: () => LogRowModel[];
   onToggleContext: () => void;

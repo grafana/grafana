@@ -70,6 +70,7 @@ interface Props extends Themeable2 {
   exploreId: ExploreId;
   datasourceType?: string;
   logsVolumeData: DataQueryResponse | undefined;
+  scrollElement?: HTMLDivElement | undefined;
   loadLogsVolumeData: (exploreId: ExploreId) => void;
   showContextToggle?: (row?: LogRowModel) => boolean;
   onChangeTime: (range: AbsoluteTimeRange) => void;
@@ -455,6 +456,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
               showDetectedFields={showDetectedFields}
               onClickShowDetectedField={this.showDetectedField}
               onClickHideDetectedField={this.hideDetectedField}
+              scrollElement={this.props.scrollElement}
             />
           </div>
           <LogsNavigation
