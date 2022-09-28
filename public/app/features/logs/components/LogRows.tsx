@@ -129,7 +129,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 getRows={getRows}
                 getRowContext={getRowContext}
                 row={row}
-                showContextToggle={showContextToggle}
+                showRowMenu={!false}
                 showDuplicates={showDuplicates}
                 showLabels={showLabels}
                 showTime={showTime}

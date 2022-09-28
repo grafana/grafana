@@ -24,6 +24,7 @@ interface Props extends Themeable2 {
   prettifyLogMessage: boolean;
   errors?: LogRowContextQueryErrors;
   context?: LogRowContextRows;
+  showRowMenu?: boolean;
   showContextToggle?: (row?: LogRowModel) => boolean;
   getRows: () => LogRowModel[];
   onToggleContext: () => void;
@@ -51,7 +52,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: block;
       margin-left: 0px;
     `,
-    contextButton: css`
+    rowMenu: css`
       display: flex;
       flex-wrap: nowrap;
       flex-direction: row;
@@ -125,6 +126,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
       context,
       contextIsOpen,
       showContextToggle,
+      showRowMenu,
       wrapLogMessage,
       prettifyLogMessage,
       onToggleContext,
@@ -160,14 +162,13 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
           <span className={cx(styles.positionRelative, { [styles.rowWithContext]: contextIsOpen })}>
             {renderLogMessage(hasAnsi, restructuredEntry, row.searchWords, style.logsRowMatchHighLight)}
           </span>
-          {!contextIsOpen && showContextToggle?.(row) && (
-            <span
-              className={cx('log-row-context', style.context, styles.contextButton)}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <Tooltip placement="top" content={'Show context'}>
-                <IconButton size="md" name="gf-show-context" onClick={this.onContextToggle} />
-              </Tooltip>
+          {showRowMenu && (
+            <span className={cx('log-row-menu', style.logRowMenu, styles.rowMenu)} onClick={(e) => e.stopPropagation()}>
+              {showContextToggle?.(row) && (
+                <Tooltip placement="top" content={'Show context'}>
+                  <IconButton size="md" name="gf-show-context" onClick={this.onContextToggle} />
+                </Tooltip>
+              )}
               <Tooltip placement="top" content={'Copy'}>
                 <IconButton
                   size="md"
