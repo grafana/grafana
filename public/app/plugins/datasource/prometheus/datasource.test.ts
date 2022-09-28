@@ -625,15 +625,14 @@ describe('PrometheusDatasource', () => {
 
     it('should call enhanceExprWithAdHocFilters', () => {
       ds.enhanceExprWithAdHocFilters = jest.fn();
-      const expr = 'rate({bar="baz", job="foo"} [5m]';
       const queries = [
         {
           refId: 'A',
-          expr,
+          expr: 'rate({bar="baz", job="foo"} [5m]',
         },
       ];
       ds.interpolateVariablesInQueries(queries, {});
-      expect(ds.enhanceExprWithAdHocFilters).toHaveBeenCalledWith(expr);
+      expect(ds.enhanceExprWithAdHocFilters).toHaveBeenCalled();
     });
   });
 
