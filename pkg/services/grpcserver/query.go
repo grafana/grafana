@@ -44,7 +44,7 @@ type queryDataServer struct {
 	dataSourceService datasources.DataSourceService
 }
 
-// QueryData handles multiple queries run against a single datasource
+// QueryData handles multiple queries run against multiple datasources.
 func (s *queryDataServer) QueryData(ctx context.Context, in *pluginv2.QueryDataRequest) (*pluginv2.QueryDataResponse, error) {
 	req := backend.FromProto().QueryDataRequest(in)
 
@@ -54,6 +54,7 @@ func (s *queryDataServer) QueryData(ctx context.Context, in *pluginv2.QueryDataR
 	user := signedInUserFromBackendUser(req.PluginContext.User)
 	user.OrgID = req.PluginContext.OrgID
 
+	// split incoming queries into new QueryDataRequests based on the datasourceUID
 	requests, err := s.buildRequests(ctx, user, req)
 	if err != nil {
 		return nil, err
@@ -61,6 +62,7 @@ func (s *queryDataServer) QueryData(ctx context.Context, in *pluginv2.QueryDataR
 
 	response := backend.NewQueryDataResponse()
 
+	// execute each request and merge the backend.DataResponse into a single QueryDataResponse
 	for _, req := range requests {
 		res, err := s.pluginClient.QueryData(ctx, req)
 		if err != nil {
@@ -112,6 +114,7 @@ func (s *queryDataServer) getDataSourceFromQuery(ctx context.Context, signedInUs
 	return nil, fmt.Errorf("missing data source ID/UID")
 }
 
+// buildRequests splits the incoming queries into new QueryDataRequests based on the datasourceUID
 func (s *queryDataServer) buildRequests(ctx context.Context, u *user.SignedInUser, req *backend.QueryDataRequest) ([]*backend.QueryDataRequest, error) {
 	requests := make(map[string]*backend.QueryDataRequest)
 	for _, query := range req.Queries {
