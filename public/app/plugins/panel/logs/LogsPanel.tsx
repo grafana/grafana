@@ -116,6 +116,7 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
           enableLogDetails={enableLogDetails}
           previewLimit={isAscending ? logRows.length : undefined}
           onLogRowHover={onLogRowHover}
+          isInDashboard={true}
         />
         {showCommonLabels && isAscending && renderCommonLabels()}
       </div>

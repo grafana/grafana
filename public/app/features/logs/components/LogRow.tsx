@@ -43,6 +43,7 @@ interface Props extends Themeable2 {
   forceEscape?: boolean;
   showDetectedFields?: string[];
   showRowMenu?: boolean;
+  isInDashboard?: boolean;
   getRows: () => LogRowModel[];
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
@@ -144,6 +145,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       getFieldLinks,
       forceEscape,
       onLogRowHover,
+      isInDashboard,
     } = this.props;
     const { showDetails, showContext } = this.state;
     const style = getLogRowStyles(theme, row.logLevel);
@@ -214,6 +216,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               wrapLogMessage={wrapLogMessage}
               prettifyLogMessage={prettifyLogMessage}
               onToggleContext={this.toggleContext}
+              isInDashboard={isInDashboard}
             />
           )}
         </tr>

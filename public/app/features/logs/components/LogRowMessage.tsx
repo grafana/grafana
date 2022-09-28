@@ -12,8 +12,6 @@ import { LogRowContext } from './LogRowContext';
 import { LogRowContextQueryErrors, HasMoreContextRows, LogRowContextRows } from './LogRowContextProvider';
 import { getLogRowStyles } from './getLogRowStyles';
 
-//Components
-
 export const MAX_CHARACTERS = 100000;
 
 interface Props extends Themeable2 {
@@ -25,13 +23,14 @@ interface Props extends Themeable2 {
   errors?: LogRowContextQueryErrors;
   context?: LogRowContextRows;
   showRowMenu?: boolean;
+  isInDashboard?: boolean;
   showContextToggle?: (row?: LogRowModel) => boolean;
   getRows: () => LogRowModel[];
   onToggleContext: () => void;
   updateLimit?: () => void;
 }
 
-const getStyles = (theme: GrafanaTheme2, showContextButton: boolean) => {
+const getStyles = (theme: GrafanaTheme2, showContextButton: boolean, isInDashboard: boolean | undefined) => {
   const outlineColor = tinycolor(theme.components.dashboard.background).setAlpha(0.7).toRgbString();
 
   return {
@@ -60,7 +59,7 @@ const getStyles = (theme: GrafanaTheme2, showContextButton: boolean) => {
       justify-content: space-evenly;
       align-items: center;
       position: absolute;
-      right: -8px;
+      right: ${isInDashboard ? '0px' : '-8px'};
       top: 0;
       bottom: auto;
       height: 36px;
@@ -138,12 +137,13 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
       wrapLogMessage,
       prettifyLogMessage,
       onToggleContext,
+      isInDashboard,
     } = this.props;
 
     const style = getLogRowStyles(theme, row.logLevel);
     const { hasAnsi, raw } = row;
     const restructuredEntry = restructureLog(raw, prettifyLogMessage);
-    const styles = getStyles(theme, this.shouldShowShowContextToggle(row));
+    const styles = getStyles(theme, this.shouldShowShowContextToggle(row), isInDashboard);
 
     return (
       // When context is open, the position has to be NOT relative.
