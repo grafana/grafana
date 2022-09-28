@@ -34,6 +34,7 @@ func TestMatrixResponses(t *testing.T) {
 		{name: "parse a simple matrix response with value missing steps", filepath: "range_missing"},
 		{name: "parse a response with Infinity", filepath: "range_infinity"},
 		{name: "parse a response with NaN", filepath: "range_nan"},
+		{name: "parse a response with legendFormat __auto", filepath: "range_auto"},
 	}
 
 	for _, test := range tt {
@@ -94,12 +95,13 @@ func makeMockedApi(responseBytes []byte) (apiv1.API, error) {
 // struct here, because it has `time.time` and `time.duration` fields that
 // cannot be unmarshalled from JSON automatically.
 type storedPrometheusQuery struct {
-	RefId      string
-	RangeQuery bool
-	Start      int64
-	End        int64
-	Step       int64
-	Expr       string
+	RefId        string
+	RangeQuery   bool
+	Start        int64
+	End          int64
+	Step         int64
+	Expr         string
+	LegendFormat string
 }
 
 func loadStoredPrometheusQuery(fileName string) (PrometheusQuery, error) {
@@ -117,12 +119,13 @@ func loadStoredPrometheusQuery(fileName string) (PrometheusQuery, error) {
 	}
 
 	return PrometheusQuery{
-		RefId:      query.RefId,
-		RangeQuery: query.RangeQuery,
-		Start:      time.Unix(query.Start, 0),
-		End:        time.Unix(query.End, 0),
-		Step:       time.Second * time.Duration(query.Step),
-		Expr:       query.Expr,
+		RefId:        query.RefId,
+		RangeQuery:   query.RangeQuery,
+		Start:        time.Unix(query.Start, 0),
+		End:          time.Unix(query.End, 0),
+		Step:         time.Second * time.Duration(query.Step),
+		Expr:         query.Expr,
+		LegendFormat: query.LegendFormat,
 	}, nil
 }
 
