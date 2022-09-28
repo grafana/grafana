@@ -38,10 +38,10 @@ If you define the following set of labels for your alert:
 
 `{ foo=bar, baz=qux, id=12 }`
 
-In this situation,
+then:
 
-- A label matcher defined as `foo=bar` will match this alert rule.
-- A label matcher defined as `foo!=bar` will _not_ match this alert rule.
-- A label matcher defined as `id=~[0-9]+` will match this alert rule.
-- A label matcher defined as `baz!~[0-9]+` will match this alert rule.
-- Two label matchers defined as `foo=bar` and `id=~[0-9]+` will match this alert rule.
+- A label matcher defined as `foo=bar` matches this alert rule.
+- A label matcher defined as `foo!=bar` does _not_ match this alert rule.
+- A label matcher defined as `id=~[0-9]+` matches this alert rule.
+- A label matcher defined as `baz!~[0-9]+` matches this alert rule.
+- Two label matchers defined as `foo=bar` and `id=~[0-9]+` match this alert rule.
