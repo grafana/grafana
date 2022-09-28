@@ -231,6 +231,9 @@ export function FilterSection({
           </div>
         </div>
       )}
+      <div className="gf-form gf-form--grow">
+        <div className="gf-form-label gf-form-label--grow"></div>
+      </div>
     </div>
   );
 }

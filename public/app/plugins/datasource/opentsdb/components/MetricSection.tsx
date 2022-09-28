@@ -32,9 +32,12 @@ export function MetricSection({ query, onChange, onRunQuery, suggestMetrics, agg
 
   return (
     <div className="gf-form-inline" data-testid={testIds.section}>
-      <div className="gf-form max-width-25">
-        <InlineLabel className="width-8 query-keyword">Metric</InlineLabel>
+      <div className="gf-form">
+        <InlineFormLabel width={8} className="query-keyword">
+          Metric
+        </InlineFormLabel>
         <Select
+          width={25}
           inputId="opentsdb-metric-select"
           className="gf-form-input"
           value={query.metric ? toOption(query.metric) : undefined}
@@ -59,9 +62,12 @@ export function MetricSection({ query, onChange, onRunQuery, suggestMetrics, agg
         />
       </div>
       <div className="gf-form">
-        <InlineLabel className="width-8 query-keyword">Aggregator</InlineLabel>
+        <InlineFormLabel width={'auto'} className="query-keyword">
+          Aggregator
+        </InlineFormLabel>
         <Select
           inputId="opentsdb-aggregator-select"
+          className="gf-form-input"
           value={query.aggregator ? toOption(query.aggregator) : undefined}
           options={aggregatorOptions}
           onChange={({ value }) => {
@@ -90,6 +96,9 @@ export function MetricSection({ query, onChange, onRunQuery, suggestMetrics, agg
           }}
           onBlur={() => onRunQuery()}
         />
+      </div>
+      <div className="gf-form gf-form--grow">
+        <div className="gf-form-label gf-form-label--grow"></div>
       </div>
     </div>
   );

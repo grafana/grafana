@@ -5,6 +5,8 @@ import { InlineLabel, Select, Input, InlineFormLabel, InlineSwitch } from '@graf
 
 import { OpenTsdbQuery } from '../types';
 
+import { paddingRightClass } from './styles';
+
 export interface DownSampleProps {
   query: OpenTsdbQuery;
   onChange: (query: OpenTsdbQuery) => void;
@@ -26,13 +28,15 @@ export function DownSample({ query, onChange, onRunQuery, aggregators, fillPolic
           width={8}
           tooltip={
             <div>
-              blank for auto, or for example <code>1m</code>
+              Leave interval blank for auto or for example use <code>1m</code>
             </div>
           }
         >
           Down sample
         </InlineFormLabel>
         <Input
+          width={25}
+          className={paddingRightClass}
           data-testid={testIds.interval}
           placeholder="interval"
           value={query.downsampleInterval ?? ''}
@@ -44,8 +48,11 @@ export function DownSample({ query, onChange, onRunQuery, aggregators, fillPolic
         />
       </div>
       <div className="gf-form">
-        <InlineLabel className="width-8 query-keyword">Aggregator</InlineLabel>
+        <InlineFormLabel width={'auto'} className="query-keyword">
+          Aggregator
+        </InlineFormLabel>
         <Select
+          className="gf-form-input"
           value={query.downsampleAggregator ? toOption(query.downsampleAggregator) : undefined}
           options={aggregatorOptions}
           onChange={({ value }) => {
@@ -82,6 +89,9 @@ export function DownSample({ query, onChange, onRunQuery, aggregators, fillPolic
             onRunQuery();
           }}
         />
+      </div>
+      <div className="gf-form gf-form--grow">
+        <div className="gf-form-label gf-form-label--grow"></div>
       </div>
     </div>
   );
