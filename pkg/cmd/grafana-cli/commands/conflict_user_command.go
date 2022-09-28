@@ -379,7 +379,7 @@ these user(s) will be deleted and their permissions transferred.
 */
 func (r *ConflictResolver) showChanges() {
 	if len(r.ValidUsers) == 0 {
-		fmt.Printf("no changes will take place as we have no valid users.\n")
+		fmt.Println("no changes will take place as we have no valid users.")
 		return
 	}
 
