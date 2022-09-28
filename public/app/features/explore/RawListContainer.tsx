@@ -40,15 +40,7 @@ const RawListContainer = (props: RawListContainerProps) => {
     <section data-testid={'raw-list-container'}>
       <div>Result series: {items.length}</div>
 
-      <List
-        itemCount={items.length}
-        className={styles.wrapper}
-        itemSize={() => {
-          return 42;
-        }}
-        height={600}
-        width="100%"
-      >
+      <List itemCount={items.length} className={styles.wrapper} itemSize={() => 42} height={600} width="100%">
         {({ index, style }) => (
           <div role="row" style={{ ...style, overflow: 'hidden' }}>
             <RawList listKey={index} listItemData={items[index]} />
