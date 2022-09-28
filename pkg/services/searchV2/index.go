@@ -762,7 +762,7 @@ func (i *searchIndex) updateDashboard(ctx context.Context, orgID int64, index *o
 
 	var folderUID string
 	if dash.folderID == 0 {
-		folderUID = "general"
+		folderUID = GeneralFolderUID
 	} else {
 		var err error
 		folderUID, err = i.folderIdLookup(ctx, dash.folderID)

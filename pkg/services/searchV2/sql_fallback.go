@@ -57,7 +57,7 @@ func (s *sqlFallbackSearcher) doSQLQuery(c *models.ReqContext, query *DashboardQ
 	}
 }
 
-// This converts the HitList to the same shape as returnd from the search query
+// This converts the HitList to the same shape as returned from the search query
 func hitListToFrame(hits models.HitList) *data.Frame {
 	if hits == nil {
 		hits = make(models.HitList, 0)
@@ -121,7 +121,7 @@ func hitListToFrame(hits models.HitList) *data.Frame {
 		// Add location info
 		fuid := hit.FolderUID
 		if fuid == "" {
-			fuid = "general"
+			fuid = GeneralFolderUID
 			header.Locations[fuid] = locationItem{
 				Kind: object.StandardKindFolder,
 				Name: "General",

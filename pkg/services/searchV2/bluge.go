@@ -32,6 +32,8 @@ const (
 	documentFieldDSType      = "ds_type"
 	DocumentFieldCreatedAt   = "created_at"
 	DocumentFieldUpdatedAt   = "updated_at"
+
+	GeneralFolderUID = "general"
 )
 
 func initOrgIndex(dashboards []dashboard, logger log.Logger, extendDoc ExtendDashboardFunc) (*orgIndex, error) {
@@ -82,7 +84,7 @@ func initOrgIndex(dashboards []dashboard, logger log.Logger, extendDoc ExtendDas
 		}
 		uid := dash.uid
 		if uid == "" {
-			uid = "general"
+			uid = GeneralFolderUID
 		}
 		folderIdLookup[dash.id] = uid
 	}
@@ -137,7 +139,7 @@ func getFolderDashboardDoc(dash dashboard) *bluge.Document {
 	uid := dash.uid
 	url := fmt.Sprintf("/dashboards/f/%s/%s", dash.uid, dash.slug)
 	if uid == "" {
-		uid = "general"
+		uid = GeneralFolderUID
 		url = "/dashboards"
 		dash.summary.Name = "General"
 		dash.summary.Description = ""
