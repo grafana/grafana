@@ -98,6 +98,8 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
         return minMax;
       }
 
+      let logBase = scale.log ?? 10;
+
       if (scale.distr === 1 || scale.distr === 2 || scale.distr === 4) {
         if (centeredZero) {
           let absMin = Math.abs(dataMin!);
@@ -110,22 +112,44 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
         if (scale.distr === 4) {
           // TODO: switch to `, true)` after updating uPlot to 1.6.23+
           // see https://github.com/leeoniya/uPlot/issues/749
-          minMax = uPlot.rangeAsinh(dataMin!, dataMax!, scale.log ?? 10, false);
+          minMax = uPlot.rangeAsinh(dataMin!, dataMax!, logBase, false);
         } else {
           // @ts-ignore here we may use hardMin / hardMax to make sure any extra padding is computed from a more accurate delta
           minMax = uPlot.rangeNum(hardMinOnly ? hardMin : dataMin, hardMaxOnly ? hardMax : dataMax, rangeConfig);
         }
       } else if (scale.distr === 3) {
-        minMax = uPlot.rangeLog(dataMin!, dataMax!, scale.log ?? 10, true);
+        minMax = uPlot.rangeLog(dataMin!, dataMax!, logBase, true);
       }
 
       if (decimals === 0) {
-        minMax[0] = incrRoundDn(minMax[0]!, 1);
-        minMax[1] = incrRoundUp(minMax[1]!, 1);
+        if (scale.distr === 1 || scale.distr === 2) {
+          minMax[0] = incrRoundDn(minMax[0]!, 1);
+          minMax[1] = incrRoundUp(minMax[1]!, 1);
+        }
+        // log2 or log10 scale min must be clamped to 1
+        else if (scale.distr === 3) {
+          let logFn = scale.log === 2 ? Math.log2 : Math.log10;
 
-        // clamp log scales' min to 1
-        if (scale.distr === 3 && minMax[0] < 1) {
-          minMax[0] = 1;
+          // min
+          if (minMax[0]! < 1) {
+            minMax[0] = 1;
+          } else {
+            let minExp = Math.floor(logFn(minMax[0]!));
+            minMax[0] = logBase ** minExp;
+          }
+
+          // max
+          let maxExp = Math.ceil(logFn(minMax[1]!));
+          minMax[1] = logBase ** maxExp;
+
+          if (minMax[0] === minMax[1]) {
+            minMax[1] *= logBase;
+          }
+        }
+        // TODO: this should be better. symlog values can be <= 0, but should also be rounded to log2 or log10 boundaries
+        else if (scale.distr === 4) {
+          minMax[0] = incrRoundDn(minMax[0]!, 1);
+          minMax[1] = incrRoundUp(minMax[1]!, 1);
         }
       }
 
@@ -140,7 +164,7 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
 
       // guard against invalid y ranges
       if (minMax[0]! >= minMax[1]!) {
-        minMax[0] = 0;
+        minMax[0] = scale.distr === 3 ? 1 : 0;
         minMax[1] = 100;
       }
 
