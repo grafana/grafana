@@ -272,6 +272,7 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 		require.Equal(t, description, response.Result.Description)
 		require.Equal(t, label, response.Result.Label)
 		require.Equal(t, "fieldName", response.Result.Config.Field)
+		require.Equal(t, map[string]interface{}{"expr": "foo"}, response.Result.Config.Target)
 
 		require.NoError(t, res.Body.Close())
 	})

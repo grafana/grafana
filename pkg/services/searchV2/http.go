@@ -63,11 +63,12 @@ func (s *searchHTTPService) doQuery(c *models.ReqContext) response.Response {
 		return response.Error(500, "error handling search request", resp.Error)
 	}
 
-	if len(resp.Frames) != 1 {
-		return response.Error(500, "invalid search response", errors.New("invalid search response"))
+	if len(resp.Frames) == 0 {
+		msg := "invalid search response"
+		return response.Error(500, msg, errors.New(msg))
 	}
 
-	bytes, err := resp.Frames[0].MarshalJSON()
+	bytes, err := resp.MarshalJSON()
 	if err != nil {
 		return response.Error(500, "error marshalling response", err)
 	}
