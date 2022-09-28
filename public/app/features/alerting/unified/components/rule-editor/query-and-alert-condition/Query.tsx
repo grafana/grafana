@@ -14,8 +14,7 @@ export const Query: FC = () => {
     formState: { errors },
   } = useFormContext<RuleFormValues>();
 
-  const type = watch('type');
-  const dataSourceName = watch('dataSourceName');
+  const [type, dataSourceName] = watch(['type', 'dataSourceName']);
 
   const isGrafanaManagedType = type === RuleFormType.grafana;
   const isCloudAlertRuleType = type === RuleFormType.cloudAlerting;

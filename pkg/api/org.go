@@ -247,9 +247,9 @@ func (hs *HTTPServer) UpdateOrgAddress(c *models.ReqContext) response.Response {
 }
 
 func (hs *HTTPServer) updateOrgAddressHelper(ctx context.Context, form dtos.UpdateOrgAddressForm, orgID int64) response.Response {
-	cmd := models.UpdateOrgAddressCommand{
-		OrgId: orgID,
-		Address: models.Address{
+	cmd := org.UpdateOrgAddressCommand{
+		OrgID: orgID,
+		Address: org.Address{
 			Address1: form.Address1,
 			Address2: form.Address2,
 			City:     form.City,
@@ -259,7 +259,7 @@ func (hs *HTTPServer) updateOrgAddressHelper(ctx context.Context, form dtos.Upda
 		},
 	}
 
-	if err := hs.SQLStore.UpdateOrgAddress(ctx, &cmd); err != nil {
+	if err := hs.orgService.UpdateAddress(ctx, &cmd); err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to update org address", err)
 	}
 
@@ -290,7 +290,7 @@ func (hs *HTTPServer) DeleteOrgByID(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "Can not delete org for current user", nil)
 	}
 
-	if err := hs.SQLStore.DeleteOrg(c.Req.Context(), &models.DeleteOrgCommand{Id: orgID}); err != nil {
+	if err := hs.orgService.Delete(c.Req.Context(), &org.DeleteOrgCommand{ID: orgID}); err != nil {
 		if errors.Is(err, models.ErrOrgNotFound) {
 			return response.Error(http.StatusNotFound, "Failed to delete organization. ID not found", nil)
 		}

@@ -21,5 +21,5 @@ type Service interface {
 	BatchDisableUsers(context.Context, *BatchDisableUsersCommand) error
 	UpdatePermissions(int64, bool) error
 	SetUserHelpFlag(context.Context, *SetUserHelpFlagCommand) error
-	GetUserProfile(context.Context, *GetUserProfileQuery) (UserProfileDTO, error)
+	GetProfile(context.Context, *GetUserProfileQuery) (UserProfileDTO, error)
 }

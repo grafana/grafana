@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestIntegrationStatsDataAccess(t *testing.T) {
@@ -116,13 +117,6 @@ func populateDB(t *testing.T, sqlStore *SQLStore) {
 		Role:   org.RoleAdmin,
 	}
 	err = sqlStore.AddOrgUser(context.Background(), cmd)
-	require.NoError(t, err)
-
-	// update 1st user last seen at
-	updateUserLastSeenAtCmd := &models.UpdateUserLastSeenAtCommand{
-		UserId: users[0].ID,
-	}
-	err = sqlStore.UpdateUserLastSeenAt(context.Background(), updateUserLastSeenAtCmd)
 	require.NoError(t, err)
 
 	// force renewal of user stats
