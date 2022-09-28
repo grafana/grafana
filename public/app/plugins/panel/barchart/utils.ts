@@ -18,6 +18,7 @@ import {
 import { maybeSortFrame } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import {
   AxisPlacement,
+  GraphTransform,
   ScaleDirection,
   ScaleDistribution,
   ScaleOrientation,
@@ -107,6 +108,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
     legend,
     xSpacing: xTickLabelSpacing,
     xTimeAuto: frame.fields[0]?.type === FieldType.time && !frame.fields[0].config.unit?.startsWith('time:'),
+    negY: frame.fields.map((f) => f.config.custom?.transform === GraphTransform.NegativeY),
   };
 
   const config = getConfig(opts, theme);
