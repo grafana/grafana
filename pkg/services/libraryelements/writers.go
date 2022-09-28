@@ -90,10 +90,10 @@ func parseFolderFilter(query searchLibraryElementsQuery) FolderFilter {
 	if len(strings.TrimSpace(query.folderFilter)) > 0 {
 		result.includeGeneralFolder = false
 		folderIDs = strings.Split(query.folderFilter, ",")
+		result.folderIDs = folderIDs
 		for _, filter := range folderIDs {
 			folderID, err := strconv.ParseInt(filter, 10, 64)
 			if err != nil {
-				result.folderIDs = folderIDs
 				result.parseError = err
 			}
 			if isGeneralFolder(folderID) {
@@ -116,7 +116,7 @@ func parseFolderFilter(query searchLibraryElementsQuery) FolderFilter {
 		}
 	}
 
-	return result;
+	return result
 	// folderUIDs = strings.Split(query.folderFilterUIDs, ",")
 
 	// for _, folderUID := range folderUIDs {

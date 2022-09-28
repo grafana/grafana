@@ -331,7 +331,6 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 	if folderFilter.parseError != nil {
 		return LibraryElementSearchResult{}, folderFilter.parseError
 	}
-	fmt.Println("WOOOOOOOOOO", folderFilter)
 	err := l.SQLStore.WithDbSession(c, func(session *sqlstore.DBSession) error {
 		builder := sqlstore.NewSqlBuilder(l.Cfg)
 		if folderFilter.includeGeneralFolder {
@@ -405,8 +404,6 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 				},
 			})
 		}
-
-		fmt.Println("SQL STRING", builder.GetSQLString())
 
 		var libraryElements []LibraryElement
 		countBuilder := sqlstore.SQLBuilder{}
