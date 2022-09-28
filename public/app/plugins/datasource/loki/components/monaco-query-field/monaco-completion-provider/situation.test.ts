@@ -113,8 +113,6 @@ describe('situation', () => {
       otherLabels: [{ name: 'one', value: 'val1', op: '=' }],
     });
 
-    // single-quoted currently failing in lezer-logql
-
     // double-quoted label-values with escape
     assertSituation('{one="val\\"1",^}', {
       type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
