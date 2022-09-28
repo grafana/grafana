@@ -16,11 +16,12 @@ type RepositoryImpl struct {
 
 func ProvideService(db db.DB, cfg *setting.Cfg, tagService tag.Service) *RepositoryImpl {
 	return &RepositoryImpl{
-		store: &SQLAnnotationRepo{
-			cfg:        cfg,
-			db:         db,
-			log:        log.New("annotations"),
-			tagService: tagService,
+		store: &xormRepositoryImpl{
+			cfg:               cfg,
+			db:                db,
+			log:               log.New("annotations"),
+			tagService:        tagService,
+			maximumTagsLength: cfg.AnnotationMaximumTagsLength,
 		},
 	}
 }

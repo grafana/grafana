@@ -34,6 +34,9 @@ export interface CanvasElementProps<TConfig = any, TData = any> {
 
   // Raw data
   data?: TData;
+
+  // If the element is currently selected
+  isSelected?: boolean;
 }
 
 /**
@@ -54,6 +57,9 @@ export interface CanvasElementItem<TConfig = any, TData = any> extends RegistryI
 
   /** Build the configuration UI */
   registerOptionsUI?: PanelOptionsSupplier<CanvasElementOptions<TConfig>>;
+
+  /** If item has an edit mode */
+  hasEditMode?: boolean;
 }
 
 export const defaultBgColor = '#D9D9D9';
