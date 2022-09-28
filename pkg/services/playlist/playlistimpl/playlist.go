@@ -64,10 +64,6 @@ func (s *Service) GetWithItems(ctx context.Context, q *playlist.GetPlaylistByUid
 	}, nil
 }
 
-func (s *Service) GetItems(ctx context.Context, q *playlist.GetPlaylistItemsByUidQuery) ([]playlist.PlaylistItem, error) {
-	return s.store.GetItems(ctx, q)
-}
-
 func (s *Service) Search(ctx context.Context, q *playlist.GetPlaylistsQuery) (playlist.Playlists, error) {
 	return s.store.List(ctx, q)
 }
