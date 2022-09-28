@@ -205,7 +205,7 @@ type queryConditionTestContext struct {
 	condition *QueryCondition
 }
 
-//nolint: staticcheck // legacydata.DataPlugin deprecated
+//nolint:staticcheck // legacydata.DataPlugin deprecated
 func (ctx *queryConditionTestContext) exec(t *testing.T) (*alerting.ConditionResult, error) {
 	jsonModel, err := simplejson.NewJson([]byte(`{
             "type": "query",
@@ -249,7 +249,7 @@ type fakeReqHandler struct {
 	response legacydata.DataResponse
 }
 
-//nolint: staticcheck // legacydata.DataPlugin deprecated
+//nolint:staticcheck // legacydata.DataPlugin deprecated
 func (rh fakeReqHandler) HandleRequest(context.Context, *datasources.DataSource, legacydata.DataQuery) (
 	legacydata.DataResponse, error) {
 	return rh.response, nil

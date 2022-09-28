@@ -76,6 +76,7 @@ func copyFileContents(src, dst string) (err error) {
 		}
 	}()
 
+	//nolint:gosec
 	out, err := os.Create(dst)
 	if err != nil {
 		return

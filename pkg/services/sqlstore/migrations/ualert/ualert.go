@@ -232,7 +232,7 @@ func (m *migration) SQL(dialect migrator.Dialect) string {
 	return codeMigration
 }
 
-// nolint: gocyclo
+//nolint:gocyclo
 func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	m.sess = sess
 	m.mg = mg

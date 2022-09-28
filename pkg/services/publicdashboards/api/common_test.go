@@ -137,7 +137,7 @@ func buildQueryDataService(t *testing.T, cs datasources.CacheService, fpc *fakeP
 	)
 }
 
-//copied from pkg/api/metrics_test.go
+// copied from pkg/api/metrics_test.go
 type fakePluginRequestValidator struct {
 	err error
 }

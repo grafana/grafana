@@ -342,7 +342,7 @@ func (hs *HTTPServer) GetAlertNotificationByID(c *models.ReqContext) response.Re
 
 // swagger:route GET /alert-notifications/uid/{notification_channel_uid} legacy_alerts_notification_channels getAlertNotificationChannelByUID
 //
-// Get notification channel by UID
+// Get notification channel by UID.
 //
 // Returns the notification channel given the notification channel UID.
 //

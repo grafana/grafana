@@ -16,6 +16,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/localcache"
@@ -265,7 +266,7 @@ func TestApiSavePublicDashboardConfig(t *testing.T) {
 	}
 }
 
-// `/public/dashboards/:uid/query`` endpoint test
+// `/public/dashboards/:uid/query` endpoint test
 func TestAPIQueryPublicDashboard(t *testing.T) {
 	cacheService := &fakeDatasources.FakeCacheService{
 		DataSources: []*datasources.DataSource{

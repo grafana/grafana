@@ -21,7 +21,7 @@ COPY emails emails
 ENV NODE_ENV production
 RUN yarn build
 
-FROM golang:1.17.12 AS go-builder
+FROM golang:1.19.1 AS go-builder
 
 WORKDIR /src/grafana
 

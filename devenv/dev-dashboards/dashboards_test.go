@@ -59,7 +59,7 @@ func themaTestableDashboards() (map[string][]byte, error) {
 		if err != nil {
 			return err
 		}
-		defer f.Close() // nolint: errcheck
+		defer f.Close() //nolint:errcheck
 
 		b, err := io.ReadAll(f)
 		if err != nil {

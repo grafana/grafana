@@ -13,6 +13,7 @@ import (
 	"github.com/blugelabs/bluge/search/aggregations"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
@@ -349,7 +350,7 @@ func getDashboardLocation(index *orgIndex, dashboardUID string) (string, bool, e
 	return dashboardLocation, found, err
 }
 
-//nolint: gocyclo
+//nolint:gocyclo
 func doSearchQuery(
 	ctx context.Context,
 	logger log.Logger,

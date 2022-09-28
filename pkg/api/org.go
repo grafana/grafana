@@ -17,7 +17,7 @@ import (
 
 // swagger:route GET /org org getCurrentOrg
 //
-// Get current Organization
+// Get current Organization.
 //
 // Responses:
 // 200: getCurrentOrgResponse
@@ -300,7 +300,7 @@ func (hs *HTTPServer) DeleteOrgByID(c *models.ReqContext) response.Response {
 
 // swagger:route GET /orgs orgs searchOrgs
 //
-// Search all Organizations
+// Search all Organizations.
 //
 // Security:
 // - basic:

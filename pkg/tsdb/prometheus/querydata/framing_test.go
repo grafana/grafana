@@ -16,6 +16,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
 )
@@ -50,6 +51,7 @@ func goldenScenario(name, queryFileName, responseFileName, goldenFileName string
 		query, err := loadStoredQuery(queryFileName)
 		require.NoError(t, err)
 
+		//nolint:gosec
 		responseBytes, err := os.ReadFile(responseFileName)
 		require.NoError(t, err)
 
@@ -78,6 +80,7 @@ type storedPrometheusQuery struct {
 }
 
 func loadStoredQuery(fileName string) (*backend.QueryDataRequest, error) {
+	//nolint:gosec
 	bytes, err := os.ReadFile(fileName)
 	if err != nil {
 		return nil, err

@@ -50,7 +50,7 @@ const sevenDaysAhead = 7 * 24 * time.Hour
 
 // swagger:route GET /serviceaccounts/{serviceAccountId}/tokens service_accounts listTokens
 //
-// Get service account tokens
+// Get service account tokens.
 //
 // Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):
 // action: `serviceaccounts:read` scope: `global:serviceaccounts:id:1` (single service account)
@@ -104,7 +104,7 @@ func (api *ServiceAccountsAPI) ListTokens(ctx *models.ReqContext) response.Respo
 
 // swagger:route POST /serviceaccounts/{serviceAccountId}/tokens service_accounts createToken
 //
-// CreateNewToken adds a token to a service account
+// CreateNewToken adds a token to a service account.
 //
 // Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):
 // action: `serviceaccounts:write` scope: `serviceaccounts:id:1` (single service account)
@@ -178,7 +178,7 @@ func (api *ServiceAccountsAPI) CreateToken(c *models.ReqContext) response.Respon
 
 // swagger:route DELETE /serviceaccounts/{serviceAccountId}/tokens/{tokenId} service_accounts deleteToken
 //
-// DeleteToken deletes service account tokens
+// DeleteToken deletes service account tokens.
 //
 // Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):
 // action: `serviceaccounts:write` scope: `serviceaccounts:id:1` (single service account)

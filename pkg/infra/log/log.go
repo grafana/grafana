@@ -205,9 +205,12 @@ func (cl *ConcreteLogger) New(ctx ...interface{}) *ConcreteLogger {
 // name plus additional contextual information, you must use the
 // Logger interface New method for it to work as expected.
 // Example creating a shared logger:
-//   requestLogger := log.New("request-logger")
+//
+//	requestLogger := log.New("request-logger")
+//
 // Example creating a contextual logger:
-//   contextualLogger := requestLogger.New("username", "user123")
+//
+//	contextualLogger := requestLogger.New("username", "user123")
 func New(ctx ...interface{}) *ConcreteLogger {
 	if len(ctx) == 0 {
 		return root.New()
