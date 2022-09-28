@@ -54,6 +54,7 @@ export interface LocationFieldMatchers {
   wkt: FieldFinder;
   lookup: FieldFinder;
   geo: FieldFinder;
+  photo: FieldFinder;
   gazetteer?: Gazetteer;
 }
 
@@ -66,6 +67,7 @@ const defaultMatchers: LocationFieldMatchers = {
   wkt: matchLowerNames(new Set(['wkt'])),
   lookup: matchLowerNames(new Set(['lookup'])),
   geo: (frame: DataFrame) => frame.fields.find((f) => f.type === FieldType.geo),
+  photo: matchLowerNames(new Set(['src'])),
 };
 
 export async function getLocationMatchers(src?: FrameGeometrySource): Promise<LocationFieldMatchers> {
@@ -107,6 +109,7 @@ export interface LocationFields {
   wkt?: Field;
   lookup?: Field;
   geo?: Field<Geometry>;
+  photo?: Field;
 }
 
 export function getLocationFields(frame: DataFrame, location: LocationFieldMatchers): LocationFields {
@@ -123,6 +126,7 @@ export function getLocationFields(frame: DataFrame, location: LocationFieldMatch
 
     fields.latitude = location.latitude(frame);
     fields.longitude = location.longitude(frame);
+    fields.photo = location.photo(frame);
     if (fields.latitude && fields.longitude) {
       fields.mode = FrameGeometrySourceMode.Coords;
       return fields;
@@ -163,6 +167,7 @@ export interface FrameGeometryField {
 
 export function getGeometryField(frame: DataFrame, location: LocationFieldMatchers): FrameGeometryField {
   const fields = getLocationFields(frame, location);
+  console.log(fields);
   switch (fields.mode) {
     case FrameGeometrySourceMode.Auto:
       if (fields.geo) {
@@ -175,9 +180,10 @@ export function getGeometryField(frame: DataFrame, location: LocationFieldMatche
       };
 
     case FrameGeometrySourceMode.Coords:
-      if (fields.latitude && fields.longitude) {
+      if (fields.latitude && fields.longitude && fields.photo) {
         return {
           field: pointFieldFromLonLat(fields.longitude, fields.latitude),
+          //field: imageFieldFromLonLat(fields.longitude, fields.latitude, fields.photo),
           derived: true,
         };
       }

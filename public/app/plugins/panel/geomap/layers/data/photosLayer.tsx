@@ -6,6 +6,7 @@ import {
   GrafanaTheme2,
   FrameGeometrySourceMode,
   EventBus,
+  PluginState,
 } from '@grafana/data';
 import Map from 'ol/Map';
 import { FeatureLike } from 'ol/Feature';
@@ -13,13 +14,14 @@ import { getLocationMatchers } from 'app/features/geo/utils/location';
 import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
 import { MarkersLegend, MarkersLegendProps } from '../../components/MarkersLegend';
 import { ReplaySubject } from 'rxjs';
-import { defaultStyleConfig, StyleConfig } from '../../style/types';
-import { StyleEditor } from '../../editor/StyleEditor';
+import { defaultImageStyleConfig, StyleConfig } from '../../style/types';
 import { getStyleConfigState } from '../../style/utils';
 import VectorLayer from 'ol/layer/Vector';
-import { isNumber } from 'lodash';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
 import { getStyleDimension} from '../../utils/utils';
+import { Stroke, Style } from 'ol/style';
+import Photo from 'ol-ext/style/Photo';
+import { StyleEditor } from '../../editor/StyleEditor';
 
 // Configuration options for Circle overlays
 export interface MarkersConfig {
@@ -28,15 +30,15 @@ export interface MarkersConfig {
 }
 
 const defaultOptions: MarkersConfig = {
-  style: defaultStyleConfig,
+  style: defaultImageStyleConfig,
   showLegend: true,
 };
 
-export const MARKERS_LAYER_ID = 'markers';
+export const PHOTOS_LAYER_ID = 'photos';
 
 // Used by default when nothing is configured
 export const defaultMarkersConfig: MapLayerOptions<MarkersConfig> = {
-  type: MARKERS_LAYER_ID,
+  type: PHOTOS_LAYER_ID,
   name: '', // will get replaced
   config: defaultOptions,
   location: {
@@ -48,13 +50,14 @@ export const defaultMarkersConfig: MapLayerOptions<MarkersConfig> = {
 /**
  * Map layer configuration for circle overlay
  */
-export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
-  id: MARKERS_LAYER_ID,
-  name: 'Markers',
-  description: 'Use markers to render each data point',
+export const photosLayer: MapLayerRegistryItem<MarkersConfig> = {
+  id: PHOTOS_LAYER_ID,
+  name: 'Photos',
+  description: 'Render photos at each data point',
   isBaseMap: false,
   showLocation: true,
   hideOpacity: true,
+  state: PluginState.alpha,
 
   /**
    * Function that configures transformation and returns a transformer
@@ -71,6 +74,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
 
     const style = await getStyleConfigState(config.style);
     const location = await getLocationMatchers(options.location);
+    console.log(style)  
     const source = new FrameVectorSource(location);
     console.log(source)
     const vectorLayer = new VectorLayer({
@@ -83,37 +87,28 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
       legend = <ObservablePropsWrapper watch={legendProps} initialSubProps={{}} child={MarkersLegend} />;
     }
 
-    if (!style.fields) {
-      // Set a global style
-      vectorLayer.setStyle(style.maker(style.base));
-      console.log('global')
-    } else {
-      console.log('else')
-      vectorLayer.setStyle((feature: FeatureLike) => {
-        const idx = feature.get('rowIndex') as number;
-        const dims = style.dims;
-        console.log(idx)
-        if (!dims || !isNumber(idx)) {
-          return style.maker(style.base);
-        }
+    vectorLayer.setStyle((feature: FeatureLike) => {
+      const idx = feature.get('rowIndex') as number;
+      console.log(feature.get('location'))
+      console.log(idx)
+      const dims = style.dims;
+      console.log(dims)
 
-        const values = { ...style.base };
-
-        if (dims.color) {
-          values.color = dims.color.get(idx);
-        }
-        if (dims.size) {
-          values.size = dims.size.get(idx);
-        }
-        if (dims.text) {
-          values.text = dims.text.get(idx);
-        }
-        if (dims.rotation) {
-          values.rotation = dims.rotation.get(idx);
-        }
-        return style.maker(values);
+      const vectorStyle = new Style({
+        image: new Photo({
+          src: 'http://www2.culture.gouv.fr/Wave/image/memoire/1597/sap40_d0000861_v.jpg',
+          radius: 20,
+          crop: true,
+          kind: 'square',
+          stroke: new Stroke({
+            width: 2,
+            color: '#000'
+          })
+        })
       });
-    }
+
+      return vectorStyle
+    });
 
     return {
       init: () => vectorLayer,
@@ -126,6 +121,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
 
         for (const frame of data.series) {
           style.dims = getStyleDimension(frame, style, theme);
+          console.log(style)
 
           // Post updates to the legend component
           if (legend) {
@@ -136,7 +132,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
               layer: vectorLayer,
             });
           }
-
+          console.log(frame)
           source.update(frame);
           break; // Only the first frame for now!
         }

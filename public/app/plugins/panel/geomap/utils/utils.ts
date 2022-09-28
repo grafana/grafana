@@ -17,6 +17,7 @@ export function getStyleDimension(
   customStyleConfig?: StyleConfig
 ) {
   const dims: StyleDimensions = {};
+  console.log(frame);
   if (customStyleConfig && Object.keys(customStyleConfig).length) {
     dims.color = getColorDimension(frame, customStyleConfig.color ?? defaultStyleConfig.color, theme);
     dims.size = getScaledDimension(frame, customStyleConfig.size ?? defaultStyleConfig.size);
