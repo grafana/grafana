@@ -353,24 +353,17 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
         let middleShift = isXHorizontal ? 0 : -Math.round(MIDDLE_BASELINE_SHIFT * fontSize);
         let value = rawValue(seriesIdx, dataIdx);
 
-        let xFormedValue = value;
-
-        if (opts.negY?.[seriesIdx] && xFormedValue != null) {
-          xFormedValue *= -1;
+        if (opts.negY?.[seriesIdx] && value != null) {
+          value *= -1;
         }
 
-        if (xFormedValue != null) {
+        if (value != null) {
           // Calculate final co-ordinates for text position
           const x =
-            u.bbox.left +
-            (isXHorizontal ? lft + wid / 2 : xFormedValue < 0 ? lft - labelOffset : lft + wid + labelOffset);
+            u.bbox.left + (isXHorizontal ? lft + wid / 2 : value < 0 ? lft - labelOffset : lft + wid + labelOffset);
           const y =
             u.bbox.top +
-            (isXHorizontal
-              ? xFormedValue < 0
-                ? top + hgt + labelOffset
-                : top - labelOffset
-              : top + hgt / 2 - middleShift);
+            (isXHorizontal ? (value < 0 ? top + hgt + labelOffset : top - labelOffset) : top + hgt / 2 - middleShift);
 
           // Retrieve textMetrics with necessary default values
           // These _shouldn't_ be undefined at this point
@@ -394,7 +387,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
             // yAdjust only matters when the value isn't negative
             yAdjust =
-              xFormedValue > 0
+              value > 0
                 ? (textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent) * scaleFactor
                 : 0;
           } else {
@@ -402,7 +395,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
             yAdjust = ((textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent) * scaleFactor) / 2;
 
             // Adjust for baseline being "right" in the x direction
-            xAdjust = xFormedValue < 0 ? textMetrics.width * scaleFactor : 0;
+            xAdjust = value < 0 ? textMetrics.width * scaleFactor : 0;
           }
 
           // Construct final bounding box for the label text
@@ -528,21 +521,16 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
       for (const sidx in labels[didx]) {
         const label = labels[didx][sidx];
-        const { text, value, x = 0, y = 0 } = label;
+        const { text, x = 0, y = 0 } = label;
+        let { value } = label;
 
-        let xFormedValue = value;
-
-        if (opts.negY?.[sidx] && xFormedValue != null) {
-          xFormedValue *= -1;
+        if (opts.negY?.[sidx] && value != null) {
+          value *= -1;
         }
 
-        let align: CanvasTextAlign = isXHorizontal
-          ? 'center'
-          : xFormedValue !== null && xFormedValue < 0
-          ? 'right'
-          : 'left';
+        let align: CanvasTextAlign = isXHorizontal ? 'center' : value !== null && value < 0 ? 'right' : 'left';
         let baseline: CanvasTextBaseline = isXHorizontal
-          ? xFormedValue !== null && xFormedValue < 0
+          ? value !== null && value < 0
             ? 'top'
             : 'alphabetic'
           : 'middle';
