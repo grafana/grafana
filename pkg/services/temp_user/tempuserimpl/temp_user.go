@@ -12,58 +12,32 @@ type Service struct {
 	store store
 }
 
-func ProvideService(
-	db db.DB,
-) tempuser.Service {
+func ProvideService(db db.DB) tempuser.Service {
 	return &Service{
 		store: &xormStore{db: db},
 	}
 }
 
 func (s *Service) UpdateTempUserStatus(ctx context.Context, cmd *models.UpdateTempUserStatusCommand) error {
-	err := s.store.UpdateTempUserStatus(ctx, cmd)
-	if err != nil {
-		return err
-	}
-	return nil
+	return s.store.UpdateTempUserStatus(ctx, cmd)
 }
 
 func (s *Service) CreateTempUser(ctx context.Context, cmd *models.CreateTempUserCommand) error {
-	err := s.store.CreateTempUser(ctx, cmd)
-	if err != nil {
-		return err
-	}
-	return nil
+	return s.store.CreateTempUser(ctx, cmd)
 }
 
 func (s *Service) UpdateTempUserWithEmailSent(ctx context.Context, cmd *models.UpdateTempUserWithEmailSentCommand) error {
-	err := s.store.UpdateTempUserWithEmailSent(ctx, cmd)
-	if err != nil {
-		return err
-	}
-	return nil
+	return s.store.UpdateTempUserWithEmailSent(ctx, cmd)
 }
 
 func (s *Service) GetTempUsersQuery(ctx context.Context, cmd *models.GetTempUsersQuery) error {
-	err := s.store.GetTempUsersQuery(ctx, cmd)
-	if err != nil {
-		return err
-	}
-	return nil
+	return s.store.GetTempUsersQuery(ctx, cmd)
 }
 
 func (s *Service) GetTempUserByCode(ctx context.Context, cmd *models.GetTempUserByCodeQuery) error {
-	err := s.store.GetTempUserByCode(ctx, cmd)
-	if err != nil {
-		return err
-	}
-	return nil
+	return s.store.GetTempUserByCode(ctx, cmd)
 }
 
 func (s *Service) ExpireOldUserInvites(ctx context.Context, cmd *models.ExpireTempUsersCommand) error {
-	err := s.store.ExpireOldUserInvites(ctx, cmd)
-	if err != nil {
-		return err
-	}
-	return nil
+	return s.store.ExpireOldUserInvites(ctx, cmd)
 }
