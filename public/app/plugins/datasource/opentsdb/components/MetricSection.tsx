@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
-import { InlineLabel, Select, Input, InlineFormLabel } from '@grafana/ui';
+import { Select, Input, InlineFormLabel } from '@grafana/ui';
 
 import { OpenTsdbQuery } from '../types';
 

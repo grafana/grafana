@@ -14,11 +14,6 @@ import { RateSection } from './RateSection';
 import { TagSection } from './TagSection';
 
 export type OpenTsdbQueryEditorProps = QueryEditorProps<OpenTsDatasource, OpenTsdbQuery, OpenTsdbOptions>;
-export type OpenTsdbErrors = {
-  downsampleInterval?: string;
-  filters?: string;
-  tags?: string;
-};
 
 export function OpenTsdbQueryEditor({
   datasource,
