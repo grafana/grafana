@@ -698,6 +698,5 @@ func confirm(confirmPrompt string) bool {
 	if input == "y" || input == "yes" {
 		return true
 	}
-
 	return false
 }
