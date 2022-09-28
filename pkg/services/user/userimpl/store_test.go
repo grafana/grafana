@@ -193,5 +193,4 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 		ss.Cfg.CaseInsensitiveLogin = false
 	})
-
 }
