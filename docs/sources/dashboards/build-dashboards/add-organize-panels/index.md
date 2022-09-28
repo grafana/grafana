@@ -9,16 +9,10 @@ aliases:
   - /docs/grafana/latest/panels/add-panels-dynamically/about-repeating-panels-rows/
   - /docs/grafana/latest/panels/add-panels-dynamically/configure-repeating-rows/
   - /docs/grafana/latest/panels/add-panels-dynamically/configure-repeating-panels/
-<<<<<<<< HEAD:docs/sources/dashboards/add-organize-panels/index.md
-title: Add and organize panels
-menuTitle: Add and organize panels
-weight: 2
-========
   - /docs/grafana/next/dashboards/build-dashboards/add-organize-panels/
 title: Add and organize panels
 menuTitle: Add and organize panels
 weight: 200
->>>>>>>> 595344a3d0 (resolves merge conflicts (#55764)):docs/sources/dashboards/build-dashboards/add-organize-panels/index.md
 keywords:
   - panel
   - dashboard
@@ -47,15 +41,9 @@ This section describes the areas of the Grafana panel editor.
 
 1. Data section: The data section contains tabs where you enter queries, transform your data, and create alert rules (if applicable).
 
-<<<<<<<< HEAD:docs/sources/dashboards/add-organize-panels/index.md
-
-- **Query tab:** Select your data source and enter queries here. For more information, refer to [Add a query]({{< relref "../../panels/query-a-data-source/add-a-query/" >}}).
-- **Transform tab:** Apply data transformations. For more information, refer to [Transform data]({{< relref "../../panels/transform-data/" >}}).
-- # **Alert tab:** Write alert rules. For more information, refer to [Overview of Grafana 8 alerting]({{< relref "../../alerting/" >}}).
 - **Query tab:** Select your data source and enter queries here. For more information, refer to [Add a query]({{< relref "../../../panels/query-a-data-source/add-a-query/" >}}).
 - **Transform tab:** Apply data transformations. For more information, refer to [Transform data]({{< relref "../../../panels/transform-data/" >}}).
 - **Alert tab:** Write alert rules. For more information, refer to [Overview of Grafana 8 alerting]({{< relref "../../../alerting/" >}}).
-  > > > > > > > > 595344a3d0 (resolves merge conflicts (#55764)):docs/sources/dashboards/build-dashboards/add-organize-panels/index.md
 
 1. Panel display options: The display options section contains tabs where you configure almost every aspect of your data visualization.
 
@@ -89,17 +77,10 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
 **Before you begin:**
 
-<<<<<<<< HEAD:docs/sources/dashboards/add-organize-panels/index.md
-
-- Ensure that you have the proper permissions. For more information about permissions, refer to [About users and permissions]({{< relref "../../administration/roles-and-permissions/" >}}).
-- Identify the dashboard to which you want to add the panel.
-- Understand the query language of the target data source.
-- # Ensure that data source for which you are writing a query has been added. For more information about adding a data source, refer to [Add a data source]({{< relref "../../datasources/add-a-data-source/" >}}) if you need instructions.
 - Ensure that you have the proper permissions. For more information about permissions, refer to [About users and permissions]({{< relref "../../../administration/roles-and-permissions/" >}}).
 - Identify the dashboard to which you want to add the panel.
 - Understand the query language of the target data source.
 - Ensure that data source for which you are writing a query has been added. For more information about adding a data source, refer to [Add a data source]({{< relref "../../../datasources/add-a-data-source/" >}}) if you need instructions.
-  > > > > > > > > 595344a3d0 (resolves merge conflicts (#55764)):docs/sources/dashboards/build-dashboards/add-organize-panels/index.md
 
 **To create a dashboard and add a panel**:
 
@@ -108,12 +89,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 1. In the first line of the **Query** tab, click the drop-down list and select a data source.
 1. Write or construct a query in the query language of your data source.
 
-<<<<<<<< HEAD:docs/sources/dashboards/add-organize-panels/index.md
-For more information about data sources, refer to [Data sources]({{< relref "../../datasources/" >}}) for specific guidelines.
-========
 For more information about data sources, refer to [Data sources]({{< relref "../../../datasources/" >}}) for specific guidelines.
-
-> > > > > > > > 595344a3d0 (resolves merge conflicts (#55764)):docs/sources/dashboards/build-dashboards/add-organize-panels/index.md
 
 1. In the Visualization list, select a visualization type.
 
@@ -121,12 +97,7 @@ For more information about data sources, refer to [Data sources]({{< relref "../
 
    ![](/static/img/docs/panel-editor/select-visualization-8-0.png)
 
-<<<<<<<< HEAD:docs/sources/dashboards/add-organize-panels/index.md
-For more information about individual visualizations, refer to [Visualizations options]({{< relref "../../visualizations/" >}}).
-========
 For more information about individual visualizations, refer to [Visualizations options]({{< relref "../../../visualizations/" >}}).
-
-> > > > > > > > 595344a3d0 (resolves merge conflicts (#55764)):docs/sources/dashboards/build-dashboards/add-organize-panels/index.md
 
 1. Refer to the following documentation for ways you can adjust panel settings.
 
