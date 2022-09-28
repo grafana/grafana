@@ -220,4 +220,10 @@ export const Pages = {
     interval: 'Playlist interval',
     itemDelete: 'Delete playlist item',
   },
+  Search: {
+    url: '/?search=openn',
+    FolderView: {
+      url: '/?search=open&layout=folders',
+    },
+  },
 };
