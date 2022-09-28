@@ -54,7 +54,7 @@ const getLogRowContextStyles = (theme: GrafanaTheme2, wrapLogMessage?: boolean) 
   return {
     commonStyles: css`
       position: absolute;
-      height: ${contextHeight};
+      height: ${contextHeight}px;
       z-index: ${theme.zIndex.dropdown};
       overflow: hidden;
       background: ${theme.colors.background.primary};
