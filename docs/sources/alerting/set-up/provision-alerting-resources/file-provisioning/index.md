@@ -8,6 +8,7 @@ keywords:
   - alerting
   - alerting resources
   - file provisioning
+  - provisioning
 title: Create and manage alerting resources using file provisioning
 weight: 100
 ---
