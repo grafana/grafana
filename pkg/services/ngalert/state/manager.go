@@ -167,18 +167,32 @@ func (st *Manager) ResetAllStates() {
 }
 
 // ResetStateByRuleUID deletes all entries in the state manager that match the given rule UID.
-func (st *Manager) ResetStateByRuleUID(ctx context.Context, ruleKey ngModels.AlertRuleKey) []*State {
+func (st *Manager) ResetStateByRuleUID(ctx context.Context, ruleKey ngModels.AlertRuleKey, newRuleVersion int64) []*State {
 	logger := st.log.New(ruleKey.LogContext()...)
 	logger.Debug("resetting state of the rule")
-	states := st.cache.removeByRuleUID(ruleKey.OrgID, ruleKey.UID)
-	if len(states) > 0 {
+	ruleStates := st.cache.getOrCreateRuleStates(ruleKey)
+	ruleStates.mtx.Lock()
+	if ruleStates.currentRuleVersion >= newRuleVersion {
+		logger.Info("The current rule version of the state is greater than one to reset. Ignoring.", "stateVersion", ruleStates.currentRuleVersion, "ruleVersion", newRuleVersion)
+		ruleStates.mtx.Unlock()
+		return nil
+	}
+	resetStates := make([]*State, 0, len(ruleStates.states))
+	for _, state := range ruleStates.states {
+		resetStates = append(resetStates, state)
+	}
+	ruleStates.states = make(map[string]*State)
+	ruleStates.currentRuleVersion = newRuleVersion
+	ruleStates.mtx.Unlock()
+
+	if len(resetStates) > 0 {
 		err := st.instanceStore.DeleteAlertInstancesByRule(ctx, ruleKey)
 		if err != nil {
-			logger.Error("failed to delete states that belong to a rule from database", ruleKey.LogContext()...)
+			logger.Error("Failed to delete states that belong to a rule from database")
 		}
 	}
-	logger.Info("rules state was reset", "deleted_states", len(states))
-	return states
+	logger.Info("rules state was reset", "deletedStates", len(resetStates), "newCurrentVersion", newRuleVersion)
+	return resetStates
 }
 
 // ProcessEvalResults updates the current states that belong to a rule with the evaluation results.
