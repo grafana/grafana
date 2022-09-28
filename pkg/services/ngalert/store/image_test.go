@@ -169,7 +169,7 @@ func TestIntegrationDeleteExpiredImages(t *testing.T) {
 	image2 := models.Image{URL: "https://example.com/example.png"}
 	require.NoError(t, dbstore.SaveImage(ctx, &image2))
 
-	dbstore.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := dbstore.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		// should return both images
 		var result1, result2 models.Image
 		ok, err := sess.Where("token = ?", image1.Token).Get(&result1)
@@ -196,5 +196,5 @@ func TestIntegrationDeleteExpiredImages(t *testing.T) {
 
 		return nil
 	})
-
+	require.NoError(t, err)
 }

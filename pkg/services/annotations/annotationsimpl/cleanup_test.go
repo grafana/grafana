@@ -132,7 +132,7 @@ func TestOldAnnotationsAreDeletedFirst(t *testing.T) {
 		Created:     time.Now().AddDate(-10, 0, -10).UnixNano() / int64(time.Millisecond),
 	}
 
-	fakeSQL.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err := fakeSQL.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		_, err := sess.Insert(a)
 		require.NoError(t, err, "cannot insert annotation")
 		_, err = sess.Insert(a)
@@ -160,29 +160,31 @@ func TestOldAnnotationsAreDeletedFirst(t *testing.T) {
 
 		return nil
 	})
-
+	require.NoError(t, err)
 }
 
 func assertAnnotationCount(t *testing.T, fakeSQL *sqlstore.SQLStore, sql string, expectedCount int64) {
 	t.Helper()
 
-	fakeSQL.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err := fakeSQL.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		count, err := sess.Where(sql).Count(&annotations.Item{})
 		require.NoError(t, err)
 		require.Equal(t, expectedCount, count)
 		return nil
 	})
+	require.NoError(t, err)
 }
 
 func assertAnnotationTagCount(t *testing.T, fakeSQL *sqlstore.SQLStore, expectedCount int64) {
 	t.Helper()
 
-	fakeSQL.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err := fakeSQL.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		count, err := sess.SQL("select count(*) from annotation_tag").Count()
 		require.NoError(t, err)
 		require.Equal(t, expectedCount, count)
 		return nil
 	})
+	require.NoError(t, err)
 }
 
 func createTestAnnotations(t *testing.T, store *sqlstore.SQLStore, expectedCount int, oldAnnotations int) {
@@ -219,7 +221,7 @@ func createTestAnnotations(t *testing.T, store *sqlstore.SQLStore, expectedCount
 			a.Created = cutoffDate.AddDate(-10, 0, -10).UnixNano() / int64(time.Millisecond)
 		}
 
-		store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		err := store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 			_, err := sess.Insert(a)
 			require.NoError(t, err, "should be able to save annotation", err)
 
@@ -231,6 +233,7 @@ func createTestAnnotations(t *testing.T, store *sqlstore.SQLStore, expectedCount
 			}
 			return err
 		})
+		require.NoError(t, err)
 	}
 }
 

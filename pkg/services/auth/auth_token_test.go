@@ -597,7 +597,6 @@ func (c *testContext) markAuthTokenAsSeen(id int64) (bool, error) {
 		return nil
 	})
 	return hasRowsAffected, err
-
 }
 
 func (c *testContext) updateRotatedAt(id, rotatedAt int64) (bool, error) {

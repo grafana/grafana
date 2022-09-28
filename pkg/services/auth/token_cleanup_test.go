@@ -22,11 +22,12 @@ func TestUserAuthTokenCleanup(t *testing.T) {
 
 	insertToken := func(ctx *testContext, token string, prev string, createdAt, rotatedAt int64) {
 		ut := userAuthToken{AuthToken: token, PrevAuthToken: prev, CreatedAt: createdAt, RotatedAt: rotatedAt, UserAgent: "", ClientIp: ""}
-		ctx.sqlstore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		err := ctx.sqlstore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 			_, err := sess.Insert(&ut)
 			require.Nil(t, err)
 			return nil
 		})
+		require.NoError(t, err)
 	}
 
 	now := time.Date(2018, 12, 13, 13, 45, 0, 0, time.UTC)

@@ -168,7 +168,7 @@ func TestFilter_Datasources(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			store := sqlstore.InitTestDB(t)
 
-			store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			err := store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 				// seed 10 data sources
 				for i := 1; i <= 10; i++ {
 					dsStore := dsService.CreateStore(store, log.New("accesscontrol.test"))
@@ -202,7 +202,7 @@ func TestFilter_Datasources(t *testing.T) {
 				}
 				return nil
 			})
-
+			require.NoError(t, err)
 		})
 	}
 }
