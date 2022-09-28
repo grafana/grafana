@@ -19,6 +19,8 @@ msgstr ""
 "X-Crowdin-File: /main/public/locales/en-US/messages.po\n"
 "X-Crowdin-File-ID: 59\n"
 
+# Don't edit this file manually - translations must be managed within Crowdin
+
 #: public/app/core/components/SharedPreferences/SharedPreferences.tsx
 msgid "common.locale.default"
 msgstr ""

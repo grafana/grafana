@@ -35,3 +35,9 @@ func (f *FakeInstanceStore) DeleteAlertInstance(_ context.Context, _ int64, _, _
 func (f *FakeInstanceStore) DeleteAlertInstancesByRule(ctx context.Context, key models.AlertRuleKey) error {
 	return nil
 }
+
+type FakeRuleReader struct{}
+
+func (f *FakeRuleReader) ListAlertRules(_ context.Context, q *models.ListAlertRulesQuery) error {
+	return nil
+}

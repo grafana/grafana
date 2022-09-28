@@ -151,14 +151,14 @@ type OrgUserDTO struct {
 }
 
 type RemoveOrgUserCommand struct {
-	UserID                   int64
-	OrgID                    int64
+	UserID                   int64 `xorm:"user_id"`
+	OrgID                    int64 `xorm:"org_id"`
 	ShouldDeleteOrphanedUser bool
 	UserWasDeleted           bool
 }
 
 type GetOrgUsersQuery struct {
-	UserID int64 `xorm:"pk autoincr 'user_id'"`
+	UserID int64 `xorm:"user_id"`
 	OrgID  int64 `xorm:"org_id"`
 	Query  string
 	Limit  int
@@ -169,7 +169,7 @@ type GetOrgUsersQuery struct {
 }
 
 type SearchOrgUsersQuery struct {
-	OrgID int64
+	OrgID int64 `xorm:"org_id"`
 	Query string
 	Page  int
 	Limit int
