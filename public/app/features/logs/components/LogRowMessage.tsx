@@ -117,14 +117,6 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
     this.props.onToggleContext();
   };
 
-  shouldShowShowContextToggle = (row: LogRowModel | undefined): boolean => {
-    const { showContextToggle } = this.props;
-    if (!showContextToggle) {
-      return false;
-    }
-    return showContextToggle(row);
-  };
-
   render() {
     const {
       row,
@@ -140,12 +132,14 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
       onToggleContext,
       isInDashboard,
       logsSortOrder,
+      showContextToggle,
     } = this.props;
 
     const style = getLogRowStyles(theme, row.logLevel);
     const { hasAnsi, raw } = row;
     const restructuredEntry = restructureLog(raw, prettifyLogMessage);
-    const styles = getStyles(theme, this.shouldShowShowContextToggle(row), isInDashboard);
+    const shouldShowContextToggle = showContextToggle ? showContextToggle(row) : false;
+    const styles = getStyles(theme, shouldShowContextToggle, isInDashboard);
 
     return (
       // When context is open, the position has to be NOT relative.
@@ -175,7 +169,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
           </span>
           {showRowMenu && (
             <span className={cx('log-row-menu', styles.rowMenu)} onClick={(e) => e.stopPropagation()}>
-              {this.shouldShowShowContextToggle(row) && (
+              {shouldShowContextToggle && (
                 <Tooltip placement="top" content={'Show context'}>
                   <IconButton size="md" name="gf-show-context" onClick={this.onContextToggle} />
                 </Tooltip>
