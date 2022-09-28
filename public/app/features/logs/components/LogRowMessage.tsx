@@ -63,12 +63,18 @@ const getStyles = (theme: GrafanaTheme2) => {
       right: -8px;
       top: 0;
       bottom: auto;
-      width: 80px;
       height: 36px;
       background: ${theme.colors.background.primary};
       box-shadow: ${theme.shadows.z3};
       padding: ${theme.spacing(0, 0, 0, 0.5)};
       z-index: 100;
+      visibility: hidden;
+    `,
+    large: css`
+      width: 80px;
+    `,
+    small: css`
+      width: 40px;
     `,
   };
 };
@@ -163,7 +169,10 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
             {renderLogMessage(hasAnsi, restructuredEntry, row.searchWords, style.logsRowMatchHighLight)}
           </span>
           {showRowMenu && (
-            <span className={cx('log-row-menu', style.logRowMenu, styles.rowMenu)} onClick={(e) => e.stopPropagation()}>
+            <span
+              className={cx('log-row-menu', styles.rowMenu, showContextToggle?.(row) ? styles.large : styles.small)}
+              onClick={(e) => e.stopPropagation()}
+            >
               {showContextToggle?.(row) && (
                 <Tooltip placement="top" content={'Show context'}>
                   <IconButton size="md" name="gf-show-context" onClick={this.onContextToggle} />

@@ -45,10 +45,6 @@ export const getLogRowStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
       font-size: ${theme.typography.bodySmall.fontSize};
       width: 100%;
     `,
-    logRowMenu: css`
-      label: context;
-      visibility: hidden;
-    `,
     logsRow: css`
       label: logs-row;
       width: 100%;

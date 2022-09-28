@@ -37,6 +37,7 @@ export interface Props extends Themeable2 {
 
 interface State {
   renderAll: boolean;
+  contextIsOpen: boolean;
 }
 
 class UnThemedLogRows extends PureComponent<Props, State> {
@@ -48,6 +49,18 @@ class UnThemedLogRows extends PureComponent<Props, State> {
 
   state: State = {
     renderAll: false,
+    contextIsOpen: false,
+  };
+
+  /**
+   * Toggle the `contextIsOpen` state when a context of one LogRow is opened in order to not show the menu of the other log rows.
+   */
+  toggleAllContexts = (): void => {
+    this.setState((state) => {
+      return {
+        contextIsOpen: !state.contextIsOpen,
+      };
+    });
   };
 
   componentDidMount() {
@@ -130,7 +143,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 getRowContext={getRowContext}
                 row={row}
                 showContextToggle={showContextToggle}
-                showRowMenu={!false}
+                showRowMenu={!this.state.contextIsOpen}
                 showDuplicates={showDuplicates}
                 showLabels={showLabels}
                 showTime={showTime}
@@ -146,6 +159,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 getFieldLinks={getFieldLinks}
                 logsSortOrder={logsSortOrder}
                 forceEscape={forceEscape}
+                toggleAllContexts={this.toggleAllContexts}
                 onLogRowHover={onLogRowHover}
               />
             ))}
@@ -158,7 +172,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 getRowContext={getRowContext}
                 row={row}
                 showContextToggle={showContextToggle}
-                showRowMenu={!false}
+                showRowMenu={!this.state.contextIsOpen}
                 showDuplicates={showDuplicates}
                 showLabels={showLabels}
                 showTime={showTime}
@@ -174,6 +188,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 getFieldLinks={getFieldLinks}
                 logsSortOrder={logsSortOrder}
                 forceEscape={forceEscape}
+                toggleAllContexts={this.toggleAllContexts}
                 onLogRowHover={onLogRowHover}
               />
             ))}
