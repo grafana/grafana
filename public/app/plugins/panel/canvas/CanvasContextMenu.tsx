@@ -4,10 +4,12 @@ import { useObservable } from 'react-use';
 import { first } from 'rxjs/operators';
 
 import { ContextMenu, MenuItem } from '@grafana/ui';
+import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
 import { activePanelSubject } from './CanvasPanel';
 import { LayerActionID } from './types';
+import { getElementTypes } from './utils';
 
 type Props = {
   scene: Scene;
@@ -95,6 +97,28 @@ export const CanvasContextMenu = ({ scene }: Props) => {
       return null;
     };
 
+    const typeOptions = getElementTypes(scene.shouldShowAdvancedTypes);
+    const addItemMenuItem = !scene.isPanelEditing && (
+      <div className={(styles.menuItem, styles.center)}>
+        <AddLayerButton
+          options={typeOptions}
+          label={'Add item'}
+          onChange={(sel) => {
+            console.log('yo');
+          }}
+        />
+      </div>
+    );
+    //   <MenuItem
+    //     label="Add item"
+    //     icon="plus"
+    //     onClick={() => {
+    //       console.log('click');
+    //     }}
+    //     className={styles.menuItem}
+    //   />
+    // );
+
     if (selectedElements && selectedElements.length >= 1) {
       return (
         <>
@@ -135,7 +159,12 @@ export const CanvasContextMenu = ({ scene }: Props) => {
         </>
       );
     } else {
-      return openCloseEditorMenuItem;
+      return (
+        <>
+          {openCloseEditorMenuItem}
+          {addItemMenuItem}
+        </>
+      );
     }
   };
 
@@ -187,5 +216,8 @@ const getStyles = () => ({
   menuItem: css`
     max-width: 60ch;
     overflow: hidden;
+  `,
+  center: css`
+    display: flex;
   `,
 });
