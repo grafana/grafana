@@ -32,9 +32,9 @@ A label matchers consists of 3 distinct parts, the **label**, the **value** and 
 
 If you are using multiple label matchers, they are combined using the AND logical operator. This means that all matchers must match in order to link a rule to a policy.
 
-## Example of a label matcher
+## Example scenario
 
-Imagine we've defined the following set of labels for our alert.
+If you define the following set of labels for your alert:
 
 `{ foo=bar, baz=qux, id=12 }`
 
