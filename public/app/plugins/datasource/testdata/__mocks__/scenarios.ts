@@ -31,6 +31,12 @@ export const scenarios = [
   },
   {
     description: '',
+    id: 'error_details',
+    name: 'Error details',
+    stringInput: '',
+  },
+  {
+    description: '',
     id: 'grafana_api',
     name: 'Grafana API',
     stringInput: '',

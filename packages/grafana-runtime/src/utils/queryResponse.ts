@@ -30,12 +30,18 @@ export const cachedResponseNotice: QueryResultMetaNotice = { severity: 'info', t
  */
 export interface DataResponse {
   error?: string;
+  errorDetails?: ErrorDetails;
   refId?: string;
   frames?: DataFrameJSON[];
 
   // Legacy TSDB format...
   series?: TimeSeries[];
   tables?: TableData[];
+}
+
+export interface ErrorDetails {
+  status?: string;
+  message?: string;
 }
 
 /**
@@ -87,6 +93,24 @@ export function toDataQueryResponse(
             message: dr.error,
           };
           rsp.state = LoadingState.Error;
+        }
+      }
+
+      if (dr.errorDetails) {
+        rsp.state = LoadingState.Error;
+
+        if (!rsp.error) {
+          rsp.error = {
+            refId: dr.refId,
+            message: dr.errorDetails.message,
+          };
+        }
+
+        if (!rsp.errorDetails) {
+          rsp.errorDetails = new Map<string, ErrorDetails>();
+        }
+        if (dr.refId) {
+          rsp.errorDetails.set(dr.refId, dr.errorDetails);
         }
       }
 

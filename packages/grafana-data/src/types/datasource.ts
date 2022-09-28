@@ -24,6 +24,11 @@ export interface DataSourcePluginOptionsEditorProps<
   onOptionsChange: (options: DataSourceSettings<JSONData, SecureJSONData>) => void;
 }
 
+export interface ErrorDetails {
+  status?: string;
+  message?: string;
+}
+
 // Utility type to extract the query type TQuery from a class extending DataSourceApi<TQuery, TOptions>
 export type DataSourceQueryType<DSType> = DSType extends DataSourceApi<infer TQuery, any> ? TQuery : never;
 
@@ -443,6 +448,7 @@ export interface DataQueryResponse {
    */
   error?: DataQueryError;
 
+  errorDetails?: Map<string, ErrorDetails>;
   /**
    * Use this to control which state the response should have
    * Defaults to LoadingState.Done if state is not defined

@@ -20,6 +20,7 @@ const (
 	randomWalkQuery                   queryType = "random_walk"
 	randomWalkSlowQuery               queryType = "slow_query"
 	randomWalkWithErrorQuery          queryType = "random_walk_with_error"
+	errorDetails                      queryType = "error_details"
 	randomWalkTableQuery              queryType = "random_walk_table"
 	exponentialHeatmapBucketDataQuery queryType = "exponential_heatmap_bucket_data"
 	linearHeatmapBucketDataQuery      queryType = "linear_heatmap_bucket_data"
@@ -173,6 +174,12 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 		ID:      string(randomWalkWithErrorQuery),
 		Name:    "Random Walk (with error)",
 		handler: s.handleRandomWalkWithErrorScenario,
+	})
+
+	s.registerScenario(&Scenario{
+		ID:      string(errorDetails),
+		Name:    "Error details",
+		handler: s.handleErrorDetailsScenario,
 	})
 
 	s.registerScenario(&Scenario{
@@ -364,6 +371,22 @@ func (s *Service) handleRandomWalkWithErrorScenario(ctx context.Context, req *ba
 		respD := resp.Responses[q.RefID]
 		respD.Frames = append(respD.Frames, RandomWalk(q, model, 0))
 		respD.Error = fmt.Errorf("this is an error and it can include URLs http://grafana.com/")
+		resp.Responses[q.RefID] = respD
+	}
+
+	return resp, nil
+}
+
+func (s *Service) handleErrorDetailsScenario(_ context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+
+	rand.Seed(time.Now().Unix())
+	for _, q := range req.Queries {
+		respD := resp.Responses[q.RefID]
+		respD.Error = &backend.ErrorDetails{
+			Status:        backend.ErrorStatuses()[rand.Intn(len(backend.ErrorStatuses()))],
+			PublicMessage: "Something happened",
+		}
 		resp.Responses[q.RefID] = respD
 	}
 
