@@ -29,7 +29,7 @@
   "scripts": {
     "build": "grafana-toolkit toolkit:build",
     "clean": "rimraf ./dist ./compiled ./sass ./package.tgz",
-    "prepack": "mv ./src ./src_bak && cp ./dist/src ./src",
+    "prepack": "mv ./src ./src_bak && cp -r ./dist/src ./src",
     "postpack": "rimraf ./src && mv ./src_bak ./src",
     "typecheck": "tsc --noEmit"
   },
