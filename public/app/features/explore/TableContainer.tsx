@@ -31,10 +31,11 @@ interface TableContainerState {
 function mapStateToProps(state: StoreState, { exploreId }: TableContainerProps) {
   const explore = state.explore;
   const item: ExploreItemState = explore[exploreId] as ExploreItemState;
-  const { loading: loadingInState, tableResult, range } = item;
-  const loading = tableResult && tableResult.length > 0 ? false : loadingInState;
+  const { loading: loadingInState, tableResult, rawPrometheusResult, range } = item;
+  const result = (tableResult?.length ?? false) > 0 ? tableResult : rawPrometheusResult;
+  const loading = result && result.length > 0 ? false : loadingInState;
 
-  return { loading, tableResult, range };
+  return { loading, tableResult: result, range };
 }
 
 const mapDispatchToProps = {

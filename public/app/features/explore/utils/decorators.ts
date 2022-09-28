@@ -74,6 +74,7 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
     graphResult: null,
     tableResult: null,
     logsResult: null,
+    rawPrometheusResult: null,
   };
 };
 
@@ -94,7 +95,7 @@ export const decorateWithTableResult = (data: ExplorePanelData): Observable<Expl
   // Prometheus has a custom frame visualization alongside the table view, but they both handle the data the same
   const tableFrames = data.tableFrames.length ? data.tableFrames : data.rawPrometheusFrames;
 
-  if (tableFrames.length === 0) {
+  if (!tableFrames || tableFrames.length === 0) {
     return of({ ...data, tableResult: null });
   }
 
@@ -133,6 +134,10 @@ export const decorateWithTableResult = (data: ExplorePanelData): Observable<Expl
             theme: config.theme2,
             timeZone: data.request?.timezone ?? 'browser',
           });
+      }
+
+      if (data.rawPrometheusFrames?.length) {
+        return { ...data, rawPrometheusResult: frame };
       }
 
       return { ...data, tableResult: frame };

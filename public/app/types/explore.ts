@@ -132,6 +132,11 @@ export interface ExploreItemState {
   tableResult: DataFrame | null;
 
   /**
+   * Simple UI that emulates native prometheus UI
+   */
+  rawPrometheusResult: DataFrame | null;
+
+  /**
    * React keys for rendering of QueryRows
    */
   queryKeys: string[];
@@ -234,6 +239,7 @@ export interface ExplorePanelData extends PanelData {
   graphResult: DataFrame[] | null;
   tableResult: DataFrame | null;
   logsResult: LogsModel | null;
+  rawPrometheusResult: DataFrame | null;
 }
 
 export enum TABLE_RESULTS_STYLE {
