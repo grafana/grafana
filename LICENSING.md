@@ -9,6 +9,8 @@ The default license for this project is [AGPL-3.0-only](LICENSE).
 The following directories and their subdirectories are licensed under Apache-2.0:
 
 ```
+cue/
+grafana-mixin/
 packages/grafana-data/
 packages/grafana-e2e/
 packages/grafana-e2e-selectors/
@@ -19,8 +21,6 @@ packages/jaeger-ui-components/
 packaging/
 pkg/coremodel/
 pkg/framework/coremodel/
-grafana-mixin/
-cue/
 public/app/plugins/datasource/tempo
 public/img/icons/solid/
 public/img/icons/unicons/
