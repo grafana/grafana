@@ -36,6 +36,4 @@ describe('OpenTsdbQueryEditor', () => {
     setup();
     expect(screen.getByTestId(testIds.editor)).toBeInTheDocument();
   });
-
-  // check rendering based on tsdb version
 });

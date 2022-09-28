@@ -47,14 +47,12 @@ export function TagSection({
       return;
     }
 
-    // ?? not sure why this is here yet
     if (!addTagMode) {
       updAddTagMode(true);
       return;
     }
 
     // check for duplicate tags
-    // used to be in validateTarget()
     if (query.tags && has(query.tags, curTagKey)) {
       const err = "Duplicate tag key '" + curTagKey + "'.";
       setErrors(err);

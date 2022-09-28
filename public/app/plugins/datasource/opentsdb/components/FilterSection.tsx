@@ -51,7 +51,6 @@ export function FilterSection({
       return;
     }
 
-    // ?? not sure why this is here yet
     if (!addFilterMode) {
       updAddFilterMode(true);
       return;
@@ -244,5 +243,4 @@ export const testIds = {
   list: 'opentsdb-filter-list',
   error: 'opentsdb-filter-error',
   remove: 'opentsdb-filter-remove',
-  // interval: 'downsample-interval',
 };

@@ -30,15 +30,6 @@ export function OpenTsdbQueryEditor({
 }: OpenTsdbQueryEditorProps) {
   const styles = useStyles2(getStyles);
 
-  // errors will be updated so they need to be state
-  // They are only displayed for tags, filters and downsampling.
-  // There is evidence that metrics had errors at one point,
-  // but there is no evidence it is being handled in the fromt end,
-  // just errors delivered from the backend
-  // const [errors /*, setErrors */] = useState<OpenTsdbErrors>({});
-
-  // Xaggregators: any;
-  // aggregators are updated potentially by datasource.getAggregators()
   const [aggregators, setAggregators] = useState<string[]>([
     'avg',
     'sum',
@@ -50,11 +41,8 @@ export function OpenTsdbQueryEditor({
     'mimmax',
   ]);
 
-  // XfillPolicies: any;
   const fillPolicies: string[] = ['none', 'nan', 'null', 'zero'];
 
-  // XfilterTypes: any;
-  // filterTypes are potentially updated by datasource.getFilterTypes()
   const [filterTypes, setFilterTypes] = useState<string[]>([
     'wildcard',
     'iliteral_or',
@@ -64,30 +52,8 @@ export function OpenTsdbQueryEditor({
     'literal_or',
     'regexp',
   ]);
-  // XtsdbVersion: any;
+
   const tsdbVersion: number = datasource.tsdbVersion;
-
-  // aggregator only exists in the query
-  // Xaggregator: any;
-
-  // XDownSample component
-  // XdownsampleInterval: any;
-  // XdownsampleAggregator: any;
-  // XdownsampleFillPolicy: any;
-
-  // errors: any;
-  // Xlet suggestMetrics: any;
-  // XsuggestTagKeys: any;
-  // XsuggestTagValues: any;
-
-  // used in filter section
-  // XaddFilterMode = false;
-
-  // done in filters section
-  // Xconst [addFilterMode, setFilterMode] = useState<boolean>(false);
-
-  // addTagMode = false;
-  // const [addTagMode, setTagMode] = useState<boolean>(false);
 
   if (!query.aggregator) {
     query.aggregator = 'sum';
@@ -137,33 +103,6 @@ export function OpenTsdbQueryEditor({
       };
     });
   }
-
-  // POSSIBLE REFACTOR => validateQuery()
-  // pass in the query, update the errors state
-  // doesn't do anything with shouldDownsample
-  // error handling for tags here, move filter here?
-  // function validateQuery() {
-  // not used!!!
-  // if (query.shouldDownsample) {
-  //   try {
-  //     if (this.target.downsampleInterval) {
-  //       rangeUtil.describeInterval(this.target.downsampleInterval);
-  //     } else {
-  //       errs.downsampleInterval = "You must supply a downsample interval (e.g. '1m' or '1h').";
-  //     }
-  //   } catch (err) {
-  //     if (err instanceof Error) {
-  //       errs.downsampleInterval = err.message;
-  //     }
-  //   }
-  // }
-
-  // if (this.target.tags && has(this.target.tags, this.target.currentTagKey)) {
-  //   errs.tags = "Duplicate tag key '" + this.target.currentTagKey + "'.";
-  // }
-
-  // return errs;
-  // }
 
   return (
     <div className={styles.container} data-testid={testIds.editor}>
