@@ -374,6 +374,14 @@ func (hs *HTTPServer) registerRoutes() {
 				pluginRoute.Post("/:pluginId/install", authorize(reqGrafanaAdmin, ac.EvalPermission(plugins.ActionInstall)), routing.Wrap(hs.InstallPlugin))
 				pluginRoute.Post("/:pluginId/uninstall", authorize(reqGrafanaAdmin, ac.EvalPermission(plugins.ActionInstall)), routing.Wrap(hs.UninstallPlugin))
 			})
+
+			apiRoute.Group("/plugin-recipes", func(recipesRoute routing.RouteRegister) {
+				recipesRoute.Get("/", authorize(reqGrafanaAdmin, ac.EvalPermission(plugins.ActionInstall)), routing.Wrap(hs.GetRecipeList))
+				recipesRoute.Get("/:recipeId", authorize(reqGrafanaAdmin, ac.EvalPermission(plugins.ActionInstall)), routing.Wrap(hs.GetRecipeByID))
+				recipesRoute.Post("/:recipeId/install", authorize(reqGrafanaAdmin, ac.EvalPermission(plugins.ActionInstall)), routing.Wrap(hs.InstallRecipe))
+				recipesRoute.Post("/:recipeId/uninstall", authorize(reqGrafanaAdmin, ac.EvalPermission(plugins.ActionInstall)), routing.Wrap(hs.UninstallRecipe))
+				recipesRoute.Get("/:recipeId/status", authorize(reqGrafanaAdmin, ac.EvalPermission(plugins.ActionInstall)), routing.Wrap(hs.GetRecipeStatus))
+			})
 		}
 
 		apiRoute.Group("/plugins", func(pluginRoute routing.RouteRegister) {
