@@ -14,16 +14,16 @@ type sqlStore struct {
 
 func (s *sqlStore) EnsureTagsExist(ctx context.Context, tags []*tag.Tag) ([]*tag.Tag, error) {
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		for _, tagelement := range tags {
+		for _, tagElement := range tags {
 			var existingTag tag.Tag
-			exists, err := sess.Table("tag").Where("`key`=? AND `value`=?", tagelement.Key, tagelement.Value).Get(&existingTag)
+			exists, err := sess.Table("tag").Where("`key`=? AND `value`=?", tagElement.Key, tagElement.Value).Get(&existingTag)
 			if err != nil {
 				return err
 			}
 			if exists {
-				tagelement.Id = existingTag.Id
+				tagElement.Id = existingTag.Id
 			} else {
-				_, err := sess.Table("tag").Insert(tagelement)
+				_, err := sess.Table("tag").Insert(tagElement)
 				if err != nil {
 					return err
 				}
