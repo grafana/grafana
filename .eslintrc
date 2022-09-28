@@ -67,7 +67,7 @@
         // we should fix them one by one and mark them as errors
         // once they're all fixed, we can remove them all and instead extend the strict preset
         // with "extends": ["plugin:jsx-a11y/strict"]
-        "jsx-a11y/alt-text": "off",
+        "jsx-a11y/alt-text": "error",
         "jsx-a11y/anchor-has-content": "error",
         "jsx-a11y/anchor-is-valid": "off",
         "jsx-a11y/aria-activedescendant-has-tabindex": "error",
