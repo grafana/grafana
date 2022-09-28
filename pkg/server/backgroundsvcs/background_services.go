@@ -52,6 +52,7 @@ func ProvideBackgroundServiceRegistry(
 	_ *plugindashboardsservice.DashboardUpdater, _ *sanitizer.Provider,
 	_ *grpcserver.HealthService,
 	_ *grpcserver.QueryDataService,
+	_ *grpcserver.ReflectionService,
 ) *BackgroundServiceRegistry {
 	return NewBackgroundServiceRegistry(
 		httpServer,

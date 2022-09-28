@@ -592,7 +592,7 @@ func setupAccessControlGuardianTest(t *testing.T, uid string, permissions []acce
 	toSave.SetUid(uid)
 
 	// seed dashboard
-	dashStore := dashdb.ProvideDashboardStore(store, featuremgmt.WithFeatures(), tagimpl.ProvideService(store))
+	dashStore := dashdb.ProvideDashboardStore(store, featuremgmt.WithFeatures(), tagimpl.ProvideService(store, store.Cfg))
 	dash, err := dashStore.SaveDashboard(context.Background(), models.SaveDashboardCommand{
 		Dashboard: toSave.Data,
 		UserId:    1,

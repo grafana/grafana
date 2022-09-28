@@ -12,6 +12,8 @@ import {
   LoadingState,
   toDataFrame,
 } from '@grafana/data';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 import { QueryOptions } from 'app/types';
 
 import { VariableHide } from '../../../features/variables/types';
@@ -1846,6 +1848,23 @@ describe('PrometheusDatasource for POST', () => {
     const httpOptions = {
       headers: {} as { [key: string]: number | undefined },
     };
+    const instanceSettings = {
+      url: 'proxied',
+      directUrl: 'direct',
+      user: 'test',
+      password: 'mupp',
+      access: 'proxy',
+      jsonData: { httpMethod: 'POST' },
+    } as unknown as DataSourceInstanceSettings<PromOptions>;
+
+    let ds: PrometheusDatasource;
+    beforeEach(() => {
+      ds = new PrometheusDatasource(
+        instanceSettings,
+        templateSrvStub as unknown as TemplateSrv,
+        timeSrvStub as unknown as TimeSrv
+      );
+    });
 
     it('with proxy access tracing headers should be added', () => {
       ds._addTracingHeaders(httpOptions as any, options as any);
@@ -1855,6 +1874,14 @@ describe('PrometheusDatasource for POST', () => {
     });
 
     it('with direct access tracing headers should not be added', () => {
+      const instanceSettings = {
+        url: 'proxied',
+        directUrl: 'direct',
+        user: 'test',
+        password: 'mupp',
+        jsonData: { httpMethod: 'POST' },
+      } as unknown as DataSourceInstanceSettings<PromOptions>;
+
       const mockDs = new PrometheusDatasource(
         { ...instanceSettings, url: 'http://127.0.0.1:8000' },
         templateSrvStub as any,
@@ -1882,6 +1909,7 @@ function getPrepareTargetsContext({
   const instanceSettings = {
     url: 'proxied',
     directUrl: 'direct',
+    access: 'proxy',
     user: 'test',
     password: 'mupp',
     jsonData: { httpMethod: 'POST' },
