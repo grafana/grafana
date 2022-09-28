@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -23,6 +24,9 @@ type store interface {
 	CaseInsensitiveLoginConflict(context.Context, string, string) error
 	GetByLogin(context.Context, *user.GetUserByLoginQuery) (*user.User, error)
 	GetByEmail(context.Context, *user.GetUserByEmailQuery) (*user.User, error)
+	Update(context.Context, *user.UpdateUserCommand) error
+	ChangePassword(context.Context, *user.ChangeUserPasswordCommand) error
+	UpdateLastSeenAt(context.Context, *user.UpdateUserLastSeenAtCommand) error
 }
 
 type sqlStore struct {
@@ -245,4 +249,65 @@ func (ss *sqlStore) userCaseInsensitiveLoginConflict(ctx context.Context, sess *
 	}
 
 	return nil
+}
+
+func (ss *sqlStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) error {
+	if ss.cfg.CaseInsensitiveLogin {
+		cmd.Login = strings.ToLower(cmd.Login)
+		cmd.Email = strings.ToLower(cmd.Email)
+	}
+
+	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		user := user.User{
+			Name:    cmd.Name,
+			Email:   cmd.Email,
+			Login:   cmd.Login,
+			Theme:   cmd.Theme,
+			Updated: time.Now(),
+		}
+
+		if _, err := sess.ID(cmd.UserID).Where(ss.notServiceAccountFilter()).Update(&user); err != nil {
+			return err
+		}
+
+		if ss.cfg.CaseInsensitiveLogin {
+			if err := ss.userCaseInsensitiveLoginConflict(ctx, sess, user.Login, user.Email); err != nil {
+				return err
+			}
+		}
+
+		sess.PublishAfterCommit(&events.UserUpdated{
+			Timestamp: user.Created,
+			Id:        user.ID,
+			Name:      user.Name,
+			Login:     user.Login,
+			Email:     user.Email,
+		})
+
+		return nil
+	})
+}
+
+func (ss *sqlStore) ChangePassword(ctx context.Context, cmd *user.ChangeUserPasswordCommand) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		user := user.User{
+			Password: cmd.NewPassword,
+			Updated:  time.Now(),
+		}
+
+		_, err := sess.ID(cmd.UserID).Where(ss.notServiceAccountFilter()).Update(&user)
+		return err
+	})
+}
+
+func (ss *sqlStore) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLastSeenAtCommand) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		user := user.User{
+			ID:         cmd.UserID,
+			LastSeenAt: time.Now(),
+		}
+
+		_, err := sess.ID(cmd.UserID).Update(&user)
+		return err
+	})
 }
