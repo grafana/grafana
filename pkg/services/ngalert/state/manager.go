@@ -278,6 +278,12 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 	resolvedStates := st.staleResultsHandler(ctx, currentStates, evaluatedAt, alertRule, processedResults)
 	currentStates.mtx.Unlock()
 
+	if len(obsoleteStates) > 0 {
+		err := st.instanceStore.DeleteAlertInstancesByRule(ctx, alertRule.GetKey())
+		if err != nil {
+			logger.Error("Failed to delete states that belong to a rule from database")
+		}
+	}
 	if len(states) > 0 {
 		logger.Debug("saving new states to the database", "count", len(states))
 		for _, state := range states {
