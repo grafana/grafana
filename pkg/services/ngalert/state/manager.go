@@ -140,15 +140,6 @@ func (st *Manager) Warm(ctx context.Context) {
 	}
 }
 
-//
-// func (st *Manager) getOrCreate(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels) *State {
-// 	return st.cache.getOrCreate(ctx, alertRule, result, extraLabels)
-// }
-
-func (st *Manager) set(entry *State) {
-	st.cache.set(entry)
-}
-
 func (st *Manager) Get(orgID int64, alertRuleUID, stateId string) (*State, error) {
 	return st.cache.get(orgID, alertRuleUID, stateId)
 }
@@ -322,7 +313,7 @@ func (st *Manager) recordMetrics() {
 
 func (st *Manager) Put(states []*State) {
 	for _, s := range states {
-		st.set(s)
+		st.cache.set(s)
 	}
 }
 
