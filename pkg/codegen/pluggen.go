@@ -14,7 +14,6 @@ import (
 	"github.com/deepmap/oapi-codegen/pkg/codegen"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/grafana/cuetsy"
-	tsast "github.com/grafana/cuetsy/ts/ast"
 	"github.com/grafana/grafana/pkg/framework/coremodel"
 	"github.com/grafana/grafana/pkg/plugins/pfs"
 	"github.com/grafana/thema"
@@ -102,22 +101,15 @@ type PluginTreeOrErr struct {
 // It is, for now, tailored specifically to Grafana core's codegen needs.
 type PluginTree pfs.Tree
 
-func (pt *PluginTree) GenerateTypeScriptAST() (*tsast.File, error) {
+func (pt *PluginTree) GenerateTS(path string) (WriteDiffer, error) {
 	t := (*pfs.Tree)(pt)
-	f := &tsast.File{}
 
-	tf := tvars_autogen_header{
-		GeneratorPath: "public/app/plugins/gen.go", // FIXME hardcoding is not OK
-		LineagePath:   "models.cue",
-	}
-	var buf bytes.Buffer
-	err := tmpls.Lookup("autogen_header.tmpl").Execute(&buf, tf)
-	if err != nil {
-		return nil, fmt.Errorf("error executing header template: %w", err)
-	}
-
-	f.Doc = &tsast.Comment{
-		Text: buf.String(),
+	// TODO replace with cuetsy's TS AST
+	f := &tvars_cuetsy_multi{
+		Header: tvars_autogen_header{
+			GeneratorPath: "public/app/plugins/gen.go", // FIXME hardcoding is not OK
+			LineagePath:   "models.cue",
+		},
 	}
 
 	pi := t.RootPlugin()
@@ -126,9 +118,7 @@ func (pt *PluginTree) GenerateTypeScriptAST() (*tsast.File, error) {
 		return nil, nil
 	}
 	for _, im := range pi.CUEImports() {
-		if tsim, err := convertImport(im); err != nil {
-			return nil, err
-		} else if tsim.From.Value != "" {
+		if tsim := convertImport(im); tsim != nil {
 			f.Imports = append(f.Imports, tsim)
 		}
 	}
@@ -136,36 +126,37 @@ func (pt *PluginTree) GenerateTypeScriptAST() (*tsast.File, error) {
 	for slotname, lin := range slotimps {
 		v := thema.LatestVersion(lin)
 		sch := thema.SchemaP(lin, v)
-		// Inject a node for the const with the version
-		f.Nodes = append(f.Nodes, tsast.Raw{
-			// TODO need call expressions in cuetsy tsast to be able to do these properly
-			Data: fmt.Sprintf("export const %sModelVersion = Object.freeze([%v, %v]);", slotname, v[0], v[1]),
-		})
-
-		// TODO this is hardcoded for now, but should ultimately be a property of
-		// whether the slot is a grouped lineage:
-		// https://github.com/grafana/thema/issues/62
-		if isGroupLineage(slotname) {
-			tsf, err := cuetsy.GenerateAST(sch.UnwrapCUE(), cuetsy.Config{
-				Export: true,
-			})
-			if err != nil {
-				return nil, fmt.Errorf("error translating %s lineage to TypeScript: %w", slotname, err)
-			}
-			f.Nodes = append(f.Nodes, tsf.Nodes...)
-		} else {
-			pair, err := cuetsy.GenerateSingleAST(strings.Title(lin.Name()), sch.UnwrapCUE(), cuetsy.TypeInterface)
-			if err != nil {
-				return nil, fmt.Errorf("error translating %s lineage to TypeScript: %w", slotname, err)
-			}
-			f.Nodes = append(f.Nodes, pair.T)
-			if pair.D != nil {
-				f.Nodes = append(f.Nodes, pair.D)
-			}
+		// TODO need call expressions in cuetsy tsast to be able to do these
+		sec := tsSection{
+			V:         v,
+			ModelName: slotname,
 		}
+
+		if isGroupLineage(slotname) {
+			b, err := cuetsy.Generate(sch.UnwrapCUE(), cuetsy.Config{})
+			if err != nil {
+				return nil, fmt.Errorf("%s: error translating %s lineage to TypeScript: %w", path, slotname, err)
+			}
+			sec.Body = string(b)
+		} else {
+			a, err := cuetsy.GenerateSingleAST(strings.Title(lin.Name()), sch.UnwrapCUE(), cuetsy.TypeInterface)
+			if err != nil {
+				return nil, fmt.Errorf("%s: error translating %s lineage to TypeScript: %w", path, slotname, err)
+			}
+			sec.Body = fmt.Sprint(a)
+		}
+
+		f.Sections = append(f.Sections, sec)
 	}
 
-	return f, nil
+	wd := NewWriteDiffer()
+	var buf bytes.Buffer
+	err := tmpls.Lookup("cuetsy_multi.tmpl").Execute(&buf, f)
+	if err != nil {
+		return nil, fmt.Errorf("%s: error executing plugin TS generator template: %w", path, err)
+	}
+	wd[filepath.Join(path, "models.gen.ts")] = buf.Bytes()
+	return wd, nil
 }
 
 func isGroupLineage(slotname string) bool {
@@ -423,27 +414,41 @@ type TreeAndPath struct {
 }
 
 // TODO convert this to use cuetsy ts types, once import * form is supported
-func convertImport(im *ast.ImportSpec) (tsast.ImportSpec, error) {
-	tsim := tsast.ImportSpec{}
-	pkg, err := MapCUEImportToTS(strings.Trim(im.Path.Value, "\""))
-	if err != nil || pkg == "" {
-		// err should be unreachable if paths has been verified already
-		// Empty string mapping means skip it
-		return tsim, err
+func convertImport(im *ast.ImportSpec) *tsImport {
+	var err error
+	tsim := &tsImport{}
+	tsim.Pkg, err = MapCUEImportToTS(strings.Trim(im.Path.Value, "\""))
+	if err != nil {
+		// should be unreachable if paths has been verified already
+		panic(err)
 	}
 
-	tsim.From = tsast.Str{Value: pkg}
+	if tsim.Pkg == "" {
+		// Empty string mapping means skip it
+		return nil
+	}
 
 	if im.Name != nil && im.Name.String() != "" {
-		tsim.AsName = im.Name.String()
+		tsim.Ident = im.Name.String()
 	} else {
 		sl := strings.Split(im.Path.Value, "/")
 		final := sl[len(sl)-1]
 		if idx := strings.Index(final, ":"); idx != -1 {
-			tsim.AsName = final[idx:]
+			tsim.Pkg = final[idx:]
 		} else {
-			tsim.AsName = final
+			tsim.Pkg = final
 		}
 	}
-	return tsim, nil
+	return tsim
+}
+
+type tsSection struct {
+	V         thema.SyntacticVersion
+	ModelName string
+	Body      string
+}
+
+type tsImport struct {
+	Ident string
+	Pkg   string
 }
