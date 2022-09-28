@@ -1,6 +1,7 @@
 package queries
 
 import (
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
 )
@@ -99,4 +100,16 @@ func GetDataSourceUidFromJson(query *simplejson.Json) string {
 	}
 
 	return uid
+}
+
+func SanitizeMetadataFromQueryData(res *backend.QueryDataResponse) {
+	for k := range res.Responses {
+		frames := res.Responses[k].Frames
+		for i := range frames {
+			if frames[i].Meta != nil {
+				frames[i].Meta.ExecutedQueryString = ""
+				frames[i].Meta.Custom = nil
+			}
+		}
+	}
 }

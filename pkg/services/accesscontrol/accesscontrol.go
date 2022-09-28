@@ -173,8 +173,8 @@ func BuildPermissionsMap(permissions []Permission) map[string]bool {
 // GroupScopesByAction will group scopes on action
 func GroupScopesByAction(permissions []Permission) map[string][]string {
 	m := make(map[string][]string)
-	for _, p := range permissions {
-		m[p.Action] = append(m[p.Action], p.Scope)
+	for i := range permissions {
+		m[permissions[i].Action] = append(m[permissions[i].Action], permissions[i].Scope)
 	}
 	return m
 }

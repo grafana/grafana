@@ -278,7 +278,11 @@ func (ots *Opentelemetry) Start(ctx context.Context, spanName string, opts ...tr
 	opentelemetrySpan := OpentelemetrySpan{
 		span: span,
 	}
-	ctx = context.WithValue(ctx, traceKey{}, traceValue{span.SpanContext().TraceID().String(), span.SpanContext().IsSampled()})
+
+	if traceID := span.SpanContext().TraceID(); traceID.IsValid() {
+		ctx = context.WithValue(ctx, traceKey{}, traceValue{traceID.String(), span.SpanContext().IsSampled()})
+	}
+
 	return ctx, opentelemetrySpan
 }
 

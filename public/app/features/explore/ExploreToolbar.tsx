@@ -18,7 +18,7 @@ import { getFiscalYearStartMonth, getTimeZone } from '../profile/state/selectors
 import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
 import { changeDatasource } from './state/datasource';
-import { splitClose, splitOpen } from './state/main';
+import { evenPaneResizeAction, maximizePaneAction, splitClose, splitOpen } from './state/main';
 import { cancelQueries, runQueries } from './state/query';
 import { isSplit } from './state/selectors';
 import { syncTimes, changeRefreshInterval } from './state/time';
@@ -38,7 +38,8 @@ type Props = OwnProps & ConnectedProps<typeof connector>;
 
 class UnConnectedExploreToolbar extends PureComponent<Props> {
   onChangeDatasource = async (dsSettings: DataSourceInstanceSettings) => {
-    this.props.changeDatasource(this.props.exploreId, dsSettings.uid, { importQueries: true });
+    const { changeDatasource, exploreId } = this.props;
+    changeDatasource(exploreId, dsSettings.uid, { importQueries: true });
   };
 
   onRunQuery = (loading = false) => {
@@ -58,6 +59,23 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
   onChangeTimeSync = () => {
     const { syncTimes, exploreId } = this.props;
     syncTimes(exploreId);
+  };
+
+  onCopyShortLink = async () => {
+    await createAndCopyShortLink(window.location.href);
+    reportInteraction('grafana_explore_shortened_link_clicked');
+  };
+
+  onOpenSplitView = () => {
+    const { split } = this.props;
+    split();
+    reportInteraction('grafana_explore_splitView_opened');
+  };
+
+  onCloseSplitView = () => {
+    const { closeSplit, exploreId } = this.props;
+    closeSplit(exploreId);
+    reportInteraction('grafana_explore_splitView_closed');
   };
 
   renderRefreshPicker = (showSmallTimePicker: boolean) => {
@@ -92,7 +110,6 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
   render() {
     const {
       datasourceMissing,
-      closeSplit,
       exploreId,
       loading,
       range,
@@ -102,7 +119,6 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
       syncedTimes,
       refreshInterval,
       onChangeTime,
-      split,
       hasLiveOption,
       isLive,
       isPaused,
@@ -110,6 +126,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
       onChangeTimeZone,
       onChangeFiscalYearStartMonth,
       topOfViewRef,
+      largerExploreId,
     } = this.props;
 
     const showSmallDataSourcePicker = (splitted ? containerWidth < 700 : containerWidth < 800) || false;
@@ -119,19 +136,30 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
       contextSrv.hasAccess(AccessControlAction.DashboardsCreate, contextSrv.isEditor) ||
       contextSrv.hasAccess(AccessControlAction.DashboardsWrite, contextSrv.isEditor);
 
+    const isLargerExploreId = largerExploreId === exploreId;
+
+    const onClickResize = () => {
+      if (isLargerExploreId) {
+        this.props.evenPaneResizeAction();
+      } else {
+        this.props.maximizePaneAction({ exploreId: exploreId });
+      }
+    };
+
     return (
       <div ref={topOfViewRef}>
         <PageToolbar
           aria-label="Explore toolbar"
           title={exploreId === ExploreId.left ? 'Explore' : undefined}
           pageIcon={exploreId === ExploreId.left ? 'compass' : undefined}
+          buttonOverflowAlignment="left"
           leftItems={[
             exploreId === ExploreId.left && (
               <DashNavButton
                 key="share"
                 tooltip="Copy shortened link"
                 icon="share-alt"
-                onClick={() => createAndCopyShortLink(window.location.href)}
+                onClick={this.onCopyShortLink}
                 aria-label="Copy shortened link"
               />
             ),
@@ -149,13 +177,25 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
         >
           <>
             {!splitted ? (
-              <ToolbarButton tooltip="Split the pane" onClick={() => split()} icon="columns" disabled={isLive}>
+              <ToolbarButton tooltip="Split the pane" onClick={this.onOpenSplitView} icon="columns" disabled={isLive}>
                 Split
               </ToolbarButton>
             ) : (
-              <ToolbarButton tooltip="Close split pane" onClick={() => closeSplit(exploreId)} icon="times">
-                Close
-              </ToolbarButton>
+              <>
+                <ToolbarButton
+                  tooltip={`${isLargerExploreId ? 'Narrow' : 'Widen'} pane`}
+                  disabled={isLive}
+                  onClick={onClickResize}
+                  icon={
+                    (exploreId === 'left' && isLargerExploreId) || (exploreId === 'right' && !isLargerExploreId)
+                      ? 'angle-left'
+                      : 'angle-right'
+                  }
+                />
+                <ToolbarButton tooltip="Close split pane" onClick={this.onCloseSplitView} icon="times">
+                  Close
+                </ToolbarButton>
+              </>
             )}
 
             {config.featureToggles.explore2Dashboard && showExploreToDashboard && (
@@ -218,7 +258,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
 }
 
 const mapStateToProps = (state: StoreState, { exploreId }: OwnProps) => {
-  const { syncedTimes } = state.explore;
+  const { syncedTimes, largerExploreId } = state.explore;
   const exploreItem = state.explore[exploreId]!;
   const { datasourceInstance, datasourceMissing, range, refreshInterval, loading, isLive, isPaused, containerWidth } =
     exploreItem;
@@ -240,6 +280,7 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps) => {
     isPaused,
     syncedTimes,
     containerWidth,
+    largerExploreId,
   };
 };
 
@@ -253,6 +294,8 @@ const mapDispatchToProps = {
   syncTimes,
   onChangeTimeZone: updateTimeZoneForSession,
   onChangeFiscalYearStartMonth: updateFiscalYearStartMonthForSession,
+  maximizePaneAction,
+  evenPaneResizeAction,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);

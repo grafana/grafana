@@ -49,6 +49,7 @@ interface State {
   prevValue: string;
 }
 
+/** @deprecated will be removed in the next major version */
 export class UnThemedLogMessageAnsi extends PureComponent<Props, State> {
   state: State = {
     chunks: [],

@@ -125,6 +125,19 @@ func main() {
 			Action: ExportVersion,
 		},
 		{
+			Name:      "package",
+			Usage:     "Package one or more Grafana variants",
+			ArgsUsage: "[version]",
+			Action:    ArgCountWrapper(1, Package),
+			Flags: []cli.Flag{
+				&jobsFlag,
+				&variantsFlag,
+				&editionFlag,
+				&buildIDFlag,
+				&signFlag,
+			},
+		},
+		{
 			Name:   "store-storybook",
 			Usage:  "Integrity check for storybook build",
 			Action: StoreStorybook,
@@ -136,16 +149,22 @@ func main() {
 			},
 		},
 		{
-			Name:  "docker",
-			Usage: "Handle Grafana Docker images",
+			Name:  "artifacts",
+			Usage: "Handle Grafana artifacts",
 			Subcommands: cli.Commands{
 				{
-					Name:      "fetch",
-					Usage:     "Fetch Grafana Docker images",
-					ArgsUsage: "[version]",
-					Action:    ArgCountWrapper(1, FetchImages),
-					Flags: []cli.Flag{
-						&editionFlag,
+					Name:  "docker",
+					Usage: "Handle Grafana Docker images",
+					Subcommands: cli.Commands{
+						{
+							Name:      "fetch",
+							Usage:     "Fetch Grafana Docker images",
+							ArgsUsage: "[version]",
+							Action:    ArgCountWrapper(1, FetchImages),
+							Flags: []cli.Flag{
+								&editionFlag,
+							},
+						},
 					},
 				},
 			},

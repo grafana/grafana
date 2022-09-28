@@ -117,6 +117,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"profileEnabled":                      setting.ProfileEnabled,
 		"queryHistoryEnabled":                 hs.Cfg.QueryHistoryEnabled,
 		"googleAnalyticsId":                   setting.GoogleAnalyticsId,
+		"googleAnalytics4Id":                  setting.GoogleAnalytics4Id,
 		"rudderstackWriteKey":                 setting.RudderstackWriteKey,
 		"rudderstackDataPlaneUrl":             setting.RudderstackDataPlaneUrl,
 		"rudderstackSdkUrl":                   setting.RudderstackSdkUrl,
@@ -139,6 +140,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"auth": map[string]interface{}{
 			"OAuthSkipOrgRoleUpdateSync": hs.Cfg.OAuthSkipOrgRoleUpdateSync,
 			"SAMLSkipOrgRoleSync":        hs.Cfg.SectionWithEnvOverrides("auth.saml").Key("skip_org_role_sync").MustBool(false),
+			"DisableSyncLock":            hs.Cfg.DisableSyncLock,
 		},
 		"buildInfo": map[string]interface{}{
 			"hideVersion":   hideVersion,
@@ -429,8 +431,8 @@ func (hs *HTTPServer) enabledPlugins(ctx context.Context, orgID int64) (EnabledP
 	return ep, nil
 }
 
-func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[string]*pluginsettings.DTO, error) {
-	pluginSettings := make(map[string]*pluginsettings.DTO)
+func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[string]*pluginsettings.InfoDTO, error) {
+	pluginSettings := make(map[string]*pluginsettings.InfoDTO)
 
 	// fill settings from database
 	if pss, err := hs.PluginSettings.GetPluginSettings(ctx, &pluginsettings.GetArgs{OrgID: orgID}); err != nil {
@@ -449,11 +451,12 @@ func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[stri
 		}
 
 		// add new setting which is enabled depending on if AutoEnabled: true
-		pluginSetting := &pluginsettings.DTO{
-			PluginID: plugin.ID,
-			OrgID:    orgID,
-			Enabled:  plugin.AutoEnabled,
-			Pinned:   plugin.AutoEnabled,
+		pluginSetting := &pluginsettings.InfoDTO{
+			PluginID:      plugin.ID,
+			OrgID:         orgID,
+			Enabled:       plugin.AutoEnabled,
+			Pinned:        plugin.AutoEnabled,
+			PluginVersion: plugin.Info.Version,
 		}
 
 		pluginSettings[plugin.ID] = pluginSetting
@@ -467,10 +470,12 @@ func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[stri
 		}
 
 		// add new setting which is enabled by default
-		pluginSetting := &pluginsettings.DTO{
-			PluginID: plugin.ID,
-			OrgID:    orgID,
-			Enabled:  true,
+		pluginSetting := &pluginsettings.InfoDTO{
+			PluginID:      plugin.ID,
+			OrgID:         orgID,
+			Enabled:       true,
+			Pinned:        false,
+			PluginVersion: plugin.Info.Version,
 		}
 
 		// if plugin is included in an app, check app settings
