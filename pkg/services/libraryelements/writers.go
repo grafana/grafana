@@ -79,47 +79,59 @@ type FolderFilter struct {
 func parseFolderFilter(query searchLibraryElementsQuery) FolderFilter {
 	folderIDs := make([]string, 0)
 	folderUIDs := make([]string, 0)
-	if len(strings.TrimSpace(query.folderFilter)) == 0 {
-		return FolderFilter{
-			includeGeneralFolder: true,
-			folderIDs:            folderIDs,
-			folderUIDs:           folderUIDs,
-			parseError:           nil,
-		}
-	}
 
-	includeGeneralFolder := false
-	folderIDs = strings.Split(query.folderFilter, ",")
-	for _, filter := range folderIDs {
-		folderID, err := strconv.ParseInt(filter, 10, 64)
-		if err != nil {
-			return FolderFilter{
-				includeGeneralFolder: false,
-				folderIDs:            folderIDs,
-				parseError:           err,
-			}
-		}
-		if isGeneralFolder(folderID) {
-			includeGeneralFolder = true
-			break
-		}
-	}
-
-	folderUIDs = strings.Split(query.folderFilterUIDs, ",")
-
-	for _, folderUID := range folderUIDs {
-		if isUIDGeneralFolder(folderUID) {
-			includeGeneralFolder = true
-			break
-		}
-	}
-
-	return FolderFilter{
-		includeGeneralFolder: includeGeneralFolder,
+	result := FolderFilter{
+		includeGeneralFolder: true,
 		folderIDs:            folderIDs,
 		folderUIDs:           folderUIDs,
 		parseError:           nil,
 	}
+
+	if len(strings.TrimSpace(query.folderFilter)) > 0 {
+		result.includeGeneralFolder = false
+		folderIDs = strings.Split(query.folderFilter, ",")
+		for _, filter := range folderIDs {
+			folderID, err := strconv.ParseInt(filter, 10, 64)
+			if err != nil {
+				result.folderIDs = folderIDs
+				result.parseError = err
+			}
+			if isGeneralFolder(folderID) {
+				result.includeGeneralFolder = true
+				break
+			}
+		}
+	}
+
+	if len(strings.TrimSpace(query.folderFilterUIDs)) > 0 {
+		result.includeGeneralFolder = false
+		folderUIDs = strings.Split(query.folderFilterUIDs, ",")
+		result.folderUIDs = folderUIDs
+
+		for _, folderUID := range folderUIDs {
+			if isUIDGeneralFolder(folderUID) {
+				result.includeGeneralFolder = true
+				break
+			}
+		}
+	}
+
+	return result;
+	// folderUIDs = strings.Split(query.folderFilterUIDs, ",")
+
+	// for _, folderUID := range folderUIDs {
+	// 	if isUIDGeneralFolder(folderUID) {
+	// 		includeGeneralFolder = true
+	// 		break
+	// 	}
+	// }
+
+	// return FolderFilter{
+	// 	includeGeneralFolder: includeGeneralFolder,
+	// 	folderIDs:            folderIDs,
+	// 	folderUIDs:           folderUIDs,
+	// 	parseError:           nil,
+	// }
 }
 
 func (f *FolderFilter) writeFolderFilterSQL(includeGeneral bool, builder *sqlstore.SQLBuilder) error {
