@@ -160,7 +160,7 @@ export const SharePublicDashboard = (props: Props) => {
               ) : (
                 dashboardHasTemplateVariables(dashboardVariables) && (
                   <Alert
-                    title="If you make this dashboard public it won't work because it has template variables"
+                    title="This public dashboard may not work since it uses template variables"
                     severity="warning"
                   />
                 )
