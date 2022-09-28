@@ -53,6 +53,7 @@ interface Props extends Themeable2 {
   onClickShowDetectedField?: (key: string) => void;
   onClickHideDetectedField?: (key: string) => void;
   onLogRowHover?: (row?: LogRowModel) => void;
+  toggleAllContexts?: () => void;
 }
 
 interface State {
@@ -92,6 +93,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
   };
 
   toggleContext = () => {
+    this.props.toggleAllContexts?.();
     this.setState((state) => {
       return {
         showContext: !state.showContext,

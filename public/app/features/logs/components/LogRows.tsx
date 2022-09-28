@@ -38,6 +38,7 @@ export interface Props extends Themeable2 {
 
 interface State {
   renderAll: boolean;
+  contextIsOpen: boolean;
 }
 
 class UnThemedLogRows extends PureComponent<Props, State> {
@@ -49,6 +50,15 @@ class UnThemedLogRows extends PureComponent<Props, State> {
 
   state: State = {
     renderAll: false,
+    contextIsOpen: false,
+  };
+
+  toggleAllContexts = () => {
+    this.setState((state) => {
+      return {
+        contextIsOpen: !state.contextIsOpen,
+      };
+    });
   };
 
   componentDidMount() {
@@ -130,7 +140,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 getRows={getRows}
                 getRowContext={getRowContext}
                 row={row}
-                showContextToggle={showContextToggle}
+                showContextToggle={this.state.contextIsOpen ? () => false : showContextToggle}
                 showDuplicates={showDuplicates}
                 showLabels={showLabels}
                 showTime={showTime}
@@ -147,6 +157,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 logsSortOrder={logsSortOrder}
                 forceEscape={forceEscape}
                 onLogRowHover={onLogRowHover}
+                toggleAllContexts={this.toggleAllContexts}
                 scrollElement={this.props.scrollElement}
               />
             ))}
@@ -158,7 +169,8 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 getRows={getRows}
                 getRowContext={getRowContext}
                 row={row}
-                showContextToggle={showContextToggle}
+                // if one context is open, no other show context button should be visible
+                showContextToggle={this.state.contextIsOpen ? () => false : showContextToggle}
                 showDuplicates={showDuplicates}
                 showLabels={showLabels}
                 showTime={showTime}
@@ -175,6 +187,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 logsSortOrder={logsSortOrder}
                 forceEscape={forceEscape}
                 onLogRowHover={onLogRowHover}
+                toggleAllContexts={this.toggleAllContexts}
                 scrollElement={this.props.scrollElement}
               />
             ))}
