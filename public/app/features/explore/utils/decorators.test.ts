@@ -111,6 +111,7 @@ describe('decorateWithGraphLogsTraceAndTable', () => {
       graphResult: null,
       tableResult: null,
       logsResult: null,
+      rawPrometheusFrames: [],
     });
   });
 
@@ -134,6 +135,7 @@ describe('decorateWithGraphLogsTraceAndTable', () => {
       graphResult: null,
       tableResult: null,
       logsResult: null,
+      rawPrometheusFrames: [],
     });
   });
 
@@ -160,6 +162,7 @@ describe('decorateWithGraphLogsTraceAndTable', () => {
       graphResult: null,
       tableResult: null,
       logsResult: null,
+      rawPrometheusFrames: [],
     });
   });
 });

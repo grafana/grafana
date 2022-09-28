@@ -158,6 +158,9 @@ export interface ExploreItemState {
   showLogs?: boolean;
   showMetrics?: boolean;
   showTable?: boolean;
+  /**
+   * If true, the default "raw" prometheus instant query UI will be displayed in addition to table view
+   */
   showRawPrometheus?: boolean;
   showTrace?: boolean;
   showNodeGraph?: boolean;
