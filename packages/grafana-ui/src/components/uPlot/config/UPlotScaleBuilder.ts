@@ -122,6 +122,11 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
       if (decimals === 0) {
         minMax[0] = incrRoundDn(minMax[0]!, 1);
         minMax[1] = incrRoundUp(minMax[1]!, 1);
+
+        // clamp log scales' min to 1
+        if (scale.distr === 3 && minMax[0] < 1) {
+          minMax[0] = 1;
+        }
       }
 
       // if all we got were hard limits, treat them as static min/max
