@@ -48,7 +48,7 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 
 	setup := func(t *testing.T) {
 		ss := sqlstore.InitTestDB(t)
-		tagService := tagimpl.ProvideService(ss)
+		tagService := tagimpl.ProvideService(ss, ss.Cfg)
 		cfg := setting.NewCfg()
 		cfg.RBACEnabled = false
 		store = &sqlStore{
@@ -290,7 +290,7 @@ func TestIntegrationPausingAlerts(t *testing.T) {
 
 	t.Run("Given an alert", func(t *testing.T) {
 		ss := sqlstore.InitTestDB(t)
-		sqlStore := sqlStore{db: ss, log: log.New(), tagService: tagimpl.ProvideService(ss)}
+		sqlStore := sqlStore{db: ss, log: log.New(), tagService: tagimpl.ProvideService(ss, ss.Cfg)}
 
 		testDash := insertTestDashboard(t, sqlStore.db, "dashboard with alerts", 1, 0, false, "alert")
 		alert, err := insertTestAlert("Alerting title", "Alerting message", testDash.OrgId, testDash.Id, simplejson.New(), sqlStore)
