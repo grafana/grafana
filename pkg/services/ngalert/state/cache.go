@@ -36,6 +36,13 @@ func newCache(logger log.Logger, metrics *metrics.State) *cache {
 	}
 }
 
+func (c *cache) getRuleStates(ruleKey ngModels.AlertRuleKey) (*ruleStates, bool) {
+	c.mtxStates.Lock()
+	defer c.mtxStates.Unlock()
+	states, ok := c.states[ruleKey.OrgID][ruleKey.UID]
+	return states, ok
+}
+
 func (c *cache) getOrCreateRuleStates(ruleKey ngModels.AlertRuleKey) *ruleStates {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
@@ -273,6 +280,16 @@ func mergeLabels(a, b data.Labels) data.Labels {
 		}
 	}
 	return newLbs
+}
+
+func (c *cache) deleteRuleStates(key ngModels.AlertRuleKey) *ruleStates {
+	c.mtxStates.Lock()
+	defer c.mtxStates.Unlock()
+	ruleStates, ok := c.states[key.OrgID][key.UID]
+	if ok {
+		delete(c.states[key.OrgID], key.UID)
+	}
+	return ruleStates
 }
 
 func (c *cache) deleteEntry(orgID int64, alertRuleUID, cacheID string) {

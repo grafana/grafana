@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"net/url"
 	"strconv"
 	"strings"
@@ -166,11 +167,47 @@ func (st *Manager) ResetAllStates() {
 	st.cache.reset()
 }
 
+func (st *Manager) InitStateForTheRule(ruleKey ngModels.AlertRuleKey) {
+	ruleStates := st.cache.getOrCreateRuleStates(ruleKey)
+	ruleStates.mtx.Lock()
+	defer ruleStates.mtx.Unlock()
+	if ruleStates.currentRuleVersion == 0 {
+		st.log.Info("Initializing a state for the alert ruleKey", ruleKey.LogContext())
+	}
+}
+
+// DeleteRuleStates deletes all the states that belong to a rule with a given key.
+// If there are states, it deletes them from the database as well.
+// NOTE: After this method is called, ProcessEvalResults will not work until the state is initialized by calling InitStateForTheRule
+func (st *Manager) DeleteRuleStates(ctx context.Context, ruleKey ngModels.AlertRuleKey) {
+	logger := st.log.New(ruleKey.LogContext()...)
+	ruleStates := st.cache.deleteRuleStates(ruleKey)
+	if ruleStates == nil {
+		logger.Info("No state to delete")
+		return
+	}
+	ruleStates.mtx.Lock()
+	defer ruleStates.mtx.Unlock()
+	ruleStates.currentRuleVersion = math.MaxInt64 // mark it as deleted
+	if len(ruleStates.states) > 0 {
+		logger.Warn("The rule state is not empty. It means that the state was not reset before deletion")
+		err := st.instanceStore.DeleteAlertInstancesByRule(ctx, ruleKey)
+		if err != nil {
+			logger.Error("Failed to delete states that belong to a rule from database")
+		}
+	}
+}
+
 // ResetStateByRuleUID deletes all entries in the state manager that match the given rule UID.
 func (st *Manager) ResetStateByRuleUID(ctx context.Context, ruleKey ngModels.AlertRuleKey, newRuleVersion int64) []*State {
 	logger := st.log.New(ruleKey.LogContext()...)
 	logger.Debug("resetting state of the rule")
-	ruleStates := st.cache.getOrCreateRuleStates(ruleKey)
+	ruleStates, ok := st.cache.getRuleStates(ruleKey)
+	if !ok {
+		// It means that the rule states were either deleted or not initialized yet
+		logger.Info("No state to reset. The state was either deleted or not initialized")
+		return nil
+	}
 	ruleStates.mtx.Lock()
 	if ruleStates.currentRuleVersion >= newRuleVersion {
 		logger.Info("The current rule version of the state is greater than one to reset. Ignoring.", "stateVersion", ruleStates.currentRuleVersion, "ruleVersion", newRuleVersion)
@@ -203,7 +240,11 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 	var states []*State
 	processedResults := make(map[string]*State, len(results))
 
-	currentStates := st.cache.getOrCreateRuleStates(alertRule.GetKey())
+	currentStates, ok := st.cache.getRuleStates(alertRule.GetKey())
+	if !ok {
+		logger.Warn("The state for the rule is not initialized or was deleted. Skip processing the results")
+		return nil
+	}
 	currentStates.mtx.Lock()
 
 	var obsoleteStates []*State
