@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2, textUtil, dateTimeFormat } from '@grafana/data';
+import { DataFrameView, GrafanaTheme2, textUtil, dateTimeFormat } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 import { NewsItem } from '../types';
@@ -9,35 +9,37 @@ import { NewsItem } from '../types';
 interface NewsItemProps {
   width: number;
   showImage?: boolean;
-  data: NewsItem;
+  index: number;
+  data: DataFrameView<NewsItem>;
 }
 
-export function News({ width, showImage, data }: NewsItemProps) {
+export function News({ width, showImage, data, index }: NewsItemProps) {
   const styles = useStyles2(getStyles);
   const useWideLayout = width > 600;
+  const newsItem = data.get(index);
 
   return (
     <article className={cx(styles.item, useWideLayout && styles.itemWide)}>
-      {showImage && data.ogImage && (
+      {showImage && newsItem.ogImage && (
         <a
           tabIndex={-1}
-          href={textUtil.sanitizeUrl(data.link)}
+          href={textUtil.sanitizeUrl(newsItem.link)}
           target="_blank"
           rel="noopener noreferrer"
           className={cx(styles.socialImage, useWideLayout && styles.socialImageWide)}
           aria-hidden
         >
-          <img src={data.ogImage} alt={data.title} />
+          <img src={newsItem.ogImage} alt={newsItem.title} />
         </a>
       )}
       <div className={styles.body}>
-        <time className={styles.date} dateTime={dateTimeFormat(data.date, { format: 'MMM DD' })}>
-          {dateTimeFormat(data.date, { format: 'MMM DD' })}{' '}
+        <time className={styles.date} dateTime={dateTimeFormat(newsItem.date, { format: 'MMM DD' })}>
+          {dateTimeFormat(newsItem.date, { format: 'MMM DD' })}{' '}
         </time>
-        <a className={styles.link} href={textUtil.sanitizeUrl(data.link)} target="_blank" rel="noopener noreferrer">
-          <h3 className={styles.title}>{data.title}</h3>
+        <a className={styles.link} href={textUtil.sanitizeUrl(newsItem.link)} target="_blank" rel="noopener noreferrer">
+          <h3 className={styles.title}>{newsItem.title}</h3>
         </a>
-        <div className={styles.content} dangerouslySetInnerHTML={{ __html: textUtil.sanitize(data.content) }} />
+        <div className={styles.content} dangerouslySetInnerHTML={{ __html: textUtil.sanitize(newsItem.content) }} />
       </div>
     </article>
   );

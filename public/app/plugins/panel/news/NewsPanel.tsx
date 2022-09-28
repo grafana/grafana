@@ -44,8 +44,8 @@ export function NewsPanel(props: NewsPanelProps) {
 
   return (
     <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
-      {state.value.map((data, index) => {
-        return <News key={index} width={width} showImage={showImage} data={data} />;
+      {state.value.map((_, index) => {
+        return <News key={index} index={index} width={width} showImage={showImage} data={state.value} />;
       })}
     </CustomScrollbar>
   );

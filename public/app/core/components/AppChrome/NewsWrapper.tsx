@@ -29,13 +29,13 @@ export function NewsWrapper({ feedUrl }: NewsWrapperProps) {
   if (!state.value) {
     return null;
   }
-
+  console.log('here');
   return (
     <AutoSizer>
       {({ width }) => (
         <div style={{ width: `${width}px` }}>
-          {state.value.map((data, index) => (
-            <News showImage key={index} width={width} data={data} />
+          {state.value.map((_, index) => (
+            <News key={index} index={index} showImage width={width} data={state.value} />
           ))}
         </div>
       )}
