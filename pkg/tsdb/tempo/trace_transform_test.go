@@ -2,13 +2,13 @@ package tempo
 
 import (
 	"encoding/json"
-	"go.opentelemetry.io/collector/model/pdata"
 	"os"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
 	otlp "go.opentelemetry.io/collector/model/otlp"
+	"go.opentelemetry.io/collector/model/pdata"
 )
 
 func TestTraceToFrame(t *testing.T) {
