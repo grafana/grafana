@@ -10,6 +10,8 @@ import { PANEL_BORDER } from 'app/core/constants';
 import { StoreState, TABLE_RESULTS_STYLE } from 'app/types';
 import { ExploreId, ExploreItemState, TABLE_RESULTS_STYLES, TableResultsStyle } from 'app/types/explore';
 
+import { PrometheusDatasource } from '../../plugins/datasource/prometheus/datasource';
+
 import { MetaInfoText } from './MetaInfoText';
 import RawListContainer from './RawListContainer';
 import { splitOpen } from './state/main';
@@ -21,10 +23,11 @@ interface TableContainerProps {
   width: number;
   timeZone: TimeZone;
   onCellFilterAdded?: (filter: FilterItem) => void;
+  isPrometheus?: boolean;
 }
 
 interface TableContainerState {
-  resultsStyle: TableResultsStyle;
+  resultsStyle?: TableResultsStyle;
 }
 
 function mapStateToProps(state: StoreState, { exploreId }: TableContainerProps) {
@@ -32,7 +35,9 @@ function mapStateToProps(state: StoreState, { exploreId }: TableContainerProps) 
   const item: ExploreItemState = explore[exploreId] as ExploreItemState;
   const { loading: loadingInState, tableResult, range } = item;
   const loading = tableResult && tableResult.length > 0 ? false : loadingInState;
-  return { loading, tableResult, range };
+
+  const isPrometheus = item.datasourceInstance instanceof PrometheusDatasource;
+  return { loading, tableResult, range, isPrometheus };
 }
 
 const mapDispatchToProps = {
@@ -46,9 +51,11 @@ type Props = TableContainerProps & ConnectedProps<typeof connector>;
 export class TableContainer extends PureComponent<Props, TableContainerState> {
   constructor(props: Props) {
     super(props);
-    this.state = {
-      resultsStyle: TABLE_RESULTS_STYLE.raw,
-    };
+    if (props.isPrometheus) {
+      this.state = {
+        resultsStyle: TABLE_RESULTS_STYLE.raw,
+      };
+    }
   }
 
   onChangeResultsStyle = (resultsStyle: TableResultsStyle) => {
@@ -83,7 +90,7 @@ export class TableContainer extends PureComponent<Props, TableContainerState> {
         <RadioButtonGroup
           size="sm"
           options={ALL_GRAPH_STYLE_OPTIONS}
-          value={this.state.resultsStyle}
+          value={this.state?.resultsStyle}
           onChange={this.onChangeResultsStyle}
         />
       </div>
@@ -124,11 +131,11 @@ export class TableContainer extends PureComponent<Props, TableContainerState> {
       }
     }
 
-    const label = this.renderLabel();
+    const label = this.state?.resultsStyle !== undefined ? this.renderLabel() : 'Table';
 
     return (
       <Collapse label={label} loading={loading} isOpen>
-        {dataFrame?.length && this.state.resultsStyle === TABLE_RESULTS_STYLE.table && (
+        {dataFrame?.length && (!this.state?.resultsStyle || this.state?.resultsStyle === TABLE_RESULTS_STYLE.table) && (
           <Table
             ariaLabel={ariaLabel}
             data={dataFrame}
@@ -138,7 +145,7 @@ export class TableContainer extends PureComponent<Props, TableContainerState> {
           />
         )}
 
-        {dataFrame?.length && this.state.resultsStyle === TABLE_RESULTS_STYLE.raw && (
+        {dataFrame?.length && this.state?.resultsStyle === TABLE_RESULTS_STYLE.raw && (
           <RawListContainer tableResult={dataFrame} />
         )}
 

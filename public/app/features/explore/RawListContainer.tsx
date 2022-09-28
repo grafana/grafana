@@ -87,10 +87,7 @@ const RawListContainer = (props: RawListContainerProps) => {
   const { tableResult } = props;
   let dataFrame = cloneDeep(tableResult);
   const styles = getRawListContainerStyles();
-
-  console.log('dataFrame', dataFrame);
   const items = getListItemsFromDataFrameNew(dataFrame);
-  console.log('items', items);
 
   return (
     // We don't use testids around here, how should we target this element in tests?
