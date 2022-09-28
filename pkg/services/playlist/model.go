@@ -21,7 +21,6 @@ type Playlist struct {
 }
 
 type PlaylistDTO struct {
-	Id       int64             `json:"id,omitempty"`
 	UID      string            `json:"uid"`
 	Name     string            `json:"name"`
 	Interval string            `json:"interval"`
@@ -30,12 +29,9 @@ type PlaylistDTO struct {
 }
 
 type PlaylistItemDTO struct {
-	Id         int64  `json:"id,omitempty"`
-	PlaylistId int64  `json:"playlistid,omitempty"`
-	Type       string `json:"type"`
-	Title      string `json:"title,omitempty"`
-	Value      string `json:"value"`
-	Order      int    `json:"order,omitempty"`
+	Type  string `json:"type"`
+	Title string `json:"title,omitempty"` // ignored
+	Value string `json:"value"`
 }
 
 type PlaylistItem struct {
