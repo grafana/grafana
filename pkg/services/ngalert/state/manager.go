@@ -189,8 +189,7 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 	var states []*State
 	processedResults := make(map[string]*State, len(results))
 
-	currentStates := st.cache.getOrCreateRuleStates(alertRule)
-
+	currentStates := st.cache.getOrCreateRuleStates(alertRule.GetKey())
 	currentStates.mtx.Lock()
 
 	var obsoleteStates []*State

@@ -36,15 +36,15 @@ func newCache(logger log.Logger, metrics *metrics.State) *cache {
 	}
 }
 
-func (c *cache) getOrCreateRuleStates(alertRule *ngModels.AlertRule) *ruleStates {
+func (c *cache) getOrCreateRuleStates(ruleKey ngModels.AlertRuleKey) *ruleStates {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
-	states := c.states[alertRule.OrgID][alertRule.UID]
+	states := c.states[ruleKey.OrgID][ruleKey.UID]
 	if states == nil {
 		states = &ruleStates{
 			states: make(map[string]*State),
 		}
-		c.states[alertRule.OrgID][alertRule.UID] = states
+		c.states[ruleKey.OrgID][ruleKey.UID] = states
 	}
 	return states
 }
