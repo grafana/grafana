@@ -29,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -38,8 +37,8 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 	createSchedule := func(
 		evalAppliedChan chan time.Time,
 		senderMock *AlertsSenderMock,
-	) (*schedule, *store.FakeRuleStore, *state.FakeInstanceStore, prometheus.Gatherer) {
-		ruleStore := store.NewFakeRuleStore(t)
+	) (*schedule, *fakeRulesStore, *state.FakeInstanceStore, prometheus.Gatherer) {
+		ruleStore := newFakeRulesStore()
 		instanceStore := &state.FakeInstanceStore{}
 
 		registry := prometheus.NewPedanticRegistry()
@@ -63,7 +62,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 
 			rule := models.AlertRuleGen(withQueryForState(t, evalState))()
 			ruleStore.PutRule(context.Background(), rule)
-			folder, _ := ruleStore.GetNamespaceByUID(context.Background(), rule.NamespaceUID, rule.OrgID, nil)
+			folderTitle := ruleStore.getNamespaceTitle(rule.NamespaceUID)
 			go func() {
 				ctx, cancel := context.WithCancel(context.Background())
 				t.Cleanup(cancel)
@@ -75,7 +74,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			evalChan <- &evaluation{
 				scheduledAt: expectedTime,
 				rule:        rule,
-				folderTitle: folder.Title,
+				folderTitle: folderTitle,
 			}
 
 			actualTime := waitForTimeChannel(t, evalAppliedChan)
@@ -87,7 +86,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 					assert.Equal(t, rule.UID, s.Labels[models.RuleUIDLabel])
 					assert.Equal(t, rule.NamespaceUID, s.Labels[models.NamespaceUIDLabel])
 					assert.Equal(t, rule.Title, s.Labels[prometheusModel.AlertNameLabel])
-					assert.Equal(t, folder.Title, s.Labels[models.FolderTitleLabel])
+					assert.Equal(t, folderTitle, s.Labels[models.FolderTitleLabel])
 				}
 			})
 
@@ -481,14 +480,14 @@ func TestSchedule_DeleteAlertRule(t *testing.T) {
 	})
 }
 
-func setupScheduler(t *testing.T, rs *store.FakeRuleStore, is *state.FakeInstanceStore, registry *prometheus.Registry, senderMock *AlertsSenderMock, evalMock *eval.FakeEvaluator) *schedule {
+func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStore, registry *prometheus.Registry, senderMock *AlertsSenderMock, evalMock *eval.FakeEvaluator) *schedule {
 	t.Helper()
 
 	mockedClock := clock.NewMock()
 	logger := log.New("ngalert schedule test")
 
 	if rs == nil {
-		rs = store.NewFakeRuleStore(t)
+		rs = newFakeRulesStore()
 	}
 
 	if is == nil {
@@ -529,7 +528,9 @@ func setupScheduler(t *testing.T, rs *store.FakeRuleStore, is *state.FakeInstanc
 		Metrics:     m.GetSchedulerMetrics(),
 		AlertSender: senderMock,
 	}
-	st := state.NewManager(schedCfg.Logger, m.GetStateMetrics(), nil, rs, is, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, mockedClock, annotationstest.NewFakeAnnotationsRepo())
+
+	stateRs := state.FakeRuleReader{}
+	st := state.NewManager(schedCfg.Logger, m.GetStateMetrics(), nil, &stateRs, is, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, mockedClock, annotationstest.NewFakeAnnotationsRepo())
 	return NewScheduler(schedCfg, appUrl, st)
 }
 

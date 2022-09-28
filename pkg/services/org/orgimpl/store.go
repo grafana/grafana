@@ -39,6 +39,8 @@ type store interface {
 	AddOrgUser(context.Context, *org.AddOrgUserCommand) error
 	UpdateOrgUser(context.Context, *org.UpdateOrgUserCommand) error
 	GetOrgUsers(context.Context, *org.GetOrgUsersQuery) ([]*org.OrgUserDTO, error)
+	GetByID(context.Context, *org.GetOrgByIdQuery) (*org.Org, error)
+	GetByName(context.Context, *org.GetOrgByNameQuery) (*org.Org, error)
 	SearchOrgUsers(context.Context, *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error)
 	RemoveOrgUser(context.Context, *org.RemoveOrgUserCommand) error
 }
@@ -518,6 +520,25 @@ func (ss *sqlStore) GetOrgUsers(ctx context.Context, query *org.GetOrgUsersQuery
 	return result, nil
 }
 
+func (ss *sqlStore) GetByID(ctx context.Context, query *org.GetOrgByIdQuery) (*org.Org, error) {
+	var orga org.Org
+	err := ss.db.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		exists, err := dbSession.ID(query.ID).Get(&orga)
+		if err != nil {
+			return err
+		}
+
+		if !exists {
+			return models.ErrOrgNotFound
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &orga, nil
+}
+
 func (ss *sqlStore) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
 	result := org.SearchOrgUsersQueryResult{
 		OrgUsers: make([]*org.OrgUserDTO, 0),
@@ -598,6 +619,25 @@ func (ss *sqlStore) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUser
 		return nil, err
 	}
 	return &result, nil
+}
+
+func (ss *sqlStore) GetByName(ctx context.Context, query *org.GetOrgByNameQuery) (*org.Org, error) {
+	var orga org.Org
+	err := ss.db.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		exists, err := dbSession.Where("name=?", query.Name).Get(&orga)
+		if err != nil {
+			return err
+		}
+
+		if !exists {
+			return models.ErrOrgNotFound
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &orga, nil
 }
 
 func (ss *sqlStore) RemoveOrgUser(ctx context.Context, cmd *org.RemoveOrgUserCommand) error {

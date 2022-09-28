@@ -232,6 +232,8 @@ export interface HideableFieldConfig {
  */
 export enum GraphTresholdsStyleMode {
   Area = 'area',
+  Dashed = 'dashed',
+  DashedAndArea = 'dashed+area',
   Line = 'line',
   LineAndArea = 'line+area',
   Off = 'off',

@@ -152,24 +152,12 @@ func (s *Service) GetByID(ctx context.Context, query *user.GetUserByIDQuery) (*u
 	return user, nil
 }
 
-// TODO: remove wrapper around sqlstore
 func (s *Service) GetByLogin(ctx context.Context, query *user.GetUserByLoginQuery) (*user.User, error) {
-	q := models.GetUserByLoginQuery{LoginOrEmail: query.LoginOrEmail}
-	err := s.sqlStore.GetUserByLogin(ctx, &q)
-	if err != nil {
-		return nil, err
-	}
-	return q.Result, nil
+	return s.store.GetByLogin(ctx, query)
 }
 
-// TODO: remove wrapper around sqlstore
 func (s *Service) GetByEmail(ctx context.Context, query *user.GetUserByEmailQuery) (*user.User, error) {
-	q := models.GetUserByEmailQuery{Email: query.Email}
-	err := s.sqlStore.GetUserByEmail(ctx, &q)
-	if err != nil {
-		return nil, err
-	}
-	return q.Result, nil
+	return s.store.GetByEmail(ctx, query)
 }
 
 // TODO: remove wrapper around sqlstore
@@ -313,7 +301,7 @@ func (s *Service) SetUserHelpFlag(ctx context.Context, cmd *user.SetUserHelpFlag
 }
 
 // TODO: remove wrapper around sqlstore
-func (s *Service) GetUserProfile(ctx context.Context, query *user.GetUserProfileQuery) (user.UserProfileDTO, error) {
+func (s *Service) GetProfile(ctx context.Context, query *user.GetUserProfileQuery) (user.UserProfileDTO, error) {
 	q := &models.GetUserProfileQuery{
 		UserId: query.UserID,
 	}
