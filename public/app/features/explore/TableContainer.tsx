@@ -48,6 +48,8 @@ type Props = TableContainerProps & ConnectedProps<typeof connector>;
 export class TableContainer extends PureComponent<Props, TableContainerState> {
   constructor(props: Props) {
     super(props);
+
+    // If resultsStyle is undefined we won't render the toggle, and the default table will be rendered
     if (props.showRawPrometheus) {
       this.state = {
         resultsStyle: TABLE_RESULTS_STYLE.raw,
@@ -127,14 +129,16 @@ export class TableContainer extends PureComponent<Props, TableContainerState> {
         };
       }
     }
-
     const label = this.state?.resultsStyle !== undefined ? this.renderLabel() : 'Table';
+
+    // Render table as default if resultsStyle is not set.
+    const renderTable = !this.state?.resultsStyle || this.state?.resultsStyle === TABLE_RESULTS_STYLE.table;
 
     return (
       <Collapse label={label} loading={loading} isOpen>
         {dataFrame?.length && (
           <>
-            {this.state?.resultsStyle === TABLE_RESULTS_STYLE.table && (
+            {renderTable && (
               <Table
                 ariaLabel={ariaLabel}
                 data={dataFrame}
