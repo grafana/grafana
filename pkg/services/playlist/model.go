@@ -54,18 +54,18 @@ type Playlists []*Playlist
 //
 
 type UpdatePlaylistCommand struct {
-	OrgId    int64             `json:"-"`
-	UID      string            `json:"uid"`
-	Name     string            `json:"name" binding:"Required"`
-	Interval string            `json:"interval"`
-	Items    []PlaylistItemDTO `json:"items"`
+	OrgId    int64          `json:"-"`
+	UID      string         `json:"uid"`
+	Name     string         `json:"name" binding:"Required"`
+	Interval string         `json:"interval"`
+	Items    []PlaylistItem `json:"items"`
 }
 
 type CreatePlaylistCommand struct {
-	Name     string            `json:"name" binding:"Required"`
-	Interval string            `json:"interval"`
-	Items    []PlaylistItemDTO `json:"items"`
-	OrgId    int64             `json:"-"`
+	Name     string         `json:"name" binding:"Required"`
+	Interval string         `json:"interval"`
+	Items    []PlaylistItem `json:"items"`
+	OrgId    int64          `json:"-"`
 }
 
 type DeletePlaylistCommand struct {
