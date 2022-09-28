@@ -64,6 +64,7 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(BarChartPa
         });
 
       builder.addSelect({
+        category: ['Graph styles'],
         name: 'Transform',
         path: 'transform',
         settings: {
