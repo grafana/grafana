@@ -8,17 +8,91 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
+type Recipe struct {
+	Id          string
+	Name        string
+	Description string
+	Steps       []RecipeStep
+}
+
+type RecipeStepMeta struct {
+	Name        string
+	Description string
+}
+
+type RecipeStepPlugin struct {
+	Id      string
+	Version string
+}
+
+type RecipeStep struct {
+	Action string
+	Meta   RecipeStepMeta
+	Plugin RecipeStepPlugin
+}
+
+var recipes = []Recipe{
+	{
+		Id:          "rcp-zabbix",
+		Name:        "Zabbix",
+		Description: "Zabbix Plugin reciep",
+		Steps: []RecipeStep{
+			{
+				Action: "install-Plugin",
+				Meta: RecipeStepMeta{
+					Name:        "",
+					Description: "",
+				},
+				Plugin: RecipeStepPlugin{
+					Id:      "alexanderzobnin-zabbix-datasource",
+					Version: "",
+				},
+			},
+			{
+				Action: "install-Plugin",
+				Meta: RecipeStepMeta{
+					Name:        "",
+					Description: "",
+				},
+				Plugin: RecipeStepPlugin{
+					Id:      "alexanderzobnin-zabbix-triggers-panel",
+					Version: "",
+				},
+			},
+			{
+				Action: "install-Plugin",
+				Meta: RecipeStepMeta{
+					Name:        "",
+					Description: "",
+				},
+				Plugin: RecipeStepPlugin{
+					Id:      "alexanderzobnin-zabbix-app",
+					Version: "",
+				},
+			},
+		},
+	},
+}
+
 func (hs *HTTPServer) GetRecipeList(c *models.ReqContext) response.Response {
-	result := 0
-	return response.JSON(http.StatusOK, result)
+	return response.JSON(http.StatusOK, recipes)
 }
 
 func (hs *HTTPServer) GetRecipeByID(c *models.ReqContext) response.Response {
 	recipeID := web.Params(c.Req)[":recipeId"]
-	return response.JSON(http.StatusOK, recipeID)
+
+	for _, recipe := range recipes {
+		if recipe.Id == recipeID {
+			return response.JSON(http.StatusOK, recipe)
+		}
+	}
+
+	return response.JSON(http.StatusNotFound, nil)
 }
 
 func (hs *HTTPServer) InstallRecipe(c *models.ReqContext) response.Response {
+	recipeID := web.Params(c.Req)[":recipeId"]
+
 	return response.Success("Plugin settings updated")
 }
 
@@ -29,3 +103,40 @@ func (hs *HTTPServer) UninstallRecipe(c *models.ReqContext) response.Response {
 func (hs *HTTPServer) GetRecipeStatus(c *models.ReqContext) response.Response {
 	return response.Success("Plugin settings updated")
 }
+
+// func installRecipe(p *RecipeStep) {
+// 	dto := dtos.InstallPluginCommand{}
+// 	if err := web.Bind(c.Req, &dto); err != nil {
+// 		return response.Error(http.StatusBadRequest, "bad request data", err)
+// 	}
+// 	pluginID := web.Params(c.Req)[":pluginId"]
+
+// 	err := hs.pluginInstaller.Add(c.Req.Context(), pluginID, dto.Version, plugins.CompatOpts{
+// 		GrafanaVersion: hs.Cfg.BuildVersion,
+// 		OS:             runtime.GOOS,
+// 		Arch:           runtime.GOARCH,
+// 	})
+// 	if err != nil {
+// 		var dupeErr plugins.DuplicateError
+// 		if errors.As(err, &dupeErr) {
+// 			return response.Error(http.StatusConflict, "Plugin already installed", err)
+// 		}
+// 		var versionUnsupportedErr repo.ErrVersionUnsupported
+// 		if errors.As(err, &versionUnsupportedErr) {
+// 			return response.Error(http.StatusConflict, "Plugin version not supported", err)
+// 		}
+// 		var versionNotFoundErr repo.ErrVersionNotFound
+// 		if errors.As(err, &versionNotFoundErr) {
+// 			return response.Error(http.StatusNotFound, "Plugin version not found", err)
+// 		}
+// 		var clientError repo.Response4xxError
+// 		if errors.As(err, &clientError) {
+// 			return response.Error(clientError.StatusCode, clientError.Message, err)
+// 		}
+// 		if errors.Is(err, plugins.ErrInstallCorePlugin) {
+// 			return response.Error(http.StatusForbidden, "Cannot install or change a Core plugin", err)
+// 		}
+
+// 		return response.Error(http.StatusInternalServerError, "Failed to install plugin", err)
+// 	}
+// }
