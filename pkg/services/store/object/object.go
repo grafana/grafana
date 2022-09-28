@@ -6,6 +6,7 @@
 
 package object
 
+
 // Will be replaced with something from the SDK
 type UserInfo struct {
 	Id    int64  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`      // internal grafana ID
