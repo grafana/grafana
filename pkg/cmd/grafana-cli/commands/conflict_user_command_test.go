@@ -698,7 +698,6 @@ conflict: test2
 			},
 		}
 		for _, tc := range testCases {
-
 			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
 				for _, u := range tc.users {
 					cmd := user.CreateUserCommand{
