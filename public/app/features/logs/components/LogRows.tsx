@@ -55,7 +55,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
   /**
    * Toggle the `contextIsOpen` state when a context of one LogRow is opened in order to not show the menu of the other log rows.
    */
-  toggleAllContexts = (): void => {
+  toggleContextIsOpen = (): void => {
     this.setState((state) => {
       return {
         contextIsOpen: !state.contextIsOpen,
@@ -159,7 +159,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 getFieldLinks={getFieldLinks}
                 logsSortOrder={logsSortOrder}
                 forceEscape={forceEscape}
-                toggleAllContexts={this.toggleAllContexts}
+                toggleContextIsOpen={this.toggleContextIsOpen}
                 onLogRowHover={onLogRowHover}
               />
             ))}
@@ -188,7 +188,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 getFieldLinks={getFieldLinks}
                 logsSortOrder={logsSortOrder}
                 forceEscape={forceEscape}
-                toggleAllContexts={this.toggleAllContexts}
+                toggleContextIsOpen={this.toggleContextIsOpen}
                 onLogRowHover={onLogRowHover}
               />
             ))}
