@@ -184,12 +184,6 @@ export const RANGE_VEC_FUNCTIONS = [
     documentation:
       'The population standard variance of the values in the specified interval. Only available in Loki 2.0+.',
   },
-  {
-    insertText: 'sum_over_time',
-    label: 'sum_over_time',
-    detail: 'sum_over_time(range-vector)',
-    documentation: 'The sum of all values in the specified interval. Only available in Loki 2.0+.',
-  },
 ];
 
 export const FUNCTIONS = [...AGGREGATION_OPERATORS, ...RANGE_VEC_FUNCTIONS];
