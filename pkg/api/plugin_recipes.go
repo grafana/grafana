@@ -9,26 +9,26 @@ import (
 )
 
 type Recipe struct {
-	Id          string
-	Name        string
-	Description string
-	Steps       []RecipeStep
+	Id          string       `json:"id"`
+	Name        string       `json:"name"`
+	Description string       `json:"description"`
+	Steps       []RecipeStep `json:"steps"`
 }
 
 type RecipeStepMeta struct {
-	Name        string
-	Description string
+	Name        string `json:"name"`
+	Description string `json:"description"`
 }
 
 type RecipeStepPlugin struct {
-	Id      string
-	Version string
+	Id      string `json:"id"`
+	Version string `json:"version"`
 }
 
 type RecipeStep struct {
-	Action string
-	Meta   RecipeStepMeta
-	Plugin RecipeStepPlugin
+	Action string           `json:"action"`
+	Meta   RecipeStepMeta   `json:"meta"`
+	Plugin RecipeStepPlugin `json:"plugin"`
 }
 
 var recipes = []Recipe{
