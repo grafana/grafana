@@ -171,9 +171,6 @@ func (f *FakeRuleStore) DeleteAlertRulesByUID(_ context.Context, orgID int64, UI
 	return nil
 }
 
-func (f *FakeRuleStore) DeleteAlertInstancesByRuleUID(_ context.Context, _ int64, _ string) error {
-	return nil
-}
 func (f *FakeRuleStore) GetAlertRuleByUID(_ context.Context, q *models.GetAlertRuleByUIDQuery) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
@@ -221,53 +218,6 @@ func (f *FakeRuleStore) GetAlertRulesGroupByRuleUID(_ context.Context, q *models
 	for _, rule := range rules {
 		if rule.GetGroupKey() == selected.GetGroupKey() {
 			q.Result = append(q.Result, rule)
-		}
-	}
-	return nil
-}
-func (f *FakeRuleStore) GetAlertRulesKeysForScheduling(_ context.Context) ([]models.AlertRuleKeyWithVersion, error) {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-	f.RecordedOps = append(f.RecordedOps, GenericRecordedQuery{
-		Name:   "GetAlertRulesKeysForScheduling",
-		Params: []interface{}{},
-	})
-	result := make([]models.AlertRuleKeyWithVersion, 0, len(f.Rules))
-	for _, rules := range f.Rules {
-		for _, rule := range rules {
-			result = append(result, models.AlertRuleKeyWithVersion{
-				Version:      rule.Version,
-				AlertRuleKey: rule.GetKey(),
-			})
-		}
-	}
-	return result, nil
-}
-
-// For now, we're not implementing namespace filtering.
-func (f *FakeRuleStore) GetAlertRulesForScheduling(_ context.Context, q *models.GetAlertRulesForSchedulingQuery) error {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-	f.RecordedOps = append(f.RecordedOps, *q)
-	if err := f.Hook(*q); err != nil {
-		return err
-	}
-	q.ResultFoldersTitles = make(map[string]string)
-	for _, rules := range f.Rules {
-		for _, rule := range rules {
-			q.ResultRules = append(q.ResultRules, rule)
-			if !q.PopulateFolders {
-				continue
-			}
-			if _, ok := q.ResultFoldersTitles[rule.NamespaceUID]; !ok {
-				if folders, ok := f.Folders[rule.OrgID]; ok {
-					for _, folder := range folders {
-						if folder.Uid == rule.NamespaceUID {
-							q.ResultFoldersTitles[rule.NamespaceUID] = folder.Title
-						}
-					}
-				}
-			}
 		}
 	}
 	return nil
@@ -323,25 +273,6 @@ func (f *FakeRuleStore) ListAlertRules(_ context.Context, q *models.ListAlertRul
 			continue
 		}
 		q.Result = append(q.Result, r)
-	}
-
-	return nil
-}
-
-func (f *FakeRuleStore) GetRuleGroups(_ context.Context, q *models.ListRuleGroupsQuery) error {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-	f.RecordedOps = append(f.RecordedOps, *q)
-
-	m := make(map[string]struct{})
-	for _, rules := range f.Rules {
-		for _, rule := range rules {
-			m[rule.RuleGroup] = struct{}{}
-		}
-	}
-
-	for s := range m {
-		q.Result = append(q.Result, s)
 	}
 
 	return nil
@@ -458,40 +389,6 @@ func (f *FakeRuleStore) IncreaseVersionForAllRulesInNamespace(_ context.Context,
 		}
 	}
 	return result, nil
-}
-
-type FakeInstanceStore struct {
-	mtx         sync.Mutex
-	RecordedOps []interface{}
-}
-
-func (f *FakeInstanceStore) GetAlertInstance(_ context.Context, q *models.GetAlertInstanceQuery) error {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-	f.RecordedOps = append(f.RecordedOps, *q)
-	return nil
-}
-func (f *FakeInstanceStore) ListAlertInstances(_ context.Context, q *models.ListAlertInstancesQuery) error {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-	f.RecordedOps = append(f.RecordedOps, *q)
-	return nil
-}
-func (f *FakeInstanceStore) SaveAlertInstances(_ context.Context, q ...models.AlertInstance) error {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-	for _, inst := range q {
-		f.RecordedOps = append(f.RecordedOps, inst)
-	}
-	return nil
-}
-
-func (f *FakeInstanceStore) FetchOrgIds(_ context.Context) ([]int64, error) { return []int64{}, nil }
-func (f *FakeInstanceStore) DeleteAlertInstances(_ context.Context, _ ...models.AlertInstanceKey) error {
-	return nil
-}
-func (f *FakeInstanceStore) DeleteAlertInstancesByRule(ctx context.Context, key models.AlertRuleKey) error {
-	return nil
 }
 
 func NewFakeAdminConfigStore(t *testing.T) *FakeAdminConfigStore {

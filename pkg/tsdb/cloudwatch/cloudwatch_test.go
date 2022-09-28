@@ -248,6 +248,85 @@ func Test_executeLogAlertQuery(t *testing.T) {
 	})
 }
 
+func TestQuery_ResourceRequest_DescribeAllLogGroups(t *testing.T) {
+	origNewCWLogsClient := NewCWLogsClient
+	t.Cleanup(func() {
+		NewCWLogsClient = origNewCWLogsClient
+	})
+
+	var cli fakeCWLogsClient
+
+	NewCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
+		return &cli
+	}
+
+	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		return datasourceInfo{}, nil
+	})
+
+	executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
+	sender := &mockedCallResourceResponseSenderForOauth{}
+
+	t.Run("multiple batches", func(t *testing.T) {
+		token := "foo"
+		cli = fakeCWLogsClient{
+			logGroups: []cloudwatchlogs.DescribeLogGroupsOutput{
+				{
+					LogGroups: []*cloudwatchlogs.LogGroup{
+						{
+							LogGroupName: aws.String("group_a"),
+						},
+						{
+							LogGroupName: aws.String("group_b"),
+						},
+						{
+							LogGroupName: aws.String("group_c"),
+						},
+					},
+					NextToken: &token,
+				},
+				{
+					LogGroups: []*cloudwatchlogs.LogGroup{
+						{
+							LogGroupName: aws.String("group_x"),
+						},
+						{
+							LogGroupName: aws.String("group_y"),
+						},
+						{
+							LogGroupName: aws.String("group_z"),
+						},
+					},
+				},
+			},
+		}
+
+		req := &backend.CallResourceRequest{
+			Method: "GET",
+			Path:   "/all-log-groups?limit=50",
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+					ID: 0,
+				},
+				PluginID: "cloudwatch",
+			},
+		}
+		err := executor.CallResource(context.Background(), req, sender)
+		require.NoError(t, err)
+		sent := sender.Response
+		require.NotNil(t, sent)
+		require.Equal(t, http.StatusOK, sent.Status)
+
+		suggestDataResponse := []suggestData{}
+		err = json.Unmarshal(sent.Body, &suggestDataResponse)
+		require.Nil(t, err)
+
+		assert.Equal(t, stringsToSuggestData([]string{
+			"group_a", "group_b", "group_c", "group_x", "group_y", "group_z",
+		}), suggestDataResponse)
+	})
+}
+
 func TestQuery_ResourceRequest_DescribeLogGroups(t *testing.T) {
 	origNewCWLogsClient := NewCWLogsClient
 	t.Cleanup(func() {
@@ -305,8 +384,7 @@ func TestQuery_ResourceRequest_DescribeLogGroups(t *testing.T) {
 		err = json.Unmarshal(sent.Body, &suggestDataResponse)
 		require.Nil(t, err)
 
-		assert.Equal(t, []suggestData{
-			{Text: "group_a", Value: "group_a", Label: "group_a"}, {Text: "group_b", Value: "group_b", Label: "group_b"}, {Text: "group_c", Value: "group_c", Label: "group_c"}}, suggestDataResponse)
+		assert.Equal(t, stringsToSuggestData([]string{"group_a", "group_b", "group_c"}), suggestDataResponse)
 	})
 
 	t.Run("Should call api with LogGroupNamePrefix if passed in resource call", func(t *testing.T) {
@@ -383,4 +461,12 @@ func TestQuery_ResourceRequest_DescribeLogGroups(t *testing.T) {
 			},
 		}, cli.calls.describeLogGroups)
 	})
+}
+
+func stringsToSuggestData(values []string) []suggestData {
+	suggestDataArray := make([]suggestData, 0)
+	for _, v := range values {
+		suggestDataArray = append(suggestDataArray, suggestData{Text: v, Value: v, Label: v})
+	}
+	return suggestDataArray
 }

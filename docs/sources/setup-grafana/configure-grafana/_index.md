@@ -1387,6 +1387,10 @@ Configures max number of alert annotations that Grafana stores. Default value is
 
 Configures the batch size for the annotation clean-up job. This setting is used for dashboard, API, and alert annotations.
 
+### tags_length
+
+Enforces the maximum allowed length of the tags for any newly introduced annotations. It can be between 500 and 4096 (inclusive). Default value is 500. Setting it to a higher value would impact performance therefore is not recommended.
+
 ## [annotations.dashboard]
 
 Dashboard annotations means that annotations are associated with the dashboard they are created on.
