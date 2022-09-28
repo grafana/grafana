@@ -73,7 +73,7 @@ export interface GeomapPanelOptions {
   controls: ControlsOptions;
   basemap: MapLayerOptions;
   layers: MapLayerOptions[];
-  tooltip: TooltipOptions;
+  tooltipGeomap: TooltipOptions;
 }
 
 export interface FeatureStyleConfig {

@@ -47,7 +47,7 @@ export const defaultDayNightConfig: MapLayerOptions<DayNightConfig> = {
   type: DAY_NIGHT_LAYER_ID,
   name: '', // will get replaced
   config: defaultConfig,
-  tooltip: true,
+  tooltipGeomap: true,
 };
 
 /**

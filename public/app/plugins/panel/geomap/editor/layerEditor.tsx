@@ -56,7 +56,6 @@ export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<Map
       if (!opts.state) {
         return;
       }
-
       const { handler, options } = opts.state;
       const layer = geomapLayerRegistry.getIfExists(options?.type);
 
@@ -115,7 +114,7 @@ export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<Map
           });
         }
         builder.addBooleanSwitch({
-          path: 'tooltip',
+          path: 'tooltipGeomap',
           name: 'Display tooltip',
           description: 'Show the tooltip for layer',
           defaultValue: true,

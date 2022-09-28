@@ -42,7 +42,7 @@ export const defaultMarkersConfig: MapLayerOptions<MarkersConfig> = {
   location: {
     mode: FrameGeometrySourceMode.Auto,
   },
-  tooltip: true,
+  tooltipGeomap: true,
 };
 
 /**

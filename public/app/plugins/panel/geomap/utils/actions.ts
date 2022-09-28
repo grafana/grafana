@@ -50,7 +50,7 @@ export const getActions = (panel: GeomapPanel) => {
           name: getNextLayerName(panel),
           config: cloneDeep(item.defaultOptions),
           location: item.showLocation ? { mode: FrameGeometrySourceMode.Auto } : undefined,
-          tooltip: true,
+          tooltipGeomap: true,
         },
         false
       ).then((lyr) => {

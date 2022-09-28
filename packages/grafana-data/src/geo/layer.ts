@@ -68,7 +68,7 @@ export interface MapLayerOptions<TConfig = any> {
   opacity?: number;
 
   // Check tooltip (defaults to true)
-  tooltip?: boolean;
+  tooltipGeomap?: boolean;
 }
 
 /**

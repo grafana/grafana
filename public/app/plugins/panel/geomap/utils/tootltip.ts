@@ -89,7 +89,7 @@ export const pointerMoveListener = (evt: MapBrowserEvent<UIEvent>, panel: Geomap
     {
       layerFilter: (l) => {
         const hoverLayerState = getMapLayerState(l);
-        return hoverLayerState?.options?.tooltip !== false;
+        return hoverLayerState?.options?.tooltipGeomap !== false;
       },
     }
   );
