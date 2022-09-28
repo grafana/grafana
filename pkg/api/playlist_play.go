@@ -85,19 +85,19 @@ func (hs *HTTPServer) LoadPlaylistDashboards(ctx context.Context, orgID int64, s
 	dashboardIDOrder := make(map[int64]int)
 	dashboardTagOrder := make(map[string]int)
 
-	for idx, i := range playlistItems {
-		if i.Type == "dashboard_by_id" {
-			dashboardID, _ := strconv.ParseInt(i.Value, 10, 64)
+	for i, item := range playlistItems {
+		if item.Type == "dashboard_by_id" {
+			dashboardID, _ := strconv.ParseInt(item.Value, 10, 64)
 			dashboardByIDs = append(dashboardByIDs, dashboardID)
-			dashboardIDOrder[dashboardID] = idx
+			dashboardIDOrder[dashboardID] = i
 		}
 
-		if i.Type == "dashboard_by_tag" {
-			dashboardByTag = append(dashboardByTag, i.Value)
-			dashboardTagOrder[i.Value] = idx
+		if item.Type == "dashboard_by_tag" {
+			dashboardByTag = append(dashboardByTag, item.Value)
+			dashboardTagOrder[item.Value] = i
 		}
 
-		if i.Type == "dashboard_by_uid" {
+		if item.Type == "dashboard_by_uid" {
 			return nil, fmt.Errorf("dashboard_by_uid not supported by this deprecated API")
 		}
 	}

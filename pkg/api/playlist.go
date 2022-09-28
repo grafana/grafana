@@ -198,6 +198,9 @@ func (hs *HTTPServer) UpdatePlaylist(c *models.ReqContext) response.Response {
 		UID:   cmd.UID,
 		OrgId: c.OrgID,
 	})
+	if err != nil {
+		return response.Error(500, "Failed to load playlist", err)
+	}
 	return response.JSON(http.StatusOK, dto)
 }
 
