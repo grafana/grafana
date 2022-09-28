@@ -70,10 +70,7 @@ func (s *sqlStore) Update(ctx context.Context, cmd *playlist.UpdatePlaylistComma
 		p.Id = existingPlaylist.Id
 
 		dto = playlist.PlaylistDTO{
-
-			Id:       p.Id,
-			UID:      p.UID,
-			OrgId:    p.OrgId,
+			Uid:      p.UID,
 			Name:     p.Name,
 			Interval: p.Interval,
 		}

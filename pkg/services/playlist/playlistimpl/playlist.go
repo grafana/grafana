@@ -3,6 +3,8 @@ package playlistimpl
 import (
 	"context"
 
+	coremodel "github.com/grafana/grafana/pkg/coremodel/playlist"
+
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/setting"
@@ -51,16 +53,16 @@ func (s *Service) GetWithItems(ctx context.Context, q *playlist.GetPlaylistByUid
 	if err != nil {
 		return nil, err
 	}
-	items := make([]playlist.PlaylistItemDTO, len(rawItems))
+	items := make([]coremodel.PlaylistItem, len(rawItems))
 	for i := 0; i < len(rawItems); i++ {
-		items[i].Type = rawItems[i].Type
+		items[i].Type = coremodel.PlaylistItemType(rawItems[i].Type)
 		items[i].Value = rawItems[i].Value
 	}
 	return &playlist.PlaylistDTO{
-		UID:      v.UID,
+		Uid:      v.UID,
 		Name:     v.Name,
 		Interval: v.Interval,
-		Items:    items,
+		Items:    &items,
 	}, nil
 }
 

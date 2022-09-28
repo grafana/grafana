@@ -70,37 +70,37 @@ func (hs *HTTPServer) populateDashboardsByTag(ctx context.Context, orgID int64, 
 
 // Deprecated -- the frontend can do this better
 func (hs *HTTPServer) LoadPlaylistDashboards(ctx context.Context, orgID int64, signedInUser *user.SignedInUser, playlistUID string) (dtos.PlaylistDashboardsSlice, error) {
+	result := make(dtos.PlaylistDashboardsSlice, 0)
 	dto, err := hs.playlistService.GetWithItems(ctx,
 		&playlist.GetPlaylistByUidQuery{UID: playlistUID, OrgId: orgID})
-	if err != nil {
-		return nil, err
+
+	if err != nil || dto == nil || dto.Items == nil {
+		return result, err
 	}
 
-	playlistItems := dto.Items
+	playlistItems := *dto.Items
 
 	dashboardByIDs := make([]int64, 0)
 	dashboardByTag := make([]string, 0)
 	dashboardIDOrder := make(map[int64]int)
 	dashboardTagOrder := make(map[string]int)
 
-	for _, i := range playlistItems {
+	for idx, i := range playlistItems {
 		if i.Type == "dashboard_by_id" {
 			dashboardID, _ := strconv.ParseInt(i.Value, 10, 64)
 			dashboardByIDs = append(dashboardByIDs, dashboardID)
-			dashboardIDOrder[dashboardID] = i.Order
+			dashboardIDOrder[dashboardID] = idx
 		}
 
 		if i.Type == "dashboard_by_tag" {
 			dashboardByTag = append(dashboardByTag, i.Value)
-			dashboardTagOrder[i.Value] = i.Order
+			dashboardTagOrder[i.Value] = idx
 		}
 
 		if i.Type == "dashboard_by_uid" {
 			return nil, fmt.Errorf("dashboard_by_uid not supported by this deprecated API")
 		}
 	}
-
-	result := make(dtos.PlaylistDashboardsSlice, 0)
 
 	var k, _ = hs.populateDashboardsByID(ctx, dashboardByIDs, dashboardIDOrder)
 	result = append(result, k...)

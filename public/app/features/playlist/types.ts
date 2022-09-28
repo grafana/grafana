@@ -2,13 +2,6 @@ import { DashboardQueryResult } from '../search/service';
 
 export type PlaylistMode = boolean | 'tv';
 
-export interface PlayListItemDTO {
-  id: number;
-  title: string;
-  playlistid: string;
-  type: 'dashboard' | 'tag';
-}
-
 export interface Playlist {
   uid: string;
   name: string;
