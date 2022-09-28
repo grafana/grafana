@@ -5,15 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
-	"github.com/grafana/grafana/pkg/services/preference/preftest"
-	"github.com/grafana/grafana/pkg/services/quota/quotatest"
-	"github.com/grafana/grafana/pkg/services/star/startest"
-	"github.com/grafana/grafana/pkg/services/teamguardian/manager"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/services/userauth/userauthtest"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/stretchr/testify/require"
@@ -22,23 +15,9 @@ import (
 func TestUserService(t *testing.T) {
 	userStore := newUserStoreFake()
 	orgService := orgtest.NewOrgServiceFake()
-	starService := startest.NewStarServiceFake()
-	dashboardService := dashboards.NewFakeDashboardService(t)
-	preferenceService := preftest.NewPreferenceServiceFake()
-	teamMemberService := manager.NewTeamGuardianMock()
-	userAuthService := userauthtest.NewFakeUserAuthService()
-	quotaService := quotatest.NewQuotaServiceFake()
-	accessControlStore := mock.New()
 	userService := Service{
-		store:              userStore,
-		orgService:         orgService,
-		starService:        starService,
-		dashboardService:   dashboardService,
-		preferenceService:  preferenceService,
-		teamMemberService:  teamMemberService,
-		userAuthService:    userAuthService,
-		quotaService:       quotaService,
-		accessControlStore: accessControlStore,
+		store:      userStore,
+		orgService: orgService,
 	}
 
 	t.Run("create user", func(t *testing.T) {
@@ -81,26 +60,6 @@ func TestUserService(t *testing.T) {
 		require.Error(t, err, user.ErrUserNotFound)
 	})
 
-	t.Run("delete user returns from team", func(t *testing.T) {
-		teamMemberService.ExpectedError = errors.New("some error")
-		t.Cleanup(func() {
-			teamMemberService.ExpectedError = nil
-		})
-		err := userService.Delete(context.Background(), &user.DeleteUserCommand{UserID: 1})
-		require.Error(t, err)
-	})
-
-	t.Run("delete user returns from team and pref", func(t *testing.T) {
-		teamMemberService.ExpectedError = errors.New("some error")
-		preferenceService.ExpectedError = errors.New("some error 2")
-		t.Cleanup(func() {
-			teamMemberService.ExpectedError = nil
-			preferenceService.ExpectedError = nil
-		})
-		err := userService.Delete(context.Background(), &user.DeleteUserCommand{UserID: 1})
-		require.Error(t, err)
-	})
-
 	t.Run("delete user successfully", func(t *testing.T) {
 		err := userService.Delete(context.Background(), &user.DeleteUserCommand{UserID: 1})
 		require.NoError(t, err)
@@ -115,29 +74,17 @@ func TestUserService(t *testing.T) {
 		require.Error(t, err, user.ErrUserNotFound)
 	})
 
-	t.Run("delete user returns from team", func(t *testing.T) {
-		teamMemberService.ExpectedError = errors.New("some error")
-		t.Cleanup(func() {
-			teamMemberService.ExpectedError = nil
-		})
-		err := userService.Delete(context.Background(), &user.DeleteUserCommand{UserID: 1})
-		require.Error(t, err)
-	})
-
-	t.Run("delete user returns from team and pref", func(t *testing.T) {
-		teamMemberService.ExpectedError = errors.New("some error")
-		preferenceService.ExpectedError = errors.New("some error 2")
-		t.Cleanup(func() {
-			teamMemberService.ExpectedError = nil
-			preferenceService.ExpectedError = nil
-		})
-		err := userService.Delete(context.Background(), &user.DeleteUserCommand{UserID: 1})
-		require.Error(t, err)
-	})
-
 	t.Run("delete user successfully", func(t *testing.T) {
 		err := userService.Delete(context.Background(), &user.DeleteUserCommand{UserID: 1})
 		require.NoError(t, err)
+	})
+
+	t.Run("GetByID - email conflict", func(t *testing.T) {
+		userService.cfg.CaseInsensitiveLogin = true
+		userStore.ExpectedError = errors.New("email conflict")
+		query := user.GetUserByIDQuery{}
+		_, err := userService.GetByID(context.Background(), &query)
+		require.Error(t, err)
 	})
 }
 
@@ -172,5 +119,25 @@ func (f *FakeUserStore) GetByID(context.Context, int64) (*user.User, error) {
 }
 
 func (f *FakeUserStore) CaseInsensitiveLoginConflict(context.Context, string, string) error {
+	return f.ExpectedError
+}
+
+func (f *FakeUserStore) GetByLogin(ctx context.Context, query *user.GetUserByLoginQuery) (*user.User, error) {
+	return f.ExpectedUser, f.ExpectedError
+}
+
+func (f *FakeUserStore) GetByEmail(ctx context.Context, query *user.GetUserByEmailQuery) (*user.User, error) {
+	return f.ExpectedUser, f.ExpectedError
+}
+
+func (f *FakeUserStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) error {
+	return f.ExpectedError
+}
+
+func (f *FakeUserStore) ChangePassword(ctx context.Context, cmd *user.ChangeUserPasswordCommand) error {
+	return f.ExpectedError
+}
+
+func (f *FakeUserStore) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLastSeenAtCommand) error {
 	return f.ExpectedError
 }

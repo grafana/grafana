@@ -34,13 +34,6 @@ func (ss *SQLStore) NewSession(ctx context.Context) *DBSession {
 	return sess
 }
 
-func (ss *SQLStore) newSession(ctx context.Context) *DBSession {
-	sess := &DBSession{Session: ss.engine.NewSession()}
-	sess.Session = sess.Session.Context(ctx)
-
-	return sess
-}
-
 func startSessionOrUseExisting(ctx context.Context, engine *xorm.Engine, beginTran bool) (*DBSession, bool, error) {
 	value := ctx.Value(ContextSessionKey{})
 	var sess *DBSession

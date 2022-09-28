@@ -48,6 +48,10 @@ export interface MapViewConfig {
   zoom?: number;
   minZoom?: number;
   maxZoom?: number;
+  padding?: number;
+  allLayers?: boolean;
+  lastOnly?: boolean;
+  layer?: string;
   shared?: boolean;
 }
 
@@ -56,6 +60,7 @@ export const defaultView: MapViewConfig = {
   lat: 0,
   lon: 0,
   zoom: 1,
+  allLayers: true,
 };
 
 /** Support hide from legend/tooltip */

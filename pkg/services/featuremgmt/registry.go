@@ -268,6 +268,11 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:            "grpcServer",
+			Description:     "Run GRPC server",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		}, {
 			Name:        "traceqlEditor",
 			Description: "Show the TraceQL editor in the explore page",
 			State:       FeatureStateAlpha,

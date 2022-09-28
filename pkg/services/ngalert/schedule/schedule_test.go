@@ -106,12 +106,11 @@ func TestWarmStateCache(t *testing.T) {
 	}
 
 	schedCfg := schedule.SchedulerCfg{
-		Cfg:           cfg,
-		C:             clock.NewMock(),
-		Logger:        log.New("ngalert cache warming test"),
-		RuleStore:     dbstore,
-		InstanceStore: dbstore,
-		Metrics:       testMetrics.GetSchedulerMetrics(),
+		Cfg:       cfg,
+		C:         clock.NewMock(),
+		Logger:    log.New("ngalert cache warming test"),
+		RuleStore: dbstore,
+		Metrics:   testMetrics.GetSchedulerMetrics(),
 	}
 	st := state.NewManager(schedCfg.Logger, testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, clock.NewMock(), annotationstest.NewFakeAnnotationsRepo())
 	st.Warm(ctx)
@@ -161,11 +160,10 @@ func TestAlertingTicker(t *testing.T) {
 		StopAppliedFunc: func(alertDefKey models.AlertRuleKey) {
 			stopAppliedCh <- alertDefKey
 		},
-		RuleStore:     dbstore,
-		InstanceStore: dbstore,
-		Logger:        log.New("ngalert schedule test"),
-		Metrics:       testMetrics.GetSchedulerMetrics(),
-		AlertSender:   notifier,
+		RuleStore:   dbstore,
+		Logger:      log.New("ngalert schedule test"),
+		Metrics:     testMetrics.GetSchedulerMetrics(),
+		AlertSender: notifier,
 	}
 	st := state.NewManager(schedCfg.Logger, testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, clock.NewMock(), annotationstest.NewFakeAnnotationsRepo())
 	appUrl := &url.URL{

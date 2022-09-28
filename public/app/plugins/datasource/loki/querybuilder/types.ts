@@ -11,10 +11,15 @@ export interface LokiVisualQuery {
 }
 
 export type LokiVisualQueryBinary = VisualQueryBinary<LokiVisualQuery>;
+export enum LokiQueryPatternType {
+  Log = 'log',
+  Metric = 'metric',
+}
 
 export interface LokiQueryPattern {
   name: string;
   operations: QueryBuilderOperation[];
+  type: LokiQueryPatternType;
 }
 
 export enum LokiVisualQueryOperationCategory {
@@ -36,6 +41,7 @@ export enum LokiOperationId {
   LineFormat = 'line_format',
   LabelFormat = 'label_format',
   Rate = 'rate',
+  RateCounter = 'rate_counter',
   CountOverTime = 'count_over_time',
   SumOverTime = 'sum_over_time',
   AvgOverTime = 'avg_over_time',

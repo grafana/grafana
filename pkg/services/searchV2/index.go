@@ -17,9 +17,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/searchV2/dslookup"
-	"github.com/grafana/grafana/pkg/services/searchV2/extract"
+	"github.com/grafana/grafana/pkg/services/searchV2/object"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/store"
+	obj "github.com/grafana/grafana/pkg/services/store/object"
 	"github.com/grafana/grafana/pkg/setting"
 	"go.opentelemetry.io/otel/attribute"
 
@@ -52,7 +53,9 @@ type dashboard struct {
 	slug     string
 	created  time.Time
 	updated  time.Time
-	info     *extract.DashboardInfo
+
+	// Use generic structure
+	summary *obj.ObjectSummary
 }
 
 // buildSignal is sent when search index is accessed in organization for which
@@ -180,6 +183,7 @@ func (i *searchIndex) sync(ctx context.Context) error {
 
 func (i *searchIndex) run(ctx context.Context, orgIDs []int64, reIndexSignalCh chan struct{}) error {
 	i.logger.Info("Initializing SearchV2", "dashboardLoadingBatchSize", i.settings.DashboardLoadingBatchSize, "fullReindexInterval", i.settings.FullReindexInterval, "indexUpdateInterval", i.settings.IndexUpdateInterval)
+	initialSetupCtx, initialSetupSpan := i.tracer.Start(ctx, "searchV2 initialSetup")
 
 	reIndexInterval := i.settings.FullReindexInterval
 	fullReIndexTimer := time.NewTimer(reIndexInterval)
@@ -190,16 +194,18 @@ func (i *searchIndex) run(ctx context.Context, orgIDs []int64, reIndexSignalCh c
 	defer partialUpdateTimer.Stop()
 
 	var lastEventID int64
-	lastEvent, err := i.eventStore.GetLastEvent(ctx)
+	lastEvent, err := i.eventStore.GetLastEvent(initialSetupCtx)
 	if err != nil {
+		initialSetupSpan.End()
 		return err
 	}
 	if lastEvent != nil {
 		lastEventID = lastEvent.Id
 	}
 
-	err = i.buildInitialIndexes(ctx, orgIDs)
+	err = i.buildInitialIndexes(initialSetupCtx, orgIDs)
 	if err != nil {
+		initialSetupSpan.End()
 		return err
 	}
 
@@ -212,6 +218,8 @@ func (i *searchIndex) run(ctx context.Context, orgIDs []int64, reIndexSignalCh c
 	i.initializationMutex.Lock()
 	i.initialIndexingComplete = true
 	i.initializationMutex.Unlock()
+
+	initialSetupSpan.End()
 
 	for {
 		select {
@@ -458,11 +466,17 @@ func (i *searchIndex) reportSizeOfIndexDiskBackup(orgID int64) {
 }
 
 func (i *searchIndex) buildOrgIndex(ctx context.Context, orgID int64) (int, error) {
+	spanCtx, span := i.tracer.Start(ctx, "searchV2 buildOrgIndex")
+	span.SetAttributes("org_id", orgID, attribute.Key("org_id").Int64(orgID))
+
 	started := time.Now()
-	ctx, cancel := context.WithTimeout(ctx, time.Minute)
+	ctx, cancel := context.WithTimeout(spanCtx, time.Minute)
 	ctx = log.InitCounter(ctx)
 
-	defer cancel()
+	defer func() {
+		span.End()
+		cancel()
+	}()
 
 	i.logger.Info("Start building org index", "orgId", orgID)
 	dashboards, err := i.loader.LoadDashboards(ctx, orgID, "")
@@ -475,8 +489,9 @@ func (i *searchIndex) buildOrgIndex(ctx context.Context, orgID int64) (int, erro
 
 	dashboardExtender := i.extender.GetDashboardExtender(orgID)
 
-	_, initOrgIndexSpan := i.tracer.Start(ctx, "searchV2 init org index")
+	_, initOrgIndexSpan := i.tracer.Start(ctx, "searchV2 buildOrgIndex init org index")
 	initOrgIndexSpan.SetAttributes("org_id", orgID, attribute.Key("org_id").Int64(orgID))
+	initOrgIndexSpan.SetAttributes("dashboardCount", len(dashboards), attribute.Key("dashboardCount").Int(len(dashboards)))
 
 	index, err := initOrgIndex(dashboards, i.logger, dashboardExtender)
 
@@ -512,7 +527,7 @@ func (i *searchIndex) buildOrgIndex(ctx context.Context, orgID int64) (int, erro
 		go func() {
 			if reader, cancel, err := index.readerForIndex(indexTypeDashboard); err == nil {
 				defer cancel()
-				updateUsageStats(context.Background(), reader, i.logger)
+				updateUsageStats(context.Background(), reader, i.logger, i.tracer)
 			}
 		}()
 	}
@@ -793,14 +808,20 @@ func (i *searchIndex) updateDashboard(ctx context.Context, orgID int64, index *o
 type sqlDashboardLoader struct {
 	sql      *sqlstore.SQLStore
 	logger   log.Logger
+	tracer   tracing.Tracer
 	settings setting.SearchSettings
 }
 
-func newSQLDashboardLoader(sql *sqlstore.SQLStore, settings setting.SearchSettings) *sqlDashboardLoader {
-	return &sqlDashboardLoader{sql: sql, logger: log.New("sqlDashboardLoader"), settings: settings}
+func newSQLDashboardLoader(sql *sqlstore.SQLStore, tracer tracing.Tracer, settings setting.SearchSettings) *sqlDashboardLoader {
+	return &sqlDashboardLoader{sql: sql, logger: log.New("sqlDashboardLoader"), tracer: tracer, settings: settings}
 }
 
 func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, dashboardUID string) ([]dashboard, error) {
+	ctx, span := l.tracer.Start(ctx, "sqlDashboardLoader LoadDashboards")
+	span.SetAttributes("orgID", orgID, attribute.Key("orgID").Int64(orgID))
+
+	defer span.End()
+
 	var dashboards []dashboard
 
 	limit := 1
@@ -818,25 +839,35 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 			slug:     "",
 			created:  time.Now(),
 			updated:  time.Now(),
-			info: &extract.DashboardInfo{
-				ID:    0,
-				Title: "General",
+			summary: &obj.ObjectSummary{
+				//ID:    0,
+				Name: "General",
 			},
 		})
 	}
 
+	loadDatasourceCtx, loadDatasourceSpan := l.tracer.Start(ctx, "sqlDashboardLoader LoadDatasourceLookup")
+	loadDatasourceSpan.SetAttributes("orgID", orgID, attribute.Key("orgID").Int64(orgID))
+
 	// key will allow name or uid
-	lookup, err := dslookup.LoadDatasourceLookup(ctx, orgID, l.sql)
+	lookup, err := dslookup.LoadDatasourceLookup(loadDatasourceCtx, orgID, l.sql)
 	if err != nil {
+		loadDatasourceSpan.End()
 		return dashboards, err
 	}
+	loadDatasourceSpan.End()
 
 	var lastID int64
 
 	for {
-		rows := make([]*dashboardQueryResult, 0, limit)
+		dashboardQueryCtx, dashboardQuerySpan := l.tracer.Start(ctx, "sqlDashboardLoader dashboardQuery")
+		dashboardQuerySpan.SetAttributes("orgID", orgID, attribute.Key("orgID").Int64(orgID))
+		dashboardQuerySpan.SetAttributes("dashboardUID", dashboardUID, attribute.Key("dashboardUID").String(dashboardUID))
+		dashboardQuerySpan.SetAttributes("lastID", lastID, attribute.Key("lastID").Int64(lastID))
 
-		err = l.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		rows := make([]dashboardQueryResult, 0, limit)
+
+		err = l.sql.WithDbSession(dashboardQueryCtx, func(sess *sqlstore.DBSession) error {
 			sess.Table("dashboard").
 				Where("org_id = ?", orgID)
 
@@ -857,11 +888,24 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 		})
 
 		if err != nil {
+			dashboardQuerySpan.End()
 			return nil, err
 		}
+		dashboardQuerySpan.End()
+
+		_, readDashboardSpan := l.tracer.Start(ctx, "sqlDashboardLoader readDashboard")
+		readDashboardSpan.SetAttributes("orgID", orgID, attribute.Key("orgID").Int64(orgID))
+		readDashboardSpan.SetAttributes("dashboardCount", len(rows), attribute.Key("dashboardCount").Int(len(rows)))
+
+		reader := object.NewDashboardSummaryBuilder(lookup)
 
 		for _, row := range rows {
-			info, err := extract.ReadDashboard(bytes.NewReader(row.Data), lookup)
+			obj := &obj.RawObject{
+				UID:  row.Uid,
+				Kind: "dashboard",
+				Body: row.Data,
+			}
+			summary, err := reader(obj)
 			if err != nil {
 				l.logger.Warn("Error indexing dashboard data", "error", err, "dashboardId", row.Id, "dashboardSlug", row.Slug)
 				// But append info anyway for now, since we possibly extracted useful information.
@@ -874,10 +918,11 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 				slug:     row.Slug,
 				created:  row.Created,
 				updated:  row.Updated,
-				info:     info,
+				summary:  &summary,
 			})
 			lastID = row.Id
 		}
+		readDashboardSpan.End()
 
 		if len(rows) < limit || dashboardUID != "" {
 			break

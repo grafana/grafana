@@ -211,7 +211,7 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 		require.NoError(t, res.Body.Close())
 	})
 
-	t.Run("Should correctly create a correlation", func(t *testing.T) {
+	t.Run("Should correctly create a correlation without a config", func(t *testing.T) {
 		description := "a description"
 		label := "a label"
 		res := ctx.Post(PostParams{
@@ -237,6 +237,71 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 		require.Equal(t, writableDs, response.Result.TargetUID)
 		require.Equal(t, description, response.Result.Description)
 		require.Equal(t, label, response.Result.Label)
+
+		require.NoError(t, res.Body.Close())
+	})
+
+	t.Run("Should correctly create a correlation with a correct config", func(t *testing.T) {
+		description := "a description"
+		label := "a label"
+		res := ctx.Post(PostParams{
+			url: fmt.Sprintf("/api/datasources/uid/%s/correlations", writableDs),
+			body: fmt.Sprintf(`{
+					"targetUID": "%s",
+					"description": "%s",
+					"label": "%s",
+					"config": {
+						"field": "fieldName",
+						"target": { "expr": "foo" }
+					}
+				}`, writableDs, description, label),
+			user: adminUser,
+		})
+		require.Equal(t, http.StatusOK, res.StatusCode)
+
+		responseBody, err := io.ReadAll(res.Body)
+		require.NoError(t, err)
+
+		var response correlations.CreateCorrelationResponseBody
+		err = json.Unmarshal(responseBody, &response)
+		require.NoError(t, err)
+
+		require.Equal(t, "Correlation created", response.Message)
+		require.Equal(t, writableDs, response.Result.SourceUID)
+		require.Equal(t, writableDs, response.Result.TargetUID)
+		require.Equal(t, description, response.Result.Description)
+		require.Equal(t, label, response.Result.Label)
+		require.Equal(t, "fieldName", response.Result.Config.Field)
+		require.Equal(t, map[string]interface{}{"expr": "foo"}, response.Result.Config.Target)
+
+		require.NoError(t, res.Body.Close())
+	})
+
+	t.Run("Should not create a correlation with incorrect config", func(t *testing.T) {
+		description := "a description"
+		label := "a label"
+		res := ctx.Post(PostParams{
+			url: fmt.Sprintf("/api/datasources/uid/%s/correlations", writableDs),
+			body: fmt.Sprintf(`{
+					"targetUID": "%s",
+					"description": "%s",
+					"label": "%s",
+					"config": {
+						"field": 2
+					}
+				}`, writableDs, description, label),
+			user: adminUser,
+		})
+		require.Equal(t, http.StatusBadRequest, res.StatusCode)
+
+		responseBody, err := io.ReadAll(res.Body)
+		require.NoError(t, err)
+
+		var response errorResponseBody
+		err = json.Unmarshal(responseBody, &response)
+		require.NoError(t, err)
+
+		require.Contains(t, response.Message, "bad request data")
 
 		require.NoError(t, res.Body.Close())
 	})
