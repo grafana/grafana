@@ -39,6 +39,31 @@ func (s *Service) Get(ctx context.Context, q *playlist.GetPlaylistByUidQuery) (*
 	return s.store.Get(ctx, q)
 }
 
+func (s *Service) GetWithItems(ctx context.Context, q *playlist.GetPlaylistByUidQuery) (*playlist.PlaylistDTO, error) {
+	v, err := s.store.Get(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	rawItems, err := s.store.GetItems(ctx, &playlist.GetPlaylistItemsByUidQuery{
+		PlaylistUID: v.UID,
+		OrgId:       q.OrgId,
+	})
+	if err != nil {
+		return nil, err
+	}
+	items := make([]playlist.PlaylistItemDTO, len(rawItems))
+	for i := 0; i < len(rawItems); i++ {
+		items[i].Type = rawItems[i].Type
+		items[i].Value = rawItems[i].Value
+	}
+	return &playlist.PlaylistDTO{
+		UID:      v.UID,
+		Name:     v.Name,
+		Interval: v.Interval,
+		Items:    items,
+	}, nil
+}
+
 func (s *Service) GetItems(ctx context.Context, q *playlist.GetPlaylistItemsByUidQuery) ([]playlist.PlaylistItem, error) {
 	return s.store.GetItems(ctx, q)
 }

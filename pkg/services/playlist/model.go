@@ -21,7 +21,7 @@ type Playlist struct {
 }
 
 type PlaylistDTO struct {
-	Id       int64             `json:"id"`
+	Id       int64             `json:"id,omitempty"`
 	UID      string            `json:"uid"`
 	Name     string            `json:"name"`
 	Interval string            `json:"interval"`
@@ -30,12 +30,12 @@ type PlaylistDTO struct {
 }
 
 type PlaylistItemDTO struct {
-	Id         int64  `json:"id"`
-	PlaylistId int64  `json:"playlistid"`
+	Id         int64  `json:"id,omitempty"`
+	PlaylistId int64  `json:"playlistid,omitempty"`
 	Type       string `json:"type"`
-	Title      string `json:"title"`
+	Title      string `json:"title,omitempty"`
 	Value      string `json:"value"`
-	Order      int    `json:"order"`
+	Order      int    `json:"order,omitempty"`
 }
 
 type PlaylistItem struct {
@@ -78,6 +78,7 @@ type DeletePlaylistCommand struct {
 //
 
 type GetPlaylistsQuery struct {
+	// NOTE: the frontend never sends this query
 	Name  string
 	Limit int
 	OrgId int64

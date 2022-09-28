@@ -2,12 +2,14 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"sort"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	_ "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -68,7 +70,13 @@ func (hs *HTTPServer) populateDashboardsByTag(ctx context.Context, orgID int64, 
 
 // Deprecated -- the frontend can do this better
 func (hs *HTTPServer) LoadPlaylistDashboards(ctx context.Context, orgID int64, signedInUser *user.SignedInUser, playlistUID string) (dtos.PlaylistDashboardsSlice, error) {
-	playlistItems, _ := hs.LoadPlaylistItems(ctx, playlistUID, orgID)
+	dto, err := hs.playlistService.GetWithItems(ctx,
+		&playlist.GetPlaylistByUidQuery{UID: playlistUID, OrgId: orgID})
+	if err != nil {
+		return nil, err
+	}
+
+	playlistItems := dto.Items
 
 	dashboardByIDs := make([]int64, 0)
 	dashboardByTag := make([]string, 0)
@@ -85,6 +93,10 @@ func (hs *HTTPServer) LoadPlaylistDashboards(ctx context.Context, orgID int64, s
 		if i.Type == "dashboard_by_tag" {
 			dashboardByTag = append(dashboardByTag, i.Value)
 			dashboardTagOrder[i.Value] = i.Order
+		}
+
+		if i.Type == "dashboard_by_uid" {
+			return nil, fmt.Errorf("dashboard_by_uid not supported by this deprecated API")
 		}
 	}
 

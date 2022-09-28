@@ -197,5 +197,5 @@ func newGenerateAndValidateNewPlaylistUid(ctx context.Context, sess *session.Ses
 		}
 	}
 
-	return "", models.ErrPlaylistFailedGenerateUniqueUid
+	return "", playlist.ErrPlaylistFailedGenerateUniqueUid
 }
