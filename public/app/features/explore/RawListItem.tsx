@@ -11,31 +11,9 @@ const getStyles = (theme: GrafanaTheme) => {
   const greenish = theme.isDark ? '#73bf69' : '#56a64b';
 
   return {
-    rowsWrapper: css`
-      width: 100%;
-    `,
-    rowWrapper: css`
-      border-bottom: 1px solid #ccc;
-      display: flex;
-      justify-content: space-between;
-      padding: 10px 6px;
-    `,
-    rowLabelWrap: css`
-      display: flex;
-      white-space: nowrap;
-      overflow-x: scroll;
-      -ms-overflow-style: none; /* IE and Edge */
-      scrollbar-width: none; /* Firefox */
-
-      &::-webkit-scrollbar {
-        display: none; /* Chrome, Safari and Opera */
-      }
-    `,
     metricName: css`
       color: ${greenish};
     `,
-    metricEquals: css``,
-    metricQuote: css``,
     metricValue: css`
       color: ${reddish};
     `,
@@ -54,10 +32,10 @@ const RawListItem = ({ value, index, length }: { value: RawListValue; index: num
   return (
     <span key={index}>
       <span className={styles.metricName}>{attributeName}</span>
-      <span className={styles.metricEquals}>=</span>
-      <span className={styles.metricQuote}>&quot;</span>
+      <span>=</span>
+      <span>&quot;</span>
       <span className={styles.metricValue}>{attributeValue}</span>
-      <span className={styles.metricQuote}>&quot;</span>
+      <span>&quot;</span>
       {index < length - 1 && <span>, </span>}
     </span>
   );

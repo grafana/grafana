@@ -17,7 +17,7 @@ export type RawListValue = { key: string; value: string };
 
 const getStyles = (theme: GrafanaTheme) => ({
   rowWrapper: css`
-    border-bottom: 1px solid #ccc;
+    border-bottom: 1px solid ${theme.colors.border3};
     display: flex;
     justify-content: space-between;
     padding: 10px 6px;
