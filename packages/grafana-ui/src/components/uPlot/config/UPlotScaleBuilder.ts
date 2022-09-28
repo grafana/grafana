@@ -130,23 +130,26 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
         else if (scale.distr === 3) {
           let logFn = scale.log === 2 ? Math.log2 : Math.log10;
 
-          // min
-          if (minMax[0]! < 1) {
+          if (minMax[0]! <= 1) {
+            // clamp min
             minMax[0] = 1;
           } else {
+            // snap min to nearest mag below
             let minExp = Math.floor(logFn(minMax[0]!));
             minMax[0] = logBase ** minExp;
           }
 
-          // max
+          // snap max to nearest mag above
           let maxExp = Math.ceil(logFn(minMax[1]!));
           minMax[1] = logBase ** maxExp;
 
+          // inflate max by mag if same
           if (minMax[0] === minMax[1]) {
             minMax[1] *= logBase;
           }
         }
-        // TODO: this should be better. symlog values can be <= 0, but should also be rounded to log2 or log10 boundaries
+        // TODO: this should be better. symlog values can be <= 0, but should also be snapped to log2 or log10 boundaries
+        // for now we just do same as linear snapping above, so may have non-neat range and ticks at edges
         else if (scale.distr === 4) {
           minMax[0] = incrRoundDn(minMax[0]!, 1);
           minMax[1] = incrRoundUp(minMax[1]!, 1);
