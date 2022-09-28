@@ -1,7 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { OptionProps } from 'react-select';
-import renderer from 'react-test-renderer';
 
 import SelectOption from './SelectOption';
 
