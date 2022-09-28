@@ -589,13 +589,13 @@ func (c *ConflictingUser) Marshal(filerow string) error {
 	} else if trimmedSpaces[0] == '-' {
 		c.Direction = "-"
 	} else {
-		return fmt.Errorf("unable to get which operation was choosen")
+		return fmt.Errorf("unable to get which operation was chosen")
 	}
 	trimmed := strings.TrimLeft(trimmedSpaces, "+-")
 	values := strings.Split(trimmed, ",")
 
 	if len(values) < 3 {
-		return fmt.Errorf("expected at least 3 values in entryrow")
+		return fmt.Errorf("expected at least 3 values in entry row")
 	}
 	// expected fields
 	id := strings.Split(values[0], ":")
