@@ -31,7 +31,7 @@ interface Props extends Themeable2 {
   updateLimit?: () => void;
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, showContextButton: boolean) => {
   const outlineColor = tinycolor(theme.components.dashboard.background).setAlpha(0.7).toRgbString();
 
   return {
@@ -69,12 +69,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: ${theme.spacing(0, 0, 0, 0.5)};
       z-index: 100;
       visibility: hidden;
-    `,
-    large: css`
-      width: 80px;
-    `,
-    small: css`
-      width: 40px;
+      width: ${showContextButton ? '80px' : '40px'};
     `,
   };
 };
@@ -148,7 +143,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
     const style = getLogRowStyles(theme, row.logLevel);
     const { hasAnsi, raw } = row;
     const restructuredEntry = restructureLog(raw, prettifyLogMessage);
-    const styles = getStyles(theme);
+    const styles = getStyles(theme, this.shouldShowShowContextToggle(row));
 
     return (
       // When context is open, the position has to be NOT relative.
@@ -176,14 +171,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
             {renderLogMessage(hasAnsi, restructuredEntry, row.searchWords, style.logsRowMatchHighLight)}
           </span>
           {showRowMenu && (
-            <span
-              className={cx(
-                'log-row-menu',
-                styles.rowMenu,
-                this.shouldShowShowContextToggle(row) ? styles.large : styles.small
-              )}
-              onClick={(e) => e.stopPropagation()}
-            >
+            <span className={cx('log-row-menu', styles.rowMenu)} onClick={(e) => e.stopPropagation()}>
               {this.shouldShowShowContextToggle(row) && (
                 <Tooltip placement="top" content={'Show context'}>
                   <IconButton size="md" name="gf-show-context" onClick={this.onContextToggle} />
