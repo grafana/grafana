@@ -22657,7 +22657,7 @@ __metadata:
     rc-tree: 5.6.6
     re-resizable: 6.9.9
     react: 17.0.2
-    react-awesome-query-builder: ^5.1.2
+    react-awesome-query-builder: 5.3.1
     react-beautiful-dnd: 13.1.0
     react-diff-viewer: ^3.1.1
     react-dom: 17.0.2
@@ -28187,7 +28187,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"moment@npm:2.29.4, moment@npm:2.x, moment@npm:>= 2.9.0, moment@npm:^2.19.4, moment@npm:^2.20.1, moment@npm:^2.29.1":
+"moment@npm:2.29.4, moment@npm:2.x, moment@npm:>= 2.9.0, moment@npm:^2.19.4, moment@npm:^2.20.1, moment@npm:^2.29.4":
   version: 2.29.4
   resolution: "moment@npm:2.29.4"
   checksum: 0ec3f9c2bcba38dc2451b1daed5daded747f17610b92427bebe1d08d48d8b7bdd8d9197500b072d14e326dd0ccf3e326b9e3d07c5895d3d49e39b6803b76e80e
@@ -32355,28 +32355,28 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-awesome-query-builder@npm:^5.1.2":
-  version: 5.1.2
-  resolution: "react-awesome-query-builder@npm:5.1.2"
+"react-awesome-query-builder@npm:5.3.1":
+  version: 5.3.1
+  resolution: "react-awesome-query-builder@npm:5.3.1"
   dependencies:
     "@date-io/moment": ^1.3.13
     classnames: ^2.3.1
     clone: ^2.1.2
     immutable: ^3.8.2
     lodash: ^4.17.21
-    moment: ^2.29.1
+    moment: ^2.29.4
     prop-types: ^15.7.2
     react-redux: ^7.2.2
-    redux: ^4.1.0
+    redux: ^4.2.0
     spel2js: ^0.2.8
-    sqlstring: ^2.3.2
+    sqlstring: ^2.3.3
   peerDependencies:
     "@ant-design/icons": ^4.0.0
     "@emotion/react": ^11.7.1
     "@emotion/styled": ^11.6.0
-    "@fortawesome/fontawesome-svg-core": ^1.2.36
-    "@fortawesome/free-solid-svg-icons": ^5.15.4
-    "@fortawesome/react-fontawesome": ^0.1.16
+    "@fortawesome/fontawesome-svg-core": ^1.2.0 || ^6.1.0
+    "@fortawesome/free-solid-svg-icons": ^5.15.4 || ^6.0.0
+    "@fortawesome/react-fontawesome": ^0.1.16 || ^0.2.0
     "@material-ui/core": ^4.12.3
     "@material-ui/icons": ^4.0.0
     "@material-ui/lab": ^4.0.0-alpha.57
@@ -32384,13 +32384,14 @@ __metadata:
     "@mui/icons-material": ^5.2.4
     "@mui/lab": ^5.0.0-alpha.60
     "@mui/material": ^5.2.4
+    "@mui/x-date-pickers": ^5.0.0-beta.2
     antd: ^4.0.0
     bootstrap: ^5.1.3
     material-ui-confirm: ^2.0.1 || ^3.0.0
-    react: ^16.8.4 || ^17.0.1
-    react-dom: ^16.8.4 || ^17.0.1
+    react: ^16.8.4 || ^17.0.1 || ^18.0.0
+    react-dom: ^16.8.4 || ^17.0.1 || ^18.0.0
     reactstrap: ^9.0.0
-  checksum: 6efab0fcbb98d4843fbe3b5036a7831fd097774869fc0e175ca40c4770d7939dd3efcb2c3365c6fe539c8ba6b6bb19ddef55d93f491770a9bfdc3f1355cc5e4e
+  checksum: d9c27f5c0ce66ab9ad3f57f7c003471afd5465f732e2359ff916a6f62d0161ccf33a738bd67349d0b82384561242714c8d29f0216c8d5148fdb10c420f5fe914
   languageName: node
   linkType: hard
 
@@ -33623,7 +33624,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"redux@npm:4.2.0, redux@npm:^4.1.0":
+"redux@npm:4.2.0, redux@npm:^4.2.0":
   version: 4.2.0
   resolution: "redux@npm:4.2.0"
   dependencies:
@@ -35728,7 +35729,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sqlstring@npm:^2.3.2":
+"sqlstring@npm:^2.3.3":
   version: 2.3.3
   resolution: "sqlstring@npm:2.3.3"
   checksum: 1e7e2d51c38a0cf7372e875408ca100b6e0c9a941ab7773975ea41fb36e5528e404dc787689be855780cf6d0a829ff71027964ae3a05a7446e91dce26672fda7

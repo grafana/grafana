@@ -356,7 +356,7 @@
     "rc-tree": "5.6.6",
     "re-resizable": "6.9.9",
     "react": "17.0.2",
-    "react-awesome-query-builder": "^5.1.2",
+    "react-awesome-query-builder": "5.3.1",
     "react-beautiful-dnd": "13.1.0",
     "react-diff-viewer": "^3.1.1",
     "react-dom": "17.0.2",
