@@ -122,6 +122,14 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
     this.props.onToggleContext();
   };
 
+  shouldShowShowContextToggle = (row: LogRowModel | undefined): boolean => {
+    const { showContextToggle } = this.props;
+    if (!showContextToggle) {
+      return false;
+    }
+    return showContextToggle(row);
+  };
+
   render() {
     const {
       row,
@@ -131,7 +139,6 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
       updateLimit,
       context,
       contextIsOpen,
-      showContextToggle,
       showRowMenu,
       wrapLogMessage,
       prettifyLogMessage,
@@ -170,10 +177,14 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
           </span>
           {showRowMenu && (
             <span
-              className={cx('log-row-menu', styles.rowMenu, showContextToggle?.(row) ? styles.large : styles.small)}
+              className={cx(
+                'log-row-menu',
+                styles.rowMenu,
+                this.shouldShowShowContextToggle(row) ? styles.large : styles.small
+              )}
               onClick={(e) => e.stopPropagation()}
             >
-              {showContextToggle?.(row) && (
+              {this.shouldShowShowContextToggle(row) && (
                 <Tooltip placement="top" content={'Show context'}>
                   <IconButton size="md" name="gf-show-context" onClick={this.onContextToggle} />
                 </Tooltip>
