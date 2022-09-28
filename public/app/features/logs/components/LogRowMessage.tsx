@@ -4,7 +4,7 @@ import React, { PureComponent } from 'react';
 import Highlighter from 'react-highlight-words';
 import tinycolor from 'tinycolor2';
 
-import { LogRowModel, findHighlightChunksInText, GrafanaTheme2 } from '@grafana/data';
+import { LogRowModel, findHighlightChunksInText, GrafanaTheme2, LogsSortOrder } from '@grafana/data';
 import { withTheme2, Themeable2, IconButton, Tooltip } from '@grafana/ui';
 
 import { LogMessageAnsi } from './LogMessageAnsi';
@@ -28,6 +28,7 @@ interface Props extends Themeable2 {
   getRows: () => LogRowModel[];
   onToggleContext: () => void;
   updateLimit?: () => void;
+  logsSortOrder?: LogsSortOrder | null;
 }
 
 const getStyles = (theme: GrafanaTheme2, showContextButton: boolean, isInDashboard: boolean | undefined) => {
@@ -138,6 +139,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
       prettifyLogMessage,
       onToggleContext,
       isInDashboard,
+      logsSortOrder,
     } = this.props;
 
     const style = getLogRowStyles(theme, row.logLevel);
@@ -160,6 +162,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
               wrapLogMessage={wrapLogMessage}
               hasMoreContextRows={hasMoreContextRows}
               onOutsideClick={onToggleContext}
+              logsSortOrder={logsSortOrder}
               onLoadMoreContext={() => {
                 if (updateLimit) {
                   updateLimit();

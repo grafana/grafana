@@ -77,7 +77,7 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 		OrgId:     dsWithCorrelations.OrgId,
 		Config: correlations.CorrelationConfig{
 			Field:  "foo",
-			Target: struct{}{},
+			Target: map[string]interface{}{},
 		},
 	})
 

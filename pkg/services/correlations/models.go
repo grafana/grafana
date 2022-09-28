@@ -15,7 +15,7 @@ var (
 
 // CorrelationConfigTarget is the target data query specific to target data source (Correlation.TargetUID)
 // swagger:model
-type CorrelationConfigTarget struct{}
+type CorrelationConfigTarget interface{}
 
 // swagger:model
 type CorrelationConfig struct {

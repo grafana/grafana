@@ -22,7 +22,8 @@ Complete the following tasks to create and manage your alerting resources using 
 
 1. Create an API key for provisioning.
 1. Configure the Terraform provider.
-1. Provision your alerting resources.
+1. Define your alerting resources in Terraform.
+1. Run `terraform apply` to provision your alerting resources.
 
 ## Before you begin
 
@@ -43,7 +44,7 @@ To create an API key for provisioning, complete the following steps.
 1. Create a new service account token.
 1. Name and save the token for use in Terraform.
 
-Alternatively, you can use Terraform authentication: [basic auth](https://registry.terraform.io/providers/grafana/grafana/latest/docs#authentication).
+Alternatively, you can use basic authentication. To view all the supported authentication formats, see [here](https://registry.terraform.io/providers/grafana/grafana/latest/docs#authentication).
 
 ## Configure the Terraform provider
 
@@ -69,13 +70,13 @@ provider "grafana" {
 
 ## Provision contact points and templates
 
-Contact points connect an alerting stack to the outside world. They tell Grafana how to connect to your external systems and where to deliver notifications. There are over fifteen different integrations to choose from.
+Contact points connect an alerting stack to the outside world. They tell Grafana how to connect to your external systems and where to deliver notifications. There are over fifteen different [integrations](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/contact_point#optional) to choose from.
 
 To provision contact points and templates, complete the following steps.
 
 1. Copy this code block into a .tf file on your local machine.
 
-This example uses a contact point that sends alert notifications to Slack.
+This example creates a contact point that sends alert notifications to Slack.
 
 ```terraform
 resource "grafana_contact_point" "my_slack_contact_point" {
@@ -105,7 +106,7 @@ The `text` field supports [Go-style templating](https://pkg.go.dev/text/template
 
 **Note:**
 
-You cannot edit resources provisioned from Terraform from the UI. This ensures that your alerting stack always stays in sync with your code.
+You cannot edit resources provisioned via Terraform from the UI. This ensures that your alerting stack always stays in sync with your code.
 
 1. Click **Test** to verify that the contact point works correctly.
 
@@ -137,6 +138,8 @@ To provision notification policies and routing, complete the following steps.
 1. Copy this code block into a .tf file on your local machine.
 
 In this example, the alerts are grouped by `alertname`, which means that any notifications coming from alerts which share the same name, are grouped into the same Slack message.
+
+If you want to route specific notifications differently, you can add sub-policies. Sub-policies allow you to apply routing to different alerts based on label matching. In this example, we apply a mute timing to all alerts with the label a=b.
 
 resource "grafana_notification_policy" "my_policy" {
 group_by = ["alertname"]
@@ -208,6 +211,8 @@ name = "My Mute Timing"
 
 1. Run the command ‘terraform apply’.
 1. Go to the Grafana UI and check the details of your mute timing.
+1. Reference your newly created mute timing in a notification policy using the `mute_timings` field.
+   This will apply your mute timing to some or all of your notifications.
 
 **Note:**
 
@@ -225,6 +230,8 @@ To provision alert rules, complete the following steps.
 
 In this example, the [TestData](https://grafana.com/docs/grafana/latest/datasources/testdata/) data source is used.
 
+Alerts can be defined against any backend datasource in Grafana.
+
 ```terraform
 resource "grafana_data_source" "testdata_datasource" {
     name = "TestData"
@@ -240,7 +247,7 @@ resource "grafana_folder" "rule_folder" {
 
 For more information on alert rules, refer to [how to create Grafana-managed alerts](https://grafana.com/blog/2022/08/01/grafana-alerting-video-how-to-create-alerts-in-grafana-9/).
 
-1. Group your alert rules.
+1. Create a rule group containing one or more rules.
 
 In this example, the `grafana_rule_group` resource group is used.
 
