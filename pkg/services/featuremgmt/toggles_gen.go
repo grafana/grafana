@@ -75,6 +75,10 @@ const (
 	// use experimental loki api for websocket streaming (early prototype)
 	FlagLokiDataframeApi = "lokiDataframeApi"
 
+	// FlagLokiMonacoEditor
+	// access to Monaco query editor for Loki
+	FlagLokiMonacoEditor = "lokiMonacoEditor"
+
 	// FlagSwaggerUi
 	// Serves swagger UI
 	FlagSwaggerUi = "swaggerUi"
