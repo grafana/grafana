@@ -35,6 +35,7 @@ export interface Props extends Themeable2 {
   forceEscape?: boolean;
   showDetectedFields?: string[];
   app?: CoreApp;
+  scrollElement?: HTMLDivElement | undefined;
   showContextToggle?: (row?: LogRowModel) => boolean;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
@@ -173,6 +174,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 toggleContextIsOpen={this.toggleContextIsOpen}
                 onLogRowHover={onLogRowHover}
                 app={app}
+                scrollElement={this.props.scrollElement}
               />
             ))}
           {hasData &&
@@ -203,6 +205,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 toggleContextIsOpen={this.toggleContextIsOpen}
                 onLogRowHover={onLogRowHover}
                 app={app}
+                scrollElement={this.props.scrollElement}
               />
             ))}
           {hasData && !renderAll && (

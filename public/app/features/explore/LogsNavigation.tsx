@@ -15,6 +15,7 @@ type Props = {
   loading: boolean;
   visibleRange: AbsoluteTimeRange;
   logsSortOrder?: LogsSortOrder | null;
+  scrollElement?: HTMLDivElement | undefined;
   onChangeTime: (range: AbsoluteTimeRange) => void;
   scrollToTopLogs: () => void;
   addResultsToCache: () => void;
