@@ -23,7 +23,8 @@ export interface Acknowledgements {
 
 // Instance methods
 export const dashboardHasTemplateVariables = (variables: VariableModel[]): boolean => {
-  return variables.length > 0;
+  // TODO: this is a POC, DO NOT MERGE
+  return false;
 };
 
 export const publicDashboardPersisted = (publicDashboard?: PublicDashboard): boolean => {

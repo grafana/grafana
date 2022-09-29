@@ -16,9 +16,8 @@ func ValidateSavePublicDashboard(dto *publicDashboardModels.SavePublicDashboardC
 }
 
 func hasTemplateVariables(dashboard *models.Dashboard) bool {
-	templateVariables := dashboard.Data.Get("templating").Get("list").MustArray()
-
-	return len(templateVariables) > 0
+	// TODO: this is a POC, DO NOT MERGE
+	return false
 }
 
 func ValidateQueryPublicDashboardRequest(req publicDashboardModels.PublicDashboardQueryDTO) error {

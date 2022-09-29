@@ -3,11 +3,13 @@ package service
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -243,6 +245,7 @@ func (pd *PublicDashboardServiceImpl) GetMetricRequest(ctx context.Context, dash
 func (pd *PublicDashboardServiceImpl) buildMetricRequest(ctx context.Context, dashboard *models.Dashboard, publicDashboard *PublicDashboard, panelId int64, reqDTO PublicDashboardQueryDTO) (dtos.MetricRequest, error) {
 	// group queries by panel
 	queriesByPanel := queries.GroupQueriesByPanelId(dashboard.Data)
+
 	queries, ok := queriesByPanel[panelId]
 	if !ok {
 		return dtos.MetricRequest{}, ErrPublicDashboardPanelNotFound
@@ -253,8 +256,35 @@ func (pd *PublicDashboardServiceImpl) buildMetricRequest(ctx context.Context, da
 	// determine safe resolution to query data at
 	safeInterval, safeResolution := pd.getSafeIntervalAndMaxDataPoints(reqDTO, ts)
 	for i := range queries {
+		datasourceType := queries[i].Get("datasource").Get("type").MustString()
+		pd.log.Info(fmt.Sprintf("datasource type %s", datasourceType))
+
 		queries[i].Set("intervalMs", safeInterval)
 		queries[i].Set("maxDataPoints", safeResolution)
+
+		// replace template variables
+		// this is a POC, not intended to get merged
+		// this loop is replacing all occurrences of ${var} and $var inside rawSql and expr
+		// using the default values declared in the original dashboard
+		// we should have different services for each datasource type (like postgres, prometheus, graphite)
+		// and different methods for each query type (textbox, custom, list, multivalue)
+		for _, varObj := range dashboard.Data.Get("templating").Get("list").MustArray() {
+			variable := simplejson.NewFromAny(varObj)
+			value := variable.Get("current").Get("value").MustString()
+			name := variable.Get("name").MustString()
+
+			// some DS uses rawSQL
+			rawSql := queries[i].Get("rawSql").MustString()
+			rawSql = strings.Replace(rawSql, fmt.Sprintf("${%s}", name), value, -1)
+			rawSql = strings.Replace(rawSql, fmt.Sprintf("$%s", name), value, -1)
+			queries[i].Set("rawSql", rawSql)
+
+			// some DS uses expr
+			expr := queries[i].Get("expr").MustString()
+			expr = strings.Replace(expr, fmt.Sprintf("${%s}", name), value, -1)
+			expr = strings.Replace(expr, fmt.Sprintf("$%s", name), value, -1)
+			queries[i].Set("expr", expr)
+		}
 	}
 
 	return dtos.MetricRequest{

@@ -63,12 +63,13 @@ var (
 )
 
 type PublicDashboard struct {
-	Uid          string        `json:"uid" xorm:"pk uid"`
-	DashboardUid string        `json:"dashboardUid" xorm:"dashboard_uid"`
-	OrgId        int64         `json:"-" xorm:"org_id"` // Don't ever marshal orgId to Json
-	TimeSettings *TimeSettings `json:"timeSettings" xorm:"time_settings"`
-	IsEnabled    bool          `json:"isEnabled" xorm:"is_enabled"`
-	AccessToken  string        `json:"accessToken" xorm:"access_token"`
+	Uid               string             `json:"uid" xorm:"pk uid"`
+	DashboardUid      string             `json:"dashboardUid" xorm:"dashboard_uid"`
+	OrgId             int64              `json:"-" xorm:"org_id"` // Don't ever marshal orgId to Json
+	TimeSettings      *TimeSettings      `json:"timeSettings" xorm:"time_settings"`
+	TemplateVariables *TemplateVariables `json:"templateVariables" xorm:"template_variables"`
+	IsEnabled         bool               `json:"isEnabled" xorm:"is_enabled"`
+	AccessToken       string             `json:"accessToken" xorm:"access_token"`
 
 	CreatedBy int64 `json:"createdBy" xorm:"created_by"`
 	UpdatedBy int64 `json:"updatedBy" xorm:"updated_by"`
@@ -84,6 +85,24 @@ func (pd PublicDashboard) TableName() string {
 type TimeSettings struct {
 	From string `json:"from,omitempty"`
 	To   string `json:"to,omitempty"`
+}
+
+type TemplateVariables struct {
+	Variables *[]TemplateVariable `json:"variables,omitempty"`
+}
+
+type TemplateVariable struct {
+	Type  string `json:"type,omitempty"`
+	Name  string `json:"name,omitempty"`
+	Value string `json:"value,omitempty"`
+}
+
+func (tv *TemplateVariables) FromDB(data []byte) error {
+	return json.Unmarshal(data, tv)
+}
+
+func (tv *TemplateVariables) ToDB() ([]byte, error) {
+	return json.Marshal(tv)
 }
 
 func (ts *TimeSettings) FromDB(data []byte) error {
