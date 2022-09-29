@@ -317,7 +317,9 @@ type ReadObjectRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	UID  string `protobuf:"bytes,1,opt,name=UID,proto3" json:"UID,omitempty"`
+	// Unique ID (Kind is also required) NOTE: UID+kind will likely be replaced with GRN that encodes both
+	UID string `protobuf:"bytes,1,opt,name=UID,proto3" json:"UID,omitempty"`
+	// Object kind (UID is also required) NOTE: UID+kind will likely be replaced with GRN that encodes both
 	Kind string `protobuf:"bytes,2,opt,name=kind,proto3" json:"kind,omitempty"`
 	// Fetch an explicit version
 	Version string `protobuf:"bytes,3,opt,name=version,proto3" json:"version,omitempty"`
@@ -550,9 +552,9 @@ type WriteObjectRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// Object identifier
+	// Unique ID (Kind is also required) NOTE: UID+kind will likely be replaced with GRN that encodes both
 	UID string `protobuf:"bytes,1,opt,name=UID,proto3" json:"UID,omitempty"`
-	// Object kind
+	// Object kind (UID is also required) NOTE: UID+kind will likely be replaced with GRN that encodes both
 	Kind string `protobuf:"bytes,2,opt,name=kind,proto3" json:"kind,omitempty"`
 	// The raw object body
 	Body []byte `protobuf:"bytes,3,opt,name=body,proto3" json:"body,omitempty"`
@@ -700,9 +702,9 @@ type DeleteObjectRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// Object identifier
+	// Unique ID (Kind is also required) NOTE: UID+kind will likely be replaced with GRN that encodes both
 	UID string `protobuf:"bytes,1,opt,name=UID,proto3" json:"UID,omitempty"`
-	// Object kind
+	// Object kind (UID is also required) NOTE: UID+kind will likely be replaced with GRN that encodes both
 	Kind string `protobuf:"bytes,2,opt,name=kind,proto3" json:"kind,omitempty"`
 	// Used for optimistic locking.  If missing, the previous version will be replaced regardless
 	PreviousVersion string `protobuf:"bytes,3,opt,name=previous_version,json=previousVersion,proto3" json:"previous_version,omitempty"`
@@ -813,9 +815,9 @@ type ObjectHistoryRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// Object identifier
+	// Unique ID (Kind is also required) NOTE: UID+kind will likely be replaced with GRN that encodes both
 	UID string `protobuf:"bytes,1,opt,name=UID,proto3" json:"UID,omitempty"`
-	// Object kind
+	// Object kind (UID is also required) NOTE: UID+kind will likely be replaced with GRN that encodes both
 	Kind string `protobuf:"bytes,2,opt,name=kind,proto3" json:"kind,omitempty"`
 	// Maximum number of items to return
 	Limit int64 `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`

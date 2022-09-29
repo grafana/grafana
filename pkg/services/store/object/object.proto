@@ -81,7 +81,10 @@ message ObjectErrorInfo {
 //-----------------------------------------------
 
 message ReadObjectRequest {
+  // Unique ID (Kind is also required) NOTE: UID+kind will likely be replaced with GRN that encodes both
   string UID = 1;
+
+  // Object kind (UID is also required) NOTE: UID+kind will likely be replaced with GRN that encodes both
   string kind = 2;
 
   // Fetch an explicit version
@@ -119,10 +122,10 @@ message BatchReadObjectResponse {
 //-----------------------------------------------
 
 message WriteObjectRequest {
-  // Object identifier
+  // Unique ID (Kind is also required) NOTE: UID+kind will likely be replaced with GRN that encodes both
   string UID = 1;
 
-  // Object kind
+  // Object kind (UID is also required) NOTE: UID+kind will likely be replaced with GRN that encodes both
   string kind = 2;
 
   // The raw object body
@@ -151,10 +154,10 @@ message WriteObjectResponse {
 //-----------------------------------------------
 
 message DeleteObjectRequest {
-  // Object identifier
+  // Unique ID (Kind is also required) NOTE: UID+kind will likely be replaced with GRN that encodes both
   string UID = 1;
 
-  // Object kind
+  // Object kind (UID is also required) NOTE: UID+kind will likely be replaced with GRN that encodes both
   string kind = 2;
 
   // Used for optimistic locking.  If missing, the previous version will be replaced regardless
@@ -170,10 +173,10 @@ message DeleteObjectResponse {
 //-----------------------------------------------
 
 message ObjectHistoryRequest {
-  // Object identifier
+  // Unique ID (Kind is also required) NOTE: UID+kind will likely be replaced with GRN that encodes both
   string UID = 1;
 
-  // Object kind
+  // Object kind (UID is also required) NOTE: UID+kind will likely be replaced with GRN that encodes both
   string kind = 2;
 
   // Maximum number of items to return
