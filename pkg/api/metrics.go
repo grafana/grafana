@@ -79,11 +79,11 @@ func (hs *HTTPServer) toJsonStreamingResponse(qdr *backend.QueryDataResponse) re
 		if resp.Error != nil {
 			statusCode = http.StatusMultiStatus
 
-			var ed backend.ErrorDetails
+			var ed backend.Error
 			if errors.As(resp.Error, &ed) {
-				qr.Status = ed.Status.HTTPStatus()
+				qr.Status = ed.Status().HTTPStatus()
 			} else {
-				qr.Status = backend.InferErrorStatusFromError(resp.Error).HTTPStatus()
+				qr.Status = backend.ErrorStatusFromError(resp.Error).HTTPStatus()
 			}
 		}
 		res[refID] = qr

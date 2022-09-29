@@ -20,7 +20,7 @@ const (
 	randomWalkQuery                   queryType = "random_walk"
 	randomWalkSlowQuery               queryType = "slow_query"
 	randomWalkWithErrorQuery          queryType = "random_walk_with_error"
-	errorDetails                      queryType = "error_details"
+	pluginQueryError                  queryType = "plugin_query_error"
 	randomWalkTableQuery              queryType = "random_walk_table"
 	exponentialHeatmapBucketDataQuery queryType = "exponential_heatmap_bucket_data"
 	linearHeatmapBucketDataQuery      queryType = "linear_heatmap_bucket_data"
@@ -177,9 +177,9 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 	})
 
 	s.registerScenario(&Scenario{
-		ID:      string(errorDetails),
-		Name:    "Error details",
-		handler: s.handleErrorDetailsScenario,
+		ID:      string(pluginQueryError),
+		Name:    "Plugin Query Error",
+		handler: s.handleDataResponseErrorScenario,
 	})
 
 	s.registerScenario(&Scenario{
@@ -377,16 +377,14 @@ func (s *Service) handleRandomWalkWithErrorScenario(ctx context.Context, req *ba
 	return resp, nil
 }
 
-func (s *Service) handleErrorDetailsScenario(_ context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (s *Service) handleDataResponseErrorScenario(_ context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	rand.Seed(time.Now().Unix())
 	for _, q := range req.Queries {
 		respD := resp.Responses[q.RefID]
-		respD.Error = &backend.ErrorDetails{
-			Status:        backend.ErrorStatuses()[rand.Intn(len(backend.ErrorStatuses()))],
-			PublicMessage: "Something happened",
-		}
+		errStatus := []backend.ErrorStatus{backend.UnauthorizedErrorStatus, backend.TooManyRequestsErrorStatus, backend.ValidationFailedErrorStatus}[rand.Intn(3)]
+		respD.Error = backend.NewError(errStatus, "Something bad happened")
 		resp.Responses[q.RefID] = respD
 	}
 
