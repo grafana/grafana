@@ -57,7 +57,8 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, r
 	timeSeriesQuery.Query += fmt.Sprintf(" | within d'%s', d'%s'", from.UTC().Format(timeFormat), to.UTC().Format(timeFormat))
 
 	buf, err := json.Marshal(map[string]interface{}{
-		"query": timeSeriesQuery.Query,
+		"query":    timeSeriesQuery.Query,
+		"pageSize": 1,
 	})
 	if err != nil {
 		dr.Error = err
@@ -89,6 +90,42 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, r
 		dr.Error = err
 		return dr, cloudMonitoringResponse{}, "", nil
 	}
+
+	// fmt.Println("response", string(d.NextPageToken))
+	// finished := d.NextPageToken
+	// for finished != "" {
+	// 	fmt.Println("from loop", string(d.NextPageToken))
+	// 	buf, err := json.Marshal(map[string]interface{}{
+	// 		"query": timeSeriesQuery.Query,
+	// 		"pageToken": d.NextPageToken,
+	// 	})
+	// 	if err != nil {
+	// 		dr.Error = err
+	// 		return dr, cloudMonitoringResponse{}, "", nil
+	// 	}
+	// 	r, err := s.createRequest(ctx, &dsInfo, path.Join("/v3/projects", projectName, "timeSeries:query"), bytes.NewBuffer(buf))
+	// 	if err != nil {
+	// 		dr.Error = err
+	// 		return dr, cloudMonitoringResponse{}, "", nil
+	// 	}
+	// 	defer span.End()
+	// 	tracer.Inject(ctx, r.Header, span)
+
+	// 	r = r.WithContext(ctx)
+	// 	res, err := dsInfo.services[cloudMonitor].client.Do(r)
+	// 	if err != nil {
+	// 		dr.Error = err
+	// 		return dr, cloudMonitoringResponse{}, "", nil
+	// 	}
+
+	// 	dnext, err := unmarshalResponse(res)
+	// 	if err != nil {
+	// 		dr.Error = err
+	// 		return dr, cloudMonitoringResponse{}, "", nil
+	// 	}
+	// 	d.TimeSeries = append(d.TimeSeries, dnext.TimeSeries...)
+	// 	finished = dnext.NextPageToken
+	// }
 
 	return dr, d, timeSeriesQuery.Query, nil
 }

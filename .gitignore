@@ -182,3 +182,4 @@ public/locales/**/*.js
 deployment_tools_config.json
 
 .betterer.cache
+conf/provisioning/datasources/stackdriver.yml
