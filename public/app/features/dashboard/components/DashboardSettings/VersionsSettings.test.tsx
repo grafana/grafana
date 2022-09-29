@@ -103,7 +103,7 @@ describe('VersionSettings', () => {
     historySrv.getHistoryList.mockResolvedValue(versions.slice(0, VERSIONS_FETCH_LIMIT - 5));
     setup();
 
-    expect(screen.queryByRole('button', { name: /show more versions|/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /show more versions/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /compare versions/i })).not.toBeInTheDocument();
 
     await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument());
