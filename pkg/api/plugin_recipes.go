@@ -164,6 +164,9 @@ func (hs *HTTPServer) InstallRecipe(c *models.ReqContext) response.Response {
 					StatusMessage: "Cannot install or change a Core plugin",
 				}
 			}
+
+			// Todo: change so we catch other errors
+
 		} else {
 			status[recipeID][step.Id] = RecipeStepStatus{
 				Id:            step.Id,
@@ -174,8 +177,8 @@ func (hs *HTTPServer) InstallRecipe(c *models.ReqContext) response.Response {
 
 	}
 
-	for _, step := range recipe.Steps {
-		step.Status = status[recipeID][step.Id]
+	for i, step := range recipe.Steps {
+		recipe.Steps[i].Status = status[recipeID][step.Id]
 	}
 
 	return response.JSON(http.StatusOK, InstallResponse{StatusUrl: "/api/plugins-recipe/" + recipe.Id + "/status", Recipe: *recipe})
@@ -186,7 +189,27 @@ func (hs *HTTPServer) UninstallRecipe(c *models.ReqContext) response.Response {
 }
 
 func (hs *HTTPServer) GetRecipeStatus(c *models.ReqContext) response.Response {
-	return response.Success("Plugin settings updated")
+	recipeID := web.Params(c.Req)[":recipeId"]
+	recipe := FindRecipeById(recipes, recipeID)
+
+	for i, step := range recipe.Steps {
+		if s, ok := status[recipeID][step.Id]; ok {
+			recipe.Steps[i].Status = s
+			continue
+		}
+
+		_, exists := hs.pluginStore.Plugin(c.Req.Context(), step.Plugin.Id)
+		if exists {
+			recipe.Steps[i].Status = RecipeStepStatus{
+				Id:            step.Id,
+				Status:        "Ok",
+				StatusMessage: "Plugin successfully installed",
+			}
+			continue
+		}
+	}
+
+	return response.JSON(http.StatusOK, InstallResponse{StatusUrl: "/api/plugins-recipe/" + recipe.Id + "/status", Recipe: *recipe})
 }
 
 func FindRecipeById(recipes []Recipe, id string) *Recipe {
@@ -198,40 +221,3 @@ func FindRecipeById(recipes []Recipe, id string) *Recipe {
 
 	return nil
 }
-
-// func installRecipe(p *RecipeStep) {
-// 	dto := dtos.InstallPluginCommand{}
-// 	if err := web.Bind(c.Req, &dto); err != nil {
-// 		return response.Error(http.StatusBadRequest, "bad request data", err)
-// 	}
-// 	pluginID := web.Params(c.Req)[":pluginId"]
-
-// 	err := hs.pluginInstaller.Add(c.Req.Context(), pluginID, dto.Version, plugins.CompatOpts{
-// 		GrafanaVersion: hs.Cfg.BuildVersion,
-// 		OS:             runtime.GOOS,
-// 		Arch:           runtime.GOARCH,
-// 	})
-// 	if err != nil {
-// 		var dupeErr plugins.DuplicateError
-// 		if errors.As(err, &dupeErr) {
-// 			return response.Error(http.StatusConflict, "Plugin already installed", err)
-// 		}
-// 		var versionUnsupportedErr repo.ErrVersionUnsupported
-// 		if errors.As(err, &versionUnsupportedErr) {
-// 			return response.Error(http.StatusConflict, "Plugin version not supported", err)
-// 		}
-// 		var versionNotFoundErr repo.ErrVersionNotFound
-// 		if errors.As(err, &versionNotFoundErr) {
-// 			return response.Error(http.StatusNotFound, "Plugin version not found", err)
-// 		}
-// 		var clientError repo.Response4xxError
-// 		if errors.As(err, &clientError) {
-// 			return response.Error(clientError.StatusCode, clientError.Message, err)
-// 		}
-// 		if errors.Is(err, plugins.ErrInstallCorePlugin) {
-// 			return response.Error(http.StatusForbidden, "Cannot install or change a Core plugin", err)
-// 		}
-
-// 		return response.Error(http.StatusInternalServerError, "Failed to install plugin", err)
-// 	}
-// }
