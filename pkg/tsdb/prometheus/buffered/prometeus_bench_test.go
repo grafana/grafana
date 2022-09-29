@@ -24,6 +24,8 @@ func BenchmarkExemplarJson(b *testing.B) {
 	require.NoError(b, err)
 
 	responseFileName := filepath.Join("../testdata", "exemplar.result.json")
+	// This is a test, so it's safe to ignore gosec warning G304.
+	// nolint:gosec
 	responseBytes, err := os.ReadFile(responseFileName)
 	require.NoError(b, err)
 
@@ -113,6 +115,8 @@ func createJsonTestData(start int64, step int64, timestampCount int, seriesCount
 }
 
 func loadStoredQuery(fileName string) (*PrometheusQuery, error) {
+	// This is a test, so it's safe to ignore gosec warning G304.
+	// nolint:gosec
 	bytes, err := os.ReadFile(fileName)
 	if err != nil {
 		return nil, err
