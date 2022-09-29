@@ -115,7 +115,7 @@ func TestBuildConflictBlock(t *testing.T) {
 				}
 				m, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
 				require.NoError(t, err)
-				r := ConflictResolver{}
+				r := ConflictResolver{Store: sqlStore}
 				r.BuildConflictBlocks(m, fmt.Sprintf)
 				require.Equal(t, tc.wantedNumberOfUsers, len(r.Blocks[tc.expectedBlock]))
 				if tc.wantDiscardedBlock != "" {
@@ -220,7 +220,7 @@ conflict: test2
 				}
 
 				conflicts, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
-				r := ConflictResolver{Users: conflicts}
+				r := ConflictResolver{Users: conflicts, Store: sqlStore}
 				r.BuildConflictBlocks(conflicts, fmt.Sprintf)
 				require.NoError(t, err)
 				validErr := getValidConflictUsers(&r, []byte(tc.fileString))
@@ -505,7 +505,7 @@ func TestGenerateConflictingUsersFile(t *testing.T) {
 				}
 				m, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
 				require.NoError(t, err)
-				r := ConflictResolver{}
+				r := ConflictResolver{Store: sqlStore}
 				r.BuildConflictBlocks(m, fmt.Sprintf)
 				if tc.expectedDiscardedBlock != "" {
 					require.Equal(t, true, r.DiscardedBlocks[tc.expectedDiscardedBlock])
@@ -563,7 +563,7 @@ func TestRunValidateConflictUserFile(t *testing.T) {
 			// get users
 			conflictUsers, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
 			require.NoError(t, err)
-			r := ConflictResolver{}
+			r := ConflictResolver{Store: sqlStore}
 			r.BuildConflictBlocks(conflictUsers, fmt.Sprintf)
 			tmpFile, err := generateConflictUsersFile(&r)
 			require.NoError(t, err)
@@ -614,7 +614,7 @@ func TestMergeUser(t *testing.T) {
 			// get users
 			conflictUsers, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
 			require.NoError(t, err)
-			r := ConflictResolver{}
+			r := ConflictResolver{Store: sqlStore}
 			r.BuildConflictBlocks(conflictUsers, fmt.Sprintf)
 			tmpFile, err := generateConflictUsersFile(&r)
 			require.NoError(t, err)
@@ -712,7 +712,7 @@ conflict: test2
 				// add additional user with conflicting login where DOMAIN is upper case
 				conflictUsers, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
 				require.NoError(t, err)
-				r := ConflictResolver{}
+				r := ConflictResolver{Store: sqlStore}
 				r.BuildConflictBlocks(conflictUsers, fmt.Sprintf)
 				require.NoError(t, err)
 				// validation to get newConflicts
