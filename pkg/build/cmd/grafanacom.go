@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -102,7 +102,7 @@ func getReleaseURLs() (string, string, error) {
 		Grafana grafanaConf `json:"grafana"`
 	}
 
-	pkgB, err := ioutil.ReadFile("package.json")
+	pkgB, err := os.ReadFile("package.json")
 	if err != nil {
 		return "", "", fmt.Errorf("failed to read package.json: %w", err)
 	}
@@ -153,20 +153,11 @@ func publishPackages(cfg PublishConfig) error {
 	pth = path.Join(pth, product)
 	baseArchiveURL := fmt.Sprintf("https://dl.grafana.com/%s", pth)
 
-	builds := []buildRepr{}
+	var builds []buildRepr
 	for _, ba := range ArtifactConfigs {
 		u := ba.GetURL(baseArchiveURL, cfg)
 
-		shaURL := fmt.Sprintf("%s.sha256", u)
-		resp, err := http.Get(shaURL)
-		if err != nil {
-			return err
-		}
-		defer resp.Body.Close()
-		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-			return fmt.Errorf("failed downloading %s: %s", u, resp.Status)
-		}
-		sha256, err := ioutil.ReadAll(resp.Body)
+		sha256, err := getSHA256(u)
 		if err != nil {
 			return err
 		}
@@ -215,6 +206,29 @@ func publishPackages(cfg PublishConfig) error {
 	return nil
 }
 
+func getSHA256(u string) ([]byte, error) {
+	shaURL := fmt.Sprintf("%s.sha256", u)
+	resp, err := http.Get(shaURL)
+	if err != nil {
+		return nil, err
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			return
+		}
+	}(resp.Body)
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("failed downloading %s: %s", u, resp.Status)
+	}
+
+	var sha256 []byte
+	if err := json.NewDecoder(resp.Body).Decode(&sha256); err != nil {
+		return nil, err
+	}
+	return sha256, nil
+}
+
 func postRequest(cfg PublishConfig, pth string, obj interface{}, descr string) error {
 	var sfx string
 	switch cfg.Edition {
@@ -249,9 +263,17 @@ func postRequest(cfg PublishConfig, pth string, obj interface{}, descr string) e
 	if err != nil {
 		return fmt.Errorf("failed posting to %s (%s): %s", u, descr, err)
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+
+		}
+	}(resp.Body)
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		body, err := ioutil.ReadAll(resp.Body)
+		var body []byte
+		if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+			return err
+		}
 		if err != nil {
 			return err
 		}

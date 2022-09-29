@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/grafana/grafana/pkg/build/config"
 	"strings"
+
+	"github.com/grafana/grafana/pkg/build/config"
 )
 
 const ReleaseFolder = "release"
