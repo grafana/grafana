@@ -2,12 +2,11 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { LogsDedupStrategy, LogsMetaItem, LogsMetaKind, LogRowModel } from '@grafana/data';
-import { Button, Tooltip, useStyles2 } from '@grafana/ui';
-
-import { LogLabels } from '../logs/components/LogLabels';
-import { MAX_CHARACTERS } from '../logs/components/LogRowMessage';
+import { Button, ToolbarButton, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { downloadLogsModelAsTxt } from '../inspector/utils/download';
+import { LogLabels } from '../logs/components/LogLabels';
+import { MAX_CHARACTERS } from '../logs/components/LogRowMessage';
 
 import { MetaInfoText, MetaItemProps } from './MetaInfoText';
 
