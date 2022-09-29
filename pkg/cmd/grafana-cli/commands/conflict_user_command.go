@@ -268,17 +268,21 @@ func getValidConflictUsers(r *ConflictResolver, b []byte) error {
 }
 
 func (r *ConflictResolver) MergeConflictingUsers(ctx context.Context) error {
-	err := r.Store.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		for block, users := range r.Blocks {
-			if len(users) < 2 {
-				return fmt.Errorf("not enough users to perform merge, found %d for id %s, should be at least 2", len(users), block)
-			}
-			var intoUser user.User
-			var intoUserId int64
-			var fromUserIds []int64
+	for block, users := range r.Blocks {
+		if len(users) < 2 {
+			return fmt.Errorf("not enough users to perform merge, found %d for id %s, should be at least 2", len(users), block)
+		}
+		var intoUser user.User
+		var intoUserId int64
+		var fromUserIds []int64
 
-			// creating a session for each block of users
-			// we want to rollback incase something happens during update / delete
+		// creating a session for each block of users
+		// we want to rollback incase something happens during update / delete
+		if err := r.Store.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			err := sess.Begin()
+			if err != nil {
+				return fmt.Errorf("could not open a db session: %w", err)
+			}
 			for _, u := range users {
 				if u.Direction == "+" {
 					id, err := strconv.ParseInt(u.ID, 10, 64)
@@ -327,10 +331,12 @@ func (r *ConflictResolver) MergeConflictingUsers(ctx context.Context) error {
 			if updateErr != nil {
 				return fmt.Errorf("could not update user: %w", updateErr)
 			}
+			return nil
+		}); err != nil {
+			return err
 		}
-		return nil
-	})
-	return err
+	}
+	return nil
 }
 
 /*
