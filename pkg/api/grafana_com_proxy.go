@@ -66,7 +66,7 @@ func (hs *HTTPServer) ListGnetPlugins(c *models.ReqContext) {
 		}
 
 		// Add RBAC Metadata to the plugins list
-		ok := hs.addMetadataToGNETPluginList(pluginList, c)
+		ok := addMetadataToGNETPluginList(c, pluginList)
 		if !ok {
 			hs.log.Warn("could not add metadata to gnet plugins list")
 			writeResponse(r, b)
@@ -87,7 +87,7 @@ func (hs *HTTPServer) ListGnetPlugins(c *models.ReqContext) {
 	proxy.ServeHTTP(c.Resp, c.Req)
 }
 
-func (*HTTPServer) addMetadataToGNETPluginList(pluginList map[string]interface{}, c *models.ReqContext) bool {
+func addMetadataToGNETPluginList(c *models.ReqContext, pluginList map[string]interface{}) bool {
 	items, ok := pluginList["items"].([]interface{})
 	if !ok {
 		return false
