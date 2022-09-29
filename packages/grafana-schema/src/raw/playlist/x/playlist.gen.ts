@@ -28,11 +28,11 @@ export interface Playlist {
     /**
      * PlaylistID for the playlist containing the item. Deprecated.
      */
-    playlist_id: number;
+    playlistid: number;
     /**
      * Type of the item.
      */
-    type: ('dashboard_by_id' | 'dashboard_by_tag');
+    type: ('dashboard_by_uid' | 'dashboard_by_id' | 'dashboard_by_tag');
     /**
      * Value depends on type and describes the playlist item.
      * 

@@ -11,7 +11,7 @@ seqs: [
 		schemas: [
 			{//0.0
 				// Unique playlist identifier for internal use, set by Grafana.
-				id: int64 @reviewme()
+				id: int64 @grafana(decisionNeeded)
 				// Unique playlist identifier. Generated on creation, either by the
 				// creator of the playlist of by the application.
 				uid: string
@@ -29,12 +29,12 @@ seqs: [
 				#PlaylistItem: {
 					// FIXME: The prefixDropper removes playlist from playlist_id, that doesn't work for us since it'll mean we'll have Id twice.
 					// ID of the playlist item for internal use by Grafana. Deprecated.
-					id: int64 @reviewme()
+					id: int64 @grafana(decisionNeeded)
 					// PlaylistID for the playlist containing the item. Deprecated.
-					playlist_id: int64 @reviewme()
+					playlistid: int64 @grafana(decisionNeeded)
 
 					// Type of the item.
-					type: "dashboard_by_id" | "dashboard_by_tag"
+					type: "dashboard_by_uid" | "dashboard_by_id" | "dashboard_by_tag"
 					// Value depends on type and describes the playlist item.
 					//
 					//  - dashboard_by_id: The value is an internal numerical identifier set by Grafana. This
@@ -44,9 +44,9 @@ seqs: [
 					//  dashboards behind the tag will be added to the playlist.
 					value: string
 					// Title is the human-readable identifier for the playlist item.
-					title: string @reviewme()
+					title: string @grafana(decisionNeeded)
 					// Order is the position in the list for the item. Deprecated.
-					order: int64 | *0 @reviewme()
+					order: int64 | *0 @grafana(decisionNeeded)
 				}
 			}
 		]

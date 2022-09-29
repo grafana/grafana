@@ -22,6 +22,8 @@ const (
 	PlaylistItemTypeDashboardById PlaylistItemType = "dashboard_by_id"
 
 	PlaylistItemTypeDashboardByTag PlaylistItemType = "dashboard_by_tag"
+
+	PlaylistItemTypeDashboardByUid PlaylistItemType = "dashboard_by_uid"
 )
 
 // Model is the Go representation of a playlist.
@@ -60,7 +62,7 @@ type PlaylistItem struct {
 	Order int `json:"order"`
 
 	// ID for the playlist containing the item. Deprecated.
-	PlaylistId int64 `json:"playlist_id"`
+	Playlistid int64 `json:"playlistid"`
 
 	// Title is the human-readable identifier for the playlist item.
 	Title string `json:"title"`
