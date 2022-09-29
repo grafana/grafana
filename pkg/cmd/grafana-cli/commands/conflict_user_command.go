@@ -372,8 +372,7 @@ func (r *ConflictResolver) showChanges() {
 		b.WriteString("Keep the following user.\n")
 		b.WriteString(fmt.Sprintf("%s\n", block))
 		b.WriteString(fmt.Sprintf("id: %s, email: %s, login: %s\n", mainUser.ID, mainUser.Email, mainUser.Login))
-		b.WriteString("\n")
-		b.WriteString("\n")
+		b.WriteString("\n\n")
 		b.WriteString("The following user(s) will be deleted.\n")
 		for _, user := range users {
 			if user.ID == mainUser.ID {
@@ -382,8 +381,7 @@ func (r *ConflictResolver) showChanges() {
 			// mergeable users
 			b.WriteString(fmt.Sprintf("id: %s, email: %s, login: %s\n", user.ID, user.Email, user.Login))
 		}
-		b.WriteString("\n")
-		b.WriteString("\n")
+		b.WriteString("\n\n")
 	}
 	logger.Info("\n\nChanges that will take place\n\n")
 	logger.Infof(b.String())
