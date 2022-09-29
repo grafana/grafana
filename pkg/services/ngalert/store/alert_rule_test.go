@@ -52,7 +52,7 @@ func TestUpdateAlertRules(t *testing.T) {
 		rule := createRule(t)
 		newRule := models.CopyRule(rule)
 		newRule.Title = util.GenerateShortUID()
-		err := store.UpdateAlertRules(context.Background(), []UpdateRule{{
+		err := store.UpdateAlertRules(context.Background(), []models.UpdateRule{{
 			Existing: rule,
 			New:      *newRule,
 		},
@@ -77,7 +77,7 @@ func TestUpdateAlertRules(t *testing.T) {
 		newRule := models.CopyRule(rule)
 		newRule.Title = util.GenerateShortUID()
 
-		err := store.UpdateAlertRules(context.Background(), []UpdateRule{{
+		err := store.UpdateAlertRules(context.Background(), []models.UpdateRule{{
 			Existing: rule,
 			New:      *newRule,
 		},
