@@ -14,7 +14,7 @@ import { setOptionImmutably } from 'app/features/dashboard/components/PanelEdito
 import { activePanelSubject, InstanceState } from './CanvasPanel';
 import { getElementEditor } from './editor/elementEditor';
 import { getLayerEditor } from './editor/layerEditor';
-import { generateStandardCanvasOptions } from './module';
+import { addStandardCanvasEditorOptions } from './module';
 
 export function InlineEditBody() {
   const activePanel = useObservable(activePanelSubject);
@@ -43,7 +43,7 @@ export function InlineEditBody() {
         }
       }
 
-      generateStandardCanvasOptions(builder);
+      addStandardCanvasEditorOptions(builder);
     };
 
     return getOptionsPaneCategoryDescriptor(

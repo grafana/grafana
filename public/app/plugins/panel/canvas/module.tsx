@@ -6,7 +6,7 @@ import { getElementEditor } from './editor/elementEditor';
 import { getLayerEditor } from './editor/layerEditor';
 import { PanelOptions } from './models.gen';
 
-export const generateStandardCanvasOptions = (builder: PanelOptionsEditorBuilder<PanelOptions>) => {
+export const addStandardCanvasEditorOptions = (builder: PanelOptionsEditorBuilder<PanelOptions>) => {
   builder.addBooleanSwitch({
     path: 'inlineEditing',
     name: 'Inline editing',
@@ -28,7 +28,7 @@ export const plugin = new PanelPlugin<PanelOptions>(CanvasPanel)
   .setPanelOptions((builder, context) => {
     const state: InstanceState = context.instanceState;
 
-    generateStandardCanvasOptions(builder);
+    addStandardCanvasEditorOptions(builder);
 
     if (state) {
       builder.addNestedOptions(getLayerEditor(state));
