@@ -24,7 +24,7 @@ export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
     menuProps: DataLinksContextMenuApi
   ): JSX.Element => {
     const { timeRange, options } = this.props;
-    const { value, alignmentFactors, width, height, count } = valueProps;
+    const { value, alignmentFactors, width, height, count, orientation } = valueProps;
     const { openMenu, targetClassName } = menuProps;
     let sparkline = value.sparkline;
     if (sparkline) {
@@ -41,6 +41,7 @@ export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
         justifyMode={options.justifyMode}
         textMode={this.getTextMode()}
         alignmentFactors={alignmentFactors}
+        parentOrientation={orientation}
         text={options.text}
         width={width}
         height={height}

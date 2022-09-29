@@ -2,8 +2,8 @@ import { SyntaxNode, TreeCursor } from '@lezer/common';
 
 import { QueryBuilderOperation } from './types';
 
-// This is used for error type for some reason
-export const ErrorName = '⚠';
+// Although 0 isn't explicitly provided in the lezer-promql & @grafana/lezer-logql library as the error node ID, it does appear to be the ID of error nodes within lezer.
+export const ErrorId = 0;
 
 export function getLeftMostChild(cur: SyntaxNode): SyntaxNode {
   return cur.firstChild ? getLeftMostChild(cur.firstChild) : cur;

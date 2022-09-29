@@ -6,7 +6,12 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -16,15 +21,20 @@ import (
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
-
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
 var (
-	namespace                             = "grafana"
-	subsystem                             = "search"
+	namespace                               = "grafana"
+	subsystem                               = "search"
+	dashboardSearchNotServedRequestsCounter = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Name:      "dashboard_search_requests_not_served_total",
+			Help:      "A counter for dashboard search requests that could not be served due to an ongoing search engine indexing",
+		},
+		[]string{"reason"},
+	)
 	dashboardSearchFailureRequestsCounter = promauto.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: namespace,
@@ -53,10 +63,12 @@ var (
 type StandardSearchService struct {
 	registry.BackgroundService
 
-	cfg  *setting.Cfg
-	sql  *sqlstore.SQLStore
-	auth FutureAuthService // eventually injected from elsewhere
-	ac   accesscontrol.Service
+	cfg         *setting.Cfg
+	sql         *sqlstore.SQLStore
+	auth        FutureAuthService // eventually injected from elsewhere
+	ac          accesscontrol.Service
+	orgService  org.Service
+	userService user.Service
 
 	logger         log.Logger
 	dashboardIndex *searchIndex
@@ -68,7 +80,9 @@ func (s *StandardSearchService) IsReady(ctx context.Context, orgId int64) IsSear
 	return s.dashboardIndex.isInitialized(ctx, orgId)
 }
 
-func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore store.EntityEventsService, ac accesscontrol.Service) SearchService {
+func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore store.EntityEventsService,
+	ac accesscontrol.Service, tracer tracing.Tracer, features featuremgmt.FeatureToggles, orgService org.Service,
+	userService user.Service) SearchService {
 	extender := &NoopExtender{}
 	s := &StandardSearchService{
 		cfg: cfg,
@@ -79,14 +93,19 @@ func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore s
 			ac:  ac,
 		},
 		dashboardIndex: newSearchIndex(
-			newSQLDashboardLoader(sql),
+			newSQLDashboardLoader(sql, tracer, cfg.Search),
 			entityEventStore,
 			extender.GetDocumentExtender(),
 			newFolderIDLookup(sql),
+			tracer,
+			features,
+			cfg.Search,
 		),
-		logger:    log.New("searchV2"),
-		extender:  extender,
-		reIndexCh: make(chan struct{}, 1),
+		logger:      log.New("searchV2"),
+		extender:    extender,
+		reIndexCh:   make(chan struct{}, 1),
+		orgService:  orgService,
+		userService: userService,
 	}
 	return s
 }
@@ -142,23 +161,22 @@ func (s *StandardSearchService) getUser(ctx context.Context, backendUser *backen
 			IsAnonymous: true,
 		}
 	} else {
-		getSignedInUserQuery := &models.GetSignedInUserQuery{
+		getSignedInUserQuery := &user.GetSignedInUserQuery{
 			Login: backendUser.Login,
 			Email: backendUser.Email,
-			OrgId: orgId,
+			OrgID: orgId,
 		}
-		err := s.sql.GetSignedInUser(ctx, getSignedInUserQuery)
+		var err error
+		usr, err = s.userService.GetSignedInUser(ctx, getSignedInUserQuery)
 		if err != nil {
 			s.logger.Error("Error while retrieving user", "error", err, "email", backendUser.Email, "login", getSignedInUserQuery.Login)
 			return nil, errors.New("auth error")
 		}
 
-		if getSignedInUserQuery.Result == nil {
+		if usr == nil {
 			s.logger.Error("No user found", "email", backendUser.Email)
 			return nil, errors.New("auth error")
 		}
-
-		usr = getSignedInUserQuery.Result
 	}
 
 	if s.ac.IsDisabled() {
@@ -188,7 +206,21 @@ func (s *StandardSearchService) getUser(ctx context.Context, backendUser *backen
 
 func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *backend.User, orgID int64, q DashboardQuery) *backend.DataResponse {
 	start := time.Now()
-	query := s.doDashboardQuery(ctx, user, orgID, q)
+
+	signedInUser, err := s.getUser(ctx, user, orgID)
+
+	if err != nil {
+		dashboardSearchFailureRequestsCounter.With(prometheus.Labels{
+			"reason": "get_user_error",
+		}).Inc()
+
+		duration := time.Since(start).Seconds()
+		dashboardSearchFailureRequestsDuration.Observe(duration)
+
+		return &backend.DataResponse{Error: err}
+	}
+
+	query := s.doDashboardQuery(ctx, signedInUser, orgID, q)
 
 	duration := time.Since(start).Seconds()
 	if query.Error != nil {
@@ -200,16 +232,8 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 	return query
 }
 
-func (s *StandardSearchService) doDashboardQuery(ctx context.Context, user *backend.User, orgID int64, q DashboardQuery) *backend.DataResponse {
+func (s *StandardSearchService) doDashboardQuery(ctx context.Context, signedInUser *user.SignedInUser, orgID int64, q DashboardQuery) *backend.DataResponse {
 	rsp := &backend.DataResponse{}
-	signedInUser, err := s.getUser(ctx, user, orgID)
-	if err != nil {
-		dashboardSearchFailureRequestsCounter.With(prometheus.Labels{
-			"reason": "get_user_error",
-		}).Inc()
-		rsp.Error = err
-		return rsp
-	}
 
 	filter, err := s.auth.GetDashboardReadFilter(signedInUser)
 	if err != nil {

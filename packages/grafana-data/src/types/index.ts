@@ -41,6 +41,7 @@ export type {
   BootData,
   OAuth,
   OAuthSettings,
+  AuthSettings,
   GrafanaConfig,
   BuildInfo,
   LicenseInfo,

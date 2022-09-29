@@ -115,3 +115,7 @@ func (t Template) Build(data TemplateData) error {
 
 	return e
 }
+
+func (t Template) Error() string {
+	return t.Base.Error()
+}

@@ -96,20 +96,22 @@ type timeoutError interface {
 // If any other error we return http.StatusBadGateway.
 func errorHandler(logger glog.Logger) func(http.ResponseWriter, *http.Request, error) {
 	return func(w http.ResponseWriter, r *http.Request, err error) {
+		ctxLogger := logger.FromContext(r.Context())
+
 		if errors.Is(err, context.Canceled) {
-			logger.Debug("Proxy request cancelled by client")
+			ctxLogger.Debug("Proxy request cancelled by client")
 			w.WriteHeader(StatusClientClosedRequest)
 			return
 		}
 
 		// nolint:errorlint
 		if timeoutErr, ok := err.(timeoutError); ok && timeoutErr.Timeout() {
-			logger.Error("Proxy request timed out", "err", err)
+			ctxLogger.Error("Proxy request timed out", "err", err)
 			w.WriteHeader(http.StatusGatewayTimeout)
 			return
 		}
 
-		logger.Error("Proxy request failed", "err", err)
+		ctxLogger.Error("Proxy request failed", "err", err)
 		w.WriteHeader(http.StatusBadGateway)
 	}
 }

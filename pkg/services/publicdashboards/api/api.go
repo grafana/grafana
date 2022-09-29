@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -25,6 +26,7 @@ type Api struct {
 	RouteRegister          routing.RouteRegister
 	AccessControl          accesscontrol.AccessControl
 	Features               *featuremgmt.FeatureManager
+	Log                    log.Logger
 }
 
 func ProvideApi(
@@ -38,6 +40,7 @@ func ProvideApi(
 		RouteRegister:          rr,
 		AccessControl:          ac,
 		Features:               features,
+		Log:                    log.New("publicdashboards.api"),
 	}
 
 	// attach api if PublicDashboards feature flag is enabled
@@ -83,7 +86,7 @@ func (api *Api) GetPublicDashboard(c *models.ReqContext) response.Response {
 	)
 
 	if err != nil {
-		return handleDashboardErr(http.StatusInternalServerError, "Failed to get public dashboard", err)
+		return api.handleError(http.StatusInternalServerError, "failed to get public dashboard", err)
 	}
 
 	meta := dtos.DashboardMeta{
@@ -113,7 +116,7 @@ func (api *Api) GetPublicDashboard(c *models.ReqContext) response.Response {
 func (api *Api) GetPublicDashboardConfig(c *models.ReqContext) response.Response {
 	pdc, err := api.PublicDashboardService.GetPublicDashboardConfig(c.Req.Context(), c.OrgID, web.Params(c.Req)[":uid"])
 	if err != nil {
-		return handleDashboardErr(http.StatusInternalServerError, "Failed to get public dashboard config", err)
+		return api.handleError(http.StatusInternalServerError, "failed to get public dashboard config", err)
 	}
 	return response.JSON(http.StatusOK, pdc)
 }
@@ -124,7 +127,7 @@ func (api *Api) SavePublicDashboardConfig(c *models.ReqContext) response.Respons
 	// exit if we don't have a valid dashboardUid
 	dashboardUid := web.Params(c.Req)[":uid"]
 	if dashboardUid == "" || !util.IsValidShortUID(dashboardUid) {
-		handleDashboardErr(http.StatusBadRequest, "no dashboardUid", dashboards.ErrDashboardIdentifierNotSet)
+		api.handleError(http.StatusBadRequest, "no dashboardUid", dashboards.ErrDashboardIdentifierNotSet)
 	}
 
 	pubdash := &PublicDashboard{}
@@ -144,7 +147,7 @@ func (api *Api) SavePublicDashboardConfig(c *models.ReqContext) response.Respons
 	// Save the public dashboard
 	pubdash, err := api.PublicDashboardService.SavePublicDashboardConfig(c.Req.Context(), c.SignedInUser, &dto)
 	if err != nil {
-		return handleDashboardErr(http.StatusInternalServerError, "Failed to save public dashboard configuration", err)
+		return api.handleError(http.StatusInternalServerError, "failed to save public dashboard configuration", err)
 	}
 
 	return response.JSON(http.StatusOK, pubdash)
@@ -165,7 +168,7 @@ func (api *Api) QueryPublicDashboard(c *models.ReqContext) response.Response {
 
 	resp, err := api.PublicDashboardService.GetQueryDataResponse(c.Req.Context(), c.SkipCache, reqDTO, panelId, web.Params(c.Req)[":accessToken"])
 	if err != nil {
-		return handlePublicDashboardErr(err)
+		return api.handleError(http.StatusInternalServerError, "error running public dashboard panel queries", err)
 	}
 
 	return toJsonStreamingResponse(api.Features, resp)
@@ -174,10 +177,12 @@ func (api *Api) QueryPublicDashboard(c *models.ReqContext) response.Response {
 // util to help us unpack dashboard and publicdashboard errors or use default http code and message
 // we should look to do some future refactoring of these errors as publicdashboard err is the same as a dashboarderr, just defined in a
 // different package.
-func handleDashboardErr(defaultCode int, defaultMsg string, err error) response.Response {
+func (api *Api) handleError(code int, message string, err error) response.Response {
 	var publicDashboardErr PublicDashboardErr
 
-	// handle public dashboard er
+	api.Log.Error(message, "error", err.Error())
+
+	// handle public dashboard error
 	if ok := errors.As(err, &publicDashboardErr); ok {
 		return response.Error(publicDashboardErr.StatusCode, publicDashboardErr.Error(), publicDashboardErr)
 	}
@@ -188,11 +193,7 @@ func handleDashboardErr(defaultCode int, defaultMsg string, err error) response.
 		return response.Error(dashboardErr.StatusCode, dashboardErr.Error(), dashboardErr)
 	}
 
-	return response.Error(defaultCode, defaultMsg, err)
-}
-
-func handlePublicDashboardErr(err error) response.Response {
-	return handleDashboardErr(http.StatusInternalServerError, "Unexpected Error", err)
+	return response.Error(code, message, err)
 }
 
 // Copied from pkg/api/metrics.go

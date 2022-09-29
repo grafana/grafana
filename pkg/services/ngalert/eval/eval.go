@@ -4,6 +4,7 @@ package eval
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"runtime/debug"
 	"sort"
@@ -16,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 
@@ -27,9 +27,11 @@ import (
 //go:generate mockery --name Evaluator --structname FakeEvaluator --inpackage --filename evaluator_mock.go --with-expecter
 type Evaluator interface {
 	// ConditionEval executes conditions and evaluates the result.
-	ConditionEval(ctx context.Context, condition models.Condition, now time.Time) Results
+	ConditionEval(ctx context.Context, user *user.SignedInUser, condition models.Condition, now time.Time) Results
 	// QueriesAndExpressionsEval executes queries and expressions and returns the result.
-	QueriesAndExpressionsEval(ctx context.Context, orgID int64, data []models.AlertQuery, now time.Time) (*backend.QueryDataResponse, error)
+	QueriesAndExpressionsEval(ctx context.Context, user *user.SignedInUser, data []models.AlertQuery, now time.Time) (*backend.QueryDataResponse, error)
+	// Validate validates that the condition is correct. Returns nil if the condition is correct. Otherwise, error that describes the failure
+	Validate(ctx context.Context, user *user.SignedInUser, condition models.Condition) error
 }
 
 type evaluatorImpl struct {
@@ -74,12 +76,16 @@ func (e *invalidEvalResultFormatError) Unwrap() error {
 // ExecutionResults contains the unevaluated results from executing
 // a condition.
 type ExecutionResults struct {
-	Error error
+	// Condition contains the results of the condition
+	Condition data.Frames
+
+	// Results contains the results of all queries, reduce and math expressions
+	Results map[string]data.Frames
 
 	// NoData contains the DatasourceUID for RefIDs that returned no data.
 	NoData map[string]string
 
-	Results data.Frames
+	Error error
 }
 
 // Results is a slice of evaluated alert instances states.
@@ -99,20 +105,24 @@ func (evalResults Results) HasErrors() bool {
 type Result struct {
 	Instance data.Labels
 	State    State // Enum
-	// Error message for Error state. should be nil if State != Error.
-	Error              error
-	EvaluatedAt        time.Time
-	EvaluationDuration time.Duration
 
-	// EvaluationString is a string representation of evaluation data such
-	// as EvalMatches (from "classic condition"), and in the future from operations
-	// like SSE "math".
-	EvaluationString string
+	// Error message for Error state. should be nil if State != Error.
+	Error error
+
+	// Results contains the results of all queries, reduce and math expressions
+	Results map[string]data.Frames
 
 	// Values contains the RefID and value of reduce and math expressions.
 	// It does not contain values for classic conditions as the values
 	// in classic conditions do not have a RefID.
 	Values map[string]NumberValueCapture
+
+	EvaluatedAt        time.Time
+	EvaluationDuration time.Duration
+	// EvaluationString is a string representation of evaluation data such
+	// as EvalMatches (from "classic condition"), and in the future from operations
+	// like SSE "math".
+	EvaluationString string
 }
 
 // State is an enum of the evaluation State for an alert instance.
@@ -151,7 +161,7 @@ func (s State) String() string {
 
 // AlertExecCtx is the context provided for executing an alert condition.
 type AlertExecCtx struct {
-	OrgID              int64
+	User               *user.SignedInUser
 	ExpressionsEnabled bool
 	Log                log.Logger
 
@@ -161,7 +171,7 @@ type AlertExecCtx struct {
 // getExprRequest validates the condition, gets the datasource information and creates an expr.Request from it.
 func getExprRequest(ctx AlertExecCtx, data []models.AlertQuery, now time.Time, dsCacheService datasources.CacheService) (*expr.Request, error) {
 	req := &expr.Request{
-		OrgId: ctx.OrgID,
+		OrgId: ctx.User.OrgID,
 		Headers: map[string]string{
 			// Some data sources check this in query method as sometimes alerting needs special considerations.
 			"FromAlert":    "true",
@@ -174,16 +184,16 @@ func getExprRequest(ctx AlertExecCtx, data []models.AlertQuery, now time.Time, d
 	for _, q := range data {
 		model, err := q.GetModel()
 		if err != nil {
-			return nil, fmt.Errorf("failed to get query model: %w", err)
+			return nil, fmt.Errorf("failed to get query model from '%s': %w", q.RefID, err)
 		}
 		interval, err := q.GetIntervalDuration()
 		if err != nil {
-			return nil, fmt.Errorf("failed to retrieve intervalMs from the model: %w", err)
+			return nil, fmt.Errorf("failed to retrieve intervalMs from '%s': %w", q.RefID, err)
 		}
 
 		maxDatapoints, err := q.GetMaxDatapoints()
 		if err != nil {
-			return nil, fmt.Errorf("failed to retrieve maxDatapoints from the model: %w", err)
+			return nil, fmt.Errorf("failed to retrieve maxDatapoints from '%s': %w", q.RefID, err)
 		}
 
 		ds, ok := datasources[q.DatasourceUID]
@@ -191,12 +201,9 @@ func getExprRequest(ctx AlertExecCtx, data []models.AlertQuery, now time.Time, d
 			if expr.IsDataSource(q.DatasourceUID) {
 				ds = expr.DataSourceModel()
 			} else {
-				ds, err = dsCacheService.GetDatasourceByUID(ctx.Ctx, q.DatasourceUID, &user.SignedInUser{
-					OrgID:   ctx.OrgID,
-					OrgRole: org.RoleAdmin, // Get DS as admin for service, API calls (test/post) must check permissions based on user.
-				}, true)
+				ds, err = dsCacheService.GetDatasourceByUID(ctx.Ctx, q.DatasourceUID, ctx.User, true)
 				if err != nil {
-					return nil, err
+					return nil, fmt.Errorf("failed to build query '%s': %w", q.RefID, err)
 				}
 			}
 			datasources[q.DatasourceUID] = ds
@@ -244,7 +251,7 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 	// datasourceExprUID is a special DatasourceUID for expressions
 	datasourceExprUID := strconv.FormatInt(expr.DatasourceID, 10)
 
-	var result ExecutionResults
+	result := ExecutionResults{Results: make(map[string]data.Frames)}
 	for refID, res := range execResp.Responses {
 		if len(res.Frames) == 0 {
 			// to ensure that NoData is consistent with Results we do not initialize NoData
@@ -271,12 +278,13 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 		}
 
 		if refID == c.Condition {
-			result.Results = res.Frames
+			result.Condition = res.Frames
 		}
+		result.Results[refID] = res.Frames
 	}
 
 	// add capture values as data frame metadata to each result (frame) that has matching labels.
-	for _, frame := range result.Results {
+	for _, frame := range result.Condition {
 		// classic conditions already have metadata set and only have one value, there's no need to add anything in this case.
 		if frame.Meta != nil && frame.Meta.Custom != nil {
 			if _, ok := frame.Meta.Custom.([]classic.EvalMatch); ok {
@@ -423,12 +431,12 @@ func evaluateExecutionResult(execResults ExecutionResults, ts time.Time) Results
 		return evalResults
 	}
 
-	if len(execResults.Results) == 0 {
+	if len(execResults.Condition) == 0 {
 		appendNoData(nil)
 		return evalResults
 	}
 
-	for _, f := range execResults.Results {
+	for _, f := range execResults.Condition {
 		rowLen, err := f.RowLen()
 		if err != nil {
 			appendErrRes(&invalidEvalResultFormatError{refID: f.RefID, reason: "unable to get frame row length", err: err})
@@ -552,8 +560,8 @@ func (evalResults Results) AsDataFrame() data.Frame {
 }
 
 // ConditionEval executes conditions and evaluates the result.
-func (e *evaluatorImpl) ConditionEval(ctx context.Context, condition models.Condition, now time.Time) Results {
-	execResp, err := e.QueriesAndExpressionsEval(ctx, condition.OrgID, condition.Data, now)
+func (e *evaluatorImpl) ConditionEval(ctx context.Context, user *user.SignedInUser, condition models.Condition, now time.Time) Results {
+	execResp, err := e.QueriesAndExpressionsEval(ctx, user, condition.Data, now)
 	var execResults ExecutionResults
 	if err != nil {
 		execResults = ExecutionResults{Error: err}
@@ -564,11 +572,11 @@ func (e *evaluatorImpl) ConditionEval(ctx context.Context, condition models.Cond
 }
 
 // QueriesAndExpressionsEval executes queries and expressions and returns the result.
-func (e *evaluatorImpl) QueriesAndExpressionsEval(ctx context.Context, orgID int64, data []models.AlertQuery, now time.Time) (*backend.QueryDataResponse, error) {
+func (e *evaluatorImpl) QueriesAndExpressionsEval(ctx context.Context, user *user.SignedInUser, data []models.AlertQuery, now time.Time) (*backend.QueryDataResponse, error) {
 	alertCtx, cancelFn := context.WithTimeout(ctx, e.cfg.UnifiedAlerting.EvaluationTimeout)
 	defer cancelFn()
 
-	alertExecCtx := AlertExecCtx{OrgID: orgID, Ctx: alertCtx, ExpressionsEnabled: e.cfg.ExpressionsEnabled, Log: e.log}
+	alertExecCtx := AlertExecCtx{User: user, Ctx: alertCtx, ExpressionsEnabled: e.cfg.ExpressionsEnabled, Log: e.log}
 
 	execResult, err := executeQueriesAndExpressions(alertExecCtx, data, now, e.expressionService, e.dataSourceCache)
 	if err != nil {
@@ -576,4 +584,37 @@ func (e *evaluatorImpl) QueriesAndExpressionsEval(ctx context.Context, orgID int
 	}
 
 	return execResult, nil
+}
+
+func (e *evaluatorImpl) Validate(ctx context.Context, user *user.SignedInUser, condition models.Condition) error {
+	evalctx := AlertExecCtx{
+		User:               user,
+		ExpressionsEnabled: e.cfg.ExpressionsEnabled,
+		Log:                e.log,
+		Ctx:                ctx,
+	}
+
+	if len(condition.Data) == 0 {
+		return errors.New("expression list is empty. must be at least 1 expression")
+	}
+	if len(condition.Condition) == 0 {
+		return errors.New("condition must not be empty")
+	}
+
+	req, err := getExprRequest(evalctx, condition.Data, time.Now(), e.dataSourceCache)
+	if err != nil {
+		return err
+	}
+	pipeline, err := e.expressionService.BuildPipeline(req)
+	if err != nil {
+		return err
+	}
+	conditions := make([]string, 0, len(pipeline))
+	for _, node := range pipeline {
+		if node.RefID() == condition.Condition {
+			return nil
+		}
+		conditions = append(conditions, node.RefID())
+	}
+	return fmt.Errorf("condition %s does not exist, must be one of %v", condition.Condition, conditions)
 }

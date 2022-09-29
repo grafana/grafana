@@ -54,6 +54,6 @@ func provideBase(lib *thema.Library) *Base {
 //
 // The returned slice is sorted lexicographically by coremodel name. It should
 // not be modified.
-func (s *Base) All() []coremodel.Interface {
-	return s.all
+func (b *Base) All() []coremodel.Interface {
+	return b.all
 }

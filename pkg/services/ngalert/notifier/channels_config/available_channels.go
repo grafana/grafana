@@ -135,7 +135,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 				{ // New in 8.0.
 					Label:        "Message",
 					Element:      ElementTypeTextArea,
-					Placeholder:  `{{ template "default.message" . }}`,
+					Placeholder:  channels.DefaultMessageEmbed,
 					PropertyName: "message",
 				},
 			},
@@ -263,7 +263,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Label:        "Summary",
 					Description:  "You can use templates for summary",
 					Element:      ElementTypeTextArea,
-					Placeholder:  `{{ template "default.message" . }}`,
+					Placeholder:  channels.DefaultMessageEmbed,
 					PropertyName: "summary",
 				},
 			},
@@ -372,7 +372,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 				{ // New in 8.0.
 					Label:        "Message",
 					Element:      ElementTypeTextArea,
-					Placeholder:  `{{ template "default.message" . }}`,
+					Placeholder:  channels.DefaultMessageEmbed,
 					PropertyName: "message",
 				},
 			},
@@ -550,7 +550,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 				{ // New in 8.0.
 					Label:        "Message",
 					Element:      ElementTypeTextArea,
-					Placeholder:  `{{ template "default.message" . }}`,
+					Placeholder:  channels.DefaultMessageEmbed,
 					PropertyName: "message",
 				},
 			},
@@ -587,7 +587,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 				{ // New in 8.0.
 					Label:        "Message",
 					Element:      ElementTypeTextArea,
-					Placeholder:  `{{ template "default.message" . }}`,
+					Placeholder:  channels.DefaultMessageEmbed,
 					PropertyName: "message",
 				},
 			},
@@ -618,7 +618,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 				{ // New in 8.0.
 					Label:        "Message",
 					Element:      ElementTypeTextArea,
-					Placeholder:  `{{ template "default.message" . }}`,
+					Placeholder:  channels.DefaultMessageEmbed,
 					PropertyName: "message",
 				},
 			},
@@ -708,7 +708,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Label:        "Message",
 					Description:  "Custom WeCom message. You can use template variables.",
 					Element:      ElementTypeTextArea,
-					Placeholder:  `{{ template "default.message" . }}`,
+					Placeholder:  channels.DefaultMessageEmbed,
 					PropertyName: "message",
 				},
 				{ // New in 9.1.
@@ -761,7 +761,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Description:  "Mention a group using @ or a user using <@ID> when notifying in a channel",
 					Element:      ElementTypeInput,
 					InputType:    InputTypeText,
-					Placeholder:  `{{ template "default.message" . }}`,
+					Placeholder:  channels.DefaultMessageEmbed,
 					PropertyName: "message",
 				},
 				{
@@ -803,7 +803,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 				{
 					Label:        "Message",
 					Element:      ElementTypeTextArea,
-					Placeholder:  `{{ template "default.message" . }}`,
+					Placeholder:  channels.DefaultMessageEmbed,
 					PropertyName: "message",
 				},
 			},

@@ -13,7 +13,22 @@ var (
 	ErrUpdateCorrelationEmptyParams       = errors.New("not enough parameters to edit correlation")
 )
 
+// CorrelationConfigTarget is the target data query specific to target data source (Correlation.TargetUID)
+// swagger:model
+type CorrelationConfigTarget interface{}
+
+// swagger:model
+type CorrelationConfig struct {
+	// Field used to attach the correlation link
+	// required:true
+	Field string `json:"field"`
+	// Target data query
+	// required:true
+	Target CorrelationConfigTarget `json:"target"`
+}
+
 // Correlation is the model for correlations definitions
+// swagger:model
 type Correlation struct {
 	// Unique identifier of the correlation
 	// example: 50xhMlg9k
@@ -30,6 +45,9 @@ type Correlation struct {
 	// Description of the correlation
 	// example: Logs to Traces
 	Description string `json:"description" xorm:"description"`
+	// Correlation Configuration
+	// example: { field: "job", target: { query: "job=app" } }
+	Config CorrelationConfig `json:"config" xorm:"jsonb config"`
 }
 
 // CreateCorrelationResponse is the response struct for CreateCorrelationCommand
@@ -56,6 +74,9 @@ type CreateCorrelationCommand struct {
 	// Optional description of the correlation
 	// example: Logs to Traces
 	Description string `json:"description"`
+	// Arbitrary configuration object handled in frontend
+	// example: { field: "job", target: { query: "job=app" } }
+	Config CorrelationConfig `json:"config"`
 }
 
 // swagger:model

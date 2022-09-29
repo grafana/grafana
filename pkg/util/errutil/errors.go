@@ -166,12 +166,16 @@ func (e Error) Is(other error) bool {
 	o, isGrafanaError := other.(Error)
 	//nolint:errorlint
 	base, isBase := other.(Base)
+	//nolint:errorlint
+	templateErr, isTemplateErr := other.(Template)
 
 	switch {
 	case isGrafanaError:
 		return o.Reason == e.Reason && o.MessageID == e.MessageID && o.Error() == e.Error()
 	case isBase:
 		return base.Is(e)
+	case isTemplateErr:
+		return templateErr.Base.Is(e)
 	default:
 		return false
 	}

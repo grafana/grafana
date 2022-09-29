@@ -11,7 +11,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/api"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
@@ -21,8 +23,8 @@ const (
 	cacheTTL = 10 * time.Second
 )
 
-func ProvideService(cfg *setting.Cfg, store accesscontrol.Store, routeRegister routing.RouteRegister, cache *localcache.CacheService) (*Service, error) {
-	service := ProvideOSSService(cfg, store, cache)
+func ProvideService(cfg *setting.Cfg, store sqlstore.Store, routeRegister routing.RouteRegister, cache *localcache.CacheService) (*Service, error) {
+	service := ProvideOSSService(cfg, database.ProvideService(store), cache)
 
 	if !accesscontrol.IsDisabled(cfg) {
 		api.NewAccessControlAPI(routeRegister, service).RegisterAPIEndpoints()
@@ -34,7 +36,7 @@ func ProvideService(cfg *setting.Cfg, store accesscontrol.Store, routeRegister r
 	return service, nil
 }
 
-func ProvideOSSService(cfg *setting.Cfg, store accesscontrol.Store, cache *localcache.CacheService) *Service {
+func ProvideOSSService(cfg *setting.Cfg, store store, cache *localcache.CacheService) *Service {
 	s := &Service{
 		cfg:   cfg,
 		store: store,
@@ -46,11 +48,16 @@ func ProvideOSSService(cfg *setting.Cfg, store accesscontrol.Store, cache *local
 	return s
 }
 
+type store interface {
+	GetUserPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]accesscontrol.Permission, error)
+	DeleteUserPermissions(ctx context.Context, orgID, userID int64) error
+}
+
 // Service is the service implementing role based access control.
 type Service struct {
 	log           log.Logger
 	cfg           *setting.Cfg
-	store         accesscontrol.Store
+	store         store
 	cache         *localcache.CacheService
 	registrations accesscontrol.RegistrationList
 	roles         map[string]*accesscontrol.RoleDTO
