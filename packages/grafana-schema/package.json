@@ -23,7 +23,8 @@
   },
   "files": [
     "dist",
-    "CHANGELOG.md",
+    "./README.md",
+    "./CHANGELOG.md",
     "LICENSE_APACHE2"
   ],
   "scripts": {

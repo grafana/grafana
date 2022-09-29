@@ -30,7 +30,8 @@
     "dist",
     "cli.js",
     "cypress.json",
-    "CHANGELOG.md",
+    "./README.md",
+    "./CHANGELOG.md",
     "LICENSE_APACHE2"
   ],
   "scripts": {
