@@ -50,6 +50,7 @@ func ProvideService(
 	searchService searchV2.SearchService,
 	quotaService quota.Service,
 	secrectService secrets.Service,
+	orgService org.Service,
 ) (*ProvisioningServiceImpl, error) {
 	s := &ProvisioningServiceImpl{
 		Cfg:                          cfg,
@@ -73,6 +74,7 @@ func ProvideService(
 		quotaService:                 quotaService,
 		secretService:                secrectService,
 		log:                          log.New("provisioning"),
+		orgService:                   orgService,
 	}
 	return s, nil
 }
@@ -106,7 +108,7 @@ func newProvisioningServiceImpl(
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory,
 	provisionNotifiers func(context.Context, string, notifiers.Manager, org.Service, notifiers.SQLStore, encryption.Internal, *notifications.NotificationService) error,
 	provisionDatasources func(context.Context, string, datasources.Store, datasources.CorrelationsStore, utils.OrgStore) error,
-	provisionPlugins func(context.Context, string, plugins.Store, plugifaces.Store, pluginsettings.Service) error,
+	provisionPlugins func(context.Context, string, plugifaces.Store, pluginsettings.Service, org.Service) error,
 ) *ProvisioningServiceImpl {
 	return &ProvisioningServiceImpl{
 		log:                     log.New("provisioning"),
@@ -131,7 +133,7 @@ type ProvisioningServiceImpl struct {
 	dashboardProvisioner         dashboards.DashboardProvisioner
 	provisionNotifiers           func(context.Context, string, notifiers.Manager, org.Service, notifiers.SQLStore, encryption.Internal, *notifications.NotificationService) error
 	provisionDatasources         func(context.Context, string, datasources.Store, datasources.CorrelationsStore, utils.OrgStore) error
-	provisionPlugins             func(context.Context, string, plugins.Store, plugifaces.Store, pluginsettings.Service) error
+	provisionPlugins             func(context.Context, string, plugifaces.Store, pluginsettings.Service, org.Service) error
 	provisionAlerting            func(context.Context, prov_alerting.ProvisionerConfig) error
 	mutex                        sync.Mutex
 	dashboardProvisioningService dashboardservice.DashboardProvisioningService
@@ -213,7 +215,7 @@ func (ps *ProvisioningServiceImpl) ProvisionDatasources(ctx context.Context) err
 
 func (ps *ProvisioningServiceImpl) ProvisionPlugins(ctx context.Context) error {
 	appPath := filepath.Join(ps.Cfg.ProvisioningPath, "plugins")
-	if err := ps.provisionPlugins(ctx, appPath, ps.SQLStore, ps.pluginStore, ps.pluginsSettings); err != nil {
+	if err := ps.provisionPlugins(ctx, appPath, ps.pluginStore, ps.pluginsSettings, ps.orgService); err != nil {
 		err = fmt.Errorf("%v: %w", "app provisioning error", err)
 		ps.log.Error("Failed to provision plugins", "error", err)
 		return err

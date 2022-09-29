@@ -37,8 +37,8 @@ func TestPluginProvisioner(t *testing.T) {
 		reader := &testConfigReader{result: cfg}
 		store := &mockStore{}
 		orgMock := orgtest.NewOrgServiceFake()
-		orgMock.ExpectedOrg = &org.Org{}
-		ap := PluginProvisioner{log: log.New("test"), cfgProvider: reader, store: store, pluginSettings: store, orgService: orgMock}
+		orgMock.ExpectedOrg = &org.Org{ID: 4}
+		ap := PluginProvisioner{log: log.New("test"), cfgProvider: reader, pluginSettings: store, orgService: orgMock}
 
 		err := ap.applyChanges(context.Background(), "")
 		require.NoError(t, err)

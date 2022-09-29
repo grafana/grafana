@@ -11,19 +11,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 )
 
-type Store interface {
-	GetOrgByNameHandler(ctx context.Context, query *models.GetOrgByNameQuery) error
-}
-
 // Provision scans a directory for provisioning config files
 // and provisions the app in those files.
-func Provision(ctx context.Context, configDirectory string, store Store, pluginStore plugins.Store, pluginSettings pluginsettings.Service) error {
+func Provision(ctx context.Context, configDirectory string, pluginStore plugins.Store, pluginSettings pluginsettings.Service, orgService org.Service) error {
 	logger := log.New("provisioning.plugins")
 	ap := PluginProvisioner{
 		log:            logger,
 		cfgProvider:    newConfigReader(logger, pluginStore),
-		store:          store,
 		pluginSettings: pluginSettings,
+		orgService:     orgService,
 	}
 	return ap.applyChanges(ctx, configDirectory)
 }
@@ -33,7 +29,6 @@ func Provision(ctx context.Context, configDirectory string, store Store, pluginS
 type PluginProvisioner struct {
 	log            log.Logger
 	cfgProvider    configReader
-	store          Store
 	pluginSettings pluginsettings.Service
 	orgService     org.Service
 }
