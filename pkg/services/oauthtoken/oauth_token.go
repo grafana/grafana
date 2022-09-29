@@ -3,6 +3,7 @@ package oauthtoken
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"golang.org/x/oauth2"
 
@@ -26,6 +27,7 @@ type Service struct {
 type OAuthTokenService interface {
 	GetCurrentOAuthToken(context.Context, *user.SignedInUser) *oauth2.Token
 	IsOAuthPassThruEnabled(*datasources.DataSource) bool
+	HasOAuthEntry(context.Context, *user.SignedInUser) (bool, *models.UserAuth)
 }
 
 func ProvideService(socialService social.Service, authInfoService login.AuthInfoService) *Service {
@@ -105,6 +107,26 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr *user.SignedInUs
 // IsOAuthPassThruEnabled returns true if Forward OAuth Identity (oauthPassThru) is enabled for the provided data source.
 func (o *Service) IsOAuthPassThruEnabled(ds *datasources.DataSource) bool {
 	return ds.JsonData != nil && ds.JsonData.Get("oauthPassThru").MustBool()
+}
+
+func (o *Service) HasOAuthEntry(ctx context.Context, usr *user.SignedInUser) (bool, *models.UserAuth) {
+	if usr == nil {
+		// No user, therefore no token
+		return false, nil
+	}
+
+	authInfoQuery := &models.GetAuthInfoQuery{UserId: usr.UserID}
+	err := o.AuthInfoService.GetAuthInfo(ctx, authInfoQuery)
+	if err != nil {
+		if !errors.Is(err, user.ErrUserNotFound) {
+			logger.Error("failed to get OAuth token for user", "userId", usr.UserID, "username", usr.Login, "error", err)
+		}
+		return false, nil
+	}
+	if !strings.Contains(authInfoQuery.Result.AuthModule, "oauth") {
+		return false, nil
+	}
+	return true, authInfoQuery.Result
 }
 
 // tokensEq checks for OAuth2 token equivalence given the fields of the struct Grafana is interested in

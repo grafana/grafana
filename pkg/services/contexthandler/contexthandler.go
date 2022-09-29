@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -44,37 +45,40 @@ func ProvideService(cfg *setting.Cfg, tokenService models.UserTokenService, jwtS
 	remoteCache *remotecache.RemoteCache, renderService rendering.Service, sqlStore sqlstore.Store,
 	tracer tracing.Tracer, authProxy *authproxy.AuthProxy, loginService login.Service,
 	apiKeyService apikey.Service, authenticator loginpkg.Authenticator, userService user.Service,
+	oauthTokenService oauthtoken.OAuthTokenService,
 ) *ContextHandler {
 	return &ContextHandler{
-		Cfg:              cfg,
-		AuthTokenService: tokenService,
-		JWTAuthService:   jwtService,
-		RemoteCache:      remoteCache,
-		RenderService:    renderService,
-		SQLStore:         sqlStore,
-		tracer:           tracer,
-		authProxy:        authProxy,
-		authenticator:    authenticator,
-		loginService:     loginService,
-		apiKeyService:    apiKeyService,
-		userService:      userService,
+		Cfg:               cfg,
+		AuthTokenService:  tokenService,
+		JWTAuthService:    jwtService,
+		RemoteCache:       remoteCache,
+		RenderService:     renderService,
+		SQLStore:          sqlStore,
+		tracer:            tracer,
+		authProxy:         authProxy,
+		authenticator:     authenticator,
+		loginService:      loginService,
+		apiKeyService:     apiKeyService,
+		userService:       userService,
+		oauthTokenService: oauthTokenService,
 	}
 }
 
 // ContextHandler is a middleware.
 type ContextHandler struct {
-	Cfg              *setting.Cfg
-	AuthTokenService models.UserTokenService
-	JWTAuthService   models.JWTService
-	RemoteCache      *remotecache.RemoteCache
-	RenderService    rendering.Service
-	SQLStore         sqlstore.Store
-	tracer           tracing.Tracer
-	authProxy        *authproxy.AuthProxy
-	authenticator    loginpkg.Authenticator
-	loginService     login.Service
-	apiKeyService    apikey.Service
-	userService      user.Service
+	Cfg               *setting.Cfg
+	AuthTokenService  models.UserTokenService
+	JWTAuthService    models.JWTService
+	RemoteCache       *remotecache.RemoteCache
+	RenderService     rendering.Service
+	SQLStore          sqlstore.Store
+	tracer            tracing.Tracer
+	authProxy         *authproxy.AuthProxy
+	authenticator     loginpkg.Authenticator
+	loginService      login.Service
+	apiKeyService     apikey.Service
+	userService       user.Service
+	oauthTokenService oauthtoken.OAuthTokenService
 	// GetTime returns the current time.
 	// Stubbable by tests.
 	GetTime func() time.Time
@@ -422,6 +426,20 @@ func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, org
 	if err != nil {
 		reqContext.Logger.Error("Failed to get user with id", "userId", token.UserId, "error", err)
 		return false
+	}
+
+	// Check whether the logged in User has a token
+	exists, oauthToken := h.oauthTokenService.HasOAuthEntry(ctx, queryResult)
+	if exists {
+		// UseRefreshTokenEnabled := true
+		// if oauth2Token := h.oauthTokenService.GetCurrentOAuthToken(ctx, queryResult); UseRefreshTokenEnabled && oauth2Token == nil {
+		// 	return false
+		// }
+		if oauthToken.OAuthExpiry.UTC().Before(time.Now().UTC()) {
+			reqContext.Logger.Warn("OAuth token for the user is expired", "userId", oauthToken.UserId)
+			reqContext.Resp.Before(h.deleteInvalidCookieEndOfRequestFunc(reqContext))
+			return false
+		}
 	}
 
 	reqContext.SignedInUser = queryResult
