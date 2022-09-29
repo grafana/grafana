@@ -90,6 +90,7 @@ func TestUserService(t *testing.T) {
 
 type FakeUserStore struct {
 	ExpectedUser            *user.User
+	ExpectedSignedInUser    *user.SignedInUser
 	ExpectedError           error
 	ExpectedDeleteUserError error
 }
@@ -139,5 +140,13 @@ func (f *FakeUserStore) ChangePassword(ctx context.Context, cmd *user.ChangeUser
 }
 
 func (f *FakeUserStore) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLastSeenAtCommand) error {
+	return f.ExpectedError
+}
+
+func (f *FakeUserStore) GetSignedInUser(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
+	return f.ExpectedSignedInUser, f.ExpectedError
+}
+
+func (f *FakeUserStore) UpdateUser(ctx context.Context, user *user.User) error {
 	return f.ExpectedError
 }
