@@ -1,7 +1,9 @@
 package correlations
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 )
 
 var (
@@ -13,18 +15,46 @@ var (
 	ErrUpdateCorrelationEmptyParams       = errors.New("not enough parameters to edit correlation")
 )
 
-// CorrelationConfigTarget is the target data query specific to target data source (Correlation.TargetUID)
-// swagger:model
-type CorrelationConfigTarget interface{}
+type CorrelationConfigType string
+
+const (
+	ConfigTypeQuery CorrelationConfigType = "query"
+)
+
+func (t CorrelationConfigType) Validate() error {
+	if t != ConfigTypeQuery {
+		return fmt.Errorf("invalid correlation config type: %s", t)
+	}
+	return nil
+}
 
 // swagger:model
 type CorrelationConfig struct {
 	// Field used to attach the correlation link
 	// required:true
-	Field string `json:"field"`
+	Field string `json:"field" binding:"Required"`
 	// Target data query
 	// required:true
-	Target CorrelationConfigTarget `json:"target"`
+	Type CorrelationConfigType `json:"type" binding:"Required"`
+	// Target data query
+	// required:true
+	Target map[string]interface{} `json:"target" binding:"Required"`
+}
+
+func (c CorrelationConfig) MarshalJSON() ([]byte, error) {
+	target := c.Target
+	if target == nil {
+		target = map[string]interface{}{}
+	}
+	return json.Marshal(struct {
+		Type   CorrelationConfigType  `json:"type"`
+		Field  string                 `json:"field"`
+		Target map[string]interface{} `json:"target"`
+	}{
+		Type:   ConfigTypeQuery,
+		Field:  c.Field,
+		Target: target,
+	})
 }
 
 // Correlation is the model for correlations definitions
