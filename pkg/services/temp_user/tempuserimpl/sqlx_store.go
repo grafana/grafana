@@ -53,7 +53,7 @@ func (ss *sqlxStore) CreateTempUser(ctx context.Context, cmd *models.CreateTempU
 	user.Id, err = ss.sess.ExecWithReturningId(
 		ctx, query, user.Email, user.Name, user.OrgId, user.Code,
 		user.Role, user.Status, user.RemoteAddr, user.InvitedByUserId,
-		user.EmailSentOn, now.Unix(), now.Unix(), user.Version, user.EmailSent)
+		user.EmailSentOn, user.Created, user.Updated, user.Version, user.EmailSent)
 	cmd.Result = user
 	return err
 }
