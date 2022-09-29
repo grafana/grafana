@@ -48,6 +48,7 @@ export type DashboardPageRouteSearchParams = {
   editPanel?: string;
   viewPanel?: string;
   editview?: string;
+  shareView?: string;
   panelType?: string;
   inspect?: string;
   from?: string;
@@ -351,6 +352,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           onAddPanel={this.onAddPanel}
           kioskMode={kioskMode}
           hideTimePicker={dashboard.timepicker.hidden}
+          shareModalActiveTab={this.props.queryParams.shareView}
         />
       </header>
     );

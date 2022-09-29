@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { getConfig } from 'app/core/config';
 import React, { FC, useState, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -8,12 +9,13 @@ import {
   //HorizontalGroup,
   //ClipboardButton,
   //InlineLabel,
-  //LinkButton,
+  ButtonGroup,
+  LinkButton,
   Icon,
   Tag,
   useStyles2,
 } from '@grafana/ui';
-import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+import { getBackendSrv} from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { generatePublicDashboardUrl } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 
 export interface ListPublicDashboardResponse {
@@ -24,6 +26,8 @@ export interface ListPublicDashboardResponse {
   isEnabled: boolean;
 }
 
+export const listPublicDashboardsUrl = () => { return `/api/dashboards/public` };
+
 export const listPublicDashboards = async (
   setPublicDashboards: React.Dispatch<React.SetStateAction<ListPublicDashboardResponse[]>>
 ) => {
@@ -31,9 +35,6 @@ export const listPublicDashboards = async (
   setPublicDashboards(resp.sort((a, b) => Number(b.isEnabled) - Number(a.isEnabled)));
 };
 
-export const listPublicDashboardsUrl = () => {
-  return `/api/dashboards/public`;
-};
 
 //describe('listPublicDashboardsUrl', () => {
 //it('has the correct url', () => {
@@ -99,14 +100,18 @@ export const PublicDashboardListTable: FC = () => {
     return <Tag name={label} colorIndex={color} />;
   }
 
+  const gPublicDashboardUrl = (accessToken: string): string => {
+    return `${getConfig().appUrl}public-dashboards/${accessToken}`;
+  };
+
   function renderViewLink(pd: ListPublicDashboardResponse) {
-    let url = pd.isEnabled ? generatePublicDashboardUrl(pd.accessToken) : '#';
+    let url = pd.isEnabled ? gPublicDashboardUrl(pd.accessToken) : '#';
     let title = pd.isEnabled ? 'View public dashboard' : 'Public dashboard is disabled';
     //let pointerEnabled = pd.isEnabled ? "auto" : "none"
     return (
-      <Link href={url} style={{ display: 'inline' }} title={title} target="_blank">
+      <LinkButton href={url} style={{ display: 'inline' }} fill="text" title={title} target="_blank">
         <Icon name="external-link-alt" />
-      </Link>
+      </LinkButton>
     );
   }
 
@@ -130,15 +135,28 @@ export const PublicDashboardListTable: FC = () => {
               </td>
               <td>{renderEnabledTag(pd)}</td>
               <td>
-                {renderViewLink(pd)}
-                &nbsp; &nbsp;
-                <Link
-                  href={generatePublicDashboardUrl(pd.accessToken)}
-                  style={{ display: 'inline' }}
-                  title="Disable public dashboard"
-                >
-                  <Icon name="eye-slash" />
-                </Link>
+
+                <ButtonGroup>
+                  {renderViewLink(pd)}
+                  &nbsp; &nbsp;
+                  <LinkButton
+                    fill="text"
+                    href={gPublicDashboardUrl(pd.accessToken)}
+                    style={{ display: 'inline' }}
+                    title="Disable public dashboard"
+                  >
+                    <Icon name="eye-slash" />
+                  </LinkButton>
+
+                  <LinkButton
+                    fill="text"
+                    href={`/d/${pd.dashboardUid}?shareView=share`}
+                    style={{ display: 'inline' }}
+                    title="Disable public dashboard"
+                  >
+                    <Icon name="cog" />
+                  </LinkButton>
+                </ButtonGroup>
               </td>
             </tr>
           ))}

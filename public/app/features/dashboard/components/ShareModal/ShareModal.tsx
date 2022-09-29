@@ -28,15 +28,16 @@ export function addPanelShareTab(tab: ShareModalTabModel) {
 }
 
 function getInitialState(props: Props): State {
-  const tabs = getTabs(props);
+  const {tabs, activeTab} = getTabs(props);
+
   return {
     tabs,
-    activeTab: tabs[0].value,
+    activeTab,
   };
 }
 
 function getTabs(props: Props) {
-  const { panel } = props;
+  const { panel, activeTab } = props;
 
   const linkLabel = t({ id: 'share-modal.tab-title.link', message: 'Link' });
   const tabs: ShareModalTabModel[] = [{ label: linkLabel, value: 'link', component: ShareLink }];
@@ -65,12 +66,19 @@ function getTabs(props: Props) {
     tabs.push({ label: 'Public dashboard', value: 'share', component: SharePublicDashboard });
   }
 
-  return tabs;
+  const at = tabs.find((t) => t.value == activeTab)
+
+  return {
+    tabs,
+    activeTab: at?.value ?? tabs[0].value,
+  }
+
 }
 
 interface Props {
   dashboard: DashboardModel;
   panel?: PanelModel;
+  activeTab?: string;
 
   onDismiss(): void;
 }
@@ -95,7 +103,8 @@ export class ShareModal extends React.Component<Props, State> {
   };
 
   getTabs() {
-    return getTabs(this.props);
+    const {tabs} = getTabs(this.props);
+    return tabs
   }
 
   getActiveTab() {
@@ -115,6 +124,7 @@ export class ShareModal extends React.Component<Props, State> {
           id: 'share-modal.dashboard.title',
           message: 'Share',
         });
+
     const tabs = this.getTabs();
 
     return (

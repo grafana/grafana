@@ -1,5 +1,5 @@
 import { t, Trans } from '@lingui/macro';
-import React, { FC, ReactNode } from 'react';
+import React, { FC, ReactNode, useContext, useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 
@@ -14,6 +14,7 @@ import {
   useForceUpdate,
   Tag,
   ToolbarButtonRow,
+  ModalsContext,
 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbarSeparator';
@@ -51,6 +52,7 @@ export interface OwnProps {
   hideTimePicker: boolean;
   folderTitle?: string;
   title: string;
+  shareModalActiveTab?: string;
   onAddPanel: () => void;
 }
 
@@ -76,6 +78,8 @@ type Props = OwnProps & ConnectedProps<typeof connector>;
 export const DashNav = React.memo<Props>((props) => {
   const forceUpdate = useForceUpdate();
   const { chrome } = useGrafana();
+  const { showModal, hideModal } = useContext(ModalsContext);
+
 
   // We don't really care about the event payload here only that it triggeres a re-render of this component
   useBusEvent(props.dashboard.events, DashboardMetaChangedEvent);
@@ -133,6 +137,18 @@ export const DashNav = React.memo<Props>((props) => {
     const { canStar, canShare, isStarred } = dashboard.meta;
     const buttons: ReactNode[] = [];
 
+
+    useEffect(()=> {
+      if (canShare && props.shareModalActiveTab) {
+        // automagically open modal
+        showModal(ShareModal, {
+          dashboard,
+          onDismiss: hideModal,
+          activeTab: props.shareModalActiveTab,
+        });
+      }
+    }, [canShare, props.shareModalActiveTab]);
+    
     if (kioskMode || isPlaylistRunning()) {
       return [];
     }
