@@ -262,10 +262,6 @@ func getValidConflictUsers(r *ConflictResolver, b []byte) error {
 		// valid entry
 		newConflicts = append(newConflicts, *newUser)
 	}
-	// TODO:
-	// make a human readable form for how we interpret the newConflicts
-	// meaning how do we show have we will perform this operation
-	// and the final output of the ingest operation
 	r.ValidUsers = newConflicts
 	r.BuildConflictBlocks(newConflicts, fmt.Sprintf)
 	return nil
@@ -618,7 +614,6 @@ func GetUsersWithConflictingEmailsOrLogins(ctx *cli.Context, s *sqlstore.SQLStor
 func conflictingUserEntriesSQL(s *sqlstore.SQLStore) string {
 	userDialect := db.DB.GetDialect(s).Quote("user")
 
-	// TODO: make the conflict_email and conflict_login columns to be boolean instead
 	sqlQuery := `
 	SELECT DISTINCT
 	u1.id,
