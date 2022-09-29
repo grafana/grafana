@@ -114,7 +114,7 @@ func (t *Time) Scan(src interface{}) error {
 		*t = Time{result}
 		return err
 	default:
-		return fmt.Errorf("invalide data type the type name is %T", src)
+		return fmt.Errorf("invalid data type the type name is %T", src)
 	}
 	return nil
 }
