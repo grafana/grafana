@@ -48,6 +48,9 @@ const mainConfig = {
       name: 'webpack5',
     },
   },
+  features: {
+    previewMdx2: true,
+  },
   framework: '@storybook/react',
   logLevel: 'debug',
   reactOptions: {
