@@ -106,7 +106,7 @@ type CreateCorrelationCommand struct {
 	Description string `json:"description"`
 	// Arbitrary configuration object handled in frontend
 	// example: { field: "job", target: { query: "job=app" } }
-	Config CorrelationConfig `json:"config"`
+	Config CorrelationConfig `json:"config" binding:"Required"`
 }
 
 // swagger:model
