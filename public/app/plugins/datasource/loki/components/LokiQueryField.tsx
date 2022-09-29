@@ -4,7 +4,7 @@ import { Plugin, Node } from 'slate';
 import { Editor } from 'slate-react';
 
 import { CoreApp, QueryEditorProps } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import {
   SlatePrism,
   TypeaheadOutput,
@@ -211,7 +211,7 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
                   <Icon name={labelBrowserVisible ? 'angle-down' : 'angle-right'} />
                 </button>
                 <div className="gf-form gf-form--grow flex-shrink-1 min-width-15">
-                  {true ? (
+                  {config.featureToggles.lokiMonacoEditor ? (
                     <MonacoQueryFieldWrapper
                       runQueryOnBlur={this.props.app !== CoreApp.Explore}
                       languageProvider={datasource.languageProvider}
