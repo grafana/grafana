@@ -33,12 +33,28 @@ func initConflictCfg(cmd *utils.ContextCommandLine) (*setting.Cfg, error) {
 		HomePath: cmd.HomePath(),
 		Args:     append(configOptions, "cfg:log.level=error"), // tailing arguments have precedence over the options string
 	})
-
 	if err != nil {
 		return nil, err
 	}
-
 	return cfg, nil
+}
+
+func initializeConflictResolver(cmd *utils.ContextCommandLine, f Formatter, ctx *cli.Context) (*ConflictResolver, error) {
+	cfg, err := initConflictCfg(cmd)
+	if err != nil {
+		return nil, fmt.Errorf("%v: %w", "failed to load configuration", err)
+	}
+	s, err := getSqlStore(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("%v: %w", "failed to get to sql", err)
+	}
+	conflicts, err := GetUsersWithConflictingEmailsOrLogins(ctx, s)
+	if err != nil {
+		return nil, fmt.Errorf("%v: %w", "failed to get users with conflicting logins", err)
+	}
+	resolver := ConflictResolver{Users: conflicts}
+	resolver.BuildConflictBlocks(conflicts, f)
+	return &resolver, nil
 }
 
 func getSqlStore(cfg *setting.Cfg) (*sqlstore.SQLStore, error) {
@@ -53,32 +69,20 @@ func getSqlStore(cfg *setting.Cfg) (*sqlstore.SQLStore, error) {
 func runListConflictUsers() func(context *cli.Context) error {
 	return func(context *cli.Context) error {
 		cmd := &utils.ContextCommandLine{Context: context}
-		cfg, err := initConflictCfg(cmd)
+		whiteBold := color.New(color.FgWhite).Add(color.Bold)
+		r, err := initializeConflictResolver(cmd, whiteBold.Sprintf, context)
 		if err != nil {
-			return fmt.Errorf("%v: %w", "failed to load configuration", err)
+			return fmt.Errorf("%v: %w", "failed to initialize conflict resolver", err)
 		}
-		s, err := getSqlStore(cfg)
-		if err != nil {
-			return fmt.Errorf("%v: %w", "failed to get to sql", err)
-		}
-		conflicts, err := GetUsersWithConflictingEmailsOrLogins(context, s)
-		if err != nil {
-			return fmt.Errorf("%v: %w", "failed to get users with conflicting logins", err)
-		}
-		if len(conflicts) < 1 {
+		if len(r.Users) < 1 {
 			logger.Info(color.GreenString("No Conflicting users found.\n\n"))
 			return nil
 		}
-		whiteBold := color.New(color.FgWhite).Add(color.Bold)
-		resolver := ConflictResolver{Users: conflicts}
-		resolver.BuildConflictBlocks(conflicts, whiteBold.Sprintf)
 		logger.Infof("\n\nShowing conflicts\n\n")
-		logger.Infof(resolver.ToStringPresentation())
+		logger.Infof(r.ToStringPresentation())
 		logger.Infof("\n")
-		// TODO: remove line when finished
-		// this is only for debugging
-		if len(resolver.DiscardedBlocks) != 0 {
-			resolver.logDiscardedUsers()
+		if len(r.DiscardedBlocks) != 0 {
+			r.logDiscardedUsers()
 		}
 		return nil
 	}
@@ -87,34 +91,23 @@ func runListConflictUsers() func(context *cli.Context) error {
 func runGenerateConflictUsersFile() func(context *cli.Context) error {
 	return func(context *cli.Context) error {
 		cmd := &utils.ContextCommandLine{Context: context}
-		cfg, err := initConflictCfg(cmd)
-		cfg.Logger = nil
+		r, err := initializeConflictResolver(cmd, fmt.Sprintf, context)
 		if err != nil {
-			return fmt.Errorf("%v: %w", "failed to load configuration", err)
+			return fmt.Errorf("%v: %w", "failed to initialize conflict resolver", err)
 		}
-		s, err := getSqlStore(cfg)
-		if err != nil {
-			return fmt.Errorf("%v: %w", "failed to get to sql", err)
-		}
-		conflicts, err := GetUsersWithConflictingEmailsOrLogins(context, s)
-		if err != nil {
-			return fmt.Errorf("%v: %w", "failed to get users with conflicting logins", err)
-		}
-		if len(conflicts) < 1 {
+		if len(r.Users) < 1 {
 			logger.Info(color.GreenString("No Conflicting users found.\n\n"))
 			return nil
 		}
-		resolver := ConflictResolver{Users: conflicts}
-		resolver.BuildConflictBlocks(conflicts, fmt.Sprintf)
-		tmpFile, err := generateConflictUsersFile(&resolver)
+		tmpFile, err := generateConflictUsersFile(r)
 		if err != nil {
 			return fmt.Errorf("generating file return error: %w", err)
 		}
 		logger.Infof("\n\ngenerated file\n")
 		logger.Infof("%s\n\n", tmpFile.Name())
 		logger.Infof("once the file is edited and resolved conflicts, you can either validate or ingest the file\n\n")
-		if len(resolver.DiscardedBlocks) != 0 {
-			resolver.logDiscardedUsers()
+		if len(r.DiscardedBlocks) != 0 {
+			r.logDiscardedUsers()
 		}
 		return nil
 	}
@@ -123,33 +116,22 @@ func runGenerateConflictUsersFile() func(context *cli.Context) error {
 func runValidateConflictUsersFile() func(context *cli.Context) error {
 	return func(context *cli.Context) error {
 		cmd := &utils.ContextCommandLine{Context: context}
-		cfg, err := initConflictCfg(cmd)
-		cfg.Logger = nil
+		r, err := initializeConflictResolver(cmd, fmt.Sprintf, context)
 		if err != nil {
-			return fmt.Errorf("%v: %w", "failed to load configuration", err)
+			return fmt.Errorf("%v: %w", "failed to initialize conflict resolver", err)
 		}
+
+		// read in the file to validate
+		// read in the file to ingest
 		arg := cmd.Args().First()
 		if arg == "" {
 			return errors.New("please specify a absolute path to file to read from")
 		}
-		// validation
-		s, err := getSqlStore(cfg)
-		if err != nil {
-			return fmt.Errorf("%v: %w", "failed to get to sql", err)
-		}
-		conflicts, err := GetUsersWithConflictingEmailsOrLogins(context, s)
-		if err != nil {
-			return fmt.Errorf("%v: %w", "grafana error: sql error to get users with conflicts, abandoning validation", err)
-		}
-		resolver := ConflictResolver{Users: conflicts}
-		resolver.BuildConflictBlocks(conflicts, fmt.Sprintf)
-
-		// read in the file to validate
 		b, err := os.ReadFile(filepath.Clean(arg))
 		if err != nil {
 			return fmt.Errorf("could not read file with error %e", err)
 		}
-		validErr := getValidConflictUsers(&resolver, b)
+		validErr := getValidConflictUsers(r, b)
 		if validErr != nil {
 			return fmt.Errorf("could not validate file with error %s", err)
 		}
@@ -161,47 +143,34 @@ func runValidateConflictUsersFile() func(context *cli.Context) error {
 func runIngestConflictUsersFile() func(context *cli.Context) error {
 	return func(context *cli.Context) error {
 		cmd := &utils.ContextCommandLine{Context: context}
+		r, err := initializeConflictResolver(cmd, fmt.Sprintf, context)
+		if err != nil {
+			return fmt.Errorf("%v: %w", "failed to initialize conflict resolver", err)
+		}
 
+		// read in the file to ingest
 		arg := cmd.Args().First()
 		if arg == "" {
 			return errors.New("please specify a absolute path to file to read from")
 		}
-
-		cfg, err := initConflictCfg(cmd)
-		cfg.Logger = nil
-		if err != nil {
-			return fmt.Errorf("%v: %w", "failed to load configuration", err)
-		}
-		s, err := getSqlStore(cfg)
-		if err != nil {
-			return fmt.Errorf("%v: %w", "failed to get to sql", err)
-		}
-		conflicts, err := GetUsersWithConflictingEmailsOrLogins(context, s)
-		if err != nil {
-			return fmt.Errorf("%v: %w", "grafana error: sql error to get users with conflicts, abandoning validation", err)
-		}
-		resolver := ConflictResolver{Users: conflicts}
-		resolver.BuildConflictBlocks(conflicts, fmt.Sprintf)
-
-		// read in the file to ingest
 		b, err := os.ReadFile(filepath.Clean(arg))
 		if err != nil {
 			return fmt.Errorf("could not read file with error %e", err)
 		}
-		validErr := getValidConflictUsers(&resolver, b)
+		validErr := getValidConflictUsers(r, b)
 		if validErr != nil {
 			return fmt.Errorf("could not validate file with error %s", validErr)
 		}
 		// should we rebuild blocks here?
 		// kind of a weird thing maybe?
-		if len(resolver.ValidUsers) == 0 {
+		if len(r.ValidUsers) == 0 {
 			return fmt.Errorf("no users")
 		}
-		resolver.showChanges()
+		r.showChanges()
 		if !confirm("\n\nWe encourage users to create a db backup before running this command. \n Proceed with operation?") {
 			return fmt.Errorf("user cancelled")
 		}
-		err = resolver.MergeConflictingUsers(context.Context, s)
+		err = r.MergeConflictingUsers(context.Context)
 		if err != nil {
 			return fmt.Errorf("not able to merge with %e", err)
 		}
@@ -302,7 +271,7 @@ func getValidConflictUsers(r *ConflictResolver, b []byte) error {
 	return nil
 }
 
-func (r *ConflictResolver) MergeConflictingUsers(ctx context.Context, ss *sqlstore.SQLStore) error {
+func (r *ConflictResolver) MergeConflictingUsers(ctx context.Context) error {
 	for block, users := range r.Blocks {
 		if len(users) < 2 {
 			return fmt.Errorf("not enough users to perform merge, found %d for id %s, should be at least 2", len(users), block)
@@ -313,7 +282,7 @@ func (r *ConflictResolver) MergeConflictingUsers(ctx context.Context, ss *sqlsto
 
 		// creating a session for each block of users
 		// we want to rollback incase something happens during update / delete
-		sess := ss.NewSession(ctx)
+		sess := r.Store.NewSession(ctx)
 		defer sess.Close()
 		err := sess.Begin()
 		if err != nil {
@@ -334,13 +303,13 @@ func (r *ConflictResolver) MergeConflictingUsers(ctx context.Context, ss *sqlsto
 				fromUserIds = append(fromUserIds, id)
 			}
 		}
-		if _, err := sess.ID(intoUserId).Where(sqlstore.NotServiceAccountFilter(ss)).Get(&intoUser); err != nil {
+		if _, err := sess.ID(intoUserId).Where(sqlstore.NotServiceAccountFilter(r.Store)).Get(&intoUser); err != nil {
 			return fmt.Errorf("could not find intoUser: %w", err)
 		}
 
 		for _, fromUserId := range fromUserIds {
 			var fromUser user.User
-			exists, err := sess.ID(fromUserId).Where(sqlstore.NotServiceAccountFilter(ss)).Get(&fromUser)
+			exists, err := sess.ID(fromUserId).Where(sqlstore.NotServiceAccountFilter(r.Store)).Get(&fromUser)
 			if err != nil {
 				return fmt.Errorf("could not find fromUser: %w", err)
 			}
@@ -348,7 +317,7 @@ func (r *ConflictResolver) MergeConflictingUsers(ctx context.Context, ss *sqlsto
 				fmt.Printf("user with id %d does not exist, skipping\n", fromUserId)
 			}
 			// // delete the user
-			delErr := ss.DeleteUserInSession(ctx, sess, &models.DeleteUserCommand{UserId: fromUserId})
+			delErr := r.Store.DeleteUserInSession(ctx, sess, &models.DeleteUserCommand{UserId: fromUserId})
 			if delErr != nil {
 				return fmt.Errorf("error during deletion of user: %w", delErr)
 			}
@@ -357,7 +326,7 @@ func (r *ConflictResolver) MergeConflictingUsers(ctx context.Context, ss *sqlsto
 		if commitErr != nil {
 			return fmt.Errorf("could not commit operation for useridentification %s: %w", block, commitErr)
 		}
-		userStore := userimpl.ProvideStore(ss, setting.NewCfg())
+		userStore := userimpl.ProvideStore(r.Store, setting.NewCfg())
 		updateMainCommand := &user.UpdateUserCommand{
 			UserID: intoUser.ID,
 			Login:  strings.ToLower(intoUser.Login),
@@ -523,7 +492,7 @@ func (r *ConflictResolver) ToStringPresentation() string {
 		- id: 3, email: hej@TEST.com, login: hej@TEST.com
 	*/
 	startOfBlock := make(map[string]bool)
-	fileString := ""
+	var b strings.Builder
 	for block, users := range r.Blocks {
 		if _, ok := r.DiscardedBlocks[block]; ok {
 			// skip block
@@ -531,9 +500,9 @@ func (r *ConflictResolver) ToStringPresentation() string {
 		}
 		for _, user := range users {
 			if !startOfBlock[block] {
-				fileString += fmt.Sprintf("%s\n", block)
+				b.WriteString(fmt.Sprintf("%s\n", block))
 				startOfBlock[block] = true
-				fileString += fmt.Sprintf("+ id: %s, email: %s, login: %s, last_seen_at: %s, auth_module: %s, conflict_email: %s, conflict_login: %s\n",
+				b.WriteString(fmt.Sprintf("+ id: %s, email: %s, login: %s, last_seen_at: %s, auth_module: %s, conflict_email: %s, conflict_login: %s\n",
 					user.ID,
 					user.Email,
 					user.Login,
@@ -541,11 +510,11 @@ func (r *ConflictResolver) ToStringPresentation() string {
 					user.AuthModule,
 					user.ConflictEmail,
 					user.ConflictLogin,
-				)
+				))
 				continue
 			}
 			// mergeable users
-			fileString += fmt.Sprintf("- id: %s, email: %s, login: %s, last_seen_at: %s, auth_module: %s, conflict_email: %s, conflict_login: %s\n",
+			b.WriteString(fmt.Sprintf("- id: %s, email: %s, login: %s, last_seen_at: %s, auth_module: %s, conflict_email: %s, conflict_login: %s\n",
 				user.ID,
 				user.Email,
 				user.Login,
@@ -553,13 +522,14 @@ func (r *ConflictResolver) ToStringPresentation() string {
 				user.AuthModule,
 				user.ConflictEmail,
 				user.ConflictLogin,
-			)
+			))
 		}
 	}
-	return fileString
+	return b.String()
 }
 
 type ConflictResolver struct {
+	Store           *sqlstore.SQLStore
 	Config          *setting.Cfg
 	Users           ConflictingUsers
 	ValidUsers      ConflictingUsers

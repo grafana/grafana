@@ -627,7 +627,7 @@ func TestMergeUser(t *testing.T) {
 			require.Equal(t, 2, len(r.ValidUsers))
 
 			// test starts here
-			err = r.MergeConflictingUsers(context.Background(), sqlStore)
+			err = r.MergeConflictingUsers(context.Background())
 			require.NoError(t, err)
 
 			// user with uppercaseemail should not exist
@@ -725,7 +725,7 @@ conflict: test2
 				require.NoError(t, validErr)
 
 				// test starts here
-				err = r.MergeConflictingUsers(context.Background(), sqlStore)
+				err = r.MergeConflictingUsers(context.Background())
 				require.NoError(t, err)
 			}
 		}
