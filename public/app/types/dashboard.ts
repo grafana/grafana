@@ -11,6 +11,8 @@ export interface DashboardDTO {
 }
 
 export interface DashboardMeta {
+  slug?: string;
+  uid?: string;
   canSave?: boolean;
   canEdit?: boolean;
   canDelete?: boolean;
@@ -27,6 +29,7 @@ export interface DashboardMeta {
   isStarred?: boolean;
   showSettings?: boolean;
   expires?: string;
+  isFolder?: boolean;
   isSnapshot?: boolean;
   folderTitle?: string;
   folderUrl?: string;
@@ -38,7 +41,10 @@ export interface DashboardMeta {
   fromFile?: boolean;
   hasUnsavedFolderChange?: boolean;
   annotationsPermissions?: AnnotationsPermissions;
-  isPublic?: boolean;
+  publicDashboardAccessToken?: string;
+  publicDashboardUid?: string;
+  publicDashboardEnabled?: boolean;
+  dashboardNotFound?: boolean;
 }
 
 export interface AnnotationActions {
@@ -65,6 +71,7 @@ export enum DashboardRoutes {
   Home = 'home-dashboard',
   New = 'new-dashboard',
   Normal = 'normal-dashboard',
+  Path = 'path-dashboard',
   Scripted = 'scripted-dashboard',
   Public = 'public-dashboard',
 }
@@ -83,7 +90,6 @@ export interface DashboardInitError {
 }
 
 export enum KioskMode {
-  Off = 'off',
   TV = 'tv',
   Full = 'full',
 }

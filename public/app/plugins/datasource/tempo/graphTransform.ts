@@ -136,6 +136,20 @@ export const totalsMetric = 'traces_service_graph_request_total';
 export const failedMetric = 'traces_service_graph_request_failed_total';
 export const histogramMetric = 'traces_service_graph_request_server_seconds_bucket';
 
+export const rateMetric = {
+  expr: 'topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name))',
+  params: [],
+};
+export const errorRateMetric = {
+  expr: 'topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name))',
+  params: ['status_code="STATUS_CODE_ERROR"'],
+};
+export const durationMetric = {
+  expr: 'histogram_quantile(.9, sum(rate(traces_spanmetrics_latency_bucket{}[$__range])) by (le))',
+  params: [],
+};
+export const defaultTableFilter = 'span_kind="SPAN_KIND_SERVER"';
+
 export const serviceMapMetrics = [
   secondsMetric,
   totalsMetric,
@@ -194,8 +208,8 @@ function createServiceMapDataFrames() {
     { name: Fields.id },
     { name: Fields.source },
     { name: Fields.target },
-    { name: Fields.mainStat, config: { unit: 'r', displayName: 'Requests' } },
-    { name: Fields.secondaryStat, config: { unit: 'ms/r', displayName: 'Average response time' } },
+    { name: Fields.mainStat, config: { unit: 'ms/r', displayName: 'Average response time' } },
+    { name: Fields.secondaryStat, config: { unit: 'r/sec', displayName: 'Requests per second' } },
   ]);
 
   return [nodes, edges];
@@ -314,8 +328,8 @@ function convertToDataFrames(
       [Fields.id]: edgeId,
       [Fields.source]: edge.source,
       [Fields.target]: edge.target,
-      [Fields.mainStat]: edge.total, // Requests
-      [Fields.secondaryStat]: edge.total ? (edge.seconds! / edge.total) * 1000 : Number.NaN, // Average response time
+      [Fields.mainStat]: edge.total ? (edge.seconds! / edge.total) * 1000 : Number.NaN, // Average response time
+      [Fields.secondaryStat]: edge.total ? Math.round((edge.total / (rangeMs / 1000)) * 100) / 100 : Number.NaN, // Request per second (to 2 decimals)
     });
   }
 

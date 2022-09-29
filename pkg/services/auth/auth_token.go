@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -41,14 +42,26 @@ type UserAuthTokenService struct {
 	log               log.Logger
 }
 
-func (s *UserAuthTokenService) ActiveTokenCount(ctx context.Context) (int64, error) {
+type ActiveAuthTokenService struct {
+	cfg      *setting.Cfg
+	sqlStore sqlstore.Store
+}
+
+func ProvideActiveAuthTokenService(cfg *setting.Cfg, sqlStore sqlstore.Store) *ActiveAuthTokenService {
+	return &ActiveAuthTokenService{
+		cfg:      cfg,
+		sqlStore: sqlStore,
+	}
+}
+
+func (a *ActiveAuthTokenService) ActiveTokenCount(ctx context.Context) (int64, error) {
 	var count int64
 	var err error
-	err = s.SQLStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+	err = a.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		var model userAuthToken
 		count, err = dbSession.Where(`created_at > ? AND rotated_at > ? AND revoked_at = 0`,
-			s.createdAfterParam(),
-			s.rotatedAfterParam()).
+			getTime().Add(-a.cfg.LoginMaxLifetime).Unix(),
+			getTime().Add(-a.cfg.LoginMaxInactiveLifetime).Unix()).
 			Count(&model)
 
 		return err
@@ -57,7 +70,7 @@ func (s *UserAuthTokenService) ActiveTokenCount(ctx context.Context) (int64, err
 	return count, err
 }
 
-func (s *UserAuthTokenService) CreateToken(ctx context.Context, user *models.User, clientIP net.IP, userAgent string) (*models.UserToken, error) {
+func (s *UserAuthTokenService) CreateToken(ctx context.Context, user *user.User, clientIP net.IP, userAgent string) (*models.UserToken, error) {
 	token, err := util.RandomHex(16)
 	if err != nil {
 		return nil, err
@@ -72,7 +85,7 @@ func (s *UserAuthTokenService) CreateToken(ctx context.Context, user *models.Use
 	}
 
 	userAuthToken := userAuthToken{
-		UserId:        user.Id,
+		UserId:        user.ID,
 		AuthToken:     hashedToken,
 		PrevAuthToken: hashedToken,
 		ClientIp:      clientIPStr,
@@ -96,7 +109,8 @@ func (s *UserAuthTokenService) CreateToken(ctx context.Context, user *models.Use
 
 	userAuthToken.UnhashedToken = token
 
-	s.log.Debug("user auth token created", "tokenId", userAuthToken.Id, "userId", userAuthToken.UserId, "clientIP", userAuthToken.ClientIp, "userAgent", userAuthToken.UserAgent, "authToken", userAuthToken.AuthToken)
+	ctxLogger := s.log.FromContext(ctx)
+	ctxLogger.Debug("user auth token created", "tokenId", userAuthToken.Id, "userId", userAuthToken.UserId, "clientIP", userAuthToken.ClientIp, "userAgent", userAuthToken.UserAgent, "authToken", userAuthToken.AuthToken)
 
 	var userToken models.UserToken
 	err = userAuthToken.toUserToken(&userToken)
@@ -125,7 +139,10 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 		return nil, models.ErrUserTokenNotFound
 	}
 
+	ctxLogger := s.log.FromContext(ctx)
+
 	if model.RevokedAt > 0 {
+		ctxLogger.Debug("user token has been revoked", "user ID", model.UserId, "token ID", model.Id)
 		return nil, &models.TokenRevokedError{
 			UserID:  model.UserId,
 			TokenID: model.Id,
@@ -133,6 +150,7 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 	}
 
 	if model.CreatedAt <= s.createdAfterParam() || model.RotatedAt <= s.rotatedAfterParam() {
+		ctxLogger.Debug("user token has expired", "user ID", model.UserId, "token ID", model.Id)
 		return nil, &models.TokenExpiredError{
 			UserID:  model.UserId,
 			TokenID: model.Id,
@@ -160,9 +178,9 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 		}
 
 		if affectedRows == 0 {
-			s.log.Debug("prev seen token unchanged", "tokenId", model.Id, "userId", model.UserId, "clientIP", model.ClientIp, "userAgent", model.UserAgent, "authToken", model.AuthToken)
+			ctxLogger.Debug("prev seen token unchanged", "tokenId", model.Id, "userId", model.UserId, "clientIP", model.ClientIp, "userAgent", model.UserAgent, "authToken", model.AuthToken)
 		} else {
-			s.log.Debug("prev seen token", "tokenId", model.Id, "userId", model.UserId, "clientIP", model.ClientIp, "userAgent", model.UserAgent, "authToken", model.AuthToken)
+			ctxLogger.Debug("prev seen token", "tokenId", model.Id, "userId", model.UserId, "clientIP", model.ClientIp, "userAgent", model.UserAgent, "authToken", model.AuthToken)
 		}
 	}
 
@@ -190,9 +208,9 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 		}
 
 		if affectedRows == 0 {
-			s.log.Debug("seen wrong token", "tokenId", model.Id, "userId", model.UserId, "clientIP", model.ClientIp, "userAgent", model.UserAgent, "authToken", model.AuthToken)
+			ctxLogger.Debug("seen wrong token", "tokenId", model.Id, "userId", model.UserId, "clientIP", model.ClientIp, "userAgent", model.UserAgent, "authToken", model.AuthToken)
 		} else {
-			s.log.Debug("seen token", "tokenId", model.Id, "userId", model.UserId, "clientIP", model.ClientIp, "userAgent", model.UserAgent, "authToken", model.AuthToken)
+			ctxLogger.Debug("seen token", "tokenId", model.Id, "userId", model.UserId, "clientIP", model.ClientIp, "userAgent", model.UserAgent, "authToken", model.AuthToken)
 		}
 	}
 
@@ -229,7 +247,8 @@ func (s *UserAuthTokenService) TryRotateToken(ctx context.Context, token *models
 		return false, nil
 	}
 
-	s.log.Debug("token needs rotation", "tokenId", model.Id, "authTokenSeen", model.AuthTokenSeen, "rotatedAt", rotatedAt)
+	ctxLogger := s.log.FromContext(ctx)
+	ctxLogger.Debug("token needs rotation", "tokenId", model.Id, "authTokenSeen", model.AuthTokenSeen, "rotatedAt", rotatedAt)
 
 	clientIPStr := clientIP.String()
 	if len(clientIP) == 0 {
@@ -271,7 +290,7 @@ func (s *UserAuthTokenService) TryRotateToken(ctx context.Context, token *models
 		return false, err
 	}
 
-	s.log.Debug("auth token rotated", "affected", affected, "auth_token_id", model.Id, "userId", model.UserId)
+	ctxLogger.Debug("auth token rotated", "affected", affected, "auth_token_id", model.Id, "userId", model.UserId)
 	if affected > 0 {
 		model.UnhashedToken = newToken
 		if err := model.toUserToken(token); err != nil {
@@ -312,12 +331,14 @@ func (s *UserAuthTokenService) RevokeToken(ctx context.Context, token *models.Us
 		return err
 	}
 
+	ctxLogger := s.log.FromContext(ctx)
+
 	if rowsAffected == 0 {
-		s.log.Debug("user auth token not found/revoked", "tokenId", model.Id, "userId", model.UserId, "clientIP", model.ClientIp, "userAgent", model.UserAgent)
+		ctxLogger.Debug("user auth token not found/revoked", "tokenId", model.Id, "userId", model.UserId, "clientIP", model.ClientIp, "userAgent", model.UserAgent)
 		return models.ErrUserTokenNotFound
 	}
 
-	s.log.Debug("user auth token revoked", "tokenId", model.Id, "userId", model.UserId, "clientIP", model.ClientIp, "userAgent", model.UserAgent, "soft", soft)
+	ctxLogger.Debug("user auth token revoked", "tokenId", model.Id, "userId", model.UserId, "clientIP", model.ClientIp, "userAgent", model.UserAgent, "soft", soft)
 
 	return nil
 }
@@ -335,7 +356,7 @@ func (s *UserAuthTokenService) RevokeAllUserTokens(ctx context.Context, userId i
 			return err
 		}
 
-		s.log.Debug("all user tokens for user revoked", "userId", userId, "count", affected)
+		s.log.FromContext(ctx).Debug("all user tokens for user revoked", "userId", userId, "count", affected)
 
 		return err
 	})
@@ -365,7 +386,7 @@ func (s *UserAuthTokenService) BatchRevokeAllUserTokens(ctx context.Context, use
 			return err
 		}
 
-		s.log.Debug("all user tokens for given users revoked", "usersCount", len(userIds), "count", affected)
+		s.log.FromContext(ctx).Debug("all user tokens for given users revoked", "usersCount", len(userIds), "count", affected)
 
 		return err
 	})

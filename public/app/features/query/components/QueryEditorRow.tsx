@@ -1,6 +1,7 @@
 // Libraries
 import classNames from 'classnames';
-import { cloneDeep, has } from 'lodash';
+import { cloneDeep, filter, has, uniqBy } from 'lodash';
+import pluralize from 'pluralize';
 import React, { PureComponent, ReactNode } from 'react';
 
 // Utils & Services
@@ -15,12 +16,13 @@ import {
   LoadingState,
   PanelData,
   PanelEvents,
+  QueryResultMetaNotice,
   TimeRange,
   toLegacyResponseData,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { AngularComponent, getAngularLoader } from '@grafana/runtime';
-import { ErrorBoundaryAlert, HorizontalGroup } from '@grafana/ui';
+import { Badge, ErrorBoundaryAlert, HorizontalGroup } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 import { QueryOperationAction } from 'app/core/components/QueryOperationRow/QueryOperationAction';
 import {
@@ -55,6 +57,9 @@ interface Props<TQuery extends DataQuery> {
   history?: Array<HistoryItem<TQuery>>;
   eventBus?: EventBusExtended;
   alerting?: boolean;
+  onQueryCopied?: () => void;
+  onQueryRemoved?: () => void;
+  onQueryToggled?: (queryStatus?: boolean | undefined) => void;
 }
 
 interface State<TQuery extends DataQuery> {
@@ -79,7 +84,10 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     showingHelp: false,
   };
 
-  componentDidMount() {
+  async componentDidMount() {
+    const { data, query } = this.props;
+    const dataFilteredByRefId = filterPanelDataToQuery(data, query.refId);
+    this.setState({ data: dataFilteredByRefId });
     this.loadDatasource();
   }
 
@@ -224,7 +232,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   }
 
   renderPluginEditor = () => {
-    const { query, onChange, queries, onRunQuery, app = CoreApp.PanelEditor, history } = this.props;
+    const { query, onChange, queries, onRunQuery, onAddQuery, app = CoreApp.PanelEditor, history } = this.props;
     const { datasource, data } = this.state;
 
     if (datasource?.components?.QueryCtrl) {
@@ -242,6 +250,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
             datasource={datasource}
             onChange={onChange}
             onRunQuery={onRunQuery}
+            onAddQuery={onAddQuery}
             data={data}
             range={getTimeSrv().timeRange()}
             queries={queries}
@@ -267,18 +276,32 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   onRemoveQuery = () => {
-    this.props.onRemoveQuery(this.props.query);
+    const { onRemoveQuery, query, onQueryRemoved } = this.props;
+    onRemoveQuery(query);
+
+    if (onQueryRemoved) {
+      onQueryRemoved();
+    }
   };
 
   onCopyQuery = () => {
-    const copy = cloneDeep(this.props.query);
-    this.props.onAddQuery(copy);
+    const { query, onAddQuery, onQueryCopied } = this.props;
+    const copy = cloneDeep(query);
+    onAddQuery(copy);
+
+    if (onQueryCopied) {
+      onQueryCopied();
+    }
   };
 
   onDisableQuery = () => {
-    const { query } = this.props;
-    this.props.onChange({ ...query, hide: !query.hide });
-    this.props.onRunQuery();
+    const { query, onChange, onRunQuery, onQueryToggled } = this.props;
+    onChange({ ...query, hide: !query.hide });
+    onRunQuery();
+
+    if (onQueryToggled) {
+      onQueryToggled(query.hide);
+    }
   };
 
   onToggleHelp = () => {
@@ -307,9 +330,46 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     return null;
   }
 
+  renderWarnings = (): JSX.Element | null => {
+    const { data, query } = this.props;
+    const dataFilteredByRefId = filterPanelDataToQuery(data, query.refId)?.series ?? [];
+
+    const allWarnings = dataFilteredByRefId.reduce((acc: QueryResultMetaNotice[], serie) => {
+      if (!serie.meta?.notices) {
+        return acc;
+      }
+
+      const warnings = filter(serie.meta.notices, { severity: 'warning' }) ?? [];
+      return acc.concat(warnings);
+    }, []);
+
+    const uniqueWarnings = uniqBy(allWarnings, 'text');
+
+    const hasWarnings = uniqueWarnings.length > 0;
+    if (!hasWarnings) {
+      return null;
+    }
+
+    const serializedWarnings = uniqueWarnings.map((warning) => warning.text).join('\n');
+
+    return (
+      <Badge
+        color="orange"
+        icon="exclamation-triangle"
+        text={
+          <>
+            {uniqueWarnings.length} {pluralize('warning', uniqueWarnings.length)}
+          </>
+        }
+        tooltip={serializedWarnings}
+      />
+    );
+  };
+
   renderExtraActions = () => {
     const { query, queries, data, onAddQuery, dataSource } = this.props;
-    return RowActionComponents.getAllExtraRenderAction()
+
+    const extraActions = RowActionComponents.getAllExtraRenderAction()
       .map((action, index) =>
         action({
           query,
@@ -321,6 +381,10 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         })
       )
       .filter(Boolean);
+
+    extraActions.push(this.renderWarnings());
+
+    return extraActions;
   };
 
   renderActions = (props: QueryOperationRowRenderProps) => {

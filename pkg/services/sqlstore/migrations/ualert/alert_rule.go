@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
 	legacymodels "github.com/grafana/grafana/pkg/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -13,6 +14,7 @@ import (
 )
 
 type alertRule struct {
+	ID              int64 `xorm:"pk autoincr 'id'"`
 	OrgID           int64 `xorm:"org_id"`
 	Title           string
 	Condition       string
@@ -22,6 +24,7 @@ type alertRule struct {
 	UID             string `xorm:"uid"`
 	NamespaceUID    string `xorm:"namespace_uid"`
 	RuleGroup       string
+	RuleGroupIndex  int `xorm:"rule_group_idx"`
 	NoDataState     string
 	ExecErrState    string
 	For             duration
@@ -35,6 +38,7 @@ type alertRuleVersion struct {
 	RuleUID          string `xorm:"rule_uid"`
 	RuleNamespaceUID string `xorm:"rule_namespace_uid"`
 	RuleGroup        string
+	RuleGroupIndex   int `xorm:"rule_group_idx"`
 	ParentVersion    int64
 	RestoredFrom     int64
 	Version          int64
@@ -59,6 +63,7 @@ func (a *alertRule) makeVersion() *alertRuleVersion {
 		RuleUID:          a.UID,
 		RuleNamespaceUID: a.NamespaceUID,
 		RuleGroup:        a.RuleGroup,
+		RuleGroupIndex:   a.RuleGroupIndex,
 		ParentVersion:    0,
 		RestoredFrom:     0,
 		Version:          1,
@@ -77,9 +82,11 @@ func (a *alertRule) makeVersion() *alertRuleVersion {
 }
 
 func addMigrationInfo(da *dashAlert) (map[string]string, map[string]string) {
-	lbls := da.ParsedSettings.AlertRuleTags
-	if lbls == nil {
-		lbls = make(map[string]string)
+	tagsMap := simplejson.NewFromAny(da.ParsedSettings.AlertRuleTags).MustMap()
+	lbls := make(map[string]string, len(tagsMap))
+
+	for k, v := range tagsMap {
+		lbls[k] = simplejson.NewFromAny(v).MustString()
 	}
 
 	annotations := make(map[string]string, 3)
@@ -92,7 +99,8 @@ func addMigrationInfo(da *dashAlert) (map[string]string, map[string]string) {
 
 func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string) (*alertRule, error) {
 	lbls, annotations := addMigrationInfo(&da)
-	lbls["alertname"] = da.Name
+	name := normalizeRuleName(da.Name)
+	lbls["alertname"] = name
 	annotations["message"] = da.Message
 	var err error
 
@@ -103,14 +111,14 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 
 	ar := &alertRule{
 		OrgID:           da.OrgId,
-		Title:           da.Name, // TODO: Make sure all names are unique, make new name on constraint insert error.
+		Title:           name, // TODO: Make sure all names are unique, make new name on constraint insert error.
 		UID:             util.GenerateShortUID(),
 		Condition:       cond.Condition,
 		Data:            data,
 		IntervalSeconds: ruleAdjustInterval(da.Frequency),
 		Version:         1,
 		NamespaceUID:    folderUID, // Folder already created, comes from env var.
-		RuleGroup:       da.Name,
+		RuleGroup:       name,
 		For:             duration(da.For),
 		Updated:         time.Now().UTC(),
 		Annotations:     annotations,
@@ -269,4 +277,16 @@ func transExecErr(s string) (string, error) {
 		return string(ngmodels.OkErrState), nil
 	}
 	return "", fmt.Errorf("unrecognized Execution Error setting %v", s)
+}
+
+func normalizeRuleName(daName string) string {
+	// If we have to truncate, we're losing data and so there is higher risk of uniqueness conflicts.
+	// Append a UID to the suffix to forcibly break any collisions.
+	if len(daName) > DefaultFieldMaxLength {
+		uniq := util.GenerateShortUID()
+		trunc := DefaultFieldMaxLength - 1 - len(uniq)
+		daName = daName[:trunc] + "_" + uniq
+	}
+
+	return daName
 }

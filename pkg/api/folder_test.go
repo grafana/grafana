@@ -4,18 +4,28 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/team/teamtest"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
+	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
 func TestFoldersAPIEndpoint(t *testing.T) {
@@ -49,15 +59,15 @@ func TestFoldersAPIEndpoint(t *testing.T) {
 			Error              error
 			ExpectedStatusCode int
 		}{
-			{Error: models.ErrFolderWithSameUIDExists, ExpectedStatusCode: 409},
-			{Error: models.ErrFolderTitleEmpty, ExpectedStatusCode: 400},
-			{Error: models.ErrFolderSameNameExists, ExpectedStatusCode: 409},
-			{Error: models.ErrDashboardInvalidUid, ExpectedStatusCode: 400},
-			{Error: models.ErrDashboardUidTooLong, ExpectedStatusCode: 400},
-			{Error: models.ErrFolderAccessDenied, ExpectedStatusCode: 403},
-			{Error: models.ErrFolderNotFound, ExpectedStatusCode: 404},
-			{Error: models.ErrFolderVersionMismatch, ExpectedStatusCode: 412},
-			{Error: models.ErrFolderFailedGenerateUniqueUid, ExpectedStatusCode: 500},
+			{Error: dashboards.ErrFolderWithSameUIDExists, ExpectedStatusCode: 409},
+			{Error: dashboards.ErrFolderTitleEmpty, ExpectedStatusCode: 400},
+			{Error: dashboards.ErrFolderSameNameExists, ExpectedStatusCode: 409},
+			{Error: dashboards.ErrDashboardInvalidUid, ExpectedStatusCode: 400},
+			{Error: dashboards.ErrDashboardUidTooLong, ExpectedStatusCode: 400},
+			{Error: dashboards.ErrFolderAccessDenied, ExpectedStatusCode: 403},
+			{Error: dashboards.ErrFolderNotFound, ExpectedStatusCode: 404},
+			{Error: dashboards.ErrFolderVersionMismatch, ExpectedStatusCode: 412},
+			{Error: dashboards.ErrFolderFailedGenerateUniqueUid, ExpectedStatusCode: 500},
 		}
 
 		cmd := models.CreateFolderCommand{
@@ -104,15 +114,15 @@ func TestFoldersAPIEndpoint(t *testing.T) {
 			Error              error
 			ExpectedStatusCode int
 		}{
-			{Error: models.ErrFolderWithSameUIDExists, ExpectedStatusCode: 409},
-			{Error: models.ErrFolderTitleEmpty, ExpectedStatusCode: 400},
-			{Error: models.ErrFolderSameNameExists, ExpectedStatusCode: 409},
-			{Error: models.ErrDashboardInvalidUid, ExpectedStatusCode: 400},
-			{Error: models.ErrDashboardUidTooLong, ExpectedStatusCode: 400},
-			{Error: models.ErrFolderAccessDenied, ExpectedStatusCode: 403},
-			{Error: models.ErrFolderNotFound, ExpectedStatusCode: 404},
-			{Error: models.ErrFolderVersionMismatch, ExpectedStatusCode: 412},
-			{Error: models.ErrFolderFailedGenerateUniqueUid, ExpectedStatusCode: 500},
+			{Error: dashboards.ErrFolderWithSameUIDExists, ExpectedStatusCode: 409},
+			{Error: dashboards.ErrFolderTitleEmpty, ExpectedStatusCode: 400},
+			{Error: dashboards.ErrFolderSameNameExists, ExpectedStatusCode: 409},
+			{Error: dashboards.ErrDashboardInvalidUid, ExpectedStatusCode: 400},
+			{Error: dashboards.ErrDashboardUidTooLong, ExpectedStatusCode: 400},
+			{Error: dashboards.ErrFolderAccessDenied, ExpectedStatusCode: 403},
+			{Error: dashboards.ErrFolderNotFound, ExpectedStatusCode: 404},
+			{Error: dashboards.ErrFolderVersionMismatch, ExpectedStatusCode: 412},
+			{Error: dashboards.ErrFolderFailedGenerateUniqueUid, ExpectedStatusCode: 500},
 		}
 
 		cmd := models.UpdateFolderCommand{
@@ -130,16 +140,116 @@ func TestFoldersAPIEndpoint(t *testing.T) {
 	})
 }
 
+func TestHTTPServer_FolderMetadata(t *testing.T) {
+	setUpRBACGuardian(t)
+	folderService := dashboards.NewFakeFolderService(t)
+	server := SetupAPITestServer(t, func(hs *HTTPServer) {
+		hs.folderService = folderService
+		hs.AccessControl = acmock.New()
+		hs.QuotaService = quotatest.NewQuotaServiceFake()
+	})
+
+	t.Run("Should attach access control metadata to multiple folders", func(t *testing.T) {
+		folderService.On("GetFolders", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]*models.Folder{
+			{Uid: "1"},
+			{Uid: "2"},
+			{Uid: "3"},
+		}, nil)
+
+		req := server.NewGetRequest("/api/folders?accesscontrol=true")
+		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
+			1: accesscontrol.GroupScopesByAction([]accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
+				{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("2")},
+			}),
+		}})
+
+		res, err := server.Send(req)
+		require.NoError(t, err)
+		defer func() { require.NoError(t, res.Body.Close()) }()
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+
+		body := []dtos.FolderSearchHit{}
+		require.NoError(t, json.NewDecoder(res.Body).Decode(&body))
+
+		for _, f := range body {
+			assert.True(t, f.AccessControl[dashboards.ActionFoldersRead])
+			if f.Uid == "2" {
+				assert.True(t, f.AccessControl[dashboards.ActionFoldersWrite])
+			} else {
+				assert.False(t, f.AccessControl[dashboards.ActionFoldersWrite])
+			}
+		}
+	})
+
+	t.Run("Should attach access control metadata to folder response", func(t *testing.T) {
+		folderService.On("GetFolderByUID", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&models.Folder{Uid: "folderUid"}, nil)
+
+		req := server.NewGetRequest("/api/folders/folderUid?accesscontrol=true")
+		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
+			1: accesscontrol.GroupScopesByAction([]accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
+				{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("folderUid")},
+			}),
+		}})
+
+		res, err := server.Send(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+		defer func() { require.NoError(t, res.Body.Close()) }()
+
+		body := dtos.Folder{}
+		require.NoError(t, json.NewDecoder(res.Body).Decode(&body))
+
+		assert.True(t, body.AccessControl[dashboards.ActionFoldersRead])
+		assert.True(t, body.AccessControl[dashboards.ActionFoldersWrite])
+	})
+
+	t.Run("Should attach access control metadata to folder response", func(t *testing.T) {
+		folderService.On("GetFolderByUID", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&models.Folder{Uid: "folderUid"}, nil)
+
+		req := server.NewGetRequest("/api/folders/folderUid")
+		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
+			1: accesscontrol.GroupScopesByAction([]accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
+				{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("folderUid")},
+			}),
+		}})
+
+		res, err := server.Send(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+		defer func() { require.NoError(t, res.Body.Close()) }()
+
+		body := dtos.Folder{}
+		require.NoError(t, json.NewDecoder(res.Body).Decode(&body))
+
+		assert.False(t, body.AccessControl[dashboards.ActionFoldersRead])
+		assert.False(t, body.AccessControl[dashboards.ActionFoldersWrite])
+	})
+}
+
 func callCreateFolder(sc *scenarioContext) {
 	sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 }
 
 func createFolderScenario(t *testing.T, desc string, url string, routePattern string, folderService dashboards.FolderService,
 	cmd models.CreateFolderCommand, fn scenarioFunc) {
+	setUpRBACGuardian(t)
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
+		aclMockResp := []*models.DashboardACLInfoDTO{}
+		teamSvc := &teamtest.FakeService{}
+		dashSvc := &dashboards.FakeDashboardService{}
+		dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
+			q := args.Get(1).(*models.GetDashboardACLInfoListQuery)
+			q.Result = aclMockResp
+		}).Return(nil)
+		store := mockstore.NewSQLStoreMock()
+		guardian.InitLegacyGuardian(store, dashSvc, teamSvc)
 		hs := HTTPServer{
-			Cfg:           setting.NewCfg(),
+			AccessControl: acmock.New(),
 			folderService: folderService,
+			Cfg:           setting.NewCfg(),
 			Features:      featuremgmt.WithFeatures(),
 		}
 
@@ -148,7 +258,7 @@ func createFolderScenario(t *testing.T, desc string, url string, routePattern st
 			c.Req.Body = mockRequestBody(cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
-			sc.context.SignedInUser = &models.SignedInUser{OrgId: testOrgID, UserId: testUserID}
+			sc.context.SignedInUser = &user.SignedInUser{OrgID: testOrgID, UserID: testUserID}
 
 			return hs.CreateFolder(c)
 		})
@@ -165,9 +275,11 @@ func callUpdateFolder(sc *scenarioContext) {
 
 func updateFolderScenario(t *testing.T, desc string, url string, routePattern string, folderService dashboards.FolderService,
 	cmd models.UpdateFolderCommand, fn scenarioFunc) {
+	setUpRBACGuardian(t)
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		hs := HTTPServer{
 			Cfg:           setting.NewCfg(),
+			AccessControl: acmock.New(),
 			folderService: folderService,
 		}
 
@@ -176,7 +288,7 @@ func updateFolderScenario(t *testing.T, desc string, url string, routePattern st
 			c.Req.Body = mockRequestBody(cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
-			sc.context.SignedInUser = &models.SignedInUser{OrgId: testOrgID, UserId: testUserID}
+			sc.context.SignedInUser = &user.SignedInUser{OrgID: testOrgID, UserID: testUserID}
 
 			return hs.UpdateFolder(c)
 		})
@@ -205,28 +317,28 @@ type fakeFolderService struct {
 	DeletedFolderUids    []string
 }
 
-func (s *fakeFolderService) GetFolders(ctx context.Context, user *models.SignedInUser, orgID int64, limit int64, page int64) ([]*models.Folder, error) {
+func (s *fakeFolderService) GetFolders(ctx context.Context, user *user.SignedInUser, orgID int64, limit int64, page int64) ([]*models.Folder, error) {
 	return s.GetFoldersResult, s.GetFoldersError
 }
 
-func (s *fakeFolderService) GetFolderByID(ctx context.Context, user *models.SignedInUser, id int64, orgID int64) (*models.Folder, error) {
+func (s *fakeFolderService) GetFolderByID(ctx context.Context, user *user.SignedInUser, id int64, orgID int64) (*models.Folder, error) {
 	return s.GetFolderByIDResult, s.GetFolderByIDError
 }
 
-func (s *fakeFolderService) GetFolderByUID(ctx context.Context, user *models.SignedInUser, orgID int64, uid string) (*models.Folder, error) {
+func (s *fakeFolderService) GetFolderByUID(ctx context.Context, user *user.SignedInUser, orgID int64, uid string) (*models.Folder, error) {
 	return s.GetFolderByUIDResult, s.GetFolderByUIDError
 }
 
-func (s *fakeFolderService) CreateFolder(ctx context.Context, user *models.SignedInUser, orgID int64, title, uid string) (*models.Folder, error) {
+func (s *fakeFolderService) CreateFolder(ctx context.Context, user *user.SignedInUser, orgID int64, title, uid string) (*models.Folder, error) {
 	return s.CreateFolderResult, s.CreateFolderError
 }
 
-func (s *fakeFolderService) UpdateFolder(ctx context.Context, user *models.SignedInUser, orgID int64, existingUid string, cmd *models.UpdateFolderCommand) error {
+func (s *fakeFolderService) UpdateFolder(ctx context.Context, user *user.SignedInUser, orgID int64, existingUid string, cmd *models.UpdateFolderCommand) error {
 	cmd.Result = s.UpdateFolderResult
 	return s.UpdateFolderError
 }
 
-func (s *fakeFolderService) DeleteFolder(ctx context.Context, user *models.SignedInUser, orgID int64, uid string, forceDeleteRules bool) (*models.Folder, error) {
+func (s *fakeFolderService) DeleteFolder(ctx context.Context, user *user.SignedInUser, orgID int64, uid string, forceDeleteRules bool) (*models.Folder, error) {
 	s.DeletedFolderUids = append(s.DeletedFolderUids, uid)
 	return s.DeleteFolderResult, s.DeleteFolderError
 }

@@ -33,7 +33,7 @@ describe('mapInternalLinkToExplore', () => {
       expect.objectContaining({
         title: 'dsName',
         href: `/explore?left=${encodeURIComponent(
-          '{"datasource":"dsName","queries":[{"query":"12344"}],"panelsState":{}}'
+          '{"datasource":"uid","queries":[{"query":"12344"}],"panelsState":{}}'
         )}`,
         onClick: undefined,
       })
@@ -76,7 +76,7 @@ describe('mapInternalLinkToExplore', () => {
       expect.objectContaining({
         title: 'dsName',
         href: `/explore?left=${encodeURIComponent(
-          '{"datasource":"dsName","queries":[{"query":"12344"}],"panelsState":{"trace":{"spanId":"abcdef"}}}'
+          '{"datasource":"uid","queries":[{"query":"12344"}],"panelsState":{"trace":{"spanId":"abcdef"}}}'
         )}`,
         onClick: undefined,
       })

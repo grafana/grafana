@@ -7,8 +7,8 @@ import { AddPanelWidgetUnconnected as AddPanelWidget, Props } from './AddPanelWi
 
 const getTestContext = (propOverrides?: object) => {
   const props: Props = {
-    dashboard: {} as DashboardModel,
-    panel: {} as PanelModel,
+    dashboard: new DashboardModel({}),
+    panel: new PanelModel({}),
     addPanel: jest.fn() as any,
   };
   Object.assign(props, propOverrides);

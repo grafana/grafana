@@ -48,10 +48,16 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2, isHorizontal: bool
       .rc-slider-handle:hover,
       .rc-slider-handle:active,
       .rc-slider-handle:focus,
-      .rc-slider-handle-click-focused:focus,
-      .rc-slider-dot-active {
+      .rc-slider-handle-click-focused:focus {
         ${hoverSyle};
       }
+
+      .rc-slider-dot,
+      .rc-slider-dot-active {
+        background-color: ${theme.colors.text.primary};
+        border-color: ${theme.colors.text.primary};
+      }
+
       .rc-slider-track {
         background-color: ${trackColor};
       }

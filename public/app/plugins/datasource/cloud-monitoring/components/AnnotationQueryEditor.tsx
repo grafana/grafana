@@ -2,9 +2,8 @@ import React, { useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { QueryEditorProps, toOption } from '@grafana/data';
-import { Input } from '@grafana/ui';
+import { EditorField, EditorRows, Input } from '@grafana/ui';
 
-import { INPUT_WIDTH } from '../constants';
 import CloudMonitoringDatasource from '../datasource';
 import {
   EditorMode,
@@ -17,7 +16,7 @@ import {
 
 import { MetricQueryEditor } from './MetricQueryEditor';
 
-import { AnnotationsHelp, QueryEditorRow } from './';
+import { AnnotationsHelp } from './';
 
 export type Props = QueryEditorProps<CloudMonitoringDatasource, CloudMonitoringQuery, CloudMonitoringOptions>;
 
@@ -77,26 +76,25 @@ export const AnnotationQueryEditor = (props: Props) => {
   );
 
   return (
-    <>
-      <MetricQueryEditor
-        refId={query.refId}
-        variableOptionGroup={variableOptionGroup}
-        customMetaData={customMetaData}
-        onChange={handleQueryChange}
-        onRunQuery={onRunQuery}
-        datasource={datasource}
-        query={metricQuery}
-      />
-
-      <QueryEditorRow label="Title" htmlFor="annotation-query-title">
-        <Input id="annotation-query-title" value={title} width={INPUT_WIDTH} onChange={handleTitleChange} />
-      </QueryEditorRow>
-
-      <QueryEditorRow label="Text" htmlFor="annotation-query-text">
-        <Input id="annotation-query-text" value={text} width={INPUT_WIDTH} onChange={handleTextChange} />
-      </QueryEditorRow>
-
+    <EditorRows>
+      <>
+        <MetricQueryEditor
+          refId={query.refId}
+          variableOptionGroup={variableOptionGroup}
+          customMetaData={customMetaData}
+          onChange={handleQueryChange}
+          onRunQuery={onRunQuery}
+          datasource={datasource}
+          query={metricQuery}
+        />
+        <EditorField label="Title" htmlFor="annotation-query-title">
+          <Input id="annotation-query-title" value={title} onChange={handleTitleChange} />
+        </EditorField>
+        <EditorField label="Text" htmlFor="annotation-query-text">
+          <Input id="annotation-query-text" value={text} onChange={handleTextChange} />
+        </EditorField>
+      </>
       <AnnotationsHelp />
-    </>
+    </EditorRows>
   );
 };

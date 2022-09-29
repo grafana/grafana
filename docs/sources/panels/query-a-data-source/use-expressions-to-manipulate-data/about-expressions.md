@@ -14,7 +14,7 @@ Server-side expressions allow you to manipulate data returned from queries with 
 
 ## Using expressions
 
-Expressions are primarily used by [Grafana alerting]({{< relref "../../../alerting/" >}}). The processing is done server-side, so expressions can operate without a browser session. However, expressions can also be used with backend data sources and visualization.
+Expressions are primarily used by [Grafana Alerting]({{< relref "../../../alerting/" >}}). The processing is done server-side, so expressions can operate without a browser session. However, expressions can also be used with backend data sources and visualization.
 
 > **Note:** Expressions do not work with legacy dashboard alerts.
 
@@ -114,7 +114,7 @@ is_nan takes a number or a series and returns `1` for `NaN` values and `0` for o
 
 ##### is_null
 
-is_nan takes a number or a series and returns `1` for `null` values and `0` for other values. For example `is_null($A)`.
+is_null takes a number or a series and returns `1` for `null` values and `0` for other values. For example `is_null($A)`.
 
 ##### is_number
 

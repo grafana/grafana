@@ -30,6 +30,9 @@ export const run = (includeInternalScripts = false) => {
       .option('-s, --scope <packages>', 'packages=[data|runtime|ui|toolkit|e2e|e2e-selectors]')
       .description('Builds @grafana/* package to packages/grafana-*/dist')
       .action(async (cmd) => {
+        console.warn(
+          '@grafana/toolkit package:build task is deprecated and will be removed in @grafana/toolkit@10.0.0.'
+        );
         await execTask(buildPackageTask)({
           scope: cmd.scope,
         });

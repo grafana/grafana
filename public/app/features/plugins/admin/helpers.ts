@@ -1,4 +1,4 @@
-import { PluginSignatureStatus, dateTimeParse, PluginError, PluginErrorCode } from '@grafana/data';
+import { PluginSignatureStatus, dateTimeParse, PluginError, PluginType, PluginErrorCode } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Settings } from 'app/core/config';
 import { getBackendSrv } from 'app/core/services/backend_srv';
@@ -61,7 +61,7 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     status,
   } = plugin;
 
-  const isDisabled = !!error;
+  const isDisabled = !!error || isDisabledSecretsPlugin(typeCode);
   return {
     description,
     downloads,
@@ -101,8 +101,10 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     signatureOrg,
     signatureType,
     hasUpdate,
+    accessControl,
   } = plugin;
 
+  const isDisabled = !!error || isDisabledSecretsPlugin(type);
   return {
     description,
     downloads: 0,
@@ -119,13 +121,14 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     installedVersion: version,
     hasUpdate,
     isInstalled: true,
-    isDisabled: !!error,
+    isDisabled: isDisabled,
     isCore: signature === 'internal',
     isPublished: false,
     isDev: Boolean(dev),
     isEnterprise: false,
     type,
     error: error?.errorCode,
+    accessControl: accessControl,
   };
 }
 
@@ -134,7 +137,7 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
   const installedVersion = local?.info.version;
   const id = remote?.slug || local?.id || '';
   const type = local?.type || remote?.typeCode;
-  const isDisabled = !!error;
+  const isDisabled = !!error || isDisabledSecretsPlugin(type);
 
   let logos = {
     small: `/public/img/icn-${type}.svg`,
@@ -178,6 +181,8 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     updatedAt: remote?.updatedAt || local?.info.updated || '',
     installedVersion,
     error: error?.errorCode,
+    // Only local plugins have access control metadata
+    accessControl: local?.accessControl,
   };
 }
 
@@ -272,6 +277,10 @@ function isPluginVisible(id: string) {
   const { pluginCatalogHiddenPlugins }: { pluginCatalogHiddenPlugins: string[] } = config;
 
   return !pluginCatalogHiddenPlugins.includes(id);
+}
+
+function isDisabledSecretsPlugin(type?: PluginType): boolean {
+  return type === PluginType.secretsmanager && !config.secretsManagerPluginEnabled;
 }
 
 export function isLocalCorePlugin(local?: LocalPlugin): boolean {

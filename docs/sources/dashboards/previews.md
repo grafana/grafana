@@ -19,7 +19,7 @@ Dashboard previews provide an overview of all available dashboards. They help yo
 
 > **Note:** Dashboard previews are available in Grafana 9.0+ as an opt-in beta feature. Data source permissions are not yet taken into the account when displaying the dashboard previews - refer to the [permissions]({{< relref "#preview-visibility">}}) to learn more before enabling the feature.
 
-You can view dashboard previews after the administrator enables the feature following the procedure described below, and after you select the new grid layout. The dashboard previews feature is an opt-in feature that is disabled by default.
+The dashboard previews feature is an opt-in feature that is disabled by default. You can view dashboard previews after an administrator enables the feature, and after you select the new grid layout. The feature-enablement procedure is outlined in the following section.
 
 - [Enable dashboard previews](#enable-dashboard-previews)
 - [About the dashboard previews crawler](#about-the-dashboard-previews-crawler)
@@ -36,7 +36,9 @@ You can view dashboard previews after the administrator enables the feature foll
 enable = dashboardPreviews
 ```
 
-3. Save your changes. Grafana should reload automatically; we recommend restarting the Grafana server in case of any issues.
+3. If running Grafana Enterprise with RBAC, enable [service accounts]({{< relref "../administration/service-accounts/" >}}).
+
+4. Save your changes. Grafana should reload automatically; we recommend restarting the Grafana server in case of any issues.
 
 The first crawler run should begin approximately five minutes after Grafana server restart.
 
@@ -78,7 +80,7 @@ Use the new [contextPerRenderKey]({{< relref "../setup-grafana/image-rendering/#
 
 ### Saving previews
 
-The crawler saves previews and their metadata in Grafana's DB. Preview's metadata contains, among other things, the [dashboard version]({{< relref "dashboard-history/" >}}) from the time of taking the screenshot. During subsequent runs, the crawler uses the saved version to find stale dashboard previews.
+The crawler saves previews and their metadata in Grafana's DB. Preview's metadata contains, among other things, the [dashboard version]({{< relref "./build-dashboards/manage-version-history" >}}) from the time of taking the screenshot. During subsequent runs, the crawler uses the saved version to find stale dashboard previews.
 
 ## Permissions
 

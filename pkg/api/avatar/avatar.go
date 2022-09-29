@@ -11,9 +11,9 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -188,7 +188,7 @@ func newNotFound(cfg *setting.Cfg) *Avatar {
 	// It's safe to ignore gosec warning G304 since the variable part of the file path comes from a configuration
 	// variable.
 	// nolint:gosec
-	if data, err := ioutil.ReadFile(path); err != nil {
+	if data, err := os.ReadFile(path); err != nil {
 		alog.Error("Failed to read user_profile.png", "path", path)
 	} else {
 		avatar.data = bytes.NewBuffer(data)

@@ -20,7 +20,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-type Props = {
+export type Props = {
   value?: DataLinkConfig[];
   onChange: (value: DataLinkConfig[]) => void;
 };

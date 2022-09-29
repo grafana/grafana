@@ -148,7 +148,7 @@ export default function AccordianKeyValues(props: AccordianKeyValuesProps) {
           [styles.headerHighContrast]: highContrast && !isEmpty,
         })}
         {...headerProps}
-        data-test-id="AccordianKeyValues--header"
+        data-testid="AccordianKeyValues--header"
       >
         {arrow}
         <strong data-test={markers.LABEL}>

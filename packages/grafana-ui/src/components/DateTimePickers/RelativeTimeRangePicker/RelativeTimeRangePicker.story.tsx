@@ -1,39 +1,40 @@
 import { action } from '@storybook/addon-actions';
+import { useArgs } from '@storybook/client-api';
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React from 'react';
 
-import { UseState } from '../../../utils/storybook/UseState';
 import { withCenteredStory } from '../../../utils/storybook/withCenteredStory';
 
 import { RelativeTimeRangePicker } from './RelativeTimeRangePicker';
 
-export default {
+const meta: ComponentMeta<typeof RelativeTimeRangePicker> = {
   title: 'Pickers and Editors/TimePickers/RelativeTimeRangePicker',
   component: RelativeTimeRangePicker,
   decorators: [withCenteredStory],
   parameters: {
-    docs: {},
+    controls: {
+      exclude: ['onChange'],
+    },
+  },
+  args: {
+    timeRange: {
+      from: 900,
+      to: 0,
+    },
   },
 };
 
-export const basic = () => {
+export const Basic: ComponentStory<typeof RelativeTimeRangePicker> = (args) => {
+  const [, updateArgs] = useArgs();
   return (
-    <UseState
-      initialState={{
-        from: 900,
-        to: 0,
+    <RelativeTimeRangePicker
+      {...args}
+      onChange={(value) => {
+        action('onChange')(value);
+        updateArgs({ timeRange: value });
       }}
-    >
-      {(value, updateValue) => {
-        return (
-          <RelativeTimeRangePicker
-            onChange={(newValue) => {
-              action('on selected')(newValue);
-              updateValue(newValue);
-            }}
-            timeRange={value}
-          />
-        );
-      }}
-    </UseState>
+    />
   );
 };
+
+export default meta;

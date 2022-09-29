@@ -34,7 +34,6 @@ const MetricNameField: React.FC<MetricNameProps> = ({ metricNames, query, variab
         value={query.azureMonitor?.metricName ?? null}
         onChange={handleChange}
         options={options}
-        width={38}
         allowCustomValue
       />
     </Field>

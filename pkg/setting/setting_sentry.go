@@ -11,12 +11,15 @@ type Sentry struct {
 
 func (cfg *Cfg) readSentryConfig() {
 	raw := cfg.Raw.Section("log.frontend")
-	cfg.Sentry = Sentry{
-		Enabled:        raw.Key("enabled").MustBool(true),
-		DSN:            raw.Key("sentry_dsn").String(),
-		CustomEndpoint: raw.Key("custom_endpoint").String(),
-		SampleRate:     raw.Key("sample_rate").MustFloat64(),
-		EndpointRPS:    raw.Key("log_endpoint_requests_per_second_limit").MustInt(),
-		EndpointBurst:  raw.Key("log_endpoint_burst_limit").MustInt(),
+	provider := raw.Key("provider").MustString("sentry")
+	if provider == "sentry" || provider != "grafana" {
+		cfg.Sentry = Sentry{
+			Enabled:        raw.Key("enabled").MustBool(true),
+			DSN:            raw.Key("sentry_dsn").String(),
+			CustomEndpoint: raw.Key("custom_endpoint").MustString("/log"),
+			SampleRate:     raw.Key("sample_rate").MustFloat64(),
+			EndpointRPS:    raw.Key("log_endpoint_requests_per_second_limit").MustInt(3),
+			EndpointBurst:  raw.Key("log_endpoint_burst_limit").MustInt(15),
+		}
 	}
 }

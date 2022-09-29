@@ -9,7 +9,7 @@ import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimen
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
 import { ColorDimensionConfig, TextDimensionConfig } from 'app/features/dimensions/types';
 
-import { CanvasElementItem, CanvasElementProps } from '../element';
+import { CanvasElementItem, CanvasElementProps, defaultBgColor, defaultTextColor } from '../element';
 
 export enum Align {
   Left = 'left',
@@ -23,7 +23,7 @@ export enum VAlign {
   Bottom = 'bottom',
 }
 
-interface TextBoxData {
+export interface TextBoxData {
   text?: string;
   color?: string;
   size?: number; // 0 or missing will "auto size"
@@ -31,7 +31,7 @@ interface TextBoxData {
   valign: VAlign;
 }
 
-interface TextBoxConfig {
+export interface TextBoxConfig {
   text?: TextDimensionConfig;
   color?: ColorDimensionConfig;
   size?: number; // 0 or missing will "auto size"
@@ -78,15 +78,18 @@ export const textBoxItem: CanvasElementItem<TextBoxConfig, TextBoxData> = {
   },
 
   getNewOptions: (options) => ({
-    background: {
-      color: {
-        fixed: 'grey',
-      },
-    },
     ...options,
     config: {
-      align: Align.Left,
+      align: Align.Center,
       valign: VAlign.Middle,
+      color: {
+        fixed: defaultTextColor,
+      },
+    },
+    background: {
+      color: {
+        fixed: defaultBgColor,
+      },
     },
   }),
 

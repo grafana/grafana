@@ -1,62 +1,101 @@
 // Libraries
 import { css, cx } from '@emotion/css';
-import React, { FC, HTMLAttributes, useEffect } from 'react';
+import React from 'react';
 
-import { GrafanaTheme2, NavModel } from '@grafana/data';
+import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { CustomScrollbar, useStyles2 } from '@grafana/ui';
-import { getTitleFromNavModel } from 'app/core/selectors/navModel';
 
-// Components
-import { Branding } from '../Branding/Branding';
 import { Footer } from '../Footer/Footer';
-import PageHeader from '../PageHeader/PageHeader';
+import { PageHeader } from '../PageHeader/PageHeader';
+import { Page as NewPage } from '../PageNew/Page';
 
+import { OldNavOnly } from './OldNavOnly';
 import { PageContents } from './PageContents';
+import { PageType } from './types';
+import { usePageNav } from './usePageNav';
+import { usePageTitle } from './usePageTitle';
 
-interface Props extends HTMLAttributes<HTMLDivElement> {
-  children: React.ReactNode;
-  navModel?: NavModel;
-}
-
-export interface PageType extends FC<Props> {
-  Header: typeof PageHeader;
-  Contents: typeof PageContents;
-}
-
-export const Page: PageType = ({ navModel, children, className, ...otherProps }) => {
+export const OldPage: PageType = ({
+  navId,
+  navModel: oldNavProp,
+  pageNav,
+  children,
+  className,
+  toolbar,
+  scrollRef,
+  scrollTop,
+  layout = PageLayoutType.Standard,
+  subTitle,
+  ...otherProps
+}) => {
   const styles = useStyles2(getStyles);
+  const navModel = usePageNav(navId, oldNavProp);
 
-  useEffect(() => {
-    if (navModel) {
-      const title = getTitleFromNavModel(navModel);
-      document.title = title ? `${title} - ${Branding.AppTitle}` : Branding.AppTitle;
-    } else {
-      document.title = Branding.AppTitle;
-    }
-  }, [navModel]);
+  usePageTitle(navModel, pageNav);
+
+  const pageHeaderNav = pageNav ?? navModel?.main;
 
   return (
-    <div {...otherProps} className={cx(styles.wrapper, className)}>
-      <CustomScrollbar autoHeightMin={'100%'}>
-        <div className="page-scrollbar-content">
-          {navModel && <PageHeader model={navModel} />}
+    <div className={cx(styles.wrapper, className)} {...otherProps}>
+      {layout === PageLayoutType.Standard && (
+        <CustomScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
+          <div className={cx('page-scrollbar-content', className)}>
+            {pageHeaderNav && <PageHeader navItem={pageHeaderNav} />}
+            {children}
+            <Footer />
+          </div>
+        </CustomScrollbar>
+      )}
+      {layout === PageLayoutType.Canvas && (
+        <>
+          {toolbar}
+          <div className={styles.scrollWrapper}>
+            <CustomScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
+              <div className={cx(styles.content, !toolbar && styles.contentWithoutToolbar)}>{children}</div>
+            </CustomScrollbar>
+          </div>
+        </>
+      )}
+      {layout === PageLayoutType.Custom && (
+        <>
+          {toolbar}
           {children}
-          <Footer />
-        </div>
-      </CustomScrollbar>
+        </>
+      )}
     </div>
   );
 };
 
-Page.Header = PageHeader;
-Page.Contents = PageContents;
+OldPage.Header = PageHeader;
+OldPage.Contents = PageContents;
+OldPage.OldNavOnly = OldNavOnly;
 
-export default Page;
+export const Page: PageType = config.featureToggles.topnav ? NewPage : OldPage;
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    width: 100%;
-    flex-grow: 1;
-    min-height: 0;
-  `,
+  wrapper: css({
+    width: '100%',
+    height: '100%',
+    display: 'flex',
+    flex: '1 1 0',
+    flexDirection: 'column',
+    minHeight: 0,
+  }),
+  scrollWrapper: css({
+    width: '100%',
+    flexGrow: 1,
+    minHeight: 0,
+    display: 'flex',
+  }),
+  content: css({
+    display: 'flex',
+    flexDirection: 'column',
+    padding: theme.spacing(0, 2, 2, 2),
+    flexBasis: '100%',
+    flexGrow: 1,
+  }),
+  contentWithoutToolbar: css({
+    padding: theme.spacing(2),
+  }),
 });

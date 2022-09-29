@@ -9,7 +9,7 @@ export interface TimeProps {
 }
 
 export const Time: FC<TimeProps> = ({ timeInMs, className, humanize }) => {
-  return <span className={`elapsed-time ${className}`}>{formatTime(timeInMs, humanize)}</span>;
+  return <span className={className}>{formatTime(timeInMs, humanize)}</span>;
 };
 
 const formatTime = (timeInMs: number, humanize = false): string => {

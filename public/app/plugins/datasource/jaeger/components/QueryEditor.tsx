@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { QueryEditorProps } from '@grafana/data';
-import { FileDropzone, InlineField, InlineFieldRow, QueryField, RadioButtonGroup, useTheme2 } from '@grafana/ui';
+import { GrafanaTheme2, QueryEditorProps } from '@grafana/data';
+import { FileDropzone, InlineField, InlineFieldRow, QueryField, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
 import { JaegerDatasource } from '../datasource';
 import { JaegerQuery, JaegerQueryType } from '../types';
@@ -12,7 +12,7 @@ import { SearchForm } from './SearchForm';
 type Props = QueryEditorProps<JaegerDatasource, JaegerQuery>;
 
 export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) {
-  const theme = useTheme2();
+  const styles = useStyles2(getStyles);
 
   const onChangeQuery = (value: string) => {
     const nextQuery: JaegerQuery = { ...query, query: value };
@@ -25,7 +25,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
         return <SearchForm datasource={datasource} query={query} onChange={onChange} />;
       case 'upload':
         return (
-          <div className={css({ padding: theme.spacing(2) })}>
+          <div className={styles.fileDropzoneContainer}>
             <FileDropzone
               options={{ multiple: false }}
               onLoad={(result) => {
@@ -55,14 +55,14 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
 
   return (
     <>
-      <div className={css({ width: '100%' })}>
+      <div className={styles.container}>
         <InlineFieldRow>
           <InlineField label="Query type">
             <RadioButtonGroup<JaegerQueryType>
               options={[
                 { value: 'search', label: 'Search' },
                 { value: undefined, label: 'TraceID' },
-                { value: 'upload', label: 'JSON file' },
+                { value: 'upload', label: 'JSON File' },
               ]}
               value={query.queryType}
               onChange={(v) =>
@@ -80,3 +80,12 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
     </>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  container: css`
+    width: 100%;
+  `,
+  fileDropzoneContainer: css`
+    padding: ${theme.spacing(2)};
+  `,
+});

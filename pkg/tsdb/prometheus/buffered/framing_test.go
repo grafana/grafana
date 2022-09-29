@@ -17,11 +17,12 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
+	"github.com/prometheus/client_golang/api"
+	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
-	"github.com/prometheus/client_golang/api"
-	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
 
 var update = true
@@ -47,6 +48,7 @@ func TestResponses(t *testing.T) {
 			query, err := loadStoredPrometheusQuery(queryFileName)
 			require.NoError(t, err)
 
+			//nolint:gosec
 			responseBytes, err := os.ReadFile(responseFileName)
 			require.NoError(t, err)
 
@@ -105,6 +107,7 @@ type storedPrometheusQuery struct {
 }
 
 func loadStoredPrometheusQuery(fileName string) (PrometheusQuery, error) {
+	//nolint:gosec
 	bytes, err := os.ReadFile(fileName)
 	if err != nil {
 		return PrometheusQuery{}, err
@@ -134,18 +137,16 @@ func runQuery(response []byte, query PrometheusQuery) (*backend.QueryDataRespons
 		return nil, err
 	}
 
-	tracer, err := tracing.InitializeTracerForTest()
-	if err != nil {
-		return nil, err
-	}
+	tracer := tracing.InitializeTracerForTest()
 
 	s := Buffered{
 		intervalCalculator: intervalv2.NewCalculator(),
 		tracer:             tracer,
 		TimeInterval:       fmt.Sprintf("%ds", int(math.Floor(query.Step.Seconds()))),
 		log:                &fakeLogger{},
+		client:             api,
 	}
-	return s.runQueries(context.Background(), api, []*PrometheusQuery{&query})
+	return s.runQueries(context.Background(), []*PrometheusQuery{&query})
 }
 
 type fakeLogger struct {

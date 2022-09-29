@@ -17,7 +17,7 @@ import cx from 'classnames';
 import React from 'react';
 import IoLink from 'react-icons/lib/io/link';
 
-import { GrafanaTheme2, LinkModel } from '@grafana/data';
+import { dateTimeFormat, GrafanaTheme2, LinkModel, TimeZone } from '@grafana/data';
 import { DataLinkButton, TextArea, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
@@ -110,13 +110,13 @@ type SpanDetailProps = {
   logsToggle: (spanID: string) => void;
   processToggle: (spanID: string) => void;
   span: TraceSpan;
+  timeZone: TimeZone;
   tagsToggle: (spanID: string) => void;
   traceStartTime: number;
   warningsToggle: (spanID: string) => void;
   stackTracesToggle: (spanID: string) => void;
   referenceItemToggle: (spanID: string, reference: TraceSpanReference) => void;
   referencesToggle: (spanID: string) => void;
-  focusSpan: (uiFind: string) => void;
   createSpanLink?: SpanLinkFunc;
   focusedSpanId?: string;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
@@ -137,7 +137,6 @@ export default function SpanDetail(props: SpanDetailProps) {
     stackTracesToggle,
     referencesToggle,
     referenceItemToggle,
-    focusSpan,
     createSpanLink,
     createFocusSpanLink,
     topOfViewRefType,
@@ -155,6 +154,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     process,
     duration,
     relativeStartTime,
+    startTime,
     traceID,
     spanID,
     logs,
@@ -163,6 +163,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     references,
     stackTraces,
   } = span;
+  const { timeZone } = props;
   const overviewItems = [
     {
       key: 'svc',
@@ -177,7 +178,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     {
       key: 'start',
       label: 'Start Time:',
-      value: formatDuration(relativeStartTime),
+      value: formatDuration(relativeStartTime) + getAbsoluteTime(startTime, timeZone),
     },
     ...(span.childSpanCount > 0
       ? [
@@ -194,7 +195,7 @@ export default function SpanDetail(props: SpanDetailProps) {
   const focusSpanLink = createFocusSpanLink(traceID, spanID);
 
   return (
-    <div>
+    <div data-testid="span-detail-component">
       <div className={styles.header}>
         <h2 className={cx(ubM0)}>{operationName}</h2>
         <div className={styles.listWrapper}>
@@ -212,7 +213,7 @@ export default function SpanDetail(props: SpanDetailProps) {
         <div>
           <AccordianKeyValues
             data={tags}
-            label="Tags"
+            label="Attributes"
             linksGetter={linksGetter}
             isOpen={isTagsOpen}
             onToggle={() => tagsToggle(spanID)}
@@ -221,7 +222,7 @@ export default function SpanDetail(props: SpanDetailProps) {
             <AccordianKeyValues
               className={ubMb1}
               data={process.tags}
-              label="Process"
+              label="Resource"
               linksGetter={linksGetter}
               isOpen={isProcessOpen}
               onToggle={() => processToggle(spanID)}
@@ -284,7 +285,7 @@ export default function SpanDetail(props: SpanDetailProps) {
             openedItems={referencesState.openedItems}
             onToggle={() => referencesToggle(spanID)}
             onItemToggle={(reference) => referenceItemToggle(spanID, reference)}
-            focusSpan={focusSpan}
+            createFocusSpanLink={createFocusSpanLink}
           />
         )}
         {topOfViewRefType === TopOfViewRefType.Explore && (
@@ -314,3 +315,10 @@ export default function SpanDetail(props: SpanDetailProps) {
     </div>
   );
 }
+
+export const getAbsoluteTime = (startTime: number, timeZone: TimeZone) => {
+  const dateStr = dateTimeFormat(startTime / 1000, { timeZone, defaultWithMS: true });
+  const match = dateStr.split(' ');
+  const absoluteTime = match[1] ? match[1] : dateStr;
+  return ` (${absoluteTime})`;
+};

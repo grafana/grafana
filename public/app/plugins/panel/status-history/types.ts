@@ -1,9 +1,15 @@
-import { HideableFieldConfig, VisibilityMode, OptionsWithTooltip, OptionsWithLegend } from '@grafana/schema';
+import {
+  HideableFieldConfig,
+  VisibilityMode,
+  OptionsWithTooltip,
+  OptionsWithLegend,
+  OptionsWithTimezones,
+} from '@grafana/schema';
 
 /**
  * @alpha
  */
-export interface StatusPanelOptions extends OptionsWithTooltip, OptionsWithLegend {
+export interface StatusPanelOptions extends OptionsWithTooltip, OptionsWithLegend, OptionsWithTimezones {
   showValue: VisibilityMode;
   rowHeight: number;
   colWidth?: number;

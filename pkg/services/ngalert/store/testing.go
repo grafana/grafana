@@ -2,26 +2,69 @@ package store
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"math/rand"
-	"net/http"
-	"net/http/httptest"
+	"strings"
 	"sync"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 
 	models2 "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-
-	amv2 "github.com/prometheus/alertmanager/api/v2/models"
-	"github.com/prometheus/common/model"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
+
+func NewFakeImageStore(t *testing.T) *FakeImageStore {
+	return &FakeImageStore{
+		t:      t,
+		images: make(map[string]*models.Image),
+	}
+}
+
+type FakeImageStore struct {
+	t      *testing.T
+	mtx    sync.Mutex
+	images map[string]*models.Image
+}
+
+func (s *FakeImageStore) GetImage(_ context.Context, token string) (*models.Image, error) {
+	s.mtx.Lock()
+	defer s.mtx.Unlock()
+	if image, ok := s.images[token]; ok {
+		return image, nil
+	}
+	return nil, models.ErrImageNotFound
+}
+
+func (s *FakeImageStore) GetImages(_ context.Context, tokens []string) ([]models.Image, []string, error) {
+	s.mtx.Lock()
+	defer s.mtx.Unlock()
+	images := make([]models.Image, 0, len(tokens))
+	for _, token := range tokens {
+		if image, ok := s.images[token]; ok {
+			images = append(images, *image)
+		}
+	}
+	if len(images) < len(tokens) {
+		return images, unmatchedTokens(tokens, images), models.ErrImageNotFound
+	}
+	return images, nil, nil
+}
+
+func (s *FakeImageStore) SaveImage(_ context.Context, image *models.Image) error {
+	s.mtx.Lock()
+	defer s.mtx.Unlock()
+	if image.ID == 0 {
+		image.ID = int64(len(s.images)) + 1
+	}
+	if image.Token == "" {
+		tmp := strings.Split(image.Path, ".")
+		image.Token = strings.Join(tmp[:len(tmp)-1], ".")
+	}
+	s.images[image.Token] = image
+	return nil
+}
 
 func NewFakeRuleStore(t *testing.T) *FakeRuleStore {
 	return &FakeRuleStore{
@@ -128,9 +171,6 @@ func (f *FakeRuleStore) DeleteAlertRulesByUID(_ context.Context, orgID int64, UI
 	return nil
 }
 
-func (f *FakeRuleStore) DeleteAlertInstancesByRuleUID(_ context.Context, _ int64, _ string) error {
-	return nil
-}
 func (f *FakeRuleStore) GetAlertRuleByUID(_ context.Context, q *models.GetAlertRuleByUIDQuery) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
@@ -178,27 +218,6 @@ func (f *FakeRuleStore) GetAlertRulesGroupByRuleUID(_ context.Context, q *models
 	for _, rule := range rules {
 		if rule.GetGroupKey() == selected.GetGroupKey() {
 			q.Result = append(q.Result, rule)
-		}
-	}
-	return nil
-}
-
-// For now, we're not implementing namespace filtering.
-func (f *FakeRuleStore) GetAlertRulesForScheduling(_ context.Context, q *models.GetAlertRulesForSchedulingQuery) error {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-	f.RecordedOps = append(f.RecordedOps, *q)
-	if err := f.Hook(*q); err != nil {
-		return err
-	}
-	for _, rules := range f.Rules {
-		for _, rule := range rules {
-			q.Result = append(q.Result, &models.SchedulableAlertRule{
-				UID:             rule.UID,
-				OrgID:           rule.OrgID,
-				IntervalSeconds: rule.IntervalSeconds,
-				Version:         rule.Version,
-			})
 		}
 	}
 	return nil
@@ -259,26 +278,7 @@ func (f *FakeRuleStore) ListAlertRules(_ context.Context, q *models.ListAlertRul
 	return nil
 }
 
-func (f *FakeRuleStore) GetRuleGroups(_ context.Context, q *models.ListRuleGroupsQuery) error {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-	f.RecordedOps = append(f.RecordedOps, *q)
-
-	m := make(map[string]struct{})
-	for _, rules := range f.Rules {
-		for _, rule := range rules {
-			m[rule.RuleGroup] = struct{}{}
-		}
-	}
-
-	for s := range m {
-		q.Result = append(q.Result, s)
-	}
-
-	return nil
-}
-
-func (f *FakeRuleStore) GetUserVisibleNamespaces(_ context.Context, orgID int64, _ *models2.SignedInUser) (map[string]*models2.Folder, error) {
+func (f *FakeRuleStore) GetUserVisibleNamespaces(_ context.Context, orgID int64, _ *user.SignedInUser) (map[string]*models2.Folder, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 
@@ -295,10 +295,25 @@ func (f *FakeRuleStore) GetUserVisibleNamespaces(_ context.Context, orgID int64,
 	return namespacesMap, nil
 }
 
-func (f *FakeRuleStore) GetNamespaceByTitle(_ context.Context, title string, orgID int64, _ *models2.SignedInUser, _ bool) (*models2.Folder, error) {
+func (f *FakeRuleStore) GetNamespaceByTitle(_ context.Context, title string, orgID int64, _ *user.SignedInUser, _ bool) (*models2.Folder, error) {
 	folders := f.Folders[orgID]
 	for _, folder := range folders {
 		if folder.Title == title {
+			return folder, nil
+		}
+	}
+	return nil, fmt.Errorf("not found")
+}
+
+func (f *FakeRuleStore) GetNamespaceByUID(_ context.Context, uid string, orgID int64, _ *user.SignedInUser) (*models2.Folder, error) {
+	f.RecordedOps = append(f.RecordedOps, GenericRecordedQuery{
+		Name:   "GetNamespaceByUID",
+		Params: []interface{}{orgID, uid},
+	})
+
+	folders := f.Folders[orgID]
+	for _, folder := range folders {
+		if folder.Uid == uid {
 			return folder, nil
 		}
 	}
@@ -352,33 +367,28 @@ func (f *FakeRuleStore) UpdateRuleGroup(ctx context.Context, orgID int64, namesp
 	return nil
 }
 
-type FakeInstanceStore struct {
-	mtx         sync.Mutex
-	RecordedOps []interface{}
-}
+func (f *FakeRuleStore) IncreaseVersionForAllRulesInNamespace(_ context.Context, orgID int64, namespaceUID string) ([]models.AlertRuleKeyWithVersion, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
 
-func (f *FakeInstanceStore) GetAlertInstance(_ context.Context, q *models.GetAlertInstanceQuery) error {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-	f.RecordedOps = append(f.RecordedOps, *q)
-	return nil
-}
-func (f *FakeInstanceStore) ListAlertInstances(_ context.Context, q *models.ListAlertInstancesQuery) error {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-	f.RecordedOps = append(f.RecordedOps, *q)
-	return nil
-}
-func (f *FakeInstanceStore) SaveAlertInstance(_ context.Context, q *models.SaveAlertInstanceCommand) error {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-	f.RecordedOps = append(f.RecordedOps, *q)
-	return nil
-}
+	f.RecordedOps = append(f.RecordedOps, GenericRecordedQuery{
+		Name:   "IncreaseVersionForAllRulesInNamespace",
+		Params: []interface{}{orgID, namespaceUID},
+	})
 
-func (f *FakeInstanceStore) FetchOrgIds(_ context.Context) ([]int64, error) { return []int64{}, nil }
-func (f *FakeInstanceStore) DeleteAlertInstance(_ context.Context, _ int64, _, _ string) error {
-	return nil
+	var result []models.AlertRuleKeyWithVersion
+
+	for _, rule := range f.Rules[orgID] {
+		if rule.NamespaceUID == namespaceUID && rule.OrgID == orgID {
+			rule.Version++
+			rule.Updated = TimeNow()
+			result = append(result, models.AlertRuleKeyWithVersion{
+				Version:      rule.Version,
+				AlertRuleKey: rule.GetKey(),
+			})
+		}
+	}
+	return result, nil
 }
 
 func NewFakeAdminConfigStore(t *testing.T) *FakeAdminConfigStore {
@@ -420,121 +430,4 @@ func (f *FakeAdminConfigStore) UpdateAdminConfiguration(cmd UpdateAdminConfigura
 	f.Configs[cmd.AdminConfiguration.OrgID] = cmd.AdminConfiguration
 
 	return nil
-}
-
-type FakeExternalAlertmanager struct {
-	t      *testing.T
-	mtx    sync.Mutex
-	alerts amv2.PostableAlerts
-	Server *httptest.Server
-}
-
-func NewFakeExternalAlertmanager(t *testing.T) *FakeExternalAlertmanager {
-	t.Helper()
-
-	am := &FakeExternalAlertmanager{
-		t:      t,
-		alerts: amv2.PostableAlerts{},
-	}
-	am.Server = httptest.NewServer(http.HandlerFunc(am.Handler()))
-
-	return am
-}
-
-func (am *FakeExternalAlertmanager) URL() string {
-	return am.Server.URL
-}
-
-func (am *FakeExternalAlertmanager) AlertNamesCompare(expected []string) bool {
-	n := []string{}
-	alerts := am.Alerts()
-
-	if len(expected) != len(alerts) {
-		return false
-	}
-
-	for _, a := range am.Alerts() {
-		for k, v := range a.Alert.Labels {
-			if k == model.AlertNameLabel {
-				n = append(n, v)
-			}
-		}
-	}
-
-	return assert.ObjectsAreEqual(expected, n)
-}
-
-func (am *FakeExternalAlertmanager) AlertsCount() int {
-	am.mtx.Lock()
-	defer am.mtx.Unlock()
-
-	return len(am.alerts)
-}
-
-func (am *FakeExternalAlertmanager) Alerts() amv2.PostableAlerts {
-	am.mtx.Lock()
-	defer am.mtx.Unlock()
-	return am.alerts
-}
-
-func (am *FakeExternalAlertmanager) Handler() func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		b, err := ioutil.ReadAll(r.Body)
-		require.NoError(am.t, err)
-
-		a := amv2.PostableAlerts{}
-		require.NoError(am.t, json.Unmarshal(b, &a))
-
-		am.mtx.Lock()
-		am.alerts = append(am.alerts, a...)
-		am.mtx.Unlock()
-	}
-}
-
-func (am *FakeExternalAlertmanager) Close() {
-	am.Server.Close()
-}
-
-type FakeAnnotationsRepo struct {
-	mtx   sync.Mutex
-	Items []*annotations.Item
-}
-
-func NewFakeAnnotationsRepo() *FakeAnnotationsRepo {
-	return &FakeAnnotationsRepo{
-		Items: make([]*annotations.Item, 0),
-	}
-}
-
-func (repo *FakeAnnotationsRepo) Len() int {
-	repo.mtx.Lock()
-	defer repo.mtx.Unlock()
-	return len(repo.Items)
-}
-
-func (repo *FakeAnnotationsRepo) Delete(_ context.Context, params *annotations.DeleteParams) error {
-	return nil
-}
-
-func (repo *FakeAnnotationsRepo) Save(item *annotations.Item) error {
-	repo.mtx.Lock()
-	defer repo.mtx.Unlock()
-	repo.Items = append(repo.Items, item)
-
-	return nil
-}
-func (repo *FakeAnnotationsRepo) Update(_ context.Context, item *annotations.Item) error {
-	return nil
-}
-
-func (repo *FakeAnnotationsRepo) Find(_ context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
-	annotations := []*annotations.ItemDTO{{Id: 1}}
-	return annotations, nil
-}
-
-func (repo *FakeAnnotationsRepo) FindTags(_ context.Context, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
-	result := annotations.FindTagsResult{
-		Tags: []*annotations.TagsDTO{},
-	}
-	return result, nil
 }

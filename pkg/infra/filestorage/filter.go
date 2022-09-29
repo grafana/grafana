@@ -244,6 +244,6 @@ func (m allOfPathFilter) asSQLFilter() accesscontrol.SQLFilter {
 	}
 }
 
-func newAndPathFilter(filters ...PathFilter) PathFilter {
+func NewAndPathFilter(filters ...PathFilter) PathFilter {
 	return &allOfPathFilter{filters: filters}
 }

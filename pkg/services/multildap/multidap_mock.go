@@ -3,6 +3,7 @@ package multildap
 import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type MultiLDAPmock struct {
@@ -10,7 +11,7 @@ type MultiLDAPmock struct {
 	ID          int64
 	UserCalled  bool
 	LoginCalled bool
-	UserInfo    *models.User
+	UserInfo    *user.User
 	AuthModule  string
 	ExpectedErr error
 }

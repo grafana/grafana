@@ -1,26 +1,30 @@
-import { Matcher, render, waitFor, screen } from '@testing-library/react';
+import { Matcher, render, waitFor, screen, within } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { Route, Router } from 'react-router-dom';
+import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
-import { BackendSrv, locationService, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
-import { selectOptionInTest } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
+import { locationService, setDataSourceSrv } from '@grafana/runtime';
+import { ADD_NEW_FOLER_OPTION } from 'app/core/components/Select/FolderPicker';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardSearchHit } from 'app/features/search/types';
 import { configureStore } from 'app/store/configureStore';
 import { GrafanaAlertStateDecision, PromApplication } from 'app/types/unified-alerting-dto';
 
 import { searchFolders } from '../../../../app/features/manage-dashboards/state/actions';
+import { backendSrv } from '../../../core/services/backend_srv';
+import { AccessControlAction } from '../../../types';
 
 import RuleEditor from './RuleEditor';
 import { discoverFeatures } from './api/buildInfo';
 import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace, setRulerRuleGroup } from './api/ruler';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
-import { disableRBAC, mockDataSource, MockDataSourceSrv } from './mocks';
-import { getAllDataSources } from './utils/config';
+import { disableRBAC, mockDataSource, MockDataSourceSrv, mockFolder } from './mocks';
+import * as config from './utils/config';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { getDefaultQueries } from './utils/rule-form';
 
@@ -33,7 +37,6 @@ jest.mock('./components/rule-editor/ExpressionEditor', () => ({
 
 jest.mock('./api/buildInfo');
 jest.mock('./api/ruler');
-jest.mock('./utils/config');
 jest.mock('../../../../app/features/manage-dashboards/state/actions');
 
 // there's no angular scope in test and things go terribly wrong when trying to render the query editor row.
@@ -43,8 +46,10 @@ jest.mock('app/features/query/components/QueryEditorRow', () => ({
   QueryEditorRow: () => <p>hi</p>,
 }));
 
+jest.spyOn(config, 'getAllDataSources');
+
 const mocks = {
-  getAllDataSources: jest.mocked(getAllDataSources),
+  getAllDataSources: jest.mocked(config.getAllDataSources),
   searchFolders: jest.mocked(searchFolders),
   api: {
     discoverFeatures: jest.mocked(discoverFeatures),
@@ -75,6 +80,7 @@ const ui = {
     alertType: byTestId('alert-type-picker'),
     dataSource: byTestId('datasource-picker'),
     folder: byTestId('folder-picker'),
+    folderContainer: byTestId(selectors.components.FolderPicker.containerV2),
     namespace: byTestId('namespace-picker'),
     group: byTestId('group-picker'),
     annotationKey: (idx: number) => byTestId(`annotation-key-${idx}`),
@@ -96,7 +102,7 @@ const ui = {
 
 describe('RuleEditor', () => {
   beforeEach(() => {
-    jest.resetAllMocks();
+    jest.clearAllMocks();
     contextSrv.isEditor = true;
     contextSrv.hasEditPermissionInFolders = true;
   });
@@ -148,18 +154,20 @@ describe('RuleEditor', () => {
 
     await renderRuleEditor();
     await waitFor(() => expect(mocks.searchFolders).toHaveBeenCalled());
-
     await waitFor(() => expect(mocks.api.discoverFeatures).toHaveBeenCalled());
-    await userEvent.type(await ui.inputs.name.find(), 'my great new rule');
-    await userEvent.click(await ui.buttons.lotexAlert.get());
+
+    await userEvent.click(await ui.buttons.lotexAlert.find());
+
     const dataSourceSelect = ui.inputs.dataSource.get();
     await userEvent.click(byRole('combobox').get(dataSourceSelect));
     await clickSelectOption(dataSourceSelect, 'Prom (default)');
     await waitFor(() => expect(mocks.api.fetchRulerRules).toHaveBeenCalled());
+
+    await userEvent.type(await ui.inputs.expr.find(), 'up == 1');
+
+    await userEvent.type(ui.inputs.name.get(), 'my great new rule');
     await clickSelectOption(ui.inputs.namespace.get(), 'namespace2');
     await clickSelectOption(ui.inputs.group.get(), 'group2');
-
-    await userEvent.type(ui.inputs.expr.get(), 'up == 1');
 
     await userEvent.type(ui.inputs.annotationValue(0).get(), 'some summary');
     await userEvent.type(ui.inputs.annotationValue(1).get(), 'some description');
@@ -236,6 +244,10 @@ describe('RuleEditor', () => {
         title: 'Folder B',
         id: 2,
       },
+      {
+        title: 'Folder / with slash',
+        id: 2,
+      },
     ] as DashboardSearchHit[]);
 
     mocks.api.discoverFeatures.mockResolvedValue({
@@ -286,7 +298,7 @@ describe('RuleEditor', () => {
             grafana_alert: {
               condition: 'B',
               data: getDefaultQueries(),
-              exec_err_state: 'Alerting',
+              exec_err_state: GrafanaAlertStateDecision.Error,
               no_data_state: 'NoData',
               title: 'my great new rule',
             },
@@ -353,7 +365,7 @@ describe('RuleEditor', () => {
     await clickSelectOption(ui.inputs.namespace.get(), 'namespace2');
     await clickSelectOption(ui.inputs.group.get(), 'group2');
 
-    await userEvent.type(ui.inputs.expr.get(), 'up == 1');
+    await userEvent.type(await ui.inputs.expr.find(), 'up == 1');
 
     // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
     await userEvent.click(ui.buttons.addLabel.get(), { pointerEventsCheck: PointerEventsCheckLevel.Never });
@@ -402,22 +414,31 @@ describe('RuleEditor', () => {
       uid: 'abcd',
       id: 1,
     };
-    const getFolderByUid = jest.fn().mockResolvedValue({
-      ...folder,
-      canSave: true,
-    });
-    const dataSources = {
-      default: mockDataSource({
-        type: 'prometheus',
-        name: 'Prom',
-        isDefault: true,
-      }),
+
+    const slashedFolder = {
+      title: 'Folder with /',
+      uid: 'abcde',
+      id: 2,
     };
 
-    const backendSrv = {
-      getFolderByUid,
-    } as any as BackendSrv;
-    setBackendSrv(backendSrv);
+    const dataSources = {
+      default: mockDataSource(
+        {
+          type: 'prometheus',
+          name: 'Prom',
+          isDefault: true,
+        },
+        { alerting: true }
+      ),
+    };
+
+    jest.spyOn(backendSrv, 'getFolderByUid').mockResolvedValue({
+      ...mockFolder(),
+      accessControl: {
+        [AccessControlAction.AlertingRuleUpdate]: true,
+      },
+    });
+
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
 
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
@@ -439,7 +460,7 @@ describe('RuleEditor', () => {
                 namespace_id: 1,
                 condition: 'B',
                 data: getDefaultQueries(),
-                exec_err_state: GrafanaAlertStateDecision.Alerting,
+                exec_err_state: GrafanaAlertStateDecision.Error,
                 no_data_state: GrafanaAlertStateDecision.NoData,
                 title: 'my great new rule',
               },
@@ -448,7 +469,7 @@ describe('RuleEditor', () => {
         },
       ],
     });
-    mocks.searchFolders.mockResolvedValue([folder] as DashboardSearchHit[]);
+    mocks.searchFolders.mockResolvedValue([folder, slashedFolder] as DashboardSearchHit[]);
 
     await renderRuleEditor(uid);
     await waitFor(() => expect(mocks.searchFolders).toHaveBeenCalled());
@@ -458,9 +479,22 @@ describe('RuleEditor', () => {
     // check that it's filled in
     const nameInput = await ui.inputs.name.find();
     expect(nameInput).toHaveValue('my great new rule');
+    //check that folder is in the list
     expect(ui.inputs.folder.get()).toHaveTextContent(new RegExp(folder.title));
     expect(ui.inputs.annotationValue(0).get()).toHaveValue('some description');
     expect(ui.inputs.annotationValue(1).get()).toHaveValue('some summary');
+
+    //check that slashed folders are not in the list
+    expect(ui.inputs.folder.get()).toHaveTextContent(new RegExp(folder.title));
+    expect(ui.inputs.folder.get()).not.toHaveTextContent(new RegExp(slashedFolder.title));
+
+    //check that slashes warning is only shown once user search slashes
+    const folderInput = await ui.inputs.folderContainer.find();
+    expect(within(folderInput).queryByText("Folders with '/' character are not allowed.")).not.toBeInTheDocument();
+    await userEvent.type(within(folderInput).getByRole('combobox'), 'new slashed //');
+    expect(within(folderInput).getByText("Folders with '/' character are not allowed.")).toBeInTheDocument();
+    await userEvent.keyboard('{backspace} {backspace}{backspace}');
+    expect(within(folderInput).queryByText("Folders with '/' character are not allowed.")).not.toBeInTheDocument();
 
     // add an annotation
     await clickSelectOption(ui.inputs.annotationKey(2).get(), /Add new/);
@@ -474,6 +508,13 @@ describe('RuleEditor', () => {
     // save and check what was sent to backend
     await userEvent.click(ui.buttons.save.get());
     await waitFor(() => expect(mocks.api.setRulerRuleGroup).toHaveBeenCalled());
+
+    //check that '+ Add new' option is in folders drop down even if we don't have values
+    const emptyFolderInput = await ui.inputs.folderContainer.find();
+    mocks.searchFolders.mockResolvedValue([] as DashboardSearchHit[]);
+    await renderRuleEditor(uid);
+    await userEvent.click(within(emptyFolderInput).getByRole('combobox'));
+    expect(screen.getByText(ADD_NEW_FOLER_OPTION)).toBeInTheDocument();
 
     expect(mocks.api.setRulerRuleGroup).toHaveBeenCalledWith(
       { dataSourceName: GRAFANA_RULES_SOURCE_NAME, apiVersion: 'legacy' },
@@ -490,7 +531,7 @@ describe('RuleEditor', () => {
               uid,
               condition: 'B',
               data: getDefaultQueries(),
-              exec_err_state: 'Alerting',
+              exec_err_state: GrafanaAlertStateDecision.Error,
               no_data_state: 'NoData',
               title: 'my great new rule',
             },

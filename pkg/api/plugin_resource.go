@@ -6,14 +6,15 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"sync"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -47,7 +48,7 @@ func (hs *HTTPServer) callPluginResource(c *models.ReqContext, pluginID string) 
 	}
 }
 
-func (hs *HTTPServer) callPluginResourceWithDataSource(c *models.ReqContext, pluginID string, ds *models.DataSource) {
+func (hs *HTTPServer) callPluginResourceWithDataSource(c *models.ReqContext, pluginID string, ds *datasources.DataSource) {
 	pCtx, found, err := hs.PluginContextProvider.GetWithDataSource(c.Req.Context(), pluginID, c.SignedInUser, ds)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to get plugin settings", err)
@@ -119,7 +120,7 @@ func (hs *HTTPServer) makePluginResourceRequest(w http.ResponseWriter, req *http
 	proxyutil.ClearCookieHeader(req, keepCookieModel.KeepCookies)
 	proxyutil.PrepareProxyRequest(req)
 
-	body, err := ioutil.ReadAll(req.Body)
+	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		return fmt.Errorf("failed to read request body: %w", err)
 	}

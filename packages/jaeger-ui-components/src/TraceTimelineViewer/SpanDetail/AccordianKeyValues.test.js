@@ -12,86 +12,95 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { shallow } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 
 import AccordianKeyValues, { KeyValuesSummary } from './AccordianKeyValues';
-import * as markers from './AccordianKeyValues.markers';
-import KeyValuesTable from './KeyValuesTable';
 
 const tags = [
   { key: 'span.kind', value: 'client' },
   { key: 'omg', value: 'mos-def' },
 ];
 
-describe('<KeyValuesSummary>', () => {
-  let wrapper;
-
-  const props = { data: tags };
-
-  beforeEach(() => {
-    wrapper = shallow(<KeyValuesSummary {...props} />);
-  });
-
-  it('renders without exploding', () => {
-    expect(wrapper).toBeDefined();
-  });
-
-  it('returns `null` when props.data is empty', () => {
-    wrapper.setProps({ data: null });
-    expect(wrapper.isEmptyRender()).toBe(true);
-  });
-
-  it('generates a list from `data`', () => {
-    expect(wrapper.find('li').length).toBe(tags.length);
-  });
-
-  it('renders the data as text', () => {
-    const texts = wrapper.find('li').map((node) => node.text());
-    const expectedTexts = tags.map((tag) => `${tag.key}=${tag.value}`);
-    expect(texts).toEqual(expectedTexts);
-  });
-});
-
-describe('<AccordianKeyValues>', () => {
-  let wrapper;
-
+const setupAccordian = (propOverrides) => {
   const props = {
     compact: false,
     data: tags,
-    highContrast: false,
-    isOpen: false,
-    label: 'le-label',
+    isOpen: true,
+    label: 'test accordian',
     onToggle: jest.fn(),
+    ...propOverrides,
   };
+  return render(<AccordianKeyValues {...props} />);
+};
 
-  beforeEach(() => {
-    wrapper = shallow(<AccordianKeyValues {...props} />);
+const setupKeyValues = (propOverrides) => {
+  const props = {
+    data: tags,
+    ...propOverrides,
+  };
+  return render(<KeyValuesSummary {...props} />);
+};
+
+describe('KeyValuesSummary tests', () => {
+  it('renders without exploding', () => {
+    expect(() => setupKeyValues()).not.toThrow();
   });
 
+  it('returns `null` when props.data is empty', () => {
+    setupKeyValues({ data: null });
+
+    expect(screen.queryAllByRole('table')).toHaveLength(0);
+    expect(screen.queryAllByRole('row')).toHaveLength(0);
+    expect(screen.queryAllByRole('cell')).toHaveLength(0);
+  });
+
+  it('generates a list from `data` with the correct content', () => {
+    setupKeyValues();
+
+    expect(screen.queryAllByRole('listitem')).toHaveLength(2);
+  });
+
+  it('renders the data as text', () => {
+    setupKeyValues();
+
+    expect(screen.getByText(/^span.kind$/)).toBeInTheDocument();
+    expect(screen.getByText(/^client$/)).toBeInTheDocument();
+    expect(screen.getByText(/^omg$/)).toBeInTheDocument();
+    expect(screen.getByText(/^mos-def$/)).toBeInTheDocument();
+  });
+});
+
+describe('AccordianKeyValues test', () => {
   it('renders without exploding', () => {
-    expect(wrapper).toBeDefined();
-    expect(wrapper.exists()).toBe(true);
+    expect(() => setupAccordian()).not.toThrow();
   });
 
   it('renders the label', () => {
-    const header = wrapper.find(`[data-test="${markers.LABEL}"]`);
-    expect(header.length).toBe(1);
-    expect(header.text()).toBe(`${props.label}:`);
+    setupAccordian();
+
+    expect(screen.getByTestId('AccordianKeyValues--header')).toBeInTheDocument();
+  });
+
+  it('renders table correctly when passed data & is open ', () => {
+    setupAccordian();
+
+    expect(screen.getByRole('switch', { name: 'test accordian' })).toBeInTheDocument();
+    expect(screen.getByRole('table')).toBeInTheDocument();
+    expect(screen.getByRole('row', { name: 'span.kind "client"' })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: 'span.kind' })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: '"client"' })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: 'omg' })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: '"mos-def"' })).toBeInTheDocument();
   });
 
   it('renders the summary instead of the table when it is not expanded', () => {
-    const summary = wrapper.find('[data-test-id="AccordianKeyValues--header"]').find(KeyValuesSummary);
-    expect(summary.length).toBe(1);
-    expect(summary.prop('data')).toBe(tags);
-    expect(wrapper.find(KeyValuesTable).length).toBe(0);
-  });
+    setupAccordian({ isOpen: false });
 
-  it('renders the table instead of the summarywhen it is expanded', () => {
-    wrapper.setProps({ isOpen: true });
-    expect(wrapper.find(KeyValuesSummary).length).toBe(0);
-    const table = wrapper.find(KeyValuesTable);
-    expect(table.length).toBe(1);
-    expect(table.prop('data')).toBe(tags);
+    expect(
+      screen.getByRole('switch', { name: 'test accordian: span.kind = client omg = mos-def' })
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+    expect(screen.queryAllByRole('cell')).toHaveLength(0);
   });
 });

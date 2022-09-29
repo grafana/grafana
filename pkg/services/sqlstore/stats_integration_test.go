@@ -9,6 +9,9 @@ import (
 )
 
 func TestIntegration_GetAdminStats(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	sqlStore := InitTestDB(t)
 
 	query := models.GetAdminStatsQuery{}

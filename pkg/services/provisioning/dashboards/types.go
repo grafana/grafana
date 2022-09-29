@@ -67,7 +67,7 @@ func createDashboardJSON(data *simplejson.Json, lastModified time.Time, cfg *con
 	dash.Dashboard.FolderId = folderID
 
 	if dash.Dashboard.Title == "" {
-		return nil, models.ErrDashboardTitleEmpty
+		return nil, dashboards.ErrDashboardTitleEmpty
 	}
 
 	return dash, nil

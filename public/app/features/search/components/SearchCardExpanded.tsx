@@ -16,9 +16,10 @@ export interface Props {
   imageWidth: number;
   item: DashboardSectionItem;
   lastUpdated?: string | null;
+  onClick?: (event: React.MouseEvent<HTMLAnchorElement>) => void;
 }
 
-export function SearchCardExpanded({ className, imageHeight, imageWidth, item, lastUpdated }: Props) {
+export function SearchCardExpanded({ className, imageHeight, imageWidth, item, lastUpdated, onClick }: Props) {
   const theme = useTheme2();
   const [hasImage, setHasImage] = useState(true);
   const imageSrc = getThumbnailURL(item.uid!, theme.isLight);
@@ -27,7 +28,7 @@ export function SearchCardExpanded({ className, imageHeight, imageWidth, item, l
   const folderTitle = item.folderTitle || 'General';
 
   return (
-    <a className={classNames(className, styles.card)} key={item.uid} href={item.url}>
+    <a className={classNames(className, styles.card)} key={item.uid} href={item.url} onClick={onClick}>
       <div className={styles.imageContainer}>
         {hasImage ? (
           <img

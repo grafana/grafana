@@ -32,7 +32,7 @@ func NewDingDingConfig(config *NotificationChannelConfig) (*DingDingConfig, erro
 	return &DingDingConfig{
 		NotificationChannelConfig: config,
 		MsgType:                   config.Settings.Get("msgType").MustString(defaultDingdingMsgType),
-		Message:                   config.Settings.Get("message").MustString(`{{ template "default.message" .}}`),
+		Message:                   config.Settings.Get("message").MustString(DefaultMessageEmbed),
 		URL:                       config.Settings.Get("url").MustString(),
 	}, nil
 }
@@ -79,7 +79,7 @@ type DingDingNotifier struct {
 
 // Notify sends the alert notification to dingding.
 func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
-	dd.log.Info("Sending dingding")
+	dd.log.Info("sending dingding")
 
 	ruleURL := joinUrlPath(dd.tmpl.ExternalURL.String(), "/alerting/list", dd.log)
 

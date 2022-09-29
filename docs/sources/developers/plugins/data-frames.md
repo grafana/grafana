@@ -46,7 +46,7 @@ interface Field {
 }
 ```
 
-Let's look an example. The table below demonstrates a data frame with two fields, _time_ and _temperature_.
+Let's look at an example. The table below demonstrates a data frame with two fields, _time_ and _temperature_.
 
 | time                | temperature |
 | ------------------- | ----------- |
@@ -165,7 +165,7 @@ Dimensions: 5 fields by 2 rows
 +---------------------+------------------+------------------+------------------+------------------+
 ```
 
-> **Note:** Not all panels support the wide time series data frame format. To keep full backward compatibility we have introduced a transformation that can be used to convert from the wide to the long format. For usage information, refer to the [Prepare time series-transformation]({{< relref "../../panels/transform-data/transformation-functions/#prepare-time-series" >}}).
+> **Note:** Not all panels support the wide time series data frame format. To keep full backward compatibility we have introduced a transformation that can be used to convert from the wide to the long format. For usage information, refer to the [Prepare time series-transformation]({{< relref "../../panels/transform-data/#prepare-time-series" >}}).
 
 ## Technical references
 

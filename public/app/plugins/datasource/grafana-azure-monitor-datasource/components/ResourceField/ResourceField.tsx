@@ -4,40 +4,31 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Button, Icon, Modal, useStyles2 } from '@grafana/ui';
 
 import Datasource from '../../datasource';
-import { AzureQueryEditorFieldProps, AzureMonitorQuery, AzureResourceSummaryItem } from '../../types';
+import { ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
+import { AzureQueryEditorFieldProps, AzureMetricResource } from '../../types';
 import { Field } from '../Field';
 import ResourcePicker from '../ResourcePicker';
 import getStyles from '../ResourcePicker/styles';
 import { ResourceRowType } from '../ResourcePicker/types';
-import { parseResourceURI } from '../ResourcePicker/utils';
+import { parseResourceDetails, setResource } from '../ResourcePicker/utils';
 
-function parseResourceDetails(resourceURI: string) {
-  const parsed = parseResourceURI(resourceURI);
-
-  if (!parsed) {
-    return undefined;
-  }
-
-  return {
-    subscriptionName: parsed.subscriptionID,
-    resourceGroupName: parsed.resourceGroup,
-    resourceName: parsed.resource,
-  };
-}
-
-interface ResourceFieldProps extends AzureQueryEditorFieldProps {
-  setResource: (query: AzureMonitorQuery, resourceURI?: string) => AzureMonitorQuery;
+interface ResourceFieldProps<T> extends AzureQueryEditorFieldProps {
   selectableEntryTypes: ResourceRowType[];
-  resourceUri?: string;
+  queryType: ResourcePickerQueryType;
+  resource: T;
+  inlineField?: boolean;
+  labelWidth?: number;
 }
 
-const ResourceField: React.FC<ResourceFieldProps> = ({
+const ResourceField: React.FC<ResourceFieldProps<string | AzureMetricResource>> = ({
   query,
   datasource,
   onQueryChange,
-  setResource,
   selectableEntryTypes,
-  resourceUri,
+  queryType,
+  resource,
+  inlineField,
+  labelWidth,
 }) => {
   const styles = useStyles2(getStyles);
   const [pickerIsOpen, setPickerIsOpen] = useState(false);
@@ -51,11 +42,11 @@ const ResourceField: React.FC<ResourceFieldProps> = ({
   }, []);
 
   const handleApply = useCallback(
-    (resourceURI: string | undefined) => {
-      onQueryChange(setResource(query, resourceURI));
+    (resource: string | AzureMetricResource | undefined) => {
+      onQueryChange(setResource(query, resource));
       closePicker();
     },
-    [closePicker, onQueryChange, query, setResource]
+    [closePicker, onQueryChange, query]
   );
 
   return (
@@ -71,39 +62,41 @@ const ResourceField: React.FC<ResourceFieldProps> = ({
       >
         <ResourcePicker
           resourcePickerData={datasource.resourcePickerData}
-          resourceURI={resourceUri}
+          resource={resource}
           onApply={handleApply}
           onCancel={closePicker}
           selectableEntryTypes={selectableEntryTypes}
+          queryType={queryType}
         />
       </Modal>
-
-      <Field label="Resource">
+      <Field label="Resource" inlineField={inlineField} labelWidth={labelWidth}>
         <Button className={styles.resourceFieldButton} variant="secondary" onClick={handleOpenPicker} type="button">
-          <ResourceLabel resource={resourceUri} datasource={datasource} />
+          <ResourceLabel resource={resource} datasource={datasource} />
         </Button>
       </Field>
     </>
   );
 };
 
-interface ResourceLabelProps {
-  resource: string | undefined;
+interface ResourceLabelProps<T> {
+  resource: T;
   datasource: Datasource;
 }
 
-const ResourceLabel = ({ resource, datasource }: ResourceLabelProps) => {
+const ResourceLabel = ({ resource, datasource }: ResourceLabelProps<string | AzureMetricResource>) => {
   const [resourceComponents, setResourceComponents] = useState(parseResourceDetails(resource ?? ''));
 
   useEffect(() => {
     if (resource && parseResourceDetails(resource)) {
-      datasource.resourcePickerData.getResourceURIDisplayProperties(resource).then(setResourceComponents);
+      typeof resource === 'string'
+        ? datasource.resourcePickerData.getResourceURIDisplayProperties(resource).then(setResourceComponents)
+        : setResourceComponents(resource);
     } else {
-      setResourceComponents(undefined);
+      setResourceComponents({});
     }
   }, [datasource.resourcePickerData, resource]);
 
-  if (!resource) {
+  if (!resource || (typeof resource === 'object' && !resource.subscription)) {
     return <>Select a resource</>;
   }
 
@@ -111,19 +104,11 @@ const ResourceLabel = ({ resource, datasource }: ResourceLabelProps) => {
     return <FormattedResource resource={resourceComponents} />;
   }
 
-  if (resource.startsWith('$')) {
-    return (
-      <span>
-        <Icon name="x" /> {resource}
-      </span>
-    );
-  }
-
   return <>{resource}</>;
 };
 
 interface FormattedResourceProps {
-  resource: AzureResourceSummaryItem;
+  resource: AzureMetricResource;
 }
 
 const FormattedResource = ({ resource }: FormattedResourceProps) => {
@@ -132,20 +117,20 @@ const FormattedResource = ({ resource }: FormattedResourceProps) => {
   if (resource.resourceName) {
     return (
       <span className={cx(styles.truncated, styles.resourceField)}>
-        <Icon name="cube" /> {resource.resourceName}
+        <Icon name="cube" /> {resource.resourceName.split('/')[0]}
       </span>
     );
   }
-  if (resource.resourceGroupName) {
+  if (resource.resourceGroup) {
     return (
       <span>
-        <Icon name="folder" /> {resource.resourceGroupName}
+        <Icon name="folder" /> {resource.resourceGroup}
       </span>
     );
   }
   return (
     <span>
-      <Icon name="layer-group" /> {resource.subscriptionName}
+      <Icon name="layer-group" /> {resource.subscription}
     </span>
   );
 };

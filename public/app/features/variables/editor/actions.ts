@@ -1,12 +1,12 @@
 import { cloneDeep } from 'lodash';
 
 import { VariableType } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 
 import { ThunkResult } from '../../../types';
 import { variableAdapters } from '../adapters';
 import { initInspect } from '../inspect/reducer';
 import { createUsagesNetwork, transformUsagesToNetwork } from '../inspect/utils';
-import { updateOptions } from '../state/actions';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { getEditorVariables, getNewVariableIndex, getVariable, getVariablesByKey } from '../state/selectors';
 import { addVariable, removeVariable } from '../state/sharedReducer';
@@ -17,8 +17,6 @@ import { toKeyedVariableIdentifier, toStateKey, toVariablePayload } from '../uti
 import {
   changeVariableNameFailed,
   changeVariableNameSucceeded,
-  clearIdInEditor,
-  setIdInEditor,
   variableEditorMounted,
   variableEditorUnMounted,
 } from './reducer';
@@ -26,7 +24,9 @@ import {
 export const variableEditorMount = (identifier: KeyedVariableIdentifier): ThunkResult<void> => {
   return async (dispatch) => {
     const { rootStateKey } = identifier;
-    dispatch(toKeyedAction(rootStateKey, variableEditorMounted({ name: getVariable(identifier).name })));
+    dispatch(
+      toKeyedAction(rootStateKey, variableEditorMounted({ name: getVariable(identifier).name, id: identifier.id }))
+    );
   };
 };
 
@@ -34,13 +34,6 @@ export const variableEditorUnMount = (identifier: KeyedVariableIdentifier): Thun
   return async (dispatch, getState) => {
     const { rootStateKey } = identifier;
     dispatch(toKeyedAction(rootStateKey, variableEditorUnMounted(toVariablePayload(identifier))));
-  };
-};
-
-export const onEditorUpdate = (identifier: KeyedVariableIdentifier): ThunkResult<void> => {
-  return async (dispatch) => {
-    await dispatch(updateOptions(identifier));
-    dispatch(switchToListMode(identifier.rootStateKey));
   };
 };
 
@@ -90,11 +83,10 @@ export const completeChangeVariableName =
     dispatch(
       toKeyedAction(rootStateKey, changeVariableNameSucceeded(toVariablePayload(renamedIdentifier, { newName })))
     );
-    dispatch(switchToEditMode(renamedIdentifier));
     dispatch(toKeyedAction(rootStateKey, removeVariable(toVariablePayload(identifier, { reIndex: false }))));
   };
 
-export const switchToNewMode =
+export const createNewVariable =
   (key: string | null | undefined, type: VariableType = 'query'): ThunkResult<void> =>
   (dispatch, getState) => {
     const rootStateKey = toStateKey(key);
@@ -109,21 +101,14 @@ export const switchToNewMode =
     dispatch(
       toKeyedAction(rootStateKey, addVariable(toVariablePayload<AddVariable>(identifier, { global, model, index })))
     );
-    dispatch(toKeyedAction(rootStateKey, setIdInEditor({ id: identifier.id })));
+
+    locationService.partial({ editIndex: index });
   };
 
-export const switchToEditMode =
-  (identifier: KeyedVariableIdentifier): ThunkResult<void> =>
-  (dispatch) => {
-    const { rootStateKey } = identifier;
-    dispatch(toKeyedAction(rootStateKey, setIdInEditor({ id: identifier.id })));
-  };
-
-export const switchToListMode =
+export const initListMode =
   (key: string | null | undefined): ThunkResult<void> =>
   (dispatch, getState) => {
     const rootStateKey = toStateKey(key);
-    dispatch(toKeyedAction(rootStateKey, clearIdInEditor()));
     const state = getState();
     const variables = getEditorVariables(rootStateKey, state);
     const dashboard = state.dashboard.getModel();

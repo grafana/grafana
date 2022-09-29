@@ -7,15 +7,15 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 // ToDashboardErrorResponse returns a different response status according to the dashboard error type
 func ToDashboardErrorResponse(ctx context.Context, pluginStore plugins.Store, err error) response.Response {
-	var dashboardErr models.DashboardErr
+	var dashboardErr dashboards.DashboardErr
 	if ok := errors.As(err, &dashboardErr); ok {
 		if body := dashboardErr.Body(); body != nil {
 			return response.JSON(dashboardErr.StatusCode, body)
@@ -26,7 +26,7 @@ func ToDashboardErrorResponse(ctx context.Context, pluginStore plugins.Store, er
 		return response.Error(dashboardErr.StatusCode, dashboardErr.Error(), nil)
 	}
 
-	if errors.Is(err, models.ErrFolderNotFound) {
+	if errors.Is(err, dashboards.ErrFolderNotFound) {
 		return response.Error(http.StatusBadRequest, err.Error(), nil)
 	}
 
@@ -35,7 +35,7 @@ func ToDashboardErrorResponse(ctx context.Context, pluginStore plugins.Store, er
 		return response.Error(http.StatusUnprocessableEntity, validationErr.Error(), err)
 	}
 
-	var pluginErr models.UpdatePluginDashboardError
+	var pluginErr dashboards.UpdatePluginDashboardError
 	if ok := errors.As(err, &pluginErr); ok {
 		message := fmt.Sprintf("The dashboard belongs to plugin %s.", pluginErr.PluginId)
 		// look up plugin name

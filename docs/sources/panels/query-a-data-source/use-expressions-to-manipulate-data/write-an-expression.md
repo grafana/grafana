@@ -12,12 +12,6 @@ If your data source supports them, then Grafana displays the **Expression** butt
 
 For more information about expressions, refer to [About expressions]({{< relref "about-expressions/" >}}).
 
-## Before you begin
-
-- [Add a panel]({{< relref "../../working-with-panels/add-panel/" >}}).
-
-**To write an expression**:
-
 1. Open the panel.
 1. Below the query, click **Expression**.
 1. In the **Operation** field, select the type of expression you want to write.

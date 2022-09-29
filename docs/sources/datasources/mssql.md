@@ -38,7 +38,7 @@ To access data source settings, hover your mouse over the **Configuration** (gea
 
 ### Min time interval
 
-A lower limit for the [$__interval]({{< relref "../variables/variable-types/global-variables/#__interval" >}}) and [$__interval_ms]({{< relref "../variables/variable-types/global-variables/#__interval_ms" >}}) variables.
+A lower limit for the [$__interval]({{< relref "../dashboards/variables/add-template-variables/#__interval" >}}) and [$__interval_ms]({{< relref "../dashboards/variables/add-template-variables/#__interval_ms" >}}) variables.
 Recommended to be set to write frequency, for example `1m` if your data is written every minute.
 This option can also be overridden/configured in a dashboard panel under data source options. It's important to note that this value **needs** to be formatted as a
 number followed by a valid time identifier, e.g. `1m` (1 minute) or `30s` (30 seconds). The following time identifiers are supported:
@@ -182,7 +182,7 @@ A time series query result is returned in a [wide data frame format]({{< relref 
 
 > For backward compatibility, there's an exception to the above rule for queries that return three columns including a string column named metric. Instead of transforming the metric column into field labels, it becomes the field name, and then the series name is formatted as the value of the metric column. See the example with the metric column below.
 
-To optionally customize the default series name formatting, refer to [Standard field definitions]({{< relref "../panels/standard-field-definitions/#display-name" >}}).
+To optionally customize the default series name formatting, refer to [Standard options definitions]({{< relref "../panels/configure-standard-options/#display-name" >}}).
 
 **Example with `metric` column:**
 
@@ -226,7 +226,7 @@ GROUP BY
 ORDER BY 1
 ```
 
-Given the data frame result in the following example and using the graph panel, you will get two series named _value 10.0.1.1_ and _value 10.0.1.2_. To render the series with a name of _10.0.1.1_ and _10.0.1.2_ , use a [Standard field definition]({{< relref "../panels/standard-field-definitions/#display-name" >}}) display name value of `${__field.labels.hostname}`.
+Given the data frame result in the following example and using the graph panel, you will get two series named _value 10.0.1.1_ and _value 10.0.1.2_. To render the series with a name of _10.0.1.1_ and _10.0.1.2_ , use a [Standard options definitions]({{< relref "../panels/configure-standard-options/#display-name" >}}) display name value of `${__field.labels.hostname}`.
 
 Data frame result:
 
@@ -271,7 +271,7 @@ Data frame result:
 
 Instead of hard-coding things like server, application and sensor name in your metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../variables/" >}}) documentation for an introduction to the templating feature and the different types of template variables.
+Check out the [Templating]({{< relref "../dashboards/variables" >}}) documentation for an introduction to the templating feature and the different types of template variables.
 
 ### Query variable
 
@@ -341,11 +341,11 @@ Grafana automatically creates a quoted, comma-separated string for multi-value v
 
 `${servers:csv}`
 
-Read more about variable formatting options in the [Variables]({{< relref "../variables/variable-types/#advanced-formatting-options" >}}) documentation.
+Read more about variable formatting options in the [Variables]({{< relref "../dashboards/variables/variable-syntax/#advanced-variable-format-options" >}}) documentation.
 
 ## Annotations
 
-[Annotations]({{< relref "../dashboards/annotations/" >}}) allow you to overlay rich event information on top of graphs. You add annotation queries via the Dashboard menu / Annotations view.
+[Annotations]({{< relref "../dashboards/build-dashboards/annotate-visualizations" >}}) allow you to overlay rich event information on top of graphs. You add annotation queries via the Dashboard menu / Annotations view.
 
 **Columns:**
 

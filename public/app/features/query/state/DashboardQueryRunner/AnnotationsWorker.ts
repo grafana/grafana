@@ -6,6 +6,7 @@ import { AnnotationQuery, DataSourceApi } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 
 import { AnnotationQueryFinished, AnnotationQueryStarted } from '../../../../types/events';
+import { DashboardModel } from '../../../dashboard/state';
 
 import { AnnotationsQueryRunner } from './AnnotationsQueryRunner';
 import { getDashboardQueryRunner } from './DashboardQueryRunner';
@@ -28,7 +29,8 @@ export class AnnotationsWorker implements DashboardQueryRunnerWorker {
 
   canWork({ dashboard }: DashboardQueryRunnerOptions): boolean {
     const annotations = dashboard.annotations.list.find(AnnotationsWorker.getAnnotationsToProcessFilter);
-    return Boolean(annotations);
+    // We shouldn't return annotations for public dashboards v1
+    return Boolean(annotations) && !this.publicDashboardViewMode(dashboard);
   }
 
   work(options: DashboardQueryRunnerOptions): Observable<DashboardQueryRunnerWorkerResult> {
@@ -90,5 +92,9 @@ export class AnnotationsWorker implements DashboardQueryRunnerWorker {
 
   private static getAnnotationsToProcessFilter(annotation: AnnotationQuery): boolean {
     return annotation.enable && !Boolean(annotation.snapshotData);
+  }
+
+  publicDashboardViewMode(dashboard: DashboardModel): boolean {
+    return dashboard.meta.publicDashboardAccessToken !== undefined && dashboard.meta.publicDashboardAccessToken !== '';
   }
 }

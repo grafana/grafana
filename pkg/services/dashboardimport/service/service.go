@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -14,11 +15,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	"github.com/grafana/grafana/pkg/services/quota"
-	"github.com/grafana/grafana/pkg/services/schemaloader"
 )
 
 func ProvideService(routeRegister routing.RouteRegister,
-	quotaService *quota.QuotaService, schemaLoaderService *schemaloader.SchemaLoaderService,
+	quotaService quota.Service,
 	pluginDashboardService plugindashboards.Service, pluginStore plugins.Store,
 	libraryPanelService librarypanels.Service, dashboardService dashboards.DashboardService,
 	ac accesscontrol.AccessControl,
@@ -29,7 +29,7 @@ func ProvideService(routeRegister routing.RouteRegister,
 		libraryPanelService:    libraryPanelService,
 	}
 
-	dashboardImportAPI := api.New(s, quotaService, schemaLoaderService, pluginStore, ac)
+	dashboardImportAPI := api.New(s, quotaService, pluginStore, ac)
 	dashboardImportAPI.RegisterAPIEndpoints(routeRegister)
 
 	return s
@@ -63,10 +63,27 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 		return nil, err
 	}
 
+	// Maintain backwards compatibility by transforming array of library elements to map
+	libraryElements := generatedDash.Get("__elements")
+	libElementsArr, err := libraryElements.Array()
+	if err == nil {
+		elementMap := map[string]interface{}{}
+		for _, el := range libElementsArr {
+			libElement := simplejson.NewFromAny(el)
+			elementMap[libElement.Get("uid").MustString()] = el
+		}
+		libraryElements = simplejson.NewFromAny(elementMap)
+	}
+
+	// No need to keep these in the stored dashboard JSON
+	generatedDash.Del("__elements")
+	generatedDash.Del("__inputs")
+	generatedDash.Del("__requires")
+
 	saveCmd := models.SaveDashboardCommand{
 		Dashboard: generatedDash,
-		OrgId:     req.User.OrgId,
-		UserId:    req.User.UserId,
+		OrgId:     req.User.OrgID,
+		UserId:    req.User.UserID,
 		Overwrite: req.Overwrite,
 		PluginId:  req.PluginId,
 		FolderId:  req.FolderId,
@@ -84,7 +101,7 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 		return nil, err
 	}
 
-	err = s.libraryPanelService.ImportLibraryPanelsForDashboard(ctx, req.User, savedDashboard, req.FolderId)
+	err = s.libraryPanelService.ImportLibraryPanelsForDashboard(ctx, req.User, libraryElements, generatedDash.Get("panels").MustArray(), req.FolderId)
 	if err != nil {
 		return nil, err
 	}

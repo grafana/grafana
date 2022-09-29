@@ -14,12 +14,11 @@ interface SaveDashboardAsFormDTO {
 }
 
 const getSaveAsDashboardClone = (dashboard: DashboardModel) => {
-  const clone: any = dashboard.getSaveModelClone();
+  const clone = dashboard.getSaveModelClone();
   clone.id = null;
   clone.uid = '';
   clone.title += ' Copy';
   clone.editable = true;
-  clone.hideControls = false;
 
   // remove alerts if source dashboard is already persisted
   // do not want to create alert dupes
@@ -64,7 +63,7 @@ export const SaveDashboardAsForm: React.FC<SaveDashboardAsFormProps> = ({
       await validationSrv.validateNewDashboardName(getFormValues().$folder.id, dashboardName);
       return true;
     } catch (e) {
-      return e.message;
+      return e instanceof Error ? e.message : 'Dashboard name is invalid';
     }
   };
 

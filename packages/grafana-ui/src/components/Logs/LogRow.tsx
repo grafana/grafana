@@ -67,8 +67,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     topVerticalAlign: css`
       label: topVerticalAlign;
-      vertical-align: top;
-      margin-top: -${theme.spacing(0.5)};
+      margin-top: -${theme.spacing(0.9)};
       margin-left: -${theme.spacing(0.25)};
     `,
     detailsOpen: css`
@@ -257,5 +256,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
   }
 }
 
+/** @deprecated will be removed in the next major version */
 export const LogRow = withTheme2(UnThemedLogRow);
 LogRow.displayName = 'LogRow';

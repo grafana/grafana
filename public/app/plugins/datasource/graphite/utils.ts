@@ -1,5 +1,7 @@
 import { last } from 'lodash';
 
+import { GraphiteParserError } from './types';
+
 /**
  * Graphite-web before v1.6 returns HTTP 500 with full stack traces in an HTML page
  * when a query fails. It results in massive error alerts with HTML tags in the UI.
@@ -18,4 +20,8 @@ export function reduceError(error: any): any {
     error.data.message = `Graphite encountered an unexpected error while handling your request. ${newMessage}`;
   }
   return error;
+}
+
+export function isGraphiteParserError(e: unknown): e is GraphiteParserError {
+  return typeof e === 'object' && e !== null && 'message' in e && 'pos' in e;
 }

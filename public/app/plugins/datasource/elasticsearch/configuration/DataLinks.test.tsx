@@ -1,84 +1,61 @@
-import { mount } from 'enzyme';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { act } from 'react-dom/test-utils';
 
-import { Button } from '@grafana/ui';
+import { DataLinkConfig } from '../types';
 
-import { DataLink } from './DataLink';
-import { DataLinks } from './DataLinks';
+import { DataLinks, Props } from './DataLinks';
 
-describe('DataLinks', () => {
-  let originalGetSelection: typeof window.getSelection;
-  beforeAll(() => {
-    originalGetSelection = window.getSelection;
-    window.getSelection = () => null;
+const setup = (propOverrides?: Partial<Props>) => {
+  const props: Props = {
+    value: [],
+    onChange: jest.fn(),
+    ...propOverrides,
+  };
+
+  return render(<DataLinks {...props} />);
+};
+
+describe('DataLinks tests', () => {
+  it('should render correctly with no fields', async () => {
+    setup();
+
+    expect(screen.getByRole('heading', { name: 'Data links' }));
+    expect(screen.getByRole('button', { name: 'Add' })).toBeInTheDocument();
+    expect(await screen.findAllByRole('button')).toHaveLength(1);
   });
 
-  afterAll(() => {
-    window.getSelection = originalGetSelection;
+  it('should render correctly when passed fields', async () => {
+    setup({ value: testValue });
+
+    expect(await screen.findAllByRole('button', { name: 'Remove field' })).toHaveLength(2);
+    expect(await screen.findAllByRole('checkbox', { name: 'Internal link' })).toHaveLength(2);
   });
 
-  it('renders correctly when no fields', async () => {
-    let wrapper: any;
-    await act(
-      // @ts-ignore we shouldn't use Promises in act => the "void | undefined" is here to forbid any sneaky "Promise" returns.
-      async () => {
-        wrapper = await mount(<DataLinks onChange={() => {}} />);
-      }
-    );
-    expect(wrapper.find(Button).length).toBe(1);
-    expect(wrapper.find(Button).contains('Add')).toBeTruthy();
-    expect(wrapper.find(DataLink).length).toBe(0);
-  });
-
-  it('renders correctly when there are fields', async () => {
-    let wrapper: any;
-    await act(
-      // @ts-ignore we shouldn't use Promises in act => the "void | undefined" is here to forbid any sneaky "Promise" returns.
-      async () => {
-        wrapper = await mount(<DataLinks value={testValue} onChange={() => {}} />);
-      }
-    );
-
-    expect(wrapper.find(Button).filterWhere((button: any) => button.contains('Add')).length).toBe(1);
-    expect(wrapper.find(DataLink).length).toBe(2);
-  });
-
-  it('adds new field', async () => {
+  it('should call onChange to add a new field when the add button is clicked', async () => {
     const onChangeMock = jest.fn();
-    let wrapper: any;
-    await act(
-      // @ts-ignore we shouldn't use Promises in act => the "void | undefined" is here to forbid any sneaky "Promise" returns.
-      async () => {
-        wrapper = await mount(<DataLinks onChange={onChangeMock} />);
-      }
-    );
-    const addButton = wrapper.find(Button).filterWhere((button: any) => button.contains('Add'));
-    addButton.simulate('click');
-    expect(onChangeMock.mock.calls[0][0].length).toBe(1);
+    setup({ onChange: onChangeMock });
+
+    expect(onChangeMock).not.toHaveBeenCalled();
+    const addButton = screen.getByRole('button', { name: 'Add' });
+    await userEvent.click(addButton);
+
+    expect(onChangeMock).toHaveBeenCalled();
   });
 
-  it('removes field', async () => {
+  it('should call onChange to remove a field when the remove button is clicked', async () => {
     const onChangeMock = jest.fn();
-    let wrapper: any;
-    await act(
-      // @ts-ignore we shouldn't use Promises in act => the "void | undefined" is here to forbid any sneaky "Promise" returns.
-      async () => {
-        wrapper = await mount(<DataLinks value={testValue} onChange={onChangeMock} />);
-      }
-    );
-    const removeButton = wrapper.find(DataLink).at(0).find(Button);
-    removeButton.simulate('click');
-    const newValue = onChangeMock.mock.calls[0][0];
-    expect(newValue.length).toBe(1);
-    expect(newValue[0]).toMatchObject({
-      field: 'regex2',
-      url: 'localhost2',
-    });
+    setup({ value: testValue, onChange: onChangeMock });
+
+    expect(onChangeMock).not.toHaveBeenCalled();
+    const removeButton = await screen.findAllByRole('button', { name: 'Remove field' });
+    await userEvent.click(removeButton[0]);
+
+    expect(onChangeMock).toHaveBeenCalled();
   });
 });
 
-const testValue = [
+const testValue: DataLinkConfig[] = [
   {
     field: 'regex1',
     url: 'localhost1',

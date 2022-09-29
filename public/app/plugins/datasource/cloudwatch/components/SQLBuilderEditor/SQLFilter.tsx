@@ -2,8 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import { SelectableValue, toOption } from '@grafana/data';
-import { AccessoryButton, EditorList, InputGroup } from '@grafana/experimental';
-import { Select } from '@grafana/ui';
+import { AccessoryButton, EditorList, InputGroup, Select } from '@grafana/ui';
 
 import { COMPARISON_OPERATORS, EQUALS } from '../../cloudwatch-sql/language';
 import { CloudWatchDatasource } from '../../datasource';
@@ -109,7 +108,7 @@ const FilterItem: React.FC<FilterItemProps> = (props) => {
       return [];
     }
 
-    return datasource
+    return datasource.api
       .getDimensionValues(query.region, namespace, metricName, filter.property.name, {})
       .then((result: Array<SelectableValue<string>>) => {
         return appendTemplateVariables(datasource, result);

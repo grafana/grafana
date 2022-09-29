@@ -5,6 +5,12 @@ import { LogsSortOrder } from '@grafana/data';
 
 import LogsNavigation from './LogsNavigation';
 
+// we have to mock out reportInteraction, otherwise it crashes the test.
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: () => null,
+}));
+
 type LogsNavigationProps = ComponentProps<typeof LogsNavigation>;
 const defaultProps: LogsNavigationProps = {
   absoluteRange: { from: 1637319381811, to: 1637322981811 },

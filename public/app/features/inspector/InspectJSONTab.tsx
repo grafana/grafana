@@ -1,13 +1,21 @@
+import { t } from '@lingui/macro';
+import { isEqual } from 'lodash';
 import React, { PureComponent } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
+import { firstValueFrom } from 'rxjs';
 
-import { AppEvents, DataFrameJSON, dataFrameToJSON, DataTopic, PanelData, SelectableValue } from '@grafana/data';
+import { AppEvents, PanelData, SelectableValue, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { locationService } from '@grafana/runtime';
 import { Button, CodeEditor, Field, Select } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 
+import { getPanelDataFrames } from '../dashboard/components/HelpWizard/utils';
 import { getPanelInspectorStyles } from '../inspector/styles';
+import { reportPanelInspectInteraction } from '../search/page/reporting';
+
+import { InspectTab } from './types';
 
 enum ShowContent {
   PanelJSON = 'panel',
@@ -17,18 +25,27 @@ enum ShowContent {
 
 const options: Array<SelectableValue<ShowContent>> = [
   {
-    label: 'Panel JSON',
-    description: 'The model saved in the dashboard JSON that configures how everything works.',
+    label: t({ id: 'dashboard.inspect-json.panel-json-label', message: 'Panel JSON' }),
+    description: t({
+      id: 'dashboard.inspect-json.panel-json-description',
+      message: 'The model saved in the dashboard JSON that configures how everything works.',
+    }),
     value: ShowContent.PanelJSON,
   },
   {
-    label: 'Panel data',
-    description: 'The raw model passed to the panel visualization',
+    label: t({ id: 'dashboard.inspect-json.panel-data-label', message: 'Panel data' }),
+    description: t({
+      id: 'dashboard.inspect-json.panel-data-description',
+      message: 'The raw model passed to the panel visualization',
+    }),
     value: ShowContent.PanelData,
   },
   {
-    label: 'DataFrame JSON',
-    description: 'JSON formatted DataFrames',
+    label: t({ id: 'dashboard.inspect-json.dataframe-label', message: 'DataFrame JSON (from Query)' }),
+    description: t({
+      id: 'dashboard.inspect-json.dataframe-description',
+      message: 'Raw data without transformations and field config applied. ',
+    }),
     value: ShowContent.DataFrames,
   },
 ];
@@ -58,8 +75,13 @@ export class InspectJSONTab extends PureComponent<Props, State> {
     };
   }
 
-  onSelectChanged = (item: SelectableValue<ShowContent>) => {
-    const show = this.getJSONObject(item.value!);
+  componentDidMount() {
+    // when opening the inspector we want to report the interaction
+    reportPanelInspectInteraction(InspectTab.JSON, 'panelJSON');
+  }
+
+  onSelectChanged = async (item: SelectableValue<ShowContent>) => {
+    const show = await this.getJSONObject(item.value!);
     const text = getPrettyJSON(show);
     this.setState({ text, show: item.value! });
   };
@@ -69,21 +91,36 @@ export class InspectJSONTab extends PureComponent<Props, State> {
     this.setState({ text });
   };
 
-  getJSONObject(show: ShowContent) {
+  async getJSONObject(show: ShowContent) {
     const { data, panel } = this.props;
     if (show === ShowContent.PanelData) {
+      reportPanelInspectInteraction(InspectTab.JSON, 'panelData');
       return data;
     }
 
     if (show === ShowContent.DataFrames) {
-      return getPanelDataFrames(data);
+      reportPanelInspectInteraction(InspectTab.JSON, 'dataFrame');
+
+      let d = data;
+
+      // do not include transforms and
+      if (panel && data?.state === LoadingState.Done) {
+        d = await firstValueFrom(
+          panel.getQueryRunner().getData({
+            withFieldConfig: false,
+            withTransforms: false,
+          })
+        );
+      }
+      return getPanelDataFrames(d);
     }
 
     if (this.hasPanelJSON && show === ShowContent.PanelJSON) {
+      reportPanelInspectInteraction(InspectTab.JSON, 'panelJSON');
       return panel!.getSaveModel();
     }
 
-    return { note: `Unknown Object: ${show}` };
+    return { note: t({ id: 'dashboard.inspect-json.unknown', message: `Unknown Object: ${show}` }) };
   }
 
   onApplyPanelModel = () => {
@@ -95,6 +132,15 @@ export class InspectJSONTab extends PureComponent<Props, State> {
         } else {
           const updates = JSON.parse(this.state.text);
           dashboard!.shouldUpdateDashboardPanelFromJSON(updates, panel!);
+
+          //Report relevant updates
+          reportPanelInspectInteraction(InspectTab.JSON, 'apply', {
+            panel_type_changed: panel!.type !== updates.type,
+            panel_id_changed: panel!.id !== updates.id,
+            panel_grid_pos_changed: !isEqual(panel!.gridPos, updates.gridPos),
+            panel_targets_changed: !isEqual(panel!.targets, updates.targets),
+          });
+
           panel!.restoreModel(updates);
           panel!.refresh();
           appEvents.emit(AppEvents.alertSuccess, ['Panel model updated']);
@@ -106,6 +152,13 @@ export class InspectJSONTab extends PureComponent<Props, State> {
 
       onClose();
     }
+  };
+
+  onShowHelpWizard = () => {
+    reportPanelInspectInteraction(InspectTab.JSON, 'supportWizard');
+    const queryParms = locationService.getSearch();
+    queryParms.set('inspectTab', InspectTab.Help.toString());
+    locationService.push('?' + queryParms.toString());
   };
 
   render() {
@@ -120,7 +173,10 @@ export class InspectJSONTab extends PureComponent<Props, State> {
     return (
       <div className={styles.wrap}>
         <div className={styles.toolbar} aria-label={selectors.components.PanelInspector.Json.content}>
-          <Field label="Select source" className="flex-grow-1">
+          <Field
+            label={t({ id: 'dashboard.inspect-json.select-source', message: 'Select source' })}
+            className="flex-grow-1"
+          >
             <Select
               inputId="select-source-dropdown"
               options={jsonOptions}
@@ -131,6 +187,11 @@ export class InspectJSONTab extends PureComponent<Props, State> {
           {this.hasPanelJSON && isPanelJSON && canEdit && (
             <Button className={styles.toolbarItem} onClick={this.onApplyPanelModel}>
               Apply
+            </Button>
+          )}
+          {show === ShowContent.DataFrames && (
+            <Button className={styles.toolbarItem} onClick={this.onShowHelpWizard}>
+              Support
             </Button>
           )}
         </div>
@@ -153,26 +214,6 @@ export class InspectJSONTab extends PureComponent<Props, State> {
       </div>
     );
   }
-}
-
-function getPanelDataFrames(data?: PanelData): DataFrameJSON[] {
-  const frames: DataFrameJSON[] = [];
-  if (data?.series) {
-    for (const f of data.series) {
-      frames.push(dataFrameToJSON(f));
-    }
-  }
-  if (data?.annotations) {
-    for (const f of data.annotations) {
-      const json = dataFrameToJSON(f);
-      if (!json.schema?.meta) {
-        json.schema!.meta = {};
-      }
-      json.schema!.meta.dataTopic = DataTopic.Annotations;
-      frames.push(json);
-    }
-  }
-  return frames;
 }
 
 function getPrettyJSON(obj: any): string {

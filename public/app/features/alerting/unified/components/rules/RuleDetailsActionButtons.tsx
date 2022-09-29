@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import React, { FC, Fragment, useState } from 'react';
-import { useDispatch } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
@@ -8,9 +7,8 @@ import { config } from '@grafana/runtime';
 import { Button, ClipboardButton, ConfirmModal, HorizontalGroup, LinkButton, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction, useDispatch } from 'app/types';
 import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
-import { RulerGrafanaRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { useIsRuleEditable } from '../../hooks/useIsRuleEditable';
 import { useStateHistoryModal } from '../../hooks/useStateHistoryModal';
@@ -20,7 +18,7 @@ import { Annotation } from '../../utils/constants';
 import { getRulesSourceName, isCloudRulesSource, isGrafanaRulesSource } from '../../utils/datasource';
 import { createExploreLink, createViewLink, makeRuleBasedSilenceLink } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
-import { isFederatedRuleGroup } from '../../utils/rules';
+import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
 
 interface Props {
   rule: CombinedRule;
@@ -43,6 +41,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
   const rulesSourceName = getRulesSourceName(rulesSource);
 
   const hasExplorePermission = contextSrv.hasPermission(AccessControlAction.DataSourcesExplore);
+  const isProvisioned = isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
 
   const leftButtons: JSX.Element[] = [];
   const rightButtons: JSX.Element[] = [];
@@ -185,7 +184,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
     );
   }
 
-  if (isEditable && rulerRule && !isFederated) {
+  if (isEditable && rulerRule && !isFederated && !isProvisioned) {
     const sourceName = getRulesSourceName(rulesSource);
     const identifier = ruleId.fromRulerRule(sourceName, namespace.name, group.name, rulerRule);
 
@@ -200,9 +199,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
       rightButtons.push(
         <ClipboardButton
           key="copy"
-          onClipboardCopy={() => {
-            notifyApp.success('URL copied!');
-          }}
+          icon="copy"
           onClipboardError={(copiedText) => {
             notifyApp.error('Error while copying URL', copiedText);
           }}
@@ -222,7 +219,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
     );
   }
 
-  if (isRemovable && rulerRule && !isFederated) {
+  if (isRemovable && rulerRule && !isFederated && !isProvisioned) {
     rightButtons.push(
       <Button
         className={style.button}
@@ -282,10 +279,3 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     font-size: ${theme.typography.size.sm};
   `,
 });
-
-function isGrafanaRulerRule(rule?: RulerRuleDTO): rule is RulerGrafanaRuleDTO {
-  if (!rule) {
-    return false;
-  }
-  return (rule as RulerGrafanaRuleDTO).grafana_alert != null;
-}

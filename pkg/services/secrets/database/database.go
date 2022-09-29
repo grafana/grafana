@@ -38,12 +38,12 @@ func (ss *SecretsStoreImpl) GetDataKey(ctx context.Context, id string) (*secrets
 		return err
 	})
 
-	if !exists {
-		return nil, secrets.ErrDataKeyNotFound
-	}
-
 	if err != nil {
 		return nil, fmt.Errorf("failed getting data key: %w", err)
+	}
+
+	if !exists {
+		return nil, secrets.ErrDataKeyNotFound
 	}
 
 	return dataKey, nil
@@ -126,7 +126,9 @@ func (ss *SecretsStoreImpl) ReEncryptDataKeys(
 	currProvider secrets.ProviderID,
 ) error {
 	keys := make([]*secrets.DataKey, 0)
-	if err := ss.sqlStore.NewSession(ctx).Table(dataKeysTable).Find(&keys); err != nil {
+	if err := ss.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		return sess.Table(dataKeysTable).Find(&keys)
+	}); err != nil {
 		return err
 	}
 

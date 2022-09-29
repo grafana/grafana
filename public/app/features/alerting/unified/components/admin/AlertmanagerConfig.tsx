@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import React, { useEffect, useState, useMemo } from 'react';
-import { useDispatch } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Button, ConfirmModal, TextArea, HorizontalGroup, Field, Form, useStyles2 } from '@grafana/ui';
+import { useDispatch } from 'app/types';
 
 import { useAlertManagerSourceName } from '../../hooks/useAlertManagerSourceName';
 import { useAlertManagersByPermission } from '../../hooks/useAlertManagerSources';
@@ -112,7 +112,7 @@ export default function AlertmanagerConfig(): JSX.Element {
                           JSON.parse(v);
                           return true;
                         } catch (e) {
-                          return e.message;
+                          return e instanceof Error ? e.message : 'Invalid JSON.';
                         }
                       },
                     })}

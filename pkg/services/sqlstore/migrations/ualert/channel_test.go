@@ -3,9 +3,11 @@ package ualert
 import (
 	"testing"
 
+	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 func TestFilterReceiversForAlert(t *testing.T) {
@@ -144,10 +146,11 @@ func TestCreateRoute(t *testing.T) {
 				"recv1": struct{}{},
 			},
 			expected: &Route{
-				Receiver: "recv1",
-				Matchers: Matchers{{Type: 0, Name: "rule_uid", Value: "r_uid1"}},
-				Routes:   nil,
-				Continue: false,
+				Receiver:   "recv1",
+				Matchers:   Matchers{{Type: 0, Name: "rule_uid", Value: "r_uid1"}},
+				Routes:     nil,
+				Continue:   false,
+				GroupByStr: nil,
 			},
 		},
 		{
@@ -162,19 +165,22 @@ func TestCreateRoute(t *testing.T) {
 				Matchers: Matchers{{Type: 0, Name: "rule_uid", Value: "r_uid1"}},
 				Routes: []*Route{
 					{
-						Receiver: "recv1",
-						Matchers: Matchers{{Type: 0, Name: "rule_uid", Value: "r_uid1"}},
-						Routes:   nil,
-						Continue: true,
+						Receiver:   "recv1",
+						Matchers:   Matchers{{Type: 0, Name: "rule_uid", Value: "r_uid1"}},
+						Routes:     nil,
+						Continue:   true,
+						GroupByStr: nil,
 					},
 					{
-						Receiver: "recv2",
-						Matchers: Matchers{{Type: 0, Name: "rule_uid", Value: "r_uid1"}},
-						Routes:   nil,
-						Continue: true,
+						Receiver:   "recv2",
+						Matchers:   Matchers{{Type: 0, Name: "rule_uid", Value: "r_uid1"}},
+						Routes:     nil,
+						Continue:   true,
+						GroupByStr: nil,
 					},
 				},
-				Continue: false,
+				Continue:   false,
+				GroupByStr: nil,
 			},
 		},
 	}
@@ -294,8 +300,9 @@ func TestCreateDefaultRouteAndReceiver(t *testing.T) {
 				GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name1"}, {Name: "name2"}},
 			},
 			expRoute: &Route{
-				Receiver: "autogen-contact-point-default",
-				Routes:   make([]*Route, 0),
+				Receiver:   "autogen-contact-point-default",
+				Routes:     make([]*Route, 0),
+				GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 			},
 		},
 		{
@@ -306,8 +313,9 @@ func TestCreateDefaultRouteAndReceiver(t *testing.T) {
 				GrafanaManagedReceivers: []*PostableGrafanaReceiver{},
 			},
 			expRoute: &Route{
-				Receiver: "autogen-contact-point-default",
-				Routes:   make([]*Route, 0),
+				Receiver:   "autogen-contact-point-default",
+				Routes:     make([]*Route, 0),
+				GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 			},
 		},
 		{
@@ -315,8 +323,9 @@ func TestCreateDefaultRouteAndReceiver(t *testing.T) {
 			defaultChannels: []*notificationChannel{createNotChannel(t, "uid1", int64(1), "name1")},
 			expRecv:         nil,
 			expRoute: &Route{
-				Receiver: "name1",
-				Routes:   make([]*Route, 0),
+				Receiver:   "name1",
+				Routes:     make([]*Route, 0),
+				GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 			},
 		},
 	}

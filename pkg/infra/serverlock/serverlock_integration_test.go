@@ -8,7 +8,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestIntegrationServerLok(t *testing.T) {
+func TestIntegrationServerLock_LockAndExecute(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	sl := createTestableServerLock(t)
 
 	counter := 0
@@ -31,4 +34,31 @@ func TestIntegrationServerLok(t *testing.T) {
 	err := sl.LockAndExecute(ctx, "test-operation", atInterval, fn)
 	require.Nil(t, err)
 	require.Equal(t, 2, counter)
+}
+
+func TestIntegrationServerLock_LockExecuteAndRelease(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	sl := createTestableServerLock(t)
+
+	counter := 0
+	fn := func(context.Context) { counter++ }
+	atInterval := time.Hour
+	ctx := context.Background()
+
+	//
+	err := sl.LockExecuteAndRelease(ctx, "test-operation", atInterval, fn)
+	require.NoError(t, err)
+	require.Equal(t, 1, counter)
+
+	// the function will be executed again, as everytime the lock is released
+	err = sl.LockExecuteAndRelease(ctx, "test-operation", atInterval, fn)
+	require.NoError(t, err)
+	err = sl.LockExecuteAndRelease(ctx, "test-operation", atInterval, fn)
+	require.NoError(t, err)
+	err = sl.LockExecuteAndRelease(ctx, "test-operation", atInterval, fn)
+	require.NoError(t, err)
+
+	require.Equal(t, 4, counter)
 }

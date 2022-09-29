@@ -17,12 +17,10 @@ import { QueryEditor as CloudMonitoringQueryEditor } from 'app/plugins/datasourc
 
 import EmptyListCTA from '../core/components/EmptyListCTA/EmptyListCTA';
 import { Footer } from '../core/components/Footer/Footer';
-import PageHeader from '../core/components/PageHeader/PageHeader';
+import { PageHeader } from '../core/components/PageHeader/PageHeader';
 import { MetricSelect } from '../core/components/Select/MetricSelect';
 import { TagFilter } from '../core/components/TagFilter/TagFilter';
 import { HelpModal } from '../core/components/help/HelpModal';
-import { SearchField, SearchResults, SearchResultsFilter } from '../features/search';
-import { LokiAnnotationsQueryEditor } from '../plugins/datasource/loki/components/AnnotationsQueryEditor';
 
 const { SecretFormField } = LegacyForms;
 
@@ -49,35 +47,6 @@ export function registerAngularDirectives() {
     'proTipTarget',
     'infoBox',
     'infoBoxTitle',
-  ]);
-  //Search
-  react2AngularDirective('searchField', SearchField, [
-    'query',
-    'autoFocus',
-    ['onChange', { watchDepth: 'reference' }],
-    ['onKeyDown', { watchDepth: 'reference' }],
-  ]);
-  react2AngularDirective('searchResults', SearchResults, [
-    'results',
-    'editable',
-    'selectors',
-    ['onSelectionChanged', { watchDepth: 'reference' }],
-    ['onTagSelected', { watchDepth: 'reference' }],
-    ['onFolderExpanding', { watchDepth: 'reference' }],
-    ['onToggleSelection', { watchDepth: 'reference' }],
-  ]);
-  react2AngularDirective('searchFilters', SearchResultsFilter, [
-    'allChecked',
-    'canMove',
-    'canDelete',
-    'tagFilterOptions',
-    'selectedStarredFilter',
-    'selectedTagFilter',
-    ['onSelectAllChanged', { watchDepth: 'reference' }],
-    ['deleteItem', { watchDepth: 'reference' }],
-    ['moveTo', { watchDepth: 'reference' }],
-    ['onStarredFilterChange', { watchDepth: 'reference' }],
-    ['onTagFilterChange', { watchDepth: 'reference' }],
   ]);
   react2AngularDirective('tagFilter', TagFilter, [
     'tags',
@@ -143,13 +112,6 @@ export function registerAngularDirectives() {
     ['onChange', { watchDepth: 'reference', wrapApply: true }],
   ]);
 
-  react2AngularDirective('lokiAnnotationsQueryEditor', LokiAnnotationsQueryEditor, [
-    'expr',
-    'maxLines',
-    'instant',
-    'onChange',
-    ['datasource', { watchDepth: 'reference' }],
-  ]);
   react2AngularDirective('datasourceHttpSettingsNext', DataSourceHttpSettings, [
     'defaultUrl',
     'showAccessOptions',

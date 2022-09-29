@@ -1,4 +1,4 @@
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import { Role } from 'app/types';
 
 export const fetchRoleOptions = async (orgId?: number, query?: string): Promise<Role[]> => {
@@ -13,14 +13,6 @@ export const fetchRoleOptions = async (orgId?: number, query?: string): Promise<
   return roles;
 };
 
-export const fetchBuiltinRoles = (orgId?: number): Promise<{ [key: string]: Role[] }> => {
-  let builtinRolesUrl = '/api/access-control/builtin-roles';
-  if (orgId) {
-    builtinRolesUrl += `?targetOrgId=${orgId}`;
-  }
-  return getBackendSrv().get(builtinRolesUrl);
-};
-
 export const fetchUserRoles = async (userId: number, orgId?: number): Promise<Role[]> => {
   let userRolesUrl = `/api/access-control/users/${userId}/roles`;
   if (orgId) {
@@ -33,7 +25,9 @@ export const fetchUserRoles = async (userId: number, orgId?: number): Promise<Ro
     }
     return roles;
   } catch (error) {
-    error.isHandled = true;
+    if (isFetchError(error)) {
+      error.isHandled = true;
+    }
     return [];
   }
 };
@@ -62,7 +56,9 @@ export const fetchTeamRoles = async (teamId: number, orgId?: number): Promise<Ro
     }
     return roles;
   } catch (error) {
-    error.isHandled = true;
+    if (isFetchError(error)) {
+      error.isHandled = true;
+    }
     return [];
   }
 };

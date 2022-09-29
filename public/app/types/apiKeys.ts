@@ -10,7 +10,9 @@ export interface ApiKey extends WithAccessControlMetadata {
   expiration?: string;
   secondsUntilExpiration?: number;
   hasExpired?: boolean;
+  isRevoked?: boolean;
   created?: string;
+  lastUsedAt?: string;
 }
 
 export interface NewApiKey {
@@ -25,4 +27,5 @@ export interface ApiKeysState {
   keysIncludingExpired: ApiKey[];
   searchQuery: string;
   hasFetched: boolean;
+  apiKeysMigrated: boolean;
 }

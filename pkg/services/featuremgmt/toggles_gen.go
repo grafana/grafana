@@ -15,10 +15,6 @@ const (
 	// Disable envelope encryption (emergency only)
 	FlagDisableEnvelopeEncryption = "disableEnvelopeEncryption"
 
-	// FlagServiceAccounts
-	// support service accounts
-	FlagServiceAccounts = "serviceAccounts"
-
 	// FlagDatabaseMetrics
 	// Add prometheus metrics for database tables
 	FlagDatabaseMetrics = "database_metrics"
@@ -51,17 +47,9 @@ const (
 	// Search for dashboards using panel title
 	FlagPanelTitleSearch = "panelTitleSearch"
 
-	// FlagTempoServiceGraph
-	// show service
-	FlagTempoServiceGraph = "tempoServiceGraph"
-
-	// FlagLokiBackendMode
-	// Loki datasource works as backend datasource
-	FlagLokiBackendMode = "lokiBackendMode"
-
-	// FlagPrometheusAzureAuth
-	// Experimental. Azure authentication for Prometheus datasource
-	FlagPrometheusAzureAuth = "prometheus_azure_auth"
+	// FlagTempoApmTable
+	// Show APM table
+	FlagTempoApmTable = "tempoApmTable"
 
 	// FlagPrometheusAzureOverrideAudience
 	// Experimental. Allow override default AAD audience for Azure Prometheus endpoint
@@ -70,10 +58,6 @@ const (
 	// FlagInfluxdbBackendMigration
 	// Query InfluxDB InfluxQL without the proxy
 	FlagInfluxdbBackendMigration = "influxdbBackendMigration"
-
-	// FlagNewNavigation
-	// Try the next gen navigation model
-	FlagNewNavigation = "newNavigation"
 
 	// FlagShowFeatureFlagsInUI
 	// Show feature flags in the settings UI
@@ -86,6 +70,10 @@ const (
 	// FlagLokiLive
 	// support websocket streaming for loki (early prototype)
 	FlagLokiLive = "lokiLive"
+
+	// FlagLokiDataframeApi
+	// use experimental loki api for websocket streaming (early prototype)
+	FlagLokiDataframeApi = "lokiDataframeApi"
 
 	// FlagSwaggerUi
 	// Serves swagger UI
@@ -111,13 +99,13 @@ const (
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
 
+	// FlagDashboardsFromStorage
+	// Load dashboards from the generic storage interface
+	FlagDashboardsFromStorage = "dashboardsFromStorage"
+
 	// FlagExport
 	// Export grafana instance (to git, etc)
 	FlagExport = "export"
-
-	// FlagStorageLocalUpload
-	// allow uploads to local storage
-	FlagStorageLocalUpload = "storageLocalUpload"
 
 	// FlagAzureMonitorResourcePickerForMetrics
 	// New UI for Azure Monitor Metrics Query
@@ -127,6 +115,10 @@ const (
 	// Experimental Explore to Dashboard workflow
 	FlagExplore2Dashboard = "explore2Dashboard"
 
+	// FlagExploreMixedDatasource
+	// Enable mixed datasource in Explore
+	FlagExploreMixedDatasource = "exploreMixedDatasource"
+
 	// FlagTracing
 	// Adds trace ID to error notifications
 	FlagTracing = "tracing"
@@ -135,9 +127,9 @@ const (
 	// Enable command palette
 	FlagCommandPalette = "commandPalette"
 
-	// FlagSavedItems
-	// Enable Saved Items in the navbar.
-	FlagSavedItems = "savedItems"
+	// FlagCorrelations
+	// Correlations page
+	FlagCorrelations = "correlations"
 
 	// FlagCloudWatchDynamicLabels
 	// Use dynamic labels instead of alias patterns in CloudWatch datasource
@@ -147,10 +139,6 @@ const (
 	// Introduce HTTP 207 Multi Status for api/ds/query
 	FlagDatasourceQueryMultiStatus = "datasourceQueryMultiStatus"
 
-	// FlagAzureMonitorExperimentalUI
-	// Use grafana-experimental UI in Azure Monitor
-	FlagAzureMonitorExperimentalUI = "azureMonitorExperimentalUI"
-
 	// FlagTraceToMetrics
 	// Enable trace to metrics links
 	FlagTraceToMetrics = "traceToMetrics"
@@ -159,9 +147,17 @@ const (
 	// Enable streaming JSON parser for Prometheus datasource
 	FlagPrometheusStreamingJSONParser = "prometheusStreamingJSONParser"
 
+	// FlagPrometheusStreamingJSONParserTest
+	// Run both old and streaming requests and log differences
+	FlagPrometheusStreamingJSONParserTest = "prometheusStreamingJSONParserTest"
+
 	// FlagValidateDashboardsOnSave
 	// Validate dashboard JSON POSTed to api/dashboards/db
 	FlagValidateDashboardsOnSave = "validateDashboardsOnSave"
+
+	// FlagAutoMigrateGraphPanels
+	// Replace the angular graph panel with timeseries
+	FlagAutoMigrateGraphPanels = "autoMigrateGraphPanels"
 
 	// FlagPrometheusWideSeries
 	// Enable wide series responses in the Prometheus datasource
@@ -170,4 +166,56 @@ const (
 	// FlagCanvasPanelNesting
 	// Allow elements nesting
 	FlagCanvasPanelNesting = "canvasPanelNesting"
+
+	// FlagScenes
+	// Experimental framework to build interactive dashboards
+	FlagScenes = "scenes"
+
+	// FlagUseLegacyHeatmapPanel
+	// Continue to use the angular/flot based heatmap panel
+	FlagUseLegacyHeatmapPanel = "useLegacyHeatmapPanel"
+
+	// FlagDisableSecretsCompatibility
+	// Disable duplicated secret storage in legacy tables
+	FlagDisableSecretsCompatibility = "disableSecretsCompatibility"
+
+	// FlagLogRequestsInstrumentedAsUnknown
+	// Logs the path for requests that are instrumented as unknown
+	FlagLogRequestsInstrumentedAsUnknown = "logRequestsInstrumentedAsUnknown"
+
+	// FlagDataConnectionsConsole
+	// Enables a new top-level page called Data Connections. This page is an experiment for better grouping of installing / configuring data sources and other plugins.
+	FlagDataConnectionsConsole = "dataConnectionsConsole"
+
+	// FlagInternationalization
+	// Enables work-in-progress internationalization
+	FlagInternationalization = "internationalization"
+
+	// FlagTopnav
+	// New top nav and page layouts
+	FlagTopnav = "topnav"
+
+	// FlagCustomBranding
+	// Replaces whitelabeling with the new custom branding feature
+	FlagCustomBranding = "customBranding"
+
+	// FlagGrpcServer
+	// Run GRPC server
+	FlagGrpcServer = "grpcServer"
+
+	// FlagTraceqlEditor
+	// Show the TraceQL editor in the explore page
+	FlagTraceqlEditor = "traceqlEditor"
+
+	// FlagRedshiftAsyncQueryDataSupport
+	// Enable async query data support for Redshift
+	FlagRedshiftAsyncQueryDataSupport = "redshiftAsyncQueryDataSupport"
+
+	// FlagAthenaAsyncQueryDataSupport
+	// Enable async query data support for Athena
+	FlagAthenaAsyncQueryDataSupport = "athenaAsyncQueryDataSupport"
+
+	// FlagIncreaseInMemDatabaseQueryCache
+	// Enable more in memory caching for database queries
+	FlagIncreaseInMemDatabaseQueryCache = "increaseInMemDatabaseQueryCache"
 )

@@ -72,6 +72,9 @@ function setup(state?: any) {
               testDatasource: jest.fn(),
               init: jest.fn(),
               name: 'default',
+              getRef() {
+                return { type: 'default', uid: 'default' };
+              },
             }
       );
     },

@@ -203,7 +203,7 @@ export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfi
     value: this.props.value || '',
   };
 
-  setInputElem = (elem: any) => {
+  setInputElem = (elem: HTMLInputElement) => {
     this.inputElem = elem;
   };
 

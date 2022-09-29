@@ -130,6 +130,7 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
           onClick={this.onShowOptions}
           loading={loading}
           onCancel={this.onCancel}
+          disabled={this.props.readOnly}
         />
       );
     }

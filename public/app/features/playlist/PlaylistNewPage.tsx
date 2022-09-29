@@ -1,53 +1,34 @@
-import React, { FC } from 'react';
-import { connect, MapStateToProps } from 'react-redux';
+import React, { useState } from 'react';
 
-import { NavModel } from '@grafana/data';
+import { NavModelItem } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { useStyles2 } from '@grafana/ui';
-import Page from 'app/core/components/Page/Page';
-import { getNavModel } from 'app/core/selectors/navModel';
-import { StoreState } from 'app/types';
-
-import { GrafanaRouteComponentProps } from '../../core/navigation/types';
+import { Page } from 'app/core/components/Page/Page';
 
 import { PlaylistForm } from './PlaylistForm';
-import { createPlaylist } from './api';
-import { getPlaylistStyles } from './styles';
+import { createPlaylist, getDefaultPlaylist } from './api';
 import { Playlist } from './types';
-import { usePlaylist } from './usePlaylist';
 
-interface ConnectedProps {
-  navModel: NavModel;
-}
+export const PlaylistNewPage = () => {
+  const [playlist] = useState<Playlist>(getDefaultPlaylist());
 
-interface Props extends ConnectedProps, GrafanaRouteComponentProps {}
-
-export const PlaylistNewPage: FC<Props> = ({ navModel }) => {
-  const styles = useStyles2(getPlaylistStyles);
-  const { playlist, loading } = usePlaylist();
   const onSubmit = async (playlist: Playlist) => {
     await createPlaylist(playlist);
     locationService.push('/playlists');
   };
 
+  const pageNav: NavModelItem = {
+    text: 'New playlist',
+    subTitle:
+      'A playlist rotates through a pre-selected list of dashboards. A playlist can be a great way to build situational awareness, or just show off your metrics to your team or visitors.',
+  };
+
   return (
-    <Page navModel={navModel}>
-      <Page.Contents isLoading={loading}>
-        <h3 className={styles.subHeading}>New Playlist</h3>
-
-        <p className={styles.description}>
-          A playlist rotates through a pre-selected list of dashboards. A playlist can be a great way to build
-          situational awareness, or just show off your metrics to your team or visitors.
-        </p>
-
+    <Page navId="dashboards/playlists" pageNav={pageNav}>
+      <Page.Contents>
         <PlaylistForm onSubmit={onSubmit} playlist={playlist} />
       </Page.Contents>
     </Page>
   );
 };
 
-const mapStateToProps: MapStateToProps<ConnectedProps, {}, StoreState> = (state: StoreState) => ({
-  navModel: getNavModel(state.navIndex, 'playlists'),
-});
-
-export default connect(mapStateToProps)(PlaylistNewPage);
+export default PlaylistNewPage;

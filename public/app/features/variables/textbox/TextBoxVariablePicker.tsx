@@ -1,7 +1,7 @@
 import React, { ChangeEvent, FocusEvent, KeyboardEvent, ReactElement, useCallback, useEffect, useState } from 'react';
-import { useDispatch } from 'react-redux';
 
 import { Input } from '@grafana/ui';
+import { useDispatch } from 'app/types';
 
 import { variableAdapters } from '../adapters';
 import { VariablePickerProps } from '../pickers/types';
@@ -12,7 +12,7 @@ import { toVariablePayload } from '../utils';
 
 export interface Props extends VariablePickerProps<TextBoxVariableModel> {}
 
-export function TextBoxVariablePicker({ variable, onVariableChange }: Props): ReactElement {
+export function TextBoxVariablePicker({ variable, onVariableChange, readOnly }: Props): ReactElement {
   const dispatch = useDispatch();
   const [updatedValue, setUpdatedValue] = useState(variable.current.value);
   useEffect(() => {
@@ -68,6 +68,7 @@ export function TextBoxVariablePicker({ variable, onVariableChange }: Props): Re
       value={updatedValue}
       onChange={onChange}
       onBlur={onBlur}
+      disabled={readOnly}
       onKeyDown={onKeyDown}
       placeholder="Enter variable value"
       id={`var-${variable.id}`}

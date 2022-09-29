@@ -106,6 +106,7 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
       width: 100%;
       overflow: auto;
       display: flex;
+      flex-direction: column;
     `,
     thead: css`
       label: thead;
@@ -165,7 +166,6 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
     imageCellLink: css`
       cursor: pointer;
       overflow: hidden;
-      width: 100%;
       height: 100%;
     `,
     headerFilter: css`
@@ -183,17 +183,22 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
       li {
         margin-bottom: 0;
       }
-      div:not(:only-child):first-child {
-        flex-grow: 0.6;
-      }
-      position: absolute;
-      bottom: 0;
-      left: 0;
+    `,
+    paginationItem: css`
+      flex: 20%;
+    `,
+    paginationCenterItem: css`
+      flex: 100%;
+      display: flex;
+      justify-content: center;
     `,
     paginationSummary: css`
       color: ${theme.colors.text.secondary};
       font-size: ${theme.typography.bodySmall.fontSize};
-      margin-left: auto;
+      display: flex;
+      justify-content: flex-end;
+      flex: 20%;
+      padding-right: ${theme.spacing(1)};
     `,
 
     tableContentWrapper: (totalColumnsWidth: number) => {

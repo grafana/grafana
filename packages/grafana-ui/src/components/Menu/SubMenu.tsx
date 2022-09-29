@@ -58,6 +58,7 @@ export const SubMenu: React.FC<SubMenuProps> = React.memo(
     );
   }
 );
+
 SubMenu.displayName = 'SubMenu';
 
 /** @internal */
@@ -70,7 +71,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     icon: css`
       opacity: 0.7;
-      margin-left: 10px;
+      margin-left: ${theme.spacing(2)};
       color: ${theme.colors.text.secondary};
     `,
     itemsWrapper: css`

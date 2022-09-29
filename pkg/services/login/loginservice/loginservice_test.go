@@ -7,11 +7,16 @@ import (
 	"testing"
 
 	"github.com/go-kit/log"
-	"github.com/grafana/grafana/pkg/infra/log/level"
+	"github.com/go-kit/log/level"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
-	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
+	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -27,9 +32,11 @@ func Test_syncOrgRoles_doesNotBreakWhenTryingToRemoveLastOrgAdmin(t *testing.T) 
 	}
 
 	login := Implementation{
-		QuotaService:    &quota.QuotaService{},
+		QuotaService:    &quotaimpl.Service{},
 		AuthInfoService: authInfoMock,
 		SQLStore:        store,
+		userService:     usertest.NewUserServiceFake(),
+		orgService:      orgtest.NewOrgServiceFake(),
 	}
 
 	err := login.syncOrgRoles(context.Background(), &user, &externalUser)
@@ -50,10 +57,15 @@ func Test_syncOrgRoles_whenTryingToRemoveLastOrgLogsError(t *testing.T) {
 		ExpectedOrgListResponse: createResponseWithOneErrLastOrgAdminItem(),
 	}
 
+	orgService := orgtest.NewOrgServiceFake()
+	orgService.ExpectedError = models.ErrLastOrgAdmin
+
 	login := Implementation{
-		QuotaService:    &quota.QuotaService{},
+		QuotaService:    &quotaimpl.Service{},
 		AuthInfoService: authInfoMock,
 		SQLStore:        store,
+		userService:     usertest.NewUserServiceFake(),
+		orgService:      orgService,
 	}
 
 	err := login.syncOrgRoles(context.Background(), &user, &externalUser)
@@ -64,20 +76,22 @@ func Test_syncOrgRoles_whenTryingToRemoveLastOrgLogsError(t *testing.T) {
 func Test_teamSync(t *testing.T) {
 	authInfoMock := &logintest.AuthInfoServiceFake{}
 	login := Implementation{
-		QuotaService:    &quota.QuotaService{},
+		QuotaService:    &quotaimpl.Service{},
 		AuthInfoService: authInfoMock,
 	}
 
-	upserCmd := &models.UpsertUserCommand{ExternalUser: &models.ExternalUserInfo{Email: "test_user@example.org"}}
-	expectedUser := &models.User{
-		Id:    1,
-		Email: "test_user@example.org",
+	email := "test_user@example.org"
+	upserCmd := &models.UpsertUserCommand{ExternalUser: &models.ExternalUserInfo{Email: email},
+		UserLookupParams: models.UserLookupParams{Email: &email}}
+	expectedUser := &user.User{
+		ID:    1,
+		Email: email,
 		Name:  "test_user",
 		Login: "test_user",
 	}
 	authInfoMock.ExpectedUser = expectedUser
 
-	var actualUser *models.User
+	var actualUser *user.User
 	var actualExternalUser *models.ExternalUserInfo
 
 	t.Run("login.TeamSync should not be called when  nil", func(t *testing.T) {
@@ -87,7 +101,7 @@ func Test_teamSync(t *testing.T) {
 		assert.Nil(t, actualExternalUser)
 
 		t.Run("login.TeamSync should be called when not nil", func(t *testing.T) {
-			teamSyncFunc := func(user *models.User, externalUser *models.ExternalUserInfo) error {
+			teamSyncFunc := func(user *user.User, externalUser *models.ExternalUserInfo) error {
 				actualUser = user
 				actualExternalUser = externalUser
 				return nil
@@ -100,7 +114,7 @@ func Test_teamSync(t *testing.T) {
 		})
 
 		t.Run("login.TeamSync should propagate its errors to the caller", func(t *testing.T) {
-			teamSyncFunc := func(user *models.User, externalUser *models.ExternalUserInfo) error {
+			teamSyncFunc := func(user *user.User, externalUser *models.ExternalUserInfo) error {
 				return errors.New("teamsync test error")
 			}
 			login.TeamSync = teamSyncFunc
@@ -110,9 +124,9 @@ func Test_teamSync(t *testing.T) {
 	})
 }
 
-func createSimpleUser() models.User {
-	user := models.User{
-		Id: 1,
+func createSimpleUser() user.User {
+	user := user.User{
+		ID: 1,
 	}
 
 	return user
@@ -123,17 +137,17 @@ func createUserOrgDTO() []*models.UserOrgDTO {
 		{
 			OrgId: 1,
 			Name:  "Bar",
-			Role:  models.ROLE_VIEWER,
+			Role:  org.RoleViewer,
 		},
 		{
 			OrgId: 10,
 			Name:  "Foo",
-			Role:  models.ROLE_ADMIN,
+			Role:  org.RoleAdmin,
 		},
 		{
 			OrgId: 11,
 			Name:  "Stuff",
-			Role:  models.ROLE_VIEWER,
+			Role:  org.RoleViewer,
 		},
 	}
 	return users
@@ -141,9 +155,9 @@ func createUserOrgDTO() []*models.UserOrgDTO {
 
 func createSimpleExternalUser() models.ExternalUserInfo {
 	externalUser := models.ExternalUserInfo{
-		AuthModule: "ldap",
-		OrgRoles: map[int64]models.RoleType{
-			1: models.ROLE_VIEWER,
+		AuthModule: login.LDAPAuthModule,
+		OrgRoles: map[int64]org.RoleType{
+			1: org.RoleViewer,
 		},
 	}
 

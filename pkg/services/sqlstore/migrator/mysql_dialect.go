@@ -10,7 +10,6 @@ import (
 	"github.com/VividCortex/mysqlerr"
 	"github.com/go-sql-driver/mysql"
 	"github.com/golang-migrate/migrate/v4/database"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"xorm.io/xorm"
 )
 
@@ -141,7 +140,7 @@ func (db *MySQLDialect) CleanDB() error {
 				return fmt.Errorf("%v: %w", "failed to disable foreign key checks", err)
 			}
 			if _, err := sess.Exec("drop table " + table.Name + " ;"); err != nil {
-				return errutil.Wrapf(err, "failed to delete table %q", table.Name)
+				return fmt.Errorf("failed to delete table %q: %w", table.Name, err)
 			}
 			if _, err := sess.Exec("set foreign_key_checks = 1"); err != nil {
 				return fmt.Errorf("%v: %w", "failed to disable foreign key checks", err)
@@ -169,14 +168,14 @@ func (db *MySQLDialect) TruncateDBTables() error {
 		case "dashboard_acl":
 			// keep default dashboard permissions
 			if _, err := sess.Exec(fmt.Sprintf("DELETE FROM %v WHERE dashboard_id != -1 AND org_id != -1;", db.Quote(table.Name))); err != nil {
-				return errutil.Wrapf(err, "failed to truncate table %q", table.Name)
+				return fmt.Errorf("failed to truncate table %q: %w", table.Name, err)
 			}
 			if _, err := sess.Exec(fmt.Sprintf("ALTER TABLE %v AUTO_INCREMENT = 3;", db.Quote(table.Name))); err != nil {
-				return errutil.Wrapf(err, "failed to reset table %q", table.Name)
+				return fmt.Errorf("failed to reset table %q: %w", table.Name, err)
 			}
 		default:
 			if _, err := sess.Exec(fmt.Sprintf("TRUNCATE TABLE %v;", db.Quote(table.Name))); err != nil {
-				return errutil.Wrapf(err, "failed to truncate table %q", table.Name)
+				return fmt.Errorf("failed to truncate table %q: %w", table.Name, err)
 			}
 		}
 	}
@@ -211,8 +210,16 @@ func (db *MySQLDialect) IsDeadlock(err error) bool {
 	return db.isThisError(err, mysqlerr.ER_LOCK_DEADLOCK)
 }
 
-// UpsertSQL returns the upsert sql statement for PostgreSQL dialect
+// UpsertSQL returns the upsert sql statement for MySQL dialect
 func (db *MySQLDialect) UpsertSQL(tableName string, keyCols, updateCols []string) string {
+	q, _ := db.UpsertMultipleSQL(tableName, keyCols, updateCols, 1)
+	return q
+}
+
+func (db *MySQLDialect) UpsertMultipleSQL(tableName string, keyCols, updateCols []string, count int) (string, error) {
+	if count < 1 {
+		return "", fmt.Errorf("upsert statement must have count >= 1. Got %v", count)
+	}
 	columnsStr := strings.Builder{}
 	colPlaceHoldersStr := strings.Builder{}
 	setStr := strings.Builder{}
@@ -227,13 +234,23 @@ func (db *MySQLDialect) UpsertSQL(tableName string, keyCols, updateCols []string
 		setStr.WriteString(fmt.Sprintf("%s=VALUES(%s)%s", db.Quote(c), db.Quote(c), separator))
 	}
 
-	s := fmt.Sprintf(`INSERT INTO %s (%s) VALUES (%s) ON DUPLICATE KEY UPDATE %s`,
+	valuesStr := strings.Builder{}
+	separator = ", "
+	colPlaceHolders := colPlaceHoldersStr.String()
+	for i := 0; i < count; i++ {
+		if i == count-1 {
+			separator = ""
+		}
+		valuesStr.WriteString(fmt.Sprintf("(%s)%s", colPlaceHolders, separator))
+	}
+
+	s := fmt.Sprintf(`INSERT INTO %s (%s) VALUES %s ON DUPLICATE KEY UPDATE %s`,
 		tableName,
 		columnsStr.String(),
-		colPlaceHoldersStr.String(),
+		valuesStr.String(),
 		setStr.String(),
 	)
-	return s
+	return s, nil
 }
 
 func (db *MySQLDialect) Lock(cfg LockCfg) error {

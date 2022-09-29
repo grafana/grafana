@@ -5,6 +5,7 @@
       - '8086:8086'
     environment:
       INFLUXD_REPORTING_DISABLED: 'true'
+      INFLUXD_HTTP_BIND_ADDRESS: ':8086'
       DOCKER_INFLUXDB_INIT_MODE: 'setup'
       DOCKER_INFLUXDB_INIT_USERNAME: 'grafana'
       DOCKER_INFLUXDB_INIT_PASSWORD: 'grafana12345'
@@ -12,7 +13,6 @@
       DOCKER_INFLUXDB_INIT_BUCKET: 'mybucket'
       DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: 'mytoken'
     volumes:
-      - ./docker/blocks/influxdb/config.yaml:/etc/influxdb2/config.yaml
       - ./docker/blocks/influxdb/setup_influxql.sh:/docker-entrypoint-initdb.d/setup_influxql.sh
 
   telegraf:

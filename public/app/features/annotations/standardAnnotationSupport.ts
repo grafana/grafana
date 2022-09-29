@@ -125,6 +125,7 @@ const alertEventAndAnnotationFields: AnnotationFieldInfo[] = [
   { key: 'panelId' },
   { key: 'alertId' },
   { key: 'dashboardId' },
+  { key: 'dashboardUID' },
 ];
 
 export function getAnnotationsFromData(
@@ -231,12 +232,23 @@ export function getAnnotationsFromData(
 // annotation support API needs some work to support less "standard" editors like prometheus and here it is not
 // polluting public API.
 
+const legacyRunner = [
+  'prometheus',
+  'loki',
+  'elasticsearch',
+  'grafana-opensearch-datasource', // external
+  'grafana-splunk-datasource', // external
+];
+
 /**
  * Opt out of using the default mapping functionality on frontend.
  */
 export function shouldUseMappingUI(datasource: DataSourceApi): boolean {
   const { type } = datasource;
-  return type !== 'prometheus' && type !== 'elasticsearch';
+  return !(
+    type === 'datasource' || //  ODD behavior for "-- Grafana --" datasource
+    legacyRunner.includes(type)
+  );
 }
 
 /**
@@ -244,5 +256,5 @@ export function shouldUseMappingUI(datasource: DataSourceApi): boolean {
  */
 export function shouldUseLegacyRunner(datasource: DataSourceApi): boolean {
   const { type } = datasource;
-  return type === 'prometheus' || type === 'elasticsearch';
+  return legacyRunner.includes(type);
 }

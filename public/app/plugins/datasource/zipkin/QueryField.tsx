@@ -66,7 +66,7 @@ export const ZipkinQueryField = ({ query, onChange, onRunQuery, datasource }: Pr
           <RadioButtonGroup<ZipkinQueryType>
             options={[
               { value: 'traceID', label: 'TraceID' },
-              { value: 'upload', label: 'JSON file' },
+              { value: 'upload', label: 'JSON File' },
             ]}
             value={query.queryType || 'traceID'}
             onChange={(v) =>
@@ -131,7 +131,8 @@ export function useServices(datasource: ZipkinDatasource): AsyncState<CascaderOp
       }
       return [];
     } catch (error) {
-      dispatch(notifyApp(createErrorNotification('Failed to load services from Zipkin', error)));
+      const errorToShow = error instanceof Error ? error : 'An unknown error occurred';
+      dispatch(notifyApp(createErrorNotification('Failed to load services from Zipkin', errorToShow)));
       throw error;
     }
   }, [datasource]);
@@ -175,7 +176,8 @@ export function useLoadOptions(datasource: ZipkinDatasource) {
           });
         }
       } catch (error) {
-        dispatch(notifyApp(createErrorNotification('Failed to load spans from Zipkin', error)));
+        const errorToShow = error instanceof Error ? error : 'An unknown error occurred';
+        dispatch(notifyApp(createErrorNotification('Failed to load spans from Zipkin', errorToShow)));
         throw error;
       }
     },
@@ -216,7 +218,8 @@ export function useLoadOptions(datasource: ZipkinDatasource) {
           });
         }
       } catch (error) {
-        dispatch(notifyApp(createErrorNotification('Failed to load spans from Zipkin', error)));
+        const errorToShow = error instanceof Error ? error : 'An unknown error occurred';
+        dispatch(notifyApp(createErrorNotification('Failed to load spans from Zipkin', errorToShow)));
         throw error;
       }
     },

@@ -42,9 +42,10 @@ func config(t *testing.T) *setting.UnifiedAlertingSettings {
 }
 
 func validRule() apimodels.PostableExtendedRuleNode {
+	forDuration := model.Duration(rand.Int63n(1000))
 	return apimodels.PostableExtendedRuleNode{
 		ApiRuleNode: &apimodels.ApiRuleNode{
-			For: model.Duration(rand.Int63n(1000)),
+			For: &forDuration,
 			Labels: map[string]string{
 				"test-label": "data",
 			},
@@ -93,7 +94,7 @@ func randFolder() *models2.Folder {
 		Updated:   time.Time{},
 		UpdatedBy: 0,
 		CreatedBy: 0,
-		HasAcl:    false,
+		HasACL:    false,
 	}
 }
 
@@ -240,7 +241,7 @@ func TestValidateRuleNode_NoUID(t *testing.T) {
 				require.Equal(t, name, alert.RuleGroup)
 				require.Equal(t, models.NoDataState(api.GrafanaManagedAlert.NoDataState), alert.NoDataState)
 				require.Equal(t, models.ExecutionErrorState(api.GrafanaManagedAlert.ExecErrState), alert.ExecErrState)
-				require.Equal(t, time.Duration(api.ApiRuleNode.For), alert.For)
+				require.Equal(t, time.Duration(*api.ApiRuleNode.For), alert.For)
 				require.Equal(t, api.ApiRuleNode.Annotations, alert.Annotations)
 				require.Equal(t, api.ApiRuleNode.Labels, alert.Labels)
 			},

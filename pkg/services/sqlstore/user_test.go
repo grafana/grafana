@@ -6,51 +6,25 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestIntegrationUserDataAccess(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	ss := InitTestDB(t)
-	user := &models.SignedInUser{
-		OrgId:       1,
+	usr := &user.SignedInUser{
+		OrgID:       1,
 		Permissions: map[int64]map[string][]string{1: {"users:read": {"global.users:*"}}},
 	}
 
-	t.Run("Testing DB - creates and loads user", func(t *testing.T) {
-		cmd := models.CreateUserCommand{
-			Email: "usertest@test.com",
-			Name:  "user name",
-			Login: "user_test_login",
-		}
-		user, err := ss.CreateUser(context.Background(), cmd)
-		require.NoError(t, err)
-
-		query := models.GetUserByIdQuery{Id: user.Id}
-		err = ss.GetUserById(context.Background(), &query)
-		require.Nil(t, err)
-
-		require.Equal(t, query.Result.Email, "usertest@test.com")
-		require.Equal(t, query.Result.Password, "")
-		require.Len(t, query.Result.Rands, 10)
-		require.Len(t, query.Result.Salt, 10)
-		require.False(t, query.Result.IsDisabled)
-
-		query = models.GetUserByIdQuery{Id: user.Id}
-		err = ss.GetUserById(context.Background(), &query)
-		require.Nil(t, err)
-
-		require.Equal(t, query.Result.Email, "usertest@test.com")
-		require.Equal(t, query.Result.Password, "")
-		require.Len(t, query.Result.Rands, 10)
-		require.Len(t, query.Result.Salt, 10)
-		require.False(t, query.Result.IsDisabled)
-	})
-
 	t.Run("Testing DB - creates and loads disabled user", func(t *testing.T) {
 		ss = InitTestDB(t)
-		cmd := models.CreateUserCommand{
+		cmd := user.CreateUserCommand{
 			Email:      "usertest@test.com",
 			Name:       "user name",
 			Login:      "user_test_login",
@@ -60,7 +34,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		user, err := ss.CreateUser(context.Background(), cmd)
 		require.Nil(t, err)
 
-		query := models.GetUserByIdQuery{Id: user.Id}
+		query := models.GetUserByIdQuery{Id: user.ID}
 		err = ss.GetUserById(context.Background(), &query)
 		require.Nil(t, err)
 
@@ -74,27 +48,27 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	t.Run("Testing DB - create user assigned to other organization", func(t *testing.T) {
 		ss = InitTestDB(t)
 
-		autoAssignOrg := setting.AutoAssignOrg
-		setting.AutoAssignOrg = true
+		autoAssignOrg := ss.Cfg.AutoAssignOrg
+		ss.Cfg.AutoAssignOrg = true
 		defer func() {
-			setting.AutoAssignOrg = autoAssignOrg
+			ss.Cfg.AutoAssignOrg = autoAssignOrg
 		}()
 
 		orgCmd := &models.CreateOrgCommand{Name: "Some Test Org"}
 		err := ss.CreateOrg(context.Background(), orgCmd)
 		require.Nil(t, err)
 
-		cmd := models.CreateUserCommand{
+		cmd := user.CreateUserCommand{
 			Email: "usertest@test.com",
 			Name:  "user name",
 			Login: "user_test_login",
-			OrgId: orgCmd.Result.Id,
+			OrgID: orgCmd.Result.Id,
 		}
 
-		user, err := ss.CreateUser(context.Background(), cmd)
+		usr, err := ss.CreateUser(context.Background(), cmd)
 		require.Nil(t, err)
 
-		query := models.GetUserByIdQuery{Id: user.Id}
+		query := models.GetUserByIdQuery{Id: usr.ID}
 		err = ss.GetUserById(context.Background(), &query)
 		require.Nil(t, err)
 
@@ -103,14 +77,14 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.Len(t, query.Result.Rands, 10)
 		require.Len(t, query.Result.Salt, 10)
 		require.False(t, query.Result.IsDisabled)
-		require.Equal(t, query.Result.OrgId, orgCmd.Result.Id)
+		require.Equal(t, query.Result.OrgID, orgCmd.Result.Id)
 
 		const nonExistingOrgID = 10000
-		cmd = models.CreateUserCommand{
+		cmd = user.CreateUserCommand{
 			Email: "usertest@test.com",
 			Name:  "user name",
 			Login: "user_test_login",
-			OrgId: nonExistingOrgID,
+			OrgID: nonExistingOrgID,
 		}
 
 		_, err = ss.CreateUser(context.Background(), cmd)
@@ -120,8 +94,8 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	t.Run("Testing DB - multiple users", func(t *testing.T) {
 		ss = InitTestDB(t)
 
-		createFiveTestUsers(t, ss, func(i int) *models.CreateUserCommand {
-			return &models.CreateUserCommand{
+		createFiveTestUsers(t, ss, func(i int) *user.CreateUserCommand {
+			return &user.CreateUserCommand{
 				Email:      fmt.Sprint("user", i, "@test.com"),
 				Name:       fmt.Sprint("user", i),
 				Login:      fmt.Sprint("loginuser", i),
@@ -130,7 +104,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		})
 
 		// Return the first page of users and a total count
-		query := models.SearchUsersQuery{Query: "", Page: 1, Limit: 3, SignedInUser: user}
+		query := models.SearchUsersQuery{Query: "", Page: 1, Limit: 3, SignedInUser: usr}
 		err := ss.SearchUsers(context.Background(), &query)
 
 		require.Nil(t, err)
@@ -138,7 +112,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.EqualValues(t, query.Result.TotalCount, 5)
 
 		// Return the second page of users and a total count
-		query = models.SearchUsersQuery{Query: "", Page: 2, Limit: 3, SignedInUser: user}
+		query = models.SearchUsersQuery{Query: "", Page: 2, Limit: 3, SignedInUser: usr}
 		err = ss.SearchUsers(context.Background(), &query)
 
 		require.Nil(t, err)
@@ -146,28 +120,28 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.EqualValues(t, query.Result.TotalCount, 5)
 
 		// Return list of users matching query on user name
-		query = models.SearchUsersQuery{Query: "use", Page: 1, Limit: 3, SignedInUser: user}
+		query = models.SearchUsersQuery{Query: "use", Page: 1, Limit: 3, SignedInUser: usr}
 		err = ss.SearchUsers(context.Background(), &query)
 
 		require.Nil(t, err)
 		require.Len(t, query.Result.Users, 3)
 		require.EqualValues(t, query.Result.TotalCount, 5)
 
-		query = models.SearchUsersQuery{Query: "ser1", Page: 1, Limit: 3, SignedInUser: user}
+		query = models.SearchUsersQuery{Query: "ser1", Page: 1, Limit: 3, SignedInUser: usr}
 		err = ss.SearchUsers(context.Background(), &query)
 
 		require.Nil(t, err)
 		require.Len(t, query.Result.Users, 1)
 		require.EqualValues(t, query.Result.TotalCount, 1)
 
-		query = models.SearchUsersQuery{Query: "USER1", Page: 1, Limit: 3, SignedInUser: user}
+		query = models.SearchUsersQuery{Query: "USER1", Page: 1, Limit: 3, SignedInUser: usr}
 		err = ss.SearchUsers(context.Background(), &query)
 
 		require.Nil(t, err)
 		require.Len(t, query.Result.Users, 1)
 		require.EqualValues(t, query.Result.TotalCount, 1)
 
-		query = models.SearchUsersQuery{Query: "idontexist", Page: 1, Limit: 3, SignedInUser: user}
+		query = models.SearchUsersQuery{Query: "idontexist", Page: 1, Limit: 3, SignedInUser: usr}
 		err = ss.SearchUsers(context.Background(), &query)
 
 		require.Nil(t, err)
@@ -175,7 +149,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.EqualValues(t, query.Result.TotalCount, 0)
 
 		// Return list of users matching query on email
-		query = models.SearchUsersQuery{Query: "ser1@test.com", Page: 1, Limit: 3, SignedInUser: user}
+		query = models.SearchUsersQuery{Query: "ser1@test.com", Page: 1, Limit: 3, SignedInUser: usr}
 		err = ss.SearchUsers(context.Background(), &query)
 
 		require.Nil(t, err)
@@ -183,7 +157,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.EqualValues(t, query.Result.TotalCount, 1)
 
 		// Return list of users matching query on login name
-		query = models.SearchUsersQuery{Query: "loginuser1", Page: 1, Limit: 3, SignedInUser: user}
+		query = models.SearchUsersQuery{Query: "loginuser1", Page: 1, Limit: 3, SignedInUser: usr}
 		err = ss.SearchUsers(context.Background(), &query)
 
 		require.Nil(t, err)
@@ -193,8 +167,8 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 	t.Run("Testing DB - return list users based on their is_disabled flag", func(t *testing.T) {
 		ss = InitTestDB(t)
-		createFiveTestUsers(t, ss, func(i int) *models.CreateUserCommand {
-			return &models.CreateUserCommand{
+		createFiveTestUsers(t, ss, func(i int) *user.CreateUserCommand {
+			return &user.CreateUserCommand{
 				Email:      fmt.Sprint("user", i, "@test.com"),
 				Name:       fmt.Sprint("user", i),
 				Login:      fmt.Sprint("loginuser", i),
@@ -203,7 +177,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		})
 
 		isDisabled := false
-		query := models.SearchUsersQuery{IsDisabled: &isDisabled, SignedInUser: user}
+		query := models.SearchUsersQuery{IsDisabled: &isDisabled, SignedInUser: usr}
 		err := ss.SearchUsers(context.Background(), &query)
 		require.Nil(t, err)
 
@@ -225,8 +199,8 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 		// Re-init DB
 		ss = InitTestDB(t)
-		users := createFiveTestUsers(t, ss, func(i int) *models.CreateUserCommand {
-			return &models.CreateUserCommand{
+		users := createFiveTestUsers(t, ss, func(i int) *user.CreateUserCommand {
+			return &user.CreateUserCommand{
 				Email:      fmt.Sprint("user", i, "@test.com"),
 				Name:       fmt.Sprint("user", i),
 				Login:      fmt.Sprint("loginuser", i),
@@ -235,29 +209,29 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		})
 
 		err = ss.AddOrgUser(context.Background(), &models.AddOrgUserCommand{
-			LoginOrEmail: users[1].Login, Role: models.ROLE_VIEWER,
-			OrgId: users[0].OrgId, UserId: users[1].Id,
+			LoginOrEmail: users[1].Login, Role: org.RoleViewer,
+			OrgId: users[0].OrgID, UserId: users[1].ID,
 		})
 		require.Nil(t, err)
 
-		err = updateDashboardAcl(t, ss, 1, &models.DashboardAcl{
-			DashboardID: 1, OrgID: users[0].OrgId, UserID: users[1].Id,
+		err = updateDashboardACL(t, ss, 1, &models.DashboardACL{
+			DashboardID: 1, OrgID: users[0].OrgID, UserID: users[1].ID,
 			Permission: models.PERMISSION_EDIT,
 		})
 		require.Nil(t, err)
 
 		// When the user is deleted
-		err = ss.DeleteUser(context.Background(), &models.DeleteUserCommand{UserId: users[1].Id})
+		err = ss.DeleteUser(context.Background(), &models.DeleteUserCommand{UserId: users[1].ID})
 		require.Nil(t, err)
 
-		query1 := &models.GetOrgUsersQuery{OrgId: users[0].OrgId, User: user}
+		query1 := &models.GetOrgUsersQuery{OrgId: users[0].OrgID, User: usr}
 		err = ss.GetOrgUsersForTest(context.Background(), query1)
 		require.Nil(t, err)
 
 		require.Len(t, query1.Result, 1)
 
-		permQuery := &models.GetDashboardAclInfoListQuery{DashboardID: 1, OrgID: users[0].OrgId}
-		err = getDashboardAclInfoList(ss, permQuery)
+		permQuery := &models.GetDashboardACLInfoListQuery{DashboardID: 1, OrgID: users[0].OrgID}
+		err = getDashboardACLInfoList(ss, permQuery)
 		require.Nil(t, err)
 
 		require.Len(t, permQuery.Result, 0)
@@ -265,8 +239,8 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		// A user is an org member and has been assigned permissions
 		// Re-init DB
 		ss = InitTestDB(t)
-		users = createFiveTestUsers(t, ss, func(i int) *models.CreateUserCommand {
-			return &models.CreateUserCommand{
+		users = createFiveTestUsers(t, ss, func(i int) *user.CreateUserCommand {
+			return &user.CreateUserCommand{
 				Email:      fmt.Sprint("user", i, "@test.com"),
 				Name:       fmt.Sprint("user", i),
 				Login:      fmt.Sprint("loginuser", i),
@@ -274,38 +248,38 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			}
 		})
 		err = ss.AddOrgUser(context.Background(), &models.AddOrgUserCommand{
-			LoginOrEmail: users[1].Login, Role: models.ROLE_VIEWER,
-			OrgId: users[0].OrgId, UserId: users[1].Id,
+			LoginOrEmail: users[1].Login, Role: org.RoleViewer,
+			OrgId: users[0].OrgID, UserId: users[1].ID,
 		})
 		require.Nil(t, err)
 
-		err = updateDashboardAcl(t, ss, 1, &models.DashboardAcl{
-			DashboardID: 1, OrgID: users[0].OrgId, UserID: users[1].Id,
+		err = updateDashboardACL(t, ss, 1, &models.DashboardACL{
+			DashboardID: 1, OrgID: users[0].OrgID, UserID: users[1].ID,
 			Permission: models.PERMISSION_EDIT,
 		})
 		require.Nil(t, err)
 
 		ss.CacheService.Flush()
 
-		query3 := &models.GetSignedInUserQuery{OrgId: users[1].OrgId, UserId: users[1].Id}
+		query3 := &models.GetSignedInUserQuery{OrgId: users[1].OrgID, UserId: users[1].ID}
 		err = ss.GetSignedInUserWithCacheCtx(context.Background(), query3)
 		require.Nil(t, err)
 		require.NotNil(t, query3.Result)
-		require.Equal(t, query3.OrgId, users[1].OrgId)
-		err = ss.SetUsingOrg(context.Background(), &models.SetUsingOrgCommand{UserId: users[1].Id, OrgId: users[0].OrgId})
+		require.Equal(t, query3.OrgId, users[1].OrgID)
+		err = ss.SetUsingOrg(context.Background(), &models.SetUsingOrgCommand{UserId: users[1].ID, OrgId: users[0].OrgID})
 		require.Nil(t, err)
-		query4 := &models.GetSignedInUserQuery{OrgId: 0, UserId: users[1].Id}
+		query4 := &models.GetSignedInUserQuery{OrgId: 0, UserId: users[1].ID}
 		err = ss.GetSignedInUserWithCacheCtx(context.Background(), query4)
 		require.Nil(t, err)
 		require.NotNil(t, query4.Result)
-		require.Equal(t, query4.Result.OrgId, users[0].OrgId)
+		require.Equal(t, query4.Result.OrgID, users[0].OrgID)
 
-		cacheKey := newSignedInUserCacheKey(query4.Result.OrgId, query4.UserId)
+		cacheKey := newSignedInUserCacheKey(query4.Result.OrgID, query4.UserId)
 		_, found := ss.CacheService.Get(cacheKey)
 		require.True(t, found)
 
 		disableCmd := models.BatchDisableUsersCommand{
-			UserIds:    []int64{users[0].Id, users[1].Id, users[2].Id, users[3].Id, users[4].Id},
+			UserIds:    []int64{users[0].ID, users[1].ID, users[2].ID, users[3].ID, users[4].ID},
 			IsDisabled: true,
 		}
 
@@ -313,25 +287,25 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.Nil(t, err)
 
 		isDisabled = true
-		query5 := &models.SearchUsersQuery{IsDisabled: &isDisabled, SignedInUser: user}
+		query5 := &models.SearchUsersQuery{IsDisabled: &isDisabled, SignedInUser: usr}
 		err = ss.SearchUsers(context.Background(), query5)
 
 		require.Nil(t, err)
 		require.EqualValues(t, query5.Result.TotalCount, 5)
 
 		// the user is deleted
-		err = ss.DeleteUser(context.Background(), &models.DeleteUserCommand{UserId: users[1].Id})
+		err = ss.DeleteUser(context.Background(), &models.DeleteUserCommand{UserId: users[1].ID})
 		require.Nil(t, err)
 
 		// delete connected org users and permissions
-		query2 := &models.GetOrgUsersQuery{OrgId: users[0].OrgId}
+		query2 := &models.GetOrgUsersQuery{OrgId: users[0].OrgID}
 		err = ss.GetOrgUsersForTest(context.Background(), query2)
 		require.Nil(t, err)
 
 		require.Len(t, query2.Result, 1)
 
-		permQuery = &models.GetDashboardAclInfoListQuery{DashboardID: 1, OrgID: users[0].OrgId}
-		err = getDashboardAclInfoList(ss, permQuery)
+		permQuery = &models.GetDashboardACLInfoListQuery{DashboardID: 1, OrgID: users[0].OrgID}
+		err = getDashboardACLInfoList(ss, permQuery)
 		require.Nil(t, err)
 
 		require.Len(t, permQuery.Result, 0)
@@ -339,16 +313,16 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 	t.Run("Testing DB - return list of users that the SignedInUser has permission to read", func(t *testing.T) {
 		ss := InitTestDB(t)
-		createFiveTestUsers(t, ss, func(i int) *models.CreateUserCommand {
-			return &models.CreateUserCommand{
+		createFiveTestUsers(t, ss, func(i int) *user.CreateUserCommand {
+			return &user.CreateUserCommand{
 				Email: fmt.Sprint("user", i, "@test.com"),
 				Name:  fmt.Sprint("user", i),
 				Login: fmt.Sprint("loginuser", i),
 			}
 		})
 
-		testUser := &models.SignedInUser{
-			OrgId:       1,
+		testUser := &user.SignedInUser{
+			OrgID:       1,
 			Permissions: map[int64]map[string][]string{1: {"users:read": {"global.users:id:1", "global.users:id:3"}}},
 		}
 		query := models.SearchUsersQuery{SignedInUser: testUser}
@@ -360,8 +334,8 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	ss = InitTestDB(t)
 
 	t.Run("Testing DB - enable all users", func(t *testing.T) {
-		users := createFiveTestUsers(t, ss, func(i int) *models.CreateUserCommand {
-			return &models.CreateUserCommand{
+		users := createFiveTestUsers(t, ss, func(i int) *user.CreateUserCommand {
+			return &user.CreateUserCommand{
 				Email:      fmt.Sprint("user", i, "@test.com"),
 				Name:       fmt.Sprint("user", i),
 				Login:      fmt.Sprint("loginuser", i),
@@ -370,7 +344,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		})
 
 		disableCmd := models.BatchDisableUsersCommand{
-			UserIds:    []int64{users[0].Id, users[1].Id, users[2].Id, users[3].Id, users[4].Id},
+			UserIds:    []int64{users[0].ID, users[1].ID, users[2].ID, users[3].ID, users[4].ID},
 			IsDisabled: false,
 		}
 
@@ -378,7 +352,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.Nil(t, err)
 
 		isDisabled := false
-		query := &models.SearchUsersQuery{IsDisabled: &isDisabled, SignedInUser: user}
+		query := &models.SearchUsersQuery{IsDisabled: &isDisabled, SignedInUser: usr}
 		err = ss.SearchUsers(context.Background(), query)
 
 		require.Nil(t, err)
@@ -388,8 +362,8 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	ss = InitTestDB(t)
 
 	t.Run("Testing DB - disable only specific users", func(t *testing.T) {
-		users := createFiveTestUsers(t, ss, func(i int) *models.CreateUserCommand {
-			return &models.CreateUserCommand{
+		users := createFiveTestUsers(t, ss, func(i int) *user.CreateUserCommand {
+			return &user.CreateUserCommand{
 				Email:      fmt.Sprint("user", i, "@test.com"),
 				Name:       fmt.Sprint("user", i),
 				Login:      fmt.Sprint("loginuser", i),
@@ -399,7 +373,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 		userIdsToDisable := []int64{}
 		for i := 0; i < 3; i++ {
-			userIdsToDisable = append(userIdsToDisable, users[i].Id)
+			userIdsToDisable = append(userIdsToDisable, users[i].ID)
 		}
 		disableCmd := models.BatchDisableUsersCommand{
 			UserIds:    userIdsToDisable,
@@ -409,7 +383,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		err := ss.BatchDisableUsers(context.Background(), &disableCmd)
 		require.Nil(t, err)
 
-		query := models.SearchUsersQuery{SignedInUser: user}
+		query := models.SearchUsersQuery{SignedInUser: usr}
 		err = ss.SearchUsers(context.Background(), &query)
 
 		require.Nil(t, err)
@@ -436,8 +410,8 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 	t.Run("Testing DB - search users", func(t *testing.T) {
 		// Since previous tests were destructive
-		createFiveTestUsers(t, ss, func(i int) *models.CreateUserCommand {
-			return &models.CreateUserCommand{
+		createFiveTestUsers(t, ss, func(i int) *user.CreateUserCommand {
+			return &user.CreateUserCommand{
 				Email:      fmt.Sprint("user", i, "@test.com"),
 				Name:       fmt.Sprint("user", i),
 				Login:      fmt.Sprint("loginuser", i),
@@ -449,21 +423,21 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	t.Run("Testing DB - grafana admin users", func(t *testing.T) {
 		ss = InitTestDB(t)
 
-		createUserCmd := models.CreateUserCommand{
+		createUserCmd := user.CreateUserCommand{
 			Email:   fmt.Sprint("admin", "@test.com"),
 			Name:    "admin",
 			Login:   "admin",
 			IsAdmin: true,
 		}
-		user, err := ss.CreateUser(context.Background(), createUserCmd)
+		usr, err := ss.CreateUser(context.Background(), createUserCmd)
 		require.Nil(t, err)
 
 		// Cannot make themselves a non-admin
-		updatePermsError := ss.UpdateUserPermissions(user.Id, false)
+		updatePermsError := ss.UpdateUserPermissions(usr.ID, false)
 
-		require.Equal(t, updatePermsError, models.ErrLastGrafanaAdmin)
+		require.Equal(t, updatePermsError, user.ErrLastGrafanaAdmin)
 
-		query := models.GetUserByIdQuery{Id: user.Id}
+		query := models.GetUserByIdQuery{Id: usr.ID}
 		getUserError := ss.GetUserById(context.Background(), &query)
 		require.Nil(t, getUserError)
 
@@ -472,7 +446,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		// One user
 		const email = "user@test.com"
 		const username = "user"
-		createUserCmd = models.CreateUserCommand{
+		createUserCmd = user.CreateUserCommand{
 			Email: email,
 			Name:  "user",
 			Login: username,
@@ -481,24 +455,24 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.Nil(t, err)
 
 		// When trying to create a new user with the same email, an error is returned
-		createUserCmd = models.CreateUserCommand{
+		createUserCmd = user.CreateUserCommand{
 			Email:        email,
 			Name:         "user2",
 			Login:        "user2",
 			SkipOrgSetup: true,
 		}
 		_, err = ss.CreateUser(context.Background(), createUserCmd)
-		require.Equal(t, err, models.ErrUserAlreadyExists)
+		require.Equal(t, err, user.ErrUserAlreadyExists)
 
 		// When trying to create a new user with the same login, an error is returned
-		createUserCmd = models.CreateUserCommand{
+		createUserCmd = user.CreateUserCommand{
 			Email:        "user2@test.com",
 			Name:         "user2",
 			Login:        username,
 			SkipOrgSetup: true,
 		}
 		_, err = ss.CreateUser(context.Background(), createUserCmd)
-		require.Equal(t, err, models.ErrUserAlreadyExists)
+		require.Equal(t, err, user.ErrUserAlreadyExists)
 	})
 }
 
@@ -515,10 +489,10 @@ func (ss *SQLStore) GetOrgUsersForTest(ctx context.Context, query *models.GetOrg
 	})
 }
 
-func createFiveTestUsers(t *testing.T, sqlStore *SQLStore, fn func(i int) *models.CreateUserCommand) []models.User {
+func createFiveTestUsers(t *testing.T, sqlStore *SQLStore, fn func(i int) *user.CreateUserCommand) []user.User {
 	t.Helper()
 
-	users := []models.User{}
+	users := []user.User{}
 	for i := 0; i < 5; i++ {
 		cmd := fn(i)
 

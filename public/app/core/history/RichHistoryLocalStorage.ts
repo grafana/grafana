@@ -78,7 +78,7 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
     try {
       store.setObject(RICH_HISTORY_KEY, updatedHistory);
     } catch (error) {
-      if (error.name === 'QuotaExceededError') {
+      if (error instanceof Error && error.name === 'QuotaExceededError') {
         throwError(RichHistoryServiceError.StorageFull, `Saving rich history failed: ${error.message}`);
       } else {
         throw error;
@@ -217,7 +217,7 @@ function createDataQuery(query: RichHistoryLocalStorageDTO, individualQuery: Dat
     // ElasticSearch (maybe other datasoures too) before grafana7
     return JSON.parse(individualQuery);
   }
-  // prometehus (maybe other datasources too) before grafana7
+  // prometheus (maybe other datasources too) before grafana7
   return { expr: individualQuery, refId: letters[index] };
 }
 

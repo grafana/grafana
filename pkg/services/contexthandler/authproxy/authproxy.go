@@ -19,7 +19,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/multildap"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -54,16 +56,18 @@ type AuthProxy struct {
 	remoteCache  *remotecache.RemoteCache
 	loginService login.Service
 	sqlStore     sqlstore.Store
+	userService  user.Service
 
 	logger log.Logger
 }
 
-func ProvideAuthProxy(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, loginService login.Service, sqlStore sqlstore.Store) *AuthProxy {
+func ProvideAuthProxy(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, loginService login.Service, userService user.Service, sqlStore sqlstore.Store) *AuthProxy {
 	return &AuthProxy{
 		cfg:          cfg,
 		remoteCache:  remoteCache,
 		loginService: loginService,
 		sqlStore:     sqlStore,
+		userService:  userService,
 		logger:       log.New("auth.proxy"),
 	}
 }
@@ -241,19 +245,24 @@ func (auth *AuthProxy) LoginViaLDAP(reqCtx *models.ReqContext) (int64, error) {
 		ReqContext:    reqCtx,
 		SignupAllowed: auth.cfg.LDAPAllowSignup,
 		ExternalUser:  extUser,
+		UserLookupParams: models.UserLookupParams{
+			Login:  &extUser.Login,
+			Email:  &extUser.Email,
+			UserID: nil,
+		},
 	}
 	if err := auth.loginService.UpsertUser(reqCtx.Req.Context(), upsert); err != nil {
 		return 0, err
 	}
 
-	return upsert.Result.Id, nil
+	return upsert.Result.ID, nil
 }
 
 // loginViaHeader logs in user from the header only
 func (auth *AuthProxy) loginViaHeader(reqCtx *models.ReqContext) (int64, error) {
 	header := auth.getDecodedHeader(reqCtx, auth.cfg.AuthProxyHeaderName)
 	extUser := &models.ExternalUserInfo{
-		AuthModule: "authproxy",
+		AuthModule: login.AuthProxyAuthModule,
 		AuthId:     header,
 	}
 
@@ -279,9 +288,9 @@ func (auth *AuthProxy) loginViaHeader(reqCtx *models.ReqContext) (int64, error) 
 		case "Role":
 			// If Role header is specified, we update the user role of the default org
 			if header != "" {
-				rt := models.RoleType(header)
+				rt := org.RoleType(header)
 				if rt.IsValid() {
-					extUser.OrgRoles = map[int64]models.RoleType{}
+					extUser.OrgRoles = map[int64]org.RoleType{}
 					orgID := int64(1)
 					if setting.AutoAssignOrg && setting.AutoAssignOrgId > 0 {
 						orgID = int64(setting.AutoAssignOrgId)
@@ -298,6 +307,11 @@ func (auth *AuthProxy) loginViaHeader(reqCtx *models.ReqContext) (int64, error) 
 		ReqContext:    reqCtx,
 		SignupAllowed: auth.cfg.AuthProxyAutoSignUp,
 		ExternalUser:  extUser,
+		UserLookupParams: models.UserLookupParams{
+			UserID: nil,
+			Login:  &extUser.Login,
+			Email:  &extUser.Email,
+		},
 	}
 
 	err := auth.loginService.UpsertUser(reqCtx.Req.Context(), upsert)
@@ -305,7 +319,7 @@ func (auth *AuthProxy) loginViaHeader(reqCtx *models.ReqContext) (int64, error) 
 		return 0, err
 	}
 
-	return upsert.Result.Id, nil
+	return upsert.Result.ID, nil
 }
 
 // getDecodedHeader gets decoded value of a header with given headerName
@@ -334,17 +348,11 @@ func (auth *AuthProxy) headersIterator(reqCtx *models.ReqContext, fn func(field 
 }
 
 // GetSignedInUser gets full signed in user info.
-func (auth *AuthProxy) GetSignedInUser(userID int64, orgID int64) (*models.SignedInUser, error) {
-	query := &models.GetSignedInUserQuery{
-		OrgId:  orgID,
-		UserId: userID,
-	}
-
-	if err := auth.sqlStore.GetSignedInUser(context.Background(), query); err != nil {
-		return nil, err
-	}
-
-	return query.Result, nil
+func (auth *AuthProxy) GetSignedInUser(userID int64, orgID int64) (*user.SignedInUser, error) {
+	return auth.userService.GetSignedInUser(context.Background(), &user.GetSignedInUserQuery{
+		OrgID:  orgID,
+		UserID: userID,
+	})
 }
 
 // Remember user in cache

@@ -1,8 +1,10 @@
 import { LanguageMap, languages as prismLanguages } from 'prismjs';
 import React, { ReactNode } from 'react';
 import { Plugin, Node } from 'slate';
+import { Editor } from 'slate-react';
 
 import { QueryEditorProps } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import {
   SlatePrism,
   TypeaheadOutput,
@@ -15,9 +17,9 @@ import {
 } from '@grafana/ui';
 import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
 
+import LokiLanguageProvider from '../LanguageProvider';
 import { LokiDatasource } from '../datasource';
-import LokiLanguageProvider from '../language_provider';
-import { escapeLabelValueInSelector, shouldRefreshLabels } from '../language_utils';
+import { escapeLabelValueInSelector, shouldRefreshLabels } from '../languageUtils';
 import { LokiQuery, LokiOptions } from '../types';
 
 import { LokiLabelBrowser } from './LokiLabelBrowser';
@@ -82,7 +84,7 @@ interface LokiQueryFieldState {
 }
 
 export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, LokiQueryFieldState> {
-  plugins: Plugin[];
+  plugins: Array<Plugin<Editor>>;
   _isMounted = false;
 
   constructor(props: LokiQueryFieldProps) {
@@ -145,6 +147,16 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
   };
 
   onClickChooserButton = () => {
+    if (!this.state.labelBrowserVisible) {
+      reportInteraction('grafana_loki_log_browser_opened', {
+        app: this.props.app,
+      });
+    } else {
+      reportInteraction('grafana_loki_log_browser_closed', {
+        app: this.props.app,
+        closeType: 'logBrowserButton',
+      });
+    }
     this.setState((state) => ({ labelBrowserVisible: !state.labelBrowserVisible }));
   };
 
@@ -170,6 +182,7 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
     const {
       ExtraFieldElement,
       query,
+      app,
       datasource,
       placeholder = 'Enter a Loki query (run with Shift+Enter)',
     } = this.props;
@@ -221,6 +234,7 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
                     lastUsedLabels={lastUsedLabels || []}
                     storeLastUsedLabels={onLastUsedLabelsSave}
                     deleteLastUsedLabels={onLastUsedLabelsDelete}
+                    app={app}
                   />
                 </div>
               )}

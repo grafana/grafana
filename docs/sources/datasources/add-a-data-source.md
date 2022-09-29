@@ -32,4 +32,4 @@ To add a data source:
 
 1. Click **Select**. The data source configuration page opens.
 
-1. Configure the data source following instructions specific to that data source. See [Data sources]({{< relref "_index.md" >}}) for links to configuration instructions for all supported data sources.
+1. Configure the data source following instructions specific to that data source. See [Data sources]({{< relref "../administration/data-source-management/_index.md" >}}) for links to configuration instructions for all supported data sources.

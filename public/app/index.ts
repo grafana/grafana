@@ -10,8 +10,8 @@ if (window.public_cdn_path) {
 window.__grafana_public_path__ =
   __webpack_public_path__.substring(0, __webpack_public_path__.lastIndexOf('build/')) || __webpack_public_path__;
 
-if ((window as any).nonce) {
-  __webpack_nonce__ = (window as any).nonce;
+if (window.nonce) {
+  __webpack_nonce__ = window.nonce;
 }
 
 // This is an indication to the window.onLoad failure check that the app bundle has loaded.

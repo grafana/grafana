@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 
-import { NavModel } from '@grafana/data';
 import { contextSrv, User } from 'app/core/services/context_srv';
 
 import { OrgRole, Team } from '../../types';
@@ -12,22 +11,13 @@ import { Props, TeamList } from './TeamList';
 import { getMockTeam, getMultipleMockTeams } from './__mocks__/teamMocks';
 import { setSearchQuery, setTeamsSearchPage } from './state/reducers';
 
-jest.mock('app/core/config', () => {
-  return {
-    featureToggles: { accesscontrol: false },
-  };
-});
+jest.mock('app/core/config', () => ({
+  ...jest.requireActual('app/core/config'),
+  featureToggles: { accesscontrol: false },
+}));
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
-    navModel: {
-      main: {
-        text: 'Configuration',
-      },
-      node: {
-        text: 'Team List',
-      },
-    } as NavModel,
     teams: [] as Team[],
     loadTeams: jest.fn(),
     deleteTeam: jest.fn(),

@@ -1,4 +1,4 @@
-import React, { FC, memo, useCallback, useEffect, useMemo } from 'react';
+import React, { FC, memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   Cell,
   Column,
@@ -131,6 +131,9 @@ export const Table: FC<Props> = memo((props: Props) => {
     enablePagination,
   } = props;
 
+  const listRef = useRef<FixedSizeList>(null);
+  const tableDivRef = useRef<HTMLDivElement>(null);
+  const fixedSizeListScrollbarRef = useRef<HTMLDivElement>(null);
   const tableStyles = useStyles2(getTableStyles);
   const headerHeight = noHeader ? 0 : tableStyles.cellHeight;
 
@@ -207,11 +210,11 @@ export const Table: FC<Props> = memo((props: Props) => {
   } = useTable(options, useFilters, useSortBy, usePagination, useAbsoluteLayout, useResizeColumns);
 
   let listHeight = height - (headerHeight + footerHeight);
+
   if (enablePagination) {
     listHeight -= tableStyles.cellHeight;
   }
   const pageSize = Math.round(listHeight / tableStyles.cellHeight) - 1;
-
   useEffect(() => {
     // Don't update the page size if it is less than 1
     if (pageSize <= 0) {
@@ -219,6 +222,29 @@ export const Table: FC<Props> = memo((props: Props) => {
     }
     setPageSize(pageSize);
   }, [pageSize, setPageSize]);
+
+  useEffect(() => {
+    // To have the custom vertical scrollbar always visible (https://github.com/grafana/grafana/issues/52136),
+    // we need to bring the element from the FixedSizeList scope to the outer Table container scope,
+    // because the FixedSizeList scope has overflow. By moving scrollbar to container scope we will have
+    // it always visible since the entire width is in view.
+
+    // Select the scrollbar element from the FixedSizeList scope
+    const listVerticalScrollbarHTML = (fixedSizeListScrollbarRef.current as HTMLDivElement)?.querySelector(
+      '.track-vertical'
+    );
+
+    // Select Table custom scrollbars
+    const tableScrollbarView = (tableDivRef.current as HTMLDivElement)?.firstChild;
+
+    //If they exists, move the scrollbar element to the Table container scope
+    if (tableScrollbarView && listVerticalScrollbarHTML) {
+      listVerticalScrollbarHTML?.remove();
+      (tableScrollbarView as HTMLDivElement).querySelector(':scope > .track-vertical')?.remove();
+
+      (tableScrollbarView as HTMLDivElement).append(listVerticalScrollbarHTML as Node);
+    }
+  });
 
   const RenderRow = React.useCallback(
     ({ index: rowIndex, style }) => {
@@ -257,13 +283,14 @@ export const Table: FC<Props> = memo((props: Props) => {
   if (enablePagination) {
     const itemsRangeStart = state.pageIndex * state.pageSize + 1;
     let itemsRangeEnd = itemsRangeStart + state.pageSize - 1;
-    const isSmall = width < 500;
+    const isSmall = width < 550;
     if (itemsRangeEnd > data.length) {
       itemsRangeEnd = data.length;
     }
     paginationEl = (
       <div className={tableStyles.paginationWrapper}>
-        <div>
+        {isSmall ? null : <div className={tableStyles.paginationItem} />}
+        <div className={tableStyles.paginationCenterItem}>
           <Pagination
             currentPage={state.pageIndex + 1}
             numberOfPages={pageOptions.length}
@@ -279,21 +306,35 @@ export const Table: FC<Props> = memo((props: Props) => {
       </div>
     );
   }
+
+  const handleScroll: React.UIEventHandler = (event) => {
+    const { scrollTop } = event.target as HTMLDivElement;
+
+    if (listRef.current !== null) {
+      listRef.current.scrollTo(scrollTop);
+    }
+  };
+
   return (
-    <div {...getTableProps()} className={tableStyles.table} aria-label={ariaLabel} role="table">
+    <div {...getTableProps()} className={tableStyles.table} aria-label={ariaLabel} role="table" ref={tableDivRef}>
       <CustomScrollbar hideVerticalTrack={true}>
         <div className={tableStyles.tableContentWrapper(totalColumnsWidth)}>
-          {!noHeader && <HeaderRow data={data} headerGroups={headerGroups} showTypeIcons={showTypeIcons} />}
+          {!noHeader && <HeaderRow headerGroups={headerGroups} showTypeIcons={showTypeIcons} />}
           {itemCount > 0 ? (
-            <FixedSizeList
-              height={listHeight}
-              itemCount={itemCount}
-              itemSize={tableStyles.rowHeight}
-              width={'100%'}
-              style={{ overflow: 'hidden auto' }}
-            >
-              {RenderRow}
-            </FixedSizeList>
+            <div ref={fixedSizeListScrollbarRef}>
+              <CustomScrollbar onScroll={handleScroll} hideHorizontalTrack={true}>
+                <FixedSizeList
+                  height={listHeight}
+                  itemCount={itemCount}
+                  itemSize={tableStyles.rowHeight}
+                  width={'100%'}
+                  ref={listRef}
+                  style={{ overflow: undefined }}
+                >
+                  {RenderRow}
+                </FixedSizeList>
+              </CustomScrollbar>
+            </div>
           ) : (
             <div style={{ height: height - headerHeight }} className={tableStyles.noData}>
               No data

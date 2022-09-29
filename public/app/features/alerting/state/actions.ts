@@ -1,4 +1,4 @@
-import { getBackendSrv, locationService } from '@grafana/runtime';
+import { getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import { AlertRuleDTO, NotifierDTO, ThunkResult } from 'app/types';
@@ -28,7 +28,9 @@ export function createNotificationChannel(data: any): ThunkResult<Promise<void>>
       dispatch(notifyApp(createSuccessNotification('Notification created')));
       locationService.push('/alerting/notifications');
     } catch (error) {
-      dispatch(notifyApp(createErrorNotification(error.data.error)));
+      if (isFetchError(error)) {
+        dispatch(notifyApp(createErrorNotification(error.data.error)));
+      }
     }
   };
 }
@@ -39,7 +41,9 @@ export function updateNotificationChannel(data: any): ThunkResult<void> {
       await getBackendSrv().put(`/api/alert-notifications/${data.id}`, data);
       dispatch(notifyApp(createSuccessNotification('Notification updated')));
     } catch (error) {
-      dispatch(notifyApp(createErrorNotification(error.data.error)));
+      if (isFetchError(error)) {
+        dispatch(notifyApp(createErrorNotification(error.data.error)));
+      }
     }
   };
 }

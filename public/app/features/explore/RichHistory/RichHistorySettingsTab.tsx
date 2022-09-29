@@ -26,9 +26,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     container: css`
       font-size: ${theme.typography.size.sm};
-      .space-between {
-        margin-bottom: ${theme.spacing.lg};
-      }
+    `,
+    spaceBetween: css`
+      margin-bottom: ${theme.spacing.lg};
     `,
     input: css`
       max-width: 200px;
@@ -78,7 +78,6 @@ export function RichHistorySettingsTab(props: RichHistorySettingsProps) {
         <Field
           label="History time span"
           description={`Select the period of time for which Grafana will save your query history. Up to ${MAX_HISTORY_ITEMS} entries will be stored.`}
-          className="space-between"
         >
           <div className={styles.input}>
             <Select value={selectedOption} options={retentionPeriodOptions} onChange={onChangeRetentionPeriod}></Select>
@@ -89,7 +88,10 @@ export function RichHistorySettingsTab(props: RichHistorySettingsProps) {
           Grafana will keep entries up to {selectedOption?.label}.
         </Alert>
       )}
-      <InlineField label="Change the default active tab from “Query history” to “Starred”" className="space-between">
+      <InlineField
+        label="Change the default active tab from “Query history” to “Starred”"
+        className={styles.spaceBetween}
+      >
         <InlineSwitch
           id="explore-query-history-settings-default-active-tab"
           value={starredTabAsFirstTab}
@@ -97,7 +99,10 @@ export function RichHistorySettingsTab(props: RichHistorySettingsProps) {
         />
       </InlineField>
       {supportedFeatures().onlyActiveDataSource && (
-        <InlineField label="Only show queries for data source currently active in Explore" className="space-between">
+        <InlineField
+          label="Only show queries for data source currently active in Explore"
+          className={styles.spaceBetween}
+        >
           <InlineSwitch
             id="explore-query-history-settings-data-source-behavior"
             value={activeDatasourceOnly}

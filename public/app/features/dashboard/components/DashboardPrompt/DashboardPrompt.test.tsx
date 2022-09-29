@@ -1,3 +1,5 @@
+import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
+
 import { setContextSrv } from '../../../../core/services/context_srv';
 import { DashboardModel } from '../../state/DashboardModel';
 import { PanelModel } from '../../state/PanelModel';
@@ -55,12 +57,6 @@ describe('DashboardPrompt', () => {
     dash.time = { from: '1h' };
     dash.refresh = true;
     dash.schemaVersion = 10;
-    expect(hasChanges(dash, original)).toBe(false);
-  });
-
-  it('Should ignore .iteration changes', () => {
-    const { original, dash } = getTestContext();
-    dash.iteration = new Date().getTime() + 1;
     expect(hasChanges(dash, original)).toBe(false);
   });
 
@@ -136,6 +132,17 @@ describe('DashboardPrompt', () => {
           ignoreChanges({ ...dash, meta: { canSave: true, fromScript: true, fromFile: undefined } }, original)
         ).toBe(true);
       });
+    });
+
+    it('Should ignore panel schema migrations', () => {
+      const { original, dash } = getTestContext();
+      const plugin = getPanelPlugin({}).setMigrationHandler((panel) => {
+        delete (panel as any).legend;
+        return { option1: 'Aasd' };
+      });
+
+      dash.panels[0].pluginLoaded(plugin);
+      expect(hasChanges(dash, original)).toBe(false);
     });
 
     describe('when called with fromFile', () => {

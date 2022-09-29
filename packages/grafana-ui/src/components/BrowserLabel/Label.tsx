@@ -1,6 +1,5 @@
 import { cx, css } from '@emotion/css';
 import React, { forwardRef, HTMLAttributes, useCallback } from 'react';
-// @ts-ignore
 import Highlighter from 'react-highlight-words';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -107,7 +106,7 @@ const getLabelStyles = (theme: GrafanaTheme2) => ({
     font-size: ${theme.typography.size.sm};
     line-height: ${theme.typography.bodySmall.lineHeight};
     background-color: ${theme.colors.background.secondary};
-    color: ${theme.colors.text};
+    color: ${theme.colors.text.primary};
     white-space: nowrap;
     text-shadow: none;
     padding: ${theme.spacing(0.5)};

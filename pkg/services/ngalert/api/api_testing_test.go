@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -26,8 +27,8 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 			Context: &web.Context{
 				Req: &http.Request{},
 			},
-			SignedInUser: &models2.SignedInUser{
-				OrgId: 1,
+			SignedInUser: &user.SignedInUser{
+				OrgID: 1,
 			},
 		}
 
@@ -35,7 +36,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 			data1 := models.GenerateAlertQuery()
 			data2 := models.GenerateAlertQuery()
 
-			ac := acMock.New().WithPermissions([]*accesscontrol.Permission{
+			ac := acMock.New().WithPermissions([]accesscontrol.Permission{
 				{Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(data1.DatasourceUID)},
 			})
 
@@ -43,7 +44,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 
 			response := srv.RouteTestGrafanaRuleConfig(rc, definitions.TestRulePayload{
 				Expr: "",
-				GrafanaManagedCondition: &models.EvalAlertConditionCommand{
+				GrafanaManagedCondition: &definitions.EvalAlertConditionCommand{
 					Condition: data1.RefID,
 					Data:      []models.AlertQuery{data1, data2},
 					Now:       time.Time{},
@@ -57,25 +58,26 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 			data1 := models.GenerateAlertQuery()
 			data2 := models.GenerateAlertQuery()
 
-			ac := acMock.New().WithPermissions([]*accesscontrol.Permission{
+			ac := acMock.New().WithPermissions([]accesscontrol.Permission{
 				{Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(data1.DatasourceUID)},
 				{Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(data2.DatasourceUID)},
 			})
 
-			ds := &fakes.FakeCacheService{DataSources: []*models2.DataSource{
+			ds := &fakes.FakeCacheService{DataSources: []*datasources.DataSource{
 				{Uid: data1.DatasourceUID},
 				{Uid: data2.DatasourceUID},
 			}}
 
 			evaluator := &eval.FakeEvaluator{}
 			var result []eval.Result
-			evaluator.EXPECT().ConditionEval(mock.Anything, mock.Anything, mock.Anything).Return(result, nil)
+			evaluator.EXPECT().Validate(mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			evaluator.EXPECT().ConditionEval(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(result)
 
 			srv := createTestingApiSrv(ds, ac, evaluator)
 
 			response := srv.RouteTestGrafanaRuleConfig(rc, definitions.TestRulePayload{
 				Expr: "",
-				GrafanaManagedCondition: &models.EvalAlertConditionCommand{
+				GrafanaManagedCondition: &definitions.EvalAlertConditionCommand{
 					Condition: data1.RefID,
 					Data:      []models.AlertQuery{data1, data2},
 					Now:       time.Time{},
@@ -84,7 +86,8 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 
 			require.Equal(t, http.StatusOK, response.Status())
 
-			evaluator.AssertCalled(t, "ConditionEval", mock.Anything, mock.Anything, mock.Anything)
+			evaluator.AssertCalled(t, "ConditionEval", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+			evaluator.AssertCalled(t, "Validate", mock.Anything, mock.Anything, mock.Anything)
 		})
 	})
 
@@ -94,8 +97,8 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 				Req: &http.Request{},
 			},
 			IsSignedIn: false,
-			SignedInUser: &models2.SignedInUser{
-				OrgId: 1,
+			SignedInUser: &user.SignedInUser{
+				OrgID: 1,
 			},
 		}
 		ac := acMock.New().WithDisabled()
@@ -103,19 +106,20 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 		t.Run("should require user to be signed in", func(t *testing.T) {
 			data1 := models.GenerateAlertQuery()
 
-			ds := &fakes.FakeCacheService{DataSources: []*models2.DataSource{
+			ds := &fakes.FakeCacheService{DataSources: []*datasources.DataSource{
 				{Uid: data1.DatasourceUID},
 			}}
 
 			evaluator := &eval.FakeEvaluator{}
 			var result []eval.Result
-			evaluator.EXPECT().ConditionEval(mock.Anything, mock.Anything, mock.Anything).Return(result, nil)
+			evaluator.EXPECT().Validate(mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			evaluator.EXPECT().ConditionEval(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(result)
 
 			srv := createTestingApiSrv(ds, ac, evaluator)
 
 			response := srv.RouteTestGrafanaRuleConfig(rc, definitions.TestRulePayload{
 				Expr: "",
-				GrafanaManagedCondition: &models.EvalAlertConditionCommand{
+				GrafanaManagedCondition: &definitions.EvalAlertConditionCommand{
 					Condition: data1.RefID,
 					Data:      []models.AlertQuery{data1},
 					Now:       time.Time{},
@@ -123,13 +127,14 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 			})
 
 			require.Equal(t, http.StatusUnauthorized, response.Status())
-			evaluator.AssertNotCalled(t, "ConditionEval", mock.Anything, mock.Anything, mock.Anything)
+			evaluator.AssertNotCalled(t, "ConditionEval", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+			evaluator.AssertNotCalled(t, "Validate", mock.Anything, mock.Anything, mock.Anything)
 
 			rc.IsSignedIn = true
 
 			response = srv.RouteTestGrafanaRuleConfig(rc, definitions.TestRulePayload{
 				Expr: "",
-				GrafanaManagedCondition: &models.EvalAlertConditionCommand{
+				GrafanaManagedCondition: &definitions.EvalAlertConditionCommand{
 					Condition: data1.RefID,
 					Data:      []models.AlertQuery{data1},
 					Now:       time.Time{},
@@ -138,7 +143,8 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 
 			require.Equal(t, http.StatusOK, response.Status())
 
-			evaluator.AssertCalled(t, "ConditionEval", mock.Anything, mock.Anything, mock.Anything)
+			evaluator.AssertCalled(t, "ConditionEval", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+			evaluator.AssertCalled(t, "Validate", mock.Anything, mock.Anything, mock.Anything)
 		})
 	})
 }
@@ -149,8 +155,8 @@ func TestRouteEvalQueries(t *testing.T) {
 			Context: &web.Context{
 				Req: &http.Request{},
 			},
-			SignedInUser: &models2.SignedInUser{
-				OrgId: 1,
+			SignedInUser: &user.SignedInUser{
+				OrgID: 1,
 			},
 		}
 
@@ -158,7 +164,7 @@ func TestRouteEvalQueries(t *testing.T) {
 			data1 := models.GenerateAlertQuery()
 			data2 := models.GenerateAlertQuery()
 
-			ac := acMock.New().WithPermissions([]*accesscontrol.Permission{
+			ac := acMock.New().WithPermissions([]accesscontrol.Permission{
 				{Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(data1.DatasourceUID)},
 			})
 
@@ -178,12 +184,12 @@ func TestRouteEvalQueries(t *testing.T) {
 			data1 := models.GenerateAlertQuery()
 			data2 := models.GenerateAlertQuery()
 
-			ac := acMock.New().WithPermissions([]*accesscontrol.Permission{
+			ac := acMock.New().WithPermissions([]accesscontrol.Permission{
 				{Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(data1.DatasourceUID)},
 				{Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(data2.DatasourceUID)},
 			})
 
-			ds := &fakes.FakeCacheService{DataSources: []*models2.DataSource{
+			ds := &fakes.FakeCacheService{DataSources: []*datasources.DataSource{
 				{Uid: data1.DatasourceUID},
 				{Uid: data2.DatasourceUID},
 			}}
@@ -218,8 +224,8 @@ func TestRouteEvalQueries(t *testing.T) {
 				Req: &http.Request{},
 			},
 			IsSignedIn: false,
-			SignedInUser: &models2.SignedInUser{
-				OrgId: 1,
+			SignedInUser: &user.SignedInUser{
+				OrgID: 1,
 			},
 		}
 		ac := acMock.New().WithDisabled()
@@ -227,7 +233,7 @@ func TestRouteEvalQueries(t *testing.T) {
 		t.Run("should require user to be signed in", func(t *testing.T) {
 			data1 := models.GenerateAlertQuery()
 
-			ds := &fakes.FakeCacheService{DataSources: []*models2.DataSource{
+			ds := &fakes.FakeCacheService{DataSources: []*datasources.DataSource{
 				{Uid: data1.DatasourceUID},
 			}}
 

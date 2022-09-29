@@ -10,9 +10,16 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
+func NewAccessControlAPI(router routing.RouteRegister, service ac.Service) *AccessControlAPI {
+	return &AccessControlAPI{
+		RouteRegister: router,
+		Service:       service,
+	}
+}
+
 type AccessControlAPI struct {
+	Service       ac.Service
 	RouteRegister routing.RouteRegister
-	AccessControl ac.AccessControl
 }
 
 func (api *AccessControlAPI) RegisterAPIEndpoints() {
@@ -24,7 +31,7 @@ func (api *AccessControlAPI) RegisterAPIEndpoints() {
 // GET /api/access-control/user/permissions
 func (api *AccessControlAPI) getUsersPermissions(c *models.ReqContext) response.Response {
 	reloadCache := c.QueryBool("reloadcache")
-	permissions, err := api.AccessControl.GetUserPermissions(c.Req.Context(),
+	permissions, err := api.Service.GetUserPermissions(c.Req.Context(),
 		c.SignedInUser, ac.Options{ReloadCache: reloadCache})
 	if err != nil {
 		response.JSON(http.StatusInternalServerError, err)

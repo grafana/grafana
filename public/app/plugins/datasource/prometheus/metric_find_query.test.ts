@@ -163,7 +163,7 @@ describe('PrometheusMetricFindQuery', () => {
           ],
         },
       });
-      const results: any = await query.process();
+      const results = await query.process();
 
       expect(results).toHaveLength(2);
       expect(results[0].text).toBe('value1');
@@ -214,7 +214,7 @@ describe('PrometheusMetricFindQuery', () => {
           },
         },
       });
-      const results: any = await query.process();
+      const results = await query.process();
 
       expect(results).toHaveLength(1);
       expect(results[0].text).toBe('metric{job="testjob"} 3846 1443454528000');
@@ -222,6 +222,28 @@ describe('PrometheusMetricFindQuery', () => {
       expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
         url: `proxied/api/v1/query?query=metric&time=${raw.to.unix()}`,
+        requestId: undefined,
+        headers: {},
+      });
+    });
+
+    it('query_result(metric) should handle scalar resultTypes separately', async () => {
+      const query = setupMetricFindQuery({
+        query: 'query_result(1+1)',
+        response: {
+          data: {
+            resultType: 'scalar',
+            result: [1443454528.0, '2'],
+          },
+        },
+      });
+      const results = await query.process();
+      expect(results).toHaveLength(1);
+      expect(results[0].text).toBe('2');
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(fetchMock).toHaveBeenCalledWith({
+        method: 'GET',
+        url: `proxied/api/v1/query?query=1%2B1&time=${raw.to.unix()}`,
         requestId: undefined,
         headers: {},
       });
@@ -238,7 +260,7 @@ describe('PrometheusMetricFindQuery', () => {
           ],
         },
       });
-      const results: any = await query.process();
+      const results = await query.process();
 
       expect(results).toHaveLength(3);
       expect(results[0].text).toBe('up{instance="127.0.0.1:1234",job="job1"}');

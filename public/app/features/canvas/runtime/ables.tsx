@@ -4,11 +4,52 @@ import { HorizontalConstraint, VerticalConstraint } from '../types';
 
 import { Scene } from './scene';
 
+export const settingsViewable = (scene: Scene) => ({
+  name: 'settingsViewable',
+  props: {},
+  events: {},
+  render(moveable: MoveableManagerInterface<unknown, unknown>, React: Renderer) {
+    // If selection is more than 1 element don't display settings button
+    if (scene.selecto?.getSelectedTargets() && scene.selecto?.getSelectedTargets().length > 1) {
+      return;
+    }
+
+    const rect = moveable.getRect();
+    return (
+      <div
+        key={'settings-viewable'}
+        className={'moveable-settings'}
+        style={{
+          position: 'absolute',
+          left: `${rect.width + 18}px`,
+          top: '0px',
+          color: 'white',
+          fontSize: '18px',
+          cursor: 'pointer',
+          userSelect: 'none',
+          willChange: 'transform',
+          transform: 'translate(-50%, 0px)',
+          zIndex: 100,
+        }}
+        onClick={(event) => {
+          const container = moveable.getContainer();
+          const evt = new PointerEvent('contextmenu', { clientX: event.clientX, clientY: event.clientY });
+          container.dispatchEvent(evt);
+        }}
+      >
+        {``}
+        ⚙️
+        {``}
+      </div>
+    );
+  },
+});
+
 export const dimensionViewable = {
   name: 'dimensionViewable',
   props: {},
   events: {},
-  render(moveable: MoveableManagerInterface<any, any>, React: Renderer) {
+  render(moveable: MoveableManagerInterface<unknown, unknown>, React: Renderer) {
     const rect = moveable.getRect();
     return (
       <div
@@ -40,15 +81,12 @@ export const constraintViewable = (scene: Scene) => ({
   name: 'constraintViewable',
   props: {},
   events: {},
-  render(moveable: MoveableManagerInterface<any, any>, React: Renderer) {
+  render(moveable: MoveableManagerInterface<unknown, unknown>, React: Renderer) {
     const rect = moveable.getRect();
-    const targetElement = scene.findElementByTarget(moveable.state.target);
+    const targetElement = scene.findElementByTarget(moveable.state.target!);
 
-    // If target is currently in motion or selection is more than 1 element don't display constraint visualizations
-    if (
-      targetElement?.isMoving ||
-      (scene.selecto?.getSelectedTargets() && scene.selecto?.getSelectedTargets().length > 1)
-    ) {
+    // If selection is more than 1 element don't display constraint visualizations
+    if (scene.selecto?.getSelectedTargets() && scene.selecto?.getSelectedTargets().length > 1) {
       return;
     }
 

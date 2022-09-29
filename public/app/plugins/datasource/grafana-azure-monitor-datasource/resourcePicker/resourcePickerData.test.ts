@@ -3,6 +3,7 @@ import {
   createMockARGResourceGroupsResponse,
   createMockARGSubscriptionResponse,
 } from '../__mocks__/argResourcePickerResponse';
+import createMockDatasource from '../__mocks__/datasource';
 import { createMockInstanceSetttings } from '../__mocks__/instanceSettings';
 import { AzureGraphResponse } from '../types';
 
@@ -10,8 +11,11 @@ import ResourcePickerData from './resourcePickerData';
 
 const createResourcePickerData = (responses: AzureGraphResponse[]) => {
   const instanceSettings = createMockInstanceSetttings();
-  const resourcePickerData = new ResourcePickerData(instanceSettings);
-
+  const mockDatasource = createMockDatasource();
+  mockDatasource.azureMonitorDatasource.getMetricNamespaces = jest
+    .fn()
+    .mockResolvedValueOnce([{ text: 'Microsoft.Storage/storageAccounts', value: 'Microsoft.Storage/storageAccounts' }]);
+  const resourcePickerData = new ResourcePickerData(instanceSettings, mockDatasource.azureMonitorDatasource);
   const postResource = jest.fn();
   responses.forEach((res) => {
     postResource.mockResolvedValueOnce(res);
@@ -93,7 +97,11 @@ describe('AzureMonitor resourcePickerData', () => {
         await resourcePickerData.getSubscriptions();
         throw Error('expected getSubscriptions to fail but it succeeded');
       } catch (err) {
-        expect(err.message).toEqual('No subscriptions were found');
+        if (err instanceof Error) {
+          expect(err.message).toEqual('No subscriptions were found');
+        } else {
+          throw err;
+        }
       }
     });
   });
@@ -102,7 +110,7 @@ describe('AzureMonitor resourcePickerData', () => {
     it('makes 1 call to ARG with the correct path and query arguments', async () => {
       const mockResponse = createMockARGResourceGroupsResponse();
       const { resourcePickerData, postResource } = createResourcePickerData([mockResponse]);
-      await resourcePickerData.getResourceGroupsBySubscriptionId('123');
+      await resourcePickerData.getResourceGroupsBySubscriptionId('123', 'logs');
 
       expect(postResource).toBeCalledTimes(1);
       const firstCall = postResource.mock.calls[0];
@@ -111,11 +119,12 @@ describe('AzureMonitor resourcePickerData', () => {
       expect(postBody.query).toContain("type == 'microsoft.resources/subscriptions/resourcegroups'");
       expect(postBody.query).toContain("where subscriptionId == '123'");
     });
+
     it('returns formatted resourceGroups', async () => {
       const mockResponse = createMockARGResourceGroupsResponse();
       const { resourcePickerData } = createResourcePickerData([mockResponse]);
 
-      const resourceGroups = await resourcePickerData.getResourceGroupsBySubscriptionId('123');
+      const resourceGroups = await resourcePickerData.getResourceGroupsBySubscriptionId('123', 'logs');
       expect(resourceGroups.length).toEqual(6);
       expect(resourceGroups[0]).toEqual({
         id: 'prod',
@@ -135,7 +144,7 @@ describe('AzureMonitor resourcePickerData', () => {
       const response2 = createMockARGResourceGroupsResponse();
       const { resourcePickerData, postResource } = createResourcePickerData([response1, response2]);
 
-      await resourcePickerData.getResourceGroupsBySubscriptionId('123');
+      await resourcePickerData.getResourceGroupsBySubscriptionId('123', 'logs');
 
       expect(postResource).toHaveBeenCalledTimes(2);
       const secondCall = postResource.mock.calls[1];
@@ -151,7 +160,7 @@ describe('AzureMonitor resourcePickerData', () => {
       const response2 = createMockARGResourceGroupsResponse();
       const { resourcePickerData } = createResourcePickerData([response1, response2]);
 
-      const resourceGroups = await resourcePickerData.getResourceGroupsBySubscriptionId('123');
+      const resourceGroups = await resourcePickerData.getResourceGroupsBySubscriptionId('123', 'logs');
 
       expect(resourceGroups.length).toEqual(12);
       expect(resourceGroups[0]).toEqual({
@@ -175,11 +184,30 @@ describe('AzureMonitor resourcePickerData', () => {
       };
       const { resourcePickerData } = createResourcePickerData([mockResponse]);
       try {
-        await resourcePickerData.getResourceGroupsBySubscriptionId('123');
+        await resourcePickerData.getResourceGroupsBySubscriptionId('123', 'logs');
         throw Error('expected getResourceGroupsBySubscriptionId to fail but it succeeded');
       } catch (err) {
-        expect(err.message).toEqual('unable to fetch resource groups');
+        if (err instanceof Error) {
+          expect(err.message).toEqual('unable to fetch resource groups');
+        } else {
+          throw err;
+        }
       }
+    });
+
+    it('filters by metric specific resources', async () => {
+      const mockSubscriptionsResponse = createMockARGSubscriptionResponse();
+      const mockResourceGroupsResponse = createMockARGResourceGroupsResponse();
+      const { resourcePickerData, postResource } = createResourcePickerData([
+        mockSubscriptionsResponse,
+        mockResourceGroupsResponse,
+      ]);
+      await resourcePickerData.getResourceGroupsBySubscriptionId('123', 'metrics');
+
+      expect(postResource).toBeCalledTimes(2);
+      const secondCall = postResource.mock.calls[1];
+      const [_, postBody] = secondCall;
+      expect(postBody.query).toContain('microsoft.storage/storageaccounts');
     });
   });
 
@@ -187,7 +215,7 @@ describe('AzureMonitor resourcePickerData', () => {
     it('makes 1 call to ARG with the correct path and query arguments', async () => {
       const mockResponse = createARGResourcesResponse();
       const { resourcePickerData, postResource } = createResourcePickerData([mockResponse]);
-      await resourcePickerData.getResourcesForResourceGroup('dev');
+      await resourcePickerData.getResourcesForResourceGroup('dev', 'logs');
 
       expect(postResource).toBeCalledTimes(1);
       const firstCall = postResource.mock.calls[0];
@@ -196,11 +224,12 @@ describe('AzureMonitor resourcePickerData', () => {
       expect(postBody.query).toContain('resources');
       expect(postBody.query).toContain('where id hasprefix "dev"');
     });
+
     it('returns formatted resources', async () => {
       const mockResponse = createARGResourcesResponse();
       const { resourcePickerData } = createResourcePickerData([mockResponse]);
 
-      const resources = await resourcePickerData.getResourcesForResourceGroup('dev');
+      const resources = await resourcePickerData.getResourcesForResourceGroup('dev', 'logs');
 
       expect(resources.length).toEqual(4);
       expect(resources[0]).toEqual({
@@ -229,16 +258,37 @@ describe('AzureMonitor resourcePickerData', () => {
       };
       const { resourcePickerData } = createResourcePickerData([mockResponse]);
       try {
-        await resourcePickerData.getResourcesForResourceGroup('dev');
+        await resourcePickerData.getResourcesForResourceGroup('dev', 'logs');
         throw Error('expected getResourcesForResourceGroup to fail but it succeeded');
       } catch (err) {
-        expect(err.message).toEqual('unable to fetch resource details');
+        if (err instanceof Error) {
+          expect(err.message).toEqual('unable to fetch resource details');
+        } else {
+          throw err;
+        }
       }
+    });
+
+    it('should filter metrics resources', async () => {
+      const mockSubscriptionsResponse = createMockARGSubscriptionResponse();
+      const mockResourcesResponse = createARGResourcesResponse();
+      const { resourcePickerData, postResource } = createResourcePickerData([
+        mockSubscriptionsResponse,
+        mockResourcesResponse,
+      ]);
+      await resourcePickerData.getResourcesForResourceGroup('dev', 'metrics');
+
+      expect(postResource).toBeCalledTimes(2);
+      const secondCall = postResource.mock.calls[1];
+      const [_, postBody] = secondCall;
+      expect(postBody.query).toContain('microsoft.storage/storageaccounts');
     });
   });
 
   describe('search', () => {
     it('makes requests for metrics searches', async () => {
+      const mockSubscriptionsResponse = createMockARGSubscriptionResponse();
+
       const mockResponse = {
         data: [
           {
@@ -251,11 +301,11 @@ describe('AzureMonitor resourcePickerData', () => {
           },
         ],
       };
-      const { resourcePickerData, postResource } = createResourcePickerData([mockResponse]);
+      const { resourcePickerData, postResource } = createResourcePickerData([mockSubscriptionsResponse, mockResponse]);
       const formattedResults = await resourcePickerData.search('vmname', 'metrics');
-      expect(postResource).toBeCalledTimes(1);
-      const firstCall = postResource.mock.calls[0];
-      const [_, postBody] = firstCall;
+      expect(postResource).toBeCalledTimes(2);
+      const secondCall = postResource.mock.calls[1];
+      const [_, postBody] = secondCall;
       expect(postBody.query).not.toContain('union resourcecontainers');
       expect(postBody.query).toContain('where id contains "vmname"');
 
@@ -265,7 +315,7 @@ describe('AzureMonitor resourcePickerData', () => {
         type: 'Resource',
         location: 'North Europe',
         resourceGroupName: 'rgName',
-        typeLabel: 'Virtual machine',
+        typeLabel: 'Virtual machines',
         uri: '/subscriptions/subId/resourceGroups/rgName/providers/Microsoft.Compute/virtualMachines/vmname',
       });
     });
@@ -295,7 +345,7 @@ describe('AzureMonitor resourcePickerData', () => {
         type: 'ResourceGroup',
         location: 'North Europe',
         resourceGroupName: 'rgName',
-        typeLabel: 'Resource Group',
+        typeLabel: 'Resource groups',
         uri: '/subscriptions/subId/resourceGroups/rgName',
       });
     });
@@ -317,7 +367,11 @@ describe('AzureMonitor resourcePickerData', () => {
         await resourcePickerData.search('dev', 'logs');
         throw Error('expected search test to fail but it succeeded');
       } catch (err) {
-        expect(err.message).toEqual('unable to fetch resource details');
+        if (err instanceof Error) {
+          expect(err.message).toEqual('unable to fetch resource details');
+        } else {
+          throw err;
+        }
       }
     });
   });

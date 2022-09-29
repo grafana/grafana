@@ -3,8 +3,7 @@ import React, { ChangeEvent, FC } from 'react';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Button, Icon, InlineField, TextArea, useStyles2 } from '@grafana/ui';
+import { Button, Icon, InlineField, Stack, TextArea, useStyles2 } from '@grafana/ui';
 
 import { ExpressionQuery } from '../types';
 

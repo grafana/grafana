@@ -12,8 +12,7 @@ import {
 } from '@grafana/schema';
 import { measureText, PlotTooltipInterpolator } from '@grafana/ui';
 import { formatTime } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
-
-import { preparePlotData2, StackingGroup } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
+import { StackingGroup, preparePlotData2 } from '@grafana/ui/src/components/uPlot/utils';
 
 import { distribute, SPACE_BETWEEN } from './distribute';
 import { intersects, pointWithin, Quadtree, Rect } from './quadtree';
@@ -58,6 +57,7 @@ export interface BarsOptions {
   legend?: VizLegendOptions;
   xSpacing?: number;
   xTimeAuto?: boolean;
+  negY?: boolean[];
 }
 
 /**
@@ -250,7 +250,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   let barsPctLayout: Array<null | { offs: number[]; size: number[] }> = [];
   let barsColors: Array<null | { fill: Array<string | null>; stroke: Array<string | null> }> = [];
   let scaleFactor = 1;
-  let labels: ValueLabelTable = {};
+  let labels: ValueLabelTable;
   let fontSize = opts.text?.valueSize ?? VALUE_MAX_FONT_SIZE;
   let labelOffset = LABEL_OFFSET_MAX;
 
@@ -307,11 +307,16 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       qt.add(barRect);
 
       if (showValue !== VisibilityMode.Never) {
+        const raw = rawValue(seriesIdx, dataIdx)!;
+        let divider = 1;
+
+        if (pctStacked && alignedTotals![seriesIdx][dataIdx]!) {
+          divider = alignedTotals![seriesIdx][dataIdx]!;
+        }
+
+        const v = divider === 0 ? 0 : raw / divider;
         // Format Values and calculate label offsets
-        const text = formatValue(
-          seriesIdx,
-          rawValue(seriesIdx, dataIdx)! / (pctStacked ? alignedTotals![seriesIdx][dataIdx]! : 1)
-        );
+        const text = formatValue(seriesIdx, v);
         labelOffset = Math.min(labelOffset, Math.round(LABEL_OFFSET_FACTOR * (isXHorizontal ? wid : hgt)));
 
         if (labels[dataIdx] === undefined) {
@@ -348,6 +353,10 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
         let middleShift = isXHorizontal ? 0 : -Math.round(MIDDLE_BASELINE_SHIFT * fontSize);
         let value = rawValue(seriesIdx, dataIdx);
 
+        if (opts.negY?.[seriesIdx] && value != null) {
+          value *= -1;
+        }
+
         if (value != null) {
           // Calculate final co-ordinates for text position
           const x =
@@ -376,7 +385,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
             // Adjust for baseline which is "top" in this case
             xAdjust = (textMetrics.width * scaleFactor) / 2;
 
-            // yAdjust only matters when when the value isn't negative
+            // yAdjust only matters when the value isn't negative
             yAdjust =
               value > 0
                 ? (textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent) * scaleFactor
@@ -507,8 +516,17 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       curBaseline: CanvasTextBaseline | undefined = undefined;
 
     for (const didx in labels) {
+      // exclude first label from overlap testing
+      let first = true;
+
       for (const sidx in labels[didx]) {
-        const { text, value, x = 0, y = 0, bbox = { x: 0, y: 0, w: 1, h: 1 } } = labels[didx][sidx];
+        const label = labels[didx][sidx];
+        const { text, x = 0, y = 0 } = label;
+        let { value } = label;
+
+        if (opts.negY?.[sidx] && value != null) {
+          value *= -1;
+        }
 
         let align: CanvasTextAlign = isXHorizontal ? 'center' : value !== null && value < 0 ? 'right' : 'left';
         let baseline: CanvasTextBaseline = isXHorizontal
@@ -528,18 +546,32 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
         if (showValue === VisibilityMode.Always) {
           u.ctx.fillText(text, x, y);
         } else if (showValue === VisibilityMode.Auto) {
+          let { bbox } = label;
+
           let intersectsLabel = false;
 
-          // Test for any collisions
-          for (const subsidx in labels[didx]) {
-            const r = labels[didx][subsidx].bbox!;
+          if (bbox == null) {
+            intersectsLabel = true;
+            label.hidden = true;
+          } else if (!first) {
+            // Test for any collisions
+            for (const subsidx in labels[didx]) {
+              if (subsidx === sidx) {
+                continue;
+              }
 
-            if (!labels[didx][subsidx].hidden && sidx !== subsidx && intersects(bbox, r)) {
-              intersectsLabel = true;
-              labels[didx][sidx].hidden = true;
-              break;
+              const label2 = labels[didx][subsidx];
+              const { bbox: bbox2, hidden } = label2;
+
+              if (!hidden && bbox2 && intersects(bbox, bbox2)) {
+                intersectsLabel = true;
+                label.hidden = true;
+                break;
+              }
             }
           }
+
+          first = false;
 
           !intersectsLabel && u.ctx.fillText(text, x, y);
         }

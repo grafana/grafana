@@ -1,20 +1,7 @@
 package tracing
 
-func InitializeTracerForTest() (Tracer, error) {
-	ots := &Opentelemetry{
-		enabled: "jaeger",
-	}
-	err := ots.initOpentelemetryTracer()
-	if err != nil {
-		return ots, err
-	}
-	return ots, err
-}
-
-func InitializeForBus() Tracer {
-	ots := &Opentelemetry{
-		enabled: "jaeger",
-	}
+func InitializeTracerForTest() Tracer {
+	ots := &Opentelemetry{enabled: noopExporter}
 	_ = ots.initOpentelemetryTracer()
 	return ots
 }

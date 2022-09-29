@@ -72,6 +72,18 @@ describe('prepare timeline graph', () => {
       ]
     `);
   });
+  it('should try to sort time fields', () => {
+    const frames = [
+      toDataFrame({
+        fields: [
+          { name: 'a', type: FieldType.time, values: [4, 3, 1, 2] },
+          { name: 'b', values: [1, 1, 2, 2] },
+        ],
+      }),
+    ];
+    const result = prepareTimelineFields(frames, true, timeRange, theme);
+    expect(result.frames?.[0].fields[0].values.toArray()).toEqual([1, 2, 3, 4]);
+  });
 });
 
 describe('findNextStateIndex', () => {

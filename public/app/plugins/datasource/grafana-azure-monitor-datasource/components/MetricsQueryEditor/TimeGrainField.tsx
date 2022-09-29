@@ -58,7 +58,6 @@ const TimeGrainField: React.FC<TimeGrainFieldProps> = ({
         value={query.azureMonitor?.timeGrain}
         onChange={handleChange}
         options={timeGrains}
-        width={38}
       />
     </Field>
   );

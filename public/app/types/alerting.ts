@@ -1,4 +1,5 @@
 import { SelectableValue } from '@grafana/data';
+import { IconName } from '@grafana/ui';
 
 export interface AlertRuleDTO {
   id: number;
@@ -25,7 +26,7 @@ export interface AlertRule {
   state: string;
   newStateDate?: string;
   stateText: string;
-  stateIcon: string;
+  stateIcon: IconName;
   stateClass: string;
   stateAge: string;
   url: string;

@@ -1,8 +1,4 @@
-export interface PlaylistDTO {
-  id: number;
-  name: string;
-  startUrl?: string;
-}
+import { DashboardQueryResult } from '../search/service';
 
 export type PlaylistMode = boolean | 'tv';
 
@@ -14,16 +10,16 @@ export interface PlayListItemDTO {
 }
 
 export interface Playlist {
+  uid: string;
   name: string;
   interval: string;
   items?: PlaylistItem[];
 }
 
 export interface PlaylistItem {
-  id?: number;
-  value: string; //tag or id.toString()
-  type: 'dashboard_by_id' | 'dashboard_by_tag';
-  order: number;
-  title: string;
-  playlistId?: number;
+  type: 'dashboard_by_tag' | 'dashboard_by_uid' | 'dashboard_by_id'; // _by_id is deprecated
+  value: string; // tag or uid
+
+  // Loaded in the frontend
+  dashboards?: DashboardQueryResult[];
 }

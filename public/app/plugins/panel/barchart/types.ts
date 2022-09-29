@@ -1,9 +1,6 @@
 import { DataFrame, Field } from '@grafana/data';
 
 export interface BarChartDisplayValues {
-  /** When the data can not display, this will be returned */
-  warn?: string;
-
   /** All fields joined */
   aligned: DataFrame;
 
@@ -15,4 +12,9 @@ export interface BarChartDisplayValues {
 
   /** Potentialy color by a field value */
   colorByField?: Field;
+}
+
+export interface BarChartDisplayWarning {
+  /** When the data can not display, this will be returned */
+  warn: string;
 }

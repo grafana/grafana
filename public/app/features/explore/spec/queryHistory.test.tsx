@@ -118,7 +118,6 @@ describe('Explore: Query History', () => {
     await openQueryHistory();
     await assertQueryHistoryExists(RAW_QUERY);
 
-    expect(reportInteractionMock).toBeCalledTimes(2);
     expect(reportInteractionMock).toBeCalledWith('grafana_explore_query_history_opened', {
       queryHistoryEnabled: false,
     });
@@ -254,7 +253,7 @@ describe('Explore: Query History', () => {
       expect(fetchMock).toBeCalledWith(
         expect.objectContaining({
           url: expect.stringMatching('/api/query-history/migrate'),
-          data: { queries: [expect.objectContaining({ datasourceUid: 'loki' })] },
+          data: { queries: [expect.objectContaining({ datasourceUid: 'loki-uid' })] },
         })
       );
       fetchMock.mockReset();

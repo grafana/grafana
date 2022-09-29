@@ -9,36 +9,36 @@ keywords:
   - guide
   - rules
   - view
-title: Manage alerting rules
+title: Manage alert rules
 weight: 402
 ---
 
-# Manage alerting rules
+# Manage alert rules
 
-The Alerting page lists existing Grafana 8 alerting rules. By default, rules are grouped by types of data sources. The Grafana section lists all Grafana managed rules. Alerting rules for Prometheus compatible data sources are also listed here. You can view alerting rules for Prometheus compatible data sources but you cannot edit them.
+The Alerting page lists all existing alert rules. By default, rules are grouped by types of data sources. The Grafana section lists all Grafana managed rules. Alert rules for Prometheus compatible data sources are also listed here. You can view alert rules for Prometheus compatible data sources but you cannot edit them.
 
-The Mimir/Loki rules section lists all rules for external Prometheus or Loki data sources. Cloud alerting rules are also listed in this section.
+The Mimir/Cortex/Loki rules section lists all rules for Mimir, Cortex, or Loki data sources. Cloud alert rules are also listed in this section.
 
-- [Manage alerting rules](#manage-alerting-rules)
-  - [View alerting rules](#view-alerting-rules)
-    - [Group view](#group-view)
+- [Manage alert rules](#manage-alert-rules)
+  - [View alert rules](#view-alert-rules)
+    - [Grouped view](#grouped-view)
     - [State view](#state-view)
-  - [Filter alerting rules](#filter-alerting-rules)
-  - [Edit or delete an alerting rule](#edit-or-delete-an-alerting-rule)
+  - [Filter alert rules](#filter-alert-rules)
+  - [Edit or delete an alert rule](#edit-or-delete-an-alert-rule)
 
-## View alerting rules
+## View alert rules
 
 To view alerting details:
 
-1. In the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page. By default, the group view displays.
-1. In **View as**, toggle between group or state views by clicking the relevant option. See [Group view](#group-view) and [State view](#state-view) for more information.
+1. In the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page. By default, the List view displays.
+1. In **View as**, toggle between Grouped or State views by clicking the relevant option. See [Group view](#group-view) and [State view](#state-view) for more information.
 1. Expand the rule row to view the rule labels, annotations, data sources the rule queries, and a list of alert instances resulting from this rule.
 
 {{< figure src="/static/img/docs/alerting/unified/rule-details-8-0.png" max-width="650px" caption="Alerting rule details" >}}
 
-### Group view
+### Grouped view
 
-Group view shows Grafana alert rules grouped by folder and Loki or Prometheus alert rules grouped by `namespace` + `group`. This is the default rule list view, intended for managing rules. You can expand each group to view a list of rules in this group. Expand a rule further to view its details. You can also expand action buttons and alerts resulting from the rule to view their details.
+Grouped view shows Grafana alert rules grouped by folder and Loki or Prometheus alert rules grouped by `namespace` + `group`. This is the default rule list view, intended for managing rules. You can expand each group to view a list of rules in this group. Expand a rule further to view its details. You can also expand action buttons and alerts resulting from the rule to view their details.
 
 {{< figure src="/static/img/docs/alerting/unified/rule-list-group-view-8-0.png" max-width="800px" caption="Alerting grouped view" >}}
 
@@ -48,19 +48,19 @@ State view shows alert rules grouped by state. Use this view to get an overview 
 
 {{< figure src="/static/img/docs/alerting/unified/rule-list-state-view-8-0.png" max-width="800px" caption="Alerting state view" >}}
 
-## Filter alerting rules
+## Filter alert rules
 
-To filter alerting rules:
+To filter alert rules:
 
-- From **Select data sources**, select a data source. You can see alerting rules that query the selected data source.
+- From **Select data sources**, select a data source. You can see alert rules that query the selected data source.
 - In the **Search by label**, enter search criteria using label selectors. For example, `environment=production,region=~US|EU,severity!=warning`.
 - From **Filter alerts by state**, select an alerting state you want to see. You can see alerting rules that match the state. Rules matching other states are hidden.
 
-## Edit or delete an alerting rule
+## Edit or delete an alert rule
 
-Grafana managed alerting rules can only be edited or deleted by users with Edit permissions for the folder storing the rules. Alerting rules for an external Grafana Mimir or Loki instance can be edited or deleted by users with Editor or Admin roles.
+Grafana managed alert rules can only be edited or deleted by users with Edit permissions for the folder storing the rules. Alert rules for an external Grafana Mimir or Loki instance can be edited or deleted by users with Editor or Admin roles.
 To edit or delete a rule:
 
 1. Expand a rule row until you can see the rule controls of **View**, **Edit**, and **Delete**.
 1. Click **Edit** to open the create rule page. Make updates following instructions in [Create a Grafana managed alerting rule]({{< relref "create-grafana-managed-rule/" >}}) or [Create a Grafana Mimir or Loki managed alerting rule]({{< relref "create-mimir-loki-managed-rule/" >}}).
-1. Click **Delete** to delete a rule.
+1. Click **Delete** to delete an alert rule.

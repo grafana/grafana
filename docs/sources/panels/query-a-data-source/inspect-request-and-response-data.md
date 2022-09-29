@@ -10,13 +10,6 @@ weight: 90
 
 Inspect query request and response data when you want to troubleshoot a query that returns unexpected results, or fails to return expected results.
 
-## Before you begin
-
-- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel/" >}}).
-- [Add a query]({{< relref "add-a-query/" >}}).
-
-**To inspect query request and response data**:
-
 1. Edit the panel that contains the query you want to export.
 1. In the query editor, click **Query Inspector**.
 1. Click **Refresh**.

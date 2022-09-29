@@ -25,8 +25,6 @@ interface Props {
     skipPasswordChange: Function;
     login: (data: FormModel) => void;
     disableLoginForm: boolean;
-    ldapEnabled: boolean;
-    authProxyEnabled: boolean;
     disableUserSignUp: boolean;
     isOauthEnabled: boolean;
     loginHint: string;
@@ -61,26 +59,26 @@ export class LoginCtrl extends PureComponent<Props, State> {
       oldPassword: 'admin',
     };
 
-    if (!this.props.resetCode) {
+    if (this.props.resetCode) {
+      const resetModel = {
+        code: this.props.resetCode,
+        newPassword: password,
+        confirmPassword: password,
+      };
+
+      getBackendSrv()
+        .post('/api/user/password/reset', resetModel)
+        .then(() => {
+          this.toGrafana();
+        });
+    } else {
       getBackendSrv()
         .put('/api/user/password', pw)
         .then(() => {
           this.toGrafana();
         })
-        .catch((err: any) => console.error(err));
+        .catch((err) => console.error(err));
     }
-
-    const resetModel = {
-      code: this.props.resetCode,
-      newPassword: password,
-      confirmPassword: password,
-    };
-
-    getBackendSrv()
-      .post('/api/user/password/reset', resetModel)
-      .then(() => {
-        this.toGrafana();
-      });
   };
 
   login = (formModel: FormModel) => {
@@ -90,7 +88,7 @@ export class LoginCtrl extends PureComponent<Props, State> {
 
     getBackendSrv()
       .post('/login', formModel)
-      .then((result: any) => {
+      .then((result) => {
         this.result = result;
         if (formModel.password !== 'admin' || config.ldapEnabled || config.authProxyEnabled) {
           this.toGrafana();
@@ -129,7 +127,7 @@ export class LoginCtrl extends PureComponent<Props, State> {
     const { children } = this.props;
     const { isLoggingIn, isChangingPassword } = this.state;
     const { login, toGrafana, changePassword } = this;
-    const { loginHint, passwordHint, disableLoginForm, ldapEnabled, authProxyEnabled, disableUserSignUp } = config;
+    const { loginHint, passwordHint, disableLoginForm, disableUserSignUp } = config;
 
     return (
       <>
@@ -138,8 +136,6 @@ export class LoginCtrl extends PureComponent<Props, State> {
           loginHint,
           passwordHint,
           disableLoginForm,
-          ldapEnabled,
-          authProxyEnabled,
           disableUserSignUp,
           login,
           isLoggingIn,

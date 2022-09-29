@@ -13,8 +13,11 @@
 // limitations under the License.
 
 import { createTheme } from '@grafana/data';
+import { colors } from '@grafana/ui';
 
-import { getColorByKey, clear } from './color-generator';
+import { getColorByKey, getFilteredColors, clear } from './color-generator';
+
+const colorsToFilter = [...colors];
 
 it('gives the same color for the same key', () => {
   clear();
@@ -30,10 +33,24 @@ it('gives different colors for each for each key', () => {
   expect(colorOne).not.toBe(colorTwo);
 });
 
-it('should clear cache', () => {
-  clear();
-  const colorOne = getColorByKey('serviceA', createTheme());
-  clear();
-  const colorTwo = getColorByKey('serviceB', createTheme());
-  expect(colorOne).toBe(colorTwo);
+it('should not allow red', () => {
+  expect(colorsToFilter.indexOf('#E24D42')).toBe(4);
+  const filteredColors = getFilteredColors(colorsToFilter, createTheme());
+  expect(filteredColors.indexOf('#E24D42')).toBe(-1);
+});
+
+it('should not allow colors with a contrast ratio < 3 in light mode', () => {
+  expect(colorsToFilter.indexOf('#7EB26D')).toBe(0);
+  expect(colorsToFilter.indexOf('#EAB839')).toBe(1);
+  const filteredColors = getFilteredColors(colorsToFilter, createTheme({ colors: { mode: 'light' } }));
+  expect(filteredColors.indexOf('#7EB26D')).toBe(-1);
+  expect(filteredColors.indexOf('#EAB839')).toBe(-1);
+});
+
+it('should not allow colors with a contrast ratio < 3 in dark mode', () => {
+  expect(colorsToFilter.indexOf('#890F02')).toBe(11);
+  expect(colorsToFilter.indexOf('#0A437C')).toBe(12);
+  const filteredColors = getFilteredColors(colorsToFilter, createTheme({ colors: { mode: 'dark' } }));
+  expect(filteredColors.indexOf('#890F02')).toBe(-1);
+  expect(filteredColors.indexOf('#0A437C')).toBe(-1);
 });

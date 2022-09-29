@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { CollapsableSection, TagsInput, Select, Field, Input, Checkbox } from '@grafana/ui';
+import { CollapsableSection, TagsInput, Select, Field, Input, Checkbox, Button, IconName } from '@grafana/ui';
 
 import { DashboardLink, DashboardModel } from '../../state/DashboardModel';
 
@@ -23,7 +23,7 @@ const linkTypeOptions = [
   { value: 'link', label: 'Link' },
 ];
 
-export const linkIconMap: { [key: string]: string } = {
+export const linkIconMap: Record<string, IconName | undefined> = {
   'external link': 'external-link-alt',
   dashboard: 'apps',
   question: 'question-circle',
@@ -41,7 +41,7 @@ type LinkSettingsEditProps = {
   onGoBack: () => void;
 };
 
-export const LinkSettingsEdit: React.FC<LinkSettingsEditProps> = ({ editLinkIdx, dashboard }) => {
+export const LinkSettingsEdit: React.FC<LinkSettingsEditProps> = ({ editLinkIdx, dashboard, onGoBack }) => {
   const [linkSettings, setLinkSettings] = useState(editLinkIdx !== null ? dashboard.links[editLinkIdx] : newLink);
 
   const onUpdate = (link: DashboardLink) => {
@@ -51,7 +51,7 @@ export const LinkSettingsEdit: React.FC<LinkSettingsEditProps> = ({ editLinkIdx,
     setLinkSettings(link);
   };
 
-  const onTagsChange = (tags: any[]) => {
+  const onTagsChange = (tags: string[]) => {
     onUpdate({ ...linkSettings, tags: tags });
   };
 
@@ -142,6 +142,7 @@ export const LinkSettingsEdit: React.FC<LinkSettingsEditProps> = ({ editLinkIdx,
           />
         </Field>
       </CollapsableSection>
+      <Button onClick={onGoBack}>Apply</Button>
     </div>
   );
 };

@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { dateTimeFormat, systemDateFormats, TimeZone, AbsoluteTimeRange, GrafanaTheme2 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { CustomScrollbar, Spinner, useTheme2 } from '@grafana/ui';
 
 import { LogsPage } from './LogsNavigation';
@@ -51,7 +52,13 @@ export function LogsNavigationPages({
               data-testid={`page${index + 1}`}
               className={styles.page}
               key={page.queryRange.to}
-              onClick={() => !loading && changeTime({ from: page.queryRange.from, to: page.queryRange.to })}
+              onClick={() => {
+                reportInteraction('grafana_explore_logs_pagination_clicked', {
+                  pageType: 'page',
+                  pageNumber: index + 1,
+                });
+                !loading && changeTime({ from: page.queryRange.from, to: page.queryRange.to });
+              }}
             >
               <div className={cx(styles.line, { selectedBg: currentPageIndex === index })} />
               <div className={cx(styles.time, { selectedText: currentPageIndex === index })}>

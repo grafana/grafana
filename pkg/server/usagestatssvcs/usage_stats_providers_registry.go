@@ -8,7 +8,7 @@ import (
 
 func ProvideUsageStatsProvidersRegistry(
 	thumbsService thumbs.Service,
-	accesscontrol accesscontrol.AccessControl,
+	accesscontrol accesscontrol.Service,
 ) *UsageStatsProvidersRegistry {
 	return NewUsageStatsProvidersRegistry(
 		thumbsService,

@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import memoizeOne from 'memoize-one';
+import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { colors } from '@grafana/ui';
@@ -32,23 +33,34 @@ class ColorGenerator {
   colorsHex: string[];
   colorsRgb: Array<[number, number, number]>;
   cache: Map<string, number>;
-  currentIdx: number;
 
-  constructor(colorsHex: string[]) {
-    this.colorsHex = colorsHex;
-    this.colorsRgb = colorsHex.map(strToRgb);
+  constructor(colorsHex: string[], theme: GrafanaTheme2) {
+    const filteredColors = getFilteredColors(colorsHex, theme);
+    this.colorsHex = filteredColors;
+    this.colorsRgb = filteredColors.map(strToRgb);
     this.cache = new Map();
-    this.currentIdx = 0;
   }
 
   _getColorIndex(key: string): number {
     let i = this.cache.get(key);
     if (i == null) {
-      i = this.currentIdx;
-      this.cache.set(key, this.currentIdx);
-      this.currentIdx = ++this.currentIdx % this.colorsHex.length;
+      const hash = this.hashCode(key.toLowerCase());
+      const hashIndex = Math.abs(hash % this.colorsHex.length);
+      i = hashIndex === 4 ? hashIndex + 1 : hashIndex;
+      this.cache.set(key, i);
     }
     return i;
+  }
+
+  hashCode(key: string) {
+    let hash = 0,
+      i,
+      chr;
+    for (i = 0; i < key.length; i++) {
+      chr = key.charCodeAt(i);
+      hash = (hash << 5) - hash + chr;
+    }
+    return hash;
   }
 
   /**
@@ -73,22 +85,39 @@ class ColorGenerator {
 
   clear() {
     this.cache.clear();
-    this.currentIdx = 0;
   }
 }
 
-const getGenerator = memoizeOne((colors: string[]) => {
-  return new ColorGenerator(colors);
+const getGenerator = memoizeOne((colors: string[], theme: GrafanaTheme2) => {
+  return new ColorGenerator(colors, theme);
 });
 
-export function clear() {
-  getGenerator([]);
+export function clear(theme: GrafanaTheme2) {
+  getGenerator([], theme);
 }
 
 export function getColorByKey(key: string, theme: GrafanaTheme2) {
-  return getGenerator(colors).getColorByKey(key);
+  return getGenerator(colors, theme).getColorByKey(key);
 }
 
 export function getRgbColorByKey(key: string, theme: GrafanaTheme2): [number, number, number] {
-  return getGenerator(colors).getRgbColorByKey(key);
+  return getGenerator(colors, theme).getRgbColorByKey(key);
+}
+
+export function getFilteredColors(colorsHex: string[], theme: GrafanaTheme2) {
+  // Remove red as a span color because it looks like an error
+  const redIndex = colorsHex.indexOf('#E24D42');
+  if (redIndex > -1) {
+    colorsHex.splice(redIndex, 1);
+  }
+
+  // Only add colors that have a contrast ratio >= 3 for the current theme
+  let filteredColors = [];
+  for (const color of colorsHex) {
+    if (tinycolor.readability(theme.colors.background.primary, color) >= 3) {
+      filteredColors.push(color);
+    }
+  }
+
+  return filteredColors;
 }

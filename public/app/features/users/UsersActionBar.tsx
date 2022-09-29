@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 
 import { RadioButtonGroup, LinkButton, FilterInput } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction, StoreState } from 'app/types';
 
 import { selectTotal } from '../invites/state/selectors';
 
@@ -37,7 +37,7 @@ export class UsersActionBar extends PureComponent<Props> {
       { label: 'Users', value: 'users' },
       { label: `Pending Invites (${pendingInvitesCount})`, value: 'invites' },
     ];
-    const canAddToOrg = contextSrv.hasAccess(AccessControlAction.UsersCreate, canInvite);
+    const canAddToOrg: boolean = contextSrv.hasAccess(AccessControlAction.OrgUsersAdd, canInvite);
 
     return (
       <div className="page-action-bar" data-testid="users-action-bar">
@@ -64,7 +64,7 @@ export class UsersActionBar extends PureComponent<Props> {
   }
 }
 
-function mapStateToProps(state: any) {
+function mapStateToProps(state: StoreState) {
   return {
     searchQuery: getUsersSearchQuery(state.users),
     pendingInvitesCount: selectTotal(state.invites),

@@ -13,8 +13,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
-	legacyMetrics "github.com/grafana/grafana/pkg/services/alerting/metrics"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/util/ticker"
 
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -46,14 +46,17 @@ type NGAlert struct {
 }
 
 type Scheduler struct {
-	Registerer               prometheus.Registerer
-	BehindSeconds            prometheus.Gauge
-	EvalTotal                *prometheus.CounterVec
-	EvalFailures             *prometheus.CounterVec
-	EvalDuration             *prometheus.SummaryVec
-	GetAlertRulesDuration    prometheus.Histogram
-	SchedulePeriodicDuration prometheus.Histogram
-	Ticker                   *legacyMetrics.Ticker
+	Registerer                          prometheus.Registerer
+	BehindSeconds                       prometheus.Gauge
+	EvalTotal                           *prometheus.CounterVec
+	EvalFailures                        *prometheus.CounterVec
+	EvalDuration                        *prometheus.HistogramVec
+	SchedulePeriodicDuration            prometheus.Histogram
+	SchedulableAlertRules               prometheus.Gauge
+	SchedulableAlertRulesHash           prometheus.Gauge
+	UpdateSchedulableAlertRulesDuration prometheus.Histogram
+	Ticker                              *ticker.Metrics
+	EvaluationMissed                    *prometheus.CounterVec
 }
 
 type MultiOrgAlertmanager struct {
@@ -153,24 +156,15 @@ func newSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 			},
 			[]string{"org"},
 		),
-		EvalDuration: promauto.With(r).NewSummaryVec(
-			prometheus.SummaryOpts{
-				Namespace:  Namespace,
-				Subsystem:  Subsystem,
-				Name:       "rule_evaluation_duration_seconds",
-				Help:       "The duration for a rule to execute.",
-				Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
-			},
-			[]string{"org"},
-		),
-		GetAlertRulesDuration: promauto.With(r).NewHistogram(
+		EvalDuration: promauto.With(r).NewHistogramVec(
 			prometheus.HistogramOpts{
 				Namespace: Namespace,
 				Subsystem: Subsystem,
-				Name:      "get_alert_rules_duration_seconds",
-				Help:      "The time taken to get all alert rules.",
-				Buckets:   []float64{0.1, 0.25, 0.5, 1, 2, 5, 10},
+				Name:      "rule_evaluation_duration_seconds",
+				Help:      "The duration for a rule to execute.",
+				Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
 			},
+			[]string{"org"},
 		),
 		SchedulePeriodicDuration: promauto.With(r).NewHistogram(
 			prometheus.HistogramOpts{
@@ -181,7 +175,40 @@ func newSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Buckets:   []float64{0.1, 0.25, 0.5, 1, 2, 5, 10},
 			},
 		),
-		Ticker: legacyMetrics.NewTickerMetrics(r),
+		SchedulableAlertRules: promauto.With(r).NewGauge(
+			prometheus.GaugeOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "schedule_alert_rules",
+				Help:      "The number of alert rules that could be considered for evaluation at the next tick.",
+			},
+		),
+		SchedulableAlertRulesHash: promauto.With(r).NewGauge(
+			prometheus.GaugeOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "schedule_alert_rules_hash",
+				Help:      "A hash of the alert rules that could be considered for evaluation at the next tick.",
+			}),
+		UpdateSchedulableAlertRulesDuration: promauto.With(r).NewHistogram(
+			prometheus.HistogramOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "schedule_query_alert_rules_duration_seconds",
+				Help:      "The time taken to fetch alert rules from the database.",
+				Buckets:   []float64{0.1, 0.25, 0.5, 1, 2, 5, 10},
+			},
+		),
+		Ticker: ticker.NewMetrics(r, "alerting"),
+		EvaluationMissed: promauto.With(r).NewCounterVec(
+			prometheus.CounterOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "schedule_rule_evaluations_missed_total",
+				Help:      "The total number of rule evaluations missed due to a slow rule evaluation.",
+			},
+			[]string{"org", "name"},
+		),
 	}
 }
 

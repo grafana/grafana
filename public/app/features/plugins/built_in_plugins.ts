@@ -40,6 +40,7 @@ const tempoPlugin = async () =>
 const alertmanagerPlugin = async () =>
   await import(/* webpackChunkName: "alertmanagerPlugin" */ 'app/plugins/datasource/alertmanager/module');
 
+import { config } from '@grafana/runtime';
 import * as alertGroupsPanel from 'app/plugins/panel/alertGroups/module';
 import * as alertListPanel from 'app/plugins/panel/alertlist/module';
 import * as annoListPanel from 'app/plugins/panel/annolist/module';
@@ -50,7 +51,6 @@ import * as dashListPanel from 'app/plugins/panel/dashlist/module';
 import * as debugPanel from 'app/plugins/panel/debug/module';
 import * as gaugePanel from 'app/plugins/panel/gauge/module';
 import * as gettingStartedPanel from 'app/plugins/panel/gettingstarted/module';
-import * as heatmapPanelNG from 'app/plugins/panel/heatmap-new/module';
 import * as histogramPanel from 'app/plugins/panel/histogram/module';
 import * as livePanel from 'app/plugins/panel/live/module';
 import * as logsPanel from 'app/plugins/panel/logs/module';
@@ -73,9 +73,23 @@ const canvasPanel = async () => await import(/* webpackChunkName: "canvasPanel" 
 const iconPanel = async () => await import(/* webpackChunkName: "iconPanel" */ 'app/plugins/panel/icon/module');
 const graphPanel = async () => await import(/* webpackChunkName: "graphPlugin" */ 'app/plugins/panel/graph/module');
 const heatmapPanel = async () =>
-  await import(/* webpackChunkName: "heatmapPlugin" */ 'app/plugins/panel/heatmap/module');
+  await import(/* webpackChunkName: "heatmapPanel" */ 'app/plugins/panel/heatmap/module');
+const heatmapPanelOLD = async () =>
+  await import(/* webpackChunkName: "heatmapPanelOLD" */ 'app/plugins/panel/heatmap-old/module');
+
 const tableOldPanel = async () =>
   await import(/* webpackChunkName: "tableOldPlugin" */ 'app/plugins/panel/table-old/module');
+
+// Automatically migrate heatmap panel.
+if (config.featureToggles.useLegacyHeatmapPanel) {
+  const heatmap = config.panels['heatmap'];
+  const legacy = config.panels['heatmap-old'];
+  legacy.id = heatmap.id;
+  legacy.module = heatmap.module;
+  legacy.state = heatmap.state;
+  config.panels['heatmap'] = legacy;
+}
+delete config.panels['heatmap-old'];
 
 const builtInPlugins: any = {
   'app/plugins/datasource/graphite/module': graphitePlugin,
@@ -112,8 +126,7 @@ const builtInPlugins: any = {
   'app/plugins/panel/dashlist/module': dashListPanel,
   'app/plugins/panel/alertlist/module': alertListPanel,
   'app/plugins/panel/annolist/module': annoListPanel,
-  'app/plugins/panel/heatmap/module': heatmapPanel,
-  'app/plugins/panel/heatmap-new/module': heatmapPanelNG,
+  'app/plugins/panel/heatmap/module': config.featureToggles.useLegacyHeatmapPanel ? heatmapPanelOLD : heatmapPanel,
   'app/plugins/panel/table/module': tablePanel,
   'app/plugins/panel/table-old/module': tableOldPanel,
   'app/plugins/panel/news/module': newsPanel,

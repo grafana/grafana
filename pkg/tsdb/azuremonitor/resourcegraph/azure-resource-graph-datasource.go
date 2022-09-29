@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -46,7 +46,7 @@ type AzureResourceGraphQuery struct {
 	TimeRange         backend.TimeRange
 }
 
-const argAPIVersion = "2021-06-01-preview"
+const ArgAPIVersion = "2021-06-01-preview"
 const argQueryProviderName = "/providers/Microsoft.ResourceGraph/resources"
 
 func (e *AzureResourceGraphDatasource) ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) {
@@ -123,7 +123,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 	dataResponse := backend.DataResponse{}
 
 	params := url.Values{}
-	params.Add("api-version", argAPIVersion)
+	params.Add("api-version", ArgAPIVersion)
 
 	dataResponseErrorWithExecuted := func(err error) backend.DataResponse {
 		dataResponse = backend.DataResponse{Error: err}
@@ -188,7 +188,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 		return dataResponseErrorWithExecuted(err)
 	}
 
-	frame, err := loganalytics.ResponseTableToFrame(&argResponse.Data)
+	frame, err := loganalytics.ResponseTableToFrame(&argResponse.Data, loganalytics.AzureLogAnalyticsResponse{})
 	if err != nil {
 		return dataResponseErrorWithExecuted(err)
 	}
@@ -238,7 +238,7 @@ func (e *AzureResourceGraphDatasource) createRequest(ctx context.Context, dsInfo
 }
 
 func (e *AzureResourceGraphDatasource) unmarshalResponse(res *http.Response) (AzureResourceGraphResponse, error) {
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return AzureResourceGraphResponse{}, err
 	}

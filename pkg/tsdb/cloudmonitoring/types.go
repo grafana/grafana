@@ -68,6 +68,7 @@ type (
 		SelectorName     string
 		ServiceId        string
 		SloId            string
+		LookbackPeriod   string
 	}
 
 	grafanaQuery struct {

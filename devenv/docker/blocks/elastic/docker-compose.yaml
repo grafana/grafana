@@ -17,8 +17,4 @@
       - elasticsearch
     # elastic starts slowly, the first couple start of data.js
     # might fail, so we auto-restart it on failure.
-    deploy:
-      restart_policy:
-        condition: on-failure
-        delay: 5s
-        max_attempts: 20 # should be enough
+    restart: "on-failure"

@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/config"
 )
 
 func TestInitializer_Initialize(t *testing.T) {
@@ -34,7 +35,7 @@ func TestInitializer_Initialize(t *testing.T) {
 		}
 
 		i := &Initializer{
-			cfg: plugins.NewCfg(),
+			cfg: &config.Cfg{},
 			log: log.NewNopLogger(),
 			backendProvider: &fakeBackendProvider{
 				plugin: p,
@@ -64,7 +65,37 @@ func TestInitializer_Initialize(t *testing.T) {
 		}
 
 		i := &Initializer{
-			cfg: plugins.NewCfg(),
+			cfg: &config.Cfg{},
+			log: log.NewNopLogger(),
+			backendProvider: &fakeBackendProvider{
+				plugin: p,
+			},
+		}
+
+		err := i.Initialize(context.Background(), p)
+		assert.NoError(t, err)
+
+		c, exists := p.Client()
+		assert.True(t, exists)
+		assert.NotNil(t, c)
+	})
+
+	t.Run("secretsmanager", func(t *testing.T) {
+		p := &plugins.Plugin{
+			JSONData: plugins.JSONData{
+				ID:   "test",
+				Type: plugins.SecretsManager,
+				Dependencies: plugins.Dependencies{
+					GrafanaVersion: ">=8.x",
+				},
+				Backend: true,
+			},
+			PluginDir: absCurPath,
+			Class:     plugins.External,
+		}
+
+		i := &Initializer{
+			cfg: &config.Cfg{},
 			log: log.NewNopLogger(),
 			backendProvider: &fakeBackendProvider{
 				plugin: p,
@@ -87,7 +118,7 @@ func TestInitializer_Initialize(t *testing.T) {
 		}
 
 		i := &Initializer{
-			cfg: &plugins.Cfg{},
+			cfg: &config.Cfg{},
 			log: log.NewNopLogger(),
 			backendProvider: &fakeBackendProvider{
 				plugin: p,
@@ -117,7 +148,7 @@ func TestInitializer_envVars(t *testing.T) {
 		}
 
 		i := &Initializer{
-			cfg: &plugins.Cfg{
+			cfg: &config.Cfg{
 				EnterpriseLicensePath: "/path/to/ent/license",
 				PluginSettings: map[string]map[string]string{
 					"test": {

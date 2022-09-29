@@ -91,6 +91,7 @@ export const QueryEditorRowHeader = <TQuery extends DataQuery>(props: Props<TQue
             title="Edit query name"
             onClick={onEditQuery}
             data-testid="query-name-div"
+            type="button"
           >
             <span className={styles.queryName}>{query.refId}</span>
             <Icon name="pen" className={styles.queryEditIcon} size="sm" />
@@ -140,7 +141,7 @@ const renderDataSource = <TQuery extends DataQuery>(
 
   return (
     <div className={styles.itemWrapper}>
-      <DataSourcePicker alerting={alerting} current={dataSource.name} onChange={onChangeDataSource} />
+      <DataSourcePicker variables={true} alerting={alerting} current={dataSource.name} onChange={onChangeDataSource} />
     </div>
   );
 };

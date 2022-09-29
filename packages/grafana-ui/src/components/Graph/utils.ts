@@ -118,6 +118,9 @@ export const graphTimeFormat = (ticks: number | null, min: number | null, max: n
     const oneDay = 86400010;
     const oneYear = 31536000000;
 
+    if (secPerTick <= 10) {
+      return systemDateFormats.interval.millisecond;
+    }
     if (secPerTick <= 45) {
       return systemDateFormats.interval.second;
     }

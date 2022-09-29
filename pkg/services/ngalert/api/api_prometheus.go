@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
 
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
@@ -26,7 +25,7 @@ import (
 type PrometheusSrv struct {
 	log     log.Logger
 	manager state.AlertInstanceManager
-	store   store.RuleStore
+	store   RuleStore
 	ac      accesscontrol.AccessControl
 }
 
@@ -47,7 +46,7 @@ func (srv PrometheusSrv) RouteGetAlertStatuses(c *models.ReqContext) response.Re
 		labelOptions = append(labelOptions, ngmodels.WithoutInternalLabels())
 	}
 
-	for _, alertState := range srv.manager.GetAll(c.OrgId) {
+	for _, alertState := range srv.manager.GetAll(c.OrgID) {
 		startsAt := alertState.StartsAt
 		valString := ""
 
@@ -133,13 +132,13 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 		labelOptions = append(labelOptions, ngmodels.WithoutInternalLabels())
 	}
 
-	namespaceMap, err := srv.store.GetUserVisibleNamespaces(c.Req.Context(), c.OrgId, c.SignedInUser)
+	namespaceMap, err := srv.store.GetUserVisibleNamespaces(c.Req.Context(), c.OrgID, c.SignedInUser)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to get namespaces visible to the user")
 	}
 
 	if len(namespaceMap) == 0 {
-		srv.log.Debug("User does not have access to any namespaces")
+		srv.log.Debug("user does not have access to any namespaces")
 		return response.JSON(http.StatusOK, ruleResponse)
 	}
 
@@ -149,7 +148,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 	}
 
 	alertRuleQuery := ngmodels.ListAlertRulesQuery{
-		OrgID:         c.SignedInUser.OrgId,
+		OrgID:         c.SignedInUser.OrgID,
 		NamespaceUIDs: namespaceUIDs,
 		DashboardUID:  dashboardUID,
 		PanelID:       panelID,
@@ -191,7 +190,7 @@ func (srv PrometheusSrv) toRuleGroup(groupName string, folder *models.Folder, ru
 		Name: groupName,
 		File: folder.Title, // file is what Prometheus uses for provisioning, we replace it with namespace.
 	}
-
+	ngmodels.RulesGroup(rules).SortByGroupIndex()
 	for _, rule := range rules {
 		alertingRule := apimodels.AlertingRule{
 			State:       "inactive",

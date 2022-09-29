@@ -1,7 +1,9 @@
 import { css } from '@emotion/css';
+import debounce from 'debounce-promise';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useAsync, useDebounce } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
+import { Observable } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Spinner, Button } from '@grafana/ui';
@@ -13,52 +15,71 @@ import { PreviewsSystemRequirements } from '../../components/PreviewsSystemRequi
 import { useSearchQuery } from '../../hooks/useSearchQuery';
 import { getGrafanaSearcher, SearchQuery } from '../../service';
 import { SearchLayout } from '../../types';
-import { reportDashboardListViewed } from '../reporting';
+import {
+  reportDashboardListViewed,
+  reportSearchResultInteraction,
+  reportSearchQueryInteraction,
+  reportSearchFailedQueryInteraction,
+} from '../reporting';
 import { newSearchSelection, updateSearchSelection } from '../selection';
 
 import { ActionRow, getValidQueryLayout } from './ActionRow';
 import { FolderSection } from './FolderSection';
 import { FolderView } from './FolderView';
 import { ManageActions } from './ManageActions';
+import { SearchResultsCards } from './SearchResultsCards';
 import { SearchResultsGrid } from './SearchResultsGrid';
 import { SearchResultsTable, SearchResultsProps } from './SearchResultsTable';
 
-type SearchViewProps = {
-  queryText: string; // odd that it is not from query.query
+export type SearchViewProps = {
   showManage: boolean;
   folderDTO?: FolderDTO;
   hidePseudoFolders?: boolean; // Recent + starred
   includePanels: boolean;
   setIncludePanels: (v: boolean) => void;
+  keyboardEvents: Observable<React.KeyboardEvent>;
 };
 
 export const SearchView = ({
   showManage,
   folderDTO,
-  queryText,
   hidePseudoFolders,
   includePanels,
   setIncludePanels,
+  keyboardEvents,
 }: SearchViewProps) => {
   const styles = useStyles2(getStyles);
 
-  const { query, onQueryChange, onTagFilterChange, onTagAdd, onDatasourceChange, onSortChange, onLayoutChange } =
-    useSearchQuery({});
-  query.query = queryText; // Use the query value passed in from parent rather than from URL
+  const {
+    query,
+    onQueryChange,
+    onTagFilterChange,
+    onStarredFilterChange,
+    onTagAdd,
+    onDatasourceChange,
+    onSortChange,
+    onLayoutChange,
+    onClearStarred,
+    onSelectSearchItem,
+  } = useSearchQuery({});
 
   const [searchSelection, setSearchSelection] = useState(newSearchSelection());
   const layout = getValidQueryLayout(query);
   const isFolders = layout === SearchLayout.Folders;
 
   const [listKey, setListKey] = useState(Date.now());
+  const eventTrackingNamespace = folderDTO ? 'manage_dashboards' : 'dashboard_search';
 
   const searchQuery = useMemo(() => {
     const q: SearchQuery = {
-      query: queryText,
+      query: query.query,
       tags: query.tag as string[],
       ds_uid: query.datasource as string,
       location: folderDTO?.uid, // This will scope all results to the prefix
       sort: query.sort?.value,
+      explain: query.explain,
+      withAllowedActions: query.explain, // allowedActions are currently not used for anything on the UI and added only in `explain` mode
+      starred: query.starred,
     };
 
     // Only dashboards have additional properties
@@ -81,26 +102,75 @@ export const SearchView = ({
       q.sort = 'name_sort';
     }
     return q;
-  }, [query, queryText, folderDTO, includePanels]);
+  }, [query, folderDTO, includePanels]);
 
   // Search usage reporting
   useDebounce(
     () => {
-      reportDashboardListViewed(folderDTO ? 'manage_dashboards' : 'dashboard_search', {
+      reportDashboardListViewed(eventTrackingNamespace, {
         layout: query.layout,
         starred: query.starred,
         sortValue: query.sort?.value,
         query: query.query,
         tagCount: query.tag?.length,
+        includePanels,
       });
     },
     1000,
-    [folderDTO, query.layout, query.starred, query.sort?.value, query.query?.length, query.tag?.length]
+    []
+  );
+
+  const onClickItem = () => {
+    reportSearchResultInteraction(eventTrackingNamespace, {
+      layout: query.layout,
+      starred: query.starred,
+      sortValue: query.sort?.value,
+      query: query.query,
+      tagCount: query.tag?.length,
+      includePanels,
+    });
+    onSelectSearchItem();
+  };
+
+  const doSearch = useMemo(
+    () =>
+      debounce((query, searchQuery, includePanels, eventTrackingNamespace) => {
+        const trackingInfo = {
+          layout: query.layout,
+          starred: query.starred,
+          sortValue: query.sort?.value,
+          query: query.query,
+          tagCount: query.tag?.length,
+          includePanels,
+        };
+
+        reportSearchQueryInteraction(eventTrackingNamespace, trackingInfo);
+
+        if (searchQuery.starred) {
+          return getGrafanaSearcher()
+            .starred(searchQuery)
+            .catch((error) =>
+              reportSearchFailedQueryInteraction(eventTrackingNamespace, { ...trackingInfo, error: error?.message })
+            );
+        }
+
+        return getGrafanaSearcher()
+          .search(searchQuery)
+          .catch((error) =>
+            reportSearchFailedQueryInteraction(eventTrackingNamespace, { ...trackingInfo, error: error?.message })
+          );
+      }, 300),
+    []
   );
 
   const results = useAsync(() => {
-    return getGrafanaSearcher().search(searchQuery);
-  }, [searchQuery]);
+    // No need to query all dashboards if we are in search folder view
+    if (layout === SearchLayout.Folders && !folderDTO) {
+      return Promise.resolve();
+    }
+
+    return doSearch(query, searchQuery, includePanels, eventTrackingNamespace);
+  }, [searchQuery, layout]);
 
   const clearSelection = useCallback(() => {
     searchSelection.items.clear();
@@ -129,6 +199,13 @@ export const SearchView = ({
     onQueryChange(query.query);
   };
 
+  const getStarredItems = useCallback(
+    (e) => {
+      onStarredFilterChange(e);
+    },
+    [onStarredFilterChange]
+  );
+
   const renderResults = () => {
     const value = results.value;
 
@@ -155,7 +232,7 @@ export const SearchView = ({
               }
             }}
           >
-            Remove search constraints
+            Clear search and filters
           </Button>
         </div>
       );
@@ -173,6 +250,7 @@ export const SearchView = ({
             renderStandaloneBody={true}
             tags={query.tag}
             key={listKey}
+            onClickItem={onClickItem}
           />
         );
       }
@@ -184,6 +262,7 @@ export const SearchView = ({
           tags={query.tag}
           onTagSelected={onTagAdd}
           hidePseudoFolders={hidePseudoFolders}
+          onClickItem={onClickItem}
         />
       );
     }
@@ -200,11 +279,17 @@ export const SearchView = ({
               width: width,
               height: height,
               onTagSelected: onTagAdd,
+              keyboardEvents,
               onDatasourceChange: query.datasource ? onDatasourceChange : undefined,
+              onClickItem: onClickItem,
             };
 
             if (layout === SearchLayout.Grid) {
               return <SearchResultsGrid {...props} />;
+            }
+
+            if (width < 800) {
+              return <SearchResultsCards {...props} />;
             }
 
             return <SearchResultsTable {...props} />;
@@ -214,7 +299,7 @@ export const SearchView = ({
     );
   };
 
-  if (folderDTO && !results.loading && !results.value?.totalRows && !queryText.length) {
+  if (folderDTO && !results.loading && !results.value?.totalRows && !query.query.length) {
     return (
       <EmptyListCTA
         title="This folder doesn't have any dashboards yet"
@@ -240,9 +325,14 @@ export const SearchView = ({
               if (query.query) {
                 onQueryChange(''); // parent will clear the sort
               }
+              if (query.starred) {
+                onClearStarred();
+              }
             }
             onLayoutChange(v);
           }}
+          showStarredFilter={hidePseudoFolders}
+          onStarredFilterChange={!hidePseudoFolders ? undefined : getStarredItems}
           onSortChange={onSortChange}
           onTagFilterChange={onTagFilterChange}
           getTagOptions={getTagOptions}

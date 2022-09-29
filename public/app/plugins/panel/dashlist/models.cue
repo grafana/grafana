@@ -12,26 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package grafanaschema
+package grafanaplugin
 
-Panel: {
-    lineages: [
-        [
-            {
-                PanelLayout: "list" | "previews" @cuetsy(kind="enum")
-                PanelOptions: {
-                    layout?: PanelLayout | *"list"
-                    showStarred: bool | *true
-                    showRecentlyViewed: bool | *false
-                    showSearch: bool | *false
-                    showHeadings: bool | *true
-                    maxItems: int | *10
-                    query: string | *""
-                    folderId?: int
-                    tags: [...string] | *[]
-                } @cuetsy(kind="interface")
-            },
-        ]
-    ]
-    migrations: []
+import "github.com/grafana/thema"
+
+Panel: thema.#Lineage & {
+	name: "dashlist"
+	seqs: [
+		{
+			schemas: [
+				{
+					PanelLayout: "list" | "previews" @cuetsy(kind="enum")
+					PanelOptions: {
+						layout?:            PanelLayout | *"list"
+						showStarred:        bool | *true
+						showRecentlyViewed: bool | *false
+						showSearch:         bool | *false
+						showHeadings:       bool | *true
+						maxItems:           int | *10
+						query:              string | *""
+						folderId?:          int
+						tags:               [...string] | *[]
+					} @cuetsy(kind="interface")
+				},
+			]
+		},
+	]
 }

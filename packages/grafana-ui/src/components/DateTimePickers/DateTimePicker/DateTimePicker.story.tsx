@@ -1,14 +1,14 @@
-import { Story, Meta } from '@storybook/react';
+import { ComponentStory, ComponentMeta } from '@storybook/react';
 import React, { useState } from 'react';
 
 import { dateTime, DateTime } from '@grafana/data';
 
 import { withCenteredStory } from '../../../utils/storybook/withCenteredStory';
 
-import { DateTimePicker, Props } from './DateTimePicker';
+import { DateTimePicker } from './DateTimePicker';
 import mdx from './DateTimePicker.mdx';
 
-export default {
+const meta: ComponentMeta<typeof DateTimePicker> = {
   title: 'Pickers and Editors/TimePickers/DateTimePicker',
   decorators: [withCenteredStory],
   component: DateTimePicker,
@@ -25,9 +25,9 @@ export default {
       page: mdx,
     },
   },
-} as Meta;
+};
 
-export const Basic: Story<Props> = ({ label }) => {
+export const Basic: ComponentStory<typeof DateTimePicker> = ({ label }) => {
   const [date, setDate] = useState<DateTime>(dateTime('2021-05-05 12:00:00'));
   return <DateTimePicker label={label} date={date} onChange={setDate} />;
 };
@@ -35,3 +35,5 @@ export const Basic: Story<Props> = ({ label }) => {
 Basic.args = {
   label: 'Date',
 };
+
+export default meta;

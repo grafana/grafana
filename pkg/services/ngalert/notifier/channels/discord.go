@@ -61,7 +61,7 @@ func NewDiscordConfig(config *NotificationChannelConfig) (*DiscordConfig, error)
 	}
 	return &DiscordConfig{
 		NotificationChannelConfig: config,
-		Content:                   config.Settings.Get("message").MustString(`{{ template "default.message" . }}`),
+		Content:                   config.Settings.Get("message").MustString(DefaultMessageEmbed),
 		AvatarURL:                 config.Settings.Get("avatar_url").MustString(),
 		WebhookURL:                discordURL,
 		UseDiscordUsername:        config.Settings.Get("use_discord_username").MustBool(false),
@@ -185,7 +185,7 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	}
 
 	if err := d.ns.SendWebhookSync(ctx, cmd); err != nil {
-		d.log.Error("Failed to send notification to Discord", "error", err)
+		d.log.Error("failed to send notification to Discord", "err", err)
 		return false, err
 	}
 	return true, nil
@@ -199,14 +199,9 @@ func (d DiscordNotifier) constructAttachments(ctx context.Context, as []*types.A
 	attachments := make([]discordAttachment, 0)
 
 	_ = withStoredImages(ctx, d.log, d.images,
-		func(index int, image *ngmodels.Image) error {
+		func(index int, image ngmodels.Image) error {
 			if embedQuota < 1 {
-				// TODO: Could be a sentinel error to stop execution.
-				return nil
-			}
-
-			if image == nil {
-				return nil
+				return ErrImagesDone
 			}
 
 			if len(image.URL) > 0 {
@@ -225,7 +220,7 @@ func (d DiscordNotifier) constructAttachments(ctx context.Context, as []*types.A
 				url := fmt.Sprintf("attachment://%s", base)
 				reader, err := openImage(image.Path)
 				if err != nil && !errors.Is(err, ngmodels.ErrImageNotFound) {
-					d.log.Warn("failed to retrieve image data from store", "error", err)
+					d.log.Warn("failed to retrieve image data from store", "err", err)
 					return nil
 				}
 
@@ -262,7 +257,7 @@ func (d DiscordNotifier) buildRequest(ctx context.Context, url string, body []by
 	defer func() {
 		if err := w.Close(); err != nil {
 			// Shouldn't matter since we already close w explicitly on the non-error path
-			d.log.Warn("Failed to close multipart writer", "err", err)
+			d.log.Warn("failed to close multipart writer", "err", err)
 		}
 	}()
 

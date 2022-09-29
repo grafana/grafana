@@ -1,16 +1,17 @@
 import { css } from '@emotion/css';
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
-import { useDispatch } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, LoadingPlaceholder, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { Receiver } from 'app/plugins/datasource/alertmanager/types';
+import { useDispatch } from 'app/types';
 
 import { useCleanup } from '../../../core/hooks/useCleanup';
 
 import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { NoAlertManagerWarning } from './components/NoAlertManagerWarning';
+import { ProvisionedResource, ProvisioningAlert } from './components/Provisioning';
 import { AmRootRoute } from './components/amroutes/AmRootRoute';
 import { AmSpecificRouting } from './components/amroutes/AmSpecificRouting';
 import { MuteTimingsTable } from './components/amroutes/MuteTimingsTable';
@@ -29,8 +30,6 @@ const AmRoutes: FC = () => {
   const [isRootRouteEditMode, setIsRootRouteEditMode] = useState(false);
   const alertManagers = useAlertManagersByPermission('notification');
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName(alertManagers);
-
-  const readOnly = alertManagerSourceName ? isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName) : true;
 
   const amConfigs = useUnifiedAlertingSelector((state) => state.amConfigs);
 
@@ -57,6 +56,8 @@ const AmRoutes: FC = () => {
     (config?.receivers ?? []).map((receiver: Receiver) => receiver.name)
   ) as AmRouteReceiver[];
 
+  const isProvisioned = useMemo(() => Boolean(config?.route?.provenance), [config?.route]);
+
   const enterRootRouteEditMode = () => {
     setIsRootRouteEditMode(true);
   };
@@ -65,7 +66,8 @@ const AmRoutes: FC = () => {
     setIsRootRouteEditMode(false);
   };
 
-  useCleanup((state) => state.unifiedAlerting.saveAMConfig);
+  useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
+
   const handleSave = (data: Partial<FormAmRoute>) => {
     if (!result) {
       return;
@@ -109,6 +111,10 @@ const AmRoutes: FC = () => {
     );
   }
 
+  const readOnly = alertManagerSourceName
+    ? isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName) || isProvisioned
+    : true;
+
   return (
     <AlertingPageWrapper pageId="am-routes">
       <AlertManagerPicker
@@ -121,10 +127,12 @@ const AmRoutes: FC = () => {
           {resultError.message || 'Unknown error.'}
         </Alert>
       )}
+      {isProvisioned && <ProvisioningAlert resource={ProvisionedResource.RootNotificationPolicy} />}
       {resultLoading && <LoadingPlaceholder text="Loading Alertmanager config..." />}
       {result && !resultLoading && !resultError && (
         <>
           <AmRootRoute
+            readOnly={readOnly}
             alertManagerSourceName={alertManagerSourceName}
             isEditMode={isRootRouteEditMode}
             onSave={handleSave}

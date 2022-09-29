@@ -3,7 +3,8 @@ import React, { FC } from 'react';
 import { useAsync, useLocalStorage } from 'react-use';
 
 import { GrafanaTheme } from '@grafana/data';
-import { Card, Checkbox, CollapsableSection, Icon, Spinner, stylesFactory, useTheme } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
+import { Card, Checkbox, CollapsableSection, Icon, IconName, Spinner, stylesFactory, useTheme } from '@grafana/ui';
 import { getSectionStorageKey } from 'app/features/search/utils';
 import { useUniqueId } from 'app/plugins/datasource/influxdb/components/useUniqueId';
 
@@ -18,13 +19,14 @@ export interface DashboardSection {
   title: string;
   selected?: boolean; // not used ?  keyboard
   url?: string;
-  icon?: string;
+  icon?: IconName;
   itemsUIDs?: string[]; // for pseudo folders
 }
 
 interface SectionHeaderProps {
   selection?: SelectionChecker;
   selectionToggle?: SelectionToggle;
+  onClickItem?: (e: React.MouseEvent<HTMLElement>) => void;
   onTagSelected: (tag: string) => void;
   section: DashboardSection;
   renderStandaloneBody?: boolean; // render the body on its own
@@ -34,6 +36,7 @@ interface SectionHeaderProps {
 export const FolderSection: FC<SectionHeaderProps> = ({
   section,
   selectionToggle,
+  onClickItem,
   onTagSelected,
   selection,
   renderStandaloneBody,
@@ -46,7 +49,7 @@ export const FolderSection: FC<SectionHeaderProps> = ({
 
   const results = useAsync(async () => {
     if (!sectionExpanded && !renderStandaloneBody) {
-      return Promise.resolve([] as DashboardSectionItem[]);
+      return Promise.resolve([]);
     }
     let folderUid: string | undefined = section.uid;
     let folderTitle: string | undefined = section.title;
@@ -55,6 +58,7 @@ export const FolderSection: FC<SectionHeaderProps> = ({
       kind: ['dashboard'],
       location: section.uid,
       sort: 'name_sort',
+      limit: 1000, // this component does not have infinate scroll, so we need to load everything upfront
     };
     if (section.itemsUIDs) {
       query = {
@@ -65,21 +69,18 @@ export const FolderSection: FC<SectionHeaderProps> = ({
     }
 
     const raw = await getGrafanaSearcher().search({ ...query, tags });
-    const v = raw.view.map(
-      (item) =>
-        ({
-          uid: item.uid,
-          title: item.name,
-          url: item.url,
-          uri: item.url,
-          type: item.kind === 'folder' ? DashboardSearchItemType.DashFolder : DashboardSearchItemType.DashDB,
-          id: 666, // do not use me!
-          isStarred: false,
-          tags: item.tags ?? [],
-          folderUid,
-          folderTitle,
-        } as DashboardSectionItem)
-    );
+    const v = raw.view.map<DashboardSectionItem>((item) => ({
+      uid: item.uid,
+      title: item.name,
+      url: item.url,
+      uri: item.url,
+      type: item.kind === 'folder' ? DashboardSearchItemType.DashFolder : DashboardSearchItemType.DashDB,
+      id: 666, // do not use me!
+      isStarred: false,
+      tags: item.tags ?? [],
+      folderUid,
+      folderTitle,
+    }));
     return v;
   }, [sectionExpanded, section, tags]);
 
@@ -102,12 +103,6 @@ export const FolderSection: FC<SectionHeaderProps> = ({
     }
   };
 
-  const onToggleChecked = (item: DashboardSectionItem) => {
-    if (selectionToggle) {
-      selectionToggle('dashboard', item.uid!);
-    }
-  };
-
   const id = useUniqueId();
   const labelId = `section-header-label-${id}`;
 
@@ -117,11 +112,9 @@ export const FolderSection: FC<SectionHeaderProps> = ({
   }
 
   const renderResults = () => {
-    if (!results.value?.length) {
-      if (results.loading) {
-        return <Spinner className={styles.spinner} />;
-      }
-
+    if (!results.value) {
+      return null;
+    } else if (results.value.length === 0 && !results.loading) {
       return (
         <Card>
           <Card.Heading>No results found</Card.Heading>
@@ -142,8 +135,13 @@ export const FolderSection: FC<SectionHeaderProps> = ({
           key={v.uid}
           item={v}
           onTagSelected={onTagSelected}
-          onToggleChecked={onToggleChecked as any}
+          onToggleChecked={(item) => {
+            if (selectionToggle) {
+              selectionToggle('dashboard', item.uid!);
+            }
+          }}
           editable={Boolean(selection != null)}
+          onClickItem={onClickItem}
         />
       );
     });
@@ -151,11 +149,17 @@ export const FolderSection: FC<SectionHeaderProps> = ({
 
   // Skip the folder wrapper
   if (renderStandaloneBody) {
-    return <div className={styles.folderViewResults}>{renderResults()}</div>;
+    return (
+      <div className={styles.folderViewResults}>
+        {!results.value?.length && results.loading ? <Spinner className={styles.spinner} /> : renderResults()}
+      </div>
+    );
   }
 
   return (
     <CollapsableSection
+      headerDataTestId={selectors.components.Search.folderHeader(section.title)}
+      contentDataTestId={selectors.components.Search.folderContent(section.title)}
       isOpen={sectionExpanded ?? false}
       onToggle={onSectionExpand}
       className={styles.wrapper}
@@ -171,7 +175,7 @@ export const FolderSection: FC<SectionHeaderProps> = ({
           )}
 
           <div className={styles.icon}>
-            <Icon name={icon as any} />
+            <Icon name={icon} />
           </div>
 
           <div className={styles.text}>

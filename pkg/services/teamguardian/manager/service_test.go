@@ -4,9 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/teamguardian/database"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -16,15 +17,15 @@ func TestUpdateTeam(t *testing.T) {
 	teamGuardianService := ProvideService(store)
 
 	t.Run("Updating a team", func(t *testing.T) {
-		admin := models.SignedInUser{
-			UserId:  1,
-			OrgId:   1,
-			OrgRole: models.ROLE_ADMIN,
+		admin := user.SignedInUser{
+			UserID:  1,
+			OrgID:   1,
+			OrgRole: org.RoleAdmin,
 		}
-		editor := models.SignedInUser{
-			UserId:  2,
-			OrgId:   1,
-			OrgRole: models.ROLE_EDITOR,
+		editor := user.SignedInUser{
+			UserID:  2,
+			OrgID:   1,
+			OrgRole: org.RoleEditor,
 		}
 		testTeam := models.Team{
 			Id:    1,
@@ -33,11 +34,9 @@ func TestUpdateTeam(t *testing.T) {
 
 		t.Run("Given an editor and a team he isn't a member of", func(t *testing.T) {
 			t.Run("Should not be able to update the team", func(t *testing.T) {
-				_, err := tracing.InitializeTracerForTest()
-				require.NoError(t, err)
 				ctx := context.Background()
 				store.On("GetTeamMembers", ctx, mock.Anything).Return([]*models.TeamMemberDTO{}, nil).Once()
-				err = teamGuardianService.CanAdmin(ctx, testTeam.OrgId, testTeam.Id, &editor)
+				err := teamGuardianService.CanAdmin(ctx, testTeam.OrgId, testTeam.Id, &editor)
 				require.Equal(t, models.ErrNotAllowedToUpdateTeam, err)
 			})
 		})
@@ -49,7 +48,7 @@ func TestUpdateTeam(t *testing.T) {
 				result := []*models.TeamMemberDTO{{
 					OrgId:      testTeam.OrgId,
 					TeamId:     testTeam.Id,
-					UserId:     editor.UserId,
+					UserId:     editor.UserID,
 					Permission: models.PERMISSION_ADMIN,
 				}}
 
@@ -71,7 +70,7 @@ func TestUpdateTeam(t *testing.T) {
 				result := []*models.TeamMemberDTO{{
 					OrgId:      testTeamOtherOrg.OrgId,
 					TeamId:     testTeamOtherOrg.Id,
-					UserId:     editor.UserId,
+					UserId:     editor.UserID,
 					Permission: models.PERMISSION_ADMIN,
 				}}
 

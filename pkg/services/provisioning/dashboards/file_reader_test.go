@@ -8,13 +8,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -405,7 +406,7 @@ func TestDashboardFileReader(t *testing.T) {
 		require.NoError(t, err)
 
 		_, err = r.getOrCreateFolderID(context.Background(), cfg, fakeService, cfg.Folder)
-		require.ErrorIs(t, err, models.ErrFolderInvalidUID)
+		require.ErrorIs(t, err, dashboards.ErrFolderInvalidUID)
 	})
 
 	t.Run("Walking the folder with dashboards", func(t *testing.T) {
@@ -513,5 +514,5 @@ func (ffi FakeFileInfo) Sys() interface{} {
 type fakeDashboardStore struct{}
 
 func (fds *fakeDashboardStore) GetDashboard(_ context.Context, _ *models.GetDashboardQuery) error {
-	return models.ErrDashboardNotFound
+	return dashboards.ErrDashboardNotFound
 }

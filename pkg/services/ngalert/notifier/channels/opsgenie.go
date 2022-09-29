@@ -7,16 +7,18 @@ import (
 	"fmt"
 	"net/http"
 	"sort"
+	"strings"
+
+	"github.com/prometheus/alertmanager/notify"
+	"github.com/prometheus/alertmanager/template"
+	"github.com/prometheus/alertmanager/types"
+	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
-	"github.com/prometheus/alertmanager/notify"
-	"github.com/prometheus/alertmanager/template"
-	"github.com/prometheus/alertmanager/types"
-	"github.com/prometheus/common/model"
 )
 
 const (
@@ -35,6 +37,8 @@ type OpsgenieNotifier struct {
 	*Base
 	APIKey           string
 	APIUrl           string
+	Message          string
+	Description      string
 	AutoClose        bool
 	OverridePriority bool
 	SendTagsAs       string
@@ -48,6 +52,8 @@ type OpsgenieConfig struct {
 	*NotificationChannelConfig
 	APIKey           string
 	APIUrl           string
+	Message          string
+	Description      string
 	AutoClose        bool
 	OverridePriority bool
 	SendTagsAs       string
@@ -81,6 +87,8 @@ func NewOpsgenieConfig(config *NotificationChannelConfig, decryptFunc GetDecrypt
 		APIUrl:                    config.Settings.Get("apiUrl").MustString(OpsgenieAlertURL),
 		AutoClose:                 config.Settings.Get("autoClose").MustBool(true),
 		OverridePriority:          config.Settings.Get("overridePriority").MustBool(true),
+		Message:                   config.Settings.Get("message").MustString(`{{ template "default.title" . }}`),
+		Description:               config.Settings.Get("description").MustString(""),
 		SendTagsAs:                sendTagsAs,
 	}, nil
 }
@@ -97,6 +105,8 @@ func NewOpsgenieNotifier(config *OpsgenieConfig, ns notifications.WebhookSender,
 		}),
 		APIKey:           config.APIKey,
 		APIUrl:           config.APIUrl,
+		Description:      config.Description,
+		Message:          config.Message,
 		AutoClose:        config.AutoClose,
 		OverridePriority: config.OverridePriority,
 		SendTagsAs:       config.SendTagsAs,
@@ -109,11 +119,11 @@ func NewOpsgenieNotifier(config *OpsgenieConfig, ns notifications.WebhookSender,
 
 // Notify sends an alert notification to Opsgenie
 func (on *OpsgenieNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
-	on.log.Debug("Executing Opsgenie notification", "notification", on.Name)
+	on.log.Debug("executing Opsgenie notification", "notification", on.Name)
 
 	alerts := types.Alerts(as...)
 	if alerts.Status() == model.AlertResolved && !on.SendResolved() {
-		on.log.Debug("Not sending a trigger to Opsgenie", "status", alerts.Status(), "auto resolve", on.SendResolved())
+		on.log.Debug("not sending a trigger to Opsgenie", "status", alerts.Status(), "auto resolve", on.SendResolved())
 		return true, nil
 	}
 
@@ -179,13 +189,25 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 	var tmplErr error
 	tmpl, data := TmplText(ctx, on.tmpl, as, on.log, &tmplErr)
 
-	title := tmpl(DefaultMessageTitleEmbed)
-	description := fmt.Sprintf(
-		"%s\n%s\n\n%s",
-		tmpl(DefaultMessageTitleEmbed),
-		ruleURL,
-		tmpl(`{{ template "default.message" . }}`),
-	)
+	titleTmpl := on.Message
+	if strings.TrimSpace(titleTmpl) == "" {
+		titleTmpl = `{{ template "default.title" . }}`
+	}
+
+	title := tmpl(titleTmpl)
+	if len(title) > 130 {
+		title = title[:127] + "..."
+	}
+
+	description := tmpl(on.Description)
+	if strings.TrimSpace(description) == "" {
+		description = fmt.Sprintf(
+			"%s\n%s\n\n%s",
+			tmpl(DefaultMessageTitleEmbed),
+			ruleURL,
+			tmpl(DefaultMessageEmbed),
+		)
+	}
 
 	var priority string
 
@@ -201,6 +223,12 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 		}
 	}
 
+	// Check for templating errors
+	if tmplErr != nil {
+		on.log.Warn("failed to template Opsgenie message", "err", tmplErr.Error())
+		tmplErr = nil
+	}
+
 	bodyJSON.Set("message", title)
 	bodyJSON.Set("source", "Grafana")
 	bodyJSON.Set("alias", alias)
@@ -214,8 +242,8 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 
 		images := []string{}
 		_ = withStoredImages(ctx, on.log, on.images,
-			func(index int, image *ngmodels.Image) error {
-				if image == nil || len(image.URL) == 0 {
+			func(_ int, image ngmodels.Image) error {
+				if len(image.URL) == 0 {
 					return nil
 				}
 				images = append(images, image.URL)
@@ -243,9 +271,9 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 	bodyJSON.Set("tags", tags)
 	bodyJSON.Set("details", details)
 	apiURL = tmpl(on.APIUrl)
-
 	if tmplErr != nil {
-		on.log.Warn("failed to template Opsgenie message", "err", tmplErr.Error())
+		on.log.Warn("failed to template Opsgenie URL", "err", tmplErr.Error(), "fallback", on.APIUrl)
+		apiURL = on.APIUrl
 	}
 
 	return bodyJSON, apiURL, nil

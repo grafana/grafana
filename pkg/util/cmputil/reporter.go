@@ -14,7 +14,13 @@ type DiffReport []Diff
 func (r DiffReport) GetDiffsForField(path string) DiffReport {
 	var result []Diff
 	for _, diff := range r {
-		if strings.HasPrefix(path, diff.Path) {
+		if strings.HasPrefix(diff.Path, path) {
+			if diff.Path != path {
+				char := []rune(diff.Path)[len(path)]
+				if char != '.' && char != '[' { // if the following symbol is not a delimiter or bracket then that's not our path
+					continue
+				}
+			}
 			result = append(result, diff)
 		}
 	}
@@ -109,8 +115,9 @@ func describeReflectValue(v reflect.Value) interface{} {
 }
 
 // IsAddOperation returns true when
-//  - Left does not have value and Right has
-//  - the kind of Left and Right is either reflect.Slice or reflect.Map and the length of Left is less than length of Right
+//   - Left does not have value and Right has
+//   - the kind of Left and Right is either reflect.Slice or reflect.Map and the length of Left is less than length of Right
+//
 // In all other cases it returns false.
 // NOTE: this is applicable to diff of Maps and Slices only
 func (d *Diff) IsAddOperation() bool {
@@ -119,8 +126,9 @@ func (d *Diff) IsAddOperation() bool {
 }
 
 // IsDeleteOperation returns true when
-//  - Right does not have value and Left has
-//  - the kind of Left and Right is either reflect.Slice or reflect.Map and the length of Right is less than length of Left
+//   - Right does not have value and Left has
+//   - the kind of Left and Right is either reflect.Slice or reflect.Map and the length of Right is less than length of Left
+//
 // In all other cases it returns false.
 // NOTE: this is applicable to diff of Maps and Slices only
 func (d *Diff) IsDeleteOperation() bool {

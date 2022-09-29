@@ -17,6 +17,11 @@ describe('Logs', () => {
     return render(
       <Logs
         exploreId={ExploreId.left}
+        splitOpen={() => undefined}
+        logsVolumeEnabled={true}
+        onSetLogsVolumeEnabled={() => null}
+        logsVolumeData={undefined}
+        loadLogsVolumeData={() => undefined}
         logRows={rows}
         timeZone={'utc'}
         width={50}

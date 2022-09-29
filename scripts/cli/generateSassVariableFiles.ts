@@ -9,9 +9,6 @@ const darkThemeVariablesPath = __dirname + '/../../public/sass/_variables.dark.g
 const lightThemeVariablesPath = __dirname + '/../../public/sass/_variables.light.generated.scss';
 const defaultThemeVariablesPath = __dirname + '/../../public/sass/_variables.generated.scss';
 
-const darkThemeJsonPath = __dirname + '/../../public/sass/theme.dark.generated.json';
-const lightThemeJsonPath = __dirname + '/../../public/sass/theme.light.generated.json';
-
 const writeVariablesFile = async (path: string, data: string) => {
   return new Promise((resolve, reject) => {
     fs.writeFile(path, data, (e) => {
@@ -38,16 +35,6 @@ const generateSassVariableFiles = async () => {
   } catch (error) {
     console.error('\nWriting SASS variable files failed', error);
     process.exit(1);
-  }
-
-  try {
-    const darkJson = JSON.stringify(darkTheme, null, 2);
-    const lightJson = JSON.stringify(lightTheme, null, 2);
-
-    writeVariablesFile(darkThemeJsonPath, darkJson);
-    writeVariablesFile(lightThemeJsonPath, lightJson);
-  } catch (error) {
-    console.error('\nWriting JSON variable files failed', error);
   }
 };
 

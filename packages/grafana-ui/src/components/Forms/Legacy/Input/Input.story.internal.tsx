@@ -7,7 +7,7 @@ import { withCenteredStory } from '../../../../utils/storybook/withCenteredStory
 
 import { Input } from './Input';
 
-export default {
+const meta: Meta = {
   title: 'Forms/Legacy/Input',
   component: Input,
   decorators: [withCenteredStory],
@@ -25,7 +25,7 @@ export default {
     },
     validation: { name: 'Validation regex (will do a partial match if you do not anchor it)' },
   },
-} as Meta;
+};
 
 const Wrapper: Story = (args) => {
   const [value, setValue] = useState('');
@@ -56,3 +56,5 @@ Basic.args = {
   validationEvents: EventsWithValidation.onBlur,
   hideErrorMessage: false,
 };
+
+export default meta;

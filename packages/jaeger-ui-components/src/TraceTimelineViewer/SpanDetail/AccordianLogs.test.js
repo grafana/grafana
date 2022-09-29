@@ -12,31 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { shallow } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import AccordianKeyValues from './AccordianKeyValues';
 import AccordianLogs from './AccordianLogs';
 
-describe('<AccordianLogs>', () => {
-  let wrapper;
+const logs = [
+  {
+    timestamp: 10,
+    fields: [
+      { key: 'message', value: 'oh the log message' },
+      { key: 'something', value: 'else' },
+    ],
+  },
+  {
+    timestamp: 20,
+    fields: [
+      { key: 'message', value: 'oh the next log message' },
+      { key: 'more', value: 'stuff' },
+    ],
+  },
+];
 
-  const logs = [
-    {
-      timestamp: 10,
-      fields: [
-        { key: 'message', value: 'oh the log message' },
-        { key: 'something', value: 'else' },
-      ],
-    },
-    {
-      timestamp: 20,
-      fields: [
-        { key: 'message', value: 'oh the next log message' },
-        { key: 'more', value: 'stuff' },
-      ],
-    },
-  ];
+const setup = (propOverrides) => {
   const props = {
     logs,
     isOpen: false,
@@ -44,45 +42,35 @@ describe('<AccordianLogs>', () => {
     onToggle: () => {},
     openedItems: new Set([logs[1]]),
     timestamp: 5,
+    ...propOverrides,
   };
 
-  beforeEach(() => {
-    props.onItemToggle.mockReset();
-    wrapper = shallow(<AccordianLogs {...props} />);
-  });
+  return render(<AccordianLogs {...props} />);
+};
 
+describe('AccordianLogs tests', () => {
   it('renders without exploding', () => {
-    expect(wrapper).toBeDefined();
+    expect(() => setup()).not.toThrow();
   });
 
   it('shows the number of log entries', () => {
-    const regex = new RegExp(`Logs \\(${logs.length}\\)`);
-    expect(wrapper.find('a').text()).toMatch(regex);
+    setup();
+
+    expect(screen.getByRole('switch', { name: 'Events (2)' })).toBeInTheDocument();
   });
 
   it('hides log entries when not expanded', () => {
-    expect(wrapper.find(AccordianKeyValues).exists()).toBe(false);
+    setup({ isOpen: false });
+
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
   });
 
   it('shows log entries when expanded', () => {
-    expect(wrapper.find(AccordianKeyValues).exists()).toBe(false);
-    wrapper.setProps({ isOpen: true });
-    const logViews = wrapper.find(AccordianKeyValues);
-    expect(logViews.length).toBe(logs.length);
+    setup({ isOpen: true });
 
-    logViews.forEach((node, i) => {
-      const log = logs[i];
-      expect(node.prop('data')).toBe(log.fields);
-      node.simulate('toggle');
-      expect(props.onItemToggle).toHaveBeenLastCalledWith(log);
-    });
-  });
-
-  it('propagates isOpen to log items correctly', () => {
-    wrapper.setProps({ isOpen: true });
-    const logViews = wrapper.find(AccordianKeyValues);
-    logViews.forEach((node, i) => {
-      expect(node.prop('isOpen')).toBe(props.openedItems.has(logs[i]));
-    });
+    expect(screen.getByRole('table')).toBeInTheDocument();
+    expect(screen.queryAllByRole('cell')).toHaveLength(6);
+    expect(screen.getByText(/^something$/)).toBeInTheDocument();
+    expect(screen.getByText(/^else$/)).toBeInTheDocument();
   });
 });

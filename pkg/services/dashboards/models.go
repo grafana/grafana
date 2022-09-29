@@ -4,21 +4,16 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type SaveDashboardDTO struct {
 	OrgId     int64
 	UpdatedAt time.Time
-	User      *models.SignedInUser
+	User      *user.SignedInUser
 	Message   string
 	Overwrite bool
 	Dashboard *models.Dashboard
-}
-
-type SavePublicDashboardConfigDTO struct {
-	DashboardUid          string
-	OrgId                 int64
-	PublicDashboardConfig *models.PublicDashboardConfig
 }
 
 type DashboardSearchProjection struct {

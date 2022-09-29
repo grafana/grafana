@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 func TestRulePayloadMarshaling(t *testing.T) {
@@ -30,7 +31,7 @@ func TestRulePayloadMarshaling(t *testing.T) {
 				data.Model = raw
 
 				return TestRulePayload{
-					GrafanaManagedCondition: &models.EvalAlertConditionCommand{
+					GrafanaManagedCondition: &EvalAlertConditionCommand{
 						Condition: "placeholder",
 						Data:      []models.AlertQuery{data},
 					},
@@ -41,7 +42,7 @@ func TestRulePayloadMarshaling(t *testing.T) {
 			desc: "failure mixed",
 			input: TestRulePayload{
 				Expr:                    "rate({cluster=\"us-central1\", job=\"loki-prod/loki-canary\"}[1m]) > 0",
-				GrafanaManagedCondition: &models.EvalAlertConditionCommand{},
+				GrafanaManagedCondition: &EvalAlertConditionCommand{},
 			},
 			err: true,
 		},

@@ -3,14 +3,13 @@ package social
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/util/errutil"
+	"github.com/grafana/grafana/pkg/services/org"
 
 	"golang.org/x/oauth2"
 	"gopkg.in/square/go-jose.v2/jwt"
@@ -18,9 +17,7 @@ import (
 
 type SocialAzureAD struct {
 	*SocialBase
-	allowedGroups       []string
-	autoAssignOrgRole   string
-	roleAttributeStrict bool
+	allowedGroups []string
 }
 
 type azureClaims struct {
@@ -53,28 +50,29 @@ func (s *SocialAzureAD) Type() int {
 func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
 	idToken := token.Extra("id_token")
 	if idToken == nil {
-		return nil, fmt.Errorf("no id_token found")
+		return nil, ErrIDTokenNotFound
 	}
 
 	parsedToken, err := jwt.ParseSigned(idToken.(string))
 	if err != nil {
-		return nil, errutil.Wrapf(err, "error parsing id token")
+		return nil, fmt.Errorf("error parsing id token: %w", err)
 	}
 
 	var claims azureClaims
 	if err := parsedToken.UnsafeClaimsWithoutVerification(&claims); err != nil {
-		return nil, errutil.Wrapf(err, "error getting claims from id token")
+		return nil, fmt.Errorf("error getting claims from id token: %w", err)
 	}
 
-	email := extractEmail(claims)
+	email := claims.extractEmail()
 	if email == "" {
-		return nil, errors.New("error getting user info: no email found in access token")
+		return nil, ErrEmailNotFound
 	}
 
-	role := extractRole(claims, s.autoAssignOrgRole, s.roleAttributeStrict)
-	if role == "" {
-		return nil, errors.New("user does not have a valid role")
+	role, grafanaAdmin := s.extractRoleAndAdmin(&claims)
+	if s.roleAttributeStrict && !role.IsValid() {
+		return nil, ErrInvalidBasicRole
 	}
+
 	logger.Debug("AzureAD OAuth: extracted role", "email", email, "role", role)
 
 	groups, err := extractGroups(client, claims, token)
@@ -82,18 +80,24 @@ func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*Bas
 		return nil, fmt.Errorf("failed to extract groups: %w", err)
 	}
 
-	logger.Debug("AzureAD OAuth: extracted groups", "email", email, "groups", groups)
+	logger.Debug("AzureAD OAuth: extracted groups", "email", email, "groups", fmt.Sprintf("%v", groups))
 	if !s.IsGroupMember(groups) {
 		return nil, errMissingGroupMembership
 	}
 
+	var isGrafanaAdmin *bool = nil
+	if s.allowAssignGrafanaAdmin {
+		isGrafanaAdmin = &grafanaAdmin
+	}
+
 	return &BasicUserInfo{
-		Id:     claims.ID,
-		Name:   claims.Name,
-		Email:  email,
-		Login:  email,
-		Role:   string(role),
-		Groups: groups,
+		Id:             claims.ID,
+		Name:           claims.Name,
+		Email:          email,
+		Login:          email,
+		Role:           role,
+		IsGrafanaAdmin: isGrafanaAdmin,
+		Groups:         groups,
 	}, nil
 }
 
@@ -113,7 +117,7 @@ func (s *SocialAzureAD) IsGroupMember(groups []string) bool {
 	return false
 }
 
-func extractEmail(claims azureClaims) string {
+func (claims *azureClaims) extractEmail() string {
 	if claims.Email == "" {
 		if claims.PreferredUsername != "" {
 			return claims.PreferredUsername
@@ -123,40 +127,33 @@ func extractEmail(claims azureClaims) string {
 	return claims.Email
 }
 
-func extractRole(claims azureClaims, autoAssignRole string, strictMode bool) models.RoleType {
+// extractRoleAndAdmin extracts the role from the claims and returns the role and whether the user is a Grafana admin.
+func (s *SocialAzureAD) extractRoleAndAdmin(claims *azureClaims) (org.RoleType, bool) {
 	if len(claims.Roles) == 0 {
-		if strictMode {
-			return models.RoleType("")
-		}
-
-		return models.RoleType(autoAssignRole)
+		return s.defaultRole(false), false
 	}
 
-	roleOrder := []models.RoleType{
-		models.ROLE_ADMIN,
-		models.ROLE_EDITOR,
-		models.ROLE_VIEWER,
-	}
-
+	roleOrder := []org.RoleType{RoleGrafanaAdmin, org.RoleAdmin, org.RoleEditor, org.RoleViewer}
 	for _, role := range roleOrder {
 		if found := hasRole(claims.Roles, role); found {
-			return role
+			if role == RoleGrafanaAdmin {
+				return org.RoleAdmin, true
+			}
+
+			return role, false
 		}
 	}
 
-	if strictMode {
-		return models.RoleType("")
-	}
-
-	return models.ROLE_VIEWER
+	return s.defaultRole(false), false
 }
 
-func hasRole(roles []string, role models.RoleType) bool {
+func hasRole(roles []string, role org.RoleType) bool {
 	for _, item := range roles {
 		if strings.EqualFold(item, string(role)) {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -186,12 +183,12 @@ func extractGroups(client *http.Client, claims azureClaims, token *oauth2.Token)
 		// See https://docs.microsoft.com/en-us/graph/migrate-azure-ad-graph-overview
 		parsedToken, err := jwt.ParseSigned(token.AccessToken)
 		if err != nil {
-			return nil, errutil.Wrapf(err, "error parsing id token")
+			return nil, fmt.Errorf("error parsing id token: %w", err)
 		}
 
 		var accessClaims azureAccessClaims
 		if err := parsedToken.UnsafeClaimsWithoutVerification(&accessClaims); err != nil {
-			return nil, errutil.Wrapf(err, "error getting claims from access token")
+			return nil, fmt.Errorf("error getting claims from access token: %w", err)
 		}
 		endpoint = fmt.Sprintf("https://graph.microsoft.com/v1.0/%s/users/%s/getMemberObjects", accessClaims.TenantID, claims.ID)
 	}

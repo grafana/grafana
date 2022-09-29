@@ -87,10 +87,10 @@ function legacyCreateSpanLinkFactory(
   createFocusSpanLink?: (traceId: string, spanId: string) => LinkModel<Field>
 ) {
   let logsDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData> | undefined;
-  const isSplunkDS = logsDataSourceSettings?.type === 'grafana-splunk-datasource';
   if (traceToLogsOptions?.datasourceUid) {
     logsDataSourceSettings = getDatasourceSrv().getInstanceSettings(traceToLogsOptions.datasourceUid);
   }
+  const isSplunkDS = logsDataSourceSettings?.type === 'grafana-splunk-datasource';
 
   let metricsDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData> | undefined;
   if (traceToMetricsOptions?.datasourceUid) {
@@ -171,8 +171,12 @@ function legacyCreateSpanLinkFactory(
           internalLink: dataLink.internal!,
           scopedVars: {},
           range: getTimeRangeFromSpan(span, {
-            startMs: 0,
-            endMs: 0,
+            startMs: traceToMetricsOptions.spanStartTimeShift
+              ? rangeUtil.intervalToMs(traceToMetricsOptions.spanStartTimeShift)
+              : 0,
+            endMs: traceToMetricsOptions.spanEndTimeShift
+              ? rangeUtil.intervalToMs(traceToMetricsOptions.spanEndTimeShift)
+              : 0,
           }),
           field: {} as Field,
           onClickFn: splitOpenFn,

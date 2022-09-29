@@ -15,7 +15,7 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2, LinkModel } from '@grafana/data';
+import { GrafanaTheme2, LinkModel, TimeZone } from '@grafana/data';
 import { stylesFactory, withTheme2 } from '@grafana/ui';
 
 import { autoColor } from '../Theme';
@@ -84,9 +84,9 @@ type SpanDetailRowProps = {
   warningsToggle: (spanID: string) => void;
   stackTracesToggle: (spanID: string) => void;
   span: TraceSpan;
+  timeZone: TimeZone;
   tagsToggle: (spanID: string) => void;
   traceStartTime: number;
-  focusSpan: (uiFind: string) => void;
   hoverIndentGuideIds: Set<string>;
   addHoverIndentGuideId: (spanID: string) => void;
   removeHoverIndentGuideId: (spanID: string) => void;
@@ -120,9 +120,9 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
       warningsToggle,
       stackTracesToggle,
       span,
+      timeZone,
       tagsToggle,
       traceStartTime,
-      focusSpan,
       hoverIndentGuideIds,
       addHoverIndentGuideId,
       removeHoverIndentGuideId,
@@ -150,7 +150,7 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
               onClick={this._detailToggle}
               role="switch"
               style={{ borderColor: color }}
-              data-test-id="detail-row-expanded-accent"
+              data-testid="detail-row-expanded-accent"
             />
           </span>
         </TimelineRow.Cell>
@@ -167,9 +167,9 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
               warningsToggle={warningsToggle}
               stackTracesToggle={stackTracesToggle}
               span={span}
+              timeZone={timeZone}
               tagsToggle={tagsToggle}
               traceStartTime={traceStartTime}
-              focusSpan={focusSpan}
               createSpanLink={createSpanLink}
               focusedSpanId={focusedSpanId}
               createFocusSpanLink={createFocusSpanLink}

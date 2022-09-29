@@ -15,7 +15,7 @@ weight: 1400
 
 # Tempo data source
 
-Grafana ships with built-in support for Tempo a high volume, minimal dependency trace storage, OSS tracing solution from Grafana Labs. Add it as a data source, and you are ready to query your traces in [Explore]({{< relref "../explore/" >}}).
+Grafana ships with built-in support for Tempo, a high volume, minimal dependency trace storage, OSS tracing solution from Grafana Labs. Add it as a data source, and you are ready to query your traces in [Explore]({{< relref "../explore" >}}).
 
 ## Add data source
 
@@ -33,6 +33,7 @@ To access Tempo settings, click the **Configuration** (gear) icon, then click **
 ### Trace to logs
 
 > **Note:** This feature is available in Grafana 7.4+.
+> Grafana Cloud users can access this feature by [opening a support ticket in the Cloud Portal](https://grafana.com/profile/org#support).
 
 This is a configuration for the [trace to logs feature]({{< relref "../explore/trace-integration/" >}}). Select target data source (at this moment limited to Loki or Splunk \[logs\] data sources) and select which tags will be used in the logs query.
 
@@ -49,6 +50,7 @@ This is a configuration for the [trace to logs feature]({{< relref "../explore/t
 ### Trace to metrics
 
 > **Note:** This feature is behind the `traceToMetrics` feature toggle.
+> Grafana Cloud users can access this feature by [opening a support ticket in the Cloud Portal](https://grafana.com/profile/org#support).
 
 To configure trace to metrics, select the target Prometheus data source and create any desired linked queries.
 
@@ -78,11 +80,21 @@ This is a configuration for the beta Node Graph visualization. The Node Graph is
 
 -- **Enable Node Graph -** Enables the Node Graph visualization.
 
-### Loki Search
+### Loki search
 
 This is a configuration for the Loki search query type.
 
 -- **Data source -** The Loki instance in which you want to search traces. You must configure derived fields in the Loki instance.
+
+### Span bar label
+
+You can configure the span bar label. The span bar label allows you add additional information to the span bar row.
+
+Select one of the following four options. The default selection is Duration.
+
+- **None -** Do not show any additional information on the span bar row.
+- **Duration -** Show the span duration on the span bar row.
+- **Tag -** Show the span tag on the span bar row. Note: You will also need to specify the tag key to use to get the tag value. For example, `span.kind`.
 
 ## Query traces
 
@@ -116,7 +128,9 @@ To query a particular trace, select the **TraceID** query type, and then put the
 
 ## Upload JSON trace file
 
-You can upload a JSON file that contains a single trace to visualize it. If the file has multiple traces then the first trace is used for visualization.
+You can upload a JSON file that contains a single trace or service graph to visualize it. If the file has multiple traces, the first trace is used for visualization.
+
+You can download a trace or service graph through the inspector. Open the inspector, navigate to the 'Data' tab, and click 'Download traces' or 'Download service graph'.
 
 Here is an example JSON:
 
@@ -162,7 +176,7 @@ Here is an example JSON:
 }
 ```
 
-## Service Graph
+## Service graph
 
 A service graph is a visual representation of the relationships between services. Each node on the graph represents a service such as an API or database. With this graph, customers can easily detect performance issues, increases in error, fault, or throttle rates in any of their services, and dive deep into corresponding traces and root causes.
 
@@ -170,12 +184,12 @@ A service graph is a visual representation of the relationships between services
 
 To display the service graph:
 
-- [Configure the Grafana Agent](https://grafana.com/docs/tempo/next/grafana-agent/service-graphs/#quickstart) to generate service graph data
-- Link a Prometheus datasource in the Tempo datasource settings.
-- Navigate to [Explore]({{< relref "../explore/" >}})
-- Select the Tempo datasource
-- Select the **Service Graph** query type and run the query
-- Optionally, filter by service name
+- [Configure Grafana Agent](https://grafana.com/docs/tempo/latest/grafana-agent/service-graphs/#quickstart), or [Tempo or GET](https://grafana.com/docs/tempo/latest/metrics-generator/service_graphs/#tempo) to generate service graph data
+- Link a Prometheus data source in the Tempo data source settings.
+- Navigate to [Explore]({{< relref "../explore/" >}}).
+- Select the Tempo data source.
+- Select the **Service Graph** query type and run the query.
+- (Optional): Filter by service name.
 
 You can pan and zoom the view with buttons or you mouse. For details about the visualization, refer to [Node graph panel](https://grafana.com/docs/grafana/latest/panels/visualizations/node-graph/).
 
@@ -189,6 +203,28 @@ The color of each circle represents the percentage of requests in each of the fo
 - purple = throttled responses
 
 Click on the service to see a context menu with additional links for quick navigation to other relevant information.
+
+## APM table
+
+The Application Performance Management (APM) table lets you view several APM metrics out of the box.
+The APM table is part of the APM dashboard.
+For more information, refer to the [APM dashboard documentation](https://grafana.com/docs/tempo/latest/metrics-generator/app-performance-mgmt/).
+
+To display the APM table:
+
+1. Activate the `tempoApmTable` feature flag in your `grafana.ini` file.
+1. Link a Prometheus data source in the Tempo data source settings.
+1. Navigate to [Explore]({{< relref "../explore/_index.md" >}}).
+1. Select the Tempo data source.
+1. Select the **Service Graph** query type and run the query.
+1. (Optional): Filter your results.
+
+> **Note:** The metric `traces_spanmetrics_calls_total` is used to display the name, rate, and error rate columns and `traces_spanmetrics_latency_bucket` is used to display the duration column. These metrics need to exist in your Prometheus data source.
+
+Click a row in the rate, error rate, or duration columns to open a query in Prometheus with the span name of that row automatically set in the query.
+Click a row in the links column to open a query in Tempo with the span name of that row automatically set in the query.
+
+{{< figure src="/static/img/docs/tempo/apm-table.png" class="docs-image--no-shadow" max-width="500px" caption="Screenshot of the Tempo APM table" >}}
 
 ## Linking Trace ID from logs
 
