@@ -319,6 +319,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
       clearCache,
       addResultsToCache,
       exploreId,
+      scrollElement,
     } = this.props;
 
     const {
@@ -478,6 +479,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                 onClickShowDetectedField={this.showDetectedField}
                 onClickHideDetectedField={this.hideDetectedField}
                 app={CoreApp.Explore}
+                scrollElement={scrollElement}
               />
             </div>
             <LogsNavigation
@@ -491,7 +493,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
               scrollToTopLogs={this.scrollToTopLogs}
               addResultsToCache={addResultsToCache}
               clearCache={clearCache}
-              scrollElement={this.props.scrollElement}
             />
           </div>
           {!loading && !hasData && !scanning && (

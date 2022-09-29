@@ -28,6 +28,7 @@ export interface Props extends Themeable2 {
   previewLimit?: number;
   forceEscape?: boolean;
   showDetectedFields?: string[];
+  scrollElement?: HTMLDivElement | undefined;
   showContextToggle?: (row?: LogRowModel) => boolean;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
