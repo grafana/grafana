@@ -36,9 +36,7 @@ export const Page: PageType = ({
   const navModel = usePageNav(navId, oldNavProp);
   const { chrome } = useGrafana();
 
-  const mediaQuery = window.matchMedia(`(max-width: ${theme.breakpoints.values.lg}px)`);
-  mediaQuery.addEventListener('change', (e) => setNavExpanded(e.matches ? false : navExpandedPreference));
-  const isSmallScreen = mediaQuery.matches;
+  const isSmallScreen = window.matchMedia(`(max-width: ${theme.breakpoints.values.lg}px)`).matches;
   const [navExpandedPreference, setNavExpandedPreference] = useLocalStorage<boolean>(
     'grafana.sectionNav.expanded',
     !isSmallScreen
@@ -48,6 +46,13 @@ export const Page: PageType = ({
   usePageTitle(navModel, pageNav);
 
   const pageHeaderNav = pageNav ?? navModel?.node;
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia(`(max-width: ${theme.breakpoints.values.lg}px)`);
+    const onMediaQueryChange = (e: MediaQueryListEvent) => setNavExpanded(e.matches ? false : navExpandedPreference);
+    mediaQuery.addEventListener('change', onMediaQueryChange);
+    return () => mediaQuery.removeEventListener('change', onMediaQueryChange);
+  }, [navExpandedPreference, theme.breakpoints.values.lg]);
 
   useEffect(() => {
     if (navModel) {
