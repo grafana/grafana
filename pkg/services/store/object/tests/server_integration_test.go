@@ -66,5 +66,4 @@ func TestBasic(t *testing.T) {
 
 	require.NotNil(t, readResp)
 	require.Nil(t, readResp.Object)
-
 }

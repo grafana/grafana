@@ -275,7 +275,6 @@ func (i inMemoryObjectServer) Delete(ctx context.Context, r *object.DeleteObject
 	return &object.DeleteObjectResponse{
 		OK: true,
 	}, nil
-
 }
 
 func (i inMemoryObjectServer) History(ctx context.Context, r *object.ObjectHistoryRequest) (*object.ObjectHistoryResponse, error) {
