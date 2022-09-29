@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/repo"
+	"github.com/grafana/grafana/pkg/plugins/storage"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -129,7 +130,7 @@ func (hs *HTTPServer) InstallRecipe(c *models.ReqContext) response.Response {
 			if errors.As(err, &dupeErr) {
 				status[recipeID][step.Id] = RecipeStepStatus{
 					Id:            step.Id,
-					Status:        "Ok",
+					Status:        "Installed",
 					StatusMessage: "Plugin already installed",
 				}
 			}
@@ -137,7 +138,7 @@ func (hs *HTTPServer) InstallRecipe(c *models.ReqContext) response.Response {
 			if errors.As(err, &versionUnsupportedErr) {
 				status[recipeID][step.Id] = RecipeStepStatus{
 					Id:            step.Id,
-					Status:        "Error",
+					Status:        "NotInstalled",
 					StatusMessage: "Plugin version not supported",
 				}
 			}
@@ -145,7 +146,7 @@ func (hs *HTTPServer) InstallRecipe(c *models.ReqContext) response.Response {
 			if errors.As(err, &versionNotFoundErr) {
 				status[recipeID][step.Id] = RecipeStepStatus{
 					Id:            step.Id,
-					Status:        "Error",
+					Status:        "NotInstalled",
 					StatusMessage: "Plugin version not found",
 				}
 			}
@@ -153,14 +154,14 @@ func (hs *HTTPServer) InstallRecipe(c *models.ReqContext) response.Response {
 			if errors.As(err, &clientError) {
 				status[recipeID][step.Id] = RecipeStepStatus{
 					Id:            step.Id,
-					Status:        "Error",
+					Status:        "NotInstalled",
 					StatusMessage: clientError.Message,
 				}
 			}
 			if errors.Is(err, plugins.ErrInstallCorePlugin) {
 				status[recipeID][step.Id] = RecipeStepStatus{
 					Id:            step.Id,
-					Status:        "Error",
+					Status:        "NotInstalled",
 					StatusMessage: "Cannot install or change a Core plugin",
 				}
 			}
@@ -170,7 +171,7 @@ func (hs *HTTPServer) InstallRecipe(c *models.ReqContext) response.Response {
 		} else {
 			status[recipeID][step.Id] = RecipeStepStatus{
 				Id:            step.Id,
-				Status:        "Ok",
+				Status:        "Installed",
 				StatusMessage: "Plugin successfully installed",
 			}
 		}
@@ -181,11 +182,75 @@ func (hs *HTTPServer) InstallRecipe(c *models.ReqContext) response.Response {
 		recipe.Steps[i].Status = status[recipeID][step.Id]
 	}
 
-	return response.JSON(http.StatusOK, InstallResponse{StatusUrl: "/api/plugins-recipe/" + recipe.Id + "/status", Recipe: *recipe})
+	return response.JSON(http.StatusOK, recipe)
 }
 
 func (hs *HTTPServer) UninstallRecipe(c *models.ReqContext) response.Response {
-	return response.Success("Plugin settings updated")
+	recipeID := web.Params(c.Req)[":recipeId"]
+	recipe := FindRecipeById(recipes, recipeID)
+
+	if recipe == nil {
+		return response.Error(http.StatusNotFound, "Plugin recipe not found with the same id", nil)
+	}
+
+	if status[recipeID] == nil {
+		status[recipeID] = map[string]RecipeStepStatus{}
+	}
+
+	for _, step := range recipe.Steps {
+		err := hs.pluginInstaller.Remove(c.Req.Context(), step.Plugin.Id)
+
+		if err != nil {
+			// Plugin is not installed yet -> set the status to empty for now
+			if errors.Is(err, plugins.ErrPluginNotInstalled) {
+				status[recipeID][step.Id] = RecipeStepStatus{
+					Id:            step.Id,
+					Status:        "",
+					StatusMessage: "",
+				}
+			} else
+
+			// Core plugin
+			if errors.Is(err, plugins.ErrUninstallCorePlugin) {
+				status[recipeID][step.Id] = RecipeStepStatus{
+					Id:            step.Id,
+					Status:        "Installed",
+					StatusMessage: "Plugin is installed (Core plugin, cannot be uninstalled)",
+				}
+			} else
+
+			// Outside of plugin dir
+			if errors.Is(err, storage.ErrUninstallOutsideOfPluginDir) {
+				status[recipeID][step.Id] = RecipeStepStatus{
+					Id:            step.Id,
+					Status:        "Installed",
+					StatusMessage: "Plugin is installed (Cannot unistall the plugin due to being outside of the plugins directory)",
+				}
+				// Uknown error
+			} else {
+				status[recipeID][step.Id] = RecipeStepStatus{
+					Id:            step.Id,
+					Status:        "Installed",
+					StatusMessage: "Plugin is installed (Cannot uninstall plugin due to an unknown error)",
+				}
+			}
+
+			// Plugin sucessfully uninstalled
+		} else {
+			status[recipeID][step.Id] = RecipeStepStatus{
+				Id:            step.Id,
+				Status:        "NotInstalled",
+				StatusMessage: "Plugin is not installed.",
+			}
+		}
+
+	}
+
+	for i, step := range recipe.Steps {
+		recipe.Steps[i].Status = status[recipeID][step.Id]
+	}
+
+	return response.JSON(http.StatusOK, recipe)
 }
 
 func (hs *HTTPServer) GetRecipeStatus(c *models.ReqContext) response.Response {
@@ -202,14 +267,14 @@ func (hs *HTTPServer) GetRecipeStatus(c *models.ReqContext) response.Response {
 		if exists {
 			recipe.Steps[i].Status = RecipeStepStatus{
 				Id:            step.Id,
-				Status:        "Ok",
+				Status:        "Installed",
 				StatusMessage: "Plugin successfully installed",
 			}
 			continue
 		}
 	}
 
-	return response.JSON(http.StatusOK, InstallResponse{StatusUrl: "/api/plugins-recipe/" + recipe.Id + "/status", Recipe: *recipe})
+	return response.JSON(http.StatusOK, recipe.Steps)
 }
 
 func FindRecipeById(recipes []Recipe, id string) *Recipe {
