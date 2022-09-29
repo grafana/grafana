@@ -12,7 +12,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func fakeGNETBackend(t *testing.T) *httptest.Server {
@@ -95,7 +94,6 @@ func TestHTTPServer_ListGnetPlugins(t *testing.T) {
 			backend := fakeGNETBackend(t)
 			defer backend.Close()
 			sc.cfg.GrafanaComURL = backend.URL
-			setting.GrafanaComUrl = backend.URL
 
 			setAccessControlPermissions(sc.acmock, tt.permissions, sc.initCtx.OrgID)
 			response := callAPIWithOpts(t, sc.server, http.MethodGet, "/api/gnet/plugins/", nil, setHeaders(tt.headers))

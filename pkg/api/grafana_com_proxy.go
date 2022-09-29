@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 	"github.com/grafana/grafana/pkg/web"
@@ -31,7 +30,7 @@ var grafanaComProxyTransport = &http.Transport{
 }
 
 func (hs *HTTPServer) ListGnetPlugins(c *models.ReqContext) {
-	proxy := ReverseProxyGnetReq(c.Logger, "/plugins", hs.Cfg.BuildVersion)
+	proxy := hs.ReverseProxyGnetReq(c.Logger, "/plugins")
 	proxy.Transport = grafanaComProxyTransport
 	director := proxy.Director
 	proxy.Director = func(r *http.Request) {
@@ -127,8 +126,8 @@ func (*HTTPServer) addMetadataToGNETPluginList(pluginList map[string]interface{}
 	return true
 }
 
-func ReverseProxyGnetReq(logger log.Logger, proxyPath string, version string) *httputil.ReverseProxy {
-	url, _ := url.Parse(setting.GrafanaComUrl)
+func (hs *HTTPServer) ReverseProxyGnetReq(logger log.Logger, proxyPath string) *httputil.ReverseProxy {
+	url, _ := url.Parse(hs.Cfg.GrafanaComURL)
 
 	director := func(req *http.Request) {
 		req.URL.Scheme = url.Scheme
@@ -143,7 +142,7 @@ func ReverseProxyGnetReq(logger log.Logger, proxyPath string, version string) *h
 		req.Header.Del("Authorization")
 
 		// send the current Grafana version for each request proxied to GCOM
-		req.Header.Add("grafana-version", version)
+		req.Header.Add("grafana-version", hs.Cfg.BuildVersion)
 	}
 
 	return proxyutil.NewReverseProxy(logger, director)
@@ -151,7 +150,7 @@ func ReverseProxyGnetReq(logger log.Logger, proxyPath string, version string) *h
 
 func (hs *HTTPServer) ProxyGnetRequest(c *models.ReqContext) {
 	proxyPath := web.Params(c.Req)["*"]
-	proxy := ReverseProxyGnetReq(c.Logger, proxyPath, hs.Cfg.BuildVersion)
+	proxy := hs.ReverseProxyGnetReq(c.Logger, proxyPath)
 	proxy.Transport = grafanaComProxyTransport
 	proxy.ServeHTTP(c.Resp, c.Req)
 }
