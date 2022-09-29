@@ -5733,7 +5733,7 @@ __metadata:
     slate: 0.47.9
     slate-plain-serializer: 0.7.11
     slate-react: 0.22.10
-    storybook-dark-mode: 1.1.0
+    storybook-dark-mode: 1.1.2
     style-loader: 3.3.1
     terser-webpack-plugin: 5.3.3
     tinycolor2: 1.4.2
@@ -9671,7 +9671,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@storybook/addons@npm:6.5.12":
+"@storybook/addons@npm:6.5.12, @storybook/addons@npm:^6.0.0":
   version: 6.5.12
   resolution: "@storybook/addons@npm:6.5.12"
   dependencies:
@@ -9715,7 +9715,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@storybook/api@npm:6.5.12":
+"@storybook/api@npm:6.5.12, @storybook/api@npm:^6.0.0":
   version: 6.5.12
   resolution: "@storybook/api@npm:6.5.12"
   dependencies:
@@ -10031,7 +10031,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@storybook/components@npm:6.5.12":
+"@storybook/components@npm:6.5.12, @storybook/components@npm:^6.0.0":
   version: 6.5.12
   resolution: "@storybook/components@npm:6.5.12"
   dependencies:
@@ -10149,7 +10149,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@storybook/core-events@npm:6.5.12":
+"@storybook/core-events@npm:6.5.12, @storybook/core-events@npm:^6.0.0":
   version: 6.5.12
   resolution: "@storybook/core-events@npm:6.5.12"
   dependencies:
@@ -10694,7 +10694,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@storybook/theming@npm:6.5.12":
+"@storybook/theming@npm:6.5.12, @storybook/theming@npm:^6.0.0":
   version: 6.5.12
   resolution: "@storybook/theming@npm:6.5.12"
   dependencies:
@@ -36154,19 +36154,27 @@ __metadata:
   languageName: node
   linkType: hard
 
-"storybook-dark-mode@npm:1.1.0":
-  version: 1.1.0
-  resolution: "storybook-dark-mode@npm:1.1.0"
+"storybook-dark-mode@npm:1.1.2":
+  version: 1.1.2
+  resolution: "storybook-dark-mode@npm:1.1.2"
   dependencies:
-    fast-deep-equal: ^3.0.0
-    memoizerific: ^1.11.3
-  peerDependencies:
     "@storybook/addons": ^6.0.0
     "@storybook/api": ^6.0.0
     "@storybook/components": ^6.0.0
     "@storybook/core-events": ^6.0.0
     "@storybook/theming": ^6.0.0
-  checksum: e1d7abbb96d1cdbe9cdba1e20aabffa6878f170e348958cc328de4183027c2052f44f6d78f82a45039f803349c7a4ec19988d42898030b2720dc591192f520e6
+    fast-deep-equal: ^3.0.0
+    global: ^4.4.0
+    memoizerific: ^1.11.3
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0 || ^18.0.0
+    react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+  peerDependenciesMeta:
+    react:
+      optional: true
+    react-dom:
+      optional: true
+  checksum: c1522be5d7b52315e7343840bc5b6ed771e671814ccc0f63fbaa3a9f47d25c5cc0e0f5d0cdb5ac3e75e356e93d66ced8722ad2b0f7306b4113489e21cf8b07ff
   languageName: node
   linkType: hard
 
