@@ -22,6 +22,7 @@ import {
   LoadingState,
   SplitOpen,
   DataQueryResponse,
+  CoreApp,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import {
@@ -476,6 +477,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                 showDetectedFields={showDetectedFields}
                 onClickShowDetectedField={this.showDetectedField}
                 onClickHideDetectedField={this.hideDetectedField}
+                app={CoreApp.Explore}
               />
             </div>
             <LogsNavigation
