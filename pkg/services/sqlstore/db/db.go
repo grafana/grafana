@@ -12,7 +12,7 @@ import (
 type DB interface {
 	WithTransactionalDbSession(ctx context.Context, callback sqlstore.DBTransactionFunc) error
 	WithDbSession(ctx context.Context, callback sqlstore.DBTransactionFunc) error
-	NewSession(ctx context.Context) *sqlstore.DBSession
+	WithNewDbSession(ctx context.Context, callback sqlstore.DBTransactionFunc) error
 	GetDialect() migrator.Dialect
 	GetDBType() core.DbType
 	GetSqlxSession() *session.SessionDB

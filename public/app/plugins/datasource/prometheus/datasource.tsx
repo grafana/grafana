@@ -1001,7 +1001,9 @@ export class PrometheusDatasource
         const expandedQuery = {
           ...query,
           datasource: this.getRef(),
-          expr: this.templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr),
+          expr: this.enhanceExprWithAdHocFilters(
+            this.templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr)
+          ),
           interval: this.templateSrv.replace(query.interval, scopedVars),
         };
         return expandedQuery;
