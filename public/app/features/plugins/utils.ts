@@ -43,41 +43,45 @@ export function buildPluginSectionNav(
     return pluginNav ?? undefined;
   }
 
-  const section = getPluginSection(location, navIndex, pluginId);
+  let section = getPluginSection(location, navIndex, pluginId);
   if (!section) {
     return undefined;
   }
 
+  // shallow clone as we set active flag
+  section = { ...section };
+
   // If we have plugin nav don't set active page in section as it will cause double breadcrumbs
   const currentUrl = config.appSubUrl + location.pathname + location.search;
   let activePage: NavModelItem | undefined;
+
+  function setPageToActive(page: NavModelItem, currentUrl: string): NavModelItem {
+    if (!currentUrl.startsWith(page.url ?? '')) {
+      return page;
+    }
+
+    if (activePage && (activePage.url?.length ?? 0) > (page.url?.length ?? 0)) {
+      return page;
+    }
+
+    if (activePage) {
+      activePage.active = false;
+    }
+
+    activePage = { ...page, active: true };
+    return activePage;
+  }
 
   // Find and set active page
   section.children = (section?.children ?? []).map((child) => {
     if (child.children) {
       return {
         ...child,
-        children: child.children.map((pluginPage) => {
-          if (currentUrl.startsWith(pluginPage.url ?? '')) {
-            activePage = {
-              ...pluginPage,
-              active: true,
-            };
-            return activePage;
-          }
-          return pluginPage;
-        }),
+        children: child.children.map((pluginPage) => setPageToActive(pluginPage, currentUrl)),
       };
-    } else {
-      if (currentUrl.startsWith(child.url ?? '')) {
-        activePage = {
-          ...child,
-          active: true,
-        };
-        return activePage;
-      }
     }
-    return child;
+
+    return setPageToActive(child, currentUrl);
   });
 
   return { main: section, node: activePage ?? section };
@@ -103,5 +107,5 @@ export function getPluginSection(location: HistoryLocation, navIndex: NavIndex, 
     throw new Error('Could not find plugin section');
   }
 
-  return { ...navTreeNodeForPlugin.parentItem };
+  return navTreeNodeForPlugin.parentItem;
 }
