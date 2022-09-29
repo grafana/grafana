@@ -10,7 +10,8 @@ const mainConfig = {
   stories,
   addons: [
     {
-      name: '@storybook/addon-docs',
+      // work around docs 6.5.x not resolving correctly with yarn PnP
+      name: path.dirname(require.resolve('@storybook/addon-docs/package.json')),
       options: {
         configureJSX: true,
         babelOptions: {},
@@ -20,6 +21,8 @@ const mainConfig = {
       name: '@storybook/addon-essentials',
       options: {
         backgrounds: false,
+        // work around docs 6.5.x not resolving correctly with yarn PnP
+        docs: false,
       },
     },
     '@storybook/addon-a11y',
