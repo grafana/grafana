@@ -130,7 +130,7 @@ func (ss *sqlxStore) GetTempUserByCode(ctx context.Context, query *models.GetTem
 
 func (ss *sqlxStore) ExpireOldUserInvites(ctx context.Context, cmd *models.ExpireTempUsersCommand) error {
 	rawSQL := "UPDATE temp_user SET status = ?, updated = ? WHERE created <= ? AND status in (?, ?)"
-	if result, err := ss.sess.Exec(ctx, rawSQL, string(models.TmpUserExpired), time.Now().Unix(), cmd.OlderThan, string(models.TmpUserSignUpStarted), string(models.TmpUserInvitePending)); err != nil {
+	if result, err := ss.sess.Exec(ctx, rawSQL, string(models.TmpUserExpired), time.Now().Unix(), cmd.OlderThan.Unix(), string(models.TmpUserSignUpStarted), string(models.TmpUserInvitePending)); err != nil {
 		return err
 	} else if cmd.NumExpired, err = result.RowsAffected(); err != nil {
 		return err
