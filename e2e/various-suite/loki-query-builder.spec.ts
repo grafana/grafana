@@ -14,6 +14,16 @@ const addDataSource = () => {
   });
 };
 
+// We need this because the final query is split into separate DOM elements using e2e().contains(finalQuery).should('not.exist'); does not detect the query.
+const checkFinalQuery = (query: 'be.visible' | 'not.exist') => {
+  const keywords = ['rate', 'instance1|instance2', 'logfmt', '__error__', '$__interval'];
+  for (const word of keywords) {
+    e2e().contains(word).should(query);
+  }
+};
+
+const finalQuery = 'rate({instance=~"instance1|instance2"} | logfmt | __error__=`` [$__interval]';
+
 describe('Loki query builder', () => {
   beforeEach(() => {
     e2e.flows.login('admin', 'admin');
@@ -36,8 +46,6 @@ describe('Loki query builder', () => {
     e2e().intercept(/series?/, (req) => {
       req.reply({ status: 'success', data: [{ instance: 'instance1' }] });
     });
-
-    const finalQuery = 'rate({instance=~"instance1|instance2"} | logfmt | __error__=`` [$__interval]';
 
     // Go to Explore and choose Loki data source
     e2e.pages.Explore.visit();
@@ -72,13 +80,16 @@ describe('Loki query builder', () => {
     e2e().contains(MISSING_LABEL_FILTER_ERROR_MESSAGE).should('not.exist');
     e2e().contains(finalQuery).should('be.visible');
 
-    // Switch to code editor and check if query was parsed
-    for (const word of finalQuery.split(' ')) {
-      e2e().contains(word).should('be.visible');
-    }
+    // Toggle raw query
+    e2e().contains('label', 'Raw query').click();
+    e2e().contains('Raw query').should('have.length', 1);
 
-    // Switch to explain mode and check if query is visible
+    // Change to code editor
+    e2e().contains('label', 'Code').click();
+    checkFinalQuery('be.visible');
+
+    // Checks the explain mode toggle
     e2e().contains('label', 'Explain').click();
-    e2e().contains(finalQuery).should('be.visible');
+    e2e().contains('Fetch all log lines matching label filters.').should('be.visible');
   });
 });
