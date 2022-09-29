@@ -1,7 +1,6 @@
 package api
 
 import (
-	"compress/gzip"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -26,18 +25,10 @@ func fakeGNETBackend(t *testing.T) *httptest.Server {
 			pluginList, err := io.ReadAll(file)
 			require.NoError(t, err)
 
-			var bodyWriter io.Writer
-			switch r.Header.Get("Accept-Encoding") {
-			case "gzip":
-				gz := gzip.NewWriter(w)
-				defer gz.Close()
-				bodyWriter = gz
-				w.Header().Set("Content-Encoding", "gzip")
-			default:
-				bodyWriter = w
-			}
+			// Check encoding has been removed
+			require.Empty(t, r.Header.Get("Accept-Encoding"))
 
-			bodyWriter.Write(pluginList)
+			w.Write(pluginList)
 			w.Header().Set("Content-Type", "application/json")
 		}),
 	)
@@ -64,7 +55,7 @@ func TestHTTPServer_ListGnetPlugins(t *testing.T) {
 		want        map[string]ac.Metadata
 	}{
 		{
-			name:        "WITHOUT_COMPRESSION",
+			name:        "BASIC",
 			headers:     map[string]string{"Accept-Encoding": ""},
 			permissions: []ac.Permission{{Action: "plugins:read", Scope: "plugins:id:*"}},
 			want: map[string]ac.Metadata{

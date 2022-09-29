@@ -2,7 +2,6 @@ package api
 
 import (
 	"bytes"
-	"compress/gzip"
 	"encoding/json"
 	"io"
 	"net"
@@ -32,54 +31,58 @@ var grafanaComProxyTransport = &http.Transport{
 }
 
 func (hs *HTTPServer) ListGnetPlugins(c *models.ReqContext) {
-	// TODO make this more robust and maybe set headers not to have to gzip
 	proxy := ReverseProxyGnetReq(c.Logger, "/plugins", hs.Cfg.BuildVersion)
 	proxy.Transport = grafanaComProxyTransport
+	director := proxy.Director
+	proxy.Director = func(r *http.Request) {
+		// Call director set with ReverseProxyGnetReq
+		director(r)
+		// Request no encoding to simplify modifying the response
+		r.Header.Set("Accept-Encoding", "")
+	}
+	writeResponse := func(r *http.Response, b []byte) {
+		r.Body = io.NopCloser(bytes.NewReader(b))
+		r.ContentLength = int64(len(b))
+		r.Header.Set("Content-Length", strconv.Itoa(len(b)))
+	}
 	proxy.ModifyResponse = func(r *http.Response) error {
 		// Early return
 		if hs.AccessControl.IsDisabled() {
 			return nil
 		}
 
-		b, errRead := hs.readGNETResponseBody(r)
+		// Read body
+		defer r.Body.Close()
+		b, errRead := io.ReadAll(r.Body)
 		if errRead != nil {
 			hs.log.Warn("error reading gnet plugin list", "error", errRead)
 			return nil
 		}
 
-		rewriteResponse := func(b []byte) {
-			body := io.NopCloser(bytes.NewReader(b))
-			r.Body = body
-			r.ContentLength = int64(len(b))
-			r.Header.Set("Content-Length", strconv.Itoa(len(b)))
-		}
-
 		pluginList := map[string]interface{}{}
 		if errUnmarshal := json.Unmarshal(b, &pluginList); errUnmarshal != nil {
-			hs.log.Warn("error parsing gnet plugin list", "error", errUnmarshal)
-			rewriteResponse(b)
+			hs.log.Warn("error parsing gnet plugins list", "error", errUnmarshal)
+			writeResponse(r, b)
 			return nil
 		}
 
+		// Add RBAC Metadata to the plugins list
 		ok := hs.addMetadataToGNETPluginList(pluginList, c)
 		if !ok {
 			hs.log.Warn("could not add metadata to gnet plugins list")
-			rewriteResponse(b)
+			writeResponse(r, b)
 			return nil
 		}
 
+		// Return the modified plugins list
 		newBody, errMarshal := json.Marshal(pluginList)
 		if errMarshal != nil {
-			hs.log.Warn("could not add marshal modified gnet plugin list", "err", errMarshal)
-			rewriteResponse(b)
+			hs.log.Warn("could not marshal modified gnet plugins list", "err", errMarshal)
+			writeResponse(r, b)
 			return nil
 		}
 
-		if r.Header.Get("Content-Encoding") == "gzip" {
-			r.Header.Del("Content-Encoding")
-		}
-
-		rewriteResponse(newBody)
+		writeResponse(r, newBody)
 		return nil
 	}
 	proxy.ServeHTTP(c.Resp, c.Req)
@@ -107,6 +110,7 @@ func (*HTTPServer) addMetadataToGNETPluginList(pluginList map[string]interface{}
 		c.SignedInUser.Permissions[c.OrgID],
 		plugins.ScopeProvider.GetResourceScope(""),
 		ids)
+
 	for i := range items {
 		item, ok := items[i].(map[string]interface{})
 		if !ok {
@@ -121,24 +125,6 @@ func (*HTTPServer) addMetadataToGNETPluginList(pluginList map[string]interface{}
 
 	pluginList["items"] = items
 	return true
-}
-
-func (*HTTPServer) readGNETResponseBody(r *http.Response) ([]byte, error) {
-	var reader io.ReadCloser
-	switch r.Header.Get("Content-Encoding") {
-	case "gzip":
-		var errGzip error
-		reader, errGzip = gzip.NewReader(r.Body)
-		if errGzip != nil {
-			return nil, errGzip
-		}
-		r.Header.Del("Content-Length")
-	default:
-		reader = r.Body
-	}
-	defer reader.Close()
-
-	return io.ReadAll(reader)
 }
 
 func ReverseProxyGnetReq(logger log.Logger, proxyPath string, version string) *httputil.ReverseProxy {
