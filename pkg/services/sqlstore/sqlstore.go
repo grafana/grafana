@@ -183,6 +183,8 @@ func (ss *SQLStore) GetSqlxSession() *session.SessionDB {
 }
 
 func (ss *SQLStore) ensureMainOrgAndAdminUser() error {
+	const AdminUserId = 1
+
 	ctx := context.Background()
 	err := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		ss.log.Debug("Ensuring main org and admin user exist")
@@ -195,6 +197,24 @@ func (ss *SQLStore) ensureMainOrgAndAdminUser() error {
 		}
 
 		if stats.Count > 0 {
+			if !ss.Cfg.ResetAdminEveryTimeRun {
+				return nil
+			}
+			ss.log.Debug("Reset admin user name and password")
+			if err := ss.UpdateUser(ctx, &models.UpdateUserCommand{
+				Name:   ss.Cfg.AdminUser,
+				Login:  ss.Cfg.AdminUser,
+				Email:  ss.Cfg.AdminEmail,
+				UserId: AdminUserId,
+			}); err != nil {
+				return fmt.Errorf("failed to update admin user: %s", err)
+			}
+			if err := ss.ChangeUserPassword(ctx, &models.ChangeUserPasswordCommand{
+				NewPassword: ss.Cfg.AdminPassword,
+				UserId:      AdminUserId,
+			}); err != nil {
+				return fmt.Errorf("failed to update admin user: %s", err)
+			}
 			return nil
 		}
 
