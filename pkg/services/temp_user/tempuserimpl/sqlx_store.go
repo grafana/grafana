@@ -53,7 +53,7 @@ func (ss *sqlxStore) CreateTempUser(ctx context.Context, cmd *models.CreateTempU
 	user.Id, err = ss.sess.ExecWithReturningId(
 		ctx, query, user.Email, user.Name, user.OrgId, user.Code,
 		user.Role, user.Status, user.RemoteAddr, user.InvitedByUserId,
-		user.EmailSentOn, &now, now, user.Version, user.EmailSent)
+		user.EmailSentOn, now.Unix(), now.Unix(), user.Version, user.EmailSent)
 	cmd.Result = user
 	return err
 }
@@ -130,7 +130,7 @@ func (ss *sqlxStore) GetTempUserByCode(ctx context.Context, query *models.GetTem
 
 func (ss *sqlxStore) ExpireOldUserInvites(ctx context.Context, cmd *models.ExpireTempUsersCommand) error {
 	rawSQL := "UPDATE temp_user SET status = ?, updated = ? WHERE created <= ? AND status in (?, ?)"
-	if result, err := ss.sess.Exec(ctx, rawSQL, string(models.TmpUserExpired), time.Now().Unix(), cmd.OlderThan.Unix(), string(models.TmpUserSignUpStarted), string(models.TmpUserInvitePending)); err != nil {
+	if result, err := ss.sess.Exec(ctx, rawSQL, string(models.TmpUserExpired), time.Now().Unix(), cmd.OlderThan, string(models.TmpUserSignUpStarted), string(models.TmpUserInvitePending)); err != nil {
 		return err
 	} else if cmd.NumExpired, err = result.RowsAffected(); err != nil {
 		return err
