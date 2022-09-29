@@ -1,10 +1,10 @@
 // Libraries
 import { css, cx } from '@emotion/css';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
-import { CustomScrollbar, useStyles2 } from '@grafana/ui';
+import { CustomScrollbar, useStyles2, useTheme2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
 import { Footer } from '../Footer/Footer';
@@ -31,10 +31,19 @@ export const Page: PageType = ({
   scrollRef,
   ...otherProps
 }) => {
+  const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const navModel = usePageNav(navId, oldNavProp);
   const { chrome } = useGrafana();
-  const [isSectionNavExpanded, setSectionNavExpanded] = useLocalStorage<boolean>('grafana.sectionNav.expanded', true);
+
+  const mediaQuery = window.matchMedia(`(max-width: ${theme.breakpoints.values.lg}px)`);
+  mediaQuery.addEventListener('change', (e) => setNavExpanded(e.matches ? false : navExpandedPreference));
+  const isSmallScreen = mediaQuery.matches;
+  const [navExpandedPreference, setNavExpandedPreference] = useLocalStorage<boolean>(
+    'grafana.sectionNav.expanded',
+    !isSmallScreen
+  );
+  const [isNavExpanded, setNavExpanded] = useState(!isSmallScreen && navExpandedPreference);
 
   usePageTitle(navModel, pageNav);
 
@@ -49,17 +58,22 @@ export const Page: PageType = ({
     }
   }, [navModel, pageNav, chrome]);
 
+  const onToggleSectionNav = () => {
+    setNavExpandedPreference(!isNavExpanded);
+    setNavExpanded(!isNavExpanded);
+  };
+
   return (
     <div className={cx(styles.wrapper, className)} {...otherProps}>
       {layout === PageLayoutType.Standard && (
         <div className={styles.panes}>
           {navModel && (
             <>
-              <SectionNav model={navModel} isExpanded={Boolean(isSectionNavExpanded)} />
+              <SectionNav model={navModel} isExpanded={Boolean(isNavExpanded)} />
               <SectionNavToggle
                 className={styles.collapseIcon}
-                isExpanded={Boolean(isSectionNavExpanded)}
-                onClick={() => setSectionNavExpanded(!isSectionNavExpanded)}
+                isExpanded={Boolean(isNavExpanded)}
+                onClick={onToggleSectionNav}
               />
             </>
           )}
