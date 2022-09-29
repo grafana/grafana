@@ -77,7 +77,7 @@ If possible, we recommend you to use the latest service pack available for optim
 
 ## Query builder
 
-{{< figure src="/static/img/docs/v92/mysql_query_builder.png" class="docs-image--no-shadow" }}
+{{< figure src="/static/img/docs/v92/mssql_query_builder.png" class="docs-image--no-shadow" >}}
 
 The MS SQL query builder is available when editing a panel using a MS SQL data source. The built query can be run by pressing the `Run query` button in the top right corner of the editor.
 
@@ -113,7 +113,7 @@ By flipping the preview switch at the top of the editor, you can get a preview o
 
 ## Code editor
 
-{{< figure src="/static/img/docs/v92/mysql_code_editor.png" class="docs-image--no-shadow" }}
+{{< figure src="/static/img/docs/v92/mssql_code_editor.png" class="docs-image--no-shadow" >}}
 
 To make advanced queries, switch to the code editor by clicking `code` in the top right corner of the editor. The code editor support autocompletion of tables, columns, SQL keywords, standard sql functions, Grafana template variables and Grafana macros. Columns cannot be completed before a table has been specified.
 
