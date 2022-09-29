@@ -270,7 +270,20 @@ func (pd *PublicDashboardServiceImpl) buildMetricRequest(ctx context.Context, da
 		// and different methods for each query type (textbox, custom, list, multivalue)
 		for _, varObj := range dashboard.Data.Get("templating").Get("list").MustArray() {
 			variable := simplejson.NewFromAny(varObj)
-			value := variable.Get("current").Get("value").MustString()
+			var value string
+
+			if variable.Get("multi").MustBool() {
+				valuesObj := variable.Get("current").Get("value").MustArray()
+				var valuesArray []string
+
+				for _, valueObj := range valuesObj {
+					valuesArray = append(valuesArray, valueObj.(string))
+				}
+				value = strings.Join(valuesArray[:], ",")
+			} else {
+				value = variable.Get("current").Get("value").MustString()
+			}
+
 			name := variable.Get("name").MustString()
 
 			// some DS uses rawSQL
