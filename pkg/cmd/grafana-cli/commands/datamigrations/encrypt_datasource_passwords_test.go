@@ -17,10 +17,15 @@ import (
 
 func TestPasswordMigrationCommand(t *testing.T) {
 	// setup datasources with password, basic_auth and none
-	sqlstore := sqlstore.InitTestDB(t)
-	session := sqlstore.NewSession(context.Background())
-	defer session.Close()
+	store := sqlstore.InitTestDB(t)
+	err := store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		passwordMigration(t, sess, store)
+		return nil
+	})
+	require.NoError(t, err)
+}
 
+func passwordMigration(t *testing.T, session *sqlstore.DBSession, sqlstore *sqlstore.SQLStore) {
 	ds := []*datasources.DataSource{
 		{Type: "influxdb", Name: "influxdb", Password: "foobar", Uid: "influx"},
 		{Type: "graphite", Name: "graphite", BasicAuthPassword: "foobar", Uid: "graphite"},
