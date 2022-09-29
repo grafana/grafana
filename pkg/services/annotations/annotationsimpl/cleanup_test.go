@@ -132,57 +132,62 @@ func TestOldAnnotationsAreDeletedFirst(t *testing.T) {
 		Created:     time.Now().AddDate(-10, 0, -10).UnixNano() / int64(time.Millisecond),
 	}
 
-	session := fakeSQL.NewSession(context.Background())
-	defer session.Close()
+	err := fakeSQL.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		_, err := sess.Insert(a)
+		require.NoError(t, err, "cannot insert annotation")
+		_, err = sess.Insert(a)
+		require.NoError(t, err, "cannot insert annotation")
 
-	_, err := session.Insert(a)
-	require.NoError(t, err, "cannot insert annotation")
-	_, err = session.Insert(a)
-	require.NoError(t, err, "cannot insert annotation")
+		a.AlertId = 20
+		_, err = sess.Insert(a)
+		require.NoError(t, err, "cannot insert annotation")
 
-	a.AlertId = 20
-	_, err = session.Insert(a)
-	require.NoError(t, err, "cannot insert annotation")
+		// run the clean up task to keep one annotation.
+		cfg := setting.NewCfg()
+		cfg.AnnotationCleanupJobBatchSize = 1
+		cleaner := &xormRepositoryImpl{cfg: cfg, log: log.New("test-logger"), db: fakeSQL}
+		_, err = cleaner.CleanAnnotations(context.Background(), setting.AnnotationCleanupSettings{MaxCount: 1}, alertAnnotationType)
+		require.NoError(t, err)
 
-	// run the clean up task to keep one annotation.
-	cfg := setting.NewCfg()
-	cfg.AnnotationCleanupJobBatchSize = 1
-	cleaner := &xormRepositoryImpl{cfg: cfg, log: log.New("test-logger"), db: fakeSQL}
-	_, err = cleaner.CleanAnnotations(context.Background(), setting.AnnotationCleanupSettings{MaxCount: 1}, alertAnnotationType)
+		// assert that the last annotations were kept
+		countNew, err := sess.Where("alert_id = 20").Count(&annotations.Item{})
+		require.NoError(t, err)
+		require.Equal(t, int64(1), countNew, "the last annotations should be kept")
+
+		countOld, err := sess.Where("alert_id = 10").Count(&annotations.Item{})
+		require.NoError(t, err)
+		require.Equal(t, int64(0), countOld, "the two first annotations should have been deleted")
+
+		return nil
+	})
 	require.NoError(t, err)
-
-	// assert that the last annotations were kept
-	countNew, err := session.Where("alert_id = 20").Count(&annotations.Item{})
-	require.NoError(t, err)
-	require.Equal(t, int64(1), countNew, "the last annotations should be kept")
-
-	countOld, err := session.Where("alert_id = 10").Count(&annotations.Item{})
-	require.NoError(t, err)
-	require.Equal(t, int64(0), countOld, "the two first annotations should have been deleted")
 }
 
 func assertAnnotationCount(t *testing.T, fakeSQL *sqlstore.SQLStore, sql string, expectedCount int64) {
 	t.Helper()
 
-	session := fakeSQL.NewSession(context.Background())
-	defer session.Close()
-	count, err := session.Where(sql).Count(&annotations.Item{})
+	err := fakeSQL.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		count, err := sess.Where(sql).Count(&annotations.Item{})
+		require.NoError(t, err)
+		require.Equal(t, expectedCount, count)
+		return nil
+	})
 	require.NoError(t, err)
-	require.Equal(t, expectedCount, count)
 }
 
 func assertAnnotationTagCount(t *testing.T, fakeSQL *sqlstore.SQLStore, expectedCount int64) {
 	t.Helper()
 
-	session := fakeSQL.NewSession(context.Background())
-	defer session.Close()
-
-	count, err := session.SQL("select count(*) from annotation_tag").Count()
+	err := fakeSQL.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		count, err := sess.SQL("select count(*) from annotation_tag").Count()
+		require.NoError(t, err)
+		require.Equal(t, expectedCount, count)
+		return nil
+	})
 	require.NoError(t, err)
-	require.Equal(t, expectedCount, count)
 }
 
-func createTestAnnotations(t *testing.T, sqlstore *sqlstore.SQLStore, expectedCount int, oldAnnotations int) {
+func createTestAnnotations(t *testing.T, store *sqlstore.SQLStore, expectedCount int, oldAnnotations int) {
 	t.Helper()
 
 	cutoffDate := time.Now()
@@ -216,16 +221,19 @@ func createTestAnnotations(t *testing.T, sqlstore *sqlstore.SQLStore, expectedCo
 			a.Created = cutoffDate.AddDate(-10, 0, -10).UnixNano() / int64(time.Millisecond)
 		}
 
-		_, err := sqlstore.NewSession(context.Background()).Insert(a)
-		require.NoError(t, err, "should be able to save annotation", err)
+		err := store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			_, err := sess.Insert(a)
+			require.NoError(t, err, "should be able to save annotation", err)
 
-		// mimick the SQL annotation Save logic by writing records to the annotation_tag table
-		// we need to ensure they get deleted when we clean up annotations
-		sess := sqlstore.NewSession(context.Background())
-		for tagID := range []int{1, 2} {
-			_, err = sess.Exec("INSERT INTO annotation_tag (annotation_id, tag_id) VALUES(?,?)", a.Id, tagID)
-			require.NoError(t, err, "should be able to save annotation tag ID", err)
-		}
+			// mimick the SQL annotation Save logic by writing records to the annotation_tag table
+			// we need to ensure they get deleted when we clean up annotations
+			for tagID := range []int{1, 2} {
+				_, err = sess.Exec("INSERT INTO annotation_tag (annotation_id, tag_id) VALUES(?,?)", a.Id, tagID)
+				require.NoError(t, err, "should be able to save annotation tag ID", err)
+			}
+			return err
+		})
+		require.NoError(t, err)
 	}
 }
 
