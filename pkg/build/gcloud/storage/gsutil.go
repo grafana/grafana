@@ -10,6 +10,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -356,6 +357,41 @@ func (client *Client) DownloadDirectory(ctx context.Context, bucket *storage.Buc
 		}
 	}
 	return nil
+}
+
+// GetLatestMainBuild gets the latest main build which is successfully uploaded to the gcs bucket.
+func GetLatestMainBuild(ctx context.Context, bucket *storage.BucketHandle, path string) (string, error) {
+	if bucket == nil {
+		return "", ErrorNilBucket
+	}
+
+	it := bucket.Objects(ctx, &storage.Query{
+		Prefix: path,
+	})
+
+	var files []string
+	for {
+		attrs, err := it.Next()
+		if errors.Is(err, iterator.Done) {
+			break
+		}
+		if err != nil {
+			return "", fmt.Errorf("failed to iterate through bucket, err: %w", err)
+		}
+
+		files = append(files, attrs.Name)
+	}
+
+	var latestVersion string
+	for i := len(files) - 1; i >= 0; i-- {
+		captureVersion := regexp.MustCompile(`(\d+\.\d+\.\d+-\d+pre)`)
+		if captureVersion.MatchString(files[i]) {
+			latestVersion = captureVersion.FindString(files[i])
+			break
+		}
+	}
+
+	return latestVersion, nil
 }
 
 // downloadFile downloads an object to a file.
