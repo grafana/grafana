@@ -5,7 +5,9 @@ import (
 	"testing"
 
 	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apikey"
+	grpccontext "github.com/grafana/grafana/pkg/services/grpcserver/context"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
@@ -13,6 +15,7 @@ import (
 )
 
 func TestAuthenticator_Authenticate(t *testing.T) {
+	tracer := tracing.InitializeTracerForTest()
 	serviceAccountId := int64(1)
 	t.Run("accepts service api key with admin role", func(t *testing.T) {
 		s := newFakeAPIKey(&apikey.APIKey{
@@ -22,7 +25,7 @@ func TestAuthenticator_Authenticate(t *testing.T) {
 			Name:             "Admin API Key",
 			ServiceAccountId: &serviceAccountId,
 		}, nil)
-		a := NewAuthenticator(s, &fakeUserService{OrgRole: org.RoleAdmin})
+		a := ProvideAuthenticator(s, &fakeUserService{OrgRole: org.RoleAdmin}, grpccontext.ProvideContextHandler(tracer))
 		ctx, err := setupContext()
 		require.NoError(t, err)
 		_, err = a.Authenticate(ctx)
@@ -37,7 +40,7 @@ func TestAuthenticator_Authenticate(t *testing.T) {
 			Name:             "Admin API Key",
 			ServiceAccountId: &serviceAccountId,
 		}, nil)
-		a := NewAuthenticator(s, &fakeUserService{OrgRole: org.RoleEditor})
+		a := ProvideAuthenticator(s, &fakeUserService{OrgRole: org.RoleEditor}, grpccontext.ProvideContextHandler(tracer))
 		ctx, err := setupContext()
 		require.NoError(t, err)
 		_, err = a.Authenticate(ctx)
@@ -52,7 +55,7 @@ func TestAuthenticator_Authenticate(t *testing.T) {
 			Name:             "Admin API Key",
 			ServiceAccountId: &serviceAccountId,
 		}, nil)
-		a := NewAuthenticator(s, &fakeUserService{OrgRole: org.RoleAdmin})
+		a := ProvideAuthenticator(s, &fakeUserService{OrgRole: org.RoleAdmin}, grpccontext.ProvideContextHandler(tracer))
 		ctx, err := setupContext()
 		require.NoError(t, err)
 		md, ok := metadata.FromIncomingContext(ctx)
@@ -63,6 +66,23 @@ func TestAuthenticator_Authenticate(t *testing.T) {
 		md, ok = metadata.FromIncomingContext(ctx)
 		require.True(t, ok)
 		require.Empty(t, md["authorization"])
+	})
+
+	t.Run("sets SignInUser", func(t *testing.T) {
+		s := newFakeAPIKey(&apikey.APIKey{
+			Id:               1,
+			OrgId:            1,
+			Key:              "admin-api-key",
+			Name:             "Admin API Key",
+			ServiceAccountId: &serviceAccountId,
+		}, nil)
+		a := ProvideAuthenticator(s, &fakeUserService{OrgRole: org.RoleAdmin}, grpccontext.ProvideContextHandler(tracer))
+		ctx, err := setupContext()
+		require.NoError(t, err)
+		ctx, err = a.Authenticate(ctx)
+		require.NoError(t, err)
+		signedInUser := grpccontext.FromContext(ctx).SignedInUser
+		require.Equal(t, serviceAccountId, signedInUser.UserID)
 	})
 }
 
