@@ -166,7 +166,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 
       z-index: ${theme.zIndex.dropdown};
 
-      @media (max-width: ${theme.breakpoints.values.sm}px) {
+      ${theme.breakpoints.down('sm')} {
         .drawer-content-wrapper {
           width: 100% !important;
         }
