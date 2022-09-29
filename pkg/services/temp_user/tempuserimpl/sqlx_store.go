@@ -74,7 +74,7 @@ func (ss *sqlxStore) GetTempUsersQuery(ctx context.Context, query *models.GetTem
 					tu.status         as status,
 					tu.email_sent     as email_sent,
 					tu.email_sent_on  as email_sent_on,
-					tu.created		  as created,
+					CAST(tu.created as DATETIME) as created,
 					u.login			  as invited_by_login,
 					u.name			  as invited_by_name,
 					u.email			  as invited_by_email
@@ -95,7 +95,6 @@ func (ss *sqlxStore) GetTempUsersQuery(ctx context.Context, query *models.GetTem
 
 	rawSQL += " ORDER BY tu.created desc"
 	query.Result = make([]*models.TempUserDTO, 0)
-
 	return ss.sess.Select(ctx, &query.Result, rawSQL, params...)
 }
 

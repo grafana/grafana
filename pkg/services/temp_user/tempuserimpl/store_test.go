@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/stretchr/testify/require"
@@ -84,6 +85,10 @@ func testIntegrationTempUserCommandsAndQueries(t *testing.T, fn getStore) {
 		createdAt := time.Unix(cmd.Result.Created, 0)
 		cmd2 := models.ExpireTempUsersCommand{OlderThan: createdAt.Add(1 * time.Second)}
 		err := store.ExpireOldUserInvites(context.Background(), &cmd2)
+
+		query := models.GetTempUsersQuery{OrgId: 2256, Status: models.TmpUserInvitePending}
+		store.GetTempUsersQuery(context.Background(), &query)
+		spew.Dump(">>>>>>>>>>>>>>>>>", query.Result)
 		require.Nil(t, err)
 		require.Equal(t, int64(1), cmd2.NumExpired)
 
