@@ -112,6 +112,8 @@ RscWbg==
 -----END PGP PRIVATE KEY BLOCK-----
 `
 
+// Dummy GPG keys, used only for testing
+// nolint:gosec
 const passPhrase = `MkDgjkrgdGxt`
 
 func TestSignRPMRepo(t *testing.T) {
