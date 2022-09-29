@@ -75,7 +75,7 @@ You can use wildcards (`*`) in place of database or table if you want to grant a
 
 ## Query builder
 
-{{< figure src="/static/img/docs/v92/mysql_query_builder.png" class="docs-image--no-shadow" }}
+{{< figure src="/static/img/docs/v92/mysql_query_builder.png" class="docs-image--no-shadow" >}}
 
 The MySQL query builder is available when editing a panel using a MySQL data source. The built query can be run by pressing the `Run query` button in the top right corner of the editor.
 
@@ -90,7 +90,7 @@ When the dataset is selected, the table dropdown is populated with the tables th
 
 ### Columns and Aggregation functions (SELECT)
 
-Using the dropdown,  select a column to include in the data. You can also specify an optional aggregation function.
+Using the dropdown, select a column to include in the data. You can also specify an optional aggregation function.
 
 Add further value columns by clicking the plus button and another column dropdown appears.
 
@@ -111,7 +111,7 @@ By flipping the preview switch at the top of the editor, you can get a preview o
 
 ## Code editor
 
-{{< figure src="/static/img/docs/v92/mysql_code_editor.png" class="docs-image--no-shadow" }}
+{{< figure src="/static/img/docs/v92/mysql_code_editor.png" class="docs-image--no-shadow" >}}
 
 To make advanced queries, switch to the code editor by clicking `code` in the top right corner of the editor. The code editor support autocompletion of tables, columns, SQL keywords, standard sql functions, Grafana template variables and Grafana macros. Columns cannot be completed before a table has been specified.
 
