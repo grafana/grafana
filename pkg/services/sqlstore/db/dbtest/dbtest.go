@@ -22,6 +22,6 @@ func (f *FakeDB) WithDbSession(ctx context.Context, callback sqlstore.DBTransact
 	return f.ExpectedError
 }
 
-func (f *FakeDB) WithDbSessionForceNewSession(ctx context.Context, callback sqlstore.DBTransactionFunc) error {
+func (f *FakeDB) WithNewDbSession(ctx context.Context, callback sqlstore.DBTransactionFunc) error {
 	return f.ExpectedError
 }

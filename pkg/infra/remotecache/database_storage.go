@@ -55,7 +55,7 @@ func (dc *databaseCache) internalRunGC() {
 func (dc *databaseCache) Get(ctx context.Context, key string) (interface{}, error) {
 	cacheHit := CacheData{}
 
-	var r interface{}
+	item := &cachedItem{}
 	err := dc.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
 		exist, err := session.Where("cache_key= ?", key).Get(&cacheHit)
 
@@ -78,16 +78,14 @@ func (dc *databaseCache) Get(ctx context.Context, key string) (interface{}, erro
 			}
 		}
 
-		item := &cachedItem{}
 		if err = decodeGob(cacheHit.Data, item); err != nil {
 			return err
 		}
-		r = item.Val
 
 		return nil
 	})
 
-	return r, err
+	return item.Val, err
 }
 
 func (dc *databaseCache) Set(ctx context.Context, key string, value interface{}, expire time.Duration) error {

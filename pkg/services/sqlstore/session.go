@@ -59,8 +59,8 @@ func (ss *SQLStore) WithDbSession(ctx context.Context, callback DBTransactionFun
 	return withDbSession(ctx, ss.engine, callback)
 }
 
-// WithDbSession calls the callback with a new session that is closed upon completion.
-func (ss *SQLStore) WithDbSessionForceNewSession(ctx context.Context, callback DBTransactionFunc) error {
+// WithNewDbSession calls the callback with a new session that is closed upon completion.
+func (ss *SQLStore) WithNewDbSession(ctx context.Context, callback DBTransactionFunc) error {
 	sess := &DBSession{Session: ss.engine.NewSession(), transactionOpen: false}
 	defer sess.Close()
 	return callback(sess)

@@ -29,7 +29,7 @@ type Store interface {
 	UpdateUserPermissions(userID int64, isAdmin bool) error
 	SetUserHelpFlag(ctx context.Context, cmd *models.SetUserHelpFlagCommand) error
 	WithDbSession(ctx context.Context, callback DBTransactionFunc) error
-	WithDbSessionForceNewSession(ctx context.Context, callback DBTransactionFunc) error
+	WithNewDbSession(ctx context.Context, callback DBTransactionFunc) error
 	GetOrgQuotaByTarget(ctx context.Context, query *models.GetOrgQuotaByTargetQuery) error
 	GetOrgQuotas(ctx context.Context, query *models.GetOrgQuotasQuery) error
 	UpdateOrgQuota(ctx context.Context, cmd *models.UpdateOrgQuotaCmd) error
