@@ -27,7 +27,7 @@ var (
 )
 
 func ProvideDummyObjectServer(cfg *setting.Cfg, grpcServerProvider grpcserver.Provider) object.ObjectStoreServer {
-	objectServer := &inMemoryObjectServer{
+	objectServer := &dummyObjectServer{
 		collection: newCollection[*RawObjectWithHistory]("raw-object", cfg.DataPath, rawObjectVersion),
 		log:        log.New("in-memory-object-server"),
 	}
@@ -35,7 +35,7 @@ func ProvideDummyObjectServer(cfg *setting.Cfg, grpcServerProvider grpcserver.Pr
 	return objectServer
 }
 
-type inMemoryObjectServer struct {
+type dummyObjectServer struct {
 	log        log.Logger
 	collection collection[*RawObjectWithHistory]
 }
@@ -54,7 +54,7 @@ func userFromContext(ctx context.Context) *user.SignedInUser {
 	}
 }
 
-func (i inMemoryObjectServer) findObject(ctx context.Context, objects []*RawObjectWithHistory, uid string, kind string, version string) (*RawObjectWithHistory, *object.RawObject, error) {
+func (i dummyObjectServer) findObject(ctx context.Context, objects []*RawObjectWithHistory, uid string, kind string, version string) (*RawObjectWithHistory, *object.RawObject, error) {
 	if uid == "" {
 		return nil, nil, errors.New("UID must not be empty")
 	}
@@ -90,7 +90,7 @@ func (i inMemoryObjectServer) findObject(ctx context.Context, objects []*RawObje
 	return obj, nil, nil
 }
 
-func (i inMemoryObjectServer) Read(ctx context.Context, r *object.ReadObjectRequest) (*object.ReadObjectResponse, error) {
+func (i dummyObjectServer) Read(ctx context.Context, r *object.ReadObjectRequest) (*object.ReadObjectResponse, error) {
 	objects, err := i.collection.Load(ctx, orgIdFromUID(r.UID))
 	if err != nil {
 		return nil, err
@@ -114,7 +114,7 @@ func (i inMemoryObjectServer) Read(ctx context.Context, r *object.ReadObjectRequ
 	}, nil
 }
 
-func (i inMemoryObjectServer) BatchRead(ctx context.Context, batchR *object.BatchReadObjectRequest) (*object.BatchReadObjectResponse, error) {
+func (i dummyObjectServer) BatchRead(ctx context.Context, batchR *object.BatchReadObjectRequest) (*object.BatchReadObjectResponse, error) {
 	results := make([]*object.ReadObjectResponse, 0)
 	for _, r := range batchR.Batch {
 		resp, err := i.Read(ctx, r)
@@ -132,7 +132,7 @@ func createContentsHash(contents []byte) string {
 	return hex.EncodeToString(hash[:])
 }
 
-func (i inMemoryObjectServer) update(ctx context.Context, r *object.WriteObjectRequest, orgID int64, objects []*RawObjectWithHistory) (*object.WriteObjectResponse, error) {
+func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequest, orgID int64, objects []*RawObjectWithHistory) (*object.WriteObjectResponse, error) {
 	obj, _, err := i.findObject(ctx, objects, r.UID, r.Kind, "")
 	if err != nil {
 		return nil, err
@@ -179,7 +179,7 @@ func (i inMemoryObjectServer) update(ctx context.Context, r *object.WriteObjectR
 	}, nil
 }
 
-func (i inMemoryObjectServer) insert(ctx context.Context, r *object.WriteObjectRequest, orgID int64, objects []*RawObjectWithHistory) (*object.WriteObjectResponse, error) {
+func (i dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectRequest, orgID int64, objects []*RawObjectWithHistory) (*object.WriteObjectResponse, error) {
 	modifier := userFromContext(ctx)
 	rawObj := &object.RawObject{
 		UID:      r.UID,
@@ -211,7 +211,7 @@ func (i inMemoryObjectServer) insert(ctx context.Context, r *object.WriteObjectR
 	}, nil
 }
 
-func (i inMemoryObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest) (*object.WriteObjectResponse, error) {
+func (i dummyObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest) (*object.WriteObjectResponse, error) {
 	orgID := orgIdFromUID(r.UID)
 	objects, err := i.collection.Load(ctx, orgID)
 	if err != nil {
@@ -233,7 +233,7 @@ func (i inMemoryObjectServer) Write(ctx context.Context, r *object.WriteObjectRe
 	return i.update(ctx, r, orgID, objects)
 }
 
-func (i inMemoryObjectServer) Delete(ctx context.Context, r *object.DeleteObjectRequest) (*object.DeleteObjectResponse, error) {
+func (i dummyObjectServer) Delete(ctx context.Context, r *object.DeleteObjectRequest) (*object.DeleteObjectResponse, error) {
 	orgID := orgIdFromUID(r.UID)
 	objects, err := i.collection.Load(ctx, orgID)
 	if err != nil {
@@ -277,7 +277,7 @@ func (i inMemoryObjectServer) Delete(ctx context.Context, r *object.DeleteObject
 	}, nil
 }
 
-func (i inMemoryObjectServer) History(ctx context.Context, r *object.ObjectHistoryRequest) (*object.ObjectHistoryResponse, error) {
+func (i dummyObjectServer) History(ctx context.Context, r *object.ObjectHistoryRequest) (*object.ObjectHistoryResponse, error) {
 	objects, err := i.collection.Load(ctx, orgIdFromUID(r.UID))
 	if err != nil {
 		return nil, err
@@ -311,7 +311,7 @@ func (i inMemoryObjectServer) History(ctx context.Context, r *object.ObjectHisto
 	}, nil
 }
 
-func (i inMemoryObjectServer) Search(ctx context.Context, r *object.ObjectSearchRequest) (*object.ObjectSearchResponse, error) {
+func (i dummyObjectServer) Search(ctx context.Context, r *object.ObjectSearchRequest) (*object.ObjectSearchResponse, error) {
 	// TODO filter
 	objects, err := i.collection.Load(ctx, orgIdFromUID("TODO"))
 	if err != nil {
