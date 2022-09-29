@@ -35,7 +35,7 @@ export interface Props extends Themeable2 {
   forceEscape?: boolean;
   showDetectedFields?: string[];
   app?: CoreApp;
-  scrollElement?: HTMLDivElement | undefined;
+  scrollElement?: HTMLDivElement;
   showContextToggle?: (row?: LogRowModel) => boolean;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;

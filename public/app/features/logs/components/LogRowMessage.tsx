@@ -24,7 +24,7 @@ interface Props extends Themeable2 {
   context?: LogRowContextRows;
   showRowMenu?: boolean;
   app?: CoreApp;
-  scrollElement?: HTMLDivElement | undefined;
+  scrollElement?: HTMLDivElement;
   showContextToggle?: (row?: LogRowModel) => boolean;
   getRows: () => LogRowModel[];
   onToggleContext: () => void;
@@ -121,14 +121,12 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
   };
 
   onShowContextClick = (e: React.SyntheticEvent<HTMLElement, Event>) => {
+    const { scrollElement } = this.props;
     this.onContextToggle(e);
-    if (this.props.scrollElement && this.logRowRef.current) {
-      this.props.scrollElement.scroll({
+    if (scrollElement && this.logRowRef.current) {
+      scrollElement.scroll({
         behavior: 'smooth',
-        top:
-          this.props.scrollElement.scrollTop +
-          this.logRowRef.current.getBoundingClientRect().top -
-          window.innerHeight / 2,
+        top: scrollElement.scrollTop + this.logRowRef.current.getBoundingClientRect().top - window.innerHeight / 2,
       });
     }
   };

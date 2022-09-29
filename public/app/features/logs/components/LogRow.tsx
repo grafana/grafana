@@ -43,7 +43,7 @@ interface Props extends Themeable2 {
   logsSortOrder?: LogsSortOrder | null;
   forceEscape?: boolean;
   showDetectedFields?: string[];
-  scrollElement?: HTMLDivElement | undefined;
+  scrollElement?: HTMLDivElement;
   showRowMenu?: boolean;
   app?: CoreApp;
   getRows: () => LogRowModel[];
