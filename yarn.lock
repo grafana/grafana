@@ -22638,7 +22638,7 @@ __metadata:
     rc-drawer: 4.4.3
     rc-slider: 9.7.5
     rc-time-picker: 3.7.3
-    rc-tree: 5.6.6
+    rc-tree: 5.7.0
     re-resizable: 6.9.9
     react: 17.0.2
     react-awesome-query-builder: 5.3.1
@@ -32220,9 +32220,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-tree@npm:5.6.6":
-  version: 5.6.6
-  resolution: "rc-tree@npm:5.6.6"
+"rc-tree@npm:5.7.0":
+  version: 5.7.0
+  resolution: "rc-tree@npm:5.7.0"
   dependencies:
     "@babel/runtime": ^7.10.1
     classnames: 2.x
@@ -32232,7 +32232,7 @@ __metadata:
   peerDependencies:
     react: "*"
     react-dom: "*"
-  checksum: 9584413b9b22d845fde70723db4994fe01982b6753bd02f154947c18e8187e3c276533b0c888dc41d813315dc91a40b0cf4dba9b10067f914f1deecdb7219677
+  checksum: 0bcab3a11615ca69386077841d63337206ddb6dcb7284b6cfbc53d39b450e74f5e3e0f43b190e445182321bb6052a9b46dacc566a6a564e8ba2d65e83b99ffcb
   languageName: node
   linkType: hard
 
