@@ -233,7 +233,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 
 		require.Equal(t, dsCfg.APIVersion, int64(0))
 
-		validateDatasource(t, dsCfg)
+		validateDatasourceV0(t, dsCfg)
 		validateDeleteDatasources(t, dsCfg)
 	})
 
@@ -292,7 +292,7 @@ func validateDeleteDatasources(t *testing.T, dsCfg *configs) {
 	require.Equal(t, deleteDs.OrgID, int64(2))
 }
 
-func validateDatasource(t *testing.T, dsCfg *configs) {
+func validateDatasourceV0(t *testing.T, dsCfg *configs) {
 	ds := dsCfg.Datasources[0]
 	require.Equal(t, ds.Name, "name")
 	require.Equal(t, ds.Type, "type")
@@ -308,12 +308,6 @@ func validateDatasource(t *testing.T, dsCfg *configs) {
 	require.True(t, ds.Editable)
 	require.Equal(t, ds.Version, 10)
 
-	require.Equal(t, []map[string]interface{}{{
-		"targetUID":   "a target",
-		"label":       "a label",
-		"description": "a description",
-	}}, ds.Correlations)
-
 	require.Greater(t, len(ds.JSONData), 2)
 	require.Equal(t, ds.JSONData["graphiteVersion"], "1.1")
 	require.Equal(t, ds.JSONData["tlsAuth"], true)
@@ -326,9 +320,20 @@ func validateDatasource(t *testing.T, dsCfg *configs) {
 }
 
 func validateDatasourceV1(t *testing.T, dsCfg *configs) {
-	validateDatasource(t, dsCfg)
+	validateDatasourceV0(t, dsCfg)
 	ds := dsCfg.Datasources[0]
 	require.Equal(t, ds.UID, "test_uid")
+	require.Equal(t, []map[string]interface{}{{
+		"targetUID":   "a target",
+		"label":       "a label",
+		"description": "a description",
+		"config": map[string]interface{}{
+			"field": "fieldName",
+			"target": map[string]interface{}{
+				"target": "test.query",
+			},
+		},
+	}}, ds.Correlations)
 }
 
 type mockOrgStore struct{ ExpectedOrg *models.Org }

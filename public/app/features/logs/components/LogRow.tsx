@@ -12,6 +12,7 @@ import {
   checkLogsError,
   escapeUnescapedString,
   GrafanaTheme2,
+  CoreApp,
 } from '@grafana/data';
 import { styleMixins, withTheme2, Themeable2, Icon, Tooltip } from '@grafana/ui';
 
@@ -42,6 +43,8 @@ interface Props extends Themeable2 {
   logsSortOrder?: LogsSortOrder | null;
   forceEscape?: boolean;
   showDetectedFields?: string[];
+  showRowMenu?: boolean;
+  app?: CoreApp;
   getRows: () => LogRowModel[];
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
@@ -52,6 +55,7 @@ interface Props extends Themeable2 {
   onClickShowDetectedField?: (key: string) => void;
   onClickHideDetectedField?: (key: string) => void;
   onLogRowHover?: (row?: LogRowModel) => void;
+  toggleContextIsOpen?: () => void;
 }
 
 interface State {
@@ -91,6 +95,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
   };
 
   toggleContext = () => {
+    this.props.toggleContextIsOpen?.();
     this.setState((state) => {
       return {
         showContext: !state.showContext,
@@ -119,7 +124,8 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     context?: LogRowContextRows,
     errors?: LogRowContextQueryErrors,
     hasMoreContextRows?: HasMoreContextRows,
-    updateLimit?: () => void
+    updateLimit?: () => void,
+    logsSortOrder?: LogsSortOrder | null
   ) {
     const {
       getRows,
@@ -131,6 +137,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       row,
       showDuplicates,
       showContextToggle,
+      showRowMenu,
       showLabels,
       showTime,
       showDetectedFields,
@@ -140,6 +147,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       getFieldLinks,
       forceEscape,
       onLogRowHover,
+      app,
     } = this.props;
     const { showDetails, showContext } = this.state;
     const style = getLogRowStyles(theme, row.logLevel);
@@ -206,9 +214,12 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               context={context}
               contextIsOpen={showContext}
               showContextToggle={showContextToggle}
+              showRowMenu={showRowMenu}
               wrapLogMessage={wrapLogMessage}
               prettifyLogMessage={prettifyLogMessage}
               onToggleContext={this.toggleContext}
+              app={app}
+              logsSortOrder={logsSortOrder}
             />
           )}
         </tr>
@@ -240,8 +251,8 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       return (
         <>
           <LogRowContextProvider row={row} getRowContext={getRowContext} logsSortOrder={logsSortOrder}>
-            {({ result, errors, hasMoreContextRows, updateLimit }) => {
-              return <>{this.renderLogRow(result, errors, hasMoreContextRows, updateLimit)}</>;
+            {({ result, errors, hasMoreContextRows, updateLimit, logsSortOrder }) => {
+              return <>{this.renderLogRow(result, errors, hasMoreContextRows, updateLimit, logsSortOrder)}</>;
             }}
           </LogRowContextProvider>
         </>

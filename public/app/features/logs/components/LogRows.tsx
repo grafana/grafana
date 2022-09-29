@@ -1,7 +1,16 @@
 import memoizeOne from 'memoize-one';
 import React, { PureComponent } from 'react';
 
-import { TimeZone, LogsDedupStrategy, LogRowModel, Field, LinkModel, LogsSortOrder, sortLogRows } from '@grafana/data';
+import {
+  TimeZone,
+  LogsDedupStrategy,
+  LogRowModel,
+  Field,
+  LinkModel,
+  LogsSortOrder,
+  sortLogRows,
+  CoreApp,
+} from '@grafana/data';
 import { withTheme2, Themeable2 } from '@grafana/ui';
 
 //Components
@@ -25,6 +34,7 @@ export interface Props extends Themeable2 {
   previewLimit?: number;
   forceEscape?: boolean;
   showDetectedFields?: string[];
+  app?: CoreApp;
   showContextToggle?: (row?: LogRowModel) => boolean;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
@@ -37,6 +47,7 @@ export interface Props extends Themeable2 {
 
 interface State {
   renderAll: boolean;
+  contextIsOpen: boolean;
 }
 
 class UnThemedLogRows extends PureComponent<Props, State> {
@@ -48,6 +59,18 @@ class UnThemedLogRows extends PureComponent<Props, State> {
 
   state: State = {
     renderAll: false,
+    contextIsOpen: false,
+  };
+
+  /**
+   * Toggle the `contextIsOpen` state when a context of one LogRow is opened in order to not show the menu of the other log rows.
+   */
+  toggleContextIsOpen = (): void => {
+    this.setState((state) => {
+      return {
+        contextIsOpen: !state.contextIsOpen,
+      };
+    });
   };
 
   componentDidMount() {
@@ -100,8 +123,9 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       onClickHideDetectedField,
       forceEscape,
       onLogRowHover,
+      app,
     } = this.props;
-    const { renderAll } = this.state;
+    const { renderAll, contextIsOpen } = this.state;
     const { logsRowsTable } = getLogRowStyles(theme);
     const dedupedRows = deduplicatedRows ? deduplicatedRows : logRows;
     const hasData = logRows && logRows.length > 0;
@@ -130,6 +154,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 getRowContext={getRowContext}
                 row={row}
                 showContextToggle={showContextToggle}
+                showRowMenu={!contextIsOpen}
                 showDuplicates={showDuplicates}
                 showLabels={showLabels}
                 showTime={showTime}
@@ -145,7 +170,9 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 getFieldLinks={getFieldLinks}
                 logsSortOrder={logsSortOrder}
                 forceEscape={forceEscape}
+                toggleContextIsOpen={this.toggleContextIsOpen}
                 onLogRowHover={onLogRowHover}
+                app={app}
               />
             ))}
           {hasData &&
@@ -157,6 +184,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 getRowContext={getRowContext}
                 row={row}
                 showContextToggle={showContextToggle}
+                showRowMenu={!contextIsOpen}
                 showDuplicates={showDuplicates}
                 showLabels={showLabels}
                 showTime={showTime}
@@ -172,7 +200,9 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 getFieldLinks={getFieldLinks}
                 logsSortOrder={logsSortOrder}
                 forceEscape={forceEscape}
+                toggleContextIsOpen={this.toggleContextIsOpen}
                 onLogRowHover={onLogRowHover}
+                app={app}
               />
             ))}
           {hasData && !renderAll && (

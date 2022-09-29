@@ -51,7 +51,7 @@ func ProvideBackgroundServiceRegistry(
 	_ dashboardsnapshots.Service, _ *alerting.AlertNotificationService,
 	_ serviceaccounts.Service, _ *guardian.Provider,
 	_ *plugindashboardsservice.DashboardUpdater, _ *sanitizer.Provider,
-	_ *grpcserver.HealthService, _ object.ObjectStoreServer,
+	_ *grpcserver.HealthService, _ object.ObjectStoreServer, _ *grpcserver.ReflectionService,
 ) *BackgroundServiceRegistry {
 	return NewBackgroundServiceRegistry(
 		httpServer,

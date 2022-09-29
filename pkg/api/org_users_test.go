@@ -716,7 +716,7 @@ func TestOrgUsersAPIEndpointWithSetPerms_AccessControl(t *testing.T) {
 			sc := setupHTTPServer(t, true, func(hs *HTTPServer) {
 				hs.tempUserService = tempuserimpl.ProvideService(hs.SQLStore)
 				hs.userService = userimpl.ProvideService(
-					hs.SQLStore, nil, nil, hs.SQLStore.(*sqlstore.SQLStore),
+					hs.SQLStore, nil, setting.NewCfg(), hs.SQLStore.(*sqlstore.SQLStore),
 				)
 			})
 			setInitCtxSignedInViewer(sc.initCtx)

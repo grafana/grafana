@@ -13,6 +13,10 @@ export interface Props {
 export function SectionNav({ model }: Props) {
   const styles = useStyles2(getStyles);
 
+  if (!Boolean(model.main?.children?.length)) {
+    return null;
+  }
+
   return (
     <nav className={styles.nav}>
       <CustomScrollbar showScrollIndicators>

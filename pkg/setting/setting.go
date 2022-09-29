@@ -226,12 +226,13 @@ type Cfg struct {
 	Packaging string
 
 	// Paths
-	HomePath           string
-	ProvisioningPath   string
-	DataPath           string
-	LogsPath           string
-	PluginsPath        string
-	BundledPluginsPath string
+	HomePath              string
+	ProvisioningPath      string
+	DataPath              string
+	LogsPath              string
+	PluginsPath           string
+	BundledPluginsPath    string
+	EnterpriseLicensePath string
 
 	// SMTP email settings
 	Smtp SmtpSettings
@@ -263,7 +264,9 @@ type Cfg struct {
 	CSPTemplate           string
 	AngularSupportEnabled bool
 
-	TempDataLifetime                 time.Duration
+	TempDataLifetime time.Duration
+
+	// Plugins
 	PluginsEnableAlpha               bool
 	PluginsAppsSkipVerifyTLS         bool
 	PluginSettings                   PluginSettings
@@ -272,8 +275,9 @@ type Cfg struct {
 	PluginCatalogHiddenPlugins       []string
 	PluginAdminEnabled               bool
 	PluginAdminExternalManageEnabled bool
-	DisableSanitizeHtml              bool
-	EnterpriseLicensePath            string
+
+	// Panels
+	DisableSanitizeHtml bool
 
 	// Metrics
 	MetricsEndpointEnabled           bool
