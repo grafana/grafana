@@ -58,6 +58,7 @@ export function InlineEditBody() {
 
   const topLevelItemsContainerStyle = {
     marginLeft: 15,
+    marginTop: 10,
   };
 
   return (
