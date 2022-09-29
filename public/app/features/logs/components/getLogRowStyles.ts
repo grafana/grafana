@@ -58,11 +58,11 @@ export const getLogRowStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
         }
       }
 
-      td:last-child {
+      td:not(.log-row-menu-cell):last-child {
         width: 100%;
       }
 
-      > td {
+      > td:not(.log-row-menu-cell) {
         position: relative;
         padding-right: ${theme.spacing(1)};
         border-top: 1px solid transparent;
