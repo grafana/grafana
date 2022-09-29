@@ -714,9 +714,11 @@ func TestOrgUsersAPIEndpointWithSetPerms_AccessControl(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			sc := setupHTTPServer(t, true, func(hs *HTTPServer) {
-				hs.tempUserService = tempuserimpl.ProvideService(hs.SQLStore)
+				features := featuremgmt.WithFeatures()
+				hs.Cfg.IsFeatureToggleEnabled = features.IsEnabled
+				hs.tempUserService = tempuserimpl.ProvideService(hs.SQLStore, hs.Cfg)
 				hs.userService = userimpl.ProvideService(
-					hs.SQLStore, nil, setting.NewCfg(), hs.SQLStore.(*sqlstore.SQLStore),
+					hs.SQLStore, nil, hs.Cfg, hs.SQLStore.(*sqlstore.SQLStore),
 				)
 			})
 			setInitCtxSignedInViewer(sc.initCtx)

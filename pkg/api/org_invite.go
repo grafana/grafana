@@ -211,7 +211,7 @@ func (hs *HTTPServer) GetInviteInfoByCode(c *models.ReqContext) response.Respons
 		Email:     invite.Email,
 		Name:      invite.Name,
 		Username:  invite.Email,
-		InvitedBy: util.StringsFallback3(invite.InvitedByName, invite.InvitedByLogin, invite.InvitedByEmail),
+		InvitedBy: util.StringsFallback3(*invite.InvitedByName, *invite.InvitedByLogin, *invite.InvitedByEmail),
 	})
 }
 
