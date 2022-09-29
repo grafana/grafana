@@ -45,12 +45,10 @@ func (hs *HTTPServer) ListGnetPlugins(c *models.ReqContext) {
 		r.Header.Set("Content-Length", strconv.Itoa(len(b)))
 	}
 	proxy.ModifyResponse = func(r *http.Response) error {
-		// Early return
 		if hs.AccessControl.IsDisabled() {
 			return nil
 		}
 
-		// Read body
 		defer func() { _ = r.Body.Close() }()
 		b, errRead := io.ReadAll(r.Body)
 		if errRead != nil {
@@ -65,7 +63,6 @@ func (hs *HTTPServer) ListGnetPlugins(c *models.ReqContext) {
 			return nil
 		}
 
-		// Add RBAC Metadata to the plugins list
 		ok := addMetadataToGNETPluginList(c, pluginList)
 		if !ok {
 			hs.log.Warn("could not add metadata to gnet plugins list")
@@ -73,7 +70,6 @@ func (hs *HTTPServer) ListGnetPlugins(c *models.ReqContext) {
 			return nil
 		}
 
-		// Return the modified plugins list
 		newBody, errMarshal := json.Marshal(pluginList)
 		if errMarshal != nil {
 			hs.log.Warn("could not marshal modified gnet plugins list", "err", errMarshal)
