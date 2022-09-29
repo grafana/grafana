@@ -163,7 +163,14 @@ const getStyles = (theme: GrafanaTheme2) => {
       .drawer-open .drawer-content-wrapper {
         box-shadow: ${theme.shadows.z3};
       }
+
       z-index: ${theme.zIndex.dropdown};
+
+      @media (max-width: ${theme.breakpoints.values.sm}px) {
+        .drawer-content-wrapper {
+          width: 100% !important;
+        }
+      }
     `,
     header: css`
       background-color: ${theme.colors.background.canvas};

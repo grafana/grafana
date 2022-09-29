@@ -29,7 +29,7 @@ export function NewsWrapper({ feedUrl }: NewsWrapperProps) {
   if (!state.value) {
     return null;
   }
-  console.log('here');
+
   return (
     <AutoSizer>
       {({ width }) => (
