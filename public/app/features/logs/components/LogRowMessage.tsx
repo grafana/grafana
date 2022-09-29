@@ -73,7 +73,7 @@ const getStyles = (theme: GrafanaTheme2, showContextButton: boolean, isInDashboa
     `,
     logRowMenuCell: css`
       position: absolute;
-      right: ${isInDashboard ? '155px' : '163px'};
+      right: ${isInDashboard ? '40px' : '163px'};
       margin-top: -1px;
     `,
   };
@@ -165,7 +165,11 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
           // When context is open, the position has to be NOT relative. // Setting the postion as inline-style to
           // overwrite the more sepecific style definition from `style.logsRowMessage`.
         }
-        <td ref={this.logRowRef} style={contextIsOpen ? { position: 'unset' } : undefined} className={style.logsRowMessage}>
+        <td
+          ref={this.logRowRef}
+          style={contextIsOpen ? { position: 'unset' } : undefined}
+          className={style.logsRowMessage}
+        >
           <div
             className={cx(
               { [styles.positionRelative]: wrapLogMessage },
