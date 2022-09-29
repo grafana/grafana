@@ -18,15 +18,15 @@ import (
 func fakeGNETBackend(t *testing.T) *httptest.Server {
 	return httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Check encoding has been removed
+			require.Empty(t, r.Header.Get("Accept-Encoding"))
+
 			file, err := os.Open("./pluginproxy/test-data/gnet-list.json")
 			require.NoError(t, err)
 			defer func() { _ = file.Close() }()
 
 			pluginList, err := io.ReadAll(file)
 			require.NoError(t, err)
-
-			// Check encoding has been removed
-			require.Empty(t, r.Header.Get("Accept-Encoding"))
 
 			_, err = w.Write(pluginList)
 			require.NoError(t, err)
