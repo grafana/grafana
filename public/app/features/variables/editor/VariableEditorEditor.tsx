@@ -152,7 +152,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
                   testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2}
                   maxLength={VariableNameConstraints.MaxSize}
                   required
-                  tooltip="Variable name cannot be bigger than 50 characters"
+                  tooltip="Variable name cannot be longer than 50 characters"
                 />
                 <VariableTypeSelect onChange={this.onTypeChange} type={this.props.variable.type} />
               </InlineFieldRow>
