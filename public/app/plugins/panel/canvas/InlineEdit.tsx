@@ -28,9 +28,8 @@ export function InlineEdit({ onClose, id, scene }: Props) {
   const inlineEditKey = 'inlineEditPanel' + id.toString();
 
   const defaultMeasurements = { width: 350, height: 400 };
-const widthOffset = root?.width ?? (defaultMeasurements.width + OFFSET_X * 2)
-const defaultX =
-    root?.x ?? 0 + widthOffset - defaultMeasurements.width - OFFSET_X;
+  const widthOffset = root?.width ?? defaultMeasurements.width + OFFSET_X * 2;
+  const defaultX = root?.x ?? 0 + widthOffset - defaultMeasurements.width - OFFSET_X;
   const defaultY = root?.y ?? 0 + OFFSET_Y;
 
   const savedPlacement = store.getObject(inlineEditKey, {
