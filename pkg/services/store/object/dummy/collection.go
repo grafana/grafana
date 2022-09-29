@@ -44,7 +44,7 @@ func (s *localFsCollection[T]) collectionFilePath(orgID int64) string {
 
 func (s *localFsCollection[T]) Load(ctx context.Context, orgID int64) ([]T, error) {
 	filePath := s.collectionFilePath(orgID)
-	// Safe to ignore gosec warning G304.
+	// Safe to ignore gosec warning G304, the path comes from grafana settings rather than the user input
 	// nolint:gosec
 	bytes, err := os.ReadFile(filePath)
 	if err != nil {
