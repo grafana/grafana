@@ -14,6 +14,7 @@ import { setOptionImmutably } from 'app/features/dashboard/components/PanelEdito
 import { activePanelSubject, InstanceState } from './CanvasPanel';
 import { getElementEditor } from './editor/elementEditor';
 import { getLayerEditor } from './editor/layerEditor';
+import { generateStandardCanvasOptions } from './module';
 
 export function InlineEditBody() {
   const activePanel = useObservable(activePanelSubject);
@@ -42,19 +43,7 @@ export function InlineEditBody() {
         }
       }
 
-      builder.addBooleanSwitch({
-        path: 'inlineEditing',
-        name: 'Inline editing',
-        description: 'Enable editing the panel directly',
-        defaultValue: true,
-      });
-
-      builder.addBooleanSwitch({
-        path: 'showAdvancedTypes',
-        name: 'Show advanced element types',
-        description: '',
-        defaultValue: false,
-      });
+      generateStandardCanvasOptions(builder);
     };
 
     return getOptionsPaneCategoryDescriptor(
