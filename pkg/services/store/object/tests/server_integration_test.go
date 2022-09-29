@@ -44,4 +44,27 @@ func TestBasic(t *testing.T) {
 	require.Equal(t, writeReq.Comment, writeResp.Object.Comment)
 	require.Equal(t, writeReq.UID, writeResp.Object.UID)
 	require.Equal(t, writeReq.Kind, writeResp.Object.Kind)
+
+	readResp, err = testCtx.client.Read(ctx, &object.ReadObjectRequest{
+		UID: "my-test-entity",
+	})
+	require.NoError(t, err)
+
+	require.NotNil(t, readResp)
+	require.NotNil(t, readResp.Object)
+
+	delResp, err := testCtx.client.Delete(ctx, &object.DeleteObjectRequest{
+		UID: "my-test-entity",
+	})
+	require.NoError(t, err)
+	require.Equal(t, true, delResp.OK)
+
+	readResp, err = testCtx.client.Read(ctx, &object.ReadObjectRequest{
+		UID: "my-test-entity",
+	})
+	require.NoError(t, err)
+
+	require.NotNil(t, readResp)
+	require.Nil(t, readResp.Object)
+
 }
