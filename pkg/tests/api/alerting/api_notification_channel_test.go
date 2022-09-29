@@ -855,7 +855,6 @@ func TestNotificationChannels(t *testing.T) {
 			require.NotNil(t, integration.SendResolved)
 
 			// If the receiver is not active, no attempts to send notifications should be registered.
-			fmt.Println("Receiver:", *rcv.Name)
 			if expActive {
 				require.NotZero(t, integration.LastNotify)
 				require.NotEqual(t, "0s", integration.LastNotifyDuration)
