@@ -624,6 +624,18 @@ describe('PrometheusDatasource', () => {
       expect(templateSrvStub.replace).toBeCalledTimes(2);
       expect(queries[0].interval).toBe(interval);
     });
+
+    it('should call enhanceExprWithAdHocFilters', () => {
+      ds.enhanceExprWithAdHocFilters = jest.fn();
+      const queries = [
+        {
+          refId: 'A',
+          expr: 'rate({bar="baz", job="foo"} [5m]',
+        },
+      ];
+      ds.interpolateVariablesInQueries(queries, {});
+      expect(ds.enhanceExprWithAdHocFilters).toHaveBeenCalled();
+    });
   });
 
   describe('applyTemplateVariables', () => {
