@@ -98,6 +98,7 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
       exploreId,
       addResultsToCache,
       clearCache,
+      scrollElement,
     } = this.props;
 
     if (!logRows) {
@@ -153,7 +154,7 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
             getFieldLinks={this.getFieldLinks}
             addResultsToCache={() => addResultsToCache(exploreId)}
             clearCache={() => clearCache(exploreId)}
-            scrollElement={this.props.scrollElement}
+            scrollElement={scrollElement}
           />
         </LogsCrossFadeTransition>
       </>

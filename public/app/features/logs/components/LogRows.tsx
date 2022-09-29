@@ -125,6 +125,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       forceEscape,
       onLogRowHover,
       app,
+      scrollElement,
     } = this.props;
     const { renderAll, contextIsOpen } = this.state;
     const { logsRowsTable } = getLogRowStyles(theme);
@@ -174,7 +175,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 toggleContextIsOpen={this.toggleContextIsOpen}
                 onLogRowHover={onLogRowHover}
                 app={app}
-                scrollElement={this.props.scrollElement}
+                scrollElement={scrollElement}
               />
             ))}
           {hasData &&
@@ -205,7 +206,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 toggleContextIsOpen={this.toggleContextIsOpen}
                 onLogRowHover={onLogRowHover}
                 app={app}
-                scrollElement={this.props.scrollElement}
+                scrollElement={scrollElement}
               />
             ))}
           {hasData && !renderAll && (

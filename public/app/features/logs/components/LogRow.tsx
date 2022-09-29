@@ -149,6 +149,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       forceEscape,
       onLogRowHover,
       app,
+      scrollElement,
     } = this.props;
     const { showDetails, showContext } = this.state;
     const style = getLogRowStyles(theme, row.logLevel);
@@ -220,7 +221,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               prettifyLogMessage={prettifyLogMessage}
               onToggleContext={this.toggleContext}
               app={app}
-              scrollElement={this.props.scrollElement}
+              scrollElement={scrollElement}
               logsSortOrder={logsSortOrder}
             />
           )}
