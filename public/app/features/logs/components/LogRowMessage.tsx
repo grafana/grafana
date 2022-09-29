@@ -24,6 +24,7 @@ interface Props extends Themeable2 {
   context?: LogRowContextRows;
   showRowMenu?: boolean;
   app?: CoreApp;
+  scrollElement?: HTMLDivElement;
   showContextToggle?: (row?: LogRowModel) => boolean;
   getRows: () => LogRowModel[];
   onToggleContext: () => void;
@@ -112,9 +113,22 @@ const restructureLog = memoizeOne((line: string, prettifyLogMessage: boolean): s
 });
 
 class UnThemedLogRowMessage extends PureComponent<Props> {
+  logRowRef: React.RefObject<HTMLTableCellElement> = React.createRef();
+
   onContextToggle = (e: React.SyntheticEvent<HTMLElement>) => {
     e.stopPropagation();
     this.props.onToggleContext();
+  };
+
+  onShowContextClick = (e: React.SyntheticEvent<HTMLElement, Event>) => {
+    const { scrollElement } = this.props;
+    this.onContextToggle(e);
+    if (scrollElement && this.logRowRef.current) {
+      scrollElement.scroll({
+        behavior: 'smooth',
+        top: scrollElement.scrollTop + this.logRowRef.current.getBoundingClientRect().top - window.innerHeight / 2,
+      });
+    }
   };
 
   render() {
@@ -144,7 +158,11 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
     return (
       // When context is open, the position has to be NOT relative.
       // Setting the postion as inline-style to overwrite the more sepecific style definition from `style.logsRowMessage`.
-      <td style={contextIsOpen ? { position: 'unset' } : undefined} className={style.logsRowMessage}>
+      <td
+        ref={this.logRowRef}
+        style={contextIsOpen ? { position: 'unset' } : undefined}
+        className={style.logsRowMessage}
+      >
         <div
           className={cx({ [styles.positionRelative]: wrapLogMessage }, { [styles.horizontalScroll]: !wrapLogMessage })}
         >
@@ -171,7 +189,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
             <span className={cx('log-row-menu', styles.rowMenu)} onClick={(e) => e.stopPropagation()}>
               {shouldShowContextToggle && (
                 <Tooltip placement="top" content={'Show context'}>
-                  <IconButton size="md" name="gf-show-context" onClick={this.onContextToggle} />
+                  <IconButton size="md" name="gf-show-context" onClick={this.onShowContextClick} />
                 </Tooltip>
               )}
               <Tooltip placement="top" content={'Copy'}>

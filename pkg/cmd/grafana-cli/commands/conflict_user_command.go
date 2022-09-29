@@ -278,59 +278,63 @@ func (r *ConflictResolver) MergeConflictingUsers(ctx context.Context) error {
 
 		// creating a session for each block of users
 		// we want to rollback incase something happens during update / delete
-		sess := r.Store.NewSession(ctx)
-		defer sess.Close()
-		err := sess.Begin()
-		if err != nil {
-			return fmt.Errorf("could not open a db session: %w", err)
-		}
-		for _, u := range users {
-			if u.Direction == "+" {
-				id, err := strconv.ParseInt(u.ID, 10, 64)
-				if err != nil {
-					return fmt.Errorf("could not convert id in +")
-				}
-				intoUserId = id
-			} else if u.Direction == "-" {
-				id, err := strconv.ParseInt(u.ID, 10, 64)
-				if err != nil {
-					return fmt.Errorf("could not convert id in -")
-				}
-				fromUserIds = append(fromUserIds, id)
-			}
-		}
-		if _, err := sess.ID(intoUserId).Where(sqlstore.NotServiceAccountFilter(r.Store)).Get(&intoUser); err != nil {
-			return fmt.Errorf("could not find intoUser: %w", err)
-		}
-
-		for _, fromUserId := range fromUserIds {
-			var fromUser user.User
-			exists, err := sess.ID(fromUserId).Where(sqlstore.NotServiceAccountFilter(r.Store)).Get(&fromUser)
+		if err := r.Store.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			err := sess.Begin()
 			if err != nil {
-				return fmt.Errorf("could not find fromUser: %w", err)
+				return fmt.Errorf("could not open a db session: %w", err)
 			}
-			if !exists {
-				fmt.Printf("user with id %d does not exist, skipping\n", fromUserId)
+			for _, u := range users {
+				if u.Direction == "+" {
+					id, err := strconv.ParseInt(u.ID, 10, 64)
+					if err != nil {
+						return fmt.Errorf("could not convert id in +")
+					}
+					intoUserId = id
+				} else if u.Direction == "-" {
+					id, err := strconv.ParseInt(u.ID, 10, 64)
+					if err != nil {
+						return fmt.Errorf("could not convert id in -")
+					}
+					fromUserIds = append(fromUserIds, id)
+				}
 			}
-			// // delete the user
-			delErr := r.Store.DeleteUserInSession(ctx, sess, &models.DeleteUserCommand{UserId: fromUserId})
-			if delErr != nil {
-				return fmt.Errorf("error during deletion of user: %w", delErr)
+			if _, err := sess.ID(intoUserId).Where(sqlstore.NotServiceAccountFilter(r.Store)).Get(&intoUser); err != nil {
+				return fmt.Errorf("could not find intoUser: %w", err)
 			}
-		}
-		commitErr := sess.Commit()
-		if commitErr != nil {
-			return fmt.Errorf("could not commit operation for useridentification %s: %w", block, commitErr)
-		}
-		userStore := userimpl.ProvideStore(r.Store, setting.NewCfg())
-		updateMainCommand := &user.UpdateUserCommand{
-			UserID: intoUser.ID,
-			Login:  strings.ToLower(intoUser.Login),
-			Email:  strings.ToLower(intoUser.Email),
-		}
-		updateErr := userStore.Update(ctx, updateMainCommand)
-		if updateErr != nil {
-			return fmt.Errorf("could not update user: %w", updateErr)
+
+			for _, fromUserId := range fromUserIds {
+				var fromUser user.User
+				exists, err := sess.ID(fromUserId).Where(sqlstore.NotServiceAccountFilter(r.Store)).Get(&fromUser)
+				if err != nil {
+					return fmt.Errorf("could not find fromUser: %w", err)
+				}
+				if !exists {
+					fmt.Printf("user with id %d does not exist, skipping\n", fromUserId)
+				}
+				// // delete the user
+				delErr := r.Store.DeleteUserInSession(ctx, sess, &models.DeleteUserCommand{UserId: fromUserId})
+				if delErr != nil {
+					return fmt.Errorf("error during deletion of user: %w", delErr)
+				}
+			}
+			commitErr := sess.Commit()
+			if commitErr != nil {
+				return fmt.Errorf("could not commit operation for useridentification %s: %w", block, commitErr)
+			}
+			userStore := userimpl.ProvideStore(r.Store, setting.NewCfg())
+			updateMainCommand := &user.UpdateUserCommand{
+				UserID: intoUser.ID,
+				Login:  strings.ToLower(intoUser.Login),
+				Email:  strings.ToLower(intoUser.Email),
+			}
+			updateErr := userStore.Update(ctx, updateMainCommand)
+			if updateErr != nil {
+				return fmt.Errorf("could not update user: %w", updateErr)
+			}
+
+			return nil
+		}); err != nil {
+			return err
 		}
 	}
 	return nil

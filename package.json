@@ -173,6 +173,7 @@
     "babel-loader": "8.2.5",
     "babel-plugin-angularjs-annotate": "0.10.0",
     "babel-plugin-macros": "3.1.0",
+    "blob-polyfill": "7.0.20220408",
     "copy-webpack-plugin": "9.0.1",
     "css-loader": "6.7.1",
     "css-minimizer-webpack-plugin": "4.1.0",
