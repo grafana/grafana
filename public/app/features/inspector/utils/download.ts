@@ -66,10 +66,10 @@ export function downloadDataFrameAsCsv(
 /**
  * Downloads any object as JSON file.
  *
- * @param {*} json
+ * @param {unknown} json
  * @param {string} title
  */
-export function downloadAsJson(json: any, title: string) {
+export function downloadAsJson(json: unknown, title: string) {
   const blob = new Blob([JSON.stringify(json)], {
     type: 'application/json',
   });
