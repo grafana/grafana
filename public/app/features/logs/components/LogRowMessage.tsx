@@ -4,15 +4,13 @@ import React, { PureComponent } from 'react';
 import Highlighter from 'react-highlight-words';
 import tinycolor from 'tinycolor2';
 
-import { LogRowModel, findHighlightChunksInText, GrafanaTheme2, LogsSortOrder } from '@grafana/data';
+import { LogRowModel, findHighlightChunksInText, GrafanaTheme2, LogsSortOrder, CoreApp } from '@grafana/data';
 import { withTheme2, Themeable2, IconButton, Tooltip } from '@grafana/ui';
 
 import { LogMessageAnsi } from './LogMessageAnsi';
 import { LogRowContext } from './LogRowContext';
 import { LogRowContextQueryErrors, HasMoreContextRows, LogRowContextRows } from './LogRowContextProvider';
 import { getLogRowStyles } from './getLogRowStyles';
-
-//Components
 
 export const MAX_CHARACTERS = 100000;
 
@@ -24,6 +22,8 @@ interface Props extends Themeable2 {
   prettifyLogMessage: boolean;
   errors?: LogRowContextQueryErrors;
   context?: LogRowContextRows;
+  showRowMenu?: boolean;
+  app?: CoreApp;
   showContextToggle?: (row?: LogRowModel) => boolean;
   getRows: () => LogRowModel[];
   onToggleContext: () => void;
@@ -31,7 +31,7 @@ interface Props extends Themeable2 {
   logsSortOrder?: LogsSortOrder | null;
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, showContextButton: boolean, isInDashboard: boolean | undefined) => {
   const outlineColor = tinycolor(theme.components.dashboard.background).setAlpha(0.7).toRgbString();
 
   return {
@@ -52,7 +52,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: block;
       margin-left: 0px;
     `,
-    contextButton: css`
+    rowMenu: css`
       display: flex;
       flex-wrap: nowrap;
       flex-direction: row;
@@ -60,15 +60,16 @@ const getStyles = (theme: GrafanaTheme2) => {
       justify-content: space-evenly;
       align-items: center;
       position: absolute;
-      right: -8px;
+      right: ${isInDashboard ? '0px' : '-8px'};
       top: 0;
       bottom: auto;
-      width: 80px;
       height: 36px;
       background: ${theme.colors.background.primary};
       box-shadow: ${theme.shadows.z3};
       padding: ${theme.spacing(0, 0, 0, 0.5)};
       z-index: 100;
+      visibility: hidden;
+      width: ${showContextButton ? '80px' : '40px'};
     `,
   };
 };
@@ -125,17 +126,20 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
       updateLimit,
       context,
       contextIsOpen,
-      showContextToggle,
+      showRowMenu,
       wrapLogMessage,
       prettifyLogMessage,
       onToggleContext,
+      app,
       logsSortOrder,
+      showContextToggle,
     } = this.props;
 
     const style = getLogRowStyles(theme, row.logLevel);
     const { hasAnsi, raw } = row;
     const restructuredEntry = restructureLog(raw, prettifyLogMessage);
-    const styles = getStyles(theme);
+    const shouldShowContextToggle = showContextToggle ? showContextToggle(row) : false;
+    const styles = getStyles(theme, shouldShowContextToggle, app === CoreApp.Dashboard);
 
     return (
       // When context is open, the position has to be NOT relative.
@@ -163,14 +167,13 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
           <span className={cx(styles.positionRelative, { [styles.rowWithContext]: contextIsOpen })}>
             {renderLogMessage(hasAnsi, restructuredEntry, row.searchWords, style.logsRowMatchHighLight)}
           </span>
-          {!contextIsOpen && showContextToggle?.(row) && (
-            <span
-              className={cx('log-row-context', style.context, styles.contextButton)}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <Tooltip placement="top" content={'Show context'}>
-                <IconButton size="md" name="gf-show-context" onClick={this.onContextToggle} />
-              </Tooltip>
+          {showRowMenu && (
+            <span className={cx('log-row-menu', styles.rowMenu)} onClick={(e) => e.stopPropagation()}>
+              {shouldShowContextToggle && (
+                <Tooltip placement="top" content={'Show context'}>
+                  <IconButton size="md" name="gf-show-context" onClick={this.onContextToggle} />
+                </Tooltip>
+              )}
               <Tooltip placement="top" content={'Copy'}>
                 <IconButton
                   size="md"

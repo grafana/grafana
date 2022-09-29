@@ -14,6 +14,10 @@ export interface Props {
 export function SectionNav({ model, isExpanded }: Props) {
   const styles = useStyles2(getStyles);
 
+  if (!Boolean(model.main?.children?.length)) {
+    return null;
+  }
+
   return (
     <nav
       className={cx(styles.nav, {

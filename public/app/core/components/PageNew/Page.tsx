@@ -53,7 +53,7 @@ export const Page: PageType = ({
     <div className={cx(styles.wrapper, className)} {...otherProps}>
       {layout === PageLayoutType.Standard && (
         <div className={styles.panes}>
-          {navModel && navModel.main.children && (
+          {navModel && (
             <>
               <SectionNav model={navModel} isExpanded={Boolean(isSectionNavExpanded)} />
               <SectionNavToggle

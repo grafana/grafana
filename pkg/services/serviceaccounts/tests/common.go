@@ -20,14 +20,16 @@ type TestUser struct {
 	Role             string
 	Login            string
 	IsServiceAccount bool
+	OrgID            int64
 }
 
 type TestApiKey struct {
-	Name      string
-	Role      org.RoleType
-	OrgId     int64
-	Key       string
-	IsExpired bool
+	Name             string
+	Role             org.RoleType
+	OrgId            int64
+	Key              string
+	IsExpired        bool
+	ServiceAccountID *int64
 }
 
 func SetupUserServiceAccount(t *testing.T, sqlStore *sqlstore.SQLStore, testUser TestUser) *user.User {
@@ -41,6 +43,7 @@ func SetupUserServiceAccount(t *testing.T, sqlStore *sqlstore.SQLStore, testUser
 		IsServiceAccount: testUser.IsServiceAccount,
 		DefaultOrgRole:   role,
 		Name:             testUser.Name,
+		OrgID:            testUser.OrgID,
 	})
 	require.NoError(t, err)
 	return u1
@@ -53,9 +56,10 @@ func SetupApiKey(t *testing.T, sqlStore *sqlstore.SQLStore, testKey TestApiKey) 
 	}
 
 	addKeyCmd := &apikey.AddCommand{
-		Name:  testKey.Name,
-		Role:  role,
-		OrgId: testKey.OrgId,
+		Name:             testKey.Name,
+		Role:             role,
+		OrgId:            testKey.OrgId,
+		ServiceAccountID: testKey.ServiceAccountID,
 	}
 
 	if testKey.Key != "" {

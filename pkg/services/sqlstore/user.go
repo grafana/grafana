@@ -201,67 +201,6 @@ func (ss *SQLStore) GetUserById(ctx context.Context, query *models.GetUserByIdQu
 	})
 }
 
-func (ss *SQLStore) UpdateUser(ctx context.Context, cmd *models.UpdateUserCommand) error {
-	if ss.Cfg.CaseInsensitiveLogin {
-		cmd.Login = strings.ToLower(cmd.Login)
-		cmd.Email = strings.ToLower(cmd.Email)
-	}
-
-	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
-		user := user.User{
-			Name:    cmd.Name,
-			Email:   cmd.Email,
-			Login:   cmd.Login,
-			Theme:   cmd.Theme,
-			Updated: TimeNow(),
-		}
-
-		if _, err := sess.ID(cmd.UserId).Where(notServiceAccountFilter(ss)).Update(&user); err != nil {
-			return err
-		}
-
-		if ss.Cfg.CaseInsensitiveLogin {
-			if err := ss.userCaseInsensitiveLoginConflict(ctx, sess, user.Login, user.Email); err != nil {
-				return err
-			}
-		}
-
-		sess.publishAfterCommit(&events.UserUpdated{
-			Timestamp: user.Created,
-			Id:        user.ID,
-			Name:      user.Name,
-			Login:     user.Login,
-			Email:     user.Email,
-		})
-
-		return nil
-	})
-}
-
-func (ss *SQLStore) ChangeUserPassword(ctx context.Context, cmd *models.ChangeUserPasswordCommand) error {
-	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
-		user := user.User{
-			Password: cmd.NewPassword,
-			Updated:  TimeNow(),
-		}
-
-		_, err := sess.ID(cmd.UserId).Where(notServiceAccountFilter(ss)).Update(&user)
-		return err
-	})
-}
-
-func (ss *SQLStore) UpdateUserLastSeenAt(ctx context.Context, cmd *models.UpdateUserLastSeenAtCommand) error {
-	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
-		user := user.User{
-			ID:         cmd.UserId,
-			LastSeenAt: TimeNow(),
-		}
-
-		_, err := sess.ID(cmd.UserId).Update(&user)
-		return err
-	})
-}
-
 func (ss *SQLStore) SetUsingOrg(ctx context.Context, cmd *models.SetUsingOrgCommand) error {
 	getOrgsForUserCmd := &models.GetUserOrgListQuery{UserId: cmd.UserId}
 	if err := ss.GetUserOrgList(ctx, getOrgsForUserCmd); err != nil {
