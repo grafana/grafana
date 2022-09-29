@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/user"
+	"xorm.io/core"
 )
 
 type Store interface {
@@ -15,6 +16,7 @@ type Store interface {
 	GetDataSourceStats(ctx context.Context, query *models.GetDataSourceStatsQuery) error
 	GetDataSourceAccessStats(ctx context.Context, query *models.GetDataSourceAccessStatsQuery) error
 	GetDialect() migrator.Dialect
+	GetDBType() core.DbType
 	GetSystemStats(ctx context.Context, query *models.GetSystemStatsQuery) error
 	GetOrgByName(name string) (*models.Org, error)
 	CreateOrg(ctx context.Context, cmd *models.CreateOrgCommand) error

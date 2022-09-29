@@ -574,7 +574,7 @@ func GetAlertsByDashboardId2(dashboardId int64, sess *sqlstore.DBSession) ([]*mo
 }
 
 func (d *DashboardStore) updateAlerts(ctx context.Context, existingAlerts []*models.Alert, alerts []*models.Alert, log log.Logger) error {
-	return d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return d.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		for _, alert := range alerts {
 			update := false
 			var alertToUpdate *models.Alert
