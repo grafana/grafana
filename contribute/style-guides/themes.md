@@ -26,7 +26,7 @@ import { useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
 
 const getComponentStyles = (theme: GrafanaTheme2) => css`
-  padding: ${theme.spacing.md};
+  padding: ${theme.spacing(1,2)};
 `;
 
 const Foo: FC<FooProps> = () => {
