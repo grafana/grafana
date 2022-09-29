@@ -114,7 +114,7 @@ is_nan takes a number or a series and returns `1` for `NaN` values and `0` for o
 
 ##### is_null
 
-is_nan takes a number or a series and returns `1` for `null` values and `0` for other values. For example `is_null($A)`.
+is_null takes a number or a series and returns `1` for `null` values and `0` for other values. For example `is_null($A)`.
 
 ##### is_number
 

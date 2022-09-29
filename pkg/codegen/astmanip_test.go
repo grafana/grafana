@@ -253,7 +253,10 @@ type Thing string
 			drop := makePrefixDropper("Foo", "Model")
 			astutil.Apply(inf, drop, nil)
 			buf := new(bytes.Buffer)
-			format.Node(buf, fset, inf)
+			err = format.Node(buf, fset, inf)
+			if err != nil {
+				t.Fatal(err)
+			}
 			is.Equal(item.out, buf.String())
 		})
 	}
