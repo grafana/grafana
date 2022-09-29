@@ -74,7 +74,7 @@ func (ss *sqlxStore) GetTempUsersQuery(ctx context.Context, query *models.GetTem
 					tu.status         as status,
 					tu.email_sent     as email_sent,
 					tu.email_sent_on  as email_sent_on,
-					CAST(tu.created as DATETIME) as created,
+					tu.created        as created,
 					u.login			  as invited_by_login,
 					u.name			  as invited_by_name,
 					u.email			  as invited_by_email
