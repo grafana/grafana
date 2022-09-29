@@ -21,12 +21,14 @@ import (
 type Provider interface {
 	registry.BackgroundService
 	GetServer() *grpc.Server
+	GetAddress() string
 }
 
 type GPRCServerService struct {
-	cfg    *setting.Cfg
-	logger log.Logger
-	server *grpc.Server
+	cfg     *setting.Cfg
+	logger  log.Logger
+	server  *grpc.Server
+	address string
 }
 
 func ProvideService(cfg *setting.Cfg, apiKey apikey.Service, userService user.Service) (Provider, error) {
@@ -62,6 +64,8 @@ func (s *GPRCServerService) Run(ctx context.Context) error {
 		return fmt.Errorf("GRPC server: failed to listen: %w", err)
 	}
 
+	s.address = listener.Addr().String()
+
 	serveErr := make(chan error, 1)
 	go func() {
 		s.logger.Info("GRPC server: starting")
@@ -92,4 +96,8 @@ func (s *GPRCServerService) IsDisabled() bool {
 
 func (s *GPRCServerService) GetServer() *grpc.Server {
 	return s.server
+}
+
+func (s *GPRCServerService) GetAddress() string {
+	return s.address
 }
