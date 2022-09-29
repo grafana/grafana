@@ -2,16 +2,21 @@ package fakes
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/rand"
 	"sync"
 	"testing"
+	"time"
 
 	models2 "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
+
+// TimeNow makes it possible to test usage of time
+var TimeNow = time.Now
 
 // FakeRuleStore mocks the RuleStore of the scheduler.
 type FakeRuleStore struct {
@@ -300,7 +305,7 @@ func (f *FakeRuleStore) GetRuleGroupInterval(ctx context.Context, orgID int64, n
 			return rule.IntervalSeconds, nil
 		}
 	}
-	return 0, ErrAlertRuleGroupNotFound
+	return 0, errors.New("rule group not found")
 }
 
 func (f *FakeRuleStore) UpdateRuleGroup(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string, interval int64) error {

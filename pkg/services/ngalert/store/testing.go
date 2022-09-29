@@ -2,14 +2,10 @@ package store
 
 import (
 	"context"
-	"math/rand"
 	"strings"
 	"sync"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/util"
-
-	models2 "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
@@ -62,52 +58,6 @@ func (s *FakeImageStore) SaveImage(_ context.Context, image *models.Image) error
 	}
 	s.images[image.Token] = image
 	return nil
-}
-
-func NewFakeRuleStore(t *testing.T) *FakeRuleStore {
-	return &FakeRuleStore{
-		t:     t,
-		Rules: map[int64][]*models.AlertRule{},
-		Hook: func(interface{}) error {
-			return nil
-		},
-		Folders: map[int64][]*models2.Folder{},
-	}
-}
-
-// PutRule puts the rule in the Rules map. If there are existing rule in the same namespace, they will be overwritten
-func (f *FakeRuleStore) PutRule(_ context.Context, rules ...*models.AlertRule) {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-mainloop:
-	for _, r := range rules {
-		rgs := f.Rules[r.OrgID]
-		for idx, rulePtr := range rgs {
-			if rulePtr.UID == r.UID {
-				rgs[idx] = r
-				continue mainloop
-			}
-		}
-		rgs = append(rgs, r)
-		f.Rules[r.OrgID] = rgs
-
-		var existing *models2.Folder
-		folders := f.Folders[r.OrgID]
-		for _, folder := range folders {
-			if folder.Uid == r.NamespaceUID {
-				existing = folder
-				break
-			}
-		}
-		if existing == nil {
-			folders = append(folders, &models2.Folder{
-				Id:    rand.Int63(),
-				Uid:   r.NamespaceUID,
-				Title: "TEST-FOLDER-" + util.GenerateShortUID(),
-			})
-			f.Folders[r.OrgID] = folders
-		}
-	}
 }
 
 func NewFakeAdminConfigStore(t *testing.T) *FakeAdminConfigStore {
