@@ -320,7 +320,7 @@ func (f *FakeRuleStore) GetNamespaceByUID(_ context.Context, uid string, orgID i
 	return nil, fmt.Errorf("not found")
 }
 
-func (f *FakeRuleStore) UpdateAlertRules(_ context.Context, q []UpdateRule) error {
+func (f *FakeRuleStore) UpdateAlertRules(_ context.Context, q []models.UpdateRule) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.RecordedOps = append(f.RecordedOps, q)
