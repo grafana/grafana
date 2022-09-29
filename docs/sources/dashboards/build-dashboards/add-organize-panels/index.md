@@ -27,10 +27,10 @@ This section describes the areas of the Grafana panel editor.
 
 1. Panel header: The header section lists the dashboard in which the panel appears and the following controls:
 
-   - **Dashboard settings (gear) icon -** Click to access the dashboard settings.
-   - **Discard -** Discards changes you have made to the panel since you last saved the dashboard.
-   - **Save -** Saves changes you made to the panel.
-   - **Apply -** Applies changes you made and closes the panel editor, returning you to the dashboard. You will have to save the dashboard to persist the applied changes.
+   - **Dashboard settings (gear) icon:** Click to access the dashboard settings.
+   - **Discard:** Discards changes you have made to the panel since you last saved the dashboard.
+   - **Save:** Saves changes you made to the panel.
+   - **Apply:** Applies changes you made and closes the panel editor, returning you to the dashboard. You will have to save the dashboard to persist the applied changes.
 
 1. Visualization preview: The visualization preview section contains the following options:
 
@@ -112,3 +112,25 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 1. Add a note to describe the visualization (or describe your changes) and then click **Save** in the upper-right corner of the page.
 
    Notes can be helpful if you need to revert the dashboard to a previous version.
+
+## Configure repeating rows
+
+You can configure Grafana to dynamically add panels or rows to a dashboard based on the value of a variable. Variables dynamically change your queries across all rows in a dashboard. For more information about repeating panels, refer to [Configure repeating panels](../../panels/configure-panel-options/#configure-repeating-panels).
+
+To see an example of repeating rows, refer to [Dashboard with repeating rows](https://play.grafana.org/d/000000153/repeat-rows). The example shows that you can also repeat rows if you have variables set with `Multi-value` or `Include all values` selected.
+
+**Before you begin:**
+
+- Ensure that the query includes a multi-value variable.
+
+**To configure repeating rows:**
+
+1. On the dashboard home page, click **Add panel**.
+
+1. On the **Add a panel** dialog box, click **Add a new row**.
+
+1. Hover over the row title and click the cog icon.
+
+1. On the **Row Options** dialog box, add a title and select the variable for which you want to add repeating rows.
+
+> **Note:** To provide context to dashboard users, add the variable to the row title.
