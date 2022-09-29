@@ -101,7 +101,7 @@ func NewInstanceSettings(cfg *setting.Cfg, clientProvider *httpclient.Provider, 
 
 		customizedCloudSettings, err := getCustomizedCloudSettings(cloud, settings.JSONData)
 		if err != nil {
-			return nil, fmt.Errorf("error getting credentials: %w", err)
+			return nil, err
 		}
 
 		routesForModel, err := getAzureRoutes(cloud, customizedCloudSettings)
