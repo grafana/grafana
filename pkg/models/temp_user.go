@@ -121,5 +121,5 @@ func (t *Time) Scan(src interface{}) error {
 
 func (t *Time) Value() (driver.Value, error) {
 	fmt.Println("The data type is", t.Time)
-	return driver.Value(time.Time(t.Time).Unix()), nil
+	return driver.Value(t.Time.Unix()), nil
 }
