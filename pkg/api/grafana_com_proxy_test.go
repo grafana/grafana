@@ -20,7 +20,7 @@ func fakeGNETBackend(t *testing.T) *httptest.Server {
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			file, err := os.Open("./pluginproxy/test-data/gnet-list.json")
 			require.NoError(t, err)
-			defer file.Close()
+			defer func() { _ = file.Close() }()
 
 			pluginList, err := io.ReadAll(file)
 			require.NoError(t, err)
@@ -28,7 +28,8 @@ func fakeGNETBackend(t *testing.T) *httptest.Server {
 			// Check encoding has been removed
 			require.Empty(t, r.Header.Get("Accept-Encoding"))
 
-			w.Write(pluginList)
+			_, err = w.Write(pluginList)
+			require.NoError(t, err)
 			w.Header().Set("Content-Type", "application/json")
 		}),
 	)

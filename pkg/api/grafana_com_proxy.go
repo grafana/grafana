@@ -52,7 +52,7 @@ func (hs *HTTPServer) ListGnetPlugins(c *models.ReqContext) {
 		}
 
 		// Read body
-		defer r.Body.Close()
+		defer func() { _ = r.Body.Close() }()
 		b, errRead := io.ReadAll(r.Body)
 		if errRead != nil {
 			hs.log.Warn("error reading gnet plugin list", "error", errRead)
