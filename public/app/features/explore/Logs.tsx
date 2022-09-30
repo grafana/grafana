@@ -66,6 +66,7 @@ interface Props extends Themeable2 {
   datasourceType?: string;
   logsVolumeEnabled: boolean;
   logsVolumeData: DataQueryResponse | undefined;
+  scrollElement?: HTMLDivElement;
   onSetLogsVolumeEnabled: (enabled: boolean) => void;
   loadLogsVolumeData: (exploreId: ExploreId) => void;
   showContextToggle?: (row?: LogRowModel) => boolean;
@@ -318,6 +319,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
       clearCache,
       addResultsToCache,
       exploreId,
+      scrollElement,
     } = this.props;
 
     const {
@@ -477,6 +479,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                 onClickShowDetectedField={this.showDetectedField}
                 onClickHideDetectedField={this.hideDetectedField}
                 app={CoreApp.Explore}
+                scrollElement={scrollElement}
               />
             </div>
             <LogsNavigation
