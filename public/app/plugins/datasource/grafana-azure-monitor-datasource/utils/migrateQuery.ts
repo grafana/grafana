@@ -146,7 +146,7 @@ function migrateDimensionToResourceObj(query: AzureMonitorQuery): AzureMonitorQu
         resourceGroup: details?.resourceGroup,
         metricNamespace: details?.metricNamespace,
         resourceName: details?.resourceName,
-        resourceUri: undefined,
+        resourceUri: details.subscription ? undefined : query.azureMonitor.resourceUri,
       },
     };
   }
