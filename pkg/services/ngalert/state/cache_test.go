@@ -12,18 +12,18 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
-	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 func Test_getOrCreate(t *testing.T) {
-	c := newCache(&metrics.State{}, &url.URL{
+	url := &url.URL{
 		Scheme: "http",
 		Host:   "localhost:3000",
 		Path:   "/test",
-	})
+	}
 	l := log.New("test")
+	c := newCache()
 
 	generateRule := models.AlertRuleGen(models.WithNotEmptyLabels(5, "rule-"))
 
@@ -34,7 +34,7 @@ func Test_getOrCreate(t *testing.T) {
 		result := eval.Result{
 			Instance: models.GenerateAlertLabels(5, "result-"),
 		}
-		state := c.getOrCreate(context.Background(), rule, result, extraLabels)
+		state := c.getOrCreate(context.Background(), l, rule, result, extraLabels, url)
 		for key, expected := range extraLabels {
 			require.Equal(t, expected, state.Labels[key])
 		}
@@ -62,7 +62,7 @@ func Test_getOrCreate(t *testing.T) {
 			result.Instance[key] = "result-" + util.GenerateShortUID()
 		}
 
-		state := c.getOrCreate(context.Background(), rule, result, extraLabels)
+		state := c.getOrCreate(context.Background(), l, rule, result, extraLabels, url)
 		for key, expected := range extraLabels {
 			require.Equal(t, expected, state.Labels[key])
 		}
@@ -78,7 +78,7 @@ func Test_getOrCreate(t *testing.T) {
 		for key := range rule.Labels {
 			result.Instance[key] = "result-" + util.GenerateShortUID()
 		}
-		state := c.getOrCreate(context.Background(), rule, result, extraLabels)
+		state := c.getOrCreate(context.Background(), l, rule, result, extraLabels, url)
 		for key, expected := range rule.Labels {
 			require.Equal(t, expected, state.Labels[key])
 		}
@@ -100,7 +100,7 @@ func Test_getOrCreate(t *testing.T) {
 		}
 		rule.Labels = labelTemplates
 
-		state := c.getOrCreate(context.Background(), rule, result, extraLabels)
+		state := c.getOrCreate(context.Background(), l, rule, result, extraLabels, url)
 		for key, expected := range extraLabels {
 			assert.Equal(t, expected, state.Labels["rule-"+key])
 		}
@@ -126,7 +126,7 @@ func Test_getOrCreate(t *testing.T) {
 		}
 		rule.Annotations = annotationTemplates
 
-		state := c.getOrCreate(context.Background(), rule, result, extraLabels)
+		state := c.getOrCreate(context.Background(), l, rule, result, extraLabels, url)
 		for key, expected := range extraLabels {
 			assert.Equal(t, expected, state.Annotations["rule-"+key])
 		}
