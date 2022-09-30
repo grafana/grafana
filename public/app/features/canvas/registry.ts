@@ -6,18 +6,21 @@ import { droneFrontItem } from './elements/droneFront';
 import { droneSideItem } from './elements/droneSide';
 import { droneTopItem } from './elements/droneTop';
 import { iconItem } from './elements/icon';
+import { metricValueItem } from './elements/metricValue';
 import { rectangleItem } from './elements/rectangle';
 import { windTurbineItem } from './elements/windTurbine';
 
 export const DEFAULT_CANVAS_ELEMENT_CONFIG: CanvasElementOptions = {
-  ...iconItem.getNewOptions(),
-  type: iconItem.id,
+  ...metricValueItem.getNewOptions(),
+  placement: { ...metricValueItem.getNewOptions().placement, ...metricValueItem.defaultSize },
+  type: metricValueItem.id,
   name: `Element 1`,
 };
 
 export const defaultElementItems = [
-  iconItem, // default for now
+  metricValueItem, // default for now
   rectangleItem,
+  iconItem,
 ];
 
 const advancedElementItems = [buttonItem, windTurbineItem, droneTopItem, droneFrontItem, droneSideItem];

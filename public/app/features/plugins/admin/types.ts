@@ -12,7 +12,6 @@ import { IconName } from '@grafana/ui';
 import { StoreState, PluginsState } from 'app/types';
 
 export type PluginTypeCode = 'app' | 'panel' | 'datasource';
-export type PluginTypeFilterOption = PluginTypeCode | 'all';
 
 export enum PluginListDisplayMode {
   Grid = 'grid',
@@ -243,7 +242,7 @@ export type RequestInfo = {
 
 export type PluginDetailsTab = {
   label: PluginTabLabels | string;
-  icon?: IconName | string;
+  icon?: IconName;
   id: PluginTabIds | string;
   href?: string;
 };

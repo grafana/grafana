@@ -23,7 +23,7 @@ export enum VAlign {
   Bottom = 'bottom',
 }
 
-interface RectangleData {
+export interface RectangleData {
   text?: string;
   color?: string;
   size?: number; // 0 or missing will "auto size"
@@ -31,7 +31,7 @@ interface RectangleData {
   valign: VAlign;
 }
 
-interface RectangleConfig {
+export interface RectangleConfig {
   text?: TextDimensionConfig;
   color?: ColorDimensionConfig;
   size?: number; // 0 or missing will "auto size"

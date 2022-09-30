@@ -15,16 +15,14 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
 type DatasourceInfo struct {
 	ID                         int64
-	HTTPClientOpts             sdkhttpclient.Options
+	HTTPClient                 *http.Client
 	URL                        string
 	Database                   string
 	ESVersion                  *semver.Version
@@ -42,10 +40,6 @@ var (
 	clientLog = log.New(loggerName)
 )
 
-var newDatasourceHttpClient = func(httpClientProvider httpclient.Provider, ds *DatasourceInfo) (*http.Client, error) {
-	return httpClientProvider.New(ds.HTTPClientOpts)
-}
-
 // Client represents a client which can interact with elasticsearch api
 type Client interface {
 	GetTimeField() string
@@ -56,7 +50,7 @@ type Client interface {
 }
 
 // NewClient creates a new elasticsearch client
-var NewClient = func(ctx context.Context, httpClientProvider httpclient.Provider, ds *DatasourceInfo, timeRange backend.TimeRange) (Client, error) {
+var NewClient = func(ctx context.Context, ds *DatasourceInfo, timeRange backend.TimeRange) (Client, error) {
 	ip, err := newIndexPattern(ds.Interval, ds.Database)
 	if err != nil {
 		return nil, err
@@ -70,23 +64,21 @@ var NewClient = func(ctx context.Context, httpClientProvider httpclient.Provider
 	clientLog.Debug("Creating new client", "version", ds.ESVersion, "timeField", ds.TimeField, "indices", strings.Join(indices, ", "))
 
 	return &baseClientImpl{
-		ctx:                ctx,
-		httpClientProvider: httpClientProvider,
-		ds:                 ds,
-		timeField:          ds.TimeField,
-		indices:            indices,
-		timeRange:          timeRange,
+		ctx:       ctx,
+		ds:        ds,
+		timeField: ds.TimeField,
+		indices:   indices,
+		timeRange: timeRange,
 	}, nil
 }
 
 type baseClientImpl struct {
-	ctx                context.Context
-	httpClientProvider httpclient.Provider
-	ds                 *DatasourceInfo
-	timeField          string
-	indices            []string
-	timeRange          backend.TimeRange
-	debugEnabled       bool
+	ctx          context.Context
+	ds           *DatasourceInfo
+	timeField    string
+	indices      []string
+	timeRange    backend.TimeRange
+	debugEnabled bool
 }
 
 func (c *baseClientImpl) GetTimeField() string {
@@ -173,18 +165,13 @@ func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body [
 
 	req.Header.Set("Content-Type", "application/x-ndjson")
 
-	httpClient, err := newDatasourceHttpClient(c.httpClientProvider, c.ds)
-	if err != nil {
-		return nil, err
-	}
-
 	start := time.Now()
 	defer func() {
 		elapsed := time.Since(start)
 		clientLog.Debug("Executed request", "took", elapsed)
 	}()
 	//nolint:bodyclose
-	resp, err := httpClient.Do(req)
+	resp, err := c.ds.HTTPClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
