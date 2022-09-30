@@ -3,9 +3,11 @@ package oauthtoken
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 
 	"golang.org/x/oauth2"
+	"golang.org/x/sync/singleflight"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
@@ -22,18 +24,21 @@ var (
 type Service struct {
 	SocialService   social.Service
 	AuthInfoService login.AuthInfoService
+	sf              *singleflight.Group
 }
 
 type OAuthTokenService interface {
 	GetCurrentOAuthToken(context.Context, *user.SignedInUser) *oauth2.Token
 	IsOAuthPassThruEnabled(*datasources.DataSource) bool
 	HasOAuthEntry(context.Context, *user.SignedInUser) (bool, *models.UserAuth)
+	TryTokenRefresh(ctx context.Context, usr *models.UserAuth) error
 }
 
 func ProvideService(socialService social.Service, authInfoService login.AuthInfoService) *Service {
 	return &Service{
 		SocialService:   socialService,
 		AuthInfoService: authInfoService,
+		sf:              new(singleflight.Group),
 	}
 }
 
@@ -109,6 +114,7 @@ func (o *Service) IsOAuthPassThruEnabled(ds *datasources.DataSource) bool {
 	return ds.JsonData != nil && ds.JsonData.Get("oauthPassThru").MustBool()
 }
 
+// HasOAuthEntry returns true and the UserAuth object when OAuth info exists for the specified User
 func (o *Service) HasOAuthEntry(ctx context.Context, usr *user.SignedInUser) (bool, *models.UserAuth) {
 	if usr == nil {
 		// No user, therefore no token
@@ -127,6 +133,68 @@ func (o *Service) HasOAuthEntry(ctx context.Context, usr *user.SignedInUser) (bo
 		return false, nil
 	}
 	return true, authInfoQuery.Result
+}
+
+// TryTokenRefresh returns an error in case the OAuth token refresh was unsuccessful
+// It uses a singleflight.Group to prevent getting the Refresh Token multiple times for a given User
+func (o *Service) TryTokenRefresh(ctx context.Context, usr *models.UserAuth) error {
+	lockKey := fmt.Sprintf("oauth-refresh-token-%d", usr.UserId)
+	logger.Debug("starting a singleflight for getting a new access token", "key", lockKey)
+	_, err, _ := o.sf.Do(lockKey, func() (interface{}, error) {
+		authProvider := usr.AuthModule
+		if !strings.Contains(authProvider, "oauth") {
+			logger.Error("the specified auth provider is not OAuth", "authmodule", usr.AuthModule, "userid", usr.UserId)
+			return false, errors.New("not an OAuth provider")
+		}
+
+		connect, err := o.SocialService.GetConnector(authProvider)
+		if err != nil {
+			logger.Error("failed to get OAuth connector", "provider", authProvider, "error", err)
+			return false, err
+		}
+
+		client, err := o.SocialService.GetOAuthHttpClient(authProvider)
+		if err != nil {
+			logger.Error("failed to get OAuth http client", "provider", authProvider, "error", err)
+			return false, err
+		}
+		ctx = context.WithValue(ctx, oauth2.HTTPClient, client)
+
+		persistedToken := &oauth2.Token{
+			AccessToken:  usr.OAuthAccessToken,
+			Expiry:       usr.OAuthExpiry,
+			RefreshToken: usr.OAuthRefreshToken,
+			TokenType:    usr.OAuthTokenType,
+		}
+
+		if usr.OAuthIdToken != "" {
+			persistedToken = persistedToken.WithExtra(map[string]interface{}{"id_token": usr.OAuthIdToken})
+		}
+
+		// TokenSource handles refreshing the token if it has expired
+		token, err := connect.TokenSource(ctx, persistedToken).Token()
+		if err != nil {
+			logger.Error("failed to retrieve OAuth access token", "provider", usr.AuthModule, "userId", usr.UserId, "error", err)
+			return false, err
+		}
+
+		// If the tokens are not the same, update the entry in the DB
+		if !tokensEq(persistedToken, token) {
+			updateAuthCommand := &models.UpdateAuthInfoCommand{
+				UserId:     usr.UserId,
+				AuthModule: usr.AuthModule,
+				AuthId:     usr.AuthId,
+				OAuthToken: token,
+			}
+			if err := o.AuthInfoService.UpdateAuthInfo(ctx, updateAuthCommand); err != nil {
+				logger.Error("failed to update auth info during token refresh", "userId", usr.UserId, "error", err)
+				return false, err
+			}
+			logger.Debug("updated OAuth info for user", "userId", usr.UserId)
+		}
+		return true, nil
+	})
+	return err
 }
 
 // tokensEq checks for OAuth2 token equivalence given the fields of the struct Grafana is interested in

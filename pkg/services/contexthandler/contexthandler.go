@@ -431,14 +431,15 @@ func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, org
 	// Check whether the logged in User has a token
 	exists, oauthToken := h.oauthTokenService.HasOAuthEntry(ctx, queryResult)
 	if exists {
-		// UseRefreshTokenEnabled := true
-		// if oauth2Token := h.oauthTokenService.GetCurrentOAuthToken(ctx, queryResult); UseRefreshTokenEnabled && oauth2Token == nil {
-		// 	return false
-		// }
 		if oauthToken.OAuthExpiry.UTC().Before(time.Now().UTC()) {
-			reqContext.Logger.Warn("OAuth token for the user is expired", "userId", oauthToken.UserId)
-			reqContext.Resp.Before(h.deleteInvalidCookieEndOfRequestFunc(reqContext))
-			return false
+			reqContext.Logger.Debug("access aoken expired", "userId", query.UserID)
+
+			// If the token is expired then try to refresh it using the Refresh token
+			if err = h.oauthTokenService.TryTokenRefresh(ctx, oauthToken); err != nil {
+				reqContext.Logger.Warn("could not fetch a new access token", "userId", oauthToken.UserId, "error", err)
+				reqContext.Resp.Before(h.deleteInvalidCookieEndOfRequestFunc(reqContext))
+				return false
+			}
 		}
 	}
 
