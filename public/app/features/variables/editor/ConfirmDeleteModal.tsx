@@ -13,7 +13,7 @@ interface Props {
 export function ConfirmDeleteModal({ varName, isOpen = false, onConfirm, onDismiss }: Props) {
   return (
     <ConfirmModal
-      title="Delete"
+      title="Delete variable"
       isOpen={isOpen}
       onConfirm={onConfirm}
       onDismiss={onDismiss}
