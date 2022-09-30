@@ -2,7 +2,6 @@ package persistentcollection
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"testing"
 
@@ -18,11 +17,6 @@ func TestLocalFSPersistentCollection(t *testing.T) {
 	orgID := int64(1)
 	ctx := context.Background()
 	tmpDir := os.TempDir()
-	defer func() {
-		if err := os.RemoveAll(tmpDir); err != nil {
-			fmt.Printf("Failed to remove temporary directory %q: %s\n", tmpDir, err.Error())
-		}
-	}()
 
 	coll := NewLocalFSPersistentCollection[*item]("test", tmpDir, 1)
 
