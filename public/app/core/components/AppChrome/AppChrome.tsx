@@ -5,8 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { HOME_NAV_ID } from 'app/core/reducers/navModel';
-import { KioskMode, useSelector } from 'app/types';
+import { KioskMode } from 'app/types';
 
 import { MegaMenu } from '../MegaMenu/MegaMenu';
 
@@ -20,7 +19,6 @@ export function AppChrome({ children }: Props) {
   const styles = useStyles2(getStyles);
   const { chrome } = useGrafana();
   const state = chrome.useState();
-  const homeNav = useSelector((state) => state.navIndex)[HOME_NAV_ID];
 
   if (!config.featureToggles.topnav) {
     return <main className="main-view">{children}</main>;
@@ -43,7 +41,6 @@ export function AppChrome({ children }: Props) {
             searchBarHidden={searchBarHidden}
             sectionNav={state.sectionNav}
             pageNav={state.pageNav}
-            homeNav={homeNav}
             actions={state.actions}
             onToggleSearchBar={chrome.onToggleSearchBar}
             onToggleMegaMenu={chrome.onToggleMegaMenu}
