@@ -9,10 +9,14 @@ export const HOME_NAV_ID = 'home';
 export function buildInitialState(): NavIndex {
   const navIndex: NavIndex = {};
   const rootNodes = cloneDeep(config.bootData.navTree as NavModelItem[]);
-  const homeNavIndex = rootNodes.findIndex((node) => node.id === HOME_NAV_ID);
-  const homeNav = rootNodes.splice(homeNavIndex, 1)[0];
-  buildNavIndex(navIndex, [homeNav]);
-  buildNavIndex(navIndex, rootNodes, homeNav);
+  if (config.featureToggles.topnav) {
+    const homeNavIndex = rootNodes.findIndex((node) => node.id === HOME_NAV_ID);
+    const homeNav = rootNodes.splice(homeNavIndex, 1)[0];
+    buildNavIndex(navIndex, [homeNav]);
+    buildNavIndex(navIndex, rootNodes, homeNav);
+  } else {
+    buildNavIndex(navIndex, rootNodes);
+  }
   return navIndex;
 }
 

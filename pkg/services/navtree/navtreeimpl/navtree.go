@@ -70,7 +70,7 @@ func (s *ServiceImpl) GetNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 	treeRoot := &navtree.NavTreeRoot{}
 
 	if s.features.IsEnabled(featuremgmt.FlagTopnav) {
-		navTree = append(navTree, s.getHomeNode(c, prefs))
+		treeRoot.AddSection(s.getHomeNode(c, prefs))
 	}
 
 	if hasAccess(ac.ReqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsRead)) {

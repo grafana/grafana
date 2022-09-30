@@ -422,7 +422,7 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
   let pageNav = state.pageNav;
   let sectionNav = state.sectionNav;
   const homeNavModel = getNavModel(props.navIndex, 'home');
-  const isHome = !dashboard.meta.url || homeNavModel.main.url === dashboard.meta.url;
+  const isHome = config.featureToggles.topnav && (!dashboard.meta.url || homeNavModel.main.url === dashboard.meta.url);
 
   if (!pageNav || dashboard.title !== pageNav.text) {
     pageNav = {
