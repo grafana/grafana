@@ -213,17 +213,15 @@ func (i dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectRequ
 func (i dummyObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest) (*object.WriteObjectResponse, error) {
 	orgID := orgIdFromUID(r.UID)
 
-	obj, latestObjVersion, err := i.findObject(ctx, r.UID, r.Kind, "")
+	obj, err := i.collection.FindFirst(ctx, orgIdFromUID(r.UID), func(i *RawObjectWithHistory) (bool, error) {
+		return i.UID == r.UID, nil
+	})
 	if err != nil {
 		return nil, err
 	}
 
 	if obj == nil {
 		return i.insert(ctx, r, orgID)
-	}
-
-	if latestObjVersion == nil {
-		return nil, errors.New("latest object should never be nil")
 	}
 
 	return i.update(ctx, r, orgID)
