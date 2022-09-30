@@ -421,10 +421,12 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
 
   let pageNav = state.pageNav;
   let sectionNav = state.sectionNav;
+  const homeNavModel = getNavModel(props.navIndex, 'home');
+  const isHome = !dashboard.meta.url || homeNavModel.main.url === dashboard.meta.url;
 
   if (!pageNav || dashboard.title !== pageNav.text) {
     pageNav = {
-      text: dashboard.meta.isHome ? 'Home' : dashboard.title,
+      text: isHome ? homeNavModel.main.text : dashboard.title,
       url: locationUtil.getUrlForPartial(props.history.location, {
         editview: null,
         editPanel: null,
@@ -434,7 +436,7 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
   }
 
   // Check if folder changed
-  const { folderTitle, folderUid, isHome } = dashboard.meta;
+  const { folderTitle, folderUid } = dashboard.meta;
   if (folderTitle && folderUid && !isHome && pageNav && pageNav.parentItem?.text !== folderTitle) {
     pageNav = {
       ...pageNav,
@@ -456,7 +458,7 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
       getNavModel(props.navIndex, config.featureToggles.topnav ? 'dashboards/browse' : 'dashboards')
     );
     // Hide the Home -> Dashboards breadcrumbs if we're on the Home dashboard
-    if (dashboard.meta.isHome) {
+    if (isHome) {
       sectionNav.node.hideFromBreadcrumbs = true;
       if (sectionNav.node.parentItem) {
         sectionNav.node.parentItem.hideFromBreadcrumbs = true;

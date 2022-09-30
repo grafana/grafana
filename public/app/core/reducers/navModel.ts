@@ -4,16 +4,15 @@ import { cloneDeep } from 'lodash';
 import { NavIndex, NavModel, NavModelItem } from '@grafana/data';
 import config from 'app/core/config';
 
-export const HOME_NAV: NavModelItem = {
-  id: 'home',
-  text: 'Home',
-  url: '/',
-};
+export const HOME_NAV_ID = 'home';
 
 export function buildInitialState(): NavIndex {
   const navIndex: NavIndex = {};
   const rootNodes = cloneDeep(config.bootData.navTree as NavModelItem[]);
-  buildNavIndex(navIndex, rootNodes, HOME_NAV);
+  const homeNavIndex = rootNodes.findIndex((node) => node.id === HOME_NAV_ID);
+  const homeNav = rootNodes.splice(homeNavIndex, 1)[0];
+  buildNavIndex(navIndex, [homeNav]);
+  buildNavIndex(navIndex, rootNodes, homeNav);
   return navIndex;
 }
 

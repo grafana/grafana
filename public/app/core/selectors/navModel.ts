@@ -1,6 +1,6 @@
 import { NavModel, NavModelItem, NavIndex } from '@grafana/data';
 
-import { HOME_NAV } from '../reducers/navModel';
+import { HOME_NAV_ID } from '../reducers/navModel';
 
 const getNotFoundModel = (): NavModel => {
   const node: NavModelItem = {
@@ -37,7 +37,7 @@ export const getNavModel = (navIndex: NavIndex, id: string, fallback?: NavModel,
 };
 
 function getSectionRoot(node: NavModelItem): NavModelItem {
-  return node.parentItem && node.parentItem.id !== HOME_NAV.id ? getSectionRoot(node.parentItem) : node;
+  return node.parentItem && node.parentItem.id !== HOME_NAV_ID ? getSectionRoot(node.parentItem) : node;
 }
 
 function enrichNodeWithActiveState(node: NavModelItem, activeId: string): NavModelItem {
