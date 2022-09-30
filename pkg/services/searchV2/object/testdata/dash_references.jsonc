@@ -2,7 +2,7 @@
 //  
 //  Frame[0] 
 //  Name: references
-//  Dimensions: 4 Fields by 291 Rows
+//  Dimensions: 4 Fields by 293 Rows
 //  +-------------------------------+----------------+----------------+----------------+
 //  | Name: uid                     | Name: kind     | Name: type     | Name: uid      |
 //  | Labels:                       | Labels:        | Labels:        | Labels:        |
@@ -328,6 +328,8 @@
             "panel-timeline/timeline-modes.json",
             "panel-timeline/timeline-modes.json",
             "panel-timeline/timeline-modes.json",
+            "panel-timeseries/timeseries-out-of-rage.json",
+            "panel-timeseries/timeseries-out-of-rage.json",
             "scenarios/slow_queries_and_annotations.json",
             "scenarios/slow_queries_and_annotations.json",
             "scenarios/time_zone_support.json",
@@ -627,6 +629,8 @@
             "panel",
             "ds",
             "panel",
+            "ds",
+            "panel",
             "panel",
             "panel",
             "ds",
@@ -914,6 +918,8 @@
             "default.type",
             "state-timeline",
             "status-history",
+            "default.type",
+            "timeseries",
             "default.type",
             "graph",
             "default.type",
@@ -1206,6 +1212,8 @@
             "",
             "default.uid",
             "",
+            "",
+            "default.uid",
             "",
             "default.uid",
             "",
