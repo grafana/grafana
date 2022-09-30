@@ -11,6 +11,7 @@ type UpdateFn[T any] func(item T) (updated bool, updatedItem T, err error)
 // The main purpose of this API is to reduce the time-to-Proof-of-Concept - this is NOT intended for production use.
 //
 // The item type needs to be serializable to JSON.
+// @alpha -- EXPERIMENTAL
 type PersistentCollection[T any] interface {
 	Delete(ctx context.Context, orgID int64, predicate Predicate[T]) (deletedCount int, err error)
 	FindFirst(ctx context.Context, orgID int64, predicate Predicate[T]) (T, error)
