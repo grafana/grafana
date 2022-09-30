@@ -158,7 +158,7 @@ func (c *cache) set(entry *State) {
 	c.states[entry.OrgID][entry.AlertRuleUID].states[entry.CacheId] = entry
 }
 
-func (c *cache) get(orgID int64, alertRuleUID, stateId string) (*State, error) {
+func (c *cache) get(orgID int64, alertRuleUID, stateId string) *State {
 	c.mtxStates.RLock()
 	defer c.mtxStates.RUnlock()
 	ruleStates, ok := c.states[orgID][alertRuleUID]
@@ -166,10 +166,10 @@ func (c *cache) get(orgID int64, alertRuleUID, stateId string) (*State, error) {
 		var state *State
 		state, ok = ruleStates.states[stateId]
 		if ok {
-			return state, nil
+			return state
 		}
 	}
-	return nil, fmt.Errorf("no entry for %s:%s was found", alertRuleUID, stateId)
+	return nil
 }
 
 func (c *cache) getAll(orgID int64) []*State {

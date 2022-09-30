@@ -140,7 +140,7 @@ func (st *Manager) Warm(ctx context.Context) {
 	st.log.Info("State cache has been initialized", "loaded_states", statesCount, "duration", time.Since(startTime))
 }
 
-func (st *Manager) Get(orgID int64, alertRuleUID, stateId string) (*State, error) {
+func (st *Manager) Get(orgID int64, alertRuleUID, stateId string) *State {
 	return st.cache.get(orgID, alertRuleUID, stateId)
 }
 
