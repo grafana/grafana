@@ -5678,7 +5678,7 @@ __metadata:
     rc-time-picker: ^3.7.3
     react: 17.0.2
     react-beautiful-dnd: 13.1.0
-    react-calendar: 3.7.0
+    react-calendar: 3.9.0
     react-colorful: 5.5.1
     react-custom-scrollbars-2: 4.5.0
     react-docgen-typescript-loader: 3.7.2
@@ -32412,9 +32412,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-calendar@npm:3.7.0":
-  version: 3.7.0
-  resolution: "react-calendar@npm:3.7.0"
+"react-calendar@npm:3.9.0":
+  version: 3.9.0
+  resolution: "react-calendar@npm:3.9.0"
   dependencies:
     "@wojtekmaj/date-utils": ^1.0.2
     get-user-locale: ^1.2.0
@@ -32423,7 +32423,7 @@ __metadata:
   peerDependencies:
     react: ^16.3.0 || ^17.0.0 || ^18.0.0
     react-dom: ^16.3.0 || ^17.0.0 || ^18.0.0
-  checksum: 368084515bdbc59dddf1a0e367c6bb49e9b9efdc1d01343afeeb412feb52d89b88ac6b09378433cdb3716557ff2cf56751f11183ecd99a5df2a5c48b1691e33d
+  checksum: f178e8afef9e427689472c3792a2e4d60ca959657f12e06ab07a7cc27f64cc5e9531e495d087bfd5c9bc5826f7cec5088fb0e7f15fa4f28482180cc344c8c60f
   languageName: node
   linkType: hard
 
