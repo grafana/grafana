@@ -2,15 +2,13 @@ package querylibrary
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/x/persistentcollection"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/searchV2/dslookup"
@@ -34,32 +32,31 @@ type Service interface {
 }
 
 func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles) Service {
-	s := &service{
-		cfg:      cfg,
-		log:      log.New("queryLibraryService"),
-		features: features,
+	return &service{
+		cfg:        cfg,
+		log:        log.New("queryLibraryService"),
+		features:   features,
+		collection: persistentcollection.NewLocalFSPersistentCollection[Query]("query-library", cfg.DataPath, 1),
 	}
-
-	if !s.IsDisabled() {
-		if err := s.createDBDirectory(); err != nil {
-			panic(err)
-		}
-	}
-	return s
 }
 
 type service struct {
-	cfg      *setting.Cfg
-	features featuremgmt.FeatureToggles
-	log      log.Logger
+	cfg        *setting.Cfg
+	features   featuremgmt.FeatureToggles
+	log        log.Logger
+	collection persistentcollection.PersistentCollection[Query]
 }
 
 func (s *service) IsDisabled() bool {
 	return !s.features.IsEnabled(featuremgmt.FlagQueryLibrary) || !s.features.IsEnabled(featuremgmt.FlagPanelTitleSearch)
 }
 
+func namespaceFromUser(user *user.SignedInUser) string {
+	return fmt.Sprintf("orgId-%d", user.OrgID)
+}
+
 func (s *service) Search(ctx context.Context, user *user.SignedInUser, options QuerySearchOptions) ([]QueryInfo, error) {
-	queries, err := s.loadQueries(user.OrgID)
+	queries, err := s.collection.Find(ctx, namespaceFromUser(user), func(_ Query) (bool, error) { return true, nil })
 	if err != nil {
 		return nil, err
 	}
@@ -145,138 +142,45 @@ func extractDataSources(query Query) []dslookup.DataSourceRef {
 }
 
 func (s *service) GetBatch(ctx context.Context, user *user.SignedInUser, uids []string) ([]Query, error) {
-	queries, err := s.loadQueries(user.OrgID)
-	if err != nil {
-		return nil, err
-	}
-
 	uidMap := make(map[string]bool)
 	for _, uid := range uids {
 		uidMap[uid] = true
 	}
 
-	filteredQueries := make([]Query, 0)
-	for _, q := range queries {
-		if uidMap[q.UID] {
-			filteredQueries = append(filteredQueries, q)
+	return s.collection.Find(ctx, namespaceFromUser(user), func(q Query) (bool, error) {
+		if _, ok := uidMap[q.UID]; ok {
+			return true, nil
 		}
-	}
 
-	return filteredQueries, nil
+		return false, nil
+	})
 }
 
 func (s *service) Update(ctx context.Context, user *user.SignedInUser, query Query) error {
-	queries, err := s.loadQueries(user.OrgID)
-	if err != nil {
-		return err
-	}
-
-	titles := make(map[string]bool)
-	isNew := true
-	filteredQueries := make([]Query, 0)
-	for _, q := range queries {
-		titles[strings.TrimSpace(strings.ToLower(q.Title))] = true
-		if q.UID != query.UID {
-			filteredQueries = append(filteredQueries, q)
-		} else {
-			isNew = false
-			filteredQueries = append(filteredQueries, query)
-		}
-	}
-
-	if isNew {
-		if titles[strings.TrimSpace(strings.ToLower(query.Title))] {
-			return fmt.Errorf("%s title is already used", query.Title)
-		}
+	if query.UID == "" {
 		query.UID = util.GenerateShortUID()
-		filteredQueries = append(filteredQueries, query)
+
+		return s.collection.Insert(ctx, namespaceFromUser(user), query)
 	}
 
-	return s.writeQueries(user.OrgID, filteredQueries)
+	_, err := s.collection.Update(ctx, namespaceFromUser(user), func(q Query) (updated bool, updatedItem Query, err error) {
+		if q.UID == query.UID {
+			return true, query, nil
+		}
+
+		return false, Query{}, nil
+	})
+	return err
 }
 
 func (s *service) Delete(ctx context.Context, user *user.SignedInUser, uid string) error {
-	queries, err := s.loadQueries(user.OrgID)
-	if err != nil {
-		return err
-	}
-
-	filteredQueries := make([]Query, 0)
-	for _, q := range queries {
-		if q.UID != uid {
-			filteredQueries = append(filteredQueries, q)
-		}
-	}
-
-	return s.writeQueries(user.OrgID, filteredQueries)
-}
-
-func (s *service) queryDBDir() string {
-	return filepath.Join(s.cfg.DataPath, "queryLibrary")
-}
-
-func (s *service) queryDbPath(orgID int64) string {
-	return filepath.Join(s.queryDBDir(), fmt.Sprintf("db-%d.json", orgID))
-}
-
-var (
-	// increment when changing Queries model
-	currentQueryDBVersion = 1
-)
-
-type QueryDBFileContents struct {
-	Version int     `json:"version"`
-	Queries []Query `json:"queries"`
-}
-
-func (s *service) loadQueries(orgID int64) ([]Query, error) {
-	filePath := s.queryDbPath(orgID)
-	// Safe to ignore gosec warning G304.
-	// nolint:gosec
-	bytes, err := os.ReadFile(filePath)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return []Query{}, nil
-		}
-		return nil, fmt.Errorf("can't read %s file: %w", filePath, err)
-	}
-	var db QueryDBFileContents
-	if err = json.Unmarshal(bytes, &db); err != nil {
-		return nil, fmt.Errorf("can't unmarshal %s data: %w", filePath, err)
-	}
-
-	if db.Version != currentQueryDBVersion {
-		if err := s.writeQueries(orgID, []Query{}); err != nil {
-			return nil, err
+	_, err := s.collection.Delete(ctx, namespaceFromUser(user), func(q Query) (bool, error) {
+		if q.UID == uid {
+			return true, nil
 		}
 
-		return []Query{}, nil
-	}
-
-	return db.Queries, nil
-}
-
-func (s *service) writeQueries(orgID int64, queries []Query) error {
-	filePath := s.queryDbPath(orgID)
-
-	bytes, err := json.MarshalIndent(&QueryDBFileContents{
-		Version: currentQueryDBVersion,
-		Queries: queries,
-	}, "", "  ")
-	if err != nil {
-		return fmt.Errorf("can't marshal query library: %w", err)
-	}
-
-	return os.WriteFile(filePath, bytes, 0600)
-}
-
-func (s *service) createDBDirectory() error {
-	path := s.queryDBDir()
-
-	_, err := os.Stat(path)
-	if os.IsNotExist(err) {
-		return os.Mkdir(path, 0750)
-	}
+		return false, nil
+	})
 
 	return err
 }
