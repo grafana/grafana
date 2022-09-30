@@ -113,6 +113,9 @@ type UpdateCorrelationCommand struct {
 	// Optional description of the correlation
 	// example: Logs to Traces
 	Description *string `json:"description"`
+	// Correlation Configuration
+	// example: { field: "job", target: { query: "job=app" } }
+	Config CorrelationConfig `json:"config"`
 }
 
 // GetCorrelationQuery is the query to retrieve a single correlation
