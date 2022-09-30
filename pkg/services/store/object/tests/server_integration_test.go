@@ -134,7 +134,6 @@ func TestObjectServer(t *testing.T) {
 	})
 
 	t.Run("should be able to read persisted objects", func(t *testing.T) {
-
 		before := time.Now()
 		writeReq := &object.WriteObjectRequest{
 			UID:     uid,
