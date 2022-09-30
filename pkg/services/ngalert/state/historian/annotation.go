@@ -31,7 +31,7 @@ func NewAnnotationHistorian(annotations annotations.Repository, dashboards dashb
 	}
 }
 
-func (h *AnnotationStateHistorian) AnnotateState(ctx context.Context, rule *ngmodels.AlertRule, labels data.Labels, evaluatedAt time.Time, currentData, previousData state.InstanceStateAndReason) {
+func (h *AnnotationStateHistorian) RecordState(ctx context.Context, rule *ngmodels.AlertRule, labels data.Labels, evaluatedAt time.Time, currentData, previousData state.InstanceStateAndReason) {
 	h.log.Debug("alert state changed creating annotation", "alertRuleUID", rule.UID, "newState", currentData.String(), "oldState", previousData.String())
 
 	labels = removePrivateLabels(labels)

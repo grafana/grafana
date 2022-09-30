@@ -25,5 +25,5 @@ type RuleReader interface {
 
 // Historian maintains an audit log of alert state history.
 type Historian interface {
-	AnnotateState(ctx context.Context, rule *ngmodels.AlertRule, labels data.Labels, evaluatedAt time.Time, currentData, previousData InstanceStateAndReason)
+	RecordState(ctx context.Context, rule *ngmodels.AlertRule, labels data.Labels, evaluatedAt time.Time, currentData, previousData InstanceStateAndReason)
 }
