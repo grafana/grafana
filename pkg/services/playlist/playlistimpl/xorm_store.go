@@ -38,7 +38,7 @@ func (s *sqlStore) Insert(ctx context.Context, cmd *playlist.CreatePlaylistComma
 		for order, item := range cmd.Items {
 			playlistItems = append(playlistItems, playlist.PlaylistItem{
 				PlaylistId: p.Id,
-				Type:       item.Type,
+				Type:       string(item.Type),
 				Value:      item.Value,
 				Order:      order + 1,
 				Title:      item.Title,
@@ -74,6 +74,8 @@ func (s *sqlStore) Update(ctx context.Context, cmd *playlist.UpdatePlaylistComma
 			Name:     p.Name,
 			Interval: p.Interval,
 		}
+		dto.Name = p.Name
+		dto.Interval = p.Interval
 
 		_, err = sess.Where("id=?", p.Id).Cols("name", "interval").Update(&p)
 		if err != nil {
@@ -92,7 +94,7 @@ func (s *sqlStore) Update(ctx context.Context, cmd *playlist.UpdatePlaylistComma
 		for index, item := range cmd.Items {
 			playlistItems = append(playlistItems, playlist.PlaylistItem{
 				PlaylistId: p.Id,
-				Type:       item.Type,
+				Type:       string(item.Type),
 				Value:      item.Value,
 				Order:      index + 1,
 				Title:      item.Title,
