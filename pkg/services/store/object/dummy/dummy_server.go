@@ -60,7 +60,7 @@ func (i dummyObjectServer) findObject(ctx context.Context, uid string, kind stri
 	}
 
 	obj, err := i.collection.FindFirst(ctx, orgIdFromUID(uid), func(i *RawObjectWithHistory) (bool, error) {
-		return i.UID == uid && i.Kind == kind && (version == "" || i.Version == version), nil
+		return i.UID == uid && i.Kind == kind, nil
 	})
 
 	if err != nil {

@@ -83,16 +83,14 @@ func requireObjectMatch(t *testing.T, obj *object.RawObject, m rawObjectMatcher)
 		}
 	}
 
-	if m.body != nil {
-		if !reflect.DeepEqual(m.body, obj.Body) {
-			mismatches += fmt.Sprintf("expected body len: %d, actual body len: %d\n", len(m.body), len(obj.Body))
-		}
+	if !reflect.DeepEqual(m.body, obj.Body) {
+		mismatches += fmt.Sprintf("expected body len: %d, actual body len: %d\n", len(m.body), len(obj.Body))
+	}
 
-		expectedHash := createContentsHash(m.body)
-		actualHash := createContentsHash(obj.Body)
-		if expectedHash != actualHash {
-			mismatches += fmt.Sprintf("expected body hash: %s, actual body hash: %s\n", expectedHash, actualHash)
-		}
+	expectedHash := createContentsHash(m.body)
+	actualHash := createContentsHash(obj.Body)
+	if expectedHash != actualHash {
+		mismatches += fmt.Sprintf("expected body hash: %s, actual body hash: %s\n", expectedHash, actualHash)
 	}
 
 	if m.version != nil && *m.version != obj.Version {
@@ -170,7 +168,114 @@ func TestObjectServer(t *testing.T) {
 			Kind:            kind,
 			PreviousVersion: writeResp.Object.Version,
 		})
-		require.NoError(t, nil)
+		require.NoError(t, err)
+		require.True(t, deleteResp.OK)
+
+		readRespAfterDelete, err := testCtx.client.Read(ctx, &object.ReadObjectRequest{
+			UID:      uid,
+			Kind:     kind,
+			Version:  "",
+			WithBody: true,
+		})
+		require.NoError(t, err)
+		require.Nil(t, readRespAfterDelete.Object)
+	})
+
+	t.Run("should be able to update an object", func(t *testing.T) {
+		before := time.Now()
+		writeReq1 := &object.WriteObjectRequest{
+			UID:     uid,
+			Kind:    kind,
+			Body:    body,
+			Comment: "first entity!",
+		}
+		writeResp1, err := testCtx.client.Write(ctx, writeReq1)
+		require.NoError(t, err)
+
+		body2 := []byte("{\"name\":\"John2\"}")
+
+		writeReq2 := &object.WriteObjectRequest{
+			UID:     uid,
+			Kind:    kind,
+			Body:    body2,
+			Comment: "update1",
+		}
+		writeResp2, err := testCtx.client.Write(ctx, writeReq2)
+		require.NoError(t, err)
+		require.NotEqual(t, writeResp1.Object.Version, writeResp2.Object.Version)
+
+		body3 := []byte("{\"name\":\"John3\"}")
+		writeReq3 := &object.WriteObjectRequest{
+			UID:     uid,
+			Kind:    kind,
+			Body:    body3,
+			Comment: "update3",
+		}
+		writeResp3, err := testCtx.client.Write(ctx, writeReq3)
+		require.NoError(t, err)
+		require.NotEqual(t, writeResp3.Object.Version, writeResp2.Object.Version)
+
+		latestMatcher := rawObjectMatcher{
+			uid:           &uid,
+			kind:          &kind,
+			createdRange:  []time.Time{before, time.Now()},
+			modifiedRange: []time.Time{before, time.Now()},
+			createdBy:     fakeUser,
+			modifiedBy:    fakeUser,
+			body:          body3,
+			version:       &writeResp3.Object.Version,
+			comment:       &writeReq3.Comment,
+		}
+		readRespLatest, err := testCtx.client.Read(ctx, &object.ReadObjectRequest{
+			UID:      uid,
+			Kind:     kind,
+			Version:  "", // latest
+			WithBody: true,
+		})
+		require.NoError(t, err)
+		require.Nil(t, readRespLatest.SummaryJson)
+		requireObjectMatch(t, readRespLatest.Object, latestMatcher)
+
+		readRespFirstVer, err := testCtx.client.Read(ctx, &object.ReadObjectRequest{
+			UID:      uid,
+			Kind:     kind,
+			Version:  writeResp1.Object.Version,
+			WithBody: true,
+		})
+
+		require.NoError(t, err)
+		require.Nil(t, readRespFirstVer.SummaryJson)
+		require.NotNil(t, readRespFirstVer.Object)
+		requireObjectMatch(t, readRespFirstVer.Object, rawObjectMatcher{
+			uid:           &uid,
+			kind:          &kind,
+			createdRange:  []time.Time{before, time.Now()},
+			modifiedRange: []time.Time{before, time.Now()},
+			createdBy:     fakeUser,
+			modifiedBy:    fakeUser,
+			body:          body,
+			version:       &firstVersion,
+			comment:       &writeReq1.Comment,
+		})
+
+		history, err := testCtx.client.History(ctx, &object.ObjectHistoryRequest{
+			UID:  uid,
+			Kind: kind,
+		})
+		require.NoError(t, err)
+		require.Equal(t, []*object.RawObject{
+			writeResp1.Object,
+			writeResp2.Object,
+			writeResp3.Object,
+		}, history.Object)
+
+		deleteResp, err := testCtx.client.Delete(ctx, &object.DeleteObjectRequest{
+			UID:             uid,
+			Kind:            kind,
+			PreviousVersion: writeResp3.Object.Version,
+		})
+		require.NoError(t, err)
 		require.True(t, deleteResp.OK)
 	})
+
 }
