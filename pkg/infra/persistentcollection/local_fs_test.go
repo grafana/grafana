@@ -71,6 +71,7 @@ func TestLocalFSPersistentCollection(t *testing.T) {
 
 		return false, nil
 	})
+	require.NoError(t, err)
 	require.Equal(t, firstInserted, firstFound)
 
 	all, err := coll.Find(ctx, orgID, func(i *item) (bool, error) { return true, nil })
