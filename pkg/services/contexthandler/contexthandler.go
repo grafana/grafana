@@ -4,6 +4,7 @@ package contexthandler
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -428,11 +429,16 @@ func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, org
 		return false
 	}
 
+	getTime := h.GetTime
+	if getTime == nil {
+		getTime = time.Now
+	}
+
 	// Check whether the logged in User has a token
 	exists, oauthToken := h.oauthTokenService.HasOAuthEntry(ctx, queryResult)
 	if exists {
-		if oauthToken.OAuthExpiry.UTC().Before(time.Now().UTC()) {
-			reqContext.Logger.Debug("access aoken expired", "userId", query.UserID)
+		if oauthToken.OAuthExpiry.Round(0).Add(-oauthtoken.ExpiryDelta).Before(getTime()) {
+			reqContext.Logger.Info("access token expired", "userId", query.UserID, "tokenExpiry", fmt.Sprintf("%v", oauthToken.OAuthExpiry))
 
 			// If the token is expired then try to refresh it using the Refresh token
 			if err = h.oauthTokenService.TryTokenRefresh(ctx, oauthToken); err != nil {
