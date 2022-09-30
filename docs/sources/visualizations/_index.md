@@ -7,11 +7,11 @@ aliases:
   - /docs/grafana/latest/panels/visualizations/graph-panel/
   - /docs/grafana/latest/reference/graph/
   - /docs/grafana/latest/visualizations/graph-panel/
-title: Visualization types
+title: Visualizations
 weight: 75
 ---
 
-# Visualization types
+# Visualizations
 
 Grafana offers a variety of visualizations to support different use cases. This section of the documentation highlights the built-in panels, their options and typical usage.
 
