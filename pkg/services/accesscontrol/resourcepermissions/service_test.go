@@ -224,7 +224,7 @@ func setupTestEnvironment(t *testing.T, permissions []accesscontrol.Permission, 
 	sql := sqlstore.InitTestDB(t)
 	cfg := setting.NewCfg()
 	teamSvc := teamimpl.ProvideService(sql, cfg)
-	userSvc := userimpl.ProvideService(sql, nil, cfg, sql)
+	userSvc := userimpl.ProvideService(sql, nil, cfg, sql, teamimpl.ProvideService(sql, cfg), nil)
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
 	mock := accesscontrolmock.New().WithPermissions(permissions)
