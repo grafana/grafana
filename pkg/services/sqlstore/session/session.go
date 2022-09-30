@@ -19,7 +19,7 @@ type SessionDB struct {
 	sqlxdb *sqlx.DB
 }
 
-func GetSession(sqlxdb *sqlx.DB, debugSQL bool) *SessionDB {
+func GetSession(sqlxdb *sqlx.DB) *SessionDB {
 	db := SessionDB{sqlxdb: sqlxdb}
 	return &db
 }
