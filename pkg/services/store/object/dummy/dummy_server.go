@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/x/persistentcollection"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/store/object"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -28,7 +29,7 @@ var (
 
 func ProvideDummyObjectServer(cfg *setting.Cfg, grpcServerProvider grpcserver.Provider) object.ObjectStoreServer {
 	objectServer := &dummyObjectServer{
-		collection: newLocalFsCollection[*RawObjectWithHistory]("raw-object", cfg.DataPath, rawObjectVersion),
+		collection: persistentcollection.NewLocalFSPersistentCollection[*RawObjectWithHistory]("raw-object", cfg.DataPath, rawObjectVersion),
 		log:        log.New("in-memory-object-server"),
 	}
 	object.RegisterObjectStoreServer(grpcServerProvider.GetServer(), objectServer)
@@ -37,12 +38,12 @@ func ProvideDummyObjectServer(cfg *setting.Cfg, grpcServerProvider grpcserver.Pr
 
 type dummyObjectServer struct {
 	log        log.Logger
-	collection persistentCollection[*RawObjectWithHistory]
+	collection persistentcollection.PersistentCollection[*RawObjectWithHistory]
 }
 
-func orgIdFromUID(uid string) int64 {
+func namespaceFromUID(uid string) string {
 	// TODO
-	return 1
+	return "orgId-1"
 }
 
 func userFromContext(ctx context.Context) *user.SignedInUser {
@@ -59,7 +60,7 @@ func (i dummyObjectServer) findObject(ctx context.Context, uid string, kind stri
 		return nil, nil, errors.New("UID must not be empty")
 	}
 
-	obj, err := i.collection.FindFirst(ctx, orgIdFromUID(uid), func(i *RawObjectWithHistory) (bool, error) {
+	obj, err := i.collection.FindFirst(ctx, namespaceFromUID(uid), func(i *RawObjectWithHistory) (bool, error) {
 		return i.UID == uid && i.Kind == kind, nil
 	})
 
@@ -123,10 +124,10 @@ func createContentsHash(contents []byte) string {
 	return hex.EncodeToString(hash[:])
 }
 
-func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequest, orgID int64) (*object.WriteObjectResponse, error) {
+func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequest, namespace string) (*object.WriteObjectResponse, error) {
 	var updated *object.RawObject
 
-	updatedCount, err := i.collection.Update(ctx, orgID, func(i *RawObjectWithHistory) (bool, *RawObjectWithHistory, error) {
+	updatedCount, err := i.collection.Update(ctx, namespace, func(i *RawObjectWithHistory) (bool, *RawObjectWithHistory, error) {
 		match := i.UID == r.UID && i.Kind == r.Kind
 		if !match {
 			return false, nil, nil
@@ -180,7 +181,7 @@ func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequ
 	}, nil
 }
 
-func (i dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectRequest, orgID int64) (*object.WriteObjectResponse, error) {
+func (i dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectRequest, namespace string) (*object.WriteObjectResponse, error) {
 	modifier := userFromContext(ctx)
 	rawObj := &object.RawObject{
 		UID:      r.UID,
@@ -206,7 +207,7 @@ func (i dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectRequ
 		History:   []*object.RawObject{rawObj},
 	}
 
-	err := i.collection.Insert(ctx, orgID, newObj)
+	err := i.collection.Insert(ctx, namespace, newObj)
 	if err != nil {
 		return nil, err
 	}
@@ -218,9 +219,8 @@ func (i dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectRequ
 }
 
 func (i dummyObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest) (*object.WriteObjectResponse, error) {
-	orgID := orgIdFromUID(r.UID)
-
-	obj, err := i.collection.FindFirst(ctx, orgIdFromUID(r.UID), func(i *RawObjectWithHistory) (bool, error) {
+	namespace := namespaceFromUID(r.UID)
+	obj, err := i.collection.FindFirst(ctx, namespace, func(i *RawObjectWithHistory) (bool, error) {
 		return i.UID == r.UID, nil
 	})
 	if err != nil {
@@ -228,14 +228,14 @@ func (i dummyObjectServer) Write(ctx context.Context, r *object.WriteObjectReque
 	}
 
 	if obj == nil {
-		return i.insert(ctx, r, orgID)
+		return i.insert(ctx, r, namespace)
 	}
 
-	return i.update(ctx, r, orgID)
+	return i.update(ctx, r, namespace)
 }
 
 func (i dummyObjectServer) Delete(ctx context.Context, r *object.DeleteObjectRequest) (*object.DeleteObjectResponse, error) {
-	_, err := i.collection.Delete(ctx, orgIdFromUID(r.UID), func(i *RawObjectWithHistory) (bool, error) {
+	_, err := i.collection.Delete(ctx, namespaceFromUID(r.UID), func(i *RawObjectWithHistory) (bool, error) {
 		match := i.UID == r.UID && i.Kind == r.Kind
 		if match {
 			if r.PreviousVersion != "" && i.Version != r.PreviousVersion {
@@ -284,7 +284,7 @@ func (i dummyObjectServer) Search(ctx context.Context, r *object.ObjectSearchReq
 	}
 
 	// TODO more filters
-	objects, err := i.collection.Find(ctx, orgIdFromUID("TODO"), func(i *RawObjectWithHistory) (bool, error) {
+	objects, err := i.collection.Find(ctx, namespaceFromUID("TODO"), func(i *RawObjectWithHistory) (bool, error) {
 		if len(r.Kind) != 0 {
 			if _, ok := kindMap[i.Kind]; !ok {
 				return false, nil
