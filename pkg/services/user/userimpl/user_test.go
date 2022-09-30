@@ -5,10 +5,14 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
+	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -16,8 +20,9 @@ func TestUserService(t *testing.T) {
 	userStore := newUserStoreFake()
 	orgService := orgtest.NewOrgServiceFake()
 	userService := Service{
-		store:      userStore,
-		orgService: orgService,
+		store:        userStore,
+		orgService:   orgService,
+		cacheService: localcache.ProvideService(),
 	}
 
 	t.Run("create user", func(t *testing.T) {
@@ -37,6 +42,7 @@ func TestUserService(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "login", u.Login)
 		require.Equal(t, "name", u.Name)
+
 		require.Equal(t, "email", u.Email)
 	})
 
@@ -85,6 +91,40 @@ func TestUserService(t *testing.T) {
 		query := user.GetUserByIDQuery{}
 		_, err := userService.GetByID(context.Background(), &query)
 		require.Error(t, err)
+	})
+
+	t.Run("Testing DB - return list users based on their is_disabled flag", func(t *testing.T) {
+		userStore := newUserStoreFake()
+		orgService := orgtest.NewOrgServiceFake()
+		userService := Service{
+			store:        userStore,
+			orgService:   orgService,
+			cacheService: localcache.ProvideService(),
+			teamService:  teamtest.NewFakeService(),
+		}
+		usr := &user.SignedInUser{
+			OrgID:       1,
+			Permissions: map[int64]map[string][]string{1: {"users:read": {"global.users:*"}}},
+		}
+
+		usr2 := &user.SignedInUser{
+			OrgID:       0,
+			Permissions: map[int64]map[string][]string{1: {"users:read": {"global.users:*"}}},
+		}
+
+		query1 := &user.GetSignedInUserQuery{OrgID: 1, UserID: 1}
+		userStore.ExpectedSignedInUser = usr
+		orgService.ExpectedUserOrgDTO = []*org.UserOrgDTO{{OrgID: 0}, {OrgID: 1}}
+		result, err := userService.GetSignedInUserWithCacheCtx(context.Background(), query1)
+		require.Nil(t, err)
+		require.NotNil(t, result)
+		assert.Equal(t, query1.OrgID, result.OrgID)
+		userStore.ExpectedSignedInUser = usr2
+		query2 := &user.GetSignedInUserQuery{OrgID: 0, UserID: 1}
+		result2, err := userService.GetSignedInUserWithCacheCtx(context.Background(), query2)
+		require.Nil(t, err)
+		require.NotNil(t, result2)
+		assert.Equal(t, query2.OrgID, result2.OrgID)
 	})
 }
 
