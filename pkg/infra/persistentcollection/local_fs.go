@@ -201,7 +201,7 @@ func (s *localFsCollection[T]) save(_ context.Context, orgID int64, items []T) e
 func (s *localFsCollection[T]) createCollectionsDirectory() error {
 	_, err := os.Stat(s.collectionsDir)
 	if os.IsNotExist(err) {
-		return os.Mkdir(s.collectionsDir, 0750)
+		return os.MkdirAll(s.collectionsDir, 0750)
 	}
 
 	return err

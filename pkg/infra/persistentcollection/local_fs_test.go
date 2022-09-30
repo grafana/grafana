@@ -2,7 +2,9 @@ package persistentcollection
 
 import (
 	"context"
+	"fmt"
 	"os"
+	"path"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -16,9 +18,14 @@ type item struct {
 func TestLocalFSPersistentCollection(t *testing.T) {
 	orgID := int64(1)
 	ctx := context.Background()
-	tmpDir := os.TempDir()
+	dir := path.Join(os.TempDir(), "persistent-collection-test")
+	defer func() {
+		if err := os.RemoveAll(dir); err != nil {
+			fmt.Printf("Failed to remove temporary directory %q: %s\n", dir, err.Error())
+		}
+	}()
 
-	coll := NewLocalFSPersistentCollection[*item]("test", tmpDir, 1)
+	coll := NewLocalFSPersistentCollection[*item]("test", dir, 1)
 
 	firstInserted := &item{
 		Name: "test",
