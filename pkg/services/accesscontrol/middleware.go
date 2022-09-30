@@ -97,7 +97,7 @@ type userCache interface {
 	GetSignedInUserWithCacheCtx(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error)
 }
 
-func AuthorizeInOrgMiddleware(ac AccessControl, cache userCache) func(web.Handler, OrgIDGetter, Evaluator) web.Handler {
+func AuthorizeInOrgMiddleware(ac AccessControl, service Service, cache userCache) func(web.Handler, OrgIDGetter, Evaluator) web.Handler {
 	return func(fallback web.Handler, getTargetOrg OrgIDGetter, evaluator Evaluator) web.Handler {
 		if ac.IsDisabled() {
 			return fallback
@@ -127,10 +127,18 @@ func AuthorizeInOrgMiddleware(ac AccessControl, cache userCache) func(web.Handle
 				userCopy.OrgRole = queryResult.OrgRole
 			}
 
+			if userCopy.Permissions[userCopy.OrgID] == nil {
+				permissions, err := service.GetUserPermissions(c.Req.Context(), &userCopy, Options{})
+				if err != nil {
+					deny(c, nil, fmt.Errorf("failed to authenticate user in target org: %w", err))
+				}
+				userCopy.Permissions[userCopy.OrgID] = GroupScopesByAction(permissions)
+			}
+
 			authorize(c, ac, &userCopy, evaluator)
 
 			// Set the sign-ed in user permissions in that org
-			c.SignedInUser.Permissions = userCopy.Permissions
+			c.SignedInUser.Permissions[userCopy.OrgID] = userCopy.Permissions[userCopy.OrgID]
 		}
 	}
 }

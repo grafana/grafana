@@ -31,6 +31,7 @@ func ProvideServiceAccountsService(
 	usageStats usagestats.Service,
 	serviceAccountsStore serviceaccounts.Store,
 	permissionService accesscontrol.ServiceAccountPermissionsService,
+	accesscontrolService accesscontrol.Service,
 ) (*ServiceAccountsService, error) {
 	s := &ServiceAccountsService{
 		store:         serviceAccountsStore,
@@ -38,7 +39,7 @@ func ProvideServiceAccountsService(
 		backgroundLog: log.New("serviceaccounts.background"),
 	}
 
-	if err := RegisterRoles(ac); err != nil {
+	if err := RegisterRoles(accesscontrolService); err != nil {
 		s.log.Error("Failed to register roles", "error", err)
 	}
 

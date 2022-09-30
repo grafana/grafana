@@ -319,6 +319,19 @@ describe('InfluxDataSource', () => {
         });
         influxChecks(query);
       });
+
+      it('should apply all scopedVars to tags', () => {
+        ds.isFlux = false;
+        ds.access = 'proxy';
+        config.featureToggles.influxdbBackendMigration = true;
+        const query = ds.applyTemplateVariables(influxQuery, {
+          interpolationVar: { text: text, value: text },
+          interpolationVar2: { text: 'interpolationText2', value: 'interpolationText2' },
+        });
+        const value = query.tags[0].value;
+        const scopedVars = 'interpolationText|interpolationText2';
+        expect(value).toBe(scopedVars);
+      });
     });
   });
 });

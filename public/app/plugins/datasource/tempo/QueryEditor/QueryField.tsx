@@ -18,8 +18,9 @@ import {
 import { LokiQueryField } from '../../loki/components/LokiQueryField';
 import { LokiDatasource } from '../../loki/datasource';
 import { LokiQuery } from '../../loki/types';
-import { TempoDatasource, TempoQuery, TempoQueryType } from '../datasource';
+import { TempoDatasource } from '../datasource';
 import { QueryEditor } from '../traceql/QueryEditor';
+import { TempoQuery, TempoQueryType } from '../types';
 
 import NativeSearch from './NativeSearch';
 import { ServiceGraphSection } from './ServiceGraphSection';
@@ -78,7 +79,7 @@ class TempoQueryFieldComponent extends React.PureComponent<Props> {
 
     const queryTypeOptions: Array<SelectableValue<TempoQueryType>> = [
       { value: 'traceId', label: 'TraceID' },
-      { value: 'upload', label: 'JSON file' },
+      { value: 'upload', label: 'JSON File' },
       { value: 'serviceMap', label: 'Service Graph' },
     ];
 

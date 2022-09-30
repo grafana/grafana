@@ -56,7 +56,7 @@ Add a title and description to a panel to share with users any important informa
 
    Text entered in this field appears in a tooltip in the upper-left corner of the panel.
 
-   You can use [variables you have defined]({{< relref "../../variables/" >}}) in the **Title** and **Description** field, but not [global variables]({{< relref "../../variables/variable-types/global-variables/" >}}).
+   You can use [variables you have defined]({{< relref "../../dashboards/variables" >}}) in the **Title** and **Description** field, but not [global variables]({{< relref "../../dashboards/variables/add-template-variables/#global-variables" >}}).
 
    ![](/static/img/docs/panels/panel-options-8-0.png)
 

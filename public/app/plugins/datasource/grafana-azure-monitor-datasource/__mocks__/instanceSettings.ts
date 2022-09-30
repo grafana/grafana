@@ -10,6 +10,7 @@ export const createMockInstanceSetttings = (): AzureDataSourceInstanceSettings =
   access: 'proxy',
   meta: {} as DataSourcePluginMeta,
   name: 'azure',
+  readOnly: false,
 
   jsonData: {
     cloudName: 'azuremonitor',

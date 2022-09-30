@@ -97,6 +97,7 @@ export function quantizeScheme(opts: HeatmapColorOptions, theme: GrafanaTheme2):
     }
 
     if (
+      opts.reverse ||
       scheme.invert === 'always' ||
       (scheme.invert === 'dark' && theme.isDark) ||
       (scheme.invert === 'light' && theme.isLight)

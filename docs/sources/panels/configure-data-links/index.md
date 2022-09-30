@@ -30,14 +30,14 @@ To see a list of available variables, type `$` in the data link **URL** field to
 
 > **Note:** These variables changed in 6.4 so if you have an older version of Grafana, then use the version picker to select docs for an older version of Grafana.
 
-You can also use template variables in your data links URLs, refer to [Templates and variables]({{< relref "../../variables/" >}}) for more information on template variables.
+You can also use template variables in your data links URLs, refer to [Templates and variables]({{< relref "../../dashboards/variables/" >}}) for more information on template variables.
 
 ## Time range panel variables
 
 These variables allow you to include the current time range in the data link URL.
 
 - `__url_time_range` - current dashboard's time range (i.e. `?from=now-6h&to=now`)
-- `$__from and $__to` - For more information, refer to [Global variables]({{< relref "../../variables/variable-types/global-variables/#__from-and-__to" >}}).
+- `$__from and $__to` - For more information, refer to [Global variables]({{< relref "../../dashboards/variables/add-template-variables/#__from-and-__to" >}}).
 
 ## Series variables
 
@@ -66,9 +66,15 @@ Value-specific variables are available under `__value` namespace:
 
 When linking to another dashboard that uses template variables, select variable values for whoever clicks the link.
 
-`${myvar:queryparam}` - where `myvar` is a name of the template variable that matches one in the current dashboard that you want to use.
+`${var-myvar:queryparam}` - where `var-myvar` is the name of the template variable that matches one in the current dashboard that you want to use.
 
-If you want to add all of the current dashboard's variables to the URL, then use `__all_variables`.
+| Variable state           | Result in the created URL           |
+| ------------------------ | ----------------------------------- |
+| selected one value       | `var-myvar=value1`                  |
+| selected multiple values | `var-myvar=value1&var-myvar=value2` |
+| selected `All`           | `var-myvar=All`                     |
+
+If you want to add all of the current dashboard's variables to the URL, then use `${__all_variables}`.
 
 ## Data links
 

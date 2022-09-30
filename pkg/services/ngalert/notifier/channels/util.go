@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -13,11 +14,13 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
+	"gopkg.in/yaml.v2"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -96,6 +99,7 @@ func withStoredImages(ctx context.Context, l log.Logger, imageStore ImageStore, 
 
 // The path argument here comes from reading internal image storage, not user
 // input, so we ignore the security check here.
+//
 //nolint:gosec
 func openImage(path string) (io.ReadCloser, error) {
 	fp := filepath.Clean(path)
@@ -167,6 +171,18 @@ type NotificationChannelConfig struct {
 	DisableResolveMessage bool              `json:"disableResolveMessage"`
 	Settings              *simplejson.Json  `json:"settings"`
 	SecureSettings        map[string][]byte `json:"secureSettings"`
+}
+
+func (c NotificationChannelConfig) unmarshalSettings(v interface{}) error {
+	ser, err := c.Settings.Encode()
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal(ser, v)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 type httpCfg struct {
@@ -247,4 +263,57 @@ func joinUrlPath(base, additionalPath string, logger log.Logger) string {
 // and set a boundary for multipart body. DO NOT set this outside tests.
 var GetBoundary = func() string {
 	return ""
+}
+
+type CommaSeparatedStrings []string
+
+func (r *CommaSeparatedStrings) UnmarshalJSON(b []byte) error {
+	var str string
+	if err := json.Unmarshal(b, &str); err != nil {
+		return err
+	}
+	if len(str) > 0 {
+		res := CommaSeparatedStrings(splitCommaDelimitedString(str))
+		*r = res
+	}
+	return nil
+}
+
+func (r *CommaSeparatedStrings) MarshalJSON() ([]byte, error) {
+	if r == nil {
+		return nil, nil
+	}
+	str := strings.Join(*r, ",")
+	return json.Marshal(str)
+}
+
+func (r *CommaSeparatedStrings) UnmarshalYAML(b []byte) error {
+	var str string
+	if err := yaml.Unmarshal(b, &str); err != nil {
+		return err
+	}
+	if len(str) > 0 {
+		res := CommaSeparatedStrings(splitCommaDelimitedString(str))
+		*r = res
+	}
+	return nil
+}
+
+func (r *CommaSeparatedStrings) MarshalYAML() ([]byte, error) {
+	if r == nil {
+		return nil, nil
+	}
+	str := strings.Join(*r, ",")
+	return yaml.Marshal(str)
+}
+
+func splitCommaDelimitedString(str string) []string {
+	split := strings.Split(str, ",")
+	res := make([]string, 0, len(split))
+	for _, s := range split {
+		if tr := strings.TrimSpace(s); tr != "" {
+			res = append(res, tr)
+		}
+	}
+	return res
 }

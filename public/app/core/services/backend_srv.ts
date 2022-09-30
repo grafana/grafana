@@ -18,7 +18,7 @@ import { BackendSrv as BackendService, BackendSrvRequest, config, FetchError, Fe
 import appEvents from 'app/core/app_events';
 import { getConfig } from 'app/core/config';
 import { loadUrlToken } from 'app/core/utils/urlToken';
-import { DashboardSearchHit } from 'app/features/search/types';
+import { DashboardSearchItem } from 'app/features/search/types';
 import { getGrafanaStorage } from 'app/features/storage/storage';
 import { TokenRevokedModal } from 'app/features/users/TokenRevokedModal';
 import { DashboardDTO, FolderDTO } from 'app/types';
@@ -439,7 +439,7 @@ export class BackendSrv implements BackendService {
   }
 
   /** @deprecated */
-  search(query: any): Promise<DashboardSearchHit[]> {
+  search(query: any): Promise<DashboardSearchItem[]> {
     return this.get('/api/search', query);
   }
 

@@ -12,48 +12,82 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestClient_ExecuteMultisearch(t *testing.T) {
-	version, err := semver.NewVersion("8.0.0")
-	require.NoError(t, err)
-	httpClientScenario(t, "Given a fake http client and a v7.0 client with response", &DatasourceInfo{
-		Database:                   "[metrics-]YYYY.MM.DD",
-		ESVersion:                  version,
-		TimeField:                  "@timestamp",
-		Interval:                   "Daily",
-		MaxConcurrentShardRequests: 6,
-		IncludeFrozen:              true,
-		XPack:                      true,
-	}, func(sc *scenarioContext) {
-		sc.responseBody = `{
+	t.Run("Given a fake http client and a client with response", func(t *testing.T) {
+		var request *http.Request
+		var requestBody *bytes.Buffer
+
+		ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+			request = r
+			buf, err := io.ReadAll(r.Body)
+			require.NoError(t, err)
+
+			requestBody = bytes.NewBuffer(buf)
+
+			rw.Header().Set("Content-Type", "application/x-ndjson")
+			_, err = rw.Write([]byte(
+				`{
 				"responses": [
 					{
 						"hits": {	"hits": [], "max_score": 0,	"total": { "value": 4656, "relation": "eq"}	},
 						"status": 200
 					}
 				]
-			}`
+			}`))
+			require.NoError(t, err)
+			rw.WriteHeader(200)
+		}))
 
-		ms, err := createMultisearchForTest(t, sc.client)
+		version, err := semver.NewVersion("8.0.0")
 		require.NoError(t, err)
-		res, err := sc.client.ExecuteMultisearch(ms)
+
+		ds := DatasourceInfo{
+			URL:                        ts.URL,
+			HTTPClient:                 ts.Client(),
+			Database:                   "[metrics-]YYYY.MM.DD",
+			ESVersion:                  version,
+			TimeField:                  "@timestamp",
+			Interval:                   "Daily",
+			MaxConcurrentShardRequests: 6,
+			IncludeFrozen:              true,
+			XPack:                      true,
+		}
+
+		from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
+		to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
+		timeRange := backend.TimeRange{
+			From: from,
+			To:   to,
+		}
+
+		c, err := NewClient(context.Background(), &ds, timeRange)
+		require.NoError(t, err)
+		require.NotNil(t, c)
+
+		t.Cleanup(func() {
+			ts.Close()
+		})
+
+		ms, err := createMultisearchForTest(t, c)
+		require.NoError(t, err)
+		res, err := c.ExecuteMultisearch(ms)
 		require.NoError(t, err)
 
-		require.NotNil(t, sc.request)
-		assert.Equal(t, http.MethodPost, sc.request.Method)
-		assert.Equal(t, "/_msearch", sc.request.URL.Path)
-		assert.Equal(t, "max_concurrent_shard_requests=6&ignore_throttled=false", sc.request.URL.RawQuery)
+		require.NotNil(t, request)
+		assert.Equal(t, http.MethodPost, request.Method)
+		assert.Equal(t, "/_msearch", request.URL.Path)
+		assert.Equal(t, "max_concurrent_shard_requests=6&ignore_throttled=false", request.URL.RawQuery)
 
-		require.NotNil(t, sc.requestBody)
+		require.NotNil(t, requestBody)
 
-		headerBytes, err := sc.requestBody.ReadBytes('\n')
+		headerBytes, err := requestBody.ReadBytes('\n')
 		require.NoError(t, err)
-		bodyBytes := sc.requestBody.Bytes()
+		bodyBytes := requestBody.Bytes()
 
 		jHeader, err := simplejson.NewJson(headerBytes)
 		require.NoError(t, err)
@@ -89,63 +123,4 @@ func createMultisearchForTest(t *testing.T, c Client) (*MultiSearchRequest, erro
 		})
 	})
 	return msb.Build()
-}
-
-type scenarioContext struct {
-	client         Client
-	request        *http.Request
-	requestBody    *bytes.Buffer
-	responseStatus int
-	responseBody   string
-}
-
-type scenarioFunc func(*scenarioContext)
-
-func httpClientScenario(t *testing.T, desc string, ds *DatasourceInfo, fn scenarioFunc) {
-	t.Helper()
-
-	t.Run(desc, func(t *testing.T) {
-		sc := &scenarioContext{
-			responseStatus: 200,
-			responseBody:   `{ "responses": [] }`,
-		}
-		ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-			sc.request = r
-			buf, err := io.ReadAll(r.Body)
-			require.NoError(t, err)
-
-			sc.requestBody = bytes.NewBuffer(buf)
-
-			rw.Header().Set("Content-Type", "application/x-ndjson")
-			_, err = rw.Write([]byte(sc.responseBody))
-			require.NoError(t, err)
-			rw.WriteHeader(sc.responseStatus)
-		}))
-		ds.URL = ts.URL
-
-		from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
-		to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
-		timeRange := backend.TimeRange{
-			From: from,
-			To:   to,
-		}
-
-		c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, timeRange)
-		require.NoError(t, err)
-		require.NotNil(t, c)
-		sc.client = c
-
-		currentNewDatasourceHTTPClient := newDatasourceHttpClient
-
-		newDatasourceHttpClient = func(httpClientProvider httpclient.Provider, ds *DatasourceInfo) (*http.Client, error) {
-			return ts.Client(), nil
-		}
-
-		t.Cleanup(func() {
-			ts.Close()
-			newDatasourceHttpClient = currentNewDatasourceHTTPClient
-		})
-
-		fn(sc)
-	})
 }

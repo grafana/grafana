@@ -7,7 +7,7 @@ import { sanitize, sanitizeUrl } from '@grafana/data/src/text/sanitize';
 import { selectors } from '@grafana/e2e-selectors';
 import { Icon, ToolbarButton, Tooltip, useStyles2 } from '@grafana/ui';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { DashboardSearchHit } from 'app/features/search/types';
+import { DashboardSearchItem } from 'app/features/search/types';
 
 import { getLinkSrv } from '../../../panel/panellinks/link_srv';
 import { DashboardLink } from '../../state/DashboardModel';
@@ -15,7 +15,7 @@ import { DashboardLink } from '../../state/DashboardModel';
 interface Props {
   link: DashboardLink;
   linkInfo: { title: string; href: string };
-  dashboardId: number;
+  dashboardUID: string;
 }
 
 export const DashboardLinksDashboard = (props: Props) => {
@@ -55,7 +55,7 @@ export const DashboardLinksDashboard = (props: Props) => {
             {resolvedLinks.length > 0 &&
               resolvedLinks.map((resolvedLink, index) => {
                 return (
-                  <li role="none" key={`dashlinks-dropdown-item-${resolvedLink.id}-${index}`}>
+                  <li role="none" key={`dashlinks-dropdown-item-${resolvedLink.uid}-${index}`}>
                     <a
                       role="menuitem"
                       href={resolvedLink.url}
@@ -82,7 +82,7 @@ export const DashboardLinksDashboard = (props: Props) => {
           return (
             <LinkElement
               link={link}
-              key={`dashlinks-list-item-${resolvedLink.id}-${index}`}
+              key={`dashlinks-list-item-${resolvedLink.uid}-${index}`}
               data-testid={selectors.components.DashboardLinks.container}
             >
               <a
@@ -120,17 +120,17 @@ const LinkElement: React.FC<LinkElementProps> = (props) => {
   );
 };
 
-const useResolvedLinks = ({ link, dashboardId }: Props, opened: number): ResolvedLinkDTO[] => {
+const useResolvedLinks = ({ link, dashboardUID }: Props, opened: number): ResolvedLinkDTO[] => {
   const { tags } = link;
   const result = useAsync(() => searchForTags(tags), [tags, opened]);
   if (!result.value) {
     return [];
   }
-  return resolveLinks(dashboardId, link, result.value);
+  return resolveLinks(dashboardUID, link, result.value);
 };
 
 interface ResolvedLinkDTO {
-  id: number;
+  uid: string;
   url: string;
   title: string;
 }
@@ -138,17 +138,17 @@ interface ResolvedLinkDTO {
 export async function searchForTags(
   tags: string[],
   dependencies: { getBackendSrv: typeof getBackendSrv } = { getBackendSrv }
-): Promise<DashboardSearchHit[]> {
+): Promise<DashboardSearchItem[]> {
   const limit = 100;
-  const searchHits: DashboardSearchHit[] = await dependencies.getBackendSrv().search({ tag: tags, limit });
+  const searchHits: DashboardSearchItem[] = await dependencies.getBackendSrv().search({ tag: tags, limit });
 
   return searchHits;
 }
 
 export function resolveLinks(
-  dashboardId: number,
+  dashboardUID: string,
   link: DashboardLink,
-  searchHits: DashboardSearchHit[],
+  searchHits: DashboardSearchItem[],
   dependencies: { getLinkSrv: typeof getLinkSrv; sanitize: typeof sanitize; sanitizeUrl: typeof sanitizeUrl } = {
     getLinkSrv,
     sanitize,
@@ -156,14 +156,14 @@ export function resolveLinks(
   }
 ): ResolvedLinkDTO[] {
   return searchHits
-    .filter((searchHit) => searchHit.id !== dashboardId)
+    .filter((searchHit) => searchHit.uid !== dashboardUID)
     .map((searchHit) => {
-      const id = searchHit.id;
+      const uid = searchHit.uid;
       const title = dependencies.sanitize(searchHit.title);
       const resolvedLink = dependencies.getLinkSrv().getLinkUrl({ ...link, url: searchHit.url });
       const url = dependencies.sanitizeUrl(resolvedLink);
 
-      return { id, title, url };
+      return { uid, title, url };
     });
 }
 

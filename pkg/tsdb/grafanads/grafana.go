@@ -9,13 +9,15 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 // DatasourceName is the string constant used as the datasource name in requests
@@ -34,8 +36,19 @@ const DatasourceUID = "grafana"
 // This is important to do since otherwise we will only get a
 // not implemented error response from plugin at runtime.
 var (
-	_ backend.QueryDataHandler   = (*Service)(nil)
-	_ backend.CheckHealthHandler = (*Service)(nil)
+	_                                       backend.QueryDataHandler   = (*Service)(nil)
+	_                                       backend.CheckHealthHandler = (*Service)(nil)
+	namespace                                                          = "grafana"
+	subsystem                                                          = "grafanads"
+	dashboardSearchNotServedRequestsCounter                            = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Name:      "dashboard_search_requests_not_served_total",
+			Help:      "A counter for dashboard search requests that could not be served due to an ongoing search engine indexing",
+		},
+		[]string{"reason"},
+	)
 )
 
 func ProvideService(cfg *setting.Cfg, search searchV2.SearchService, store store.StorageService) *Service {
@@ -46,6 +59,7 @@ func newService(cfg *setting.Cfg, search searchV2.SearchService, store store.Sto
 	s := &Service{
 		search: search,
 		store:  store,
+		log:    log.New("grafanads"),
 	}
 
 	return s
@@ -55,6 +69,7 @@ func newService(cfg *setting.Cfg, search searchV2.SearchService, store store.Sto
 type Service struct {
 	search searchV2.SearchService
 	store  store.StorageService
+	log    log.Logger
 }
 
 func DataSourceModel(orgId int64) *datasources.DataSource {
@@ -157,6 +172,21 @@ func (s *Service) doRandomWalk(query backend.DataQuery) backend.DataResponse {
 }
 
 func (s *Service) doSearchQuery(ctx context.Context, req *backend.QueryDataRequest, query backend.DataQuery) backend.DataResponse {
+	searchReadinessCheckResp := s.search.IsReady(ctx, req.PluginContext.OrgID)
+	if !searchReadinessCheckResp.IsReady {
+		dashboardSearchNotServedRequestsCounter.With(prometheus.Labels{
+			"reason": searchReadinessCheckResp.Reason,
+		}).Inc()
+
+		return backend.DataResponse{
+			Frames: data.Frames{
+				&data.Frame{
+					Name: "Loading",
+				},
+			},
+		}
+	}
+
 	m := requestModel{}
 	err := json.Unmarshal(query.JSON, &m)
 	if err != nil {

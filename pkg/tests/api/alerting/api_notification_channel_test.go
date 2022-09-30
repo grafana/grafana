@@ -63,7 +63,6 @@ func TestTestReceivers(t *testing.T) {
 		res := Response{}
 		err = json.Unmarshal(b, &res)
 		require.NoError(t, err)
-		require.NotEmpty(t, res.TraceID)
 	})
 
 	t.Run("assert working receiver returns OK", func(t *testing.T) {
@@ -913,6 +912,9 @@ func newMockNotificationChannel(t *testing.T, grafanaListedAddr string) *mockNot
 	require.NoError(t, err)
 
 	nc := &mockNotificationChannel{
+		// Skip gosec linter since this is in test code.
+		//
+		//nolint:gosec
 		server: &http.Server{
 			Addr: listener.Addr().String(),
 		},

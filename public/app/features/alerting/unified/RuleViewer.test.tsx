@@ -136,6 +136,7 @@ const mockCloudRule = {
       meta: {} as PluginMeta,
       jsonData: {} as DataSourceJsonData,
       access: 'proxy',
+      readOnly: false,
     },
   },
 };

@@ -30,7 +30,7 @@ export default function AdminListOrgsPages() {
   }, [fetchOrgs]);
 
   return (
-    <Page navId="global-orgs" subTitle="Manage and create orgs across the whole Grafana server.">
+    <Page navId="global-orgs">
       <Page.Contents>
         <>
           <div className="page-action-bar">

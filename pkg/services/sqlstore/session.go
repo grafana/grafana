@@ -27,27 +27,14 @@ func (sess *DBSession) PublishAfterCommit(msg interface{}) {
 	sess.events = append(sess.events, msg)
 }
 
-// NewSession returns a new DBSession
-func (ss *SQLStore) NewSession(ctx context.Context) *DBSession {
-	sess := &DBSession{Session: ss.engine.NewSession()}
-	sess.Session = sess.Session.Context(ctx)
-	return sess
-}
-
-func (ss *SQLStore) newSession(ctx context.Context) *DBSession {
-	sess := &DBSession{Session: ss.engine.NewSession()}
-	sess.Session = sess.Session.Context(ctx)
-
-	return sess
-}
-
 func startSessionOrUseExisting(ctx context.Context, engine *xorm.Engine, beginTran bool) (*DBSession, bool, error) {
 	value := ctx.Value(ContextSessionKey{})
 	var sess *DBSession
 	sess, ok := value.(*DBSession)
 
 	if ok {
-		sessionLogger.Debug("reusing existing session", "transaction", sess.transactionOpen)
+		ctxLogger := sessionLogger.FromContext(ctx)
+		ctxLogger.Debug("reusing existing session", "transaction", sess.transactionOpen)
 		sess.Session = sess.Session.Context(ctx)
 		return sess, false, nil
 	}
@@ -61,12 +48,22 @@ func startSessionOrUseExisting(ctx context.Context, engine *xorm.Engine, beginTr
 	}
 
 	newSess.Session = newSess.Session.Context(ctx)
+
 	return newSess, true, nil
 }
 
-// WithDbSession calls the callback with a session.
+// WithDbSession calls the callback with the session in the context (if exists).
+// Otherwise it creates a new one that is closed upon completion.
+// A session is stored in the context if sqlstore.InTransaction() has been been previously called with the same context (and it's not committed/rolledback yet).
 func (ss *SQLStore) WithDbSession(ctx context.Context, callback DBTransactionFunc) error {
 	return withDbSession(ctx, ss.engine, callback)
+}
+
+// WithNewDbSession calls the callback with a new session that is closed upon completion.
+func (ss *SQLStore) WithNewDbSession(ctx context.Context, callback DBTransactionFunc) error {
+	sess := &DBSession{Session: ss.engine.NewSession(), transactionOpen: false}
+	defer sess.Close()
+	return callback(sess)
 }
 
 func withDbSession(ctx context.Context, engine *xorm.Engine, callback DBTransactionFunc) error {

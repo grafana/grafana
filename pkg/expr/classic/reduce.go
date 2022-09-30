@@ -21,7 +21,7 @@ func (cr classicReducer) ValidReduceFunc() bool {
 	return false
 }
 
-//nolint: gocyclo
+//nolint:gocyclo
 func (cr classicReducer) Reduce(series mathexp.Series) mathexp.Number {
 	num := mathexp.NewNumber("", nil)
 

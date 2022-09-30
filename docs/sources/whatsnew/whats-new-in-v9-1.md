@@ -45,7 +45,7 @@ You can now easily embed Grafana in other applications by adding a JWT token dir
 When the JWT token is passed through the request URL to Grafana, Grafana validates and authenticates the token linked to a specific user, allowing access to dashboards which that user can view.
 To see JWT URL embedding in action, see the [sample project](https://github.com/grafana/grafana-iframe-oauth-sample).
 
-Grafana Cloud users can access this feature by [opening a support ticket in the Cloud Portal](https://grafana.com/profile/org#support).
+> **Note:** JWT URL Embedding and `allow_embedding` are not available to Grafana Cloud users. For Grafana Cloud, use the [Public Dashboards]({{< relref "../dashboards/dashboard-public/" >}}) feature. To enable that, [open a ticket with our Support team](https://grafana.com/docs/grafana-cloud/account-management/support/).
 
 {{< figure src="/static/img/docs/dashboards/jwt-url-embedding-9-1.png" max-width="750px" caption="A JWT token used to embed Grafana" >}}
 
@@ -183,7 +183,7 @@ Reporting is better in a few specific ways in Grafana version 9.1:
   For example, you can share last month's numbers as compared to the numbers for this month.
   The dashboard uses the same template variables if you attach the dashboard to a report twice.
 
-To learn more about reporting, see the [documentation]({{< relref "../share-dashboards-panels/#reporting" >}}).
+To learn more about reporting, see the [documentation]({{< relref "../dashboards/share-dashboards-panels/#reporting" >}}).
 
 {{< figure src="/static/img/docs/enterprise/reporting-draft-9-1.png" max-width="750px" caption="Saving a report as a draft" >}}
 

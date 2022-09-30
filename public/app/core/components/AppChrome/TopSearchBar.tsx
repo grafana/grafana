@@ -2,13 +2,21 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Dropdown, FilterInput, Icon, Menu, MenuItem, Tooltip, useStyles2 } from '@grafana/ui';
+import { Dropdown, Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
+import { useSelector } from 'app/types';
 
+import { TopNavBarMenu } from './TopBar/TopNavBarMenu';
+import { TopSearchBarInput } from './TopSearchBarInput';
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
 
 export function TopSearchBar() {
   const styles = useStyles2(getStyles);
+  const navIndex = useSelector((state) => state.navIndex);
+
+  const helpNode = navIndex['help'];
+  const profileNode = navIndex['profile'];
+  const signInNode = navIndex['signin'];
 
   return (
     <div className={styles.container}>
@@ -18,41 +26,37 @@ export function TopSearchBar() {
         </a>
       </div>
       <div className={styles.searchWrapper}>
-        <FilterInput placeholder="Search grafana" value={''} onChange={() => {}} className={styles.searchInput} />
+        <TopSearchBarInput />
       </div>
       <div className={styles.actions}>
-        <Tooltip placement="bottom" content="Help menu (todo)">
-          <button className={styles.actionItem}>
-            <Icon name="question-circle" size="lg" />
-          </button>
-        </Tooltip>
+        {helpNode && (
+          <Dropdown overlay={() => <TopNavBarMenu node={helpNode} />}>
+            <button className={styles.actionItem}>
+              <Icon name="question-circle" size="lg" />
+            </button>
+          </Dropdown>
+        )}
         <Tooltip placement="bottom" content="Grafana news (todo)">
           <button className={styles.actionItem}>
             <Icon name="rss" size="lg" />
           </button>
         </Tooltip>
-        <Tooltip placement="bottom" content="User profile (todo)">
-          <Dropdown overlay={ProfileMenu}>
+        {signInNode && (
+          <Tooltip placement="bottom" content="Sign in">
+            <a className={styles.actionItem} href={signInNode.url} target={signInNode.target}>
+              {signInNode.icon && <Icon name={signInNode.icon} size="lg" />}
+            </a>
+          </Tooltip>
+        )}
+        {profileNode && (
+          <Dropdown overlay={<TopNavBarMenu node={profileNode} />}>
             <button className={styles.actionItem}>
               <img src={contextSrv.user.gravatarUrl} />
             </button>
           </Dropdown>
-        </Tooltip>
+        )}
       </div>
     </div>
-  );
-}
-
-/**
- * This is just temporary, needs syncing with the backend option like DisableSignoutMenu
- */
-export function ProfileMenu() {
-  return (
-    <Menu>
-      <MenuItem url="profile" label="Your profile" />
-      <MenuItem url="profile/notifications" label="Your notifications" />
-      <MenuItem url="logout" label="Sign out" />
-    </Menu>
   );
 }
 

@@ -62,7 +62,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
         start /= 1e3;
         end /= 1e3;
       }
-      showMs = end - start < 60; //show ms when minute or less
+      showMs = Math.abs(end - start) < 60; //show ms when minute or less
     }
   } else if (field.type === FieldType.boolean) {
     if (!isBooleanUnit(unit)) {

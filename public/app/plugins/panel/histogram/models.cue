@@ -37,6 +37,7 @@ Panel: thema.#Lineage & {
 					} @cuetsy(kind="interface")
 
 					PanelFieldConfig: {
+						ui.AxisConfig
 						ui.HideableFieldConfig
 						// Controls line width of the bars.
 						lineWidth?:    uint32 & <= 10 | *1

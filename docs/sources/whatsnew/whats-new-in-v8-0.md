@@ -35,7 +35,7 @@ To learn more about the differences between new alerts and the legacy alerts, re
 
 ### Library panels
 
-Library panels allow users to build panels that can be used in multiple dashboards. Any updates made to that shared panel will then automatically be applied to all the dashboards that have that panel. For instructions on how to create, add, unlink and manage library panels, refer to [Library panels]({{< relref "../dashboards/manage-library-panels/" >}}).
+Library panels allow users to build panels that can be used in multiple dashboards. Any updates made to that shared panel will then automatically be applied to all the dashboards that have that panel. For instructions on how to create, add, unlink and manage library panels, refer to [Library panels]({{< relref "../dashboards/build-dashboards/manage-library-panels" >}}).
 
 ### Real-time streaming
 
@@ -312,7 +312,7 @@ When creating a report, you can now choose to export Table panels as .csv files 
 
 You can also link back to the dashboard directly from the email, for users who want to see the data live in Grafana. This release also includes some improvements to the Reports list view.
 
-For more information, refer to [Reporting docs]({{< relref "../share-dashboards-panels/#reporting" >}}).
+For more information, refer to [Reporting docs]({{< relref "../dashboards/share-dashboards-panels/#reporting" >}}).
 
 ### License restrictions clarification in the docs
 

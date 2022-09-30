@@ -43,6 +43,7 @@ const TRANSLATED_MENU_ITEMS: Record<string, MessageDescriptor> = {
 
   cfg: defineMessage({ id: 'nav.config', message: 'Configuration' }),
   datasources: defineMessage({ id: 'nav.datasources', message: 'Data sources' }),
+  correlations: defineMessage({ id: 'nav.correlations', message: 'Correlations' }),
   users: defineMessage({ id: 'nav.users', message: 'Users' }),
   teams: defineMessage({ id: 'nav.teams', message: 'Teams' }),
   plugins: defineMessage({ id: 'nav.plugins', message: 'Plugins' }),

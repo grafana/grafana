@@ -158,8 +158,8 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   };
 
   onClickAddQueryRowButton = () => {
-    const { exploreId, queryKeys, datasourceInstance } = this.props;
-    this.props.addQueryRow(exploreId, queryKeys.length, datasourceInstance);
+    const { exploreId, queryKeys } = this.props;
+    this.props.addQueryRow(exploreId, queryKeys.length);
   };
 
   onMakeAbsoluteTime = () => {
@@ -275,6 +275,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         onClickFilterOutLabel={this.onClickFilterOutLabel}
         onStartScanning={this.onStartScanning}
         onStopScanning={this.onStopScanning}
+        scrollElement={this.scrollElement}
       />
     );
   }

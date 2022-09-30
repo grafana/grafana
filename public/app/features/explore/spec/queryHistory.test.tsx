@@ -253,7 +253,7 @@ describe('Explore: Query History', () => {
       expect(fetchMock).toBeCalledWith(
         expect.objectContaining({
           url: expect.stringMatching('/api/query-history/migrate'),
-          data: { queries: [expect.objectContaining({ datasourceUid: 'loki' })] },
+          data: { queries: [expect.objectContaining({ datasourceUid: 'loki-uid' })] },
         })
       );
       fetchMock.mockReset();
