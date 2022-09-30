@@ -196,12 +196,6 @@ func (c *cache) removeByRuleUID(orgID int64, uid string) []*State {
 	return states
 }
 
-func (c *cache) reset() {
-	c.mtxStates.Lock()
-	defer c.mtxStates.Unlock()
-	c.states = make(map[int64]map[string]map[string]*State)
-}
-
 func (c *cache) recordMetrics(metrics *metrics.State) {
 	c.mtxStates.RLock()
 	defer c.mtxStates.RUnlock()
