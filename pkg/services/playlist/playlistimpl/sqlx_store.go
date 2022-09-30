@@ -94,7 +94,7 @@ func (s *sqlxStore) Update(ctx context.Context, cmd *playlist.UpdatePlaylistComm
 		for index, item := range cmd.Items {
 			playlistItems = append(playlistItems, playlist.PlaylistItem{
 				PlaylistId: p.Id,
-				Type:       string(item.Type),
+				Type:       item.Type,
 				Value:      item.Value,
 				Order:      index + 1,
 				Title:      item.Title,
