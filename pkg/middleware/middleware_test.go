@@ -120,7 +120,7 @@ func TestMiddlewareContext(t *testing.T) {
 			data := &dtos.IndexViewData{
 				User:     &dtos.CurrentUser{},
 				Settings: map[string]interface{}{},
-				NavTree:  []*navtree.NavLink{},
+				NavTree:  &navtree.NavTreeRoot{},
 			}
 			t.Log("Calling HTML", "data", data)
 			c.HTML(http.StatusOK, "index-template", data)

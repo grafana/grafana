@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/user"
+	"xorm.io/core"
 )
 
 type OrgListResponse []struct {
@@ -74,6 +75,10 @@ func (m *SQLStoreMock) GetSystemStats(ctx context.Context, query *models.GetSyst
 
 func (m *SQLStoreMock) GetDialect() migrator.Dialect {
 	return nil
+}
+
+func (m *SQLStoreMock) GetDBType() core.DbType {
+	return ""
 }
 
 func (m *SQLStoreMock) HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error {
@@ -214,6 +219,10 @@ func (m *SQLStoreMock) NewSession(ctx context.Context) *sqlstore.DBSession {
 }
 
 func (m *SQLStoreMock) WithDbSession(ctx context.Context, callback sqlstore.DBTransactionFunc) error {
+	return m.ExpectedError
+}
+
+func (m *SQLStoreMock) WithNewDbSession(ctx context.Context, callback sqlstore.DBTransactionFunc) error {
 	return m.ExpectedError
 }
 
