@@ -112,9 +112,10 @@ export const run = (includeInternalScripts = false) => {
     program
       .command('component:create')
       .description(
-        'Scaffold React components. Optionally add test, story and .mdx files. The components are created in the same dir the script is run from.'
+        '[deprecated] Scaffold React components. Optionally add test, story and .mdx files. The components are created in the same dir the script is run from.'
       )
       .action(async () => {
+        chalk.yellow.bold(`⚠️ This command is deprecated and will be removed in v10 ⚠️`);
         await execTask(componentCreateTask)({});
       });
   }
