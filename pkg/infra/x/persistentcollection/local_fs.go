@@ -136,7 +136,7 @@ func (s *localFsCollection[T]) Update(ctx context.Context, orgID int64, updateFn
 
 	newItems := make([]T, 0)
 	updatedCount := 0
-	for idx, _ := range items {
+	for idx := range items {
 		updated, updatedItem, err := updateFn(items[idx])
 		if err != nil {
 			return updatedCount, err
