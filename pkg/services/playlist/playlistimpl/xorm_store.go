@@ -35,12 +35,12 @@ func (s *sqlStore) Insert(ctx context.Context, cmd *playlist.CreatePlaylistComma
 		}
 
 		playlistItems := make([]playlist.PlaylistItem, 0)
-		for _, item := range cmd.Items {
+		for order, item := range cmd.Items {
 			playlistItems = append(playlistItems, playlist.PlaylistItem{
 				PlaylistId: p.Id,
 				Type:       item.Type,
 				Value:      item.Value,
-				Order:      item.Order,
+				Order:      order + 1,
 				Title:      item.Title,
 			})
 		}
@@ -71,7 +71,6 @@ func (s *sqlStore) Update(ctx context.Context, cmd *playlist.UpdatePlaylistComma
 
 		dto = playlist.PlaylistDTO{
 			UID:      p.UID,
-			OrgId:    p.OrgId,
 			Name:     p.Name,
 			Interval: p.Interval,
 		}

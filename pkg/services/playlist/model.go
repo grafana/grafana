@@ -24,7 +24,6 @@ type PlaylistDTO struct {
 	UID      string            `json:"uid"`
 	Name     string            `json:"name"`
 	Interval string            `json:"interval"`
-	OrgId    int64             `json:"-"`
 	Items    []PlaylistItemDTO `json:"items"`
 }
 
