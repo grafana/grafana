@@ -48,7 +48,7 @@ const getLogRowContextStyles = (theme: GrafanaTheme2, wrapLogMessage?: boolean) 
         top: 100%;
       `
     : css`
-        margin-top: 40px;
+        margin-top: 20px;
         width: 75%;
       `;
   return {
