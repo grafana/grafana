@@ -5,7 +5,7 @@ aliases:
   - /docs/sources/panels/
 description: Panels
 title: Panels
-weight: 72
+weight: 85
 ---
 
 # About Grafana panels

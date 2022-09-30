@@ -2,11 +2,11 @@
 aliases:
   - /docs/grafana/latest/dashboards/
   - /docs/grafana/latest/features/dashboard/dashboards/
-title: Dashboards and visualizations
+title: Dashboards
 weight: 80
 ---
 
-# Dashboards and visualizations
+# Dashboards
 
 A dashboard is a set of one or more [panels]({{< relref "../panels/" >}}) organized and arranged into one or more rows. Grafana ships with a variety of panels making it easy to construct the right queries, and customize the visualization so that you can create the perfect dashboard for your need. Each panel can interact with data from any configured Grafana [data source]({{< relref "../administration/data-source-management/" >}}).
 
