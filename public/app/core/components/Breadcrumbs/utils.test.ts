@@ -2,6 +2,12 @@ import { NavModelItem } from '@grafana/data';
 
 import { buildBreadcrumbs } from './utils';
 
+const mockHomeNav: NavModelItem = {
+  text: 'Home',
+  url: '/home',
+  id: 'home',
+};
+
 describe('breadcrumb utils', () => {
   describe('buildBreadcrumbs', () => {
     it('includes breadcrumbs for the section nav', () => {
@@ -9,7 +15,7 @@ describe('breadcrumb utils', () => {
         text: 'My section',
         url: '/my-section',
       };
-      expect(buildBreadcrumbs(sectionNav)).toEqual([{ text: 'My section', href: '/my-section' }]);
+      expect(buildBreadcrumbs(mockHomeNav, sectionNav)).toEqual([{ text: 'My section', href: '/my-section' }]);
     });
 
     it('includes breadcrumbs for the page nav', () => {
@@ -22,7 +28,7 @@ describe('breadcrumb utils', () => {
         text: 'My page',
         url: '/my-page',
       };
-      expect(buildBreadcrumbs(sectionNav, pageNav)).toEqual([
+      expect(buildBreadcrumbs(mockHomeNav, sectionNav, pageNav)).toEqual([
         { text: 'My section', href: '/my-section' },
         { text: 'My page', href: '/my-page' },
       ]);
@@ -37,7 +43,7 @@ describe('breadcrumb utils', () => {
           url: '/my-parent-section',
         },
       };
-      expect(buildBreadcrumbs(sectionNav)).toEqual([
+      expect(buildBreadcrumbs(mockHomeNav, sectionNav)).toEqual([
         { text: 'My parent section', href: '/my-parent-section' },
         { text: 'My section', href: '/my-section' },
       ]);
@@ -60,10 +66,33 @@ describe('breadcrumb utils', () => {
           url: '/my-parent-section',
         },
       };
-      expect(buildBreadcrumbs(sectionNav, pageNav)).toEqual([
+      expect(buildBreadcrumbs(mockHomeNav, sectionNav, pageNav)).toEqual([
         { text: 'My parent section', href: '/my-parent-section' },
         { text: 'My section', href: '/my-section' },
         { text: 'My parent page', href: '/my-parent-page' },
+        { text: 'My page', href: '/my-page' },
+      ]);
+    });
+
+    it('shortcircuits if the home nav is found early', () => {
+      const pageNav: NavModelItem = {
+        text: 'My page',
+        url: '/my-page',
+        parentItem: {
+          text: 'My parent page',
+          url: '/home',
+        },
+      };
+      const sectionNav: NavModelItem = {
+        text: 'My section',
+        url: '/my-section',
+        parentItem: {
+          text: 'My parent section',
+          url: '/my-parent-section',
+        },
+      };
+      expect(buildBreadcrumbs(mockHomeNav, sectionNav, pageNav)).toEqual([
+        { text: 'Home', href: '/home' },
         { text: 'My page', href: '/my-page' },
       ]);
     });

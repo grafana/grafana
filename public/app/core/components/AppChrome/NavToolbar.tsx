@@ -15,6 +15,7 @@ export interface Props {
   onToggleMegaMenu(): void;
   onToggleKioskMode(): void;
   searchBarHidden?: boolean;
+  homeNav: NavModelItem;
   sectionNav: NavModelItem;
   pageNav?: NavModelItem;
   actions: React.ReactNode;
@@ -23,6 +24,7 @@ export interface Props {
 export function NavToolbar({
   actions,
   searchBarHidden,
+  homeNav,
   sectionNav,
   pageNav,
   onToggleMegaMenu,
@@ -30,7 +32,7 @@ export function NavToolbar({
   onToggleKioskMode,
 }: Props) {
   const styles = useStyles2(getStyles);
-  const breadcrumbs = buildBreadcrumbs(sectionNav, pageNav);
+  const breadcrumbs = buildBreadcrumbs(homeNav, sectionNav, pageNav);
 
   return (
     <div className={styles.pageToolbar}>
