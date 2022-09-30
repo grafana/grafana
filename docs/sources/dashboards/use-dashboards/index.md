@@ -168,12 +168,6 @@ Click the **Refresh dashboard** icon to immediately run every query on the dashb
 
 By default, Grafana does not automatically refresh the dashboard. Queries run on their own schedule according to the panel settings. However, if you want to regularly refresh the dashboard, then click the down arrow next to the **Refresh dashboard** icon and then select a refresh interval.
 
-### Panel time overrides and timeshift
-
-In [Query options]({{< relref "../../panels/query-options/" >}}), you can override the relative time range for individual panels, which causes them to be different than what is selected in the dashboard time picker located in the upper right. This enables you to show metrics from different time periods or days at the same time.
-
-> **Note:** Panel time overrides have no effect when the time range for the dashboard is absolute.
-
 ### Control the time range using a URL
 
 You can control the time range of a dashboard by providing the following query parameters in the dashboard URL:

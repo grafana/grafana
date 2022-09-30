@@ -2,12 +2,12 @@
 aliases:
   - /docs/grafana/latest/panels/query-options/
   - /docs/grafana/latest/panels/reference-query-options/
-  - /docs/sources/panels/reference-query-options/
+  - /docs/grafana/latest/configure-panels-visualizations/query-options/
 title: Query options
 weight: 900
 ---
 
-# Reference: Query options
+# Query options
 
 Click **Query options** next to the data source selector to see settings for your selected data source. Changes you make here affect only queries made in this panel.
 
@@ -41,7 +41,7 @@ Panel data source query options:
 
 - **Cache timeout -** (This field is only visible if available in your data source.) If your time series store has a query cache, then this option can override the default cache timeout. Specified as a numeric value in seconds.
 
-### Examples:
+## Examples
 
 - **Relative time:**
 
@@ -62,3 +62,9 @@ Panel data source query options:
 | Last entire month    | `1M/M`           |
 | This entire year     | `1d/y`           |
 | Last entire year     | `1y/y`           |
+
+## Panel time overrides and timeshift
+
+In [Query options]({{< relref "../../panels/query-options/" >}}), you can override the relative time range for individual panels, which causes them to be different than what is selected in the dashboard time picker located in the upper right. This enables you to show metrics from different time periods or days at the same time.
+
+> **Note:** Panel time overrides have no effect when the time range for the dashboard is absolute.
