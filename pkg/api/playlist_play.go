@@ -70,13 +70,14 @@ func (hs *HTTPServer) populateDashboardsByTag(ctx context.Context, orgID int64, 
 
 // Deprecated -- the frontend can do this better
 func (hs *HTTPServer) LoadPlaylistDashboards(ctx context.Context, orgID int64, signedInUser *user.SignedInUser, playlistUID string) (dtos.PlaylistDashboardsSlice, error) {
+	result := make(dtos.PlaylistDashboardsSlice, 0)
 	dto, err := hs.playlistService.GetWithItems(ctx,
 		&playlist.GetPlaylistByUidQuery{UID: playlistUID, OrgId: orgID})
-	if err != nil {
-		return nil, err
+	if err != nil || dto == nil || dto.Items == nil {
+		return result, err
 	}
 
-	playlistItems := dto.Items
+	playlistItems := *dto.Items
 
 	dashboardByIDs := make([]int64, 0)
 	dashboardByTag := make([]string, 0)
@@ -99,8 +100,6 @@ func (hs *HTTPServer) LoadPlaylistDashboards(ctx context.Context, orgID int64, s
 			return nil, fmt.Errorf("dashboard_by_uid not supported by this deprecated API")
 		}
 	}
-
-	result := make(dtos.PlaylistDashboardsSlice, 0)
 
 	var k, _ = hs.populateDashboardsByID(ctx, dashboardByIDs, dashboardIDOrder)
 	result = append(result, k...)

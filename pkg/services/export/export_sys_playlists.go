@@ -37,7 +37,7 @@ func exportSystemPlaylists(helper *commitHelper, job *gitExportJob) error {
 		}
 
 		gitcmd.body = append(gitcmd.body, commitBody{
-			fpath: filepath.Join(helper.orgDir, "system", "playlists", fmt.Sprintf("%s-playlist.json", playlist.UID)),
+			fpath: filepath.Join(helper.orgDir, "system", "playlists", fmt.Sprintf("%s-playlist.json", playlist.Uid)),
 			body:  prettyJSON(playlist),
 		})
 	}

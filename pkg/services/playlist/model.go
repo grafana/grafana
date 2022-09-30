@@ -2,6 +2,8 @@ package playlist
 
 import (
 	"errors"
+
+	"github.com/grafana/grafana/pkg/coremodel/playlist"
 )
 
 // Typed errors
@@ -20,18 +22,9 @@ type Playlist struct {
 	OrgId    int64  `json:"-" db:"org_id"`
 }
 
-type PlaylistDTO struct {
-	UID      string            `json:"uid"`
-	Name     string            `json:"name"`
-	Interval string            `json:"interval"`
-	Items    []PlaylistItemDTO `json:"items"`
-}
-
-type PlaylistItemDTO struct {
-	Type  string `json:"type"`
-	Title string `json:"title,omitempty"` // ignored
-	Value string `json:"value"`
-}
+type PlaylistDTO = playlist.Model
+type PlaylistItemDTO = playlist.PlaylistItem
+type PlaylistItemType = playlist.PlaylistItemType
 
 type PlaylistItem struct {
 	Id         int64  `db:"id"`

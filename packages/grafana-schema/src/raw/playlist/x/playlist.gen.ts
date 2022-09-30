@@ -8,10 +8,6 @@
 
 export interface Playlist {
   /**
-   * Unique playlist identifier for internal use, set by Grafana.
-   */
-  id: number;
-  /**
    * Interval sets the time between switching views in a playlist.
    * FIXME: Is this based on a standardized format or what options are available? Can datemath be used?
    */
@@ -20,15 +16,6 @@ export interface Playlist {
    * The ordered list of items that the playlist will iterate over.
    */
   items?: Array<{
-    /**
-     * FIXME: The prefixDropper removes playlist from playlist_id, that doesn't work for us since it'll mean we'll have Id twice.
-     * ID of the playlist item for internal use by Grafana. Deprecated.
-     */
-    id: number;
-    /**
-     * PlaylistID for the playlist containing the item. Deprecated.
-     */
-    playlistid: number;
     /**
      * Type of the item.
      */
@@ -43,14 +30,6 @@ export interface Playlist {
      *  dashboards behind the tag will be added to the playlist.
      */
     value: string;
-    /**
-     * Title is the human-readable identifier for the playlist item.
-     */
-    title: string;
-    /**
-     * Order is the position in the list for the item. Deprecated.
-     */
-    order: number;
   }>;
   /**
    * Name of the playlist.

@@ -53,14 +53,14 @@ func (s *Service) GetWithItems(ctx context.Context, q *playlist.GetPlaylistByUid
 	}
 	items := make([]playlist.PlaylistItemDTO, len(rawItems))
 	for i := 0; i < len(rawItems); i++ {
-		items[i].Type = rawItems[i].Type
+		items[i].Type = playlist.PlaylistItemType(rawItems[i].Type)
 		items[i].Value = rawItems[i].Value
 	}
 	return &playlist.PlaylistDTO{
-		UID:      v.UID,
+		Uid:      v.UID,
 		Name:     v.Name,
 		Interval: v.Interval,
-		Items:    items,
+		Items:    &items,
 	}, nil
 }
 
