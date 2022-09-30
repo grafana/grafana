@@ -55,6 +55,8 @@ When to use which log level?
 
 Use a contextual logger to include additional key/value pairs attached to `context.Context`, e.g. `traceID`, to allow correlating logs with traces and/or correlate logs with a common identifier.
 
+You must [Enable tracing in Grafana](#2-enable-tracing-in-grafana) to get a traceID
+
 Example:
 
 ```go
@@ -248,6 +250,8 @@ make devenv sources=jaeger
 ```
 
 #### 2. Enable tracing in Grafana
+
+To enable tracing in Grafana, you must set the address in your config.ini file
 
 opentelemetry tracing (recommended):
 
