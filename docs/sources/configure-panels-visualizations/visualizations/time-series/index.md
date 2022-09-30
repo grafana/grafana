@@ -17,7 +17,7 @@ aliases:
   - /docs/grafana/latest/features/panels/histogram/
   - /docs/grafana/latest/panels/visualizations/time-series/graph-time-series-stacking/
   - /docs/grafana/latest/visualizations/time-series/graph-time-series-stacking/
-  - /docs/grafana/latest/dashboards/configure-panels-visualizations/visualizations/time-series/
+  - /docs/grafana/latest/configure-panels-visualizations/visualizations/time-series/
 keywords:
   - grafana
   - graph panel

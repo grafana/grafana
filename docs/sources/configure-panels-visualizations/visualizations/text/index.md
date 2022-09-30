@@ -4,7 +4,7 @@ aliases:
   - /docs/grafana/latest/panels/visualizations/text-panel/
   - /docs/grafana/latest/reference/alertlist/
   - /docs/grafana/latest/visualizations/text-panel/
-  - /docs/grafana/latest/dashboards/configure-panels-visualizations/visualizations/text/
+  - /docs/grafana/latest/configure-panels-visualizations/visualizations/text/
 keywords:
   - grafana
   - text

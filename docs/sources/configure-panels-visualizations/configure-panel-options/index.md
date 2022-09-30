@@ -5,7 +5,7 @@ aliases:
   - /docs/grafana/latest/panels/working-with-panels/add-title-and-description/
   - /docs/grafana/latest/panels/working-with-panels/view-json-model/
   - /docs/grafana/latest/panels/configure-panel-options/
-  - /docs/grafana/latest/dashboards/configure-panels-visualizations/configure-panel-options/
+  - /docs/grafana/latest/configure-panels-visualizations/configure-panel-options/
 title: Configure panel options
 menuTitle: Configure panel options
 weight: 150

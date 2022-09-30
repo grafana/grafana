@@ -3,7 +3,7 @@ aliases:
   - /docs/grafana/latest/features/panels/bar_gauge/
   - /docs/grafana/latest/panels/visualizations/bar-gauge-panel/
   - /docs/grafana/latest/visualizations/bar-gauge-panel/
-  - /docs/grafana/latest/dashboards/configure-panels-visualizations/visualizations/bar-gauge/
+  - /docs/grafana/latest/configure-panels-visualizations/visualizations/bar-gauge/
 description: Bar gauge panel options
 keywords:
   - grafana

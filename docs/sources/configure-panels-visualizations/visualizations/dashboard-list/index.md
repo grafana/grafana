@@ -4,7 +4,7 @@ aliases:
   - /docs/grafana/latest/panels/visualizations/dashboard-list-panel/
   - /docs/grafana/latest/reference/dashlist/
   - /docs/grafana/latest/visualizations/dashboard-list-panel/
-  - /docs/grafana/latest/dashboards/configure-panels-visualizations/visualizations/dashboard-list/
+  - /docs/grafana/latest/configure-panels-visualizations/visualizations/dashboard-list/
 keywords:
   - grafana
   - dashboard list

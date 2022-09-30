@@ -2,7 +2,7 @@
 aliases:
   - /docs/grafana/latest/panels/visualizations/
   - /docs/grafana/latest/visualizations/
-  - /docs/grafana/latest/dashboards/configure-panels-visualizations/visualizations/
+  - /docs/grafana/latest/configure-panels-visualizations/visualizations/
   - /docs/grafana/latest/features/panels/graph/
   - /docs/grafana/latest/panels/visualizations/graph-panel/
   - /docs/grafana/latest/reference/graph/

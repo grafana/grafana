@@ -13,7 +13,7 @@ aliases:
   - /docs/grafana/latest/panels/reference-transformation-functions/
   - /docs/grafana/latest/panels/transform-data/transformation-functions/
   - /docs/grafana/latest/panels/transformations/types-options/
-  - /docs/grafana/latest/dashboards/configure-panels-visualizations/transform-data/
+  - /docs/grafana/latest/configure-panels-visualizations/transform-data/
 title: Transform data
 weight: 500
 ---

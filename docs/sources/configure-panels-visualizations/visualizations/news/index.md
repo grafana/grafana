@@ -2,7 +2,7 @@
 aliases:
   - /docs/grafana/latest/panels/visualizations/news-graph/
   - /docs/grafana/latest/visualizations/news-panel/
-  - /docs/grafana/latest/dashboards/configure-panels-visualizations/visualizations/news/
+  - /docs/grafana/latest/configure-panels-visualizations/visualizations/news/
 keywords:
   - grafana
   - news

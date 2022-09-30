@@ -1,7 +1,7 @@
 ---
 aliases:
   - /docs/grafana/latest/panels/query-a-data-source/manage-queries/
-  - /docs/grafana/latest/dashboards/configure-panels-visualizations/manage-queries/
+  - /docs/grafana/latest/configure-panels-visualizations/manage-queries/
 title: Manage queries
 weight: 50
 ---

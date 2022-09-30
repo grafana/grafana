@@ -9,7 +9,7 @@ aliases:
   - /docs/grafana/latest/panels/format-data/map-a-regular-expression/
   - /docs/grafana/latest/panels/format-data/map-a-special-value/
   - /docs/grafana/latest/panels/format-data/map-a-value/
-  - /docs/grafana/latest/dashboards/configure-panels-visualizations/configure-value-mappings/
+  - /docs/grafana/latest/configure-panels-visualizations/configure-value-mappings/
 title: Configure value mappings
 menuTitle: Configure value mappings
 weight: 600

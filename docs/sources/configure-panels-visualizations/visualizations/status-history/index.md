@@ -2,7 +2,7 @@
 aliases:
   - /docs/grafana/latest/panels/visualizations/status-history/
   - /docs/grafana/latest/visualizations/status-history/
-  - /docs/grafana/latest/dashboards/configure-panels-visualizations/visualizations/status-history/
+  - /docs/grafana/latest/configure-panels-visualizations/visualizations/status-history/
 description: Status history visualization
 keywords:
   - grafana

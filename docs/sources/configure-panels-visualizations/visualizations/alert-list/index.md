@@ -4,7 +4,7 @@ aliases:
   - /docs/grafana/latest/panels/visualizations/alert-list-panel/
   - /docs/grafana/latest/reference/alertlist/
   - /docs/grafana/latest/visualizations/alert-list-panel/
-  - /docs/grafana/latest/dashboards/configure-panels-visualizations/visualizations/alert-list/
+  - /docs/grafana/latest/configure-panels-visualizations/visualizations/alert-list/
 keywords:
   - grafana
   - alert list

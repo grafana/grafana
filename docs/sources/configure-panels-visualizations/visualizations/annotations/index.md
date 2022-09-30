@@ -3,7 +3,7 @@ aliases:
   - /docs/grafana/latest/features/panels/anotations/
   - /docs/grafana/latest/panels/visualizations/annotations/
   - /docs/grafana/latest/visualizations/annotations/
-  - /docs/grafana/latest/dashboards/configure-panels-visualizations/visualizations/annotations/
+  - /docs/grafana/latest/configure-panels-visualizations/visualizations/annotations/
 description: Annotations visualization documentation
 keywords:
   - grafana

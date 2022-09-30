@@ -10,6 +10,7 @@ aliases:
   - /docs/grafana/latest/panels/add-panels-dynamically/configure-repeating-rows/
   - /docs/grafana/latest/panels/add-panels-dynamically/configure-repeating-panels/
   - /docs/grafana/next/dashboards/build-dashboards/add-organize-panels/
+  - /docs/grafana/latest/configure-panels-visualizations/add-organize-panels/
 title: Add and organize panels
 menuTitle: Add and organize panels
 weight: 200

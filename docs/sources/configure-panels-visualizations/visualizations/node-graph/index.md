@@ -2,7 +2,7 @@
 aliases:
   - /docs/grafana/latest/panels/visualizations/node-graph/
   - /docs/grafana/latest/visualizations/node-graph/
-  - /docs/grafana/latest/dashboards/configure-panels-visualizations/visualizations/node-graph/
+  - /docs/grafana/latest/configure-panels-visualizations/visualizations/node-graph/
 keywords:
   - grafana
   - dashboard

@@ -9,7 +9,7 @@ aliases:
   - /docs/grafana/latest/reference/table/
   - /docs/grafana/latest/visualizations/table/filter-table-columns/
   - /docs/grafana/latest/visualizations/table/
-  - /docs/grafana/latest/dashboards/configure-panels-visualizations/visualizations/table/
+  - /docs/grafana/latest/configure-panels-visualizations/visualizations/table/
 keywords:
   - grafana
   - dashboard
