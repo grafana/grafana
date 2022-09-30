@@ -66,7 +66,7 @@ func inTransactionWithRetryCtx(ctx context.Context, engine *xorm.Engine, bus bus
 		}
 
 		time.Sleep(time.Millisecond * time.Duration(10))
-		ctxLogger.Info("Database locked, sleeping then retrying", "error", err, "retry", retry)
+		ctxLogger.Info("Database locked, sleeping then retrying", "error", err, "retry", retry, "code", sqlError.Code)
 		return inTransactionWithRetryCtx(ctx, engine, bus, callback, retry+1)
 	}
 
