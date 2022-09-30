@@ -3,7 +3,7 @@ import { reportInteraction } from 'src/utils/analytics';
 
 import { GrafanaConfig, PluginMeta, usePluginContext } from '@grafana/data';
 
-export function usePluginInteractionReporter() {
+export function usePluginInteractionTracker() {
   // I would like to use the `useGrafana`to fetch the config instead of passing it via the plugin context.
   const { config, meta } = usePluginContext();
 

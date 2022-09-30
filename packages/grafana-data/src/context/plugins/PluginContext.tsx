@@ -10,12 +10,12 @@ export interface PluginContextType {
 
 const Context = createContext<PluginContextType | undefined>(undefined);
 
-export type PluginProviderProps = {
+export type PluginContextProviderProps = {
   meta: PluginMeta;
   config: GrafanaConfig;
 };
 
-export function PluginProvider(props: PropsWithChildren<PluginProviderProps>): ReactElement {
+export function PluginContextProvider(props: PropsWithChildren<PluginContextProviderProps>): ReactElement {
   const { children, meta, config } = props;
   return <Context.Provider value={{ meta, config }}>{children}</Context.Provider>;
 }

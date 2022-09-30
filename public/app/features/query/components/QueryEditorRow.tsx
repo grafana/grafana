@@ -16,12 +16,13 @@ import {
   LoadingState,
   PanelData,
   PanelEvents,
+  PluginContextProvider,
   QueryResultMetaNotice,
   TimeRange,
   toLegacyResponseData,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { AngularComponent, getAngularLoader } from '@grafana/runtime';
+import { AngularComponent, getAngularLoader, config } from '@grafana/runtime';
 import { Badge, ErrorBoundaryAlert, HorizontalGroup } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 import { QueryOperationAction } from 'app/core/components/QueryOperationRow/QueryOperationAction';
@@ -244,19 +245,21 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
       if (QueryEditor) {
         return (
-          <QueryEditor
-            key={datasource?.name}
-            query={query}
-            datasource={datasource}
-            onChange={onChange}
-            onRunQuery={onRunQuery}
-            onAddQuery={onAddQuery}
-            data={data}
-            range={getTimeSrv().timeRange()}
-            queries={queries}
-            app={app}
-            history={history}
-          />
+          <PluginContextProvider meta={datasource.meta} config={config}>
+            <QueryEditor
+              key={datasource?.name}
+              query={query}
+              datasource={datasource}
+              onChange={onChange}
+              onRunQuery={onRunQuery}
+              onAddQuery={onAddQuery}
+              data={data}
+              range={getTimeSrv().timeRange()}
+              queries={queries}
+              app={app}
+              history={history}
+            />
+          </PluginContextProvider>
         );
       }
     }

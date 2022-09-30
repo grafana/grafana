@@ -15,6 +15,7 @@ import {
   PanelData,
   PanelPlugin,
   PanelPluginMeta,
+  PluginContextProvider,
   TimeRange,
   toDataFrameDTO,
   toUtc,
@@ -465,26 +466,28 @@ export class PanelChrome extends PureComponent<Props, State> {
     return (
       <>
         <div className={panelContentClassNames}>
-          <PanelContextProvider value={this.state.context}>
-            <PanelComponent
-              id={panel.id}
-              data={data}
-              title={panel.title}
-              timeRange={timeRange}
-              timeZone={this.props.dashboard.getTimezone()}
-              options={panelOptions}
-              fieldConfig={panel.fieldConfig}
-              transparent={panel.transparent}
-              width={panelWidth}
-              height={innerPanelHeight}
-              renderCounter={renderCounter}
-              replaceVariables={panel.replaceVariables}
-              onOptionsChange={this.onOptionsChange}
-              onFieldConfigChange={this.onFieldConfigChange}
-              onChangeTimeRange={this.onChangeTimeRange}
-              eventBus={dashboard.events}
-            />
-          </PanelContextProvider>
+          <PluginContextProvider config={config} meta={plugin.meta}>
+            <PanelContextProvider value={this.state.context}>
+              <PanelComponent
+                id={panel.id}
+                data={data}
+                title={panel.title}
+                timeRange={timeRange}
+                timeZone={this.props.dashboard.getTimezone()}
+                options={panelOptions}
+                fieldConfig={panel.fieldConfig}
+                transparent={panel.transparent}
+                width={panelWidth}
+                height={innerPanelHeight}
+                renderCounter={renderCounter}
+                replaceVariables={panel.replaceVariables}
+                onOptionsChange={this.onOptionsChange}
+                onFieldConfigChange={this.onFieldConfigChange}
+                onChangeTimeRange={this.onChangeTimeRange}
+                eventBus={dashboard.events}
+              />
+            </PanelContextProvider>
+          </PluginContextProvider>
         </div>
       </>
     );

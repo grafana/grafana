@@ -28,7 +28,7 @@ export { type QueryRunner, type QueryRunnerOptions } from './types/queryRunner';
 export { type GroupingToMatrixTransformerOptions } from './transformations/transformers/groupingToMatrix';
 export {
   type PluginContextType,
-  type PluginProviderProps,
-  PluginProvider,
+  type PluginContextProviderProps,
+  PluginContextProvider,
   usePluginContext,
 } from './context/plugins/PluginContext';
