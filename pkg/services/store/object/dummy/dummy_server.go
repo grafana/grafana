@@ -144,9 +144,11 @@ func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequ
 		modifier := userFromContext(ctx)
 
 		updated = &object.RawObject{
-			UID:      r.UID,
-			Kind:     r.Kind,
-			Modified: time.Now().Unix(),
+			UID:       r.UID,
+			Kind:      r.Kind,
+			Created:   i.Created,
+			CreatedBy: i.CreatedBy,
+			Modified:  time.Now().Unix(),
 			ModifiedBy: &object.UserInfo{
 				Id:    modifier.UserID,
 				Login: modifier.Login,
@@ -184,6 +186,11 @@ func (i dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectRequ
 		UID:      r.UID,
 		Kind:     r.Kind,
 		Modified: time.Now().Unix(),
+		Created:  time.Now().Unix(),
+		CreatedBy: &object.UserInfo{
+			Id:    modifier.UserID,
+			Login: modifier.Login,
+		},
 		ModifiedBy: &object.UserInfo{
 			Id:    modifier.UserID,
 			Login: modifier.Login,
