@@ -83,7 +83,7 @@ The response from PostgreSQL can be formatted as either a table or as a time ser
 
 ### Dataset and Table selection
 
-In the dataset dropdown, choose the PostgresSQL database to query. The dropdown is be populated with the databases that the user has access to.
+In the dataset dropdown, choose the PostgreSQL database to query. The dropdown is be populated with the databases that the user has access to.
 When the dataset is selected, the table dropdown is populated with the tables that are available.
 
 ### Columns and Aggregation functions (SELECT)
