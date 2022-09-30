@@ -16,27 +16,21 @@ import (
 )
 
 type cache struct {
-	states      map[int64]map[string]map[string]*State // orgID > alertRuleUID > stateID > state
-	mtxStates   sync.RWMutex
-	log         log.Logger
-	metrics     *metrics.State
-	externalURL *url.URL
+	states    map[int64]map[string]map[string]*State // orgID > alertRuleUID > stateID > state
+	mtxStates sync.RWMutex
 }
 
-func newCache(logger log.Logger, metrics *metrics.State, externalURL *url.URL) *cache {
+func newCache() *cache {
 	return &cache{
-		states:      make(map[int64]map[string]map[string]*State),
-		log:         logger,
-		metrics:     metrics,
-		externalURL: externalURL,
+		states: make(map[int64]map[string]map[string]*State),
 	}
 }
 
-func (c *cache) getOrCreate(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels) *State {
+func (c *cache) getOrCreate(ctx context.Context, log log.Logger, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, externalURL *url.URL) *State {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
 
-	ruleLabels, annotations := c.expandRuleLabelsAndAnnotations(ctx, alertRule, result, extraLabels)
+	ruleLabels, annotations := c.expandRuleLabelsAndAnnotations(ctx, log, alertRule, result, extraLabels, externalURL)
 
 	lbs := make(data.Labels, len(extraLabels)+len(ruleLabels)+len(result.Instance))
 	dupes := make(data.Labels)
@@ -53,7 +47,7 @@ func (c *cache) getOrCreate(ctx context.Context, alertRule *ngModels.AlertRule, 
 		}
 	}
 	if len(dupes) > 0 {
-		c.log.Warn("rule declares one or many reserved labels. Those rules labels will be ignored", "labels", dupes)
+		log.Warn("rule declares one or many reserved labels. Those rules labels will be ignored", "labels", dupes)
 	}
 	dupes = make(data.Labels)
 	for key, val := range result.Instance {
@@ -66,13 +60,13 @@ func (c *cache) getOrCreate(ctx context.Context, alertRule *ngModels.AlertRule, 
 		}
 	}
 	if len(dupes) > 0 {
-		c.log.Warn("evaluation result contains either reserved labels or labels declared in the rules. Those labels from the result will be ignored", "labels", dupes)
+		log.Warn("evaluation result contains either reserved labels or labels declared in the rules. Those labels from the result will be ignored", "labels", dupes)
 	}
 
 	il := ngModels.InstanceLabels(lbs)
 	id, err := il.StringKey()
 	if err != nil {
-		c.log.Error("error getting cacheId for entry", "err", err.Error())
+		log.Error("error getting cacheId for entry", "err", err.Error())
 	}
 
 	if _, ok := c.states[alertRule.OrgID]; !ok {
@@ -116,17 +110,17 @@ func (c *cache) getOrCreate(ctx context.Context, alertRule *ngModels.AlertRule, 
 	return newState
 }
 
-func (c *cache) expandRuleLabelsAndAnnotations(ctx context.Context, alertRule *ngModels.AlertRule, alertInstance eval.Result, extraLabels data.Labels) (data.Labels, data.Labels) {
+func (c *cache) expandRuleLabelsAndAnnotations(ctx context.Context, log log.Logger, alertRule *ngModels.AlertRule, alertInstance eval.Result, extraLabels data.Labels, externalURL *url.URL) (data.Labels, data.Labels) {
 	// use labels from the result and extra labels to expand the labels and annotations declared by the rule
 	templateLabels := mergeLabels(extraLabels, alertInstance.Instance)
 
 	expand := func(original map[string]string) map[string]string {
 		expanded := make(map[string]string, len(original))
 		for k, v := range original {
-			ev, err := expandTemplate(ctx, alertRule.Title, v, templateLabels, alertInstance, c.externalURL)
+			ev, err := expandTemplate(ctx, alertRule.Title, v, templateLabels, alertInstance, externalURL)
 			expanded[k] = ev
 			if err != nil {
-				c.log.Error("error in expanding template", "name", k, "value", v, "err", err.Error())
+				log.Error("error in expanding template", "name", k, "value", v, "err", err.Error())
 				// Store the original template on error.
 				expanded[k] = v
 			}
@@ -202,7 +196,7 @@ func (c *cache) reset() {
 	c.states = make(map[int64]map[string]map[string]*State)
 }
 
-func (c *cache) recordMetrics() {
+func (c *cache) recordMetrics(metrics *metrics.State) {
 	c.mtxStates.RLock()
 	defer c.mtxStates.RUnlock()
 
@@ -217,7 +211,7 @@ func (c *cache) recordMetrics() {
 	}
 
 	for org, orgMap := range c.states {
-		c.metrics.GroupRules.WithLabelValues(fmt.Sprint(org)).Set(float64(len(orgMap)))
+		metrics.GroupRules.WithLabelValues(fmt.Sprint(org)).Set(float64(len(orgMap)))
 		for _, rule := range orgMap {
 			for _, state := range rule {
 				n := ct[state.State]
@@ -227,7 +221,7 @@ func (c *cache) recordMetrics() {
 	}
 
 	for k, n := range ct {
-		c.metrics.AlertState.WithLabelValues(strings.ToLower(k.String())).Set(float64(n))
+		metrics.AlertState.WithLabelValues(strings.ToLower(k.String())).Set(float64(n))
 	}
 }
 

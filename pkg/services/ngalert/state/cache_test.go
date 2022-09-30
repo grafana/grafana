@@ -18,11 +18,12 @@ import (
 )
 
 func Test_getOrCreate(t *testing.T) {
-	c := newCache(log.New("test"), &metrics.State{}, &url.URL{
+	c := newCache(&metrics.State{}, &url.URL{
 		Scheme: "http",
 		Host:   "localhost:3000",
 		Path:   "/test",
 	})
+	l := log.New("test")
 
 	generateRule := models.AlertRuleGen(models.WithNotEmptyLabels(5, "rule-"))
 

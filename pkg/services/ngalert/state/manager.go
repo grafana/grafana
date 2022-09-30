@@ -40,12 +40,13 @@ type Manager struct {
 	instanceStore InstanceStore
 	imageService  image.ImageService
 	historian     Historian
+	externalURL   *url.URL
 }
 
 func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL,
 	ruleStore RuleReader, instanceStore InstanceStore, imageService image.ImageService, clock clock.Clock, historian Historian) *Manager {
 	manager := &Manager{
-		cache:         newCache(logger, metrics, externalURL),
+		cache:         newCache(),
 		quit:          make(chan struct{}),
 		ResendDelay:   ResendDelay, // TODO: make this configurable
 		log:           logger,
@@ -55,6 +56,7 @@ func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL,
 		imageService:  imageService,
 		historian:     historian,
 		clock:         clock,
+		externalURL:   externalURL,
 	}
 	go manager.recordMetrics()
 	return manager
@@ -128,10 +130,6 @@ func (st *Manager) Warm(ctx context.Context) {
 	for _, s := range states {
 		st.set(s)
 	}
-}
-
-func (st *Manager) getOrCreate(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels) *State {
-	return st.cache.getOrCreate(ctx, alertRule, result, extraLabels)
 }
 
 func (st *Manager) set(entry *State) {
@@ -214,7 +212,7 @@ func (st *Manager) maybeTakeScreenshot(
 
 // Set the current state based on evaluation results
 func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels) *State {
-	currentState := st.getOrCreate(ctx, alertRule, result, extraLabels)
+	currentState := st.cache.getOrCreate(ctx, st.log, alertRule, result, extraLabels, st.externalURL)
 
 	currentState.LastEvaluationTime = result.EvaluatedAt
 	currentState.EvaluationDuration = result.EvaluationDuration
@@ -290,7 +288,7 @@ func (st *Manager) recordMetrics() {
 		select {
 		case <-ticker.C:
 			st.log.Debug("recording state cache metrics", "now", st.clock.Now())
-			st.cache.recordMetrics()
+			st.cache.recordMetrics(st.metrics)
 		case <-st.quit:
 			st.log.Debug("stopping state cache metrics recording", "now", st.clock.Now())
 			ticker.Stop()
