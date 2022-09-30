@@ -361,22 +361,20 @@ func (ss *sqlStore) GetSignedInUser(ctx context.Context, query *user.GetSignedIn
 				sess.SQL(rawSQL+"WHERE u.email=?", query.Email)
 			}
 		}
-
-		var usr user.SignedInUser
-		has, err := sess.Get(&usr)
+		has, err := sess.Get(&signedInUser)
 		if err != nil {
 			return err
 		} else if !has {
 			return user.ErrUserNotFound
 		}
 
-		if usr.OrgRole == "" {
-			usr.OrgID = -1
-			usr.OrgName = "Org missing"
+		if signedInUser.OrgRole == "" {
+			signedInUser.OrgID = -1
+			signedInUser.OrgName = "Org missing"
 		}
 
-		if usr.ExternalAuthModule != "oauth_grafana_com" {
-			usr.ExternalAuthID = ""
+		if signedInUser.ExternalAuthModule != "oauth_grafana_com" {
+			signedInUser.ExternalAuthID = ""
 		}
 		return nil
 	})

@@ -220,7 +220,7 @@ func (s *Service) GetSignedInUserWithCacheCtx(ctx context.Context, query *user.G
 
 	cacheKey = newSignedInUserCacheKey(result.OrgID, query.UserID)
 	s.cacheService.Set(cacheKey, *result, time.Second*5)
-	return signedInUser, nil
+	return result, nil
 }
 
 func newSignedInUserCacheKey(orgID, userID int64) string {
