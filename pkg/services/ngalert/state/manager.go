@@ -67,15 +67,16 @@ func (st *Manager) Close() {
 }
 
 func (st *Manager) Warm(ctx context.Context) {
-	st.log.Info("warming cache for startup")
-	st.cache.reset()
+	startTime := time.Now()
+	st.log.Info("Warming state cache for startup")
 
 	orgIds, err := st.instanceStore.FetchOrgIds(ctx)
 	if err != nil {
-		st.log.Error("unable to fetch orgIds", "msg", err.Error())
+		st.log.Error("unable to fetch orgIds", "err", err.Error())
 	}
 
-	var states []*State
+	statesCount := 0
+	states := make(map[int64]map[string]map[string]*State, len(orgIds))
 	for _, orgId := range orgIds {
 		// Get Rules
 		ruleCmd := ngModels.ListAlertRulesQuery{
@@ -90,6 +91,9 @@ func (st *Manager) Warm(ctx context.Context) {
 			ruleByUID[rule.UID] = rule
 		}
 
+		orgStates := make(map[string]map[string]*State, len(ruleByUID))
+		states[orgId] = orgStates
+
 		// Get Instances
 		cmd := ngModels.ListAlertInstancesQuery{
 			RuleOrgID: orgId,
@@ -101,8 +105,14 @@ func (st *Manager) Warm(ctx context.Context) {
 		for _, entry := range cmd.Result {
 			ruleForEntry, ok := ruleByUID[entry.RuleUID]
 			if !ok {
-				st.log.Error("rule not found for instance, ignoring", "rule", entry.RuleUID)
+				// TODO Should we delete the orphaned state from the db?
 				continue
+			}
+
+			rulesStates, ok := orgStates[entry.RuleUID]
+			if !ok {
+				rulesStates = make(map[string]*State)
+				orgStates[entry.RuleUID] = rulesStates
 			}
 
 			lbs := map[string]string(entry.Labels)
@@ -110,7 +120,7 @@ func (st *Manager) Warm(ctx context.Context) {
 			if err != nil {
 				st.log.Error("error getting cacheId for entry", "msg", err.Error())
 			}
-			stateForEntry := &State{
+			rulesStates[cacheId] = &State{
 				AlertRuleUID:         entry.RuleUID,
 				OrgID:                entry.RuleOrgID,
 				CacheId:              cacheId,
@@ -123,17 +133,11 @@ func (st *Manager) Warm(ctx context.Context) {
 				LastEvaluationTime:   entry.LastEvalTime,
 				Annotations:          ruleForEntry.Annotations,
 			}
-			states = append(states, stateForEntry)
+			statesCount++
 		}
 	}
-
-	for _, s := range states {
-		st.set(s)
-	}
-}
-
-func (st *Manager) set(entry *State) {
-	st.cache.set(entry)
+	st.cache.setAllStates(states)
+	st.log.Info("State cache has been initialized", "loaded_states", statesCount, "duration", time.Since(startTime))
 }
 
 func (st *Manager) Get(orgID int64, alertRuleUID, stateId string) (*State, error) {
@@ -262,7 +266,7 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 			"err", err)
 	}
 
-	st.set(currentState)
+	st.cache.set(currentState)
 
 	shouldUpdateAnnotation := oldState != currentState.State || oldReason != currentState.StateReason
 	if shouldUpdateAnnotation {
@@ -299,7 +303,7 @@ func (st *Manager) recordMetrics() {
 
 func (st *Manager) Put(states []*State) {
 	for _, s := range states {
-		st.set(s)
+		st.cache.set(s)
 	}
 }
 

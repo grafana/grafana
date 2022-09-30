@@ -131,6 +131,12 @@ func (c *cache) expandRuleLabelsAndAnnotations(ctx context.Context, log log.Logg
 	return expand(alertRule.Labels), expand(alertRule.Annotations)
 }
 
+func (c *cache) setAllStates(newStates map[int64]map[string]map[string]*State) {
+	c.mtxStates.Lock()
+	defer c.mtxStates.Unlock()
+	c.states = newStates
+}
+
 func (c *cache) set(entry *State) {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
