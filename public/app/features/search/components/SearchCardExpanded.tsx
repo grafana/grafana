@@ -33,7 +33,7 @@ export function SearchCardExpanded({ className, imageHeight, imageWidth, item, l
         {hasImage ? (
           <img
             loading="lazy"
-            alt="Preview of dashboard"
+            alt="Dashboard preview"
             className={styles.image}
             src={imageSrc}
             onLoad={() => setHasImage(true)}

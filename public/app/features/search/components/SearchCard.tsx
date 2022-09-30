@@ -134,7 +134,7 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked, onC
             loading="lazy"
             className={styles.image}
             src={imageSrc}
-            alt="Preview of dashboard"
+            alt="Dashboard preview"
             onError={() => setHasImage(false)}
           />
         ) : (
