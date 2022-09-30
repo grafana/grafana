@@ -117,9 +117,9 @@ func errorAlert(labels, annotations data.Labels, alertState *state.State, urlStr
 	}
 }
 
-func FromAlertStateToPostableAlerts(firingStates []*state.State, resendDelay time.Duration, appURL *url.URL) apimodels.PostableAlerts {
+func FromAlertStateToPostableAlerts(firingStates []*state.State, resendDelay time.Duration, appURL *url.URL, clock clock.Clock) apimodels.PostableAlerts {
 	alerts := apimodels.PostableAlerts{PostableAlerts: make([]models.PostableAlert, 0, len(firingStates))}
-	ts := time.Now()
+	ts := clock.Now()
 
 	for _, alertState := range firingStates {
 		if !alertState.NeedsSending(resendDelay) {
