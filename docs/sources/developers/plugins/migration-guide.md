@@ -66,7 +66,7 @@ This guide helps you identify the steps required to update a plugin from the Gra
 
 ### NavModelItem requires a valid icon name
 
-The typings of the `NavModelItem` have improved to only allow a valid `IconName` for the icon property. You can find the complete list of valid icons [here](https://github.com/grafana/grafana/blob/v9.2.0-beta1/packages/grafana-data/src/types/icon.ts).
+The typings of the `NavModelItem` have improved to only allow a valid `IconName` for the icon property. You can find the complete list of valid icons [here](https://github.com/grafana/grafana/blob/v9.2.0-beta1/packages/grafana-data/src/types/icon.ts). The icons specified in the list will work for older versions of Grafana 9.
 
 Example:
 
