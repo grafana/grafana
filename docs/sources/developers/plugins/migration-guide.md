@@ -17,6 +17,8 @@ This guide helps you identify the steps required to update a plugin from the Gra
 - [Plugin migration guide](#plugin-migration-guide)
   - [Introduction](#introduction)
   - [Table of contents](#table-of-contents)
+  - [From version 9.1.x to 9.2.x](#from-version-91x-to-92x)
+    - [NavModelItem requires a valid icon name](#navmodelitem-requires-a-valid-icon-name)
   - [From version 8.x to 9.x](#from-version-8x-to-9x)
     - [9.0 breaking changes](#90-breaking-changes)
       - [theme.visualization.getColorByName replaces getColorForTheme](#themevisualizationgetcolorbyname-replaces-getcolorfortheme)
@@ -59,6 +61,32 @@ This guide helps you identify the steps required to update a plugin from the Gra
       - [Migrate a data source plugin](#migrate-a-data-source-plugin)
       - [Migrate to data frames](#migrate-to-data-frames)
     - [Troubleshoot plugin migration](#troubleshoot-plugin-migration)
+
+## From version 9.1.x to 9.2.x
+
+### NavModelItem requires a valid icon name
+
+The typings of the `NavModelItem` have improved to only allow a valid `IconName` for the icon property. You can find the complete list of valid icons [here](https://github.com/grafana/grafana/blob/v9.2.0-beta1/packages/grafana-data/src/types/icon.ts). The icons specified in the list will work for older versions of Grafana 9.
+
+Example:
+
+```ts
+// before
+const model: NavModelItem = {
+  id: 'settings',
+  text: 'Settings',
+  icon: 'fa fa-cog',
+  url: `${baseUrl}/settings`,
+};
+
+// after
+const model: NavModelItem = {
+  id: 'settings',
+  text: 'Settings',
+  icon: 'cog',
+  url: `${baseUrl}/settings`,
+};
+```
 
 ## From version 8.x to 9.x
 

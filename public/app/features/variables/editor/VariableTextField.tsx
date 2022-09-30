@@ -15,6 +15,7 @@ interface VariableTextFieldProps {
   grow?: boolean;
   onBlur?: (event: FormEvent<HTMLInputElement>) => void;
   interactive?: boolean;
+  maxLength?: number;
 }
 
 export function VariableTextField({
@@ -30,6 +31,7 @@ export function VariableTextField({
   tooltip,
   grow,
   interactive,
+  maxLength,
 }: PropsWithChildren<VariableTextFieldProps>): ReactElement {
   return (
     <InlineField interactive={interactive} label={name} labelWidth={labelWidth ?? 12} tooltip={tooltip} grow={grow}>
@@ -43,6 +45,7 @@ export function VariableTextField({
         onBlur={onBlur}
         width={grow ? undefined : width ?? 25}
         data-testid={testId}
+        maxLength={maxLength}
         required={required}
       />
     </InlineField>

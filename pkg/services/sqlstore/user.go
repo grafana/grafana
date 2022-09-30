@@ -169,7 +169,7 @@ func (ss *SQLStore) CreateUser(ctx context.Context, cmd user.CreateUserCommand) 
 	return &user, createErr
 }
 
-func notServiceAccountFilter(ss *SQLStore) string {
+func NotServiceAccountFilter(ss *SQLStore) string {
 	return fmt.Sprintf("%s.is_service_account = %s",
 		ss.Dialect.Quote("user"),
 		ss.Dialect.BooleanStr(false))
@@ -180,7 +180,7 @@ func (ss *SQLStore) GetUserById(ctx context.Context, query *models.GetUserByIdQu
 		usr := new(user.User)
 
 		has, err := sess.ID(query.Id).
-			Where(notServiceAccountFilter(ss)).
+			Where(NotServiceAccountFilter(ss)).
 			Get(usr)
 
 		if err != nil {
@@ -198,148 +198,6 @@ func (ss *SQLStore) GetUserById(ctx context.Context, query *models.GetUserByIdQu
 		query.Result = usr
 
 		return nil
-	})
-}
-
-func (ss *SQLStore) GetUserByLogin(ctx context.Context, query *models.GetUserByLoginQuery) error {
-	return ss.WithDbSession(ctx, func(sess *DBSession) error {
-		if query.LoginOrEmail == "" {
-			return user.ErrUserNotFound
-		}
-
-		// Try and find the user by login first.
-		// It's not sufficient to assume that a LoginOrEmail with an "@" is an email.
-		usr := &user.User{}
-		where := "login=?"
-		if ss.Cfg.CaseInsensitiveLogin {
-			where = "LOWER(login)=LOWER(?)"
-		}
-
-		has, err := sess.Where(notServiceAccountFilter(ss)).Where(where, query.LoginOrEmail).Get(usr)
-		if err != nil {
-			return err
-		}
-
-		if !has && strings.Contains(query.LoginOrEmail, "@") {
-			// If the user wasn't found, and it contains an "@" fallback to finding the
-			// user by email.
-
-			where = "email=?"
-			if ss.Cfg.CaseInsensitiveLogin {
-				where = "LOWER(email)=LOWER(?)"
-			}
-			usr = &user.User{}
-			has, err = sess.Where(notServiceAccountFilter(ss)).Where(where, query.LoginOrEmail).Get(usr)
-		}
-
-		if err != nil {
-			return err
-		} else if !has {
-			return user.ErrUserNotFound
-		}
-
-		if ss.Cfg.CaseInsensitiveLogin {
-			if err := ss.userCaseInsensitiveLoginConflict(ctx, sess, usr.Login, usr.Email); err != nil {
-				return err
-			}
-		}
-
-		query.Result = usr
-
-		return nil
-	})
-}
-
-func (ss *SQLStore) GetUserByEmail(ctx context.Context, query *models.GetUserByEmailQuery) error {
-	return ss.WithDbSession(ctx, func(sess *DBSession) error {
-		if query.Email == "" {
-			return user.ErrUserNotFound
-		}
-
-		usr := &user.User{}
-		where := "email=?"
-		if ss.Cfg.CaseInsensitiveLogin {
-			where = "LOWER(email)=LOWER(?)"
-		}
-
-		has, err := sess.Where(notServiceAccountFilter(ss)).Where(where, query.Email).Get(usr)
-
-		if err != nil {
-			return err
-		} else if !has {
-			return user.ErrUserNotFound
-		}
-
-		if ss.Cfg.CaseInsensitiveLogin {
-			if err := ss.userCaseInsensitiveLoginConflict(ctx, sess, usr.Login, usr.Email); err != nil {
-				return err
-			}
-		}
-
-		query.Result = usr
-
-		return nil
-	})
-}
-
-func (ss *SQLStore) UpdateUser(ctx context.Context, cmd *models.UpdateUserCommand) error {
-	if ss.Cfg.CaseInsensitiveLogin {
-		cmd.Login = strings.ToLower(cmd.Login)
-		cmd.Email = strings.ToLower(cmd.Email)
-	}
-
-	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
-		user := user.User{
-			Name:    cmd.Name,
-			Email:   cmd.Email,
-			Login:   cmd.Login,
-			Theme:   cmd.Theme,
-			Updated: TimeNow(),
-		}
-
-		if _, err := sess.ID(cmd.UserId).Where(notServiceAccountFilter(ss)).Update(&user); err != nil {
-			return err
-		}
-
-		if ss.Cfg.CaseInsensitiveLogin {
-			if err := ss.userCaseInsensitiveLoginConflict(ctx, sess, user.Login, user.Email); err != nil {
-				return err
-			}
-		}
-
-		sess.publishAfterCommit(&events.UserUpdated{
-			Timestamp: user.Created,
-			Id:        user.ID,
-			Name:      user.Name,
-			Login:     user.Login,
-			Email:     user.Email,
-		})
-
-		return nil
-	})
-}
-
-func (ss *SQLStore) ChangeUserPassword(ctx context.Context, cmd *models.ChangeUserPasswordCommand) error {
-	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
-		user := user.User{
-			Password: cmd.NewPassword,
-			Updated:  TimeNow(),
-		}
-
-		_, err := sess.ID(cmd.UserId).Where(notServiceAccountFilter(ss)).Update(&user)
-		return err
-	})
-}
-
-func (ss *SQLStore) UpdateUserLastSeenAt(ctx context.Context, cmd *models.UpdateUserLastSeenAtCommand) error {
-	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
-		user := user.User{
-			ID:         cmd.UserId,
-			LastSeenAt: TimeNow(),
-		}
-
-		_, err := sess.ID(cmd.UserId).Update(&user)
-		return err
 	})
 }
 
@@ -374,20 +232,10 @@ func setUsingOrgInTransaction(sess *DBSession, userID int64, orgID int64) error 
 	return err
 }
 
-func removeUserOrg(sess *DBSession, userID int64) error {
-	user := user.User{
-		ID:    userID,
-		OrgID: 0,
-	}
-
-	_, err := sess.ID(userID).MustCols("org_id").Update(&user)
-	return err
-}
-
 func (ss *SQLStore) GetUserProfile(ctx context.Context, query *models.GetUserProfileQuery) error {
 	return ss.WithDbSession(ctx, func(sess *DBSession) error {
 		var usr user.User
-		has, err := sess.ID(query.UserId).Where(notServiceAccountFilter(ss)).Get(&usr)
+		has, err := sess.ID(query.UserId).Where(NotServiceAccountFilter(ss)).Get(&usr)
 
 		if err != nil {
 			return err
@@ -440,7 +288,7 @@ func (ss *SQLStore) GetUserOrgList(ctx context.Context, query *models.GetUserOrg
 		sess.Join("INNER", "org", "org_user.org_id=org.id")
 		sess.Join("INNER", ss.Dialect.Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", ss.Dialect.Quote("user")))
 		sess.Where("org_user.user_id=?", query.UserId)
-		sess.Where(notServiceAccountFilter(ss))
+		sess.Where(NotServiceAccountFilter(ss))
 		sess.Cols("org.name", "org_user.role", "org_user.org_id")
 		sess.OrderBy("org.name")
 		err := sess.Find(&query.Result)
@@ -733,7 +581,7 @@ func (ss *SQLStore) DisableUser(ctx context.Context, cmd *models.DisableUserComm
 		usr := user.User{}
 		sess := dbSess.Table("user")
 
-		if has, err := sess.ID(cmd.UserId).Where(notServiceAccountFilter(ss)).Get(&usr); err != nil {
+		if has, err := sess.ID(cmd.UserId).Where(NotServiceAccountFilter(ss)).Get(&usr); err != nil {
 			return err
 		} else if !has {
 			return user.ErrUserNotFound
@@ -763,7 +611,7 @@ func (ss *SQLStore) BatchDisableUsers(ctx context.Context, cmd *models.BatchDisa
 			disableParams = append(disableParams, v)
 		}
 
-		_, err := sess.Where(notServiceAccountFilter(ss)).Exec(disableParams...)
+		_, err := sess.Where(NotServiceAccountFilter(ss)).Exec(disableParams...)
 		return err
 	})
 }
@@ -774,10 +622,14 @@ func (ss *SQLStore) DeleteUser(ctx context.Context, cmd *models.DeleteUserComman
 	})
 }
 
+func (ss *SQLStore) DeleteUserInSession(ctx context.Context, sess *DBSession, cmd *models.DeleteUserCommand) error {
+	return deleteUserInTransaction(ss, sess, cmd)
+}
+
 func deleteUserInTransaction(ss *SQLStore, sess *DBSession, cmd *models.DeleteUserCommand) error {
 	// Check if user exists
 	usr := user.User{ID: cmd.UserId}
-	has, err := sess.Where(notServiceAccountFilter(ss)).Get(&usr)
+	has, err := sess.Where(NotServiceAccountFilter(ss)).Get(&usr)
 	if err != nil {
 		return err
 	}
@@ -853,23 +705,20 @@ func UserDeletions() []string {
 func (ss *SQLStore) UpdateUserPermissions(userID int64, isAdmin bool) error {
 	return ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
 		var user user.User
-		if _, err := sess.ID(userID).Where(notServiceAccountFilter(ss)).Get(&user); err != nil {
+		if _, err := sess.ID(userID).Where(NotServiceAccountFilter(ss)).Get(&user); err != nil {
 			return err
 		}
 
 		user.IsAdmin = isAdmin
 		sess.UseBool("is_admin")
-
 		_, err := sess.ID(user.ID).Update(&user)
 		if err != nil {
 			return err
 		}
-
 		// validate that after update there is at least one server admin
 		if err := validateOneAdminLeft(sess); err != nil {
 			return err
 		}
-
 		return nil
 	})
 }

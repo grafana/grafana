@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/user"
+	"xorm.io/core"
 )
 
 type Store interface {
@@ -15,6 +16,7 @@ type Store interface {
 	GetDataSourceStats(ctx context.Context, query *models.GetDataSourceStatsQuery) error
 	GetDataSourceAccessStats(ctx context.Context, query *models.GetDataSourceAccessStatsQuery) error
 	GetDialect() migrator.Dialect
+	GetDBType() core.DbType
 	GetSystemStats(ctx context.Context, query *models.GetSystemStatsQuery) error
 	GetOrgByName(name string) (*models.Org, error)
 	CreateOrg(ctx context.Context, cmd *models.CreateOrgCommand) error
@@ -28,8 +30,8 @@ type Store interface {
 	GetSignedInUser(ctx context.Context, query *models.GetSignedInUserQuery) error
 	UpdateUserPermissions(userID int64, isAdmin bool) error
 	SetUserHelpFlag(ctx context.Context, cmd *models.SetUserHelpFlagCommand) error
-	NewSession(ctx context.Context) *DBSession
 	WithDbSession(ctx context.Context, callback DBTransactionFunc) error
+	WithNewDbSession(ctx context.Context, callback DBTransactionFunc) error
 	GetOrgQuotaByTarget(ctx context.Context, query *models.GetOrgQuotaByTargetQuery) error
 	GetOrgQuotas(ctx context.Context, query *models.GetOrgQuotasQuery) error
 	UpdateOrgQuota(ctx context.Context, cmd *models.UpdateOrgQuotaCmd) error
@@ -39,8 +41,6 @@ type Store interface {
 	GetGlobalQuotaByTarget(ctx context.Context, query *models.GetGlobalQuotaByTargetQuery) error
 	WithTransactionalDbSession(ctx context.Context, callback DBTransactionFunc) error
 	InTransaction(ctx context.Context, fn func(ctx context.Context) error) error
-	SearchOrgUsers(ctx context.Context, query *models.SearchOrgUsersQuery) error
-	RemoveOrgUser(ctx context.Context, cmd *models.RemoveOrgUserCommand) error
 	Migrate(bool) error
 	Sync() error
 	Reset() error

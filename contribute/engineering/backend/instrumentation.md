@@ -55,6 +55,8 @@ When to use which log level?
 
 Use a contextual logger to include additional key/value pairs attached to `context.Context`, e.g. `traceID`, to allow correlating logs with traces and/or correlate logs with a common identifier.
 
+You must [Enable tracing in Grafana](#2-enable-tracing-in-grafana) to get a traceID
+
 Example:
 
 ```go
@@ -241,36 +243,38 @@ Be **careful** to not expose any sensitive information in span names, attribute 
 
 ### How to collect, visualize and query traces (and correlate logs with traces) locally
 
-1. Start Jaeger
+#### 1. Start Jaeger
 
-   ```bash
-   make devenv sources=jaeger
-   ```
+```bash
+make devenv sources=jaeger
+```
 
-2. Enable tracing in Grafana
+#### 2. Enable tracing in Grafana
 
-   opentelemetry tracing (recommended):
+To enable tracing in Grafana, you must set the address in your config.ini file
 
-   ```ini
-   [tracing.opentelemetry.jaeger]
-   address = http://localhost:14268/api/traces
-   ```
+opentelemetry tracing (recommended):
 
-   opentracing tracing (deprecated/not recommended):
+```ini
+[tracing.opentelemetry.jaeger]
+address = http://localhost:14268/api/traces
+```
 
-   ```ini
-   [tracing.jaeger]
-   address = localhost:6831
-   ```
+opentracing tracing (deprecated/not recommended):
 
-3. Search/browse collected logs and traces in Grafana Explore
+```ini
+[tracing.jaeger]
+address = localhost:6831
+```
 
-   You need provisioned gdev-jaeger and gdev-loki datasources, see [developer dashboard and data sources](https://github.com/grafana/grafana/tree/main/devenv#developer-dashboards-and-data-sources) for setup instructions.
+#### 3. Search/browse collected logs and traces in Grafana Explore
 
-   Open Grafana explore and select gdev-loki datasource and use the query `{filename="/var/log/grafana/grafana.log"} | logfmt`.
+You need provisioned gdev-jaeger and gdev-loki datasources, see [developer dashboard and data sources](https://github.com/grafana/grafana/tree/main/devenv#developer-dashboards-and-data-sources) for setup instructions.
 
-   You can then inspect any log message that includes a `traceID` and from there click on `gdev-jaeger` to split view and inspect the trace in question.
+Open Grafana explore and select gdev-loki datasource and use the query `{filename="/var/log/grafana/grafana.log"} | logfmt`.
 
-4. Search/browse collected traces in Jaeger UI
+You can then inspect any log message that includes a `traceID` and from there click on `gdev-jaeger` to split view and inspect the trace in question.
 
-   You can open http://localhost:16686 to use the Jaeger UI for browsing and searching traces.
+#### 4. Search/browse collected traces in Jaeger UI
+
+You can open http://localhost:16686 to use the Jaeger UI for browsing and searching traces.
