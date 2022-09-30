@@ -77,7 +77,7 @@ If possible, we recommend you to use the latest service pack available for optim
 
 ## Query builder
 
-{{< figure src="/static/img/docs/v92/mysql_query_builder.png" class="docs-image--no-shadow" }}
+{{< figure src="/static/img/docs/v92/mssql_query_builder.png" class="docs-image--no-shadow" >}}
 
 The MS SQL query builder is available when editing a panel using a MS SQL data source. The built query can be run by pressing the `Run query` button in the top right corner of the editor.
 
