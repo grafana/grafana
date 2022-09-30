@@ -26,7 +26,7 @@ export const SectionNavToggle = ({ className, isExpanded, onClick }: Props) => {
   );
 };
 
-SectionNavToggle.displayName = 'NavBarToggle';
+SectionNavToggle.displayName = 'SectionNavToggle';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   icon: css({
