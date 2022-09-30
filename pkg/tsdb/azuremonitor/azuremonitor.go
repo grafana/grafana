@@ -99,12 +99,7 @@ func NewInstanceSettings(cfg *setting.Cfg, clientProvider *httpclient.Provider, 
 			return nil, fmt.Errorf("error getting credentials: %w", err)
 		}
 
-		customizedCloudSettings, err := getCustomizedCloudSettings(cloud, settings.JSONData)
-		if err != nil {
-			return nil, err
-		}
-
-		routesForModel, err := getAzureRoutes(cloud, customizedCloudSettings)
+		routesForModel, err := getAzureRoutes(cloud, settings.JSONData)
 		if err != nil {
 			return nil, err
 		}
@@ -138,20 +133,20 @@ func NewInstanceSettings(cfg *setting.Cfg, clientProvider *httpclient.Provider, 
 }
 
 func getCustomizedCloudSettings(cloud string, jsonData json.RawMessage) (types.AzureMonitorCustomizedCloudSettings, error) {
-	if cloud == "AzureCustomizedCloud" {
-		customizedCloudSettings := types.AzureMonitorCustomizedCloudSettings{}
-		err := json.Unmarshal(jsonData, &customizedCloudSettings)
-		if err != nil {
-			return types.AzureMonitorCustomizedCloudSettings{}, fmt.Errorf("error getting customized cloud settings: %w", err)
-		}
-		return customizedCloudSettings, nil
-	} else {
-		return types.AzureMonitorCustomizedCloudSettings{}, nil
+	customizedCloudSettings := types.AzureMonitorCustomizedCloudSettings{}
+	err := json.Unmarshal(jsonData, &customizedCloudSettings)
+	if err != nil {
+		return types.AzureMonitorCustomizedCloudSettings{}, fmt.Errorf("error getting customized cloud settings: %w", err)
 	}
+	return customizedCloudSettings, nil
 }
 
-func getAzureRoutes(cloud string, customizedCloudSettings types.AzureMonitorCustomizedCloudSettings) (map[string]types.AzRoute, error) {
+func getAzureRoutes(cloud string, jsonData json.RawMessage) (map[string]types.AzRoute, error) {
 	if cloud == "AzureCustomizedCloud" {
+		customizedCloudSettings, err := getCustomizedCloudSettings(cloud, jsonData)
+		if err != nil {
+			return nil, err
+		}
 		if customizedCloudSettings.CustomizedRoutes == nil {
 			return nil, fmt.Errorf("unable to instantiate routes, customizedRoutes must be set")
 		}
