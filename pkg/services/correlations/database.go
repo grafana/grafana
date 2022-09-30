@@ -16,6 +16,7 @@ func (s CorrelationsService) createCorrelation(ctx context.Context, cmd CreateCo
 		TargetUID:   cmd.TargetUID,
 		Label:       cmd.Label,
 		Description: cmd.Description,
+		Config:      cmd.Config,
 	}
 
 	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *sqlstore.DBSession) error {

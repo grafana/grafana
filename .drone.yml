@@ -3770,6 +3770,7 @@ steps:
   failure: ignore
   image: us.gcr.io/kubernetes-dev/package-publish:latest
   name: publish-linux-packages
+  privileged: true
   settings:
     access_key_id:
       from_secret: packages_access_key_id
@@ -3852,6 +3853,7 @@ steps:
   failure: ignore
   image: us.gcr.io/kubernetes-dev/package-publish:latest
   name: publish-linux-packages
+  privileged: true
   settings:
     access_key_id:
       from_secret: packages_access_key_id
@@ -5282,6 +5284,36 @@ trigger:
   event: cron
 type: docker
 ---
+clone:
+  retries: 3
+kind: pipeline
+name: grafana-com-nightly
+platform:
+  arch: amd64
+  os: linux
+steps:
+- commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.10/grabpl
+  - chmod +x bin/grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: grabpl
+- commands:
+  - ./bin/grabpl publish grafana-com --edition oss
+  depends_on:
+  - grabpl
+  environment:
+    GCP_KEY:
+      from_secret: gcp_key
+    GRAFANA_COM_API_KEY:
+      from_secret: grafana_api_key
+  image: grafana/grafana-ci-deploy:1.3.3
+  name: post-to-grafana-com
+trigger:
+  cron: grafana-com-nightly
+  event: cron
+type: docker
+---
 get:
   name: .dockerconfigjson
   path: secret/data/common/gcr
@@ -5349,6 +5381,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 88244e8abc706fc4a5c08b37152198afdd406bcd93366c4c07195f5eab242f70
+hmac: 774fd382b75b0860cc64326952818257df858a0f59144ad9ed978c984b94fd0e
 
 ...

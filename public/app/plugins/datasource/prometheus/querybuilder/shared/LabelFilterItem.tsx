@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import { uniqBy } from 'lodash';
 import React, { useState } from 'react';
 
@@ -14,9 +15,20 @@ export interface Props {
   onGetLabelNames: (forLabel: Partial<QueryBuilderLabelFilter>) => Promise<SelectableValue[]>;
   onGetLabelValues: (forLabel: Partial<QueryBuilderLabelFilter>) => Promise<SelectableValue[]>;
   onDelete: () => void;
+  invalidLabel?: boolean;
+  invalidValue?: boolean;
 }
 
-export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabelNames, onGetLabelValues }: Props) {
+export function LabelFilterItem({
+  item,
+  defaultOp,
+  onChange,
+  onDelete,
+  onGetLabelNames,
+  onGetLabelValues,
+  invalidLabel,
+  invalidValue,
+}: Props) {
   const [state, setState] = useState<{
     labelNames?: SelectableValue[];
     labelValues?: SelectableValue[];
@@ -46,6 +58,16 @@ export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabe
     return uniqBy([...selectedOptions, ...labelValues], 'value');
   };
 
+  /**
+   * !important here is necessary to show invalid border on all 4 sides of select.
+   * Without it, the invalid state is only visible on 3 sides as the right side is overridden in InputGroup.
+   */
+  const invalidClassNameOverride = invalidLabel
+    ? css`
+        margin-left: 0 !important;
+      `
+    : '';
+
   return (
     <div data-testid="prometheus-dimensions-filter-item">
       <InputGroup>
@@ -72,6 +94,7 @@ export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabe
               } as any as QueryBuilderLabelFilter);
             }
           }}
+          invalid={invalidLabel}
         />
 
         <Select
@@ -84,6 +107,7 @@ export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabe
               onChange({ ...item, op: change.value } as any as QueryBuilderLabelFilter);
             }
           }}
+          className={invalidClassNameOverride}
         />
 
         <Select
@@ -121,6 +145,7 @@ export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabe
               onChange({ ...item, value: changes, op: item.op ?? defaultOp } as any as QueryBuilderLabelFilter);
             }
           }}
+          invalid={invalidValue}
         />
         <AccessoryButton aria-label="remove" icon="times" variant="secondary" onClick={onDelete} />
       </InputGroup>
