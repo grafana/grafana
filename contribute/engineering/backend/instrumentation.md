@@ -241,36 +241,36 @@ Be **careful** to not expose any sensitive information in span names, attribute 
 
 ### How to collect, visualize and query traces (and correlate logs with traces) locally
 
-1. Start Jaeger
+#### 1. Start Jaeger
 
-   ```bash
-   make devenv sources=jaeger
-   ```
+```bash
+make devenv sources=jaeger
+```
 
-2. Enable tracing in Grafana
+#### 2. Enable tracing in Grafana
 
-   opentelemetry tracing (recommended):
+opentelemetry tracing (recommended):
 
-   ```ini
-   [tracing.opentelemetry.jaeger]
-   address = http://localhost:14268/api/traces
-   ```
+```ini
+[tracing.opentelemetry.jaeger]
+address = http://localhost:14268/api/traces
+```
 
-   opentracing tracing (deprecated/not recommended):
+opentracing tracing (deprecated/not recommended):
 
-   ```ini
-   [tracing.jaeger]
-   address = localhost:6831
-   ```
+```ini
+[tracing.jaeger]
+address = localhost:6831
+```
 
-3. Search/browse collected logs and traces in Grafana Explore
+#### 3. Search/browse collected logs and traces in Grafana Explore
 
-   You need provisioned gdev-jaeger and gdev-loki datasources, see [developer dashboard and data sources](https://github.com/grafana/grafana/tree/main/devenv#developer-dashboards-and-data-sources) for setup instructions.
+You need provisioned gdev-jaeger and gdev-loki datasources, see [developer dashboard and data sources](https://github.com/grafana/grafana/tree/main/devenv#developer-dashboards-and-data-sources) for setup instructions.
 
-   Open Grafana explore and select gdev-loki datasource and use the query `{filename="/var/log/grafana/grafana.log"} | logfmt`.
+Open Grafana explore and select gdev-loki datasource and use the query `{filename="/var/log/grafana/grafana.log"} | logfmt`.
 
-   You can then inspect any log message that includes a `traceID` and from there click on `gdev-jaeger` to split view and inspect the trace in question.
+You can then inspect any log message that includes a `traceID` and from there click on `gdev-jaeger` to split view and inspect the trace in question.
 
-4. Search/browse collected traces in Jaeger UI
+#### 4. Search/browse collected traces in Jaeger UI
 
-   You can open http://localhost:16686 to use the Jaeger UI for browsing and searching traces.
+You can open http://localhost:16686 to use the Jaeger UI for browsing and searching traces.
