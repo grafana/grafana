@@ -307,12 +307,6 @@ func (st *Manager) recordMetrics() {
 	}
 }
 
-func (st *Manager) Put(states []*State) {
-	for _, s := range states {
-		st.set(s)
-	}
-}
-
 func (st *Manager) saveState(ctx context.Context, s *State) error {
 	cmd := ngModels.SaveAlertInstanceCommand{
 		RuleOrgID:         s.OrgID,
