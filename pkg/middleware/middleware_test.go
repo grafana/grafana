@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -653,6 +654,7 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 		sc.mockSQLStore = mockstore.NewSQLStoreMock()
 		sc.loginService = &loginservice.LoginServiceMock{}
 		sc.userService = usertest.NewUserServiceFake()
+		sc.orgService = orgtest.NewOrgServiceFake()
 		sc.apiKeyService = &apikeytest.Service{}
 		ctxHdlr := getContextHandler(t, cfg, sc.mockSQLStore, sc.loginService, sc.apiKeyService, sc.userService)
 		sc.sqlStore = ctxHdlr.SQLStore

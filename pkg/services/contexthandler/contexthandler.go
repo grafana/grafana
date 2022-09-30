@@ -44,7 +44,7 @@ func ProvideService(cfg *setting.Cfg, tokenService models.UserTokenService, jwtS
 	remoteCache *remotecache.RemoteCache, renderService rendering.Service, sqlStore sqlstore.Store,
 	tracer tracing.Tracer, authProxy *authproxy.AuthProxy, loginService login.Service,
 	apiKeyService apikey.Service, authenticator loginpkg.Authenticator, userService user.Service,
-) *ContextHandler {
+	orgService org.Service) *ContextHandler {
 	return &ContextHandler{
 		Cfg:              cfg,
 		AuthTokenService: tokenService,
@@ -58,6 +58,7 @@ func ProvideService(cfg *setting.Cfg, tokenService models.UserTokenService, jwtS
 		loginService:     loginService,
 		apiKeyService:    apiKeyService,
 		userService:      userService,
+		orgService:       orgService,
 	}
 }
 
