@@ -79,7 +79,7 @@ The PostgreSQL query builder is available when editing a panel using a PostgreSQ
 
 ### Format
 
-The response from PostgresSQL can be formatted as either a table or as a time series. To use the time series format one of the columns must be named `time`.
+The response from PostgreSQL can be formatted as either a table or as a time series. To use the time series format one of the columns must be named `time`.
 
 ### Dataset and Table selection
 
