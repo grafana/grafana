@@ -2,6 +2,8 @@ package sqlstore
 
 import (
 	"context"
+	"database/sql"
+	"database/sql/driver"
 	"fmt"
 	"net/url"
 	"os"
@@ -12,9 +14,12 @@ import (
 	"time"
 
 	"github.com/dlmiddlecote/sqlstats"
+	"github.com/gchaincl/sqlhooks"
 	"github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 	_ "github.com/lib/pq"
+	"github.com/mattn/go-sqlite3"
 	"github.com/prometheus/client_golang/prometheus"
 	"xorm.io/xorm"
 
@@ -176,9 +181,55 @@ func (ss *SQLStore) Bus() bus.Bus {
 	return ss.bus
 }
 
+// Hooks satisfies the sqlhook.Hooks interface
+type Hooks struct {
+	logger sqllog.ILogger
+}
+
+// Before hook will return the context with the timestamp
+func (h *Hooks) Before(ctx context.Context, query string, args ...interface{}) (context.Context, error) {
+	return context.WithValue(ctx, "start", time.Now()), nil
+}
+
+// After hook will get the timestamp registered on the Before hook and logs the query, its args and its elapsed time
+func (h *Hooks) After(ctx context.Context, query string, args ...interface{}) (context.Context, error) {
+	start := ctx.Value("start").(time.Time)
+	h.logger.Infof("[SQL] %v %v - took: %v", query, args, time.Since(start))
+	return ctx, nil
+}
+
 func (ss *SQLStore) GetSqlxSession(debugSQL bool) *session.SessionDB {
 	if ss.sqlxsession == nil {
-		ss.sqlxsession = session.GetSession(sqlx.NewDb(ss.engine.DB().DB, ss.GetDialect().DriverName()), debugSQL)
+		var logger sqllog.ILogger
+		if !debugSQL {
+			logger = sqllog.DiscardLogger{}
+		} else {
+			logger = sqllog.NewGenericLogger(log.LvlInfo, log.WithSuffix(log.New("sqlstore.sqlx"), log.CallerContextKey, log.StackCaller(log.DefaultCallerDepth)))
+		}
+		drivers := map[string]driver.Driver{
+			migrator.SQLite:   &sqlite3.SQLiteDriver{},
+			migrator.MySQL:    &mysql.MySQLDriver{},
+			migrator.Postgres: &pq.Driver{},
+		}
+
+		dbType := ss.GetDialect().DriverName()
+		d, exist := drivers[dbType]
+		if !exist {
+			// TODO return proper error
+			panic("unknown dbType")
+		}
+
+		driverWithHooks := "sqlx" + dbType + "WithHooks"
+		sql.Register(driverWithHooks, sqlhooks.Wrap(d, &Hooks{logger: logger}))
+
+		connectionString, err := ss.buildConnectionString()
+		if err != nil {
+			// TODO return proper error
+			panic("failed to build connection string")
+		}
+		// open's a new connection (in parallel with the xorm one)
+		db, _ := sqlx.Open(driverWithHooks, connectionString)
+		ss.sqlxsession = session.GetSession(db, debugSQL)
 	}
 	return ss.sqlxsession
 }
