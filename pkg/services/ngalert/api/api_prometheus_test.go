@@ -423,7 +423,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 
 	t.Run("with many rules in a group", func(t *testing.T) {
 		t.Run("should return sorted", func(t *testing.T) {
-			ruleStore := fakes.NewFakeRuleStore(t)
+			ruleStore := fakes.NewRuleStore(t)
 			fakeAIM := NewFakeAlertInstanceManager(t)
 			groupKey := ngmodels.GenerateGroupKey(orgID)
 			_, rules := ngmodels.GenerateUniqueAlertRules(rand.Intn(5)+5, ngmodels.AlertRuleGen(withGroupKey(groupKey), ngmodels.WithUniqueGroupIndex()))
@@ -466,7 +466,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 
 	t.Run("when fine-grained access is enabled", func(t *testing.T) {
 		t.Run("should return only rules if the user can query all data sources", func(t *testing.T) {
-			ruleStore := fakes.NewFakeRuleStore(t)
+			ruleStore := fakes.NewRuleStore(t)
 			fakeAIM := NewFakeAlertInstanceManager(t)
 
 			rules := ngmodels.GenerateAlertRules(rand.Intn(4)+2, ngmodels.AlertRuleGen(withOrgID(orgID)))
@@ -503,8 +503,8 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 	})
 }
 
-func setupAPI(t *testing.T) (*fakes.FakeRuleStore, *fakeAlertInstanceManager, *acmock.Mock, PrometheusSrv) {
-	fakeStore := fakes.NewFakeRuleStore(t)
+func setupAPI(t *testing.T) (*fakes.RuleStore, *fakeAlertInstanceManager, *acmock.Mock, PrometheusSrv) {
+	fakeStore := fakes.NewRuleStore(t)
 	fakeAIM := NewFakeAlertInstanceManager(t)
 	acMock := acmock.New().WithDisabled()
 
@@ -518,7 +518,7 @@ func setupAPI(t *testing.T) (*fakes.FakeRuleStore, *fakeAlertInstanceManager, *a
 	return fakeStore, fakeAIM, acMock, api
 }
 
-func generateRuleAndInstanceWithQuery(t *testing.T, orgID int64, fakeAIM *fakeAlertInstanceManager, fakeStore *fakes.FakeRuleStore, query func(r *ngmodels.AlertRule)) {
+func generateRuleAndInstanceWithQuery(t *testing.T, orgID int64, fakeAIM *fakeAlertInstanceManager, fakeStore *fakes.RuleStore, query func(r *ngmodels.AlertRule)) {
 	t.Helper()
 
 	rules := ngmodels.GenerateAlertRules(1, ngmodels.AlertRuleGen(withOrgID(orgID), asFixture(), query))

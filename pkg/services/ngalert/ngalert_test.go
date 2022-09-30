@@ -29,7 +29,7 @@ func Test_subscribeToFolderChanges(t *testing.T) {
 	rules := models.GenerateAlertRules(5, models.AlertRuleGen(models.WithOrgID(orgID), models.WithNamespace(folder)))
 
 	bus := busmock.New()
-	db := fakes.NewFakeRuleStore(t)
+	db := fakes.NewRuleStore(t)
 	db.Folders[orgID] = append(db.Folders[orgID], folder)
 	db.PutRule(context.Background(), rules...)
 

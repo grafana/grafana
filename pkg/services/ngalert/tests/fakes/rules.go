@@ -16,7 +16,7 @@ import (
 )
 
 // FakeRuleStore mocks the RuleStore of the scheduler.
-type FakeRuleStore struct {
+type RuleStore struct {
 	t   *testing.T
 	mtx sync.Mutex
 	// OrgID -> RuleGroup -> Namespace -> Rules
@@ -31,8 +31,8 @@ type GenericRecordedQuery struct {
 	Params []interface{}
 }
 
-func NewFakeRuleStore(t *testing.T) *FakeRuleStore {
-	return &FakeRuleStore{
+func NewRuleStore(t *testing.T) *RuleStore {
+	return &RuleStore{
 		t:     t,
 		Rules: map[int64][]*models.AlertRule{},
 		Hook: func(interface{}) error {
@@ -43,7 +43,7 @@ func NewFakeRuleStore(t *testing.T) *FakeRuleStore {
 }
 
 // PutRule puts the rule in the Rules map. If there are existing rule in the same namespace, they will be overwritten
-func (f *FakeRuleStore) PutRule(_ context.Context, rules ...*models.AlertRule) {
+func (f *RuleStore) PutRule(_ context.Context, rules ...*models.AlertRule) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 mainloop:
@@ -78,7 +78,7 @@ mainloop:
 }
 
 // GetRecordedCommands filters recorded commands using predicate function. Returns the subset of the recorded commands that meet the predicate
-func (f *FakeRuleStore) GetRecordedCommands(predicate func(cmd interface{}) (interface{}, bool)) []interface{} {
+func (f *RuleStore) GetRecordedCommands(predicate func(cmd interface{}) (interface{}, bool)) []interface{} {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 
@@ -93,7 +93,7 @@ func (f *FakeRuleStore) GetRecordedCommands(predicate func(cmd interface{}) (int
 	return result
 }
 
-func (f *FakeRuleStore) DeleteAlertRulesByUID(_ context.Context, orgID int64, UIDs ...string) error {
+func (f *RuleStore) DeleteAlertRulesByUID(_ context.Context, orgID int64, UIDs ...string) error {
 	f.RecordedOps = append(f.RecordedOps, GenericRecordedQuery{
 		Name:   "DeleteAlertRulesByUID",
 		Params: []interface{}{orgID, UIDs},
@@ -120,7 +120,7 @@ func (f *FakeRuleStore) DeleteAlertRulesByUID(_ context.Context, orgID int64, UI
 	return nil
 }
 
-func (f *FakeRuleStore) GetAlertRuleByUID(_ context.Context, q *models.GetAlertRuleByUIDQuery) error {
+func (f *RuleStore) GetAlertRuleByUID(_ context.Context, q *models.GetAlertRuleByUIDQuery) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.RecordedOps = append(f.RecordedOps, *q)
@@ -141,7 +141,7 @@ func (f *FakeRuleStore) GetAlertRuleByUID(_ context.Context, q *models.GetAlertR
 	return nil
 }
 
-func (f *FakeRuleStore) GetAlertRulesGroupByRuleUID(_ context.Context, q *models.GetAlertRulesGroupByRuleUIDQuery) error {
+func (f *RuleStore) GetAlertRulesGroupByRuleUID(_ context.Context, q *models.GetAlertRulesGroupByRuleUIDQuery) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.RecordedOps = append(f.RecordedOps, *q)
@@ -172,7 +172,7 @@ func (f *FakeRuleStore) GetAlertRulesGroupByRuleUID(_ context.Context, q *models
 	return nil
 }
 
-func (f *FakeRuleStore) ListAlertRules(_ context.Context, q *models.ListAlertRulesQuery) error {
+func (f *RuleStore) ListAlertRules(_ context.Context, q *models.ListAlertRulesQuery) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.RecordedOps = append(f.RecordedOps, *q)
@@ -227,7 +227,7 @@ func (f *FakeRuleStore) ListAlertRules(_ context.Context, q *models.ListAlertRul
 	return nil
 }
 
-func (f *FakeRuleStore) GetUserVisibleNamespaces(_ context.Context, orgID int64, _ *user.SignedInUser) (map[string]*models2.Folder, error) {
+func (f *RuleStore) GetUserVisibleNamespaces(_ context.Context, orgID int64, _ *user.SignedInUser) (map[string]*models2.Folder, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 
@@ -244,7 +244,7 @@ func (f *FakeRuleStore) GetUserVisibleNamespaces(_ context.Context, orgID int64,
 	return namespacesMap, nil
 }
 
-func (f *FakeRuleStore) GetNamespaceByTitle(_ context.Context, title string, orgID int64, _ *user.SignedInUser, _ bool) (*models2.Folder, error) {
+func (f *RuleStore) GetNamespaceByTitle(_ context.Context, title string, orgID int64, _ *user.SignedInUser, _ bool) (*models2.Folder, error) {
 	folders := f.Folders[orgID]
 	for _, folder := range folders {
 		if folder.Title == title {
@@ -254,7 +254,7 @@ func (f *FakeRuleStore) GetNamespaceByTitle(_ context.Context, title string, org
 	return nil, fmt.Errorf("not found")
 }
 
-func (f *FakeRuleStore) GetNamespaceByUID(_ context.Context, uid string, orgID int64, _ *user.SignedInUser) (*models2.Folder, error) {
+func (f *RuleStore) GetNamespaceByUID(_ context.Context, uid string, orgID int64, _ *user.SignedInUser) (*models2.Folder, error) {
 	f.RecordedOps = append(f.RecordedOps, GenericRecordedQuery{
 		Name:   "GetNamespaceByUID",
 		Params: []interface{}{orgID, uid},
@@ -269,7 +269,7 @@ func (f *FakeRuleStore) GetNamespaceByUID(_ context.Context, uid string, orgID i
 	return nil, fmt.Errorf("not found")
 }
 
-func (f *FakeRuleStore) UpdateAlertRules(_ context.Context, q []models.UpdateRule) error {
+func (f *RuleStore) UpdateAlertRules(_ context.Context, q []models.UpdateRule) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.RecordedOps = append(f.RecordedOps, q)
@@ -279,7 +279,7 @@ func (f *FakeRuleStore) UpdateAlertRules(_ context.Context, q []models.UpdateRul
 	return nil
 }
 
-func (f *FakeRuleStore) InsertAlertRules(_ context.Context, q []models.AlertRule) (map[string]int64, error) {
+func (f *RuleStore) InsertAlertRules(_ context.Context, q []models.AlertRule) (map[string]int64, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.RecordedOps = append(f.RecordedOps, q)
@@ -290,11 +290,11 @@ func (f *FakeRuleStore) InsertAlertRules(_ context.Context, q []models.AlertRule
 	return ids, nil
 }
 
-func (f *FakeRuleStore) InTransaction(ctx context.Context, fn func(c context.Context) error) error {
+func (f *RuleStore) InTransaction(ctx context.Context, fn func(c context.Context) error) error {
 	return fn(ctx)
 }
 
-func (f *FakeRuleStore) GetRuleGroupInterval(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string) (int64, error) {
+func (f *RuleStore) GetRuleGroupInterval(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string) (int64, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	for _, rule := range f.Rules[orgID] {
@@ -305,7 +305,7 @@ func (f *FakeRuleStore) GetRuleGroupInterval(ctx context.Context, orgID int64, n
 	return 0, errors.New("rule group not found")
 }
 
-func (f *FakeRuleStore) UpdateRuleGroup(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string, interval int64) error {
+func (f *RuleStore) UpdateRuleGroup(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string, interval int64) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	for _, rule := range f.Rules[orgID] {
@@ -316,7 +316,7 @@ func (f *FakeRuleStore) UpdateRuleGroup(ctx context.Context, orgID int64, namesp
 	return nil
 }
 
-func (f *FakeRuleStore) IncreaseVersionForAllRulesInNamespace(_ context.Context, orgID int64, namespaceUID string) ([]models.AlertRuleKeyWithVersion, error) {
+func (f *RuleStore) IncreaseVersionForAllRulesInNamespace(_ context.Context, orgID int64, namespaceUID string) ([]models.AlertRuleKeyWithVersion, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 
