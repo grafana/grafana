@@ -74,7 +74,7 @@ func (st *Manager) Close() {
 
 func (st *Manager) Warm(ctx context.Context) {
 	st.log.Info("warming cache for startup")
-	st.ResetAllStates()
+	st.cache.reset()
 
 	orgIds, err := st.instanceStore.FetchOrgIds(ctx)
 	if err != nil {
@@ -148,11 +148,6 @@ func (st *Manager) set(entry *State) {
 
 func (st *Manager) Get(orgID int64, alertRuleUID, stateId string) (*State, error) {
 	return st.cache.get(orgID, alertRuleUID, stateId)
-}
-
-// ResetAllStates is used to ensure a clean cache on startup.
-func (st *Manager) ResetAllStates() {
-	st.cache.reset()
 }
 
 // ResetStateByRuleUID deletes all entries in the state manager that match the given rule UID.
