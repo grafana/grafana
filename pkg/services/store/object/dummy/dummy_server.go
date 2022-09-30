@@ -275,8 +275,23 @@ func (i dummyObjectServer) History(ctx context.Context, r *object.ObjectHistoryR
 }
 
 func (i dummyObjectServer) Search(ctx context.Context, r *object.ObjectSearchRequest) (*object.ObjectSearchResponse, error) {
-	// TODO filter
-	objects, err := i.collection.Find(ctx, orgIdFromUID("TODO"), func(_ *RawObjectWithHistory) (bool, error) { return true, nil })
+	var kindMap map[string]bool
+	if len(r.Kind) != 0 {
+		kindMap = make(map[string]bool)
+		for _, k := range r.Kind {
+			kindMap[k] = true
+		}
+	}
+
+	// TODO more filters
+	objects, err := i.collection.Find(ctx, orgIdFromUID("TODO"), func(i *RawObjectWithHistory) (bool, error) {
+		if len(r.Kind) != 0 {
+			if _, ok := kindMap[i.Kind]; !ok {
+				return false, nil
+			}
+		}
+		return true, nil
+	})
 	if err != nil {
 		return nil, err
 	}

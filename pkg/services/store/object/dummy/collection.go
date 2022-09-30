@@ -72,7 +72,7 @@ func (s *localFsCollection[T]) Delete(ctx context.Context, orgID int64, predicat
 
 	deletedCount := 0
 	newItems := make([]T, 0)
-	for idx, _ := range items {
+	for idx := range items {
 		del, err := predicate(items[idx])
 		if err != nil {
 			return deletedCount, err
@@ -103,7 +103,7 @@ func (s *localFsCollection[T]) FindFirst(ctx context.Context, orgID int64, predi
 		return nilResult, err
 	}
 
-	for idx, _ := range items {
+	for idx := range items {
 		match, err := predicate(items[idx])
 		if err != nil {
 			return nilResult, err
@@ -126,7 +126,7 @@ func (s *localFsCollection[T]) Find(ctx context.Context, orgID int64, predicate 
 	}
 
 	result := make([]T, 0)
-	for idx, _ := range items {
+	for idx := range items {
 		match, err := predicate(items[idx])
 		if err != nil {
 			return nil, err
@@ -151,7 +151,7 @@ func (s *localFsCollection[T]) Update(ctx context.Context, orgID int64, updateFn
 
 	newItems := make([]T, 0)
 	updatedCount := 0
-	for idx, _ := range items {
+	for idx := range items {
 		updated, updatedItem, err := updateFn(items[idx])
 		if err != nil {
 			return updatedCount, err

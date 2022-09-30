@@ -278,4 +278,53 @@ func TestObjectServer(t *testing.T) {
 		require.True(t, deleteResp.OK)
 	})
 
+	t.Run("should be able to search for objects", func(t *testing.T) {
+		uid2 := "uid2"
+		uid3 := "uid3"
+		uid4 := "uid4"
+		kind2 := "kind2"
+		w1, err := testCtx.client.Write(ctx, &object.WriteObjectRequest{
+			UID:  uid,
+			Kind: kind,
+			Body: body,
+		})
+		require.NoError(t, err)
+
+		w2, err := testCtx.client.Write(ctx, &object.WriteObjectRequest{
+			UID:  uid2,
+			Kind: kind,
+			Body: body,
+		})
+		require.NoError(t, err)
+
+		w3, err := testCtx.client.Write(ctx, &object.WriteObjectRequest{
+			UID:  uid3,
+			Kind: kind2,
+			Body: body,
+		})
+		require.NoError(t, err)
+
+		w4, err := testCtx.client.Write(ctx, &object.WriteObjectRequest{
+			UID:  uid4,
+			Kind: kind2,
+			Body: body,
+		})
+		require.NoError(t, err)
+
+		search, err := testCtx.client.Search(ctx, &object.ObjectSearchRequest{
+			Kind: []string{kind, kind2},
+		})
+		require.NoError(t, err)
+		require.Equal(t, []*object.RawObject{
+			w1.Object, w2.Object, w3.Object, w4.Object,
+		}, search.Results)
+
+		searchKind1, err := testCtx.client.Search(ctx, &object.ObjectSearchRequest{
+			Kind: []string{kind},
+		})
+		require.NoError(t, err)
+		require.Equal(t, []*object.RawObject{
+			w1.Object, w2.Object,
+		}, searchKind1.Results)
+	})
 }
