@@ -379,6 +379,10 @@ func setupHTTPServerWithCfgDb(
 	var acService accesscontrol.Service
 
 	var userSvc user.Service
+	userMock := usertest.NewUserServiceFake()
+	userMock.ExpectedUser = &user.User{ID: 1}
+	orgMock := orgtest.NewOrgServiceFake()
+	orgMock.ExpectedOrg = &org.Org{}
 
 	// Defining the accesscontrol service has to be done before registering routes
 	if useFakeAccessControl {
@@ -388,7 +392,7 @@ func setupHTTPServerWithCfgDb(
 		}
 		ac = acmock
 		acService = acmock
-		userSvc = &usertest.FakeUserService{}
+		userSvc = userMock
 	} else {
 		var err error
 		acService, err = acimpl.ProvideService(cfg, db, routeRegister, localcache.ProvideService())
@@ -400,10 +404,6 @@ func setupHTTPServerWithCfgDb(
 	require.NoError(t, err)
 
 	// Create minimal HTTP Server
-	userMock := usertest.NewUserServiceFake()
-	userMock.ExpectedUser = &user.User{ID: 1}
-	orgMock := orgtest.NewOrgServiceFake()
-	orgMock.ExpectedOrg = &org.Org{}
 	hs := &HTTPServer{
 		Cfg:                    cfg,
 		Features:               features,
@@ -421,7 +421,7 @@ func setupHTTPServerWithCfgDb(
 			accesscontrolmock.NewMockedPermissionsService(), accesscontrolmock.NewMockedPermissionsService(), ac,
 		),
 		preferenceService: preftest.NewPreferenceServiceFake(),
-		userService:       userMock,
+		userService:       userSvc,
 		orgService:        orgMock,
 		teamService:       teamService,
 		annotationsRepo:   annotationstest.NewFakeAnnotationsRepo(),
