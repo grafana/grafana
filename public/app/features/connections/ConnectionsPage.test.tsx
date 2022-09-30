@@ -35,13 +35,11 @@ describe('Connections Page', () => {
     (api.getDataSources as jest.Mock) = jest.fn().mockResolvedValue(mockDatasources);
   });
 
-  test('shows all the four tabs', async () => {
+  test('shows all tabs', async () => {
     renderPage();
 
     expect(await screen.findByLabelText('Tab Data sources')).toBeVisible();
-    expect(await screen.findByLabelText('Tab Plugins')).toBeVisible();
-    expect(await screen.findByLabelText('Tab Cloud integrations')).toBeVisible();
-    expect(await screen.findByLabelText('Tab Recorded queries')).toBeVisible();
+    expect(await screen.findByLabelText('Tab Connect data')).toBeVisible();
   });
 
   test('shows the "Data sources" tab by default', async () => {
@@ -52,10 +50,10 @@ describe('Connections Page', () => {
   });
 
   test('renders the correct tab even if accessing it with a "sub-url"', async () => {
-    renderPage(`${ROUTES.Plugins}/foo`);
+    renderPage(`${ROUTES.ConnectData}/foo`);
 
     // Check if it still renders the plugins tab
-    expect(await screen.findByText('The list of plugins is under development')).toBeVisible();
+    expect(await screen.findByText('This page is under development')).toBeVisible();
     expect(screen.queryByText('The list of data sources is under development.')).not.toBeInTheDocument();
   });
 });
