@@ -54,8 +54,8 @@ func getDefaultAzureCloud(cfg *setting.Cfg) (string, error) {
 		return azsettings.AzureUSGovernment, nil
 	case azsettings.AzureGermany:
 		return azsettings.AzureGermany, nil
-	case "AzureCustomizedCloud":
-		return "AzureCustomizedCloud", nil
+	case azsettings.AzureCustomized:
+		return azsettings.AzureCustomized, nil
 	case "":
 		// Not set cloud defaults to public
 		return azsettings.AzurePublic, nil
@@ -76,7 +76,7 @@ func normalizeAzureCloud(cloudName string) (string, error) {
 	case azureMonitorGermany:
 		return azsettings.AzureGermany, nil
 	case azureMonitorCustomized:
-		return "AzureCustomizedCloud", nil
+		return azsettings.AzureCustomized, nil
 	default:
 		err := fmt.Errorf("the cloud '%s' not supported", cloudName)
 		return "", err
