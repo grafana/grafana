@@ -39,12 +39,14 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
   const [legendRef, legendMeasure] = useMeasure<HTMLDivElement>();
 
   if (!legend) {
-    // this is needed for keyboard accessibility in the plot area
-    // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
     return (
-      <div tabIndex={0} style={containerStyle} className={styles.viz}>
-        {children(width, height)}
-      </div>
+      <>
+        {/* tabIndex={0} is needed for keyboard accessibility in the plot area */}
+        {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
+        <div tabIndex={0} style={containerStyle} className={styles.viz}>
+          {children(width, height)}
+        </div>
+      </>
     );
   }
 
@@ -90,13 +92,11 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
 
   return (
     <div style={containerStyle}>
-      {
-        // this is needed for keyboard accessibility in the plot area
-        // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
-        <div tabIndex={0} className={styles.viz}>
-          {size && children(size.width, size.height)}
-        </div>
-      }
+      {/* tabIndex={0} is needed for keyboard accessibility in the plot area */}
+      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
+      <div tabIndex={0} className={styles.viz}>
+        {size && children(size.width, size.height)}
+      </div>
       <div style={legendStyle} ref={legendRef}>
         <CustomScrollbar hideHorizontalTrack>{legend}</CustomScrollbar>
       </div>
