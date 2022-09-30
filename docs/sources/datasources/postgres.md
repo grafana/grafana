@@ -75,7 +75,7 @@ Make sure the user does not get any unwanted privileges from the public role.
 
 {{< figure src="/static/img/docs/v92/postgresql_query_builder.png" class="docs-image--no-shadow" >}}
 
-The PostgresSQL query builder is available when editing a panel using a PostgresSQL data source. The built query can be run by pressing the `Run query` button in the top right corner of the editor.
+The PostgreSQL query builder is available when editing a panel using a PostgreSQL data source. The built query can be run by pressing the `Run query` button in the top right corner of the editor.
 
 ### Format
 
