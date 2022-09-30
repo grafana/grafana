@@ -13,9 +13,9 @@ type UpdateFn[T any] func(item T) (updated bool, updatedItem T, err error)
 // The item type needs to be serializable to JSON.
 // @alpha -- EXPERIMENTAL
 type PersistentCollection[T any] interface {
-	Delete(ctx context.Context, orgID int64, predicate Predicate[T]) (deletedCount int, err error)
-	FindFirst(ctx context.Context, orgID int64, predicate Predicate[T]) (T, error)
-	Find(ctx context.Context, orgID int64, predicate Predicate[T]) ([]T, error)
-	Update(ctx context.Context, orgID int64, updateFn UpdateFn[T]) (updatedCount int, err error)
-	Insert(ctx context.Context, orgID int64, item T) error
+	Delete(ctx context.Context, namespace string, predicate Predicate[T]) (deletedCount int, err error)
+	FindFirst(ctx context.Context, namespace string, predicate Predicate[T]) (T, error)
+	Find(ctx context.Context, namespace string, predicate Predicate[T]) ([]T, error)
+	Update(ctx context.Context, namespace string, updateFn UpdateFn[T]) (updatedCount int, err error)
+	Insert(ctx context.Context, namespace string, item T) error
 }

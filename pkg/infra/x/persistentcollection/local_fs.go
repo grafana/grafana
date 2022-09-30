@@ -34,23 +34,23 @@ type localFsCollection[T any] struct {
 	mu             sync.Mutex
 }
 
-func (s *localFsCollection[T]) Insert(ctx context.Context, orgID int64, item T) error {
+func (s *localFsCollection[T]) Insert(ctx context.Context, namespace string, item T) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	items, err := s.load(ctx, orgID)
+	items, err := s.load(ctx, namespace)
 	if err != nil {
 		return err
 	}
 
-	return s.save(ctx, orgID, append(items, item))
+	return s.save(ctx, namespace, append(items, item))
 }
 
-func (s *localFsCollection[T]) Delete(ctx context.Context, orgID int64, predicate Predicate[T]) (int, error) {
+func (s *localFsCollection[T]) Delete(ctx context.Context, namespace string, predicate Predicate[T]) (int, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	items, err := s.load(ctx, orgID)
+	items, err := s.load(ctx, namespace)
 	if err != nil {
 		return 0, err
 	}
@@ -71,19 +71,19 @@ func (s *localFsCollection[T]) Delete(ctx context.Context, orgID int64, predicat
 	}
 
 	if deletedCount != 0 {
-		return deletedCount, s.save(ctx, orgID, newItems)
+		return deletedCount, s.save(ctx, namespace, newItems)
 	}
 
 	return deletedCount, nil
 }
 
-func (s *localFsCollection[T]) FindFirst(ctx context.Context, orgID int64, predicate Predicate[T]) (T, error) {
+func (s *localFsCollection[T]) FindFirst(ctx context.Context, namespace string, predicate Predicate[T]) (T, error) {
 	var nilResult T
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	items, err := s.load(ctx, orgID)
+	items, err := s.load(ctx, namespace)
 	if err != nil {
 		return nilResult, err
 	}
@@ -101,11 +101,11 @@ func (s *localFsCollection[T]) FindFirst(ctx context.Context, orgID int64, predi
 	return nilResult, nil
 }
 
-func (s *localFsCollection[T]) Find(ctx context.Context, orgID int64, predicate Predicate[T]) ([]T, error) {
+func (s *localFsCollection[T]) Find(ctx context.Context, namespace string, predicate Predicate[T]) ([]T, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	items, err := s.load(ctx, orgID)
+	items, err := s.load(ctx, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -125,11 +125,11 @@ func (s *localFsCollection[T]) Find(ctx context.Context, orgID int64, predicate 
 	return result, nil
 }
 
-func (s *localFsCollection[T]) Update(ctx context.Context, orgID int64, updateFn UpdateFn[T]) (int, error) {
+func (s *localFsCollection[T]) Update(ctx context.Context, namespace string, updateFn UpdateFn[T]) (int, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	items, err := s.load(ctx, orgID)
+	items, err := s.load(ctx, namespace)
 	if err != nil {
 		return 0, err
 	}
@@ -151,14 +151,14 @@ func (s *localFsCollection[T]) Update(ctx context.Context, orgID int64, updateFn
 	}
 
 	if updatedCount != 0 {
-		return updatedCount, s.save(ctx, orgID, newItems)
+		return updatedCount, s.save(ctx, namespace, newItems)
 	}
 
 	return updatedCount, nil
 }
 
-func (s *localFsCollection[T]) load(ctx context.Context, orgID int64) ([]T, error) {
-	filePath := s.collectionFilePath(orgID)
+func (s *localFsCollection[T]) load(ctx context.Context, namespace string) ([]T, error) {
+	filePath := s.collectionFilePath(namespace)
 	// Safe to ignore gosec warning G304, the path comes from grafana settings rather than the user input
 	// nolint:gosec
 	bytes, err := os.ReadFile(filePath)
@@ -174,7 +174,7 @@ func (s *localFsCollection[T]) load(ctx context.Context, orgID int64) ([]T, erro
 	}
 
 	if db.Version != s.version {
-		if err := s.save(ctx, orgID, []T{}); err != nil {
+		if err := s.save(ctx, namespace, []T{}); err != nil {
 			return nil, err
 		}
 
@@ -184,8 +184,8 @@ func (s *localFsCollection[T]) load(ctx context.Context, orgID int64) ([]T, erro
 	return db.Items, nil
 }
 
-func (s *localFsCollection[T]) save(_ context.Context, orgID int64, items []T) error {
-	filePath := s.collectionFilePath(orgID)
+func (s *localFsCollection[T]) save(_ context.Context, namespace string, items []T) error {
+	filePath := s.collectionFilePath(namespace)
 
 	bytes, err := json.MarshalIndent(&CollectionFileContents[T]{
 		Version: s.version,
@@ -207,6 +207,6 @@ func (s *localFsCollection[T]) createCollectionsDirectory() error {
 	return err
 }
 
-func (s *localFsCollection[T]) collectionFilePath(orgID int64) string {
-	return filepath.Join(s.collectionsDir, fmt.Sprintf("%s-orgId-%d.json", s.name, orgID))
+func (s *localFsCollection[T]) collectionFilePath(namespace string) string {
+	return filepath.Join(s.collectionsDir, fmt.Sprintf("%s-namespace-%s.json", s.name, namespace))
 }

@@ -16,7 +16,7 @@ type item struct {
 }
 
 func TestLocalFSPersistentCollection(t *testing.T) {
-	orgID := int64(1)
+	namespace := "1"
 	ctx := context.Background()
 	dir := path.Join(os.TempDir(), "persistent-collection-test")
 	defer func() {
@@ -31,22 +31,22 @@ func TestLocalFSPersistentCollection(t *testing.T) {
 		Name: "test",
 		Val:  10,
 	}
-	err := coll.Insert(ctx, orgID, firstInserted)
+	err := coll.Insert(ctx, namespace, firstInserted)
 	require.NoError(t, err)
 
-	err = coll.Insert(ctx, orgID, &item{
+	err = coll.Insert(ctx, namespace, &item{
 		Name: "test",
 		Val:  20,
 	})
 	require.NoError(t, err)
 
-	err = coll.Insert(ctx, orgID, &item{
+	err = coll.Insert(ctx, namespace, &item{
 		Name: "test",
 		Val:  30,
 	})
 	require.NoError(t, err)
 
-	updatedCount, err := coll.Update(ctx, orgID, func(i *item) (bool, *item, error) {
+	updatedCount, err := coll.Update(ctx, namespace, func(i *item) (bool, *item, error) {
 		if i.Val == 20 {
 			return true, &item{Val: 25, Name: "test"}, nil
 		}
@@ -55,7 +55,7 @@ func TestLocalFSPersistentCollection(t *testing.T) {
 	require.Equal(t, 1, updatedCount)
 	require.NoError(t, err)
 
-	deletedCount, err := coll.Delete(ctx, orgID, func(i *item) (bool, error) {
+	deletedCount, err := coll.Delete(ctx, namespace, func(i *item) (bool, error) {
 		if i.Val == 30 {
 			return true, nil
 		}
@@ -64,7 +64,7 @@ func TestLocalFSPersistentCollection(t *testing.T) {
 	require.Equal(t, 1, deletedCount)
 	require.NoError(t, err)
 
-	firstFound, err := coll.FindFirst(ctx, orgID, func(i *item) (bool, error) {
+	firstFound, err := coll.FindFirst(ctx, namespace, func(i *item) (bool, error) {
 		if i.Name == "test" {
 			return true, nil
 		}
@@ -74,7 +74,7 @@ func TestLocalFSPersistentCollection(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, firstInserted, firstFound)
 
-	all, err := coll.Find(ctx, orgID, func(i *item) (bool, error) { return true, nil })
+	all, err := coll.Find(ctx, namespace, func(i *item) (bool, error) { return true, nil })
 	require.NoError(t, err)
 	require.Equal(t, []*item{
 		{
