@@ -7,39 +7,11 @@ import { config } from 'app/core/config';
 import { DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
-import { ColorDimensionConfig, TextDimensionConfig } from 'app/features/dimensions/types';
 
 import { CanvasElementItem, CanvasElementProps, defaultBgColor, defaultTextColor } from '../element';
+import { Align, TextConfig, TextData, VAlign } from '../types';
 
-export enum Align {
-  Left = 'left',
-  Center = 'center',
-  Right = 'right',
-}
-
-export enum VAlign {
-  Top = 'top',
-  Middle = 'middle',
-  Bottom = 'bottom',
-}
-
-export interface RectangleData {
-  text?: string;
-  color?: string;
-  size?: number; // 0 or missing will "auto size"
-  align: Align;
-  valign: VAlign;
-}
-
-export interface RectangleConfig {
-  text?: TextDimensionConfig;
-  color?: ColorDimensionConfig;
-  size?: number; // 0 or missing will "auto size"
-  align: Align;
-  valign: VAlign;
-}
-
-class RectangleDisplay extends PureComponent<CanvasElementProps<RectangleConfig, RectangleData>> {
+class RectangleDisplay extends PureComponent<CanvasElementProps<TextConfig, TextData>> {
   render() {
     const { data } = this.props;
     const styles = getStyles(config.theme2, data);
@@ -65,7 +37,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, data) => ({
     color: ${data?.color};
   `,
 }));
-export const rectangleItem: CanvasElementItem<RectangleConfig, RectangleData> = {
+export const rectangleItem: CanvasElementItem<TextConfig, TextData> = {
   id: 'rectangle',
   name: 'Rectangle',
   description: 'Rectangle',
@@ -94,8 +66,8 @@ export const rectangleItem: CanvasElementItem<RectangleConfig, RectangleData> = 
   }),
 
   // Called when data changes
-  prepareData: (ctx: DimensionContext, cfg: RectangleConfig) => {
-    const data: RectangleData = {
+  prepareData: (ctx: DimensionContext, cfg: TextConfig) => {
+    const data: TextData = {
       text: cfg.text ? ctx.getText(cfg.text).value() : '',
       align: cfg.align ?? Align.Center,
       valign: cfg.valign ?? VAlign.Middle,

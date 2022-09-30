@@ -13,15 +13,14 @@ import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensi
 
 import { CanvasElementItem, CanvasElementProps, defaultBgColor, defaultTextColor } from '../element';
 import { ElementState } from '../runtime/element';
-
-import { Align, RectangleConfig, RectangleData, VAlign } from './rectangle';
+import { Align, TextConfig, TextData, VAlign } from '../types';
 
 // eslint-disable-next-line
 const dummyFieldSettings: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {
   settings: {},
 } as StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings>;
 
-const MetricValueDisplay = (props: CanvasElementProps<RectangleConfig, RectangleData>) => {
+const MetricValueDisplay = (props: CanvasElementProps<TextConfig, TextData>) => {
   const { data, isSelected } = props;
   const styles = useStyles2(getStyles(data));
 
@@ -40,7 +39,7 @@ const MetricValueDisplay = (props: CanvasElementProps<RectangleConfig, Rectangle
   );
 };
 
-const MetricValueEdit = (props: CanvasElementProps<RectangleConfig, RectangleData>) => {
+const MetricValueEdit = (props: CanvasElementProps<TextConfig, TextData>) => {
   let { data, config } = props;
   const context = usePanelContext();
   let panelData: DataFrame[];
@@ -89,7 +88,7 @@ const MetricValueEdit = (props: CanvasElementProps<RectangleConfig, RectangleDat
   );
 };
 
-const getStyles = (data: RectangleData | undefined) => (theme: GrafanaTheme2) => ({
+const getStyles = (data: TextData | undefined) => (theme: GrafanaTheme2) => ({
   container: css`
     position: absolute;
     height: 100%;
@@ -112,7 +111,7 @@ const getStyles = (data: RectangleData | undefined) => (theme: GrafanaTheme2) =>
   `,
 });
 
-export const metricValueItem: CanvasElementItem<RectangleConfig, RectangleData> = {
+export const metricValueItem: CanvasElementItem<TextConfig, TextData> = {
   id: 'metric-value',
   name: 'Metric Value',
   description: 'Display a field value',
@@ -148,8 +147,8 @@ export const metricValueItem: CanvasElementItem<RectangleConfig, RectangleData> 
     },
   }),
 
-  prepareData: (ctx: DimensionContext, cfg: RectangleConfig) => {
-    const data: RectangleData = {
+  prepareData: (ctx: DimensionContext, cfg: TextConfig) => {
+    const data: TextData = {
       text: cfg.text ? ctx.getText(cfg.text).value() : '',
       align: cfg.align ?? Align.Center,
       valign: cfg.valign ?? VAlign.Middle,
