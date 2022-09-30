@@ -168,40 +168,41 @@ func TestFilter_Datasources(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			store := sqlstore.InitTestDB(t)
 
-			sess := store.NewSession(context.Background())
-			defer sess.Close()
-
-			// seed 10 data sources
-			for i := 1; i <= 10; i++ {
-				dsStore := dsService.CreateStore(store, log.New("accesscontrol.test"))
-				err := dsStore.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{Name: fmt.Sprintf("ds:%d", i), Uid: fmt.Sprintf("uid%d", i)})
-				require.NoError(t, err)
-			}
-
-			baseSql := `SELECT data_source.* FROM data_source WHERE`
-			acFilter, err := accesscontrol.Filter(
-				&user.SignedInUser{
-					OrgID:       1,
-					Permissions: map[int64]map[string][]string{1: tt.permissions},
-				},
-				tt.sqlID,
-				tt.prefix,
-				tt.actions...,
-			)
-
-			if !tt.expectErr {
-				require.NoError(t, err)
-				var datasources []datasources.DataSource
-				err = sess.SQL(baseSql+acFilter.Where, acFilter.Args...).Find(&datasources)
-				require.NoError(t, err)
-
-				assert.Len(t, datasources, len(tt.expectedDataSources))
-				for i, ds := range datasources {
-					assert.Equal(t, tt.expectedDataSources[i], ds.Name)
+			err := store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+				// seed 10 data sources
+				for i := 1; i <= 10; i++ {
+					dsStore := dsService.CreateStore(store, log.New("accesscontrol.test"))
+					err := dsStore.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{Name: fmt.Sprintf("ds:%d", i), Uid: fmt.Sprintf("uid%d", i)})
+					require.NoError(t, err)
 				}
-			} else {
-				require.Error(t, err)
-			}
+
+				baseSql := `SELECT data_source.* FROM data_source WHERE`
+				acFilter, err := accesscontrol.Filter(
+					&user.SignedInUser{
+						OrgID:       1,
+						Permissions: map[int64]map[string][]string{1: tt.permissions},
+					},
+					tt.sqlID,
+					tt.prefix,
+					tt.actions...,
+				)
+
+				if !tt.expectErr {
+					require.NoError(t, err)
+					var datasources []datasources.DataSource
+					err = sess.SQL(baseSql+acFilter.Where, acFilter.Args...).Find(&datasources)
+					require.NoError(t, err)
+
+					assert.Len(t, datasources, len(tt.expectedDataSources))
+					for i, ds := range datasources {
+						assert.Equal(t, tt.expectedDataSources[i], ds.Name)
+					}
+				} else {
+					require.Error(t, err)
+				}
+				return nil
+			})
+			require.NoError(t, err)
 		})
 	}
 }

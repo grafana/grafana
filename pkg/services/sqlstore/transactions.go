@@ -20,6 +20,8 @@ func (ss *SQLStore) WithTransactionalDbSession(ctx context.Context, callback DBT
 	return inTransactionWithRetryCtx(ctx, ss.engine, ss.bus, callback, 0)
 }
 
+// InTransaction starts a transaction and calls the fn
+// It stores the session in the context
 func (ss *SQLStore) InTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
 	return ss.inTransactionWithRetry(ctx, fn, 0)
 }

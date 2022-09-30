@@ -374,10 +374,11 @@ async function getDataSource(
     return datasource;
   }
 
-  const ds = await getDatasourceSrv().get(datasource, scopedVars);
+  // TODO: Retrieve datasource to pass as argument to PublicDashboardDataSource
+  // const ds = await getDatasourceSrv().get(datasource, scopedVars);
   if (publicDashboardAccessToken) {
-    return new PublicDashboardDataSource(ds);
+    return new PublicDashboardDataSource(datasource);
   }
 
-  return ds;
+  return await getDatasourceSrv().get(datasource, scopedVars);
 }

@@ -51,7 +51,7 @@ export const TimeRangeInput: FC<TimeRangeInputProps> = ({
   const theme = useTheme2();
   const styles = getStyles(theme, disabled);
 
-  const onOpen = (event: FormEvent<HTMLDivElement>) => {
+  const onOpen = (event: FormEvent<HTMLButtonElement>) => {
     event.stopPropagation();
     event.preventDefault();
     if (disabled) {
@@ -78,12 +78,7 @@ export const TimeRangeInput: FC<TimeRangeInputProps> = ({
 
   return (
     <div className={styles.container}>
-      <div
-        tabIndex={0}
-        className={styles.pickerInput}
-        aria-label={selectors.components.TimePicker.openButton}
-        onClick={onOpen}
-      >
+      <button className={styles.pickerInput} aria-label={selectors.components.TimePicker.openButton} onClick={onOpen}>
         {isValidTimeRange(value) ? (
           <TimePickerButtonLabel value={value} timeZone={timeZone} />
         ) : (
@@ -98,7 +93,7 @@ export const TimeRangeInput: FC<TimeRangeInputProps> = ({
             <Icon name={isOpen ? 'angle-up' : 'angle-down'} size="lg" />
           </span>
         )}
-      </div>
+      </button>
       {isOpen && (
         <ClickOutsideWrapper includeButtonPress={false} onClick={onClose}>
           <TimePickerContent

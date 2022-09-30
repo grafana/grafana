@@ -302,7 +302,7 @@ func (hs *HTTPServer) applyUserInvite(ctx context.Context, usr *user.User, invit
 
 	if setActive {
 		// set org to active
-		if err := hs.SQLStore.SetUsingOrg(ctx, &models.SetUsingOrgCommand{OrgId: invite.OrgId, UserId: usr.ID}); err != nil {
+		if err := hs.userService.SetUsingOrg(ctx, &user.SetUsingOrgCommand{OrgID: invite.OrgId, UserID: usr.ID}); err != nil {
 			return false, response.Error(500, "Failed to set org as active", err)
 		}
 	}

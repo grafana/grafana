@@ -10,12 +10,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestIntegrationSavingTags(t *testing.T) {
+type getStore func(*sqlstore.SQLStore) store
+
+func testIntegrationSavingTags(t *testing.T, fn getStore) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
 	ss := sqlstore.InitTestDB(t)
-	store := sqlStore{db: ss}
+	store := fn(ss)
 	tagPairs := []*tag.Tag{
 		{Key: "outage"},
 		{Key: "type", Value: "outage"},
