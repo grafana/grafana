@@ -190,16 +190,15 @@ type HTTPServer struct {
 	apiKeyService                apikey.Service
 	kvStore                      kvstore.KVStore
 
-	userService            user.Service
-	tempUserService        tempUser.Service
-	dashboardThumbsService thumbs.DashboardThumbService
-	loginAttemptService    loginAttempt.Service
-	orgService             org.Service
-	teamService            team.Service
-	accesscontrolService   accesscontrol.Service
-	annotationsRepo        annotations.Repository
-	tagService             tag.Service
-	userAuthService        userauth.Service
+	userService          user.Service
+	tempUserService      tempUser.Service
+	loginAttemptService  loginAttempt.Service
+	orgService           org.Service
+	teamService          team.Service
+	accesscontrolService accesscontrol.Service
+	annotationsRepo      annotations.Repository
+	tagService           tag.Service
+	userAuthService      userauth.Service
 }
 
 type ServerOptions struct {
@@ -239,7 +238,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	secretsPluginMigrator spm.SecretMigrationProvider, secretsStore secretsKV.SecretsKVStore,
 	publicDashboardsApi *publicdashboardsApi.Api, userService user.Service, tempUserService tempUser.Service,
 	loginAttemptService loginAttempt.Service, orgService org.Service, teamService team.Service,
-	accesscontrolService accesscontrol.Service, dashboardThumbsService thumbs.DashboardThumbService, navTreeService navtree.Service,
+	accesscontrolService accesscontrol.Service, navTreeService navtree.Service,
 	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService,
 	userAuthService userauth.Service,
 ) (*HTTPServer, error) {
@@ -334,7 +333,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		PublicDashboardsApi:          publicDashboardsApi,
 		userService:                  userService,
 		tempUserService:              tempUserService,
-		dashboardThumbsService:       dashboardThumbsService,
 		loginAttemptService:          loginAttemptService,
 		orgService:                   orgService,
 		teamService:                  teamService,

@@ -1,4 +1,4 @@
-package dashboardthumbsimpl
+package thumbimpl
 
 import (
 	"context"

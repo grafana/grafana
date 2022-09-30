@@ -1,7 +1,6 @@
 package thumbs
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -27,25 +26,25 @@ const (
 type crawlerState string
 
 const (
-	initializing crawlerState = "initializing"
-	running      crawlerState = "running"
-	stopping     crawlerState = "stopping"
-	stopped      crawlerState = "stopped"
+	Initializing crawlerState = "initializing"
+	Running      crawlerState = "running"
+	Stopping     crawlerState = "stopping"
+	Stopped      crawlerState = "stopped"
 )
 
-type previewRequest struct {
+type PreviewRequest struct {
 	OrgID int64         `json:"orgId"`
 	UID   string        `json:"uid"`
 	Kind  ThumbnailKind `json:"kind"`
 	Theme models.Theme  `json:"theme"`
 }
 
-type crawlCmd struct {
+type CrawlCmd struct {
 	Mode  CrawlerMode  `json:"mode"`  // thumbs | analytics | migrate
 	Theme models.Theme `json:"theme"` // light | dark
 }
 
-type crawlStatus struct {
+type CrawlStatus struct {
 	State    crawlerState `json:"state"`
 	Started  time.Time    `json:"started,omitempty"`
 	Finished time.Time    `json:"finished,omitempty"`
@@ -55,13 +54,13 @@ type crawlStatus struct {
 	Last     time.Time    `json:"last,omitempty"`
 }
 
-type dashboardPreviewsSystemRequirements struct {
+type DashboardPreviewsSystemRequirements struct {
 	Met                                bool   `json:"met"`
 	RequiredImageRendererPluginVersion string `json:"requiredImageRendererPluginVersion"`
 }
 
-type dashboardPreviewsSetupConfig struct {
-	SystemRequirements dashboardPreviewsSystemRequirements `json:"systemRequirements"`
+type DashboardPreviewsSetupConfig struct {
+	SystemRequirements DashboardPreviewsSystemRequirements `json:"systemRequirements"`
 	ThumbnailsExist    bool                                `json:"thumbnailsExist"`
 }
 
@@ -202,25 +201,6 @@ type UpdateThumbnailStateCommand struct {
 	DashboardThumbnailMeta
 }
 
-type dashRenderer interface {
-
-	// Run Assumes you have already authenticated as admin.
-	Run(ctx context.Context, auth CrawlerAuth, mode CrawlerMode, theme models.Theme, kind ThumbnailKind) error
-
-	// Assumes you have already authenticated as admin.
-	Stop() (crawlStatus, error)
-
-	// Assumes you have already authenticated as admin.
-	Status() (crawlStatus, error)
-
-	IsRunning() bool
-}
-
-type thumbnailRepo interface {
-	updateThumbnailState(ctx context.Context, state ThumbnailState, meta DashboardThumbnailMeta) error
-	doThumbnailsExist(ctx context.Context) (bool, error)
-	saveFromFile(ctx context.Context, filePath string, meta DashboardThumbnailMeta, dashboardVersion int, dsUids []string) (int64, error)
-	saveFromBytes(ctx context.Context, bytes []byte, mimeType string, meta DashboardThumbnailMeta, dashboardVersion int, dsUids []string) (int64, error)
-	getThumbnail(ctx context.Context, meta DashboardThumbnailMeta) (*DashboardThumbnail, error)
-	findDashboardsWithStaleThumbnails(ctx context.Context, theme models.Theme, thumbnailKind ThumbnailKind) ([]*DashboardWithStaleThumbnail, error)
+type UpdateThumbnailStateRequest struct {
+	State ThumbnailState `json:"state" binding:"Required"`
 }

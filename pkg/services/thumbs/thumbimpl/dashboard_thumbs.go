@@ -1,4 +1,4 @@
-package dashboardthumbsimpl
+package thumbimpl
 
 import (
 	"context"
@@ -11,7 +11,7 @@ type Service struct {
 	store store
 }
 
-func ProvideService(db db.DB) thumbs.DashboardThumbService {
+func provideDashboardThumbService(db db.DB) thumbs.DashboardThumbService {
 	return &Service{
 		store: &xormStore{db: db},
 	}

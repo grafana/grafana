@@ -1,4 +1,4 @@
-package thumbs
+package thumbimpl
 
 import (
 	"context"
@@ -10,9 +10,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/searchV2"
+	"github.com/grafana/grafana/pkg/services/thumbs"
 )
 
-func newThumbnailRepo(thumbsService DashboardThumbService, search searchV2.SearchService) thumbnailRepo {
+func newThumbnailRepo(thumbsService thumbs.DashboardThumbService, search searchV2.SearchService) thumbs.ThumbnailRepo {
 	repo := &sqlThumbnailRepository{
 		store:  thumbsService,
 		search: search,
@@ -22,12 +23,12 @@ func newThumbnailRepo(thumbsService DashboardThumbService, search searchV2.Searc
 }
 
 type sqlThumbnailRepository struct {
-	store  DashboardThumbService
+	store  thumbs.DashboardThumbService
 	search searchV2.SearchService
 	log    log.Logger
 }
 
-func (r *sqlThumbnailRepository) saveFromFile(ctx context.Context, filePath string, meta DashboardThumbnailMeta, dashboardVersion int, dsUids []string) (int64, error) {
+func (r *sqlThumbnailRepository) SaveFromFile(ctx context.Context, filePath string, meta thumbs.DashboardThumbnailMeta, dashboardVersion int, dsUids []string) (int64, error) {
 	// the filePath variable is never set by the user. it refers to a temporary file created either in
 	//   1. thumbs/service.go, when user uploads a thumbnail
 	//   2. the rendering service, when image-renderer returns a screenshot
@@ -44,7 +45,7 @@ func (r *sqlThumbnailRepository) saveFromFile(ctx context.Context, filePath stri
 		return 0, err
 	}
 
-	return r.saveFromBytes(ctx, content, getMimeType(filePath), meta, dashboardVersion, dsUids)
+	return r.SaveFromBytes(ctx, content, getMimeType(filePath), meta, dashboardVersion, dsUids)
 }
 
 func getMimeType(filePath string) string {
@@ -55,8 +56,8 @@ func getMimeType(filePath string) string {
 	return "image/png"
 }
 
-func (r *sqlThumbnailRepository) saveFromBytes(ctx context.Context, content []byte, mimeType string, meta DashboardThumbnailMeta, dashboardVersion int, dsUids []string) (int64, error) {
-	cmd := &SaveDashboardThumbnailCommand{
+func (r *sqlThumbnailRepository) SaveFromBytes(ctx context.Context, content []byte, mimeType string, meta thumbs.DashboardThumbnailMeta, dashboardVersion int, dsUids []string) (int64, error) {
+	cmd := &thumbs.SaveDashboardThumbnailCommand{
 		DashboardThumbnailMeta: meta,
 		Image:                  content,
 		MimeType:               mimeType,
@@ -73,22 +74,22 @@ func (r *sqlThumbnailRepository) saveFromBytes(ctx context.Context, content []by
 	return cmd.Result.Id, nil
 }
 
-func (r *sqlThumbnailRepository) updateThumbnailState(ctx context.Context, state ThumbnailState, meta DashboardThumbnailMeta) error {
-	return r.store.UpdateThumbnailState(ctx, &UpdateThumbnailStateCommand{
+func (r *sqlThumbnailRepository) UpdateThumbnailState(ctx context.Context, state thumbs.ThumbnailState, meta thumbs.DashboardThumbnailMeta) error {
+	return r.store.UpdateThumbnailState(ctx, &thumbs.UpdateThumbnailStateCommand{
 		State:                  state,
 		DashboardThumbnailMeta: meta,
 	})
 }
 
-func (r *sqlThumbnailRepository) getThumbnail(ctx context.Context, meta DashboardThumbnailMeta) (*DashboardThumbnail, error) {
-	query := &GetDashboardThumbnailCommand{
+func (r *sqlThumbnailRepository) GetThumbnail(ctx context.Context, meta thumbs.DashboardThumbnailMeta) (*thumbs.DashboardThumbnail, error) {
+	query := &thumbs.GetDashboardThumbnailCommand{
 		DashboardThumbnailMeta: meta,
 	}
 	return r.store.GetThumbnail(ctx, query)
 }
 
-func (r *sqlThumbnailRepository) findDashboardsWithStaleThumbnails(ctx context.Context, theme models.Theme, kind ThumbnailKind) ([]*DashboardWithStaleThumbnail, error) {
-	return r.store.FindDashboardsWithStaleThumbnails(ctx, &FindDashboardsWithStaleThumbnailsCommand{
+func (r *sqlThumbnailRepository) FindDashboardsWithStaleThumbnails(ctx context.Context, theme models.Theme, kind thumbs.ThumbnailKind) ([]*thumbs.DashboardWithStaleThumbnail, error) {
+	return r.store.FindDashboardsWithStaleThumbnails(ctx, &thumbs.FindDashboardsWithStaleThumbnailsCommand{
 		IncludeManuallyUploadedThumbnails: false,
 		IncludeThumbnailsWithEmptyDsUIDs:  !r.search.IsDisabled(),
 		Theme:                             theme,
@@ -96,8 +97,8 @@ func (r *sqlThumbnailRepository) findDashboardsWithStaleThumbnails(ctx context.C
 	})
 }
 
-func (r *sqlThumbnailRepository) doThumbnailsExist(ctx context.Context) (bool, error) {
-	cmd := &FindDashboardThumbnailCountCommand{}
+func (r *sqlThumbnailRepository) DoThumbnailsExist(ctx context.Context) (bool, error) {
+	cmd := &thumbs.FindDashboardThumbnailCountCommand{}
 	count, err := r.store.FindThumbnailCount(ctx, cmd)
 	if err != nil {
 		r.log.Error("Error finding thumbnails", "err", err)

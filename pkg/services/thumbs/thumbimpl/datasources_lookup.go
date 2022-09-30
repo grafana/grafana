@@ -1,4 +1,4 @@
-package thumbs
+package thumbimpl
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/searchV2"
+	"github.com/grafana/grafana/pkg/services/thumbs"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 )
 
@@ -16,7 +17,7 @@ type getDatasourceUidsForDashboard func(ctx context.Context, dashboardUid string
 
 type dsUidsLookup struct {
 	searchService searchV2.SearchService
-	crawlerAuth   CrawlerAuth
+	crawlerAuth   thumbs.CrawlerAuth
 	features      featuremgmt.FeatureToggles
 }
 

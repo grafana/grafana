@@ -1,4 +1,4 @@
-package thumbs
+package thumbimpl
 
 import (
 	"context"
@@ -10,11 +10,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/thumbs"
 )
-
-type CrawlerAuthSetupService interface {
-	Setup(ctx context.Context) (CrawlerAuth, error)
-}
 
 func ProvideCrawlerAuthSetupService(serviceAccounts serviceaccounts.Service, serviceAccountsStore serviceaccounts.Store,
 	sqlStore *sqlstore.SQLStore, orgService org.Service) *OSSCrawlerAuthSetupService {
@@ -35,12 +32,6 @@ type OSSCrawlerAuthSetupService struct {
 	serviceAccountsStore     serviceaccounts.Store
 	sqlStore                 *sqlstore.SQLStore
 	orgService               org.Service
-}
-
-type CrawlerAuth interface {
-	GetUserId(orgId int64) int64
-	GetLogin(orgId int64) string
-	GetOrgRole() org.RoleType
 }
 
 func (o *OSSCrawlerAuthSetupService) findAllOrgIds(ctx context.Context) ([]int64, error) {
@@ -77,7 +68,7 @@ func (o *crawlerAuth) GetLogin(orgId int64) string {
 	return o.loginByOrgId[orgId]
 }
 
-func (o *OSSCrawlerAuthSetupService) Setup(ctx context.Context) (CrawlerAuth, error) {
+func (o *OSSCrawlerAuthSetupService) Setup(ctx context.Context) (thumbs.CrawlerAuth, error) {
 	orgIds, err := o.findAllOrgIds(ctx)
 	if err != nil {
 		return nil, err

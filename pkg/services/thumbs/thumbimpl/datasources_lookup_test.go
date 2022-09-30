@@ -1,4 +1,4 @@
-package thumbs
+package thumbimpl
 
 import (
 	"context"

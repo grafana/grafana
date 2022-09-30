@@ -1,4 +1,4 @@
-package thumbs
+package thumbimpl
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/thumbs"
 )
 
 // When the feature flag is not enabled we just implement a dummy service
@@ -31,9 +32,9 @@ func (ds *dummyService) Enabled() bool {
 	return false
 }
 
-func (ds *dummyService) GetDashboardPreviewsSetupSettings(c *models.ReqContext) dashboardPreviewsSetupConfig {
-	return dashboardPreviewsSetupConfig{
-		SystemRequirements: dashboardPreviewsSystemRequirements{
+func (ds *dummyService) GetDashboardPreviewsSetupSettings(c *models.ReqContext) thumbs.DashboardPreviewsSetupConfig {
+	return thumbs.DashboardPreviewsSetupConfig{
+		SystemRequirements: thumbs.DashboardPreviewsSystemRequirements{
 			Met:                                false,
 			RequiredImageRendererPluginVersion: "",
 		},
