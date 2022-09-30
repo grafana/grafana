@@ -28,6 +28,9 @@ func BenchmarkExemplarJson(b *testing.B) {
 	require.NoError(b, err)
 
 	responseFileName := filepath.Join("../testdata", "exemplar.result.json")
+
+	// nolint:gosec
+	// We can ignore the gosec G304 warning since this is a test file
 	responseBytes, err := os.ReadFile(responseFileName)
 	require.NoError(b, err)
 
