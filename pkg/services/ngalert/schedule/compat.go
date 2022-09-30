@@ -117,22 +117,17 @@ func errorAlert(labels, annotations data.Labels, alertState *state.State, urlStr
 	}
 }
 
-func FromAlertStateToPostableAlerts(firingStates []*state.State, stateManager *state.Manager, appURL *url.URL) apimodels.PostableAlerts {
+func FromAlertStateToPostableAlerts(firingStates []*state.State, resendDelay time.Duration, appURL *url.URL) apimodels.PostableAlerts {
 	alerts := apimodels.PostableAlerts{PostableAlerts: make([]models.PostableAlert, 0, len(firingStates))}
-	var sentAlerts []*state.State
 	ts := time.Now()
 
 	for _, alertState := range firingStates {
-		if !alertState.NeedsSending(stateManager.ResendDelay) {
+		if !alertState.NeedsSending(resendDelay) {
 			continue
 		}
 		alert := stateToPostableAlert(alertState, appURL)
 		alerts.PostableAlerts = append(alerts.PostableAlerts, *alert)
-		if alertState.StateReason == ngModels.StateReasonMissingSeries { // do not put stale state back to state manager
-			continue
-		}
-		alertState.LastSentAt = ts
-		sentAlerts = append(sentAlerts, alertState)
+		alertState.LastSentAt = ts // this effectively mutates the existing state in the state manager. This is used by State.NeedsSending
 	}
 	return alerts
 }

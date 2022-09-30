@@ -361,7 +361,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 			return
 		}
 		processedStates := sch.stateManager.ProcessEvalResults(ctx, e.scheduledAt, e.rule, results, sch.getRuleExtraLabels(e))
-		alerts := FromAlertStateToPostableAlerts(processedStates, sch.stateManager, sch.appURL)
+		alerts := FromAlertStateToPostableAlerts(processedStates, sch.stateManager.ResendDelay, sch.appURL)
 		if len(alerts.PostableAlerts) > 0 {
 			sch.alertsSender.Send(key, alerts)
 		}
