@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 
+import { DataSourcePluginList } from './DataSourcePluginList';
 import { Search } from './Search';
 
 export function ConnectData() {
@@ -8,10 +9,11 @@ export function ConnectData() {
   const handleSearchChange = (e: React.FormEvent<HTMLInputElement>) => {
     setSearchTerm(e.currentTarget.value.toLowerCase());
   };
+
   return (
     <>
       <Search onChange={handleSearchChange} />
-      <div>This page is under development. {searchTerm}</div>
+      <DataSourcePluginList searchTerm={searchTerm} />
     </>
   );
 }
