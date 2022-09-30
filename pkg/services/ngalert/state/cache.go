@@ -33,7 +33,19 @@ func newCache() *cache {
 func (c *cache) getOrCreate(ctx context.Context, log log.Logger, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, externalURL *url.URL) *State {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
+	var ok bool
+	if _, ok = c.states[alertRule.OrgID]; !ok {
+		c.states[alertRule.OrgID] = make(map[string]*ruleStates)
+	}
+	var states *ruleStates
+	if states, ok = c.states[alertRule.OrgID][alertRule.UID]; !ok {
+		states = &ruleStates{states: make(map[string]*State)}
+		c.states[alertRule.OrgID][alertRule.UID] = states
+	}
+	return states.getOrCreate(ctx, log, alertRule, result, extraLabels, externalURL)
+}
 
+func (c *ruleStates) getOrCreate(ctx context.Context, log log.Logger, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, externalURL *url.URL) *State {
 	ruleLabels, annotations := c.expandRuleLabelsAndAnnotations(ctx, log, alertRule, result, extraLabels, externalURL)
 
 	lbs := make(data.Labels, len(extraLabels)+len(ruleLabels)+len(result.Instance))
@@ -73,14 +85,7 @@ func (c *cache) getOrCreate(ctx context.Context, log log.Logger, alertRule *ngMo
 		log.Error("error getting cacheId for entry", "err", err.Error())
 	}
 
-	if _, ok := c.states[alertRule.OrgID]; !ok {
-		c.states[alertRule.OrgID] = make(map[string]*ruleStates)
-	}
-	if _, ok := c.states[alertRule.OrgID][alertRule.UID]; !ok {
-		c.states[alertRule.OrgID][alertRule.UID] = &ruleStates{states: make(map[string]*State)}
-	}
-
-	if state, ok := c.states[alertRule.OrgID][alertRule.UID].states[id]; ok {
+	if state, ok := c.states[id]; ok {
 		// Annotations can change over time, however we also want to maintain
 		// certain annotations across evaluations
 		for k, v := range state.Annotations {
@@ -93,7 +98,7 @@ func (c *cache) getOrCreate(ctx context.Context, log log.Logger, alertRule *ngMo
 			}
 		}
 		state.Annotations = annotations
-		c.states[alertRule.OrgID][alertRule.UID].states[id] = state
+		c.states[id] = state
 		return state
 	}
 
@@ -110,11 +115,11 @@ func (c *cache) getOrCreate(ctx context.Context, log log.Logger, alertRule *ngMo
 	if result.State == eval.Alerting {
 		newState.StartsAt = result.EvaluatedAt
 	}
-	c.states[alertRule.OrgID][alertRule.UID].states[id] = newState
+	c.states[id] = newState
 	return newState
 }
 
-func (c *cache) expandRuleLabelsAndAnnotations(ctx context.Context, log log.Logger, alertRule *ngModels.AlertRule, alertInstance eval.Result, extraLabels data.Labels, externalURL *url.URL) (data.Labels, data.Labels) {
+func (c *ruleStates) expandRuleLabelsAndAnnotations(ctx context.Context, log log.Logger, alertRule *ngModels.AlertRule, alertInstance eval.Result, extraLabels data.Labels, externalURL *url.URL) (data.Labels, data.Labels) {
 	// use labels from the result and extra labels to expand the labels and annotations declared by the rule
 	templateLabels := mergeLabels(extraLabels, alertInstance.Instance)
 
