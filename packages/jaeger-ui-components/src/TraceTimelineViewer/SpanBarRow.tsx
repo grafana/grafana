@@ -21,7 +21,6 @@ import IoArrowRightA from 'react-icons/lib/io/arrow-right-a';
 import { GrafanaTheme2, TraceKeyValuePair } from '@grafana/data';
 import { stylesFactory, withTheme2 } from '@grafana/ui';
 
-import { DURATION, NONE, TAG } from '../../../../public/app/core/components/SpanBarSettings/SpanBarSettings';
 import { autoColor } from '../Theme';
 import { SpanBarOptions, SpanLinkFunc, TNil } from '../types';
 import { SpanLinks } from '../types/links';
@@ -33,6 +32,10 @@ import SpanTreeOffset from './SpanTreeOffset';
 import Ticks from './Ticks';
 import TimelineRow from './TimelineRow';
 import { formatDuration, ViewedBoundsFunctionType } from './utils';
+
+export const NONE = 'None';
+export const DURATION = 'Duration';
+export const TAG = 'Tag';
 
 const spanBarClassName = 'spanBar';
 const spanBarLabelClassName = 'spanBarLabel';

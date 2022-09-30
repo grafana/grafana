@@ -10,6 +10,8 @@ import {
 } from '@grafana/data';
 import { InlineField, InlineFieldRow, Input, Select, useStyles } from '@grafana/ui';
 
+import { DURATION, NONE, TAG } from '../../../../../packages/jaeger-ui-components/src/TraceTimelineViewer/SpanBarRow';
+
 export interface SpanBarOptions {
   type?: string;
   tag?: string;
@@ -18,10 +20,6 @@ export interface SpanBarOptions {
 export interface SpanBarOptionsData extends DataSourceJsonData {
   spanBar?: SpanBarOptions;
 }
-
-export const NONE = 'None';
-export const DURATION = 'Duration';
-export const TAG = 'Tag';
 
 interface Props extends DataSourcePluginOptionsEditorProps<SpanBarOptionsData> {}
 
