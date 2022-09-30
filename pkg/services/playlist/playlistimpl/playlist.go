@@ -14,10 +14,9 @@ type Service struct {
 
 func ProvideService(db db.DB, cfg *setting.Cfg) playlist.Service {
 	if cfg.IsFeatureToggleEnabled("newDBLibrary") {
-		debugSQL := cfg.Raw.Section("database").Key("log_queries").MustBool(false)
 		return &Service{
 			store: &sqlxStore{
-				sess: db.GetSqlxSession(debugSQL),
+				sess: db.GetSqlxSession(),
 			},
 		}
 	}

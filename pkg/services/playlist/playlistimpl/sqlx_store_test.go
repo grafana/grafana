@@ -8,6 +8,6 @@ import (
 
 func TestIntegrationSQLxPlaylistDataAccess(t *testing.T) {
 	testIntegrationPlaylistDataAccess(t, func(ss *sqlstore.SQLStore) store {
-		return &sqlxStore{sess: ss.GetSqlxSession(false)}
+		return &sqlxStore{sess: ss.GetSqlxSession()}
 	})
 }

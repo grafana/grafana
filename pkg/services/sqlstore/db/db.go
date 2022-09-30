@@ -13,6 +13,6 @@ type DB interface {
 	WithDbSession(ctx context.Context, callback sqlstore.DBTransactionFunc) error
 	NewSession(ctx context.Context) *sqlstore.DBSession
 	GetDialect() migrator.Dialect
-	GetSqlxSession(bool) *session.SessionDB
+	GetSqlxSession() *session.SessionDB
 	InTransaction(ctx context.Context, fn func(ctx context.Context) error) error
 }

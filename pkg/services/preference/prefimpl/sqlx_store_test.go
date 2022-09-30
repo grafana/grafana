@@ -8,6 +8,6 @@ import (
 
 func TestIntegrationSQLxPreferencesDataAccess(t *testing.T) {
 	testIntegrationPreferencesDataAccess(t, func(ss *sqlstore.SQLStore) store {
-		return &sqlxStore{sess: ss.GetSqlxSession(false)}
+		return &sqlxStore{sess: ss.GetSqlxSession()}
 	})
 }

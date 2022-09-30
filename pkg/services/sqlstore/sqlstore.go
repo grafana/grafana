@@ -198,9 +198,11 @@ func (h *Hooks) After(ctx context.Context, query string, args ...interface{}) (c
 	return ctx, nil
 }
 
-func (ss *SQLStore) GetSqlxSession(debugSQL bool) *session.SessionDB {
+func (ss *SQLStore) GetSqlxSession() *session.SessionDB {
 	if ss.sqlxsession == nil {
 		var logger sqllog.ILogger
+
+		debugSQL := ss.Cfg.Raw.Section("database").Key("log_queries").MustBool(false)
 		if !debugSQL {
 			logger = sqllog.DiscardLogger{}
 		} else {
