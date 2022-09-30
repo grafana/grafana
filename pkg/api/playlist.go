@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	cmplaylist "github.com/grafana/grafana/pkg/coremodel/playlist"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/web"
@@ -83,13 +84,13 @@ func (hs *HTTPServer) GetPlaylist(c *models.ReqContext) response.Response {
 	playlistDTOs, _ := hs.LoadPlaylistItemDTOs(c.Req.Context(), uid, c.OrgID)
 
 	dto := &playlist.PlaylistDTO{
-		Id:       p.Id,
-		UID:      p.UID,
-		Name:     p.Name,
-		Interval: p.Interval,
-		OrgId:    p.OrgId,
-		Items:    playlistDTOs,
+		OrgId: p.OrgId,
 	}
+	dto.Id = p.Id
+	dto.Uid = p.UID
+	dto.Name = p.Name
+	dto.Interval = p.Interval
+	dto.Items = &playlistDTOs
 
 	return response.JSON(http.StatusOK, dto)
 }
@@ -106,8 +107,8 @@ func (hs *HTTPServer) LoadPlaylistItemDTOs(ctx context.Context, uid string, orgI
 	for _, item := range playlistitems {
 		playlistDTOs = append(playlistDTOs, playlist.PlaylistItemDTO{
 			Id:         item.Id,
-			PlaylistId: item.PlaylistId,
-			Type:       item.Type,
+			Playlistid: item.PlaylistId,
+			Type:       cmplaylist.PlaylistItemType(item.Type),
 			Value:      item.Value,
 			Order:      item.Order,
 			Title:      item.Title,
@@ -244,7 +245,7 @@ func (hs *HTTPServer) UpdatePlaylist(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to save playlist", err)
 	}
 
-	p.Items = playlistDTOs
+	p.Items = &playlistDTOs
 	return response.JSON(http.StatusOK, p)
 }
 
