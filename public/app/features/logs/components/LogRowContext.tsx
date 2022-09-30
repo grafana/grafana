@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import React, { useRef, useState, useLayoutEffect, useEffect } from 'react';
 
 import { GrafanaTheme2, DataQueryError, LogRowModel, textUtil, LogsSortOrder } from '@grafana/data';
-import { useStyles2, Alert, ClickOutsideWrapper, CustomScrollbar, List } from '@grafana/ui';
+import { useStyles2, Alert, ClickOutsideWrapper, CustomScrollbar, List, Button } from '@grafana/ui';
 
 import { LogMessageAnsi } from './LogMessageAnsi';
 import { LogRowContextRows, LogRowContextQueryErrors, HasMoreContextRows } from './LogRowContextProvider';
@@ -31,12 +31,15 @@ const getLogRowContextStyles = (theme: GrafanaTheme2, wrapLogMessage?: boolean) 
    * We also adjust width to 75%.
    */
 
+  const headerHeight = 40;
+  const logsHeight = 220;
+  const contextHeight = headerHeight + logsHeight;
   const afterContext = wrapLogMessage
     ? css`
-        top: -250px;
+        top: -${contextHeight}px;
       `
     : css`
-        margin-top: -250px;
+        margin-top: -${contextHeight}px;
         width: 75%;
       `;
 
@@ -45,13 +48,13 @@ const getLogRowContextStyles = (theme: GrafanaTheme2, wrapLogMessage?: boolean) 
         top: 100%;
       `
     : css`
-        margin-top: 40px;
+        margin-top: 20px;
         width: 75%;
       `;
   return {
     commonStyles: css`
       position: absolute;
-      height: 250px;
+      height: ${contextHeight}px;
       z-index: ${theme.zIndex.dropdown};
       overflow: hidden;
       background: ${theme.colors.background.primary};
@@ -61,15 +64,22 @@ const getLogRowContextStyles = (theme: GrafanaTheme2, wrapLogMessage?: boolean) 
       width: 100%;
     `,
     header: css`
-      height: 30px;
+      height: ${headerHeight}px;
       padding: 0 10px;
       display: flex;
       align-items: center;
       background: ${theme.colors.background.secondary};
     `,
+    headerButton: css`
+      margin-left: 8px;
+    `,
     logs: css`
-      height: 220px;
+      height: ${logsHeight}px;
       padding: 10px;
+
+      .scrollbar-view {
+        overscroll-behavior: contain;
+      }
     `,
     afterContext,
     beforeContext,
@@ -101,7 +111,7 @@ const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeader
   groupPosition,
   logsSortOrder,
 }) => {
-  const { header } = useStyles2(getLogRowContextStyles);
+  const { header, headerButton } = useStyles2(getLogRowContextStyles);
 
   // determine the position in time for this LogGroup by taking the ordering of
   // logs and position of the component itself into account.
@@ -124,18 +134,9 @@ const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeader
         Showing {rows.length} lines {logGroupPosition} match.
       </span>
       {(rows.length >= 10 || (rows.length > 10 && rows.length % 10 !== 0)) && canLoadMoreRows && (
-        <span
-          className={css`
-            margin-left: 10px;
-            &:hover {
-              text-decoration: underline;
-              cursor: pointer;
-            }
-          `}
-          onClick={onLoadMoreContext}
-        >
-          Load 10 more
-        </span>
+        <Button className={headerButton} variant="secondary" size="sm" onClick={onLoadMoreContext}>
+          Load 10 more lines
+        </Button>
       )}
     </div>
   );

@@ -58,7 +58,9 @@ func (ss *sqlStore) DeleteAlertNotification(ctx context.Context, cmd *models.Del
 
 func (ss *sqlStore) DeleteAlertNotificationWithUid(ctx context.Context, cmd *models.DeleteAlertNotificationWithUidCommand) error {
 	existingNotification := &models.GetAlertNotificationsWithUidQuery{OrgId: cmd.OrgId, Uid: cmd.Uid}
-	if err := getAlertNotificationWithUidInternal(ctx, existingNotification, ss.db.NewSession(ctx)); err != nil {
+	if err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		return getAlertNotificationWithUidInternal(ctx, existingNotification, sess)
+	}); err != nil {
 		return err
 	}
 
@@ -79,7 +81,9 @@ func (ss *sqlStore) DeleteAlertNotificationWithUid(ctx context.Context, cmd *mod
 }
 
 func (ss *sqlStore) GetAlertNotifications(ctx context.Context, query *models.GetAlertNotificationsQuery) error {
-	return getAlertNotificationInternal(ctx, query, ss.db.NewSession(ctx))
+	return ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		return getAlertNotificationInternal(ctx, query, sess)
+	})
 }
 
 func (ss *sqlStore) GetAlertNotificationUidWithId(ctx context.Context, query *models.GetAlertNotificationUidQuery) error {
@@ -90,8 +94,9 @@ func (ss *sqlStore) GetAlertNotificationUidWithId(ctx context.Context, query *mo
 		return nil
 	}
 
-	err := getAlertNotificationUidInternal(ctx, query, ss.db.NewSession(ctx))
-	if err != nil {
+	if err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		return getAlertNotificationUidInternal(ctx, query, sess)
+	}); err != nil {
 		return err
 	}
 
@@ -105,7 +110,9 @@ func newAlertNotificationUidCacheKey(orgID, notificationId int64) string {
 }
 
 func (ss *sqlStore) GetAlertNotificationsWithUid(ctx context.Context, query *models.GetAlertNotificationsWithUidQuery) error {
-	return getAlertNotificationWithUidInternal(ctx, query, ss.db.NewSession(ctx))
+	return ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		return getAlertNotificationWithUidInternal(ctx, query, sess)
+	})
 }
 
 func (ss *sqlStore) GetAllAlertNotifications(ctx context.Context, query *models.GetAllAlertNotificationsQuery) error {
@@ -444,7 +451,9 @@ func (ss *sqlStore) UpdateAlertNotification(ctx context.Context, cmd *models.Upd
 func (ss *sqlStore) UpdateAlertNotificationWithUid(ctx context.Context, cmd *models.UpdateAlertNotificationWithUidCommand) error {
 	getAlertNotificationWithUidQuery := &models.GetAlertNotificationsWithUidQuery{OrgId: cmd.OrgId, Uid: cmd.Uid}
 
-	if err := getAlertNotificationWithUidInternal(ctx, getAlertNotificationWithUidQuery, ss.db.NewSession(ctx)); err != nil {
+	if err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		return getAlertNotificationWithUidInternal(ctx, getAlertNotificationWithUidQuery, sess)
+	}); err != nil {
 		return err
 	}
 

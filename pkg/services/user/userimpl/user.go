@@ -160,34 +160,16 @@ func (s *Service) GetByEmail(ctx context.Context, query *user.GetUserByEmailQuer
 	return s.store.GetByEmail(ctx, query)
 }
 
-// TODO: remove wrapper around sqlstore
 func (s *Service) Update(ctx context.Context, cmd *user.UpdateUserCommand) error {
-	q := &models.UpdateUserCommand{
-		Name:   cmd.Name,
-		Email:  cmd.Email,
-		Login:  cmd.Login,
-		Theme:  cmd.Theme,
-		UserId: cmd.UserID,
-	}
-	return s.sqlStore.UpdateUser(ctx, q)
+	return s.store.Update(ctx, cmd)
 }
 
-// TODO: remove wrapper around sqlstore
 func (s *Service) ChangePassword(ctx context.Context, cmd *user.ChangeUserPasswordCommand) error {
-	q := &models.ChangeUserPasswordCommand{
-		UserId:      cmd.UserID,
-		NewPassword: cmd.NewPassword,
-		OldPassword: cmd.OldPassword,
-	}
-	return s.sqlStore.ChangeUserPassword(ctx, q)
+	return s.store.ChangePassword(ctx, cmd)
 }
 
-// TODO: remove wrapper around sqlstore
 func (s *Service) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLastSeenAtCommand) error {
-	q := &models.UpdateUserLastSeenAtCommand{
-		UserId: cmd.UserID,
-	}
-	return s.sqlStore.UpdateUserLastSeenAt(ctx, q)
+	return s.store.UpdateLastSeenAt(ctx, cmd)
 }
 
 // TODO: remove wrapper around sqlstore

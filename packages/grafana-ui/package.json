@@ -26,7 +26,8 @@
   },
   "files": [
     "dist",
-    "CHANGELOG.md",
+    "./README.md",
+    "./CHANGELOG.md",
     "LICENSE_APACHE2"
   ],
   "scripts": {
@@ -79,7 +80,7 @@
     "rc-slider": "9.7.5",
     "rc-time-picker": "^3.7.3",
     "react-beautiful-dnd": "13.1.0",
-    "react-calendar": "3.7.0",
+    "react-calendar": "3.9.0",
     "react-colorful": "5.5.1",
     "react-custom-scrollbars-2": "4.5.0",
     "react-dropzone": "14.2.2",
