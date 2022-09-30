@@ -28,7 +28,7 @@ var (
 
 func ProvideDummyObjectServer(cfg *setting.Cfg, grpcServerProvider grpcserver.Provider) object.ObjectStoreServer {
 	objectServer := &dummyObjectServer{
-		collection: newCollection[*RawObjectWithHistory]("raw-object", cfg.DataPath, rawObjectVersion),
+		collection: newLocalFsCollection[*RawObjectWithHistory]("raw-object", cfg.DataPath, rawObjectVersion),
 		log:        log.New("in-memory-object-server"),
 	}
 	object.RegisterObjectStoreServer(grpcServerProvider.GetServer(), objectServer)
@@ -37,7 +37,7 @@ func ProvideDummyObjectServer(cfg *setting.Cfg, grpcServerProvider grpcserver.Pr
 
 type dummyObjectServer struct {
 	log        log.Logger
-	collection collection[*RawObjectWithHistory]
+	collection persistentCollection[*RawObjectWithHistory]
 }
 
 func orgIdFromUID(uid string) int64 {
@@ -54,21 +54,17 @@ func userFromContext(ctx context.Context) *user.SignedInUser {
 	}
 }
 
-func (i dummyObjectServer) findObject(ctx context.Context, objects []*RawObjectWithHistory, uid string, kind string, version string) (*RawObjectWithHistory, *object.RawObject, error) {
+func (i dummyObjectServer) findObject(ctx context.Context, uid string, kind string, version string) (*RawObjectWithHistory, *object.RawObject, error) {
 	if uid == "" {
 		return nil, nil, errors.New("UID must not be empty")
 	}
 
-	var obj *RawObjectWithHistory
-	for _, o := range objects {
-		if kind != "" && o.Kind != kind {
-			continue
-		}
+	obj, err := i.collection.FindFirst(ctx, orgIdFromUID(uid), func(i *RawObjectWithHistory) (bool, error) {
+		return i.UID == uid && i.Kind == kind && (version == "" || i.Version == version), nil
+	})
 
-		if o.UID == uid {
-			obj = o
-			break
-		}
+	if err != nil {
+		return nil, nil, err
 	}
 
 	if obj == nil {
@@ -91,12 +87,7 @@ func (i dummyObjectServer) findObject(ctx context.Context, objects []*RawObjectW
 }
 
 func (i dummyObjectServer) Read(ctx context.Context, r *object.ReadObjectRequest) (*object.ReadObjectResponse, error) {
-	objects, err := i.collection.Load(ctx, orgIdFromUID(r.UID))
-	if err != nil {
-		return nil, err
-	}
-
-	_, objVersion, err := i.findObject(ctx, objects, r.UID, r.Kind, r.Version)
+	_, objVersion, err := i.findObject(ctx, r.UID, r.Kind, r.Version)
 	if err != nil {
 		return nil, err
 	}
@@ -132,54 +123,62 @@ func createContentsHash(contents []byte) string {
 	return hex.EncodeToString(hash[:])
 }
 
-func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequest, orgID int64, objects []*RawObjectWithHistory) (*object.WriteObjectResponse, error) {
-	obj, _, err := i.findObject(ctx, objects, r.UID, r.Kind, "")
+func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequest, orgID int64) (*object.WriteObjectResponse, error) {
+	var updated *object.RawObject
+
+	updatedCount, err := i.collection.Update(ctx, orgID, func(i *RawObjectWithHistory) (bool, *RawObjectWithHistory, error) {
+		match := i.UID == r.UID && i.Kind == r.Kind
+		if !match {
+			return false, nil, nil
+		}
+
+		if r.PreviousVersion != "" && i.Version != r.PreviousVersion {
+			return false, nil, fmt.Errorf("expected the previous version to be %s, but was %s", r.PreviousVersion, i.Version)
+		}
+
+		prevVersion, err := strconv.Atoi(i.Version)
+		if err != nil {
+			return false, nil, err
+		}
+
+		modifier := userFromContext(ctx)
+
+		updated = &object.RawObject{
+			UID:      r.UID,
+			Kind:     r.Kind,
+			Modified: time.Now().Unix(),
+			ModifiedBy: &object.UserInfo{
+				Id:    modifier.UserID,
+				Login: modifier.Login,
+			},
+			Size:    int64(len(r.Body)),
+			ETag:    createContentsHash(r.Body),
+			Body:    r.Body,
+			Version: fmt.Sprintf("%d", prevVersion+1),
+			Comment: r.Comment,
+		}
+
+		return true, &RawObjectWithHistory{
+			RawObject: updated,
+			History:   append(i.History, updated),
+		}, nil
+	})
+
 	if err != nil {
 		return nil, err
 	}
 
-	if obj == nil {
+	if updatedCount == 0 {
 		return nil, fmt.Errorf("could not find object with uid %s and kind %s", r.UID, r.Kind)
-	}
-
-	if r.PreviousVersion != "" && obj.Version != r.PreviousVersion {
-		return nil, fmt.Errorf("expected the previous version to be %s, but was %s", r.PreviousVersion, obj.Version)
-	}
-
-	prevVersion, err := strconv.Atoi(obj.Version)
-	if err != nil {
-		return nil, err
-	}
-
-	modifier := userFromContext(ctx)
-	newVersion := &object.RawObject{
-		UID:      obj.UID,
-		Kind:     obj.Kind,
-		Modified: time.Now().Unix(),
-		ModifiedBy: &object.UserInfo{
-			Id:    modifier.UserID,
-			Login: modifier.Login,
-		},
-		Size:    int64(len(r.Body)),
-		ETag:    createContentsHash(r.Body),
-		Body:    r.Body,
-		Version: fmt.Sprintf("%d", prevVersion+1),
-		Comment: r.Comment,
-	}
-	obj.RawObject = newVersion
-	obj.History = append(obj.History, newVersion)
-	err = i.collection.Save(ctx, orgID, objects)
-	if err != nil {
-		return nil, err
 	}
 
 	return &object.WriteObjectResponse{
 		Error:  nil,
-		Object: newVersion,
+		Object: updated,
 	}, nil
 }
 
-func (i dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectRequest, orgID int64, objects []*RawObjectWithHistory) (*object.WriteObjectResponse, error) {
+func (i dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectRequest, orgID int64) (*object.WriteObjectResponse, error) {
 	modifier := userFromContext(ctx)
 	rawObj := &object.RawObject{
 		UID:      r.UID,
@@ -200,7 +199,7 @@ func (i dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectRequ
 		History:   []*object.RawObject{rawObj},
 	}
 
-	err := i.collection.Save(ctx, orgID, append(objects, newObj))
+	err := i.collection.Insert(ctx, orgID, newObj)
 	if err != nil {
 		return nil, err
 	}
@@ -213,62 +212,38 @@ func (i dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectRequ
 
 func (i dummyObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest) (*object.WriteObjectResponse, error) {
 	orgID := orgIdFromUID(r.UID)
-	objects, err := i.collection.Load(ctx, orgID)
-	if err != nil {
-		return nil, err
-	}
-	obj, latestObjVersion, err := i.findObject(ctx, objects, r.UID, r.Kind, "")
+
+	obj, latestObjVersion, err := i.findObject(ctx, r.UID, r.Kind, "")
 	if err != nil {
 		return nil, err
 	}
 
 	if obj == nil {
-		return i.insert(ctx, r, orgID, objects)
+		return i.insert(ctx, r, orgID)
 	}
 
 	if latestObjVersion == nil {
 		return nil, errors.New("latest object should never be nil")
 	}
 
-	return i.update(ctx, r, orgID, objects)
+	return i.update(ctx, r, orgID)
 }
 
 func (i dummyObjectServer) Delete(ctx context.Context, r *object.DeleteObjectRequest) (*object.DeleteObjectResponse, error) {
-	orgID := orgIdFromUID(r.UID)
-	objects, err := i.collection.Load(ctx, orgID)
-	if err != nil {
-		return nil, err
-	}
+	_, err := i.collection.Delete(ctx, orgIdFromUID(r.UID), func(i *RawObjectWithHistory) (bool, error) {
+		match := i.UID == r.UID && i.Kind == r.Kind
+		if match {
+			if r.PreviousVersion != "" && i.Version != r.PreviousVersion {
+				return false, fmt.Errorf("expected the previous version to be %s, but was %s", r.PreviousVersion, i.Version)
+			}
 
-	obj, _, err := i.findObject(ctx, objects, r.UID, r.Kind, "")
-	if err != nil {
-		return nil, err
-	}
-
-	if obj == nil {
-		return &object.DeleteObjectResponse{
-			OK: true,
-		}, nil
-	}
-
-	if r.PreviousVersion != "" && obj.Version != r.PreviousVersion {
-		return nil, fmt.Errorf("expected the previous version to be %s, but was %s", r.PreviousVersion, obj.Version)
-	}
-
-	newObjects := make([]*RawObjectWithHistory, 0)
-	for _, o := range objects {
-		if r.Kind != "" && o.Kind != r.Kind {
-			newObjects = append(newObjects, o)
-			continue
+			return true, nil
 		}
 
-		if o.UID != r.UID {
-			newObjects = append(newObjects, o)
-			continue
-		}
-	}
+		return false, nil
+	})
 
-	if err := i.collection.Save(ctx, orgID, newObjects); err != nil {
+	if err != nil {
 		return nil, err
 	}
 
@@ -278,42 +253,25 @@ func (i dummyObjectServer) Delete(ctx context.Context, r *object.DeleteObjectReq
 }
 
 func (i dummyObjectServer) History(ctx context.Context, r *object.ObjectHistoryRequest) (*object.ObjectHistoryResponse, error) {
-	objects, err := i.collection.Load(ctx, orgIdFromUID(r.UID))
-	if err != nil {
-		return nil, err
-	}
-
-	obj, _, err := i.findObject(ctx, objects, r.UID, r.Kind, "")
+	obj, _, err := i.findObject(ctx, r.UID, r.Kind, "")
 	if err != nil {
 		return nil, err
 	}
 
 	if obj == nil {
 		return &object.ObjectHistoryResponse{
-			Object:  nil,
-			Authors: nil,
+			Object: nil,
 		}, nil
 	}
 
-	createdTime := obj.History[0].Modified
-
-	authors := make([]*object.UserInfo, 0)
-	for _, objVersion := range obj.History {
-		// TODO avoid duplicates
-		// TODO why do we need it if we are returning obj.History?
-		authors = append(authors, objVersion.ModifiedBy)
-	}
-
 	return &object.ObjectHistoryResponse{
-		Object:      obj.History,
-		Authors:     authors,
-		CreatedTime: createdTime,
+		Object: obj.History,
 	}, nil
 }
 
 func (i dummyObjectServer) Search(ctx context.Context, r *object.ObjectSearchRequest) (*object.ObjectSearchResponse, error) {
 	// TODO filter
-	objects, err := i.collection.Load(ctx, orgIdFromUID("TODO"))
+	objects, err := i.collection.Find(ctx, orgIdFromUID("TODO"), func(_ *RawObjectWithHistory) (bool, error) { return true, nil })
 	if err != nil {
 		return nil, err
 	}

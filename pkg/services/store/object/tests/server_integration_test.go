@@ -14,10 +14,12 @@ func TestBasic(t *testing.T) {
 	ctx := context.Background()
 	testCtx := createTestContext(t)
 
+	kind := "dashboard"
+	uid := "my-test-entity"
 	ctx = metadata.AppendToOutgoingContext(ctx, "authorization", fmt.Sprintf("Bearer %s", testCtx.authToken))
 	readResp, err := testCtx.client.Read(ctx, &object.ReadObjectRequest{
-		UID:         "my-test-entity",
-		Kind:        "",
+		UID:         uid,
+		Kind:        kind,
 		Version:     "",
 		WithBody:    false,
 		WithSummary: false,
@@ -29,8 +31,8 @@ func TestBasic(t *testing.T) {
 
 	body := []byte("{\"name\":\"John\"}")
 	writeReq := &object.WriteObjectRequest{
-		UID:     "my-test-entity",
-		Kind:    "dashboard",
+		UID:     uid,
+		Kind:    kind,
 		Body:    body,
 		Comment: "first entity!",
 	}
@@ -46,21 +48,38 @@ func TestBasic(t *testing.T) {
 	require.Equal(t, writeReq.Kind, writeResp.Object.Kind)
 
 	readResp, err = testCtx.client.Read(ctx, &object.ReadObjectRequest{
-		UID: "my-test-entity",
+		UID:  uid,
+		Kind: kind,
 	})
 	require.NoError(t, err)
 
 	require.NotNil(t, readResp)
 	require.NotNil(t, readResp.Object)
 
+	newBody := []byte("{\"name\":\"John\"}")
+	updateResp, err := testCtx.client.Write(ctx, &object.WriteObjectRequest{
+		UID:             uid,
+		Kind:            kind,
+		Body:            newBody,
+		Comment:         "new comment",
+		PreviousVersion: writeResp.Object.Version,
+	})
+	require.NoError(t, err)
+
+	require.NotNil(t, updateResp)
+	require.NotNil(t, updateResp.Object)
+	require.Equal(t, newBody, updateResp.Object.Body)
+
 	delResp, err := testCtx.client.Delete(ctx, &object.DeleteObjectRequest{
-		UID: "my-test-entity",
+		UID:  uid,
+		Kind: kind,
 	})
 	require.NoError(t, err)
 	require.Equal(t, true, delResp.OK)
 
 	readResp, err = testCtx.client.Read(ctx, &object.ReadObjectRequest{
-		UID: "my-test-entity",
+		UID:  uid,
+		Kind: kind,
 	})
 	require.NoError(t, err)
 
