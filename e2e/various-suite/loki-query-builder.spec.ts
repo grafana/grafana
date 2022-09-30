@@ -14,14 +14,6 @@ const addDataSource = () => {
   });
 };
 
-// We need this because the final query is split into separate DOM elements using e2e().contains(finalQuery).should('not.exist'); does not detect the query.
-const checkFinalQuery = (query: 'be.visible' | 'not.exist') => {
-  const keywords = ['rate', 'instance1|instance2', 'logfmt', '__error__', '$__interval'];
-  for (const word of keywords) {
-    e2e().contains(word).should(query);
-  }
-};
-
 const finalQuery = 'rate({instance=~"instance1|instance2"} | logfmt | __error__=`` [$__interval]';
 
 describe('Loki query builder', () => {
@@ -86,7 +78,12 @@ describe('Loki query builder', () => {
 
     // Change to code editor
     e2e().contains('label', 'Code').click();
-    checkFinalQuery('be.visible');
+    // We need to test this manually because the final query is split into separate DOM elements using e2e().contains(finalQuery).should('be.visible'); does not detect the query.
+    e2e().contains('rate').should('be.visible');
+    e2e().contains('instance1|instance2').should('be.visible');
+    e2e().contains('logfmt').should('be.visible');
+    e2e().contains('__error__').should('be.visible');
+    e2e().contains('$__interval').should('be.visible');
 
     // Checks the explain mode toggle
     e2e().contains('label', 'Explain').click();
