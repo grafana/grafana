@@ -67,7 +67,7 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
       state.queries = addQuery(state.queries, {
         datasourceUid: ExpressionDatasourceUID,
         model: expressionDatasource.newQuery({
-          type: ExpressionQueryType.classic,
+          type: ExpressionQueryType.math,
           conditions: [{ ...defaultCondition, query: { params: [] } }],
           expression: '',
         }),

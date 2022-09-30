@@ -44,7 +44,7 @@ Object {
         "expression": "",
         "hide": false,
         "refId": "B",
-        "type": "classic_conditions",
+        "type": "math",
       },
       "queryType": "",
       "refId": "B",
