@@ -71,22 +71,18 @@ The panel inspector consists of the following options:
 
 1. **Error tab -** Shows the error. Only visible when query returns error.
 
-## Create a dashboard and add a panel
+## Add a panel to a dashboard
 
-Dashboards and panels allow you to show your data in visual form. Each panel needs at least one query to display a visualization.
+You can add panels to existing dashboards.
 
-**Before you begin:**
+1. Open the dashboard to which you want to add a panel.
 
-- Ensure that you have the proper permissions. For more information about permissions, refer to [About users and permissions]({{< relref "../../../administration/roles-and-permissions/" >}}).
-- Identify the dashboard to which you want to add the panel.
-- Understand the query language of the target data source.
-- Ensure that data source for which you are writing a query has been added. For more information about adding a data source, refer to [Add a data source]({{< relref "../../../datasources/add-a-data-source/" >}}) if you need instructions.
+1. Click the **Add panel** button on the top toolbar.
 
-**To create a dashboard and add a panel**:
-
-1. Sign in to Grafana, hover your cursor over **Dashboard**, and click **+ New Dashboard**.
 1. Click **Add a new panel**.
+
 1. In the first line of the **Query** tab, click the drop-down list and select a data source.
+
 1. Write or construct a query in the query language of your data source.
 
    For more information about data sources, refer to [Data sources]({{< relref "../../../datasources/" >}}) for specific guidelines.
@@ -134,3 +130,19 @@ To see an example of repeating rows, refer to [Dashboard with repeating rows](ht
 1. On the **Row Options** dialog box, add a title and select the variable for which you want to add repeating rows.
 
 > **Note:** To provide context to dashboard users, add the variable to the row title.
+
+## Move a panel
+
+You can place a panel on a dashboard in any location.
+
+1. Open the dashboard.
+
+1. Click the panel title and drag the panel to the new location.
+
+## Resize a panel
+
+You can size a dashboard panel to suits your needs.
+
+1. Open the dashboard.
+
+1. To adjust the size of the panel, click and drag the lower-right corner of the panel.

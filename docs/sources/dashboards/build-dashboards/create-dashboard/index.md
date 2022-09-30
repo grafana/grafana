@@ -1,0 +1,53 @@
+---
+aliases:
+  - /docs/grafana/latest/dashboards/build-dashboards/create-dashboard/
+title: Create a dashboard
+menuTitle: Create a dashboard
+weight: 200
+keywords:
+  - panel
+  - dashboard
+  - create
+---
+
+## Create a dashboard
+
+Dashboards and panels allow you to show your data in visual form. Each panel needs at least one query to display a visualization.
+
+**Before you begin:**
+
+- Ensure that you have the proper permissions. For more information about permissions, refer to [About users and permissions]({{< relref "../../../administration/roles-and-permissions/" >}}).
+- Identify the dashboard to which you want to add the panel.
+- Understand the query language of the target data source.
+- Ensure that data source for which you are writing a query has been added. For more information about adding a data source, refer to [Add a data source]({{< relref "../../../datasources/add-a-data-source/" >}}) if you need instructions.
+
+**To create a dashboard**:
+
+1. Sign in to Grafana, hover your cursor over **Dashboard**, and click **+ New Dashboard**.
+1. Click **Add a new panel**.
+1. In the first line of the **Query** tab, click the drop-down list and select a data source.
+1. Write or construct a query in the query language of your data source.
+
+   For more information about data sources, refer to [Data sources]({{< relref "../../../datasources/" >}}) for specific guidelines.
+
+1. In the Visualization list, select a visualization type.
+
+   Grafana displays a preview of your query results with the visualization applied.
+
+   ![](/static/img/docs/panel-editor/select-visualization-8-0.png)
+
+   For more information about individual visualizations, refer to [Visualizations options]({{< relref "../../configure-panels-visualizations/visualizations/" >}}).
+
+1. Refer to the following documentation for ways you can adjust panel settings.
+
+   While not required, most visualizations need some adjustment before they properly display the information that you need.
+
+   - [Configure value mappings]({{< relref "../../configure-panels-visualizations/configure-value-mappings" >}})
+   - [Visualization-specific options]({{< relref "../../configure-panels-visualizations/visualizations/" >}})
+   - [Override field values]({{< relref "../../configure-panels-visualizations/configure-overrides/" >}})
+   - [Configure thresholds]({{< relref "../../configure-panels-visualizations/configure-thresholds/" >}})
+   - [Configure standard options]({{< relref "../../configure-panels-visualizations/configure-standard-options/" >}})
+
+1. Add a note to describe the visualization (or describe your changes) and then click **Save** in the upper-right corner of the page.
+
+   Notes can be helpful if you need to revert the dashboard to a previous version.
