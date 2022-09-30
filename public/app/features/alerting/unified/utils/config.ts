@@ -1,12 +1,16 @@
-import { DataSourceInstanceSettings, DataSourceJsonData, isValidGoDuration, rangeUtil } from '@grafana/data';
+import { DataSourceInstanceSettings, DataSourceJsonData, rangeUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
+
+import { isValidGoDuration, isValidPrometheusDuration } from './time';
 
 export function getAllDataSources(): Array<DataSourceInstanceSettings<DataSourceJsonData>> {
   return Object.values(config.datasources);
 }
 
 export function checkEvaluationIntervalGlobalLimit(alertGroupEvaluateEvery?: string) {
-  if (!alertGroupEvaluateEvery || !isValidGoDuration(alertGroupEvaluateEvery)) {
+  // There is a discrepancy between the duration format for evaluateEvery and unifiedAlerting.minInterval
+
+  if (!alertGroupEvaluateEvery || !isValidPrometheusDuration(alertGroupEvaluateEvery)) {
     return { globalLimit: 0, exceedsLimit: false };
   }
 

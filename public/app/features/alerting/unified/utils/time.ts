@@ -40,3 +40,12 @@ export const durationValidationPattern = {
 export function parseDurationToMilliseconds(duration: string) {
   return durationToMilliseconds(parseDuration(duration));
 }
+
+export function isValidGoDuration(duration: string): boolean {
+  return /^(?:\d+(h|m|s|ms|us|µs|ns))+$/.test(duration);
+}
+
+// According to https://prometheus.io/docs/alerting/latest/configuration/#time_interval
+export function isValidPrometheusDuration(duration: string): boolean {
+  return /((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?|0)/.test(duration);
+}
