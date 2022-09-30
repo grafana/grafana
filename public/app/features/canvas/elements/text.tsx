@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback } from 'react';
 import { useObservable } from 'react-use';
 import { of } from 'rxjs';
 
@@ -34,49 +34,53 @@ const TextDisplay = (props: CanvasElementProps<TextConfig, TextData>) => {
 
 const TextEdit = (props: CanvasElementProps<TextConfig, TextData>) => {
   let { data, config } = props;
-  const [text, setText] = useState(config.text?.fixed ?? '');
   const context = usePanelContext();
   let panelData: DataFrame[];
   panelData = context.instanceState?.scene?.data.series;
 
   const onTextChange = (event: React.SyntheticEvent<HTMLInputElement>) => {
     const { value: textValue } = event.currentTarget;
-    setText(textValue);
+    saveText(textValue);
   };
 
-  const onTextSubmit = (event: React.KeyboardEvent<HTMLInputElement>) => {
+  const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
       event.preventDefault();
-      submitText();
-    }
-  };
-
-  const submitText = useCallback(() => {
-    let selectedElement: ElementState;
-    selectedElement = context.instanceState?.selected[0];
-    if (selectedElement) {
-      const options = selectedElement.options;
-      selectedElement.onChange({
-        ...options,
-        config: {
-          ...options.config,
-          text: { ...selectedElement.options.config.text, fixed: text },
-        },
-      });
-
-      // Force a re-render (update scene data after config update)
       const scene = context.instanceState?.scene;
       if (scene) {
         scene.editModeEnabled.next(false);
-        scene.updateData(scene.data);
       }
     }
-  }, [context.instanceState?.scene, context.instanceState?.selected, text]);
+  };
+
+  const saveText = useCallback(
+    (textValue: string) => {
+      let selectedElement: ElementState;
+      selectedElement = context.instanceState?.selected[0];
+      if (selectedElement) {
+        const options = selectedElement.options;
+        selectedElement.onChange({
+          ...options,
+          config: {
+            ...options.config,
+            text: { ...selectedElement.options.config.text, fixed: textValue },
+          },
+        });
+
+        // Force a re-render (update scene data after config update)
+        const scene = context.instanceState?.scene;
+        if (scene) {
+          scene.updateData(scene.data);
+        }
+      }
+    },
+    [context.instanceState?.scene, context.instanceState?.selected]
+  );
 
   const styles = useStyles2(getStyles(data));
   return (
     <div className={styles.inlineEditorContainer}>
-      {panelData && <Input value={text ?? ''} onChange={onTextChange} onKeyDown={onTextSubmit} autoFocus />}
+      {panelData && <Input value={config.text?.fixed ?? ''} onChange={onTextChange} onKeyDown={onKeyDown} autoFocus />}
     </div>
   );
 };
