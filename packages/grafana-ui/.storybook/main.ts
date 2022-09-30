@@ -42,6 +42,13 @@ const mainConfig = {
     },
     '@storybook/addon-storysource',
     'storybook-dark-mode',
+    {
+      // replace babel-loader in manager and preview with esbuild-loader
+      name: 'storybook-addon-turbo-build',
+      options: {
+        optimizationLevel: 3,
+      },
+    },
   ],
   core: {
     builder: {
