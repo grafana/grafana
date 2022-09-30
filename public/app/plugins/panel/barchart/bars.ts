@@ -57,6 +57,7 @@ export interface BarsOptions {
   legend?: VizLegendOptions;
   xSpacing?: number;
   xTimeAuto?: boolean;
+  negY?: boolean[];
 }
 
 /**
@@ -352,6 +353,10 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
         let middleShift = isXHorizontal ? 0 : -Math.round(MIDDLE_BASELINE_SHIFT * fontSize);
         let value = rawValue(seriesIdx, dataIdx);
 
+        if (opts.negY?.[seriesIdx] && value != null) {
+          value *= -1;
+        }
+
         if (value != null) {
           // Calculate final co-ordinates for text position
           const x =
@@ -380,7 +385,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
             // Adjust for baseline which is "top" in this case
             xAdjust = (textMetrics.width * scaleFactor) / 2;
 
-            // yAdjust only matters when when the value isn't negative
+            // yAdjust only matters when the value isn't negative
             yAdjust =
               value > 0
                 ? (textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent) * scaleFactor
@@ -516,7 +521,12 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
       for (const sidx in labels[didx]) {
         const label = labels[didx][sidx];
-        const { text, value, x = 0, y = 0 } = label;
+        const { text, x = 0, y = 0 } = label;
+        let { value } = label;
+
+        if (opts.negY?.[sidx] && value != null) {
+          value *= -1;
+        }
 
         let align: CanvasTextAlign = isXHorizontal ? 'center' : value !== null && value < 0 ? 'right' : 'left';
         let baseline: CanvasTextBaseline = isXHorizontal
