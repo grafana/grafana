@@ -253,31 +253,6 @@ You can control the time range of a dashboard by providing the following query p
 - `to`: Defines the upper limit of the time range, specified in `ms`, `epoch`, or [relative time]({{< relref "#relative-time-range" >}})
 - `time` and `time.window`: Defines a time range from `time-time.window/2` to `time+time.window/2`. Both parameters should be specified in `ms`. For example `?time=1500000000000&time.window=10000` results in 10s time range from 1499999995000 to 1500000005000
 
-## Organize a dashboard
-
-You can place any panel in any location you want and controls its size. The changes you make impact other users of the dashboard.
-
-**Before you begin:**
-
-- Ensure that you sign in to Grafana with Editor permissions
-
-**To organize a dashboard**:
-
-1. Hover your cursor over the panel, and click-and-drag the panel to its new location.
-
-1. To resize a panel, click the zoom in (+) and zoom out (-) icons.
-
-![](/static/img/docs/animated_gifs/drag_drop.gif)
-
-### Tips and shortcuts
-
-- Click the graph title and in the dropdown menu quickly duplicate the panel.
-- Click the colored icon in the legend to change a series color or the y-axis.
-- Click series name in the legend to hide series.
-- Ctrl/Shift/Meta + click legend name to hide other series.
-- Hover your cursor over a panel and press `e` to open the panel editor.
-- Hover your cursor over a panel and press `v` to open the panel in full screen view.
-
 ## Troubleshoot dashboards
 
 This section provides information to help you solve common dashboard problems.
