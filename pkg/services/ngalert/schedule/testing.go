@@ -65,6 +65,13 @@ func (f *fakeRulesStore) GetAlertRulesForScheduling(ctx context.Context, query *
 	return nil
 }
 
+func (f *fakeRulesStore) ListAlertRules(_ context.Context, q *models.ListAlertRulesQuery) error {
+	for _, rule := range f.rules {
+		q.Result = append(q.Result, rule)
+	}
+	return nil
+}
+
 func (f *fakeRulesStore) PutRule(_ context.Context, rules ...*models.AlertRule) {
 	for _, r := range rules {
 		f.rules[r.UID] = r

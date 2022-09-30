@@ -39,7 +39,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		senderMock *AlertsSenderMock,
 	) (*schedule, *fakeRulesStore, *state.FakeInstanceStore, prometheus.Gatherer) {
 		ruleStore := newFakeRulesStore()
-		instanceStore := &state.FakeInstanceStore{}
+		instanceStore := &state.FakeInstanceStore{States: make(map[int64][]*models.AlertInstance)}
 
 		registry := prometheus.NewPedanticRegistry()
 		sch := setupScheduler(t, ruleStore, instanceStore, registry, senderMock, nil)
@@ -219,7 +219,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		sender := AlertsSenderMock{}
 		sender.EXPECT().Send(rule.GetKey(), mock.Anything).Return()
 
-		sch, ruleStore, _, _ := createSchedule(evalAppliedChan, &sender)
+		sch, ruleStore, instanceStore, _ := createSchedule(evalAppliedChan, &sender)
 		ruleStore.PutRule(context.Background(), rule)
 
 		go func() {
@@ -237,23 +237,22 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		waitForTimeChannel(t, evalAppliedChan)
 
 		// define some state
-		states := make([]*state.State, 0, len(allStates))
 		for _, s := range allStates {
 			for i := 0; i < 2; i++ {
-				states = append(states, &state.State{
-					AlertRuleUID: rule.UID,
-					CacheId:      util.GenerateShortUID(),
-					OrgID:        rule.OrgID,
-					State:        s,
-					StartsAt:     sch.clock.Now(),
-					EndsAt:       sch.clock.Now().Add(time.Duration(rand.Intn(25)+5) * time.Second),
-					Labels:       rule.Labels,
+				instanceStore.States[rule.OrgID] = append(instanceStore.States[rule.OrgID], &models.AlertInstance{
+					RuleOrgID:         rule.OrgID,
+					RuleUID:           rule.UID,
+					Labels:            rule.Labels,
+					CurrentState:      models.InstanceStateType(s.String()),
+					CurrentStateSince: sch.clock.Now(),
+					CurrentStateEnd:   sch.clock.Now().Add(time.Duration(rand.Intn(25)+5) * time.Second),
+					LastEvalTime:      time.Time{},
 				})
 			}
 		}
-		sch.stateManager.Put(states)
+		sch.stateManager.Warm(context.Background())
 
-		states = sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
+		states := sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
 		expectedToBeSent := 0
 		for _, s := range states {
 			if s.State == eval.Normal || s.State == eval.Pending {
@@ -529,8 +528,7 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 		AlertSender: senderMock,
 	}
 
-	stateRs := state.FakeRuleReader{}
-	st := state.NewManager(schedCfg.Logger, m.GetStateMetrics(), nil, &stateRs, is, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, mockedClock, annotationstest.NewFakeAnnotationsRepo())
+	st := state.NewManager(schedCfg.Logger, m.GetStateMetrics(), nil, rs, is, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, mockedClock, annotationstest.NewFakeAnnotationsRepo())
 	return NewScheduler(schedCfg, appUrl, st)
 }
 

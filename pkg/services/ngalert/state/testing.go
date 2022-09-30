@@ -10,12 +10,14 @@ import (
 type FakeInstanceStore struct {
 	mtx         sync.Mutex
 	RecordedOps []interface{}
+	States      map[int64][]*models.AlertInstance
 }
 
 func (f *FakeInstanceStore) ListAlertInstances(_ context.Context, q *models.ListAlertInstancesQuery) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.RecordedOps = append(f.RecordedOps, *q)
+	q.Result = f.States[q.RuleOrgID]
 	return nil
 }
 
@@ -26,7 +28,15 @@ func (f *FakeInstanceStore) SaveAlertInstance(_ context.Context, q *models.SaveA
 	return nil
 }
 
-func (f *FakeInstanceStore) FetchOrgIds(_ context.Context) ([]int64, error) { return []int64{}, nil }
+func (f *FakeInstanceStore) FetchOrgIds(_ context.Context) ([]int64, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	var orgs []int64
+	for orgID := range f.States {
+		orgs = append(orgs, orgID)
+	}
+	return orgs, nil
+}
 
 func (f *FakeInstanceStore) DeleteAlertInstance(_ context.Context, _ int64, _, _ string) error {
 	return nil
