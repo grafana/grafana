@@ -344,6 +344,7 @@ var wireBasicSet = wire.NewSet(
 	orgimpl.ProvideService,
 	grpcserver.ProvideService,
 	grpcserver.ProvideHealthService,
+	grpcserver.ProvideReflectionService,
 	teamimpl.ProvideService,
 	tempuserimpl.ProvideService,
 	loginattemptimpl.ProvideService,

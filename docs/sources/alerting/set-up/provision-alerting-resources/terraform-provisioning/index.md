@@ -22,7 +22,8 @@ Complete the following tasks to create and manage your alerting resources using 
 
 1. Create an API key for provisioning.
 1. Configure the Terraform provider.
-1. Provision your alerting resources.
+1. Define your alerting resources in Terraform.
+1. Run `terraform apply` to provision your alerting resources.
 
 ## Before you begin
 
@@ -43,7 +44,7 @@ To create an API key for provisioning, complete the following steps.
 1. Create a new service account token.
 1. Name and save the token for use in Terraform.
 
-Alternatively, you can use Terraform authentication: [basic auth](https://registry.terraform.io/providers/grafana/grafana/latest/docs#authentication).
+Alternatively, you can use basic authentication. To view all the supported authentication formats, see [here](https://registry.terraform.io/providers/grafana/grafana/latest/docs#authentication).
 
 ## Configure the Terraform provider
 
@@ -69,13 +70,13 @@ provider "grafana" {
 
 ## Provision contact points and templates
 
-Contact points connect an alerting stack to the outside world. They tell Grafana how to connect to your external systems and where to deliver notifications. There are over fifteen different integrations to choose from.
+Contact points connect an alerting stack to the outside world. They tell Grafana how to connect to your external systems and where to deliver notifications. There are over fifteen different [integrations](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/contact_point#optional) to choose from.
 
 To provision contact points and templates, complete the following steps.
 
 1. Copy this code block into a .tf file on your local machine.
 
-This example uses a contact point that sends alert notifications to Slack.
+This example creates a contact point that sends alert notifications to Slack.
 
 ```terraform
 resource "grafana_contact_point" "my_slack_contact_point" {
@@ -95,19 +96,17 @@ EOT
 }
 ```
 
-1. Enter text for your notification in the text field.
+2. Enter text for your notification in the text field.
 
 The `text` field supports [Go-style templating](https://pkg.go.dev/text/template). This enables you to manage your Grafana Alerting message templates directly in Terraform.
 
-1. Run the command ‘terraform apply’.
+3. Run the command ‘terraform apply’.
 
-1. Go to the Grafana UI and check the details of your contact point.
+4. Go to the Grafana UI and check the details of your contact point.
 
-**Note:**
+You cannot edit resources provisioned via Terraform from the UI. This ensures that your alerting stack always stays in sync with your code.
 
-You cannot edit resources provisioned from Terraform from the UI. This ensures that your alerting stack always stays in sync with your code.
-
-1. Click **Test** to verify that the contact point works correctly.
+5. Click **Test** to verify that the contact point works correctly.
 
 **Note:**
 
@@ -137,6 +136,8 @@ To provision notification policies and routing, complete the following steps.
 1. Copy this code block into a .tf file on your local machine.
 
 In this example, the alerts are grouped by `alertname`, which means that any notifications coming from alerts which share the same name, are grouped into the same Slack message.
+
+If you want to route specific notifications differently, you can add sub-policies. Sub-policies allow you to apply routing to different alerts based on label matching. In this example, we apply a mute timing to all alerts with the label a=b.
 
 resource "grafana_notification_policy" "my_policy" {
 group_by = ["alertname"]
@@ -169,17 +170,17 @@ contact_point = grafana_contact_point.my_slack_contact_point.name
 
 }
 
-1. In the mute_timings field, link a mute timing to your notification policy.
+2. In the mute_timings field, link a mute timing to your notification policy.
 
-1. Run the command ‘terraform apply’.
+3. Run the command ‘terraform apply’.
 
-1. Go to the Grafana UI and check the details of your notification policy.
+4. Go to the Grafana UI and check the details of your notification policy.
 
 **Note:**
 
 You cannot edit resources provisioned from Terraform from the UI. This ensures that your alerting stack always stays in sync with your code.
 
-1. Click **Test** to verify that the notification point is working correctly.
+5. Click **Test** to verify that the notification point is working correctly.
 
 ## Provision mute timings
 
@@ -206,14 +207,16 @@ name = "My Mute Timing"
 
 }
 
-1. Run the command ‘terraform apply’.
-1. Go to the Grafana UI and check the details of your mute timing.
+2. Run the command ‘terraform apply’.
+3. Go to the Grafana UI and check the details of your mute timing.
+4. Reference your newly created mute timing in a notification policy using the `mute_timings` field.
+   This will apply your mute timing to some or all of your notifications.
 
 **Note:**
 
 You cannot edit resources provisioned from Terraform from the UI. This ensures that your alerting stack always stays in sync with your code.
 
-1. Click **Test** to verify that the mute timing is working correctly.
+5. Click **Test** to verify that the mute timing is working correctly.
 
 ## Provision alert rules
 
@@ -224,6 +227,8 @@ To provision alert rules, complete the following steps.
 1. Create a data source to query and a folder to store your rules in.
 
 In this example, the [TestData](https://grafana.com/docs/grafana/latest/datasources/testdata/) data source is used.
+
+Alerts can be defined against any backend datasource in Grafana.
 
 ```terraform
 resource "grafana_data_source" "testdata_datasource" {
@@ -236,11 +241,11 @@ resource "grafana_folder" "rule_folder" {
 }
 ```
 
-1. Define an alert rule.
+2. Define an alert rule.
 
 For more information on alert rules, refer to [how to create Grafana-managed alerts](https://grafana.com/blog/2022/08/01/grafana-alerting-video-how-to-create-alerts-in-grafana-9/).
 
-1. Group your alert rules.
+3. Create a rule group containing one or more rules.
 
 In this example, the `grafana_rule_group` resource group is used.
 
@@ -307,7 +312,7 @@ EOT
 }
 ```
 
-1. Go to the Grafana UI and check your alert rule.
+4. Go to the Grafana UI and check your alert rule.
 
 You can see whether or not the alert rule is firing. You can also see a visualization of each of the alert rule’s query stages
 
