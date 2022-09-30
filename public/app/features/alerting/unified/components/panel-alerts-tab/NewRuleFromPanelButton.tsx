@@ -1,12 +1,11 @@
 import React, { FC } from 'react';
-import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { useAsync } from 'react-use';
 
 import { urlUtil } from '@grafana/data';
 import { Alert, Button, LinkButton } from '@grafana/ui';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { StoreState } from 'app/types';
+import { useSelector } from 'app/types';
 
 import { panelToRuleFormValues } from '../../utils/rule-form';
 
@@ -17,7 +16,7 @@ interface Props {
 }
 
 export const NewRuleFromPanelButton: FC<Props> = ({ dashboard, panel, className }) => {
-  const templating = useSelector((state: StoreState) => {
+  const templating = useSelector((state) => {
     return state.templating;
   });
 

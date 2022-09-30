@@ -25,7 +25,7 @@
   promtail:
     image: grafana/promtail:master
     volumes:
-      - ./docker/blocks/loki/config.yaml:/etc/promtail/docker-config.yaml
+      - ./docker/blocks/jaeger/promtail-config.yaml:/etc/promtail/docker-config.yaml
       - /var/log:/var/log
       - ../data/log:/var/log/grafana
     command:

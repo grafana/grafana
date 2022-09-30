@@ -19,6 +19,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
@@ -105,14 +106,13 @@ func TestWarmStateCache(t *testing.T) {
 	}
 
 	schedCfg := schedule.SchedulerCfg{
-		Cfg:           cfg,
-		C:             clock.NewMock(),
-		Logger:        log.New("ngalert cache warming test"),
-		RuleStore:     dbstore,
-		InstanceStore: dbstore,
-		Metrics:       testMetrics.GetSchedulerMetrics(),
+		Cfg:       cfg,
+		C:         clock.NewMock(),
+		Logger:    log.New("ngalert cache warming test"),
+		RuleStore: dbstore,
+		Metrics:   testMetrics.GetSchedulerMetrics(),
 	}
-	st := state.NewManager(schedCfg.Logger, testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, clock.NewMock())
+	st := state.NewManager(schedCfg.Logger, testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, clock.NewMock(), annotationstest.NewFakeAnnotationsRepo())
 	st.Warm(ctx)
 
 	t.Run("instance cache has expected entries", func(t *testing.T) {
@@ -160,13 +160,12 @@ func TestAlertingTicker(t *testing.T) {
 		StopAppliedFunc: func(alertDefKey models.AlertRuleKey) {
 			stopAppliedCh <- alertDefKey
 		},
-		RuleStore:     dbstore,
-		InstanceStore: dbstore,
-		Logger:        log.New("ngalert schedule test"),
-		Metrics:       testMetrics.GetSchedulerMetrics(),
-		AlertSender:   notifier,
+		RuleStore:   dbstore,
+		Logger:      log.New("ngalert schedule test"),
+		Metrics:     testMetrics.GetSchedulerMetrics(),
+		AlertSender: notifier,
 	}
-	st := state.NewManager(schedCfg.Logger, testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, clock.NewMock())
+	st := state.NewManager(schedCfg.Logger, testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, clock.NewMock(), annotationstest.NewFakeAnnotationsRepo())
 	appUrl := &url.URL{
 		Scheme: "http",
 		Host:   "localhost",

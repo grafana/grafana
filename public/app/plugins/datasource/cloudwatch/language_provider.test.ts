@@ -109,8 +109,10 @@ async function runSuggestionTest(query: string, expectedItems: string[][]) {
 
 function makeDatasource(): CloudWatchDatasource {
   return {
-    getLogGroupFields(): Promise<GetLogGroupFieldsResponse> {
-      return Promise.resolve({ logGroupFields: [{ name: 'field1' }, { name: '@message' }] });
+    logsQueryRunner: {
+      getLogGroupFields(): Promise<GetLogGroupFieldsResponse> {
+        return Promise.resolve({ logGroupFields: [{ name: 'field1' }, { name: '@message' }] });
+      },
     },
   } as any;
 }

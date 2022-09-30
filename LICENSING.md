@@ -21,6 +21,7 @@ pkg/coremodel/
 pkg/framework/coremodel/
 grafana-mixin/
 cue/
+public/app/plugins/datasource/tempo
 public/img/icons/solid/
 public/img/icons/unicons/
 ```

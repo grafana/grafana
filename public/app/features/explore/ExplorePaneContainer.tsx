@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import memoizeOne from 'memoize-one';
 import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
@@ -28,6 +28,7 @@ import Explore from './Explore';
 import { initializeExplore, refreshExplore } from './state/explorePane';
 import { lastSavedUrl, cleanupPaneAction, stateSave } from './state/main';
 import { importQueries } from './state/query';
+import { loadAndInitDatasource } from './state/utils';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -35,12 +36,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: flex;
       flex: 1 1 auto;
       flex-direction: column;
+      overflow: scroll;
+      min-width: 600px;
       & + & {
         border-left: 1px dotted ${theme.colors.border.medium};
       }
-    `,
-    exploreSplit: css`
-      width: 50%;
     `,
   };
 };
@@ -70,7 +70,7 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
   }
 
   async componentDidMount() {
-    const { initialized, exploreId, initialDatasource, initialQueries, initialRange, panelsState } = this.props;
+    const { initialized, exploreId, initialDatasource, initialQueries, initialRange, panelsState, orgId } = this.props;
     const width = this.el?.offsetWidth ?? 0;
     // initialize the whole explore first time we mount and if browser history contains a change in datasource
     if (!initialized) {
@@ -81,8 +81,8 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
         const isDSMixed =
           initialDatasource === MIXED_DATASOURCE_NAME || initialDatasource.uid === MIXED_DATASOURCE_NAME;
         if (!isDSMixed) {
-          const datasource = await getDatasourceSrv().get(initialDatasource);
-          queriesDatasourceOverride = datasource.getRef();
+          const { instance } = await loadAndInitDatasource(orgId, initialDatasource);
+          queriesDatasourceOverride = instance.getRef();
         }
       }
 
@@ -122,7 +122,6 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
 
   componentWillUnmount() {
     this.exploreEvents.removeAllListeners();
-    this.props.cleanupPaneAction({ exploreId: this.props.exploreId });
   }
 
   componentDidUpdate(prevProps: Props) {
@@ -143,11 +142,10 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
   };
 
   render() {
-    const { theme, split, exploreId, initialized } = this.props;
+    const { theme, exploreId, initialized } = this.props;
     const styles = getStyles(theme);
-    const exploreClass = cx(styles.explore, split && styles.exploreSplit);
     return (
-      <div className={exploreClass} ref={this.getRef} data-testid={selectors.pages.Explore.General.container}>
+      <div className={styles.explore} ref={this.getRef} data-testid={selectors.pages.Explore.General.container}>
         {initialized && <Explore exploreId={exploreId} />}
       </div>
     );
@@ -173,6 +171,7 @@ function mapStateToProps(state: StoreState, props: OwnProps) {
     initialQueries: queries,
     initialRange,
     panelsState,
+    orgId: state.user.orgId,
   };
 }
 

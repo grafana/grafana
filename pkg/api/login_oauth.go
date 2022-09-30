@@ -275,7 +275,7 @@ func (hs *HTTPServer) buildExternalUserInfo(token *oauth2.Token, userInfo *socia
 	}
 
 	if userInfo.Role != "" && !hs.Cfg.OAuthSkipOrgRoleUpdateSync {
-		rt := org.RoleType(userInfo.Role)
+		rt := userInfo.Role
 		if rt.IsValid() {
 			// The user will be assigned a role in either the auto-assigned organization or in the default one
 			var orgID int64

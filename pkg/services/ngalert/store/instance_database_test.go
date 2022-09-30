@@ -44,19 +44,18 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 		err := dbstore.SaveAlertInstance(ctx, saveCmd)
 		require.NoError(t, err)
 
-		getCmd := &models.GetAlertInstanceQuery{
+		listCmd := &models.ListAlertInstancesQuery{
 			RuleOrgID: saveCmd.RuleOrgID,
 			RuleUID:   saveCmd.RuleUID,
-			Labels:    models.InstanceLabels{"test": "testValue"},
 		}
-
-		err = dbstore.GetAlertInstance(ctx, getCmd)
+		err = dbstore.ListAlertInstances(ctx, listCmd)
 		require.NoError(t, err)
 
-		require.Equal(t, saveCmd.Labels, getCmd.Result.Labels)
-		require.Equal(t, alertRule1.OrgID, getCmd.Result.RuleOrgID)
-		require.Equal(t, alertRule1.UID, getCmd.Result.RuleUID)
-		require.Equal(t, saveCmd.StateReason, getCmd.Result.CurrentReason)
+		require.Len(t, listCmd.Result, 1)
+		require.Equal(t, saveCmd.Labels, listCmd.Result[0].Labels)
+		require.Equal(t, alertRule1.OrgID, listCmd.Result[0].RuleOrgID)
+		require.Equal(t, alertRule1.UID, listCmd.Result[0].RuleUID)
+		require.Equal(t, saveCmd.StateReason, listCmd.Result[0].CurrentReason)
 	})
 
 	t.Run("can save and read new alert instance with no labels", func(t *testing.T) {
@@ -69,17 +68,18 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 		err := dbstore.SaveAlertInstance(ctx, saveCmd)
 		require.NoError(t, err)
 
-		getCmd := &models.GetAlertInstanceQuery{
+		listCmd := &models.ListAlertInstancesQuery{
 			RuleOrgID: saveCmd.RuleOrgID,
 			RuleUID:   saveCmd.RuleUID,
 		}
 
-		err = dbstore.GetAlertInstance(ctx, getCmd)
+		err = dbstore.ListAlertInstances(ctx, listCmd)
 		require.NoError(t, err)
 
-		require.Equal(t, alertRule2.OrgID, getCmd.Result.RuleOrgID)
-		require.Equal(t, alertRule2.UID, getCmd.Result.RuleUID)
-		require.Equal(t, saveCmd.Labels, getCmd.Result.Labels)
+		require.Len(t, listCmd.Result, 1)
+		require.Equal(t, alertRule2.OrgID, listCmd.Result[0].RuleOrgID)
+		require.Equal(t, alertRule2.UID, listCmd.Result[0].RuleUID)
+		require.Equal(t, saveCmd.Labels, listCmd.Result[0].Labels)
 	})
 
 	t.Run("can save two instances with same org_id, uid and different labels", func(t *testing.T) {

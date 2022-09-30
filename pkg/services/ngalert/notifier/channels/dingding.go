@@ -32,7 +32,7 @@ func NewDingDingConfig(config *NotificationChannelConfig) (*DingDingConfig, erro
 	return &DingDingConfig{
 		NotificationChannelConfig: config,
 		MsgType:                   config.Settings.Get("msgType").MustString(defaultDingdingMsgType),
-		Message:                   config.Settings.Get("message").MustString(`{{ template "default.message" .}}`),
+		Message:                   config.Settings.Get("message").MustString(DefaultMessageEmbed),
 		URL:                       config.Settings.Get("url").MustString(),
 	}, nil
 }

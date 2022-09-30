@@ -14,7 +14,6 @@ import {
   DataSourceRef,
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { keybindingSrv } from 'app/core/services/keybindingSrv';
 import {
   DEFAULT_RANGE,
   getQueryKeys,
@@ -177,8 +176,6 @@ export function initializeExplore(
       dispatch(changePanelsStateAction({ exploreId, panelsState }));
     }
     dispatch(updateTime({ exploreId }));
-
-    keybindingSrv.setupTimeRangeBindings(false);
 
     if (instance) {
       // We do not want to add the url to browser history on init because when the pane is initialised it's because

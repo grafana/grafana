@@ -1,11 +1,10 @@
 import { css } from '@emotion/css';
 import React, { FC } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 
 import { GrafanaTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { ToolbarButton, ButtonGroup, useStyles } from '@grafana/ui';
-import { StoreState } from 'app/types';
+import { useDispatch, useSelector } from 'app/types';
 
 import { PanelModel } from '../../state';
 import { getPanelPluginWithFallback } from '../../state/selectors';
@@ -20,8 +19,8 @@ export const VisualizationButton: FC<Props> = ({ panel }) => {
   const styles = useStyles(getStyles);
   const dispatch = useDispatch();
   const plugin = useSelector(getPanelPluginWithFallback(panel.type));
-  const isPanelOptionsVisible = useSelector((state: StoreState) => state.panelEditor.ui.isPanelOptionsVisible);
-  const isVizPickerOpen = useSelector((state: StoreState) => state.panelEditor.isVizPickerOpen);
+  const isPanelOptionsVisible = useSelector((state) => state.panelEditor.ui.isPanelOptionsVisible);
+  const isVizPickerOpen = useSelector((state) => state.panelEditor.isVizPickerOpen);
 
   const onToggleOpen = () => {
     dispatch(toggleVizPicker(!isVizPickerOpen));

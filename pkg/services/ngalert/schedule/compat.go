@@ -43,6 +43,10 @@ func stateToPostableAlert(alertState *state.State, appURL *url.URL) *models.Post
 		nA[ngModels.ImageTokenAnnotation] = alertState.Image.Token
 	}
 
+	if alertState.StateReason != "" {
+		nA[ngModels.StateReasonAnnotation] = alertState.StateReason
+	}
+
 	var urlStr string
 	if uid := nL[ngModels.RuleUIDLabel]; len(uid) > 0 && appURL != nil {
 		u := *appURL
@@ -124,6 +128,9 @@ func FromAlertStateToPostableAlerts(firingStates []*state.State, stateManager *s
 		}
 		alert := stateToPostableAlert(alertState, appURL)
 		alerts.PostableAlerts = append(alerts.PostableAlerts, *alert)
+		if alertState.StateReason == ngModels.StateReasonMissingSeries { // do not put stale state back to state manager
+			continue
+		}
 		alertState.LastSentAt = ts
 		sentAlerts = append(sentAlerts, alertState)
 	}

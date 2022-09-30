@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -31,7 +32,7 @@ import (
 func (hs *HTTPServer) GetPendingOrgInvites(c *models.ReqContext) response.Response {
 	query := models.GetTempUsersQuery{OrgId: c.OrgID, Status: models.TmpUserInvitePending}
 
-	if err := hs.SQLStore.GetTempUsersQuery(c.Req.Context(), &query); err != nil {
+	if err := hs.tempUserService.GetTempUsersQuery(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "Failed to get invites from db", err)
 	}
 
@@ -102,7 +103,7 @@ func (hs *HTTPServer) AddOrgInvite(c *models.ReqContext) response.Response {
 	cmd.Role = inviteDto.Role
 	cmd.RemoteAddr = c.Req.RemoteAddr
 
-	if err := hs.SQLStore.CreateTempUser(c.Req.Context(), &cmd); err != nil {
+	if err := hs.tempUserService.CreateTempUser(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to save invite to database", err)
 	}
 
@@ -129,7 +130,7 @@ func (hs *HTTPServer) AddOrgInvite(c *models.ReqContext) response.Response {
 		}
 
 		emailSentCmd := models.UpdateTempUserWithEmailSentCommand{Code: cmd.Result.Code}
-		if err := hs.SQLStore.UpdateTempUserWithEmailSent(c.Req.Context(), &emailSentCmd); err != nil {
+		if err := hs.tempUserService.UpdateTempUserWithEmailSent(c.Req.Context(), &emailSentCmd); err != nil {
 			return response.Error(500, "Failed to update invite with email sent info", err)
 		}
 
@@ -141,8 +142,8 @@ func (hs *HTTPServer) AddOrgInvite(c *models.ReqContext) response.Response {
 
 func (hs *HTTPServer) inviteExistingUserToOrg(c *models.ReqContext, user *user.User, inviteDto *dtos.AddInviteForm) response.Response {
 	// user exists, add org role
-	createOrgUserCmd := models.AddOrgUserCommand{OrgId: c.OrgID, UserId: user.ID, Role: inviteDto.Role}
-	if err := hs.SQLStore.AddOrgUser(c.Req.Context(), &createOrgUserCmd); err != nil {
+	createOrgUserCmd := org.AddOrgUserCommand{OrgID: c.OrgID, UserID: user.ID, Role: inviteDto.Role}
+	if err := hs.orgService.AddOrgUser(c.Req.Context(), &createOrgUserCmd); err != nil {
 		if errors.Is(err, models.ErrOrgUserAlreadyAdded) {
 			return response.Error(412, fmt.Sprintf("User %s is already added to organization", inviteDto.LoginOrEmail), err)
 		}
@@ -194,7 +195,7 @@ func (hs *HTTPServer) RevokeInvite(c *models.ReqContext) response.Response {
 // If a (pending) invite is not found, 404 is returned.
 func (hs *HTTPServer) GetInviteInfoByCode(c *models.ReqContext) response.Response {
 	query := models.GetTempUserByCodeQuery{Code: web.Params(c.Req)[":code"]}
-	if err := hs.SQLStore.GetTempUserByCode(c.Req.Context(), &query); err != nil {
+	if err := hs.tempUserService.GetTempUserByCode(c.Req.Context(), &query); err != nil {
 		if errors.Is(err, models.ErrTempUserNotFound) {
 			return response.Error(404, "Invite not found", nil)
 		}
@@ -221,7 +222,7 @@ func (hs *HTTPServer) CompleteInvite(c *models.ReqContext) response.Response {
 	}
 	query := models.GetTempUserByCodeQuery{Code: completeInvite.InviteCode}
 
-	if err := hs.SQLStore.GetTempUserByCode(c.Req.Context(), &query); err != nil {
+	if err := hs.tempUserService.GetTempUserByCode(c.Req.Context(), &query); err != nil {
 		if errors.Is(err, models.ErrTempUserNotFound) {
 			return response.Error(404, "Invite not found", nil)
 		}
@@ -287,8 +288,8 @@ func (hs *HTTPServer) updateTempUserStatus(ctx context.Context, code string, sta
 
 func (hs *HTTPServer) applyUserInvite(ctx context.Context, usr *user.User, invite *models.TempUserDTO, setActive bool) (bool, response.Response) {
 	// add to org
-	addOrgUserCmd := models.AddOrgUserCommand{OrgId: invite.OrgId, UserId: usr.ID, Role: invite.Role}
-	if err := hs.SQLStore.AddOrgUser(ctx, &addOrgUserCmd); err != nil {
+	addOrgUserCmd := org.AddOrgUserCommand{OrgID: invite.OrgId, UserID: usr.ID, Role: invite.Role}
+	if err := hs.orgService.AddOrgUser(ctx, &addOrgUserCmd); err != nil {
 		if !errors.Is(err, models.ErrOrgUserAlreadyAdded) {
 			return false, response.Error(500, "Error while trying to create org user", err)
 		}
@@ -301,7 +302,7 @@ func (hs *HTTPServer) applyUserInvite(ctx context.Context, usr *user.User, invit
 
 	if setActive {
 		// set org to active
-		if err := hs.SQLStore.SetUsingOrg(ctx, &models.SetUsingOrgCommand{OrgId: invite.OrgId, UserId: usr.ID}); err != nil {
+		if err := hs.userService.SetUsingOrg(ctx, &user.SetUsingOrgCommand{OrgID: invite.OrgId, UserID: usr.ID}); err != nil {
 			return false, response.Error(500, "Failed to set org as active", err)
 		}
 	}

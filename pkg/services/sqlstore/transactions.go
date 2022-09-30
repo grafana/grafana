@@ -20,6 +20,8 @@ func (ss *SQLStore) WithTransactionalDbSession(ctx context.Context, callback DBT
 	return inTransactionWithRetryCtx(ctx, ss.engine, ss.bus, callback, 0)
 }
 
+// InTransaction starts a transaction and calls the fn
+// It stores the session in the context
 func (ss *SQLStore) InTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
 	return ss.inTransactionWithRetry(ctx, fn, 0)
 }
@@ -48,8 +50,10 @@ func inTransactionWithRetryCtx(ctx context.Context, engine *xorm.Engine, bus bus
 
 	err = callback(sess)
 
+	ctxLogger := tsclogger.FromContext(ctx)
+
 	if !isNew {
-		tsclogger.Debug("skip committing the transaction because it belongs to a session created in the outer scope")
+		ctxLogger.Debug("skip committing the transaction because it belongs to a session created in the outer scope")
 		// Do not commit the transaction if the session was reused.
 		return err
 	}
@@ -62,7 +66,7 @@ func inTransactionWithRetryCtx(ctx context.Context, engine *xorm.Engine, bus bus
 		}
 
 		time.Sleep(time.Millisecond * time.Duration(10))
-		sqlog.Info("Database locked, sleeping then retrying", "error", err, "retry", retry)
+		ctxLogger.Info("Database locked, sleeping then retrying", "error", err, "retry", retry)
 		return inTransactionWithRetryCtx(ctx, engine, bus, callback, retry+1)
 	}
 
@@ -79,7 +83,7 @@ func inTransactionWithRetryCtx(ctx context.Context, engine *xorm.Engine, bus bus
 	if len(sess.events) > 0 {
 		for _, e := range sess.events {
 			if err = bus.Publish(ctx, e); err != nil {
-				tsclogger.Error("Failed to publish event after commit.", "error", err)
+				ctxLogger.Error("Failed to publish event after commit.", "error", err)
 			}
 		}
 	}

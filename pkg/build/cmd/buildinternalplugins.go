@@ -21,7 +21,7 @@ func BuildInternalPlugins(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	verMode, err := config.GetVersion(metadata.ReleaseMode.Mode)
+	buildConfig, err := config.GetBuildConfig(metadata.ReleaseMode.Mode)
 	if err != nil {
 		return err
 	}
@@ -35,7 +35,7 @@ func BuildInternalPlugins(c *cli.Context) error {
 
 	var g *errutil.Group
 	g, ctx = errutil.GroupWithContext(ctx)
-	if err := plugins.Build(ctx, grafanaDir, p, g, verMode); err != nil {
+	if err := plugins.Build(ctx, grafanaDir, p, g, buildConfig); err != nil {
 		return cli.Exit(err.Error(), 1)
 	}
 	if err := g.Wait(); err != nil {

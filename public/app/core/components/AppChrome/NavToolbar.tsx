@@ -13,6 +13,7 @@ import { TOP_BAR_LEVEL_HEIGHT } from './types';
 export interface Props {
   onToggleSearchBar(): void;
   onToggleMegaMenu(): void;
+  onToggleKioskMode(): void;
   searchBarHidden?: boolean;
   sectionNav: NavModelItem;
   pageNav?: NavModelItem;
@@ -26,6 +27,7 @@ export function NavToolbar({
   pageNav,
   onToggleMegaMenu,
   onToggleSearchBar,
+  onToggleKioskMode,
 }: Props) {
   const styles = useStyles2(getStyles);
   const breadcrumbs = buildBreadcrumbs(sectionNav, pageNav);
@@ -35,11 +37,14 @@ export function NavToolbar({
       <div className={styles.menuButton}>
         <IconButton name="bars" tooltip="Toggle menu" tooltipPlacement="bottom" size="xl" onClick={onToggleMegaMenu} />
       </div>
-      <Breadcrumbs breadcrumbs={breadcrumbs} />
+      <Breadcrumbs breadcrumbs={breadcrumbs} className={styles.breadcrumbs} />
       <div className={styles.actions}>
         {actions}
         {actions && <NavToolbarSeparator />}
-        <ToolbarButton onClick={onToggleSearchBar} narrow tooltip="Toggle top search bar">
+        {searchBarHidden && (
+          <ToolbarButton onClick={onToggleKioskMode} narrow title="Enable kiosk mode" icon="monitor" />
+        )}
+        <ToolbarButton onClick={onToggleSearchBar} narrow title="Toggle top search bar">
           <Icon name={searchBarHidden ? 'angle-down' : 'angle-up'} size="xl" />
         </ToolbarButton>
       </div>
@@ -49,6 +54,9 @@ export function NavToolbar({
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    breadcrumbs: css({
+      maxWidth: '50%',
+    }),
     pageToolbar: css({
       height: TOP_BAR_LEVEL_HEIGHT,
       display: 'flex',

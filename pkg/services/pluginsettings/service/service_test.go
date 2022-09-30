@@ -137,8 +137,6 @@ func TestIntegrationPluginSettings(t *testing.T) {
 			require.Equal(t, existing.OrgId, ps.OrgID)
 			require.Equal(t, existing.PluginId, ps.PluginID)
 			require.False(t, ps.Enabled)
-			require.Nil(t, ps.JSONData)
-			require.Nil(t, ps.SecureJSONData)
 		})
 
 		t.Run("GetPluginSettings with orgID=1 should return all existing plugin settings", func(t *testing.T) {
@@ -149,8 +147,6 @@ func TestIntegrationPluginSettings(t *testing.T) {
 			require.Equal(t, existing.OrgId, ps.OrgID)
 			require.Equal(t, existing.PluginId, ps.PluginID)
 			require.False(t, ps.Enabled)
-			require.Nil(t, ps.JSONData)
-			require.Nil(t, ps.SecureJSONData)
 		})
 
 		t.Run("GetPluginSettingById should return existing plugin settings", func(t *testing.T) {

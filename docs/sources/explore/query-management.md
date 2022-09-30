@@ -88,7 +88,7 @@ On the left side of the query field, click **Metrics** to open the Metric Explor
 
 ### Query field
 
-The Query field supports autocomplete for metric names, function and works mostly the same way as the standard Prometheus query editor. Press the enter key to execute a query.
+The Query field supports autocomplete for metric names and functions, comparable to the standard Prometheus query editor. Press the Enter key to create a new line and Shift+Enter to execute a query.
 
 The autocomplete menu can be triggered by pressing Ctrl+Space. The Autocomplete menu contains a new History section with a list of recently executed queries.
 

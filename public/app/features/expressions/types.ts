@@ -7,6 +7,7 @@ export enum ExpressionQueryType {
   reduce = 'reduce',
   resample = 'resample',
   classic = 'classic_conditions',
+  threshold = 'threshold',
 }
 
 export const gelTypes: Array<SelectableValue<ExpressionQueryType>> = [
@@ -14,6 +15,7 @@ export const gelTypes: Array<SelectableValue<ExpressionQueryType>> = [
   { value: ExpressionQueryType.reduce, label: 'Reduce' },
   { value: ExpressionQueryType.resample, label: 'Resample' },
   { value: ExpressionQueryType.classic, label: 'Classic condition' },
+  { value: ExpressionQueryType.threshold, label: 'Threshold' },
 ];
 
 export const reducerTypes: Array<SelectableValue<string>> = [
@@ -60,6 +62,13 @@ export const upsamplingTypes: Array<SelectableValue<string>> = [
   { value: 'pad', label: 'pad', description: 'fill with the last known value' },
   { value: 'backfilling', label: 'backfilling', description: 'fill with the next known value' },
   { value: 'fillna', label: 'fillna', description: 'Fill with NaNs' },
+];
+
+export const thresholdFunctions: Array<SelectableValue<EvalFunction>> = [
+  { value: EvalFunction.IsAbove, label: 'Is above' },
+  { value: EvalFunction.IsBelow, label: 'Is below' },
+  { value: EvalFunction.IsWithinRange, label: 'Is within range' },
+  { value: EvalFunction.IsOutsideRange, label: 'Is outside range' },
 ];
 
 /**

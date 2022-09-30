@@ -1,51 +1,22 @@
 import { css } from '@emotion/css';
-import { cloneDeep } from 'lodash';
-import React, { useState } from 'react';
-import { useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
+import React from 'react';
 
-import { GrafanaTheme2, NavSection } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
-import { Dropdown, FilterInput, Icon, Tooltip, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Dropdown, Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { useSearchQuery } from 'app/features/search/hooks/useSearchQuery';
-import { StoreState } from 'app/types';
-
-import { enrichConfigItems, enrichWithInteractionTracking } from '../NavBar/utils';
-import { OrgSwitcher } from '../OrgSwitcher';
+import { useSelector } from 'app/types';
 
 import { TopNavBarMenu } from './TopBar/TopNavBarMenu';
+import { TopSearchBarInput } from './TopSearchBarInput';
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
 
 export function TopSearchBar() {
   const styles = useStyles2(getStyles);
-  const location = useLocation();
-  const { query, onQueryChange } = useSearchQuery({});
-  const navBarTree = useSelector((state: StoreState) => state.navBarTree);
-  const navTree = cloneDeep(navBarTree);
-  const [showSwitcherModal, setShowSwitcherModal] = useState(false);
-  const toggleSwitcherModal = () => {
-    setShowSwitcherModal(!showSwitcherModal);
-  };
+  const navIndex = useSelector((state) => state.navIndex);
 
-  const onOpenSearch = () => {
-    locationService.partial({ search: 'open' });
-  };
-  const onSearchChange = (value: string) => {
-    onQueryChange(value);
-    if (value) {
-      onOpenSearch();
-    }
-  };
-
-  const configItems = enrichConfigItems(
-    navTree.filter((item) => item.section === NavSection.Config),
-    location,
-    toggleSwitcherModal
-  ).map((item) => enrichWithInteractionTracking(item, false));
-
-  const profileNode = configItems.find((item) => item.id === 'profile');
-  const signInNode = configItems.find((item) => item.id === 'signin');
+  const helpNode = navIndex['help'];
+  const profileNode = navIndex['profile'];
+  const signInNode = navIndex['signin'];
 
   return (
     <div className={styles.container}>
@@ -55,20 +26,16 @@ export function TopSearchBar() {
         </a>
       </div>
       <div className={styles.searchWrapper}>
-        <FilterInput
-          onClick={onOpenSearch}
-          placeholder="Search Grafana"
-          value={query.query ?? ''}
-          onChange={onSearchChange}
-          className={styles.searchInput}
-        />
+        <TopSearchBarInput />
       </div>
       <div className={styles.actions}>
-        <Tooltip placement="bottom" content="Help menu (todo)">
-          <button className={styles.actionItem}>
-            <Icon name="question-circle" size="lg" />
-          </button>
-        </Tooltip>
+        {helpNode && (
+          <Dropdown overlay={() => <TopNavBarMenu node={helpNode} />}>
+            <button className={styles.actionItem}>
+              <Icon name="question-circle" size="lg" />
+            </button>
+          </Dropdown>
+        )}
         <Tooltip placement="bottom" content="Grafana news (todo)">
           <button className={styles.actionItem}>
             <Icon name="rss" size="lg" />
@@ -89,7 +56,6 @@ export function TopSearchBar() {
           </Dropdown>
         )}
       </div>
-      {showSwitcherModal && <OrgSwitcher onDismiss={toggleSwitcherModal} />}
     </div>
   );
 }
