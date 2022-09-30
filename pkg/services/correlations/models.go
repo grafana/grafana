@@ -23,7 +23,7 @@ const (
 
 func (t CorrelationConfigType) Validate() error {
 	if t != ConfigTypeQuery {
-		return fmt.Errorf("invalid correlation config type: %s", t)
+		return fmt.Errorf("invalid correlation config type: \"%s\"", t)
 	}
 	return nil
 }
@@ -68,7 +68,7 @@ type Correlation struct {
 	SourceUID string `json:"sourceUID" xorm:"pk 'source_uid'"`
 	// UID of the data source the correlation points to
 	// example:PE1C5CBDA0504A6A3
-	TargetUID string `json:"targetUID" xorm:"target_uid"`
+	TargetUID *string `json:"targetUID" xorm:"target_uid"`
 	// Label identifying the correlation
 	// example: My Label
 	Label string `json:"label" xorm:"label"`
@@ -97,7 +97,7 @@ type CreateCorrelationCommand struct {
 	SkipReadOnlyCheck bool   `json:"-"`
 	// Target data source UID to which the correlation is created
 	// example:PE1C5CBDA0504A6A3
-	TargetUID string `json:"targetUID" binding:"Required"`
+	TargetUID *string `json:"targetUID"`
 	// Optional label identifying the correlation
 	// example: My label
 	Label string `json:"label"`
@@ -107,6 +107,16 @@ type CreateCorrelationCommand struct {
 	// Arbitrary configuration object handled in frontend
 	// example: { field: "job", target: { query: "job=app" } }
 	Config CorrelationConfig `json:"config" binding:"Required"`
+}
+
+func (c CreateCorrelationCommand) Validate() error {
+	if err := c.Config.Type.Validate(); err != nil {
+		return err
+	}
+	if c.TargetUID == nil && c.Config.Type == ConfigTypeQuery {
+		return fmt.Errorf("correlations of type \"%s\" must have a targetUID", ConfigTypeQuery)
+	}
+	return nil
 }
 
 // swagger:model
