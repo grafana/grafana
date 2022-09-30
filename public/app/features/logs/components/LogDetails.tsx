@@ -2,17 +2,10 @@ import { css, cx } from '@emotion/css';
 import memoizeOne from 'memoize-one';
 import React, { PureComponent } from 'react';
 
-import {
-  calculateFieldStats,
-  calculateLogsLabelStats,
-  calculateStats,
-  Field,
-  getParser,
-  LinkModel,
-  LogRowModel,
-  GrafanaTheme2,
-} from '@grafana/data';
+import { Field, LinkModel, LogRowModel, GrafanaTheme2 } from '@grafana/data';
 import { withTheme2, Themeable2, Icon, Tooltip } from '@grafana/ui';
+
+import { calculateFieldStats, calculateLogsLabelStats, calculateStats, getParser } from '../utils';
 
 import { LogDetailsRow } from './LogDetailsRow';
 import { getLogRowStyles } from './getLogRowStyles';

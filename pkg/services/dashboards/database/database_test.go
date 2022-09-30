@@ -35,7 +35,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 	setup := func() {
 		sqlStore = sqlstore.InitTestDB(t)
 		starService = starimpl.ProvideService(sqlStore, sqlStore.Cfg)
-		dashboardStore = ProvideDashboardStore(sqlStore, testFeatureToggles, tagimpl.ProvideService(sqlStore))
+		dashboardStore = ProvideDashboardStore(sqlStore, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 		savedFolder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, true, "prod", "webapp")
 		savedDash = insertTestDashboard(t, dashboardStore, "test dash 23", 1, savedFolder.Id, false, "prod", "webapp")
 		insertTestDashboard(t, dashboardStore, "test dash 45", 1, savedFolder.Id, false, "prod")
@@ -486,7 +486,7 @@ func TestIntegrationDashboardDataAccessGivenPluginWithImportedDashboards(t *test
 		t.Skip("skipping integration test")
 	}
 	sqlStore := sqlstore.InitTestDB(t)
-	dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles, tagimpl.ProvideService(sqlStore))
+	dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 	pluginId := "test-app"
 
 	appFolder := insertTestDashboardForPlugin(t, dashboardStore, "app-test", 1, 0, true, pluginId)
@@ -508,7 +508,7 @@ func TestIntegrationDashboard_SortingOptions(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	sqlStore := sqlstore.InitTestDB(t)
-	dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles, tagimpl.ProvideService(sqlStore))
+	dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 
 	dashB := insertTestDashboard(t, dashboardStore, "Beta", 1, 0, false)
 	dashA := insertTestDashboard(t, dashboardStore, "Alfa", 1, 0, false)
@@ -557,7 +557,7 @@ func TestIntegrationDashboard_Filter(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	sqlStore := sqlstore.InitTestDB(t)
-	dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles, tagimpl.ProvideService(sqlStore))
+	dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 	insertTestDashboard(t, dashboardStore, "Alfa", 1, 0, false)
 	dashB := insertTestDashboard(t, dashboardStore, "Beta", 1, 0, false)
 	qNoFilter := &models.FindPersistedDashboardsQuery{

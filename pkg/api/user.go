@@ -51,7 +51,7 @@ func (hs *HTTPServer) GetUserByID(c *models.ReqContext) response.Response {
 func (hs *HTTPServer) getUserUserProfile(c *models.ReqContext, userID int64) response.Response {
 	query := user.GetUserProfileQuery{UserID: userID}
 
-	userProfile, err := hs.userService.GetUserProfile(c.Req.Context(), &query)
+	userProfile, err := hs.userService.GetProfile(c.Req.Context(), &query)
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
 			return response.Error(404, user.ErrUserNotFound.Error(), nil)
