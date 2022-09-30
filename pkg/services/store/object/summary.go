@@ -24,6 +24,20 @@ type ObjectSummary struct {
 	_ interface{}
 }
 
+// Reference to another object outside itself
+// This message is derived from the object body and can be used to search for references.
+// This does not represent a method to declare a reference to another object.
+type ExternalReference struct {
+	// datasource (instance), dashboard (instance),
+	Kind string `json:"kind,omitempty"`
+
+	// prometheus / heatmap, heatamp|prometheus
+	Type string `json:"type,omitempty"` // flavor
+
+	// Unique ID for this object
+	UID string `json:"UID,omitempty"`
+}
+
 // ObjectSummaryBuilder will read an object and create the summary.
 // This should not include values that depend on system state, only the raw object
 type ObjectSummaryBuilder = func(obj *RawObject) (ObjectSummary, error)
