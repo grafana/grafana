@@ -13,6 +13,7 @@ var (
 	ErrCorrelationFailedGenerateUniqueUid = errors.New("failed to generate unique correlation UID")
 	ErrCorrelationNotFound                = errors.New("correlation not found")
 	ErrUpdateCorrelationEmptyParams       = errors.New("not enough parameters to edit correlation")
+	ErrInvalidConfigType                  = errors.New("invalid correlation config type")
 )
 
 type CorrelationConfigType string
@@ -23,7 +24,7 @@ const (
 
 func (t CorrelationConfigType) Validate() error {
 	if t != ConfigTypeQuery {
-		return fmt.Errorf("invalid correlation config type: \"%s\"", t)
+		return fmt.Errorf("%s: \"%s\"", ErrInvalidConfigType, t)
 	}
 	return nil
 }
