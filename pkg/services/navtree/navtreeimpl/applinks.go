@@ -85,7 +85,7 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 		SortWeight: navtree.WeightPlugin,
 	}
 
-	if s.features.IsEnabled(featuremgmt.FlagTopnav) {
+	if topNavEnabled {
 		appLink.Url = s.cfg.AppSubURL + "/a/" + plugin.ID
 	} else {
 		appLink.Url = path.Join(s.cfg.AppSubURL, plugin.DefaultNavURL)

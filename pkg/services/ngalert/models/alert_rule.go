@@ -379,6 +379,11 @@ type ListOrgRuleGroupsQuery struct {
 	Result [][]string
 }
 
+type UpdateRule struct {
+	Existing *AlertRule
+	New      AlertRule
+}
+
 // Condition contains backend expressions and queries and the RefID
 // of the query or expression that will be evaluated.
 type Condition struct {
