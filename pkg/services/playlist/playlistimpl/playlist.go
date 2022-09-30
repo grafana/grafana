@@ -35,11 +35,11 @@ func (s *Service) Update(ctx context.Context, cmd *playlist.UpdatePlaylistComman
 	return s.store.Update(ctx, cmd)
 }
 
-func (s *Service) Get(ctx context.Context, q *playlist.GetPlaylistByUidQuery) (*playlist.Playlist, error) {
+func (s *Service) GetSummary(ctx context.Context, q *playlist.GetPlaylistByUidQuery) (*playlist.Playlist, error) {
 	return s.store.Get(ctx, q)
 }
 
-func (s *Service) GetWithItems(ctx context.Context, q *playlist.GetPlaylistByUidQuery) (*playlist.PlaylistDTO, error) {
+func (s *Service) Get(ctx context.Context, q *playlist.GetPlaylistByUidQuery) (*playlist.PlaylistDTO, error) {
 	v, err := s.store.Get(ctx, q)
 	if err != nil {
 		return nil, err

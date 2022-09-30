@@ -71,7 +71,7 @@ func (hs *HTTPServer) populateDashboardsByTag(ctx context.Context, orgID int64, 
 // Deprecated -- the frontend can do this better
 func (hs *HTTPServer) LoadPlaylistDashboards(ctx context.Context, orgID int64, signedInUser *user.SignedInUser, playlistUID string) (dtos.PlaylistDashboardsSlice, error) {
 	result := make(dtos.PlaylistDashboardsSlice, 0)
-	dto, err := hs.playlistService.GetWithItems(ctx,
+	dto, err := hs.playlistService.Get(ctx,
 		&playlist.GetPlaylistByUidQuery{UID: playlistUID, OrgId: orgID})
 	if err != nil || dto == nil || dto.Items == nil {
 		return result, err
