@@ -64,6 +64,7 @@ func TestSlackNotifier(t *testing.T) {
 			},
 			expMsg: &slackMessage{
 				Channel:   "#testchannel",
+				Text:      "[FIRING:1]  (val1)",
 				Username:  "Grafana",
 				IconEmoji: ":emoji:",
 				Attachments: []attachment{
@@ -99,6 +100,7 @@ func TestSlackNotifier(t *testing.T) {
 			},
 			expMsg: &slackMessage{
 				Channel:   "#testchannel",
+				Text:      "[FIRING:1]  (val1)",
 				Username:  "Grafana",
 				IconEmoji: ":emoji:",
 				Attachments: []attachment{
@@ -134,6 +136,7 @@ func TestSlackNotifier(t *testing.T) {
 			},
 			expMsg: &slackMessage{
 				Channel:   "#testchannel",
+				Text:      "[FIRING:1]  (val1)",
 				Username:  "Grafana",
 				IconEmoji: ":emoji:",
 				Attachments: []attachment{
@@ -177,6 +180,7 @@ func TestSlackNotifier(t *testing.T) {
 			},
 			expMsg: &slackMessage{
 				Channel:   "#testchannel",
+				Text:      "2 firing, 0 resolved",
 				Username:  "Grafana",
 				IconEmoji: ":emoji:",
 				Attachments: []attachment{
@@ -225,6 +229,7 @@ func TestSlackNotifier(t *testing.T) {
 			},
 			expMsg: &slackMessage{
 				Channel:   "#testchannel",
+				Text:      "[FIRING:1]  (val1)",
 				Username:  "Grafana",
 				IconEmoji: ":emoji:",
 				Attachments: []attachment{
@@ -266,9 +271,10 @@ func TestSlackNotifier(t *testing.T) {
 				// TODO: allow changing the associated values for different tests.
 				NotificationService: notificationService,
 				DecryptFunc:         decryptFn,
+				Template:            tmpl,
 			}
 
-			cfg, err := NewSlackConfig(fc)
+			pn, err := buildSlackNotifier(fc)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())
@@ -301,7 +307,6 @@ func TestSlackNotifier(t *testing.T) {
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
-			pn := NewSlackNotifier(cfg, fc.ImageStore, fc.NotificationService, tmpl)
 			ok, err := pn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.Error(t, err)

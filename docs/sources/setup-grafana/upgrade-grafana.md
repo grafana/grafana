@@ -17,7 +17,7 @@ weight: 500
 We recommend that you upgrade Grafana often to stay up to date with the latest fixes and enhancements.
 In order to make this a reality, Grafana upgrades are backward compatible and the upgrade process is simple and quick.
 
-Upgrading is generally safe (between many minor and one major version) and dashboards and graphs will look the same. There may be minor breaking changes in some edge cases, which are outlined in the [Release Notes](https://community.grafana.com/c/releases) and [Changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md)
+Upgrading is generally safe (between many minor and one major version) and dashboards and graphs will look the same. There may be minor breaking changes in some edge cases, which are outlined in the [Release Notes](https://grafana.com/docs/grafana/latest/release-notes/) and [Changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md)
 
 ## Backup
 
@@ -129,7 +129,7 @@ grafana-cli plugins update-all
 
 The dashboard grid layout engine has changed. All dashboards will be automatically upgraded to new positioning system when you load them in v5. Dashboards saved in v5 will not work in older versions of Grafana. Some external panel plugins might need to be updated to work properly.
 
-For more details on the new panel positioning system, refer to [panel size position]({{< relref "../dashboards/json-model/#panel-size-position" >}})
+For more details on the new panel positioning system, refer to [panel size position]({{< relref "../dashboards/build-dashboards/view-dashboard-json-model/#panel-size-and-position" >}}).
 
 ## Upgrading to v5.2
 
@@ -246,7 +246,7 @@ change the `[security]` setting `cookie_secure` to `true` and use HTTPS when `co
 
 ### PhantomJS removed
 
-PhantomJS was deprecated in [Grafana v6.4]({{< relref "../whatsnew/whats-new-in-v6-4/#phantomjs-deprecation" >}}) and starting from Grafana v7.0.0, all PhantomJS support has been removed. This means that Grafana no longer ships with a built-in image renderer, and we advise you to install the [Grafana Image Renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer).
+PhantomJS was deprecated in Grafana v6.4 and starting from Grafana v7.0.0, all PhantomJS support has been removed. This means that Grafana no longer ships with a built-in image renderer, and we advise you to install the [Grafana Image Renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer).
 
 ### Dashboard minimum refresh interval enforced
 
@@ -374,7 +374,7 @@ ORDER BY time
 There are two possible workarounds to resolve this problem:
 
 1. In Grafana v8.0.3, use an alias of the string column selected as `metric`. for example, `hostname as metric`.
-2. Use the [Standard field definitions' display name]({{< relref "../panels/standard-field-definitions/#display-name" >}}) to format the alias. For the preceding example query, you would use `${__field.labels.hostname}` option.
+2. Use the [Standard field definitions' display name]({{< relref "../panels/configure-standard-options/#display-name" >}}) to format the alias. For the preceding example query, you would use `${__field.labels.hostname}` option.
 
 For more information, refer to the our relational databases documentation of [Postgres]({{< relref "../datasources/postgres/#time-series-queries" >}}), [MySQL]({{< relref "../datasources/mysql/#time-series-queries" >}}), [Microsoft SQL Server]({{< relref "../datasources/mssql/#time-series-queries" >}}).
 

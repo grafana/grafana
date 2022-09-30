@@ -12,6 +12,7 @@ import (
 const (
 	alertRuleTarget = "alert_rule"
 	dashboardTarget = "dashboard"
+	filesTarget     = "file"
 )
 
 type targetCount struct {
@@ -255,7 +256,19 @@ func (ss *SQLStore) UpdateUserQuota(ctx context.Context, cmd *models.UpdateUserQ
 func (ss *SQLStore) GetGlobalQuotaByTarget(ctx context.Context, query *models.GetGlobalQuotaByTargetQuery) error {
 	return ss.WithDbSession(ctx, func(sess *DBSession) error {
 		var used int64
-		if query.Target != alertRuleTarget || query.UnifiedAlertingEnabled {
+
+		if query.Target == filesTarget {
+			// get quota used.
+			rawSQL := fmt.Sprintf("SELECT COUNT(*) AS count FROM %s",
+				dialect.Quote("file"))
+
+			notFolderCondition := fmt.Sprintf(" WHERE path NOT LIKE '%s'", "%/")
+			resp := make([]*targetCount, 0)
+			if err := sess.SQL(rawSQL + notFolderCondition).Find(&resp); err != nil {
+				return err
+			}
+			used = resp[0].Count
+		} else if query.Target != alertRuleTarget || query.UnifiedAlertingEnabled {
 			// get quota used.
 			rawSQL := fmt.Sprintf("SELECT COUNT(*) AS count FROM %s",
 				dialect.Quote(query.Target))

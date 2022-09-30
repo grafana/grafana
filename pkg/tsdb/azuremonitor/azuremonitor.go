@@ -266,7 +266,10 @@ func checkAzureMonitorResourceGraphHealth(dsInfo types.DatasourceInfo) (*http.Re
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	dsInfo, err := s.getDSInfo(req.PluginContext)
 	if err != nil {
-		return nil, err
+		return &backend.CheckHealthResult{
+			Status:  backend.HealthStatusError,
+			Message: err.Error(),
+		}, nil
 	}
 
 	status := backend.HealthStatusOk

@@ -9,18 +9,18 @@ import (
 )
 
 func TestHashUIDs(t *testing.T) {
-	r := []*models.SchedulableAlertRule{{UID: "foo"}, {UID: "bar"}}
+	r := []*models.AlertRule{{UID: "foo"}, {UID: "bar"}}
 	assert.Equal(t, uint64(0xade76f55c76a1c48), hashUIDs(r))
 	// expect the same hash irrespective of order
-	r = []*models.SchedulableAlertRule{{UID: "bar"}, {UID: "foo"}}
+	r = []*models.AlertRule{{UID: "bar"}, {UID: "foo"}}
 	assert.Equal(t, uint64(0xade76f55c76a1c48), hashUIDs(r))
 	// expect a different hash
-	r = []*models.SchedulableAlertRule{{UID: "bar"}}
+	r = []*models.AlertRule{{UID: "bar"}}
 	assert.Equal(t, uint64(0xd8d9a5186bad3880), hashUIDs(r))
 	// slice with no items
-	r = []*models.SchedulableAlertRule{}
+	r = []*models.AlertRule{}
 	assert.Equal(t, uint64(0xcbf29ce484222325), hashUIDs(r))
 	// a different slice with no items should have the same hash
-	r = []*models.SchedulableAlertRule{}
+	r = []*models.AlertRule{}
 	assert.Equal(t, uint64(0xcbf29ce484222325), hashUIDs(r))
 }

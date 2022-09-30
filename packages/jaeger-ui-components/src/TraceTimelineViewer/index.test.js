@@ -24,6 +24,13 @@ import TimelineHeaderRow from './TimelineHeaderRow';
 
 import TraceTimelineViewer from './index';
 
+jest.mock('@grafana/runtime', () => {
+  return {
+    ...jest.requireActual('@grafana/runtime'),
+    reportInteraction: jest.fn(),
+  };
+});
+
 describe('<TraceTimelineViewer>', () => {
   const trace = transformTraceData(traceGenerator.trace({}));
   const props = {

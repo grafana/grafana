@@ -1,9 +1,8 @@
 import React, { ChangeEvent, useState } from 'react';
 
 import { QueryEditorProps } from '@grafana/data';
-import { EditorField, EditorRow, Space } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { Input } from '@grafana/ui';
+import { EditorField, EditorRow, Input, Space } from '@grafana/ui';
 
 import { MathExpressionQueryField, MetricStatEditor, SQLBuilderEditor, SQLCodeEditor } from '../';
 import { CloudWatchDatasource } from '../../datasource';

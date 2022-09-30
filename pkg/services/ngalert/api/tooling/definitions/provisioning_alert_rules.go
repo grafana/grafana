@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/prometheus/common/model"
 )
 
 // swagger:route GET /api/v1/provisioning/alert-rules/{UID} provisioning stable RouteGetAlertRule
@@ -11,7 +12,7 @@ import (
 // Get a specific alert rule by UID.
 //
 //     Responses:
-//       200: AlertRule
+//       200: ProvisionedAlertRule
 //       404: description: Not found.
 
 // swagger:route POST /api/v1/provisioning/alert-rules provisioning stable RoutePostAlertRule
@@ -22,7 +23,7 @@ import (
 //     - application/json
 //
 //     Responses:
-//       201: AlertRule
+//       201: ProvisionedAlertRule
 //       400: ValidationError
 
 // swagger:route PUT /api/v1/provisioning/alert-rules/{UID} provisioning stable RoutePutAlertRule
@@ -33,7 +34,7 @@ import (
 //     - application/json
 //
 //     Responses:
-//       200: AlertRule
+//       200: ProvisionedAlertRule
 //       400: ValidationError
 
 // swagger:route DELETE /api/v1/provisioning/alert-rules/{UID} provisioning stable RouteDeleteAlertRule
@@ -53,10 +54,10 @@ type AlertRuleUIDReference struct {
 // swagger:parameters RoutePostAlertRule RoutePutAlertRule
 type AlertRulePayload struct {
 	// in:body
-	Body AlertRule
+	Body ProvisionedAlertRule
 }
 
-type AlertRule struct {
+type ProvisionedAlertRule struct {
 	ID  int64  `json:"id"`
 	UID string `json:"uid"`
 	// required: true
@@ -87,7 +88,7 @@ type AlertRule struct {
 	// required: true
 	ExecErrState models.ExecutionErrorState `json:"execErrState"`
 	// required: true
-	For time.Duration `json:"for"`
+	For model.Duration `json:"for"`
 	// example: {"runbook_url": "https://supercoolrunbook.com/page/13"}
 	Annotations map[string]string `json:"annotations,omitempty"`
 	// example: {"team": "sre-team-1"}
@@ -96,7 +97,11 @@ type AlertRule struct {
 	Provenance models.Provenance `json:"provenance,omitempty"`
 }
 
-func (a *AlertRule) UpstreamModel() models.AlertRule {
+func (a *ProvisionedAlertRule) UpstreamModel() (models.AlertRule, error) {
+	forDur, err := time.ParseDuration(a.For.String())
+	if err != nil {
+		return models.AlertRule{}, err
+	}
 	return models.AlertRule{
 		ID:           a.ID,
 		UID:          a.UID,
@@ -109,21 +114,21 @@ func (a *AlertRule) UpstreamModel() models.AlertRule {
 		Updated:      a.Updated,
 		NoDataState:  a.NoDataState,
 		ExecErrState: a.ExecErrState,
-		For:          a.For,
+		For:          forDur,
 		Annotations:  a.Annotations,
 		Labels:       a.Labels,
-	}
+	}, nil
 }
 
-func NewAlertRule(rule models.AlertRule, provenance models.Provenance) AlertRule {
-	return AlertRule{
+func NewAlertRule(rule models.AlertRule, provenance models.Provenance) ProvisionedAlertRule {
+	return ProvisionedAlertRule{
 		ID:           rule.ID,
 		UID:          rule.UID,
 		OrgID:        rule.OrgID,
 		FolderUID:    rule.NamespaceUID,
 		RuleGroup:    rule.RuleGroup,
 		Title:        rule.Title,
-		For:          rule.For,
+		For:          model.Duration(rule.For),
 		Condition:    rule.Condition,
 		Data:         rule.Data,
 		Updated:      rule.Updated,
@@ -134,6 +139,14 @@ func NewAlertRule(rule models.AlertRule, provenance models.Provenance) AlertRule
 		Provenance:   provenance,
 	}
 }
+
+// swagger:route GET /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group} provisioning stable RouteGetAlertRuleGroup
+//
+// Get a rule group.
+//
+//     Responses:
+//       200: AlertRuleGroup
+//       404: description: Not found.
 
 // swagger:route PUT /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group} provisioning stable RoutePutAlertRuleGroup
 //
@@ -146,13 +159,13 @@ func NewAlertRule(rule models.AlertRule, provenance models.Provenance) AlertRule
 //       200: AlertRuleGroup
 //       400: ValidationError
 
-// swagger:parameters RoutePutAlertRuleGroup
+// swagger:parameters RouteGetAlertRuleGroup RoutePutAlertRuleGroup
 type FolderUIDPathParam struct {
 	// in:path
 	FolderUID string `json:"FolderUID"`
 }
 
-// swagger:parameters RoutePutAlertRuleGroup
+// swagger:parameters RouteGetAlertRuleGroup RoutePutAlertRuleGroup
 type RuleGroupPathParam struct {
 	// in:path
 	Group string `json:"Group"`
@@ -164,6 +177,44 @@ type AlertRuleGroupPayload struct {
 	Body AlertRuleGroup
 }
 
-type AlertRuleGroup struct {
+// swagger:model
+type AlertRuleGroupMetadata struct {
 	Interval int64 `json:"interval"`
+}
+
+// swagger:model
+type AlertRuleGroup struct {
+	Title     string                 `json:"title"`
+	FolderUID string                 `json:"folderUid"`
+	Interval  int64                  `json:"interval"`
+	Rules     []ProvisionedAlertRule `json:"rules"`
+}
+
+func (a *AlertRuleGroup) ToModel() (models.AlertRuleGroup, error) {
+	ruleGroup := models.AlertRuleGroup{
+		Title:     a.Title,
+		FolderUID: a.FolderUID,
+		Interval:  a.Interval,
+	}
+	for i := range a.Rules {
+		converted, err := a.Rules[i].UpstreamModel()
+		if err != nil {
+			return models.AlertRuleGroup{}, err
+		}
+		ruleGroup.Rules = append(ruleGroup.Rules, converted)
+	}
+	return ruleGroup, nil
+}
+
+func NewAlertRuleGroupFromModel(d models.AlertRuleGroup) AlertRuleGroup {
+	rules := make([]ProvisionedAlertRule, 0, len(d.Rules))
+	for i := range d.Rules {
+		rules = append(rules, NewAlertRule(d.Rules[i], d.Provenance))
+	}
+	return AlertRuleGroup{
+		Title:     d.Title,
+		FolderUID: d.FolderUID,
+		Interval:  d.Interval,
+		Rules:     rules,
+	}
 }

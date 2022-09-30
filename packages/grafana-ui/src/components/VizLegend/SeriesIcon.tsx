@@ -35,7 +35,7 @@ export const SeriesIcon = React.forwardRef<HTMLDivElement, Props>(
       marginRight: '8px',
     };
 
-    return <div ref={ref} className={className} style={styles} {...restProps} />;
+    return <div data-testid="series-icon" ref={ref} className={className} style={styles} {...restProps} />;
   }
 );
 

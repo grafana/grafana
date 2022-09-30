@@ -1,7 +1,7 @@
 ---
 aliases:
+  - /docs/grafana/latest/alerting/contact-points/message-templating/example-template-functions/
   - /docs/grafana/latest/alerting/fundamentals/annotation-label/example-template-functions/
-  - /docs/grafana/latest/alerting/unified-alerting/fundamentals/annotation-label/template-functions/
 keywords:
   - grafana
   - alerting

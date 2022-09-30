@@ -41,6 +41,8 @@ const defaultResult: any = {
   panelId: 13,
   dashboardId: 14, // deliberately different from panelId
   id: 14,
+  uid: '7MeksYbmk',
+  dashboardUID: '7MeksYbmk',
   url: '/d/asdkjhajksd/some-dash',
 };
 
@@ -53,7 +55,7 @@ async function setupTestContext({
   const getMock = jest.spyOn(backendSrv, 'get');
   getMock.mockResolvedValue(results);
 
-  const dash: any = { id: 1, formatDate: (time: number) => new Date(time).toISOString() };
+  const dash: any = { uid: 'srx16xR4z', formatDate: (time: number) => new Date(time).toISOString() };
   const dashSrv: any = { getCurrent: () => dash };
   setDashboardSrv(dashSrv);
   const pushSpy = jest.spyOn(locationService, 'push');
@@ -99,7 +101,7 @@ describe('AnnoListPanel', () => {
       expect(getMock).toHaveBeenCalledWith(
         '/api/annotations',
         {
-          dashboardId: 1,
+          dashboardUID: 'srx16xR4z',
           limit: 10,
           tags: ['tag A', 'tag B'],
           type: 'annotation',
@@ -205,7 +207,7 @@ describe('AnnoListPanel', () => {
         await userEvent.click(screen.getByText(/result text/i));
         await waitFor(() => expect(getMock).toHaveBeenCalledTimes(1));
 
-        expect(getMock).toHaveBeenCalledWith('/api/search', { dashboardIds: 14 });
+        expect(getMock).toHaveBeenCalledWith('/api/search', { dashboardUIDs: '7MeksYbmk' });
         expect(pushSpy).toHaveBeenCalledTimes(1);
         expect(pushSpy).toHaveBeenCalledWith('/d/asdkjhajksd/some-dash?from=1609458600000&to=1609459800000');
       });
@@ -223,7 +225,7 @@ describe('AnnoListPanel', () => {
         expect(getMock).toHaveBeenCalledWith(
           '/api/annotations',
           {
-            dashboardId: 1,
+            dashboardUID: 'srx16xR4z',
             limit: 10,
             tags: ['tag A', 'tag B', 'Result tag B'],
             type: 'annotation',
@@ -247,7 +249,7 @@ describe('AnnoListPanel', () => {
         expect(getMock).toHaveBeenCalledWith(
           '/api/annotations',
           {
-            dashboardId: 1,
+            dashboardUID: 'srx16xR4z',
             limit: 10,
             tags: ['tag A', 'tag B'],
             type: 'annotation',

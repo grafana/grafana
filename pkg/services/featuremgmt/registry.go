@@ -63,21 +63,10 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:         "tempoServiceGraph",
-			Description:  "show service",
-			State:        FeatureStateBeta,
-			FrontendOnly: true,
-		},
-		{
 			Name:         "tempoApmTable",
 			Description:  "Show APM table",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
-		},
-		{
-			Name:        "prometheus_azure_auth",
-			Description: "Experimental. Azure authentication for Prometheus datasource",
-			State:       FeatureStateBeta,
 		},
 		{
 			Name:        "prometheusAzureOverrideAudience",
@@ -142,14 +131,14 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:            "export",
-			Description:     "Export grafana instance (to git, etc)",
+			Name:            "dashboardsFromStorage",
+			Description:     "Load dashboards from the generic storage interface",
 			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
+			RequiresDevMode: true, // Also a gate on automatic git storage (for now)
 		},
 		{
-			Name:            "storageLocalUpload",
-			Description:     "allow uploads to local storage",
+			Name:            "export",
+			Description:     "Export grafana instance (to git, etc)",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
 		},
@@ -167,6 +156,12 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:         "exploreMixedDatasource",
+			Description:  "Enable mixed datasource in Explore",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
 			Name:         "tracing",
 			Description:  "Adds trace ID to error notifications",
 			State:        FeatureStateAlpha,
@@ -175,6 +170,11 @@ var (
 		{
 			Name:        "commandPalette",
 			Description: "Enable command palette",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "correlations",
+			Description: "Correlations page",
 			State:       FeatureStateAlpha,
 		},
 		{
@@ -188,12 +188,6 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:         "azureMonitorExperimentalUI",
-			Description:  "Use grafana-experimental UI in Azure Monitor",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
-		},
-		{
 			Name:         "traceToMetrics",
 			Description:  "Enable trace to metrics links",
 			State:        FeatureStateAlpha,
@@ -202,6 +196,11 @@ var (
 		{
 			Name:        "prometheusStreamingJSONParser",
 			Description: "Enable streaming JSON parser for Prometheus datasource",
+			State:       FeatureStateBeta,
+		},
+		{
+			Name:        "prometheusStreamingJSONParserTest",
+			Description: "Run both old and streaming requests and log differences",
 			State:       FeatureStateBeta,
 		},
 		{
@@ -228,15 +227,21 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:         "scenes",
+			Description:  "Experimental framework to build interactive dashboards",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
 			Name:        "useLegacyHeatmapPanel",
 			Description: "Continue to use the angular/flot based heatmap panel",
 			State:       FeatureStateStable,
 		},
 		{
-			Name:         "cloudMonitoringExperimentalUI",
-			Description:  "Use grafana-experimental UI in Cloud Monitoring",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
+			Name:            "disableSecretsCompatibility",
+			Description:     "Disable duplicated secret storage in legacy tables",
+			State:           FeatureStateAlpha,
+			RequiresRestart: true,
 		},
 		{
 			Name:        "logRequestsInstrumentedAsUnknown",
@@ -261,6 +266,32 @@ var (
 			Name:        "customBranding",
 			Description: "Replaces whitelabeling with the new custom branding feature",
 			State:       FeatureStateAlpha,
+		},
+		{
+			Name:            "grpcServer",
+			Description:     "Run GRPC server",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		}, {
+			Name:        "traceqlEditor",
+			Description: "Show the TraceQL editor in the explore page",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:         "redshiftAsyncQueryDataSupport",
+			Description:  "Enable async query data support for Redshift",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
+			Name:         "athenaAsyncQueryDataSupport",
+			Description:  "Enable async query data support for Athena",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
+			Name:        "increaseInMemDatabaseQueryCache",
+			Description: "Enable more in memory caching for database queries",
 		},
 	}
 )

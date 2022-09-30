@@ -35,7 +35,10 @@ function countEslintErrors() {
           '@typescript-eslint/no-explicit-any': 'error',
         };
 
-        if (!filePath.endsWith('.test.tsx') && !filePath.endsWith('.test.ts')) {
+        const isTestFile =
+          filePath.endsWith('.test.tsx') || filePath.endsWith('.test.ts') || filePath.includes('__mocks__');
+
+        if (!isTestFile) {
           rules['@typescript-eslint/consistent-type-assertions'] = [
             'error',
             {

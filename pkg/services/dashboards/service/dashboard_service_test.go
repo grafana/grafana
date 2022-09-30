@@ -7,23 +7,24 @@ import (
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"github.com/xorcare/pointer"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func TestIntegrationDashboardService(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+func TestDashboardService(t *testing.T) {
 	t.Run("Dashboard service tests", func(t *testing.T) {
 		fakeStore := dashboards.FakeDashboardStore{}
 		defer fakeStore.AssertExpectations(t)
+
 		service := &DashboardServiceImpl{
+			cfg:                setting.NewCfg(),
 			log:                log.New("test.logger"),
 			dashboardStore:     &fakeStore,
 			dashAlertExtractor: &dummyDashAlertExtractor{},
@@ -76,7 +77,7 @@ func TestIntegrationDashboardService(t *testing.T) {
 				for _, tc := range testCases {
 					dto.Dashboard = models.NewDashboard("title")
 					dto.Dashboard.SetUid(tc.Uid)
-					dto.User = &models.SignedInUser{}
+					dto.User = &user.SignedInUser{}
 
 					if tc.Error == nil {
 						fakeStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything).Return(true, nil).Once()
@@ -92,7 +93,7 @@ func TestIntegrationDashboardService(t *testing.T) {
 
 				dto.Dashboard = models.NewDashboard("Dash")
 				dto.Dashboard.SetId(3)
-				dto.User = &models.SignedInUser{UserId: 1}
+				dto.User = &user.SignedInUser{UserID: 1}
 				_, err := service.SaveDashboard(context.Background(), dto, false)
 				require.Equal(t, err, dashboards.ErrDashboardCannotSaveProvisionedDashboard)
 			})
@@ -100,24 +101,38 @@ func TestIntegrationDashboardService(t *testing.T) {
 			t.Run("Should not return validation error if dashboard is provisioned but UI updates allowed", func(t *testing.T) {
 				fakeStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything).Return(true, nil).Once()
 				fakeStore.On("SaveDashboard", mock.Anything).Return(&models.Dashboard{Data: simplejson.New()}, nil).Once()
-				fakeStore.On("SaveAlerts", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 				dto.Dashboard = models.NewDashboard("Dash")
 				dto.Dashboard.SetId(3)
-				dto.User = &models.SignedInUser{UserId: 1}
+				dto.User = &user.SignedInUser{UserID: 1}
 				_, err := service.SaveDashboard(context.Background(), dto, true)
 				require.NoError(t, err)
 			})
 
 			t.Run("Should return validation error if alert data is invalid", func(t *testing.T) {
+				origAlertingEnabledSet := setting.AlertingEnabled != nil
+				origAlertingEnabledVal := false
+				if origAlertingEnabledSet {
+					origAlertingEnabledVal = *setting.AlertingEnabled
+				}
+				setting.AlertingEnabled = pointer.Bool(true)
+				t.Cleanup(func() {
+					if !origAlertingEnabledSet {
+						setting.AlertingEnabled = nil
+					} else {
+						setting.AlertingEnabled = &origAlertingEnabledVal
+					}
+				})
+
 				fakeStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything).Return(true, nil).Once()
 				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything).Return(nil, nil).Once()
 				fakeStore.On("SaveDashboard", mock.Anything).Return(&models.Dashboard{Data: simplejson.New()}, nil).Once()
 				fakeStore.On("SaveAlerts", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("alert validation error")).Once()
 
 				dto.Dashboard = models.NewDashboard("Dash")
-				dto.User = &models.SignedInUser{UserId: 1}
+				dto.User = &user.SignedInUser{UserID: 1}
 				_, err := service.SaveDashboard(context.Background(), dto, false)
+				require.Error(t, err)
 				require.Equal(t, err.Error(), "alert validation error")
 			})
 		})
@@ -128,11 +143,10 @@ func TestIntegrationDashboardService(t *testing.T) {
 			t.Run("Should not return validation error if dashboard is provisioned", func(t *testing.T) {
 				fakeStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything).Return(true, nil).Once()
 				fakeStore.On("SaveProvisionedDashboard", mock.Anything, mock.Anything).Return(&models.Dashboard{Data: simplejson.New()}, nil).Once()
-				fakeStore.On("SaveAlerts", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 				dto.Dashboard = models.NewDashboard("Dash")
 				dto.Dashboard.SetId(3)
-				dto.User = &models.SignedInUser{UserId: 1}
+				dto.User = &user.SignedInUser{UserID: 1}
 				_, err := service.SaveProvisionedDashboard(context.Background(), dto, nil)
 				require.NoError(t, err)
 			})
@@ -140,7 +154,6 @@ func TestIntegrationDashboardService(t *testing.T) {
 			t.Run("Should override invalid refresh interval if dashboard is provisioned", func(t *testing.T) {
 				fakeStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything).Return(true, nil).Once()
 				fakeStore.On("SaveProvisionedDashboard", mock.Anything, mock.Anything).Return(&models.Dashboard{Data: simplejson.New()}, nil).Once()
-				fakeStore.On("SaveAlerts", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 				oldRefreshInterval := setting.MinRefreshInterval
 				setting.MinRefreshInterval = "5m"
@@ -148,7 +161,7 @@ func TestIntegrationDashboardService(t *testing.T) {
 
 				dto.Dashboard = models.NewDashboard("Dash")
 				dto.Dashboard.SetId(3)
-				dto.User = &models.SignedInUser{UserId: 1}
+				dto.User = &user.SignedInUser{UserID: 1}
 				dto.Dashboard.Data.Set("refresh", "1s")
 				_, err := service.SaveProvisionedDashboard(context.Background(), dto, nil)
 				require.NoError(t, err)
@@ -165,7 +178,7 @@ func TestIntegrationDashboardService(t *testing.T) {
 
 				dto.Dashboard = models.NewDashboard("Dash")
 				dto.Dashboard.SetId(3)
-				dto.User = &models.SignedInUser{UserId: 1}
+				dto.User = &user.SignedInUser{UserID: 1}
 				_, err := service.ImportDashboard(context.Background(), dto)
 				require.Equal(t, err, dashboards.ErrDashboardCannotSaveProvisionedDashboard)
 			})
@@ -201,6 +214,28 @@ func TestIntegrationDashboardService(t *testing.T) {
 				err := service.DeleteDashboard(context.Background(), 1, 1)
 				require.NoError(t, err)
 			})
+
+			// t.Run("Delete ACL by user", func(t *testing.T) {
+			// 	fakeStore := dashboards.FakeDashboardStore{}
+			// 	args := 1
+			// 	fakeStore.On("DeleteACLByUser", mock.Anything, args).Return(nil).Once()
+			// 	err := service.DeleteACLByUser(context.Background(), 1)
+			// 	require.NoError(t, err)
+			// })
 		})
+	})
+
+	t.Run("Delete user by acl", func(t *testing.T) {
+		fakeStore := dashboards.FakeDashboardStore{}
+		defer fakeStore.AssertExpectations(t)
+
+		service := &DashboardServiceImpl{
+			cfg:                setting.NewCfg(),
+			log:                log.New("test.logger"),
+			dashboardStore:     &fakeStore,
+			dashAlertExtractor: &dummyDashAlertExtractor{},
+		}
+		err := service.DeleteACLByUser(context.Background(), 1)
+		require.NoError(t, err)
 	})
 }

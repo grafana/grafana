@@ -22,25 +22,27 @@ const getOriginalActionType = (type: string) => {
   return type.substring(0, separator);
 };
 
+export const initialState: ReducerState = {
+  items: pluginsAdapter.getInitialState(),
+  requests: {},
+  settings: {
+    displayMode: PluginListDisplayMode.Grid,
+  },
+  // Backwards compatibility
+  // (we need to have the following fields in the store as well to be backwards compatible with other parts of Grafana)
+  // TODO<remove once the "plugin_admin_enabled" feature flag is removed>
+  plugins: [],
+  errors: [],
+  searchQuery: '',
+  hasFetched: false,
+  dashboards: [],
+  isLoadingPluginDashboards: false,
+  panels: {},
+};
+
 const slice = createSlice({
   name: 'plugins',
-  initialState: {
-    items: pluginsAdapter.getInitialState(),
-    requests: {},
-    settings: {
-      displayMode: PluginListDisplayMode.Grid,
-    },
-    // Backwards compatibility
-    // (we need to have the following fields in the store as well to be backwards compatible with other parts of Grafana)
-    // TODO<remove once the "plugin_admin_enabled" feature flag is removed>
-    plugins: [],
-    errors: [],
-    searchQuery: '',
-    hasFetched: false,
-    dashboards: [],
-    isLoadingPluginDashboards: false,
-    panels: {},
-  } as ReducerState,
+  initialState,
   reducers: {
     setDisplayMode(state, action: PayloadAction<PluginListDisplayMode>) {
       state.settings.displayMode = action.payload;

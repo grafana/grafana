@@ -1,6 +1,6 @@
 import { Location } from 'history';
 
-import { NavModelItem } from '@grafana/data';
+import { GrafanaConfig, locationUtil, NavModelItem } from '@grafana/data';
 import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
 
 import { updateConfig } from '../../config';
@@ -62,7 +62,7 @@ describe('enrichConfigItems', () => {
     const contextSrv = new ContextSrv();
     contextSrv.user.isSignedIn = false;
     setContextSrv(contextSrv);
-    const enrichedConfigItems = enrichConfigItems(mockItems, mockLocation, jest.fn());
+    const enrichedConfigItems = enrichConfigItems(mockItems, mockLocation);
     const signInNode = enrichedConfigItems.find((item) => item.id === 'signin');
     expect(signInNode).toBeDefined();
   });
@@ -71,7 +71,7 @@ describe('enrichConfigItems', () => {
     const contextSrv = new ContextSrv();
     contextSrv.user.isSignedIn = true;
     setContextSrv(contextSrv);
-    const enrichedConfigItems = enrichConfigItems(mockItems, mockLocation, jest.fn());
+    const enrichedConfigItems = enrichConfigItems(mockItems, mockLocation);
     const signInNode = enrichedConfigItems.find((item) => item.id === 'signin');
     expect(signInNode).toBeDefined();
   });
@@ -80,7 +80,7 @@ describe('enrichConfigItems', () => {
     const contextSrv = new ContextSrv();
     contextSrv.user.orgCount = 1;
     setContextSrv(contextSrv);
-    const enrichedConfigItems = enrichConfigItems(mockItems, mockLocation, jest.fn());
+    const enrichedConfigItems = enrichConfigItems(mockItems, mockLocation);
     const profileNode = enrichedConfigItems.find((item) => item.id === 'profile');
     expect(profileNode!.children).toBeUndefined();
   });
@@ -89,7 +89,7 @@ describe('enrichConfigItems', () => {
     const contextSrv = new ContextSrv();
     contextSrv.user.orgCount = 2;
     setContextSrv(contextSrv);
-    const enrichedConfigItems = enrichConfigItems(mockItems, mockLocation, jest.fn());
+    const enrichedConfigItems = enrichConfigItems(mockItems, mockLocation);
     const profileNode = enrichedConfigItems.find((item) => item.id === 'profile');
     expect(profileNode!.children).toContainEqual(
       expect.objectContaining({
@@ -101,7 +101,7 @@ describe('enrichConfigItems', () => {
   it('enhances the help node with extra child links', () => {
     const contextSrv = new ContextSrv();
     setContextSrv(contextSrv);
-    const enrichedConfigItems = enrichConfigItems(mockItems, mockLocation, jest.fn());
+    const enrichedConfigItems = enrichConfigItems(mockItems, mockLocation);
     const helpNode = enrichedConfigItems.find((item) => item.id === 'help');
     expect(helpNode!.children).toContainEqual(
       expect.objectContaining({
@@ -167,6 +167,10 @@ describe('getActiveItem', () => {
       url: '/itemWithQueryParam?foo=bar',
     },
     {
+      text: 'Item after subpath',
+      url: '/subUrl/itemAfterSubpath',
+    },
+    {
       text: 'Item with children',
       url: '/itemWithChildren',
       children: [
@@ -193,12 +197,27 @@ describe('getActiveItem', () => {
       url: '/d/moreSpecificDashboard',
     },
   ];
+  beforeEach(() => {
+    locationUtil.initialize({
+      config: { appSubUrl: '/subUrl' } as GrafanaConfig,
+      getVariablesUrlParams: () => ({}),
+      getTimeRangeForUrl: () => ({ from: 'now-7d', to: 'now' }),
+    });
+  });
 
   it('returns an exact match at the top level', () => {
     const mockPathName = '/item';
     expect(getActiveItem(mockNavTree, mockPathName)).toEqual({
       text: 'Item',
       url: '/item',
+    });
+  });
+
+  it('returns an exact match ignoring root subpath', () => {
+    const mockPathName = '/itemAfterSubpath';
+    expect(getActiveItem(mockNavTree, mockPathName)).toEqual({
+      text: 'Item after subpath',
+      url: '/subUrl/itemAfterSubpath',
     });
   });
 

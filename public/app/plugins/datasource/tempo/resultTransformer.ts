@@ -5,11 +5,9 @@ import differenceInHours from 'date-fns/differenceInHours';
 import formatDistance from 'date-fns/formatDistance';
 
 import {
-  ArrayVector,
   DataFrame,
   DataQueryResponse,
   DataSourceInstanceSettings,
-  Field,
   FieldType,
   MutableDataFrame,
   TraceKeyValuePair,
@@ -20,6 +18,7 @@ import {
 } from '@grafana/data';
 
 import { createGraphFrames } from './graphTransform';
+import { Span, TraceSearchMetadata } from './types';
 
 export function createTableFrame(
   logsFrame: DataFrame,
@@ -534,20 +533,10 @@ function getOTLPReferences(
 }
 
 export function transformTrace(response: DataQueryResponse, nodeGraph = false): DataQueryResponse {
-  // We need to parse some of the fields which contain stringified json.
-  // Seems like we can't just map the values as the frame we got from backend has some default processing
-  // and will stringify the json back when we try to set it. So we create a new field and swap it instead.
   const frame: DataFrame = response.data[0];
 
   if (!frame) {
     return emptyDataQueryResponse;
-  }
-
-  try {
-    parseJsonFields(frame);
-  } catch (error) {
-    console.error(error);
-    return { error: { message: 'Unable to parse trace response: ' + error }, data: [] };
   }
 
   let data = [...response.data];
@@ -561,39 +550,7 @@ export function transformTrace(response: DataQueryResponse, nodeGraph = false): 
   };
 }
 
-/**
- * Change fields which are json string into JS objects. Modifies the frame in place.
- */
-function parseJsonFields(frame: DataFrame) {
-  for (const fieldName of ['serviceTags', 'logs', 'tags', 'references']) {
-    const field = frame.fields.find((f) => f.name === fieldName);
-    if (field) {
-      const fieldIndex = frame.fields.indexOf(field);
-      const values = new ArrayVector();
-      const newField: Field = {
-        ...field,
-        values,
-        type: FieldType.other,
-      };
-
-      for (let i = 0; i < field.values.length; i++) {
-        const value = field.values.get(i);
-        values.set(i, value === '' ? undefined : JSON.parse(value));
-      }
-      frame.fields[fieldIndex] = newField;
-    }
-  }
-}
-
-export type SearchResponse = {
-  traceID: string;
-  rootServiceName: string;
-  rootTraceName: string;
-  startTimeUnixNano: string;
-  durationMs: number;
-};
-
-export function createTableFrameFromSearch(data: SearchResponse[], instanceSettings: DataSourceInstanceSettings) {
+export function createTableFrameFromSearch(data: TraceSearchMetadata[], instanceSettings: DataSourceInstanceSettings) {
   const frame = new MutableDataFrame({
     fields: [
       {
@@ -641,7 +598,7 @@ export function createTableFrameFromSearch(data: SearchResponse[], instanceSetti
   return frame;
 }
 
-function transformToTraceData(data: SearchResponse) {
+function transformToTraceData(data: TraceSearchMetadata) {
   let traceName = '';
   if (data.rootServiceName) {
     traceName += data.rootServiceName + ' ';
@@ -666,6 +623,121 @@ function transformToTraceData(data: SearchResponse) {
     startTime: startTime,
     duration: data.durationMs,
     traceName,
+  };
+}
+
+export function createTableFrameFromTraceQlQuery(
+  data: TraceSearchMetadata[],
+  instanceSettings: DataSourceInstanceSettings
+) {
+  const frame = new MutableDataFrame({
+    fields: [
+      {
+        name: 'traceID',
+        type: FieldType.string,
+        config: {
+          unit: 'string',
+          displayNameFromDS: 'Trace ID',
+          links: [
+            {
+              title: 'Trace: ${__value.raw}',
+              url: '',
+              internal: {
+                datasourceUid: instanceSettings.uid,
+                datasourceName: instanceSettings.name,
+                query: {
+                  query: '${__value.raw}',
+                  queryType: 'traceId',
+                },
+              },
+            },
+          ],
+        },
+      },
+      {
+        name: 'spanID',
+        type: FieldType.string,
+        config: {
+          unit: 'string',
+          displayNameFromDS: 'Span',
+          links: [
+            {
+              title: 'Span: ${__value.raw}',
+              url: '',
+              internal: {
+                datasourceUid: instanceSettings.uid,
+                datasourceName: instanceSettings.name,
+                query: {
+                  query: '${__value.raw}',
+                  queryType: 'spanId',
+                },
+              },
+            },
+          ],
+        },
+      },
+      { name: 'traceName', type: FieldType.string, config: { displayNameFromDS: 'Name' } },
+      { name: 'attributes', type: FieldType.string, config: { displayNameFromDS: 'Attributes' } },
+      { name: 'startTime', type: FieldType.string, config: { displayNameFromDS: 'Start time' } },
+      { name: 'duration', type: FieldType.number, config: { displayNameFromDS: 'Duration', unit: 'ms' } },
+    ],
+    meta: {
+      preferredVisualisationType: 'table',
+    },
+  });
+  if (!data?.length) {
+    return frame;
+  }
+  // Show the most recent traces
+  const traceData = data
+    .sort((a, b) => parseInt(b?.startTimeUnixNano!, 10) / 1000000 - parseInt(a?.startTimeUnixNano!, 10) / 1000000)
+    .reduce((list: TraceTableData[], t) => {
+      const firstSpanSet = t.spanSets?.[0];
+      const trace: TraceTableData = transformToTraceData(t);
+      trace.attributes = firstSpanSet?.attributes
+        .map((atr) => Object.keys(atr).map((key) => `${key} = ${atr[key]}`))
+        .join(', ');
+      list.push(trace);
+      firstSpanSet?.spans.forEach((span) => list.push(transformSpanToTraceData(span)));
+      return list;
+    }, []);
+
+  for (const trace of traceData) {
+    frame.add(trace);
+  }
+
+  return frame;
+}
+
+interface TraceTableData {
+  traceID?: string;
+  traceName: string;
+  spanID?: string;
+  attributes?: string;
+  startTime: string;
+  duration: number;
+}
+
+function transformSpanToTraceData(data: Span): TraceTableData {
+  const traceStartTime = data.startTimeUnixNano / 1000000;
+  const traceEndTime = data.endTimeUnixNano / 1000000;
+
+  let startTime = dateTimeFormat(traceStartTime);
+
+  if (Math.abs(differenceInHours(new Date(traceStartTime), Date.now())) <= 1) {
+    startTime = formatDistance(new Date(traceStartTime), Date.now(), {
+      addSuffix: true,
+      includeSeconds: true,
+    });
+  }
+
+  return {
+    traceID: undefined,
+    traceName: data.name,
+    spanID: data.spanId,
+    attributes: data.attributes?.map((atr) => Object.keys(atr).map((key) => `${key} = ${atr[key]}`)).join(', '),
+    startTime,
+    duration: traceEndTime - traceStartTime,
   };
 }
 

@@ -35,10 +35,30 @@ import {
   scanStartAction,
   scanStopAction,
   storeLogsVolumeDataProviderAction,
+  setLogsVolumeEnabled,
 } from './query';
 import { makeExplorePaneState } from './utils';
 
 const { testRange, defaultInitialState } = createDefaultInitialState();
+
+const datasources: DataSourceApi[] = [
+  {
+    name: 'testDs',
+    type: 'postgres',
+    uid: 'ds1',
+    getRef: () => {
+      return { type: 'postgres', uid: 'ds1' };
+    },
+  } as DataSourceApi<DataQuery, DataSourceJsonData, {}>,
+  {
+    name: 'testDs2',
+    type: 'postgres',
+    uid: 'ds2',
+    getRef: () => {
+      return { type: 'postgres', uid: 'ds2' };
+    },
+  } as DataSourceApi<DataQuery, DataSourceJsonData, {}>,
+];
 
 jest.mock('app/features/dashboard/services/TimeSrv', () => ({
   ...jest.requireActual('app/features/dashboard/services/TimeSrv'),
@@ -53,6 +73,11 @@ jest.mock('@grafana/runtime', () => ({
   getTemplateSrv: () => ({
     updateTimeRange: jest.fn(),
   }),
+  getDataSourceSrv: () => {
+    return {
+      get: (uid?: string) => datasources.find((ds) => ds.uid === uid) || datasources[0],
+    };
+  },
 }));
 
 function setupQueryResponse(state: StoreState) {
@@ -159,7 +184,7 @@ describe('importing queries', () => {
         explore: {
           [ExploreId.left]: {
             ...defaultInitialState.explore[ExploreId.left],
-            datasourceInstance: { name: 'testDs', type: 'postgres' },
+            datasourceInstance: datasources[0],
           },
         },
       });
@@ -168,18 +193,18 @@ describe('importing queries', () => {
         importQueries(
           ExploreId.left,
           [
-            { datasource: { type: 'postgresql' }, refId: 'refId_A' },
-            { datasource: { type: 'postgresql' }, refId: 'refId_B' },
+            { datasource: { type: 'postgresql', uid: 'ds1' }, refId: 'refId_A' },
+            { datasource: { type: 'postgresql', uid: 'ds1' }, refId: 'refId_B' },
           ],
-          { name: 'Postgres1', type: 'postgres' } as DataSourceApi<DataQuery, DataSourceJsonData, {}>,
-          { name: 'Postgres2', type: 'postgres' } as DataSourceApi<DataQuery, DataSourceJsonData, {}>
+          datasources[0],
+          datasources[1]
         )
       );
 
       expect(getState().explore[ExploreId.left].queries[0]).toHaveProperty('refId', 'refId_A');
       expect(getState().explore[ExploreId.left].queries[1]).toHaveProperty('refId', 'refId_B');
-      expect(getState().explore[ExploreId.left].queries[0]).not.toHaveProperty('datasource');
-      expect(getState().explore[ExploreId.left].queries[1]).not.toHaveProperty('datasource');
+      expect(getState().explore[ExploreId.left].queries[0]).toHaveProperty('datasource.uid', 'ds2');
+      expect(getState().explore[ExploreId.left].queries[1]).toHaveProperty('datasource.uid', 'ds2');
     });
   });
 });
@@ -440,6 +465,35 @@ describe('reducer', () => {
       expect(getState().explore[ExploreId.left].logsVolumeData).toBeDefined();
       expect(getState().explore[ExploreId.left].logsVolumeData!.state).toBe(LoadingState.Done);
       expect(getState().explore[ExploreId.left].logsVolumeDataProvider).toBeUndefined();
+    });
+
+    it('do not load logsVolume data when disabled', async () => {
+      // turn logsvolume off
+      dispatch(setLogsVolumeEnabled(ExploreId.left, false));
+      expect(getState().explore[ExploreId.left].logsVolumeEnabled).toBe(false);
+
+      // verify that if we run a query, it will not do logsvolume, but the Provider will still be set
+      await dispatch(runQueries(ExploreId.left));
+      expect(getState().explore[ExploreId.left].logsVolumeData).toBeUndefined();
+      expect(getState().explore[ExploreId.left].logsVolumeDataSubscription).toBeUndefined();
+      expect(getState().explore[ExploreId.left].logsVolumeDataProvider).toBeDefined();
+    });
+
+    it('load logsVolume data when it gets enabled', async () => {
+      // first it is disabled
+      dispatch(setLogsVolumeEnabled(ExploreId.left, false));
+
+      // runQueries sets up the logsVolume query, but does not run it
+      await dispatch(runQueries(ExploreId.left));
+      expect(getState().explore[ExploreId.left].logsVolumeDataProvider).toBeDefined();
+
+      // we turn logsvolume on
+      await dispatch(setLogsVolumeEnabled(ExploreId.left, true));
+
+      // verify it was turned on
+      expect(getState().explore[ExploreId.left].logsVolumeEnabled).toBe(true);
+
+      expect(getState().explore[ExploreId.left].logsVolumeDataSubscription).toBeDefined();
     });
   });
 });

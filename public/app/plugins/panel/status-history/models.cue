@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package grafanaschema
+package grafanaplugin
 
 import (
 	"github.com/grafana/thema"
@@ -28,6 +28,7 @@ Panel: thema.#Lineage & {
 					PanelOptions: {
 						ui.OptionsWithLegend
 						ui.OptionsWithTooltip
+						ui.OptionsWithTimezones
 						showValue:  ui.VisibilityMode
 						rowHeight:  number
 						colWidth?:  number

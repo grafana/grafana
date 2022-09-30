@@ -7,8 +7,10 @@ import (
 	"fmt"
 
 	"github.com/prometheus/alertmanager/pkg/labels"
+	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -229,8 +231,9 @@ func (m *migration) createDefaultRouteAndReceiver(defaultChannels []*notificatio
 	}
 
 	defaultRoute := &Route{
-		Receiver: defaultReceiverName,
-		Routes:   make([]*Route, 0),
+		Receiver:   defaultReceiverName,
+		Routes:     make([]*Route, 0),
+		GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel}, // To keep parity with pre-migration notifications.
 	}
 
 	return defaultReceiver, defaultRoute, nil
@@ -438,10 +441,11 @@ type PostableApiAlertingConfig struct {
 }
 
 type Route struct {
-	Receiver string   `yaml:"receiver,omitempty" json:"receiver,omitempty"`
-	Matchers Matchers `yaml:"matchers,omitempty" json:"matchers,omitempty"`
-	Routes   []*Route `yaml:"routes,omitempty" json:"routes,omitempty"`
-	Continue bool     `yaml:"continue,omitempty" json:"continue,omitempty"`
+	Receiver   string   `yaml:"receiver,omitempty" json:"receiver,omitempty"`
+	Matchers   Matchers `yaml:"matchers,omitempty" json:"matchers,omitempty"`
+	Routes     []*Route `yaml:"routes,omitempty" json:"routes,omitempty"`
+	Continue   bool     `yaml:"continue,omitempty" json:"continue,omitempty"`
+	GroupByStr []string `yaml:"group_by,omitempty" json:"group_by,omitempty"`
 }
 
 type Matchers labels.Matchers

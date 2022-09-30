@@ -1,14 +1,16 @@
-import { Meta, Story } from '@storybook/react';
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React from 'react';
 
+import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { ButtonGroup } from '../Button';
+import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
 
-import { ToolbarButton, ToolbarButtonProps } from './ToolbarButton';
+import { ToolbarButton, ToolbarButtonVariant } from './ToolbarButton';
 import mdx from './ToolbarButton.mdx';
 import { ToolbarButtonRow } from './ToolbarButtonRow';
 
-export default {
+const meta: ComponentMeta<typeof ToolbarButton> = {
   title: 'Buttons/ToolbarButton',
   component: ToolbarButton,
   decorators: [withCenteredStory],
@@ -17,16 +19,15 @@ export default {
       page: mdx,
     },
     controls: {
-      exclude: ['imgSrc', 'imgAlt', 'iconOnly', 'narrow'],
+      exclude: ['imgSrc', 'imgAlt', 'narrow'],
     },
   },
   args: {
     variant: 'default',
     fullWidth: false,
     disabled: false,
-    toolbarButtonText: 'Just text',
+    children: 'Just text',
     icon: 'cloud',
-    showDropdown: false,
     isOpen: false,
     tooltip: 'This is a tooltip',
     isHighlighted: false,
@@ -47,36 +48,36 @@ export default {
       },
     },
   },
-} as Meta;
+};
 
-interface StoryProps extends Partial<ToolbarButtonProps> {
-  toolbarButtonText: string;
-  showDropdown: boolean;
-}
-
-export const BasicWithText: Story<StoryProps> = (args) => {
+export const BasicWithText: ComponentStory<typeof ToolbarButton> = (args) => {
   return (
     <ToolbarButton
       variant={args.variant}
       disabled={args.disabled}
       fullWidth={args.fullWidth}
+      icon={args.icon}
       tooltip={args.tooltip}
-      isOpen={args.showDropdown ? args.isOpen : undefined}
+      isOpen={args.isOpen}
       isHighlighted={args.isHighlighted}
       imgSrc={args.imgSrc}
       imgAlt={args.imgAlt}
     >
-      {args.toolbarButtonText}
+      {args.children}
     </ToolbarButton>
   );
 };
+BasicWithText.args = {
+  icon: undefined,
+  iconOnly: false,
+};
 
-export const BasicWithIcon: Story<StoryProps> = (args) => {
+export const BasicWithIcon: ComponentStory<typeof ToolbarButton> = (args) => {
   return (
     <ToolbarButton
       variant={args.variant}
       icon={args.icon}
-      isOpen={args.showDropdown ? args.isOpen : undefined}
+      isOpen={args.isOpen}
       tooltip={args.tooltip}
       disabled={args.disabled}
       fullWidth={args.fullWidth}
@@ -86,18 +87,76 @@ export const BasicWithIcon: Story<StoryProps> = (args) => {
     />
   );
 };
+BasicWithIcon.args = {
+  iconOnly: true,
+};
 
-export const List: Story<ToolbarButtonProps> = (args) => {
+export const Examples: ComponentStory<typeof ToolbarButton> = (args) => {
+  const variants: ToolbarButtonVariant[] = ['default', 'active', 'primary', 'destructive'];
+
   return (
-    <ToolbarButtonRow>
-      <ToolbarButton variant={args.variant} iconOnly={false} isOpen={false}>
-        Last 6 hours
-      </ToolbarButton>
-      <ButtonGroup>
-        <ToolbarButton icon="search-minus" variant={args.variant} />
-        <ToolbarButton icon="search-plus" variant={args.variant} />
-      </ButtonGroup>
-      <ToolbarButton icon="sync" isOpen={false} variant={args.variant} />
-    </ToolbarButtonRow>
+    <DashboardStoryCanvas>
+      <VerticalGroup>
+        Button states
+        <ToolbarButtonRow>
+          <ToolbarButton>Just text</ToolbarButton>
+          <ToolbarButton icon="sync" tooltip="Sync" />
+          <ToolbarButton imgSrc="./grafana_icon.svg">With imgSrc</ToolbarButton>
+          <ToolbarButton icon="cloud" isOpen={true}>
+            isOpen
+          </ToolbarButton>
+          <ToolbarButton icon="cloud" isOpen={false}>
+            isOpen = false
+          </ToolbarButton>
+        </ToolbarButtonRow>
+        <br />
+        disabled
+        <ToolbarButtonRow>
+          <ToolbarButton icon="sync" disabled>
+            Disabled
+          </ToolbarButton>
+        </ToolbarButtonRow>
+        <br />
+        Variants
+        <ToolbarButtonRow>
+          {variants.map((variant) => (
+            <ToolbarButton icon="sync" tooltip="Sync" variant={variant} key={variant}>
+              {variant}
+            </ToolbarButton>
+          ))}
+        </ToolbarButtonRow>
+        <br />
+        Wrapped in noSpacing ButtonGroup
+        <ButtonGroup>
+          <ToolbarButton icon="clock-nine" tooltip="Time picker">
+            2020-10-02
+          </ToolbarButton>
+          <ToolbarButton icon="search-minus" />
+        </ButtonGroup>
+        <br />
+        <ButtonGroup>
+          <ToolbarButton icon="sync" />
+          <ToolbarButton isOpen={false} narrow />
+        </ButtonGroup>
+        <br />
+        Inside button group
+        <HorizontalGroup>
+          <ButtonGroup>
+            <ToolbarButton variant="primary" icon="sync">
+              Run query
+            </ToolbarButton>
+            <ToolbarButton isOpen={false} narrow variant="primary" />
+          </ButtonGroup>
+          <ButtonGroup>
+            <ToolbarButton variant="destructive" icon="sync">
+              Run query
+            </ToolbarButton>
+            <ToolbarButton isOpen={false} narrow variant="destructive" />
+          </ButtonGroup>
+        </HorizontalGroup>
+      </VerticalGroup>
+    </DashboardStoryCanvas>
   );
 };
+
+export default meta;

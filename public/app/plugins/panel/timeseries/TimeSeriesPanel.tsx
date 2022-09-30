@@ -14,7 +14,7 @@ import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
 import { OutsideRangePlugin } from './plugins/OutsideRangePlugin';
 import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
 import { TimeSeriesOptions } from './types';
-import { prepareGraphableFields } from './utils';
+import { getTimezones, prepareGraphableFields } from './utils';
 
 interface TimeSeriesPanelProps extends PanelProps<TimeSeriesOptions> {}
 
@@ -37,6 +37,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   };
 
   const frames = useMemo(() => prepareGraphableFields(data.series, config.theme2, timeRange), [data, timeRange]);
+  const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
 
   if (!frames) {
     return (
@@ -57,10 +58,11 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
       frames={frames}
       structureRev={data.structureRev}
       timeRange={timeRange}
-      timeZone={timeZone}
+      timeZone={timezones}
       width={width}
       height={height}
       legend={options.legend}
+      options={options}
     >
       {(config, alignedDataFrame) => {
         return (
@@ -69,6 +71,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
             <ZoomPlugin config={config} onZoom={onChangeTimeRange} />
             {options.tooltip.mode === TooltipDisplayMode.None || (
               <TooltipPlugin
+                frames={frames}
                 data={alignedDataFrame}
                 config={config}
                 mode={options.tooltip.mode}
@@ -115,6 +118,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
             ) : (
               <ContextMenuPlugin
                 data={alignedDataFrame}
+                frames={frames}
                 config={config}
                 timeZone={timeZone}
                 replaceVariables={replaceVariables}

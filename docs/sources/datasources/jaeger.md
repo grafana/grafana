@@ -44,7 +44,7 @@ This is a configuration for the [trace to logs feature]({{< relref "../explore/t
 - **Filter by Trace ID -** Toggle to append the trace ID to the logs query.
 - **Filter by Span ID -** Toggle to append the span ID to the logs query.
 
-![Trace to logs settings](/static/img/docs/explore/trace-to-logs-settings-8-2.png 'Screenshot of the trace to logs settings')
+![Trace to logs settings](/static/img/docs/explore/trace-to-log-7-4.png 'Screenshot of the trace to logs settings')
 
 ### Trace to metrics
 
@@ -65,6 +65,16 @@ Each linked query consists of:
 This is a configuration for the beta Node Graph visualization. The Node Graph is shown after the trace view is loaded and is disabled by default.
 
 -- **Enable Node Graph -** Enables the Node Graph visualization.
+
+### Span bar label
+
+You can configure the span bar label. The span bar label allows you add additional information to the span bar row.
+
+Select one of the following four options. The default selection is Duration.
+
+- **None -** Do not show any additional information on the span bar row.
+- **Duration -** Show the span duration on the span bar row.
+- **Tag -** Show the span tag on the span bar row. Note: You will also need to specify the tag key to use to get the tag value. For example, `span.kind`.
 
 ## Query traces
 

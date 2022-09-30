@@ -94,16 +94,6 @@ export const ResourcePickerPopover = (props: Props) => {
             <button className={getTabClassName(PickerTabType.URL)} onClick={() => setActivePicker(PickerTabType.URL)}>
               URL
             </button>
-            {config.featureToggles['storageLocalUpload'] ? (
-              <button
-                className={getTabClassName(PickerTabType.Upload)}
-                onClick={() => setActivePicker(PickerTabType.Upload)}
-              >
-                Upload
-              </button>
-            ) : (
-              ''
-            )}
           </div>
           <div className={styles.resourcePickerPopoverContent}>
             {renderPicker()}

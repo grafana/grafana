@@ -4,6 +4,12 @@ import (
 	"time"
 )
 
+const (
+	QuitOnPluginStartupFailureKey = "quit_on_secrets_plugin_startup_failure"
+	PluginNamespace               = "secretsmanagerplugin"
+	DataSourceSecretType          = "datasource"
+)
+
 // Item stored in k/v store.
 type Item struct {
 	Id        int64

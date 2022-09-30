@@ -2,9 +2,10 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2, LogLevel } from '@grafana/data';
 
-import { styleMixins, stylesFactory } from '../../themes';
+import { styleMixins } from '../../themes';
 
-export const getLogRowStyles = stylesFactory((theme: GrafanaTheme2, logLevel?: LogLevel) => {
+/** @deprecated will be removed in the next major version */
+export const getLogRowStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
   let logColor = theme.isLight ? theme.v1.palette.gray5 : theme.v1.palette.gray2;
   const hoverBgColor = styleMixins.hoverColor(theme.colors.background.secondary, theme);
 
@@ -77,8 +78,8 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme2, logLevel?: L
       > td {
         position: relative;
         padding-right: ${theme.spacing(1)};
-        border-top: ${theme.v1.border.width.sm} solid transparent;
-        border-bottom: ${theme.v1.border.width.sm} solid transparent;
+        border-top: 1px solid transparent;
+        border-bottom: 1px solid transparent;
         height: 100%;
       }
 
@@ -182,4 +183,4 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme2, logLevel?: L
       }
     `,
   };
-});
+};

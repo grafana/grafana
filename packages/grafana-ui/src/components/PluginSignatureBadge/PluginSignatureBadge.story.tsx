@@ -1,4 +1,4 @@
-import { Story } from '@storybook/react';
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React from 'react';
 
 import { PluginSignatureStatus } from '@grafana/data';
@@ -8,7 +8,7 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import mdx from './PluginSignatureBadge.mdx';
 
-export default {
+const meta: ComponentMeta<typeof PluginSignatureBadge> = {
   title: 'Data Display/PluginSignatureBadge',
   decorators: [withCenteredStory],
   component: PluginSignatureBadge,
@@ -33,9 +33,11 @@ export default {
   },
 };
 
-export const Basic: Story = (args) => {
+export const Basic: ComponentStory<typeof PluginSignatureBadge> = (args) => {
   return <PluginSignatureBadge status={args.status} />;
 };
 Basic.args = {
   status: PluginSignatureStatus.valid,
 };
+
+export default meta;

@@ -25,7 +25,7 @@ describe('historySrv', () => {
 
   let historySrv = new HistorySrv();
 
-  const dash = new DashboardModel({ id: 1 });
+  const dash = new DashboardModel({ uid: '_U4zObQMz' });
   const emptyDash = new DashboardModel({});
   const historyListOpts = { limit: 10, start: 0 };
 

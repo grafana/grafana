@@ -1,5 +1,5 @@
-import React, { ReactElement } from 'react';
+import React from 'react';
 
-export function Plugins(): ReactElement | null {
+export function Plugins() {
   return <div>The list of plugins is under development</div>;
 }

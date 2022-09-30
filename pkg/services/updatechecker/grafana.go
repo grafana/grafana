@@ -3,7 +3,7 @@ package updatechecker
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"sync"
@@ -68,7 +68,7 @@ func (s *GrafanaService) checkForUpdates() {
 			s.log.Warn("Failed to close response body", "err", err)
 		}
 	}()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		s.log.Debug("Update check failed, reading response from github.com", "error", err)
 		return

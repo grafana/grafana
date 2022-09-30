@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { FocusScope } from '@react-aria/focus';
-import React from 'react';
+import React, { Component } from 'react';
 
 import { GrafanaTheme2, colorManipulator } from '@grafana/data';
 
@@ -37,7 +37,7 @@ interface State<T> {
   activePicker: PickerType | keyof T;
 }
 
-class UnThemedColorPickerPopover<T extends CustomPickersDescriptor> extends React.Component<Props<T>, State<T>> {
+class UnThemedColorPickerPopover<T extends CustomPickersDescriptor> extends Component<Props<T>, State<T>> {
   constructor(props: Props<T>) {
     super(props);
     this.state = {
@@ -50,7 +50,7 @@ class UnThemedColorPickerPopover<T extends CustomPickersDescriptor> extends Reac
     return `ColorPickerPopover__tab ${activePicker === tabName && 'ColorPickerPopover__tab--active'}`;
   };
 
-  handleChange = (color: any) => {
+  handleChange = (color: string) => {
     const { onChange, enableNamedColors, theme } = this.props;
     if (enableNamedColors) {
       return onChange(color);

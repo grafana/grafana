@@ -80,5 +80,7 @@ The following example shows a pie chart with **Name** and **Percent** labels dis
 
 Select values to display in the legend. You can select more than one.
 
-**Percent -** The percentage of the whole.
-**Value -** The raw numerical value.
+- **Percent:** The percentage of the whole.
+- **Value:** The raw numerical value.
+
+For more information about the legend, refer to [Configure a legend](../configure-legend/).

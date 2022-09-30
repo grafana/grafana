@@ -10,7 +10,7 @@ weight: 1100
 
 # Reference: Calculation types
 
-Refer to the following list of calculations you can perform in Grafana. You can find these calculations in the **Transform** tab and in the bar gauge, gauge, and stat visualizations.
+The following table contains a list of calculations you can perform in Grafana. You can find these calculations in the **Transform** tab and in the bar gauge, gauge, and stat visualizations.
 
 | Calculation        | Description                                               |
 | :----------------- | :-------------------------------------------------------- |
@@ -25,6 +25,8 @@ Refer to the following list of calculations you can perform in Grafana. You can 
 | First (not null)   | First, not null value in a field                          |
 | Max                | Maximum value of a field                                  |
 | Mean               | Mean value of all values in a field                       |
+| Variance           | Variance of all values in a field                         |
+| StdDev             | Standard deviation of all values in a field               |
 | Min                | Minimum value of a field                                  |
 | Min (above zero)   | Minimum, positive value of a field                        |
 | Range              | Difference between maximum and minimum values of a field  |

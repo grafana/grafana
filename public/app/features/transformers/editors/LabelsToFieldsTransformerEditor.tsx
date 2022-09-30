@@ -11,8 +11,7 @@ import {
   LabelsToFieldsMode,
   LabelsToFieldsOptions,
 } from '@grafana/data/src/transformations/transformers/labelsToFields';
-import { Stack } from '@grafana/experimental';
-import { InlineField, InlineFieldRow, RadioButtonGroup, Select, FilterPill } from '@grafana/ui';
+import { InlineField, InlineFieldRow, RadioButtonGroup, Select, FilterPill, Stack } from '@grafana/ui';
 
 const modes: Array<SelectableValue<LabelsToFieldsMode>> = [
   { value: LabelsToFieldsMode.Columns, label: 'Columns' },

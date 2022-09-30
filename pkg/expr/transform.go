@@ -127,12 +127,8 @@ func hiddenRefIDs(queries []Query) (map[string]struct{}, error) {
 	return hidden, nil
 }
 
-func (s *Service) decryptSecureJsonDataFn(ctx context.Context) func(ds *datasources.DataSource) map[string]string {
-	return func(ds *datasources.DataSource) map[string]string {
-		decryptedJsonData, err := s.dataSourceService.DecryptedValues(ctx, ds)
-		if err != nil {
-			logger.Error("Failed to decrypt secure json data", "error", err)
-		}
-		return decryptedJsonData
+func (s *Service) decryptSecureJsonDataFn(ctx context.Context) func(ds *datasources.DataSource) (map[string]string, error) {
+	return func(ds *datasources.DataSource) (map[string]string, error) {
+		return s.dataSourceService.DecryptedValues(ctx, ds)
 	}
 }

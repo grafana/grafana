@@ -13,9 +13,6 @@ describe('toUrlParams', () => {
     });
     expect(url).toBe('server=backend-01&hasSpace=has%20space&many=1&many=2&many=3&true&number=20&isNull=&isUndefined=');
   });
-});
-
-describe('toUrlParams', () => {
   it('should encode the same way as angularjs', () => {
     const url = urlUtil.toUrlParams({
       server: ':@',
@@ -29,6 +26,12 @@ describe('toUrlParams', () => {
       bool2: false,
     });
     expect(url).toBe('bool1&bool2=false');
+  });
+  it("should encode the following special characters [!'()*]", () => {
+    const url = urlUtil.toUrlParams({
+      datasource: "testDs[!'()*]",
+    });
+    expect(url).toBe('datasource=testDs%5B%21%27%28%29%2A%5D');
   });
 });
 

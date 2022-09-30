@@ -18,26 +18,12 @@ const getNotFoundModel = (): NavModel => {
 export const getNavModel = (navIndex: NavIndex, id: string, fallback?: NavModel, onlyChild = false): NavModel => {
   if (navIndex[id]) {
     const node = navIndex[id];
-
-    let main: NavModelItem;
-    if (!onlyChild && node.parentItem) {
-      main = { ...node.parentItem };
-
-      main.children =
-        main.children &&
-        main.children.map((item) => {
-          return {
-            ...item,
-            active: item.url === node.url,
-          };
-        });
-    } else {
-      main = node;
-    }
+    const main = onlyChild ? node : getSectionRoot(node);
+    const mainWithActive = enrichNodeWithActiveState(main, id);
 
     return {
-      node,
-      main,
+      node: node,
+      main: mainWithActive,
     };
   }
 
@@ -47,6 +33,25 @@ export const getNavModel = (navIndex: NavIndex, id: string, fallback?: NavModel,
 
   return getNotFoundModel();
 };
+
+function getSectionRoot(node: NavModelItem): NavModelItem {
+  return node.parentItem ? getSectionRoot(node.parentItem) : node;
+}
+
+function enrichNodeWithActiveState(node: NavModelItem, activeId: string): NavModelItem {
+  if (node.id === activeId) {
+    return { ...node, active: true };
+  }
+
+  if (node.children && node.children.length > 0) {
+    return {
+      ...node,
+      children: node.children.map((child) => enrichNodeWithActiveState(child, activeId)),
+    };
+  }
+
+  return node;
+}
 
 export const getTitleFromNavModel = (navModel: NavModel) => {
   return `${navModel.main.text}${navModel.node.text ? ': ' + navModel.node.text : ''}`;

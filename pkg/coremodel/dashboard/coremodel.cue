@@ -12,6 +12,8 @@ seqs: [
 	{
 		schemas: [
 			{// 0.0
+			  @grafana(TSVeneer="type")
+
 				// Unique numeric identifier for the dashboard.
 				// TODO must isolate or remove identifiers local to a Grafana instance...?
 				id?: int64
@@ -30,7 +32,7 @@ seqs: [
 				// Timezone of dashboard,
 				timezone?: *"browser" | "utc" | "" @reviewme()
 				// Whether a dashboard is editable or not.
-				editable: bool | *true
+				editable:     bool | *true
 				graphTooltip: #DashboardCursorSync @reviewme()
 				// Time range for dashboard, e.g. last 6 hours, last 7 days, etc
 				time?: {
@@ -49,9 +51,11 @@ seqs: [
 					hidden: bool | *false
 					// Selectable intervals for auto-refresh.
 					refresh_intervals: [...string] | *["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
+					// TODO docs
+					time_options: [...string] | *["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
 				} @reviewme()
 				// TODO docs
-				fiscalYearStartMonth?: uint8 & >0 & <13 @reviewme()
+				fiscalYearStartMonth?: uint8 & <13 @reviewme()
 				// TODO docs
 				liveNow?: bool @reviewme()
 				// TODO docs
@@ -67,9 +71,13 @@ seqs: [
 				version?: uint32 @reviewme()
 				panels?: [...(#Panel | #RowPanel | #GraphPanel | #HeatmapPanel)] @reviewme()
 				// TODO docs
-				templating?: list: [...#VariableModel] @reviewme()
+				templating?: {
+					list: [...#VariableModel] @reviewme()
+				}
 				// TODO docs
-				annotations?: list: [...#AnnotationQuery] @reviewme()
+				annotations?: {
+					list: [...#AnnotationQuery] @reviewme()
+				}
 				// TODO docs
 				links?: [...#DashboardLink] @reviewme()
 
@@ -88,17 +96,17 @@ seqs: [
 					// Whether annotation is enabled.
 					enable: bool | *true @reviewme()
 					// Name of annotation.
-					name?: string @reviewme()
+					name?:   string     @reviewme()
 					builtIn: uint8 | *0 @reviewme() // TODO should this be persisted at all?
 					// Whether to hide annotation.
 					hide?: bool | *false @reviewme()
 					// Annotation icon color.
-					iconColor?: string @reviewme()
-					type:  string | *"dashboard" @reviewme()
+					iconColor?: string                @reviewme()
+					type:       string | *"dashboard" @reviewme()
 					// Query for annotation data.
-					rawQuery?: string @reviewme()
+					rawQuery?: string     @reviewme()
 					showIn:    uint8 | *0 @reviewme()
-					target?: #Target @reviewme() // TODO currently a generic in AnnotationQuery
+					target?:   #Target    @reviewme() // TODO currently a generic in AnnotationQuery
 				} @cuetsy(kind="interface")
 
 				// FROM: packages/grafana-data/src/types/templateVars.ts
@@ -106,8 +114,8 @@ seqs: [
 				// TODO what about what's in public/app/features/types.ts?
 				// TODO there appear to be a lot of different kinds of [template] vars here? if so need a disjunction
 				#VariableModel: {
-					type: #VariableType
-					name: string
+					type:   #VariableType
+					name:   string
 					label?: string
 					...
 				} @cuetsy(kind="interface") @reviewme()
@@ -115,16 +123,16 @@ seqs: [
 				// FROM public/app/features/dashboard/state/DashboardModels.ts - ish
 				// TODO docs
 				#DashboardLink: {
-					title: string @reviewme()
-					type: #DashboardLinkType @reviewme()
-					icon?: string @reviewme()
-					tooltip?: string @reviewme()
-					url?: string @reviewme()
+					title:    string             @reviewme()
+					type:     #DashboardLinkType @reviewme()
+					icon?:    string             @reviewme()
+					tooltip?: string             @reviewme()
+					url?:     string             @reviewme()
 					tags: [...string] @reviewme()
-					asDropdown: bool | *false @reviewme()
+					asDropdown:  bool | *false @reviewme()
 					targetBlank: bool | *false @reviewme()
 					includeVars: bool | *false @reviewme()
-					keepTime: bool | *false @reviewme()
+					keepTime:    bool | *false @reviewme()
 				} @cuetsy(kind="interface")
 
 				// TODO docs
@@ -151,18 +159,18 @@ seqs: [
 					seriesBy?: #FieldColorSeriesByMode
 				} @cuetsy(kind="interface") @reviewme()
 
-        #GridPos: {
-          // Panel
-          h: uint32 & >0 | *9 @reviewme()
-          // Panel
-          w: uint32 & >0 & <=24 | *12 @reviewme()
-          // Panel x
-          x: uint32 & >=0 & <24 | *0 @reviewme()
-          // Panel y
-          y: uint32 & >=0 | *0 @reviewme()
-          // true if fixed
-          static?: bool @reviewme()
-        } @cuetsy(kind="interface")
+				#GridPos: {
+					// Panel
+					h: uint32 & >0 | *9 @reviewme()
+					// Panel
+					w: uint32 & >0 & <=24 | *12 @reviewme()
+					// Panel x
+					x: uint32 & >=0 & <24 | *0 @reviewme()
+					// Panel y
+					y: uint32 & >=0 | *0 @reviewme()
+					// true if fixed
+					static?: bool @reviewme()
+				} @cuetsy(kind="interface")
 
 				// TODO docs
 				#Threshold: {
@@ -185,6 +193,59 @@ seqs: [
 					// Must be sorted by 'value', first value is always -Infinity
 					steps: [...#Threshold] @reviewme()
 				} @cuetsy(kind="interface") @reviewme()
+
+				// TODO docs
+				#ValueMapping: #ValueMap | #RangeMap | #RegexMap | #SpecialValueMap @cuetsy(kind="type") @reviewme()
+
+				// TODO docs
+				#MappingType: "value" | "range" | "regex" | "special" @cuetsy(kind="enum",memberNames="ValueToText|RangeToText|RegexToText|SpecialValue") @reviewme()
+
+				// TODO docs
+				#ValueMap: {
+					type: #MappingType & "value"
+					options: [string]: #ValueMappingResult
+				} @cuetsy(kind="interface")
+
+				// TODO docs
+				#RangeMap: {
+					type: #MappingType & "range"
+					options: {
+						// to and from are `number | null` in current ts, really not sure what to do
+						from:   int32 @reviewme()
+						to:     int32 @reviewme()
+						result: #ValueMappingResult
+					}
+				} @cuetsy(kind="interface") @reviewme()
+
+				// TODO docs
+				#RegexMap: {
+					type: #MappingType & "regex"
+					options: {
+						pattern: string
+						result:  #ValueMappingResult
+					}
+				} @cuetsy(kind="interface") @reviewme()
+
+				// TODO docs
+				#SpecialValueMap: {
+					type: #MappingType & "special"
+					options: {
+						match: "true" | "false"
+						pattern: string
+						result:  #ValueMappingResult
+					}
+				} @cuetsy(kind="interface") @reviewme()
+
+				// TODO docs
+				#SpecialValueMatch: "true" | "false" | "null" | "nan" | "null+nan" | "empty" @cuetsy(kind="enum",memberNames="True|False|Null|NaN|NullAndNan|Empty")
+
+				// TODO docs
+				#ValueMappingResult: {
+					text?:  string
+					color?: string
+					icon?:  string
+					index?: int32
+				} @cuetsy(kind="interface")
 
 				// TODO docs
 				// FIXME this is extremely underspecfied; wasn't obvious which typescript types corresponded to it
@@ -276,88 +337,88 @@ seqs: [
 					// plugin schemas.
 					options: {...} @reviewme()
 
-					fieldConfig: {
-						defaults: {
-							// The display value for this field.  This supports template variables blank is auto
-							displayName?: string @reviewme()
+					fieldConfig: #FieldConfigSource
+				} @cuetsy(kind="interface") @grafana(TSVeneer="type") @reviewme()
 
-							// This can be used by data sources that return and explicit naming structure for values and labels
-							// When this property is configured, this value is used rather than the default naming strategy.
-							displayNameFromDS?: string @reviewme()
+				#FieldConfigSource: {
+					defaults: #FieldConfig
+					overrides: [...{
+						matcher: #MatcherConfig
+						properties: [...#DynamicConfigValue]
+					}] @reviewme()
+				} @cuetsy(kind="interface") @grafana(TSVeneer="type") @reviewme()
 
-							// Human readable field metadata
-							description?: string @reviewme()
+				#MatcherConfig: {
+					id:       string | *"" @reviewme()
+					options?: _            @reviewme()
+				} @cuetsy(kind="interface")
 
-							// An explict path to the field in the datasource.  When the frame meta includes a path,
-							// This will default to `${frame.meta.path}/${field.name}
-							//
-							// When defined, this value can be used as an identifier within the datasource scope, and
-							// may be used to update the results
-							path?: string @reviewme()
+				#DynamicConfigValue: {
+					id:     string | *"" @reviewme()
+					value?: _            @reviewme()
+				}
 
-							// True if data source can write a value to the path.  Auth/authz are supported separately
-							writeable?: bool @reviewme()
+				#FieldConfig: {
+					// The display value for this field.  This supports template variables blank is auto
+					displayName?: string @reviewme()
 
-							// True if data source field supports ad-hoc filters
-							filterable?: bool @reviewme()
+					// This can be used by data sources that return and explicit naming structure for values and labels
+					// When this property is configured, this value is used rather than the default naming strategy.
+					displayNameFromDS?: string @reviewme()
 
-							// Numeric Options
-							unit?: string @reviewme()
+					// Human readable field metadata
+					description?: string @reviewme()
 
-							// Significant digits (for display)
-							decimals?: number @reviewme()
+					// An explict path to the field in the datasource.  When the frame meta includes a path,
+					// This will default to `${frame.meta.path}/${field.name}
+					//
+					// When defined, this value can be used as an identifier within the datasource scope, and
+					// may be used to update the results
+					path?: string @reviewme()
 
-							min?: number @reviewme()
-							max?: number @reviewme()
+					// True if data source can write a value to the path.  Auth/authz are supported separately
+					writeable?: bool @reviewme()
 
-							// Convert input values into a display string
-							//
-							// TODO this one corresponds to a complex type with
-							// generics on the typescript side. Ouch. Will
-							// either need special care, or we'll just need to
-							// accept a very loosely specified schema. It's very
-							// unlikely we'll be able to translate cue to
-							// typescript generics in the general case, though
-							// this particular one *may* be able to work.
-							mappings?: [...{...}] @reviewme()
+					// True if data source field supports ad-hoc filters
+					filterable?: bool @reviewme()
 
-							// Map numeric values to states
-							thresholds?: #ThresholdsConfig @reviewme()
+					// Numeric Options
+					unit?: string @reviewme()
 
-							//   // Map values to a display color
-							color?: #FieldColor @reviewme()
+					// Significant digits (for display)
+					decimals?: number @reviewme()
 
-							//   // Used when reducing field values
-							//   nullValueMode?: NullValueMode
+					min?: number @reviewme()
+					max?: number @reviewme()
 
-							//   // The behavior when clicking on a result
-							links?: [...] @reviewme()
+					// Convert input values into a display string
+					mappings?: [...#ValueMapping] @reviewme()
 
-							// Alternative to empty string
-							noValue?: string @reviewme()
+					// Map numeric values to states
+					thresholds?: #ThresholdsConfig @reviewme()
 
-							// custom is specified by the PanelFieldConfig field
-							// in panel plugin schemas.
-							custom?: {...} @reviewme()
-						} @reviewme()
-						overrides: [...{
-							matcher: {
-								id:       string | *"" @reviewme()
-								options?: _ @reviewme()
-							}
-							properties: [...{
-								id:     string | *"" @reviewme()
-								value?: _ @reviewme()
-							}]
-						}] @reviewme()
-					}
-				} @cuetsy(kind="interface") @reviewme()
+					// Map values to a display color
+					color?: #FieldColor @reviewme()
+
+					// Used when reducing field values
+					//   nullValueMode?: NullValueMode
+
+					// The behavior when clicking on a result
+					links?: [...] @reviewme()
+
+					// Alternative to empty string
+					noValue?: string @reviewme()
+
+					// custom is specified by the PanelFieldConfig field
+					// in panel plugin schemas.
+					custom?: {...} @reviewme()
+				} @cuetsy(kind="interface") @grafana(TSVeneer="type") @reviewme()
 
 				// Row panel
 				#RowPanel: {
-					type:      "row" @reviewme()
+					type:      "row"         @reviewme()
 					collapsed: bool | *false @reviewme()
-					title?:    string @reviewme()
+					title?:    string        @reviewme()
 
 					// Name of default datasource.
 					datasource?: {
@@ -366,7 +427,7 @@ seqs: [
 					} @reviewme()
 
 					gridPos?: #GridPos
-					id: uint32 @reviewme()
+					id:       uint32 @reviewme()
 					panels: [...(#Panel | #GraphPanel | #HeatmapPanel)] @reviewme()
 					// Name of template variable to repeat for.
 					repeat?: string @reviewme()

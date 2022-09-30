@@ -5,8 +5,10 @@ export const CLOUD_ONBOARDING_APP_ID = 'grafana-easystart-app';
 export const ROUTE_BASE_ID = 'data-connections';
 
 export enum ROUTES {
-  DataSources = '/data-connections/data-sources',
+  DataSources = '/data-connections/datasources',
+  DataSourcesNew = '/data-connections/datasources/new',
+  DataSourcesEdit = '/data-connections/datasources/edit/:uid',
+  DataSourcesDashboards = '/data-connections/datasources/edit/:uid/dashboards',
   Plugins = '/data-connections/plugins',
   CloudIntegrations = '/data-connections/cloud-integrations',
-  RecordedQueries = '/data-connections/recorded-queries',
 }

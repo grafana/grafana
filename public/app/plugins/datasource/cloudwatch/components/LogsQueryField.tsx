@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { LanguageMap, languages as prismLanguages } from 'prismjs';
 import React, { ReactNode } from 'react';
 import { Node, Plugin } from 'slate';
+import { Editor } from 'slate-react';
 
 import { AbsoluteTimeRange, QueryEditorProps } from '@grafana/data';
 import { BracesPlugin, LegacyForms, QueryField, SlatePrism, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
@@ -48,7 +49,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
     hint: undefined,
   };
 
-  plugins: Plugin[];
+  plugins: Array<Plugin<Editor>>;
 
   constructor(props: CloudWatchLogsQueryFieldProps, context: React.Context<any>) {
     super(props, context);
@@ -66,10 +67,10 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
   }
 
   componentDidMount = () => {
-    const { query, onChange } = this.props;
+    const { query, datasource, onChange } = this.props;
 
     if (onChange) {
-      onChange({ ...query, logGroupNames: query.logGroupNames ?? [] });
+      onChange({ ...query, logGroupNames: query.logGroupNames ?? datasource.logsQueryRunner.defaultLogGroups });
     }
   };
 
@@ -135,7 +136,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
             inputEl={
               <LogGroupSelector
                 region={region}
-                selectedLogGroups={logGroupNames ?? []}
+                selectedLogGroups={logGroupNames ?? datasource.logsQueryRunner.defaultLogGroups}
                 datasource={datasource}
                 onChange={function (logGroups: string[]): void {
                   onChange({ ...query, logGroupNames: logGroups });

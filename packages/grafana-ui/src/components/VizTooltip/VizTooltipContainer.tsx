@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import React, { useState, HTMLAttributes, useMemo, useRef, useLayoutEffect } from 'react';
-import useWindowSize from 'react-use/lib/useWindowSize';
+import { useWindowSize } from 'react-use';
 
 import { Dimensions2D, GrafanaTheme2 } from '@grafana/data';
 

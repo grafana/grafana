@@ -1,21 +1,19 @@
-import { of } from 'rxjs';
 import { thunkTester } from 'test/core/thunk/thunkTester';
 
-import { BackendSrvRequest, FetchError, FetchResponse } from '@grafana/runtime';
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import { DataSourceSettings } from '@grafana/data';
+import { FetchError } from '@grafana/runtime';
 import { ThunkResult, ThunkDispatch } from 'app/types';
 
-import { getMockPlugin, getMockPlugins } from '../../plugins/__mocks__/pluginMocks';
-import { GenericDataSourcePlugin } from '../settings/PluginSettings';
-import { initDataSourceSettings } from '../state/actions';
+import { getMockDataSource } from '../__mocks__';
+import * as api from '../api';
+import { GenericDataSourcePlugin } from '../types';
 
 import {
-  findNewName,
-  nameExits,
   InitDataSourceSettingDependencies,
   testDataSource,
   TestDataSourceDependencies,
-  getDataSourceUsingUidOrId,
+  initDataSourceSettings,
+  loadDataSource,
 } from './actions';
 import {
   initDataSourceSettingsSucceeded,
@@ -23,8 +21,10 @@ import {
   testDataSourceStarting,
   testDataSourceSucceeded,
   testDataSourceFailed,
+  dataSourceLoaded,
 } from './reducers';
 
+jest.mock('../api');
 jest.mock('app/core/services/backend_srv');
 jest.mock('@grafana/runtime', () => ({
   ...(jest.requireActual('@grafana/runtime') as unknown as object),
@@ -67,118 +67,59 @@ const failDataSourceTest = async (error: object) => {
   return dispatchedActions;
 };
 
-describe('getDataSourceUsingUidOrId', () => {
-  const uidResponse = {
-    ok: true,
-    data: {
-      id: 111,
-      uid: 'abcdefg',
-    },
-  };
+describe('loadDataSource()', () => {
+  it('should resolve to a data-source if a UID was used for fetching', async () => {
+    const dataSourceMock = getMockDataSource();
+    const dispatch = jest.fn();
+    const getState = jest.fn();
 
-  const idResponse = {
-    ok: true,
-    data: {
-      id: 222,
-      uid: 'xyz',
-    },
-  };
+    (api.getDataSourceByIdOrUid as jest.Mock).mockResolvedValueOnce(dataSourceMock);
 
-  it('should return UID response data', async () => {
-    (getBackendSrv as jest.Mock).mockReturnValueOnce({
-      fetch: (options: BackendSrvRequest) => {
-        return of(uidResponse as FetchResponse);
-      },
-    });
+    const dataSource = await loadDataSource(dataSourceMock.uid)(dispatch, getState, undefined);
 
-    expect(await getDataSourceUsingUidOrId('abcdefg')).toBe(uidResponse.data);
+    expect(dispatch).toHaveBeenCalledTimes(1);
+    expect(dispatch).toHaveBeenCalledWith(dataSourceLoaded(dataSource));
+    expect(dataSource).toBe(dataSourceMock);
   });
 
-  it('should return ID response data', async () => {
-    const uidResponse = {
-      ok: false,
-    };
+  it('should resolve to an empty data-source if an ID (deprecated) was used for fetching', async () => {
+    const id = 123;
+    const uid = 'uid';
+    const dataSourceMock = getMockDataSource({ id, uid });
+    const dispatch = jest.fn();
+    const getState = jest.fn();
 
-    (getBackendSrv as jest.Mock)
-      .mockReturnValueOnce({
-        fetch: (options: BackendSrvRequest) => {
-          return of(uidResponse as FetchResponse);
-        },
-      })
-      .mockReturnValueOnce({
-        fetch: (options: BackendSrvRequest) => {
-          return of(idResponse as FetchResponse);
-        },
-      });
-
-    expect(await getDataSourceUsingUidOrId(222)).toBe(idResponse.data);
-  });
-
-  it('should return empty response data', async () => {
     // @ts-ignore
     delete window.location;
     window.location = {} as Location;
 
-    const uidResponse = {
-      ok: false,
-    };
+    (api.getDataSourceByIdOrUid as jest.Mock).mockResolvedValueOnce(dataSourceMock);
 
-    (getBackendSrv as jest.Mock)
-      .mockReturnValueOnce({
-        fetch: (options: BackendSrvRequest) => {
-          return of(uidResponse as FetchResponse);
-        },
-      })
-      .mockReturnValueOnce({
-        fetch: (options: BackendSrvRequest) => {
-          return of(idResponse as FetchResponse);
-        },
-      });
+    // Fetch the datasource by ID
+    const dataSource = await loadDataSource(id.toString())(dispatch, getState, undefined);
 
-    expect(await getDataSourceUsingUidOrId('222')).toStrictEqual({});
-    expect(window.location.href).toBe('/datasources/edit/xyz');
-  });
-});
-
-describe('Name exists', () => {
-  const plugins = getMockPlugins(5);
-
-  it('should be true', () => {
-    const name = 'pretty cool plugin-1';
-
-    expect(nameExits(plugins, name)).toEqual(true);
+    expect(dataSource).toEqual({});
+    expect(dispatch).toHaveBeenCalledTimes(1);
+    expect(dispatch).toHaveBeenCalledWith(dataSourceLoaded({} as DataSourceSettings));
   });
 
-  it('should be false', () => {
-    const name = 'pretty cool plugin-6';
+  it('should redirect to a URL which uses the UID if an ID (deprecated) was used for fetching', async () => {
+    const id = 123;
+    const uid = 'uid';
+    const dataSourceMock = getMockDataSource({ id, uid });
+    const dispatch = jest.fn();
+    const getState = jest.fn();
 
-    expect(nameExits(plugins, name));
-  });
-});
+    // @ts-ignore
+    delete window.location;
+    window.location = {} as Location;
 
-describe('Find new name', () => {
-  it('should create a new name', () => {
-    const plugins = getMockPlugins(5);
-    const name = 'pretty cool plugin-1';
+    (api.getDataSourceByIdOrUid as jest.Mock).mockResolvedValueOnce(dataSourceMock);
 
-    expect(findNewName(plugins, name)).toEqual('pretty cool plugin-6');
-  });
+    // Fetch the datasource by ID
+    await loadDataSource(id.toString())(dispatch, getState, undefined);
 
-  it('should create new name without suffix', () => {
-    const plugin = getMockPlugin();
-    plugin.name = 'prometheus';
-    const plugins = [plugin];
-    const name = 'prometheus';
-
-    expect(findNewName(plugins, name)).toEqual('prometheus-1');
-  });
-
-  it('should handle names that end with -', () => {
-    const plugin = getMockPlugin();
-    const plugins = [plugin];
-    const name = 'pretty cool plugin-';
-
-    expect(findNewName(plugins, name)).toEqual('pretty cool plugin-');
+    expect(window.location.href).toBe(`/datasources/edit/${uid}`);
   });
 });
 
@@ -187,7 +128,7 @@ describe('initDataSourceSettings', () => {
     it('then initDataSourceSettingsFailed should be dispatched', async () => {
       const dispatchedActions = await thunkTester({}).givenThunk(initDataSourceSettings).whenThunkIsDispatched('');
 
-      expect(dispatchedActions).toEqual([initDataSourceSettingsFailed(new Error('Invalid ID'))]);
+      expect(dispatchedActions).toEqual([initDataSourceSettingsFailed(new Error('Invalid UID'))]);
     });
   });
 

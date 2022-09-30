@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 const (
@@ -31,9 +31,9 @@ const (
 type DsAccess string
 
 type DataSource struct {
-	Id      int64 `json:"id"`
-	OrgId   int64 `json:"orgId"`
-	Version int   `json:"version"`
+	Id      int64 `json:"id,omitempty"`
+	OrgId   int64 `json:"orgId,omitempty"`
+	Version int   `json:"version,omitempty"`
 
 	Name   string   `json:"name"`
 	Type   string   `json:"type"`
@@ -54,8 +54,8 @@ type DataSource struct {
 	ReadOnly          bool              `json:"readOnly"`
 	Uid               string            `json:"uid"`
 
-	Created time.Time `json:"created"`
-	Updated time.Time `json:"updated"`
+	Created time.Time `json:"created,omitempty"`
+	Updated time.Time `json:"updated,omitempty"`
 }
 
 // AllowedCookies parses the jsondata.keepCookies and returns a list of
@@ -156,18 +156,23 @@ type UpdateSecretFn func() error
 type GetDataSourcesQuery struct {
 	OrgId           int64
 	DataSourceLimit int
-	User            *models.SignedInUser
+	User            *user.SignedInUser
 	Result          []*DataSource
 }
 
+type GetAllDataSourcesQuery struct {
+	Result []*DataSource
+}
+
 type GetDataSourcesByTypeQuery struct {
+	OrgId  int64 // optional: filter by org_id
 	Type   string
 	Result []*DataSource
 }
 
 type GetDefaultDataSourceQuery struct {
 	OrgId  int64
-	User   *models.SignedInUser
+	User   *user.SignedInUser
 	Result *DataSource
 }
 
@@ -209,7 +214,7 @@ func (p DsPermissionType) String() string {
 }
 
 type DatasourcesPermissionFilterQuery struct {
-	User        *models.SignedInUser
+	User        *user.SignedInUser
 	Datasources []*DataSource
 	Result      []*DataSource
 }

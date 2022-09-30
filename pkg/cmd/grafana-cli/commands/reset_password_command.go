@@ -8,15 +8,16 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/runner"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 const AdminUserId = 1
 
-func resetPasswordCommand(c utils.CommandLine, sqlStore *sqlstore.SQLStore) error {
+func resetPasswordCommand(c utils.CommandLine, runner runner.Runner) error {
 	newPassword := ""
 
 	if c.Bool("password-from-stdin") {
@@ -39,23 +40,24 @@ func resetPasswordCommand(c utils.CommandLine, sqlStore *sqlstore.SQLStore) erro
 		return fmt.Errorf("new password is too short")
 	}
 
-	userQuery := models.GetUserByIdQuery{Id: AdminUserId}
+	userQuery := user.GetUserByIDQuery{ID: AdminUserId}
 
-	if err := sqlStore.GetUserById(context.Background(), &userQuery); err != nil {
+	usr, err := runner.UserService.GetByID(context.Background(), &userQuery)
+	if err != nil {
 		return fmt.Errorf("could not read user from database. Error: %v", err)
 	}
 
-	passwordHashed, err := util.EncodePassword(newPassword, userQuery.Result.Salt)
+	passwordHashed, err := util.EncodePassword(newPassword, usr.Salt)
 	if err != nil {
 		return err
 	}
 
-	cmd := models.ChangeUserPasswordCommand{
-		UserId:      AdminUserId,
+	cmd := user.ChangeUserPasswordCommand{
+		UserID:      AdminUserId,
 		NewPassword: passwordHashed,
 	}
 
-	if err := sqlStore.ChangeUserPassword(context.Background(), &cmd); err != nil {
+	if err := runner.UserService.ChangePassword(context.Background(), &cmd); err != nil {
 		return fmt.Errorf("failed to update user password: %w", err)
 	}
 

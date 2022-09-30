@@ -15,6 +15,7 @@ export interface Props {
   editable?: boolean;
   onTagSelected: (name: string) => any;
   onToggleChecked?: OnToggleChecked;
+  onClickItem?: (event: React.MouseEvent<HTMLElement>) => void;
 }
 
 const selectors = e2eSelectors.components.Search;
@@ -29,7 +30,7 @@ const getIconFromMeta = (meta = ''): IconName => {
 };
 
 /** @deprecated */
-export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSelected }) => {
+export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSelected, onClickItem }) => {
   const styles = useStyles2(getStyles);
   const tagSelected = useCallback(
     (tag: string, event: React.MouseEvent<HTMLElement>) => {
@@ -59,6 +60,7 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSe
       href={item.url}
       style={{ minHeight: SEARCH_ITEM_HEIGHT }}
       className={styles.container}
+      onClick={onClickItem}
     >
       <Card.Heading>{item.title}</Card.Heading>
       <Card.Figure align={'center'} className={styles.checkbox}>

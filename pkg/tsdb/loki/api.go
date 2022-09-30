@@ -163,6 +163,14 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery) (data.Frames
 	iter := jsoniter.Parse(jsoniter.ConfigDefault, resp.Body, 1024)
 	res := converter.ReadPrometheusStyleResult(iter, converter.Options{MatrixWideSeries: false, VectorWideSeries: false})
 
+	if res == nil {
+		// it's hard to say if this is an error-case or not.
+		// we know the http-response was a success-response
+		// (otherwise we wouldn't be here in the code),
+		// so we will go with a success, with no data.
+		return data.Frames{}, nil
+	}
+
 	if res.Error != nil {
 		return nil, res.Error
 	}

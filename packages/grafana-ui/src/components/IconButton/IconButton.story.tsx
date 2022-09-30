@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { ComponentStory, ComponentMeta } from '@storybook/react';
 import React from 'react';
 
 import { useTheme2 } from '../../themes';
@@ -6,10 +7,10 @@ import { IconSize, IconName } from '../../types';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { VerticalGroup } from '../Layout/Layout';
 
-import { IconButton, IconButtonVariant } from './IconButton';
+import { IconButton, IconButtonVariant, Props as IconButtonProps } from './IconButton';
 import mdx from './IconButton.mdx';
 
-export default {
+const meta: ComponentMeta<typeof IconButton> = {
   title: 'Buttons/IconButton',
   component: IconButton,
   decorators: [withCenteredStory],
@@ -18,9 +19,23 @@ export default {
       page: mdx,
     },
   },
+  args: {
+    name: 'apps',
+    size: 'md',
+    iconType: 'default',
+    tooltip: 'sample tooltip message',
+    tooltipPlacement: 'top',
+    variant: 'secondary',
+    ariaLabel: 'sample aria-label content',
+  },
+  argTypes: {
+    tooltip: {
+      control: 'text',
+    },
+  },
 };
 
-export const Simple = () => {
+export const Examples = () => {
   return (
     <div>
       <RenderScenario background="canvas" />
@@ -28,6 +43,10 @@ export const Simple = () => {
       <RenderScenario background="secondary" />
     </div>
   );
+};
+
+export const Basic: ComponentStory<typeof IconButton> = (args: IconButtonProps) => {
+  return <IconButton {...args} />;
 };
 
 interface ScenarioProps {
@@ -71,3 +90,5 @@ const RenderScenario = ({ background }: ScenarioProps) => {
     </div>
   );
 };
+
+export default meta;

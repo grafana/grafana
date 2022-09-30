@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -12,11 +15,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -27,71 +31,67 @@ const (
 )
 
 func TestAdminAPIEndpoint(t *testing.T) {
-	const role = models.ROLE_ADMIN
-
+	const role = org.RoleAdmin
+	userService := usertest.NewUserServiceFake()
 	t.Run("Given a server admin attempts to remove themselves as an admin", func(t *testing.T) {
 		updateCmd := dtos.AdminUpdateUserPermissionsForm{
 			IsGrafanaAdmin: false,
 		}
-		mock := &mockstore.SQLStoreMock{
-			ExpectedError: models.ErrLastGrafanaAdmin,
-		}
+		userService := usertest.FakeUserService{ExpectedError: user.ErrLastGrafanaAdmin}
 		putAdminScenario(t, "When calling PUT on", "/api/admin/users/1/permissions",
 			"/api/admin/users/:id/permissions", role, updateCmd, func(sc *scenarioContext) {
 				sc.fakeReqWithParams("PUT", sc.url, map[string]string{}).exec()
 				assert.Equal(t, 400, sc.resp.Code)
-			}, mock)
+			}, nil, &userService)
 	})
 
 	t.Run("When a server admin attempts to logout himself from all devices", func(t *testing.T) {
-		mock := mockstore.NewSQLStoreMock()
 		adminLogoutUserScenario(t, "Should not be allowed when calling POST on",
 			"/api/admin/users/1/logout", "/api/admin/users/:id/logout", func(sc *scenarioContext) {
 				sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 				assert.Equal(t, 400, sc.resp.Code)
-			}, mock)
+			}, userService)
 	})
 
 	t.Run("When a server admin attempts to logout a non-existing user from all devices", func(t *testing.T) {
-		mock := &mockstore.SQLStoreMock{
-			ExpectedError: models.ErrUserNotFound,
-		}
+		mockUserService := usertest.NewUserServiceFake()
+		mockUserService.ExpectedError = user.ErrUserNotFound
+
 		adminLogoutUserScenario(t, "Should return not found when calling POST on", "/api/admin/users/200/logout",
 			"/api/admin/users/:id/logout", func(sc *scenarioContext) {
 				sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 				assert.Equal(t, 404, sc.resp.Code)
-			}, mock)
+			}, mockUserService)
 	})
 
 	t.Run("When a server admin attempts to revoke an auth token for a non-existing user", func(t *testing.T) {
 		cmd := models.RevokeAuthTokenCmd{AuthTokenId: 2}
-		mock := &mockstore.SQLStoreMock{
-			ExpectedError: models.ErrUserNotFound,
-		}
+		mockUser := usertest.NewUserServiceFake()
+		mockUser.ExpectedError = user.ErrUserNotFound
 		adminRevokeUserAuthTokenScenario(t, "Should return not found when calling POST on",
 			"/api/admin/users/200/revoke-auth-token", "/api/admin/users/:id/revoke-auth-token", cmd, func(sc *scenarioContext) {
 				sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 				assert.Equal(t, 404, sc.resp.Code)
-			}, mock)
+			}, mockUser)
 	})
 
 	t.Run("When a server admin gets auth tokens for a non-existing user", func(t *testing.T) {
-		mock := &mockstore.SQLStoreMock{
-			ExpectedError: models.ErrUserNotFound,
-		}
+		mockUserService := usertest.NewUserServiceFake()
+		mockUserService.ExpectedError = user.ErrUserNotFound
 		adminGetUserAuthTokensScenario(t, "Should return not found when calling GET on",
 			"/api/admin/users/200/auth-tokens", "/api/admin/users/:id/auth-tokens", func(sc *scenarioContext) {
 				sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 				assert.Equal(t, 404, sc.resp.Code)
-			}, mock)
+			}, mockUserService)
 	})
 
 	t.Run("When a server admin attempts to enable/disable a nonexistent user", func(t *testing.T) {
 		adminDisableUserScenario(t, "Should return user not found on a POST request", "enable",
 			"/api/admin/users/42/enable", "/api/admin/users/:id/enable", func(sc *scenarioContext) {
-				store := sc.sqlStore.(*mockstore.SQLStoreMock)
-				sc.authInfoService.ExpectedError = models.ErrUserNotFound
-				store.ExpectedError = models.ErrUserNotFound
+				userService := sc.userService.(*usertest.FakeUserService)
+				sc.authInfoService.ExpectedError = user.ErrUserNotFound
+
+				userService.ExpectedError = user.ErrUserNotFound
 
 				sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 
@@ -100,15 +100,13 @@ func TestAdminAPIEndpoint(t *testing.T) {
 				require.NoError(t, err)
 
 				assert.Equal(t, "user not found", respJSON.Get("message").MustString())
-
-				assert.Equal(t, int64(42), store.LatestUserId)
 			})
 
 		adminDisableUserScenario(t, "Should return user not found on a POST request", "disable",
 			"/api/admin/users/42/disable", "/api/admin/users/:id/disable", func(sc *scenarioContext) {
-				store := sc.sqlStore.(*mockstore.SQLStoreMock)
-				sc.authInfoService.ExpectedError = models.ErrUserNotFound
-				store.ExpectedError = models.ErrUserNotFound
+				userService := sc.userService.(*usertest.FakeUserService)
+				sc.authInfoService.ExpectedError = user.ErrUserNotFound
+				userService.ExpectedError = user.ErrUserNotFound
 
 				sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 
@@ -117,8 +115,6 @@ func TestAdminAPIEndpoint(t *testing.T) {
 				require.NoError(t, err)
 
 				assert.Equal(t, "user not found", respJSON.Get("message").MustString())
-
-				assert.Equal(t, int64(42), store.LatestUserId)
 			})
 	})
 
@@ -152,18 +148,16 @@ func TestAdminAPIEndpoint(t *testing.T) {
 	t.Run("When a server admin attempts to delete a nonexistent user", func(t *testing.T) {
 		adminDeleteUserScenario(t, "Should return user not found error", "/api/admin/users/42",
 			"/api/admin/users/:id", func(sc *scenarioContext) {
-				sc.sqlStore.(*mockstore.SQLStoreMock).ExpectedError = models.ErrUserNotFound
-				sc.authInfoService.ExpectedError = models.ErrUserNotFound
+				sc.sqlStore.(*mockstore.SQLStoreMock).ExpectedError = user.ErrUserNotFound
+				sc.userService.(*usertest.FakeUserService).ExpectedError = user.ErrUserNotFound
+				sc.authInfoService.ExpectedError = user.ErrUserNotFound
 				sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
-				userID := sc.sqlStore.(*mockstore.SQLStoreMock).LatestUserId
 
 				assert.Equal(t, 404, sc.resp.Code)
 
 				respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
 				require.NoError(t, err)
 				assert.Equal(t, "user not found", respJSON.Get("message").MustString())
-
-				assert.Equal(t, int64(42), userID)
 			})
 	})
 
@@ -238,13 +232,14 @@ func TestAdminAPIEndpoint(t *testing.T) {
 	})
 }
 
-func putAdminScenario(t *testing.T, desc string, url string, routePattern string, role models.RoleType,
-	cmd dtos.AdminUpdateUserPermissionsForm, fn scenarioFunc, sqlStore sqlstore.Store) {
+func putAdminScenario(t *testing.T, desc string, url string, routePattern string, role org.RoleType,
+	cmd dtos.AdminUpdateUserPermissionsForm, fn scenarioFunc, sqlStore sqlstore.Store, userSvc user.Service) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		hs := &HTTPServer{
 			Cfg:             setting.NewCfg(),
 			SQLStore:        sqlStore,
 			authInfoService: &logintest.AuthInfoServiceFake{},
+			userService:     userSvc,
 		}
 
 		sc := setupScenarioContext(t, url)
@@ -252,8 +247,8 @@ func putAdminScenario(t *testing.T, desc string, url string, routePattern string
 			c.Req.Body = mockRequestBody(cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
-			sc.context.UserId = testUserID
-			sc.context.OrgId = testOrgID
+			sc.context.UserID = testUserID
+			sc.context.OrgID = testOrgID
 			sc.context.OrgRole = role
 
 			return hs.AdminUpdateUserPermissions(c)
@@ -265,11 +260,11 @@ func putAdminScenario(t *testing.T, desc string, url string, routePattern string
 	})
 }
 
-func adminLogoutUserScenario(t *testing.T, desc string, url string, routePattern string, fn scenarioFunc, sqlStore sqlstore.Store) {
+func adminLogoutUserScenario(t *testing.T, desc string, url string, routePattern string, fn scenarioFunc, userService *usertest.FakeUserService) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		hs := HTTPServer{
 			AuthTokenService: auth.NewFakeUserAuthTokenService(),
-			SQLStore:         sqlStore,
+			userService:      userService,
 		}
 
 		sc := setupScenarioContext(t, url)
@@ -277,9 +272,9 @@ func adminLogoutUserScenario(t *testing.T, desc string, url string, routePattern
 			t.Log("Route handler invoked", "url", c.Req.URL)
 
 			sc.context = c
-			sc.context.UserId = testUserID
-			sc.context.OrgId = testOrgID
-			sc.context.OrgRole = models.ROLE_ADMIN
+			sc.context.UserID = testUserID
+			sc.context.OrgID = testOrgID
+			sc.context.OrgRole = org.RoleAdmin
 
 			return hs.AdminLogoutUser(c)
 		})
@@ -290,13 +285,13 @@ func adminLogoutUserScenario(t *testing.T, desc string, url string, routePattern
 	})
 }
 
-func adminRevokeUserAuthTokenScenario(t *testing.T, desc string, url string, routePattern string, cmd models.RevokeAuthTokenCmd, fn scenarioFunc, sqlStore sqlstore.Store) {
+func adminRevokeUserAuthTokenScenario(t *testing.T, desc string, url string, routePattern string, cmd models.RevokeAuthTokenCmd, fn scenarioFunc, userService user.Service) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		fakeAuthTokenService := auth.NewFakeUserAuthTokenService()
 
 		hs := HTTPServer{
 			AuthTokenService: fakeAuthTokenService,
-			SQLStore:         sqlStore,
+			userService:      userService,
 		}
 
 		sc := setupScenarioContext(t, url)
@@ -305,9 +300,9 @@ func adminRevokeUserAuthTokenScenario(t *testing.T, desc string, url string, rou
 			c.Req.Body = mockRequestBody(cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
-			sc.context.UserId = testUserID
-			sc.context.OrgId = testOrgID
-			sc.context.OrgRole = models.ROLE_ADMIN
+			sc.context.UserID = testUserID
+			sc.context.OrgID = testOrgID
+			sc.context.OrgRole = org.RoleAdmin
 
 			return hs.AdminRevokeUserAuthToken(c)
 		})
@@ -318,22 +313,22 @@ func adminRevokeUserAuthTokenScenario(t *testing.T, desc string, url string, rou
 	})
 }
 
-func adminGetUserAuthTokensScenario(t *testing.T, desc string, url string, routePattern string, fn scenarioFunc, sqlStore sqlstore.Store) {
+func adminGetUserAuthTokensScenario(t *testing.T, desc string, url string, routePattern string, fn scenarioFunc, userService *usertest.FakeUserService) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		fakeAuthTokenService := auth.NewFakeUserAuthTokenService()
 
 		hs := HTTPServer{
 			AuthTokenService: fakeAuthTokenService,
-			SQLStore:         sqlStore,
+			userService:      userService,
 		}
 
 		sc := setupScenarioContext(t, url)
 		sc.userAuthTokenService = fakeAuthTokenService
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
-			sc.context.UserId = testUserID
-			sc.context.OrgId = testOrgID
-			sc.context.OrgRole = models.ROLE_ADMIN
+			sc.context.UserID = testUserID
+			sc.context.OrgID = testOrgID
+			sc.context.OrgRole = org.RoleAdmin
 
 			return hs.AdminGetUserAuthTokens(c)
 		})
@@ -354,14 +349,16 @@ func adminDisableUserScenario(t *testing.T, desc string, action string, url stri
 			SQLStore:         mockstore.NewSQLStoreMock(),
 			AuthTokenService: fakeAuthTokenService,
 			authInfoService:  authInfoService,
+			userService:      usertest.NewUserServiceFake(),
 		}
 
 		sc := setupScenarioContext(t, url)
 		sc.sqlStore = hs.SQLStore
 		sc.authInfoService = authInfoService
+		sc.userService = hs.userService
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
-			sc.context.UserId = testUserID
+			sc.context.UserID = testUserID
 
 			if action == "enable" {
 				return hs.AdminEnableUser(c)
@@ -378,7 +375,8 @@ func adminDisableUserScenario(t *testing.T, desc string, action string, url stri
 
 func adminDeleteUserScenario(t *testing.T, desc string, url string, routePattern string, fn scenarioFunc) {
 	hs := HTTPServer{
-		SQLStore: mockstore.NewSQLStoreMock(),
+		SQLStore:    mockstore.NewSQLStoreMock(),
+		userService: usertest.NewUserServiceFake(),
 	}
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		sc := setupScenarioContext(t, url)
@@ -386,10 +384,11 @@ func adminDeleteUserScenario(t *testing.T, desc string, url string, routePattern
 		sc.authInfoService = &logintest.AuthInfoServiceFake{}
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
-			sc.context.UserId = testUserID
+			sc.context.UserID = testUserID
 
 			return hs.AdminDeleteUser(c)
 		})
+		sc.userService = hs.userService
 
 		sc.m.Delete(routePattern, sc.defaultHandler)
 
@@ -413,7 +412,7 @@ func adminCreateUserScenario(t *testing.T, desc string, url string, routePattern
 			c.Req.Body = mockRequestBody(cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
-			sc.context.UserId = testUserID
+			sc.context.UserID = testUserID
 
 			return hs.AdminCreateUser(c)
 		})

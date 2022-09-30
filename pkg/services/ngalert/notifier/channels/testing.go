@@ -8,8 +8,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type fakeImageStore struct {
@@ -104,11 +110,12 @@ func newTestImage() (string, error) {
 // mockTimeNow replaces function timeNow to return constant time.
 // It returns a function that resets the variable back to its original value.
 // This allows usage of this function with defer:
-// func Test (t *testing.T) {
-//    now := time.Now()
-//    defer mockTimeNow(now)()
-//    ...
-// }
+//
+//	func Test (t *testing.T) {
+//	   now := time.Now()
+//	   defer mockTimeNow(now)()
+//	   ...
+//	}
 func mockTimeNow(constTime time.Time) func() {
 	timeNow = func() time.Time {
 		return constTime
@@ -142,3 +149,26 @@ func (ns *notificationServiceMock) SendEmailCommandHandler(ctx context.Context, 
 }
 
 func mockNotificationService() *notificationServiceMock { return &notificationServiceMock{} }
+
+func CreateNotificationService(t *testing.T) *notifications.NotificationService {
+	t.Helper()
+
+	tracer := tracing.InitializeTracerForTest()
+	bus := bus.ProvideBus(tracer)
+
+	cfg := setting.NewCfg()
+	cfg.StaticRootPath = "../../../../../public/"
+	cfg.BuildVersion = "4.0.0"
+	cfg.Smtp.Enabled = true
+	cfg.Smtp.TemplatesPatterns = []string{"emails/*.html", "emails/*.txt"}
+	cfg.Smtp.FromAddress = "from@address.com"
+	cfg.Smtp.FromName = "Grafana Admin"
+	cfg.Smtp.ContentTypes = []string{"text/html", "text/plain"}
+	cfg.Smtp.Host = "localhost:1234"
+	mailer := notifications.NewFakeMailer()
+
+	ns, err := notifications.ProvideService(bus, cfg, mailer, nil)
+	require.NoError(t, err)
+
+	return ns
+}

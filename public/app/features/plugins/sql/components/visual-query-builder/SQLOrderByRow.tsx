@@ -20,16 +20,18 @@ export function SQLOrderByRow({ fields, query, onQueryChange, db }: SQLOrderByRo
   let columnsWithIndices: SelectableValue[] = [];
 
   if (fields) {
+    const options = query.sql?.columns?.map((c, i) => {
+      const value = c.name ? `${c.name}(${c.parameters?.map((p) => p.name)})` : c.parameters?.map((p) => p.name);
+      return {
+        value,
+        label: `${i + 1} - ${value}`,
+      };
+    });
     columnsWithIndices = [
       {
         value: '',
         label: 'Selected columns',
-        options: query.sql?.columns?.map((c, i) => ({
-          value: i + 1,
-          label: c.name
-            ? `${i + 1} - ${c.name}(${c.parameters?.map((p) => `${p.name}`)})`
-            : c.parameters?.map((p) => `${i + 1} - ${p.name}`),
-        })),
+        options,
         expanded: true,
       },
       ...fields,

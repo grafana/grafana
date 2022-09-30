@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -75,7 +74,7 @@ func (u *Uploader) Upload(ctx context.Context, imageDiskPath string) (string, er
 	var keyData []byte
 	if u.KeyFile != "" {
 		u.log.Debug("Opening key file ", u.KeyFile)
-		keyData, err = ioutil.ReadFile(u.KeyFile)
+		keyData, err = os.ReadFile(u.KeyFile)
 		if err != nil {
 			return "", err
 		}

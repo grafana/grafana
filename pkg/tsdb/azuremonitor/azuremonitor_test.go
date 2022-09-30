@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
@@ -205,7 +205,7 @@ func TestCheckHealth(t *testing.T) {
 			}
 			return &http.Response{
 				StatusCode: 200,
-				Body:       ioutil.NopCloser(bytes.NewBuffer(bodyMarshal)),
+				Body:       io.NopCloser(bytes.NewBuffer(bodyMarshal)),
 				Header:     make(http.Header),
 			}, nil
 		} else {
@@ -218,7 +218,7 @@ func TestCheckHealth(t *testing.T) {
 			}
 			return &http.Response{
 				StatusCode: 200,
-				Body:       ioutil.NopCloser(bytes.NewBuffer(bodyMarshal)),
+				Body:       io.NopCloser(bytes.NewBuffer(bodyMarshal)),
 				Header:     make(http.Header),
 			}, nil
 		}
@@ -231,13 +231,13 @@ func TestCheckHealth(t *testing.T) {
 				if !fail {
 					return &http.Response{
 						StatusCode: 200,
-						Body:       ioutil.NopCloser(bytes.NewBufferString("OK")),
+						Body:       io.NopCloser(bytes.NewBufferString("OK")),
 						Header:     make(http.Header),
 					}, nil
 				} else {
 					return &http.Response{
 						StatusCode: 404,
-						Body:       ioutil.NopCloser(bytes.NewBufferString("not found")),
+						Body:       io.NopCloser(bytes.NewBufferString("not found")),
 						Header:     make(http.Header),
 					}, nil
 				}
@@ -247,7 +247,7 @@ func TestCheckHealth(t *testing.T) {
 	okClient := NewTestClient(func(req *http.Request) (*http.Response, error) {
 		return &http.Response{
 			StatusCode: 200,
-			Body:       ioutil.NopCloser(bytes.NewBufferString("OK")),
+			Body:       io.NopCloser(bytes.NewBufferString("OK")),
 			Header:     make(http.Header),
 		}, nil
 	})
@@ -258,7 +258,7 @@ func TestCheckHealth(t *testing.T) {
 			}
 			return &http.Response{
 				StatusCode: 404,
-				Body:       ioutil.NopCloser(bytes.NewBufferString("not found")),
+				Body:       io.NopCloser(bytes.NewBufferString("not found")),
 				Header:     make(http.Header),
 			}, nil
 		})

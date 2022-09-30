@@ -8,16 +8,16 @@ import {
   VizOrientation,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { StackingMode, VisibilityMode } from '@grafana/schema';
+import { GraphTransform, StackingMode, VisibilityMode } from '@grafana/schema';
 import { graphFieldOptions, commonOptionsBuilder } from '@grafana/ui';
 
 import { BarChartPanel } from './BarChartPanel';
 import { TickSpacingEditor } from './TickSpacingEditor';
-import { BarChartFieldConfig, PanelOptions, defaultBarChartFieldConfig, defaultPanelOptions } from './models.gen';
+import { PanelFieldConfig, PanelOptions, defaultPanelFieldConfig, defaultPanelOptions } from './models.gen';
 import { BarChartSuggestionsSupplier } from './suggestions';
 import { prepareBarChartDisplayValues } from './utils';
 
-export const plugin = new PanelPlugin<PanelOptions, BarChartFieldConfig>(BarChartPanel)
+export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(BarChartPanel)
   .useFieldConfig({
     standardOptions: {
       [FieldConfigProperty.Color]: {
@@ -31,7 +31,7 @@ export const plugin = new PanelPlugin<PanelOptions, BarChartFieldConfig>(BarChar
       },
     },
     useCustomConfig: (builder) => {
-      const cfg = defaultBarChartFieldConfig;
+      const cfg = defaultPanelFieldConfig;
 
       builder
         .addSliderInput({
@@ -62,6 +62,28 @@ export const plugin = new PanelPlugin<PanelOptions, BarChartFieldConfig>(BarChar
             options: graphFieldOptions.fillGradient,
           },
         });
+
+      builder.addSelect({
+        category: ['Graph styles'],
+        name: 'Transform',
+        path: 'transform',
+        settings: {
+          options: [
+            {
+              label: 'Constant',
+              value: GraphTransform.Constant,
+              description: 'The first value will be shown as a constant line',
+            },
+            {
+              label: 'Negative Y',
+              value: GraphTransform.NegativeY,
+              description: 'Flip the results to negative values on the y axis',
+            },
+          ],
+          isClearable: true,
+        },
+        hideFromDefaults: true,
+      });
 
       commonOptionsBuilder.addAxisConfig(builder, cfg, false);
       commonOptionsBuilder.addHideFrom(builder);

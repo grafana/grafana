@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, Button, useStyles2 } from '@grafana/ui';
+import { Alert, Button, ConfirmModal, useStyles2 } from '@grafana/ui';
 
 interface Props {
   onMigrate: () => void;
@@ -10,22 +10,41 @@ interface Props {
 }
 
 export const MigrateToServiceAccountsCard = ({ onMigrate, disabled }: Props): JSX.Element => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const styles = useStyles2(getStyles);
 
+  const docsLink = (
+    <a
+      className="external-link"
+      href="https://grafana.com/docs/grafana/latest/administration/api-keys/#migrate-api-keys-to-grafana-service-accounts/"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      here.
+    </a>
+  );
+  const migrationBoxDesc = (
+    <span>Are you sure you want to migrate all API keys to service accounts? Find out more {docsLink}</span>
+  );
+
   return (
-    <Alert title="Switch from API keys to Service accounts" severity="info">
+    <Alert title="Switch from API keys to service accounts" severity="info">
       <div className={styles.text}>
-        Service accounts give you more control. API keys will be automatically migrated into tokens inside respective
-        service accounts. The current API keys will still work, but will be called tokens and you will find them in the
-        detail view of a respective service account.
+        Each API key will be automatically migrated into a service account with a token. The service account will be
+        created with the same permission as the API Key and current API Keys will continue to work as they were.
       </div>
       <div className={styles.actionRow}>
-        {!disabled && (
-          <Button className={styles.actionButton} onClick={onMigrate}>
-            Migrate now
-          </Button>
-        )}
-        <span>Read more about Service accounts and how to turn them on</span>
+        <Button className={styles.actionButton} onClick={() => setIsModalOpen(true)}>
+          Migrate to service accounts now
+        </Button>
+        <ConfirmModal
+          title={'Migrate API keys to service accounts'}
+          isOpen={isModalOpen}
+          body={migrationBoxDesc}
+          confirmText={'Yes, migrate now'}
+          onConfirm={onMigrate}
+          onDismiss={() => setIsModalOpen(false)}
+        />
       </div>
     </Alert>
   );

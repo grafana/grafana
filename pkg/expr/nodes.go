@@ -99,7 +99,7 @@ func (gn *CMDNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (
 func buildCMDNode(dp *simple.DirectedGraph, rn *rawNode) (*CMDNode, error) {
 	commandType, err := rn.GetCommandType()
 	if err != nil {
-		return nil, fmt.Errorf("invalid expression command type in '%v'", rn.RefID)
+		return nil, fmt.Errorf("invalid command type in expression '%v': %w", rn.RefID, err)
 	}
 
 	node := &CMDNode{
@@ -119,11 +119,13 @@ func buildCMDNode(dp *simple.DirectedGraph, rn *rawNode) (*CMDNode, error) {
 		node.Command, err = UnmarshalResampleCommand(rn)
 	case TypeClassicConditions:
 		node.Command, err = classic.UnmarshalConditionsCmd(rn.Query, rn.RefID)
+	case TypeThreshold:
+		node.Command, err = UnmarshalThresholdCommand(rn)
 	default:
-		return nil, fmt.Errorf("expression command type '%v' in '%v' not implemented", commandType, rn.RefID)
+		return nil, fmt.Errorf("expression command type '%v' in expression '%v' not implemented", commandType, rn.RefID)
 	}
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to parse expression '%v': %w", rn.RefID, err)
 	}
 
 	return node, nil
@@ -237,7 +239,7 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (m
 		}
 
 		dataSource := dn.datasource.Type
-		if isAllFrameVectors(dataSource, qr.Frames) {
+		if isAllFrameVectors(dataSource, qr.Frames) { // Prometheus Specific Handling
 			vals, err = framesToNumbers(qr.Frames)
 			if err != nil {
 				return mathexp.Results{}, fmt.Errorf("failed to read frames as numbers: %w", err)
@@ -247,6 +249,12 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (m
 
 		if len(qr.Frames) == 1 {
 			frame := qr.Frames[0]
+			// Handle Untyped NoData
+			if len(frame.Fields) == 0 {
+				return mathexp.Results{Values: mathexp.Values{mathexp.NoData{Frame: frame}}}, nil
+			}
+
+			// Handle Numeric Table
 			if frame.TimeSeriesSchema().Type == data.TimeSeriesTypeNot && isNumberTable(frame) {
 				logger.Debug("expression datasource query (numberSet)", "query", refID)
 				numberSet, err := extractNumberSet(frame)

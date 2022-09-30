@@ -1,0 +1,41 @@
+{
+  "id": 208,
+  "title": "new-dashboard-var-ds-test",
+  "tags": null,
+  "templateVars": [
+    "dsVariable"
+  ],
+  "datasource": [
+    {
+      "uid": "sqlite-2",
+      "type": "sqlite-datasource"
+    },
+    {
+      "uid": "sqlite-1",
+      "type": "sqlite-datasource"
+    }
+  ],
+  "panels": [
+    {
+      "id": 2,
+      "title": "Panel Title",
+      "type": "table",
+      "pluginVersion": "9.1.0-pre",
+      "datasource": [
+        {
+          "uid": "sqlite-2",
+          "type": "sqlite-datasource"
+        },
+        {
+          "uid": "sqlite-1",
+          "type": "sqlite-datasource"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 36,
+  "linkCount": 0,
+  "timeFrom": "now-6h",
+  "timeTo": "now",
+  "timezone": ""
+}

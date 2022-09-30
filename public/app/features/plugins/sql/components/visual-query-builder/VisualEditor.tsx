@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAsync } from 'react-use';
 
-import { EditorField, EditorRow, EditorRows } from '@grafana/experimental';
+import { EditorRows, EditorRow, EditorField } from '@grafana/ui';
 
 import { DB, QueryEditorProps, QueryRowFilter } from '../../types';
 import { QueryToolbox } from '../query-editor-raw/QueryToolbox';

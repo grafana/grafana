@@ -22,7 +22,7 @@ interface Props {
   selectRule?: Rule;
 }
 
-export const PipelineTable: React.FC<Props> = (props) => {
+export const PipelineTable = (props: Props) => {
   const { rules } = props;
   const [isOpen, setOpen] = useState(false);
   const [selectedRule, setSelectedRule] = useState<Rule>();

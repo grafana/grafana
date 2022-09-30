@@ -16,12 +16,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 var orgID = int64(1)
-var user = &models.SignedInUser{UserId: 1}
+var usr = &user.SignedInUser{UserID: 1}
 
 func TestIntegrationProvideFolderService(t *testing.T) {
 	if testing.Short() {
@@ -44,6 +45,7 @@ func TestIntegrationFolderService(t *testing.T) {
 	t.Run("Folder service tests", func(t *testing.T) {
 		store := &dashboards.FakeDashboardStore{}
 		cfg := setting.NewCfg()
+		cfg.RBACEnabled = false
 		features := featuremgmt.WithFeatures()
 		cfg.IsFeatureToggleEnabled = features.IsEnabled
 		folderPermissions := acmock.NewMockedPermissionsService()
@@ -76,24 +78,24 @@ func TestIntegrationFolderService(t *testing.T) {
 			store.On("GetFolderByUID", mock.Anything, orgID, folderUID).Return(folder, nil)
 
 			t.Run("When get folder by id should return access denied error", func(t *testing.T) {
-				_, err := service.GetFolderByID(context.Background(), user, folderId, orgID)
+				_, err := service.GetFolderByID(context.Background(), usr, folderId, orgID)
 				require.Equal(t, err, dashboards.ErrFolderAccessDenied)
 			})
 
 			t.Run("When get folder by id, with id = 0 should return default folder", func(t *testing.T) {
-				folder, err := service.GetFolderByID(context.Background(), user, 0, orgID)
+				folder, err := service.GetFolderByID(context.Background(), usr, 0, orgID)
 				require.NoError(t, err)
 				require.Equal(t, folder, &models.Folder{Id: 0, Title: "General"})
 			})
 
 			t.Run("When get folder by uid should return access denied error", func(t *testing.T) {
-				_, err := service.GetFolderByUID(context.Background(), user, orgID, folderUID)
+				_, err := service.GetFolderByUID(context.Background(), usr, orgID, folderUID)
 				require.Equal(t, err, dashboards.ErrFolderAccessDenied)
 			})
 
 			t.Run("When creating folder should return access denied error", func(t *testing.T) {
 				store.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything).Return(true, nil).Times(2)
-				_, err := service.CreateFolder(context.Background(), user, orgID, folder.Title, folderUID)
+				_, err := service.CreateFolder(context.Background(), usr, orgID, folder.Title, folderUID)
 				require.Equal(t, err, dashboards.ErrFolderAccessDenied)
 			})
 
@@ -103,7 +105,7 @@ func TestIntegrationFolderService(t *testing.T) {
 					folder.Result = models.NewDashboard("dashboard-test")
 					folder.Result.IsFolder = true
 				}).Return(&models.Dashboard{}, nil)
-				err := service.UpdateFolder(context.Background(), user, orgID, folderUID, &models.UpdateFolderCommand{
+				err := service.UpdateFolder(context.Background(), usr, orgID, folderUID, &models.UpdateFolderCommand{
 					Uid:   folderUID,
 					Title: "Folder-TEST",
 				})
@@ -111,7 +113,7 @@ func TestIntegrationFolderService(t *testing.T) {
 			})
 
 			t.Run("When deleting folder by uid should return access denied error", func(t *testing.T) {
-				_, err := service.DeleteFolder(context.Background(), user, orgID, folderUID, false)
+				_, err := service.DeleteFolder(context.Background(), usr, orgID, folderUID, false)
 				require.Error(t, err)
 				require.Equal(t, err, dashboards.ErrFolderAccessDenied)
 			})
@@ -134,7 +136,7 @@ func TestIntegrationFolderService(t *testing.T) {
 				store.On("SaveDashboard", mock.Anything).Return(dash, nil).Once()
 				store.On("GetFolderByID", mock.Anything, orgID, dash.Id).Return(f, nil)
 
-				actualFolder, err := service.CreateFolder(context.Background(), user, orgID, dash.Title, "")
+				actualFolder, err := service.CreateFolder(context.Background(), usr, orgID, dash.Title, "")
 				require.NoError(t, err)
 				require.Equal(t, f, actualFolder)
 			})
@@ -143,7 +145,7 @@ func TestIntegrationFolderService(t *testing.T) {
 				dash := models.NewDashboardFolder("Test-Folder")
 				dash.Id = rand.Int63()
 
-				_, err := service.CreateFolder(context.Background(), user, orgID, dash.Title, "general")
+				_, err := service.CreateFolder(context.Background(), usr, orgID, dash.Title, "general")
 				require.ErrorIs(t, err, dashboards.ErrFolderInvalidUID)
 			})
 
@@ -162,7 +164,7 @@ func TestIntegrationFolderService(t *testing.T) {
 					Title: "TEST-Folder",
 				}
 
-				err := service.UpdateFolder(context.Background(), user, orgID, dashboardFolder.Uid, req)
+				err := service.UpdateFolder(context.Background(), usr, orgID, dashboardFolder.Uid, req)
 				require.NoError(t, err)
 				require.Equal(t, f, req.Result)
 			})
@@ -179,7 +181,7 @@ func TestIntegrationFolderService(t *testing.T) {
 				}).Return(nil).Once()
 
 				expectedForceDeleteRules := rand.Int63()%2 == 0
-				_, err := service.DeleteFolder(context.Background(), user, orgID, f.Uid, expectedForceDeleteRules)
+				_, err := service.DeleteFolder(context.Background(), usr, orgID, f.Uid, expectedForceDeleteRules)
 				require.NoError(t, err)
 				require.NotNil(t, actualCmd)
 				require.Equal(t, f.Id, actualCmd.Id)
@@ -202,7 +204,7 @@ func TestIntegrationFolderService(t *testing.T) {
 
 				store.On("GetFolderByID", mock.Anything, orgID, expected.Id).Return(expected, nil)
 
-				actual, err := service.GetFolderByID(context.Background(), user, expected.Id, orgID)
+				actual, err := service.GetFolderByID(context.Background(), usr, expected.Id, orgID)
 				require.Equal(t, expected, actual)
 				require.NoError(t, err)
 			})
@@ -213,7 +215,7 @@ func TestIntegrationFolderService(t *testing.T) {
 
 				store.On("GetFolderByUID", mock.Anything, orgID, expected.Uid).Return(expected, nil)
 
-				actual, err := service.GetFolderByUID(context.Background(), user, orgID, expected.Uid)
+				actual, err := service.GetFolderByUID(context.Background(), usr, orgID, expected.Uid)
 				require.Equal(t, expected, actual)
 				require.NoError(t, err)
 			})
@@ -223,7 +225,7 @@ func TestIntegrationFolderService(t *testing.T) {
 
 				store.On("GetFolderByTitle", mock.Anything, orgID, expected.Title).Return(expected, nil)
 
-				actual, err := service.GetFolderByTitle(context.Background(), user, orgID, expected.Title)
+				actual, err := service.GetFolderByTitle(context.Background(), usr, orgID, expected.Title)
 				require.Equal(t, expected, actual)
 				require.NoError(t, err)
 			})

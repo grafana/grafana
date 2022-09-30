@@ -127,6 +127,7 @@ func (ns *NotificationService) SendWebhookSync(ctx context.Context, cmd *models.
 		HttpMethod:  cmd.HttpMethod,
 		HttpHeader:  cmd.HttpHeader,
 		ContentType: cmd.ContentType,
+		Validation:  cmd.Validation,
 	})
 }
 
@@ -168,7 +169,7 @@ func (ns *NotificationService) SendEmailCommandHandler(ctx context.Context, cmd 
 }
 
 func (ns *NotificationService) SendResetPasswordEmail(ctx context.Context, cmd *models.SendResetPasswordEmailCommand) error {
-	code, err := createUserEmailCode(ns.Cfg, cmd.User, nil)
+	code, err := createUserEmailCode(ns.Cfg, cmd.User, "")
 	if err != nil {
 		return err
 	}

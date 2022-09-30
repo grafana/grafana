@@ -11,7 +11,7 @@ import { Props } from './ConfirmButton';
 import mdx from './ConfirmButton.mdx';
 import { DeleteButton } from './DeleteButton';
 
-export default {
+const meta: Meta = {
   title: 'Buttons/ConfirmButton',
   component: ConfirmButton,
   decorators: [withCenteredStory],
@@ -41,7 +41,7 @@ export default {
     },
     size: { control: { type: 'select' }, options: ['xs', 'sm', 'md', 'lg'] },
   },
-} as Meta;
+};
 
 interface StoryProps extends Partial<Props> {
   buttonText: string;
@@ -94,3 +94,5 @@ export const Delete: Story<StoryProps> = (args) => {
     />
   );
 };
+
+export default meta;

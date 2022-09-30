@@ -21,7 +21,7 @@ As an example, if the current Prometheus version is `2.31.1`, we support >= `2.2
 
 ## Grafana is not an alert receiver
 
-Grafana is not an alert receiver; is it an alert generator. This means that Grafana cannot receive alerts from anything other than its internal alert generator.
+Grafana is not an alert receiver; it is an alert generator. This means that Grafana cannot receive alerts from anything other than its internal alert generator.
 
 Receiving alerts from Prometheus (or anything else) is not supported at the time.
 

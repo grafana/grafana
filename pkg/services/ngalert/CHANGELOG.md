@@ -52,6 +52,7 @@ Scopes must have an order to ensure consistency and ease of search, this helps u
 - [ENHANCEMENT] Scheduler: Drop ticks if rule evaluation is too slow and adds a metric grafana_alerting_schedule_rule_evaluations_missed_total to track missed evaluations per rule #48885
 - [ENHANCEMENT] Ticker to tick at predictable time #50197
 - [ENHANCEMENT] Migration: Don't stop the migration when failing to parse alert rule tags #51253
+- [ENHANCEMENT] Prevent evaluation if "for" shorter than "evaluate" #51797
 
 ## 9.0.0
 

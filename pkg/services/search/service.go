@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/star"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -30,7 +31,7 @@ type Query struct {
 	Title         string
 	Tags          []string
 	OrgId         int64
-	SignedInUser  *models.SignedInUser
+	SignedInUser  *user.SignedInUser
 	Limit         int64
 	Page          int64
 	IsStarred     bool
@@ -85,7 +86,7 @@ func (s *SearchService) SearchHandler(ctx context.Context, query *Query) error {
 		hits = sortedHits(hits)
 	}
 
-	if err := s.setStarredDashboards(ctx, query.SignedInUser.UserId, hits); err != nil {
+	if err := s.setStarredDashboards(ctx, query.SignedInUser.UserID, hits); err != nil {
 		return err
 	}
 

@@ -214,7 +214,7 @@ describe('GraphNG utils', () => {
     const result = preparePlotConfigBuilder({
       frame: frame!,
       theme: createTheme(),
-      timeZone: DefaultTimeZone,
+      timeZones: [DefaultTimeZone],
       getTimeRange: getDefaultTimeRange,
       eventBus: new EventBusSrv(),
       sync: () => DashboardCursorSync.Tooltip,

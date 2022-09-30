@@ -3,7 +3,7 @@ import Prism from 'prismjs';
 import React, { useCallback, useState, useEffect, useMemo } from 'react';
 import { Node } from 'slate';
 
-import { GrafanaTheme2, isValidGoDuration, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, isValidGoDuration, SelectableValue, toOption } from '@grafana/data';
 import { FetchError, getTemplateSrv, isFetchError, TemplateSrv } from '@grafana/runtime';
 import {
   InlineFieldRow,
@@ -23,9 +23,10 @@ import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { dispatch } from 'app/store/store';
 
-import { TempoDatasource, TempoQuery } from '../datasource';
+import { DEFAULT_LIMIT, TempoDatasource } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
 import { tokenizer } from '../syntax';
+import { TempoQuery } from '../types';
 
 interface Props {
   datasource: TempoDatasource;
@@ -90,7 +91,13 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
     const fetchOptions = async () => {
       try {
         const [services, spans] = await Promise.all([loadOptions('serviceName'), loadOptions('spanName')]);
+        if (query.serviceName && getTemplateSrv().containsTemplate(query.serviceName)) {
+          services.push(toOption(query.serviceName));
+        }
         setServiceOptions(services);
+        if (query.spanName && getTemplateSrv().containsTemplate(query.spanName)) {
+          spans.push(toOption(query.spanName));
+        }
         setSpanOptions(spans);
       } catch (error) {
         // Display message if Tempo is connected but search 404's
@@ -102,7 +109,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
       }
     };
     fetchOptions();
-  }, [languageProvider, loadOptions]);
+  }, [languageProvider, loadOptions, query.serviceName, query.spanName]);
 
   useEffect(() => {
     const fetchTags = async () => {
@@ -136,6 +143,20 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
     }
   };
 
+  const onSpanNameChange = (v: SelectableValue<string>) => {
+    // If the 'x' icon is clicked to clear the selected span name, remove spanName from the query object.
+    if (!v) {
+      delete query.spanName;
+      return;
+    }
+    if (spanOptions?.find((obj) => obj.value === v.value)) {
+      onChange({
+        ...query,
+        spanName: v.value,
+      });
+    }
+  };
+
   const templateSrv: TemplateSrv = getTemplateSrv();
 
   return (
@@ -161,6 +182,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
               isClearable
               onKeyDown={onKeyDown}
               aria-label={'select-service-name'}
+              allowCustomValue={true}
             />
           </InlineField>
         </InlineFieldRow>
@@ -173,22 +195,17 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
                 loadOptions('spanName');
               }}
               isLoading={isLoading.spanName}
-              value={spanOptions?.find((v) => v?.value === query.spanName) || undefined}
-              onChange={(v) => {
-                onChange({
-                  ...query,
-                  spanName: v?.value || undefined,
-                });
-              }}
+              onChange={onSpanNameChange}
               placeholder="Select a span"
               isClearable
               onKeyDown={onKeyDown}
               aria-label={'select-span-name'}
+              allowCustomValue={true}
             />
           </InlineField>
         </InlineFieldRow>
         <InlineFieldRow>
-          <InlineField label="Tags" labelWidth={14} grow tooltip="Values should be in the logfmt format.">
+          <InlineField label="Tags" labelWidth={14} grow tooltip="Values should be in logfmt.">
             <QueryField
               additionalPlugins={plugins}
               query={query.search}
@@ -262,11 +279,12 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
             invalid={!!inputErrors.limit}
             labelWidth={14}
             grow
-            tooltip="Maximum numbers of returned results"
+            tooltip="Maximum number of returned results"
           >
             <Input
               id="limit"
               value={query.limit || ''}
+              placeholder={`Default: ${DEFAULT_LIMIT}`}
               type="number"
               onChange={(v) => {
                 let limit = v.currentTarget.value ? parseInt(v.currentTarget.value, 10) : undefined;

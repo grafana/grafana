@@ -19,6 +19,10 @@ var (
 	// ErrVersionLockedObjectNotFound is returned when an object is not
 	// found using the current hash.
 	ErrVersionLockedObjectNotFound = fmt.Errorf("could not find object using provided id and hash")
+	// ConfigRecordsLimit defines the limit of how many alertmanager configuration versions
+	// should be stored in the database for each organization including the current one.
+	// Has to be > 0
+	ConfigRecordsLimit int = 100
 )
 
 // GetLatestAlertmanagerConfiguration returns the lastest version of the alertmanager configuration.
@@ -78,7 +82,9 @@ func (st DBstore) SaveAlertmanagerConfigurationWithCallback(ctx context.Context,
 		if _, err := sess.Insert(config); err != nil {
 			return err
 		}
-
+		if _, err := st.deleteOldConfigurations(ctx, cmd.OrgID, ConfigRecordsLimit); err != nil {
+			st.Logger.Warn("failed to delete old am configs", "org", cmd.OrgID, "err", err)
+		}
 		if err := callback(); err != nil {
 			return err
 		}
@@ -117,6 +123,9 @@ func (st *DBstore) UpdateAlertmanagerConfiguration(ctx context.Context, cmd *mod
 		}
 		if rows == 0 {
 			return ErrVersionLockedObjectNotFound
+		}
+		if _, err := st.deleteOldConfigurations(ctx, cmd.OrgID, ConfigRecordsLimit); err != nil {
+			st.Logger.Warn("failed to delete old am configs", "org", cmd.OrgID, "err", err)
 		}
 		return err
 	})
@@ -195,4 +204,57 @@ func getInsertQuery(driver string) string {
 				configuration_hash = ?
 		)`
 	}
+}
+
+func (st *DBstore) deleteOldConfigurations(ctx context.Context, orgID int64, limit int) (int64, error) {
+	if limit < 1 {
+		return 0, fmt.Errorf("failed to delete old configurations: limit is set to '%d' but needs to be > 0", limit)
+	}
+
+	if limit < 1 {
+		limit = ConfigRecordsLimit
+	}
+
+	var affectedRows int64
+	err := st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		highest := &models.AlertConfiguration{}
+		ok, err := sess.Desc("id").Where("org_id = ?", orgID).OrderBy("id").Limit(1, limit-1).Get(highest)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			// No configurations exist. Nothing to clean up.
+			affectedRows = 0
+			return nil
+		}
+
+		threshold := highest.ID - 1
+		if threshold < 1 {
+			// Fewer than `limit` records even exist. Nothing to clean up.
+			affectedRows = 0
+			return nil
+		}
+
+		res, err := sess.Exec(`
+			DELETE FROM 
+				alert_configuration 
+			WHERE
+				org_id = ?
+			AND 
+				id < ?
+		`, orgID, threshold)
+		if err != nil {
+			return err
+		}
+		rows, err := res.RowsAffected()
+		if err != nil {
+			return err
+		}
+		affectedRows = rows
+		if affectedRows > 0 {
+			st.Logger.Info("deleted old alert_configuration(s)", "org", orgID, "limit", limit, "delete_count", affectedRows)
+		}
+		return nil
+	})
+	return affectedRows, err
 }

@@ -31,7 +31,9 @@ This topic explains configuring, querying, and other options specific to the Azu
 
 To access Azure Monitor configuration, hover your mouse over the **Configuration** (gear) icon, click **Data Sources**, and then select the Azure Monitor data source. If you haven't already, you'll need to [add the Azure Monitor data source]({{< relref "../add-a-data-source/" >}}).
 
-You must create an app registration and service principal in Azure AD to authenticate the data source. See the [Azure documentation](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal#get-tenant-and-app-id-values-for-signing-in) for configuration details. Alternatively, if you are hosting Grafana in Azure (e.g. App Service, or Azure Virtual Machines) you can configure the Azure Monitor data source to use Managed Identity to securely authenticate without entering credentials into Grafana. Refer to [Configuring using Managed Identity](#configuring-using-managed-identity) for more details.
+You must create an app registration and service principal in Azure AD to authenticate the data source. For more information, refer to [Azure documentation](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal#get-tenant-and-app-id-values-for-signing-in) for configuration details. The app registration you create will need to have the `Reader` role assigned on the subscription. For more information, refer to [Azure docs for role assignments](https://docs.microsoft.com/en-us/azure/role-based-access-control/role-assignments-portal?tabs=current).
+
+Alternatively, if you host Grafana in Azure (such as in App Service or Azure Virtual Machines), you can configure the Azure Monitor data source to use Managed Identity to securely authenticate without entering credentials into Grafana. Refer to [Configuring using Managed Identity](#configuring-using-managed-identity) for details.
 
 | Name                    | Description                                                                                                                                                                                                                                                                                                             |
 | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -103,7 +105,7 @@ Further documentation on multi-dimensional metrics is available [here](https://d
 
 #### Supported Azure Monitor metrics
 
-Not all metrics returned by the Azure Monitor Metrics API have values. To make it easier for you when building a query, the Grafana data source has a list of supported metrics and ignores metrics which will never have values. This list is updated regularly as new services and metrics are added to the Azure cloud. For more information about the list of metrics, refer to [current supported namespaces](https://github.com/grafana/grafana/blob/main/public/app/plugins/datasource/grafana-azure-monitor-datasource/azure_monitor/supported_namespaces.ts).
+Not all metrics returned by the Azure Monitor Metrics API have values. To make it easier for you when building a query, the Grafana data source has a list of supported metrics and ignores metrics which will never have values. This list is updated regularly as new services and metrics are added to the Azure cloud. For more information about the list of metrics, refer to [current supported namespaces](https://github.com/grafana/grafana/blob/main/public/app/plugins/datasource/grafana-azure-monitor-datasource/azureMetadata/metricNamespaces.ts).
 
 ### Querying Azure Monitor Logs
 

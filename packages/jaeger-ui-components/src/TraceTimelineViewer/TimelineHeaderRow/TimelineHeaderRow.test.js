@@ -12,20 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { shallow } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import Ticks from '../Ticks';
-
-import { TimelineCollapser } from './TimelineCollapser';
-import TimelineColumnResizer from './TimelineColumnResizer';
 import TimelineHeaderRow from './TimelineHeaderRow';
-import TimelineViewingLayer from './TimelineViewingLayer';
 
-describe('<TimelineHeaderRow>', () => {
-  let wrapper;
-
-  const nameColumnWidth = 0.25;
+const nameColumnWidth = 0.25;
+const setup = () => {
   const props = {
     nameColumnWidth,
     duration: 1234,
@@ -42,67 +35,55 @@ describe('<TimelineHeaderRow>', () => {
     },
   };
 
-  beforeEach(() => {
-    wrapper = shallow(<TimelineHeaderRow {...props} />);
-  });
+  return render(<TimelineHeaderRow {...props} />);
+};
 
+describe('TimelineHeaderRow', () => {
   it('renders without exploding', () => {
-    expect(wrapper).toBeDefined();
-    expect(wrapper.find('[data-test-id="TimelineHeaderRow"]').length).toBe(1);
-  });
-
-  it('propagates the name column width', () => {
-    const nameCol = wrapper.find({ width: nameColumnWidth });
-    const timelineCol = wrapper.find({ width: 1 - nameColumnWidth });
-    expect(nameCol.length).toBe(1);
-    expect(timelineCol.length).toBe(1);
+    expect(() => setup()).not.toThrow();
   });
 
   it('renders the title', () => {
-    expect(wrapper.find('h4').text()).toMatch(/Service.*?Operation/);
+    setup();
+
+    expect(screen.getByRole('heading', { name: 'Service & Operation' }));
+  });
+
+  it('renders the collapser controls', () => {
+    setup();
+
+    expect(screen.getByRole('button', { name: 'Expand All' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Collapse All' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Expand +1' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Collapse +1' })).toBeInTheDocument();
+  });
+
+  it('renders the resizer controls', () => {
+    setup();
+
+    expect(screen.getByTestId('TimelineColumnResizer')).toBeInTheDocument();
+    expect(screen.getByTestId('TimelineColumnResizer--dragger')).toBeInTheDocument();
+    expect(screen.getByTestId('TimelineColumnResizer--gripIcon')).toBeInTheDocument();
+  });
+
+  it('propagates the name column width', () => {
+    setup();
+
+    const timelineCells = screen.queryAllByTestId('TimelineRowCell');
+    expect(timelineCells).toHaveLength(2);
+    expect(getComputedStyle(timelineCells[0]).maxWidth).toBe(`${nameColumnWidth * 100}%`);
+    expect(getComputedStyle(timelineCells[1]).maxWidth).toBe(`${(1 - nameColumnWidth) * 100}%`);
   });
 
   it('renders the TimelineViewingLayer', () => {
-    const elm = (
-      <TimelineViewingLayer
-        boundsInvalidator={nameColumnWidth}
-        updateNextViewRangeTime={props.updateNextViewRangeTime}
-        updateViewRangeTime={props.updateViewRangeTime}
-        viewRangeTime={props.viewRangeTime}
-      />
-    );
-    expect(wrapper.containsMatchingElement(elm)).toBe(true);
+    setup();
+
+    expect(screen.getByTestId('TimelineViewingLayer')).toBeInTheDocument();
   });
 
   it('renders the Ticks', () => {
-    const [viewStart, viewEnd] = props.viewRangeTime.current;
-    const elm = (
-      <Ticks
-        numTicks={props.numTicks}
-        startTime={viewStart * props.duration}
-        endTime={viewEnd * props.duration}
-        showLabels
-      />
-    );
-    expect(wrapper.containsMatchingElement(elm)).toBe(true);
-  });
+    setup();
 
-  it('renders the TimelineColumnResizer', () => {
-    const elm = (
-      <TimelineColumnResizer position={nameColumnWidth} onChange={props.onColummWidthChange} min={0.2} max={0.85} />
-    );
-    expect(wrapper.containsMatchingElement(elm)).toBe(true);
-  });
-
-  it('renders the TimelineCollapser', () => {
-    const elm = (
-      <TimelineCollapser
-        onCollapseAll={props.onCollapseAll}
-        onExpandAll={props.onExpandAll}
-        onCollapseOne={props.onCollapseOne}
-        onExpandOne={props.onExpandOne}
-      />
-    );
-    expect(wrapper.containsMatchingElement(elm)).toBe(true);
+    expect(screen.getAllByTestId('TicksID')).toHaveLength(5);
   });
 });

@@ -67,4 +67,31 @@ describe('handle location parsing', () => {
       ]
     `);
   });
+
+  it('auto support geohash fields', async () => {
+    const frame = toDataFrame({
+      name: 'simple',
+      fields: [
+        { name: 'name', type: FieldType.string, values: names },
+        { name: 'geohash', type: FieldType.string, values: ['9q94r', 'dr5rs'] },
+      ],
+    });
+
+    const matchers = await getLocationMatchers({
+      mode: FrameGeometrySourceMode.Geohash,
+    });
+    const geo = getGeometryField(frame, matchers).field!;
+    expect(geo.values.toArray().map((p) => toLonLat((p as Point).getCoordinates()))).toMatchInlineSnapshot(`
+      Array [
+        Array [
+          -122.01416015625001,
+          36.979980468750014,
+        ],
+        Array [
+          -73.98193359375,
+          40.71533203125,
+        ],
+      ]
+    `);
+  });
 });

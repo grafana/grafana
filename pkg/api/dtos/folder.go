@@ -11,7 +11,7 @@ type Folder struct {
 	Uid           string                 `json:"uid"`
 	Title         string                 `json:"title"`
 	Url           string                 `json:"url"`
-	HasAcl        bool                   `json:"hasAcl"`
+	HasACL        bool                   `json:"hasAcl" xorm:"has_acl"`
 	CanSave       bool                   `json:"canSave"`
 	CanEdit       bool                   `json:"canEdit"`
 	CanAdmin      bool                   `json:"canAdmin"`

@@ -3,7 +3,7 @@ package dashboards
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -19,12 +19,12 @@ type configReader struct {
 	orgStore utils.OrgStore
 }
 
-func (cr *configReader) parseConfigs(file os.FileInfo) ([]*config, error) {
+func (cr *configReader) parseConfigs(file fs.DirEntry) ([]*config, error) {
 	filename, _ := filepath.Abs(filepath.Join(cr.path, file.Name()))
 
 	// nolint:gosec
 	// We can ignore the gosec G304 warning on this one because `filename` comes from ps.Cfg.ProvisioningPath
-	yamlFile, err := ioutil.ReadFile(filename)
+	yamlFile, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +67,7 @@ func (cr *configReader) parseConfigs(file os.FileInfo) ([]*config, error) {
 func (cr *configReader) readConfig(ctx context.Context) ([]*config, error) {
 	var dashboards []*config
 
-	files, err := ioutil.ReadDir(cr.path)
+	files, err := os.ReadDir(cr.path)
 	if err != nil {
 		cr.log.Error("can't read dashboard provisioning files from directory", "path", cr.path, "error", err)
 		return dashboards, nil

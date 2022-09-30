@@ -41,7 +41,7 @@ func (e UnknownReceiverError) Error() string {
 }
 
 func (srv AlertmanagerSrv) RouteGetAMStatus(c *models.ReqContext) response.Response {
-	am, errResp := srv.AlertmanagerFor(c.OrgId)
+	am, errResp := srv.AlertmanagerFor(c.OrgID)
 	if errResp != nil {
 		return errResp
 	}
@@ -56,7 +56,7 @@ func (srv AlertmanagerSrv) RouteCreateSilence(c *models.ReqContext, postableSile
 		return ErrResp(http.StatusBadRequest, err, "silence failed validation")
 	}
 
-	am, errResp := srv.AlertmanagerFor(c.OrgId)
+	am, errResp := srv.AlertmanagerFor(c.OrgID)
 	if errResp != nil {
 		return errResp
 	}
@@ -89,7 +89,7 @@ func (srv AlertmanagerSrv) RouteCreateSilence(c *models.ReqContext, postableSile
 }
 
 func (srv AlertmanagerSrv) RouteDeleteAlertingConfig(c *models.ReqContext) response.Response {
-	am, errResp := srv.AlertmanagerFor(c.OrgId)
+	am, errResp := srv.AlertmanagerFor(c.OrgID)
 	if errResp != nil {
 		return errResp
 	}
@@ -103,7 +103,7 @@ func (srv AlertmanagerSrv) RouteDeleteAlertingConfig(c *models.ReqContext) respo
 }
 
 func (srv AlertmanagerSrv) RouteDeleteSilence(c *models.ReqContext, silenceID string) response.Response {
-	am, errResp := srv.AlertmanagerFor(c.OrgId)
+	am, errResp := srv.AlertmanagerFor(c.OrgID)
 	if errResp != nil {
 		return errResp
 	}
@@ -118,7 +118,7 @@ func (srv AlertmanagerSrv) RouteDeleteSilence(c *models.ReqContext, silenceID st
 }
 
 func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *models.ReqContext) response.Response {
-	config, err := srv.mam.GetAlertmanagerConfiguration(c.Req.Context(), c.OrgId)
+	config, err := srv.mam.GetAlertmanagerConfiguration(c.Req.Context(), c.OrgID)
 	if err != nil {
 		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 			return ErrResp(http.StatusNotFound, err, "")
@@ -129,7 +129,7 @@ func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *models.ReqContext) response
 }
 
 func (srv AlertmanagerSrv) RouteGetAMAlertGroups(c *models.ReqContext) response.Response {
-	am, errResp := srv.AlertmanagerFor(c.OrgId)
+	am, errResp := srv.AlertmanagerFor(c.OrgID)
 	if errResp != nil {
 		return errResp
 	}
@@ -153,7 +153,7 @@ func (srv AlertmanagerSrv) RouteGetAMAlertGroups(c *models.ReqContext) response.
 }
 
 func (srv AlertmanagerSrv) RouteGetAMAlerts(c *models.ReqContext) response.Response {
-	am, errResp := srv.AlertmanagerFor(c.OrgId)
+	am, errResp := srv.AlertmanagerFor(c.OrgID)
 	if errResp != nil {
 		return errResp
 	}
@@ -180,7 +180,7 @@ func (srv AlertmanagerSrv) RouteGetAMAlerts(c *models.ReqContext) response.Respo
 }
 
 func (srv AlertmanagerSrv) RouteGetSilence(c *models.ReqContext, silenceID string) response.Response {
-	am, errResp := srv.AlertmanagerFor(c.OrgId)
+	am, errResp := srv.AlertmanagerFor(c.OrgID)
 	if errResp != nil {
 		return errResp
 	}
@@ -197,7 +197,7 @@ func (srv AlertmanagerSrv) RouteGetSilence(c *models.ReqContext, silenceID strin
 }
 
 func (srv AlertmanagerSrv) RouteGetSilences(c *models.ReqContext) response.Response {
-	am, errResp := srv.AlertmanagerFor(c.OrgId)
+	am, errResp := srv.AlertmanagerFor(c.OrgID)
 	if errResp != nil {
 		return errResp
 	}
@@ -214,7 +214,7 @@ func (srv AlertmanagerSrv) RouteGetSilences(c *models.ReqContext) response.Respo
 }
 
 func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *models.ReqContext, body apimodels.PostableUserConfig) response.Response {
-	currentConfig, err := srv.mam.GetAlertmanagerConfiguration(c.Req.Context(), c.OrgId)
+	currentConfig, err := srv.mam.GetAlertmanagerConfiguration(c.Req.Context(), c.OrgID)
 	// If a config is present and valid we proceed with the guard, otherwise we
 	// just bypass the guard which is okay as we are anyway in an invalid state.
 	if err == nil {
@@ -222,7 +222,7 @@ func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *models.ReqContext, body ap
 			return ErrResp(http.StatusBadRequest, err, "")
 		}
 	}
-	err = srv.mam.ApplyAlertmanagerConfiguration(c.Req.Context(), c.OrgId, body)
+	err = srv.mam.ApplyAlertmanagerConfiguration(c.Req.Context(), c.OrgID, body)
 	if err == nil {
 		return response.JSON(http.StatusAccepted, util.DynMap{"message": "configuration created"})
 	}
@@ -249,7 +249,7 @@ func (srv AlertmanagerSrv) RoutePostAMAlerts(_ *models.ReqContext, _ apimodels.P
 }
 
 func (srv AlertmanagerSrv) RoutePostTestReceivers(c *models.ReqContext, body apimodels.TestReceiversConfigBodyParams) response.Response {
-	if err := srv.crypto.LoadSecureSettings(c.Req.Context(), c.OrgId, body.Receivers); err != nil {
+	if err := srv.crypto.LoadSecureSettings(c.Req.Context(), c.OrgID, body.Receivers); err != nil {
 		var unknownReceiverError UnknownReceiverError
 		if errors.As(err, &unknownReceiverError) {
 			return ErrResp(http.StatusBadRequest, err, "")
@@ -271,7 +271,7 @@ func (srv AlertmanagerSrv) RoutePostTestReceivers(c *models.ReqContext, body api
 	}
 	defer cancelFunc()
 
-	am, errResp := srv.AlertmanagerFor(c.OrgId)
+	am, errResp := srv.AlertmanagerFor(c.OrgID)
 	if errResp != nil {
 		return errResp
 	}
