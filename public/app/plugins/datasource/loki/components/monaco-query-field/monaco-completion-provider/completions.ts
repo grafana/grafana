@@ -214,15 +214,12 @@ export async function getCompletions(
   dataProvider: CompletionDataProvider
 ): Promise<Completion[]> {
   switch (situation.type) {
+    case 'EMPTY':
     case 'AT_ROOT':
       const historyCompletions = await getAllHistoryCompletions(dataProvider);
       return [...historyCompletions, ...LOG_COMPLETIONS, ...AGGREGATION_COMPLETIONS, ...FUNCTION_COMPLETIONS];
     case 'IN_DURATION':
       return DURATION_COMPLETIONS;
-    case 'EMPTY': {
-      const historyCompletions = await getAllHistoryCompletions(dataProvider);
-      return [...historyCompletions, ...LOG_COMPLETIONS, ...AGGREGATION_COMPLETIONS, ...FUNCTION_COMPLETIONS];
-    }
     case 'IN_GROUPING':
       return getInGroupingCompletions(situation.otherLabels, dataProvider);
     case 'IN_LABEL_SELECTOR_NO_LABEL_NAME':
