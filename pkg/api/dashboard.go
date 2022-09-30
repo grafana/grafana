@@ -155,7 +155,6 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	prefsQuery := pref.GetPreferenceWithDefaultsQuery{OrgID: c.OrgID, UserID: c.SignedInUser.UserID, Teams: c.Teams}
 	preference, err := hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)
 	if err != nil {
-		preference.HomeDashboardID = 0
 		return response.Error(500, "Failed to get preferences", err)
 	}
 
