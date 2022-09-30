@@ -15,14 +15,18 @@ import (
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
+type ruleStates struct {
+	states map[string]*State
+}
+
 type cache struct {
-	states    map[int64]map[string]map[string]*State // orgID > alertRuleUID > stateID > state
+	states    map[int64]map[string]*ruleStates // orgID > alertRuleUID > stateID > state
 	mtxStates sync.RWMutex
 }
 
 func newCache() *cache {
 	return &cache{
-		states: make(map[int64]map[string]map[string]*State),
+		states: make(map[int64]map[string]*ruleStates),
 	}
 }
 
@@ -70,13 +74,13 @@ func (c *cache) getOrCreate(ctx context.Context, log log.Logger, alertRule *ngMo
 	}
 
 	if _, ok := c.states[alertRule.OrgID]; !ok {
-		c.states[alertRule.OrgID] = make(map[string]map[string]*State)
+		c.states[alertRule.OrgID] = make(map[string]*ruleStates)
 	}
 	if _, ok := c.states[alertRule.OrgID][alertRule.UID]; !ok {
-		c.states[alertRule.OrgID][alertRule.UID] = make(map[string]*State)
+		c.states[alertRule.OrgID][alertRule.UID] = &ruleStates{states: make(map[string]*State)}
 	}
 
-	if state, ok := c.states[alertRule.OrgID][alertRule.UID][id]; ok {
+	if state, ok := c.states[alertRule.OrgID][alertRule.UID].states[id]; ok {
 		// Annotations can change over time, however we also want to maintain
 		// certain annotations across evaluations
 		for k, v := range state.Annotations {
@@ -89,7 +93,7 @@ func (c *cache) getOrCreate(ctx context.Context, log log.Logger, alertRule *ngMo
 			}
 		}
 		state.Annotations = annotations
-		c.states[alertRule.OrgID][alertRule.UID][id] = state
+		c.states[alertRule.OrgID][alertRule.UID].states[id] = state
 		return state
 	}
 
@@ -106,7 +110,7 @@ func (c *cache) getOrCreate(ctx context.Context, log log.Logger, alertRule *ngMo
 	if result.State == eval.Alerting {
 		newState.StartsAt = result.EvaluatedAt
 	}
-	c.states[alertRule.OrgID][alertRule.UID][id] = newState
+	c.states[alertRule.OrgID][alertRule.UID].states[id] = newState
 	return newState
 }
 
@@ -131,7 +135,7 @@ func (c *cache) expandRuleLabelsAndAnnotations(ctx context.Context, log log.Logg
 	return expand(alertRule.Labels), expand(alertRule.Annotations)
 }
 
-func (c *cache) setAllStates(newStates map[int64]map[string]map[string]*State) {
+func (c *cache) setAllStates(newStates map[int64]map[string]*ruleStates) {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
 	c.states = newStates
@@ -141,19 +145,24 @@ func (c *cache) set(entry *State) {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
 	if _, ok := c.states[entry.OrgID]; !ok {
-		c.states[entry.OrgID] = make(map[string]map[string]*State)
+		c.states[entry.OrgID] = make(map[string]*ruleStates)
 	}
 	if _, ok := c.states[entry.OrgID][entry.AlertRuleUID]; !ok {
-		c.states[entry.OrgID][entry.AlertRuleUID] = make(map[string]*State)
+		c.states[entry.OrgID][entry.AlertRuleUID] = &ruleStates{states: make(map[string]*State)}
 	}
-	c.states[entry.OrgID][entry.AlertRuleUID][entry.CacheId] = entry
+	c.states[entry.OrgID][entry.AlertRuleUID].states[entry.CacheId] = entry
 }
 
 func (c *cache) get(orgID int64, alertRuleUID, stateId string) (*State, error) {
 	c.mtxStates.RLock()
 	defer c.mtxStates.RUnlock()
-	if state, ok := c.states[orgID][alertRuleUID][stateId]; ok {
-		return state, nil
+	ruleStates, ok := c.states[orgID][alertRuleUID]
+	if ok {
+		var state *State
+		state, ok = ruleStates.states[stateId]
+		if ok {
+			return state, nil
+		}
 	}
 	return nil, fmt.Errorf("no entry for %s:%s was found", alertRuleUID, stateId)
 }
@@ -163,7 +172,7 @@ func (c *cache) getAll(orgID int64) []*State {
 	c.mtxStates.RLock()
 	defer c.mtxStates.RUnlock()
 	for _, v1 := range c.states[orgID] {
-		for _, v2 := range v1 {
+		for _, v2 := range v1.states {
 			states = append(states, v2)
 		}
 	}
@@ -171,26 +180,33 @@ func (c *cache) getAll(orgID int64) []*State {
 }
 
 func (c *cache) getStatesForRuleUID(orgID int64, alertRuleUID string) []*State {
-	var ruleStates []*State
+	var result []*State
 	c.mtxStates.RLock()
 	defer c.mtxStates.RUnlock()
-	for _, state := range c.states[orgID][alertRuleUID] {
-		ruleStates = append(ruleStates, state)
+	ruleStates, ok := c.states[orgID][alertRuleUID]
+	if !ok {
+		return nil
 	}
-	return ruleStates
+	for _, state := range ruleStates.states {
+		result = append(result, state)
+	}
+	return result
 }
 
 // removeByRuleUID deletes all entries in the state cache that match the given UID. Returns removed states
 func (c *cache) removeByRuleUID(orgID int64, uid string) []*State {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
-	statesMap := c.states[orgID][uid]
-	delete(c.states[orgID], uid)
-	if statesMap == nil {
+	ruleState, ok := c.states[orgID][uid]
+	if !ok {
 		return nil
 	}
-	states := make([]*State, 0, len(statesMap))
-	for _, state := range statesMap {
+	delete(c.states[orgID], uid)
+	if len(ruleState.states) == 0 {
+		return nil
+	}
+	states := make([]*State, 0, len(ruleState.states))
+	for _, state := range ruleState.states {
 		states = append(states, state)
 	}
 	return states
@@ -213,7 +229,7 @@ func (c *cache) recordMetrics(metrics *metrics.State) {
 	for org, orgMap := range c.states {
 		metrics.GroupRules.WithLabelValues(fmt.Sprint(org)).Set(float64(len(orgMap)))
 		for _, rule := range orgMap {
-			for _, state := range rule {
+			for _, state := range rule.states {
 				n := ct[state.State]
 				ct[state.State] = n + 1
 			}
@@ -242,5 +258,9 @@ func mergeLabels(a, b data.Labels) data.Labels {
 func (c *cache) deleteEntry(orgID int64, alertRuleUID, cacheID string) {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
-	delete(c.states[orgID][alertRuleUID], cacheID)
+	ruleStates, ok := c.states[orgID][alertRuleUID]
+	if !ok {
+		return
+	}
+	delete(ruleStates.states, cacheID)
 }

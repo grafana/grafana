@@ -76,7 +76,7 @@ func (st *Manager) Warm(ctx context.Context) {
 	}
 
 	statesCount := 0
-	states := make(map[int64]map[string]map[string]*State, len(orgIds))
+	states := make(map[int64]map[string]*ruleStates, len(orgIds))
 	for _, orgId := range orgIds {
 		// Get Rules
 		ruleCmd := ngModels.ListAlertRulesQuery{
@@ -91,7 +91,7 @@ func (st *Manager) Warm(ctx context.Context) {
 			ruleByUID[rule.UID] = rule
 		}
 
-		orgStates := make(map[string]map[string]*State, len(ruleByUID))
+		orgStates := make(map[string]*ruleStates, len(ruleByUID))
 		states[orgId] = orgStates
 
 		// Get Instances
@@ -111,7 +111,7 @@ func (st *Manager) Warm(ctx context.Context) {
 
 			rulesStates, ok := orgStates[entry.RuleUID]
 			if !ok {
-				rulesStates = make(map[string]*State)
+				rulesStates = &ruleStates{states: make(map[string]*State)}
 				orgStates[entry.RuleUID] = rulesStates
 			}
 
@@ -120,7 +120,7 @@ func (st *Manager) Warm(ctx context.Context) {
 			if err != nil {
 				st.log.Error("error getting cacheId for entry", "msg", err.Error())
 			}
-			rulesStates[cacheId] = &State{
+			rulesStates.states[cacheId] = &State{
 				AlertRuleUID:         entry.RuleUID,
 				OrgID:                entry.RuleOrgID,
 				CacheId:              cacheId,
