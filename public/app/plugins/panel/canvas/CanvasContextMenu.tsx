@@ -119,6 +119,17 @@ export const CanvasContextMenu = ({ scene }: Props) => {
     //   />
     // );
 
+    const setBackgroundMenuItem = !scene.isPanelEditing && (
+      <MenuItem
+        label={'Set background'}
+        onClick={() => {
+          console.log('Set canvas background');
+          closeContextMenu();
+        }}
+        className={styles.menuItem}
+      />
+    );
+
     if (selectedElements && selectedElements.length >= 1) {
       return (
         <>
@@ -162,6 +173,7 @@ export const CanvasContextMenu = ({ scene }: Props) => {
       return (
         <>
           {openCloseEditorMenuItem}
+          {setBackgroundMenuItem}
           {addItemMenuItem}
         </>
       );
