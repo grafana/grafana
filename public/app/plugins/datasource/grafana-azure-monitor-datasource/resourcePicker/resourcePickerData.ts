@@ -350,7 +350,7 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
         {
           resourceUri: `/subscriptions/${subscription.id}`,
         },
-        false
+        true
       );
       if (namespaces) {
         const namespaceVals = namespaces.map((namespace) => `"${namespace.value.toLocaleLowerCase()}"`);

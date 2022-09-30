@@ -45,13 +45,6 @@ export const getLogRowStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
       font-size: ${theme.typography.bodySmall.fontSize};
       width: 100%;
     `,
-    context: css`
-      label: context;
-      visibility: hidden;
-      white-space: nowrap;
-      position: relative;
-      margin-left: 10px;
-    `,
     logsRow: css`
       label: logs-row;
       width: 100%;
@@ -59,13 +52,9 @@ export const getLogRowStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
       vertical-align: top;
 
       &:hover {
-        .log-row-context {
+        .log-row-menu {
           visibility: visible;
           z-index: 1;
-          text-decoration: underline;
-          &:hover {
-            color: ${theme.colors.warning.main};
-          }
         }
       }
 

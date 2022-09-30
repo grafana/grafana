@@ -75,6 +75,10 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 		SourceUID: dsWithCorrelations.Uid,
 		TargetUID: dsWithCorrelations.Uid,
 		OrgId:     dsWithCorrelations.OrgId,
+		Config: correlations.CorrelationConfig{
+			Field:  "foo",
+			Target: map[string]interface{}{},
+		},
 	})
 
 	createDsCommand = &datasources.AddDataSourceCommand{

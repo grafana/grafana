@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -19,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/stretchr/testify/require"
 )
 
 const userID = int64(1)
@@ -84,10 +85,23 @@ func getContextHandler(t *testing.T) *ContextHandler {
 	tracer := tracing.InitializeTracerForTest()
 
 	loginService := loginservice.LoginServiceMock{ExpectedUser: &user.User{ID: userID}}
-	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginService, &FakeGetSignUserStore{})
+	userService := usertest.FakeUserService{
+		GetSignedInUserFn: func(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
+			if query.UserID != userID {
+				return &user.SignedInUser{}, user.ErrUserNotFound
+			}
+			return &user.SignedInUser{
+				UserID: userID,
+				OrgID:  orgID,
+			}, nil
+		},
+	}
+
+	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginService, &userService, &FakeGetSignUserStore{})
 	authenticator := &fakeAuthenticator{}
 
-	return ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, sqlStore, tracer, authProxy, loginService, nil, authenticator, &usertest.FakeUserService{})
+	return ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc,
+		renderSvc, sqlStore, tracer, authProxy, loginService, nil, authenticator, &userService)
 }
 
 type FakeGetSignUserStore struct {
