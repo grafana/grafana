@@ -21,7 +21,6 @@ import {
   FieldCache,
   AbstractQuery,
   FieldType,
-  getLogLevelFromKey,
   Labels,
   LoadingState,
   LogLevel,
@@ -42,6 +41,7 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 
 import { serializeParams } from '../../../core/utils/fetch';
 import { RowContextOptions } from '../../../features/logs/components/LogRowContextProvider';
+import { getLogLevelFromKey } from '../../../features/logs/utils';
 import { renderLegendFormat } from '../prometheus/legend';
 import { replaceVariables, returnVariables } from '../prometheus/querybuilder/shared/parsingUtils';
 

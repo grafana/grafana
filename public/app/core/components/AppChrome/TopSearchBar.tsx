@@ -6,6 +6,7 @@ import { Dropdown, Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { useSelector } from 'app/types';
 
+import { NewsContainer } from './News/NewsContainer';
 import { TopNavBarMenu } from './TopBar/TopNavBarMenu';
 import { TopSearchBarInput } from './TopSearchBarInput';
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
@@ -36,11 +37,7 @@ export function TopSearchBar() {
             </button>
           </Dropdown>
         )}
-        <Tooltip placement="bottom" content="Grafana news (todo)">
-          <button className={styles.actionItem}>
-            <Icon name="rss" size="lg" />
-          </button>
-        </Tooltip>
+        <NewsContainer buttonCss={styles.actionItem} />
         {signInNode && (
           <Tooltip placement="bottom" content="Sign in">
             <a className={styles.actionItem} href={signInNode.url} target={signInNode.target}>
