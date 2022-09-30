@@ -2,7 +2,7 @@
 //  
 //  Frame[0] 
 //  Name: labels
-//  Dimensions: 3 Fields by 209 Rows
+//  Dimensions: 3 Fields by 212 Rows
 //  +-----------------------------------------------------+-----------------+----------------+
 //  | Name: uid                                           | Name: key       | Name: value    |
 //  | Labels:                                             | Labels:         | Labels:        |
@@ -250,6 +250,9 @@
             "panel-timeline/timeline-modes.json",
             "panel-timeline/timeline-modes.json",
             "panel-timeline/timeline-modes.json",
+            "panel-timeseries/timeseries-out-of-rage.json",
+            "panel-timeseries/timeseries-out-of-rage.json",
+            "panel-timeseries/timeseries-out-of-rage.json",
             "scenarios/time_zone_support.json",
             "scenarios/time_zone_support.json",
             "scenarios/time_zone_support.json",
@@ -462,6 +465,9 @@
             "graph-ng",
             "panel-tests",
             "gdev",
+            "graph-ng",
+            "panel-tests",
+            "gdev",
             "graph",
             "panel-tests",
             "table",
@@ -476,6 +482,9 @@
             "transform"
           ],
           [
+            "",
+            "",
+            "",
             "",
             "",
             "",

@@ -2,7 +2,7 @@
 //  
 //  Frame[0] 
 //  Name: summary
-//  Dimensions: 3 Fields by 96 Rows
+//  Dimensions: 3 Fields by 97 Rows
 //  +---------------------------------------------------------+----------------------------------------------+--------------------------+
 //  | Name: uid                                               | Name: name                                   | Name: fields             |
 //  | Labels:                                                 | Labels:                                      | Labels:                  |
@@ -143,6 +143,7 @@
             "panel-text/text-options.json",
             "panel-timeline/timeline-demo.json",
             "panel-timeline/timeline-modes.json",
+            "panel-timeseries/timeseries-out-of-rage.json",
             "scenarios/slow_queries_and_annotations.json",
             "scenarios/time_zone_support.json",
             "transforms/config-from-query.json",
@@ -241,6 +242,7 @@
             "Text options",
             "Timeline Demo",
             "Timeline Modes",
+            "Panel Tests - Timeseries - Out of range",
             "Panel tests - Slow Queries \u0026 Annotations",
             "Panel Tests - Time zone support",
             "Transforms - Config from query",
@@ -401,6 +403,7 @@
             {
               "hasTemplateVars": true
             },
+            {},
             {},
             {},
             {},
