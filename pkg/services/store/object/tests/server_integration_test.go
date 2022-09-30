@@ -105,6 +105,10 @@ func requireObjectMatch(t *testing.T, obj *object.RawObject, m rawObjectMatcher)
 }
 
 func TestObjectServer(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	ctx := context.Background()
 	testCtx := createTestContext(t)
 	ctx = metadata.AppendToOutgoingContext(ctx, "authorization", fmt.Sprintf("Bearer %s", testCtx.authToken))
@@ -130,6 +134,7 @@ func TestObjectServer(t *testing.T) {
 	})
 
 	t.Run("should be able to read persisted objects", func(t *testing.T) {
+
 		before := time.Now()
 		writeReq := &object.WriteObjectRequest{
 			UID:     uid,
