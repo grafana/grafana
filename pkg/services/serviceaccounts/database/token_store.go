@@ -3,6 +3,8 @@ package database
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"time"
 
 	"github.com/pkg/errors"
 
@@ -152,20 +154,32 @@ func (s *ServiceAccountsStoreImpl) UpdateAPIKeysExpiryDate(ctx context.Context, 
 	if 1 > expiryDaysLimit {
 		return nil
 	}
-	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		rawSQL := `UPDATE api_key
-							 SET expires = CAST(strftime('%s', created) AS INT) - (CAST(strftime('%s', created) AS INT) % 86400) + ((? + 1) * 86400),
-							 updated = strftime('%s', 'now')
-							 WHERE expires IS NULL OR expires - CAST(strftime('%s', created) AS INT) - (CAST(strftime('%s', created) AS INT) % 86400) > (? + 1) * 86400
-							 AND service_account_id IS NOT NULL;`
-		result, err := sess.Exec(rawSQL, expiryDaysLimit, expiryDaysLimit)
-		if err != nil {
-			s.log.Error("Could not update api keys", "err", err)
+
+	saTokens, err := s.ListTokens(ctx, &serviceaccounts.GetSATokensQuery{})
+	if err != nil {
+		s.log.Error("The following error has been encountered while reading the service access tokens from database.", "err", err)
+	}
+
+	threshold := time.Duration(expiryDaysLimit+1) * time.Hour * 24
+	now := time.Now()
+
+	err = s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		for _, token := range saTokens {
+			_, offset := token.Created.Zone()
+			newExpiryTime := token.Created.Truncate(time.Hour*24).Add(threshold).Unix() - int64(offset)
+			if token.Expires == nil || *token.Expires > newExpiryTime {
+				s.log.Info(fmt.Sprintf("The expiration date of token %s will be updated", strconv.Itoa(int(token.Id))))
+
+				rawSQL := "UPDATE api_key SET expires = ?, updated = ? WHERE id=?"
+				if _, err := sess.Exec(rawSQL, newExpiryTime, now, token.Id); err != nil {
+					s.log.Error("Could not update api key", "err", err)
+					return err
+				}
+			}
 		}
-		if rowsAffected, _ := result.RowsAffected(); rowsAffected > 0 {
-			s.log.Info(fmt.Sprintf("%d API keys where affected because of a new configuration value at service_accounts.token_expiration_day_limit", rowsAffected))
-		}
-		return err
+
+		return nil
 	})
+
 	return err
 }
