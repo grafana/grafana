@@ -15,8 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-const AdminUserId = 1
-
 func resetPasswordCommand(c utils.CommandLine, runner runner.Runner) error {
 	newPassword := ""
 
@@ -40,11 +38,12 @@ func resetPasswordCommand(c utils.CommandLine, runner runner.Runner) error {
 		return fmt.Errorf("new password is too short")
 	}
 
-	userQuery := user.GetUserByIDQuery{ID: AdminUserId}
+	adminUserId := c.Int64("user-id")
+	userQuery := user.GetUserByIDQuery{ID: adminUserId}
 
 	usr, err := runner.UserService.GetByID(context.Background(), &userQuery)
 	if err != nil {
-		return fmt.Errorf("could not read user from database. Error: %v", err)
+		return fmt.Errorf("could not read user (id: %d) from database. Error: %v", adminUserId, err)
 	}
 
 	passwordHashed, err := util.EncodePassword(newPassword, usr.Salt)
@@ -53,7 +52,7 @@ func resetPasswordCommand(c utils.CommandLine, runner runner.Runner) error {
 	}
 
 	cmd := user.ChangeUserPasswordCommand{
-		UserID:      AdminUserId,
+		UserID:      adminUserId,
 		NewPassword: passwordHashed,
 	}
 

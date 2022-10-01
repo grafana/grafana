@@ -158,6 +158,11 @@ var adminCommands = []*cli.Command{
 				Usage: "Read the password from stdin",
 				Value: false,
 			},
+			&cli.Int64Flag{
+				Name:  "user-id",
+				Usage: "User ID to reset password for",
+				Value: 1,
+			},
 		},
 	},
 	{

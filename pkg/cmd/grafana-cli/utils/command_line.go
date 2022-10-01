@@ -14,6 +14,7 @@ type CommandLine interface {
 	Args() cli.Args
 	Bool(name string) bool
 	Int(name string) int
+	Int64(name string) int64
 	String(name string) string
 	StringSlice(name string) []string
 	FlagNames() (names []string)
