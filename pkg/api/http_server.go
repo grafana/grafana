@@ -470,8 +470,14 @@ func (hs *HTTPServer) getListener() (net.Listener, error) {
 
 		// Make socket writable by group
 		// nolint:gosec
-		if err := os.Chmod(hs.Cfg.SocketPath, 0660); err != nil {
-			return nil, fmt.Errorf("failed to change socket permissions: %w", err)
+		if err := os.Chmod(hs.Cfg.SocketPath, os.FileMode(hs.Cfg.SocketMode)); err != nil {
+			return nil, fmt.Errorf(err, "failed to change socket mode %d: %w", hs.Cfg.SocketMode, err)
+		}
+
+		// golang.org/pkg/os does not have chgrp
+		// Changing the gid of a file without privileges requires that the target group is in the group of the process and that the process is the file owner
+		if err := os.Chown(hs.Cfg.SocketPath, -1, hs.Cfg.SocketGid); err != nil {
+			return nil, fmt.Errorf(err, "failed to change socket group id %d: %w", hs.Cfg.SocketGid, err)
 		}
 
 		return listener, nil
