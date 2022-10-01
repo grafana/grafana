@@ -5,7 +5,7 @@ import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, FilterInput, HorizontalGroup, ModalsController, Spinner, useStyles2, useTheme2 } from '@grafana/ui';
+import { Button, FilterInput, HorizontalGroup, ModalsController, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { getGrafanaSearcher, SearchQuery } from '../../search/service';
 import { getGlobalStyles } from '../globalStyles';
@@ -69,10 +69,6 @@ const QueryLibrarySearchTable = () => {
       ds_uid: item.ds_uid,
     }));
   }, [searchQuery, reload]);
-
-  if (results.loading) {
-    return <Spinner />;
-  }
 
   const found = results.value;
   return (
@@ -140,7 +136,7 @@ const QueryLibrarySearchTable = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {found?.length === 0 && (
+                        {!Boolean(found?.length) && (
                           <tr className={styles.transparentBg}>
                             <td />
                             <td />
@@ -153,19 +149,20 @@ const QueryLibrarySearchTable = () => {
                             <th />
                           </tr>
                         )}
-                        {found!.map((item, key) => {
-                          return (
-                            <QueryListItem
-                              query={item}
-                              key={item.uid}
-                              showModal={showModal}
-                              hideModal={hideModal}
-                              updateComponent={() => setReload(reload + 1)}
-                              author={key < authors.length ? authors[key] : authors[key - authors.length]}
-                              date={key < dates.length ? dates[key] : dates[key - dates.length]}
-                            />
-                          );
-                        })}
+                        {Boolean(found?.length) &&
+                          found!.map((item, key) => {
+                            return (
+                              <QueryListItem
+                                query={item}
+                                key={item.uid}
+                                showModal={showModal}
+                                hideModal={hideModal}
+                                updateComponent={() => setReload(reload + 1)}
+                                author={key < authors.length ? authors[key] : authors[key - authors.length]}
+                                date={key < dates.length ? dates[key] : dates[key - dates.length]}
+                              />
+                            );
+                          })}
                       </tbody>
                     </table>
                   );
