@@ -1,4 +1,4 @@
-FROM node:16-alpine3.15 as js-builder
+FROM node:16-alpine3.16 as js-builder
 
 ENV NODE_OPTIONS=--max_old_space_size=8000
 
@@ -20,7 +20,7 @@ COPY emails emails
 ENV NODE_ENV production
 RUN yarn build
 
-FROM golang:1.19.1-alpine3.15 as go-builder
+FROM golang:1.19.1-alpine3.16 as go-builder
 
 RUN apk add --no-cache gcc g++ make
 
@@ -39,7 +39,7 @@ RUN go mod verify
 RUN make build-go
 
 # Final stage
-FROM alpine:3.15.6
+FROM alpine:3.16.2
 
 LABEL maintainer="Grafana team <hello@grafana.com>"
 
