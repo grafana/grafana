@@ -10,7 +10,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
 	"github.com/grafana/grafana/pkg/util/converter"
 	jsoniter "github.com/json-iterator/go"
@@ -201,9 +200,6 @@ func processExemplars(q *models.Query, dr *backend.DataResponse) *backend.DataRe
 			exemplarFrame.Fields[colIdx].Append(labelValue)
 		}
 	}
-
-	sorter := experimental.NewFrameSorter(exemplarFrame, exemplarFrame.Fields[0])
-	sort.Sort(sorter)
 
 	frames = append(frames, exemplarFrame)
 

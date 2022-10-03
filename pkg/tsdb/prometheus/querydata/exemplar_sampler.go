@@ -119,7 +119,7 @@ func (e *exemplarSampler) getSampledExemplars() []exemplar {
 		exemplars = append(exemplars, sampled...)
 	}
 	sort.SliceStable(exemplars, func(i, j int) bool {
-		return exemplars[i].ts.UnixNano() < exemplars[j].ts.UnixNano()
+		return exemplars[i].ts.Before(exemplars[j].ts)
 	})
 	return exemplars
 }
