@@ -7,6 +7,7 @@ import { AzureQueryEditorFieldProps } from '../../types';
 import { Field } from '../Field';
 
 import { setFormatAs } from './setQueryValue';
+import { selectors } from '../../e2e/selectors';
 
 const FORMAT_OPTIONS: Array<SelectableValue<string>> = [
   { label: 'Time series', value: 'time_series' },
@@ -30,7 +31,7 @@ const FormatAsField: React.FC<AzureQueryEditorFieldProps> = ({ query, variableOp
   );
 
   return (
-    <Field label="Format as">
+    <Field label="Format as" data-testid={selectors.components.queryEditor.logsQueryEditor.formatSelection.input}>
       <Select
         inputId="azure-monitor-logs-workspaces-field"
         value={query.azureLogAnalytics?.resultFormat}

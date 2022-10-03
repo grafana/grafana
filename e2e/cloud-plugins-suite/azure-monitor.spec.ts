@@ -77,7 +77,70 @@ e2e.scenario({
             e2e().contains('azmonmetricstest').click();
             e2eSelectors.queryEditor.resourcePicker.apply.button().click();
             e2e().contains('microsoft.storage/storageaccounts');
-            e2eSelectors.queryEditor.metricName.input().find('input').type('Used capacity{enter}');
+            e2eSelectors.queryEditor.metricsQueryEditor.metricName.input().find('input').type('Used capacity{enter}');
+          },
+        });
+      });
+  },
+});
+
+e2e.scenario({
+  describeName: 'Create panel and run a logs query',
+  itName: 'configures datasource, adds a panel, runs a logs query',
+  scenario: () => {
+    e2e()
+      .readFile(provisioningPath)
+      .then((azMonitorProvision: string) => {
+        const yaml = load(azMonitorProvision) as AzureMonitorProvision;
+        provisionAzureMonitorDatasources([yaml]);
+        e2e.flows.addDashboard({
+          timeRange: {
+            from: '2022-10-03 00:00:00',
+            to: '2022-10-03 23:59:59',
+            zone: 'Coordinated Universal Time',
+          },
+        });
+        e2e.flows.addPanel({
+          visitDashboardAtStart: false,
+          queriesForm: () => {
+            e2eSelectors.queryEditor.header.select().find('input').type('Logs{enter}');
+            e2eSelectors.queryEditor.resourcePicker.select.button().click();
+            e2eSelectors.queryEditor.resourcePicker.search.input().type('azmonlogstest');
+            e2e().contains('azmonlogstest').click();
+            e2eSelectors.queryEditor.resourcePicker.apply.button().click();
+            e2e.components.CodeEditor.container().type('AzureDiagnostics');
+            e2eSelectors.queryEditor.logsQueryEditor.formatSelection.input().type('Time series{enter}');
+          },
+        });
+      });
+  },
+});
+
+e2e.scenario({
+  describeName: 'Create panel and run an ARG query',
+  itName: 'configures datasource, adds a panel, runs an ARG query',
+  scenario: () => {
+    e2e()
+      .readFile(provisioningPath)
+      .then((azMonitorProvision: string) => {
+        const yaml = load(azMonitorProvision) as AzureMonitorProvision;
+        provisionAzureMonitorDatasources([yaml]);
+        e2e.flows.addDashboard({
+          timeRange: {
+            from: '2022-10-03 00:00:00',
+            to: '2022-10-03 23:59:59',
+            zone: 'Coordinated Universal Time',
+          },
+        });
+        e2e.flows.addPanel({
+          visitDashboardAtStart: false,
+          queriesForm: () => {
+            e2eSelectors.queryEditor.header.select().find('input').type('Azure Resource Graph{enter}');
+            e2e().wait(500); // Need to wait for code editor to completely load
+            e2e.components.CodeEditor.container().type(
+              "Resources | where resourceGroup == 'cloud-plugins-e2e-test' | project name, resourceGroup"
+            );
+            e2e.components.PanelEditor.toggleTableView().click({ force: true });
           },
         });
       });

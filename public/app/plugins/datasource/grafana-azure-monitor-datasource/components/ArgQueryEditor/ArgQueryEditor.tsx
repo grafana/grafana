@@ -7,6 +7,7 @@ import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery } from '../
 import SubscriptionField from '../SubscriptionField';
 
 import QueryField from './QueryField';
+import { selectors } from '../../e2e/selectors';
 
 interface ArgQueryEditorProps {
   query: AzureMonitorQuery;
@@ -53,7 +54,7 @@ const ArgQueryEditor: React.FC<ArgQueryEditorProps> = ({
   }, [datasource, onChange, query, setError]);
 
   return (
-    <span data-testid="azure-monitor-arg-query-editor-with-experimental-ui">
+    <span data-testid={selectors.components.queryEditor.argsQueryEditor.container.input}>
       <EditorRows>
         <EditorRow>
           <EditorFieldGroup>

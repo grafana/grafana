@@ -22,6 +22,9 @@ export const components = {
     },
   },
   queryEditor: {
+    header: {
+      select: 'data-testid azure-monitor-experimental-header',
+    },
     resourcePicker: {
       select: {
         button: 'data-testid resource-picker-select',
@@ -36,8 +39,20 @@ export const components = {
         button: 'data-testid resource-picker-cancel',
       },
     },
-    metricName: {
-      input: 'data-testid metric-name',
+    metricsQueryEditor: {
+      metricName: {
+        input: 'data-testid metric-name',
+      },
+    },
+    logsQueryEditor: {
+      formatSelection: {
+        input: 'data-testid format-selection',
+      },
+    },
+    argsQueryEditor: {
+      container: {
+        input: 'data-testid azure-monitor-arg-query-editor-with-experimental-ui',
+      },
     },
   },
 };

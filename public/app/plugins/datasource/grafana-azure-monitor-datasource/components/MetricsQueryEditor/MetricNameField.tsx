@@ -29,7 +29,7 @@ const MetricNameField: React.FC<MetricNameProps> = ({ metricNames, query, variab
   const options = useMemo(() => [...metricNames, variableOptionGroup], [metricNames, variableOptionGroup]);
 
   return (
-    <Field label="Metric" data-testid={selectors.components.queryEditor.metricName.input}>
+    <Field label="Metric" data-testid={selectors.components.queryEditor.metricsQueryEditor.metricName.input}>
       <Select
         inputId="azure-monitor-metrics-metric-field"
         value={query.azureMonitor?.metricName ?? null}
