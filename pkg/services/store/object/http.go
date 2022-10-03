@@ -1,7 +1,7 @@
 package object
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -38,8 +38,8 @@ func (s *httpObjectStore) RegisterHTTPRoutes(route routing.RouteRegister) {
 	reqGrafanaAdmin := middleware.ReqSignedIn //.ReqGrafanaAdmin
 
 	// Every * must parse to a GRN (uid+kind)
-	route.Get("/store/*", reqGrafanaAdmin, routing.Wrap(s.doGetOject))
-	route.Get("/raw/*", reqGrafanaAdmin, routing.Wrap(s.doGetRawOject))
+	route.Get("/store/*", reqGrafanaAdmin, routing.Wrap(s.doGetObject))
+	route.Get("/raw/*", reqGrafanaAdmin, routing.Wrap(s.doGetRawObject))
 	route.Post("/store/*", reqGrafanaAdmin, routing.Wrap(s.doWriteObject))
 	route.Delete("/store/*", reqGrafanaAdmin, routing.Wrap(s.doDeleteObject))
 	route.Get("/history/*", reqGrafanaAdmin, routing.Wrap(s.doGetHistory))
@@ -47,7 +47,9 @@ func (s *httpObjectStore) RegisterHTTPRoutes(route routing.RouteRegister) {
 	route.Get("/search", reqGrafanaAdmin, routing.Wrap(s.doSearch))
 }
 
-// GRN? path >> UID + kind???
+// This function will extract UID+Kind from the requested path "*" in our router
+// This is far from ideal! but is at least consistent for these endpoints.
+// This will quickly be revisited as we explore how to encode UID+Kind in a "GRN" format
 func parseRequestParams(req *http.Request) (uid string, kind string, params map[string]string) {
 	params = web.Params(req)
 	path := params["*"]
@@ -62,7 +64,7 @@ func parseRequestParams(req *http.Request) (uid string, kind string, params map[
 	return
 }
 
-func (s *httpObjectStore) doGetOject(c *models.ReqContext) response.Response {
+func (s *httpObjectStore) doGetObject(c *models.ReqContext) response.Response {
 	uid, kind, params := parseRequestParams(c.Req)
 	rsp, err := s.store.Read(c.Req.Context(), &ReadObjectRequest{
 		UID:         uid,
@@ -84,7 +86,7 @@ func (s *httpObjectStore) doGetOject(c *models.ReqContext) response.Response {
 	return response.JSON(200, rsp)
 }
 
-func (s *httpObjectStore) doGetRawOject(c *models.ReqContext) response.Response {
+func (s *httpObjectStore) doGetRawObject(c *models.ReqContext) response.Response {
 	uid, kind, params := parseRequestParams(c.Req)
 	rsp, err := s.store.Read(c.Req.Context(), &ReadObjectRequest{
 		UID:         uid,
@@ -110,7 +112,7 @@ func (s *httpObjectStore) doGetRawOject(c *models.ReqContext) response.Response 
 
 func (s *httpObjectStore) doWriteObject(c *models.ReqContext) response.Response {
 	uid, kind, params := parseRequestParams(c.Req)
-	b, err := ioutil.ReadAll(c.Req.Body)
+	b, err := io.ReadAll(c.Req.Body)
 	if err != nil {
 		return response.Error(400, "error reading body", err)
 	}
@@ -157,9 +159,9 @@ func (s *httpObjectStore) doGetHistory(c *models.ReqContext) response.Response {
 }
 
 func (s *httpObjectStore) doListFolder(c *models.ReqContext) response.Response {
-	return response.JSON(500, "Not implemented yet")
+	return response.JSON(501, "Not implemented yet")
 }
 
 func (s *httpObjectStore) doSearch(c *models.ReqContext) response.Response {
-	return response.JSON(500, "Not implemented yet")
+	return response.JSON(501, "Not implemented yet")
 }
