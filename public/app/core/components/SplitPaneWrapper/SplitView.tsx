@@ -31,7 +31,7 @@ const getResizerStyles = (hasSplit: boolean) => (theme: GrafanaTheme2) =>
       content: '';
       position: absolute;
       transition: 0.2s border-color ease-in-out;
-      border-right: 1px solid ${theme.colors.border.weak};
+      border-right: 1px solid transparent;
       height: 100%;
       left: 50%;
       transform: translateX(-50%);
