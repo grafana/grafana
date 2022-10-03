@@ -7,10 +7,17 @@ export function buildBreadcrumbs(homeNav: NavModelItem, sectionNav: NavModelItem
   let foundHome = false;
 
   function addCrumbs(node: NavModelItem) {
-    // extract the pathname from the url
-    const urlPathname = node.url?.split('?')[0];
+    // construct the URL to match
+    // we want to ignore query params except for the editview query param
+    const urlSearchParams = new URLSearchParams(node.url?.split('?')[1]);
+    let urlToMatch = `${node.url?.split('?')[0]}`;
+    if (urlSearchParams.has('editview')) {
+      urlToMatch += `?editview=${urlSearchParams.get('editview')}`;
+    }
+    // const urlPathname = node.url?.split('?')[0];
+    // const urlToMatch = locationUtil.getUrlForPartial(props.history.location);
     if (!foundHome && !node.hideFromBreadcrumbs) {
-      if (urlPathname === homeNav.url) {
+      if (urlToMatch === homeNav.url) {
         crumbs.unshift({ text: homeNav.text, href: node.url ?? '' });
         foundHome = true;
       } else {
