@@ -34,7 +34,7 @@ type CorrelationConfig struct {
 	// Field used to attach the correlation link
 	// required:true
 	Field string `json:"field" binding:"Required"`
-	// Target data query
+	// Target type
 	// required:true
 	Type CorrelationConfigType `json:"type" binding:"Required"`
 	// Target data query
