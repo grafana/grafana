@@ -2,7 +2,6 @@ import chalk from 'chalk';
 import { program } from 'commander';
 
 import { changelogTask } from './tasks/changelog';
-import { cherryPickTask } from './tasks/cherrypick';
 import { closeMilestoneTask } from './tasks/closeMilestone';
 import { componentCreateTask } from './tasks/component.create';
 import { nodeVersionCheckerTask } from './tasks/nodeVersionChecker';
@@ -52,14 +51,6 @@ export const run = (includeInternalScripts = false) => {
           milestone: cmd.milestone,
           silent: true,
         });
-      });
-
-    program
-      .command('cherrypick')
-      .option('-e, --enterprise', 'Run task for grafana-enterprise')
-      .description('Helps find commits to cherry pick')
-      .action(async (cmd) => {
-        await execTask(cherryPickTask)({ enterprise: !!cmd.enterprise });
       });
 
     program
