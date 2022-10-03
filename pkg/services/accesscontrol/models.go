@@ -271,7 +271,6 @@ type SetResourcePermissionCommand struct {
 
 type EvaluateUserPermissionCommand struct {
 	SignedInUser *user.SignedInUser `json:"-"`
-	OrgRole      org.RoleType       `json:"role"`
 	Action       string             `json:"action,omitempty"`
 	Resource     string             `json:"resource,omitempty"`
 	Attribute    string             `json:"attribute,omitempty"`

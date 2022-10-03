@@ -10,16 +10,17 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func NewAccessControlAPI(router routing.RouteRegister, accesscontrol ac.AccessControl, service ac.Service) *AccessControlAPI {
+func NewAccessControlAPI(router routing.RouteRegister, accesscontrol ac.AccessControl, service ac.Service, userStore sqlstore.Store) *AccessControlAPI {
 	return &AccessControlAPI{
 		RouteRegister: router,
 		Service:       service,
 		AccessControl: accesscontrol,
+		userStore:     userStore,
 	}
 }
 
@@ -27,6 +28,7 @@ type AccessControlAPI struct {
 	Service       ac.Service
 	AccessControl ac.AccessControl
 	RouteRegister routing.RouteRegister
+	userStore     sqlstore.Store
 }
 
 func (api *AccessControlAPI) RegisterAPIEndpoints() {
@@ -66,7 +68,6 @@ func (api *AccessControlAPI) evaluateSelfMetadata(c *models.ReqContext) response
 
 	// Use ctx signed in user
 	cmd.SignedInUser = c.SignedInUser
-	cmd.OrgRole = c.OrgRole
 
 	// Compute metadata
 	metadata, err := api.AccessControl.EvaluateMetadata(c.Req.Context(), cmd)
@@ -96,12 +97,9 @@ func (api *AccessControlAPI) evaluateMetadata(c *models.ReqContext) response.Res
 	if cmd.Action == "" && (cmd.Resource == "" || cmd.Attribute == "" || len(cmd.UIDs) == 0) {
 		return response.JSON(http.StatusBadRequest, "missing an action or resources")
 	}
-	if cmd.OrgRole == "" {
-		return response.JSON(http.StatusBadRequest, "missing user role")
-	}
 
 	// Generate signed in user
-	cmd.SignedInUser, err = api.signedInUser(c.Req.Context(), userID, c.OrgID, cmd.OrgRole, reloadCache)
+	cmd.SignedInUser, err = api.signedInUser(c.Req.Context(), userID, c.OrgID, reloadCache)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "could not get user permissions", err)
 	}
@@ -115,19 +113,19 @@ func (api *AccessControlAPI) evaluateMetadata(c *models.ReqContext) response.Res
 	return response.JSON(http.StatusOK, metadata)
 }
 
-func (api *AccessControlAPI) signedInUser(ctx context.Context, userID, orgID int64, orgRole org.RoleType, reloadCache bool) (*user.SignedInUser, error) {
-	signedInUser := &user.SignedInUser{
-		UserID:      userID,
-		OrgID:       orgID,
-		OrgRole:     orgRole,
-		Permissions: map[int64]map[string][]string{},
+func (api *AccessControlAPI) signedInUser(ctx context.Context, userID, orgID int64,
+	reloadCache bool) (*user.SignedInUser, error) {
+	userQuery := &models.GetSignedInUserQuery{UserId: userID, OrgId: orgID}
+	errGetUser := api.userStore.GetSignedInUser(ctx, userQuery)
+	if errGetUser != nil {
+		return nil, errGetUser
 	}
 
-	permissions, errGetPerms := api.Service.GetUserPermissions(ctx, signedInUser,
+	permissions, errGetPerms := api.Service.GetUserPermissions(ctx, userQuery.Result,
 		ac.Options{ReloadCache: reloadCache})
 	if errGetPerms != nil {
 		return nil, errGetPerms
 	}
-	signedInUser.Permissions[orgID] = ac.GroupScopesByAction(permissions)
-	return signedInUser, nil
+	userQuery.Result.Permissions[orgID] = ac.GroupScopesByAction(permissions)
+	return userQuery.Result, nil
 }
