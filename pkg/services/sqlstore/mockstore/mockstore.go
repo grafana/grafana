@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/services/sqlstore/session"
+	"github.com/grafana/grafana/pkg/services/sqlstore/sqlxsession"
 	"github.com/grafana/grafana/pkg/services/user"
 	"xorm.io/core"
 )
@@ -419,6 +419,6 @@ func (m *SQLStoreMock) GetAPIKeyByHash(ctx context.Context, hash string) (*apike
 	return nil, m.ExpectedError
 }
 
-func (m *SQLStoreMock) GetSqlxSession() *session.SessionDB {
+func (m *SQLStoreMock) GetSqlxSession() *sqlxsession.SessionDB {
 	return nil
 }

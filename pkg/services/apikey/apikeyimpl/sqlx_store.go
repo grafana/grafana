@@ -10,12 +10,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
-	"github.com/grafana/grafana/pkg/services/sqlstore/session"
+	"github.com/grafana/grafana/pkg/services/sqlstore/sqlxsession"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type sqlxStore struct {
-	sess *session.SessionDB
+	sess *sqlxsession.SessionDB
 	cfg  *setting.Cfg
 }
 

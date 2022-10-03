@@ -5,12 +5,12 @@ import (
 	"database/sql"
 	"errors"
 
-	"github.com/grafana/grafana/pkg/services/sqlstore/session"
+	"github.com/grafana/grafana/pkg/services/sqlstore/sqlxsession"
 	"github.com/grafana/grafana/pkg/services/tag"
 )
 
 type sqlxStore struct {
-	sess *session.SessionDB
+	sess *sqlxsession.SessionDB
 }
 
 func (s *sqlxStore) EnsureTagsExist(ctx context.Context, tags []*tag.Tag) ([]*tag.Tag, error) {

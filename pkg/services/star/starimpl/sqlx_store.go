@@ -5,12 +5,12 @@ import (
 	"database/sql"
 	"errors"
 
-	"github.com/grafana/grafana/pkg/services/sqlstore/session"
+	"github.com/grafana/grafana/pkg/services/sqlstore/sqlxsession"
 	"github.com/grafana/grafana/pkg/services/star"
 )
 
 type sqlxStore struct {
-	sess *session.SessionDB
+	sess *sqlxsession.SessionDB
 }
 
 func (s *sqlxStore) Get(ctx context.Context, query *star.IsStarredByUserQuery) (bool, error) {

@@ -8,11 +8,11 @@ import (
 	"strings"
 
 	pref "github.com/grafana/grafana/pkg/services/preference"
-	"github.com/grafana/grafana/pkg/services/sqlstore/session"
+	"github.com/grafana/grafana/pkg/services/sqlstore/sqlxsession"
 )
 
 type sqlxStore struct {
-	sess *session.SessionDB
+	sess *sqlxsession.SessionDB
 }
 
 func (s *sqlxStore) Get(ctx context.Context, query *pref.Preference) (*pref.Preference, error) {

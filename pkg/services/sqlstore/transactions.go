@@ -90,3 +90,10 @@ func inTransactionWithRetryCtx(ctx context.Context, engine *xorm.Engine, bus bus
 
 	return nil
 }
+
+func (ss *SQLStore) SQLxInTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
+	if ss.Cfg.IsFeatureToggleEnabled("newDBLibrary") {
+		return ss.GetSqlxSession().SqlxInTransactionWithRetry(ctx, fn, 0)
+	}
+	return ss.inTransactionWithRetry(ctx, fn, 0)
+}

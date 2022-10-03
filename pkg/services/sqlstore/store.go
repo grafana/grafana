@@ -5,7 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/services/sqlstore/session"
+	"github.com/grafana/grafana/pkg/services/sqlstore/sqlxsession"
 	"github.com/grafana/grafana/pkg/services/user"
 	"xorm.io/core"
 )
@@ -41,5 +41,5 @@ type Store interface {
 	Quote(value string) string
 	GetDBHealthQuery(ctx context.Context, query *models.GetDBHealthQuery) error
 	SearchOrgs(ctx context.Context, query *models.SearchOrgsQuery) error
-	GetSqlxSession() *session.SessionDB
+	GetSqlxSession() *sqlxsession.SessionDB
 }
