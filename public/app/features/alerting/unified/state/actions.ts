@@ -302,12 +302,13 @@ export function fetchAllPromAndRulerRulesAction(force = false): ThunkResult<void
           return;
         }
 
-        if (force || !promRules[rulesSourceName]?.loading) {
-          dispatch(fetchPromRulesAction({ rulesSourceName }));
-        }
-        if ((force || !rulerRules[rulesSourceName]?.loading) && dataSourceConfig.rulerConfig) {
-          dispatch(fetchRulerRulesAction({ rulesSourceName }));
-        }
+        const shouldLoadProm = force || !promRules[rulesSourceName]?.loading;
+        const shouldLoadRuler = (force || !rulerRules[rulesSourceName]?.loading) && dataSourceConfig.rulerConfig;
+
+        await Promise.allSettled([
+          shouldLoadProm && dispatch(fetchPromRulesAction({ rulesSourceName })),
+          shouldLoadRuler && dispatch(fetchRulerRulesAction({ rulesSourceName })),
+        ]);
       })
     );
   };

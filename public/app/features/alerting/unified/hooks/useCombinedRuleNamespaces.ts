@@ -1,3 +1,4 @@
+import { isEqual } from 'lodash';
 import { useMemo, useRef } from 'react';
 
 import {
@@ -129,6 +130,9 @@ function addRulerGroupsToCombinedNamespace(namespace: CombinedRuleNamespace, gro
 }
 
 function addPromGroupsToCombinedNamespace(namespace: CombinedRuleNamespace, groups: RuleGroup[]): void {
+  // const groupsByName = new Map<string, RuleGroup>();
+  // groups.forEach()
+
   groups.forEach((group) => {
     let combinedGroup = namespace.groups.find((g) => g.name === group.name);
     if (!combinedGroup) {
@@ -139,8 +143,11 @@ function addPromGroupsToCombinedNamespace(namespace: CombinedRuleNamespace, grou
       namespace.groups.push(combinedGroup);
     }
 
+    const existingRulesMap = new Map<string, CombinedRule>();
+    combinedGroup!.rules.forEach((r) => existingRulesMap.set(r.name, r));
+
     (group.rules ?? []).forEach((rule) => {
-      const existingRule = getExistingRuleInGroup(rule, combinedGroup!, namespace.rulesSource);
+      const existingRule = getExistingRuleInGroup(rule, existingRulesMap, namespace.rulesSource);
       if (existingRule) {
         existingRule.promRule = rule;
       } else {
@@ -201,39 +208,46 @@ function rulerRuleToCombinedRule(
 // find existing rule in group that matches the given prom rule
 function getExistingRuleInGroup(
   rule: Rule,
-  group: CombinedRuleGroup,
+  existingCombinedRulesMap: Map<string, CombinedRule>,
   rulesSource: RulesSource
 ): CombinedRule | undefined {
+  const existingRule = existingCombinedRulesMap.get(rule.name);
+  if (!existingRule) {
+    return undefined;
+  }
+
   if (isGrafanaRulesSource(rulesSource)) {
     // assume grafana groups have only the one rule. check name anyway because paranoid
-    return group!.rules.find((existingRule) => existingRule.name === rule.name);
+    return existingRule;
   }
-  return (
-    // try finding a rule that matches name, labels, annotations and query
-    group!.rules.find(
-      (existingRule) => !existingRule.promRule && isCombinedRuleEqualToPromRule(existingRule, rule, true)
-    ) ??
-    // if that fails, try finding a rule that only matches name, labels and annotations.
-    // loki & prom can sometimes modify the query so it doesnt match, eg `2 > 1` becomes `1`
-    group!.rules.find(
-      (existingRule) => !existingRule.promRule && isCombinedRuleEqualToPromRule(existingRule, rule, false)
-    )
-  );
+
+  if (!existingRule.promRule && isCombinedRuleEqualToPromRule(existingRule, rule, true)) {
+    return existingRule;
+  }
+
+  if (!existingRule.promRule && isCombinedRuleEqualToPromRule(existingRule, rule, false)) {
+    return existingRule;
+  }
+
+  return undefined;
+
+  // return (
+  //   // try finding a rule that matches name, labels, annotations and query
+  //   !existingRule.promRule && isCombinedRuleEqualToPromRule(existingRule, rule, true)
+  //    ??
+  //   // if that fails, try finding a rule that only matches name, labels and annotations.
+  //   // loki & prom can sometimes modify the query so it doesnt match, eg `2 > 1` becomes `1`
+  //
+  //     (existingRule) => !existingRule.promRule && isCombinedRuleEqualToPromRule(existingRule, rule, false)
+  //
+  // );
 }
 
 function isCombinedRuleEqualToPromRule(combinedRule: CombinedRule, rule: Rule, checkQuery = true): boolean {
   if (combinedRule.name === rule.name) {
-    return (
-      JSON.stringify([
-        checkQuery ? hashQuery(combinedRule.query) : '',
-        combinedRule.labels,
-        combinedRule.annotations,
-      ]) ===
-      JSON.stringify([
-        checkQuery ? hashQuery(rule.query) : '',
-        rule.labels || {},
-        isAlertingRule(rule) ? rule.annotations || {} : {},
-      ])
+    return isEqual(
+      [checkQuery ? hashQuery(combinedRule.query) : '', combinedRule.labels, combinedRule.annotations],
+      [checkQuery ? hashQuery(rule.query) : '', rule.labels || {}, isAlertingRule(rule) ? rule.annotations || {} : {}]
     );
   }
   return false;

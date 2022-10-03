@@ -51,10 +51,10 @@ const RuleList = withErrorBoundary(
     // fetch rules, then poll every RULE_LIST_POLL_INTERVAL_MS
     useEffect(() => {
       dispatch(fetchAllPromAndRulerRulesAction());
-      const interval = setInterval(() => dispatch(fetchAllPromAndRulerRulesAction()), RULE_LIST_POLL_INTERVAL_MS);
-      return () => {
-        clearInterval(interval);
-      };
+      // const interval = setInterval(() => dispatch(fetchAllPromAndRulerRulesAction()), RULE_LIST_POLL_INTERVAL_MS);
+      // return () => {
+      //   clearInterval(interval);
+      // };
     }, [dispatch]);
 
     const promRuleRequests = useUnifiedAlertingSelector((state) => state.promRules);

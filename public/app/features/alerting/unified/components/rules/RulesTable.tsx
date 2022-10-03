@@ -45,15 +45,16 @@ export const RulesTable: FC<Props> = ({
   const wrapperClass = cx(styles.wrapper, className, { [styles.wrapperMargin]: showGuidelines });
 
   const items = useMemo((): RuleTableItemProps[] => {
-    const seenKeys: string[] = [];
+    // const seenKeys: string[] = [];
     return rules.map((rule, ruleIdx) => {
-      let key = JSON.stringify([rule.promRule?.type, rule.labels, rule.query, rule.name, rule.annotations]);
-      if (seenKeys.includes(key)) {
-        key += `-${ruleIdx}`;
-      }
-      seenKeys.push(key);
+      // TODO This is a huge performance hog
+      // let key = JSON.stringify([rule.promRule?.type, rule.labels, rule.query, rule.name, rule.annotations]);
+      // if (seenKeys.includes(key)) {
+      //   key += `-${ruleIdx}`;
+      // }
+      // seenKeys.push(key);
       return {
-        id: key,
+        id: `${rule.namespace.name}-${rule.group.name}-${rule.name}-${ruleIdx}`,
         data: rule,
       };
     });
