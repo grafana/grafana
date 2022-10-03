@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 type FakeInstanceStore struct {
@@ -47,5 +46,5 @@ func (f *FakeRuleReader) ListAlertRules(_ context.Context, q *models.ListAlertRu
 
 type FakeHistorian struct{}
 
-func (f *FakeHistorian) RecordState(ctx context.Context, rule *ngmodels.AlertRule, labels data.Labels, evaluatedAt time.Time, currentData, previousData InstanceStateAndReason) {
+func (f *FakeHistorian) RecordState(ctx context.Context, rule *models.AlertRule, labels data.Labels, evaluatedAt time.Time, currentData, previousData InstanceStateAndReason) {
 }
