@@ -71,69 +71,51 @@ Example:
 
 Make sure the user does not get any unwanted privileges from the public role.
 
-## Query editor
+## Query builder
 
-{{< figure src="/static/img/docs/v53/postgres_query_still.png" class="docs-image--no-shadow" animated-gif="/static/img/docs/v53/postgres_query.gif" >}}
+{{< figure src="/static/img/docs/v92/postgresql_query_builder.png" class="docs-image--no-shadow" >}}
 
-You find the PostgreSQL query editor in the metrics tab in Graph or Singlestat panel's edit mode. You enter edit mode by clicking the
-panel title, then edit.
+The PostgreSQL query builder is available when editing a panel using a PostgreSQL data source. The built query can be run by pressing the `Run query` button in the top right corner of the editor.
 
-The query editor has a link named `Generated SQL` that shows up after a query has been executed, while in panel edit mode. Click on it and it will expand and show the raw interpolated SQL string that was executed.
+### Format
 
-### Select table, time column and metric column (FROM)
+The response from PostgreSQL can be formatted as either a table or as a time series. To use the time series format one of the columns must be named `time`.
 
-When you enter edit mode for the first time or add a new query Grafana will try to prefill the query builder with the first table that has a timestamp column and a numeric column.
+### Dataset and Table selection
 
-In the FROM field, Grafana will suggest tables that are in the `search_path` of the database user. To select a table or view not in your `search_path`
-you can manually enter a fully qualified name (schema.table) like `public.metrics`.
+In the dataset dropdown, choose the PostgreSQL database to query. The dropdown is be populated with the databases that the user has access to.
+When the dataset is selected, the table dropdown is populated with the tables that are available.
 
-The Time column field refers to the name of the column holding your time values. Selecting a value for the Metric column field is optional. If a value is selected, the Metric column field will be used as the series name.
+### Columns and Aggregation functions (SELECT)
 
-The metric column suggestions will only contain columns with a text datatype (char,varchar,text).
-If you want to use a column with a different datatype as metric column you may enter the column name with a cast: `ip::text`.
-You may also enter arbitrary SQL expressions in the metric column field that evaluate to a text datatype like
-`hostname || ' ' || container_name`.
+Using the dropdown, select a column to include in the data. You can also specify an optional aggregation function.
 
-### Columns, window, and aggregation functions (SELECT)
-
-In the `SELECT` row you can specify what columns and functions you want to use.
-In the column field you may write arbitrary expressions instead of a column name like `column1 * column2 / column3`.
-
-The available functions in the query editor depend on the PostgreSQL version you selected when configuring the data source.
-If you use aggregate functions you need to group your resultset. The editor will automatically add a `GROUP BY time` if you add an aggregate function.
-
-The editor tries to simplify and unify this part of the query. For example:<br>
-![](/static/img/docs/v53/postgres_select_editor.png)<br>
-
-The above will generate the following PostgreSQL `SELECT` clause:
-
-```sql
-avg(tx_bytes) OVER (ORDER BY "time" ROWS 5 PRECEDING) AS "tx_bytes"
-```
-
-You may add further value columns by clicking the plus button and selecting `Column` from the menu. Multiple value columns will be plotted as separate series in the graph panel.
+Add further value columns by clicking the plus button and another column dropdown appears.
 
 ### Filter data (WHERE)
 
-To add a filter click the plus icon to the right of the `WHERE` condition. You can remove filters by clicking on
-the filter and selecting `Remove`. A filter for the current selected timerange is automatically added to new queries.
+To add a filter, flip the switch at the top of the editor.
+Using the first dropdown, select if all the filters need to match (AND) or if only one of the filters needs to match (OR).
 
-### Group by
+To add more columns to filter on use the plus button.
 
-To group by time or any other columns click the plus icon at the end of the GROUP BY row. The suggestion dropdown will only show text columns of your currently selected table but you may manually enter any column.
-You can remove the group by clicking on the item and then selecting `Remove`.
+### Group By
 
-If you add any grouping, all selected columns need to have an aggregate function applied. The query builder will automatically add aggregate functions to all columns without aggregate functions when you add groupings.
+To group the results by column, flip the group switch at the top of the editor. You can then choose which column to group the results by. The group by clause can be removed by pressing the X button.
 
-#### Gap filling
+### Preview
 
-Grafana can fill in missing values when you group by time. The time function accepts two arguments. The first argument is the time window that you would like to group by, and the second argument is the value you want Grafana to fill missing items with.
+By flipping the preview switch at the top of the editor, you can get a preview of the SQL query generated by the query builder.
 
-### Text editor mode (RAW)
+## Code editor
 
-You can switch to the raw query editor mode by clicking the hamburger icon and selecting `Switch editor mode` or by clicking `Edit SQL` below the query.
+{{< figure src="/static/img/docs/v92/sql_code_editor.png" class="docs-image--no-shadow" >}}
 
-> If you use the raw query editor, be sure your query at minimum has `ORDER BY time` and a filter on the returned time range.
+To make advanced queries, switch to the code editor by clicking `code` in the top right corner of the editor. The code editor support autocompletion of tables, columns, SQL keywords, standard sql functions, Grafana template variables and Grafana macros. Columns cannot be completed before a table has been specified.
+
+You can expand the code editor by pressing the `chevron` pointing downwards in the lower right corner of the code editor.
+
+`CTRL/CMD + Return` works as a keyboard shortcut to run the query.
 
 ## Macros
 
