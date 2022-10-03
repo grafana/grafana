@@ -1,5 +1,3 @@
-import { lastValueFrom } from 'rxjs';
-
 import { DataSourceInstanceSettings, locationUtil } from '@grafana/data';
 import { getDataSourceSrv, locationService, getBackendSrv, isFetchError } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
@@ -278,13 +276,7 @@ export function saveDashboard(options: SaveDashboardCommand) {
 }
 
 function deleteFolder(uid: string, showSuccessAlert: boolean) {
-  return lastValueFrom(
-    getBackendSrv().fetch({
-      method: 'DELETE',
-      url: `/api/folders/${uid}?forceDeleteRules=false`,
-      showSuccessAlert: showSuccessAlert,
-    })
-  );
+  return getBackendSrv().delete(`/api/folders/${uid}?forceDeleteRules=false`, undefined, { showSuccessAlert });
 }
 
 export function createFolder(payload: any) {
@@ -309,13 +301,7 @@ export function getFolderById(id: number): Promise<{ id: number; title: string }
 }
 
 export function deleteDashboard(uid: string, showSuccessAlert: boolean) {
-  return lastValueFrom(
-    getBackendSrv().fetch<DeleteDashboardResponse>({
-      method: 'DELETE',
-      url: `/api/dashboards/uid/${uid}`,
-      showSuccessAlert: showSuccessAlert,
-    })
-  );
+  return getBackendSrv().delete<DeleteDashboardResponse>(`/api/dashboards/uid/${uid}`, { showSuccessAlert });
 }
 
 function executeInOrder(tasks: any[]) {

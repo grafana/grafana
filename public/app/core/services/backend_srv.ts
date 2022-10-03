@@ -413,35 +413,23 @@ export class BackendSrv implements BackendService {
     requestId?: BackendSrvRequest['requestId'],
     options?: Partial<BackendSrvRequest>
   ) {
-    return await lastValueFrom(
-      this.fetch<T>({ ...options, method: 'GET', url, params, requestId }).pipe(
-        map((response: FetchResponse<T>) => response.data)
-      )
-    );
+    return this.request<T>({ ...options, method: 'GET', url, params, requestId });
   }
 
-  async delete<T = any>(url: string, data?: any, options?: BackendSrvRequest) {
-    return await lastValueFrom(
-      this.fetch<T>({ ...options, method: 'DELETE', url, data }).pipe(map((response: FetchResponse) => response.data))
-    );
+  async delete<T = any>(url: string, data?: any, options?: Partial<BackendSrvRequest>) {
+    return this.request<T>({ ...options, method: 'DELETE', url, data });
   }
 
-  async post<T = any>(url: string, data?: any, options?: BackendSrvRequest) {
-    return await lastValueFrom(
-      this.fetch<T>({ ...options, method: 'POST', url, data }).pipe(map((response: FetchResponse) => response.data))
-    );
+  async post<T = any>(url: string, data?: any, options?: Partial<BackendSrvRequest>) {
+    return this.request<T>({ ...options, method: 'POST', url, data });
   }
 
-  async patch<T = any>(url: string, data: any, options?: BackendSrvRequest) {
-    return await lastValueFrom(
-      this.fetch<T>({ ...options, method: 'PATCH', url, data }).pipe(map((response: FetchResponse) => response.data))
-    );
+  async patch<T = any>(url: string, data: any, options?: Partial<BackendSrvRequest>) {
+    return this.request<T>({ ...options, method: 'PATCH', url, data });
   }
 
-  async put<T = any>(url: string, data: any, options?: BackendSrvRequest): Promise<T> {
-    return await lastValueFrom(
-      this.fetch({ ...options, method: 'PUT', url, data }).pipe(map((response: FetchResponse) => response.data))
-    );
+  async put<T = any>(url: string, data: any, options?: Partial<BackendSrvRequest>): Promise<T> {
+    return this.request<T>({ ...options, method: 'PUT', url, data });
   }
 
   withNoBackendCache(callback: any) {
@@ -452,11 +440,7 @@ export class BackendSrv implements BackendService {
   }
 
   loginPing() {
-    return lastValueFrom(
-      this.fetch({ method: 'GET', url: '/api/login/ping', retry: 1 }).pipe(
-        map((response: FetchResponse) => response.data)
-      )
-    );
+    return this.request({ method: 'GET', url: '/api/login/ping', retry: 1 });
   }
 
   /** @deprecated */
