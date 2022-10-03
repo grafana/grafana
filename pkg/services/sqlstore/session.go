@@ -60,7 +60,7 @@ func startSessionOrUseExisting(ctx context.Context, engine *xorm.Engine, beginTr
 // A session is stored in the context if sqlstore.InTransaction() has been been previously called with the same context (and it's not committed/rolledback yet).
 // In case of sqlite3.ErrLocked or sqlite3.ErrBusy failure it will be retried at most five times before giving up.
 func (ss *SQLStore) WithDbSession(ctx context.Context, callback DBTransactionFunc) error {
-	return withDbSession(ctx, ss.engine, callback)
+	return ss.withDbSession(ctx, ss.engine, callback)
 }
 
 // WithNewDbSession calls the callback with a new session that is closed upon completion.
@@ -68,27 +68,27 @@ func (ss *SQLStore) WithDbSession(ctx context.Context, callback DBTransactionFun
 func (ss *SQLStore) WithNewDbSession(ctx context.Context, callback DBTransactionFunc) error {
 	sess := &DBSession{Session: ss.engine.NewSession(), transactionOpen: false}
 	defer sess.Close()
-	return withRetry(ctx, callback, 0)(sess)
+	return ss.withRetry(ctx, callback, 0)(sess)
 }
 
-func withRetry(ctx context.Context, callback DBTransactionFunc, retry int) DBTransactionFunc {
+func (ss *SQLStore) withRetry(ctx context.Context, callback DBTransactionFunc, retry int) DBTransactionFunc {
 	return func(sess *DBSession) error {
 		err := callback(sess)
 
 		ctxLogger := tsclogger.FromContext(ctx)
 
 		var sqlError sqlite3.Error
-		if errors.As(err, &sqlError) && retry < 5 && (sqlError.Code == sqlite3.ErrLocked || sqlError.Code == sqlite3.ErrBusy) {
+		if errors.As(err, &sqlError) && retry < ss.dbCfg.QueryRetries && (sqlError.Code == sqlite3.ErrLocked || sqlError.Code == sqlite3.ErrBusy) {
 			time.Sleep(time.Millisecond * time.Duration(10))
 			ctxLogger.Info("Database locked, sleeping then retrying", "error", err, "retry", retry, "code", sqlError.Code)
-			return withRetry(ctx, callback, retry+1)(sess)
+			return ss.withRetry(ctx, callback, retry+1)(sess)
 		}
 
 		return err
 	}
 }
 
-func withDbSession(ctx context.Context, engine *xorm.Engine, callback DBTransactionFunc) error {
+func (ss *SQLStore) withDbSession(ctx context.Context, engine *xorm.Engine, callback DBTransactionFunc) error {
 	sess, isNew, err := startSessionOrUseExisting(ctx, engine, false)
 	if err != nil {
 		return err
@@ -96,7 +96,7 @@ func withDbSession(ctx context.Context, engine *xorm.Engine, callback DBTransact
 	if isNew {
 		defer sess.Close()
 	}
-	return withRetry(ctx, callback, 0)(sess)
+	return ss.withRetry(ctx, callback, 0)(sess)
 }
 
 func (sess *DBSession) InsertId(bean interface{}) (int64, error) {

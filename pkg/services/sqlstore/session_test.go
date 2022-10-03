@@ -12,6 +12,7 @@ import (
 
 func TestRetryingOnFailures(t *testing.T) {
 	store := InitTestDB(t)
+	store.dbCfg.QueryRetries = 5
 
 	funcToTest := map[string]func(ctx context.Context, callback DBTransactionFunc) error{
 		"WithDbSession()":    store.WithDbSession,
@@ -19,43 +20,43 @@ func TestRetryingOnFailures(t *testing.T) {
 	}
 
 	for name, f := range funcToTest {
-		retries := 0
+		i := 0
 		t.Run(fmt.Sprintf("%s should return the error immediately if it's other than sqlite3.ErrLocked or sqlite3.ErrBusy", name), func(t *testing.T) {
 			err := f(context.Background(), func(sess *DBSession) error {
-				retries++
+				i++
 				return errors.New("some error")
 			})
 			require.Error(t, err)
-			require.Equal(t, retries, 1)
+			require.Equal(t, i, 1)
 		})
 
-		retries = 0
+		i = 0
 		t.Run(fmt.Sprintf("%s should return the sqlite3.Error if all retries have failed", name), func(t *testing.T) {
 			err := f(context.Background(), func(sess *DBSession) error {
-				retries++
+				i++
 				return sqlite3.Error{Code: sqlite3.ErrBusy}
 			})
 			require.Error(t, err)
 			var driverErr sqlite3.Error
 			require.ErrorAs(t, err, &driverErr)
-			require.Equal(t, retries, 6)
+			require.Equal(t, i, store.dbCfg.QueryRetries+1)
 		})
 
-		retries = 0
+		i = 0
 		t.Run(fmt.Sprintf("%s should not return the error if successive retries succeed", name), func(t *testing.T) {
 			err := f(context.Background(), func(sess *DBSession) error {
 				var err error
 				switch {
-				case retries >= 5:
+				case i >= store.dbCfg.QueryRetries:
 					err = nil
 				default:
 					err = sqlite3.Error{Code: sqlite3.ErrBusy}
 				}
-				retries++
+				i++
 				return err
 			})
 			require.NoError(t, err)
-			require.Equal(t, retries, 6)
+			require.Equal(t, i, store.dbCfg.QueryRetries+1)
 		})
 	}
 }

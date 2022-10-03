@@ -365,6 +365,14 @@ will be stored.
 For "sqlite3" only. [Shared cache](https://www.sqlite.org/sharedcache.html) setting used for connecting to the database. (private, shared)
 Defaults to `private`.
 
+### query_retries
+
+For "sqlite" only. How many times to retry a query in case of database is locked failures. Default is 0 (disabled).
+
+### transaction_retries
+
+For "sqlite" only. How many times to retry a transaction in case of database is locked failures. Default is 5.
+
 <hr />
 
 ## [remote_cache]
