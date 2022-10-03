@@ -1,11 +1,11 @@
 package main
 
 import (
-	"github.com/grafana/grafana/pkg/build/config"
 	"log"
 	"os"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/grafana/grafana/pkg/build/docker"
 	"github.com/grafana/grafana/pkg/build/packaging"
 	"github.com/urfave/cli/v2"
