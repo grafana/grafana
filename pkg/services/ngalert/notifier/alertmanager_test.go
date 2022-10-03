@@ -314,7 +314,7 @@ func TestPutAlert(t *testing.T) {
 		t.Run(c.title, func(t *testing.T) {
 			r := prometheus.NewRegistry()
 			am.marker = types.NewMarker(r)
-			am.alerts, err = mem.NewAlerts(context.Background(), am.marker, 15*time.Minute, nil, am.logger)
+			am.alerts, err = mem.NewAlerts(context.Background(), am.marker, 15*time.Minute, nil, am.logger, r)
 			require.NoError(t, err)
 
 			alerts := []*types.Alert{}

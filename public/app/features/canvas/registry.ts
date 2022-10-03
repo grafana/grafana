@@ -8,6 +8,7 @@ import { droneTopItem } from './elements/droneTop';
 import { iconItem } from './elements/icon';
 import { metricValueItem } from './elements/metricValue';
 import { rectangleItem } from './elements/rectangle';
+import { textItem } from './elements/text';
 import { windTurbineItem } from './elements/windTurbine';
 
 export const DEFAULT_CANVAS_ELEMENT_CONFIG: CanvasElementOptions = {
@@ -19,6 +20,7 @@ export const DEFAULT_CANVAS_ELEMENT_CONFIG: CanvasElementOptions = {
 
 export const defaultElementItems = [
   metricValueItem, // default for now
+  textItem,
   rectangleItem,
   iconItem,
 ];
