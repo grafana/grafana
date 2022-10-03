@@ -21,6 +21,8 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+const grafanaAPI = "https://grafana.com/api"
+
 // GrafanaCom implements the sub-command "grafana-com".
 func GrafanaCom(c *cli.Context) error {
 	bucketStr := c.String("src-bucket")
@@ -245,7 +247,10 @@ func postRequest(cfg PublishConfig, pth string, obj interface{}, descr string) e
 		return fmt.Errorf("failed to JSON encode release: %w", err)
 	}
 
-	u := fmt.Sprintf("https://grafana.com/api/%s/%s", product, pth)
+	u, err := constructURL(product, pth)
+	if err != nil {
+		return err
+	}
 	req, err := http.NewRequest(http.MethodPost, u, bytes.NewReader(jsonB))
 	if err != nil {
 		return err
@@ -289,6 +294,16 @@ func postRequest(cfg PublishConfig, pth string, obj interface{}, descr string) e
 	log.Printf("Successfully posted to grafana.com API, %s\n", u)
 
 	return nil
+}
+
+func constructURL(product string, pth string) (string, error) {
+	productPath := filepath.Clean(filepath.Join("/", product, pth))
+	u, err := url.Parse(grafanaAPI)
+	if err != nil {
+		return "", err
+	}
+	u.Path = path.Join(u.Path, productPath)
+	return u.String(), err
 }
 
 type buildRepr struct {
