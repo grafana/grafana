@@ -440,7 +440,7 @@ export class BackendSrv implements BackendService {
   }
 
   loginPing() {
-    return this.request({ method: 'GET', url: '/api/login/ping', retry: 1 });
+    return this.request({ url: '/api/login/ping', method: 'GET', retry: 1 });
   }
 
   /** @deprecated */
