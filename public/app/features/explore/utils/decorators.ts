@@ -146,7 +146,7 @@ export const decorateWithRawPrometheusResult = (data: ExplorePanelData): Observa
     return of({ ...data, tableResult: null });
   }
 
-  data.tableFrames.sort((frameA: DataFrame, frameB: DataFrame) => {
+  tableFrames.sort((frameA: DataFrame, frameB: DataFrame) => {
     const frameARefId = frameA.refId!;
     const frameBRefId = frameB.refId!;
 
