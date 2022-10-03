@@ -1,5 +1,4 @@
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { LokiOptionFieldsProps, LokiOptionFields } from './LokiOptionFields';
@@ -40,13 +39,11 @@ describe('Query Type Field', () => {
     expect(screen.getByLabelText('Instant')).not.toBeChecked();
   });
 
-  //! Warning: You seem to have overlapping act() calls, this is not supported. Be sure to await previous act() calls before making a new one.
   it('should call onChange when value is changed', async () => {
     // Arrange
     const props = setup();
     render(<LokiOptionFields {...props} />);
-    // Act
-    // `userEvent.click()` triggers an error, so switching here to `fireEvent`.
+    // Act (`userEvent.click()` triggers an error, so switching here to `fireEvent`.)
     fireEvent.click(screen.getByLabelText('Instant'));
     // Assert
     await waitFor(() => expect(props.onChange).toHaveBeenCalledTimes(1));
@@ -56,25 +53,10 @@ describe('Query Type Field', () => {
     // Arrange
     const props = setup();
     render(<LokiOptionFields {...props} query={{ refId: '1', expr: 'query', instant: true }} />);
-    // Act
-    // `userEvent.click()` triggers an error, so switching here to `fireEvent`.
-    expect(screen.getByLabelText('Range')).not.toBeChecked();
+    // Assert
     expect(screen.getByLabelText('Instant')).toBeChecked();
+    expect(screen.getByLabelText('Range')).not.toBeChecked();
   });
-
-  //! FAIL, (expected: "instant to be checked", received: "range to be checked")
-  // it('should change the value to "Instant" on click', async () => {
-  //   // Arrange
-  //   const props = setup();
-  //   render(<LokiOptionFields {...props} />);
-  //   // Act
-  //   userEvent.click(screen.getByLabelText('Instant'));
-  //   // Assert
-  //   await waitFor(() => {
-  //     expect(screen.getByLabelText('Instant')).toBeChecked();
-  //     expect(screen.getByLabelText('Range')).not.toBeChecked();
-  //   });
-  // });
 });
 
 describe('Line Limit Field', () => {
@@ -94,18 +76,13 @@ describe('Line Limit Field', () => {
     expect(screen.getByRole('spinbutton')).toHaveValue(1);
   });
 
-  //! FAIL, (EXPECTED: 2, RECEIVED: 1)
-  // it('should have an updated value of 2', async () => {
-  //   // Arrange
-  //   const props = setup();
-  //   render(<LokiOptionFields {...props} />);
-  //   // Act
-  //   userEvent.type(screen.getByRole('spinbutton'), '2');
-  //   // Assert
-  //   await waitFor(() => {
-  //     expect(screen.getByRole('spinbutton')).toHaveValue(2);
-  //   });
-  // });
+  it('displays the expected line limit value', () => {
+    // Arrange
+    const props = setup();
+    render(<LokiOptionFields {...props} lineLimitValue="123" />);
+    // Act
+    expect(screen.getByRole('spinbutton')).toHaveValue(123);
+  });
 });
 
 describe('Resolution Field', () => {
@@ -117,20 +94,19 @@ describe('Resolution Field', () => {
     expect(screen.getByRole('combobox')).toBeInTheDocument();
   });
 
-  //! FAIL, (EXPECTED: 1, RECEIVED: '')
-  //* Me and Ivana had a quick look at this, we couldn't figure out why the value of the input is ''.
-  // it('should have a default value of 1', () => {
-  //   // Arrange
-  //   const props = setup();
-  //   render(<LokiOptionFields {...props} />);
-  //   // Assert
-  //   // screen.debug();
-  //   expect(screen.getByLabelText('Select resolution')).toHaveValue(1 / 1);
-  // });
+  it('should have a default value of 1', async () => {
+    // Arrange
+    const props = setup();
+    render(<LokiOptionFields {...props} />);
+    // Assert
+    expect(await screen.findByText('1/1')).toBeInTheDocument();
+  });
 
-  // it('', () => {
-  //   // Arrange
-  //   const props = setup();
-  //   render(<LokiOptionFields {...props} />);
-  // });
+  it('displays the expected resolution value', async () => {
+    // Arrange
+    const props = setup();
+    render(<LokiOptionFields {...props} resolution={5} />);
+    // Assert
+    expect(await screen.findByText('1/5')).toBeInTheDocument();
+  });
 });
