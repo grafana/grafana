@@ -1,4 +1,4 @@
-import { DataFrame, FieldType, FormattedValue, formattedValueToString, toDataFrame } from '@grafana/data/src';
+import { DataFrame, formattedValueToString } from '@grafana/data/src';
 
 import { instantQueryRawVirtualizedListData } from '../RawListContainer';
 
@@ -17,7 +17,7 @@ export const getRawPrometheusListItemsFromDataFrame = (dataFrame: DataFrame): in
 
   // Get name from each series
   let metricNames: string[] = newFields.find((field) => field.name === '__name__')?.values.toArray() ?? [];
-  if (!metricNames.length) {
+  if (!metricNames.length && newFields.length && newFields[0].values.length) {
     // These results do not have series labels
     // Matching the native prometheus UI which appears to only show the permutations of the first field in the query result.
     metricNames = Array(newFields[0].values.length).fill('');
