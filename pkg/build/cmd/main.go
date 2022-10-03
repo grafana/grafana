@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/grafana/grafana/pkg/build/config"
 	"log"
 	"os"
 	"strings"
@@ -187,7 +188,7 @@ func main() {
 						&gcpKeyFlag,
 						&cli.StringFlag{
 							Name:  "packages-bucket",
-							Value: "grafana-downloads",
+							Value: config.PublicBucket,
 							Usage: "Google Cloud Storage Debian database bucket",
 						},
 						&cli.StringFlag{
