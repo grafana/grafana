@@ -50,7 +50,7 @@ export const Page: PageType = ({
     <div className={cx(styles.wrapper, className)} {...otherProps}>
       {layout === PageLayoutType.Standard && (
         <div className={styles.panes}>
-          {navModel && navModel.main.children && <SectionNav model={navModel} />}
+          {navModel && <SectionNav model={navModel} />}
           <div className={styles.pageContent}>
             <CustomScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
               <div className={styles.pageInner}>

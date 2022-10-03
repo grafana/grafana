@@ -124,7 +124,7 @@
           "enterprise"
         ],
         "summary": "Update a custom role.",
-        "operationId": "updateRoleWithPermissions",
+        "operationId": "updateRole",
         "parameters": [
           {
             "name": "body",
@@ -166,7 +166,7 @@
           "enterprise"
         ],
         "summary": "Delete a custom role.",
-        "operationId": "deleteCustomRole",
+        "operationId": "deleteRole",
         "parameters": [
           {
             "type": "boolean",
@@ -194,6 +194,78 @@
           },
           "403": {
             "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/access-control/roles/{roleUID}/assignments": {
+      "get": {
+        "description": "Get role assignments for the role with the given UID.\n\nYou need to have a permission with action `teams.roles:list` and scope `teams:id:*` and `users.roles:list` and scope `users:id:*`.",
+        "tags": [
+          "access_control",
+          "enterprise"
+        ],
+        "summary": "Get role assignments.",
+        "operationId": "getRoleAssignments",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "roleUID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getRoleAssignmentsResponse"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "put": {
+        "description": "Set role assignments for the role with the given UID.\n\nYou need to have a permission with action `teams.roles:add` and `teams.roles:remove` and scope `permissions:type:delegate`, and `users.roles:add` and `users.roles:remove` and scope `permissions:type:delegate`.",
+        "tags": [
+          "access_control",
+          "enterprise"
+        ],
+        "summary": "Set role assignments.",
+        "operationId": "setRoleAssignments",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "roleUID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/SetRoleAssignmentsCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/setRoleAssignmentsResponse"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
           },
           "500": {
             "$ref": "#/responses/internalServerError"
@@ -553,7 +625,7 @@
         "tags": [
           "ldap_debug"
         ],
-        "summary": "Returns the current state of the LDAP background sync integration",
+        "summary": "Returns the current state of the LDAP background sync integration.",
         "operationId": "getSyncStatus",
         "responses": {
           "200": {
@@ -4095,9 +4167,7 @@
             "name": "DatasourceProxyParam",
             "in": "body",
             "required": true,
-            "schema": {
-              "type": "object"
-            }
+            "schema": {}
           },
           {
             "type": "string",
@@ -4236,9 +4306,7 @@
             "name": "DatasourceProxyParam",
             "in": "body",
             "required": true,
-            "schema": {
-              "type": "object"
-            }
+            "schema": {}
           },
           {
             "type": "string",
@@ -7630,11 +7698,11 @@
     },
     "/recording-rules/writer": {
       "get": {
-        "description": "Return the prometheus remote write target",
         "tags": [
           "recording_rules",
           "enterprise"
         ],
+        "summary": "Return the prometheus remote write target.",
         "operationId": "getRecordingRuleWriteTarget",
         "responses": {
           "200": {
@@ -7655,7 +7723,7 @@
         }
       },
       "post": {
-        "description": "It returns a 422 if there is not an existing prometheus data source configured",
+        "description": "It returns a 422 if there is not an existing prometheus data source configured.",
         "tags": [
           "recording_rules",
           "enterprise"
@@ -7757,7 +7825,7 @@
     },
     "/reports": {
       "get": {
-        "description": "Available to org admins only and with a valid or expired license\n\nYou need to have a permission with action `reports:read` with scope `reports:*`.",
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports:read` with scope `reports:*`.",
         "tags": [
           "reports",
           "enterprise"
@@ -7982,7 +8050,7 @@
     },
     "/reports/settings": {
       "get": {
-        "description": "Available to org admins only and with a valid or expired license\n\nYou need to have a permission with action `reports.settings:read`x.",
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.settings:read`x.",
         "tags": [
           "reports",
           "enterprise"
@@ -8005,7 +8073,7 @@
         }
       },
       "post": {
-        "description": "Available to org admins only and with a valid or expired license\n\nYou need to have a permission with action `reports.settings:write`xx.",
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.settings:write`xx.",
         "tags": [
           "reports",
           "enterprise"
@@ -8084,7 +8152,7 @@
     },
     "/reports/{id}": {
       "get": {
-        "description": "Available to org admins only and with a valid or expired license\n\nYou need to have a permission with action `reports:read` with scope `reports:id:\u003creport ID\u003e`.",
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports:read` with scope `reports:id:\u003creport ID\u003e`.",
         "tags": [
           "reports",
           "enterprise"
@@ -8122,7 +8190,7 @@
         }
       },
       "put": {
-        "description": "Available to org admins only and with a valid or expired license\n\nYou need to have a permission with action `reports.admin:write` with scope `reports:id:\u003creport ID\u003e`.",
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.admin:write` with scope `reports:id:\u003creport ID\u003e`.",
         "tags": [
           "reports",
           "enterprise"
@@ -8168,7 +8236,7 @@
         }
       },
       "delete": {
-        "description": "Available to org admins only and with a valid or expired license\n\nYou need to have a permission with action `reports.delete` with scope `reports:id:\u003creport ID\u003e`.",
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.delete` with scope `reports:id:\u003creport ID\u003e`.",
         "tags": [
           "reports",
           "enterprise"
@@ -10957,9 +11025,7 @@
     "AlertTestResultLog": {
       "type": "object",
       "properties": {
-        "data": {
-          "type": "object"
-        },
+        "data": {},
         "message": {
           "type": "string"
         }
@@ -11020,6 +11086,19 @@
         },
         "type": {
           "$ref": "#/definitions/RuleType"
+        }
+      }
+    },
+    "AlertingStatus": {
+      "type": "object",
+      "properties": {
+        "alertmanagersChoice": {
+          "type": "string",
+          "enum": [
+            "all",
+            "internal",
+            "external"
+          ]
         }
       }
     },
@@ -11304,6 +11383,9 @@
       "description": "Correlation is the model for correlations definitions",
       "type": "object",
       "properties": {
+        "config": {
+          "$ref": "#/definitions/CorrelationConfig"
+        },
         "description": {
           "description": "Description of the correlation",
           "type": "string",
@@ -11330,6 +11412,25 @@
           "example": "50xhMlg9k"
         }
       }
+    },
+    "CorrelationConfig": {
+      "type": "object",
+      "required": [
+        "field",
+        "target"
+      ],
+      "properties": {
+        "field": {
+          "description": "Field used to attach the correlation link",
+          "type": "string"
+        },
+        "target": {
+          "$ref": "#/definitions/CorrelationConfigTarget"
+        }
+      }
+    },
+    "CorrelationConfigTarget": {
+      "description": "CorrelationConfigTarget is the target data query specific to target data source (Correlation.TargetUID)"
     },
     "CreateAlertNotificationCommand": {
       "type": "object",
@@ -11370,6 +11471,9 @@
       "description": "CreateCorrelationCommand is the command for creating a correlation",
       "type": "object",
       "properties": {
+        "config": {
+          "$ref": "#/definitions/CorrelationConfig"
+        },
         "description": {
           "description": "Optional description of the correlation",
           "type": "string",
@@ -11554,7 +11658,7 @@
         "items": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/PlaylistItemDTO"
+            "$ref": "#/definitions/PlaylistItem"
           }
         },
         "name": {
@@ -12601,7 +12705,7 @@
           }
         },
         "value": {
-          "$ref": "#/definitions/Float"
+          "type": "string"
         }
       }
     },
@@ -12692,16 +12796,12 @@
         "color": {
           "description": "Map values to a display color\nNOTE: this interface is under development in the frontend... so simple map for now",
           "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          }
+          "additionalProperties": false
         },
         "custom": {
           "description": "Panel Specific Values",
           "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          }
+          "additionalProperties": false
         },
         "decimals": {
           "type": "integer",
@@ -12774,20 +12874,6 @@
           "items": {
             "$ref": "#/definitions/TagsDTO"
           }
-        }
-      }
-    },
-    "Float": {
-      "description": "It does not consider zero values to be null.\nIt will decode to null, not zero, if null.",
-      "type": "object",
-      "title": "Float is a nullable float64.",
-      "properties": {
-        "Float64": {
-          "type": "number",
-          "format": "double"
-        },
-        "Valid": {
-          "type": "boolean"
         }
       }
     },
@@ -12905,8 +12991,7 @@
           "type": "string"
         },
         "custom": {
-          "description": "Custom datasource specific values.",
-          "type": "object"
+          "description": "Custom datasource specific values."
         },
         "dataTopic": {
           "$ref": "#/definitions/DataTopic"
@@ -14822,22 +14907,27 @@
       "type": "object",
       "properties": {
         "id": {
+          "description": "Unique playlist identifier for internal use, set by Grafana.",
           "type": "integer",
           "format": "int64"
         },
         "interval": {
+          "description": "Interval sets the time between switching views in a playlist.\nFIXME: Is this based on a standardized format or what options are available? Can datemath be used?",
           "type": "string"
         },
         "items": {
+          "description": "The ordered list of items that the playlist will iterate over.",
           "type": "array",
           "items": {
-            "$ref": "#/definitions/PlaylistItemDTO"
+            "$ref": "#/definitions/PlaylistItem"
           }
         },
         "name": {
+          "description": "Name of the playlist.",
           "type": "string"
         },
         "uid": {
+          "description": "Unique playlist identifier. Generated on creation, either by the\ncreator of the playlist of by the application.",
           "type": "string"
         }
       }
@@ -14873,31 +14963,43 @@
         "$ref": "#/definitions/PlaylistDashboard"
       }
     },
-    "PlaylistItemDTO": {
+    "PlaylistItem": {
+      "description": "THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.\nEquivalent Go types at stable import paths are provided in https://github.com/grafana/grok.",
       "type": "object",
+      "title": "PlaylistItem is the Go representation of a playlist.Item.",
       "properties": {
         "id": {
+          "description": "FIXME: The prefixDropper removes playlist from playlist_id, that doesn't work for us since it'll mean we'll have Id twice.\nID of the playlist item for internal use by Grafana. Deprecated.",
           "type": "integer",
           "format": "int64"
         },
         "order": {
+          "description": "Order is the position in the list for the item. Deprecated.",
           "type": "integer",
           "format": "int64"
         },
         "playlistid": {
+          "description": "ID for the playlist containing the item. Deprecated.",
           "type": "integer",
           "format": "int64"
         },
         "title": {
+          "description": "Title is the human-readable identifier for the playlist item.",
           "type": "string"
         },
         "type": {
-          "type": "string"
+          "$ref": "#/definitions/PlaylistItemType"
         },
         "value": {
+          "description": "Value depends on type and describes the playlist item.\n\ndashboard_by_id: The value is an internal numerical identifier set by Grafana. This\nis not portable as the numerical identifier is non-deterministic between different instances.\nWill be replaced by dashboard_by_uid in the future.\ndashboard_by_tag: The value is a tag which is set on any number of dashboards. All\ndashboards behind the tag will be added to the playlist.",
           "type": "string"
         }
       }
+    },
+    "PlaylistItemType": {
+      "description": "THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.\nEquivalent Go types at stable import paths are provided in https://github.com/grafana/grok.",
+      "type": "string",
+      "title": "Type of the item."
     },
     "Playlists": {
       "type": "array",
@@ -14964,9 +15066,7 @@
         "data": {
           "type": "string"
         },
-        "tags": {
-          "type": "object"
-        },
+        "tags": {},
         "what": {
           "type": "string"
         },
@@ -15599,16 +15699,12 @@
         "color": {
           "description": "Map values to a display color\nNOTE: this interface is under development in the frontend... so simple map for now",
           "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          }
+          "additionalProperties": false
         },
         "custom": {
           "description": "Panel Specific Values",
           "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          }
+          "additionalProperties": false
         },
         "decimals": {
           "type": "integer",
@@ -15800,9 +15896,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "additionalProperties": {
-              "type": "object"
-            }
+            "additionalProperties": false
           }
         },
         "range": {
@@ -15897,6 +15991,35 @@
         "authTokenId": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "RoleAssignmentsDTO": {
+      "type": "object",
+      "properties": {
+        "role_uid": {
+          "type": "string"
+        },
+        "service_accounts": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "teams": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "users": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
         }
       }
     },
@@ -16456,6 +16579,32 @@
           "type": "string",
           "format": "date-time",
           "example": "2022-03-21T14:35:33Z"
+        }
+      }
+    },
+    "SetRoleAssignmentsCommand": {
+      "type": "object",
+      "properties": {
+        "service_accounts": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "teams": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "users": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
         }
       }
     },
@@ -17623,7 +17772,7 @@
         "items": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/PlaylistItemDTO"
+            "$ref": "#/definitions/PlaylistItem"
           }
         },
         "name": {
@@ -19334,7 +19483,7 @@
       "schema": {
         "type": "array",
         "items": {
-          "$ref": "#/definitions/PlaylistItemDTO"
+          "$ref": "#/definitions/PlaylistItem"
         }
       }
     },
@@ -19402,6 +19551,12 @@
         "items": {
           "$ref": "#/definitions/ConfigDTO"
         }
+      }
+    },
+    "getRoleAssignmentsResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/RoleAssignmentsDTO"
       }
     },
     "getRoleResponse": {
@@ -19807,6 +19962,12 @@
       "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/SearchUserQueryResult"
+      }
+    },
+    "setRoleAssignmentsResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/RoleAssignmentsDTO"
       }
     },
     "testAlertResponse": {

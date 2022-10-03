@@ -1,6 +1,6 @@
 // Libraries
 import classNames from 'classnames';
-import { cloneDeep, filter, has, uniqBy } from 'lodash';
+import { cloneDeep, filter, has, uniqBy, uniqueId } from 'lodash';
 import pluralize from 'pluralize';
 import React, { PureComponent, ReactNode } from 'react';
 
@@ -84,11 +84,10 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     showingHelp: false,
   };
 
-  componentDidMount() {
+  async componentDidMount() {
     const { data, query } = this.props;
     const dataFilteredByRefId = filterPanelDataToQuery(data, query.refId);
     this.setState({ data: dataFilteredByRefId });
-
     this.loadDatasource();
   }
 
@@ -452,6 +451,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     const { query, id, index, visualization } = this.props;
     const { datasource, showingHelp, data } = this.state;
     const isDisabled = query.hide;
+    const generatedUniqueId = uniqueId(id + '_');
 
     const rowClasses = classNames('query-editor-row', {
       'query-editor-row--disabled': isDisabled,
@@ -468,14 +468,14 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     return (
       <div aria-label={selectors.components.QueryEditorRows.rows}>
         <QueryOperationRow
-          id={id}
+          id={generatedUniqueId}
           draggable={true}
           index={index}
           headerElement={this.renderHeader}
           actions={this.renderActions}
           onOpen={this.onOpen}
         >
-          <div className={rowClasses}>
+          <div className={rowClasses} id={generatedUniqueId}>
             <ErrorBoundaryAlert>
               {showingHelp && DatasourceCheatsheet && (
                 <OperationRowHelp>

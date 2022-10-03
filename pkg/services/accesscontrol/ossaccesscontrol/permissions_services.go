@@ -40,7 +40,7 @@ var (
 func ProvideTeamPermissions(
 	cfg *setting.Cfg, router routing.RouteRegister, sql *sqlstore.SQLStore,
 	ac accesscontrol.AccessControl, license models.Licensing, service accesscontrol.Service,
-	teamService team.Service,
+	teamService team.Service, userService user.Service,
 ) (*TeamPermissionsService, error) {
 	options := resourcepermissions.Options{
 		Resource:          "teams",
@@ -96,7 +96,7 @@ func ProvideTeamPermissions(
 		},
 	}
 
-	srv, err := resourcepermissions.New(options, cfg, router, license, ac, service, sql, teamService)
+	srv, err := resourcepermissions.New(options, cfg, router, license, ac, service, sql, teamService, userService)
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +114,7 @@ var DashboardAdminActions = append(DashboardEditActions, []string{dashboards.Act
 func ProvideDashboardPermissions(
 	cfg *setting.Cfg, router routing.RouteRegister, sql *sqlstore.SQLStore, ac accesscontrol.AccessControl,
 	license models.Licensing, dashboardStore dashboards.Store, service accesscontrol.Service,
-	teamService team.Service,
+	teamService team.Service, userService user.Service,
 ) (*DashboardPermissionsService, error) {
 	getDashboard := func(ctx context.Context, orgID int64, resourceID string) (*models.Dashboard, error) {
 		query := &models.GetDashboardQuery{Uid: resourceID, OrgId: orgID}
@@ -168,7 +168,7 @@ func ProvideDashboardPermissions(
 		RoleGroup:      "Dashboards",
 	}
 
-	srv, err := resourcepermissions.New(options, cfg, router, license, ac, service, sql, teamService)
+	srv, err := resourcepermissions.New(options, cfg, router, license, ac, service, sql, teamService, userService)
 	if err != nil {
 		return nil, err
 	}
@@ -193,7 +193,7 @@ var FolderAdminActions = append(FolderEditActions, []string{dashboards.ActionFol
 func ProvideFolderPermissions(
 	cfg *setting.Cfg, router routing.RouteRegister, sql *sqlstore.SQLStore, accesscontrol accesscontrol.AccessControl,
 	license models.Licensing, dashboardStore dashboards.Store, service accesscontrol.Service,
-	teamService team.Service,
+	teamService team.Service, userService user.Service,
 ) (*FolderPermissionsService, error) {
 	options := resourcepermissions.Options{
 		Resource:          "folders",
@@ -224,7 +224,7 @@ func ProvideFolderPermissions(
 		WriterRoleName: "Folder permission writer",
 		RoleGroup:      "Folders",
 	}
-	srv, err := resourcepermissions.New(options, cfg, router, license, accesscontrol, service, sql, teamService)
+	srv, err := resourcepermissions.New(options, cfg, router, license, accesscontrol, service, sql, teamService, userService)
 	if err != nil {
 		return nil, err
 	}
@@ -284,7 +284,7 @@ type ServiceAccountPermissionsService struct {
 func ProvideServiceAccountPermissions(
 	cfg *setting.Cfg, router routing.RouteRegister, sql *sqlstore.SQLStore, ac accesscontrol.AccessControl,
 	license models.Licensing, serviceAccountStore serviceaccounts.Store, service accesscontrol.Service,
-	teamService team.Service,
+	teamService team.Service, userService user.Service,
 ) (*ServiceAccountPermissionsService, error) {
 	options := resourcepermissions.Options{
 		Resource:          "serviceaccounts",
@@ -311,7 +311,7 @@ func ProvideServiceAccountPermissions(
 		RoleGroup:      "Service accounts",
 	}
 
-	srv, err := resourcepermissions.New(options, cfg, router, license, ac, service, sql, teamService)
+	srv, err := resourcepermissions.New(options, cfg, router, license, ac, service, sql, teamService, userService)
 	if err != nil {
 		return nil, err
 	}

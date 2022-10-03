@@ -29,7 +29,7 @@ Alert hooks allow you to create different notifiers with a bit of code if you pr
 
 Annotate graphs with rich events from different data sources. Hover over events to see the full event metadata and tags.
 
-This feature, which shows up as a graph marker in Grafana, is useful for correlating data in case something goes wrong. You can create the annotations manually—just control-click on a graph and input some text—or you can fetch data from any data source. Refer to [Annotations]({{< relref "../dashboards/annotations.md" >}}) for more information.
+This feature, which shows up as a graph marker in Grafana, is useful for correlating data in case something goes wrong. You can create the annotations manually—just control-click on a graph and input some text—or you can fetch data from any data source. Refer to [Annotations]({{< relref "../dashboards/build-dashboards/annotate-visualizations" >}}) for more information.
 
 ## Dashboard variables
 

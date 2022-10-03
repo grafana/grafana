@@ -4,7 +4,7 @@ import { PluginError } from '@grafana/data';
 import { useDispatch, useSelector } from 'app/types';
 
 import { sortPlugins, Sorters } from '../helpers';
-import { CatalogPlugin, PluginListDisplayMode, PluginTypeFilterOption } from '../types';
+import { CatalogPlugin, PluginListDisplayMode } from '../types';
 
 import { fetchAll, fetchDetails, fetchRemotePlugins, install, uninstall } from './actions';
 import { setDisplayMode } from './reducer';
@@ -22,7 +22,7 @@ import {
 type Filters = {
   query?: string; // Note: this will be an escaped regex string as it comes from `FilterInput`
   filterBy?: string;
-  filterByType?: PluginTypeFilterOption;
+  filterByType?: string;
   sortBy?: Sorters;
 };
 
