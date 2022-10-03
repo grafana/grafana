@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkHTTPClient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
@@ -593,7 +594,12 @@ func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *Prometheu
 		dataFields = append(dataFields, data.NewField(label, nil, labelsVector[label]))
 	}
 
-	return append(frames, newDataFrame("exemplar", "exemplar", dataFields...))
+	frame := newDataFrame("exemplar", "exemplar", dataFields...)
+
+	sorter := experimental.NewFrameSorter(frame, frame.Fields[0])
+	sort.Sort(sorter)
+
+	return append(frames, frame)
 }
 
 func sortedLabels(labelsVector map[string][]string) []string {
