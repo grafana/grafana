@@ -366,3 +366,7 @@ replace github.com/microcosm-cc/bluemonday => github.com/microcosm-cc/bluemonday
 // happen, for example, during a read when the sqlite db is under heavy write load.
 // This patch cherry picks compatible fixes from upstream xorm PR#1998 and can be reverted on upgrade to xorm v1.2.0+.
 replace xorm.io/xorm => github.com/grafana/xorm v0.8.3-0.20220614223926-2fcda7565af6
+
+// Use our fork of the upstream alertmanagers.
+// This is required in order to get notification delivery errors from the receivers API.
+replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.24.1-0.20221006171631-7f1ce00421dc
