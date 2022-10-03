@@ -22,7 +22,7 @@ const setup = () => {
 };
 
 describe('Query Type Field', () => {
-  it('should render query type field', () => {
+  it('should render a query type field', () => {
     const props = setup();
     render(<LokiOptionFields {...props} />);
     expect(screen.getByTestId('queryTypeField')).toBeInTheDocument();
@@ -51,7 +51,7 @@ describe('Query Type Field', () => {
 });
 
 describe('Line Limit Field', () => {
-  it('should render line limit field', () => {
+  it('should render a line limit field', () => {
     const props = setup();
     render(<LokiOptionFields {...props} />);
     expect(screen.getByRole('spinbutton')).toBeInTheDocument();
