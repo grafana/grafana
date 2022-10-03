@@ -25,6 +25,7 @@ import {
   StreamingFrameOptions,
   StreamingFrameAction,
   BackendSrvRequest,
+  FetchResponse,
 } from '../services';
 
 import { BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
@@ -225,14 +226,7 @@ class DataSourceWithBackend<
     params?: BackendSrvRequest['params'],
     options?: Partial<BackendSrvRequest>
   ): Promise<any> {
-    return lastValueFrom(
-      getBackendSrv().fetch<HealthCheckResult>({
-        ...options,
-        method: 'GET',
-        url: `/api/datasources/${this.id}/resources/${path}`,
-        params,
-      })
-    );
+    return getBackendSrv().get(`/api/datasources/${this.id}/resources/${path}`, params, options?.requestId, options);
   }
 
   /**
@@ -243,14 +237,7 @@ class DataSourceWithBackend<
     data?: BackendSrvRequest['data'],
     options?: Partial<BackendSrvRequest>
   ): Promise<any> {
-    return lastValueFrom(
-      getBackendSrv().fetch<HealthCheckResult>({
-        ...options,
-        method: 'POST',
-        url: `/api/datasources/${this.id}/resources/${path}`,
-        data: { ...data },
-      })
-    );
+    return getBackendSrv().post(`/api/datasources/${this.id}/resources/${path}`, { ...data }, options);
   }
 
   /**
@@ -264,7 +251,7 @@ class DataSourceWithBackend<
         showErrorAlert: false,
       })
     )
-      .then((v: unknown) => v as HealthCheckResult)
+      .then((v: FetchResponse) => v.data as HealthCheckResult)
       .catch((err) => err.data as HealthCheckResult);
   }
 
