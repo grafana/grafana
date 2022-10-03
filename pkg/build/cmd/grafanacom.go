@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -210,16 +209,16 @@ func publishPackages(cfg PublishConfig) error {
 
 func getSHA256(u string) ([]byte, error) {
 	shaURL := fmt.Sprintf("%s.sha256", u)
+	// nolint:gosec
 	resp, err := http.Get(shaURL)
 	if err != nil {
 		return nil, err
 	}
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			return
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Println("failed to close response body, err: %w", err)
 		}
-	}(resp.Body)
+	}()
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return nil, fmt.Errorf("failed downloading %s: %s", u, resp.Status)
 	}
@@ -268,12 +267,11 @@ func postRequest(cfg PublishConfig, pth string, obj interface{}, descr string) e
 	if err != nil {
 		return fmt.Errorf("failed posting to %s (%s): %s", u, descr, err)
 	}
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Println("failed to close response body, err: %w", err)
 		}
-	}(resp.Body)
+	}()
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		var body []byte
 		if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
