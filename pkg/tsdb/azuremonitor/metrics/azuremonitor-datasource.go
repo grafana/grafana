@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
@@ -203,7 +202,7 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *types.
 	req.URL.RawQuery = query.Params.Encode()
 	if query.Filter != "" {
 		req.Method = http.MethodPost
-		req.Body = ioutil.NopCloser(strings.NewReader(fmt.Sprintf(`{"filter": "%s"}`, query.Filter)))
+		req.Body = io.NopCloser(strings.NewReader(fmt.Sprintf(`{"filter": "%s"}`, query.Filter)))
 	}
 
 	ctx, span := tracer.Start(ctx, "azuremonitor query")
