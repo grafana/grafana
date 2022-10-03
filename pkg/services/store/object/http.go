@@ -109,18 +109,21 @@ func (s *httpObjectStore) doGetRawOject(c *models.ReqContext) response.Response 
 }
 
 func (s *httpObjectStore) doWriteObject(c *models.ReqContext) response.Response {
-	uid, kind, params := parseRequestParams(c.Req)
+	uid, kind, _ := parseRequestParams(c.Req)
 	b, err := ioutil.ReadAll(c.Req.Body)
 	if err != nil {
 		return response.Error(400, "error reading body", err)
 	}
 
+	// Read some parameters from the URL
+	vals := c.Req.URL.Query()
+
 	rsp, err := s.store.Write(c.Req.Context(), &WriteObjectRequest{
 		UID:             uid,
 		Kind:            kind,
 		Body:            b,
-		Comment:         params["comment"],
-		PreviousVersion: params["previous"],
+		Comment:         vals.Get("comment"),
+		PreviousVersion: vals.Get("previousVersion"),
 	})
 	if err != nil {
 		return response.Error(500, "?", err)
