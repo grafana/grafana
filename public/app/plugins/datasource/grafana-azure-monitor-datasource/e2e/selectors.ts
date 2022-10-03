@@ -21,7 +21,25 @@ export const components = {
       button: 'data-testid load-subscriptions',
     },
   },
-  queryEditor: {},
+  queryEditor: {
+    resourcePicker: {
+      select: {
+        button: 'data-testid resource-picker-select',
+      },
+      search: {
+        input: 'data-testid resource-picker-search',
+      },
+      apply: {
+        button: 'data-testid resource-picker-apply',
+      },
+      cancel: {
+        button: 'data-testid resource-picker-cancel',
+      },
+    },
+    metricName: {
+      input: 'data-testid metric-name',
+    },
+  },
 };
 
 export const selectors: { components: E2ESelectors<typeof components> } = {

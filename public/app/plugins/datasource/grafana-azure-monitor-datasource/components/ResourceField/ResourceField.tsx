@@ -11,6 +11,7 @@ import ResourcePicker from '../ResourcePicker';
 import getStyles from '../ResourcePicker/styles';
 import { ResourceRowType } from '../ResourcePicker/types';
 import { parseResourceDetails, setResource } from '../ResourcePicker/utils';
+import { selectors } from '../../e2e/selectors';
 
 interface ResourceFieldProps<T> extends AzureQueryEditorFieldProps {
   selectableEntryTypes: ResourceRowType[];
@@ -50,7 +51,7 @@ const ResourceField: React.FC<ResourceFieldProps<string | AzureMetricResource>> 
   );
 
   return (
-    <>
+    <span data-testid={selectors.components.queryEditor.resourcePicker.select.button}>
       <Modal
         className={styles.modal}
         title="Select a resource"
@@ -74,7 +75,7 @@ const ResourceField: React.FC<ResourceFieldProps<string | AzureMetricResource>> 
           <ResourceLabel resource={resource} datasource={datasource} />
         </Button>
       </Field>
-    </>
+    </span>
   );
 };
 

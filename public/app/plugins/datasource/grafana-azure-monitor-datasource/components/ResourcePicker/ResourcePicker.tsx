@@ -15,6 +15,7 @@ import Search from './Search';
 import getStyles from './styles';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from './types';
 import { findRow, parseResourceDetails, resourceToString } from './utils';
+import { selectors } from '../../e2e/selectors';
 
 interface ResourcePickerProps<T> {
   resourcePickerData: ResourcePickerData;
@@ -232,7 +233,7 @@ const ResourcePicker = ({
         <Advanced resource={internalSelected} onChange={(r) => setInternalSelected(r)} />
         <Space v={2} />
 
-        <Button disabled={!!errorMessage} onClick={handleApply}>
+        <Button disabled={!!errorMessage} onClick={handleApply} data-testid={selectors.components.queryEditor.resourcePicker.apply.button}>
           Apply
         </Button>
 

@@ -52,3 +52,34 @@ e2e.scenario({
       });
   },
 });
+
+e2e.scenario({
+  describeName: 'Create panel and run a metrics query',
+  itName: 'configures datasource, adds a panel, runs a metrics query',
+  scenario: () => {
+    e2e()
+      .readFile(provisioningPath)
+      .then((azMonitorProvision: string) => {
+        const yaml = load(azMonitorProvision) as AzureMonitorProvision;
+        provisionAzureMonitorDatasources([yaml]);
+        e2e.flows.addDashboard({
+          timeRange: {
+            from: '2022-10-03 00:00:00',
+            to: '2022-10-03 23:59:59',
+            zone: 'Coordinated Universal Time',
+          },
+        });
+        e2e.flows.addPanel({
+          visitDashboardAtStart: false,
+          queriesForm: () => {
+            e2eSelectors.queryEditor.resourcePicker.select.button().click();
+            e2eSelectors.queryEditor.resourcePicker.search.input().type('azmonmetricstest');
+            e2e().contains('azmonmetricstest').click();
+            e2eSelectors.queryEditor.resourcePicker.apply.button().click();
+            e2e().contains('microsoft.storage/storageaccounts');
+            e2eSelectors.queryEditor.metricName.input().find('input').type('Used capacity{enter}');
+          },
+        });
+      });
+  },
+});
