@@ -10,6 +10,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
+	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
+	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
@@ -573,5 +575,113 @@ func TestQuery_ListMetricsPagination(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, len(metrics), len(response))
+	})
+}
+
+func Test_DescribeAllLogGroupsPagination(t *testing.T) {
+	origNewCWLogsClient := NewCWLogsClient
+	t.Cleanup(func() {
+		NewCWLogsClient = origNewCWLogsClient
+	})
+
+	var client fakeCWLogsClient
+
+	NewCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
+		return &client
+	}
+
+	t.Run("List LogGroups when page limit is reached", func(t *testing.T) {
+		client = fakeCWLogsClient{
+			logGroups: []cloudwatchlogs.DescribeLogGroupsOutput{
+				{
+					LogGroups: []*cloudwatchlogs.LogGroup{
+						{
+							LogGroupName: aws.String("group_a"),
+						},
+						{
+							LogGroupName: aws.String("group_b"),
+						},
+						{
+							LogGroupName: aws.String("group_c"),
+						},
+					},
+				},
+			},
+		}
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return datasourceInfo{}, nil
+		})
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
+
+		response, err := executor.handleGetAllLogGroups(backend.PluginContext{
+			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			url.Values{"logGroupNamePrefix": {"test"}},
+		)
+		require.NoError(t, err)
+		assert.Equal(t, 3, len(response))
+
+		assert.Equal(t, []*cloudwatchlogs.DescribeLogGroupsInput{
+			{
+				Limit:              aws.Int64(defaultLogGroupLimit),
+				LogGroupNamePrefix: aws.String("test"),
+			},
+		}, client.calls.describeLogGroups)
+	})
+
+	t.Run("List LogGroups when page limit is not reached", func(t *testing.T) {
+		client = fakeCWLogsClient{
+			logGroups: []cloudwatchlogs.DescribeLogGroupsOutput{
+				{
+					LogGroups: []*cloudwatchlogs.LogGroup{
+						{
+							LogGroupName: aws.String("group_a"),
+						},
+						{
+							LogGroupName: aws.String("group_b"),
+						},
+						{
+							LogGroupName: aws.String("group_c"),
+						},
+					},
+					NextToken: aws.String("next-token"),
+				},
+				{
+					LogGroups: []*cloudwatchlogs.LogGroup{
+						{
+							LogGroupName: aws.String("group_x"),
+						},
+						{
+							LogGroupName: aws.String("group_y"),
+						},
+						{
+							LogGroupName: aws.String("group_z"),
+						},
+					},
+				},
+			},
+		}
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return datasourceInfo{}, nil
+		})
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
+
+		response, err := executor.handleGetAllLogGroups(backend.PluginContext{
+			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			url.Values{"logGroupNamePrefix": {"test"}},
+		)
+		require.NoError(t, err)
+		assert.Equal(t, 6, len(response))
+
+		assert.Equal(t, []*cloudwatchlogs.DescribeLogGroupsInput{
+			{
+				Limit:              aws.Int64(defaultLogGroupLimit),
+				LogGroupNamePrefix: aws.String("test"),
+			},
+			{
+				Limit:              aws.Int64(defaultLogGroupLimit),
+				LogGroupNamePrefix: aws.String("test"),
+				NextToken:          aws.String("next-token"),
+			},
+		}, client.calls.describeLogGroups)
 	})
 }

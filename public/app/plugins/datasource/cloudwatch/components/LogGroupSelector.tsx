@@ -47,12 +47,12 @@ export const LogGroupSelector: React.FC<LogGroupSelectorProps> = ({
   );
 
   const fetchLogGroupOptions = useCallback(
-    async (region: string, logGroupNamePrefix?: string) => {
+    async (region: string, logGroupNamePrefix = '') => {
       if (!datasource) {
         return [];
       }
       try {
-        const logGroups = await datasource.api.describeLogGroups({
+        const logGroups = await datasource.api.describeAllLogGroups({
           refId,
           region,
           logGroupNamePrefix,
