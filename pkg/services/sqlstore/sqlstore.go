@@ -227,8 +227,7 @@ func (ss *SQLStore) GetSqlxSession() *session.SessionDB {
 		dbType := ss.GetDialect().DriverName()
 		d, exist := drivers[dbType]
 		if !exist {
-			// TODO return proper error
-			panic("unknown dbType")
+			logger.Errorf("unknow dbType: %s", dbType)
 		}
 
 		driverWithHooks := "sqlx" + dbType + "WithHooks"
@@ -236,11 +235,13 @@ func (ss *SQLStore) GetSqlxSession() *session.SessionDB {
 
 		connectionString, err := ss.buildConnectionString()
 		if err != nil {
-			// TODO return proper error
-			panic("failed to build connection string")
+			logger.Error("failed to build the connection string: ", "error", err)
 		}
 		// open's a new connection (in parallel with the xorm one)
 		db, _ := sqlx.Open(driverWithHooks, connectionString)
+		if err := db.Ping(); err != nil {
+			logger.Error("failed to ping the database: ", "error", err)
+		}
 		ss.sqlxsession = session.GetSession(db)
 	}
 	return ss.sqlxsession
@@ -348,11 +349,11 @@ func (ss *SQLStore) buildConnectionString() (string, error) {
 			cnnstr += fmt.Sprintf("&tx_isolation=%s", val)
 		}
 
-		if ss.Cfg.IsFeatureToggleEnabled("mysqlAnsiQuotes") || ss.Cfg.IsFeatureToggleEnabled("newDBLibrary") {
+		if ss.Cfg.IsFeatureToggleEnabled("mysqlAnsiQuotes") || ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagNewDBLibrary) {
 			cnnstr += "&sql_mode='ANSI_QUOTES'"
 		}
 
-		if ss.Cfg.IsFeatureToggleEnabled("newDBLibrary") {
+		if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagNewDBLibrary) {
 			cnnstr += "&parseTime=true"
 		}
 

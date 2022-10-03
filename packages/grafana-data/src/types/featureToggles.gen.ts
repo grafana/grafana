@@ -19,6 +19,7 @@ export interface FeatureToggles {
   trimDefaults?: boolean;
   disableEnvelopeEncryption?: boolean;
   database_metrics?: boolean;
+  newDBLibrary?: boolean;
   dashboardPreviews?: boolean;
   dashboardPreviewsAdmin?: boolean;
   ['live-config']?: boolean;

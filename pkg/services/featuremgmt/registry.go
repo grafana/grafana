@@ -25,6 +25,10 @@ var (
 			State:       FeatureStateStable,
 		},
 		{
+			Name:        "newDBLibrary",
+			Description: "Use SQLx library for interacting with the database. Supported only by specific services.",
+		},
+		{
 			Name:        "dashboardPreviews",
 			Description: "Create and show thumbnails for dashboard search results",
 			State:       FeatureStateAlpha,
