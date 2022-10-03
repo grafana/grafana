@@ -6220,6 +6220,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@jest/schemas@npm:^29.0.0":
+  version: 29.0.0
+  resolution: "@jest/schemas@npm:29.0.0"
+  dependencies:
+    "@sinclair/typebox": ^0.24.1
+  checksum: 41355c78f09eb1097e57a3c5d0ca11c9099e235e01ea5fa4e3953562a79a6a9296c1d300f1ba50ca75236048829e056b00685cd2f1ff8285e56fd2ce01249acb
+  languageName: node
+  linkType: hard
+
 "@jest/source-map@npm:^27.5.1":
   version: 27.5.1
   resolution: "@jest/source-map@npm:27.5.1"
@@ -6436,6 +6445,20 @@ __metadata:
     "@types/yargs": ^17.0.8
     chalk: ^4.0.0
   checksum: 1e258d9c063fcf59ebc91e46d5ea5984674ac7ae6cae3e50aa780d22b4405bf2c925f40350bf30013839eb5d4b5e521d956ddf8f3b7c78debef0e75a07f57350
+  languageName: node
+  linkType: hard
+
+"@jest/types@npm:^29.1.2":
+  version: 29.1.2
+  resolution: "@jest/types@npm:29.1.2"
+  dependencies:
+    "@jest/schemas": ^29.0.0
+    "@types/istanbul-lib-coverage": ^2.0.0
+    "@types/istanbul-reports": ^3.0.0
+    "@types/node": "*"
+    "@types/yargs": ^17.0.8
+    chalk: ^4.0.0
+  checksum: 697fc72c37814606715fd1dcbdcb84129d8b292dc6d6d5fa9b8f2b7e8ffd297757b508913be049a4acfbe9f80b982d96e4aa9aa60c40bbc643274ca1867194f8
   languageName: node
   linkType: hard
 
@@ -17990,12 +18013,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"css-minimizer-webpack-plugin@npm:4.1.0":
-  version: 4.1.0
-  resolution: "css-minimizer-webpack-plugin@npm:4.1.0"
+"css-minimizer-webpack-plugin@npm:4.2.0":
+  version: 4.2.0
+  resolution: "css-minimizer-webpack-plugin@npm:4.2.0"
   dependencies:
     cssnano: ^5.1.8
-    jest-worker: ^27.5.1
+    jest-worker: ^29.0.3
     postcss: ^8.4.13
     schema-utils: ^4.0.0
     serialize-javascript: ^6.0.0
@@ -18005,6 +18028,8 @@ __metadata:
   peerDependenciesMeta:
     "@parcel/css":
       optional: true
+    "@swc/css":
+      optional: true
     clean-css:
       optional: true
     csso:
@@ -18013,7 +18038,7 @@ __metadata:
       optional: true
     lightningcss:
       optional: true
-  checksum: bf3c9e9ca4ab23ab139dac2fdfb1daeee2c60455aa314c91745038d01c188107a2108269ff2f2c82c41bc0d342b636a962826646c3c098946f15edd8ed98f42e
+  checksum: fa95f0ae93b755606c6024f632252de6e60c5307ddbf6928a40447a6b33b551f4bfda274ff6a6c0419aa6c38b5a8b909d9d27d6cd868da6fe55cf16ec2d5de21
   languageName: node
   linkType: hard
 
@@ -23219,7 +23244,7 @@ __metadata:
     copy-webpack-plugin: 9.0.1
     core-js: 3.25.1
     css-loader: 6.7.1
-    css-minimizer-webpack-plugin: 4.1.0
+    css-minimizer-webpack-plugin: 4.2.0
     cypress: 9.5.1
     d3: 5.15.0
     d3-force: ^2.1.1
@@ -26613,6 +26638,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"jest-util@npm:^29.1.2":
+  version: 29.1.2
+  resolution: "jest-util@npm:29.1.2"
+  dependencies:
+    "@jest/types": ^29.1.2
+    "@types/node": "*"
+    chalk: ^4.0.0
+    ci-info: ^3.2.0
+    graceful-fs: ^4.2.9
+    picomatch: ^2.2.3
+  checksum: 6c55464e2028032692c4801b339bc1f7418826072d75981b8f29ded6ccba8cb8e1f164eb3d12d859cb63c24a8e9be90204f0d3c4d33e530375f1e5935755b5a9
+  languageName: node
+  linkType: hard
+
 "jest-validate@npm:^26.5.2":
   version: 26.6.2
   resolution: "jest-validate@npm:26.6.2"
@@ -26738,6 +26777,18 @@ __metadata:
     merge-stream: ^2.0.0
     supports-color: ^8.0.0
   checksum: e921c9a1b8f0909da9ea07dbf3592f95b653aef3a8bb0cbcd20fc7f9a795a1304adecac31eecb308992c167e8d7e75c522061fec38a5928ace0f9571c90169ca
+  languageName: node
+  linkType: hard
+
+"jest-worker@npm:^29.0.3":
+  version: 29.1.2
+  resolution: "jest-worker@npm:29.1.2"
+  dependencies:
+    "@types/node": "*"
+    jest-util: ^29.1.2
+    merge-stream: ^2.0.0
+    supports-color: ^8.0.0
+  checksum: 788d14b2a051bf548a316dd177175c0e46127e63d794677fb0ba67e9b0b9f579cbc6a602a72671c80a020bf4d3f502b0a2dff7bf380986e5f30d30ec0f69168b
   languageName: node
   linkType: hard
 
