@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -41,14 +41,25 @@ describe('Query Type Field', () => {
   });
 
   //! Warning: You seem to have overlapping act() calls, this is not supported. Be sure to await previous act() calls before making a new one.
-  it.only('should call onChange when value is changed', async () => {
+  it('should call onChange when value is changed', async () => {
     // Arrange
     const props = setup();
     render(<LokiOptionFields {...props} />);
     // Act
-    userEvent.click(screen.getByLabelText('Instant'));
+    // `userEvent.click()` triggers an error, so switching here to `fireEvent`.
+    fireEvent.click(screen.getByLabelText('Instant'));
     // Assert
     await waitFor(() => expect(props.onChange).toHaveBeenCalledTimes(1));
+  });
+
+  it('renders as expected when the query type is instant', () => {
+    // Arrange
+    const props = setup();
+    render(<LokiOptionFields {...props} query={{ refId: '1', expr: 'query', instant: true }} />);
+    // Act
+    // `userEvent.click()` triggers an error, so switching here to `fireEvent`.
+    expect(screen.getByLabelText('Range')).not.toBeChecked();
+    expect(screen.getByLabelText('Instant')).toBeChecked();
   });
 
   //! FAIL, (expected: "instant to be checked", received: "range to be checked")
