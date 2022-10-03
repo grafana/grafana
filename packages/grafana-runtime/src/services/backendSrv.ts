@@ -150,8 +150,9 @@ export interface BackendSrv {
   put<T = any>(url: string, data?: any, options?: Partial<BackendSrvRequest>): Promise<T>;
 
   /**
-   * @deprecated Use the fetch function instead. If you prefer to work with a promise
-   * wrap the Observable returned by fetch with the lastValueFrom function.
+   * @deprecated Use the `.fetch()` function instead. If you prefer to work with a promise
+   * wrap the Observable returned by fetch with the lastValueFrom function, or use the get|delete|post|patch|put methods.
+   * This method is going to be private from Grafana 10.
    */
   request<T = any>(options: BackendSrvRequest): Promise<T>;
 
