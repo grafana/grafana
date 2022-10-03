@@ -1,5 +1,5 @@
 import { groupBy } from 'lodash';
-import { Observable, of } from 'rxjs';
+import { from, Observable, of } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
 import {
@@ -17,6 +17,13 @@ import { dataFrameToLogsModel } from '../../../core/logsModel';
 import { refreshIntervalToSortOrder } from '../../../core/utils/explore';
 import { sortLogsResult } from '../../../features/logs/utils';
 import { ExplorePanelData } from '../../../types';
+import { getAllCorrelations } from '../../correlations/useCorrelations';
+import {
+  CorrelationsByDataSourceUid,
+  decorateDataFrameWithInternalDataLinks,
+  groupCorrelationsByDataSourceUid,
+  mapQueryRefIdToDataSourceUid,
+} from '../../correlations/utils';
 import { preProcessPanelData } from '../../query/state/runRequest';
 
 /**
@@ -71,6 +78,41 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
     logsResult: null,
   };
 };
+
+export const decorateWithCorrelations = ({ queries }: { queries: DataQuery[] | undefined }) => {
+  return (data: PanelData): Observable<PanelData> => {
+    return from(
+      getCachedCorrelationsConfig().then((correlationsConfig) => {
+        let queryRefIdToDataSourceUid = mapQueryRefIdToDataSourceUid(queries || []);
+
+        data.series.forEach((dataFrame) => {
+          const frameRefId = dataFrame.refId!;
+          const dataSourceUid = queryRefIdToDataSourceUid[frameRefId];
+          const correlations = correlationsConfig[dataSourceUid];
+          decorateDataFrameWithInternalDataLinks(dataFrame, correlations);
+        });
+        return data;
+      })
+    );
+  };
+};
+
+/**
+ * Temporarily cache results once per page load
+ */
+const getCachedCorrelationsConfig = (() => {
+  let correlationsByDataSourceUid: CorrelationsByDataSourceUid = {};
+  return () => {
+    if (Object.keys(correlationsByDataSourceUid).length > 0) {
+      return Promise.resolve(correlationsByDataSourceUid);
+    } else {
+      return getAllCorrelations().then((correlations) => {
+        correlationsByDataSourceUid = groupCorrelationsByDataSourceUid(correlations);
+        return correlationsByDataSourceUid;
+      });
+    }
+  };
+})();
 
 export const decorateWithGraphResult = (data: ExplorePanelData): ExplorePanelData => {
   if (!data.graphFrames.length) {
@@ -168,6 +210,7 @@ export function decorateData(
 ): Observable<ExplorePanelData> {
   return of(data).pipe(
     map((data: PanelData) => preProcessPanelData(data, queryResponse)),
+    mergeMap(decorateWithCorrelations({ queries })),
     map(decorateWithFrameTypeMetadata),
     map(decorateWithGraphResult),
     map(decorateWithLogsResult({ absoluteRange, refreshInterval, queries, fullRangeLogsVolumeAvailable })),

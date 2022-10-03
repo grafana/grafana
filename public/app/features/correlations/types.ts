@@ -10,6 +10,7 @@ export interface Correlation {
   targetUID: string;
   label?: string;
   description?: string;
+  config?: { target: object; type: string; field: string };
 }
 
 export type RemoveCorrelationParams = Pick<Correlation, 'sourceUID' | 'uid'>;
