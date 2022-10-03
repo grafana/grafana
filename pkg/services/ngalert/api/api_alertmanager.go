@@ -128,6 +128,14 @@ func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *models.ReqContext) response
 	return response.JSON(http.StatusOK, config)
 }
 
+func (srv AlertmanagerSrv) RouteGetRawAlertmanagerConfig(c *models.ReqContext) response.Response {
+	rawConfig, err := srv.mam.GetRawAlertmanagerConfiguration(c.Req.Context(), c.OrgID)
+	if err != nil {
+		return ErrResp(http.StatusNotFound, err, "")
+	}
+	return response.JSON(http.StatusOK, rawConfig)
+}
+
 func (srv AlertmanagerSrv) RouteGetAMAlertGroups(c *models.ReqContext) response.Response {
 	am, errResp := srv.AlertmanagerFor(c.OrgID)
 	if errResp != nil {

@@ -1060,6 +1060,14 @@
    },
    "type": "object"
   },
+  "GettableRawAlertmanagerConfig": {
+   "properties": {
+    "raw_alertmanager_config": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
   "GettableRuleGroupConfig": {
    "properties": {
     "interval": {
@@ -3293,7 +3301,6 @@
    "type": "object"
   },
   "alertGroups": {
-   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
@@ -3398,7 +3405,6 @@
    "type": "object"
   },
   "gettableAlert": {
-   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -3510,13 +3516,13 @@
    "type": "object"
   },
   "gettableSilences": {
-   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
    "type": "array"
   },
   "integration": {
+   "description": "Integration integration",
    "properties": {
     "lastNotifyAttempt": {
      "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -3689,6 +3695,7 @@
    "type": "object"
   },
   "receiver": {
+   "description": "Receiver receiver",
    "properties": {
     "active": {
      "description": "active",

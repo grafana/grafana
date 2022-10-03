@@ -89,6 +89,17 @@ func (moa *MultiOrgAlertmanager) GetAlertmanagerConfiguration(ctx context.Contex
 	return result, nil
 }
 
+func (moa *MultiOrgAlertmanager) GetRawAlertmanagerConfiguration(ctx context.Context, org int64) (definitions.GettableRawAlertmanagerConfig, error) {
+	query := models.GetLatestAlertmanagerConfigurationQuery{OrgID: org}
+	err := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, &query)
+	if err != nil {
+		return definitions.GettableRawAlertmanagerConfig{}, fmt.Errorf("failed to get latest configuration: %w", err)
+	}
+	return definitions.GettableRawAlertmanagerConfig{
+		RawAlertmanagerConfig: query.Result.AlertmanagerConfiguration,
+	}, nil
+}
+
 func (moa *MultiOrgAlertmanager) ApplyAlertmanagerConfiguration(ctx context.Context, org int64, config definitions.PostableUserConfig) error {
 	// Get the last known working configuration
 	query := models.GetLatestAlertmanagerConfigurationQuery{OrgID: org}

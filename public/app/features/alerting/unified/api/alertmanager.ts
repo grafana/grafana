@@ -16,6 +16,7 @@ import {
   TestReceiversPayload,
   TestReceiversResult,
   ExternalAlertmanagerConfig,
+  RawAlertmanagerConfig,
 } from 'app/plugins/datasource/alertmanager/types';
 
 import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
@@ -45,6 +46,33 @@ export async function fetchAlertManagerConfig(alertManagerSourceName: string): P
       return {
         template_files: {},
         alertmanager_config: {},
+      };
+    }
+    throw e;
+  }
+}
+
+export async function fetchRawAlertmanagerConfig(alertManagerSourceName: string): Promise<RawAlertmanagerConfig> {
+  try {
+    const result = await lastValueFrom(
+      getBackendSrv().fetch<RawAlertmanagerConfig>({
+        url: `/api/alertmanager/${getDatasourceAPIUid(alertManagerSourceName)}/config/api/v1/raw`,
+        showErrorAlert: false,
+        showSuccessAlert: false,
+      })
+    );
+    return {
+      raw_alertmanager_config: result.data.raw_alertmanager_config ?? {},
+    };
+  } catch (e) {
+    // if no config has been uploaded to grafana, it returns error instead of latest config
+    if (
+      alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME &&
+      isFetchError(e) &&
+      e.data?.message?.includes('could not find an Alertmanager configuration')
+    ) {
+      return {
+        raw_alertmanager_config: '',
       };
     }
     throw e;

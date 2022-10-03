@@ -152,6 +152,10 @@ export type AlertmanagerConfig = {
   muteTimeProvenances?: Record<string, string>;
 };
 
+export type RawAlertmanagerConfig = {
+  raw_alertmanager_config: string;
+};
+
 export type Matcher = {
   name: string;
   value: string;

@@ -15,6 +15,7 @@ import {
   fetchGrafanaAnnotationsAction,
   fetchGrafanaNotifiersAction,
   fetchPromRulesAction,
+  fetchRawAlertmanagerConfigAction,
   fetchRulerRulesAction,
   fetchRulesSourceBuildInfoAction,
   fetchSilencesAction,
@@ -36,6 +37,11 @@ export const reducer = combineReducers({
   amConfigs: createAsyncMapSlice(
     'amConfigs',
     fetchAlertManagerConfigAction,
+    (alertManagerSourceName) => alertManagerSourceName
+  ).reducer,
+  rawAlertmanagerConfig: createAsyncMapSlice(
+    'rawAlertmanagerConfig',
+    fetchRawAlertmanagerConfigAction,
     (alertManagerSourceName) => alertManagerSourceName
   ).reducer,
   silences: createAsyncMapSlice('silences', fetchSilencesAction, (alertManagerSourceName) => alertManagerSourceName)

@@ -33,6 +33,7 @@ type AlertmanagerApi interface {
 	RouteGetGrafanaAMAlerts(*models.ReqContext) response.Response
 	RouteGetGrafanaAMStatus(*models.ReqContext) response.Response
 	RouteGetGrafanaAlertingConfig(*models.ReqContext) response.Response
+	RouteGetGrafanaRawAlertmanagerConfig(*models.ReqContext) response.Response
 	RouteGetGrafanaReceivers(*models.ReqContext) response.Response
 	RouteGetGrafanaSilence(*models.ReqContext) response.Response
 	RouteGetGrafanaSilences(*models.ReqContext) response.Response
@@ -114,6 +115,9 @@ func (f *AlertmanagerApiHandler) RouteGetGrafanaAMStatus(ctx *models.ReqContext)
 }
 func (f *AlertmanagerApiHandler) RouteGetGrafanaAlertingConfig(ctx *models.ReqContext) response.Response {
 	return f.handleRouteGetGrafanaAlertingConfig(ctx)
+}
+func (f *AlertmanagerApiHandler) RouteGetGrafanaRawAlertmanagerConfig(ctx *models.ReqContext) response.Response {
+	return f.handleRouteGetGrafanaRawAlertmanagerConfig(ctx)
 }
 func (f *AlertmanagerApiHandler) RouteGetGrafanaReceivers(ctx *models.ReqContext) response.Response {
 	return f.handleRouteGetGrafanaReceivers(ctx)
@@ -331,6 +335,16 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApi, m *metrics
 				http.MethodGet,
 				"/api/alertmanager/grafana/config/api/v1/alerts",
 				srv.RouteGetGrafanaAlertingConfig,
+				m,
+			),
+		)
+		group.Get(
+			toMacaronPath("/api/alertmanager/grafana/config/api/v1/raw"),
+			api.authorize(http.MethodGet, "/api/alertmanager/grafana/config/api/v1/raw"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/alertmanager/grafana/config/api/v1/raw",
+				srv.RouteGetGrafanaRawAlertmanagerConfig,
 				m,
 			),
 		)

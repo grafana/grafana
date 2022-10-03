@@ -5,6 +5,7 @@ import { locationService, logInfo } from '@grafana/runtime';
 import {
   AlertmanagerAlert,
   AlertManagerCortexConfig,
+  RawAlertmanagerConfig,
   AlertmanagerGroup,
   ExternalAlertmanagerConfig,
   ExternalAlertmanagersResponse,
@@ -45,6 +46,7 @@ import {
   fetchExternalAlertmanagers,
   fetchSilences,
   fetchStatus,
+  fetchRawAlertmanagerConfig,
   testReceivers,
   updateAlertManagerConfig,
 } from '../api/alertmanager';
@@ -165,6 +167,13 @@ export const fetchAlertManagerConfigAction = createAsyncThunk(
           });
       })()
     )
+);
+
+export const fetchRawAlertmanagerConfigAction = createAsyncThunk(
+  'unifiedAlerting/fetchRawAmConfig',
+  (alertManagerSourceName: string): Promise<RawAlertmanagerConfig> => {
+    return withSerializedError(fetchRawAlertmanagerConfig(alertManagerSourceName));
+  }
 );
 
 export const fetchExternalAlertmanagersAction = createAsyncThunk(

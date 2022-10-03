@@ -48,6 +48,14 @@ import (
 //       200: GettableUserConfig
 //       400: ValidationError
 
+// swagger:route GET /api/alertmanager/grafana/config/api/v1/raw alertmanager RouteGetGrafanaRawAlertmanagerConfig
+//
+// gets the alertmanager config as plain text
+//
+//     Responses:
+//       200: GettableRawAlertmanagerConfig
+//       404: NotFound
+
 // swagger:route GET /api/alertmanager/{DatasourceUID}/config/api/v1/alerts alertmanager RouteGetAlertingConfig
 //
 // gets an Alerting config
@@ -591,6 +599,11 @@ type GettableUserConfig struct {
 	// This enables circumventing the underlying alertmanager secret type
 	// which redacts itself during encoding.
 	amSimple map[string]interface{} `yaml:"-" json:"-"`
+}
+
+// swagger:model
+type GettableRawAlertmanagerConfig struct {
+	RawAlertmanagerConfig string `yaml:"raw_alertmanager_config" json:"raw_alertmanager_config"`
 }
 
 func (c *GettableUserConfig) UnmarshalYAML(value *yaml.Node) error {

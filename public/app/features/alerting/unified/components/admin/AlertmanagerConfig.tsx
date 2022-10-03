@@ -11,6 +11,7 @@ import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelect
 import {
   deleteAlertManagerConfigAction,
   fetchAlertManagerConfigAction,
+  fetchRawAlertmanagerConfigAction,
   updateAlertManagerConfigAction,
 } from '../../state/actions';
 import { GRAFANA_RULES_SOURCE_NAME, isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
@@ -34,17 +35,28 @@ export default function AlertmanagerConfig(): JSX.Element {
 
   const configRequests = useUnifiedAlertingSelector((state) => state.amConfigs);
 
+  const rawConfigRequests = useUnifiedAlertingSelector((state) => state.rawAlertmanagerConfig);
+
   const {
     result: config,
     loading: isLoadingConfig,
     error: loadingError,
   } = (alertManagerSourceName && configRequests[alertManagerSourceName]) || initialAsyncRequestState;
 
+  const { result: rawConfig, loading: isLoadingRawConfig } =
+    (alertManagerSourceName && rawConfigRequests[alertManagerSourceName]) || initialAsyncRequestState;
+
   useEffect(() => {
     if (alertManagerSourceName) {
       dispatch(fetchAlertManagerConfigAction(alertManagerSourceName));
     }
   }, [alertManagerSourceName, dispatch]);
+
+  useEffect(() => {
+    if (loadingError?.message && alertManagerSourceName) {
+      dispatch(fetchRawAlertmanagerConfigAction(alertManagerSourceName));
+    }
+  }, [loadingError, alertManagerSourceName, dispatch]);
 
   const resetConfig = () => {
     if (alertManagerSourceName) {
@@ -55,12 +67,12 @@ export default function AlertmanagerConfig(): JSX.Element {
 
   const defaultValues = useMemo(
     (): FormValues => ({
-      configJSON: config ? JSON.stringify(config, null, 2) : '',
+      configJSON: config ? JSON.stringify(config, null, 2) : rawConfig ? rawConfig.raw_alertmanager_config : '',
     }),
-    [config]
+    [config, rawConfig]
   );
 
-  const loading = isDeleting || isLoadingConfig || isSaving;
+  const loading = isDeleting || isLoadingConfig || isLoadingRawConfig || isSaving;
 
   const onSubmit = (values: FormValues) => {
     if (alertManagerSourceName && config) {
@@ -93,7 +105,7 @@ export default function AlertmanagerConfig(): JSX.Element {
           It might take a while...
         </Alert>
       )}
-      {alertManagerSourceName && config && (
+      {alertManagerSourceName && (config || rawConfig) && (
         <Form defaultValues={defaultValues} onSubmit={onSubmit} key={defaultValues.configJSON}>
           {({ register, errors }) => (
             <>
