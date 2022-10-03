@@ -24,10 +24,16 @@ export const InputGroup = ({ children }: InputGroupProps) => {
   return <div className={styles.root}>{modifiedChildren}</div>;
 };
 
+// The lower in the array the higher the priority for showing that element's border
+const borderPriority = [
+  '' as const, // lowest priority
+  'base' as const,
+  'hovered' as const,
+  'invalid' as const,
+  'focused' as const, // highest priority
+];
+
 const getStyles = () => ({
-  invalidChild: css({
-    zIndex: 3,
-  }),
   root: css({
     display: 'flex',
 
@@ -54,16 +60,20 @@ const getStyles = () => ({
 
       //
       position: 'relative',
-      zIndex: 1,
+      zIndex: borderPriority.indexOf('base'),
 
       // Adjacent borders are overlapping, so raise children up when hovering etc
       // so all that child's borders are visible.
       '&:hover': {
-        zIndex: 2,
+        zIndex: borderPriority.indexOf('hovered'),
       },
       '&:focus-within': {
-        zIndex: 4,
+        zIndex: borderPriority.indexOf('focused'),
       },
     },
+  }),
+
+  invalidChild: css({
+    zIndex: borderPriority.indexOf('invalid'),
   }),
 });
