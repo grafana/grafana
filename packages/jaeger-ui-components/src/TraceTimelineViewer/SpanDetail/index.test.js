@@ -14,23 +14,19 @@
 
 jest.mock('../utils');
 
-import { shallow } from 'enzyme';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import LabeledList from '../../common/LabeledList';
 import traceGenerator from '../../demo/trace-generators';
 import transformTraceData from '../../model/transform-trace-data';
 import { formatDuration } from '../utils';
 
-import AccordianKeyValues from './AccordianKeyValues';
-import AccordianLogs from './AccordianLogs';
 import DetailState from './DetailState';
 
 import SpanDetail, { getAbsoluteTime } from './index';
 
 describe('<SpanDetail>', () => {
-  let wrapper;
-
   // use `transformTraceData` on a fake trace to get a fully processed span
   const span = transformTraceData(traceGenerator.trace({ numberOfSpans: 1 })).spans[0];
   const detailState = new DetailState().toggleLogs().toggleProcess().toggleReferences().toggleTags();
@@ -47,7 +43,7 @@ describe('<SpanDetail>', () => {
     tagsToggle: jest.fn(),
     warningsToggle: jest.fn(),
     referencesToggle: jest.fn(),
-    createFocusSpanLink: jest.fn(),
+    createFocusSpanLink: jest.fn().mockReturnValue({}),
     topOfViewRefType: 'Explore',
   };
   span.logs = [
@@ -117,81 +113,68 @@ describe('<SpanDetail>', () => {
     props.processToggle.mockReset();
     props.logsToggle.mockReset();
     props.logItemToggle.mockReset();
-    wrapper = shallow(<SpanDetail {...props} />);
   });
 
   it('renders without exploding', () => {
-    expect(wrapper).toBeDefined();
+    expect(() => render(<SpanDetail {...props} />)).not.toThrow();
   });
 
   it('shows the operation name', () => {
-    expect(wrapper.find('h2').text()).toBe(span.operationName);
+    render(<SpanDetail {...props} />);
+    expect(screen.getByRole('heading', { name: span.operationName })).toBeInTheDocument();
   });
 
   it('lists the service name, duration and start time', () => {
-    const words = ['Duration:', 'Service:', 'Start Time:'];
-    const overview = wrapper.find(LabeledList);
-    expect(
-      overview
-        .prop('items')
-        .map((item) => item.label)
-        .sort()
-    ).toEqual(words);
+    render(<SpanDetail {...props} />);
+    expect(screen.getByText('Duration:')).toBeInTheDocument();
+    expect(screen.getByText('Service:')).toBeInTheDocument();
+    expect(screen.getByText('Start Time:')).toBeInTheDocument();
   });
 
   it('start time shows the absolute time', () => {
-    const startTime = wrapper.find(LabeledList).prop('items')[2].value;
+    render(<SpanDetail {...props} />);
     const absoluteTime = getAbsoluteTime(span.startTime);
-    expect(startTime).toContain(absoluteTime);
+    expect(
+      screen.getByText((text) => {
+        return text.includes(absoluteTime);
+      })
+    ).toBeInTheDocument();
   });
 
-  it('renders the span tags', () => {
-    const target = <AccordianKeyValues data={span.tags} label="Attributes" isOpen={detailState.isTagsOpen} />;
-    expect(wrapper.containsMatchingElement(target)).toBe(true);
-    wrapper.find({ data: span.tags }).simulate('toggle');
+  it('renders the span tags', async () => {
+    render(<SpanDetail {...props} />);
+    await userEvent.click(screen.getByRole('switch', { name: /Attributes/ }));
     expect(props.tagsToggle).toHaveBeenLastCalledWith(span.spanID);
   });
 
-  it('renders the process tags', () => {
-    const target = <AccordianKeyValues data={span.process.tags} label="Resource" isOpen={detailState.isProcessOpen} />;
-    expect(wrapper.containsMatchingElement(target)).toBe(true);
-    wrapper.find({ data: span.process.tags }).simulate('toggle');
+  it('renders the process tags', async () => {
+    render(<SpanDetail {...props} />);
+    await userEvent.click(screen.getByRole('switch', { name: /Resource/ }));
     expect(props.processToggle).toHaveBeenLastCalledWith(span.spanID);
   });
 
-  it('renders the logs', () => {
-    const somethingUniq = {};
-    const target = (
-      <AccordianLogs
-        logs={span.logs}
-        isOpen={detailState.logs.isOpen}
-        openedItems={detailState.logs.openedItems}
-        timestamp={traceStartTime}
-      />
-    );
-    expect(wrapper.containsMatchingElement(target)).toBe(true);
-    const accordianLogs = wrapper.find(AccordianLogs);
-    accordianLogs.simulate('toggle');
-    accordianLogs.simulate('itemToggle', somethingUniq);
+  it('renders the logs', async () => {
+    render(<SpanDetail {...props} />);
+    await userEvent.click(screen.getByRole('switch', { name: /Events/ }));
     expect(props.logsToggle).toHaveBeenLastCalledWith(span.spanID);
-    expect(props.logItemToggle).toHaveBeenLastCalledWith(span.spanID, somethingUniq);
+    await userEvent.click(screen.getByRole('switch', { name: /oh the log/ }));
+    expect(props.logItemToggle).toHaveBeenLastCalledWith(span.spanID, props.span.logs[0]);
   });
 
-  it('renders the warnings', () => {
-    const warningElm = wrapper.find({ data: span.warnings });
-    expect(warningElm.length).toBe(1);
-    warningElm.simulate('toggle');
+  it('renders the warnings', async () => {
+    render(<SpanDetail {...props} />);
+    await userEvent.click(screen.getByRole('switch', { name: /Warnings/ }));
     expect(props.warningsToggle).toHaveBeenLastCalledWith(span.spanID);
   });
 
-  it('renders the references', () => {
-    const refElem = wrapper.find({ data: span.references });
-    expect(refElem.length).toBe(1);
-    refElem.simulate('toggle');
+  it('renders the references', async () => {
+    render(<SpanDetail {...props} />);
+    await userEvent.click(screen.getByRole('switch', { name: /References/ }));
     expect(props.referencesToggle).toHaveBeenLastCalledWith(span.spanID);
   });
 
   it('renders deep link URL', () => {
-    expect(wrapper.find('a').exists()).toBeTruthy();
+    render(<SpanDetail {...props} />);
+    expect(document.getElementsByTagName('a').length).toBeGreaterThan(1);
   });
 });
