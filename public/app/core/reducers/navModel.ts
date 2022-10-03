@@ -11,6 +11,7 @@ export function buildInitialState(): NavIndex {
   const rootNodes = cloneDeep(config.bootData.navTree as NavModelItem[]);
   if (config.featureToggles.topnav) {
     const homeNavIndex = rootNodes.findIndex((node) => node.id === HOME_NAV_ID);
+    // Remove home node from rootNodes
     const homeNav = rootNodes.splice(homeNavIndex, 1)[0];
     buildNavIndex(navIndex, [homeNav]);
     buildNavIndex(navIndex, rootNodes, homeNav);
