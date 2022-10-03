@@ -168,7 +168,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     pageIcon: css`
       display: none;
-      ${theme.breakpoints.up('md')} {
+      ${theme.breakpoints.up('sm')} {
         display: flex;
         padding-right: ${theme.spacing(1)};
         align-items: center;
