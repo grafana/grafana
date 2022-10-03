@@ -231,7 +231,7 @@ func (ss *SQLStore) GetSqlxSession() *session.SessionDB {
 		}
 		// open's a new connection (in parallel with the xorm one)
 		db, _ := sqlx.Open(driverWithHooks, connectionString)
-		ss.sqlxsession = session.GetSession(db, debugSQL)
+		ss.sqlxsession = session.GetSession(db)
 	}
 	return ss.sqlxsession
 }
