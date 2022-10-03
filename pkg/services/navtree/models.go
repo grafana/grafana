@@ -11,7 +11,8 @@ const (
 	// are negative to ensure that the default items are placed above
 	// any items with default weight.
 
-	WeightSavedItems = (iota - 20) * 100
+	WeightHome = (iota - 20) * 100
+	WeightSavedItems
 	WeightCreate
 	WeightDashboard
 	WeightExplore
@@ -44,7 +45,6 @@ const (
 type NavLink struct {
 	Id               string     `json:"id,omitempty"`
 	Text             string     `json:"text"`
-	Description      string     `json:"description,omitempty"`
 	Section          string     `json:"section,omitempty"`
 	SubTitle         string     `json:"subTitle,omitempty"`
 	Icon             string     `json:"icon,omitempty"` // Available icons can be browsed in Storybook: https://developers.grafana.com/ui/latest/index.html?path=/story/docs-overview-icon--icons-overview

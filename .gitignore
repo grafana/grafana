@@ -125,6 +125,7 @@ pkg/cmd/grafana-server/__debug_bin
 !.yarn/patches/*.patch
 
 # Ignoring frontend packages specifics
+/packages/grafana-ui/.yarn/.cache
 /packages/**/dist
 /packages/**/compiled
 /packages/**/.rpt2_cache
