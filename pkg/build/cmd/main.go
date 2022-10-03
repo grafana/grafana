@@ -216,6 +216,21 @@ func main() {
 						},
 					},
 				},
+				{
+					Name:   "grafana-com",
+					Usage:  "Publish packages to grafana.com",
+					Action: GrafanaCom,
+					Flags: []cli.Flag{
+						&editionFlag,
+						&buildIDFlag,
+						&dryRunFlag,
+						&cli.StringFlag{
+							Name:  "src-bucket",
+							Value: "grafana-downloads",
+							Usage: "Google Cloud Storage bucket",
+						},
+					},
+				},
 			},
 		},
 	}
