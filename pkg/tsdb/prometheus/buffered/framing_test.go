@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"math"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -36,6 +35,7 @@ func TestResponses(t *testing.T) {
 		{name: "parse a simple matrix response with value missing steps", filepath: "range_missing"},
 		{name: "parse a matrix response with Infinity", filepath: "range_infinity"},
 		{name: "parse a matrix response with NaN", filepath: "range_nan"},
+		{name: "parse a response with legendFormat __auto", filepath: "range_auto"},
 		{name: "parse an exemplar response", filepath: "exemplar"},
 	}
 
@@ -98,40 +98,28 @@ func makeMockedApi(responseBytes []byte) (apiv1.API, error) {
 // cannot be unmarshalled from JSON automatically.
 type storedPrometheusQuery struct {
 	RefId         string
-	ExemplarQuery bool
 	RangeQuery    bool
+	ExemplarQuery bool
 	Start         int64
 	End           int64
 	Step          int64
 	Expr          string
+	LegendFormat  string
 }
 
-func loadStoredPrometheusQuery(fileName string) (PrometheusQuery, error) {
+func loadStoredPrometheusQuery(fileName string) (storedPrometheusQuery, error) {
 	//nolint:gosec
 	bytes, err := os.ReadFile(fileName)
 	if err != nil {
-		return PrometheusQuery{}, err
+		return storedPrometheusQuery{}, err
 	}
 
-	var query storedPrometheusQuery
-
-	err = json.Unmarshal(bytes, &query)
-	if err != nil {
-		return PrometheusQuery{}, err
-	}
-
-	return PrometheusQuery{
-		RefId:         query.RefId,
-		RangeQuery:    query.RangeQuery,
-		ExemplarQuery: query.ExemplarQuery,
-		Start:         time.Unix(query.Start, 0),
-		End:           time.Unix(query.End, 0),
-		Step:          time.Second * time.Duration(query.Step),
-		Expr:          query.Expr,
-	}, nil
+	var sq storedPrometheusQuery
+	err = json.Unmarshal(bytes, &sq)
+	return sq, err
 }
 
-func runQuery(response []byte, query PrometheusQuery) (*backend.QueryDataResponse, error) {
+func runQuery(response []byte, sq storedPrometheusQuery) (*backend.QueryDataResponse, error) {
 	api, err := makeMockedApi(response)
 	if err != nil {
 		return nil, err
@@ -139,14 +127,48 @@ func runQuery(response []byte, query PrometheusQuery) (*backend.QueryDataRespons
 
 	tracer := tracing.InitializeTracerForTest()
 
-	s := Buffered{
+	qm := QueryModel{
+		RangeQuery:    sq.RangeQuery,
+		ExemplarQuery: sq.ExemplarQuery,
+		Expr:          sq.Expr,
+		Interval:      fmt.Sprintf("%ds", sq.Step),
+		IntervalMS:    sq.Step * 1000,
+		LegendFormat:  sq.LegendFormat,
+	}
+
+	b := Buffered{
 		intervalCalculator: intervalv2.NewCalculator(),
 		tracer:             tracer,
-		TimeInterval:       fmt.Sprintf("%ds", int(math.Floor(query.Step.Seconds()))),
+		TimeInterval:       fmt.Sprintf("%ds", sq.Step),
 		log:                &fakeLogger{},
 		client:             api,
 	}
-	return s.runQueries(context.Background(), []*PrometheusQuery{&query})
+
+	data, err := json.Marshal(&qm)
+	if err != nil {
+		return nil, err
+	}
+
+	req := &backend.QueryDataRequest{
+		Queries: []backend.DataQuery{
+			{
+				TimeRange: backend.TimeRange{
+					From: time.Unix(sq.Start, 0),
+					To:   time.Unix(sq.End, 0),
+				},
+				RefID:    sq.RefId,
+				Interval: time.Second * time.Duration(sq.Step),
+				JSON:     json.RawMessage(data),
+			},
+		},
+	}
+
+	queries, err := b.parseTimeSeriesQuery(req)
+	if err != nil {
+		return nil, err
+	}
+
+	return b.runQueries(context.Background(), queries)
 }
 
 type fakeLogger struct {

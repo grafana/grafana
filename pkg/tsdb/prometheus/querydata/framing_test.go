@@ -32,13 +32,14 @@ func TestRangeResponses(t *testing.T) {
 		{name: "parse a simple matrix response with value missing steps", filepath: "range_missing"},
 		{name: "parse a matrix response with Infinity", filepath: "range_infinity"},
 		{name: "parse a matrix response with NaN", filepath: "range_nan"},
+		{name: "parse a response with legendFormat __auto", filepath: "range_auto"},
 	}
 
 	for _, test := range tt {
 		enableWideSeries := false
 		queryFileName := filepath.Join("../testdata", test.filepath+".query.json")
 		responseFileName := filepath.Join("../testdata", test.filepath+".result.json")
-		goldenFileName := test.filepath + ".result.streaming.golden"
+		goldenFileName := test.filepath + ".result.golden"
 		t.Run(test.name, goldenScenario(test.name, queryFileName, responseFileName, goldenFileName, enableWideSeries))
 		enableWideSeries = true
 		goldenFileName = test.filepath + ".result.streaming-wide.golden"
@@ -58,7 +59,7 @@ func TestExemplarResponses(t *testing.T) {
 		enableWideSeries := false
 		queryFileName := filepath.Join("../testdata", test.filepath+".query.json")
 		responseFileName := filepath.Join("../testdata", test.filepath+".result.json")
-		goldenFileName := test.filepath + ".result.streaming.golden"
+		goldenFileName := test.filepath + ".result.golden"
 		t.Run(test.name, goldenScenario(test.name, queryFileName, responseFileName, goldenFileName, enableWideSeries))
 		enableWideSeries = true
 		goldenFileName = test.filepath + ".result.streaming-wide.golden"
@@ -98,6 +99,7 @@ type storedPrometheusQuery struct {
 	End           int64
 	Step          int64
 	Expr          string
+	LegendFormat  string
 }
 
 func loadStoredQuery(fileName string) (*backend.QueryDataRequest, error) {
@@ -120,6 +122,7 @@ func loadStoredQuery(fileName string) (*backend.QueryDataRequest, error) {
 		Expr:          sq.Expr,
 		Interval:      fmt.Sprintf("%ds", sq.Step),
 		IntervalMS:    sq.Step * 1000,
+		LegendFormat:  sq.LegendFormat,
 	}
 
 	data, err := json.Marshal(&qm)
