@@ -19,6 +19,8 @@ type DBSession struct {
 
 type DBTransactionFunc func(sess *DBSession) error
 
+type SQLxDBTransactionFunc func(tx *SQLxDBTransaction) error
+
 func (sess *DBSession) publishAfterCommit(msg interface{}) {
 	sess.events = append(sess.events, msg)
 }

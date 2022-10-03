@@ -45,6 +45,7 @@ var (
 // ContextSessionKey is used as key to save values in `context.Context`
 type ContextSessionKey struct{}
 
+type ContextSQLxTransactionKey struct{}
 type SQLStore struct {
 	Cfg          *setting.Cfg
 	sqlxsession  *session.SessionDB
