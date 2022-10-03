@@ -13,11 +13,6 @@ const meta: ComponentMeta<typeof InputGroup> = {
   title: 'Experimental/InputGroup',
   component: InputGroup,
   decorators: [withCenteredStory],
-  // parameters: {
-  //   controls: {
-  //     exclude: ['onClick', 'href', 'heading', 'description', 'className'],
-  //   },
-  // },
 };
 
 export function WithTextInputs() {
