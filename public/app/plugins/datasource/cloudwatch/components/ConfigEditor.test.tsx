@@ -14,7 +14,7 @@ jest.mock('app/features/plugins/datasource_srv', () => ({
   getDatasourceSrv: () => ({
     loadDatasource: jest.fn().mockResolvedValue({
       api: {
-        describeLogGroups: jest.fn().mockResolvedValue(['logGroup-foo', 'logGroup-bar'].map(toOption)),
+        describeAllLogGroups: jest.fn().mockResolvedValue(['logGroup-foo', 'logGroup-bar'].map(toOption)),
         getRegions: jest.fn().mockResolvedValue([
           {
             label: 'ap-east-1',
