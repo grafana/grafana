@@ -139,7 +139,7 @@ func runQuery(response []byte, sq storedPrometheusQuery) (*backend.QueryDataResp
 	b := Buffered{
 		intervalCalculator: intervalv2.NewCalculator(),
 		tracer:             tracer,
-		TimeInterval:       fmt.Sprintf("%ds", sq.Step),
+		TimeInterval:       "15s",
 		log:                &fakeLogger{},
 		client:             api,
 	}

@@ -1,12 +1,13 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
 //  
 //  Frame[0] {
+//      "type": "timeseries-many",
 //      "custom": {
 //          "resultType": "exemplar"
 //      },
 //      "executedQueryString": "Expr: histogram_quantile(0.99, sum(rate(traces_spanmetrics_duration_seconds_bucket[15s])) by (le))\nStep: 15s"
 //  }
-//  Name: 
+//  Name: exemplar
 //  Dimensions: 14 Fields by 62 Rows
 //  +-----------------------------------+-----------------+--------------------------------------------+----------------+-------------------+-------------------+----------------+----------------+--------------------+----------------+------------------+-----------------+-------------------+----------------------------------+
 //  | Name: Time                        | Name: Value     | Name: __name__                             | Name: group    | Name: http_method | Name: http_target | Name: instance | Name: le       | Name: service      | Name: source   | Name: span_kind  | Name: span_name | Name: span_status | Name: traceID                    |
@@ -31,7 +32,9 @@
   "frames": [
     {
       "schema": {
+        "name": "exemplar",
         "meta": {
+          "type": "timeseries-many",
           "custom": {
             "resultType": "exemplar"
           },
