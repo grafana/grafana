@@ -14,8 +14,6 @@ export function buildBreadcrumbs(homeNav: NavModelItem, sectionNav: NavModelItem
     if (urlSearchParams.has('editview')) {
       urlToMatch += `?editview=${urlSearchParams.get('editview')}`;
     }
-    // const urlPathname = node.url?.split('?')[0];
-    // const urlToMatch = locationUtil.getUrlForPartial(props.history.location);
     if (!foundHome && !node.hideFromBreadcrumbs) {
       if (urlToMatch === homeNav.url) {
         crumbs.unshift({ text: homeNav.text, href: node.url ?? '' });
