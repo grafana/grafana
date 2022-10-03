@@ -168,6 +168,14 @@ func runQuery(response []byte, sq storedPrometheusQuery) (*backend.QueryDataResp
 		return nil, err
 	}
 
+	// parseTimeSeriesQuery forces range queries if the only query is an exemplar query
+	// so we need to set it back to false
+	if qm.ExemplarQuery {
+		for i := range queries {
+			queries[i].RangeQuery = false
+		}
+	}
+
 	return b.runQueries(context.Background(), queries)
 }
 
