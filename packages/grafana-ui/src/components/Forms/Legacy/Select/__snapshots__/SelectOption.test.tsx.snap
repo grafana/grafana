@@ -14,6 +14,7 @@ exports[`SelectOption renders correctly 1`] = `
     className="gf-form-select-box__desc-option"
   >
     <img
+      alt=""
       className="gf-form-select-box__desc-option__img"
       src="url/to/avatar"
     />
