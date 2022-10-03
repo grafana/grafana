@@ -24,7 +24,7 @@ export const InputGroup = ({ children }: InputGroupProps) => {
   return <div className={styles.root}>{modifiedChildren}</div>;
 };
 
-// The lower in the array the higher the priority for showing that element's border
+// The later in the array the higher the priority for showing that element's border
 const borderPriority = [
   '' as const, // lowest priority
   'base' as const,
