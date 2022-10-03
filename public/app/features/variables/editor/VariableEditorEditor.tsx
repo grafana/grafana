@@ -20,13 +20,14 @@ import { KeyedVariableIdentifier } from '../state/types';
 import { VariableHide } from '../types';
 import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
+import { ConfirmDeleteModal } from './ConfirmDeleteModal';
 import { VariableHideSelect } from './VariableHideSelect';
 import { VariableSectionHeader } from './VariableSectionHeader';
 import { VariableTextField } from './VariableTextField';
 import { VariableTypeSelect } from './VariableTypeSelect';
 import { VariableValuesPreview } from './VariableValuesPreview';
 import { changeVariableName, variableEditorMount, variableEditorUnMount } from './actions';
-import { OnPropChangeArguments } from './types';
+import { OnPropChangeArguments, VariableNameConstraints } from './types';
 
 const mapStateToProps = (state: StoreState, ownProps: OwnProps) => ({
   editor: getVariablesState(ownProps.identifier.rootStateKey, state).editor,
@@ -61,7 +62,15 @@ export interface OwnProps {
 
 type Props = OwnProps & ConnectedProps<typeof connector>;
 
-export class VariableEditorEditorUnConnected extends PureComponent<Props> {
+interface State {
+  showDeleteModal: boolean;
+}
+
+export class VariableEditorEditorUnConnected extends PureComponent<Props, State> {
+  state: State = {
+    showDeleteModal: false,
+  };
+
   componentDidMount(): void {
     this.props.variableEditorMount(this.props.identifier);
   }
@@ -120,8 +129,17 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
     this.props.updateOptions(toKeyedVariableIdentifier(this.props.variable));
   };
 
+  onModalOpen = () => {
+    this.setState({ showDeleteModal: true });
+  };
+
+  onModalClose = () => {
+    this.setState({ showDeleteModal: false });
+  };
+
   onDelete = () => {
     this.props.removeVariable(this.props.identifier);
+    this.onModalClose();
     locationService.partial({ editIndex: null });
   };
 
@@ -149,8 +167,10 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
                   onChange={this.onNameChange}
                   name="Name"
                   placeholder="name"
-                  required
                   testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2}
+                  maxLength={VariableNameConstraints.MaxSize}
+                  required
+                  tooltip="Variable name cannot be longer than 50 characters"
                 />
                 <VariableTypeSelect onChange={this.onTypeChange} type={this.props.variable.type} />
               </InlineFieldRow>
@@ -190,7 +210,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
             {hasOptions(this.props.variable) ? <VariableValuesPreview variable={this.props.variable} /> : null}
 
             <HorizontalGroup spacing="md">
-              <Button variant="destructive" onClick={this.onDelete}>
+              <Button variant="destructive" onClick={this.onModalOpen}>
                 Delete
               </Button>
               <Button
@@ -210,6 +230,12 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
             </HorizontalGroup>
           </VerticalGroup>
         </form>
+        <ConfirmDeleteModal
+          isOpen={this.state.showDeleteModal}
+          varName={this.props.editor.name}
+          onConfirm={this.onDelete}
+          onDismiss={this.onModalClose}
+        />
       </div>
     );
   }

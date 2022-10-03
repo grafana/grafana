@@ -55,7 +55,7 @@ require (
 	github.com/gorilla/websocket v1.5.0
 	github.com/gosimple/slug v1.12.0
 	github.com/grafana/cuetsy v0.1.1
-	github.com/grafana/grafana-aws-sdk v0.10.8
+	github.com/grafana/grafana-aws-sdk v0.11.0
 	github.com/grafana/grafana-azure-sdk-go v1.3.0
 	github.com/grafana/grafana-plugin-sdk-go v0.139.0
 	github.com/grafana/thema v0.0.0-20220817114012-ebeee841c104
@@ -254,6 +254,7 @@ require (
 	github.com/google/go-github/v45 v45.2.0
 	github.com/grafana/dskit v0.0.0-20211011144203-3a88ec0b675f
 	github.com/jmoiron/sqlx v1.3.5
+	github.com/matryer/is v1.4.0
 	github.com/urfave/cli v1.22.5
 	go.etcd.io/etcd/api/v3 v3.5.4
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.31.0
