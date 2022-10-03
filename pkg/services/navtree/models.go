@@ -44,7 +44,6 @@ const (
 type NavLink struct {
 	Id               string     `json:"id,omitempty"`
 	Text             string     `json:"text"`
-	Description      string     `json:"description,omitempty"`
 	Section          string     `json:"section,omitempty"`
 	SubTitle         string     `json:"subTitle,omitempty"`
 	Icon             string     `json:"icon,omitempty"` // Available icons can be browsed in Storybook: https://developers.grafana.com/ui/latest/index.html?path=/story/docs-overview-icon--icons-overview
