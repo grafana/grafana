@@ -105,6 +105,14 @@ export interface SelectAsyncProps<T> {
   loadingMessage?: string;
 }
 
+/** The VirtualizedSelect component uses a slightly different SelectableValue, description and other props are not supported */
+export interface VirtualizedSelectProps<T> extends Omit<SelectCommonProps<T>, 'virtualized'> {
+  options?: Array<{
+    value: T;
+    label: string;
+  }>;
+}
+
 export interface MultiSelectCommonProps<T> extends Omit<SelectCommonProps<T>, 'onChange' | 'isMulti' | 'value'> {
   value?: Array<SelectableValue<T>> | T[];
   onChange: (item: Array<SelectableValue<T>>) => {} | void;
