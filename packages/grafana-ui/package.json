@@ -25,10 +25,11 @@
     "access": "public"
   },
   "files": [
-    "dist",
+    "./dist",
+    "!./dist/storybook",
     "./README.md",
     "./CHANGELOG.md",
-    "LICENSE_APACHE2"
+    "./LICENSE_APACHE2"
   ],
   "scripts": {
     "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts",
