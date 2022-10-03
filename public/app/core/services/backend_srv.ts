@@ -407,7 +407,12 @@ export class BackendSrv implements BackendService {
     return this.inspectorStream;
   }
 
-  async get<T = any>(url: string, params?: any, requestId?: string, options?: Partial<BackendSrvRequest>) {
+  async get<T = any>(
+    url: string,
+    params?: BackendSrvRequest['params'],
+    requestId?: BackendSrvRequest['requestId'],
+    options?: Partial<BackendSrvRequest>
+  ) {
     return await lastValueFrom(
       this.fetch<T>({ ...options, method: 'GET', url, params, requestId }).pipe(
         map((response: FetchResponse<T>) => response.data)

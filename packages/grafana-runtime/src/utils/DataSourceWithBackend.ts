@@ -220,7 +220,11 @@ class DataSourceWithBackend<
   /**
    * Make a GET request to the datasource resource path
    */
-  async getResource(path: string, params?: any, options?: Partial<BackendSrvRequest>): Promise<any> {
+  async getResource(
+    path: string,
+    params?: BackendSrvRequest['params'],
+    options?: Partial<BackendSrvRequest>
+  ): Promise<any> {
     return lastValueFrom(
       getBackendSrv().fetch<HealthCheckResult>({
         ...options,
@@ -234,7 +238,11 @@ class DataSourceWithBackend<
   /**
    * Send a POST request to the datasource resource path
    */
-  async postResource(path: string, data?: any, options?: Partial<BackendSrvRequest>): Promise<any> {
+  async postResource(
+    path: string,
+    data?: BackendSrvRequest['data'],
+    options?: Partial<BackendSrvRequest>
+  ): Promise<any> {
     return lastValueFrom(
       getBackendSrv().fetch<HealthCheckResult>({
         ...options,
