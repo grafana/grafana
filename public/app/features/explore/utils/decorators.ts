@@ -19,7 +19,6 @@ import { sortLogsResult } from '../../../features/logs/utils';
 import { ExplorePanelData } from '../../../types';
 import { getAllCorrelations } from '../../correlations/useCorrelations';
 import {
-  CorrelationsByDataSourceUid,
   decorateDataFrameWithInternalDataLinks,
   groupCorrelationsByDataSourceUid,
   mapQueryRefIdToDataSourceUid,
@@ -82,7 +81,7 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
 export const decorateWithCorrelations = ({ queries }: { queries: DataQuery[] | undefined }) => {
   return (data: PanelData): Observable<PanelData> => {
     return from(
-      getCachedCorrelationsConfig().then((correlationsConfig) => {
+      getCorrelationsConfig().then((correlationsConfig) => {
         let queryRefIdToDataSourceUid = mapQueryRefIdToDataSourceUid(queries || []);
 
         data.series.forEach((dataFrame) => {
@@ -98,21 +97,11 @@ export const decorateWithCorrelations = ({ queries }: { queries: DataQuery[] | u
 };
 
 /**
- * Temporarily cache results once per page load
+ * Temporarily load results every time a query is run. Todo: load it when Explore is loaded only.
  */
-const getCachedCorrelationsConfig = (() => {
-  let correlationsByDataSourceUid: CorrelationsByDataSourceUid = {};
-  return () => {
-    if (Object.keys(correlationsByDataSourceUid).length > 0) {
-      return Promise.resolve(correlationsByDataSourceUid);
-    } else {
-      return getAllCorrelations().then((correlations) => {
-        correlationsByDataSourceUid = groupCorrelationsByDataSourceUid(correlations);
-        return correlationsByDataSourceUid;
-      });
-    }
-  };
-})();
+const getCorrelationsConfig = () => {
+  return getAllCorrelations().then(groupCorrelationsByDataSourceUid);
+};
 
 export const decorateWithGraphResult = (data: ExplorePanelData): ExplorePanelData => {
   if (!data.graphFrames.length) {
