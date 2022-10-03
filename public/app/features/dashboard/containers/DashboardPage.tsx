@@ -2,7 +2,7 @@ import { cx } from '@emotion/css';
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { locationUtil, NavModel, NavModelItem, TimeRange, PageLayoutType } from '@grafana/data';
+import { NavModel, NavModelItem, TimeRange, PageLayoutType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
 import { Themeable2, withTheme2 } from '@grafana/ui';
@@ -424,13 +424,7 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
   if (!pageNav || dashboard.title !== pageNav.text) {
     pageNav = {
       text: dashboard.title,
-      url: locationUtil
-        .getUrlForPartial(props.history.location, {
-          editview: null,
-          editPanel: null,
-          viewPanel: null,
-        })
-        .split('?')[0],
+      url: props.history.location.pathname,
     };
   }
 
