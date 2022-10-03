@@ -131,7 +131,7 @@ describe('contactPointsStateDtoToModel method', () => {
             email: [
               {
                 lastNotifyAttempt: '2022-07-08 17:42:44.998893 +0000 UTC',
-                lastNotifyDuration: '117.2455ms',
+                lastNotifyAttemptDuration: '117.2455ms',
                 name: 'email[0]',
               },
             ],
