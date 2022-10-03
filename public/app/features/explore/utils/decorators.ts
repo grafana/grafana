@@ -228,8 +228,8 @@ export function decorateData(
     map(decorateWithGraphResult),
     map(decorateWithGraphResult),
     map(decorateWithLogsResult({ absoluteRange, refreshInterval, queries, fullRangeLogsVolumeAvailable })),
-    mergeMap(decorateWithTableResult),
-    mergeMap(decorateWithRawPrometheusResult)
+    mergeMap(decorateWithRawPrometheusResult),
+    mergeMap(decorateWithTableResult)
   );
 }
 
