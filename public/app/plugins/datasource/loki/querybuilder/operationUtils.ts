@@ -127,7 +127,7 @@ export function getRangeAggregationWithGroupingRenderer(aggregation: string, gro
       return `${aggregation}(${params[1]}, ${innerExpr} [${params[0]}]) ${grouping} (${restParams.join(', ')})`;
     }
 
-    return `${aggregation}(${innerExpr} [${params[0]}]) ${grouping}(${restParams.join(', ')})`;
+    return `${aggregation}(${innerExpr} [${params[0]}]) ${grouping} (${restParams.join(', ')})`;
   };
 }
 
