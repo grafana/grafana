@@ -11,7 +11,7 @@ import { StoreState, TABLE_RESULTS_STYLE } from 'app/types';
 import { ExploreId, ExploreItemState, TABLE_RESULTS_STYLES, TableResultsStyle } from 'app/types/explore';
 
 import { MetaInfoText } from './MetaInfoText';
-import RawListContainer from './RawListContainer';
+import RawListContainer from './PrometheusListView/RawListContainer';
 import { splitOpen } from './state/main';
 import { getFieldLinksForExplore } from './utils/links';
 

@@ -6,8 +6,9 @@ import { VariableSizeList as List } from 'react-window';
 import { DataFrame } from '@grafana/data/src';
 import { stylesFactory } from '@grafana/ui/src';
 
+import { getRawPrometheusListItemsFromDataFrame } from '../utils/getRawPrometheusListItemsFromDataFrame';
+
 import RawList from './RawList';
-import { getRawPrometheusListItemsFromDataFrame } from './utils/getRawPrometheusListItemsFromDataFrame';
 
 export type instantQueryRawVirtualizedListData = { Value: string; __name__: string; [index: string]: string };
 
