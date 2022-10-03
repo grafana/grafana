@@ -1,17 +1,33 @@
-import { css } from '@emotion/css';
-import React from 'react';
+import { css, cx } from '@emotion/css';
+import React, { Children, cloneElement, isValidElement, ReactElement } from 'react';
 
 import { useStyles2 } from '../../themes';
 
-interface InputGroupProps {}
+interface InputGroupProps {
+  // we type the children props so we can test them later on
+  children: Array<ReactElement<{ className?: string; invalid?: unknown }>>;
+}
 
-export const InputGroup: React.FC<InputGroupProps> = ({ children }) => {
+export const InputGroup = ({ children }: InputGroupProps) => {
   const styles = useStyles2(getStyles);
 
-  return <div className={styles.root}>{children}</div>;
+  // Find children with an invalid prop, and set a class name to raise their z-index so all
+  // of the invalid border is visible
+  const modifiedChildren = Children.map(children, (child) => {
+    if (isValidElement(child) && child.props.invalid) {
+      return cloneElement(child, { className: cx(child.props.className, styles.invalidChild) });
+    }
+
+    return child;
+  });
+
+  return <div className={styles.root}>{modifiedChildren}</div>;
 };
 
 const getStyles = () => ({
+  invalidChild: css({
+    zIndex: 3,
+  }),
   root: css({
     display: 'flex',
 
@@ -40,11 +56,13 @@ const getStyles = () => ({
       position: 'relative',
       zIndex: 1,
 
+      // Adjacent borders are overlapping, so raise children up when hovering etc
+      // so all that child's borders are visible.
       '&:hover': {
         zIndex: 2,
       },
       '&:focus-within': {
-        zIndex: 2,
+        zIndex: 4,
       },
     },
   }),
