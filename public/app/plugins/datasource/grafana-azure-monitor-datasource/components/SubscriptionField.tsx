@@ -56,9 +56,10 @@ const SubscriptionField: React.FC<SubscriptionFieldProps> = ({
         return;
       }
 
-      query.subscriptions = change.map((c) => c.value ?? '');
-
-      onQueryChange(query);
+      onQueryChange({
+        ...query,
+        subscriptions: change.map((c) => c.value ?? ''),
+      });
     },
     [query, onQueryChange]
   );

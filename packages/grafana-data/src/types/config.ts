@@ -210,6 +210,7 @@ export interface GrafanaConfig {
   feedbackLinksEnabled: boolean;
   secretsManagerPluginEnabled: boolean;
   googleAnalyticsId: string | undefined;
+  googleAnalytics4Id: string | undefined;
   rudderstackWriteKey: string | undefined;
   rudderstackDataPlaneUrl: string | undefined;
   rudderstackSdkUrl: string | undefined;
@@ -219,4 +220,5 @@ export interface GrafanaConfig {
 export interface AuthSettings {
   OAuthSkipOrgRoleUpdateSync?: boolean;
   SAMLSkipOrgRoleSync?: boolean;
+  DisableSyncLock?: boolean;
 }

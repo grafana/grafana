@@ -1,5 +1,7 @@
 package config
 
+const PublicBucket = "grafana-downloads"
+
 var Versions = VersionMap{
 	PullRequestMode: {
 		Variants: []Variant{
@@ -54,6 +56,7 @@ var Versions = VersionMap{
 			Artifacts:            "grafana-downloads",
 			ArtifactsEnterprise2: "grafana-downloads-enterprise2",
 			CDNAssets:            "grafana-static-assets",
+			Storybook:            "grafana-storybook",
 		},
 	},
 	CustomMode: {
@@ -151,6 +154,7 @@ var Versions = VersionMap{
 				Alpine,
 				Ubuntu,
 			},
+			PrereleaseBucket: "grafana-prerelease/artifacts/docker",
 		},
 		Buckets: Buckets{
 			Artifacts:            "grafana-prerelease/artifacts/downloads",

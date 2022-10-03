@@ -10,6 +10,7 @@ weight: 10000
 Here you can find detailed release notes that list everything that is included in every release as well as notices
 about deprecations, breaking changes as well as changes that relate to plugin development.
 
+- [Release notes for 9.1.6]({{< relref "release-notes-9-1-6" >}})
 - [Release notes for 9.1.5]({{< relref "release-notes-9-1-5" >}})
 - [Release notes for 9.1.4]({{< relref "release-notes-9-1-4" >}})
 - [Release notes for 9.1.3]({{< relref "release-notes-9-1-3" >}})
@@ -17,6 +18,7 @@ about deprecations, breaking changes as well as changes that relate to plugin de
 - [Release notes for 9.1.1]({{< relref "release-notes-9-1-1" >}})
 - [Release notes for 9.1.0]({{< relref "release-notes-9-1-0" >}})
 - [Release notes for 9.1.0-beta1]({{< relref "release-notes-9-1-0-beta1" >}})
+- [Release notes for 9.0.9]({{< relref "release-notes-9-0-9" >}})
 - [Release notes for 9.0.8]({{< relref "release-notes-9-0-8" >}})
 - [Release notes for 9.0.7]({{< relref "release-notes-9-0-7" >}})
 - [Release notes for 9.0.6]({{< relref "release-notes-9-0-6" >}})
@@ -29,6 +31,7 @@ about deprecations, breaking changes as well as changes that relate to plugin de
 - [Release notes for 9.0.0-beta3]({{< relref "release-notes-9-0-0-beta3/" >}})
 - [Release notes for 9.0.0-beta2]({{< relref "release-notes-9-0-0-beta2/" >}})
 - [Release notes for 9.0.0-beta1]({{< relref "release-notes-9-0-0-beta1/" >}})
+- [Release notes for 8.5.13]({{< relref "release-notes-8-5-13" >}})
 - [Release notes for 8.5.11]({{< relref "release-notes-8-5-11" >}})
 - [Release notes for 8.5.10]({{< relref "release-notes-8-5-10" >}})
 - [Release notes for 8.5.9]({{< relref "release-notes-8-5-9" >}})

@@ -1,6 +1,6 @@
 import { renderHook } from '@testing-library/react-hooks';
 import React from 'react';
-import * as reactRedux from 'react-redux';
+import { Provider } from 'react-redux';
 
 import { DataSourceJsonData, DataSourceSettings } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -10,17 +10,12 @@ import { mockDataSource, mockDataSourcesStore, mockStore } from '../mocks';
 
 import { useExternalAmSelector, useExternalDataSourceAlertmanagers } from './useExternalAmSelector';
 
-const useSelectorMock = jest.spyOn(reactRedux, 'useSelector');
-
 describe('useExternalAmSelector', () => {
-  beforeEach(() => {
-    useSelectorMock.mockClear();
-  });
   it('should have one in pending', () => {
-    useSelectorMock.mockImplementation((callback) => {
-      return callback(createMockStoreState([], [], ['some/url/to/am']));
-    });
-    const alertmanagers = useExternalAmSelector();
+    const store = createMockStoreState([], [], ['some/url/to/am']);
+    const wrapper = ({ children }: React.PropsWithChildren<{}>) => <Provider store={store}>{children}</Provider>;
+    const { result } = renderHook(() => useExternalAmSelector(), { wrapper });
+    const alertmanagers = result.current;
 
     expect(alertmanagers).toEqual([
       {
@@ -32,13 +27,14 @@ describe('useExternalAmSelector', () => {
   });
 
   it('should have one active, one pending', () => {
-    useSelectorMock.mockImplementation((callback) => {
-      return callback(
-        createMockStoreState([{ url: 'some/url/to/am/api/v2/alerts' }], [], ['some/url/to/am', 'some/url/to/am1'])
-      );
-    });
-
-    const alertmanagers = useExternalAmSelector();
+    const store = createMockStoreState(
+      [{ url: 'some/url/to/am/api/v2/alerts' }],
+      [],
+      ['some/url/to/am', 'some/url/to/am1']
+    );
+    const wrapper = ({ children }: React.PropsWithChildren<{}>) => <Provider store={store}>{children}</Provider>;
+    const { result } = renderHook(() => useExternalAmSelector(), { wrapper });
+    const alertmanagers = result.current;
 
     expect(alertmanagers).toEqual([
       {
@@ -55,17 +51,14 @@ describe('useExternalAmSelector', () => {
   });
 
   it('should have two active', () => {
-    useSelectorMock.mockImplementation((callback) => {
-      return callback(
-        createMockStoreState(
-          [{ url: 'some/url/to/am/api/v2/alerts' }, { url: 'some/url/to/am1/api/v2/alerts' }],
-          [],
-          ['some/url/to/am', 'some/url/to/am1']
-        )
-      );
-    });
-
-    const alertmanagers = useExternalAmSelector();
+    const store = createMockStoreState(
+      [{ url: 'some/url/to/am/api/v2/alerts' }, { url: 'some/url/to/am1/api/v2/alerts' }],
+      [],
+      ['some/url/to/am', 'some/url/to/am1']
+    );
+    const wrapper = ({ children }: React.PropsWithChildren<{}>) => <Provider store={store}>{children}</Provider>;
+    const { result } = renderHook(() => useExternalAmSelector(), { wrapper });
+    const alertmanagers = result.current;
 
     expect(alertmanagers).toEqual([
       {
@@ -82,18 +75,15 @@ describe('useExternalAmSelector', () => {
   });
 
   it('should have one active, one dropped, one pending', () => {
-    useSelectorMock.mockImplementation((callback) => {
-      return callback(
-        createMockStoreState(
-          [{ url: 'some/url/to/am/api/v2/alerts' }],
-          [{ url: 'some/dropped/url/api/v2/alerts' }],
-          ['some/url/to/am', 'some/url/to/am1']
-        )
-      );
-    });
+    const store = createMockStoreState(
+      [{ url: 'some/url/to/am/api/v2/alerts' }],
+      [{ url: 'some/dropped/url/api/v2/alerts' }],
+      ['some/url/to/am', 'some/url/to/am1']
+    );
+    const wrapper = ({ children }: React.PropsWithChildren<{}>) => <Provider store={store}>{children}</Provider>;
 
-    const alertmanagers = useExternalAmSelector();
-
+    const { result } = renderHook(() => useExternalAmSelector(), { wrapper });
+    const alertmanagers = result.current;
     expect(alertmanagers).toEqual([
       {
         url: 'some/url/to/am',
@@ -114,21 +104,19 @@ describe('useExternalAmSelector', () => {
   });
 
   it('The number of alert managers should match config entries when there are multiple entries of the same url', () => {
-    useSelectorMock.mockImplementation((callback) => {
-      return callback(
-        createMockStoreState(
-          [
-            { url: 'same/url/to/am/api/v2/alerts' },
-            { url: 'same/url/to/am/api/v2/alerts' },
-            { url: 'same/url/to/am/api/v2/alerts' },
-          ],
-          [],
-          ['same/url/to/am', 'same/url/to/am', 'same/url/to/am']
-        )
-      );
-    });
+    const store = createMockStoreState(
+      [
+        { url: 'same/url/to/am/api/v2/alerts' },
+        { url: 'same/url/to/am/api/v2/alerts' },
+        { url: 'same/url/to/am/api/v2/alerts' },
+      ],
+      [],
+      ['same/url/to/am', 'same/url/to/am', 'same/url/to/am']
+    );
+    const wrapper = ({ children }: React.PropsWithChildren<{}>) => <Provider store={store}>{children}</Provider>;
 
-    const alertmanagers = useExternalAmSelector();
+    const { result } = renderHook(() => useExternalAmSelector(), { wrapper });
+    const alertmanagers = result.current;
 
     expect(alertmanagers.length).toBe(3);
     expect(alertmanagers).toEqual([
@@ -152,10 +140,6 @@ describe('useExternalAmSelector', () => {
 });
 
 describe('useExternalDataSourceAlertmanagers', () => {
-  beforeEach(() => {
-    useSelectorMock.mockRestore();
-  });
-
   it('Should merge data sources information from config and api responses', () => {
     // Arrange
     const { dsSettings, dsInstanceSettings } = setupAlertmanagerDataSource({ url: 'http://grafana.com' });
@@ -168,7 +152,7 @@ describe('useExternalDataSourceAlertmanagers', () => {
       dataSources: [dsSettings],
     });
 
-    const wrapper: React.FC = ({ children }) => <reactRedux.Provider store={store}>{children}</reactRedux.Provider>;
+    const wrapper: React.FC = ({ children }) => <Provider store={store}>{children}</Provider>;
 
     // Act
     const {
@@ -199,7 +183,7 @@ describe('useExternalDataSourceAlertmanagers', () => {
       };
     });
 
-    const wrapper: React.FC = ({ children }) => <reactRedux.Provider store={store}>{children}</reactRedux.Provider>;
+    const wrapper: React.FC = ({ children }) => <Provider store={store}>{children}</Provider>;
 
     // Act
     const {
@@ -230,7 +214,7 @@ describe('useExternalDataSourceAlertmanagers', () => {
       };
     });
 
-    const wrapper: React.FC = ({ children }) => <reactRedux.Provider store={store}>{children}</reactRedux.Provider>;
+    const wrapper: React.FC = ({ children }) => <Provider store={store}>{children}</Provider>;
 
     // Act
     const {
@@ -261,7 +245,7 @@ describe('useExternalDataSourceAlertmanagers', () => {
       };
     });
 
-    const wrapper: React.FC = ({ children }) => <reactRedux.Provider store={store}>{children}</reactRedux.Provider>;
+    const wrapper: React.FC = ({ children }) => <Provider store={store}>{children}</Provider>;
 
     // Act
     const {
@@ -292,7 +276,7 @@ describe('useExternalDataSourceAlertmanagers', () => {
       };
     });
 
-    const wrapper: React.FC = ({ children }) => <reactRedux.Provider store={store}>{children}</reactRedux.Provider>;
+    const wrapper: React.FC = ({ children }) => <Provider store={store}>{children}</Provider>;
 
     // Act
     const {
@@ -326,7 +310,7 @@ describe('useExternalDataSourceAlertmanagers', () => {
       };
     });
 
-    const wrapper: React.FC = ({ children }) => <reactRedux.Provider store={store}>{children}</reactRedux.Provider>;
+    const wrapper: React.FC = ({ children }) => <Provider store={store}>{children}</Provider>;
 
     // Act
     const {
@@ -389,28 +373,16 @@ const createMockStoreState = (
   droppedAlertmanagers: Array<{ url: string }>,
   alertmanagerConfig: string[]
 ) => {
-  return {
-    unifiedAlerting: {
-      externalAlertmanagers: {
-        discoveredAlertmanagers: {
-          result: {
-            data: {
-              activeAlertManagers: activeAlertmanagers,
-              droppedAlertManagers: droppedAlertmanagers,
-            },
-          },
-          dispatched: false,
-          loading: false,
-        },
-        alertmanagerConfig: {
-          result: {
-            alertmanagers: alertmanagerConfig,
-            alertmanagersChoice: AlertmanagerChoice.All,
-          },
-          dispatched: false,
-          loading: false,
-        },
+  return mockStore((state) => {
+    state.unifiedAlerting.externalAlertmanagers.alertmanagerConfig.result = {
+      alertmanagers: alertmanagerConfig,
+      alertmanagersChoice: AlertmanagerChoice.All,
+    };
+    state.unifiedAlerting.externalAlertmanagers.discoveredAlertmanagers.result = {
+      data: {
+        activeAlertManagers: activeAlertmanagers,
+        droppedAlertManagers: droppedAlertmanagers,
       },
-    },
-  };
+    };
+  });
 };

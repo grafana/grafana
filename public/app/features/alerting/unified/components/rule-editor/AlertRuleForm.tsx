@@ -1,16 +1,18 @@
 import { css } from '@emotion/css';
 import React, { FC, useMemo, useState } from 'react';
 import { FormProvider, useForm, UseFormWatch } from 'react-hook-form';
-import { useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { logInfo } from '@grafana/runtime';
 import { Button, ConfirmModal, CustomScrollbar, PageToolbar, Spinner, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { useDispatch } from 'app/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 
+import { LogMessages } from '../../Analytics';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { deleteRuleAction, saveRuleFormAction } from '../../state/actions';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
@@ -110,7 +112,13 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
       <form onSubmit={(e) => e.preventDefault()} className={styles.form}>
         <PageToolbar title={`${existing ? 'Edit' : 'Create'} alert rule`} pageIcon="bell">
           <Link to={returnTo}>
-            <Button variant="secondary" disabled={submitState.loading} type="button" fill="outline">
+            <Button
+              variant="secondary"
+              disabled={submitState.loading}
+              type="button"
+              fill="outline"
+              onClick={() => logInfo(LogMessages.cancelSavingAlertRule)}
+            >
               Cancel
             </Button>
           </Link>

@@ -2,13 +2,12 @@ import { cx } from '@emotion/css';
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { locationUtil, NavModel, NavModelItem, TimeRange, PageLayoutType } from '@grafana/data';
+import { NavModel, NavModelItem, TimeRange, PageLayoutType, locationUtil } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { Themeable2, withTheme2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { Page } from 'app/core/components/Page/Page';
-import { config } from 'app/core/config';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getKioskMode } from 'app/core/navigation/kiosk';
@@ -29,6 +28,7 @@ import { DashboardPrompt } from '../components/DashboardPrompt/DashboardPrompt';
 import { DashboardSettings } from '../components/DashboardSettings';
 import { PanelInspector } from '../components/Inspector/PanelInspector';
 import { PanelEditor } from '../components/PanelEditor/PanelEditor';
+import { PubdashFooter } from '../components/PubdashFooter/PubdashFooter';
 import { SubMenu } from '../components/SubMenu/SubMenu';
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { liveTimer } from '../dashgrid/liveTimer';
@@ -402,6 +402,10 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
             sectionNav={sectionNav}
           />
         )}
+        {
+          // TODO: assess if there are other places where we may want a footer, which may reveal a better place to add this
+          isPublic && <PubdashFooter />
+        }
       </>
     );
   }
@@ -429,8 +433,8 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
   }
 
   // Check if folder changed
-  const { folderTitle } = dashboard.meta;
-  if (folderTitle && pageNav && pageNav.parentItem?.text !== folderTitle) {
+  const { folderTitle, folderUid } = dashboard.meta;
+  if (folderTitle && folderUid && pageNav && pageNav.parentItem?.text !== folderTitle) {
     pageNav = {
       ...pageNav,
       parentItem: {
@@ -455,6 +459,7 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
       ...pageNav,
       text: `${state.editPanel ? 'Edit' : 'View'} panel`,
       parentItem: pageNav,
+      url: undefined,
     };
   }
 

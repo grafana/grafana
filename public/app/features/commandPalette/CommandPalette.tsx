@@ -13,13 +13,12 @@ import {
   useKBar,
 } from 'kbar';
 import React, { useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction, locationService } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { StoreState } from 'app/types';
+import { useSelector } from 'app/types';
 
 import { ResultItem } from './ResultItem';
 import getDashboardNavActions from './actions/dashboard.nav.actions';
@@ -40,7 +39,7 @@ export const CommandPalette = () => {
   }));
   const isNotLogin = locationService.getLocation().pathname !== '/login';
 
-  const { navBarTree } = useSelector((state: StoreState) => {
+  const { navBarTree } = useSelector((state) => {
     return {
       navBarTree: state.navBarTree,
     };

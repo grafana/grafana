@@ -289,6 +289,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         onClickFilterOutLabel={this.onClickFilterOutLabel}
         onStartScanning={this.onStartScanning}
         onStopScanning={this.onStopScanning}
+        scrollElement={this.scrollElement}
       />
     );
   }

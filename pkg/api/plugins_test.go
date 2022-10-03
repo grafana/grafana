@@ -51,16 +51,14 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 			action, testCase.expectedHTTPStatus, testCase.pluginAdminEnabled, testCase.pluginAdminExternalManageEnabled)
 	}
 
-	pm := &fakePluginManager{
-		plugins: make(map[string]fakePlugin),
-	}
+	inst := NewFakePluginInstaller()
 	for _, tc := range tcs {
 		srv := SetupAPITestServer(t, func(hs *HTTPServer) {
 			hs.Cfg = &setting.Cfg{
 				PluginAdminEnabled:               tc.pluginAdminEnabled,
 				PluginAdminExternalManageEnabled: tc.pluginAdminExternalManageEnabled,
 			}
-			hs.pluginManager = pm
+			hs.pluginInstaller = inst
 			hs.QuotaService = quotatest.NewQuotaServiceFake()
 		})
 
@@ -78,7 +76,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 			require.Equal(t, tc.expectedHTTPStatus, resp.StatusCode)
 
 			if tc.expectedHTTPStatus == 200 {
-				require.Equal(t, fakePlugin{pluginID: "test", version: "1.0.2"}, pm.plugins["test"])
+				require.Equal(t, fakePlugin{pluginID: "test", version: "1.0.2"}, inst.plugins["test"])
 			}
 		})
 
@@ -96,7 +94,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 			require.Equal(t, tc.expectedHTTPStatus, resp.StatusCode)
 
 			if tc.expectedHTTPStatus == 200 {
-				require.Empty(t, pm.plugins)
+				require.Empty(t, inst.plugins)
 			}
 		})
 	}
@@ -125,10 +123,6 @@ func Test_PluginsInstallAndUninstall_AccessControl(t *testing.T) {
 			action, tc.expectedCode, tc.pluginAdminEnabled, tc.pluginAdminExternalManageEnabled, tc.permissions)
 	}
 
-	pm := &fakePluginManager{
-		plugins: make(map[string]fakePlugin),
-	}
-
 	for _, tc := range tcs {
 		sc := setupHTTPServerWithCfg(t, true, &setting.Cfg{
 			RBACEnabled:                      true,
@@ -136,7 +130,7 @@ func Test_PluginsInstallAndUninstall_AccessControl(t *testing.T) {
 			PluginAdminExternalManageEnabled: tc.pluginAdminExternalManageEnabled})
 		setInitCtxSignedInViewer(sc.initCtx)
 		setAccessControlPermissions(sc.acmock, tc.permissions, sc.initCtx.OrgID)
-		sc.hs.pluginManager = pm
+		sc.hs.pluginInstaller = NewFakePluginInstaller()
 
 		t.Run(testName("Install", tc), func(t *testing.T) {
 			input := strings.NewReader("{ \"version\": \"1.0.2\" }")
@@ -181,10 +175,8 @@ func Test_GetPluginAssets(t *testing.T) {
 				requestedFile: {},
 			},
 		}
-		service := &fakePluginStore{
-			plugins: map[string]plugins.PluginDTO{
-				pluginID: p,
-			},
+		service := &plugins.FakePluginStore{
+			PluginList: []plugins.PluginDTO{p},
 		}
 		l := &logtest.Fake{}
 
@@ -206,10 +198,8 @@ func Test_GetPluginAssets(t *testing.T) {
 			},
 			PluginDir: pluginDir,
 		}
-		service := &fakePluginStore{
-			plugins: map[string]plugins.PluginDTO{
-				pluginID: p,
-			},
+		service := &plugins.FakePluginStore{
+			PluginList: []plugins.PluginDTO{p},
 		}
 		l := &logtest.Fake{}
 
@@ -229,10 +219,8 @@ func Test_GetPluginAssets(t *testing.T) {
 			},
 			PluginDir: pluginDir,
 		}
-		service := &fakePluginStore{
-			plugins: map[string]plugins.PluginDTO{
-				pluginID: p,
-			},
+		service := &plugins.FakePluginStore{
+			PluginList: []plugins.PluginDTO{p},
 		}
 		l := &logtest.Fake{}
 
@@ -254,10 +242,8 @@ func Test_GetPluginAssets(t *testing.T) {
 			},
 			PluginDir: pluginDir,
 		}
-		service := &fakePluginStore{
-			plugins: map[string]plugins.PluginDTO{
-				pluginID: p,
-			},
+		service := &plugins.FakePluginStore{
+			PluginList: []plugins.PluginDTO{p},
 		}
 		l := &logtest.Fake{}
 
@@ -277,8 +263,8 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for an non-existing plugin", func(t *testing.T) {
-		service := &fakePluginStore{
-			plugins: map[string]plugins.PluginDTO{},
+		service := &plugins.FakePluginStore{
+			PluginList: []plugins.PluginDTO{},
 		}
 		l := &logtest.Fake{}
 
@@ -298,10 +284,11 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for a core plugin's file", func(t *testing.T) {
-		service := &fakePluginStore{
-			plugins: map[string]plugins.PluginDTO{
-				pluginID: {
-					Class: plugins.Core,
+		service := &plugins.FakePluginStore{
+			PluginList: []plugins.PluginDTO{
+				{
+					JSONData: plugins.JSONData{ID: pluginID},
+					Class:    plugins.Core,
 				},
 			},
 		}
@@ -398,8 +385,8 @@ func (c *fakePluginClient) QueryData(ctx context.Context, req *backend.QueryData
 }
 
 func Test_PluginsList_AccessControl(t *testing.T) {
-	pluginStore := fakePluginStore{plugins: map[string]plugins.PluginDTO{
-		"test-app": {
+	pluginStore := plugins.FakePluginStore{PluginList: []plugins.PluginDTO{
+		{
 			PluginDir:     "/grafana/plugins/test-app/dist",
 			Class:         "external",
 			DefaultNavURL: "/plugins/test-app/page/test",
@@ -416,7 +403,7 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 				},
 			},
 		},
-		"mysql": {
+		{
 			PluginDir: "/grafana/public/app/plugins/datasource/mysql",
 			Class:     "core",
 			Pinned:    false,
@@ -434,7 +421,8 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 			},
 		},
 	}}
-	pluginSettings := fakePluginSettings{plugins: map[string]*pluginsettings.DTO{
+
+	pluginSettings := pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
 		"test-app": {ID: 0, OrgID: 1, PluginID: "test-app", PluginVersion: "1.0.0", Enabled: true},
 		"mysql":    {ID: 0, OrgID: 1, PluginID: "mysql", PluginVersion: "", Enabled: true}},
 	}

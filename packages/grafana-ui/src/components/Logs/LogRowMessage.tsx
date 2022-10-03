@@ -16,8 +16,7 @@ import { LogRowContext } from './LogRowContext';
 import { LogRowContextQueryErrors, HasMoreContextRows, LogRowContextRows } from './LogRowContextProvider';
 import { getLogRowStyles } from './getLogRowStyles';
 
-//Components
-
+/** @deprecated will be removed in the next major version */
 export const MAX_CHARACTERS = 100000;
 
 interface Props extends Themeable2 {
@@ -187,5 +186,6 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
   }
 }
 
+/** @deprecated will be removed in the next major version */
 export const LogRowMessage = withTheme2(UnThemedLogRowMessage);
 LogRowMessage.displayName = 'LogRowMessage';

@@ -1,6 +1,6 @@
 // Libraries
 import classNames from 'classnames';
-import { cloneDeep, filter, has, uniqBy } from 'lodash';
+import { cloneDeep, filter, has, uniqBy, uniqueId } from 'lodash';
 import pluralize from 'pluralize';
 import React, { PureComponent, ReactNode } from 'react';
 
@@ -57,6 +57,9 @@ interface Props<TQuery extends DataQuery> {
   history?: Array<HistoryItem<TQuery>>;
   eventBus?: EventBusExtended;
   alerting?: boolean;
+  onQueryCopied?: () => void;
+  onQueryRemoved?: () => void;
+  onQueryToggled?: (queryStatus?: boolean | undefined) => void;
 }
 
 interface State<TQuery extends DataQuery> {
@@ -81,11 +84,10 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     showingHelp: false,
   };
 
-  componentDidMount() {
+  async componentDidMount() {
     const { data, query } = this.props;
     const dataFilteredByRefId = filterPanelDataToQuery(data, query.refId);
     this.setState({ data: dataFilteredByRefId });
-
     this.loadDatasource();
   }
 
@@ -274,18 +276,32 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   onRemoveQuery = () => {
-    this.props.onRemoveQuery(this.props.query);
+    const { onRemoveQuery, query, onQueryRemoved } = this.props;
+    onRemoveQuery(query);
+
+    if (onQueryRemoved) {
+      onQueryRemoved();
+    }
   };
 
   onCopyQuery = () => {
-    const copy = cloneDeep(this.props.query);
-    this.props.onAddQuery(copy);
+    const { query, onAddQuery, onQueryCopied } = this.props;
+    const copy = cloneDeep(query);
+    onAddQuery(copy);
+
+    if (onQueryCopied) {
+      onQueryCopied();
+    }
   };
 
   onDisableQuery = () => {
-    const { query } = this.props;
-    this.props.onChange({ ...query, hide: !query.hide });
-    this.props.onRunQuery();
+    const { query, onChange, onRunQuery, onQueryToggled } = this.props;
+    onChange({ ...query, hide: !query.hide });
+    onRunQuery();
+
+    if (onQueryToggled) {
+      onQueryToggled(query.hide);
+    }
   };
 
   onToggleHelp = () => {
@@ -435,6 +451,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     const { query, id, index, visualization } = this.props;
     const { datasource, showingHelp, data } = this.state;
     const isDisabled = query.hide;
+    const generatedUniqueId = uniqueId(id + '_');
 
     const rowClasses = classNames('query-editor-row', {
       'query-editor-row--disabled': isDisabled,
@@ -451,14 +468,14 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     return (
       <div aria-label={selectors.components.QueryEditorRows.rows}>
         <QueryOperationRow
-          id={id}
+          id={generatedUniqueId}
           draggable={true}
           index={index}
           headerElement={this.renderHeader}
           actions={this.renderActions}
           onOpen={this.onOpen}
         >
-          <div className={rowClasses}>
+          <div className={rowClasses} id={generatedUniqueId}>
             <ErrorBoundaryAlert>
               {showingHelp && DatasourceCheatsheet && (
                 <OperationRowHelp>

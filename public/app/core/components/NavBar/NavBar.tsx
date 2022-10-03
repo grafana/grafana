@@ -3,16 +3,13 @@ import { FocusScope } from '@react-aria/focus';
 import { Location as HistoryLocation } from 'history';
 import { cloneDeep } from 'lodash';
 import React, { useState } from 'react';
-import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, NavModelItem, NavSection } from '@grafana/data';
 import { config, locationSearchToObject, locationService, reportInteraction } from '@grafana/runtime';
 import { Icon, useTheme2, CustomScrollbar } from '@grafana/ui';
 import { getKioskMode } from 'app/core/navigation/kiosk';
-import { StoreState } from 'app/types';
-
-import { OrgSwitcher } from '../OrgSwitcher';
+import { useSelector } from 'app/types';
 
 import NavBarItem from './NavBarItem';
 import { NavBarItemIcon } from './NavBarItemIcon';
@@ -35,18 +32,13 @@ const onOpenSearch = () => {
 };
 
 export const NavBar = React.memo(() => {
-  const navBarTree = useSelector((state: StoreState) => state.navBarTree);
+  const navBarTree = useSelector((state) => state.navBarTree);
   const theme = useTheme2();
   const styles = getStyles(theme);
   const location = useLocation();
-  const [showSwitcherModal, setShowSwitcherModal] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuAnimationInProgress, setMenuAnimationInProgress] = useState(false);
   const [menuIdOpen, setMenuIdOpen] = useState<string | undefined>(undefined);
-
-  const toggleSwitcherModal = () => {
-    setShowSwitcherModal(!showSwitcherModal);
-  };
 
   // Here we need to hack in a "home" and "search" NavModelItem since this is constructed in the frontend
   const searchItem: NavModelItem = enrichWithInteractionTracking(
@@ -79,8 +71,7 @@ export const NavBar = React.memo(() => {
     .map((item) => enrichWithInteractionTracking(item, menuOpen));
   const configItems = enrichConfigItems(
     navTree.filter((item) => item.section === NavSection.Config),
-    location,
-    toggleSwitcherModal
+    location
   ).map((item) => enrichWithInteractionTracking(item, menuOpen));
 
   const activeItem = isSearchActive(location) ? searchItem : getActiveItem(navTree, location.pathname);
@@ -159,7 +150,6 @@ export const NavBar = React.memo(() => {
           </FocusScope>
         </NavBarContext.Provider>
       </nav>
-      {showSwitcherModal && <OrgSwitcher onDismiss={toggleSwitcherModal} />}
       {(menuOpen || menuAnimationInProgress) && (
         <div className={styles.menuWrapper}>
           <NavBarMenu

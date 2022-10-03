@@ -85,10 +85,7 @@ export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.E
 }
 
 export const getStyles = (theme: GrafanaTheme2) => ({
-  container: css`
-    padding: ${theme.spacing(3, 4)};
-    height: 100%;
-  `,
+  container: css``,
   readme: css`
     & img {
       max-width: 100%;

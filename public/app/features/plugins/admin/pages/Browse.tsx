@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import React, { ReactElement } from 'react';
-import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 
 import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
@@ -9,7 +8,7 @@ import { LoadingPlaceholder, Select, RadioButtonGroup, useStyles2, Tooltip } fro
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { StoreState } from 'app/types/store';
+import { useSelector } from 'app/types';
 
 import { HorizontalGroup } from '../components/HorizontalGroup';
 import { PluginList } from '../components/PluginList';
@@ -22,7 +21,7 @@ import { PluginListDisplayMode } from '../types';
 export default function Browse({ route }: GrafanaRouteComponentProps): ReactElement | null {
   const location = useLocation();
   const locationSearch = locationSearchToObject(location.search);
-  const navModel = useSelector((state: StoreState) => getNavModel(state.navIndex, 'plugins'));
+  const navModel = useSelector((state) => getNavModel(state.navIndex, 'plugins'));
   const { displayMode, setDisplayMode } = useDisplayMode();
   const styles = useStyles2(getStyles);
   const history = useHistory();

@@ -54,6 +54,7 @@ You can use the unit dropdown to also specify custom units, custom prefix or suf
 To select a custom unit enter the unit and select the last `Custom: xxx` option in the dropdown.
 
 - `suffix:<suffix>` for custom unit that should go after value.
+- `prefix:<prefix>` for custom unit that should go before value.
 - `time:<format>` For custom date time formats type for example `time:YYYY-MM-DD`. See [formats](https://momentjs.com/docs/#/displaying/) for the format syntax and options.
 - `si:<base scale><unit characters>` for custom SI units. For example: `si: mF`. This one is a bit more advanced as you can specify both a unit and the
   source data scale. So if your source data is represented as milli (thousands of) something prefix the unit with that
@@ -67,7 +68,7 @@ You can also paste a native emoji in the unit picker and pick it as a custom uni
 
 #### String units
 
-Grafana can sometime be too aggressive in parsing strings and displaying them as numbers. To make Grafana show the original string create a field override and add a unit property with the `string` unit.
+Grafana can sometimes be too aggressive in parsing strings and displaying them as numbers. To configure Grafana to show the original string value, create a field override and add a unit property with the `String` unit.
 
 ### Min
 
@@ -79,9 +80,9 @@ Lets you set the maximum value used in percentage threshold calculations. Leave 
 
 ### Decimals
 
-Number of decimals to render value with. Leave empty for Grafana to use the number of decimals provided by the data source.
+Specify the number of decimals Grafana includes in the rendered value. If you leave this field blank, Grafana automatically truncates the number of decimals based on the value. For example 1.1234 will display as 1.12 and 100.456 will display as 100.
 
-To change this setting, type a number in the field and then click outside the field or press Enter.
+To display all decimals, set the unit to `String`.
 
 ### Display name
 

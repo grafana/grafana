@@ -27,8 +27,7 @@ export function NavLandingPage({ navId }: Props) {
               {directChildren?.map((child) => (
                 <NavLandingPageCard
                   key={child.id}
-                  description={child.description}
-                  icon={child.icon}
+                  description={child.subTitle}
                   text={child.text}
                   url={child.url ?? ''}
                 />
@@ -37,16 +36,13 @@ export function NavLandingPage({ navId }: Props) {
           )}
           {nestedChildren?.map((child) => (
             <section key={child.id}>
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                <h2 className={styles.nestedTitle}>{child.text}</h2>
-              </div>
+              <h2 className={styles.nestedTitle}>{child.text}</h2>
               <div className={styles.nestedDescription}>{child.subTitle}</div>
               <div className={styles.grid}>
                 {child.children?.map((child) => (
                   <NavLandingPageCard
                     key={child.id}
-                    description={child.description}
-                    icon={child.icon}
+                    description={child.subTitle}
                     text={child.text}
                     url={child.url ?? ''}
                   />
@@ -68,10 +64,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   grid: css({
     display: 'grid',
-    gap: theme.spacing(2),
+    gap: theme.spacing(3),
     gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-    gridAutoRows: '200px',
-    padding: theme.spacing(2, 1),
+    gridAutoRows: '130px',
+    padding: theme.spacing(2, 0),
   }),
   nestedTitle: css({
     margin: theme.spacing(2, 0),

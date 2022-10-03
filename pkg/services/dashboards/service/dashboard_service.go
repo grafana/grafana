@@ -62,16 +62,16 @@ func ProvideDashboardService(
 	}
 }
 
-func (dr *DashboardServiceImpl) GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error) {
-	return dr.dashboardStore.GetProvisionedDashboardData(name)
+func (dr *DashboardServiceImpl) GetProvisionedDashboardData(ctx context.Context, name string) ([]*models.DashboardProvisioning, error) {
+	return dr.dashboardStore.GetProvisionedDashboardData(ctx, name)
 }
 
-func (dr *DashboardServiceImpl) GetProvisionedDashboardDataByDashboardID(dashboardID int64) (*models.DashboardProvisioning, error) {
-	return dr.dashboardStore.GetProvisionedDataByDashboardID(dashboardID)
+func (dr *DashboardServiceImpl) GetProvisionedDashboardDataByDashboardID(ctx context.Context, dashboardID int64) (*models.DashboardProvisioning, error) {
+	return dr.dashboardStore.GetProvisionedDataByDashboardID(ctx, dashboardID)
 }
 
-func (dr *DashboardServiceImpl) GetProvisionedDashboardDataByDashboardUID(orgID int64, dashboardUID string) (*models.DashboardProvisioning, error) {
-	return dr.dashboardStore.GetProvisionedDataByDashboardUID(orgID, dashboardUID)
+func (dr *DashboardServiceImpl) GetProvisionedDashboardDataByDashboardUID(ctx context.Context, orgID int64, dashboardUID string) (*models.DashboardProvisioning, error) {
+	return dr.dashboardStore.GetProvisionedDataByDashboardUID(ctx, orgID, dashboardUID)
 }
 
 func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, dto *dashboards.SaveDashboardDTO, shouldValidateAlerts bool,
@@ -112,7 +112,7 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 		}
 	}
 
-	isParentFolderChanged, err := dr.dashboardStore.ValidateDashboardBeforeSave(dash, dto.Overwrite)
+	isParentFolderChanged, err := dr.dashboardStore.ValidateDashboardBeforeSave(ctx, dash, dto.Overwrite)
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +129,7 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 	}
 
 	if validateProvisionedDashboard {
-		provisionedData, err := dr.GetProvisionedDashboardDataByDashboardID(dash.Id)
+		provisionedData, err := dr.GetProvisionedDashboardDataByDashboardID(ctx, dash.Id)
 		if err != nil {
 			return nil, err
 		}
@@ -225,7 +225,7 @@ func (dr *DashboardServiceImpl) SaveProvisionedDashboard(ctx context.Context, dt
 	}
 
 	// dashboard
-	dash, err := dr.dashboardStore.SaveProvisionedDashboard(*cmd, provisioning)
+	dash, err := dr.dashboardStore.SaveProvisionedDashboard(ctx, *cmd, provisioning)
 	if err != nil {
 		return nil, err
 	}
@@ -266,7 +266,7 @@ func (dr *DashboardServiceImpl) SaveFolderForProvisionedDashboards(ctx context.C
 		return nil, err
 	}
 
-	dash, err := dr.dashboardStore.SaveDashboard(*cmd)
+	dash, err := dr.dashboardStore.SaveDashboard(ctx, *cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -313,7 +313,7 @@ func (dr *DashboardServiceImpl) SaveDashboard(ctx context.Context, dto *dashboar
 		return nil, err
 	}
 
-	dash, err := dr.dashboardStore.SaveDashboard(*cmd)
+	dash, err := dr.dashboardStore.SaveDashboard(ctx, *cmd)
 	if err != nil {
 		return nil, fmt.Errorf("saving dashboard failed: %w", err)
 	}
@@ -407,7 +407,7 @@ func (dr *DashboardServiceImpl) DeleteProvisionedDashboard(ctx context.Context, 
 
 func (dr *DashboardServiceImpl) deleteDashboard(ctx context.Context, dashboardId int64, orgId int64, validateProvisionedDashboard bool) error {
 	if validateProvisionedDashboard {
-		provisionedData, err := dr.GetProvisionedDashboardDataByDashboardID(dashboardId)
+		provisionedData, err := dr.GetProvisionedDashboardDataByDashboardID(ctx, dashboardId)
 		if err != nil {
 			return fmt.Errorf("%v: %w", "failed to check if dashboard is provisioned", err)
 		}
@@ -434,7 +434,7 @@ func (dr *DashboardServiceImpl) ImportDashboard(ctx context.Context, dto *dashbo
 		return nil, err
 	}
 
-	dash, err := dr.dashboardStore.SaveDashboard(*cmd)
+	dash, err := dr.dashboardStore.SaveDashboard(ctx, *cmd)
 	if err != nil {
 		return nil, err
 	}

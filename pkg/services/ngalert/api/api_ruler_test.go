@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
@@ -30,22 +31,22 @@ import (
 )
 
 func TestRouteDeleteAlertRules(t *testing.T) {
-	getRecordedCommand := func(ruleStore *store.FakeRuleStore) []store.GenericRecordedQuery {
+	getRecordedCommand := func(ruleStore *fakes.RuleStore) []fakes.GenericRecordedQuery {
 		results := ruleStore.GetRecordedCommands(func(cmd interface{}) (interface{}, bool) {
-			c, ok := cmd.(store.GenericRecordedQuery)
+			c, ok := cmd.(fakes.GenericRecordedQuery)
 			if !ok || c.Name != "DeleteAlertRulesByUID" {
 				return nil, false
 			}
 			return c, ok
 		})
-		var result []store.GenericRecordedQuery
+		var result []fakes.GenericRecordedQuery
 		for _, cmd := range results {
-			result = append(result, cmd.(store.GenericRecordedQuery))
+			result = append(result, cmd.(fakes.GenericRecordedQuery))
 		}
 		return result
 	}
 
-	assertRulesDeleted := func(t *testing.T, expectedRules []*models.AlertRule, ruleStore *store.FakeRuleStore, scheduler *schedule.FakeScheduleService) {
+	assertRulesDeleted := func(t *testing.T, expectedRules []*models.AlertRule, ruleStore *fakes.RuleStore, scheduler *schedule.FakeScheduleService) {
 		deleteCommands := getRecordedCommand(ruleStore)
 		require.Len(t, deleteCommands, 1)
 		cmd := deleteCommands[0]
@@ -73,8 +74,8 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 	orgID := rand.Int63()
 	folder := randFolder()
 
-	initFakeRuleStore := func(t *testing.T) *store.FakeRuleStore {
-		ruleStore := store.NewFakeRuleStore(t)
+	initFakeRuleStore := func(t *testing.T) *fakes.RuleStore {
+		ruleStore := fakes.NewRuleStore(t)
 		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
 		// add random data
 		ruleStore.PutRule(context.Background(), models.GenerateAlertRulesSmallNonEmpty(models.AlertRuleGen(withOrgID(orgID)))...)
@@ -267,7 +268,7 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 		t.Run("should return rules for which user has access to data source", func(t *testing.T) {
 			orgID := rand.Int63()
 			folder := randFolder()
-			ruleStore := store.NewFakeRuleStore(t)
+			ruleStore := fakes.NewRuleStore(t)
 			ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
 			expectedRules := models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))
 			ruleStore.PutRule(context.Background(), expectedRules...)
@@ -303,7 +304,7 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 		t.Run("should return all rules from folder", func(t *testing.T) {
 			orgID := rand.Int63()
 			folder := randFolder()
-			ruleStore := store.NewFakeRuleStore(t)
+			ruleStore := fakes.NewRuleStore(t)
 			ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
 			expectedRules := models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))
 			ruleStore.PutRule(context.Background(), expectedRules...)
@@ -337,7 +338,7 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 	t.Run("should return the provenance of the alert rules", func(t *testing.T) {
 		orgID := rand.Int63()
 		folder := randFolder()
-		ruleStore := store.NewFakeRuleStore(t)
+		ruleStore := fakes.NewRuleStore(t)
 		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
 		expectedRules := models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))
 		ruleStore.PutRule(context.Background(), expectedRules...)
@@ -378,7 +379,7 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 	t.Run("should enforce order of rules in the group", func(t *testing.T) {
 		orgID := rand.Int63()
 		folder := randFolder()
-		ruleStore := store.NewFakeRuleStore(t)
+		ruleStore := fakes.NewRuleStore(t)
 		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
 		groupKey := models.GenerateGroupKey(orgID)
 		groupKey.NamespaceUID = folder.Uid
@@ -422,7 +423,7 @@ func TestRouteGetRulesConfig(t *testing.T) {
 	t.Run("fine-grained access is enabled", func(t *testing.T) {
 		t.Run("should check access to data source", func(t *testing.T) {
 			orgID := rand.Int63()
-			ruleStore := store.NewFakeRuleStore(t)
+			ruleStore := fakes.NewRuleStore(t)
 			folder1 := randFolder()
 			folder2 := randFolder()
 			ruleStore.Folders[orgID] = []*models2.Folder{folder1, folder2}
@@ -460,7 +461,7 @@ func TestRouteGetRulesConfig(t *testing.T) {
 	t.Run("should return rules in group sorted by group index", func(t *testing.T) {
 		orgID := rand.Int63()
 		folder := randFolder()
-		ruleStore := store.NewFakeRuleStore(t)
+		ruleStore := fakes.NewRuleStore(t)
 		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
 		groupKey := models.GenerateGroupKey(orgID)
 		groupKey.NamespaceUID = folder.Uid
@@ -505,7 +506,7 @@ func TestRouteGetRulesGroupConfig(t *testing.T) {
 		t.Run("should check access to data source", func(t *testing.T) {
 			orgID := rand.Int63()
 			folder := randFolder()
-			ruleStore := store.NewFakeRuleStore(t)
+			ruleStore := fakes.NewRuleStore(t)
 			ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
 			groupKey := models.GenerateGroupKey(orgID)
 			groupKey.NamespaceUID = folder.Uid
@@ -540,7 +541,7 @@ func TestRouteGetRulesGroupConfig(t *testing.T) {
 	t.Run("should return rules in group sorted by group index", func(t *testing.T) {
 		orgID := rand.Int63()
 		folder := randFolder()
-		ruleStore := store.NewFakeRuleStore(t)
+		ruleStore := fakes.NewRuleStore(t)
 		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
 		groupKey := models.GenerateGroupKey(orgID)
 		groupKey.NamespaceUID = folder.Uid
@@ -636,17 +637,16 @@ func TestVerifyProvisionedRulesNotAffected(t *testing.T) {
 	})
 }
 
-func createServiceWithProvenanceStore(ac *acMock.Mock, store *store.FakeRuleStore, scheduler schedule.ScheduleService, provenanceStore provisioning.ProvisioningStore) *RulerSrv {
+func createServiceWithProvenanceStore(ac *acMock.Mock, store *fakes.RuleStore, scheduler schedule.ScheduleService, provenanceStore provisioning.ProvisioningStore) *RulerSrv {
 	svc := createService(ac, store, scheduler)
 	svc.provenanceStore = provenanceStore
 	return svc
 }
 
-func createService(ac *acMock.Mock, store *store.FakeRuleStore, scheduler schedule.ScheduleService) *RulerSrv {
+func createService(ac *acMock.Mock, store *fakes.RuleStore, scheduler schedule.ScheduleService) *RulerSrv {
 	return &RulerSrv{
 		xactManager:     store,
 		store:           store,
-		DatasourceCache: nil,
 		QuotaService:    nil,
 		provenanceStore: provisioning.NewFakeProvisioningStore(),
 		scheduleService: scheduler,

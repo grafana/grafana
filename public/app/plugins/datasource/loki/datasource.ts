@@ -21,7 +21,6 @@ import {
   FieldCache,
   AbstractQuery,
   FieldType,
-  getLogLevelFromKey,
   Labels,
   LoadingState,
   LogLevel,
@@ -35,13 +34,14 @@ import {
   QueryFixAction,
 } from '@grafana/data';
 import { FetchError, config, DataSourceWithBackend } from '@grafana/runtime';
-import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import { queryLogsVolume } from 'app/core/logsModel';
 import { convertToWebSocketUrl } from 'app/core/utils/explore';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
 import { serializeParams } from '../../../core/utils/fetch';
+import { RowContextOptions } from '../../../features/logs/components/LogRowContextProvider';
+import { getLogLevelFromKey } from '../../../features/logs/utils';
 import { renderLegendFormat } from '../prometheus/legend';
 import { replaceVariables, returnVariables } from '../prometheus/querybuilder/shared/parsingUtils';
 
@@ -272,7 +272,7 @@ export class LokiDatasource
       expandedQueries = queries.map((query) => ({
         ...query,
         datasource: this.getRef(),
-        expr: this.templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr),
+        expr: this.addAdHocFilters(this.templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr)),
       }));
     }
 

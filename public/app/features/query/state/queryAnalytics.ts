@@ -1,5 +1,6 @@
 import { PanelData, LoadingState, DataSourceApi, CoreApp, urlUtil } from '@grafana/data';
 import { reportMetaAnalytics, MetaAnalyticsEventName, DataRequestEventPayload } from '@grafana/runtime';
+import { getConfig } from 'app/core/config';
 
 import { getDashboardSrv } from '../../dashboard/services/DashboardSrv';
 
@@ -50,7 +51,10 @@ export function emitDataRequestEvent(datasource: DataSourceApi) {
       eventData.dashboardName = dashboard.title;
       eventData.dashboardUid = dashboard.uid;
       eventData.folderName = dashboard.meta.folderTitle;
-      eventData.publicDashboardUid = dashboard.meta.publicDashboardUid;
+
+      if (getConfig().isPublicDashboardView) {
+        eventData.publicDashboardUid = dashboard.meta.publicDashboardUid;
+      }
     }
 
     if (data.series && data.series.length > 0) {

@@ -26,6 +26,7 @@ export function DashboardSearchModal({ isOpen }: Props) {
   const animStyles = useStyles2((theme) => getAnimStyles(theme, ANIMATION_DURATION));
   const { query, onQueryChange, onCloseSearch } = useSearchQuery({});
   const ref = useRef<HTMLDivElement>(null);
+  const backdropRef = useRef(null);
   const [animationComplete, setAnimationComplete] = useState(false);
 
   const { overlayProps, underlayProps } = useOverlay({ isOpen, onClose: onCloseSearch }, ref);
@@ -45,10 +46,11 @@ export function DashboardSearchModal({ isOpen }: Props) {
 
   return (
     <OverlayContainer>
-      <CSSTransition appear in timeout={ANIMATION_DURATION} classNames={animStyles.underlay}>
-        <div onClick={onCloseSearch} className={styles.underlay} {...underlayProps} />
+      <CSSTransition nodeRef={backdropRef} appear in timeout={ANIMATION_DURATION} classNames={animStyles.underlay}>
+        <div ref={backdropRef} onClick={onCloseSearch} className={styles.underlay} {...underlayProps} />
       </CSSTransition>
       <CSSTransition
+        nodeRef={ref}
         onEntered={() => setAnimationComplete(true)}
         appear
         in
