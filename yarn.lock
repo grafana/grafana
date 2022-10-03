@@ -5297,7 +5297,7 @@ __metadata:
     rimraf: 3.0.2
     rollup: 2.79.1
     rollup-plugin-dts: ^4.2.2
-    rollup-plugin-esbuild: ^4.9.1
+    rollup-plugin-esbuild: 4.10.1
     rollup-plugin-node-externals: ^4.1.0
     rxjs: 7.5.6
     sinon: 14.0.0
@@ -5324,7 +5324,7 @@ __metadata:
     rimraf: 3.0.2
     rollup: 2.79.1
     rollup-plugin-dts: ^4.2.2
-    rollup-plugin-esbuild: ^4.9.1
+    rollup-plugin-esbuild: 4.10.1
     rollup-plugin-node-externals: ^4.1.0
     tslib: 2.4.0
     typescript: 4.8.2
@@ -5361,7 +5361,7 @@ __metadata:
     rimraf: 3.0.2
     rollup: 2.79.1
     rollup-plugin-dts: ^4.2.2
-    rollup-plugin-esbuild: ^4.9.1
+    rollup-plugin-esbuild: 4.10.1
     rollup-plugin-node-externals: ^4.1.0
     tracelib: 1.0.1
     ts-loader: 6.2.2
@@ -5451,7 +5451,7 @@ __metadata:
     rimraf: 3.0.2
     rollup: 2.79.1
     rollup-plugin-dts: ^4.2.2
-    rollup-plugin-esbuild: ^4.9.1
+    rollup-plugin-esbuild: 4.10.1
     rollup-plugin-node-externals: ^4.1.0
     rollup-plugin-sourcemaps: 0.6.3
     rollup-plugin-terser: 7.0.2
@@ -5478,7 +5478,7 @@ __metadata:
     rimraf: 3.0.2
     rollup: 2.79.1
     rollup-plugin-dts: ^4.2.2
-    rollup-plugin-esbuild: ^4.9.1
+    rollup-plugin-esbuild: 4.10.1
     rollup-plugin-node-externals: ^4.1.0
     tslib: 2.4.0
     typescript: 4.8.2
@@ -5717,7 +5717,7 @@ __metadata:
     rimraf: 3.0.2
     rollup: 2.79.1
     rollup-plugin-dts: ^4.2.2
-    rollup-plugin-esbuild: ^4.9.1
+    rollup-plugin-esbuild: 4.10.1
     rollup-plugin-node-externals: ^4.1.0
     rollup-plugin-svg-import: ^1.6.0
     rxjs: 7.5.6
@@ -35657,9 +35657,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rollup-plugin-esbuild@npm:^4.9.1":
-  version: 4.9.1
-  resolution: "rollup-plugin-esbuild@npm:4.9.1"
+"rollup-plugin-esbuild@npm:4.10.1":
+  version: 4.10.1
+  resolution: "rollup-plugin-esbuild@npm:4.10.1"
   dependencies:
     "@rollup/pluginutils": ^4.1.1
     debug: ^4.3.3
@@ -35669,7 +35669,7 @@ __metadata:
   peerDependencies:
     esbuild: ">=0.10.1"
     rollup: ^1.20.0 || ^2.0.0
-  checksum: 9b74a7ccff6e1487956c2f3f79e302e96b97036e445f2e56749decccda8733e49354fb1e01698420909fc0c817d535771bdbbb8beb046d961af3e08f005741d8
+  checksum: 8bc7c90c972e00d6757b92d6ee4c04d9b0f34b61659f4c544b3994091bc5fdfe4ffdcbf56999111da39e39e650eb93001d587843e87bc306322d9869afe4d60b
   languageName: node
   linkType: hard
 
