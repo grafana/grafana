@@ -216,7 +216,7 @@ func (ss *SQLStore) GetSqlxSession() *session.SessionDB {
 		if !debugSQL {
 			logger = DiscardLogger{}
 		} else {
-			logger = NewGenericLogger(log.LvlInfo, log.WithSuffix(log.New("sqlstore.sqlx"), log.CallerContextKey, log.StackCaller(log.DefaultCallerDepth)))
+			logger = NewGenericLogger(log.LvlCrit, log.WithSuffix(log.New("sqlstore.sqlx"), log.CallerContextKey, log.StackCaller(log.DefaultCallerDepth)))
 		}
 		drivers := map[string]driver.Driver{
 			migrator.SQLite:   &sqlite3.SQLiteDriver{},
