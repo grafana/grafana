@@ -21,7 +21,7 @@ interface TableContainerProps {
   width: number;
   timeZone: TimeZone;
   onCellFilterAdded?: (filter: FilterItem) => void;
-  showRawPrometheus: boolean;
+  showRawPrometheus?: boolean;
 }
 
 interface TableContainerState {

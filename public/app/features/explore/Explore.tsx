@@ -249,11 +249,24 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     );
   }
 
-  renderTablePanel(width: number, rawPrometheus = false) {
+  renderTablePanel(width: number) {
     const { exploreId, datasourceInstance, timeZone } = this.props;
     return (
       <TableContainer
-        showRawPrometheus={rawPrometheus}
+        ariaLabel={selectors.pages.Explore.General.table}
+        width={width}
+        exploreId={exploreId}
+        onCellFilterAdded={datasourceInstance?.modifyQuery ? this.onCellFilterAdded : undefined}
+        timeZone={timeZone}
+      />
+    );
+  }
+
+  renderRawPrometheus(width: number) {
+    const { exploreId, datasourceInstance, timeZone } = this.props;
+    return (
+      <TableContainer
+        showRawPrometheus={true}
         ariaLabel={selectors.pages.Explore.General.table}
         width={width}
         exploreId={exploreId}
@@ -390,7 +403,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                             <ErrorBoundaryAlert>{this.renderGraphPanel(width)}</ErrorBoundaryAlert>
                           )}
                           {showRawPrometheus && (
-                            <ErrorBoundaryAlert>{this.renderTablePanel(width, true)}</ErrorBoundaryAlert>
+                            <ErrorBoundaryAlert>{this.renderRawPrometheus(width)}</ErrorBoundaryAlert>
                           )}
                           {showTable && <ErrorBoundaryAlert>{this.renderTablePanel(width)}</ErrorBoundaryAlert>}
                           {showLogs && <ErrorBoundaryAlert>{this.renderLogsPanel(width)}</ErrorBoundaryAlert>}

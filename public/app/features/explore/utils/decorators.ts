@@ -92,8 +92,55 @@ export const decorateWithGraphResult = (data: ExplorePanelData): ExplorePanelDat
  * multiple results and so this should be used with mergeMap or similar to unbox the internal observable.
  */
 export const decorateWithTableResult = (data: ExplorePanelData): Observable<ExplorePanelData> => {
+  if (data.tableFrames.length === 0) {
+    return of({ ...data, tableResult: null });
+  }
+
+  data.tableFrames.sort((frameA: DataFrame, frameB: DataFrame) => {
+    const frameARefId = frameA.refId!;
+    const frameBRefId = frameB.refId!;
+
+    if (frameARefId > frameBRefId) {
+      return 1;
+    }
+    if (frameARefId < frameBRefId) {
+      return -1;
+    }
+    return 0;
+  });
+
+  const hasOnlyTimeseries = data.tableFrames.every((df) => isTimeSeries(df));
+
+  // If we have only timeseries we do join on default time column which makes more sense. If we are showing
+  // non timeseries or some mix of data we are not trying to join on anything and just try to merge them in
+  // single table, which may not make sense in most cases, but it's up to the user to query something sensible.
+  const transformer = hasOnlyTimeseries
+    ? of(data.tableFrames).pipe(standardTransformers.joinByFieldTransformer.operator({}))
+    : of(data.tableFrames).pipe(standardTransformers.mergeTransformer.operator({}));
+
+  return transformer.pipe(
+    map((frames) => {
+      const frame = frames[0];
+
+      // set display processor
+      for (const field of frame.fields) {
+        field.display =
+          field.display ??
+          getDisplayProcessor({
+            field,
+            theme: config.theme2,
+            timeZone: data.request?.timezone ?? 'browser',
+          });
+      }
+
+      return { ...data, tableResult: frame };
+    })
+  );
+};
+
+export const decorateWithRawPrometheusResult = (data: ExplorePanelData): Observable<ExplorePanelData> => {
   // Prometheus has a custom frame visualization alongside the table view, but they both handle the data the same
-  const tableFrames = data.tableFrames.length ? data.tableFrames : data.rawPrometheusFrames;
+  const tableFrames = data.rawPrometheusFrames;
 
   if (!tableFrames || tableFrames.length === 0) {
     return of({ ...data, tableResult: null });
@@ -136,11 +183,7 @@ export const decorateWithTableResult = (data: ExplorePanelData): Observable<Expl
           });
       }
 
-      if (data.rawPrometheusFrames?.length) {
-        return { ...data, rawPrometheusResult: frame };
-      }
-
-      return { ...data, tableResult: frame };
+      return { ...data, rawPrometheusResult: frame };
     })
   );
 };
@@ -183,8 +226,10 @@ export function decorateData(
     map((data: PanelData) => preProcessPanelData(data, queryResponse)),
     map(decorateWithFrameTypeMetadata),
     map(decorateWithGraphResult),
+    map(decorateWithGraphResult),
     map(decorateWithLogsResult({ absoluteRange, refreshInterval, queries, fullRangeLogsVolumeAvailable })),
-    mergeMap(decorateWithTableResult)
+    mergeMap(decorateWithTableResult),
+    mergeMap(decorateWithRawPrometheusResult)
   );
 }
 
