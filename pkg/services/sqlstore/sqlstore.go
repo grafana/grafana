@@ -32,7 +32,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	sqllog "github.com/grafana/grafana/pkg/services/sqlstore/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
@@ -186,32 +185,38 @@ func (ss *SQLStore) Bus() bus.Bus {
 	return ss.bus
 }
 
-// Hooks satisfies the sqlhook.Hooks interface
-type Hooks struct {
-	logger sqllog.ILogger
+// SQLxHooks satisfies the sqlhook.SQLxHooks interface
+type SQLxHooks struct {
+	logger ILogger
 }
 
 // Before hook will return the context with the timestamp
-func (h *Hooks) Before(ctx context.Context, query string, args ...interface{}) (context.Context, error) {
+func (h *SQLxHooks) Before(ctx context.Context, query string, args ...interface{}) (context.Context, error) {
 	return context.WithValue(ctx, "start", time.Now()), nil
 }
 
 // After hook will get the timestamp registered on the Before hook and logs the query, its args and its elapsed time
-func (h *Hooks) After(ctx context.Context, query string, args ...interface{}) (context.Context, error) {
+func (h *SQLxHooks) After(ctx context.Context, query string, args ...interface{}) (context.Context, error) {
 	start := ctx.Value("start").(time.Time)
 	h.logger.Infof("[SQL] %v %v - took: %v", query, args, time.Since(start))
 	return ctx, nil
 }
 
+// OnError will be called if any error happens
+func (h *SQLxHooks) OnError(ctx context.Context, err error, query string, args ...interface{}) error {
+	h.logger.Errorf("[SQL] %v %v failed: %v - took: %v", query, args, err)
+	return nil
+}
+
 func (ss *SQLStore) GetSqlxSession() *session.SessionDB {
 	if ss.sqlxsession == nil {
-		var logger sqllog.ILogger
+		var logger ILogger
 
 		debugSQL := ss.Cfg.Raw.Section("database").Key("log_queries").MustBool(false)
 		if !debugSQL {
-			logger = sqllog.DiscardLogger{}
+			logger = DiscardLogger{}
 		} else {
-			logger = sqllog.NewGenericLogger(log.LvlInfo, log.WithSuffix(log.New("sqlstore.sqlx"), log.CallerContextKey, log.StackCaller(log.DefaultCallerDepth)))
+			logger = NewGenericLogger(log.LvlInfo, log.WithSuffix(log.New("sqlstore.sqlx"), log.CallerContextKey, log.StackCaller(log.DefaultCallerDepth)))
 		}
 		drivers := map[string]driver.Driver{
 			migrator.SQLite:   &sqlite3.SQLiteDriver{},
@@ -227,7 +232,7 @@ func (ss *SQLStore) GetSqlxSession() *session.SessionDB {
 		}
 
 		driverWithHooks := "sqlx" + dbType + "WithHooks"
-		sql.Register(driverWithHooks, sqlhooks.Wrap(d, &Hooks{logger: logger}))
+		sql.Register(driverWithHooks, sqlhooks.Wrap(d, &SQLxHooks{logger: logger}))
 
 		connectionString, err := ss.buildConnectionString()
 		if err != nil {
@@ -451,7 +456,7 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 		engine.SetLogger(&xorm.DiscardLogger{})
 	} else {
 		// add stack to database calls to be able to see what repository initiated queries. Top 7 items from the stack as they are likely in the xorm library.
-		engine.SetLogger(sqllog.NewXormLogger(log.LvlInfo, log.WithSuffix(log.New("sqlstore.xorm"), log.CallerContextKey, log.StackCaller(log.DefaultCallerDepth))))
+		engine.SetLogger(NewXormLogger(log.LvlInfo, log.WithSuffix(log.New("sqlstore.xorm"), log.CallerContextKey, log.StackCaller(log.DefaultCallerDepth))))
 		engine.ShowSQL(true)
 		engine.ShowExecTime(true)
 	}

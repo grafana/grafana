@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 
-	sqllog "github.com/grafana/grafana/pkg/services/sqlstore/log"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -72,7 +71,6 @@ func (gs *SessionDB) ExecWithReturningId(ctx context.Context, query string, args
 
 type SessionTx struct {
 	sqlxtx *sqlx.Tx
-	logger sqllog.ILogger
 }
 
 func (gtx *SessionTx) NamedExec(ctx context.Context, query string, arg interface{}) (sql.Result, error) {
