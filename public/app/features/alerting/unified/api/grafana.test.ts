@@ -45,26 +45,29 @@ describe('contactPointsStateDtoToModel method', () => {
         active: true,
         integrations: [
           {
-            lastError: 'establish connection to server: dial tcp: lookup smtp.example.org on 8.8.8.8:53: no such host',
-            lastNotify: '2022-07-08 17:42:44.998893 +0000 UTC',
-            lastNotifyDuration: '117.2455ms',
+            lastNotifyAttemptError:
+              'establish connection to server: dial tcp: lookup smtp.example.org on 8.8.8.8:53: no such host',
+            lastNotifyAttempt: '2022-07-08 17:42:44.998893 +0000 UTC',
+            lastNotifyAttemptDuration: '117.2455ms',
             name: 'email[0]',
           },
           {
-            lastError: 'establish connection to server: dial tcp: lookup smtp.example.org on 8.8.8.8:53: no such host',
-            lastNotify: '2022-07-08 17:42:44.998893 +0000 UTC',
-            lastNotifyDuration: '117.2455ms',
+            lastNotifyAttemptError:
+              'establish connection to server: dial tcp: lookup smtp.example.org on 8.8.8.8:53: no such host',
+            lastNotifyAttempt: '2022-07-08 17:42:44.998893 +0000 UTC',
+            lastNotifyAttemptDuration: '117.2455ms',
             name: 'email[1]',
           },
           {
-            lastNotify: '2022-07-08 17:42:44.998893 +0000 UTC',
-            lastNotifyDuration: '117.2455ms',
+            lastNotifyAttempt: '2022-07-08 17:42:44.998893 +0000 UTC',
+            lastNotifyAttemptDuration: '117.2455ms',
             name: 'email[2]',
           },
           {
-            lastError: 'establish connection to server: dial tcp: lookup smtp.example.org on 8.8.8.8:53: no such host',
-            lastNotify: '2022-07-08 17:42:44.998893 +0000 UTC',
-            lastNotifyDuration: '117.2455ms',
+            lastNotifyAttemptError:
+              'establish connection to server: dial tcp: lookup smtp.example.org on 8.8.8.8:53: no such host',
+            lastNotifyAttempt: '2022-07-08 17:42:44.998893 +0000 UTC',
+            lastNotifyAttemptDuration: '117.2455ms',
             name: 'webhook[0]',
           },
         ],
@@ -74,8 +77,8 @@ describe('contactPointsStateDtoToModel method', () => {
         active: true,
         integrations: [
           {
-            lastNotify: '2022-07-08 17:42:44.998893 +0000 UTC',
-            lastNotifyDuration: '117.2455ms',
+            lastNotifyAttempt: '2022-07-08 17:42:44.998893 +0000 UTC',
+            lastNotifyAttemptDuration: '117.2455ms',
             name: 'email[0]',
           },
         ],
@@ -91,31 +94,31 @@ describe('contactPointsStateDtoToModel method', () => {
           notifiers: {
             email: [
               {
-                lastError:
+                lastNotifyAttemptError:
                   'establish connection to server: dial tcp: lookup smtp.example.org on 8.8.8.8:53: no such host',
-                lastNotify: '2022-07-08 17:42:44.998893 +0000 UTC',
-                lastNotifyDuration: '117.2455ms',
+                lastNotifyAttempt: '2022-07-08 17:42:44.998893 +0000 UTC',
+                lastNotifyAttemptDuration: '117.2455ms',
                 name: 'email[0]',
               },
               {
-                lastError:
+                lastNotifyAttemptError:
                   'establish connection to server: dial tcp: lookup smtp.example.org on 8.8.8.8:53: no such host',
-                lastNotify: '2022-07-08 17:42:44.998893 +0000 UTC',
-                lastNotifyDuration: '117.2455ms',
+                lastNotifyAttempt: '2022-07-08 17:42:44.998893 +0000 UTC',
+                lastNotifyAttemptDuration: '117.2455ms',
                 name: 'email[1]',
               },
               {
-                lastNotify: '2022-07-08 17:42:44.998893 +0000 UTC',
-                lastNotifyDuration: '117.2455ms',
+                lastNotifyAttempt: '2022-07-08 17:42:44.998893 +0000 UTC',
+                lastNotifyAttemptDuration: '117.2455ms',
                 name: 'email[2]',
               },
             ],
             webhook: [
               {
-                lastError:
+                lastNotifyAttemptError:
                   'establish connection to server: dial tcp: lookup smtp.example.org on 8.8.8.8:53: no such host',
-                lastNotify: '2022-07-08 17:42:44.998893 +0000 UTC',
-                lastNotifyDuration: '117.2455ms',
+                lastNotifyAttempt: '2022-07-08 17:42:44.998893 +0000 UTC',
+                lastNotifyAttemptDuration: '117.2455ms',
                 name: 'webhook[0]',
               },
             ],
@@ -127,7 +130,7 @@ describe('contactPointsStateDtoToModel method', () => {
           notifiers: {
             email: [
               {
-                lastNotify: '2022-07-08 17:42:44.998893 +0000 UTC',
+                lastNotifyAttempt: '2022-07-08 17:42:44.998893 +0000 UTC',
                 lastNotifyDuration: '117.2455ms',
                 name: 'email[0]',
               },
