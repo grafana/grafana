@@ -96,5 +96,28 @@ describe('breadcrumb utils', () => {
         { text: 'My page', href: '/my-page' },
       ]);
     });
+
+    it('matches the home nav ignoring query parameters', () => {
+      const pageNav: NavModelItem = {
+        text: 'My page',
+        url: '/my-page',
+        parentItem: {
+          text: 'My parent page',
+          url: '/home?orgId=1',
+        },
+      };
+      const sectionNav: NavModelItem = {
+        text: 'My section',
+        url: '/my-section',
+        parentItem: {
+          text: 'My parent section',
+          url: '/my-parent-section',
+        },
+      };
+      expect(buildBreadcrumbs(mockHomeNav, sectionNav, pageNav)).toEqual([
+        { text: 'Home', href: '/home?orgId=1' },
+        { text: 'My page', href: '/my-page' },
+      ]);
+    });
   });
 });

@@ -7,8 +7,10 @@ export function buildBreadcrumbs(homeNav: NavModelItem, sectionNav: NavModelItem
   let foundHome = false;
 
   function addCrumbs(node: NavModelItem) {
+    // extract the pathname from the url
+    const urlPathname = node.url?.split('?')[0];
     if (!foundHome && !node.hideFromBreadcrumbs) {
-      if (node.url === homeNav.url) {
+      if (urlPathname === homeNav.url) {
         crumbs.unshift({ text: homeNav.text, href: node.url ?? '' });
         foundHome = true;
       } else {
