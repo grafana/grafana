@@ -83,7 +83,6 @@ export const SplitView = ({ uiState: { rightPaneSize }, children, minSize = 200,
       minSize={minSize}
       maxSize={width - minSize}
       resizerClassName={useStyles2(getResizerStyles(hasSplit))}
-      paneStyle={{ overflow: 'auto', display: 'flex', flexDirection: 'column', overflowY: 'scroll' }}
       onDragStarted={onDragStarted}
       onDragFinished={(size: number) => onDragFinished(size, onResize)}
     >
