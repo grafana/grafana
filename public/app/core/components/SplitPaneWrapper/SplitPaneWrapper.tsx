@@ -161,25 +161,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       overflow: hidden;
       width: 100%;
     `,
-    resizerV: cx(
-      resizer,
-      css`
-        cursor: col-resize;
-        width: ${paneSpacing};
-
-        &::before {
-          border-right: 1px solid transparent;
-          height: 100%;
-          left: 50%;
-          transform: translateX(-50%);
-        }
-
-        &::after {
-          height: 200px;
-          width: 4px;
-        }
-      `
-    ),
     resizerH: cx(
       resizer,
       css`
