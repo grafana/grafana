@@ -35,7 +35,7 @@ func (s *Service) Update(ctx context.Context, cmd *playlist.UpdatePlaylistComman
 	return s.store.Update(ctx, cmd)
 }
 
-func (s *Service) GetSummary(ctx context.Context, q *playlist.GetPlaylistByUidQuery) (*playlist.Playlist, error) {
+func (s *Service) GetWithoutItems(ctx context.Context, q *playlist.GetPlaylistByUidQuery) (*playlist.Playlist, error) {
 	return s.store.Get(ctx, q)
 }
 

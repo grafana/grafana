@@ -13,7 +13,7 @@ import (
 func (hs *HTTPServer) ValidateOrgPlaylist(c *models.ReqContext) {
 	uid := web.Params(c.Req)[":uid"]
 	query := playlist.GetPlaylistByUidQuery{UID: uid, OrgId: c.OrgID}
-	p, err := hs.playlistService.GetSummary(c.Req.Context(), &query)
+	p, err := hs.playlistService.GetWithoutItems(c.Req.Context(), &query)
 
 	if err != nil {
 		c.JsonApiErr(404, "Playlist not found", err)
