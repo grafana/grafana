@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	grpccontext "github.com/grafana/grafana/pkg/services/grpcserver/context"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -27,17 +28,19 @@ type authenticator struct {
 	contextHandler grpccontext.ContextHandler
 	logger         log.Logger
 
-	APIKeyService apikey.Service
-	UserService   user.Service
+	APIKeyService        apikey.Service
+	UserService          user.Service
+	AccessControlService accesscontrol.Service
 }
 
-func ProvideAuthenticator(apiKeyService apikey.Service, userService user.Service, contextHandler grpccontext.ContextHandler) Authenticator {
+func ProvideAuthenticator(apiKeyService apikey.Service, userService user.Service, accessControlService accesscontrol.Service, contextHandler grpccontext.ContextHandler) Authenticator {
 	return &authenticator{
 		contextHandler: contextHandler,
 		logger:         log.New("grpc-server-authenticator"),
 
-		APIKeyService: apiKeyService,
-		UserService:   userService,
+		AccessControlService: accessControlService,
+		APIKeyService:        apiKeyService,
+		UserService:          userService,
 	}
 }
 
@@ -110,6 +113,14 @@ func (a *authenticator) getSignedInUser(ctx context.Context, token string) (*use
 	// disabled service accounts are not allowed to access the API
 	if signedInUser.IsDisabled {
 		return nil, fmt.Errorf("service account is disabled")
+	}
+
+	if signedInUser.Permissions[signedInUser.OrgID] == nil {
+		permissions, err := a.AccessControlService.GetUserPermissions(ctx, signedInUser, accesscontrol.Options{})
+		if err != nil {
+			a.logger.Error("failed fetching permissions for user", "userID", signedInUser.UserID, "error", err)
+		}
+		signedInUser.Permissions[signedInUser.OrgID] = accesscontrol.GroupScopesByAction(permissions)
 	}
 
 	return signedInUser, nil
