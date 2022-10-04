@@ -640,7 +640,7 @@ describe('PrometheusDatasource', () => {
 
   describe('applyTemplateVariables', () => {
     const originalAdhocFiltersMock = templateSrvStub.getAdhocFilters();
-    const originalReplaceMock = jest.fn((a: string, ...rest: any) => a);
+    const originalReplaceMock = templateSrvStub.replace;
     afterAll(() => {
       templateSrvStub.getAdhocFilters.mockReturnValue(originalAdhocFiltersMock);
       templateSrvStub.replace = originalReplaceMock;
@@ -1131,7 +1131,7 @@ describe('PrometheusDatasource2', () => {
       });
     });
     describe('with template variables', () => {
-      const originalReplaceMock = jest.fn((a: string, ...rest: any) => a);
+      const originalReplaceMock = templateSrvStub.replace;
       afterAll(() => {
         templateSrvStub.replace = originalReplaceMock;
       });
