@@ -6,7 +6,7 @@ import { Dropdown, Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { useSelector } from 'app/types';
 
-import { OrganizationSwitcher } from './OrganizationSwitcher';
+import { OrganisationSwitcher } from './Organization/OrganisationSwitcher';
 import { TopNavBarMenu } from './TopBar/TopNavBarMenu';
 import { TopSearchBarInput } from './TopSearchBarInput';
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
@@ -25,7 +25,7 @@ export function TopSearchBar() {
         <a className={styles.logo} href="/" title="Go to home">
           <Icon name="grafana" size="xl" />
         </a>
-        <OrganizationSwitcher />
+        <OrganisationSwitcher />
       </div>
       <div className={styles.searchWrapper}>
         <TopSearchBarInput />
