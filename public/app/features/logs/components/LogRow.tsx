@@ -9,12 +9,12 @@ import {
   TimeZone,
   DataQueryResponse,
   dateTimeFormat,
-  checkLogsError,
-  escapeUnescapedString,
   GrafanaTheme2,
   CoreApp,
 } from '@grafana/data';
 import { styleMixins, withTheme2, Themeable2, Icon, Tooltip } from '@grafana/ui';
+
+import { checkLogsError, escapeUnescapedString } from '../utils';
 
 import { LogDetails } from './LogDetails';
 import { LogLabels } from './LogLabels';

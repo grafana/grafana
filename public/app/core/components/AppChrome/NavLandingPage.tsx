@@ -27,7 +27,7 @@ export function NavLandingPage({ navId }: Props) {
               {directChildren?.map((child) => (
                 <NavLandingPageCard
                   key={child.id}
-                  description={child.description}
+                  description={child.subTitle}
                   text={child.text}
                   url={child.url ?? ''}
                 />
@@ -36,15 +36,13 @@ export function NavLandingPage({ navId }: Props) {
           )}
           {nestedChildren?.map((child) => (
             <section key={child.id}>
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                <h2 className={styles.nestedTitle}>{child.text}</h2>
-              </div>
-              <div className={styles.nestedDescription}>{child.description}</div>
+              <h2 className={styles.nestedTitle}>{child.text}</h2>
+              <div className={styles.nestedDescription}>{child.subTitle}</div>
               <div className={styles.grid}>
                 {child.children?.map((child) => (
                   <NavLandingPageCard
                     key={child.id}
-                    description={child.description}
+                    description={child.subTitle}
                     text={child.text}
                     url={child.url ?? ''}
                   />
