@@ -40,7 +40,6 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) run(ctx context.Context
 	d := cloudMonitoringResponse{}
 
 	for first || d.NextPageToken != "" {
-		timeSeriesFilter.Params["pageSize"] = []string{"5000"}
 		if (d.NextPageToken != "") {
 			timeSeriesFilter.Params["pageToken"] = []string{d.NextPageToken}
 		} 
