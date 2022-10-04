@@ -10,7 +10,7 @@ export interface PageState {
 }
 
 export function usePageState() {
-  const { state, actions } = useMemo(() => {
+  return useHookStateAndActions(() => {
     const isSmallScreenQuery = window.matchMedia(`(max-width: ${config.theme2.breakpoints.values.lg}px)`);
     const navExpandedPreference = store.getBool('grafana.sectionNav.expanded', true);
 
@@ -37,11 +37,41 @@ export function usePageState() {
     };
 
     return { state, actions: { onToggleSectionNav, onInit, onCleanUp } };
-  }, []);
+  });
+}
+
+/**
+ * Reusable framework below
+ */
+
+interface LifecycleActions {
+  /** Called on mount */
+  onInit?: () => void;
+  /** Called on unmount */
+  onCleanUp?: () => void;
+}
+
+interface StateAndActionsFnReturn<TState, TActions extends LifecycleActions> {
+  state: BehaviorSubject<TState>;
+  actions: TActions;
+}
+
+interface StateAndActions<TState, TActions extends LifecycleActions> {
+  state: TState;
+  actions: TActions;
+}
+
+export function useHookStateAndActions<TState, TActions extends LifecycleActions>(
+  fn: () => StateAndActionsFnReturn<TState, TActions>
+): StateAndActions<TState, TActions> {
+  // eslint-disable-next-line
+  const { state, actions } = useMemo(fn, []);
 
   useEffect(() => {
-    actions.onInit();
-    return () => actions.onCleanUp();
+    if (actions.onInit) {
+      actions.onInit();
+    }
+    return () => actions.onCleanUp && actions.onCleanUp();
   }, [actions]);
 
   const latestState = useLatestState(state);
