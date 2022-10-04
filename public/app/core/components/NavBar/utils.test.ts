@@ -85,19 +85,6 @@ describe('enrichConfigItems', () => {
     expect(profileNode!.children).toBeUndefined();
   });
 
-  it('adds an org switcher to the profile node if there is more than 1 org', () => {
-    const contextSrv = new ContextSrv();
-    contextSrv.user.orgCount = 2;
-    setContextSrv(contextSrv);
-    const enrichedConfigItems = enrichConfigItems(mockItems, mockLocation);
-    const profileNode = enrichedConfigItems.find((item) => item.id === 'profile');
-    expect(profileNode!.children).toContainEqual(
-      expect.objectContaining({
-        text: 'Switch organization',
-      })
-    );
-  });
-
   it('enhances the help node with extra child links', () => {
     const contextSrv = new ContextSrv();
     setContextSrv(contextSrv);

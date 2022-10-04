@@ -21,7 +21,7 @@ export function OrganisationSelect() {
     if (option.value) {
       await api.setUserOrg(option.value);
       locationService.partial({ orgId: option.value.orgId }, true);
-      // locationService.reload();
+      // TODO how to reload the current page
       window.location.reload();
     }
   }, []);
