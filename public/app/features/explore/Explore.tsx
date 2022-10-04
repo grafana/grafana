@@ -23,6 +23,7 @@ import { ExploreGraph } from './ExploreGraph';
 import { ExploreGraphLabel } from './ExploreGraphLabel';
 import ExploreQueryInspector from './ExploreQueryInspector';
 import { ExploreToolbar } from './ExploreToolbar';
+import { FlameGraphExploreContainer } from './FlameGraphExploreContainer';
 import LogsContainer from './LogsContainer';
 import { NoData } from './NoData';
 import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
@@ -228,15 +229,26 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 
   renderGraphPanel(width: number) {
-    const { graphResult, absoluteRange, timeZone, splitOpen, queryResponse, loading, theme, graphStyle } = this.props;
+    const {
+      graphResult,
+      absoluteRange,
+      timeZone,
+      splitOpen,
+      queryResponse,
+      loading,
+      theme,
+      graphStyle,
+      showFlameGraph,
+    } = this.props;
     const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
     const label = <ExploreGraphLabel graphStyle={graphStyle} onChangeGraphStyle={this.onChangeGraphStyle} />;
+
     return (
       <Collapse label={label} loading={loading} isOpen>
         <ExploreGraph
           graphStyle={graphStyle}
           data={graphResult!}
-          height={400}
+          height={showFlameGraph ? 180 : 400}
           width={width - spacing}
           absoluteRange={absoluteRange}
           onChangeTime={this.onUpdateTimeRange}
@@ -296,6 +308,15 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
 
   memoizedGetNodeGraphDataFrames = memoizeOne(getNodeGraphDataFrames);
 
+  renderFlameGraphPanel() {
+    const { queryResponse } = this.props;
+    const dataFrames = queryResponse.series.filter(
+      (series) => series.meta?.preferredVisualisationType === 'flamegraph'
+    );
+
+    return <FlameGraphExploreContainer dataFrames={dataFrames} />;
+  }
+
   renderTraceViewPanel() {
     const { queryResponse, splitOpen, exploreId } = this.props;
     const dataFrames = queryResponse.series.filter((series) => series.meta?.preferredVisualisationType === 'trace');
@@ -329,6 +350,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       showLogs,
       showTrace,
       showNodeGraph,
+      showFlameGraph,
       timeZone,
     } = this.props;
     const { openDrawer } = this.state;
@@ -390,6 +412,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                           {showTable && <ErrorBoundaryAlert>{this.renderTablePanel(width)}</ErrorBoundaryAlert>}
                           {showLogs && <ErrorBoundaryAlert>{this.renderLogsPanel(width)}</ErrorBoundaryAlert>}
                           {showNodeGraph && <ErrorBoundaryAlert>{this.renderNodeGraphPanel()}</ErrorBoundaryAlert>}
+                          {showFlameGraph && <ErrorBoundaryAlert>{this.renderFlameGraphPanel()}</ErrorBoundaryAlert>}
                           {showTrace && <ErrorBoundaryAlert>{this.renderTraceViewPanel()}</ErrorBoundaryAlert>}
                           {showNoData && <ErrorBoundaryAlert>{this.renderNoData()}</ErrorBoundaryAlert>}
                         </>
@@ -440,6 +463,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     absoluteRange,
     queryResponse,
     showNodeGraph,
+    showFlameGraph,
     loading,
     graphStyle,
   } = item;
@@ -460,6 +484,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showTable,
     showTrace,
     showNodeGraph,
+    showFlameGraph,
     loading,
     graphStyle,
   };
