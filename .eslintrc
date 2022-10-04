@@ -1,24 +1,98 @@
 {
-  "extends": ["@grafana/eslint-config"],
+  "env": {
+    "node": true
+  },
+  "extends": [
+    "@grafana/eslint-config",
+    "@grafana/eslint-config/emotion",
+    "@grafana/eslint-config/jest",
+    "@grafana/eslint-config/jsx",
+    "@grafana/eslint-config/lodash",
+    "@grafana/eslint-config/react"
+  ],
   "root": true,
-  "plugins": ["@emotion", "lodash", "jest", "import", "jsx-a11y"],
   "settings": {
-    "import/internal-regex": "^(app/)|(@grafana)",
-    "import/external-module-folders": ["node_modules", ".yarn"]
+    "import/external-module-folders": ["node_modules", ".yarn"],
+    "import/internal-regex": "^(app/)|(@grafana)"
   },
   "rules": {
-    "react/prop-types": "off",
-    "@emotion/jsx-import": "error",
-    "lodash/import-scope": [2, "member"],
-    "jest/no-focused-tests": "error",
-    "import/order": [
-      "error",
-      {
-        "groups": [["builtin", "external"], "internal", "parent", "sibling", "index"],
-        "newlines-between": "always",
-        "alphabetize": { "order": "asc" }
-      }
-    ],
+    // TODO: We definitely want to enable these rules... eventually!
+    "jsx-a11y/anchor-is-valid": "off",
+    "jsx-a11y/click-events-have-key-events": "off",
+    "jsx-a11y/iframe-has-title": "off",
+    "jsx-a11y/interactive-supports-focus": "off",
+    "jsx-a11y/label-has-associated-control": "off",
+    "jsx-a11y/mouse-events-have-key-events": "off",
+    "jsx-a11y/no-autofocus": "off",
+    "jsx-a11y/no-noninteractive-element-interactions": "off",
+    "jsx-a11y/no-noninteractive-element-to-interactive-role": "off",
+    "jsx-a11y/no-static-element-interactions": "off",
+
+    // TODO: Investigate whether these rules should be enabled or kept disabled
+    "@typescript-eslint/ban-ts-comment": "off",
+    "@typescript-eslint/ban-types": "off",
+    "@typescript-eslint/no-empty-function": "off",
+    "@typescript-eslint/no-empty-interface": "off",
+    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/no-loss-of-precision": "off",
+    "@typescript-eslint/no-non-null-asserted-optional-chain": "off",
+    "@typescript-eslint/no-non-null-assertion": "off",
+    "@typescript-eslint/no-this-alias": "off",
+    "@typescript-eslint/no-unnecessary-type-constraint": "off",
+    "@typescript-eslint/no-unused-vars": "off",
+    "@typescript-eslint/no-var-requires": "off",
+    "@typescript-eslint/prefer-as-const": "off",
+    "jest/no-commented-out-tests": "off",
+    "jest/no-disabled-tests": "off",
+    "jest/no-done-callback": "off",
+    "jest/no-export": "off",
+    "jest/no-identical-title": "off",
+    "jest/no-jasmine-globals": "off",
+    "jest/no-mocks-import": "off",
+    "jest/valid-expect-in-promise": "off",
+    "jest/valid-title": "off",
+    "lodash/chaining": "off",
+    "lodash/identity-shorthand": "off",
+    "lodash/matches-prop-shorthand": "off",
+    "lodash/no-extra-args": "off",
+    "lodash/prefer-compact": "off",
+    "lodash/prefer-constant": "off",
+    "lodash/prefer-filter": "off",
+    "lodash/prefer-flat-map": "off",
+    "lodash/prefer-get": "off",
+    "lodash/prefer-immutable-method": "off",
+    "lodash/prefer-includes": "off",
+    "lodash/prefer-invoke-map": "off",
+    "lodash/prefer-is-nil": "off",
+    "lodash/prefer-lodash-method": "off",
+    "lodash/prefer-lodash-typecheck": "off",
+    "lodash/prefer-map": "off",
+    "lodash/prefer-matches": "off",
+    "lodash/prefer-noop": "off",
+    "lodash/prefer-reject": "off",
+    "lodash/prefer-startswith": "off",
+    "lodash/preferred-alias": "off",
+    "lodash/prop-shorthand": "off",
+    "no-case-declarations": "off",
+    "no-class-assign": "off",
+    "no-constant-condition": "off",
+    "no-control-regex": "off",
+    "no-duplicate-case": "off",
+    "no-empty-pattern": "off",
+    "no-empty": "off",
+    "no-extra-boolean-cast": "off",
+    "no-fallthrough": "off",
+    "no-prototype-builtins": "off",
+    "no-self-assign": "off",
+    "no-sparse-arrays": "off",
+    "no-undef": "off",
+    "no-unsafe-optional-chaining": "off",
+    "no-useless-escape": "off",
+    "prefer-const": "off",
+    "prefer-rest-params": "off",
+    "prefer-spread": "off",
+
+    // These rules we like but must be configured
     "no-restricted-imports": [
       "warn",
       {
@@ -30,11 +104,7 @@
           }
         ]
       }
-    ],
-
-    // Use typescript's no-redeclare for compatibility with overrides
-    "no-redeclare": "off",
-    "@typescript-eslint/no-redeclare": ["error"]
+    ]
   },
   "overrides": [
     {
@@ -57,69 +127,6 @@
       "rules": {
         "no-redeclare": "error",
         "@typescript-eslint/no-redeclare": "off"
-      }
-    },
-    {
-      "files": ["**/*"],
-      "excludedFiles": ["**/*.{spec,test}.{ts,tsx}"],
-      "rules": {
-        // these are all the rules listed in the strict preset
-        // we should fix them one by one and mark them as errors
-        // once they're all fixed, we can remove them all and instead extend the strict preset
-        // with "extends": ["plugin:jsx-a11y/strict"]
-        "jsx-a11y/alt-text": "error",
-        "jsx-a11y/anchor-has-content": "error",
-        "jsx-a11y/anchor-is-valid": "off",
-        "jsx-a11y/aria-activedescendant-has-tabindex": "error",
-        "jsx-a11y/aria-props": "error",
-        "jsx-a11y/aria-proptypes": "error",
-        "jsx-a11y/aria-role": "error",
-        "jsx-a11y/aria-unsupported-elements": "error",
-        "jsx-a11y/autocomplete-valid": "error",
-        "jsx-a11y/click-events-have-key-events": "off",
-        "jsx-a11y/heading-has-content": "error",
-        "jsx-a11y/html-has-lang": "error",
-        "jsx-a11y/iframe-has-title": "off",
-        "jsx-a11y/img-redundant-alt": "error",
-        "jsx-a11y/interactive-supports-focus": [
-          "off",
-          {
-            "tabbable": [
-              "button",
-              "checkbox",
-              "link",
-              "progressbar",
-              "searchbox",
-              "slider",
-              "spinbutton",
-              "switch",
-              "textbox"
-            ]
-          }
-        ],
-        "jsx-a11y/label-has-associated-control": "off",
-        "jsx-a11y/media-has-caption": "error",
-        "jsx-a11y/mouse-events-have-key-events": "off",
-        "jsx-a11y/no-access-key": "error",
-        "jsx-a11y/no-autofocus": "off",
-        "jsx-a11y/no-distracting-elements": "error",
-        "jsx-a11y/no-interactive-element-to-noninteractive-role": "error",
-        "jsx-a11y/no-noninteractive-element-interactions": [
-          "off",
-          {
-            "body": ["onError", "onLoad"],
-            "iframe": ["onError", "onLoad"],
-            "img": ["onError", "onLoad"]
-          }
-        ],
-        "jsx-a11y/no-noninteractive-element-to-interactive-role": "off",
-        "jsx-a11y/no-noninteractive-tabindex": "error",
-        "jsx-a11y/no-redundant-roles": "error",
-        "jsx-a11y/no-static-element-interactions": "off",
-        "jsx-a11y/role-has-required-aria-props": "error",
-        "jsx-a11y/role-supports-aria-props": "error",
-        "jsx-a11y/scope": "error",
-        "jsx-a11y/tabindex-no-positive": "error"
       }
     }
   ]
