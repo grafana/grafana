@@ -80,7 +80,7 @@ export const Page: PageType = ({
       )}
       {layout === PageLayoutType.Canvas && (
         <CustomScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
-          <div className={styles.canvasContent}>
+          <div className={styles.dashboardContent}>
             {toolbar}
             {children}
           </div>
@@ -121,16 +121,14 @@ const getStyles = (theme: GrafanaTheme2) => {
         top: theme.spacing(2),
       },
     }),
-    wrapper: css({
-      label: 'page-wrapper',
-      height: '100%',
-      display: 'flex',
-      flex: '1 1 0',
-      flexDirection: 'column',
-      minHeight: 0,
-    }),
+    wrapper: css`
+      height: 100%;
+      display: flex;
+      flex: 1 1 0;
+      flex-direction: column;
+      min-height: 0;
+    `,
     panes: css({
-      label: 'page-panes',
       display: 'flex',
       height: '100%',
       width: '100%',
@@ -142,19 +140,18 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     pageContent: css({
-      label: 'page-content',
       flexGrow: 1,
     }),
     pageInner: css({
-      label: 'page-inner',
       padding: theme.spacing(3),
       boxShadow: shadow,
       background: theme.colors.background.primary,
       margin: theme.spacing(2, 2, 2, 1),
+      display: 'flex',
+      flexDirection: 'column',
       flexGrow: 1,
     }),
-    canvasContent: css({
-      label: 'canvas-content',
+    dashboardContent: css({
       display: 'flex',
       flexDirection: 'column',
       padding: theme.spacing(2),
