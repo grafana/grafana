@@ -40,6 +40,7 @@ const (
 	NavIDAlerting           = "alerting"
 	NavIDMonitoring         = "monitoring"
 	NavIDReporting          = "reports"
+	NavIDApps               = "apps"
 )
 
 type NavLink struct {

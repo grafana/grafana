@@ -124,8 +124,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       boxShadow: shadow,
       background: theme.colors.background.primary,
       margin: theme.spacing(2, 2, 2, 1),
-      display: 'flex',
-      flexDirection: 'column',
       flexGrow: 1,
     }),
     canvasContent: css({
