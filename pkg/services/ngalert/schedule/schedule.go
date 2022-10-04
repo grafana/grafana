@@ -40,7 +40,6 @@ type ScheduleService interface {
 	// the following are used by tests only used for tests
 	evalApplied(ngmodels.AlertRuleKey, time.Time)
 	stopApplied(ngmodels.AlertRuleKey)
-	overrideCfg(cfg SchedulerCfg)
 }
 
 // AlertsSender is an interface for a service that is responsible for sending notifications to the end-user.
