@@ -16,7 +16,6 @@ hide_menu = true
 - **Prometheus:** Restore FromAlert header. [#55255](https://github.com/grafana/grafana/pull/55255), [@kylebrandt](https://github.com/kylebrandt)
 - **SAML:** Account for all orgs in org_mapping (#3855). (Enterprise)
 - **Search:** Add search index configuration options. [#55525](https://github.com/grafana/grafana/pull/55525), [@ArturWierzbicki](https://github.com/ArturWierzbicki)
-- **Search:** Add search index configuration options (#55525). [#55529](https://github.com/grafana/grafana/pull/55529), [@ArturWierzbicki](https://github.com/ArturWierzbicki)
 - **Thresholds:** Add option for dashed line style. [#55875](https://github.com/grafana/grafana/pull/55875), [@leeoniya](https://github.com/leeoniya)
 
 ### Bug fixes
@@ -30,6 +29,5 @@ hide_menu = true
 - **Fix:** RBAC handle `error no resolver` found. [#55676](https://github.com/grafana/grafana/pull/55676), [@gamab](https://github.com/gamab)
 - **Fix:** RBAC handle `error no resolver` found. (Enterprise)
 - **LibraryPanelSearch:** Refactor and fix hyphen issue. [#55314](https://github.com/grafana/grafana/pull/55314), [@kaydelaney](https://github.com/kaydelaney)
-- **Live:** Fix live streaming with `live-service-web-worker` feature flag enabled. [#55558](https://github.com/grafana/grafana/pull/55558), [@grafanabot](https://github.com/grafanabot)
 - **Live:** Fix live streaming with `live-service-web-worker` feature flag enabled. [#55528](https://github.com/grafana/grafana/pull/55528), [@ArturWierzbicki](https://github.com/ArturWierzbicki)
 - **QueryField:** Fix wrong cursor position on autocomplete. [#55576](https://github.com/grafana/grafana/pull/55576), [@svennergr](https://github.com/svennergr)
