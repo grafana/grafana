@@ -3,9 +3,9 @@ import React, { FC, useState } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { getBackendSrv } from '@grafana/runtime';
 import { Link, ButtonGroup, LinkButton, Icon, Tag, useStyles2 } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
-import { getBackendSrv } from 'app/core/services/backend_srv';
 
 export interface ListPublicDashboardResponse {
   uid: string;
@@ -23,14 +23,6 @@ export const getPublicDashboards = async () => {
   return resp.sort((a, b) => Number(b.isEnabled) - Number(a.isEnabled));
 };
 
-//export function getPublicDashboards() {
-//getBackendSrv()
-//.get(listPublicDashboardsUrl())
-//.then((result: ListPublicDashboardResponse[]) => {
-//return result.sort((a, b) => Number(b.isEnabled) - Number(a.isEnabled))
-//})
-//};
-
 export const viewPublicDashboardUrl = (accessToken: string): string => {
   return `${getConfig().appUrl}public-dashboards/${accessToken}`;
 };
@@ -45,7 +37,7 @@ function getStyles(theme: GrafanaTheme2) {
   };
 }
 
-export const PublicDashboardListTable: FC = () => {
+export const ListPublicDashboardTable: FC = () => {
   const styles = useStyles2(getStyles);
   const [publicDashboards, setPublicDashboards] = useState<ListPublicDashboardResponse[]>([]);
 

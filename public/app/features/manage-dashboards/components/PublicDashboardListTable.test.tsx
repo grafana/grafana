@@ -1,21 +1,24 @@
-//import { locationService } from '@grafana/runtime';
 import {
-  //listPublicDashboardsUrl,
-  //viewPublicDashboardUrl,
+  listPublicDashboardsUrl,
+  viewPublicDashboardUrl,
   getPublicDashboards,
+  //ListPublicDashboardTable,
 } from './PublicDashboardListTable';
 
-//describe('listPublicDashboardsUrl', () => {
-//it('has the correct url', () => {
-//expect(listPublicDashboardsUrl()).toEqual('/api/dashboards/public');
-//});
-//});
+//import { render, screen, waitFor, act } from '@testing-library/react';
+//import React from 'react';
 
-//describe('viewPublicDashboardUrl', () => {
-//it('has the correct url', () => {
-//expect(viewPublicDashboardUrl("abcd")).toEqual('public-dashboards/abcd');
-//});
-//});
+describe('listPublicDashboardsUrl', () => {
+  it('has the correct url', () => {
+    expect(listPublicDashboardsUrl()).toEqual('/api/dashboards/public');
+  });
+});
+
+describe('viewPublicDashboardUrl', () => {
+  it('has the correct url', () => {
+    expect(viewPublicDashboardUrl('abcd')).toEqual('public-dashboards/abcd');
+  });
+});
 
 jest.mock('@grafana/runtime', () => ({
   ...(jest.requireActual('@grafana/runtime') as unknown as object),
@@ -40,11 +43,9 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('getPublicDashboards', () => {
-  //locationService.push('/dashboard/public');
-
-  test('returns public dashboards', async () => {
+  test('returns public dashboards sorted by isEnabled', async () => {
     const results = await getPublicDashboards();
-    expect(results).Equal([
+    expect(results).toEqual([
       {
         uid: 'EuiEbd3nz',
         accessToken: '8687b0498ccf4babb2f92810d8563b33',
@@ -62,3 +63,15 @@ describe('getPublicDashboards', () => {
     ]);
   });
 });
+
+//describe('ListPublicDashboardTable', () => {
+//  test('renders properly', async() => {
+//    act(() => {
+//      render(<ListPublicDashboardTable />)
+//    });
+
+//    //await waitFor(() => screen.getByRole('table'));
+//    expect(screen.getByText("Dashboard")).toBeInTheDocument();
+//    //expect(screen.getAllByRole("tr")).toHaveLength(2);
+//  })
+//})
