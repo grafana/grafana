@@ -168,7 +168,7 @@ export function DashboardQueryEditor({ panelData, queries, onChange, onRunQuerie
                 {results.map((target, i) => (
                   <div className={styles.queryEditorRowHeader} key={`DashboardQueryRow-${i}`}>
                     <div>
-                      <img src={target.img} width={16} />
+                      <img src={target.img} alt="" width={16} />
                       <span className={styles.refId}>{target.refId}:</span>
                     </div>
                     <div>

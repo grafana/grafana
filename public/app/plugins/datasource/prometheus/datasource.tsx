@@ -144,8 +144,7 @@ export class PrometheusDatasource
 
   _addTracingHeaders(httpOptions: PromQueryRequest, options: DataQueryRequest<PromQuery>) {
     httpOptions.headers = {};
-    const proxyMode = !this.url.match(/^http/);
-    if (proxyMode) {
+    if (this.access === 'proxy') {
       httpOptions.headers['X-Dashboard-Id'] = options.dashboardId;
       httpOptions.headers['X-Dashboard-UID'] = options.dashboardUID;
       httpOptions.headers['X-Panel-Id'] = options.panelId;
@@ -924,6 +923,7 @@ export class PrometheusDatasource
             <img
               style={{ width: 14, height: 14, verticalAlign: 'text-bottom' }}
               src={LOGOS[buildInfo.application ?? PromApplication.Prometheus]}
+              alt=""
             />{' '}
             {buildInfo.application ? AppDisplayNames[buildInfo.application] : 'Unknown'}
           </span>
@@ -1002,7 +1002,9 @@ export class PrometheusDatasource
         const expandedQuery = {
           ...query,
           datasource: this.getRef(),
-          expr: this.templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr),
+          expr: this.enhanceExprWithAdHocFilters(
+            this.templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr)
+          ),
           interval: this.templateSrv.replace(query.interval, scopedVars),
         };
         return expandedQuery;

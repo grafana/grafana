@@ -4,6 +4,7 @@ import { FormProvider, useForm, UseFormWatch } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { logInfo } from '@grafana/runtime';
 import { Button, ConfirmModal, CustomScrollbar, Spinner, useStyles2, HorizontalGroup } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useCleanup } from 'app/core/hooks/useCleanup';
@@ -11,6 +12,7 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useDispatch } from 'app/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 
+import { LogMessages } from '../../Analytics';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { deleteRuleAction, saveRuleFormAction } from '../../state/actions';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
@@ -110,7 +112,13 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
       <form onSubmit={(e) => e.preventDefault()} className={styles.form}>
         <HorizontalGroup height="auto" justify="flex-end">
           <Link to={returnTo}>
-            <Button variant="secondary" disabled={submitState.loading} type="button" fill="outline">
+            <Button
+              variant="secondary"
+              disabled={submitState.loading}
+              type="button"
+              fill="outline"
+              onClick={() => logInfo(LogMessages.cancelSavingAlertRule)}
+            >
               Cancel
             </Button>
           </Link>

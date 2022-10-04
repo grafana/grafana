@@ -19,7 +19,7 @@ func TestIntegrationDashboardProvisioningTest(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	sqlStore := sqlstore.InitTestDB(t)
-	dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles, tagimpl.ProvideService(sqlStore))
+	dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 
 	folderCmd := models.SaveDashboardCommand{
 		OrgId:    1,

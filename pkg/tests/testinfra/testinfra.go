@@ -311,6 +311,12 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			_, err = logSection.NewKey("enabled", "false")
 			require.NoError(t, err)
 		}
+		if o.GRPCServerAddress != "" {
+			logSection, err := getOrCreateSection("grpc_server")
+			require.NoError(t, err)
+			_, err = logSection.NewKey("address", o.GRPCServerAddress)
+			require.NoError(t, err)
+		}
 	}
 
 	cfgPath := filepath.Join(cfgDir, "test.ini")
@@ -341,4 +347,5 @@ type GrafanaOpts struct {
 	EnableUnifiedAlerting                 bool
 	UnifiedAlertingDisabledOrgs           []int64
 	EnableLog                             bool
+	GRPCServerAddress                     string
 }

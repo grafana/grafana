@@ -6,6 +6,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
@@ -17,10 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
-
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
 var (
@@ -63,11 +63,12 @@ var (
 type StandardSearchService struct {
 	registry.BackgroundService
 
-	cfg        *setting.Cfg
-	sql        *sqlstore.SQLStore
-	auth       FutureAuthService // eventually injected from elsewhere
-	ac         accesscontrol.Service
-	orgService org.Service
+	cfg         *setting.Cfg
+	sql         *sqlstore.SQLStore
+	auth        FutureAuthService // eventually injected from elsewhere
+	ac          accesscontrol.Service
+	orgService  org.Service
+	userService user.Service
 
 	logger         log.Logger
 	dashboardIndex *searchIndex
@@ -79,7 +80,9 @@ func (s *StandardSearchService) IsReady(ctx context.Context, orgId int64) IsSear
 	return s.dashboardIndex.isInitialized(ctx, orgId)
 }
 
-func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore store.EntityEventsService, ac accesscontrol.Service, tracer tracing.Tracer, features featuremgmt.FeatureToggles, orgService org.Service) SearchService {
+func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore store.EntityEventsService,
+	ac accesscontrol.Service, tracer tracing.Tracer, features featuremgmt.FeatureToggles, orgService org.Service,
+	userService user.Service) SearchService {
 	extender := &NoopExtender{}
 	s := &StandardSearchService{
 		cfg: cfg,
@@ -98,10 +101,11 @@ func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore s
 			features,
 			cfg.Search,
 		),
-		logger:     log.New("searchV2"),
-		extender:   extender,
-		reIndexCh:  make(chan struct{}, 1),
-		orgService: orgService,
+		logger:      log.New("searchV2"),
+		extender:    extender,
+		reIndexCh:   make(chan struct{}, 1),
+		orgService:  orgService,
+		userService: userService,
 	}
 	return s
 }
@@ -157,23 +161,22 @@ func (s *StandardSearchService) getUser(ctx context.Context, backendUser *backen
 			IsAnonymous: true,
 		}
 	} else {
-		getSignedInUserQuery := &models.GetSignedInUserQuery{
+		getSignedInUserQuery := &user.GetSignedInUserQuery{
 			Login: backendUser.Login,
 			Email: backendUser.Email,
-			OrgId: orgId,
+			OrgID: orgId,
 		}
-		err := s.sql.GetSignedInUser(ctx, getSignedInUserQuery)
+		var err error
+		usr, err = s.userService.GetSignedInUser(ctx, getSignedInUserQuery)
 		if err != nil {
 			s.logger.Error("Error while retrieving user", "error", err, "email", backendUser.Email, "login", getSignedInUserQuery.Login)
 			return nil, errors.New("auth error")
 		}
 
-		if getSignedInUserQuery.Result == nil {
+		if usr == nil {
 			s.logger.Error("No user found", "email", backendUser.Email)
 			return nil, errors.New("auth error")
 		}
-
-		usr = getSignedInUserQuery.Result
 	}
 
 	if s.ac.IsDisabled() {

@@ -13,8 +13,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
-	legacyMetrics "github.com/grafana/grafana/pkg/services/alerting/metrics"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/util/ticker"
 
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -55,7 +55,7 @@ type Scheduler struct {
 	SchedulableAlertRules               prometheus.Gauge
 	SchedulableAlertRulesHash           prometheus.Gauge
 	UpdateSchedulableAlertRulesDuration prometheus.Histogram
-	Ticker                              *legacyMetrics.Ticker
+	Ticker                              *ticker.Metrics
 	EvaluationMissed                    *prometheus.CounterVec
 }
 
@@ -199,7 +199,7 @@ func newSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Buckets:   []float64{0.1, 0.25, 0.5, 1, 2, 5, 10},
 			},
 		),
-		Ticker: legacyMetrics.NewTickerMetrics(r),
+		Ticker: ticker.NewMetrics(r, "alerting"),
 		EvaluationMissed: promauto.With(r).NewCounterVec(
 			prometheus.CounterOpts{
 				Namespace: Namespace,

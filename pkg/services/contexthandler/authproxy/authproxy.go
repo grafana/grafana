@@ -56,16 +56,18 @@ type AuthProxy struct {
 	remoteCache  *remotecache.RemoteCache
 	loginService login.Service
 	sqlStore     sqlstore.Store
+	userService  user.Service
 
 	logger log.Logger
 }
 
-func ProvideAuthProxy(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, loginService login.Service, sqlStore sqlstore.Store) *AuthProxy {
+func ProvideAuthProxy(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, loginService login.Service, userService user.Service, sqlStore sqlstore.Store) *AuthProxy {
 	return &AuthProxy{
 		cfg:          cfg,
 		remoteCache:  remoteCache,
 		loginService: loginService,
 		sqlStore:     sqlStore,
+		userService:  userService,
 		logger:       log.New("auth.proxy"),
 	}
 }
@@ -347,16 +349,10 @@ func (auth *AuthProxy) headersIterator(reqCtx *models.ReqContext, fn func(field 
 
 // GetSignedInUser gets full signed in user info.
 func (auth *AuthProxy) GetSignedInUser(userID int64, orgID int64) (*user.SignedInUser, error) {
-	query := &models.GetSignedInUserQuery{
-		OrgId:  orgID,
-		UserId: userID,
-	}
-
-	if err := auth.sqlStore.GetSignedInUser(context.Background(), query); err != nil {
-		return nil, err
-	}
-
-	return query.Result, nil
+	return auth.userService.GetSignedInUser(context.Background(), &user.GetSignedInUserQuery{
+		OrgID:  orgID,
+		UserID: userID,
+	})
 }
 
 // Remember user in cache
