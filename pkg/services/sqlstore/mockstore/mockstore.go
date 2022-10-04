@@ -267,30 +267,6 @@ func (m SQLStoreMock) GetDashboardACLInfoList(ctx context.Context, query *models
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) CreatePlaylist(ctx context.Context, cmd *models.CreatePlaylistCommand) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) UpdatePlaylist(ctx context.Context, cmd *models.UpdatePlaylistCommand) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) GetPlaylist(ctx context.Context, query *models.GetPlaylistByUidQuery) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) DeletePlaylist(ctx context.Context, cmd *models.DeletePlaylistCommand) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) SearchPlaylists(ctx context.Context, query *models.GetPlaylistsQuery) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) GetPlaylistItem(ctx context.Context, query *models.GetPlaylistItemsByUidQuery) error {
-	return m.ExpectedError
-}
-
 func (m *SQLStoreMock) GetAlertById(ctx context.Context, query *models.GetAlertByIdQuery) error {
 	query.Result = m.ExpectedAlert
 	return m.ExpectedError
