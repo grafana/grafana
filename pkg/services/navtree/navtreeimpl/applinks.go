@@ -156,7 +156,8 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 	if navNode := treeRoot.FindById(sectionID); navNode != nil {
 		navNode.Children = append(navNode.Children, appLink)
 	} else {
-		if sectionID == navtree.NavIDApps {
+		switch sectionID {
+		case navtree.NavIDApps:
 			treeRoot.AddSection(&navtree.NavLink{
 				Text:     "Apps",
 				Icon:     "apps",
@@ -166,7 +167,7 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 				Section:  navtree.NavSectionCore,
 				Url:      s.cfg.AppSubURL + "/apps",
 			})
-		} else if sectionID == navtree.NavIDMonitoring {
+		case navtree.NavIDMonitoring:
 			treeRoot.AddSection(&navtree.NavLink{
 				Text:     "Monitoring",
 				Id:       navtree.NavIDMonitoring,
@@ -176,18 +177,20 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 				Children: []*navtree.NavLink{appLink},
 				Url:      s.cfg.AppSubURL + "/monitoring",
 			})
-		} else if sectionID == navtree.NavIDAlertsAndIncidents && alertingNode != nil {
-			treeRoot.AddSection(&navtree.NavLink{
-				Text:     "Alerts & incidents",
-				Id:       navtree.NavIDAlertsAndIncidents,
-				SubTitle: "Alerting and incident management apps",
-				Icon:     "bell",
-				Section:  navtree.NavSectionCore,
-				Children: []*navtree.NavLink{alertingNode, appLink},
-				Url:      s.cfg.AppSubURL + "/alerts-and-incidents",
-			})
-			treeRoot.RemoveSection(alertingNode)
-		} else {
+		case navtree.NavIDAlertsAndIncidents:
+			if alertingNode != nil {
+				treeRoot.AddSection(&navtree.NavLink{
+					Text:     "Alerts & incidents",
+					Id:       navtree.NavIDAlertsAndIncidents,
+					SubTitle: "Alerting and incident management apps",
+					Icon:     "bell",
+					Section:  navtree.NavSectionCore,
+					Children: []*navtree.NavLink{alertingNode, appLink},
+					Url:      s.cfg.AppSubURL + "/alerts-and-incidents",
+				})
+				treeRoot.RemoveSection(alertingNode)
+			}
+		default:
 			s.log.Error("Plugin app nav id not found", "pluginId", plugin.ID, "navId", sectionID)
 		}
 	}
