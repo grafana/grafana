@@ -70,7 +70,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     select: css({
       background: 'none',
       border: 'none',
-      margin: theme.spacing(0, 2),
     }),
   };
 };

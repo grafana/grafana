@@ -6,6 +6,7 @@ import { Dropdown, Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { useSelector } from 'app/types';
 
+import { NewsContainer } from './News/NewsContainer';
 import { OrganisationSwitcher } from './Organization/OrganisationSwitcher';
 import { TopNavBarMenu } from './TopBar/TopNavBarMenu';
 import { TopSearchBarInput } from './TopSearchBarInput';
@@ -38,11 +39,7 @@ export function TopSearchBar() {
             </button>
           </Dropdown>
         )}
-        <Tooltip placement="bottom" content="Grafana news (todo)">
-          <button className={styles.actionItem}>
-            <Icon name="rss" size="lg" />
-          </button>
-        </Tooltip>
+        <NewsContainer buttonCss={styles.actionItem} />
         {signInNode && (
           <Tooltip placement="bottom" content="Sign in">
             <a className={styles.actionItem} href={signInNode.url} target={signInNode.target}>
@@ -53,7 +50,7 @@ export function TopSearchBar() {
         {profileNode && (
           <Dropdown overlay={<TopNavBarMenu node={profileNode} />}>
             <button className={styles.actionItem}>
-              <img src={contextSrv.user.gravatarUrl} />
+              <img src={contextSrv.user.gravatarUrl} alt="User avatar" />
             </button>
           </Dropdown>
         )}
@@ -74,6 +71,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     leftContent: css({
       display: 'flex',
+      alignItems: 'center',
     }),
     logo: css({
       display: 'flex',

@@ -34,9 +34,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
   button: css`
     border: none;
-    boxshadow: none;
     background: none;
     alignitems: center;
+    color: ${theme.colors.text.secondary};
+
+    &:hover {
+      background: ${theme.colors.background.secondary};
+    }
   `,
 
   select: css`
