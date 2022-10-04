@@ -34,11 +34,13 @@ func (s CorrelationsService) createCorrelation(ctx context.Context, cmd CreateCo
 			return ErrSourceDataSourceReadOnly
 		}
 
-		if err = s.DataSourceService.GetDataSource(ctx, &datasources.GetDataSourceQuery{
-			OrgId: cmd.OrgId,
-			Uid:   cmd.TargetUID,
-		}); err != nil {
-			return ErrTargetDataSourceDoesNotExists
+		if cmd.TargetUID != nil {
+			if err = s.DataSourceService.GetDataSource(ctx, &datasources.GetDataSourceQuery{
+				OrgId: cmd.OrgId,
+				Uid:   *cmd.TargetUID,
+			}); err != nil {
+				return ErrTargetDataSourceDoesNotExists
+			}
 		}
 
 		_, err = session.Insert(correlation)
@@ -206,7 +208,7 @@ func (s CorrelationsService) deleteCorrelationsBySourceUID(ctx context.Context, 
 
 func (s CorrelationsService) deleteCorrelationsByTargetUID(ctx context.Context, cmd DeleteCorrelationsByTargetUIDCommand) error {
 	return s.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
-		_, err := session.Delete(&Correlation{TargetUID: cmd.TargetUID})
+		_, err := session.Delete(&Correlation{TargetUID: &cmd.TargetUID})
 		return err
 	})
 }

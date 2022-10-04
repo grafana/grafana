@@ -242,6 +242,7 @@ datasources:
         label: "Logs to metrics"
         description: "Related metrics stored in Prometheus"
         config:
+          type: query
           target:
             expr: "{ job=\"test\" }"
           field: "labels"

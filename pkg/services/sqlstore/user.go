@@ -169,7 +169,7 @@ func (ss *SQLStore) CreateUser(ctx context.Context, cmd user.CreateUserCommand) 
 	return &user, createErr
 }
 
-func notServiceAccountFilter(ss *SQLStore) string {
+func NotServiceAccountFilter(ss *SQLStore) string {
 	return fmt.Sprintf("%s.is_service_account = %s",
 		ss.Dialect.Quote("user"),
 		ss.Dialect.BooleanStr(false))
@@ -180,7 +180,7 @@ func (ss *SQLStore) GetUserById(ctx context.Context, query *models.GetUserByIdQu
 		usr := new(user.User)
 
 		has, err := sess.ID(query.Id).
-			Where(notServiceAccountFilter(ss)).
+			Where(NotServiceAccountFilter(ss)).
 			Get(usr)
 
 		if err != nil {
@@ -201,6 +201,7 @@ func (ss *SQLStore) GetUserById(ctx context.Context, query *models.GetUserByIdQu
 	})
 }
 
+// deprecated method, use only for tests
 func (ss *SQLStore) SetUsingOrg(ctx context.Context, cmd *models.SetUsingOrgCommand) error {
 	getOrgsForUserCmd := &models.GetUserOrgListQuery{UserId: cmd.UserId}
 	if err := ss.GetUserOrgList(ctx, getOrgsForUserCmd); err != nil {
@@ -235,7 +236,7 @@ func setUsingOrgInTransaction(sess *DBSession, userID int64, orgID int64) error 
 func (ss *SQLStore) GetUserProfile(ctx context.Context, query *models.GetUserProfileQuery) error {
 	return ss.WithDbSession(ctx, func(sess *DBSession) error {
 		var usr user.User
-		has, err := sess.ID(query.UserId).Where(notServiceAccountFilter(ss)).Get(&usr)
+		has, err := sess.ID(query.UserId).Where(NotServiceAccountFilter(ss)).Get(&usr)
 
 		if err != nil {
 			return err
@@ -288,7 +289,7 @@ func (ss *SQLStore) GetUserOrgList(ctx context.Context, query *models.GetUserOrg
 		sess.Join("INNER", "org", "org_user.org_id=org.id")
 		sess.Join("INNER", ss.Dialect.Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", ss.Dialect.Quote("user")))
 		sess.Where("org_user.user_id=?", query.UserId)
-		sess.Where(notServiceAccountFilter(ss))
+		sess.Where(NotServiceAccountFilter(ss))
 		sess.Cols("org.name", "org_user.role", "org_user.org_id")
 		sess.OrderBy("org.name")
 		err := sess.Find(&query.Result)
@@ -301,6 +302,7 @@ func newSignedInUserCacheKey(orgID, userID int64) string {
 	return fmt.Sprintf("signed-in-user-%d-%d", userID, orgID)
 }
 
+// deprecated method, use only for tests
 func (ss *SQLStore) GetSignedInUserWithCacheCtx(ctx context.Context, query *models.GetSignedInUserQuery) error {
 	cacheKey := newSignedInUserCacheKey(query.OrgId, query.UserId)
 	if cached, found := ss.CacheService.Get(cacheKey); found {
@@ -581,7 +583,7 @@ func (ss *SQLStore) DisableUser(ctx context.Context, cmd *models.DisableUserComm
 		usr := user.User{}
 		sess := dbSess.Table("user")
 
-		if has, err := sess.ID(cmd.UserId).Where(notServiceAccountFilter(ss)).Get(&usr); err != nil {
+		if has, err := sess.ID(cmd.UserId).Where(NotServiceAccountFilter(ss)).Get(&usr); err != nil {
 			return err
 		} else if !has {
 			return user.ErrUserNotFound
@@ -611,7 +613,7 @@ func (ss *SQLStore) BatchDisableUsers(ctx context.Context, cmd *models.BatchDisa
 			disableParams = append(disableParams, v)
 		}
 
-		_, err := sess.Where(notServiceAccountFilter(ss)).Exec(disableParams...)
+		_, err := sess.Where(NotServiceAccountFilter(ss)).Exec(disableParams...)
 		return err
 	})
 }
@@ -622,10 +624,14 @@ func (ss *SQLStore) DeleteUser(ctx context.Context, cmd *models.DeleteUserComman
 	})
 }
 
+func (ss *SQLStore) DeleteUserInSession(ctx context.Context, sess *DBSession, cmd *models.DeleteUserCommand) error {
+	return deleteUserInTransaction(ss, sess, cmd)
+}
+
 func deleteUserInTransaction(ss *SQLStore, sess *DBSession, cmd *models.DeleteUserCommand) error {
 	// Check if user exists
 	usr := user.User{ID: cmd.UserId}
-	has, err := sess.Where(notServiceAccountFilter(ss)).Get(&usr)
+	has, err := sess.Where(NotServiceAccountFilter(ss)).Get(&usr)
 	if err != nil {
 		return err
 	}
@@ -695,56 +701,4 @@ func UserDeletions() []string {
 		"DELETE FROM quota WHERE user_id = ?",
 	}
 	return deletes
-}
-
-// UpdateUserPermissions sets the user Server Admin flag
-func (ss *SQLStore) UpdateUserPermissions(userID int64, isAdmin bool) error {
-	return ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
-		var user user.User
-		if _, err := sess.ID(userID).Where(notServiceAccountFilter(ss)).Get(&user); err != nil {
-			return err
-		}
-
-		user.IsAdmin = isAdmin
-		sess.UseBool("is_admin")
-
-		_, err := sess.ID(user.ID).Update(&user)
-		if err != nil {
-			return err
-		}
-
-		// validate that after update there is at least one server admin
-		if err := validateOneAdminLeft(sess); err != nil {
-			return err
-		}
-
-		return nil
-	})
-}
-
-func (ss *SQLStore) SetUserHelpFlag(ctx context.Context, cmd *models.SetUserHelpFlagCommand) error {
-	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
-		user := user.User{
-			ID:         cmd.UserId,
-			HelpFlags1: cmd.HelpFlags1,
-			Updated:    TimeNow(),
-		}
-
-		_, err := sess.ID(cmd.UserId).Cols("help_flags1").Update(&user)
-		return err
-	})
-}
-
-// validateOneAdminLeft validate that there is an admin user left
-func validateOneAdminLeft(sess *DBSession) error {
-	count, err := sess.Where("is_admin=?", true).Count(&user.User{})
-	if err != nil {
-		return err
-	}
-
-	if count == 0 {
-		return user.ErrLastGrafanaAdmin
-	}
-
-	return nil
 }
