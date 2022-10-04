@@ -93,8 +93,10 @@ export const getRowContexts = async (
           // ns which came before but they come in the response that search for logs after. This means right now
           // we will show those as if they came after. This is not strictly correct but seems better than losing them
           // and making this correct would mean quite a bit of complexity to shuffle things around and messing up
-          //counts.
-          if (idField.values.get(fieldIndex) === row.uid) {
+          // counts.
+          // We add the refId of the original dataFrame, since uids contain those now and the uids in the context-dataframe
+          // do not have a refid.
+          if (`${idField.values.get(fieldIndex)}${row.dataFrame.refId}` === row.uid) {
             continue;
           }
         } else {
