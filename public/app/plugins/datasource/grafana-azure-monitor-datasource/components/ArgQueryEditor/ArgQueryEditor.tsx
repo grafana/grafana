@@ -33,6 +33,7 @@ function selectSubscriptions(
     querySubscriptions = [fetchedSubscriptions[0]];
   }
   if (fetchedSubscriptions.length && intersection(querySubscriptions, fetchedSubscriptions).length === 0) {
+    // If the current subscriptions are not in the fetched subscriptions, use the first one
     querySubscriptions = [fetchedSubscriptions[0]];
   }
   return querySubscriptions;
