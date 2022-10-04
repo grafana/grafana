@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -96,12 +97,14 @@ func getContextHandler(t *testing.T) *ContextHandler {
 			}, nil
 		},
 	}
+	orgService := orgtest.NewOrgServiceFake()
 
 	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginService, &userService, &FakeGetSignUserStore{})
 	authenticator := &fakeAuthenticator{}
 
 	return ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc,
-		renderSvc, sqlStore, tracer, authProxy, loginService, nil, authenticator, &userService)
+		renderSvc, sqlStore, tracer, authProxy, loginService, nil, authenticator,
+		&userService, orgService)
 }
 
 type FakeGetSignUserStore struct {
