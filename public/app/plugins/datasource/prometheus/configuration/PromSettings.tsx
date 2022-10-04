@@ -1,10 +1,9 @@
-import React, { SyntheticEvent, useEffect } from 'react';
+import React, { SyntheticEvent } from 'react';
 import semver from 'semver/preload';
-
-//@ts-ignore @todo not use this package?
 
 import {
   DataSourcePluginOptionsEditorProps,
+  DataSourceSettings,
   onUpdateDatasourceJsonDataOptionChecked,
   SelectableValue,
   updateDatasourcePluginJsonDataOption,
@@ -19,6 +18,7 @@ import {
   regexValidation,
 } from '@grafana/ui';
 
+import { PromApplication } from '../../../../types/unified-alerting-dto';
 import { PromOptions } from '../types';
 
 import { ExemplarsSettings } from './ExemplarsSettings';
@@ -33,11 +33,11 @@ const httpOptions = [
   { value: 'GET', label: 'GET' },
 ];
 
-const prometheusFlavors = [
-  { value: 'Prometheus', label: 'Prometheus' },
-  { value: 'Cortex', label: 'Cortex' },
-  { value: 'Mimir', label: 'Mimir' },
-  { value: 'Thanos', label: 'Thanos' },
+const prometheusFlavors: Array<{ value: PromApplication; label: PromApplication }> = [
+  { value: PromApplication.Prometheus, label: PromApplication.Prometheus },
+  { value: PromApplication.Cortex, label: PromApplication.Cortex },
+  { value: PromApplication.Mimir, label: PromApplication.Mimir },
+  { value: PromApplication.Thanos, label: PromApplication.Thanos },
 ];
 
 type Props = Pick<DataSourcePluginOptionsEditorProps<PromOptions>, 'options' | 'onOptionsChange'>;
@@ -53,11 +53,18 @@ interface VersionDetectionResponse {
   };
 }
 
-const setVersion = (version: string, flavor?: string): string | undefined => {
+/**
+ * @todo this is sloppy
+ * Returns the closest version to what the user provided that we have in our PromFlavorVersions for the currently selected flavor
+ * Bugs: It will only reject versions that are a major release apart, so Mimir 2.x might get selected for Prometheus 2.8 if the user selects an incorrect flavor
+ * Advantages: We don't need to maintain a list of every possible version for each release
+ * @param version
+ * @param flavor
+ */
+const getVersionString = (version: string, flavor?: string): string | undefined => {
   if (!flavor || !PromFlavorVersions[flavor]) {
     return;
   }
-
   const flavorVersionValues = PromFlavorVersions[flavor];
   const closestVersion: string = closestSemver(
     version,
@@ -71,6 +78,32 @@ const setVersion = (version: string, flavor?: string): string | undefined => {
   return;
 };
 
+const setPrometheusVersion = (
+  options: DataSourceSettings<PromOptions, {}>,
+  onOptionsChange: (options: DataSourceSettings<PromOptions, {}>) => void
+) => {
+  getBackendSrv()
+    .get(`/api/datasources/${options.id}/resources/version-detect`)
+    .then((rawResponse: VersionDetectionResponse) => {
+      if (rawResponse.data?.version && semver.valid(rawResponse.data?.version)) {
+        onOptionsChange({
+          ...options,
+          jsonData: {
+            ...options.jsonData,
+            prometheusVersion: getVersionString(rawResponse.data?.version, options.jsonData.prometheusFlavor),
+          },
+        });
+      } else {
+        // show UI to prompt manual population?
+        console.warn('Error fetching version from buildinfo API, user must manually select version!');
+      }
+    })
+    .catch((error) => {
+      // show UI to prompt manual population?
+      console.warn('Error fetching version from buildinfo API, user must manually select version!', error);
+    });
+};
+
 export const PromSettings = (props: Props) => {
   const { options, onOptionsChange } = props;
 
@@ -78,35 +111,6 @@ export const PromSettings = (props: Props) => {
   if (!options.jsonData.httpMethod) {
     options.jsonData.httpMethod = 'POST';
   }
-
-  useEffect(() => {
-    if (!options.jsonData.prometheusFlavor) {
-      return;
-    }
-    getBackendSrv()
-      .get(`/api/datasources/${options.id}/resources/version-detect`)
-      .then((rawResponse: VersionDetectionResponse) => {
-        if (rawResponse.data?.version && semver.valid(rawResponse.data?.version)) {
-          onOptionsChange({
-            ...options,
-            jsonData: {
-              ...options.jsonData,
-              prometheusVersion: setVersion(rawResponse.data?.version, options.jsonData.prometheusFlavor),
-            },
-          });
-        } else {
-          // show UI to prompt manual population?
-          console.warn('Error fetching version from buildinfo API, user must manually select version!');
-        }
-      })
-      .catch((error) => {
-        // show UI to prompt manual population?
-        console.warn('Error fetching version from buildinfo API, user must manually select version!', error);
-      });
-
-    // @todo is there a way around adding this? Adding the options object (as suggested in the lint error) results in an infinite loop
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [options.jsonData?.prometheusFlavor]);
 
   return (
     <>
@@ -188,6 +192,8 @@ export const PromSettings = (props: Props) => {
                       jsonData: { ...options.jsonData, prometheusVersion: undefined },
                     },
                     (options) => {
+                      // Check buildinfo api and set default version if we can
+                      setPrometheusVersion(options, onOptionsChange);
                       return onOptionsChange({
                         ...options,
                         jsonData: { ...options.jsonData, prometheusVersion: undefined },
