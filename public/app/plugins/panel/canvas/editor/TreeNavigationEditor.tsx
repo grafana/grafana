@@ -164,7 +164,7 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
         multiple={true}
       />
 
-      <HorizontalGroup>
+      <HorizontalGroup justify="space-between">
         <div className={styles.addLayerButton}>
           <AddLayerButton onChange={onAddItem} options={typeOptions} label={'Add item'} />
         </div>
