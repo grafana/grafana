@@ -29,8 +29,6 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
     <Field label="Query" invalid={invalid} error={error}>
       <Controller
         name={name}
-        // FIXME: this won't be needed when the API will return the default config
-        defaultValue={{}}
         rules={{
           validate: {
             hasQueryEditor: () =>
