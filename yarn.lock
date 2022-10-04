@@ -23382,7 +23382,7 @@ __metadata:
     reselect: 4.1.6
     rimraf: 3.0.2
     rst2html: "github:thoward/rst2html#990cb89f2a300cdd9151790be377c4c0840df809"
-    rudder-sdk-js: ^2.13.0
+    rudder-sdk-js: 2.15.0
     rxjs: 7.5.6
     sass: 1.54.0
     sass-loader: 13.0.2
@@ -35774,10 +35774,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rudder-sdk-js@npm:^2.13.0":
-  version: 2.13.0
-  resolution: "rudder-sdk-js@npm:2.13.0"
-  checksum: 36c5200d7f49b4871ebe082498cf9e3d358821fdda0e51d4a1f916dd26fc6e820eea7077e42b837cf7edcea81cce0b7b95f69bc81496c43b9f22957d42747c94
+"rudder-sdk-js@npm:2.15.0":
+  version: 2.15.0
+  resolution: "rudder-sdk-js@npm:2.15.0"
+  checksum: c78b4f74511575abcc2f0e98bfc629800aaa0a11b2a6b1539ebd482791328ccc6776e65e6049a6d3f88f9138c87d22914142bf3db4fd2bcae6c6e9aaacd934f3
   languageName: node
   linkType: hard
 
