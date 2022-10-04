@@ -233,7 +233,11 @@ const ResourcePicker = ({
         <Advanced resource={internalSelected} onChange={(r) => setInternalSelected(r)} />
         <Space v={2} />
 
-        <Button disabled={!!errorMessage} onClick={handleApply} data-testid={selectors.components.queryEditor.resourcePicker.apply.button}>
+        <Button
+          disabled={!!errorMessage}
+          onClick={handleApply}
+          data-testid={selectors.components.queryEditor.resourcePicker.apply.button}
+        >
           Apply
         </Button>
 

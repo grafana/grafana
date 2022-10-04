@@ -163,7 +163,7 @@ const addAzureMonitorVariable = (
     e2e.pages.Dashboard.Settings.Variables.List.newButton().click();
   }
   e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2().clear().type(name);
-  getScenarioContext().then(({ lastAddedDataSource }: any) => {
+  getScenarioContext().then(({ lastAddedDataSource }: { lastAddedDataSource: string }) => {
     e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect().type(
       `${lastAddedDataSource}{enter}`
     );
@@ -272,7 +272,7 @@ e2e.scenario({
             zone: 'Coordinated Universal Time',
           },
         });
-        getScenarioContext().then(({ lastAddedDataSource }: any) => {
+        getScenarioContext().then(({ lastAddedDataSource }: { lastAddedDataSource: string }) => {
           e2e.components.PageToolbar.item('Dashboard settings').click();
           e2e.components.Tab.title('Annotations').click();
           e2e.pages.Dashboard.Settings.Annotations.List.addAnnotationCTAV2().click();
