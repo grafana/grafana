@@ -1,6 +1,8 @@
 import React, { SyntheticEvent, useEffect } from 'react';
 import semver from 'semver/preload';
 
+//@ts-ignore @todo not use this package?
+
 import {
   DataSourcePluginOptionsEditorProps,
   onUpdateDatasourceJsonDataOptionChecked,
@@ -20,6 +22,9 @@ import {
 import { PromOptions } from '../types';
 
 import { ExemplarsSettings } from './ExemplarsSettings';
+import { PromFlavorVersions } from './PromFlavorVersions';
+
+const closestSemver = require('semver-closest');
 
 const { Select, Input, FormField } = LegacyForms;
 
@@ -35,78 +40,6 @@ const prometheusFlavors = [
   { value: 'Thanos', label: 'Thanos' },
 ];
 
-const versions: { [index: string]: Array<{ value?: string; label: string }> } = {
-  Prometheus: [
-    { value: undefined, label: 'Please select' },
-    { value: 'lt2.18.0', label: '< 2.18.0' },
-    { value: '2.18.0', label: '2.18.0' },
-    { value: '2.18.1', label: '2.18.1' },
-    { value: '2.18.2', label: '2.18.2' },
-    { value: '2.19.2', label: '2.19.2' },
-    { value: '2.19.3', label: '2.19.3' },
-    { value: '2.20.0', label: '2.20.0' },
-    { value: '2.20.1', label: '2.20.1' },
-    { value: '2.21.0', label: '2.21.0' },
-    { value: '2.22.0', label: '2.22.0' },
-    { value: '2.22.1', label: '2.22.1' },
-    { value: '2.22.2', label: '2.22.2' },
-    { value: '2.23.0', label: '2.23.0' },
-    { value: '2.24.0', label: '2.24.0' },
-    { value: '2.24.1', label: '2.24.1' },
-    { value: '2.25.0', label: '2.25.0' },
-    { value: '2.25.1', label: '2.25.1' },
-    { value: '2.25.2', label: '2.25.2' },
-    { value: '2.26.0', label: '2.26.0' },
-    { value: '2.26.1', label: '2.26.1' },
-    { value: '2.27.0', label: '2.27.0' },
-    { value: '2.27.1', label: '2.27.1' },
-    { value: '2.28.0', label: '2.28.0' },
-    { value: '2.28.1', label: '2.28.1' },
-    { value: '2.29.0', label: '2.29.0' },
-    { value: '2.29.1', label: '2.29.1' },
-    { value: '2.29.2', label: '2.29.2' },
-    { value: '2.30.0', label: '2.30.0' },
-    { value: '2.30.1', label: '2.30.1' },
-    { value: '2.30.2', label: '2.30.2' },
-    { value: '2.30.3', label: '2.30.3' },
-    { value: '2.30.4', label: '2.30.4' },
-    { value: '2.31.0', label: '2.31.0' },
-    { value: '2.31.2', label: '2.31.2' },
-    { value: '2.32.0', label: '2.32.0' },
-    { value: '2.32.1', label: '2.32.1' },
-    { value: '2.33.0', label: '2.33.0' },
-    { value: '2.33.1', label: '2.33.1' },
-    { value: '2.33.2', label: '2.33.2' },
-    { value: '2.33.3', label: '2.33.3' },
-    { value: '2.33.4', label: '2.33.4' },
-    { value: '2.33.5', label: '2.33.5' },
-    { value: '2.34.0', label: '2.34.0' },
-    { value: '2.35.0', label: '2.35.0' },
-    { value: '2.36.0', label: '2.36.0' },
-    { value: '2.36.1', label: '2.36.1' },
-    { value: '2.36.2', label: '2.36.2' },
-    { value: '2.37.0', label: '2.37.0' },
-    { value: '2.37.1', label: '2.37.1' },
-    { value: '2.38.0', label: '2.38.0' },
-    { value: '2.39.0', label: '2.39.0' },
-    { value: 'gt2.39.0', label: '> 2.39.0' },
-  ],
-  Mimir: [
-    { value: undefined, label: 'Please select' },
-    { value: '2.0.0', label: '2.0.0' },
-  ],
-  Thanos: [
-    { value: undefined, label: 'Please select' },
-    { value: 'lt0.15', label: '0.15 or lower' },
-    { value: '2.24', label: '2.24' },
-    { value: '2.37', label: '2.37' },
-  ],
-  Cortex: [
-    { value: undefined, label: 'Please select' },
-    { value: '1.0.0', label: '1.0.0' },
-  ],
-};
-
 type Props = Pick<DataSourcePluginOptionsEditorProps<PromOptions>, 'options' | 'onOptionsChange'>;
 
 interface VersionDetectionResponse {
@@ -120,11 +53,28 @@ interface VersionDetectionResponse {
   };
 }
 
+const setVersion = (version: string, flavor?: string): string | undefined => {
+  if (!flavor || !PromFlavorVersions[flavor]) {
+    return;
+  }
+
+  const flavorVersionValues = PromFlavorVersions[flavor];
+  const closestVersion: string = closestSemver(
+    version,
+    flavorVersionValues?.filter((el) => !!el.value).map((el) => el.value)
+  );
+  const differenceBetweenActualAndClosest = semver.diff(closestVersion, version);
+  if (differenceBetweenActualAndClosest !== 'major') {
+    return closestVersion;
+  }
+
+  return;
+};
+
 export const PromSettings = (props: Props) => {
   const { options, onOptionsChange } = props;
 
   // We are explicitly adding httpMethod so it is correctly displayed in dropdown. This way, it is more predictable for users.
-
   if (!options.jsonData.httpMethod) {
     options.jsonData.httpMethod = 'POST';
   }
@@ -139,7 +89,10 @@ export const PromSettings = (props: Props) => {
         if (rawResponse.data?.version && semver.valid(rawResponse.data?.version)) {
           onOptionsChange({
             ...options,
-            jsonData: { ...options.jsonData, prometheusVersion: rawResponse.data?.version },
+            jsonData: {
+              ...options.jsonData,
+              prometheusVersion: setVersion(rawResponse.data?.version, options.jsonData.prometheusFlavor),
+            },
           });
         } else {
           // show UI to prompt manual population?
@@ -257,8 +210,8 @@ export const PromSettings = (props: Props) => {
                 inputEl={
                   <Select
                     aria-label={`${options.jsonData.prometheusFlavor} Flavor`}
-                    options={versions[options.jsonData.prometheusFlavor]}
-                    value={versions[options.jsonData.prometheusFlavor]?.find(
+                    options={PromFlavorVersions[options.jsonData.prometheusFlavor]}
+                    value={PromFlavorVersions[options.jsonData.prometheusFlavor]?.find(
                       (o) => o.value === options.jsonData.prometheusVersion
                     )}
                     onChange={onChangeHandler('prometheusVersion', options, onOptionsChange)}

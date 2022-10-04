@@ -22,6 +22,8 @@ export interface PromQuery extends DataQuery {
   editorMode?: QueryEditorMode;
 }
 
+export type PromDatasourceConfigFlavorValues = 'Prometheus' | 'Cortex' | 'Mimir' | 'Thanos';
+
 export interface PromOptions extends DataSourceJsonData {
   timeInterval?: string;
   queryTimeout?: string;
@@ -30,7 +32,7 @@ export interface PromOptions extends DataSourceJsonData {
   customQueryParameters?: string;
   disableMetricsLookup?: boolean;
   exemplarTraceIdDestinations?: ExemplarTraceIdDestination[];
-  prometheusFlavor?: string;
+  prometheusFlavor?: PromDatasourceConfigFlavorValues;
   prometheusVersion?: string;
 }
 
