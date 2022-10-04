@@ -6,12 +6,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import CSSTransition from 'react-transition-group/CSSTransition';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
 import { CustomScrollbar, Icon, IconButton, useTheme2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
 import { TOP_BAR_LEVEL_HEIGHT } from '../AppChrome/types';
-import { NavBarToggle } from '../NavBar/NavBarToggle';
 
 import { NavBarMenuItemWrapper } from './NavBarMenuItemWrapper';
 
@@ -75,14 +73,6 @@ export function NavBarMenu({ activeItem, navItems, searchBarHidden, onClose }: P
                 variant="secondary"
               />
             </div>
-            <NavBarToggle
-              className={styles.menuCollapseIcon}
-              isExpanded={true}
-              onClick={() => {
-                reportInteraction('grafana_navigation_collapsed');
-                onMenuClose();
-              }}
-            />
             <nav className={styles.content}>
               <CustomScrollbar showScrollIndicators hideHorizontalTrack>
                 <ul className={styles.itemList}>
@@ -161,12 +151,6 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden?: boolean) => {
       gridAutoRows: `minmax(${theme.spacing(6)}, auto)`,
       gridTemplateColumns: `minmax(${MENU_WIDTH}, auto)`,
       minWidth: MENU_WIDTH,
-    }),
-    menuCollapseIcon: css({
-      position: 'absolute',
-      top: '20px',
-      right: '0px',
-      transform: `translateX(50%)`,
     }),
   };
 };
