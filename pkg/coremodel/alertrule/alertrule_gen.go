@@ -49,24 +49,18 @@ const (
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
 type Model struct {
-	Annotations []struct {
-		Key   string `json:"key"`
-		Value string `json:"value"`
-	} `json:"annotations"`
-	Condition    string       `json:"condition"`
-	ExecErrState ExecErrState `json:"execErrState"`
-	FolderUid    string       `json:"folderUid"`
+	Annotations  map[string]interface{} `json:"annotations"`
+	Condition    string                 `json:"condition"`
+	ExecErrState ExecErrState           `json:"execErrState"`
+	FolderUid    string                 `json:"folderUid"`
 
 	// A go-parseable duration string.
 	For string `json:"for"`
 
 	// Unique numeric identifier for the rule. Read-only.
-	Id     *int64 `json:"id,omitempty"`
-	Labels []struct {
-		Key   string `json:"key"`
-		Value string `json:"value"`
-	} `json:"labels"`
-	NoDataState NoDataState `json:"noDataState"`
+	Id          *int64                 `json:"id,omitempty"`
+	Labels      map[string]interface{} `json:"labels"`
+	NoDataState NoDataState            `json:"noDataState"`
 	Queries     []struct {
 		// Grafana data source unique identifier; it should be '-100' for a Server Side Expression operation.
 		DatasourceUID string `json:"datasourceUID"`

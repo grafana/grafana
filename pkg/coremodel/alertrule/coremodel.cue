@@ -38,9 +38,9 @@ seqs: [
 				// A go-parseable duration string.
 				for: string
 
-				annotations: [...#Label]
+				annotations: [string]: string
 
-				labels: [...#Label]
+				labels: [string]: string
 
 				///////////////////////////////////////
 				// Definitions (referenced above) are declared below

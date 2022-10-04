@@ -19,10 +19,7 @@ export enum ExecutionErrState {
 }
 
 export interface Alertrule {
-  annotations: Array<{
-    key: string;
-    value: string;
-  }>;
+  annotations: Record<string, unknown>;
   condition: string;
   execErrState: ExecutionErrState;
   folderUid: string;
@@ -34,10 +31,7 @@ export interface Alertrule {
    * Unique numeric identifier for the rule. Read-only.
    */
   id?: number;
-  labels: Array<{
-    key: string;
-    value: string;
-  }>;
+  labels: Record<string, unknown>;
   noDataState: NoDataState;
   queries: Array<{
     refID: string;
@@ -67,7 +61,5 @@ export interface Alertrule {
 }
 
 export const defaultAlertrule: Partial<Alertrule> = {
-  annotations: [],
-  labels: [],
   queries: [],
 };
