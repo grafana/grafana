@@ -9,6 +9,7 @@ package registry
 import (
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/coremodel/alertrule"
 	"github.com/grafana/grafana/pkg/coremodel/dashboard"
 	"github.com/grafana/grafana/pkg/coremodel/playlist"
 	"github.com/grafana/grafana/pkg/coremodel/pluginmeta"
@@ -27,6 +28,7 @@ import (
 // a validation HTTP middleware for any coremodel-schematized object type.
 type Base struct {
 	all        []coremodel.Interface
+	alertrule  *alertrule.Coremodel
 	dashboard  *dashboard.Coremodel
 	playlist   *playlist.Coremodel
 	pluginmeta *pluginmeta.Coremodel
@@ -34,10 +36,17 @@ type Base struct {
 
 // type guards
 var (
+	_ coremodel.Interface = &alertrule.Coremodel{}
 	_ coremodel.Interface = &dashboard.Coremodel{}
 	_ coremodel.Interface = &playlist.Coremodel{}
 	_ coremodel.Interface = &pluginmeta.Coremodel{}
 )
+
+// Alertrule returns the alertrule coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (b *Base) Alertrule() *alertrule.Coremodel {
+	return b.alertrule
+}
 
 // Dashboard returns the dashboard coremodel. The return value is guaranteed to
 // implement coremodel.Interface.
@@ -60,6 +69,12 @@ func (b *Base) Pluginmeta() *pluginmeta.Coremodel {
 func doProvideBase(lib thema.Library) *Base {
 	var err error
 	reg := &Base{}
+
+	reg.alertrule, err = alertrule.New(lib)
+	if err != nil {
+		panic(fmt.Sprintf("error while initializing alertrule coremodel: %s", err))
+	}
+	reg.all = append(reg.all, reg.alertrule)
 
 	reg.dashboard, err = dashboard.New(lib)
 	if err != nil {

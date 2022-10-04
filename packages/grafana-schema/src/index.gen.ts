@@ -4,6 +4,34 @@
 //
 // Run `make gen-cue` from repository root to regenerate.
 
+// Raw generated types from alertrule entity type.
+export type {
+  NoDataState,
+  ExecutionErrState
+} from './raw/alertrule/x/alertrule.gen';
+
+// The following exported declarations correspond to types in the alertrule@0.0 schema with
+// attribute @grafana(TSVeneer="type"). (lineage declared in file: pkg/coremodel/alertrule/coremodel.cue)
+//
+// The handwritten file for these type and default veneers is expected to be at
+// packages/grafana-schema/src/veneer/alertrule.types.ts.
+// This re-export declaration enforces that the handwritten veneer file exists,
+// and exports all the symbols in the list.
+//
+// TODO generate code such that tsc enforces type compatibility between raw and veneer decls
+export type { Alertrule } from './veneer/alertrule.types';
+
+// The following exported declarations correspond to types in the alertrule@0.0 schema with
+// attribute @grafana(TSVeneer="type"). (lineage declared in file: pkg/coremodel/alertrule/coremodel.cue)
+//
+// The handwritten file for these type and default veneers is expected to be at
+// packages/grafana-schema/src/veneer/alertrule.types.ts.
+// This re-export declaration enforces that the handwritten veneer file exists,
+// and exports all the symbols in the list.
+//
+// TODO generate code such that tsc enforces type compatibility between raw and veneer decls
+export { defaultAlertrule } from './veneer/alertrule.types';
+
 // Raw generated types from dashboard entity type.
 export type {
   AnnotationQuery,
