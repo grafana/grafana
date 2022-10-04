@@ -449,7 +449,7 @@ func (ss *sqlStore) UpdatePermissions(ctx context.Context, userID int64, isAdmin
 			return err
 		}
 		// validate that after update there is at least one server admin
-		if err := ss.validateOneAdminLeft(ctx); err != nil {
+		if err := validateOneAdminLeft(ctx, sess); err != nil {
 			return err
 		}
 		return nil
@@ -457,17 +457,15 @@ func (ss *sqlStore) UpdatePermissions(ctx context.Context, userID int64, isAdmin
 }
 
 // validateOneAdminLeft validate that there is an admin user left
-func (ss *sqlStore) validateOneAdminLeft(ctx context.Context) error {
-	return ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		count, err := sess.Where("is_admin=?", true).Count(&user.User{})
-		if err != nil {
-			return err
-		}
+func validateOneAdminLeft(ctx context.Context, sess *sqlstore.DBSession) error {
+	count, err := sess.Where("is_admin=?", true).Count(&user.User{})
+	if err != nil {
+		return err
+	}
 
-		if count == 0 {
-			return user.ErrLastGrafanaAdmin
-		}
+	if count == 0 {
+		return user.ErrLastGrafanaAdmin
+	}
 
-		return nil
-	})
+	return nil
 }

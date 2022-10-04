@@ -246,6 +246,71 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		assert.Equal(t, result.Name, "testtestest")
 		assert.Equal(t, result.Login, "loginloginlogin")
 	})
+
+	t.Run("Testing DB - grafana admin users", func(t *testing.T) {
+		ss = sqlstore.InitTestDB(t)
+
+		createUserCmd := user.CreateUserCommand{
+			Email:   fmt.Sprint("admin", "@test.com"),
+			Name:    "admin",
+			Login:   "admin",
+			IsAdmin: true,
+		}
+		usr, err := ss.CreateUser(context.Background(), createUserCmd)
+		require.Nil(t, err)
+
+		// Cannot make themselves a non-admin
+		updatePermsError := userStore.UpdatePermissions(context.Background(), usr.ID, false)
+
+		require.Equal(t, user.ErrLastGrafanaAdmin, updatePermsError)
+
+		query := models.GetUserByIdQuery{Id: usr.ID}
+		getUserError := ss.GetUserById(context.Background(), &query)
+		require.Nil(t, getUserError)
+
+		require.True(t, query.Result.IsAdmin)
+
+		// One user
+		const email = "user@test.com"
+		const username = "user"
+		createUserCmd = user.CreateUserCommand{
+			Email: email,
+			Name:  "user",
+			Login: username,
+		}
+		_, err = ss.CreateUser(context.Background(), createUserCmd)
+		require.Nil(t, err)
+
+		// When trying to create a new user with the same email, an error is returned
+		createUserCmd = user.CreateUserCommand{
+			Email:        email,
+			Name:         "user2",
+			Login:        "user2",
+			SkipOrgSetup: true,
+		}
+		_, err = ss.CreateUser(context.Background(), createUserCmd)
+		require.Equal(t, err, user.ErrUserAlreadyExists)
+
+		// When trying to create a new user with the same login, an error is returned
+		createUserCmd = user.CreateUserCommand{
+			Email:        "user2@test.com",
+			Name:         "user2",
+			Login:        username,
+			SkipOrgSetup: true,
+		}
+		_, err = ss.CreateUser(context.Background(), createUserCmd)
+		require.Equal(t, err, user.ErrUserAlreadyExists)
+	})
+
+	t.Run("GetProfile", func(t *testing.T) {
+		_, err := userStore.GetProfile(context.Background(), &user.GetUserProfileQuery{UserID: 1})
+		require.NoError(t, err)
+	})
+
+	t.Run("SetHelpFlag", func(t *testing.T) {
+		err := userStore.SetHelpFlag(context.Background(), &user.SetUserHelpFlagCommand{UserID: 1, HelpFlags1: user.HelpFlags1(1)})
+		require.NoError(t, err)
+	})
 }
 
 func TestIntegrationUserUpdate(t *testing.T) {
