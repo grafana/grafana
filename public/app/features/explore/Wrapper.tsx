@@ -1,10 +1,8 @@
 import { css } from '@emotion/css';
-import { inRange } from 'lodash';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect } from 'react';
 
 import { locationService } from '@grafana/runtime';
 import { ErrorBoundaryAlert } from '@grafana/ui';
-import { SplitView } from 'app/core/components/SplitPaneWrapper/SplitView';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -16,7 +14,7 @@ import { Branding } from '../../core/components/Branding/Branding';
 
 import { ExploreActions } from './ExploreActions';
 import { ExplorePaneContainer } from './ExplorePaneContainer';
-import { lastSavedUrl, resetExploreAction, splitSizeUpdateAction } from './state/main';
+import { lastSavedUrl, resetExploreAction } from './state/main';
 
 const styles = {
   pageScrollbarWrapper: css`
@@ -30,13 +28,9 @@ const styles = {
   `,
 };
 
-const MIN_PANE_WIDTH = 200;
 function Wrapper(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
   useExplorePageTitle();
-  const { maxedExploreId, evenSplitPanes } = useSelector((state) => state.explore);
-  const [rightPaneWidth, setRightPaneWidth] = useState<number>();
   const dispatch = useDispatch();
-  const containerRef = useRef<HTMLDivElement>(null);
   const queryParams = props.queryParams;
   const { keybindings, chrome } = useGrafana();
   const navModel = useNavModel('explore');
@@ -76,50 +70,20 @@ function Wrapper(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- dispatch is stable, doesn't need to be in the deps array
   }, []);
 
-  const updateSplitSize = (rightPaneWidth: number) => {
-    const evenSplitWidth = window.innerWidth / 2;
-    const areBothSimilar = inRange(rightPaneWidth, evenSplitWidth - 100, evenSplitWidth + 100);
-    if (areBothSimilar) {
-      dispatch(splitSizeUpdateAction({ largerExploreId: undefined }));
-    } else {
-      dispatch(
-        splitSizeUpdateAction({
-          largerExploreId: rightPaneWidth > evenSplitWidth ? ExploreId.right : ExploreId.left,
-        })
-      );
-    }
-
-    setRightPaneWidth(rightPaneWidth);
-  };
-
   const hasSplit = Boolean(queryParams.left) && Boolean(queryParams.right);
-  let widthCalc = 0;
 
-  if (hasSplit) {
-    if (!evenSplitPanes && maxedExploreId) {
-      widthCalc = maxedExploreId === ExploreId.right ? window.innerWidth - MIN_PANE_WIDTH : MIN_PANE_WIDTH;
-    } else if (evenSplitPanes) {
-      widthCalc = Math.floor(window.innerWidth / 2);
-    } else if (rightPaneWidth !== undefined) {
-      widthCalc = rightPaneWidth;
-    }
-  }
-
-  const splitSizeObj = { rightPaneSize: widthCalc };
   return (
-    <div className={styles.pageScrollbarWrapper} ref={containerRef}>
+    <div className={styles.pageScrollbarWrapper}>
       <ExploreActions exploreIdLeft={ExploreId.left} exploreIdRight={ExploreId.right} />
       <div className={styles.exploreWrapper}>
-        <SplitView uiState={splitSizeObj} minSize={MIN_PANE_WIDTH} onResize={updateSplitSize}>
-          <ErrorBoundaryAlert style="page" key="LeftPane">
-            <ExplorePaneContainer split={hasSplit} exploreId={ExploreId.left} urlQuery={queryParams.left} />
+        <ErrorBoundaryAlert style="page">
+          <ExplorePaneContainer split={hasSplit} exploreId={ExploreId.left} urlQuery={queryParams.left} />
+        </ErrorBoundaryAlert>
+        {hasSplit && (
+          <ErrorBoundaryAlert style="page">
+            <ExplorePaneContainer split={hasSplit} exploreId={ExploreId.right} urlQuery={queryParams.right} />
           </ErrorBoundaryAlert>
-          {hasSplit && (
-            <ErrorBoundaryAlert style="page" key="RightPane">
-              <ExplorePaneContainer split={hasSplit} exploreId={ExploreId.right} urlQuery={queryParams.right} />
-            </ErrorBoundaryAlert>
-          )}
-        </SplitView>
+        )}
       </div>
     </div>
   );
