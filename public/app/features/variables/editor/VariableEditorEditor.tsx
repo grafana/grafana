@@ -1,14 +1,12 @@
-import { isEqual } from 'lodash';
 import React, { FormEvent, PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { bindActionCreators } from 'redux';
 
-import { AppEvents, LoadingState, SelectableValue, VariableType } from '@grafana/data';
+import { LoadingState, SelectableValue, VariableType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
-import { Button, HorizontalGroup, Icon, InlineFieldRow, VerticalGroup } from '@grafana/ui';
+import { Button, HorizontalGroup, Icon, Legend } from '@grafana/ui';
 
-import { appEvents } from '../../../core/core';
 import { StoreState, ThunkDispatch } from '../../../types';
 import { variableAdapters } from '../adapters';
 import { hasOptions } from '../guard';
@@ -22,7 +20,6 @@ import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 import { ConfirmDeleteModal } from './ConfirmDeleteModal';
 import { VariableHideSelect } from './VariableHideSelect';
-import { VariableSectionHeader } from './VariableSectionHeader';
 import { VariableTextField } from './VariableTextField';
 import { VariableTypeSelect } from './VariableTypeSelect';
 import { VariableValuesPreview } from './VariableValuesPreview';
@@ -73,14 +70,6 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props, State>
 
   componentDidMount(): void {
     this.props.variableEditorMount(this.props.identifier);
-  }
-
-  componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<{}>, snapshot?: any): void {
-    if (!isEqual(prevProps.editor.errors, this.props.editor.errors)) {
-      Object.values(this.props.editor.errors).forEach((error) => {
-        appEvents.emit(AppEvents.alertWarning, ['Validation', error]);
-      });
-    }
   }
 
   componentWillUnmount(): void {
@@ -158,77 +147,65 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props, State>
     return (
       <div>
         <form aria-label="Variable editor Form" onSubmit={this.onHandleSubmit}>
-          <VerticalGroup spacing="lg">
-            <VerticalGroup spacing="none">
-              <VariableSectionHeader name="General" />
-              <InlineFieldRow>
-                <VariableTextField
-                  value={this.props.editor.name}
-                  onChange={this.onNameChange}
-                  name="Name"
-                  placeholder="name"
-                  testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2}
-                  maxLength={VariableNameConstraints.MaxSize}
-                  required
-                  tooltip="Variable name cannot be longer than 50 characters"
-                />
-                <VariableTypeSelect onChange={this.onTypeChange} type={this.props.variable.type} />
-              </InlineFieldRow>
+          <Legend>General</Legend>
+          <VariableTextField
+            value={this.props.editor.name}
+            onChange={this.onNameChange}
+            name="Name"
+            placeholder="name"
+            description="The name of the template variable. (Max. 50 characters)"
+            invalid={!!this.props.editor.errors.name}
+            error={this.props.editor.errors.name}
+            testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2}
+            maxLength={VariableNameConstraints.MaxSize}
+            required
+          />
 
-              {this.props.editor.errors.name && (
-                <div className="gf-form">
-                  <span className="gf-form-label gf-form-label--error">{this.props.editor.errors.name}</span>
-                </div>
-              )}
+          <VariableTypeSelect onChange={this.onTypeChange} type={this.props.variable.type} />
 
-              <InlineFieldRow>
-                <VariableTextField
-                  value={this.props.variable.label ?? ''}
-                  onChange={this.onLabelChange}
-                  name="Label"
-                  placeholder="optional display name"
-                  testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInputV2}
-                />
-                <VariableHideSelect
-                  onChange={this.onHideChange}
-                  hide={this.props.variable.hide}
-                  type={this.props.variable.type}
-                />
-              </InlineFieldRow>
+          <VariableTextField
+            name="Label"
+            description="Optional display name"
+            value={this.props.variable.label ?? ''}
+            placeholder="My label"
+            onChange={this.onLabelChange}
+            testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInputV2}
+          />
+          <VariableHideSelect
+            onChange={this.onHideChange}
+            hide={this.props.variable.hide}
+            type={this.props.variable.type}
+          />
 
-              <VariableTextField
-                name="Description"
-                value={variable.description ?? ''}
-                placeholder="descriptive text"
-                onChange={this.onDescriptionChange}
-                grow
-              />
-            </VerticalGroup>
+          <VariableTextField
+            name="Description"
+            value={variable.description ?? ''}
+            placeholder="descriptive text"
+            onChange={this.onDescriptionChange}
+            grow
+          />
 
-            {EditorToRender && <EditorToRender variable={this.props.variable} onPropChange={this.onPropChanged} />}
+          {EditorToRender && <EditorToRender variable={this.props.variable} onPropChange={this.onPropChanged} />}
 
-            {hasOptions(this.props.variable) ? <VariableValuesPreview variable={this.props.variable} /> : null}
+          {hasOptions(this.props.variable) ? <VariableValuesPreview variable={this.props.variable} /> : null}
 
-            <HorizontalGroup spacing="md">
-              <Button variant="destructive" onClick={this.onModalOpen}>
-                Delete
-              </Button>
-              <Button
-                type="submit"
-                aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.submitButton}
-                disabled={loading}
-                variant={'secondary'}
-              >
-                Run query
-                {loading ? (
-                  <Icon className="spin-clockwise" name="sync" size="sm" style={{ marginLeft: '2px' }} />
-                ) : null}
-              </Button>
-              <Button variant="primary" onClick={this.onApply}>
-                Apply
-              </Button>
-            </HorizontalGroup>
-          </VerticalGroup>
+          <HorizontalGroup spacing="md">
+            <Button variant="destructive" onClick={this.onModalOpen}>
+              Delete
+            </Button>
+            <Button
+              type="submit"
+              aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.submitButton}
+              disabled={loading}
+              variant={'secondary'}
+            >
+              Run query
+              {loading ? <Icon className="spin-clockwise" name="sync" size="sm" style={{ marginLeft: '2px' }} /> : null}
+            </Button>
+            <Button variant="primary" onClick={this.onApply}>
+              Apply
+            </Button>
+          </HorizontalGroup>
         </form>
         <ConfirmDeleteModal
           isOpen={this.state.showDeleteModal}

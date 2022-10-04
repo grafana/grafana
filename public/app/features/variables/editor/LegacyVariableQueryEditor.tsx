@@ -35,7 +35,6 @@ export const LegacyVariableQueryEditor: FC<VariableQueryEditorProps> = ({ onChan
         onChange={onValueChange}
         onBlur={onBlur}
         required
-        labelWidth={20}
         ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput}
       />
     </div>

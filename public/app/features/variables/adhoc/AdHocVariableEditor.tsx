@@ -3,10 +3,9 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
-import { Alert, InlineField, InlineFieldRow, VerticalGroup } from '@grafana/ui';
+import { Alert, Field, Legend } from '@grafana/ui';
 import { StoreState } from 'app/types';
 
-import { VariableSectionHeader } from '../editor/VariableSectionHeader';
 import { initialVariableEditorState } from '../editor/reducer';
 import { getAdhocVariableEditorState } from '../editor/selectors';
 import { VariableEditorProps } from '../editor/types';
@@ -61,18 +60,14 @@ export class AdHocVariableEditorUnConnected extends PureComponent<Props> {
     const infoText = extended?.infoText ?? null;
 
     return (
-      <VerticalGroup spacing="xs">
-        <VariableSectionHeader name="Options" />
-        <VerticalGroup spacing="sm">
-          <InlineFieldRow>
-            <InlineField label="Data source" labelWidth={20} htmlFor="data-source-picker">
-              <DataSourcePicker current={variable.datasource} onChange={this.onDatasourceChanged} noDefault />
-            </InlineField>
-          </InlineFieldRow>
+      <>
+        <Legend>Ad-hoc options</Legend>
+        <Field label="Data source" htmlFor="data-source-picker">
+          <DataSourcePicker current={variable.datasource} onChange={this.onDatasourceChanged} noDefault />
+        </Field>
 
-          {infoText ? <Alert title={infoText} severity="info" /> : null}
-        </VerticalGroup>
-      </VerticalGroup>
+        {infoText ? <Alert title={infoText} severity="info" /> : null}
+      </>
     );
   }
 }

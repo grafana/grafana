@@ -1,44 +1,43 @@
 import React, { FormEvent, PropsWithChildren, ReactElement } from 'react';
 
-import { InlineField, Input, PopoverContent } from '@grafana/ui';
+import { Field, Input } from '@grafana/ui';
 
 interface VariableTextFieldProps {
   value: string;
   name: string;
-  placeholder: string;
+  placeholder?: string;
   onChange: (event: FormEvent<HTMLInputElement>) => void;
   testId?: string;
-  tooltip?: PopoverContent;
   required?: boolean;
   width?: number;
-  labelWidth?: number;
   grow?: boolean;
   onBlur?: (event: FormEvent<HTMLInputElement>) => void;
-  interactive?: boolean;
   maxLength?: number;
+  description?: React.ReactNode;
+  invalid?: boolean;
+  error?: React.ReactNode;
 }
 
 export function VariableTextField({
   value,
   name,
-  placeholder,
+  placeholder = '',
   onChange,
   testId,
   width,
-  labelWidth,
   required,
   onBlur,
-  tooltip,
   grow,
-  interactive,
+  description,
+  invalid,
+  error,
   maxLength,
 }: PropsWithChildren<VariableTextFieldProps>): ReactElement {
   return (
-    <InlineField interactive={interactive} label={name} labelWidth={labelWidth ?? 12} tooltip={tooltip} grow={grow}>
+    <Field label={name} description={description} invalid={invalid} error={error}>
       <Input
         type="text"
         id={name}
-        name={name}
         placeholder={placeholder}
         value={value}
         onChange={onChange}
@@ -48,6 +47,6 @@ export function VariableTextField({
         maxLength={maxLength}
         required={required}
       />
-    </InlineField>
+    </Field>
   );
 }

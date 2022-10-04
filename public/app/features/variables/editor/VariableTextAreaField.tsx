@@ -2,35 +2,31 @@ import { css } from '@emotion/css';
 import React, { FormEvent, PropsWithChildren, ReactElement, useCallback } from 'react';
 
 import { GrafanaTheme } from '@grafana/data';
-import { InlineField, TextArea, useStyles } from '@grafana/ui';
+import { Field, TextArea, useStyles } from '@grafana/ui';
 
-interface VariableTextAreaFieldProps<T> {
+interface VariableTextAreaFieldProps {
   name: string;
   value: string;
   placeholder: string;
   onChange: (event: FormEvent<HTMLTextAreaElement>) => void;
   width: number;
-  tooltip?: string;
   ariaLabel?: string;
   required?: boolean;
-  labelWidth?: number;
   testId?: string;
   onBlur?: (event: FormEvent<HTMLTextAreaElement>) => void;
 }
 
 export function VariableTextAreaField({
-  name,
   value,
+  name,
   placeholder,
-  tooltip,
   onChange,
   onBlur,
   ariaLabel,
   required,
   width,
-  labelWidth,
   testId,
-}: PropsWithChildren<VariableTextAreaFieldProps<any>>): ReactElement {
+}: PropsWithChildren<VariableTextAreaFieldProps>): ReactElement {
   const styles = useStyles(getStyles);
   const getLineCount = useCallback((value: any) => {
     if (value && typeof value === 'string') {
@@ -41,7 +37,7 @@ export function VariableTextAreaField({
   }, []);
 
   return (
-    <InlineField label={name} labelWidth={labelWidth ?? 12} tooltip={tooltip}>
+    <Field label={name}>
       <TextArea
         rows={getLineCount(value)}
         value={value}
@@ -54,7 +50,7 @@ export function VariableTextAreaField({
         className={styles.textarea}
         data-testid={testId}
       />
-    </InlineField>
+    </Field>
   );
 }
 
