@@ -220,10 +220,12 @@ func getValidConflictUsers(r *ConflictResolver, b []byte) error {
 	// need to verify that id or email exists
 	previouslySeenIds := map[string]bool{}
 	previouslySeenEmails := map[string]bool{}
+	previouslySeenLogins := map[string]bool{}
 	for _, users := range r.Blocks {
 		for _, u := range users {
 			previouslySeenIds[strings.ToLower(u.ID)] = true
 			previouslySeenEmails[strings.ToLower(u.Email)] = true
+			previouslySeenLogins[strings.ToLower(u.Login)] = true
 		}
 	}
 
@@ -256,8 +258,11 @@ func getValidConflictUsers(r *ConflictResolver, b []byte) error {
 		if err != nil {
 			return fmt.Errorf("could not parse the content of the file with error %e", err)
 		}
-		if !previouslySeenEmails[strings.ToLower(newUser.Email)] {
-			return fmt.Errorf("not valid email: %s, email not in previous conflicts seen", newUser.Email)
+		if newUser.ConflictEmail != "" && !previouslySeenEmails[strings.ToLower(newUser.Email)] {
+			return fmt.Errorf("not valid email: %s, email not seen in previous conflicts", newUser.Email)
+		}
+		if newUser.ConflictLogin != "" && !previouslySeenLogins[strings.ToLower(newUser.Login)] {
+			return fmt.Errorf("not valid login: %s, login not seen in previous conflicts", newUser.Login)
 		}
 		// valid entry
 		newConflicts = append(newConflicts, *newUser)

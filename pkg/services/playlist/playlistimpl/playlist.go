@@ -35,12 +35,33 @@ func (s *Service) Update(ctx context.Context, cmd *playlist.UpdatePlaylistComman
 	return s.store.Update(ctx, cmd)
 }
 
-func (s *Service) Get(ctx context.Context, q *playlist.GetPlaylistByUidQuery) (*playlist.Playlist, error) {
+func (s *Service) GetWithoutItems(ctx context.Context, q *playlist.GetPlaylistByUidQuery) (*playlist.Playlist, error) {
 	return s.store.Get(ctx, q)
 }
 
-func (s *Service) GetItems(ctx context.Context, q *playlist.GetPlaylistItemsByUidQuery) ([]playlist.PlaylistItem, error) {
-	return s.store.GetItems(ctx, q)
+func (s *Service) Get(ctx context.Context, q *playlist.GetPlaylistByUidQuery) (*playlist.PlaylistDTO, error) {
+	v, err := s.store.Get(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	rawItems, err := s.store.GetItems(ctx, &playlist.GetPlaylistItemsByUidQuery{
+		PlaylistUID: v.UID,
+		OrgId:       q.OrgId,
+	})
+	if err != nil {
+		return nil, err
+	}
+	items := make([]playlist.PlaylistItemDTO, len(rawItems))
+	for i := 0; i < len(rawItems); i++ {
+		items[i].Type = playlist.PlaylistItemType(rawItems[i].Type)
+		items[i].Value = rawItems[i].Value
+	}
+	return &playlist.PlaylistDTO{
+		Uid:      v.UID,
+		Name:     v.Name,
+		Interval: v.Interval,
+		Items:    &items,
+	}, nil
 }
 
 func (s *Service) Search(ctx context.Context, q *playlist.GetPlaylistsQuery) (playlist.Playlists, error) {

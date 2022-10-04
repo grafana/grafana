@@ -273,7 +273,6 @@ export { useGraphNGContext } from './GraphNG/hooks';
 export { preparePlotFrame, buildScaleKey } from './GraphNG/utils';
 export { type GraphNGLegendEvent } from './GraphNG/types';
 export * from './PanelChrome/types';
-export { EmotionPerfTest } from './ThemeDemos/EmotionPerfTest';
 export { Label as BrowserLabel } from './BrowserLabel/Label';
 export { PanelContainer } from './PanelContainer/PanelContainer';
 export * from './QueryEditor';

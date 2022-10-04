@@ -942,7 +942,7 @@
           "application/json": {
             "schema": {
               "items": {
-                "$ref": "#/components/schemas/PlaylistItemDTO"
+                "$ref": "#/components/schemas/PlaylistItem"
               },
               "type": "array"
             }
@@ -2873,8 +2873,7 @@
         "type": "object"
       },
       "CorrelationConfigTarget": {
-        "description": "CorrelationConfigTarget is the target data query specific to target data source (Correlation.TargetUID)",
-        "type": "object"
+        "description": "CorrelationConfigTarget is the target data query specific to target data source (Correlation.TargetUID)"
       },
       "CreateAlertNotificationCommand": {
         "properties": {
@@ -3100,7 +3099,7 @@
           },
           "items": {
             "items": {
-              "$ref": "#/components/schemas/PlaylistItemDTO"
+              "$ref": "#/components/schemas/PlaylistItem"
             },
             "type": "array"
           },
@@ -6349,22 +6348,27 @@
       "PlaylistDTO": {
         "properties": {
           "id": {
+            "description": "Unique playlist identifier for internal use, set by Grafana.",
             "format": "int64",
             "type": "integer"
           },
           "interval": {
+            "description": "Interval sets the time between switching views in a playlist.\nFIXME: Is this based on a standardized format or what options are available? Can datemath be used?",
             "type": "string"
           },
           "items": {
+            "description": "The ordered list of items that the playlist will iterate over.",
             "items": {
-              "$ref": "#/components/schemas/PlaylistItemDTO"
+              "$ref": "#/components/schemas/PlaylistItem"
             },
             "type": "array"
           },
           "name": {
+            "description": "Name of the playlist.",
             "type": "string"
           },
           "uid": {
+            "description": "Unique playlist identifier. Generated on creation, either by the\ncreator of the playlist of by the application.",
             "type": "string"
           }
         },
@@ -6401,31 +6405,43 @@
         },
         "type": "array"
       },
-      "PlaylistItemDTO": {
+      "PlaylistItem": {
+        "description": "THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.\nEquivalent Go types at stable import paths are provided in https://github.com/grafana/grok.",
         "properties": {
           "id": {
+            "description": "FIXME: The prefixDropper removes playlist from playlist_id, that doesn't work for us since it'll mean we'll have Id twice.\nID of the playlist item for internal use by Grafana. Deprecated.",
             "format": "int64",
             "type": "integer"
           },
           "order": {
+            "description": "Order is the position in the list for the item. Deprecated.",
             "format": "int64",
             "type": "integer"
           },
           "playlistid": {
+            "description": "ID for the playlist containing the item. Deprecated.",
             "format": "int64",
             "type": "integer"
           },
           "title": {
+            "description": "Title is the human-readable identifier for the playlist item.",
             "type": "string"
           },
           "type": {
-            "type": "string"
+            "$ref": "#/components/schemas/PlaylistItemType"
           },
           "value": {
+            "description": "Value depends on type and describes the playlist item.\n\ndashboard_by_id: The value is an internal numerical identifier set by Grafana. This\nis not portable as the numerical identifier is non-deterministic between different instances.\nWill be replaced by dashboard_by_uid in the future.\ndashboard_by_tag: The value is a tag which is set on any number of dashboards. All\ndashboards behind the tag will be added to the playlist.",
             "type": "string"
           }
         },
+        "title": "PlaylistItem is the Go representation of a playlist.Item.",
         "type": "object"
+      },
+      "PlaylistItemType": {
+        "description": "THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.\nEquivalent Go types at stable import paths are provided in https://github.com/grafana/grok.",
+        "title": "Type of the item.",
+        "type": "string"
       },
       "Playlists": {
         "items": {
@@ -9195,7 +9211,7 @@
           },
           "items": {
             "items": {
-              "$ref": "#/components/schemas/PlaylistItemDTO"
+              "$ref": "#/components/schemas/PlaylistItem"
             },
             "type": "array"
           },
@@ -19475,7 +19491,7 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "Create service account",
+        "summary": "# Create service account",
         "tags": [
           "service_accounts"
         ]
@@ -19541,7 +19557,7 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "Search service accounts with paging",
+        "summary": "# Search service accounts with paging",
         "tags": [
           "service_accounts"
         ]
@@ -19579,7 +19595,7 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "Delete service account",
+        "summary": "# Delete service account",
         "tags": [
           "service_accounts"
         ]
@@ -19618,7 +19634,7 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "Get single serviceaccount by Id",
+        "summary": "# Get single serviceaccount by Id",
         "tags": [
           "service_accounts"
         ]
@@ -19667,7 +19683,7 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "Update service account",
+        "summary": "# Update service account",
         "tags": [
           "service_accounts"
         ]
@@ -19705,7 +19721,7 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "Get service account tokens",
+        "summary": "# Get service account tokens",
         "tags": [
           "service_accounts"
         ]
@@ -19757,7 +19773,7 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "CreateNewToken adds a token to a service account",
+        "summary": "# CreateNewToken adds a token to a service account",
         "tags": [
           "service_accounts"
         ]
@@ -19807,7 +19823,7 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "DeleteToken deletes service account tokens",
+        "summary": "# DeleteToken deletes service account tokens",
         "tags": [
           "service_accounts"
         ]
