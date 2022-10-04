@@ -69,8 +69,12 @@ func (s *ServiceImpl) GetNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	treeRoot := &navtree.NavTreeRoot{}
 
+	if s.features.IsEnabled(featuremgmt.FlagTopnav) {
+		treeRoot.AddSection(s.getHomeNode(c, prefs))
+	}
+
 	if hasAccess(ac.ReqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsRead)) {
-		starredItemsLinks, err := s.buildStarredItemsNavLinks(c, prefs)
+		starredItemsLinks, err := s.buildStarredItemsNavLinks(c)
 		if err != nil {
 			return nil, err
 		}
@@ -186,6 +190,32 @@ func (s *ServiceImpl) GetNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 	return treeRoot, nil
 }
 
+func (s *ServiceImpl) getHomeNode(c *models.ReqContext, prefs *pref.Preference) *navtree.NavLink {
+	homeUrl := s.cfg.AppSubURL + "/"
+	homePage := s.cfg.HomePage
+
+	if prefs.HomeDashboardID == 0 && len(homePage) > 0 {
+		homeUrl = homePage
+	}
+
+	if prefs.HomeDashboardID != 0 {
+		slugQuery := models.GetDashboardRefByIdQuery{Id: prefs.HomeDashboardID}
+		err := s.dashboardService.GetDashboardUIDById(c.Req.Context(), &slugQuery)
+		if err == nil {
+			homeUrl = models.GetDashboardUrl(slugQuery.Result.Uid, slugQuery.Result.Slug)
+		}
+	}
+
+	return &navtree.NavLink{
+		Text:       "Home",
+		Id:         "home",
+		Url:        homeUrl,
+		Icon:       "home-alt",
+		Section:    navtree.NavSectionCore,
+		SortWeight: navtree.WeightHome,
+	}
+}
+
 func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *models.ReqContext) {
 	if setting.HelpEnabled {
 		helpVersion := fmt.Sprintf(`%s v%s (%s)`, setting.ApplicationName, setting.BuildVersion, setting.BuildCommit)
@@ -256,7 +286,7 @@ func (s *ServiceImpl) getProfileNode(c *models.ReqContext) *navtree.NavLink {
 	}
 }
 
-func (s *ServiceImpl) buildStarredItemsNavLinks(c *models.ReqContext, prefs *pref.Preference) ([]*navtree.NavLink, error) {
+func (s *ServiceImpl) buildStarredItemsNavLinks(c *models.ReqContext) ([]*navtree.NavLink, error) {
 	starredItemsChildNavs := []*navtree.NavLink{}
 
 	query := star.GetUserStarsQuery{
