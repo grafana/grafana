@@ -92,7 +92,7 @@ func parseFolderFilter(query searchLibraryElementsQuery) FolderFilter {
 
 	if len(folderFilterId) > 0 && len(folderFilterUID) > 0 {
 		result.parseError = errors.New("Cannot pass both folderFilter and folderFilterUIDs")
-		return result;
+		return result
 	}
 
 	if len(folderFilterId) > 0 {
