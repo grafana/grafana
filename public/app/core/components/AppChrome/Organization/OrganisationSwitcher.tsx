@@ -44,8 +44,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
 
   select: css`
-    ${theme.breakpoints.down('sm')} {
-      display: none;
+    display: none;
+
+    ${theme.breakpoints.up('sm')} {
+      display: block;
     }
   `,
 });

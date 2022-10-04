@@ -1,15 +1,12 @@
 import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
-import { useAsyncFn } from 'react-use';
 
 import { UserOrgDTO, SelectableValue, GrafanaTheme2 } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { Icon, Select, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
-import { getUserOrganizations } from 'app/features/org/state/actions';
+import { getUserOrganizations, setUserOrganization } from 'app/features/org/state/actions';
 import { useDispatch, UserOrg, useSelector } from 'app/types';
-
-import { api } from '../../../../features/profile/api';
 
 export function OrganisationSelect() {
   const styles = useStyles2(getStyles);
@@ -17,14 +14,14 @@ export function OrganisationSelect() {
   const orgs = useSelector((state) => state.organization.userOrgs);
   const { orgName: name, orgId, orgRole: role } = contextSrv.user;
 
-  const [userOrgState, setUserOrg] = useAsyncFn(async (option: SelectableValue<UserOrg>) => {
+  const onSelectChange = (option: SelectableValue<UserOrg>) => {
     if (option.value) {
-      await api.setUserOrg(option.value);
+      setUserOrganization(option.value.orgId);
       locationService.partial({ orgId: option.value.orgId }, true);
       // TODO how to reload the current page
       window.location.reload();
     }
-  }, []);
+  };
 
   const [value, setValue] = useState<SelectableValue<UserOrgDTO>>(() => ({
     label: name,
@@ -56,10 +53,9 @@ export function OrganisationSelect() {
           role,
         },
       }))}
-      disabled={userOrgState.loading}
-      onChange={async (v) => {
+      onChange={(v) => {
         setValue(v);
-        await setUserOrg(v);
+        onSelectChange(v);
       }}
     />
   );
@@ -67,9 +63,12 @@ export function OrganisationSelect() {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    select: css({
-      background: 'none',
-      border: 'none',
-    }),
+    select: css`
+      border: none;
+
+      ${theme.breakpoints.up('sm')} {
+        background: none;
+      }
+    `,
   };
 };
