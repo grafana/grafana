@@ -11,7 +11,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/x/persistentcollection"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
+	grpccontext "github.com/grafana/grafana/pkg/services/grpcserver/context"
 	"github.com/grafana/grafana/pkg/services/store/object"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -47,12 +50,19 @@ func namespaceFromUID(uid string) string {
 }
 
 func userFromContext(ctx context.Context) *user.SignedInUser {
-	// TODO implement in GRPC server
-	return &user.SignedInUser{
-		UserID: 1,
-		OrgID:  1,
-		Login:  "fake",
+	// TODO move this function outside of the `store` package
+	grpcCtx := grpccontext.FromContext(ctx)
+	if grpcCtx != nil {
+		return grpcCtx.SignedInUser
 	}
+
+	c, ok := ctxkey.Get(ctx).(*models.ReqContext)
+	if !ok || c == nil || c.SignedInUser == nil {
+		// TODO: return error?
+		return nil
+	}
+
+	return c.SignedInUser
 }
 
 func (i dummyObjectServer) findObject(ctx context.Context, uid string, kind string, version string) (*RawObjectWithHistory, *object.RawObject, error) {

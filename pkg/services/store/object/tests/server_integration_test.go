@@ -114,8 +114,8 @@ func TestObjectServer(t *testing.T) {
 	ctx = metadata.AppendToOutgoingContext(ctx, "authorization", fmt.Sprintf("Bearer %s", testCtx.authToken))
 
 	fakeUser := &object.UserInfo{
-		Login: "fake",
-		Id:    1,
+		Login: testCtx.user.Login,
+		Id:    testCtx.user.UserID,
 	}
 	firstVersion := "1"
 	kind := "dashboard"
