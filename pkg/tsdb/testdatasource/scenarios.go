@@ -383,8 +383,9 @@ func (s *Service) handleDataResponseErrorScenario(_ context.Context, req *backen
 	rand.Seed(time.Now().Unix())
 	for _, q := range req.Queries {
 		respD := resp.Responses[q.RefID]
-		errStatus := []backend.ErrorStatus{backend.UnauthorizedErrorStatus, backend.TooManyRequestsErrorStatus, backend.ValidationFailedErrorStatus}[rand.Intn(3)]
-		respD.Error = backend.NewError(errStatus, "Something bad happened")
+		errStatus := []backend.Status{backend.StatusTimeout, backend.StatusTooManyRequests, backend.StatusValidationFailed}[rand.Intn(3)]
+		respD.Status = errStatus
+		respD.Error = fmt.Errorf("error %s occurred", errStatus)
 		resp.Responses[q.RefID] = respD
 	}
 

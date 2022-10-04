@@ -72,23 +72,11 @@ func (hs *HTTPServer) toJsonStreamingResponse(qdr *backend.QueryDataResponse) re
 		return response.JSONStreaming(statusCode, qdr)
 	}
 
-	statusCode := http.StatusOK
 	res := map[string]queryResponse{}
 	for refID, resp := range qdr.Responses {
-		qr := queryResponse{Frames: resp.Frames, Error: resp.Error, Status: http.StatusOK}
-		if resp.Error != nil {
-			statusCode = http.StatusMultiStatus
-
-			var ed backend.Error
-			if errors.As(resp.Error, &ed) {
-				qr.Status = ed.Status().HTTPStatus()
-			} else {
-				qr.Status = backend.ErrorStatusFromError(resp.Error).HTTPStatus()
-			}
-		}
-		res[refID] = qr
+		res[refID] = queryResponse{Frames: resp.Frames, Error: resp.Error, Status: resp.Status.HTTPStatus()}
 	}
-	return response.JSONStreaming(statusCode, &metricsResponse{Results: res})
+	return response.JSONStreaming(http.StatusMultiStatus, &metricsResponse{Results: res})
 }
 
 // swagger:parameters queryMetricsWithExpressions
