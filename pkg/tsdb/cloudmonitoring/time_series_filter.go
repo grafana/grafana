@@ -40,9 +40,9 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) run(ctx context.Context
 	d := cloudMonitoringResponse{}
 
 	for first || d.NextPageToken != "" {
-		if (d.NextPageToken != "") {
+		if d.NextPageToken != "" {
 			timeSeriesFilter.Params["pageToken"] = []string{d.NextPageToken}
-		} 
+		}
 		r.URL.RawQuery = timeSeriesFilter.Params.Encode()
 		alignmentPeriod, ok := r.URL.Query()["aggregation.alignmentPeriod"]
 
@@ -86,7 +86,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) run(ctx context.Context
 			return dr, cloudMonitoringResponse{}, "", nil
 		}
 
-		if(first) {
+		if first {
 			d = dnext
 			first = false
 		} else {
