@@ -42,6 +42,10 @@ type objectVersionMatcher struct {
 func userInfoMatches(expected *object.UserInfo, actual *object.UserInfo) (bool, string) {
 	var mismatches []string
 
+	if actual == nil && expected != nil {
+		return true, "Missing user info"
+	}
+
 	if expected.Id != actual.Id {
 		mismatches = append(mismatches, fmt.Sprintf("expected ID %d, actual ID: %d", expected.Id, actual.Id))
 	}
@@ -59,6 +63,8 @@ func timestampInRange(ts int64, tsRange []time.Time) bool {
 
 func requireObjectMatch(t *testing.T, obj *object.RawObject, m rawObjectMatcher) {
 	t.Helper()
+	require.NotNil(t, obj)
+
 	mismatches := ""
 	if m.uid != nil && *m.uid != obj.UID {
 		mismatches += fmt.Sprintf("expected UID: %s, actual UID: %s\n", *m.uid, obj.UID)

@@ -240,6 +240,8 @@ func (i dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectRequ
 		Version:   rawObj.Version,
 		Created:   rawObj.Created,
 		CreatedBy: rawObj.CreatedBy,
+		Size:      rawObj.Size,
+		ETag:      rawObj.ETag,
 		Comment:   r.Comment,
 	}
 
@@ -310,6 +312,7 @@ func (i dummyObjectServer) History(ctx context.Context, r *object.ObjectHistoryR
 	rsp := &object.ObjectHistoryResponse{}
 	if obj != nil {
 		// Return the most recent versions first
+		// Better? save them in this order?
 		for i := len(obj.History) - 1; i >= 0; i-- {
 			rsp.Versions = append(rsp.Versions, obj.History[i].ObjectVersionInfo)
 		}
