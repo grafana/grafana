@@ -244,7 +244,7 @@ datasources:
         config:
           target:
             expr: "{ job=\"test\" }"
-          field: "labels"
+          field: "traceID"
     jsonData:
       manageAlerts: false
       derivedFields:

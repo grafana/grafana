@@ -1,5 +1,5 @@
 import { groupBy } from 'lodash';
-import { Observable, of } from 'rxjs';
+import { from, Observable, of } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
 import {
@@ -17,6 +17,12 @@ import { dataFrameToLogsModel } from '../../../core/logsModel';
 import { refreshIntervalToSortOrder } from '../../../core/utils/explore';
 import { sortLogsResult } from '../../../features/logs/utils';
 import { ExplorePanelData } from '../../../types';
+import { getAllCorrelations } from '../../correlations/useCorrelations';
+import {
+  decorateDataFrameWithInternalDataLinks,
+  groupCorrelationsByDataSourceUid,
+  mapQueryRefIdToDataSourceUid,
+} from '../../correlations/utils';
 import { preProcessPanelData } from '../../query/state/runRequest';
 
 /**
@@ -70,6 +76,31 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
     tableResult: null,
     logsResult: null,
   };
+};
+
+export const decorateWithCorrelations = ({ queries }: { queries: DataQuery[] | undefined }) => {
+  return (data: PanelData): Observable<PanelData> => {
+    return from(
+      getCorrelationsConfig().then((correlationsConfig) => {
+        let queryRefIdToDataSourceUid = mapQueryRefIdToDataSourceUid(queries || []);
+
+        data.series.forEach((dataFrame) => {
+          const frameRefId = dataFrame.refId!;
+          const dataSourceUid = queryRefIdToDataSourceUid[frameRefId];
+          const correlations = correlationsConfig[dataSourceUid];
+          decorateDataFrameWithInternalDataLinks(dataFrame, correlations);
+        });
+        return data;
+      })
+    );
+  };
+};
+
+/**
+ * Temporarily load results every time a query is run. Todo: load it when Explore is loaded only.
+ */
+const getCorrelationsConfig = () => {
+  return getAllCorrelations().then(groupCorrelationsByDataSourceUid);
 };
 
 export const decorateWithGraphResult = (data: ExplorePanelData): ExplorePanelData => {
@@ -168,6 +199,7 @@ export function decorateData(
 ): Observable<ExplorePanelData> {
   return of(data).pipe(
     map((data: PanelData) => preProcessPanelData(data, queryResponse)),
+    mergeMap(decorateWithCorrelations({ queries })),
     map(decorateWithFrameTypeMetadata),
     map(decorateWithGraphResult),
     map(decorateWithLogsResult({ absoluteRange, refreshInterval, queries, fullRangeLogsVolumeAvailable })),
