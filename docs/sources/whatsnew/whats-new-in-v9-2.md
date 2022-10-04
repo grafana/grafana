@@ -33,6 +33,16 @@ For details, see [GitHub issue #55005](https://github.com/grafana/grafana/issues
 
 {{< figure src="/static/img/docs/panels/panel-help-9-2.gif" max-width="750px" caption="Retrieving a panel's query response data and panel settings" >}}
 
+## Canvas panel
+
+_Available in beta in Grafana Open Source._
+
+Introducing the Canvas panel, a new panel that combines the power of Grafana with the flexibility of custom elements.
+Canvas is a new panel type that allows you to create custom visualizations and overlay data.
+Canvas is a great way to create custom visualizations that are not possible with standard Grafana panels.
+
+Insert gif here of canvas panel in action (for default use case)
+
 ## Support for Google Analytics 4 properties
 
 _Generally available in Grafana Open Source._
