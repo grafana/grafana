@@ -74,9 +74,18 @@ const sharedReducerSlice = createSlice({
     },
     duplicateVariable: (state: VariablesState, action: PayloadAction<VariablePayload<{ newId: string }>>) => {
       const original = cloneDeep<VariableModel>(state[action.payload.id]);
-      const name = `copy_of_${original.name}`;
-      const newId = action.payload.data?.newId ?? name;
+      let name = `copy_of_${original.name}`;
+      const originalId = action.payload.data?.newId ?? name;
+      let newId = action.payload.data?.newId ?? name;
       const index = getNextVariableIndex(Object.values(state));
+      let idExists = state[newId] != null;
+      let counter = 0;
+      while (idExists && counter < 100) {
+        newId = `${originalId}_${counter}`;
+        idExists = state[newId] != null;
+        name = newId;
+        counter++;
+      }
       state[newId] = {
         ...cloneDeep(variableAdapters.get(action.payload.type).initialState),
         ...original,
