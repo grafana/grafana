@@ -270,6 +270,9 @@ func (i dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectRequ
 func (i dummyObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest) (*object.WriteObjectResponse, error) {
 	namespace := namespaceFromUID(r.UID)
 	obj, err := i.collection.FindFirst(ctx, namespace, func(i *RawObjectWithHistory) (bool, error) {
+		if i == nil || r == nil {
+			return false, nil
+		}
 		return i.UID == r.UID, nil
 	})
 	if err != nil {

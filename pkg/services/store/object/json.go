@@ -8,18 +8,17 @@ import (
 )
 
 func init() { //nolint:gochecknoinits
-	//jsoniter.RegisterTypeEncoder("object.ReadObjectResponse", &readObjectResponseCodec{})
-	jsoniter.RegisterTypeEncoder("object.RawObject", &rawObjectCodec{})
+	jsoniter.RegisterTypeEncoder("object.RawObjectXX", &rawObjectCodec{})
 }
 
 // Unlike the standard JSON marshal, this will write bytes as JSON when it can
 type rawObjectCodec struct{}
 
-// Custom marshal for RawObject (if JSON body)
-func (obj *RawObject) MarshalJSON() ([]byte, error) {
-	var json = jsoniter.ConfigCompatibleWithStandardLibrary
-	return json.Marshal(obj)
-}
+// // Custom marshal for RawObject (if JSON body)
+// func (obj *RawObject) MarshalJSON() ([]byte, error) {
+// 	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+// 	return json.Marshal(obj)
+// }
 
 func (codec *rawObjectCodec) IsEmpty(ptr unsafe.Pointer) bool {
 	f := (*RawObject)(ptr)
