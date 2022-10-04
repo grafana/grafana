@@ -134,8 +134,13 @@ func (s *httpObjectStore) doGetRawObject(c *models.ReqContext) response.Response
 	return response.JSON(400, rsp) // ???
 }
 
+const MAX_UPLOAD_SIZE = 5 * 1024 * 1024 // 5MB
+
 func (s *httpObjectStore) doWriteObject(c *models.ReqContext) response.Response {
 	uid, kind, params := parseRequestParams(c.Req)
+
+	// Cap the max size
+	c.Req.Body = http.MaxBytesReader(c.Resp, c.Req.Body, MAX_UPLOAD_SIZE)
 	b, err := io.ReadAll(c.Req.Body)
 	if err != nil {
 		return response.Error(400, "error reading body", err)
