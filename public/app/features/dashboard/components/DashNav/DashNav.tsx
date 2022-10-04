@@ -80,7 +80,6 @@ export const DashNav = React.memo<Props>((props) => {
   const { chrome } = useGrafana();
   const { showModal, hideModal } = useContext(ModalsContext);
 
-
   // We don't really care about the event payload here only that it triggeres a re-render of this component
   useBusEvent(props.dashboard.events, DashboardMetaChangedEvent);
 
@@ -132,23 +131,30 @@ export const DashNav = React.memo<Props>((props) => {
     return playlistSrv.isPlaying;
   };
 
+  // Open/Close
+  useEffect(() => {
+    const dashboard = props.dashboard;
+    const shareModalActiveTab = props.shareModalActiveTab;
+    const { canShare } = dashboard.meta;
+
+    if (canShare && shareModalActiveTab) {
+      // automagically open modal
+      showModal(ShareModal, {
+        dashboard,
+        onDismiss: hideModal,
+        activeTab: shareModalActiveTab,
+      });
+    }
+    return () => {
+      hideModal();
+    };
+  }, [showModal, hideModal, props.dashboard, props.shareModalActiveTab]);
+
   const renderLeftActions = () => {
     const { dashboard, kioskMode } = props;
     const { canStar, canShare, isStarred } = dashboard.meta;
     const buttons: ReactNode[] = [];
 
-
-    useEffect(()=> {
-      if (canShare && props.shareModalActiveTab) {
-        // automagically open modal
-        showModal(ShareModal, {
-          dashboard,
-          onDismiss: hideModal,
-          activeTab: props.shareModalActiveTab,
-        });
-      }
-    }, [canShare, props.shareModalActiveTab]);
-    
     if (kioskMode || isPlaylistRunning()) {
       return [];
     }
