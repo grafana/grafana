@@ -362,26 +362,48 @@ func TestObjectServer(t *testing.T) {
 		require.NoError(t, err)
 
 		search, err := testCtx.client.Search(ctx, &object.ObjectSearchRequest{
-			Kind: []string{kind, kind2},
+			Kind:     []string{kind, kind2},
+			WithBody: false,
 		})
 		require.NoError(t, err)
 
 		require.NotNil(t, search)
-		require.NotNil(t, w1)
-		require.NotNil(t, w2)
-		require.NotNil(t, w3)
-		require.NotNil(t, w4)
+		uids := make([]string, 0, len(search.Results))
+		kinds := make([]string, 0, len(search.Results))
+		version := make([]string, 0, len(search.Results))
+		for _, res := range search.Results {
+			uids = append(uids, res.UID)
+			kinds = append(kinds, res.Kind)
+			version = append(version, res.Version)
+		}
+		require.Equal(t, []string{"my-test-entity", "uid2", "uid3", "uid4"}, uids)
+		require.Equal(t, []string{"dashboard", "dashboard", "kind2", "kind2"}, kinds)
+		require.Equal(t, []string{
+			w1.Object.Version,
+			w2.Object.Version,
+			w3.Object.Version,
+			w4.Object.Version,
+		}, version)
 
-		// require.Equal(t, []*object.RawObject{
-		// 	w1.Object, w2.Object, w3.Object, w4.Object,
-		// }, search.Results)
+		// Again with only one kind
+		searchKind1, err := testCtx.client.Search(ctx, &object.ObjectSearchRequest{
+			Kind: []string{kind},
+		})
+		require.NoError(t, err)
+		uids = make([]string, 0, len(searchKind1.Results))
+		kinds = make([]string, 0, len(searchKind1.Results))
+		version = make([]string, 0, len(searchKind1.Results))
+		for _, res := range searchKind1.Results {
+			uids = append(uids, res.UID)
+			kinds = append(kinds, res.Kind)
+			version = append(version, res.Version)
+		}
+		require.Equal(t, []string{"my-test-entity", "uid2"}, uids)
+		require.Equal(t, []string{"dashboard", "dashboard"}, kinds)
+		require.Equal(t, []string{
+			w1.Object.Version,
+			w2.Object.Version,
+		}, version)
 
-		// searchKind1, err := testCtx.client.Search(ctx, &object.ObjectSearchRequest{
-		// 	Kind: []string{kind},
-		// })
-		// require.NoError(t, err)
-		// require.Equal(t, []*object.RawObject{
-		// 	w1.Object, w2.Object,
-		// }, searchKind1.Results)
 	})
 }
