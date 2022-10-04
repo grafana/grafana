@@ -5,10 +5,10 @@ import { EventBus, PanelData, TimeRange, UrlQueryMap } from '@grafana/data';
 
 import { SceneVariableSet } from '../variables/types';
 
+import { SceneDataObject } from './SceneObjectBase';
+
 export interface SceneObjectStatePlain {
   key?: string;
-  $timeRange?: SceneTimeRange;
-  $data?: SceneObject<SceneDataState>;
   $editor?: SceneEditor;
   $variables?: SceneVariableSet;
 }
@@ -36,10 +36,6 @@ export interface SceneComponentProps<T> {
 }
 
 export type SceneComponent<TModel> = React.FunctionComponent<SceneComponentProps<TModel>>;
-
-export interface SceneDataState extends SceneObjectStatePlain {
-  data?: PanelData;
-}
 
 export interface SceneObject<TState extends SceneObjectState = SceneObjectState> extends Subscribable<TState> {
   /** The current state */
@@ -126,3 +122,20 @@ export interface StandardSceneObjectContext {
   timeRange: SceneTimeRange;
   variables: any[];
 }
+
+/** State used by objects that can provide data within a scene */
+export interface SceneDataState extends SceneObjectStatePlain {
+  $data?: PanelData;
+}
+
+/** Parametrized state allows specifying explicite dependencies on SceneObject */
+export interface SceneParametrizedState<T extends Record<string, SceneObject<any>>> extends SceneObjectStatePlain {
+  inputParams: T;
+}
+
+export type DataInputParams<
+  TState extends SceneDataState,
+  T extends SceneDataObject<TState> = SceneDataObject<TState>
+> = {
+  data: T;
+};

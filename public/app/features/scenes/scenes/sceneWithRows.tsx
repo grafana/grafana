@@ -3,27 +3,55 @@ import { Scene } from '../components/Scene';
 import { SceneFlexLayout } from '../components/SceneFlexLayout';
 import { SceneTimePicker } from '../components/SceneTimePicker';
 import { VizPanel } from '../components/VizPanel';
+import { SceneDataProvider } from '../core/SceneDataProvider';
 import { SceneEditManager } from '../editor/SceneEditManager';
 
-import { getQueryRunnerWithRandomWalkQuery } from './queries';
-
 export function getSceneWithRows(): Scene {
+  const dataNode = new SceneDataProvider({
+    queries: [
+      {
+        refId: 'A',
+        datasource: {
+          uid: 'gdev-testdata',
+          type: 'testdata',
+        },
+        scenarioId: 'random_walk',
+      },
+    ],
+  });
+
+  const dataNode1 = new SceneDataProvider({
+    queries: [
+      {
+        refId: 'A',
+        datasource: {
+          uid: 'gdev-testdata',
+          type: 'testdata',
+        },
+        scenarioId: 'random_walk_table',
+      },
+    ],
+  });
+
   const scene = new Scene({
     title: 'Scene with rows',
     layout: new SceneFlexLayout({
       direction: 'column',
       children: [
         new NestedScene({
-          title: 'Overview',
+          title: 'Overview (uses global context)',
           canCollapse: true,
+          inheritContext: true,
           layout: new SceneFlexLayout({
             direction: 'row',
             children: [
               new VizPanel({
+                inputParams: { data: dataNode },
                 pluginId: 'timeseries',
                 title: 'Fill height',
               }),
               new VizPanel({
+                inputParams: { data: dataNode },
                 pluginId: 'timeseries',
                 title: 'Fill height',
               }),
@@ -33,14 +61,17 @@ export function getSceneWithRows(): Scene {
         new NestedScene({
           title: 'More server details',
           canCollapse: true,
+          actions: [new SceneTimePicker({})],
           layout: new SceneFlexLayout({
             direction: 'row',
             children: [
               new VizPanel({
+                inputParams: { data: dataNode1 },
                 pluginId: 'timeseries',
                 title: 'Fill height',
               }),
               new VizPanel({
+                inputParams: { data: dataNode1 },
                 pluginId: 'timeseries',
                 title: 'Fill height',
               }),
@@ -50,7 +81,6 @@ export function getSceneWithRows(): Scene {
       ],
     }),
     $editor: new SceneEditManager({}),
-    $data: getQueryRunnerWithRandomWalkQuery(),
     actions: [new SceneTimePicker({})],
   });
 

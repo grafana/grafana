@@ -4,10 +4,10 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
 
-import { SceneContextObject } from '../core/SceneContextObject';
+import { SceneContextObject, SceneContextObjectState } from '../core/SceneContextObject';
 import { SceneObject, SceneLayoutChildState, SceneComponentProps, SceneLayout } from '../core/types';
 
-interface NestedSceneState extends SceneLayoutChildState {
+interface NestedSceneState extends SceneContextObjectState, SceneLayoutChildState {
   title: string;
   isCollapsed?: boolean;
   canCollapse?: boolean;

@@ -1,11 +1,16 @@
 import { SceneObjectBase } from './SceneObjectBase';
 import { SceneTimeRange } from './SceneTimeRange';
-import { SceneObjectState, StandardSceneObjectContext } from './types';
+import { SceneObjectStatePlain, StandardSceneObjectContext } from './types';
+
+export interface SceneContextObjectState extends SceneObjectStatePlain {
+  /** Indicates this object scope uses the enclosing context */
+  inheritContext?: boolean;
+}
 
 /**
  * A scene object that can provide data execution context
  */
-export class SceneContextObject<TState extends SceneObjectState = {}> extends SceneObjectBase<TState> {
+export class SceneContextObject<TState extends SceneContextObjectState = {}> extends SceneObjectBase<TState> {
   ctx: StandardSceneObjectContext = {
     timeRange: new SceneTimeRange(),
     variables: [],

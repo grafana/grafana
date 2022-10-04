@@ -6,10 +6,10 @@ import { EventBusSrv } from '@grafana/data';
 import { useForceUpdate } from '@grafana/ui';
 
 import { SceneComponentWrapper } from './SceneComponentWrapper';
+import { SceneContextObjectState } from './SceneContextObject';
 import { SceneObjectStateChangedEvent } from './events';
 import { isContextObject } from './typeguards';
 import {
-  SceneDataState,
   SceneObject,
   SceneComponent,
   SceneEditor,
@@ -18,9 +18,12 @@ import {
   SceneObjectState,
   SceneLayoutChild,
   StandardSceneObjectContext,
+  SceneDataState,
 } from './types';
 
 export abstract class SceneObjectBase<TState extends SceneObjectState = {}> implements SceneObject<TState> {
+  // keeps keys of all scene objects that are referencing this object
+  _refCounter = new Set<string>();
   subject = new Subject<TState>();
   state: TState;
   parent?: SceneObjectBase<SceneObjectState>;
@@ -100,19 +103,36 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
 
   activate() {
     this.isActive = true;
-
-    const { $data } = this.state;
-    if ($data && !$data.isActive) {
-      $data.activate();
+    if (Object.prototype.hasOwnProperty.call(this.state, 'inputParams')) {
+      const params = (this.state as any).inputParams;
+      for (const param in params) {
+        if (isSceneObject(params[param])) {
+          if (!params[param].isActive) {
+            // Input params (data currently) are separate from the layout hierarchy. But they need a way for resolving scoped context,
+            // hence they reuse its consumer context
+            params[param].setCtxResolver(this.getContext);
+            params[param].activate();
+          }
+        }
+        params[param]._refCounter.add(this.state.key);
+      }
     }
   }
 
   deactivate(): void {
     this.isActive = false;
 
-    const { $data } = this.state;
-    if ($data && $data.isActive) {
-      $data.deactivate();
+    if (Object.prototype.hasOwnProperty.call(this.state, 'inputParams')) {
+      const params = (this.state as any).inputParams;
+
+      for (const param in params) {
+        if (isSceneObject(params[param]) && params[param].isActive) {
+          if (params[param]._refCounter.size === 1) {
+            params[param].deactivate();
+          }
+          params[param]._refCounter.delete(this.state.key);
+        }
+      }
     }
 
     this.subs.unsubscribe();
@@ -125,7 +145,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
   }
 
   getContext: () => StandardSceneObjectContext = () => {
-    if (isContextObject(this)) {
+    if (isContextObject(this) && !(this.state as SceneContextObjectState).inheritContext) {
       return this.ctx;
     }
 
@@ -136,6 +156,10 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
     throw new Error('No context found in scene tree');
   };
 
+  setCtxResolver(resolver: () => StandardSceneObjectContext) {
+    this.getContext = resolver;
+  }
+
   /**
    * Will walk up the scene object graph to the closest context object
    */
@@ -144,12 +168,16 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
   }
 
   /**
-   * Will walk up the scene object graph to the closest $data scene object
+   * Will resolve nearest data provider object, based on input params or hierarchy
    */
   getData(): SceneObject<SceneDataState> {
-    const { $data } = this.state;
-    if ($data) {
-      return $data;
+    if (Object.prototype.hasOwnProperty.call(this.state, 'inputParams')) {
+      const params = (this.state as any).inputParams;
+      for (const param in params) {
+        if (params[param] instanceof SceneDataObject) {
+          return params[param];
+        }
+      }
     }
 
     if (this.parent) {
@@ -217,4 +245,10 @@ function useSceneObjectState<TState extends SceneObjectState>(model: SceneObject
   }, [model, forceUpdate]);
 
   return model.state;
+}
+
+export class SceneDataObject<TState extends SceneDataState = SceneDataState> extends SceneObjectBase<TState> {
+  getData() {
+    return this;
+  }
 }

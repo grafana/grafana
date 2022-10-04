@@ -3,28 +3,35 @@ import React from 'react';
 import { LoadingState, PanelData } from '@grafana/data';
 
 import { SceneDataNode } from '../core/SceneDataNode';
-import { SceneObjectBase } from '../core/SceneObjectBase';
+import { SceneDataObject, SceneObjectBase } from '../core/SceneObjectBase';
 import {
   SceneComponentProps,
-  SceneObject,
   SceneObjectStatePlain,
-  SceneLayoutState,
   SceneLayoutChild,
+  SceneParametrizedState,
+  DataInputParams,
+  SceneDataState,
+  SceneLayout,
 } from '../core/types';
 
-interface RepeatOptions extends SceneObjectStatePlain {
-  layout: SceneObject<SceneLayoutState>;
+import { VizPanel } from './VizPanel';
+
+interface RepeatOptions<TState extends SceneDataState, T extends SceneDataObject<TState> = SceneDataObject<TState>>
+  extends SceneObjectStatePlain,
+    SceneParametrizedState<DataInputParams<TState, T>> {
+  panel: VizPanel;
+  layout: SceneLayout;
 }
 
-export class ScenePanelRepeater extends SceneObjectBase<RepeatOptions> {
+export class ScenePanelRepeater extends SceneObjectBase<RepeatOptions<any, any>> {
   activate(): void {
     super.activate();
 
     this.subs.add(
       this.getData().subscribe({
         next: (data) => {
-          if (data.data?.state === LoadingState.Done) {
-            this.performRepeat(data.data);
+          if (data.$data?.state === LoadingState.Done) {
+            this.performRepeat(data.$data);
           }
         },
       })
@@ -33,18 +40,20 @@ export class ScenePanelRepeater extends SceneObjectBase<RepeatOptions> {
 
   performRepeat(data: PanelData) {
     // assume parent is a layout
-    const firstChild = this.state.layout.state.children[0]!;
+    const panel = this.state.panel;
     const newChildren: SceneLayoutChild[] = [];
 
     for (const series of data.series) {
-      const clone = firstChild.clone({
+      const clone = panel.clone({
         key: `${newChildren.length}`,
-        $data: new SceneDataNode({
-          data: {
-            ...data,
-            series: [series],
-          },
-        }),
+        inputParams: {
+          data: new SceneDataNode({
+            $data: {
+              ...data,
+              series: [series],
+            },
+          }),
+        },
       });
 
       newChildren.push(clone);

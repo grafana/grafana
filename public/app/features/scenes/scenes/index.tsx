@@ -1,8 +1,9 @@
 import { Scene } from '../components/Scene';
 
-import { getFlexLayoutTest, getScenePanelRepeaterTest } from './demo';
+import { getFlexLayoutTest } from './demo';
 import { getNestedScene } from './nested';
 import { getSceneWithRows } from './sceneWithRows';
+import { getScenePanelRepeaterTest } from './seriesRepeater';
 
 export function getScenes(): Scene[] {
   return [getFlexLayoutTest(), getScenePanelRepeaterTest(), getNestedScene(), getSceneWithRows()];
