@@ -1,10 +1,9 @@
 // Libraries
 import { css, cx } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
-import { useLocalStorage } from 'react-use';
+import React, { useEffect } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
-import { CustomScrollbar, useStyles2, useTheme2 } from '@grafana/ui';
+import { CustomScrollbar, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
 import { Footer } from '../Footer/Footer';
@@ -17,6 +16,7 @@ import { PageHeader } from './PageHeader';
 import { PageTabs } from './PageTabs';
 import { SectionNav } from './SectionNav';
 import { SectionNavToggle } from './SectionNavToggle';
+import { usePageState } from './state';
 
 export const Page: PageType = ({
   navId,
@@ -31,28 +31,17 @@ export const Page: PageType = ({
   scrollRef,
   ...otherProps
 }) => {
-  const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const navModel = usePageNav(navId, oldNavProp);
   const { chrome } = useGrafana();
-
-  const isSmallScreen = window.matchMedia(`(max-width: ${theme.breakpoints.values.lg}px)`).matches;
-  const [navExpandedPreference, setNavExpandedPreference] = useLocalStorage<boolean>(
-    'grafana.sectionNav.expanded',
-    !isSmallScreen
-  );
-  const [isNavExpanded, setNavExpanded] = useState(!isSmallScreen && navExpandedPreference);
+  const {
+    state: { isNavExpanded },
+    actions,
+  } = usePageState();
 
   usePageTitle(navModel, pageNav);
 
   const pageHeaderNav = pageNav ?? navModel?.node;
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia(`(max-width: ${theme.breakpoints.values.lg}px)`);
-    const onMediaQueryChange = (e: MediaQueryListEvent) => setNavExpanded(e.matches ? false : navExpandedPreference);
-    mediaQuery.addEventListener('change', onMediaQueryChange);
-    return () => mediaQuery.removeEventListener('change', onMediaQueryChange);
-  }, [navExpandedPreference, theme.breakpoints.values.lg]);
 
   useEffect(() => {
     if (navModel) {
@@ -62,11 +51,6 @@ export const Page: PageType = ({
       });
     }
   }, [navModel, pageNav, chrome]);
-
-  const onToggleSectionNav = () => {
-    setNavExpandedPreference(!isNavExpanded);
-    setNavExpanded(!isNavExpanded);
-  };
 
   return (
     <div className={cx(styles.wrapper, className)} {...otherProps}>
@@ -78,7 +62,7 @@ export const Page: PageType = ({
               <SectionNavToggle
                 className={styles.collapseIcon}
                 isExpanded={Boolean(isNavExpanded)}
-                onClick={onToggleSectionNav}
+                onClick={actions.onToggleSectionNav}
               />
             </>
           )}
@@ -96,7 +80,7 @@ export const Page: PageType = ({
       )}
       {layout === PageLayoutType.Canvas && (
         <CustomScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
-          <div className={styles.dashboardContent}>
+          <div className={styles.canvasContent}>
             {toolbar}
             {children}
           </div>
@@ -137,14 +121,16 @@ const getStyles = (theme: GrafanaTheme2) => {
         top: theme.spacing(2),
       },
     }),
-    wrapper: css`
-      height: 100%;
-      display: flex;
-      flex: 1 1 0;
-      flex-direction: column;
-      min-height: 0;
-    `,
+    wrapper: css({
+      label: 'page-wrapper',
+      height: '100%',
+      display: 'flex',
+      flex: '1 1 0',
+      flexDirection: 'column',
+      minHeight: 0,
+    }),
     panes: css({
+      label: 'page-panes',
       display: 'flex',
       height: '100%',
       width: '100%',
@@ -156,18 +142,19 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     pageContent: css({
+      label: 'page-content',
       flexGrow: 1,
     }),
     pageInner: css({
+      label: 'page-inner',
       padding: theme.spacing(3),
       boxShadow: shadow,
       background: theme.colors.background.primary,
       margin: theme.spacing(2, 2, 2, 1),
-      display: 'flex',
-      flexDirection: 'column',
       flexGrow: 1,
     }),
-    dashboardContent: css({
+    canvasContent: css({
+      label: 'canvas-content',
       display: 'flex',
       flexDirection: 'column',
       padding: theme.spacing(2),
