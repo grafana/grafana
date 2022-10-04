@@ -6,10 +6,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"errors"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/tokens"
-	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/assert"
@@ -29,14 +30,6 @@ func TestRequiresValidAccessToken(t *testing.T) {
 		ExpectedResponseCode int
 	}{
 		{
-			Name:                 "Returns 404 when access token is empty",
-			Path:                 "/api/public/ma/events/",
-			AccessTokenExists:    false,
-			AccessTokenExistsErr: nil,
-			AccessToken:          "",
-			ExpectedResponseCode: http.StatusNotFound,
-		},
-		{
 			Name:                 "Returns 200 when public dashboard with access token exists",
 			Path:                 "/api/public/ma/events/myAccesstoken",
 			AccessTokenExists:    true,
@@ -45,19 +38,27 @@ func TestRequiresValidAccessToken(t *testing.T) {
 			ExpectedResponseCode: http.StatusOK,
 		},
 		{
+			Name:                 "Returns 400 when access token is empty",
+			Path:                 "/api/public/ma/events/",
+			AccessTokenExists:    false,
+			AccessTokenExistsErr: nil,
+			AccessToken:          "",
+			ExpectedResponseCode: http.StatusBadRequest,
+		},
+		{
+			Name:                 "Returns 400 when invalid access token",
+			Path:                 "/api/public/ma/events/myAccesstoken",
+			AccessTokenExists:    false,
+			AccessTokenExistsErr: nil,
+			AccessToken:          "invalidAccessToken",
+			ExpectedResponseCode: http.StatusBadRequest,
+		},
+		{
 			Name:                 "Returns 404 when public dashboard with access token does not exist",
 			Path:                 "/api/public/ma/events/myAccesstoken",
 			AccessTokenExists:    false,
 			AccessTokenExistsErr: nil,
 			AccessToken:          validAccessToken,
-			ExpectedResponseCode: http.StatusNotFound,
-		},
-		{
-			Name:                 "Returns 404 when invalid access token",
-			Path:                 "/api/public/ma/events/myAccesstoken",
-			AccessTokenExists:    false,
-			AccessTokenExistsErr: nil,
-			AccessToken:          "invalidAccessToken",
 			ExpectedResponseCode: http.StatusNotFound,
 		},
 		{
@@ -85,43 +86,62 @@ func TestRequiresValidAccessToken(t *testing.T) {
 
 func TestSetPublicDashboardOrgIdOnContext(t *testing.T) {
 	tests := []struct {
-		Name                    string
-		AccessToken             string
-		PublicDashboardResponse *PublicDashboard
-		OrgId                   int64
+		Name          string
+		AccessToken   string
+		OrgIdResp     int64
+		ErrorResp     error
+		ExpectedOrgId int64
 	}{
 		{
-			Name:                    "Adds orgId for enabled public dashboard",
-			AccessToken:             "abc123",
-			PublicDashboardResponse: &PublicDashboard{OrgId: 7, IsEnabled: true},
-			OrgId:                   7,
+			Name:          "Adds orgId for enabled public dashboard",
+			AccessToken:   validAccessToken,
+			OrgIdResp:     7,
+			ErrorResp:     nil,
+			ExpectedOrgId: 7,
 		},
 		{
-			Name:                    "Does not set orgId or fail with disabled public dashboard",
-			AccessToken:             "abc123",
-			PublicDashboardResponse: &PublicDashboard{OrgId: 7, IsEnabled: false},
-			OrgId:                   0,
+			Name:          "Does not set orgId or fail with invalid accessToken",
+			AccessToken:   "invalidAccessToken",
+			OrgIdResp:     0,
+			ErrorResp:     nil,
+			ExpectedOrgId: 0,
 		},
 		{
-			Name:                    "Does not set orgId or fail with missing public dashboard",
-			AccessToken:             "incorrectAccesstoken",
-			PublicDashboardResponse: nil,
-			OrgId:                   0,
+			Name:          "Does not set orgId or fail with disabled public dashboard",
+			AccessToken:   validAccessToken,
+			OrgIdResp:     0,
+			ErrorResp:     nil,
+			ExpectedOrgId: 0,
+		},
+		{
+			Name:          "Does not set orgId or fail with error querying public dashboard",
+			AccessToken:   validAccessToken,
+			OrgIdResp:     0,
+			ErrorResp:     errors.New("database error of some sort"),
+			ExpectedOrgId: 0,
+		},
+		{
+			Name:          "Does not set orgId or fail with missing public dashboard",
+			AccessToken:   validAccessToken,
+			OrgIdResp:     0,
+			ErrorResp:     nil,
+			ExpectedOrgId: 0,
 		},
 	}
 
 	for _, tt := range tests {
-		publicdashboardService := &publicdashboards.FakePublicDashboardService{}
-		publicdashboardService.On("GetPublicDashboard", mock.Anything, tt.AccessToken).Return(
-			tt.PublicDashboardResponse,
-			nil,
-			nil,
-		)
+		t.Run(tt.Name, func(t *testing.T) {
+			publicdashboardService := &publicdashboards.FakePublicDashboardService{}
+			publicdashboardService.On("GetPublicDashboardOrgId", mock.Anything, tt.AccessToken).Return(
+				tt.OrgIdResp,
+				tt.ErrorResp,
+			)
 
-		params := map[string]string{":accessToken": tt.AccessToken}
-		mw := SetPublicDashboardOrgIdOnContext(publicdashboardService)
-		ctx, _ := runMw(t, nil, "GET", "/public-dashboard/myaccesstoken", params, mw)
-		assert.Equal(t, tt.OrgId, ctx.OrgID)
+			params := map[string]string{":accessToken": tt.AccessToken}
+			mw := SetPublicDashboardOrgIdOnContext(publicdashboardService)
+			ctx, _ := runMw(t, nil, "GET", "/public-dashboard/myaccesstoken", params, mw)
+			assert.Equal(t, tt.ExpectedOrgId, ctx.OrgID)
+		})
 	}
 }
 

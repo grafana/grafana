@@ -207,7 +207,7 @@ func (d *PublicDashboardStoreImpl) UpdatePublicDashboardConfig(ctx context.Conte
 	return err
 }
 
-//Responds true if public dashboard for a dashboard exists and isEnabled
+// Responds true if public dashboard for a dashboard exists and isEnabled
 func (d *PublicDashboardStoreImpl) PublicDashboardEnabled(ctx context.Context, dashboardUid string) (bool, error) {
 	hasPublicDashboard := false
 	err := d.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
@@ -244,4 +244,21 @@ func (d *PublicDashboardStoreImpl) AccessTokenExists(ctx context.Context, access
 	})
 
 	return hasPublicDashboard, err
+}
+
+// Responds with OrgId from if exists and isEnabled.
+func (d *PublicDashboardStoreImpl) GetPublicDashboardOrgId(ctx context.Context, accessToken string) (int64, error) {
+	var orgId int64
+	err := d.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		sql := "SELECT org_id FROM dashboard_public WHERE access_token=? AND is_enabled=true"
+
+		_, err := dbSession.SQL(sql, accessToken).Get(&orgId)
+		if err != nil {
+			return err
+		}
+
+		return err
+	})
+
+	return orgId, err
 }
