@@ -42,12 +42,14 @@ describe('correlations utils', () => {
     const correlations: CorrelationData[] = [
       {
         uid: 'loki-to-prometheus',
+        label: 'logs to metrics',
         source: loki,
         target: prometheus,
         config: { type: 'query', field: 'traceId', target: { expr: 'target Prometheus query' } },
       },
       {
         uid: 'prometheus-to-elastic',
+        label: 'metrics to logs',
         source: prometheus,
         target: elastic,
         config: { type: 'query', field: 'value', target: { expr: 'target Elastic query' } },
@@ -61,6 +63,7 @@ describe('correlations utils', () => {
     // Loki traceId (linked to Prometheus)
     expect(testDataFrames[0].fields[1].config.links).toHaveLength(1);
     expect(testDataFrames[0].fields[1].config.links![0]).toMatchObject({
+      title: 'logs to metrics',
       internal: {
         datasourceUid: prometheus.uid,
         datasourceName: prometheus.name,
@@ -78,6 +81,7 @@ describe('correlations utils', () => {
     // Prometheus value (linked to Elastic)
     expect(testDataFrames[2].fields[0].config.links).toHaveLength(1);
     expect(testDataFrames[2].fields[0].config.links![0]).toMatchObject({
+      title: 'metrics to logs',
       internal: {
         datasourceUid: elastic.uid,
         datasourceName: elastic.name,

@@ -41,7 +41,7 @@ const decorateDataFrameWithInternalDataLinks = (dataFrame: DataFrame, correlatio
             datasourceName: correlation.target.name,
           },
           url: '',
-          title: correlation.target.name,
+          title: correlation.label || correlation.target.name,
         });
       }
     });
