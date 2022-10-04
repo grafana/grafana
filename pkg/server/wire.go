@@ -6,10 +6,6 @@ package server
 import (
 	"github.com/google/wire"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/playlist/playlistimpl"
-	"github.com/grafana/grafana/pkg/services/store/sanitizer"
-
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -34,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
+	pluginsCfg "github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
 	pluginDashboards "github.com/grafana/grafana/pkg/plugins/manager/dashboards"
@@ -44,16 +41,19 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
+	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/comments"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/correlations"
-	"github.com/grafana/grafana/pkg/services/dashboard_thumbs/dashboardthumbsimpl"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	dashboardimportservice "github.com/grafana/grafana/pkg/services/dashboardimport/service"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -70,6 +70,7 @@ import (
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/export"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
@@ -80,7 +81,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
 	authinfodatabase "github.com/grafana/grafana/pkg/services/login/authinfoservice/database"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
-	"github.com/grafana/grafana/pkg/services/login_attempt/loginattemptimpl"
+	"github.com/grafana/grafana/pkg/services/loginattempt/loginattemptimpl"
+	"github.com/grafana/grafana/pkg/services/navtree/navtreeimpl"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	ngimage "github.com/grafana/grafana/pkg/services/ngalert/image"
 	ngmetrics "github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -88,6 +90,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/playlist/playlistimpl"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	plugindashboardsservice "github.com/grafana/grafana/pkg/services/plugindashboards/service"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
@@ -118,11 +121,19 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/star/starimpl"
 	"github.com/grafana/grafana/pkg/services/store"
+	"github.com/grafana/grafana/pkg/services/store/object"
+	objectdummyserver "github.com/grafana/grafana/pkg/services/store/object/dummy"
+	"github.com/grafana/grafana/pkg/services/store/sanitizer"
+	"github.com/grafana/grafana/pkg/services/tag"
+	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
+	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/teamguardian"
 	teamguardianDatabase "github.com/grafana/grafana/pkg/services/teamguardian/database"
 	teamguardianManager "github.com/grafana/grafana/pkg/services/teamguardian/manager"
+	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/services/temp_user/tempuserimpl"
 	"github.com/grafana/grafana/pkg/services/thumbs"
+	"github.com/grafana/grafana/pkg/services/thumbs/dashboardthumbsimpl"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/services/userauth/userauthimpl"
@@ -149,6 +160,8 @@ import (
 var wireBasicSet = wire.NewSet(
 	legacydataservice.ProvideService,
 	wire.Bind(new(legacydata.RequestHandler), new(*legacydataservice.Service)),
+	annotationsimpl.ProvideService,
+	wire.Bind(new(annotations.Repository), new(*annotationsimpl.RepositoryImpl)),
 	alerting.ProvideAlertStore,
 	alerting.ProvideAlertEngine,
 	wire.Bind(new(alerting.UsageStatsQuerier), new(*alerting.AlertEngine)),
@@ -166,16 +179,18 @@ var wireBasicSet = wire.NewSet(
 	hooks.ProvideService,
 	kvstore.ProvideService,
 	localcache.ProvideService,
+	dashboardthumbsimpl.ProvideService,
 	updatechecker.ProvideGrafanaService,
 	updatechecker.ProvidePluginsService,
 	uss.ProvideService,
 	wire.Bind(new(usagestats.Service), new(*uss.UsageStats)),
 	registry.ProvideService,
 	wire.Bind(new(registry.Service), new(*registry.InMemory)),
+	pluginsCfg.ProvideConfig,
 	repo.ProvideService,
 	wire.Bind(new(repo.Service), new(*repo.Manager)),
-	manager.ProvideService,
-	wire.Bind(new(plugins.Manager), new(*manager.PluginManager)),
+	manager.ProvideInstaller,
+	wire.Bind(new(plugins.Installer), new(*manager.PluginInstaller)),
 	client.ProvideService,
 	wire.Bind(new(plugins.Client), new(*client.Service)),
 	managerStore.ProvideService,
@@ -201,6 +216,8 @@ var wireBasicSet = wire.NewSet(
 	httpclientprovider.New,
 	wire.Bind(new(httpclient.Provider), new(*sdkhttpclient.Provider)),
 	serverlock.ProvideService,
+	annotationsimpl.ProvideCleanupService,
+	wire.Bind(new(annotations.Cleaner), new(*annotationsimpl.CleanupServiceImpl)),
 	cleanup.ProvideService,
 	shorturls.ProvideService,
 	wire.Bind(new(shorturls.Service), new(*shorturls.ShortURLService)),
@@ -220,6 +237,7 @@ var wireBasicSet = wire.NewSet(
 	datasourceproxy.ProvideService,
 	search.ProvideService,
 	searchV2.ProvideService,
+	searchV2.ProvideSearchHTTPService,
 	store.ProvideService,
 	export.ProvideService,
 	live.ProvideService,
@@ -326,25 +344,32 @@ var wireBasicSet = wire.NewSet(
 	publicdashboardsApi.ProvideApi,
 	userimpl.ProvideService,
 	orgimpl.ProvideService,
+	grpcserver.ProvideService,
+	grpcserver.ProvideHealthService,
+	grpcserver.ProvideReflectionService,
+	objectdummyserver.ProvideDummyObjectServer,
+	object.ProvideHTTPObjectStore,
+	teamimpl.ProvideService,
 	tempuserimpl.ProvideService,
-	dashboardthumbsimpl.ProvideService,
 	loginattemptimpl.ProvideService,
+	userauthimpl.ProvideService,
 	secretsMigrations.ProvideDataSourceMigrationService,
 	secretsMigrations.ProvideMigrateToPluginService,
 	secretsMigrations.ProvideMigrateFromPluginService,
-	secretsMigrations.ProvideSecretMigrationService,
-	wire.Bind(new(secretsMigrations.SecretMigrationService), new(*secretsMigrations.SecretMigrationServiceImpl)),
-	userauthimpl.ProvideService,
-	ossaccesscontrol.ProvideAccessControl,
-	wire.Bind(new(accesscontrol.AccessControl), new(*ossaccesscontrol.AccessControl)),
+	secretsMigrations.ProvideSecretMigrationProvider,
+	wire.Bind(new(secretsMigrations.SecretMigrationProvider), new(*secretsMigrations.SecretMigrationProviderImpl)),
+	acimpl.ProvideAccessControl,
+	navtreeimpl.ProvideService,
+	wire.Bind(new(accesscontrol.AccessControl), new(*acimpl.AccessControl)),
+	wire.Bind(new(notifications.TempUserStore), new(tempuser.Service)),
+	tagimpl.ProvideService,
+	wire.Bind(new(tag.Service), new(*tagimpl.Service)),
 )
 
 var wireSet = wire.NewSet(
 	wireBasicSet,
 	sqlstore.ProvideService,
-	wire.Bind(new(sqlstore.TeamStore), new(*sqlstore.SQLStore)),
 	ngmetrics.ProvideService,
-	wire.Bind(new(notifications.TempUserStore), new(*sqlstore.SQLStore)),
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationService)),
 	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationService)),
 	wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationService)),
@@ -358,10 +383,8 @@ var wireTestSet = wire.NewSet(
 	ProvideTestEnv,
 	sqlstore.ProvideServiceForTests,
 	ngmetrics.ProvideServiceForTest,
-	wire.Bind(new(sqlstore.TeamStore), new(*sqlstore.SQLStore)),
 
 	notifications.MockNotificationService,
-	wire.Bind(new(notifications.TempUserStore), new(*mockstore.SQLStoreMock)),
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationServiceMock)),
 	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationServiceMock)),
 	wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationServiceMock)),

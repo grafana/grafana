@@ -9,4 +9,18 @@ const (
 	ReleaseBranchMode VersionMode = "branch"
 	PullRequestMode   VersionMode = "pull_request"
 	CustomMode        VersionMode = "custom"
+	CronjobMode       VersionMode = "cron"
+)
+
+const (
+	Tag         = "tag"
+	PullRequest = "pull_request"
+	Push        = "push"
+	Custom      = "custom"
+	Promote     = "promote"
+	Cronjob     = "cron"
+)
+
+const (
+	MainBranch = "main"
 )

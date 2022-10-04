@@ -21,7 +21,7 @@ func hasTemplateVariables(dashboard *models.Dashboard) bool {
 	return len(templateVariables) > 0
 }
 
-func ValidateQueryPublicDashboardRequest(req *publicDashboardModels.PublicDashboardQueryDTO) error {
+func ValidateQueryPublicDashboardRequest(req publicDashboardModels.PublicDashboardQueryDTO) error {
 	if req.IntervalMs < 0 {
 		return fmt.Errorf("intervalMS should be greater than 0")
 	}

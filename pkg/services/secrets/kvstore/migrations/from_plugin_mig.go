@@ -2,6 +2,7 @@ package migrations
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -12,6 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+var errPluginUnavailable = errors.New("remote secret management plugin is unavailable")
 
 // MigrateFromPluginService This migrator will handle migration of the configured plugin secrets back to Grafana unified secrets
 type MigrateFromPluginService struct {
@@ -44,8 +47,7 @@ func (s *MigrateFromPluginService) Migrate(ctx context.Context) error {
 	// access the plugin directly
 	plugin, err := secretskvs.StartAndReturnPlugin(s.manager, context.Background())
 	if err != nil {
-		logger.Error("Error retrieiving plugin", "error", err.Error())
-		return err
+		return errPluginUnavailable
 	}
 	// Get full list of secrets from the plugin
 	res, err := plugin.GetAllSecrets(ctx, &secretsmanagerplugin.GetAllSecretsRequest{})
@@ -96,7 +98,7 @@ func (s *MigrateFromPluginService) Migrate(ctx context.Context) error {
 	logger.Debug("Shutting down secrets plugin now that migration is complete")
 	// if `use_plugin` wasn't set, stop the plugin after migration
 	if !s.cfg.SectionWithEnvOverrides("secrets").Key("use_plugin").MustBool(false) {
-		err := s.manager.SecretsManager().Stop(ctx)
+		err := s.manager.SecretsManager(ctx).Stop(ctx)
 		if err != nil {
 			// Log a warning but don't throw an error
 			logger.Error("Error stopping secrets plugin after migration", "error", err.Error())

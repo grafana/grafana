@@ -26,7 +26,7 @@ export type AsyncRequestMapSlice<T> = Record<string, AsyncRequestState<T>>;
 
 export type AsyncRequestAction<T> = PayloadAction<Draft<T>, string, any, any>;
 
-function requestStateReducer<T, ThunkArg = void, ThunkApiConfig = {}>(
+function requestStateReducer<T, ThunkArg = void, ThunkApiConfig extends {} = {}>(
   asyncThunk: AsyncThunk<T, ThunkArg, ThunkApiConfig>,
   state: Draft<AsyncRequestState<T>> = initialAsyncRequestState,
   action: AsyncRequestAction<T>
@@ -64,7 +64,7 @@ function requestStateReducer<T, ThunkArg = void, ThunkApiConfig = {}>(
  * createAsyncSlice creates a slice based on a given async action, exposing its state.
  * takes care to only use state of the latest invocation of the action if there are several in flight.
  */
-export function createAsyncSlice<T, ThunkArg = void, ThunkApiConfig = {}>(
+export function createAsyncSlice<T, ThunkArg = void, ThunkApiConfig extends {} = {}>(
   name: string,
   asyncThunk: AsyncThunk<T, ThunkArg, ThunkApiConfig>
 ) {
@@ -84,7 +84,7 @@ export function createAsyncSlice<T, ThunkArg = void, ThunkApiConfig = {}>(
  * separate requests are uniquely indentified by result of provided getEntityId function
  * takes care to only use state of the latest invocation of the action if there are several in flight.
  */
-export function createAsyncMapSlice<T, ThunkArg = void, ThunkApiConfig = {}>(
+export function createAsyncMapSlice<T, ThunkArg = void, ThunkApiConfig extends {} = {}>(
   name: string,
   asyncThunk: AsyncThunk<T, ThunkArg, ThunkApiConfig>,
   getEntityId: (arg: ThunkArg) => string

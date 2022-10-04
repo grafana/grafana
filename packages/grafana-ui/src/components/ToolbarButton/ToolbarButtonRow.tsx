@@ -57,7 +57,7 @@ export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(
         });
       }
       return () => intersectionObserver.disconnect();
-    }, []);
+    }, [children]);
 
     return (
       <div ref={containerRef} className={cx(styles.container, className)} {...rest}>

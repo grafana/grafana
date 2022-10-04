@@ -9,7 +9,7 @@ import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { CollapsableSection, CustomScrollbar, Icon, IconButton, IconName, useStyles2, useTheme2 } from '@grafana/ui';
+import { CollapsableSection, CustomScrollbar, Icon, IconButton, toIconName, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { NavBarItemIcon } from './NavBarItemIcon';
 import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
@@ -35,6 +35,7 @@ export function NavBarMenu({ activeItem, isOpen, navItems, onClose, setMenuAnima
   const ANIMATION_DURATION = theme.transitions.duration.standard;
   const animStyles = getAnimStyles(theme, ANIMATION_DURATION);
   const ref = useRef(null);
+  const backdropRef = useRef(null);
   const { dialogProps } = useDialog({}, ref);
 
   const { overlayProps, underlayProps } = useOverlay(
@@ -50,6 +51,7 @@ export function NavBarMenu({ activeItem, isOpen, navItems, onClose, setMenuAnima
     <OverlayContainer>
       <FocusScope contain restoreFocus autoFocus>
         <CSSTransition
+          nodeRef={ref}
           onEnter={() => setMenuAnimationInProgress(true)}
           onExited={() => setMenuAnimationInProgress(false)}
           appear={isOpen}
@@ -88,8 +90,14 @@ export function NavBarMenu({ activeItem, isOpen, navItems, onClose, setMenuAnima
           </div>
         </CSSTransition>
       </FocusScope>
-      <CSSTransition appear={isOpen} in={isOpen} classNames={animStyles.backdrop} timeout={ANIMATION_DURATION}>
-        <div className={styles.backdrop} {...underlayProps} />
+      <CSSTransition
+        nodeRef={backdropRef}
+        appear={isOpen}
+        in={isOpen}
+        classNames={animStyles.backdrop}
+        timeout={ANIMATION_DURATION}
+      >
+        <div className={styles.backdrop} {...underlayProps} ref={backdropRef} />
       </CSSTransition>
     </OverlayContainer>
   );
@@ -235,14 +243,15 @@ export function NavItem({
     return (
       <CollapsibleNavItem onClose={onClose} link={link} isActive={isMatchOrChildMatch(link, activeItem)}>
         <ul className={styles.children}>
-          {link.children.map(
-            (childLink) =>
+          {link.children.map((childLink) => {
+            const icon = childLink.icon ? toIconName(childLink.icon) : undefined;
+            return (
               !childLink.divider && (
                 <NavBarMenuItem
                   key={`${link.text}-${childLink.text}`}
                   isActive={activeItem === childLink}
                   isDivider={childLink.divider}
-                  icon={childLink.showIconInNavbar ? (childLink.icon as IconName) : undefined}
+                  icon={childLink.showIconInNavbar ? icon : undefined}
                   onClick={() => {
                     childLink.onClick?.();
                     onClose();
@@ -254,7 +263,8 @@ export function NavItem({
                   isMobile={true}
                 />
               )
-          )}
+            );
+          })}
         </ul>
       </CollapsibleNavItem>
     );

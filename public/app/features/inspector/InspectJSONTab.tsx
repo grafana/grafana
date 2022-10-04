@@ -1,23 +1,21 @@
 import { t } from '@lingui/macro';
+import { isEqual } from 'lodash';
 import React, { PureComponent } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { firstValueFrom } from 'rxjs';
 
-import {
-  AppEvents,
-  DataFrameJSON,
-  dataFrameToJSON,
-  DataTopic,
-  PanelData,
-  SelectableValue,
-  LoadingState,
-} from '@grafana/data';
+import { AppEvents, PanelData, SelectableValue, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { locationService } from '@grafana/runtime';
 import { Button, CodeEditor, Field, Select } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 
+import { getPanelDataFrames } from '../dashboard/components/HelpWizard/utils';
 import { getPanelInspectorStyles } from '../inspector/styles';
+import { reportPanelInspectInteraction } from '../search/page/reporting';
+
+import { InspectTab } from './types';
 
 enum ShowContent {
   PanelJSON = 'panel',
@@ -77,6 +75,11 @@ export class InspectJSONTab extends PureComponent<Props, State> {
     };
   }
 
+  componentDidMount() {
+    // when opening the inspector we want to report the interaction
+    reportPanelInspectInteraction(InspectTab.JSON, 'panelJSON');
+  }
+
   onSelectChanged = async (item: SelectableValue<ShowContent>) => {
     const show = await this.getJSONObject(item.value!);
     const text = getPrettyJSON(show);
@@ -91,10 +94,13 @@ export class InspectJSONTab extends PureComponent<Props, State> {
   async getJSONObject(show: ShowContent) {
     const { data, panel } = this.props;
     if (show === ShowContent.PanelData) {
+      reportPanelInspectInteraction(InspectTab.JSON, 'panelData');
       return data;
     }
 
     if (show === ShowContent.DataFrames) {
+      reportPanelInspectInteraction(InspectTab.JSON, 'dataFrame');
+
       let d = data;
 
       // do not include transforms and
@@ -110,6 +116,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
     }
 
     if (this.hasPanelJSON && show === ShowContent.PanelJSON) {
+      reportPanelInspectInteraction(InspectTab.JSON, 'panelJSON');
       return panel!.getSaveModel();
     }
 
@@ -125,6 +132,15 @@ export class InspectJSONTab extends PureComponent<Props, State> {
         } else {
           const updates = JSON.parse(this.state.text);
           dashboard!.shouldUpdateDashboardPanelFromJSON(updates, panel!);
+
+          //Report relevant updates
+          reportPanelInspectInteraction(InspectTab.JSON, 'apply', {
+            panel_type_changed: panel!.type !== updates.type,
+            panel_id_changed: panel!.id !== updates.id,
+            panel_grid_pos_changed: !isEqual(panel!.gridPos, updates.gridPos),
+            panel_targets_changed: !isEqual(panel!.targets, updates.targets),
+          });
+
           panel!.restoreModel(updates);
           panel!.refresh();
           appEvents.emit(AppEvents.alertSuccess, ['Panel model updated']);
@@ -136,6 +152,13 @@ export class InspectJSONTab extends PureComponent<Props, State> {
 
       onClose();
     }
+  };
+
+  onShowHelpWizard = () => {
+    reportPanelInspectInteraction(InspectTab.JSON, 'supportWizard');
+    const queryParms = locationService.getSearch();
+    queryParms.set('inspectTab', InspectTab.Help.toString());
+    locationService.push('?' + queryParms.toString());
   };
 
   render() {
@@ -166,6 +189,11 @@ export class InspectJSONTab extends PureComponent<Props, State> {
               Apply
             </Button>
           )}
+          {show === ShowContent.DataFrames && (
+            <Button className={styles.toolbarItem} onClick={this.onShowHelpWizard}>
+              Support
+            </Button>
+          )}
         </div>
         <div className={styles.content}>
           <AutoSizer disableWidth>
@@ -186,26 +214,6 @@ export class InspectJSONTab extends PureComponent<Props, State> {
       </div>
     );
   }
-}
-
-function getPanelDataFrames(data?: PanelData): DataFrameJSON[] {
-  const frames: DataFrameJSON[] = [];
-  if (data?.series) {
-    for (const f of data.series) {
-      frames.push(dataFrameToJSON(f));
-    }
-  }
-  if (data?.annotations) {
-    for (const f of data.annotations) {
-      const json = dataFrameToJSON(f);
-      if (!json.schema?.meta) {
-        json.schema!.meta = {};
-      }
-      json.schema!.meta.dataTopic = DataTopic.Annotations;
-      frames.push(json);
-    }
-  }
-  return frames;
 }
 
 function getPrettyJSON(obj: any): string {

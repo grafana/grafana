@@ -66,7 +66,7 @@ func (t *TemplateService) SetTemplate(ctx context.Context, orgID int64, tmpl def
 		OrgID:                     orgID,
 	}
 	err = t.xact.InTransaction(ctx, func(ctx context.Context) error {
-		err = t.config.UpdateAlertmanagerConfiguration(ctx, &cmd)
+		err = PersistConfig(ctx, t.config, &cmd)
 		if err != nil {
 			return err
 		}
@@ -104,7 +104,7 @@ func (t *TemplateService) DeleteTemplate(ctx context.Context, orgID int64, name 
 		OrgID:                     orgID,
 	}
 	err = t.xact.InTransaction(ctx, func(ctx context.Context) error {
-		err = t.config.UpdateAlertmanagerConfiguration(ctx, &cmd)
+		err = PersistConfig(ctx, t.config, &cmd)
 		if err != nil {
 			return err
 		}

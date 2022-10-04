@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
+	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/live/pushhttp"
@@ -23,10 +24,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/searchV2"
+	secretsMigrations "github.com/grafana/grafana/pkg/services/secrets/kvstore/migrations"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	samanager "github.com/grafana/grafana/pkg/services/serviceaccounts/manager"
 	"github.com/grafana/grafana/pkg/services/store"
+	"github.com/grafana/grafana/pkg/services/store/object"
 	"github.com/grafana/grafana/pkg/services/store/sanitizer"
 	"github.com/grafana/grafana/pkg/services/thumbs"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
@@ -42,10 +45,13 @@ func ProvideBackgroundServiceRegistry(
 	secretsService *secretsManager.SecretsService, remoteCache *remotecache.RemoteCache,
 	thumbnailsService thumbs.Service, StorageService store.StorageService, searchService searchV2.SearchService, entityEventsService store.EntityEventsService,
 	saService *samanager.ServiceAccountsService, authInfoService *authinfoservice.Implementation,
+	grpcServerProvider grpcserver.Provider,
+	secretMigrationProvider secretsMigrations.SecretMigrationProvider,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service, _ *alerting.AlertNotificationService,
 	_ serviceaccounts.Service, _ *guardian.Provider,
 	_ *plugindashboardsservice.DashboardUpdater, _ *sanitizer.Provider,
+	_ *grpcserver.HealthService, _ object.ObjectStoreServer, _ *grpcserver.ReflectionService,
 ) *BackgroundServiceRegistry {
 	return NewBackgroundServiceRegistry(
 		httpServer,
@@ -70,9 +76,11 @@ func ProvideBackgroundServiceRegistry(
 		thumbnailsService,
 		searchService,
 		entityEventsService,
+		grpcServerProvider,
 		saService,
 		authInfoService,
 		processManager,
+		secretMigrationProvider,
 	)
 }
 

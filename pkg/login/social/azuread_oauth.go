@@ -3,7 +3,6 @@ package social
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -18,9 +17,7 @@ import (
 
 type SocialAzureAD struct {
 	*SocialBase
-	allowedGroups       []string
-	autoAssignOrgRole   string
-	roleAttributeStrict bool
+	allowedGroups []string
 }
 
 type azureClaims struct {
@@ -32,6 +29,7 @@ type azureClaims struct {
 	ID                string                 `json:"oid"`
 	ClaimNames        claimNames             `json:"_claim_names,omitempty"`
 	ClaimSources      map[string]claimSource `json:"_claim_sources,omitempty"`
+	TenantID          string                 `json:"tid,omitempty"`
 }
 
 type claimNames struct {
@@ -53,7 +51,7 @@ func (s *SocialAzureAD) Type() int {
 func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
 	idToken := token.Extra("id_token")
 	if idToken == nil {
-		return nil, fmt.Errorf("no id_token found")
+		return nil, ErrIDTokenNotFound
 	}
 
 	parsedToken, err := jwt.ParseSigned(idToken.(string))
@@ -68,13 +66,14 @@ func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*Bas
 
 	email := claims.extractEmail()
 	if email == "" {
-		return nil, errors.New("error getting user info: no email found in access token")
+		return nil, ErrEmailNotFound
 	}
 
-	role := claims.extractRole(s.autoAssignOrgRole, s.roleAttributeStrict)
-	if role == "" {
-		return nil, errors.New("user does not have a valid role")
+	role, grafanaAdmin := s.extractRoleAndAdmin(&claims)
+	if s.roleAttributeStrict && !role.IsValid() {
+		return nil, ErrInvalidBasicRole
 	}
+
 	logger.Debug("AzureAD OAuth: extracted role", "email", email, "role", role)
 
 	groups, err := extractGroups(client, claims, token)
@@ -87,13 +86,19 @@ func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*Bas
 		return nil, errMissingGroupMembership
 	}
 
+	var isGrafanaAdmin *bool = nil
+	if s.allowAssignGrafanaAdmin {
+		isGrafanaAdmin = &grafanaAdmin
+	}
+
 	return &BasicUserInfo{
-		Id:     claims.ID,
-		Name:   claims.Name,
-		Email:  email,
-		Login:  email,
-		Role:   string(role),
-		Groups: groups,
+		Id:             claims.ID,
+		Name:           claims.Name,
+		Email:          email,
+		Login:          email,
+		Role:           role,
+		IsGrafanaAdmin: isGrafanaAdmin,
+		Groups:         groups,
 	}, nil
 }
 
@@ -123,32 +128,24 @@ func (claims *azureClaims) extractEmail() string {
 	return claims.Email
 }
 
-func (claims *azureClaims) extractRole(autoAssignRole string, strictMode bool) org.RoleType {
+// extractRoleAndAdmin extracts the role from the claims and returns the role and whether the user is a Grafana admin.
+func (s *SocialAzureAD) extractRoleAndAdmin(claims *azureClaims) (org.RoleType, bool) {
 	if len(claims.Roles) == 0 {
-		if strictMode {
-			return org.RoleType("")
-		}
-
-		return org.RoleType(autoAssignRole)
+		return s.defaultRole(false), false
 	}
 
-	roleOrder := []org.RoleType{
-		org.RoleAdmin,
-		org.RoleEditor,
-		org.RoleViewer,
-	}
-
+	roleOrder := []org.RoleType{RoleGrafanaAdmin, org.RoleAdmin, org.RoleEditor, org.RoleViewer}
 	for _, role := range roleOrder {
 		if found := hasRole(claims.Roles, role); found {
-			return role
+			if role == RoleGrafanaAdmin {
+				return org.RoleAdmin, true
+			}
+
+			return role, false
 		}
 	}
 
-	if strictMode {
-		return org.RoleType("")
-	}
-
-	return org.RoleViewer
+	return s.defaultRole(false), false
 }
 
 func hasRole(roles []string, role org.RoleType) bool {
@@ -157,6 +154,7 @@ func hasRole(roles []string, role org.RoleType) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -180,20 +178,27 @@ func extractGroups(client *http.Client, claims azureClaims, token *oauth2.Token)
 	// If user groups exceeds 200 no groups will be found in claims.
 	// See https://docs.microsoft.com/en-us/azure/active-directory/develop/id-tokens#groups-overage-claim
 	endpoint := claims.ClaimSources[claims.ClaimNames.Groups].Endpoint
+
+	// If the endpoints provided in _claim_source is pointing to the deprecated "graph.windows.net" api
+	// replace with handcrafted url to graph.microsoft.com
+	// See https://docs.microsoft.com/en-us/graph/migrate-azure-ad-graph-overview
 	if strings.Contains(endpoint, "graph.windows.net") {
-		// If the endpoints provided in _claim_source is pointed to the deprecated "graph.windows.net" api
-		// replace with handcrafted url to graph.microsoft.com
-		// See https://docs.microsoft.com/en-us/graph/migrate-azure-ad-graph-overview
-		parsedToken, err := jwt.ParseSigned(token.AccessToken)
-		if err != nil {
-			return nil, fmt.Errorf("error parsing id token: %w", err)
+		tenantID := claims.TenantID
+		// If tenantID wasn't found in the id_token, parse access token
+		if tenantID == "" {
+			parsedToken, err := jwt.ParseSigned(token.AccessToken)
+			if err != nil {
+				return nil, fmt.Errorf("error parsing access token: %w", err)
+			}
+
+			var accessClaims azureAccessClaims
+			if err := parsedToken.UnsafeClaimsWithoutVerification(&accessClaims); err != nil {
+				return nil, fmt.Errorf("error getting claims from access token: %w", err)
+			}
+			tenantID = accessClaims.TenantID
 		}
 
-		var accessClaims azureAccessClaims
-		if err := parsedToken.UnsafeClaimsWithoutVerification(&accessClaims); err != nil {
-			return nil, fmt.Errorf("error getting claims from access token: %w", err)
-		}
-		endpoint = fmt.Sprintf("https://graph.microsoft.com/v1.0/%s/users/%s/getMemberObjects", accessClaims.TenantID, claims.ID)
+		endpoint = fmt.Sprintf("https://graph.microsoft.com/v1.0/%s/users/%s/getMemberObjects", tenantID, claims.ID)
 	}
 
 	data, err := json.Marshal(&getAzureGroupRequest{SecurityEnabledOnly: false})

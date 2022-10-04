@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -112,7 +113,7 @@ func TestApi_getDescription(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, _ := setupTestEnvironment(t, tt.permissions, tt.options)
+			service, _, _ := setupTestEnvironment(t, tt.permissions, tt.options)
 			server := setupTestServer(t, &user.SignedInUser{OrgID: 1}, service)
 
 			req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/access-control/%s/description", tt.options.Resource), nil)
@@ -159,7 +160,7 @@ func TestApi_getPermissions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, sql := setupTestEnvironment(t, tt.permissions, testOptions)
+			service, sql, _ := setupTestEnvironment(t, tt.permissions, testOptions)
 			server := setupTestServer(t, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}, service)
 
 			seedPermissions(t, tt.resourceID, sql, service)
@@ -236,7 +237,7 @@ func TestApi_setBuiltinRolePermission(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, _ := setupTestEnvironment(t, tt.permissions, testOptions)
+			service, _, _ := setupTestEnvironment(t, tt.permissions, testOptions)
 			server := setupTestServer(t, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}, service)
 
 			recorder := setPermission(t, server, testOptions.Resource, tt.resourceID, tt.permission, "builtInRoles", tt.builtInRole)
@@ -314,11 +315,11 @@ func TestApi_setTeamPermission(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, sql := setupTestEnvironment(t, tt.permissions, testOptions)
+			service, _, teamSvc := setupTestEnvironment(t, tt.permissions, testOptions)
 			server := setupTestServer(t, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}, service)
 
 			// seed team
-			_, err := sql.CreateTeam("test", "test@test.com", 1)
+			_, err := teamSvc.CreateTeam("test", "test@test.com", 1)
 			require.NoError(t, err)
 
 			recorder := setPermission(t, server, testOptions.Resource, tt.resourceID, tt.permission, "teams", strconv.Itoa(int(tt.teamID)))
@@ -397,7 +398,7 @@ func TestApi_setUserPermission(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, sql := setupTestEnvironment(t, tt.permissions, testOptions)
+			service, sql, _ := setupTestEnvironment(t, tt.permissions, testOptions)
 			server := setupTestServer(t, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}, service)
 
 			// seed user
@@ -498,7 +499,8 @@ func checkSeededPermissions(t *testing.T, permissions []resourcePermissionDTO) {
 func seedPermissions(t *testing.T, resourceID string, sql *sqlstore.SQLStore, service *Service) {
 	t.Helper()
 	// seed team 1 with "Edit" permission on dashboard 1
-	team, err := sql.CreateTeam("test", "test@test.com", 1)
+	teamSvc := teamimpl.ProvideService(sql, sql.Cfg)
+	team, err := teamSvc.CreateTeam("test", "test@test.com", 1)
 	require.NoError(t, err)
 	_, err = service.SetTeamPermission(context.Background(), team.OrgId, team.Id, resourceID, "Edit")
 	require.NoError(t, err)

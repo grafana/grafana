@@ -25,20 +25,18 @@ export const VerticalTab = React.forwardRef<HTMLAnchorElement, TabProps>(
     const linkClass = cx(tabsStyles.link, active && tabsStyles.activeStyle);
 
     return (
-      <div className={tabsStyles.item}>
-        <a
-          href={href}
-          className={linkClass}
-          {...otherProps}
-          onClick={onChangeTab}
-          aria-label={otherProps['aria-label'] || selectors.components.Tab.title(label)}
-          role="tab"
-          aria-selected={active}
-          ref={ref}
-        >
-          {content()}
-        </a>
-      </div>
+      <a
+        href={href}
+        className={linkClass}
+        {...otherProps}
+        onClick={onChangeTab}
+        aria-label={otherProps['aria-label'] || selectors.components.Tab.title(label)}
+        role="tab"
+        aria-selected={active}
+        ref={ref}
+      >
+        {content()}
+      </a>
     );
   }
 );
@@ -47,17 +45,12 @@ VerticalTab.displayName = 'Tab';
 
 const getTabStyles = (theme: GrafanaTheme2) => {
   return {
-    item: css`
-      list-style: none;
-      margin-right: ${theme.spacing(2)};
-      position: relative;
-      display: block;
-    `,
     link: css`
       padding: 6px 12px;
       display: block;
       height: 100%;
       cursor: pointer;
+      position: relative;
 
       color: ${theme.colors.text.primary};
 

@@ -10,14 +10,16 @@ import (
 	prometheusModel "github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/ticker"
 
 	"github.com/benbjohnson/clock"
 	"golang.org/x/sync/errgroup"
@@ -25,6 +27,7 @@ import (
 
 // ScheduleService is an interface for a service that schedules the evaluation
 // of alert rules.
+//
 //go:generate mockery --name ScheduleService --structname FakeScheduleService --inpackage --filename schedule_mock.go --unroll-variadic=False
 type ScheduleService interface {
 	// Run the scheduler until the context is canceled or the scheduler returns
@@ -40,8 +43,9 @@ type ScheduleService interface {
 	overrideCfg(cfg SchedulerCfg)
 }
 
-//go:generate mockery --name AlertsSender --structname AlertsSenderMock --inpackage --filename alerts_sender_mock.go --with-expecter
 // AlertsSender is an interface for a service that is responsible for sending notifications to the end-user.
+//
+//go:generate mockery --name AlertsSender --structname AlertsSenderMock --inpackage --filename alerts_sender_mock.go --with-expecter
 type AlertsSender interface {
 	Send(key ngmodels.AlertRuleKey, alerts definitions.PostableAlerts)
 }
@@ -63,7 +67,7 @@ type schedule struct {
 
 	clock clock.Clock
 
-	ticker *alerting.Ticker
+	ticker *ticker.T
 
 	// evalApplied is only used for tests: test code can set it to non-nil
 	// function, and then it'll be called from the event loop whenever the
@@ -107,14 +111,13 @@ type SchedulerCfg struct {
 	StopAppliedFunc func(ngmodels.AlertRuleKey)
 	Evaluator       eval.Evaluator
 	RuleStore       RulesStore
-	InstanceStore   store.InstanceStore
 	Metrics         *metrics.Scheduler
 	AlertSender     AlertsSender
 }
 
 // NewScheduler returns a new schedule.
 func NewScheduler(cfg SchedulerCfg, appURL *url.URL, stateManager *state.Manager) *schedule {
-	ticker := alerting.NewTicker(cfg.C, cfg.Cfg.BaseInterval, cfg.Metrics.Ticker)
+	ticker := ticker.New(cfg.C, cfg.Cfg.BaseInterval, cfg.Metrics.Ticker)
 
 	sch := schedule{
 		registry:              alertRuleInfoRegistry{alertRuleInfo: make(map[ngmodels.AlertRuleKey]*alertRuleInfo)},
@@ -302,7 +305,7 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 			// waiting for all rule evaluation routines to stop
 			waitErr := dispatcherGroup.Wait()
 			// close the state manager and flush the state
-			sch.stateManager.Close(ctx)
+			sch.stateManager.Close()
 			return waitErr
 		}
 	}
@@ -329,7 +332,21 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		logger := logger.New("version", e.rule.Version, "attempt", attempt, "now", e.scheduledAt)
 		start := sch.clock.Now()
 
-		results := sch.evaluator.ConditionEval(ctx, e.rule.GetEvalCondition(), e.scheduledAt)
+		schedulerUser := &user.SignedInUser{
+			UserID:  -1,
+			Login:   "grafana_scheduler",
+			OrgID:   e.rule.OrgID,
+			OrgRole: org.RoleAdmin,
+			Permissions: map[int64]map[string][]string{
+				e.rule.OrgID: {
+					datasources.ActionQuery: []string{
+						datasources.ScopeAll,
+					},
+				},
+			},
+		}
+
+		results := sch.evaluator.ConditionEval(ctx, schedulerUser, e.rule.GetEvalCondition(), e.scheduledAt)
 		dur := sch.clock.Now().Sub(start)
 		evalTotal.Inc()
 		evalDuration.Observe(dur.Seconds())
@@ -430,7 +447,7 @@ func (sch *schedule) overrideCfg(cfg SchedulerCfg) {
 	sch.clock = cfg.C
 	sch.baseInterval = cfg.Cfg.BaseInterval
 	sch.ticker.Stop()
-	sch.ticker = alerting.NewTicker(cfg.C, cfg.Cfg.BaseInterval, cfg.Metrics.Ticker)
+	sch.ticker = ticker.New(cfg.C, cfg.Cfg.BaseInterval, cfg.Metrics.Ticker)
 	sch.evalAppliedFunc = cfg.EvalAppliedFunc
 	sch.stopAppliedFunc = cfg.StopAppliedFunc
 }

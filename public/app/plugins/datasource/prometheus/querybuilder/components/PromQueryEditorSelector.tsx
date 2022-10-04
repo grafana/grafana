@@ -8,7 +8,6 @@ import { PromQueryEditorProps } from '../../components/types';
 import { PromQuery } from '../../types';
 import { promQueryModeller } from '../PromQueryModeller';
 import { buildVisualQueryFromString } from '../parsing';
-import { FeedbackLink } from '../shared/FeedbackLink';
 import { QueryEditorModeToggle } from '../shared/QueryEditorModeToggle';
 import { QueryHeaderSwitch } from '../shared/QueryHeaderSwitch';
 import { promQueryEditorExplainKey, promQueryEditorRawQueryKey, useFlag } from '../shared/hooks/useFlag';
@@ -107,7 +106,6 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
         {editorMode === QueryEditorMode.Builder && (
           <>
             <QueryHeaderSwitch label="Raw query" value={rawQuery} onChange={onQueryPreviewChange} />
-            <FeedbackLink feedbackUrl="https://github.com/grafana/grafana/discussions/47693" />
           </>
         )}
         <FlexItem grow={1} />

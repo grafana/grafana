@@ -55,7 +55,6 @@ def windows(trigger, edition, ver_mode):
             'release',
         ):
             installer_commands.extend([
-                '.\\grabpl.exe gen-version {}'.format(ver_part),
                 '.\\grabpl.exe windows-installer --edition {} {}'.format(edition, ver_part),
                 '$$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]',
             ])

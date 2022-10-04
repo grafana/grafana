@@ -1,7 +1,6 @@
 import { render } from 'enzyme';
 import _ from 'lodash'; // eslint-disable-line lodash/import-scope
-
-import { Plugin as SlatePlugin } from '@grafana/slate-react';
+import { Plugin as SlatePlugin } from 'slate-react';
 
 import { CompletionItemGroup, SuggestionsState } from '../types';
 import { SearchFunctionType } from '../utils';

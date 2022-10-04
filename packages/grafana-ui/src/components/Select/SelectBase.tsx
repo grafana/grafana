@@ -4,6 +4,8 @@ import { default as ReactAsyncSelect } from 'react-select/async';
 import { default as AsyncCreatable } from 'react-select/async-creatable';
 import Creatable from 'react-select/creatable';
 
+import { SelectableValue } from '@grafana/data';
+
 import { useTheme2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { Spinner } from '../Spinner/Spinner';
@@ -19,7 +21,7 @@ import { SingleValue } from './SingleValue';
 import { ValueContainer } from './ValueContainer';
 import { getSelectStyles } from './getSelectStyles';
 import { useCustomSelectStyles } from './resetSelectStyles';
-import { ActionMeta, SelectBaseProps, SelectValue } from './types';
+import { ActionMeta, SelectBaseProps } from './types';
 import { cleanValue, findSelectedValue } from './utils';
 
 interface ExtraValuesIndicatorProps {
@@ -166,7 +168,7 @@ export function SelectBase<T>({
   }, [maxMenuHeight, menuPlacement, loadOptions, isOpen]);
 
   const onChangeWithEmpty = useCallback(
-    (value: SelectValue<T>, action: ActionMeta) => {
+    (value: SelectableValue<T>, action: ActionMeta) => {
       if (isMulti && (value === undefined || value === null)) {
         return onChange([], action);
       }

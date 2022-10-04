@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback } from 'react';
+import React, { useEffect } from 'react';
 import { Controller } from 'react-hook-form';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
@@ -47,17 +47,17 @@ const withDsUID = (fn: Function) => (ds: DataSourceInstanceSettings) => fn(ds.ui
 export const AddCorrelationForm = ({ onClose, onCreated }: Props) => {
   const styles = useStyles2(getStyles);
 
-  const { create } = useCorrelations();
+  const {
+    create: { execute, loading, error, value },
+  } = useCorrelations();
 
-  const onSubmit = useCallback(
-    async (correlation) => {
-      await create.execute(correlation);
+  useEffect(() => {
+    if (!error && !loading && value) {
       onCreated();
-    },
-    [create, onCreated]
-  );
+    }
+  }, [error, loading, value, onCreated]);
 
-  const { control, handleSubmit, register, errors } = useCorrelationForm<FormDTO>({ onSubmit });
+  const { control, handleSubmit, register, errors } = useCorrelationForm<FormDTO>({ onSubmit: execute });
 
   return (
     <PanelContainer className={styles.panelContainer}>
@@ -108,12 +108,7 @@ export const AddCorrelationForm = ({ onClose, onCreated }: Props) => {
         <CorrelationDetailsFormPart register={register} />
 
         <HorizontalGroup justify="flex-end">
-          <Button
-            variant="primary"
-            icon={create.loading ? 'fa fa-spinner' : 'plus'}
-            type="submit"
-            disabled={create.loading}
-          >
+          <Button variant="primary" icon={loading ? 'fa fa-spinner' : 'plus'} type="submit" disabled={loading}>
             Add
           </Button>
         </HorizontalGroup>

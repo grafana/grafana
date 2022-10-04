@@ -54,7 +54,7 @@ func (hs *HTTPServer) AdminRollbackSecrets(c *models.ReqContext) response.Respon
 // To migrate to the plugin, it must be installed and configured
 // so as not to lose access to migrated secrets
 func (hs *HTTPServer) AdminMigrateSecretsToPlugin(c *models.ReqContext) response.Response {
-	if skv.EvaluateRemoteSecretsPlugin(hs.secretsPluginManager, hs.Cfg) != nil {
+	if skv.EvaluateRemoteSecretsPlugin(c.Req.Context(), hs.secretsPluginManager, hs.Cfg) != nil {
 		hs.log.Warn("Received secrets plugin migration request while plugin is not available")
 		return response.Respond(http.StatusBadRequest, "Secrets plugin is not available")
 	}
@@ -69,7 +69,7 @@ func (hs *HTTPServer) AdminMigrateSecretsToPlugin(c *models.ReqContext) response
 // To migrate from the plugin, it must be installed only
 // as it is possible the user disabled it and then wants to migrate
 func (hs *HTTPServer) AdminMigrateSecretsFromPlugin(c *models.ReqContext) response.Response {
-	if hs.secretsPluginManager.SecretsManager() == nil {
+	if hs.secretsPluginManager.SecretsManager(c.Req.Context()) == nil {
 		hs.log.Warn("Received secrets plugin migration request while plugin is not installed")
 		return response.Respond(http.StatusBadRequest, "Secrets plugin is not installed")
 	}
@@ -82,7 +82,7 @@ func (hs *HTTPServer) AdminMigrateSecretsFromPlugin(c *models.ReqContext) respon
 }
 
 func (hs *HTTPServer) AdminDeleteAllSecretsManagerPluginSecrets(c *models.ReqContext) response.Response {
-	if hs.secretsPluginManager.SecretsManager() == nil {
+	if hs.secretsPluginManager.SecretsManager(c.Req.Context()) == nil {
 		hs.log.Warn("Received secrets plugin deletion request while plugin is not installed")
 		return response.Respond(http.StatusBadRequest, "Secrets plugin is not installed")
 	}

@@ -1,7 +1,7 @@
 import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import type { Monaco, monacoTypes } from '@grafana/ui';
 
-import { CloudWatchDatasource } from '../datasource';
+import { CloudWatchAPI } from '../api';
 
 import { LinkedToken } from './LinkedToken';
 import { linkedTokenBuilder } from './linkedTokenBuilder';
@@ -18,15 +18,13 @@ CompletionItemProvider is an extendable class which needs to implement :
 - getSuggestions
 */
 export class CompletionItemProvider implements Completeable {
-  templateVariables: string[];
-  datasource: CloudWatchDatasource;
+  api: CloudWatchAPI;
   templateSrv: TemplateSrv;
   tokenTypes: TokenTypes;
 
-  constructor(datasource: CloudWatchDatasource, templateSrv: TemplateSrv = getTemplateSrv()) {
-    this.datasource = datasource;
+  constructor(api: CloudWatchAPI, templateSrv: TemplateSrv = getTemplateSrv()) {
+    this.api = api;
     this.templateSrv = templateSrv;
-    this.templateVariables = this.datasource.getVariables();
     this.templateSrv = templateSrv;
 
     // implement with more specific tokens when extending this class

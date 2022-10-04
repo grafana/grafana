@@ -14,7 +14,6 @@ import {
   DataSourceRef,
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { keybindingSrv } from 'app/core/services/keybindingSrv';
 import {
   DEFAULT_RANGE,
   getQueryKeys,
@@ -178,8 +177,6 @@ export function initializeExplore(
     }
     dispatch(updateTime({ exploreId }));
 
-    keybindingSrv.setupTimeRangeBindings(false);
-
     if (instance) {
       // We do not want to add the url to browser history on init because when the pane is initialised it's because
       // we already have something in the url. Adding basically the same state as additional history item prevents
@@ -195,8 +192,8 @@ export function initializeExplore(
  */
 export function refreshExplore(exploreId: ExploreId, newUrlQuery: string): ThunkResult<void> {
   return async (dispatch, getState) => {
-    const itemState = getState().explore[exploreId]!;
-    if (!itemState.initialized) {
+    const itemState = getState().explore[exploreId];
+    if (!itemState?.initialized) {
       return;
     }
 
