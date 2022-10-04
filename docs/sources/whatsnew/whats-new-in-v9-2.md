@@ -128,19 +128,6 @@ We have extended the Join transformation to support both inner and outer JOINs, 
 
 Also, you can now click on the `x` to clear values in the select fields for the Outer Join and Grouping to Matrix transformations as expected.
 
-## Custom branding previews
-
-_Available in beta in Grafana Enterprise._
-
-Use custom branding to make Grafana _your_ observability tool by adding your own sign-in page, docs and help links, logo, application name, and more.
-Previously, you could configure custom branding only in Grafana's configuration files.
-In Grafana v9.1, we introduced a UI where you can update and upload content.
-In v9.2, you can preview what your customized Grafana will look like on the custom branding page before applying your changes.
-
-Turn on the custom branding configuration page and API with the `customBranding` [feature toggle](https://grafana.com/docs/grafana/latest/packages_api/data/featuretoggles/), and learn more about what you can do with custom branding in our [documentation](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/configure-custom-branding/).
-
-{{< figure src="/static/img/docs/enterprise/custom-branding-preview-9-2.png" max-width="750px" caption="Previewing a custom branding configuration" >}}
-
 ## Simplified UI to create template variable queries for Loki data source
 
 _Generally available in Grafana Open Source._
