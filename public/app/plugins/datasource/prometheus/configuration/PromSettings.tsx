@@ -1,4 +1,5 @@
-import React, { SyntheticEvent } from 'react';
+import React, { SyntheticEvent, useEffect } from 'react';
+import semver from 'semver/preload';
 
 import {
   DataSourcePluginOptionsEditorProps,
@@ -6,11 +7,12 @@ import {
   SelectableValue,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
+import { getBackendSrv } from '@grafana/runtime/src';
 import {
-  InlineField,
-  InlineSwitch,
   EventsWithValidation,
+  InlineField,
   InlineFormLabel,
+  InlineSwitch,
   LegacyForms,
   regexValidation,
 } from '@grafana/ui';
@@ -18,6 +20,7 @@ import {
 import { PromOptions } from '../types';
 
 import { ExemplarsSettings } from './ExemplarsSettings';
+
 const { Select, Input, FormField } = LegacyForms;
 
 const httpOptions = [
@@ -35,9 +38,58 @@ const prometheusFlavors = [
 const versions: { [index: string]: Array<{ value?: string; label: string }> } = {
   Prometheus: [
     { value: undefined, label: 'Please select' },
-    { value: 'lt2.24', label: '2.23 or lower' },
-    { value: '2.24', label: '2.24' },
-    { value: '2.37', label: '2.37' },
+    { value: 'lt2.18.0', label: '< 2.18.0' },
+    { value: '2.18.0', label: '2.18.0' },
+    { value: '2.18.1', label: '2.18.1' },
+    { value: '2.18.2', label: '2.18.2' },
+    { value: '2.19.2', label: '2.19.2' },
+    { value: '2.19.3', label: '2.19.3' },
+    { value: '2.20.0', label: '2.20.0' },
+    { value: '2.20.1', label: '2.20.1' },
+    { value: '2.21.0', label: '2.21.0' },
+    { value: '2.22.0', label: '2.22.0' },
+    { value: '2.22.1', label: '2.22.1' },
+    { value: '2.22.2', label: '2.22.2' },
+    { value: '2.23.0', label: '2.23.0' },
+    { value: '2.24.0', label: '2.24.0' },
+    { value: '2.24.1', label: '2.24.1' },
+    { value: '2.25.0', label: '2.25.0' },
+    { value: '2.25.1', label: '2.25.1' },
+    { value: '2.25.2', label: '2.25.2' },
+    { value: '2.26.0', label: '2.26.0' },
+    { value: '2.26.1', label: '2.26.1' },
+    { value: '2.27.0', label: '2.27.0' },
+    { value: '2.27.1', label: '2.27.1' },
+    { value: '2.28.0', label: '2.28.0' },
+    { value: '2.28.1', label: '2.28.1' },
+    { value: '2.29.0', label: '2.29.0' },
+    { value: '2.29.1', label: '2.29.1' },
+    { value: '2.29.2', label: '2.29.2' },
+    { value: '2.30.0', label: '2.30.0' },
+    { value: '2.30.1', label: '2.30.1' },
+    { value: '2.30.2', label: '2.30.2' },
+    { value: '2.30.3', label: '2.30.3' },
+    { value: '2.30.4', label: '2.30.4' },
+    { value: '2.31.0', label: '2.31.0' },
+    { value: '2.31.2', label: '2.31.2' },
+    { value: '2.32.0', label: '2.32.0' },
+    { value: '2.32.1', label: '2.32.1' },
+    { value: '2.33.0', label: '2.33.0' },
+    { value: '2.33.1', label: '2.33.1' },
+    { value: '2.33.2', label: '2.33.2' },
+    { value: '2.33.3', label: '2.33.3' },
+    { value: '2.33.4', label: '2.33.4' },
+    { value: '2.33.5', label: '2.33.5' },
+    { value: '2.34.0', label: '2.34.0' },
+    { value: '2.35.0', label: '2.35.0' },
+    { value: '2.36.0', label: '2.36.0' },
+    { value: '2.36.1', label: '2.36.1' },
+    { value: '2.36.2', label: '2.36.2' },
+    { value: '2.37.0', label: '2.37.0' },
+    { value: '2.37.1', label: '2.37.1' },
+    { value: '2.38.0', label: '2.38.0' },
+    { value: '2.39.0', label: '2.39.0' },
+    { value: 'gt2.39.0', label: '> 2.39.0' },
   ],
   Mimir: [
     { value: undefined, label: 'Please select' },
@@ -57,6 +109,17 @@ const versions: { [index: string]: Array<{ value?: string; label: string }> } = 
 
 type Props = Pick<DataSourcePluginOptionsEditorProps<PromOptions>, 'options' | 'onOptionsChange'>;
 
+interface VersionDetectionResponse {
+  data?: {
+    branch?: string;
+    buildDate?: string;
+    buildUser?: string;
+    goVersion?: string;
+    revision?: string;
+    version?: string;
+  };
+}
+
 export const PromSettings = (props: Props) => {
   const { options, onOptionsChange } = props;
 
@@ -65,6 +128,32 @@ export const PromSettings = (props: Props) => {
   if (!options.jsonData.httpMethod) {
     options.jsonData.httpMethod = 'POST';
   }
+
+  useEffect(() => {
+    if (!options.jsonData.prometheusFlavor) {
+      return;
+    }
+    getBackendSrv()
+      .get(`/api/datasources/${options.id}/resources/version-detect`)
+      .then((rawResponse: VersionDetectionResponse) => {
+        if (rawResponse.data?.version && semver.valid(rawResponse.data?.version)) {
+          onOptionsChange({
+            ...options,
+            jsonData: { ...options.jsonData, prometheusVersion: rawResponse.data?.version },
+          });
+        } else {
+          // show UI to prompt manual population?
+          console.warn('Error fetching version from buildinfo API, user must manually select version!');
+        }
+      })
+      .catch((error) => {
+        // show UI to prompt manual population?
+        console.warn('Error fetching version from buildinfo API, user must manually select version!', error);
+      });
+
+    //@todo is there a way around adding this?
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [options.jsonData?.prometheusFlavor]);
 
   return (
     <>
@@ -139,7 +228,6 @@ export const PromSettings = (props: Props) => {
                   aria-label="Prometheus Flavor"
                   options={prometheusFlavors}
                   value={prometheusFlavors.find((o) => o.value === options.jsonData.prometheusFlavor)}
-                  // onChange={onChangeHandler('prometheusFlavor', options, onOptionsChange)}
                   onChange={onChangeHandler(
                     'prometheusFlavor',
                     {
