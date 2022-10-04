@@ -28,12 +28,12 @@ export interface GazetteerPathEditorConfigSettings {
   options?: Array<SelectableValue<string>>;
 }
 
-export const GazetteerPathEditor: FC<StandardEditorProps<string, any, any, GazetteerPathEditorConfigSettings>> = ({
+export const GazetteerPathEditor = ({
   value,
   onChange,
   context,
   item,
-}) => {
+}: StandardEditorProps<string, any, any, GazetteerPathEditorConfigSettings>) => {
   const styles = getStyles(useTheme2());
   const [gaz, setGaz] = useState<Gazetteer>();
   const settings = item.settings as any;
