@@ -291,7 +291,7 @@ func signRPMRepo(repoRoot string, cfg PublishConfig) error {
 		PrimaryKey: pubKey,
 		PrivateKey: privKey,
 		Identities: map[string]*openpgp.Identity{
-			uid.Id: &openpgp.Identity{
+			uid.Id: {
 				Name:   uid.Name,
 				UserId: uid,
 				SelfSignature: &packet.Signature{

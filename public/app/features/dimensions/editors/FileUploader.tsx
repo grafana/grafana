@@ -37,7 +37,7 @@ export const FileUploader = ({ mediaType, setFormData, setUpload, error }: Props
     <Field label="Preview">
       <div className={styles.iconPreview}>
         {mediaType === MediaType.Icon && <SVG src={file} className={styles.img} />}
-        {mediaType === MediaType.Image && <img src={file} className={styles.img} />}
+        {mediaType === MediaType.Image && <img src={file} alt="Preview of the uploaded file" className={styles.img} />}
       </div>
     </Field>
   );

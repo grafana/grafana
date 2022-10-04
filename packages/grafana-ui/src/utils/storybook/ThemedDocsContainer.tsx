@@ -1,6 +1,6 @@
 // This is a temporary workaround to allow theme switching storybook docs
 // see https://github.com/storybookjs/storybook/issues/10523 for further details
-import { DocsContainer } from '@storybook/addon-docs/blocks';
+import { DocsContainer } from '@storybook/addon-docs';
 import React from 'react';
 import { useDarkMode } from 'storybook-dark-mode';
 
