@@ -153,6 +153,7 @@ def publish_image_pipelines(mode):
     ),]
 
 def get_oss_pipelines(trigger, ver_mode):
+    environment = {'EDITION': 'OSS'}
     edition = 'oss'
     services = integration_test_services(edition=edition)
     volumes = integration_test_services_volumes()
@@ -230,13 +231,13 @@ def get_oss_pipelines(trigger, ver_mode):
         steps=[identify_runner_step('windows')] + windows_package_steps,
         platform='windows', depends_on=[
             'oss-build{}-publish-{}'.format(get_e2e_suffix(), ver_mode),
-        ],
+        ], environment=environment,
     )
     pipelines = [
         pipeline(
             name='{}-oss-build{}-publish'.format(ver_mode, get_e2e_suffix()), edition=edition, trigger=trigger, services=[],
             steps=init_steps + build_steps + package_steps + publish_steps,
-            volumes=volumes,
+            environment=environment, volumes=volumes,
         ),
     ]
     if not disable_tests:
@@ -244,12 +245,12 @@ def get_oss_pipelines(trigger, ver_mode):
             pipeline(
                 name='{}-oss-test'.format(ver_mode), edition=edition, trigger=trigger, services=[],
                 steps=init_steps + test_steps,
-                volumes=[],
+                environment=environment, volumes=[],
             ),
             pipeline(
                 name='{}-oss-integration-tests'.format(ver_mode), edition=edition, trigger=trigger, services=services,
                 steps=[download_grabpl_step(), identify_runner_step(), verify_gen_cue_step(edition), wire_install_step(), ] + integration_test_steps,
-                volumes=volumes,
+                environment=environment, volumes=volumes,
             )
         ])
         deps = {
@@ -265,6 +266,7 @@ def get_oss_pipelines(trigger, ver_mode):
     return pipelines
 
 def get_enterprise_pipelines(trigger, ver_mode):
+    environment = {'EDITION': 'ENTERPRISE'}
     edition = 'enterprise'
     services = integration_test_services(edition=edition)
     volumes = integration_test_services_volumes()
@@ -371,12 +373,12 @@ def get_enterprise_pipelines(trigger, ver_mode):
         steps=[identify_runner_step('windows')] + windows_package_steps,
         platform='windows', depends_on=[
             'enterprise-build{}-publish-{}'.format(get_e2e_suffix(), ver_mode),
-        ],
+        ], environment=environment,
     )
     pipelines = [
         pipeline(
             name='{}-enterprise-build{}-publish'.format(ver_mode, get_e2e_suffix()), edition=edition, trigger=trigger, services=[],
-            steps=init_steps + build_steps + package_steps + publish_steps,
+            steps=init_steps + build_steps + package_steps + publish_steps, environment=environment,
             volumes=volumes,
         ),
     ]
@@ -384,13 +386,13 @@ def get_enterprise_pipelines(trigger, ver_mode):
         pipelines.extend([
             pipeline(
                 name='{}-enterprise-test'.format(ver_mode), edition=edition, trigger=trigger, services=[],
-                steps=init_steps + test_steps,
+                steps=init_steps + test_steps, environment=environment,
                 volumes=[],
             ),
             pipeline(
                 name='{}-enterprise-integration-tests'.format(ver_mode), edition=edition, trigger=trigger, services=services,
                 steps=[download_grabpl_step(), identify_runner_step(), clone_enterprise_step(ver_mode), init_enterprise_step(ver_mode), verify_gen_cue_step(edition), wire_install_step()] + integration_test_steps + [redis_integration_tests_step(), memcached_integration_tests_step()],
-                volumes=volumes,
+                environment=environment, volumes=volumes,
             ),
         ])
         deps = {
