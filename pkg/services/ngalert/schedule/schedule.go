@@ -67,8 +67,6 @@ type schedule struct {
 
 	clock clock.Clock
 
-	ticker *ticker.T
-
 	// evalApplied is only used for tests: test code can set it to non-nil
 	// function, and then it'll be called from the event loop whenever the
 	// message from evalApplied is handled.
@@ -117,15 +115,12 @@ type SchedulerCfg struct {
 
 // NewScheduler returns a new schedule.
 func NewScheduler(cfg SchedulerCfg, appURL *url.URL, stateManager *state.Manager) *schedule {
-	ticker := ticker.New(cfg.C, cfg.Cfg.BaseInterval, cfg.Metrics.Ticker)
-
 	sch := schedule{
 		registry:              alertRuleInfoRegistry{alertRuleInfo: make(map[ngmodels.AlertRuleKey]*alertRuleInfo)},
 		maxAttempts:           cfg.Cfg.MaxAttempts,
 		clock:                 cfg.C,
 		baseInterval:          cfg.Cfg.BaseInterval,
 		log:                   cfg.Logger,
-		ticker:                ticker,
 		evalAppliedFunc:       cfg.EvalAppliedFunc,
 		stopAppliedFunc:       cfg.StopAppliedFunc,
 		evaluator:             cfg.Evaluator,
@@ -143,9 +138,10 @@ func NewScheduler(cfg SchedulerCfg, appURL *url.URL, stateManager *state.Manager
 }
 
 func (sch *schedule) Run(ctx context.Context) error {
-	defer sch.ticker.Stop()
+	t := ticker.New(sch.clock, sch.baseInterval, sch.metrics.Ticker)
+	defer t.Stop()
 
-	if err := sch.schedulePeriodic(ctx); err != nil {
+	if err := sch.schedulePeriodic(ctx, t); err != nil {
 		sch.log.Error("failure while running the rule evaluation loop", "err", err)
 	}
 	return nil
@@ -184,11 +180,11 @@ func (sch *schedule) DeleteAlertRule(keys ...ngmodels.AlertRuleKey) {
 	sch.metrics.SchedulableAlertRulesHash.Set(float64(hashUIDs(alertRules)))
 }
 
-func (sch *schedule) schedulePeriodic(ctx context.Context) error {
+func (sch *schedule) schedulePeriodic(ctx context.Context, t *ticker.T) error {
 	dispatcherGroup, ctx := errgroup.WithContext(ctx)
 	for {
 		select {
-		case tick := <-sch.ticker.C:
+		case tick := <-t.C:
 			// We use Round(0) on the start time to remove the monotonic clock.
 			// This is required as ticks from the ticker and time.Now() can have
 			// a monotonic clock that when subtracted do not represent the delta
@@ -440,16 +436,6 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 			return nil
 		}
 	}
-}
-
-// overrideCfg is only used on tests.
-func (sch *schedule) overrideCfg(cfg SchedulerCfg) {
-	sch.clock = cfg.C
-	sch.baseInterval = cfg.Cfg.BaseInterval
-	sch.ticker.Stop()
-	sch.ticker = ticker.New(cfg.C, cfg.Cfg.BaseInterval, cfg.Metrics.Ticker)
-	sch.evalAppliedFunc = cfg.EvalAppliedFunc
-	sch.stopAppliedFunc = cfg.StopAppliedFunc
 }
 
 // evalApplied is only used on tests.
