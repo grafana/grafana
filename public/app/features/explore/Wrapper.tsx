@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { debounce, inRange } from 'lodash';
+import { inRange } from 'lodash';
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
@@ -41,7 +41,6 @@ interface OwnProps {}
 
 interface WrapperState {
   rightPaneWidth?: number;
-  windowWidth?: number;
 }
 
 const mapStateToProps = (state: StoreState) => {
@@ -69,7 +68,6 @@ class WrapperUnconnected extends PureComponent<Props, WrapperState> {
     super(props);
     this.state = {
       rightPaneWidth: undefined,
-      windowWidth: undefined,
     };
   }
 
@@ -84,8 +82,6 @@ class WrapperUnconnected extends PureComponent<Props, WrapperState> {
     if (Boolean(right)) {
       this.props.cleanupPaneAction({ exploreId: ExploreId.right });
     }
-
-    window.removeEventListener('resize', this.windowResizeListener);
   }
 
   componentDidMount() {
@@ -110,8 +106,6 @@ class WrapperUnconnected extends PureComponent<Props, WrapperState> {
     if (searchParams.from || searchParams.to) {
       locationService.partial({ from: undefined, to: undefined }, true);
     }
-
-    window.addEventListener('resize', this.windowResizeListener);
   }
 
   componentDidUpdate() {
@@ -124,25 +118,6 @@ class WrapperUnconnected extends PureComponent<Props, WrapperState> {
     document.title = documentTitle;
   }
 
-  windowResizeListener = debounce(() => {
-    let rightPaneRatio = 0.5;
-    const windowWidth = window.innerWidth;
-    // get the ratio of the previous rightPane to the window width
-    if (this.state.rightPaneWidth && this.state.windowWidth) {
-      rightPaneRatio = this.state.rightPaneWidth / this.state.windowWidth;
-    }
-    let newRightPaneWidth = Math.floor(windowWidth * rightPaneRatio);
-    if (newRightPaneWidth < this.minWidth) {
-      // if right pane is too narrow, make min width
-      newRightPaneWidth = this.minWidth;
-    } else if (windowWidth - newRightPaneWidth < this.minWidth) {
-      // if left pane is too narrow, make right pane = window - minWidth
-      newRightPaneWidth = windowWidth - this.minWidth;
-    }
-
-    this.setState({ windowWidth, rightPaneWidth: newRightPaneWidth });
-  }, 500);
-
   updateSplitSize = (rightPaneWidth: number) => {
     const evenSplitWidth = window.innerWidth / 2;
     const areBothSimilar = inRange(rightPaneWidth, evenSplitWidth - 100, evenSplitWidth + 100);
@@ -154,7 +129,7 @@ class WrapperUnconnected extends PureComponent<Props, WrapperState> {
       });
     }
 
-    this.setState({ ...this.state, rightPaneWidth });
+    this.setState({ rightPaneWidth });
   };
 
   render() {
