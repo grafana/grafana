@@ -95,7 +95,7 @@ func (i dummyObjectServer) findObject(ctx context.Context, uid string, kind stri
 				ETag:       objVersion.ETag,
 				Version:    objVersion.Version,
 
-				// Not in the history object
+				// Body is added from the dummy server cache (it does not exist in ObjectVersionInfo)
 				Body: objVersion.Body,
 			}
 
