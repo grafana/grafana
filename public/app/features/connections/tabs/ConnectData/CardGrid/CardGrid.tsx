@@ -12,11 +12,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gap: 12px;
     list-style: none;
   `,
-  noResults: css`
-    text-align: center;
-    padding: 50px 0;
-    font-style: italic;
-  `,
   card: css`
     height: 90px;
     padding: 0px 24px;
@@ -48,24 +43,21 @@ export const CardGrid: FC<{ plugins: CatalogPlugin[] }> = ({ plugins }) => {
   const styles = useStyles2(getStyles);
 
   return (
-    <>
-      <ul className={styles.sourcesList}>
-        {plugins.map((plugin) => (
-          <Card key={plugin.id} className={styles.card} href={`plugins/${plugin.id}`}>
-            <Card.Heading>
-              <div className={styles.cardContent}>
-                {plugin.info.logos.small && (
-                  <div className={styles.logoWrapper}>
-                    <img src={plugin.info.logos.small} alt={`logo of ${plugin.name}`} />
-                  </div>
-                )}
-                <h4 className={styles.label}>{plugin.name}</h4>
-              </div>
-            </Card.Heading>
-          </Card>
-        ))}
-      </ul>
-      {plugins.length < 1 && <p className={styles.noResults}>No results matching your query were found. </p>}
-    </>
+    <ul className={styles.sourcesList}>
+      {plugins.map((plugin) => (
+        <Card key={plugin.id} className={styles.card} href={`plugins/${plugin.id}`}>
+          <Card.Heading>
+            <div className={styles.cardContent}>
+              {plugin.info.logos.small && (
+                <div className={styles.logoWrapper}>
+                  <img src={plugin.info.logos.small} alt={`logo of ${plugin.name}`} />
+                </div>
+              )}
+              <h4 className={styles.label}>{plugin.name}</h4>
+            </div>
+          </Card.Heading>
+        </Card>
+      ))}
+    </ul>
   );
 };
