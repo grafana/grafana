@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
-import { useResizeObserver } from '@react-aria/utils';
-import { debounce, inRange } from 'lodash';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { inRange } from 'lodash';
+import React, { useEffect, useRef, useState } from 'react';
 
 import { locationService } from '@grafana/runtime';
 import { ErrorBoundaryAlert } from '@grafana/ui';
@@ -36,7 +35,6 @@ function Wrapper(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
   useExplorePageTitle();
   const { maxedExploreId, evenSplitPanes } = useSelector((state) => state.explore);
   const [rightPaneWidth, setRightPaneWidth] = useState<number>();
-  const [prevWindowWidth, setWindowWidth] = useState<number>();
   const dispatch = useDispatch();
   const containerRef = useRef<HTMLDivElement>(null);
   const queryParams = props.queryParams;
@@ -78,36 +76,6 @@ function Wrapper(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- dispatch is stable, doesn't need to be in the deps array
   }, []);
 
-  const debouncedFunctionRef = useRef((prevWindowWidth?: number, rightPaneWidth?: number) => {
-    let rightPaneRatio = 0.5;
-    if (!containerRef.current) {
-      return;
-    }
-    const windowWidth = containerRef.current.clientWidth;
-    // get the ratio of the previous rightPane to the window width
-    if (rightPaneWidth && prevWindowWidth) {
-      rightPaneRatio = rightPaneWidth / prevWindowWidth;
-    }
-    let newRightPaneWidth = Math.floor(windowWidth * rightPaneRatio);
-    if (newRightPaneWidth < MIN_PANE_WIDTH) {
-      // if right pane is too narrow, make min width
-      newRightPaneWidth = MIN_PANE_WIDTH;
-    } else if (windowWidth - newRightPaneWidth < MIN_PANE_WIDTH) {
-      // if left pane is too narrow, make right pane = window - minWidth
-      newRightPaneWidth = windowWidth - MIN_PANE_WIDTH;
-    }
-
-    setRightPaneWidth(newRightPaneWidth);
-    setWindowWidth(windowWidth);
-  });
-
-  // eslint needs the callback to be inline to analyze the dependencies, but we need to use debounce from lodash
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const onResize = useCallback(
-    debounce(() => debouncedFunctionRef.current(prevWindowWidth, rightPaneWidth), 500),
-    [prevWindowWidth, rightPaneWidth]
-  );
-
   const updateSplitSize = (rightPaneWidth: number) => {
     const evenSplitWidth = window.innerWidth / 2;
     const areBothSimilar = inRange(rightPaneWidth, evenSplitWidth - 100, evenSplitWidth + 100);
@@ -124,7 +92,6 @@ function Wrapper(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
     setRightPaneWidth(rightPaneWidth);
   };
 
-  useResizeObserver({ onResize, ref: containerRef });
   const hasSplit = Boolean(queryParams.left) && Boolean(queryParams.right);
   let widthCalc = 0;
 
