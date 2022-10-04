@@ -2,7 +2,6 @@ package interceptors
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
@@ -106,13 +105,21 @@ func (a *authenticator) getSignedInUser(ctx context.Context, token string) (*use
 		return nil, err
 	}
 
+	if signedInUser == nil {
+		return nil, status.Error(codes.Unauthenticated, "service account not found")
+	}
+
 	if !signedInUser.HasRole(org.RoleAdmin) {
-		return nil, fmt.Errorf("api key does not have admin role")
+		return nil, status.Error(codes.PermissionDenied, "service account does not have admin role")
 	}
 
 	// disabled service accounts are not allowed to access the API
 	if signedInUser.IsDisabled {
-		return nil, fmt.Errorf("service account is disabled")
+		return nil, status.Error(codes.PermissionDenied, "service account is disabled")
+	}
+
+	if signedInUser.Permissions == nil {
+		signedInUser.Permissions = make(map[int64]map[string][]string)
 	}
 
 	if signedInUser.Permissions[signedInUser.OrgID] == nil {
