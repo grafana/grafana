@@ -10,7 +10,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -127,21 +126,6 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, query.Result.Email, "ac1@test.com")
 				require.Equal(t, query.Result.Login, "ac1")
-			})
-
-			t.Run("Can search users", func(t *testing.T) {
-				query := models.SearchUsersQuery{Query: "", SignedInUser: &user.SignedInUser{
-					OrgID: 1,
-					Permissions: map[int64]map[string][]string{
-						1: {accesscontrol.ActionUsersRead: {accesscontrol.ScopeGlobalUsersAll}},
-					},
-				}}
-				err := sqlStore.SearchUsers(context.Background(), &query)
-
-				require.NoError(t, err)
-				require.Len(t, query.Result.Users, 2)
-				require.Equal(t, query.Result.Users[0].Email, "ac1@test.com")
-				require.Equal(t, query.Result.Users[1].Email, "ac2@test.com")
 			})
 
 			t.Run("Given an added org user", func(t *testing.T) {
