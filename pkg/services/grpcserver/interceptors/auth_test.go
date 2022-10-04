@@ -1,4 +1,4 @@
-package grpcserver
+package interceptors
 
 import (
 	"context"
@@ -22,10 +22,10 @@ func TestAuthenticator_Authenticate(t *testing.T) {
 			Name:             "Admin API Key",
 			ServiceAccountId: &serviceAccountId,
 		}, nil)
-		a := newAuthenticator(s, &fakeUserService{OrgRole: org.RoleAdmin})
+		a := NewAuthenticator(s, &fakeUserService{OrgRole: org.RoleAdmin})
 		ctx, err := setupContext()
 		require.NoError(t, err)
-		_, err = a.authenticate(ctx)
+		_, err = a.Authenticate(ctx)
 		require.NoError(t, err)
 	})
 
@@ -37,10 +37,10 @@ func TestAuthenticator_Authenticate(t *testing.T) {
 			Name:             "Admin API Key",
 			ServiceAccountId: &serviceAccountId,
 		}, nil)
-		a := newAuthenticator(s, &fakeUserService{OrgRole: org.RoleEditor})
+		a := NewAuthenticator(s, &fakeUserService{OrgRole: org.RoleEditor})
 		ctx, err := setupContext()
 		require.NoError(t, err)
-		_, err = a.authenticate(ctx)
+		_, err = a.Authenticate(ctx)
 		require.NotNil(t, err)
 	})
 
@@ -52,13 +52,13 @@ func TestAuthenticator_Authenticate(t *testing.T) {
 			Name:             "Admin API Key",
 			ServiceAccountId: &serviceAccountId,
 		}, nil)
-		a := newAuthenticator(s, &fakeUserService{OrgRole: org.RoleAdmin})
+		a := NewAuthenticator(s, &fakeUserService{OrgRole: org.RoleAdmin})
 		ctx, err := setupContext()
 		require.NoError(t, err)
 		md, ok := metadata.FromIncomingContext(ctx)
 		require.True(t, ok)
 		require.NotEmpty(t, md["authorization"])
-		ctx, err = a.authenticate(ctx)
+		ctx, err = a.Authenticate(ctx)
 		require.NoError(t, err)
 		md, ok = metadata.FromIncomingContext(ctx)
 		require.True(t, ok)
