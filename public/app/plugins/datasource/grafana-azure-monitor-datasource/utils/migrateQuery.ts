@@ -136,8 +136,9 @@ function migrateDimensionFilterToArray(query: AzureMonitorQuery): AzureMonitorQu
 }
 
 function migrateDimensionToResourceObj(query: AzureMonitorQuery): AzureMonitorQuery {
-  if (query.azureMonitor?.resourceUri) {
+  if (query.azureMonitor?.resourceUri && !query.azureMonitor.resourceUri.startsWith('$')) {
     const details = parseResourceDetails(query.azureMonitor.resourceUri);
+    const isWellFormedUri = details?.subscription && details?.resourceGroup && details?.resourceName;
     return {
       ...query,
       subscription: details?.subscription,
@@ -146,10 +147,7 @@ function migrateDimensionToResourceObj(query: AzureMonitorQuery): AzureMonitorQu
         resourceGroup: details?.resourceGroup,
         metricNamespace: details?.metricNamespace,
         resourceName: details?.resourceName,
-        resourceUri:
-          details?.subscription && details?.resourceGroup && details?.resourceName
-            ? undefined
-            : query.azureMonitor.resourceUri,
+        resourceUri: isWellFormedUri ? undefined : query.azureMonitor.resourceUri,
       },
     };
   }
