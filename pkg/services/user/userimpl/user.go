@@ -3,20 +3,26 @@ package userimpl
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/models"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
+	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 type Service struct {
-	store      store
-	orgService org.Service
+	store        store
+	orgService   org.Service
+	teamService  team.Service
+	cacheService *localcache.CacheService
 	// TODO remove sqlstore
 	sqlStore *sqlstore.SQLStore
 	cfg      *setting.Cfg
@@ -27,13 +33,17 @@ func ProvideService(
 	orgService org.Service,
 	cfg *setting.Cfg,
 	ss *sqlstore.SQLStore,
+	teamService team.Service,
+	cacheService *localcache.CacheService,
 ) user.Service {
 	store := ProvideStore(db, cfg)
 	return &Service{
-		store:      &store,
-		orgService: orgService,
-		cfg:        cfg,
-		sqlStore:   ss,
+		store:        &store,
+		orgService:   orgService,
+		cfg:          cfg,
+		sqlStore:     ss,
+		teamService:  teamService,
+		cacheService: cacheService,
 	}
 }
 
@@ -172,40 +182,81 @@ func (s *Service) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLast
 	return s.store.UpdateLastSeenAt(ctx, cmd)
 }
 
-// TODO: remove wrapper around sqlstore
 func (s *Service) SetUsingOrg(ctx context.Context, cmd *user.SetUsingOrgCommand) error {
-	q := &models.SetUsingOrgCommand{
-		UserId: cmd.UserID,
-		OrgId:  cmd.OrgID,
+	getOrgsForUserCmd := &org.GetUserOrgListQuery{UserID: cmd.UserID}
+	orgsForUser, err := s.orgService.GetUserOrgList(ctx, getOrgsForUserCmd)
+	if err != nil {
+		return err
 	}
-	return s.sqlStore.SetUsingOrg(ctx, q)
+
+	valid := false
+	for _, other := range orgsForUser {
+		if other.OrgID == cmd.OrgID {
+			valid = true
+		}
+	}
+	if !valid {
+		return fmt.Errorf("user does not belong to org")
+	}
+	return s.store.UpdateUser(ctx, &user.User{
+		ID:    cmd.UserID,
+		OrgID: cmd.OrgID,
+	})
 }
 
-// TODO: remove wrapper around sqlstore
 func (s *Service) GetSignedInUserWithCacheCtx(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
-	q := &models.GetSignedInUserQuery{
-		UserId: query.UserID,
-		Login:  query.Login,
-		Email:  query.Email,
-		OrgId:  query.OrgID,
+	var signedInUser *user.SignedInUser
+	cacheKey := newSignedInUserCacheKey(query.OrgID, query.UserID)
+	if cached, found := s.cacheService.Get(cacheKey); found {
+		cachedUser := cached.(user.SignedInUser)
+		signedInUser = &cachedUser
+		return signedInUser, nil
 	}
-	err := s.sqlStore.GetSignedInUserWithCacheCtx(ctx, q)
+
+	result, err := s.GetSignedInUser(ctx, query)
 	if err != nil {
 		return nil, err
 	}
-	return q.Result, nil
+
+	cacheKey = newSignedInUserCacheKey(result.OrgID, query.UserID)
+	s.cacheService.Set(cacheKey, *result, time.Second*5)
+	return result, nil
 }
 
-// TODO: remove wrapper around sqlstore
+func newSignedInUserCacheKey(orgID, userID int64) string {
+	return fmt.Sprintf("signed-in-user-%d-%d", userID, orgID)
+}
+
 func (s *Service) GetSignedInUser(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
-	q := &models.GetSignedInUserQuery{
-		UserId: query.UserID,
-		Login:  query.Login,
-		Email:  query.Email,
-		OrgId:  query.OrgID,
+	signedInUser, err := s.store.GetSignedInUser(ctx, query)
+	if err != nil {
+		return nil, err
 	}
-	err := s.sqlStore.GetSignedInUser(ctx, q)
-	return q.Result, err
+
+	// tempUser is used to retrieve the teams for the signed in user for internal use.
+	tempUser := &user.SignedInUser{
+		OrgID: signedInUser.OrgID,
+		Permissions: map[int64]map[string][]string{
+			signedInUser.OrgID: {
+				ac.ActionTeamsRead: {ac.ScopeTeamsAll},
+			},
+		},
+	}
+	getTeamsByUserQuery := &models.GetTeamsByUserQuery{
+		OrgId:        signedInUser.OrgID,
+		UserId:       signedInUser.UserID,
+		SignedInUser: tempUser,
+	}
+	err = s.teamService.GetTeamsByUser(ctx, getTeamsByUserQuery)
+	if err != nil {
+		return nil, err
+	}
+
+	signedInUser.Teams = make([]int64, len(getTeamsByUserQuery.Result))
+	for i, t := range getTeamsByUserQuery.Result {
+		signedInUser.Teams[i] = t.Id
+	}
+	return signedInUser, err
 }
 
 // TODO: remove wrapper around sqlstore
