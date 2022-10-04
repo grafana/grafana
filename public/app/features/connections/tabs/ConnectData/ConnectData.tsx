@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
-import { useStyles2 } from '@grafana/ui';
+import { LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { useGetAllWithFilters } from 'app/features/plugins/admin/state/hooks';
 
 import { CardGrid } from './CardGrid';
@@ -31,7 +31,7 @@ export function ConnectData() {
       {/* We need this extra spacing when there are no filters */}
       <div className={styles.spacer} />
       {isLoading ? (
-        <div>Loading...</div>
+        <LoadingPlaceholder text="Loading..." />
       ) : !!error ? (
         <div>Error: {error.message}</div>
       ) : (
