@@ -383,7 +383,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *models.ReqContext, hasEditPerm b
 				Text:        "Public dashboards",
 				Description: "Anonymous viewing of dashboards",
 				Id:          "dashboards/public",
-				Url:         s.cfg.AppSubURL + "/dashboards/public",
+				Url:         s.cfg.AppSubURL + "/dashboard/public",
 				Icon:        "library-panel",
 			})
 		}
