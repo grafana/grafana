@@ -47,6 +47,7 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
 
   const list: QueryBuilderOperationDef[] = [
     createRangeOperation(LokiOperationId.Rate),
+    createRangeOperation(LokiOperationId.RateCounter),
     createRangeOperation(LokiOperationId.CountOverTime),
     createRangeOperation(LokiOperationId.SumOverTime),
     createRangeOperation(LokiOperationId.BytesRate),

@@ -13,6 +13,10 @@ type FakeService struct {
 	ExpectedError       error
 }
 
+func NewFakeService() *FakeService {
+	return &FakeService{}
+}
+
 func (s *FakeService) CreateTeam(name, email string, orgID int64) (models.Team, error) {
 	return s.ExpectedTeam, s.ExpectedError
 }

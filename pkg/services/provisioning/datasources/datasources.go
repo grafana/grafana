@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 
+	jsoniter "github.com/json-iterator/go"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -134,20 +136,44 @@ func (dc *DatasourceProvisioner) applyChanges(ctx context.Context, configPath st
 	return nil
 }
 
-func makeCreateCorrelationCommand(correlation map[string]interface{}, SourceUid string, OrgId int64) (correlations.CreateCorrelationCommand, error) {
-	targetUID, ok := correlation["targetUID"].(string)
-	if !ok {
-		return correlations.CreateCorrelationCommand{}, fmt.Errorf("correlation missing targetUID")
-	}
-
-	return correlations.CreateCorrelationCommand{
-		SourceUID:         SourceUid,
-		TargetUID:         targetUID,
+func makeCreateCorrelationCommand(correlation map[string]interface{}, SourceUID string, OrgId int64) (correlations.CreateCorrelationCommand, error) {
+	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+	createCommand := correlations.CreateCorrelationCommand{
+		SourceUID:         SourceUID,
 		Label:             correlation["label"].(string),
 		Description:       correlation["description"].(string),
 		OrgId:             OrgId,
 		SkipReadOnlyCheck: true,
-	}, nil
+	}
+
+	targetUID, ok := correlation["targetUID"].(string)
+	if ok {
+		createCommand.TargetUID = &targetUID
+	}
+
+	if correlation["config"] != nil {
+		jsonbody, err := json.Marshal(correlation["config"])
+		if err != nil {
+			return correlations.CreateCorrelationCommand{}, err
+		}
+
+		config := correlations.CorrelationConfig{}
+		if err := json.Unmarshal(jsonbody, &config); err != nil {
+			return correlations.CreateCorrelationCommand{}, err
+		}
+
+		createCommand.Config = config
+	} else {
+		// when provisioning correlations without config we default to type="query"
+		createCommand.Config = correlations.CorrelationConfig{
+			Type: correlations.ConfigTypeQuery,
+		}
+	}
+	if err := createCommand.Validate(); err != nil {
+		return correlations.CreateCorrelationCommand{}, err
+	}
+
+	return createCommand, nil
 }
 
 func (dc *DatasourceProvisioner) deleteDatasources(ctx context.Context, dsToDelete []*deleteDatasourceConfig) error {

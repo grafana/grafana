@@ -85,7 +85,7 @@ export function NavBarItemMenu(props: NavBarItemMenuProps): ReactElement | null 
   const menu = [headerComponent, contentComponent];
 
   return (
-    <ul className={styles.menu} ref={ref} {...mergeProps(menuProps, contextMenuProps)} tabIndex={menuHasFocus ? 0 : -1}>
+    <ul className={styles.menu} ref={ref} {...mergeProps(menuProps, contextMenuProps)} tabIndex={-1}>
       {reverseMenuDirection ? menu.reverse() : menu}
     </ul>
   );

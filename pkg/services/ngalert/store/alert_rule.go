@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/guardian"
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
@@ -22,43 +21,10 @@ const AlertRuleMaxTitleLength = 190
 // AlertRuleMaxRuleGroupNameLength is the maximum length of the alert rule group name
 const AlertRuleMaxRuleGroupNameLength = 190
 
-type UpdateRuleGroupCmd struct {
-	OrgID           int64
-	NamespaceUID    string
-	RuleGroupConfig apimodels.PostableRuleGroupConfig
-}
-
-type UpdateRule struct {
-	Existing *ngmodels.AlertRule
-	New      ngmodels.AlertRule
-}
-
 var (
 	ErrAlertRuleGroupNotFound = errors.New("rulegroup not found")
 	ErrOptimisticLock         = errors.New("version conflict while updating a record in the database with optimistic locking")
 )
-
-// RuleStore is the interface for persisting alert rules and instances
-type RuleStore interface {
-	DeleteAlertRulesByUID(ctx context.Context, orgID int64, ruleUID ...string) error
-	DeleteAlertInstancesByRuleUID(ctx context.Context, orgID int64, ruleUID string) error
-	GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAlertRuleByUIDQuery) error
-	GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmodels.GetAlertRulesGroupByRuleUIDQuery) error
-	ListAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) error
-	// GetRuleGroups returns the unique rule groups across all organizations.
-	GetRuleGroups(ctx context.Context, query *ngmodels.ListRuleGroupsQuery) error
-	GetRuleGroupInterval(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string) (int64, error)
-	GetUserVisibleNamespaces(context.Context, int64, *user.SignedInUser) (map[string]*models.Folder, error)
-	GetNamespaceByTitle(context.Context, string, int64, *user.SignedInUser, bool) (*models.Folder, error)
-	GetNamespaceByUID(context.Context, string, int64, *user.SignedInUser) (*models.Folder, error)
-	// InsertAlertRules will insert all alert rules passed into the function
-	// and return the map of uuid to id.
-	InsertAlertRules(ctx context.Context, rule []ngmodels.AlertRule) (map[string]int64, error)
-	UpdateAlertRules(ctx context.Context, rule []UpdateRule) error
-
-	// IncreaseVersionForAllRulesInNamespace Increases version for all rules that have specified namespace. Returns all rules that belong to the namespace
-	IncreaseVersionForAllRulesInNamespace(ctx context.Context, orgID int64, namespaceUID string) ([]ngmodels.AlertRuleKeyWithVersion, error)
-}
 
 func getAlertRuleByUID(sess *sqlstore.DBSession, alertRuleUID string, orgID int64) (*ngmodels.AlertRule, error) {
 	// we consider optionally enabling some caching
@@ -110,17 +76,6 @@ func (st DBstore) IncreaseVersionForAllRulesInNamespace(ctx context.Context, org
 		return sess.Table(ngmodels.AlertRule{}).Where("namespace_uid = ? AND org_id = ?", namespaceUID, orgID).Find(&keys)
 	})
 	return keys, err
-}
-
-// DeleteAlertInstancesByRuleUID is a handler for deleting alert instances by alert rule UID when a rule has been updated
-func (st DBstore) DeleteAlertInstancesByRuleUID(ctx context.Context, orgID int64, ruleUID string) error {
-	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		_, err := sess.Exec("DELETE FROM alert_instance WHERE rule_org_id = ? AND rule_uid = ?", orgID, ruleUID)
-		if err != nil {
-			return err
-		}
-		return nil
-	})
 }
 
 // GetAlertRuleByUID is a handler for retrieving an alert rule from that database by its UID and organisation ID.
@@ -218,7 +173,7 @@ func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRu
 }
 
 // UpdateAlertRules is a handler for updating alert rules.
-func (st DBstore) UpdateAlertRules(ctx context.Context, rules []UpdateRule) error {
+func (st DBstore) UpdateAlertRules(ctx context.Context, rules []ngmodels.UpdateRule) error {
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		ruleVersions := make([]ngmodels.AlertRuleVersion, 0, len(rules))
 		for _, r := range rules {
@@ -309,17 +264,6 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 		}
 
 		query.Result = alertRules
-		return nil
-	})
-}
-
-func (st DBstore) GetRuleGroups(ctx context.Context, query *ngmodels.ListRuleGroupsQuery) error {
-	return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		ruleGroups := make([]string, 0)
-		if err := sess.Table("alert_rule").Distinct("rule_group").Find(&ruleGroups); err != nil {
-			return err
-		}
-		query.Result = ruleGroups
 		return nil
 	})
 }

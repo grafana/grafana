@@ -156,6 +156,10 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/alerting/", reqSignedIn, hs.Index)
 	r.Get("/alerting/*", reqSignedIn, hs.Index)
 	r.Get("/library-panels/", reqSignedIn, hs.Index)
+	r.Get("/monitoring/", reqSignedIn, hs.Index)
+	r.Get("/monitoring/*", reqSignedIn, hs.Index)
+	r.Get("/alerts-and-incidents", reqSignedIn, hs.Index)
+	r.Get("/alerts-and-incidents/*", reqSignedIn, hs.Index)
 
 	// sign up
 	r.Get("/verify", hs.Index)
@@ -257,7 +261,13 @@ func (hs *HTTPServer) registerRoutes() {
 		})
 
 		if hs.Features.IsEnabled(featuremgmt.FlagStorage) {
+			// Will eventually be replaced with the 'object' route
 			apiRoute.Group("/storage", hs.StorageService.RegisterHTTPRoutes)
+
+			// Allow HTTP access to the object storage feature (dev only for now)
+			if hs.Features.IsEnabled(featuremgmt.FlagGrpcServer) {
+				apiRoute.Group("/object", hs.httpObjectStore.RegisterHTTPRoutes)
+			}
 		}
 
 		if hs.Features.IsEnabled(featuremgmt.FlagPanelTitleSearch) {
