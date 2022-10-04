@@ -60,7 +60,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, r
 
 	for first || d.NextPageToken != "" {
 		requestBody := map[string]interface{}{
-			"query":    timeSeriesQuery.Query,
+			"query": timeSeriesQuery.Query,
 		}
 		if (d.NextPageToken != "") {
 			requestBody["pageToken"] = d.NextPageToken
@@ -105,7 +105,6 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, r
 			d.TimeSeriesData = append(d.TimeSeriesData, dnext.TimeSeriesData...)
 			d.NextPageToken = dnext.NextPageToken
 		}
-
 	}
 
 	return dr, d, timeSeriesQuery.Query, nil
