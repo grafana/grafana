@@ -28,6 +28,8 @@ Reporting enables you to automatically generate PDFs from any of your dashboards
 
 Any changes you make to a dashboard used in a report are reflected the next time the report is sent. For example, if you change the time range in the dashboard, then the time range in the report also changes.
 
+For information about recent improvements to the reporting UI, refer to [Grafana reporting: How we improved the UX in Grafana](https://grafana.com/blog/2022/06/29/grafana-reporting-how-we-improved-the-ux-in-grafana/).
+
 ## Requirements
 
 - SMTP must be configured for reports to be sent. Refer to [SMTP]({{< relref "../../setup-grafana/configure-grafana/#smtp" >}}) in [Configuration]({{< relref "../../setup-grafana/configure-grafana/" >}}) for more information.
