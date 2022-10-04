@@ -69,6 +69,7 @@ export interface FeatureToggles {
   objectStore?: boolean;
   traceqlEditor?: boolean;
   flameGraph?: boolean;
+  cloudwatchCrossAccountQuerying?: boolean;
   redshiftAsyncQueryDataSupport?: boolean;
   athenaAsyncQueryDataSupport?: boolean;
   increaseInMemDatabaseQueryCache?: boolean;

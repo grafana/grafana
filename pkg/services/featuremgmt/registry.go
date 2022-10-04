@@ -301,6 +301,12 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:         "cloudwatchCrossAccountQuerying",
+			Description:  "cloudwatchCrossAccountQuerying features",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
 			Name:         "redshiftAsyncQueryDataSupport",
 			Description:  "Enable async query data support for Redshift",
 			State:        FeatureStateAlpha,
