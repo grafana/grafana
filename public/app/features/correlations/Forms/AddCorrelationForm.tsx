@@ -56,7 +56,7 @@ export const AddCorrelationForm = ({ onClose, onCreated }: Props) => {
     }
   }, [error, loading, value, onCreated]);
 
-  const methods = useForm<FormDTO>();
+  const methods = useForm<FormDTO>({ defaultValues: { config: { type: 'query' } } });
 
   return (
     <PanelContainer className={styles.panelContainer}>

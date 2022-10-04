@@ -365,14 +365,14 @@ describe('CorrelationsPage', () => {
             targetUID: 'loki',
             uid: '1',
             label: 'Some label',
-            config: { field: 'line', target: {} },
+            config: { field: 'line', target: {}, type: 'query' },
           },
           {
             sourceUID: 'prometheus',
             targetUID: 'loki',
             uid: '2',
             label: 'Prometheus to Loki',
-            config: { field: 'label', target: {} },
+            config: { field: 'label', target: {}, type: 'query' },
           },
         ]
       );
@@ -486,8 +486,14 @@ describe('CorrelationsPage', () => {
   });
 
   describe('Read only correlations', () => {
-    const correlations = [
-      { sourceUID: 'loki', targetUID: 'loki', uid: '1', label: 'Some label', config: { field: 'line', target: {} } },
+    const correlations: Correlation[] = [
+      {
+        sourceUID: 'loki',
+        targetUID: 'loki',
+        uid: '1',
+        label: 'Some label',
+        config: { field: 'line', target: {}, type: 'query' },
+      },
     ];
 
     beforeEach(async () => {

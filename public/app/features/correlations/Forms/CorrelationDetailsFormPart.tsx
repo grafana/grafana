@@ -43,6 +43,8 @@ export function CorrelationDetailsFormPart({ readOnly = false, correlation }: Pr
 
   return (
     <>
+      <input type="hidden" {...register('config.type')} />
+
       <Field label="Label" className={styles.label}>
         <Input
           id={getInputId('label', correlation)}

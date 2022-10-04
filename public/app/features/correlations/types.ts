@@ -4,9 +4,11 @@ export interface AddCorrelationResponse {
 
 export type GetCorrelationsResponse = Correlation[];
 
+type CorrelationConfigType = 'query';
 export interface CorrelationConfig {
   field: string;
   target: object;
+  type: CorrelationConfigType;
 }
 
 export interface Correlation {
