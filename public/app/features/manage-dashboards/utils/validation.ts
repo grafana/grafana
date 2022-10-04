@@ -30,6 +30,18 @@ export const validateDashboardJson = (json: string) => {
   } catch (error) {
     return 'Not valid JSON';
   }
+  if (dashboard.tags) {
+    if (Array.isArray(dashboard.tags)) {
+      const hasInvalidTag = dashboard.tags.some((tag: string) => typeof tag !== 'string');
+      if (hasInvalidTag) {
+        return 'error: tags expected Array of Strings';
+      }
+    } else {
+      return 'error: tags expected Array';
+    }
+  }
+  
+  return true;
 };
 
 export const validateGcomDashboard = (gcomDashboard: string) => {
