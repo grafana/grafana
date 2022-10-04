@@ -164,7 +164,6 @@ const addAzureMonitorVariable = (
   }
   e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2().clear().type(name);
   getScenarioContext().then(({ lastAddedDataSource }: any) => {
-    e2e().log(lastAddedDataSource);
     e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect().type(
       `${lastAddedDataSource}{enter}`
     );
@@ -251,6 +250,52 @@ e2e.scenario({
             e2eSelectors.queryEditor.resourcePicker.advanced.resource.input().find('input').type('$resource');
             e2eSelectors.queryEditor.resourcePicker.apply.button().click();
             e2eSelectors.queryEditor.metricsQueryEditor.metricName.input().find('input').type('Transactions{enter}');
+          },
+        });
+      });
+  },
+});
+
+e2e.scenario({
+  describeName: 'Create dashboard with annotation',
+  itName: 'creates a dashboard that includes an annotation',
+  scenario: () => {
+    e2e()
+      .readFile(provisioningPath)
+      .then((azMonitorProvision: string) => {
+        const yaml = load(azMonitorProvision) as AzureMonitorProvision;
+        provisionAzureMonitorDatasources([yaml]);
+        e2e.flows.addDashboard({
+          timeRange: {
+            from: '2022-10-03 00:00:00',
+            to: '2022-10-03 23:59:59',
+            zone: 'Coordinated Universal Time',
+          },
+        });
+        getScenarioContext().then(({ lastAddedDataSource }: any) => {
+          e2e.components.PageToolbar.item('Dashboard settings').click();
+          e2e.components.Tab.title('Annotations').click();
+          e2e.pages.Dashboard.Settings.Annotations.List.addAnnotationCTAV2().click();
+          e2e.pages.Dashboard.Settings.Annotations.Settings.name().type('TestAnnotation');
+          e2e.components.DataSourcePicker.inputV2().click().type(`${lastAddedDataSource}{enter}`);
+          e2eSelectors.queryEditor.resourcePicker.select.button().click();
+          e2eSelectors.queryEditor.resourcePicker.search.input().type('azmonmetricstest');
+          e2e().contains('azmonmetricstest').click();
+          e2eSelectors.queryEditor.resourcePicker.apply.button().click();
+          e2e().contains('microsoft.storage/storageaccounts');
+          e2eSelectors.queryEditor.metricsQueryEditor.metricName.input().find('input').type('Transactions{enter}');
+          e2e().get('table').contains('text').parent().find('input').click().type('Transactions (number){enter}');
+          e2e.components.PageToolbar.item('Go Back').click();
+        });
+        e2e.flows.addPanel({
+          visitDashboardAtStart: false,
+          queriesForm: () => {
+            e2eSelectors.queryEditor.resourcePicker.select.button().click();
+            e2eSelectors.queryEditor.resourcePicker.search.input().type('azmonmetricstest');
+            e2e().contains('azmonmetricstest').click();
+            e2eSelectors.queryEditor.resourcePicker.apply.button().click();
+            e2e().contains('microsoft.storage/storageaccounts');
+            e2eSelectors.queryEditor.metricsQueryEditor.metricName.input().find('input').type('Used capacity{enter}');
           },
         });
       });
