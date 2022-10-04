@@ -143,7 +143,7 @@ func (hs *HTTPServer) registerRoutes() {
 	if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
 		r.Get("/public-dashboards/:accessToken",
 			publicdashboardsapi.SetPublicDashboardFlag,
-			publicdashboardsapi.SetPublicDashboardOrgIdOnContext,
+			publicdashboardsapi.SetPublicDashboardOrgIdOnContext(hs.PublicDashboardsApi.PublicDashboardService),
 			publicdashboardsapi.CountPublicDashboardRequest(),
 			hs.Index,
 		)
