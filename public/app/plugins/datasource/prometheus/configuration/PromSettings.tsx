@@ -200,7 +200,7 @@ export const PromSettings = (props: Props) => {
                   width={20}
                 />
               }
-              tooltip="Set this to the typical scrape and evaluation interval configured in Prometheus. Defaults to 15s."
+              tooltip="Set this to the flavor of your prometheus database, e.g. Prometheus, Cortex, Mimir or Thanos."
             />
           </div>
         </div>
@@ -221,7 +221,7 @@ export const PromSettings = (props: Props) => {
                     width={20}
                   />
                 }
-                tooltip={`Use this to set the version of your ${options.jsonData.prometheusFlavor} instance`}
+                tooltip={`Use this to set the version of your ${options.jsonData.prometheusFlavor} instance. Auto-detects on change of field above.`}
               />
             </div>
           )}
