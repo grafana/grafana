@@ -182,14 +182,14 @@ type BatchDisableUsersCommand struct {
 
 type SetUserHelpFlagCommand struct {
 	HelpFlags1 HelpFlags1
-	UserID     int64
+	UserID     int64 `xorm:"user_id"`
 }
 
 type GetSignedInUserQuery struct {
-	UserID int64
+	UserID int64 `xorm:"user_id"`
 	Login  string
 	Email  string
-	OrgID  int64
+	OrgID  int64 `xorm:"org_id"`
 }
 
 type SignedInUser struct {

@@ -148,7 +148,7 @@ func (ls *Implementation) UpsertUser(ctx context.Context, cmd *models.UpsertUser
 
 	// Sync isGrafanaAdmin permission
 	if extUser.IsGrafanaAdmin != nil && *extUser.IsGrafanaAdmin != cmd.Result.IsAdmin {
-		if errPerms := ls.userService.UpdatePermissions(cmd.Result.ID, *extUser.IsGrafanaAdmin); errPerms != nil {
+		if errPerms := ls.userService.UpdatePermissions(ctx, cmd.Result.ID, *extUser.IsGrafanaAdmin); errPerms != nil {
 			return errPerms
 		}
 	}
