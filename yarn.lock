@@ -22648,13 +22648,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"gesto@npm:^1.12.2, gesto@npm:^1.13.0":
+"gesto@npm:^1.12.2":
   version: 1.13.0
   resolution: "gesto@npm:1.13.0"
   dependencies:
     "@daybrush/utils": ^1.7.1
     "@scena/event-emitter": ^1.0.2
   checksum: 6042fffce17853e7d2c7df64ffa5a310e02a3be77171c58bb82aa83381e92e0c284750b34634a4c80cc30fc1dd446bbbb71110eafeb8307a07566f9792765cec
+  languageName: node
+  linkType: hard
+
+"gesto@npm:^1.13.1":
+  version: 1.13.3
+  resolution: "gesto@npm:1.13.3"
+  dependencies:
+    "@daybrush/utils": ^1.7.1
+    "@scena/event-emitter": ^1.0.2
+  checksum: 02a27cd829f9b231810e01e9df76805c8721642a95a22bb71a0013f2a8b9ee6a50d08f0cb21b7052e1afaf8206b45083bae4141123a8130a84de561591434547
   languageName: node
   linkType: hard
 
@@ -23404,7 +23414,7 @@ __metadata:
     rxjs: 7.5.6
     sass: 1.55.0
     sass-loader: 13.0.2
-    selecto: 1.19.1
+    selecto: 1.20.2
     semver: 7.3.7
     sinon: 14.0.0
     slate: 0.47.9
@@ -36129,9 +36139,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"selecto@npm:1.19.1":
-  version: 1.19.1
-  resolution: "selecto@npm:1.19.1"
+"selecto@npm:1.20.2":
+  version: 1.20.2
+  resolution: "selecto@npm:1.20.2"
   dependencies:
     "@daybrush/utils": ^1.7.1
     "@egjs/children-differ": ^1.0.1
@@ -36140,10 +36150,10 @@ __metadata:
     css-styled: ^1.0.0
     css-to-mat: ^1.0.3
     framework-utils: ^1.1.0
-    gesto: ^1.13.0
+    gesto: ^1.13.1
     keycon: ^1.2.0
     overlap-area: ^1.1.0
-  checksum: 7c4856dad77e7c3d24db6a18995b0cb34e68edc97b9ff4df52d11a79fe9d58a332f20631d3b7004b74e13be898bff20433c7fa9e5015aab73c6a7fb396eb9ae5
+  checksum: c0d9947ecf678c6fe38cb32d34b7a06db793a9cfa87f10261a963c6cb6c143e63d4f32777586ceae25344617944269d9ddcf8f68c716281c2539784bb4e18076
   languageName: node
   linkType: hard
 
