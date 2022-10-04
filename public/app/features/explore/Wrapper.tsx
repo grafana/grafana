@@ -50,8 +50,6 @@ function Wrapper(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
   }, [chrome, navModel]);
 
   useEffect(() => {
-    // FIXME: after cloasing the split view, changing time via keyboard causes an error (happens also on main)
-    // will create a separate issue for this.
     keybindings.setupTimeRangeBindings(false);
   }, [keybindings]);
 
