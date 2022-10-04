@@ -73,9 +73,9 @@ async function getFoldersAsOptions(
 
   // FIXME: stop using id from search and use UID instead
   const searchHits: DashboardSearchHit[] = await getBackendSrv().search(params);
-  const options = searchHits.map((d) => ({ label: d.title, value: { id: d.id, title: d.title } }));
+  const options = searchHits.map((d) => ({ label: d.title, value: { uid: d.uid, title: d.title } }));
   if (!searchString || 'general'.includes(searchString.toLowerCase())) {
-    options.unshift({ label: 'General', value: { id: 0, title: 'General' } });
+    options.unshift({ label: 'General', value: { uid: 'general', title: 'General' } });
   }
 
   setLoading(false);

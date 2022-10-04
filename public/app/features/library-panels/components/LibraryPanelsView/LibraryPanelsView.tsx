@@ -51,7 +51,7 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
           searchString,
           sortDirection,
           panelFilter,
-          folderFilter,
+          folderFilterUIDs: folderFilter,
           page,
           perPage,
           currentPanelId,

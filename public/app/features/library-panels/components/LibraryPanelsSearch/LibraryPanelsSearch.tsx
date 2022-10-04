@@ -155,7 +155,7 @@ const SearchControls = React.memo(
       [onPanelFilterChange]
     );
     const folderFilterChanged = useCallback(
-      (folders: FolderInfo[]) => onFolderFilterChange(folders.map((f) => String(f.id))),
+      (folders: FolderInfo[]) => onFolderFilterChange(folders.map((f) => f.uid ?? '')),
       [onFolderFilterChange]
     );
 

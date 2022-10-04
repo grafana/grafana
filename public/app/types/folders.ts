@@ -28,7 +28,11 @@ export interface FolderState {
 }
 
 export interface FolderInfo {
+  /**
+   * @deprecated use uid instead.
+   */
   id?: number;
+  uid?: string;
   title?: string;
   url?: string;
   canViewFolderPermissions?: boolean;
