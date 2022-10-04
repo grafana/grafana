@@ -68,4 +68,18 @@ describe('ArgQueryEditor', () => {
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ subscriptions: ['foo'] }));
     expect(onChange).not.toHaveBeenCalledWith(expect.objectContaining({ subscriptions: ['bar'] }));
   });
+
+  it('should keep a subset of subscriptions if the new list does not contain all the query subscriptions', async () => {
+    const onChange = jest.fn();
+    const datasource = createMockDatasource({
+      getSubscriptions: jest.fn().mockResolvedValue([{ value: 'foo' }, { value: 'bar' }]),
+    });
+    const query = createMockQuery({
+      subscriptions: ['foo', 'bar', 'foobar'],
+    });
+    render(<ArgQueryEditor {...defaultProps} datasource={datasource} onChange={onChange} query={query} />);
+    expect(await screen.findByTestId('azure-monitor-arg-query-editor-with-experimental-ui')).toBeInTheDocument();
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ subscriptions: ['foo', 'bar'] }));
+    expect(onChange).not.toHaveBeenCalledWith(expect.objectContaining({ subscriptions: ['foo', 'bar', 'foobar'] }));
+  });
 });

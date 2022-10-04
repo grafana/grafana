@@ -32,9 +32,11 @@ function selectSubscriptions(
   if (querySubscriptions.length === 0 && fetchedSubscriptions.length) {
     querySubscriptions = [fetchedSubscriptions[0]];
   }
-  if (fetchedSubscriptions.length && intersection(querySubscriptions, fetchedSubscriptions).length === 0) {
-    // If the current subscriptions are not in the fetched subscriptions, use the first one
-    querySubscriptions = [fetchedSubscriptions[0]];
+  const commonSubscriptions = intersection(querySubscriptions, fetchedSubscriptions);
+  if (fetchedSubscriptions.length && querySubscriptions.length > commonSubscriptions.length) {
+    // If not all of the query subscriptions are in the list of fetched subscriptions, then
+    // select only the ones present (or the first one if none is present)
+    querySubscriptions = commonSubscriptions.length > 0 ? commonSubscriptions : [fetchedSubscriptions[0]];
   }
   return querySubscriptions;
 }
