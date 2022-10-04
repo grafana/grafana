@@ -56,17 +56,14 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, r
 	timeFormat := "2006/01/02-15:04:05"
 	timeSeriesQuery.Query += fmt.Sprintf(" | within d'%s', d'%s'", from.UTC().Format(timeFormat), to.UTC().Format(timeFormat))
 	first := true
-	pageToken := ""
 	d := cloudMonitoringResponse{}
 
-	for first || pageToken != "" {
+	for first || d.NextPageToken != "" {
 		requestBody := map[string]interface{}{
 			"query":    timeSeriesQuery.Query,
-			//"pageSize": 1,
-			//"pageToken": "CIKopIu6uenQ5wESoAEqFmNsb3VkLW1vbml0b3JpbmcucXVlcnkyhQFqFwoHcHJvamVjdBoMNDE3OTY1NTE0MTMzahsKCGxvY2F0aW9uGg9ldXJvcGUtbm9ydGgxLWFqIgoLcmVzb3VyY2VfaWQaEzY2MzYzNzc3ODYyNTIzNDI5NTVyKQoVbWV0cmljOi9pbnN0YW5jZV9uYW1lGhBzdGFja2RyaXZlci10ZXN0",
 		}
-		if (pageToken != "") {
-			requestBody["pageToken"] = pageToken
+		if (d.NextPageToken != "") {
+			requestBody["pageToken"] = d.NextPageToken
 		}
 
 		buf, err := json.Marshal(requestBody)
@@ -103,12 +100,12 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, r
 
 		if(first) {
 			d = dnext
+			first = false
 		} else {
-			d.TimeSeries = append(d.TimeSeries, dnext.TimeSeries...)
+			d.TimeSeriesData = append(d.TimeSeriesData, dnext.TimeSeriesData...)
+			d.NextPageToken = dnext.NextPageToken
 		}
 
-		pageToken = dnext.NextPageToken[0:len(dnext.NextPageToken)-1]
-		first = false
 	}
 
 	return dr, d, timeSeriesQuery.Query, nil
