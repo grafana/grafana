@@ -8,6 +8,8 @@ import (
 	"io"
 	"math/rand"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -18,23 +20,61 @@ import (
 )
 
 // when memory-profiling this benchmark, these commands are recommended:
+// - go test -benchmem -run=^$ -benchtime 1x -memprofile memprofile.out -memprofilerate 1 -bench ^BenchmarkExemplarJson$ github.com/grafana/grafana/pkg/tsdb/prometheus/buffered
+// - go tool pprof -http=localhost:6061 memprofile.out
+func BenchmarkExemplarJson(b *testing.B) {
+	queryFileName := filepath.Join("../testdata", "exemplar.query.json")
+	query, err := loadStoredQuery(queryFileName)
+	require.NoError(b, err)
+
+	responseFileName := filepath.Join("../testdata", "exemplar.result.json")
+
+	// nolint:gosec
+	// We can ignore the gosec G304 warning since this is a test file
+	responseBytes, err := os.ReadFile(responseFileName)
+	require.NoError(b, err)
+
+	tCtx, err := setup(true)
+	require.NoError(b, err)
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		res := http.Response{
+			StatusCode: 200,
+			Body:       io.NopCloser(bytes.NewReader(responseBytes)),
+		}
+		tCtx.httpProvider.setResponse(&res)
+		_, err := tCtx.queryData.Execute(context.Background(), query)
+		require.NoError(b, err)
+	}
+}
+
+var resp *backend.QueryDataResponse
+
+// when memory-profiling this benchmark, these commands are recommended:
 // - go test -benchmem -run=^$ -benchtime 1x -memprofile memprofile.out -memprofilerate 1 -bench ^BenchmarkJson$ github.com/grafana/grafana/pkg/tsdb/prometheus
 // - go tool pprof -http=localhost:6061 memprofile.out
-func BenchmarkJson(b *testing.B) {
+func BenchmarkRangeJson(b *testing.B) {
+	var (
+		r   *backend.QueryDataResponse
+		err error
+	)
 	body, q := createJsonTestData(1642000000, 1, 300, 400)
 	tCtx, err := setup(true)
 	require.NoError(b, err)
 
 	b.ResetTimer()
+
 	for n := 0; n < b.N; n++ {
 		res := http.Response{
 			StatusCode: 200,
 			Body:       io.NopCloser(bytes.NewReader(body)),
 		}
 		tCtx.httpProvider.setResponse(&res)
-		_, err := tCtx.queryData.Execute(context.Background(), q)
+		r, err = tCtx.queryData.Execute(context.Background(), q)
 		require.NoError(b, err)
 	}
+
+	resp = r
 }
 
 const nanRate = 0.002
