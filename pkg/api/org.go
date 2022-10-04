@@ -62,7 +62,7 @@ func (hs *HTTPServer) GetOrgByID(c *models.ReqContext) response.Response {
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) GetOrgByName(c *models.ReqContext) response.Response {
-	org, err := hs.SQLStore.GetOrgByName(web.Params(c.Req)[":name"])
+	orga, err := hs.orgService.GetByName(c.Req.Context(), &org.GetOrgByNameQuery{Name: web.Params(c.Req)[":name"]})
 	if err != nil {
 		if errors.Is(err, models.ErrOrgNotFound) {
 			return response.Error(http.StatusNotFound, "Organization not found", err)
@@ -71,15 +71,15 @@ func (hs *HTTPServer) GetOrgByName(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusInternalServerError, "Failed to get organization", err)
 	}
 	result := models.OrgDetailsDTO{
-		Id:   org.Id,
-		Name: org.Name,
+		Id:   orga.ID,
+		Name: orga.Name,
 		Address: models.Address{
-			Address1: org.Address1,
-			Address2: org.Address2,
-			City:     org.City,
-			ZipCode:  org.ZipCode,
-			State:    org.State,
-			Country:  org.Country,
+			Address1: orga.Address1,
+			Address2: orga.Address2,
+			City:     orga.City,
+			ZipCode:  orga.ZipCode,
+			State:    orga.State,
+			Country:  orga.Country,
 		},
 	}
 
@@ -87,26 +87,27 @@ func (hs *HTTPServer) GetOrgByName(c *models.ReqContext) response.Response {
 }
 
 func (hs *HTTPServer) getOrgHelper(ctx context.Context, orgID int64) response.Response {
-	query := models.GetOrgByIdQuery{Id: orgID}
+	query := org.GetOrgByIdQuery{ID: orgID}
 
-	if err := hs.SQLStore.GetOrgById(ctx, &query); err != nil {
+	res, err := hs.orgService.GetByID(ctx, &query)
+	if err != nil {
 		if errors.Is(err, models.ErrOrgNotFound) {
 			return response.Error(http.StatusNotFound, "Organization not found", err)
 		}
 		return response.Error(http.StatusInternalServerError, "Failed to get organization", err)
 	}
 
-	org := query.Result
+	orga := res
 	result := models.OrgDetailsDTO{
-		Id:   org.Id,
-		Name: org.Name,
+		Id:   orga.ID,
+		Name: orga.Name,
 		Address: models.Address{
-			Address1: org.Address1,
-			Address2: org.Address2,
-			City:     org.City,
-			ZipCode:  org.ZipCode,
-			State:    org.State,
-			Country:  org.Country,
+			Address1: orga.Address1,
+			Address2: orga.Address2,
+			City:     orga.City,
+			ZipCode:  orga.ZipCode,
+			State:    orga.State,
+			Country:  orga.Country,
 		},
 	}
 
