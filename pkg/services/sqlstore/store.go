@@ -24,7 +24,6 @@ type Store interface {
 	GetOrgById(context.Context, *models.GetOrgByIdQuery) error
 	GetOrgByNameHandler(ctx context.Context, query *models.GetOrgByNameQuery) error
 	CreateUser(ctx context.Context, cmd user.CreateUserCommand) (*user.User, error)
-	SetUsingOrg(ctx context.Context, cmd *models.SetUsingOrgCommand) error
 	GetUserProfile(ctx context.Context, query *models.GetUserProfileQuery) error
 	GetUserOrgList(ctx context.Context, query *models.GetUserOrgListQuery) error
 	GetSignedInUser(ctx context.Context, query *models.GetSignedInUserQuery) error
