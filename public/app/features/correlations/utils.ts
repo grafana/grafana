@@ -47,16 +47,3 @@ const decorateDataFrameWithInternalDataLinks = (dataFrame: DataFrame, correlatio
     });
   });
 };
-
-export type CorrelationsByDataSourceUid = {
-  [uid: string]: CorrelationData[];
-};
-
-export const groupCorrelationsByDataSourceUid = (correlations: CorrelationData[]): CorrelationsByDataSourceUid => {
-  const correlationsByDataSourceUid: CorrelationsByDataSourceUid = {};
-  correlations.forEach((c) => {
-    correlationsByDataSourceUid[c.source.uid] = correlationsByDataSourceUid[c.source.uid] || [];
-    correlationsByDataSourceUid[c.source.uid].push(c);
-  });
-  return correlationsByDataSourceUid;
-};
