@@ -61,11 +61,6 @@ load(
     'drone_change_template',
 )
 
-load(
-    'scripts/drone/pipelines/publish_images.star',
-    'publish_image_pipelines',
-)
-
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
 def store_npm_packages_step():

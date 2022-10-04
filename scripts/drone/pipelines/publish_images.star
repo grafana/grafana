@@ -27,7 +27,8 @@ def publish_image_steps(edition, mode, docker_repo):
 
     return steps
 
-def publish_image_pipelines(mode):
+def publish_image_pipelines_public():
+    mode='public'
     trigger = {
         'event': ['promote'],
         'target': [mode],
@@ -35,5 +36,15 @@ def publish_image_pipelines(mode):
     return [pipeline(
         name='publish-docker-oss-{}'.format(mode), trigger=trigger, steps=publish_image_steps(edition='oss',  mode=mode, docker_repo='grafana'), edition=""
     ), pipeline(
+        name='publish-docker-enterprise-{}'.format(mode), trigger=trigger, steps=publish_image_steps(edition='enterprise',  mode=mode, docker_repo='grafana-enterprise'), edition=""
+    ),]
+
+def publish_image_pipelines_security():
+    mode='security'
+    trigger = {
+        'event': ['promote'],
+        'target': [mode],
+    }
+    return [pipeline(
         name='publish-docker-enterprise-{}'.format(mode), trigger=trigger, steps=publish_image_steps(edition='enterprise',  mode=mode, docker_repo='grafana-enterprise'), edition=""
     ),]
