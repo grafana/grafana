@@ -3,7 +3,6 @@ package manager
 import (
 	"context"
 	"encoding/json"
-	"net/http"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -13,7 +12,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel/trace"
 	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -57,8 +55,6 @@ func TestIntegrationPluginManager(t *testing.T) {
 	bundledPluginsPath, err := filepath.Abs("../../../plugins-bundled/internal")
 	require.NoError(t, err)
 
-	features := featuremgmt.WithFeatures()
-
 	// We use the raw config here as it forms the basis for the setting.Provider implementation
 	// The plugin manager also relies directly on the setting.Cfg struct to provide Grafana specific
 	// properties such as the loading paths
@@ -81,11 +77,8 @@ func TestIntegrationPluginManager(t *testing.T) {
 		Azure:              &azsettings.AzureSettings{},
 	}
 
-	tracer := &fakeTracer{}
-
-	license := &licensing.OSSLicensingService{
-		Cfg: cfg,
-	}
+	tracer := tracing.InitializeTracerForTest()
+	features := featuremgmt.WithFeatures()
 
 	hcp := httpclient.NewProvider()
 	am := azuremonitor.ProvideService(cfg, hcp, tracer)
@@ -102,14 +95,14 @@ func TestIntegrationPluginManager(t *testing.T) {
 	pg := postgres.ProvideService(cfg)
 	my := mysql.ProvideService(cfg, hcp)
 	ms := mssql.ProvideService(cfg)
-	sv2 := searchV2.ProvideService(cfg, sqlstore.InitTestDB(t), nil, nil, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(), nil, nil)
+	sv2 := searchV2.ProvideService(cfg, sqlstore.InitTestDB(t), nil, nil, tracer, features, nil, nil)
 	graf := grafanads.ProvideService(cfg, sv2, nil)
 
 	coreRegistry := coreplugin.ProvideCoreRegistry(am, cw, cm, es, grap, idb, lk, otsdb, pr, tmpo, td, pg, my, ms, graf)
 
 	pCfg := config.ProvideConfig(setting.ProvideProvider(cfg), cfg)
 	reg := registry.ProvideService()
-	l := loader.ProvideService(pCfg, license, signature.NewUnsignedAuthorizer(pCfg), reg, provider.ProvideService(coreRegistry))
+	l := loader.ProvideService(pCfg, &licensing.OSSLicensingService{Cfg: cfg}, signature.NewUnsignedAuthorizer(pCfg), reg, provider.ProvideService(coreRegistry))
 	ps, err := store.ProvideService(cfg, pCfg, reg, l)
 	require.NoError(t, err)
 
@@ -291,20 +284,4 @@ func verifyBackendProcesses(t *testing.T, ps []*plugins.Plugin) {
 			require.NotNil(t, pc)
 		}
 	}
-}
-
-type fakeTracer struct {
-	tracing.Tracer
-}
-
-func (ft *fakeTracer) Run(context.Context) error {
-	return nil
-}
-
-func (ft *fakeTracer) Start(ctx context.Context, _ string, _ ...trace.SpanStartOption) (context.Context, tracing.Span) {
-	return ctx, nil
-}
-
-func (ft *fakeTracer) Inject(context.Context, http.Header, tracing.Span) {
-
 }

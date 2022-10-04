@@ -26,7 +26,7 @@ import { getFiscalYearStartMonth, getTimeZone } from '../profile/state/selectors
 
 import Explore from './Explore';
 import { initializeExplore, refreshExplore } from './state/explorePane';
-import { lastSavedUrl, cleanupPaneAction, stateSave } from './state/main';
+import { lastSavedUrl, stateSave } from './state/main';
 import { importQueries } from './state/query';
 import { loadAndInitDatasource } from './state/utils';
 
@@ -178,7 +178,6 @@ function mapStateToProps(state: StoreState, props: OwnProps) {
 const mapDispatchToProps = {
   initializeExplore,
   refreshExplore,
-  cleanupPaneAction,
   importQueries,
   stateSave,
 };

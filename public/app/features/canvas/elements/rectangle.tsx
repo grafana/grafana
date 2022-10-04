@@ -7,39 +7,11 @@ import { config } from 'app/core/config';
 import { DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
-import { ColorDimensionConfig, TextDimensionConfig } from 'app/features/dimensions/types';
 
 import { CanvasElementItem, CanvasElementProps, defaultBgColor, defaultTextColor } from '../element';
+import { Align, TextConfig, TextData, VAlign } from '../types';
 
-export enum Align {
-  Left = 'left',
-  Center = 'center',
-  Right = 'right',
-}
-
-export enum VAlign {
-  Top = 'top',
-  Middle = 'middle',
-  Bottom = 'bottom',
-}
-
-export interface TextBoxData {
-  text?: string;
-  color?: string;
-  size?: number; // 0 or missing will "auto size"
-  align: Align;
-  valign: VAlign;
-}
-
-export interface TextBoxConfig {
-  text?: TextDimensionConfig;
-  color?: ColorDimensionConfig;
-  size?: number; // 0 or missing will "auto size"
-  align: Align;
-  valign: VAlign;
-}
-
-class TextBoxDisplay extends PureComponent<CanvasElementProps<TextBoxConfig, TextBoxData>> {
+class RectangleDisplay extends PureComponent<CanvasElementProps<TextConfig, TextData>> {
   render() {
     const { data } = this.props;
     const styles = getStyles(config.theme2, data);
@@ -65,12 +37,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, data) => ({
     color: ${data?.color};
   `,
 }));
-export const textBoxItem: CanvasElementItem<TextBoxConfig, TextBoxData> = {
-  id: 'text-box',
-  name: 'Text',
-  description: 'Text box',
+export const rectangleItem: CanvasElementItem<TextConfig, TextData> = {
+  id: 'rectangle',
+  name: 'Rectangle',
+  description: 'Rectangle',
 
-  display: TextBoxDisplay,
+  display: RectangleDisplay,
 
   defaultSize: {
     width: 240,
@@ -94,8 +66,8 @@ export const textBoxItem: CanvasElementItem<TextBoxConfig, TextBoxData> = {
   }),
 
   // Called when data changes
-  prepareData: (ctx: DimensionContext, cfg: TextBoxConfig) => {
-    const data: TextBoxData = {
+  prepareData: (ctx: DimensionContext, cfg: TextConfig) => {
+    const data: TextData = {
       text: cfg.text ? ctx.getText(cfg.text).value() : '',
       align: cfg.align ?? Align.Center,
       valign: cfg.valign ?? VAlign.Middle,
@@ -111,7 +83,7 @@ export const textBoxItem: CanvasElementItem<TextBoxConfig, TextBoxData> = {
 
   // Heatmap overlay options
   registerOptionsUI: (builder) => {
-    const category = ['Text box'];
+    const category = ['Rectangle'];
     builder
       .addCustomEditor({
         category,

@@ -41,7 +41,9 @@ export class Registry<T extends RegistryItem> {
   private byId = new Map<string, T>();
   private initialized = false;
 
-  constructor(private init?: () => T[]) {}
+  constructor(private init?: () => T[]) {
+    this.init = init;
+  }
 
   setInit = (init: () => T[]) => {
     if (this.initialized) {

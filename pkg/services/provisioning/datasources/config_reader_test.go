@@ -271,7 +271,8 @@ func TestDatasourceAsConfig(t *testing.T) {
 		t.Run("Deleting datasource deletes existing correlations", func(t *testing.T) {
 			store := &spyStore{items: []*datasources.DataSource{{Name: "old-data-source", OrgId: 1, Id: 1, Uid: "some-uid"}}}
 			orgStore := &mockOrgStore{}
-			correlationsStore := &mockCorrelationsStore{items: []correlations.Correlation{{UID: "some-uid", SourceUID: "some-uid", TargetUID: "target-uid"}}}
+			targetUid := "target-uid"
+			correlationsStore := &mockCorrelationsStore{items: []correlations.Correlation{{UID: "some-uid", SourceUID: "some-uid", TargetUID: &targetUid}}}
 			dc := newDatasourceProvisioner(logger, store, correlationsStore, orgStore)
 			err := dc.applyChanges(context.Background(), deleteOneDatasource)
 			if err != nil {

@@ -184,7 +184,7 @@ const DataSourceCell = memo(
 
     return (
       <span className={styles.root}>
-        <img src={value.meta.info.logos.small} className={styles.dsLogo} />
+        <img src={value.meta.info.logos.small} alt="" className={styles.dsLogo} />
         {value.name}
       </span>
     );

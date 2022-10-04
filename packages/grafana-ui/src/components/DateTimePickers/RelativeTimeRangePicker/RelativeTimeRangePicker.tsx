@@ -63,7 +63,7 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
   };
 
   const onOpen = useCallback(
-    (event: FormEvent<HTMLDivElement>) => {
+    (event: FormEvent<HTMLButtonElement>) => {
       event.stopPropagation();
       event.preventDefault();
       setIsOpen(!isOpen);
@@ -94,7 +94,7 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
 
   return (
     <div className={styles.container}>
-      <div tabIndex={0} className={styles.pickerInput} onClick={onOpen}>
+      <button className={styles.pickerInput} onClick={onOpen}>
         <span className={styles.clockIcon}>
           <Icon name="clock-nine" />
         </span>
@@ -104,7 +104,7 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
         <span className={styles.caretIcon}>
           <Icon name={isOpen ? 'angle-up' : 'angle-down'} size="lg" />
         </span>
-      </div>
+      </button>
       {isOpen && (
         <ClickOutsideWrapper includeButtonPress={false} onClick={onClose}>
           <div className={styles.content}>

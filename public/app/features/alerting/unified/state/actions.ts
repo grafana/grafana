@@ -1,7 +1,7 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { isEmpty } from 'lodash';
 
-import { locationService } from '@grafana/runtime';
+import { locationService, logInfo } from '@grafana/runtime';
 import {
   AlertmanagerAlert,
   AlertManagerCortexConfig,
@@ -32,6 +32,7 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { backendSrv } from '../../../../core/services/backend_srv';
+import { LogMessages } from '../Analytics';
 import {
   addAlertManagers,
   createOrUpdateSilence,
@@ -422,6 +423,9 @@ export const saveRuleFormAction = createAsyncThunk(
           } else {
             throw new Error('Unexpected rule form type');
           }
+
+          logInfo(LogMessages.successSavingAlertRule);
+
           if (redirectOnSave) {
             locationService.push(redirectOnSave);
           } else {

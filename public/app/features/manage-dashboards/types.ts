@@ -11,3 +11,9 @@ export interface Snapshot {
   url?: string;
   userId: number;
 }
+
+export type DeleteDashboardResponse = {
+  id: number;
+  message: string;
+  title: string;
+};
