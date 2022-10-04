@@ -249,6 +249,13 @@ func TestObjectServer(t *testing.T) {
 		require.NoError(t, err)
 		require.NotEqual(t, writeResp1.Object.Version, writeResp2.Object.Version)
 
+		// Duplicate write (no change)
+		writeDupRsp, err := testCtx.client.Write(ctx, writeReq2)
+		require.NoError(t, err)
+		require.NotNil(t, writeDupRsp.Error)
+		require.Equal(t, writeResp2.Object.Version, writeDupRsp.Object.Version)
+		require.Equal(t, writeResp2.Object.ETag, writeDupRsp.Object.ETag)
+
 		body3 := []byte("{\"name\":\"John3\"}")
 		writeReq3 := &object.WriteObjectRequest{
 			UID:     uid,
@@ -307,9 +314,9 @@ func TestObjectServer(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Equal(t, []*object.ObjectVersionInfo{
-			writeResp1.Object,
-			writeResp2.Object,
 			writeResp3.Object,
+			writeResp2.Object,
+			writeResp1.Object,
 		}, history.Versions)
 
 		deleteResp, err := testCtx.client.Delete(ctx, &object.DeleteObjectRequest{

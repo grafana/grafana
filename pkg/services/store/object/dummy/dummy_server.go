@@ -86,11 +86,14 @@ func (i dummyObjectServer) findObject(ctx context.Context, uid string, kind stri
 	for _, objVersion := range obj.History {
 		if objVersion.Version == version {
 			copy := &object.RawObject{
-				UID:       obj.UID,
-				Kind:      obj.Kind,
-				Created:   objVersion.Created,
-				CreatedBy: objVersion.CreatedBy,
-				ETag:      objVersion.ETag,
+				UID:        obj.UID,
+				Kind:       obj.Kind,
+				Created:    obj.Created,
+				CreatedBy:  obj.CreatedBy,
+				Modified:   objVersion.Created,   // Version creation is raw modification
+				ModifiedBy: objVersion.CreatedBy, // Version creation is raw modification
+				ETag:       objVersion.ETag,
+				Version:    objVersion.Version,
 
 				// Not in the history object
 				Body: objVersion.Body,
@@ -176,15 +179,6 @@ func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequ
 			Version: fmt.Sprintf("%d", prevVersion+1),
 		}
 
-		// When saving, it must be differnet than the head version
-		if i.ETag == updated.ETag {
-			rsp.Error = &object.ObjectErrorInfo{
-				Code:    304,
-				Message: "Object not changed",
-			}
-			return false, nil, nil
-		}
-
 		versionInfo := &ObjectVersionWithBody{
 			Body: r.Body,
 			ObjectVersionInfo: &object.ObjectVersionInfo{
@@ -197,6 +191,16 @@ func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequ
 			},
 		}
 		rsp.Object = versionInfo.ObjectVersionInfo
+
+		// When saving, it must be differnet than the head version
+		if i.ETag == updated.ETag {
+			versionInfo.ObjectVersionInfo.Version = i.Version
+			rsp.Error = &object.ObjectErrorInfo{
+				Code:    304,
+				Message: "Object not changed",
+			}
+			return false, nil, nil
+		}
 
 		return true, &RawObjectWithHistory{
 			RawObject: updated,
