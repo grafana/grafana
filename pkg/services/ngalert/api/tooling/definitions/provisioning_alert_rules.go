@@ -191,20 +191,19 @@ type AlertRuleGroup struct {
 }
 
 func (a *AlertRuleGroup) ToModel() (models.AlertRuleGroup, error) {
-	rules := make([]models.AlertRule, 0, len(a.Rules))
+	ruleGroup := models.AlertRuleGroup{
+		Title:     a.Title,
+		FolderUID: a.FolderUID,
+		Interval:  a.Interval,
+	}
 	for i := range a.Rules {
 		converted, err := a.Rules[i].UpstreamModel()
 		if err != nil {
 			return models.AlertRuleGroup{}, err
 		}
-		rules = append(rules, converted)
+		ruleGroup.Rules = append(ruleGroup.Rules, converted)
 	}
-	return models.AlertRuleGroup{
-		Title:     a.Title,
-		FolderUID: a.FolderUID,
-		Interval:  a.Interval,
-		Rules:     rules,
-	}, nil
+	return ruleGroup, nil
 }
 
 func NewAlertRuleGroupFromModel(d models.AlertRuleGroup) AlertRuleGroup {
