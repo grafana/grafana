@@ -419,61 +419,6 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			}
 		})
 	})
-
-	t.Run("Testing DB - grafana admin users", func(t *testing.T) {
-		ss = InitTestDB(t)
-
-		createUserCmd := user.CreateUserCommand{
-			Email:   fmt.Sprint("admin", "@test.com"),
-			Name:    "admin",
-			Login:   "admin",
-			IsAdmin: true,
-		}
-		usr, err := ss.CreateUser(context.Background(), createUserCmd)
-		require.Nil(t, err)
-
-		// Cannot make themselves a non-admin
-		updatePermsError := ss.UpdateUserPermissions(usr.ID, false)
-
-		require.Equal(t, updatePermsError, user.ErrLastGrafanaAdmin)
-
-		query := models.GetUserByIdQuery{Id: usr.ID}
-		getUserError := ss.GetUserById(context.Background(), &query)
-		require.Nil(t, getUserError)
-
-		require.True(t, query.Result.IsAdmin)
-
-		// One user
-		const email = "user@test.com"
-		const username = "user"
-		createUserCmd = user.CreateUserCommand{
-			Email: email,
-			Name:  "user",
-			Login: username,
-		}
-		_, err = ss.CreateUser(context.Background(), createUserCmd)
-		require.Nil(t, err)
-
-		// When trying to create a new user with the same email, an error is returned
-		createUserCmd = user.CreateUserCommand{
-			Email:        email,
-			Name:         "user2",
-			Login:        "user2",
-			SkipOrgSetup: true,
-		}
-		_, err = ss.CreateUser(context.Background(), createUserCmd)
-		require.Equal(t, err, user.ErrUserAlreadyExists)
-
-		// When trying to create a new user with the same login, an error is returned
-		createUserCmd = user.CreateUserCommand{
-			Email:        "user2@test.com",
-			Name:         "user2",
-			Login:        username,
-			SkipOrgSetup: true,
-		}
-		_, err = ss.CreateUser(context.Background(), createUserCmd)
-		require.Equal(t, err, user.ErrUserAlreadyExists)
-	})
 }
 
 func (ss *SQLStore) GetOrgUsersForTest(ctx context.Context, query *models.GetOrgUsersQuery) error {
