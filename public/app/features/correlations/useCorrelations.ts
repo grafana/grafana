@@ -2,7 +2,7 @@ import { useAsyncFn } from 'react-use';
 import { lastValueFrom } from 'rxjs';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
-import { getDataSourceSrv, FetchResponse, getBackendSrv } from '@grafana/runtime';
+import { getDataSourceSrv, FetchResponse } from '@grafana/runtime';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
 import { Correlation, CreateCorrelationParams, RemoveCorrelationParams, UpdateCorrelationParams } from './types';
@@ -12,7 +12,7 @@ export interface CorrelationData extends Omit<Correlation, 'sourceUID' | 'target
   target: DataSourceInstanceSettings;
 }
 
-export const toEnrichedCorrelationData = ({ sourceUID, targetUID, ...correlation }: Correlation): CorrelationData => ({
+const toEnrichedCorrelationData = ({ sourceUID, targetUID, ...correlation }: Correlation): CorrelationData => ({
   ...correlation,
   source: getDataSourceSrv().getInstanceSettings(sourceUID)!,
   target: getDataSourceSrv().getInstanceSettings(targetUID)!,
@@ -24,17 +24,6 @@ function getData<T>(response: FetchResponse<T>) {
 }
 
 /**
- * Temporarily extracted to a separate function. Once Wrapper.tsx is a functional component, use useCorrelations hook instead
- */
-export const getAllCorrelations = () => {
-  return lastValueFrom(
-    getBackendSrv().fetch<Correlation[]>({ url: '/api/datasources/correlations', method: 'GET', showErrorAlert: false })
-  )
-    .then(getData)
-    .then(toEnrichedCorrelationsData);
-};
-
-/**
  * hook for managing correlations data.
  * TODO: ideally this hook shouldn't have any side effect like showing notifications on error
  * and let consumers handle them. It works nicely with the correlations settings page, but when we'll
@@ -43,9 +32,15 @@ export const getAllCorrelations = () => {
 export const useCorrelations = () => {
   const { backend } = useGrafana();
 
-  const [getInfo, get] = useAsyncFn<() => Promise<CorrelationData[]>>(() => {
-    return getAllCorrelations();
-  }, [backend]);
+  const [getInfo, get] = useAsyncFn<() => Promise<CorrelationData[]>>(
+    () =>
+      lastValueFrom(
+        backend.fetch<Correlation[]>({ url: '/api/datasources/correlations', method: 'GET', showErrorAlert: false })
+      )
+        .then(getData)
+        .then(toEnrichedCorrelationsData),
+    [backend]
+  );
 
   const [createInfo, create] = useAsyncFn<(params: CreateCorrelationParams) => Promise<CorrelationData>>(
     ({ sourceUID, ...correlation }) =>

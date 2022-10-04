@@ -407,6 +407,8 @@ export const runQueries = (
       dispatch(clearCache(exploreId));
     }
 
+    const correlations = getState().explore.correlations;
+
     const exploreItemState = getState().explore[exploreId]!;
     const {
       datasourceInstance,
@@ -447,6 +449,7 @@ export const runQueries = (
               absoluteRange,
               refreshInterval,
               queries,
+              correlations,
               datasourceInstance != null && hasLogsVolumeSupport(datasourceInstance)
             )
           )
@@ -506,6 +509,7 @@ export const runQueries = (
               absoluteRange,
               refreshInterval,
               queries,
+              correlations,
               datasourceInstance != null && hasLogsVolumeSupport(datasourceInstance)
             )
           )

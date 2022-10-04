@@ -4,6 +4,24 @@ import { CorrelationData } from './useCorrelations';
 
 type QueryToDS = Record<string, string>;
 
+export const attachCorrelationsToDataFrames = (
+  dataFrames: DataFrame[],
+  correlations: CorrelationData[],
+  refIdToDataSourceUid: QueryToDS
+): DataFrame[] => {
+  dataFrames.forEach((dataFrame) => {
+    const frameRefId = dataFrame.refId;
+    if (!frameRefId) {
+      return;
+    }
+    const dataSourceUid = refIdToDataSourceUid[frameRefId];
+    const sourceCorrelations = correlations.filter((correlation) => correlation.source.uid === dataSourceUid);
+    decorateDataFrameWithInternalDataLinks(dataFrame, sourceCorrelations);
+  });
+
+  return dataFrames;
+};
+
 export const mapQueryRefIdToDataSourceUid = (queries: DataQuery[]): QueryToDS => {
   let queryRefIdToDataSourceUid: QueryToDS = {};
   queries!.forEach((query: DataQuery) => {
@@ -14,7 +32,7 @@ export const mapQueryRefIdToDataSourceUid = (queries: DataQuery[]): QueryToDS =>
   return queryRefIdToDataSourceUid;
 };
 
-export const decorateDataFrameWithInternalDataLinks = (dataFrame: DataFrame, correlations: CorrelationData[]) => {
+const decorateDataFrameWithInternalDataLinks = (dataFrame: DataFrame, correlations: CorrelationData[]) => {
   dataFrame.fields.forEach((field) => {
     correlations.map((correlation) => {
       if (correlation.config?.field === field.name) {
