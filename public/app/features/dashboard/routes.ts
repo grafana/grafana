@@ -13,7 +13,7 @@ export const getPublicDashboardRoutes = (): RouteDescriptor[] => {
         component: SafeDynamicImport(
           () =>
             import(
-              /* webpackChunkName: "ListPublicDashboardPage" */ '../../features/manage-dashboards/ListPublicDashboardPage'
+              /* webpackChunkName: "ListPublicDashboardPage" */ '../../features/manage-dashboards/PublicDashboardListPage'
             )
         ),
       },

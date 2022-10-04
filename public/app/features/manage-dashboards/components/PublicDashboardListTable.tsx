@@ -1,22 +1,11 @@
 import { css } from '@emotion/css';
-import { getConfig } from 'app/core/config';
-import React, { FC, useState, useEffect } from 'react';
+import React, { FC, useState } from 'react';
+import useAsync from 'react-use/lib/useAsync';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import {
-  Link,
-  //Switch,
-  //HorizontalGroup,
-  //ClipboardButton,
-  //InlineLabel,
-  ButtonGroup,
-  LinkButton,
-  Icon,
-  Tag,
-  useStyles2,
-} from '@grafana/ui';
-import { getBackendSrv} from 'app/core/services/backend_srv'; // will use the version in __mocks__
-import { generatePublicDashboardUrl } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
+import { Link, ButtonGroup, LinkButton, Icon, Tag, useStyles2 } from '@grafana/ui';
+import { getConfig } from 'app/core/config';
+import { getBackendSrv } from 'app/core/services/backend_srv';
 
 export interface ListPublicDashboardResponse {
   uid: string;
@@ -26,21 +15,25 @@ export interface ListPublicDashboardResponse {
   isEnabled: boolean;
 }
 
-export const listPublicDashboardsUrl = () => { return `/api/dashboards/public` };
-
-export const listPublicDashboards = async (
-  setPublicDashboards: React.Dispatch<React.SetStateAction<ListPublicDashboardResponse[]>>
-) => {
+export const listPublicDashboardsUrl = () => {
+  return `/api/dashboards/public`;
+};
+export const getPublicDashboards = async () => {
   const resp: ListPublicDashboardResponse[] = await getBackendSrv().get(listPublicDashboardsUrl());
-  setPublicDashboards(resp.sort((a, b) => Number(b.isEnabled) - Number(a.isEnabled)));
+  return resp.sort((a, b) => Number(b.isEnabled) - Number(a.isEnabled));
 };
 
+//export function getPublicDashboards() {
+//getBackendSrv()
+//.get(listPublicDashboardsUrl())
+//.then((result: ListPublicDashboardResponse[]) => {
+//return result.sort((a, b) => Number(b.isEnabled) - Number(a.isEnabled))
+//})
+//};
 
-//describe('listPublicDashboardsUrl', () => {
-//it('has the correct url', () => {
-//expect(listPublicDashboardsUrl()).toEqual('/api/dashboards/public');
-//});
-//});
+export const viewPublicDashboardUrl = (accessToken: string): string => {
+  return `${getConfig().appUrl}public-dashboards/${accessToken}`;
+};
 
 function getStyles(theme: GrafanaTheme2) {
   return {
@@ -56,61 +49,39 @@ export const PublicDashboardListTable: FC = () => {
   const styles = useStyles2(getStyles);
   const [publicDashboards, setPublicDashboards] = useState<ListPublicDashboardResponse[]>([]);
 
-  useEffect(() => {
-    listPublicDashboards(setPublicDashboards).catch();
-  }, []);
-
-  //function togglePublicDashboard() {}
-
-  //function publicDashboardLinks(pd: ListPublicDashboardResponse) {
-  //if (pd.isEnabled) {
-  //return (
-  //<>
-
-  //<HorizontalGroup justify="flex-end">
-  //<LinkButton href={generatePublicDashboardUrl(pd.accessToken)}>
-  //<Icon  name="external-link-alt" size="sm" />
-  //</LinkButton>
-
-  //<ClipboardButton
-  //size="xs"
-  //variant="primary"
-  //icon="copy"
-  //getText={() => {
-  //return generatePublicDashboardUrl(pd.accessToken);
-  //}}
-  //>
-  //Copy
-  //</ClipboardButton>
-  //</HorizontalGroup>
-  //</>
-  //);
-  //} else {
-  //return (
-  //<Link className={styles.link} href={generatePublicDashboardUrl(pd.accessToken)}>
-  ///public-dashboards/{pd.accessToken}
-  //</Link>
-  //);
-  //}
-  //}
+  useAsync(async () => {
+    const publicDashboards = await getPublicDashboards();
+    setPublicDashboards(publicDashboards);
+  }, [setPublicDashboards]);
 
   function renderEnabledTag(pd: ListPublicDashboardResponse) {
-    let label = pd.isEnabled ? 'enabled' : 'disabled';
-    let color = pd.isEnabled ? 20 : 15; // 20 = green /  15 = red
-    return <Tag name={label} colorIndex={color} />;
+    if (pd.isEnabled) {
+      return <Tag name="enabled" colorIndex={20} />;
+    } else {
+      return <Tag name="disabled" colorIndex={15} />;
+    }
   }
 
-  const gPublicDashboardUrl = (accessToken: string): string => {
-    return `${getConfig().appUrl}public-dashboards/${accessToken}`;
-  };
-
   function renderViewLink(pd: ListPublicDashboardResponse) {
-    let url = pd.isEnabled ? gPublicDashboardUrl(pd.accessToken) : '#';
     let title = pd.isEnabled ? 'View public dashboard' : 'Public dashboard is disabled';
-    //let pointerEnabled = pd.isEnabled ? "auto" : "none"
     return (
-      <LinkButton href={url} style={{ display: 'inline' }} fill="text" title={title} target="_blank">
+      <LinkButton
+        href={viewPublicDashboardUrl(pd.accessToken)}
+        fill="text"
+        title={title}
+        target="_blank"
+        disabled={!pd.isEnabled}
+      >
         <Icon name="external-link-alt" />
+      </LinkButton>
+    );
+  }
+
+  function renderConfigLink(pd: ListPublicDashboardResponse) {
+    let url = `/d/${pd.dashboardUid}?shareView=share`;
+    return (
+      <LinkButton fill="text" href={url} title="Configure public dashboard">
+        <Icon name="cog" />
       </LinkButton>
     );
   }
@@ -129,33 +100,15 @@ export const PublicDashboardListTable: FC = () => {
           {publicDashboards.map((pd) => (
             <tr key={pd.uid}>
               <td>
-                <Link className={styles.link} href={`/d/${pd.dashboardUid}`} target="_blank">
+                <Link className={styles.link} href={`/d/${pd.dashboardUid}`}>
                   {pd.title}
                 </Link>
               </td>
               <td>{renderEnabledTag(pd)}</td>
               <td>
-
                 <ButtonGroup>
                   {renderViewLink(pd)}
-                  &nbsp; &nbsp;
-                  <LinkButton
-                    fill="text"
-                    href={gPublicDashboardUrl(pd.accessToken)}
-                    style={{ display: 'inline' }}
-                    title="Disable public dashboard"
-                  >
-                    <Icon name="eye-slash" />
-                  </LinkButton>
-
-                  <LinkButton
-                    fill="text"
-                    href={`/d/${pd.dashboardUid}?shareView=share`}
-                    style={{ display: 'inline' }}
-                    title="Disable public dashboard"
-                  >
-                    <Icon name="cog" />
-                  </LinkButton>
+                  {renderConfigLink(pd)}
                 </ButtonGroup>
               </td>
             </tr>
