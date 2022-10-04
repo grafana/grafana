@@ -4,16 +4,29 @@ import {
   FrameGeometrySource,
   FrameGeometrySourceMode,
   PanelOptionsEditorBuilder,
+  DataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors/src';
 import { GazetteerPathEditor } from 'app/features/geo/editor/GazetteerPathEditor';
 
+import { getGeometryField, getLocationMatchers } from '../utils/location';
+
 export function addLocationFields<TOptions>(
   title: string,
   prefix: string,
-  builder: PanelOptionsEditorBuilder<TOptions>,
-  source?: FrameGeometrySource
+  builder: PanelOptionsEditorBuilder<TOptions>, // ??? Perhaps pass in the filtered data?
+  source?: FrameGeometrySource,
+  data?: DataFrame[]
 ) {
+  if (source && data?.length) {
+    // TODO... equivolent in the custom component
+    getLocationMatchers(source).then((location) => {
+      const info = getGeometryField(data[0], location);
+      console.log('LOCATION', info);
+    });
+  }
+
+  // TODO replace radio with custom component
   builder.addRadio({
     path: `${prefix}mode`,
     name: title,

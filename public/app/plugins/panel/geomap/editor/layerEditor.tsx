@@ -96,7 +96,9 @@ export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<Map
       }
 
       if (layer.showLocation) {
-        addLocationFields('Location', 'location.', builder, options.location);
+        const data = context.data;
+        // TODO... if `filterData` exists... filter it :)
+        addLocationFields('Location', 'location.', builder, options.location, data);
       }
       if (handler.registerOptionsUI) {
         handler.registerOptionsUI(builder);
