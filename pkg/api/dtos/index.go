@@ -15,7 +15,7 @@ type IndexViewData struct {
 	GoogleAnalyticsId       string
 	GoogleAnalytics4Id      string
 	GoogleTagManagerId      string
-	NavTree                 []*navtree.NavLink
+	NavTree                 *navtree.NavTreeRoot
 	BuildVersion            string
 	BuildCommit             string
 	Theme                   string

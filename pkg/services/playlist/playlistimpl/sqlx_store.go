@@ -42,7 +42,7 @@ func (s *sqlxStore) Insert(ctx context.Context, cmd *playlist.CreatePlaylistComm
 			for _, item := range cmd.Items {
 				playlistItems = append(playlistItems, playlist.PlaylistItem{
 					PlaylistId: p.Id,
-					Type:       item.Type,
+					Type:       string(item.Type),
 					Value:      item.Value,
 					Order:      item.Order,
 					Title:      item.Title,
@@ -94,7 +94,7 @@ func (s *sqlxStore) Update(ctx context.Context, cmd *playlist.UpdatePlaylistComm
 		for index, item := range cmd.Items {
 			playlistItems = append(playlistItems, playlist.PlaylistItem{
 				PlaylistId: p.Id,
-				Type:       item.Type,
+				Type:       string(item.Type),
 				Value:      item.Value,
 				Order:      index + 1,
 				Title:      item.Title,

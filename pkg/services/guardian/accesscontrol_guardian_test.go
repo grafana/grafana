@@ -592,7 +592,7 @@ func setupAccessControlGuardianTest(t *testing.T, uid string, permissions []acce
 	toSave.SetUid(uid)
 
 	// seed dashboard
-	dashStore := dashdb.ProvideDashboardStore(store, featuremgmt.WithFeatures(), tagimpl.ProvideService(store))
+	dashStore := dashdb.ProvideDashboardStore(store, featuremgmt.WithFeatures(), tagimpl.ProvideService(store, store.Cfg))
 	dash, err := dashStore.SaveDashboard(context.Background(), models.SaveDashboardCommand{
 		Dashboard: toSave.Data,
 		UserId:    1,
@@ -604,7 +604,7 @@ func setupAccessControlGuardianTest(t *testing.T, uid string, permissions []acce
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
 	teamSvc := teamimpl.ProvideService(store, store.Cfg)
-	userSvc := userimpl.ProvideService(store, nil, store.Cfg, store)
+	userSvc := userimpl.ProvideService(store, nil, store.Cfg, store, nil, nil)
 
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
 		setting.NewCfg(), routing.NewRouteRegister(), store, ac, license, &dashboards.FakeDashboardStore{}, ac, teamSvc, userSvc)

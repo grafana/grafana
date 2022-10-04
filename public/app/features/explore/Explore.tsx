@@ -244,6 +244,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
           annotations={queryResponse.annotations}
           splitOpenFn={splitOpen}
           loadingState={queryResponse.state}
+          anchorToZero={false}
         />
       </Collapse>
     );
@@ -275,6 +276,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         onClickFilterOutLabel={this.onClickFilterOutLabel}
         onStartScanning={this.onStartScanning}
         onStopScanning={this.onStopScanning}
+        scrollElement={this.scrollElement}
       />
     );
   }
