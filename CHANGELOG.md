@@ -191,6 +191,9 @@ Issue [#55364](https://github.com/grafana/grafana/issues/55364)
 - **CustomScrollbar:** Add optional scroll indicators to `CustomScrollbar`. [#54705](https://github.com/grafana/grafana/pull/54705), [@ashharrison90](https://github.com/ashharrison90)
 - **Build:** Introduce ESM and Treeshaking to NPM package builds. [#51517](https://github.com/grafana/grafana/pull/51517), [@jackw](https://github.com/jackw)
 
+<!-- v9.1.7 START -->
+
+<!-- v9.1.7 END -->
 <!-- 9.2.0-beta1 END -->
 <!-- 9.1.6 START -->
 
