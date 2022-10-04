@@ -179,7 +179,7 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 	s.registerScenario(&Scenario{
 		ID:      string(pluginQueryError),
 		Name:    "Plugin Query Error",
-		handler: s.handleDataResponseErrorScenario,
+		handler: s.handleDataResponseErrorStatusScenario,
 	})
 
 	s.registerScenario(&Scenario{
@@ -377,7 +377,7 @@ func (s *Service) handleRandomWalkWithErrorScenario(ctx context.Context, req *ba
 	return resp, nil
 }
 
-func (s *Service) handleDataResponseErrorScenario(_ context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (s *Service) handleDataResponseErrorStatusScenario(_ context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	rand.Seed(time.Now().Unix())
