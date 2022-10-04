@@ -4,10 +4,12 @@ import { useLocation } from 'react-router-dom';
 import { useAsyncFn, useInterval } from 'react-use';
 
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
+import { logInfo } from '@grafana/runtime';
 import { Button, LinkButton, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useDispatch } from 'app/types';
 
+import { LogMessages } from './Analytics';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { NoRulesSplash } from './components/rules/NoRulesCTA';
 import { RuleListErrors } from './components/rules/RuleListErrors';
@@ -106,6 +108,7 @@ const RuleList = withErrorBoundary(
                 <LinkButton
                   href={urlUtil.renderUrl('alerting/new', { returnTo: location.pathname + location.search })}
                   icon="plus"
+                  onClick={() => logInfo(LogMessages.alertRuleFromScratch)}
                 >
                   New alert rule
                 </LinkButton>
