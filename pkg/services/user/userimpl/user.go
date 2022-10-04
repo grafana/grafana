@@ -319,44 +319,15 @@ func (s *Service) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisableU
 	return s.sqlStore.BatchDisableUsers(ctx, c)
 }
 
-// TODO: remove wrapper around sqlstore
-func (s *Service) UpdatePermissions(userID int64, isAdmin bool) error {
-	return s.sqlStore.UpdateUserPermissions(userID, isAdmin)
+func (s *Service) UpdatePermissions(ctx context.Context, userID int64, isAdmin bool) error {
+	return s.store.UpdatePermissions(ctx, userID, isAdmin)
 }
 
-// TODO: remove wrapper around sqlstore
 func (s *Service) SetUserHelpFlag(ctx context.Context, cmd *user.SetUserHelpFlagCommand) error {
-	c := &models.SetUserHelpFlagCommand{
-		UserId:     cmd.UserID,
-		HelpFlags1: cmd.HelpFlags1,
-	}
-	return s.sqlStore.SetUserHelpFlag(ctx, c)
+	return s.store.SetHelpFlag(ctx, cmd)
 }
 
-// TODO: remove wrapper around sqlstore
-func (s *Service) GetProfile(ctx context.Context, query *user.GetUserProfileQuery) (user.UserProfileDTO, error) {
-	q := &models.GetUserProfileQuery{
-		UserId: query.UserID,
-	}
-	err := s.sqlStore.GetUserProfile(ctx, q)
-	if err != nil {
-		return user.UserProfileDTO{}, err
-	}
-	result := user.UserProfileDTO{
-		ID:             q.Result.Id,
-		Email:          q.Result.Email,
-		Name:           q.Result.Name,
-		Login:          q.Result.Login,
-		Theme:          q.Result.Theme,
-		OrgID:          q.Result.OrgId,
-		IsGrafanaAdmin: q.Result.IsGrafanaAdmin,
-		IsDisabled:     q.Result.IsDisabled,
-		IsExternal:     q.Result.IsExternal,
-		AuthLabels:     q.Result.AuthLabels,
-		UpdatedAt:      q.Result.UpdatedAt,
-		CreatedAt:      q.Result.CreatedAt,
-		AvatarUrl:      q.Result.AvatarUrl,
-		AccessControl:  q.Result.AccessControl,
-	}
-	return result, nil
+func (s *Service) GetProfile(ctx context.Context, query *user.GetUserProfileQuery) (*user.UserProfileDTO, error) {
+	result, err := s.store.GetProfile(ctx, query)
+	return result, err
 }

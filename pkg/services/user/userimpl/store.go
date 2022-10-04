@@ -30,6 +30,9 @@ type store interface {
 	UpdateLastSeenAt(context.Context, *user.UpdateUserLastSeenAtCommand) error
 	GetSignedInUser(context.Context, *user.GetSignedInUserQuery) (*user.SignedInUser, error)
 	UpdateUser(context.Context, *user.User) error
+	GetProfile(context.Context, *user.GetUserProfileQuery) (*user.UserProfileDTO, error)
+	SetHelpFlag(context.Context, *user.SetUserHelpFlagCommand) error
+	UpdatePermissions(context.Context, int64, bool) error
 }
 
 type sqlStore struct {
@@ -386,4 +389,83 @@ func (ss *sqlStore) UpdateUser(ctx context.Context, user *user.User) error {
 		_, err := sess.ID(user.ID).Update(user)
 		return err
 	})
+}
+
+func (ss *sqlStore) GetProfile(ctx context.Context, query *user.GetUserProfileQuery) (*user.UserProfileDTO, error) {
+	var usr user.User
+	var userProfile user.UserProfileDTO
+	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		has, err := sess.ID(query.UserID).Where(ss.notServiceAccountFilter()).Get(&usr)
+
+		if err != nil {
+			return err
+		} else if !has {
+			return user.ErrUserNotFound
+		}
+
+		userProfile = user.UserProfileDTO{
+			ID:             usr.ID,
+			Name:           usr.Name,
+			Email:          usr.Email,
+			Login:          usr.Login,
+			Theme:          usr.Theme,
+			IsGrafanaAdmin: usr.IsAdmin,
+			IsDisabled:     usr.IsDisabled,
+			OrgID:          usr.OrgID,
+			UpdatedAt:      usr.Updated,
+			CreatedAt:      usr.Created,
+		}
+
+		return err
+	})
+	return &userProfile, err
+}
+
+func (ss *sqlStore) SetHelpFlag(ctx context.Context, cmd *user.SetUserHelpFlagCommand) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		user := user.User{
+			ID:         cmd.UserID,
+			HelpFlags1: cmd.HelpFlags1,
+			Updated:    sqlstore.TimeNow(),
+		}
+
+		_, err := sess.ID(cmd.UserID).Cols("help_flags1").Update(&user)
+		return err
+	})
+}
+
+// UpdatePermissions sets the user Server Admin flag
+func (ss *sqlStore) UpdatePermissions(ctx context.Context, userID int64, isAdmin bool) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		var user user.User
+		if _, err := sess.ID(userID).Where(ss.notServiceAccountFilter()).Get(&user); err != nil {
+			return err
+		}
+
+		user.IsAdmin = isAdmin
+		sess.UseBool("is_admin")
+		_, err := sess.ID(user.ID).Update(&user)
+		if err != nil {
+			return err
+		}
+		// validate that after update there is at least one server admin
+		if err := validateOneAdminLeft(ctx, sess); err != nil {
+			return err
+		}
+		return nil
+	})
+}
+
+// validateOneAdminLeft validate that there is an admin user left
+func validateOneAdminLeft(ctx context.Context, sess *sqlstore.DBSession) error {
+	count, err := sess.Where("is_admin=?", true).Count(&user.User{})
+	if err != nil {
+		return err
+	}
+
+	if count == 0 {
+		return user.ErrLastGrafanaAdmin
+	}
+
+	return nil
 }
