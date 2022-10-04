@@ -23416,7 +23416,6 @@ __metadata:
     sass-loader: 13.0.2
     selecto: 1.20.2
     semver: 7.3.7
-    semver-closest: ^0.1.2
     sinon: 14.0.0
     slate: 0.47.9
     slate-plain-serializer: 0.7.11
@@ -36164,15 +36163,6 @@ __metadata:
   dependencies:
     node-forge: ^1
   checksum: 864e65c2f31ca877bce3ccdaa3bdef5e1e992b63b2a03641e00c24cd305bf2acce093431d1fed2e5ae9f526558db4be5e90baa2b3474c0428fcf7e25cc86ac93
-  languageName: node
-  linkType: hard
-
-"semver-closest@npm:^0.1.2":
-  version: 0.1.2
-  resolution: "semver-closest@npm:0.1.2"
-  dependencies:
-    semver: ^5.4.1
-  checksum: 4748346f2794c13a76a711a4ee0dd28adc10e8abd3fa3a4a39cd1383cd421fd68f7ed15d56ace10b63be492b5fc46ab328090d0959521c5d04bd1b7f56c82db1
   languageName: node
   linkType: hard
 

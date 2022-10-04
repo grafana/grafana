@@ -24,8 +24,6 @@ import { PromOptions } from '../types';
 import { ExemplarsSettings } from './ExemplarsSettings';
 import { PromFlavorVersions } from './PromFlavorVersions';
 
-const closestSemver = require('semver-closest');
-
 const { Select, Input, FormField } = LegacyForms;
 
 const httpOptions = [
@@ -54,10 +52,13 @@ interface VersionDetectionResponse {
 }
 
 /**
- * @todo this is sloppy
  * Returns the closest version to what the user provided that we have in our PromFlavorVersions for the currently selected flavor
  * Bugs: It will only reject versions that are a major release apart, so Mimir 2.x might get selected for Prometheus 2.8 if the user selects an incorrect flavor
  * Advantages: We don't need to maintain a list of every possible version for each release
+ *
+ * This function will return the closest version from PromFlavorVersions that is equal or lower to the version argument,
+ * unless the versions are a major release apart.
+ *
  * @param version
  * @param flavor
  */
@@ -66,13 +67,20 @@ const getVersionString = (version: string, flavor?: string): string | undefined 
     return;
   }
   const flavorVersionValues = PromFlavorVersions[flavor];
-  const closestVersion: string = closestSemver(
-    version,
-    flavorVersionValues?.filter((el) => !!el.value).map((el) => el.value)
-  );
-  const differenceBetweenActualAndClosest = semver.diff(closestVersion, version);
-  if (differenceBetweenActualAndClosest !== 'major') {
-    return closestVersion;
+
+  // As long as it's assured we're using versions which are sorted, we could just filter out the values greater than the target version, and then check the last element in the array
+  const versionsLessThanOrEqual = flavorVersionValues
+    ?.filter((el) => !!el.value && semver.lte(el.value, version))
+    .map((el) => el.value);
+
+  const closestVersion = versionsLessThanOrEqual[versionsLessThanOrEqual.length - 1];
+
+  if (closestVersion) {
+    const differenceBetweenActualAndClosest = semver.diff(closestVersion, version);
+
+    if (['minor', 'preminor', 'patch', 'prepatch', 'prerelease', null].includes(differenceBetweenActualAndClosest)) {
+      return closestVersion;
+    }
   }
 
   return;

@@ -29,19 +29,21 @@ export const PromFlavorVersions: { [index: string]: Array<{ value?: string; labe
     { value: '2.38.0', label: '2.38.x' },
     { value: '2.39.0', label: '2.39.x' },
     { value: '2.40.0', label: '2.40.x' },
-    { value: '9.9.9', label: '> 2.40.x' },
+
+    // This value will be returned for future versions of prometheus until we add new entries to this object
+    { value: '2.40.1', label: '> 2.40.x' },
   ],
   Mimir: [
     { value: undefined, label: 'Please select' },
-    { value: '2.4.0', label: '> 2.3.x' },
-    { value: '2.3.0', label: '2.3.x' },
-    { value: '2.2.0', label: '2.2.x' },
-    { value: '2.1.0', label: '2.1.x' },
     { value: '2.0.0', label: '2.0.x' },
+    { value: '2.1.0', label: '2.1.x' },
+    { value: '2.2.0', label: '2.2.x' },
+    { value: '2.3.0', label: '2.3.x' },
+    { value: '2.3.1', label: '> 2.3.x' },
   ],
   Thanos: [
     { value: undefined, label: 'Please select' },
-    { value: '0.15.0', label: '< 0.16.x' },
+    { value: '0.0.0', label: '< 0.16.x' },
     { value: '0.16.0', label: '0.16.x' },
     { value: '0.17.0', label: '0.17.x' },
     { value: '0.18.0', label: '0.18.x' },
