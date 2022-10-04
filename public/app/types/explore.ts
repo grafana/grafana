@@ -47,7 +47,7 @@ export interface ExploreState {
    */
   right?: ExploreItemState;
 
-  correlations: CorrelationData[];
+  correlations?: CorrelationData[];
 
   /**
    * Settings for rich history (note: filters are stored per each pane separately)

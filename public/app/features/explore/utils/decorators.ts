@@ -1,4 +1,4 @@
-import { groupBy, mapValues } from 'lodash';
+import { groupBy, isEmpty, mapValues } from 'lodash';
 import { Observable, of } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
@@ -79,15 +79,14 @@ export const decorateWithCorrelations = ({
   correlations,
 }: {
   queries: DataQuery[] | undefined;
-  correlations: CorrelationData[];
+  correlations: CorrelationData[] | undefined;
 }) => {
   return (data: PanelData): Observable<PanelData> => {
     return new Observable<PanelData>((subscriber) => {
-      if (!queries) {
-        return;
+      if (!isEmpty(queries) && !isEmpty(correlations)) {
+        const queryRefIdToDataSourceUid = mapValues(groupBy(queries, 'refId'), '0.datasource.uid');
+        attachCorrelationsToDataFrames(data.series, correlations!, queryRefIdToDataSourceUid);
       }
-      const queryRefIdToDataSourceUid = mapValues(groupBy(test, 'refId'), '0.datasource.uid');
-      attachCorrelationsToDataFrames(data.series, correlations, queryRefIdToDataSourceUid);
       subscriber.next(data);
     });
   };
@@ -185,7 +184,7 @@ export function decorateData(
   absoluteRange: AbsoluteTimeRange,
   refreshInterval: string | undefined,
   queries: DataQuery[] | undefined,
-  correlations: CorrelationData[],
+  correlations: CorrelationData[] | undefined,
   fullRangeLogsVolumeAvailable: boolean
 ): Observable<ExplorePanelData> {
   return of(data).pipe(

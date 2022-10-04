@@ -10,7 +10,7 @@ import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { isTruthy } from 'app/core/utils/types';
-import { useSelector, useDispatch } from 'app/types';
+import { useDispatch, useSelector } from 'app/types';
 import { ExploreId, ExploreQueryParams } from 'app/types/explore';
 
 import { Branding } from '../../core/components/Branding/Branding';
@@ -18,7 +18,7 @@ import { useCorrelations } from '../correlations/useCorrelations';
 
 import { ExploreActions } from './ExploreActions';
 import { ExplorePaneContainer } from './ExplorePaneContainer';
-import { lastSavedUrl, resetExploreAction, splitSizeUpdateAction, saveCorrelationsAction } from './state/main';
+import { lastSavedUrl, resetExploreAction, saveCorrelationsAction, splitSizeUpdateAction } from './state/main';
 
 const styles = {
   pageScrollbarWrapper: css`
@@ -35,7 +35,7 @@ const styles = {
 const MIN_PANE_WIDTH = 200;
 function Wrapper(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
   useExplorePageTitle();
-  const { maxedExploreId, evenSplitPanes } = useSelector((state) => state.explore);
+  const { maxedExploreId, evenSplitPanes, correlations } = useSelector((state) => state.explore);
   const [rightPaneWidth, setRightPaneWidth] = useState<number>();
   const [prevWindowWidth, setWindowWidth] = useState<number>();
   const dispatch = useDispatch();
@@ -43,7 +43,6 @@ function Wrapper(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
   const queryParams = props.queryParams;
   const { keybindings, chrome, config } = useGrafana();
   const navModel = useNavModel('explore');
-  const [correlationsLoaded, setCorrelationsLoaded] = useState(false);
   const { get } = useCorrelations();
 
   useEffect(() => {
@@ -57,24 +56,19 @@ function Wrapper(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
   }, [keybindings]);
 
   useEffect(() => {
-    const run = async () => {
-      if (correlationsLoaded) {
-        return;
-      }
-      if (!config.featureToggles.correlations) {
-        setCorrelationsLoaded(true);
-        return;
-      }
-      if (get.value || get.error) {
-        const correlations = get.error ? [] : get.value ? get.value : [];
-        dispatch(saveCorrelationsAction(correlations));
-        setCorrelationsLoaded(true);
-      } else if (!get.loading) {
-        get.execute();
-      }
-    };
-    run();
-  }, [get, get.error, get.value, get.loading, correlationsLoaded, dispatch, config.featureToggles.correlations]);
+    if (!config.featureToggles.correlations) {
+      dispatch(saveCorrelationsAction([]));
+    } else {
+      get.execute();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (get.value || get.error) {
+      dispatch(saveCorrelationsAction(get.error ? [] : get.value!));
+    }
+  }, [get.value, get.error, dispatch]);
 
   useEffect(() => {
     lastSavedUrl.left = undefined;
@@ -161,7 +155,7 @@ function Wrapper(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
     }
   }
 
-  if (!correlationsLoaded) {
+  if (!correlations) {
     return <LoadingPlaceholder text="Loading..." />;
   }
 
@@ -191,8 +185,7 @@ const useExplorePageTitle = () => {
     [state.explore.left.datasourceInstance?.name, state.explore.right?.datasourceInstance?.name].filter(isTruthy)
   );
 
-  const documentTitle = `${navModel.main.text} - ${datasources.join(' | ')} - ${Branding.AppTitle}`;
-  document.title = documentTitle;
+  document.title = `${navModel.main.text} - ${datasources.join(' | ')} - ${Branding.AppTitle}`;
 };
 
 export default Wrapper;

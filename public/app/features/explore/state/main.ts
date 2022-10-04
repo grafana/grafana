@@ -169,7 +169,7 @@ export const initialExploreState: ExploreState = {
   syncedTimes: false,
   left: initialExploreItemState,
   right: undefined,
-  correlations: [],
+  correlations: undefined,
   richHistoryStorageFull: false,
   richHistoryLimitExceededWarningShown: false,
   richHistoryMigrationFailed: false,
