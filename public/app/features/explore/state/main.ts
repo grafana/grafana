@@ -50,10 +50,7 @@ export const evenPaneResizeAction = createAction('explore/evenPaneResizeAction')
 /**
  * Resets state for explore.
  */
-export interface ResetExplorePayload {
-  force?: boolean;
-}
-export const resetExploreAction = createAction<ResetExplorePayload>('explore/resetExplore');
+export const resetExploreAction = createAction('explore/resetExplore');
 
 /**
  * Close the split view and save URL state.
@@ -62,17 +59,6 @@ export interface SplitCloseActionPayload {
   itemId: ExploreId;
 }
 export const splitCloseAction = createAction<SplitCloseActionPayload>('explore/splitClose');
-
-/**
- * Cleans up a pane state. Could seem like this should be in explorePane.ts actions but in case we area closing
- * left pane we need to move right state to the left.
- * Also this may seem redundant as we have splitClose actions which clears up state but that action is not called on
- * URL change.
- */
-export interface CleanupPanePayload {
-  exploreId: ExploreId;
-}
-export const cleanupPaneAction = createAction<CleanupPanePayload>('explore/cleanupPane');
 
 //
 // Action creators
@@ -237,30 +223,6 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     };
   }
 
-  if (cleanupPaneAction.match(action)) {
-    const { exploreId } = action.payload as CleanupPanePayload;
-
-    // We want to do this only when we remove single pane not when we are unmounting whole explore.
-    // It needs to be checked like this because in component we don't get new path (which would tell us if we are
-    // navigating out of explore) before the unmount.
-    if (!state[exploreId]?.initialized) {
-      return state;
-    }
-
-    if (exploreId === ExploreId.left) {
-      return {
-        ...state,
-        [ExploreId.left]: state[ExploreId.right]!,
-        [ExploreId.right]: undefined,
-      };
-    } else {
-      return {
-        ...state,
-        [ExploreId.right]: undefined,
-      };
-    }
-  }
-
   if (syncTimesAction.match(action)) {
     return { ...state, syncedTimes: action.payload.syncedTimes };
   }
@@ -287,16 +249,11 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
   }
 
   if (resetExploreAction.match(action)) {
-    const payload: ResetExplorePayload = action.payload;
     const leftState = state[ExploreId.left];
     const rightState = state[ExploreId.right];
     stopQueryState(leftState.querySubscription);
     if (rightState) {
       stopQueryState(rightState.querySubscription);
-    }
-
-    if (payload.force) {
-      return initialExploreState;
     }
 
     return {
