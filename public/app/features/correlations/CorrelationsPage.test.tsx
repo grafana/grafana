@@ -275,7 +275,15 @@ describe('CorrelationsPage', () => {
             }
           ),
         },
-        [{ sourceUID: 'loki', targetUID: 'loki', uid: '1', label: 'Some label' }]
+        [
+          {
+            sourceUID: 'loki',
+            targetUID: 'loki',
+            uid: '1',
+            label: 'Some label',
+            config: { type: 'query', target: {}, field: 'field' },
+          },
+        ]
       );
     });
 
@@ -361,7 +369,15 @@ describe('CorrelationsPage', () => {
   });
 
   describe('Read only correlations', () => {
-    const correlations = [{ sourceUID: 'loki', targetUID: 'loki', uid: '1', label: 'Some label' }];
+    const correlations: Correlation[] = [
+      {
+        sourceUID: 'loki',
+        targetUID: 'loki',
+        uid: '1',
+        label: 'Some label',
+        config: { type: 'query', target: {}, field: 'field' },
+      },
+    ];
 
     beforeEach(async () => {
       await renderWithContext(
