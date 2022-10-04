@@ -126,6 +126,8 @@ func (api *AccessControlAPI) signedInUser(ctx context.Context, userID, orgID int
 	if errGetPerms != nil {
 		return nil, errGetPerms
 	}
-	userQuery.Result.Permissions[orgID] = ac.GroupScopesByAction(permissions)
+	userQuery.Result.Permissions = map[int64]map[string][]string{
+		orgID: ac.GroupScopesByAction(permissions),
+	}
 	return userQuery.Result, nil
 }
