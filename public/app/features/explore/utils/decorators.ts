@@ -1,4 +1,4 @@
-import { groupBy } from 'lodash';
+import { groupBy, mapValues } from 'lodash';
 import { Observable, of } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
@@ -15,10 +15,10 @@ import { config } from '@grafana/runtime';
 
 import { dataFrameToLogsModel } from '../../../core/logsModel';
 import { refreshIntervalToSortOrder } from '../../../core/utils/explore';
-import { sortLogsResult } from '../../../features/logs/utils';
 import { ExplorePanelData } from '../../../types';
 import { CorrelationData } from '../../correlations/useCorrelations';
-import { attachCorrelationsToDataFrames, mapQueryRefIdToDataSourceUid } from '../../correlations/utils';
+import { attachCorrelationsToDataFrames } from '../../correlations/utils';
+import { sortLogsResult } from '../../logs/utils';
 import { preProcessPanelData } from '../../query/state/runRequest';
 
 /**
@@ -83,7 +83,10 @@ export const decorateWithCorrelations = ({
 }) => {
   return (data: PanelData): Observable<PanelData> => {
     return new Observable<PanelData>((subscriber) => {
-      let queryRefIdToDataSourceUid = mapQueryRefIdToDataSourceUid(queries || []);
+      if (!queries) {
+        return;
+      }
+      const queryRefIdToDataSourceUid = mapValues(groupBy(test, 'refId'), '0.datasource.uid');
       attachCorrelationsToDataFrames(data.series, correlations, queryRefIdToDataSourceUid);
       subscriber.next(data);
     });

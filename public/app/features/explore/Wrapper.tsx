@@ -41,7 +41,7 @@ function Wrapper(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
   const dispatch = useDispatch();
   const containerRef = useRef<HTMLDivElement>(null);
   const queryParams = props.queryParams;
-  const { keybindings, chrome } = useGrafana();
+  const { keybindings, chrome, config } = useGrafana();
   const navModel = useNavModel('explore');
   const [correlationsLoaded, setCorrelationsLoaded] = useState(false);
   const { get } = useCorrelations();
@@ -61,6 +61,10 @@ function Wrapper(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
       if (correlationsLoaded) {
         return;
       }
+      if (!config.featureToggles.correlations) {
+        setCorrelationsLoaded(true);
+        return;
+      }
       if (get.value || get.error) {
         const correlations = get.error ? [] : get.value ? get.value : [];
         dispatch(saveCorrelationsAction(correlations));
@@ -70,7 +74,7 @@ function Wrapper(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
       }
     };
     run();
-  }, [get, get.error, get.value, get.loading, correlationsLoaded, dispatch]);
+  }, [get, get.error, get.value, get.loading, correlationsLoaded, dispatch, config.featureToggles.correlations]);
 
   useEffect(() => {
     lastSavedUrl.left = undefined;
