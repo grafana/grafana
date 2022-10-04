@@ -141,7 +141,7 @@ func createContentsHash(contents []byte) string {
 }
 
 func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequest, namespace string) (*object.WriteObjectResponse, error) {
-	var versionInfo *ObjectVersionWithBody
+	rsp := &object.WriteObjectResponse{}
 
 	updatedCount, err := i.collection.Update(ctx, namespace, func(i *RawObjectWithHistory) (bool, *RawObjectWithHistory, error) {
 		match := i.UID == r.UID && i.Kind == r.Kind
@@ -176,17 +176,27 @@ func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequ
 			Version: fmt.Sprintf("%d", prevVersion+1),
 		}
 
-		versionInfo = &ObjectVersionWithBody{
+		// When saving, it must be differnet than the head version
+		if i.ETag == updated.ETag {
+			rsp.Error = &object.ObjectErrorInfo{
+				Code:    304,
+				Message: "Object not changed",
+			}
+			return false, nil, nil
+		}
+
+		versionInfo := &ObjectVersionWithBody{
 			Body: r.Body,
 			ObjectVersionInfo: &object.ObjectVersionInfo{
 				Version:   updated.Version,
-				Created:   updated.Created,
-				CreatedBy: updated.CreatedBy,
+				Created:   updated.Modified,
+				CreatedBy: updated.ModifiedBy,
 				Size:      updated.Size,
 				ETag:      updated.ETag,
 				Comment:   r.Comment,
 			},
 		}
+		rsp.Object = versionInfo.ObjectVersionInfo
 
 		return true, &RawObjectWithHistory{
 			RawObject: updated,
@@ -198,14 +208,11 @@ func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequ
 		return nil, err
 	}
 
-	if updatedCount == 0 || versionInfo == nil {
+	if updatedCount == 0 && rsp.Error == nil {
 		return nil, fmt.Errorf("could not find object with uid %s and kind %s", r.UID, r.Kind)
 	}
 
-	return &object.WriteObjectResponse{
-		Error:  nil,
-		Object: versionInfo.ObjectVersionInfo,
-	}, nil
+	return rsp, nil
 }
 
 func (i dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectRequest, namespace string) (*object.WriteObjectResponse, error) {
@@ -302,8 +309,9 @@ func (i dummyObjectServer) History(ctx context.Context, r *object.ObjectHistoryR
 
 	rsp := &object.ObjectHistoryResponse{}
 	if obj != nil {
-		for idx := range obj.History {
-			rsp.Versions = append(rsp.Versions, obj.History[idx].ObjectVersionInfo)
+		// Return the most recent versions first
+		for i := len(obj.History) - 1; i >= 0; i-- {
+			rsp.Versions = append(rsp.Versions, obj.History[i].ObjectVersionInfo)
 		}
 	}
 	return rsp, nil

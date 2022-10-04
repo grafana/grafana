@@ -61,6 +61,14 @@ func parseRequestParams(req *http.Request) (uid string, kind string, params map[
 		uid = path
 		kind = "?"
 	}
+
+	// Read parameters that are encoded in the URL
+	vals := req.URL.Query()
+	for k, v := range vals {
+		if len(v) > 0 {
+			params[k] = v[0]
+		}
+	}
 	return
 }
 
@@ -111,21 +119,18 @@ func (s *httpObjectStore) doGetRawObject(c *models.ReqContext) response.Response
 }
 
 func (s *httpObjectStore) doWriteObject(c *models.ReqContext) response.Response {
-	uid, kind, _ := parseRequestParams(c.Req)
+	uid, kind, params := parseRequestParams(c.Req)
 	b, err := io.ReadAll(c.Req.Body)
 	if err != nil {
 		return response.Error(400, "error reading body", err)
 	}
 
-	// Read some parameters from the URL
-	vals := c.Req.URL.Query()
-
 	rsp, err := s.store.Write(c.Req.Context(), &WriteObjectRequest{
 		UID:             uid,
 		Kind:            kind,
 		Body:            b,
-		Comment:         vals.Get("comment"),
-		PreviousVersion: vals.Get("previousVersion"),
+		Comment:         params["comment"],
+		PreviousVersion: params["previousVersion"],
 	})
 	if err != nil {
 		return response.Error(500, "?", err)
