@@ -130,24 +130,29 @@ function addRulerGroupsToCombinedNamespace(namespace: CombinedRuleNamespace, gro
 }
 
 function addPromGroupsToCombinedNamespace(namespace: CombinedRuleNamespace, groups: RuleGroup[]): void {
-  // const groupsByName = new Map<string, RuleGroup>();
-  // groups.forEach()
+  const existingGroupsByName = new Map<string, CombinedRuleGroup>();
+  namespace.groups.forEach((group) => existingGroupsByName.set(group.name, group));
 
   groups.forEach((group) => {
-    let combinedGroup = namespace.groups.find((g) => g.name === group.name);
+    let combinedGroup = existingGroupsByName.get(group.name);
     if (!combinedGroup) {
       combinedGroup = {
         name: group.name,
         rules: [],
       };
       namespace.groups.push(combinedGroup);
+      existingGroupsByName.set(group.name, combinedGroup);
     }
 
-    const existingRulesMap = new Map<string, CombinedRule>();
-    combinedGroup!.rules.forEach((r) => existingRulesMap.set(r.name, r));
+    const combinedRulesByName = new Map<string, CombinedRule[]>();
+    combinedGroup!.rules.forEach((r) => {
+      // Prometheus rules do not have to be unique by name
+      const existingRule = combinedRulesByName.get(r.name);
+      existingRule ? existingRule.push(r) : combinedRulesByName.set(r.name, [r]);
+    });
 
     (group.rules ?? []).forEach((rule) => {
-      const existingRule = getExistingRuleInGroup(rule, existingRulesMap, namespace.rulesSource);
+      const existingRule = getExistingRuleInGroup(rule, combinedRulesByName, namespace.rulesSource);
       if (existingRule) {
         existingRule.promRule = rule;
       } else {
@@ -208,25 +213,34 @@ function rulerRuleToCombinedRule(
 // find existing rule in group that matches the given prom rule
 function getExistingRuleInGroup(
   rule: Rule,
-  existingCombinedRulesMap: Map<string, CombinedRule>,
+  existingCombinedRulesMap: Map<string, CombinedRule[]>,
   rulesSource: RulesSource
 ): CombinedRule | undefined {
-  const existingRule = existingCombinedRulesMap.get(rule.name);
-  if (!existingRule) {
+  // Using Map of name-based rules is important performance optimization for the code below
+  // Otherwise we would perform find method multiple times on (possibly) thousands of rules
+
+  const nameMatchingRules = existingCombinedRulesMap.get(rule.name);
+  if (!nameMatchingRules) {
     return undefined;
   }
 
   if (isGrafanaRulesSource(rulesSource)) {
     // assume grafana groups have only the one rule. check name anyway because paranoid
-    return existingRule;
+    return nameMatchingRules[0];
   }
 
-  if (!existingRule.promRule && isCombinedRuleEqualToPromRule(existingRule, rule, true)) {
-    return existingRule;
+  const strictlyMatchingRule = nameMatchingRules.find(
+    (combinedRule) => !combinedRule.promRule && isCombinedRuleEqualToPromRule(combinedRule, rule, true)
+  );
+  if (strictlyMatchingRule) {
+    return strictlyMatchingRule;
   }
 
-  if (!existingRule.promRule && isCombinedRuleEqualToPromRule(existingRule, rule, false)) {
-    return existingRule;
+  const looselyMatchingRule = nameMatchingRules.find(
+    (combinedRule) => !combinedRule.promRule && isCombinedRuleEqualToPromRule(combinedRule, rule, false)
+  );
+  if (looselyMatchingRule) {
+    return looselyMatchingRule;
   }
 
   return undefined;

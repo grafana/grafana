@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useAsyncFn, useInterval } from 'react-use';
 
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
 import { Button, LinkButton, useStyles2, withErrorBoundary } from '@grafana/ui';
@@ -48,15 +49,6 @@ const RuleList = withErrorBoundary(
 
     const ViewComponent = VIEWS[view];
 
-    // fetch rules, then poll every RULE_LIST_POLL_INTERVAL_MS
-    useEffect(() => {
-      dispatch(fetchAllPromAndRulerRulesAction());
-      // const interval = setInterval(() => dispatch(fetchAllPromAndRulerRulesAction()), RULE_LIST_POLL_INTERVAL_MS);
-      // return () => {
-      //   clearInterval(interval);
-      // };
-    }, [dispatch]);
-
     const promRuleRequests = useUnifiedAlertingSelector((state) => state.promRules);
     const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
 
@@ -71,6 +63,19 @@ const RuleList = withErrorBoundary(
         (promRuleRequests[name]?.result?.length && !promRuleRequests[name]?.error) ||
         (Object.keys(rulerRuleRequests[name]?.result || {}).length && !rulerRuleRequests[name]?.error)
     );
+
+    // Trigger data refresh only when the RULE_LIST_POLL_INTERVAL_MS elapsed since the previous load FINISHED
+    const [_, fetchRules] = useAsyncFn(async () => {
+      if (!loading) {
+        await dispatch(fetchAllPromAndRulerRulesAction());
+      }
+    }, [loading]);
+
+    // fetch rules, then poll every RULE_LIST_POLL_INTERVAL_MS
+    useEffect(() => {
+      dispatch(fetchAllPromAndRulerRulesAction());
+    }, [dispatch]);
+    useInterval(fetchRules, RULE_LIST_POLL_INTERVAL_MS);
 
     const showNewAlertSplash = dispatched && !loading && !haveResults;
 
