@@ -509,10 +509,10 @@ describe('Receivers', () => {
             notifiers: {
               email: [
                 {
-                  lastError:
+                  lastNotifyAttemptError:
                     'establish connection to server: dial tcp: lookup smtp.example.org on 8.8.8.8:53: no such host',
-                  lastNotify: '2022-09-19T15:34:40.696Z',
-                  lastNotifyDuration: '117.2455ms',
+                  lastNotifyAttempt: '2022-09-19T15:34:40.696Z',
+                  lastNotifyAttemptDuration: '117.2455ms',
                   name: 'email[0]',
                 },
               ],
@@ -524,15 +524,15 @@ describe('Receivers', () => {
             notifiers: {
               slack: [
                 {
-                  lastNotify: '2022-09-19T15:34:40.696Z',
-                  lastNotifyDuration: '117.2455ms',
+                  lastNotifyAttempt: '2022-09-19T15:34:40.696Z',
+                  lastNotifyAttemptDuration: '117.2455ms',
                   name: 'slack[0]',
                 },
               ],
               pagerduty: [
                 {
-                  lastNotify: '2022-09-19T15:34:40.696Z',
-                  lastNotifyDuration: '117.2455ms',
+                  lastNotifyAttempt: '2022-09-19T15:34:40.696Z',
+                  lastNotifyAttemptDuration: '117.2455ms',
                   name: 'pagerduty',
                 },
               ],

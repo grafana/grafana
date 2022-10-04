@@ -144,11 +144,11 @@ export interface NotificationChannelState {
 }
 
 export interface NotifierStatus {
-  lastError?: null | string;
-  lastNotify: string;
-  lastNotifyDuration: string;
+  lastNotifyAttemptError?: null | string;
+  lastNotifyAttempt: string;
+  lastNotifyAttemptDuration: string;
   name: string;
-  sendResolve?: boolean;
+  sendResolved?: boolean;
 }
 
 export interface NotifiersState {

@@ -121,7 +121,7 @@ interface NotifierStatus {
   lastNotify: string;
   lastNotifyDuration: string;
   type: string;
-  sendResolve?: boolean;
+  sendResolved?: boolean;
 }
 
 type RowTableColumnProps = DynamicTableColumnProps<ReceiverItem>;
@@ -180,9 +180,9 @@ function NotifiersTable({ notifiersState }: NotifiersTableProps) {
         size: 1,
       },
       {
-        id: 'sendResolve',
-        label: 'Send resolve',
-        renderCell: ({ data: { sendResolve } }) => <>{String(Boolean(sendResolve))}</>,
+        id: 'sendResolved',
+        label: 'Send resolved',
+        renderCell: ({ data: { sendResolved } }) => <>{String(Boolean(sendResolved))}</>,
         size: 1,
       },
     ];
@@ -192,9 +192,10 @@ function NotifiersTable({ notifiersState }: NotifiersTableProps) {
       id: index,
       data: {
         type: typeState[0],
-        lastError: notifierStatus.lastError,
-        lastNotify: notifierStatus.lastNotify,
-        lastNotifyDuration: notifierStatus.lastNotifyDuration,
+        lastError: notifierStatus.lastNotifyAttemptError,
+        lastNotify: notifierStatus.lastNotifyAttempt,
+        lastNotifyDuration: notifierStatus.lastNotifyAttemptDuration,
+        sendResolved: notifierStatus.sendResolved,
       },
     }))
   );
