@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import { sortBy } from 'lodash';
 import React, { useEffect, useMemo } from 'react';
-import { useDispatch } from 'react-redux';
 
 import { GrafanaTheme2, PanelProps } from '@grafana/data';
 import {
@@ -28,7 +27,7 @@ import {
 } from 'app/features/alerting/unified/utils/datasource';
 import { flattenRules, getFirstActiveAt } from 'app/features/alerting/unified/utils/rules';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { AccessControlAction } from 'app/types';
+import { useDispatch, AccessControlAction } from 'app/types';
 import { PromRuleWithLocation } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 

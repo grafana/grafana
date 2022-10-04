@@ -16,6 +16,7 @@ func (s CorrelationsService) createCorrelation(ctx context.Context, cmd CreateCo
 		TargetUID:   cmd.TargetUID,
 		Label:       cmd.Label,
 		Description: cmd.Description,
+		Config:      cmd.Config,
 	}
 
 	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *sqlstore.DBSession) error {
@@ -33,11 +34,13 @@ func (s CorrelationsService) createCorrelation(ctx context.Context, cmd CreateCo
 			return ErrSourceDataSourceReadOnly
 		}
 
-		if err = s.DataSourceService.GetDataSource(ctx, &datasources.GetDataSourceQuery{
-			OrgId: cmd.OrgId,
-			Uid:   cmd.TargetUID,
-		}); err != nil {
-			return ErrTargetDataSourceDoesNotExists
+		if cmd.TargetUID != nil {
+			if err = s.DataSourceService.GetDataSource(ctx, &datasources.GetDataSourceQuery{
+				OrgId: cmd.OrgId,
+				Uid:   *cmd.TargetUID,
+			}); err != nil {
+				return ErrTargetDataSourceDoesNotExists
+			}
 		}
 
 		_, err = session.Insert(correlation)
@@ -147,14 +150,10 @@ func (s CorrelationsService) getCorrelation(ctx context.Context, cmd GetCorrelat
 			return ErrSourceDataSourceDoesNotExists
 		}
 
-		found, err := session.Where("uid = ? AND source_uid = ?", correlation.UID, correlation.SourceUID).Get(&correlation)
+		found, err := session.Select("correlation.*").Join("", "data_source AS dss", "correlation.source_uid = dss.uid and dss.org_id = ?", cmd.OrgId).Join("", "data_source AS dst", "correlation.target_uid = dst.uid and dst.org_id = ?", cmd.OrgId).Where("correlation.uid = ? AND correlation.source_uid = ?", correlation.UID, correlation.SourceUID).Get(&correlation)
 		if !found {
 			return ErrCorrelationNotFound
 		}
-		if err != nil {
-			return err
-		}
-
 		return err
 	})
 
@@ -166,9 +165,6 @@ func (s CorrelationsService) getCorrelation(ctx context.Context, cmd GetCorrelat
 }
 
 func (s CorrelationsService) getCorrelationsBySourceUID(ctx context.Context, cmd GetCorrelationsBySourceUIDQuery) ([]Correlation, error) {
-	correlationsCondiBean := Correlation{
-		SourceUID: cmd.SourceUID,
-	}
 	correlations := make([]Correlation, 0)
 
 	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *sqlstore.DBSession) error {
@@ -180,20 +176,11 @@ func (s CorrelationsService) getCorrelationsBySourceUID(ctx context.Context, cmd
 			return ErrSourceDataSourceDoesNotExists
 		}
 
-		err := session.Find(&correlations, correlationsCondiBean)
-		if err != nil {
-			return err
-		}
-
-		return err
+		return session.Select("correlation.*").Join("", "data_source AS dss", "correlation.source_uid = dss.uid and dss.org_id = ?", cmd.OrgId).Join("", "data_source AS dst", "correlation.target_uid = dst.uid and dst.org_id = ?", cmd.OrgId).Where("correlation.source_uid = ?", cmd.SourceUID).Find(&correlations)
 	})
 
 	if err != nil {
 		return []Correlation{}, err
-	}
-
-	if len(correlations) == 0 {
-		return []Correlation{}, ErrCorrelationNotFound
 	}
 
 	return correlations, nil
@@ -203,14 +190,10 @@ func (s CorrelationsService) getCorrelations(ctx context.Context, cmd GetCorrela
 	correlations := make([]Correlation, 0)
 
 	err := s.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
-		return session.Select("correlation.*").Join("", "data_source", "correlation.source_uid = data_source.uid").Where("data_source.org_id = ?", cmd.OrgId).Find(&correlations)
+		return session.Select("correlation.*").Join("", "data_source AS dss", "correlation.source_uid = dss.uid and dss.org_id = ?", cmd.OrgId).Join("", "data_source AS dst", "correlation.target_uid = dst.uid and dst.org_id = ?", cmd.OrgId).Find(&correlations)
 	})
 	if err != nil {
 		return []Correlation{}, err
-	}
-
-	if len(correlations) == 0 {
-		return []Correlation{}, ErrCorrelationNotFound
 	}
 
 	return correlations, nil
@@ -225,7 +208,7 @@ func (s CorrelationsService) deleteCorrelationsBySourceUID(ctx context.Context, 
 
 func (s CorrelationsService) deleteCorrelationsByTargetUID(ctx context.Context, cmd DeleteCorrelationsByTargetUIDCommand) error {
 	return s.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
-		_, err := session.Delete(&Correlation{TargetUID: cmd.TargetUID})
+		_, err := session.Delete(&Correlation{TargetUID: &cmd.TargetUID})
 		return err
 	})
 }

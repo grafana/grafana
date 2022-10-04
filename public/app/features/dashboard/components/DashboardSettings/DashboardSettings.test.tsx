@@ -51,6 +51,6 @@ describe('DashboardSettings', () => {
       </GrafanaContext.Provider>
     );
 
-    expect(await screen.findByRole('heading', { name: 'Settings' })).toBeInTheDocument();
+    expect(await screen.findByRole('tab', { name: 'Tab Settings' })).toBeInTheDocument();
   });
 });

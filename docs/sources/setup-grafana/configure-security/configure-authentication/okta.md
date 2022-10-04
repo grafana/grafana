@@ -75,6 +75,20 @@ Grafana can attempt to do role mapping through Okta OAuth. In order to achieve t
 
 Grafana uses JSON obtained from querying the `/userinfo` endpoint for the path lookup. The result after evaluating the `role_attribute_path` JMESPath expression needs to be a valid Grafana role, i.e. `Viewer`, `Editor` or `Admin`. For more information about roles and permissions in Grafana, refer to [Roles and permissions]({{< relref "../../../administration/roles-and-permissions/" >}}).
 
+> **Warning**: Currently if no organization role mapping is found for a user, Grafana doesn't
+> update the user's organization role. This is going to change in Grafana 10. To avoid overriding manually set roles,
+> enable the `oauth_skip_org_role_update_sync` option.
+> See [configure-grafana]({{< relref "../../configure-grafana#oauth_skip_org_role_update_sync" >}}) for more information.
+
+On first login, if the`role_attribute_path` property does not return a role, then the user is assigned the role
+specified by [the `auto_assign_org_role` option]({{< relref "../../configure-grafana#auto_assign_org_role" >}}).
+You can disable this default role assignment by setting `role_attribute_strict = true`.
+It denies user access if no role or an invalid role is returned.
+
+> **Warning**: With Grafana 10, **on every login**, if the`role_attribute_path` property does not return a role,
+> then the user is assigned the role specified by
+> [the `auto_assign_org_role` option]({{< relref "../../configure-grafana#auto_assign_org_role" >}}).
+
 Read about how to [add custom claims](https://developer.okta.com/docs/guides/customize-tokens-returned-from-okta/add-custom-claim/) to the user info in Okta. Also, check Generic OAuth page for [JMESPath examples]({{< relref "generic-oauth/#jmespath-examples" >}}).
 
 #### Map server administrator privileges

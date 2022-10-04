@@ -173,6 +173,11 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:        "correlations",
+			Description: "Correlations page",
+			State:       FeatureStateAlpha,
+		},
+		{
 			Name:        "cloudWatchDynamicLabels",
 			Description: "Use dynamic labels instead of alias patterns in CloudWatch datasource",
 			State:       FeatureStateStable,
@@ -233,12 +238,6 @@ var (
 			State:       FeatureStateStable,
 		},
 		{
-			Name:         "cloudMonitoringExperimentalUI",
-			Description:  "Use grafana-experimental UI in Cloud Monitoring",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
-		},
-		{
 			Name:            "disableSecretsCompatibility",
 			Description:     "Disable duplicated secret storage in legacy tables",
 			State:           FeatureStateAlpha,
@@ -269,6 +268,11 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:            "grpcServer",
+			Description:     "Run GRPC server",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		}, {
 			Name:        "traceqlEditor",
 			Description: "Show the TraceQL editor in the explore page",
 			State:       FeatureStateAlpha,

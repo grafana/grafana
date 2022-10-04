@@ -20,7 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
+
 	"github.com/grafana/grafana/pkg/services/screenshot"
 )
 
@@ -41,15 +41,16 @@ type Manager struct {
 	quit        chan struct{}
 	ResendDelay time.Duration
 
-	ruleStore        store.RuleStore
-	instanceStore    store.InstanceStore
+	ruleStore        RuleReader
+	instanceStore    InstanceStore
 	dashboardService dashboards.DashboardService
 	imageService     image.ImageService
+	AnnotationsRepo  annotations.Repository
 }
 
 func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL,
-	ruleStore store.RuleStore, instanceStore store.InstanceStore,
-	dashboardService dashboards.DashboardService, imageService image.ImageService, clock clock.Clock) *Manager {
+	ruleStore RuleReader, instanceStore InstanceStore,
+	dashboardService dashboards.DashboardService, imageService image.ImageService, clock clock.Clock, annotationsRepo annotations.Repository) *Manager {
 	manager := &Manager{
 		cache:            newCache(logger, metrics, externalURL),
 		quit:             make(chan struct{}),
@@ -61,14 +62,14 @@ func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL,
 		dashboardService: dashboardService,
 		imageService:     imageService,
 		clock:            clock,
+		AnnotationsRepo:  annotationsRepo,
 	}
 	go manager.recordMetrics()
 	return manager
 }
 
-func (st *Manager) Close(ctx context.Context) {
+func (st *Manager) Close() {
 	st.quit <- struct{}{}
-	st.flushState(ctx)
 }
 
 func (st *Manager) Warm(ctx context.Context) {
@@ -181,7 +182,7 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 		states = append(states, s)
 		processedResults[s.CacheId] = s
 	}
-	st.staleResultsHandler(ctx, evaluatedAt, alertRule, processedResults)
+	resolvedStates := st.staleResultsHandler(ctx, evaluatedAt, alertRule, processedResults)
 	if len(states) > 0 {
 		logger.Debug("saving new states to the database", "count", len(states))
 		for _, state := range states {
@@ -190,7 +191,7 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 			}
 		}
 	}
-	return states
+	return append(states, resolvedStates...)
 }
 
 // Maybe take a screenshot. Do it if:
@@ -317,28 +318,6 @@ func (st *Manager) Put(states []*State) {
 	}
 }
 
-// flushState dumps the entire state to the database
-func (st *Manager) flushState(ctx context.Context) {
-	t := st.clock.Now()
-	st.log.Info("flushing the state")
-	st.cache.mtxStates.Lock()
-	defer st.cache.mtxStates.Unlock()
-	totalStates, errorsCnt := 0, 0
-	for _, orgStates := range st.cache.states {
-		for _, ruleStates := range orgStates {
-			for _, state := range ruleStates {
-				err := st.saveState(ctx, state)
-				totalStates++
-				if err != nil {
-					st.log.Error("failed to save alert state", append(state.GetRuleKey().LogContext(), "labels", state.Labels.String(), "state", state.State.String(), "err", err.Error()))
-					errorsCnt++
-				}
-			}
-		}
-	}
-	st.log.Info("the state has been flushed", "total_instances", totalStates, "errors", errorsCnt, "took", st.clock.Since(t))
-}
-
 func (st *Manager) saveState(ctx context.Context, s *State) error {
 	cmd := ngModels.SaveAlertInstanceCommand{
 		RuleOrgID:         s.OrgID,
@@ -419,14 +398,14 @@ func (st *Manager) annotateState(ctx context.Context, alertRule *ngModels.AlertR
 		item.DashboardId = query.Result.Id
 	}
 
-	annotationRepo := annotations.GetRepository()
-	if err := annotationRepo.Save(item); err != nil {
+	if err := st.AnnotationsRepo.Save(ctx, item); err != nil {
 		st.log.Error("error saving alert annotation", "alertRuleUID", alertRule.UID, "err", err.Error())
 		return
 	}
 }
 
-func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, states map[string]*State) {
+func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, states map[string]*State) []*State {
+	var resolvedStates []*State
 	allStates := st.GetStatesForRuleUID(alertRule.OrgID, alertRule.UID)
 	for _, s := range allStates {
 		_, ok := states[s.CacheId]
@@ -444,12 +423,20 @@ func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Tim
 			}
 
 			if s.State == eval.Alerting {
+				previousState := InstanceStateAndReason{State: s.State, Reason: s.StateReason}
+				s.State = eval.Normal
+				s.StateReason = ngModels.StateReasonMissingSeries
+				s.EndsAt = evaluatedAt
+				s.Resolved = true
 				st.annotateState(ctx, alertRule, s.Labels, evaluatedAt,
-					InstanceStateAndReason{State: eval.Normal, Reason: ""},
-					InstanceStateAndReason{State: s.State, Reason: s.StateReason})
+					InstanceStateAndReason{State: eval.Normal, Reason: s.StateReason},
+					previousState,
+				)
+				resolvedStates = append(resolvedStates, s)
 			}
 		}
 	}
+	return resolvedStates
 }
 
 func isItStale(evaluatedAt time.Time, lastEval time.Time, intervalSeconds int64) bool {

@@ -10,11 +10,15 @@ import {
   LogRowModel,
   DataHoverClearEvent,
   DataHoverEvent,
+  CoreApp,
 } from '@grafana/data';
-import { LogRows, CustomScrollbar, LogLabels, useStyles2, usePanelContext } from '@grafana/ui';
+import { CustomScrollbar, useStyles2, usePanelContext } from '@grafana/ui';
 import { dataFrameToLogsModel, dedupLogRows, COMMON_LABELS } from 'app/core/logsModel';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
+
+import { LogLabels } from '../../../features/logs/components/LogLabels';
+import { LogRows } from '../../../features/logs/components/LogRows';
 
 import { Options } from './types';
 
@@ -113,6 +117,7 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
           enableLogDetails={enableLogDetails}
           previewLimit={isAscending ? logRows.length : undefined}
           onLogRowHover={onLogRowHover}
+          app={CoreApp.Dashboard}
         />
         {showCommonLabels && isAscending && renderCommonLabels()}
       </div>

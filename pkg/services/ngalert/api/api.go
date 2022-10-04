@@ -49,7 +49,8 @@ type Alertmanager interface {
 	GetAlerts(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.GettableAlerts, error)
 	GetAlertGroups(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.AlertGroups, error)
 
-	// Testing
+	// Receivers
+	GetReceivers(ctx context.Context) apimodels.Receivers
 	TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*notifier.TestReceiversResult, error)
 }
 
@@ -68,8 +69,7 @@ type API struct {
 	Schedule             schedule.ScheduleService
 	TransactionManager   provisioning.TransactionManager
 	ProvenanceStore      provisioning.ProvisioningStore
-	RuleStore            store.RuleStore
-	InstanceStore        store.InstanceStore
+	RuleStore            RuleStore
 	AlertingStore        AlertingStore
 	AdminConfigStore     store.AdminConfigurationStore
 	DataProxy            *datasourceproxy.DataSourceProxyService
@@ -92,6 +92,8 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		ac:        api.AccessControl,
 	}
 
+	evaluator := eval.NewEvaluator(api.Cfg, log.New("ngalert.eval"), api.DatasourceCache, api.ExpressionService)
+
 	// Register endpoints for proxying to Alertmanager-compatible backends.
 	api.RegisterAlertmanagerApiEndpoints(NewForkingAM(
 		api.DatasourceCache,
@@ -109,15 +111,15 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		api.DatasourceCache,
 		NewLotexRuler(proxy, logger),
 		&RulerSrv{
-			DatasourceCache: api.DatasourceCache,
-			QuotaService:    api.QuotaService,
-			scheduleService: api.Schedule,
-			store:           api.RuleStore,
-			provenanceStore: api.ProvenanceStore,
-			xactManager:     api.TransactionManager,
-			log:             logger,
-			cfg:             &api.Cfg.UnifiedAlerting,
-			ac:              api.AccessControl,
+			conditionValidator: evaluator,
+			QuotaService:       api.QuotaService,
+			scheduleService:    api.Schedule,
+			store:              api.RuleStore,
+			provenanceStore:    api.ProvenanceStore,
+			xactManager:        api.TransactionManager,
+			log:                logger,
+			cfg:                &api.Cfg.UnifiedAlerting,
+			ac:                 api.AccessControl,
 		},
 	), m)
 	api.RegisterTestingApiEndpoints(NewTestingApi(
@@ -126,7 +128,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			DatasourceCache: api.DatasourceCache,
 			log:             logger,
 			accessControl:   api.AccessControl,
-			evaluator:       eval.NewEvaluator(api.Cfg, log.New("ngalert.eval"), api.DatasourceCache, api.ExpressionService),
+			evaluator:       evaluator,
 		}), m)
 	api.RegisterConfigurationApiEndpoints(NewConfiguration(
 		&ConfigSrv{

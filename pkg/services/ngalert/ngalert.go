@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -41,7 +42,7 @@ func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, 
 	sqlStore *sqlstore.SQLStore, kvStore kvstore.KVStore, expressionService *expr.Service, dataProxy *datasourceproxy.DataSourceProxyService,
 	quotaService quota.Service, secretsService secrets.Service, notificationService notifications.Service, m *metrics.NGAlert,
 	folderService dashboards.FolderService, ac accesscontrol.AccessControl, dashboardService dashboards.DashboardService, renderService rendering.Service,
-	bus bus.Bus, accesscontrolService accesscontrol.Service) (*AlertNG, error) {
+	bus bus.Bus, accesscontrolService accesscontrol.Service, annotationsRepo annotations.Repository) (*AlertNG, error) {
 	ng := &AlertNG{
 		Cfg:                  cfg,
 		DataSourceCache:      dataSourceCache,
@@ -62,6 +63,7 @@ func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, 
 		renderService:        renderService,
 		bus:                  bus,
 		accesscontrolService: accesscontrolService,
+		annotationsRepo:      annotationsRepo,
 	}
 
 	if ng.IsDisabled() {
@@ -102,6 +104,7 @@ type AlertNG struct {
 	AlertsRouter         *sender.AlertsRouter
 	accesscontrol        accesscontrol.AccessControl
 	accesscontrolService accesscontrol.Service
+	annotationsRepo      annotations.Repository
 
 	bus bus.Bus
 }
@@ -125,7 +128,7 @@ func (ng *AlertNG) init() error {
 		return err
 	}
 
-	imageService, err := image.NewScreenshotImageServiceFromCfg(ng.Cfg, ng.Metrics.Registerer, store, ng.dashboardService, ng.renderService)
+	imageService, err := image.NewScreenshotImageServiceFromCfg(ng.Cfg, store, ng.dashboardService, ng.renderService, ng.Metrics.Registerer)
 	if err != nil {
 		return err
 	}
@@ -155,17 +158,16 @@ func (ng *AlertNG) init() error {
 	ng.AlertsRouter = alertsRouter
 
 	schedCfg := schedule.SchedulerCfg{
-		Cfg:           ng.Cfg.UnifiedAlerting,
-		C:             clk,
-		Logger:        ng.Log,
-		Evaluator:     eval.NewEvaluator(ng.Cfg, ng.Log, ng.DataSourceCache, ng.ExpressionService),
-		InstanceStore: store,
-		RuleStore:     store,
-		Metrics:       ng.Metrics.GetSchedulerMetrics(),
-		AlertSender:   alertsRouter,
+		Cfg:         ng.Cfg.UnifiedAlerting,
+		C:           clk,
+		Logger:      ng.Log,
+		Evaluator:   eval.NewEvaluator(ng.Cfg, ng.Log, ng.DataSourceCache, ng.ExpressionService),
+		RuleStore:   store,
+		Metrics:     ng.Metrics.GetSchedulerMetrics(),
+		AlertSender: alertsRouter,
 	}
 
-	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), appUrl, store, store, ng.dashboardService, ng.imageService, clk)
+	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), appUrl, store, store, ng.dashboardService, ng.imageService, clk, ng.annotationsRepo)
 	scheduler := schedule.NewScheduler(schedCfg, appUrl, stateManager)
 
 	// if it is required to include folder title to the alerts, we need to subscribe to changes of alert title
@@ -195,7 +197,6 @@ func (ng *AlertNG) init() error {
 		DataProxy:            ng.DataProxy,
 		QuotaService:         ng.QuotaService,
 		TransactionManager:   store,
-		InstanceStore:        store,
 		RuleStore:            store,
 		AlertingStore:        store,
 		AdminConfigStore:     store,
@@ -215,7 +216,7 @@ func (ng *AlertNG) init() error {
 	return DeclareFixedRoles(ng.accesscontrolService)
 }
 
-func subscribeToFolderChanges(logger log.Logger, bus bus.Bus, dbStore store.RuleStore, scheduler schedule.ScheduleService) {
+func subscribeToFolderChanges(logger log.Logger, bus bus.Bus, dbStore api.RuleStore, scheduler schedule.ScheduleService) {
 	// if folder title is changed, we update all alert rules in that folder to make sure that all peers (in HA mode) will update folder title and
 	// clean up the current state
 	bus.AddEventListener(func(ctx context.Context, e *events.FolderTitleUpdated) error {

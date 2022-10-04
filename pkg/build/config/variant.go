@@ -15,16 +15,29 @@ const (
 	VariantWindowsAmd64   Variant = "windows-amd64"
 )
 
+var AllVariants = []Variant{
+	VariantArmV6,
+	VariantArmV7,
+	VariantArmV7Musl,
+	VariantArm64,
+	VariantArm64Musl,
+	VariantDarwinAmd64,
+	VariantWindowsAmd64,
+	VariantLinuxAmd64,
+	VariantLinuxAmd64Musl,
+}
+
 // Architecture is an allowed value in the GOARCH environment variable.
 type Architecture string
 
 const (
-	ArchAMD64 Architecture = "amd64"
-	ArchARMv6 Architecture = "armv6"
-	ArchARMv7 Architecture = "armv7"
-	ArchARM64 Architecture = "arm64"
-	ArchARMHF Architecture = "armhf"
-	ArchARM   Architecture = "arm"
+	ArchAMD64  Architecture = "amd64"
+	ArchARMv6  Architecture = "armv6"
+	ArchARMv7  Architecture = "armv7"
+	ArchARM64  Architecture = "arm64"
+	ArchARMHF  Architecture = "armhf"
+	ArchARMHFP Architecture = "armhfp"
+	ArchARM    Architecture = "arm"
 )
 
 type OS string
@@ -39,4 +52,12 @@ type LibC string
 
 const (
 	LibCMusl = "musl"
+)
+
+// Distribution is the base os image where the Grafana image is built on.
+type Distribution string
+
+const (
+	Ubuntu Distribution = "ubuntu"
+	Alpine Distribution = "alpine"
 )

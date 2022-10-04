@@ -8,7 +8,6 @@ import {
   FieldType,
   getDisplayProcessor,
   PanelData,
-  sortLogsResult,
   standardTransformers,
   DataQuery,
 } from '@grafana/data';
@@ -16,6 +15,7 @@ import { config } from '@grafana/runtime';
 
 import { dataFrameToLogsModel } from '../../../core/logsModel';
 import { refreshIntervalToSortOrder } from '../../../core/utils/explore';
+import { sortLogsResult } from '../../../features/logs/utils';
 import { ExplorePanelData } from '../../../types';
 import { preProcessPanelData } from '../../query/state/runRequest';
 

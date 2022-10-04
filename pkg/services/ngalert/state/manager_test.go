@@ -18,13 +18,13 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests"
 )
 
@@ -37,10 +37,8 @@ func TestDashboardAnnotations(t *testing.T) {
 	ctx := context.Background()
 	_, dbstore := tests.SetupTestEnv(t, 1)
 
-	st := state.NewManager(log.New("test_stale_results_handler"), testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, clock.New())
-
-	fakeAnnoRepo := store.NewFakeAnnotationsRepo()
-	annotations.SetRepository(fakeAnnoRepo)
+	fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()
+	st := state.NewManager(log.New("test_stale_results_handler"), testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, clock.New(), fakeAnnoRepo)
 
 	const mainOrgID int64 = 1
 
@@ -62,7 +60,7 @@ func TestDashboardAnnotations(t *testing.T) {
 	sort.Strings(expected)
 	require.Eventuallyf(t, func() bool {
 		var actual []string
-		for _, next := range fakeAnnoRepo.Items {
+		for _, next := range fakeAnnoRepo.Items() {
 			actual = append(actual, next.Text)
 		}
 		sort.Strings(actual)
@@ -1981,11 +1979,9 @@ func TestProcessEvalResults(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		st := state.NewManager(log.New("test_state_manager"), testMetrics.GetStateMetrics(), nil, nil, &store.FakeInstanceStore{}, &dashboards.FakeDashboardService{}, &image.NotAvailableImageService{}, clock.New())
+		fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()
+		st := state.NewManager(log.New("test_state_manager"), testMetrics.GetStateMetrics(), nil, nil, &state.FakeInstanceStore{}, &dashboards.FakeDashboardService{}, &image.NotAvailableImageService{}, clock.New(), fakeAnnoRepo)
 		t.Run(tc.desc, func(t *testing.T) {
-			fakeAnnoRepo := store.NewFakeAnnotationsRepo()
-			annotations.SetRepository(fakeAnnoRepo)
-
 			for _, res := range tc.evalResults {
 				_ = st.ProcessEvalResults(context.Background(), evaluationTime, tc.alertRule, res, data.Labels{
 					"alertname":                    tc.alertRule.Title,
@@ -2005,16 +2001,14 @@ func TestProcessEvalResults(t *testing.T) {
 
 			require.Eventuallyf(t, func() bool {
 				return tc.expectedAnnotations == fakeAnnoRepo.Len()
-			}, time.Second, 100*time.Millisecond, "%d annotations are present, expected %d. We have %+v", fakeAnnoRepo.Len(), tc.expectedAnnotations, printAllAnnotations(fakeAnnoRepo.Items))
+			}, time.Second, 100*time.Millisecond, "%d annotations are present, expected %d. We have %+v", fakeAnnoRepo.Len(), tc.expectedAnnotations, printAllAnnotations(fakeAnnoRepo.Items()))
 		})
 	}
 
 	t.Run("should save state to database", func(t *testing.T) {
-		fakeAnnoRepo := store.NewFakeAnnotationsRepo()
-		annotations.SetRepository(fakeAnnoRepo)
-		instanceStore := &store.FakeInstanceStore{}
+		instanceStore := &state.FakeInstanceStore{}
 		clk := clock.New()
-		st := state.NewManager(log.New("test_state_manager"), testMetrics.GetStateMetrics(), nil, nil, instanceStore, &dashboards.FakeDashboardService{}, &image.NotAvailableImageService{}, clk)
+		st := state.NewManager(log.New("test_state_manager"), testMetrics.GetStateMetrics(), nil, nil, instanceStore, &dashboards.FakeDashboardService{}, &image.NotAvailableImageService{}, clk, annotationstest.NewFakeAnnotationsRepo())
 		rule := models.AlertRuleGen()()
 		var results = eval.GenerateResults(rand.Intn(4)+1, eval.ResultGen(eval.WithEvaluatedAt(clk.Now())))
 
@@ -2038,10 +2032,10 @@ func TestProcessEvalResults(t *testing.T) {
 	})
 }
 
-func printAllAnnotations(annos []*annotations.Item) string {
+func printAllAnnotations(annos map[int64]annotations.Item) string {
 	str := "["
 	for _, anno := range annos {
-		str += fmt.Sprintf("%+v, ", *anno)
+		str += fmt.Sprintf("%+v, ", anno)
 	}
 	str += "]"
 
@@ -2131,7 +2125,7 @@ func TestStaleResultsHandler(t *testing.T) {
 
 	for _, tc := range testCases {
 		ctx := context.Background()
-		st := state.NewManager(log.New("test_stale_results_handler"), testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, clock.New())
+		st := state.NewManager(log.New("test_stale_results_handler"), testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, clock.New(), annotationstest.NewFakeAnnotationsRepo())
 		st.Warm(ctx)
 		existingStatesForRule := st.GetStatesForRuleUID(rule.OrgID, rule.UID)
 
@@ -2160,4 +2154,102 @@ func TestStaleResultsHandler(t *testing.T) {
 		// The expected number of state entries remains after results are processed
 		assert.Equal(t, tc.finalStateCount, len(existingStatesForRule))
 	}
+}
+
+func TestStaleResults(t *testing.T) {
+	getCacheID := func(t *testing.T, rule *models.AlertRule, result eval.Result) string {
+		t.Helper()
+		labels := data.Labels{}
+		for key, value := range rule.Labels {
+			labels[key] = value
+		}
+		for key, value := range result.Instance {
+			labels[key] = value
+		}
+		lbls := models.InstanceLabels(labels)
+		key, err := lbls.StringKey()
+		require.NoError(t, err)
+		return key
+	}
+
+	checkExpectedStates := func(t *testing.T, actual []*state.State, expected map[string]struct{}) {
+		t.Helper()
+		require.Len(t, actual, len(expected))
+		for _, currentState := range actual {
+			_, ok := expected[currentState.CacheId]
+			require.Truef(t, ok, "State %s is not expected. States: %v", currentState.CacheId, expected)
+		}
+	}
+
+	t.Run("should mark missing states as stale", func(t *testing.T) {
+		// init
+		ctx := context.Background()
+		_, dbstore := tests.SetupTestEnv(t, 1)
+		clk := clock.NewMock()
+		clk.Set(time.Now())
+
+		st := state.NewManager(log.New("test_stale_results_handler"), testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, clk, annotationstest.NewFakeAnnotationsRepo())
+
+		orgID := rand.Int63()
+		rule := tests.CreateTestAlertRule(t, ctx, dbstore, 10, orgID)
+
+		initResults := eval.Results{
+			eval.Result{
+				Instance:    data.Labels{"test1": "testValue1"},
+				State:       eval.Alerting,
+				EvaluatedAt: clk.Now(),
+			},
+			eval.Result{
+				Instance:    data.Labels{"test1": "testValue2"},
+				State:       eval.Alerting,
+				EvaluatedAt: clk.Now(),
+			},
+			eval.Result{
+				Instance:    data.Labels{"test1": "testValue3"},
+				State:       eval.Normal,
+				EvaluatedAt: clk.Now(),
+			},
+		}
+
+		initStates := map[string]struct{}{
+			getCacheID(t, rule, initResults[0]): {},
+			getCacheID(t, rule, initResults[1]): {},
+			getCacheID(t, rule, initResults[2]): {},
+		}
+
+		// Init
+		processed := st.ProcessEvalResults(ctx, clk.Now(), rule, initResults, nil)
+		checkExpectedStates(t, processed, initStates)
+		currentStates := st.GetStatesForRuleUID(orgID, rule.UID)
+		checkExpectedStates(t, currentStates, initStates)
+
+		staleDuration := 2 * time.Duration(rule.IntervalSeconds) * time.Second
+		clk.Add(staleDuration)
+		results := eval.Results{
+			eval.Result{
+				Instance:    data.Labels{"test1": "testValue1"},
+				State:       eval.Alerting,
+				EvaluatedAt: clk.Now(),
+			},
+		}
+		clk.Add(time.Nanosecond) // we use time now when calculate stale states. Evaluation tick and real time are not the same. usually, difference is way greater than nanosecond.
+		expectedStaleReturned := getCacheID(t, rule, initResults[1])
+		processed = st.ProcessEvalResults(ctx, clk.Now(), rule, results, nil)
+		checkExpectedStates(t, processed, map[string]struct{}{
+			getCacheID(t, rule, results[0]): {},
+			expectedStaleReturned:           {},
+		})
+		for _, s := range processed {
+			if s.CacheId == expectedStaleReturned {
+				assert.Truef(t, s.Resolved, "Returned stale state should have Resolved set to true")
+				assert.Equal(t, eval.Normal, s.State)
+				assert.Equal(t, models.StateReasonMissingSeries, s.StateReason)
+				break
+			}
+		}
+		currentStates = st.GetStatesForRuleUID(orgID, rule.UID)
+		checkExpectedStates(t, currentStates, map[string]struct{}{
+			getCacheID(t, rule, results[0]): {},
+		})
+	})
 }
