@@ -48,7 +48,7 @@ export function TopSearchBar() {
         {profileNode && (
           <Dropdown overlay={<TopNavBarMenu node={profileNode} />}>
             <button className={styles.actionItem}>
-              <img src={contextSrv.user.gravatarUrl} />
+              <img src={contextSrv.user.gravatarUrl} alt="User avatar" />
             </button>
           </Dropdown>
         )}
@@ -65,7 +65,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       gridTemplateColumns: '1fr 2fr 1fr',
       padding: theme.spacing(0, 2),
       alignItems: 'center',
-      border: `1px solid ${theme.colors.border.weak}`,
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
     }),
     leftContent: css({
       display: 'flex',

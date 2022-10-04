@@ -20,7 +20,7 @@ func testIntegrationPlaylistDataAccess(t *testing.T, fn getStore) {
 	playlistStore := fn(ss)
 
 	t.Run("Can create playlist", func(t *testing.T) {
-		items := []playlist.PlaylistItemDTO{
+		items := []playlist.PlaylistItem{
 			{Title: "graphite", Value: "graphite", Type: "dashboard_by_tag"},
 			{Title: "Backend response times", Value: "3", Type: "dashboard_by_id"},
 		}
@@ -44,7 +44,7 @@ func testIntegrationPlaylistDataAccess(t *testing.T, fn getStore) {
 		})
 
 		t.Run("Can update playlist", func(t *testing.T) {
-			items := []playlist.PlaylistItemDTO{
+			items := []playlist.PlaylistItem{
 				{Title: "influxdb", Value: "influxdb", Type: "dashboard_by_tag"},
 				{Title: "Backend response times", Value: "2", Type: "dashboard_by_id"},
 			}
@@ -66,7 +66,7 @@ func testIntegrationPlaylistDataAccess(t *testing.T, fn getStore) {
 	})
 
 	t.Run("Search playlist", func(t *testing.T) {
-		items := []playlist.PlaylistItemDTO{
+		items := []playlist.PlaylistItem{
 			{Title: "graphite", Value: "graphite", Type: "dashboard_by_tag"},
 			{Title: "Backend response times", Value: "3", Type: "dashboard_by_id"},
 		}

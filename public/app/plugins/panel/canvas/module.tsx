@@ -4,6 +4,7 @@ import { FrameState } from 'app/features/canvas/runtime/frame';
 import { CanvasPanel, InstanceState } from './CanvasPanel';
 import { getElementEditor } from './editor/elementEditor';
 import { getLayerEditor } from './editor/layerEditor';
+import { canvasMigrationHandler } from './migrations';
 import { PanelOptions } from './models.gen';
 
 export const addStandardCanvasEditorOptions = (builder: PanelOptionsEditorBuilder<PanelOptions>) => {
@@ -25,6 +26,7 @@ export const addStandardCanvasEditorOptions = (builder: PanelOptionsEditorBuilde
 export const plugin = new PanelPlugin<PanelOptions>(CanvasPanel)
   .setNoPadding() // extend to panel edges
   .useFieldConfig()
+  .setMigrationHandler(canvasMigrationHandler)
   .setPanelOptions((builder, context) => {
     const state: InstanceState = context.instanceState;
 

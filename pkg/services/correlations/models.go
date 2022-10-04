@@ -1,7 +1,9 @@
 package correlations
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 )
 
 var (
@@ -11,20 +13,49 @@ var (
 	ErrCorrelationFailedGenerateUniqueUid = errors.New("failed to generate unique correlation UID")
 	ErrCorrelationNotFound                = errors.New("correlation not found")
 	ErrUpdateCorrelationEmptyParams       = errors.New("not enough parameters to edit correlation")
+	ErrInvalidConfigType                  = errors.New("invalid correlation config type")
 )
 
-// CorrelationConfigTarget is the target data query specific to target data source (Correlation.TargetUID)
-// swagger:model
-type CorrelationConfigTarget interface{}
+type CorrelationConfigType string
+
+const (
+	ConfigTypeQuery CorrelationConfigType = "query"
+)
+
+func (t CorrelationConfigType) Validate() error {
+	if t != ConfigTypeQuery {
+		return fmt.Errorf("%s: \"%s\"", ErrInvalidConfigType, t)
+	}
+	return nil
+}
 
 // swagger:model
 type CorrelationConfig struct {
 	// Field used to attach the correlation link
 	// required:true
-	Field string `json:"field"`
+	Field string `json:"field" binding:"Required"`
+	// Target type
+	// required:true
+	Type CorrelationConfigType `json:"type" binding:"Required"`
 	// Target data query
 	// required:true
-	Target CorrelationConfigTarget `json:"target"`
+	Target map[string]interface{} `json:"target" binding:"Required"`
+}
+
+func (c CorrelationConfig) MarshalJSON() ([]byte, error) {
+	target := c.Target
+	if target == nil {
+		target = map[string]interface{}{}
+	}
+	return json.Marshal(struct {
+		Type   CorrelationConfigType  `json:"type"`
+		Field  string                 `json:"field"`
+		Target map[string]interface{} `json:"target"`
+	}{
+		Type:   ConfigTypeQuery,
+		Field:  c.Field,
+		Target: target,
+	})
 }
 
 // Correlation is the model for correlations definitions
@@ -38,7 +69,7 @@ type Correlation struct {
 	SourceUID string `json:"sourceUID" xorm:"pk 'source_uid'"`
 	// UID of the data source the correlation points to
 	// example:PE1C5CBDA0504A6A3
-	TargetUID string `json:"targetUID" xorm:"target_uid"`
+	TargetUID *string `json:"targetUID" xorm:"target_uid"`
 	// Label identifying the correlation
 	// example: My Label
 	Label string `json:"label" xorm:"label"`
@@ -67,7 +98,7 @@ type CreateCorrelationCommand struct {
 	SkipReadOnlyCheck bool   `json:"-"`
 	// Target data source UID to which the correlation is created
 	// example:PE1C5CBDA0504A6A3
-	TargetUID string `json:"targetUID" binding:"Required"`
+	TargetUID *string `json:"targetUID"`
 	// Optional label identifying the correlation
 	// example: My label
 	Label string `json:"label"`
@@ -76,7 +107,17 @@ type CreateCorrelationCommand struct {
 	Description string `json:"description"`
 	// Arbitrary configuration object handled in frontend
 	// example: { field: "job", target: { query: "job=app" } }
-	Config CorrelationConfig `json:"config"`
+	Config CorrelationConfig `json:"config" binding:"Required"`
+}
+
+func (c CreateCorrelationCommand) Validate() error {
+	if err := c.Config.Type.Validate(); err != nil {
+		return err
+	}
+	if c.TargetUID == nil && c.Config.Type == ConfigTypeQuery {
+		return fmt.Errorf("correlations of type \"%s\" must have a targetUID", ConfigTypeQuery)
+	}
+	return nil
 }
 
 // swagger:model
