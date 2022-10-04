@@ -65,7 +65,7 @@ export const Page: PageType = ({
       )}
       {layout === PageLayoutType.Canvas && (
         <CustomScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
-          <div className={styles.dashboardContent}>
+          <div className={styles.canvasContent}>
             {toolbar}
             {children}
           </div>
@@ -94,14 +94,16 @@ const getStyles = (theme: GrafanaTheme2) => {
     : '0 0.6px 1.5px -1px rgb(0 0 0 / 8%),0 2px 4px rgb(0 0 0 / 6%),0 5px 10px -1px rgb(0 0 0 / 5%)';
 
   return {
-    wrapper: css`
-      height: 100%;
-      display: flex;
-      flex: 1 1 0;
-      flex-direction: column;
-      min-height: 0;
-    `,
+    wrapper: css({
+      label: 'page-wrapper',
+      height: '100%',
+      display: 'flex',
+      flex: '1 1 0',
+      flexDirection: 'column',
+      minHeight: 0,
+    }),
     panes: css({
+      label: 'page-panes',
       display: 'flex',
       height: '100%',
       width: '100%',
@@ -113,9 +115,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     pageContent: css({
+      label: 'page-content',
       flexGrow: 1,
     }),
     pageInner: css({
+      label: 'page-inner',
       padding: theme.spacing(3),
       boxShadow: shadow,
       background: theme.colors.background.primary,
@@ -124,7 +128,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'column',
       flexGrow: 1,
     }),
-    dashboardContent: css({
+    canvasContent: css({
+      label: 'canvas-content',
       display: 'flex',
       flexDirection: 'column',
       padding: theme.spacing(2),
