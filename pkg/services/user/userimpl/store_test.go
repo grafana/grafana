@@ -6,8 +6,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -205,6 +208,44 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		err := userStore.UpdateLastSeenAt(context.Background(), &user.UpdateUserLastSeenAtCommand{})
 		require.NoError(t, err)
 	})
+
+	t.Run("get signed in user", func(t *testing.T) {
+		users := createFiveTestUsers(t, ss, func(i int) *user.CreateUserCommand {
+			return &user.CreateUserCommand{
+				Email:      fmt.Sprint("user", i, "@test.com"),
+				Name:       fmt.Sprint("user", i),
+				Login:      fmt.Sprint("loginuser", i),
+				IsDisabled: false,
+			}
+		})
+		err := ss.AddOrgUser(context.Background(), &models.AddOrgUserCommand{
+			LoginOrEmail: users[1].Login, Role: org.RoleViewer,
+			OrgId: users[0].OrgID, UserId: users[1].ID,
+		})
+		require.Nil(t, err)
+
+		err = updateDashboardACL(t, ss, 1, &models.DashboardACL{
+			DashboardID: 1, OrgID: users[0].OrgID, UserID: users[1].ID,
+			Permission: models.PERMISSION_EDIT,
+		})
+		require.Nil(t, err)
+
+		ss.CacheService.Flush()
+
+		query := &user.GetSignedInUserQuery{OrgID: users[1].OrgID, UserID: users[1].ID}
+		result, err := userStore.GetSignedInUser(context.Background(), query)
+		require.NoError(t, err)
+		require.Equal(t, result.Email, "user1@test.com")
+	})
+
+	t.Run("update user", func(t *testing.T) {
+		err := userStore.UpdateUser(context.Background(), &user.User{ID: 1, Name: "testtestest", Login: "loginloginlogin"})
+		require.NoError(t, err)
+		result, err := userStore.GetByID(context.Background(), 1)
+		require.NoError(t, err)
+		assert.Equal(t, result.Name, "testtestest")
+		assert.Equal(t, result.Login, "loginloginlogin")
+	})
 }
 
 func TestIntegrationUserUpdate(t *testing.T) {
@@ -288,4 +329,39 @@ func createFiveTestUsers(t *testing.T, sqlStore *sqlstore.SQLStore, fn func(i in
 	}
 
 	return users
+}
+
+// TODO: Use FakeDashboardStore when org has its own service
+func updateDashboardACL(t *testing.T, sqlStore *sqlstore.SQLStore, dashboardID int64, items ...*models.DashboardACL) error {
+	t.Helper()
+
+	err := sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		_, err := sess.Exec("DELETE FROM dashboard_acl WHERE dashboard_id=?", dashboardID)
+		if err != nil {
+			return fmt.Errorf("deleting from dashboard_acl failed: %w", err)
+		}
+
+		for _, item := range items {
+			item.Created = time.Now()
+			item.Updated = time.Now()
+			if item.UserID == 0 && item.TeamID == 0 && (item.Role == nil || !item.Role.IsValid()) {
+				return models.ErrDashboardACLInfoMissing
+			}
+
+			if item.DashboardID == 0 {
+				return models.ErrDashboardPermissionDashboardEmpty
+			}
+
+			sess.Nullable("user_id", "team_id")
+			if _, err := sess.Insert(item); err != nil {
+				return err
+			}
+		}
+
+		// Update dashboard HasACL flag
+		dashboard := models.Dashboard{HasACL: true}
+		_, err = sess.Cols("has_acl").Where("id=?", dashboardID).Update(&dashboard)
+		return err
+	})
+	return err
 }

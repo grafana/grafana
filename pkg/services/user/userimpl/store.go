@@ -3,6 +3,7 @@ package userimpl
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -27,6 +28,8 @@ type store interface {
 	Update(context.Context, *user.UpdateUserCommand) error
 	ChangePassword(context.Context, *user.ChangeUserPasswordCommand) error
 	UpdateLastSeenAt(context.Context, *user.UpdateUserLastSeenAtCommand) error
+	GetSignedInUser(context.Context, *user.GetSignedInUserQuery) (*user.SignedInUser, error)
+	UpdateUser(context.Context, *user.User) error
 }
 
 type sqlStore struct {
@@ -308,6 +311,79 @@ func (ss *sqlStore) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLa
 		}
 
 		_, err := sess.ID(cmd.UserID).Update(&user)
+		return err
+	})
+}
+
+func (ss *sqlStore) GetSignedInUser(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
+	var signedInUser user.SignedInUser
+	err := ss.db.WithDbSession(ctx, func(dbSess *sqlstore.DBSession) error {
+		orgId := "u.org_id"
+		if query.OrgID > 0 {
+			orgId = strconv.FormatInt(query.OrgID, 10)
+		}
+
+		var rawSQL = `SELECT
+		u.id                  as user_id,
+		u.is_admin            as is_grafana_admin,
+		u.email               as email,
+		u.login               as login,
+		u.name                as name,
+		u.is_disabled         as is_disabled,
+		u.help_flags1         as help_flags1,
+		u.last_seen_at        as last_seen_at,
+		(SELECT COUNT(*) FROM org_user where org_user.user_id = u.id) as org_count,
+		user_auth.auth_module as external_auth_module,
+		user_auth.auth_id     as external_auth_id,
+		org.name              as org_name,
+		org_user.role         as org_role,
+		org.id                as org_id
+		FROM ` + ss.dialect.Quote("user") + ` as u
+		LEFT OUTER JOIN user_auth on user_auth.user_id = u.id
+		LEFT OUTER JOIN org_user on org_user.org_id = ` + orgId + ` and org_user.user_id = u.id
+		LEFT OUTER JOIN org on org.id = org_user.org_id `
+
+		sess := dbSess.Table("user")
+		sess = sess.Context(ctx)
+		switch {
+		case query.UserID > 0:
+			sess.SQL(rawSQL+"WHERE u.id=?", query.UserID)
+		case query.Login != "":
+			if ss.cfg.CaseInsensitiveLogin {
+				sess.SQL(rawSQL+"WHERE LOWER(u.login)=LOWER(?)", query.Login)
+			} else {
+				sess.SQL(rawSQL+"WHERE u.login=?", query.Login)
+			}
+		case query.Email != "":
+			if ss.cfg.CaseInsensitiveLogin {
+				sess.SQL(rawSQL+"WHERE LOWER(u.email)=LOWER(?)", query.Email)
+			} else {
+				sess.SQL(rawSQL+"WHERE u.email=?", query.Email)
+			}
+		}
+		has, err := sess.Get(&signedInUser)
+		if err != nil {
+			return err
+		} else if !has {
+			return user.ErrUserNotFound
+		}
+
+		if signedInUser.OrgRole == "" {
+			signedInUser.OrgID = -1
+			signedInUser.OrgName = "Org missing"
+		}
+
+		if signedInUser.ExternalAuthModule != "oauth_grafana_com" {
+			signedInUser.ExternalAuthID = ""
+		}
+		return nil
+	})
+	return &signedInUser, err
+}
+
+func (ss *sqlStore) UpdateUser(ctx context.Context, user *user.User) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		_, err := sess.ID(user.ID).Update(user)
 		return err
 	})
 }

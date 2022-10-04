@@ -48,7 +48,7 @@ const getLogRowContextStyles = (theme: GrafanaTheme2, wrapLogMessage?: boolean) 
         top: 100%;
       `
     : css`
-        margin-top: 40px;
+        margin-top: 20px;
         width: 75%;
       `;
   return {
@@ -76,6 +76,10 @@ const getLogRowContextStyles = (theme: GrafanaTheme2, wrapLogMessage?: boolean) 
     logs: css`
       height: ${logsHeight}px;
       padding: 10px;
+
+      .scrollbar-view {
+        overscroll-behavior: contain;
+      }
     `,
     afterContext,
     beforeContext,

@@ -1,17 +1,10 @@
 import memoizeOne from 'memoize-one';
 import React, { PureComponent } from 'react';
 
-import {
-  TimeZone,
-  LogsDedupStrategy,
-  LogRowModel,
-  Field,
-  LinkModel,
-  LogsSortOrder,
-  sortLogRows,
-  CoreApp,
-} from '@grafana/data';
+import { TimeZone, LogsDedupStrategy, LogRowModel, Field, LinkModel, LogsSortOrder, CoreApp } from '@grafana/data';
 import { withTheme2, Themeable2 } from '@grafana/ui';
+
+import { sortLogRows } from '../utils';
 
 //Components
 import { LogRow } from './LogRow';
@@ -35,6 +28,7 @@ export interface Props extends Themeable2 {
   forceEscape?: boolean;
   showDetectedFields?: string[];
   app?: CoreApp;
+  scrollElement?: HTMLDivElement;
   showContextToggle?: (row?: LogRowModel) => boolean;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
@@ -124,6 +118,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       forceEscape,
       onLogRowHover,
       app,
+      scrollElement,
     } = this.props;
     const { renderAll, contextIsOpen } = this.state;
     const { logsRowsTable } = getLogRowStyles(theme);
@@ -173,6 +168,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 toggleContextIsOpen={this.toggleContextIsOpen}
                 onLogRowHover={onLogRowHover}
                 app={app}
+                scrollElement={scrollElement}
               />
             ))}
           {hasData &&
@@ -203,6 +199,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 toggleContextIsOpen={this.toggleContextIsOpen}
                 onLogRowHover={onLogRowHover}
                 app={app}
+                scrollElement={scrollElement}
               />
             ))}
           {hasData && !renderAll && (
