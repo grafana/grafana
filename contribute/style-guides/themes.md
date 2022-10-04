@@ -93,7 +93,7 @@ Example use cases:
 | -------------------------- | ------------------------------------------------------------ |
 | theme.colors.border.weak   | Primary border for panels and panes and other subtle borders |
 | theme.colors.border.medium | For stronger borders like inputs                             |
-| theme.colors.border.strong | For even stronger border like hover highighted border        |
+| theme.colors.border.strong | For even stronger border like hover highlighted border       |
 
 ### Actions
 
