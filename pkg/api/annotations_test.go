@@ -390,8 +390,8 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 	dashboardAnnotation := &annotations.Item{Id: 1, DashboardId: 1}
 	organizationAnnotation := &annotations.Item{Id: 2, DashboardId: 0}
 
-	_ = sc.hs.annotationsRepo.Save(context.Background(), dashboardAnnotation)
-	_ = sc.hs.annotationsRepo.Save(context.Background(), organizationAnnotation)
+	_ = sc.hs.AnnotationsRepo.Save(context.Background(), dashboardAnnotation)
+	_ = sc.hs.AnnotationsRepo.Save(context.Background(), organizationAnnotation)
 
 	postOrganizationCmd := dtos.PostAnnotationsCmd{
 		Time:    1000,
@@ -714,7 +714,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			setUpRBACGuardian(t)
 			sc.acmock.
-				RegisterScopeAttributeResolver(AnnotationTypeScopeResolver(sc.hs.annotationsRepo))
+				RegisterScopeAttributeResolver(AnnotationTypeScopeResolver(sc.hs.AnnotationsRepo))
 			setAccessControlPermissions(sc.acmock, tt.args.permissions, sc.initCtx.OrgID)
 
 			r := callAPI(sc.server, tt.args.method, tt.args.url, tt.args.body, t)
@@ -910,8 +910,8 @@ func TestAPI_MassDeleteAnnotations_AccessControl(t *testing.T) {
 			dashboardAnnotation := &annotations.Item{Id: 1, DashboardId: 1}
 			organizationAnnotation := &annotations.Item{Id: 2, DashboardId: 0}
 
-			_ = sc.hs.annotationsRepo.Save(context.Background(), dashboardAnnotation)
-			_ = sc.hs.annotationsRepo.Save(context.Background(), organizationAnnotation)
+			_ = sc.hs.AnnotationsRepo.Save(context.Background(), dashboardAnnotation)
+			_ = sc.hs.AnnotationsRepo.Save(context.Background(), organizationAnnotation)
 
 			r := callAPI(sc.server, tt.args.method, tt.args.url, tt.args.body, t)
 			assert.Equalf(t, tt.want, r.Code, "Annotations API(%v)", tt.args.url)

@@ -62,6 +62,7 @@ func (api *Api) RegisterAPIEndpoints() {
 	// public endpoints
 	api.RouteRegister.Get("/api/public/dashboards/:accessToken", routing.Wrap(api.GetPublicDashboard))
 	api.RouteRegister.Post("/api/public/dashboards/:accessToken/panels/:panelId/query", routing.Wrap(api.QueryPublicDashboard))
+	api.RouteRegister.Get("/api/public/dashboards/:accessToken/annotations", routing.Wrap(api.GetAnnotations))
 
 	// Create/Update Public Dashboard
 	uidScope := dashboards.ScopeDashboardsProvider.GetResourceScopeUID(accesscontrol.Parameter(":uid"))
@@ -172,6 +173,23 @@ func (api *Api) QueryPublicDashboard(c *models.ReqContext) response.Response {
 	}
 
 	return toJsonStreamingResponse(api.Features, resp)
+}
+
+func (api *Api) GetAnnotations(c *models.ReqContext) response.Response {
+	from, err := strconv.ParseInt(c.Req.URL.Query().Get("from"), 10, 64)
+	to, err := strconv.ParseInt(c.Req.URL.Query().Get("to"), 10, 64)
+	reqDTO := AnnotationsQueryDTO{
+		From: from,
+		To:   to,
+	}
+
+	annotations, err := api.PublicDashboardService.GetAnnotations(c.Req.Context(), reqDTO, web.Params(c.Req)[":accessToken"])
+
+	if err != nil {
+		return api.handleError(http.StatusInternalServerError, "error getting public dashboard annotations", err)
+	}
+
+	return response.JSON(http.StatusOK, annotations)
 }
 
 // util to help us unpack dashboard and publicdashboard errors or use default http code and message

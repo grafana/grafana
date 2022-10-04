@@ -127,6 +127,11 @@ type PublicDashboardQueryDTO struct {
 	MaxDataPoints int64
 }
 
+type AnnotationsQueryDTO struct {
+	From int64
+	To   int64
+}
+
 //
 // COMMANDS
 //

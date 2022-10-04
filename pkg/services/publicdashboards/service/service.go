@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
@@ -30,6 +31,7 @@ type PublicDashboardServiceImpl struct {
 	store              publicdashboards.Store
 	intervalCalculator intervalv2.Calculator
 	QueryDataService   *query.Service
+	AnnotationsService annotations.Repository
 }
 
 var LogPrefix = "publicdashboards.service"
@@ -44,6 +46,7 @@ func ProvideService(
 	cfg *setting.Cfg,
 	store publicdashboards.Store,
 	qds *query.Service,
+	anno annotations.Repository,
 ) *PublicDashboardServiceImpl {
 	return &PublicDashboardServiceImpl{
 		log:                log.New(LogPrefix),
@@ -51,6 +54,7 @@ func ProvideService(
 		store:              store,
 		intervalCalculator: intervalv2.NewCalculator(),
 		QueryDataService:   qds,
+		AnnotationsService: anno,
 	}
 }
 
@@ -236,6 +240,36 @@ func (pd *PublicDashboardServiceImpl) GetMetricRequest(ctx context.Context, dash
 	}
 
 	return metricReqDTO, nil
+}
+
+func (pd *PublicDashboardServiceImpl) GetAnnotations(ctx context.Context, reqDTO AnnotationsQueryDTO, accessToken string) ([]*annotations.ItemDTO, error) {
+	_, dash, err := pd.GetPublicDashboard(ctx, accessToken)
+	if err != nil {
+		return nil, err
+	}
+
+	anonymousUser, err := pd.BuildAnonymousUser(ctx, dash)
+	if err != nil {
+		return nil, err
+	}
+
+	annoQuery := &annotations.ItemQuery{
+		From:         reqDTO.From,
+		To:           reqDTO.To,
+		OrgId:        dash.OrgId,
+		DashboardId:  dash.Id,
+		DashboardUid: dash.Uid,
+		Limit:        100,
+		MatchAny:     false,
+		SignedInUser: anonymousUser,
+	}
+
+	annotationItems, err := pd.AnnotationsService.Find(ctx, annoQuery)
+	if err != nil {
+		return nil, err
+	}
+
+	return annotationItems, nil
 }
 
 // buildMetricRequest merges public dashboard parameters with
