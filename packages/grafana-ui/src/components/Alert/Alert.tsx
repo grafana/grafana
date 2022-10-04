@@ -110,7 +110,6 @@ const getStyles = (
 
   return {
     alert: css`
-      flex-grow: 1;
       position: relative;
       border-radius: ${borderRadius};
       display: flex;
