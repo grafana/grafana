@@ -76,11 +76,11 @@ message ObjectVersionInfo {
   // The version will change when the object is saved. It is not necessarily sortable
   string version = 1;
 
-  // Time in epoch milliseconds that the object was created
-  int64 created = 2;
+  // Time in epoch milliseconds that the object was modified
+  int64 modified = 2;
 
-  // Who created the object
-  UserInfo created_by = 3;
+  // Who modified the object
+  UserInfo modified_by = 3;
 
   // Content Length
   int64 size = 4;

@@ -90,8 +90,8 @@ func (i dummyObjectServer) findObject(ctx context.Context, uid string, kind stri
 				Kind:       obj.Kind,
 				Created:    obj.Created,
 				CreatedBy:  obj.CreatedBy,
-				Modified:   objVersion.Created,   // Version creation is raw modification
-				ModifiedBy: objVersion.CreatedBy, // Version creation is raw modification
+				Modified:   objVersion.Modified,
+				ModifiedBy: objVersion.ModifiedBy,
 				ETag:       objVersion.ETag,
 				Version:    objVersion.Version,
 
@@ -182,12 +182,12 @@ func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequ
 		versionInfo := &ObjectVersionWithBody{
 			Body: r.Body,
 			ObjectVersionInfo: &object.ObjectVersionInfo{
-				Version:   updated.Version,
-				Created:   updated.Modified,
-				CreatedBy: updated.ModifiedBy,
-				Size:      updated.Size,
-				ETag:      updated.ETag,
-				Comment:   r.Comment,
+				Version:    updated.Version,
+				Modified:   updated.Modified,
+				ModifiedBy: updated.ModifiedBy,
+				Size:       updated.Size,
+				ETag:       updated.ETag,
+				Comment:    r.Comment,
 			},
 		}
 		rsp.Object = versionInfo.ObjectVersionInfo
@@ -241,12 +241,12 @@ func (i dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectRequ
 	}
 
 	info := &object.ObjectVersionInfo{
-		Version:   rawObj.Version,
-		Created:   rawObj.Created,
-		CreatedBy: rawObj.CreatedBy,
-		Size:      rawObj.Size,
-		ETag:      rawObj.ETag,
-		Comment:   r.Comment,
+		Version:    rawObj.Version,
+		Modified:   rawObj.Modified,
+		ModifiedBy: rawObj.ModifiedBy,
+		Size:       rawObj.Size,
+		ETag:       rawObj.ETag,
+		Comment:    r.Comment,
 	}
 
 	newObj := &RawObjectWithHistory{

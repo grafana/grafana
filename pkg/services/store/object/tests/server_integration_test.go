@@ -32,11 +32,11 @@ type rawObjectMatcher struct {
 }
 
 type objectVersionMatcher struct {
-	createdRange []time.Time
-	createdBy    *object.UserInfo
-	version      *string
-	etag         *string
-	comment      *string
+	modifiedRange []time.Time
+	modifiedBy    *object.UserInfo
+	version       *string
+	etag          *string
+	comment       *string
 }
 
 func userInfoMatches(expected *object.UserInfo, actual *object.UserInfo) (bool, string) {
@@ -79,7 +79,7 @@ func requireObjectMatch(t *testing.T, obj *object.RawObject, m rawObjectMatcher)
 	}
 
 	if len(m.modifiedRange) == 2 && !timestampInRange(obj.Modified, m.modifiedRange) {
-		mismatches += fmt.Sprintf("expected createdBy range: [from %s to %s], actual created: %s\n", m.createdRange[0], m.createdRange[1], time.Unix(obj.Created, 0))
+		mismatches += fmt.Sprintf("expected createdBy range: [from %s to %s], actual created: %s\n", m.modifiedRange[0], m.modifiedRange[1], time.Unix(obj.Modified, 0))
 	}
 
 	if m.createdBy != nil {
@@ -121,14 +121,14 @@ func requireVersionMatch(t *testing.T, obj *object.ObjectVersionInfo, m objectVe
 		mismatches += fmt.Sprintf("expected etag: %s, actual etag: %s\n", *m.etag, obj.ETag)
 	}
 
-	if len(m.createdRange) == 2 && !timestampInRange(obj.Created, m.createdRange) {
-		mismatches += fmt.Sprintf("expected createdBy range: [from %s to %s], actual created: %s\n", m.createdRange[0], m.createdRange[1], time.Unix(obj.Created, 0))
+	if len(m.modifiedRange) == 2 && !timestampInRange(obj.Modified, m.modifiedRange) {
+		mismatches += fmt.Sprintf("expected createdBy range: [from %s to %s], actual created: %s\n", m.modifiedRange[0], m.modifiedRange[1], time.Unix(obj.Modified, 0))
 	}
 
-	if m.createdBy != nil {
-		userInfoMatches, msg := userInfoMatches(m.createdBy, obj.CreatedBy)
+	if m.modifiedBy != nil {
+		userInfoMatches, msg := userInfoMatches(m.modifiedBy, obj.ModifiedBy)
 		if !userInfoMatches {
-			mismatches += fmt.Sprintf("createdBy: %s\n", msg)
+			mismatches += fmt.Sprintf("modifiedBy: %s\n", msg)
 		}
 	}
 
@@ -180,10 +180,10 @@ func TestObjectServer(t *testing.T) {
 		require.NoError(t, err)
 
 		versionMatcher := objectVersionMatcher{
-			createdRange: []time.Time{before, time.Now()},
-			createdBy:    fakeUser,
-			version:      &firstVersion,
-			comment:      &writeReq.Comment,
+			modifiedRange: []time.Time{before, time.Now()},
+			modifiedBy:    fakeUser,
+			version:       &firstVersion,
+			comment:       &writeReq.Comment,
 		}
 		requireVersionMatch(t, writeResp.Object, versionMatcher)
 
