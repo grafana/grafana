@@ -4,7 +4,6 @@ import (
 	"io"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
@@ -74,15 +73,26 @@ func (s *httpObjectStore) doGetObject(c *models.ReqContext) response.Response {
 		WithSummary: true,              // ?? allow false?
 	})
 	if err != nil {
-		return response.Error(500, "?", err)
+		return response.Error(500, "error fetching object", err)
 	}
 	if rsp.Object == nil {
-		rsp.Object = &RawObject{
-			UID:      uid,
-			Kind:     "missing!",
-			Modified: time.Now().UnixMilli(),
-		}
+		return response.Error(404, "not found", nil)
 	}
+
+	// Configure etag support
+	currentEtag := rsp.Object.ETag
+	previousEtag := c.Req.Header.Get("If-None-Match")
+	if previousEtag == currentEtag {
+		return response.CreateNormalResponse(
+			http.Header{
+				"ETag": []string{rsp.Object.ETag},
+			},
+			[]byte{},               // nothing
+			http.StatusNotModified, // 304
+		)
+	}
+
+	c.Resp.Header().Set("ETag", currentEtag)
 	return response.JSON(200, rsp)
 }
 
@@ -99,9 +109,23 @@ func (s *httpObjectStore) doGetRawObject(c *models.ReqContext) response.Response
 		return response.Error(500, "?", err)
 	}
 	if rsp.Object != nil && rsp.Object.Body != nil {
+		// Configure etag support
+		currentEtag := rsp.Object.ETag
+		previousEtag := c.Req.Header.Get("If-None-Match")
+		if previousEtag == currentEtag {
+			return response.CreateNormalResponse(
+				http.Header{
+					"ETag": []string{rsp.Object.ETag},
+				},
+				[]byte{},               // nothing
+				http.StatusNotModified, // 304
+			)
+		}
+
 		return response.CreateNormalResponse(
 			http.Header{
 				"Content-Type": []string{"application/json"}, // TODO, based on kind!!!
+				"ETag":         []string{currentEtag},
 			},
 			rsp.Object.Body,
 			200,
