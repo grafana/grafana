@@ -151,7 +151,7 @@ export const PromSettings = (props: Props) => {
         console.warn('Error fetching version from buildinfo API, user must manually select version!', error);
       });
 
-    //@todo is there a way around adding this?
+    // @todo is there a way around adding this? Adding the options object (as suggested in the lint error) results in an infinite loop
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options.jsonData?.prometheusFlavor]);
 
