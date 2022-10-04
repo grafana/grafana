@@ -171,12 +171,12 @@ func (auth *AuthModuleConversion) ToDB() ([]byte, error) {
 }
 
 type DisableUserCommand struct {
-	UserID     int64
+	UserID     int64 `xorm:"user_id"`
 	IsDisabled bool
 }
 
 type BatchDisableUsersCommand struct {
-	UserIDs    []int64
+	UserIDs    []int64 `xorm:"user_ids"`
 	IsDisabled bool
 }
 
