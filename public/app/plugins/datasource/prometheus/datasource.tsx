@@ -53,7 +53,6 @@ import { getOriginalMetricName, transform, transformV2 } from './result_transfor
 import {
   ExemplarTraceIdDestination,
   PromDataErrorResponse,
-  PromDatasourceConfigFlavorValues,
   PromDataSuccessResponse,
   PromExemplarData,
   PromMatrixData,
@@ -90,7 +89,7 @@ export class PrometheusDatasource
   exemplarTraceIdDestinations: ExemplarTraceIdDestination[] | undefined;
   lookupsDisabled: boolean;
   customQueryParameters: any;
-  datasourceConfigurationPrometheusFlavor?: PromDatasourceConfigFlavorValues;
+  datasourceConfigurationPrometheusFlavor?: PromApplication;
   datasourceConfigurationPrometheusVersion?: string;
   exemplarsAvailable: boolean;
   subType: PromApplication;
@@ -849,11 +848,6 @@ export class PrometheusDatasource
       { requestId: query.requestId, headers: query.headers }
     );
   }
-  //
-  // async getSubtitle(): Promise<JSX.Element | null> {
-  //   const buildInfo = await this.getBuildInfo();
-  //   return buildInfo ? this.getBuildInfoMessage(buildInfo) : null;
-  // }
 
   async getTagKeys(options?: any) {
     if (options?.series) {

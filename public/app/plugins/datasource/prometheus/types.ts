@@ -1,5 +1,7 @@
 import { DataQuery, DataSourceJsonData, QueryResultMeta, ScopedVars } from '@grafana/data';
 
+import { PromApplication } from '../../../types/unified-alerting-dto';
+
 import { QueryEditorMode } from './querybuilder/shared/types';
 
 export interface PromQuery extends DataQuery {
@@ -22,8 +24,6 @@ export interface PromQuery extends DataQuery {
   editorMode?: QueryEditorMode;
 }
 
-export type PromDatasourceConfigFlavorValues = 'Prometheus' | 'Cortex' | 'Mimir' | 'Thanos';
-
 export interface PromOptions extends DataSourceJsonData {
   timeInterval?: string;
   queryTimeout?: string;
@@ -32,7 +32,7 @@ export interface PromOptions extends DataSourceJsonData {
   customQueryParameters?: string;
   disableMetricsLookup?: boolean;
   exemplarTraceIdDestinations?: ExemplarTraceIdDestination[];
-  prometheusFlavor?: PromDatasourceConfigFlavorValues;
+  prometheusFlavor?: PromApplication;
   prometheusVersion?: string;
 }
 
