@@ -18,7 +18,7 @@ import {
   regexValidation,
 } from '@grafana/ui';
 
-import { PromApplication } from '../../../../types/unified-alerting-dto';
+import { PromApplication, PromBuildInfoResponse } from '../../../../types/unified-alerting-dto';
 import { PromOptions } from '../types';
 
 import { ExemplarsSettings } from './ExemplarsSettings';
@@ -31,7 +31,7 @@ const httpOptions = [
   { value: 'GET', label: 'GET' },
 ];
 
-const prometheusFlavors: Array<{ value: PromApplication; label: PromApplication }> = [
+const prometheusFlavorSelectItems: Array<{ value: PromApplication; label: PromApplication }> = [
   { value: PromApplication.Prometheus, label: PromApplication.Prometheus },
   { value: PromApplication.Cortex, label: PromApplication.Cortex },
   { value: PromApplication.Mimir, label: PromApplication.Mimir },
@@ -39,17 +39,6 @@ const prometheusFlavors: Array<{ value: PromApplication; label: PromApplication 
 ];
 
 type Props = Pick<DataSourcePluginOptionsEditorProps<PromOptions>, 'options' | 'onOptionsChange'>;
-
-interface VersionDetectionResponse {
-  data?: {
-    branch?: string;
-    buildDate?: string;
-    buildUser?: string;
-    goVersion?: string;
-    revision?: string;
-    version?: string;
-  };
-}
 
 /**
  * Returns the closest version to what the user provided that we have in our PromFlavorVersions for the currently selected flavor
@@ -78,7 +67,7 @@ const getVersionString = (version: string, flavor?: string): string | undefined 
   if (closestVersion) {
     const differenceBetweenActualAndClosest = semver.diff(closestVersion, version);
 
-    if (['minor', 'preminor', 'patch', 'prepatch', 'prerelease', null].includes(differenceBetweenActualAndClosest)) {
+    if (['patch', 'prepatch', 'prerelease', null].includes(differenceBetweenActualAndClosest)) {
       return closestVersion;
     }
   }
@@ -87,12 +76,12 @@ const getVersionString = (version: string, flavor?: string): string | undefined 
 };
 
 const setPrometheusVersion = (
-  options: DataSourceSettings<PromOptions, {}>,
-  onOptionsChange: (options: DataSourceSettings<PromOptions, {}>) => void
+  options: DataSourceSettings<PromOptions>,
+  onOptionsChange: (options: DataSourceSettings<PromOptions>) => void
 ) => {
   getBackendSrv()
     .get(`/api/datasources/${options.id}/resources/version-detect`)
-    .then((rawResponse: VersionDetectionResponse) => {
+    .then((rawResponse: PromBuildInfoResponse) => {
       if (rawResponse.data?.version && semver.valid(rawResponse.data?.version)) {
         onOptionsChange({
           ...options,
@@ -191,8 +180,8 @@ export const PromSettings = (props: Props) => {
               inputEl={
                 <Select
                   aria-label="Prometheus Flavor"
-                  options={prometheusFlavors}
-                  value={prometheusFlavors.find((o) => o.value === options.jsonData.prometheusFlavor)}
+                  options={prometheusFlavorSelectItems}
+                  value={prometheusFlavorSelectItems.find((o) => o.value === options.jsonData.prometheusFlavor)}
                   onChange={onChangeHandler(
                     'prometheusFlavor',
                     {

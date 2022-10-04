@@ -1,7 +1,7 @@
 export const PromFlavorVersions: { [index: string]: Array<{ value?: string; label: string }> } = {
   Prometheus: [
     { value: undefined, label: 'Please select' },
-    { value: '0.0.0', label: '< 2.14.x' },
+    { value: '2.0.0', label: '< 2.14.x' },
     { value: '2.14.0', label: '2.14.x' },
     { value: '2.15.0', label: '2.15.x' },
     { value: '2.16.0', label: '2.16.x' },
@@ -39,7 +39,7 @@ export const PromFlavorVersions: { [index: string]: Array<{ value?: string; labe
     { value: '2.1.0', label: '2.1.x' },
     { value: '2.2.0', label: '2.2.x' },
     { value: '2.3.0', label: '2.3.x' },
-    { value: '2.3.1', label: '> 2.3.x' },
+    { value: '2.4.0', label: '> 2.3.x' },
   ],
   Thanos: [
     { value: undefined, label: 'Please select' },

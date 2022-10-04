@@ -54,6 +54,7 @@ export enum PromRuleType {
   Alerting = 'alerting',
   Recording = 'recording',
 }
+
 export enum PromApplication {
   Cortex = 'Cortex',
   Mimir = 'Mimir',
