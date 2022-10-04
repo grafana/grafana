@@ -12,7 +12,7 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 		Columns: []*migrator.Column{
 			// Object key contains everything required to make it unique across all instances
 			// orgId+kind+uid+scope?
-			{Name: "key", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false},
+			{Name: "key", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false, IsPrimaryKey: true},
 
 			// If objects are organized into folders (ie '/' exists in the uid),
 			// this will optimize the common use case of listing all files in a folder
@@ -45,19 +45,19 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 		PrimaryKeys: []string{"key"},
 		Indices: []*migrator.Index{
 			{Cols: []string{"parent_folder_key"}}, // list in folder
-			{Cols: []string{"content_type"}},      // filter by type
+			{Cols: []string{"kind"}},              // filter by type
 		},
 	}
 
 	objectLabelsTable := migrator.Table{
 		Name: "object_labels",
 		Columns: []*migrator.Column{
-			{Name: "key", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false},
+			{Name: "object_key", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false},
 			{Name: "label", Type: migrator.DB_NVarchar, Length: 191, Nullable: false},
 			{Name: "value", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false},
 		},
 		Indices: []*migrator.Index{
-			{Cols: []string{"key", "label"}, Type: migrator.UniqueIndex},
+			{Cols: []string{"object_key", "label"}, Type: migrator.UniqueIndex},
 		},
 	}
 
@@ -65,23 +65,23 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 		Name: "object_ref",
 		Columns: []*migrator.Column{
 			// FROM:
-			{Name: "key", Type: migrator.DB_NVarchar, Length: 64, Nullable: false},
+			{Name: "object_key", Type: migrator.DB_NVarchar, Length: 64, Nullable: false},
 
 			// TO:
 			{Name: "kind", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "type", Type: migrator.DB_NVarchar, Length: 255, Nullable: true},
-			{Name: "uid", Type: migrator.DB_NVarchar, Length: 1024, Nullable: true}, // key? (must join?)
+			{Name: "uid", Type: migrator.DB_NVarchar, Length: 1024, Nullable: true}, // key? (must join?) target_key?
 		},
 		Indices: []*migrator.Index{
-			{Cols: []string{"path_hash"}, Type: migrator.UniqueIndex},
+			{Cols: []string{"object_key"}, Type: migrator.UniqueIndex},
 		},
 	}
 
 	objectHistoryTable := migrator.Table{
 		Name: "object_history",
 		Columns: []*migrator.Column{
-			{Name: "version", Type: migrator.DB_NVarchar, Length: 128, Nullable: true},
 			{Name: "key", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false},
+			{Name: "version", Type: migrator.DB_NVarchar, Length: 128, Nullable: true},
 
 			// Raw bytes
 			{Name: "size", Type: migrator.DB_BigInt, Nullable: false},

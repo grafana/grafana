@@ -124,7 +124,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/star/starimpl"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/object"
-	objectdummyserver "github.com/grafana/grafana/pkg/services/store/object/dummy"
+	//	objectdummyserver "github.com/grafana/grafana/pkg/services/store/object/dummy"
+	objectsqlserver "github.com/grafana/grafana/pkg/services/store/object/sqlstash"
 	"github.com/grafana/grafana/pkg/services/store/sanitizer"
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
@@ -351,7 +352,8 @@ var wireBasicSet = wire.NewSet(
 	grpcserver.ProvideHealthService,
 	grpcserver.ProvideReflectionService,
 	interceptors.ProvideAuthenticator,
-	objectdummyserver.ProvideDummyObjectServer,
+	//	objectdummyserver.ProvideDummyObjectServer,
+	objectsqlserver.ProvideSQLObjectServer,
 	object.ProvideHTTPObjectStore,
 	teamimpl.ProvideService,
 	tempuserimpl.ProvideService,
