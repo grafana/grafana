@@ -232,6 +232,33 @@ func main() {
 						},
 					},
 				},
+				{
+					Name:   "github",
+					Usage:  "Publish packages to GitHub releases",
+					Action: PublishGitHub,
+					Flags: []cli.Flag{
+						&dryRunFlag,
+						&cli.StringFlag{
+							Name:     "path",
+							Required: true,
+							Usage:    "Path to the asset to be published",
+						},
+						&cli.StringFlag{
+							Name:     "repo",
+							Required: true,
+							Usage:    "GitHub repository",
+						},
+						&cli.StringFlag{
+							Name:     "tag",
+							Required: true,
+							Usage:    "Release tag",
+						},
+						&cli.BoolFlag{
+							Name:  "create",
+							Usage: "Create release if it doesn't exist",
+						},
+					},
+				},
 			},
 		},
 	}
