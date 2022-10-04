@@ -11,6 +11,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 12px;
     list-style: none;
+    margin-bottom: 80px;
   `,
   card: css`
     height: 90px;
