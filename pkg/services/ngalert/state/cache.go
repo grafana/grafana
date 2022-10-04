@@ -33,12 +33,14 @@ func newCache() *cache {
 func (c *cache) getOrCreate(ctx context.Context, log log.Logger, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, externalURL *url.URL) *State {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
+	var orgStates map[string]*ruleStates
 	var ok bool
-	if _, ok = c.states[alertRule.OrgID]; !ok {
-		c.states[alertRule.OrgID] = make(map[string]*ruleStates)
+	if orgStates, ok = c.states[alertRule.OrgID]; !ok {
+		orgStates = make(map[string]*ruleStates)
+		c.states[alertRule.OrgID] = orgStates
 	}
 	var states *ruleStates
-	if states, ok = c.states[alertRule.OrgID][alertRule.UID]; !ok {
+	if states, ok = orgStates[alertRule.UID]; !ok {
 		states = &ruleStates{states: make(map[string]*State)}
 		c.states[alertRule.OrgID][alertRule.UID] = states
 	}
