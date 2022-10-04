@@ -38,6 +38,21 @@ export const components = {
       cancel: {
         button: 'data-testid resource-picker-cancel',
       },
+      advanced: {
+        collapse: 'data-testid resource-picker-advanced',
+        subscription: {
+          input: 'data-testid resource-picker-subscription',
+        },
+        resourceGroup: {
+          input: 'data-testid resource-picker-resource-group',
+        },
+        namespace: {
+          input: 'data-testid resource-picker-namespace',
+        },
+        resource: {
+          input: 'data-testid resource-picker-resource',
+        },
+      },
     },
     metricsQueryEditor: {
       metricName: {
@@ -53,6 +68,23 @@ export const components = {
       container: {
         input: 'data-testid azure-monitor-arg-query-editor-with-experimental-ui',
       },
+    },
+  },
+  variableEditor: {
+    queryType: {
+      input: 'data-testid query-type',
+    },
+    subscription: {
+      input: 'data-testid subscription',
+    },
+    resourceGroup: {
+      input: 'data-testid resource-group',
+    },
+    namespace: {
+      input: 'data-testid namespace',
+    },
+    resource: {
+      input: 'data-testid resource',
     },
   },
 };

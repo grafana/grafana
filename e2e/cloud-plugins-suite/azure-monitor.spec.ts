@@ -4,10 +4,12 @@ import { e2e } from '@grafana/e2e';
 import {
   AzureDataSourceJsonData,
   AzureDataSourceSecureJsonData,
+  AzureQueryType,
 } from '../../public/app/plugins/datasource/grafana-azure-monitor-datasource/types';
 
 import EXAMPLE_DASHBOARD from './example-dashboards/azure-monitor.json';
 import { selectors } from '../../public/app/plugins/datasource/grafana-azure-monitor-datasource/e2e/selectors';
+import { getScenarioContext } from '@grafana/e2e/src/support';
 
 const provisioningPath = `../../provisioning/datasources/azmonitor-ds.yaml`;
 const e2eSelectors = e2e.getSelectors(selectors.components);
@@ -141,6 +143,114 @@ e2e.scenario({
               "Resources | where resourceGroup == 'cloud-plugins-e2e-test' | project name, resourceGroup"
             );
             e2e.components.PanelEditor.toggleTableView().click({ force: true });
+          },
+        });
+      });
+  },
+});
+
+const addAzureMonitorVariable = (
+  name: string,
+  type: AzureQueryType,
+  isFirst: boolean,
+  options?: { subscription?: string; resourceGroup?: string; namespace?: string; resource?: string }
+) => {
+  e2e.components.PageToolbar.item('Dashboard settings').click();
+  e2e.components.Tab.title('Variables').click();
+  if (isFirst) {
+    e2e.pages.Dashboard.Settings.Variables.List.addVariableCTAV2().click();
+  } else {
+    e2e.pages.Dashboard.Settings.Variables.List.newButton().click();
+  }
+  e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2().clear().type(name);
+  getScenarioContext().then(({ lastAddedDataSource }: any) => {
+    e2e().log(lastAddedDataSource);
+    e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect().type(
+      `${lastAddedDataSource}{enter}`
+    );
+  });
+  e2eSelectors.variableEditor.queryType
+    .input()
+    .find('input')
+    .type(`${type.replace('Azure', '').trim()}{enter}`);
+  switch (type) {
+    case AzureQueryType.ResourceGroupsQuery:
+      e2eSelectors.variableEditor.subscription.input().find('input').type(`${options?.subscription}{enter}`);
+      break;
+    case AzureQueryType.NamespacesQuery:
+      e2eSelectors.variableEditor.subscription.input().find('input').type(`${options?.subscription}{enter}`);
+      e2eSelectors.variableEditor.resourceGroup.input().find('input').type(`${options?.resourceGroup}{enter}`);
+      break;
+    case AzureQueryType.ResourceNamesQuery:
+      e2eSelectors.variableEditor.subscription.input().find('input').type(`${options?.subscription}{enter}`);
+      e2eSelectors.variableEditor.resourceGroup.input().find('input').type(`${options?.resourceGroup}{enter}`);
+      e2eSelectors.variableEditor.namespace.input().find('input').type(`${options?.namespace}{enter}`);
+      break;
+    case AzureQueryType.MetricNamesQuery:
+      e2eSelectors.variableEditor.subscription.input().find('input').type(`${options?.subscription}{enter}`);
+      e2eSelectors.variableEditor.resourceGroup.input().find('input').type(`${options?.resourceGroup}{enter}`);
+      e2eSelectors.variableEditor.namespace.input().find('input').type(`${options?.namespace}{enter}`);
+      e2eSelectors.variableEditor.resource.input().find('input').type(`${options?.resource}{enter}`);
+      break;
+  }
+  e2e.pages.Dashboard.Settings.Variables.Edit.General.submitButton().click();
+  e2e.components.PageToolbar.item('Go Back').click();
+};
+
+e2e.scenario({
+  describeName: 'Create dashboard with template variables',
+  itName: 'creates a dashboard that includes a template variable',
+  scenario: () => {
+    e2e()
+      .readFile(provisioningPath)
+      .then((azMonitorProvision: string) => {
+        const yaml = load(azMonitorProvision) as AzureMonitorProvision;
+        provisionAzureMonitorDatasources([yaml]);
+        e2e.flows.addDashboard({
+          timeRange: {
+            from: '2022-10-03 00:00:00',
+            to: '2022-10-03 23:59:59',
+            zone: 'Coordinated Universal Time',
+          },
+        });
+        addAzureMonitorVariable('subscription', AzureQueryType.SubscriptionsQuery, true);
+        addAzureMonitorVariable('resourceGroups', AzureQueryType.ResourceGroupsQuery, false, {
+          subscription: '$subscription',
+        });
+        addAzureMonitorVariable('namespaces', AzureQueryType.NamespacesQuery, false, {
+          subscription: '$subscription',
+          resourceGroup: '$resourceGroups',
+        });
+        addAzureMonitorVariable('resource', AzureQueryType.ResourceNamesQuery, false, {
+          subscription: '$subscription',
+          resourceGroup: '$resourceGroups',
+          namespace: '$namespace',
+        });
+        e2e.pages.Dashboard.SubMenu.submenuItemLabels('subscription').click();
+        e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('Primary Subscription').click();
+        e2e.pages.Dashboard.SubMenu.submenuItemLabels('resourceGroups').click();
+        e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('cloud-plugins-e2e-test').click();
+        e2e.pages.Dashboard.SubMenu.submenuItemLabels('namespaces').parent().find('button').click();
+        e2e.pages.Dashboard.SubMenu.submenuItemLabels('namespaces')
+          .parent()
+          .find('input')
+          .type('microsoft.storage/storageaccounts{enter}');
+        e2e.pages.Dashboard.SubMenu.submenuItemLabels('resource').click();
+        e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('azmonmetricstest').click();
+        e2e.flows.addPanel({
+          visitDashboardAtStart: false,
+          queriesForm: () => {
+            e2eSelectors.queryEditor.resourcePicker.select.button().click();
+            e2eSelectors.queryEditor.resourcePicker.advanced.collapse().click();
+            e2eSelectors.queryEditor.resourcePicker.advanced.subscription.input().find('input').type('$subscription');
+            e2eSelectors.queryEditor.resourcePicker.advanced.resourceGroup
+              .input()
+              .find('input')
+              .type('$resourceGroups');
+            e2eSelectors.queryEditor.resourcePicker.advanced.namespace.input().find('input').type('$namespaces');
+            e2eSelectors.queryEditor.resourcePicker.advanced.resource.input().find('input').type('$resource');
+            e2eSelectors.queryEditor.resourcePicker.apply.button().click();
+            e2eSelectors.queryEditor.metricsQueryEditor.metricName.input().find('input').type('Transactions{enter}');
           },
         });
       });
