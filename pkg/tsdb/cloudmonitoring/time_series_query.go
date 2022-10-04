@@ -55,77 +55,61 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, r
 	to := req.Queries[0].TimeRange.To
 	timeFormat := "2006/01/02-15:04:05"
 	timeSeriesQuery.Query += fmt.Sprintf(" | within d'%s', d'%s'", from.UTC().Format(timeFormat), to.UTC().Format(timeFormat))
+	first := true
+	pageToken := ""
+	d := cloudMonitoringResponse{}
 
-	buf, err := json.Marshal(map[string]interface{}{
-		"query":    timeSeriesQuery.Query,
-		"pageSize": 1,
-	})
-	if err != nil {
-		dr.Error = err
-		return dr, cloudMonitoringResponse{}, "", nil
+	for first || pageToken != "" {
+		requestBody := map[string]interface{}{
+			"query":    timeSeriesQuery.Query,
+			//"pageSize": 1,
+			//"pageToken": "CIKopIu6uenQ5wESoAEqFmNsb3VkLW1vbml0b3JpbmcucXVlcnkyhQFqFwoHcHJvamVjdBoMNDE3OTY1NTE0MTMzahsKCGxvY2F0aW9uGg9ldXJvcGUtbm9ydGgxLWFqIgoLcmVzb3VyY2VfaWQaEzY2MzYzNzc3ODYyNTIzNDI5NTVyKQoVbWV0cmljOi9pbnN0YW5jZV9uYW1lGhBzdGFja2RyaXZlci10ZXN0",
+		}
+		if (pageToken != "") {
+			requestBody["pageToken"] = pageToken
+		}
+
+		buf, err := json.Marshal(requestBody)
+		if err != nil {
+			dr.Error = err
+			return dr, cloudMonitoringResponse{}, "", nil
+		}
+		r, err := s.createRequest(ctx, &dsInfo, path.Join("/v3/projects", projectName, "timeSeries:query"), bytes.NewBuffer(buf))
+		if err != nil {
+			dr.Error = err
+			return dr, cloudMonitoringResponse{}, "", nil
+		}
+
+		ctx, span := tracer.Start(ctx, "cloudMonitoring MQL query")
+		span.SetAttributes("query", timeSeriesQuery.Query, attribute.Key("query").String(timeSeriesQuery.Query))
+		span.SetAttributes("from", req.Queries[0].TimeRange.From, attribute.Key("from").String(req.Queries[0].TimeRange.From.String()))
+		span.SetAttributes("until", req.Queries[0].TimeRange.To, attribute.Key("until").String(req.Queries[0].TimeRange.To.String()))
+
+		defer span.End()
+		tracer.Inject(ctx, r.Header, span)
+
+		r = r.WithContext(ctx)
+		res, err := dsInfo.services[cloudMonitor].client.Do(r)
+		if err != nil {
+			dr.Error = err
+			return dr, cloudMonitoringResponse{}, "", nil
+		}
+
+		dnext, err := unmarshalResponse(res)
+		if err != nil {
+			dr.Error = err
+			return dr, cloudMonitoringResponse{}, "", nil
+		}
+
+		if(first) {
+			d = dnext
+		} else {
+			d.TimeSeries = append(d.TimeSeries, dnext.TimeSeries...)
+		}
+
+		pageToken = dnext.NextPageToken[0:len(dnext.NextPageToken)-1]
+		first = false
 	}
-	r, err := s.createRequest(ctx, &dsInfo, path.Join("/v3/projects", projectName, "timeSeries:query"), bytes.NewBuffer(buf))
-	if err != nil {
-		dr.Error = err
-		return dr, cloudMonitoringResponse{}, "", nil
-	}
-
-	ctx, span := tracer.Start(ctx, "cloudMonitoring MQL query")
-	span.SetAttributes("query", timeSeriesQuery.Query, attribute.Key("query").String(timeSeriesQuery.Query))
-	span.SetAttributes("from", req.Queries[0].TimeRange.From, attribute.Key("from").String(req.Queries[0].TimeRange.From.String()))
-	span.SetAttributes("until", req.Queries[0].TimeRange.To, attribute.Key("until").String(req.Queries[0].TimeRange.To.String()))
-
-	defer span.End()
-	tracer.Inject(ctx, r.Header, span)
-
-	r = r.WithContext(ctx)
-	res, err := dsInfo.services[cloudMonitor].client.Do(r)
-	if err != nil {
-		dr.Error = err
-		return dr, cloudMonitoringResponse{}, "", nil
-	}
-
-	d, err := unmarshalResponse(res)
-	if err != nil {
-		dr.Error = err
-		return dr, cloudMonitoringResponse{}, "", nil
-	}
-
-	// fmt.Println("response", string(d.NextPageToken))
-	// finished := d.NextPageToken
-	// for finished != "" {
-	// 	fmt.Println("from loop", string(d.NextPageToken))
-	// 	buf, err := json.Marshal(map[string]interface{}{
-	// 		"query": timeSeriesQuery.Query,
-	// 		"pageToken": d.NextPageToken,
-	// 	})
-	// 	if err != nil {
-	// 		dr.Error = err
-	// 		return dr, cloudMonitoringResponse{}, "", nil
-	// 	}
-	// 	r, err := s.createRequest(ctx, &dsInfo, path.Join("/v3/projects", projectName, "timeSeries:query"), bytes.NewBuffer(buf))
-	// 	if err != nil {
-	// 		dr.Error = err
-	// 		return dr, cloudMonitoringResponse{}, "", nil
-	// 	}
-	// 	defer span.End()
-	// 	tracer.Inject(ctx, r.Header, span)
-
-	// 	r = r.WithContext(ctx)
-	// 	res, err := dsInfo.services[cloudMonitor].client.Do(r)
-	// 	if err != nil {
-	// 		dr.Error = err
-	// 		return dr, cloudMonitoringResponse{}, "", nil
-	// 	}
-
-	// 	dnext, err := unmarshalResponse(res)
-	// 	if err != nil {
-	// 		dr.Error = err
-	// 		return dr, cloudMonitoringResponse{}, "", nil
-	// 	}
-	// 	d.TimeSeries = append(d.TimeSeries, dnext.TimeSeries...)
-	// 	finished = dnext.NextPageToken
-	// }
 
 	return dr, d, timeSeriesQuery.Query, nil
 }
