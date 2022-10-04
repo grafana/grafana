@@ -236,6 +236,7 @@ func TestObjectServer(t *testing.T) {
 		}
 		writeResp1, err := testCtx.client.Write(ctx, writeReq1)
 		require.NoError(t, err)
+		require.Equal(t, object.WriteObjectResponse_CREATED, writeResp1.Status)
 
 		body2 := []byte("{\"name\":\"John2\"}")
 
@@ -252,7 +253,8 @@ func TestObjectServer(t *testing.T) {
 		// Duplicate write (no change)
 		writeDupRsp, err := testCtx.client.Write(ctx, writeReq2)
 		require.NoError(t, err)
-		require.NotNil(t, writeDupRsp.Error)
+		require.Nil(t, writeDupRsp.Error)
+		require.Equal(t, object.WriteObjectResponse_UNCHANGED, writeDupRsp.Status)
 		require.Equal(t, writeResp2.Object.Version, writeDupRsp.Object.Version)
 		require.Equal(t, writeResp2.Object.ETag, writeDupRsp.Object.ETag)
 
@@ -404,6 +406,5 @@ func TestObjectServer(t *testing.T) {
 			w1.Object.Version,
 			w2.Object.Version,
 		}, version)
-
 	})
 }

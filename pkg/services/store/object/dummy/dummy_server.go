@@ -191,14 +191,12 @@ func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequ
 			},
 		}
 		rsp.Object = versionInfo.ObjectVersionInfo
+		rsp.Status = object.WriteObjectResponse_MODIFIED
 
 		// When saving, it must be differnet than the head version
 		if i.ETag == updated.ETag {
 			versionInfo.ObjectVersionInfo.Version = i.Version
-			rsp.Error = &object.ObjectErrorInfo{
-				Code:    304,
-				Message: "Object not changed",
-			}
+			rsp.Status = object.WriteObjectResponse_UNCHANGED
 			return false, nil, nil
 		}
 
@@ -212,7 +210,7 @@ func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequ
 		return nil, err
 	}
 
-	if updatedCount == 0 && rsp.Error == nil {
+	if updatedCount == 0 && rsp.Object == nil {
 		return nil, fmt.Errorf("could not find object with uid %s and kind %s", r.UID, r.Kind)
 	}
 
@@ -265,6 +263,7 @@ func (i dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectRequ
 	return &object.WriteObjectResponse{
 		Error:  nil,
 		Object: info,
+		Status: object.WriteObjectResponse_CREATED,
 	}, nil
 }
 

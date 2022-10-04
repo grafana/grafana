@@ -165,6 +165,17 @@ message WriteObjectResponse {
 
   // Object summary as JSON
   bytes summary_json = 3;
+
+  // Status code
+  Status status = 4;
+
+  // Status enumeration
+  enum Status {
+    ERROR = 0;
+    CREATED = 1;
+    MODIFIED = 2;
+    UNCHANGED = 3;
+  }
 }
 
 //-----------------------------------------------
