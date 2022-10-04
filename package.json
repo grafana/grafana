@@ -426,10 +426,5 @@
   "engines": {
     "node": ">= 16"
   },
-  "packageManager": "yarn@3.2.3",
-  "dependenciesMeta": {
-    "eslint@8.24.0": {
-      "unplugged": true
-    }
-  }
+  "packageManager": "yarn@3.2.3"
 }
