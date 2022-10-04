@@ -1,6 +1,7 @@
-import { catchError, Observable, of, switchMap } from 'rxjs';
+import { catchError, from, Observable, of, switchMap } from 'rxjs';
 
 import {
+  AnnotationQuery,
   DataQuery,
   DataQueryRequest,
   DataQueryResponse,
@@ -8,9 +9,11 @@ import {
   DataSourceJsonData,
   DataSourcePluginMeta,
   DataSourceRef,
+  toDataFrame,
 } from '@grafana/data';
 import { BackendDataSourceResponse, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
 
+import { GrafanaQueryType } from '../../../plugins/datasource/grafana/types';
 import { MIXED_DATASOURCE_NAME } from '../../../plugins/datasource/mixed/MixedDataSource';
 
 export const PUBLIC_DATASOURCE = '-- Public --';
@@ -35,6 +38,12 @@ export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSour
     });
 
     this.interval = PublicDashboardDataSource.resolveInterval(datasource);
+
+    this.annotations = {
+      prepareQuery(anno: AnnotationQuery<DataQuery>): DataQuery | undefined {
+        return { ...anno, queryType: GrafanaQueryType.Annotations, refId: 'anno' };
+      },
+    };
   }
 
   /**
@@ -78,23 +87,51 @@ export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSour
       return of({ data: [] });
     }
 
-    const body: any = { intervalMs, maxDataPoints };
+    // Its a query for annotations
+    if (request.targets[0].queryType === GrafanaQueryType.Annotations) {
+      return from(this.getAnnotations(request));
+    }
 
-    return getBackendSrv()
-      .fetch<BackendDataSourceResponse>({
-        url: `/api/public/dashboards/${publicDashboardAccessToken}/panels/${panelId}/query`,
-        method: 'POST',
-        data: body,
-        requestId,
-      })
-      .pipe(
-        switchMap((raw) => {
-          return of(toDataQueryResponse(raw, queries));
-        }),
-        catchError((err) => {
-          return of(toDataQueryResponse(err));
+    // Its a datasource query
+    else {
+      const body: any = { intervalMs, maxDataPoints };
+
+      return getBackendSrv()
+        .fetch<BackendDataSourceResponse>({
+          url: `/api/public/dashboards/${publicDashboardAccessToken}/panels/${panelId}/query`,
+          method: 'POST',
+          data: body,
+          requestId,
         })
-      );
+        .pipe(
+          switchMap((raw) => {
+            return of(toDataQueryResponse(raw, queries));
+          }),
+          catchError((err) => {
+            return of(toDataQueryResponse(err));
+          })
+        );
+    }
+  }
+
+  async getAnnotations(request: DataQueryRequest<DataQuery>): Promise<DataQueryResponse> {
+    console.log(request);
+    const {
+      publicDashboardAccessToken: accessToken,
+      range: { to, from },
+    } = request;
+
+    const params = {
+      from: from.valueOf(),
+      to: to.valueOf(),
+    };
+    const annotations = await getBackendSrv().get(
+      `/api/public/dashboards/${accessToken}/annotations`,
+      params,
+      'abc123' //TODO what is this for?
+    );
+
+    return { data: [toDataFrame(annotations)] };
   }
 
   testDatasource(): Promise<any> {
