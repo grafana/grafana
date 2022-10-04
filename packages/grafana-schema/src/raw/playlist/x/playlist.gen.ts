@@ -10,7 +10,7 @@ export interface PlaylistItem {
   /**
    * Title is an unused property -- it will be removed in the future
    */
-  title: string;
+  title?: string;
   /**
    * Type of the item.
    */

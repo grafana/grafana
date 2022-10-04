@@ -41,7 +41,7 @@ seqs: [
 					value: string
 
 					// Title is an unused property -- it will be removed in the future
-    				title: string
+    				title?: string
 				} @cuetsy(kind="interface")
 			}
 		]
