@@ -4,7 +4,6 @@ import (
 	"io"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
@@ -82,15 +81,26 @@ func (s *httpObjectStore) doGetObject(c *models.ReqContext) response.Response {
 		WithSummary: true,              // ?? allow false?
 	})
 	if err != nil {
-		return response.Error(500, "?", err)
+		return response.Error(500, "error fetching object", err)
 	}
 	if rsp.Object == nil {
-		rsp.Object = &RawObject{
-			UID:      uid,
-			Kind:     "missing!",
-			Modified: time.Now().UnixMilli(),
-		}
+		return response.Error(404, "not found", nil)
 	}
+
+	// Configure etag support
+	currentEtag := rsp.Object.ETag
+	previousEtag := c.Req.Header.Get("If-None-Match")
+	if previousEtag == currentEtag {
+		return response.CreateNormalResponse(
+			http.Header{
+				"ETag": []string{rsp.Object.ETag},
+			},
+			[]byte{},               // nothing
+			http.StatusNotModified, // 304
+		)
+	}
+
+	c.Resp.Header().Set("ETag", currentEtag)
 	return response.JSON(200, rsp)
 }
 
@@ -107,9 +117,23 @@ func (s *httpObjectStore) doGetRawObject(c *models.ReqContext) response.Response
 		return response.Error(500, "?", err)
 	}
 	if rsp.Object != nil && rsp.Object.Body != nil {
+		// Configure etag support
+		currentEtag := rsp.Object.ETag
+		previousEtag := c.Req.Header.Get("If-None-Match")
+		if previousEtag == currentEtag {
+			return response.CreateNormalResponse(
+				http.Header{
+					"ETag": []string{rsp.Object.ETag},
+				},
+				[]byte{},               // nothing
+				http.StatusNotModified, // 304
+			)
+		}
+
 		return response.CreateNormalResponse(
 			http.Header{
 				"Content-Type": []string{"application/json"}, // TODO, based on kind!!!
+				"ETag":         []string{currentEtag},
 			},
 			rsp.Object.Body,
 			200,
@@ -118,8 +142,13 @@ func (s *httpObjectStore) doGetRawObject(c *models.ReqContext) response.Response
 	return response.JSON(400, rsp) // ???
 }
 
+const MAX_UPLOAD_SIZE = 5 * 1024 * 1024 // 5MB
+
 func (s *httpObjectStore) doWriteObject(c *models.ReqContext) response.Response {
 	uid, kind, params := parseRequestParams(c.Req)
+
+	// Cap the max size
+	c.Req.Body = http.MaxBytesReader(c.Resp, c.Req.Body, MAX_UPLOAD_SIZE)
 	b, err := io.ReadAll(c.Req.Body)
 	if err != nil {
 		return response.Error(400, "error reading body", err)
@@ -143,7 +172,7 @@ func (s *httpObjectStore) doDeleteObject(c *models.ReqContext) response.Response
 	rsp, err := s.store.Delete(c.Req.Context(), &DeleteObjectRequest{
 		UID:             uid,
 		Kind:            kind,
-		PreviousVersion: params["previous"],
+		PreviousVersion: params["previousVersion"],
 	})
 	if err != nil {
 		return response.Error(500, "?", err)

@@ -2,8 +2,10 @@ import React, { HTMLProps } from 'react';
 
 import { escapeStringForRegex, unEscapeStringFromRegex } from '@grafana/data';
 
-import { Button, Icon, Input } from '..';
 import { useCombinedRefs } from '../../utils/useCombinedRefs';
+import { Button } from '../Button';
+import { Icon } from '../Icon/Icon';
+import { Input } from '../Input/Input';
 
 export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'onChange'> {
   value: string | undefined;

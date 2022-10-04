@@ -201,6 +201,7 @@ func (ss *SQLStore) GetUserById(ctx context.Context, query *models.GetUserByIdQu
 	})
 }
 
+// deprecated method, use only for tests
 func (ss *SQLStore) SetUsingOrg(ctx context.Context, cmd *models.SetUsingOrgCommand) error {
 	getOrgsForUserCmd := &models.GetUserOrgListQuery{UserId: cmd.UserId}
 	if err := ss.GetUserOrgList(ctx, getOrgsForUserCmd); err != nil {
@@ -301,6 +302,7 @@ func newSignedInUserCacheKey(orgID, userID int64) string {
 	return fmt.Sprintf("signed-in-user-%d-%d", userID, orgID)
 }
 
+// deprecated method, use only for tests
 func (ss *SQLStore) GetSignedInUserWithCacheCtx(ctx context.Context, query *models.GetSignedInUserQuery) error {
 	cacheKey := newSignedInUserCacheKey(query.OrgId, query.UserId)
 	if cached, found := ss.CacheService.Get(cacheKey); found {
@@ -699,53 +701,4 @@ func UserDeletions() []string {
 		"DELETE FROM quota WHERE user_id = ?",
 	}
 	return deletes
-}
-
-// UpdateUserPermissions sets the user Server Admin flag
-func (ss *SQLStore) UpdateUserPermissions(userID int64, isAdmin bool) error {
-	return ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
-		var user user.User
-		if _, err := sess.ID(userID).Where(NotServiceAccountFilter(ss)).Get(&user); err != nil {
-			return err
-		}
-
-		user.IsAdmin = isAdmin
-		sess.UseBool("is_admin")
-		_, err := sess.ID(user.ID).Update(&user)
-		if err != nil {
-			return err
-		}
-		// validate that after update there is at least one server admin
-		if err := validateOneAdminLeft(sess); err != nil {
-			return err
-		}
-		return nil
-	})
-}
-
-func (ss *SQLStore) SetUserHelpFlag(ctx context.Context, cmd *models.SetUserHelpFlagCommand) error {
-	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
-		user := user.User{
-			ID:         cmd.UserId,
-			HelpFlags1: cmd.HelpFlags1,
-			Updated:    TimeNow(),
-		}
-
-		_, err := sess.ID(cmd.UserId).Cols("help_flags1").Update(&user)
-		return err
-	})
-}
-
-// validateOneAdminLeft validate that there is an admin user left
-func validateOneAdminLeft(sess *DBSession) error {
-	count, err := sess.Where("is_admin=?", true).Count(&user.User{})
-	if err != nil {
-		return err
-	}
-
-	if count == 0 {
-		return user.ErrLastGrafanaAdmin
-	}
-
-	return nil
 }
