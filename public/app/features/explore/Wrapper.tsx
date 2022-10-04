@@ -44,7 +44,7 @@ function Wrapper(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
   const { keybindings, chrome } = useGrafana();
   const navModel = useNavModel('explore');
   const [correlationsLoaded, setCorrelationsLoaded] = useState(false);
-  const { get: f } = useCorrelations();
+  const { get } = useCorrelations();
 
   useEffect(() => {
     //This is needed for breadcrumbs and topnav.
@@ -61,16 +61,16 @@ function Wrapper(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
       if (correlationsLoaded) {
         return;
       }
-      if (f.value || f.error) {
-        const correlations = f.error ? [] : f.value ? f.value : [];
+      if (get.value || get.error) {
+        const correlations = get.error ? [] : get.value ? get.value : [];
         dispatch(saveCorrelationsAction(correlations));
         setCorrelationsLoaded(true);
-      } else if (!f.loading) {
-        f.execute();
+      } else if (!get.loading) {
+        get.execute();
       }
     };
     run();
-  }, [f, f.error, f.value, f.loading, correlationsLoaded, dispatch]);
+  }, [get, get.error, get.value, get.loading, correlationsLoaded, dispatch]);
 
   useEffect(() => {
     lastSavedUrl.left = undefined;
@@ -158,7 +158,7 @@ function Wrapper(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
   }
 
   if (!correlationsLoaded) {
-    return <LoadingPlaceholder text="loading..." />;
+    return <LoadingPlaceholder text="Loading..." />;
   }
 
   const splitSizeObj = { rightPaneSize: widthCalc };
