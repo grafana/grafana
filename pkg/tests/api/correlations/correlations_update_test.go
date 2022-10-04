@@ -165,7 +165,7 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 	t.Run("updating a without data should result in a 400", func(t *testing.T) {
 		correlation := ctx.createCorrelation(correlations.CreateCorrelationCommand{
 			SourceUID: writableDs,
-			TargetUID: writableDs,
+			TargetUID: &writableDs,
 			OrgId:     writableDsOrgId,
 		})
 
@@ -231,7 +231,7 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 	t.Run("updating a correlation pointing to a read-only data source should work", func(t *testing.T) {
 		correlation := ctx.createCorrelation(correlations.CreateCorrelationCommand{
 			SourceUID: writableDs,
-			TargetUID: writableDs,
+			TargetUID: &writableDs,
 			OrgId:     writableDsOrgId,
 			Label:     "a label",
 		})
@@ -260,7 +260,7 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 	t.Run("should correctly update correlations", func(t *testing.T) {
 		correlation := ctx.createCorrelation(correlations.CreateCorrelationCommand{
 			SourceUID:   writableDs,
-			TargetUID:   writableDs,
+			TargetUID:   &writableDs,
 			OrgId:       writableDsOrgId,
 			Label:       "0",
 			Description: "0",

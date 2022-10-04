@@ -1,4 +1,4 @@
-package grpcserver
+package interceptors
 
 import (
 	"context"
@@ -17,15 +17,15 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// authenticator can authenticate GRPC requests.
-type authenticator struct {
+// Authenticator can authenticate GRPC requests.
+type Authenticator struct {
 	logger      log.Logger
 	APIKey      apikey.Service
 	UserService user.Service
 }
 
-func newAuthenticator(apiKey apikey.Service, userService user.Service) *authenticator {
-	return &authenticator{
+func NewAuthenticator(apiKey apikey.Service, userService user.Service) *Authenticator {
+	return &Authenticator{
 		logger:      log.New("grpc-server-authenticator"),
 		APIKey:      apiKey,
 		UserService: userService,
@@ -34,13 +34,13 @@ func newAuthenticator(apiKey apikey.Service, userService user.Service) *authenti
 
 // Authenticate checks that a token exists and is valid, and then removes the token from the
 // authorization header in the context.
-func (a *authenticator) authenticate(ctx context.Context) (context.Context, error) {
+func (a *Authenticator) Authenticate(ctx context.Context) (context.Context, error) {
 	return a.tokenAuth(ctx)
 }
 
 const tokenPrefix = "Bearer "
 
-func (a *authenticator) tokenAuth(ctx context.Context) (context.Context, error) {
+func (a *Authenticator) tokenAuth(ctx context.Context) (context.Context, error) {
 	auth, err := extractAuthorization(ctx)
 	if err != nil {
 		return ctx, err
@@ -57,50 +57,51 @@ func (a *authenticator) tokenAuth(ctx context.Context) (context.Context, error) 
 
 	newCtx := purgeHeader(ctx, "authorization")
 
-	err = a.validateToken(ctx, token)
+	_, err = a.getSignedInUser(ctx, token)
 	if err != nil {
 		logger.Warn("request with invalid token", "error", err, "token", token)
 		return ctx, status.Error(codes.Unauthenticated, "invalid token")
 	}
+
 	return newCtx, nil
 }
 
-func (a *authenticator) validateToken(ctx context.Context, keyString string) error {
-	decoded, err := apikeygenprefix.Decode(keyString)
+func (a *Authenticator) getSignedInUser(ctx context.Context, token string) (*user.SignedInUser, error) {
+	decoded, err := apikeygenprefix.Decode(token)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	hash, err := decoded.Hash()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	apikey, err := a.APIKey.GetAPIKeyByHash(ctx, hash)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if apikey == nil || apikey.ServiceAccountId == nil {
-		return status.Error(codes.Unauthenticated, "api key does not have a service account")
+		return nil, status.Error(codes.Unauthenticated, "api key does not have a service account")
 	}
 
 	querySignedInUser := user.GetSignedInUserQuery{UserID: *apikey.ServiceAccountId, OrgID: apikey.OrgId}
 	signedInUser, err := a.UserService.GetSignedInUserWithCacheCtx(ctx, &querySignedInUser)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if !signedInUser.HasRole(org.RoleAdmin) {
-		return fmt.Errorf("api key does not have admin role")
+		return nil, fmt.Errorf("api key does not have admin role")
 	}
 
 	// disabled service accounts are not allowed to access the API
 	if signedInUser.IsDisabled {
-		return fmt.Errorf("service account is disabled")
+		return nil, fmt.Errorf("service account is disabled")
 	}
 
-	return nil
+	return signedInUser, nil
 }
 
 func extractAuthorization(ctx context.Context) (string, error) {
