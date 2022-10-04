@@ -66,6 +66,14 @@ This change does not update existing alert rules.
 For details on this change, see [GitHub pull request #55345](https://github.com/grafana/grafana/pull/55345).
 For more information about alerting states, see the [alerting documentation](https://grafana.com/docs/grafana/latest/alerting/fundamentals/state-and-health/).
 
+## Configure external alertmanagers as data sources
+
+_Generally available in all editions._
+
+Starting with release 9.2, the URL configuration of external alertmanagers from the Admin tab on the Alerting page is deprecated. It will be removed in a future release.
+
+External alertmanagers should now be configured as data sources from the Configuration page. This enables you to manage the contact points and notification policies of external alertmanagers from within Grafana and also encrypts HTTP basic authentication credentials that were previously visible when configuring external alertmanagers by URL.
+
 ## Public dashboards
 
 _Available in Experimental in Grafana Open Source, Enterprise, Cloud Pro, and Cloud Advanced._
