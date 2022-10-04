@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -438,11 +439,10 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.Nil(t, err)
 
 		isDisabled = true
-		query5 := &models.SearchUsersQuery{IsDisabled: &isDisabled, SignedInUser: usr}
-		err = ss.SearchUsers(context.Background(), query5)
-
+		query5 := &user.SearchUsersQuery{IsDisabled: &isDisabled, SignedInUser: usr}
+		query5Result, err := userStore.Search(context.Background(), query5)
 		require.Nil(t, err)
-		require.EqualValues(t, query5.Result.TotalCount, 5)
+		require.EqualValues(t, query5Result.TotalCount, 5)
 
 		// the user is deleted
 		err = ss.DeleteUser(context.Background(), &models.DeleteUserCommand{UserId: users[1].ID})
@@ -476,10 +476,10 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			OrgID:       1,
 			Permissions: map[int64]map[string][]string{1: {"users:read": {"global.users:id:1", "global.users:id:3"}}},
 		}
-		query := models.SearchUsersQuery{SignedInUser: testUser}
-		err := ss.SearchUsers(context.Background(), &query)
+		query := user.SearchUsersQuery{SignedInUser: testUser}
+		queryResult, err := userStore.Search(context.Background(), &query)
 		assert.Nil(t, err)
-		assert.Len(t, query.Result.Users, 2)
+		assert.Len(t, queryResult.Users, 2)
 	})
 
 	ss = sqlstore.InitTestDB(t)
@@ -503,11 +503,39 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.Nil(t, err)
 
 		isDisabled := false
-		query := &models.SearchUsersQuery{IsDisabled: &isDisabled, SignedInUser: usr}
-		err = ss.SearchUsers(context.Background(), query)
+		query := &user.SearchUsersQuery{IsDisabled: &isDisabled, SignedInUser: usr}
+		queryResult, err := userStore.Search(context.Background(), query)
 
 		require.Nil(t, err)
-		require.EqualValues(t, query.Result.TotalCount, 5)
+		require.EqualValues(t, queryResult.TotalCount, 5)
+	})
+
+	t.Run("Can search users", func(t *testing.T) {
+		ss = sqlstore.InitTestDB(t)
+		userStore.cfg.AutoAssignOrg = false
+
+		ac1cmd := user.CreateUserCommand{Login: "ac1", Email: "ac1@test.com", Name: "ac1 name"}
+		ac2cmd := user.CreateUserCommand{Login: "ac2", Email: "ac2@test.com", Name: "ac2 name", IsAdmin: true}
+		serviceaccountcmd := user.CreateUserCommand{Login: "serviceaccount", Email: "service@test.com", Name: "serviceaccount name", IsAdmin: true, IsServiceAccount: true}
+
+		_, err := ss.CreateUser(context.Background(), ac1cmd)
+		require.NoError(t, err)
+		_, err = ss.CreateUser(context.Background(), ac2cmd)
+		require.NoError(t, err)
+		// user only used for making sure we filter out the service accounts
+		_, err = ss.CreateUser(context.Background(), serviceaccountcmd)
+		require.NoError(t, err)
+		query := user.SearchUsersQuery{Query: "", SignedInUser: &user.SignedInUser{
+			OrgID: 1,
+			Permissions: map[int64]map[string][]string{
+				1: {accesscontrol.ActionUsersRead: {accesscontrol.ScopeGlobalUsersAll}},
+			},
+		}}
+		queryResult, err := userStore.Search(context.Background(), &query)
+		require.NoError(t, err)
+		require.Len(t, queryResult.Users, 2)
+		require.Equal(t, queryResult.Users[0].Email, "ac1@test.com")
+		require.Equal(t, queryResult.Users[1].Email, "ac2@test.com")
 	})
 
 	ss = sqlstore.InitTestDB(t)
@@ -534,17 +562,17 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		err := userStore.BatchDisableUsers(context.Background(), &disableCmd)
 		require.Nil(t, err)
 
-		query := models.SearchUsersQuery{SignedInUser: usr}
-		err = ss.SearchUsers(context.Background(), &query)
-
+		query := user.SearchUsersQuery{SignedInUser: usr}
+		queryResult, err := userStore.Search(context.Background(), &query)
 		require.Nil(t, err)
-		require.EqualValues(t, query.Result.TotalCount, 5)
-		for _, user := range query.Result.Users {
+		require.EqualValues(t, queryResult.TotalCount, 5)
+		for _, user := range queryResult.Users {
 			shouldBeDisabled := false
 
 			// Check if user id is in the userIdsToDisable list
 			for _, disabledUserId := range userIdsToDisable {
-				if user.Id == disabledUserId {
+				fmt.Println(user.ID, disabledUserId)
+				if user.ID == disabledUserId {
 					require.True(t, user.IsDisabled)
 					shouldBeDisabled = true
 				}
@@ -580,6 +608,80 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.NoError(t, err)
 		err = userStore.Disable(context.Background(), &user.DisableUserCommand{UserID: id})
 		require.NoError(t, err)
+	})
+
+	t.Run("Testing DB - multiple users", func(t *testing.T) {
+		ss = sqlstore.InitTestDB(t)
+
+		createFiveTestUsers(t, ss, func(i int) *user.CreateUserCommand {
+			return &user.CreateUserCommand{
+				Email:      fmt.Sprint("user", i, "@test.com"),
+				Name:       fmt.Sprint("user", i),
+				Login:      fmt.Sprint("loginuser", i),
+				IsDisabled: false,
+			}
+		})
+
+		// Return the first page of users and a total count
+		query := user.SearchUsersQuery{Query: "", Page: 1, Limit: 3, SignedInUser: usr}
+		queryResult, err := userStore.Search(context.Background(), &query)
+
+		require.Nil(t, err)
+		require.Len(t, queryResult.Users, 3)
+		require.EqualValues(t, queryResult.TotalCount, 5)
+
+		// Return the second page of users and a total count
+		query = user.SearchUsersQuery{Query: "", Page: 2, Limit: 3, SignedInUser: usr}
+		queryResult, err = userStore.Search(context.Background(), &query)
+
+		require.Nil(t, err)
+		require.Len(t, queryResult.Users, 2)
+		require.EqualValues(t, queryResult.TotalCount, 5)
+
+		// Return list of users matching query on user name
+		query = user.SearchUsersQuery{Query: "use", Page: 1, Limit: 3, SignedInUser: usr}
+		queryResult, err = userStore.Search(context.Background(), &query)
+
+		require.Nil(t, err)
+		require.Len(t, queryResult.Users, 3)
+		require.EqualValues(t, queryResult.TotalCount, 5)
+
+		query = user.SearchUsersQuery{Query: "ser1", Page: 1, Limit: 3, SignedInUser: usr}
+		queryResult, err = userStore.Search(context.Background(), &query)
+
+		require.Nil(t, err)
+		require.Len(t, queryResult.Users, 1)
+		require.EqualValues(t, queryResult.TotalCount, 1)
+
+		query = user.SearchUsersQuery{Query: "USER1", Page: 1, Limit: 3, SignedInUser: usr}
+		queryResult, err = userStore.Search(context.Background(), &query)
+
+		require.Nil(t, err)
+		require.Len(t, queryResult.Users, 1)
+		require.EqualValues(t, queryResult.TotalCount, 1)
+
+		query = user.SearchUsersQuery{Query: "idontexist", Page: 1, Limit: 3, SignedInUser: usr}
+		queryResult, err = userStore.Search(context.Background(), &query)
+
+		require.Nil(t, err)
+		require.Len(t, queryResult.Users, 0)
+		require.EqualValues(t, queryResult.TotalCount, 0)
+
+		// Return list of users matching query on email
+		query = user.SearchUsersQuery{Query: "ser1@test.com", Page: 1, Limit: 3, SignedInUser: usr}
+		queryResult, err = userStore.Search(context.Background(), &query)
+
+		require.Nil(t, err)
+		require.Len(t, queryResult.Users, 1)
+		require.EqualValues(t, queryResult.TotalCount, 1)
+
+		// Return list of users matching query on login name
+		query = user.SearchUsersQuery{Query: "loginuser1", Page: 1, Limit: 3, SignedInUser: usr}
+		queryResult, err = userStore.Search(context.Background(), &query)
+
+		require.Nil(t, err)
+		require.Len(t, queryResult.Users, 1)
+		require.EqualValues(t, queryResult.TotalCount, 1)
 	})
 }
 
