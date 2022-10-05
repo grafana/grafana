@@ -766,8 +766,8 @@
               "name": "w2_status",
               "placement": {
                 "height": 31,
-                "left": 993,
-                "top": 540,
+                "left": 990,
+                "top": 527,
                 "width": 110
               },
               "type": "metric-value"
@@ -804,8 +804,8 @@
               "name": "w2_energy_value",
               "placement": {
                 "height": 31,
-                "left": 994,
-                "top": 500,
+                "left": 990,
+                "top": 492,
                 "width": 58
               },
               "type": "metric-value"
@@ -838,10 +838,10 @@
               },
               "name": "w2_energy_label",
               "placement": {
-                "height": 50,
+                "height": 31,
                 "left": 1038,
-                "top": 502,
-                "width": 80
+                "top": 492,
+                "width": 62
               },
               "type": "text"
             },
