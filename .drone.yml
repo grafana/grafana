@@ -370,8 +370,9 @@ steps:
     && git push origin $${TEST_TAG}
   - cd -
   - git fetch origin "refs/tags/*:refs/tags/*"
-  - git tag -d $${TEST_TAG} && git push --delete origin --quiet $${TEST_TAG} && git
-    tag $${TEST_TAG} && git push origin $${TEST_TAG} --quiet
+  - git tag -d $${TEST_TAG} && git push --delete https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git
+    --quiet $${TEST_TAG} && git tag $${TEST_TAG} && git push https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git
+    $${TEST_TAG} --quiet
   environment:
     DOWNSTREAM_REPO:
       from_secret: downstream
@@ -1230,8 +1231,9 @@ steps:
     && git push origin $${TEST_TAG}
   - cd -
   - git fetch origin "refs/tags/*:refs/tags/*"
-  - git tag -d $${TEST_TAG} && git push --delete origin --quiet $${TEST_TAG} && git
-    tag $${TEST_TAG} && git push origin $${TEST_TAG} --quiet
+  - git tag -d $${TEST_TAG} && git push --delete https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git
+    --quiet $${TEST_TAG} && git tag $${TEST_TAG} && git push https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git
+    $${TEST_TAG} --quiet
   environment:
     DOWNSTREAM_REPO:
       from_secret: downstream
@@ -5326,6 +5328,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 990990c9907087beb421d251068f41695046fcbb8ea660e863cd7c7ece251267
+hmac: 477648ff0f6961ef9b3b8d6c7fa5f8f3b8d5d18185fc14fd2591371fb6194334
 
 ...
