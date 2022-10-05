@@ -11,7 +11,7 @@ export function getRoutes(): RouteDescriptor[] {
         path: `/${ROUTE_BASE_ID}`,
         exact: false,
         component: SafeDynamicImport(
-          () => import(/* webpackChunkName: "DataConnectionsPage"*/ 'app/features/data-connections/DataConnectionsPage')
+          () => import(/* webpackChunkName: "DataConnectionsPage"*/ 'app/features/connections/ConnectionsPage')
         ),
       },
     ];

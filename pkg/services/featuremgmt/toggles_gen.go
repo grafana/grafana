@@ -184,7 +184,7 @@ const (
 	FlagLogRequestsInstrumentedAsUnknown = "logRequestsInstrumentedAsUnknown"
 
 	// FlagDataConnectionsConsole
-	// Enables a new top-level page called Data Connections. This page is an experiment for better grouping of installing / configuring data sources and other plugins.
+	// Enables a new top-level page called Connections. This page is an experiment for better grouping of installing / configuring data sources and other plugins.
 	FlagDataConnectionsConsole = "dataConnectionsConsole"
 
 	// FlagInternationalization
