@@ -689,6 +689,7 @@ export function createTableFrameFromTraceQlQuery(
     return frame;
   }
   // Show the most recent traces
+  console.log(data);
   const traceData = data
     .sort((a, b) => parseInt(b?.startTimeUnixNano!, 10) / 1000000 - parseInt(a?.startTimeUnixNano!, 10) / 1000000)
     .reduce((list: TraceTableData[], t) => {

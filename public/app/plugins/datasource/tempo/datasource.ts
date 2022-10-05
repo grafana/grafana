@@ -174,9 +174,21 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         });
 
         subQueries.push(
-          of({
-            data: [createTableFrameFromTraceQlQuery(mockedSearchResponse().traces, this.instanceSettings)],
-          })
+          this._request('/api/search', {
+            q: targets.traceql[0].query,
+            limit: options.targets[0].limit,
+            start: 0,
+            end: 2147483647,
+          }).pipe(
+            map((response) => {
+              return {
+                data: [createTableFrameFromTraceQlQuery(response.data.traces, this.instanceSettings)],
+              };
+            }),
+            catchError((error) => {
+              return of({ error: { message: error.data.message }, data: [] });
+            })
+          )
         );
       } catch (error) {
         return of({ error: { message: error instanceof Error ? error.message : 'Unknown error occurred' }, data: [] });
