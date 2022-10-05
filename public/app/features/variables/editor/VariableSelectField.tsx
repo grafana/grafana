@@ -29,15 +29,17 @@ export function VariableSelectField({
   const inputId = `variable-select-input-${name}-${uniqueId}`;
 
   return (
-    <Field label={name} description={description} data-testid={testId}>
-      <Select
-        inputId={inputId}
-        onChange={onChange}
-        value={value}
-        width={width ?? 25}
-        options={options}
-        className={styles.selectContainer}
-      />
+    <Field label={name} description={description}>
+      <div data-testid={testId}>
+        <Select
+          inputId={inputId}
+          onChange={onChange}
+          value={value}
+          width={width ?? 25}
+          options={options}
+          className={styles.selectContainer}
+        />
+      </div>
     </Field>
   );
 }

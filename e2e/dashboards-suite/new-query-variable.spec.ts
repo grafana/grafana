@@ -23,7 +23,7 @@ describe('Variables - Query - Add variable', () => {
     e2e.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInputV2()
       .should('be.visible')
       .within((input) => {
-        expect(input.attr('placeholder')).equals('optional display name');
+        expect(input.attr('placeholder')).equals('Label');
         expect(input.val()).equals('');
       });
     e2e()
@@ -96,7 +96,7 @@ describe('Variables - Query - Add variable', () => {
 
     e2e.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption().should('exist');
 
-    e2e.pages.Dashboard.Settings.Variables.Edit.General.submitButton().should('be.visible').click();
+    e2e.pages.Dashboard.Settings.Variables.Edit.General.submitButton().scrollIntoView().should('be.visible').click();
 
     e2e().wait(1500);
 
@@ -159,7 +159,7 @@ describe('Variables - Query - Add variable', () => {
 
     e2e.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption().should('exist');
 
-    e2e.pages.Dashboard.Settings.Variables.Edit.General.submitButton().should('be.visible').click();
+    e2e.pages.Dashboard.Settings.Variables.Edit.General.submitButton().scrollIntoView().should('be.visible').click();
 
     e2e().wait(500);
 

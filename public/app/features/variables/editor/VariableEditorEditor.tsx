@@ -167,7 +167,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props, State>
             name="Label"
             description="Optional display name"
             value={this.props.variable.label ?? ''}
-            placeholder="My label"
+            placeholder="Label"
             onChange={this.onLabelChange}
             testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInputV2}
           />
