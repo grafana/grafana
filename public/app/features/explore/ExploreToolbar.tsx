@@ -258,6 +258,30 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
           leftItems={
             isTopnav
               ? [
+                  exploreId === ExploreId.left && (
+                    <AppChromeUpdate
+                      actions={[
+                        <DashNavButton
+                          key="share"
+                          tooltip="Copy shortened link"
+                          icon="share-alt"
+                          onClick={this.onCopyShortLink}
+                          aria-label="Copy shortened link"
+                        />,
+                        !datasourceMissing && !splitted && (
+                          <DataSourcePicker
+                            key={`${exploreId}-ds-picker`}
+                            mixed={config.featureToggles.exploreMixedDatasource === true}
+                            onChange={this.onChangeDatasource}
+                            current={this.props.datasourceRef}
+                            hideTextValue={showSmallDataSourcePicker}
+                            width={showSmallDataSourcePicker ? 8 : undefined}
+                          />
+                        ),
+                        <div style={{ flex: 1 }} key="spacer" />,
+                      ].filter(Boolean)}
+                    />
+                  ),
                   !datasourceMissing && (
                     <DataSourcePicker
                       key={`${exploreId}-ds-picker`}
@@ -268,7 +292,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
                       width={showSmallDataSourcePicker ? 8 : undefined}
                     />
                   ),
-                ]
+                ].filter(Boolean)
               : [
                   exploreId === ExploreId.left && (
                     <DashNavButton
@@ -292,30 +316,6 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
                 ].filter(Boolean)
           }
         >
-          {isTopnav && (
-            <AppChromeUpdate
-              actions={[
-                <DashNavButton
-                  key="share"
-                  tooltip="Copy shortened link"
-                  icon="share-alt"
-                  onClick={this.onCopyShortLink}
-                  aria-label="Copy shortened link"
-                />,
-                !datasourceMissing && !splitted && (
-                  <DataSourcePicker
-                    key={`${exploreId}-ds-picker`}
-                    mixed={config.featureToggles.exploreMixedDatasource === true}
-                    onChange={this.onChangeDatasource}
-                    current={this.props.datasourceRef}
-                    hideTextValue={showSmallDataSourcePicker}
-                    width={showSmallDataSourcePicker ? 8 : undefined}
-                  />
-                ),
-                <div style={{ flex: 1 }} key="spacer" />,
-              ].filter(Boolean)}
-            />
-          )}
           {this.renderActions()}
         </PageToolbar>
       </div>
