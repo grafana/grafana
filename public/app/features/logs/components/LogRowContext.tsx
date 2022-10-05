@@ -159,6 +159,7 @@ export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps
   const [scrollHeight, setScrollHeight] = useState(0);
 
   const listContainerRef = useRef<HTMLDivElement>(null);
+  const prevRows = usePrevious(rows);
   const prevScrollTop = usePrevious(scrollTop);
   const prevScrollHeight = usePrevious(scrollHeight);
 
@@ -172,6 +173,7 @@ export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps
       return;
     }
 
+    const previousRowsLength = prevRows?.length ?? 0;
     const previousScrollHeight = prevScrollHeight ?? 0;
     const previousScrollTop = prevScrollTop ?? 0;
     const scrollElement = listContainerRef.current.parentElement;
@@ -182,10 +184,10 @@ export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps
       setScrollHeight(currentScrollHeight);
     }
 
-    if (currentScrollHeight > previousScrollHeight) {
+    if (rows.length > previousRowsLength && currentScrollHeight > previousScrollHeight) {
       setScrollTop(previousScrollTop + (currentScrollHeight - previousScrollHeight));
     }
-  }, [shouldScrollToBottom, prevScrollTop, prevScrollHeight]);
+  }, [shouldScrollToBottom, rows, prevRows, prevScrollTop, prevScrollHeight]);
 
   /**
    * Keeps track of the scroll position of the list container.
