@@ -13,6 +13,7 @@ packages/grafana-data/
 packages/grafana-e2e/
 packages/grafana-e2e-selectors/
 packages/grafana-runtime/
+packages/grafana-schema/
 packages/grafana-toolkit/
 packages/grafana-ui/
 packages/jaeger-ui-components/
