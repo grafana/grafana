@@ -89,6 +89,7 @@ func (hs *HTTPServer) StarDashboardByUID(c *models.ReqContext) response.Response
 		return response.Error(http.StatusBadRequest, "Invalid dashboard UID", nil)
 	}
 	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgID, 0, uid)
+
 	if rsp != nil {
 		return rsp
 	}
