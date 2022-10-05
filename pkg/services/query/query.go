@@ -3,6 +3,7 @@ package query
 import (
 	"context"
 	"fmt"
+	"golang.org/x/sync/errgroup"
 	"net/http"
 	"time"
 
@@ -90,28 +91,32 @@ func (s *Service) QueryDataMultipleSources(ctx context.Context, user *user.Signe
 	} else {
 		resp := backend.NewQueryDataResponse()
 
-		resultsChannel := make(chan backend.Responses)
-		// create new reqDTO with only the queries for that datasource
+		g, ctx := errgroup.WithContext(ctx)
+		results := make([]backend.Responses, len(byDataSource))
+
 		for _, queries := range byDataSource {
-			go func(queries []*simplejson.Json) {
-				subDTO := reqDTO.CloneWithQueries(queries)
+			dataSourceQueries := queries
+			g.Go(func() error {
+				subDTO := reqDTO.CloneWithQueries(dataSourceQueries)
 
-				subResp, _ := s.QueryData(ctx, user, skipCache, subDTO, handleExpressions)
+				subResp, err := s.QueryData(ctx, user, skipCache, subDTO, handleExpressions)
 
-				//if err != nil {
-				//	return err
-				//}
+				if err == nil {
+					results = append(results, subResp.Responses)
+				}
 
-				resultsChannel <- subResp.Responses
-			}(queries)
-
-			//if err != nil {
-			//	return nil, err
-			//}
+				return err
+			})
 		}
 
-		for refId, dataResponse := range <-resultsChannel {
-			resp.Responses[refId] = dataResponse
+		if err := g.Wait(); err != nil {
+			return nil, err
+		}
+
+		for _, result := range results {
+			for refId, dataResponse := range result {
+				resp.Responses[refId] = dataResponse
+			}
 		}
 
 		return resp, nil
