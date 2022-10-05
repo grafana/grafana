@@ -29,7 +29,7 @@ export function VariableSelectField({
   const inputId = `variable-select-input-${name}-${uniqueId}`;
 
   return (
-    <Field label={name} description={description}>
+    <Field label={name} description={description} htmlFor={inputId}>
       <div data-testid={testId}>
         <Select
           inputId={inputId}
