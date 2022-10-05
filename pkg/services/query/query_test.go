@@ -116,7 +116,7 @@ func TestQueryDataMultipleSources(t *testing.T) {
 	t.Run("error is returned when one of the queries fails", func(t *testing.T) {
 		tc := setup(t)
 
-		query1, err := simplejson.NewJson([]byte(`
+		query1, _ := simplejson.NewJson([]byte(`
 			{
 				"datasource": {
 					"type": "mysql",
@@ -124,7 +124,7 @@ func TestQueryDataMultipleSources(t *testing.T) {
 				}
 			}
 		`))
-		query2, err := simplejson.NewJson([]byte(`
+		query2, _ := simplejson.NewJson([]byte(`
 			{
 				"datasource": {
 					"type": "prometheus",
@@ -145,7 +145,7 @@ func TestQueryDataMultipleSources(t *testing.T) {
 			HTTPRequest:                nil,
 		}
 
-		_, err = tc.queryService.QueryDataMultipleSources(context.Background(), nil, true, reqDTO, false)
+		_, err := tc.queryService.QueryDataMultipleSources(context.Background(), nil, true, reqDTO, false)
 
 		require.Error(t, err)
 	})

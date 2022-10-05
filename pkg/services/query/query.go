@@ -3,7 +3,6 @@ package query
 import (
 	"context"
 	"fmt"
-	"golang.org/x/sync/errgroup"
 	"net/http"
 	"time"
 
@@ -27,6 +26,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"golang.org/x/sync/errgroup"
 )
 
 func ProvideService(
