@@ -2,7 +2,6 @@ import Plain from 'slate-plain-serializer';
 
 import { AbstractLabelOperator, DataFrame } from '@grafana/data';
 import { TypeaheadInput } from '@grafana/ui';
-import { executeAnnotationQuery } from 'app/features/annotations/executeAnnotationQuery';
 
 import LanguageProvider, { LokiHistoryItem } from './LanguageProvider';
 import { LokiDatasource } from './datasource';
