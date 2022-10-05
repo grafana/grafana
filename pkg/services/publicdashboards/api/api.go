@@ -177,7 +177,13 @@ func (api *Api) QueryPublicDashboard(c *models.ReqContext) response.Response {
 
 func (api *Api) GetAnnotations(c *models.ReqContext) response.Response {
 	from, err := strconv.ParseInt(c.Req.URL.Query().Get("from"), 10, 64)
+	if err != nil {
+		return api.handleError(http.StatusBadRequest, "from must be a valid unix timestamp", err)
+	}
 	to, err := strconv.ParseInt(c.Req.URL.Query().Get("to"), 10, 64)
+	if err != nil {
+		return api.handleError(http.StatusBadRequest, "to must be a valid unix timestamp", err)
+	}
 	reqDTO := AnnotationsQueryDTO{
 		From: from,
 		To:   to,
