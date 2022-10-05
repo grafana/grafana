@@ -160,7 +160,16 @@ describe('getCompletions', () => {
     const situation: Situation = { type: 'IN_DURATION' };
     const completions = await getCompletions(situation, completionProvider);
 
-    expect(completions).toHaveLength(9);
+    expect(completions).toEqual([
+      { insertText: '$__interval', label: '$__interval', type: 'DURATION' },
+      { insertText: '$__range', label: '$__range', type: 'DURATION' },
+      { insertText: '1m', label: '1m', type: 'DURATION' },
+      { insertText: '5m', label: '5m', type: 'DURATION' },
+      { insertText: '10m', label: '10m', type: 'DURATION' },
+      { insertText: '30m', label: '30m', type: 'DURATION' },
+      { insertText: '1h', label: '1h', type: 'DURATION' },
+      { insertText: '1d', label: '1d', type: 'DURATION' },
+    ]);
   });
 
   test('Returns completion options when the situation is IN_GROUPING', async () => {

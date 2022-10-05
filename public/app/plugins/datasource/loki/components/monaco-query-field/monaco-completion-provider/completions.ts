@@ -55,21 +55,13 @@ const FUNCTION_COMPLETIONS: Completion[] = RANGE_VEC_FUNCTIONS.map((f) => ({
   documentation: f.documentation,
 }));
 
-const DURATION_COMPLETIONS: Completion[] = [
-  '$__interval',
-  '$__range',
-  '$__rate_interval',
-  '1m',
-  '5m',
-  '10m',
-  '30m',
-  '1h',
-  '1d',
-].map((text) => ({
-  type: 'DURATION',
-  label: text,
-  insertText: text,
-}));
+const DURATION_COMPLETIONS: Completion[] = ['$__interval', '$__range', '1m', '5m', '10m', '30m', '1h', '1d'].map(
+  (text) => ({
+    type: 'DURATION',
+    label: text,
+    insertText: text,
+  })
+);
 
 const LINE_FILTER_COMPLETIONS: Completion[] = ['|=', '!=', '|~', '!~'].map((item) => ({
   type: 'LINE_FILTER',
