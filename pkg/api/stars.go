@@ -55,12 +55,8 @@ func (hs *HTTPServer) StarDashboard(c *models.ReqContext) response.Response {
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Invalid dashboard ID", nil)
 	}
-	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgID, id, "")
-	if rsp != nil {
-		return rsp
-	}
 
-	cmd := star.StarDashboardCommand{UserID: c.UserID, DashboardID: dash.Id, DashboardUID: dash.Uid}
+	cmd := star.StarDashboardCommand{UserID: c.UserID, DashboardID: id}
 
 	if err := hs.starService.Add(c.Req.Context(), &cmd); err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to star dashboard", err)
