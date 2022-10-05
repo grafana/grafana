@@ -313,12 +313,6 @@ func (m *SQLStoreMock) SearchOrgUsers(ctx context.Context, query *models.SearchO
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) RemoveOrgUser(ctx context.Context, cmd *models.RemoveOrgUserCommand) error {
-	testData := m.ExpectedOrgListResponse[0]
-	m.ExpectedOrgListResponse = m.ExpectedOrgListResponse[1:]
-	return testData.Response
-}
-
 func (m *SQLStoreMock) GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) error {
 	return nil // TODO: Implement
 }
