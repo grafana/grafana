@@ -2,13 +2,13 @@ import { DataSourceApi, PluginMeta, PluginType } from '@grafana/data';
 
 import { config } from '../../config';
 
-export interface PluginEventProperties {
+export type PluginEventProperties = {
   grafana_version: string;
   plugin_type: PluginType;
   plugin_version: string;
   plugin_id: string;
   plugin_name: string;
-}
+};
 
 export function createPluginEventProperties(meta: PluginMeta): PluginEventProperties {
   return {

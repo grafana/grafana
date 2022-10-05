@@ -187,7 +187,7 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     const query = annotation.target ?? { refId: 'Anno' };
     return (
       <>
-        <DataSourcePluginContextProvider meta={datasource.meta} dataSource={dataSource}>
+        <DataSourcePluginContextProvider meta={datasource.meta} dataSource={datasource}>
           <QueryEditor
             key={datasource?.name}
             query={query}

@@ -245,7 +245,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
       if (QueryEditor) {
         return (
-          <DataSourcePluginContextProvider<TQuery> meta={datasource.meta} dataSource={datasource}>
+          <DataSourcePluginContextProvider meta={datasource.meta} dataSource={datasource}>
             <QueryEditor
               key={datasource?.name}
               query={query}
