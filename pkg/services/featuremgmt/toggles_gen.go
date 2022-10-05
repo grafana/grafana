@@ -207,6 +207,10 @@ const (
 	// Show the TraceQL editor in the explore page
 	FlagTraceqlEditor = "traceqlEditor"
 
+	// FlagFlameGraph
+	// Show the flame graph
+	FlagFlameGraph = "flameGraph"
+
 	// FlagRedshiftAsyncQueryDataSupport
 	// Enable async query data support for Redshift
 	FlagRedshiftAsyncQueryDataSupport = "redshiftAsyncQueryDataSupport"

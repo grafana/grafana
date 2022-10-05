@@ -66,6 +66,7 @@ export interface FeatureToggles {
   customBranding?: boolean;
   grpcServer?: boolean;
   traceqlEditor?: boolean;
+  flameGraph?: boolean;
   redshiftAsyncQueryDataSupport?: boolean;
   athenaAsyncQueryDataSupport?: boolean;
   increaseInMemDatabaseQueryCache?: boolean;
