@@ -12,7 +12,7 @@ import { CloudIntegrations } from './tabs/CloudIntegrations';
 import { DataSourcesEdit } from './tabs/DataSourcesEdit';
 import { Plugins } from './tabs/Plugins';
 
-export default function DataConnectionsPage() {
+export default function ConnectionsPage() {
   const navModel = useNavModel();
 
   return (

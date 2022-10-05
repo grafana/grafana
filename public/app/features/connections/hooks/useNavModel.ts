@@ -14,7 +14,7 @@ export const useNavModel = () => {
   const node = navIndex[ROUTE_BASE_ID];
   const main = node;
   const isDefaultRoute = (item: NavModelItem) =>
-    currentPath === `/${ROUTE_BASE_ID}` && item.id === 'data-connections-datasources';
+    currentPath === `/${ROUTE_BASE_ID}` && item.id === 'connections-datasources';
   const isItemActive = (item: NavModelItem) => currentPath.startsWith(item.url || '');
 
   main.children = main.children?.map((item) => ({

@@ -60,6 +60,14 @@ func parseRequestParams(req *http.Request) (uid string, kind string, params map[
 		uid = path
 		kind = "?"
 	}
+
+	// Read parameters that are encoded in the URL
+	vals := req.URL.Query()
+	for k, v := range vals {
+		if len(v) > 0 {
+			params[k] = v[0]
+		}
+	}
 	return
 }
 
@@ -151,7 +159,7 @@ func (s *httpObjectStore) doWriteObject(c *models.ReqContext) response.Response 
 		Kind:            kind,
 		Body:            b,
 		Comment:         params["comment"],
-		PreviousVersion: params["previous"],
+		PreviousVersion: params["previousVersion"],
 	})
 	if err != nil {
 		return response.Error(500, "?", err)
@@ -164,7 +172,7 @@ func (s *httpObjectStore) doDeleteObject(c *models.ReqContext) response.Response
 	rsp, err := s.store.Delete(c.Req.Context(), &DeleteObjectRequest{
 		UID:             uid,
 		Kind:            kind,
-		PreviousVersion: params["previous"],
+		PreviousVersion: params["previousVersion"],
 	})
 	if err != nil {
 		return response.Error(500, "?", err)

@@ -8,7 +8,7 @@ import { getMockDataSources } from 'app/features/datasources/__mocks__';
 import * as api from 'app/features/datasources/api';
 import { configureStore } from 'app/store/configureStore';
 
-import DataConnectionsPage from './DataConnectionsPage';
+import ConnectionsPage from './ConnectionsPage';
 import { navIndex } from './__mocks__/store.navIndex.mock';
 import { ROUTE_BASE_ID, ROUTES } from './constants';
 
@@ -22,13 +22,13 @@ const renderPage = (path = `/${ROUTE_BASE_ID}`): RenderResult => {
   return render(
     <Provider store={store}>
       <Router history={locationService.getHistory()}>
-        <DataConnectionsPage />
+        <ConnectionsPage />
       </Router>
     </Provider>
   );
 };
 
-describe('Data Connections Page', () => {
+describe('Connections Page', () => {
   const mockDatasources = getMockDataSources(3);
 
   beforeEach(() => {
