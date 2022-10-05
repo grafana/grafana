@@ -66,10 +66,11 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       hasValue(item?.azureMonitor?.resourceGroup) &&
       hasValue(item?.azureMonitor?.resourceName) &&
       hasValue(item?.azureMonitor?.metricDefinition || item?.azureMonitor?.metricNamespace);
+    const hasResourceUri = hasValue(item.azureMonitor?.resourceUri);
 
     return !!(
       item.hide !== true &&
-      hasResource &&
+      (hasResource || hasResourceUri) &&
       hasValue(item?.azureMonitor?.metricName) &&
       hasValue(item?.azureMonitor?.aggregation)
     );

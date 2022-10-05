@@ -67,9 +67,9 @@ const sharedReducerSlice = createSlice({
         return;
       }
 
-      const variableStates = Object.values(state);
-      for (let index = 0; index < variableStates.length; index++) {
-        variableStates[index].index = index;
+      const variableStates = Object.values(state).sort((a, b) => a.index - b.index);
+      for (let i = 0; i < variableStates.length; i++) {
+        variableStates[i].index = i;
       }
     },
     duplicateVariable: (state: VariablesState, action: PayloadAction<VariablePayload<{ newId: string }>>) => {
