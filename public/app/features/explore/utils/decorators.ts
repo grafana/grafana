@@ -81,14 +81,12 @@ export const decorateWithCorrelations = ({
   queries: DataQuery[] | undefined;
   correlations: CorrelationData[] | undefined;
 }) => {
-  return (data: PanelData): Observable<PanelData> => {
-    return new Observable<PanelData>((subscriber) => {
-      if (!isEmpty(queries) && !isEmpty(correlations)) {
-        const queryRefIdToDataSourceUid = mapValues(groupBy(queries, 'refId'), '0.datasource.uid');
-        attachCorrelationsToDataFrames(data.series, correlations!, queryRefIdToDataSourceUid);
-      }
-      subscriber.next(data);
-    });
+  return (data: PanelData): PanelData => {
+    if (!isEmpty(queries) && !isEmpty(correlations)) {
+      const queryRefIdToDataSourceUid = mapValues(groupBy(queries, 'refId'), '0.datasource.uid');
+      attachCorrelationsToDataFrames(data.series, correlations!, queryRefIdToDataSourceUid);
+    }
+    return data;
   };
 };
 
@@ -189,7 +187,7 @@ export function decorateData(
 ): Observable<ExplorePanelData> {
   return of(data).pipe(
     map((data: PanelData) => preProcessPanelData(data, queryResponse)),
-    mergeMap(decorateWithCorrelations({ queries, correlations })),
+    map(decorateWithCorrelations({ queries, correlations })),
     map(decorateWithFrameTypeMetadata),
     map(decorateWithGraphResult),
     map(decorateWithLogsResult({ absoluteRange, refreshInterval, queries, fullRangeLogsVolumeAvailable })),
