@@ -3,11 +3,11 @@ import React, { useEffect, useState, useRef } from 'react';
 import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/ui';
 
 import Datasource from '../../datasource';
+import { selectors } from '../../e2e/selectors';
 import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery } from '../../types';
 import SubscriptionField from '../SubscriptionField';
 
 import QueryField from './QueryField';
-import { selectors } from '../../e2e/selectors';
 
 interface ArgQueryEditorProps {
   query: AzureMonitorQuery;

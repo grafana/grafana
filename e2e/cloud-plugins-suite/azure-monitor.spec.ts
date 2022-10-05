@@ -1,6 +1,9 @@
 import { load } from 'js-yaml';
-import { e2e } from '@grafana/e2e';
 
+import { e2e } from '@grafana/e2e';
+import { getScenarioContext } from '@grafana/e2e/src/support';
+
+import { selectors } from '../../public/app/plugins/datasource/grafana-azure-monitor-datasource/e2e/selectors';
 import {
   AzureDataSourceJsonData,
   AzureDataSourceSecureJsonData,
@@ -8,8 +11,6 @@ import {
 } from '../../public/app/plugins/datasource/grafana-azure-monitor-datasource/types';
 
 import EXAMPLE_DASHBOARD from './example-dashboards/azure-monitor.json';
-import { selectors } from '../../public/app/plugins/datasource/grafana-azure-monitor-datasource/e2e/selectors';
-import { getScenarioContext } from '@grafana/e2e/src/support';
 
 const provisioningPath = `../../provisioning/datasources/azmonitor-ds.yaml`;
 const e2eSelectors = e2e.getSelectors(selectors.components);

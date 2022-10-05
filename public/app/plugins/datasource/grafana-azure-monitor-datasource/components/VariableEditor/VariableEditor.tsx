@@ -6,6 +6,7 @@ import { SelectableValue } from '@grafana/data';
 import { Alert, InlineField, Select } from '@grafana/ui';
 
 import DataSource from '../../datasource';
+import { selectors } from '../../e2e/selectors';
 import { migrateQuery } from '../../grafanaTemplateVariableFns';
 import { AzureMonitorOption, AzureMonitorQuery, AzureQueryType } from '../../types';
 import useLastError from '../../utils/useLastError';
@@ -14,7 +15,6 @@ import LogsQueryEditor from '../LogsQueryEditor';
 import { Space } from '../Space';
 
 import GrafanaTemplateVariableFnInput from './GrafanaTemplateVariableFn';
-import { selectors } from '../../e2e/selectors';
 
 type Props = {
   query: AzureMonitorQuery | string;

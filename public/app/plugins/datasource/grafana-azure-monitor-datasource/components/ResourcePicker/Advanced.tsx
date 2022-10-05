@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 
 import { Icon, Input, Tooltip, Collapse, Label, InlineField } from '@grafana/ui';
 
+import { selectors } from '../../e2e/selectors';
 import { AzureMetricResource } from '../../types';
 import { Space } from '../Space';
-import { selectors } from '../../e2e/selectors';
 
 interface ResourcePickerProps<T> {
   resource: T;

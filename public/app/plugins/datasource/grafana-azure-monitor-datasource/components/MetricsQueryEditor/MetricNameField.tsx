@@ -3,11 +3,11 @@ import React, { useCallback, useMemo } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
 
+import { selectors } from '../../e2e/selectors';
 import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
 import { Field } from '../Field';
 
 import { setMetricName } from './setQueryValue';
-import { selectors } from '../../e2e/selectors';
 
 interface MetricNameProps extends AzureQueryEditorFieldProps {
   metricNames: AzureMonitorOption[];

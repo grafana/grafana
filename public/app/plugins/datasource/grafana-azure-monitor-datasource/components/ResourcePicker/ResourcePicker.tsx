@@ -4,6 +4,7 @@ import { useEffectOnce } from 'react-use';
 
 import { Alert, Button, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 
+import { selectors } from '../../e2e/selectors';
 import ResourcePickerData, { ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
 import { AzureMetricResource } from '../../types';
 import messageFromError from '../../utils/messageFromError';
@@ -15,7 +16,6 @@ import Search from './Search';
 import getStyles from './styles';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from './types';
 import { findRow, parseResourceDetails, resourceToString } from './utils';
-import { selectors } from '../../e2e/selectors';
 
 interface ResourcePickerProps<T> {
   resourcePickerData: ResourcePickerData;

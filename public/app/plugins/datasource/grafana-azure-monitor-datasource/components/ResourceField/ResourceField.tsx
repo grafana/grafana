@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Button, Icon, Modal, useStyles2 } from '@grafana/ui';
 
 import Datasource from '../../datasource';
+import { selectors } from '../../e2e/selectors';
 import { ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
 import { AzureQueryEditorFieldProps, AzureMetricResource } from '../../types';
 import { Field } from '../Field';
@@ -11,7 +12,6 @@ import ResourcePicker from '../ResourcePicker';
 import getStyles from '../ResourcePicker/styles';
 import { ResourceRowType } from '../ResourcePicker/types';
 import { parseResourceDetails, setResource } from '../ResourcePicker/utils';
-import { selectors } from '../../e2e/selectors';
 
 interface ResourceFieldProps<T> extends AzureQueryEditorFieldProps {
   selectableEntryTypes: ResourceRowType[];
