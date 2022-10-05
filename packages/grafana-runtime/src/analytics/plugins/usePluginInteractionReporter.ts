@@ -1,25 +1,38 @@
-import { GrafanaConfig, PluginMeta, usePluginContext } from '@grafana/data';
+import {
+  type DataSourcePluginContextType,
+  isDataSourcePluginContext,
+  type PluginContextType,
+  usePluginContext,
+} from '@grafana/data';
 
-import { config } from '../../config';
 import { reportInteraction } from '../utils';
 
-import { PluginEventProperties } from './types';
+import { createDataSourcePluginEventProperties, createPluginEventProperties } from './eventProperties';
 
-export function usePluginInteractionReporter() {
-  const { meta } = usePluginContext();
+export function usePluginInteractionReporter(): typeof reportInteraction {
+  const context = usePluginContext();
 
-  return (interactionName: string, properties?: Record<string, string | number | boolean>) => {
-    const info = createPluginInfo(meta, config);
+  if (isDataSourcePluginContext(context)) {
+    return createDataSourceReporter(context);
+  }
+
+  return createPluginReporter(context);
+}
+
+function createDataSourceReporter(context: DataSourcePluginContextType): typeof reportInteraction {
+  const { meta, settings } = context;
+  const info = createDataSourcePluginEventProperties(meta, settings);
+
+  return (interactionName: string, properties?: Record<string, unknown>) => {
     return reportInteraction(interactionName, { ...properties, ...info });
   };
 }
 
-function createPluginInfo(meta: PluginMeta, config: GrafanaConfig): PluginEventProperties {
-  return {
-    grafana_version: config.buildInfo.version,
-    plugin_type: meta.type,
-    plugin_version: meta.info.version,
-    plugin_id: meta.id,
-    plugin_name: meta.name,
+function createPluginReporter(context: PluginContextType): typeof reportInteraction {
+  const { meta } = context;
+  const info = createPluginEventProperties(meta);
+
+  return (interactionName: string, properties?: Record<string, unknown>) => {
+    return reportInteraction(interactionName, { ...properties, ...info });
   };
 }

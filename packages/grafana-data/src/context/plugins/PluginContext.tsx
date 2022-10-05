@@ -1,26 +1,14 @@
-import React, { ReactElement, createContext, PropsWithChildren, useContext } from 'react';
+import { createContext } from 'react';
 
+import { DataSourceInstanceSettings } from '../../types/datasource';
 import { PluginMeta } from '../../types/plugin';
 
 export interface PluginContextType {
   meta: PluginMeta;
 }
 
-const Context = createContext<PluginContextType | undefined>(undefined);
-
-export type PluginContextProviderProps = {
-  meta: PluginMeta;
-};
-
-export function PluginContextProvider(props: PropsWithChildren<PluginContextProviderProps>): ReactElement {
-  const { children, ...rest } = props;
-  return <Context.Provider value={rest}>{children}</Context.Provider>;
+export interface DataSourcePluginContextType extends PluginContextType {
+  settings: DataSourceInstanceSettings;
 }
 
-export function usePluginContext(): PluginContextType {
-  const context = useContext(Context);
-  if (!context) {
-    throw new Error('add a b etter error message');
-  }
-  return context;
-}
+export const Context = createContext<PluginContextType | DataSourcePluginContextType | undefined>(undefined);

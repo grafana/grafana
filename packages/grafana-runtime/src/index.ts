@@ -35,3 +35,9 @@ export {
   type DataSourcePickerProps,
   type DataSourcePickerState,
 } from './components/DataSourcePicker';
+export {
+  type PluginEventProperties,
+  createPluginEventProperties,
+  createDataSourcePluginEventProperties,
+} from './analytics/plugins/eventProperties';
+export { usePluginInteractionReporter } from './analytics/plugins/usePluginInteractionReporter';

@@ -26,9 +26,11 @@ export { PanelPlugin, type SetFieldConfigOptionsArgs, type StandardOptionConfig 
 export { createFieldConfigRegistry } from './panel/registryFactories';
 export { type QueryRunner, type QueryRunnerOptions } from './types/queryRunner';
 export { type GroupingToMatrixTransformerOptions } from './transformations/transformers/groupingToMatrix';
+export { type PluginContextType, type DataSourcePluginContextType } from './context/plugins/PluginContext';
+export { type PluginContextProviderProps, PluginContextProvider } from './context/plugins/PluginContextProvider';
 export {
-  type PluginContextType,
-  type PluginContextProviderProps,
-  PluginContextProvider,
-  usePluginContext,
-} from './context/plugins/PluginContext';
+  type DataSourcePluginContextProviderProps,
+  DataSourcePluginContextProvider,
+} from './context/plugins/DataSourcePluginContextProvider';
+export { usePluginContext } from './context/plugins/usePluginContext';
+export { isDataSourcePluginContext } from './context/plugins/guards';
