@@ -29,7 +29,7 @@ type RawObjectWithHistory struct {
 
 var (
 	// increment when RawObject changes
-	rawObjectVersion = 2
+	rawObjectVersion = 3
 )
 
 func ProvideDummyObjectServer(cfg *setting.Cfg, grpcServerProvider grpcserver.Provider) object.ObjectStoreServer {
@@ -159,14 +159,11 @@ func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequ
 			Created:   i.Created,
 			CreatedBy: i.CreatedBy,
 			Updated:   time.Now().Unix(),
-			UpdatedBy: &object.UserInfo{
-				Id:    modifier.UserID,
-				Login: modifier.Login,
-			},
-			Size:    int64(len(r.Body)),
-			ETag:    createContentsHash(r.Body),
-			Body:    r.Body,
-			Version: fmt.Sprintf("%d", prevVersion+1),
+			UpdatedBy: object.GetUserIDString(modifier),
+			Size:      int64(len(r.Body)),
+			ETag:      createContentsHash(r.Body),
+			Body:      r.Body,
+			Version:   fmt.Sprintf("%d", prevVersion+1),
 		}
 
 		versionInfo := &ObjectVersionWithBody{
@@ -208,24 +205,18 @@ func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequ
 }
 
 func (i dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectRequest, namespace string) (*object.WriteObjectResponse, error) {
-	modifier := object.UserFromContext(ctx)
+	modifier := object.GetUserIDString(object.UserFromContext(ctx))
 	rawObj := &object.RawObject{
-		UID:     r.UID,
-		Kind:    r.Kind,
-		Updated: time.Now().Unix(),
-		Created: time.Now().Unix(),
-		CreatedBy: &object.UserInfo{
-			Id:    modifier.UserID,
-			Login: modifier.Login,
-		},
-		UpdatedBy: &object.UserInfo{
-			Id:    modifier.UserID,
-			Login: modifier.Login,
-		},
-		Size:    int64(len(r.Body)),
-		ETag:    createContentsHash(r.Body),
-		Body:    r.Body,
-		Version: fmt.Sprintf("%d", 1),
+		UID:       r.UID,
+		Kind:      r.Kind,
+		Updated:   time.Now().Unix(),
+		Created:   time.Now().Unix(),
+		CreatedBy: modifier,
+		UpdatedBy: modifier,
+		Size:      int64(len(r.Body)),
+		ETag:      createContentsHash(r.Body),
+		Body:      r.Body,
+		Version:   fmt.Sprintf("%d", 1),
 	}
 
 	info := &object.ObjectVersionInfo{
@@ -338,12 +329,20 @@ func (i dummyObjectServer) Search(ctx context.Context, r *object.ObjectSearchReq
 		return nil, err
 	}
 
-	rawObjects := make([]*object.RawObject, 0)
+	searchResults := make([]*object.ObjectSearchResult, 0)
 	for _, o := range objects {
-		rawObjects = append(rawObjects, o.RawObject)
+		searchResults = append(searchResults, &object.ObjectSearchResult{
+			UID:       o.UID,
+			Kind:      o.Kind,
+			Version:   o.Version,
+			Updated:   o.Updated,
+			UpdatedBy: o.UpdatedBy,
+			Name:      "? name from summary",
+			Body:      o.Body,
+		})
 	}
 
 	return &object.ObjectSearchResponse{
-		Results: rawObjects,
+		Results: searchResults,
 	}, nil
 }
