@@ -375,7 +375,7 @@ steps:
     push --delete https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git $${TEST_TAG};
     fi
   - git tag $${TEST_TAG} && git push https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git
-    $${TEST_TAG} --quiet
+    $${TEST_TAG}
   environment:
     DOWNSTREAM_REPO:
       from_secret: downstream
@@ -1239,7 +1239,7 @@ steps:
     push --delete https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git $${TEST_TAG};
     fi
   - git tag $${TEST_TAG} && git push https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git
-    $${TEST_TAG} --quiet
+    $${TEST_TAG}
   environment:
     DOWNSTREAM_REPO:
       from_secret: downstream
@@ -5334,6 +5334,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 103a4521f9612a023213940f390e14a974d270df37165bc5c73fd6a28ddef2f6
+hmac: d12472e46f9174d71fc02a97bd869248bc15619d9aec48cc38e70e6918cba858
 
 ...
