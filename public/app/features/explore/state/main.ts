@@ -38,16 +38,6 @@ export const richHistorySearchFiltersUpdatedAction = createAction<{
   filters?: RichHistorySearchFilters;
 }>('explore/richHistorySearchFiltersUpdatedAction');
 
-export const splitSizeUpdateAction = createAction<{
-  largerExploreId?: ExploreId;
-}>('explore/splitSizeUpdateAction');
-
-export const maximizePaneAction = createAction<{
-  exploreId?: ExploreId;
-}>('explore/maximizePaneAction');
-
-export const evenPaneResizeAction = createAction('explore/evenPaneResizeAction');
-
 export const saveCorrelationsAction = createAction<CorrelationData[]>('explore/saveCorrelationsAction');
 
 /**
@@ -173,9 +163,6 @@ export const initialExploreState: ExploreState = {
   richHistoryStorageFull: false,
   richHistoryLimitExceededWarningShown: false,
   richHistoryMigrationFailed: false,
-  largerExploreId: undefined,
-  maxedExploreId: undefined,
-  evenSplitPanes: true,
 };
 
 /**
@@ -192,29 +179,6 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     return {
       ...state,
       ...targetSplit,
-      largerExploreId: undefined,
-      maxedExploreId: undefined,
-      evenSplitPanes: true,
-    };
-  }
-
-  if (splitSizeUpdateAction.match(action)) {
-    const { largerExploreId } = action.payload;
-    return {
-      ...state,
-      largerExploreId,
-      maxedExploreId: undefined,
-      evenSplitPanes: largerExploreId === undefined,
-    };
-  }
-
-  if (maximizePaneAction.match(action)) {
-    const { exploreId } = action.payload;
-    return {
-      ...state,
-      largerExploreId: exploreId,
-      maxedExploreId: exploreId,
-      evenSplitPanes: false,
     };
   }
 
@@ -222,15 +186,6 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     return {
       ...state,
       correlations: action.payload,
-    };
-  }
-
-  if (evenPaneResizeAction.match(action)) {
-    return {
-      ...state,
-      largerExploreId: undefined,
-      maxedExploreId: undefined,
-      evenSplitPanes: true,
     };
   }
 
