@@ -164,7 +164,7 @@ export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps
   const prevScrollHeight = usePrevious(scrollHeight);
 
   /**
-   * This hook is responsible to keep the right scroll position of the top
+   * This hook is responsible of keeping the right scroll position of the top
    * context when rows are added. Since rows are added at the top of the DOM,
    * the scroll position changes and we need to adjust the scrollTop.
    */
