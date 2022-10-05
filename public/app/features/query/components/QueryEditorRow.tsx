@@ -16,13 +16,13 @@ import {
   LoadingState,
   PanelData,
   PanelEvents,
-  PluginContextProvider,
+  DataSourcePluginContextProvider,
   QueryResultMetaNotice,
   TimeRange,
   toLegacyResponseData,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { AngularComponent, getAngularLoader, config } from '@grafana/runtime';
+import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 import { Badge, ErrorBoundaryAlert, HorizontalGroup } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 import { QueryOperationAction } from 'app/core/components/QueryOperationRow/QueryOperationAction';
@@ -245,7 +245,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
       if (QueryEditor) {
         return (
-          <PluginContextProvider meta={datasource.meta} config={config}>
+          <DataSourcePluginContextProvider<TQuery> meta={datasource.meta} dataSource={datasource}>
             <QueryEditor
               key={datasource?.name}
               query={query}
@@ -259,7 +259,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
               app={app}
               history={history}
             />
-          </PluginContextProvider>
+          </DataSourcePluginContextProvider>
         );
       }
     }

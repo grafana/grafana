@@ -20,8 +20,8 @@ export function usePluginInteractionReporter(): typeof reportInteraction {
 }
 
 function createDataSourceReporter(context: DataSourcePluginContextType): typeof reportInteraction {
-  const { meta, settings } = context;
-  const info = createDataSourcePluginEventProperties(meta, settings);
+  const { meta, dataSource } = context;
+  const info = createDataSourcePluginEventProperties(meta, dataSource);
 
   return (interactionName: string, properties?: Record<string, unknown>) => {
     return reportInteraction(interactionName, { ...properties, ...info });

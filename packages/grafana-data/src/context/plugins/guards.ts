@@ -1,5 +1,5 @@
 import { type DataSourcePluginContextType, type PluginContextType } from './PluginContext';
 
 export function isDataSourcePluginContext(context: PluginContextType): context is DataSourcePluginContextType {
-  return 'meta' in context && 'settings' in context;
+  return 'meta' in context && 'dataSource' in context;
 }

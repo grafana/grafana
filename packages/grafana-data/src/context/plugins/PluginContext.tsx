@@ -1,6 +1,6 @@
 import { createContext } from 'react';
 
-import { DataSourceInstanceSettings } from '../../types/datasource';
+import { DataSourceApi } from '../../types/datasource';
 import { PluginMeta } from '../../types/plugin';
 
 export interface PluginContextType {
@@ -8,7 +8,7 @@ export interface PluginContextType {
 }
 
 export interface DataSourcePluginContextType extends PluginContextType {
-  settings: DataSourceInstanceSettings;
+  dataSource: DataSourceApi;
 }
 
 export const Context = createContext<PluginContextType | DataSourcePluginContextType | undefined>(undefined);

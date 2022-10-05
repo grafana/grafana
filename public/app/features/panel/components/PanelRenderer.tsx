@@ -11,7 +11,7 @@ import {
   compareDataFrameStructures,
   PluginContextProvider,
 } from '@grafana/data';
-import { config, PanelRendererProps } from '@grafana/runtime';
+import { PanelRendererProps } from '@grafana/runtime';
 import { ErrorBoundaryAlert, useTheme2 } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
 
@@ -74,7 +74,7 @@ export function PanelRenderer<P extends object = any, F extends object = any>(pr
 
   return (
     <ErrorBoundaryAlert dependencies={[plugin, data]}>
-      <PluginContextProvider config={config} meta={plugin.meta}>
+      <PluginContextProvider meta={plugin.meta}>
         <PanelComponent
           id={1}
           data={dataWithOverrides}

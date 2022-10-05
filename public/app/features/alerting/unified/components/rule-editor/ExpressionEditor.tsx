@@ -3,7 +3,7 @@ import { noop } from 'lodash';
 import React, { FC, useCallback, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
-import { CoreApp, DataQuery, GrafanaTheme2, LoadingState } from '@grafana/data';
+import { CoreApp, DataQuery, DataSourcePluginContextProvider, GrafanaTheme2, LoadingState } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Alert, Button, useStyles2 } from '@grafana/ui';
 import { LokiQuery } from 'app/plugins/datasource/loki/types';
@@ -65,15 +65,16 @@ export const ExpressionEditor: FC<ExpressionEditorProps> = ({ value, onChange, d
 
   return (
     <>
-      <QueryEditor
-        query={dataQuery}
-        queries={[dataQuery]}
-        app={CoreApp.CloudAlerting}
-        onChange={onChangeQuery}
-        onRunQuery={noop}
-        datasource={dataSource}
-      />
-
+      <DataSourcePluginContextProvider meta={dataSource.meta} dataSource={dataSource}>
+        <QueryEditor
+          query={dataQuery}
+          queries={[dataQuery]}
+          app={CoreApp.CloudAlerting}
+          onChange={onChangeQuery}
+          onRunQuery={noop}
+          datasource={dataSource}
+        />
+      </DataSourcePluginContextProvider>
       <div className={styles.preview}>
         <Button type="button" onClick={onRunQueriesClick} disabled={alertPreview?.data.state === LoadingState.Loading}>
           Preview alerts

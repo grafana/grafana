@@ -1,5 +1,7 @@
 import React from 'react';
 
+import { PluginContextProvider } from '@grafana/data';
+
 import { GenericDataSourcePlugin } from '../types';
 
 export type Props = {
@@ -16,7 +18,11 @@ export function DataSourcePluginConfigPage({ plugin, pageId }: Props) {
 
   if (page) {
     // TODO: Investigate if any plugins are using this? We should change this interface
-    return <page.body plugin={plugin} query={{}} />;
+    return (
+      <PluginContextProvider meta={plugin.meta}>
+        <page.body plugin={plugin} query={{}} />
+      </PluginContextProvider>
+    );
   }
 
   return <div>Page not found: {page}</div>;

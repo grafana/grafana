@@ -466,7 +466,7 @@ export class PanelChrome extends PureComponent<Props, State> {
     return (
       <>
         <div className={panelContentClassNames}>
-          <PluginContextProvider config={config} meta={plugin.meta}>
+          <PluginContextProvider meta={plugin.meta}>
             <PanelContextProvider value={this.state.context}>
               <PanelComponent
                 id={panel.id}
