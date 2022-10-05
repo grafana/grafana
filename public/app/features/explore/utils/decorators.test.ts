@@ -67,7 +67,19 @@ const getTestContext = () => {
     meta: { preferredVisualisationType: 'logs' },
   });
 
-  return { emptyTable, timeSeries, logs, table };
+  const flameGraph = toDataFrame({
+    name: 'flameGraph-res',
+    refId: 'A',
+    fields: [
+      { name: 'level', type: FieldType.number, values: [4, 5, 6] },
+      { name: 'value', type: FieldType.number, values: [100, 100, 100] },
+      { name: 'self', type: FieldType.number, values: [10, 10, 10] },
+      { name: 'label', type: FieldType.string, values: ['this is a message', 'second message', 'third'] },
+    ],
+    meta: { preferredVisualisationType: 'flamegraph' },
+  });
+
+  return { emptyTable, timeSeries, logs, table, flameGraph };
 };
 
 const createExplorePanelData = (args: Partial<ExplorePanelData>): ExplorePanelData => {
@@ -83,15 +95,16 @@ const createExplorePanelData = (args: Partial<ExplorePanelData>): ExplorePanelDa
     tableResult: undefined as unknown as null,
     traceFrames: [],
     nodeGraphFrames: [],
+    flameGraphFrames: [],
   };
 
   return { ...defaults, ...args };
 };
 
-describe('decorateWithGraphLogsTraceAndTable', () => {
+describe('decorateWithGraphLogsTraceTableAndFlameGraph', () => {
   it('should correctly classify the dataFrames', () => {
-    const { table, logs, timeSeries, emptyTable } = getTestContext();
-    const series = [table, logs, timeSeries, emptyTable];
+    const { table, logs, timeSeries, emptyTable, flameGraph } = getTestContext();
+    const series = [table, logs, timeSeries, emptyTable, flameGraph];
     const panelData: PanelData = {
       series,
       state: LoadingState.Done,
@@ -107,6 +120,7 @@ describe('decorateWithGraphLogsTraceAndTable', () => {
       logsFrames: [logs],
       traceFrames: [],
       nodeGraphFrames: [],
+      flameGraphFrames: [flameGraph],
       graphResult: null,
       tableResult: null,
       logsResult: null,
@@ -130,6 +144,7 @@ describe('decorateWithGraphLogsTraceAndTable', () => {
       logsFrames: [],
       traceFrames: [],
       nodeGraphFrames: [],
+      flameGraphFrames: [],
       graphResult: null,
       tableResult: null,
       logsResult: null,
@@ -156,6 +171,7 @@ describe('decorateWithGraphLogsTraceAndTable', () => {
       logsFrames: [logs],
       traceFrames: [],
       nodeGraphFrames: [],
+      flameGraphFrames: [],
       graphResult: null,
       tableResult: null,
       logsResult: null,
