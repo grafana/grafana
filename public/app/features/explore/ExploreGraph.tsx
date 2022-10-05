@@ -53,6 +53,7 @@ interface Props {
   splitOpenFn?: SplitOpen;
   onChangeTime: (timeRange: AbsoluteTimeRange) => void;
   graphStyle: ExploreGraphStyle;
+  anchorToZero: boolean;
 }
 
 export function ExploreGraph({
@@ -68,6 +69,7 @@ export function ExploreGraph({
   splitOpenFn,
   graphStyle,
   tooltipDisplayMode = TooltipDisplayMode.Single,
+  anchorToZero,
 }: Props) {
   const theme = useTheme2();
   const [showAllTimeSeries, setShowAllTimeSeries] = useState(false);
@@ -80,6 +82,7 @@ export function ExploreGraph({
 
   const [fieldConfig, setFieldConfig] = useState<FieldConfigSource>({
     defaults: {
+      min: anchorToZero ? 0 : undefined,
       color: {
         mode: FieldColorModeId.PaletteClassic,
       },

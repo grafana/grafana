@@ -244,6 +244,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
           annotations={queryResponse.annotations}
           splitOpenFn={splitOpen}
           loadingState={queryResponse.state}
+          anchorToZero={false}
         />
       </Collapse>
     );
