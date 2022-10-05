@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
@@ -80,8 +81,9 @@ func mockAccessTokenExistsResponse(returnArguments ...interface{}) *publicdashbo
 		},
 		&fakeOAuthTokenService{},
 	)
+	annotationsService := annotationstest.NewFakeAnnotationsRepo()
 
-	return publicdashboardsService.ProvideService(setting.NewCfg(), fakeStore, qds)
+	return publicdashboardsService.ProvideService(setting.NewCfg(), fakeStore, qds, annotationsService)
 }
 
 func runMiddleware(request *http.Request, pubdashService *publicdashboardsService.PublicDashboardServiceImpl) *httptest.ResponseRecorder {
