@@ -16,8 +16,6 @@ replace github.com/russellhaering/goxmldsig@v1.1.0 => github.com/russellhaering/
 // Avoid using v2.0.0+incompatible Redigo used by dependencies as the latest maintained branch of Redigo is v1.
 replace github.com/gomodule/redigo => github.com/gomodule/redigo v1.8.9
 
-replace github.com/grafana/grafana-plugin-sdk-go => ../grafana-plugin-sdk-go
-
 require (
 	cloud.google.com/go/storage v1.21.0
 	cuelang.org/go v0.4.3
@@ -59,7 +57,7 @@ require (
 	github.com/grafana/cuetsy v0.1.1
 	github.com/grafana/grafana-aws-sdk v0.11.0
 	github.com/grafana/grafana-azure-sdk-go v1.3.1
-	github.com/grafana/grafana-plugin-sdk-go v0.139.0
+	github.com/grafana/grafana-plugin-sdk-go v0.140.1-0.20221005105711-0c6f01858443
 	github.com/grafana/thema v0.0.0-20220817114012-ebeee841c104
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-hclog v1.0.0

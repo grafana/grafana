@@ -1367,6 +1367,8 @@ github.com/grafana/grafana-google-sdk-go v0.0.0-20211104130251-b190293eaf58/go.m
 github.com/grafana/grafana-plugin-sdk-go v0.114.0/go.mod h1:D7x3ah+1d4phNXpbnOaxa/osSaZlwh9/ZUnGGzegRbk=
 github.com/grafana/grafana-plugin-sdk-go v0.139.0 h1:2RQKM2QpSaWTtaGN6sK+R7LO7zykOeTYF0QkAMA7JsI=
 github.com/grafana/grafana-plugin-sdk-go v0.139.0/go.mod h1:Y+Ps2sesZ62AyCnX+hzrYnyDQYe/ZZl+A8yKLOBm12c=
+github.com/grafana/grafana-plugin-sdk-go v0.140.1-0.20221005105711-0c6f01858443 h1:TfxDhtwiqoyrrBJu5cNNjgFWHiypHl8c8+E2wWmXT64=
+github.com/grafana/grafana-plugin-sdk-go v0.140.1-0.20221005105711-0c6f01858443/go.mod h1:srvRQ+de4C5h7FqA5lSFUkFCs5pJolWT+PGV2AyBOFk=
 github.com/grafana/prometheus-alertmanager v0.24.0-rc.0.0.20220930143838-d75bdc5543c0 h1:Ifcxl2wKT+UoJE+d2hsEZjH5FVdF5nML+1dtMliFk78=
 github.com/grafana/prometheus-alertmanager v0.24.0-rc.0.0.20220930143838-d75bdc5543c0/go.mod h1:xVHSIhcJ2xBqw8jSf7ZM+9NnTSV68dCLrj7MDiFEse8=
 github.com/grafana/saml v0.4.9-0.20220727151557-61cd9c9353fc h1:1PY8n+rXuBNr3r1JQhoytWDCpc+pq+BibxV0SZv+Cr4=
