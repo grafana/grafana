@@ -52,7 +52,7 @@ type Model struct {
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
 type PlaylistItem struct {
 	// Title is an unused property -- it will be removed in the future
-	Title string `json:"title"`
+	Title *string `json:"title,omitempty"`
 
 	// Type of the item.
 	Type PlaylistItemType `json:"type"`

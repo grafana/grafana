@@ -55,6 +55,12 @@ func (s *Service) Get(ctx context.Context, q *playlist.GetPlaylistByUidQuery) (*
 	for i := 0; i < len(rawItems); i++ {
 		items[i].Type = playlist.PlaylistItemType(rawItems[i].Type)
 		items[i].Value = rawItems[i].Value
+
+		// Add the unused title to the result
+		title := rawItems[i].Title
+		if title != "" {
+			items[i].Title = &title
+		}
 	}
 	return &playlist.PlaylistDTO{
 		Uid:      v.UID,

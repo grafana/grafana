@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Dropdown, Icon, Tooltip, useStyles2 } from '@grafana/ui';
+import { Dropdown, Icon, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { useSelector } from 'app/types';
 
@@ -17,7 +17,6 @@ export function TopSearchBar() {
 
   const helpNode = navIndex['help'];
   const profileNode = navIndex['profile'];
-  const signInNode = navIndex['signin'];
 
   return (
     <div className={styles.container}>
@@ -32,24 +31,18 @@ export function TopSearchBar() {
       <div className={styles.actions}>
         {helpNode && (
           <Dropdown overlay={() => <TopNavBarMenu node={helpNode} />}>
-            <button className={styles.actionItem}>
-              <Icon name="question-circle" size="lg" />
-            </button>
+            <ToolbarButton iconOnly icon="question-circle" aria-label="Help" />
           </Dropdown>
         )}
-        <NewsContainer buttonCss={styles.actionItem} />
-        {signInNode && (
-          <Tooltip placement="bottom" content="Sign in">
-            <a className={styles.actionItem} href={signInNode.url} target={signInNode.target}>
-              {signInNode.icon && <Icon name={signInNode.icon} size="lg" />}
-            </a>
-          </Tooltip>
-        )}
+        <NewsContainer />
         {profileNode && (
           <Dropdown overlay={<TopNavBarMenu node={profileNode} />}>
-            <button className={styles.actionItem}>
-              <img src={contextSrv.user.gravatarUrl} alt="User avatar" />
-            </button>
+            <ToolbarButton
+              className={styles.profileButton}
+              imgSrc={contextSrv.user.gravatarUrl}
+              imgAlt="User avatar"
+              aria-label="Profile"
+            />
           </Dropdown>
         )}
       </div>
@@ -62,6 +55,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     container: css({
       height: TOP_BAR_LEVEL_HEIGHT,
       display: 'grid',
+      gap: theme.spacing(0.5),
       gridTemplateColumns: '1fr 2fr 1fr',
       padding: theme.spacing(0, 2),
       alignItems: 'center',
@@ -77,25 +71,15 @@ const getStyles = (theme: GrafanaTheme2) => {
     searchInput: css({}),
     actions: css({
       display: 'flex',
-      gap: theme.spacing(1),
+      gap: theme.spacing(0.5),
       justifyContent: 'flex-end',
     }),
-    actionItem: css({
-      display: 'flex',
-      flexGrow: 0,
-      border: 'none',
-      boxShadow: 'none',
-      background: 'none',
-      alignItems: 'center',
-
-      color: theme.colors.text.secondary,
-      '&:hover': {
-        background: theme.colors.background.secondary,
-      },
+    profileButton: css({
       img: {
         borderRadius: '50%',
-        width: '24px',
         height: '24px',
+        marginRight: 0,
+        width: '24px',
       },
     }),
   };
