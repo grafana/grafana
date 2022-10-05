@@ -20,7 +20,7 @@ const (
 	randomWalkQuery                   queryType = "random_walk"
 	randomWalkSlowQuery               queryType = "slow_query"
 	randomWalkWithErrorQuery          queryType = "random_walk_with_error"
-	pluginQueryError                  queryType = "plugin_query_error"
+	pluginQueryErrorStatus            queryType = "plugin_query_error_status"
 	randomWalkTableQuery              queryType = "random_walk_table"
 	exponentialHeatmapBucketDataQuery queryType = "exponential_heatmap_bucket_data"
 	linearHeatmapBucketDataQuery      queryType = "linear_heatmap_bucket_data"
@@ -177,8 +177,8 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 	})
 
 	s.registerScenario(&Scenario{
-		ID:      string(pluginQueryError),
-		Name:    "Plugin Query Error",
+		ID:      string(pluginQueryErrorStatus),
+		Name:    "Plugin Query Error Status",
 		handler: s.handleDataResponseErrorStatusScenario,
 	})
 
