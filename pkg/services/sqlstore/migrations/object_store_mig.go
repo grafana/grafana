@@ -22,8 +22,8 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 			{Name: "kind", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
 
 			// The raw object body (any byte array)
-			{Name: "size", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "body", Type: migrator.DB_Blob, Nullable: false},
+			{Name: "size", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "etag", Type: migrator.DB_NVarchar, Length: 32, Nullable: false}, // md5(body)
 			{Name: "version", Type: migrator.DB_NVarchar, Length: 128, Nullable: true},
 
@@ -84,8 +84,8 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 			{Name: "version", Type: migrator.DB_NVarchar, Length: 128, Nullable: true},
 
 			// Raw bytes
-			{Name: "size", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "body", Type: migrator.DB_Blob, Nullable: false},
+			{Name: "size", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "etag", Type: migrator.DB_NVarchar, Length: 32, Nullable: false}, // md5(body)
 
 			// Who changed what when
