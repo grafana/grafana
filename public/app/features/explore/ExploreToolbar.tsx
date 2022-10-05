@@ -100,6 +100,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
 
     return (
       <RefreshPicker
+        key="refreshPicker"
         onIntervalChanged={this.onChangeRefreshInterval}
         value={refreshInterval}
         isLoading={loading}
@@ -141,23 +142,30 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
 
     return [
       !splitted ? (
-        <ToolbarButton tooltip="Split the pane" onClick={this.onOpenSplitView} icon="columns" disabled={isLive}>
+        <ToolbarButton
+          key="split"
+          tooltip="Split the pane"
+          onClick={this.onOpenSplitView}
+          icon="columns"
+          disabled={isLive}
+        >
           Split
         </ToolbarButton>
       ) : (
-        <ToolbarButton tooltip="Close split pane" onClick={this.onCloseSplitView} icon="times">
+        <ToolbarButton key="split" tooltip="Close split pane" onClick={this.onCloseSplitView} icon="times">
           Close
         </ToolbarButton>
       ),
 
       config.featureToggles.explore2Dashboard && showExploreToDashboard && (
-        <Suspense fallback={null}>
+        <Suspense key="addToDashboard" fallback={null}>
           <AddToDashboard exploreId={exploreId} />
         </Suspense>
       ),
 
       !isLive && (
         <ExploreTimeControls
+          key="timeControls"
           exploreId={exploreId}
           range={range}
           timeZone={timeZone}
@@ -174,10 +182,12 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
 
       this.renderRefreshPicker(showSmallTimePicker),
 
-      refreshInterval && <SetInterval func={this.onRunQuery} interval={refreshInterval} loading={loading} />,
+      refreshInterval && (
+        <SetInterval key="setInterval" func={this.onRunQuery} interval={refreshInterval} loading={loading} />
+      ),
 
       hasLiveOption && (
-        <LiveTailControls exploreId={exploreId}>
+        <LiveTailControls key="liveControls" exploreId={exploreId}>
           {(c) => {
             const controls = {
               ...c,
