@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Dropdown, Icon, Tooltip, useStyles2 } from '@grafana/ui';
+import { Dropdown, Icon, ToolbarButton, Tooltip, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { useSelector } from 'app/types';
 
@@ -32,9 +32,7 @@ export function TopSearchBar() {
       <div className={styles.actions}>
         {helpNode && (
           <Dropdown overlay={() => <TopNavBarMenu node={helpNode} />}>
-            <button className={styles.actionItem}>
-              <Icon name="question-circle" size="lg" />
-            </button>
+            <ToolbarButton className={styles.actionItem} iconOnly icon="question-circle" aria-label="Help" />
           </Dropdown>
         )}
         <NewsContainer buttonCss={styles.actionItem} />
@@ -47,9 +45,12 @@ export function TopSearchBar() {
         )}
         {profileNode && (
           <Dropdown overlay={<TopNavBarMenu node={profileNode} />}>
-            <button className={styles.actionItem}>
-              <img src={contextSrv.user.gravatarUrl} alt="User avatar" />
-            </button>
+            <ToolbarButton
+              className={styles.actionItem}
+              imgSrc={contextSrv.user.gravatarUrl}
+              imgAlt="User avatar"
+              aria-label="Profile"
+            />
           </Dropdown>
         )}
       </div>
@@ -62,6 +63,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     container: css({
       height: TOP_BAR_LEVEL_HEIGHT,
       display: 'grid',
+      gap: theme.spacing(0.5),
       gridTemplateColumns: '1fr 2fr 1fr',
       padding: theme.spacing(0, 2),
       alignItems: 'center',
@@ -77,7 +79,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     searchInput: css({}),
     actions: css({
       display: 'flex',
-      gap: theme.spacing(1),
+      gap: theme.spacing(0.5),
       justifyContent: 'flex-end',
     }),
     actionItem: css({
@@ -94,8 +96,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
       img: {
         borderRadius: '50%',
-        width: '24px',
         height: '24px',
+        marginRight: 0,
+        width: '24px',
       },
     }),
   };
