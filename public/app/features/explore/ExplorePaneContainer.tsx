@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import memoizeOne from 'memoize-one';
 import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
@@ -36,11 +36,12 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: flex;
       flex: 1 1 auto;
       flex-direction: column;
-      overflow: scroll;
-      min-width: 600px;
       & + & {
         border-left: 1px dotted ${theme.colors.border.medium};
       }
+    `,
+    exploreSplit: css`
+      width: 50%;
     `,
   };
 };
@@ -142,10 +143,11 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
   };
 
   render() {
-    const { theme, exploreId, initialized } = this.props;
+    const { theme, split, exploreId, initialized } = this.props;
     const styles = getStyles(theme);
+    const exploreClass = cx(styles.explore, split && styles.exploreSplit);
     return (
-      <div className={styles.explore} ref={this.getRef} data-testid={selectors.pages.Explore.General.container}>
+      <div className={exploreClass} ref={this.getRef} data-testid={selectors.pages.Explore.General.container}>
         {initialized && <Explore exploreId={exploreId} />}
       </div>
     );
