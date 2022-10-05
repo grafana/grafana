@@ -1209,8 +1209,7 @@ def trigger_test_release():
             'git tag -d $${TEST_TAG} && git push --delete origin $${TEST_TAG} && git tag $${TEST_TAG} && git push origin $${TEST_TAG}',
             'cd -',
             'git fetch origin "refs/tags/*:refs/tags/*"',
-            'git remote add downstream https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git',
-            'git tag -d $${TEST_TAG} && git push --delete downstream --quiet $${TEST_TAG} && git tag $${TEST_TAG} && git push downstream $${TEST_TAG} --quiet',
+            'git tag -d $${TEST_TAG} && git push --delete origin --quiet $${TEST_TAG} && git tag $${TEST_TAG} && git push origin $${TEST_TAG} --quiet',
         ],
         'failure': 'ignore',
         'when': {
