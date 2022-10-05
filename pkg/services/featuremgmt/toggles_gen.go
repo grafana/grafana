@@ -195,10 +195,6 @@ const (
 	// New top nav and page layouts
 	FlagTopnav = "topnav"
 
-	// FlagCustomBranding
-	// Replaces whitelabeling with the new custom branding feature
-	FlagCustomBranding = "customBranding"
-
 	// FlagGrpcServer
 	// Run GRPC server
 	FlagGrpcServer = "grpcServer"
