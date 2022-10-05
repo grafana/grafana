@@ -2,8 +2,6 @@ package sqlstore
 
 import (
 	"context"
-	"database/sql"
-	"database/sql/driver"
 	"fmt"
 	"net/url"
 	"os"
@@ -17,9 +15,7 @@ import (
 	"github.com/gchaincl/sqlhooks"
 	"github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
-	"github.com/lib/pq"
 	_ "github.com/lib/pq"
-	"github.com/mattn/go-sqlite3"
 	"github.com/prometheus/client_golang/prometheus"
 	"xorm.io/core"
 	"xorm.io/xorm"
@@ -185,64 +181,9 @@ func (ss *SQLStore) Bus() bus.Bus {
 	return ss.bus
 }
 
-// SQLxHooks satisfies the sqlhook.SQLxHooks interface
-type SQLxHooks struct {
-	logger ILogger
-}
-
-// Before hook will return the context with the timestamp
-func (h *SQLxHooks) Before(ctx context.Context, query string, args ...interface{}) (context.Context, error) {
-	return context.WithValue(ctx, "start", time.Now()), nil
-}
-
-// After hook will get the timestamp registered on the Before hook and logs the query, its args and its elapsed time
-func (h *SQLxHooks) After(ctx context.Context, query string, args ...interface{}) (context.Context, error) {
-	start := ctx.Value("start").(time.Time)
-	h.logger.Infof("[SQL] %v %v - took: %v", query, args, time.Since(start))
-	return ctx, nil
-}
-
-// OnError will be called if any error happens
-func (h *SQLxHooks) OnError(ctx context.Context, err error, query string, args ...interface{}) error {
-	h.logger.Errorf("[SQL] %v %v failed: %v - took: %v", query, args, err)
-	return nil
-}
-
 func (ss *SQLStore) GetSqlxSession() *session.SessionDB {
 	if ss.sqlxsession == nil {
-		var logger ILogger
-
-		debugSQL := ss.Cfg.Raw.Section("database").Key("log_queries").MustBool(false)
-		if !debugSQL {
-			logger = DiscardLogger{}
-		} else {
-			logger = NewGenericLogger(log.LvlCrit, log.WithSuffix(log.New("sqlstore.sqlx"), log.CallerContextKey, log.StackCaller(log.DefaultCallerDepth)))
-		}
-		drivers := map[string]driver.Driver{
-			migrator.SQLite:   &sqlite3.SQLiteDriver{},
-			migrator.MySQL:    &mysql.MySQLDriver{},
-			migrator.Postgres: &pq.Driver{},
-		}
-
-		dbType := ss.GetDialect().DriverName()
-		d, exist := drivers[dbType]
-		if !exist {
-			logger.Errorf("unknow dbType: %s", dbType)
-		}
-
-		driverWithHooks := "sqlx" + dbType + "WithHooks"
-		sql.Register(driverWithHooks, sqlhooks.Wrap(d, &SQLxHooks{logger: logger}))
-
-		connectionString, err := ss.buildConnectionString()
-		if err != nil {
-			logger.Error("failed to build the connection string: ", "error", err)
-		}
-		// open's a new connection (in parallel with the xorm one)
-		db, _ := sqlx.Open(driverWithHooks, connectionString)
-		if err := db.Ping(); err != nil {
-			logger.Error("failed to ping the database: ", "error", err)
-		}
-		ss.sqlxsession = session.GetSession(db)
+		ss.sqlxsession = session.GetSession(sqlx.NewDb(ss.engine.DB().DB, ss.GetDialect().DriverName()))
 	}
 	return ss.sqlxsession
 }
@@ -405,8 +346,23 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 		return err
 	}
 
+	var hooks []sqlhooks.Hooks
+	var onErroers []sqlhooks.OnErrorer
 	if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagDatabaseMetrics) {
-		ss.dbCfg.Type = WrapDatabaseDriverWithHooks(ss.dbCfg.Type, ss.tracer)
+		dbQueryInstrumenter := databaseQueryInstrumenter{log: log.New("sqlstore.metrics"), tracer: ss.tracer}
+		hooks = append(hooks, &dbQueryInstrumenter)
+		onErroers = append(onErroers, &dbQueryInstrumenter)
+	}
+
+	debugSQL := ss.Cfg.Raw.Section("database").Key("log_queries").MustBool(false)
+	if debugSQL {
+		dbQueryLogger := databaseQueryLogger{log: log.New("sqlstore.queries")}
+		hooks = append(hooks, &dbQueryLogger)
+		onErroers = append(onErroers, &dbQueryLogger)
+	}
+
+	if len(hooks) > 0 || len(onErroers) > 0 {
+		ss.dbCfg.Type = WrapDatabaseDriverWithHooks(ss.dbCfg.Type, hooks, onErroers)
 	}
 
 	sqlog.Info("Connecting to DB", "dbtype", ss.dbCfg.Type)
@@ -450,17 +406,6 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 	engine.SetMaxOpenConns(ss.dbCfg.MaxOpenConn)
 	engine.SetMaxIdleConns(ss.dbCfg.MaxIdleConn)
 	engine.SetConnMaxLifetime(time.Second * time.Duration(ss.dbCfg.ConnMaxLifetime))
-
-	// configure sql logging
-	debugSQL := ss.Cfg.Raw.Section("database").Key("log_queries").MustBool(false)
-	if !debugSQL {
-		engine.SetLogger(&xorm.DiscardLogger{})
-	} else {
-		// add stack to database calls to be able to see what repository initiated queries. Top 7 items from the stack as they are likely in the xorm library.
-		engine.SetLogger(NewXormLogger(log.LvlInfo, log.WithSuffix(log.New("sqlstore.xorm"), log.CallerContextKey, log.StackCaller(log.DefaultCallerDepth))))
-		engine.ShowSQL(true)
-		engine.ShowExecTime(true)
-	}
 
 	ss.engine = engine
 	return nil

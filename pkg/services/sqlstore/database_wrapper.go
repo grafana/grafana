@@ -37,7 +37,8 @@ func init() {
 // WrapDatabaseDriverWithHooks creates a fake database driver that
 // executes pre and post functions which we use to gather metrics about
 // database queries. It also registers the metrics.
-func WrapDatabaseDriverWithHooks(dbType string, tracer tracing.Tracer) string {
+// It expects multiple sqlhooks.Hooks and sqlhooks.OnErrorer that are executed sequentially.
+func WrapDatabaseDriverWithHooks(dbType string, hooks []sqlhooks.Hooks, onErroers []sqlhooks.OnErrorer) string {
 	drivers := map[string]driver.Driver{
 		migrator.SQLite:   &sqlite3.SQLiteDriver{},
 		migrator.MySQL:    &mysql.MySQLDriver{},
@@ -50,14 +51,60 @@ func WrapDatabaseDriverWithHooks(dbType string, tracer tracing.Tracer) string {
 	}
 
 	driverWithHooks := dbType + "WithHooks"
-	sql.Register(driverWithHooks, sqlhooks.Wrap(d, &databaseQueryWrapper{log: log.New("sqlstore.metrics"), tracer: tracer}))
+
+	sql.Register(driverWithHooks, sqlhooks.Wrap(d, &databaseWrapper{
+		hooks:     hooks,
+		onErroers: onErroers,
+	}))
+
 	core.RegisterDriver(driverWithHooks, &databaseQueryWrapperDriver{dbType: dbType})
 	return driverWithHooks
 }
 
-// databaseQueryWrapper satisfies the sqlhook.databaseQueryWrapper interface
+type databaseWrapper struct {
+	hooks     []sqlhooks.Hooks
+	onErroers []sqlhooks.OnErrorer
+}
+
+// Before hook will print the query with its args and return the context with the timestamp
+func (h *databaseWrapper) Before(ctx context.Context, query string, args ...interface{}) (context.Context, error) {
+	for _, hook := range h.hooks {
+		c, err := hook.Before(ctx, query, args...)
+		if err != nil {
+			return ctx, err
+		}
+		ctx = c
+	}
+	return ctx, nil
+}
+
+// After hook will get the timestamp registered on the Before hook and print the elapsed time
+func (h *databaseWrapper) After(ctx context.Context, query string, args ...interface{}) (context.Context, error) {
+	for _, hook := range h.hooks {
+		c, err := hook.After(ctx, query, args...)
+		if err != nil {
+			return ctx, err
+		}
+		ctx = c
+	}
+	return ctx, nil
+}
+
+// OnError will be called if any error happens
+func (h *databaseWrapper) OnError(ctx context.Context, err error, query string, args ...interface{}) error {
+	for _, hook := range h.onErroers {
+		err := hook.OnError(ctx, err, query, args...)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// databaseQueryInstrumenter satisfies the sqlhook.databaseQueryInstrumenter interface
 // which allow us to wrap all SQL queries with a `Before` & `After` hook.
-type databaseQueryWrapper struct {
+// It gathers metrics about database queries. It also registers the metrics.
+type databaseQueryInstrumenter struct {
 	log    log.Logger
 	tracer tracing.Tracer
 }
@@ -66,18 +113,18 @@ type databaseQueryWrapper struct {
 type databaseQueryWrapperKey struct{}
 
 // Before hook will print the query with its args and return the context with the timestamp
-func (h *databaseQueryWrapper) Before(ctx context.Context, query string, args ...interface{}) (context.Context, error) {
+func (h *databaseQueryInstrumenter) Before(ctx context.Context, query string, args ...interface{}) (context.Context, error) {
 	return context.WithValue(ctx, databaseQueryWrapperKey{}, time.Now()), nil
 }
 
 // After hook will get the timestamp registered on the Before hook and print the elapsed time
-func (h *databaseQueryWrapper) After(ctx context.Context, query string, args ...interface{}) (context.Context, error) {
+func (h *databaseQueryInstrumenter) After(ctx context.Context, query string, args ...interface{}) (context.Context, error) {
 	h.instrument(ctx, "success", query, nil)
 
 	return ctx, nil
 }
 
-func (h *databaseQueryWrapper) instrument(ctx context.Context, status string, query string, err error) {
+func (h *databaseQueryInstrumenter) instrument(ctx context.Context, status string, query string, err error) {
 	begin := ctx.Value(databaseQueryWrapperKey{}).(time.Time)
 	elapsed := time.Since(begin)
 
@@ -109,7 +156,7 @@ func (h *databaseQueryWrapper) instrument(ctx context.Context, status string, qu
 }
 
 // OnError will be called if any error happens
-func (h *databaseQueryWrapper) OnError(ctx context.Context, err error, query string, args ...interface{}) error {
+func (h *databaseQueryInstrumenter) OnError(ctx context.Context, err error, query string, args ...interface{}) error {
 	// Not a user error: driver is telling sql package that an
 	// optional interface method is not implemented. There is
 	// nothing to instrument here.
@@ -140,4 +187,39 @@ func (hp *databaseQueryWrapperDriver) Parse(driverName, dataSourceName string) (
 		return nil, fmt.Errorf("could not find driver with name %s", hp.dbType)
 	}
 	return driver.Parse(driverName, dataSourceName)
+}
+
+// databaseQueryLogger satisfies the sqlhook.databaseQueryLogger interface
+// It logs database queries.
+type databaseQueryLogger struct {
+	log log.Logger
+}
+
+func (h *databaseQueryLogger) Before(ctx context.Context, query string, args ...interface{}) (context.Context, error) {
+	return context.WithValue(ctx, "start", time.Now()), nil
+}
+
+// After hook will get the timestamp registered on the Before hook and logs the query, its args and its elapsed time
+func (h *databaseQueryLogger) After(ctx context.Context, query string, args ...interface{}) (context.Context, error) {
+	start := ctx.Value("start").(time.Time)
+
+	ctxLogger := h.log.FromContext(ctx)
+	ctxLogger.Info("[SQL]", "query", query, "args", args, "elapsed time", time.Since(start))
+	return ctx, nil
+}
+
+// OnError will be called if any error happens
+func (h *databaseQueryLogger) OnError(ctx context.Context, err error, query string, args ...interface{}) error {
+	// Not a user error: driver is telling sql package that an
+	// optional interface method is not implemented. There is
+	// nothing to instrument here.
+	// https://golang.org/pkg/database/sql/driver/#ErrSkip
+	// https://github.com/DataDog/dd-trace-go/issues/270
+	if errors.Is(err, driver.ErrSkip) {
+		return nil
+	}
+
+	ctxLogger := h.log.FromContext(ctx)
+	ctxLogger.Error("[SQL] failed", "query", query, "args", args, "err", err)
+	return nil
 }
