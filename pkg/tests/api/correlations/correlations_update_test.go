@@ -240,7 +240,7 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 		err = json.Unmarshal(responseBody, &response)
 		require.NoError(t, err)
 
-		require.Equal(t, "At least one of label, description is required", response.Message)
+		require.Equal(t, "At least one of label, description or config is required", response.Message)
 		require.Equal(t, correlations.ErrUpdateCorrelationEmptyParams.Error(), response.Error)
 		require.NoError(t, res.Body.Close())
 
@@ -258,7 +258,7 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 		err = json.Unmarshal(responseBody, &response)
 		require.NoError(t, err)
 
-		require.Equal(t, "At least one of label, description is required", response.Message)
+		require.Equal(t, "At least one of label, description or config is required", response.Message)
 		require.Equal(t, correlations.ErrUpdateCorrelationEmptyParams.Error(), response.Error)
 		require.NoError(t, res.Body.Close())
 
@@ -279,7 +279,7 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 		err = json.Unmarshal(responseBody, &response)
 		require.NoError(t, err)
 
-		require.Equal(t, "At least one of label, description is required", response.Message)
+		require.Equal(t, "At least one of label, description or config is required", response.Message)
 		require.Equal(t, correlations.ErrUpdateCorrelationEmptyParams.Error(), response.Error)
 		require.NoError(t, res.Body.Close())
 	})

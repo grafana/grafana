@@ -99,7 +99,7 @@ func (s CorrelationsService) updateCorrelation(ctx context.Context, cmd UpdateCo
 			return ErrSourceDataSourceReadOnly
 		}
 
-		if cmd.Label == nil && cmd.Description == nil {
+		if cmd.Label == nil && cmd.Description == nil && cmd.Config == nil {
 			return ErrUpdateCorrelationEmptyParams
 		}
 		update := Correlation{}
@@ -110,6 +110,10 @@ func (s CorrelationsService) updateCorrelation(ctx context.Context, cmd UpdateCo
 		if cmd.Description != nil {
 			update.Description = *cmd.Description
 			session.MustCols("description")
+		}
+		if cmd.Config != nil {
+			update.Config = *cmd.Config
+			session.MustCols("config")
 		}
 
 		updateCount, err := session.Where("uid = ? AND source_uid = ?", correlation.UID, correlation.SourceUID).Limit(1).Update(update)
