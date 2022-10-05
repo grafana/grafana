@@ -1,30 +1,20 @@
-import { DataFrameView, toDataFrame, FieldType } from '@grafana/data';
+import { toDataFrame, FieldType } from '@grafana/data';
 
+import { DummySearcher } from './dummy';
 import { FrontendSearcher } from './frontend';
-import { GrafanaSearcher, QueryResponse } from './types';
 
 describe('FrontendSearcher', () => {
-  // Searcher that returns the same thing every time
-  const upstream: GrafanaSearcher = {
-    search: jest.fn(() =>
-      Promise.resolve({
-        view: new DataFrameView(
-          toDataFrame({
-            meta: {
-              custom: {
-                something: 8,
-              },
-            },
-            fields: [{ name: 'name', type: FieldType.string, values: ['1', '2', '3'] }],
-          })
-        ),
-      } as QueryResponse)
-    ),
-
-    starred: jest.fn(),
-    tags: jest.fn(),
-    getSortOptions: jest.fn(),
-  };
+  const upstream = new DummySearcher();
+  upstream.setExpectedSearchResult(
+    toDataFrame({
+      meta: {
+        custom: {
+          something: 8,
+        },
+      },
+      fields: [{ name: 'name', type: FieldType.string, values: ['1', '2', '3'] }],
+    })
+  );
 
   it('should call search api with correct query for general folder', async () => {
     const frontendSearcher = new FrontendSearcher(upstream);
