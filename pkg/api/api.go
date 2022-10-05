@@ -261,7 +261,13 @@ func (hs *HTTPServer) registerRoutes() {
 		})
 
 		if hs.Features.IsEnabled(featuremgmt.FlagStorage) {
+			// Will eventually be replaced with the 'object' route
 			apiRoute.Group("/storage", hs.StorageService.RegisterHTTPRoutes)
+
+			// Allow HTTP access to the object storage feature (dev only for now)
+			if hs.Features.IsEnabled(featuremgmt.FlagGrpcServer) {
+				apiRoute.Group("/object", hs.httpObjectStore.RegisterHTTPRoutes)
+			}
 		}
 
 		if hs.Features.IsEnabled(featuremgmt.FlagPanelTitleSearch) {

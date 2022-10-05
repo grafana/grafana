@@ -76,7 +76,7 @@ export function buildPluginSectionNav(
   section.children = (section?.children ?? []).map((child) => {
     if (child.children) {
       return {
-        ...child,
+        ...setPageToActive(child, currentUrl),
         children: child.children.map((pluginPage) => setPageToActive(pluginPage, currentUrl)),
       };
     }

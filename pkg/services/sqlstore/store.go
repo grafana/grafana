@@ -19,13 +19,10 @@ type Store interface {
 	GetDBType() core.DbType
 	GetSystemStats(ctx context.Context, query *models.GetSystemStatsQuery) error
 	GetOrgByName(name string) (*models.Org, error)
-	CreateOrg(ctx context.Context, cmd *models.CreateOrgCommand) error
-	CreateOrgWithMember(name string, userID int64) (models.Org, error)
 	GetOrgById(context.Context, *models.GetOrgByIdQuery) error
 	GetOrgByNameHandler(ctx context.Context, query *models.GetOrgByNameQuery) error
 	CreateUser(ctx context.Context, cmd user.CreateUserCommand) (*user.User, error)
 	GetUserProfile(ctx context.Context, query *models.GetUserProfileQuery) error
-	GetUserOrgList(ctx context.Context, query *models.GetUserOrgListQuery) error
 	GetSignedInUser(ctx context.Context, query *models.GetSignedInUserQuery) error
 	WithDbSession(ctx context.Context, callback DBTransactionFunc) error
 	WithNewDbSession(ctx context.Context, callback DBTransactionFunc) error

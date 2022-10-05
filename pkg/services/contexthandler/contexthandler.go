@@ -44,7 +44,7 @@ func ProvideService(cfg *setting.Cfg, tokenService models.UserTokenService, jwtS
 	remoteCache *remotecache.RemoteCache, renderService rendering.Service, sqlStore sqlstore.Store,
 	tracer tracing.Tracer, authProxy *authproxy.AuthProxy, loginService login.Service,
 	apiKeyService apikey.Service, authenticator loginpkg.Authenticator, userService user.Service,
-) *ContextHandler {
+	orgService org.Service) *ContextHandler {
 	return &ContextHandler{
 		Cfg:              cfg,
 		AuthTokenService: tokenService,
@@ -58,6 +58,7 @@ func ProvideService(cfg *setting.Cfg, tokenService models.UserTokenService, jwtS
 		loginService:     loginService,
 		apiKeyService:    apiKeyService,
 		userService:      userService,
+		orgService:       orgService,
 	}
 }
 
@@ -75,6 +76,7 @@ type ContextHandler struct {
 	loginService     login.Service
 	apiKeyService    apikey.Service
 	userService      user.Service
+	orgService       org.Service
 	// GetTime returns the current time.
 	// Stubbable by tests.
 	GetTime func() time.Time
@@ -184,7 +186,9 @@ func (h *ContextHandler) initContextWithAnonymousUser(reqContext *models.ReqCont
 	_, span := h.tracer.Start(reqContext.Req.Context(), "initContextWithAnonymousUser")
 	defer span.End()
 
-	orga, err := h.SQLStore.GetOrgByName(h.Cfg.AnonymousOrgName)
+	getOrg := org.GetOrgByNameQuery{Name: h.Cfg.AnonymousOrgName}
+
+	orga, err := h.orgService.GetByName(reqContext.Req.Context(), &getOrg)
 	if err != nil {
 		reqContext.Logger.Error("Anonymous access organization error.", "org_name", h.Cfg.AnonymousOrgName, "error", err)
 		return false
@@ -194,7 +198,7 @@ func (h *ContextHandler) initContextWithAnonymousUser(reqContext *models.ReqCont
 	reqContext.AllowAnonymous = true
 	reqContext.SignedInUser = &user.SignedInUser{IsAnonymous: true}
 	reqContext.OrgRole = org.RoleType(h.Cfg.AnonymousOrgRole)
-	reqContext.OrgID = orga.Id
+	reqContext.OrgID = orga.ID
 	reqContext.OrgName = orga.Name
 	return true
 }
