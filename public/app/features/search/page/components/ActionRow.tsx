@@ -26,7 +26,6 @@ interface Props {
   onTagFilterChange: (tags: string[]) => void;
   getTagOptions: () => Promise<TermCount[]>;
   getSortOptions: () => Promise<SelectableValue[]>;
-  sortPlaceholder?: string;
   onDatasourceChange: (ds?: string) => void;
   includePanels: boolean;
   setIncludePanels: (v: boolean) => void;
@@ -58,7 +57,6 @@ export const ActionRow: FC<Props> = ({
   onTagFilterChange,
   getTagOptions,
   getSortOptions,
-  sortPlaceholder,
   onDatasourceChange,
   query,
   showStarredFilter,
@@ -118,13 +116,7 @@ export const ActionRow: FC<Props> = ({
               value={layout}
             />
           )}
-          <SortPicker
-            onChange={onSortChange}
-            value={query.sort?.value}
-            getSortOptions={getSortOptions}
-            placeholder={sortPlaceholder}
-            isClearable
-          />
+          <SortPicker onChange={onSortChange} value={query.sort?.value} getSortOptions={getSortOptions} isClearable />
         </HorizontalGroup>
       </div>
     </div>
