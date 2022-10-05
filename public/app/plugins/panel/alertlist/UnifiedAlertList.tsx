@@ -3,6 +3,7 @@ import { sortBy } from 'lodash';
 import React, { useEffect, useMemo } from 'react';
 
 import { GrafanaTheme2, PanelProps } from '@grafana/data';
+import { TimeRangeUpdatedEvent } from '@grafana/runtime';
 import {
   Alert,
   BigValue,
@@ -19,7 +20,7 @@ import alertDef from 'app/features/alerting/state/alertDef';
 import { useUnifiedAlertingSelector } from 'app/features/alerting/unified/hooks/useUnifiedAlertingSelector';
 import { fetchAllPromRulesAction } from 'app/features/alerting/unified/state/actions';
 import { labelsMatchMatchers, parseMatchers } from 'app/features/alerting/unified/utils/alertmanager';
-import { Annotation, RULE_LIST_POLL_INTERVAL_MS } from 'app/features/alerting/unified/utils/constants';
+import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import {
   getAllRulesSourceNames,
   GRAFANA_DATASOURCE_NAME,
@@ -48,13 +49,15 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
     props.options.stateFilter.inactive = undefined; // now disable inactive
   }, [props.options.stateFilter]);
 
+  const dashboard = getDashboardSrv().getCurrent();
+
   useEffect(() => {
     dispatch(fetchAllPromRulesAction());
-    const interval = setInterval(() => dispatch(fetchAllPromRulesAction()), RULE_LIST_POLL_INTERVAL_MS);
+    const sub = dashboard?.events.subscribe(TimeRangeUpdatedEvent, () => dispatch(fetchAllPromRulesAction()));
     return () => {
-      clearInterval(interval);
+      sub?.unsubscribe();
     };
-  }, [dispatch]);
+  }, [dispatch, dashboard?.events]);
 
   const promRulesRequests = useUnifiedAlertingSelector((state) => state.promRules);
 
