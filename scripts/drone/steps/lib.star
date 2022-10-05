@@ -1210,7 +1210,7 @@ def trigger_test_release():
             'git tag $${TEST_TAG} && git push origin $${TEST_TAG}',
             'cd -',
             'git fetch https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git "refs/tags/*:refs/tags/*" && git fetch',
-            'git rebase origin/main',
+            'git stash && git rebase origin/main',
             'if git show-ref --tags $${TEST_TAG} --quiet; then git tag -d $${TEST_TAG} && git push --delete https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git $${TEST_TAG}; fi',
             'git tag $${TEST_TAG} && git push https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git $${TEST_TAG}',
         ],

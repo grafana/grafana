@@ -372,7 +372,7 @@ steps:
   - cd -
   - git fetch https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git "refs/tags/*:refs/tags/*"
     && git fetch
-  - git rebase origin/main
+  - git stash && git rebase origin/main
   - if git show-ref --tags $${TEST_TAG} --quiet; then git tag -d $${TEST_TAG} && git
     push --delete https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git $${TEST_TAG};
     fi
@@ -1238,7 +1238,7 @@ steps:
   - cd -
   - git fetch https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git "refs/tags/*:refs/tags/*"
     && git fetch
-  - git rebase origin/main
+  - git stash && git rebase origin/main
   - if git show-ref --tags $${TEST_TAG} --quiet; then git tag -d $${TEST_TAG} && git
     push --delete https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git $${TEST_TAG};
     fi
@@ -5338,6 +5338,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 83d0f265160c3006dbf7c7c5098a893b0b821b43deb5c8db5ce9f5217a868321
+hmac: 1b6874e508d7d7e5ae795e15eeeae142f99a54057edd706345cc59e65c94f048
 
 ...
