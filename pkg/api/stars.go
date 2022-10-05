@@ -105,6 +105,8 @@ func (hs *HTTPServer) StarDashboardByUID(c *models.ReqContext) response.Response
 //
 // Deprecated: true
 //
+// Please refer to the [new](#/signed_in_user/unstarDashboardByUID) API instead
+//
 // Responses:
 // 200: okResponse
 // 400: badRequestError
