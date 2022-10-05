@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/store/object"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -45,15 +44,6 @@ func createContentsHash(contents []byte) string {
 	return hex.EncodeToString(hash[:])
 }
 
-func userFromContext(ctx context.Context) *user.SignedInUser {
-	// TODO implement in GRPC server
-	return &user.SignedInUser{
-		UserID: 1,
-		OrgID:  1,
-		Login:  "fake",
-	}
-}
-
 func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest) (*object.WriteObjectResponse, error) {
 	// TODO: this needs to be extracted from the body content
 	summary := object.ObjectSummary{
@@ -78,7 +68,7 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 		return nil, err
 	}
 
-	modifier := userFromContext(ctx)
+	modifier := object.UserFromContext(ctx)
 	key := fmt.Sprintf("%d/%s.%s", modifier.OrgID, r.UID, r.Kind)
 
 	rsp := &object.WriteObjectResponse{}
