@@ -57,6 +57,9 @@ func (hs *HTTPServer) StarDashboard(c *models.ReqContext) response.Response {
 	}
 
 	cmd := star.StarDashboardCommand{UserID: c.UserID, DashboardID: id}
+	if cmd.DashboardID <= 0 {
+		return response.Error(400, "Missing dashboard id", nil)
+	}
 
 	if err := hs.starService.Add(c.Req.Context(), &cmd); err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to star dashboard", err)
@@ -88,7 +91,7 @@ func (hs *HTTPServer) StarDashboardByUID(c *models.ReqContext) response.Response
 		return rsp
 	}
 
-	cmd := star.StarDashboardCommand{UserID: c.UserID, DashboardID: dash.Id, DashboardUID: dash.Uid}
+	cmd := star.StarDashboardCommand{UserID: c.UserID, DashboardID: dash.Id}
 
 	if err := hs.starService.Add(c.Req.Context(), &cmd); err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to star dashboard", err)
@@ -114,13 +117,15 @@ func (hs *HTTPServer) StarDashboardByUID(c *models.ReqContext) response.Response
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) UnstarDashboard(c *models.ReqContext) response.Response {
-
 	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Invalid dashboard ID", nil)
 	}
 
 	cmd := star.UnstarDashboardCommand{UserID: c.UserID, DashboardID: id}
+	if cmd.DashboardID <= 0 {
+		return response.Error(400, "Missing dashboard id", nil)
+	}
 
 	if err := hs.starService.Delete(c.Req.Context(), &cmd); err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to unstar dashboard", err)
@@ -151,7 +156,7 @@ func (hs *HTTPServer) UnstarDashboardByUID(c *models.ReqContext) response.Respon
 		return rsp
 	}
 
-	cmd := star.UnstarDashboardCommand{UserID: c.UserID, DashboardID: dash.Id, DashboardUID: dash.Uid}
+	cmd := star.UnstarDashboardCommand{UserID: c.UserID, DashboardID: dash.Id}
 
 	if err := hs.starService.Delete(c.Req.Context(), &cmd); err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to unstar dashboard", err)
