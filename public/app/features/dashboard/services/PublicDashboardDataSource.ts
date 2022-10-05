@@ -15,6 +15,7 @@ import { BackendDataSourceResponse, getBackendSrv, toDataQueryResponse } from '@
 
 import { GrafanaQueryType } from '../../../plugins/datasource/grafana/types';
 import { MIXED_DATASOURCE_NAME } from '../../../plugins/datasource/mixed/MixedDataSource';
+import { GRAFANA_DATASOURCE_NAME } from '../../alerting/unified/utils/datasource';
 
 export const PUBLIC_DATASOURCE = '-- Public --';
 export const DEFAULT_INTERVAL = '1min';
@@ -87,9 +88,14 @@ export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSour
       return of({ data: [] });
     }
 
-    // Its a query for annotations
-    if (request.targets[0].queryType === GrafanaQueryType.Annotations) {
-      return from(this.getAnnotations(request));
+    // Its an annotations query
+    // Currently, annotations requests come in one at a time, so there will only be one target
+    const target = request.targets[0];
+    if (target.queryType === GrafanaQueryType.Annotations) {
+      if (target?.datasource?.uid === GRAFANA_DATASOURCE_NAME) {
+        return from(this.getAnnotations(request));
+      }
+      return of({ data: [] });
     }
 
     // Its a datasource query
@@ -115,7 +121,6 @@ export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSour
   }
 
   async getAnnotations(request: DataQueryRequest<DataQuery>): Promise<DataQueryResponse> {
-    console.log(request);
     const {
       publicDashboardAccessToken: accessToken,
       range: { to, from },
@@ -125,11 +130,7 @@ export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSour
       from: from.valueOf(),
       to: to.valueOf(),
     };
-    const annotations = await getBackendSrv().get(
-      `/api/public/dashboards/${accessToken}/annotations`,
-      params,
-      'abc123' //TODO what is this for?
-    );
+    const annotations = await getBackendSrv().get(`/api/public/dashboards/${accessToken}/annotations`, params);
 
     return { data: [toDataFrame(annotations)] };
   }
