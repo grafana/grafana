@@ -109,7 +109,8 @@ export class BlugeSearcher implements GrafanaSearcher {
     }
     delete query.starred;
 
-    const doPost = req.facet?.length || req.withAllowedActions || req.starred;
+    // The query properties with nested options should use POST
+    const doPost = req.facet?.length || req.withAllowedActions;
     const rsp = await lastValueFrom(
       getBackendSrv()
         .fetch<SearchAPIResponse>({
