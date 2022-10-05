@@ -57,11 +57,11 @@ func TestReadDashboard(t *testing.T) {
 				}
 
 				obj := &object.RawObject{
-					UID:      path[len(devdash):],
-					Size:     info.Size(),
-					Modified: info.ModTime().UnixMilli(),
-					Body:     body,
-					ETag:     createContentsHash(body),
+					UID:     path[len(devdash):],
+					Size:    info.Size(),
+					Updated: info.ModTime().UnixMilli(),
+					Body:    body,
+					ETag:    createContentsHash(body),
 				}
 
 				summary, err := reader(obj)

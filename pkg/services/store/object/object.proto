@@ -24,14 +24,14 @@ message RawObject {
   // Time in epoch milliseconds that the object was created
   int64 created = 3;
 
-  // Time in epoch milliseconds that the object was modified
-  int64 modified = 4;
+  // Time in epoch milliseconds that the object was updated
+  int64 updated = 4;
 
   // Who created the object
   UserInfo created_by = 5;
 
-  // Who modified the object
-  UserInfo modified_by = 6;
+  // Who updated the object
+  UserInfo updated_by = 6;
 
   // Content Length
   int64 size = 7;
@@ -76,11 +76,11 @@ message ObjectVersionInfo {
   // The version will change when the object is saved. It is not necessarily sortable
   string version = 1;
 
-  // Time in epoch milliseconds that the object was modified
-  int64 modified = 2;
+  // Time in epoch milliseconds that the object was updated
+  int64 updated = 2;
 
-  // Who modified the object
-  UserInfo modified_by = 3;
+  // Who updated the object
+  UserInfo updated_by = 3;
 
   // Content Length
   int64 size = 4;
@@ -173,7 +173,7 @@ message WriteObjectResponse {
   enum Status {
     ERROR = 0;
     CREATED = 1;
-    MODIFIED = 2;
+    UPDATED = 2;
     UNCHANGED = 3;
   }
 }
