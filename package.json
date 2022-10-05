@@ -424,7 +424,7 @@
     ]
   },
   "engines": {
-    "node": ">= 16"
+    "node": ">= 16.14.2"
   },
   "packageManager": "yarn@3.2.3"
 }
