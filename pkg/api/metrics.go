@@ -62,21 +62,19 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext) response.Response {
 }
 
 func (hs *HTTPServer) toJsonStreamingResponse(qdr *backend.QueryDataResponse) response.Response {
-	if !hs.Features.IsEnabled(featuremgmt.FlagDatasourceQueryMultiStatus) {
-		statusCode := http.StatusOK
-		for _, res := range qdr.Responses {
-			if res.Error != nil {
-				statusCode = http.StatusBadRequest
-			}
-		}
-		return response.JSONStreaming(statusCode, qdr)
+	statusWhenError := http.StatusBadRequest
+	if hs.Features.IsEnabled(featuremgmt.FlagDatasourceQueryMultiStatus) {
+		statusWhenError = http.StatusMultiStatus
 	}
 
-	res := map[string]queryResponse{}
-	for refID, resp := range qdr.Responses {
-		res[refID] = queryResponse{Frames: resp.Frames, Error: resp.Error, Status: resp.Status.HTTPStatus()}
+	statusCode := http.StatusOK
+	for _, res := range qdr.Responses {
+		if res.Error != nil {
+			statusCode = statusWhenError
+		}
 	}
-	return response.JSONStreaming(http.StatusMultiStatus, &metricsResponse{Results: res})
+
+	return response.JSONStreaming(statusCode, qdr)
 }
 
 // swagger:parameters queryMetricsWithExpressions
