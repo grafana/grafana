@@ -9,11 +9,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type store interface {
@@ -33,6 +35,9 @@ type store interface {
 	GetProfile(context.Context, *user.GetUserProfileQuery) (*user.UserProfileDTO, error)
 	SetHelpFlag(context.Context, *user.SetUserHelpFlagCommand) error
 	UpdatePermissions(context.Context, int64, bool) error
+	BatchDisableUsers(context.Context, *user.BatchDisableUsersCommand) error
+	Disable(context.Context, *user.DisableUserCommand) error
+	Search(context.Context, *user.SearchUsersQuery) (*user.SearchUserQueryResult, error)
 }
 
 type sqlStore struct {
@@ -468,4 +473,159 @@ func validateOneAdminLeft(ctx context.Context, sess *sqlstore.DBSession) error {
 	}
 
 	return nil
+}
+
+func (ss *sqlStore) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisableUsersCommand) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		userIds := cmd.UserIDs
+
+		if len(userIds) == 0 {
+			return nil
+		}
+
+		user_id_params := strings.Repeat(",?", len(userIds)-1)
+		disableSQL := "UPDATE " + ss.dialect.Quote("user") + " SET is_disabled=? WHERE Id IN (?" + user_id_params + ")"
+
+		disableParams := []interface{}{disableSQL, cmd.IsDisabled}
+		for _, v := range userIds {
+			disableParams = append(disableParams, v)
+		}
+
+		_, err := sess.Where(ss.notServiceAccountFilter()).Exec(disableParams...)
+		return err
+	})
+}
+
+func (ss *sqlStore) Disable(ctx context.Context, cmd *user.DisableUserCommand) error {
+	return ss.db.WithDbSession(ctx, func(dbSess *sqlstore.DBSession) error {
+		usr := user.User{}
+		sess := dbSess.Table("user")
+
+		if has, err := sess.ID(cmd.UserID).Where(ss.notServiceAccountFilter()).Get(&usr); err != nil {
+			return err
+		} else if !has {
+			return user.ErrUserNotFound
+		}
+
+		usr.IsDisabled = cmd.IsDisabled
+		sess.UseBool("is_disabled")
+
+		_, err := sess.ID(cmd.UserID).Update(&usr)
+		return err
+	})
+}
+
+func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
+	result := user.SearchUserQueryResult{
+		Users: make([]*user.UserSearchHitDTO, 0),
+	}
+	err := ss.db.WithDbSession(ctx, func(dbSess *sqlstore.DBSession) error {
+		queryWithWildcards := "%" + query.Query + "%"
+
+		whereConditions := make([]string, 0)
+		whereParams := make([]interface{}, 0)
+		sess := dbSess.Table("user").Alias("u")
+
+		whereConditions = append(whereConditions, "u.is_service_account = ?")
+		whereParams = append(whereParams, ss.dialect.BooleanStr(false))
+
+		// Join with only most recent auth module
+		joinCondition := `(
+		SELECT id from user_auth
+			WHERE user_auth.user_id = u.id
+			ORDER BY user_auth.created DESC `
+		joinCondition = "user_auth.id=" + joinCondition + ss.dialect.Limit(1) + ")"
+		sess.Join("LEFT", "user_auth", joinCondition)
+		if query.OrgID > 0 {
+			whereConditions = append(whereConditions, "org_id = ?")
+			whereParams = append(whereParams, query.OrgID)
+		}
+
+		// user only sees the users for which it has read permissions
+		if !accesscontrol.IsDisabled(ss.cfg) {
+			acFilter, err := accesscontrol.Filter(query.SignedInUser, "u.id", "global.users:id:", accesscontrol.ActionUsersRead)
+			if err != nil {
+				return err
+			}
+			whereConditions = append(whereConditions, acFilter.Where)
+			whereParams = append(whereParams, acFilter.Args...)
+		}
+
+		if query.Query != "" {
+			whereConditions = append(whereConditions, "(email "+ss.dialect.LikeStr()+" ? OR name "+ss.dialect.LikeStr()+" ? OR login "+ss.dialect.LikeStr()+" ?)")
+			whereParams = append(whereParams, queryWithWildcards, queryWithWildcards, queryWithWildcards)
+		}
+
+		if query.IsDisabled != nil {
+			whereConditions = append(whereConditions, "is_disabled = ?")
+			whereParams = append(whereParams, query.IsDisabled)
+		}
+
+		if query.AuthModule != "" {
+			whereConditions = append(whereConditions, `auth_module=?`)
+			whereParams = append(whereParams, query.AuthModule)
+		}
+
+		if len(whereConditions) > 0 {
+			sess.Where(strings.Join(whereConditions, " AND "), whereParams...)
+		}
+
+		for _, filter := range query.Filters {
+			if jc := filter.JoinCondition(); jc != nil {
+				sess.Join(jc.Operator, jc.Table, jc.Params)
+			}
+			if ic := filter.InCondition(); ic != nil {
+				sess.In(ic.Condition, ic.Params)
+			}
+			if wc := filter.WhereCondition(); wc != nil {
+				sess.Where(wc.Condition, wc.Params)
+			}
+		}
+
+		if query.Limit > 0 {
+			offset := query.Limit * (query.Page - 1)
+			sess.Limit(query.Limit, offset)
+		}
+
+		sess.Cols("u.id", "u.email", "u.name", "u.login", "u.is_admin", "u.is_disabled", "u.last_seen_at", "user_auth.auth_module")
+		sess.Asc("u.login", "u.email")
+		if err := sess.Find(&result.Users); err != nil {
+			return err
+		}
+
+		// get total
+		user := user.User{}
+		countSess := dbSess.Table("user").Alias("u")
+
+		// Join with user_auth table if users filtered by auth_module
+		if query.AuthModule != "" {
+			countSess.Join("LEFT", "user_auth", joinCondition)
+		}
+
+		if len(whereConditions) > 0 {
+			countSess.Where(strings.Join(whereConditions, " AND "), whereParams...)
+		}
+
+		for _, filter := range query.Filters {
+			if jc := filter.JoinCondition(); jc != nil {
+				countSess.Join(jc.Operator, jc.Table, jc.Params)
+			}
+			if ic := filter.InCondition(); ic != nil {
+				countSess.In(ic.Condition, ic.Params)
+			}
+			if wc := filter.WhereCondition(); wc != nil {
+				countSess.Where(wc.Condition, wc.Params)
+			}
+		}
+
+		count, err := countSess.Count(&user)
+		result.TotalCount = count
+
+		for _, user := range result.Users {
+			user.LastSeenAtAge = util.GetAgeString(user.LastSeenAt)
+		}
+
+		return err
+	})
+	return &result, err
 }
