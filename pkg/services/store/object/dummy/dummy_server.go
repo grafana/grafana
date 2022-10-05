@@ -29,7 +29,7 @@ type RawObjectWithHistory struct {
 
 var (
 	// increment when RawObject changes
-	rawObjectVersion = 1
+	rawObjectVersion = 2
 )
 
 func ProvideDummyObjectServer(cfg *setting.Cfg, grpcServerProvider grpcserver.Provider) object.ObjectStoreServer {
@@ -76,14 +76,14 @@ func (i dummyObjectServer) findObject(ctx context.Context, uid string, kind stri
 	for _, objVersion := range obj.History {
 		if objVersion.Version == version {
 			copy := &object.RawObject{
-				UID:        obj.UID,
-				Kind:       obj.Kind,
-				Created:    obj.Created,
-				CreatedBy:  obj.CreatedBy,
-				Modified:   objVersion.Modified,
-				ModifiedBy: objVersion.ModifiedBy,
-				ETag:       objVersion.ETag,
-				Version:    objVersion.Version,
+				UID:       obj.UID,
+				Kind:      obj.Kind,
+				Created:   obj.Created,
+				CreatedBy: obj.CreatedBy,
+				Updated:   objVersion.Updated,
+				UpdatedBy: objVersion.UpdatedBy,
+				ETag:      objVersion.ETag,
+				Version:   objVersion.Version,
 
 				// Body is added from the dummy server cache (it does not exist in ObjectVersionInfo)
 				Body: objVersion.Body,
@@ -158,8 +158,8 @@ func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequ
 			Kind:      r.Kind,
 			Created:   i.Created,
 			CreatedBy: i.CreatedBy,
-			Modified:  time.Now().Unix(),
-			ModifiedBy: &object.UserInfo{
+			Updated:   time.Now().Unix(),
+			UpdatedBy: &object.UserInfo{
 				Id:    modifier.UserID,
 				Login: modifier.Login,
 			},
@@ -172,16 +172,16 @@ func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequ
 		versionInfo := &ObjectVersionWithBody{
 			Body: r.Body,
 			ObjectVersionInfo: &object.ObjectVersionInfo{
-				Version:    updated.Version,
-				Modified:   updated.Modified,
-				ModifiedBy: updated.ModifiedBy,
-				Size:       updated.Size,
-				ETag:       updated.ETag,
-				Comment:    r.Comment,
+				Version:   updated.Version,
+				Updated:   updated.Updated,
+				UpdatedBy: updated.UpdatedBy,
+				Size:      updated.Size,
+				ETag:      updated.ETag,
+				Comment:   r.Comment,
 			},
 		}
 		rsp.Object = versionInfo.ObjectVersionInfo
-		rsp.Status = object.WriteObjectResponse_MODIFIED
+		rsp.Status = object.WriteObjectResponse_UPDATED
 
 		// When saving, it must be different than the head version
 		if i.ETag == updated.ETag {
@@ -210,15 +210,15 @@ func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequ
 func (i dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectRequest, namespace string) (*object.WriteObjectResponse, error) {
 	modifier := object.UserFromContext(ctx)
 	rawObj := &object.RawObject{
-		UID:      r.UID,
-		Kind:     r.Kind,
-		Modified: time.Now().Unix(),
-		Created:  time.Now().Unix(),
+		UID:     r.UID,
+		Kind:    r.Kind,
+		Updated: time.Now().Unix(),
+		Created: time.Now().Unix(),
 		CreatedBy: &object.UserInfo{
 			Id:    modifier.UserID,
 			Login: modifier.Login,
 		},
-		ModifiedBy: &object.UserInfo{
+		UpdatedBy: &object.UserInfo{
 			Id:    modifier.UserID,
 			Login: modifier.Login,
 		},
@@ -229,12 +229,12 @@ func (i dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectRequ
 	}
 
 	info := &object.ObjectVersionInfo{
-		Version:    rawObj.Version,
-		Modified:   rawObj.Modified,
-		ModifiedBy: rawObj.ModifiedBy,
-		Size:       rawObj.Size,
-		ETag:       rawObj.ETag,
-		Comment:    r.Comment,
+		Version:   rawObj.Version,
+		Updated:   rawObj.Updated,
+		UpdatedBy: rawObj.UpdatedBy,
+		Size:      rawObj.Size,
+		ETag:      rawObj.ETag,
+		Comment:   r.Comment,
 	}
 
 	newObj := &RawObjectWithHistory{
