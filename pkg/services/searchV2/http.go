@@ -2,14 +2,14 @@ package searchV2
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 	"io"
+	"net/url"
+	"strconv"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/search"
@@ -21,14 +21,16 @@ type SearchHTTPService interface {
 }
 
 type searchHTTPService struct {
-	search   SearchService
-	fallback *sqlFallbackSearcher
+	search    SearchService
+	sqlbacked *sqlBackedSearcher
+	useSQL    bool
 }
 
 func ProvideSearchHTTPService(search SearchService, sql *search.SearchService, folders dashboards.FolderService) SearchHTTPService {
 	return &searchHTTPService{
 		search: search,
-		fallback: &sqlFallbackSearcher{
+		useSQL: search.IsDisabled(),
+		sqlbacked: &sqlBackedSearcher{
 			sql:     sql,
 			folders: folders,
 		},
@@ -36,10 +38,19 @@ func ProvideSearchHTTPService(search SearchService, sql *search.SearchService, f
 }
 
 func (s *searchHTTPService) RegisterHTTPRoutes(storageRoute routing.RouteRegister) {
-	storageRoute.Post("/", middleware.ReqSignedIn, routing.Wrap(s.doQuery))
+	storageRoute.Post("/", routing.Wrap(s.doQueryFromPOST))
+	storageRoute.Get("/", routing.Wrap(s.doQueryFromGET))
 }
 
-func (s *searchHTTPService) doQuery(c *models.ReqContext) response.Response {
+func (s *searchHTTPService) doQueryFromGET(c *models.ReqContext) response.Response {
+	query, err := queryParamsToDashboardQuery(c.Req.URL.Query())
+	if err != nil {
+		return response.Error(400, "error parsing query", err)
+	}
+	return s.doQuery(c, query)
+}
+
+func (s *searchHTTPService) doQueryFromPOST(c *models.ReqContext) response.Response {
 	body, err := io.ReadAll(c.Req.Body)
 	if err != nil {
 		return response.Error(500, "error reading bytes", err)
@@ -48,44 +59,71 @@ func (s *searchHTTPService) doQuery(c *models.ReqContext) response.Response {
 	query := &DashboardQuery{}
 	err = json.Unmarshal(body, query)
 	if err != nil {
-		return response.Error(400, "error parsing body", err)
+		return response.Error(400, "error parsing query", err)
 	}
+	return s.doQuery(c, query)
+}
 
-	var resp *backend.DataResponse
-	if true {
-		resp = s.fallback.doSQLQuery(c, query)
-	} else {
+func (s *searchHTTPService) doQuery(c *models.ReqContext, query *DashboardQuery) response.Response {
+	res := func() *backend.DataResponse {
+		if s.useSQL {
+			return s.sqlbacked.doSQLQuery(c, query)
+		}
+
+		// Check if the bluge index is ready
 		searchReadinessCheckResp := s.search.IsReady(c.Req.Context(), c.OrgID)
 		if !searchReadinessCheckResp.IsReady {
+			// should we rename this?
 			dashboardSearchNotServedRequestsCounter.With(prometheus.Labels{
 				"reason": searchReadinessCheckResp.Reason,
 			}).Inc()
 
-			bytes, err := (&data.Frame{
-				Name: "Loading",
-			}).MarshalJSON()
-
-			if err != nil {
-				return response.Error(500, "error marshalling response", err)
-			}
-			return response.JSON(200, bytes)
+			return s.sqlbacked.doSQLQuery(c, query)
 		}
-		resp = s.search.doDashboardQuery(c.Req.Context(), c.SignedInUser, c.OrgID, *query)
-	}
 
-	if resp.Error != nil {
-		return response.Error(500, "error handling search request", resp.Error)
-	}
+		return s.search.doDashboardQuery(c.Req.Context(), c.SignedInUser, c.OrgID, *query)
+	}()
 
-	if len(resp.Frames) == 0 {
-		msg := "invalid search response"
-		return response.Error(500, msg, errors.New(msg))
+	if res.Error != nil {
+		return response.Error(400, "error executing query", res.Error)
 	}
+	return response.JSON(200, res)
+}
 
-	bytes, err := resp.MarshalJSON()
-	if err != nil {
-		return response.Error(500, "error marshalling response", err)
+// Convert URL parameters to a query object
+func queryParamsToDashboardQuery(params url.Values) (*DashboardQuery, error) {
+	var err error
+	var parseError error
+	query := &DashboardQuery{}
+	for k, v := range params {
+		if len(v) < 1 {
+			continue
+		}
+		switch k {
+		case "starred":
+			// ignore
+
+		case "query":
+			query.Query = v[0]
+		case "location":
+			query.Location = v[0]
+		case "tag":
+			query.Tags = v
+		case "kind":
+			query.Kind = v
+		case "from":
+			query.From, parseError = strconv.Atoi(v[0])
+			if parseError != nil {
+				err = parseError
+			}
+		case "limit":
+			query.Limit, parseError = strconv.Atoi(v[0])
+			if parseError != nil {
+				err = parseError
+			}
+		default:
+			err = fmt.Errorf("unknown query parameter: %s", k)
+		}
 	}
-
-	return response.JSON(200, bytes)
+	return query, err
 }

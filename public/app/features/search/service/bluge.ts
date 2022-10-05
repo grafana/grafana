@@ -1,3 +1,5 @@
+import { lastValueFrom, map } from 'rxjs';
+
 import {
   ArrayVector,
   DataFrame,
@@ -7,7 +9,7 @@ import {
   SelectableValue,
   toDataFrame,
 } from '@grafana/data';
-import { config, getBackendSrv } from '@grafana/runtime';
+import { config, getBackendSrv, FetchResponse } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 
 import { replaceCurrentFolderQuery } from './utils';
@@ -101,7 +103,18 @@ export class BlugeSearcher implements GrafanaSearcher {
       limit: query.limit ?? firstPageSize,
     };
 
-    const rsp = await getBackendSrv().post<SearchAPIResponse>(searchURI, req);
+    const doPost = req.facet?.length || req.withAllowedActions || req.starred;
+    const rsp = await lastValueFrom(
+      getBackendSrv()
+        .fetch<SearchAPIResponse>({
+          method: doPost ? 'POST' : 'GET',
+          url: searchURI,
+          params: doPost ? undefined : req,
+          data: doPost ? req : undefined,
+        })
+        .pipe(map((response: FetchResponse<SearchAPIResponse>) => response.data))
+    );
+
     const frames = rsp.frames.map((f) => toDataFrame(f));
 
     const first = frames.length ? toDataFrame(frames[0]) : { fields: [], length: 0 };
