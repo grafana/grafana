@@ -5,17 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/annotations"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -41,28 +36,25 @@ type Manager struct {
 	quit        chan struct{}
 	ResendDelay time.Duration
 
-	ruleStore        RuleReader
-	instanceStore    InstanceStore
-	dashboardService dashboards.DashboardService
-	imageService     image.ImageService
-	AnnotationsRepo  annotations.Repository
+	ruleStore     RuleReader
+	instanceStore InstanceStore
+	imageService  image.ImageService
+	historian     Historian
 }
 
 func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL,
-	ruleStore RuleReader, instanceStore InstanceStore,
-	dashboardService dashboards.DashboardService, imageService image.ImageService, clock clock.Clock, annotationsRepo annotations.Repository) *Manager {
+	ruleStore RuleReader, instanceStore InstanceStore, imageService image.ImageService, clock clock.Clock, historian Historian) *Manager {
 	manager := &Manager{
-		cache:            newCache(logger, metrics, externalURL),
-		quit:             make(chan struct{}),
-		ResendDelay:      ResendDelay, // TODO: make this configurable
-		log:              logger,
-		metrics:          metrics,
-		ruleStore:        ruleStore,
-		instanceStore:    instanceStore,
-		dashboardService: dashboardService,
-		imageService:     imageService,
-		clock:            clock,
-		AnnotationsRepo:  annotationsRepo,
+		cache:         newCache(logger, metrics, externalURL),
+		quit:          make(chan struct{}),
+		ResendDelay:   ResendDelay, // TODO: make this configurable
+		log:           logger,
+		metrics:       metrics,
+		ruleStore:     ruleStore,
+		instanceStore: instanceStore,
+		imageService:  imageService,
+		historian:     historian,
+		clock:         clock,
 	}
 	go manager.recordMetrics()
 	return manager
@@ -281,7 +273,7 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 
 	shouldUpdateAnnotation := oldState != currentState.State || oldReason != currentState.StateReason
 	if shouldUpdateAnnotation {
-		go st.annotateState(ctx, alertRule, currentState.Labels, result.EvaluatedAt, InstanceStateAndReason{State: currentState.State, Reason: currentState.StateReason}, InstanceStateAndReason{State: oldState, Reason: oldReason})
+		go st.historian.RecordState(ctx, alertRule, currentState.Labels, result.EvaluatedAt, InstanceStateAndReason{State: currentState.State, Reason: currentState.StateReason}, InstanceStateAndReason{State: oldState, Reason: oldReason})
 	}
 	return currentState
 }
@@ -358,52 +350,6 @@ func (i InstanceStateAndReason) String() string {
 	return s
 }
 
-func (st *Manager) annotateState(ctx context.Context, alertRule *ngModels.AlertRule, labels data.Labels, evaluatedAt time.Time, currentData, previousData InstanceStateAndReason) {
-	st.log.Debug("alert state changed creating annotation", "alertRuleUID", alertRule.UID, "newState", currentData.String(), "oldState", previousData.String())
-
-	labels = removePrivateLabels(labels)
-	annotationText := fmt.Sprintf("%s {%s} - %s", alertRule.Title, labels.String(), currentData.String())
-
-	item := &annotations.Item{
-		AlertId:   alertRule.ID,
-		OrgId:     alertRule.OrgID,
-		PrevState: previousData.String(),
-		NewState:  currentData.String(),
-		Text:      annotationText,
-		Epoch:     evaluatedAt.UnixNano() / int64(time.Millisecond),
-	}
-
-	dashUid, ok := alertRule.Annotations[ngModels.DashboardUIDAnnotation]
-	if ok {
-		panelUid := alertRule.Annotations[ngModels.PanelIDAnnotation]
-
-		panelId, err := strconv.ParseInt(panelUid, 10, 64)
-		if err != nil {
-			st.log.Error("error parsing panelUID for alert annotation", "panelUID", panelUid, "alertRuleUID", alertRule.UID, "err", err.Error())
-			return
-		}
-
-		query := &models.GetDashboardQuery{
-			Uid:   dashUid,
-			OrgId: alertRule.OrgID,
-		}
-
-		err = st.dashboardService.GetDashboard(ctx, query)
-		if err != nil {
-			st.log.Error("error getting dashboard for alert annotation", "dashboardUID", dashUid, "alertRuleUID", alertRule.UID, "err", err.Error())
-			return
-		}
-
-		item.PanelId = panelId
-		item.DashboardId = query.Result.Id
-	}
-
-	if err := st.AnnotationsRepo.Save(ctx, item); err != nil {
-		st.log.Error("error saving alert annotation", "alertRuleUID", alertRule.UID, "err", err.Error())
-		return
-	}
-}
-
 func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, states map[string]*State) []*State {
 	var resolvedStates []*State
 	allStates := st.GetStatesForRuleUID(alertRule.OrgID, alertRule.UID)
@@ -428,7 +374,7 @@ func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Tim
 				s.StateReason = ngModels.StateReasonMissingSeries
 				s.EndsAt = evaluatedAt
 				s.Resolved = true
-				st.annotateState(ctx, alertRule, s.Labels, evaluatedAt,
+				st.historian.RecordState(ctx, alertRule, s.Labels, evaluatedAt,
 					InstanceStateAndReason{State: eval.Normal, Reason: s.StateReason},
 					previousState,
 				)
@@ -441,14 +387,4 @@ func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Tim
 
 func isItStale(evaluatedAt time.Time, lastEval time.Time, intervalSeconds int64) bool {
 	return !lastEval.Add(2 * time.Duration(intervalSeconds) * time.Second).After(evaluatedAt)
-}
-
-func removePrivateLabels(labels data.Labels) data.Labels {
-	result := make(data.Labels)
-	for k, v := range labels {
-		if !strings.HasPrefix(k, "__") && !strings.HasSuffix(k, "__") {
-			result[k] = v
-		}
-	}
-	return result
 }
