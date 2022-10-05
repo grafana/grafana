@@ -53,6 +53,7 @@ func (ruleGroupV1 *AlertRuleGroupV1) MapToModel() (AlertRuleGroup, error) {
 		if err != nil {
 			return AlertRuleGroup{}, err
 		}
+		rule.RuleGroup = ruleGroup.Name
 		ruleGroup.Rules = append(ruleGroup.Rules, rule)
 	}
 	return ruleGroup, nil

@@ -52,13 +52,14 @@ func (prov *defaultAlertRuleProvisioner) Provision(ctx context.Context,
 				"name", group.Name)
 			for _, rule := range group.Rules {
 				rule.NamespaceUID = folderUID
-				rule.RuleGroup = group.Name
-				err = prov.provisionRule(ctx, group.OrgID, rule, group.Folder, folderUID)
-				if err != nil {
-					return err
-				}
 			}
-			err = prov.ruleService.UpdateRuleGroup(ctx, group.OrgID, folderUID, group.Name, int64(group.Interval.Seconds()))
+			var mGroup alert_models.AlertRuleGroup
+			mGroup.Rules = group.Rules
+			mGroup.FolderUID = folderUID
+			mGroup.Interval = int64(group.Interval.Seconds())
+			mGroup.Provenance = alert_models.ProvenanceFile
+			mGroup.Title = group.Name
+			err = prov.ruleService.ReplaceRuleGroup(ctx, group.OrgID, mGroup, 0, alert_models.ProvenanceFile)
 			if err != nil {
 				return err
 			}
