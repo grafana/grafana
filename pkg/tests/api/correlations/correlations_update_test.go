@@ -99,8 +99,13 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 
 	t.Run("inexistent source data source should result in a 404", func(t *testing.T) {
 		res := ctx.Patch(PatchParams{
-			url:  fmt.Sprintf("/api/datasources/uid/%s/correlations/%s", "some-ds-uid", "some-correlation-uid"),
-			body: `{}`,
+			url: fmt.Sprintf("/api/datasources/uid/%s/correlations/%s", "some-ds-uid", "some-correlation-uid"),
+			body: `{
+					"config": {
+					"type": "query",
+					"field": "fieldName",
+					"target": { "expr": "bar" }
+				}}`,
 			user: adminUser,
 		})
 		require.Equal(t, http.StatusNotFound, res.StatusCode)
@@ -123,8 +128,12 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 			url:  fmt.Sprintf("/api/datasources/uid/%s/correlations/%s", writableDs, "nonexistent-correlation-uid"),
 			user: adminUser,
 			body: `{
-				"label": ""
-			}`,
+				"label": "",
+				"config": {
+					"type": "query",
+					"field": "fieldName",
+					"target": { "expr": "bar" }
+				}}`,
 		})
 		require.Equal(t, http.StatusNotFound, res.StatusCode)
 
@@ -145,7 +154,12 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 		res := ctx.Patch(PatchParams{
 			url:  fmt.Sprintf("/api/datasources/uid/%s/correlations/%s", readOnlyDS, "nonexistent-correlation-uid"),
 			user: adminUser,
-			body: `{}`,
+			body: `{
+				"config": {
+					"type": "query",
+					"field": "fieldName",
+					"target": { "expr": "bar" }
+			}}`,
 		})
 		require.Equal(t, http.StatusForbidden, res.StatusCode)
 
@@ -358,6 +372,7 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 		require.Equal(t, "Correlation updated", response.Message)
 		require.Equal(t, "2", response.Result.Label)
 		require.Equal(t, "1", response.Result.Description)
+		// TODO: Test the config more in detail (e.g. require.Equal(t, `"fieldName", response.Result.Config.Field), etc.)
 		require.Equal(t, `{"field": "fieldName","target": { "expr": "bar" }}`, response.Result.Config)
 		require.NoError(t, res.Body.Close())
 
