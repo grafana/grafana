@@ -173,7 +173,7 @@ message WriteObjectResponse {
   enum Status {
     ERROR = 0;
     CREATED = 1;
-    MODIFIED = 2;
+    UPDATED = 2;
     UNCHANGED = 3;
   }
 }

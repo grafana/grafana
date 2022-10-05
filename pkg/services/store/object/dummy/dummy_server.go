@@ -181,7 +181,7 @@ func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequ
 			},
 		}
 		rsp.Object = versionInfo.ObjectVersionInfo
-		rsp.Status = object.WriteObjectResponse_MODIFIED
+		rsp.Status = object.WriteObjectResponse_UPDATED
 
 		// When saving, it must be different than the head version
 		if i.ETag == updated.ETag {
