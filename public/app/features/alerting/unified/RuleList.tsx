@@ -9,6 +9,8 @@ import { Button, LinkButton, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useDispatch } from 'app/types';
 
+import { CombinedRuleNamespace } from '../../../types/unified-alerting';
+
 import { LogMessages } from './Analytics';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { NoRulesSplash } from './components/rules/NoRulesCTA';
@@ -54,17 +56,15 @@ const RuleList = withErrorBoundary(
     const promRuleRequests = useUnifiedAlertingSelector((state) => state.promRules);
     const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
 
-    const dispatched = rulesDataSourceNames.some(
-      (name) => promRuleRequests[name]?.dispatched || rulerRuleRequests[name]?.dispatched
-    );
     const loading = rulesDataSourceNames.some(
       (name) => promRuleRequests[name]?.loading || rulerRuleRequests[name]?.loading
     );
-    const haveResults = rulesDataSourceNames.some(
-      (name) =>
-        (promRuleRequests[name]?.result?.length && !promRuleRequests[name]?.error) ||
-        (Object.keys(rulerRuleRequests[name]?.result || {}).length && !rulerRuleRequests[name]?.error)
+
+    const promRequests = Object.entries(promRuleRequests);
+    const allPromLoaded = promRequests.every(
+      ([_, state]) => state.dispatched && (state?.result !== undefined || state?.error !== undefined)
     );
+    const allPromEmpty = promRequests.every(([_, state]) => state.dispatched && state?.result?.length === 0);
 
     // Trigger data refresh only when the RULE_LIST_POLL_INTERVAL_MS elapsed since the previous load FINISHED
     const [_, fetchRules] = useAsyncFn(async () => {
@@ -79,16 +79,19 @@ const RuleList = withErrorBoundary(
     }, [dispatch]);
     useInterval(fetchRules, RULE_LIST_POLL_INTERVAL_MS);
 
-    const showNewAlertSplash = dispatched && !loading && !haveResults;
+    // Show splash only when we loaded all of the data sources and none of them has alerts
+    const showNewAlertSplash = allPromLoaded && allPromEmpty && promRequests.length > 0;
 
-    const combinedNamespaces = useCombinedRuleNamespaces();
+    const combinedNamespaces: CombinedRuleNamespace[] = useCombinedRuleNamespaces();
     const filteredNamespaces = useFilteredRules(combinedNamespaces);
     return (
-      <AlertingPageWrapper pageId="alert-list" isLoading={loading && !haveResults}>
+      // We don't want to show the Loading... indicator for the whole page.
+      // We show separate indicators for Grafana-managed and Cloud rules
+      <AlertingPageWrapper pageId="alert-list" isLoading={false}>
         <RuleListErrors />
+        <RulesFilter />
         {!showNewAlertSplash && (
           <>
-            <RulesFilter />
             <div className={styles.break} />
             <div className={styles.buttonsContainer}>
               <div className={styles.statsContainer}>
@@ -117,7 +120,7 @@ const RuleList = withErrorBoundary(
           </>
         )}
         {showNewAlertSplash && <NoRulesSplash />}
-        {haveResults && <ViewComponent expandAll={expandAll} namespaces={filteredNamespaces} />}
+        {!showNewAlertSplash && <ViewComponent expandAll={expandAll} namespaces={filteredNamespaces} />}
       </AlertingPageWrapper>
     );
   },
