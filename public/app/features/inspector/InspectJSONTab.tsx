@@ -225,7 +225,7 @@ function getPrettyJSON(obj: any): string {
       e instanceof Error &&
       (e.toString().includes('RangeError') || e.toString().includes('allocation size overflow'))
     ) {
-      appEvents.emit(AppEvents.alertError, [e.toString(), 'possibly too much data, try setting a lower line limit']);
+      appEvents.emit(AppEvents.alertError, [e.toString(), 'Cannot display JSON, the object is too big.']);
     } else {
       appEvents.emit(AppEvents.alertError, [e instanceof Error ? e.toString() : e]);
     }
