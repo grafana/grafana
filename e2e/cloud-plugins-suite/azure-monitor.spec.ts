@@ -1,7 +1,6 @@
 import { load } from 'js-yaml';
 
 import { e2e } from '@grafana/e2e';
-import { getScenarioContext } from '@grafana/e2e/src/support';
 
 import { selectors } from '../../public/app/plugins/datasource/grafana-azure-monitor-datasource/e2e/selectors';
 import {
@@ -32,11 +31,11 @@ function provisionAzureMonitorDatasources(datasources: AzureMonitorProvision[]) 
   e2e.flows.addDataSource({
     type: 'Azure Monitor',
     form: () => {
-      e2eSelectors.configEditor.azureCloud.input().find('input').type('Azure').type('{enter}'),
-        e2eSelectors.configEditor.tenantID.input().find('input').type(datasource.jsonData.tenantId),
-        e2eSelectors.configEditor.clientID.input().find('input').type(datasource.jsonData.clientId),
-        e2eSelectors.configEditor.clientSecret.input().find('input').type(datasource.secureJsonData.clientSecret),
-        e2eSelectors.configEditor.loadSubscriptions.button().click().wait('@subscriptions').wait(500);
+      e2eSelectors.configEditor.azureCloud.input().find('input').type('Azure').type('{enter}');
+      e2eSelectors.configEditor.tenantID.input().find('input').type(datasource.jsonData.tenantId);
+      e2eSelectors.configEditor.clientID.input().find('input').type(datasource.jsonData.clientId);
+      e2eSelectors.configEditor.clientSecret.input().find('input').type(datasource.secureJsonData.clientSecret);
+      e2eSelectors.configEditor.loadSubscriptions.button().click().wait('@subscriptions').wait(500);
     },
     expectedAlertMessage: 'Successfully connected to all Azure Monitor endpoints',
   });
@@ -164,7 +163,7 @@ const addAzureMonitorVariable = (
     e2e.pages.Dashboard.Settings.Variables.List.newButton().click();
   }
   e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2().clear().type(name);
-  getScenarioContext().then(({ lastAddedDataSource }: { lastAddedDataSource: string }) => {
+  e2e.getScenarioContext().then(({ lastAddedDataSource }: { lastAddedDataSource: string }) => {
     e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect().type(
       `${lastAddedDataSource}{enter}`
     );
@@ -273,7 +272,7 @@ e2e.scenario({
             zone: 'Coordinated Universal Time',
           },
         });
-        getScenarioContext().then(({ lastAddedDataSource }: { lastAddedDataSource: string }) => {
+        e2e.getScenarioContext().then(({ lastAddedDataSource }: { lastAddedDataSource: string }) => {
           e2e.components.PageToolbar.item('Dashboard settings').click();
           e2e.components.Tab.title('Annotations').click();
           e2e.pages.Dashboard.Settings.Annotations.List.addAnnotationCTAV2().click();
