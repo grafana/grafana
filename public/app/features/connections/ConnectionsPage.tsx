@@ -7,14 +7,11 @@ import { NewDataSource } from 'app/features/datasources/components/NewDataSource
 import { DataSourcesRoutesContext } from 'app/features/datasources/state';
 
 import { ROUTES } from './constants';
-import { useNavModel } from './hooks/useNavModel';
 import { CloudIntegrations } from './tabs/CloudIntegrations';
 import { DataSourcesEdit } from './tabs/DataSourcesEdit';
 import { Plugins } from './tabs/Plugins';
 
 export default function ConnectionsPage() {
-  const navModel = useNavModel();
-
   return (
     <DataSourcesRoutesContext.Provider
       value={{
@@ -24,7 +21,7 @@ export default function ConnectionsPage() {
         Dashboards: ROUTES.DataSourcesDashboards,
       }}
     >
-      <Page navModel={navModel}>
+      <Page>
         <Page.Contents>
           <Switch>
             <Route path={ROUTES.DataSourcesNew} component={NewDataSource} />
