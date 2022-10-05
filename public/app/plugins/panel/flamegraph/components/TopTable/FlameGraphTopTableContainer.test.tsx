@@ -21,7 +21,7 @@ describe('FlameGraphTopTableContainer', () => {
     return (
       <FlameGraphTopTableContainer
         data={flameGraphData}
-        levels={levels}
+        totalLevels={levels.length}
         selectedView={selectedView}
         search={search}
         setSearch={setSearch}

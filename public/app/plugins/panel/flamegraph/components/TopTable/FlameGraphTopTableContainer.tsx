@@ -6,14 +6,13 @@ import { createTheme, DataFrame, Field, FieldType, getDisplayProcessor } from '@
 import { useStyles2 } from '@grafana/ui';
 
 import { PIXELS_PER_LEVEL } from '../../constants';
-import { Item } from '../FlameGraph/dataTransform';
 import { SampleUnit, SelectedView, TableData, TopTableData } from '../types';
 
 import FlameGraphTopTable from './FlameGraphTopTable';
 
 type Props = {
   data: DataFrame;
-  levels: Item[][];
+  totalLevels: number;
   selectedView: SelectedView;
   search: string;
   setSearch: (search: string) => void;
@@ -24,7 +23,7 @@ type Props = {
 
 const FlameGraphTopTableContainer = ({
   data,
-  levels,
+  totalLevels,
   selectedView,
   search,
   setSearch,
@@ -103,7 +102,7 @@ const FlameGraphTopTableContainer = ({
     <>
       {topTable && (
         <div className={styles.topTableContainer}>
-          <AutoSizer style={{ width: '100%', height: PIXELS_PER_LEVEL * levels.length + 'px' }}>
+          <AutoSizer style={{ width: '100%', height: PIXELS_PER_LEVEL * totalLevels + 'px' }}>
             {({ width, height }) => (
               <FlameGraphTopTable
                 width={width}

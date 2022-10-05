@@ -61,7 +61,7 @@ const FlameGraphContainer = (props: Props) => {
       {selectedView !== SelectedView.FlameGraph && (
         <FlameGraphTopTableContainer
           data={props.data}
-          levels={levels}
+          totalLevels={levels.length}
           selectedView={selectedView}
           search={search}
           setSearch={setSearch}
