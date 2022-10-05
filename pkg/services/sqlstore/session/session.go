@@ -19,8 +19,7 @@ type SessionDB struct {
 }
 
 func GetSession(sqlxdb *sqlx.DB) *SessionDB {
-	db := SessionDB{sqlxdb: sqlxdb}
-	return &db
+	return &SessionDB{sqlxdb: sqlxdb}
 }
 
 func (gs *SessionDB) Get(ctx context.Context, dest interface{}, query string, args ...interface{}) error {
