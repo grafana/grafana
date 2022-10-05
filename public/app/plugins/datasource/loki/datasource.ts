@@ -590,7 +590,7 @@ export class LokiDatasource
     const query: LokiQuery = {
       expr: `{${expr}}`,
       queryType: LokiQueryType.Range,
-      refId: '',
+      refId: row.dataFrame.refId ?? '',
       maxLines: limit,
       direction: queryDirection,
     };
