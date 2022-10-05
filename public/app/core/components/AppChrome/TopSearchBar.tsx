@@ -7,7 +7,7 @@ import { contextSrv } from 'app/core/core';
 import { useSelector } from 'app/types';
 
 import { NewsContainer } from './News/NewsContainer';
-import { OrganisationSwitcher } from './Organization/OrganisationSwitcher';
+import { OrganizationSwitcher } from './Organization/OrganizationSwitcher';
 import { TopNavBarMenu } from './TopBar/TopNavBarMenu';
 import { TopSearchBarInput } from './TopSearchBarInput';
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
@@ -26,7 +26,7 @@ export function TopSearchBar() {
         <a className={styles.logo} href="/" title="Go to home">
           <Icon name="grafana" size="xl" />
         </a>
-        <OrganisationSwitcher />
+        <OrganizationSwitcher />
       </div>
       <div className={styles.searchWrapper}>
         <TopSearchBarInput />
@@ -72,6 +72,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     leftContent: css({
       display: 'flex',
       alignItems: 'center',
+      gap: theme.spacing(1),
     }),
     logo: css({
       display: 'flex',

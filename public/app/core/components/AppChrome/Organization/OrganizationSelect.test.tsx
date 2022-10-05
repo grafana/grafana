@@ -6,7 +6,7 @@ import { OrgRole } from '@grafana/data';
 import { configureStore } from 'app/store/configureStore';
 import * as appTypes from 'app/types';
 
-import { OrganisationSelect } from './OrganisationSelect';
+import { OrganizationSelect } from './OrganizationSelect';
 
 jest.mock('app/features/org/state/actions', () => ({
   ...jest.requireActual('app/features/org/state/actions'),
@@ -24,7 +24,7 @@ const renderWithProvider = ({ initialState }: { initialState?: Partial<appTypes.
 
   render(
     <Provider store={store}>
-      <OrganisationSelect />
+      <OrganizationSelect />
     </Provider>
   );
 };

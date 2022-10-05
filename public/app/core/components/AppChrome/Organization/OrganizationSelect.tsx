@@ -8,7 +8,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { getUserOrganizations, setUserOrganization } from 'app/features/org/state/actions';
 import { useDispatch, UserOrg, useSelector } from 'app/types';
 
-export function OrganisationSelect() {
+export function OrganizationSelect() {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const orgs = useSelector((state) => state.organization.userOrgs);
@@ -32,8 +32,7 @@ export function OrganisationSelect() {
 
   useEffect(() => {
     dispatch(getUserOrganizations());
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [dispatch]);
 
   if (orgs?.length <= 1) {
     return null;
@@ -56,11 +55,10 @@ export function OrganisationSelect() {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  select: css`
-    border: none;
-
-    ${theme.breakpoints.up('sm')} {
-      background: none;
-    }
-  `,
+  select: css({
+    border: 'none',
+    [theme.breakpoints.up('sm')]: {
+      background: 'none',
+    },
+  }),
 });
