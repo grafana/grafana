@@ -5,7 +5,6 @@ import { Provider } from 'react-redux';
 import { getDefaultTimeRange, LoadingState, PanelProps, FieldConfigSource } from '@grafana/data';
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
 import { DashboardSrv, setDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { DashboardModel } from 'app/features/dashboard/state';
 import { configureStore } from 'app/store/configureStore';
 
 import { UnifiedAlertList } from './UnifiedAlertList';
