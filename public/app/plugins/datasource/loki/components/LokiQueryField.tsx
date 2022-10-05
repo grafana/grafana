@@ -186,6 +186,9 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
       app,
       datasource,
       placeholder = 'Enter a Loki query (run with Shift+Enter)',
+      history,
+      onRunQuery,
+      onBlur,
     } = this.props;
 
     const { labelsLoaded, labelBrowserVisible } = this.state;
@@ -213,11 +216,11 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
                 <div className="gf-form gf-form--grow flex-shrink-1 min-width-15">
                   {config.featureToggles.lokiMonacoEditor ? (
                     <MonacoQueryFieldWrapper
-                      runQueryOnBlur={this.props.app !== CoreApp.Explore}
+                      runQueryOnBlur={app !== CoreApp.Explore}
                       languageProvider={datasource.languageProvider}
-                      history={this.props.history ?? []}
+                      history={history ?? []}
                       onChange={this.onChangeQuery}
-                      onRunQuery={this.props.onRunQuery}
+                      onRunQuery={onRunQuery}
                       initialValue={query.expr ?? ''}
                     />
                   ) : (
@@ -228,8 +231,8 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
                       onTypeahead={this.onTypeahead}
                       onWillApplySuggestion={willApplySuggestion}
                       onChange={this.onChangeQuery}
-                      onBlur={this.props.onBlur}
-                      onRunQuery={this.props.onRunQuery}
+                      onBlur={onBlur}
+                      onRunQuery={onRunQuery}
                       placeholder={placeholder}
                       portalOrigin="loki"
                     />
