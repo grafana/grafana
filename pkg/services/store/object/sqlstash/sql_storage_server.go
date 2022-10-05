@@ -177,6 +177,14 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 				Type: "influx",
 				UID:  "xyz",
 			},
+			{
+				Kind: "panel",
+				Type: "heatmap",
+			},
+			{
+				Kind: "panel",
+				Type: "timeseries",
+			},
 		},
 	}
 
@@ -319,11 +327,68 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 }
 
 func (s sqlObjectServer) Delete(ctx context.Context, r *object.DeleteObjectRequest) (*object.DeleteObjectResponse, error) {
-	return nil, fmt.Errorf("not implemented yet")
+	modifier := object.UserFromContext(ctx)
+	key := fmt.Sprintf("%d/%s.%s", modifier.OrgID, r.UID, r.Kind)
+
+	rsp := &object.DeleteObjectResponse{}
+	err := s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
+		results, err := tx.Exec(ctx, `DELETE FROM object key=?`, key)
+		if err != nil {
+			return err
+		}
+		rows, err := results.RowsAffected()
+		if err != nil {
+			return err
+		}
+		if rows > 0 {
+			rsp.OK = true
+		}
+
+		// TODO: keep history? would need current version bump, and the "write" would have to get from history
+		_, _ = tx.Exec(ctx, `DELETE FROM object_history key=?`, key)
+		_, _ = tx.Exec(ctx, `DELETE FROM object_labels object_key=?`, key)
+		_, _ = tx.Exec(ctx, `DELETE FROM object_ref object_key=?`, key)
+		return nil
+	})
+	return rsp, err
 }
 
 func (s sqlObjectServer) History(ctx context.Context, r *object.ObjectHistoryRequest) (*object.ObjectHistoryResponse, error) {
-	return nil, fmt.Errorf("not implemented yet")
+	modifier := object.UserFromContext(ctx)
+	key := fmt.Sprintf("%d/%s.%s", modifier.OrgID, r.UID, r.Kind)
+
+	page := ""
+	args := []interface{}{key}
+	if r.NextPageToken != "" {
+		args = append(args, r.NextPageToken) // TODO, need to get time from the version
+		page = "AND updated <= ?"
+	}
+
+	// TODO limiting...
+	query := `SELECT "version","size","etag","updated","updated_by","message" 
+		FROM object_history
+		WHERE "key"=? ` + page + `
+		ORDER BY "updated" DESC
+	;`
+
+	timestamp := time.Now()
+	rows, err := s.sess.Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	rsp := &object.ObjectHistoryResponse{}
+	for rows.Next() {
+		v := &object.ObjectVersionInfo{
+			UpdatedBy: &object.UserInfo{},
+		}
+		err := rows.Scan(&v.Version, &v.Size, &v.ETag, &timestamp, &v.UpdatedBy.Id, &v.Comment)
+		if err != nil {
+			return nil, err
+		}
+		v.Updated = timestamp.UnixMilli()
+		rsp.Versions = append(rsp.Versions, v)
+	}
+	return rsp, err
 }
 
 func (s sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchRequest) (*object.ObjectSearchResponse, error) {
