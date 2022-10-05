@@ -229,6 +229,7 @@ function getExistingRuleInGroup(
     return nameMatchingRules[0];
   }
 
+  // try finding a rule that matches name, labels, annotations and query
   const strictlyMatchingRule = nameMatchingRules.find(
     (combinedRule) => !combinedRule.promRule && isCombinedRuleEqualToPromRule(combinedRule, rule, true)
   );
@@ -236,6 +237,8 @@ function getExistingRuleInGroup(
     return strictlyMatchingRule;
   }
 
+  // if that fails, try finding a rule that only matches name, labels and annotations.
+  // loki & prom can sometimes modify the query so it doesnt match, eg `2 > 1` becomes `1`
   const looselyMatchingRule = nameMatchingRules.find(
     (combinedRule) => !combinedRule.promRule && isCombinedRuleEqualToPromRule(combinedRule, rule, false)
   );
@@ -244,17 +247,6 @@ function getExistingRuleInGroup(
   }
 
   return undefined;
-
-  // return (
-  //   // try finding a rule that matches name, labels, annotations and query
-  //   !existingRule.promRule && isCombinedRuleEqualToPromRule(existingRule, rule, true)
-  //    ??
-  //   // if that fails, try finding a rule that only matches name, labels and annotations.
-  //   // loki & prom can sometimes modify the query so it doesnt match, eg `2 > 1` becomes `1`
-  //
-  //     (existingRule) => !existingRule.promRule && isCombinedRuleEqualToPromRule(existingRule, rule, false)
-  //
-  // );
 }
 
 function isCombinedRuleEqualToPromRule(combinedRule: CombinedRule, rule: Rule, checkQuery = true): boolean {
