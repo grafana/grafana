@@ -41,7 +41,6 @@ export function DashboardSearch({}: Props) {
               onKeyDown={onKeyDown}
               spellCheck={false}
               className={styles.input}
-              autoFocus
             />
           </div>
 

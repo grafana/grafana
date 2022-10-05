@@ -268,8 +268,9 @@ func ListLocalFiles(dir string) ([]File, error) {
 	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if !info.IsDir() {
 			files = append(files, File{
-				FullPath:    path,
-				PathTrimmed: info.Name(),
+				FullPath: path,
+				// Strip the dir name from the filepath
+				PathTrimmed: strings.ReplaceAll(path, dir, ""),
 			})
 		}
 		return nil

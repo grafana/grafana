@@ -47,20 +47,15 @@ message RawObject {
   // NOTE: currently managed by the dashboard+dashboard_version tables
   string version = 10;
 
-  // optional "save" or "commit" message
-  //
-  // NOTE: currently managed by the dashboard_version table, and will be returned from a "history" command
-  string comment = 11;
-
   // Location (path/repo/etc) that defines the canonocal form
   //
   // NOTE: currently managed by the dashboard_provisioning table
-  string sync_src = 12;
+  string sync_src = 11;
 
   // Time in epoch milliseconds that the object was last synced with an external system (provisioning/git)
   //
   // NOTE: currently managed by the dashboard_provisioning table
-  int64 sync_time = 13;
+  int64 sync_time = 12;
 }
 
 // Report error while working with objects
@@ -74,6 +69,29 @@ message ObjectErrorInfo {
 
   // Details encoded in JSON
   bytes details_json = 3;
+}
+
+// This is a subset of RawObject that does not include body or sync info
+message ObjectVersionInfo {
+  // The version will change when the object is saved. It is not necessarily sortable
+  string version = 1;
+
+  // Time in epoch milliseconds that the object was modified
+  int64 modified = 2;
+
+  // Who modified the object
+  UserInfo modified_by = 3;
+
+  // Content Length
+  int64 size = 4;
+
+  // MD5 digest of the body
+  string ETag = 5;
+
+  // optional "save" or "commit" message
+  //
+  // NOTE: currently managed by the dashboard_version table, and will be returned from a "history" command
+  string comment = 6;
 }
 
 //-----------------------------------------------
@@ -143,10 +161,21 @@ message WriteObjectResponse {
   ObjectErrorInfo error = 1;
 
   // Object details with the body removed
-  RawObject object = 2; 
+  ObjectVersionInfo object = 2; 
 
   // Object summary as JSON
   bytes summary_json = 3;
+
+  // Status code
+  Status status = 4;
+
+  // Status enumeration
+  enum Status {
+    ERROR = 0;
+    CREATED = 1;
+    MODIFIED = 2;
+    UNCHANGED = 3;
+  }
 }
 
 //-----------------------------------------------
@@ -188,7 +217,7 @@ message ObjectHistoryRequest {
 
 message ObjectHistoryResponse {
   // Object metadata without the raw bytes
-  repeated RawObject object = 1;
+  repeated ObjectVersionInfo versions = 1;
 
   // More results exist... pass this in the next request
   string next_page_token = 2;

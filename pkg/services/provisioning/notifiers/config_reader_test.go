@@ -12,6 +12,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting/notifiers"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 
 	"github.com/stretchr/testify/require"
@@ -34,6 +36,8 @@ func TestNotificationAsConfig(t *testing.T) {
 	var sqlStore *sqlstore.SQLStore
 	var ns *alerting.AlertNotificationService
 	logger := log.New("fake.log")
+	orgService := orgtest.NewOrgServiceFake()
+	orgService.ExpectedOrg = &org.Org{}
 
 	encryptionService := encryptionservice.SetupTestService(t)
 
@@ -146,7 +150,7 @@ func TestNotificationAsConfig(t *testing.T) {
 				setup()
 				fakeAlertNotification := &fakeAlertNotification{}
 				fakeAlertNotification.ExpectedAlertNotification = &models.AlertNotification{OrgId: 1}
-				dc := newNotificationProvisioner(sqlStore, fakeAlertNotification, encryptionService, nil, logger)
+				dc := newNotificationProvisioner(orgService, sqlStore, fakeAlertNotification, encryptionService, nil, logger)
 
 				err := dc.applyChanges(context.Background(), twoNotificationsConfig)
 				if err != nil {
@@ -172,7 +176,7 @@ func TestNotificationAsConfig(t *testing.T) {
 				require.Equal(t, len(notificationsQuery.Result), 1)
 
 				t.Run("should update one notification", func(t *testing.T) {
-					dc := newNotificationProvisioner(sqlStore, &fakeAlertNotification{}, encryptionService, nil, logger)
+					dc := newNotificationProvisioner(orgService, sqlStore, &fakeAlertNotification{}, encryptionService, nil, logger)
 					err = dc.applyChanges(context.Background(), twoNotificationsConfig)
 					if err != nil {
 						t.Fatalf("applyChanges return an error %v", err)
@@ -182,7 +186,7 @@ func TestNotificationAsConfig(t *testing.T) {
 
 			t.Run("Two notifications with is_default", func(t *testing.T) {
 				setup()
-				dc := newNotificationProvisioner(sqlStore, &fakeAlertNotification{}, encryptionService, nil, logger)
+				dc := newNotificationProvisioner(orgService, sqlStore, &fakeAlertNotification{}, encryptionService, nil, logger)
 				err := dc.applyChanges(context.Background(), doubleNotificationsConfig)
 				t.Run("should both be inserted", func(t *testing.T) {
 					require.NoError(t, err)
@@ -217,7 +221,7 @@ func TestNotificationAsConfig(t *testing.T) {
 				require.Equal(t, len(notificationsQuery.Result), 2)
 
 				t.Run("should have two new notifications", func(t *testing.T) {
-					dc := newNotificationProvisioner(sqlStore, &fakeAlertNotification{}, encryptionService, nil, logger)
+					dc := newNotificationProvisioner(orgService, sqlStore, &fakeAlertNotification{}, encryptionService, nil, logger)
 					err := dc.applyChanges(context.Background(), twoNotificationsConfig)
 					if err != nil {
 						t.Fatalf("applyChanges return an error %v", err)
@@ -247,7 +251,7 @@ func TestNotificationAsConfig(t *testing.T) {
 			err = ns.SQLStore.CreateAlertNotificationCommand(context.Background(), &existingNotificationCmd)
 			require.NoError(t, err)
 
-			dc := newNotificationProvisioner(sqlStore, &fakeAlertNotification{}, encryptionService, nil, logger)
+			dc := newNotificationProvisioner(orgService, sqlStore, &fakeAlertNotification{}, encryptionService, nil, logger)
 			err = dc.applyChanges(context.Background(), correctPropertiesWithOrgName)
 			if err != nil {
 				t.Fatalf("applyChanges return an error %v", err)
@@ -256,7 +260,7 @@ func TestNotificationAsConfig(t *testing.T) {
 
 		t.Run("Config doesn't contain required field", func(t *testing.T) {
 			setup()
-			dc := newNotificationProvisioner(sqlStore, &fakeAlertNotification{}, encryptionService, nil, logger)
+			dc := newNotificationProvisioner(orgService, sqlStore, &fakeAlertNotification{}, encryptionService, nil, logger)
 			err := dc.applyChanges(context.Background(), noRequiredFields)
 			require.NotNil(t, err)
 
@@ -270,7 +274,7 @@ func TestNotificationAsConfig(t *testing.T) {
 		t.Run("Empty yaml file", func(t *testing.T) {
 			t.Run("should have not changed repo", func(t *testing.T) {
 				setup()
-				dc := newNotificationProvisioner(sqlStore, &fakeAlertNotification{}, encryptionService, nil, logger)
+				dc := newNotificationProvisioner(orgService, sqlStore, &fakeAlertNotification{}, encryptionService, nil, logger)
 				err := dc.applyChanges(context.Background(), emptyFile)
 				if err != nil {
 					t.Fatalf("applyChanges return an error %v", err)
