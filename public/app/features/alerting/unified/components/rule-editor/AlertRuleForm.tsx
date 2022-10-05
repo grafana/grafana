@@ -213,8 +213,12 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
               <QueryAndExpressionsStep editingExistingRule={!!existing} />
               {showStep2 && (
                 <>
-                  {type === RuleFormType.grafana ? <GrafanaEvaluationBehavior /> : <CloudEvaluationBehavior />}
-                  <DetailsStep initialFolder={defaultValues.folder} />
+                  {type === RuleFormType.grafana ? (
+                    <GrafanaEvaluationBehavior initialFolder={defaultValues.folder} />
+                  ) : (
+                    <CloudEvaluationBehavior />
+                  )}
+                  <DetailsStep />
                   <NotificationsStep />
                 </>
               )}

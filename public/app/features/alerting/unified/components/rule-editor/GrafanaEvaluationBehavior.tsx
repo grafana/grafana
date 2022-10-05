@@ -1,11 +1,16 @@
 import { css, cx } from '@emotion/css';
-import React, { FC, useState, useEffect } from 'react';
+import classNames from 'classnames';
+import React, { useState, useEffect, useCallback } from 'react';
 import { RegisterOptions, useFormContext } from 'react-hook-form';
 
 import { durationToMilliseconds, GrafanaTheme2, parseDuration } from '@grafana/data';
-import { Button, Field, InlineLabel, Input, InputControl, useStyles2 } from '@grafana/ui';
+import { Button, Field, Icon, InlineLabel, Input, InputControl, Label, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { FolderPickerFilter } from 'app/core/components/Select/FolderPicker';
+import { contextSrv } from 'app/core/core';
+import { DashboardSearchHit } from 'app/features/search/types';
+import { AccessControlAction } from 'app/types';
 
-import { RuleFormValues } from '../../types/rule-form';
+import { RuleForm, RuleFormValues } from '../../types/rule-form';
 import { checkEvaluationIntervalGlobalLimit } from '../../utils/config';
 import { parsePrometheusDuration } from '../../utils/time';
 import { CollapseToggle } from '../CollapseToggle';
@@ -13,6 +18,8 @@ import { EvaluationIntervalLimitExceeded } from '../InvalidIntervalWarning';
 
 import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
 import { RuleEditorSection } from './RuleEditorSection';
+import { containsSlashes, Folder, RuleFolderPicker } from './RuleFolderPicker';
+import { checkForPathSeparator } from './util';
 
 export const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
 
@@ -50,8 +57,113 @@ export const forValidationOptions = (evaluateEvery: string): RegisterOptions => 
     }
   },
 });
+const useRuleFolderFilter = (existingRuleForm: RuleForm | null) => {
+  const isSearchHitAvailable = useCallback(
+    (hit: DashboardSearchHit) => {
+      const rbacDisabledFallback = contextSrv.hasEditPermissionInFolders;
 
-function EvaluationIntervalInput() {
+      const canCreateRuleInFolder = contextSrv.hasAccessInMetadata(
+        AccessControlAction.AlertingRuleCreate,
+        hit,
+        rbacDisabledFallback
+      );
+
+      const canUpdateInCurrentFolder =
+        existingRuleForm &&
+        hit.folderId === existingRuleForm.id &&
+        contextSrv.hasAccessInMetadata(AccessControlAction.AlertingRuleUpdate, hit, rbacDisabledFallback);
+      return canCreateRuleInFolder || canUpdateInCurrentFolder;
+    },
+    [existingRuleForm]
+  );
+
+  return useCallback<FolderPickerFilter>(
+    (folderHits) =>
+      folderHits
+        .filter(isSearchHitAvailable)
+        .filter((value: DashboardSearchHit) => !containsSlashes(value.title ?? '')),
+    [isSearchHitAvailable]
+  );
+};
+
+interface FolderAndGroupProps {
+  initialFolder: RuleForm | null;
+}
+
+function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
+  const {
+    register,
+    formState: { errors },
+  } = useFormContext<RuleFormValues>();
+
+  const styles = useStyles2(getStyles);
+  const folderFilter = useRuleFolderFilter(initialFolder);
+  return (
+    <div className={classNames([styles.flexRow, styles.alignBaseline])}>
+      <Field
+        label={
+          <Label htmlFor="folder" description={'Select a folder to store your rule.'}>
+            <Stack gap={0.5}>
+              Folder
+              <Tooltip
+                placement="top"
+                content={
+                  <div>
+                    Each folder has unique folder permission. When you store multiple rules in a folder, the folder
+                    access permissions get assigned to the rules.
+                  </div>
+                }
+              >
+                <Icon name="info-circle" size="xs" />
+              </Tooltip>
+            </Stack>
+          </Label>
+        }
+        className={styles.formInput}
+        error={errors.folder?.message}
+        invalid={!!errors.folder?.message}
+        data-testid="folder-picker"
+      >
+        <InputControl
+          render={({ field: { ref, ...field } }) => (
+            <RuleFolderPicker
+              inputId="folder"
+              {...field}
+              enableCreateNew={contextSrv.hasPermission(AccessControlAction.FoldersCreate)}
+              enableReset={true}
+              filter={folderFilter}
+              dissalowSlashes={true}
+            />
+          )}
+          name="folder"
+          rules={{
+            required: { value: true, message: 'Please select a folder' },
+            validate: {
+              pathSeparator: (folder: Folder) => checkForPathSeparator(folder.title),
+            },
+          }}
+        />
+      </Field>
+      <Field
+        label="Group"
+        data-testid="group-picker"
+        description="Rules within the same group are evaluated after the same time interval."
+        className={styles.formInput}
+        error={errors.group?.message}
+        invalid={!!errors.group?.message}
+      >
+        <Input
+          id="group"
+          {...register('group', {
+            required: { value: true, message: 'Must enter a group name' },
+          })}
+        />
+      </Field>
+    </div>
+  );
+}
+
+function EvaluationIntervalInput({ initialFolder }: { initialFolder: RuleForm | null }) {
   const styles = useStyles2(getStyles);
   const [editInterval, setEditInterval] = useState(false);
   const {
@@ -92,6 +204,7 @@ function EvaluationIntervalInput() {
 
   return (
     <div>
+      <FolderAndGroup initialFolder={initialFolder} />
       <div className={styles.flexRow}>
         <div className={styles.evaluateLabel}>{`Alert rules in '${group}' are evaluated every`}</div>
         <Field
@@ -166,7 +279,7 @@ function ForInput() {
   );
 }
 
-export const GrafanaEvaluationBehavior: FC = () => {
+export function GrafanaEvaluationBehavior({ initialFolder }: { initialFolder: RuleForm | null }) {
   const styles = useStyles2(getStyles);
   const [showErrorHandling, setShowErrorHandling] = useState(false);
   const { watch } = useFormContext<RuleFormValues>();
@@ -176,15 +289,11 @@ export const GrafanaEvaluationBehavior: FC = () => {
   return (
     // TODO remove "and alert condition" for recording rules
     <RuleEditorSection stepNo={3} title="Alert evaluation behavior">
-      <Field
-        label="Evaluate"
-        description="Evaluation interval applies to every rule within a group. It can overwrite the interval of an existing alert rule."
-      >
-        <div className={styles.flexColumn}>
-          <EvaluationIntervalInput />
-          <ForInput />
-        </div>
-      </Field>
+      <div className={styles.flexColumn}>
+        <EvaluationIntervalInput initialFolder={initialFolder} />
+        <ForInput />
+      </div>
+      {/* </Field> */}
       {exceedsGlobalEvaluationLimit && <EvaluationIntervalLimitExceeded />}
       <CollapseToggle
         isCollapsed={!showErrorHandling}
@@ -228,7 +337,7 @@ export const GrafanaEvaluationBehavior: FC = () => {
       )}
     </RuleEditorSection>
   );
-};
+}
 
 const getStyles = (theme: GrafanaTheme2) => ({
   inlineField: css`
@@ -259,5 +368,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   evaluateInput: css`
     margin-right: ${theme.spacing(1)};
+  `,
+  alignBaseline: css`
+    align-items: baseline;
+    margin-bottom: ${theme.spacing(3)};
+  `,
+  formInput: css`
+    width: 275px;
+
+    & + & {
+      margin-left: ${theme.spacing(3)};
+    }
   `,
 });
