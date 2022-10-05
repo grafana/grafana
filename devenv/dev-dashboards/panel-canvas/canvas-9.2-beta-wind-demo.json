@@ -24,7 +24,6 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 280,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -79,8 +78,8 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 18,
-        "w": 8,
+        "h": 17,
+        "w": 17,
         "x": 0,
         "y": 0
       },
@@ -102,11 +101,123 @@
               "fixed": "dark-green"
             }
           },
-          "constraint": {
-            "horizontal": "left",
-            "vertical": "top"
-          },
           "elements": [
+            {
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "rpm": {
+                  "field": "w3_rpm"
+                }
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Windmill 3",
+              "placement": {
+                "height": 179,
+                "left": -16,
+                "top": 243,
+                "width": 190
+              },
+              "type": "windTurbine"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "rpm": {
+                  "field": "w4_rpm"
+                }
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Windmill 4",
+              "placement": {
+                "height": 104,
+                "left": 168,
+                "top": 266,
+                "width": 167
+              },
+              "type": "windTurbine"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "rpm": {
+                  "field": "w1_rpm"
+                }
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Windmill 1",
+              "placement": {
+                "height": 383,
+                "left": 395,
+                "top": 122,
+                "width": 299
+              },
+              "type": "windTurbine"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "rpm": {
+                  "field": "w2_rpm"
+                }
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Windmill 2",
+              "placement": {
+                "height": 280,
+                "left": 695,
+                "top": 146,
+                "width": 259
+              },
+              "type": "windTurbine"
+            },
             {
               "background": {
                 "color": {
@@ -136,40 +247,11 @@
               "name": "Windmill 4_label",
               "placement": {
                 "height": 26,
-                "left": 178,
-                "top": 404,
+                "left": 232,
+                "top": 489,
                 "width": 39
               },
               "type": "text"
-            },
-            {
-              "background": {
-                "color": {
-                  "fixed": "transparent"
-                }
-              },
-              "border": {
-                "color": {
-                  "fixed": "dark-green"
-                }
-              },
-              "config": {
-                "rpm": {
-                  "field": "w4_rpm"
-                }
-              },
-              "constraint": {
-                "horizontal": "left",
-                "vertical": "top"
-              },
-              "name": "Windmill 4",
-              "placement": {
-                "height": 104,
-                "left": 134,
-                "top": 268,
-                "width": 167
-              },
-              "type": "windTurbine"
             },
             {
               "background": {
@@ -218,35 +300,6 @@
                 }
               },
               "config": {
-                "rpm": {
-                  "field": "w3_rpm"
-                }
-              },
-              "constraint": {
-                "horizontal": "left",
-                "vertical": "top"
-              },
-              "name": "Windmill 3",
-              "placement": {
-                "height": 179,
-                "left": -16,
-                "top": 243,
-                "width": 190
-              },
-              "type": "windTurbine"
-            },
-            {
-              "background": {
-                "color": {
-                  "fixed": "transparent"
-                }
-              },
-              "border": {
-                "color": {
-                  "fixed": "dark-green"
-                }
-              },
-              "config": {
                 "align": "center",
                 "color": {
                   "fixed": "#000000"
@@ -264,40 +317,11 @@
               "name": "Windmill 2_label",
               "placement": {
                 "height": 26,
-                "left": 930,
-                "top": 410,
+                "left": 805,
+                "top": 504,
                 "width": 39
               },
               "type": "text"
-            },
-            {
-              "background": {
-                "color": {
-                  "fixed": "transparent"
-                }
-              },
-              "border": {
-                "color": {
-                  "fixed": "dark-green"
-                }
-              },
-              "config": {
-                "rpm": {
-                  "field": "w2_rpm"
-                }
-              },
-              "constraint": {
-                "horizontal": "left",
-                "vertical": "top"
-              },
-              "name": "Windmill 2",
-              "placement": {
-                "height": 280,
-                "left": 842,
-                "top": 176,
-                "width": 259
-              },
-              "type": "windTurbine"
             },
             {
               "background": {
@@ -328,40 +352,11 @@
               "name": "Windmill 1_label",
               "placement": {
                 "height": 26,
-                "left": 482,
-                "top": 415,
+                "left": 524,
+                "top": 535,
                 "width": 39
               },
               "type": "text"
-            },
-            {
-              "background": {
-                "color": {
-                  "fixed": "transparent"
-                }
-              },
-              "border": {
-                "color": {
-                  "fixed": "dark-green"
-                }
-              },
-              "config": {
-                "rpm": {
-                  "field": "w1_rpm"
-                }
-              },
-              "constraint": {
-                "horizontal": "left",
-                "vertical": "top"
-              },
-              "name": "Windmill 1",
-              "placement": {
-                "height": 383,
-                "left": 375,
-                "top": 163,
-                "width": 299
-              },
-              "type": "windTurbine"
             },
             {
               "background": {
@@ -395,8 +390,8 @@
               "name": "w4_status",
               "placement": {
                 "height": 31,
-                "left": 241,
-                "top": 507,
+                "left": 275,
+                "top": 505,
                 "width": 137
               },
               "type": "metric-value"
@@ -433,8 +428,8 @@
               "name": "w4_energy_value",
               "placement": {
                 "height": 31,
-                "left": 241,
-                "top": 473,
+                "left": 275,
+                "top": 471,
                 "width": 58
               },
               "type": "metric-value"
@@ -468,8 +463,8 @@
               "name": "w4_energy_label",
               "placement": {
                 "height": 26,
-                "left": 292,
-                "top": 476,
+                "left": 326,
+                "top": 474,
                 "width": 56
               },
               "type": "text"
@@ -506,8 +501,8 @@
               "name": "w4_rpm_value",
               "placement": {
                 "height": 31,
-                "left": 241,
-                "top": 440,
+                "left": 275,
+                "top": 438,
                 "width": 37
               },
               "type": "metric-value"
@@ -541,8 +536,8 @@
               "name": "w4_rpm_label",
               "placement": {
                 "height": 26,
-                "left": 270,
-                "top": 442,
+                "left": 304,
+                "top": 440,
                 "width": 48
               },
               "type": "text"
@@ -579,8 +574,8 @@
               "name": "w3_status",
               "placement": {
                 "height": 31,
-                "left": 97,
-                "top": 555,
+                "left": 100,
+                "top": 528,
                 "width": 110
               },
               "type": "metric-value"
@@ -617,8 +612,8 @@
               "name": "w3_energy_value",
               "placement": {
                 "height": 31,
-                "left": 97,
-                "top": 521,
+                "left": 100,
+                "top": 494,
                 "width": 58
               },
               "type": "metric-value"
@@ -652,8 +647,8 @@
               "name": "w3_energy_label",
               "placement": {
                 "height": 27,
-                "left": 149,
-                "top": 524,
+                "left": 151,
+                "top": 496,
                 "width": 56
               },
               "type": "text"
@@ -690,8 +685,8 @@
               "name": "w3_rpm_value",
               "placement": {
                 "height": 31,
-                "left": 97,
-                "top": 487,
+                "left": 100,
+                "top": 460,
                 "width": 37
               },
               "type": "metric-value"
@@ -725,8 +720,8 @@
               "name": "w3_rpm_label",
               "placement": {
                 "height": 31,
-                "left": 131,
-                "top": 487,
+                "left": 134,
+                "top": 460,
                 "width": 43
               },
               "type": "text"
@@ -766,8 +761,8 @@
               "name": "w2_status",
               "placement": {
                 "height": 31,
-                "left": 990,
-                "top": 527,
+                "left": 843,
+                "top": 497,
                 "width": 110
               },
               "type": "metric-value"
@@ -804,8 +799,8 @@
               "name": "w2_energy_value",
               "placement": {
                 "height": 31,
-                "left": 990,
-                "top": 492,
+                "left": 843,
+                "top": 462,
                 "width": 58
               },
               "type": "metric-value"
@@ -839,8 +834,8 @@
               "name": "w2_energy_label",
               "placement": {
                 "height": 31,
-                "left": 1038,
-                "top": 492,
+                "left": 891,
+                "top": 462,
                 "width": 62
               },
               "type": "text"
@@ -877,8 +872,8 @@
               "name": "w2_rpm_value",
               "placement": {
                 "height": 31,
-                "left": 990,
-                "top": 457,
+                "left": 843,
+                "top": 427,
                 "width": 37
               },
               "type": "metric-value"
@@ -912,8 +907,8 @@
               "name": "w2_rpm_label",
               "placement": {
                 "height": 41,
-                "left": 1005,
-                "top": 451,
+                "left": 858,
+                "top": 421,
                 "width": 80
               },
               "type": "text"
@@ -953,8 +948,8 @@
               "name": "w1_status",
               "placement": {
                 "height": 31,
-                "left": 551,
-                "top": 569,
+                "left": 571,
+                "top": 540,
                 "width": 110
               },
               "type": "metric-value"
@@ -991,8 +986,8 @@
               "name": "w1_energy_value",
               "placement": {
                 "height": 31,
-                "left": 552,
-                "top": 534,
+                "left": 572,
+                "top": 505,
                 "width": 58
               },
               "type": "metric-value"
@@ -1026,8 +1021,8 @@
               "name": "w1_energy_label",
               "placement": {
                 "height": 31,
-                "left": 601,
-                "top": 534,
+                "left": 621,
+                "top": 505,
                 "width": 58
               },
               "type": "text"
@@ -1064,8 +1059,8 @@
               "name": "w1_rpm_value",
               "placement": {
                 "height": 31,
-                "left": 553,
-                "top": 498,
+                "left": 573,
+                "top": 469,
                 "width": 37
               },
               "type": "metric-value"
@@ -1099,20 +1094,14 @@
               "name": "w1_rpm_label",
               "placement": {
                 "height": 32,
-                "left": 580,
-                "top": 497,
+                "left": 600,
+                "top": 468,
                 "width": 54
               },
               "type": "text"
             }
           ],
           "name": "Element 1664917007512",
-          "placement": {
-            "height": 100,
-            "left": 0,
-            "top": 0,
-            "width": 100
-          },
           "type": "frame"
         },
         "showAdvancedTypes": true
@@ -1151,6 +1140,6 @@
   "timezone": "",
   "title": "Panel Tests - Canvas 9.2 Beta - Wind Energy Demo",
   "uid": "7p7JkqWVz",
-  "version": 5,
+  "version": 1,
   "weekStart": ""
 }
