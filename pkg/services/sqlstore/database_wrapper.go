@@ -37,7 +37,6 @@ func init() {
 // WrapDatabaseDriverWithHooks creates a fake database driver that
 // executes pre and post functions which we use to gather metrics about
 // database queries. It also registers the metrics.
-// It expects multiple sqlhooks.Hooks and sqlhooks.OnErrorer that are executed sequentially.
 func WrapDatabaseDriverWithHooks(dbType string, hooks []sqlhooks.Hooks, onErroers []sqlhooks.OnErrorer) string {
 	drivers := map[string]driver.Driver{
 		migrator.SQLite:   &sqlite3.SQLiteDriver{},
@@ -61,6 +60,8 @@ func WrapDatabaseDriverWithHooks(dbType string, hooks []sqlhooks.Hooks, onErroer
 	return driverWithHooks
 }
 
+// databaseQueryLogger satisfies the sqlhook.Hooks and sqlhooks.OnErrorer interfaces
+// It expects multiple sqlhooks.Hooks and sqlhooks.OnErrorer that are executed sequentially.
 type databaseWrapper struct {
 	hooks     []sqlhooks.Hooks
 	onErroers []sqlhooks.OnErrorer
@@ -101,7 +102,7 @@ func (h *databaseWrapper) OnError(ctx context.Context, err error, query string, 
 	return nil
 }
 
-// databaseQueryInstrumenter satisfies the sqlhook.databaseQueryInstrumenter interface
+// databaseQueryInstrumenter satisfies the sqlhook.Hooks and sqlhooks.OnErrorer interfaces
 // which allow us to wrap all SQL queries with a `Before` & `After` hook.
 // It gathers metrics about database queries. It also registers the metrics.
 type databaseQueryInstrumenter struct {
@@ -109,12 +110,12 @@ type databaseQueryInstrumenter struct {
 	tracer tracing.Tracer
 }
 
-// databaseQueryWrapperKey is used as key to save values in `context.Context`
-type databaseQueryWrapperKey struct{}
+// databaseQueryInstrumenterKey is used as key to save values in `context.Context`
+type databaseQueryInstrumenterKey struct{}
 
 // Before hook will print the query with its args and return the context with the timestamp
 func (h *databaseQueryInstrumenter) Before(ctx context.Context, query string, args ...interface{}) (context.Context, error) {
-	return context.WithValue(ctx, databaseQueryWrapperKey{}, time.Now()), nil
+	return context.WithValue(ctx, databaseQueryInstrumenterKey{}, time.Now()), nil
 }
 
 // After hook will get the timestamp registered on the Before hook and print the elapsed time
@@ -125,7 +126,7 @@ func (h *databaseQueryInstrumenter) After(ctx context.Context, query string, arg
 }
 
 func (h *databaseQueryInstrumenter) instrument(ctx context.Context, status string, query string, err error) {
-	begin := ctx.Value(databaseQueryWrapperKey{}).(time.Time)
+	begin := ctx.Value(databaseQueryInstrumenterKey{}).(time.Time)
 	elapsed := time.Since(begin)
 
 	histogram := databaseQueryHistogram.WithLabelValues(status)
@@ -189,7 +190,7 @@ func (hp *databaseQueryWrapperDriver) Parse(driverName, dataSourceName string) (
 	return driver.Parse(driverName, dataSourceName)
 }
 
-// databaseQueryLogger satisfies the sqlhook.databaseQueryLogger interface
+// databaseQueryLogger satisfies the sqlhook.Hooks and sqlhooks.OnErrorer interfaces
 // It logs database queries.
 type databaseQueryLogger struct {
 	log log.Logger
