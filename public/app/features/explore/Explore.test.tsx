@@ -81,6 +81,7 @@ const dummyProps: Props = {
   showTrace: true,
   showNodeGraph: true,
   splitOpen: (() => {}) as any,
+  splitted: false,
   changeGraphStyle: () => {},
   graphStyle: 'lines',
 };
