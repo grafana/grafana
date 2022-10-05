@@ -51,7 +51,6 @@ describe('ArgQueryEditor', () => {
     });
     render(<ArgQueryEditor {...defaultProps} onChange={onChange} query={query} />);
     expect(await screen.findByTestId('azure-monitor-arg-query-editor-with-experimental-ui')).toBeInTheDocument();
-    expect(onChange).not.toHaveBeenCalledWith(expect.objectContaining({ subscriptions: ['foo'] }));
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ subscriptions: ['bar'] }));
   });
 
