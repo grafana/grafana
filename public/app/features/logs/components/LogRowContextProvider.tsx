@@ -96,7 +96,11 @@ export const getRowContexts = async (
           // counts.
           // We add the refId of the original dataFrame, since uids contain those now and the uids in the context-dataframe
           // do not have a refid.
-          if (`${idField.values.get(fieldIndex)}${row.dataFrame.refId}` === row.uid) {
+          // To be compatible to other datasources we check for both IDs with and without refId.
+          if (
+            idField.values.get(fieldIndex) === row.uid ||
+            `${idField.values.get(fieldIndex)}${row.dataFrame.refId}` === row.uid
+          ) {
             continue;
           }
         } else {
