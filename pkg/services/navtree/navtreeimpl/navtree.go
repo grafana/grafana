@@ -534,42 +534,41 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *models.ReqContext) *navtree
 	var children []*navtree.NavLink
 	var navLink *navtree.NavLink
 
-	baseId := "connections"
-	baseUrl := s.cfg.AppSubURL + "/" + baseId
+	baseUrl := s.cfg.AppSubURL + "/connections"
 
 	children = append(children, &navtree.NavLink{
-		Id:       baseId + "-your-connections",
+		Id:       "connections-your-connections",
 		Text:     "Your connections",
 		SubTitle: "Manage your existing connections",
-		Url:      baseUrl + "/your-connections",
-		Children: []*navtree.NavLink{&navtree.NavLink{
-			Id:       baseId + "-your-connections-datasources",
+		Url:      s.cfg.AppSubURL + "/connections/your-connections",
+		Children: []*navtree.NavLink{{
+			Id:       "connections-your-connections-datasources",
 			Text:     "Datasources",
 			SubTitle: "Manage your existing datasource connections",
-			Url:      baseUrl + "/your-connections/datasources",
+			Url:      s.cfg.AppSubURL + "/connections/your-connections/datasources",
 		}},
 	})
 
 	children = append(children, &navtree.NavLink{
-		Id:       baseId + "-connections",
+		Id:       "connections-connections",
 		Text:     "Connections",
 		SubTitle: "Browse and create new connections",
-		Url:      baseUrl + "/connections",
+		Url:      s.cfg.AppSubURL + "/connections/connections",
 		Children: []*navtree.NavLink{},
 	})
 
 	children = append(children, &navtree.NavLink{
-		Id:       baseId + "-agent",
+		Id:       "connections-agent",
 		Text:     "Agent",
 		SubTitle: "Manage your agent setup",
-		Url:      baseUrl + "/agent",
+		Url:      s.cfg.AppSubURL + "/connections/agent",
 		Children: []*navtree.NavLink{},
 	})
 
 	navLink = &navtree.NavLink{
 		Text:       "Connections",
 		Icon:       "link",
-		Id:         baseId,
+		Id:         "connections",
 		Url:        baseUrl,
 		Children:   children,
 		Section:    navtree.NavSectionCore,
