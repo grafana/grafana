@@ -11,12 +11,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/x/persistentcollection"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
-	grpccontext "github.com/grafana/grafana/pkg/services/grpcserver/context"
 	"github.com/grafana/grafana/pkg/services/store/object"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -53,22 +49,6 @@ type dummyObjectServer struct {
 func namespaceFromUID(uid string) string {
 	// TODO
 	return "orgId-1"
-}
-
-func userFromContext(ctx context.Context) *user.SignedInUser {
-	// TODO move this function outside of the `store` package
-	grpcCtx := grpccontext.FromContext(ctx)
-	if grpcCtx != nil {
-		return grpcCtx.SignedInUser
-	}
-
-	c, ok := ctxkey.Get(ctx).(*models.ReqContext)
-	if !ok || c == nil || c.SignedInUser == nil {
-		// TODO: return error?
-		return nil
-	}
-
-	return c.SignedInUser
 }
 
 func (i dummyObjectServer) findObject(ctx context.Context, uid string, kind string, version string) (*RawObjectWithHistory, *object.RawObject, error) {
@@ -171,7 +151,7 @@ func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequ
 			return false, nil, err
 		}
 
-		modifier := userFromContext(ctx)
+		modifier := object.UserFromContext(ctx)
 
 		updated := &object.RawObject{
 			UID:       r.UID,
@@ -228,7 +208,7 @@ func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequ
 }
 
 func (i dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectRequest, namespace string) (*object.WriteObjectResponse, error) {
-	modifier := userFromContext(ctx)
+	modifier := object.UserFromContext(ctx)
 	rawObj := &object.RawObject{
 		UID:      r.UID,
 		Kind:     r.Kind,
