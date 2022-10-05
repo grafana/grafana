@@ -90,19 +90,28 @@ func (s *Service) QueryDataMultipleSources(ctx context.Context, user *user.Signe
 	} else {
 		resp := backend.NewQueryDataResponse()
 
+		resultsChannel := make(chan backend.Responses)
 		// create new reqDTO with only the queries for that datasource
 		for _, queries := range byDataSource {
-			subDTO := reqDTO.CloneWithQueries(queries)
+			go func(queries []*simplejson.Json) {
+				subDTO := reqDTO.CloneWithQueries(queries)
 
-			subResp, err := s.QueryData(ctx, user, skipCache, subDTO, handleExpressions)
+				subResp, _ := s.QueryData(ctx, user, skipCache, subDTO, handleExpressions)
 
-			if err != nil {
-				return nil, err
-			}
+				//if err != nil {
+				//	return err
+				//}
 
-			for refId, queryResponse := range subResp.Responses {
-				resp.Responses[refId] = queryResponse
-			}
+				resultsChannel <- subResp.Responses
+			}(queries)
+
+			//if err != nil {
+			//	return nil, err
+			//}
+		}
+
+		for refId, dataResponse := range <-resultsChannel {
+			resp.Responses[refId] = dataResponse
 		}
 
 		return resp, nil
