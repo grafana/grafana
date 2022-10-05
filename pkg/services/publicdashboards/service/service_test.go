@@ -2,13 +2,17 @@ package service
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -33,6 +37,69 @@ var SignedInUser = &user.SignedInUser{UserID: 1234, Login: "user@login.com"}
 
 func TestLogPrefix(t *testing.T) {
 	assert.Equal(t, LogPrefix, "publicdashboards.service")
+}
+
+func TestGetAnnotations(t *testing.T) {
+	t.Run("will build anonymous user with correct permissions to get annotations", func(t *testing.T) {
+		sqlStore := sqlstore.InitTestDB(t)
+		config := setting.NewCfg()
+		tagService := tagimpl.ProvideService(sqlStore, sqlStore.Cfg)
+		annotationsRepo := annotationsimpl.ProvideService(sqlStore, config, tagService)
+		fakeStore := FakePublicDashboardStore{}
+		service := &PublicDashboardServiceImpl{
+			log:                log.New("test.logger"),
+			store:              &fakeStore,
+			AnnotationsService: annotationsRepo,
+		}
+		fakeStore.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).
+			Return(&PublicDashboard{Uid: "uid1", IsEnabled: true}, models.NewDashboard("dash1"), nil)
+		reqDTO := AnnotationsQueryDTO{
+			From: 1,
+			To:   2,
+		}
+
+		items, err := service.GetAnnotations(context.Background(), reqDTO, "abc123")
+
+		assert.Len(t, items, 0)
+		require.NoError(t, err)
+	})
+	t.Run("test can get annotations", func(t *testing.T) {
+		annotationsRepo := annotations.FakeAnnotationsRepo{}
+		fakeStore := FakePublicDashboardStore{}
+		service := &PublicDashboardServiceImpl{
+			log:                log.New("test.logger"),
+			store:              &fakeStore,
+			AnnotationsService: &annotationsRepo,
+		}
+		dashboard := models.NewDashboard("dash1")
+		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.Uid}
+		fakeStore.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dashboard, nil)
+		annotationsRepo.On("Find", mock.Anything, mock.Anything).Return([]*annotations.ItemDTO{
+			{Id: 1},
+		}, nil).Maybe()
+
+		items, err := service.GetAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
+		require.NoError(t, err)
+
+		assert.Len(t, items, 1)
+	})
+	t.Run("test will return error when failed to get annotations", func(t *testing.T) {
+		annotationsRepo := annotations.FakeAnnotationsRepo{}
+		fakeStore := FakePublicDashboardStore{}
+		service := &PublicDashboardServiceImpl{
+			log:                log.New("test.logger"),
+			store:              &fakeStore,
+			AnnotationsService: &annotationsRepo,
+		}
+		dashboard := models.NewDashboard("dash1")
+		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.Uid}
+		fakeStore.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dashboard, nil)
+		annotationsRepo.On("Find", mock.Anything, mock.Anything).Return(nil, errors.New("failed")).Maybe()
+
+		items, err := service.GetAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
+		assert.Error(t, err)
+		require.Nil(t, items)
+	})
 }
 
 func TestGetPublicDashboard(t *testing.T) {
