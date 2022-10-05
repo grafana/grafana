@@ -1279,9 +1279,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
-    "packages/grafana-ui/src/components/FilterInput/FilterInput.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
     "packages/grafana-ui/src/components/FormattedValueDisplay/FormattedValueDisplay.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -1887,35 +1884,15 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
-    "packages/grafana-ui/src/utils/reactUtils.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "packages/grafana-ui/src/utils/storybook/ThemedDocsContainer.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "packages/grafana-ui/src/utils/storybook/withTheme.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "packages/grafana-ui/src/utils/table.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "packages/grafana-ui/src/utils/useAsyncDependency.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "packages/grafana-ui/src/utils/useCombinedRefs.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
-    "packages/grafana-ui/src/utils/useDelayedSwitch.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
-    ],
-    "packages/grafana-ui/src/utils/validate.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "packages/jaeger-ui-components/src/ScrollManager.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
