@@ -57,20 +57,8 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *models.ReqCo
 		})
 	}
 
-	if topNavEnabled {
-		treeRoot.AddSection(&navtree.NavLink{
-			Text:     "Apps",
-			Icon:     "apps",
-			SubTitle: "App plugins that extend the Grafana experience",
-			Id:       "apps",
-			Children: appLinks,
-			Section:  navtree.NavSectionCore,
-			Url:      s.cfg.AppSubURL + "/apps",
-		})
-	} else {
-		for _, appLink := range appLinks {
-			treeRoot.AddSection(appLink)
-		}
+	for _, appLink := range appLinks {
+		treeRoot.AddSection(appLink)
 	}
 
 	return nil
@@ -134,47 +122,79 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 		}
 	}
 
-	if len(appLink.Children) > 0 {
-		// If we only have one child and it's the app default nav then remove it from children
-		if len(appLink.Children) == 1 && appLink.Children[0].Url == appLink.Url {
-			appLink.Children = []*navtree.NavLink{}
+	// Apps without any nav children are not part of navtree
+	if len(appLink.Children) == 0 {
+		return nil
+	}
+	// If we only have one child and it's the app default nav then remove it from children
+	if len(appLink.Children) == 1 && appLink.Children[0].Url == appLink.Url {
+		appLink.Children = []*navtree.NavLink{}
+	}
+
+	if !topNavEnabled {
+		return appLink
+	}
+
+	// Remove default nav child
+	childrenWithoutDefault := []*navtree.NavLink{}
+	for _, child := range appLink.Children {
+		if child.Url != appLink.Url {
+			childrenWithoutDefault = append(childrenWithoutDefault, child)
 		}
+	}
+	appLink.Children = childrenWithoutDefault
 
-		alertingNode := treeRoot.FindById(navtree.NavIDAlerting)
+	// Handle moving apps into specific navtree sections
+	alertingNode := treeRoot.FindById(navtree.NavIDAlerting)
+	sectionID := "apps"
 
-		if navConfig, hasOverride := s.navigationAppConfig[plugin.ID]; hasOverride && topNavEnabled {
-			appLink.SortWeight = navConfig.SortWeight
+	if navConfig, hasOverride := s.navigationAppConfig[plugin.ID]; hasOverride {
+		appLink.SortWeight = navConfig.SortWeight
+		sectionID = navConfig.SectionID
+	}
 
-			if navNode := treeRoot.FindById(navConfig.SectionID); navNode != nil {
-				navNode.Children = append(navNode.Children, appLink)
-			} else {
-				if navConfig.SectionID == navtree.NavIDMonitoring {
-					treeRoot.AddSection(&navtree.NavLink{
-						Text:     "Monitoring",
-						Id:       navtree.NavIDMonitoring,
-						SubTitle: "Monitoring and infrastructure apps",
-						Icon:     "heart-rate",
-						Section:  navtree.NavSectionCore,
-						Children: []*navtree.NavLink{appLink},
-						Url:      s.cfg.AppSubURL + "/monitoring",
-					})
-				} else if navConfig.SectionID == navtree.NavIDAlertsAndIncidents && alertingNode != nil {
-					treeRoot.AddSection(&navtree.NavLink{
-						Text:     "Alerts & incidents",
-						Id:       navtree.NavIDAlertsAndIncidents,
-						SubTitle: "Alerting and incident management apps",
-						Icon:     "bell",
-						Section:  navtree.NavSectionCore,
-						Children: []*navtree.NavLink{alertingNode, appLink},
-						Url:      s.cfg.AppSubURL + "/alerts-and-incidents",
-					})
-					treeRoot.RemoveSection(alertingNode)
-				} else {
-					s.log.Error("Plugin app nav id not found", "pluginId", plugin.ID, "navId", navConfig.SectionID)
-				}
+	if navNode := treeRoot.FindById(sectionID); navNode != nil {
+		navNode.Children = append(navNode.Children, appLink)
+	} else {
+		switch sectionID {
+		case navtree.NavIDApps:
+			treeRoot.AddSection(&navtree.NavLink{
+				Text:       "Apps",
+				Icon:       "apps",
+				SubTitle:   "App plugins that extend the Grafana experience",
+				Id:         navtree.NavIDApps,
+				Children:   []*navtree.NavLink{appLink},
+				Section:    navtree.NavSectionCore,
+				SortWeight: navtree.WeightApps,
+				Url:        s.cfg.AppSubURL + "/apps",
+			})
+		case navtree.NavIDMonitoring:
+			treeRoot.AddSection(&navtree.NavLink{
+				Text:       "Monitoring",
+				Id:         navtree.NavIDMonitoring,
+				SubTitle:   "Monitoring and infrastructure apps",
+				Icon:       "heart-rate",
+				Section:    navtree.NavSectionCore,
+				SortWeight: navtree.WeightMonitoring,
+				Children:   []*navtree.NavLink{appLink},
+				Url:        s.cfg.AppSubURL + "/monitoring",
+			})
+		case navtree.NavIDAlertsAndIncidents:
+			if alertingNode != nil {
+				treeRoot.AddSection(&navtree.NavLink{
+					Text:       "Alerts & incidents",
+					Id:         navtree.NavIDAlertsAndIncidents,
+					SubTitle:   "Alerting and incident management apps",
+					Icon:       "bell",
+					Section:    navtree.NavSectionCore,
+					SortWeight: navtree.WeightAlertsAndIncidents,
+					Children:   []*navtree.NavLink{alertingNode, appLink},
+					Url:        s.cfg.AppSubURL + "/alerts-and-incidents",
+				})
+				treeRoot.RemoveSection(alertingNode)
 			}
-		} else {
-			return appLink
+		default:
+			s.log.Error("Plugin app nav id not found", "pluginId", plugin.ID, "navId", sectionID)
 		}
 	}
 

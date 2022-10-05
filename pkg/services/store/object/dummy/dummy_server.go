@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/x/persistentcollection"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/store/object"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -50,15 +49,6 @@ type dummyObjectServer struct {
 func namespaceFromUID(uid string) string {
 	// TODO
 	return "orgId-1"
-}
-
-func userFromContext(ctx context.Context) *user.SignedInUser {
-	// TODO implement in GRPC server
-	return &user.SignedInUser{
-		UserID: 1,
-		OrgID:  1,
-		Login:  "fake",
-	}
 }
 
 func (i dummyObjectServer) findObject(ctx context.Context, uid string, kind string, version string) (*RawObjectWithHistory, *object.RawObject, error) {
@@ -161,7 +151,7 @@ func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequ
 			return false, nil, err
 		}
 
-		modifier := userFromContext(ctx)
+		modifier := object.UserFromContext(ctx)
 
 		updated := &object.RawObject{
 			UID:       r.UID,
@@ -218,7 +208,7 @@ func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequ
 }
 
 func (i dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectRequest, namespace string) (*object.WriteObjectResponse, error) {
-	modifier := userFromContext(ctx)
+	modifier := object.UserFromContext(ctx)
 	rawObj := &object.RawObject{
 		UID:      r.UID,
 		Kind:     r.Kind,
