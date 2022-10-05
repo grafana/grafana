@@ -39,10 +39,10 @@ seqs: [
 					//  dashboards behind the tag will be added to the playlist.
 					//  - dashboard_by_uid: The value is the dashboard UID
 					value: string
-					
+
 					// Title is an unused property -- it will be removed in the future
-    				title: string
-				}
+    				title?: string
+				} @cuetsy(kind="interface")
 			}
 		]
 	}

@@ -2,7 +2,9 @@ package state
 
 import (
 	"context"
+	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
@@ -18,4 +20,9 @@ type InstanceStore interface {
 // RuleReader represents the ability to fetch alert rules.
 type RuleReader interface {
 	ListAlertRules(ctx context.Context, query *models.ListAlertRulesQuery) error
+}
+
+// Historian maintains an audit log of alert state history.
+type Historian interface {
+	RecordState(ctx context.Context, rule *models.AlertRule, labels data.Labels, evaluatedAt time.Time, currentData, previousData InstanceStateAndReason)
 }

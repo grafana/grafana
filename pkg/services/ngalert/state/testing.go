@@ -3,7 +3,9 @@ package state
 import (
 	"context"
 	"sync"
+	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
@@ -40,4 +42,9 @@ type FakeRuleReader struct{}
 
 func (f *FakeRuleReader) ListAlertRules(_ context.Context, q *models.ListAlertRulesQuery) error {
 	return nil
+}
+
+type FakeHistorian struct{}
+
+func (f *FakeHistorian) RecordState(ctx context.Context, rule *models.AlertRule, labels data.Labels, evaluatedAt time.Time, currentData, previousData InstanceStateAndReason) {
 }

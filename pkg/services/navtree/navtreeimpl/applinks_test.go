@@ -32,14 +32,14 @@ func TestAddAppLinks(t *testing.T) {
 			Type: plugins.App,
 			Includes: []*plugins.Includes{
 				{
-					Name:       "Hello",
+					Name:       "Catalog",
 					Path:       "/a/test-app1/catalog",
 					Type:       "page",
 					AddToNav:   true,
 					DefaultNav: true,
 				},
 				{
-					Name:     "Hello",
+					Name:     "Page2",
 					Path:     "/a/test-app1/page2",
 					Type:     "page",
 					AddToNav: true,
@@ -97,6 +97,16 @@ func TestAddAppLinks(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "Apps", treeRoot.Children[0].Text)
 		require.Equal(t, "Test app1 name", treeRoot.Children[0].Children[0].Text)
+	})
+
+	t.Run("Should remove add default nav child when topnav is enabled", func(t *testing.T) {
+		service.features = featuremgmt.WithFeatures(featuremgmt.FlagTopnav)
+		treeRoot := navtree.NavTreeRoot{}
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+		require.Equal(t, "Apps", treeRoot.Children[0].Text)
+		require.Equal(t, "Test app1 name", treeRoot.Children[0].Children[0].Text)
+		require.Equal(t, "Page2", treeRoot.Children[0].Children[0].Children[0].Text)
 	})
 
 	t.Run("Should move apps that have specific nav id configured to correct section", func(t *testing.T) {
