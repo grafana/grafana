@@ -3,10 +3,12 @@ package sqlstash
 import (
 	"context"
 	"crypto/md5"
+	"database/sql"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -31,12 +33,128 @@ type sqlObjectServer struct {
 	sess *session.SessionDB
 }
 
-func (s sqlObjectServer) Read(ctx context.Context, r *object.ReadObjectRequest) (*object.ReadObjectResponse, error) {
-	return nil, fmt.Errorf("not implemented yet")
+func getReadSelect(r *object.ReadObjectRequest) string {
+	fields := []string{
+		`"key"`, `"kind"`, `"version"`,
+		`"size"`, `"etag"`,
+		`"created"`, `"created_by"`,
+		`"updated"`, `"updated_by"`,
+		`"sync_src"`, `"sync_time"`}
+
+	if r.WithBody {
+		fields = append(fields, `"body"`)
+	}
+	if r.WithSummary {
+		fields = append(fields, `"summary"`)
+	}
+	return "SELECT " + strings.Join(fields, ",") + " FROM object WHERE "
 }
 
-func (s sqlObjectServer) BatchRead(ctx context.Context, batchR *object.BatchReadObjectRequest) (*object.BatchReadObjectResponse, error) {
-	return nil, fmt.Errorf("not implemented yet")
+func rowToReadObjectResponse(rows *sql.Rows, r *object.ReadObjectRequest) (*object.ReadObjectResponse, error) {
+	created := time.Now()
+	updated := time.Now()
+	summary := "" // empty
+	key := ""     // string (extract UID?)
+	var syncSrc sql.NullString
+	var syncTime sql.NullTime
+	raw := &object.RawObject{
+		CreatedBy: &object.UserInfo{},
+		UpdatedBy: &object.UserInfo{},
+	}
+
+	args := []interface{}{
+		&key, &raw.Kind, &raw.Version,
+		&raw.Size, &raw.ETag,
+		&created, &raw.CreatedBy.Id,
+		&updated, &raw.UpdatedBy.Id,
+		&syncSrc, &syncTime,
+	}
+	if r.WithBody {
+		args = append(args, &raw.Body)
+	}
+	if r.WithSummary {
+		args = append(args, &summary)
+	}
+
+	err := rows.Scan(args...)
+	if err != nil {
+		return nil, err
+	}
+	raw.Created = created.UnixMilli()
+	raw.Updated = updated.UnixMilli()
+
+	if syncSrc.Valid {
+		raw.SyncSrc = syncSrc.String
+	}
+	if syncTime.Valid {
+		raw.SyncTime = syncTime.Time.UnixMilli()
+	}
+
+	rsp := &object.ReadObjectResponse{
+		Object: raw,
+	}
+	if summary != "" {
+		rsp.SummaryJson = []byte(summary)
+	}
+	return rsp, nil
+}
+
+func (s sqlObjectServer) Read(ctx context.Context, r *object.ReadObjectRequest) (*object.ReadObjectResponse, error) {
+	modifier := object.UserFromContext(ctx)
+	key := fmt.Sprintf("%d/%s.%s", modifier.OrgID, r.UID, r.Kind)
+
+	args := []interface{}{key}
+	where := "key=?"
+	if r.Version != "" {
+		args = append(args, r.Version)
+		where = "key=? AND version=?"
+	}
+
+	rows, err := s.sess.Query(ctx, getReadSelect(r)+where, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	if !rows.Next() {
+		return &object.ReadObjectResponse{}, nil
+	}
+	return rowToReadObjectResponse(rows, r)
+}
+
+func (s sqlObjectServer) BatchRead(ctx context.Context, b *object.BatchReadObjectRequest) (*object.BatchReadObjectResponse, error) {
+	modifier := object.UserFromContext(ctx)
+
+	args := []interface{}{}
+	constraints := []string{}
+
+	for _, r := range b.Batch {
+		key := fmt.Sprintf("%d/%s.%s", modifier.OrgID, r.UID, r.Kind)
+		where := "key=?"
+		args = append(args, key)
+		if r.Version != "" {
+			args = append(args, r.Version)
+			where = "(key=? AND version=?)"
+		}
+		constraints = append(constraints, where)
+	}
+	// TODO, validate everything has same WithBody/WithSummary
+	req := b.Batch[0]
+	query := getReadSelect(req) + strings.Join(constraints, " OR ")
+	rows, err := s.sess.Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO? make sure the results are in order?
+	rsp := &object.BatchReadObjectResponse{}
+	for rows.Next() {
+		r, err := rowToReadObjectResponse(rows, req)
+		if err != nil {
+			return nil, err
+		}
+		rsp.Results = append(rsp.Results, r)
+	}
+	return rsp, nil
 }
 
 func createContentsHash(contents []byte) string {
@@ -74,8 +192,7 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 	rsp := &object.WriteObjectResponse{}
 
 	err = s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
-		rows := make([]*object.ObjectVersionInfo, 0, 1) // TODO? is there a non-magic binding way to do this?
-		err := s.sess.Select(ctx, &rows, `SELECT "etag","version" FROM object WHERE key=?`, key)
+		rows, err := tx.Query(ctx, `SELECT "etag","version","updated","size" FROM object WHERE key=?`, key)
 		if err != nil {
 			return err
 		}
@@ -87,9 +204,13 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 			Comment: r.Comment,
 		}
 
-		// Check if it existed before
-		if len(rows) > 0 {
-			current := rows[0]
+		// Has a result
+		if rows.Next() {
+			update := time.Now()
+			current := &object.ObjectVersionInfo{}
+			rows.Scan(&current.ETag, &current.Version, &update, &current.Size)
+			current.Updated = update.UnixMilli()
+
 			if current.ETag == etag {
 				rsp.Object = current // TODO more
 				rsp.Status = object.WriteObjectResponse_UNCHANGED
@@ -116,8 +237,8 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 		// 1. Add the `object_history` values
 		versionInfo.Size = int64(len(r.Body))
 		versionInfo.ETag = etag
-		versionInfo.Modified = timestamp.Unix()
-		versionInfo.ModifiedBy = &object.UserInfo{
+		versionInfo.Updated = timestamp.Unix()
+		versionInfo.UpdatedBy = &object.UserInfo{
 			Id:    modifier.UserID,
 			Login: modifier.Login,
 		}
@@ -161,7 +282,7 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 		// 4. Add/update the main `object` table
 		rsp.Object = versionInfo
 		if isUpdate {
-			rsp.Status = object.WriteObjectResponse_MODIFIED
+			rsp.Status = object.WriteObjectResponse_UPDATED
 			_, err = tx.Exec(ctx, `UPDATE object SET "body"=?, "size"=?, "etag"=?, "version"=?, `+
 				`"updated"=?, "updated_by"=?,`+
 				`"name"=?, "description"=?, "summary"=? `+
