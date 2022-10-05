@@ -1,8 +1,7 @@
 import { Location } from 'history';
 
-import { locationUtil, NavModelItem, NavSection } from '@grafana/data';
+import { locationUtil, NavModelItem } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { getConfig } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { ShowModalReactEvent } from '../../../types/events';
@@ -16,15 +15,8 @@ export const NAV_MENU_PORTAL_CONTAINER_ID = 'navbar-menu-portal-container';
 
 export const getNavMenuPortalContainer = () => document.getElementById(NAV_MENU_PORTAL_CONTAINER_ID) ?? document.body;
 
-export const getForcedLoginUrl = (url: string) => {
-  const queryParams = new URLSearchParams(url.split('?')[1]);
-  queryParams.append('forceLogin', 'true');
-
-  return `${getConfig().appSubUrl}${url.split('?')[0]}?${queryParams.toString()}`;
-};
-
-export const enrichConfigItems = (items: NavModelItem[], location: Location<unknown>) => {
-  const { isSignedIn, user } = contextSrv;
+export const enrichConfigItems = (items: NavModelItem[]) => {
+  const { user } = contextSrv;
   const onOpenShortcuts = () => {
     appEvents.publish(new ShowModalReactEvent({ component: HelpModal }));
   };
@@ -39,19 +31,6 @@ export const enrichConfigItems = (items: NavModelItem[], location: Location<unkn
       profileNode.showOrgSwitcher = true;
       profileNode.subTitle = `Organization: ${user?.orgName}`;
     }
-  }
-
-  if (!isSignedIn) {
-    const forcedLoginUrl = getForcedLoginUrl(location.pathname + location.search);
-
-    items.unshift({
-      icon: 'signout',
-      id: 'signin',
-      section: NavSection.Config,
-      target: '_self',
-      text: 'Sign in',
-      url: forcedLoginUrl,
-    });
   }
 
   items.forEach((link) => {
@@ -81,6 +60,7 @@ export const enrichConfigItems = (items: NavModelItem[], location: Location<unkn
       ];
     }
   });
+
   return items;
 };
 

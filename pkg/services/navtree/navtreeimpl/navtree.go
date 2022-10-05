@@ -125,6 +125,18 @@ func (s *ServiceImpl) GetNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 		treeRoot.AddSection(s.getProfileNode(c))
 	}
 
+	if !c.IsSignedIn {
+		treeRoot.AddSection(&navtree.NavLink{
+			Text:       "Sign in",
+			Id:         "signin",
+			Icon:       "signout",
+			Section:    navtree.NavSectionConfig,
+			SortWeight: navtree.WeightProfile,
+			Url:        s.cfg.AppSubURL + "/login",
+			Target:     "_self",
+		})
+	}
+
 	_, uaIsDisabledForOrg := s.cfg.UnifiedAlerting.DisabledOrgs[c.OrgID]
 	uaVisibleForOrg := s.cfg.UnifiedAlerting.IsEnabled() && !uaIsDisabledForOrg
 

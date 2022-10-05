@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Dropdown, Icon, Tooltip, useStyles2 } from '@grafana/ui';
+import { Dropdown, Icon, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { useSelector } from 'app/types';
 
@@ -17,7 +17,6 @@ export function TopSearchBar() {
 
   const helpNode = navIndex['help'];
   const profileNode = navIndex['profile'];
-  const signInNode = navIndex['signin'];
 
   return (
     <div className={styles.container}>
@@ -38,12 +37,10 @@ export function TopSearchBar() {
           </Dropdown>
         )}
         <NewsContainer buttonCss={styles.actionItem} />
-        {signInNode && (
-          <Tooltip placement="bottom" content="Sign in">
-            <a className={styles.actionItem} href={signInNode.url} target={signInNode.target}>
-              {signInNode.icon && <Icon name={signInNode.icon} size="lg" />}
-            </a>
-          </Tooltip>
+        {!contextSrv.user.isSignedIn && (
+          <a className={styles.signIn} href="login" target="_self">
+            Sign in
+          </a>
         )}
         {profileNode && (
           <Dropdown overlay={<TopNavBarMenu node={profileNode} />}>
@@ -73,11 +70,13 @@ const getStyles = (theme: GrafanaTheme2) => {
     logo: css({
       display: 'flex',
     }),
+    signIn: css({}),
     searchWrapper: css({}),
     searchInput: css({}),
     actions: css({
       display: 'flex',
       gap: theme.spacing(1),
+      alignItems: 'center',
       justifyContent: 'flex-end',
     }),
     actionItem: css({

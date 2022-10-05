@@ -77,7 +77,18 @@ func (hs *HTTPServer) CookieOptionsFromCfg() cookies.CookieOptions {
 	}
 }
 
+func (hs *HTTPServer) setLoginRedirectToCookie(c *models.ReqContext) {
+	referrer := c.Req.Header.Get("Referer")
+
+	if referrer != "" && strings.HasPrefix(referrer, hs.Cfg.AppURL) {
+		relativeUrl := hs.Cfg.AppSubURL + "/" + strings.TrimPrefix(referrer, hs.Cfg.AppURL)
+		cookies.WriteCookie(c.Resp, "redirect_to", url.QueryEscape(relativeUrl), 0, nil)
+	}
+}
+
 func (hs *HTTPServer) LoginView(c *models.ReqContext) {
+	hs.setLoginRedirectToCookie(c)
+
 	viewData, err := setIndexViewData(hs, c)
 	if err != nil {
 		c.Handle(hs.Cfg, 500, "Failed to get settings", err)

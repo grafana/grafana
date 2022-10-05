@@ -1,47 +1,14 @@
-import { Location } from 'history';
-
 import { GrafanaConfig, locationUtil, NavModelItem } from '@grafana/data';
 import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
 
-import { updateConfig } from '../../config';
-
-import { enrichConfigItems, getActiveItem, getForcedLoginUrl, isMatchOrChildMatch, isSearchActive } from './utils';
+import { enrichConfigItems, getActiveItem, isMatchOrChildMatch, isSearchActive } from './utils';
 
 jest.mock('../../app_events', () => ({
   publish: jest.fn(),
 }));
 
-describe('getForcedLoginUrl', () => {
-  it.each`
-    appSubUrl          | url                    | expected
-    ${''}              | ${'/whatever?a=1&b=2'} | ${'/whatever?a=1&b=2&forceLogin=true'}
-    ${'/grafana'}      | ${'/whatever?a=1&b=2'} | ${'/grafana/whatever?a=1&b=2&forceLogin=true'}
-    ${'/grafana/test'} | ${'/whatever?a=1&b=2'} | ${'/grafana/test/whatever?a=1&b=2&forceLogin=true'}
-    ${'/grafana'}      | ${''}                  | ${'/grafana?forceLogin=true'}
-    ${'/grafana'}      | ${'/whatever'}         | ${'/grafana/whatever?forceLogin=true'}
-    ${'/grafana'}      | ${'/whatever/'}        | ${'/grafana/whatever/?forceLogin=true'}
-  `(
-    "when appUrl set to '$appUrl' and appSubUrl set to '$appSubUrl' then result should be '$expected'",
-    ({ appSubUrl, url, expected }) => {
-      updateConfig({
-        appSubUrl,
-      });
-
-      const result = getForcedLoginUrl(url);
-
-      expect(result).toBe(expected);
-    }
-  );
-});
-
 describe('enrichConfigItems', () => {
   let mockItems: NavModelItem[];
-  const mockLocation: Location<unknown> = {
-    hash: '',
-    pathname: '/',
-    search: '',
-    state: '',
-  };
 
   beforeEach(() => {
     mockItems = [
@@ -62,7 +29,7 @@ describe('enrichConfigItems', () => {
     const contextSrv = new ContextSrv();
     contextSrv.user.isSignedIn = false;
     setContextSrv(contextSrv);
-    const enrichedConfigItems = enrichConfigItems(mockItems, mockLocation);
+    const enrichedConfigItems = enrichConfigItems(mockItems);
     const signInNode = enrichedConfigItems.find((item) => item.id === 'signin');
     expect(signInNode).toBeDefined();
   });
@@ -71,7 +38,7 @@ describe('enrichConfigItems', () => {
     const contextSrv = new ContextSrv();
     contextSrv.user.isSignedIn = true;
     setContextSrv(contextSrv);
-    const enrichedConfigItems = enrichConfigItems(mockItems, mockLocation);
+    const enrichedConfigItems = enrichConfigItems(mockItems);
     const signInNode = enrichedConfigItems.find((item) => item.id === 'signin');
     expect(signInNode).toBeDefined();
   });
@@ -80,7 +47,7 @@ describe('enrichConfigItems', () => {
     const contextSrv = new ContextSrv();
     contextSrv.user.orgCount = 1;
     setContextSrv(contextSrv);
-    const enrichedConfigItems = enrichConfigItems(mockItems, mockLocation);
+    const enrichedConfigItems = enrichConfigItems(mockItems);
     const profileNode = enrichedConfigItems.find((item) => item.id === 'profile');
     expect(profileNode!.children).toBeUndefined();
   });
@@ -89,7 +56,7 @@ describe('enrichConfigItems', () => {
     const contextSrv = new ContextSrv();
     contextSrv.user.orgCount = 2;
     setContextSrv(contextSrv);
-    const enrichedConfigItems = enrichConfigItems(mockItems, mockLocation);
+    const enrichedConfigItems = enrichConfigItems(mockItems);
     const profileNode = enrichedConfigItems.find((item) => item.id === 'profile');
     expect(profileNode!.children).toContainEqual(
       expect.objectContaining({
@@ -101,7 +68,7 @@ describe('enrichConfigItems', () => {
   it('enhances the help node with extra child links', () => {
     const contextSrv = new ContextSrv();
     setContextSrv(contextSrv);
-    const enrichedConfigItems = enrichConfigItems(mockItems, mockLocation);
+    const enrichedConfigItems = enrichConfigItems(mockItems);
     const helpNode = enrichedConfigItems.find((item) => item.id === 'help');
     expect(helpNode!.children).toContainEqual(
       expect.objectContaining({

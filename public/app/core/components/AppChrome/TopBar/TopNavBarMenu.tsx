@@ -2,7 +2,6 @@ import { css } from '@emotion/css';
 import { i18n } from '@lingui/core';
 import { cloneDeep } from 'lodash';
 import React from 'react';
-import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { Menu, MenuItem, useStyles2 } from '@grafana/ui';
@@ -16,8 +15,7 @@ export interface TopNavBarMenuProps {
 
 export function TopNavBarMenu({ node: nodePlain }: TopNavBarMenuProps) {
   const styles = useStyles2(getStyles);
-  const location = useLocation();
-  const enriched = enrichConfigItems([cloneDeep(nodePlain)], location);
+  const enriched = enrichConfigItems([cloneDeep(nodePlain)]);
   const node = enrichWithInteractionTracking(enriched[0], false);
 
   if (!node) {

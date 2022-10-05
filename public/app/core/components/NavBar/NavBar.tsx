@@ -69,10 +69,9 @@ export const NavBar = React.memo(() => {
   const pluginItems = navTree
     .filter((item) => item.section === NavSection.Plugin)
     .map((item) => enrichWithInteractionTracking(item, menuOpen));
-  const configItems = enrichConfigItems(
-    navTree.filter((item) => item.section === NavSection.Config),
-    location
-  ).map((item) => enrichWithInteractionTracking(item, menuOpen));
+  const configItems = enrichConfigItems(navTree.filter((item) => item.section === NavSection.Config)).map((item) =>
+    enrichWithInteractionTracking(item, menuOpen)
+  );
 
   const activeItem = isSearchActive(location) ? searchItem : getActiveItem(navTree, location.pathname);
 

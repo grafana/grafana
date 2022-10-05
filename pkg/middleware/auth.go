@@ -3,7 +3,6 @@ package middleware
 import (
 	"errors"
 	"net/url"
-	"regexp"
 	"strconv"
 	"strings"
 
@@ -64,16 +63,7 @@ func writeRedirectCookie(c *models.ReqContext) {
 		redirectTo = setting.AppSubUrl + c.Req.RequestURI
 	}
 
-	// remove any forceLogin=true params
-	redirectTo = removeForceLoginParams(redirectTo)
-
 	cookies.WriteCookie(c.Resp, "redirect_to", url.QueryEscape(redirectTo), 0, nil)
-}
-
-var forceLoginParamsRegexp = regexp.MustCompile(`&?forceLogin=true`)
-
-func removeForceLoginParams(str string) string {
-	return forceLoginParamsRegexp.ReplaceAllString(str, "")
 }
 
 func EnsureEditorOrViewerCanEdit(c *models.ReqContext) {
@@ -101,14 +91,12 @@ func Auth(options *AuthOptions) web.Handler {
 	return func(c *models.ReqContext) {
 		forceLogin := false
 		if c.AllowAnonymous {
-			forceLogin = shouldForceLogin(c)
-			if !forceLogin {
-				orgIDValue := c.Req.URL.Query().Get("orgId")
-				orgID, err := strconv.ParseInt(orgIDValue, 10, 64)
-				if err == nil && orgID > 0 && orgID != c.OrgID {
-					forceLogin = true
-				}
+			orgIDValue := c.Req.URL.Query().Get("orgId")
+			orgID, err := strconv.ParseInt(orgIDValue, 10, 64)
+			if err == nil && orgID > 0 && orgID != c.OrgID {
+				forceLogin = true
 			}
+
 		}
 
 		requireLogin := !c.AllowAnonymous || forceLogin || options.ReqNoAnonynmous
