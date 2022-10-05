@@ -131,7 +131,7 @@ func (s *QueryData) fetch(ctx context.Context, client *client.Client, q *models.
 		if err != nil {
 			// If exemplar query returns error, we want to only log it and
 			// continue with other results processing
-			s.log.Error("Exemplar query failed", "query", q.Expr, "err", err)
+			s.log.Error("Exemplar query failed", "err", err)
 		}
 		if res != nil {
 			response.Frames = append(response.Frames, res.Frames...)

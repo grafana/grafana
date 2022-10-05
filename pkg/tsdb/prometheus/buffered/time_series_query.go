@@ -143,7 +143,7 @@ func (b *Buffered) runQueries(ctx context.Context, queries []*PrometheusQuery) (
 		if query.RangeQuery {
 			rangeResponse, _, err := b.client.QueryRange(ctx, query.Expr, timeRange)
 			if err != nil {
-				b.log.Error("Range query failed", "query", query.Expr, "err", err)
+				b.log.Error("Range query failed", "err", err)
 				result.Responses[query.RefId] = backend.DataResponse{Error: err}
 				continue
 			}
@@ -153,7 +153,7 @@ func (b *Buffered) runQueries(ctx context.Context, queries []*PrometheusQuery) (
 		if query.InstantQuery {
 			instantResponse, _, err := b.client.Query(ctx, query.Expr, query.End)
 			if err != nil {
-				b.log.Error("Instant query failed", "query", query.Expr, "err", err)
+				b.log.Error("Instant query failed", "err", err)
 				result.Responses[query.RefId] = backend.DataResponse{Error: err}
 				continue
 			}
@@ -165,7 +165,7 @@ func (b *Buffered) runQueries(ctx context.Context, queries []*PrometheusQuery) (
 		if query.ExemplarQuery {
 			exemplarResponse, err := b.client.QueryExemplars(ctx, query.Expr, timeRange.Start, timeRange.End)
 			if err != nil {
-				b.log.Error("Exemplar query failed", "query", query.Expr, "err", err)
+				b.log.Error("Exemplar query failed", "err", err)
 			} else {
 				response[ExemplarQueryType] = exemplarResponse
 			}
