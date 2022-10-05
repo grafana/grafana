@@ -263,11 +263,6 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:        "customBranding",
-			Description: "Replaces whitelabeling with the new custom branding feature",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:        "traceqlEditor",
 			Description: "Show the TraceQL editor in the explore page",
 			State:       FeatureStateAlpha,
