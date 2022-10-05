@@ -1,4 +1,4 @@
-import React, { FC, memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { FC, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Cell,
   Column,
@@ -12,9 +12,9 @@ import {
 } from 'react-table';
 import { FixedSizeList } from 'react-window';
 
-import { DataFrame, getFieldDisplayName } from '@grafana/data';
+import { DataFrame, getFieldDisplayName, Field } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2, useTheme2 } from '../../themes';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { Pagination } from '../Pagination/Pagination';
 
@@ -28,8 +28,9 @@ import {
   FooterItem,
   TableSortByActionCallback,
   TableSortByFieldState,
+  TableFooterCalc,
 } from './types';
-import { getColumns, sortCaseInsensitive, sortNumber } from './utils';
+import { getColumns, sortCaseInsensitive, sortNumber, getFooterCells, createFooterCalculationValues } from './utils';
 
 const COLUMN_MIN_WIDTH = 150;
 
@@ -47,8 +48,7 @@ export interface Props {
   onColumnResize?: TableColumnResizeActionCallback;
   onSortByChange?: TableSortByActionCallback;
   onCellFilterAdded?: TableFilterActionCallback;
-  footerValues?: FooterItem[];
-  enablePagination?: boolean;
+  footerOptions?: TableFooterCalc;
 }
 
 function useTableStateReducer({ onColumnResize, onSortByChange, data }: Props) {
@@ -126,16 +126,17 @@ export const Table: FC<Props> = memo((props: Props) => {
     noHeader,
     resizable = true,
     initialSortBy,
-    footerValues,
+    footerOptions,
     showTypeIcons,
-    enablePagination,
   } = props;
 
   const listRef = useRef<FixedSizeList>(null);
   const tableDivRef = useRef<HTMLDivElement>(null);
   const fixedSizeListScrollbarRef = useRef<HTMLDivElement>(null);
   const tableStyles = useStyles2(getTableStyles);
+  const theme = useTheme2();
   const headerHeight = noHeader ? 0 : tableStyles.cellHeight;
+  const [footerValues, setFooterValues] = useState<FooterItem[] | undefined>(undefined);
 
   const footerHeight = useMemo(() => {
     const EXTENDED_ROW_HEIGHT = 33;
@@ -209,9 +210,25 @@ export const Table: FC<Props> = memo((props: Props) => {
     pageOptions,
   } = useTable(options, useFilters, useSortBy, usePagination, useAbsoluteLayout, useResizeColumns);
 
+  useEffect(() => {
+    if (footerOptions && footerOptions.show) {
+      setFooterValues(
+        getFooterCells(
+          headerGroups[0].headers as unknown as Array<{ field: Field }>,
+          createFooterCalculationValues(rows),
+          footerOptions,
+          theme
+        )
+      );
+    } else {
+      setFooterValues(undefined);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [footerOptions, theme, state.filters]);
+
   let listHeight = height - (headerHeight + footerHeight);
 
-  if (enablePagination) {
+  if (footerOptions?.enablePagination) {
     listHeight -= tableStyles.cellHeight;
   }
   const pageSize = Math.round(listHeight / tableStyles.cellHeight) - 1;
@@ -249,7 +266,7 @@ export const Table: FC<Props> = memo((props: Props) => {
   const RenderRow = React.useCallback(
     ({ index: rowIndex, style }) => {
       let row = rows[rowIndex];
-      if (enablePagination) {
+      if (footerOptions?.enablePagination) {
         row = page[rowIndex];
       }
       prepareRow(row);
@@ -268,7 +285,7 @@ export const Table: FC<Props> = memo((props: Props) => {
         </div>
       );
     },
-    [onCellFilterAdded, page, enablePagination, prepareRow, rows, tableStyles]
+    [onCellFilterAdded, page, footerOptions?.enablePagination, prepareRow, rows, tableStyles]
   );
 
   const onNavigate = useCallback(
@@ -278,9 +295,9 @@ export const Table: FC<Props> = memo((props: Props) => {
     [gotoPage]
   );
 
-  const itemCount = enablePagination ? page.length : rows.length;
+  const itemCount = footerOptions?.enablePagination ? page.length : rows.length;
   let paginationEl = null;
-  if (enablePagination) {
+  if (footerOptions?.enablePagination) {
     const itemsRangeStart = state.pageIndex * state.pageSize + 1;
     let itemsRangeEnd = itemsRangeStart + state.pageSize - 1;
     const isSmall = width < 550;
@@ -343,7 +360,7 @@ export const Table: FC<Props> = memo((props: Props) => {
           {footerValues && (
             <FooterRow
               height={footerHeight}
-              isPaginationVisible={Boolean(enablePagination)}
+              isPaginationVisible={Boolean(footerOptions?.enablePagination)}
               footerValues={footerValues}
               footerGroups={footerGroups}
               totalColumnsWidth={totalColumnsWidth}
