@@ -557,14 +557,6 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *models.ReqContext) *navtree
 		Children: []*navtree.NavLink{},
 	})
 
-	children = append(children, &navtree.NavLink{
-		Id:       "connections-agent",
-		Text:     "Agent",
-		SubTitle: "Manage your agent setup",
-		Url:      s.cfg.AppSubURL + "/connections/agent",
-		Children: []*navtree.NavLink{},
-	})
-
 	navLink = &navtree.NavLink{
 		Text:       "Connections",
 		Icon:       "link",
