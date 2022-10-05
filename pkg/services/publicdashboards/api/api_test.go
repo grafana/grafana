@@ -116,7 +116,6 @@ func TestAPIGetAnnotations(t *testing.T) {
 				assert.Equal(t, items, test.Annotations)
 			}
 		})
-
 	}
 }
 
