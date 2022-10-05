@@ -142,7 +142,7 @@ e2e.scenario({
           visitDashboardAtStart: false,
           queriesForm: () => {
             e2eSelectors.queryEditor.header.select().find('input').type('Azure Resource Graph{enter}');
-            e2e().wait(500); // Need to wait for code editor to completely load
+            e2e().wait(1000); // Need to wait for code editor to completely load
             e2e.components.CodeEditor.container().type(
               "Resources | where resourceGroup == 'cloud-plugins-e2e-test' | project name, resourceGroup"
             );
@@ -238,8 +238,11 @@ e2e.scenario({
           .parent()
           .find('input')
           .type('microsoft.storage/storageaccounts{enter}');
-        e2e.pages.Dashboard.SubMenu.submenuItemLabels('resource').click();
-        e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('azmonmetricstest').click();
+        e2e.pages.Dashboard.SubMenu.submenuItemLabels('resource').parent().find('button').click();
+        e2e.pages.Dashboard.SubMenu.submenuItemLabels('resource')
+          .parent()
+          .find('input')
+          .type('azmonmetricstest{enter}');
         e2e.flows.addPanel({
           visitDashboardAtStart: false,
           queriesForm: () => {
