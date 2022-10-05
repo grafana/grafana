@@ -1,5 +1,3 @@
-import $ from 'jquery';
-
 import { CurrentUserDTO } from '@grafana/data';
 import { EchoBackend, EchoEventType, PageviewEchoEvent } from '@grafana/runtime';
 
@@ -23,10 +21,10 @@ export class GA4EchoBackend implements EchoBackend<PageviewEchoEvent, GA4EchoBac
   constructor(public options: GA4EchoBackendOptions) {
     const url = `https://www.googletagmanager.com/gtag/js?id=${options.googleAnalyticsId}`;
 
-    $.ajax({
-      url,
-      dataType: 'script',
-      cache: true,
+    fetch(url, {
+      headers: {
+        Accept: 'text/javascript',
+      },
     });
 
     window.dataLayer = window.dataLayer || [];

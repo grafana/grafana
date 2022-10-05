@@ -1,5 +1,3 @@
-import $ from 'jquery';
-
 import { EchoBackend, EchoEventType, PageviewEchoEvent } from '@grafana/runtime';
 
 export interface GAEchoBackendOptions {
@@ -14,10 +12,10 @@ export class GAEchoBackend implements EchoBackend<PageviewEchoEvent, GAEchoBacke
   constructor(public options: GAEchoBackendOptions) {
     const url = `https://www.google-analytics.com/analytics${options.debug ? '_debug' : ''}.js`;
 
-    $.ajax({
-      url,
-      dataType: 'script',
-      cache: true,
+    fetch(url, {
+      headers: {
+        Accept: 'text/javascript',
+      },
     });
 
     const ga = (window.ga =

@@ -1,5 +1,3 @@
-import $ from 'jquery';
-
 import {
   EchoBackend,
   EchoEventType,
@@ -31,11 +29,11 @@ export class ApplicationInsightsBackend implements EchoBackend<PageviewEchoEvent
   supportedEvents = [EchoEventType.Pageview, EchoEventType.Interaction];
 
   constructor(public options: ApplicationInsightsBackendOptions) {
-    $.ajax({
-      url: 'https://js.monitor.azure.com/scripts/b/ai.2.min.js',
-      dataType: 'script',
-      cache: true,
-    }).done(function () {
+    fetch('https://js.monitor.azure.com/scripts/b/ai.2.min.js', {
+      headers: {
+        Accept: 'text/javascript',
+      },
+    }).then(function () {
       const applicationInsightsOpts = {
         config: {
           connectionString: options.connectionString,
