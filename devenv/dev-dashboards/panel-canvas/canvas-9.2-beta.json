@@ -51,17 +51,18 @@
                 "value": 80
               }
             ]
-          }
+          },
+          "unit": "kwatt"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 11,
-        "w": 11,
-        "x": 13,
+        "h": 15,
+        "w": 18,
+        "x": 1,
         "y": 0
       },
-      "id": 2,
+      "id": 4,
       "options": {
         "inlineEditing": true,
         "root": {
@@ -70,14 +71,17 @@
               "fixed": "transparent"
             },
             "image": {
-              "fixed": "https://media.tenor.com/asmeeD8YkAoAAAAd/nuclear-reactor-light-water-reactor.gif"
+              "field": "",
+              "fixed": "https://www.sunnova.com/-/media/Marketing-Components/Infographic/Solar-Storage-For-Non-Export-Markets/Solar-Storage-Export-Outage-Day.ashx",
+              "mode": "fixed"
             },
             "size": "original"
           },
           "border": {
             "color": {
-              "fixed": "dark-green"
-            }
+              "fixed": "red"
+            },
+            "width": 0
           },
           "constraint": {
             "horizontal": "left",
@@ -87,8 +91,10 @@
             {
               "background": {
                 "color": {
-                  "field": "core_pressure",
-                  "fixed": "#D9D9D9"
+                  "fixed": "super-light-blue"
+                },
+                "image": {
+                  "fixed": ""
                 }
               },
               "border": {
@@ -99,11 +105,11 @@
               "config": {
                 "align": "center",
                 "color": {
-                  "fixed": "#000000"
+                  "fixed": "dark-blue"
                 },
-                "size": 20,
+                "size": 16,
                 "text": {
-                  "field": "core_pressure",
+                  "field": "solar_output",
                   "fixed": "",
                   "mode": "field"
                 },
@@ -113,19 +119,22 @@
                 "horizontal": "left",
                 "vertical": "top"
               },
-              "name": "core_pressure_value",
+              "name": "Solar output",
               "placement": {
-                "height": 32.4296875,
-                "left": 417,
-                "top": 324,
-                "width": 44.6015625
+                "height": 30,
+                "left": 752,
+                "top": 253,
+                "width": 75
               },
               "type": "metric-value"
             },
             {
               "background": {
                 "color": {
-                  "fixed": "transparent"
+                  "fixed": "#ffffff"
+                },
+                "image": {
+                  "fixed": ""
                 }
               },
               "border": {
@@ -137,10 +146,6 @@
                 "align": "center",
                 "color": {
                   "fixed": "#000000"
-                },
-                "size": 16,
-                "text": {
-                  "fixed": "MPa - core pressure"
                 },
                 "valign": "middle"
               },
@@ -148,20 +153,22 @@
                 "horizontal": "left",
                 "vertical": "top"
               },
-              "name": "core_pressure_label",
+              "name": "Hide logo",
               "placement": {
-                "height": 41.5546875,
-                "left": 458,
-                "top": 318,
-                "width": 160.1796875
+                "height": 93,
+                "left": 27,
+                "top": 467,
+                "width": 222
               },
-              "type": "text"
+              "type": "rectangle"
             },
             {
               "background": {
                 "color": {
-                  "field": "core_outside_temperature",
-                  "fixed": "#D9D9D9"
+                  "fixed": "super-light-green"
+                },
+                "image": {
+                  "fixed": ""
                 }
               },
               "border": {
@@ -172,11 +179,11 @@
               "config": {
                 "align": "center",
                 "color": {
-                  "fixed": "#000000"
+                  "fixed": "dark-green"
                 },
-                "size": 20,
+                "size": 16,
                 "text": {
-                  "field": "core_outside_temperature",
+                  "field": "battery_charge",
                   "fixed": "",
                   "mode": "field"
                 },
@@ -186,19 +193,22 @@
                 "horizontal": "left",
                 "vertical": "top"
               },
-              "name": "core_temp_value",
+              "name": "Battery charge",
               "placement": {
-                "height": 32.4296875,
-                "left": 416,
-                "top": 288,
-                "width": 56.765625
+                "height": 30,
+                "left": 648,
+                "top": 349,
+                "width": 75
               },
               "type": "metric-value"
             },
             {
               "background": {
                 "color": {
-                  "fixed": "transparent"
+                  "fixed": "super-light-red"
+                },
+                "image": {
+                  "fixed": ""
                 }
               },
               "border": {
@@ -209,47 +219,11 @@
               "config": {
                 "align": "center",
                 "color": {
-                  "fixed": "#000000"
+                  "fixed": "dark-red"
                 },
                 "size": 16,
                 "text": {
-                  "fixed": "C - core outside temp"
-                },
-                "valign": "middle"
-              },
-              "constraint": {
-                "horizontal": "left",
-                "vertical": "top"
-              },
-              "name": "core_temp_label",
-              "placement": {
-                "height": 41.5546875,
-                "left": 473,
-                "top": 282,
-                "width": 160.1796875
-              },
-              "type": "text"
-            },
-            {
-              "background": {
-                "color": {
-                  "field": "core_status",
-                  "fixed": "#D9D9D9"
-                }
-              },
-              "border": {
-                "color": {
-                  "fixed": "dark-green"
-                }
-              },
-              "config": {
-                "align": "center",
-                "color": {
-                  "fixed": "#000000"
-                },
-                "size": 16,
-                "text": {
-                  "field": "core_status",
+                  "field": "house_draw",
                   "fixed": "",
                   "mode": "field"
                 },
@@ -259,125 +233,17 @@
                 "horizontal": "left",
                 "vertical": "top"
               },
-              "name": "core_status_value",
+              "name": "House draw",
               "placement": {
-                "height": 32.4296875,
-                "left": 415,
-                "top": 252,
-                "width": 137.875
+                "height": 30,
+                "left": 747,
+                "top": 352,
+                "width": 75
               },
               "type": "metric-value"
-            },
-            {
-              "background": {
-                "color": {
-                  "field": "energy_output",
-                  "fixed": "#D9D9D9"
-                }
-              },
-              "border": {
-                "color": {
-                  "fixed": "dark-green"
-                }
-              },
-              "config": {
-                "align": "center",
-                "color": {
-                  "fixed": "#000000"
-                },
-                "size": 20,
-                "text": {
-                  "field": "energy_output",
-                  "fixed": "",
-                  "mode": "field"
-                },
-                "valign": "middle"
-              },
-              "constraint": {
-                "horizontal": "left",
-                "vertical": "top"
-              },
-              "name": "energy_output_value",
-              "placement": {
-                "height": 32,
-                "left": 430,
-                "top": 44,
-                "width": 115
-              },
-              "type": "metric-value"
-            },
-            {
-              "background": {
-                "color": {
-                  "fixed": "transparent"
-                }
-              },
-              "border": {
-                "color": {
-                  "fixed": "dark-green"
-                }
-              },
-              "config": {
-                "align": "center",
-                "color": {
-                  "fixed": "#000000"
-                },
-                "size": 16,
-                "text": {
-                  "fixed": "mW / hr "
-                },
-                "valign": "middle"
-              },
-              "constraint": {
-                "horizontal": "left",
-                "vertical": "top"
-              },
-              "name": "energy_output_label",
-              "placement": {
-                "height": 41,
-                "left": 500,
-                "top": 42,
-                "width": 158
-              },
-              "type": "text"
-            },
-            {
-              "background": {
-                "color": {
-                  "fixed": "transparent"
-                }
-              },
-              "border": {
-                "color": {
-                  "fixed": "dark-green"
-                }
-              },
-              "config": {
-                "align": "center",
-                "color": {
-                  "fixed": "#000000"
-                },
-                "size": 16,
-                "text": {
-                  "fixed": "Energy Output"
-                },
-                "valign": "middle"
-              },
-              "constraint": {
-                "horizontal": "left",
-                "vertical": "top"
-              },
-              "name": "eo_label",
-              "placement": {
-                "height": 41,
-                "left": 447,
-                "top": 3,
-                "width": 158
-              },
-              "type": "text"
             }
           ],
-          "name": "Element 1664919963656",
+          "name": "Element 1659400716798",
           "placement": {
             "height": 100,
             "left": 0,
@@ -391,7 +257,7 @@
       "pluginVersion": "9.3.0-pre",
       "targets": [
         {
-          "csvContent": "core_outside_temperature, core_pressure, core_status, energy_output,\n800, 8, operational, 9.7, 20",
+          "csvContent": "house_draw, battery_charge, solar_output\n1.1, 2.2, 3.3",
           "datasource": {
             "type": "testdata",
             "uid": "PD8C576611E62080A"
@@ -400,10 +266,201 @@
           "scenarioId": "csv_content"
         }
       ],
-      "title": "Canvas - Nuclear Energy Demo",
+      "title": "Home Solar - Day",
       "type": "canvas"
-    }
-  ],
+    },
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "kwatt"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 15,
+        "w": 18,
+        "x": 1,
+        "y": 15
+      },
+      "id": 5,
+      "options": {
+        "inlineEditing": true,
+        "root": {
+          "background": {
+            "color": {
+              "fixed": "transparent"
+            },
+            "image": {
+              "field": "",
+              "fixed": "https://www.sunnova.com/-/media/Marketing-Components/Infographic/Solar-Storage-For-Non-Export-Markets/Solar-Storage-Export-Outage-Night.ashx",
+              "mode": "fixed"
+            },
+            "size": "original"
+          },
+          "border": {
+            "color": {
+              "fixed": "red"
+            },
+            "width": 0
+          },
+          "constraint": {
+            "horizontal": "left",
+            "vertical": "top"
+          },
+          "elements": [
+            {
+              "background": {
+                "color": {
+                  "fixed": "#565558"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#000000"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Hide logo",
+              "placement": {
+                "height": 100,
+                "left": 28,
+                "top": 470,
+                "width": 228
+              },
+              "type": "rectangle"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "super-light-blue"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "dark-blue"
+                },
+                "size": 16,
+                "text": {
+                  "field": "solar_output",
+                  "fixed": "",
+                  "mode": "field"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 2",
+              "placement": {
+                "height": 30,
+                "left": 750,
+                "top": 265,
+                "width": 75
+              },
+              "type": "metric-value"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "super-light-red"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "dark-red"
+                },
+                "size": 16,
+                "text": {
+                  "field": "battery_draw",
+                  "fixed": "",
+                  "mode": "field"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 3",
+              "placement": {
+                "height": 30,
+                "left": 652,
+                "top": 364,
+                "width": 75
+              },
+              "type": "metric-value"
+            }
+          ],
+          "name": "Element 1659400716798",
+          "placement": {
+            "height": 100,
+            "left": 0,
+            "top": 0,
+            "width": 100
+          },
+          "type": "frame"
+        },
+        "showAdvancedTypes": false
+      },
+      "pluginVersion": "9.3.0-pre",
+      "targets": [
+        {
+          "csvContent": "solar_output, battery_draw\n0.0, 2.2",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "A",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "Home Solar - Night",
+      "type": "canvas"
+    }],
   "schemaVersion": 37,
   "style": "dark",
   "tags": [
