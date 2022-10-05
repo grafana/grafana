@@ -32,9 +32,13 @@ function provisionAzureMonitorDatasources(datasources: AzureMonitorProvision[]) 
     type: 'Azure Monitor',
     form: () => {
       e2eSelectors.configEditor.azureCloud.input().find('input').type('Azure').type('{enter}');
-      e2eSelectors.configEditor.tenantID.input().find('input').type(datasource.jsonData.tenantId);
-      e2eSelectors.configEditor.clientID.input().find('input').type(datasource.jsonData.clientId);
-      e2eSelectors.configEditor.clientSecret.input().find('input').type(datasource.secureJsonData.clientSecret);
+      // We set the log value to false here to ensure that secrets aren't printed to logs
+      e2eSelectors.configEditor.tenantID.input().find('input').type(datasource.jsonData.tenantId, { log: false });
+      e2eSelectors.configEditor.clientID.input().find('input').type(datasource.jsonData.clientId, { log: false });
+      e2eSelectors.configEditor.clientSecret
+        .input()
+        .find('input')
+        .type(datasource.secureJsonData.clientSecret, { log: false });
       e2eSelectors.configEditor.loadSubscriptions.button().click().wait('@subscriptions').wait(500);
     },
     expectedAlertMessage: 'Successfully connected to all Azure Monitor endpoints',
