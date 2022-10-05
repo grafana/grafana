@@ -659,7 +659,7 @@ export function createTableFrameFromTraceQlQuery(
         type: FieldType.string,
         config: {
           unit: 'string',
-          displayNameFromDS: 'Span',
+          displayNameFromDS: 'Span ID',
           links: [
             {
               title: 'Span: ${__value.raw}',
@@ -676,8 +676,8 @@ export function createTableFrameFromTraceQlQuery(
           ],
         },
       },
-      { name: 'traceName', type: FieldType.string, config: { displayNameFromDS: 'Name' } },
-      { name: 'attributes', type: FieldType.string, config: { displayNameFromDS: 'Attributes' } },
+      // { name: 'traceName', type: FieldType.string, config: { displayNameFromDS: 'Name' } },
+      // { name: 'attributes', type: FieldType.string, config: { displayNameFromDS: 'Attributes' } },
       { name: 'startTime', type: FieldType.string, config: { displayNameFromDS: 'Start time' } },
       { name: 'duration', type: FieldType.number, config: { displayNameFromDS: 'Duration', unit: 'ms' } },
     ],
@@ -693,13 +693,9 @@ export function createTableFrameFromTraceQlQuery(
   const traceData = data
     .sort((a, b) => parseInt(b?.startTimeUnixNano!, 10) / 1000000 - parseInt(a?.startTimeUnixNano!, 10) / 1000000)
     .reduce((list: TraceTableData[], t) => {
-      const firstSpanSet = t.spanSets?.[0];
       const trace: TraceTableData = transformToTraceData(t);
-      trace.attributes = firstSpanSet?.attributes
-        .map((atr) => Object.keys(atr).map((key) => `${key} = ${atr[key]}`))
-        .join(', ');
       list.push(trace);
-      firstSpanSet?.spans.forEach((span) => list.push(transformSpanToTraceData(span)));
+      t.spans?.forEach((span) => list.push(transformSpanToTraceData(span)));
       return list;
     }, []);
 
@@ -712,7 +708,7 @@ export function createTableFrameFromTraceQlQuery(
 
 interface TraceTableData {
   traceID?: string;
-  traceName: string;
+  traceName?: string;
   spanID?: string;
   attributes?: string;
   startTime: string;
@@ -736,7 +732,6 @@ function transformSpanToTraceData(data: Span): TraceTableData {
     traceID: undefined,
     traceName: data.name,
     spanID: data.spanId,
-    attributes: data.attributes?.map((atr) => Object.keys(atr).map((key) => `${key} = ${atr[key]}`)).join(', '),
     startTime,
     duration: traceEndTime - traceStartTime,
   };
