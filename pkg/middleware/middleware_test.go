@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -340,6 +341,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 	middlewareScenario(t, "When anonymous access is enabled", func(t *testing.T, sc *scenarioContext) {
 		sc.mockSQLStore.ExpectedOrg = &models.Org{Id: 1, Name: sc.cfg.AnonymousOrgName}
+		sc.orgService.ExpectedOrg = &org.Org{ID: 1, Name: sc.cfg.AnonymousOrgName}
 		orga, err := sc.mockSQLStore.CreateOrgWithMember(sc.cfg.AnonymousOrgName, 1)
 		require.NoError(t, err)
 		sc.fakeReq("GET", "/").exec()
@@ -653,8 +655,9 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 		sc.mockSQLStore = mockstore.NewSQLStoreMock()
 		sc.loginService = &loginservice.LoginServiceMock{}
 		sc.userService = usertest.NewUserServiceFake()
+		sc.orgService = orgtest.NewOrgServiceFake()
 		sc.apiKeyService = &apikeytest.Service{}
-		ctxHdlr := getContextHandler(t, cfg, sc.mockSQLStore, sc.loginService, sc.apiKeyService, sc.userService)
+		ctxHdlr := getContextHandler(t, cfg, sc.mockSQLStore, sc.loginService, sc.apiKeyService, sc.userService, sc.orgService)
 		sc.sqlStore = ctxHdlr.SQLStore
 		sc.contextHandler = ctxHdlr
 		sc.m.Use(ctxHdlr.Middleware)
@@ -687,7 +690,10 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 	})
 }
 
-func getContextHandler(t *testing.T, cfg *setting.Cfg, mockSQLStore *mockstore.SQLStoreMock, loginService *loginservice.LoginServiceMock, apiKeyService *apikeytest.Service, userService *usertest.FakeUserService) *contexthandler.ContextHandler {
+func getContextHandler(t *testing.T, cfg *setting.Cfg, mockSQLStore *mockstore.SQLStoreMock,
+	loginService *loginservice.LoginServiceMock, apiKeyService *apikeytest.Service,
+	userService *usertest.FakeUserService, orgService *orgtest.FakeOrgService,
+) *contexthandler.ContextHandler {
 	t.Helper()
 
 	if cfg == nil {
@@ -704,7 +710,7 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg, mockSQLStore *mockstore.S
 	tracer := tracing.InitializeTracerForTest()
 	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginService, userService, mockSQLStore)
 	authenticator := &logintest.AuthenticatorFake{ExpectedUser: &user.User{}}
-	return contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, mockSQLStore, tracer, authProxy, loginService, apiKeyService, authenticator, userService)
+	return contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, mockSQLStore, tracer, authProxy, loginService, apiKeyService, authenticator, userService, orgService)
 }
 
 type fakeRenderService struct {

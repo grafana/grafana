@@ -202,6 +202,7 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
             {({ height }) => (
               <>
                 <iframe
+                  title="Support snapshot preview"
                   src={`${config.appUrl}dashboard/new?orgId=${contextSrv.user.orgId}&kiosk&${snapshotUpdate}`}
                   width="100%"
                   height={height - 100}

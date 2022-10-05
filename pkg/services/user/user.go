@@ -19,7 +19,7 @@ type Service interface {
 	Search(context.Context, *SearchUsersQuery) (*SearchUserQueryResult, error)
 	Disable(context.Context, *DisableUserCommand) error
 	BatchDisableUsers(context.Context, *BatchDisableUsersCommand) error
-	UpdatePermissions(int64, bool) error
+	UpdatePermissions(context.Context, int64, bool) error
 	SetUserHelpFlag(context.Context, *SetUserHelpFlagCommand) error
-	GetProfile(context.Context, *GetUserProfileQuery) (UserProfileDTO, error)
+	GetProfile(context.Context, *GetUserProfileQuery) (*UserProfileDTO, error)
 }

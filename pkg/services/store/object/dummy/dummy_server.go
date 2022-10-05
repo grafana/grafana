@@ -17,9 +17,15 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+type ObjectVersionWithBody struct {
+	*object.ObjectVersionInfo `json:"info,omitempty"`
+
+	Body []byte `json:"body,omitempty"`
+}
+
 type RawObjectWithHistory struct {
 	*object.RawObject `json:"rawObject,omitempty"`
-	History           []*object.RawObject `json:"history,omitempty"`
+	History           []*ObjectVersionWithBody `json:"history,omitempty"`
 }
 
 var (
@@ -74,13 +80,26 @@ func (i dummyObjectServer) findObject(ctx context.Context, uid string, kind stri
 
 	getLatestVersion := version == ""
 	if getLatestVersion {
-		objVersion := obj.History[len(obj.History)-1]
-		return obj, objVersion, nil
+		return obj, obj.RawObject, nil
 	}
 
 	for _, objVersion := range obj.History {
 		if objVersion.Version == version {
-			return obj, objVersion, nil
+			copy := &object.RawObject{
+				UID:        obj.UID,
+				Kind:       obj.Kind,
+				Created:    obj.Created,
+				CreatedBy:  obj.CreatedBy,
+				Modified:   objVersion.Modified,
+				ModifiedBy: objVersion.ModifiedBy,
+				ETag:       objVersion.ETag,
+				Version:    objVersion.Version,
+
+				// Body is added from the dummy server cache (it does not exist in ObjectVersionInfo)
+				Body: objVersion.Body,
+			}
+
+			return obj, copy, nil
 		}
 	}
 
@@ -125,7 +144,7 @@ func createContentsHash(contents []byte) string {
 }
 
 func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequest, namespace string) (*object.WriteObjectResponse, error) {
-	var updated *object.RawObject
+	rsp := &object.WriteObjectResponse{}
 
 	updatedCount, err := i.collection.Update(ctx, namespace, func(i *RawObjectWithHistory) (bool, *RawObjectWithHistory, error) {
 		match := i.UID == r.UID && i.Kind == r.Kind
@@ -144,7 +163,7 @@ func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequ
 
 		modifier := userFromContext(ctx)
 
-		updated = &object.RawObject{
+		updated := &object.RawObject{
 			UID:       r.UID,
 			Kind:      r.Kind,
 			Created:   i.Created,
@@ -158,12 +177,32 @@ func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequ
 			ETag:    createContentsHash(r.Body),
 			Body:    r.Body,
 			Version: fmt.Sprintf("%d", prevVersion+1),
-			Comment: r.Comment,
+		}
+
+		versionInfo := &ObjectVersionWithBody{
+			Body: r.Body,
+			ObjectVersionInfo: &object.ObjectVersionInfo{
+				Version:    updated.Version,
+				Modified:   updated.Modified,
+				ModifiedBy: updated.ModifiedBy,
+				Size:       updated.Size,
+				ETag:       updated.ETag,
+				Comment:    r.Comment,
+			},
+		}
+		rsp.Object = versionInfo.ObjectVersionInfo
+		rsp.Status = object.WriteObjectResponse_MODIFIED
+
+		// When saving, it must be different than the head version
+		if i.ETag == updated.ETag {
+			versionInfo.ObjectVersionInfo.Version = i.Version
+			rsp.Status = object.WriteObjectResponse_UNCHANGED
+			return false, nil, nil
 		}
 
 		return true, &RawObjectWithHistory{
 			RawObject: updated,
-			History:   append(i.History, updated),
+			History:   append(i.History, versionInfo),
 		}, nil
 	})
 
@@ -171,14 +210,11 @@ func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequ
 		return nil, err
 	}
 
-	if updatedCount == 0 {
+	if updatedCount == 0 && rsp.Object == nil {
 		return nil, fmt.Errorf("could not find object with uid %s and kind %s", r.UID, r.Kind)
 	}
 
-	return &object.WriteObjectResponse{
-		Error:  nil,
-		Object: updated,
-	}, nil
+	return rsp, nil
 }
 
 func (i dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectRequest, namespace string) (*object.WriteObjectResponse, error) {
@@ -200,11 +236,23 @@ func (i dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectRequ
 		ETag:    createContentsHash(r.Body),
 		Body:    r.Body,
 		Version: fmt.Sprintf("%d", 1),
-		Comment: r.Comment,
 	}
+
+	info := &object.ObjectVersionInfo{
+		Version:    rawObj.Version,
+		Modified:   rawObj.Modified,
+		ModifiedBy: rawObj.ModifiedBy,
+		Size:       rawObj.Size,
+		ETag:       rawObj.ETag,
+		Comment:    r.Comment,
+	}
+
 	newObj := &RawObjectWithHistory{
 		RawObject: rawObj,
-		History:   []*object.RawObject{rawObj},
+		History: []*ObjectVersionWithBody{{
+			ObjectVersionInfo: info,
+			Body:              r.Body,
+		}},
 	}
 
 	err := i.collection.Insert(ctx, namespace, newObj)
@@ -214,13 +262,17 @@ func (i dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectRequ
 
 	return &object.WriteObjectResponse{
 		Error:  nil,
-		Object: newObj.RawObject,
+		Object: info,
+		Status: object.WriteObjectResponse_CREATED,
 	}, nil
 }
 
 func (i dummyObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest) (*object.WriteObjectResponse, error) {
 	namespace := namespaceFromUID(r.UID)
 	obj, err := i.collection.FindFirst(ctx, namespace, func(i *RawObjectWithHistory) (bool, error) {
+		if i == nil || r == nil {
+			return false, nil
+		}
 		return i.UID == r.UID, nil
 	})
 	if err != nil {
@@ -263,15 +315,15 @@ func (i dummyObjectServer) History(ctx context.Context, r *object.ObjectHistoryR
 		return nil, err
 	}
 
-	if obj == nil {
-		return &object.ObjectHistoryResponse{
-			Object: nil,
-		}, nil
+	rsp := &object.ObjectHistoryResponse{}
+	if obj != nil {
+		// Return the most recent versions first
+		// Better? save them in this order?
+		for i := len(obj.History) - 1; i >= 0; i-- {
+			rsp.Versions = append(rsp.Versions, obj.History[i].ObjectVersionInfo)
+		}
 	}
-
-	return &object.ObjectHistoryResponse{
-		Object: obj.History,
-	}, nil
+	return rsp, nil
 }
 
 func (i dummyObjectServer) Search(ctx context.Context, r *object.ObjectSearchRequest) (*object.ObjectSearchResponse, error) {
