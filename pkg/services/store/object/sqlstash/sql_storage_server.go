@@ -93,15 +93,8 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 		isUpdate := false
 		timestamp := time.Now()
 		versionInfo := &object.ObjectVersionInfo{
-			Version:  "1",
-			Comment:  r.Comment,
-			Size:     int64(len(r.Body)),
-			ETag:     etag,
-			Modified: timestamp.Unix(),
-			ModifiedBy: &object.UserInfo{
-				Id:    modifier.UserID,
-				Login: modifier.Login,
-			},
+			Version: "1",
+			Comment: r.Comment,
 		}
 
 		// Check if it existed before
@@ -112,8 +105,6 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 				rsp.Status = object.WriteObjectResponse_UNCHANGED
 				return nil
 			}
-
-			rsp.Status = object.WriteObjectResponse_MODIFIED
 			isUpdate = true
 
 			// Increment the version
@@ -133,6 +124,13 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 		}
 
 		// 1. Add the `object_history` values
+		versionInfo.Size = int64(len(r.Body))
+		versionInfo.ETag = etag
+		versionInfo.Modified = timestamp.Unix()
+		versionInfo.ModifiedBy = &object.UserInfo{
+			Id:    modifier.UserID,
+			Login: modifier.Login,
+		}
 		_, err = tx.Exec(ctx, `INSERT INTO object_history (`+
 			`"key", "version", "message", `+
 			`"size", "body", "etag", `+
@@ -147,26 +145,53 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 		}
 
 		// 2. Add the labels rows
+		for k, v := range summary.Labels {
+			_, err = tx.Exec(ctx, `INSERT INTO object_labels (`+
+				`"object_key", "label", "value") `+
+				`VALUES (?, ?, ?)`,
+				key, k, v,
+			)
+			if err != nil {
+				return err
+			}
+		}
 
 		// 3. Add the references rows
+		for _, ref := range summary.References {
+			_, err = tx.Exec(ctx, `INSERT INTO object_ref (`+
+				`"object_key", "kind", "type", "uid") `+
+				`VALUES (?, ?, ?, ?)`,
+				key, ref.Kind, ref.Type, ref.UID,
+			)
+			if err != nil {
+				return err
+			}
+		}
 
 		// 4. Add/update the main `object` table
 		rsp.Object = versionInfo
 		if isUpdate {
-			// TODO: the update
-			return nil
+			rsp.Status = object.WriteObjectResponse_MODIFIED
+			_, err = tx.Exec(ctx, `UPDATE object SET "body"=?, "size"=?, "etag"=?, "version"=?, `+
+				`"updated"=?, "updated_by"=?,`+
+				`"name"=?, "description"=?, "summary"=? `+
+				`WHERE key=?`,
+				r.Body, versionInfo.Size, etag, versionInfo.Version,
+				timestamp, modifier.UserID,
+				summary.Name, summary.Description, string(summaryjson),
+				key,
+			)
+			return err
 		}
 
 		// Insert the new row
 		parent_folder_key := "???"
-		query :=
-			`INSERT INTO object (` +
-				`"key", "parent_folder_key", "kind", "size", "body", "etag", "version",` +
-				`"updated", "updated_by", "created", "created_by",` +
-				`"name", "description", "summary") ` +
-				`VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
-		_, err = tx.Exec(ctx, query,
+		_, err = tx.Exec(ctx, `INSERT INTO object (`+
+			`"key", "parent_folder_key", "kind", "size", "body", "etag", "version",`+
+			`"updated", "updated_by", "created", "created_by",`+
+			`"name", "description", "summary") `+
+			`VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			key, parent_folder_key, r.Kind, versionInfo.Size, r.Body, etag, versionInfo.Version,
 			timestamp, modifier.UserID, timestamp, modifier.UserID, // created + modified
 			summary.Name,
