@@ -38,6 +38,7 @@ export {
 export {
   type PluginEventProperties,
   createPluginEventProperties,
+  type DataSourcePluginEventProperties,
   createDataSourcePluginEventProperties,
 } from './analytics/plugins/eventProperties';
 export { usePluginInteractionReporter } from './analytics/plugins/usePluginInteractionReporter';

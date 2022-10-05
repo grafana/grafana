@@ -20,9 +20,16 @@ export function createPluginEventProperties(meta: PluginMeta): PluginEventProper
   };
 }
 
+export type DataSourcePluginEventProperties = PluginEventProperties & {
+  datasource_uid: string;
+};
+
 export function createDataSourcePluginEventProperties(
   meta: PluginMeta,
   dataSource: DataSourceApi
-): PluginEventProperties {
-  return createPluginEventProperties(meta);
+): DataSourcePluginEventProperties {
+  return {
+    ...createPluginEventProperties(meta),
+    datasource_uid: dataSource.uid,
+  };
 }
