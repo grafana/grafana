@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Dropdown, Icon, ToolbarButton, Tooltip, useStyles2 } from '@grafana/ui';
+import { Dropdown, Icon, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { useSelector } from 'app/types';
 
@@ -17,7 +17,6 @@ export function TopSearchBar() {
 
   const helpNode = navIndex['help'];
   const profileNode = navIndex['profile'];
-  const signInNode = navIndex['signin'];
 
   return (
     <div className={styles.container}>
@@ -32,21 +31,14 @@ export function TopSearchBar() {
       <div className={styles.actions}>
         {helpNode && (
           <Dropdown overlay={() => <TopNavBarMenu node={helpNode} />}>
-            <ToolbarButton className={styles.actionItem} iconOnly icon="question-circle" aria-label="Help" />
+            <ToolbarButton iconOnly icon="question-circle" aria-label="Help" />
           </Dropdown>
         )}
-        <NewsContainer buttonCss={styles.actionItem} />
-        {signInNode && (
-          <Tooltip placement="bottom" content="Sign in">
-            <a className={styles.actionItem} href={signInNode.url} target={signInNode.target}>
-              {signInNode.icon && <Icon name={signInNode.icon} size="lg" />}
-            </a>
-          </Tooltip>
-        )}
+        <NewsContainer />
         {profileNode && (
           <Dropdown overlay={<TopNavBarMenu node={profileNode} />}>
             <ToolbarButton
-              className={styles.actionItem}
+              className={styles.profileButton}
               imgSrc={contextSrv.user.gravatarUrl}
               imgAlt="User avatar"
               aria-label="Profile"
@@ -82,18 +74,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       gap: theme.spacing(0.5),
       justifyContent: 'flex-end',
     }),
-    actionItem: css({
-      display: 'flex',
-      flexGrow: 0,
-      border: 'none',
-      boxShadow: 'none',
-      background: 'none',
-      alignItems: 'center',
-
-      color: theme.colors.text.secondary,
-      '&:hover': {
-        background: theme.colors.background.secondary,
-      },
+    profileButton: css({
       img: {
         borderRadius: '50%',
         height: '24px',
