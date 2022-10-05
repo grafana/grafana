@@ -590,6 +590,10 @@ export interface Dashboard {
    */
   refresh?: (string | false);
   /**
+   * Version of the current dashboard data
+   */
+  revision: number;
+  /**
    * Version of the JSON schema, incremented each time a Grafana update brings
    * changes to said schema.
    * TODO this is the existing schema numbering system. It will be replaced by Thema's themaVersion

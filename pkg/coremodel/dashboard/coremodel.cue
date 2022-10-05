@@ -24,6 +24,9 @@ seqs: [
 				// Description of dashboard.
 				description?: string
 
+				// Version of the current dashboard data 
+				revision: int64 @grafana(decisionNeeded)
+
 				gnetId?: string @reviewme()
 				// Tags associated with dashboard.
 				tags?: [...string] @reviewme()

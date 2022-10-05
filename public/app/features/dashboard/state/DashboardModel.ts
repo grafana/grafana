@@ -126,8 +126,9 @@ export class DashboardModel implements TimeModel {
     lastRefresh: true,
   };
 
-  constructor(data: Partial<Dashboard>, meta?: DashboardMeta, private getVariablesFromState: GetVariables = getVariablesByKey) {
+  constructor(data: Dashboard, meta?: DashboardMeta, private getVariablesFromState: GetVariables = getVariablesByKey) {
     if (!data) {
+      // FIXME please, use default?
       data = {};
     }
 

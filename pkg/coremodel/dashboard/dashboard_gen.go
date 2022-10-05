@@ -242,6 +242,9 @@ type Model struct {
 	// TODO docs
 	Refresh *interface{} `json:"refresh,omitempty"`
 
+	// Version of the current dashboard data
+	Revision int64 `json:"revision"`
+
 	// Version of the JSON schema, incremented each time a Grafana update brings
 	// changes to said schema.
 	// TODO this is the existing schema numbering system. It will be replaced by Thema's themaVersion
