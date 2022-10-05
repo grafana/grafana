@@ -42,6 +42,7 @@ load(
     'publish_linux_packages_step',
     'trigger_oss',
     'artifacts_page_step',
+    'fetch_images_step',
     'compile_build_cmd',
 )
 
@@ -110,47 +111,6 @@ def release_npm_packages_step():
             './bin/grabpl artifacts npm release --tag v${TAG}'
         ],
     }
-
-def fetch_images_step(edition):
-    return {
-        'name': 'fetch-images-{}'.format(edition),
-        'image': 'google/cloud-sdk',
-        'environment': {
-            'GCP_KEY': from_secret('gcp_key'),
-            'DOCKER_USER': from_secret('docker_username'),
-            'DOCKER_PASSWORD': from_secret('docker_password'),
-        },
-        'commands': ['./bin/build artifacts docker fetch --edition {}'.format(edition)],
-        'depends_on': ['compile-build-cmd'],
-        'volumes': [{
-            'name': 'docker',
-            'path': '/var/run/docker.sock'
-        }],
-    }
-
-def publish_image_steps(edition, mode, docker_repo, additional_docker_repo=""):
-    steps = [
-        download_grabpl_step(),
-        compile_build_cmd(),
-        fetch_images_step(edition),
-        publish_images_step(edition, 'release', mode, docker_repo),
-    ]
-    if additional_docker_repo != "":
-        steps.extend([publish_images_step(edition, 'release', mode, additional_docker_repo)])
-
-    return steps
-
-def publish_image_pipelines(mode):
-    trigger = {
-        'event': ['promote'],
-        'target': [mode],
-    }
-
-    return [pipeline(
-        name='publish-docker-oss-{}'.format(mode), trigger=trigger, steps=publish_image_steps(edition='oss',  mode=mode, docker_repo='grafana', additional_docker_repo='grafana-oss'), edition=""
-    ), pipeline(
-        name='publish-docker-enterprise-{}'.format(mode), trigger=trigger, steps=publish_image_steps(edition='enterprise',  mode=mode, docker_repo='grafana-enterprise'), edition=""
-    ),]
 
 def get_oss_pipelines(trigger, ver_mode):
     environment = {'EDITION': 'OSS'}

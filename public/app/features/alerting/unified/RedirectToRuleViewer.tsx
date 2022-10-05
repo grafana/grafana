@@ -13,7 +13,7 @@ import { getRulesSourceByName } from './utils/datasource';
 import { createViewLink } from './utils/misc';
 
 type RedirectToRuleViewerProps = GrafanaRouteComponentProps<{ name?: string; sourceName?: string }>;
-const pageTitle = 'Alerting / Find rule';
+const pageTitle = 'Find rule';
 
 export function RedirectToRuleViewer(props: RedirectToRuleViewerProps): JSX.Element | null {
   const { name, sourceName } = props.match.params;
