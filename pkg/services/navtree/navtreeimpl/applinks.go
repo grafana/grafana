@@ -159,34 +159,37 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 		switch sectionID {
 		case navtree.NavIDApps:
 			treeRoot.AddSection(&navtree.NavLink{
-				Text:     "Apps",
-				Icon:     "apps",
-				SubTitle: "App plugins that extend the Grafana experience",
-				Id:       navtree.NavIDApps,
-				Children: []*navtree.NavLink{appLink},
-				Section:  navtree.NavSectionCore,
-				Url:      s.cfg.AppSubURL + "/apps",
+				Text:       "Apps",
+				Icon:       "apps",
+				SubTitle:   "App plugins that extend the Grafana experience",
+				Id:         navtree.NavIDApps,
+				Children:   []*navtree.NavLink{appLink},
+				Section:    navtree.NavSectionCore,
+				SortWeight: navtree.WeightApps,
+				Url:        s.cfg.AppSubURL + "/apps",
 			})
 		case navtree.NavIDMonitoring:
 			treeRoot.AddSection(&navtree.NavLink{
-				Text:     "Monitoring",
-				Id:       navtree.NavIDMonitoring,
-				SubTitle: "Monitoring and infrastructure apps",
-				Icon:     "heart-rate",
-				Section:  navtree.NavSectionCore,
-				Children: []*navtree.NavLink{appLink},
-				Url:      s.cfg.AppSubURL + "/monitoring",
+				Text:       "Monitoring",
+				Id:         navtree.NavIDMonitoring,
+				SubTitle:   "Monitoring and infrastructure apps",
+				Icon:       "heart-rate",
+				Section:    navtree.NavSectionCore,
+				SortWeight: navtree.WeightMonitoring,
+				Children:   []*navtree.NavLink{appLink},
+				Url:        s.cfg.AppSubURL + "/monitoring",
 			})
 		case navtree.NavIDAlertsAndIncidents:
 			if alertingNode != nil {
 				treeRoot.AddSection(&navtree.NavLink{
-					Text:     "Alerts & incidents",
-					Id:       navtree.NavIDAlertsAndIncidents,
-					SubTitle: "Alerting and incident management apps",
-					Icon:     "bell",
-					Section:  navtree.NavSectionCore,
-					Children: []*navtree.NavLink{alertingNode, appLink},
-					Url:      s.cfg.AppSubURL + "/alerts-and-incidents",
+					Text:       "Alerts & incidents",
+					Id:         navtree.NavIDAlertsAndIncidents,
+					SubTitle:   "Alerting and incident management apps",
+					Icon:       "bell",
+					Section:    navtree.NavSectionCore,
+					SortWeight: navtree.WeightAlertsAndIncidents,
+					Children:   []*navtree.NavLink{alertingNode, appLink},
+					Url:        s.cfg.AppSubURL + "/alerts-and-incidents",
 				})
 				treeRoot.RemoveSection(alertingNode)
 			}
