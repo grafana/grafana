@@ -19,11 +19,12 @@ export function SectionNavItem({ item }: Props) {
 
   // If first root child is a section skip the bottom margin (as sections have top margin already)
   const noRootMargin = isSectionRoot && Boolean(item.children![0].children?.length);
+  const hasChildren = Boolean(children?.length);
 
   const linkClass = cx({
     [styles.link]: true,
     [styles.activeStyle]: item.active,
-    [styles.isSection]: Boolean(children?.length),
+    [styles.isSection]: hasChildren,
     [styles.hasActiveChild]: hasActiveChild,
     [styles.isSectionRoot]: isSectionRoot,
     [styles.noRootMargin]: noRootMargin,
@@ -46,6 +47,7 @@ export function SectionNavItem({ item }: Props) {
       {children?.map((child, index) => (
         <SectionNavItem item={child} key={index} />
       ))}
+      {hasChildren && <div className={styles.spacing}></div>}
     </>
   );
 }
@@ -108,6 +110,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     hasActiveChild: css({
       color: theme.colors.text.primary,
+    }),
+    spacing: css({
+      marginTop: theme.spacing(2),
     }),
   };
 };
