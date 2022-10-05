@@ -392,5 +392,9 @@ func (s sqlObjectServer) History(ctx context.Context, r *object.ObjectHistoryReq
 }
 
 func (s sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchRequest) (*object.ObjectSearchResponse, error) {
+	if r.NextPageToken != "" || r.Folder != "" || len(r.Sort) > 0 {
+		return nil, fmt.Errorf("not yet supported")
+	}
+
 	return nil, fmt.Errorf("not implemented yet")
 }
