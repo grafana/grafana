@@ -10,7 +10,9 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
@@ -302,17 +304,28 @@ func (pd *PublicDashboardServiceImpl) buildMetricRequest(ctx context.Context, da
 func (pd *PublicDashboardServiceImpl) BuildAnonymousUser(ctx context.Context, dashboard *models.Dashboard) (*user.SignedInUser, error) {
 	datasourceUids := queries.GetUniqueDashboardDatasourceUids(dashboard.Data)
 
-	// Create a temp user with read-only datasource permissions
+	// Create a user with blank permissions
 	anonymousUser := &user.SignedInUser{OrgID: dashboard.OrgId, Permissions: make(map[int64]map[string][]string)}
-	permissions := make(map[string][]string)
+
+	// Scopes needed for annotation queries
+	annotationScopes := []string{"annotations:type:dashboard"}
+	dashboardScopes := []string{fmt.Sprintf("dashboards:uid:%s", dashboard.Uid)}
+
+	// Scopes needed for datasource queries
 	queryScopes := make([]string, 0)
 	readScopes := make([]string, 0)
 	for _, uid := range datasourceUids {
 		queryScopes = append(queryScopes, fmt.Sprintf("datasources:uid:%s", uid))
 		readScopes = append(readScopes, fmt.Sprintf("datasources:uid:%s", uid))
 	}
+
+	// Apply all scopes to the actions we need the user to be able to perform
+	permissions := make(map[string][]string)
 	permissions[datasources.ActionQuery] = queryScopes
 	permissions[datasources.ActionRead] = readScopes
+	permissions[accesscontrol.ActionAnnotationsRead] = annotationScopes
+	permissions[dashboards.ActionDashboardsRead] = dashboardScopes
+
 	anonymousUser.Permissions[dashboard.OrgId] = permissions
 
 	return anonymousUser, nil
