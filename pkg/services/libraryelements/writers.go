@@ -80,8 +80,8 @@ type FolderFilter struct {
 func parseFolderFilter(query searchLibraryElementsQuery) FolderFilter {
 	folderIDs := make([]string, 0)
 	folderUIDs := make([]string, 0)
-	folderFilterId := strings.TrimSpace(query.folderFilter)
-	folderFilterUID := strings.TrimSpace(query.folderFilterUIDs)
+	hasFolderFilter := len(strings.TrimSpace(query.folderFilter)) > 0
+	hasFolderFilterUID := len(strings.TrimSpace(query.folderFilterUIDs)) > 0
 
 	result := FolderFilter{
 		includeGeneralFolder: true,
@@ -90,12 +90,12 @@ func parseFolderFilter(query searchLibraryElementsQuery) FolderFilter {
 		parseError:           nil,
 	}
 
-	if len(folderFilterId) > 0 && len(folderFilterUID) > 0 {
+	if hasFolderFilter && hasFolderFilterUID {
 		result.parseError = errors.New("Cannot pass both folderFilter and folderFilterUIDs")
 		return result
 	}
 
-	if len(folderFilterId) > 0 {
+	if hasFolderFilter {
 		result.includeGeneralFolder = false
 		folderIDs = strings.Split(query.folderFilter, ",")
 		result.folderIDs = folderIDs
@@ -111,7 +111,7 @@ func parseFolderFilter(query searchLibraryElementsQuery) FolderFilter {
 		}
 	}
 
-	if len(folderFilterUID) > 0 {
+	if hasFolderFilterUID{
 		result.includeGeneralFolder = false
 		folderUIDs = strings.Split(query.folderFilterUIDs, ",")
 		result.folderUIDs = folderUIDs
@@ -125,21 +125,6 @@ func parseFolderFilter(query searchLibraryElementsQuery) FolderFilter {
 	}
 
 	return result
-	// folderUIDs = strings.Split(query.folderFilterUIDs, ",")
-
-	// for _, folderUID := range folderUIDs {
-	// 	if isUIDGeneralFolder(folderUID) {
-	// 		includeGeneralFolder = true
-	// 		break
-	// 	}
-	// }
-
-	// return FolderFilter{
-	// 	includeGeneralFolder: includeGeneralFolder,
-	// 	folderIDs:            folderIDs,
-	// 	folderUIDs:           folderUIDs,
-	// 	parseError:           nil,
-	// }
 }
 
 func (f *FolderFilter) writeFolderFilterSQL(includeGeneral bool, builder *sqlstore.SQLBuilder) error {
