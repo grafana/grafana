@@ -60,7 +60,7 @@ func WrapDatabaseDriverWithHooks(dbType string, hooks []sqlhooks.Hooks, onErroer
 	return driverWithHooks
 }
 
-// databaseQueryLogger satisfies the sqlhook.Hooks and sqlhooks.OnErrorer interfaces
+// databaseWrapper satisfies the sqlhook.Hooks and sqlhooks.OnErrorer interfaces
 // It expects multiple sqlhooks.Hooks and sqlhooks.OnErrorer that are executed sequentially.
 type databaseWrapper struct {
 	hooks     []sqlhooks.Hooks
