@@ -1,37 +1,48 @@
-import { backendSrv } from 'app/core/services/backend_srv';
+import { DataFrameView, toDataFrame, FieldType } from '@grafana/data';
 
-import { DashboardSearchItemType } from '../types';
-
-import { BlugeSearcher } from './bluge';
 import { FrontendSearcher } from './frontend';
-import { SQLSearcher } from './sql';
-
-//jest.mock('app/core/services/backend_srv');
-const searchMock = jest.spyOn(backendSrv, 'get');
-jest.spyOn(backendSrv, 'fetch');
+import { GrafanaSearcher, QueryResponse } from './types';
 
 describe('FrontendSearcher', () => {
-  beforeEach(() => {
-    searchMock.mockReset();
-  });
+  // Searcher that returns the same thing every time
+  const upstream: GrafanaSearcher = {
+    search: jest.fn(() =>
+      Promise.resolve({
+        view: new DataFrameView(
+          toDataFrame({
+            meta: {
+              custom: {
+                something: 8,
+              },
+            },
+            fields: [{ name: 'name', type: FieldType.string, values: ['1', '2', '3'] }],
+          })
+        ),
+      } as QueryResponse)
+    ),
+
+    starred: jest.fn(),
+    tags: jest.fn(),
+    getSortOptions: jest.fn(),
+  };
+
   it('should call search api with correct query for general folder', async () => {
-    searchMock.mockResolvedValue([]);
-    const frontendSearcher = new FrontendSearcher(new BlugeSearcher(new SQLSearcher()));
+    const frontendSearcher = new FrontendSearcher(upstream);
     const query = {
       query: '*',
       kind: ['dashboard'],
       location: 'General',
       sort: 'name_sort',
     };
-    await frontendSearcher.search(query);
+    const results = await frontendSearcher.search(query);
 
-    expect(searchMock).toHaveBeenLastCalledWith('/api/search-v2', {
-      limit: 1000,
-      sort: query.sort,
-      tag: undefined,
-      type: DashboardSearchItemType.DashDB,
-      folderIds: [0],
-    });
+    expect(results.view.fields.name.values.toArray()).toMatchInlineSnapshot(`
+      Array [
+        "1",
+        "2",
+        "3",
+      ]
+    `);
   });
 
   /*
