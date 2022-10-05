@@ -8,6 +8,7 @@ import { Unsubscribable } from 'rxjs';
 
 import { AbsoluteTimeRange, DataQuery, GrafanaTheme2, LoadingState, QueryFixAction, RawTimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import { Collapse, CustomScrollbar, ErrorBoundaryAlert, Themeable2, withTheme2, PanelContainer } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, FilterItem } from '@grafana/ui/src/components/Table/types';
 import appEvents from 'app/core/app_events';
@@ -36,6 +37,7 @@ import { TraceViewContainer } from './TraceView/TraceViewContainer';
 import { changeSize, changeGraphStyle } from './state/explorePane';
 import { splitOpen } from './state/main';
 import { addQueryRow, modifyQueries, scanStart, scanStopAction, setQueries } from './state/query';
+import { isSplit } from './state/selectors';
 import { makeAbsoluteTime, updateTimeRange } from './state/time';
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -64,6 +66,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       flex-direction: column;
       padding: ${theme.spacing(2)};
       padding-top: 0;
+    `,
+    exploreContainerTopnav: css`
+      padding-top: ${theme.spacing(2)};
     `,
   };
 };
@@ -330,6 +335,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       showLogs,
       showTrace,
       showNodeGraph,
+      splitted,
       timeZone,
     } = this.props;
     const { openDrawer } = this.state;
@@ -357,7 +363,11 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         <ExploreToolbar exploreId={exploreId} onChangeTime={this.onChangeTime} topOfViewRef={this.topOfViewRef} />
         {datasourceMissing ? this.renderEmptyState(styles.exploreContainer) : null}
         {datasourceInstance && (
-          <div className={cx(styles.exploreContainer)}>
+          <div
+            className={cx(styles.exploreContainer, {
+              [styles.exploreContainerTopnav]: Boolean(config.featureToggles.topnav && !splitted),
+            })}
+          >
             <PanelContainer className={styles.queryContainer}>
               <QueryRows exploreId={exploreId} />
               <SecondaryActions
@@ -461,6 +471,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showTable,
     showTrace,
     showNodeGraph,
+    splitted: isSplit(state),
     loading,
     graphStyle,
   };

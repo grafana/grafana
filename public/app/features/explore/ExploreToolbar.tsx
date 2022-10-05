@@ -3,7 +3,15 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { DataSourceInstanceSettings, RawTimeRange } from '@grafana/data';
 import { config, DataSourcePicker, reportInteraction } from '@grafana/runtime';
-import { defaultIntervals, PageToolbar, RefreshPicker, SetInterval, ToolbarButton } from '@grafana/ui';
+import {
+  defaultIntervals,
+  PageToolbar,
+  RefreshPicker,
+  SetInterval,
+  ToolbarButton,
+  ToolbarButtonRow,
+} from '@grafana/ui';
+import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { contextSrv } from 'app/core/core';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { AccessControlAction } from 'app/types';
@@ -107,51 +115,114 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
     );
   };
 
-  render() {
+  renderActions = () => {
     const {
-      datasourceMissing,
+      splitted,
+      isLive,
       exploreId,
-      loading,
       range,
       timeZone,
       fiscalYearStartMonth,
-      splitted,
-      syncedTimes,
-      refreshInterval,
       onChangeTime,
-      hasLiveOption,
-      isLive,
-      isPaused,
-      containerWidth,
+      syncedTimes,
       onChangeTimeZone,
       onChangeFiscalYearStartMonth,
-      topOfViewRef,
+      refreshInterval,
+      loading,
+      isPaused,
+      hasLiveOption,
+      containerWidth,
     } = this.props;
-
-    const showSmallDataSourcePicker = (splitted ? containerWidth < 700 : containerWidth < 800) || false;
     const showSmallTimePicker = splitted || containerWidth < 1210;
 
     const showExploreToDashboard =
       contextSrv.hasAccess(AccessControlAction.DashboardsCreate, contextSrv.isEditor) ||
       contextSrv.hasAccess(AccessControlAction.DashboardsWrite, contextSrv.isEditor);
 
-    return (
-      <div ref={topOfViewRef}>
-        <PageToolbar
-          aria-label="Explore toolbar"
-          title={exploreId === ExploreId.left ? 'Explore' : undefined}
-          pageIcon={exploreId === ExploreId.left ? 'compass' : undefined}
-          leftItems={[
-            exploreId === ExploreId.left && (
-              <DashNavButton
-                key="share"
-                tooltip="Copy shortened link"
-                icon="share-alt"
-                onClick={this.onCopyShortLink}
-                aria-label="Copy shortened link"
+    return [
+      !splitted ? (
+        <ToolbarButton tooltip="Split the pane" onClick={this.onOpenSplitView} icon="columns" disabled={isLive}>
+          Split
+        </ToolbarButton>
+      ) : (
+        <ToolbarButton tooltip="Close split pane" onClick={this.onCloseSplitView} icon="times">
+          Close
+        </ToolbarButton>
+      ),
+
+      config.featureToggles.explore2Dashboard && showExploreToDashboard && (
+        <Suspense fallback={null}>
+          <AddToDashboard exploreId={exploreId} />
+        </Suspense>
+      ),
+
+      !isLive && (
+        <ExploreTimeControls
+          exploreId={exploreId}
+          range={range}
+          timeZone={timeZone}
+          fiscalYearStartMonth={fiscalYearStartMonth}
+          onChangeTime={onChangeTime}
+          splitted={splitted}
+          syncedTimes={syncedTimes}
+          onChangeTimeSync={this.onChangeTimeSync}
+          hideText={showSmallTimePicker}
+          onChangeTimeZone={onChangeTimeZone}
+          onChangeFiscalYearStartMonth={onChangeFiscalYearStartMonth}
+        />
+      ),
+
+      this.renderRefreshPicker(showSmallTimePicker),
+
+      refreshInterval && <SetInterval func={this.onRunQuery} interval={refreshInterval} loading={loading} />,
+
+      hasLiveOption && (
+        <LiveTailControls exploreId={exploreId}>
+          {(c) => {
+            const controls = {
+              ...c,
+              start: () => {
+                reportInteraction('grafana_explore_logs_live_tailing_clicked', {
+                  datasourceType: this.props.datasourceType,
+                });
+                c.start();
+              },
+            };
+            return (
+              <LiveTailButton
+                splitted={splitted}
+                isLive={isLive}
+                isPaused={isPaused}
+                start={controls.start}
+                pause={controls.pause}
+                resume={controls.resume}
+                stop={controls.stop}
               />
-            ),
-            !datasourceMissing && (
+            );
+          }}
+        </LiveTailControls>
+      ),
+    ].filter(Boolean);
+  };
+
+  render() {
+    const { datasourceMissing, exploreId, splitted, containerWidth, topOfViewRef } = this.props;
+
+    const showSmallDataSourcePicker = (splitted ? containerWidth < 700 : containerWidth < 800) || false;
+    const isTopnav = config.featureToggles.topnav;
+
+    return isTopnav && !splitted ? (
+      <div ref={topOfViewRef}>
+        <AppChromeUpdate
+          actions={[
+            <DashNavButton
+              key="share"
+              tooltip="Copy shortened link"
+              icon="share-alt"
+              onClick={this.onCopyShortLink}
+              aria-label="Copy shortened link"
+            />,
+            !datasourceMissing && !splitted && (
               <DataSourcePicker
                 key={`${exploreId}-ds-picker`}
                 mixed={config.featureToggles.exploreMixedDatasource === true}
@@ -161,72 +232,81 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
                 width={showSmallDataSourcePicker ? 8 : undefined}
               />
             ),
+            <div style={{ flex: 1 }} key="spacer" />,
+            <ToolbarButtonRow key="actions" alignment="right">
+              {this.renderActions()}
+            </ToolbarButtonRow>,
           ].filter(Boolean)}
-        >
-          <>
-            {!splitted ? (
-              <ToolbarButton tooltip="Split the pane" onClick={this.onOpenSplitView} icon="columns" disabled={isLive}>
-                Split
-              </ToolbarButton>
-            ) : (
-              <ToolbarButton tooltip="Close split pane" onClick={this.onCloseSplitView} icon="times">
-                Close
-              </ToolbarButton>
-            )}
-
-            {config.featureToggles.explore2Dashboard && showExploreToDashboard && (
-              <Suspense fallback={null}>
-                <AddToDashboard exploreId={exploreId} />
-              </Suspense>
-            )}
-
-            {!isLive && (
-              <ExploreTimeControls
-                exploreId={exploreId}
-                range={range}
-                timeZone={timeZone}
-                fiscalYearStartMonth={fiscalYearStartMonth}
-                onChangeTime={onChangeTime}
-                splitted={splitted}
-                syncedTimes={syncedTimes}
-                onChangeTimeSync={this.onChangeTimeSync}
-                hideText={showSmallTimePicker}
-                onChangeTimeZone={onChangeTimeZone}
-                onChangeFiscalYearStartMonth={onChangeFiscalYearStartMonth}
-              />
-            )}
-
-            {this.renderRefreshPicker(showSmallTimePicker)}
-
-            {refreshInterval && <SetInterval func={this.onRunQuery} interval={refreshInterval} loading={loading} />}
-
-            {hasLiveOption && (
-              <LiveTailControls exploreId={exploreId}>
-                {(c) => {
-                  const controls = {
-                    ...c,
-                    start: () => {
-                      reportInteraction('grafana_explore_logs_live_tailing_clicked', {
-                        datasourceType: this.props.datasourceType,
-                      });
-                      c.start();
-                    },
-                  };
-                  return (
-                    <LiveTailButton
-                      splitted={splitted}
-                      isLive={isLive}
-                      isPaused={isPaused}
-                      start={controls.start}
-                      pause={controls.pause}
-                      resume={controls.resume}
-                      stop={controls.stop}
+        />
+      </div>
+    ) : (
+      <div ref={topOfViewRef}>
+        <PageToolbar
+          aria-label="Explore toolbar"
+          title={exploreId === ExploreId.left && !isTopnav ? 'Explore' : undefined}
+          pageIcon={exploreId === ExploreId.left && !isTopnav ? 'compass' : undefined}
+          leftItems={
+            isTopnav
+              ? [
+                  !datasourceMissing && (
+                    <DataSourcePicker
+                      key={`${exploreId}-ds-picker`}
+                      mixed={config.featureToggles.exploreMixedDatasource === true}
+                      onChange={this.onChangeDatasource}
+                      current={this.props.datasourceRef}
+                      hideTextValue={showSmallDataSourcePicker}
+                      width={showSmallDataSourcePicker ? 8 : undefined}
                     />
-                  );
-                }}
-              </LiveTailControls>
-            )}
-          </>
+                  ),
+                ]
+              : [
+                  exploreId === ExploreId.left && (
+                    <DashNavButton
+                      key="share"
+                      tooltip="Copy shortened link"
+                      icon="share-alt"
+                      onClick={this.onCopyShortLink}
+                      aria-label="Copy shortened link"
+                    />
+                  ),
+                  !datasourceMissing && (
+                    <DataSourcePicker
+                      key={`${exploreId}-ds-picker`}
+                      mixed={config.featureToggles.exploreMixedDatasource === true}
+                      onChange={this.onChangeDatasource}
+                      current={this.props.datasourceRef}
+                      hideTextValue={showSmallDataSourcePicker}
+                      width={showSmallDataSourcePicker ? 8 : undefined}
+                    />
+                  ),
+                ].filter(Boolean)
+          }
+        >
+          {isTopnav && (
+            <AppChromeUpdate
+              actions={[
+                <DashNavButton
+                  key="share"
+                  tooltip="Copy shortened link"
+                  icon="share-alt"
+                  onClick={this.onCopyShortLink}
+                  aria-label="Copy shortened link"
+                />,
+                !datasourceMissing && !splitted && (
+                  <DataSourcePicker
+                    key={`${exploreId}-ds-picker`}
+                    mixed={config.featureToggles.exploreMixedDatasource === true}
+                    onChange={this.onChangeDatasource}
+                    current={this.props.datasourceRef}
+                    hideTextValue={showSmallDataSourcePicker}
+                    width={showSmallDataSourcePicker ? 8 : undefined}
+                  />
+                ),
+                <div style={{ flex: 1 }} key="spacer" />,
+              ].filter(Boolean)}
+            />
+          )}
+          {this.renderActions()}
         </PageToolbar>
       </div>
     );
