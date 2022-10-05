@@ -102,6 +102,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       fontSize: theme.typography.h5.fontSize,
       marginTop: theme.spacing(2),
       fontWeight: theme.typography.fontWeightMedium,
+      color: theme.colors.text.primary,
     }),
     noRootMargin: css({
       marginBottom: 0,
