@@ -1,23 +1,20 @@
 import React, { ReactElement, createContext, PropsWithChildren, useContext } from 'react';
 
-import { GrafanaConfig } from '../../types/config';
 import { PluginMeta } from '../../types/plugin';
 
 export interface PluginContextType {
   meta: PluginMeta;
-  config: GrafanaConfig;
 }
 
 const Context = createContext<PluginContextType | undefined>(undefined);
 
 export type PluginContextProviderProps = {
   meta: PluginMeta;
-  config: GrafanaConfig;
 };
 
 export function PluginContextProvider(props: PropsWithChildren<PluginContextProviderProps>): ReactElement {
-  const { children, meta, config } = props;
-  return <Context.Provider value={{ meta, config }}>{children}</Context.Provider>;
+  const { children, ...rest } = props;
+  return <Context.Provider value={rest}>{children}</Context.Provider>;
 }
 
 export function usePluginContext(): PluginContextType {

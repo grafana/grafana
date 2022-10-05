@@ -1,13 +1,14 @@
 import { config } from '../config';
 import { locationService } from '../services';
 import { getEchoSrv, EchoEventType } from '../services/EchoSrv';
+
 import {
   ExperimentViewEchoEvent,
   InteractionEchoEvent,
   MetaAnalyticsEvent,
   MetaAnalyticsEventPayload,
   PageviewEchoEvent,
-} from '../types/analytics';
+} from './types';
 
 /**
  * Helper function to report meta analytics to the {@link EchoSrv}.
@@ -42,7 +43,7 @@ export const reportPageview = () => {
  *
  * @public
  */
-export const reportInteraction = (interactionName: string, properties?: Record<string, any>) => {
+export const reportInteraction = (interactionName: string, properties?: Record<string, unknown>) => {
   getEchoSrv().addEvent<InteractionEchoEvent>({
     type: EchoEventType.Interaction,
     payload: {
