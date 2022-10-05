@@ -51,9 +51,7 @@ func (hs *HTTPServer) GetStars(c *models.ReqContext) response.Response {
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) StarDashboard(c *models.ReqContext) response.Response {
-	var id int64
-	var err error
-	id, err = strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Invalid dashboard ID", nil)
 	}
