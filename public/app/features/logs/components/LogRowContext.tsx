@@ -302,7 +302,7 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
           />
         )}
         <div className={cx(title, sizes)}>
-          <h5>Show Context</h5>
+          <h5>Log context</h5>
           <div className={actions}>
             <IconButton size="lg" name="times" onClick={onOutsideClick} />
           </div>
