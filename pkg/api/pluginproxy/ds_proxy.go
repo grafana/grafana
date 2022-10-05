@@ -339,8 +339,7 @@ func (proxy *DataSourceProxy) logRequest() {
 		"username", proxy.ctx.Login,
 		"datasource", proxy.ds.Type,
 		"uri", proxy.ctx.Req.RequestURI,
-		"method", proxy.ctx.Req.Method,
-		"body", body)
+		"method", proxy.ctx.Req.Method)
 }
 
 func checkWhiteList(c *models.ReqContext, host string) bool {
