@@ -85,11 +85,10 @@ const FlameGraph = ({
       const ctx = graphRef.current?.getContext('2d')!;
       const graph = graphRef.current!;
 
-      const width = graph.clientWidth;
       const height = PIXELS_PER_LEVEL * levels.length;
-      graph.width = Math.round(width * window.devicePixelRatio);
+      graph.width = Math.round(wrapperWidth * window.devicePixelRatio);
       graph.height = Math.round(height * window.devicePixelRatio);
-      graph.style.width = `${width}px`;
+      graph.style.width = `${wrapperWidth}px`;
       graph.style.height = `${height}px`;
 
       ctx.textBaseline = 'middle';
@@ -107,12 +106,11 @@ const FlameGraph = ({
         }
       }
     },
-    [levels, search, rangeMax, rangeMin, topLevelIndex, totalTicks]
+    [levels, wrapperWidth, totalTicks, rangeMin, rangeMax, search, topLevelIndex]
   );
 
   useEffect(() => {
     if (graphRef.current) {
-      graphRef.current.style.width = wrapperWidth + 'px';
       const pixelsPerTick = (wrapperWidth * window.devicePixelRatio) / totalTicks / (rangeMax - rangeMin);
       render(pixelsPerTick);
 
