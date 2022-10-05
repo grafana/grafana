@@ -356,7 +356,8 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 
 	debugSQL := ss.Cfg.Raw.Section("database").Key("log_queries").MustBool(false)
 	if debugSQL {
-		dbQueryLogger := databaseQueryLogger{log: log.New("sqlstore.queries")}
+		// adds stack to database calls to be able to see what repository initiated queries. Top 7 items from the stack as they are likely in the xorm library.
+		dbQueryLogger := databaseQueryLogger{log: log.WithSuffix(log.New("sqlstore.queries"), log.CallerContextKey, log.StackCaller(log.DefaultCallerDepth))}
 		hooks = append(hooks, &dbQueryLogger)
 		onErroers = append(onErroers, &dbQueryLogger)
 	}
