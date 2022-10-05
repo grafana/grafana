@@ -14,6 +14,12 @@ export class FrontendSearcher implements GrafanaSearcher {
     if (query.facet?.length) {
       throw new Error('facets not supported!');
     }
+
+    // we don't yet support anything except default (relevance)
+    if (query.sort != null) {
+      throw new Error('custom sorting is not supported yet');
+    }
+
     // Don't bother... not needed for this exercise
     if (query.tags?.length || query.ds_uid?.length) {
       return this.parent.search(query);

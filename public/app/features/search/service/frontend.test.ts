@@ -22,7 +22,6 @@ describe('FrontendSearcher', () => {
       query: '*',
       kind: ['dashboard'],
       location: 'General',
-      sort: 'name_sort',
     };
     const results = await frontendSearcher.search(query);
 
@@ -41,7 +40,6 @@ describe('FrontendSearcher', () => {
       query: 'ba',
       kind: ['dashboard'],
       location: 'General',
-      sort: 'name_sort',
     };
     const results = await frontendSearcher.search(query);
 
@@ -59,7 +57,6 @@ describe('FrontendSearcher', () => {
       query: 'do ba',
       kind: ['dashboard'],
       location: 'General',
-      sort: 'name_sort',
     };
     const results = await frontendSearcher.search(query);
 
@@ -68,5 +65,17 @@ describe('FrontendSearcher', () => {
         "bar dog",
       ]
     `);
+  });
+
+  it('should barf when attempting a custom sort strategy', async () => {
+    const frontendSearcher = new FrontendSearcher(upstream);
+    const query = {
+      query: 'ba',
+      kind: ['dashboard'],
+      location: 'General',
+      sort: 'name_sort',
+    };
+
+    await expect(frontendSearcher.search(query)).rejects.toThrow('custom sorting is not supported yet');
   });
 });
