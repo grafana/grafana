@@ -55,7 +55,7 @@ func parseRequestParams(req *http.Request) (uid string, kind string, params map[
 	idx := strings.LastIndex(path, ".")
 	if idx > 0 {
 		uid = path[:idx]
-		kind = path[idx:]
+		kind = path[idx+1:]
 	} else {
 		uid = path
 		kind = "?"
