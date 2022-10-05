@@ -59,6 +59,8 @@ export class FrontendSearcher implements GrafanaSearcher {
     return this.parent.starred(query);
   }
 
+  sortPlaceholder = 'Default (Auto)';
+
   // returns the appropriate sorting options
   async getSortOptions(): Promise<SelectableValue[]> {
     return this.parent.getSortOptions();
