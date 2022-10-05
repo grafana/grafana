@@ -380,7 +380,10 @@ func (s *Service) handleRandomWalkWithErrorScenario(ctx context.Context, req *ba
 func (s *Service) handleDataResponseErrorStatusScenario(_ context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
-	rand.Seed(time.Now().Unix())
+	if len(req.Queries) > 0 {
+		rand.Seed(req.Queries[0].TimeRange.Duration().Microseconds())
+	}
+
 	for _, q := range req.Queries {
 		respD := resp.Responses[q.RefID]
 		errStatus := []backend.Status{backend.StatusTimeout, backend.StatusTooManyRequests, backend.StatusValidationFailed}[rand.Intn(3)]
