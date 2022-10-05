@@ -1,5 +1,3 @@
-import { M } from 'msw/lib/glossary-dc3fd077';
-
 import LokiLanguageProvider from '../../../LanguageProvider';
 import { LokiDatasource } from '../../../datasource';
 import { createLokiDatasource } from '../../../mocks';
