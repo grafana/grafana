@@ -26,6 +26,18 @@ npm install -g yarn
 
 If you are running Grafana on Windows 10, we recommend installing the Windows Subsystem for Linux (WSL). For installation instructions, refer to our [Grafana setup guide for Windows environment](https://grafana.com/blog/2021/03/03/how-to-set-up-a-grafana-development-environment-on-a-windows-pc-using-wsl/).
 
+### Linux (Ubuntu/Debian)
+
+If you are running Grafana on the current LTS/stable releases of Ubuntu/Debian (jammy/bullseye), the default repositories include old versions of Node.js and Yarn that Grafana does not support. You can use an [alternative repository](https://nodejs.org/en/download/package-manager/) that include Node.js LTS. Once you have added the repository, you can use apt to install Node.js and then use npm to install Yarn.
+
+```
+apt install git
+apt install make
+apt install go
+apt install nodejs
+npm install -g yarn
+```
+
 ## Download Grafana
 
 We recommend using the Git command-line interface to download the source code for the Grafana project:
