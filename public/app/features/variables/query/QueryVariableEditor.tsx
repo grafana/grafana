@@ -139,12 +139,14 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
 
     if (isLegacyQueryEditor(VariableQueryEditor, datasource)) {
       return (
-        <VariableQueryEditor
-          datasource={datasource}
-          query={query}
-          templateSrv={getTemplateSrv()}
-          onChange={this.onLegacyQueryChange}
-        />
+        <CollapsableSection label="Query" isOpen>
+          <VariableQueryEditor
+            datasource={datasource}
+            query={query}
+            templateSrv={getTemplateSrv()}
+            onChange={this.onLegacyQueryChange}
+          />
+        </CollapsableSection>
       );
     }
 
@@ -152,16 +154,18 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
 
     if (isQueryEditor(VariableQueryEditor, datasource)) {
       return (
-        <VariableQueryEditor
-          datasource={datasource}
-          query={query}
-          onChange={this.onQueryChange}
-          onRunQuery={() => {}}
-          data={{ series: [], state: LoadingState.Done, timeRange: range }}
-          range={range}
-          onBlur={() => {}}
-          history={[]}
-        />
+        <CollapsableSection label="Query" isOpen>
+          <VariableQueryEditor
+            datasource={datasource}
+            query={query}
+            onChange={this.onQueryChange}
+            onRunQuery={() => {}}
+            data={{ series: [], state: LoadingState.Done, timeRange: range }}
+            range={range}
+            onBlur={() => {}}
+            history={[]}
+          />
+        </CollapsableSection>
       );
     }
 
@@ -182,9 +186,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
 
         <QueryVariableRefreshSelect onChange={this.onRefreshChange} refresh={this.props.variable.refresh} />
 
-        <CollapsableSection label="Query" isOpen>
-          {this.renderQueryEditor()}
-        </CollapsableSection>
+        {this.renderQueryEditor()}
 
         <VariableTextField
           value={this.state.regex ?? this.props.variable.regex}
