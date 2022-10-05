@@ -15,6 +15,7 @@ export function OrganisationSelect() {
   const { orgName: name, orgId, orgRole: role } = contextSrv.user;
 
   const onSelectChange = (option: SelectableValue<UserOrg>) => {
+    setValue(option);
     if (option.value) {
       setUserOrganization(option.value.orgId);
       locationService.partial({ orgId: option.value.orgId }, true);
@@ -34,7 +35,7 @@ export function OrganisationSelect() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (!orgs?.length) {
+  if (orgs?.length <= 1) {
     return null;
   }
 
@@ -44,31 +45,22 @@ export function OrganisationSelect() {
       value={value}
       prefix={<Icon name="building" />}
       className={styles.select}
-      options={orgs.map(({ orgId, name, role }) => ({
-        label: name,
-        description: role,
-        value: {
-          orgId,
-          name,
-          role,
-        },
+      options={orgs.map((org) => ({
+        label: org.name,
+        description: org.role,
+        value: org,
       }))}
-      onChange={(v) => {
-        setValue(v);
-        onSelectChange(v);
-      }}
+      onChange={onSelectChange}
     />
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    select: css`
-      border: none;
+const getStyles = (theme: GrafanaTheme2) => ({
+  select: css`
+    border: none;
 
-      ${theme.breakpoints.up('sm')} {
-        background: none;
-      }
-    `,
-  };
-};
+    ${theme.breakpoints.up('sm')} {
+      background: none;
+    }
+  `,
+});

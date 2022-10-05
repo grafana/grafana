@@ -47,6 +47,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: none;
 
     ${theme.breakpoints.up('sm')} {
+      margin: ${theme.spacing(0, 1)};
       display: block;
     }
   `,
