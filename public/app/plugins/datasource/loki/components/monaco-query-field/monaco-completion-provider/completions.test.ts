@@ -37,25 +37,25 @@ const afterSelectorCompletions = [
   {
     insertText: '|= "$0"',
     isSnippet: true,
-    label: '|= "something"',
+    label: '|= ""',
     type: 'LINE_FILTER',
   },
   {
     insertText: '!= "$0"',
     isSnippet: true,
-    label: '!= "something"',
+    label: '!= ""',
     type: 'LINE_FILTER',
   },
   {
     insertText: '|~ "$0"',
     isSnippet: true,
-    label: '|~ "something"',
+    label: '|~ ""',
     type: 'LINE_FILTER',
   },
   {
     insertText: '!~ "$0"',
     isSnippet: true,
-    label: '!~ "something"',
+    label: '!~ ""',
     type: 'LINE_FILTER',
   },
   {

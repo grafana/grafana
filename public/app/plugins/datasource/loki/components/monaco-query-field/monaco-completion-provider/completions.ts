@@ -73,7 +73,7 @@ const DURATION_COMPLETIONS: Completion[] = [
 
 const LINE_FILTER_COMPLETIONS: Completion[] = ['|=', '!=', '|~', '!~'].map((item) => ({
   type: 'LINE_FILTER',
-  label: `${item} "something"`,
+  label: `${item} ""`,
   insertText: `${item} "$0"`,
   isSnippet: true,
 }));
