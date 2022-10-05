@@ -102,6 +102,12 @@ export class BlugeSearcher implements GrafanaSearcher {
       query: query.query ?? '*',
       limit: query.limit ?? firstPageSize,
     };
+    // Remove the legacy star query
+    // G10:REMOVE -- this shoudl be removed before grafana 10
+    if (query.starred) {
+      return Promise.reject('star query not supported');
+    }
+    delete query.starred;
 
     const doPost = req.facet?.length || req.withAllowedActions || req.starred;
     const rsp = await lastValueFrom(
