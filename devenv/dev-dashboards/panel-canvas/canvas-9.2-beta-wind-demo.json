@@ -101,6 +101,10 @@
               "fixed": "dark-green"
             }
           },
+          "constraint": {
+            "horizontal": "left",
+            "vertical": "top"
+          },
           "elements": [
             {
               "background": {
@@ -282,8 +286,8 @@
               "name": "Windmill 3_label",
               "placement": {
                 "height": 26,
-                "left": 35,
-                "top": 405,
+                "left": 60,
+                "top": 500,
                 "width": 39
               },
               "type": "text"
@@ -1102,6 +1106,12 @@
             }
           ],
           "name": "Element 1664917007512",
+          "placement": {
+            "height": 100,
+            "left": 0,
+            "top": 0,
+            "width": 100
+          },
           "type": "frame"
         },
         "showAdvancedTypes": true
@@ -1140,6 +1150,6 @@
   "timezone": "",
   "title": "Panel Tests - Canvas 9.2 Beta - Wind Energy Demo",
   "uid": "7p7JkqWVz",
-  "version": 1,
+  "version": 2,
   "weekStart": ""
 }
