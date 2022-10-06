@@ -102,7 +102,7 @@ var (
 		},
 		{
 			Name:        "lokiMonacoEditor",
-			Description: "access to Monaco query editor for Loki",
+			Description: "Access to Monaco query editor for Loki",
 			State:       FeatureStateAlpha,
 		},
 		{
