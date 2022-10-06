@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"net/url"
 	"path"
 	"strconv"
@@ -16,6 +17,49 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 )
+
+func doRequestPage(r *http.Request, dsInfo datasourceInfo, timeSeriesFilter *cloudMonitoringTimeSeriesFilter, tracer tracing.Tracer, dr *backend.DataResponse, ctx context.Context, req *backend.QueryDataRequest) (cloudMonitoringResponse, error) {
+	r.URL.RawQuery = timeSeriesFilter.Params.Encode()
+	alignmentPeriod, ok := r.URL.Query()["aggregation.alignmentPeriod"]
+	if ok {
+		seconds, err := strconv.ParseInt(alignmentPeriodRe.FindString(alignmentPeriod[0]), 10, 64)
+		if err == nil {
+			if len(dr.Frames) == 0 {
+				dr.Frames = append(dr.Frames, data.NewFrame(""))
+			}
+			firstFrame := dr.Frames[0]
+			if firstFrame.Meta == nil {
+				firstFrame.SetMeta(&data.FrameMeta{
+					Custom: map[string]interface{}{
+						"alignmentPeriod": seconds,
+					},
+				})
+			}
+		}
+	}
+
+	ctx, span := tracer.Start(ctx, "cloudMonitoring query")
+	span.SetAttributes("target", timeSeriesFilter.Target, attribute.Key("target").String(timeSeriesFilter.Target))
+	span.SetAttributes("from", req.Queries[0].TimeRange.From, attribute.Key("from").String(req.Queries[0].TimeRange.From.String()))
+	span.SetAttributes("until", req.Queries[0].TimeRange.To, attribute.Key("until").String(req.Queries[0].TimeRange.To.String()))
+	span.SetAttributes("datasource_id", dsInfo.id, attribute.Key("datasource_id").Int64(dsInfo.id))
+	span.SetAttributes("org_id", req.PluginContext.OrgID, attribute.Key("org_id").Int64(req.PluginContext.OrgID))
+	defer span.End()
+	tracer.Inject(ctx, r.Header, span)
+
+	r = r.WithContext(ctx)
+	res, err := dsInfo.services[cloudMonitor].client.Do(r)
+	if err != nil {
+		return cloudMonitoringResponse{}, err
+	}
+
+	dnext, err := unmarshalResponse(res)
+	if err != nil {
+		return cloudMonitoringResponse{}, err
+	}
+
+	return dnext, nil
+}
 
 func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) run(ctx context.Context, req *backend.QueryDataRequest,
 	s *Service, dsInfo datasourceInfo, tracer tracing.Tracer) (*backend.DataResponse, cloudMonitoringResponse, string, error) {
@@ -36,63 +80,22 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) run(ctx context.Context
 		return dr, cloudMonitoringResponse{}, "", nil
 	}
 
-	first := true
-	d := cloudMonitoringResponse{}
-
-	for first || d.NextPageToken != "" {
-		if d.NextPageToken != "" {
-			timeSeriesFilter.Params["pageToken"] = []string{d.NextPageToken}
-		}
-		r.URL.RawQuery = timeSeriesFilter.Params.Encode()
-		alignmentPeriod, ok := r.URL.Query()["aggregation.alignmentPeriod"]
-
-		if ok {
-			seconds, err := strconv.ParseInt(alignmentPeriodRe.FindString(alignmentPeriod[0]), 10, 64)
-			if err == nil {
-				if len(dr.Frames) == 0 {
-					dr.Frames = append(dr.Frames, data.NewFrame(""))
-				}
-				firstFrame := dr.Frames[0]
-				if firstFrame.Meta == nil {
-					firstFrame.SetMeta(&data.FrameMeta{
-						Custom: map[string]interface{}{
-							"alignmentPeriod": seconds,
-						},
-					})
-				}
-			}
-		}
-
-		ctx, span := tracer.Start(ctx, "cloudMonitoring query")
-		span.SetAttributes("target", timeSeriesFilter.Target, attribute.Key("target").String(timeSeriesFilter.Target))
-		span.SetAttributes("from", req.Queries[0].TimeRange.From, attribute.Key("from").String(req.Queries[0].TimeRange.From.String()))
-		span.SetAttributes("until", req.Queries[0].TimeRange.To, attribute.Key("until").String(req.Queries[0].TimeRange.To.String()))
-		span.SetAttributes("datasource_id", dsInfo.id, attribute.Key("datasource_id").Int64(dsInfo.id))
-		span.SetAttributes("org_id", req.PluginContext.OrgID, attribute.Key("org_id").Int64(req.PluginContext.OrgID))
-
-		defer span.End()
-		tracer.Inject(ctx, r.Header, span)
-
-		r = r.WithContext(ctx)
-		res, err := dsInfo.services[cloudMonitor].client.Do(r)
+	timeSeriesFilter.Params["pageSize"] = []string{"30000"}
+	d, err := doRequestPage(r, dsInfo, timeSeriesFilter, tracer, dr, ctx, req)
+	if err != nil {
+		dr.Error = err
+		return dr, cloudMonitoringResponse{}, "", nil
+	}
+	nextPageToken := d.NextPageToken
+	for nextPageToken != "" {
+		timeSeriesFilter.Params["pageToken"] = []string{d.NextPageToken}
+		nextPage, err := doRequestPage(r, dsInfo, timeSeriesFilter, tracer, dr, ctx, req)
 		if err != nil {
 			dr.Error = err
 			return dr, cloudMonitoringResponse{}, "", nil
 		}
-
-		dnext, err := unmarshalResponse(res)
-		if err != nil {
-			dr.Error = err
-			return dr, cloudMonitoringResponse{}, "", nil
-		}
-
-		if first {
-			d = dnext
-			first = false
-		} else {
-			d.TimeSeries = append(d.TimeSeries, dnext.TimeSeries...)
-			d.NextPageToken = dnext.NextPageToken
-		}
+		d.TimeSeries = append(d.TimeSeries, nextPage.TimeSeries...)
+		nextPageToken = nextPage.NextPageToken
 	}
 
 	return dr, d, r.URL.RawQuery, nil
