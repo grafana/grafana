@@ -66,7 +66,7 @@ function getTabs(props: Props) {
     tabs.push({ label: 'Public dashboard', value: 'share', component: SharePublicDashboard });
   }
 
-  const at = tabs.find((t) => t.value == activeTab)
+  const at = tabs.find((t) => t.value === activeTab)
 
   return {
     tabs,
