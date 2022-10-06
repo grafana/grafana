@@ -196,13 +196,16 @@ type databaseQueryLogger struct {
 	log log.Logger
 }
 
+// databaseQueryLoggerKey is used as key to save values in `context.Context`
+type databaseQueryLoggerKey struct{}
+
 func (h *databaseQueryLogger) Before(ctx context.Context, query string, args ...interface{}) (context.Context, error) {
-	return context.WithValue(ctx, "start", time.Now()), nil
+	return context.WithValue(ctx, databaseQueryLoggerKey{}, time.Now()), nil
 }
 
 // After hook will get the timestamp registered on the Before hook and logs the query, its args and its elapsed time
 func (h *databaseQueryLogger) After(ctx context.Context, query string, args ...interface{}) (context.Context, error) {
-	start := ctx.Value("start").(time.Time)
+	start := ctx.Value(databaseQueryLoggerKey{}).(time.Time)
 
 	ctxLogger := h.log.FromContext(ctx)
 	ctxLogger.Info("[SQL]", "query", query, "args", args, "elapsed time", time.Since(start))
