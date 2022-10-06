@@ -630,7 +630,6 @@ export function createTableFrameFromTraceQlQuery(
   data: TraceSearchMetadata[],
   instanceSettings: DataSourceInstanceSettings
 ) {
-  console.log(data);
   const frame = new MutableDataFrame({
     fields: [
       {
@@ -719,7 +718,6 @@ export function createTableFrameFromTraceQlQuery(
     frame.add(trace);
   }
 
-  console.log(frame);
   return frame;
 }
 
