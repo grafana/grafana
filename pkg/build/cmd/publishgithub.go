@@ -1,14 +1,30 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
+	"path"
+	"strings"
 
-	"github.com/grafana/grafana/pkg/build/github"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	"github.com/google/go-github/github"
 	"github.com/urfave/cli/v2"
+	"golang.org/x/oauth2"
 )
+
+type repo struct {
+	owner string
+	name  string
+}
+
+type flags struct {
+	create       bool
+	dryRun       bool
+	tag          string
+	repo         *repo
+	artifactPath string
+}
 
 var (
 	errTokenIsEmpty    = errors.New("the environment variable GH_TOKEN must be set")
@@ -16,37 +32,103 @@ var (
 )
 
 func PublishGitHub(ctx *cli.Context) error {
-	tag := ctx.Value("tag").(string)
-	repo := ctx.Value("repo").(string)
+	gitCtx := context.Background()
 	token := os.Getenv("GH_TOKEN")
+	f := getFlags(ctx)
 	if token == "" {
-		return errTokenIsEmpty
+		return cli.NewExitError(errTokenIsEmpty, 1)
 	}
 
-	release, err := github.GetReleaseByTag(token, repo, tag)
-	if err != nil {
-		return err
+	if f.dryRun {
+		return runDryRun(f, token, gitCtx)
 	}
 
-	// dryRun := ctx.Value("dry-run").(bool)
-	create := ctx.Value("create").(bool)
-	if release.Id < 1 {
-		if create {
-			release, err = github.CreateReleaseByTag(token, repo, tag)
+	client := getClient(gitCtx, token)
+	release, res, err := client.Repositories.GetReleaseByTag(gitCtx, f.repo.owner, f.repo.name, f.tag)
+	if err != nil && res.StatusCode != 404 {
+		return cli.NewExitError(err, 1)
+	}
+
+	if release == nil {
+		if f.create {
+			release, _, err = client.Repositories.CreateRelease(gitCtx, f.repo.owner, f.repo.name, &github.RepositoryRelease{TagName: &f.tag})
 			if err != nil {
-				return err
+				return cli.NewExitError(err, 1)
 			}
 		} else {
-			return errReleaseNotFound
+			return cli.NewExitError(errReleaseNotFound, 1)
 		}
 	}
 
-	artifactPath := ctx.Value("path").(string)
-	asset, err := github.UploadAsset(token, release, artifactPath)
+	artifactName := path.Base(f.artifactPath)
+	file, err := os.Open(f.artifactPath)
 	if err != nil {
-		return err
+		return cli.NewExitError(err, 1)
 	}
 
-	logger.Info(fmt.Sprintf(`Asset "%s" uploaded to release "%s": %s`, asset.Name, tag, asset.DownloadUrl))
+	asset, _, err := client.Repositories.UploadReleaseAsset(gitCtx, f.repo.owner, f.repo.name, *release.ID, &github.UploadOptions{Name: artifactName}, file)
+	if err != nil {
+		return cli.NewExitError(err, 1)
+	}
+	fmt.Printf("Asset '%s' uploaded to release '%s' on repository '%s/%s'\nDownload: %s\n", *asset.Name, f.tag, f.repo.owner, f.repo.name, *asset.BrowserDownloadURL)
+	return nil
+}
+
+func getClient(ctx context.Context, token string) *github.Client {
+	ts := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: token},
+	)
+	tc := oauth2.NewClient(ctx, ts)
+
+	return github.NewClient(tc)
+}
+
+func getFlags(ctx *cli.Context) *flags {
+	tag := ctx.Value("tag").(string)
+	fullRepo := ctx.Value("repo").(string)
+	dryRun := ctx.Value("dry-run").(bool)
+	owner := strings.Split(fullRepo, "/")[0]
+	name := strings.Split(fullRepo, "/")[1]
+	create := ctx.Value("create").(bool)
+	artifactPath := ctx.Value("path").(string)
+	return &flags{
+		artifactPath: artifactPath,
+		create:       create,
+		dryRun:       dryRun,
+		tag:          tag,
+		repo: &repo{
+			owner: owner,
+			name:  name,
+		},
+	}
+}
+
+func runDryRun(f *flags, token string, gitCtx context.Context) error {
+	client := getClient(gitCtx, token)
+	fmt.Println("Dry-Run: Retrieving release on repository by tag")
+	release, res, err := client.Repositories.GetReleaseByTag(gitCtx, f.repo.owner, f.repo.name, f.tag)
+	if err != nil && res.StatusCode != 404 {
+		fmt.Println("Dry-Run: GitHub communication error:\n", err)
+		return nil
+	}
+
+	if release == nil {
+		if f.create {
+			fmt.Println("Dry-Run: Release doesn't exist and --create is enabled, so it would try to create the release")
+		} else {
+			fmt.Println("Dry-Run: Release doesn't exist and --create is disabled, so it would fail with error")
+			return nil
+		}
+	}
+
+	artifactName := path.Base(f.artifactPath)
+	fmt.Printf("Dry-Run: Opening file for release: %s\n", f.artifactPath)
+	_, err = os.Open(f.artifactPath)
+	if err != nil {
+		fmt.Println("Dry-Run: Error opening file\n", err)
+		return nil
+	}
+
+	fmt.Printf("Dry-Run: Would upload asset '%s' to release '%s' on repo '%s/%s' and return download URL if successful\n", artifactName, f.tag, f.repo.owner, f.repo.name)
 	return nil
 }
