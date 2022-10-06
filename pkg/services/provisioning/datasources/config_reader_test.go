@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -337,13 +336,6 @@ func validateDatasourceV1(t *testing.T, dsCfg *configs) {
 			},
 		},
 	}}, ds.Correlations)
-}
-
-type mockOrgStore struct{ ExpectedOrg *models.Org }
-
-func (m *mockOrgStore) GetOrgById(c context.Context, cmd *models.GetOrgByIdQuery) error {
-	cmd.Result = m.ExpectedOrg
-	return nil
 }
 
 type mockCorrelationsStore struct {
