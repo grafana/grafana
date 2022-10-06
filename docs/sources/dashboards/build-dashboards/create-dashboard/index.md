@@ -1,6 +1,7 @@
 ---
 aliases:
   - /docs/grafana/latest/dashboards/build-dashboards/create-dashboard/
+  - /docs/grafana/latest/dashboards/build-dashboards/add-organize-panels/
 title: Create a dashboard
 menuTitle: Create a dashboard
 weight: 1
@@ -36,17 +37,17 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
    ![](/static/img/docs/panel-editor/select-visualization-8-0.png)
 
-   For more information about individual visualizations, refer to [Visualizations options]({{< relref "../../configure-panels-visualizations/visualizations/" >}}).
+   For more information about individual visualizations, refer to [Visualizations options]({{< relref "../../../panels-visualizations/visualizations/" >}}).
 
 1. Refer to the following documentation for ways you can adjust panel settings.
 
    While not required, most visualizations need some adjustment before they properly display the information that you need.
 
-   - [Configure value mappings]({{< relref "../../configure-panels-visualizations/configure-value-mappings" >}})
-   - [Visualization-specific options]({{< relref "../../configure-panels-visualizations/visualizations/" >}})
-   - [Override field values]({{< relref "../../configure-panels-visualizations/configure-overrides/" >}})
-   - [Configure thresholds]({{< relref "../../configure-panels-visualizations/configure-thresholds/" >}})
-   - [Configure standard options]({{< relref "../../configure-panels-visualizations/configure-standard-options/" >}})
+   - [Configure value mappings]({{< relref "../../../panels-visualizations/configure-value-mappings" >}})
+   - [Visualization-specific options]({{< relref "../../../panels-visualizations/visualizations/" >}})
+   - [Override field values]({{< relref "../../../panels-visualizations/configure-overrides/" >}})
+   - [Configure thresholds]({{< relref "../../../panels-visualizations/configure-thresholds/" >}})
+   - [Configure standard options]({{< relref "../../../panels-visualizations/configure-standard-options/" >}})
 
 1. Add a note to describe the visualization (or describe your changes) and then click **Save** in the upper-right corner of the page.
 
