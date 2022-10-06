@@ -2,13 +2,14 @@
 aliases:
   - /docs/grafana/latest/panels/working-with-panels/navigate-inspector-panel/
   - /docs/sources/panels/working-with-panels/navigate-inspector-panel/
-title: Navigate the Grafana Inspector panel
-weight: 90
+  - /docs/sources/panels/working-with-panels/download-query-results/
+title: The panel inspect view
+weight: 1200
 ---
 
-# Navigate the Grafana Inspector panel
+# The panel inspect view
 
-The panel inspector helps you understand and troubleshoot your panels. You can inspect the raw data for any Grafana panel, export that data to a comma-separated values (CSV) file, view query requests, and export panel and data JSON.
+The panel inspect view, which you can open via the panel menu, helps you understand and troubleshoot your panels. You can inspect the raw data for any Grafana panel, export that data to a comma-separated values (CSV) file, view query requests, and export panel and data JSON.
 
 > **Note:** Not all panel types include all tabs. For example, dashboard list panels do not have raw data to inspect, so they do not display the Stats, Data, or Query tabs.
 
@@ -25,3 +26,7 @@ The panel inspector consists of the following options:
 5. **Query tab -** Shows you the requests to the server sent when Grafana queries the data source.
 
 6. **Error tab -** Shows the error. Only visible when query returns error.
+
+## Download query data
+
+In the **Data\*** tab you can download the query results as CSV.
