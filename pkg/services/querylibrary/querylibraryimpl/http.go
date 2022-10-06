@@ -35,9 +35,9 @@ func (s *queriesServiceHTTPHandler) delete(c *models.ReqContext) response.Respon
 
 func (s *queriesServiceHTTPHandler) RegisterHTTPRoutes(routes routing.RouteRegister) {
 	reqSignedIn := middleware.ReqSignedIn
-	routes.Get("/get", reqSignedIn, routing.Wrap(s.getBatch))
-	routes.Post("/update", reqSignedIn, routing.Wrap(s.update))
-	routes.Delete("/delete", reqSignedIn, routing.Wrap(s.delete))
+	routes.Get("/", reqSignedIn, routing.Wrap(s.getBatch))
+	routes.Post("/", reqSignedIn, routing.Wrap(s.update))
+	routes.Delete("/", reqSignedIn, routing.Wrap(s.delete))
 }
 
 func (s *queriesServiceHTTPHandler) getBatch(c *models.ReqContext) response.Response {

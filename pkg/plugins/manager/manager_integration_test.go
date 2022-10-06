@@ -95,7 +95,7 @@ func TestIntegrationPluginManager(t *testing.T) {
 	pg := postgres.ProvideService(cfg)
 	my := mysql.ProvideService(cfg, hcp)
 	ms := mssql.ProvideService(cfg)
-	sv2 := searchV2.ProvideService(cfg, sqlstore.InitTestDB(t), nil, nil, tracer, features, nil, nil)
+	sv2 := searchV2.ProvideService(cfg, sqlstore.InitTestDB(t), nil, nil, tracer, features, nil, nil, nil)
 	graf := grafanads.ProvideService(sv2, nil)
 
 	coreRegistry := coreplugin.ProvideCoreRegistry(am, cw, cm, es, grap, idb, lk, otsdb, pr, tmpo, td, pg, my, ms, graf)

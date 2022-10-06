@@ -9,15 +9,15 @@ export class SavedQuerySrv {
       return [];
     }
     const uidParams = refs.map((r) => `uid=${r.uid}`).join('&');
-    return getBackendSrv().get<SavedQuery[]>(`/api/query-library/get?${uidParams}`);
+    return getBackendSrv().get<SavedQuery[]>(`/api/query-library?${uidParams}`);
   };
 
   deleteSavedQuery = async (ref: SavedQueryRef): Promise<void> => {
-    return getBackendSrv().delete(`/api/query-library/delete?uid=${ref.uid}`);
+    return getBackendSrv().delete(`/api/query-library?uid=${ref.uid}`);
   };
 
   updateSavedQuery = async (query: SavedQuery, options: SavedQueryUpdateOpts): Promise<void> => {
-    return getBackendSrv().post(`/api/query-library/update`, query);
+    return getBackendSrv().post(`/api/query-library`, query);
   };
 }
 
