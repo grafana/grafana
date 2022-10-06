@@ -2,7 +2,6 @@ package state
 
 import (
 	"context"
-	"time"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
@@ -23,5 +22,5 @@ type RuleReader interface {
 
 // Historian maintains an audit log of alert state history.
 type Historian interface {
-	RecordState(ctx context.Context, rule *models.AlertRule, currentState *State, evaluatedAt time.Time, currentData, previousData InstanceStateAndReason)
+	RecordState(ctx context.Context, rule *models.AlertRule, state *State, previousData InstanceStateAndReason)
 }

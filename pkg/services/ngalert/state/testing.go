@@ -3,7 +3,6 @@ package state
 import (
 	"context"
 	"sync"
-	"time"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
@@ -49,5 +48,5 @@ func (f *FakeRuleReader) ListAlertRules(_ context.Context, q *models.ListAlertRu
 
 type FakeHistorian struct{}
 
-func (f *FakeHistorian) RecordState(ctx context.Context, rule *models.AlertRule, currentState *State, evaluatedAt time.Time, currentData, previousData InstanceStateAndReason) {
+func (f *FakeHistorian) RecordState(ctx context.Context, rule *models.AlertRule, state *State, previousData InstanceStateAndReason) {
 }

@@ -73,6 +73,14 @@ func (a *State) GetRuleKey() models.AlertRuleKey {
 	}
 }
 
+func (a *State) DisplayName() string {
+	s := fmt.Sprintf("%v", a.State)
+	if len(a.StateReason) > 0 {
+		s += fmt.Sprintf(" (%v)", a.StateReason)
+	}
+	return s
+}
+
 type Evaluation struct {
 	EvaluationTime  time.Time
 	EvaluationState eval.State

@@ -243,9 +243,7 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 
 	shouldUpdateAnnotation := oldState != currentState.State || oldReason != currentState.StateReason
 	if shouldUpdateAnnotation && st.historian != nil {
-		go st.historian.RecordState(ctx, alertRule, currentState, result.EvaluatedAt,
-			InstanceStateAndReason{State: currentState.State, Reason: currentState.StateReason},
-			InstanceStateAndReason{State: oldState, Reason: oldReason})
+		go st.historian.RecordState(ctx, alertRule, currentState, InstanceStateAndReason{State: oldState, Reason: oldReason})
 	}
 	return currentState
 }
@@ -388,11 +386,9 @@ func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Tim
 				s.StateReason = ngModels.StateReasonMissingSeries
 				s.EndsAt = evaluatedAt
 				s.Resolved = true
+				s.LastEvaluationTime = evaluatedAt
 				if st.historian != nil {
-					st.historian.RecordState(ctx, alertRule, s, evaluatedAt,
-						InstanceStateAndReason{State: eval.Normal, Reason: s.StateReason},
-						previousState,
-					)
+					st.historian.RecordState(ctx, alertRule, s, previousState)
 				}
 
 				// If there is no resolved image for this rule then take one
