@@ -51,7 +51,7 @@ return pd.isEnabled ? <Tag name="enabled" colorIndex={20} /> : <Tag name="disabl
   }
 
   function renderViewLink(pd: ListPublicDashboardResponse) {
-    let title = pd.isEnabled ? 'View public dashboard' : 'Public dashboard is disabled';
+    const title = pd.isEnabled ? 'View public dashboard' : 'Public dashboard is disabled';
     return (
       <LinkButton
         href={viewPublicDashboardUrl(pd.accessToken)}
