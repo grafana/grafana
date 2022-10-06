@@ -61,7 +61,6 @@ func rowToReadObjectResponse(rows *sql.Rows, r *object.ReadObjectRequest) (*obje
 	raw := &object.RawObject{}
 
 	summaryjson := &summarySupport{}
-
 	args := []interface{}{
 		&key, &raw.Kind, &raw.Version,
 		&raw.Size, &raw.ETag, &summaryjson.errors,
@@ -85,11 +84,11 @@ func rowToReadObjectResponse(rows *sql.Rows, r *object.ReadObjectRequest) (*obje
 	raw.CreatedBy = fmt.Sprintf("user:%d", updatedByID)
 	raw.UpdatedBy = fmt.Sprintf("user:%d", updatedByID)
 
-	if syncSrc.Valid {
-		raw.SyncSrc = syncSrc.String
-	}
-	if syncTime.Valid {
-		raw.SyncTime = syncTime.Time.UnixMilli()
+	if syncSrc.Valid || syncTime.Valid {
+		raw.Sync = &object.RawObjectSyncInfo{
+			Source: syncSrc.String,
+			Time:   syncTime.Time.UnixMilli(),
+		}
 	}
 
 	rsp := &object.ReadObjectResponse{
@@ -104,8 +103,9 @@ func rowToReadObjectResponse(rows *sql.Rows, r *object.ReadObjectRequest) (*obje
 
 		js, err := json.Marshal(summary)
 		if err != nil {
-			rsp.SummaryJson = js
+			return nil, err
 		}
+		rsp.SummaryJson = js
 	}
 	return rsp, nil
 }
@@ -174,43 +174,16 @@ func createContentsHash(contents []byte) string {
 }
 
 func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest) (*object.WriteObjectResponse, error) {
-	// TODO: this needs to be extracted from the body content
-	summary := object.ObjectSummary{
-		Name:        "hello",
-		Description: fmt.Sprintf("Wrote at %s", time.Now().Local().String()),
-		Labels: map[string]string{
-			"hello": "world",
-			"test":  "",
-		},
-		Fields: map[string]interface{}{
-			"field1": "a string",
-			"field2": 1.224,
-			"field4": true,
-		},
-		Error:  nil, // ignore for now
-		Nested: nil, // ignore for now
-		References: []*object.ExternalReference{
-			{
-				Kind: "ds",
-				Type: "influx",
-				UID:  "xyz",
-			},
-			{
-				Kind: "panel",
-				Type: "heatmap",
-			},
-			{
-				Kind: "panel",
-				Type: "timeseries",
-			},
-		},
-	}
-
-	summaryjson, err := newSummarySupport(&summary)
+	summary, body, err := object.GetSafeSaveObject(r)
 	if err != nil {
 		return nil, err
 	}
-	etag := createContentsHash(r.Body)
+
+	summaryjson, err := newSummarySupport(summary)
+	if err != nil {
+		return nil, err
+	}
+	etag := createContentsHash(body)
 
 	modifier := object.UserFromContext(ctx)
 	key := fmt.Sprintf("%d/%s.%s", modifier.OrgID, r.UID, r.Kind)
@@ -261,7 +234,7 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 		}
 
 		// 1. Add the `object_history` values
-		versionInfo.Size = int64(len(r.Body))
+		versionInfo.Size = int64(len(body))
 		versionInfo.ETag = etag
 		versionInfo.Updated = timestamp.Unix()
 		versionInfo.UpdatedBy = object.GetUserIDString(modifier)
@@ -271,7 +244,7 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 			`"updated", "updated_by") `+
 			`VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
 			key, versionInfo.Version, versionInfo.Comment,
-			versionInfo.Size, r.Body, versionInfo.ETag,
+			versionInfo.Size, body, versionInfo.ETag,
 			timestamp, modifier.UserID,
 		)
 		if err != nil {
@@ -311,7 +284,7 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 				`"name"=?, "description"=?,`+
 				`"labels"=?, "fields"=?, "errors"=? `+
 				`WHERE key=?`,
-				r.Body, versionInfo.Size, etag, versionInfo.Version,
+				body, versionInfo.Size, etag, versionInfo.Version,
 				timestamp, modifier.UserID,
 				summary.Name, summary.Description,
 				summaryjson.labels, summaryjson.fields, summaryjson.errors,
@@ -329,7 +302,7 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 			`"name", "description",`+
 			`"labels", "fields", "errors") `+
 			`VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-			key, parent_folder_key, r.Kind, versionInfo.Size, r.Body, etag, versionInfo.Version,
+			key, parent_folder_key, r.Kind, versionInfo.Size, body, etag, versionInfo.Version,
 			timestamp, modifier.UserID, timestamp, modifier.UserID, // created + modified
 			summary.Name, summary.Description,
 			summaryjson.labels, summaryjson.fields, summaryjson.errors,
@@ -339,7 +312,7 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 		}
 		return err
 	})
-
+	rsp.SummaryJson = summaryjson.marshaled
 	return rsp, err
 }
 
@@ -413,5 +386,80 @@ func (s sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchReque
 		return nil, fmt.Errorf("not yet supported")
 	}
 
-	return nil, fmt.Errorf("not implemented yet")
+	fields := []string{
+		`"key"`, `"kind"`, `"version"`, `"errors"`, // errors are always returned
+		`"updated"`, `"updated_by"`,
+		`"name"`, `"description"`, // basic summary
+	}
+
+	if r.WithBody {
+		fields = append(fields, `"body"`)
+	}
+	if r.WithLabels {
+		fields = append(fields, `"labels"`)
+	}
+	if r.WithFields {
+		fields = append(fields, `"fields"`)
+	}
+	query := "SELECT " + strings.Join(fields, ",") + " FROM object" // no where clause
+
+	args := []interface{}{}
+	rows, err := s.sess.Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	key := ""
+	updated := time.Now()
+	updatedByID := int64(0)
+
+	rsp := &object.ObjectSearchResponse{}
+	for rows.Next() {
+		result := &object.ObjectSearchResult{}
+		summaryjson := summarySupport{}
+
+		args := []interface{}{
+			&key, &result.Kind, &result.Version, &summaryjson.errors,
+			&updated, &updatedByID,
+			&result.Name, &summaryjson.description,
+		}
+		if r.WithBody {
+			args = append(args, &result.Body)
+		}
+		if r.WithLabels {
+			args = append(args, &summaryjson.labels)
+		}
+		if r.WithFields {
+			args = append(args, &summaryjson.fields)
+		}
+
+		err = rows.Scan(args...)
+		if err != nil {
+			return rsp, err
+		}
+
+		result.UID = "TODO!" + key
+
+		if summaryjson.description != nil {
+			result.Description = *summaryjson.description
+		}
+
+		if summaryjson.labels != nil {
+			b := []byte(*summaryjson.labels)
+			err = json.Unmarshal(b, &result.Labels)
+			if err != nil {
+				return rsp, err
+			}
+		}
+
+		if summaryjson.fields != nil {
+			result.FieldsJson = []byte(*summaryjson.fields)
+		}
+
+		if summaryjson.errors != nil {
+			result.ErrorJson = []byte(*summaryjson.errors)
+		}
+
+		rsp.Results = append(rsp.Results, result)
+	}
+	return rsp, err
 }

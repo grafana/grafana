@@ -12,6 +12,7 @@ type summarySupport struct {
 	labels      *string
 	fields      *string
 	errors      *string // should not allow saving with this!
+	marshaled   []byte
 }
 
 func newSummarySupport(summary *object.ObjectSummary) (summarySupport, error) {
@@ -19,6 +20,11 @@ func newSummarySupport(summary *object.ObjectSummary) (summarySupport, error) {
 	var js []byte
 	s := summarySupport{}
 	if summary != nil {
+		s.marshaled, err = json.Marshal(summary)
+		if err != nil {
+			return s, err
+		}
+
 		s.name = summary.Name
 		if summary.Description != "" {
 			s.description = &summary.Description
