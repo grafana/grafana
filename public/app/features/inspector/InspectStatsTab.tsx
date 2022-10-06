@@ -1,8 +1,8 @@
-import { t } from '@lingui/macro';
 import React from 'react';
 
 import { PanelData, QueryResultMetaStat, TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from 'app/core/internationalization';
 
 import { InspectStatsTable } from './InspectStatsTable';
 
@@ -28,24 +28,24 @@ export const InspectStatsTab: React.FC<InspectStatsTabProps> = ({ data, timeZone
 
   if (requestTime > 0) {
     stats.push({
-      displayName: t({ id: 'dashboard.inspect-stats.request-time', message: 'Total request time' }),
+      displayName: t('dashboard.inspect-stats.request-time', 'Total request time'),
       value: requestTime,
       unit: 'ms',
     });
   }
   if (processingTime > 0) {
     stats.push({
-      displayName: t({ id: 'dashboard.inspect-stats.processing-time', message: 'Data processing time' }),
+      displayName: t('dashboard.inspect-stats.processing-time', 'Data processing time'),
       value: processingTime,
       unit: 'ms',
     });
   }
   stats.push({
-    displayName: t({ id: 'dashboard.inspect-stats.queries', message: 'Number of queries' }),
+    displayName: t('dashboard.inspect-stats.queries', 'Number of queries'),
     value: data.request.targets.length,
   });
   stats.push({
-    displayName: t({ id: 'dashboard.inspect-stats.rows', message: 'Total number rows' }),
+    displayName: t('dashboard.inspect-stats.rows', 'Total number rows'),
     value: dataRows,
   });
 
@@ -57,8 +57,8 @@ export const InspectStatsTab: React.FC<InspectStatsTabProps> = ({ data, timeZone
     }
   }
 
-  const statsTableName = t({ id: 'dashboard.inspect-stats.table-title', message: 'Stats' });
-  const dataStatsTableName = t({ id: 'dashboard.inspect-stats.data-title', message: 'Data source stats' });
+  const statsTableName = t('dashboard.inspect-stats.table-title', 'Stats');
+  const dataStatsTableName = t('dashboard.inspect-stats.data-title', 'Data source stats');
 
   return (
     <div aria-label={selectors.components.PanelInspector.Stats.content}>
