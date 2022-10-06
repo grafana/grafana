@@ -1,7 +1,6 @@
 import chalk from 'chalk';
 import { program } from 'commander';
 
-import { changelogTask } from './tasks/changelog';
 import { closeMilestoneTask } from './tasks/closeMilestone';
 import { componentCreateTask } from './tasks/component.create';
 import { nodeVersionCheckerTask } from './tasks/nodeVersionChecker';
@@ -34,22 +33,6 @@ export const run = (includeInternalScripts = false) => {
         );
         await execTask(buildPackageTask)({
           scope: cmd.scope,
-        });
-      });
-
-    program
-      .command('changelog')
-      .option('-m, --milestone <milestone>', 'Specify milestone')
-      .description('Builds changelog markdown')
-      .action(async (cmd) => {
-        if (!cmd.milestone) {
-          console.log('Please specify milestone, example: -m <milestone id from github milestone URL>');
-          return;
-        }
-
-        await execTask(changelogTask)({
-          milestone: cmd.milestone,
-          silent: true,
         });
       });
 
@@ -103,9 +86,15 @@ export const run = (includeInternalScripts = false) => {
     program
       .command('component:create')
       .description(
-        'Scaffold React components. Optionally add test, story and .mdx files. The components are created in the same dir the script is run from.'
+        '[deprecated] Scaffold React components. Optionally add test, story and .mdx files. The components are created in the same dir the script is run from.'
       )
       .action(async () => {
+        chalk.yellow.bold(
+          `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
+        );
+        console.log(
+          'if you were reliant on this command we recommend https://www.npmjs.com/package/react-gen-component'
+        );
         await execTask(componentCreateTask)({});
       });
   }

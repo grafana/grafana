@@ -10,6 +10,7 @@ import { LibraryElementExport } from '../../dashboard/components/DashExportModal
 import { getLibraryPanel } from '../../library-panels/state/api';
 import { LibraryElementDTO, LibraryElementKind } from '../../library-panels/types';
 import { DashboardSearchHit } from '../../search/types';
+import { DeleteDashboardResponse } from '../types';
 
 import {
   clearDashboard,
@@ -275,11 +276,7 @@ export function saveDashboard(options: SaveDashboardCommand) {
 }
 
 function deleteFolder(uid: string, showSuccessAlert: boolean) {
-  return getBackendSrv().request({
-    method: 'DELETE',
-    url: `/api/folders/${uid}?forceDeleteRules=false`,
-    showSuccessAlert: showSuccessAlert,
-  });
+  return getBackendSrv().delete(`/api/folders/${uid}?forceDeleteRules=false`, undefined, { showSuccessAlert });
 }
 
 export function createFolder(payload: any) {
@@ -304,11 +301,7 @@ export function getFolderById(id: number): Promise<{ id: number; title: string }
 }
 
 export function deleteDashboard(uid: string, showSuccessAlert: boolean) {
-  return getBackendSrv().request({
-    method: 'DELETE',
-    url: `/api/dashboards/uid/${uid}`,
-    showSuccessAlert: showSuccessAlert,
-  });
+  return getBackendSrv().delete<DeleteDashboardResponse>(`/api/dashboards/uid/${uid}`, { showSuccessAlert });
 }
 
 function executeInOrder(tasks: any[]) {
