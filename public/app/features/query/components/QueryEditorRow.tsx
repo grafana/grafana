@@ -75,6 +75,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   element: HTMLElement | null = null;
   angularScope: AngularQueryComponentScope<TQuery> | null = null;
   angularQueryEditor: AngularComponent | null = null;
+  id = '';
 
   state: State<TQuery> = {
     datasource: null,
@@ -85,8 +86,9 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   componentDidMount() {
-    const { data, query } = this.props;
+    const { data, query, id } = this.props;
     const dataFilteredByRefId = filterPanelDataToQuery(data, query.refId);
+    this.id = uniqueId(id + '_');
     this.setState({ data: dataFilteredByRefId });
 
     this.loadDatasource();
@@ -95,6 +97,12 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   componentWillUnmount() {
     if (this.angularQueryEditor) {
       this.angularQueryEditor.destroy();
+    }
+  }
+
+  getSnapshotBeforeUpdate(prevProps: Readonly<Props<TQuery>>) {
+    if (prevProps.id !== this.props.id) {
+      this.id = uniqueId(this.props.id + '_');
     }
   }
 
@@ -449,10 +457,9 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   render() {
-    const { query, id, index, visualization } = this.props;
+    const { query, index, visualization } = this.props;
     const { datasource, showingHelp, data } = this.state;
     const isDisabled = query.hide;
-    const generatedUniqueId = uniqueId(id + '_');
 
     const rowClasses = classNames('query-editor-row', {
       'query-editor-row--disabled': isDisabled,
@@ -469,14 +476,14 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     return (
       <div aria-label={selectors.components.QueryEditorRows.rows}>
         <QueryOperationRow
-          id={generatedUniqueId}
+          id={this.id}
           draggable={true}
           index={index}
           headerElement={this.renderHeader}
           actions={this.renderActions}
           onOpen={this.onOpen}
         >
-          <div className={rowClasses} id={generatedUniqueId}>
+          <div className={rowClasses} id={this.id}>
             <ErrorBoundaryAlert>
               {showingHelp && DatasourceCheatsheet && (
                 <OperationRowHelp>
