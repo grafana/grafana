@@ -142,8 +142,14 @@ func (s *service) Search(ctx context.Context, user *user.SignedInUser, options q
 	queryInfo := asQueryInfo(queries)
 	filteredQueryInfo := make([]querylibrary.QueryInfo, 0)
 	for _, q := range queryInfo {
-		if len(options.Query) > 0 && !strings.Contains(strings.TrimSpace(strings.ToLower(q.Title)), options.Query) {
-			continue
+
+		if len(options.Query) > 0 {
+			lowerTitle := strings.ReplaceAll(strings.ToLower(q.Title), " ", "")
+			lowerQuery := strings.ReplaceAll(strings.ToLower(options.Query), " ", "")
+
+			if !strings.Contains(lowerTitle, lowerQuery) {
+				continue
+			}
 		}
 
 		if len(options.DatasourceUID) > 0 || len(options.DatasourceType) > 0 {
