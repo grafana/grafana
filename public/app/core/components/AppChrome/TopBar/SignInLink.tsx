@@ -8,7 +8,7 @@ import { useStyles2 } from '@grafana/ui';
 export function SignInLink() {
   const location = useLocation();
   const styles = useStyles2(getStyles);
-  const loginUrl = locationUtil.getUrlForPartial(location, { forceLogin: true });
+  const loginUrl = locationUtil.getUrlForPartial(location, { forceLogin: 'true' });
 
   return (
     <a className={styles.link} href={loginUrl} target="_self">
