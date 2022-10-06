@@ -63,12 +63,12 @@ const DURATION_COMPLETIONS: Completion[] = ['$__interval', '$__range', '1m', '5m
   })
 );
 
-/*TODO: Implement. const LINE_FILTER_COMPLETIONS: Completion[] = ['|=', '!=', '|~', '!~'].map((item) => ({
+const LINE_FILTER_COMPLETIONS: Completion[] = ['|=', '!=', '|~', '!~'].map((item) => ({
   type: 'LINE_FILTER',
   label: `${item} ""`,
   insertText: `${item} "$0"`,
   isSnippet: true,
-}));*/
+}));
 
 async function getAllHistoryCompletions(dataProvider: CompletionDataProvider): Promise<Completion[]> {
   const history = await dataProvider.getHistory();
