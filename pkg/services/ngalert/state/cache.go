@@ -47,8 +47,8 @@ func (c *cache) getOrCreate(ctx context.Context, log log.Logger, alertRule *ngMo
 	return states.getOrCreate(ctx, log, alertRule, result, extraLabels, externalURL)
 }
 
-func (c *ruleStates) getOrCreate(ctx context.Context, log log.Logger, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, externalURL *url.URL) *State {
-	ruleLabels, annotations := c.expandRuleLabelsAndAnnotations(ctx, log, alertRule, result, extraLabels, externalURL)
+func (rs *ruleStates) getOrCreate(ctx context.Context, log log.Logger, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, externalURL *url.URL) *State {
+	ruleLabels, annotations := rs.expandRuleLabelsAndAnnotations(ctx, log, alertRule, result, extraLabels, externalURL)
 
 	lbs := make(data.Labels, len(extraLabels)+len(ruleLabels)+len(result.Instance))
 	dupes := make(data.Labels)
@@ -87,7 +87,7 @@ func (c *ruleStates) getOrCreate(ctx context.Context, log log.Logger, alertRule 
 		log.Error("error getting cacheId for entry", "err", err.Error())
 	}
 
-	if state, ok := c.states[id]; ok {
+	if state, ok := rs.states[id]; ok {
 		// Annotations can change over time, however we also want to maintain
 		// certain annotations across evaluations
 		for k, v := range state.Annotations {
@@ -100,7 +100,7 @@ func (c *ruleStates) getOrCreate(ctx context.Context, log log.Logger, alertRule 
 			}
 		}
 		state.Annotations = annotations
-		c.states[id] = state
+		rs.states[id] = state
 		return state
 	}
 
@@ -117,11 +117,11 @@ func (c *ruleStates) getOrCreate(ctx context.Context, log log.Logger, alertRule 
 	if result.State == eval.Alerting {
 		newState.StartsAt = result.EvaluatedAt
 	}
-	c.states[id] = newState
+	rs.states[id] = newState
 	return newState
 }
 
-func (c *ruleStates) expandRuleLabelsAndAnnotations(ctx context.Context, log log.Logger, alertRule *ngModels.AlertRule, alertInstance eval.Result, extraLabels data.Labels, externalURL *url.URL) (data.Labels, data.Labels) {
+func (rs *ruleStates) expandRuleLabelsAndAnnotations(ctx context.Context, log log.Logger, alertRule *ngModels.AlertRule, alertInstance eval.Result, extraLabels data.Labels, externalURL *url.URL) (data.Labels, data.Labels) {
 	// use labels from the result and extra labels to expand the labels and annotations declared by the rule
 	templateLabels := mergeLabels(extraLabels, alertInstance.Instance)
 
