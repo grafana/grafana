@@ -111,6 +111,7 @@ describe('decorateWithGraphLogsTraceTableAndFlameGraph', () => {
       state: LoadingState.Done,
       timeRange: {} as unknown as TimeRange,
     };
+    // Needed so flamegraph does not fallback to table, will be removed when feature flag no longer necessary
     config.featureToggles.flameGraph = true;
 
     expect(decorateWithFrameTypeMetadata(panelData)).toEqual({
