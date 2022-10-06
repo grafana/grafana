@@ -404,7 +404,7 @@ function handleRangeAggregation(expr: string, node: SyntaxNode, context: Context
 
   let match = getString(expr, node).match(/\[(.+)\]/);
   if (match?.[1]) {
-    params.push(match[1]);
+    params.unshift(match[1]);
   }
 
   const op = {
