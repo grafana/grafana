@@ -10,7 +10,6 @@
 
 export const PanelModelVersion = Object.freeze([0, 0]);
 
-
 export enum PanelLayout {
   List = 'list',
   Previews = 'previews',
@@ -25,7 +24,7 @@ export interface PanelOptions {
   showRecentlyViewed: boolean;
   showSearch: boolean;
   showStarred: boolean;
-  tags: string[];
+  tags: Array<string>;
 }
 
 export const defaultPanelOptions: Partial<PanelOptions> = {
@@ -38,4 +37,3 @@ export const defaultPanelOptions: Partial<PanelOptions> = {
   showStarred: true,
   tags: [],
 };
-

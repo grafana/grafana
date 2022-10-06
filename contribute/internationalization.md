@@ -7,6 +7,10 @@ Grafana uses the [LinguiJS](https://github.com/lingui/js-lingui) framework for m
 - Use `<Trans id="search-results.panel-link">Go to {panel.title}</Trans>` in code to add a translatable phrase
 - Translations are stored in .po files in `public/locales/{locale}/messages.po`
 - If a particular phrase is not available in the a language then it will fall back to English
+- To update phrases in English, edit the `en/messages.po` file, not the source JSX
+- To update phrases in any translated language, edit the phrase in Crowdin
+
+**Please note:** We do not currently accept contributions for translations. Please do not submit pull requests for messages.po files - they will be rejected.
 
 ## How to add a new translation phrase
 

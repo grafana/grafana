@@ -130,6 +130,7 @@ export function LogsVolumePanel(props: Props) {
           splitOpenFn={splitOpen}
           tooltipDisplayMode={TooltipDisplayMode.Multi}
           onHiddenSeriesChanged={onHiddenSeriesChanged}
+          anchorToZero
         />
       );
     } else {

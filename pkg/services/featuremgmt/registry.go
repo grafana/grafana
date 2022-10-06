@@ -249,7 +249,7 @@ var (
 		},
 		{
 			Name:        "dataConnectionsConsole",
-			Description: "Enables a new top-level page called Data Connections. This page is an experiment for better grouping of installing / configuring data sources and other plugins.",
+			Description: "Enables a new top-level page called Connections. This page is an experiment for better grouping of installing / configuring data sources and other plugins.",
 			State:       FeatureStateAlpha,
 		},
 		{
@@ -263,11 +263,11 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:        "customBranding",
-			Description: "Replaces whitelabeling with the new custom branding feature",
-			State:       FeatureStateAlpha,
-		},
-		{
+			Name:            "grpcServer",
+			Description:     "Run GRPC server",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		}, {
 			Name:        "traceqlEditor",
 			Description: "Show the TraceQL editor in the explore page",
 			State:       FeatureStateAlpha,

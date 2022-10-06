@@ -63,7 +63,7 @@ export interface FeatureToggles {
   dataConnectionsConsole?: boolean;
   internationalization?: boolean;
   topnav?: boolean;
-  customBranding?: boolean;
+  grpcServer?: boolean;
   traceqlEditor?: boolean;
   redshiftAsyncQueryDataSupport?: boolean;
   athenaAsyncQueryDataSupport?: boolean;
