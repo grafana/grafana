@@ -16,12 +16,17 @@ import { RuleEditorSection } from './RuleEditorSection';
 
 const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
 
-const forValidationOptions = (evaluateEvery: string): RegisterOptions => ({
+export const forValidationOptions = (evaluateEvery: string): RegisterOptions => ({
   required: {
     value: true,
     message: 'Required.',
   },
   validate: (value: string) => {
+    // parsePrometheusDuration does not allow 0 but does allow 0s
+    if (Number(value) === 0) {
+      return true;
+    }
+
     try {
       const millisFor = parsePrometheusDuration(value);
 
