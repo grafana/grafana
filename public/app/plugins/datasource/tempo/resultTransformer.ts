@@ -622,7 +622,6 @@ function transformToTraceData(data: TraceSearchMetadata) {
     traceID: data.traceID,
     startTime: startTime,
     duration: data.durationMs,
-    spans: data.spans,
     traceName,
   };
 }
@@ -704,19 +703,19 @@ export function createTableFrameFromTraceQlQuery(
     });
   });
 
-  // Show the most recent traces
-  const traceData = data
+  const tableRows = data
+    // Show the most recent traces
     .sort((a, b) => parseInt(b?.startTimeUnixNano!, 10) / 1000000 - parseInt(a?.startTimeUnixNano!, 10) / 1000000)
-    .reduce((list: TraceTableData[], t) => {
-      const trace: TraceTableData = transformToTraceData(t);
-      list.push(trace);
-      t.spans?.forEach((span) => {
-        list.push(transformSpanToTraceData(span, t.traceID));
+    .reduce((rows: TraceTableData[], trace) => {
+      const traceData: TraceTableData = transformToTraceData(trace);
+      rows.push(traceData);
+      trace.spans?.forEach((span) => {
+        rows.push(transformSpanToTraceData(span, trace.traceID));
       });
-      return list;
+      return rows;
     }, []);
 
-  for (const trace of traceData) {
+  for (const trace of tableRows) {
     frame.add(trace);
   }
 
@@ -725,9 +724,9 @@ export function createTableFrameFromTraceQlQuery(
 }
 
 interface TraceTableData {
-  [key: string]: string | number; // dynamic attribute name
+  [key: string]: string | number | undefined; // dynamic attribute name
   traceID: string;
-  spanID: string;
+  spanID?: string;
   //attributes?: string;
   startTime: string;
   duration: number;
