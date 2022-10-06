@@ -49,7 +49,7 @@ import LanguageProvider from './LanguageProvider';
 import { LiveStreams, LokiLiveTarget } from './LiveStreams';
 import { transformBackendResult } from './backendResultTransformer';
 import { LokiAnnotationsQueryEditor } from './components/AnnotationsQueryEditor';
-import { escapeLabelValueInSelector } from './languageUtils';
+import { escapeLabelValueInSelector, isRegexSelector } from './languageUtils';
 import { labelNamesRegex, labelValuesRegex } from './migrations/variableQueryMigrations';
 import {
   addLabelFormatToQuery,
@@ -747,8 +747,14 @@ export class LokiDatasource
     expr = adhocFilters.reduce((acc: string, filter: { key: string; operator: string; value: string }) => {
       const { key, operator } = filter;
       let { value } = filter;
-      if (operator === '=~' || operator === '!~') {
+      if (isRegexSelector(operator)) {
+        // Adhoc filters don't support multiselect, therefore if user selects regex operator
+        // we are going to consider value to be regex filter and use lokiRegularEscape
+        // that does not escape regex special characters (e.g. .*test.* => .*test.*)
         value = lokiRegularEscape(value);
+      } else {
+        // Otherwise, we want to escape special characters in value
+        value = escapeLabelValueInSelector(value, operator);
       }
       return addLabelToQuery(acc, key, operator, value);
     }, expr);
