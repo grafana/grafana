@@ -177,11 +177,7 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 	resolvedStates := st.staleResultsHandler(ctx, evaluatedAt, alertRule, processedResults)
 	if len(states) > 0 {
 		logger.Debug("saving new states to the database", "count", len(states))
-		for _, state := range states {
-			if err := st.saveState(ctx, state); err != nil {
-				logger.Error("failed to save alert state", "labels", state.Labels.String(), "state", state.State.String(), "err", err.Error())
-			}
-		}
+		_, _ = st.saveAlertStates(ctx, states...)
 	}
 	return append(states, resolvedStates...)
 }
@@ -310,18 +306,52 @@ func (st *Manager) Put(states []*State) {
 	}
 }
 
-func (st *Manager) saveState(ctx context.Context, s *State) error {
-	cmd := ngModels.SaveAlertInstanceCommand{
-		RuleOrgID:         s.OrgID,
-		RuleUID:           s.AlertRuleUID,
-		Labels:            ngModels.InstanceLabels(s.Labels),
-		State:             ngModels.InstanceStateType(s.State.String()),
-		StateReason:       s.StateReason,
-		LastEvalTime:      s.LastEvaluationTime,
-		CurrentStateSince: s.StartsAt,
-		CurrentStateEnd:   s.EndsAt,
+// TODO: Is the `State` type necessary? Should it embed the instance?
+func (st *Manager) saveAlertStates(ctx context.Context, states ...*State) (saved, failed int) {
+	st.log.Debug("saving alert states", "count", len(states))
+	instances := make([]ngModels.AlertInstance, 0, len(states))
+
+	type debugInfo struct {
+		OrgID  int64
+		Uid    string
+		State  string
+		Labels string
 	}
-	return st.instanceStore.SaveAlertInstance(ctx, &cmd)
+	debug := make([]debugInfo, 0)
+
+	for _, s := range states {
+		labels := ngModels.InstanceLabels(s.Labels)
+		_, hash, err := labels.StringAndHash()
+		if err != nil {
+			debug = append(debug, debugInfo{s.OrgID, s.AlertRuleUID, s.State.String(), s.Labels.String()})
+			st.log.Error("failed to save alert instance with invalid labels", "orgID", s.OrgID, "ruleUID", s.AlertRuleUID, "err", err)
+			continue
+		}
+		fields := ngModels.AlertInstance{
+			AlertInstanceKey: ngModels.AlertInstanceKey{
+				RuleOrgID:  s.OrgID,
+				RuleUID:    s.AlertRuleUID,
+				LabelsHash: hash,
+			},
+			Labels:            ngModels.InstanceLabels(s.Labels),
+			CurrentState:      ngModels.InstanceStateType(s.State.String()),
+			CurrentReason:     s.StateReason,
+			LastEvalTime:      s.LastEvaluationTime,
+			CurrentStateSince: s.StartsAt,
+			CurrentStateEnd:   s.EndsAt,
+		}
+		instances = append(instances, fields)
+	}
+
+	if err := st.instanceStore.SaveAlertInstances(ctx, instances...); err != nil {
+		for _, inst := range instances {
+			debug = append(debug, debugInfo{inst.RuleOrgID, inst.RuleUID, string(inst.CurrentState), data.Labels(inst.Labels).String()})
+		}
+		st.log.Error("failed to save alert states", "states", debug, "err", err)
+		return 0, len(debug)
+	}
+
+	return len(instances), len(debug)
 }
 
 // TODO: why wouldn't you allow other types like NoData or Error?
@@ -353,9 +383,11 @@ func (i InstanceStateAndReason) String() string {
 func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, states map[string]*State) []*State {
 	var resolvedStates []*State
 	allStates := st.GetStatesForRuleUID(alertRule.OrgID, alertRule.UID)
+	toDelete := make([]ngModels.AlertInstanceKey, 0)
+
 	for _, s := range allStates {
-		_, ok := states[s.CacheId]
-		if !ok && isItStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds) {
+		// Is the cached state in our recently processed results? If not, is it stale?
+		if _, ok := states[s.CacheId]; !ok && stateIsStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds) {
 			st.log.Debug("removing stale state entry", "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID, "cacheID", s.CacheId)
 			st.cache.deleteEntry(s.OrgID, s.AlertRuleUID, s.CacheId)
 			ilbs := ngModels.InstanceLabels(s.Labels)
@@ -364,9 +396,7 @@ func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Tim
 				st.log.Error("unable to get labelsHash", "err", err.Error(), "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID)
 			}
 
-			if err = st.instanceStore.DeleteAlertInstance(ctx, s.OrgID, s.AlertRuleUID, labelsHash); err != nil {
-				st.log.Error("unable to delete stale instance from database", "err", err.Error(), "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID, "cacheID", s.CacheId)
-			}
+			toDelete = append(toDelete, ngModels.AlertInstanceKey{RuleOrgID: s.OrgID, RuleUID: s.AlertRuleUID, LabelsHash: labelsHash})
 
 			if s.State == eval.Alerting {
 				previousState := InstanceStateAndReason{State: s.State, Reason: s.StateReason}
@@ -382,9 +412,14 @@ func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Tim
 			}
 		}
 	}
+
+	if err := st.instanceStore.DeleteAlertInstances(ctx, toDelete...); err != nil {
+		st.log.Error("unable to delete stale instances from database", "err", err.Error(),
+			"orgID", alertRule.OrgID, "alertRuleUID", alertRule.UID, "count", len(toDelete))
+	}
 	return resolvedStates
 }
 
-func isItStale(evaluatedAt time.Time, lastEval time.Time, intervalSeconds int64) bool {
+func stateIsStale(evaluatedAt time.Time, lastEval time.Time, intervalSeconds int64) bool {
 	return !lastEval.Add(2 * time.Duration(intervalSeconds) * time.Second).After(evaluatedAt)
 }
