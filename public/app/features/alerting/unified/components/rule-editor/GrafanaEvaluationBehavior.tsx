@@ -22,13 +22,13 @@ const forValidationOptions = (evaluateEvery: string): RegisterOptions => ({
     message: 'Required.',
   },
   validate: (value: string) => {
-    // 0 is a special value meaning for equals evaluation interval
-    if (Number(value) === 0) {
-      return true;
-    }
-
     try {
       const millisFor = parsePrometheusDuration(value);
+
+      // 0 is a special value meaning for equals evaluation interval
+      if (millisFor === 0) {
+        return true;
+      }
 
       try {
         const millisEvery = parsePrometheusDuration(evaluateEvery);

@@ -58,8 +58,12 @@ const INVALID_FORMAT = new Error(
   ).join(', ')}`
 );
 
-// According to https://prometheus.io/docs/alerting/latest/configuration/#configuration-file
-// see <duration>
+/**
+ * According to https://prometheus.io/docs/alerting/latest/configuration/#configuration-file
+ * see <duration>
+ *
+ * @returns Duration in milliseconds
+ */
 export function parsePrometheusDuration(duration: string): number {
   let input = duration;
   let parts: Array<[number, string]> = [];

@@ -1,4 +1,4 @@
-import { DataSourceInstanceSettings, DataSourceJsonData, rangeUtil, isValidGoDuration } from '@grafana/data';
+import { DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { isValidPrometheusDuration, parsePrometheusDuration } from './time';
@@ -8,19 +8,19 @@ export function getAllDataSources(): Array<DataSourceInstanceSettings<DataSource
 }
 
 export function checkEvaluationIntervalGlobalLimit(alertGroupEvaluateEvery?: string) {
-  // There is a discrepancy between the duration format for evaluateEvery and unifiedAlerting.minInterval
-  // "evaluateEvery" is a Prometheus duration and supports d, w, y – "minInterval" is
-  // a strict golang time.ParseDuration compatible format
-  if (!alertGroupEvaluateEvery || !isValidPrometheusDuration(alertGroupEvaluateEvery)) {
+  // config.unifiedAlerting.minInterval should be Prometheus-compatible duration
+  // However, Go's gtime library has issues with parsing y,w,d
+  if (!isValidPrometheusDuration(config.unifiedAlerting.minInterval)) {
     return { globalLimit: 0, exceedsLimit: false };
   }
 
-  if (!isValidGoDuration(config.unifiedAlerting.minInterval)) {
-    return { globalLimit: 0, exceedsLimit: false };
+  const evaluateEveryGlobalLimitMs = parsePrometheusDuration(config.unifiedAlerting.minInterval);
+
+  if (!alertGroupEvaluateEvery || !isValidPrometheusDuration(alertGroupEvaluateEvery)) {
+    return { globalLimit: evaluateEveryGlobalLimitMs, exceedsLimit: false };
   }
 
   const evaluateEveryMs = parsePrometheusDuration(alertGroupEvaluateEvery);
-  const evaluateEveryGlobalLimitMs = rangeUtil.intervalToMs(config.unifiedAlerting.minInterval);
 
   const exceedsLimit = evaluateEveryGlobalLimitMs > evaluateEveryMs && evaluateEveryMs > 0;
 
