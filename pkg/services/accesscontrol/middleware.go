@@ -36,7 +36,7 @@ func Middleware(ac AccessControl) func(web.Handler, Evaluator) web.Handler {
 					forceLogin = true
 				}
 
-				if forceLogin {
+				if !c.IsSignedIn && forceLogin {
 					unauthorized(c, nil)
 				}
 			}
