@@ -245,7 +245,10 @@ message ObjectSearchRequest {
   bool with_body = 8;
 
   // Return the full body in each payload
-  bool with_summary = 9;
+  bool with_labels = 9;
+
+  // Return the full body in each payload
+  bool with_fields = 10;
 }
 
 // Search result metadata for each object
@@ -260,20 +263,33 @@ message ObjectSearchResult {
   // The current veresion of this object
   string version = 3;
 
-  // Display name from summary
-  string name = 4;
-
   // Time in epoch milliseconds that the object was updated
-  int64 updated = 5;
+  int64 updated = 4;
 
   // Who updated the object
-  string updated_by = 6;
+  string updated_by = 5;
 
   // Optionally include the full object body
-  bytes body = 7;
+  bytes body = 6;
+
+  //----------------------------------------
+  // Derived from body in the summary
+  //----------------------------------------
+
+  // Always included
+  string name = 7;
+
+  // Always included
+  string description = 8;
+
+  // The structured labels
+  map<string,string> labels = 9;
 
   // Optionally include extracted JSON
-  string summary_json = 8;
+  string fields_json = 10;
+
+  // ObjectErrorInfo in json
+  string error_json = 11;
 }
 
 message ObjectSearchResponse {
