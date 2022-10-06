@@ -12,8 +12,8 @@ import (
 type InstanceStore interface {
 	FetchOrgIds(ctx context.Context) ([]int64, error)
 	ListAlertInstances(ctx context.Context, cmd *models.ListAlertInstancesQuery) error
-	SaveAlertInstance(ctx context.Context, cmd *models.SaveAlertInstanceCommand) error
-	DeleteAlertInstance(ctx context.Context, orgID int64, ruleUID, labelsHash string) error
+	SaveAlertInstances(ctx context.Context, cmd ...models.AlertInstance) error
+	DeleteAlertInstances(ctx context.Context, keys ...models.AlertInstanceKey) error
 	DeleteAlertInstancesByRule(ctx context.Context, key models.AlertRuleKey) error
 }
 

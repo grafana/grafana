@@ -7,6 +7,7 @@ import { contextSrv } from 'app/core/core';
 import { useSelector } from 'app/types';
 
 import { NewsContainer } from './News/NewsContainer';
+import { SignInLink } from './TopBar/SignInLink';
 import { TopNavBarMenu } from './TopBar/TopNavBarMenu';
 import { TopSearchBarInput } from './TopSearchBarInput';
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
@@ -35,6 +36,7 @@ export function TopSearchBar() {
           </Dropdown>
         )}
         <NewsContainer />
+        {!contextSrv.user.isSignedIn && <SignInLink />}
         {profileNode && (
           <Dropdown overlay={<TopNavBarMenu node={profileNode} />}>
             <ToolbarButton
@@ -73,6 +75,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       gap: theme.spacing(0.5),
       justifyContent: 'flex-end',
+      alignItems: 'center',
     }),
     profileButton: css({
       img: {
