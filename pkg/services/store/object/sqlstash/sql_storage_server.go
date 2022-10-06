@@ -60,13 +60,7 @@ func rowToReadObjectResponse(rows *sql.Rows, r *object.ReadObjectRequest) (*obje
 	updatedByID := int64(0)
 	raw := &object.RawObject{}
 
-	summaryjson := struct {
-		name        string
-		description string
-		labels      []byte
-		fields      []byte
-		errors      []byte // should not allow saving with this!
-	}{}
+	summaryjson := &summarySupport{}
 
 	args := []interface{}{
 		&key, &raw.Kind, &raw.Version,
@@ -103,18 +97,9 @@ func rowToReadObjectResponse(rows *sql.Rows, r *object.ReadObjectRequest) (*obje
 	}
 
 	if r.WithSummary || summaryjson.errors != nil {
-		summary := &object.ObjectSummary{
-			Name:        summaryjson.name,
-			Description: summaryjson.description,
-		}
-		if summaryjson.errors != nil {
-			_ = json.Unmarshal(summaryjson.errors, &summary.Error)
-		}
-		if summaryjson.fields != nil {
-			_ = json.Unmarshal(summaryjson.fields, &summary.Fields)
-		}
-		if summaryjson.labels != nil {
-			_ = json.Unmarshal(summaryjson.labels, &summary.Labels)
+		summary, err := summaryjson.toObjectSummary()
+		if err != nil {
+			return nil, err
 		}
 
 		js, err := json.Marshal(summary)
@@ -221,20 +206,10 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 		},
 	}
 
-	summaryjson := struct {
-		labels []byte
-		fields []byte
-		errors []byte // should not allow saving with this!
-	}{}
-
-	var err error
-	if len(summary.Labels) > 0 {
-		summaryjson.labels, err = json.Marshal(summary.Labels)
-		if err != nil {
-			return nil, err
-		}
+	summaryjson, err := newSummarySupport(&summary)
+	if err != nil {
+		return nil, err
 	}
-
 	etag := createContentsHash(r.Body)
 
 	modifier := object.UserFromContext(ctx)
