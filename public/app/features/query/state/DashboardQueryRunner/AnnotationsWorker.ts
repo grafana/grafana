@@ -40,7 +40,11 @@ export class AnnotationsWorker implements DashboardQueryRunnerWorker {
     }
 
     const { dashboard, range } = options;
-    const annotations = dashboard.annotations.list.filter(AnnotationsWorker.getAnnotationsToProcessFilter);
+    let annotations = dashboard.annotations.list.filter(AnnotationsWorker.getAnnotationsToProcessFilter);
+    // We only want to create a single PublicDashboardDatasource. This will get all annotations in one request.
+    if (dashboard.meta.publicDashboardAccessToken && annotations.length > 0) {
+      annotations = [annotations[0]];
+    }
     const observables = annotations.map((annotation) => {
       let datasourceObservable;
       if (dashboard.meta.publicDashboardAccessToken !== '') {

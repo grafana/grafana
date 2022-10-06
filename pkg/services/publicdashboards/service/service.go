@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -250,28 +251,71 @@ func (pd *PublicDashboardServiceImpl) GetAnnotations(ctx context.Context, reqDTO
 		return nil, err
 	}
 
+	type annotation struct {
+		Datasource struct {
+			DType string `json:"type"`
+			Uid   string `json:"uid"`
+		}
+		Enable bool   `json:"enable"`
+		Type   string `json:"type"`
+		Target struct {
+			Limit    int64    `json:"limit"`
+			MatchAny bool     `json:"matchAny"`
+			Tags     []string `json:"tags"`
+			Type     string   `json:"type"`
+		}
+	}
+
+	type annotationsDto struct {
+		Annotations struct {
+			List []annotation `json:"list"`
+		}
+	}
+
+	dto := annotationsDto{}
+	bytes, err := dash.Data.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(bytes, &dto)
+	if err != nil {
+		return nil, err
+	}
+
 	anonymousUser, err := pd.BuildAnonymousUser(ctx, dash)
 	if err != nil {
 		return nil, err
 	}
 
-	annoQuery := &annotations.ItemQuery{
-		From:         reqDTO.From,
-		To:           reqDTO.To,
-		OrgId:        dash.OrgId,
-		DashboardId:  dash.Id,
-		DashboardUid: dash.Uid,
-		Limit:        100,
-		MatchAny:     false,
-		SignedInUser: anonymousUser,
+	var results []*annotations.ItemDTO
+	for _, anno := range dto.Annotations.List {
+		if anno.Enable {
+			annoQuery := &annotations.ItemQuery{
+				From:         reqDTO.From,
+				To:           reqDTO.To,
+				OrgId:        dash.OrgId,
+				DashboardId:  dash.Id,
+				DashboardUid: dash.Uid,
+				Limit:        anno.Target.Limit,
+				MatchAny:     anno.Target.MatchAny,
+				SignedInUser: anonymousUser,
+			}
+
+			if anno.Target.Type == "tags" {
+				annoQuery.Tags = anno.Target.Tags
+			}
+
+			annotationItems, err := pd.AnnotationsService.Find(ctx, annoQuery)
+			if err != nil {
+				return nil, err
+			}
+			for _, item := range annotationItems {
+				results = append(results, item)
+			}
+		}
 	}
 
-	annotationItems, err := pd.AnnotationsService.Find(ctx, annoQuery)
-	if err != nil {
-		return nil, err
-	}
-
-	return annotationItems, nil
+	return results, nil
 }
 
 // buildMetricRequest merges public dashboard parameters with
