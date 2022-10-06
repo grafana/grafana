@@ -630,6 +630,7 @@ export function createTableFrameFromTraceQlQuery(
   data: TraceSearchMetadata[],
   instanceSettings: DataSourceInstanceSettings
 ) {
+  console.log(data);
   const frame = new MutableDataFrame({
     fields: [
       {
@@ -659,7 +660,7 @@ export function createTableFrameFromTraceQlQuery(
         type: FieldType.string,
         config: {
           unit: 'string',
-          displayNameFromDS: 'Span',
+          displayNameFromDS: 'Span ID',
           links: [
             {
               title: 'Span: ${__value.raw}',
@@ -668,16 +669,16 @@ export function createTableFrameFromTraceQlQuery(
                 datasourceUid: instanceSettings.uid,
                 datasourceName: instanceSettings.name,
                 query: {
-                  query: '${__value.raw}',
-                  queryType: 'spanId',
+                  query: '${__data.fields.traceID}',
+                  queryType: 'traceId',
                 },
               },
             },
           ],
         },
       },
-      { name: 'traceName', type: FieldType.string, config: { displayNameFromDS: 'Name' } },
-      { name: 'attributes', type: FieldType.string, config: { displayNameFromDS: 'Attributes' } },
+      // { name: 'traceName', type: FieldType.string, config: { displayNameFromDS: 'Name' } },
+      //{ name: 'attributes', type: FieldType.string, config: { displayNameFromDS: 'Attributes' } },
       { name: 'startTime', type: FieldType.string, config: { displayNameFromDS: 'Start time' } },
       { name: 'duration', type: FieldType.number, config: { displayNameFromDS: 'Duration', unit: 'ms' } },
     ],
@@ -688,39 +689,52 @@ export function createTableFrameFromTraceQlQuery(
   if (!data?.length) {
     return frame;
   }
-  // Show the most recent traces
-  const traceData = data
+
+  const attributesAdded: string[] = [];
+
+  data.forEach((trace) => {
+    trace.spans?.forEach((span) => {
+      span.attributes?.forEach((attr) => {
+        if (!attributesAdded.includes(attr.key)) {
+          frame.addField({ name: attr.key, type: FieldType.string, config: { displayNameFromDS: attr.key } });
+          attributesAdded.push(attr.key);
+        }
+      });
+    });
+  });
+
+  const tableRows = data
+    // Show the most recent traces
     .sort((a, b) => parseInt(b?.startTimeUnixNano!, 10) / 1000000 - parseInt(a?.startTimeUnixNano!, 10) / 1000000)
-    .reduce((list: TraceTableData[], t) => {
-      const firstSpanSet = t.spanSets?.[0];
-      const trace: TraceTableData = transformToTraceData(t);
-      trace.attributes = firstSpanSet?.attributes
-        .map((atr) => Object.keys(atr).map((key) => `${key} = ${atr[key]}`))
-        .join(', ');
-      list.push(trace);
-      firstSpanSet?.spans.forEach((span) => list.push(transformSpanToTraceData(span)));
-      return list;
+    .reduce((rows: TraceTableData[], trace) => {
+      const traceData: TraceTableData = transformToTraceData(trace);
+      rows.push(traceData);
+      trace.spans?.forEach((span) => {
+        rows.push(transformSpanToTraceData(span, trace.traceID));
+      });
+      return rows;
     }, []);
 
-  for (const trace of traceData) {
+  for (const trace of tableRows) {
     frame.add(trace);
   }
 
+  console.log(frame);
   return frame;
 }
 
 interface TraceTableData {
-  traceID?: string;
-  traceName: string;
+  [key: string]: string | number | undefined; // dynamic attribute name
+  traceID: string;
   spanID?: string;
-  attributes?: string;
+  //attributes?: string;
   startTime: string;
   duration: number;
 }
 
-function transformSpanToTraceData(data: Span): TraceTableData {
-  const traceStartTime = data.startTimeUnixNano / 1000000;
-  const traceEndTime = data.endTimeUnixNano / 1000000;
+function transformSpanToTraceData(span: Span, traceID: string): TraceTableData {
+  const traceStartTime = span.startTimeUnixNano / 1000000;
+  const traceEndTime = span.endTimeUnixNano / 1000000;
 
   let startTime = dateTimeFormat(traceStartTime);
 
@@ -731,14 +745,18 @@ function transformSpanToTraceData(data: Span): TraceTableData {
     });
   }
 
-  return {
-    traceID: undefined,
-    traceName: data.name,
-    spanID: data.spanId,
-    attributes: data.attributes?.map((atr) => Object.keys(atr).map((key) => `${key} = ${atr[key]}`)).join(', '),
+  const data: TraceTableData = {
+    traceID,
+    spanID: span.spanId,
     startTime,
     duration: traceEndTime - traceStartTime,
   };
+
+  span.attributes?.forEach((attr) => {
+    data[attr.key] = attr.value.stringValue;
+  });
+
+  return data;
 }
 
 const emptyDataQueryResponse = {

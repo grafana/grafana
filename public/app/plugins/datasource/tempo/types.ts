@@ -58,7 +58,7 @@ export type TraceSearchMetadata = {
   rootTraceName: string;
   startTimeUnixNano: string;
   durationMs: number;
-  spanSets?: Spanset[];
+  spans?: Span[];
 };
 
 export type SearchMetrics = {
@@ -81,12 +81,12 @@ export enum SpanKind {
 }
 
 export type Span = {
-  traceId: string;
+  traceId?: string;
   spanId: string;
   traceState?: string;
   parentSpanId?: string;
-  name: string;
-  kind: SpanKind;
+  name?: string;
+  kind?: SpanKind;
   startTimeUnixNano: number;
   endTimeUnixNano: number;
   attributes?: KeyValue[];
