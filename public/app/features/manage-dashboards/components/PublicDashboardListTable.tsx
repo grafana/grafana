@@ -37,7 +37,7 @@ function getStyles(theme: GrafanaTheme2) {
   };
 }
 
-export const ListPublicDashboardTable: FC = () => {
+export const ListPublicDashboardTable = () => {
   const styles = useStyles2(getStyles);
   const [publicDashboards, setPublicDashboards] = useState<ListPublicDashboardResponse[]>([]);
 
