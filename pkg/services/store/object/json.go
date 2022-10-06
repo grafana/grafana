@@ -35,12 +35,12 @@ func (obj *RawObject) MarshalJSON() ([]byte, error) {
 }
 
 // UnmarshalJSON will read JSON into a RawObject
-func (r *RawObject) UnmarshalJSON(b []byte) error {
-	if r == nil {
+func (obj *RawObject) UnmarshalJSON(b []byte) error {
+	if obj == nil {
 		return fmt.Errorf("unexpected nil for raw objcet")
 	}
 	iter := jsoniter.ParseBytes(jsoniter.ConfigDefault, b)
-	readRawObject(iter, r)
+	readRawObject(iter, obj)
 	return iter.Error
 }
 
@@ -171,7 +171,6 @@ func readRawObject(iter *jsoniter.Iterator, raw *RawObject) {
 			return
 		}
 	}
-
 }
 
 // Unlike the standard JSON marshal, this will write bytes as JSON when it can
