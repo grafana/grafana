@@ -91,7 +91,7 @@ func parseFolderFilter(query searchLibraryElementsQuery) FolderFilter {
 	}
 
 	if hasFolderFilter && hasFolderFilterUID {
-		result.parseError = errors.New("Cannot pass both folderFilter and folderFilterUIDs")
+		result.parseError = errors.New("cannot pass both folderFilter and folderFilterUIDs")
 		return result
 	}
 
@@ -111,7 +111,7 @@ func parseFolderFilter(query searchLibraryElementsQuery) FolderFilter {
 		}
 	}
 
-	if hasFolderFilterUID{
+	if hasFolderFilterUID {
 		result.includeGeneralFolder = false
 		folderUIDs = strings.Split(query.folderFilterUIDs, ",")
 		result.folderUIDs = folderUIDs
