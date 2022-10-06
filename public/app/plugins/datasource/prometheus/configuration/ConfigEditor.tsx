@@ -4,7 +4,6 @@ import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
 import { DataSourcePluginOptionsEditorProps, DataSourceSettings } from '@grafana/data';
 import { AlertingSettings, DataSourceHttpSettings, Alert } from '@grafana/ui';
 import { config } from 'app/core/config';
-import { getAllAlertmanagerDataSources } from 'app/features/alerting/unified/utils/alertmanager';
 
 import { PromOptions } from '../types';
 
@@ -15,7 +14,6 @@ import { PromSettings } from './PromSettings';
 export type Props = DataSourcePluginOptionsEditorProps<PromOptions>;
 export const ConfigEditor = (props: Props) => {
   const { options, onOptionsChange } = props;
-  const alertmanagers = getAllAlertmanagerDataSources();
   // use ref so this is evaluated only first time it renders and the select does not disappear suddenly.
   const showAccessOptions = useRef(props.options.access === 'direct');
 
@@ -45,11 +43,7 @@ export const ConfigEditor = (props: Props) => {
         renderSigV4Editor={<SIGV4ConnectionConfig {...props}></SIGV4ConnectionConfig>}
       />
 
-      <AlertingSettings<PromOptions>
-        alertmanagerDataSources={alertmanagers}
-        options={options}
-        onOptionsChange={onOptionsChange}
-      />
+      <AlertingSettings<PromOptions> options={options} onOptionsChange={onOptionsChange} />
 
       <PromSettings options={options} onOptionsChange={onOptionsChange} />
     </>
