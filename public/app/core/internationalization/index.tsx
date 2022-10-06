@@ -1,6 +1,6 @@
 import i18n, { BackendModule, ResourceKey } from 'i18next';
 import React from 'react';
-import { Trans as I18NextTrans, initReactI18next } from 'react-i18next';
+import { Trans as I18NextTrans, initReactI18next } from 'react-i18next'; // eslint-disable-line no-restricted-imports
 
 import { DEFAULT_LOCALE, ENGLISH_US, FRENCH_FRANCE, SPANISH_SPAIN, PSEUDO_LOCALE, VALID_LOCALES } from './constants';
 
@@ -21,7 +21,6 @@ const loadTranslations: BackendModule = {
       return callback(new Error('No message loader available for ' + language), null);
     }
 
-    // TODO: namespace??
     const messages = await loader();
     callback(null, messages);
   },
