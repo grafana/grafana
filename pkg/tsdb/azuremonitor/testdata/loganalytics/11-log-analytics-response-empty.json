@@ -1,0 +1,19 @@
+{
+  "tables": [
+    {
+      "name": "PrimaryResult",
+      "columns": [
+        {
+          "name": "OperationName",
+          "type": "string"
+        },
+        {
+          "name": "Level",
+          "type": "string"
+        }
+      ],
+      "rows": []
+    }
+  ]
+}
+  

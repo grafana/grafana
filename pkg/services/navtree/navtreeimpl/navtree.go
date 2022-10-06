@@ -508,7 +508,7 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *models.ReqContext) *navtree
 	var children []*navtree.NavLink
 	var navLink *navtree.NavLink
 
-	baseId := "data-connections"
+	baseId := "connections"
 	baseUrl := s.cfg.AppSubURL + "/" + baseId
 
 	children = append(children, &navtree.NavLink{
@@ -536,7 +536,7 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *models.ReqContext) *navtree
 	})
 
 	navLink = &navtree.NavLink{
-		Text:       "Data Connections",
+		Text:       "Connections",
 		Icon:       "link",
 		Id:         baseId,
 		Url:        baseUrl,

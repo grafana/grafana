@@ -20,6 +20,9 @@ const (
 	WeightDataConnections
 	WeightPlugin
 	WeightConfig
+	WeightAlertsAndIncidents
+	WeightMonitoring
+	WeightApps
 	WeightAdmin
 	WeightProfile
 	WeightHelp
@@ -113,7 +116,7 @@ func (root *NavTreeRoot) RemoveEmptySectionsAndApplyNewInformationArchitecture(t
 		if serverAdminNode := root.FindById(NavIDAdmin); serverAdminNode != nil {
 			serverAdminNode.Url = "/admin/settings"
 			serverAdminNode.Text = "Server admin"
-			serverAdminNode.SortWeight = 10000
+			serverAdminNode.SortWeight = 0
 
 			if orgAdminNode != nil {
 				orgAdminNode.Children = append(orgAdminNode.Children, serverAdminNode)

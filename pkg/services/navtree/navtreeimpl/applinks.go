@@ -159,34 +159,37 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 		switch sectionID {
 		case navtree.NavIDApps:
 			treeRoot.AddSection(&navtree.NavLink{
-				Text:     "Apps",
-				Icon:     "apps",
-				SubTitle: "App plugins that extend the Grafana experience",
-				Id:       navtree.NavIDApps,
-				Children: []*navtree.NavLink{appLink},
-				Section:  navtree.NavSectionCore,
-				Url:      s.cfg.AppSubURL + "/apps",
+				Text:       "Apps",
+				Icon:       "apps",
+				SubTitle:   "App plugins that extend the Grafana experience",
+				Id:         navtree.NavIDApps,
+				Children:   []*navtree.NavLink{appLink},
+				Section:    navtree.NavSectionCore,
+				SortWeight: navtree.WeightApps,
+				Url:        s.cfg.AppSubURL + "/apps",
 			})
 		case navtree.NavIDMonitoring:
 			treeRoot.AddSection(&navtree.NavLink{
-				Text:     "Monitoring",
-				Id:       navtree.NavIDMonitoring,
-				SubTitle: "Monitoring and infrastructure apps",
-				Icon:     "heart-rate",
-				Section:  navtree.NavSectionCore,
-				Children: []*navtree.NavLink{appLink},
-				Url:      s.cfg.AppSubURL + "/monitoring",
+				Text:       "Monitoring",
+				Id:         navtree.NavIDMonitoring,
+				SubTitle:   "Monitoring and infrastructure apps",
+				Icon:       "heart-rate",
+				Section:    navtree.NavSectionCore,
+				SortWeight: navtree.WeightMonitoring,
+				Children:   []*navtree.NavLink{appLink},
+				Url:        s.cfg.AppSubURL + "/monitoring",
 			})
 		case navtree.NavIDAlertsAndIncidents:
 			if alertingNode != nil {
 				treeRoot.AddSection(&navtree.NavLink{
-					Text:     "Alerts & incidents",
-					Id:       navtree.NavIDAlertsAndIncidents,
-					SubTitle: "Alerting and incident management apps",
-					Icon:     "bell",
-					Section:  navtree.NavSectionCore,
-					Children: []*navtree.NavLink{alertingNode, appLink},
-					Url:      s.cfg.AppSubURL + "/alerts-and-incidents",
+					Text:       "Alerts & incidents",
+					Id:         navtree.NavIDAlertsAndIncidents,
+					SubTitle:   "Alerting and incident management apps",
+					Icon:       "bell",
+					Section:    navtree.NavSectionCore,
+					SortWeight: navtree.WeightAlertsAndIncidents,
+					Children:   []*navtree.NavLink{alertingNode, appLink},
+					Url:        s.cfg.AppSubURL + "/alerts-and-incidents",
 				})
 				treeRoot.RemoveSection(alertingNode)
 			}
@@ -211,12 +214,13 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"/a/grafana-auth-app": {SectionID: navtree.NavIDCfg, SortWeight: 7},
 	}
 
-	sec := s.cfg.Raw.Section("navigation.apps")
+	appSections := s.cfg.Raw.Section("navigation.app_sections")
+	appStandalonePages := s.cfg.Raw.Section("navigation.app_standalone_pages")
 
-	for _, key := range sec.Keys() {
+	for _, key := range appSections.Keys() {
 		pluginId := key.Name()
 		// Support <id> <weight> value
-		values := util.SplitString(sec.Key(key.Name()).MustString(""))
+		values := util.SplitString(appSections.Key(key.Name()).MustString(""))
 
 		appCfg := &NavigationAppConfig{SectionID: values[0]}
 		if len(values) > 1 {
@@ -226,5 +230,20 @@ func (s *ServiceImpl) readNavigationSettings() {
 		}
 
 		s.navigationAppConfig[pluginId] = *appCfg
+	}
+
+	for _, key := range appStandalonePages.Keys() {
+		url := key.Name()
+		// Support <id> <weight> value
+		values := util.SplitString(appStandalonePages.Key(key.Name()).MustString(""))
+
+		appCfg := &NavigationAppConfig{SectionID: values[0]}
+		if len(values) > 1 {
+			if weight, err := strconv.ParseInt(values[1], 10, 64); err == nil {
+				appCfg.SortWeight = weight
+			}
+		}
+
+		s.navigationAppPathConfig[url] = *appCfg
 	}
 }
