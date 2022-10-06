@@ -37,7 +37,7 @@ func stateToPostableAlert(alertState *state.State, appURL *url.URL) *models.Post
 	nA := data.Labels(alertState.Annotations).Copy()
 
 	// encode the values as JSON where it will be expanded later
-	if b, err := json.Marshal(alertState.Values); err != nil {
+	if b, err := json.Marshal(alertState.Values); err == nil {
 		nA[ngModels.ValuesAnnotation] = string(b)
 	}
 
