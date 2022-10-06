@@ -42,8 +42,8 @@ func TestIntegrationLoki(t *testing.T) {
 	t.Cleanup(outgoingServer.Close)
 
 	jsonData := simplejson.NewFromAny(map[string]interface{}{
-		"httpMethod":            "post",
-		"httpHeaderName1":       "X-CUSTOM-HEADER",
+		"httpMethod":      "post",
+		"httpHeaderName1": "X-CUSTOM-HEADER",
 	})
 	secureJSONData := map[string]string{
 		"basicAuthPassword": "basicAuthPassword",
@@ -70,7 +70,7 @@ func TestIntegrationLoki(t *testing.T) {
 			"datasource": map[string]interface{}{
 				"uid": uid,
 			},
-			"expr":         "{job=\"grafana\"}",
+			"expr": "{job=\"grafana\"}",
 		})
 		buf1 := &bytes.Buffer{}
 		err = json.NewEncoder(buf1).Encode(dtos.MetricRequest{
