@@ -102,8 +102,7 @@ export class ShareModal extends React.Component<Props, State> {
   };
 
   getTabs() {
-    const { tabs } = getTabs(this.props);
-    return tabs;
+    return getTabs(this.props).tabs;
   }
 
   getActiveTab() {
@@ -115,13 +114,12 @@ export class ShareModal extends React.Component<Props, State> {
     const { panel } = this.props;
     const { activeTab } = this.state;
     const title = panel ? t('share-modal.panel.title', 'Share Panel') : t('share-modal.dashboard.title', 'Share');
-    const tabs = this.getTabs();
 
     return (
       <ModalTabsHeader
         title={title}
         icon="share-alt"
-        tabs={tabs}
+        tabs={this.getTabs()}
         activeTab={activeTab}
         onChangeTab={this.onSelectTab}
       />

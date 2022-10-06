@@ -25,16 +25,6 @@ export const viewPublicDashboardUrl = (accessToken: string): string => {
   return `${getConfig().appUrl}public-dashboards/${accessToken}`;
 };
 
-function getStyles(theme: GrafanaTheme2) {
-  return {
-    link: css`
-      color: ${theme.colors.primary.text};
-      text-decoration: underline;
-      margin-right: ${theme.spacing()};
-    `,
-  };
-}
-
 export const ListPublicDashboardTable = () => {
   const styles = useStyles2(getStyles);
   const [publicDashboards, setPublicDashboards] = useState<ListPublicDashboardResponse[]>([]);
@@ -93,3 +83,13 @@ export const ListPublicDashboardTable = () => {
     </div>
   );
 };
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    link: css`
+      color: ${theme.colors.primary.text};
+      text-decoration: underline;
+      margin-right: ${theme.spacing()};
+    `,
+  };
+}
