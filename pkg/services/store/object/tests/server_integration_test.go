@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"reflect"
-	"strings"
 	"testing"
 	"time"
 
@@ -21,40 +20,22 @@ func createContentsHash(contents []byte) string {
 }
 
 type rawObjectMatcher struct {
-	uid           *string
-	kind          *string
-	createdRange  []time.Time
-	modifiedRange []time.Time
-	createdBy     *object.UserInfo
-	modifiedBy    *object.UserInfo
-	body          []byte
-	version       *string
+	uid          *string
+	kind         *string
+	createdRange []time.Time
+	updatedRange []time.Time
+	createdBy    string
+	updatedBy    string
+	body         []byte
+	version      *string
 }
 
 type objectVersionMatcher struct {
-	modifiedRange []time.Time
-	modifiedBy    *object.UserInfo
-	version       *string
-	etag          *string
-	comment       *string
-}
-
-func userInfoMatches(expected *object.UserInfo, actual *object.UserInfo) (bool, string) {
-	var mismatches []string
-
-	if actual == nil && expected != nil {
-		return true, "Missing user info"
-	}
-
-	if expected.Id != actual.Id {
-		mismatches = append(mismatches, fmt.Sprintf("expected ID %d, actual ID: %d", expected.Id, actual.Id))
-	}
-
-	if expected.Login != actual.Login {
-		mismatches = append(mismatches, fmt.Sprintf("expected login %s, actual login: %s", expected.Login, actual.Login))
-	}
-
-	return len(mismatches) == 0, strings.Join(mismatches, ", ")
+	updatedRange []time.Time
+	updatedBy    string
+	version      *string
+	etag         *string
+	comment      *string
 }
 
 func timestampInRange(ts int64, tsRange []time.Time) bool {
@@ -78,22 +59,16 @@ func requireObjectMatch(t *testing.T, obj *object.RawObject, m rawObjectMatcher)
 		mismatches += fmt.Sprintf("expected createdBy range: [from %s to %s], actual created: %s\n", m.createdRange[0], m.createdRange[1], time.Unix(obj.Created, 0))
 	}
 
-	if len(m.modifiedRange) == 2 && !timestampInRange(obj.Modified, m.modifiedRange) {
-		mismatches += fmt.Sprintf("expected createdBy range: [from %s to %s], actual created: %s\n", m.modifiedRange[0], m.modifiedRange[1], time.Unix(obj.Modified, 0))
+	if len(m.updatedRange) == 2 && !timestampInRange(obj.Updated, m.updatedRange) {
+		mismatches += fmt.Sprintf("expected updatedRange range: [from %s to %s], actual updated: %s\n", m.updatedRange[0], m.updatedRange[1], time.Unix(obj.Updated, 0))
 	}
 
-	if m.createdBy != nil {
-		userInfoMatches, msg := userInfoMatches(m.createdBy, obj.CreatedBy)
-		if !userInfoMatches {
-			mismatches += fmt.Sprintf("createdBy: %s\n", msg)
-		}
+	if m.createdBy != "" && m.createdBy != obj.CreatedBy {
+		mismatches += fmt.Sprintf("createdBy: expected:%s, found:%s\n", m.createdBy, obj.CreatedBy)
 	}
 
-	if m.modifiedBy != nil {
-		userInfoMatches, msg := userInfoMatches(m.modifiedBy, obj.ModifiedBy)
-		if !userInfoMatches {
-			mismatches += fmt.Sprintf("modifiedBy: %s\n", msg)
-		}
+	if m.updatedBy != "" && m.updatedBy != obj.UpdatedBy {
+		mismatches += fmt.Sprintf("updatedBy: expected:%s, found:%s\n", m.updatedBy, obj.UpdatedBy)
 	}
 
 	if !reflect.DeepEqual(m.body, obj.Body) {
@@ -121,15 +96,12 @@ func requireVersionMatch(t *testing.T, obj *object.ObjectVersionInfo, m objectVe
 		mismatches += fmt.Sprintf("expected etag: %s, actual etag: %s\n", *m.etag, obj.ETag)
 	}
 
-	if len(m.modifiedRange) == 2 && !timestampInRange(obj.Modified, m.modifiedRange) {
-		mismatches += fmt.Sprintf("expected createdBy range: [from %s to %s], actual created: %s\n", m.modifiedRange[0], m.modifiedRange[1], time.Unix(obj.Modified, 0))
+	if len(m.updatedRange) == 2 && !timestampInRange(obj.Updated, m.updatedRange) {
+		mismatches += fmt.Sprintf("expected updatedRange range: [from %s to %s], actual updated: %s\n", m.updatedRange[0], m.updatedRange[1], time.Unix(obj.Updated, 0))
 	}
 
-	if m.modifiedBy != nil {
-		userInfoMatches, msg := userInfoMatches(m.modifiedBy, obj.ModifiedBy)
-		if !userInfoMatches {
-			mismatches += fmt.Sprintf("modifiedBy: %s\n", msg)
-		}
+	if m.updatedBy != "" && m.updatedBy != obj.UpdatedBy {
+		mismatches += fmt.Sprintf("updatedBy: expected:%s, found:%s\n", m.updatedBy, obj.UpdatedBy)
 	}
 
 	if m.version != nil && *m.version != obj.Version {
@@ -148,10 +120,7 @@ func TestObjectServer(t *testing.T) {
 	testCtx := createTestContext(t)
 	ctx = metadata.AppendToOutgoingContext(ctx, "authorization", fmt.Sprintf("Bearer %s", testCtx.authToken))
 
-	fakeUser := &object.UserInfo{
-		Login: testCtx.user.Login,
-		Id:    testCtx.user.UserID,
-	}
+	fakeUser := fmt.Sprintf("user:%d:%s", testCtx.user.UserID, testCtx.user.Login)
 	firstVersion := "1"
 	kind := "dashboard"
 	uid := "my-test-entity"
@@ -180,10 +149,10 @@ func TestObjectServer(t *testing.T) {
 		require.NoError(t, err)
 
 		versionMatcher := objectVersionMatcher{
-			modifiedRange: []time.Time{before, time.Now()},
-			modifiedBy:    fakeUser,
-			version:       &firstVersion,
-			comment:       &writeReq.Comment,
+			updatedRange: []time.Time{before, time.Now()},
+			updatedBy:    fakeUser,
+			version:      &firstVersion,
+			comment:      &writeReq.Comment,
 		}
 		requireVersionMatch(t, writeResp.Object, versionMatcher)
 
@@ -197,14 +166,14 @@ func TestObjectServer(t *testing.T) {
 		require.Nil(t, readResp.SummaryJson)
 
 		objectMatcher := rawObjectMatcher{
-			uid:           &uid,
-			kind:          &kind,
-			createdRange:  []time.Time{before, time.Now()},
-			modifiedRange: []time.Time{before, time.Now()},
-			createdBy:     fakeUser,
-			modifiedBy:    fakeUser,
-			body:          body,
-			version:       &firstVersion,
+			uid:          &uid,
+			kind:         &kind,
+			createdRange: []time.Time{before, time.Now()},
+			updatedRange: []time.Time{before, time.Now()},
+			createdBy:    fakeUser,
+			updatedBy:    fakeUser,
+			body:         body,
+			version:      &firstVersion,
 		}
 		requireObjectMatch(t, readResp.Object, objectMatcher)
 
@@ -270,14 +239,14 @@ func TestObjectServer(t *testing.T) {
 		require.NotEqual(t, writeResp3.Object.Version, writeResp2.Object.Version)
 
 		latestMatcher := rawObjectMatcher{
-			uid:           &uid,
-			kind:          &kind,
-			createdRange:  []time.Time{before, time.Now()},
-			modifiedRange: []time.Time{before, time.Now()},
-			createdBy:     fakeUser,
-			modifiedBy:    fakeUser,
-			body:          body3,
-			version:       &writeResp3.Object.Version,
+			uid:          &uid,
+			kind:         &kind,
+			createdRange: []time.Time{before, time.Now()},
+			updatedRange: []time.Time{before, time.Now()},
+			createdBy:    fakeUser,
+			updatedBy:    fakeUser,
+			body:         body3,
+			version:      &writeResp3.Object.Version,
 		}
 		readRespLatest, err := testCtx.client.Read(ctx, &object.ReadObjectRequest{
 			UID:      uid,
@@ -300,14 +269,14 @@ func TestObjectServer(t *testing.T) {
 		require.Nil(t, readRespFirstVer.SummaryJson)
 		require.NotNil(t, readRespFirstVer.Object)
 		requireObjectMatch(t, readRespFirstVer.Object, rawObjectMatcher{
-			uid:           &uid,
-			kind:          &kind,
-			createdRange:  []time.Time{before, time.Now()},
-			modifiedRange: []time.Time{before, time.Now()},
-			createdBy:     fakeUser,
-			modifiedBy:    fakeUser,
-			body:          body,
-			version:       &firstVersion,
+			uid:          &uid,
+			kind:         &kind,
+			createdRange: []time.Time{before, time.Now()},
+			updatedRange: []time.Time{before, time.Now()},
+			createdBy:    fakeUser,
+			updatedBy:    fakeUser,
+			body:         body,
+			version:      &firstVersion,
 		})
 
 		history, err := testCtx.client.History(ctx, &object.ObjectHistoryRequest{
