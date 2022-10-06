@@ -52,7 +52,7 @@ export interface DashboardSectionItem {
 }
 
 /**
- * @deprecated - It uses dashboard ID which is depreacted in favor of dashboard UID. Please, use DashboardSearchItem instead.
+ * @deprecated - It uses dashboard ID which is deprecated in favor of dashboard UID. Please, use DashboardSearchItem instead.
  */
 export interface DashboardSearchHit extends DashboardSectionItem, DashboardSection, WithAccessControlMetadata {}
 

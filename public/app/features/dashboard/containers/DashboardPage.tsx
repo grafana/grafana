@@ -2,7 +2,7 @@ import { cx } from '@emotion/css';
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { locationUtil, NavModel, NavModelItem, TimeRange, PageLayoutType } from '@grafana/data';
+import { NavModel, NavModelItem, TimeRange, PageLayoutType, locationUtil } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
 import { Themeable2, withTheme2 } from '@grafana/ui';
@@ -459,6 +459,7 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
       ...pageNav,
       text: `${state.editPanel ? 'Edit' : 'View'} panel`,
       parentItem: pageNav,
+      url: undefined,
     };
   }
 
