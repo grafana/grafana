@@ -4,13 +4,26 @@ export function setCustomNamespace(query: AzureMonitorQuery, selection: string |
   if (query.azureMonitor?.customNamespace === selection) {
     return query;
   }
-  const customNamespace = selection?.toLowerCase().startsWith('microsoft.storage/storageaccounts/') ? '' : selection;
+
+  if (selection?.toLowerCase().startsWith('microsoft.storage/storageaccounts/')) {
+    return {
+      ...query,
+      azureMonitor: {
+        ...query.azureMonitor,
+        metricNamespace: selection,
+        metricName: undefined,
+        aggregation: undefined,
+        timeGrain: '',
+        dimensionFilters: [],
+      },
+    };
+  }
 
   return {
     ...query,
     azureMonitor: {
       ...query.azureMonitor,
-      customNamespace,
+      customNamespace: selection,
       metricName: undefined,
       aggregation: undefined,
       timeGrain: '',
