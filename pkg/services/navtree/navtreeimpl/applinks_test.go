@@ -205,7 +205,7 @@ func TestReadingNavigationSettings(t *testing.T) {
 		require.Equal(t, int64(0), service.navigationAppConfig["grafana-k8s-app"].SortWeight)
 		require.Equal(t, int64(12), service.navigationAppConfig["other-app"].SortWeight)
 
-		require.Equal(t, "admin", service.navigationAppPathConfig["/a/grafana-k8s/foo"].SectionID)
-		require.Equal(t, int64(30), service.navigationAppPathConfig["/a/grafana-k8s/foo"].SortWeight)
+		require.Equal(t, "admin", service.navigationAppPathConfig["/a/grafana-k8s-app/foo"].SectionID)
+		require.Equal(t, int64(30), service.navigationAppPathConfig["/a/grafana-k8s-app/foo"].SortWeight)
 	})
 }
