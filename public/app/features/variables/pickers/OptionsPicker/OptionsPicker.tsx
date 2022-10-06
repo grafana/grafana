@@ -108,6 +108,11 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
       this.props.navigateOptions(this.props.variable.rootStateKey, key, clearOthers);
     };
 
+    componentDidMount() {
+      this.onShowOptions();
+      this.onHideOptions();
+    }
+
     render() {
       const { variable, picker } = this.props;
       const showOptions = picker.id === variable.id;
