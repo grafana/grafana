@@ -148,14 +148,15 @@ func (s *StandardSearchService) getUser(ctx context.Context, backendUser *backen
 
 	var usr *user.SignedInUser
 	if s.cfg.AnonymousEnabled && backendUser.Email == "" && backendUser.Login == "" {
-		orga, err := s.sql.GetOrgByName(s.cfg.AnonymousOrgName)
+		getOrg := org.GetOrgByNameQuery{Name: s.cfg.AnonymousOrgName}
+		orga, err := s.orgService.GetByName(ctx, &getOrg)
 		if err != nil {
 			s.logger.Error("Anonymous access organization error.", "org_name", s.cfg.AnonymousOrgName, "error", err)
 			return nil, err
 		}
 
 		usr = &user.SignedInUser{
-			OrgID:       orga.Id,
+			OrgID:       orga.ID,
 			OrgName:     orga.Name,
 			OrgRole:     org.RoleType(s.cfg.AnonymousOrgRole),
 			IsAnonymous: true,

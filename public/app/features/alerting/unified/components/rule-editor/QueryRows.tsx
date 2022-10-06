@@ -19,36 +19,29 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { EmptyQueryWrapper, QueryWrapper } from './QueryWrapper';
-import { queriesWithUpdatedReferences } from './util';
+import { errorFromSeries } from './util';
 
 interface Props {
   // The query configuration
   queries: AlertQuery[];
   data: Record<string, PanelData>;
+  onRunQueries: () => void;
 
   // Query editing
   onQueriesChange: (queries: AlertQuery[]) => void;
   onDuplicateQuery: (query: AlertQuery) => void;
-  onRunQueries: () => void;
+  condition: string | null;
+  onSetCondition: (refId: string) => void;
 }
 
-interface State {
-  dataPerQuery: Record<string, PanelData>;
-}
-
-export class QueryRows extends PureComponent<Props, State> {
+export class QueryRows extends PureComponent<Props> {
   constructor(props: Props) {
     super(props);
-
-    this.state = { dataPerQuery: {} };
   }
 
   onRemoveQuery = (query: DataQuery) => {
-    this.props.onQueriesChange(
-      this.props.queries.filter((item) => {
-        return item.model.refId !== query.refId;
-      })
-    );
+    const { queries, onQueriesChange } = this.props;
+    onQueriesChange(queries.filter((q) => q.refId !== query.refId));
   };
 
   onChangeTimeRange = (timeRange: RelativeTimeRange, index: number) => {
@@ -119,12 +112,8 @@ export class QueryRows extends PureComponent<Props, State> {
   onChangeQuery = (query: DataQuery, index: number) => {
     const { queries, onQueriesChange } = this.props;
 
-    // find what queries still have a reference to the old name
-    const previousRefId = queries[index].refId;
-    const newRefId = query.refId;
-
     onQueriesChange(
-      queriesWithUpdatedReferences(queries, previousRefId, newRefId).map((item, itemIndex) => {
+      queries.map((item, itemIndex) => {
         if (itemIndex !== index) {
           return item;
         }
@@ -160,13 +149,6 @@ export class QueryRows extends PureComponent<Props, State> {
     const [removed] = update.splice(startIndex, 1);
     update.splice(endIndex, 0, removed);
     onQueriesChange(update);
-  };
-
-  onDuplicateQuery = (query: DataQuery, source: AlertQuery): void => {
-    this.props.onDuplicateQuery({
-      ...source,
-      model: query,
-    });
   };
 
   getDataSourceSettings = (query: AlertQuery): DataSourceInstanceSettings | undefined => {
@@ -218,7 +200,7 @@ export class QueryRows extends PureComponent<Props, State> {
   };
 
   render() {
-    const { onDuplicateQuery, onRunQueries, queries } = this.props;
+    const { queries } = this.props;
     const thresholdByRefId = this.getThresholdsForQueries(queries);
 
     return (
@@ -233,6 +215,9 @@ export class QueryRows extends PureComponent<Props, State> {
                     state: LoadingState.NotStarted,
                   };
                   const dsSettings = this.getDataSourceSettings(query);
+
+                  const isAlertCondition = this.props.condition === query.refId;
+                  const error = isAlertCondition ? errorFromSeries(data.series) : undefined;
 
                   if (!dsSettings) {
                     return (
@@ -259,16 +244,19 @@ export class QueryRows extends PureComponent<Props, State> {
                       key={query.refId}
                       dsSettings={dsSettings}
                       data={data}
+                      error={error}
                       query={query}
                       onChangeQuery={this.onChangeQuery}
                       onRemoveQuery={this.onRemoveQuery}
                       queries={queries}
                       onChangeDataSource={this.onChangeDataSource}
-                      onDuplicateQuery={onDuplicateQuery}
-                      onRunQueries={onRunQueries}
+                      onDuplicateQuery={this.props.onDuplicateQuery}
                       onChangeTimeRange={this.onChangeTimeRange}
                       thresholds={thresholdByRefId[query.refId]}
                       onChangeThreshold={this.onChangeThreshold}
+                      onRunQueries={this.props.onRunQueries}
+                      condition={this.props.condition}
+                      onSetCondition={this.props.onSetCondition}
                     />
                   );
                 })}

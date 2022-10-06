@@ -10,6 +10,11 @@ var (
 	// Register each toggle here
 	standardFeatureFlags = []FeatureFlag{
 		{
+			Name:        "alertingBigTransactions",
+			Description: "Use big transactions for alerting database writes",
+			State:       FeatureStateAlpha,
+		},
+		{
 			Name:        "trimDefaults",
 			Description: "Use cue schema to remove values that will be applied automatically",
 			State:       FeatureStateBeta,
@@ -249,7 +254,7 @@ var (
 		},
 		{
 			Name:        "dataConnectionsConsole",
-			Description: "Enables a new top-level page called Data Connections. This page is an experiment for better grouping of installing / configuring data sources and other plugins.",
+			Description: "Enables a new top-level page called Connections. This page is an experiment for better grouping of installing / configuring data sources and other plugins.",
 			State:       FeatureStateAlpha,
 		},
 		{
@@ -260,11 +265,6 @@ var (
 		{
 			Name:        "topnav",
 			Description: "New top nav and page layouts",
-			State:       FeatureStateAlpha,
-		},
-		{
-			Name:        "customBranding",
-			Description: "Replaces whitelabeling with the new custom branding feature",
 			State:       FeatureStateAlpha,
 		},
 		{
