@@ -36,7 +36,7 @@ type sqlObjectServer struct {
 func getReadSelect(r *object.ReadObjectRequest) string {
 	fields := []string{
 		`"key"`, `"kind"`, `"version"`,
-		`"size"`, `"etag"`,
+		`"size"`, `"etag"`, `"errors"`, // errors are always returned
 		`"created"`, `"created_by"`,
 		`"updated"`, `"updated_by"`,
 		`"sync_src"`, `"sync_time"`}
@@ -45,7 +45,7 @@ func getReadSelect(r *object.ReadObjectRequest) string {
 		fields = append(fields, `"body"`)
 	}
 	if r.WithSummary {
-		fields = append(fields, `"summary"`)
+		fields = append(fields, `"name"`, `"description"`, `"labels"`, `"fields"`)
 	}
 	return "SELECT " + strings.Join(fields, ",") + " FROM object WHERE "
 }
@@ -53,27 +53,33 @@ func getReadSelect(r *object.ReadObjectRequest) string {
 func rowToReadObjectResponse(rows *sql.Rows, r *object.ReadObjectRequest) (*object.ReadObjectResponse, error) {
 	created := time.Now()
 	updated := time.Now()
-	summary := "" // empty
-	key := ""     // string (extract UID?)
+	key := "" // string (extract UID?)
 	var syncSrc sql.NullString
 	var syncTime sql.NullTime
-	raw := &object.RawObject{
-		CreatedBy: &object.UserInfo{},
-		UpdatedBy: &object.UserInfo{},
-	}
+	createdByID := int64(0)
+	updatedByID := int64(0)
+	raw := &object.RawObject{}
+
+	summaryjson := struct {
+		name        string
+		description string
+		labels      []byte
+		fields      []byte
+		errors      []byte // should not allow saving with this!
+	}{}
 
 	args := []interface{}{
 		&key, &raw.Kind, &raw.Version,
-		&raw.Size, &raw.ETag,
-		&created, &raw.CreatedBy.Id,
-		&updated, &raw.UpdatedBy.Id,
+		&raw.Size, &raw.ETag, &summaryjson.errors,
+		&created, &createdByID,
+		&updated, &updatedByID,
 		&syncSrc, &syncTime,
 	}
 	if r.WithBody {
 		args = append(args, &raw.Body)
 	}
 	if r.WithSummary {
-		args = append(args, &summary)
+		args = append(args, &summaryjson.name, &summaryjson.description, &summaryjson.labels, &summaryjson.fields)
 	}
 
 	err := rows.Scan(args...)
@@ -82,6 +88,8 @@ func rowToReadObjectResponse(rows *sql.Rows, r *object.ReadObjectRequest) (*obje
 	}
 	raw.Created = created.UnixMilli()
 	raw.Updated = updated.UnixMilli()
+	raw.CreatedBy = fmt.Sprintf("user:%d", updatedByID)
+	raw.UpdatedBy = fmt.Sprintf("user:%d", updatedByID)
 
 	if syncSrc.Valid {
 		raw.SyncSrc = syncSrc.String
@@ -93,8 +101,26 @@ func rowToReadObjectResponse(rows *sql.Rows, r *object.ReadObjectRequest) (*obje
 	rsp := &object.ReadObjectResponse{
 		Object: raw,
 	}
-	if summary != "" {
-		rsp.SummaryJson = []byte(summary)
+
+	if r.WithSummary || summaryjson.errors != nil {
+		summary := &object.ObjectSummary{
+			Name:        summaryjson.name,
+			Description: summaryjson.description,
+		}
+		if summaryjson.errors != nil {
+			_ = json.Unmarshal(summaryjson.errors, &summary.Error)
+		}
+		if summaryjson.fields != nil {
+			_ = json.Unmarshal(summaryjson.fields, &summary.Fields)
+		}
+		if summaryjson.labels != nil {
+			_ = json.Unmarshal(summaryjson.labels, &summary.Labels)
+		}
+
+		js, err := json.Marshal(summary)
+		if err != nil {
+			rsp.SummaryJson = js
+		}
 	}
 	return rsp, nil
 }
@@ -166,11 +192,18 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 	// TODO: this needs to be extracted from the body content
 	summary := object.ObjectSummary{
 		Name:        "hello",
-		Description: "description",
+		Description: fmt.Sprintf("Wrote at %s", time.Now().Local().String()),
 		Labels: map[string]string{
 			"hello": "world",
 			"test":  "",
 		},
+		Fields: map[string]interface{}{
+			"field1": "a string",
+			"field2": 1.224,
+			"field4": true,
+		},
+		Error:  nil, // ignore for now
+		Nested: nil, // ignore for now
 		References: []*object.ExternalReference{
 			{
 				Kind: "ds",
@@ -188,11 +221,21 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 		},
 	}
 
-	etag := createContentsHash(r.Body)
-	summaryjson, err := json.Marshal(summary)
-	if err != nil {
-		return nil, err
+	summaryjson := struct {
+		labels []byte
+		fields []byte
+		errors []byte // should not allow saving with this!
+	}{}
+
+	var err error
+	if len(summary.Labels) > 0 {
+		summaryjson.labels, err = json.Marshal(summary.Labels)
+		if err != nil {
+			return nil, err
+		}
 	}
+
+	etag := createContentsHash(r.Body)
 
 	modifier := object.UserFromContext(ctx)
 	key := fmt.Sprintf("%d/%s.%s", modifier.OrgID, r.UID, r.Kind)
@@ -234,10 +277,10 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 			versionInfo.Version = fmt.Sprintf("%d", i+1)
 
 			// Clear the labels+refs
-			if _, err := tx.Exec(ctx, "DELETE FROM object_labels WHERE object_key = ?", key); err != nil {
+			if _, err := tx.Exec(ctx, "DELETE FROM object_labels WHERE key = ?", key); err != nil {
 				return err
 			}
-			if _, err := tx.Exec(ctx, "DELETE FROM object_ref WHERE object_key = ?", key); err != nil {
+			if _, err := tx.Exec(ctx, "DELETE FROM object_ref WHERE key = ?", key); err != nil {
 				return err
 			}
 		}
@@ -246,10 +289,7 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 		versionInfo.Size = int64(len(r.Body))
 		versionInfo.ETag = etag
 		versionInfo.Updated = timestamp.Unix()
-		versionInfo.UpdatedBy = &object.UserInfo{
-			Id:    modifier.UserID,
-			Login: modifier.Login,
-		}
+		versionInfo.UpdatedBy = object.GetUserIDString(modifier)
 		_, err = tx.Exec(ctx, `INSERT INTO object_history (`+
 			`"key", "version", "message", `+
 			`"size", "body", "etag", `+
@@ -266,7 +306,7 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 		// 2. Add the labels rows
 		for k, v := range summary.Labels {
 			_, err = tx.Exec(ctx, `INSERT INTO object_labels (`+
-				`"object_key", "label", "value") `+
+				`"key", "label", "value") `+
 				`VALUES (?, ?, ?)`,
 				key, k, v,
 			)
@@ -278,7 +318,7 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 		// 3. Add the references rows
 		for _, ref := range summary.References {
 			_, err = tx.Exec(ctx, `INSERT INTO object_ref (`+
-				`"object_key", "kind", "type", "uid") `+
+				`"key", "kind", "type", "uid") `+
 				`VALUES (?, ?, ?, ?)`,
 				key, ref.Kind, ref.Type, ref.UID,
 			)
@@ -293,11 +333,13 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 			rsp.Status = object.WriteObjectResponse_UPDATED
 			_, err = tx.Exec(ctx, `UPDATE object SET "body"=?, "size"=?, "etag"=?, "version"=?, `+
 				`"updated"=?, "updated_by"=?,`+
-				`"name"=?, "description"=?, "summary"=? `+
+				`"name"=?, "description"=?,`+
+				`"labels"=?, "fields"=?, "errors"=? `+
 				`WHERE key=?`,
 				r.Body, versionInfo.Size, etag, versionInfo.Version,
 				timestamp, modifier.UserID,
-				summary.Name, summary.Description, string(summaryjson),
+				summary.Name, summary.Description,
+				summaryjson.labels, summaryjson.fields, summaryjson.errors,
 				key,
 			)
 			return err
@@ -309,13 +351,13 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 		_, err = tx.Exec(ctx, `INSERT INTO object (`+
 			`"key", "parent_folder_key", "kind", "size", "body", "etag", "version",`+
 			`"updated", "updated_by", "created", "created_by",`+
-			`"name", "description", "summary") `+
-			`VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			`"name", "description",`+
+			`"labels", "fields", "errors") `+
+			`VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			key, parent_folder_key, r.Kind, versionInfo.Size, r.Body, etag, versionInfo.Version,
 			timestamp, modifier.UserID, timestamp, modifier.UserID, // created + modified
-			summary.Name,
-			summary.Description,
-			string(summaryjson),
+			summary.Name, summary.Description,
+			summaryjson.labels, summaryjson.fields, summaryjson.errors,
 		)
 		if err != nil {
 			rsp.Status = object.WriteObjectResponse_CREATED
@@ -346,8 +388,8 @@ func (s sqlObjectServer) Delete(ctx context.Context, r *object.DeleteObjectReque
 
 		// TODO: keep history? would need current version bump, and the "write" would have to get from history
 		_, _ = tx.Exec(ctx, `DELETE FROM object_history key=?`, key)
-		_, _ = tx.Exec(ctx, `DELETE FROM object_labels object_key=?`, key)
-		_, _ = tx.Exec(ctx, `DELETE FROM object_ref object_key=?`, key)
+		_, _ = tx.Exec(ctx, `DELETE FROM object_labels key=?`, key)
+		_, _ = tx.Exec(ctx, `DELETE FROM object_ref key=?`, key)
 		return nil
 	})
 	return rsp, err
@@ -372,20 +414,20 @@ func (s sqlObjectServer) History(ctx context.Context, r *object.ObjectHistoryReq
 	;`
 
 	timestamp := time.Now()
+	updateById := int64(0)
 	rows, err := s.sess.Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
 	rsp := &object.ObjectHistoryResponse{}
 	for rows.Next() {
-		v := &object.ObjectVersionInfo{
-			UpdatedBy: &object.UserInfo{},
-		}
-		err := rows.Scan(&v.Version, &v.Size, &v.ETag, &timestamp, &v.UpdatedBy.Id, &v.Comment)
+		v := &object.ObjectVersionInfo{}
+		err := rows.Scan(&v.Version, &v.Size, &v.ETag, &timestamp, &updateById, &v.Comment)
 		if err != nil {
 			return nil, err
 		}
 		v.Updated = timestamp.UnixMilli()
+		v.UpdatedBy = fmt.Sprintf("user:%d", updateById)
 		rsp.Versions = append(rsp.Versions, v)
 	}
 	return rsp, err

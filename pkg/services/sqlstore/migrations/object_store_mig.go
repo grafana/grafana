@@ -25,7 +25,7 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 			{Name: "body", Type: migrator.DB_Blob, Nullable: false},
 			{Name: "size", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "etag", Type: migrator.DB_NVarchar, Length: 32, Nullable: false}, // md5(body)
-			{Name: "version", Type: migrator.DB_NVarchar, Length: 128, Nullable: true},
+			{Name: "version", Type: migrator.DB_NVarchar, Length: 128, Nullable: false},
 
 			// Who changed what when
 			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
@@ -40,7 +40,9 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 			// Summary data (always extracted from the `body` column)
 			{Name: "name", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "description", Type: migrator.DB_NVarchar, Length: 255, Nullable: true},
-			{Name: "summary", Type: migrator.DB_Text, Nullable: true}, // JSON with labels+fields
+			{Name: "labels", Type: migrator.DB_Text, Nullable: true}, // JSON object
+			{Name: "fields", Type: migrator.DB_Text, Nullable: true}, // JSON object
+			{Name: "errors", Type: migrator.DB_Text, Nullable: true}, // JSON object
 		},
 		PrimaryKeys: []string{"key"},
 		Indices: []*migrator.Index{
@@ -52,12 +54,12 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 	objectLabelsTable := migrator.Table{
 		Name: "object_labels",
 		Columns: []*migrator.Column{
-			{Name: "object_key", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false},
+			{Name: "key", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false},
 			{Name: "label", Type: migrator.DB_NVarchar, Length: 191, Nullable: false},
 			{Name: "value", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false},
 		},
 		Indices: []*migrator.Index{
-			{Cols: []string{"object_key", "label"}, Type: migrator.UniqueIndex},
+			{Cols: []string{"key", "label"}, Type: migrator.UniqueIndex},
 		},
 	}
 
@@ -65,7 +67,7 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 		Name: "object_ref",
 		Columns: []*migrator.Column{
 			// FROM:
-			{Name: "object_key", Type: migrator.DB_NVarchar, Length: 64, Nullable: false},
+			{Name: "key", Type: migrator.DB_NVarchar, Length: 64, Nullable: false},
 
 			// TO:
 			{Name: "kind", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
@@ -73,7 +75,8 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 			{Name: "uid", Type: migrator.DB_NVarchar, Length: 1024, Nullable: true}, // key? (must join?) target_key?
 		},
 		Indices: []*migrator.Index{
-			{Cols: []string{"object_key"}, Type: migrator.UniqueIndex},
+			{Cols: []string{"key"}, Type: migrator.IndexType},
+			{Cols: []string{"kind"}, Type: migrator.IndexType},
 		},
 	}
 
@@ -81,7 +84,7 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 		Name: "object_history",
 		Columns: []*migrator.Column{
 			{Name: "key", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false},
-			{Name: "version", Type: migrator.DB_NVarchar, Length: 128, Nullable: true},
+			{Name: "version", Type: migrator.DB_NVarchar, Length: 128, Nullable: false},
 
 			// Raw bytes
 			{Name: "body", Type: migrator.DB_Blob, Nullable: false},
@@ -93,7 +96,7 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 			{Name: "updated_by", Type: migrator.DB_Int, Nullable: false},
 
 			// Commit message
-			{Name: "message", Type: migrator.DB_Text, Nullable: false},
+			{Name: "message", Type: migrator.DB_Text, Nullable: false}, // defaults to empty string
 		},
 		Indices: []*migrator.Index{
 			{Cols: []string{"key", "version"}, Type: migrator.UniqueIndex},
