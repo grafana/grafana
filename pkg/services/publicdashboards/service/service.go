@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -147,7 +146,7 @@ func (pd *PublicDashboardServiceImpl) savePublicDashboardConfig(ctx context.Cont
 		return "", err
 	}
 
-	accessToken, err := GenerateAccessToken()
+	accessToken, err := pd.store.GenerateNewPublicDashboardAccessToken(ctx)
 	if err != nil {
 		return "", err
 	}
@@ -290,16 +289,6 @@ func (pd *PublicDashboardServiceImpl) PublicDashboardEnabled(ctx context.Context
 
 func (pd *PublicDashboardServiceImpl) AccessTokenExists(ctx context.Context, accessToken string) (bool, error) {
 	return pd.store.AccessTokenExists(ctx, accessToken)
-}
-
-// generates a uuid formatted without dashes to use as access token
-func GenerateAccessToken() (string, error) {
-	token, err := uuid.NewRandom()
-	if err != nil {
-		return "", err
-	}
-
-	return fmt.Sprintf("%x", token[:]), nil
 }
 
 // intervalMS and maxQueryData values are being calculated on the frontend for regular dashboards
