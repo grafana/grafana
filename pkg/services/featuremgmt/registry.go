@@ -290,7 +290,7 @@ var (
 		},
 		{
 			Name:            "queryLibrary",
-			Description:     "Datasource queries as a first-class object",
+			Description:     "Reusable query library",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
 		},
