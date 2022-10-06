@@ -4,7 +4,6 @@ import { program } from 'commander';
 import { closeMilestoneTask } from './tasks/closeMilestone';
 import { componentCreateTask } from './tasks/component.create';
 import { nodeVersionCheckerTask } from './tasks/nodeVersionChecker';
-import { buildPackageTask } from './tasks/package.build';
 import { pluginBuildTask } from './tasks/plugin.build';
 import { ciBuildPluginTask, ciPackagePluginTask, ciPluginReportTask } from './tasks/plugin.ci';
 import { pluginCreateTask } from './tasks/plugin.create';
@@ -22,19 +21,6 @@ import { execTask } from './utils/execTask';
 export const run = (includeInternalScripts = false) => {
   if (includeInternalScripts) {
     program.option('-d, --depreciate <scripts>', 'Inform about npm script deprecation', (v) => v.split(','));
-
-    program
-      .command('package:build')
-      .option('-s, --scope <packages>', 'packages=[data|runtime|ui|toolkit|e2e|e2e-selectors]')
-      .description('Builds @grafana/* package to packages/grafana-*/dist')
-      .action(async (cmd) => {
-        console.warn(
-          '@grafana/toolkit package:build task is deprecated and will be removed in @grafana/toolkit@10.0.0.'
-        );
-        await execTask(buildPackageTask)({
-          scope: cmd.scope,
-        });
-      });
 
     program
       .command('node-version-check')
