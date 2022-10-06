@@ -2,7 +2,7 @@
 //  
 //  Frame[0] 
 //  Name: labels
-//  Dimensions: 3 Fields by 212 Rows
+//  Dimensions: 3 Fields by 215 Rows
 //  +-----------------------------------------------------+-----------------+----------------+
 //  | Name: uid                                           | Name: key       | Name: value    |
 //  | Labels:                                             | Labels:         | Labels:        |
@@ -136,6 +136,9 @@
             "panel-candlestick/candlestick.json",
             "panel-candlestick/candlestick.json",
             "panel-candlestick/candlestick.json",
+            "panel-canvas/canvas-9.2-beta-demo.json",
+            "panel-canvas/canvas-9.2-beta-demo.json",
+            "panel-canvas/canvas-9.2-beta-demo.json",
             "panel-common/auto_decimals.json",
             "panel-common/auto_decimals.json",
             "panel-common/color_modes.json",
@@ -350,6 +353,9 @@
             "gdev",
             "graph-ng",
             "panel-tests",
+            "canvas",
+            "gdev",
+            "panel-tests",
             "gdev",
             "panel-tests",
             "demo",
@@ -482,6 +488,9 @@
             "transform"
           ],
           [
+            "",
+            "",
+            "",
             "",
             "",
             "",

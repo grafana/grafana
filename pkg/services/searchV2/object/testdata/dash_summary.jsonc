@@ -2,7 +2,7 @@
 //  
 //  Frame[0] 
 //  Name: summary
-//  Dimensions: 3 Fields by 97 Rows
+//  Dimensions: 3 Fields by 98 Rows
 //  +---------------------------------------------------------+----------------------------------------------+--------------------------+
 //  | Name: uid                                               | Name: name                                   | Name: fields             |
 //  | Labels:                                                 | Labels:                                      | Labels:                  |
@@ -99,6 +99,7 @@
             "panel-bargauge/panel_tests_bar_gauge.json",
             "panel-bargauge/panel_tests_bar_gauge2.json",
             "panel-candlestick/candlestick.json",
+            "panel-canvas/canvas-9.2-beta-demo.json",
             "panel-common/auto_decimals.json",
             "panel-common/color_modes.json",
             "panel-common/lazy_loading.json",
@@ -198,6 +199,7 @@
             "Panel Tests - Bar Gauge",
             "Panel Tests - Bar Gauge 2",
             "Candlestick",
+            "Panel Tests - Canvas 9.2 Beta",
             "Panel Tests - Auto Decimals",
             "Gradient Color modes",
             "Lazy Loading",
@@ -351,6 +353,7 @@
             {
               "hasTemplateVars": true
             },
+            {},
             {},
             {},
             {},

@@ -2,7 +2,7 @@
 //  
 //  Frame[0] 
 //  Name: references
-//  Dimensions: 4 Fields by 293 Rows
+//  Dimensions: 4 Fields by 297 Rows
 //  +-------------------------------+----------------+----------------+----------------+
 //  | Name: uid                     | Name: kind     | Name: type     | Name: uid      |
 //  | Labels:                       | Labels:        | Labels:        | Labels:        |
@@ -211,6 +211,10 @@
             "panel-bargauge/panel_tests_bar_gauge2.json",
             "panel-candlestick/candlestick.json",
             "panel-candlestick/candlestick.json",
+            "panel-canvas/canvas-9.2-beta-demo.json",
+            "panel-canvas/canvas-9.2-beta-demo.json",
+            "panel-canvas/canvas-9.2-beta-demo.json",
+            "panel-canvas/canvas-9.2-beta-demo.json",
             "panel-common/auto_decimals.json",
             "panel-common/auto_decimals.json",
             "panel-common/color_modes.json",
@@ -508,6 +512,10 @@
             "panel",
             "ds",
             "panel",
+            "panel",
+            "panel",
+            "ds",
+            "panel",
             "ds",
             "panel",
             "panel",
@@ -802,6 +810,10 @@
             "default.type",
             "candlestick",
             "default.type",
+            "canvas",
+            "row",
+            "text",
+            "default.type",
             "graph",
             "default.type",
             "bargauge",
@@ -1095,6 +1107,10 @@
             "default.uid",
             "",
             "default.uid",
+            "",
+            "default.uid",
+            "",
+            "",
             "",
             "default.uid",
             "",

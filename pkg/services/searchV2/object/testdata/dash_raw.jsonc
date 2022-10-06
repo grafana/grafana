@@ -2,7 +2,7 @@
 //  
 //  Frame[0] 
 //  Name: raw
-//  Dimensions: 4 Fields by 97 Rows
+//  Dimensions: 4 Fields by 98 Rows
 //  +---------------------------------------------------------+----------------+---------------+----------------------------------+
 //  | Name: uid                                               | Name: kind     | Name: size    | Name: etag                       |
 //  | Labels:                                                 | Labels:        | Labels:       | Labels:                          |
@@ -106,6 +106,7 @@
             "panel-bargauge/panel_tests_bar_gauge.json",
             "panel-bargauge/panel_tests_bar_gauge2.json",
             "panel-candlestick/candlestick.json",
+            "panel-canvas/canvas-9.2-beta-demo.json",
             "panel-common/auto_decimals.json",
             "panel-common/color_modes.json",
             "panel-common/lazy_loading.json",
@@ -256,6 +257,7 @@
             "",
             "",
             "",
+            "",
             ""
           ],
           [
@@ -304,6 +306,7 @@
             17936,
             11716,
             11649,
+            116174,
             24938,
             7435,
             46665,
@@ -403,6 +406,7 @@
             "b4853b38464f95d79f1b7f893a9a6a4f",
             "080701565677d45165d2aca1d199c4cc",
             "34f9cec2e1e44c45ca9ccdd6806e7750",
+            "be547b3953372573a423d419788a34bf",
             "2901f2bbcefb0b20d09c59750e4ceecd",
             "305262c474aa436622235d50d6120f2b",
             "4f8be9860297e38156781c132d8a2868",
