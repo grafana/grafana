@@ -288,5 +288,11 @@ var (
 			Name:        "increaseInMemDatabaseQueryCache",
 			Description: "Enable more in memory caching for database queries",
 		},
+		{
+			Name:         "newPanelHeader",
+			Description:  "Updated design for panel header and panel menu",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
 	}
 )
