@@ -32,7 +32,7 @@ export interface NotificationErrorProps {
   errorCount: number;
 }
 
-const NotificationError: FC<NotificationErrorProps> = ({ errorCount }: NotificationErrorProps) => {
+function NotificationError({ errorCount }: NotificationErrorProps) {
   const styles = useStyles2(getStyles);
 
   return (
@@ -48,7 +48,7 @@ const NotificationError: FC<NotificationErrorProps> = ({ errorCount }: Notificat
       </Stack>
     </div>
   );
-};
+}
 
 const Receivers: FC = () => {
   const alertManagers = useAlertManagersByPermission('notification');
@@ -96,9 +96,9 @@ const Receivers: FC = () => {
 
   useEffect(() => {
     function fetchContactPointStates() {
-      shouldRenderNotificationStatus &&
-        alertManagerSourceName &&
+      if (shouldRenderNotificationStatus && alertManagerSourceName) {
         dispatch(fetchContactPointsStateAction(alertManagerSourceName));
+      }
     }
     fetchContactPointStates();
     const interval = setInterval(fetchContactPointStates, CONTACT_POINTS_STATE_INTERVAL_MS);
