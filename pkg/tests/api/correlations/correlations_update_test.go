@@ -176,48 +176,6 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 		require.NoError(t, res.Body.Close())
 	})
 
-	t.Run("updating a correlation without a valid config should result in a 403", func(t *testing.T) {
-		// TODO: adjust to my purpose!
-		//correlation := ctx.createCorrelation(correlations.CreateCorrelationCommand{
-		//	SourceUID:   writableDs,
-		//	TargetUID:   writableDs,
-		//	OrgId:       writableDsOrgId,
-		//	Label:       "0",
-		//	Description: "0",
-		//	Config: correlations.CorrelationConfig{
-		//		Field:  "fieldName",
-		//		Target: map[string]interface{}{"expr": "foo"},
-		//	},
-		//})
-		//
-		//// TODO: add invalid config data
-		//res := ctx.Patch(PatchParams{
-		//	url:  fmt.Sprintf("/api/datasources/uid/%s/correlations/%s", readOnlyDS, "nonexistent-correlation-uid"),
-		//	user: adminUser,
-		//	body: `{
-		//		"label": "1",
-		//		"description": "1",
-		//		"config": {
-		//			"field": "fieldName",
-		//			"target": { "expr": "bar" }
-		//		}
-		//	}`,
-		//})
-		//require.Equal(t, http.StatusForbidden, res.StatusCode)
-		//
-		//responseBody, err := io.ReadAll(res.Body)
-		//require.NoError(t, err)
-		//
-		//var response errorResponseBody
-		//err = json.Unmarshal(responseBody, &response)
-		//require.NoError(t, err)
-		//
-		//require.Equal(t, "Data source is read only", response.Message)
-		//require.Equal(t, correlations.ErrSourceDataSourceReadOnly.Error(), response.Error)
-		//
-		//require.NoError(t, res.Body.Close())
-	})
-
 	t.Run("updating a correlation without data should result in a 400", func(t *testing.T) {
 		correlation := ctx.createCorrelation(correlations.CreateCorrelationCommand{
 			SourceUID: writableDs,
