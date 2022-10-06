@@ -6,7 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { useTheme2 } from '../../themes';
 import { IconName } from '../../types';
 import { ComponentSize } from '../../types/size';
-import { Button, ButtonVariant } from '../Button';
+import { Button, ButtonFill, ButtonVariant } from '../Button';
 import { Select } from '../Select/Select';
 
 export interface ValuePickerProps<T> {
@@ -28,6 +28,8 @@ export interface ValuePickerProps<T> {
   isFullWidth?: boolean;
   /** Control where the menu is rendered */
   menuPlacement?: 'auto' | 'bottom' | 'top';
+  /** Which ButtonFill to use */
+  fill?: ButtonFill;
 }
 
 export function ValuePicker<T>({
@@ -40,6 +42,7 @@ export function ValuePicker<T>({
   size = 'sm',
   isFullWidth = true,
   menuPlacement,
+  fill,
 }: ValuePickerProps<T>) {
   const [isPicking, setIsPicking] = useState(false);
   const theme = useTheme2();
@@ -52,6 +55,7 @@ export function ValuePicker<T>({
           icon={icon || 'plus'}
           onClick={() => setIsPicking(true)}
           variant={variant}
+          fill={fill}
           fullWidth={isFullWidth}
           aria-label={selectors.components.ValuePicker.button(label)}
         >

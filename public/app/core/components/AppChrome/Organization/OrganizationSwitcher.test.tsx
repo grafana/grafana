@@ -6,7 +6,7 @@ import { OrgRole } from '@grafana/data';
 import { configureStore } from 'app/store/configureStore';
 import * as appTypes from 'app/types';
 
-import { OrganizationSelect } from './OrganizationSelect';
+import { OrganizationSwitcher } from './OrganizationSwitcher';
 
 jest.mock('app/features/org/state/actions', () => ({
   ...jest.requireActual('app/features/org/state/actions'),
@@ -24,12 +24,12 @@ const renderWithProvider = ({ initialState }: { initialState?: Partial<appTypes.
 
   render(
     <Provider store={store}>
-      <OrganizationSelect />
+      <OrganizationSwitcher />
     </Provider>
   );
 };
 
-describe('OrganisationSelect', () => {
+describe('OrganisationSwitcher', () => {
   it('should only render if more than one organisations', () => {
     renderWithProvider({
       initialState: {
@@ -70,5 +70,26 @@ describe('OrganisationSelect', () => {
     });
 
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+  });
+
+  it('should render a picker in mobile screen', () => {
+    (window.matchMedia as jest.Mock).mockImplementation(() => ({
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      matches: () => true,
+    }));
+    renderWithProvider({
+      initialState: {
+        organization: {
+          organization: { name: 'test', id: 1 },
+          userOrgs: [
+            { orgId: 1, name: 'test', role: OrgRole.Admin },
+            { orgId: 2, name: 'test2', role: OrgRole.Admin },
+          ],
+        },
+      },
+    });
+
+    expect(screen.getByRole('button')).toBeInTheDocument();
   });
 });

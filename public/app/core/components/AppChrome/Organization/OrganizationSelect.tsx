@@ -1,45 +1,28 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 
-import { UserOrgDTO, SelectableValue, GrafanaTheme2 } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
 import { Icon, Select, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
-import { getUserOrganizations, setUserOrganization } from 'app/features/org/state/actions';
-import { useDispatch, UserOrg, useSelector } from 'app/types';
+import { UserOrg } from 'app/types';
 
-export function OrganizationSelect() {
+import { OrganizationBaseProps } from './types';
+
+export function OrganizationSelect({ orgs, onSelectChange }: OrganizationBaseProps) {
   const styles = useStyles2(getStyles);
-  const dispatch = useDispatch();
-  const orgs = useSelector((state) => state.organization.userOrgs);
   const { orgName: name, orgId, orgRole: role } = contextSrv.user;
-
-  const onSelectChange = (option: SelectableValue<UserOrg>) => {
-    setValue(option);
-    if (option.value) {
-      setUserOrganization(option.value.orgId);
-      locationService.partial({ orgId: option.value.orgId }, true);
-      // TODO how to reload the current page
-      window.location.reload();
-    }
-  };
-
-  const [value, setValue] = useState<SelectableValue<UserOrgDTO>>(() => ({
+  const [value, setValue] = useState<SelectableValue<UserOrg>>(() => ({
     label: name,
     value: { role, orgId, name },
     description: role,
   }));
-
-  useEffect(() => {
-    dispatch(getUserOrganizations());
-  }, [dispatch]);
-
-  if (orgs?.length <= 1) {
-    return null;
-  }
+  const onChange = (option: SelectableValue<UserOrg>) => {
+    setValue(option);
+    onSelectChange(option);
+  };
 
   return (
-    <Select<UserOrgDTO>
+    <Select<UserOrg>
       width={'auto'}
       value={value}
       prefix={<Icon name="building" />}
@@ -49,7 +32,7 @@ export function OrganizationSelect() {
         description: org.role,
         value: org,
       }))}
-      onChange={onSelectChange}
+      onChange={onChange}
     />
   );
 }
