@@ -1360,8 +1360,6 @@ github.com/grafana/go-mssqldb v0.0.0-20210326084033-d0ce3c521036 h1:GplhUk6Xes5J
 github.com/grafana/go-mssqldb v0.0.0-20210326084033-d0ce3c521036/go.mod h1:xbL0rPBG9cCiLr28tMa8zpbdarY27NDyej4t/EjAShU=
 github.com/grafana/grafana-aws-sdk v0.11.0 h1:ncPD/UN0wNcKq3kEU90RdvrnK/6R4VW2Lo5dPcGk9t0=
 github.com/grafana/grafana-aws-sdk v0.11.0/go.mod h1:5Iw3xY7iXJfNaYHrRHMXa/kaB2lWoyntg71PPLGvSs8=
-github.com/grafana/grafana-azure-sdk-go v1.3.0 h1:zboQpq/ljBjqHo/6UQNZAUwqGTtnEGRYSEnqIQvLuAo=
-github.com/grafana/grafana-azure-sdk-go v1.3.0/go.mod h1:rgrnK9m6CgKlgx4rH3FFP/6dTdyRO6LYC2mVZov35yo=
 github.com/grafana/grafana-azure-sdk-go v1.3.1 h1:xTgBmbDxUPj3X9Pl9vgIOgZoDdtxWl0fYDuHrHr79jM=
 github.com/grafana/grafana-azure-sdk-go v1.3.1/go.mod h1:rgrnK9m6CgKlgx4rH3FFP/6dTdyRO6LYC2mVZov35yo=
 github.com/grafana/grafana-google-sdk-go v0.0.0-20211104130251-b190293eaf58 h1:2ud7NNM7LrGPO4x0NFR8qLq68CqI4SmB7I2yRN2w9oE=
@@ -1714,6 +1712,8 @@ github.com/kylelemons/godebug v1.1.0/go.mod h1:9/0rRGxNHcop5bhtWyNeEfOS8JIWk580+
 github.com/labstack/echo/v4 v4.2.1/go.mod h1:AA49e0DZ8kk5jTOOCKNuPR6oTnBS0dYiM4FW1e6jwpg=
 github.com/labstack/echo/v4 v4.7.2 h1:Kv2/p8OaQ+M6Ex4eGimg9b9e6icoxA42JSlOR3msKtI=
 github.com/labstack/echo/v4 v4.7.2/go.mod h1:xkCDAdFCIf8jsFQ5NnbK7oqaF/yU1A1X20Ltm0OvSks=
+github.com/labstack/echo/v4 v4.9.0 h1:wPOF1CE6gvt/kmbMR4dGzWvHMPT+sAEUJOwOTtvITVY=
+github.com/labstack/echo/v4 v4.9.0/go.mod h1:xkCDAdFCIf8jsFQ5NnbK7oqaF/yU1A1X20Ltm0OvSks=
 github.com/labstack/gommon v0.3.0/go.mod h1:MULnywXg0yavhxWKc+lOruYdAhDwPK9wf0OL7NoOu+k=
 github.com/labstack/gommon v0.3.1 h1:OomWaJXm7xR6L1HmEtGyQf26TEn7V6X88mktX9kee9o=
 github.com/labstack/gommon v0.3.1/go.mod h1:uW6kP17uPlLJsD3ijUYn3/M5bAxtlZhMI6m3MFxTMTM=

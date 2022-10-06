@@ -71,6 +71,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/export"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
+	grpccontext "github.com/grafana/grafana/pkg/services/grpcserver/context"
+	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
@@ -121,6 +123,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/star/starimpl"
 	"github.com/grafana/grafana/pkg/services/store"
+	"github.com/grafana/grafana/pkg/services/store/object"
 	objectdummyserver "github.com/grafana/grafana/pkg/services/store/object/dummy"
 	"github.com/grafana/grafana/pkg/services/store/sanitizer"
 	"github.com/grafana/grafana/pkg/services/tag"
@@ -343,10 +346,13 @@ var wireBasicSet = wire.NewSet(
 	publicdashboardsApi.ProvideApi,
 	userimpl.ProvideService,
 	orgimpl.ProvideService,
+	grpccontext.ProvideContextHandler,
 	grpcserver.ProvideService,
 	grpcserver.ProvideHealthService,
 	grpcserver.ProvideReflectionService,
+	interceptors.ProvideAuthenticator,
 	objectdummyserver.ProvideDummyObjectServer,
+	object.ProvideHTTPObjectStore,
 	teamimpl.ProvideService,
 	tempuserimpl.ProvideService,
 	loginattemptimpl.ProvideService,
