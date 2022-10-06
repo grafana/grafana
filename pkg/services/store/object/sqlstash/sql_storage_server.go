@@ -294,16 +294,14 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 		}
 
 		// Insert the new row
-		parent_folder_key := "???"
-
 		_, err = tx.Exec(ctx, `INSERT INTO object (`+
 			`"key", "parent_folder_key", "kind", "size", "body", "etag", "version",`+
 			`"updated", "updated_by", "created", "created_by",`+
 			`"name", "description",`+
 			`"labels", "fields", "errors") `+
 			`VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-			key, parent_folder_key, r.Kind, versionInfo.Size, body, etag, versionInfo.Version,
-			timestamp, modifier.UserID, timestamp, modifier.UserID, // created + modified
+			key, getParentFolderKey(key), r.Kind, versionInfo.Size, body, etag, versionInfo.Version,
+			timestamp, modifier.UserID, timestamp, modifier.UserID, // created + updated are the same
 			summary.Name, summary.Description,
 			summaryjson.labels, summaryjson.fields, summaryjson.errors,
 		)
