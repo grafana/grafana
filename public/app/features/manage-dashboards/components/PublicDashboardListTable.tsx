@@ -47,11 +47,7 @@ export const ListPublicDashboardTable: FC = () => {
   }, [setPublicDashboards]);
 
   function renderEnabledTag(pd: ListPublicDashboardResponse) {
-    if (pd.isEnabled) {
-      return <Tag name="enabled" colorIndex={20} />;
-    } else {
-      return <Tag name="disabled" colorIndex={15} />;
-    }
+return pd.isEnabled ? <Tag name="enabled" colorIndex={20} /> : <Tag name="disabled" colorIndex={15} />;
   }
 
   function renderViewLink(pd: ListPublicDashboardResponse) {
