@@ -78,25 +78,27 @@ function ViewAction({ permissions, alertManagerName, receiverName }: ActionProps
 }
 interface ReceiverErrorProps {
   errorCount: number;
+  errorDetail?: string;
 }
 
-function ReceiverError({ errorCount }: ReceiverErrorProps) {
+function ReceiverError({ errorCount, errorDetail }: ReceiverErrorProps) {
   return (
     <Badge
       color="orange"
       icon="exclamation-triangle"
       text={`${errorCount} ${pluralize('error', errorCount)}`}
-      tooltip={`${errorCount} ${pluralize('error', errorCount)} detected in this contact point`}
+      tooltip={errorDetail}
     />
   );
 }
 interface ReceiverHealthProps {
   errorsByReceiver: number;
+  errorDetail?: string;
 }
 
-function ReceiverHealth({ errorsByReceiver }: ReceiverHealthProps) {
+function ReceiverHealth({ errorsByReceiver, errorDetail }: ReceiverHealthProps) {
   return errorsByReceiver > 0 ? (
-    <ReceiverError errorCount={errorsByReceiver} />
+    <ReceiverError errorCount={errorsByReceiver} errorDetail={errorDetail} />
   ) : (
     <Badge color="green" text="OK" tooltip="No errors detected" />
   );
@@ -157,7 +159,7 @@ function NotifiersTable({ notifiersState }: NotifiersTableProps) {
         id: 'health',
         label: 'Health',
         renderCell: ({ data: { lastError } }) => {
-          return <ReceiverHealth errorsByReceiver={lastError ? 1 : 0} />;
+          return <ReceiverHealth errorsByReceiver={lastError ? 1 : 0} errorDetail={lastError ?? undefined} />;
         },
         size: 0.5,
       },
