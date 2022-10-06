@@ -3,15 +3,6 @@ package object;
 
 option go_package = "./;object";
 
-// Will be replaced with something from the SDK
-message UserInfo {
-  // internal grafana user ID
-  int64 id = 1;
-
-  // login name
-  string login = 2; // string ID? 
-}
-
 // The canonical object/document data -- this represents the raw bytes and storage level metadata
 message RawObject {
   // Unique ID
@@ -28,10 +19,10 @@ message RawObject {
   int64 updated = 4;
 
   // Who created the object
-  UserInfo created_by = 5;
+  string created_by = 5;
 
   // Who updated the object
-  UserInfo updated_by = 6;
+  string updated_by = 6;
 
   // Content Length
   int64 size = 7;
@@ -80,7 +71,7 @@ message ObjectVersionInfo {
   int64 updated = 2;
 
   // Who updated the object
-  UserInfo updated_by = 3;
+  string updated_by = 3;
 
   // Content Length
   int64 size = 4;
@@ -250,16 +241,59 @@ message ObjectSearchRequest {
   // Sorting instructions `field ASC/DESC`
   repeated string sort = 7;
 
-  // TODO, limit the set of fields we actually want returned
-  // Only supported in the QueryResponse flavor?
-  repeated string fields = 8;
+  // Return the full body in each payload
+  bool with_body = 8;
 
   // Return the full body in each payload
-  bool with_body = 9;
+  bool with_labels = 9;
+
+  // Return the full body in each payload
+  bool with_fields = 10;
+}
+
+// Search result metadata for each object
+message ObjectSearchResult {
+  // Unique ID
+  string UID = 1;
+
+  // Identify the object kind.  This kind will be used to apply a schema to the body and
+  // will trigger additional indexing behavior.
+  string kind = 2;
+
+  // The current veresion of this object
+  string version = 3;
+
+  // Time in epoch milliseconds that the object was updated
+  int64 updated = 4;
+
+  // Who updated the object
+  string updated_by = 5;
+
+  // Optionally include the full object body
+  bytes body = 6;
+
+  //----------------------------------------
+  // Derived from body in the summary
+  //----------------------------------------
+
+  // Always included
+  string name = 7;
+
+  // Always included
+  string description = 8;
+
+  // The structured labels
+  map<string,string> labels = 9;
+
+  // Optionally include extracted JSON
+  string fields_json = 10;
+
+  // ObjectErrorInfo in json
+  string error_json = 11;
 }
 
 message ObjectSearchResponse {
-  repeated RawObject results = 1;
+  repeated ObjectSearchResult results = 1;
 
   // More results exist... pass this in the next request
   string next_page_token = 2;
