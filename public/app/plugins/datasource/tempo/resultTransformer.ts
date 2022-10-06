@@ -655,6 +655,12 @@ export function createTableFrameFromTraceQlQuery(
         },
       },
       {
+        name: 'traceIdHidden',
+        config: {
+          custom: { hidden: true },
+        },
+      },
+      {
         name: 'spanID',
         type: FieldType.string,
         config: {
@@ -668,7 +674,7 @@ export function createTableFrameFromTraceQlQuery(
                 datasourceUid: instanceSettings.uid,
                 datasourceName: instanceSettings.name,
                 query: {
-                  query: '${__data.fields.traceID}',
+                  query: '${__data.fields.traceIdHidden}',
                   queryType: 'traceId',
                 },
               },
@@ -677,7 +683,7 @@ export function createTableFrameFromTraceQlQuery(
         },
       },
       // { name: 'traceName', type: FieldType.string, config: { displayNameFromDS: 'Name' } },
-      //{ name: 'attributes', type: FieldType.string, config: { displayNameFromDS: 'Attributes' } },
+      // { name: 'attributes', type: FieldType.string, config: { displayNameFromDS: 'Attributes' } },
       { name: 'startTime', type: FieldType.string, config: { displayNameFromDS: 'Start time' } },
       { name: 'duration', type: FieldType.number, config: { displayNameFromDS: 'Duration', unit: 'ms' } },
     ],
@@ -723,7 +729,7 @@ export function createTableFrameFromTraceQlQuery(
 
 interface TraceTableData {
   [key: string]: string | number | undefined; // dynamic attribute name
-  traceID: string;
+  traceID?: string;
   spanID?: string;
   //attributes?: string;
   startTime: string;
@@ -744,7 +750,7 @@ function transformSpanToTraceData(span: Span, traceID: string): TraceTableData {
   }
 
   const data: TraceTableData = {
-    traceID,
+    traceIdHidden: traceID,
     spanID: span.spanId,
     startTime,
     duration: traceEndTime - traceStartTime,
