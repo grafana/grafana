@@ -31,36 +31,41 @@ export function JsonEditorSettings({ dashboard, sectionNav }: SettingsPageProps)
 
   return (
     <Page navModel={sectionNav} subTitle={subTitle}>
-      <div className="dashboard-settings__subheader"></div>
-
-      <Stack direction="column" gap={4} flexGrow={1}>
-        <div className={styles.editWrapper}>
-          <AutoSizer>
-            {({ width, height }) => (
-              <CodeEditor
-                value={dashboardJson}
-                language="json"
-                width={width}
-                height={height}
-                showMiniMap={true}
-                showLineNumbers={true}
-                onBlur={onBlur}
-              />
+      <div className={styles.fullHeight}>
+        <Stack direction="column" gap={4} flexGrow={1}>
+          <div className={styles.editWrapper}>
+            <AutoSizer>
+              {({ width, height }) => (
+                <CodeEditor
+                  value={dashboardJson}
+                  language="json"
+                  width={width}
+                  height={height}
+                  showMiniMap={true}
+                  showLineNumbers={true}
+                  onBlur={onBlur}
+                />
+              )}
+            </AutoSizer>
+          </div>
+          <div>
+            {dashboard.meta.canSave && (
+              <Button type="submit" onClick={onClick}>
+                Save changes
+              </Button>
             )}
-          </AutoSizer>
-        </div>
-        <div>
-          {dashboard.meta.canSave && (
-            <Button type="submit" onClick={onClick}>
-              Save changes
-            </Button>
-          )}
-        </div>
-      </Stack>
+          </div>
+        </Stack>
+      </div>
     </Page>
   );
 }
 
 const getStyles = (_: GrafanaTheme2) => ({
   editWrapper: css({ flexGrow: 1 }),
+  fullHeight: css({
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+  }),
 });
