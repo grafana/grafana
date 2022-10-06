@@ -31,7 +31,4 @@ func TestRawEncoders(t *testing.T) {
 	copy := &RawObject{}
 	err = json.Unmarshal(b, copy)
 	require.NoError(t, err)
-
-	// go compare
-
 }
