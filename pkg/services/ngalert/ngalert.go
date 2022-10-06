@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
@@ -39,13 +40,31 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, dataSourceService datasources.DataSourceService, routeRegister routing.RouteRegister,
-	sqlStore *sqlstore.SQLStore, kvStore kvstore.KVStore, expressionService *expr.Service, dataProxy *datasourceproxy.DataSourceProxyService,
-	quotaService quota.Service, secretsService secrets.Service, notificationService notifications.Service, m *metrics.NGAlert,
-	folderService dashboards.FolderService, ac accesscontrol.AccessControl, dashboardService dashboards.DashboardService, renderService rendering.Service,
-	bus bus.Bus, accesscontrolService accesscontrol.Service, annotationsRepo annotations.Repository) (*AlertNG, error) {
+func ProvideService(
+	cfg *setting.Cfg,
+	featureToggles featuremgmt.FeatureToggles,
+	dataSourceCache datasources.CacheService,
+	dataSourceService datasources.DataSourceService,
+	routeRegister routing.RouteRegister,
+	sqlStore *sqlstore.SQLStore,
+	kvStore kvstore.KVStore,
+	expressionService *expr.Service,
+	dataProxy *datasourceproxy.DataSourceProxyService,
+	quotaService quota.Service,
+	secretsService secrets.Service,
+	notificationService notifications.Service,
+	m *metrics.NGAlert,
+	folderService dashboards.FolderService,
+	ac accesscontrol.AccessControl,
+	dashboardService dashboards.DashboardService,
+	renderService rendering.Service,
+	bus bus.Bus,
+	accesscontrolService accesscontrol.Service,
+	annotationsRepo annotations.Repository,
+) (*AlertNG, error) {
 	ng := &AlertNG{
 		Cfg:                  cfg,
+		FeatureToggles:       featureToggles,
 		DataSourceCache:      dataSourceCache,
 		DataSourceService:    dataSourceService,
 		RouteRegister:        routeRegister,
@@ -81,6 +100,7 @@ func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, 
 // AlertNG is the service for evaluating the condition of an alert definition.
 type AlertNG struct {
 	Cfg                 *setting.Cfg
+	FeatureToggles      featuremgmt.FeatureToggles
 	DataSourceCache     datasources.CacheService
 	DataSourceService   datasources.DataSourceService
 	RouteRegister       routing.RouteRegister
@@ -115,6 +135,7 @@ func (ng *AlertNG) init() error {
 
 	store := &store.DBstore{
 		Cfg:              ng.Cfg.UnifiedAlerting,
+		FeatureToggles:   ng.FeatureToggles,
 		SQLStore:         ng.SQLStore,
 		Logger:           ng.Log,
 		FolderService:    ng.folderService,

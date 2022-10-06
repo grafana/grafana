@@ -180,7 +180,7 @@ func TestReadingNavigationSettings(t *testing.T) {
 			cfg: setting.NewCfg(),
 		}
 
-		_, _ = service.cfg.Raw.NewSection("navigation.apps")
+		_, _ = service.cfg.Raw.NewSection("navigation.app_sections")
 		service.readNavigationSettings()
 
 		require.Equal(t, "monitoring", service.navigationAppConfig["grafana-k8s-app"].SectionID)
@@ -191,9 +191,11 @@ func TestReadingNavigationSettings(t *testing.T) {
 			cfg: setting.NewCfg(),
 		}
 
-		sec, _ := service.cfg.Raw.NewSection("navigation.apps")
-		_, _ = sec.NewKey("grafana-k8s-app", "dashboards")
-		_, _ = sec.NewKey("other-app", "admin 12")
+		appSections, _ := service.cfg.Raw.NewSection("navigation.app_sections")
+		appStandalonePages, _ := service.cfg.Raw.NewSection("navigation.app_standalone_pages")
+		_, _ = appSections.NewKey("grafana-k8s-app", "dashboards")
+		_, _ = appSections.NewKey("other-app", "admin 12")
+		_, _ = appStandalonePages.NewKey("/a/grafana-k8s-app/foo", "admin 30")
 
 		service.readNavigationSettings()
 
@@ -202,5 +204,8 @@ func TestReadingNavigationSettings(t *testing.T) {
 
 		require.Equal(t, int64(0), service.navigationAppConfig["grafana-k8s-app"].SortWeight)
 		require.Equal(t, int64(12), service.navigationAppConfig["other-app"].SortWeight)
+
+		require.Equal(t, "admin", service.navigationAppPathConfig["/a/grafana-k8s-app/foo"].SectionID)
+		require.Equal(t, int64(30), service.navigationAppPathConfig["/a/grafana-k8s-app/foo"].SortWeight)
 	})
 }
