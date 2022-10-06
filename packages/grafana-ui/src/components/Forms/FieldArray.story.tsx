@@ -52,12 +52,7 @@ export const Simple: Story = (args) => {
                         {...register(`people.${index}.lastName` as const)}
                         defaultValue={field.lastName}
                       />
-                      <Button
-                        aria-label="Remove entry"
-                        type="button"
-                        onClick={() => remove(index)}
-                        icon="trash-alt"
-                      />
+                      <Button aria-label="Remove entry" type="button" onClick={() => remove(index)} icon="trash-alt" />
                     </HorizontalGroup>
                   ))}
                 </div>
