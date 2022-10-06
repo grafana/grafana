@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -36,8 +37,11 @@ func (s *searchHTTPService) doQuery(c *models.ReqContext) response.Response {
 			"reason": searchReadinessCheckResp.Reason,
 		}).Inc()
 
-		bytes, err := (&data.Frame{
-			Name: "Loading",
+		bytes, err := (&backend.DataResponse{
+			Frames: []*data.Frame{{
+				Name: "Loading",
+			}},
+			Error: nil,
 		}).MarshalJSON()
 
 		if err != nil {
