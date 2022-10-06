@@ -10,7 +10,6 @@ seqs: [
 	{
 		schemas: [
 			{// 0.0
-				@grafana(TSVeneer="type")
 
 				// Unique numeric identifier for the rule. Read-only.
 				id?: int64
@@ -26,7 +25,7 @@ seqs: [
 
 				condition: string
 
-				queries: [...#AlertQuery]
+				queries?: [...#AlertQuery]
 
 				// TODO: timestamps
 				// updated
@@ -38,14 +37,14 @@ seqs: [
 				// A go-parseable duration string.
 				for: string
 
-				annotations: [string]: string
+				annotations?: #Labels
 
-				labels: [string]: string
+				labels?:  #Labels
 
 				///////////////////////////////////////
 				// Definitions (referenced above) are declared below
 
-				#Label: {key: string, value: string}
+				#Labels: [string]: string @cuetsy(kind="type")
 
 				#AlertQuery: {
 
@@ -54,17 +53,19 @@ seqs: [
 					queryType: string
 
 					// RelativeTimeRange is the relative Start and End of the query as sent by the frontend.
-					relativeTimeRange: {
-						from: string | *"now-6h"
-						to:   string | *"now"
-					} @reviewme()
+					relativeTimeRange?: #RelativeTimeRange 
 
 					// Grafana data source unique identifier; it should be '-100' for a Server Side Expression operation.
 					datasourceUID: string
 
 					// model is the raw JSON query and includes the above properties as well as custom properties.
 					model: string
-				}
+				} @cuetsy(kind="interface") @reviewme()
+
+        #RelativeTimeRange: {				
+			  	from: string | *"now-6h"
+					to:   string | *"now"
+				} @cuetsy(kind="interface") @reviewme()
 
 				#NoDataState:       "Alerting" | "NoData" | "OK" @cuetsy(kind="enum",memberNames="Alerting|NoData|OK") @reviewme()
 				#ExecutionErrState: "Alerting" | "Error" | "OK"  @cuetsy(kind="enum",memberNames="Alerting|Error|OK") @reviewme()

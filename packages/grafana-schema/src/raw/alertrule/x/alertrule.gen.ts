@@ -6,6 +6,33 @@
 //
 // Run `make gen-cue` from repository root to regenerate.
 
+export interface AlertQuery {
+  /**
+   * Grafana data source unique identifier; it should be '-100' for a Server Side Expression operation.
+   */
+  datasourceUID: string;
+  /**
+   * model is the raw JSON query and includes the above properties as well as custom properties.
+   */
+  model: string;
+  queryType: string;
+  refID: string;
+  /**
+   * RelativeTimeRange is the relative Start and End of the query as sent by the frontend.
+   */
+  relativeTimeRange?: RelativeTimeRange;
+}
+
+export interface RelativeTimeRange {
+  from: string;
+  to: string;
+}
+
+export const defaultRelativeTimeRange: Partial<RelativeTimeRange> = {
+  from: 'now-6h',
+  to: 'now',
+};
+
 export enum NoDataState {
   Alerting = 'Alerting',
   NoData = 'NoData',
@@ -19,7 +46,7 @@ export enum ExecutionErrState {
 }
 
 export interface Alertrule {
-  annotations: Record<string, unknown>;
+  annotations?: Record<string, unknown>;
   condition: string;
   execErrState: ExecutionErrState;
   folderUid: string;
@@ -31,27 +58,9 @@ export interface Alertrule {
    * Unique numeric identifier for the rule. Read-only.
    */
   id?: number;
-  labels: Record<string, unknown>;
+  labels?: Record<string, unknown>;
   noDataState: NoDataState;
-  queries: Array<{
-    refID: string;
-    queryType: string;
-    /**
-     * RelativeTimeRange is the relative Start and End of the query as sent by the frontend.
-     */
-    relativeTimeRange: {
-      from: string;
-      to: string;
-    };
-    /**
-     * Grafana data source unique identifier; it should be '-100' for a Server Side Expression operation.
-     */
-    datasourceUID: string;
-    /**
-     * model is the raw JSON query and includes the above properties as well as custom properties.
-     */
-    model: string;
-  }>;
+  queries?: Array<AlertQuery>;
   ruleGroup: string;
   title: string;
   /**
