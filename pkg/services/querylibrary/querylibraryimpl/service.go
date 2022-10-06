@@ -1,4 +1,4 @@
-package querylibrary
+package querylibraryimpl
 
 import (
 	"context"
@@ -10,35 +10,20 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/x/persistentcollection"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/querylibrary"
 	"github.com/grafana/grafana/pkg/services/searchV2/dslookup"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-type QuerySearchOptions struct {
-	DatasourceUID  string
-	Query          string
-	DatasourceType string
-}
-
-type Service interface {
-	Search(ctx context.Context, user *user.SignedInUser, options QuerySearchOptions) ([]QueryInfo, error)
-	GetBatch(ctx context.Context, user *user.SignedInUser, uids []string) ([]*Query, error)
-	Update(ctx context.Context, user *user.SignedInUser, query *Query) error
-	Delete(ctx context.Context, user *user.SignedInUser, uid string) error
-	UpdateDashboardQueries(ctx context.Context, user *user.SignedInUser, dash *models.Dashboard) error
-	registry.CanBeDisabled
-}
-
-func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles) Service {
+func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles) querylibrary.Service {
 	return &service{
 		cfg:        cfg,
 		log:        log.New("queryLibraryService"),
 		features:   features,
-		collection: persistentcollection.NewLocalFSPersistentCollection[*Query]("query-library", cfg.DataPath, 1),
+		collection: persistentcollection.NewLocalFSPersistentCollection[*querylibrary.Query]("query-library", cfg.DataPath, 1),
 	}
 }
 
@@ -46,17 +31,17 @@ type service struct {
 	cfg        *setting.Cfg
 	features   featuremgmt.FeatureToggles
 	log        log.Logger
-	collection persistentcollection.PersistentCollection[*Query]
+	collection persistentcollection.PersistentCollection[*querylibrary.Query]
 }
 
 type perRequestQueryLoader struct {
-	service Service
-	queries map[string]*Query
+	service querylibrary.Service
+	queries map[string]*querylibrary.Query
 	ctx     context.Context
 	user    *user.SignedInUser
 }
 
-func (q *perRequestQueryLoader) byUID(uid string) (*Query, error) {
+func (q *perRequestQueryLoader) byUID(uid string) (*querylibrary.Query, error) {
 	if q, ok := q.queries[uid]; ok {
 		return q, nil
 	}
@@ -74,12 +59,12 @@ func (q *perRequestQueryLoader) byUID(uid string) (*Query, error) {
 	return queries[0], nil
 }
 
-func newPerRequestQueryLoader(ctx context.Context, user *user.SignedInUser, service Service) queryLoader {
-	return &perRequestQueryLoader{queries: make(map[string]*Query), ctx: ctx, user: user, service: service}
+func newPerRequestQueryLoader(ctx context.Context, user *user.SignedInUser, service querylibrary.Service) queryLoader {
+	return &perRequestQueryLoader{queries: make(map[string]*querylibrary.Query), ctx: ctx, user: user, service: service}
 }
 
 type queryLoader interface {
-	byUID(uid string) (*Query, error)
+	byUID(uid string) (*querylibrary.Query, error)
 }
 
 func (s *service) UpdateDashboardQueries(ctx context.Context, user *user.SignedInUser, dash *models.Dashboard) error {
@@ -148,14 +133,14 @@ func namespaceFromUser(user *user.SignedInUser) string {
 	return fmt.Sprintf("orgId-%d", user.OrgID)
 }
 
-func (s *service) Search(ctx context.Context, user *user.SignedInUser, options QuerySearchOptions) ([]QueryInfo, error) {
-	queries, err := s.collection.Find(ctx, namespaceFromUser(user), func(_ *Query) (bool, error) { return true, nil })
+func (s *service) Search(ctx context.Context, user *user.SignedInUser, options querylibrary.QuerySearchOptions) ([]querylibrary.QueryInfo, error) {
+	queries, err := s.collection.Find(ctx, namespaceFromUser(user), func(_ *querylibrary.Query) (bool, error) { return true, nil })
 	if err != nil {
 		return nil, err
 	}
 
 	queryInfo := asQueryInfo(queries)
-	filteredQueryInfo := make([]QueryInfo, 0)
+	filteredQueryInfo := make([]querylibrary.QueryInfo, 0)
 	for _, q := range queryInfo {
 		if len(options.Query) > 0 && !strings.Contains(strings.TrimSpace(strings.ToLower(q.Title)), options.Query) {
 			continue
@@ -184,10 +169,10 @@ func (s *service) Search(ctx context.Context, user *user.SignedInUser, options Q
 	return filteredQueryInfo, nil
 }
 
-func asQueryInfo(queries []*Query) []QueryInfo {
-	res := make([]QueryInfo, 0)
+func asQueryInfo(queries []*querylibrary.Query) []querylibrary.QueryInfo {
+	res := make([]querylibrary.QueryInfo, 0)
 	for _, query := range queries {
-		res = append(res, QueryInfo{
+		res = append(res, querylibrary.QueryInfo{
 			UID:           query.UID,
 			Title:         query.Title,
 			Description:   query.Description,
@@ -215,7 +200,7 @@ func getDatasourceUID(q *simplejson.Json) string {
 	return uid
 }
 
-func isQueryWithMixedDataSource(q *Query) (isMixed bool, firstDsRef dslookup.DataSourceRef) {
+func isQueryWithMixedDataSource(q *querylibrary.Query) (isMixed bool, firstDsRef dslookup.DataSourceRef) {
 	dsRefs := extractDataSources(q)
 
 	for _, dsRef := range dsRefs {
@@ -236,7 +221,7 @@ func isQueryWithMixedDataSource(q *Query) (isMixed bool, firstDsRef dslookup.Dat
 	return false, firstDsRef
 }
 
-func extractDataSources(query *Query) []dslookup.DataSourceRef {
+func extractDataSources(query *querylibrary.Query) []dslookup.DataSourceRef {
 	ds := make([]dslookup.DataSourceRef, 0)
 
 	for _, q := range query.Queries {
@@ -255,13 +240,13 @@ func extractDataSources(query *Query) []dslookup.DataSourceRef {
 	return ds
 }
 
-func (s *service) GetBatch(ctx context.Context, user *user.SignedInUser, uids []string) ([]*Query, error) {
+func (s *service) GetBatch(ctx context.Context, user *user.SignedInUser, uids []string) ([]*querylibrary.Query, error) {
 	uidMap := make(map[string]bool)
 	for _, uid := range uids {
 		uidMap[uid] = true
 	}
 
-	return s.collection.Find(ctx, namespaceFromUser(user), func(q *Query) (bool, error) {
+	return s.collection.Find(ctx, namespaceFromUser(user), func(q *querylibrary.Query) (bool, error) {
 		if _, ok := uidMap[q.UID]; ok {
 			return true, nil
 		}
@@ -270,14 +255,14 @@ func (s *service) GetBatch(ctx context.Context, user *user.SignedInUser, uids []
 	})
 }
 
-func (s *service) Update(ctx context.Context, user *user.SignedInUser, query *Query) error {
+func (s *service) Update(ctx context.Context, user *user.SignedInUser, query *querylibrary.Query) error {
 	if query.UID == "" {
 		query.UID = util.GenerateShortUID()
 
 		return s.collection.Insert(ctx, namespaceFromUser(user), query)
 	}
 
-	_, err := s.collection.Update(ctx, namespaceFromUser(user), func(q *Query) (updated bool, updatedItem *Query, err error) {
+	_, err := s.collection.Update(ctx, namespaceFromUser(user), func(q *querylibrary.Query) (updated bool, updatedItem *querylibrary.Query, err error) {
 		if q.UID == query.UID {
 			return true, query, nil
 		}
@@ -288,7 +273,7 @@ func (s *service) Update(ctx context.Context, user *user.SignedInUser, query *Qu
 }
 
 func (s *service) Delete(ctx context.Context, user *user.SignedInUser, uid string) error {
-	_, err := s.collection.Delete(ctx, namespaceFromUser(user), func(q *Query) (bool, error) {
+	_, err := s.collection.Delete(ctx, namespaceFromUser(user), func(q *querylibrary.Query) (bool, error) {
 		if q.UID == uid {
 			return true, nil
 		}

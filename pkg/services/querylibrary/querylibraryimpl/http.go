@@ -1,4 +1,4 @@
-package querylibrary
+package querylibraryimpl
 
 import (
 	"encoding/json"
@@ -10,20 +10,27 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/querylibrary"
 )
 
-type HTTPService interface {
-	registry.CanBeDisabled
-	RegisterHTTPRoutes(routes routing.RouteRegister)
-}
-
 type queriesServiceHTTPHandler struct {
-	service Service
+	service querylibrary.Service
 }
 
 func (s *queriesServiceHTTPHandler) IsDisabled() bool {
 	return s.service.IsDisabled()
+}
+
+func (s *queriesServiceHTTPHandler) delete(c *models.ReqContext) response.Response {
+	uid := c.Query("uid")
+	err := s.service.Delete(c.Req.Context(), c.SignedInUser, uid)
+	if err != nil {
+		return response.Error(500, fmt.Sprintf("error deleting query with id %s", uid), err)
+	}
+
+	return response.JSON(200, map[string]interface{}{
+		"success": true,
+	})
 }
 
 func (s *queriesServiceHTTPHandler) RegisterHTTPRoutes(routes routing.RouteRegister) {
@@ -50,7 +57,7 @@ func (s *queriesServiceHTTPHandler) update(c *models.ReqContext) response.Respon
 		return response.Error(500, "error reading bytes", err)
 	}
 
-	query := &Query{}
+	query := &querylibrary.Query{}
 	err = json.Unmarshal(body, query)
 	if err != nil {
 		return response.Error(400, "error parsing body", err)
@@ -71,21 +78,9 @@ func (s *queriesServiceHTTPHandler) update(c *models.ReqContext) response.Respon
 	})
 }
 
-func (s *queriesServiceHTTPHandler) delete(c *models.ReqContext) response.Response {
-	uid := c.Query("uid")
-	err := s.service.Delete(c.Req.Context(), c.SignedInUser, uid)
-	if err != nil {
-		return response.Error(500, fmt.Sprintf("error deleting query with id %s", uid), err)
-	}
-
-	return response.JSON(200, map[string]interface{}{
-		"success": true,
-	})
-}
-
 func ProvideHTTPService(
-	queriesService Service,
-) HTTPService {
+	queriesService querylibrary.Service,
+) querylibrary.HTTPService {
 	return &queriesServiceHTTPHandler{
 		service: queriesService,
 	}

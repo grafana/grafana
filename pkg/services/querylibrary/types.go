@@ -1,8 +1,14 @@
 package querylibrary
 
 import (
+	"context"
+
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/searchV2/dslookup"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type Time struct {
@@ -59,4 +65,24 @@ type QueryInfo struct {
 	SchemaVersion int64    `json:"schemaVersion"`
 
 	Datasource []dslookup.DataSourceRef `json:"datasource,omitempty"` // UIDs
+}
+
+type QuerySearchOptions struct {
+	DatasourceUID  string
+	Query          string
+	DatasourceType string
+}
+
+type Service interface {
+	Search(ctx context.Context, user *user.SignedInUser, options QuerySearchOptions) ([]QueryInfo, error)
+	GetBatch(ctx context.Context, user *user.SignedInUser, uids []string) ([]*Query, error)
+	Update(ctx context.Context, user *user.SignedInUser, query *Query) error
+	Delete(ctx context.Context, user *user.SignedInUser, uid string) error
+	UpdateDashboardQueries(ctx context.Context, user *user.SignedInUser, dash *models.Dashboard) error
+	registry.CanBeDisabled
+}
+
+type HTTPService interface {
+	registry.CanBeDisabled
+	RegisterHTTPRoutes(routes routing.RouteRegister)
 }
