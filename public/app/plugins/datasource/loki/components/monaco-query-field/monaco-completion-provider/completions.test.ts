@@ -35,6 +35,30 @@ const otherLabels: Label[] = [
 ];
 const afterSelectorCompletions = [
   {
+    insertText: '|= "$0"',
+    isSnippet: true,
+    label: '|= ""',
+    type: 'LINE_FILTER',
+  },
+  {
+    insertText: '!= "$0"',
+    isSnippet: true,
+    label: '!= ""',
+    type: 'LINE_FILTER',
+  },
+  {
+    insertText: '|~ "$0"',
+    isSnippet: true,
+    label: '|~ ""',
+    type: 'LINE_FILTER',
+  },
+  {
+    insertText: '!~ "$0"',
+    isSnippet: true,
+    label: '!~ ""',
+    type: 'LINE_FILTER',
+  },
+  {
     insertText: '',
     label: '// Placeholder for the detected parser',
     type: 'DETECTED_PARSER_PLACEHOLDER',

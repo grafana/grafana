@@ -184,7 +184,7 @@ async function getAfterSelectorCompletions(
     isSnippet: true,
   });
 
-  return [...completions];
+  return [...LINE_FILTER_COMPLETIONS, ...completions];
 }
 
 async function getLabelValuesForMetricCompletions(
