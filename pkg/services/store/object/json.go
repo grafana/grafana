@@ -1,7 +1,9 @@
 package object
 
 import (
+	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"unsafe"
 
 	jsoniter "github.com/json-iterator/go"
@@ -10,8 +12,10 @@ import (
 func init() { //nolint:gochecknoinits
 	jsoniter.RegisterTypeEncoder("object.ObjectSearchResult", &searchResultCodec{})
 	jsoniter.RegisterTypeEncoder("object.WriteObjectResponse", &writeResponseCodec{})
-	jsoniter.RegisterTypeEncoder("object.RawObject", &rawObjectCodec{})
 	jsoniter.RegisterTypeEncoder("object.ReadObjectResponse", &readResponseCodec{})
+
+	jsoniter.RegisterTypeEncoder("object.RawObject", &rawObjectCodec{})
+	jsoniter.RegisterTypeDecoder("object.RawObject", &rawObjectCodec{})
 }
 
 func writeRawJson(stream *jsoniter.Stream, val []byte) {
@@ -28,6 +32,16 @@ type rawObjectCodec struct{}
 func (obj *RawObject) MarshalJSON() ([]byte, error) {
 	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	return json.Marshal(obj)
+}
+
+// UnmarshalJSON will read JSON into a RawObject
+func (obj *RawObject) UnmarshalJSON(b []byte) error {
+	if obj == nil {
+		return fmt.Errorf("unexpected nil for raw objcet")
+	}
+	iter := jsoniter.ParseBytes(jsoniter.ConfigDefault, b)
+	readRawObject(iter, obj)
+	return iter.Error
 }
 
 func (codec *rawObjectCodec) IsEmpty(ptr unsafe.Pointer) bool {
@@ -77,8 +91,9 @@ func (codec *rawObjectCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream)
 			stream.WriteObjectField("body")
 			stream.WriteRaw(string(obj.Body)) // works for strings
 		} else {
+			sEnc := base64.StdEncoding.EncodeToString(obj.Body)
 			stream.WriteObjectField("body_base64")
-			stream.WriteVal(obj.Body) // works for strings
+			stream.WriteString(sEnc) // works for strings
 		}
 	}
 	if obj.ETag != "" {
@@ -99,6 +114,63 @@ func (codec *rawObjectCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream)
 	}
 
 	stream.WriteObjectEnd()
+}
+
+func (codec *rawObjectCodec) Decode(ptr unsafe.Pointer, iter *jsoniter.Iterator) {
+	*(*RawObject)(ptr) = RawObject{}
+	raw := (*RawObject)(ptr)
+	readRawObject(iter, raw)
+}
+
+func readRawObject(iter *jsoniter.Iterator, raw *RawObject) {
+	for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
+		switch l1Field {
+		case "UID":
+			raw.UID = iter.ReadString()
+		case "kind":
+			raw.Kind = iter.ReadString()
+		case "updated":
+			raw.Updated = iter.ReadInt64()
+		case "updatedBy":
+			raw.UpdatedBy = iter.ReadString()
+		case "created":
+			raw.Created = iter.ReadInt64()
+		case "createdBy":
+			raw.CreatedBy = iter.ReadString()
+		case "size":
+			raw.Size = iter.ReadInt64()
+		case "etag":
+			raw.ETag = iter.ReadString()
+		case "version":
+			raw.Version = iter.ReadString()
+		case "sync":
+			raw.Sync = &RawObjectSyncInfo{}
+			iter.ReadVal(raw.Sync)
+
+		case "body":
+			var val interface{}
+			iter.ReadVal(&val) // ??? is there a smarter way to just keep the underlying bytes without read+marshal
+			body, err := json.Marshal(val)
+			if err != nil {
+				iter.ReportError("raw object", "error creating json from body")
+				return
+			}
+			raw.Body = body
+
+		case "body_base64":
+			val := iter.ReadString()
+			body, err := base64.StdEncoding.DecodeString(val)
+			if err != nil {
+				iter.ReportError("raw object", "error decoding base64 body")
+				return
+			}
+			raw.Body = body
+
+		default:
+			iter.ReportError("raw object", "unexpected field: "+l1Field)
+			return
+		}
+	}
 }
 
 // Unlike the standard JSON marshal, this will write bytes as JSON when it can

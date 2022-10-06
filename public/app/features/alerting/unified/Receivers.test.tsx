@@ -1,4 +1,4 @@
-import { render, waitFor } from '@testing-library/react';
+import { render, waitFor, within, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Provider } from 'react-redux';
@@ -12,12 +12,12 @@ import { contextSrv } from 'app/core/services/context_srv';
 import store from 'app/core/store';
 import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
 import { configureStore } from 'app/store/configureStore';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction, ContactPointsState } from 'app/types';
 
 import Receivers from './Receivers';
 import { updateAlertManagerConfig, fetchAlertManagerConfig, fetchStatus, testReceivers } from './api/alertmanager';
 import { discoverAlertmanagerFeatures } from './api/buildInfo';
-import { fetchNotifiers } from './api/grafana';
+import { fetchNotifiers, fetchContactPointsState } from './api/grafana';
 import {
   mockDataSource,
   MockDataSourceSrv,
@@ -46,6 +46,7 @@ const mocks = {
     fetchNotifiers: jest.mocked(fetchNotifiers),
     testReceivers: jest.mocked(testReceivers),
     discoverAlertmanagerFeatures: jest.mocked(discoverAlertmanagerFeatures),
+    fetchReceivers: jest.mocked(fetchContactPointsState),
   },
   contextSrv: jest.mocked(contextSrv),
 };
@@ -95,11 +96,14 @@ const ui = {
   testContactPoint: byRole('button', { name: /send test notification/i }),
   cancelButton: byTestId('cancel-button'),
 
-  receiversTable: byTestId('receivers-table'),
+  receiversTable: byTestId('dynamic-table'),
   templatesTable: byTestId('templates-table'),
   alertManagerPicker: byTestId('alertmanager-picker'),
 
   channelFormContainer: byTestId('item-container'),
+
+  notificationError: byTestId('receivers-notification-error'),
+  contactPointsCollapseToggle: byTestId('collapse-toggle'),
 
   inputs: {
     name: byPlaceholderText('Name'),
@@ -133,6 +137,8 @@ describe('Receivers', () => {
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     mocks.api.fetchNotifiers.mockResolvedValue(grafanaNotifiersMock);
     mocks.api.discoverAlertmanagerFeatures.mockResolvedValue({ lazyConfigInit: false });
+    const emptyContactPointsState: ContactPointsState = { receivers: {}, errorCount: 0 };
+    mocks.api.fetchReceivers.mockResolvedValue(emptyContactPointsState);
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
     mocks.contextSrv.isEditor = true;
     store.delete(ALERTMANAGER_NAME_LOCAL_STORAGE_KEY);
@@ -151,21 +157,21 @@ describe('Receivers', () => {
     mocks.contextSrv.hasAccess.mockImplementation(() => true);
   });
 
-  it('Template and receiver tables are rendered, alertmanager can be selected', async () => {
+  it('Template and receiver tables are rendered, alertmanager can be selected, no notification errors', async () => {
     mocks.api.fetchConfig.mockImplementation((name) =>
       Promise.resolve(name === GRAFANA_RULES_SOURCE_NAME ? someGrafanaAlertManagerConfig : someCloudAlertManagerConfig)
     );
     await renderReceivers();
 
     // check that by default grafana templates & receivers are fetched rendered in appropriate tables
-    let receiversTable = await ui.receiversTable.find();
+    await ui.receiversTable.find();
     let templatesTable = await ui.templatesTable.find();
     let templateRows = templatesTable.querySelectorAll('tbody tr');
     expect(templateRows).toHaveLength(3);
     expect(templateRows[0]).toHaveTextContent('first template');
     expect(templateRows[1]).toHaveTextContent('second template');
     expect(templateRows[2]).toHaveTextContent('third template');
-    let receiverRows = receiversTable.querySelectorAll('tbody tr');
+    let receiverRows = within(screen.getByTestId('dynamic-table')).getAllByTestId('row');
     expect(receiverRows[0]).toHaveTextContent('default');
     expect(receiverRows[1]).toHaveTextContent('critical');
     expect(receiverRows).toHaveLength(2);
@@ -181,15 +187,18 @@ describe('Receivers', () => {
     expect(mocks.api.fetchConfig).toHaveBeenCalledTimes(2);
     expect(mocks.api.fetchConfig).toHaveBeenLastCalledWith('CloudManager');
 
-    receiversTable = await ui.receiversTable.find();
+    await ui.receiversTable.find();
     templatesTable = await ui.templatesTable.find();
     templateRows = templatesTable.querySelectorAll('tbody tr');
     expect(templateRows[0]).toHaveTextContent('foo template');
     expect(templateRows).toHaveLength(1);
-    receiverRows = receiversTable.querySelectorAll('tbody tr');
+    receiverRows = within(screen.getByTestId('dynamic-table')).getAllByTestId('row');
     expect(receiverRows[0]).toHaveTextContent('cloud-receiver');
     expect(receiverRows).toHaveLength(1);
     expect(locationService.getSearchObject()[ALERTMANAGER_NAME_QUERY_KEY]).toEqual('CloudManager');
+
+    //should not render any notification error
+    expect(ui.notificationError.query()).not.toBeInTheDocument();
   });
 
   it('Grafana receiver can be tested', async () => {
@@ -329,8 +338,8 @@ describe('Receivers', () => {
     await renderReceivers('CloudManager');
 
     // click edit button for the receiver
-    const receiversTable = await ui.receiversTable.find();
-    const receiverRows = receiversTable.querySelectorAll<HTMLTableRowElement>('tbody tr');
+    await ui.receiversTable.find();
+    const receiverRows = within(screen.getByTestId('dynamic-table')).getAllByTestId('row');
     expect(receiverRows[0]).toHaveTextContent('cloud-receiver');
     await userEvent.click(byTestId('edit').get(receiverRows[0]));
 
@@ -424,12 +433,12 @@ describe('Receivers', () => {
     });
     await renderReceivers(dataSources.promAlertManager.name);
 
-    const receiversTable = await ui.receiversTable.find();
+    await ui.receiversTable.find();
     // there's no templates table for vanilla prom, API does not return templates
     expect(ui.templatesTable.query()).not.toBeInTheDocument();
 
     // click view button on the receiver
-    const receiverRows = receiversTable.querySelectorAll<HTMLTableRowElement>('tbody tr');
+    const receiverRows = within(screen.getByTestId('dynamic-table')).getAllByTestId('row');
     expect(receiverRows[0]).toHaveTextContent('cloud-receiver');
     expect(byTestId('edit').query(receiverRows[0])).not.toBeInTheDocument();
     await userEvent.click(byTestId('view').get(receiverRows[0]));
@@ -464,8 +473,8 @@ describe('Receivers', () => {
     await renderReceivers('CloudManager');
 
     // check that receiver from the default config is represented
-    const receiversTable = await ui.receiversTable.find();
-    const receiverRows = receiversTable.querySelectorAll<HTMLTableRowElement>('tbody tr');
+    await ui.receiversTable.find();
+    const receiverRows = within(screen.getByTestId('dynamic-table')).getAllByTestId('row');
     expect(receiverRows[0]).toHaveTextContent('default-email');
 
     // check that both config and status endpoints were called
@@ -487,5 +496,97 @@ describe('Receivers', () => {
     expect(templatesTable).toBeInTheDocument();
     expect(receiversTable).toBeInTheDocument();
     expect(ui.newContactPointButton.get()).toBeInTheDocument();
+  });
+  describe('Contact points state', () => {
+    it('Should render error notifications when there are some points state ', async () => {
+      mocks.api.fetchConfig.mockResolvedValue(someGrafanaAlertManagerConfig);
+      mocks.api.updateConfig.mockResolvedValue();
+
+      const receiversMock: ContactPointsState = {
+        receivers: {
+          default: {
+            active: true,
+            notifiers: {
+              email: [
+                {
+                  lastNotifyAttemptError:
+                    'establish connection to server: dial tcp: lookup smtp.example.org on 8.8.8.8:53: no such host',
+                  lastNotifyAttempt: '2022-09-19T15:34:40.696Z',
+                  lastNotifyAttemptDuration: '117.2455ms',
+                  name: 'email[0]',
+                },
+              ],
+            },
+            errorCount: 1,
+          },
+          critical: {
+            active: true,
+            notifiers: {
+              slack: [
+                {
+                  lastNotifyAttempt: '2022-09-19T15:34:40.696Z',
+                  lastNotifyAttemptDuration: '117.2455ms',
+                  name: 'slack[0]',
+                },
+              ],
+              pagerduty: [
+                {
+                  lastNotifyAttempt: '2022-09-19T15:34:40.696Z',
+                  lastNotifyAttemptDuration: '117.2455ms',
+                  name: 'pagerduty',
+                },
+              ],
+            },
+            errorCount: 0,
+          },
+        },
+        errorCount: 1,
+      };
+
+      mocks.api.fetchReceivers.mockResolvedValue(receiversMock);
+      await renderReceivers();
+
+      //
+      await ui.receiversTable.find();
+      //should render notification error
+      expect(ui.notificationError.query()).toBeInTheDocument();
+      expect(ui.notificationError.get()).toHaveTextContent('1 error with contact points');
+
+      const receiverRows = within(screen.getByTestId('dynamic-table')).getAllByTestId('row');
+      expect(receiverRows[0]).toHaveTextContent('1 error');
+      expect(receiverRows[1]).not.toHaveTextContent('error');
+      expect(receiverRows[1]).toHaveTextContent('OK');
+
+      //should show error in contact points when expanding
+      // expand contact point detail for default 2 emails - 2 errors
+      await userEvent.click(ui.contactPointsCollapseToggle.get(receiverRows[0]));
+      const defaultDetailTable = screen.getAllByTestId('dynamic-table')[1];
+      expect(byText('1 error').getAll(defaultDetailTable)).toHaveLength(1);
+
+      // expand contact point detail for slack and pagerduty - 0 errors
+      await userEvent.click(ui.contactPointsCollapseToggle.get(receiverRows[1]));
+      const criticalDetailTable = screen.getAllByTestId('dynamic-table')[2];
+      expect(byText('1 error').query(criticalDetailTable)).toBeNull();
+      expect(byText('OK').getAll(criticalDetailTable)).toHaveLength(2);
+    });
+
+    it('Should not render error notifications when fetchContactPointsState raises 404 error ', async () => {
+      mocks.api.fetchConfig.mockResolvedValue(someGrafanaAlertManagerConfig);
+      mocks.api.updateConfig.mockResolvedValue();
+
+      mocks.api.fetchReceivers.mockRejectedValue({ status: 404 });
+      await renderReceivers();
+
+      await ui.receiversTable.find();
+      //should not render notification error
+      expect(ui.notificationError.query()).not.toBeInTheDocument();
+      //contact points are not expandable
+      expect(ui.contactPointsCollapseToggle.query()).not.toBeInTheDocument();
+      //should render receivers, only one dynamic table
+      let receiverRows = within(screen.getByTestId('dynamic-table')).getAllByTestId('row');
+      expect(receiverRows[0]).toHaveTextContent('default');
+      expect(receiverRows[1]).toHaveTextContent('critical');
+      expect(receiverRows).toHaveLength(2);
+    });
   });
 });

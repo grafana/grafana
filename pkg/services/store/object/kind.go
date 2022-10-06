@@ -14,7 +14,10 @@ const StandardKindPanel = "panel"         // types: heatmap, timeseries, table, 
 const StandardKindDataSource = "ds"       // types: influx, prometheus, test, ...
 const StandardKindTransform = "transform" // types: joinByField, pivot, organizeFields, ...
 
-// This is a stub -- it should lookup in a registry
+// This is a stub -- it will soon lookup in a registry of known "kinds"
+// Each kind will be able to define:
+//  1. sanitize/normalize function  (ie get safe bytes)
+//  2. SummaryProvier
 func GetSafeSaveObject(r *WriteObjectRequest) (*ObjectSummary, []byte, error) {
 	summary := &ObjectSummary{
 		Name:        fmt.Sprintf("hello: %s", r.Kind),
