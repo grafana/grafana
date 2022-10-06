@@ -214,4 +214,8 @@ const (
 	// FlagIncreaseInMemDatabaseQueryCache
 	// Enable more in memory caching for database queries
 	FlagIncreaseInMemDatabaseQueryCache = "increaseInMemDatabaseQueryCache"
+
+	// FlagNewPanelHeader
+	// Show updated design for panel header and panel menu
+	FlagNewPanelHeader = "newPanelHeader"
 )
