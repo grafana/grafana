@@ -1,0 +1,289 @@
+{
+  "common": {
+    "locale": {
+      "default": "Default",
+      "en": "English",
+      "es": "Spanish",
+      "fr": "French"
+    },
+    "save": "Save"
+  },
+  "dashboard": {
+    "inspect": {
+      "actions-tab": "Actions",
+      "data-tab": "Data",
+      "error-tab": "Error",
+      "json-tab": "JSON",
+      "meta-tab": "Meta Data",
+      "query-tab": "Query",
+      "stats-tab": "Stats",
+      "subtitle": "{{queryCount}} queries with total query time of {{formatted}}",
+      "title": "Inspect: {{panelTitle}}"
+    },
+    "inspect-data": {
+      "data-options": "Data options",
+      "dataframe-aria-label": "Select dataframe",
+      "dataframe-label": "Show data frame",
+      "download-csv": "Download CSV",
+      "download-excel-description": "Adds header to CSV for use with Excel",
+      "download-excel-label": "Download for Excel",
+      "download-logs": "Download logs",
+      "download-service": "Download service graph",
+      "download-traces": "Download traces",
+      "excel-header": "Excel header",
+      "formatted": "Formatted data",
+      "formatted-data-description": "Table data is formatted with options defined in the Field and Override tabs.",
+      "formatted-data-label": "Formatted data",
+      "panel-transforms": "Panel transforms",
+      "series-to-columns": "Series joined by time",
+      "transformation": "Series joined by time",
+      "transformations-description": "Table data is displayed with transformations defined in the panel Transform tab.",
+      "transformations-label": "Apply panel transformations"
+    },
+    "inspect-json": {
+      "dataframe-description": "Raw data without transformations and field config applied. ",
+      "dataframe-label": "DataFrame JSON (from Query)",
+      "panel-data-description": "The raw model passed to the panel visualization",
+      "panel-data-label": "Panel data",
+      "panel-json-description": "The model saved in the dashboard JSON that configures how everything works.",
+      "panel-json-label": "Panel JSON",
+      "select-source": "Select source",
+      "unknown": "Unknown Object: {{show}}"
+    },
+    "inspect-meta": {
+      "no-inspector": "No Metadata Inspector"
+    },
+    "inspect-stats": {
+      "data-title": "Data source stats",
+      "processing-time": "Data processing time",
+      "queries": "Number of queries",
+      "request-time": "Total request time",
+      "rows": "Total number rows",
+      "table-title": "Stats"
+    },
+    "refresh-picker": {
+      "off-arialabel": "Turn off auto refresh",
+      "off-description": "Auto refresh turned off. Choose refresh time interval",
+      "off-label": "Off",
+      "on-description": ""
+    },
+    "toolbar": {
+      "add-panel": "Add panel",
+      "comments-show": "Show dashboard comments",
+      "mark-favorite": "Mark as favorite",
+      "open-original": "Open original dashboard",
+      "playlist-next": "Go to next dashboard",
+      "playlist-previous": "Go to previous dashboard",
+      "playlist-stop": "Stop playlist",
+      "refresh": "Refresh dashboard",
+      "save": "Save dashboard",
+      "settings": "Dashboard settings",
+      "share": "Share dashboard or panel",
+      "tv-button": "Cycle view mode",
+      "unmark-favorite": "Unmark as favorite"
+    }
+  },
+  "folder-picker": {
+    "loading": "Loading folders..."
+  },
+  "library-panel": {
+    "add-modal": {
+      "cancel": "Cancel",
+      "create": "Create library panel",
+      "error": "Library panel with this name already exists",
+      "folder": "Save in folder",
+      "folder-description": "Library panel permissions are derived from the folder permissions",
+      "name": "Library panel name"
+    }
+  },
+  "library-panels": {
+    "save": {
+      "error": "Error saving library panel: \"{{errorMsg}}\"",
+      "success": "Library panel saved"
+    }
+  },
+  "nav": {
+    "alerting": "Alerting",
+    "alerting-admin": "Admin",
+    "alerting-am-routes": "Notification policies",
+    "alerting-channels": "Notification channels",
+    "alerting-groups": "Groups",
+    "alerting-legacy": "Alerting (legacy)",
+    "alerting-list": "Alert rules",
+    "alerting-receivers": "Contact points",
+    "alerting-silences": "Silences",
+    "api-keys": "API keys",
+    "config": "Configuration",
+    "correlations": "Correlations",
+    "create": "Create",
+    "create-alert": "New alert rule",
+    "create-dashboard": "Dashboard",
+    "create-folder": "Folder",
+    "create-import": "Import",
+    "dashboards": "Dashboards",
+    "datasources": "Data sources",
+    "explore": "Explore",
+    "help": "Help",
+    "home": "Home",
+    "library-panels": "Library panels",
+    "live": "Event streaming",
+    "live-cloud": "Cloud",
+    "live-pipeline": "Pipeline",
+    "live-status": "Status",
+    "manage-dashboards": "Browse",
+    "new-dashboard": "New dashboard",
+    "new-folder": "New folder",
+    "org-settings": "Preferences",
+    "playlists": "Playlists",
+    "plugins": "Plugins",
+    "profile/password": "Change password",
+    "profile/settings": "Preferences",
+    "service-accounts": "Service accounts",
+    "sign-out": "Sign out",
+    "snapshots": "Snapshots",
+    "starred": "Starred",
+    "starred-empty": "Your starred dashboards will appear here",
+    "teams": "Teams",
+    "users": "Users"
+  },
+  "navigation": {
+    "kiosk": {
+      "tv-alert": "Press ESC to exit kiosk mode"
+    }
+  },
+  "panel": {
+    "header-menu": {
+      "inspect": "Inspect",
+      "inspect-data": "Data",
+      "inspect-json": "Panel JSON",
+      "more": "More...",
+      "share": "Share",
+      "view": "View"
+    }
+  },
+  "share-modal": {
+    "dashboard": {
+      "title": "Share"
+    },
+    "embed": {
+      "copy": "Copy to clipboard",
+      "html": "Embed HTML",
+      "html-description": "The HTML code below can be pasted and included in another web page. Unless anonymous access is enabled, the user viewing that page need to be signed into Grafana for the graph to load.",
+      "info": "Generate HTML for embedding an iframe with this panel.",
+      "time-range": "Current time range",
+      "time-range-description": "Transforms the current relative time range to an absolute time range"
+    },
+    "export": {
+      "cancel-button": "Cancel",
+      "info-text": "Export this dashboard.",
+      "save-button": "Save to file",
+      "share-default-label": "Export with default values removed",
+      "share-externally-label": "Export for sharing externally",
+      "view-button": "View JSON"
+    },
+    "library": {
+      "info": "Create library panel."
+    },
+    "link": {
+      "copy-link-button": "Copy",
+      "info-text": "Create a direct link to this dashboard or panel, customized with the options below.",
+      "link-url": "Link URL",
+      "render-alert": "Image renderer plugin not installed",
+      "render-instructions": "To render a panel image, you must install the&nbsp;<1>Grafana image renderer plugin</1>. Please contact your Grafana administrator to install the plugin.",
+      "rendered-image": "Direct link rendered image",
+      "save-alert": "Dashboard is not saved",
+      "save-dashboard": "To render a panel image, you must save the dashboard first.",
+      "shorten-url": "Shorten URL",
+      "time-range-description": "Transforms the current relative time range to an absolute time range",
+      "time-range-label": "Lock time range"
+    },
+    "panel": {
+      "title": "Share Panel"
+    },
+    "snapshot": {
+      "cancel-button": "Cancel",
+      "copy-link-button": "Copy",
+      "delete-button": "Delete snapshot.",
+      "deleted-message": "The snapshot has been deleted. If you have already accessed it once, then it might take up to an hour before before it is removed from browser caches or CDN caches.",
+      "expire": "Expire",
+      "expire-day": "1 Day",
+      "expire-hour": "1 Hour",
+      "expire-never": "Never",
+      "expire-week": "7 Days",
+      "info-text-1": "A snapshot is an instant way to share an interactive dashboard publicly. When created, we strip sensitive data like queries (metric, template, and annotation) and panel links, leaving only the visible metric data and series names embedded in your dashboard.",
+      "info-text-2": "Keep in mind, your snapshot <1>can be viewed by anyone</1> that has the link and can access the URL. Share wisely.",
+      "local-button": "Local Snapshot",
+      "mistake-message": "Did you make a mistake? ",
+      "name": "Snapshot name",
+      "timeout": "Timeout (seconds)",
+      "timeout-description": "You might need to configure the timeout value if it takes a long time to collect your dashboard metrics."
+    },
+    "tab-title": {
+      "embed": "Embed",
+      "export": "Export",
+      "library-panel": "Library panel",
+      "link": "Link",
+      "snapshot": "Snapshot"
+    },
+    "theme-picker": {
+      "current": "Current",
+      "dark": "Dark",
+      "field-name": "Theme",
+      "light": "Light"
+    }
+  },
+  "shared-dashboard": {
+    "fields": {
+      "timezone-label": "Timezone"
+    }
+  },
+  "shared-preferences": {
+    "fields": {
+      "home-dashboard-label": "Home Dashboard",
+      "home-dashboard-placeholder": "Default dashboard",
+      "locale-label": "Language",
+      "locale-placeholder": "Choose language",
+      "theme-label": "UI Theme",
+      "week-start-label": "Week start"
+    },
+    "theme": {
+      "dark-label": "Dark",
+      "default-label": "Default",
+      "light-label": "Light"
+    },
+    "title": "Preferences"
+  },
+  "time-picker": {
+    "absolute": {
+      "recent-title": "Recently used absolute ranges",
+      "title": "Absolute time range"
+    }
+  },
+  "user-orgs": {
+    "current-org-button": "Current",
+    "name-column": "Name",
+    "role-column": "Role",
+    "select-org-button": "Select organisation",
+    "title": "Organizations"
+  },
+  "user-profile": {
+    "fields": {
+      "email-error": "Email is required",
+      "email-label": "Email",
+      "name-error": "Name is required",
+      "name-label": "Name",
+      "username-label": "Username"
+    },
+    "title": "Edit profile"
+  },
+  "user-session": {
+    "browser-column": "Browser &amp; OS",
+    "created-at-column": "Logged on",
+    "ip-column": "IP address",
+    "revoke": "Revoke user session",
+    "seen-at-column": "Last seen"
+  },
+  "user-sessions": {
+    "loading": "Loading sessions..."
+  }
+}

@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	"github.com/grafana/grafana/pkg/services/ngalert/state/historian"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests"
 )
 
@@ -38,7 +39,8 @@ func TestDashboardAnnotations(t *testing.T) {
 	_, dbstore := tests.SetupTestEnv(t, 1)
 
 	fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()
-	st := state.NewManager(log.New("test_stale_results_handler"), testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, clock.New(), fakeAnnoRepo)
+	hist := historian.NewAnnotationHistorian(fakeAnnoRepo, &dashboards.FakeDashboardService{}, log.NewNopLogger())
+	st := state.NewManager(log.New("test_stale_results_handler"), testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &image.NoopImageService{}, clock.New(), hist)
 
 	const mainOrgID int64 = 1
 
@@ -1980,7 +1982,8 @@ func TestProcessEvalResults(t *testing.T) {
 
 	for _, tc := range testCases {
 		fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()
-		st := state.NewManager(log.New("test_state_manager"), testMetrics.GetStateMetrics(), nil, nil, &state.FakeInstanceStore{}, &dashboards.FakeDashboardService{}, &image.NotAvailableImageService{}, clock.New(), fakeAnnoRepo)
+		hist := historian.NewAnnotationHistorian(fakeAnnoRepo, &dashboards.FakeDashboardService{}, log.NewNopLogger())
+		st := state.NewManager(log.New("test_state_manager"), testMetrics.GetStateMetrics(), nil, nil, &state.FakeInstanceStore{}, &image.NotAvailableImageService{}, clock.New(), hist)
 		t.Run(tc.desc, func(t *testing.T) {
 			for _, res := range tc.evalResults {
 				_ = st.ProcessEvalResults(context.Background(), evaluationTime, tc.alertRule, res, data.Labels{
@@ -2008,7 +2011,7 @@ func TestProcessEvalResults(t *testing.T) {
 	t.Run("should save state to database", func(t *testing.T) {
 		instanceStore := &state.FakeInstanceStore{}
 		clk := clock.New()
-		st := state.NewManager(log.New("test_state_manager"), testMetrics.GetStateMetrics(), nil, nil, instanceStore, &dashboards.FakeDashboardService{}, &image.NotAvailableImageService{}, clk, annotationstest.NewFakeAnnotationsRepo())
+		st := state.NewManager(log.New("test_state_manager"), testMetrics.GetStateMetrics(), nil, nil, instanceStore, &image.NotAvailableImageService{}, clk, &state.FakeHistorian{})
 		rule := models.AlertRuleGen()()
 		var results = eval.GenerateResults(rand.Intn(4)+1, eval.ResultGen(eval.WithEvaluatedAt(clk.Now())))
 
@@ -2016,10 +2019,10 @@ func TestProcessEvalResults(t *testing.T) {
 
 		require.NotEmpty(t, states)
 
-		savedStates := make(map[string]models.SaveAlertInstanceCommand)
+		savedStates := make(map[string]models.AlertInstance)
 		for _, op := range instanceStore.RecordedOps {
 			switch q := op.(type) {
-			case models.SaveAlertInstanceCommand:
+			case models.AlertInstance:
 				cacheId, err := q.Labels.StringKey()
 				require.NoError(t, err)
 				savedStates[cacheId] = q
@@ -2052,28 +2055,39 @@ func TestStaleResultsHandler(t *testing.T) {
 	const mainOrgID int64 = 1
 	rule := tests.CreateTestAlertRule(t, ctx, dbstore, int64(interval.Seconds()), mainOrgID)
 	lastEval := evaluationTime.Add(-2 * interval)
-	saveCmd1 := &models.SaveAlertInstanceCommand{
-		RuleOrgID:         rule.OrgID,
-		RuleUID:           rule.UID,
-		Labels:            models.InstanceLabels{"test1": "testValue1"},
-		State:             models.InstanceStateNormal,
-		LastEvalTime:      lastEval,
-		CurrentStateSince: lastEval,
-		CurrentStateEnd:   lastEval.Add(3 * interval),
+
+	labels1 := models.InstanceLabels{"test1": "testValue1"}
+	_, hash1, _ := labels1.StringAndHash()
+	labels2 := models.InstanceLabels{"test2": "testValue2"}
+	_, hash2, _ := labels2.StringAndHash()
+	instances := []models.AlertInstance{
+		{
+			AlertInstanceKey: models.AlertInstanceKey{
+				RuleOrgID:  rule.OrgID,
+				RuleUID:    rule.UID,
+				LabelsHash: hash1,
+			},
+			CurrentState:      models.InstanceStateNormal,
+			Labels:            labels1,
+			LastEvalTime:      lastEval,
+			CurrentStateSince: lastEval,
+			CurrentStateEnd:   lastEval.Add(3 * interval),
+		},
+		{
+			AlertInstanceKey: models.AlertInstanceKey{
+				RuleOrgID:  rule.OrgID,
+				RuleUID:    rule.UID,
+				LabelsHash: hash2,
+			},
+			CurrentState:      models.InstanceStateFiring,
+			Labels:            labels2,
+			LastEvalTime:      lastEval,
+			CurrentStateSince: lastEval,
+			CurrentStateEnd:   lastEval.Add(3 * interval),
+		},
 	}
 
-	_ = dbstore.SaveAlertInstance(ctx, saveCmd1)
-
-	saveCmd2 := &models.SaveAlertInstanceCommand{
-		RuleOrgID:         rule.OrgID,
-		RuleUID:           rule.UID,
-		Labels:            models.InstanceLabels{"test2": "testValue2"},
-		State:             models.InstanceStateFiring,
-		LastEvalTime:      lastEval,
-		CurrentStateSince: lastEval,
-		CurrentStateEnd:   lastEval.Add(3 * interval),
-	}
-	_ = dbstore.SaveAlertInstance(ctx, saveCmd2)
+	_ = dbstore.SaveAlertInstances(ctx, instances...)
 
 	testCases := []struct {
 		desc               string
@@ -2125,7 +2139,7 @@ func TestStaleResultsHandler(t *testing.T) {
 
 	for _, tc := range testCases {
 		ctx := context.Background()
-		st := state.NewManager(log.New("test_stale_results_handler"), testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, clock.New(), annotationstest.NewFakeAnnotationsRepo())
+		st := state.NewManager(log.New("test_stale_results_handler"), testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &image.NoopImageService{}, clock.New(), &state.FakeHistorian{})
 		st.Warm(ctx)
 		existingStatesForRule := st.GetStatesForRuleUID(rule.OrgID, rule.UID)
 
@@ -2188,7 +2202,7 @@ func TestStaleResults(t *testing.T) {
 		clk := clock.NewMock()
 		clk.Set(time.Now())
 
-		st := state.NewManager(log.New("test_stale_results_handler"), testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, clk, annotationstest.NewFakeAnnotationsRepo())
+		st := state.NewManager(log.New("test_stale_results_handler"), testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &image.NoopImageService{}, clk, &state.FakeHistorian{})
 
 		orgID := rand.Int63()
 		rule := tests.CreateTestAlertRule(t, ctx, dbstore, 10, orgID)

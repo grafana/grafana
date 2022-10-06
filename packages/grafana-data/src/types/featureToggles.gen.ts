@@ -16,6 +16,7 @@
 export interface FeatureToggles {
   [name: string]: boolean | undefined; // support any string value
 
+  alertingBigTransactions?: boolean;
   trimDefaults?: boolean;
   disableEnvelopeEncryption?: boolean;
   database_metrics?: boolean;
@@ -33,6 +34,7 @@ export interface FeatureToggles {
   publicDashboards?: boolean;
   lokiLive?: boolean;
   lokiDataframeApi?: boolean;
+  lokiMonacoEditor?: boolean;
   swaggerUi?: boolean;
   featureHighlights?: boolean;
   dashboardComments?: boolean;
@@ -63,7 +65,6 @@ export interface FeatureToggles {
   dataConnectionsConsole?: boolean;
   internationalization?: boolean;
   topnav?: boolean;
-  customBranding?: boolean;
   grpcServer?: boolean;
   traceqlEditor?: boolean;
   redshiftAsyncQueryDataSupport?: boolean;

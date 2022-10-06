@@ -1,11 +1,12 @@
 import { css, cx } from '@emotion/css';
-import React, { useRef, useState, useLayoutEffect, useEffect } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import usePrevious from 'react-use/lib/usePrevious';
 
-import { GrafanaTheme2, DataQueryError, LogRowModel, textUtil, LogsSortOrder } from '@grafana/data';
-import { useStyles2, Alert, ClickOutsideWrapper, CustomScrollbar, List, Button } from '@grafana/ui';
+import { DataQueryError, GrafanaTheme2, LogRowModel, LogsSortOrder, textUtil } from '@grafana/data';
+import { Alert, Button, ClickOutsideWrapper, CustomScrollbar, List, useStyles2 } from '@grafana/ui';
 
 import { LogMessageAnsi } from './LogMessageAnsi';
-import { LogRowContextRows, LogRowContextQueryErrors, HasMoreContextRows } from './LogRowContextProvider';
+import { HasMoreContextRows, LogRowContextQueryErrors, LogRowContextRows } from './LogRowContextProvider';
 
 export enum LogGroupPosition {
   Bottom = 'bottom',
@@ -155,15 +156,48 @@ export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps
 }) => {
   const { commonStyles, logs } = useStyles2(getLogRowContextStyles);
   const [scrollTop, setScrollTop] = useState(0);
-  const listContainerRef = useRef<HTMLDivElement>(null);
+  const [scrollHeight, setScrollHeight] = useState(0);
 
+  const listContainerRef = useRef<HTMLDivElement>(null);
+  const prevRows = usePrevious(rows);
+  const prevScrollTop = usePrevious(scrollTop);
+  const prevScrollHeight = usePrevious(scrollHeight);
+
+  /**
+   * This hook is responsible of keeping the right scroll position of the top
+   * context when rows are added. Since rows are added at the top of the DOM,
+   * the scroll position changes and we need to adjust the scrollTop.
+   */
   useLayoutEffect(() => {
-    // We want to scroll to bottom only when we receive first 10 log lines
-    const shouldScrollRows = rows.length > 0 && rows.length <= 10;
-    if (shouldScrollToBottom && shouldScrollRows && listContainerRef.current) {
-      setScrollTop(listContainerRef.current.offsetHeight);
+    if (!shouldScrollToBottom || !listContainerRef.current) {
+      return;
     }
-  }, [shouldScrollToBottom, rows]);
+
+    const previousRowsLength = prevRows?.length ?? 0;
+    const previousScrollHeight = prevScrollHeight ?? 0;
+    const previousScrollTop = prevScrollTop ?? 0;
+    const scrollElement = listContainerRef.current.parentElement;
+    let currentScrollHeight = 0;
+
+    if (scrollElement) {
+      currentScrollHeight = scrollElement.scrollHeight - scrollElement.clientHeight;
+      setScrollHeight(currentScrollHeight);
+    }
+
+    if (rows.length > previousRowsLength && currentScrollHeight > previousScrollHeight) {
+      setScrollTop(previousScrollTop + (currentScrollHeight - previousScrollHeight));
+    }
+  }, [shouldScrollToBottom, rows, prevRows, prevScrollTop, prevScrollHeight]);
+
+  /**
+   * Keeps track of the scroll position of the list container.
+   */
+  const updateScroll = () => {
+    const scrollElement = listContainerRef.current?.parentElement;
+    if (scrollElement) {
+      setScrollTop(listContainerRef.current?.parentElement.scrollTop);
+    }
+  };
 
   const headerProps = {
     row,
@@ -179,7 +213,7 @@ export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps
       {/* When displaying "after" context */}
       {shouldScrollToBottom && !error && <LogRowContextGroupHeader {...headerProps} />}
       <div className={logs}>
-        <CustomScrollbar autoHide scrollTop={scrollTop} autoHeightMin={'210px'}>
+        <CustomScrollbar autoHide onScroll={updateScroll} scrollTop={scrollTop} autoHeightMin={'210px'}>
           <div ref={listContainerRef}>
             {!error && (
               <List

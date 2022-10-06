@@ -104,7 +104,7 @@ type SetUsingOrgCommand struct {
 
 type SearchUsersQuery struct {
 	SignedInUser *SignedInUser
-	OrgID        int64
+	OrgID        int64 `xorm:"org_id"`
 	Query        string
 	Page         int
 	Limit        int
@@ -122,11 +122,11 @@ type SearchUserQueryResult struct {
 }
 
 type UserSearchHitDTO struct {
-	ID            int64                `json:"id"`
+	ID            int64                `json:"id" xorm:"id"`
 	Name          string               `json:"name"`
 	Login         string               `json:"login"`
 	Email         string               `json:"email"`
-	AvatarUrl     string               `json:"avatarUrl"`
+	AvatarURL     string               `json:"avatarUrl" xorm:"avatar_url"`
 	IsAdmin       bool                 `json:"isAdmin"`
 	IsDisabled    bool                 `json:"isDisabled"`
 	LastSeenAt    time.Time            `json:"lastSeenAt"`
@@ -171,12 +171,12 @@ func (auth *AuthModuleConversion) ToDB() ([]byte, error) {
 }
 
 type DisableUserCommand struct {
-	UserID     int64
+	UserID     int64 `xorm:"user_id"`
 	IsDisabled bool
 }
 
 type BatchDisableUsersCommand struct {
-	UserIDs    []int64
+	UserIDs    []int64 `xorm:"user_ids"`
 	IsDisabled bool
 }
 
