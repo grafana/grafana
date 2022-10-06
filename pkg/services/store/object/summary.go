@@ -1,5 +1,7 @@
 package object
 
+import "context"
+
 // ObjectSummary is derived from a RawObject and should not depend on system state
 // The summary is used for a unified search and listings objects since the fully
 type ObjectSummary struct {
@@ -38,6 +40,6 @@ type ExternalReference struct {
 	UID string `json:"UID,omitempty"`
 }
 
-// ObjectSummaryBuilder will read an object and create the summary.
+// ObjectSummaryBuilder will read an object, validate it, and return a summary, sanitized payload, or an error
 // This should not include values that depend on system state, only the raw object
-type ObjectSummaryBuilder = func(obj *RawObject) (ObjectSummary, error)
+type ObjectSummaryBuilder = func(ctx context.Context, uid string, kind string, body []byte) (ObjectSummary, []byte, error)

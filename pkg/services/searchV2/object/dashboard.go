@@ -2,6 +2,7 @@ package object
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"strconv"
 
@@ -12,23 +13,23 @@ import (
 )
 
 func NewDashboardSummaryBuilder(lookup dslookup.DatasourceLookup) object.ObjectSummaryBuilder {
-	return func(obj *object.RawObject) (object.ObjectSummary, error) {
+	return func(ctx context.Context, uid string, kind string, body []byte) (object.ObjectSummary, []byte, error) {
 		summary := object.ObjectSummary{
 			Labels: make(map[string]string),
 			Fields: make(map[string]interface{}),
 		}
-		stream := bytes.NewBuffer(obj.Body)
+		stream := bytes.NewBuffer(body)
 		dash, err := extract.ReadDashboard(stream, lookup)
 		if err != nil {
 			summary.Error = &object.ObjectErrorInfo{
 				Code:    500, // generic bad error
 				Message: err.Error(),
 			}
-			return summary, err
+			return summary, body, err
 		}
 
 		dashboardRefs := object.NewReferenceAccumulator()
-		url := fmt.Sprintf("/d/%s/%s", obj.UID, models.SlugifyTitle(dash.Title))
+		url := fmt.Sprintf("/d/%s/%s", uid, models.SlugifyTitle(dash.Title))
 		summary.Name = dash.Title
 		summary.Description = dash.Description
 		summary.URL = url
@@ -42,7 +43,7 @@ func NewDashboardSummaryBuilder(lookup dslookup.DatasourceLookup) object.ObjectS
 		for _, panel := range dash.Panels {
 			panelRefs := object.NewReferenceAccumulator()
 			p := &object.ObjectSummary{
-				UID:  obj.UID + "#" + strconv.FormatInt(panel.ID, 10),
+				UID:  uid + "#" + strconv.FormatInt(panel.ID, 10),
 				Kind: "panel",
 			}
 			p.Name = panel.Title
@@ -66,6 +67,6 @@ func NewDashboardSummaryBuilder(lookup dslookup.DatasourceLookup) object.ObjectS
 		}
 
 		summary.References = dashboardRefs.Get()
-		return summary, nil
+		return summary, body, nil
 	}
 }

@@ -900,12 +900,7 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 		reader := object.NewDashboardSummaryBuilder(lookup)
 
 		for _, row := range rows {
-			obj := &obj.RawObject{
-				UID:  row.Uid,
-				Kind: "dashboard",
-				Body: row.Data,
-			}
-			summary, err := reader(obj)
+			summary, _, err := reader(ctx, row.Uid, string(entityKindDashboard), row.Data)
 			if err != nil {
 				l.logger.Warn("Error indexing dashboard data", "error", err, "dashboardId", row.Id, "dashboardSlug", row.Slug)
 				// But append info anyway for now, since we possibly extracted useful information.

@@ -2,6 +2,7 @@ package object
 
 import (
 	"bytes"
+	"context"
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
@@ -36,6 +37,7 @@ func dsLookup() dslookup.DatasourceLookup {
 func TestReadDashboard(t *testing.T) {
 	devdash := "../../../../devenv/dev-dashboards/"
 
+	ctx := context.Background()
 	reader := NewDashboardSummaryBuilder(dsLookup())
 	failed := make([]string, 0, 10)
 	table := newSummaryTable()
@@ -64,7 +66,7 @@ func TestReadDashboard(t *testing.T) {
 					ETag:    createContentsHash(body),
 				}
 
-				summary, err := reader(obj)
+				summary, _, err := reader(ctx, obj.UID, obj.Kind, obj.Body)
 				if err != nil {
 					return err
 				}
