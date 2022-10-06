@@ -77,6 +77,7 @@ const Receivers: FC = () => {
   const receiverTypes = useUnifiedAlertingSelector((state) => state.grafanaNotifiers);
 
   const shouldLoadConfig = isRoot || !config;
+  const shouldRenderNotificationStatus = isRoot;
 
   useEffect(() => {
     if (alertManagerSourceName && shouldLoadConfig) {
@@ -95,14 +96,16 @@ const Receivers: FC = () => {
 
   useEffect(() => {
     function fetchContactPointStates() {
-      alertManagerSourceName && dispatch(fetchContactPointsStateAction(alertManagerSourceName));
+      shouldRenderNotificationStatus &&
+        alertManagerSourceName &&
+        dispatch(fetchContactPointsStateAction(alertManagerSourceName));
     }
     fetchContactPointStates();
     const interval = setInterval(fetchContactPointStates, CONTACT_POINTS_STATE_INTERVAL_MS);
     return () => {
       clearInterval(interval);
     };
-  }, [alertManagerSourceName, dispatch]);
+  }, [shouldRenderNotificationStatus, alertManagerSourceName, dispatch]);
 
   const integrationsErrorCount = contactPointsState?.errorCount ?? 0;
 
@@ -148,7 +151,9 @@ const Receivers: FC = () => {
           onChange={setAlertManagerSourceName}
           dataSources={alertManagers}
         />
-        {integrationsErrorCount > 0 && <NotificationError errorCount={integrationsErrorCount} />}
+        {shouldRenderNotificationStatus && integrationsErrorCount > 0 && (
+          <NotificationError errorCount={integrationsErrorCount} />
+        )}
       </div>
       {error && !loading && (
         <Alert severity="error" title="Error loading Alertmanager config">
