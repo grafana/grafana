@@ -34,7 +34,7 @@ export const enrichConfigItems = (items: NavModelItem[], location: Location<unkn
   }
 
   if (!isSignedIn && !config.featureToggles.topnav) {
-    const loginUrl = locationUtil.getUrlForPartial(location, { forceLogin: true });
+    const loginUrl = locationUtil.getUrlForPartial(location, { forceLogin: 'true' });
 
     items.unshift({
       icon: 'signout',
