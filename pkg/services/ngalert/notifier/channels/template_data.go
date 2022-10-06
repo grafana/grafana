@@ -92,9 +92,10 @@ func extendAlert(alert template.Alert, externalURL string, logger log.Logger) *E
 	}
 
 	if alert.Annotations != nil {
-		s := alert.Annotations[ngmodels.ValuesAnnotation]
-		if err := json.Unmarshal([]byte(s), &extended.Values); err != nil {
-			logger.Warn("failed to unmarshal values annotation", "err", err)
+		if s, ok := alert.Annotations[ngmodels.ValuesAnnotation]; ok {
+			if err := json.Unmarshal([]byte(s), &extended.Values); err != nil {
+				logger.Warn("failed to unmarshal values annotation", "err", err)
+			}
 		}
 		// TODO: Remove in Grafana 10
 		extended.ValueString = alert.Annotations[ngmodels.ValueStringAnnotation]
