@@ -650,6 +650,7 @@ func copyInternalPlugins(pluginsDir, tmpDir string) error {
 		return err
 	}
 	if !exists {
+		//nolint:gosec
 		if err := os.MkdirAll(tgtDir, 0o755); err != nil {
 			return err
 		}
@@ -728,6 +729,7 @@ func realPackageVariant(ctx context.Context, v config.Variant, edition config.Ed
 
 	if v == config.VariantWindowsAmd64 {
 		toolsDir := filepath.Join(tmpDir, "tools")
+		//nolint:gosec
 		if err := os.MkdirAll(toolsDir, 0o755); err != nil {
 			return fmt.Errorf("failed to create tools dir %q: %w", toolsDir, err)
 		}
@@ -901,6 +903,7 @@ func createArchive(srcDir string, edition config.Edition, v config.Variant, vers
 	}
 	if !exists {
 		log.Printf("directory %s doesn't exist - creating...", distDir)
+		//nolint:gosec
 		if err := os.MkdirAll(distDir, 0o755); err != nil {
 			return fmt.Errorf("couldn't create dist: %w", err)
 		}
