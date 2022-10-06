@@ -1162,7 +1162,7 @@
           "showLineNumbers": false,
           "showMiniMap": false
         },
-        "content": "#### Wind Energy Demo",
+        "content": "#### Wind Energy Demo\n\nIn this demo we are showcasing a basic wind farm. We are using the wind turbine element to visualize the rpm of each turbine. We also use metric value elements with text element labels to visualize each turbines operational status, energy output, and rpm.\n\nThe wind turbine element is an \"advanced\" element type that can be accessed by enabling \"Show advanced element types\" in canvas options.",
         "mode": "markdown"
       },
       "pluginVersion": "9.3.0-pre",
@@ -3349,7 +3349,7 @@
           "showLineNumbers": false,
           "showMiniMap": false
         },
-        "content": "#### Level 2 Conveyance Demo",
+        "content": "#### Level 2 Conveyance Demo\n\nThis example shows a basic factory conveyor layout from the top view. Using a similar approach, material flow metrics and equipment status can be monitored on a factory floor.",
         "mode": "markdown"
       },
       "pluginVersion": "9.3.0-pre",
@@ -3628,7 +3628,7 @@
           "showLineNumbers": false,
           "showMiniMap": false
         },
-        "content": "#### Home Solar Energy Demo (Day)",
+        "content": "#### Home Solar Energy Demo (Day)\n\nThis demo show cases an example off grid home solar system with batteries. In this example we set a background animated gif to represent our home solar system. We then overlayed metric values to represent the solar output, battery charging rate, and house energy drain.",
         "mode": "markdown"
       },
       "pluginVersion": "9.3.0-pre",
@@ -3845,7 +3845,7 @@
           "showLineNumbers": false,
           "showMiniMap": false
         },
-        "content": "#### Home Solar Energy Demo (Night)",
+        "content": "#### Home Solar Energy Demo (Night)\n\nThis demo show cases an example off grid home solar system with batteries at night. In this example we set a background animated gif to represent our home solar system. We then overlayed metric values to represent the solar output and battery draining rate / house energy drain.",
         "mode": "markdown"
       },
       "pluginVersion": "9.3.0-pre",
