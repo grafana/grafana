@@ -23,7 +23,7 @@ export const forValidationOptions = (evaluateEvery: string): RegisterOptions => 
   },
   validate: (value: string) => {
     // parsePrometheusDuration does not allow 0 but does allow 0s
-    if (Number(value) === 0) {
+    if (value === '0') {
       return true;
     }
 
