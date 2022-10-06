@@ -92,7 +92,9 @@ return pd.isEnabled ? <Tag name="enabled" colorIndex={20} /> : <Tag name="disabl
                   {pd.title}
                 </Link>
               </td>
-              <td>{renderEnabledTag(pd)}</td>
+              <td>
+                <Tag name={isEnabled ? 'enabled' : 'disabled'} colorIndex={isEnabled ? 20 : 15} 
+              </td>
               <td>
                 <ButtonGroup>
                   {renderViewLink(pd)}
