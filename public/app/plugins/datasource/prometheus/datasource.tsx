@@ -3,6 +3,7 @@ import LRU from 'lru-cache';
 import React from 'react';
 import { forkJoin, lastValueFrom, merge, Observable, of, OperatorFunction, pipe, throwError } from 'rxjs';
 import { catchError, filter, map, tap } from 'rxjs/operators';
+import semver from 'semver/preload';
 
 import {
   AnnotationEvent,
@@ -144,6 +145,28 @@ export class PrometheusDatasource
 
   getQueryDisplayText(query: PromQuery) {
     return query.expr;
+  }
+
+  doesDatasourceSupportLabelsMatchAPI() {
+    return (
+      this._isDatasourceVersionGreaterOrEqualTo('2.26', PromApplication.Prometheus) ||
+      this._isDatasourceVersionGreaterOrEqualTo('2.0.0', PromApplication.Mimir) ||
+      this._isDatasourceVersionGreaterOrEqualTo('1.8.0', PromApplication.Cortex) ||
+      this._isDatasourceVersionGreaterOrEqualTo('0.18', PromApplication.Thanos)
+    );
+  }
+
+  _isDatasourceVersionGreaterOrEqualTo(targetVersion: string, targetFlavor: PromApplication): boolean {
+    // User hasn't configured flavor/version yet, default behavior is to not support features that require version configuration when not provided
+    if (!this.datasourceConfigurationPrometheusVersion || !this.datasourceConfigurationPrometheusFlavor) {
+      return false;
+    }
+
+    if (targetFlavor !== this.datasourceConfigurationPrometheusFlavor) {
+      return false;
+    }
+
+    return semver.gte(targetVersion, this.datasourceConfigurationPrometheusVersion);
   }
 
   _addTracingHeaders(httpOptions: PromQueryRequest, options: DataQueryRequest<PromQuery>) {
