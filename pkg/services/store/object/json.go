@@ -149,7 +149,7 @@ func readRawObject(iter *jsoniter.Iterator, raw *RawObject) {
 
 		case "body":
 			var val interface{}
-			iter.ReadVal(&val)
+			iter.ReadVal(&val) // ??? is there a smarter way to just keep the underlying bytes without read+marshal
 			body, err := json.Marshal(val)
 			if err != nil {
 				iter.ReportError("raw object", "error creating json from body")
