@@ -147,16 +147,14 @@ describe('LogsParsers', () => {
 
     test('should build a valid value matcher', () => {
       const matcher = parser.buildMatcher('foo');
-      const match = 'foo=bar'.match(matcher);
-      expect(match).toBeDefined();
-      expect(match![1]).toBe('bar');
+      const match = matcher('foo=bar');
+      expect(match).toBe('bar');
     });
 
     test('should build a valid complex value matcher', () => {
       const matcher = parser.buildMatcher('time(ms)');
-      const match = 'time(ms)=50'.match(matcher);
-      expect(match).toBeDefined();
-      expect(match![1]).toBe('50');
+      const match = matcher('time(ms)=50');
+      expect(match).toBe('50');
     });
   });
 
@@ -190,23 +188,22 @@ describe('LogsParsers', () => {
 
     test('should build a valid value matcher for strings', () => {
       const matcher = parser.buildMatcher('foo');
-      const match = '{"foo":"bar"}'.match(matcher);
-      expect(match).toBeDefined();
-      expect(match![1]).toBe('bar');
+      const match = matcher('{"foo":"bar"}');
+      expect(match).toBe('bar');
     });
 
     test('should build a valid value matcher for integers', () => {
       const matcher = parser.buildMatcher('foo');
-      const match = '{"foo":42.1}'.match(matcher);
-      expect(match).toBeDefined();
-      expect(match![1]).toBe('42.1');
+      const match = matcher('{"foo":42.1}');
+      expect(match).toBe('42.1');
     });
   });
 });
 
 describe('calculateFieldStats()', () => {
   test('should return no stats for empty rows', () => {
-    expect(calculateFieldStats([], /foo=(.*)/)).toEqual([]);
+    const matcher = () => 'value';
+    expect(calculateFieldStats([], matcher)).toEqual([]);
   });
 
   test('should return no stats if extractor does not match', () => {
@@ -216,7 +213,8 @@ describe('calculateFieldStats()', () => {
       },
     ] as LogRowModel[];
 
-    expect(calculateFieldStats(rows, /baz=(.*)/)).toEqual([]);
+    const parser = LogsParsers.logfmt;
+    expect(calculateFieldStats(rows, parser.buildMatcher('baz'))).toEqual([]);
   });
 
   test('should return stats for found field', () => {
@@ -235,7 +233,13 @@ describe('calculateFieldStats()', () => {
       },
     ] as LogRowModel[];
 
-    expect(calculateFieldStats(rows, /foo=("[^"]*"|\S+)/)).toMatchObject([
+    const matcher = (logLine: string): string | null => {
+      const re = /foo=("[^"]*"|\S+)/;
+      const match = logLine.match(re);
+      return match ? match[1] : null;
+    };
+
+    expect(calculateFieldStats(rows, matcher)).toMatchObject([
       {
         value: '"42 + 1"',
         count: 2,
