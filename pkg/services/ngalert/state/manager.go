@@ -2,7 +2,6 @@ package state
 
 import (
 	"context"
-	"fmt"
 	"net/url"
 	"time"
 
@@ -241,9 +240,16 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 
 	st.cache.set(currentState)
 
-	shouldUpdateAnnotation := oldState != currentState.State || oldReason != currentState.StateReason
-	if shouldUpdateAnnotation && st.historian != nil {
-		go st.historian.RecordState(ctx, alertRule, currentState, InstanceStateAndReason{State: oldState, Reason: oldReason})
+	shouldRecordHistory := oldState != currentState.State || oldReason != currentState.StateReason
+	if shouldRecordHistory && st.historian != nil {
+		record := ContextualState{
+			State:               *currentState,
+			RuleID:              alertRule.ID,
+			RuleTitle:           alertRule.Title,
+			PreviousState:       oldState,
+			PreviousStateReason: oldReason,
+		}
+		go st.historian.RecordState(ctx, record)
 	}
 	return currentState
 }
@@ -344,20 +350,6 @@ func translateInstanceState(state ngModels.InstanceStateType) eval.State {
 	}
 }
 
-// This struct provides grouping of state with reason, and string formatting.
-type InstanceStateAndReason struct {
-	State  eval.State
-	Reason string
-}
-
-func (i InstanceStateAndReason) String() string {
-	s := fmt.Sprintf("%v", i.State)
-	if len(i.Reason) > 0 {
-		s += fmt.Sprintf(" (%v)", i.Reason)
-	}
-	return s
-}
-
 func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, states map[string]*State, logger log.Logger) []*State {
 	// If we are removing two or more stale series it makes sense to share the resolved image as the alert rule is the same.
 	// TODO: We will need to change this when we support images without screenshots as each series will have a different image
@@ -381,14 +373,23 @@ func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Tim
 			toDelete = append(toDelete, ngModels.AlertInstanceKey{RuleOrgID: s.OrgID, RuleUID: s.AlertRuleUID, LabelsHash: labelsHash})
 
 			if s.State == eval.Alerting {
-				previousState := InstanceStateAndReason{State: s.State, Reason: s.StateReason}
+				oldState := s.State
+				oldReason := s.StateReason
+
 				s.State = eval.Normal
 				s.StateReason = ngModels.StateReasonMissingSeries
 				s.EndsAt = evaluatedAt
 				s.Resolved = true
 				s.LastEvaluationTime = evaluatedAt
 				if st.historian != nil {
-					st.historian.RecordState(ctx, alertRule, s, previousState)
+					record := ContextualState{
+						State:               *s,
+						RuleID:              alertRule.ID,
+						RuleTitle:           alertRule.Title,
+						PreviousState:       oldState,
+						PreviousStateReason: oldReason,
+					}
+					st.historian.RecordState(ctx, record)
 				}
 
 				// If there is no resolved image for this rule then take one

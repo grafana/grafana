@@ -73,12 +73,21 @@ func (a *State) GetRuleKey() models.AlertRuleKey {
 	}
 }
 
-func (a *State) DisplayName() string {
-	s := fmt.Sprintf("%v", a.State)
-	if len(a.StateReason) > 0 {
-		s += fmt.Sprintf(" (%v)", a.StateReason)
-	}
-	return s
+// ContextualState is a state bundled with contextual info from when the state originated.
+type ContextualState struct {
+	State
+	PreviousState       eval.State
+	PreviousStateReason string
+	RuleID              int64
+	RuleTitle           string
+}
+
+func (c ContextualState) Formatted() string {
+	return formatStateAndReason(c.State.State, c.State.StateReason)
+}
+
+func (c ContextualState) PreviousFormatted() string {
+	return formatStateAndReason(c.PreviousState, c.PreviousStateReason)
 }
 
 type Evaluation struct {
@@ -318,4 +327,12 @@ func takeImage(ctx context.Context, s image.ImageService, r *models.AlertRule) (
 		return nil, err
 	}
 	return img, nil
+}
+
+func formatStateAndReason(state eval.State, reason string) string {
+	s := fmt.Sprintf("%v", state)
+	if len(reason) > 0 {
+		s += fmt.Sprintf(" (%v)", reason)
+	}
+	return s
 }

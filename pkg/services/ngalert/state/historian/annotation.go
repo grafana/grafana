@@ -33,16 +33,16 @@ func NewAnnotationHistorian(annotations annotations.Repository, dashboards dashb
 	}
 }
 
-func (h *AnnotationStateHistorian) RecordState(ctx context.Context, rule *ngmodels.AlertRule, state *state.State, previousData state.InstanceStateAndReason) {
-	logger := h.log.New(rule.GetKey().LogContext()...)
-	logger.Debug("Alert state changed creating annotation", "newState", state.DisplayName(), "oldState", previousData.String())
+func (h *AnnotationStateHistorian) RecordState(ctx context.Context, state state.ContextualState) {
+	logger := h.log.New(state.State.GetRuleKey().LogContext()...)
+	logger.Debug("Alert state changed creating annotation", "newState", state.Formatted(), "oldState", state.PreviousFormatted())
 
-	annotationText, annotationData := buildAnnotationTextAndData(rule, state)
+	annotationText, annotationData := buildAnnotationTextAndData(state.RuleTitle, &state.State)
 	item := &annotations.Item{
-		AlertId:   rule.ID,
+		AlertId:   state.RuleID,
 		OrgId:     state.OrgID,
-		PrevState: previousData.String(),
-		NewState:  state.DisplayName(),
+		PrevState: state.PreviousFormatted(),
+		NewState:  state.Formatted(),
 		Text:      annotationText,
 		Data:      annotationData,
 		Epoch:     state.LastEvaluationTime.UnixNano() / int64(time.Millisecond),
@@ -58,7 +58,7 @@ func (h *AnnotationStateHistorian) RecordState(ctx context.Context, rule *ngmode
 			return
 		}
 
-		dashID, err := h.dashboards.getID(ctx, rule.OrgID, dashUid)
+		dashID, err := h.dashboards.getID(ctx, state.OrgID, dashUid)
 		if err != nil {
 			logger.Error("Error getting dashboard for alert annotation", "dashboardUID", dashUid, "error", err)
 			return
@@ -74,7 +74,7 @@ func (h *AnnotationStateHistorian) RecordState(ctx context.Context, rule *ngmode
 	}
 }
 
-func buildAnnotationTextAndData(rule *ngmodels.AlertRule, currentState *state.State) (string, *simplejson.Json) {
+func buildAnnotationTextAndData(title string, currentState *state.State) (string, *simplejson.Json) {
 	jsonData := simplejson.New()
 	var value string
 
@@ -105,7 +105,7 @@ func buildAnnotationTextAndData(rule *ngmodels.AlertRule, currentState *state.St
 	}
 
 	labels := removePrivateLabels(currentState.Labels)
-	return fmt.Sprintf("%s {%s} - %s", rule.Title, labels.String(), value), jsonData
+	return fmt.Sprintf("%s {%s} - %s", title, labels.String(), value), jsonData
 }
 
 func removePrivateLabels(labels data.Labels) data.Labels {
