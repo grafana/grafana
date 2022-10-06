@@ -363,6 +363,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         queryResponse.logsFrames,
         queryResponse.graphFrames,
         queryResponse.nodeGraphFrames,
+        queryResponse.flameGraphFrames,
         queryResponse.tableFrames,
         queryResponse.traceFrames,
       ].every((e) => e.length === 0);
