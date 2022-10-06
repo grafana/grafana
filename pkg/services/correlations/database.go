@@ -102,33 +102,31 @@ func (s CorrelationsService) updateCorrelation(ctx context.Context, cmd UpdateCo
 		if cmd.Label == nil && cmd.Description == nil && cmd.Config == nil {
 			return ErrUpdateCorrelationEmptyParams
 		}
-		update := Correlation{}
-		if cmd.Label != nil {
-			update.Label = *cmd.Label
-			session.MustCols("label")
-		}
-		if cmd.Description != nil {
-			update.Description = *cmd.Description
-			session.MustCols("description")
-		}
-		if cmd.Config != nil {
-			update.Config = *cmd.Config
-			session.MustCols("config")
-		}
-
-		updateCount, err := session.Where("uid = ? AND source_uid = ?", correlation.UID, correlation.SourceUID).Limit(1).Update(update)
-		if updateCount == 0 {
+		found, err := session.Get(&correlation)
+		if !found {
 			return ErrCorrelationNotFound
 		}
 		if err != nil {
 			return err
 		}
 
-		found, err := session.Get(&correlation)
-		if !found {
-			return ErrCorrelationNotFound
+		if cmd.Label != nil {
+			correlation.Label = *cmd.Label
+			session.MustCols("label")
+		}
+		if cmd.Description != nil {
+			correlation.Description = *cmd.Description
+			session.MustCols("description")
+		}
+		if cmd.Config != nil {
+			correlation.Config = *cmd.Config
+			session.MustCols("config")
 		}
 
+		updateCount, err := session.Where("uid = ? AND source_uid = ?", correlation.UID, correlation.SourceUID).Limit(1).Update(correlation)
+		if updateCount == 0 {
+			return ErrCorrelationNotFound
+		}
 		return err
 	})
 
