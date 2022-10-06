@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"reflect"
-	"strings"
 	"testing"
 	"time"
 
@@ -25,36 +24,18 @@ type rawObjectMatcher struct {
 	kind         *string
 	createdRange []time.Time
 	updatedRange []time.Time
-	createdBy    *object.UserInfo
-	updatedBy    *object.UserInfo
+	createdBy    string
+	updatedBy    string
 	body         []byte
 	version      *string
 }
 
 type objectVersionMatcher struct {
 	updatedRange []time.Time
-	updatedBy    *object.UserInfo
+	updatedBy    string
 	version      *string
 	etag         *string
 	comment      *string
-}
-
-func userInfoMatches(expected *object.UserInfo, actual *object.UserInfo) (bool, string) {
-	var mismatches []string
-
-	if actual == nil && expected != nil {
-		return true, "Missing user info"
-	}
-
-	if expected.Id != actual.Id {
-		mismatches = append(mismatches, fmt.Sprintf("expected ID %d, actual ID: %d", expected.Id, actual.Id))
-	}
-
-	if expected.Login != actual.Login {
-		mismatches = append(mismatches, fmt.Sprintf("expected login %s, actual login: %s", expected.Login, actual.Login))
-	}
-
-	return len(mismatches) == 0, strings.Join(mismatches, ", ")
 }
 
 func timestampInRange(ts int64, tsRange []time.Time) bool {
@@ -82,18 +63,12 @@ func requireObjectMatch(t *testing.T, obj *object.RawObject, m rawObjectMatcher)
 		mismatches += fmt.Sprintf("expected updatedRange range: [from %s to %s], actual updated: %s\n", m.updatedRange[0], m.updatedRange[1], time.Unix(obj.Updated, 0))
 	}
 
-	if m.createdBy != nil {
-		userInfoMatches, msg := userInfoMatches(m.createdBy, obj.CreatedBy)
-		if !userInfoMatches {
-			mismatches += fmt.Sprintf("createdBy: %s\n", msg)
-		}
+	if m.createdBy != "" && m.createdBy != obj.CreatedBy {
+		mismatches += fmt.Sprintf("createdBy: expected:%s, found:%s\n", m.createdBy, obj.CreatedBy)
 	}
 
-	if m.updatedBy != nil {
-		userInfoMatches, msg := userInfoMatches(m.updatedBy, obj.UpdatedBy)
-		if !userInfoMatches {
-			mismatches += fmt.Sprintf("updatedBy: %s\n", msg)
-		}
+	if m.updatedBy != "" && m.updatedBy != obj.UpdatedBy {
+		mismatches += fmt.Sprintf("updatedBy: expected:%s, found:%s\n", m.updatedBy, obj.UpdatedBy)
 	}
 
 	if !reflect.DeepEqual(m.body, obj.Body) {
@@ -125,11 +100,8 @@ func requireVersionMatch(t *testing.T, obj *object.ObjectVersionInfo, m objectVe
 		mismatches += fmt.Sprintf("expected updatedRange range: [from %s to %s], actual updated: %s\n", m.updatedRange[0], m.updatedRange[1], time.Unix(obj.Updated, 0))
 	}
 
-	if m.updatedBy != nil {
-		userInfoMatches, msg := userInfoMatches(m.updatedBy, obj.UpdatedBy)
-		if !userInfoMatches {
-			mismatches += fmt.Sprintf("updatedBy: %s\n", msg)
-		}
+	if m.updatedBy != "" && m.updatedBy != obj.UpdatedBy {
+		mismatches += fmt.Sprintf("updatedBy: expected:%s, found:%s\n", m.updatedBy, obj.UpdatedBy)
 	}
 
 	if m.version != nil && *m.version != obj.Version {
@@ -148,10 +120,7 @@ func TestObjectServer(t *testing.T) {
 	testCtx := createTestContext(t)
 	ctx = metadata.AppendToOutgoingContext(ctx, "authorization", fmt.Sprintf("Bearer %s", testCtx.authToken))
 
-	fakeUser := &object.UserInfo{
-		Login: testCtx.user.Login,
-		Id:    testCtx.user.UserID,
-	}
+	fakeUser := fmt.Sprintf("user:%d:%s", testCtx.user.UserID, testCtx.user.Login)
 	firstVersion := "1"
 	kind := "dashboard"
 	uid := "my-test-entity"
