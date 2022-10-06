@@ -312,11 +312,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
 
   renderFlameGraphPanel() {
     const { queryResponse } = this.props;
-    const dataFrames = queryResponse.series.filter(
-      (series) => series.meta?.preferredVisualisationType === 'flamegraph'
-    );
-
-    return <FlameGraphExploreContainer dataFrames={dataFrames} />;
+    return <FlameGraphExploreContainer dataFrames={queryResponse.flameGraphFrames} />;
   }
 
   renderTraceViewPanel() {

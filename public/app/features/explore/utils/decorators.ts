@@ -50,7 +50,7 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
         nodeGraphFrames.push(frame);
         break;
       case 'flamegraph':
-        flameGraphFrames.push(frame);
+        config.featureToggles.flameGraph ? flameGraphFrames.push(frame) : tableFrames.push(frame);
         break;
       default:
         if (isTimeSeries(frame)) {
