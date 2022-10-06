@@ -42,9 +42,9 @@ Canvas visualizations are extensible form-built panels that allow you to explici
 
 For example, you can place image layers and then overlay text that's updated by Grafana data sources, and display icons that can change color conditionally based on data.
 
-We've planned additional features and design elements for future releases to make Canvas panels even more powerful tools for creating custom, interactive, data-driven visualizations.
+We've planned additional features and design elements for future releases to make Canvas panels even more powerful tools for creating custom, interactive, data-driven visualizations. To learn more about the Geomap panel, see the [documentation]({{< relref "../visualizations/canvas/" >}}).
 
-Insert gif here of canvas panel in action (for default use case)
+{{< figure src="/static/img/docs/canvas-panel/canvas-beta-overview-9-2-0.mov" max-width="750px" caption="Canvas panel beta overview" >}}
 
 ## Support for Google Analytics 4 properties
 
