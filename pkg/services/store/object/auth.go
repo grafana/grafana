@@ -2,6 +2,7 @@ package object
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
@@ -23,4 +24,15 @@ func UserFromContext(ctx context.Context) *user.SignedInUser {
 	}
 
 	return c.SignedInUser
+}
+
+// Really just spitballing here :) this should hook into a system that can give better display info
+func GetUserIDString(user *user.SignedInUser) string {
+	if user == nil {
+		return ""
+	}
+	if user.IsRealUser() {
+		return fmt.Sprintf("user:%d:%s", user.UserID, user.Login)
+	}
+	return fmt.Sprintf("sys:%d:%s", user.UserID, user.Login)
 }
