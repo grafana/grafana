@@ -95,10 +95,10 @@ func (st DBstore) GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAler
 func (st DBstore) GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmodels.GetAlertRulesGroupByRuleUIDQuery) error {
 	return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var result []*ngmodels.AlertRule
-		err := sess.Table("alert_rule").Alias("A").Join(
+		err := sess.Table("alert_rule").Alias("a").Join(
 			"INNER",
-			"alert_rule AS B", "A.org_id = B.org_id AND A.namespace_uid = B.namespace_uid AND A.rule_group = B.rule_group AND B.uid = ?", query.UID,
-		).Where("A.org_id = ?", query.OrgID).Select("A.*").Find(&result)
+			"alert_rule AS b", "a.org_id = b.org_id AND a.namespace_uid = b.namespace_uid AND a.rule_group = b.rule_group AND b.uid = ?", query.UID,
+		).Where("a.org_id = ?", query.OrgID).Select("a.*").Find(&result)
 		if err != nil {
 			return err
 		}
