@@ -99,7 +99,3 @@ export function parsePrometheusDuration(duration: string): number {
 
   return totalDuration;
 }
-
-export function isValidGoDuration(duration: string): boolean {
-  return /^(?:\d+(h|m|s|ms|us|µs|ns))+$/.test(duration);
-}
