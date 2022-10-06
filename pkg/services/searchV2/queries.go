@@ -12,7 +12,7 @@ import (
 
 // TEMPORARY FILE
 
-func (s *StandardSearchService) searchQueries(ctx context.Context, user *user.SignedInUser, orgID int64, q DashboardQuery) *backend.DataResponse {
+func (s *StandardSearchService) searchQueries(ctx context.Context, user *user.SignedInUser, q DashboardQuery) *backend.DataResponse {
 	queryText := q.Query
 	if queryText == "*" {
 		queryText = ""
@@ -82,7 +82,7 @@ func (s *StandardSearchService) searchQueries(ctx context.Context, user *user.Si
 			tags = make([]string, 0)
 		}
 
-		tagsJson := asJsonRawMessage(tags)
+		tagsJson := mustJsonRawMessage(tags)
 		fTags.Append(&tagsJson)
 
 		dsUids := make([]string, 0)
@@ -90,7 +90,7 @@ func (s *StandardSearchService) searchQueries(ctx context.Context, user *user.Si
 			dsUids = append(dsUids, dsRef.UID)
 		}
 
-		fDSUIDs.Append(asJsonRawMessage(dsUids))
+		fDSUIDs.Append(mustJsonRawMessage(dsUids))
 
 		// extend fields to match the longest field
 		fieldLen++
@@ -106,7 +106,7 @@ func (s *StandardSearchService) searchQueries(ctx context.Context, user *user.Si
 	}
 }
 
-func asJsonRawMessage(arr []string) json.RawMessage {
+func mustJsonRawMessage(arr []string) json.RawMessage {
 	js, _ := json.Marshal(arr)
-	return json.RawMessage(js)
+	return js
 }

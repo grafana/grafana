@@ -56,7 +56,7 @@ func (s *queriesServiceHTTPHandler) update(c *models.ReqContext) response.Respon
 		return response.Error(400, "error parsing body", err)
 	}
 
-	if err := s.service.Update(c.Req.Context(), c.SignedInUser, *query); err != nil {
+	if err := s.service.Update(c.Req.Context(), c.SignedInUser, query); err != nil {
 		var msg string
 		if len(query.UID) > 0 {
 			msg = fmt.Sprintf("error updating query with UID %s: %s", query.UID, err.Error())

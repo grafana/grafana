@@ -239,8 +239,8 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 }
 
 func (s *StandardSearchService) doDashboardQuery(ctx context.Context, signedInUser *user.SignedInUser, orgID int64, q DashboardQuery) *backend.DataResponse {
-	if s.features.IsEnabled(featuremgmt.FlagQueryLibrary) && len(q.Kind) == 1 && q.Kind[0] == string(entityKindQuery) {
-		return s.searchQueries(ctx, signedInUser, orgID, q)
+	if !s.queries.IsDisabled() && len(q.Kind) == 1 && q.Kind[0] == string(entityKindQuery) {
+		return s.searchQueries(ctx, signedInUser, q)
 	}
 
 	rsp := &backend.DataResponse{}

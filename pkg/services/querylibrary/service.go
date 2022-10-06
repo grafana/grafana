@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/x/persistentcollection"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/searchV2/dslookup"
@@ -25,9 +26,10 @@ type QuerySearchOptions struct {
 
 type Service interface {
 	Search(ctx context.Context, user *user.SignedInUser, options QuerySearchOptions) ([]QueryInfo, error)
-	GetBatch(ctx context.Context, user *user.SignedInUser, uids []string) ([]Query, error)
-	Update(ctx context.Context, user *user.SignedInUser, query Query) error
+	GetBatch(ctx context.Context, user *user.SignedInUser, uids []string) ([]*Query, error)
+	Update(ctx context.Context, user *user.SignedInUser, query *Query) error
 	Delete(ctx context.Context, user *user.SignedInUser, uid string) error
+	UpdateDashboardQueries(ctx context.Context, user *user.SignedInUser, dash *models.Dashboard) error
 	registry.CanBeDisabled
 }
 
@@ -36,7 +38,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles) Servi
 		cfg:        cfg,
 		log:        log.New("queryLibraryService"),
 		features:   features,
-		collection: persistentcollection.NewLocalFSPersistentCollection[Query]("query-library", cfg.DataPath, 1),
+		collection: persistentcollection.NewLocalFSPersistentCollection[*Query]("query-library", cfg.DataPath, 1),
 	}
 }
 
@@ -44,7 +46,98 @@ type service struct {
 	cfg        *setting.Cfg
 	features   featuremgmt.FeatureToggles
 	log        log.Logger
-	collection persistentcollection.PersistentCollection[Query]
+	collection persistentcollection.PersistentCollection[*Query]
+}
+
+type perRequestQueryLoader struct {
+	service Service
+	queries map[string]*Query
+	ctx     context.Context
+	user    *user.SignedInUser
+}
+
+func (q *perRequestQueryLoader) byUID(uid string) (*Query, error) {
+	if q, ok := q.queries[uid]; ok {
+		return q, nil
+	}
+
+	queries, err := q.service.GetBatch(q.ctx, q.user, []string{uid})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(queries) != 1 {
+		return nil, err
+	}
+
+	q.queries[uid] = queries[0]
+	return queries[0], nil
+}
+
+func newPerRequestQueryLoader(ctx context.Context, user *user.SignedInUser, service Service) queryLoader {
+	return &perRequestQueryLoader{queries: make(map[string]*Query), ctx: ctx, user: user, service: service}
+}
+
+type queryLoader interface {
+	byUID(uid string) (*Query, error)
+}
+
+func (s *service) UpdateDashboardQueries(ctx context.Context, user *user.SignedInUser, dash *models.Dashboard) error {
+	queryLoader := newPerRequestQueryLoader(ctx, user, s)
+	return s.updateQueriesRecursively(queryLoader, dash.Data)
+}
+
+func (s *service) updateQueriesRecursively(loader queryLoader, parent *simplejson.Json) error {
+	panels := parent.Get("panels").MustArray()
+	for i := range panels {
+		panelAsJSON := simplejson.NewFromAny(panels[i])
+		panelType := panelAsJSON.Get("type").MustString()
+
+		if panelType == "row" {
+			err := s.updateQueriesRecursively(loader, panelAsJSON)
+			if err != nil {
+				return err
+			}
+			continue
+		}
+
+		queryUID := panelAsJSON.GetPath("savedQueryLink", "ref", "uid").MustString()
+		if queryUID == "" {
+			continue
+		}
+
+		query, err := loader.byUID(queryUID)
+		if err != nil {
+			return err
+		}
+
+		if query == nil {
+			// query deleted - unlink
+			panelAsJSON.Set("savedQueryLink", nil)
+			continue
+		}
+
+		queriesAsMap := make([]interface{}, 0)
+		for idx := range query.Queries {
+			queriesAsMap = append(queriesAsMap, query.Queries[idx].MustMap())
+		}
+		panelAsJSON.Set("targets", queriesAsMap)
+
+		isMixed, firstDsRef := isQueryWithMixedDataSource(query)
+		if isMixed {
+			panelAsJSON.Set("datasource", map[string]interface{}{
+				"uid":  "-- Mixed --",
+				"type": "datasource",
+			})
+		} else {
+			panelAsJSON.Set("datasource", map[string]interface{}{
+				"uid":  firstDsRef.UID,
+				"type": firstDsRef.Type,
+			})
+		}
+	}
+
+	return nil
 }
 
 func (s *service) IsDisabled() bool {
@@ -56,7 +149,7 @@ func namespaceFromUser(user *user.SignedInUser) string {
 }
 
 func (s *service) Search(ctx context.Context, user *user.SignedInUser, options QuerySearchOptions) ([]QueryInfo, error) {
-	queries, err := s.collection.Find(ctx, namespaceFromUser(user), func(_ Query) (bool, error) { return true, nil })
+	queries, err := s.collection.Find(ctx, namespaceFromUser(user), func(_ *Query) (bool, error) { return true, nil })
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +184,7 @@ func (s *service) Search(ctx context.Context, user *user.SignedInUser, options Q
 	return filteredQueryInfo, nil
 }
 
-func asQueryInfo(queries []Query) []QueryInfo {
+func asQueryInfo(queries []*Query) []QueryInfo {
 	res := make([]QueryInfo, 0)
 	for _, query := range queries {
 		res = append(res, QueryInfo{
@@ -122,7 +215,28 @@ func getDatasourceUID(q *simplejson.Json) string {
 	return uid
 }
 
-func extractDataSources(query Query) []dslookup.DataSourceRef {
+func isQueryWithMixedDataSource(q *Query) (isMixed bool, firstDsRef dslookup.DataSourceRef) {
+	dsRefs := extractDataSources(q)
+
+	for _, dsRef := range dsRefs {
+		if dsRef.Type == expr.DatasourceType {
+			continue
+		}
+
+		if firstDsRef.UID == "" {
+			firstDsRef = dsRef
+			continue
+		}
+
+		if firstDsRef.UID != dsRef.UID || firstDsRef.Type != dsRef.Type {
+			return true, firstDsRef
+		}
+	}
+
+	return false, firstDsRef
+}
+
+func extractDataSources(query *Query) []dslookup.DataSourceRef {
 	ds := make([]dslookup.DataSourceRef, 0)
 
 	for _, q := range query.Queries {
@@ -141,13 +255,13 @@ func extractDataSources(query Query) []dslookup.DataSourceRef {
 	return ds
 }
 
-func (s *service) GetBatch(ctx context.Context, user *user.SignedInUser, uids []string) ([]Query, error) {
+func (s *service) GetBatch(ctx context.Context, user *user.SignedInUser, uids []string) ([]*Query, error) {
 	uidMap := make(map[string]bool)
 	for _, uid := range uids {
 		uidMap[uid] = true
 	}
 
-	return s.collection.Find(ctx, namespaceFromUser(user), func(q Query) (bool, error) {
+	return s.collection.Find(ctx, namespaceFromUser(user), func(q *Query) (bool, error) {
 		if _, ok := uidMap[q.UID]; ok {
 			return true, nil
 		}
@@ -156,25 +270,25 @@ func (s *service) GetBatch(ctx context.Context, user *user.SignedInUser, uids []
 	})
 }
 
-func (s *service) Update(ctx context.Context, user *user.SignedInUser, query Query) error {
+func (s *service) Update(ctx context.Context, user *user.SignedInUser, query *Query) error {
 	if query.UID == "" {
 		query.UID = util.GenerateShortUID()
 
 		return s.collection.Insert(ctx, namespaceFromUser(user), query)
 	}
 
-	_, err := s.collection.Update(ctx, namespaceFromUser(user), func(q Query) (updated bool, updatedItem Query, err error) {
+	_, err := s.collection.Update(ctx, namespaceFromUser(user), func(q *Query) (updated bool, updatedItem *Query, err error) {
 		if q.UID == query.UID {
 			return true, query, nil
 		}
 
-		return false, Query{}, nil
+		return false, nil, nil
 	})
 	return err
 }
 
 func (s *service) Delete(ctx context.Context, user *user.SignedInUser, uid string) error {
-	_, err := s.collection.Delete(ctx, namespaceFromUser(user), func(q Query) (bool, error) {
+	_, err := s.collection.Delete(ctx, namespaceFromUser(user), func(q *Query) (bool, error) {
 		if q.UID == uid {
 			return true, nil
 		}
