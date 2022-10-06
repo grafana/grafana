@@ -1,4 +1,3 @@
-import { t, Trans } from '@lingui/macro';
 import React, { FC, ReactNode } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { useLocation } from 'react-router-dom';
@@ -20,6 +19,7 @@ import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbarSep
 import config from 'app/core/config';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useBusEvent } from 'app/core/hooks/useBusEvent';
+import { t, Trans } from 'app/core/internationalization';
 import { DashboardCommentsModal } from 'app/features/dashboard/components/DashboardComments/DashboardCommentsModal';
 import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
@@ -139,8 +139,8 @@ export const DashNav = React.memo<Props>((props) => {
 
     if (canStar) {
       let desc = isStarred
-        ? t({ id: 'dashboard.toolbar.unmark-favorite', message: 'Unmark as favorite' })
-        : t({ id: 'dashboard.toolbar.mark-favorite', message: 'Mark as favorite' });
+        ? t('dashboard.toolbar.unmark-favorite', 'Unmark as favorite')
+        : t('dashboard.toolbar.mark-favorite', 'Mark as favorite');
       buttons.push(
         <DashNavButton
           tooltip={desc}
@@ -158,7 +158,7 @@ export const DashNav = React.memo<Props>((props) => {
         <ModalsController key="button-share">
           {({ showModal, hideModal }) => (
             <DashNavButton
-              tooltip={t({ id: 'dashboard.toolbar.share', message: 'Share dashboard or panel' })}
+              tooltip={t('dashboard.toolbar.share', 'Share dashboard or panel')}
               icon="share-alt"
               iconSize="lg"
               onClick={() => {
@@ -184,7 +184,7 @@ export const DashNav = React.memo<Props>((props) => {
         <ModalsController key="button-dashboard-comments">
           {({ showModal, hideModal }) => (
             <DashNavButton
-              tooltip={t({ id: 'dashboard.toolbar.comments-show', message: 'Show dashboard comments' })}
+              tooltip={t('dashboard.toolbar.comments-show', 'Show dashboard comments')}
               icon="comment-alt-message"
               iconSize="lg"
               onClick={() => {
@@ -207,16 +207,16 @@ export const DashNav = React.memo<Props>((props) => {
     return (
       <ButtonGroup key="playlist-buttons">
         <ToolbarButton
-          tooltip={t({ id: 'dashboard.toolbar.playlist-previous', message: 'Go to previous dashboard' })}
+          tooltip={t('dashboard.toolbar.playlist-previous', 'Go to previous dashboard')}
           icon="backward"
           onClick={onPlaylistPrev}
           narrow
         />
         <ToolbarButton onClick={onPlaylistStop}>
-          <Trans id="dashboard.toolbar.playlist-stop">Stop playlist</Trans>
+          <Trans i18nKey="dashboard.toolbar.playlist-stop">Stop playlist</Trans>
         </ToolbarButton>
         <ToolbarButton
-          tooltip={t({ id: 'dashboard.toolbar.playlist-next', message: 'Go to next dashboard' })}
+          tooltip={t('dashboard.toolbar.playlist-next', 'Go to next dashboard')}
           icon="forward"
           onClick={onPlaylistNext}
           narrow
@@ -245,7 +245,7 @@ export const DashNav = React.memo<Props>((props) => {
     const buttons: ReactNode[] = [];
     const tvButton = config.featureToggles.topnav ? null : (
       <ToolbarButton
-        tooltip={t({ id: 'dashboard.toolbar.tv-button', message: 'Cycle view mode' })}
+        tooltip={t('dashboard.toolbar.tv-button', 'Cycle view mode')}
         icon="monitor"
         onClick={onToggleTVMode}
         key="tv-button"
@@ -263,7 +263,7 @@ export const DashNav = React.memo<Props>((props) => {
     if (canEdit && !isFullscreen) {
       buttons.push(
         <ToolbarButton
-          tooltip={t({ id: 'dashboard.toolbar.add-panel', message: 'Add panel' })}
+          tooltip={t('dashboard.toolbar.add-panel', 'Add panel')}
           icon="panel-add"
           onClick={onAddPanel}
           key="button-panel-add"
@@ -276,7 +276,7 @@ export const DashNav = React.memo<Props>((props) => {
         <ModalsController key="button-save">
           {({ showModal, hideModal }) => (
             <ToolbarButton
-              tooltip={t({ id: 'dashboard.toolbar.save', message: 'Save dashboard' })}
+              tooltip={t('dashboard.toolbar.save', 'Save dashboard')}
               icon="save"
               onClick={() => {
                 showModal(SaveDashboardDrawer, {
@@ -293,7 +293,7 @@ export const DashNav = React.memo<Props>((props) => {
     if (snapshotUrl) {
       buttons.push(
         <ToolbarButton
-          tooltip={t({ id: 'dashboard.toolbar.open-original', message: 'Open original dashboard' })}
+          tooltip={t('dashboard.toolbar.open-original', 'Open original dashboard')}
           onClick={() => gotoSnapshotOrigin(snapshotUrl)}
           icon="link"
           key="button-snapshot"
@@ -304,7 +304,7 @@ export const DashNav = React.memo<Props>((props) => {
     if (showSettings) {
       buttons.push(
         <ToolbarButton
-          tooltip={t({ id: 'dashboard.toolbar.settings', message: 'Dashboard settings' })}
+          tooltip={t('dashboard.toolbar.settings', 'Dashboard settings')}
           icon="cog"
           onClick={onOpenSettings}
           key="button-settings"
