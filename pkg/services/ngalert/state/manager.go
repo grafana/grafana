@@ -172,8 +172,8 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 	processedResults := make(map[string]*State, len(results))
 	for _, result := range results {
 		s := st.setNextState(ctx, alertRule, result, extraLabels, logger)
-		states = append(states, s)
-		processedResults[s.CacheID] = s
+		states = append(states, s.State)
+		processedResults[s.State.CacheID] = s.State
 	}
 	resolvedStates := st.staleResultsHandler(ctx, evaluatedAt, alertRule, processedResults, logger)
 	if len(states) > 0 && st.instanceStore != nil {
@@ -184,7 +184,7 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 }
 
 // Set the current state based on evaluation results
-func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, logger log.Logger) *State {
+func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, logger log.Logger) ContextualState {
 	currentState := st.cache.getOrCreate(ctx, st.log, alertRule, result, extraLabels, st.externalURL)
 
 	currentState.LastEvaluationTime = result.EvaluatedAt
@@ -240,18 +240,19 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 
 	st.cache.set(currentState)
 
+	nextState := ContextualState{
+		State:               currentState,
+		RuleID:              alertRule.ID,
+		RuleTitle:           alertRule.Title,
+		PreviousState:       oldState,
+		PreviousStateReason: oldReason,
+	}
+
 	shouldRecordHistory := oldState != currentState.State || oldReason != currentState.StateReason
 	if shouldRecordHistory && st.historian != nil {
-		record := ContextualState{
-			State:               *currentState,
-			RuleID:              alertRule.ID,
-			RuleTitle:           alertRule.Title,
-			PreviousState:       oldState,
-			PreviousStateReason: oldReason,
-		}
-		go st.historian.RecordState(ctx, record)
+		go st.historian.RecordState(ctx, nextState)
 	}
-	return currentState
+	return nextState
 }
 
 func (st *Manager) GetAll(orgID int64) []*State {
@@ -383,7 +384,7 @@ func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Tim
 				s.LastEvaluationTime = evaluatedAt
 				if st.historian != nil {
 					record := ContextualState{
-						State:               *s,
+						State:               s,
 						RuleID:              alertRule.ID,
 						RuleTitle:           alertRule.Title,
 						PreviousState:       oldState,

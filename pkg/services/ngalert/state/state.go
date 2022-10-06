@@ -75,7 +75,7 @@ func (a *State) GetRuleKey() models.AlertRuleKey {
 
 // ContextualState is a state bundled with contextual info from when the state originated.
 type ContextualState struct {
-	State
+	*State
 	PreviousState       eval.State
 	PreviousStateReason string
 	RuleID              int64
