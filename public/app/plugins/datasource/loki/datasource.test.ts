@@ -201,7 +201,7 @@ describe('LokiDatasource', () => {
         },
       ]);
       expect(ds.applyTemplateVariables(query, {}).expr).toBe(
-        `rate({bar="baz", job="foo", k1=~"v.*", k2=~"v\\\\'.*"} |= "bar" [5m])`
+        'rate({bar="baz", job="foo", k1=~"v.*", k2=~"v\\\\\'.*"} |= "bar" [5m])'
       );
     });
   });
