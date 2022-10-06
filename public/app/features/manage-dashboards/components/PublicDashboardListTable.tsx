@@ -97,8 +97,20 @@ return pd.isEnabled ? <Tag name="enabled" colorIndex={20} /> : <Tag name="disabl
               </td>
               <td>
                 <ButtonGroup>
-                  {renderViewLink(pd)}
-                  {renderConfigLink(pd)}
+                  <LinkButton
+        href={viewPublicDashboardUrl(pd.accessToken)}
+        fill="text"
+        title={pd.isEnabled ? 'View public dashboard' : 'Public dashboard is disabled'}
+        target="_blank"
+        disabled={!pd.isEnabled}
+      >
+        <Icon name="external-link-alt" />
+      </LinkButton>
+ 
+      <LinkButton fill="text" href={`/d/${pd.dashboardUid}?shareView=share`} title="Configure public dashboard">
+        <Icon name="cog" />
+      </LinkButton>
+
                 </ButtonGroup>
               </td>
             </tr>
