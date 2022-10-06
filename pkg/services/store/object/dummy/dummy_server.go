@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
@@ -23,13 +24,14 @@ type ObjectVersionWithBody struct {
 }
 
 type RawObjectWithHistory struct {
-	*object.RawObject `json:"rawObject,omitempty"`
-	History           []*ObjectVersionWithBody `json:"history,omitempty"`
+	Object  *object.RawObject        `json:"object,omitempty"`
+	Summary *object.ObjectSummary    `json:"summary,omitempty"`
+	History []*ObjectVersionWithBody `json:"history,omitempty"`
 }
 
 var (
 	// increment when RawObject changes
-	rawObjectVersion = 3
+	rawObjectVersion = 6
 )
 
 func ProvideDummyObjectServer(cfg *setting.Cfg, grpcServerProvider grpcserver.Provider) object.ObjectStoreServer {
@@ -57,7 +59,7 @@ func (i dummyObjectServer) findObject(ctx context.Context, uid string, kind stri
 	}
 
 	obj, err := i.collection.FindFirst(ctx, namespaceFromUID(uid), func(i *RawObjectWithHistory) (bool, error) {
-		return i.UID == uid && i.Kind == kind, nil
+		return i.Object.UID == uid && i.Object.Kind == kind, nil
 	})
 
 	if err != nil {
@@ -70,16 +72,16 @@ func (i dummyObjectServer) findObject(ctx context.Context, uid string, kind stri
 
 	getLatestVersion := version == ""
 	if getLatestVersion {
-		return obj, obj.RawObject, nil
+		return obj, obj.Object, nil
 	}
 
 	for _, objVersion := range obj.History {
 		if objVersion.Version == version {
 			copy := &object.RawObject{
-				UID:       obj.UID,
-				Kind:      obj.Kind,
-				Created:   obj.Created,
-				CreatedBy: obj.CreatedBy,
+				UID:       obj.Object.UID,
+				Kind:      obj.Object.Kind,
+				Created:   obj.Object.Created,
+				CreatedBy: obj.Object.CreatedBy,
 				Updated:   objVersion.Updated,
 				UpdatedBy: objVersion.UpdatedBy,
 				ETag:      objVersion.ETag,
@@ -109,10 +111,21 @@ func (i dummyObjectServer) Read(ctx context.Context, r *object.ReadObjectRequest
 		}, nil
 	}
 
-	return &object.ReadObjectResponse{
-		Object:      objVersion,
-		SummaryJson: nil,
-	}, nil
+	rsp := &object.ReadObjectResponse{
+		Object: objVersion,
+	}
+	if r.WithSummary {
+		summary, _, e2 := object.GetSafeSaveObject(&object.WriteObjectRequest{
+			UID:  r.UID,
+			Kind: r.Kind,
+			Body: objVersion.Body,
+		})
+		if e2 != nil {
+			return nil, e2
+		}
+		rsp.SummaryJson, err = json.Marshal(summary)
+	}
+	return rsp, err
 }
 
 func (i dummyObjectServer) BatchRead(ctx context.Context, batchR *object.BatchReadObjectRequest) (*object.BatchReadObjectResponse, error) {
@@ -137,16 +150,16 @@ func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequ
 	rsp := &object.WriteObjectResponse{}
 
 	updatedCount, err := i.collection.Update(ctx, namespace, func(i *RawObjectWithHistory) (bool, *RawObjectWithHistory, error) {
-		match := i.UID == r.UID && i.Kind == r.Kind
+		match := i.Object.UID == r.UID && i.Object.Kind == r.Kind
 		if !match {
 			return false, nil, nil
 		}
 
-		if r.PreviousVersion != "" && i.Version != r.PreviousVersion {
-			return false, nil, fmt.Errorf("expected the previous version to be %s, but was %s", r.PreviousVersion, i.Version)
+		if r.PreviousVersion != "" && i.Object.Version != r.PreviousVersion {
+			return false, nil, fmt.Errorf("expected the previous version to be %s, but was %s", r.PreviousVersion, i.Object.Version)
 		}
 
-		prevVersion, err := strconv.Atoi(i.Version)
+		prevVersion, err := strconv.Atoi(i.Object.Version)
 		if err != nil {
 			return false, nil, err
 		}
@@ -156,8 +169,8 @@ func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequ
 		updated := &object.RawObject{
 			UID:       r.UID,
 			Kind:      r.Kind,
-			Created:   i.Created,
-			CreatedBy: i.CreatedBy,
+			Created:   i.Object.Created,
+			CreatedBy: i.Object.CreatedBy,
 			Updated:   time.Now().Unix(),
 			UpdatedBy: object.GetUserIDString(modifier),
 			Size:      int64(len(r.Body)),
@@ -181,15 +194,15 @@ func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequ
 		rsp.Status = object.WriteObjectResponse_UPDATED
 
 		// When saving, it must be different than the head version
-		if i.ETag == updated.ETag {
-			versionInfo.ObjectVersionInfo.Version = i.Version
+		if i.Object.ETag == updated.ETag {
+			versionInfo.ObjectVersionInfo.Version = i.Object.Version
 			rsp.Status = object.WriteObjectResponse_UNCHANGED
 			return false, nil, nil
 		}
 
 		return true, &RawObjectWithHistory{
-			RawObject: updated,
-			History:   append(i.History, versionInfo),
+			Object:  updated,
+			History: append(i.History, versionInfo),
 		}, nil
 	})
 
@@ -229,7 +242,7 @@ func (i dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectRequ
 	}
 
 	newObj := &RawObjectWithHistory{
-		RawObject: rawObj,
+		Object: rawObj,
 		History: []*ObjectVersionWithBody{{
 			ObjectVersionInfo: info,
 			Body:              r.Body,
@@ -254,7 +267,7 @@ func (i dummyObjectServer) Write(ctx context.Context, r *object.WriteObjectReque
 		if i == nil || r == nil {
 			return false, nil
 		}
-		return i.UID == r.UID, nil
+		return i.Object.UID == r.UID, nil
 	})
 	if err != nil {
 		return nil, err
@@ -269,10 +282,10 @@ func (i dummyObjectServer) Write(ctx context.Context, r *object.WriteObjectReque
 
 func (i dummyObjectServer) Delete(ctx context.Context, r *object.DeleteObjectRequest) (*object.DeleteObjectResponse, error) {
 	_, err := i.collection.Delete(ctx, namespaceFromUID(r.UID), func(i *RawObjectWithHistory) (bool, error) {
-		match := i.UID == r.UID && i.Kind == r.Kind
+		match := i.Object.UID == r.UID && i.Object.Kind == r.Kind
 		if match {
-			if r.PreviousVersion != "" && i.Version != r.PreviousVersion {
-				return false, fmt.Errorf("expected the previous version to be %s, but was %s", r.PreviousVersion, i.Version)
+			if r.PreviousVersion != "" && i.Object.Version != r.PreviousVersion {
+				return false, fmt.Errorf("expected the previous version to be %s, but was %s", r.PreviousVersion, i.Object.Version)
 			}
 
 			return true, nil
@@ -319,7 +332,7 @@ func (i dummyObjectServer) Search(ctx context.Context, r *object.ObjectSearchReq
 	// TODO more filters
 	objects, err := i.collection.Find(ctx, namespaceFromUID("TODO"), func(i *RawObjectWithHistory) (bool, error) {
 		if len(r.Kind) != 0 {
-			if _, ok := kindMap[i.Kind]; !ok {
+			if _, ok := kindMap[i.Object.Kind]; !ok {
 				return false, nil
 			}
 		}
@@ -332,13 +345,13 @@ func (i dummyObjectServer) Search(ctx context.Context, r *object.ObjectSearchReq
 	searchResults := make([]*object.ObjectSearchResult, 0)
 	for _, o := range objects {
 		searchResults = append(searchResults, &object.ObjectSearchResult{
-			UID:       o.UID,
-			Kind:      o.Kind,
-			Version:   o.Version,
-			Updated:   o.Updated,
-			UpdatedBy: o.UpdatedBy,
+			UID:       o.Object.UID,
+			Kind:      o.Object.Kind,
+			Version:   o.Object.Version,
+			Updated:   o.Object.Updated,
+			UpdatedBy: o.Object.UpdatedBy,
 			Name:      "? name from summary",
-			Body:      o.Body,
+			Body:      o.Object.Body,
 		})
 	}
 
