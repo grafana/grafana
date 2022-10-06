@@ -21,4 +21,12 @@ export class SceneContextObject<TState extends SceneContextObjectState = {}> ext
     // TODO: Resolve state from persisted model
     // this.ctx = { timeRange: ..., variables: ... };
   }
+
+  getContext = () => {
+    if (this.state.inheritContext && this.parent) {
+      return this.parent.getContext();
+    }
+
+    return this.ctx;
+  };
 }

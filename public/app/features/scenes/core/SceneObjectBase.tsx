@@ -6,9 +6,7 @@ import { EventBusSrv } from '@grafana/data';
 import { useForceUpdate } from '@grafana/ui';
 
 import { SceneComponentWrapper } from './SceneComponentWrapper';
-import { SceneContextObjectState } from './SceneContextObject';
 import { SceneObjectStateChangedEvent } from './events';
-import { isContextObject } from './typeguards';
 import {
   SceneObject,
   SceneComponent,
@@ -145,9 +143,9 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
   }
 
   getContext: () => StandardSceneObjectContext = () => {
-    if (isContextObject(this) && !(this.state as SceneContextObjectState).inheritContext) {
-      return this.ctx;
-    }
+    // if (isContextObject(this) && !(this.state as SceneContextObjectState).inheritContext) {
+    //   return this.ctx;
+    // }
 
     if (this.parent) {
       return this.parent.getContext();
