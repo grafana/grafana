@@ -71,12 +71,18 @@ export default class PrometheusMetricFindQuery {
     const start = this.datasource.getPrometheusTime(this.range.from, false);
     const end = this.datasource.getPrometheusTime(this.range.to, true);
 
-    if (!metric) {
-      const params = {
-        start: start.toString(),
-        end: end.toString(),
-      };
-      // return label values globally
+    const params = metric
+      ? {
+          'match[]': metric,
+          start: start.toString(),
+          end: end.toString(),
+        }
+      : {
+          start: start.toString(),
+          end: end.toString(),
+        };
+
+    if (this.datasource.doesDatasourceSupportLabelsMatchAPI()) {
       const url = `/api/v1/label/${label}/values`;
 
       return this.datasource.metadataRequest(url, params).then((result: any) => {
@@ -85,38 +91,22 @@ export default class PrometheusMetricFindQuery {
         });
       });
     } else {
-      const params = {
-        'match[]': metric,
-        start: start.toString(),
-        end: end.toString(),
-      };
-      if(this.datasource.doesDatasourceSupportLabelsMatchAPI()){
-        debugger;
-        const url = `/api/v1/label/${label}/values`;
+      const url = `/api/v1/series`;
 
-        return this.datasource.metadataRequest(url, params).then((result: any) => {
-          return _map(result.data.data, (value) => {
-            return { text: value };
-          });
+      return this.datasource.metadataRequest(url, params).then((result: any) => {
+        const _labels = _map(result.data.data, (metric) => {
+          return metric[label] || '';
+        }).filter((label) => {
+          return label !== '';
         });
-      }else{
-        const url = `/api/v1/series`;
 
-        return this.datasource.metadataRequest(url, params).then((result: any) => {
-          const _labels = _map(result.data.data, (metric) => {
-            return metric[label] || '';
-          }).filter((label) => {
-            return label !== '';
-          });
-
-          return uniq(_labels).map((metric) => {
-            return {
-              text: metric,
-              expandable: true,
-            };
-          });
+        return uniq(_labels).map((metric) => {
+          return {
+            text: metric,
+            expandable: true,
+          };
         });
-      }
+      });
     }
   }
 

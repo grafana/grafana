@@ -147,7 +147,7 @@ export class PrometheusDatasource
     return query.expr;
   }
 
-  doesDatasourceSupportLabelsMatchAPI() {
+  doesDatasourceSupportLabelsMatchAPI(): boolean {
     return (
       this._isDatasourceVersionGreaterOrEqualTo('2.26.0', PromApplication.Prometheus) ||
       this._isDatasourceVersionGreaterOrEqualTo('2.0.0', PromApplication.Mimir) ||
@@ -166,7 +166,7 @@ export class PrometheusDatasource
       return false;
     }
 
-    return semver.gte(targetVersion, this.datasourceConfigurationPrometheusVersion);
+    return semver.gte(this.datasourceConfigurationPrometheusVersion, targetVersion);
   }
 
   _addTracingHeaders(httpOptions: PromQueryRequest, options: DataQueryRequest<PromQuery>) {
