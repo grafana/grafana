@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-import { stylesFactory, useTheme } from '../../themes';
+import { useStyles2 } from '../../themes';
 import { getTagColorsFromName } from '../../utils';
 import { IconButton } from '../IconButton/IconButton';
 
@@ -13,22 +13,21 @@ interface Props {
   onRemove: (tag: string) => void;
 }
 
-const getStyles = stylesFactory(({ theme, name }: { theme: GrafanaTheme; name: string }) => {
-  const { color, borderColor } = getTagColorsFromName(name);
-  const height = theme.spacing.formInputHeight - 8;
+const getStyles = (theme: GrafanaTheme2) => {
+  const height = theme.spacing.gridSize * 3;
 
   return {
     itemStyle: css`
       display: flex;
+      gap: 3px;
       align-items: center;
       height: ${height}px;
       line-height: ${height - 2}px;
-      background-color: ${color};
-      color: ${theme.palette.white};
-      border: 1px solid ${borderColor};
+      color: #fff;
+      border-width: 1px;
+      border-style: solid;
       border-radius: 3px;
-      padding: 0 ${theme.spacing.xs};
-      margin-right: 3px;
+      padding: 0 ${theme.spacing(0.5)};
       white-space: nowrap;
       text-shadow: none;
       font-weight: 500;
@@ -36,7 +35,9 @@ const getStyles = stylesFactory(({ theme, name }: { theme: GrafanaTheme; name: s
     `,
 
     nameStyle: css`
-      margin-right: 3px;
+      max-width: 25ch;
+      text-overflow: ellipsis;
+      overflow: hidden;
     `,
 
     buttonStyles: css`
@@ -46,18 +47,18 @@ const getStyles = stylesFactory(({ theme, name }: { theme: GrafanaTheme; name: s
       }
     `,
   };
-});
+};
 
 /**
  * @internal
  * Only used internally by TagsInput
  * */
-export const TagItem: FC<Props> = ({ name, disabled, onRemove }) => {
-  const theme = useTheme();
-  const styles = getStyles({ theme, name });
+export const TagItem = ({ name, disabled, onRemove }: Props) => {
+  const { color, borderColor } = getTagColorsFromName(name);
+  const styles = useStyles2(getStyles);
 
   return (
-    <div className={styles.itemStyle}>
+    <li className={styles.itemStyle} style={{ backgroundColor: color, borderColor }}>
       <span className={styles.nameStyle}>{name}</span>
       <IconButton
         name="times"
@@ -68,6 +69,6 @@ export const TagItem: FC<Props> = ({ name, disabled, onRemove }) => {
         type="button"
         className={styles.buttonStyles}
       />
-    </div>
+    </li>
   );
 };
