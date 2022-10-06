@@ -149,7 +149,7 @@ export class PrometheusDatasource
 
   doesDatasourceSupportLabelsMatchAPI() {
     return (
-      this._isDatasourceVersionGreaterOrEqualTo('2.26', PromApplication.Prometheus) ||
+      this._isDatasourceVersionGreaterOrEqualTo('2.26.0', PromApplication.Prometheus) ||
       this._isDatasourceVersionGreaterOrEqualTo('2.0.0', PromApplication.Mimir) ||
       this._isDatasourceVersionGreaterOrEqualTo('1.8.0', PromApplication.Cortex) ||
       this._isDatasourceVersionGreaterOrEqualTo('0.18', PromApplication.Thanos)
