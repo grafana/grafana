@@ -1,7 +1,7 @@
 import { lastValueFrom } from 'rxjs';
 
 import { getBackendSrv } from '@grafana/runtime';
-import { ContactPointsState, NotifierDTO, ReceiversStateDTO } from 'app/types';
+import { ContactPointsState, NotifierDTO, ReceiversStateDTO, ReceiverState } from 'app/types';
 
 import { getDatasourceAPIUid } from '../utils/datasource';
 
@@ -28,7 +28,6 @@ export const parseIntegrationName = (integrationName: string): IntegrationNameOb
 export const contactPointsStateDtoToModel = (receiversStateDto: ReceiversStateDTO[]): ContactPointsState => {
   // init object to return
   const contactPointsState: ContactPointsState = { receivers: {}, errorCount: 0 };
-
   // for each receiver from response
   receiversStateDto.forEach((cpState) => {
     //init receiver state
@@ -40,7 +39,6 @@ export const contactPointsStateDtoToModel = (receiversStateDto: ReceiversStateDT
       const hasError = Boolean(integrationStatusDTO?.lastNotifyAttemptError);
       if (hasError) {
         receiverState.errorCount += 1;
-        contactPointsState.errorCount += 1;
       }
       //add integration for this type
       const integrationType = getIntegrationType(integrationStatusDTO.name);
@@ -54,7 +52,11 @@ export const contactPointsStateDtoToModel = (receiversStateDto: ReceiversStateDT
       }
     });
   });
-  return contactPointsState;
+  const errorsCount = Object.values(contactPointsState.receivers).reduce(
+    (prevCount: number, receiverState: ReceiverState) => prevCount + receiverState.errorCount,
+    0
+  );
+  return { ...contactPointsState, errorCount: errorsCount };
 };
 
 export const getIntegrationType = (integrationName: string): string | undefined =>
