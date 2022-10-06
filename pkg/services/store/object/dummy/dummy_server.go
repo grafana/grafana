@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/x/persistentcollection"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/store/object"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -30,7 +29,7 @@ type RawObjectWithHistory struct {
 
 var (
 	// increment when RawObject changes
-	rawObjectVersion = 1
+	rawObjectVersion = 3
 )
 
 func ProvideDummyObjectServer(cfg *setting.Cfg, grpcServerProvider grpcserver.Provider) object.ObjectStoreServer {
@@ -50,15 +49,6 @@ type dummyObjectServer struct {
 func namespaceFromUID(uid string) string {
 	// TODO
 	return "orgId-1"
-}
-
-func userFromContext(ctx context.Context) *user.SignedInUser {
-	// TODO implement in GRPC server
-	return &user.SignedInUser{
-		UserID: 1,
-		OrgID:  1,
-		Login:  "fake",
-	}
 }
 
 func (i dummyObjectServer) findObject(ctx context.Context, uid string, kind string, version string) (*RawObjectWithHistory, *object.RawObject, error) {
@@ -86,14 +76,14 @@ func (i dummyObjectServer) findObject(ctx context.Context, uid string, kind stri
 	for _, objVersion := range obj.History {
 		if objVersion.Version == version {
 			copy := &object.RawObject{
-				UID:        obj.UID,
-				Kind:       obj.Kind,
-				Created:    obj.Created,
-				CreatedBy:  obj.CreatedBy,
-				Modified:   objVersion.Modified,
-				ModifiedBy: objVersion.ModifiedBy,
-				ETag:       objVersion.ETag,
-				Version:    objVersion.Version,
+				UID:       obj.UID,
+				Kind:      obj.Kind,
+				Created:   obj.Created,
+				CreatedBy: obj.CreatedBy,
+				Updated:   objVersion.Updated,
+				UpdatedBy: objVersion.UpdatedBy,
+				ETag:      objVersion.ETag,
+				Version:   objVersion.Version,
 
 				// Body is added from the dummy server cache (it does not exist in ObjectVersionInfo)
 				Body: objVersion.Body,
@@ -161,37 +151,34 @@ func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequ
 			return false, nil, err
 		}
 
-		modifier := userFromContext(ctx)
+		modifier := object.UserFromContext(ctx)
 
 		updated := &object.RawObject{
 			UID:       r.UID,
 			Kind:      r.Kind,
 			Created:   i.Created,
 			CreatedBy: i.CreatedBy,
-			Modified:  time.Now().Unix(),
-			ModifiedBy: &object.UserInfo{
-				Id:    modifier.UserID,
-				Login: modifier.Login,
-			},
-			Size:    int64(len(r.Body)),
-			ETag:    createContentsHash(r.Body),
-			Body:    r.Body,
-			Version: fmt.Sprintf("%d", prevVersion+1),
+			Updated:   time.Now().Unix(),
+			UpdatedBy: object.GetUserIDString(modifier),
+			Size:      int64(len(r.Body)),
+			ETag:      createContentsHash(r.Body),
+			Body:      r.Body,
+			Version:   fmt.Sprintf("%d", prevVersion+1),
 		}
 
 		versionInfo := &ObjectVersionWithBody{
 			Body: r.Body,
 			ObjectVersionInfo: &object.ObjectVersionInfo{
-				Version:    updated.Version,
-				Modified:   updated.Modified,
-				ModifiedBy: updated.ModifiedBy,
-				Size:       updated.Size,
-				ETag:       updated.ETag,
-				Comment:    r.Comment,
+				Version:   updated.Version,
+				Updated:   updated.Updated,
+				UpdatedBy: updated.UpdatedBy,
+				Size:      updated.Size,
+				ETag:      updated.ETag,
+				Comment:   r.Comment,
 			},
 		}
 		rsp.Object = versionInfo.ObjectVersionInfo
-		rsp.Status = object.WriteObjectResponse_MODIFIED
+		rsp.Status = object.WriteObjectResponse_UPDATED
 
 		// When saving, it must be different than the head version
 		if i.ETag == updated.ETag {
@@ -218,33 +205,27 @@ func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequ
 }
 
 func (i dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectRequest, namespace string) (*object.WriteObjectResponse, error) {
-	modifier := userFromContext(ctx)
+	modifier := object.GetUserIDString(object.UserFromContext(ctx))
 	rawObj := &object.RawObject{
-		UID:      r.UID,
-		Kind:     r.Kind,
-		Modified: time.Now().Unix(),
-		Created:  time.Now().Unix(),
-		CreatedBy: &object.UserInfo{
-			Id:    modifier.UserID,
-			Login: modifier.Login,
-		},
-		ModifiedBy: &object.UserInfo{
-			Id:    modifier.UserID,
-			Login: modifier.Login,
-		},
-		Size:    int64(len(r.Body)),
-		ETag:    createContentsHash(r.Body),
-		Body:    r.Body,
-		Version: fmt.Sprintf("%d", 1),
+		UID:       r.UID,
+		Kind:      r.Kind,
+		Updated:   time.Now().Unix(),
+		Created:   time.Now().Unix(),
+		CreatedBy: modifier,
+		UpdatedBy: modifier,
+		Size:      int64(len(r.Body)),
+		ETag:      createContentsHash(r.Body),
+		Body:      r.Body,
+		Version:   fmt.Sprintf("%d", 1),
 	}
 
 	info := &object.ObjectVersionInfo{
-		Version:    rawObj.Version,
-		Modified:   rawObj.Modified,
-		ModifiedBy: rawObj.ModifiedBy,
-		Size:       rawObj.Size,
-		ETag:       rawObj.ETag,
-		Comment:    r.Comment,
+		Version:   rawObj.Version,
+		Updated:   rawObj.Updated,
+		UpdatedBy: rawObj.UpdatedBy,
+		Size:      rawObj.Size,
+		ETag:      rawObj.ETag,
+		Comment:   r.Comment,
 	}
 
 	newObj := &RawObjectWithHistory{
@@ -348,12 +329,20 @@ func (i dummyObjectServer) Search(ctx context.Context, r *object.ObjectSearchReq
 		return nil, err
 	}
 
-	rawObjects := make([]*object.RawObject, 0)
+	searchResults := make([]*object.ObjectSearchResult, 0)
 	for _, o := range objects {
-		rawObjects = append(rawObjects, o.RawObject)
+		searchResults = append(searchResults, &object.ObjectSearchResult{
+			UID:       o.UID,
+			Kind:      o.Kind,
+			Version:   o.Version,
+			Updated:   o.Updated,
+			UpdatedBy: o.UpdatedBy,
+			Name:      "? name from summary",
+			Body:      o.Body,
+		})
 	}
 
 	return &object.ObjectSearchResponse{
-		Results: rawObjects,
+		Results: searchResults,
 	}, nil
 }
