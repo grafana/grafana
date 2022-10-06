@@ -14,6 +14,14 @@ func init() { //nolint:gochecknoinits
 	jsoniter.RegisterTypeEncoder("object.ReadObjectResponse", &readResponseCodec{})
 }
 
+func writeRawJson(stream *jsoniter.Stream, val []byte) {
+	if json.Valid(val) {
+		_, _ = stream.Write(val)
+	} else {
+		stream.WriteString(string(val))
+	}
+}
+
 // Unlike the standard JSON marshal, this will write bytes as JSON when it can
 type rawObjectCodec struct{}
 
@@ -43,25 +51,25 @@ func (codec *rawObjectCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream)
 		stream.WriteObjectField("version")
 		stream.WriteString(obj.Version)
 	}
-	if obj.Updated > 0 {
-		stream.WriteMore()
-		stream.WriteObjectField("updated")
-		stream.WriteInt64(obj.Updated)
-	}
-	if obj.UpdatedBy != "" {
-		stream.WriteMore()
-		stream.WriteObjectField("updatedBy")
-		stream.WriteString(obj.UpdatedBy)
-	}
 	if obj.Created > 0 {
 		stream.WriteMore()
 		stream.WriteObjectField("created")
 		stream.WriteInt64(obj.Created)
 	}
+	if obj.Updated > 0 {
+		stream.WriteMore()
+		stream.WriteObjectField("updated")
+		stream.WriteInt64(obj.Updated)
+	}
 	if obj.CreatedBy != "" {
 		stream.WriteMore()
 		stream.WriteObjectField("createdBy")
 		stream.WriteString(obj.CreatedBy)
+	}
+	if obj.UpdatedBy != "" {
+		stream.WriteMore()
+		stream.WriteObjectField("updatedBy")
+		stream.WriteString(obj.UpdatedBy)
 	}
 	if obj.Body != nil {
 		stream.WriteMore()
@@ -115,7 +123,7 @@ func (codec *readResponseCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Stre
 	if len(obj.SummaryJson) > 0 {
 		stream.WriteMore()
 		stream.WriteObjectField("summary")
-		stream.WriteRaw(string(obj.SummaryJson))
+		writeRawJson(stream, obj.SummaryJson)
 	}
 
 	stream.WriteObjectEnd()
@@ -169,7 +177,7 @@ func (codec *searchResultCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Stre
 		stream.WriteMore()
 		if json.Valid(obj.Body) {
 			stream.WriteObjectField("body")
-			stream.WriteRaw(string(obj.Body)) // works for strings
+			_, _ = stream.Write(obj.Body) // works for strings
 		} else {
 			stream.WriteObjectField("body_base64")
 			stream.WriteVal(obj.Body) // works for strings
@@ -183,12 +191,12 @@ func (codec *searchResultCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Stre
 	if obj.ErrorJson != nil {
 		stream.WriteMore()
 		stream.WriteObjectField("error")
-		stream.WriteRaw(string(obj.ErrorJson))
+		writeRawJson(stream, obj.ErrorJson)
 	}
 	if obj.FieldsJson != nil {
 		stream.WriteMore()
 		stream.WriteObjectField("fields")
-		stream.WriteRaw(string(obj.FieldsJson))
+		writeRawJson(stream, obj.FieldsJson)
 	}
 
 	stream.WriteObjectEnd()
@@ -226,7 +234,7 @@ func (codec *writeResponseCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Str
 	if len(obj.SummaryJson) > 0 {
 		stream.WriteMore()
 		stream.WriteObjectField("summary")
-		stream.WriteRaw(string(obj.SummaryJson))
+		writeRawJson(stream, obj.SummaryJson)
 	}
 	stream.WriteObjectEnd()
 }
