@@ -25,15 +25,15 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
 
-const getComponentStyles = (theme: GrafanaTheme2) => css`
-  padding: ${theme.spacing.md};
-`;
-
-const Foo: FC<FooProps> = () => {
-  const styles = useStyles2(getComponentsStyles);
+function Foo(props: FooProps) {
+  const styles = useStyles2(getStyles);
   // Use styles with className
-};
+}
 ```
+
+const getStyles = (theme: GrafanaTheme2) => css({
+padding: theme.spacing(1,2)
+});
 
 #### Get the theme object
 

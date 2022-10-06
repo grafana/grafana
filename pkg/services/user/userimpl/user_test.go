@@ -129,11 +129,12 @@ func TestUserService(t *testing.T) {
 }
 
 type FakeUserStore struct {
-	ExpectedUser            *user.User
-	ExpectedSignedInUser    *user.SignedInUser
-	ExpectedUserProfile     *user.UserProfileDTO
-	ExpectedError           error
-	ExpectedDeleteUserError error
+	ExpectedUser                  *user.User
+	ExpectedSignedInUser          *user.SignedInUser
+	ExpectedUserProfile           *user.UserProfileDTO
+	ExpectedSearchUserQueryResult *user.SearchUserQueryResult
+	ExpectedError                 error
+	ExpectedDeleteUserError       error
 }
 
 func newUserStoreFake() *FakeUserStore {
@@ -202,4 +203,16 @@ func (f *FakeUserStore) SetHelpFlag(ctx context.Context, cmd *user.SetUserHelpFl
 
 func (f *FakeUserStore) UpdatePermissions(ctx context.Context, userID int64, isAdmin bool) error {
 	return f.ExpectedError
+}
+
+func (f *FakeUserStore) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisableUsersCommand) error {
+	return f.ExpectedError
+}
+
+func (f *FakeUserStore) Disable(ctx context.Context, cmd *user.DisableUserCommand) error {
+	return f.ExpectedError
+}
+
+func (f *FakeUserStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
+	return f.ExpectedSearchUserQueryResult, f.ExpectedError
 }
