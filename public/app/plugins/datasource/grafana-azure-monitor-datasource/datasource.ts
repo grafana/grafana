@@ -46,7 +46,7 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     this.azureMonitorDatasource = new AzureMonitorDatasource(instanceSettings);
     this.azureLogAnalyticsDatasource = new AzureLogAnalyticsDatasource(instanceSettings);
     this.azureResourceGraphDatasource = new AzureResourceGraphDatasource(instanceSettings);
-    this.resourcePickerData = new ResourcePickerData(instanceSettings);
+    this.resourcePickerData = new ResourcePickerData(instanceSettings, this.azureMonitorDatasource);
 
     this.pseudoDatasource = {
       [AzureQueryType.AzureMonitor]: this.azureMonitorDatasource,
@@ -152,7 +152,7 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     if (resourceGroup) {
       url += `/resourceGroups/${resourceGroup};`;
     }
-    return this.azureMonitorDatasource.getMetricNamespaces({ resourceUri: url });
+    return this.azureMonitorDatasource.getMetricNamespaces({ resourceUri: url }, true);
   }
 
   getResourceNames(subscriptionId: string, resourceGroup?: string, metricNamespace?: string) {

@@ -7,10 +7,9 @@ import { SpectrumMenuProps } from '@react-types/menu';
 import React, { ReactElement, useEffect, useRef } from 'react';
 
 import { GrafanaTheme2, NavMenuItemType, NavModelItem } from '@grafana/data';
-import { useTheme2 } from '@grafana/ui';
+import { CustomScrollbar, useTheme2 } from '@grafana/ui';
 
 import { NavBarItemMenuItem } from './NavBarItemMenuItem';
-import { NavBarScrollContainer } from './NavBarScrollContainer';
 import { useNavBarItemMenuContext } from './context';
 import menuItemTranslations from './navBarItem-translations';
 import { getNavModelItemKey } from './utils';
@@ -78,15 +77,15 @@ export function NavBarItemMenu(props: NavBarItemMenuProps): ReactElement | null 
 
   const contents = [itemComponents, subTitleComponent];
   const contentComponent = (
-    <NavBarScrollContainer key="scrollContainer">
+    <CustomScrollbar hideHorizontalTrack hideVerticalTrack showScrollIndicators key="scrollContainer">
       {reverseMenuDirection ? contents.reverse() : contents}
-    </NavBarScrollContainer>
+    </CustomScrollbar>
   );
 
   const menu = [headerComponent, contentComponent];
 
   return (
-    <ul className={styles.menu} ref={ref} {...mergeProps(menuProps, contextMenuProps)} tabIndex={menuHasFocus ? 0 : -1}>
+    <ul className={styles.menu} ref={ref} {...mergeProps(menuProps, contextMenuProps)} tabIndex={-1}>
       {reverseMenuDirection ? menu.reverse() : menu}
     </ul>
   );

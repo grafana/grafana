@@ -26,7 +26,7 @@ To access Prometheus settings, hover your mouse over the **Configuration** (gear
 | `Name`                      | The data source name. This is how you refer to the data source in panels and queries.                                                                                                                                                                             |
 | `Default`                   | Default data source that is pre-selected for new panels.                                                                                                                                                                                                          |
 | `Url`                       | The URL of your Prometheus server, for example, `http://prometheus.example.org:9090`.                                                                                                                                                                             |
-| `Access`                    | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser. **Note**: Browser (direct) access is deprecated and will be removed in a future release.                                    |
+| `Access`                    | Only Server access mode is functional. If Server mode is already selected this option is hidden. Otherwise change to Server mode to prevent errors.                                                                                                               |
 | `Basic Auth`                | Enable basic authentication to the Prometheus data source.                                                                                                                                                                                                        |
 | `User`                      | User name for basic authentication.                                                                                                                                                                                                                               |
 | `Password`                  | Password for basic authentication.                                                                                                                                                                                                                                |
@@ -168,7 +168,7 @@ Instead of hard-coding things like server, application and sensor name in your m
 Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data
 being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../variables/" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../dashboards/variables" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### Query variable
@@ -190,7 +190,7 @@ For details of what _metric names_, _label names_ and _label values_ are please 
 
 > Support for `$__range`, `$__range_s` and `$__range_ms` only available from Grafana v5.3
 
-You can use some global built-in variables in query variables, for example, `$__interval`, `$__interval_ms`, `$__range`, `$__range_s` and `$__range_ms`. See [Global built-in variables]({{< relref "../variables/variable-types/global-variables/" >}}) for more information. They are convenient to use in conjunction with the `query_result` function when you need to filter variable queries since the `label_values` function doesn't support queries.
+You can use some global built-in variables in query variables, for example, `$__interval`, `$__interval_ms`, `$__range`, `$__range_s` and `$__range_ms`. See [Global built-in variables]({{< relref "../dashboards/variables/add-template-variables/#global-variables" >}}) for more information. They are convenient to use in conjunction with the `query_result` function when you need to filter variable queries since the `label_values` function doesn't support queries.
 
 Make sure to set the variable's `refresh` trigger to be `On Time Range Change` to get the correct instances when changing the time range on the dashboard.
 
@@ -235,12 +235,12 @@ options are enabled, Grafana converts the labels from plain text to a regex comp
 
 ### Ad hoc filters variable
 
-Prometheus supports the special [ad hoc filters]({{< relref "../variables/variable-types/add-ad-hoc-filters/" >}}) variable type. It allows you to specify any number of label/value filters on the fly. These filters are automatically
+Prometheus supports the special [ad hoc filters]({{< relref "../dashboards/variables/add-template-variables/#add-ad-hoc-filters" >}}) variable type. It allows you to specify any number of label/value filters on the fly. These filters are automatically
 applied to all your Prometheus queries.
 
 ## Annotations
 
-[Annotations]({{< relref "../dashboards/annotations/" >}}) allow you to overlay rich event information on top of graphs. You add annotation
+[Annotations]({{< relref "../dashboards/build-dashboards/annotate-visualizations" >}}) allow you to overlay rich event information on top of graphs. You add annotation
 queries via the Dashboard menu / Annotations view.
 
 Prometheus supports two ways to query annotations.

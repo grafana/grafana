@@ -9,7 +9,7 @@ keywords:
   - panel
   - documentation
 title: ArcGIS layer
-weight: 400
+weight: 10
 ---
 
 # ArcGIS layer

@@ -144,7 +144,6 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
     currentRole: this.props.org.role,
     isChangingRole: false,
     roleOptions: [],
-    builtInRoles: {},
   };
 
   componentDidMount() {
@@ -158,16 +157,8 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
   }
 
   onOrgRemove = async () => {
-    const { org, user } = this.props;
+    const { org } = this.props;
     this.props.onOrgRemove(org.orgId);
-    if (contextSrv.licensedAccessControlEnabled()) {
-      if (
-        contextSrv.hasPermission(AccessControlAction.ActionUserRolesRemove) &&
-        contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd)
-      ) {
-        user && (await updateUserRoles([], user.id, org.orgId));
-      }
-    }
   };
 
   onChangeRoleClick = () => {
@@ -187,7 +178,7 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
     this.setState({ isChangingRole: false });
   };
 
-  onBuiltinRoleChange = (newRole: OrgRole) => {
+  onBasicRoleChange = (newRole: OrgRole) => {
     this.props.onOrgRoleChange(this.props.org.orgId, newRole);
   };
 
@@ -213,11 +204,10 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
                 <UserRolePicker
                   userId={user?.id || 0}
                   orgId={org.orgId}
-                  builtInRole={org.role}
+                  basicRole={org.role}
                   roleOptions={this.state.roleOptions}
-                  builtInRoles={this.state.builtInRoles}
-                  onBuiltinRoleChange={this.onBuiltinRoleChange}
-                  builtinRolesDisabled={rolePickerDisabled}
+                  onBasicRoleChange={this.onBasicRoleChange}
+                  basicRoleDisabled={rolePickerDisabled}
                 />
               </div>
               {isExternalUser && <ExternalUserTooltip />}
@@ -385,9 +375,9 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
             <UserRolePicker
               userId={user?.id || 0}
               orgId={selectedOrg?.id}
-              builtInRole={role}
-              onBuiltinRoleChange={this.onOrgRoleChange}
-              builtinRolesDisabled={false}
+              basicRole={role}
+              onBasicRoleChange={this.onOrgRoleChange}
+              basicRoleDisabled={false}
               roleOptions={roleOptions}
               apply={true}
               onApplyRoles={this.onRoleUpdate}
@@ -480,6 +470,7 @@ const ExternalUserTooltip: React.FC = () => {
     <div className={styles.disabledTooltip}>
       <Tooltip
         placement="right-end"
+        interactive={true}
         content={
           <div>
             This user&apos;s built-in role is not editable because it is synchronized from your auth provider. Refer to

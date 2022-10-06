@@ -26,7 +26,6 @@ const setup = (propOverrides: Partial<Props>) => {
   const getApiKeysMigrationInfoMock = jest.fn();
   const closeApiKeysMigrationInfoMock = jest.fn();
   const props: Props = {
-    builtInRoles: {},
     isLoading: false,
     page: 0,
     perPage: 10,

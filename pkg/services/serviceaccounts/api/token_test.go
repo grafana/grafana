@@ -55,7 +55,7 @@ func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 	store := sqlstore.InitTestDB(t)
 	apiKeyService := apikeyimpl.ProvideService(store, store.Cfg)
 	kvStore := kvstore.ProvideService(store)
-	saStore := database.ProvideServiceAccountsStore(store, apiKeyService, kvStore)
+	saStore := database.ProvideServiceAccountsStore(store, apiKeyService, kvStore, nil)
 	svcmock := tests.ServiceAccountMock{}
 	sa := tests.SetupUserServiceAccount(t, store, tests.TestUser{Login: "sa", IsServiceAccount: true})
 
@@ -173,7 +173,7 @@ func TestServiceAccountsAPI_DeleteToken(t *testing.T) {
 	apiKeyService := apikeyimpl.ProvideService(store, store.Cfg)
 	kvStore := kvstore.ProvideService(store)
 	svcMock := &tests.ServiceAccountMock{}
-	saStore := database.ProvideServiceAccountsStore(store, apiKeyService, kvStore)
+	saStore := database.ProvideServiceAccountsStore(store, apiKeyService, kvStore, nil)
 	sa := tests.SetupUserServiceAccount(t, store, tests.TestUser{Login: "sa", IsServiceAccount: true})
 
 	type testCreateSAToken struct {
@@ -259,10 +259,10 @@ func TestServiceAccountsAPI_DeleteToken(t *testing.T) {
 
 type saStoreMockTokens struct {
 	serviceaccounts.Store
-	saAPIKeys []*apikey.APIKey
+	saAPIKeys []apikey.APIKey
 }
 
-func (s *saStoreMockTokens) ListTokens(ctx context.Context, orgID, saID int64) ([]*apikey.APIKey, error) {
+func (s *saStoreMockTokens) ListTokens(ctx context.Context, query *serviceaccounts.GetSATokensQuery) ([]apikey.APIKey, error) {
 	return s.saAPIKeys, nil
 }
 
@@ -273,7 +273,7 @@ func TestServiceAccountsAPI_ListTokens(t *testing.T) {
 
 	type testCreateSAToken struct {
 		desc                      string
-		tokens                    []*apikey.APIKey
+		tokens                    []apikey.APIKey
 		expectedHasExpired        bool
 		expectedResponseBodyField string
 		expectedCode              int
@@ -287,7 +287,7 @@ func TestServiceAccountsAPI_ListTokens(t *testing.T) {
 	testCases := []testCreateSAToken{
 		{
 			desc: "should be able to list serviceaccount with no expiration date",
-			tokens: []*apikey.APIKey{{
+			tokens: []apikey.APIKey{{
 				Id:               1,
 				OrgId:            1,
 				ServiceAccountId: &saId,
@@ -307,7 +307,7 @@ func TestServiceAccountsAPI_ListTokens(t *testing.T) {
 		},
 		{
 			desc: "should be able to list serviceaccount with secondsUntilExpiration",
-			tokens: []*apikey.APIKey{{
+			tokens: []apikey.APIKey{{
 				Id:               1,
 				OrgId:            1,
 				ServiceAccountId: &saId,
@@ -327,7 +327,7 @@ func TestServiceAccountsAPI_ListTokens(t *testing.T) {
 		},
 		{
 			desc: "should be able to list serviceaccount with expired token",
-			tokens: []*apikey.APIKey{{
+			tokens: []apikey.APIKey{{
 				Id:               1,
 				OrgId:            1,
 				ServiceAccountId: &saId,

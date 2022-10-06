@@ -12,6 +12,11 @@ import { UserState } from '../profile/state/reducers';
 import { QueryRows } from './QueryRows';
 import { makeExplorePaneState } from './state/utils';
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: () => null,
+}));
+
 function setup(queries: DataQuery[]) {
   const defaultDs = {
     name: 'newDs',
@@ -78,7 +83,7 @@ describe('Explore QueryRows', () => {
     // waiting for the d&d component to fully render.
     await screen.findAllByText('someDs query editor');
 
-    let duplicateButton = screen.getByTitle('Duplicate query');
+    let duplicateButton = screen.getByLabelText(/Duplicate query/i);
 
     fireEvent.click(duplicateButton);
 

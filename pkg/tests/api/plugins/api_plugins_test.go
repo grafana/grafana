@@ -48,11 +48,11 @@ func TestPlugins(t *testing.T) {
 		t.Run("Request is forbidden if not from an admin", func(t *testing.T) {
 			status, body := makePostRequest(t, grafanaAPIURL(usernameNonAdmin, grafanaListedAddr, "plugins/grafana-plugin/install"))
 			assert.Equal(t, 403, status)
-			assert.Equal(t, "Permission denied", body["message"])
+			assert.Equal(t, "You'll need additional permissions to perform this action. Permissions needed: plugins:install", body["message"])
 
 			status, body = makePostRequest(t, grafanaAPIURL(usernameNonAdmin, grafanaListedAddr, "plugins/grafana-plugin/uninstall"))
 			assert.Equal(t, 403, status)
-			assert.Equal(t, "Permission denied", body["message"])
+			assert.Equal(t, "You'll need additional permissions to perform this action. Permissions needed: plugins:install", body["message"])
 		})
 
 		t.Run("Request is not forbidden if from an admin", func(t *testing.T) {

@@ -2,6 +2,7 @@ package notifications
 
 import (
 	"context"
+	"regexp"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -185,7 +186,9 @@ func TestSendEmailAsync(t *testing.T) {
 
 	t.Run("When sending reset email password", func(t *testing.T) {
 		sut, _ := createSut(t, bus)
-		err := sut.SendResetPasswordEmail(context.Background(), &models.SendResetPasswordEmailCommand{User: &user.User{Email: "asd@asd.com"}})
+		testuser := user.User{Email: "asd@asd.com", Login: "asd@asd.com"}
+		err := sut.SendResetPasswordEmail(context.Background(), &models.SendResetPasswordEmailCommand{User: &testuser})
+
 		require.NoError(t, err)
 
 		sentMsg := <-sut.mailQueue
@@ -194,6 +197,21 @@ func TestSendEmailAsync(t *testing.T) {
 		assert.Equal(t, "Reset your Grafana password - asd@asd.com", sentMsg.Subject)
 		assert.NotContains(t, sentMsg.Body["text/html"], "Subject")
 		assert.NotContains(t, sentMsg.Body["text/plain"], "Subject")
+
+		// find code in mail
+		r, _ := regexp.Compile(`code=(\w+)`)
+		match := r.FindString(sentMsg.Body["text/plain"])
+		code := match[len("code="):]
+
+		// verify code
+		query := models.ValidateResetPasswordCodeQuery{Code: code}
+		getUserByLogin := func(ctx context.Context, login string) (*user.User, error) {
+			query := models.GetUserByLoginQuery{LoginOrEmail: login}
+			query.Result = &testuser
+			return query.Result, nil
+		}
+		err = sut.ValidateResetPasswordCode(context.Background(), &query, getUserByLogin)
+		require.NoError(t, err)
 	})
 
 	t.Run("When SMTP disabled in configuration", func(t *testing.T) {

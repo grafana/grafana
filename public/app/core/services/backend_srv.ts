@@ -18,7 +18,7 @@ import { BackendSrv as BackendService, BackendSrvRequest, config, FetchError, Fe
 import appEvents from 'app/core/app_events';
 import { getConfig } from 'app/core/config';
 import { loadUrlToken } from 'app/core/utils/urlToken';
-import { DashboardSearchHit } from 'app/features/search/types';
+import { DashboardSearchItem } from 'app/features/search/types';
 import { getGrafanaStorage } from 'app/features/storage/storage';
 import { TokenRevokedModal } from 'app/features/users/TokenRevokedModal';
 import { DashboardDTO, FolderDTO } from 'app/types';
@@ -407,24 +407,29 @@ export class BackendSrv implements BackendService {
     return this.inspectorStream;
   }
 
-  async get<T = any>(url: string, params?: any, requestId?: string): Promise<T> {
-    return await this.request({ method: 'GET', url, params, requestId });
+  async get<T = any>(
+    url: string,
+    params?: BackendSrvRequest['params'],
+    requestId?: BackendSrvRequest['requestId'],
+    options?: Partial<BackendSrvRequest>
+  ) {
+    return this.request<T>({ ...options, method: 'GET', url, params, requestId });
   }
 
-  async delete<T = any>(url: string, data?: any): Promise<T> {
-    return await this.request({ method: 'DELETE', url, data });
+  async delete<T = any>(url: string, data?: any, options?: Partial<BackendSrvRequest>) {
+    return this.request<T>({ ...options, method: 'DELETE', url, data });
   }
 
-  async post<T = any>(url: string, data?: any): Promise<T> {
-    return await this.request({ method: 'POST', url, data });
+  async post<T = any>(url: string, data?: any, options?: Partial<BackendSrvRequest>) {
+    return this.request<T>({ ...options, method: 'POST', url, data });
   }
 
-  async patch<T = any>(url: string, data: any): Promise<T> {
-    return await this.request({ method: 'PATCH', url, data });
+  async patch<T = any>(url: string, data: any, options?: Partial<BackendSrvRequest>) {
+    return this.request<T>({ ...options, method: 'PATCH', url, data });
   }
 
-  async put<T = any>(url: string, data: any): Promise<T> {
-    return await this.request({ method: 'PUT', url, data });
+  async put<T = any>(url: string, data: any, options?: Partial<BackendSrvRequest>): Promise<T> {
+    return this.request<T>({ ...options, method: 'PUT', url, data });
   }
 
   withNoBackendCache(callback: any) {
@@ -439,7 +444,7 @@ export class BackendSrv implements BackendService {
   }
 
   /** @deprecated */
-  search(query: any): Promise<DashboardSearchHit[]> {
+  search(query: any): Promise<DashboardSearchItem[]> {
     return this.get('/api/search', query);
   }
 

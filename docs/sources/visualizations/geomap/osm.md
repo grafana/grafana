@@ -9,7 +9,7 @@ keywords:
   - panel
   - documentation
 title: Open street map layer
-weight: 400
+weight: 6
 ---
 
 # Open Street Map layer

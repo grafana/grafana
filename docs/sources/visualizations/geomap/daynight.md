@@ -9,10 +9,10 @@ keywords:
   - panel
   - documentation
 title: Night / Day layer
-weight: 400
+weight: 20
 ---
 
-# Night / Day layer
+# Night / Day layer (Alpha)
 
 The Night / Day layer displays night and day regions based on the current time range.
 

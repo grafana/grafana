@@ -20,6 +20,7 @@ const paddingSide: PaddingSide = (u, side, sidesWithAxes) => {
 };
 
 export const DEFAULT_PLOT_CONFIG: Partial<Options> = {
+  ms: 1,
   focus: {
     alpha: 1,
   },

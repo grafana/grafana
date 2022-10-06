@@ -35,7 +35,7 @@ To learn more about the differences between new alerts and the legacy alerts, re
 
 ### Library panels
 
-Library panels allow users to build panels that can be used in multiple dashboards. Any updates made to that shared panel will then automatically be applied to all the dashboards that have that panel. For instructions on how to create, add, unlink and manage library panels, refer to [Library panels]({{< relref "../dashboards/manage-library-panels/" >}}).
+Library panels allow users to build panels that can be used in multiple dashboards. Any updates made to that shared panel will then automatically be applied to all the dashboards that have that panel. For instructions on how to create, add, unlink and manage library panels, refer to [Library panels]({{< relref "../dashboards/build-dashboards/manage-library-panels" >}}).
 
 ### Real-time streaming
 
@@ -95,9 +95,9 @@ For more information, refer to [Histogram]({{< relref "../visualizations/histogr
 The Time series is out of beta! We are removing the `Beta` tag and graduating the Time series visualization to a stable state.
 
 - **Time series** is now the default visualization option, replacing the **Graph (old)**.
-- The Time series panel now supports stacking. For more information, refer to [Graph stacked time series]({{< relref "../visualizations/time-series/graph-time-series-stacking/" >}}).
+- The Time series panel now supports stacking. For more information, refer to [Graph stacked time series]({{< relref "../visualizations/time-series#stack-series" >}}).
 - You can now add alerts in the Time series panel, just like the old Graph panel.
-- Updated [connect null values]({{< relref "../visualizations/time-series/graph-time-series-as-lines/#connect-null-values" >}}) options.
+- Updated [connect null values]({{< relref "../visualizations/time-series#connect-null-values" >}}) options.
 - We added support for a shared crosshair and a tooltip that’s now smarter when it comes to data display in the tooltip.
 - Various performance improvements.
 
@@ -121,7 +121,7 @@ Lots of panel editor improvements, heavily informed by user research and communi
 
 - All options are now shown in a single pane.
 - You can now search panel options.
-- The Value mappings feature has been completely redesigned. For more information, refer to [About value mappings]({{< relref "../panels/format-data/about-value-mapping/" >}}).
+- The Value mappings feature has been completely redesigned. For more information, refer to [Configure value mappings]({{< relref "../panels/configure-value-mappings/" >}}).
 - New **Table view** option is always available.
 
 The [Panels]({{< relref "../panels/" >}}) section has been updated to reflect these changes.
@@ -312,7 +312,7 @@ When creating a report, you can now choose to export Table panels as .csv files 
 
 You can also link back to the dashboard directly from the email, for users who want to see the data live in Grafana. This release also includes some improvements to the Reports list view.
 
-For more information, refer to [Reporting docs]({{< relref "../enterprise/reporting/" >}}).
+For more information, refer to [Reporting docs]({{< relref "../dashboards/share-dashboards-panels/#reporting" >}}).
 
 ### License restrictions clarification in the docs
 

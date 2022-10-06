@@ -3,7 +3,6 @@ load(
     'download_grabpl_step',
     'build_image',
     'identify_runner_step',
-    'gen_version_step',
     'wire_install_step',
     'yarn_install_step',
     'build_backend_step',
@@ -49,7 +48,6 @@ def build_e2e(trigger, ver_mode, edition):
         identify_runner_step(),
         download_grabpl_step(),
         compile_build_cmd(),
-        gen_version_step(ver_mode),
         verify_gen_cue_step(edition="oss"),
         wire_install_step(),
         yarn_install_step(),
@@ -57,8 +55,9 @@ def build_e2e(trigger, ver_mode, edition):
     build_steps = []
     if ver_mode == 'main':
         build_steps.extend([trigger_test_release()])
+    if ver_mode == 'pr':
+        build_steps.extend([enterprise_downstream_step(edition=edition, ver_mode=ver_mode)])
     build_steps.extend([
-        enterprise_downstream_step(edition=edition, ver_mode=ver_mode),
         build_backend_step(edition=edition, ver_mode=ver_mode),
         build_frontend_step(edition=edition, ver_mode=ver_mode),
         build_frontend_package_step(edition=edition, ver_mode=ver_mode),

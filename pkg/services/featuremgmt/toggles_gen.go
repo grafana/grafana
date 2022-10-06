@@ -7,6 +7,10 @@
 package featuremgmt
 
 const (
+	// FlagAlertingBigTransactions
+	// Use big transactions for alerting database writes
+	FlagAlertingBigTransactions = "alertingBigTransactions"
+
 	// FlagTrimDefaults
 	// Use cue schema to remove values that will be applied automatically
 	FlagTrimDefaults = "trimDefaults"
@@ -115,6 +119,10 @@ const (
 	// Experimental Explore to Dashboard workflow
 	FlagExplore2Dashboard = "explore2Dashboard"
 
+	// FlagExploreMixedDatasource
+	// Enable mixed datasource in Explore
+	FlagExploreMixedDatasource = "exploreMixedDatasource"
+
 	// FlagTracing
 	// Adds trace ID to error notifications
 	FlagTracing = "tracing"
@@ -122,6 +130,10 @@ const (
 	// FlagCommandPalette
 	// Enable command palette
 	FlagCommandPalette = "commandPalette"
+
+	// FlagCorrelations
+	// Correlations page
+	FlagCorrelations = "correlations"
 
 	// FlagCloudWatchDynamicLabels
 	// Use dynamic labels instead of alias patterns in CloudWatch datasource
@@ -167,10 +179,6 @@ const (
 	// Continue to use the angular/flot based heatmap panel
 	FlagUseLegacyHeatmapPanel = "useLegacyHeatmapPanel"
 
-	// FlagCloudMonitoringExperimentalUI
-	// Use grafana-experimental UI in Cloud Monitoring
-	FlagCloudMonitoringExperimentalUI = "cloudMonitoringExperimentalUI"
-
 	// FlagDisableSecretsCompatibility
 	// Disable duplicated secret storage in legacy tables
 	FlagDisableSecretsCompatibility = "disableSecretsCompatibility"
@@ -180,7 +188,7 @@ const (
 	FlagLogRequestsInstrumentedAsUnknown = "logRequestsInstrumentedAsUnknown"
 
 	// FlagDataConnectionsConsole
-	// Enables a new top-level page called Data Connections. This page is an experiment for better grouping of installing / configuring data sources and other plugins.
+	// Enables a new top-level page called Connections. This page is an experiment for better grouping of installing / configuring data sources and other plugins.
 	FlagDataConnectionsConsole = "dataConnectionsConsole"
 
 	// FlagInternationalization
@@ -191,7 +199,23 @@ const (
 	// New top nav and page layouts
 	FlagTopnav = "topnav"
 
-	// FlagCustomBranding
-	// Replaces whitelabeling with the new custom branding feature
-	FlagCustomBranding = "customBranding"
+	// FlagGrpcServer
+	// Run GRPC server
+	FlagGrpcServer = "grpcServer"
+
+	// FlagTraceqlEditor
+	// Show the TraceQL editor in the explore page
+	FlagTraceqlEditor = "traceqlEditor"
+
+	// FlagRedshiftAsyncQueryDataSupport
+	// Enable async query data support for Redshift
+	FlagRedshiftAsyncQueryDataSupport = "redshiftAsyncQueryDataSupport"
+
+	// FlagAthenaAsyncQueryDataSupport
+	// Enable async query data support for Athena
+	FlagAthenaAsyncQueryDataSupport = "athenaAsyncQueryDataSupport"
+
+	// FlagIncreaseInMemDatabaseQueryCache
+	// Enable more in memory caching for database queries
+	FlagIncreaseInMemDatabaseQueryCache = "increaseInMemDatabaseQueryCache"
 )

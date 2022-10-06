@@ -74,6 +74,7 @@ type resourcePermissionDTO struct {
 	ID            int64    `json:"id"`
 	RoleName      string   `json:"roleName"`
 	IsManaged     bool     `json:"isManaged"`
+	IsInherited   bool     `json:"isInherited"`
 	UserID        int64    `json:"userId,omitempty"`
 	UserLogin     string   `json:"userLogin,omitempty"`
 	UserAvatarUrl string   `json:"userAvatarUrl,omitempty"`
@@ -122,6 +123,7 @@ func (a *api) getPermissions(c *models.ReqContext) response.Response {
 				Actions:       p.Actions,
 				Permission:    permission,
 				IsManaged:     p.IsManaged,
+				IsInherited:   p.IsInherited,
 			})
 		}
 	}

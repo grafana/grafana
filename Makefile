@@ -134,7 +134,7 @@ test: test-go test-js ## Run all tests.
 golangci-lint: $(GOLANGCI_LINT)
 	@echo "lint via golangci-lint"
 	$(GOLANGCI_LINT) run \
-		--config ./conf/.golangci.toml \
+		--config .golangci.toml \
 		$(GO_FILES)
 
 lint-go: golangci-lint ## Run all code checks for backend. You can use GO_FILES to specify exact files to check
@@ -158,7 +158,7 @@ build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 ##@ Services
 
 # create docker-compose file with provided sources and start them
-# example: make devenv sources=postgres,openldap
+# example: make devenv sources=postgres,auth/openldap
 ifeq ($(sources),)
 devenv:
 	@printf 'You have to define sources for this command \nexample: make devenv sources=postgres,openldap\n'

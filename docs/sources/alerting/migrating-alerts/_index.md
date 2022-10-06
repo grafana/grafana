@@ -6,7 +6,7 @@ aliases:
   - /docs/grafana/latest/alerting/difference-old-new/
 description: Upgrade Grafana alerts
 title: Upgrade to Grafana Alerting
-weight: 101
+weight: 110
 ---
 
 # Upgrade to Grafana Alerting

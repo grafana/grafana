@@ -429,7 +429,13 @@ func buildFilterString(metricType string, filterParts []string) string {
 }
 
 func buildSLOFilterExpression(q sloQuery) string {
-	return fmt.Sprintf(`%s("projects/%s/services/%s/serviceLevelObjectives/%s")`, q.SelectorName, q.ProjectName, q.ServiceId, q.SloId)
+	sloName := fmt.Sprintf("projects/%s/services/%s/serviceLevelObjectives/%s", q.ProjectName, q.ServiceId, q.SloId)
+
+	if q.SelectorName == "select_slo_burn_rate" {
+		return fmt.Sprintf(`%s("%s", "%s")`, q.SelectorName, sloName, q.LookbackPeriod)
+	} else {
+		return fmt.Sprintf(`%s("%s")`, q.SelectorName, sloName)
+	}
 }
 
 func setMetricAggParams(params *url.Values, query *metricQuery, durationSeconds int, intervalMs int64) {

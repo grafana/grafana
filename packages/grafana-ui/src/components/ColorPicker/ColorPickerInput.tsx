@@ -51,7 +51,7 @@ export const ColorPickerInput = forwardRef<HTMLInputElement, ColorPickerInputPro
     return (
       <ClickOutsideWrapper onClick={() => setIsOpen(false)}>
         <div className={styles.wrapper}>
-          {isOpen && (
+          {isOpen && !inputProps.disabled && (
             <RgbaStringColorPicker
               data-testid={'color-popover'}
               color={currentColor}

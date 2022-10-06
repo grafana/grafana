@@ -5,18 +5,20 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/team"
 )
 
 type TeamGuardianStoreImpl struct {
-	sqlStore sqlstore.Store
+	sqlStore    sqlstore.Store
+	teamService team.Service
 }
 
-func ProvideTeamGuardianStore(sqlStore sqlstore.Store) *TeamGuardianStoreImpl {
-	return &TeamGuardianStoreImpl{sqlStore: sqlStore}
+func ProvideTeamGuardianStore(sqlStore sqlstore.Store, teamService team.Service) *TeamGuardianStoreImpl {
+	return &TeamGuardianStoreImpl{sqlStore: sqlStore, teamService: teamService}
 }
 
 func (t *TeamGuardianStoreImpl) GetTeamMembers(ctx context.Context, query models.GetTeamMembersQuery) ([]*models.TeamMemberDTO, error) {
-	if err := t.sqlStore.GetTeamMembers(ctx, &query); err != nil {
+	if err := t.teamService.GetTeamMembers(ctx, &query); err != nil {
 		return nil, err
 	}
 

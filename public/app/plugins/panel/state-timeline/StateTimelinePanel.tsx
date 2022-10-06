@@ -1,7 +1,15 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { CartesianCoords2D, DataFrame, FieldType, PanelProps } from '@grafana/data';
-import { Portal, UPlotConfigBuilder, usePanelContext, useTheme2, VizTooltipContainer, ZoomPlugin } from '@grafana/ui';
+import {
+  Portal,
+  TooltipDisplayMode,
+  UPlotConfigBuilder,
+  usePanelContext,
+  useTheme2,
+  VizTooltipContainer,
+  ZoomPlugin,
+} from '@grafana/ui';
 import { HoverEvent, addTooltipSupport } from '@grafana/ui/src/components/uPlot/config/addTooltipSupport';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { getLastStreamingDataFramePacket } from 'app/features/live/data/StreamingDataFrame';
@@ -67,7 +75,7 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
     [frames, options.legend, theme]
   );
 
-  const timezones = useMemo(() => getTimezones(options.timezones, timeZone), [options.timezones, timeZone]);
+  const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
 
   const renderCustomTooltip = useCallback(
     (alignedData: DataFrame, seriesIdx: number | null, datapointIdx: number | null, onAnnotationAdd?: () => void) => {
@@ -153,7 +161,7 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
       frames={frames}
       structureRev={data.structureRev}
       timeRange={timeRange}
-      timeZones={timezones}
+      timeZone={timezones}
       width={width}
       height={height}
       legendItems={legendItems}
@@ -172,6 +180,7 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
             isToolTipOpen,
           });
         }
+
         return (
           <>
             <ZoomPlugin config={config} onZoom={onChangeTimeRange} />
@@ -185,6 +194,10 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
             {enableAnnotationCreation ? (
               <AnnotationEditorPlugin data={alignedFrame} timeZone={timeZone} config={config}>
                 {({ startAnnotating }) => {
+                  if (options.tooltip.mode === TooltipDisplayMode.None) {
+                    return null;
+                  }
+
                   return (
                     <Portal>
                       {hover && coords && (
@@ -205,7 +218,7 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
               </AnnotationEditorPlugin>
             ) : (
               <Portal>
-                {hover && coords && (
+                {options.tooltip.mode !== TooltipDisplayMode.None && hover && coords && (
                   <VizTooltipContainer
                     position={{ x: coords.viewport.x, y: coords.viewport.y }}
                     offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}

@@ -122,7 +122,7 @@ func (rule *AlertRuleV1) mapToModel(orgID int64) (models.AlertRule, error) {
 	if alertRule.Condition == "" {
 		return models.AlertRule{}, fmt.Errorf("rule '%s' failed to parse: no condition set", alertRule.Title)
 	}
-	alertRule.Annotations = rule.Annotations.Value()
+	alertRule.Annotations = rule.Annotations.Raw
 	alertRule.Labels = rule.Labels.Value()
 	for _, queryV1 := range rule.Data {
 		query, err := queryV1.mapToModel()
@@ -151,7 +151,12 @@ func (queryV1 *QueryV1) mapToModel() (models.AlertQuery, error) {
 	// in json.RawMessage. We do this as we cannot use
 	// json.RawMessage with a yaml files and have to use
 	// JSONValue that supports both, json and yaml.
-	encoded, err := json.Marshal(queryV1.Model.Value())
+	//
+	// We have to use the Raw field here, as Value would
+	// try to interpolate macros like `$__timeFilter`, resulting
+	// in missing macros in the SQL queries as they would be
+	// replaced by an empty string.
+	encoded, err := json.Marshal(queryV1.Model.Raw)
 	if err != nil {
 		return models.AlertQuery{}, err
 	}

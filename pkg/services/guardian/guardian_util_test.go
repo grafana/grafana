@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -42,7 +43,7 @@ func orgRoleScenario(desc string, t *testing.T, role org.RoleType, fn scenarioFu
 			OrgRole: role,
 		}
 		store := mockstore.NewSQLStoreMock()
-		guard := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, &dashboards.FakeDashboardService{})
+		guard := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, &dashboards.FakeDashboardService{}, &teamtest.FakeService{})
 
 		sc := &scenarioContext{
 			t:                t,
@@ -64,7 +65,7 @@ func apiKeyScenario(desc string, t *testing.T, role org.RoleType, fn scenarioFun
 			ApiKeyID: 10,
 		}
 		store := mockstore.NewSQLStoreMock()
-		guard := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, &dashboards.FakeDashboardService{})
+		guard := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, &dashboards.FakeDashboardService{}, &teamtest.FakeService{})
 		sc := &scenarioContext{
 			t:                t,
 			orgRoleScenario:  desc,
@@ -88,7 +89,7 @@ func permissionScenario(desc string, dashboardID int64, sc *scenarioContext,
 				teams = append(teams, &models.TeamDTO{Id: p.TeamId})
 			}
 		}
-		store.ExpectedTeamsByUser = teams
+		teamSvc := &teamtest.FakeService{ExpectedTeamsByUser: teams}
 
 		dashSvc := dashboards.NewFakeDashboardService(t)
 		dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
@@ -97,7 +98,7 @@ func permissionScenario(desc string, dashboardID int64, sc *scenarioContext,
 		}).Return(nil)
 
 		sc.permissionScenario = desc
-		sc.g = newDashboardGuardian(context.Background(), dashboardID, sc.givenUser.OrgID, sc.givenUser, store, dashSvc)
+		sc.g = newDashboardGuardian(context.Background(), dashboardID, sc.givenUser.OrgID, sc.givenUser, store, dashSvc, teamSvc)
 		sc.givenDashboardID = dashboardID
 		sc.givenPermissions = permissions
 		sc.givenTeams = teams

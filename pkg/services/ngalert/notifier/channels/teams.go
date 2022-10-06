@@ -43,6 +43,7 @@ const (
 // AdaptiveCardsMessage represents a message for adaptive cards.
 type AdaptiveCardsMessage struct {
 	Attachments []AdaptiveCardsAttachment `json:"attachments"`
+	Summary     string                    `json:"summary,omitempty"` // Summary is the text shown in notifications
 	Type        string                    `json:"type"`
 }
 
@@ -68,10 +69,10 @@ type AdaptiveCardsAttachment struct {
 // AdapativeCard repesents an Adaptive Card.
 // https://adaptivecards.io/explorer/AdaptiveCard.html
 type AdaptiveCard struct {
-	Body    []AdaptiveCardItem `json:"body"`
-	Schema  string             `json:"$schema"`
-	Type    string             `json:"type"`
-	Version string             `json:"version"`
+	Body    []AdaptiveCardItem
+	Schema  string
+	Type    string
+	Version string
 }
 
 // NewAdaptiveCard returns a prepared Adaptive Card.
@@ -82,6 +83,22 @@ func NewAdaptiveCard() AdaptiveCard {
 		Type:    "AdaptiveCard",
 		Version: "1.4",
 	}
+}
+
+func (c *AdaptiveCard) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Body    []AdaptiveCardItem     `json:"body"`
+		Schema  string                 `json:"$schema"`
+		Type    string                 `json:"type"`
+		Version string                 `json:"version"`
+		MsTeams map[string]interface{} `json:"msTeams,omitempty"`
+	}{
+		Body:    c.Body,
+		Schema:  c.Schema,
+		Type:    c.Type,
+		Version: c.Version,
+		MsTeams: map[string]interface{}{"width": "Full"},
+	})
 }
 
 // AppendItem appends an item, such as text or an image, to the Adaptive Card.
@@ -317,6 +334,9 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		},
 	})
 
+	msg := NewAdaptiveCardsMessage(card)
+	msg.Summary = tmpl(tn.Title)
+
 	// This check for tmplErr must happen before templating the URL
 	if tmplErr != nil {
 		tn.log.Warn("failed to template Teams message", "err", tmplErr.Error())
@@ -329,7 +349,7 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		u = tn.URL
 	}
 
-	b, err := json.Marshal(NewAdaptiveCardsMessage(card))
+	b, err := json.Marshal(msg)
 	if err != nil {
 		return false, fmt.Errorf("failed to marshal JSON: %w", err)
 	}

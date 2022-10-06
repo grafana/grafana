@@ -1,8 +1,8 @@
 import React, { PureComponent } from 'react';
 
 import { Spinner, HorizontalGroup } from '@grafana/ui';
+import { Page } from 'app/core/components/PageNew/Page';
 
-import { DashboardModel } from '../../state/DashboardModel';
 import {
   historySrv,
   RevisionsModel,
@@ -12,9 +12,9 @@ import {
   VersionHistoryComparison,
 } from '../VersionHistory';
 
-interface Props {
-  dashboard: DashboardModel;
-}
+import { SettingsPageProps } from './types';
+
+interface Props extends SettingsPageProps {}
 
 type State = {
   isLoading: boolean;
@@ -141,9 +141,8 @@ export class VersionsSettings extends PureComponent<Props, State> {
 
     if (viewMode === 'compare') {
       return (
-        <div>
+        <Page navModel={this.props.sectionNav}>
           <VersionHistoryHeader
-            isComparing
             onClick={this.reset}
             baseVersion={baseInfo?.version}
             newVersion={newInfo?.version}
@@ -159,13 +158,12 @@ export class VersionsSettings extends PureComponent<Props, State> {
               diffData={diffData}
             />
           )}
-        </div>
+        </Page>
       );
     }
 
     return (
-      <div>
-        <VersionHistoryHeader />
+      <Page navModel={this.props.sectionNav}>
         {isLoading ? (
           <VersionsHistorySpinner msg="Fetching history list&hellip;" />
         ) : (
@@ -181,7 +179,7 @@ export class VersionsSettings extends PureComponent<Props, State> {
             isLastPage={!!this.isLastPage()}
           />
         )}
-      </div>
+      </Page>
     );
   }
 }

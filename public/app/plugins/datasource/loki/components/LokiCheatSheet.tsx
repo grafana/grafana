@@ -4,7 +4,7 @@ import React, { PureComponent } from 'react';
 import { QueryEditorHelpProps } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 
-import LokiLanguageProvider from '../language_provider';
+import LokiLanguageProvider from '../LanguageProvider';
 import { LokiQuery } from '../types';
 
 const DEFAULT_EXAMPLES = ['{job="default/prometheus"}'];
@@ -37,7 +37,7 @@ const LOGQL_EXAMPLES = [
 ];
 
 export default class LokiCheatSheet extends PureComponent<QueryEditorHelpProps<LokiQuery>, { userExamples: string[] }> {
-  declare userLabelTimer: NodeJS.Timeout;
+  declare userLabelTimer: ReturnType<typeof setTimeout>;
   state = {
     userExamples: [],
   };

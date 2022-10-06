@@ -98,6 +98,13 @@ const (
 
 	// FolderTitleLabel is the label that will contain the title of an alert's folder/namespace.
 	FolderTitleLabel = GrafanaReservedLabelPrefix + "folder"
+
+	// StateReasonAnnotation is the name of the annotation that explains the difference between evaluation state and alert state (i.e. changing state when NoData or Error).
+	StateReasonAnnotation = GrafanaReservedLabelPrefix + "state_reason"
+)
+
+var (
+	StateReasonMissingSeries = "MissingSeries"
 )
 
 var (
@@ -173,7 +180,6 @@ func (alertRule *AlertRule) GetLabels(opts ...LabelOption) map[string]string {
 func (alertRule *AlertRule) GetEvalCondition() Condition {
 	return Condition{
 		Condition: alertRule.Condition,
-		OrgID:     alertRule.OrgID,
 		Data:      alertRule.Data,
 	}
 }
@@ -225,6 +231,10 @@ func (alertRule *AlertRule) SetDashboardAndPanel() error {
 type AlertRuleKey struct {
 	OrgID int64  `xorm:"org_id"`
 	UID   string `xorm:"uid"`
+}
+
+func (k AlertRuleKey) LogContext() []interface{} {
+	return []interface{}{"rule_uid", k.UID, "org_id", k.OrgID}
 }
 
 type AlertRuleKeyWithVersion struct {
@@ -340,7 +350,10 @@ type ListAlertRulesQuery struct {
 }
 
 type GetAlertRulesForSchedulingQuery struct {
-	Result []*AlertRule
+	PopulateFolders bool
+
+	ResultRules         []*AlertRule
+	ResultFoldersTitles map[string]string
 }
 
 // ListNamespaceAlertRulesQuery is the query for listing namespace alert rules
@@ -350,12 +363,6 @@ type ListNamespaceAlertRulesQuery struct {
 	NamespaceUID string
 
 	Result []*AlertRule
-}
-
-// ListRuleGroupsQuery is the query for listing unique rule groups
-// across all organizations
-type ListRuleGroupsQuery struct {
-	Result []string
 }
 
 // ListOrgRuleGroupsQuery is the query for listing unique rule groups
@@ -372,13 +379,17 @@ type ListOrgRuleGroupsQuery struct {
 	Result [][]string
 }
 
+type UpdateRule struct {
+	Existing *AlertRule
+	New      AlertRule
+}
+
 // Condition contains backend expressions and queries and the RefID
 // of the query or expression that will be evaluated.
 type Condition struct {
 	// Condition is the RefID of the query or expression from
 	// the Data property to get the results for.
 	Condition string `json:"condition"`
-	OrgID     int64  `json:"-"`
 
 	// Data is an array of data source queries and/or server side expressions.
 	Data []AlertQuery `json:"data"`
@@ -394,7 +405,8 @@ func (c Condition) IsValid() bool {
 // There are several exceptions:
 // 1. Following fields are not patched and therefore will be ignored: AlertRule.ID, AlertRule.OrgID, AlertRule.Updated, AlertRule.Version, AlertRule.UID, AlertRule.DashboardUID, AlertRule.PanelID, AlertRule.Annotations and AlertRule.Labels
 // 2. There are fields that are patched together:
-//    - AlertRule.Condition and AlertRule.Data
+//   - AlertRule.Condition and AlertRule.Data
+//
 // If either of the pair is specified, neither is patched.
 func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRule) {
 	if ruleToPatch.Title == "" {

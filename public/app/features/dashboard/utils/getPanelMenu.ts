@@ -1,9 +1,11 @@
 import { t } from '@lingui/macro';
 
 import { PanelMenuItem } from '@grafana/data';
-import { AngularComponent, getDataSourceSrv, locationService } from '@grafana/runtime';
+import { AngularComponent, getDataSourceSrv, locationService, reportInteraction } from '@grafana/runtime';
 import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
 import config from 'app/core/config';
+import { contextSrv } from 'app/core/services/context_srv';
+import { getExploreUrl } from 'app/core/utils/explore';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import {
@@ -15,11 +17,10 @@ import {
   toggleLegend,
   unlinkLibraryPanel,
 } from 'app/features/dashboard/utils/panel';
+import { InspectTab } from 'app/features/inspector/types';
 import { isPanelModelLibraryPanel } from 'app/features/library-panels/guard';
 import { store } from 'app/store/store';
 
-import { contextSrv } from '../../../core/services/context_srv';
-import { getExploreUrl } from '../../../core/utils/explore';
 import { navigateToExplore } from '../../explore/state/main';
 import { getTimeSrv } from '../services/TimeSrv';
 
@@ -47,11 +48,6 @@ export function getPanelMenu(
     sharePanel(dashboard, panel);
   };
 
-  const onToggleLegend = (event: React.MouseEvent<any>) => {
-    event.preventDefault();
-    toggleLegend(panel);
-  };
-
   const onAddLibraryPanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
     addLibraryPanel(dashboard, panel);
@@ -62,10 +58,14 @@ export function getPanelMenu(
     unlinkLibraryPanel(panel);
   };
 
-  const onInspectPanel = (tab?: string) => {
+  const onInspectPanel = (tab?: InspectTab) => {
     locationService.partial({
       inspect: panel.id,
       inspectTab: tab,
+    });
+
+    reportInteraction('grafana_panel_menu_inspect', {
+      tab: tab ?? InspectTab.Data,
     });
   };
 
@@ -95,6 +95,10 @@ export function getPanelMenu(
     store.dispatch(navigateToExplore(panel, { getDataSourceSrv, getTimeSrv, getExploreUrl, openInNewWindow }) as any);
   };
 
+  const onToggleLegend = (event: React.MouseEvent) => {
+    event.preventDefault();
+    toggleLegend(panel);
+  };
   const menu: PanelMenuItem[] = [];
 
   if (!panel.isEditing) {
@@ -140,13 +144,6 @@ export function getPanelMenu(
     });
   }
 
-  menu.push({
-    text: panel.options.legend?.showLegend ? 'Hide legend' : 'Show legend',
-    iconClassName: 'exchange-alt',
-    onClick: onToggleLegend,
-    shortcut: 'p l',
-  });
-
   const inspectMenu: PanelMenuItem[] = [];
 
   // Only show these inspect actions for data plugins
@@ -158,13 +155,13 @@ export function getPanelMenu(
 
     inspectMenu.push({
       text: dataTextTranslation,
-      onClick: (e: React.MouseEvent<any>) => onInspectPanel('data'),
+      onClick: (e: React.MouseEvent<any>) => onInspectPanel(InspectTab.Data),
     });
 
     if (dashboard.meta.canEdit) {
       inspectMenu.push({
         text: 'Query',
-        onClick: (e: React.MouseEvent<any>) => onInspectPanel('query'),
+        onClick: (e: React.MouseEvent<any>) => onInspectPanel(InspectTab.Query),
       });
     }
   }
@@ -176,13 +173,14 @@ export function getPanelMenu(
 
   inspectMenu.push({
     text: jsonTextTranslation,
-    onClick: (e: React.MouseEvent<any>) => onInspectPanel('json'),
+    onClick: (e: React.MouseEvent<any>) => onInspectPanel(InspectTab.JSON),
   });
 
   const inspectTextTranslation = t({
     id: 'panel.header-menu.inspect',
     message: `Inspect`,
   });
+
   menu.push({
     type: 'submenu',
     text: inspectTextTranslation,
@@ -193,8 +191,9 @@ export function getPanelMenu(
   });
 
   const subMenu: PanelMenuItem[] = [];
+  const canEdit = dashboard.canEditPanel(panel);
 
-  if (dashboard.canEditPanel(panel) && !(panel.isViewing || panel.isEditing)) {
+  if (canEdit && !(panel.isViewing || panel.isEditing)) {
     subMenu.push({
       text: 'Duplicate',
       onClick: onDuplicatePanel,
@@ -242,7 +241,27 @@ export function getPanelMenu(
     }
   }
 
-  if (!panel.isEditing && subMenu.length) {
+  if (panel.options.legend) {
+    subMenu.push({
+      text: panel.options.legend.showLegend ? 'Hide legend' : 'Show legend',
+      onClick: onToggleLegend,
+      shortcut: 'p l',
+    });
+  }
+
+  // When editing hide most actions
+  if (panel.isEditing) {
+    subMenu.length = 0;
+  }
+
+  if (canEdit && panel.plugin && !panel.plugin.meta.skipDataQuery) {
+    subMenu.push({
+      text: 'Get help',
+      onClick: (e: React.MouseEvent) => onInspectPanel(InspectTab.Help),
+    });
+  }
+
+  if (subMenu.length) {
     const moreTextTranslation = t({
       id: 'panel.header-menu.more',
       message: `More...`,

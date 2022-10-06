@@ -1,23 +1,19 @@
 import { css } from '@emotion/css';
-import { Trans, t } from '@lingui/macro';
-import { saveAs } from 'file-saver';
+import { t, Trans } from '@lingui/macro';
 import React, { PureComponent } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import {
   applyFieldOverrides,
   applyRawFieldOverrides,
+  CoreApp,
   CSVConfig,
   DataFrame,
   DataTransformerID,
-  dateTimeFormat,
-  dateTimeFormatISO,
   MutableDataFrame,
   SelectableValue,
-  toCSV,
-  transformDataFrame,
   TimeZone,
-  CoreApp,
+  transformDataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
@@ -32,6 +28,7 @@ import { transformToZipkin } from 'app/plugins/datasource/zipkin/utils/transform
 
 import { InspectDataOptions } from './InspectDataOptions';
 import { getPanelInspectorStyles } from './styles';
+import { downloadAsJson, downloadDataFrameAsCsv, downloadLogsModelAsTxt } from './utils/download';
 
 interface Props {
   isLoading: boolean;
@@ -44,7 +41,7 @@ interface Props {
 }
 
 interface State {
-  /** The string is seriesToColumns transformation. Otherwise it is a dataframe index */
+  /** The string is joinByField transformation. Otherwise it is a dataframe index */
   selectedDataFrame: number | DataTransformerID;
   transformId: DataTransformerID;
   dataFrameIndex: number;
@@ -99,43 +96,19 @@ export class InspectDataTab extends PureComponent<Props, State> {
     const { panel } = this.props;
     const { transformId } = this.state;
 
-    const dataFrameCsv = toCSV([dataFrame], csvConfig);
-
-    const blob = new Blob([String.fromCharCode(0xfeff), dataFrameCsv], {
-      type: 'text/csv;charset=utf-8',
-    });
-    const displayTitle = panel ? panel.getDisplayTitle() : 'Explore';
-    const transformation = transformId !== DataTransformerID.noop ? '-as-' + transformId.toLocaleLowerCase() : '';
-    const fileName = `${displayTitle}-data${transformation}-${dateTimeFormat(new Date())}.csv`;
-    saveAs(blob, fileName);
+    downloadDataFrameAsCsv(dataFrame, panel ? panel.getDisplayTitle() : 'Explore', csvConfig, transformId);
   };
 
   exportLogsAsTxt = () => {
     const { data, panel, app } = this.props;
+
     reportInteraction('grafana_logs_download_logs_clicked', {
       app,
       format: 'logs',
     });
+
     const logsModel = dataFrameToLogsModel(data || [], undefined);
-    let textToDownload = '';
-
-    logsModel.meta?.forEach((metaItem) => {
-      const string = `${metaItem.label}: ${JSON.stringify(metaItem.value)}\n`;
-      textToDownload = textToDownload + string;
-    });
-    textToDownload = textToDownload + '\n\n';
-
-    logsModel.rows.forEach((row) => {
-      const newRow = dateTimeFormatISO(row.timeEpochMs) + '\t' + row.entry + '\n';
-      textToDownload = textToDownload + newRow;
-    });
-
-    const blob = new Blob([textToDownload], {
-      type: 'text/plain;charset=utf-8',
-    });
-    const displayTitle = panel ? panel.getDisplayTitle() : 'Explore';
-    const fileName = `${displayTitle}-logs-${dateTimeFormat(new Date())}.txt`;
-    saveAs(blob, fileName);
+    downloadLogsModelAsTxt(logsModel, panel ? panel.getDisplayTitle() : 'Explore');
   };
 
   exportTracesAsJson = () => {
@@ -153,31 +126,22 @@ export class InspectDataTab extends PureComponent<Props, State> {
       switch (df.meta?.custom?.traceFormat) {
         case 'jaeger': {
           let res = transformToJaeger(new MutableDataFrame(df));
-          this.saveTraceJson(res, panel);
+          downloadAsJson(res, (panel ? panel.getDisplayTitle() : 'Explore') + '-traces');
           break;
         }
         case 'zipkin': {
           let res = transformToZipkin(new MutableDataFrame(df));
-          this.saveTraceJson(res, panel);
+          downloadAsJson(res, (panel ? panel.getDisplayTitle() : 'Explore') + '-traces');
           break;
         }
         case 'otlp':
         default: {
           let res = transformToOTLP(new MutableDataFrame(df));
-          this.saveTraceJson(res, panel);
+          downloadAsJson(res, (panel ? panel.getDisplayTitle() : 'Explore') + '-traces');
           break;
         }
       }
     }
-  };
-
-  saveTraceJson = (json: any, panel?: PanelModel) => {
-    const blob = new Blob([JSON.stringify(json)], {
-      type: 'application/json',
-    });
-    const displayTitle = panel ? panel.getDisplayTitle() : 'Explore';
-    const fileName = `${displayTitle}-traces-${dateTimeFormat(new Date())}.json`;
-    saveAs(blob, fileName);
   };
 
   exportServiceGraph = () => {
@@ -186,18 +150,13 @@ export class InspectDataTab extends PureComponent<Props, State> {
       return;
     }
 
-    const blob = new Blob([JSON.stringify(data)], {
-      type: 'application/json',
-    });
-    const displayTitle = panel ? panel.getDisplayTitle() : 'Explore';
-    const fileName = `${displayTitle}-service-graph-${dateTimeFormat(new Date())}.json`;
-    saveAs(blob, fileName);
+    downloadAsJson(data, panel ? panel.getDisplayTitle() : 'Explore');
   };
 
   onDataFrameChange = (item: SelectableValue<DataTransformerID | number>) => {
     this.setState({
       transformId:
-        item.value === DataTransformerID.seriesToColumns ? DataTransformerID.seriesToColumns : DataTransformerID.noop,
+        item.value === DataTransformerID.joinByField ? DataTransformerID.joinByField : DataTransformerID.noop,
       dataFrameIndex: typeof item.value === 'number' ? item.value : 0,
       selectedDataFrame: item.value!,
     });
@@ -349,14 +308,14 @@ export class InspectDataTab extends PureComponent<Props, State> {
 function buildTransformationOptions() {
   const transformations: Array<SelectableValue<DataTransformerID>> = [
     {
-      value: DataTransformerID.seriesToColumns,
+      value: DataTransformerID.joinByField,
       label: t({
         id: 'dashboard.inspect-data.transformation',
         message: 'Series joined by time',
       }),
       transformer: {
-        id: DataTransformerID.seriesToColumns,
-        options: { byField: 'Time' },
+        id: DataTransformerID.joinByField,
+        options: { byField: undefined }, // defaults to time field
       },
     },
   ];

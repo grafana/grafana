@@ -88,7 +88,7 @@ export default class ResponseParser {
     return table;
   }
 
-  async transformAnnotationResponse(options: any, data: any, target: InfluxQuery): Promise<AnnotationEvent[]> {
+  async transformAnnotationResponse(annotation: any, data: any, target: InfluxQuery): Promise<AnnotationEvent[]> {
     const rsp = toDataQueryResponse(data, [target] as DataQuery[]);
 
     if (rsp) {
@@ -105,19 +105,19 @@ export default class ResponseParser {
           timeCol = index;
           return;
         }
-        if (column.text === options.annotation.titleColumn) {
+        if (column.text === annotation.titleColumn) {
           titleCol = index;
           return;
         }
-        if (colContainsTag(column.text, options.annotation.tagsColumn)) {
+        if (colContainsTag(column.text, annotation.tagsColumn)) {
           tagsCol.push(index);
           return;
         }
-        if (column.text.includes(options.annotation.textColumn)) {
+        if (column.text.includes(annotation.textColumn)) {
           textCol = index;
           return;
         }
-        if (column.text === options.annotation.timeEndColumn) {
+        if (column.text === annotation.timeEndColumn) {
           timeEndCol = index;
           return;
         }
@@ -129,7 +129,7 @@ export default class ResponseParser {
 
       each(table.rows, (value) => {
         const data = {
-          annotation: options.annotation,
+          annotation: annotation,
           time: +new Date(value[timeCol]),
           title: value[titleCol],
           timeEnd: value[timeEndCol],

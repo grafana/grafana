@@ -9,7 +9,7 @@ keywords:
   - panel
   - documentation
 title: Markers layer
-weight: 600
+weight: 1
 ---
 
 # Markers layer

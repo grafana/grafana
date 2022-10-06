@@ -1,0 +1,14 @@
+{
+  "type": "panel",
+  "name": "Wrong slot for type",
+  "id": "wrong-slot-panel",
+  "backend": true,
+  "state": "alpha",
+  "info": {
+    "description": "Test",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    }
+  }
+}

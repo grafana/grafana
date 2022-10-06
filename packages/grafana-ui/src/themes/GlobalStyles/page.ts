@@ -24,6 +24,7 @@ export function getPageStyles(theme: GrafanaTheme2) {
       flex-grow: 1;
       height: 100%;
       flex: 1 1 0;
+      min-width: 0;
     }
 
     .page-scrollbar-content {
@@ -110,6 +111,10 @@ export function getPageStyles(theme: GrafanaTheme2) {
     .page-sub-heading-icon {
       margin-left: ${theme.spacing(1)};
       margin-top: ${theme.spacing(0.5)};
+    }
+
+    .page-hidden {
+      display: none;
     }
   `;
 }

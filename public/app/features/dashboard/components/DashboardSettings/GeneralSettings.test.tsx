@@ -1,11 +1,14 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { BrowserRouter } from 'react-router-dom';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
+import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 import { byRole } from 'testing-library-selector';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { setBackendSrv } from '@grafana/runtime';
+import { GrafanaContext } from 'app/core/context/GrafanaContext';
 
 import { DashboardModel } from '../../state';
 
@@ -34,10 +37,23 @@ const setupTestContext = (options: Partial<Props>) => {
     ),
     updateTimeZone: jest.fn(),
     updateWeekStart: jest.fn(),
+    sectionNav: {
+      main: { text: 'Dashboard' },
+      node: {
+        text: 'Settings',
+      },
+    },
   };
 
   const props = { ...defaults, ...options };
-  const { rerender } = render(<GeneralSettings {...props} />);
+
+  const { rerender } = render(
+    <GrafanaContext.Provider value={getGrafanaContextMock()}>
+      <BrowserRouter>
+        <GeneralSettings {...props} />
+      </BrowserRouter>
+    </GrafanaContext.Provider>
+  );
 
   return { rerender, props };
 };

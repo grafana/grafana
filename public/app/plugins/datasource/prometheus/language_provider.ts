@@ -18,6 +18,7 @@ import { PrometheusDatasource } from './datasource';
 import {
   addLimitInfo,
   extractLabelMatchers,
+  fixSummariesMetadata,
   parseSelector,
   processHistogramMetrics,
   processLabels,
@@ -145,19 +146,9 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   };
 
   async loadMetricsMetadata() {
-    // The metadata endpoint is experimental and
-    // we have customers who are not implementing it.
-    // This is to be a temporary fix until the Observability Metrics Squad
-    // has time to implement the 2022Q3 plan
-    // to detect prometheus versions and implementations.
-    // This will allow us to see if endpoints such as api/v1/metadata
-    // are implemented or not and handle them as such
-    this.metricsMetadata = {};
-
-    // PREVIOUS IMPLEMENTATION FOR NOTES
-    // this.metricsMetadata = fixSummariesMetadata(
-    //   await this.request('/api/v1/metadata', {}, {}, { showErrorAlert: false })
-    // );
+    this.metricsMetadata = fixSummariesMetadata(
+      await this.request('/api/v1/metadata', {}, {}, { showErrorAlert: false })
+    );
   }
 
   getLabelKeys(): string[] {

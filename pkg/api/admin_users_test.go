@@ -37,14 +37,12 @@ func TestAdminAPIEndpoint(t *testing.T) {
 		updateCmd := dtos.AdminUpdateUserPermissionsForm{
 			IsGrafanaAdmin: false,
 		}
-		mock := &mockstore.SQLStoreMock{
-			ExpectedError: user.ErrLastGrafanaAdmin,
-		}
+		userService := usertest.FakeUserService{ExpectedError: user.ErrLastGrafanaAdmin}
 		putAdminScenario(t, "When calling PUT on", "/api/admin/users/1/permissions",
 			"/api/admin/users/:id/permissions", role, updateCmd, func(sc *scenarioContext) {
 				sc.fakeReqWithParams("PUT", sc.url, map[string]string{}).exec()
 				assert.Equal(t, 400, sc.resp.Code)
-			}, mock)
+			}, nil, &userService)
 	})
 
 	t.Run("When a server admin attempts to logout himself from all devices", func(t *testing.T) {
@@ -90,9 +88,10 @@ func TestAdminAPIEndpoint(t *testing.T) {
 	t.Run("When a server admin attempts to enable/disable a nonexistent user", func(t *testing.T) {
 		adminDisableUserScenario(t, "Should return user not found on a POST request", "enable",
 			"/api/admin/users/42/enable", "/api/admin/users/:id/enable", func(sc *scenarioContext) {
-				store := sc.sqlStore.(*mockstore.SQLStoreMock)
+				userService := sc.userService.(*usertest.FakeUserService)
 				sc.authInfoService.ExpectedError = user.ErrUserNotFound
-				store.ExpectedError = user.ErrUserNotFound
+
+				userService.ExpectedError = user.ErrUserNotFound
 
 				sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 
@@ -101,15 +100,13 @@ func TestAdminAPIEndpoint(t *testing.T) {
 				require.NoError(t, err)
 
 				assert.Equal(t, "user not found", respJSON.Get("message").MustString())
-
-				assert.Equal(t, int64(42), store.LatestUserId)
 			})
 
 		adminDisableUserScenario(t, "Should return user not found on a POST request", "disable",
 			"/api/admin/users/42/disable", "/api/admin/users/:id/disable", func(sc *scenarioContext) {
-				store := sc.sqlStore.(*mockstore.SQLStoreMock)
+				userService := sc.userService.(*usertest.FakeUserService)
 				sc.authInfoService.ExpectedError = user.ErrUserNotFound
-				store.ExpectedError = user.ErrUserNotFound
+				userService.ExpectedError = user.ErrUserNotFound
 
 				sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 
@@ -118,8 +115,6 @@ func TestAdminAPIEndpoint(t *testing.T) {
 				require.NoError(t, err)
 
 				assert.Equal(t, "user not found", respJSON.Get("message").MustString())
-
-				assert.Equal(t, int64(42), store.LatestUserId)
 			})
 	})
 
@@ -238,12 +233,13 @@ func TestAdminAPIEndpoint(t *testing.T) {
 }
 
 func putAdminScenario(t *testing.T, desc string, url string, routePattern string, role org.RoleType,
-	cmd dtos.AdminUpdateUserPermissionsForm, fn scenarioFunc, sqlStore sqlstore.Store) {
+	cmd dtos.AdminUpdateUserPermissionsForm, fn scenarioFunc, sqlStore sqlstore.Store, userSvc user.Service) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		hs := &HTTPServer{
 			Cfg:             setting.NewCfg(),
 			SQLStore:        sqlStore,
 			authInfoService: &logintest.AuthInfoServiceFake{},
+			userService:     userSvc,
 		}
 
 		sc := setupScenarioContext(t, url)
@@ -353,11 +349,13 @@ func adminDisableUserScenario(t *testing.T, desc string, action string, url stri
 			SQLStore:         mockstore.NewSQLStoreMock(),
 			AuthTokenService: fakeAuthTokenService,
 			authInfoService:  authInfoService,
+			userService:      usertest.NewUserServiceFake(),
 		}
 
 		sc := setupScenarioContext(t, url)
 		sc.sqlStore = hs.SQLStore
 		sc.authInfoService = authInfoService
+		sc.userService = hs.userService
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
 			sc.context.UserID = testUserID

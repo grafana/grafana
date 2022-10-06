@@ -18,13 +18,20 @@ type Service struct {
 }
 
 func ProvideService(db db.DB, cfg *setting.Cfg, features *featuremgmt.FeatureManager) pref.Service {
-	return &Service{
-		store: &sqlStore{
-			db: db,
-		},
+	service := &Service{
 		cfg:      cfg,
 		features: features,
 	}
+	if cfg.IsFeatureToggleEnabled("newDBLibrary") {
+		service.store = &sqlxStore{
+			sess: db.GetSqlxSession(),
+		}
+	} else {
+		service.store = &sqlStore{
+			db: db,
+		}
+	}
+	return service
 }
 
 func (s *Service) GetWithDefaults(ctx context.Context, query *pref.GetPreferenceWithDefaultsQuery) (*pref.Preference, error) {

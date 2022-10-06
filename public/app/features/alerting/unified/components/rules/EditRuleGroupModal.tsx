@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import React, { useEffect, useMemo } from 'react';
-import { useDispatch } from 'react-redux';
 
 import { isValidGoDuration } from '@grafana/data';
 import { Modal, Button, Form, Field, Input, useStyles2 } from '@grafana/ui';
 import { useCleanup } from 'app/core/hooks/useCleanup';
+import { useDispatch } from 'app/types';
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
@@ -15,10 +15,10 @@ import { initialAsyncRequestState } from '../../utils/redux';
 import { durationValidationPattern } from '../../utils/time';
 import { EvaluationIntervalLimitExceeded } from '../InvalidIntervalWarning';
 
-interface Props {
+interface ModalProps {
   namespace: CombinedRuleNamespace;
   group: CombinedRuleGroup;
-  onClose: () => void;
+  onClose: (saved?: boolean) => void;
 }
 
 interface FormValues {
@@ -27,7 +27,7 @@ interface FormValues {
   groupInterval: string;
 }
 
-export function EditCloudGroupModal(props: Props): React.ReactElement {
+export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
   const { namespace, group, onClose } = props;
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
@@ -46,11 +46,11 @@ export function EditCloudGroupModal(props: Props): React.ReactElement {
   // close modal if successfully saved
   useEffect(() => {
     if (dispatched && !loading && !error) {
-      onClose();
+      onClose(true);
     }
   }, [dispatched, loading, onClose, error]);
 
-  useCleanup((state) => state.unifiedAlerting.updateLotexNamespaceAndGroup);
+  useCleanup((state) => (state.unifiedAlerting.updateLotexNamespaceAndGroup = initialAsyncRequestState));
 
   const onSubmit = (values: FormValues) => {
     dispatch(
@@ -123,7 +123,13 @@ export function EditCloudGroupModal(props: Props): React.ReactElement {
             )}
 
             <Modal.ButtonRow>
-              <Button variant="secondary" type="button" disabled={loading} onClick={onClose} fill="outline">
+              <Button
+                variant="secondary"
+                type="button"
+                disabled={loading}
+                onClick={() => onClose(false)}
+                fill="outline"
+              >
                 Close
               </Button>
               <Button type="submit" disabled={!isDirty || loading}>

@@ -16,7 +16,6 @@ import { CollapseToggle } from '../CollapseToggle';
 import { EvaluationIntervalLimitExceeded } from '../InvalidIntervalWarning';
 
 import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
-import { PreviewRule } from './PreviewRule';
 import { RuleEditorSection } from './RuleEditorSection';
 
 const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
@@ -161,7 +160,6 @@ export const GrafanaEvaluationBehavior: FC = () => {
           </Field>
         </>
       )}
-      <PreviewRule />
     </RuleEditorSection>
   );
 };

@@ -822,7 +822,7 @@
         "options": [],
         "query": {
           "grafanaTemplateVariableFn": {
-            "kind": "MetricDefinitionsQuery",
+            "kind": "MetricNamespaceQuery",
             "rawQuery": "Namespaces($sub, $rg)",
             "resourceGroup": "$rg",
             "subscription": "$sub"

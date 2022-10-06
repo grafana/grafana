@@ -25,7 +25,7 @@ import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
 import { GetVariables, getVariablesByKey } from 'app/features/variables/state/selectors';
 import { CoreEvents, DashboardMeta, KioskMode } from 'app/types';
-import { DashboardPanelsChangedEvent, RenderEvent } from 'app/types/events';
+import { DashboardMetaChangedEvent, DashboardPanelsChangedEvent, RenderEvent } from 'app/types/events';
 
 import { appEvents } from '../../../core/core';
 import { dispatch } from '../../../store/store';
@@ -480,6 +480,11 @@ export class DashboardModel implements TimeModel {
     this.events.publish(new DashboardPanelsChangedEvent());
   }
 
+  updateMeta(updates: Partial<DashboardMeta>) {
+    this.meta = { ...this.meta, ...updates };
+    this.events.publish(new DashboardMetaChangedEvent());
+  }
+
   sortPanelsByGridPos() {
     this.panels.sort((panelA, panelB) => {
       if (panelA.gridPos.y === panelB.gridPos.y) {
@@ -493,6 +498,12 @@ export class DashboardModel implements TimeModel {
   clearUnsavedChanges() {
     for (const panel of this.panels) {
       panel.configRev = 0;
+    }
+
+    if (this.panelInEdit) {
+      // Remember that we have a saved a change in panel editor so we apply it when leaving panel edit
+      this.panelInEdit.hasSavedPanelEditChange = this.panelInEdit.configRev > 0;
+      this.panelInEdit.configRev = 0;
     }
   }
 

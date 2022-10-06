@@ -1,7 +1,14 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { CartesianCoords2D, DataFrame, FieldType, PanelProps } from '@grafana/data';
-import { Portal, UPlotConfigBuilder, useTheme2, VizTooltipContainer, ZoomPlugin } from '@grafana/ui';
+import {
+  Portal,
+  TooltipDisplayMode,
+  UPlotConfigBuilder,
+  useTheme2,
+  VizTooltipContainer,
+  ZoomPlugin,
+} from '@grafana/ui';
 import { HoverEvent, addTooltipSupport } from '@grafana/ui/src/components/uPlot/config/addTooltipSupport';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 
@@ -126,7 +133,7 @@ export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
     [timeZone, frames, shouldDisplayCloseButton]
   );
 
-  const timezones = useMemo(() => getTimezones(options.timezones, timeZone), [options.timezones, timeZone]);
+  const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
 
   if (!frames || warn) {
     return (
@@ -154,7 +161,7 @@ export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
       frames={frames}
       structureRev={data.structureRev}
       timeRange={timeRange}
-      timeZones={timezones}
+      timeZone={timezones}
       width={width}
       height={height}
       legendItems={legendItems}
@@ -174,6 +181,11 @@ export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
             isToolTipOpen,
           });
         }
+
+        if (options.tooltip.mode === TooltipDisplayMode.None) {
+          return null;
+        }
+
         return (
           <>
             <ZoomPlugin config={config} onZoom={onChangeTimeRange} />

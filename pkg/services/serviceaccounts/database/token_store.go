@@ -2,27 +2,37 @@ package database
 
 import (
 	"context"
-	"time"
 
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"xorm.io/xorm"
+	"github.com/pkg/errors"
 )
 
-func (s *ServiceAccountsStoreImpl) ListTokens(ctx context.Context, orgId int64, serviceAccountId int64) ([]*apikey.APIKey, error) {
-	result := make([]*apikey.APIKey, 0)
-	err := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
-		var sess *xorm.Session
+const maxRetrievedTokens = 300
 
+func (s *ServiceAccountsStoreImpl) ListTokens(
+	ctx context.Context, query *serviceaccounts.GetSATokensQuery,
+) ([]apikey.APIKey, error) {
+	result := make([]apikey.APIKey, 0)
+	err := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		quotedUser := s.sqlStore.Dialect.Quote("user")
-		sess = dbSession.
-			Join("inner", quotedUser, quotedUser+".id = api_key.service_account_id").
-			Where(quotedUser+".org_id=? AND "+quotedUser+".id=?", orgId, serviceAccountId).
+		sess := dbSession.Limit(maxRetrievedTokens, 0).Where("api_key.service_account_id IS NOT NULL")
+
+		if query.OrgID != nil {
+			sess = sess.Where(quotedUser+".org_id=?", *query.OrgID)
+			sess = sess.Where("api_key.org_id=?", *query.OrgID)
+		}
+
+		if query.ServiceAccountID != nil {
+			sess = sess.Where("api_key.service_account_id=?", *query.ServiceAccountID)
+		}
+
+		sess = sess.Join("inner", quotedUser, quotedUser+".id = api_key.service_account_id").
 			Asc("api_key.name")
 
-		return sess.Find(&result)
+		return errors.Wrapf(sess.Find(&result), "list token error")
 	})
 	return result, err
 }
@@ -33,37 +43,27 @@ func (s *ServiceAccountsStoreImpl) AddServiceAccountToken(ctx context.Context, s
 			return err
 		}
 
-		key := apikey.APIKey{OrgId: cmd.OrgId, Name: cmd.Name}
-		exists, _ := sess.Get(&key)
-		if exists {
-			return ErrDuplicateToken
-		}
-
-		updated := time.Now()
-		var expires *int64 = nil
-		if cmd.SecondsToLive > 0 {
-			v := updated.Add(time.Second * time.Duration(cmd.SecondsToLive)).Unix()
-			expires = &v
-		} else if cmd.SecondsToLive < 0 {
-			return ErrInvalidTokenExpiration
-		}
-
-		token := apikey.APIKey{
-			OrgId:            cmd.OrgId,
+		addKeyCmd := &apikey.AddCommand{
 			Name:             cmd.Name,
 			Role:             org.RoleViewer,
+			OrgId:            cmd.OrgId,
 			Key:              cmd.Key,
-			Created:          updated,
-			Updated:          updated,
-			Expires:          expires,
-			LastUsedAt:       nil,
-			ServiceAccountId: &serviceAccountId,
+			SecondsToLive:    cmd.SecondsToLive,
+			ServiceAccountID: &serviceAccountId,
 		}
 
-		if _, err := sess.Insert(&token); err != nil {
+		if err := s.apiKeyService.AddAPIKey(ctx, addKeyCmd); err != nil {
+			switch {
+			case errors.Is(err, apikey.ErrDuplicate):
+				return ErrDuplicateToken
+			case errors.Is(err, apikey.ErrInvalidExpiration):
+				return ErrInvalidTokenExpiration
+			}
+
 			return err
 		}
-		cmd.Result = &token
+
+		cmd.Result = addKeyCmd.Result
 		return nil
 	})
 }
@@ -73,6 +73,23 @@ func (s *ServiceAccountsStoreImpl) DeleteServiceAccountToken(ctx context.Context
 
 	return s.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		result, err := sess.Exec(rawSQL, tokenId, orgId, serviceAccountId)
+		if err != nil {
+			return err
+		}
+		affected, err := result.RowsAffected()
+		if affected == 0 {
+			return ErrServiceAccountTokenNotFound
+		}
+
+		return err
+	})
+}
+
+func (s *ServiceAccountsStoreImpl) RevokeServiceAccountToken(ctx context.Context, orgId, serviceAccountId, tokenId int64) error {
+	rawSQL := "UPDATE api_key SET is_revoked = ? WHERE id=? and org_id=? and service_account_id=?"
+
+	return s.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		result, err := sess.Exec(rawSQL, s.sqlStore.Dialect.BooleanStr(true), tokenId, orgId, serviceAccountId)
 		if err != nil {
 			return err
 		}

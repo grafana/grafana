@@ -11,8 +11,9 @@ import React, { ReactElement, useEffect, useState } from 'react';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { reportExperimentView } from '@grafana/runtime';
-import { Icon, IconName, Link, useTheme2 } from '@grafana/ui';
+import { Link, useTheme2 } from '@grafana/ui';
 
+import { NavBarItemIcon } from './NavBarItemIcon';
 import { getNavMenuPortalContainer } from './NavBarMenuPortalContainer';
 import { NavFeatureHighlight } from './NavFeatureHighlight';
 import { NavBarItemMenuContext, useNavBarContext } from './context';
@@ -92,8 +93,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
   const itemContent = (
     <Wrapper>
       <span className={styles.icon}>
-        {item?.icon && <Icon name={item.icon as IconName} size="xl" />}
-        {item?.img && <img src={item.img} alt={`${item.text} logo`} />}
+        <NavBarItemIcon link={item} />
       </span>
     </Wrapper>
   );
@@ -250,11 +250,5 @@ const getStyles = (theme: GrafanaTheme2, isActive?: boolean) => ({
   icon: css({
     height: '100%',
     width: '100%',
-
-    img: {
-      borderRadius: '50%',
-      height: theme.spacing(3),
-      width: theme.spacing(3),
-    },
   }),
 });

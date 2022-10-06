@@ -1,6 +1,18 @@
 import { sortBy } from 'lodash';
 
-import { LineComment, parser } from '@grafana/lezer-logql';
+import {
+  JsonExpressionParser,
+  LabelFilter,
+  LabelParser,
+  LineComment,
+  LineFilters,
+  LogExpr,
+  LogRangeExpr,
+  parser,
+  PipelineExpr,
+  Selector,
+  UnwrapExpr,
+} from '@grafana/lezer-logql';
 
 import { QueryBuilderLabelFilter } from '../prometheus/querybuilder/shared/types';
 
@@ -123,8 +135,8 @@ function getStreamSelectorPositions(query: string): Position[] {
   const tree = parser.parse(query);
   const positions: Position[] = [];
   tree.iterate({
-    enter: (type, from, to, get): false | void => {
-      if (type.name === 'Selector') {
+    enter: ({ type, from, to }): false | void => {
+      if (type.id === Selector) {
         positions.push({ from, to });
         return false;
       }
@@ -141,8 +153,8 @@ export function getParserPositions(query: string): Position[] {
   const tree = parser.parse(query);
   const positions: Position[] = [];
   tree.iterate({
-    enter: (type, from, to, get): false | void => {
-      if (type.name === 'LabelParser' || type.name === 'JsonExpressionParser') {
+    enter: ({ type, from, to }): false | void => {
+      if (type.id === LabelParser || type.id === JsonExpressionParser) {
         positions.push({ from, to });
         return false;
       }
@@ -159,8 +171,8 @@ export function getLabelFilterPositions(query: string): Position[] {
   const tree = parser.parse(query);
   const positions: Position[] = [];
   tree.iterate({
-    enter: (type, from, to, get): false | void => {
-      if (type.name === 'LabelFilter') {
+    enter: ({ type, from, to }): false | void => {
+      if (type.id === LabelFilter) {
         positions.push({ from, to });
         return false;
       }
@@ -177,9 +189,9 @@ function getLineFiltersPositions(query: string): Position[] {
   const tree = parser.parse(query);
   const positions: Position[] = [];
   tree.iterate({
-    enter: (type, from, to, get): false | void => {
-      if (type.name === 'LineFilters') {
-        positions.push({ from, to });
+    enter: ({ type, node }): false | void => {
+      if (type.id === LineFilters) {
+        positions.push({ from: node.from, to: node.to });
         return false;
       }
     },
@@ -195,28 +207,28 @@ function getLogQueryPositions(query: string): Position[] {
   const tree = parser.parse(query);
   const positions: Position[] = [];
   tree.iterate({
-    enter: (type, from, to, get): false | void => {
-      if (type.name === 'LogExpr') {
+    enter: ({ type, from, to, node }): false | void => {
+      if (type.id === LogExpr) {
         positions.push({ from, to });
         return false;
       }
 
       // This is a case in metrics query
-      if (type.name === 'LogRangeExpr') {
+      if (type.id === LogRangeExpr) {
         // Unfortunately, LogRangeExpr includes both log and non-log (e.g. Duration/Range/...) parts of query.
         // We get position of all log-parts within LogRangeExpr: Selector, PipelineExpr and UnwrapExpr.
         const logPartsPositions: Position[] = [];
-        const selector = get().getChild('Selector');
+        const selector = node.getChild(Selector);
         if (selector) {
           logPartsPositions.push({ from: selector.from, to: selector.to });
         }
 
-        const pipeline = get().getChild('PipelineExpr');
+        const pipeline = node.getChild(PipelineExpr);
         if (pipeline) {
           logPartsPositions.push({ from: pipeline.from, to: pipeline.to });
         }
 
-        const unwrap = get().getChild('UnwrapExpr');
+        const unwrap = node.getChild(UnwrapExpr);
         if (unwrap) {
           logPartsPositions.push({ from: unwrap.from, to: unwrap.to });
         }
@@ -359,7 +371,7 @@ function getLineCommentPositions(query: string): Position[] {
   const tree = parser.parse(query);
   const positions: Position[] = [];
   tree.iterate({
-    enter: (type, from, to, get): false | void => {
+    enter: ({ type, from, to }): false | void => {
       if (type.id === LineComment) {
         positions.push({ from, to });
         return false;

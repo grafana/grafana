@@ -26,7 +26,7 @@ describe('addLabelToQuery()', () => {
 
   it('should detect in-order function use', () => {
     expect(addLabelToQuery('sum by (host) (rate({} [1m]))', 'bar', '=', 'baz')).toBe(
-      'sum by (host) (rate({bar="baz"} [1m]))'
+      'sum by (host) (rate({bar="baz"}[1m]))'
     );
   });
 
@@ -38,7 +38,7 @@ describe('addLabelToQuery()', () => {
   });
 
   it('should work on arithmetical expressions', () => {
-    expect(addLabelToQuery('{} + {}', 'bar', '=', 'baz')).toBe('{bar="baz"} + {bar="baz"}');
+    expect(addLabelToQuery('{} + {}', 'bar', '=', 'baz')).toBe('{bar="baz"}+ {bar="baz"}');
     expect(addLabelToQuery('avg(rate({x="y"} [$__interval]))+ sum(rate({}[5m]))', 'bar', '=', 'baz')).toBe(
       'avg(rate({x="y", bar="baz"} [$__interval]))+ sum(rate({bar="baz"}[5m]))'
     );
@@ -103,7 +103,7 @@ describe('addLabelToQuery()', () => {
         'baz'
       )
     ).toBe(
-      'max by (id, name, type) ({type=~"foo|bar|baz-test", bar="baz"}) * on(id) group_right(id, type, name) sum by (id) (rate({bar="baz"} [5m])) * 1000'
+      'max by (id, name, type) ({type=~"foo|bar|baz-test", bar="baz"}) * on(id) group_right(id, type, name) sum by (id) (rate({bar="baz"}[5m])) * 1000'
     );
   });
   it('should not add ad-hoc filter to labels in label list provided with the group modifier', () => {

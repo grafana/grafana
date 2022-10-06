@@ -15,6 +15,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
+type getStore func(*sqlstore.SQLStore) store
+
+type getApiKeysTestCase struct {
+	desc               string
+	user               *user.SignedInUser
+	expectedNumKeys    int
+	expectedAllNumKeys int
+}
+
 func mockTimeNow() {
 	var timeSeed int64
 	timeNow = func() time.Time {
@@ -29,7 +38,20 @@ func resetTimeNow() {
 	timeNow = time.Now
 }
 
-func TestIntegrationApiKeyDataAccess(t *testing.T) {
+func seedApiKeys(t *testing.T, store store, num int) {
+	t.Helper()
+
+	for i := 0; i < num; i++ {
+		err := store.AddAPIKey(context.Background(), &apikey.AddCommand{
+			Name:  fmt.Sprintf("key:%d", i),
+			Key:   fmt.Sprintf("key:%d", i),
+			OrgId: 1,
+		})
+		require.NoError(t, err)
+	}
+}
+
+func testIntegrationApiKeyDataAccess(t *testing.T, fn getStore) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -38,7 +60,7 @@ func TestIntegrationApiKeyDataAccess(t *testing.T) {
 
 	t.Run("Testing API Key data access", func(t *testing.T) {
 		db := sqlstore.InitTestDB(t)
-		ss := &sqlStore{db: db, cfg: db.Cfg}
+		ss := fn(db)
 
 		t.Run("Given saved api key", func(t *testing.T) {
 			cmd := apikey.AddCommand{OrgId: 1, Name: "hello", Key: "asd"}
@@ -59,6 +81,12 @@ func TestIntegrationApiKeyDataAccess(t *testing.T) {
 				assert.Nil(t, err)
 				assert.NotNil(t, key)
 			})
+			t.Run("Should be able to delete key by id", func(t *testing.T) {
+				key, err := ss.GetAPIKeyByHash(context.Background(), cmd.Key)
+				assert.NoError(t, err)
+				err = ss.DeleteApiKey(context.Background(), &apikey.DeleteCommand{Id: key.Id, OrgId: key.OrgId})
+				assert.NoError(t, err)
+			})
 		})
 
 		t.Run("Add non expiring key", func(t *testing.T) {
@@ -69,7 +97,6 @@ func TestIntegrationApiKeyDataAccess(t *testing.T) {
 			query := apikey.GetByNameQuery{KeyName: "non-expiring", OrgId: 1}
 			err = ss.GetApiKeyByName(context.Background(), &query)
 			assert.Nil(t, err)
-
 			assert.Nil(t, query.Result.Expires)
 		})
 
@@ -107,7 +134,6 @@ func TestIntegrationApiKeyDataAccess(t *testing.T) {
 			query := apikey.GetByNameQuery{KeyName: "last-update-at", OrgId: 1}
 			err = ss.GetApiKeyByName(context.Background(), &query)
 			assert.Nil(t, err)
-
 			assert.NotNil(t, query.Result.LastUsedAt)
 		})
 
@@ -170,18 +196,10 @@ func TestIntegrationApiKeyDataAccess(t *testing.T) {
 			assert.True(t, found)
 		})
 	})
-}
-
-func TestIntegrationApiKeyErrors(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-	mockTimeNow()
-	defer resetTimeNow()
 
 	t.Run("Testing API Key errors", func(t *testing.T) {
 		db := sqlstore.InitTestDB(t)
-		ss := &sqlStore{db: db, cfg: db.Cfg}
+		ss := fn(db)
 
 		t.Run("Delete non-existing key should return error", func(t *testing.T) {
 			cmd := apikey.DeleteCommand{Id: 1}
@@ -204,65 +222,50 @@ func TestIntegrationApiKeyErrors(t *testing.T) {
 			})
 		})
 	})
-}
 
-type getApiKeysTestCase struct {
-	desc            string
-	user            *user.SignedInUser
-	expectedNumKeys int
-}
+	t.Run("Testing Get API keys", func(t *testing.T) {
+		tests := []getApiKeysTestCase{
+			{
+				desc: "expect all keys for wildcard scope",
+				user: &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+					1: {"apikeys:read": {"apikeys:*"}},
+				}},
+				expectedNumKeys:    10,
+				expectedAllNumKeys: 10,
+			},
+			{
+				desc: "expect only api keys that user have scopes for",
+				user: &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+					1: {"apikeys:read": {"apikeys:id:1", "apikeys:id:3"}},
+				}},
+				expectedNumKeys:    2,
+				expectedAllNumKeys: 10,
+			},
+			{
+				desc: "expect no keys when user have no scopes",
+				user: &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+					1: {"apikeys:read": {}},
+				}},
+				expectedNumKeys:    0,
+				expectedAllNumKeys: 10,
+			},
+		}
 
-func TestIntegrationSQLStore_GetAPIKeys(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-	tests := []getApiKeysTestCase{
-		{
-			desc: "expect all keys for wildcard scope",
-			user: &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
-				1: {"apikeys:read": {"apikeys:*"}},
-			}},
-			expectedNumKeys: 10,
-		},
-		{
-			desc: "expect only api keys that user have scopes for",
-			user: &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
-				1: {"apikeys:read": {"apikeys:id:1", "apikeys:id:3"}},
-			}},
-			expectedNumKeys: 2,
-		},
-		{
-			desc: "expect no keys when user have no scopes",
-			user: &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
-				1: {"apikeys:read": {}},
-			}},
-			expectedNumKeys: 0,
-		},
-	}
+		for _, tt := range tests {
+			t.Run(tt.desc, func(t *testing.T) {
+				db := sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{})
+				store := fn(db)
+				seedApiKeys(t, store, 10)
 
-	for _, tt := range tests {
-		t.Run(tt.desc, func(t *testing.T) {
-			db := sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{})
-			store := &sqlStore{db: db, cfg: db.Cfg}
-			seedApiKeys(t, store, 10)
+				query := &apikey.GetApiKeysQuery{OrgId: 1, User: tt.user}
+				err := store.GetAPIKeys(context.Background(), query)
+				require.NoError(t, err)
+				assert.Len(t, query.Result, tt.expectedNumKeys)
 
-			query := &apikey.GetApiKeysQuery{OrgId: 1, User: tt.user}
-			err := store.GetAPIKeys(context.Background(), query)
-			require.NoError(t, err)
-			assert.Len(t, query.Result, tt.expectedNumKeys)
-		})
-	}
-}
-
-func seedApiKeys(t *testing.T, store store, num int) {
-	t.Helper()
-
-	for i := 0; i < num; i++ {
-		err := store.AddAPIKey(context.Background(), &apikey.AddCommand{
-			Name:  fmt.Sprintf("key:%d", i),
-			Key:   fmt.Sprintf("key:%d", i),
-			OrgId: 1,
-		})
-		require.NoError(t, err)
-	}
+				res, err := store.GetAllAPIKeys(context.Background(), 1)
+				require.NoError(t, err)
+				assert.Equal(t, tt.expectedAllNumKeys, len(res))
+			})
+		}
+	})
 }

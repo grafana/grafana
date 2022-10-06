@@ -83,7 +83,7 @@ func (api *ServiceAccountsAPI) RegisterAPIEndpoints() {
 
 // swagger:route POST /serviceaccounts service_accounts createServiceAccount
 //
-// Create service account
+// # Create service account
 //
 // Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):
 // action: `serviceaccounts:write` scope: `serviceaccounts:*`
@@ -134,7 +134,7 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *models.ReqContext) respon
 
 // swagger:route GET /serviceaccounts/{serviceAccountId} service_accounts retrieveServiceAccount
 //
-// Get single serviceaccount by Id
+// # Get single serviceaccount by Id
 //
 // Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):
 // action: `serviceaccounts:read` scope: `serviceaccounts:id:1` (single service account)
@@ -167,7 +167,10 @@ func (api *ServiceAccountsAPI) RetrieveServiceAccount(ctx *models.ReqContext) re
 	serviceAccount.AvatarUrl = dtos.GetGravatarUrlWithDefault("", serviceAccount.Name)
 	serviceAccount.AccessControl = metadata[saIDString]
 
-	tokens, err := api.store.ListTokens(ctx.Req.Context(), serviceAccount.OrgId, serviceAccount.Id)
+	tokens, err := api.store.ListTokens(ctx.Req.Context(), &serviceaccounts.GetSATokensQuery{
+		OrgID:            &serviceAccount.OrgId,
+		ServiceAccountID: &serviceAccount.Id,
+	})
 	if err != nil {
 		api.log.Warn("Failed to list tokens for service account", "serviceAccount", serviceAccount.Id)
 	}
@@ -178,7 +181,7 @@ func (api *ServiceAccountsAPI) RetrieveServiceAccount(ctx *models.ReqContext) re
 
 // swagger:route PATCH /serviceaccounts/{serviceAccountId} service_accounts updateServiceAccount
 //
-// Update service account
+// # Update service account
 //
 // Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):
 // action: `serviceaccounts:write` scope: `serviceaccounts:id:1` (single service account)
@@ -247,7 +250,7 @@ func (api *ServiceAccountsAPI) validateRole(r *org.RoleType, orgRole *org.RoleTy
 
 // swagger:route DELETE /serviceaccounts/{serviceAccountId} service_accounts deleteServiceAccount
 //
-// Delete service account
+// # Delete service account
 //
 // Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):
 // action: `serviceaccounts:delete` scope: `serviceaccounts:id:1` (single service account)
@@ -272,7 +275,7 @@ func (api *ServiceAccountsAPI) DeleteServiceAccount(ctx *models.ReqContext) resp
 
 // swagger:route GET /serviceaccounts/search service_accounts searchOrgServiceAccountsWithPaging
 //
-// Search service accounts with paging
+// # Search service accounts with paging
 //
 // Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):
 // action: `serviceaccounts:read` scope: `serviceaccounts:*`
@@ -316,7 +319,9 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *models.ReqC
 		saIDs[saIDString] = true
 		metadata := api.getAccessControlMetadata(c, map[string]bool{saIDString: true})
 		sa.AccessControl = metadata[strconv.FormatInt(sa.Id, 10)]
-		tokens, err := api.store.ListTokens(ctx, sa.OrgId, sa.Id)
+		tokens, err := api.store.ListTokens(ctx, &serviceaccounts.GetSATokensQuery{
+			OrgID: &sa.OrgId, ServiceAccountID: &sa.Id,
+		})
 		if err != nil {
 			api.log.Warn("Failed to list tokens for service account", "serviceAccount", sa.Id)
 		}
