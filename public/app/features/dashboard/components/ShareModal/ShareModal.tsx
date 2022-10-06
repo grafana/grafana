@@ -103,8 +103,7 @@ export class ShareModal extends React.Component<Props, State> {
   };
 
   getTabs() {
-    const {tabs} = getTabs(this.props);
-    return tabs
+    return getTabs(this.props).tabs;
   }
 
   getActiveTab() {
