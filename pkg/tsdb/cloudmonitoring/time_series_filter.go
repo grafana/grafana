@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
-func doRequestPage(r *http.Request, dsInfo datasourceInfo, timeSeriesFilter *cloudMonitoringTimeSeriesFilter, tracer tracing.Tracer, dr *backend.DataResponse, ctx context.Context, req *backend.QueryDataRequest) (cloudMonitoringResponse, error) {
+func doRequestFilterPage(r *http.Request, dsInfo datasourceInfo, timeSeriesFilter *cloudMonitoringTimeSeriesFilter, tracer tracing.Tracer, dr *backend.DataResponse, ctx context.Context, req *backend.QueryDataRequest) (cloudMonitoringResponse, error) {
 	r.URL.RawQuery = timeSeriesFilter.Params.Encode()
 	alignmentPeriod, ok := r.URL.Query()["aggregation.alignmentPeriod"]
 	if ok {
@@ -80,8 +80,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) run(ctx context.Context
 		return dr, cloudMonitoringResponse{}, "", nil
 	}
 
-	timeSeriesFilter.Params["pageSize"] = []string{"30000"}
-	d, err := doRequestPage(r, dsInfo, timeSeriesFilter, tracer, dr, ctx, req)
+	d, err := doRequestFilterPage(r, dsInfo, timeSeriesFilter, tracer, dr, ctx, req)
 	if err != nil {
 		dr.Error = err
 		return dr, cloudMonitoringResponse{}, "", nil
@@ -89,7 +88,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) run(ctx context.Context
 	nextPageToken := d.NextPageToken
 	for nextPageToken != "" {
 		timeSeriesFilter.Params["pageToken"] = []string{d.NextPageToken}
-		nextPage, err := doRequestPage(r, dsInfo, timeSeriesFilter, tracer, dr, ctx, req)
+		nextPage, err := doRequestFilterPage(r, dsInfo, timeSeriesFilter, tracer, dr, ctx, req)
 		if err != nil {
 			dr.Error = err
 			return dr, cloudMonitoringResponse{}, "", nil

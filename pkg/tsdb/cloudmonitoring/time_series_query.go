@@ -35,6 +35,44 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) appendGraphPeriod(req *bac
 	return ""
 }
 
+func doRequestQueryPage(query string, nextPageToken string, s *Service, ctx context.Context, dsInfo datasourceInfo, path string, tracer tracing.Tracer, req *backend.QueryDataRequest) (cloudMonitoringResponse, error) {
+	requestBody := map[string]interface{}{
+		"query": query,
+	}
+	if nextPageToken != "" {
+		requestBody["pageToken"] = nextPageToken
+	}
+
+	buf, err := json.Marshal(requestBody)
+	if err != nil {
+		return cloudMonitoringResponse{}, err
+	}
+	r, err := s.createRequest(ctx, &dsInfo, path, bytes.NewBuffer(buf))
+	if err != nil {
+		return cloudMonitoringResponse{}, err
+	}
+
+	ctx, span := tracer.Start(ctx, "cloudMonitoring MQL query")
+	span.SetAttributes("query", query, attribute.Key("query").String(query))
+	span.SetAttributes("from", req.Queries[0].TimeRange.From, attribute.Key("from").String(req.Queries[0].TimeRange.From.String()))
+	span.SetAttributes("until", req.Queries[0].TimeRange.To, attribute.Key("until").String(req.Queries[0].TimeRange.To.String()))
+
+	defer span.End()
+	tracer.Inject(ctx, r.Header, span)
+
+	r = r.WithContext(ctx)
+	res, err := dsInfo.services[cloudMonitor].client.Do(r)
+	if err != nil {
+		return cloudMonitoringResponse{}, err
+	}
+
+	dnext, err := unmarshalResponse(res)
+	if err != nil {
+		return cloudMonitoringResponse{}, err
+	}
+	return dnext, nil
+}
+
 func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, req *backend.QueryDataRequest,
 	s *Service, dsInfo datasourceInfo, tracer tracing.Tracer) (*backend.DataResponse, cloudMonitoringResponse, string, error) {
 	dr := &backend.DataResponse{}
@@ -55,56 +93,20 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, r
 	to := req.Queries[0].TimeRange.To
 	timeFormat := "2006/01/02-15:04:05"
 	timeSeriesQuery.Query += fmt.Sprintf(" | within d'%s', d'%s'", from.UTC().Format(timeFormat), to.UTC().Format(timeFormat))
-	first := true
-	d := cloudMonitoringResponse{}
-
-	for first || d.NextPageToken != "" {
-		requestBody := map[string]interface{}{
-			"query": timeSeriesQuery.Query,
-		}
-		if d.NextPageToken != "" {
-			requestBody["pageToken"] = d.NextPageToken
-		}
-
-		buf, err := json.Marshal(requestBody)
+	p := path.Join("/v3/projects", projectName, "timeSeries:query")
+	d, err := doRequestQueryPage(timeSeriesQuery.Query, "", s, ctx, dsInfo, p, tracer, req)
+	if err != nil {
+		dr.Error = err
+		return dr, cloudMonitoringResponse{}, "", nil
+	}
+	for d.NextPageToken != "" {
+		nextPage, err := doRequestQueryPage(timeSeriesQuery.Query, d.NextPageToken, s, ctx, dsInfo, p, tracer, req)
 		if err != nil {
 			dr.Error = err
 			return dr, cloudMonitoringResponse{}, "", nil
 		}
-		r, err := s.createRequest(ctx, &dsInfo, path.Join("/v3/projects", projectName, "timeSeries:query"), bytes.NewBuffer(buf))
-		if err != nil {
-			dr.Error = err
-			return dr, cloudMonitoringResponse{}, "", nil
-		}
-
-		ctx, span := tracer.Start(ctx, "cloudMonitoring MQL query")
-		span.SetAttributes("query", timeSeriesQuery.Query, attribute.Key("query").String(timeSeriesQuery.Query))
-		span.SetAttributes("from", req.Queries[0].TimeRange.From, attribute.Key("from").String(req.Queries[0].TimeRange.From.String()))
-		span.SetAttributes("until", req.Queries[0].TimeRange.To, attribute.Key("until").String(req.Queries[0].TimeRange.To.String()))
-
-		defer span.End()
-		tracer.Inject(ctx, r.Header, span)
-
-		r = r.WithContext(ctx)
-		res, err := dsInfo.services[cloudMonitor].client.Do(r)
-		if err != nil {
-			dr.Error = err
-			return dr, cloudMonitoringResponse{}, "", nil
-		}
-
-		dnext, err := unmarshalResponse(res)
-		if err != nil {
-			dr.Error = err
-			return dr, cloudMonitoringResponse{}, "", nil
-		}
-
-		if first {
-			d = dnext
-			first = false
-		} else {
-			d.TimeSeriesData = append(d.TimeSeriesData, dnext.TimeSeriesData...)
-			d.NextPageToken = dnext.NextPageToken
-		}
+		d.TimeSeriesData = append(d.TimeSeriesData, nextPage.TimeSeriesData...)
+		d.NextPageToken = nextPage.NextPageToken
 	}
 
 	return dr, d, timeSeriesQuery.Query, nil
