@@ -1,5 +1,5 @@
 import {
-  listPublicDashboardsUrl,
+  LIST_PUBLIC_DASHBOARD_URL,
   viewPublicDashboardUrl,
   getPublicDashboards,
   //ListPublicDashboardTable,
@@ -10,7 +10,7 @@ import {
 
 describe('listPublicDashboardsUrl', () => {
   it('has the correct url', () => {
-    expect(listPublicDashboardsUrl()).toEqual('/api/dashboards/public');
+    expect(LIST_PUBLIC_DASHBOARD_URL).toEqual('/api/dashboards/public');
   });
 });
 

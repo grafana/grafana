@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC, useState } from 'react';
+import React, { useState } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -15,11 +15,9 @@ export interface ListPublicDashboardResponse {
   isEnabled: boolean;
 }
 
-export const listPublicDashboardsUrl = () => {
-  return `/api/dashboards/public`;
-};
+export const LIST_PUBLIC_DASHBOARD_URL = `/api/dashboards/public`;
 export const getPublicDashboards = async () => {
-  const resp: ListPublicDashboardResponse[] = await getBackendSrv().get(listPublicDashboardsUrl());
+  const resp: ListPublicDashboardResponse[] = await getBackendSrv().get(LIST_PUBLIC_DASHBOARD_URL);
   return resp.sort((a, b) => Number(b.isEnabled) - Number(a.isEnabled));
 };
 
@@ -46,34 +44,6 @@ export const ListPublicDashboardTable = () => {
     setPublicDashboards(publicDashboards);
   }, [setPublicDashboards]);
 
-  function renderEnabledTag(pd: ListPublicDashboardResponse) {
-return pd.isEnabled ? <Tag name="enabled" colorIndex={20} /> : <Tag name="disabled" colorIndex={15} />;
-  }
-
-  function renderViewLink(pd: ListPublicDashboardResponse) {
-    const title = pd.isEnabled ? 'View public dashboard' : 'Public dashboard is disabled';
-    return (
-      <LinkButton
-        href={viewPublicDashboardUrl(pd.accessToken)}
-        fill="text"
-        title={title}
-        target="_blank"
-        disabled={!pd.isEnabled}
-      >
-        <Icon name="external-link-alt" />
-      </LinkButton>
-    );
-  }
-
-  function renderConfigLink(pd: ListPublicDashboardResponse) {
-    let url = `/d/${pd.dashboardUid}?shareView=share`;
-    return (
-      <LinkButton fill="text" href={url} title="Configure public dashboard">
-        <Icon name="cog" />
-      </LinkButton>
-    );
-  }
-
   return (
     <div className="page-action-bar">
       <table className="filter-table">
@@ -93,24 +63,27 @@ return pd.isEnabled ? <Tag name="enabled" colorIndex={20} /> : <Tag name="disabl
                 </Link>
               </td>
               <td>
-                <Tag name={isEnabled ? 'enabled' : 'disabled'} colorIndex={isEnabled ? 20 : 15} 
+                <Tag name={pd.isEnabled ? 'enabled' : 'disabled'} colorIndex={pd.isEnabled ? 20 : 15} />
               </td>
               <td>
                 <ButtonGroup>
                   <LinkButton
-        href={viewPublicDashboardUrl(pd.accessToken)}
-        fill="text"
-        title={pd.isEnabled ? 'View public dashboard' : 'Public dashboard is disabled'}
-        target="_blank"
-        disabled={!pd.isEnabled}
-      >
-        <Icon name="external-link-alt" />
-      </LinkButton>
- 
-      <LinkButton fill="text" href={`/d/${pd.dashboardUid}?shareView=share`} title="Configure public dashboard">
-        <Icon name="cog" />
-      </LinkButton>
+                    href={viewPublicDashboardUrl(pd.accessToken)}
+                    fill="text"
+                    title={pd.isEnabled ? 'View public dashboard' : 'Public dashboard is disabled'}
+                    target="_blank"
+                    disabled={!pd.isEnabled}
+                  >
+                    <Icon name="external-link-alt" />
+                  </LinkButton>
 
+                  <LinkButton
+                    fill="text"
+                    href={`/d/${pd.dashboardUid}?shareView=share`}
+                    title="Configure public dashboard"
+                  >
+                    <Icon name="cog" />
+                  </LinkButton>
                 </ButtonGroup>
               </td>
             </tr>

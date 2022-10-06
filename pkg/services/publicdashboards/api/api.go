@@ -113,6 +113,8 @@ func (api *Api) GetPublicDashboard(c *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, dto)
 }
 
+// Gets list of public dashboards for an org
+// GET /api/dashboards/public
 func (api *Api) ListPublicDashboards(c *models.ReqContext) response.Response {
 	resp, err := api.PublicDashboardService.ListPublicDashboards(c.Req.Context(), c.OrgID)
 	if err != nil {

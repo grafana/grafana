@@ -42,13 +42,9 @@ func (d *PublicDashboardStoreImpl) ListPublicDashboards(ctx context.Context, org
 	resp := make([]PublicDashboardListResponse, 0)
 
 	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		//Select dashboard_public.access_token ,dashboard.title, dashboard.uid, from dashboard_public, dashboard
-		//WHERE dashboard.uid == dashboard_public.uid AND dashboard.org_id = dashboard_public.uid
-
 		sess.Table("dashboard_public").
-			Join("LEFT", "dashboard", "dashboard.uid = dashboard_public.dashboard_uid").
+			Join("LEFT", "dashboard", "dashboard.uid = dashboard_public.dashboard_uid AND dashboard.org_id = dashboard_public.org_id").
 			Cols("dashboard_public.uid", "dashboard_public.access_token", "dashboard_public.dashboard_uid", "dashboard_public.is_enabled", "dashboard.title").
-			Where("dashboard_public.org_id = dashboard.org_id").
 			Where("dashboard_public.org_id = ?", orgId)
 
 		err := sess.Find(&resp)
