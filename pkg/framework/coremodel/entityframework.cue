@@ -85,7 +85,7 @@ _sharedKind: {
 #StructuredEntityType: {
 	_sharedKind
 	maturity: *"committed" | "synchronized" | "mature"
-	form: "schema"
+	form: "structured"
   lineage: #thema.Lineage
 }
 
