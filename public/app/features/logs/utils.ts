@@ -76,6 +76,21 @@ export function addLogLevelToSeries(series: DataFrame, lineIndex: number): DataF
   };
 }
 
+/* parses JSON into an object-ish thing, never throws an exception, returns `null` if data is invalid */
+function safeJSONParse(logLine: string): Record<string, unknown> | null {
+  let data: any = null;
+  try {
+    data = JSON.parse(logLine);
+  } catch {
+    return null;
+  }
+
+  // we check that the data is really an object
+  // (we need to check for array too, because in javascript
+  // typeof-array-is-object)
+  return typeof data === 'object' && !Array.isArray(data) ? data : null;
+}
+
 interface LogsParser {
   /**
    * Value-agnostic matcher for a field label.
@@ -108,31 +123,32 @@ export const LogsParsers: { [name: string]: LogsParser } = {
   JSON: {
     buildMatcher: (label) => {
       const matcher = (logLine: string): string | null => {
-        const re = new RegExp(`(?:{|,)\\s*"${label}"\\s*:\\s*"?([\\d\\.]+|[^"]*)"?`);
-        const match = logLine.match(re);
-        return match ? match[1] : null;
+        const obj = safeJSONParse(logLine);
+        if (obj == null) {
+          return null;
+        }
+
+        const result = obj[label];
+
+        // if it is `null` or `undefined`, we return `null`
+        return result == null ? null : result.toString();
       };
       return matcher;
     },
     getFields: (line) => {
-      try {
-        const parsed = JSON.parse(line);
-        return Object.keys(parsed).map((key) => {
-          return `"${key}":${JSON.stringify(parsed[key])}`;
-        });
-      } catch {}
-      return [];
+      const parsed = safeJSONParse(line);
+      if (parsed == null) {
+        return [];
+      }
+      return Object.keys(parsed).map((key) => {
+        return `"${key}":${JSON.stringify(parsed[key])}`;
+      });
     },
     getLabelFromField: (field) => (field.match(/^"([^"]+)"\s*:/) || [])[1],
     getValueFromField: (field) => (field.match(/:\s*(.*)$/) || [])[1],
     test: (line) => {
-      let parsed;
-      try {
-        parsed = JSON.parse(line);
-      } catch (error) {}
-      // The JSON parser should only be used for log lines that are valid serialized JSON objects.
-      // If it would be used for a string, detected fields would include each letter as a separate field.
-      return typeof parsed === 'object';
+      const parsed = safeJSONParse(line);
+      return parsed != null;
     },
   },
 
