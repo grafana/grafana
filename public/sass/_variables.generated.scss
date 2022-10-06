@@ -99,7 +99,7 @@ $height-lg: 48;
 // Typography
 // -------------------------
 /* stylelint-disable-next-line string-quotes */
-$font-family-sans-serif: "Roboto", "Helvetica", "Arial", sans-serif;
+$font-family-sans-serif: "Inter", "Helvetica", "Arial", sans-serif;
 /* stylelint-disable-next-line string-quotes */
 $font-family-monospace: 'Roboto Mono', monospace;
 
@@ -112,7 +112,7 @@ $font-size-md: 14px !default;
 $font-size-sm: 12px !default;
 $font-size-xs: 10px !default;
 
-$line-height-base: 1.5 !default;
+$line-height-base: 1.57142857143 !default;
 
 $font-weight-regular: 400 !default;
 $font-weight-semi-bold: 500 !default;
@@ -124,7 +124,7 @@ $font-size-h4: 1.2857142857142858rem !default;
 $font-size-h5: 1.1428571428571428rem !default;
 $font-size-h6: 1rem !default;
 
-$headings-line-height: 1.5 !default;
+$headings-line-height: 1.57142857143 !default;
 
 // Components
 //
