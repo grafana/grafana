@@ -83,11 +83,11 @@ type ContextualState struct {
 }
 
 func (c ContextualState) Formatted() string {
-	return formatStateAndReason(c.State.State, c.State.StateReason)
+	return FormatStateAndReason(c.State.State, c.State.StateReason)
 }
 
 func (c ContextualState) PreviousFormatted() string {
-	return formatStateAndReason(c.PreviousState, c.PreviousStateReason)
+	return FormatStateAndReason(c.PreviousState, c.PreviousStateReason)
 }
 
 type Evaluation struct {
@@ -329,7 +329,7 @@ func takeImage(ctx context.Context, s image.ImageService, r *models.AlertRule) (
 	return img, nil
 }
 
-func formatStateAndReason(state eval.State, reason string) string {
+func FormatStateAndReason(state eval.State, reason string) string {
 	s := fmt.Sprintf("%v", state)
 	if len(reason) > 0 {
 		s += fmt.Sprintf(" (%v)", reason)
