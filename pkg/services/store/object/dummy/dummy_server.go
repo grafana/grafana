@@ -115,7 +115,7 @@ func (i dummyObjectServer) Read(ctx context.Context, r *object.ReadObjectRequest
 		Object: objVersion,
 	}
 	if r.WithSummary {
-		summary, _, e2 := object.GetSafeSaveObject(&object.WriteObjectRequest{
+		summary, _, e2 := object.GetSafeSaveObject(ctx, &object.WriteObjectRequest{
 			UID:  r.UID,
 			Kind: r.Kind,
 			Body: objVersion.Body,

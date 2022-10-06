@@ -13,8 +13,8 @@ import (
 )
 
 func NewDashboardSummaryBuilder(lookup dslookup.DatasourceLookup) object.ObjectSummaryBuilder {
-	return func(ctx context.Context, uid string, kind string, body []byte) (object.ObjectSummary, []byte, error) {
-		summary := object.ObjectSummary{
+	return func(ctx context.Context, uid string, kind string, body []byte) (*object.ObjectSummary, []byte, error) {
+		summary := &object.ObjectSummary{
 			Labels: make(map[string]string),
 			Fields: make(map[string]interface{}),
 		}

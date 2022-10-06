@@ -42,4 +42,4 @@ type ExternalReference struct {
 
 // ObjectSummaryBuilder will read an object, validate it, and return a summary, sanitized payload, or an error
 // This should not include values that depend on system state, only the raw object
-type ObjectSummaryBuilder = func(ctx context.Context, uid string, kind string, body []byte) (ObjectSummary, []byte, error)
+type ObjectSummaryBuilder = func(ctx context.Context, uid string, kind string, body []byte) (*ObjectSummary, []byte, error)

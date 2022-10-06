@@ -1,6 +1,7 @@
 package object
 
 import (
+	"context"
 	"fmt"
 	"time"
 )
@@ -18,9 +19,23 @@ const StandardKindTransform = "transform" // types: joinByField, pivot, organize
 // Each kind will be able to define:
 //  1. sanitize/normalize function  (ie get safe bytes)
 //  2. SummaryProvier
-func GetSafeSaveObject(r *WriteObjectRequest) (*ObjectSummary, []byte, error) {
+func GetSafeSaveObject(ctx context.Context, r *WriteObjectRequest) (*ObjectSummary, []byte, error) {
+	var builder ObjectSummaryBuilder
+	switch r.Kind {
+	// Avoid circular dependency
+	// case StandardKindDashboard:
+	// 	builder = sobj.NewDashboardSummaryBuilder(dummyDSLookup)
+	default:
+		builder = dummySummaryBuilder
+	}
+
+	return builder(ctx, r.UID, r.Kind, r.Body)
+}
+
+// This is just a fake builder for now
+var dummySummaryBuilder = func(ctx context.Context, uid string, kind string, body []byte) (*ObjectSummary, []byte, error) {
 	summary := &ObjectSummary{
-		Name:        fmt.Sprintf("hello: %s", r.Kind),
+		Name:        fmt.Sprintf("hello: %s", kind),
 		Description: fmt.Sprintf("Wrote at %s", time.Now().Local().String()),
 		Labels: map[string]string{
 			"hello": "world",
@@ -51,12 +66,12 @@ func GetSafeSaveObject(r *WriteObjectRequest) (*ObjectSummary, []byte, error) {
 		},
 	}
 
-	if summary.UID != "" && r.UID != summary.UID {
-		return nil, nil, fmt.Errorf("internal UID mismatch")
+	if summary.UID != "" && uid != summary.UID {
+		return summary, nil, fmt.Errorf("internal UID mismatch")
 	}
-	if summary.Kind != "" && r.Kind != summary.Kind {
-		return nil, nil, fmt.Errorf("internal Kind mismatch")
+	if summary.Kind != "" && kind != summary.Kind {
+		return summary, nil, fmt.Errorf("internal Kind mismatch")
 	}
 
-	return summary, r.Body, nil
+	return summary, body, nil
 }

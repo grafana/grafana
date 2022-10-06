@@ -53,7 +53,11 @@ func newField(name string, p data.FieldType) *data.Field {
 	return f
 }
 
-func (x *SummaryTable) Add(obj *object.RawObject, summary object.ObjectSummary) {
+func (x *SummaryTable) Add(obj *object.RawObject, summary *object.ObjectSummary) {
+	if summary == nil {
+		return
+	}
+
 	x.Raw.AppendRow(
 		obj.UID,
 		obj.Kind,
