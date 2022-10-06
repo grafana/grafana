@@ -45,7 +45,7 @@ package entity
 _sharedKind: {
 	// kind is the canonical, machine-friendly name of an EntityType.
 	//
-	// A kind's name is often used in generated code intended to
+	// kind is often used in generated code intended to
 	// be parsed or used by machines, so it follows the relatively
 	// strict DNS label naming standard, as defined in RFC 1123:
 	//  - Contain at most 63 characters
@@ -56,6 +56,8 @@ _sharedKind: {
 
 	// TODO need some fields related to other names, human names - pluralization, capitalization
 	// it's all necessary for conversion to CRDs
+
+	form: "structured" | "raw"
 }
 
 
