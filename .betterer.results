@@ -46,9 +46,6 @@ exports[`no enzyme tests`] = {
     ],
     "public/app/features/dimensions/editors/ThresholdsEditor/ThresholdsEditor.test.tsx:145048794": [
       [0, 17, 13, "RegExp match", "2409514259"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/components/ConfigEditor.test.tsx:2983010995": [
-      [1, 19, 13, "RegExp match", "2409514259"]
     ]
   }`
 };

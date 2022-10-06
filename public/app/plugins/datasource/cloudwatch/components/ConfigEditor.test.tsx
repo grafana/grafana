@@ -1,10 +1,11 @@
 import { render, screen } from '@testing-library/react';
-import { shallow } from 'enzyme';
 import React from 'react';
+import { Provider } from 'react-redux';
 import selectEvent from 'react-select-event';
 
 import { AwsAuthType } from '@grafana/aws-sdk';
 import { toOption } from '@grafana/data';
+import { configureStore } from 'app/store/configureStore';
 
 import { setupMockedDataSource } from '../__mocks__/CloudWatchDataSource';
 
@@ -79,65 +80,75 @@ const props: Props = {
   onOptionsChange: jest.fn(),
 };
 
-const setup = (propOverrides?: object) => {
-  const newProps = { ...props, ...propOverrides };
+const setup = (optionOverrides?: Partial<Props['options']>) => {
+  const store = configureStore();
+  const newProps = {
+    ...props,
+    options: {
+      ...props.options,
+      ...optionOverrides,
+    },
+  };
 
-  return shallow(<ConfigEditor {...newProps} />);
+  render(
+    <Provider store={store}>
+      <ConfigEditor {...newProps} />
+    </Provider>
+  );
 };
 
 describe('Render', () => {
   beforeEach(() => {
+    (window as any).grafanaBootData = {
+      settings: {},
+    };
     jest.resetAllMocks();
     putMock.mockImplementation(async () => ({ datasource: setupMockedDataSource().datasource }));
   });
-  it('should render component', () => {
-    const wrapper = setup();
 
-    expect(wrapper).toMatchSnapshot();
+  it('should render component without blowing up', () => {
+    expect(() => setup()).not.toThrow();
   });
 
   it('should disable access key id field', () => {
-    const wrapper = setup({
+    setup({
       secureJsonFields: {
         secretKey: true,
       },
     });
-    expect(wrapper).toMatchSnapshot();
+    expect(screen.getByPlaceholderText('Configured')).toBeDisabled();
   });
 
   it('should show credentials profile name field', () => {
-    const wrapper = setup({
+    setup({
       jsonData: {
-        authType: 'credentials',
+        authType: AwsAuthType.Credentials,
       },
     });
-    expect(wrapper).toMatchSnapshot();
+    expect(screen.getByLabelText('Credentials Profile Name')).toBeInTheDocument();
   });
 
   it('should show access key and secret access key fields', () => {
-    const wrapper = setup({
+    setup({
       jsonData: {
-        authType: 'keys',
+        authType: AwsAuthType.Keys,
       },
     });
-    expect(wrapper).toMatchSnapshot();
+    expect(screen.getByLabelText('Access Key ID')).toBeInTheDocument();
+    expect(screen.getByLabelText('Secret Access Key')).toBeInTheDocument();
   });
 
   it('should show arn role field', () => {
-    const wrapper = setup({
+    setup({
       jsonData: {
-        authType: 'arn',
+        authType: AwsAuthType.ARN,
       },
     });
-    expect(wrapper).toMatchSnapshot();
+    expect(screen.getByLabelText('Assume Role ARN')).toBeInTheDocument();
   });
 
   it('should load log groups when multiselect is opened', async () => {
-    (window as any).grafanaBootData = {
-      settings: {},
-    };
-
-    render(<ConfigEditor {...props} />);
+    setup();
     const multiselect = await screen.findByLabelText('Log Groups');
     selectEvent.openMenu(multiselect);
     expect(await screen.findByText('logGroup-foo')).toBeInTheDocument();
