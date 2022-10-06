@@ -3756,6 +3756,13 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.19.1
+  name: compile-build-cmd
+- commands:
   - ./bin/grabpl publish packages --edition oss --gcp-key /tmp/gcpkey.json ${DRONE_TAG}
   depends_on:
   - grabpl
@@ -3773,7 +3780,7 @@ steps:
   image: grafana/grafana-ci-deploy:1.3.3
   name: publish-packages-oss
 - commands:
-  - ./bin/grabpl publish grafana-com --edition oss ${DRONE_TAG}
+  - ./bin/build publish grafana-com --edition oss ${DRONE_TAG}
   depends_on:
   - publish-packages-oss
   environment:
@@ -3837,6 +3844,13 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.19.1
+  name: compile-build-cmd
+- commands:
   - ./bin/grabpl publish packages --edition enterprise --gcp-key /tmp/gcpkey.json
     ${DRONE_TAG}
   depends_on:
@@ -3855,7 +3869,7 @@ steps:
   image: grafana/grafana-ci-deploy:1.3.3
   name: publish-packages-enterprise
 - commands:
-  - ./bin/grabpl publish grafana-com --edition enterprise ${DRONE_TAG}
+  - ./bin/build publish grafana-com --edition enterprise ${DRONE_TAG}
   depends_on:
   - publish-packages-enterprise
   environment:
@@ -5381,6 +5395,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: f97c0e6742fbcb3c0369652bc1570242cf1083fb2b7fdac76b66f719ecd2b5e0
+hmac: e272666c636ef5a6c3961293d4a981e801c2e6823c3b8fcf63adad49b53ee32e
 
 ...
