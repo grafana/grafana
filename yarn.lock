@@ -5425,6 +5425,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grafana/monaco-logql@npm:^0.0.6":
+  version: 0.0.6
+  resolution: "@grafana/monaco-logql@npm:0.0.6"
+  peerDependencies:
+    monaco-editor: ^0.32.1
+  checksum: 81ac76c0eaa020cdac4c2eb5a7b5b4c18c3aac932ecfe2a860e1755597a41fae8421290b96a4f6234cd02e640b6cf3dc7380b475973e20d8e29ab62f4cee5933
+  languageName: node
+  linkType: hard
+
 "@grafana/runtime@9.3.0-pre, @grafana/runtime@workspace:*, @grafana/runtime@workspace:packages/grafana-runtime":
   version: 0.0.0-use.local
   resolution: "@grafana/runtime@workspace:packages/grafana-runtime"
@@ -23160,6 +23169,7 @@ __metadata:
     "@grafana/experimental": ^0.0.2-canary.36
     "@grafana/google-sdk": 0.0.3
     "@grafana/lezer-logql": 0.1.1
+    "@grafana/monaco-logql": ^0.0.6
     "@grafana/runtime": "workspace:*"
     "@grafana/schema": "workspace:*"
     "@grafana/toolkit": "workspace:*"
