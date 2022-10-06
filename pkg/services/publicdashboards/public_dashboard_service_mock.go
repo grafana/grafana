@@ -69,27 +69,6 @@ func (_m *FakePublicDashboardService) BuildAnonymousUser(ctx context.Context, da
 	return r0, r1
 }
 
-// BuildPublicDashboardMetricRequest provides a mock function with given fields: ctx, dashboard, publicDashboard, panelId
-func (_m *FakePublicDashboardService) BuildPublicDashboardMetricRequest(ctx context.Context, dashboard *models.Dashboard, publicDashboard *publicdashboardsmodels.PublicDashboard, panelId int64) (dtos.MetricRequest, error) {
-	ret := _m.Called(ctx, dashboard, publicDashboard, panelId)
-
-	var r0 dtos.MetricRequest
-	if rf, ok := ret.Get(0).(func(context.Context, *models.Dashboard, *publicdashboardsmodels.PublicDashboard, int64) dtos.MetricRequest); ok {
-		r0 = rf(ctx, dashboard, publicDashboard, panelId)
-	} else {
-		r0 = ret.Get(0).(dtos.MetricRequest)
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *models.Dashboard, *publicdashboardsmodels.PublicDashboard, int64) error); ok {
-		r1 = rf(ctx, dashboard, publicDashboard, panelId)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // GetDashboard provides a mock function with given fields: ctx, dashboardUid
 func (_m *FakePublicDashboardService) GetDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error) {
 	ret := _m.Called(ctx, dashboardUid)
@@ -182,6 +161,27 @@ func (_m *FakePublicDashboardService) GetPublicDashboardConfig(ctx context.Conte
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, int64, string) error); ok {
 		r1 = rf(ctx, orgId, dashboardUid)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetPublicDashboardOrgId provides a mock function with given fields: ctx, accessToken
+func (_m *FakePublicDashboardService) GetPublicDashboardOrgId(ctx context.Context, accessToken string) (int64, error) {
+	ret := _m.Called(ctx, accessToken)
+
+	var r0 int64
+	if rf, ok := ret.Get(0).(func(context.Context, string) int64); ok {
+		r0 = rf(ctx, accessToken)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, accessToken)
 	} else {
 		r1 = ret.Error(1)
 	}

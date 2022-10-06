@@ -145,7 +145,12 @@ func (hs *HTTPServer) registerRoutes() {
 		r.Get("/public-dashboards/list", reqSignedIn, hs.Index)
 
 		// anonymous view public dashboard
-		r.Get("/public-dashboards/:accessToken", publicdashboardsapi.SetPublicDashboardFlag(), publicdashboardsapi.CountPublicDashboardRequest(), hs.Index)
+		r.Get("/public-dashboards/:accessToken",
+			publicdashboardsapi.SetPublicDashboardFlag,
+			publicdashboardsapi.SetPublicDashboardOrgIdOnContext(hs.PublicDashboardsApi.PublicDashboardService),
+			publicdashboardsapi.CountPublicDashboardRequest(),
+			hs.Index,
+		)
 	}
 
 	r.Get("/explore", authorize(func(c *models.ReqContext) {
