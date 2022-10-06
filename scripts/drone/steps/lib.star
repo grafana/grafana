@@ -1012,12 +1012,12 @@ def publish_packages_step(edition, ver_mode):
 
 def publish_grafanacom_step(edition, ver_mode):
     if ver_mode == 'release':
-        cmd = './bin/grabpl publish grafana-com --edition {} ${{DRONE_TAG}}'.format(
+        cmd = './bin/build publish grafana-com --edition {} ${{DRONE_TAG}}'.format(
             edition,
         )
     elif ver_mode == 'main':
         build_no = '${DRONE_BUILD_NUMBER}'
-        cmd = './bin/grabpl publish grafana-com --edition {} --build-id {}'.format(
+        cmd = './bin/build publish grafana-com --edition {} --build-id {}'.format(
             edition, build_no,
         )
     else:

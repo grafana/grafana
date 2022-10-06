@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/grafana/grafana/pkg/build/gcloud"
 	"github.com/grafana/grafana/pkg/build/gcloud/storage"
+	"github.com/grafana/grafana/pkg/build/packaging"
 	"github.com/urfave/cli/v2"
 )
 
@@ -72,7 +73,7 @@ func GrafanaCom(c *cli.Context) error {
 	}
 
 	// TODO: Verify config values
-	cfg := PublishConfig{
+	cfg := packaging.PublishConfig{
 		Config: config.Config{
 			Version: version,
 		},
@@ -124,7 +125,7 @@ func getReleaseURLs() (string, string, error) {
 }
 
 // publishPackages publishes packages to grafana.com.
-func publishPackages(cfg PublishConfig) error {
+func publishPackages(cfg packaging.PublishConfig) error {
 	log.Printf("Publishing Grafana packages, version %s, %s edition, %s mode, dryRun: %v, simulating: %v...\n",
 		cfg.Version, cfg.Edition, cfg.ReleaseMode.Mode, cfg.DryRun, cfg.SimulateRelease)
 
@@ -138,16 +139,16 @@ func publishPackages(cfg PublishConfig) error {
 		pth = "oss"
 	case config.EditionEnterprise:
 		pth = "enterprise"
-		sfx = EnterpriseSfx
+		sfx = packaging.EnterpriseSfx
 	default:
 		return fmt.Errorf("unrecognized edition %q", cfg.Edition)
 	}
 
 	switch cfg.ReleaseMode.Mode {
 	case config.MainMode, config.CustomMode, config.CronjobMode:
-		pth = path.Join(pth, MainFolder)
+		pth = path.Join(pth, packaging.MainFolder)
 	default:
-		pth = path.Join(pth, ReleaseFolder)
+		pth = path.Join(pth, packaging.ReleaseFolder)
 	}
 
 	product := fmt.Sprintf("grafana%s", sfx)
@@ -155,7 +156,7 @@ func publishPackages(cfg PublishConfig) error {
 	baseArchiveURL := fmt.Sprintf("https://dl.grafana.com/%s", pth)
 
 	var builds []buildRepr
-	for _, ba := range ArtifactConfigs {
+	for _, ba := range packaging.ArtifactConfigs {
 		u := ba.GetURL(baseArchiveURL, cfg)
 
 		sha256, err := getSHA256(u)
@@ -230,12 +231,12 @@ func getSHA256(u string) ([]byte, error) {
 	return sha256, nil
 }
 
-func postRequest(cfg PublishConfig, pth string, obj interface{}, descr string) error {
+func postRequest(cfg packaging.PublishConfig, pth string, obj interface{}, descr string) error {
 	var sfx string
 	switch cfg.Edition {
 	case config.EditionOSS:
 	case config.EditionEnterprise:
-		sfx = EnterpriseSfx
+		sfx = packaging.EnterpriseSfx
 	default:
 		return fmt.Errorf("unrecognized edition %q", cfg.Edition)
 	}

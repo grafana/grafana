@@ -115,7 +115,9 @@ export function createTypography(colors: ThemeColors, typographyInput: ThemeTypo
     h4: buildVariant(fontWeightRegular, 18, 1.235, 0.25),
     h5: buildVariant(fontWeightRegular, 16, 1.334, 0),
     h6: buildVariant(fontWeightMedium, 14, 1.6, 0.15),
-    body: buildVariant(fontWeightRegular, 14, 1.5, 0.15),
+    // The line-height of 1.5714285714285714 results in a real line-height of 22px for the default font size. Which is an even number and result in more perfect vertical alignment
+    body: buildVariant(fontWeightRegular, fontSize, 1.5714285714285714, 0.15),
+    // The line-height of 1.5 results in a real line height of 18px for the font size of 12px
     bodySmall: buildVariant(fontWeightRegular, 12, 1.5, 0.15),
   };
 

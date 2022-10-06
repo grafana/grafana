@@ -10,6 +10,11 @@ var (
 	// Register each toggle here
 	standardFeatureFlags = []FeatureFlag{
 		{
+			Name:        "alertingBigTransactions",
+			Description: "Use big transactions for alerting database writes",
+			State:       FeatureStateAlpha,
+		},
+		{
 			Name:        "trimDefaults",
 			Description: "Use cue schema to remove values that will be applied automatically",
 			State:       FeatureStateBeta,
@@ -98,6 +103,11 @@ var (
 		{
 			Name:        "lokiDataframeApi",
 			Description: "use experimental loki api for websocket streaming (early prototype)",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "lokiMonacoEditor",
+			Description: "Access to Monaco query editor for Loki",
 			State:       FeatureStateAlpha,
 		},
 		{
@@ -267,7 +277,14 @@ var (
 			Description:     "Run GRPC server",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
-		}, {
+		},
+		{
+			Name:            "objectStore",
+			Description:     "SQL based object store",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
 			Name:        "traceqlEditor",
 			Description: "Show the TraceQL editor in the explore page",
 			State:       FeatureStateAlpha,

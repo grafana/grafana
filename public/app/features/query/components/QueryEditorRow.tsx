@@ -534,8 +534,8 @@ export interface AngularQueryComponentScope<TQuery extends DataQuery> {
 export function filterPanelDataToQuery(data: PanelData, refId: string): PanelData | undefined {
   const series = data.series.filter((series) => series.refId === refId);
 
-  // If there was an error with no data, pass it to the QueryEditors
-  if (data.error && !data.series.length) {
+  // If there was an error with no data and the panel is not in a loading state, pass it to the QueryEditors
+  if (data.state !== LoadingState.Loading && data.error && !data.series.length) {
     return {
       ...data,
       state: LoadingState.Error,
