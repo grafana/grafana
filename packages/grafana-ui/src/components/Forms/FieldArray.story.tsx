@@ -37,7 +37,7 @@ export const Simple: Story = (args) => {
       {({ control, register }) => (
         <div>
           <FieldArray control={control} name="people">
-            {({ fields, append }) => (
+            {({ fields, append, remove }) => (
               <>
                 <div style={{ marginBottom: '1rem' }}>
                   {fields.map((field, index) => (
@@ -51,6 +51,12 @@ export const Simple: Story = (args) => {
                         key={field.id}
                         {...register(`people.${index}.lastName` as const)}
                         defaultValue={field.lastName}
+                      />
+                      <Button
+                        aria-label="Remove entry"
+                        type="button"
+                        onClick={() => remove(index)}
+                        icon="trash-alt"
                       />
                     </HorizontalGroup>
                   ))}
