@@ -19,9 +19,5 @@ func GenerateAccessToken() (string, error) {
 // asserts that an accessToken is a valid uuid
 func IsValidAccessToken(token string) bool {
 	_, err := uuid.Parse(token)
-	if err != nil {
-		return false
-	}
-
-	return true
+	return err == nil
 }

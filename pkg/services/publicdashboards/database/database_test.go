@@ -504,7 +504,6 @@ func TestIntegrationGetPublicDashboardOrgId(t *testing.T) {
 		require.NoError(t, err)
 		assert.NotEqual(t, savedDashboard.OrgId, orgId)
 	})
-
 }
 
 // helper function insertTestDashboard

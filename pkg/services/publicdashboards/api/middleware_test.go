@@ -80,7 +80,6 @@ func TestRequiresValidAccessToken(t *testing.T) {
 			_, resp := runMw(t, nil, "GET", tt.Path, params, mw)
 			require.Equal(t, tt.ExpectedResponseCode, resp.Code)
 		})
-
 	}
 }
 
