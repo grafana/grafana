@@ -6,6 +6,10 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"golang.org/x/sync/errgroup"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
@@ -23,10 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
-
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	"golang.org/x/sync/errgroup"
 )
 
 func ProvideService(
@@ -187,6 +187,12 @@ func (s *Service) handleQueryData(ctx context.Context, user *user.SignedInUser, 
 		middlewares = append(middlewares,
 			httpclientprovider.ForwardedCookiesMiddleware(parsedReq.httpRequest.Cookies(), ds.AllowedCookies()),
 		)
+	}
+
+	if s.cfg != nil {
+		if s.cfg.SendUserHeader && !user.IsAnonymous {
+			middlewares = append(middlewares, httpclientprovider.SetGrafanaUserMiddleware(user.Login))
+		}
 	}
 
 	if s.oAuthTokenService.IsOAuthPassThruEnabled(ds) {
