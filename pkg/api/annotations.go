@@ -63,7 +63,7 @@ func (hs *HTTPServer) GetAnnotations(c *models.ReqContext) response.Response {
 		}
 	}
 
-	items, err := hs.AnnotationsRepo.Find(c.Req.Context(), query)
+	items, err := hs.annotationsRepo.Find(c.Req.Context(), query)
 	if err != nil {
 		return response.Error(500, "Failed to get annotations", err)
 	}
@@ -150,7 +150,7 @@ func (hs *HTTPServer) PostAnnotation(c *models.ReqContext) response.Response {
 		Tags:        cmd.Tags,
 	}
 
-	if err := hs.AnnotationsRepo.Save(c.Req.Context(), &item); err != nil {
+	if err := hs.annotationsRepo.Save(c.Req.Context(), &item); err != nil {
 		if errors.Is(err, annotations.ErrTimerangeMissing) {
 			return response.Error(400, "Failed to save annotation", err)
 		}
@@ -228,7 +228,7 @@ func (hs *HTTPServer) PostGraphiteAnnotation(c *models.ReqContext) response.Resp
 		Tags:   tagsArray,
 	}
 
-	if err := hs.AnnotationsRepo.Save(c.Req.Context(), &item); err != nil {
+	if err := hs.annotationsRepo.Save(c.Req.Context(), &item); err != nil {
 		return response.ErrOrFallback(500, "Failed to save Graphite annotation", err)
 	}
 
@@ -261,7 +261,7 @@ func (hs *HTTPServer) UpdateAnnotation(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "annotationId is invalid", err)
 	}
 
-	annotation, resp := findAnnotationByID(c.Req.Context(), hs.AnnotationsRepo, annotationID, c.SignedInUser)
+	annotation, resp := findAnnotationByID(c.Req.Context(), hs.annotationsRepo, annotationID, c.SignedInUser)
 	if resp != nil {
 		return resp
 	}
@@ -280,7 +280,7 @@ func (hs *HTTPServer) UpdateAnnotation(c *models.ReqContext) response.Response {
 		Tags:     cmd.Tags,
 	}
 
-	if err := hs.AnnotationsRepo.Update(c.Req.Context(), &item); err != nil {
+	if err := hs.annotationsRepo.Update(c.Req.Context(), &item); err != nil {
 		return response.ErrOrFallback(500, "Failed to update annotation", err)
 	}
 
@@ -311,7 +311,7 @@ func (hs *HTTPServer) PatchAnnotation(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "annotationId is invalid", err)
 	}
 
-	annotation, resp := findAnnotationByID(c.Req.Context(), hs.AnnotationsRepo, annotationID, c.SignedInUser)
+	annotation, resp := findAnnotationByID(c.Req.Context(), hs.annotationsRepo, annotationID, c.SignedInUser)
 	if resp != nil {
 		return resp
 	}
@@ -346,7 +346,7 @@ func (hs *HTTPServer) PatchAnnotation(c *models.ReqContext) response.Response {
 		existing.EpochEnd = cmd.TimeEnd
 	}
 
-	if err := hs.AnnotationsRepo.Update(c.Req.Context(), &existing); err != nil {
+	if err := hs.annotationsRepo.Update(c.Req.Context(), &existing); err != nil {
 		return response.ErrOrFallback(500, "Failed to update annotation", err)
 	}
 
@@ -389,7 +389,7 @@ func (hs *HTTPServer) MassDeleteAnnotations(c *models.ReqContext) response.Respo
 		var dashboardId int64
 
 		if cmd.AnnotationId != 0 {
-			annotation, respErr := findAnnotationByID(c.Req.Context(), hs.AnnotationsRepo, cmd.AnnotationId, c.SignedInUser)
+			annotation, respErr := findAnnotationByID(c.Req.Context(), hs.annotationsRepo, cmd.AnnotationId, c.SignedInUser)
 			if respErr != nil {
 				return respErr
 			}
@@ -420,7 +420,7 @@ func (hs *HTTPServer) MassDeleteAnnotations(c *models.ReqContext) response.Respo
 		}
 	}
 
-	err = hs.AnnotationsRepo.Delete(c.Req.Context(), deleteParams)
+	err = hs.annotationsRepo.Delete(c.Req.Context(), deleteParams)
 
 	if err != nil {
 		return response.Error(500, "Failed to delete annotations", err)
@@ -443,7 +443,7 @@ func (hs *HTTPServer) GetAnnotationByID(c *models.ReqContext) response.Response 
 		return response.Error(http.StatusBadRequest, "annotationId is invalid", err)
 	}
 
-	annotation, resp := findAnnotationByID(c.Req.Context(), hs.AnnotationsRepo, annotationID, c.SignedInUser)
+	annotation, resp := findAnnotationByID(c.Req.Context(), hs.annotationsRepo, annotationID, c.SignedInUser)
 	if resp != nil {
 		return resp
 	}
@@ -472,7 +472,7 @@ func (hs *HTTPServer) DeleteAnnotationByID(c *models.ReqContext) response.Respon
 		return response.Error(http.StatusBadRequest, "annotationId is invalid", err)
 	}
 
-	annotation, resp := findAnnotationByID(c.Req.Context(), hs.AnnotationsRepo, annotationID, c.SignedInUser)
+	annotation, resp := findAnnotationByID(c.Req.Context(), hs.annotationsRepo, annotationID, c.SignedInUser)
 	if resp != nil {
 		return resp
 	}
@@ -481,7 +481,7 @@ func (hs *HTTPServer) DeleteAnnotationByID(c *models.ReqContext) response.Respon
 		return dashboardGuardianResponse(err)
 	}
 
-	err = hs.AnnotationsRepo.Delete(c.Req.Context(), &annotations.DeleteParams{
+	err = hs.annotationsRepo.Delete(c.Req.Context(), &annotations.DeleteParams{
 		OrgId: c.OrgID,
 		Id:    annotationID,
 	})
@@ -548,7 +548,7 @@ func (hs *HTTPServer) GetAnnotationTags(c *models.ReqContext) response.Response 
 		Limit: c.QueryInt64("limit"),
 	}
 
-	result, err := hs.AnnotationsRepo.FindTags(c.Req.Context(), query)
+	result, err := hs.annotationsRepo.FindTags(c.Req.Context(), query)
 	if err != nil {
 		return response.Error(500, "Failed to find annotation tags", err)
 	}

@@ -199,7 +199,7 @@ type HTTPServer struct {
 	orgService             org.Service
 	teamService            team.Service
 	accesscontrolService   accesscontrol.Service
-	AnnotationsRepo        annotations.Repository
+	annotationsRepo        annotations.Repository
 	tagService             tag.Service
 	userAuthService        userauth.Service
 }
@@ -343,7 +343,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		teamService:                  teamService,
 		navTreeService:               navTreeService,
 		accesscontrolService:         accesscontrolService,
-		AnnotationsRepo:              annotationRepo,
+		annotationsRepo:              annotationRepo,
 		tagService:                   tagService,
 		userAuthService:              userAuthService,
 	}
@@ -353,7 +353,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	hs.registerRoutes()
 
 	// Register access control scope resolver for annotations
-	hs.AccessControl.RegisterScopeAttributeResolver(AnnotationTypeScopeResolver(hs.AnnotationsRepo))
+	hs.AccessControl.RegisterScopeAttributeResolver(AnnotationTypeScopeResolver(hs.annotationsRepo))
 
 	if err := hs.declareFixedRoles(); err != nil {
 		return nil, err

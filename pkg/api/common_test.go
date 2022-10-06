@@ -348,7 +348,7 @@ func setupSimpleHTTPServer(features *featuremgmt.FeatureManager) *HTTPServer {
 		Features:        features,
 		License:         &licensing.OSSLicensingService{},
 		AccessControl:   accesscontrolmock.New().WithDisabled(),
-		AnnotationsRepo: annotationstest.NewFakeAnnotationsRepo(),
+		annotationsRepo: annotationstest.NewFakeAnnotationsRepo(),
 	}
 }
 
@@ -424,7 +424,7 @@ func setupHTTPServerWithCfgDb(
 		userService:       userSvc,
 		orgService:        orgMock,
 		teamService:       teamService,
-		AnnotationsRepo:   annotationstest.NewFakeAnnotationsRepo(),
+		annotationsRepo:   annotationstest.NewFakeAnnotationsRepo(),
 	}
 
 	for _, o := range options {
