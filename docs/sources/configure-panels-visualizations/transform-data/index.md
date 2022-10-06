@@ -54,7 +54,7 @@ The following steps guide you in adding a transformation to data. This documenta
 
    A transformation row appears where you configure the transformation options. For more information about how to configure a transformation, refer to [Transformation functions]({{< relref "#transformation-functions" >}}).
 
-   For information about available calculations, refer to [Calculation types]({{< relref "../../../panels/calculation-types/" >}}).
+   For information about available calculations, refer to [Calculation types]({{< relref "../calculation-types" >}}).
 
 1. To apply another transformation, click **Add transformation**.
 
@@ -96,7 +96,7 @@ Use this transformation to add a new field calculated from two other fields. Eac
   - **Reduce row -** Apply selected calculation on each row of selected fields independently.
   - **Binary option -** Apply basic math operation(sum, multiply, etc) on values in a single row from two selected fields.
 - **Field name -** Select the names of fields you want to use in the calculation for the new field.
-- **Calculation -** If you select **Reduce row** mode, then the **Calculation** field appears. Click in the field to see a list of calculation choices you can use to create the new field. For information about available calculations, refer to [Calculation types]({{< relref "../../../panels/calculation-types/" >}}).
+- **Calculation -** If you select **Reduce row** mode, then the **Calculation** field appears. Click in the field to see a list of calculation choices you can use to create the new field. For information about available calculations, refer to [Calculation types]({{< relref "../calculation-types" >}}).
 - **Operation -** If you select **Binary option** mode, then the **Operation** fields appear. These fields allow you to do basic math operations on values in a single row from two selected fields. You can also use numerical values for binary operations.
 - **Alias -** (Optional) Enter the name of your new field. If you leave this blank, then the field will be named to match the calculation.
 - **Replace all fields -** (Optional) Select this option if you want to hide all other fields and display only your calculated field in the visualization.
@@ -269,7 +269,7 @@ Conditions that are invalid or incompletely configured are ignored.
 
 ### Group by
 
-This transformation groups the data by a specified field (column) value and processes calculations on each group. Click to see a list of calculation choices. For information about available calculations, refer to [Calculation types]({{< relref "../../../panels/calculation-types/" >}}).
+This transformation groups the data by a specified field (column) value and processes calculations on each group. Click to see a list of calculation choices. For information about available calculations, refer to [Calculation types]({{< relref "../calculation-types" >}}).
 
 Here's an example of original data.
 
@@ -635,7 +635,7 @@ As you can see each row in the source data becomes a separate field. Each field 
 
 > **Note:** This transformation is available in Grafana 7.5.10+ and Grafana 8.0.6+.
 
-Prepare time series transformation is useful when a data source returns time series data in a format that isn't supported by the panel you want to use. For more information about data frame formats, refer to [Data frames]({{< relref "../../../developers/plugins/data-frames/" >}}).
+Prepare time series transformation is useful when a data source returns time series data in a format that isn't supported by the panel you want to use. For more information about data frame formats, refer to [Data frames]({{< relref "../../developers/plugins/data-frames/" >}}).
 
 This transformation helps you resolve this issue by converting the time series data from either the wide format to the long format or the other way around.
 

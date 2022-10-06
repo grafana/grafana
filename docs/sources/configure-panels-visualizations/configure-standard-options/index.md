@@ -7,7 +7,7 @@ aliases:
   - /docs/grafana/latest/configure-panels-visualizations/configure-standard-options/
 title: Configure standard options
 menuTitle: Configure standard options
-weight: 40
+weight: 2
 keywords:
   - panel
   - dasboard

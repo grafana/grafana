@@ -4,11 +4,12 @@ aliases:
   - /docs/grafana/latest/panels/calculations-list/
   - /docs/grafana/latest/panels/reference-calculation-types/
   - /docs/sources/panels/reference-calculation-types/
+  - /docs/sources/panels/calculation-types/
 title: Calculation types
 weight: 1100
 ---
 
-# Reference: Calculation types
+# Calculation types
 
 The following table contains a list of calculations you can perform in Grafana. You can find these calculations in the **Transform** tab and in the bar gauge, gauge, and stat visualizations.
 

@@ -9,12 +9,12 @@ aliases:
   - /docs/grafana/latest/panels/thresholds/
   - /docs/grafana/latest/configure-panels-visualizations/configure-thresholds/
 description: This section includes information about using thresholds in your visualizations.
-menuTitle: Configure visualization thresholds
-title: Configure visualization thresholds
+menuTitle: Configure thresholds
+title: Configure thresholds
 weight: 300
 ---
 
-# Configure visualization thresholds
+# Configure thresholds
 
 This section includes information about using thresholds in your visualizations. You'll learn about thresholds and their defaults, how to add or delete a threshold, and adding a threshold to a legacy panel.
 

@@ -4,7 +4,7 @@ aliases:
   - /docs/grafana/latest/configure-panels-visualizations/
 title: Panels and visualizations
 menuTitle: Panels and visualizations
-weight: 70
+weight: 80
 keywords:
   - grafana
   - configure
@@ -14,6 +14,8 @@ keywords:
 
 # Panels and visualizations
 
-This section includes the following topics:
+Panels are the main building block that make up a dashboard.
+
+This section includes the following sub topics:
 
 {{< section >}}

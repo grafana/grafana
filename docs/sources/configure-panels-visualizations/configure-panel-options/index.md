@@ -8,7 +8,7 @@ aliases:
   - /docs/grafana/latest/configure-panels-visualizations/configure-panel-options/
 title: Configure panel options
 menuTitle: Configure panel options
-weight: 150
+weight: 2
 keywords:
   - panel
   - dynamic
