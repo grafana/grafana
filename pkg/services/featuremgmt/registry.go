@@ -277,7 +277,14 @@ var (
 			Description:     "Run GRPC server",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
-		}, {
+		},
+		{
+			Name:            "objectStore",
+			Description:     "SQL based object store",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
 			Name:        "traceqlEditor",
 			Description: "Show the TraceQL editor in the explore page",
 			State:       FeatureStateAlpha,
