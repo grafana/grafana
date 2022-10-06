@@ -28,9 +28,27 @@ The map view controls the initial view of the map when the dashboard loads.
 The initial view configures how the GeoMap panel renders when the panel is first loaded.
 
 - **View** sets the center for the map when the panel first loads.
-- **Latitude** (available when the **View** mode is _Coordinates_)
-- **Longitude** (available when the **View** mode is _Coordinates_)
-- **Zoom** sets the initial zoom level for the GeoMap panel, or the initial maximum zoom level in case the _Fit data layers_ view is selected.
+  - **Fit to data** fits the map view based on the data extents of Map layers and updates when data changes.
+    - **Data** option allows selection of extent based on data from "All layers", a single "Layer", or the "Last value" from a selected layer.
+    - **Layer** can be selected if fitting data from a single "Layer" or the "Last value" of a layer.
+    - **Padding** sets padding in relative percent beyond data extent (not available when looking at "Last value" only).
+    - **Max Zoom** sets the maximum zoom level when fitting data.
+  - **Coordinates** sets the map view based on:
+    - **Latitude**
+    - **Longitude**
+  - Default Views are also available including:
+    - **(0°, 0°)**
+    - **North America**
+    - **South America**
+    - **Europe**
+    - **Africa**
+    - **West Asia**
+    - **South Asia**
+    - **South-East Asia**
+    - **East Asia**
+    - **Australia**
+    - **Oceania**
+- **Zoom** sets the initial zoom level.
 
 ## Map layers
 
