@@ -1,27 +1,28 @@
 import type { Tree, SyntaxNode } from '@lezer/common';
 
-import { parser } from '@grafana/lezer-logql';
+import {
+  parser,
+  VectorAggregationExpr,
+  String,
+  Selector,
+  RangeAggregationExpr,
+  Range,
+  PipelineExpr,
+  PipelineStage,
+  Matchers,
+  Matcher,
+  LogQL,
+  LogRangeExpr,
+  LogExpr,
+  Identifier,
+  Grouping,
+  Expr,
+} from '@grafana/lezer-logql';
 
 type Direction = 'parent' | 'firstChild' | 'lastChild' | 'nextSibling';
-type NodeTypeName =
-  | '⚠' // this is used as error-name
-  | 'Expr'
-  | 'Grouping'
-  | 'Identifier'
-  | 'LogExpr'
-  | 'LogRangeExpr'
-  | 'LogQL'
-  | 'Matcher'
-  | 'Matchers'
-  | 'PipelineStage'
-  | 'PipelineExpr'
-  | 'Range'
-  | 'RangeAggregationExpr'
-  | 'Selector'
-  | 'String'
-  | 'VectorAggregationExpr';
+type NodeType = number;
 
-type Path = Array<[Direction, NodeTypeName]>;
+type Path = Array<[Direction, NodeType]>;
 
 function move(node: SyntaxNode, direction: Direction): SyntaxNode | null {
   return node[direction];
@@ -29,13 +30,13 @@ function move(node: SyntaxNode, direction: Direction): SyntaxNode | null {
 
 function walk(node: SyntaxNode, path: Path): SyntaxNode | null {
   let current: SyntaxNode | null = node;
-  for (const [direction, expectedType] of path) {
+  for (const [direction, expectedNode] of path) {
     current = move(current, direction);
     if (current === null) {
       // we could not move in the direction, we stop
       return null;
     }
-    if (current.type.name !== expectedType) {
+    if (current.type.id !== expectedNode) {
       // the reached node has wrong type, we stop
       return null;
     }
@@ -117,55 +118,55 @@ export type Situation =
     };
 
 type Resolver = {
-  path: NodeTypeName[];
+  path: NodeType[];
   fun: (node: SyntaxNode, text: string, pos: number) => Situation | null;
 };
 
-function isPathMatch(resolverPath: string[], cursorPath: string[]): boolean {
+function isPathMatch(resolverPath: NodeType[], cursorPath: number[]): boolean {
   return resolverPath.every((item, index) => item === cursorPath[index]);
 }
 
-const ERROR_NODE_NAME: NodeTypeName = '⚠'; // this is used as error-name
+const ERROR_NODE_ID = 0;
 
 const RESOLVERS: Resolver[] = [
   {
-    path: ['Selector'],
+    path: [Selector],
     fun: resolveSelector,
   },
   {
-    path: ['LogQL'],
+    path: [LogQL],
     fun: resolveTopLevel,
   },
   {
-    path: ['String', 'Matcher'],
+    path: [String, Matcher],
     fun: resolveMatcher,
   },
   {
-    path: ['Grouping'],
+    path: [Grouping],
     fun: resolveLabelsForGrouping,
   },
   {
-    path: ['LogRangeExpr'],
+    path: [LogRangeExpr],
     fun: resolveLogRange,
   },
   {
-    path: [ERROR_NODE_NAME, 'Matcher'],
+    path: [ERROR_NODE_ID, Matcher],
     fun: resolveMatcher,
   },
   {
-    path: [ERROR_NODE_NAME, 'Range'],
+    path: [ERROR_NODE_ID, Range],
     fun: resolveDurations,
   },
   {
-    path: [ERROR_NODE_NAME, 'LogRangeExpr'],
+    path: [ERROR_NODE_ID, LogRangeExpr],
     fun: resolveLogRangeFromError,
   },
   {
-    path: [ERROR_NODE_NAME, 'VectorAggregationExpr'],
+    path: [ERROR_NODE_ID, VectorAggregationExpr],
     fun: () => ({ type: 'IN_AGGREGATION' }),
   },
   {
-    path: [ERROR_NODE_NAME, 'PipelineStage', 'PipelineExpr'],
+    path: [ERROR_NODE_ID, PipelineStage, PipelineExpr],
     fun: resolvePipeError,
   },
 ];
@@ -182,11 +183,11 @@ function getLabelOp(opNode: SyntaxNode): LabelOperator | null {
 }
 
 function getLabel(matcherNode: SyntaxNode, text: string): Label | null {
-  if (matcherNode.type.name !== 'Matcher') {
+  if (matcherNode.type.id !== Matcher) {
     return null;
   }
 
-  const nameNode = walk(matcherNode, [['firstChild', 'Identifier']]);
+  const nameNode = walk(matcherNode, [['firstChild', Identifier]]);
 
   if (nameNode === null) {
     return null;
@@ -202,7 +203,7 @@ function getLabel(matcherNode: SyntaxNode, text: string): Label | null {
     return null;
   }
 
-  const valueNode = walk(matcherNode, [['lastChild', 'String']]);
+  const valueNode = walk(matcherNode, [['lastChild', String]]);
 
   if (valueNode === null) {
     return null;
@@ -215,16 +216,16 @@ function getLabel(matcherNode: SyntaxNode, text: string): Label | null {
 }
 
 function getLabels(selectorNode: SyntaxNode, text: string): Label[] {
-  if (selectorNode.type.name !== 'Selector') {
+  if (selectorNode.type.id !== Selector) {
     return [];
   }
 
-  let listNode: SyntaxNode | null = walk(selectorNode, [['firstChild', 'Matchers']]);
+  let listNode: SyntaxNode | null = walk(selectorNode, [['firstChild', Matchers]]);
 
   const labels: Label[] = [];
 
   while (listNode !== null) {
-    const matcherNode = walk(listNode, [['lastChild', 'Matcher']]);
+    const matcherNode = walk(listNode, [['lastChild', Matcher]]);
     if (matcherNode === null) {
       // unexpected, we stop
       return [];
@@ -236,7 +237,7 @@ function getLabels(selectorNode: SyntaxNode, text: string): Label[] {
     }
 
     // there might be more labels
-    listNode = walk(listNode, [['firstChild', 'Matchers']]);
+    listNode = walk(listNode, [['firstChild', Matchers]]);
   }
 
   // our labels-list is last-first, so we reverse it
@@ -248,8 +249,8 @@ function getLabels(selectorNode: SyntaxNode, text: string): Label[] {
 function resolvePipeError(node: SyntaxNode, text: string, pos: number): Situation | null {
   // for example `{level="info"} |`
   const exprNode = walk(node, [
-    ['parent', 'PipelineStage'],
-    ['parent', 'PipelineExpr'],
+    ['parent', PipelineStage],
+    ['parent', PipelineExpr],
   ]);
 
   if (exprNode === null) {
@@ -262,9 +263,7 @@ function resolvePipeError(node: SyntaxNode, text: string, pos: number): Situatio
     return null;
   }
 
-  const parentName = parent.type.name;
-
-  if (parentName === 'LogExpr' || parentName === 'LogRangeExpr') {
+  if (parent.type.id === LogExpr || parent.type.id === LogRangeExpr) {
     return resolveLogOrLogRange(parent, text, pos, true);
   }
 
@@ -272,7 +271,7 @@ function resolvePipeError(node: SyntaxNode, text: string, pos: number): Situatio
 }
 
 function resolveLabelsForGrouping(node: SyntaxNode, text: string, pos: number): Situation | null {
-  const aggrExpNode = walk(node, [['parent', 'VectorAggregationExpr']]);
+  const aggrExpNode = walk(node, [['parent', VectorAggregationExpr]]);
   if (aggrExpNode === null) {
     return null;
   }
@@ -282,9 +281,9 @@ function resolveLabelsForGrouping(node: SyntaxNode, text: string, pos: number): 
   }
 
   const selectorNode = walk(bodyNode, [
-    ['firstChild', 'RangeAggregationExpr'],
-    ['lastChild', 'LogRangeExpr'],
-    ['firstChild', 'Selector'],
+    ['firstChild', RangeAggregationExpr],
+    ['lastChild', LogRangeExpr],
+    ['firstChild', Selector],
   ]);
 
   if (selectorNode === null) {
@@ -305,12 +304,12 @@ function resolveMatcher(node: SyntaxNode, text: string, pos: number): Situation 
   // - or an error node (like in `{job=^}`)
   const inStringNode = !node.type.isError;
 
-  const parent = walk(node, [['parent', 'Matcher']]);
+  const parent = walk(node, [['parent', Matcher]]);
   if (parent === null) {
     return null;
   }
 
-  const labelNameNode = walk(parent, [['firstChild', 'Identifier']]);
+  const labelNameNode = walk(parent, [['firstChild', Identifier]]);
   if (labelNameNode === null) {
     return null;
   }
@@ -321,7 +320,7 @@ function resolveMatcher(node: SyntaxNode, text: string, pos: number): Situation 
   // there can be one or many `Matchers` parents, we have
   // to go through all of them
 
-  const firstListNode = walk(parent, [['parent', 'Matchers']]);
+  const firstListNode = walk(parent, [['parent', Matchers]]);
   if (firstListNode === null) {
     return null;
   }
@@ -332,21 +331,19 @@ function resolveMatcher(node: SyntaxNode, text: string, pos: number): Situation 
   // as soon as we reach Selector, we stop
   let selectorNode: SyntaxNode | null = null;
   while (selectorNode === null) {
-    const p = listNode.parent;
-    if (p === null) {
+    const parent = listNode.parent;
+    if (parent === null) {
       return null;
     }
 
-    const { name } = p.type;
-
-    switch (name) {
-      case 'Matchers':
+    switch (parent.type.id) {
+      case Matchers:
         //we keep looping
-        listNode = p;
+        listNode = parent;
         continue;
-      case 'Selector':
+      case Selector:
         // we reached the end, we can stop the loop
-        selectorNode = p;
+        selectorNode = parent;
         continue;
       default:
         // we reached some other node, we stop
@@ -373,8 +370,8 @@ function resolveTopLevel(node: SyntaxNode, text: string, pos: number): Situation
   // `{x="y"}` situation, with the cursor at the end
 
   const logExprNode = walk(node, [
-    ['lastChild', 'Expr'],
-    ['lastChild', 'LogExpr'],
+    ['lastChild', Expr],
+    ['lastChild', LogExpr],
   ]);
 
   if (logExprNode != null) {
@@ -385,8 +382,8 @@ function resolveTopLevel(node: SyntaxNode, text: string, pos: number): Situation
   // (basically, user enters a non-special characters as first
   // character in query field)
   const idNode = walk(node, [
-    ['firstChild', ERROR_NODE_NAME],
-    ['firstChild', 'Identifier'],
+    ['firstChild', ERROR_NODE_ID],
+    ['firstChild', Identifier],
   ]);
 
   if (idNode != null) {
@@ -410,7 +407,7 @@ function resolveLogRange(node: SyntaxNode, text: string, pos: number): Situation
 }
 
 function resolveLogRangeFromError(node: SyntaxNode, text: string, pos: number): Situation | null {
-  const parent = walk(node, [['parent', 'LogRangeExpr']]);
+  const parent = walk(node, [['parent', LogRangeExpr]]);
   if (parent === null) {
     return null;
   }
@@ -421,7 +418,7 @@ function resolveLogRangeFromError(node: SyntaxNode, text: string, pos: number): 
 function resolveLogOrLogRange(node: SyntaxNode, text: string, pos: number, afterPipe: boolean): Situation | null {
   // here the `node` is either a LogExpr or a LogRangeExpr
   // we want to handle the case where we are next to a selector
-  const selectorNode = walk(node, [['firstChild', 'Selector']]);
+  const selectorNode = walk(node, [['firstChild', Selector]]);
 
   // we check that the selector is before the cursor, not after it
   if (selectorNode != null && selectorNode.to <= pos) {
@@ -441,7 +438,7 @@ function resolveSelector(node: SyntaxNode, text: string, pos: number): Situation
 
   // false positive:
   // `{a="1"^}`
-  const child = walk(node, [['firstChild', 'Matchers']]);
+  const child = walk(node, [['firstChild', Matchers]]);
   if (child !== null) {
     // means the label-matching part contains at least one label already.
     //
@@ -511,13 +508,13 @@ export function getSituation(text: string, pos: number): Situation | null {
 
   const currentNode = cur.node;
 
-  const names = [cur.name];
+  const ids = [cur.type.id];
   while (cur.parent()) {
-    names.push(cur.name);
+    ids.push(cur.type.id);
   }
 
   for (let resolver of RESOLVERS) {
-    if (isPathMatch(resolver.path, names)) {
+    if (isPathMatch(resolver.path, ids)) {
       return resolver.fun(currentNode, text, pos);
     }
   }
