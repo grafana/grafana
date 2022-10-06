@@ -40,7 +40,7 @@ func (h *AnnotationStateHistorian) RecordState(ctx context.Context, rule *ngmode
 	annotationText, annotationData := buildAnnotationTextAndData(rule, state)
 	item := &annotations.Item{
 		AlertId:   rule.ID,
-		OrgId:     rule.OrgID,
+		OrgId:     state.OrgID,
 		PrevState: previousData.String(),
 		NewState:  state.DisplayName(),
 		Text:      annotationText,
@@ -48,9 +48,9 @@ func (h *AnnotationStateHistorian) RecordState(ctx context.Context, rule *ngmode
 		Epoch:     state.LastEvaluationTime.UnixNano() / int64(time.Millisecond),
 	}
 
-	dashUid, ok := rule.Annotations[ngmodels.DashboardUIDAnnotation]
+	dashUid, ok := state.Annotations[ngmodels.DashboardUIDAnnotation]
 	if ok {
-		panelUid := rule.Annotations[ngmodels.PanelIDAnnotation]
+		panelUid := state.Annotations[ngmodels.PanelIDAnnotation]
 
 		panelId, err := strconv.ParseInt(panelUid, 10, 64)
 		if err != nil {
