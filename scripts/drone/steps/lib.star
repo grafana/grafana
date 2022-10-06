@@ -1,6 +1,6 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = 'v3.0.10'
+grabpl_version = 'v3.0.11'
 build_image = 'grafana/build-container:1.6.2'
 publish_image = 'grafana/grafana-ci-deploy:1.3.3'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
@@ -796,6 +796,23 @@ def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publis
         },
     }
 
+def fetch_images_step(edition):
+    return {
+        'name': 'fetch-images-{}'.format(edition),
+        'image': 'google/cloud-sdk',
+        'environment': {
+            'GCP_KEY': from_secret('gcp_key'),
+            'DOCKER_USER': from_secret('docker_username'),
+            'DOCKER_PASSWORD': from_secret('docker_password'),
+        },
+        'commands': ['./bin/build artifacts docker fetch --edition {}'.format(edition)],
+        'depends_on': ['compile-build-cmd'],
+        'volumes': [{
+            'name': 'docker',
+            'path': '/var/run/docker.sock'
+        }],
+    }
+
 
 def publish_images_step(edition, ver_mode, mode, docker_repo, trigger=None):
     if mode == 'security':
@@ -995,12 +1012,12 @@ def publish_packages_step(edition, ver_mode):
 
 def publish_grafanacom_step(edition, ver_mode):
     if ver_mode == 'release':
-        cmd = './bin/grabpl publish grafana-com --edition {} ${{DRONE_TAG}}'.format(
+        cmd = './bin/build publish grafana-com --edition {} ${{DRONE_TAG}}'.format(
             edition,
         )
     elif ver_mode == 'main':
         build_no = '${DRONE_BUILD_NUMBER}'
-        cmd = './bin/grabpl publish grafana-com --edition {} --build-id {}'.format(
+        cmd = './bin/build publish grafana-com --edition {} --build-id {}'.format(
             edition, build_no,
         )
     else:

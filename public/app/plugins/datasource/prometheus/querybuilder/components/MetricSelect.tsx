@@ -64,6 +64,7 @@ export function MetricSelect({ query, onChange, onGetMetrics }: Props) {
           className={styles.select}
           value={query.metric ? toOption(query.metric) : undefined}
           placeholder="Select metric"
+          virtualized
           allowCustomValue
           formatOptionLabel={formatOptionLabel}
           filterOption={customFilterOption}

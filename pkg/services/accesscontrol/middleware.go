@@ -93,6 +93,7 @@ func newID() string {
 }
 
 type OrgIDGetter func(c *models.ReqContext) (int64, error)
+
 type userCache interface {
 	GetSignedInUserWithCacheCtx(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error)
 }

@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/grafana/grafana/pkg/build/docker"
 	"github.com/grafana/grafana/pkg/build/packaging"
 	"github.com/urfave/cli/v2"
@@ -187,7 +188,7 @@ func main() {
 						&gcpKeyFlag,
 						&cli.StringFlag{
 							Name:  "packages-bucket",
-							Value: "grafana-downloads",
+							Value: config.PublicBucket,
 							Usage: "Google Cloud Storage Debian database bucket",
 						},
 						&cli.StringFlag{
@@ -213,6 +214,21 @@ func main() {
 						&cli.BoolFlag{
 							Name:  "simulate-release",
 							Usage: "Only simulate creating release at grafana.com",
+						},
+					},
+				},
+				{
+					Name:   "grafana-com",
+					Usage:  "Publish packages to grafana.com",
+					Action: GrafanaCom,
+					Flags: []cli.Flag{
+						&editionFlag,
+						&buildIDFlag,
+						&dryRunFlag,
+						&cli.StringFlag{
+							Name:  "src-bucket",
+							Value: "grafana-downloads",
+							Usage: "Google Cloud Storage bucket",
 						},
 					},
 				},
