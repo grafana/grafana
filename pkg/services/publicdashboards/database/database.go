@@ -39,7 +39,6 @@ func ProvideStore(sqlStore *sqlstore.SQLStore) *PublicDashboardStoreImpl {
 
 // Gets list of public dashboards by orgId
 func (d *PublicDashboardStoreImpl) ListPublicDashboards(ctx context.Context, orgId int64) ([]PublicDashboardListResponse, error) {
-
 	resp := make([]PublicDashboardListResponse, 0)
 
 	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
