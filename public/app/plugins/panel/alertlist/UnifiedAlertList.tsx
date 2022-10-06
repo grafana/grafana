@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { sortBy } from 'lodash';
 import React, { useEffect, useMemo } from 'react';
+import { useEffectOnce } from 'react-use';
 
 import { GrafanaTheme2, PanelProps } from '@grafana/data';
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
@@ -28,6 +29,7 @@ import {
 } from 'app/features/alerting/unified/utils/datasource';
 import { flattenRules, getFirstActiveAt } from 'app/features/alerting/unified/utils/rules';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { DashboardModel } from 'app/features/dashboard/state';
 import { useDispatch, AccessControlAction } from 'app/types';
 import { PromRuleWithLocation } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
@@ -49,7 +51,11 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
     props.options.stateFilter.inactive = undefined; // now disable inactive
   }, [props.options.stateFilter]);
 
-  const dashboard = getDashboardSrv().getCurrent();
+  let dashboard: DashboardModel | undefined = undefined;
+
+  useEffectOnce(() => {
+    dashboard = getDashboardSrv().getCurrent();
+  });
 
   useEffect(() => {
     dispatch(fetchAllPromRulesAction());
@@ -57,7 +63,7 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
     return () => {
       sub?.unsubscribe();
     };
-  }, [dispatch, dashboard?.events]);
+  }, [dispatch, dashboard]);
 
   const promRulesRequests = useUnifiedAlertingSelector((state) => state.promRules);
 
