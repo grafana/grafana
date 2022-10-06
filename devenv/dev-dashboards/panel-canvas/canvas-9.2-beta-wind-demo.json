@@ -34,9 +34,6 @@
       },
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
           "mappings": [
             {
               "options": {
@@ -73,13 +70,16 @@
                 "value": 30
               }
             ]
+          },
+          "color": {
+            "mode": "thresholds"
           }
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 18,
-        "w": 8,
+        "h": 15,
+        "w": 17,
         "x": 0,
         "y": 0
       },
@@ -94,7 +94,7 @@
             "image": {
               "fixed": "https://media.istockphoto.com/vectors/summer-landscape-background-vector-vector-id835845414?k=20&m=835845414&s=170667a&w=0&h=oH1pZlFIl0ctsUp9bDk19aLYr7gbnVjx_4Yfo25EvIk="
             },
-            "size": "cover"
+            "size": "contain"
           },
           "border": {
             "color": {
@@ -129,8 +129,8 @@
               "name": "Windmill 3",
               "placement": {
                 "height": 179,
-                "left": -16,
-                "top": 243,
+                "left": -51,
+                "top": 172,
                 "width": 190
               },
               "type": "windTurbine"
@@ -158,8 +158,8 @@
               "name": "Windmill 4",
               "placement": {
                 "height": 104,
-                "left": 168,
-                "top": 266,
+                "left": 133,
+                "top": 195,
                 "width": 167
               },
               "type": "windTurbine"
@@ -187,8 +187,8 @@
               "name": "Windmill 1",
               "placement": {
                 "height": 383,
-                "left": 395,
-                "top": 122,
+                "left": 360,
+                "top": 51,
                 "width": 299
               },
               "type": "windTurbine"
@@ -216,8 +216,8 @@
               "name": "Windmill 2",
               "placement": {
                 "height": 280,
-                "left": 695,
-                "top": 146,
+                "left": 660,
+                "top": 75,
                 "width": 259
               },
               "type": "windTurbine"
@@ -251,8 +251,8 @@
               "name": "Windmill 4_label",
               "placement": {
                 "height": 26,
-                "left": 232,
-                "top": 489,
+                "left": 197,
+                "top": 418,
                 "width": 39
               },
               "type": "text"
@@ -286,8 +286,8 @@
               "name": "Windmill 3_label",
               "placement": {
                 "height": 26,
-                "left": 60,
-                "top": 500,
+                "left": 25,
+                "top": 429,
                 "width": 39
               },
               "type": "text"
@@ -321,8 +321,8 @@
               "name": "Windmill 2_label",
               "placement": {
                 "height": 26,
-                "left": 805,
-                "top": 504,
+                "left": 770,
+                "top": 433,
                 "width": 39
               },
               "type": "text"
@@ -356,8 +356,8 @@
               "name": "Windmill 1_label",
               "placement": {
                 "height": 26,
-                "left": 524,
-                "top": 535,
+                "left": 489,
+                "top": 464,
                 "width": 39
               },
               "type": "text"
@@ -394,8 +394,8 @@
               "name": "w4_status",
               "placement": {
                 "height": 31,
-                "left": 275,
-                "top": 505,
+                "left": 240,
+                "top": 434,
                 "width": 137
               },
               "type": "metric-value"
@@ -432,8 +432,8 @@
               "name": "w4_energy_value",
               "placement": {
                 "height": 31,
-                "left": 275,
-                "top": 471,
+                "left": 240,
+                "top": 400,
                 "width": 58
               },
               "type": "metric-value"
@@ -467,8 +467,8 @@
               "name": "w4_energy_label",
               "placement": {
                 "height": 26,
-                "left": 326,
-                "top": 474,
+                "left": 291,
+                "top": 403,
                 "width": 56
               },
               "type": "text"
@@ -505,8 +505,8 @@
               "name": "w4_rpm_value",
               "placement": {
                 "height": 31,
-                "left": 275,
-                "top": 438,
+                "left": 240,
+                "top": 367,
                 "width": 37
               },
               "type": "metric-value"
@@ -540,8 +540,8 @@
               "name": "w4_rpm_label",
               "placement": {
                 "height": 26,
-                "left": 304,
-                "top": 440,
+                "left": 269,
+                "top": 369,
                 "width": 48
               },
               "type": "text"
@@ -578,8 +578,8 @@
               "name": "w3_status",
               "placement": {
                 "height": 31,
-                "left": 100,
-                "top": 528,
+                "left": 65,
+                "top": 457,
                 "width": 110
               },
               "type": "metric-value"
@@ -616,8 +616,8 @@
               "name": "w3_energy_value",
               "placement": {
                 "height": 31,
-                "left": 100,
-                "top": 494,
+                "left": 65,
+                "top": 423,
                 "width": 58
               },
               "type": "metric-value"
@@ -651,8 +651,8 @@
               "name": "w3_energy_label",
               "placement": {
                 "height": 27,
-                "left": 151,
-                "top": 496,
+                "left": 116,
+                "top": 425,
                 "width": 56
               },
               "type": "text"
@@ -689,8 +689,8 @@
               "name": "w3_rpm_value",
               "placement": {
                 "height": 31,
-                "left": 100,
-                "top": 460,
+                "left": 65,
+                "top": 389,
                 "width": 37
               },
               "type": "metric-value"
@@ -724,8 +724,8 @@
               "name": "w3_rpm_label",
               "placement": {
                 "height": 31,
-                "left": 134,
-                "top": 460,
+                "left": 99,
+                "top": 389,
                 "width": 43
               },
               "type": "text"
@@ -765,8 +765,8 @@
               "name": "w2_status",
               "placement": {
                 "height": 31,
-                "left": 843,
-                "top": 497,
+                "left": 808,
+                "top": 426,
                 "width": 110
               },
               "type": "metric-value"
@@ -803,8 +803,8 @@
               "name": "w2_energy_value",
               "placement": {
                 "height": 31,
-                "left": 843,
-                "top": 462,
+                "left": 808,
+                "top": 391,
                 "width": 58
               },
               "type": "metric-value"
@@ -838,8 +838,8 @@
               "name": "w2_energy_label",
               "placement": {
                 "height": 31,
-                "left": 891,
-                "top": 462,
+                "left": 856,
+                "top": 391,
                 "width": 62
               },
               "type": "text"
@@ -876,8 +876,8 @@
               "name": "w2_rpm_value",
               "placement": {
                 "height": 31,
-                "left": 843,
-                "top": 427,
+                "left": 808,
+                "top": 356,
                 "width": 37
               },
               "type": "metric-value"
@@ -911,8 +911,8 @@
               "name": "w2_rpm_label",
               "placement": {
                 "height": 41,
-                "left": 858,
-                "top": 421,
+                "left": 823,
+                "top": 350,
                 "width": 80
               },
               "type": "text"
@@ -952,8 +952,8 @@
               "name": "w1_status",
               "placement": {
                 "height": 31,
-                "left": 571,
-                "top": 540,
+                "left": 536,
+                "top": 469,
                 "width": 110
               },
               "type": "metric-value"
@@ -990,8 +990,8 @@
               "name": "w1_energy_value",
               "placement": {
                 "height": 31,
-                "left": 572,
-                "top": 505,
+                "left": 537,
+                "top": 434,
                 "width": 58
               },
               "type": "metric-value"
@@ -1025,8 +1025,8 @@
               "name": "w1_energy_label",
               "placement": {
                 "height": 31,
-                "left": 621,
-                "top": 505,
+                "left": 586,
+                "top": 434,
                 "width": 58
               },
               "type": "text"
@@ -1063,8 +1063,8 @@
               "name": "w1_rpm_value",
               "placement": {
                 "height": 31,
-                "left": 573,
-                "top": 469,
+                "left": 538,
+                "top": 398,
                 "width": 37
               },
               "type": "metric-value"
@@ -1098,8 +1098,8 @@
               "name": "w1_rpm_label",
               "placement": {
                 "height": 32,
-                "left": 600,
-                "top": 468,
+                "left": 565,
+                "top": 397,
                 "width": 54
               },
               "type": "text"
@@ -1113,8 +1113,7 @@
             "width": 100
           },
           "type": "frame"
-        },
-        "showAdvancedTypes": true
+        }
       },
       "pluginVersion": "9.3.0-pre",
       "targets": [
