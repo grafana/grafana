@@ -11,7 +11,7 @@ export function SignInLink() {
   const loginUrl = locationUtil.getUrlForPartial(location, { forceLogin: true });
 
   return (
-    <a className={styles.link} href={loginUrl}>
+    <a className={styles.link} href={loginUrl} target="_self">
       Sign in
     </a>
   );
@@ -20,8 +20,6 @@ export function SignInLink() {
 const getStyles = () => {
   return {
     link: css({
-      position: 'relative',
-      top: 1,
       whiteSpace: 'nowrap',
       '&:hover': {
         textDecoration: 'underline',
