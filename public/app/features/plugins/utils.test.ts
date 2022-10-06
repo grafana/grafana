@@ -10,6 +10,7 @@ describe('buildPluginSectionNav', () => {
   const app1: NavModelItem = {
     text: 'App1',
     id: 'plugin-page-app1',
+    url: '/a/plugin1',
     children: [
       {
         text: 'page1',
@@ -72,6 +73,18 @@ describe('buildPluginSectionNav', () => {
     );
     expect(result?.main.children![0].children![1].active).toBe(true);
     expect(result?.node.text).toBe('page2');
+  });
+
+  it('Should set app section to active', () => {
+    config.featureToggles.topnav = true;
+    const result = buildPluginSectionNav(
+      { pathname: '/a/plugin1', search: '' } as HistoryLocation,
+      null,
+      navIndex,
+      'app1'
+    );
+    expect(result?.main.children![0].active).toBe(true);
+    expect(result?.node.text).toBe('App1');
   });
 
   it('Should handle standalone page', () => {

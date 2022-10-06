@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	"github.com/grafana/grafana/pkg/services/ngalert/state/historian"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -167,7 +168,8 @@ func (ng *AlertNG) init() error {
 		AlertSender: alertsRouter,
 	}
 
-	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), appUrl, store, store, ng.dashboardService, ng.imageService, clk, ng.annotationsRepo)
+	historian := historian.NewAnnotationHistorian(ng.annotationsRepo, ng.dashboardService, ng.Log)
+	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), appUrl, store, store, ng.imageService, clk, historian)
 	scheduler := schedule.NewScheduler(schedCfg, appUrl, stateManager)
 
 	// if it is required to include folder title to the alerts, we need to subscribe to changes of alert title

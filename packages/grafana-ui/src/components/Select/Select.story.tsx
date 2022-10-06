@@ -10,7 +10,7 @@ import { getAvailableIcons } from '../../types';
 import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import mdx from './Select.mdx';
-import { generateOptions } from './mockOptions';
+import { generateOptions, generateThousandsOfOptions } from './mockOptions';
 import { SelectCommonProps } from './types';
 
 const meta: Meta = {
@@ -95,6 +95,24 @@ export const Basic: Story<StoryProps> = (args) => {
     <>
       <Select
         options={generateOptions()}
+        value={value}
+        onChange={(v) => {
+          setValue(v);
+          action('onChange')(v);
+        }}
+        {...args}
+      />
+    </>
+  );
+};
+export const BasicVirtualizedList: Story<StoryProps> = (args) => {
+  const [value, setValue] = useState<SelectableValue<string>>();
+
+  return (
+    <>
+      <Select
+        options={generateThousandsOfOptions()}
+        virtualized
         value={value}
         onChange={(v) => {
           setValue(v);
