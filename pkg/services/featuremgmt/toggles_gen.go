@@ -218,4 +218,8 @@ const (
 	// FlagIncreaseInMemDatabaseQueryCache
 	// Enable more in memory caching for database queries
 	FlagIncreaseInMemDatabaseQueryCache = "increaseInMemDatabaseQueryCache"
+
+	// FlagInterFont
+	// Switch to inter font
+	FlagInterFont = "interFont"
 )

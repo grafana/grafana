@@ -293,5 +293,9 @@ var (
 			Name:        "increaseInMemDatabaseQueryCache",
 			Description: "Enable more in memory caching for database queries",
 		},
+		{
+			Name:        "interFont",
+			Description: "Switch to inter font",
+		},
 	}
 )

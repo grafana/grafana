@@ -53,7 +53,7 @@ export function SectionNavItem({ item }: Props) {
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     link: css`
-      padding: ${theme.spacing(0.75, 0, 0.75, 1.5)};
+      padding: ${theme.spacing(1, 0, 1, 1.5)};
       display: flex;
       align-items: center;
       gap: ${theme.spacing(1)};

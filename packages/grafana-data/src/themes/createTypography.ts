@@ -63,7 +63,7 @@ export interface ThemeTypographyInput {
   htmlFontSize?: number;
 }
 
-const defaultFontFamily = '"Inter", "Helvetica", "Arial", sans-serif';
+const defaultFontFamily = '"Roboto", "Helvetica", "Arial", sans-serif';
 const defaultFontFamilyMonospace = "'Roboto Mono', monospace";
 
 export function createTypography(colors: ThemeColors, typographyInput: ThemeTypographyInput = {}): ThemeTypography {
@@ -109,8 +109,8 @@ export function createTypography(colors: ThemeColors, typographyInput: ThemeTypo
   });
 
   const variants = {
-    h1: buildVariant(fontWeightLight, 28, 1.167, -0.25),
-    h2: buildVariant(fontWeightLight, 24, 1.2, 0),
+    h1: buildVariant(fontWeightRegular, 28, 1.167, -0.25),
+    h2: buildVariant(fontWeightRegular, 24, 1.2, 0),
     h3: buildVariant(fontWeightRegular, 21, 1.167, 0),
     h4: buildVariant(fontWeightRegular, 18, 1.235, 0.25),
     h5: buildVariant(fontWeightRegular, 16, 1.334, 0),
