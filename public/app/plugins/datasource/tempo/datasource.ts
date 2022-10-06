@@ -51,7 +51,6 @@ import {
   createTableFrameFromSearch,
   createTableFrameFromTraceQlQuery,
 } from './resultTransformer';
-import { mockedSearchResponse } from './traceql/mockedSearchResponse';
 import { SearchQueryParams, TempoQuery, TempoJsonData } from './types';
 
 export const DEFAULT_LIMIT = 20;
