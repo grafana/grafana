@@ -208,16 +208,20 @@ func (c *cache) getStatesForRuleUID(orgID int64, alertRuleUID string) []*State {
 func (c *cache) removeByRuleUID(orgID int64, uid string) []*State {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
-	ruleState, ok := c.states[orgID][uid]
+	orgStates, ok := c.states[orgID]
+	if !ok {
+		return nil
+	}
+	rs, ok := orgStates[uid]
 	if !ok {
 		return nil
 	}
 	delete(c.states[orgID], uid)
-	if len(ruleState.states) == 0 {
+	if len(rs.states) == 0 {
 		return nil
 	}
-	states := make([]*State, 0, len(ruleState.states))
-	for _, state := range ruleState.states {
+	states := make([]*State, 0, len(rs.states))
+	for _, state := range rs.states {
 		states = append(states, state)
 	}
 	return states
