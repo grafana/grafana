@@ -26,8 +26,13 @@ func ProvideService(db db.DB, cfg *setting.Cfg, tagService tag.Service) *Reposit
 	}
 }
 
-func (r *RepositoryImpl) Save(ctx context.Context, item *annotations.Item) error {
-	return r.store.Add(ctx, item)
+func (r *RepositoryImpl) Save(ctx context.Context, items ...*annotations.Item) error {
+	for _, i := range items {
+		if err := r.store.Add(ctx, i); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (r *RepositoryImpl) Update(ctx context.Context, item *annotations.Item) error {
