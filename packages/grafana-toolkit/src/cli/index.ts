@@ -13,7 +13,6 @@ import { pluginSignTask } from './tasks/plugin.sign';
 import { pluginTestTask } from './tasks/plugin.tests';
 import { pluginUpdateTask } from './tasks/plugin.update';
 import { getToolkitVersion, githubPublishTask } from './tasks/plugin.utils';
-import { bundleManagedTask } from './tasks/plugin/bundle.managed';
 import { searchTestDataSetupTask } from './tasks/searchTestDataSetup';
 import { templateTask } from './tasks/template';
 import { toolkitBuildTask } from './tasks/toolkit.build';
@@ -222,13 +221,6 @@ export const run = (includeInternalScripts = false) => {
       await execTask(ciPluginReportTask)({
         upload: cmd.upload,
       });
-    });
-
-  program
-    .command('plugin:bundle-managed')
-    .description('Builds managed plugins')
-    .action(async (cmd) => {
-      await execTask(bundleManagedTask)({});
     });
 
   program
