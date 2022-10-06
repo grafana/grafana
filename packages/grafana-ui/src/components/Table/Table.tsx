@@ -30,7 +30,7 @@ import {
   TableSortByFieldState,
   TableFooterCalc,
 } from './types';
-import { getColumns, sortCaseInsensitive, sortNumber, getFooterCells, createFooterCalculationValues } from './utils';
+import { getColumns, sortCaseInsensitive, sortNumber, getFooterItems, createFooterCalculationValues } from './utils';
 
 const COLUMN_MIN_WIDTH = 150;
 
@@ -49,6 +49,8 @@ export interface Props {
   onSortByChange?: TableSortByActionCallback;
   onCellFilterAdded?: TableFilterActionCallback;
   footerOptions?: TableFooterCalc;
+  footerValues?: FooterItem[];
+  enablePagination?: boolean;
 }
 
 function useTableStateReducer({ onColumnResize, onSortByChange, data }: Props) {
@@ -128,6 +130,8 @@ export const Table: FC<Props> = memo((props: Props) => {
     initialSortBy,
     footerOptions,
     showTypeIcons,
+    footerValues,
+    enablePagination,
   } = props;
 
   const listRef = useRef<FixedSizeList>(null);
@@ -136,17 +140,17 @@ export const Table: FC<Props> = memo((props: Props) => {
   const tableStyles = useStyles2(getTableStyles);
   const theme = useTheme2();
   const headerHeight = noHeader ? 0 : tableStyles.cellHeight;
-  const [footerValues, setFooterValues] = useState<FooterItem[] | undefined>(undefined);
+  const [footerItems, setFooterItems] = useState<FooterItem[] | undefined>(footerValues);
 
   const footerHeight = useMemo(() => {
     const EXTENDED_ROW_HEIGHT = 33;
     let length = 0;
 
-    if (!footerValues) {
+    if (!footerItems) {
       return 0;
     }
 
-    for (const fv of footerValues) {
+    for (const fv of footerItems) {
       if (Array.isArray(fv) && fv.length > length) {
         length = fv.length;
       }
@@ -157,7 +161,7 @@ export const Table: FC<Props> = memo((props: Props) => {
     }
 
     return EXTENDED_ROW_HEIGHT;
-  }, [footerValues]);
+  }, [footerItems]);
 
   // React table data array. This data acts just like a dummy array to let react-table know how many rows exist
   // The cells use the field to look up values
@@ -173,8 +177,8 @@ export const Table: FC<Props> = memo((props: Props) => {
 
   // React-table column definitions
   const memoizedColumns = useMemo(
-    () => getColumns(data, width, columnMinWidth, footerValues),
-    [data, width, columnMinWidth, footerValues]
+    () => getColumns(data, width, columnMinWidth, footerItems),
+    [data, width, columnMinWidth, footerItems]
   );
 
   // Internal react table state reducer
@@ -210,10 +214,26 @@ export const Table: FC<Props> = memo((props: Props) => {
     pageOptions,
   } = useTable(options, useFilters, useSortBy, usePagination, useAbsoluteLayout, useResizeColumns);
 
+  /*
+    Footer value calculation is being moved in the Table component and the footerValues prop will be deprecated.
+    The footerValues prop is still used in the Table component for backwards compatibility. Adding the
+    footerOptions prop will switch the Table component to use the new footer calculation. Using both props will
+    result in the footerValues prop being ignored.
+  */
   useEffect(() => {
-    if (footerOptions && footerOptions.show) {
-      setFooterValues(
-        getFooterCells(
+    if (!footerOptions) {
+      setFooterItems(footerValues);
+    }
+  }, [footerValues, footerOptions]);
+
+  useEffect(() => {
+    if (!footerOptions) {
+      return;
+    }
+
+    if (footerOptions.show) {
+      setFooterItems(
+        getFooterItems(
           headerGroups[0].headers as unknown as Array<{ field: Field }>,
           createFooterCalculationValues(rows),
           footerOptions,
@@ -221,14 +241,14 @@ export const Table: FC<Props> = memo((props: Props) => {
         )
       );
     } else {
-      setFooterValues(undefined);
+      setFooterItems(undefined);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [footerOptions, theme, state.filters]);
 
   let listHeight = height - (headerHeight + footerHeight);
 
-  if (footerOptions?.enablePagination) {
+  if (enablePagination) {
     listHeight -= tableStyles.cellHeight;
   }
   const pageSize = Math.round(listHeight / tableStyles.cellHeight) - 1;
@@ -266,7 +286,7 @@ export const Table: FC<Props> = memo((props: Props) => {
   const RenderRow = React.useCallback(
     ({ index: rowIndex, style }) => {
       let row = rows[rowIndex];
-      if (footerOptions?.enablePagination) {
+      if (enablePagination) {
         row = page[rowIndex];
       }
       prepareRow(row);
@@ -285,7 +305,7 @@ export const Table: FC<Props> = memo((props: Props) => {
         </div>
       );
     },
-    [onCellFilterAdded, page, footerOptions?.enablePagination, prepareRow, rows, tableStyles]
+    [onCellFilterAdded, page, enablePagination, prepareRow, rows, tableStyles]
   );
 
   const onNavigate = useCallback(
@@ -295,9 +315,9 @@ export const Table: FC<Props> = memo((props: Props) => {
     [gotoPage]
   );
 
-  const itemCount = footerOptions?.enablePagination ? page.length : rows.length;
+  const itemCount = enablePagination ? page.length : rows.length;
   let paginationEl = null;
-  if (footerOptions?.enablePagination) {
+  if (enablePagination) {
     const itemsRangeStart = state.pageIndex * state.pageSize + 1;
     let itemsRangeEnd = itemsRangeStart + state.pageSize - 1;
     const isSmall = width < 550;
@@ -357,11 +377,11 @@ export const Table: FC<Props> = memo((props: Props) => {
               No data
             </div>
           )}
-          {footerValues && (
+          {footerItems && (
             <FooterRow
               height={footerHeight}
-              isPaginationVisible={Boolean(footerOptions?.enablePagination)}
-              footerValues={footerValues}
+              isPaginationVisible={Boolean(enablePagination)}
+              footerValues={footerItems}
               footerGroups={footerGroups}
               totalColumnsWidth={totalColumnsWidth}
             />

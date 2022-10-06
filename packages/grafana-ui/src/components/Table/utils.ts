@@ -270,7 +270,7 @@ function toNumber(value: any): number {
   return Number(value);
 }
 
-export function getFooterCells(
+export function getFooterItems(
   filterFields: Array<{ field: Field }>,
   values: any[number],
   options: TableFooterCalc,
