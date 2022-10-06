@@ -190,11 +190,15 @@ func (c *cache) getStatesForRuleUID(orgID int64, alertRuleUID string) []*State {
 	var result []*State
 	c.mtxStates.RLock()
 	defer c.mtxStates.RUnlock()
-	ruleStates, ok := c.states[orgID][alertRuleUID]
+	orgRules, ok := c.states[orgID]
 	if !ok {
 		return nil
 	}
-	for _, state := range ruleStates.states {
+	rs, ok := orgRules[alertRuleUID]
+	if !ok {
+		return nil
+	}
+	for _, state := range rs.states {
 		result = append(result, state)
 	}
 	return result
