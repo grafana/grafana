@@ -60,7 +60,6 @@ describe('DashboardModel', () => {
   describe('getSaveModelClone', () => {
     it('should sort keys', () => {
       const model = new DashboardModel({});
-      model.autoUpdate = null;
 
       const saveModel = model.getSaveModelClone();
       const keys = _keys(saveModel);

@@ -31,7 +31,6 @@ const getSaveAsDashboardClone = (dashboard: DashboardModel) => {
     });
   }
 
-  delete clone.autoUpdate;
   return clone;
 };
 

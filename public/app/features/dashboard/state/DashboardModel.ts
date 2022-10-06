@@ -71,7 +71,6 @@ export class DashboardModel implements TimeModel {
   id: any;
   uid: string;
   title: string;
-  autoUpdate: any;
   description: any;
   tags: any;
   style: any;
@@ -137,7 +136,6 @@ export class DashboardModel implements TimeModel {
     this.uid = data.uid || null;
     this.revision = data.revision;
     this.title = data.title ?? 'No Title';
-    this.autoUpdate = data.autoUpdate;
     this.description = data.description;
     this.tags = data.tags ?? [];
     this.style = data.style ?? 'dark';
