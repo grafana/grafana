@@ -80,7 +80,7 @@ const (
 	FlagLokiDataframeApi = "lokiDataframeApi"
 
 	// FlagLokiMonacoEditor
-	// access to Monaco query editor for Loki
+	// Access to Monaco query editor for Loki
 	FlagLokiMonacoEditor = "lokiMonacoEditor"
 
 	// FlagSwaggerUi
