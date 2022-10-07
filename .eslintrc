@@ -20,13 +20,18 @@
       }
     ],
     "no-restricted-imports": [
-      "warn",
+      "error",
       {
         "paths": [
           {
             "name": "react-redux",
             "importNames": ["useDispatch", "useSelector"],
             "message": "Please import from app/types instead."
+          },
+          {
+            "name": "react-i18next",
+            "importNames": ["Trans", "t"],
+            "message": "Please import from app/core/internationalization instead"
           }
         ]
       }
@@ -79,7 +84,7 @@
         "jsx-a11y/click-events-have-key-events": "off",
         "jsx-a11y/heading-has-content": "error",
         "jsx-a11y/html-has-lang": "error",
-        "jsx-a11y/iframe-has-title": "off",
+        "jsx-a11y/iframe-has-title": "error",
         "jsx-a11y/img-redundant-alt": "error",
         "jsx-a11y/interactive-supports-focus": [
           "off",
@@ -101,7 +106,12 @@
         "jsx-a11y/media-has-caption": "error",
         "jsx-a11y/mouse-events-have-key-events": "off",
         "jsx-a11y/no-access-key": "error",
-        "jsx-a11y/no-autofocus": "off",
+        "jsx-a11y/no-autofocus": [
+          "error",
+          {
+            "ignoreNonDOM": true
+          }
+        ],
         "jsx-a11y/no-distracting-elements": "error",
         "jsx-a11y/no-interactive-element-to-noninteractive-role": "error",
         "jsx-a11y/no-noninteractive-element-interactions": [

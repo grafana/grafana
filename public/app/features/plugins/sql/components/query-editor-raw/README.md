@@ -39,7 +39,7 @@ Goals
 - [ ] Allow providing suggestions for standard-ish SQL syntax (THIS PR)
 - [ ] Allow providing custom SQL dialects and suggestions for them (TODO - CloudWatch implementation sets a good base for how to provide custom dialect definition)
 
-`SQLEditor` component builds on top of `CodeEditor` component, but we may want to base it on `ReactMonacoEditor` component instead to be less prone to `CodeEditor` API changes and have full controll over the Monaco API. For now the `CodeEditor` is good enough for a simplification.
+`SQLEditor` component builds on top of `CodeEditor` component, but we may want to base it on `ReactMonacoEditor` component instead to be less prone to `CodeEditor` API changes and have full control over the Monaco API. For now the `CodeEditor` is good enough for a simplification.
 
 `SQLEditor` API:
 

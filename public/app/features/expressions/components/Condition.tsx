@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import React, { FC, FormEvent } from 'react';
 
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
-import { Button, ButtonSelect, Icon, InlineFieldRow, Input, Select, useStyles } from '@grafana/ui';
+import { Button, ButtonSelect, Icon, InlineFieldRow, Input, Select, Stack, useStyles } from '@grafana/ui';
 
 import alertDef, { EvalFunction } from '../../alerting/state/alertDef';
 import { ClassicCondition, ReducerType } from '../types';
@@ -69,65 +69,70 @@ export const Condition: FC<Props> = ({ condition, index, onChange, onRemoveCondi
     condition.evaluator.type === EvalFunction.IsWithinRange || condition.evaluator.type === EvalFunction.IsOutsideRange;
 
   return (
-    <InlineFieldRow>
-      {index === 0 ? (
-        <div className={cx(styles.button, buttonWidth)}>WHEN</div>
-      ) : (
-        <ButtonSelect
-          className={cx(styles.buttonSelectText, buttonWidth)}
-          options={evalOperators}
-          onChange={onEvalOperatorChange}
-          value={evalOperators.find((ea) => ea.value === condition.operator!.type)}
-        />
-      )}
-      <Select
-        options={reducerFunctions}
-        onChange={onReducerFunctionChange}
-        width={20}
-        value={reducerFunctions.find((rf) => rf.value === condition.reducer.type)}
-      />
-      <div className={styles.button}>OF</div>
-      <Select
-        onChange={onRefIdChange}
-        options={refIds}
-        width={15}
-        value={refIds.find((r) => r.value === condition.query.params[0])}
-      />
-      <ButtonSelect
-        className={styles.buttonSelectText}
-        options={evalFunctions}
-        onChange={onEvalFunctionChange}
-        value={evalFunctions.find((ef) => ef.value === condition.evaluator.type)}
-      />
-      {isRange ? (
-        <>
-          <Input
-            type="number"
-            width={10}
-            onChange={(event) => onEvaluateValueChange(event, 0)}
-            value={condition.evaluator.params[0]}
+    <Stack direction="row">
+      <div style={{ flex: 1 }}>
+        <InlineFieldRow>
+          {index === 0 ? (
+            <div className={cx(styles.button, buttonWidth)}>WHEN</div>
+          ) : (
+            <ButtonSelect
+              className={cx(styles.buttonSelectText, buttonWidth)}
+              options={evalOperators}
+              onChange={onEvalOperatorChange}
+              value={evalOperators.find((ea) => ea.value === condition.operator!.type)}
+            />
+          )}
+          <Select
+            options={reducerFunctions}
+            onChange={onReducerFunctionChange}
+            width={20}
+            value={reducerFunctions.find((rf) => rf.value === condition.reducer.type)}
           />
-          <div className={styles.button}>TO</div>
-          <Input
-            type="number"
-            width={10}
-            onChange={(event) => onEvaluateValueChange(event, 1)}
-            value={condition.evaluator.params[1]}
+          <div className={styles.button}>OF</div>
+          <Select
+            onChange={onRefIdChange}
+            options={refIds}
+            width={'auto'}
+            value={refIds.find((r) => r.value === condition.query.params[0])}
           />
-        </>
-      ) : condition.evaluator.type !== EvalFunction.HasNoValue ? (
-        <Input
-          type="number"
-          width={10}
-          onChange={(event) => onEvaluateValueChange(event, 0)}
-          value={condition.evaluator.params[0]}
-        />
-      ) : null}
-
+        </InlineFieldRow>
+        <InlineFieldRow>
+          <ButtonSelect
+            className={styles.buttonSelectText}
+            options={evalFunctions}
+            onChange={onEvalFunctionChange}
+            value={evalFunctions.find((ef) => ef.value === condition.evaluator.type)}
+          />
+          {isRange ? (
+            <>
+              <Input
+                type="number"
+                width={10}
+                onChange={(event) => onEvaluateValueChange(event, 0)}
+                value={condition.evaluator.params[0]}
+              />
+              <div className={styles.button}>TO</div>
+              <Input
+                type="number"
+                width={10}
+                onChange={(event) => onEvaluateValueChange(event, 1)}
+                value={condition.evaluator.params[1]}
+              />
+            </>
+          ) : condition.evaluator.type !== EvalFunction.HasNoValue ? (
+            <Input
+              type="number"
+              width={10}
+              onChange={(event) => onEvaluateValueChange(event, 0)}
+              value={condition.evaluator.params[0]}
+            />
+          ) : null}
+        </InlineFieldRow>
+      </div>
       <Button variant="secondary" type="button" onClick={() => onRemoveCondition(index)}>
         <Icon name="trash-alt" />
       </Button>
-    </InlineFieldRow>
+    </Stack>
   );
 };
 

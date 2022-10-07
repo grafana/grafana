@@ -26,6 +26,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"golang.org/x/sync/errgroup"
 )
 
 func ProvideService(
@@ -90,18 +91,31 @@ func (s *Service) QueryDataMultipleSources(ctx context.Context, user *user.Signe
 	} else {
 		resp := backend.NewQueryDataResponse()
 
-		// create new reqDTO with only the queries for that datasource
+		g, ctx := errgroup.WithContext(ctx)
+		results := make([]backend.Responses, len(byDataSource))
+
 		for _, queries := range byDataSource {
-			subDTO := reqDTO.CloneWithQueries(queries)
+			dataSourceQueries := queries
+			g.Go(func() error {
+				subDTO := reqDTO.CloneWithQueries(dataSourceQueries)
 
-			subResp, err := s.QueryData(ctx, user, skipCache, subDTO, handleExpressions)
+				subResp, err := s.QueryData(ctx, user, skipCache, subDTO, handleExpressions)
 
-			if err != nil {
-				return nil, err
-			}
+				if err == nil {
+					results = append(results, subResp.Responses)
+				}
 
-			for refId, queryResponse := range subResp.Responses {
-				resp.Responses[refId] = queryResponse
+				return err
+			})
+		}
+
+		if err := g.Wait(); err != nil {
+			return nil, err
+		}
+
+		for _, result := range results {
+			for refId, dataResponse := range result {
+				resp.Responses[refId] = dataResponse
 			}
 		}
 

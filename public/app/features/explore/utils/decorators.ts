@@ -30,6 +30,7 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
   const logsFrames: DataFrame[] = [];
   const traceFrames: DataFrame[] = [];
   const nodeGraphFrames: DataFrame[] = [];
+  const flameGraphFrames: DataFrame[] = [];
 
   for (const frame of data.series) {
     switch (frame.meta?.preferredVisualisationType) {
@@ -47,6 +48,9 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
         break;
       case 'nodeGraph':
         nodeGraphFrames.push(frame);
+        break;
+      case 'flamegraph':
+        config.featureToggles.flameGraph ? flameGraphFrames.push(frame) : tableFrames.push(frame);
         break;
       default:
         if (isTimeSeries(frame)) {
@@ -66,6 +70,7 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
     logsFrames,
     traceFrames,
     nodeGraphFrames,
+    flameGraphFrames,
     graphResult: null,
     tableResult: null,
     logsResult: null,
