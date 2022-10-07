@@ -25,13 +25,17 @@ interface TopBarWrapperProps {
 function TopBarWrapper({ children, align = 'left' }: TopBarWrapperProps) {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
-  const breakPointSM = theme.breakpoints.values.sm;
-  const [isSmallScreen, setIsSmallScreen] = useState(window.matchMedia(`(max-width: ${breakPointSM}px)`).matches);
+  const breakpoint = theme.breakpoints.values.sm;
 
-  const onMediaQueryChange = (e: MediaQueryListEvent) => {
-    setIsSmallScreen(e.matches);
-  };
-  useMediaQueryChange(breakPointSM, onMediaQueryChange, isSmallScreen);
+  const [isSmallScreen, setIsSmallScreen] = useState(window.matchMedia(`(max-width: ${breakpoint}px)`).matches);
+
+  useMediaQueryChange({
+    breakpoint,
+    onChange: (e: MediaQueryListEvent) => {
+      setIsSmallScreen(e.matches);
+    },
+    value: isSmallScreen,
+  });
 
   if (isSmallScreen) {
     return <>{children}</>;
