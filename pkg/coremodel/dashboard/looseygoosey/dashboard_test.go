@@ -1,4 +1,4 @@
-package extract
+package looseygoosey
 
 import (
 	"encoding/json"
@@ -10,12 +10,10 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/services/searchV2/dslookup"
 )
 
-func dsLookup() dslookup.DatasourceLookup {
-	return dslookup.CreateDatasourceLookup([]*dslookup.DatasourceQueryResult{
+func dsLookupForTests() DatasourceLookup {
+	return CreateDatasourceLookup([]*DatasourceQueryResult{
 		{
 			UID:       "P8045C56BDA891CB2",
 			Type:      "cloudwatch",
@@ -90,7 +88,7 @@ func TestReadDashboard(t *testing.T) {
 		}
 		require.NoError(t, err)
 
-		dash, err := ReadDashboard(f, dsLookup())
+		dash, err := readDashboard(f, dsLookupForTests())
 		sortDatasources(dash)
 
 		require.NoError(t, err)
@@ -115,7 +113,7 @@ func TestReadDashboard(t *testing.T) {
 }
 
 // assure consistent ordering of datasources to prevent random failures of `assert.JSONEq`
-func sortDatasources(dash *DashboardInfo) {
+func sortDatasources(dash *dashboardInfo) {
 	sort.Slice(dash.Datasource, func(i, j int) bool {
 		return strings.Compare(dash.Datasource[i].UID, dash.Datasource[j].UID) > 0
 	})

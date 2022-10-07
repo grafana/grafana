@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/coremodel/dashboard/looseygoosey"
 	"github.com/grafana/grafana/pkg/coremodel/playlist"
 	"github.com/grafana/grafana/pkg/models"
 )
@@ -28,10 +29,9 @@ func GetSafeSaveObject(ctx context.Context, r *WriteObjectRequest) (*models.Obje
 	switch r.Kind {
 	case StandardKindPlaylist:
 		builder = playlist.GetSummaryBuilder()
-
-	// Avoid circular dependency
-	//case StandardKindDashboard:
-	// 	builder = sobj.NewDashboardSummaryBuilder(dummyDSLookup)
+	case StandardKindDashboard:
+		// TODO: use real datasource lookup
+		builder = looseygoosey.NewDashboardSummaryBuilder(dummyDSLookup())
 	default:
 		builder = getDummySummary(r.Kind)
 	}
@@ -83,4 +83,21 @@ func getDummySummary(kind string) models.ObjectSummaryBuilder {
 
 		return summary, body, nil
 	}
+}
+
+func dummyDSLookup() looseygoosey.DatasourceLookup {
+	return looseygoosey.CreateDatasourceLookup([]*looseygoosey.DatasourceQueryResult{
+		{
+			UID:       "sqlite-2",
+			Type:      "sqlite-datasource",
+			Name:      "SQLite Grafana2",
+			IsDefault: false,
+		},
+		{
+			UID:       "default.uid",
+			Type:      "default.type",
+			Name:      "default.name",
+			IsDefault: true,
+		},
+	})
 }

@@ -1,4 +1,4 @@
-package object
+package looseygoosey
 
 import (
 	"encoding/json"
@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/store/object"
 )
 
 //------------------------------------------------------------------------------
@@ -21,7 +20,14 @@ type SummaryTable struct {
 	Labels     *data.Frame
 }
 
-func newSummaryTable() SummaryTable {
+type ObjectInfo struct {
+	UID  string
+	Kind string
+	Size int64
+	ETag string
+}
+
+func NewSummaryTable() SummaryTable {
 	return SummaryTable{
 		Raw: data.NewFrame("raw",
 			newField("uid", data.FieldTypeString),
@@ -54,7 +60,7 @@ func newField(name string, p data.FieldType) *data.Field {
 	return f
 }
 
-func (x *SummaryTable) Add(obj *object.RawObject, summary *models.ObjectSummary) {
+func (x *SummaryTable) Add(obj *ObjectInfo, summary *models.ObjectSummary) {
 	if summary == nil {
 		return
 	}

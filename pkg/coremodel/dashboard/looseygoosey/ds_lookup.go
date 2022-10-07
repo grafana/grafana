@@ -1,4 +1,4 @@
-package dslookup
+package looseygoosey
 
 import (
 	"context"

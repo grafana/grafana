@@ -13,12 +13,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/coremodel/dashboard/looseygoosey"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/searchV2/dslookup"
-	"github.com/grafana/grafana/pkg/services/searchV2/object"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/setting"
@@ -850,7 +849,7 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 	loadDatasourceSpan.SetAttributes("orgID", orgID, attribute.Key("orgID").Int64(orgID))
 
 	// key will allow name or uid
-	lookup, err := dslookup.LoadDatasourceLookup(loadDatasourceCtx, orgID, l.sql)
+	lookup, err := looseygoosey.LoadDatasourceLookup(loadDatasourceCtx, orgID, l.sql)
 	if err != nil {
 		loadDatasourceSpan.End()
 		return dashboards, err
@@ -897,7 +896,7 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 		readDashboardSpan.SetAttributes("orgID", orgID, attribute.Key("orgID").Int64(orgID))
 		readDashboardSpan.SetAttributes("dashboardCount", len(rows), attribute.Key("dashboardCount").Int(len(rows)))
 
-		reader := object.NewDashboardSummaryBuilder(lookup)
+		reader := looseygoosey.NewDashboardSummaryBuilder(lookup)
 
 		for _, row := range rows {
 			summary, _, err := reader(ctx, row.Uid, row.Data)

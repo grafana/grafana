@@ -1,4 +1,4 @@
-package object
+package looseygoosey
 
 import (
 	"bytes"
@@ -7,19 +7,16 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/searchV2/dslookup"
-	"github.com/grafana/grafana/pkg/services/searchV2/extract"
-	"github.com/grafana/grafana/pkg/services/store/object"
 )
 
-func NewDashboardSummaryBuilder(lookup dslookup.DatasourceLookup) models.ObjectSummaryBuilder {
+func NewDashboardSummaryBuilder(lookup DatasourceLookup) models.ObjectSummaryBuilder {
 	return func(ctx context.Context, uid string, body []byte) (*models.ObjectSummary, []byte, error) {
 		summary := &models.ObjectSummary{
 			Labels: make(map[string]string),
 			Fields: make(map[string]interface{}),
 		}
 		stream := bytes.NewBuffer(body)
-		dash, err := extract.ReadDashboard(stream, lookup)
+		dash, err := readDashboard(stream, lookup)
 		if err != nil {
 			summary.Error = &models.ObjectErrorInfo{
 				Message: err.Error(),
@@ -27,7 +24,7 @@ func NewDashboardSummaryBuilder(lookup dslookup.DatasourceLookup) models.ObjectS
 			return summary, body, err
 		}
 
-		dashboardRefs := object.NewReferenceAccumulator()
+		dashboardRefs := NewReferenceAccumulator()
 		url := fmt.Sprintf("/d/%s/%s", uid, models.SlugifyTitle(dash.Title))
 		summary.Name = dash.Title
 		summary.Description = dash.Description
@@ -38,9 +35,10 @@ func NewDashboardSummaryBuilder(lookup dslookup.DatasourceLookup) models.ObjectS
 		if len(dash.TemplateVars) > 0 {
 			summary.Fields["hasTemplateVars"] = true
 		}
+		summary.Fields["schemaVersion"] = dash.SchemaVersion
 
 		for _, panel := range dash.Panels {
-			panelRefs := object.NewReferenceAccumulator()
+			panelRefs := NewReferenceAccumulator()
 			p := &models.ObjectSummary{
 				UID:  uid + "#" + strconv.FormatInt(panel.ID, 10),
 				Kind: "panel",
@@ -52,15 +50,15 @@ func NewDashboardSummaryBuilder(lookup dslookup.DatasourceLookup) models.ObjectS
 
 			panelRefs.Add("panel", panel.Type, "")
 			for _, v := range panel.Datasource {
-				dashboardRefs.Add(object.StandardKindDataSource, v.Type, v.UID)
-				panelRefs.Add(object.StandardKindDataSource, v.Type, v.UID)
+				dashboardRefs.Add(StandardKindDataSource, v.Type, v.UID)
+				panelRefs.Add(StandardKindDataSource, v.Type, v.UID)
 			}
 
 			for _, v := range panel.Transformer {
-				panelRefs.Add(object.StandardKindTransform, v, "")
+				panelRefs.Add(StandardKindTransform, v, "")
 			}
 
-			dashboardRefs.Add(object.StandardKindPanel, panel.Type, "")
+			dashboardRefs.Add(StandardKindPanel, panel.Type, "")
 			p.References = panelRefs.Get()
 			summary.Nested = append(summary.Nested, p)
 		}
