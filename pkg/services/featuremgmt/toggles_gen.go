@@ -79,6 +79,10 @@ const (
 	// use experimental loki api for websocket streaming (early prototype)
 	FlagLokiDataframeApi = "lokiDataframeApi"
 
+	// FlagLokiMonacoEditor
+	// Access to Monaco query editor for Loki
+	FlagLokiMonacoEditor = "lokiMonacoEditor"
+
 	// FlagSwaggerUi
 	// Serves swagger UI
 	FlagSwaggerUi = "swaggerUi"
@@ -203,9 +207,17 @@ const (
 	// Run GRPC server
 	FlagGrpcServer = "grpcServer"
 
+	// FlagObjectStore
+	// SQL based object store
+	FlagObjectStore = "objectStore"
+
 	// FlagTraceqlEditor
 	// Show the TraceQL editor in the explore page
 	FlagTraceqlEditor = "traceqlEditor"
+
+	// FlagFlameGraph
+	// Show the flame graph
+	FlagFlameGraph = "flameGraph"
 
 	// FlagRedshiftAsyncQueryDataSupport
 	// Enable async query data support for Redshift
