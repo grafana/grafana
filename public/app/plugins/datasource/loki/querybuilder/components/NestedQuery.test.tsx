@@ -2,9 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data';
-
-import { LokiDatasource } from '../../datasource';
+import { createLokiDatasource } from '../../mocks';
 import { LokiVisualQueryBinary } from '../types';
 
 import { NestedQuery, Props as NestedQueryProps } from './NestedQuery';
@@ -26,15 +24,7 @@ const createMockProps = (
     },
   };
 
-  const datasource = new LokiDatasource(
-    {
-      url: '',
-      jsonData: {},
-      meta: {} as DataSourcePluginMeta,
-    } as DataSourceInstanceSettings,
-    undefined,
-    undefined
-  );
+  const datasource = createLokiDatasource();
 
   const props: NestedQueryProps = {
     nestedQuery: nestedQuery,
