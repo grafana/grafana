@@ -60,5 +60,6 @@ publicDashboards = true
 - Annotations will not be displayed in public dashboards.
 - Grafana Live and real-time event streams are not supported.
 - Library panels are currently not supported, but are planned to be in the future.
+- Datasources using Reverse Proxy functionality are not supported.
 
 We are excited to share this enhancement with you and we’d love your feedback! Please check out the [Github](https://github.com/grafana/grafana/discussions/49253) discussion and join the conversation.
