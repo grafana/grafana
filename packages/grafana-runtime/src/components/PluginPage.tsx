@@ -20,6 +20,7 @@ export let PluginPage: PluginPageType = ({ children }) => {
  * Used to bootstrap the PluginPage during application start
  * is exposed via runtime.
  *
+ * {@link app/core/components/PageNew/PluginPage#PluginPage}
  * @internal
  */
 export function setPluginPage(component: PluginPageType) {
