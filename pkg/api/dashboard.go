@@ -777,8 +777,7 @@ func (hs *HTTPServer) ValidateDashboard(c *models.ReqContext) response.Response 
 
 	// POST api receives dashboard as a string of json (so line numbers for errors stay consistent),
 	// but we need to parse the schema version out of it
-	dashboardBytes := []byte(cmd.Dashboard)
-	dashboardJson, err := simplejson.NewJson(dashboardBytes)
+	dashboardJson, err := simplejson.NewJson(cmd.Dashboard)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "unable to parse dashboard", err)
 	}
@@ -794,7 +793,7 @@ func (hs *HTTPServer) ValidateDashboard(c *models.ReqContext) response.Response 
 	// work), or if schemaVersion is absent (which will happen once the Thema
 	// schema becomes canonical).
 	if err != nil || schemaVersion >= dashboard.HandoffSchemaVersion {
-		v, _ := cuectx.JSONtoCUE("dashboard.json", dashboardBytes)
+		v, _ := cuectx.JSONtoCUE("dashboard.json", cmd.Dashboard)
 		_, validationErr := cm.CurrentSchema().Validate(v)
 
 		if validationErr == nil {
