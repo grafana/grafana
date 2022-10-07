@@ -21,8 +21,6 @@ import (
 )
 
 type Service struct {
-	folderService dashboards.FolderService
-
 	log              log.Logger
 	cfg              *setting.Cfg
 	dashboardService dashboards.DashboardService
@@ -43,12 +41,11 @@ func ProvideService(
 	dashboardStore dashboards.Store,
 	features featuremgmt.FeatureToggles,
 	folderPermissionsService accesscontrol.FolderPermissionsService,
-	folderService dashboards.FolderService,
 	searchService *search.SearchService,
 ) folder.Service {
+	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(dashboardStore))
+	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(dashboardStore))
 	return &Service{
-		folderService: folderService,
-
 		cfg:              cfg,
 		log:              log.New("folder-service"),
 		dashboardService: dashboardService,
@@ -184,7 +181,7 @@ func (s *Service) CreateFolder(ctx context.Context, user *user.SignedInUser, org
 	}
 
 	var permissionErr error
-	if !accesscontrol.IsDisabled(f.cfg) {
+	if !accesscontrol.IsDisabled(s.cfg) {
 		var permissions []accesscontrol.SetResourcePermissionCommand
 		if user.IsRealUser() && !user.IsAnonymous {
 			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
