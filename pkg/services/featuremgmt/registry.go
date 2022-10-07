@@ -310,5 +310,11 @@ var (
 			Name:        "increaseInMemDatabaseQueryCache",
 			Description: "Enable more in memory caching for database queries",
 		},
+		{
+			Name:            "queryLibrary",
+			Description:     "Reusable query library",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
 	}
 )
