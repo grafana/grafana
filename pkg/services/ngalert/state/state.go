@@ -78,8 +78,7 @@ type ContextualState struct {
 	*State
 	PreviousState       eval.State
 	PreviousStateReason string
-	RuleID              int64
-	RuleTitle           string
+	Rule                *models.AlertRule
 }
 
 func (c ContextualState) Formatted() string {

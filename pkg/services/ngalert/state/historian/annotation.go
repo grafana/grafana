@@ -43,10 +43,10 @@ func (h *AnnotationStateHistorian) recordStatesSync(ctx context.Context, states 
 		logger := h.log.New(state.State.GetRuleKey().LogContext()...)
 		logger.Debug("Alert state changed creating annotation", "newState", state.Formatted(), "oldState", state.PreviousFormatted())
 
-		annotationText, annotationData := buildAnnotationTextAndData(state.RuleTitle, state.State)
+		annotationText, annotationData := buildAnnotationTextAndData(state.Rule, state.State)
 
 		item := annotations.Item{
-			AlertId:   state.RuleID,
+			AlertId:   state.Rule.ID,
 			OrgId:     state.OrgID,
 			PrevState: state.PreviousFormatted(),
 			NewState:  state.Formatted(),
@@ -87,7 +87,7 @@ func (h *AnnotationStateHistorian) recordStatesSync(ctx context.Context, states 
 	}
 }
 
-func buildAnnotationTextAndData(title string, currentState *state.State) (string, *simplejson.Json) {
+func buildAnnotationTextAndData(rule *ngmodels.AlertRule, currentState *state.State) (string, *simplejson.Json) {
 	jsonData := simplejson.New()
 	var value string
 
@@ -118,7 +118,7 @@ func buildAnnotationTextAndData(title string, currentState *state.State) (string
 	}
 
 	labels := removePrivateLabels(currentState.Labels)
-	return fmt.Sprintf("%s {%s} - %s", title, labels.String(), value), jsonData
+	return fmt.Sprintf("%s {%s} - %s", rule.Title, labels.String(), value), jsonData
 }
 
 func removePrivateLabels(labels data.Labels) data.Labels {
