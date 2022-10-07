@@ -7758,6 +7758,9 @@ exports[`better eslint`] = {
     "public/app/plugins/panel/debug/RenderInfoViewer.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "public/app/plugins/panel/flamegraph/components/FlameGraphHeader.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
     "public/app/plugins/panel/gauge/GaugeMigrations.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
