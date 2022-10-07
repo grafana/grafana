@@ -98,7 +98,7 @@ func getFlags(ctx *cli.Context) (*flags, error) {
 		return nil, err
 	}
 	tag := ctx.Value("tag").(string)
-	if tag == "" {
+	if tag == "" && metadata.GrafanaVersion != "" {
 		tag = fmt.Sprintf("v%s", metadata.GrafanaVersion)
 	}
 	fullRepo := ctx.Value("repo").(string)
