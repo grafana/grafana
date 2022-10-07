@@ -63,19 +63,7 @@ func (r *xormRepositoryImpl) Add(ctx context.Context, item *annotations.Item) er
 		if _, err := sess.Table("annotation").Insert(item); err != nil {
 			return err
 		}
-
-		if item.Tags != nil {
-			tags, err := r.tagService.EnsureTagsExist(ctx, tags)
-			if err != nil {
-				return err
-			}
-			for _, tag := range tags {
-				if _, err := sess.Exec("INSERT INTO annotation_tag (annotation_id, tag_id) VALUES(?,?)", item.Id, tag.Id); err != nil {
-					return err
-				}
-			}
-		}
-		return nil
+		return r.synchronizeTags(ctx, item)
 	})
 }
 
@@ -84,16 +72,14 @@ func (r *xormRepositoryImpl) Add(ctx context.Context, item *annotations.Item) er
 // This is due to a limitation with some supported databases:
 // We cannot correlate the IDs of batch-inserted records without acquiring a full table lock in MySQL.
 // Annotations have no other uniquifier field, so we also cannot re-query for them after the fact.
-// IDs are also required to associate tags. So, callers can only perform this optimization if they:
-//   a) Don't care about the IDs of inserted annotations
-//   b) Are inserting annotations with no tags
+// So, callers can only reliably use this endpoint if they don't care about returned IDs.
 func (r *xormRepositoryImpl) AddMany(ctx context.Context, items []annotations.Item) error {
-	for i, item := range items {
-		if len(item.Tags) > 0 {
-			panic("Batch insert of annotations with tags is unsupported due to a database limitation.")
-		}
+	hasTags := make([]annotations.Item, 0)
+	hasNoTags := make([]annotations.Item, 0)
 
-		item.Tags = []string{}
+	for i, item := range items {
+		tags := tag.ParseTagPairs(item.Tags)
+		item.Tags = tag.JoinTagPairs(tags)
 		item.Created = timeNow().UnixNano() / int64(time.Millisecond)
 		item.Updated = item.Created
 		if item.Epoch == 0 {
@@ -102,11 +88,46 @@ func (r *xormRepositoryImpl) AddMany(ctx context.Context, items []annotations.It
 		if err := r.validateItem(&items[i]); err != nil {
 			return err
 		}
+
+		if len(item.Tags) > 0 {
+			hasTags = append(hasTags, item)
+		} else {
+			hasNoTags = append(hasNoTags, item)
+		}
 	}
 
 	return r.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		if _, err := sess.Table("annotation").InsertMulti(items); err != nil {
+		// We can batch-insert every annotation with no tags. If an annotation has tags, we need the ID.
+		if _, err := sess.Table("annotation").InsertMulti(hasNoTags); err != nil {
 			return err
+		}
+
+		for i, item := range hasTags {
+			if _, err := sess.Table("annotation").Insert(item); err != nil {
+				return err
+			}
+			if err := r.synchronizeTags(ctx, &hasTags[i]); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+}
+
+func (r *xormRepositoryImpl) synchronizeTags(ctx context.Context, item *annotations.Item) error {
+	// Will re-use session if one has already been opened with the same ctx.
+	return r.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		if item.Tags != nil {
+			tags, err := r.tagService.EnsureTagsExist(ctx, tag.ParseTagPairs(item.Tags))
+			if err != nil {
+				return err
+			}
+			for _, tag := range tags {
+				if _, err := sess.Exec("INSERT INTO annotation_tag (annotation_id, tag_id) VALUES(?,?)", item.Id, tag.Id); err != nil {
+					return err
+				}
+			}
 		}
 		return nil
 	})

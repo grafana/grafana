@@ -183,21 +183,25 @@ func TestIntegrationAnnotations(t *testing.T) {
 			assert.Len(t, inserted, count)
 		})
 
-		t.Run("Panics when a batch-inserted annotation has tags", func(t *testing.T) {
+		t.Run("Can batch-insert annotations with tags", func(t *testing.T) {
 			count := 10
 			items := make([]annotations.Item, count)
 			for i := 0; i < count; i++ {
 				items[i] = annotations.Item{
-					OrgId: 100,
+					OrgId: 101,
 					Type:  "batch",
 					Epoch: 12,
 				}
 			}
 			items[0].Tags = []string{"type:test"}
 
-			require.Panics(t, func() {
-				_ = repo.AddMany(context.Background(), items)
-			})
+			err := repo.AddMany(context.Background(), items)
+
+			require.NoError(t, err)
+			query := &annotations.ItemQuery{OrgId: 101, SignedInUser: testUser}
+			inserted, err := repo.Get(context.Background(), query)
+			require.NoError(t, err)
+			assert.Len(t, inserted, count)
 		})
 
 		t.Run("Can query for annotation by id", func(t *testing.T) {

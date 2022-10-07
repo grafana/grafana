@@ -31,7 +31,7 @@ func (r *RepositoryImpl) Save(ctx context.Context, item *annotations.Item) error
 }
 
 // SaveMany inserts multiple annotations at once.
-// It does not return IDs associated with created annotations, and it does not support annotations with tags. If you need this functionality, use the single-item Save instead.
+// It does not return IDs associated with created annotations. If you need this functionality, use the single-item Save instead.
 func (r *RepositoryImpl) SaveMany(ctx context.Context, items []annotations.Item) error {
 	return r.store.AddMany(ctx, items)
 }
