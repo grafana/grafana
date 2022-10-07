@@ -186,6 +186,7 @@ func (mg *Migrator) run() (err error) {
 }
 
 func (mg *Migrator) exec(m Migration, sess *xorm.Session) (bool, error) {
+	// Return a (success bool, error) tuple. The error is nil if exec is successful
 	mg.Logger.Info("Executing migration", "id", m.Id())
 
 	skipCondition := m.GetSkipCondition()
