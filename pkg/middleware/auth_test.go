@@ -65,12 +65,10 @@ func TestMiddlewareAuth(t *testing.T) {
 			t *testing.T, sc *scenarioContext) {
 			sc.mockSQLStore.ExpectedOrg = &models.Org{Id: 1, Name: sc.cfg.AnonymousOrgName}
 			sc.orgService.ExpectedOrg = &org.Org{ID: 1, Name: sc.cfg.AnonymousOrgName}
-			org, err := sc.mockSQLStore.CreateOrgWithMember(sc.cfg.AnonymousOrgName, 1)
-			require.NoError(t, err)
 
 			sc.m.Get("/secure", reqSignIn, sc.defaultHandler)
 
-			sc.fakeReq("GET", fmt.Sprintf("/secure?orgId=%d", org.Id)).exec()
+			sc.fakeReq("GET", fmt.Sprintf("/secure?orgId=%d", 1)).exec()
 
 			assert.Equal(t, 200, sc.resp.Code)
 		}, configure)

@@ -3,8 +3,8 @@ import React, { ReactNode } from 'react';
 import { Plugin, Node } from 'slate';
 import { Editor } from 'slate-react';
 
-import { QueryEditorProps } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { CoreApp, QueryEditorProps } from '@grafana/data';
+import { config, reportInteraction } from '@grafana/runtime';
 import {
   SlatePrism,
   TypeaheadOutput,
@@ -23,6 +23,7 @@ import { escapeLabelValueInSelector, shouldRefreshLabels } from '../languageUtil
 import { LokiQuery, LokiOptions } from '../types';
 
 import { LokiLabelBrowser } from './LokiLabelBrowser';
+import { MonacoQueryFieldWrapper } from './monaco-query-field/MonacoQueryFieldWrapper';
 
 const LAST_USED_LABELS_KEY = 'grafana.datasources.loki.browser.labels';
 
@@ -185,12 +186,13 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
       app,
       datasource,
       placeholder = 'Enter a Loki query (run with Shift+Enter)',
+      history,
+      onRunQuery,
+      onBlur,
     } = this.props;
 
     const { labelsLoaded, labelBrowserVisible } = this.state;
-    const lokiLanguageProvider = datasource.languageProvider as LokiLanguageProvider;
-    const cleanText = datasource.languageProvider ? lokiLanguageProvider.cleanText : undefined;
-    const hasLogLabels = lokiLanguageProvider.getLabelKeys().length > 0;
+    const hasLogLabels = datasource.languageProvider.getLabelKeys().length > 0;
     const chooserText = getChooserText(labelsLoaded, hasLogLabels);
     const buttonDisabled = !(labelsLoaded && hasLogLabels);
 
@@ -212,24 +214,35 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
                   <Icon name={labelBrowserVisible ? 'angle-down' : 'angle-right'} />
                 </button>
                 <div className="gf-form gf-form--grow flex-shrink-1 min-width-15">
-                  <QueryField
-                    additionalPlugins={this.plugins}
-                    cleanText={cleanText}
-                    query={query.expr}
-                    onTypeahead={this.onTypeahead}
-                    onWillApplySuggestion={willApplySuggestion}
-                    onChange={this.onChangeQuery}
-                    onBlur={this.props.onBlur}
-                    onRunQuery={this.props.onRunQuery}
-                    placeholder={placeholder}
-                    portalOrigin="loki"
-                  />
+                  {config.featureToggles.lokiMonacoEditor ? (
+                    <MonacoQueryFieldWrapper
+                      runQueryOnBlur={app !== CoreApp.Explore}
+                      languageProvider={datasource.languageProvider}
+                      history={history ?? []}
+                      onChange={this.onChangeQuery}
+                      onRunQuery={onRunQuery}
+                      initialValue={query.expr ?? ''}
+                    />
+                  ) : (
+                    <QueryField
+                      additionalPlugins={this.plugins}
+                      cleanText={datasource.languageProvider.cleanText}
+                      query={query.expr}
+                      onTypeahead={this.onTypeahead}
+                      onWillApplySuggestion={willApplySuggestion}
+                      onChange={this.onChangeQuery}
+                      onBlur={onBlur}
+                      onRunQuery={onRunQuery}
+                      placeholder={placeholder}
+                      portalOrigin="loki"
+                    />
+                  )}
                 </div>
               </div>
               {labelBrowserVisible && (
                 <div className="gf-form">
                   <LokiLabelBrowser
-                    languageProvider={lokiLanguageProvider}
+                    languageProvider={datasource.languageProvider}
                     onChange={this.onChangeLabelBrowser}
                     lastUsedLabels={lastUsedLabels || []}
                     storeLastUsedLabels={onLastUsedLabelsSave}

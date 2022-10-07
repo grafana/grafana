@@ -112,6 +112,43 @@ func TestQueryDataMultipleSources(t *testing.T) {
 
 		require.NoError(t, err)
 	})
+
+	t.Run("error is returned when one of the queries fails", func(t *testing.T) {
+		tc := setup(t)
+
+		query1, _ := simplejson.NewJson([]byte(`
+			{
+				"datasource": {
+					"type": "mysql",
+					"uid": "ds1"
+				}
+			}
+		`))
+		query2, _ := simplejson.NewJson([]byte(`
+			{
+				"datasource": {
+					"type": "prometheus",
+					"uid": "ds2"
+				},
+				"queryType": "FAIL"
+			}
+		`))
+
+		queries := []*simplejson.Json{query1, query2}
+
+		reqDTO := dtos.MetricRequest{
+			From:                       "2022-01-01",
+			To:                         "2022-01-02",
+			Queries:                    queries,
+			Debug:                      false,
+			PublicDashboardAccessToken: "abc123",
+			HTTPRequest:                nil,
+		}
+
+		_, err := tc.queryService.QueryDataMultipleSources(context.Background(), nil, true, reqDTO, false)
+
+		require.Error(t, err)
+	})
 }
 
 func TestQueryData(t *testing.T) {
@@ -255,7 +292,6 @@ func (c *fakeDataSourceCache) GetDatasourceByUID(ctx context.Context, datasource
 
 type fakePluginClient struct {
 	plugins.Client
-
 	req *backend.QueryDataRequest
 }
 
@@ -265,6 +301,10 @@ func (c *fakePluginClient) QueryData(ctx context.Context, req *backend.QueryData
 	// If an expression query ends up getting directly queried, we want it to return an error in our test.
 	if req.PluginContext.PluginID == "__expr__" {
 		return nil, errors.New("cant query an expression datasource")
+	}
+
+	if req.Queries[0].QueryType == "FAIL" {
+		return nil, errors.New("plugin client failed")
 	}
 
 	return &backend.QueryDataResponse{Responses: make(backend.Responses)}, nil
