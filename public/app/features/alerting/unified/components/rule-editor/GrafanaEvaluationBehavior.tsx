@@ -4,7 +4,19 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { RegisterOptions, useFormContext } from 'react-hook-form';
 
 import { durationToMilliseconds, GrafanaTheme2, parseDuration } from '@grafana/data';
-import { Button, Field, Icon, InlineLabel, Input, InputControl, Label, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import {
+  Button,
+  Card,
+  Field,
+  Icon,
+  InlineLabel,
+  Input,
+  InputControl,
+  Label,
+  Stack,
+  Tooltip,
+  useStyles2,
+} from '@grafana/ui';
 import { FolderPickerFilter } from 'app/core/components/Select/FolderPicker';
 import { contextSrv } from 'app/core/core';
 import { DashboardSearchHit } from 'app/features/search/types';
@@ -86,6 +98,14 @@ const useRuleFolderFilter = (existingRuleForm: RuleForm | null) => {
   );
 };
 
+function InfoIcon({ text }: { text: string }) {
+  return (
+    <Tooltip placement="top" content={<div>{text}</div>}>
+      <Icon name="info-circle" size="xs" />
+    </Tooltip>
+  );
+}
+
 interface FolderAndGroupProps {
   initialFolder: RuleForm | null;
 }
@@ -105,17 +125,11 @@ function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
           <Label htmlFor="folder" description={'Select a folder to store your rule.'}>
             <Stack gap={0.5}>
               Folder
-              <Tooltip
-                placement="top"
-                content={
-                  <div>
-                    Each folder has unique folder permission. When you store multiple rules in a folder, the folder
-                    access permissions get assigned to the rules.
-                  </div>
+              <InfoIcon
+                text={
+                  'Each folder has unique folder permission. When you store multiple rules in a folder, the folder access permissions get assigned to the rules.'
                 }
-              >
-                <Icon name="info-circle" size="xs" />
-              </Tooltip>
+              />
             </Stack>
           </Label>
         }
@@ -205,41 +219,50 @@ function EvaluationIntervalInput({ initialFolder }: { initialFolder: RuleForm | 
   return (
     <div>
       <FolderAndGroup initialFolder={initialFolder} />
-      <div className={styles.flexRow}>
-        <div className={styles.evaluateLabel}>{`Alert rules in '${group}' are evaluated every`}</div>
-        <Field
-          className={styles.inlineField}
-          error={errors.evaluateEvery?.message}
-          invalid={!!errors.evaluateEvery}
-          validationMessageHorizontalOverflow={true}
-        >
-          <Input
-            id={evaluateEveryId}
-            width={8}
-            {...register('evaluateEvery', evaluateEveryValidationOptions)}
-            readOnly={!editInterval}
-            onBlur={onBlur}
-            className={styles.evaluateInput}
-          />
-        </Field>
-        <Button
-          icon={editInterval ? 'exclamation-circle' : 'edit'}
-          type="button"
-          variant="secondary"
-          disabled={editInterval}
-          onClick={() => {
-            if (!editInterval) {
-              setFocus('evaluateEvery');
-              setEditInterval(true);
-            }
-            editInterval && setEditInterval(false);
-          }}
-        >
-          <span className={cx(editInterval && 'text-warning')}>
-            {editInterval ? `You are updating evaluation interval for the group '${group}'` : 'Edit group behaviour'}
-          </span>
-        </Button>
-      </div>
+      <Card className={styles.cardContainer}>
+        <Card.Heading>Group behaviour</Card.Heading>
+        <Card.Meta>
+          {`Evaluation interval applies to every rule within a group. 
+            It can overwrite the interval of an existing alert rule. 
+            Click on 'Edit group behaviour' button to edit this group value.`}
+        </Card.Meta>
+        <Card.Actions>
+          <div className={styles.flexRow}>
+            <div className={styles.evaluateLabel}>{`Alert rules in '${group}' are evaluated every`}</div>
+            <Field
+              className={styles.inlineField}
+              error={errors.evaluateEvery?.message}
+              invalid={!!errors.evaluateEvery}
+              validationMessageHorizontalOverflow={true}
+            >
+              <Input
+                id={evaluateEveryId}
+                width={8}
+                {...register('evaluateEvery', evaluateEveryValidationOptions)}
+                readOnly={!editInterval}
+                onBlur={onBlur}
+                className={styles.evaluateInput}
+              />
+            </Field>
+            {editInterval ? (
+              <span className={cx('text-warning', styles.evalEditingLabel)}>
+                {`You are updating evaluation interval for the group '${group}'`}
+              </span>
+            ) : (
+              <Button
+                icon={editInterval ? 'exclamation-circle' : 'edit'}
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  setEditInterval(true);
+                }}
+              >
+                <span className={cx(editInterval && 'text-warning')}>{'Edit group behaviour'}</span>
+              </Button>
+            )}
+          </div>
+        </Card.Actions>
+      </Card>
     </div>
   );
 }
@@ -354,7 +377,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flex-direction: row;
     justify-content: flex-start;
     align-items: flex-start;
-    margin-bottom: ${theme.spacing(1)};
   `,
   collapseToggle: css`
     margin: ${theme.spacing(2, 0, 2, -1)};
@@ -371,7 +393,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   alignBaseline: css`
     align-items: baseline;
-    margin-bottom: ${theme.spacing(3)};
+    margin-bottom: ${theme.spacing(1)};
   `,
   formInput: css`
     width: 275px;
@@ -379,5 +401,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     & + & {
       margin-left: ${theme.spacing(3)};
     }
+  `,
+  evalEditingLabel: css`
+    align-self: baseline;
+    margin-left: ${theme.spacing(1)};
+  `,
+  cardContainer: css`
+    max-width: ${theme.breakpoints.values.sm}px;
   `,
 });
