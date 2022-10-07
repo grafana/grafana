@@ -39,7 +39,7 @@ func TestMatrixResponses(t *testing.T) {
 		enableWideSeries := false
 		queryFileName := filepath.Join("../testdata", test.filepath+".query.json")
 		responseFileName := filepath.Join("../testdata", test.filepath+".result.json")
-		goldenFileName := test.filepath + ".result.golden"
+		goldenFileName := test.filepath + ".result.streaming.golden"
 		t.Run(test.name, goldenScenario(test.name, queryFileName, responseFileName, goldenFileName, enableWideSeries))
 		enableWideSeries = true
 		goldenFileName = test.filepath + ".result.streaming-wide.golden"

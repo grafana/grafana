@@ -379,7 +379,11 @@ func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data
 
 		for i, k := range v.Values {
 			timeField.Set(i, k.Timestamp.Time().UTC())
-			valueField.Set(i, float64(k.Value))
+			value := float64(k.Value)
+
+			if !math.IsNaN(value) {
+				valueField.Set(i, value)
+			}
 		}
 
 		name := formatLegend(v.Metric, query)
