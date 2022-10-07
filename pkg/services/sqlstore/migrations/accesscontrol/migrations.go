@@ -162,6 +162,10 @@ func AddMigration(mg *migrator.Migrator) {
 		},
 	}
 
+	mg.AddMigration("add primary key to seed assignment table", migrator.NewAddColumnMigration(seedAssignmentV1, &migrator.Column{
+		Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+	))
+
 	mg.AddMigration("create seed assignment table", migrator.NewAddTableMigration(seedAssignmentV1))
 
 	//-------  indexes ------------------
