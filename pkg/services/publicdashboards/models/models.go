@@ -79,8 +79,8 @@ type PublicDashboard struct {
 
 type Annotation struct {
 	Datasource struct {
-		DType string `json:"type"`
-		Uid   string `json:"uid"`
+		Type string `json:"type"`
+		Uid  string `json:"uid"`
 	}
 	Enable bool   `json:"enable"`
 	Type   string `json:"type"`
@@ -92,7 +92,6 @@ type Annotation struct {
 	}
 	IconColor string `json:"iconColor"`
 	Name      string `json:"name"`
-	IsRegion  bool   `json:"isRegion"`
 }
 
 type AnnotationEvent struct {

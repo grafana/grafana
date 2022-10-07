@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"errors"
-	"os"
 	"testing"
 	"time"
 
@@ -64,7 +63,23 @@ func TestGetAnnotations(t *testing.T) {
 		assert.Len(t, items, 0)
 		require.NoError(t, err)
 	})
-	t.Run("test can get annotations", func(t *testing.T) {
+
+	t.Run("Test can get grafana annotations and will skip annotation queries", func(t *testing.T) {
+		dash := models.NewDashboard("test")
+		grafanaAnnotation := Annotation{
+			Datasource: internal.CreateDatasource("grafana", "grafana"),
+			Enable:     true,
+			Name:       "someName",
+			IconColor:  "red",
+		}
+		queryAnnotation := Annotation{
+			Datasource: internal.CreateDatasource("prometheus", "abc123"),
+			Enable:     true,
+			Name:       "someName",
+		}
+		annos := []Annotation{grafanaAnnotation, queryAnnotation}
+		dashboard := internal.CreateDashboardWithAnnotations(t, dash, annos)
+
 		annotationsRepo := annotations.FakeAnnotationsRepo{}
 		fakeStore := FakePublicDashboardStore{}
 		service := &PublicDashboardServiceImpl{
@@ -72,11 +87,6 @@ func TestGetAnnotations(t *testing.T) {
 			store:              &fakeStore,
 			AnnotationsService: &annotationsRepo,
 		}
-		json, err := os.ReadFile("./testData/dashboardWithAnnotations.json")
-		require.Nil(t, err)
-		dashJSON, err := simplejson.NewJson(json)
-		require.Nil(t, err)
-		dashboard := models.NewDashboardFromJson(dashJSON)
 		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.Uid}
 		fakeStore.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dashboard, nil)
 		annotationsRepo.On("Find", mock.Anything, mock.Anything).Return([]*annotations.ItemDTO{
@@ -86,15 +96,30 @@ func TestGetAnnotations(t *testing.T) {
 				PanelId:     1,
 				Tags:        []string{},
 				TimeEnd:     1,
-				Time:        1,
+				Time:        2,
+				Text:        "text",
 			},
 		}, nil).Maybe()
 
 		items, err := service.GetAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
 
+		expected := AnnotationEvent{
+			Id:          1,
+			DashboardId: 1,
+			PanelId:     1,
+			Tags:        []string{},
+			IsRegion:    true,
+			Text:        "text",
+			Color:       "red",
+			Time:        2,
+			TimeEnd:     1,
+			Source:      grafanaAnnotation,
+		}
 		require.NoError(t, err)
 		assert.Len(t, items, 1)
+		assert.Equal(t, expected, items[0])
 	})
+
 	t.Run("test will return nothing when dashboard has no annotations", func(t *testing.T) {
 		annotationsRepo := annotations.FakeAnnotationsRepo{}
 		fakeStore := FakePublicDashboardStore{}
@@ -121,11 +146,7 @@ func TestGetAnnotations(t *testing.T) {
 			store:              &fakeStore,
 			AnnotationsService: &annotationsRepo,
 		}
-		json, err := os.ReadFile("./testData/dashboardWithAnnotations.json")
-		require.Nil(t, err)
-		dashJSON, err := simplejson.NewJson(json)
-		require.Nil(t, err)
-		dashboard := models.NewDashboardFromJson(dashJSON)
+		dashboard := internal.CreateDashboardFromFile(t, "./testData/dashboardWithAnnotations.json")
 		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.Uid}
 		fakeStore.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dashboard, nil)
 		annotationsRepo.On("Find", mock.Anything, mock.Anything).Return(nil, errors.New("failed")).Maybe()
