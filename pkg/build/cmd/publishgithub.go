@@ -28,13 +28,22 @@ type flags struct {
 
 var (
 	errTokenIsEmpty    = errors.New("the environment variable GH_TOKEN must be set")
+	errTagIsEmpty      = errors.New(`failed to retrieve release tag from metadata, use "--tag" to set it manually`)
 	errReleaseNotFound = errors.New(`release not found, use "--create" to create the release`)
 )
 
 func PublishGitHub(ctx *cli.Context) error {
 	gitCtx := context.Background()
 	token := os.Getenv("GH_TOKEN")
-	f := getFlags(ctx)
+	f, err := getFlags(ctx)
+	if err != nil {
+		return cli.NewExitError(err, 1)
+	}
+
+	if f.tag == "" {
+		return cli.NewExitError(errTagIsEmpty, 1)
+	}
+
 	if token == "" {
 		return cli.NewExitError(errTokenIsEmpty, 1)
 	}
@@ -43,7 +52,7 @@ func PublishGitHub(ctx *cli.Context) error {
 		return runDryRun(f, token, gitCtx)
 	}
 
-	client := getClient(gitCtx, token)
+	client := newClient(gitCtx, token)
 	release, res, err := client.Repositories.GetReleaseByTag(gitCtx, f.repo.owner, f.repo.name, f.tag)
 	if err != nil && res.StatusCode != 404 {
 		return cli.NewExitError(err, 1)
@@ -74,7 +83,7 @@ func PublishGitHub(ctx *cli.Context) error {
 	return nil
 }
 
-func getClient(ctx context.Context, token string) *github.Client {
+func newClient(ctx context.Context, token string) *github.Client {
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: token},
 	)
@@ -83,8 +92,15 @@ func getClient(ctx context.Context, token string) *github.Client {
 	return github.NewClient(tc)
 }
 
-func getFlags(ctx *cli.Context) *flags {
+func getFlags(ctx *cli.Context) (*flags, error) {
+	metadata, err := GenerateMetadata(ctx)
+	if err != nil {
+		return nil, err
+	}
 	tag := ctx.Value("tag").(string)
+	if tag == "" {
+		tag = fmt.Sprintf("v%s", metadata.GrafanaVersion)
+	}
 	fullRepo := ctx.Value("repo").(string)
 	dryRun := ctx.Value("dry-run").(bool)
 	owner := strings.Split(fullRepo, "/")[0]
@@ -100,11 +116,11 @@ func getFlags(ctx *cli.Context) *flags {
 			owner: owner,
 			name:  name,
 		},
-	}
+	}, nil
 }
 
 func runDryRun(f *flags, token string, gitCtx context.Context) error {
-	client := getClient(gitCtx, token)
+	client := newClient(gitCtx, token)
 	fmt.Println("Dry-Run: Retrieving release on repository by tag")
 	release, res, err := client.Repositories.GetReleaseByTag(gitCtx, f.repo.owner, f.repo.name, f.tag)
 	if err != nil && res.StatusCode != 404 {

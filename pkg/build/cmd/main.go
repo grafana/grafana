@@ -249,9 +249,8 @@ func main() {
 							Usage:    "GitHub repository",
 						},
 						&cli.StringFlag{
-							Name:     "tag",
-							Required: true,
-							Usage:    "Release tag",
+							Name:  "tag",
+							Usage: "Release tag (default from metadata)ß",
 						},
 						&cli.BoolFlag{
 							Name:  "create",
