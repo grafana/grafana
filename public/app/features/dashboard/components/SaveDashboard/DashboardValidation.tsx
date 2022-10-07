@@ -3,6 +3,7 @@ import React from 'react';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { FetchError } from '@grafana/runtime';
 import { Alert, useStyles2 } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
 
@@ -14,10 +15,23 @@ interface DashboardValidationProps {
 
 function DashboardValidation({ dashboard }: DashboardValidationProps) {
   const styles = useStyles2(getStyles);
-
   const { loading, value, error } = useAsync(async () => {
     const saveModel = dashboard.getSaveModelClone();
-    const validationResponse = await backendSrv.validateDashboard(saveModel);
+    const respPromise = backendSrv
+      .validateDashboard(saveModel)
+      .catch((err: FetchError<Awaited<ReturnType<typeof backendSrv.validateDashboard>>>) => {
+        if (err.status >= 500) {
+          throw err;
+        }
+
+        // don't throw on 4xx status codes
+        return err.data;
+      });
+
+    const validationResponse = await respPromise;
+
+    console.log('validationResponse', validationResponse);
+
     return validationResponse;
   }, [dashboard]);
 
@@ -39,6 +53,7 @@ function DashboardValidation({ dashboard }: DashboardValidationProps) {
       );
     }
   } else {
+    console.log('error', error);
     // non-200 response from the API. This shouldn't happen normally
     const errorMessage = error?.message ?? error?.toString?.() ?? 'Unknown error';
     alert = (
