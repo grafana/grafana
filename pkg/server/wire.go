@@ -70,6 +70,7 @@ import (
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/export"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	grpccontext "github.com/grafana/grafana/pkg/services/grpcserver/context"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
@@ -309,6 +310,7 @@ var wireBasicSet = wire.NewSet(
 	dashboardservice.ProvideDashboardService,
 	dashboardservice.ProvideFolderService,
 	dashboardstore.ProvideDashboardStore,
+	folderimpl.ProvideService,
 	wire.Bind(new(dashboards.DashboardService), new(*dashboardservice.DashboardServiceImpl)),
 	wire.Bind(new(dashboards.DashboardProvisioningService), new(*dashboardservice.DashboardServiceImpl)),
 	wire.Bind(new(dashboards.PluginService), new(*dashboardservice.DashboardServiceImpl)),

@@ -19,6 +19,7 @@ import (
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
@@ -233,7 +234,7 @@ func callCreateFolder(sc *scenarioContext) {
 	sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 }
 
-func createFolderScenario(t *testing.T, desc string, url string, routePattern string, folderService dashboards.FolderService,
+func createFolderScenario(t *testing.T, desc string, url string, routePattern string, folderService folder.Service,
 	cmd models.CreateFolderCommand, fn scenarioFunc) {
 	setUpRBACGuardian(t)
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
@@ -273,7 +274,7 @@ func callUpdateFolder(sc *scenarioContext) {
 	sc.fakeReqWithParams("PUT", sc.url, map[string]string{}).exec()
 }
 
-func updateFolderScenario(t *testing.T, desc string, url string, routePattern string, folderService dashboards.FolderService,
+func updateFolderScenario(t *testing.T, desc string, url string, routePattern string, folderService folder.Service,
 	cmd models.UpdateFolderCommand, fn scenarioFunc) {
 	setUpRBACGuardian(t)
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
@@ -300,7 +301,7 @@ func updateFolderScenario(t *testing.T, desc string, url string, routePattern st
 }
 
 type fakeFolderService struct {
-	dashboards.FolderService
+	folder.Service
 
 	GetFoldersResult     []*models.Folder
 	GetFoldersError      error
