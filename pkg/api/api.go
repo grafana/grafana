@@ -279,7 +279,7 @@ func (hs *HTTPServer) registerRoutes() {
 			apiRoute.Group("/search-v2", hs.SearchV2HTTPService.RegisterHTTPRoutes)
 		}
 
-		if !hs.QueryLibraryHTTPService.IsDisabled() {
+		if hs.QueryLibraryHTTPService != nil && !hs.QueryLibraryHTTPService.IsDisabled() {
 			apiRoute.Group("/query-library", hs.QueryLibraryHTTPService.RegisterHTTPRoutes)
 		}
 
