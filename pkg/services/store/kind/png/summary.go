@@ -16,7 +16,7 @@ func GetObjectKindInfo() models.ObjectKindInfo {
 		Description:   "PNG Image file",
 		IsRaw:         true,
 		FileExtension: "png",
-		MimeType: "	image/png",
+		MimeType:      "image/png",
 	}
 }
 

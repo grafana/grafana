@@ -57,14 +57,14 @@ func ProvideService(cfg *setting.Cfg, renderer rendering.Service, sql *sqlstore.
 
 	// Register Dashboard support
 	//-----------------------
-	reg.Register(dashboard.GetObjectKindInfo(), dashboard.NewDashboardSummary(sql))
+	_ = reg.Register(dashboard.GetObjectKindInfo(), dashboard.NewDashboardSummary(sql))
 
 	// Register SVG support
 	//-----------------------
 	info := svg.GetObjectKindInfo()
 	allowUnsanitizedSvgUpload := cfg != nil && cfg.Storage.AllowUnsanitizedSvgUpload
 	support := svg.GetObjectSummaryBuilder(allowUnsanitizedSvgUpload, renderer)
-	reg.Register(info, support)
+	_ = reg.Register(info, support)
 
 	return reg
 }
