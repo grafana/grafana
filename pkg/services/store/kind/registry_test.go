@@ -19,6 +19,7 @@ func TestKindRegistry(t *testing.T) {
 		ids = append(ids, k.ID)
 	}
 	require.Equal(t, []string{
+		"dummy",
 		"kind1",
 		"kind2",
 		"kind3",
