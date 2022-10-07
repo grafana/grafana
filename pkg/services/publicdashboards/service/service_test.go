@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"os"
 	"testing"
 	"time"
 
@@ -71,19 +72,30 @@ func TestGetAnnotations(t *testing.T) {
 			store:              &fakeStore,
 			AnnotationsService: &annotationsRepo,
 		}
-		dashboard := models.NewDashboard("dash1")
+		json, err := os.ReadFile("./testData/dashboardWithAnnotations.json")
+		require.Nil(t, err)
+		dashJSON, err := simplejson.NewJson(json)
+		require.Nil(t, err)
+		dashboard := models.NewDashboardFromJson(dashJSON)
 		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.Uid}
 		fakeStore.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dashboard, nil)
 		annotationsRepo.On("Find", mock.Anything, mock.Anything).Return([]*annotations.ItemDTO{
-			{Id: 1},
+			{
+				Id:          1,
+				DashboardId: 1,
+				PanelId:     1,
+				Tags:        []string{},
+				TimeEnd:     1,
+				Time:        1,
+			},
 		}, nil).Maybe()
 
 		items, err := service.GetAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
-		require.NoError(t, err)
 
+		require.NoError(t, err)
 		assert.Len(t, items, 1)
 	})
-	t.Run("test will return error when failed to get annotations", func(t *testing.T) {
+	t.Run("test will return nothing when dashboard has no annotations", func(t *testing.T) {
 		annotationsRepo := annotations.FakeAnnotationsRepo{}
 		fakeStore := FakePublicDashboardStore{}
 		service := &PublicDashboardServiceImpl{
@@ -91,13 +103,36 @@ func TestGetAnnotations(t *testing.T) {
 			store:              &fakeStore,
 			AnnotationsService: &annotationsRepo,
 		}
-		dashboard := models.NewDashboard("dash1")
+		dashboard := models.NewDashboard("dashWithNoAnnotations")
+		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.Uid}
+		fakeStore.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dashboard, nil)
+
+		items, err := service.GetAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
+
+		require.NoError(t, err)
+		assert.Empty(t, items)
+	})
+
+	t.Run("test will error when annotations repo returns an error", func(t *testing.T) {
+		annotationsRepo := annotations.FakeAnnotationsRepo{}
+		fakeStore := FakePublicDashboardStore{}
+		service := &PublicDashboardServiceImpl{
+			log:                log.New("test.logger"),
+			store:              &fakeStore,
+			AnnotationsService: &annotationsRepo,
+		}
+		json, err := os.ReadFile("./testData/dashboardWithAnnotations.json")
+		require.Nil(t, err)
+		dashJSON, err := simplejson.NewJson(json)
+		require.Nil(t, err)
+		dashboard := models.NewDashboardFromJson(dashJSON)
 		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.Uid}
 		fakeStore.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dashboard, nil)
 		annotationsRepo.On("Find", mock.Anything, mock.Anything).Return(nil, errors.New("failed")).Maybe()
 
 		items, err := service.GetAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
-		assert.Error(t, err)
+
+		require.Error(t, err)
 		require.Nil(t, items)
 	})
 }
