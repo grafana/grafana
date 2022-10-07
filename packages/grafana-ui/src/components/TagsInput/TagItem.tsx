@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -13,48 +13,12 @@ interface Props {
   onRemove: (tag: string) => void;
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
-  const height = theme.spacing.gridSize * 3;
-
-  return {
-    itemStyle: css`
-      display: flex;
-      gap: 3px;
-      align-items: center;
-      height: ${height}px;
-      line-height: ${height - 2}px;
-      color: #fff;
-      border-width: 1px;
-      border-style: solid;
-      border-radius: 3px;
-      padding: 0 ${theme.spacing(0.5)};
-      white-space: nowrap;
-      text-shadow: none;
-      font-weight: 500;
-      font-size: ${theme.typography.size.sm};
-    `,
-
-    nameStyle: css`
-      max-width: 25ch;
-      text-overflow: ellipsis;
-      overflow: hidden;
-    `,
-
-    buttonStyles: css`
-      margin: 0;
-      &:hover::before {
-        display: none;
-      }
-    `,
-  };
-};
-
 /**
  * @internal
  * Only used internally by TagsInput
  * */
 export const TagItem = ({ name, disabled, onRemove }: Props) => {
-  const { color, borderColor } = getTagColorsFromName(name);
+  const { color, borderColor } = useMemo(() => getTagColorsFromName(name), [name]);
   const styles = useStyles2(getStyles);
 
   return (
@@ -64,11 +28,45 @@ export const TagItem = ({ name, disabled, onRemove }: Props) => {
         name="times"
         size="lg"
         disabled={disabled}
-        ariaLabel={`Remove ${name}`}
+        ariaLabel={`Remove "${name}" tag`}
         onClick={() => onRemove(name)}
         type="button"
         className={styles.buttonStyles}
       />
     </li>
   );
+};
+
+const getStyles = (theme: GrafanaTheme2) => {
+  const height = theme.spacing.gridSize * 3;
+
+  return {
+    itemStyle: css({
+      display: 'flex',
+      gap: '3px',
+      alignItems: 'center',
+      height: `${height}px`,
+      lineHeight: `${height - 2}px`,
+      color: '#fff',
+      borderWidth: '1px',
+      borderStyle: 'solid',
+      borderRadius: '3px',
+      padding: `0 ${theme.spacing(0.5)}`,
+      whiteSpace: 'nowrap',
+      textShadow: 'none',
+      fontWeight: 500,
+      fontSize: theme.typography.size.sm,
+    }),
+    nameStyle: css({
+      maxWidth: '25ch',
+      textOverflow: 'ellipsis',
+      overflow: 'hidden',
+    }),
+    buttonStyles: css({
+      margin: 0,
+      '&:hover::before': {
+        display: 'none',
+      },
+    }),
+  };
 };
