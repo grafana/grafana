@@ -25,7 +25,6 @@ export const Page: PageType = ({
   subTitle,
   children,
   className,
-  pageInnerClass,
   layout = PageLayoutType.Standard,
   toolbar,
   scrollTop,

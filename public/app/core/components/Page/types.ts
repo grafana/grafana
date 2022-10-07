@@ -20,7 +20,6 @@ export interface PageProps extends HTMLAttributes<HTMLDivElement> {
   scrollRef?: RefCallback<HTMLDivElement>;
   /** Can be used to update the current scroll position */
   scrollTop?: number;
-  pageInnerClass?: string;
 }
 
 export interface PageType extends FC<PageProps> {
