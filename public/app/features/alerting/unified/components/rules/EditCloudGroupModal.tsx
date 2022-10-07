@@ -10,7 +10,7 @@ import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelect
 import { updateLotexNamespaceAndGroupAction } from '../../state/actions';
 import { getRulesSourceName } from '../../utils/datasource';
 import { initialAsyncRequestState } from '../../utils/redux';
-import { durationValidationPattern } from '../../utils/time';
+import { evaluateEveryValidationOptions } from '../rule-editor/GrafanaEvaluationBehavior';
 
 interface Props {
   namespace: CombinedRuleNamespace;
@@ -97,9 +97,7 @@ export function EditCloudGroupModal(props: Props): React.ReactElement {
               <Input
                 id="groupInterval"
                 placeholder="1m"
-                {...register('groupInterval', {
-                  pattern: durationValidationPattern,
-                })}
+                {...register('groupInterval', evaluateEveryValidationOptions)}
               />
             </Field>
 
