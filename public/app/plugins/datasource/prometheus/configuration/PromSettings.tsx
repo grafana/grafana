@@ -80,7 +80,7 @@ const setPrometheusVersion = (
   onOptionsChange: (options: DataSourceSettings<PromOptions>) => void
 ) => {
   getBackendSrv()
-    .get(`/api/datasources/${options.id}/resources/version-detect`)
+    .post(`/api/datasources/${options.id}/resources/version-detect`, { url: options.url })
     .then((rawResponse: PromBuildInfoResponse) => {
       if (rawResponse.data?.version && semver.valid(rawResponse.data?.version)) {
         onOptionsChange({

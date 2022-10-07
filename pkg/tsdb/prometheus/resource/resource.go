@@ -3,6 +3,7 @@ package resource
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -16,6 +17,10 @@ import (
 type Resource struct {
 	promClient *client.Client
 	log        log.Logger
+}
+
+type DetectVersionRequestModel struct {
+	Url string `json:"url"`
 }
 
 // Hop-by-hop headers. These are removed when sent to the backend.
@@ -66,6 +71,40 @@ func New(
 	}, nil
 }
 
+func (r *Resource) ExecuteSpecial(ctx context.Context, req *backend.CallResourceRequest) (*backend.CallResourceResponse, error) {
+	delHopHeaders(req.Headers)
+	delStopHeaders(req.Headers)
+
+	r.log.Debug("Sending resource query", "URL", req.URL)
+	//r.promClient.
+
+	resp, err := r.promClient.QueryResourceSpecial(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("error querying resource: %v", err)
+	}
+
+	defer func() {
+		tmpErr := resp.Body.Close()
+		if tmpErr != nil && err == nil {
+			err = tmpErr
+		}
+	}()
+
+	var buf bytes.Buffer
+	// Should be more efficient than ReadAll. See https://github.com/prometheus/client_golang/pull/976
+	_, err = buf.ReadFrom(resp.Body)
+	body := buf.Bytes()
+	if err != nil {
+		return nil, err
+	}
+	callResponse := &backend.CallResourceResponse{
+		Status:  resp.StatusCode,
+		Headers: resp.Header,
+		Body:    body,
+	}
+
+	return callResponse, err
+}
 func (r *Resource) Execute(ctx context.Context, req *backend.CallResourceRequest) (*backend.CallResourceResponse, error) {
 	delHopHeaders(req.Headers)
 	delStopHeaders(req.Headers)
@@ -100,12 +139,18 @@ func (r *Resource) Execute(ctx context.Context, req *backend.CallResourceRequest
 }
 
 func (r *Resource) DetectVersion(ctx context.Context, req *backend.CallResourceRequest) (*backend.CallResourceResponse, error) {
+	model := &DetectVersionRequestModel{}
+
+	if err := json.Unmarshal(req.Body, model); err != nil {
+		return nil, err
+	}
 	newReq := &backend.CallResourceRequest{
 		PluginContext: req.PluginContext,
 		Path:          "/api/v1/status/buildinfo",
+		URL:           model.Url,
 	}
 
-	resp, err := r.Execute(ctx, newReq)
+	resp, err := r.ExecuteSpecial(ctx, newReq)
 	if err != nil {
 		return nil, err
 	}
