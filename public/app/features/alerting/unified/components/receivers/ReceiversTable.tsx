@@ -78,28 +78,53 @@ function ViewAction({ permissions, alertManagerName, receiverName }: ActionProps
 }
 interface ReceiverErrorProps {
   errorCount: number;
+  errorDetail?: string;
 }
 
-function ReceiverError({ errorCount }: ReceiverErrorProps) {
+function ReceiverError({ errorCount, errorDetail }: ReceiverErrorProps) {
   return (
     <Badge
       color="orange"
       icon="exclamation-triangle"
       text={`${errorCount} ${pluralize('error', errorCount)}`}
-      tooltip={`${errorCount} ${pluralize('error', errorCount)} detected in this contact point`}
+      tooltip={errorDetail ?? 'Error'}
     />
   );
 }
-interface ReceiverHealthProps {
-  errorsByReceiver: number;
+interface NotifierHealthProps {
+  errorsByNotifier: number;
+  errorDetail?: string;
+  lastNotify: string;
 }
 
-function ReceiverHealth({ errorsByReceiver }: ReceiverHealthProps) {
+function NotifierHealth({ errorsByNotifier, errorDetail, lastNotify }: NotifierHealthProps) {
+  const noErrorsColor = isLastNotifyNullDate(lastNotify) ? 'orange' : 'green';
+  const noErrorsText = isLastNotifyNullDate(lastNotify) ? 'No attempts' : 'OK';
+  return errorsByNotifier > 0 ? (
+    <ReceiverError errorCount={errorsByNotifier} errorDetail={errorDetail} />
+  ) : (
+    <Badge color={noErrorsColor} text={noErrorsText} tooltip="" />
+  );
+}
+
+interface ReceiverHealthProps {
+  errorsByReceiver: number;
+  someWithNoAttempt: boolean;
+}
+
+function ReceiverHealth({ errorsByReceiver, someWithNoAttempt }: ReceiverHealthProps) {
+  const noErrorsColor = someWithNoAttempt ? 'orange' : 'green';
+  const noErrorsText = someWithNoAttempt ? 'No attempts' : 'OK';
   return errorsByReceiver > 0 ? (
     <ReceiverError errorCount={errorsByReceiver} />
   ) : (
-    <Badge color="green" text="OK" tooltip="No errors detected" />
+    <Badge color={noErrorsColor} text={noErrorsText} tooltip="" />
   );
+}
+interface NotifierHealthProps {
+  errorsByNotifier: number;
+  errorDetail?: string;
+  lastNotify: string;
 }
 
 const useContactPointsState = (alertManagerName: string) => {
@@ -158,8 +183,14 @@ function NotifiersTable({ notifiersState }: NotifiersTableProps) {
       {
         id: 'health',
         label: 'Health',
-        renderCell: ({ data: { lastError } }) => {
-          return <ReceiverHealth errorsByReceiver={lastError ? 1 : 0} />;
+        renderCell: ({ data: { lastError, lastNotify } }) => {
+          return (
+            <NotifierHealth
+              errorsByNotifier={lastError ? 1 : 0}
+              errorDetail={lastError ?? undefined}
+              lastNotify={lastNotify}
+            />
+          );
         },
         size: 0.5,
       },
@@ -192,16 +223,18 @@ function NotifiersTable({ notifiersState }: NotifiersTableProps) {
     ];
   }
   const notifierRows: NotifierItemTableProps[] = Object.entries(notifiersState).flatMap((typeState) =>
-    typeState[1].map((notifierStatus, index) => ({
-      id: index,
-      data: {
-        type: typeState[0],
-        lastError: notifierStatus.lastNotifyAttemptError,
-        lastNotify: notifierStatus.lastNotifyAttempt,
-        lastNotifyDuration: notifierStatus.lastNotifyAttemptDuration,
-        sendResolved: notifierStatus.sendResolved,
-      },
-    }))
+    typeState[1].map((notifierStatus, index) => {
+      return {
+        id: index,
+        data: {
+          type: typeState[0],
+          lastError: notifierStatus.lastNotifyAttemptError,
+          lastNotify: notifierStatus.lastNotifyAttempt,
+          lastNotifyDuration: notifierStatus.lastNotifyAttemptDuration,
+          sendResolved: notifierStatus.sendResolved,
+        },
+      };
+    })
   );
 
   return <DynamicTable items={notifierRows} cols={getNotifierColumns()} />;
@@ -319,6 +352,15 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
     </ReceiversSection>
   );
 };
+const errorsByReceiver = (contactPointsState: ContactPointsState, receiverName: string) =>
+  contactPointsState?.receivers[receiverName]?.errorCount ?? 0;
+
+const someNotifiersWithNoAttempt = (contactPointsState: ContactPointsState, receiverName: string) => {
+  const notifiers = Object.values(contactPointsState?.receivers[receiverName]?.notifiers ?? {});
+  const hasSomeWitNoAttempt =
+    notifiers.length === 0 || notifiers.flat().some((status) => isLastNotifyNullDate(status.lastNotifyAttempt));
+  return hasSomeWitNoAttempt;
+};
 
 function useGetColumns(
   alertManagerName: string,
@@ -356,9 +398,14 @@ function useGetColumns(
     id: 'health',
     label: 'Health',
     renderCell: ({ data: { name } }) => {
-      const errorsByReceiver = (contactPointsState: ContactPointsState, receiverName: string) =>
-        contactPointsState?.receivers[receiverName]?.errorCount ?? 0;
-      return contactPointsState && <ReceiverHealth errorsByReceiver={errorsByReceiver(contactPointsState, name)} />;
+      return (
+        contactPointsState && (
+          <ReceiverHealth
+            errorsByReceiver={errorsByReceiver(contactPointsState, name)}
+            someWithNoAttempt={someNotifiersWithNoAttempt(contactPointsState, name)}
+          />
+        )
+      );
     },
     size: 1,
   };
