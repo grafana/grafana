@@ -10,6 +10,8 @@ import { Button, ButtonFill, ButtonVariant } from '../Button';
 import { Select } from '../Select/Select';
 
 export interface ValuePickerProps<T> {
+  /** Aria label applied to the input field */
+  ['aria-label']?: string;
   /** Label to display on the picker button */
   label: string;
   /** Icon to display on the picker button */
@@ -33,6 +35,7 @@ export interface ValuePickerProps<T> {
 }
 
 export function ValuePicker<T>({
+  'aria-label': ariaLabel,
   label,
   icon,
   options,
@@ -57,7 +60,7 @@ export function ValuePicker<T>({
           variant={variant}
           fill={fill}
           fullWidth={isFullWidth}
-          aria-label={selectors.components.ValuePicker.button(label)}
+          aria-label={selectors.components.ValuePicker.button(ariaLabel ?? label)}
         >
           {label}
         </Button>
@@ -68,7 +71,7 @@ export function ValuePicker<T>({
           <Select
             placeholder={label}
             options={options}
-            aria-label={selectors.components.ValuePicker.select(label)}
+            aria-label={selectors.components.ValuePicker.select(ariaLabel ?? label)}
             isOpen
             onCloseMenu={() => setIsPicking(false)}
             autoFocus={true}

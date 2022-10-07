@@ -43,7 +43,7 @@ describe('OrganisationSwitcher', () => {
       },
     });
 
-    expect(screen.getByRole('combobox')).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Change organization' })).toBeInTheDocument();
   });
 
   it('should not render if there is only one organisation', () => {
@@ -56,7 +56,7 @@ describe('OrganisationSwitcher', () => {
       },
     });
 
-    expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: 'Change organization' })).not.toBeInTheDocument();
   });
 
   it('should not render if there is no organisation available', () => {
@@ -69,7 +69,7 @@ describe('OrganisationSwitcher', () => {
       },
     });
 
-    expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: 'Change organization' })).not.toBeInTheDocument();
   });
 
   it('should render a picker in mobile screen', () => {
@@ -90,6 +90,6 @@ describe('OrganisationSwitcher', () => {
       },
     });
 
-    expect(screen.getByRole('button')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Change organization' })).toBeInTheDocument();
   });
 });

@@ -23,6 +23,7 @@ export function OrganizationSelect({ orgs, onSelectChange }: OrganizationBasePro
 
   return (
     <Select<UserOrg>
+      aria-label="Change organization"
       width={'auto'}
       value={value}
       prefix={<Icon name="building" />}
@@ -40,8 +41,6 @@ export function OrganizationSelect({ orgs, onSelectChange }: OrganizationBasePro
 const getStyles = (theme: GrafanaTheme2) => ({
   select: css({
     border: 'none',
-    [theme.breakpoints.up('sm')]: {
-      background: 'none',
-    },
+    background: 'none',
   }),
 });
