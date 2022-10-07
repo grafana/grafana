@@ -67,7 +67,7 @@ func TestPrometheus_ExecuteTimeSeriesQuery(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.NotNil(t, rt.Req)
-		require.Equal(t, http.Header{"Content-Type": []string{"application/x-www-form-urlencoded"}}, rt.Req.Header)
+		require.Equal(t, http.Header{"Content-Type": []string{"application/x-www-form-urlencoded"}, "Idempotency-Key": []string(nil)}, rt.Req.Header)
 	})
 }
 
