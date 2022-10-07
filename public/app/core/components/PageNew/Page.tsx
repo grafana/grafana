@@ -82,12 +82,12 @@ export const Page: PageType = ({
               />
             </>
           )}
-          <div className={styles.pageContent}>
+          <div className={styles.pageContainer}>
             <CustomScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
               <div className={styles.pageInner}>
                 {pageHeaderNav && <PageHeader navItem={pageHeaderNav} subTitle={subTitle} />}
                 {pageNav && pageNav.children && <PageTabs navItem={pageNav} />}
-                {children}
+                <div className={styles.pageContent}>{children}</div>
               </div>
               <Footer />
             </CustomScrollbar>
@@ -157,6 +157,10 @@ const getStyles = (theme: GrafanaTheme2) => {
         flexDirection: 'row',
       },
     }),
+    pageContainer: css({
+      label: 'page-container',
+      flexGrow: 1,
+    }),
     pageContent: css({
       label: 'page-content',
       flexGrow: 1,
@@ -167,6 +171,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       boxShadow: shadow,
       background: theme.colors.background.primary,
       margin: theme.spacing(2, 2, 2, 1),
+      display: 'flex',
+      flexDirection: 'column',
       flexGrow: 1,
     }),
     canvasContent: css({
