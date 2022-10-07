@@ -81,7 +81,7 @@ describe('exit the nested query', () => {
   it('onRemove is called when clicking (x)', async () => {
     const props = createMockProps();
     render(<NestedQuery {...props} />);
-    fireEvent.click(await screen.findByLabelText('remove-nested-query'));
+    fireEvent.click(await screen.findByLabelText('Remove nested query'));
     await waitFor(() => expect(props.onRemove).toHaveBeenCalledTimes(1));
   });
 });
@@ -90,7 +90,7 @@ describe('change operator', () => {
   it('onChange is called with the correct args', async () => {
     const props = createMockProps('/', 'on');
     render(<NestedQuery {...props} />);
-    userEvent.click(await screen.findByLabelText('operator-select'));
+    userEvent.click(await screen.findByLabelText('Select operator'));
     fireEvent.click(await screen.findByText('+'));
     await waitFor(() => expect(props.onChange).toHaveBeenCalledTimes(1));
     await waitFor(() =>
