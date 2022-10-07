@@ -11,7 +11,7 @@ import { Icon } from '../Icon/Icon';
 /**
  * @public
  */
-export type OnTagClick = (name: string, event: React.MouseEvent<HTMLElement>) => any;
+export type OnTagClick = (name: string, event: React.MouseEvent<HTMLElement>) => void;
 
 export interface Props extends Omit<HTMLAttributes<HTMLElement>, 'onClick'> {
   /** Name of the tag to display */

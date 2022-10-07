@@ -290,6 +290,11 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:        "flameGraph",
+			Description: "Show the flame graph",
+			State:       FeatureStateAlpha,
+		},
+		{
 			Name:         "redshiftAsyncQueryDataSupport",
 			Description:  "Enable async query data support for Redshift",
 			State:        FeatureStateAlpha,
