@@ -1,8 +1,6 @@
 package recipes
 
 import (
-	"fmt"
-
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -18,8 +16,6 @@ type staticRecipesProvider struct {
 
 func (s *staticRecipesProvider) GetById(id string) *Recipe {
 	for _, recipe := range s.recipes {
-		fmt.Printf("%s compared to %s", recipe.Id, id)
-
 		if recipe.Id == id {
 			return recipe
 		}
