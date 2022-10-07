@@ -1,7 +1,7 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect, useMemo, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { VirtualizedSelect } from '@grafana/ui';
+import { Input, Select } from '@grafana/ui';
 
 interface Props {
   onChange: (value: string) => void;
@@ -24,23 +24,61 @@ export const SelectWithAdd: FC<Props> = ({
   className,
   placeholder,
   width,
+  custom,
+  onCustomChange,
   disabled = false,
+  addLabel = '+ Add new',
   'aria-label': ariaLabel,
 }) => {
-  return (
-    <VirtualizedSelect
-      aria-label={ariaLabel}
-      width={width}
-      options={options}
-      allowCustomValue
-      value={value}
-      className={className}
-      placeholder={placeholder}
-      disabled={disabled}
-      onChange={(val: SelectableValue) => {
-        const value = val?.value;
-        onChange(value);
-      }}
-    />
+  const [isCustom, setIsCustom] = useState(custom);
+
+  useEffect(() => {
+    if (custom) {
+      setIsCustom(custom);
+    }
+  }, [custom]);
+
+  const _options = useMemo(
+    (): Array<SelectableValue<string>> => [...options, { value: '__add__', label: addLabel }],
+    [options, addLabel]
   );
+
+  if (isCustom) {
+    return (
+      <Input
+        aria-label={ariaLabel}
+        width={width}
+        autoFocus={!custom}
+        value={value || ''}
+        placeholder={placeholder}
+        className={className}
+        disabled={disabled}
+        onChange={(e) => onChange(e.currentTarget.value)}
+      />
+    );
+  } else {
+    return (
+      <Select
+        aria-label={ariaLabel}
+        width={width}
+        options={_options}
+        value={value}
+        className={className}
+        placeholder={placeholder}
+        disabled={disabled}
+        onChange={(val: SelectableValue) => {
+          const value = val?.value;
+          if (value === '__add__') {
+            setIsCustom(true);
+            if (onCustomChange) {
+              onCustomChange(true);
+            }
+            onChange('');
+          } else {
+            onChange(value);
+          }
+        }}
+      />
+    );
+  }
 };
