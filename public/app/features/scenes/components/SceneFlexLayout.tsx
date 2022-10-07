@@ -23,10 +23,10 @@ export class SceneFlexLayout extends SceneObjectBase<SceneFlexLayoutState> {
 }
 
 function FlexLayoutRenderer({ model, isEditing }: SceneComponentProps<SceneFlexLayout>) {
-  const { direction = 'row', children } = model.useState();
+  const { direction = 'row', children, size } = model.useState();
 
   return (
-    <div style={{ flexGrow: 1, flexDirection: direction, display: 'flex', gap: '8px' }}>
+    <div style={{ flexGrow: 1, flexDirection: direction, display: 'flex', gap: '8px', height: size?.height }}>
       {children.map((item) => (
         <FlexLayoutChildComponent key={item.state.key} item={item} direction={direction} isEditing={isEditing} />
       ))}

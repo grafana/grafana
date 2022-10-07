@@ -1,11 +1,20 @@
 import { Scene } from '../components/Scene';
 
 import { getFlexLayoutTest, getScenePanelRepeaterTest } from './demo';
+import { getGridLayoutTest } from './grid';
+import { getMultipleGridLayoutTest } from './gridMultiple';
 import { getNestedScene } from './nested';
 import { getSceneWithRows } from './sceneWithRows';
 
 export function getScenes(): Scene[] {
-  return [getFlexLayoutTest(), getScenePanelRepeaterTest(), getNestedScene(), getSceneWithRows()];
+  return [
+    getFlexLayoutTest(),
+    getGridLayoutTest(),
+    getMultipleGridLayoutTest(),
+    getScenePanelRepeaterTest(),
+    getNestedScene(),
+    getSceneWithRows(),
+  ];
 }
 
 const cache: Record<string, Scene> = {};

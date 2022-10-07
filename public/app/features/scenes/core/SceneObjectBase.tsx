@@ -27,6 +27,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
   events = new EventBusSrv();
 
   constructor(state: TState) {
+    // TODO: Key should not belong to state, is technically it should be stable for a scene object
     if (!state.key) {
       state.key = uuidv4();
     }
