@@ -12,6 +12,10 @@ import (
 )
 
 func TestCreateAndDelete(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cancel()
 
@@ -119,6 +123,10 @@ func createQuery(t *testing.T, ctx context.Context, testCtx testContext) string 
 }
 
 func TestDashboardGetWithLatestSavedQueries(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cancel()
 
