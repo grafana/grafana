@@ -66,7 +66,7 @@ export const components = {
     },
     argsQueryEditor: {
       container: {
-        input: 'data-testid azure-monitor-arg-query-editor-with-experimental-ui',
+        input: 'data-testid azure-monitor-arg-query-editor',
       },
     },
   },
