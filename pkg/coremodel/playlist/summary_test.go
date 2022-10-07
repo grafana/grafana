@@ -16,9 +16,11 @@ func TestPlaylistSummary(t *testing.T) {
 	playlist := Model{
 		Interval: "30s",
 		Name:     "test",
-		// Items: []PlaylistItem{   :( does not work
-		// 	{Type: PlaylistItemTypeDashboardByUid, Value: "D1"},
-		// },
+		Items: &[]PlaylistItem{
+			{Type: PlaylistItemTypeDashboardByUid, Value: "D1"},
+			{Type: PlaylistItemTypeDashboardByTag, Value: "tagA"},
+			{Type: PlaylistItemTypeDashboardByUid, Value: "D3"},
+		},
 	}
 	out, err := json.Marshal(playlist)
 	require.NoError(t, err)
@@ -28,5 +30,7 @@ func TestPlaylistSummary(t *testing.T) {
 	summary, body, err := GetSummaryBuilder()(context.Background(), "abc", out)
 	require.NoError(t, err)
 	require.Equal(t, "test", summary.Name)
+	require.Equal(t, 2, len(summary.References))
+	require.Equal(t, map[string]string{"tagA": ""}, summary.Labels)
 	require.True(t, json.Valid(body))
 }
