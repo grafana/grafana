@@ -2,6 +2,7 @@ package historian
 
 import (
 	"context"
+	"errors"
 	"strconv"
 	"sync"
 	"time"
@@ -12,9 +13,11 @@ import (
 	"github.com/patrickmn/go-cache"
 )
 
-const dashboardNotFound = -1
+const dashboardNotFound = int64(-1)
 
 const defaultDashboardCacheExpiry = 1 * time.Minute
+
+const minCleanupInterval = 1 * time.Second
 
 // dashboardResolver resolves dashboard UIDs to IDs with caching.
 type dashboardResolver struct {
@@ -27,7 +30,7 @@ type dashboardResolver struct {
 func newDashboardResolver(dbs dashboards.DashboardService, log log.Logger, expiry time.Duration) *dashboardResolver {
 	return &dashboardResolver{
 		dashboards: dbs,
-		cache:      cache.New(expiry, 2*expiry),
+		cache:      cache.New(expiry, maxDuration(2*expiry, minCleanupInterval)),
 		log:        log,
 	}
 }
@@ -50,16 +53,18 @@ func (r *dashboardResolver) getId(ctx context.Context, orgID int64, uid string) 
 
 	r.log.Debug("dashboard cache miss, querying dashboards", "dashboardUID", uid)
 
+	var id int64
 	query := &models.GetDashboardQuery{
 		Uid:   uid,
 		OrgId: orgID,
 	}
 	err := r.dashboards.GetDashboard(ctx, query)
-	if err != nil {
+	if err != nil && errors.Is(err, dashboards.ErrDashboardNotFound) {
+		id = dashboardNotFound
+	} else if err != nil {
 		return 0, err
 	}
 
-	var id int64
 	if query.Result != nil {
 		id = query.Result.Id
 	} else {
@@ -74,4 +79,11 @@ func (r *dashboardResolver) getId(ctx context.Context, orgID int64, uid string) 
 func packCacheKey(orgID int64, uid string) string {
 	const base = 10
 	return strconv.FormatInt(orgID, base) + "-" + uid
+}
+
+func maxDuration(a, b time.Duration) time.Duration {
+	if a >= b {
+		return a
+	}
+	return b
 }
