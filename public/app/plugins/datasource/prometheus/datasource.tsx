@@ -149,9 +149,14 @@ export class PrometheusDatasource
 
   doesDatasourceSupportLabelsMatchAPI(): boolean {
     return (
-      this._isDatasourceVersionGreaterOrEqualTo('2.26.0', PromApplication.Prometheus) ||
+      // https://github.com/prometheus/prometheus/releases/tag/v2.24.0
+      this._isDatasourceVersionGreaterOrEqualTo('2.24.0', PromApplication.Prometheus) ||
+      // All versions of Mimir support matchers for labels API
       this._isDatasourceVersionGreaterOrEqualTo('2.0.0', PromApplication.Mimir) ||
-      this._isDatasourceVersionGreaterOrEqualTo('1.8.0', PromApplication.Cortex) ||
+      // https://github.com/cortexproject/cortex/discussions/4542
+      this._isDatasourceVersionGreaterOrEqualTo('1.11.0', PromApplication.Cortex) ||
+      // https://github.com/thanos-io/thanos/pull/3566
+      //https://github.com/thanos-io/thanos/releases/tag/v0.18.0
       this._isDatasourceVersionGreaterOrEqualTo('0.18', PromApplication.Thanos)
     );
   }
