@@ -26,6 +26,9 @@ const (
 	// StandardKindSVG SVG file support
 	StandardKindSVG = "svg"
 
+	// StandardKindPNG PNG file support
+	StandardKindPNG = "png"
+
 	// StandardKindQuery early development on panel query library
 	// the kind may need to change to better encapsulate { targets:[], transforms:[] }
 	StandardKindQuery = "query"

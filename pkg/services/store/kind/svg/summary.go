@@ -16,6 +16,7 @@ func GetObjectKindInfo() models.ObjectKindInfo {
 		Description:   "Scalable Vector Graphics",
 		IsRaw:         true,
 		FileExtension: "svg",
+		MimeType:      "image/svg+xml",
 	}
 }
 
