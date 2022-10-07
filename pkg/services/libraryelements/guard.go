@@ -12,7 +12,7 @@ import (
 )
 
 func isGeneralFolder(folderID int64) bool {
-	return folderID == 0 
+	return folderID == 0
 }
 
 func isUIDGeneralFolder(folderUID string) bool {
