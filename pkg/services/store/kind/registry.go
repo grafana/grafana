@@ -11,17 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/kind/playlist"
 )
 
-const StandardKindDashboard = "dashboard"
-const StandardKindFolder = "folder"
-const StandardKindPanel = "panel"         // types: heatmap, timeseries, table, ...
-const StandardKindDataSource = "ds"       // types: influx, prometheus, test, ...
-const StandardKindTransform = "transform" // types: joinByField, pivot, organizeFields, ...
-const StandardKindPlaylist = "playlist"
-const StandardKindSVG = "svg"
-
-// Query library
-const StandardKindQuery = "query"
-
 type KindRegistry interface {
 	Register(info models.ObjectKindInfo, builder models.ObjectSummaryBuilder) error
 	GetSummaryBuilder(kind string) models.ObjectSummaryBuilder
@@ -31,7 +20,7 @@ type KindRegistry interface {
 
 func NewKindRegistry() KindRegistry {
 	kinds := make(map[string]*kindValues)
-	kinds[StandardKindPlaylist] = &kindValues{
+	kinds[models.StandardKindPlaylist] = &kindValues{
 		info:    playlist.GetObjectKindInfo(),
 		builder: playlist.GetObjectSummaryBuilder(),
 	}

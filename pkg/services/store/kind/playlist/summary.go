@@ -11,7 +11,7 @@ import (
 
 func GetObjectKindInfo() models.ObjectKindInfo {
 	return models.ObjectKindInfo{
-		ID:          "playlist",
+		ID:          models.StandardKindPlaylist,
 		Name:        "Playlist",
 		Description: "Cycle though a collection of dashboards automatically",
 	}

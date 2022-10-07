@@ -3,7 +3,6 @@ package dummy
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -12,7 +11,7 @@ import (
 func GetObjectKindInfo(kind string) models.ObjectKindInfo {
 	return models.ObjectKindInfo{
 		ID:          kind,
-		Name:        strings.ToTitle(kind),
+		Name:        kind,
 		Description: "Dummy kind used for testing.",
 		IsRaw:       true,
 	}

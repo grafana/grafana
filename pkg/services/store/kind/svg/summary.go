@@ -11,7 +11,7 @@ import (
 
 func GetObjectKindInfo() models.ObjectKindInfo {
 	return models.ObjectKindInfo{
-		ID:            kind.StandardKindSVG,
+		ID:            models.StandardKindSVG,
 		Name:          "SVG",
 		Description:   "Scalable Vector Graphics",
 		IsRaw:         true,
@@ -23,7 +23,7 @@ func GetObjectKindInfo() models.ObjectKindInfo {
 func GetObjectSummaryBuilder(renderer rendering.Service) models.ObjectSummaryBuilder {
 	return func(ctx context.Context, uid string, body []byte) (*models.ObjectSummary, []byte, error) {
 		if !IsSVG(body) {
-			return nil, nil, fmt.Errorf("invlid svg")
+			return nil, nil, fmt.Errorf("invalid svg")
 		}
 
 		// When a renderer exists, we can return a sanitized version
@@ -37,7 +37,7 @@ func GetObjectSummaryBuilder(renderer rendering.Service) models.ObjectSummaryBui
 			body = rsp.Sanitized
 		}
 		return &models.ObjectSummary{
-			Kind: kind.StandardKindSVG,
+			Kind: models.StandardKindSVG,
 			Name: kind.GuessNameFromUID(uid),
 			UID:  uid,
 		}, body, nil

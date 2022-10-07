@@ -6,6 +6,31 @@ package models
 
 import "context"
 
+const (
+	StandardKindDashboard = "dashboard"
+	StandardKindPlaylist  = "playlist"
+	StandardKindFolder    = "folder"
+
+	// StandardKindDataSource: not a real kind yet, but used to define references from dashboards
+	// Types: influx, prometheus, testdata, ...
+	StandardKindDataSource = "ds"
+
+	// StandardKindPanel: currently used in two ways :( in search it defines a panel within a dashboard
+	// This is also used to refer to a panel plugin with type:  heatmap, timeseries, table, ...
+	StandardKindPanel = "panel"
+
+	// StandardKindTransform: used to show that a dashboard depends on a set of transformations
+	// NOTE: this should likey be replaced with kind:system/type:transform/uid:joinByField or something like that
+	StandardKindTransform = "transform"
+
+	// StandardKindSVG SVG file support
+	StandardKindSVG = "svg"
+
+	// StandardKindQuery early development on panel query library
+	// the kind may need to change to better encapsulate { targets:[], transforms:[] }
+	StandardKindQuery = "query"
+)
+
 // ObjectKindInfo describes information needed from the object store
 // All non-raw types will have a schema that can be used to validate
 type ObjectKindInfo struct {

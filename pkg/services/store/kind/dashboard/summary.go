@@ -12,7 +12,7 @@ import (
 
 func GetObjectKindInfo() models.ObjectKindInfo {
 	return models.ObjectKindInfo{
-		ID:          kind.StandardKindDashboard,
+		ID:          models.StandardKindDashboard,
 		Name:        "Dashboard",
 		Description: "Define a grafana dashboard layout",
 	}
@@ -59,15 +59,15 @@ func NewDashboardSummaryBuilder(lookup DatasourceLookup) models.ObjectSummaryBui
 
 			panelRefs.Add("panel", panel.Type, "")
 			for _, v := range panel.Datasource {
-				dashboardRefs.Add(kind.StandardKindDataSource, v.Type, v.UID)
-				panelRefs.Add(kind.StandardKindDataSource, v.Type, v.UID)
+				dashboardRefs.Add(models.StandardKindDataSource, v.Type, v.UID)
+				panelRefs.Add(models.StandardKindDataSource, v.Type, v.UID)
 			}
 
 			for _, v := range panel.Transformer {
-				panelRefs.Add(kind.StandardKindTransform, v, "")
+				panelRefs.Add(models.StandardKindTransform, v, "")
 			}
 
-			dashboardRefs.Add(kind.StandardKindPanel, panel.Type, "")
+			dashboardRefs.Add(models.StandardKindPanel, panel.Type, "")
 			p.References = panelRefs.Get()
 			summary.Nested = append(summary.Nested, p)
 		}
