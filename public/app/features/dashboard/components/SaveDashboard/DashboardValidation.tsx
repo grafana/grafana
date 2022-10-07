@@ -53,9 +53,8 @@ function DashboardValidation({ dashboard }: DashboardValidationProps) {
       );
     }
   } else {
-    console.log('error', error);
     // non-200 response from the API. This shouldn't happen normally
-    const errorMessage = error?.message ?? error?.toString?.() ?? 'Unknown error';
+    const errorMessage = error?.message ?? 'Unknown error';
     alert = (
       <Alert severity="info" title="Error checking dashboard validity">
         <p className={styles.error}>{errorMessage}</p>
