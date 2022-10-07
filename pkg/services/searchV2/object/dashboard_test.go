@@ -66,7 +66,7 @@ func TestReadDashboard(t *testing.T) {
 					ETag:    createContentsHash(body),
 				}
 
-				summary, _, err := reader(ctx, obj.UID, obj.Kind, obj.Body)
+				summary, _, err := reader(ctx, obj.UID, obj.Body)
 				if err != nil {
 					return err
 				}

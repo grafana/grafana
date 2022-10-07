@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/store/object"
 )
 
@@ -53,7 +54,7 @@ func newField(name string, p data.FieldType) *data.Field {
 	return f
 }
 
-func (x *SummaryTable) Add(obj *object.RawObject, summary *object.ObjectSummary) {
+func (x *SummaryTable) Add(obj *object.RawObject, summary *models.ObjectSummary) {
 	if summary == nil {
 		return
 	}

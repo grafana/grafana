@@ -25,7 +25,6 @@ type ObjectVersionWithBody struct {
 
 type RawObjectWithHistory struct {
 	Object  *object.RawObject        `json:"object,omitempty"`
-	Summary *object.ObjectSummary    `json:"summary,omitempty"`
 	History []*ObjectVersionWithBody `json:"history,omitempty"`
 }
 

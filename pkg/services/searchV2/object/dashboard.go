@@ -12,17 +12,16 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/object"
 )
 
-func NewDashboardSummaryBuilder(lookup dslookup.DatasourceLookup) object.ObjectSummaryBuilder {
-	return func(ctx context.Context, uid string, kind string, body []byte) (*object.ObjectSummary, []byte, error) {
-		summary := &object.ObjectSummary{
+func NewDashboardSummaryBuilder(lookup dslookup.DatasourceLookup) models.ObjectSummaryBuilder {
+	return func(ctx context.Context, uid string, body []byte) (*models.ObjectSummary, []byte, error) {
+		summary := &models.ObjectSummary{
 			Labels: make(map[string]string),
 			Fields: make(map[string]interface{}),
 		}
 		stream := bytes.NewBuffer(body)
 		dash, err := extract.ReadDashboard(stream, lookup)
 		if err != nil {
-			summary.Error = &object.ObjectErrorInfo{
-				Code:    500, // generic bad error
+			summary.Error = &models.ObjectErrorInfo{
 				Message: err.Error(),
 			}
 			return summary, body, err
@@ -42,7 +41,7 @@ func NewDashboardSummaryBuilder(lookup dslookup.DatasourceLookup) object.ObjectS
 
 		for _, panel := range dash.Panels {
 			panelRefs := object.NewReferenceAccumulator()
-			p := &object.ObjectSummary{
+			p := &models.ObjectSummary{
 				UID:  uid + "#" + strconv.FormatInt(panel.ID, 10),
 				Kind: "panel",
 			}
