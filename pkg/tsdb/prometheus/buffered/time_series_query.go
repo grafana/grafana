@@ -379,11 +379,7 @@ func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data
 
 		for i, k := range v.Values {
 			timeField.Set(i, k.Timestamp.Time().UTC())
-			value := float64(k.Value)
-
-			if !math.IsNaN(value) {
-				valueField.Set(i, value)
-			}
+			valueField.Set(i, float64(k.Value))
 		}
 
 		name := formatLegend(v.Metric, query)
@@ -567,6 +563,10 @@ func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *Prometheu
 			}
 		}
 	}
+
+	sort.SliceStable(sampleExemplars, func(i, j int) bool {
+		return sampleExemplars[i].Time.Before(sampleExemplars[j].Time)
+	})
 
 	// Create DF from sampled exemplars
 	timeField := data.NewFieldFromFieldType(data.FieldTypeTime, len(sampleExemplars))

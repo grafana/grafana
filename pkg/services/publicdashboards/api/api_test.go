@@ -527,7 +527,7 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	}
 
 	// create dashboard
-	dashboardStoreService := dashboardStore.ProvideDashboardStore(db, featuremgmt.WithFeatures(), tagimpl.ProvideService(db))
+	dashboardStoreService := dashboardStore.ProvideDashboardStore(db, featuremgmt.WithFeatures(), tagimpl.ProvideService(db, db.Cfg))
 	dashboard, err := dashboardStoreService.SaveDashboard(context.Background(), saveDashboardCmd)
 	require.NoError(t, err)
 

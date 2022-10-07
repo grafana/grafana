@@ -252,6 +252,22 @@ describe('LokiDatasource', () => {
     });
   });
 
+  describe('when running interpolateVariablesInQueries', () => {
+    it('should call addAdHocFilters', () => {
+      const ds = createLokiDatasource(templateSrvStub);
+      ds.addAdHocFilters = jest.fn();
+      const expr = 'rate({bar="baz", job="foo"} [5m]';
+      const queries = [
+        {
+          refId: 'A',
+          expr,
+        },
+      ];
+      ds.interpolateVariablesInQueries(queries, {});
+      expect(ds.addAdHocFilters).toHaveBeenCalledWith(expr);
+    });
+  });
+
   describe('when performing testDataSource', () => {
     let ds: LokiDatasource;
     beforeEach(() => {
@@ -886,6 +902,24 @@ describe('applyTemplateVariables', () => {
     const spy = jest.spyOn(ds, 'addAdHocFilters');
     ds.applyTemplateVariables({ expr: '{test}', refId: 'A' }, {});
     expect(spy).toHaveBeenCalledWith('{test}');
+  });
+});
+
+describe('getTimeRange*()', () => {
+  it('exposes the current time range', () => {
+    const ds = createLokiDatasource();
+    const timeRange = ds.getTimeRange();
+
+    expect(timeRange.from).toBeDefined();
+    expect(timeRange.to).toBeDefined();
+  });
+
+  it('exposes time range as params', () => {
+    const ds = createLokiDatasource();
+    const params = ds.getTimeRangeParams();
+
+    // Returns a very big integer, so we stringify it for the assertion
+    expect(JSON.stringify(params)).toEqual('{"start":1524650400000000000,"end":1524654000000000000}');
   });
 });
 

@@ -43,3 +43,10 @@ export const findSelectedValue = (
 
   return null;
 };
+
+/**
+ * Omit descriptions from an array of options
+ */
+export const omitDescriptions = (options: SelectableValue[]): SelectableValue[] => {
+  return options.map(({ description, ...rest }) => rest);
+};

@@ -141,7 +141,12 @@ func (hs *HTTPServer) registerRoutes() {
 	}
 
 	if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
-		r.Get("/public-dashboards/:accessToken", publicdashboardsapi.SetPublicDashboardFlag(), publicdashboardsapi.CountPublicDashboardRequest(), hs.Index)
+		r.Get("/public-dashboards/:accessToken",
+			publicdashboardsapi.SetPublicDashboardFlag,
+			publicdashboardsapi.SetPublicDashboardOrgIdOnContext(hs.PublicDashboardsApi.PublicDashboardService),
+			publicdashboardsapi.CountPublicDashboardRequest(),
+			hs.Index,
+		)
 	}
 
 	r.Get("/explore", authorize(func(c *models.ReqContext) {
@@ -156,6 +161,10 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/alerting/", reqSignedIn, hs.Index)
 	r.Get("/alerting/*", reqSignedIn, hs.Index)
 	r.Get("/library-panels/", reqSignedIn, hs.Index)
+	r.Get("/monitoring/", reqSignedIn, hs.Index)
+	r.Get("/monitoring/*", reqSignedIn, hs.Index)
+	r.Get("/alerts-and-incidents", reqSignedIn, hs.Index)
+	r.Get("/alerts-and-incidents/*", reqSignedIn, hs.Index)
 
 	// sign up
 	r.Get("/verify", hs.Index)
@@ -201,8 +210,13 @@ func (hs *HTTPServer) registerRoutes() {
 			userRoute.Get("/teams", routing.Wrap(hs.GetSignedInUserTeamList))
 
 			userRoute.Get("/stars", routing.Wrap(hs.GetStars))
+			// Deprecated: use /stars/dashboard/uid/:uid API instead.
 			userRoute.Post("/stars/dashboard/:id", routing.Wrap(hs.StarDashboard))
+			// Deprecated: use /stars/dashboard/uid/:uid API instead.
 			userRoute.Delete("/stars/dashboard/:id", routing.Wrap(hs.UnstarDashboard))
+
+			userRoute.Post("/stars/dashboard/uid/:uid", routing.Wrap(hs.StarDashboardByUID))
+			userRoute.Delete("/stars/dashboard/uid/:uid", routing.Wrap(hs.UnstarDashboardByUID))
 
 			userRoute.Put("/password", routing.Wrap(hs.ChangeUserPassword))
 			userRoute.Get("/quotas", routing.Wrap(hs.GetUserQuotas))
@@ -257,7 +271,13 @@ func (hs *HTTPServer) registerRoutes() {
 		})
 
 		if hs.Features.IsEnabled(featuremgmt.FlagStorage) {
+			// Will eventually be replaced with the 'object' route
 			apiRoute.Group("/storage", hs.StorageService.RegisterHTTPRoutes)
+
+			// Allow HTTP access to the object storage feature (dev only for now)
+			if hs.Features.IsEnabled(featuremgmt.FlagGrpcServer) {
+				apiRoute.Group("/object", hs.httpObjectStore.RegisterHTTPRoutes)
+			}
 		}
 
 		if hs.Features.IsEnabled(featuremgmt.FlagPanelTitleSearch) {

@@ -365,12 +365,6 @@ type ListNamespaceAlertRulesQuery struct {
 	Result []*AlertRule
 }
 
-// ListRuleGroupsQuery is the query for listing unique rule groups
-// across all organizations
-type ListRuleGroupsQuery struct {
-	Result []string
-}
-
 // ListOrgRuleGroupsQuery is the query for listing unique rule groups
 // for an organization
 type ListOrgRuleGroupsQuery struct {
@@ -383,6 +377,11 @@ type ListOrgRuleGroupsQuery struct {
 	PanelID      int64
 
 	Result [][]string
+}
+
+type UpdateRule struct {
+	Existing *AlertRule
+	New      AlertRule
 }
 
 // Condition contains backend expressions and queries and the RefID

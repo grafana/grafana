@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -22,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/temp_user/tempuserimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
@@ -388,8 +390,7 @@ func TestGetOrgUsersAPIEndpoint_AccessControlMetadata(t *testing.T) {
 			cfg.RBACEnabled = tc.enableAccessControl
 			sc := setupHTTPServerWithCfg(t, false, cfg, func(hs *HTTPServer) {
 				hs.userService = userimpl.ProvideService(
-					hs.SQLStore, nil, nil, nil, nil,
-					nil, nil, nil, nil, nil, hs.SQLStore.(*sqlstore.SQLStore),
+					hs.SQLStore, nil, cfg, teamimpl.ProvideService(hs.SQLStore.(*sqlstore.SQLStore), cfg), localcache.ProvideService(),
 				)
 				hs.orgService = orgimpl.ProvideService(hs.SQLStore, cfg)
 			})
@@ -472,7 +473,7 @@ func TestGetOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			targetOrg:           2,
 		},
 		{
-			name:                "org admin can get users in his org",
+			name:                "org admin can get users in their org",
 			enableAccessControl: true,
 			expectedCode:        http.StatusOK,
 			expectedUserCount:   2,
@@ -493,8 +494,7 @@ func TestGetOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			cfg.RBACEnabled = tc.enableAccessControl
 			sc := setupHTTPServerWithCfg(t, false, cfg, func(hs *HTTPServer) {
 				hs.userService = userimpl.ProvideService(
-					hs.SQLStore, nil, nil, nil, nil,
-					nil, nil, nil, nil, nil, hs.SQLStore.(*sqlstore.SQLStore),
+					hs.SQLStore, nil, cfg, teamimpl.ProvideService(hs.SQLStore.(*sqlstore.SQLStore), cfg), localcache.ProvideService(),
 				)
 				hs.orgService = orgimpl.ProvideService(hs.SQLStore, cfg)
 			})
@@ -599,10 +599,10 @@ func TestPostOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			cfg.RBACEnabled = tc.enableAccessControl
 			sc := setupHTTPServerWithCfg(t, false, cfg, func(hs *HTTPServer) {
 				hs.userService = userimpl.ProvideService(
-					hs.SQLStore, nil, nil, nil, nil,
-					nil, nil, nil, nil, nil, hs.SQLStore.(*sqlstore.SQLStore),
+					hs.SQLStore, nil, cfg, teamimpl.ProvideService(hs.SQLStore.(*sqlstore.SQLStore), cfg), localcache.ProvideService(),
 				)
 			})
+
 			setupOrgUsersDBForAccessControlTests(t, sc.db)
 			setInitCtxSignedInUser(sc.initCtx, tc.user)
 
@@ -718,8 +718,7 @@ func TestOrgUsersAPIEndpointWithSetPerms_AccessControl(t *testing.T) {
 			sc := setupHTTPServer(t, true, func(hs *HTTPServer) {
 				hs.tempUserService = tempuserimpl.ProvideService(hs.SQLStore)
 				hs.userService = userimpl.ProvideService(
-					hs.SQLStore, nil, nil, nil, nil,
-					nil, nil, nil, nil, nil, hs.SQLStore.(*sqlstore.SQLStore),
+					hs.SQLStore, nil, setting.NewCfg(), teamimpl.ProvideService(hs.SQLStore.(*sqlstore.SQLStore), setting.NewCfg()), localcache.ProvideService(),
 				)
 			})
 			setInitCtxSignedInViewer(sc.initCtx)
@@ -837,8 +836,7 @@ func TestPatchOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			cfg.RBACEnabled = tc.enableAccessControl
 			sc := setupHTTPServerWithCfg(t, false, cfg, func(hs *HTTPServer) {
 				hs.userService = userimpl.ProvideService(
-					hs.SQLStore, nil, nil, nil, nil,
-					nil, nil, nil, nil, nil, hs.SQLStore.(*sqlstore.SQLStore),
+					hs.SQLStore, nil, cfg, teamimpl.ProvideService(hs.SQLStore.(*sqlstore.SQLStore), cfg), localcache.ProvideService(),
 				)
 				hs.orgService = orgimpl.ProvideService(hs.SQLStore, cfg)
 			})
@@ -858,13 +856,13 @@ func TestPatchOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 				require.NoError(t, err)
 				assert.Equal(t, tc.expectedMessage, message)
 
-				getUserQuery := models.GetSignedInUserQuery{
-					UserId: tc.targetUserId,
-					OrgId:  tc.targetOrg,
+				getUserQuery := user.GetSignedInUserQuery{
+					UserID: tc.targetUserId,
+					OrgID:  tc.targetOrg,
 				}
-				err = sc.db.GetSignedInUser(context.Background(), &getUserQuery)
+				usr, err := sc.userService.GetSignedInUser(context.Background(), &getUserQuery)
 				require.NoError(t, err)
-				assert.Equal(t, tc.expectedUserRole, getUserQuery.Result.OrgRole)
+				assert.Equal(t, tc.expectedUserRole, usr.OrgRole)
 			}
 		})
 	}
@@ -965,8 +963,7 @@ func TestDeleteOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			cfg.RBACEnabled = tc.enableAccessControl
 			sc := setupHTTPServerWithCfg(t, false, cfg, func(hs *HTTPServer) {
 				hs.userService = userimpl.ProvideService(
-					hs.SQLStore, nil, nil, nil, nil,
-					nil, nil, nil, nil, nil, hs.SQLStore.(*sqlstore.SQLStore),
+					hs.SQLStore, nil, cfg, teamimpl.ProvideService(hs.SQLStore.(*sqlstore.SQLStore), cfg), localcache.ProvideService(),
 				)
 				hs.orgService = orgimpl.ProvideService(hs.SQLStore, cfg)
 			})

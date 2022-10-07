@@ -1,28 +1,20 @@
 import { css } from '@emotion/css';
-import { inRange } from 'lodash';
-import React, { PureComponent } from 'react';
-import { connect, ConnectedProps } from 'react-redux';
+import React, { useEffect } from 'react';
 
 import { locationService } from '@grafana/runtime';
 import { ErrorBoundaryAlert } from '@grafana/ui';
-import { SplitView } from 'app/core/components/SplitPaneWrapper/SplitView';
-import { GrafanaContext } from 'app/core/context/GrafanaContext';
+import { useGrafana } from 'app/core/context/GrafanaContext';
+import { useNavModel } from 'app/core/hooks/useNavModel';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { StoreState } from 'app/types';
+import { isTruthy } from 'app/core/utils/types';
+import { useSelector, useDispatch } from 'app/types';
 import { ExploreId, ExploreQueryParams } from 'app/types/explore';
 
 import { Branding } from '../../core/components/Branding/Branding';
-import { getNavModel } from '../../core/selectors/navModel';
 
 import { ExploreActions } from './ExploreActions';
 import { ExplorePaneContainer } from './ExplorePaneContainer';
-import {
-  lastSavedUrl,
-  resetExploreAction,
-  richHistoryUpdatedAction,
-  cleanupPaneAction,
-  splitSizeUpdateAction,
-} from './state/main';
+import { lastSavedUrl, resetExploreAction } from './state/main';
 
 const styles = {
   pageScrollbarWrapper: css`
@@ -36,60 +28,24 @@ const styles = {
   `,
 };
 
-interface RouteProps extends GrafanaRouteComponentProps<{}, ExploreQueryParams> {}
-interface OwnProps {}
+function Wrapper(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
+  useExplorePageTitle();
+  const dispatch = useDispatch();
+  const queryParams = props.queryParams;
+  const { keybindings, chrome } = useGrafana();
+  const navModel = useNavModel('explore');
 
-interface WrapperState {
-  rightPaneWidth?: number;
-}
-
-const mapStateToProps = (state: StoreState) => {
-  return {
-    navModel: getNavModel(state.navIndex, 'explore'),
-    exploreState: state.explore,
-  };
-};
-
-const mapDispatchToProps = {
-  resetExploreAction,
-  richHistoryUpdatedAction,
-  cleanupPaneAction,
-  splitSizeUpdateAction,
-};
-
-const connector = connect(mapStateToProps, mapDispatchToProps);
-
-type Props = OwnProps & RouteProps & ConnectedProps<typeof connector>;
-class WrapperUnconnected extends PureComponent<Props, WrapperState> {
-  minWidth = 200;
-  static contextType = GrafanaContext;
-
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      rightPaneWidth: undefined,
-    };
-  }
-
-  componentWillUnmount() {
-    const { left, right } = this.props.queryParams;
-    this.props.resetExploreAction({});
-
-    if (Boolean(left)) {
-      this.props.cleanupPaneAction({ exploreId: ExploreId.left });
-    }
-
-    if (Boolean(right)) {
-      this.props.cleanupPaneAction({ exploreId: ExploreId.right });
-    }
-  }
-
-  componentDidMount() {
+  useEffect(() => {
     //This is needed for breadcrumbs and topnav.
     //We should probably abstract this out at some point
-    this.context.chrome.update({ sectionNav: this.props.navModel.node });
-    this.context.keybindings.setupTimeRangeBindings(false);
+    chrome.update({ sectionNav: navModel.node });
+  }, [chrome, navModel]);
 
+  useEffect(() => {
+    keybindings.setupTimeRangeBindings(false);
+  }, [keybindings]);
+
+  useEffect(() => {
     lastSavedUrl.left = undefined;
     lastSavedUrl.right = undefined;
 
@@ -106,70 +62,41 @@ class WrapperUnconnected extends PureComponent<Props, WrapperState> {
     if (searchParams.from || searchParams.to) {
       locationService.partial({ from: undefined, to: undefined }, true);
     }
-  }
 
-  componentDidUpdate() {
-    const { left, right } = this.props.queryParams;
-    const hasSplit = Boolean(left) && Boolean(right);
-    const datasourceTitle = hasSplit
-      ? `${this.props.exploreState.left.datasourceInstance?.name} | ${this.props.exploreState.right?.datasourceInstance?.name}`
-      : `${this.props.exploreState.left.datasourceInstance?.name}`;
-    const documentTitle = `${this.props.navModel.main.text} - ${datasourceTitle} - ${Branding.AppTitle}`;
-    document.title = documentTitle;
-  }
+    return () => {
+      // Cleaning up Explore state so that when navigating back to Explore it starts from a blank state
+      dispatch(resetExploreAction());
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- dispatch is stable, doesn't need to be in the deps array
+  }, []);
 
-  updateSplitSize = (rightPaneWidth: number) => {
-    const evenSplitWidth = window.innerWidth / 2;
-    const areBothSimilar = inRange(rightPaneWidth, evenSplitWidth - 100, evenSplitWidth + 100);
-    if (areBothSimilar) {
-      this.props.splitSizeUpdateAction({ largerExploreId: undefined });
-    } else {
-      this.props.splitSizeUpdateAction({
-        largerExploreId: rightPaneWidth > evenSplitWidth ? ExploreId.right : ExploreId.left,
-      });
-    }
+  const hasSplit = Boolean(queryParams.left) && Boolean(queryParams.right);
 
-    this.setState({ rightPaneWidth });
-  };
-
-  render() {
-    const { left, right } = this.props.queryParams;
-    const { maxedExploreId, evenSplitPanes } = this.props.exploreState;
-    const hasSplit = Boolean(left) && Boolean(right);
-    let widthCalc = 0;
-
-    if (hasSplit) {
-      if (!evenSplitPanes && maxedExploreId) {
-        widthCalc = maxedExploreId === ExploreId.right ? window.innerWidth - this.minWidth : this.minWidth;
-      } else if (evenSplitPanes) {
-        widthCalc = Math.floor(window.innerWidth / 2);
-      } else if (this.state.rightPaneWidth !== undefined) {
-        widthCalc = this.state.rightPaneWidth;
-      }
-    }
-
-    const splitSizeObj = { rightPaneSize: widthCalc };
-
-    return (
-      <div className={styles.pageScrollbarWrapper}>
-        <ExploreActions exploreIdLeft={ExploreId.left} exploreIdRight={ExploreId.right} />
-        <div className={styles.exploreWrapper}>
-          <SplitView uiState={splitSizeObj} minSize={this.minWidth} onResize={this.updateSplitSize}>
-            <ErrorBoundaryAlert style="page" key="LeftPane">
-              <ExplorePaneContainer split={hasSplit} exploreId={ExploreId.left} urlQuery={left} />
-            </ErrorBoundaryAlert>
-            {hasSplit && (
-              <ErrorBoundaryAlert style="page" key="RightPane">
-                <ExplorePaneContainer split={hasSplit} exploreId={ExploreId.right} urlQuery={right} />
-              </ErrorBoundaryAlert>
-            )}
-          </SplitView>
-        </div>
+  return (
+    <div className={styles.pageScrollbarWrapper}>
+      <ExploreActions exploreIdLeft={ExploreId.left} exploreIdRight={ExploreId.right} />
+      <div className={styles.exploreWrapper}>
+        <ErrorBoundaryAlert style="page">
+          <ExplorePaneContainer split={hasSplit} exploreId={ExploreId.left} urlQuery={queryParams.left} />
+        </ErrorBoundaryAlert>
+        {hasSplit && (
+          <ErrorBoundaryAlert style="page">
+            <ExplorePaneContainer split={hasSplit} exploreId={ExploreId.right} urlQuery={queryParams.right} />
+          </ErrorBoundaryAlert>
+        )}
       </div>
-    );
-  }
+    </div>
+  );
 }
 
-const Wrapper = connector(WrapperUnconnected);
+const useExplorePageTitle = () => {
+  const navModel = useNavModel('explore');
+  const datasources = useSelector((state) =>
+    [state.explore.left.datasourceInstance?.name, state.explore.right?.datasourceInstance?.name].filter(isTruthy)
+  );
+
+  const documentTitle = `${navModel.main.text} - ${datasources.join(' | ')} - ${Branding.AppTitle}`;
+  document.title = documentTitle;
+};
 
 export default Wrapper;

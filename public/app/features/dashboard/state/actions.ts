@@ -2,6 +2,7 @@ import { TimeZone } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
+import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { updateTimeZoneForSession, updateWeekStartForSession } from 'app/features/profile/state/reducers';
 import { DashboardAcl, DashboardAclUpdateDTO, NewDashboardAclItem, PermissionLevel, ThunkResult } from 'app/types';
 
@@ -124,6 +125,7 @@ export const cleanUpDashboardAndVariables = (): ThunkResult<void> => (dispatch, 
   getTimeSrv().stopAutoRefresh();
 
   dispatch(cleanUpDashboard());
+  dashboardWatcher.leave();
 };
 
 export const updateTimeZoneDashboard =

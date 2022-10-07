@@ -187,6 +187,10 @@ func (f *AlertmanagerApiHandler) handleRoutePostGrafanaAlertingConfig(ctx *model
 	return f.GrafanaSvc.RoutePostAlertingConfig(ctx, conf)
 }
 
+func (f *AlertmanagerApiHandler) handleRouteGetGrafanaReceivers(ctx *models.ReqContext) response.Response {
+	return f.GrafanaSvc.RouteGetReceivers(ctx)
+}
+
 func (f *AlertmanagerApiHandler) handleRoutePostTestGrafanaReceivers(ctx *models.ReqContext, conf apimodels.TestReceiversConfigBodyParams) response.Response {
 	return f.GrafanaSvc.RoutePostTestReceivers(ctx, conf)
 }

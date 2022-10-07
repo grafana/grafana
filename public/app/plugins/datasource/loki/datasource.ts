@@ -21,7 +21,6 @@ import {
   FieldCache,
   AbstractQuery,
   FieldType,
-  getLogLevelFromKey,
   Labels,
   LoadingState,
   LogLevel,
@@ -42,6 +41,7 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 
 import { serializeParams } from '../../../core/utils/fetch';
 import { RowContextOptions } from '../../../features/logs/components/LogRowContextProvider';
+import { getLogLevelFromKey } from '../../../features/logs/utils';
 import { renderLegendFormat } from '../prometheus/legend';
 import { replaceVariables, returnVariables } from '../prometheus/querybuilder/shared/parsingUtils';
 
@@ -256,7 +256,7 @@ export class LokiDatasource
     );
   };
 
-  getRangeScopedVars(range: TimeRange = this.timeSrv.timeRange()) {
+  getRangeScopedVars(range: TimeRange = this.getTimeRange()) {
     const msRange = range.to.diff(range.from);
     const sRange = Math.round(msRange / 1000);
     return {
@@ -272,7 +272,7 @@ export class LokiDatasource
       expandedQueries = queries.map((query) => ({
         ...query,
         datasource: this.getRef(),
-        expr: this.templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr),
+        expr: this.addAdHocFilters(this.templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr)),
       }));
     }
 
@@ -283,8 +283,12 @@ export class LokiDatasource
     return query.expr;
   }
 
+  getTimeRange() {
+    return this.timeSrv.timeRange();
+  }
+
   getTimeRangeParams() {
-    const timeRange = this.timeSrv.timeRange();
+    const timeRange = this.getTimeRange();
     return { start: timeRange.from.valueOf() * NS_IN_MS, end: timeRange.to.valueOf() * NS_IN_MS };
   }
 
@@ -590,7 +594,7 @@ export class LokiDatasource
     const query: LokiQuery = {
       expr: `{${expr}}`,
       queryType: LokiQueryType.Range,
-      refId: '',
+      refId: row.dataFrame.refId ?? '',
       maxLines: limit,
       direction: queryDirection,
     };

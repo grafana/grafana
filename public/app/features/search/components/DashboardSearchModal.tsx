@@ -70,7 +70,6 @@ export function DashboardSearchModal({ isOpen }: Props) {
                   tabIndex={0}
                   spellCheck={false}
                   className={styles.input}
-                  autoFocus
                 />
               </div>
 
