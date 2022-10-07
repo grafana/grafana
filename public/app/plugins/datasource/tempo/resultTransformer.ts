@@ -698,7 +698,7 @@ export function createTableFrameFromTraceQlQuery(
   const attributesAdded: string[] = [];
 
   data.forEach((trace) => {
-    trace.spans?.forEach((span) => {
+    trace.spanSet?.spans.forEach((span) => {
       span.attributes?.forEach((attr) => {
         if (!attributesAdded.includes(attr.key)) {
           frame.addField({ name: attr.key, type: FieldType.string, config: { displayNameFromDS: attr.key } });
@@ -714,7 +714,7 @@ export function createTableFrameFromTraceQlQuery(
     .reduce((rows: TraceTableData[], trace) => {
       const traceData: TraceTableData = transformToTraceData(trace);
       rows.push(traceData);
-      trace.spans?.forEach((span) => {
+      trace.spanSet?.spans.forEach((span) => {
         rows.push(transformSpanToTraceData(span, trace.traceID));
       });
       return rows;
@@ -738,7 +738,6 @@ interface TraceTableData {
 
 function transformSpanToTraceData(span: Span, traceID: string): TraceTableData {
   const traceStartTime = span.startTimeUnixNano / 1000000;
-  const traceEndTime = span.endTimeUnixNano / 1000000;
 
   let startTime = dateTimeFormat(traceStartTime);
 
@@ -751,9 +750,9 @@ function transformSpanToTraceData(span: Span, traceID: string): TraceTableData {
 
   const data: TraceTableData = {
     traceIdHidden: traceID,
-    spanID: span.spanId,
+    spanID: span.spanID,
     startTime,
-    duration: traceEndTime - traceStartTime,
+    duration: span.durationMs,
   };
 
   span.attributes?.forEach((attr) => {
