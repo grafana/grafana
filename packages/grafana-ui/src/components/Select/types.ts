@@ -27,7 +27,7 @@ export interface SelectCommonProps<T> {
   closeMenuOnSelect?: boolean;
   /** Used for custom components. For more information, see `react-select` */
   components?: any;
-  defaultValue?: any;
+  defaultValue?: T | SelectValue<T> | null;
   disabled?: boolean;
   filterOption?: (option: SelectableValue<T>, searchQuery: string) => boolean;
   formatOptionLabel?: (item: SelectableValue<T>, formatOptionMeta: FormatOptionLabelMeta<T>) => React.ReactNode;
