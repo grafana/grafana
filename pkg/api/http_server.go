@@ -37,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
+	"github.com/grafana/grafana/pkg/plugins/recipes"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/annotations"
@@ -200,6 +201,7 @@ type HTTPServer struct {
 	annotationsRepo        annotations.Repository
 	tagService             tag.Service
 	userAuthService        userauth.Service
+	recipeProvider         recipes.RecipesProvider
 }
 
 type ServerOptions struct {
@@ -241,7 +243,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	loginAttemptService loginAttempt.Service, orgService org.Service, teamService team.Service,
 	accesscontrolService accesscontrol.Service, dashboardThumbsService thumbs.DashboardThumbService, navTreeService navtree.Service,
 	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService,
-	userAuthService userauth.Service,
+	userAuthService userauth.Service, recipesProvider recipes.RecipesProvider,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -343,6 +345,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		annotationsRepo:              annotationRepo,
 		tagService:                   tagService,
 		userAuthService:              userAuthService,
+		recipeProvider:               recipesProvider,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
@@ -360,6 +363,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 
 func (hs *HTTPServer) AddMiddleware(middleware web.Handler) {
 	hs.middlewares = append(hs.middlewares, middleware)
+
 }
 
 func (hs *HTTPServer) AddNamedMiddleware(middleware routing.RegisterNamedMiddleware) {

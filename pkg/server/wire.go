@@ -39,6 +39,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	managerStore "github.com/grafana/grafana/pkg/plugins/manager/store"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
+	"github.com/grafana/grafana/pkg/plugins/recipes"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -359,6 +360,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(notifications.TempUserStore), new(tempuser.Service)),
 	tagimpl.ProvideService,
 	wire.Bind(new(tag.Service), new(*tagimpl.Service)),
+	recipes.ProvideService,
 )
 
 var wireSet = wire.NewSet(
