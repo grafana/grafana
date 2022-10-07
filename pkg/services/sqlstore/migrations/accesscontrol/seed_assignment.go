@@ -1,6 +1,10 @@
 package accesscontrol
 
-import "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+import (
+	"xorm.io/xorm"
+
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+)
 
 const migSQLITERoleNameNullable = `ALTER TABLE seed_assignment ADD COLUMN tmp_role_name VARCHAR(190) DEFAULT NULL;
 UPDATE seed_assignment SET tmp_role_name = role_name;
@@ -35,4 +39,80 @@ func AddSeedAssignmentMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("add unique index builtin_role_action_scope",
 		migrator.NewAddIndexMigration(seedAssignmentTable,
 			&migrator.Index{Cols: []string{"builtin_role", "action", "scope"}, Type: migrator.UniqueIndex}))
+
+	mg.AddMigration("add primary key to seed_assigment", &seedAssignmentPrimaryKeyMigrator{})
+}
+
+type seedAssignmentPrimaryKeyMigrator struct {
+	migrator.MigrationBase
+}
+
+func (m *seedAssignmentPrimaryKeyMigrator) SQL(dialect migrator.Dialect) string {
+	return CodeMigrationSQL
+}
+
+func (m *seedAssignmentPrimaryKeyMigrator) Exec(sess *xorm.Session, mig *migrator.Migrator) error {
+	driver := mig.Dialect.DriverName()
+
+	if driver == migrator.MySQL {
+		_, err := sess.Exec("ALTER TABLE seed_assignment ADD id INT NOT NULL AUTO_INCREMENT FIRST, ADD PRIMARY KEY (id)")
+		return err
+	} else if driver == migrator.Postgres {
+		_, err := sess.Exec("ALTER TABLE seed_assignment ADD COLUMN id SERIAL PRIMARY KEY")
+		return err
+	}
+
+	// sqlite does not allow to add constraint after a table is created
+	// We need to create a new table with desired columns, move data to new table, delete old table and rename new table to old
+
+	// create temp table
+	_, err := sess.Exec(`
+		CREATE TABLE seed_assignment_temp (
+		    id INTEGER PRIMARY KEY AUTOINCREMENT,
+			builtin_role TEXT,
+			action TEXT,
+			scope TEXT,
+			role_name TEXT
+		);
+	`)
+
+	// copy data to temp table
+	_, err = sess.Exec("INSERT INTO seed_assignment_temp (builtin_role, action, scope, role_name) SELECT * FROM seed_assignment;")
+	if err != nil {
+		return err
+	}
+
+	// drop indices on old table
+	_, err = sess.Exec("DROP INDEX UQE_seed_assignment_builtin_role_action_scope;")
+	if err != nil {
+		return err
+	}
+	_, err = sess.Exec("DROP INDEX UQE_seed_assignment_builtin_role_role_name;")
+	if err != nil {
+		return err
+	}
+
+	// drop old table
+	_, err = sess.Exec("DROP TABLE seed_assignment;")
+	if err != nil {
+		return err
+	}
+
+	// rename temp table to old name
+	_, err = sess.Exec("ALTER TABLE seed_assignment_temp RENAME TO seed_assignment;")
+	if err != nil {
+		return err
+	}
+
+	// recreate indexes on new table
+	_, err = sess.Exec("CREATE UNIQUE INDEX UQE_seed_assignment_builtin_role_action_scope ON seed_assignment (builtin_role, action, scope);")
+	if err != nil {
+		return err
+	}
+	_, err = sess.Exec("CREATE UNIQUE INDEX UQE_seed_assignment_builtin_role_role_name ON seed_assignment (builtin_role, role_name);")
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
