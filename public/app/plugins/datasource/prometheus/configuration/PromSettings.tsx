@@ -79,30 +79,26 @@ const setPrometheusVersion = (
   options: DataSourceSettings<PromOptions>,
   onOptionsChange: (options: DataSourceSettings<PromOptions>) => void
 ) => {
-  try {
-    getBackendSrv()
-      .get(`/api/datasources/${options.id}/resources/version-detect`)
-      .then((rawResponse: PromBuildInfoResponse) => {
-        if (rawResponse.data?.version && semver.valid(rawResponse.data?.version)) {
-          onOptionsChange({
-            ...options,
-            jsonData: {
-              ...options.jsonData,
-              prometheusVersion: getVersionString(rawResponse.data?.version, options.jsonData.prometheusFlavor),
-            },
-          });
-        } else {
-          // show UI to prompt manual population?
-          console.warn('Error fetching version from buildinfo API, user must manually select version!');
-        }
-      })
-      .catch((error) => {
+  getBackendSrv()
+    .get(`/api/datasources/${options.id}/resources/version-detect`)
+    .then((rawResponse: PromBuildInfoResponse) => {
+      if (rawResponse.data?.version && semver.valid(rawResponse.data?.version)) {
+        onOptionsChange({
+          ...options,
+          jsonData: {
+            ...options.jsonData,
+            prometheusVersion: getVersionString(rawResponse.data?.version, options.jsonData.prometheusFlavor),
+          },
+        });
+      } else {
         // show UI to prompt manual population?
-        console.warn('Error fetching version from buildinfo API, user must manually select version!', error);
-      });
-  } catch (error) {
-    console.warn('Error fetching version from buildinfo API, user must manually select version!', error);
-  }
+        console.warn('Error fetching version from buildinfo API, user must manually select version!');
+      }
+    })
+    .catch((error) => {
+      // show UI to prompt manual population?
+      console.warn('Error fetching version from buildinfo API, user must manually select version!', error);
+    });
 };
 
 export const PromSettings = (props: Props) => {
