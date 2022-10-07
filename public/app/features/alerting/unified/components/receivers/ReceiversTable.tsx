@@ -168,8 +168,10 @@ function LastNotify({ lastNotifyDate }: { lastNotifyDate: string }) {
   }
 }
 
+const possibleNullDurations = ['', '0', '0ms', '0s', '0m', '0h', '0d', '0w', '0y'];
+const durationIsNull = (duration: string) => possibleNullDurations.includes(duration);
+
 function NotifiersTable({ notifiersState }: NotifiersTableProps) {
-  const durationIsNull = (duration: string) => duration === '0s';
   function getNotifierColumns(): NotifierTableColumnProps[] {
     return [
       {
