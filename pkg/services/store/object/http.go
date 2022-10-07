@@ -55,7 +55,7 @@ func parseRequestParams(req *http.Request) (uid string, kind string, params map[
 	idx := strings.LastIndex(path, ".")
 	if idx > 0 {
 		uid = path[:idx]
-		kind = path[idx:]
+		kind = path[idx+1:]
 	} else {
 		uid = path
 		kind = "?"
@@ -76,9 +76,9 @@ func (s *httpObjectStore) doGetObject(c *models.ReqContext) response.Response {
 	rsp, err := s.store.Read(c.Req.Context(), &ReadObjectRequest{
 		UID:         uid,
 		Kind:        kind,
-		Version:     params["version"], // ?version = XYZ
-		WithBody:    true,              // ?? allow false?
-		WithSummary: true,              // ?? allow false?
+		Version:     params["version"],           // ?version = XYZ
+		WithBody:    params["body"] != "false",   // default to true
+		WithSummary: params["summary"] == "true", // default to false
 	})
 	if err != nil {
 		return response.Error(500, "error fetching object", err)
@@ -200,5 +200,16 @@ func (s *httpObjectStore) doListFolder(c *models.ReqContext) response.Response {
 }
 
 func (s *httpObjectStore) doSearch(c *models.ReqContext) response.Response {
-	return response.JSON(501, "Not implemented yet")
+	req := &ObjectSearchRequest{
+		WithBody:   true,
+		WithLabels: true,
+		WithFields: true,
+		// TODO!!!
+	}
+
+	rsp, err := s.store.Search(c.Req.Context(), req)
+	if err != nil {
+		return response.Error(500, "?", err)
+	}
+	return response.JSON(200, rsp)
 }

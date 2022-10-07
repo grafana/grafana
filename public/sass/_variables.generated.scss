@@ -103,6 +103,8 @@ $font-family-sans-serif: "Roboto", "Helvetica", "Arial", sans-serif;
 /* stylelint-disable-next-line string-quotes */
 $font-family-monospace: 'Roboto Mono', monospace;
 
+$font-file-path: '../fonts' !default;
+
 $font-size-base: 14px !default;
 
 $font-size-lg: 18px !default;
@@ -110,7 +112,7 @@ $font-size-md: 14px !default;
 $font-size-sm: 12px !default;
 $font-size-xs: 10px !default;
 
-$line-height-base: 1.5 !default;
+$line-height-base: 1.5714285714285714 !default;
 
 $font-weight-regular: 400 !default;
 $font-weight-semi-bold: 500 !default;

@@ -1,5 +1,8 @@
 import { cx } from '@emotion/css';
+import { max } from 'lodash';
 import React, { FC, RefCallback } from 'react';
+import { MenuListProps } from 'react-select';
+import { FixedSizeList as List } from 'react-window';
 
 import { SelectableValue, toIconName } from '@grafana/data';
 
@@ -29,6 +32,54 @@ export const SelectMenu: FC<SelectMenuProps> = ({ children, maxHeight, innerRef,
 };
 
 SelectMenu.displayName = 'SelectMenu';
+
+const VIRTUAL_LIST_ITEM_HEIGHT = 37;
+const VIRTUAL_LIST_WIDTH_ESTIMATE_MULTIPLIER = 7;
+
+// A virtualized version of the SelectMenu, descriptions for SelectableValue options not supported since those are of a variable height.
+//
+// To support the virtualized list we have to "guess" the width of the menu container based on the longest available option.
+// the reason for this is because all of the options will be positioned absolute, this takes them out of the document and no space
+// is created for them, thus the container can't grow to accomodate.
+//
+// VIRTUAL_LIST_ITEM_HEIGHT and WIDTH_ESTIMATE_MULTIPLIER are both magic numbers.
+// Some characters (such as emojis and other unicode characters) may consist of multiple code points in which case the width would be inaccurate (but larger than needed).
+export const VirtualizedSelectMenu: FC<MenuListProps<SelectableValue>> = ({
+  children,
+  maxHeight,
+  options,
+  getValue,
+}) => {
+  const theme = useTheme2();
+  const styles = getSelectStyles(theme);
+  const [value] = getValue();
+
+  const valueIndex = value ? options.findIndex((option: SelectableValue<unknown>) => option.value === value.value) : 0;
+  const initialOffset = valueIndex * VIRTUAL_LIST_ITEM_HEIGHT;
+
+  if (!Array.isArray(children)) {
+    return null;
+  }
+
+  const longestOption = max(options.map((option) => option.label?.length)) ?? 0;
+  const widthEstimate = longestOption * VIRTUAL_LIST_WIDTH_ESTIMATE_MULTIPLIER;
+
+  return (
+    <List
+      className={styles.menu}
+      height={maxHeight}
+      width={widthEstimate}
+      aria-label="Select options menu"
+      itemCount={children.length}
+      itemSize={VIRTUAL_LIST_ITEM_HEIGHT}
+      initialScrollOffset={initialOffset}
+    >
+      {({ index, style }) => <div style={{ ...style, overflow: 'hidden' }}>{children[index]}</div>}
+    </List>
+  );
+};
+
+VirtualizedSelectMenu.displayName = 'VirtualizedSelectMenu';
 
 interface SelectMenuOptionProps<T> {
   isDisabled: boolean;
