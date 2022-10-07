@@ -25,13 +25,13 @@ The Grafana Alertmanager can receive alerts from Grafana, but it cannot receive 
 
 **External Alertmanager**
 
-If you want to use a single alertmanager to receive all of your alerts, you can set up Grafana to use an external Alertmanager. This external Alertmanager can be configured and administered from within Grafana itself.
+If you want to use a single alertmanager to receive all your Grafana, Loki, Mimir, and Prometheus alerts, you can set up Grafana to use an external Alertmanager. This external Alertmanager can be configured and administered from within Grafana itself.
 
 Here are two examples of when you may want to configure your own external alertmanager and send your alerts there instead of the Grafana Alertmanager:
 
 1. You may already have alertmanagers on-premise in your own Cloud infrastructure that you have set up and still want to use, because you have other alert generators, such as Prometheus.
 
-1. You want to use both Prometheus on-premise and hosted Grafana to send alerts to the same alertmanager that runs in your Cloud infrastructure.
+2. You want to use both Prometheus on-premise and hosted Grafana to send alerts to the same alertmanager that runs in your Cloud infrastructure.
 
 Alertmanagers are visible from the drop-down menu on the Alerting Contact Points, Notification Policies, and Silences pages.
 
