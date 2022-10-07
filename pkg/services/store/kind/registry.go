@@ -15,39 +15,48 @@ const StandardKindDataSource = "ds"       // types: influx, prometheus, test, ..
 const StandardKindTransform = "transform" // types: joinByField, pivot, organizeFields, ...
 const StandardKindPlaylist = "playlist"
 
+type KindRegistry interface {
+	Register(info models.ObjectKindInfo, builder models.ObjectSummaryBuilder) error
+	GetSummaryBuilder(kind string) models.ObjectSummaryBuilder
+	GetInfo(kind string) (models.ObjectKindInfo, error)
+	GetKinds() []models.ObjectKindInfo
+}
+
+func NewKindRegistry() KindRegistry {
+	kinds := make(map[string]*kindValues)
+	kinds[StandardKindPlaylist] = &kindValues{
+		info:    playlist.GetObjectKindInfo(),
+		builder: playlist.GetObjectSummaryBuilder(),
+	}
+
+	reg := &registry{
+		mutex: sync.RWMutex{},
+		kinds: kinds,
+	}
+	// Add each item
+	for _, k := range kinds {
+		reg.info = append(reg.info, k.info)
+	}
+	return reg
+}
+
+// Zero dependency service -- this includes the default services
+func ProvideService() KindRegistry {
+	return NewKindRegistry()
+}
+
 type kindValues struct {
 	info    models.ObjectKindInfo
 	builder models.ObjectSummaryBuilder
 }
 
-type Registry struct {
+type registry struct {
 	mutex sync.RWMutex
 	kinds map[string]*kindValues
 	info  []models.ObjectKindInfo
 }
 
-func NewKindRegistry() *Registry {
-	return &Registry{
-		mutex: sync.RWMutex{},
-		kinds: make(map[string]*kindValues),
-		info:  make([]models.ObjectKindInfo, 0),
-	}
-}
-
-// Initalize the standard dependency free kinds
-func (r *Registry) RegisterDefaults() error {
-	r.mutex.Lock()
-	defer r.mutex.Unlock()
-
-	r.kinds[StandardKindPlaylist] = &kindValues{
-		info:    playlist.GetObjectKindInfo(),
-		builder: playlist.GetObjectSummaryBuilder(),
-	}
-
-	return nil
-}
-
-func (r *Registry) Register(info models.ObjectKindInfo, builder models.ObjectSummaryBuilder) error {
+func (r *registry) Register(info models.ObjectKindInfo, builder models.ObjectSummaryBuilder) error {
 	if info.ID == "" || builder == nil {
 		return fmt.Errorf("invalid kind")
 	}
@@ -70,7 +79,7 @@ func (r *Registry) Register(info models.ObjectKindInfo, builder models.ObjectSum
 }
 
 // GetSummaryBuilder returns a builder or nil if not found
-func (r *Registry) GetSummaryBuilder(kind string) models.ObjectSummaryBuilder {
+func (r *registry) GetSummaryBuilder(kind string) models.ObjectSummaryBuilder {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
 
@@ -82,7 +91,7 @@ func (r *Registry) GetSummaryBuilder(kind string) models.ObjectSummaryBuilder {
 }
 
 // GetInfo returns the registered info
-func (r *Registry) GetInfo(kind string) (models.ObjectKindInfo, error) {
+func (r *registry) GetInfo(kind string) (models.ObjectKindInfo, error) {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
 
@@ -94,7 +103,7 @@ func (r *Registry) GetInfo(kind string) (models.ObjectKindInfo, error) {
 }
 
 // GetSummaryBuilder returns a builder or nil if not found
-func (r *Registry) GetKinds() []models.ObjectKindInfo {
+func (r *registry) GetKinds() []models.ObjectKindInfo {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
 

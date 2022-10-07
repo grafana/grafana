@@ -10,10 +10,7 @@ import (
 
 func TestKindRegistry(t *testing.T) {
 	registry := NewKindRegistry()
-	err := registry.RegisterDefaults()
-	require.NoError(t, err)
-
-	err = registry.Register(dummy.GetObjectKindInfo(), dummy.GetObjectSummaryBuilder())
+	err := registry.Register(dummy.GetObjectKindInfo(), dummy.GetObjectSummaryBuilder())
 	require.NoError(t, err)
 
 	// Check playlist exists
