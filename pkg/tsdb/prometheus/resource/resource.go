@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -106,6 +107,17 @@ func (r *Resource) DetectVersion(ctx context.Context, req *backend.CallResourceR
 	}
 
 	resp, err := r.Execute(ctx, newReq)
+
+	if err != nil && strings.Contains(err.Error(), "empty url") {
+		var emptyBody []byte
+		callResponse := &backend.CallResourceResponse{
+			Status: 200,
+			Body:   emptyBody,
+		}
+
+		return callResponse, nil
+	}
+
 	if err != nil {
 		return nil, err
 	}
