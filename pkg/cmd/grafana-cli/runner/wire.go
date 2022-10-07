@@ -281,7 +281,6 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(teamguardian.Store), new(*teamguardianDatabase.TeamGuardianStoreImpl)),
 	teamguardianManager.ProvideService,
 	dashboardservice.ProvideDashboardService,
-	dashboardservice.ProvideFolderService,
 	dashboardstore.ProvideDashboardStore,
 	wire.Bind(new(dashboards.DashboardService), new(*dashboardservice.DashboardServiceImpl)),
 	wire.Bind(new(dashboards.DashboardProvisioningService), new(*dashboardservice.DashboardServiceImpl)),
