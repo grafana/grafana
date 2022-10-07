@@ -72,7 +72,7 @@ func TestReadDashboard(t *testing.T) {
 		"panels-without-datasources",
 	}
 
-	devdash := "../../../../devenv/dev-dashboards/"
+	devdash := "../../../../../devenv/dev-dashboards/"
 
 	for _, input := range inputs {
 		// nolint:gosec

@@ -2,10 +2,11 @@ package kind
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 
-	"github.com/grafana/grafana/pkg/coremodel/playlist"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/store/kind/playlist"
 )
 
 const StandardKindDashboard = "dashboard"
@@ -14,6 +15,7 @@ const StandardKindPanel = "panel"         // types: heatmap, timeseries, table, 
 const StandardKindDataSource = "ds"       // types: influx, prometheus, test, ...
 const StandardKindTransform = "transform" // types: joinByField, pivot, organizeFields, ...
 const StandardKindPlaylist = "playlist"
+const StandardKindSVG = "svg"
 
 type KindRegistry interface {
 	Register(info models.ObjectKindInfo, builder models.ObjectSummaryBuilder) error
@@ -108,4 +110,16 @@ func (r *registry) GetKinds() []models.ObjectKindInfo {
 	defer r.mutex.RUnlock()
 
 	return r.info // returns a copy of the array
+}
+
+func GuessNameFromUID(uid string) string {
+	sidx := strings.LastIndex(uid, "/") + 1
+	didx := strings.LastIndex(uid, ".")
+	if didx > sidx && didx != sidx {
+		return uid[sidx:didx]
+	}
+	if sidx > 0 {
+		return uid[sidx:]
+	}
+	return uid
 }

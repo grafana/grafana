@@ -21,8 +21,11 @@ type ObjectKindInfo struct {
 	// The format is not controlled by a schema
 	IsRaw bool `json:"isRaw,omitempty"`
 
-	// For formats that have a preferred save extension (svg, png, parquet, etc)
+	// The preferred save extension (svg, png, parquet, etc) if one exists
 	FileExtension string `json:"fileExtension,omitempty"`
+
+	// The correct mime-type to return for raw objects
+	MimeType string `json:"mimeType,omitempty"`
 }
 
 // ObjectSummary represents common data derived from a raw object bytes.
