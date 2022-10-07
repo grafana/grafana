@@ -83,11 +83,14 @@ func (s *AccessControlStore) GetUsersPermissions(ctx context.Context, query acce
 					INNER JOIN builtin_role AS br ON br.role_id = permission.role_id
 					INNER JOIN org_user AS ou ON ou.role = br.role
 			UNION
-				SELECT user.id AS user_id, br.org_id, permission.action, permission.scope
+				SELECT sa.user_id, br.org_id, permission.action, permission.scope
 					FROM permission
 					INNER JOIN builtin_role AS br ON br.role_id = permission.role_id
-					INNER JOIN user
-					WHERE user.is_admin = 1 AND br.role = "Grafana Admin"
+					INNER JOIN (
+						SELECT user.id AS user_id
+						FROM user WHERE user.is_admin
+					) AS sa ON 1 = 1 
+					WHERE br.role = 'Grafana Admin'
 		)
 		WHERE
 			(org_id = ? OR org_id = ?)
