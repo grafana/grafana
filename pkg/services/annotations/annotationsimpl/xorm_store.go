@@ -79,6 +79,39 @@ func (r *xormRepositoryImpl) Add(ctx context.Context, item *annotations.Item) er
 	})
 }
 
+// AddMany inserts large batches of annotations at once.
+// It does not return IDs associated with created annotations, and it does not support annotations with tags. If you need this functionality, use the single-item Add instead.
+// This is due to a limitation with some supported databases:
+// We cannot correlate the IDs of batch-inserted records without acquiring a full table lock in MySQL.
+// Annotations have no other uniquifier field, so we also cannot re-query for them after the fact.
+// IDs are also required to associate tags. So, callers can only perform this optimization if they:
+//   a) Don't care about the IDs of inserted annotations
+//   b) Are inserting annotations with no tags
+func (r *xormRepositoryImpl) AddMany(ctx context.Context, items []annotations.Item) error {
+	for _, item := range items {
+		if len(item.Tags) > 0 {
+			panic("Batch insert of annotations with tags is unsupported due to a database limitation.")
+		}
+
+		item.Tags = []string{}
+		item.Created = timeNow().UnixNano() / int64(time.Millisecond)
+		item.Updated = item.Created
+		if item.Epoch == 0 {
+			item.Epoch = item.Created
+		}
+		if err := r.validateItem(&item); err != nil {
+			return err
+		}
+	}
+
+	return r.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		if _, err := sess.Table("annotation").InsertMulti(items); err != nil {
+			return err
+		}
+		return nil
+	})
+}
+
 func (r *xormRepositoryImpl) Update(ctx context.Context, item *annotations.Item) error {
 	return r.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		var (

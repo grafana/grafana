@@ -35,15 +35,27 @@ func (repo *fakeAnnotationsRepo) Delete(_ context.Context, params *annotations.D
 	return nil
 }
 
-func (repo *fakeAnnotationsRepo) Save(ctx context.Context, item ...*annotations.Item) error {
+func (repo *fakeAnnotationsRepo) Save(ctx context.Context, item *annotations.Item) error {
 	repo.mtx.Lock()
 	defer repo.mtx.Unlock()
 
-	for _, i := range item {
+	if item.Id == 0 {
+		item.Id = int64(len(repo.annotations) + 1)
+	}
+	repo.annotations[item.Id] = *item
+
+	return nil
+}
+
+func (repo *fakeAnnotationsRepo) SaveMany(ctx context.Context, items []annotations.Item) error {
+	repo.mtx.Lock()
+	defer repo.mtx.Unlock()
+
+	for _, i := range items {
 		if i.Id == 0 {
 			i.Id = int64(len(repo.annotations) + 1)
 		}
-		repo.annotations[i.Id] = *i
+		repo.annotations[i.Id] = i
 	}
 
 	return nil

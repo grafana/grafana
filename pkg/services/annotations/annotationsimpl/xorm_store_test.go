@@ -163,6 +163,41 @@ func TestIntegrationAnnotations(t *testing.T) {
 		require.Error(t, err)
 		require.ErrorIs(t, err, annotations.ErrBaseTagLimitExceeded)
 
+		t.Run("Can batch-insert annotations", func(t *testing.T) {
+			count := 10
+			items := make([]annotations.Item, count)
+			for i := 0; i < count; i++ {
+				items[i] = annotations.Item{
+					OrgId: 100,
+					Type:  "batch",
+				}
+			}
+
+			err := repo.AddMany(context.Background(), items)
+
+			require.NoError(t, err)
+			query := &annotations.ItemQuery{OrgId: 100, SignedInUser: testUser}
+			inserted, err := repo.Get(context.Background(), query)
+			require.NoError(t, err)
+			assert.Len(t, inserted, count)
+		})
+
+		t.Run("Panics when a batch-inserted annotation has tags", func(t *testing.T) {
+			count := 10
+			items := make([]annotations.Item, count)
+			for i := 0; i < count; i++ {
+				items[i] = annotations.Item{
+					OrgId: 100,
+					Type:  "batch",
+				}
+			}
+			items[0].Tags = []string{"type:test"}
+
+			require.Panics(t, func() {
+				_ = repo.AddMany(context.Background(), items)
+			})
+		})
+
 		t.Run("Can query for annotation by id", func(t *testing.T) {
 			items, err := repo.Get(context.Background(), &annotations.ItemQuery{
 				OrgId:        1,
@@ -448,6 +483,7 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 		OrgId:       1,
 		DashboardId: 2,
 		Epoch:       10,
+		Tags:        []string{"foo:bar"},
 	}
 	err = repo.Add(context.Background(), dash2Annotation)
 	require.NoError(t, err)
