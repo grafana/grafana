@@ -25,7 +25,7 @@ export const enrichConfigItems = (items: NavModelItem[], location: Location<unkn
     appEvents.publish(new ShowModalReactEvent({ component: OrgSwitcher }));
   };
 
-  if (user && user.orgCount > 1) {
+  if (!config.featureToggles.topnav && user && user.orgCount > 1) {
     const profileNode = items.find((bottomNavItem) => bottomNavItem.id === 'profile');
     if (profileNode) {
       profileNode.showOrgSwitcher = true;
@@ -61,7 +61,7 @@ export const enrichConfigItems = (items: NavModelItem[], location: Location<unkn
       ];
     }
 
-    if (link.showOrgSwitcher) {
+    if (!config.featureToggles.topnav && link.showOrgSwitcher) {
       link.children = [
         ...menuItems,
         {

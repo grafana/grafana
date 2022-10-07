@@ -23,37 +23,36 @@ export function JsonEditorSettings({ dashboard, sectionNav }: SettingsPageProps)
     'The JSON model below is the data structure that defines the dashboard. This includes dashboard settings, panel settings, layout, queries, and so on';
 
   return (
-    <Page navModel={sectionNav} subTitle={subTitle} pageInnerClass={styles.pageInner}>
-      <CodeEditor
-        value={dashboardJson}
-        language="json"
-        showMiniMap={true}
-        showLineNumbers={true}
-        onBlur={setDashboardJson}
-        containerStyles={styles.container}
-      />
-      {dashboard.meta.canSave && (
-        <Button type="submit" onClick={onClick} className={styles.saveButton}>
-          Save changes
-        </Button>
-      )}
+    <Page navModel={sectionNav} subTitle={subTitle}>
+      <div className={styles.wrapper}>
+        <CodeEditor
+          value={dashboardJson}
+          language="json"
+          showMiniMap={true}
+          showLineNumbers={true}
+          onBlur={setDashboardJson}
+          containerStyles={styles.codeEditor}
+        />
+        {dashboard.meta.canSave && (
+          <div>
+            <Button type="submit" onClick={onClick}>
+              Save changes
+            </Button>
+          </div>
+        )}
+      </div>
     </Page>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  pageInner: css({
+  wrapper: css({
     display: 'flex',
+    height: '100%',
     flexDirection: 'column',
-    position: 'relative',
+    gap: theme.spacing(2),
   }),
-  container: css({
-    borderRadius: theme.shape.borderRadius(),
-    border: `1px solid ${theme.components.input.borderColor}`,
+  codeEditor: css({
     flexGrow: 1,
-  }),
-  saveButton: css({
-    alignSelf: 'flex-start',
-    marginTop: theme.spacing(1),
   }),
 });

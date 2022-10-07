@@ -207,9 +207,17 @@ const (
 	// Run GRPC server
 	FlagGrpcServer = "grpcServer"
 
+	// FlagObjectStore
+	// SQL based object store
+	FlagObjectStore = "objectStore"
+
 	// FlagTraceqlEditor
 	// Show the TraceQL editor in the explore page
 	FlagTraceqlEditor = "traceqlEditor"
+
+	// FlagFlameGraph
+	// Show the flame graph
+	FlagFlameGraph = "flameGraph"
 
 	// FlagRedshiftAsyncQueryDataSupport
 	// Enable async query data support for Redshift

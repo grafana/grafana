@@ -1997,8 +1997,7 @@ func TestProcessEvalResults(t *testing.T) {
 			assert.Len(t, states, len(tc.expectedStates))
 
 			for _, s := range tc.expectedStates {
-				cachedState, err := st.Get(s.OrgID, s.AlertRuleUID, s.CacheId)
-				require.NoError(t, err)
+				cachedState := st.Get(s.OrgID, s.AlertRuleUID, s.CacheId)
 				assert.Equal(t, s, cachedState)
 			}
 
@@ -2158,8 +2157,7 @@ func TestStaleResultsHandler(t *testing.T) {
 				"__alert_rule_uid__":           rule.UID,
 			})
 			for _, s := range tc.expectedStates {
-				cachedState, err := st.Get(s.OrgID, s.AlertRuleUID, s.CacheId)
-				require.NoError(t, err)
+				cachedState := st.Get(s.OrgID, s.AlertRuleUID, s.CacheId)
 				assert.Equal(t, s, cachedState)
 			}
 		}

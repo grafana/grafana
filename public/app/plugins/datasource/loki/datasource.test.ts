@@ -201,7 +201,7 @@ describe('LokiDatasource', () => {
         },
       ]);
       expect(ds.applyTemplateVariables(query, {}).expr).toBe(
-        'rate({bar="baz", job="foo", k1=~"v\\\\.\\\\*", k2=~"v\'\\\\.\\\\*"} |= "bar" [5m])'
+        'rate({bar="baz", job="foo", k1=~"v.*", k2=~"v\\\\\'.*"} |= "bar" [5m])'
       );
     });
   });
@@ -665,10 +665,15 @@ describe('LokiDatasource', () => {
 
   describe('addAdHocFilters', () => {
     let ds: LokiDatasource;
-    let adHocFilters: AdHocFilter[];
+    const createTemplateSrvMock = (options: { adHocFilters: AdHocFilter[] }) => {
+      return {
+        getAdhocFilters: (): AdHocFilter[] => options.adHocFilters,
+        replace: (a: string) => a,
+      } as unknown as TemplateSrv;
+    };
     describe('when called with "=" operator', () => {
       beforeEach(() => {
-        adHocFilters = [
+        const defaultAdHocFilters: AdHocFilter[] = [
           {
             condition: '',
             key: 'job',
@@ -676,11 +681,7 @@ describe('LokiDatasource', () => {
             value: 'grafana',
           },
         ];
-        const templateSrvMock = {
-          getAdhocFilters: (): AdHocFilter[] => adHocFilters,
-          replace: (a: string) => a,
-        } as unknown as TemplateSrv;
-        ds = createLokiDatasource(templateSrvMock);
+        ds = createLokiDatasource(createTemplateSrvMock({ adHocFilters: defaultAdHocFilters }));
       });
       describe('and query has no parser', () => {
         it('then the correct label should be added for logs query', () => {
@@ -706,6 +707,21 @@ describe('LokiDatasource', () => {
         it('then the correct label should be added for metrics query with empty selector and variable', () => {
           assertAdHocFilters('rate({}[$__interval])', 'rate({job="grafana"}[$__interval])', ds);
         });
+        it('should correctly escape special characters in ad hoc filter', () => {
+          const ds = createLokiDatasource(
+            createTemplateSrvMock({
+              adHocFilters: [
+                {
+                  condition: '',
+                  key: 'instance',
+                  operator: '=',
+                  value: '"test"',
+                },
+              ],
+            })
+          );
+          assertAdHocFilters('{job="grafana"}', '{job="grafana", instance="\\"test\\""}', ds);
+        });
       });
       describe('and query has parser', () => {
         it('then the correct label should be added for logs query', () => {
@@ -719,7 +735,7 @@ describe('LokiDatasource', () => {
 
     describe('when called with "!=" operator', () => {
       beforeEach(() => {
-        adHocFilters = [
+        const defaultAdHocFilters: AdHocFilter[] = [
           {
             condition: '',
             key: 'job',
@@ -727,11 +743,7 @@ describe('LokiDatasource', () => {
             value: 'grafana',
           },
         ];
-        const templateSrvMock = {
-          getAdhocFilters: (): AdHocFilter[] => adHocFilters,
-          replace: (a: string) => a,
-        } as unknown as TemplateSrv;
-        ds = createLokiDatasource(templateSrvMock);
+        ds = createLokiDatasource(createTemplateSrvMock({ adHocFilters: defaultAdHocFilters }));
       });
       describe('and query has no parser', () => {
         it('then the correct label should be added for logs query', () => {
@@ -749,6 +761,23 @@ describe('LokiDatasource', () => {
         it('then the correct label should be added for metrics query', () => {
           assertAdHocFilters('rate({bar="baz"} | logfmt [5m])', 'rate({bar="baz"} | logfmt | job!=`grafana` [5m])', ds);
         });
+      });
+    });
+
+    describe('when called with regex operator', () => {
+      beforeEach(() => {
+        const defaultAdHocFilters: AdHocFilter[] = [
+          {
+            condition: '',
+            key: 'instance',
+            operator: '=~',
+            value: '.*',
+          },
+        ];
+        ds = createLokiDatasource(createTemplateSrvMock({ adHocFilters: defaultAdHocFilters }));
+      });
+      it('should not escape special characters in ad hoc filter', () => {
+        assertAdHocFilters('{job="grafana"}', '{job="grafana", instance=~".*"}', ds);
       });
     });
   });
