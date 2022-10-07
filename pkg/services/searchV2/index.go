@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/coremodel/dashboard/schemaless"
+	"github.com/grafana/grafana/pkg/coremodel/dashboard/x/schemaless"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"

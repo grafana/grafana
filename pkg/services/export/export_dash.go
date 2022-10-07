@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/grafana/grafana/pkg/coremodel/dashboard/schemaless"
+	"github.com/grafana/grafana/pkg/coremodel/dashboard/x/schemaless"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )

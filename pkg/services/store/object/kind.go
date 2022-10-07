@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/coremodel/dashboard/schemaless"
+	"github.com/grafana/grafana/pkg/coremodel/dashboard/x/schemaless"
 	"github.com/grafana/grafana/pkg/coremodel/playlist"
 	"github.com/grafana/grafana/pkg/models"
 )
