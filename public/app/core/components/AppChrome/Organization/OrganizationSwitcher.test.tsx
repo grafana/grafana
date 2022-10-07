@@ -90,6 +90,6 @@ describe('OrganisationSwitcher', () => {
       },
     });
 
-    expect(screen.getByRole('button', { name: 'Change organization' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /change organization/i })).toBeInTheDocument();
   });
 });
