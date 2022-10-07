@@ -231,7 +231,7 @@ export const PromSettings = (props: Props) => {
                   width={20}
                 />
               }
-              tooltip="Set this to the flavor of your prometheus database, e.g. Prometheus, Cortex, Mimir or Thanos."
+              tooltip="Set this to the flavor of your prometheus database, e.g. Prometheus, Cortex, Mimir or Thanos. Changing this field will save your current settings, and attempt to detect the version."
             />
           </div>
         </div>
@@ -252,7 +252,7 @@ export const PromSettings = (props: Props) => {
                     width={20}
                   />
                 }
-                tooltip={`Use this to set the version of your ${options.jsonData.prometheusFlavor} instance. Auto-detects on change of field above.`}
+                tooltip={`Use this to set the version of your ${options.jsonData.prometheusFlavor} instance if it is not automatically configured.`}
               />
             </div>
           )}
