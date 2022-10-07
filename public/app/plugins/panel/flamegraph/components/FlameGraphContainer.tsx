@@ -1,7 +1,9 @@
+import { css } from '@emotion/css';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { DataFrame, DataFrameView } from '@grafana/data';
+import { useStyles } from '@grafana/ui';
 
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from '../constants';
 
@@ -22,6 +24,7 @@ const FlameGraphContainer = (props: Props) => {
   const [search, setSearch] = useState('');
   const [selectedView, setSelectedView] = useState(SelectedView.Both);
   const [sizeRef, { width: containerWidth }] = useMeasure<HTMLDivElement>();
+  const styles = useStyles(getStyles);
 
   // Transform dataFrame with nested set format to array of levels. Each level contains all the bars for a particular
   // level of the flame graph. We do this temporary as in the end we should be able to render directly by iterating
@@ -46,7 +49,7 @@ const FlameGraphContainer = (props: Props) => {
   }, [selectedView, setSelectedView, containerWidth]);
 
   return (
-    <div ref={sizeRef}>
+    <div ref={sizeRef} className={styles.container}>
       <FlameGraphHeader
         setTopLevelIndex={setTopLevelIndex}
         setRangeMin={setRangeMin}
@@ -88,5 +91,12 @@ const FlameGraphContainer = (props: Props) => {
     </div>
   );
 };
+
+const getStyles = () => ({
+  container: css`
+    overflow: scroll;
+    flex: auto;
+  `,
+});
 
 export default FlameGraphContainer;
