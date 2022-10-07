@@ -3,6 +3,7 @@ import semver from 'semver/preload';
 
 import {
   DataSourcePluginOptionsEditorProps,
+  DataSourceSettings as DataSourceSettingsType,
   DataSourceSettings,
   onUpdateDatasourceJsonDataOptionChecked,
   SelectableValue,
@@ -18,6 +19,7 @@ import {
   regexValidation,
 } from '@grafana/ui';
 
+import { useUpdateDatasource } from '../../../../features/datasources/state';
 import { PromApplication, PromBuildInfoResponse } from '../../../../types/unified-alerting-dto';
 import { PromOptions } from '../types';
 
@@ -75,34 +77,63 @@ const getVersionString = (version: string, flavor?: string): string | undefined 
   return;
 };
 
+const unableToDeterminePrometheusVersion = (error?: Error): void => {
+  console.warn('Error fetching version from buildinfo API, must manually select version!', error);
+};
+
+/**
+ * I don't like the daisy chain of network requests, and that we have to save on behalf of the user, but currently
+ * the backend doesn't allow for the prometheus client url to be passed in from the frontend, so we currently need to save it
+ * to the database before consumption.
+ *
+ * Since the prometheus version fields are below the url field, we can expect users to populate this field before
+ * hitting save and test at the bottom of the page. For this case we need to save the current fields before calling the
+ * resource to auto-detect the version.
+ *
+ * @param options
+ * @param onOptionsChange
+ * @param onUpdate
+ */
 const setPrometheusVersion = (
   options: DataSourceSettings<PromOptions>,
-  onOptionsChange: (options: DataSourceSettings<PromOptions>) => void
+  onOptionsChange: (options: DataSourceSettings<PromOptions>) => void,
+  onUpdate: (dataSource: DataSourceSettingsType<PromOptions>) => Promise<DataSourceSettings<PromOptions>>
 ) => {
-  getBackendSrv()
-    .get(`/api/datasources/${options.id}/resources/version-detect`)
-    .then((rawResponse: PromBuildInfoResponse) => {
-      if (rawResponse.data?.version && semver.valid(rawResponse.data?.version)) {
-        onOptionsChange({
-          ...options,
-          jsonData: {
-            ...options.jsonData,
-            prometheusVersion: getVersionString(rawResponse.data?.version, options.jsonData.prometheusFlavor),
-          },
+  // This will save the current state of the form, as the url is needed for this API call to function
+  onUpdate(options)
+    .then((updatedOptions) => {
+      getBackendSrv()
+        .get(`/api/datasources/${updatedOptions.id}/resources/version-detect`)
+        .then((rawResponse: PromBuildInfoResponse) => {
+          if (rawResponse.data?.version && semver.valid(rawResponse.data?.version)) {
+            const versionString = getVersionString(rawResponse.data?.version, updatedOptions.jsonData.prometheusFlavor);
+            // If we got a successful response, let's update the backend with the version right away if it's new
+            if (versionString) {
+              onUpdate({
+                ...updatedOptions,
+                jsonData: {
+                  ...updatedOptions.jsonData,
+                  prometheusVersion: versionString,
+                },
+              }).then((updatedUpdatedOptions) => {
+                onOptionsChange(updatedUpdatedOptions);
+              });
+            }
+          } else {
+            unableToDeterminePrometheusVersion();
+          }
         });
-      } else {
-        // show UI to prompt manual population?
-        console.warn('Error fetching version from buildinfo API, user must manually select version!');
-      }
     })
     .catch((error) => {
-      // show UI to prompt manual population?
-      console.warn('Error fetching version from buildinfo API, user must manually select version!', error);
+      unableToDeterminePrometheusVersion(error);
     });
 };
 
 export const PromSettings = (props: Props) => {
   const { options, onOptionsChange } = props;
+
+  // This update call is typed as void, but it returns a response which we need
+  const onUpdate = useUpdateDatasource();
 
   // We are explicitly adding httpMethod so it is correctly displayed in dropdown. This way, it is more predictable for users.
   if (!options.jsonData.httpMethod) {
@@ -190,7 +221,7 @@ export const PromSettings = (props: Props) => {
                     },
                     (options) => {
                       // Check buildinfo api and set default version if we can
-                      setPrometheusVersion(options, onOptionsChange);
+                      setPrometheusVersion(options, onOptionsChange, onUpdate);
                       return onOptionsChange({
                         ...options,
                         jsonData: { ...options.jsonData, prometheusVersion: undefined },
