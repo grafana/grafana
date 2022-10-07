@@ -60,6 +60,50 @@ func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query acces
 	return result, err
 }
 
+func (s *AccessControlStore) GetUsersPermissions(ctx context.Context, query accesscontrol.GetUsersPermissionCommand) ([]accesscontrol.Permission, error) {
+	result := make([]accesscontrol.Permission, 0)
+	err := s.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		q := `
+		SELECT
+			user_id,
+			action,
+			scope
+		FROM (
+			SELECT ur.user_id, ur.org_id, permission.action, permission.scope
+				FROM permission
+				INNER JOIN user_role AS ur on ur.role_id = permission.role_id
+			UNION
+				SELECT tm.user_id, tr.org_id, permission.action, permission.scope
+					FROM permission
+					INNER JOIN team_role AS tr ON tr.role_id = permission.role_id
+					INNER JOIN team_member AS tm ON tm.team_id = tr.team_id
+			UNION
+				SELECT ou.user_id, br.org_id, permission.action, permission.scope
+					FROM permission
+					INNER JOIN builtin_role AS br ON br.role_id = permission.role_id
+					INNER JOIN org_user AS ou ON ou.role = br.role
+			UNION
+				SELECT user.id AS user_id, br.org_id, permission.action, permission.scope
+					FROM permission
+					INNER JOIN builtin_role AS br ON br.role_id = permission.role_id
+					INNER JOIN user
+					WHERE user.is_admin = 1 AND br.role = "Grafana Admin"
+		)
+		WHERE
+			(org_id = ? OR org_id = ?)
+			AND action LIKE ?
+		`
+
+		if err := sess.SQL(q, globalOrgID, query.OrgID, query.ActionPrefix+"%").Find(&result); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	return result, err
+}
+
 func userRolesFilter(orgID, userID int64, teamIDs []int64, roles []string) (string, []interface{}) {
 	var params []interface{}
 	builder := strings.Builder{}

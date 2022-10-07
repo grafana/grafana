@@ -51,6 +51,7 @@ func ProvideOSSService(cfg *setting.Cfg, store store, cache *localcache.CacheSer
 
 type store interface {
 	GetUserPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]accesscontrol.Permission, error)
+	GetUsersPermissions(ctx context.Context, query accesscontrol.GetUsersPermissionCommand) ([]accesscontrol.Permission, error)
 	DeleteUserPermissions(ctx context.Context, orgID, userID int64) error
 }
 
@@ -222,4 +223,11 @@ func (s *Service) DeclarePluginRoles(pluginID string, registrations ...accesscon
 	}
 
 	return nil
+}
+
+// GetSimplifiedUsersPermissions returns all users' permissions filtered by action prefixes
+func (s *Service) GetSimplifiedUsersPermissions(ctx context.Context, orgID int64,
+	cmd accesscontrol.GetUsersPermissionCommand) ([]accesscontrol.OrgUserSimplifiedPermissionsDTO, error) {
+
+	return nil, nil
 }

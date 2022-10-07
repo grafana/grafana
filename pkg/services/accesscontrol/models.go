@@ -277,6 +277,24 @@ type EvaluateUserPermissionCommand struct {
 	UIDs         []string           `json:"uids,omitempty"`
 }
 
+type GetUsersPermissionCommand struct {
+	OrgID        int64  `json:"-"`
+	ActionPrefix string `json:"actionPrefix"`
+}
+
+type SimplifiedUserPermissionDTO struct {
+	Action         string   `json:"action"`
+	ScopeResource  string   `json:"scopeResource"`
+	ScopeAttribute string   `json:"scopeAttribute"`
+	All            bool     `json:"all"`
+	UIDs           []string `json:"uids"`
+}
+
+type OrgUserSimplifiedPermissionsDTO struct {
+	UserID      int64                         `json:"userID"`
+	Permissions []SimplifiedUserPermissionDTO `json:"permission"`
+}
+
 const (
 	GlobalOrgID         = 0
 	FixedRolePrefix     = "fixed:"
