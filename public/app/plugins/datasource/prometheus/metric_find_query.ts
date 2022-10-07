@@ -82,7 +82,7 @@ export default class PrometheusMetricFindQuery {
           end: end.toString(),
         };
 
-    if (this.datasource.doesDatasourceSupportLabelsMatchAPI()) {
+    if (this.datasource.doesDatasourceSupportLabelsMatchAPI() || !metric) {
       const url = `/api/v1/label/${label}/values`;
 
       return this.datasource.metadataRequest(url, params).then((result: any) => {
