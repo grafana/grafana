@@ -100,12 +100,6 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     }
   }
 
-  getSnapshotBeforeUpdate(prevProps: Readonly<Props<TQuery>>) {
-    if (prevProps.id !== this.props.id) {
-      this.id = uniqueId(this.props.id + '_');
-    }
-  }
-
   getAngularQueryComponentScope(): AngularQueryComponentScope<TQuery> {
     const { query, queries } = this.props;
     const { datasource } = this.state;
@@ -166,6 +160,10 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   componentDidUpdate(prevProps: Props<TQuery>) {
     const { datasource, loadedDataSourceIdentifier } = this.state;
     const { data, query } = this.props;
+
+    if (prevProps.id !== this.props.id) {
+      this.id = uniqueId(this.props.id + '_');
+    }
 
     if (data !== prevProps.data) {
       const dataFilteredByRefId = filterPanelDataToQuery(data, query.refId);
