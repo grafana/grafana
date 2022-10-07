@@ -34,7 +34,7 @@ export const EditorField: React.FC<EditorFieldProps> = (props) => {
         {label}
         {optional && <span className={styles.optional}> - optional</span>}
         {tooltip && (
-          <Tooltip placement="top" content={tooltip} theme="info">
+          <Tooltip placement="top" content={tooltip} theme="info" interactive>
             <Icon name="info-circle" size="sm" className={styles.icon} />
           </Tooltip>
         )}
