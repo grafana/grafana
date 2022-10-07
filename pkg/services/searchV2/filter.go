@@ -23,6 +23,7 @@ const (
 	entityKindDashboard  entityKind = kind.StandardKindDashboard
 	entityKindFolder     entityKind = kind.StandardKindFolder
 	entityKindDatasource entityKind = kind.StandardKindDataSource
+	entityKindQuery      entityKind = kind.StandardKindQuery
 )
 
 func (r entityKind) IsValid() bool {

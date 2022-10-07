@@ -17,6 +17,9 @@ const StandardKindTransform = "transform" // types: joinByField, pivot, organize
 const StandardKindPlaylist = "playlist"
 const StandardKindSVG = "svg"
 
+// Query library
+const StandardKindQuery = "query"
+
 type KindRegistry interface {
 	Register(info models.ObjectKindInfo, builder models.ObjectSummaryBuilder) error
 	GetSummaryBuilder(kind string) models.ObjectSummaryBuilder

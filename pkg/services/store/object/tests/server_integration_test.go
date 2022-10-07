@@ -122,7 +122,7 @@ func TestObjectServer(t *testing.T) {
 
 	fakeUser := fmt.Sprintf("user:%d:%s", testCtx.user.UserID, testCtx.user.Login)
 	firstVersion := "1"
-	kind := "dashboard"
+	kind := "dummy"
 	uid := "my-test-entity"
 	body := []byte("{\"name\":\"John\"}")
 

@@ -151,7 +151,7 @@ func createContentsHash(contents []byte) string {
 func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequest, namespace string) (*object.WriteObjectResponse, error) {
 	builder := i.kinds.GetSummaryBuilder(r.Kind)
 	if builder == nil {
-		return nil, fmt.Errorf("unsupported kind")
+		return nil, fmt.Errorf("unsupported kind: " + r.Kind)
 	}
 	rsp := &object.WriteObjectResponse{}
 
