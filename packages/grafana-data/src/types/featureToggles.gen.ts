@@ -68,7 +68,9 @@ export interface FeatureToggles {
   grpcServer?: boolean;
   objectStore?: boolean;
   traceqlEditor?: boolean;
+  flameGraph?: boolean;
   redshiftAsyncQueryDataSupport?: boolean;
   athenaAsyncQueryDataSupport?: boolean;
   increaseInMemDatabaseQueryCache?: boolean;
+  queryLibrary?: boolean;
 }
