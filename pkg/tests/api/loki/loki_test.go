@@ -1,4 +1,4 @@
-package graphite
+package loki
 
 import (
 	"bytes"
@@ -20,7 +20,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestIntegrationGraphite(t *testing.T) {
+func TestIntegrationLoki(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableAnonymous: true,
 	})
@@ -50,12 +50,12 @@ func TestIntegrationGraphite(t *testing.T) {
 		"httpHeaderValue1":  "custom-header-value",
 	}
 
-	uid := "graphite"
+	uid := "loki"
 	err := testEnv.Server.HTTPServer.DataSourcesService.AddDataSource(ctx, &datasources.AddDataSourceCommand{
 		OrgId:          1,
 		Access:         datasources.DS_ACCESS_PROXY,
-		Name:           "graphite",
-		Type:           datasources.DS_GRAPHITE,
+		Name:           "Loki",
+		Type:           datasources.DS_LOKI,
 		Uid:            uid,
 		Url:            outgoingServer.URL,
 		BasicAuth:      true,
@@ -65,14 +65,12 @@ func TestIntegrationGraphite(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	t.Run("When calling query should set expected headers on outgoing HTTP request", func(t *testing.T) {
+	t.Run("When calling /api/ds/query should set expected headers on outgoing HTTP request", func(t *testing.T) {
 		query := simplejson.NewFromAny(map[string]interface{}{
 			"datasource": map[string]interface{}{
 				"uid": uid,
 			},
-			"expr":         "up",
-			"instantQuery": true,
-			"target":       "target",
+			"expr": "{job=\"grafana\"}",
 		})
 		buf1 := &bytes.Buffer{}
 		err = json.NewEncoder(buf1).Encode(dtos.MetricRequest{
@@ -85,7 +83,7 @@ func TestIntegrationGraphite(t *testing.T) {
 		// nolint:gosec
 		resp, err := http.Post(u, "application/json", buf1)
 		require.NoError(t, err)
-		require.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 		t.Cleanup(func() {
 			err := resp.Body.Close()
 			require.NoError(t, err)
