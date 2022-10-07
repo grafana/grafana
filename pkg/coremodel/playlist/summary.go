@@ -8,7 +8,15 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func GetSummaryBuilder() models.ObjectSummaryBuilder {
+func GetObjectKindInfo() models.ObjectKindInfo {
+	return models.ObjectKindInfo{
+		ID:          "playlist",
+		Name:        "Playlist",
+		Description: "Cycle though a collection of dashboards automatically",
+	}
+}
+
+func GetObjectSummaryBuilder() models.ObjectSummaryBuilder {
 	return summaryBuilder
 }
 

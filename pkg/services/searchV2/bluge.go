@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/store/object"
+	"github.com/grafana/grafana/pkg/services/store/kind"
 )
 
 const (
@@ -168,7 +168,7 @@ func getNonFolderDashboardDoc(dash dashboard, location string) *bluge.Document {
 	}
 
 	for _, ref := range dash.summary.References {
-		if ref.Kind == object.StandardKindDataSource {
+		if ref.Kind == kind.StandardKindDataSource {
 			if ref.Type != "" {
 				doc.AddField(bluge.NewKeywordField(documentFieldDSType, ref.Type).
 					StoreValue().
@@ -200,7 +200,7 @@ func getDashboardPanelDocs(dash dashboard, location string) []*bluge.Document {
 
 		for _, ref := range dash.summary.References {
 			switch ref.Kind {
-			case object.StandardKindDashboard:
+			case kind.StandardKindDashboard:
 				if ref.Type != "" {
 					doc.AddField(bluge.NewKeywordField(documentFieldDSType, ref.Type).
 						StoreValue().
@@ -213,11 +213,11 @@ func getDashboardPanelDocs(dash dashboard, location string) []*bluge.Document {
 						Aggregatable().
 						SearchTermPositions())
 				}
-			case object.StandardKindPanel:
+			case kind.StandardKindPanel:
 				if ref.Type != "" {
 					doc.AddField(bluge.NewKeywordField(documentFieldPanelType, ref.Type).Aggregatable().StoreValue())
 				}
-			case object.StandardKindTransform:
+			case kind.StandardKindTransform:
 				if ref.Type != "" {
 					doc.AddField(bluge.NewKeywordField(documentFieldTransformer, ref.Type).Aggregatable())
 				}

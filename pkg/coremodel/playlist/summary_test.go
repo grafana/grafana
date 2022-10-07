@@ -9,8 +9,10 @@ import (
 )
 
 func TestPlaylistSummary(t *testing.T) {
+	builder := GetObjectSummaryBuilder()
+
 	// Do not parse invalid input
-	_, _, err := GetSummaryBuilder()(context.Background(), "abc", []byte("{invalid json"))
+	_, _, err := builder(context.Background(), "abc", []byte("{invalid json"))
 	require.Error(t, err)
 
 	playlist := Model{
@@ -27,7 +29,7 @@ func TestPlaylistSummary(t *testing.T) {
 	require.NotNil(t, out)
 
 	// Do not parse invalid input
-	summary, body, err := GetSummaryBuilder()(context.Background(), "abc", out)
+	summary, body, err := builder(context.Background(), "abc", out)
 	require.NoError(t, err)
 	require.Equal(t, "test", summary.Name)
 	require.Equal(t, 2, len(summary.References))

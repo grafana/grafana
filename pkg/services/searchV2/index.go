@@ -13,13 +13,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/coremodel/dashboard/x/schemaless"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/store"
+	kdash "github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/setting"
 	"go.opentelemetry.io/otel/attribute"
 
@@ -849,7 +849,7 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 	loadDatasourceSpan.SetAttributes("orgID", orgID, attribute.Key("orgID").Int64(orgID))
 
 	// key will allow name or uid
-	lookup, err := schemaless.LoadDatasourceLookup(loadDatasourceCtx, orgID, l.sql)
+	lookup, err := kdash.LoadDatasourceLookup(loadDatasourceCtx, orgID, l.sql)
 	if err != nil {
 		loadDatasourceSpan.End()
 		return dashboards, err
@@ -896,7 +896,7 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 		readDashboardSpan.SetAttributes("orgID", orgID, attribute.Key("orgID").Int64(orgID))
 		readDashboardSpan.SetAttributes("dashboardCount", len(rows), attribute.Key("dashboardCount").Int(len(rows)))
 
-		reader := schemaless.NewDashboardSummaryBuilder(lookup)
+		reader := kdash.NewDashboardSummaryBuilder(lookup)
 
 		for _, row := range rows {
 			summary, _, err := reader(ctx, row.Uid, row.Data)

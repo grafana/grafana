@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/grafana/grafana/pkg/coremodel/dashboard/x/schemaless"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 )
 
 func exportDashboards(helper *commitHelper, job *gitExportJob) error {
@@ -24,7 +24,7 @@ func exportDashboards(helper *commitHelper, job *gitExportJob) error {
 		folders[0] = job.cfg.GeneralFolderPath // "general"
 	}
 
-	lookup, err := schemaless.LoadDatasourceLookup(helper.ctx, helper.orgID, job.sql)
+	lookup, err := dashboard.LoadDatasourceLookup(helper.ctx, helper.orgID, job.sql)
 	if err != nil {
 		return err
 	}
@@ -58,7 +58,7 @@ func exportDashboards(helper *commitHelper, job *gitExportJob) error {
 			return err
 		}
 
-		reader := schemaless.NewDashboardSummaryBuilder(lookup)
+		reader := dashboard.NewDashboardSummaryBuilder(lookup)
 
 		// Process all folders
 		for _, row := range rows {

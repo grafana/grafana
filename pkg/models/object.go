@@ -1,6 +1,29 @@
 package models
 
+//-----------------------------------------------------------------------------------------------------
+// NOTE: the object store is in heavy development, and the locations will likely continue to move
+//-----------------------------------------------------------------------------------------------------
+
 import "context"
+
+// ObjectKindInfo describes information needed from the object store
+// All non-raw types will have a schema that can be used to validate
+type ObjectKindInfo struct {
+	// Unique short id for this kind
+	ID string `json:"id,omitempty"`
+
+	// Display name (may be equal to the ID)
+	Name string `json:"name,omitempty"`
+
+	// Kind description
+	Description string `json:"description,omitempty"`
+
+	// The format is not controlled by a schema
+	IsRaw bool `json:"isRaw,omitempty"`
+
+	// For formats that have a preferred save extension (svg, png, parquet, etc)
+	FileExtension string `json:"fileExtension,omitempty"`
+}
 
 // ObjectSummary represents common data derived from a raw object bytes.
 // The values should not depend on system state, and are derived from the raw object.

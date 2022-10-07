@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/filestorage"
-	issvg "github.com/grafana/grafana/pkg/services/store/go-is-svg"
+	issvg "github.com/grafana/grafana/pkg/services/store/kind/svg/go-is-svg"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 

@@ -1,4 +1,4 @@
-package schemaless
+package dashboard
 
 import (
 	"io"

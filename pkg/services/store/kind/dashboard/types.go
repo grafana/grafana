@@ -1,11 +1,4 @@
-package schemaless
-
-// Duplicate to avoid circular reference
-const StandardKindDashboard = "dashboard"
-const StandardKindFolder = "folder"
-const StandardKindPanel = "panel"         // types: heatmap, timeseries, table, ...
-const StandardKindDataSource = "ds"       // types: influx, prometheus, test, ...
-const StandardKindTransform = "transform" // types: joinByField, pivot, organizeFields, ...
+package dashboard
 
 type panelInfo struct {
 	ID            int64           `json:"id"`
