@@ -1,4 +1,5 @@
-import React, { FormEvent, PropsWithChildren, ReactElement } from 'react';
+import { useId } from '@react-aria/utils';
+import React, { FormEvent, PropsWithChildren } from 'react';
 
 import { Field, Input } from '@grafana/ui';
 
@@ -32,17 +33,19 @@ export function VariableTextField({
   invalid,
   error,
   maxLength,
-}: PropsWithChildren<VariableTextFieldProps>): ReactElement {
+}: PropsWithChildren<VariableTextFieldProps>) {
+  const id = useId(name);
+
   return (
-    <Field label={name} description={description} invalid={invalid} error={error}>
+    <Field label={name} description={description} invalid={invalid} error={error} htmlFor={id}>
       <Input
         type="text"
-        id={name}
+        id={id}
         placeholder={placeholder}
         value={value}
         onChange={onChange}
         onBlur={onBlur}
-        width={grow ? undefined : width ?? 25}
+        width={grow ? undefined : width ?? 30}
         data-testid={testId}
         maxLength={maxLength}
         required={required}

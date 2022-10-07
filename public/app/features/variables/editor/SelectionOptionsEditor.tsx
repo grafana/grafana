@@ -7,7 +7,7 @@ import { KeyedVariableIdentifier } from '../state/types';
 import { VariableWithMultiSupport } from '../types';
 import { toKeyedVariableIdentifier } from '../utils';
 
-import { VariableSwitchField } from './VariableSwitchField';
+import { VariableCheckboxField } from './VariableCheckboxField';
 import { VariableTextField } from './VariableTextField';
 import { VariableEditorProps } from './types';
 
@@ -43,20 +43,18 @@ export const SelectionOptionsEditor: FunctionComponent<SelectionOptionsEditorPro
   );
 
   return (
-    <VerticalGroup spacing="none">
-      <VariableSwitchField
+    <VerticalGroup spacing="md" height="inherit">
+      <VariableCheckboxField
         value={variable.multi}
         name="Multi-value"
         description="Enables multiple values to be selected at the same time"
         onChange={onMultiChanged}
-        ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsMultiSwitch}
       />
-      <VariableSwitchField
+      <VariableCheckboxField
         value={variable.includeAll}
         name="Include All option"
         description="Enables an option to include all variables"
         onChange={onIncludeAllChanged}
-        ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsIncludeAllSwitch}
       />
       {variable.includeAll && (
         <VariableTextField

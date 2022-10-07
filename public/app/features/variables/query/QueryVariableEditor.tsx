@@ -4,12 +4,12 @@ import { connect, ConnectedProps } from 'react-redux';
 import { DataSourceInstanceSettings, getDataSourceRef, LoadingState, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { DataSourcePicker, getTemplateSrv } from '@grafana/runtime';
-import { CollapsableSection, Field, Legend } from '@grafana/ui';
+import { Field, Legend } from '@grafana/ui';
 
 import { StoreState } from '../../../types';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
-import { VariableTextField } from '../editor/VariableTextField';
+import { VariableTextAreaField } from '../editor/VariableTextAreaField';
 import { initialVariableEditorState } from '../editor/reducer';
 import { getQueryVariableEditorState } from '../editor/selectors';
 import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
@@ -103,19 +103,19 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
     }
   };
 
-  onRegExChange = (event: FormEvent<HTMLInputElement>) => {
+  onRegExChange = (event: FormEvent<HTMLTextAreaElement>) => {
     this.setState({ regex: event.currentTarget.value });
   };
 
-  onRegExBlur = async (event: FormEvent<HTMLInputElement>) => {
+  onRegExBlur = async (event: FormEvent<HTMLTextAreaElement>) => {
     const regex = event.currentTarget.value;
     if (this.props.variable.regex !== regex) {
       this.props.onPropChange({ propName: 'regex', propValue: regex, updateOptions: true });
     }
   };
 
-  onRefreshChange = (option: SelectableValue<VariableRefresh>) => {
-    this.props.onPropChange({ propName: 'refresh', propValue: option.value });
+  onRefreshChange = (option: VariableRefresh) => {
+    this.props.onPropChange({ propName: 'refresh', propValue: option });
   };
 
   onSortChange = async (option: SelectableValue<VariableSort>) => {
@@ -139,14 +139,12 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
 
     if (isLegacyQueryEditor(VariableQueryEditor, datasource)) {
       return (
-        <CollapsableSection label="Query" isOpen>
-          <VariableQueryEditor
-            datasource={datasource}
-            query={query}
-            templateSrv={getTemplateSrv()}
-            onChange={this.onLegacyQueryChange}
-          />
-        </CollapsableSection>
+        <VariableQueryEditor
+          datasource={datasource}
+          query={query}
+          templateSrv={getTemplateSrv()}
+          onChange={this.onLegacyQueryChange}
+        />
       );
     }
 
@@ -154,18 +152,16 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
 
     if (isQueryEditor(VariableQueryEditor, datasource)) {
       return (
-        <CollapsableSection label="Query" isOpen>
-          <VariableQueryEditor
-            datasource={datasource}
-            query={query}
-            onChange={this.onQueryChange}
-            onRunQuery={() => {}}
-            data={{ series: [], state: LoadingState.Done, timeRange: range }}
-            range={range}
-            onBlur={() => {}}
-            history={[]}
-          />
-        </CollapsableSection>
+        <VariableQueryEditor
+          datasource={datasource}
+          query={query}
+          onChange={this.onQueryChange}
+          onRunQuery={() => {}}
+          data={{ series: [], state: LoadingState.Done, timeRange: range }}
+          range={range}
+          onBlur={() => {}}
+          history={[]}
+        />
       );
     }
 
@@ -181,14 +177,13 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
             current={this.props.variable.datasource}
             onChange={this.onDataSourceChange}
             variables={true}
+            width={30}
           />
         </Field>
 
-        <QueryVariableRefreshSelect onChange={this.onRefreshChange} refresh={this.props.variable.refresh} />
-
         {this.renderQueryEditor()}
 
-        <VariableTextField
+        <VariableTextAreaField
           value={this.state.regex ?? this.props.variable.regex}
           name="Regex"
           description={
@@ -210,10 +205,12 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
           onChange={this.onRegExChange}
           onBlur={this.onRegExBlur}
           testId={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInputV2}
-          grow
+          width={52}
         />
 
         <QueryVariableSortSelect onChange={this.onSortChange} sort={this.props.variable.sort} />
+
+        <QueryVariableRefreshSelect onChange={this.onRefreshChange} refresh={this.props.variable.refresh} />
 
         <Legend>Selection options</Legend>
         <SelectionOptionsEditor

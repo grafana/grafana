@@ -20,6 +20,7 @@ import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 import { ConfirmDeleteModal } from './ConfirmDeleteModal';
 import { VariableHideSelect } from './VariableHideSelect';
+import { VariableTextAreaField } from './VariableTextAreaField';
 import { VariableTextField } from './VariableTextField';
 import { VariableTypeSelect } from './VariableTypeSelect';
 import { VariableValuesPreview } from './VariableValuesPreview';
@@ -93,12 +94,12 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props, State>
     this.props.changeVariableProp(this.props.identifier, 'label', event.currentTarget.value);
   };
 
-  onDescriptionChange = (event: FormEvent<HTMLInputElement>) => {
+  onDescriptionChange = (event: FormEvent<HTMLTextAreaElement>) => {
     this.props.changeVariableProp(this.props.identifier, 'description', event.currentTarget.value);
   };
 
-  onHideChange = (option: SelectableValue<VariableHide>) => {
-    this.props.changeVariableProp(this.props.identifier, 'hide', option.value);
+  onHideChange = (option: VariableHide) => {
+    this.props.changeVariableProp(this.props.identifier, 'hide', option);
   };
 
   onPropChanged = ({ propName, propValue, updateOptions = false }: OnPropChangeArguments) => {
@@ -145,14 +146,16 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props, State>
     const loading = variable.state === LoadingState.Loading;
 
     return (
-      <div>
+      <>
         <form aria-label="Variable editor Form" onSubmit={this.onHandleSubmit}>
+          <VariableTypeSelect onChange={this.onTypeChange} type={this.props.variable.type} />
+
           <Legend>General</Legend>
           <VariableTextField
             value={this.props.editor.name}
             onChange={this.onNameChange}
             name="Name"
-            placeholder="name"
+            placeholder="Variable name"
             description="The name of the template variable. (Max. 50 characters)"
             invalid={!!this.props.editor.errors.name}
             error={this.props.editor.errors.name}
@@ -161,15 +164,20 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props, State>
             required
           />
 
-          <VariableTypeSelect onChange={this.onTypeChange} type={this.props.variable.type} />
-
           <VariableTextField
             name="Label"
             description="Optional display name"
             value={this.props.variable.label ?? ''}
-            placeholder="Label"
+            placeholder="Label name"
             onChange={this.onLabelChange}
             testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInputV2}
+          />
+          <VariableTextAreaField
+            name="Description"
+            value={variable.description ?? ''}
+            placeholder="descriptive text"
+            onChange={this.onDescriptionChange}
+            width={52}
           />
           <VariableHideSelect
             onChange={this.onHideChange}
@@ -177,35 +185,29 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props, State>
             type={this.props.variable.type}
           />
 
-          <VariableTextField
-            name="Description"
-            value={variable.description ?? ''}
-            placeholder="descriptive text"
-            onChange={this.onDescriptionChange}
-            grow
-          />
-
           {EditorToRender && <EditorToRender variable={this.props.variable} onPropChange={this.onPropChanged} />}
 
           {hasOptions(this.props.variable) ? <VariableValuesPreview variable={this.props.variable} /> : null}
 
-          <HorizontalGroup spacing="md">
-            <Button variant="destructive" onClick={this.onModalOpen}>
-              Delete
-            </Button>
-            <Button
-              type="submit"
-              aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.submitButton}
-              disabled={loading}
-              variant={'secondary'}
-            >
-              Run query
-              {loading ? <Icon className="spin-clockwise" name="sync" size="sm" style={{ marginLeft: '2px' }} /> : null}
-            </Button>
-            <Button variant="primary" onClick={this.onApply}>
-              Apply
-            </Button>
-          </HorizontalGroup>
+          <div style={{ marginTop: '40px' }}>
+            <HorizontalGroup spacing="md" height="inherit">
+              <Button variant="destructive" fill="outline" onClick={this.onModalOpen}>
+                Delete
+              </Button>
+              <Button
+                type="submit"
+                aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.submitButton}
+                disabled={loading}
+                variant="secondary"
+              >
+                Run query
+                {loading && <Icon className="spin-clockwise" name="sync" size="sm" style={{ marginLeft: '2px' }} />}
+              </Button>
+              <Button variant="primary" onClick={this.onApply}>
+                Apply
+              </Button>
+            </HorizontalGroup>
+          </div>
         </form>
         <ConfirmDeleteModal
           isOpen={this.state.showDeleteModal}
@@ -213,7 +215,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props, State>
           onConfirm={this.onDelete}
           onDismiss={this.onModalClose}
         />
-      </div>
+      </>
     );
   }
 }

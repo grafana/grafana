@@ -31,7 +31,7 @@ export function TextBoxVariableEditor({ onPropChange, variable: { query } }: Pro
         placeholder="default value, if any"
         onChange={onChange}
         onBlur={onBlur}
-        grow
+        width={30}
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.TextBoxVariable.textBoxOptionsQueryInputV2}
       />
     </>

@@ -53,7 +53,7 @@ class CustomVariableEditorUnconnected extends PureComponent<Props> {
           onChange={this.onChange}
           onBlur={this.onBlur}
           required
-          width={50}
+          width={52}
           testId={selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.customValueInput}
         />
         <Legend>Selection options</Legend>

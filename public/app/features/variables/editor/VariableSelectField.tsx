@@ -35,7 +35,7 @@ export function VariableSelectField({
           inputId={inputId}
           onChange={onChange}
           value={value}
-          width={width ?? 25}
+          width={width ?? 30}
           options={options}
           className={styles.selectContainer}
         />

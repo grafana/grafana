@@ -32,6 +32,7 @@ export function QueryVariableSortSelect({ onChange, sort }: PropsWithChildren<Pr
       options={SORT_OPTIONS}
       onChange={onChange}
       testId={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsSortSelectV2}
+      width={25}
     />
   );
 }

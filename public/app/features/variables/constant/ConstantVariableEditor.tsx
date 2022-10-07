@@ -36,7 +36,7 @@ export class ConstantVariableEditor extends PureComponent<Props> {
           onChange={this.onChange}
           onBlur={this.onBlur}
           testId={selectors.pages.Dashboard.Settings.Variables.Edit.ConstantVariable.constantOptionsQueryInputV2}
-          grow
+          width={30}
         />
       </>
     );

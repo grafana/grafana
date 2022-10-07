@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
-import React, { FormEvent, PropsWithChildren, ReactElement, useCallback } from 'react';
+import { useId } from '@react-aria/utils';
+import React, { FormEvent, PropsWithChildren, ReactElement } from 'react';
 
-import { GrafanaTheme } from '@grafana/data';
-import { Field, TextArea, useStyles } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Field, TextArea, useStyles2 } from '@grafana/ui';
 
 interface VariableTextAreaFieldProps {
   name: string;
@@ -14,11 +15,13 @@ interface VariableTextAreaFieldProps {
   required?: boolean;
   testId?: string;
   onBlur?: (event: FormEvent<HTMLTextAreaElement>) => void;
+  description?: React.ReactNode;
 }
 
 export function VariableTextAreaField({
   value,
   name,
+  description,
   placeholder,
   onChange,
   onBlur,
@@ -27,19 +30,14 @@ export function VariableTextAreaField({
   width,
   testId,
 }: PropsWithChildren<VariableTextAreaFieldProps>): ReactElement {
-  const styles = useStyles(getStyles);
-  const getLineCount = useCallback((value: any) => {
-    if (value && typeof value === 'string') {
-      return value.split('\n').length;
-    }
-
-    return 1;
-  }, []);
+  const styles = useStyles2(getStyles);
+  const id = useId();
 
   return (
-    <Field label={name}>
+    <Field label={name} description={description} htmlFor={id}>
       <TextArea
-        rows={getLineCount(value)}
+        id={id}
+        rows={2}
         value={value}
         onChange={onChange}
         onBlur={onBlur}
@@ -54,14 +52,15 @@ export function VariableTextAreaField({
   );
 }
 
-function getStyles(theme: GrafanaTheme) {
+function getStyles(theme: GrafanaTheme2) {
   return {
     textarea: css`
       white-space: pre-wrap;
-      min-height: 32px;
+      min-height: ${theme.spacing(4)};
       height: auto;
       overflow: auto;
-      padding: 6px 8px;
+      padding: ${theme.spacing(0.75, 1)};
+      width: inherit;
     `,
   };
 }

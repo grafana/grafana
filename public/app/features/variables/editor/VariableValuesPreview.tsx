@@ -31,7 +31,7 @@ export const VariableValuesPreview: React.FunctionComponent<VariableValuesPrevie
   }
 
   return (
-    <VerticalGroup spacing="none">
+    <VerticalGroup spacing="none" height="inherit">
       <h5>Preview of values</h5>
       <InlineFieldRow>
         {previewOptions.map((o, index) => (

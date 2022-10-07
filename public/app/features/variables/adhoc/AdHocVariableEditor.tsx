@@ -63,7 +63,7 @@ export class AdHocVariableEditorUnConnected extends PureComponent<Props> {
       <>
         <Legend>Ad-hoc options</Legend>
         <Field label="Data source" htmlFor="data-source-picker">
-          <DataSourcePicker current={variable.datasource} onChange={this.onDatasourceChanged} noDefault />
+          <DataSourcePicker current={variable.datasource} onChange={this.onDatasourceChanged} width={30} noDefault />
         </Field>
 
         {infoText ? <Alert title={infoText} severity="info" /> : null}
