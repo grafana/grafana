@@ -88,7 +88,7 @@ func (r *xormRepositoryImpl) Add(ctx context.Context, item *annotations.Item) er
 //   a) Don't care about the IDs of inserted annotations
 //   b) Are inserting annotations with no tags
 func (r *xormRepositoryImpl) AddMany(ctx context.Context, items []annotations.Item) error {
-	for _, item := range items {
+	for i, item := range items {
 		if len(item.Tags) > 0 {
 			panic("Batch insert of annotations with tags is unsupported due to a database limitation.")
 		}
@@ -99,7 +99,7 @@ func (r *xormRepositoryImpl) AddMany(ctx context.Context, items []annotations.It
 		if item.Epoch == 0 {
 			item.Epoch = item.Created
 		}
-		if err := r.validateItem(&item); err != nil {
+		if err := r.validateItem(&items[i]); err != nil {
 			return err
 		}
 	}
