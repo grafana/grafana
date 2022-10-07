@@ -754,13 +754,15 @@ func (hs *HTTPServer) GetDashboardVersion(c *models.ReqContext) response.Respons
 
 // swagger:route POST /dashboards/validate dashboards validateDashboard
 //
-// Validates a dashboard JSON against the schema
+// # Validates a dashboard JSON against the schema
 //
 // Produces:
 // - application/json
 //
 // Responses:
 // 200: validateDashboardResponse
+// 412: validateDashboardResponse
+// 422: validateDashboardResponse
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
@@ -784,6 +786,7 @@ func (hs *HTTPServer) ValidateDashboard(c *models.ReqContext) response.Response 
 	schemaVersion, err := dashboardJson.Get("schemaVersion").Int()
 
 	isValid := false
+	statusCode := http.StatusOK
 	validationMessage := ""
 
 	// Only try to validate if the schemaVersion is at least the handoff version
@@ -798,9 +801,11 @@ func (hs *HTTPServer) ValidateDashboard(c *models.ReqContext) response.Response 
 			isValid = true
 		} else {
 			validationMessage = validationErr.Error()
+			statusCode = http.StatusUnprocessableEntity
 		}
 	} else {
 		validationMessage = "invalid schema version"
+		statusCode = http.StatusPreconditionFailed
 	}
 
 	respData := &ValidateDashboardResponse{
@@ -810,7 +815,7 @@ func (hs *HTTPServer) ValidateDashboard(c *models.ReqContext) response.Response 
 
 	// We respond with StatusOK even when the dashboard failed validation we were
 	// able to "task failed successfully" on an invalid dashboard
-	return response.JSON(http.StatusOK, respData)
+	return response.JSON(statusCode, respData)
 }
 
 // swagger:route POST /dashboards/calculate-diff dashboards calculateDashboardDiff
