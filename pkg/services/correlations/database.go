@@ -119,8 +119,16 @@ func (s CorrelationsService) updateCorrelation(ctx context.Context, cmd UpdateCo
 			session.MustCols("description")
 		}
 		if cmd.Config != nil {
-			correlation.Config = *cmd.Config
 			session.MustCols("config")
+			if cmd.Config.Field != nil {
+				correlation.Config.Field = *cmd.Config.Field
+			}
+			if cmd.Config.Type != nil {
+				correlation.Config.Type = *cmd.Config.Type
+			}
+			if cmd.Config.Target != nil {
+				correlation.Config.Target = *cmd.Config.Target
+			}
 		}
 
 		updateCount, err := session.Where("uid = ? AND source_uid = ?", correlation.UID, correlation.SourceUID).Limit(1).Update(correlation)

@@ -58,6 +58,18 @@ func (c CorrelationConfig) MarshalJSON() ([]byte, error) {
 	})
 }
 
+type CorrelationConfigUpdateDTO struct {
+	// Field used to attach the correlation link
+	// required:true
+	Field *string `json:"field"`
+	// Target type
+	// required:true
+	Type *CorrelationConfigType `json:"type"`
+	// Target data query
+	// required:true
+	Target *map[string]interface{} `json:"target"`
+}
+
 // Correlation is the model for correlations definitions
 // swagger:model
 type Correlation struct {
@@ -156,7 +168,7 @@ type UpdateCorrelationCommand struct {
 	Description *string `json:"description"`
 	// Correlation Configuration
 	// example: { field: "job", type: "query", target: { query: "job=app" } }
-	Config *CorrelationConfig `json:"config"`
+	Config *CorrelationConfigUpdateDTO `json:"config"`
 }
 
 // GetCorrelationQuery is the query to retrieve a single correlation
