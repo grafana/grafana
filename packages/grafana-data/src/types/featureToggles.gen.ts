@@ -64,6 +64,7 @@ export interface FeatureToggles {
   internationalization?: boolean;
   topnav?: boolean;
   traceqlEditor?: boolean;
+  flameGraph?: boolean;
   redshiftAsyncQueryDataSupport?: boolean;
   athenaAsyncQueryDataSupport?: boolean;
   increaseInMemDatabaseQueryCache?: boolean;

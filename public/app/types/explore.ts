@@ -160,6 +160,7 @@ export interface ExploreItemState {
   showTable?: boolean;
   showTrace?: boolean;
   showNodeGraph?: boolean;
+  showFlameGraph?: boolean;
 
   /**
    * History of all queries
@@ -226,6 +227,7 @@ export interface ExplorePanelData extends PanelData {
   logsFrames: DataFrame[];
   traceFrames: DataFrame[];
   nodeGraphFrames: DataFrame[];
+  flameGraphFrames: DataFrame[];
   graphResult: DataFrame[] | null;
   tableResult: DataFrame | null;
   logsResult: LogsModel | null;
