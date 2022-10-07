@@ -77,6 +77,37 @@ type PublicDashboard struct {
 	UpdatedAt time.Time `json:"updatedAt" xorm:"updated_at"`
 }
 
+type Annotation struct {
+	Datasource struct {
+		DType string `json:"type"`
+		Uid   string `json:"uid"`
+	}
+	Enable bool   `json:"enable"`
+	Type   string `json:"type"`
+	Target struct {
+		Limit    int64    `json:"limit"`
+		MatchAny bool     `json:"matchAny"`
+		Tags     []string `json:"tags"`
+		Type     string   `json:"type"`
+	}
+	IconColor string `json:"iconColor"`
+	Name      string `json:"name"`
+	IsRegion  bool   `json:"isRegion"`
+}
+
+type AnnotationEvent struct {
+	Id          int64      `json:"id"`
+	DashboardId int64      `json:"dashboardId"`
+	PanelId     int64      `json:"panelId"`
+	Tags        []string   `json:"tags"`
+	IsRegion    bool       `json:"isRegion"`
+	Text        string     `json:"text"`
+	Color       string     `json:"color"`
+	Time        int64      `json:"time"`
+	TimeEnd     int64      `json:"timeEnd"`
+	Source      Annotation `json:"source"`
+}
+
 func (pd PublicDashboard) TableName() string {
 	return "dashboard_public"
 }

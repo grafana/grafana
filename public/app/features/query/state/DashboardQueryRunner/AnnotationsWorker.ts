@@ -77,7 +77,11 @@ export class AnnotationsWorker implements DashboardQueryRunnerWorker {
                 annotation.snapshotData = cloneDeep(results);
               }
               // translate result
-              return translateQueryResult(annotation, results);
+              if (dashboard.meta.publicDashboardAccessToken) {
+                return results;
+              } else {
+                return translateQueryResult(annotation, results);
+              }
             }),
             finalize(() => {
               dashboard.events.publish(new AnnotationQueryFinished(annotation));

@@ -245,30 +245,15 @@ func (pd *PublicDashboardServiceImpl) GetMetricRequest(ctx context.Context, dash
 	return metricReqDTO, nil
 }
 
-func (pd *PublicDashboardServiceImpl) GetAnnotations(ctx context.Context, reqDTO AnnotationsQueryDTO, accessToken string) ([]*annotations.ItemDTO, error) {
+func (pd *PublicDashboardServiceImpl) GetAnnotations(ctx context.Context, reqDTO AnnotationsQueryDTO, accessToken string) ([]AnnotationEvent, error) {
 	_, dash, err := pd.GetPublicDashboard(ctx, accessToken)
 	if err != nil {
 		return nil, err
 	}
 
-	type annotation struct {
-		Datasource struct {
-			DType string `json:"type"`
-			Uid   string `json:"uid"`
-		}
-		Enable bool   `json:"enable"`
-		Type   string `json:"type"`
-		Target struct {
-			Limit    int64    `json:"limit"`
-			MatchAny bool     `json:"matchAny"`
-			Tags     []string `json:"tags"`
-			Type     string   `json:"type"`
-		}
-	}
-
 	type annotationsDto struct {
 		Annotations struct {
-			List []annotation `json:"list"`
+			List []Annotation `json:"list"`
 		}
 	}
 
@@ -287,7 +272,7 @@ func (pd *PublicDashboardServiceImpl) GetAnnotations(ctx context.Context, reqDTO
 		return nil, err
 	}
 
-	var results []*annotations.ItemDTO
+	var results []AnnotationEvent
 	for _, anno := range dto.Annotations.List {
 		if anno.Enable {
 			annoQuery := &annotations.ItemQuery{
@@ -309,8 +294,21 @@ func (pd *PublicDashboardServiceImpl) GetAnnotations(ctx context.Context, reqDTO
 			if err != nil {
 				return nil, err
 			}
+
 			for _, item := range annotationItems {
-				results = append(results, item)
+				event := AnnotationEvent{
+					Id:          item.Id,
+					DashboardId: item.DashboardId,
+					PanelId:     item.PanelId,
+					Tags:        item.Tags,
+					IsRegion:    item.TimeEnd > 0 && item.Time != item.TimeEnd,
+					Text:        item.Text,
+					Color:       anno.IconColor,
+					Time:        item.Time,
+					TimeEnd:     item.TimeEnd,
+					Source:      anno,
+				}
+				results = append(results, event)
 			}
 		}
 	}
@@ -351,7 +349,7 @@ func (pd *PublicDashboardServiceImpl) BuildAnonymousUser(ctx context.Context, da
 	// Create a user with blank permissions
 	anonymousUser := &user.SignedInUser{OrgID: dashboard.OrgId, Permissions: make(map[int64]map[string][]string)}
 
-	// Scopes needed for annotation queries
+	// Scopes needed for Annotation queries
 	annotationScopes := []string{"annotations:type:dashboard"}
 	dashboardScopes := []string{fmt.Sprintf("dashboards:uid:%s", dashboard.Uid)}
 

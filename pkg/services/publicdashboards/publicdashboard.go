@@ -6,7 +6,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/annotations"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -17,7 +16,7 @@ import (
 type Service interface {
 	AccessTokenExists(ctx context.Context, accessToken string) (bool, error)
 	BuildAnonymousUser(ctx context.Context, dashboard *models.Dashboard) (*user.SignedInUser, error)
-	GetAnnotations(ctx context.Context, reqDTO AnnotationsQueryDTO, accessToken string) ([]*annotations.ItemDTO, error)
+	GetAnnotations(ctx context.Context, reqDTO AnnotationsQueryDTO, accessToken string) ([]AnnotationEvent, error)
 	GetDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error)
 	GetPublicDashboard(ctx context.Context, accessToken string) (*PublicDashboard, *models.Dashboard, error)
 	GetMetricRequest(ctx context.Context, dashboard *models.Dashboard, publicDashboard *PublicDashboard, panelId int64, reqDTO PublicDashboardQueryDTO) (dtos.MetricRequest, error)
