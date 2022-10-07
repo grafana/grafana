@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/querylibrary/querylibraryimpl"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -251,15 +252,16 @@ func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url strin
 
 	store := sqlstore.InitTestDB(t)
 	hs := &HTTPServer{
-		Cfg:                cfg,
-		Live:               newTestLive(t, store),
-		License:            &licensing.OSSLicensingService{},
-		Features:           featuremgmt.WithFeatures(),
-		QuotaService:       &quotaimpl.Service{Cfg: cfg},
-		RouteRegister:      routing.NewRouteRegister(),
-		AccessControl:      accesscontrolmock.New().WithPermissions(permissions),
-		searchUsersService: searchusers.ProvideUsersService(filters.ProvideOSSSearchUserFilter(), usertest.NewUserServiceFake()),
-		ldapGroups:         ldap.ProvideGroupsService(),
+		Cfg:                     cfg,
+		Live:                    newTestLive(t, store),
+		License:                 &licensing.OSSLicensingService{},
+		Features:                featuremgmt.WithFeatures(),
+		QuotaService:            &quotaimpl.Service{Cfg: cfg},
+		RouteRegister:           routing.NewRouteRegister(),
+		AccessControl:           accesscontrolmock.New().WithPermissions(permissions),
+		searchUsersService:      searchusers.ProvideUsersService(filters.ProvideOSSSearchUserFilter(), usertest.NewUserServiceFake()),
+		ldapGroups:              ldap.ProvideGroupsService(),
+		QueryLibraryHTTPService: querylibraryimpl.ProvideHTTPService(querylibraryimpl.ProvideService(cfg, featuremgmt.WithFeatures())),
 	}
 
 	sc := setupScenarioContext(t, url)
