@@ -1,25 +1,34 @@
 package recipes
 
 import (
+	"fmt"
+
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type RecipesProvider interface {
-	GetById(id string) (*Recipe, error)
-	GetAll() ([]*Recipe, error)
+	GetById(id string) *Recipe
+	GetAll() []*Recipe
 }
 
 type staticRecipesProvider struct {
 	recipes []*Recipe
 }
 
-func (s *staticRecipesProvider) GetById(id string) (*Recipe, error) {
-	return s.recipes[0], nil
+func (s *staticRecipesProvider) GetById(id string) *Recipe {
+	for _, recipe := range s.recipes {
+		fmt.Printf("%s compared to %s", recipe.Id, id)
+
+		if recipe.Id == id {
+			return recipe
+		}
+	}
+	return nil
 }
 
-func (s *staticRecipesProvider) GetAll() ([]*Recipe, error) {
-	return s.recipes, nil
+func (s *staticRecipesProvider) GetAll() []*Recipe {
+	return s.recipes
 }
 
 func ProvideService(i plugins.Installer, cfg *setting.Cfg) RecipesProvider {
@@ -29,29 +38,29 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg) RecipesProvider {
 			Name:        "Special mix of plugins",
 			Description: "This recipe will contain a special mix of awesome plugins",
 			Steps: []RecipeStep{
-				NewInstallStep(i, cfg,
+				newInstallStep(i, cfg,
 					RecipeStepMeta{
 						Name:        "Installing Jira",
 						Description: "Some description here...",
-					}, RecipeStepPlugin{
+					}, recipePluginStep{
 						Id:      "grafana-jira-datasource",
 						Version: "1.0.9",
 					},
 				),
-				NewInstallStep(i, cfg,
+				newInstallStep(i, cfg,
 					RecipeStepMeta{
 						Name:        "Installing K6 app",
 						Description: "Some description here...",
-					}, RecipeStepPlugin{
+					}, recipePluginStep{
 						Id:      "grafana-k6-app",
 						Version: "0.4.1",
 					},
 				),
-				NewInstallStep(i, cfg,
+				newInstallStep(i, cfg,
 					RecipeStepMeta{
 						Name:        "Installing Anodot panel",
 						Description: "Some description here...",
-					}, RecipeStepPlugin{
+					}, recipePluginStep{
 						Id:      "anodot-panel",
 						Version: "2.0.1",
 					},

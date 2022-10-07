@@ -11,13 +11,13 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type RecipeStepPlugin struct {
+type recipePluginStep struct {
 	Id      string `json:"id"`
 	Version string `json:"version"`
 }
 
-func NewInstallStep(installer plugins.Installer, cfg *setting.Cfg, meta RecipeStepMeta, plugin RecipeStepPlugin) *InstallPluginRecipeStep {
-	return &InstallPluginRecipeStep{
+func newInstallStep(installer plugins.Installer, cfg *setting.Cfg, meta RecipeStepMeta, plugin recipePluginStep) *installPluginRecipeStep {
+	return &installPluginRecipeStep{
 		Action:    "install-plugin",
 		Meta:      meta,
 		Plugin:    plugin,
@@ -26,17 +26,17 @@ func NewInstallStep(installer plugins.Installer, cfg *setting.Cfg, meta RecipeSt
 	}
 }
 
-type InstallPluginRecipeStep struct {
+type installPluginRecipeStep struct {
 	Action    string           `json:"action"`
 	Meta      RecipeStepMeta   `json:"meta"`
-	Plugin    RecipeStepPlugin `json:"plugin"`
+	Plugin    recipePluginStep `json:"plugin"`
 	Status    RecipeStepStatus `json:"status"`
 	installer plugins.Installer
 	cfg       *setting.Cfg
 }
 
-func (s *InstallPluginRecipeStep) Apply(c *context.Context) error {
-	err := s.installer.Add(*c, s.Plugin.Id, s.Plugin.Version, plugins.CompatOpts{
+func (s *installPluginRecipeStep) Apply(c context.Context) error {
+	err := s.installer.Add(c, s.Plugin.Id, s.Plugin.Version, plugins.CompatOpts{
 		GrafanaVersion: s.cfg.BuildVersion,
 		OS:             runtime.GOOS,
 		Arch:           runtime.GOARCH,
@@ -97,8 +97,8 @@ func (s *InstallPluginRecipeStep) Apply(c *context.Context) error {
 	return err
 }
 
-func (s *InstallPluginRecipeStep) Revert(c *context.Context) error {
-	err := s.installer.Remove(*c, s.Plugin.Id)
+func (s *installPluginRecipeStep) Revert(c context.Context) error {
+	err := s.installer.Remove(c, s.Plugin.Id)
 
 	if err == nil {
 		s.Status = RecipeStepStatus{
@@ -126,7 +126,6 @@ func (s *InstallPluginRecipeStep) Revert(c *context.Context) error {
 		return nil
 	}
 
-	// Outside of plugin dir
 	if errors.Is(err, storage.ErrUninstallOutsideOfPluginDir) {
 		s.Status = RecipeStepStatus{
 			Status:        "Installed",
