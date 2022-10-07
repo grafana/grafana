@@ -44,8 +44,8 @@ func TestIntegrationElasticsearch(t *testing.T) {
 	jsonData := simplejson.NewFromAny(map[string]interface{}{
 		"httpMethod":      "post",
 		"httpHeaderName1": "X-CUSTOM-HEADER",
-		"esVersion": 		 		"8.0.0",
-		"timeField": 		 		"@timestamp",
+		"esVersion":       "8.0.0",
+		"timeField":       "@timestamp",
 	})
 	secureJSONData := map[string]string{
 		"basicAuthPassword": "basicAuthPassword",
@@ -72,8 +72,8 @@ func TestIntegrationElasticsearch(t *testing.T) {
 			"datasource": map[string]interface{}{
 				"uid": uid,
 			},
-			"rawQuery": "*",
-			"type": "",
+			"rawQuery":  "*",
+			"type":      "",
 			"timeField": "@timestamp",
 		})
 		buf1 := &bytes.Buffer{}
