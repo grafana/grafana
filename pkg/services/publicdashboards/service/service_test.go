@@ -64,8 +64,14 @@ func TestGetAnnotations(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("Test can get grafana annotations and will skip annotation queries", func(t *testing.T) {
+	t.Run("Test can get grafana annotations and will skip annotation queries and disabled annotations", func(t *testing.T) {
 		dash := models.NewDashboard("test")
+		disabledGrafanaAnnotation := Annotation{
+			Datasource: internal.CreateDatasource("grafana", "grafana"),
+			Enable:     false,
+			Name:       "someName",
+			IconColor:  "red",
+		}
 		grafanaAnnotation := Annotation{
 			Datasource: internal.CreateDatasource("grafana", "grafana"),
 			Enable:     true,
@@ -77,7 +83,7 @@ func TestGetAnnotations(t *testing.T) {
 			Enable:     true,
 			Name:       "someName",
 		}
-		annos := []Annotation{grafanaAnnotation, queryAnnotation}
+		annos := []Annotation{grafanaAnnotation, queryAnnotation, disabledGrafanaAnnotation}
 		dashboard := internal.CreateDashboardWithAnnotations(t, dash, annos)
 
 		annotationsRepo := annotations.FakeAnnotationsRepo{}
