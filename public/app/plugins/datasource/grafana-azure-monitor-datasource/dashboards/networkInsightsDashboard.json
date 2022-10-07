@@ -1824,7 +1824,7 @@
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
-        "sort": 0,
+        "sort": 5,
         "type": "query"
       },
       {
@@ -1852,7 +1852,7 @@
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
-        "sort": 0,
+        "sort": 5,
         "type": "query"
       },
       {
@@ -1870,7 +1870,7 @@
         "options": [],
         "query": {
           "grafanaTemplateVariableFn": {
-            "kind": "MetricNamespaceQuery",
+            "kind": "MetricDefinitionsQuery",
             "rawQuery": "namespaces($sub,$rg)",
             "resourceGroup": "$rg",
             "subscription": "$sub"
@@ -1881,7 +1881,7 @@
         "refresh": 1,
         "regex": "([Mm](icrosoft)\\.[Nn](etwork)/(load)[Bb](alancers))",
         "skipUrlSync": false,
-        "sort": 0,
+        "sort": 5,
         "type": "query"
       },
       {
@@ -1898,7 +1898,7 @@
         "options": [],
         "query": {
           "grafanaTemplateVariableFn": {
-            "kind": "MetricNamespaceQuery",
+            "kind": "MetricDefinitionsQuery",
             "rawQuery": "namespaces($sub,$rg)",
             "resourceGroup": "$rg",
             "subscription": "$sub"
@@ -1909,7 +1909,7 @@
         "refresh": 1,
         "regex": "([Mm](icrosoft)\\.[Nn](etwork)/(application)[Gg](ateways))",
         "skipUrlSync": false,
-        "sort": 0,
+        "sort": 5,
         "type": "query"
       },
       {
@@ -1926,7 +1926,7 @@
         "options": [],
         "query": {
           "grafanaTemplateVariableFn": {
-            "kind": "MetricNamespaceQuery",
+            "kind": "MetricDefinitionsQuery",
             "rawQuery": "namespaces($sub,$rg)",
             "resourceGroup": "$rg",
             "subscription": "$sub"
@@ -1937,7 +1937,7 @@
         "refresh": 1,
         "regex": "([Mm](icrosoft)\\.[Nn](etwork)/(traffic)[Mm](anager)[Pp](rofiles))",
         "skipUrlSync": false,
-        "sort": 0,
+        "sort": 5,
         "type": "query"
       },
       {
@@ -1954,7 +1954,7 @@
         "options": [],
         "query": {
           "grafanaTemplateVariableFn": {
-            "kind": "MetricNamespaceQuery",
+            "kind": "MetricDefinitionsQuery",
             "rawQuery": "namespaces($sub,$rg)",
             "resourceGroup": "$rg",
             "subscription": "$sub"
@@ -1965,7 +1965,7 @@
         "refresh": 1,
         "regex": "([Mm](icrosoft)\\.[Cc](dn)/[Pp](rofiles))",
         "skipUrlSync": false,
-        "sort": 0,
+        "sort": 5,
         "type": "query"
       },
       {
@@ -1996,7 +1996,7 @@
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
-        "sort": 0,
+        "sort": 5,
         "type": "query"
       },
       {
@@ -2027,7 +2027,7 @@
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
-        "sort": 0,
+        "sort": 5,
         "type": "query"
       },
       {
@@ -2058,7 +2058,7 @@
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
-        "sort": 0,
+        "sort": 5,
         "type": "query"
       },
       {
@@ -2089,7 +2089,7 @@
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
-        "sort": 0,
+        "sort": 5,
         "type": "query"
       }
     ]
