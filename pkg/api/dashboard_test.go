@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"testing"
@@ -765,7 +764,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		})
 
 		t.Run("When a valid dashboard is posted", func(t *testing.T) {
-			devenvDashboard, readErr := ioutil.ReadFile("../../devenv/dev-dashboards/home.json")
+			devenvDashboard, readErr := os.ReadFile("../../devenv/dev-dashboards/home.json")
 			assert.Empty(t, readErr)
 
 			cmd := models.ValidateDashboardCommand{
