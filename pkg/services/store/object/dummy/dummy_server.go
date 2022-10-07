@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/x/persistentcollection"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
+	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/kind"
 	"github.com/grafana/grafana/pkg/services/store/object"
 	"github.com/grafana/grafana/pkg/setting"
@@ -170,7 +171,7 @@ func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequ
 			return false, nil, err
 		}
 
-		modifier := object.UserFromContext(ctx)
+		modifier := store.UserFromContext(ctx)
 
 		updated := &object.RawObject{
 			UID:       r.UID,
@@ -178,7 +179,7 @@ func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequ
 			Created:   i.Object.Created,
 			CreatedBy: i.Object.CreatedBy,
 			Updated:   time.Now().Unix(),
-			UpdatedBy: object.GetUserIDString(modifier),
+			UpdatedBy: store.GetUserIDString(modifier),
 			Size:      int64(len(r.Body)),
 			ETag:      createContentsHash(r.Body),
 			Body:      r.Body,
@@ -224,7 +225,7 @@ func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequ
 }
 
 func (i dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectRequest, namespace string) (*object.WriteObjectResponse, error) {
-	modifier := object.GetUserIDString(object.UserFromContext(ctx))
+	modifier := store.GetUserIDString(store.UserFromContext(ctx))
 	rawObj := &object.RawObject{
 		UID:       r.UID,
 		Kind:      r.Kind,

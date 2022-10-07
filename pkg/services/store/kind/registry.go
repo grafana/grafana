@@ -3,12 +3,17 @@ package kind
 import (
 	"fmt"
 	"sort"
-	"strings"
 	"sync"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/services/store/kind/dummy"
 	"github.com/grafana/grafana/pkg/services/store/kind/playlist"
+	"github.com/grafana/grafana/pkg/services/store/kind/png"
+	"github.com/grafana/grafana/pkg/services/store/kind/svg"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type KindRegistry interface {
@@ -24,9 +29,13 @@ func NewKindRegistry() KindRegistry {
 		info:    playlist.GetObjectKindInfo(),
 		builder: playlist.GetObjectSummaryBuilder(),
 	}
+	kinds[models.StandardKindPNG] = &kindValues{
+		info:    png.GetObjectKindInfo(),
+		builder: png.GetObjectSummaryBuilder(),
+	}
 
 	// FIXME -- these are registered because existing tests use them
-	for _, k := range []string{"kind1", "kind2", "kind3"} {
+	for _, k := range []string{"dummy", "kind1", "kind2", "kind3"} {
 		kinds[k] = &kindValues{
 			info:    dummy.GetObjectKindInfo(k),
 			builder: dummy.GetObjectSummaryBuilder(k),
@@ -42,9 +51,22 @@ func NewKindRegistry() KindRegistry {
 	return reg
 }
 
-// Zero dependency service -- this includes the default services
-func ProvideService() KindRegistry {
-	return NewKindRegistry()
+// TODO? This could be a zero dependency service that others are responsible for configuring
+func ProvideService(cfg *setting.Cfg, renderer rendering.Service, sql *sqlstore.SQLStore) KindRegistry {
+	reg := NewKindRegistry()
+
+	// Register Dashboard support
+	//-----------------------
+	reg.Register(dashboard.GetObjectKindInfo(), dashboard.NewDashboardSummary(sql))
+
+	// Register SVG support
+	//-----------------------
+	info := svg.GetObjectKindInfo()
+	allowUnsanitizedSvgUpload := cfg != nil && cfg.Storage.AllowUnsanitizedSvgUpload
+	support := svg.GetObjectSummaryBuilder(allowUnsanitizedSvgUpload, renderer)
+	reg.Register(info, support)
+
+	return reg
 }
 
 type kindValues struct {
@@ -119,16 +141,4 @@ func (r *registry) GetKinds() []models.ObjectKindInfo {
 	defer r.mutex.RUnlock()
 
 	return r.info // returns a copy of the array
-}
-
-func GuessNameFromUID(uid string) string {
-	sidx := strings.LastIndex(uid, "/") + 1
-	didx := strings.LastIndex(uid, ".")
-	if didx > sidx && didx != sidx {
-		return uid[sidx:didx]
-	}
-	if sidx > 0 {
-		return uid[sidx:]
-	}
-	return uid
 }

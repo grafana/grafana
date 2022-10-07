@@ -3,10 +3,10 @@ package svg
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/rendering"
-	"github.com/grafana/grafana/pkg/services/store/kind"
 )
 
 func GetObjectKindInfo() models.ObjectKindInfo {
@@ -21,26 +21,46 @@ func GetObjectKindInfo() models.ObjectKindInfo {
 }
 
 // SVG sanitizer based on the rendering service
-func GetObjectSummaryBuilder(renderer rendering.Service) models.ObjectSummaryBuilder {
+func GetObjectSummaryBuilder(allowUnsanitizedSvgUpload bool, renderer rendering.Service) models.ObjectSummaryBuilder {
 	return func(ctx context.Context, uid string, body []byte) (*models.ObjectSummary, []byte, error) {
 		if !IsSVG(body) {
 			return nil, nil, fmt.Errorf("invalid svg")
 		}
 
 		// When a renderer exists, we can return a sanitized version
+		var sanitized []byte
 		if renderer != nil {
 			rsp, err := renderer.SanitizeSVG(ctx, &rendering.SanitizeSVGRequest{
 				Content: body,
 			})
-			if err != nil {
+			if err != nil && !allowUnsanitizedSvgUpload {
 				return nil, nil, err
 			}
-			body = rsp.Sanitized
+			sanitized = rsp.Sanitized
 		}
+		if sanitized == nil {
+			if !allowUnsanitizedSvgUpload {
+				return nil, nil, fmt.Errorf("unable to sanitize svg")
+			}
+			sanitized = body
+		}
+
 		return &models.ObjectSummary{
 			Kind: models.StandardKindSVG,
-			Name: kind.GuessNameFromUID(uid),
+			Name: guessNameFromUID(uid),
 			UID:  uid,
-		}, body, nil
+		}, sanitized, nil
 	}
+}
+
+func guessNameFromUID(uid string) string {
+	sidx := strings.LastIndex(uid, "/") + 1
+	didx := strings.LastIndex(uid, ".")
+	if didx > sidx && didx != sidx {
+		return uid[sidx:didx]
+	}
+	if sidx > 0 {
+		return uid[sidx:]
+	}
+	return uid
 }

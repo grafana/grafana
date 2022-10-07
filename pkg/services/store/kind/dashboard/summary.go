@@ -5,9 +5,11 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"sync"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/store/kind"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/store"
 )
 
 func GetObjectKindInfo() models.ObjectKindInfo {
@@ -18,7 +20,33 @@ func GetObjectKindInfo() models.ObjectKindInfo {
 	}
 }
 
-func NewDashboardSummaryBuilder(lookup DatasourceLookup) models.ObjectSummaryBuilder {
+func NewDashboardSummary(sql *sqlstore.SQLStore) models.ObjectSummaryBuilder {
+	cache := make(map[int64]models.ObjectSummaryBuilder)
+	mutex := sync.Mutex{}
+
+	return func(ctx context.Context, uid string, body []byte) (*models.ObjectSummary, []byte, error) {
+		user := store.UserFromContext(ctx)
+		if user == nil {
+			return nil, nil, fmt.Errorf("can not find user in context")
+		}
+
+		mutex.Lock()
+		defer mutex.Unlock()
+
+		builder, ok := cache[user.OrgID]
+		if !ok || builder == nil {
+			lookup, err := LoadDatasourceLookup(ctx, user.OrgID, sql)
+			if err != nil {
+				return nil, nil, err
+			}
+			builder = NewStaticDashboardSummaryBuilder(lookup)
+			cache[user.OrgID] = builder
+		}
+		return builder(ctx, uid, body)
+	}
+}
+
+func NewStaticDashboardSummaryBuilder(lookup DatasourceLookup) models.ObjectSummaryBuilder {
 	return func(ctx context.Context, uid string, body []byte) (*models.ObjectSummary, []byte, error) {
 		summary := &models.ObjectSummary{
 			Labels: make(map[string]string),
@@ -33,7 +61,7 @@ func NewDashboardSummaryBuilder(lookup DatasourceLookup) models.ObjectSummaryBui
 			return summary, body, err
 		}
 
-		dashboardRefs := kind.NewReferenceAccumulator()
+		dashboardRefs := NewReferenceAccumulator()
 		url := fmt.Sprintf("/d/%s/%s", uid, models.SlugifyTitle(dash.Title))
 		summary.Name = dash.Title
 		summary.Description = dash.Description
@@ -47,7 +75,7 @@ func NewDashboardSummaryBuilder(lookup DatasourceLookup) models.ObjectSummaryBui
 		summary.Fields["schemaVersion"] = dash.SchemaVersion
 
 		for _, panel := range dash.Panels {
-			panelRefs := kind.NewReferenceAccumulator()
+			panelRefs := NewReferenceAccumulator()
 			p := &models.ObjectSummary{
 				UID:  uid + "#" + strconv.FormatInt(panel.ID, 10),
 				Kind: "panel",

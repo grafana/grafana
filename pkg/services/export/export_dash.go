@@ -58,7 +58,7 @@ func exportDashboards(helper *commitHelper, job *gitExportJob) error {
 			return err
 		}
 
-		reader := dashboard.NewDashboardSummaryBuilder(lookup)
+		reader := dashboard.NewStaticDashboardSummaryBuilder(lookup)
 
 		// Process all folders
 		for _, row := range rows {

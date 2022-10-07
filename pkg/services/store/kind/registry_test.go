@@ -23,6 +23,7 @@ func TestKindRegistry(t *testing.T) {
 		"kind2",
 		"kind3",
 		"playlist",
+		"png",
 		"test",
 	}, ids)
 
