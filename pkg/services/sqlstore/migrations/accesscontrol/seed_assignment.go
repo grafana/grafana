@@ -75,6 +75,9 @@ func (m *seedAssignmentPrimaryKeyMigrator) Exec(sess *xorm.Session, mig *migrato
 			role_name TEXT
 		);
 	`)
+	if err != nil {
+		return err
+	}
 
 	// copy data to temp table
 	_, err = sess.Exec("INSERT INTO seed_assignment_temp (builtin_role, action, scope, role_name) SELECT * FROM seed_assignment;")
