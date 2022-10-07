@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/coremodel/dashboard/looseygoosey"
+	"github.com/grafana/grafana/pkg/coremodel/dashboard/schemaless"
 	"github.com/grafana/grafana/pkg/coremodel/playlist"
 	"github.com/grafana/grafana/pkg/models"
 )
@@ -31,7 +31,7 @@ func GetSafeSaveObject(ctx context.Context, r *WriteObjectRequest) (*models.Obje
 		builder = playlist.GetSummaryBuilder()
 	case StandardKindDashboard:
 		// TODO: use real datasource lookup
-		builder = looseygoosey.NewDashboardSummaryBuilder(dummyDSLookup())
+		builder = schemaless.NewDashboardSummaryBuilder(dummyDSLookup())
 	default:
 		builder = getDummySummary(r.Kind)
 	}
@@ -85,8 +85,8 @@ func getDummySummary(kind string) models.ObjectSummaryBuilder {
 	}
 }
 
-func dummyDSLookup() looseygoosey.DatasourceLookup {
-	return looseygoosey.CreateDatasourceLookup([]*looseygoosey.DatasourceQueryResult{
+func dummyDSLookup() schemaless.DatasourceLookup {
+	return schemaless.CreateDatasourceLookup([]*schemaless.DatasourceQueryResult{
 		{
 			UID:       "sqlite-2",
 			Type:      "sqlite-datasource",

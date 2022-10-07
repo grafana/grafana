@@ -1,4 +1,4 @@
-package looseygoosey
+package schemaless
 
 import (
 	jsoniter "github.com/json-iterator/go"

@@ -1,4 +1,4 @@
-package looseygoosey
+package schemaless
 
 // Duplicate to avoid circular reference
 const StandardKindDashboard = "dashboard"

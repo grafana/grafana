@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/grafana/grafana/pkg/coremodel/dashboard/looseygoosey"
+	"github.com/grafana/grafana/pkg/coremodel/dashboard/schemaless"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
@@ -24,7 +24,7 @@ func exportDashboards(helper *commitHelper, job *gitExportJob) error {
 		folders[0] = job.cfg.GeneralFolderPath // "general"
 	}
 
-	lookup, err := looseygoosey.LoadDatasourceLookup(helper.ctx, helper.orgID, job.sql)
+	lookup, err := schemaless.LoadDatasourceLookup(helper.ctx, helper.orgID, job.sql)
 	if err != nil {
 		return err
 	}
@@ -58,7 +58,7 @@ func exportDashboards(helper *commitHelper, job *gitExportJob) error {
 			return err
 		}
 
-		reader := looseygoosey.NewDashboardSummaryBuilder(lookup)
+		reader := schemaless.NewDashboardSummaryBuilder(lookup)
 
 		// Process all folders
 		for _, row := range rows {

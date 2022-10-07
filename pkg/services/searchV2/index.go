@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/coremodel/dashboard/looseygoosey"
+	"github.com/grafana/grafana/pkg/coremodel/dashboard/schemaless"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
@@ -849,7 +849,7 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 	loadDatasourceSpan.SetAttributes("orgID", orgID, attribute.Key("orgID").Int64(orgID))
 
 	// key will allow name or uid
-	lookup, err := looseygoosey.LoadDatasourceLookup(loadDatasourceCtx, orgID, l.sql)
+	lookup, err := schemaless.LoadDatasourceLookup(loadDatasourceCtx, orgID, l.sql)
 	if err != nil {
 		loadDatasourceSpan.End()
 		return dashboards, err
@@ -896,7 +896,7 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 		readDashboardSpan.SetAttributes("orgID", orgID, attribute.Key("orgID").Int64(orgID))
 		readDashboardSpan.SetAttributes("dashboardCount", len(rows), attribute.Key("dashboardCount").Int(len(rows)))
 
-		reader := looseygoosey.NewDashboardSummaryBuilder(lookup)
+		reader := schemaless.NewDashboardSummaryBuilder(lookup)
 
 		for _, row := range rows {
 			summary, _, err := reader(ctx, row.Uid, row.Data)
