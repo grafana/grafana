@@ -3,24 +3,26 @@ package dummy
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func GetObjectKindInfo() models.ObjectKindInfo {
+func GetObjectKindInfo(kind string) models.ObjectKindInfo {
 	return models.ObjectKindInfo{
-		ID:          "dummy",
-		Name:        "Dummy",
-		Description: "Allows anything and produces a complex summary object",
+		ID:          kind,
+		Name:        strings.ToTitle(kind),
+		Description: "Dummy kind used for testing.",
 		IsRaw:       true,
 	}
 }
 
-func GetObjectSummaryBuilder() models.ObjectSummaryBuilder {
+func GetObjectSummaryBuilder(kind string) models.ObjectSummaryBuilder {
 	return func(ctx context.Context, uid string, body []byte) (*models.ObjectSummary, []byte, error) {
 		summary := &models.ObjectSummary{
-			Name:        fmt.Sprintf("hello: %s", "dummy"),
+			Name:        fmt.Sprintf("Dummy: %s", kind),
+			Kind:        kind,
 			Description: fmt.Sprintf("Wrote at %s", time.Now().Local().String()),
 			Labels: map[string]string{
 				"hello": "world",

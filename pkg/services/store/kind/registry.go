@@ -2,10 +2,12 @@ package kind
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"sync"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/store/kind/dummy"
 	"github.com/grafana/grafana/pkg/services/store/kind/playlist"
 )
 
@@ -34,14 +36,20 @@ func NewKindRegistry() KindRegistry {
 		builder: playlist.GetObjectSummaryBuilder(),
 	}
 
+	// FIXME -- these are registered because existing tests use them
+	for _, k := range []string{"kind1", "kind2", "kind3"} {
+		kinds[k] = &kindValues{
+			info:    dummy.GetObjectKindInfo(k),
+			builder: dummy.GetObjectSummaryBuilder(k),
+		}
+	}
+
+	// create a registry
 	reg := &registry{
 		mutex: sync.RWMutex{},
 		kinds: kinds,
 	}
-	// Add each item
-	for _, k := range kinds {
-		reg.info = append(reg.info, k.info)
-	}
+	reg.updateInfoArray()
 	return reg
 }
 
@@ -61,6 +69,17 @@ type registry struct {
 	info  []models.ObjectKindInfo
 }
 
+func (r *registry) updateInfoArray() {
+	info := make([]models.ObjectKindInfo, 0, len(r.kinds))
+	for _, v := range r.kinds {
+		info = append(info, v.info)
+	}
+	sort.Slice(info, func(i, j int) bool {
+		return info[i].ID < info[j].ID
+	})
+	r.info = info
+}
+
 func (r *registry) Register(info models.ObjectKindInfo, builder models.ObjectSummaryBuilder) error {
 	if info.ID == "" || builder == nil {
 		return fmt.Errorf("invalid kind")
@@ -77,9 +96,7 @@ func (r *registry) Register(info models.ObjectKindInfo, builder models.ObjectSum
 		info:    info,
 		builder: builder,
 	}
-
-	// sort?
-	r.info = append(r.info, info)
+	r.updateInfoArray()
 	return nil
 }
 

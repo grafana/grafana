@@ -10,8 +10,20 @@ import (
 
 func TestKindRegistry(t *testing.T) {
 	registry := NewKindRegistry()
-	err := registry.Register(dummy.GetObjectKindInfo(), dummy.GetObjectSummaryBuilder())
+	err := registry.Register(dummy.GetObjectKindInfo("test"), dummy.GetObjectSummaryBuilder("test"))
 	require.NoError(t, err)
+
+	ids := []string{}
+	for _, k := range registry.GetKinds() {
+		ids = append(ids, k.ID)
+	}
+	require.Equal(t, []string{
+		"kind1",
+		"kind2",
+		"kind3",
+		"playlist",
+		"test",
+	}, ids)
 
 	// Check playlist exists
 	info, err := registry.GetInfo(StandardKindPlaylist)
@@ -19,9 +31,9 @@ func TestKindRegistry(t *testing.T) {
 	require.Equal(t, "Playlist", info.Name)
 	require.False(t, info.IsRaw)
 
-	// Check dummy exists
-	info, err = registry.GetInfo("dummy")
+	// Check that we registered a test item
+	info, err = registry.GetInfo("test")
 	require.NoError(t, err)
-	require.Equal(t, "Dummy", info.Name)
+	require.Equal(t, "Test", info.Name)
 	require.True(t, info.IsRaw)
 }
