@@ -1,0 +1,75 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] 
+//  Name: references
+//  Dimensions: 4 Fields by 2 Rows
+//  +------------------+----------------+----------------+-------------------+
+//  | Name: uid        | Name: kind     | Name: type     | Name: uid         |
+//  | Labels:          | Labels:        | Labels:        | Labels:           |
+//  | Type: []string   | Type: []string | Type: []string | Type: []string    |
+//  +------------------+----------------+----------------+-------------------+
+//  | candlestick.json | ds             | testdata       | PD8C576611E62080A |
+//  | candlestick.json | panel          | candlestick    |                   |
+//  +------------------+----------------+----------------+-------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "frames": [
+    {
+      "schema": {
+        "name": "references",
+        "fields": [
+          {
+            "name": "uid",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "kind",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "type",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "uid",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            "candlestick.json",
+            "candlestick.json"
+          ],
+          [
+            "ds",
+            "panel"
+          ],
+          [
+            "testdata",
+            "candlestick"
+          ],
+          [
+            "PD8C576611E62080A",
+            ""
+          ]
+        ]
+      }
+    }
+  ]
+}

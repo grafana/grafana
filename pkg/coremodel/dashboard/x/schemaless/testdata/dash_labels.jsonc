@@ -1,0 +1,68 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] 
+//  Name: labels
+//  Dimensions: 3 Fields by 3 Rows
+//  +------------------+----------------+----------------+
+//  | Name: uid        | Name: key      | Name: value    |
+//  | Labels:          | Labels:        | Labels:        |
+//  | Type: []string   | Type: []string | Type: []string |
+//  +------------------+----------------+----------------+
+//  | candlestick.json | gdev           |                |
+//  | candlestick.json | graph-ng       |                |
+//  | candlestick.json | panel-tests    |                |
+//  +------------------+----------------+----------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "frames": [
+    {
+      "schema": {
+        "name": "labels",
+        "fields": [
+          {
+            "name": "uid",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "key",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "value",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            "candlestick.json",
+            "candlestick.json",
+            "candlestick.json"
+          ],
+          [
+            "gdev",
+            "graph-ng",
+            "panel-tests"
+          ],
+          [
+            "",
+            "",
+            ""
+          ]
+        ]
+      }
+    }
+  ]
+}
