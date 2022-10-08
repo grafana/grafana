@@ -1032,6 +1032,12 @@ export class FuncInstance {
         return value;
       }
 
+      // functions that should not have param types quoted
+      // https://github.com/grafana/grafana/issues/54924
+      if (includes(['asPercent'], this.def.name)) {
+        return value;
+      }
+
       const valueInterpolated = isString(value) ? replaceVariables(value) : value;
 
       // param types that might be quoted
