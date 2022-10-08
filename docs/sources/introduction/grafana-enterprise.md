@@ -45,6 +45,10 @@ With [enhanced LDAP integration]({{< relref "../setup-grafana/configure-security
 
 [SAML authentication]({{< relref "../setup-grafana/configure-security/configure-authentication/saml/" >}}) enables users to authenticate with single sign-on services that use Security Assertion Markup Language (SAML).
 
+### Protected roles
+
+With [protected roles]({{< relref "../setup-grafana/configure-security/configure-authentication/#protected-roles" >}}), you can define user roles that are exempt from being converted from one authentication type to another when changing auth providers.
+
 ## Enterprise features
 
 Grafana Enterprise adds the following features:
