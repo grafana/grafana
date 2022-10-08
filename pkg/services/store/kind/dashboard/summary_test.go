@@ -1,39 +1,22 @@
-package object
+package dashboard
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/searchV2/dslookup"
-	"github.com/grafana/grafana/pkg/services/store/object"
 	"github.com/stretchr/testify/require"
 )
 
-func dsLookup() dslookup.DatasourceLookup {
-	return dslookup.CreateDatasourceLookup([]*dslookup.DatasourceQueryResult{
-		{
-			UID:       "P8045C56BDA891CB2",
-			Type:      "cloudwatch",
-			Name:      "cloudwatch-name",
-			IsDefault: false,
-		},
-		{
-			UID:       "default.uid",
-			Type:      "default.type",
-			Name:      "default.name",
-			IsDefault: true,
-		},
-	})
-}
-
 func TestReadSummaries(t *testing.T) {
-	devdash := "../../../../devenv/dev-dashboards/panel-graph/"
+	devdash := "../../../../../devenv/dev-dashboards/panel-graph/"
 
-	reader := NewDashboardSummaryBuilder(dsLookup())
+	ctx := context.Background()
+	reader := NewStaticDashboardSummaryBuilder(dsLookupForTests())
 	failed := make([]string, 0, 10)
 
 	err := filepath.Walk(devdash,
@@ -51,10 +34,7 @@ func TestReadSummaries(t *testing.T) {
 				}
 
 				uid := path[len(devdash):]
-				summary, err := reader(&object.RawObject{
-					UID:  uid,
-					Body: body,
-				})
+				summary, _, err := reader(ctx, uid, body)
 				if err != nil {
 					return err
 				}

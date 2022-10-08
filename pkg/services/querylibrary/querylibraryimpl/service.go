@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/querylibrary"
-	"github.com/grafana/grafana/pkg/services/searchV2/dslookup"
+	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -205,7 +205,7 @@ func getDatasourceUID(q *simplejson.Json) string {
 	return uid
 }
 
-func isQueryWithMixedDataSource(q *querylibrary.Query) (isMixed bool, firstDsRef dslookup.DataSourceRef) {
+func isQueryWithMixedDataSource(q *querylibrary.Query) (isMixed bool, firstDsRef dashboard.DataSourceRef) {
 	dsRefs := extractDataSources(q)
 
 	for _, dsRef := range dsRefs {
@@ -226,8 +226,8 @@ func isQueryWithMixedDataSource(q *querylibrary.Query) (isMixed bool, firstDsRef
 	return false, firstDsRef
 }
 
-func extractDataSources(query *querylibrary.Query) []dslookup.DataSourceRef {
-	ds := make([]dslookup.DataSourceRef, 0)
+func extractDataSources(query *querylibrary.Query) []dashboard.DataSourceRef {
+	ds := make([]dashboard.DataSourceRef, 0)
 
 	for _, q := range query.Queries {
 		dsUid := getDatasourceUID(q)
@@ -236,7 +236,7 @@ func extractDataSources(query *querylibrary.Query) []dslookup.DataSourceRef {
 			dsType = expr.DatasourceType
 		}
 
-		ds = append(ds, dslookup.DataSourceRef{
+		ds = append(ds, dashboard.DataSourceRef{
 			UID:  dsUid,
 			Type: dsType,
 		})

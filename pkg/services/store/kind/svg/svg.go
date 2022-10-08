@@ -23,7 +23,7 @@
 //FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 //OTHER DEALINGS IN THE SOFTWARE.
 
-package issvg
+package svg
 
 import (
 	"regexp"
@@ -51,12 +51,6 @@ func isBinary(buf []byte) bool {
 }
 
 // Is returns true if the given buffer is a valid SVG image.
-func Is(buf []byte) bool {
-	return !isBinary(buf) && svgRegex.Match(htmlCommentRegex.ReplaceAll(buf, []byte{}))
-}
-
-// IsSVG returns true if the given buffer is a valid SVG image.
-// Alias to: Is()
 func IsSVG(buf []byte) bool {
-	return Is(buf)
+	return !isBinary(buf) && svgRegex.Match(htmlCommentRegex.ReplaceAll(buf, []byte{}))
 }
