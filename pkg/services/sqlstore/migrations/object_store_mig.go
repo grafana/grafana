@@ -66,17 +66,23 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 	objectReferenceTable := migrator.Table{
 		Name: "object_ref",
 		Columns: []*migrator.Column{
-			// FROM:
-			{Name: "key", Type: migrator.DB_NVarchar, Length: 64, Nullable: false},
+			// Source:
+			{Name: "key", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false},
 
-			// TO:
+			// Address (defined in the body, not resolved, may be invalid and change)
 			{Name: "kind", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "type", Type: migrator.DB_NVarchar, Length: 255, Nullable: true},
-			{Name: "uid", Type: migrator.DB_NVarchar, Length: 1024, Nullable: true}, // key? (must join?) target_key?
+			{Name: "uid", Type: migrator.DB_NVarchar, Length: 1024, Nullable: true},
+
+			// Runtime calcs (will depend on the system state)
+			{Name: "resolved_to_key", Type: migrator.DB_NVarchar, Length: 255, Nullable: true},
+			{Name: "resolved_ok", Type: migrator.DB_Bool, Nullable: false},
+			{Name: "resolved_time", Type: migrator.DB_DateTime, Nullable: true}, // when the items were resolved
 		},
 		Indices: []*migrator.Index{
 			{Cols: []string{"key"}, Type: migrator.IndexType},
 			{Cols: []string{"kind"}, Type: migrator.IndexType},
+			{Cols: []string{"resolved_to_key"}, Type: migrator.IndexType},
 		},
 	}
 
@@ -103,8 +109,23 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 		},
 	}
 
+	// Keep track of renames (404 handler)
+	objectAliasTable := migrator.Table{
+		Name: "object_alias",
+		Columns: []*migrator.Column{
+			{Name: "old_key", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false, IsPrimaryKey: true},
+			{Name: "new_key", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false},
+			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
+			{Name: "updated_by", Type: migrator.DB_Int, Nullable: false},
+		},
+		PrimaryKeys: []string{"old_key"},
+		Indices: []*migrator.Index{
+			{Cols: []string{"new_key"}, Type: migrator.IndexType},
+		},
+	}
+
 	// Initalize all tables
-	tables := []migrator.Table{objectTable, objectLabelsTable, objectReferenceTable, objectHistoryTable}
+	tables := []migrator.Table{objectTable, objectLabelsTable, objectReferenceTable, objectHistoryTable, objectAliasTable}
 	for t := range tables {
 		mg.AddMigration("ObjectStore: create table "+tables[t].Name, migrator.NewAddTableMigration(tables[t]))
 		for i := range tables[t].Indices {
