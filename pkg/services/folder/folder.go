@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
+//go:generate mockery --name Service --structname FakeService --inpackage --filename foldertest/folder_service_mock.go
 type Service interface {
 	GetFolders(ctx context.Context, user *user.SignedInUser, orgID int64, limit int64, page int64) ([]*models.Folder, error)
 	GetFolderByID(ctx context.Context, user *user.SignedInUser, id int64, orgID int64) (*models.Folder, error)
