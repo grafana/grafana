@@ -56,16 +56,18 @@ func (rs *ruleStates) getOrCreate(ctx context.Context, log log.Logger, alertRule
 		lbs[key] = val
 	}
 	for key, val := range ruleLabels {
-		_, ok := lbs[key]
+		ruleVal, ok := lbs[key]
 		// if duplicate labels exist, reserved label will take precedence
 		if ok {
-			dupes[key] = val
+			if ruleVal != val {
+				dupes[key] = val
+			}
 		} else {
 			lbs[key] = val
 		}
 	}
 	if len(dupes) > 0 {
-		log.Warn("rule declares one or many reserved labels. Those rules labels will be ignored", "labels", dupes)
+		log.Warn("Rule declares one or many reserved labels. Those rules labels will be ignored", "labels", dupes)
 	}
 	dupes = make(data.Labels)
 	for key, val := range result.Instance {

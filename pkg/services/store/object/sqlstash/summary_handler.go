@@ -3,7 +3,7 @@ package sqlstash
 import (
 	"encoding/json"
 
-	"github.com/grafana/grafana/pkg/services/store/object"
+	"github.com/grafana/grafana/pkg/models"
 )
 
 type summarySupport struct {
@@ -15,7 +15,7 @@ type summarySupport struct {
 	marshaled   []byte
 }
 
-func newSummarySupport(summary *object.ObjectSummary) (summarySupport, error) {
+func newSummarySupport(summary *models.ObjectSummary) (summarySupport, error) {
 	var err error
 	var js []byte
 	s := summarySupport{}
@@ -60,9 +60,9 @@ func newSummarySupport(summary *object.ObjectSummary) (summarySupport, error) {
 	return s, err
 }
 
-func (s summarySupport) toObjectSummary() (*object.ObjectSummary, error) {
+func (s summarySupport) toObjectSummary() (*models.ObjectSummary, error) {
 	var err error
-	summary := &object.ObjectSummary{
+	summary := &models.ObjectSummary{
 		Name: s.name,
 	}
 	if s.description != nil {

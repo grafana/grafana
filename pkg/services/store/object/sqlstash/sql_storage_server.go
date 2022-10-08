@@ -15,22 +15,26 @@ import (
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
+	"github.com/grafana/grafana/pkg/services/store"
+	"github.com/grafana/grafana/pkg/services/store/kind"
 	"github.com/grafana/grafana/pkg/services/store/object"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvideSQLObjectServer(db db.DB, cfg *setting.Cfg, grpcServerProvider grpcserver.Provider) object.ObjectStoreServer {
+func ProvideSQLObjectServer(db db.DB, cfg *setting.Cfg, grpcServerProvider grpcserver.Provider, kinds kind.KindRegistry) object.ObjectStoreServer {
 	objectServer := &sqlObjectServer{
-		sess: db.GetSqlxSession(),
-		log:  log.New("in-memory-object-server"),
+		sess:  db.GetSqlxSession(),
+		log:   log.New("in-memory-object-server"),
+		kinds: kinds,
 	}
 	object.RegisterObjectStoreServer(grpcServerProvider.GetServer(), objectServer)
 	return objectServer
 }
 
 type sqlObjectServer struct {
-	log  log.Logger
-	sess *session.SessionDB
+	log   log.Logger
+	sess  *session.SessionDB
+	kinds kind.KindRegistry
 }
 
 func getReadSelect(r *object.ReadObjectRequest) string {
@@ -111,7 +115,7 @@ func rowToReadObjectResponse(rows *sql.Rows, r *object.ReadObjectRequest) (*obje
 }
 
 func (s sqlObjectServer) Read(ctx context.Context, r *object.ReadObjectRequest) (*object.ReadObjectResponse, error) {
-	modifier := object.UserFromContext(ctx)
+	modifier := store.UserFromContext(ctx)
 	key := fmt.Sprintf("%d/%s.%s", modifier.OrgID, r.UID, r.Kind)
 
 	args := []interface{}{key}
@@ -133,7 +137,7 @@ func (s sqlObjectServer) Read(ctx context.Context, r *object.ReadObjectRequest) 
 }
 
 func (s sqlObjectServer) BatchRead(ctx context.Context, b *object.BatchReadObjectRequest) (*object.BatchReadObjectResponse, error) {
-	modifier := object.UserFromContext(ctx)
+	modifier := store.UserFromContext(ctx)
 
 	args := []interface{}{}
 	constraints := []string{}
@@ -174,7 +178,12 @@ func createContentsHash(contents []byte) string {
 }
 
 func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest) (*object.WriteObjectResponse, error) {
-	summary, body, err := object.GetSafeSaveObject(r)
+	builder := s.kinds.GetSummaryBuilder(r.Kind)
+	if builder == nil {
+		return nil, fmt.Errorf("unsupported kind")
+	}
+
+	summary, body, err := builder(ctx, r.UID, r.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -185,7 +194,7 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 	}
 	etag := createContentsHash(body)
 
-	modifier := object.UserFromContext(ctx)
+	modifier := store.UserFromContext(ctx)
 	key := fmt.Sprintf("%d/%s.%s", modifier.OrgID, r.UID, r.Kind)
 
 	rsp := &object.WriteObjectResponse{}
@@ -237,7 +246,7 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 		versionInfo.Size = int64(len(body))
 		versionInfo.ETag = etag
 		versionInfo.Updated = timestamp.Unix()
-		versionInfo.UpdatedBy = object.GetUserIDString(modifier)
+		versionInfo.UpdatedBy = store.GetUserIDString(modifier)
 		_, err = tx.Exec(ctx, `INSERT INTO object_history (`+
 			`"key", "version", "message", `+
 			`"size", "body", "etag", `+
@@ -315,7 +324,7 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 }
 
 func (s sqlObjectServer) Delete(ctx context.Context, r *object.DeleteObjectRequest) (*object.DeleteObjectResponse, error) {
-	modifier := object.UserFromContext(ctx)
+	modifier := store.UserFromContext(ctx)
 	key := fmt.Sprintf("%d/%s.%s", modifier.OrgID, r.UID, r.Kind)
 
 	rsp := &object.DeleteObjectResponse{}
@@ -342,7 +351,7 @@ func (s sqlObjectServer) Delete(ctx context.Context, r *object.DeleteObjectReque
 }
 
 func (s sqlObjectServer) History(ctx context.Context, r *object.ObjectHistoryRequest) (*object.ObjectHistoryResponse, error) {
-	modifier := object.UserFromContext(ctx)
+	modifier := store.UserFromContext(ctx)
 	key := fmt.Sprintf("%d/%s.%s", modifier.OrgID, r.UID, r.Kind)
 
 	page := ""

@@ -104,6 +104,7 @@ import (
 	publicdashboardsService "github.com/grafana/grafana/pkg/services/publicdashboards/service"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/queryhistory"
+	"github.com/grafana/grafana/pkg/services/querylibrary/querylibraryimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/search"
@@ -123,6 +124,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/star/starimpl"
 	"github.com/grafana/grafana/pkg/services/store"
+	"github.com/grafana/grafana/pkg/services/store/kind"
 	"github.com/grafana/grafana/pkg/services/store/object"
 	//	objectdummyserver "github.com/grafana/grafana/pkg/services/store/object/dummy"
 	objectsqlserver "github.com/grafana/grafana/pkg/services/store/object/sqlstash"
@@ -279,6 +281,8 @@ var wireBasicSet = wire.NewSet(
 	secretsManager.ProvideSecretsService,
 	wire.Bind(new(secrets.Service), new(*secretsManager.SecretsService)),
 	secretsDatabase.ProvideSecretsStore,
+	querylibraryimpl.ProvideService,
+	querylibraryimpl.ProvideHTTPService,
 	wire.Bind(new(secrets.Store), new(*secretsDatabase.SecretsStoreImpl)),
 	secretsMigrator.ProvideSecretsMigrator,
 	wire.Bind(new(secrets.Migrator), new(*secretsMigrator.SecretsMigrator)),
@@ -354,6 +358,7 @@ var wireBasicSet = wire.NewSet(
 	interceptors.ProvideAuthenticator,
 	//	objectdummyserver.ProvideDummyObjectServer,
 	objectsqlserver.ProvideSQLObjectServer,
+	kind.ProvideService, // The registry known kinds
 	object.ProvideHTTPObjectStore,
 	teamimpl.ProvideService,
 	tempuserimpl.ProvideService,

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/services/querylibrary"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
@@ -74,6 +75,8 @@ type StandardSearchService struct {
 	dashboardIndex *searchIndex
 	extender       DashboardIndexExtender
 	reIndexCh      chan struct{}
+	queries        querylibrary.Service
+	features       featuremgmt.FeatureToggles
 }
 
 func (s *StandardSearchService) IsReady(ctx context.Context, orgId int64) IsSearchReadyResponse {
@@ -82,7 +85,7 @@ func (s *StandardSearchService) IsReady(ctx context.Context, orgId int64) IsSear
 
 func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore store.EntityEventsService,
 	ac accesscontrol.Service, tracer tracing.Tracer, features featuremgmt.FeatureToggles, orgService org.Service,
-	userService user.Service) SearchService {
+	userService user.Service, queries querylibrary.Service) SearchService {
 	extender := &NoopExtender{}
 	s := &StandardSearchService{
 		cfg: cfg,
@@ -106,6 +109,8 @@ func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore s
 		reIndexCh:   make(chan struct{}, 1),
 		orgService:  orgService,
 		userService: userService,
+		queries:     queries,
+		features:    features,
 	}
 	return s
 }
@@ -234,6 +239,10 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 }
 
 func (s *StandardSearchService) doDashboardQuery(ctx context.Context, signedInUser *user.SignedInUser, orgID int64, q DashboardQuery) *backend.DataResponse {
+	if !s.queries.IsDisabled() && len(q.Kind) == 1 && q.Kind[0] == string(entityKindQuery) {
+		return s.searchQueries(ctx, signedInUser, q)
+	}
+
 	rsp := &backend.DataResponse{}
 
 	filter, err := s.auth.GetDashboardReadFilter(signedInUser)
