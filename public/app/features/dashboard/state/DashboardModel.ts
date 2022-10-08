@@ -110,7 +110,7 @@ export class DashboardModel implements TimeModel {
 
   static nonPersistedProperties: { [str: string]: boolean } = {
     events: true,
-    meta: true,
+    meta: false,
     panels: true, // needs special handling
     templating: true, // needs special handling
     originalTime: true,
