@@ -100,7 +100,7 @@ A query returns data that Grafana visualizes in dashboards. When you create a pa
 1. Click the **Data source** drop-down menu and select a data source.
 1. Click **Query options** to configure the maximum number of data points returned by the query and how frequently you want the query to request data from the data source.
 
-   For more information about query options, refer to [Query options]({{< relref "../query-options/" >}}).
+   For more information about query options, refer to [Query options]({{< relref "#query-options" >}}).
 
 1. Write the query.
 1. Click **Apply**.
@@ -179,6 +179,6 @@ Panel data source query options:
 
 ### Panel time overrides and timeshift
 
-In [Query options]({{< relref "./query-options/" >}}), you can override the relative time range for individual panels, which causes them to be different than what is selected in the dashboard time picker located in the upper right. This enables you to show metrics from different time periods or days at the same time.
+In [Query options]({{< relref "#query-options" >}}), you can override the relative time range for individual panels, which causes them to be different than what is selected in the dashboard time picker located in the upper right. This enables you to show metrics from different time periods or days at the same time.
 
 > **Note:** Panel time overrides have no effect when the time range for the dashboard is absolute.
