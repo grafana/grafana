@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-	"sync"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -21,27 +20,21 @@ func GetObjectKindInfo() models.ObjectKindInfo {
 }
 
 func NewDashboardSummary(sql *sqlstore.SQLStore) models.ObjectSummaryBuilder {
-	cache := make(map[int64]models.ObjectSummaryBuilder)
-	mutex := sync.Mutex{}
-
 	return func(ctx context.Context, uid string, body []byte) (*models.ObjectSummary, []byte, error) {
+		// This just gets the orgID (that will soon/eventually be encoded in a GRN and passed instead of a UID)
 		user := store.UserFromContext(ctx)
 		if user == nil {
 			return nil, nil, fmt.Errorf("can not find user in context")
 		}
 
-		mutex.Lock()
-		defer mutex.Unlock()
-
-		builder, ok := cache[user.OrgID]
-		if !ok || builder == nil {
-			lookup, err := LoadDatasourceLookup(ctx, user.OrgID, sql)
-			if err != nil {
-				return nil, nil, err
-			}
-			builder = NewStaticDashboardSummaryBuilder(lookup)
-			cache[user.OrgID] = builder
+		// Totally inefficient to look this up every time, but for the current use case that is OK
+		// The lookup is currently structured to support searchV2, but I think should become a real fallback
+		// that is only executed when we find a legacy dashboard ref
+		lookup, err := LoadDatasourceLookup(ctx, user.OrgID, sql)
+		if err != nil {
+			return nil, nil, err
 		}
+		builder := NewStaticDashboardSummaryBuilder(lookup)
 		return builder(ctx, uid, body)
 	}
 }
