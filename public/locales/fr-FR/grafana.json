@@ -1,24 +1,24 @@
 {
   "common": {
     "locale": {
-      "default": "",
-      "en": "",
-      "es": "",
-      "fr": ""
+      "default": "Défaut",
+      "en": "Anglais",
+      "es": "Espagnol",
+      "fr": "Français"
     },
-    "save": ""
+    "save": "Sauvegarder"
   },
   "dashboard": {
     "inspect": {
-      "actions-tab": "",
-      "data-tab": "",
-      "error-tab": "",
-      "json-tab": "",
-      "meta-tab": "",
-      "query-tab": "",
-      "stats-tab": "",
-      "subtitle": "",
-      "title": ""
+      "actions-tab": "Actions",
+      "data-tab": "Donnée",
+      "error-tab": "Erreurs",
+      "json-tab": "JSON",
+      "meta-tab": "Meta donnée",
+      "query-tab": "Requêtes",
+      "stats-tab": "Stats",
+      "subtitle": "{{queryCount}} requêtes  avec un temps de requête total de {{formatted}}",
+      "title": "Inspecter: {{panelTitle}}"
     },
     "inspect-data": {
       "data-options": "",
@@ -84,7 +84,7 @@
     }
   },
   "folder-picker": {
-    "loading": ""
+    "loading": "Chargement des dossiers..."
   },
   "library-panel": {
     "add-modal": {
@@ -247,11 +247,11 @@
       "week-start-label": ""
     },
     "theme": {
-      "dark-label": "",
-      "default-label": "",
-      "light-label": ""
+      "dark-label": "Sombre",
+      "default-label": "Défaut",
+      "light-label": "Claire"
     },
-    "title": ""
+    "title": "Préférences"
   },
   "time-picker": {
     "absolute": {
@@ -261,29 +261,29 @@
   },
   "user-orgs": {
     "current-org-button": "",
-    "name-column": "",
-    "role-column": "",
+    "name-column": "Nom",
+    "role-column": "Rôle",
     "select-org-button": "",
     "title": ""
   },
   "user-profile": {
     "fields": {
-      "email-error": "",
-      "email-label": "",
-      "name-error": "",
-      "name-label": "",
-      "username-label": ""
+      "email-error": "L'adresse email est requise",
+      "email-label": "Email",
+      "name-error": "Nom est requis",
+      "name-label": "Nom",
+      "username-label": "Pseudonyme"
     },
-    "title": ""
+    "title": "Edition du profile"
   },
   "user-session": {
-    "browser-column": "",
-    "created-at-column": "",
-    "ip-column": "",
-    "revoke": "",
-    "seen-at-column": ""
+    "browser-column": "Navigateur",
+    "created-at-column": "Connecté",
+    "ip-column": "Adresse IP",
+    "revoke": "Révoquer la session",
+    "seen-at-column": "Dernière connexion"
   },
   "user-sessions": {
-    "loading": ""
+    "loading": "Chargement des sessions"
   }
 }
