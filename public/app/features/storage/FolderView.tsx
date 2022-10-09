@@ -3,6 +3,7 @@ import React from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { DataFrame, GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Table, useStyles2 } from '@grafana/ui';
 
 import { WriteObjectView } from './WriteObjectView';
@@ -22,7 +23,7 @@ export function FolderView({ listing, view }: Props) {
         <div>
           CONFIGURE?
           <hr />
-          <WriteObjectView />
+          {config.featureToggles.objectStore && <WriteObjectView />}
         </div>
       );
     case StorageView.Perms:
