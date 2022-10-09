@@ -57,7 +57,7 @@ func (b *Base) Pluginmeta() *pluginmeta.Coremodel {
 	return b.pluginmeta
 }
 
-func doProvideBase(lib thema.Library) *Base {
+func doProvideBase(lib *thema.Runtime) *Base {
 	var err error
 	reg := &Base{}
 

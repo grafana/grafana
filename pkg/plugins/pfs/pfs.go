@@ -190,13 +190,13 @@ func (pi PluginInfo) Meta() pluginmeta.Model {
 // It does not descend into subdirectories to search for additional plugin.json
 // files.
 // TODO no descent is ok for core plugins, but won't cut it in general
-func ParsePluginFS(f fs.FS, lib thema.Library) (*Tree, error) {
+func ParsePluginFS(f fs.FS, rt *thema.Runtime) (*Tree, error) {
 	if f == nil {
 		return nil, ErrEmptyFS
 	}
 	// _, mux := loadMux()
 	mux := loadMux()
-	ctx := lib.Context()
+	ctx := rt.Context()
 
 	b, err := fs.ReadFile(f, "plugin.json")
 	if err != nil {
@@ -260,7 +260,7 @@ func ParsePluginFS(f fs.FS, lib thema.Library) (*Tree, error) {
 		}
 		for _, s := range allslots {
 			iv := val.LookupPath(cue.ParsePath(s.slot.Name()))
-			lin, err := bindSlotLineage(iv, s.slot, r.meta, lib)
+			lin, err := bindSlotLineage(iv, s.slot, r.meta, rt)
 			if lin != nil {
 				r.slotimpls[s.slot.Name()] = lin
 			}
@@ -273,7 +273,7 @@ func ParsePluginFS(f fs.FS, lib thema.Library) (*Tree, error) {
 	return tree, nil
 }
 
-func bindSlotLineage(v cue.Value, s *coremodel.Slot, meta pluginmeta.Model, lib thema.Library, opts ...thema.BindOption) (thema.Lineage, error) {
+func bindSlotLineage(v cue.Value, s *coremodel.Slot, meta pluginmeta.Model, rt *thema.Runtime, opts ...thema.BindOption) (thema.Lineage, error) {
 	accept, required := s.ForPluginType(string(meta.Type))
 	exists := v.Exists()
 
@@ -292,8 +292,8 @@ func bindSlotLineage(v cue.Value, s *coremodel.Slot, meta pluginmeta.Model, lib 
 	}
 
 	// TODO make this opt real in thema, then uncomment to enforce joinSchema
-	// lin, err := thema.BindLineage(iv, lib, thema.SatisfiesJoinSchema(s.MetaSchema()))
-	lin, err := thema.BindLineage(v, lib, opts...)
+	// lin, err := thema.BindLineage(iv, rt, thema.SatisfiesJoinSchema(s.MetaSchema()))
+	lin, err := thema.BindLineage(v, rt, opts...)
 	if err != nil {
 		return nil, ewrap(fmt.Errorf("%s: invalid thema lineage for slot %s: %w", meta.Id, s.Name(), err), ErrInvalidLineage)
 	}

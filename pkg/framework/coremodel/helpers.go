@@ -24,7 +24,7 @@ var defaultFramework cue.Value
 
 func init() {
 	var err error
-	defaultFramework, err = doLoadFrameworkCUE(cuectx.ProvideCUEContext())
+	defaultFramework, err = doLoadFrameworkCUE(cuectx.GrafanaCUEContext())
 	if err != nil {
 		panic(err)
 	}
