@@ -36,7 +36,7 @@ var (
 	resourceNameLandmark = regexp.MustCompile(`(?i)(/(?P<resourceName>[\w-\.]+)/providers/Microsoft\.Insights/metrics)`)
 )
 
-const AzureMonitorAPIVersion = "2021-05-01"
+const AzureMonitorAPIVersion = "2022-09-01"
 
 func (e *AzureMonitorDatasource) ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) {
 	e.Proxy.Do(rw, req, cli)
