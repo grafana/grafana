@@ -278,6 +278,7 @@ require (
 	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/mitchellh/mapstructure v1.4.3 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
+	github.com/samber/mo v1.5.1 // indirect
 	github.com/segmentio/asm v1.1.4 // indirect
 	go.starlark.net v0.0.0-20201118183435-e55f603d8c79 // indirect
 )
