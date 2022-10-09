@@ -1,4 +1,4 @@
-package entity
+package kind
 
 // TODO generate from type.cue
 type RawMeta struct {
@@ -13,10 +13,10 @@ type CoreStructuredMeta struct {
 
 func (m CoreStructuredMeta) _private() {}
 
-// type CoreStructuredKind[T thema.Assignee] struct {
+// type CoreStructured[T thema.Assignee] struct {
 // 	Name    string
 // 	Lineage thema.ConvergentLineage[T]
-// 	// Maturity StructuredMaturity
+// 	// Maturity Maturity
 // 	Maturity string
 // }
 
@@ -26,10 +26,10 @@ type CustomStructuredMeta struct {
 
 func (m CustomStructuredMeta) _private() {}
 
-// type CustomStructuredKind struct {
+// type CustomStructured struct {
 // 	Name    string
 // 	Lineage thema.Lineage
-// 	// Maturity StructuredMaturity
+// 	// Maturity Maturity
 // 	Maturity string
 // }
 

@@ -1,14 +1,14 @@
-package entity
+package kind
 
 import "github.com/grafana/thema"
 
 // TODO
-type StructuredMaturity string
+type Maturity string
 
 const (
-	MaturityCommitted    StructuredMaturity = "committed"
-	MaturitySynchronized StructuredMaturity = "synchronized"
-	MaturityMature       StructuredMaturity = "mature"
+	MaturityCommitted    Maturity = "committed"
+	MaturitySynchronized Maturity = "synchronized"
+	MaturityMature       Maturity = "mature"
 )
 
 // TODO
@@ -17,18 +17,18 @@ type Interface interface {
 	Name() string
 
 	// TODO
-	Maturity() StructuredMaturity
+	Maturity() Maturity
 }
 
 // TODO
-type RawKind interface {
+type Raw interface {
 	Interface
 
 	// TODO
 	Meta() RawMeta
 }
 
-type CoreStructuredKind[T thema.Assignee] interface {
+type CoreStructured[T thema.Assignee] interface {
 	Interface
 
 	// TODO
@@ -38,7 +38,7 @@ type CoreStructuredKind[T thema.Assignee] interface {
 	Meta() CoreStructuredMeta
 }
 
-type CustomStructuredKind interface {
+type CustomStructured interface {
 	Interface
 
 	// TODO

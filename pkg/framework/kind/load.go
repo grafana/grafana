@@ -1,4 +1,4 @@
-package entity
+package kind
 
 import (
 	"embed"
@@ -110,27 +110,8 @@ func cueFrameworkWithContext(ctx *cue.Context) cue.Value {
 	return v
 }
 
-// // TODO this is pointless, just make a hidden interface
-// type SomeKindMeta mo.Either3[RawMeta, CoreStructuredMeta, CustomStructuredMeta]
-//
-// func metaToSome[T KindMetas](t T) SomeKindMeta {
-// 	switch x := any(t).(type) {
-// 	case RawMeta:
-// 		return SomeKindMeta(mo.NewEither3Arg1[RawMeta, CoreStructuredMeta, CustomStructuredMeta](x))
-// 	case CoreStructuredMeta:
-// 		return SomeKindMeta(mo.NewEither3Arg2[RawMeta, CoreStructuredMeta, CustomStructuredMeta](x))
-// 	case CustomStructuredMeta:
-// 		return SomeKindMeta(mo.NewEither3Arg3[RawMeta, CoreStructuredMeta, CustomStructuredMeta](x))
-// 	default:
-// 		panic("unreachable")
-// 	}
-// }
-
 // BindSomeKind takes a cue.Value expected to represent one of Grafana's kind
 // variants, and attempts to extract its metadata into the relevant typed struct.
-//
-// Use [mo.Either3.Match] against each branch to
-// func BindSomeKind(v cue.Value) (SomeKindMeta, error) {
 func BindSomeKind(v cue.Value) (SomeKindMeta, error) {
 	if !v.Exists() {
 		return nil, ErrValueNotExist
