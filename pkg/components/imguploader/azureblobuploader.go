@@ -27,14 +27,16 @@ type AzureBlobUploader struct {
 	account_name   string
 	account_key    string
 	container_name string
+	sas_token      string
 	log            log.Logger
 }
 
-func NewAzureBlobUploader(account_name string, account_key string, container_name string) *AzureBlobUploader {
+func NewAzureBlobUploader(account_name string, account_key string, container_name string, sas_token string) *AzureBlobUploader {
 	return &AzureBlobUploader{
 		account_name:   account_name,
 		account_key:    account_key,
 		container_name: container_name,
+		sas_token:      sas_token,
 		log:            log.New("azureBlobUploader"),
 	}
 }
@@ -91,6 +93,10 @@ func (az *AzureBlobUploader) Upload(ctx context.Context, imageDiskPath string) (
 	}
 
 	url := fmt.Sprintf("https://%s.blob.core.windows.net/%s/%s", az.account_name, az.container_name, randomFileName)
+	// Attach SAS token if value is not empty string
+	if az.sas_token != "" {
+		url = fmt.Sprintf("%s?%s", url, az.sas_token)
+	}
 	return url, nil
 }
 
