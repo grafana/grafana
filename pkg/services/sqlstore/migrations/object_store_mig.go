@@ -75,14 +75,15 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 			{Name: "uid", Type: migrator.DB_NVarchar, Length: 1024, Nullable: true},
 
 			// Runtime calcs (will depend on the system state)
-			{Name: "resolved_to_key", Type: migrator.DB_NVarchar, Length: 255, Nullable: true},
 			{Name: "resolved_ok", Type: migrator.DB_Bool, Nullable: false},
-			{Name: "resolved_time", Type: migrator.DB_DateTime, Nullable: true}, // when the items were resolved
+			{Name: "resolved_key", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false},
+			{Name: "resolved_warning", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "resolved_time", Type: migrator.DB_DateTime, Nullable: false}, // resolution cache timestamp
 		},
 		Indices: []*migrator.Index{
 			{Cols: []string{"key"}, Type: migrator.IndexType},
 			{Cols: []string{"kind"}, Type: migrator.IndexType},
-			{Cols: []string{"resolved_to_key"}, Type: migrator.IndexType},
+			{Cols: []string{"resolved_key"}, Type: migrator.IndexType},
 		},
 	}
 
@@ -127,14 +128,14 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 	// Initalize all tables
 	tables := []migrator.Table{objectTable, objectLabelsTable, objectReferenceTable, objectHistoryTable, objectAliasTable}
 	for t := range tables {
-		mg.AddMigration("ObjectStore: create table "+tables[t].Name, migrator.NewAddTableMigration(tables[t]))
+		mg.AddMigration("ObjectStore init: table "+tables[t].Name, migrator.NewAddTableMigration(tables[t]))
 		for i := range tables[t].Indices {
-			mg.AddMigration(fmt.Sprintf("ObjectStore: create index %s[%d]", tables[t].Name, i), migrator.NewAddIndexMigration(tables[t], tables[t].Indices[i]))
+			mg.AddMigration(fmt.Sprintf("ObjectStore init: index %s[%d]", tables[t].Name, i), migrator.NewAddIndexMigration(tables[t], tables[t].Indices[i]))
 		}
 	}
 
 	// TODO: add collation support to `migrator.Column`
-	mg.AddMigration("ObjectStore: set path collation in object tables", migrator.NewRawSQLMigration("").
+	mg.AddMigration("ObjectStore init: set path collation in object tables", migrator.NewRawSQLMigration("").
 		// MySQL `utf8mb4_unicode_ci` collation is set in `mysql_dialect.go`
 		// SQLite uses a `BINARY` collation by default
 		Postgres("ALTER TABLE object ALTER COLUMN path TYPE VARCHAR(1024) COLLATE \"C\";")) // Collate C - sorting done based on character code byte values

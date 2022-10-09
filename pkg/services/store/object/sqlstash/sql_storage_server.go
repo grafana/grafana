@@ -18,23 +18,26 @@ import (
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/kind"
 	"github.com/grafana/grafana/pkg/services/store/object"
+	"github.com/grafana/grafana/pkg/services/store/resolver"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvideSQLObjectServer(db db.DB, cfg *setting.Cfg, grpcServerProvider grpcserver.Provider, kinds kind.KindRegistry) object.ObjectStoreServer {
+func ProvideSQLObjectServer(db db.DB, cfg *setting.Cfg, grpcServerProvider grpcserver.Provider, kinds kind.KindRegistry, resolver resolver.ObjectReferenceResolver) object.ObjectStoreServer {
 	objectServer := &sqlObjectServer{
-		sess:  db.GetSqlxSession(),
-		log:   log.New("in-memory-object-server"),
-		kinds: kinds,
+		sess:     db.GetSqlxSession(),
+		log:      log.New("in-memory-object-server"),
+		kinds:    kinds,
+		resolver: resolver,
 	}
 	object.RegisterObjectStoreServer(grpcServerProvider.GetServer(), objectServer)
 	return objectServer
 }
 
 type sqlObjectServer struct {
-	log   log.Logger
-	sess  *session.SessionDB
-	kinds kind.KindRegistry
+	log      log.Logger
+	sess     *session.SessionDB
+	kinds    kind.KindRegistry
+	resolver resolver.ObjectReferenceResolver
 }
 
 func getReadSelect(r *object.ReadObjectRequest) string {
@@ -197,7 +200,9 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 	modifier := store.UserFromContext(ctx)
 	key := fmt.Sprintf("%d/%s.%s", modifier.OrgID, r.UID, r.Kind)
 
-	rsp := &object.WriteObjectResponse{}
+	rsp := &object.WriteObjectResponse{
+		Status: object.WriteObjectResponse_CREATED, // Will be changed if not true
+	}
 
 	err = s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
 		rows, err := tx.Query(ctx, `SELECT "etag","version","updated","size" FROM object WHERE key=?`, key)
@@ -274,10 +279,13 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 
 		// 3. Add the references rows
 		for _, ref := range summary.References {
+			resolved := s.resolver.Resolve(ctx, ref)
 			_, err = tx.Exec(ctx, `INSERT INTO object_ref (`+
-				`"key", "kind", "type", "uid") `+
-				`VALUES (?, ?, ?, ?)`,
+				`"key", "kind", "type", "uid", `+
+				`"resolved_ok", "resolved_key", "resolved_warning", "resolved_time") `+
+				`VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
 				key, ref.Kind, ref.Type, ref.UID,
+				resolved.OK, resolved.Key, resolved.Warning, resolved.Timestamp,
 			)
 			if err != nil {
 				return err
@@ -314,12 +322,12 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 			summary.Name, summary.Description,
 			summaryjson.labels, summaryjson.fields, summaryjson.errors,
 		)
-		if err != nil {
-			rsp.Status = object.WriteObjectResponse_CREATED
-		}
 		return err
 	})
 	rsp.SummaryJson = summaryjson.marshaled
+	if err != nil {
+		rsp.Status = object.WriteObjectResponse_ERROR
+	}
 	return rsp, err
 }
 

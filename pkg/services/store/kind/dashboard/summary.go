@@ -7,8 +7,6 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/store"
 )
 
 func GetObjectKindInfo() models.ObjectKindInfo {
@@ -19,26 +17,15 @@ func GetObjectKindInfo() models.ObjectKindInfo {
 	}
 }
 
-func NewDashboardSummary(sql *sqlstore.SQLStore) models.ObjectSummaryBuilder {
+// This summary does not resolve old name as UID
+func GetObjectSummaryBuilder() models.ObjectSummaryBuilder {
+	builder := NewStaticDashboardSummaryBuilder(&directLookup{})
 	return func(ctx context.Context, uid string, body []byte) (*models.ObjectSummary, []byte, error) {
-		// This just gets the orgID (that will soon/eventually be encoded in a GRN and passed instead of a UID)
-		user := store.UserFromContext(ctx)
-		if user == nil {
-			return nil, nil, fmt.Errorf("can not find user in context")
-		}
-
-		// Totally inefficient to look this up every time, but for the current use case that is OK
-		// The lookup is currently structured to support searchV2, but I think should become a real fallback
-		// that is only executed when we find a legacy dashboard ref
-		lookup, err := LoadDatasourceLookup(ctx, user.OrgID, sql)
-		if err != nil {
-			return nil, nil, err
-		}
-		builder := NewStaticDashboardSummaryBuilder(lookup)
 		return builder(ctx, uid, body)
 	}
 }
 
+// This implementation moves datasources referenced by internal ID or name to UID
 func NewStaticDashboardSummaryBuilder(lookup DatasourceLookup) models.ObjectSummaryBuilder {
 	return func(ctx context.Context, uid string, body []byte) (*models.ObjectSummary, []byte, error) {
 		summary := &models.ObjectSummary{

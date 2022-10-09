@@ -126,6 +126,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/kind"
 	"github.com/grafana/grafana/pkg/services/store/object"
+	"github.com/grafana/grafana/pkg/services/store/resolver"
 	//	objectdummyserver "github.com/grafana/grafana/pkg/services/store/object/dummy"
 	objectsqlserver "github.com/grafana/grafana/pkg/services/store/object/sqlstash"
 	"github.com/grafana/grafana/pkg/services/store/sanitizer"
@@ -360,6 +361,7 @@ var wireBasicSet = wire.NewSet(
 	objectsqlserver.ProvideSQLObjectServer,
 	kind.ProvideService, // The registry known kinds
 	object.ProvideHTTPObjectStore,
+	resolver.ProvideObjectReferenceResolver,
 	teamimpl.ProvideService,
 	tempuserimpl.ProvideService,
 	loginattemptimpl.ProvideService,

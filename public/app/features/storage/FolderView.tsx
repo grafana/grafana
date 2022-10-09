@@ -5,6 +5,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { DataFrame, GrafanaTheme2 } from '@grafana/data';
 import { Table, useStyles2 } from '@grafana/ui';
 
+import { WriteObjectView } from './WriteObjectView';
 import { StorageView } from './types';
 
 interface Props {
@@ -17,7 +18,13 @@ export function FolderView({ listing, view }: Props) {
 
   switch (view) {
     case StorageView.Config:
-      return <div>CONFIGURE?</div>;
+      return (
+        <div>
+          CONFIGURE?
+          <hr />
+          <WriteObjectView />
+        </div>
+      );
     case StorageView.Perms:
       return <div>Permissions</div>;
   }
