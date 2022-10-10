@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-git/go-git/v5"
 	. "github.com/go-git/go-git/v5/_examples"
+	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
@@ -71,10 +72,6 @@ func prepareEnv(grafanaDir, grafanaEnterpriseDir, branch, token string) *git.Rep
 		cmd := exec.Command("ln", "-s", grafanaDir, filepath.Join(filepath.Dir(grafanaDir), "grafana"))
 		execCmd(cmd)
 	}
-
-	files, err := os.ReadDir(grafanaEnterpriseDir)
-	CheckIfError(err)
-	Info("enterprise files: %d", len(files))
 
 	Info("enable enterprise")
 	//nolint:gosec
@@ -166,15 +163,16 @@ func main() {
 
 	fmt.Println(obj)
 
-	/*
-		Info("git push origin %s", branch)
-		// push changes
-		refSpec := config.RefSpec(fmt.Sprintf("refs/heads/%s:refs/remotes/origin/%s", branch, branch))
+	h, err := grafanaRepo.Head()
+	CheckIfError(err)
 
-		err = grafanaRepo.Push(&git.PushOptions{
-			RefSpecs:          []config.RefSpec{refSpec},
-			RequireRemoteRefs: []config.RefSpec{refSpec},
-		})
-		CheckIfError(err)
-	*/
+	Info("git push origin %s", branch)
+	// push changes
+	refSpec := config.RefSpec(fmt.Sprintf("refs/heads/%s:refs/remotes/origin/%s", h.Name().String(), branch))
+
+	err = grafanaRepo.Push(&git.PushOptions{
+		RefSpecs:          []config.RefSpec{refSpec},
+		RequireRemoteRefs: []config.RefSpec{refSpec},
+	})
+	CheckIfError(err)
 }
