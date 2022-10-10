@@ -5374,3 +5374,8 @@ get:
   path: infra/data/ci/packages-publish/bucket-credentials
 kind: secret
 name: packages_secret_access_key
+---
+kind: signature
+hmac: 7f9aac61f422ab9aabe9939250f4d6205835c19f3aec039b320c958ab5966edd
+
+...
