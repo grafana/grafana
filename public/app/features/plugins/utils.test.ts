@@ -2,6 +2,7 @@ import { Location as HistoryLocation } from 'history';
 
 import { NavIndex, NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 
 import { buildPluginSectionNav } from './utils';
 
@@ -33,6 +34,10 @@ describe('buildPluginSectionNav', () => {
     text: 'Admin',
     id: 'admin',
     children: [],
+    parentItem: {
+      id: HOME_NAV_ID,
+      text: 'Home',
+    },
   };
 
   const standalonePluginPage = {

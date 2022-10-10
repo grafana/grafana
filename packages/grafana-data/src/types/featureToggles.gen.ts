@@ -34,6 +34,7 @@ export interface FeatureToggles {
   publicDashboards?: boolean;
   lokiLive?: boolean;
   lokiDataframeApi?: boolean;
+  lokiMonacoEditor?: boolean;
   swaggerUi?: boolean;
   featureHighlights?: boolean;
   dashboardComments?: boolean;
@@ -65,8 +66,11 @@ export interface FeatureToggles {
   internationalization?: boolean;
   topnav?: boolean;
   grpcServer?: boolean;
+  objectStore?: boolean;
   traceqlEditor?: boolean;
+  flameGraph?: boolean;
   redshiftAsyncQueryDataSupport?: boolean;
   athenaAsyncQueryDataSupport?: boolean;
   increaseInMemDatabaseQueryCache?: boolean;
+  queryLibrary?: boolean;
 }

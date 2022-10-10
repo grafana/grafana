@@ -220,6 +220,12 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 		return response.Error(500, "Error while loading library panels", err)
 	}
 
+	if hs.QueryLibraryService != nil && !hs.QueryLibraryService.IsDisabled() {
+		if err := hs.QueryLibraryService.UpdateDashboardQueries(c.Req.Context(), c.SignedInUser, dash); err != nil {
+			return response.Error(500, "Error while loading saved queries", err)
+		}
+	}
+
 	dto := dtos.DashboardFullWithMeta{
 		Dashboard: dash.Data,
 		Meta:      meta,

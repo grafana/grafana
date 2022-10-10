@@ -125,8 +125,7 @@ func TestWarmStateCache(t *testing.T) {
 
 	t.Run("instance cache has expected entries", func(t *testing.T) {
 		for _, entry := range expectedEntries {
-			cacheEntry, err := st.Get(entry.OrgID, entry.AlertRuleUID, entry.CacheId)
-			require.NoError(t, err)
+			cacheEntry := st.Get(entry.OrgID, entry.AlertRuleUID, entry.CacheId)
 
 			if diff := cmp.Diff(entry, cacheEntry, cmpopts.IgnoreFields(state.State{}, "Results")); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
