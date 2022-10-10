@@ -78,10 +78,13 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
     })
     .addCase(updateExpression, (state, { payload }) => {
       state.queries = state.queries.map((query) => {
+        const dataSource = state.queries.find((alertQuery) => alertQuery.refId === payload.expression);
+        const relativeTimeRange = dataSource ? dataSource.relativeTimeRange : getDefaultRelativeTimeRange();
         return query.refId === payload.refId
           ? {
               ...query,
               model: payload,
+              relativeTimeRange: relativeTimeRange,
             }
           : query;
       });
@@ -138,7 +141,6 @@ const addQuery = (
   queryToAdd: Pick<AlertQuery, 'model' | 'datasourceUid' | 'relativeTimeRange'>
 ): AlertQuery[] => {
   const refId = getNextRefIdChar(queries);
-
   const query: AlertQuery = {
     ...queryToAdd,
     refId,
