@@ -3,6 +3,10 @@
 
 [[Subject .Subject "[[.Title]]"]]
 
+[[ define "__text_values_list" ]][[ $len := len .Values ]][[ if $len ]][[ $first := gt $len 1 ]][[ range $refID, $value := .Values -]]
+[[ $refID ]]=[[ $value ]][[ if $first ]], [[ end ]][[ $first = false ]][[ end -]]
+[[ else ]][no value][[ end ]][[ end ]]
+
 [[ define "alert" ]]
 
   [[ if ne .ImageURL "" ]]
@@ -21,7 +25,7 @@
   [[ end ]]
   <tr>
     <td colspan="2" class="value">
-      <span class="value-heading">Value:</span> <span class="value-value">[[ .ValueString ]]</span>
+      <span class="value-heading">Value:</span> <span class="value-value">[[ template "__text_values_list" . ]]</span>
     </td>
   </tr>
   [[ if gt (len .Annotations.SortedPairs) 0 ]]
