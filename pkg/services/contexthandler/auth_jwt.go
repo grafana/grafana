@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/models"
@@ -29,6 +30,15 @@ func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64)
 	}
 
 	if jwtToken == "" {
+		return false
+	}
+
+	// Strip the 'Bearer' prefix if it exists.
+	jwtToken = strings.TrimPrefix(jwtToken, "Bearer ")
+
+	// The header is Authorization and the token does not look like a JWT,
+	// this is likely an API key. Pass it on.
+	if h.Cfg.JWTAuthHeaderName == "Authorization" && !looksLikeJWT(jwtToken) {
 		return false
 	}
 
@@ -185,4 +195,10 @@ func searchClaimsForStringAttr(attributePath string, claims map[string]interface
 	}
 
 	return "", nil
+}
+
+func looksLikeJWT(token string) bool {
+	// A JWT must have 3 parts separated by `.`.
+	parts := strings.Split(token, ".")
+	return len(parts) == 3
 }

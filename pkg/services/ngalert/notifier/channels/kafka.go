@@ -100,7 +100,7 @@ func (kn *KafkaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	bodyJSON.Set("alert_state", state)
 	bodyJSON.Set("description", tmpl(DefaultMessageTitleEmbed))
 	bodyJSON.Set("client", "Grafana")
-	bodyJSON.Set("details", tmpl(`{{ template "default.message" . }}`))
+	bodyJSON.Set("details", tmpl(DefaultMessageEmbed))
 
 	ruleURL := joinUrlPath(kn.tmpl.ExternalURL.String(), "/alerting/list", kn.log)
 	bodyJSON.Set("client_url", ruleURL)

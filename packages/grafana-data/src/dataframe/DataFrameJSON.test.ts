@@ -83,5 +83,59 @@ describe('DataFrame JSON', () => {
         }
       `);
     });
+
+    it('should inflate values from enums and switch to string field type', () => {
+      const json: DataFrameJSON = {
+        schema: {
+          fields: [
+            { name: 'time', type: FieldType.time },
+            { name: 'value', type: FieldType.number },
+          ],
+        },
+        data: {
+          values: [
+            [100, 200, 300, 400],
+            [1, 0, 2, 1],
+          ],
+          enums: [
+            null, // nothing to replace, but keeps the index
+            ['foo', 'bar', 'baz'],
+          ],
+        },
+      };
+
+      const frame = dataFrameFromJSON(json);
+      expect(frame).toMatchInlineSnapshot(`
+        Object {
+          "fields": Array [
+            Object {
+              "config": Object {},
+              "entities": Object {},
+              "name": "time",
+              "type": "time",
+              "values": Array [
+                100,
+                200,
+                300,
+                400,
+              ],
+            },
+            Object {
+              "config": Object {},
+              "entities": Object {},
+              "name": "value",
+              "type": "string",
+              "values": Array [
+                "bar",
+                "foo",
+                "baz",
+                "bar",
+              ],
+            },
+          ],
+          "length": 4,
+        }
+      `);
+    });
   });
 });

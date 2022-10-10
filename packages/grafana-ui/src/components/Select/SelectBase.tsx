@@ -4,6 +4,8 @@ import { default as ReactAsyncSelect } from 'react-select/async';
 import { default as AsyncCreatable } from 'react-select/async-creatable';
 import Creatable from 'react-select/creatable';
 
+import { SelectableValue } from '@grafana/data';
+
 import { useTheme2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { Spinner } from '../Spinner/Spinner';
@@ -13,14 +15,14 @@ import { IndicatorsContainer } from './IndicatorsContainer';
 import { InputControl } from './InputControl';
 import { MultiValueContainer, MultiValueRemove } from './MultiValue';
 import { SelectContainer } from './SelectContainer';
-import { SelectMenu, SelectMenuOptions } from './SelectMenu';
+import { SelectMenu, SelectMenuOptions, VirtualizedSelectMenu } from './SelectMenu';
 import { SelectOptionGroup } from './SelectOptionGroup';
 import { SingleValue } from './SingleValue';
 import { ValueContainer } from './ValueContainer';
 import { getSelectStyles } from './getSelectStyles';
 import { useCustomSelectStyles } from './resetSelectStyles';
-import { ActionMeta, SelectBaseProps, SelectValue } from './types';
-import { cleanValue, findSelectedValue } from './utils';
+import { ActionMeta, SelectBaseProps } from './types';
+import { cleanValue, findSelectedValue, omitDescriptions } from './utils';
 
 interface ExtraValuesIndicatorProps {
   maxVisibleValues?: number | undefined;
@@ -137,6 +139,7 @@ export function SelectBase<T>({
   showAllSelectedWhenOpen = true,
   tabSelectsValue = true,
   value,
+  virtualized = false,
   width,
   isValidNewOption,
   formatOptionLabel,
@@ -166,7 +169,7 @@ export function SelectBase<T>({
   }, [maxMenuHeight, menuPlacement, loadOptions, isOpen]);
 
   const onChangeWithEmpty = useCallback(
-    (value: SelectValue<T>, action: ActionMeta) => {
+    (value: SelectableValue<T>, action: ActionMeta) => {
       if (isMulti && (value === undefined || value === null)) {
         return onChange([], action);
       }
@@ -239,7 +242,7 @@ export function SelectBase<T>({
     onFocus,
     formatOptionLabel,
     openMenuOnFocus,
-    options,
+    options: virtualized ? omitDescriptions(options) : options,
     placeholder,
     prefix,
     renderControl,
@@ -266,12 +269,14 @@ export function SelectBase<T>({
     };
   }
 
+  const SelectMenuComponent = virtualized ? VirtualizedSelectMenu : SelectMenu;
+
   return (
     <>
       <ReactSelectComponent
         ref={reactSelectRef}
         components={{
-          MenuList: SelectMenu,
+          MenuList: SelectMenuComponent,
           Group: SelectOptionGroup,
           ValueContainer,
           IndicatorsContainer(props: any) {

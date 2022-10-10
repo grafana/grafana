@@ -189,7 +189,7 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 		meta.FolderUrl = query.Result.GetUrl()
 	}
 
-	provisioningData, err := hs.dashboardProvisioningService.GetProvisionedDashboardDataByDashboardID(dash.Id)
+	provisioningData, err := hs.dashboardProvisioningService.GetProvisionedDashboardDataByDashboardID(c.Req.Context(), dash.Id)
 	if err != nil {
 		return response.Error(500, "Error while checking if dashboard is provisioned", err)
 	}
@@ -218,6 +218,12 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	err = hs.LibraryPanelService.LoadLibraryPanelsForDashboard(c.Req.Context(), dash)
 	if err != nil {
 		return response.Error(500, "Error while loading library panels", err)
+	}
+
+	if hs.QueryLibraryService != nil && !hs.QueryLibraryService.IsDisabled() {
+		if err := hs.QueryLibraryService.UpdateDashboardQueries(c.Req.Context(), c.SignedInUser, dash); err != nil {
+			return response.Error(500, "Error while loading saved queries", err)
+		}
 	}
 
 	dto := dtos.DashboardFullWithMeta{
@@ -407,13 +413,13 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 
 	var provisioningData *models.DashboardProvisioning
 	if dash.Id != 0 {
-		data, err := hs.dashboardProvisioningService.GetProvisionedDashboardDataByDashboardID(dash.Id)
+		data, err := hs.dashboardProvisioningService.GetProvisionedDashboardDataByDashboardID(c.Req.Context(), dash.Id)
 		if err != nil {
 			return response.Error(500, "Error while checking if dashboard is provisioned using ID", err)
 		}
 		provisioningData = data
 	} else if dash.Uid != "" {
-		data, err := hs.dashboardProvisioningService.GetProvisionedDashboardDataByDashboardUID(dash.OrgId, dash.Uid)
+		data, err := hs.dashboardProvisioningService.GetProvisionedDashboardDataByDashboardUID(c.Req.Context(), dash.OrgId, dash.Uid)
 		if err != nil && !errors.Is(err, dashboards.ErrProvisionedDashboardNotFound) && !errors.Is(err, dashboards.ErrDashboardNotFound) {
 			return response.Error(500, "Error while checking if dashboard is provisioned", err)
 		}
@@ -538,7 +544,6 @@ func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) response.Response {
 	}()
 
 	dash := dtos.DashboardFullWithMeta{}
-	dash.Meta.IsHome = true
 	dash.Meta.CanEdit = c.SignedInUser.HasRole(org.RoleEditor)
 	dash.Meta.FolderTitle = "General"
 	dash.Dashboard = simplejson.New()

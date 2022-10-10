@@ -1,13 +1,14 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = 'v3.0.5'
-build_image = 'grafana/build-container:1.5.9'
+grabpl_version = 'v3.0.11'
+build_image = 'grafana/build-container:1.6.3'
 publish_image = 'grafana/grafana-ci-deploy:1.3.3'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
 alpine_image = 'alpine:3.15.6'
 curl_image = 'byrnedo/alpine-curl:0.1.8'
 windows_image = 'mcr.microsoft.com/windows:1809'
 wix_image = 'grafana/ci-wix:0.1.1'
+go_image = 'golang:1.19.2'
 
 disable_tests = False
 trigger_oss = {
@@ -163,10 +164,10 @@ def lint_drone_step():
         'name': 'lint-drone',
         'image': curl_image,
         'commands': [
-            './bin/grabpl verify-drone',
+            './bin/build verify-drone',
         ],
         'depends_on': [
-            'grabpl',
+            'compile-build-cmd',
         ],
     }
 
@@ -206,7 +207,7 @@ def enterprise_downstream_step(edition, ver_mode):
 def lint_backend_step(edition):
     return {
         'name': 'lint-backend' + enterprise2_suffix(edition),
-        'image': build_image,
+        'image': go_image,
         'environment': {
             # We need CGO because of go-sqlite3
             'CGO_ENABLED': '1',
@@ -215,6 +216,7 @@ def lint_backend_step(edition):
             'wire-install',
         ],
         'commands': [
+            'apt-get update && apt-get install make',
             # Don't use Make since it will re-download the linters
             'make lint-go',
         ],
@@ -265,13 +267,13 @@ def store_storybook_step(edition, ver_mode, trigger=None):
     commands = []
     if ver_mode == 'release':
         commands.extend([
-            './bin/grabpl store-storybook --deployment latest --src-bucket grafana-prerelease --src-dir artifacts/storybook',
-            './bin/grabpl store-storybook --deployment ${DRONE_TAG} --src-bucket grafana-prerelease --src-dir artifacts/storybook',
+            './bin/build store-storybook --deployment latest',
+            './bin/build store-storybook --deployment ${DRONE_TAG}',
         ])
 
     else:
         # main pipelines should deploy storybook to grafana-storybook/canary public bucket
-        commands = ['./bin/grabpl store-storybook --deployment canary --src-bucket grafana-storybook', ]
+        commands = ['./bin/build store-storybook --deployment canary', ]
 
     step = {
         'name': 'store-storybook',
@@ -608,7 +610,7 @@ def frontend_metrics_step(edition, trigger=None):
         },
         'failure': 'ignore',
         'commands': [
-            './scripts/ci-frontend-metrics.sh | ./bin/grabpl publish-metrics $${GRAFANA_MISC_STATS_API_KEY}',
+            './scripts/ci-frontend-metrics.sh | ./bin/build publish-metrics $${GRAFANA_MISC_STATS_API_KEY}',
         ],
     }
     if trigger:
@@ -625,20 +627,6 @@ def codespell_step():
             'echo -e "unknwon\nreferer\nerrorstring\neror\niam\nwan" > words_to_ignore.txt',
             'codespell -I words_to_ignore.txt docs/',
             'rm words_to_ignore.txt',
-        ],
-    }
-
-
-def shellcheck_step():
-    return {
-        'name': 'shellcheck',
-        'image': build_image,
-        'depends_on': [
-            'grabpl',
-            'compile-build-cmd',
-        ],
-        'commands': [
-            './bin/build shellcheck',
         ],
     }
 
@@ -677,7 +665,7 @@ def package_step(edition, ver_mode, include_enterprise2=False, variants=None):
     # TODO: Use percentage for jobs
     if ver_mode == 'release':
         cmds = [
-            '{}./bin/grabpl package --jobs 8 --edition {} '.format(test_args, edition) + \
+            '{}./bin/build package --jobs 8 --edition {} '.format(test_args, edition) + \
             '{} ${{DRONE_TAG}}'.format(
                 sign_args
             ),
@@ -685,7 +673,7 @@ def package_step(edition, ver_mode, include_enterprise2=False, variants=None):
     else:
         build_no = '${DRONE_BUILD_NUMBER}'
         cmds = [
-            '{}./bin/grabpl package --jobs 8 --edition {} '.format(test_args, edition) + \
+            '{}./bin/build package --jobs 8 --edition {} '.format(test_args, edition) + \
             '--build-id {}{}{}'.format(build_no, variants_str, sign_args),
         ]
 
@@ -806,6 +794,23 @@ def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publis
         'environment': {
             'GCP_KEY': from_secret('gcp_key'),
         },
+    }
+
+def fetch_images_step(edition):
+    return {
+        'name': 'fetch-images-{}'.format(edition),
+        'image': 'google/cloud-sdk',
+        'environment': {
+            'GCP_KEY': from_secret('gcp_key'),
+            'DOCKER_USER': from_secret('docker_username'),
+            'DOCKER_PASSWORD': from_secret('docker_password'),
+        },
+        'commands': ['./bin/build artifacts docker fetch --edition {}'.format(edition)],
+        'depends_on': ['compile-build-cmd'],
+        'volumes': [{
+            'name': 'docker',
+            'path': '/var/run/docker.sock'
+        }],
     }
 
 
@@ -1007,12 +1012,12 @@ def publish_packages_step(edition, ver_mode):
 
 def publish_grafanacom_step(edition, ver_mode):
     if ver_mode == 'release':
-        cmd = './bin/grabpl publish grafana-com --edition {} ${{DRONE_TAG}}'.format(
+        cmd = './bin/build publish grafana-com --edition {} ${{DRONE_TAG}}'.format(
             edition,
         )
     elif ver_mode == 'main':
         build_no = '${DRONE_BUILD_NUMBER}'
-        cmd = './bin/grabpl publish grafana-com --edition {} --build-id {}'.format(
+        cmd = './bin/build publish grafana-com --edition {} --build-id {}'.format(
             edition, build_no,
         )
     else:
@@ -1040,6 +1045,7 @@ def publish_linux_packages_step(edition):
         'depends_on': [
             'grabpl'
         ],
+        'privileged': True,
         'failure': 'ignore', # While we're testing it
         'settings': {
             'access_key_id': from_secret('packages_access_key_id'),
@@ -1251,7 +1257,7 @@ def compile_build_cmd(edition='oss'):
           dependencies = ['init-enterprise',]
     return {
         'name': 'compile-build-cmd',
-        'image': 'golang:1.17',
+        'image': go_image,
         'commands': [
             "go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd",
         ],

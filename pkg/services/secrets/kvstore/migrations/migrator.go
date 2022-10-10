@@ -67,7 +67,7 @@ func (s *SecretMigrationProviderImpl) Run(ctx context.Context) error {
 // This should only be called once at startup
 func (s *SecretMigrationProviderImpl) Migrate(ctx context.Context) error {
 	// Start migration services.
-	return s.ServerLockService.LockExecuteAndRelease(ctx, actionName, time.Minute*10, func(context.Context) {
+	err := s.ServerLockService.LockExecuteAndRelease(ctx, actionName, time.Minute*10, func(context.Context) {
 		for _, service := range s.services {
 			serviceName := reflect.TypeOf(service).String()
 			logger.Debug("Starting secret migration service", "service", serviceName)
@@ -78,6 +78,10 @@ func (s *SecretMigrationProviderImpl) Migrate(ctx context.Context) error {
 			logger.Debug("Finished secret migration service", "service", serviceName)
 		}
 	})
+	if err != nil {
+		logger.Error("Server lock for secret migration already exists")
+	}
+	return nil
 }
 
 // TriggerPluginMigration Kick off a migration to or from the plugin. This will block until all services have exited.

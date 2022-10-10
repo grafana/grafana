@@ -1,6 +1,7 @@
 import { merge } from 'lodash';
 
 import {
+  AuthSettings,
   BootData,
   BuildInfo,
   createTheme,
@@ -27,6 +28,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   isPublicDashboardView: boolean;
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
   panels: { [key: string]: PanelPluginMeta } = {};
+  auth: AuthSettings = {};
   minRefreshInterval = '';
   appUrl = '';
   appSubUrl = '';
@@ -107,7 +109,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   pluginAdminExternalManageEnabled = false;
   pluginCatalogHiddenPlugins: string[] = [];
   expressionsEnabled = false;
-  customTheme?: any;
+  customTheme?: undefined;
   awsAllowedAuthProviders: string[] = [];
   awsAssumeRoleEnabled = false;
   azure: AzureSettings = {
@@ -132,6 +134,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     enabled: true,
   };
   googleAnalyticsId: undefined;
+  googleAnalytics4Id: undefined;
   rudderstackWriteKey: undefined;
   rudderstackDataPlaneUrl: undefined;
   rudderstackSdkUrl: undefined;

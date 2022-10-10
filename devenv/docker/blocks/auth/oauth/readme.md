@@ -26,7 +26,8 @@ name_attribute_path = name
 auth_url = http://localhost:8087/auth/realms/grafana/protocol/openid-connect/auth
 token_url = http://localhost:8087/auth/realms/grafana/protocol/openid-connect/token
 api_url = http://localhost:8087/auth/realms/grafana/protocol/openid-connect/userinfo
-role_attribute_path = contains(roles[*], 'admin') && 'Admin' || contains(roles[*], 'editor') && 'Editor' || 'Viewer'
+role_attribute_path = contains(roles[*], 'grafanaadmin') && 'GrafanaAdmin' || contains(roles[*], 'admin') && 'Admin' || contains(roles[*], 'editor') && 'Editor' || 'Viewer'
+allow_assign_grafana_admin = true
 ```
 
 ## Devenv setup jwt auth
@@ -112,9 +113,10 @@ docker-compose exec -T oauthkeycloakdb bash -c "pg_dump -U keycloak keycloak" > 
 
 - keycloak admin:                     http://localhost:8087
 - keycloak admin login:               admin:admin
-- grafana oauth viewer login:          oauth-viewer:grafana
-- grafana oauth editor login:          oauth-editor:grafana
-- grafana oauth admin login:           oauth-admin:grafana
+- grafana oauth viewer login:         oauth-viewer:grafana
+- grafana oauth editor login:         oauth-editor:grafana
+- grafana oauth admin login:          oauth-admin:grafana
+- grafana oauth server admin login:   oauth-grafanaadmin:grafana
 
 # Troubleshooting
 

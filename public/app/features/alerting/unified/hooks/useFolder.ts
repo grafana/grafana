@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
-import { useDispatch } from 'react-redux';
 
-import { FolderDTO } from 'app/types';
+import { FolderDTO, useDispatch } from 'app/types';
 
 import { fetchFolderIfNotFetchedAction } from '../state/actions';
 import { initialAsyncRequestState } from '../utils/redux';

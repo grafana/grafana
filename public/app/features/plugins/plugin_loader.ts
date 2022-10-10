@@ -1,4 +1,5 @@
 import * as emotion from '@emotion/css';
+import * as emotionReact from '@emotion/react';
 import * as d3 from 'd3';
 import jquery from 'jquery';
 import _ from 'lodash'; // eslint-disable-line lodash/import-scope
@@ -6,7 +7,7 @@ import moment from 'moment'; // eslint-disable-line no-restricted-imports
 import prismjs from 'prismjs';
 import react from 'react';
 import reactDom from 'react-dom';
-import * as reactRedux from 'react-redux';
+import * as reactRedux from 'react-redux'; // eslint-disable-line no-restricted-imports
 import * as reactRouter from 'react-router-dom';
 import * as redux from 'redux';
 import * as rxjs from 'rxjs';
@@ -86,6 +87,7 @@ exposeToPlugin('react-router-dom', reactRouter);
 exposeToPlugin('prismjs', prismjs);
 exposeToPlugin('slate', slate);
 exposeToPlugin('slate-react', slateReact);
+exposeToPlugin('@grafana/slate-react', slateReact); // for backwards compatibility with older plugins
 exposeToPlugin('slate-plain-serializer', slatePlain);
 exposeToPlugin('react', react);
 exposeToPlugin('react-dom', reactDom);
@@ -93,6 +95,7 @@ exposeToPlugin('react-redux', reactRedux);
 exposeToPlugin('redux', redux);
 exposeToPlugin('emotion', emotion);
 exposeToPlugin('@emotion/css', emotion);
+exposeToPlugin('@emotion/react', emotionReact);
 
 exposeToPlugin('app/features/dashboard/impression_store', {
   impressions: impressionSrv,

@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
-import { CartesianCoords2D, DataFrame, FieldType, PanelProps } from '@grafana/data';
+import { CartesianCoords2D, DashboardCursorSync, DataFrame, FieldType, PanelProps } from '@grafana/data';
 import {
   Portal,
   TooltipDisplayMode,
@@ -50,8 +50,9 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
   const [coords, setCoords] = useState<{ viewport: CartesianCoords2D; canvas: CartesianCoords2D } | null>(null);
   const [focusedSeriesIdx, setFocusedSeriesIdx] = useState<number | null>(null);
   const [focusedPointIdx, setFocusedPointIdx] = useState<number | null>(null);
+  const [isActive, setIsActive] = useState<boolean>(false);
   const [shouldDisplayCloseButton, setShouldDisplayCloseButton] = useState<boolean>(false);
-  const { canAddAnnotations } = usePanelContext();
+  const { sync, canAddAnnotations } = usePanelContext();
 
   const onCloseToolTip = () => {
     isToolTipOpen.current = false;
@@ -178,11 +179,10 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
             setCoords,
             setHover,
             isToolTipOpen,
+            isActive,
+            setIsActive,
+            sync,
           });
-        }
-
-        if (options.tooltip.mode === TooltipDisplayMode.None) {
-          return null;
         }
 
         return (
@@ -198,9 +198,17 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
             {enableAnnotationCreation ? (
               <AnnotationEditorPlugin data={alignedFrame} timeZone={timeZone} config={config}>
                 {({ startAnnotating }) => {
+                  if (options.tooltip.mode === TooltipDisplayMode.None) {
+                    return null;
+                  }
+
+                  if (focusedPointIdx === null || (!isActive && sync && sync() === DashboardCursorSync.Crosshair)) {
+                    return null;
+                  }
+
                   return (
                     <Portal>
-                      {hover && coords && (
+                      {hover && coords && focusedSeriesIdx && (
                         <VizTooltipContainer
                           position={{ x: coords.viewport.x, y: coords.viewport.y }}
                           offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}
@@ -218,7 +226,7 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
               </AnnotationEditorPlugin>
             ) : (
               <Portal>
-                {hover && coords && (
+                {options.tooltip.mode !== TooltipDisplayMode.None && hover && coords && (
                   <VizTooltipContainer
                     position={{ x: coords.viewport.x, y: coords.viewport.y }}
                     offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}

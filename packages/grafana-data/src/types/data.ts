@@ -21,7 +21,7 @@ export enum LoadingState {
 }
 
 // Should be kept in sync with grafana-plugin-sdk-go/data/frame_meta.go
-export const preferredVisualizationTypes = ['graph', 'table', 'logs', 'trace', 'nodeGraph'] as const;
+export const preferredVisualizationTypes = ['graph', 'table', 'logs', 'trace', 'nodeGraph', 'flamegraph'] as const;
 export type PreferredVisualisationType = typeof preferredVisualizationTypes[number];
 
 /**
@@ -76,7 +76,6 @@ export interface QueryResultMeta {
   /**
    * Legacy data source specific, should be moved to custom
    * */
-  alignmentPeriod?: number; // used by cloud monitoring
   searchWords?: string[]; // used by log models and loki
   limit?: number; // used by log models and loki
   json?: boolean; // used to keep track of old json doc values

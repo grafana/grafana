@@ -183,7 +183,7 @@ For more information on adding a query editor help component to your plugin, ref
 
 The variables list has an additional column indicating whether variables are referenced in queries and panel names or not. The dependencies graph provides an easy way to check variable dependencies. You can click on a variable name within the graph to make updates to the variable as needed.
 
-For more information, refer to [Inspect variables and their dependencies]({{< relref "../variables/inspect-variable/" >}}).
+For more information, refer to [Inspect variables and their dependencies]({{< relref "../dashboards/variables/inspect-variable/" >}}).
 
 ## Grafana Enterprise features
 
@@ -217,7 +217,7 @@ Also, a counter for audit log writing actions with status (success / failure) an
 
 You can now select a font, other than the default, for Unicode-based scripts. As a result, an automatically generated PDF of a dashboard, which contains for example Chinese or Cyrillic text, can display them. Because the size of a report increases as additional fonts are added, this feature is not on by default.
 
-[Reporting]({{< relref "../share-dashboards-panels/#rendering-configuration" >}}) was updated as a result of this change.
+[Reporting]({{< relref "../dashboards/share-dashboards-panels/#rendering-configuration" >}}) was updated as a result of this change.
 
 ### Request security
 

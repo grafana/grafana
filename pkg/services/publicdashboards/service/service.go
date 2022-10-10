@@ -5,18 +5,17 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/tokens"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/queries"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/validation"
 	"github.com/grafana/grafana/pkg/services/query"
-	queryModels "github.com/grafana/grafana/pkg/services/query/models"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
@@ -97,19 +96,15 @@ func (pd *PublicDashboardServiceImpl) GetPublicDashboardConfig(ctx context.Conte
 // SavePublicDashboardConfig is a helper method to persist the sharing config
 // to the database. It handles validations for sharing config and persistence
 func (pd *PublicDashboardServiceImpl) SavePublicDashboardConfig(ctx context.Context, u *user.SignedInUser, dto *SavePublicDashboardConfigDTO) (*PublicDashboard, error) {
+	// validate if the dashboard exists
 	dashboard, err := pd.GetDashboard(ctx, dto.DashboardUid)
-	if err != nil {
-		return nil, err
-	}
-
-	err = validation.ValidateSavePublicDashboard(dto, dashboard)
 	if err != nil {
 		return nil, err
 	}
 
 	// set default value for time settings
 	if dto.PublicDashboard.TimeSettings == nil {
-		dto.PublicDashboard.TimeSettings = simplejson.New()
+		dto.PublicDashboard.TimeSettings = &TimeSettings{}
 	}
 
 	// get existing public dashboard if exists
@@ -121,6 +116,10 @@ func (pd *PublicDashboardServiceImpl) SavePublicDashboardConfig(ctx context.Cont
 	// save changes
 	var pubdashUid string
 	if existingPubdash == nil {
+		err = validation.ValidateSavePublicDashboard(dto, dashboard)
+		if err != nil {
+			return nil, err
+		}
 		pubdashUid, err = pd.savePublicDashboardConfig(ctx, dto)
 	} else {
 		pubdashUid, err = pd.updatePublicDashboardConfig(ctx, dto)
@@ -148,7 +147,7 @@ func (pd *PublicDashboardServiceImpl) savePublicDashboardConfig(ctx context.Cont
 		return "", err
 	}
 
-	accessToken, err := GenerateAccessToken()
+	accessToken, err := tokens.GenerateAccessToken()
 	if err != nil {
 		return "", err
 	}
@@ -206,7 +205,18 @@ func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, 
 		return nil, err
 	}
 
-	return pd.QueryDataService.QueryDataMultipleSources(ctx, anonymousUser, skipCache, metricReq, true)
+	res, err := pd.QueryDataService.QueryDataMultipleSources(ctx, anonymousUser, skipCache, metricReq, true)
+
+	reqDatasources := metricReq.GetUniqueDatasourceTypes()
+	if err != nil {
+		LogQueryFailure(reqDatasources, pd.log, err)
+		return nil, err
+	}
+	LogQuerySuccess(reqDatasources, pd.log)
+
+	queries.SanitizeMetadataFromQueryData(res)
+
+	return res, nil
 }
 
 func (pd *PublicDashboardServiceImpl) GetMetricRequest(ctx context.Context, dashboard *models.Dashboard, publicDashboard *PublicDashboard, panelId int64, queryDto PublicDashboardQueryDTO) (dtos.MetricRequest, error) {
@@ -232,7 +242,7 @@ func (pd *PublicDashboardServiceImpl) GetMetricRequest(ctx context.Context, dash
 // dashboard and returns a metrics request to be sent to query backend
 func (pd *PublicDashboardServiceImpl) buildMetricRequest(ctx context.Context, dashboard *models.Dashboard, publicDashboard *PublicDashboard, panelId int64, reqDTO PublicDashboardQueryDTO) (dtos.MetricRequest, error) {
 	// group queries by panel
-	queriesByPanel := queryModels.GroupQueriesByPanelId(dashboard.Data)
+	queriesByPanel := queries.GroupQueriesByPanelId(dashboard.Data)
 	queries, ok := queriesByPanel[panelId]
 	if !ok {
 		return dtos.MetricRequest{}, ErrPublicDashboardPanelNotFound
@@ -256,7 +266,7 @@ func (pd *PublicDashboardServiceImpl) buildMetricRequest(ctx context.Context, da
 
 // BuildAnonymousUser creates a user with permissions to read from all datasources used in the dashboard
 func (pd *PublicDashboardServiceImpl) BuildAnonymousUser(ctx context.Context, dashboard *models.Dashboard) (*user.SignedInUser, error) {
-	datasourceUids := queryModels.GetUniqueDashboardDatasourceUids(dashboard.Data)
+	datasourceUids := queries.GetUniqueDashboardDatasourceUids(dashboard.Data)
 
 	// Create a temp user with read-only datasource permissions
 	anonymousUser := &user.SignedInUser{OrgID: dashboard.OrgId, Permissions: make(map[int64]map[string][]string)}
@@ -282,14 +292,8 @@ func (pd *PublicDashboardServiceImpl) AccessTokenExists(ctx context.Context, acc
 	return pd.store.AccessTokenExists(ctx, accessToken)
 }
 
-// generates a uuid formatted without dashes to use as access token
-func GenerateAccessToken() (string, error) {
-	token, err := uuid.NewRandom()
-	if err != nil {
-		return "", err
-	}
-
-	return fmt.Sprintf("%x", token[:]), nil
+func (pd *PublicDashboardServiceImpl) GetPublicDashboardOrgId(ctx context.Context, accessToken string) (int64, error) {
+	return pd.store.GetPublicDashboardOrgId(ctx, accessToken)
 }
 
 // intervalMS and maxQueryData values are being calculated on the frontend for regular dashboards

@@ -160,6 +160,7 @@ export interface ExploreItemState {
   showTable?: boolean;
   showTrace?: boolean;
   showNodeGraph?: boolean;
+  showFlameGraph?: boolean;
 
   /**
    * History of all queries
@@ -177,6 +178,7 @@ export interface ExploreItemState {
 
   // properties below should be more generic if we add more providers
   // see also: DataSourceWithLogsVolumeSupport
+  logsVolumeEnabled: boolean;
   logsVolumeDataProvider?: Observable<DataQueryResponse>;
   logsVolumeDataSubscription?: SubscriptionLike;
   logsVolumeData?: DataQueryResponse;
@@ -226,6 +228,7 @@ export interface ExplorePanelData extends PanelData {
   logsFrames: DataFrame[];
   traceFrames: DataFrame[];
   nodeGraphFrames: DataFrame[];
+  flameGraphFrames: DataFrame[];
   graphResult: DataFrame[] | null;
   tableResult: DataFrame | null;
   logsResult: LogsModel | null;

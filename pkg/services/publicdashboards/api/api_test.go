@@ -20,12 +20,14 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardStore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datasourcesService "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
@@ -363,7 +365,7 @@ func TestApiSavePublicDashboardConfig(t *testing.T) {
 	}
 }
 
-// `/public/dashboards/:uid/query`` endpoint test
+// `/public/dashboards/:uid/query“ endpoint test
 func TestAPIQueryPublicDashboard(t *testing.T) {
 	mockedResponse := &backend.QueryDataResponse{
 		Responses: map[string]backend.DataResponse{
@@ -487,8 +489,8 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 
 	cacheService := datasourcesService.ProvideCacheService(localcache.ProvideService(), db)
 	qds := buildQueryDataService(t, cacheService, nil, db)
-
-	_ = db.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+	dsStore := datasourcesService.CreateStore(db, log.New("publicdashboards.test"))
+	_ = dsStore.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
 		Uid:      "ds1",
 		OrgId:    1,
 		Name:     "laban",
@@ -525,8 +527,8 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	}
 
 	// create dashboard
-	dashboardStoreService := dashboardStore.ProvideDashboardStore(db, featuremgmt.WithFeatures())
-	dashboard, err := dashboardStoreService.SaveDashboard(saveDashboardCmd)
+	dashboardStoreService := dashboardStore.ProvideDashboardStore(db, featuremgmt.WithFeatures(), tagimpl.ProvideService(db, db.Cfg))
+	dashboard, err := dashboardStoreService.SaveDashboard(context.Background(), saveDashboardCmd)
 	require.NoError(t, err)
 
 	// Create public dashboard

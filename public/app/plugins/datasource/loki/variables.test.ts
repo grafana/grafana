@@ -1,5 +1,3 @@
-import { TemplateSrv } from 'app/features/templating/template_srv';
-
 import { createLokiDatasource, createMetadataRequest } from './mocks';
 import { LokiVariableQueryType } from './types';
 import { LokiVariableSupport } from './variables';
@@ -8,7 +6,7 @@ describe('LokiVariableSupport', () => {
   let lokiVariableSupport: LokiVariableSupport;
 
   beforeEach(() => {
-    const datasource = createLokiDatasource({} as unknown as TemplateSrv);
+    const datasource = createLokiDatasource();
     jest
       .spyOn(datasource, 'metadataRequest')
       .mockImplementation(

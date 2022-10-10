@@ -499,7 +499,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       expandedQuery.tags = query.tags.map((tag) => {
         return {
           ...tag,
-          value: this.templateSrv.replace(tag.value, undefined, 'regex'),
+          value: this.templateSrv.replace(tag.value, scopedVars, 'regex'),
         };
       });
     }

@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	databasestore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
@@ -28,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -35,6 +37,18 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 )
+
+type FakeFeatures struct {
+	BigTransactions bool
+}
+
+func (f *FakeFeatures) IsEnabled(feature string) bool {
+	if feature == featuremgmt.FlagAlertingBigTransactions {
+		return f.BigTransactions
+	}
+
+	return false
+}
 
 // SetupTestEnv initializes a store to used by the tests.
 func SetupTestEnv(tb testing.TB, baseInterval time.Duration) (*ngalert.AlertNG, *store.DBstore) {
@@ -60,7 +74,7 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration) (*ngalert.AlertNG, 
 	m := metrics.NewNGAlert(prometheus.NewRegistry())
 	sqlStore := sqlstore.InitTestDB(tb)
 	secretsService := secretsManager.SetupTestService(tb, database.ProvideSecretsStore(sqlStore))
-	dashboardStore := databasestore.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures())
+	dashboardStore := databasestore.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 
 	ac := acmock.New()
 	features := featuremgmt.WithFeatures()
@@ -80,12 +94,13 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration) (*ngalert.AlertNG, 
 	)
 
 	ng, err := ngalert.ProvideService(
-		cfg, nil, nil, routing.NewRouteRegister(), sqlStore, nil, nil, nil, nil,
-		secretsService, nil, m, folderService, ac, &dashboards.FakeDashboardService{}, nil, bus, ac,
+		cfg, &FakeFeatures{}, nil, nil, routing.NewRouteRegister(), sqlStore, nil, nil, nil, nil,
+		secretsService, nil, m, folderService, ac, &dashboards.FakeDashboardService{}, nil, bus, ac, annotationstest.NewFakeAnnotationsRepo(),
 	)
 	require.NoError(tb, err)
 	return ng, &store.DBstore{
-		SQLStore: ng.SQLStore,
+		FeatureToggles: ng.FeatureToggles,
+		SQLStore:       ng.SQLStore,
 		Cfg: setting.UnifiedAlertingSettings{
 			BaseInterval: baseInterval * time.Second,
 		},

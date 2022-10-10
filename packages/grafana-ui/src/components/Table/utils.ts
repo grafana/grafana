@@ -174,7 +174,7 @@ export function calculateUniqueFieldValues(rows: any[], field?: Field) {
     return {};
   }
 
-  const set: Record<string, any> = {};
+  const set: Record<string, string> = {};
 
   for (let index = 0; index < rows.length; index++) {
     const value = rowToFieldValue(rows[index], field);

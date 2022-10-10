@@ -17,10 +17,10 @@ describe('CompletionProvider', () => {
     const { provider, model } = setup('{}', 1, defaultTags);
     const result = await provider.provideCompletionItems(model as any, {} as any);
     expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([
-      expect.objectContaining({ label: 'foo', insertText: '.foo' }),
-      expect.objectContaining({ label: 'bar', insertText: '.bar' }),
-      ...CompletionProvider.intrinsics.map((s) => expect.objectContaining({ label: s, insertText: s })),
       ...CompletionProvider.scopes.map((s) => expect.objectContaining({ label: s, insertText: s })),
+      ...CompletionProvider.intrinsics.map((s) => expect.objectContaining({ label: s, insertText: s })),
+      expect.objectContaining({ label: 'bar', insertText: '.bar' }),
+      expect.objectContaining({ label: 'foo', insertText: '.foo' }),
     ]);
   });
 
@@ -76,10 +76,10 @@ describe('CompletionProvider', () => {
     const { provider, model } = setup('', 0, defaultTags);
     const result = await provider.provideCompletionItems(model as any, {} as any);
     expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([
-      expect.objectContaining({ label: 'foo', insertText: '{ .foo' }),
-      expect.objectContaining({ label: 'bar', insertText: '{ .bar' }),
-      ...CompletionProvider.intrinsics.map((s) => expect.objectContaining({ label: s, insertText: `{ ${s}` })),
       ...CompletionProvider.scopes.map((s) => expect.objectContaining({ label: s, insertText: `{ ${s}` })),
+      ...CompletionProvider.intrinsics.map((s) => expect.objectContaining({ label: s, insertText: `{ ${s}` })),
+      expect.objectContaining({ label: 'bar', insertText: '{ .bar' }),
+      expect.objectContaining({ label: 'foo', insertText: '{ .foo' }),
     ]);
   });
 
@@ -95,8 +95,8 @@ describe('CompletionProvider', () => {
     const { provider, model } = setup('{ resource. }', 11, defaultTags);
     const result = await provider.provideCompletionItems(model as any, {} as any);
     expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([
-      ...defaultTags.map((s) => expect.objectContaining({ label: s, insertText: s })),
       ...CompletionProvider.intrinsics.map((s) => expect.objectContaining({ label: s, insertText: s })),
+      ...defaultTags.map((s) => expect.objectContaining({ label: s, insertText: s })),
     ]);
   });
 
@@ -130,7 +130,7 @@ describe('CompletionProvider', () => {
   });
 });
 
-const defaultTags = ['foo', 'bar'];
+const defaultTags = ['bar', 'foo'];
 
 function setup(value: string, offset: number, tags?: string[]) {
   const ds = new TempoDatasource(defaultSettings);

@@ -24,7 +24,7 @@ export function getChildId(children: ReactElement): string | undefined {
  * @param itemToRender
  * @param props props to be passed to the function if item provided as such
  */
-export function renderOrCallToRender<TProps = any>(
+export function renderOrCallToRender<TProps = {}>(
   itemToRender: ((props?: TProps) => React.ReactNode) | React.ReactNode,
   props?: TProps
 ): React.ReactNode {

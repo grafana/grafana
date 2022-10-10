@@ -49,7 +49,9 @@ import {
   transformTraceList,
   transformFromOTLP as transformFromOTEL,
   createTableFrameFromSearch,
+  createTableFrameFromTraceQlQuery,
 } from './resultTransformer';
+import { mockedSearchResponse } from './traceql/mockedSearchResponse';
 import { SearchQueryParams, TempoQuery, TempoJsonData } from './types';
 
 export const DEFAULT_LIMIT = 20;
@@ -159,6 +161,22 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
               return of({ error: { message: error.data.message }, data: [] });
             })
           )
+        );
+      } catch (error) {
+        return of({ error: { message: error instanceof Error ? error.message : 'Unknown error occurred' }, data: [] });
+      }
+    }
+    if (targets.traceql?.length) {
+      try {
+        reportInteraction('grafana_traces_traceql_queried', {
+          datasourceType: 'tempo',
+          app: options.app ?? '',
+        });
+
+        subQueries.push(
+          of({
+            data: [createTableFrameFromTraceQlQuery(mockedSearchResponse().traces, this.instanceSettings)],
+          })
         );
       } catch (error) {
         return of({ error: { message: error instanceof Error ? error.message : 'Unknown error occurred' }, data: [] });

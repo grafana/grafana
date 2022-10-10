@@ -18,8 +18,6 @@ import {
   FieldWithIndex,
   findCommonLabels,
   findUniqueLabels,
-  getLogLevel,
-  getLogLevelFromKey,
   Labels,
   LoadingState,
   LogLevel,
@@ -31,7 +29,6 @@ import {
   MutableDataFrame,
   rangeUtil,
   ScopedVars,
-  sortInAscendingOrder,
   textUtil,
   TimeRange,
   toDataFrame,
@@ -42,6 +39,7 @@ import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
 import { ansicolor, colors } from '@grafana/ui';
 import { getThemeColor } from 'app/core/utils/colors';
 
+import { getLogLevel, getLogLevelFromKey, sortInAscendingOrder } from '../features/logs/utils';
 export const LIMIT_LABEL = 'Line limit';
 export const COMMON_LABELS = 'Common labels';
 
@@ -678,12 +676,16 @@ export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataS
 ): Observable<DataQueryResponse> {
   const timespan = options.range.to.valueOf() - options.range.from.valueOf();
   const intervalInfo = getIntervalInfo(logsVolumeRequest.scopedVars, timespan);
+
   logsVolumeRequest.interval = intervalInfo.interval;
   logsVolumeRequest.scopedVars.__interval = { value: intervalInfo.interval, text: intervalInfo.interval };
+
   if (intervalInfo.intervalMs !== undefined) {
     logsVolumeRequest.intervalMs = intervalInfo.intervalMs;
     logsVolumeRequest.scopedVars.__interval_ms = { value: intervalInfo.intervalMs, text: intervalInfo.intervalMs };
   }
+
+  logsVolumeRequest.hideFromInspector = true;
 
   return new Observable((observer) => {
     let rawLogsVolume: DataFrame[] = [];

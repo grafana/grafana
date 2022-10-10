@@ -323,11 +323,25 @@ export async function ensureQueries(
         refId = getNextRefIdChar(allQueries);
       }
 
-      allQueries.push({
-        ...query,
-        refId,
-        key,
-      });
+      // if a query has a datasource, validate it and only add it if valid
+      // if a query doesn't have a datasource, do not worry about it at this step
+      let validDS = true;
+      if (query.datasource) {
+        try {
+          await getDataSourceSrv().get(query.datasource.uid);
+        } catch {
+          console.error(`One of the queries has a datasource that is no longer available and was removed.`);
+          validDS = false;
+        }
+      }
+
+      if (validDS) {
+        allQueries.push({
+          ...query,
+          refId,
+          key,
+        });
+      }
     }
     return allQueries;
   }

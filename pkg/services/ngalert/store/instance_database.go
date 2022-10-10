@@ -6,51 +6,10 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
-
-type InstanceStore interface {
-	GetAlertInstance(ctx context.Context, cmd *models.GetAlertInstanceQuery) error
-	ListAlertInstances(ctx context.Context, cmd *models.ListAlertInstancesQuery) error
-	SaveAlertInstances(ctx context.Context, cmd ...models.AlertInstance) error
-	FetchOrgIds(ctx context.Context) ([]int64, error)
-	DeleteAlertInstances(ctx context.Context, keys ...models.AlertInstanceKey) error
-	DeleteAlertInstancesByRule(ctx context.Context, key models.AlertRuleKey) error
-}
-
-// GetAlertInstance is a handler for retrieving an alert instance based on OrgId, AlertDefintionID, and
-// the hash of the labels.
-func (st DBstore) GetAlertInstance(ctx context.Context, cmd *models.GetAlertInstanceQuery) error {
-	return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		instance := models.AlertInstance{}
-		s := strings.Builder{}
-		s.WriteString(`SELECT * FROM alert_instance
-			WHERE
-				rule_org_id=? AND
-				rule_uid=? AND
-				labels_hash=?
-		`)
-
-		_, hash, err := cmd.Labels.StringAndHash()
-		if err != nil {
-			return err
-		}
-
-		params := append(make([]interface{}, 0), cmd.RuleOrgID, cmd.RuleUID, hash)
-
-		has, err := sess.SQL(s.String(), params...).Get(&instance)
-		if !has {
-			return fmt.Errorf("instance not found for labels %v (hash: %v), alert rule %v (org %v)", cmd.Labels, hash, cmd.RuleUID, cmd.RuleOrgID)
-		}
-		if err != nil {
-			return err
-		}
-
-		cmd.Result = &instance
-		return nil
-	})
-}
 
 // ListAlertInstances is a handler for retrieving alert instances within specific organisation
 // based on various filters.
@@ -89,15 +48,22 @@ func (st DBstore) ListAlertInstances(ctx context.Context, cmd *models.ListAlertI
 	})
 }
 
-// SaveAlertInstances saves all the provided alert instances to the store in a single transaction.
+// SaveAlertInstances saves all the provided alert instances to the store.
 func (st DBstore) SaveAlertInstances(ctx context.Context, cmd ...models.AlertInstance) error {
-	// The function starts a single transaction and batches writes into
-	// statements with `maxRows` instances per statements. This makes for a
-	// fairly efficient transcation without creating statements that are too long
-	// for some databases to process. For example, SQLite has a limit of 999
-	// variables per write.
-
-	err := st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	if !st.FeatureToggles.IsEnabled(featuremgmt.FlagAlertingBigTransactions) {
+		// This mimics the replace code-path by calling SaveAlertInstance in a loop, with a transaction per call.
+		for _, c := range cmd {
+			err := st.SaveAlertInstance(ctx, c)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	} else {
+		//  Batches write into statements with `maxRows` instances per statements.
+		//  This makes sure we don't create  statements that are too long for some
+		//  databases to process. For example, SQLite has a limit of 999 variables
+		//  per write.
 		keyNames := []string{"rule_org_id", "rule_uid", "labels_hash"}
 		fieldNames := []string{
 			"rule_org_id", "rule_uid", "labels", "labels_hash", "current_state",
@@ -107,28 +73,21 @@ func (st DBstore) SaveAlertInstances(ctx context.Context, cmd ...models.AlertIns
 		maxRows := 20
 		maxArgs := maxRows * fieldsPerRow
 
-		// Prepare a statement for the maximum batch size.
 		bigUpsertSQL, err := st.SQLStore.Dialect.UpsertMultipleSQL(
 			"alert_instance", keyNames, fieldNames, maxRows)
 		if err != nil {
 			return err
 		}
 
-		bigStmt, err := sess.DB().Prepare(bigUpsertSQL)
-		if err != nil {
-			return err
+		// Args contains the SQL statement, and the values to fill into the SQL statement.
+		args := make([]interface{}, 0, maxArgs)
+		args = append(args, bigUpsertSQL)
+		values := func(a []interface{}) int {
+			return len(a) - 1
 		}
 
 		// Generate batches of `maxRows` and write the statements when full.
-		args := make([]interface{}, 0, maxArgs)
 		for _, alertInstance := range cmd {
-			if len(args) >= maxArgs {
-				if _, err = bigStmt.ExecContext(ctx, args...); err != nil {
-					return err
-				}
-				args = args[:0]
-			}
-
 			labelTupleJSON, err := alertInstance.Labels.StringKey()
 			if err != nil {
 				return err
@@ -142,36 +101,70 @@ func (st DBstore) SaveAlertInstances(ctx context.Context, cmd ...models.AlertIns
 				alertInstance.RuleOrgID, alertInstance.RuleUID, labelTupleJSON, alertInstance.LabelsHash,
 				alertInstance.CurrentState, alertInstance.CurrentReason, alertInstance.CurrentStateSince.Unix(),
 				alertInstance.CurrentStateEnd.Unix(), alertInstance.LastEvalTime.Unix())
+
+			// If we've reached the maximum batch size, write to the database.
+			if values(args) >= maxArgs {
+				err = st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+					_, err := sess.Exec(args...)
+					return err
+				})
+				if err != nil {
+					return fmt.Errorf("failed to save alert instances: %w", err)
+				}
+
+				// Reset args so we can re-use the allocated interface pointers.
+				args = args[:1]
+			}
 		}
 
 		// Write the final batch of up to maxRows in size.
-		if len(args) > 0 && len(args)%fieldsPerRow == 0 {
+		if values(args) != 0 && values(args)%fieldsPerRow == 0 {
 			upsertSQL, err := st.SQLStore.Dialect.UpsertMultipleSQL(
-				"alert_instance", keyNames, fieldNames, len(args)/fieldsPerRow)
+				"alert_instance", keyNames, fieldNames, values(args)/fieldsPerRow)
 			if err != nil {
 				return err
 			}
 
-			stmt, err := sess.DB().Prepare(upsertSQL)
-			if err != nil {
+			args[0] = upsertSQL
+			err = st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+				_, err := sess.Exec(args...)
 				return err
-			}
-
-			_, err = stmt.ExecContext(ctx, args...)
+			})
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to save alert instances: %w", err)
 			}
-		} else {
+		} else if values(args) != 0 {
 			return fmt.Errorf("failed to upsert alert instances. Last statements had %v fields, which is not a multiple of the number of fields, %v", len(args), fieldsPerRow)
 		}
 
 		return nil
-	})
-	if err != nil {
-		return err
 	}
+}
 
-	return nil
+// SaveAlertInstance is a handler for saving a new alert instance.
+func (st DBstore) SaveAlertInstance(ctx context.Context, alertInstance models.AlertInstance) error {
+	return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		if err := models.ValidateAlertInstance(alertInstance); err != nil {
+			return err
+		}
+
+		labelTupleJSON, err := alertInstance.Labels.StringKey()
+		if err != nil {
+			return err
+		}
+		params := append(make([]interface{}, 0), alertInstance.RuleOrgID, alertInstance.RuleUID, labelTupleJSON, alertInstance.LabelsHash, alertInstance.CurrentState, alertInstance.CurrentReason, alertInstance.CurrentStateSince.Unix(), alertInstance.CurrentStateEnd.Unix(), alertInstance.LastEvalTime.Unix())
+
+		upsertSQL := st.SQLStore.Dialect.UpsertSQL(
+			"alert_instance",
+			[]string{"rule_org_id", "rule_uid", "labels_hash"},
+			[]string{"rule_org_id", "rule_uid", "labels", "labels_hash", "current_state", "current_reason", "current_state_since", "current_state_end", "last_eval_time"})
+		_, err = sess.SQL(upsertSQL, params...).Query()
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 }
 
 func (st DBstore) FetchOrgIds(ctx context.Context) ([]int64, error) {

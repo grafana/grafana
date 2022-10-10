@@ -566,40 +566,54 @@ type testContext struct {
 }
 
 func (c *testContext) getAuthTokenByID(id int64) (*userAuthToken, error) {
-	sess := c.sqlstore.NewSession(context.Background())
-	var t userAuthToken
-	found, err := sess.ID(id).Get(&t)
-	if err != nil || !found {
-		return nil, err
-	}
+	var res *userAuthToken
+	err := c.sqlstore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		var t userAuthToken
+		found, err := sess.ID(id).Get(&t)
+		if err != nil || !found {
+			return err
+		}
 
-	return &t, nil
+		res = &t
+		return nil
+	})
+
+	return res, err
 }
 
 func (c *testContext) markAuthTokenAsSeen(id int64) (bool, error) {
-	sess := c.sqlstore.NewSession(context.Background())
-	res, err := sess.Exec("UPDATE user_auth_token SET auth_token_seen = ? WHERE id = ?", c.sqlstore.Dialect.BooleanStr(true), id)
-	if err != nil {
-		return false, err
-	}
+	hasRowsAffected := false
+	err := c.sqlstore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		res, err := sess.Exec("UPDATE user_auth_token SET auth_token_seen = ? WHERE id = ?", c.sqlstore.Dialect.BooleanStr(true), id)
+		if err != nil {
+			return err
+		}
 
-	rowsAffected, err := res.RowsAffected()
-	if err != nil {
-		return false, err
-	}
-	return rowsAffected == 1, nil
+		rowsAffected, err := res.RowsAffected()
+		if err != nil {
+			return err
+		}
+		hasRowsAffected = rowsAffected == 1
+		return nil
+	})
+	return hasRowsAffected, err
 }
 
 func (c *testContext) updateRotatedAt(id, rotatedAt int64) (bool, error) {
-	sess := c.sqlstore.NewSession(context.Background())
-	res, err := sess.Exec("UPDATE user_auth_token SET rotated_at = ? WHERE id = ?", rotatedAt, id)
-	if err != nil {
-		return false, err
-	}
+	hasRowsAffected := false
+	err := c.sqlstore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		res, err := sess.Exec("UPDATE user_auth_token SET rotated_at = ? WHERE id = ?", rotatedAt, id)
+		if err != nil {
+			return err
+		}
 
-	rowsAffected, err := res.RowsAffected()
-	if err != nil {
-		return false, err
-	}
-	return rowsAffected == 1, nil
+		rowsAffected, err := res.RowsAffected()
+		if err != nil {
+			return err
+		}
+
+		hasRowsAffected = rowsAffected == 1
+		return nil
+	})
+	return hasRowsAffected, err
 }
