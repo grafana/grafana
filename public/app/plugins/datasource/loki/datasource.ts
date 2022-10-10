@@ -49,7 +49,7 @@ import LanguageProvider from './LanguageProvider';
 import { LiveStreams, LokiLiveTarget } from './LiveStreams';
 import { transformBackendResult } from './backendResultTransformer';
 import { LokiAnnotationsQueryEditor } from './components/AnnotationsQueryEditor';
-import { escapeLabelValueInSelector, isRegexSelector } from './languageUtils';
+import { escapeLabelValueInExactSelector, escapeLabelValueInSelector, isRegexSelector } from './languageUtils';
 import { labelNamesRegex, labelValuesRegex } from './migrations/variableQueryMigrations';
 import {
   addLabelFormatToQuery,
@@ -581,7 +581,7 @@ export class LokiDatasource
       .map((label: string) => {
         if (labels.includes(label)) {
           // escape backslashes in label as users can't escape them by themselves
-          return `${label}="${row.labels[label].replace(/\\/g, '\\\\')}"`;
+          return `${label}="${escapeLabelValueInExactSelector(row.labels[label])}"`;
         }
         return '';
       })
