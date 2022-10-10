@@ -35,25 +35,6 @@ func clone(dir, repo, branch, token string) (*git.Repository, error) {
 	})
 }
 
-func checkCurrentBranch(repo *git.Repository, branches ...string) {
-	r, err := repo.Remotes()
-	CheckIfError(err)
-	Info("checking branch for repository %s", r)
-
-	h, err := repo.Head()
-	CheckIfError(err)
-
-	for _, branch := range branches {
-		if h.Name() == plumbing.ReferenceName(fmt.Sprintf("refs/heads/%s", branch)) {
-			Info("grafana enterprise branch: %s", h.Name())
-			return
-		}
-	}
-
-	fmt.Printf("\x1b[31;1merror: unexpected current branch%s\x1b[0m\n", h.Name())
-	os.Exit(1)
-}
-
 func prepareEnv(grafanaDir, grafanaEnterpriseDir, branch, token string) *git.Repository {
 	var grafanaRepo *git.Repository
 	grafanaRepo, err := git.PlainOpen(grafanaDir)
@@ -63,13 +44,11 @@ func prepareEnv(grafanaDir, grafanaEnterpriseDir, branch, token string) *git.Rep
 	}
 	CheckIfError(err)
 
-	checkCurrentBranch(grafanaRepo, branch)
-
-	grafanaEnterpriseRepo, err := git.PlainOpen(grafanaEnterpriseDir)
+	_, err = git.PlainOpen(grafanaEnterpriseDir)
 	if err != nil && errors.Is(err, git.ErrRepositoryNotExists) {
 		for _, b := range []string{branch, "main"} {
 			// Clone the grafana enterprise repository: checkout the branch if exists otherwise checkout the main branch
-			grafanaEnterpriseRepo, err = clone(grafanaEnterpriseDir, "https://github.com/grafana/grafana-enterprise.git", b, token)
+			_, err = clone(grafanaEnterpriseDir, "https://github.com/grafana/grafana-enterprise.git", b, token)
 			if err == nil {
 				break
 			}
@@ -77,18 +56,12 @@ func prepareEnv(grafanaDir, grafanaEnterpriseDir, branch, token string) *git.Rep
 	}
 	CheckIfError(err)
 
-	checkCurrentBranch(grafanaEnterpriseRepo, branch, "main")
-
 	Info("enable enterprise")
 	//nolint:gosec
 	cmd := exec.Command("/bin/sh", filepath.Join(grafanaEnterpriseDir, "dev.sh"))
 	cmd.Dir = grafanaEnterpriseDir
 	err = cmd.Run()
 	CheckIfError(err)
-
-	files, err := os.ReadDir(filepath.Join(grafanaDir, "pkg", "extensions"))
-	CheckIfError(err)
-	Info("pkg/extensions: %d", len(files))
 
 	return grafanaRepo
 }
