@@ -146,7 +146,7 @@ func main() {
 	files, err := os.ReadDir(dir)
 	CheckIfError(err)
 	for _, f := range files {
-		fmt.Println(f.IsDir(), f.IsDir())
+		fmt.Println(f.IsDir(), f.Name())
 	}
 
 	/*
