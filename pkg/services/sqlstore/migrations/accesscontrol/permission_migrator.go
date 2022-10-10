@@ -207,6 +207,7 @@ func batch(count, batchSize int, eachFn func(start, end int) error) error {
 	return nil
 }
 
+// generateManagedRoleUID generated a deterministic uid of the form `managed_{org_id}_{type}_{id}`.
 func generateManagedRoleUID(orgID int64, name string) (string, error) {
 	parts := strings.Split(name, ":")
 	if len(parts) != 4 {
