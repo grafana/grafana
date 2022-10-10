@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
 
-interface TopSearchBarSectionProps {
+export interface TopSearchBarSectionProps {
   children: React.ReactNode;
   align?: 'left' | 'center' | 'right';
 }
@@ -28,7 +28,11 @@ export function TopSearchBarSection({ children, align = 'left' }: TopSearchBarSe
     return <>{children}</>;
   }
 
-  return <div className={cx(styles.wrapper, { [styles[align]]: align === 'right' })}>{children}</div>;
+  return (
+    <div data-test-id="wrapper" className={cx(styles.wrapper, { [styles[align]]: align === 'right' })}>
+      {children}
+    </div>
+  );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
