@@ -828,49 +828,53 @@ func TestNotificationChannels(t *testing.T) {
 	err := json.Unmarshal([]byte(b), &receivers)
 	require.NoError(t, err)
 	for _, rcv := range receivers {
-		var expActive bool
-		if _, ok := expInactiveReceivers[*rcv.Name]; !ok {
-			expActive = true
-		}
-		var expErr bool
-		if _, ok := expNotificationErrors[*rcv.Name]; ok {
-			expErr = true
-		}
+		t.Run("Receiver "+*rcv.Name, func(t *testing.T) {
+			var expActive bool
+			if _, ok := expInactiveReceivers[*rcv.Name]; !ok {
+				expActive = true
+			}
+			var expErr bool
+			if _, ok := expNotificationErrors[*rcv.Name]; ok {
+				expErr = true
+			}
 
-		require.NotNil(t, rcv.Name)
-		require.NotNil(t, rcv.Active)
-		require.NotEmpty(t, rcv.Integrations)
-		if expActive {
-			require.True(t, *rcv.Active)
-		}
-
-		// We don't have test alerts for the default notifier, continue iterating.
-		if *rcv.Name == "grafana-default-email" {
-			continue
-		}
-
-		for _, integration := range rcv.Integrations {
-			require.NotNil(t, integration.Name)
-			require.NotNil(t, integration.SendResolved)
-
-			// If the receiver is not active, no attempts to send notifications should be registered.
+			require.NotNil(t, rcv.Name)
+			require.NotNil(t, rcv.Active)
+			require.NotEmpty(t, rcv.Integrations)
 			if expActive {
-				require.NotZero(t, integration.LastNotifyAttempt)
-				require.NotEqual(t, "0s", integration.LastNotifyAttemptDuration)
-			} else {
-				require.Zero(t, integration.LastNotifyAttempt)
-				require.Equal(t, "0s", integration.LastNotifyAttemptDuration)
+				require.True(t, *rcv.Active)
 			}
 
-			// Check whether we're expecting an error on this integration.
-			if expErr {
-				for _, integration := range rcv.Integrations {
-					require.Equal(t, expNotificationErrors[*rcv.Name], integration.LastNotifyAttemptError)
-				}
-			} else {
-				require.Equal(t, "", integration.LastNotifyAttemptError)
+			// We don't have test alerts for the default notifier, continue iterating.
+			if *rcv.Name == "grafana-default-email" {
+				return
 			}
-		}
+
+			for _, integration := range rcv.Integrations {
+				require.NotNil(t, integration.Name)
+				t.Run("Integration "+*integration.Name, func(t *testing.T) {
+					require.NotNil(t, integration.SendResolved)
+
+					// If the receiver is not active, no attempts to send notifications should be registered.
+					if expActive {
+						require.NotZero(t, integration.LastNotifyAttempt)
+						require.NotEqual(t, "0s", integration.LastNotifyAttemptDuration)
+					} else {
+						require.Zero(t, integration.LastNotifyAttempt)
+						require.Equal(t, "0s", integration.LastNotifyAttemptDuration)
+					}
+
+					// Check whether we're expecting an error on this integration.
+					if expErr {
+						for _, integration := range rcv.Integrations {
+							require.Equal(t, expNotificationErrors[*rcv.Name], integration.LastNotifyAttemptError)
+						}
+					} else {
+						require.Equal(t, "", integration.LastNotifyAttemptError)
+					}
+				})
+			}
+		})
 	}
 
 	{

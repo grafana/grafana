@@ -22,6 +22,7 @@ seqs: [
 				interval: string | *"5m"
 
 				// The ordered list of items that the playlist will iterate over.
+				// FIXME! This should not be optional, but changing it makes the godegen awkward
 				items?: [...#PlaylistItem]
 
 				///////////////////////////////////////

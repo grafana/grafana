@@ -20,13 +20,18 @@
       }
     ],
     "no-restricted-imports": [
-      "warn",
+      "error",
       {
         "paths": [
           {
             "name": "react-redux",
             "importNames": ["useDispatch", "useSelector"],
             "message": "Please import from app/types instead."
+          },
+          {
+            "name": "react-i18next",
+            "importNames": ["Trans", "t"],
+            "message": "Please import from app/core/internationalization instead"
           }
         ]
       }

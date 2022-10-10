@@ -65,6 +65,7 @@ func coreTreeList(lib thema.Library) pfs.TreeList {
 		makeTreeOrPanic("public/app/plugins/panel/bargauge", "bargauge", lib),
 		makeTreeOrPanic("public/app/plugins/panel/dashlist", "dashlist", lib),
 		makeTreeOrPanic("public/app/plugins/panel/debug", "debug", lib),
+		makeTreeOrPanic("public/app/plugins/panel/flamegraph", "flamegraph", lib),
 		makeTreeOrPanic("public/app/plugins/panel/gauge", "gauge", lib),
 		makeTreeOrPanic("public/app/plugins/panel/geomap", "geomap", lib),
 		makeTreeOrPanic("public/app/plugins/panel/gettingstarted", "gettingstarted", lib),

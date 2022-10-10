@@ -194,7 +194,7 @@ func TestAPIEndpoint_PutCurrentOrgAddress_AccessControl(t *testing.T) {
 // `/api/orgs/` endpoints test
 
 // setupOrgsDBForAccessControlTests creates orgs up until orgID and fake user as member of org
-func setupOrgsDBForAccessControlTests(t *testing.T, db sqlstore.Store, c accessControlScenarioContext, orgID int64) {
+func setupOrgsDBForAccessControlTests(t *testing.T, db *sqlstore.SQLStore, c accessControlScenarioContext, orgID int64) {
 	t.Helper()
 	setInitCtxSignedInViewer(c.initCtx)
 	u := *c.initCtx.SignedInUser
