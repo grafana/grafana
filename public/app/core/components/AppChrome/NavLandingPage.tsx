@@ -6,6 +6,8 @@ import { useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 
+import getNavTranslation from '../NavBar/navBarItem-translations';
+
 import { NavLandingPageCard } from './NavLandingPageCard';
 
 interface Props {
@@ -28,7 +30,7 @@ export function NavLandingPage({ navId }: Props) {
                 <NavLandingPageCard
                   key={child.id}
                   description={child.subTitle}
-                  text={child.text}
+                  text={getNavTranslation(child.id) ?? child.text}
                   url={child.url ?? ''}
                 />
               ))}
@@ -36,14 +38,14 @@ export function NavLandingPage({ navId }: Props) {
           )}
           {nestedChildren?.map((child) => (
             <section key={child.id}>
-              <h2 className={styles.nestedTitle}>{child.text}</h2>
+              <h2 className={styles.nestedTitle}>{getNavTranslation(child.id) ?? child.text}</h2>
               <div className={styles.nestedDescription}>{child.subTitle}</div>
               <div className={styles.grid}>
                 {child.children?.map((child) => (
                   <NavLandingPageCard
                     key={child.id}
                     description={child.subTitle}
-                    text={child.text}
+                    text={getNavTranslation(child.id) ?? child.text}
                     url={child.url ?? ''}
                   />
                 ))}

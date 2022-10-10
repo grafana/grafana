@@ -2,6 +2,7 @@
 // Because the navigation content is dynamic (defined in the backend), we can not use
 // the normal inline message definition method.
 
+import { config } from '@grafana/runtime';
 import { t } from 'app/core/internationalization';
 
 // The keys of the TRANSLATED_MENU_ITEMS object (NOT the id inside the defineMessage function)
@@ -29,7 +30,7 @@ export default function getNavTranslation(navId: string | undefined) {
     case 'dashboards':
       return t('nav.dashboards', 'Dashboards');
     case 'dashboards/browse':
-      return t('nav.manage-dashboards', 'Browse');
+      return config.featureToggles.topnav ? t('nav.dashboards', 'Dashboards') : t('nav.manage-dashboards', 'Browse');
     case 'dashboards/playlists':
       return t('nav.playlists', 'Playlists');
     case 'dashboards/snapshots':
@@ -80,6 +81,18 @@ export default function getNavTranslation(navId: string | undefined) {
       return t('nav.api-keys', 'API keys');
     case 'serviceaccounts':
       return t('nav.service-accounts', 'Service accounts');
+    case 'admin':
+      return t('nav.admin', 'Server admin');
+    case 'global-users':
+      return t('nav.global-users', 'Users');
+    case 'global-orgs':
+      return t('nav.global-orgs', 'Organizations');
+    case 'server-settings':
+      return t('nav.server-settings', 'Settings');
+    case 'storage':
+      return t('nav.storage', 'Storage');
+    case 'upgrading':
+      return t('nav.upgrading', 'Stats and license');
     case 'live':
       return t('nav.live', 'Event streaming');
     case 'live-status':
@@ -88,6 +101,10 @@ export default function getNavTranslation(navId: string | undefined) {
       return t('nav.live-pipeline', 'Pipeline');
     case 'live-cloud':
       return t('nav.live-cloud', 'Cloud');
+    case 'monitoring':
+      return t('nav.monitoring', 'Monitoring');
+    case 'apps':
+      return t('nav.apps', 'Apps');
     case 'help':
       return t('nav.help', 'Help');
     case 'profile/settings':

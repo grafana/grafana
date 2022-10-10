@@ -103,6 +103,7 @@
     }
   },
   "nav": {
+    "admin": "",
     "alerting": "",
     "alerting-admin": "",
     "alerting-am-routes": "",
@@ -113,6 +114,7 @@
     "alerting-receivers": "",
     "alerting-silences": "",
     "api-keys": "",
+    "apps": "",
     "config": "",
     "correlations": "",
     "create": "",
@@ -123,6 +125,8 @@
     "dashboards": "",
     "datasources": "",
     "explore": "",
+    "global-orgs": "",
+    "global-users": "",
     "help": "",
     "help/community": "",
     "help/documentation": "",
@@ -135,6 +139,7 @@
     "live-pipeline": "",
     "live-status": "",
     "manage-dashboards": "",
+    "monitoring": "",
     "new-dashboard": "",
     "new-folder": "",
     "org-settings": "",
@@ -148,19 +153,25 @@
     "search": {
       "placeholder": ""
     },
+    "server-settings": "",
     "service-accounts": "",
     "sign-in": "",
     "sign-out": "",
     "snapshots": "",
     "starred": "",
     "starred-empty": "",
+    "storage": "",
     "teams": "",
+    "upgrading": "",
     "users": ""
   },
   "navigation": {
     "kiosk": {
       "tv-alert": ""
     }
+  },
+  "news": {
+    "title": ""
   },
   "panel": {
     "header-menu": {

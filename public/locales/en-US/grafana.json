@@ -103,6 +103,7 @@
     }
   },
   "nav": {
+    "admin": "Server admin",
     "alerting": "Alerting",
     "alerting-admin": "Admin",
     "alerting-am-routes": "Notification policies",
@@ -113,6 +114,7 @@
     "alerting-receivers": "Contact points",
     "alerting-silences": "Silences",
     "api-keys": "API keys",
+    "apps": "Apps",
     "config": "Configuration",
     "correlations": "Correlations",
     "create": "Create",
@@ -123,6 +125,8 @@
     "dashboards": "Dashboards",
     "datasources": "Data sources",
     "explore": "Explore",
+    "global-orgs": "Organizations",
+    "global-users": "Users",
     "help": "Help",
     "help/community": "Community",
     "help/documentation": "Documentation",
@@ -135,6 +139,7 @@
     "live-pipeline": "Pipeline",
     "live-status": "Status",
     "manage-dashboards": "Browse",
+    "monitoring": "Monitoring",
     "new-dashboard": "New dashboard",
     "new-folder": "New folder",
     "org-settings": "Preferences",
@@ -148,19 +153,25 @@
     "search": {
       "placeholder": "Search Grafana"
     },
+    "server-settings": "Settings",
     "service-accounts": "Service accounts",
     "sign-in": "Sign in",
     "sign-out": "Sign out",
     "snapshots": "Snapshots",
     "starred": "Starred",
     "starred-empty": "Your starred dashboards will appear here",
+    "storage": "Storage",
     "teams": "Teams",
+    "upgrading": "Stats and license",
     "users": "Users"
   },
   "navigation": {
     "kiosk": {
       "tv-alert": "Press ESC to exit kiosk mode"
     }
+  },
+  "news": {
+    "title": "Latest from the blog"
   },
   "panel": {
     "header-menu": {

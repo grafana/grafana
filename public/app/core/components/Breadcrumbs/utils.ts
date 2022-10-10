@@ -18,7 +18,7 @@ export function buildBreadcrumbs(homeNav: NavModelItem, sectionNav: NavModelItem
     }
     if (!foundHome && !node.hideFromBreadcrumbs) {
       if (urlToMatch === homeNav.url) {
-        crumbs.unshift({ text: homeNav.text, href: node.url ?? '' });
+        crumbs.unshift({ text: getNavTranslation(homeNav.id) ?? homeNav.text, href: node.url ?? '' });
         foundHome = true;
       } else {
         crumbs.unshift({ text: getNavTranslation(node.id) ?? node.text, href: node.url ?? '' });

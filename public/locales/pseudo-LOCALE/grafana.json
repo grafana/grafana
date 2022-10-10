@@ -103,6 +103,7 @@
     }
   },
   "nav": {
+    "admin": "Ŝęřvęř äđmįŉ",
     "alerting": "Åľęřŧįŉģ",
     "alerting-admin": "Åđmįŉ",
     "alerting-am-routes": "Ńőŧįƒįčäŧįőŉ pőľįčįęş",
@@ -113,6 +114,7 @@
     "alerting-receivers": "Cőŉŧäčŧ pőįŉŧş",
     "alerting-silences": "Ŝįľęŉčęş",
     "api-keys": "ÅPĨ ĸęyş",
+    "apps": "Åppş",
     "config": "Cőŉƒįģūřäŧįőŉ",
     "correlations": "Cőřřęľäŧįőŉş",
     "create": "Cřęäŧę",
@@ -123,6 +125,8 @@
     "dashboards": "Đäşĥþőäřđş",
     "datasources": "Đäŧä şőūřčęş",
     "explore": "Ēχpľőřę",
+    "global-orgs": "Øřģäŉįžäŧįőŉş",
+    "global-users": "Ůşęřş",
     "help": "Ħęľp",
     "help/community": "Cőmmūŉįŧy",
     "help/documentation": "Đőčūmęŉŧäŧįőŉ",
@@ -135,6 +139,7 @@
     "live-pipeline": "Pįpęľįŉę",
     "live-status": "Ŝŧäŧūş",
     "manage-dashboards": "ßřőŵşę",
+    "monitoring": "Mőŉįŧőřįŉģ",
     "new-dashboard": "Ńęŵ đäşĥþőäřđ",
     "new-folder": "Ńęŵ ƒőľđęř",
     "org-settings": "Přęƒęřęŉčęş",
@@ -148,19 +153,25 @@
     "search": {
       "placeholder": "Ŝęäřčĥ Ğřäƒäŉä"
     },
+    "server-settings": "Ŝęŧŧįŉģş",
     "service-accounts": "Ŝęřvįčę äččőūŉŧş",
     "sign-in": "Ŝįģŉ įŉ",
     "sign-out": "Ŝįģŉ őūŧ",
     "snapshots": "Ŝŉäpşĥőŧş",
     "starred": "Ŝŧäřřęđ",
     "starred-empty": "Ÿőūř şŧäřřęđ đäşĥþőäřđş ŵįľľ äppęäř ĥęřę",
+    "storage": "Ŝŧőřäģę",
     "teams": "Ŧęämş",
+    "upgrading": "Ŝŧäŧş äŉđ ľįčęŉşę",
     "users": "Ůşęřş"
   },
   "navigation": {
     "kiosk": {
       "tv-alert": "Přęşş ĒŜC ŧő ęχįŧ ĸįőşĸ mőđę"
     }
+  },
+  "news": {
+    "title": "Ŀäŧęşŧ ƒřőm ŧĥę þľőģ"
   },
   "panel": {
     "header-menu": {
