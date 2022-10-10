@@ -94,15 +94,14 @@ const addAzureMonitorVariable = (
 };
 
 e2e.scenario({
-  describeName: 'Add Azure Monitor datasource and import dashboard',
-  itName: 'fills out datasource connection configuration and imports JSON dashboard',
+  describeName: 'Add Azure Monitor datasource',
+  itName: 'fills out datasource connection configuration',
   scenario: () => {
     e2e()
       .readFile(provisioningPath)
       .then((azMonitorProvision: string) => {
         const yaml = load(azMonitorProvision) as AzureMonitorProvision;
         provisionAzureMonitorDatasources([yaml]);
-        e2e.flows.importDashboard(EXAMPLE_DASHBOARD, undefined, true);
       });
     e2e.setScenarioContext({ addedDataSources: [] });
   },
