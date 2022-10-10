@@ -529,7 +529,7 @@ def swagger_gen_step(edition, ver_mode):
             'GITHUB_TOKEN': from_secret(github_token),
         },
         'commands': [
-            'go run ./pkg/api/swaggergen/main.go src ${DRONE_SOURCE_BRANCH} $${GITHUB_TOKEN}',
+            'go run ./pkg/api/swaggergen/main.go src ${DRONE_SOURCE_BRANCH} ${DRONE_COMMIT_SHA} $${GITHUB_TOKEN}',
         ],
     }
 

@@ -827,7 +827,8 @@ platform:
 services: []
 steps:
 - commands:
-  - go run ./pkg/api/swaggergen/main.go src ${DRONE_SOURCE_BRANCH} $${GITHUB_TOKEN}
+  - go run ./pkg/api/swaggergen/main.go src ${DRONE_SOURCE_BRANCH} ${DRONE_COMMIT_SHA}
+    $${GITHUB_TOKEN}
   depends_on: []
   environment:
     GITHUB_TOKEN:
@@ -5376,6 +5377,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 7f9aac61f422ab9aabe9939250f4d6205835c19f3aec039b320c958ab5966edd
+hmac: 69cfb49e578c82aee600553910ede8db3b2da6b93e71576a0756468763380b04
 
 ...

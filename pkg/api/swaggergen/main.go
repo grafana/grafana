@@ -10,7 +10,6 @@ import (
 
 	"github.com/go-git/go-git/v5"
 	. "github.com/go-git/go-git/v5/_examples"
-	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
@@ -135,8 +134,10 @@ func commitChanges(grafanaWorktree *git.Worktree) plumbing.Hash {
 }
 
 func main() {
-	CheckArgs("<grafana_subdir>", "<branch>", "<github token>")
-	grafanaSubDir, branch, token := os.Args[1], os.Args[2], os.Args[3]
+	CheckArgs("<grafana_subdir>", "<branch>", "<latest_commit>", "<github token>")
+	grafanaSubDir, branch, commit, token := os.Args[1], os.Args[2], os.Args[3], os.Args[4]
+
+	fmt.Println(">>>", branch, commit)
 
 	grafanaSubDir = filepath.Clean(grafanaSubDir)
 
@@ -154,6 +155,9 @@ func main() {
 	grafanaWorktree, err := grafanaRepo.Worktree()
 	CheckIfError(err)
 
+	h, err := grafanaRepo.Head()
+	CheckIfError(err)
+
 	commitHash := commitChanges(grafanaWorktree)
 	if commitHash == plumbing.ZeroHash {
 		fmt.Println("Everything seems up to date!")
@@ -166,17 +170,14 @@ func main() {
 
 	fmt.Println(obj)
 
-	h, err := grafanaRepo.Head()
-	CheckIfError(err)
-
-	Info("git push origin %s", branch)
-	// push changes
-	refSpec := config.RefSpec(fmt.Sprintf("refs/heads/%s:refs/remotes/origin/%s", h.Name().String(), branch))
-
-	err = grafanaRepo.Push(&git.PushOptions{
-		RefSpecs:          []config.RefSpec{refSpec},
-		RequireRemoteRefs: []config.RefSpec{refSpec},
-		Auth:              getAuth(token),
-	})
-	CheckIfError(err)
+	/*
+		Info("git push origin %s", branch)
+		// push changes
+		err = grafanaRepo.Push(&git.PushOptions{
+			RefSpecs:          []config.RefSpec{config.RefSpec(fmt.Sprintf("refs/heads/%s:refs/heads/%s", h.Name().String(), branch))},
+			RequireRemoteRefs: []config.RefSpec{config.RefSpec(fmt.Sprintf("%s:refs/heads/%s", commit, branch))},
+			Auth:              getAuth(token),
+		})
+		CheckIfError(err)
+	*/
 }
