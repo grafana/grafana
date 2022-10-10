@@ -35,6 +35,14 @@ func clone(dir, repo, branch, token string) (*git.Repository, error) {
 	})
 }
 
+func execCmd(cmd *exec.Cmd) {
+	o, err := cmd.CombinedOutput()
+	if err != nil {
+		Info(string(o))
+	}
+	CheckIfError(err)
+}
+
 func prepareEnv(grafanaDir, grafanaEnterpriseDir, branch, token string) *git.Repository {
 	var grafanaRepo *git.Repository
 	grafanaRepo, err := git.PlainOpen(grafanaDir)
@@ -62,18 +70,18 @@ func prepareEnv(grafanaDir, grafanaEnterpriseDir, branch, token string) *git.Rep
 		Info("ln -s %s %s", grafanaDir, filepath.Join(filepath.Dir(grafanaDir), "grafana"))
 		//nolint:gosec
 		cmd := exec.Command("ln", "-s", grafanaDir, filepath.Join(filepath.Dir(grafanaDir), "grafana"))
-		o, err := cmd.CombinedOutput()
-		Info(string(o))
-		CheckIfError(err)
+		execCmd(cmd)
 	}
+
+	files, err := os.ReadDir(grafanaEnterpriseDir)
+	CheckIfError(err)
+	Info("enterprise: %d", len(files))
 
 	Info("enable enterprise")
 	//nolint:gosec
 	cmd := exec.Command("/bin/sh", "dev.sh")
 	cmd.Dir = grafanaEnterpriseDir
-	o, err := cmd.CombinedOutput()
-	Info(string(o))
-	CheckIfError(err)
+	execCmd(cmd)
 
 	return grafanaRepo
 }
@@ -90,9 +98,7 @@ func generateSwagger(grafanaDir string) {
 	Info("make openapi3-gen")
 	cmd = exec.Command("make", "openapi3-gen")
 	cmd.Dir = grafanaDir
-	o, err = cmd.CombinedOutput()
-	Info(string(o))
-	CheckIfError(err)
+	execCmd(cmd)
 }
 
 func commitChanges(grafanaWorktree *git.Worktree) plumbing.Hash {
