@@ -35,15 +35,23 @@ func clone(dir, repo, branch, token string) (*git.Repository, error) {
 	})
 }
 
-func checkCurrentBranch(repo *git.Repository, branch string) {
-	Info("checking branch for repository")
+func checkCurrentBranch(repo *git.Repository, branches ...string) {
+	r, err := repo.Remotes()
+	CheckIfError(err)
+	Info("checking branch for repository %s", r)
+
 	h, err := repo.Head()
 	CheckIfError(err)
 
-	if h.Name() != plumbing.ReferenceName(fmt.Sprintf("refs/heads/%s", branch)) {
-		fmt.Printf("\x1b[31;1merror: unexpected current branch%s\x1b[0m\n", h.Name())
-		os.Exit(1)
+	for _, branch := range branches {
+		if h.Name() == plumbing.ReferenceName(fmt.Sprintf("refs/heads/%s", branch)) {
+			Info("grafana enterprise branch: %s", h.Name())
+			return
+		}
 	}
+
+	fmt.Printf("\x1b[31;1merror: unexpected current branch%s\x1b[0m\n", h.Name())
+	os.Exit(1)
 }
 
 func prepareEnv(grafanaDir, grafanaEnterpriseDir, branch, token string) *git.Repository {
@@ -58,26 +66,25 @@ func prepareEnv(grafanaDir, grafanaEnterpriseDir, branch, token string) *git.Rep
 	checkCurrentBranch(grafanaRepo, branch)
 
 	grafanaEnterpriseRepo, err := git.PlainOpen(grafanaEnterpriseDir)
-	enterpriseBranch := ""
 	if err != nil && errors.Is(err, git.ErrRepositoryNotExists) {
 		for _, b := range []string{branch, "main"} {
-			// Clone the grafana enterprise repository
+			// Clone the grafana enterprise repository: checkout the branch if exists otherwise checkout the main branch
 			grafanaEnterpriseRepo, err = clone(grafanaEnterpriseDir, "https://github.com/grafana/grafana-enterprise.git", b, token)
 			if err == nil {
-				enterpriseBranch = b
 				break
 			}
 		}
 	}
 	CheckIfError(err)
 
-	checkCurrentBranch(grafanaEnterpriseRepo, enterpriseBranch)
+	checkCurrentBranch(grafanaEnterpriseRepo, branch, "main")
 
 	Info("enable enterprise")
+	//nolint:gosec
 	cmd := exec.Command("/bin/sh", filepath.Join(grafanaEnterpriseDir, "dev.sh"))
 	cmd.Dir = grafanaEnterpriseDir
 	err = cmd.Run()
-	CheckIfError(cmd.Err)
+	CheckIfError(err)
 
 	files, err := os.ReadDir(filepath.Join(grafanaDir, "pkg", "extensions"))
 	CheckIfError(err)
@@ -138,48 +145,48 @@ func commitChanges(grafanaWorktree *git.Worktree) plumbing.Hash {
 }
 
 func main() {
-	CheckArgs("<directory>", "<branch>", "<github token>")
-	dir, branch, _ := os.Args[1], os.Args[2], os.Args[3]
+	CheckArgs("<grafana_subdir>", "<branch>", "<github token>")
+	grafanaSubDir, branch, token := os.Args[1], os.Args[2], os.Args[3]
 
-	fmt.Println(">>>>>>>", dir, branch)
+	grafanaSubDir = filepath.Clean(grafanaSubDir)
 
-	files, err := os.ReadDir(dir)
+	wd, err := os.Getwd()
 	CheckIfError(err)
-	for _, f := range files {
-		fmt.Println(f.IsDir(), f.Name())
+
+	parentDir := filepath.Dir(wd)
+	grafanaDir := filepath.Join(parentDir, grafanaSubDir)
+	grafanaEnterpriseDir := filepath.Join(parentDir, "grafana-enterprise")
+
+	fmt.Println(">>>", grafanaDir, grafanaEnterpriseDir, branch)
+
+	grafanaRepo := prepareEnv(grafanaDir, grafanaEnterpriseDir, branch, token)
+
+	generateSwagger(grafanaDir)
+
+	grafanaWorktree, err := grafanaRepo.Worktree()
+	CheckIfError(err)
+
+	commitHash := commitChanges(grafanaWorktree)
+	if commitHash == plumbing.ZeroHash {
+		fmt.Println("Everything seems up to date!")
+		os.Exit(0)
 	}
 
+	Info("git show -s")
+	obj, err := grafanaRepo.CommitObject(commitHash)
+	CheckIfError(err)
+
+	fmt.Println(obj)
+
 	/*
-		grafanaDir := filepath.Join(dir, "grafana")
-		grafanaEnterpriseDir := filepath.Join(dir, "grafana-enterprise")
+		Info("git push origin %s", branch)
+		// push changes
+		refSpec := config.RefSpec(fmt.Sprintf("refs/heads/%s:refs/remotes/origin/%s", branch, branch))
 
-		grafanaRepo := prepareEnv(grafanaDir, grafanaEnterpriseDir, branch, token)
-
-		generateSwagger(grafanaDir)
-
-		grafanaWorktree, err := grafanaRepo.Worktree()
+		err = grafanaRepo.Push(&git.PushOptions{
+			RefSpecs:          []config.RefSpec{refSpec},
+			RequireRemoteRefs: []config.RefSpec{refSpec},
+		})
 		CheckIfError(err)
-
-		commitHash := commitChanges(grafanaWorktree)
-		if commitHash == plumbing.ZeroHash {
-			fmt.Println("Everything seems up to date!")
-			os.Exit(0)
-		}
-
-		Info("git show -s")
-		obj, err := grafanaRepo.CommitObject(commitHash)
-		CheckIfError(err)
-
-		fmt.Println(obj)
-
-			Info("git push origin %s", branch)
-			// push changes
-			refSpec := config.RefSpec(fmt.Sprintf("refs/heads/%s:refs/remotes/origin/%s", branch, branch))
-
-			err = grafanaRepo.Push(&git.PushOptions{
-				RefSpecs:          []config.RefSpec{refSpec},
-				RequireRemoteRefs: []config.RefSpec{refSpec},
-			})
-			CheckIfError(err)
 	*/
 }

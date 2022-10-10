@@ -827,7 +827,7 @@ platform:
 services: []
 steps:
 - commands:
-  - go run ./pkg/api/swaggergen/main.go .. ${DRONE_SOURCE_BRANCH} $${GITHUB_TOKEN}
+  - go run ./pkg/api/swaggergen/main.go src ${DRONE_SOURCE_BRANCH} $${GITHUB_TOKEN}
   depends_on: []
   environment:
     GITHUB_TOKEN:
@@ -5374,8 +5374,3 @@ get:
   path: infra/data/ci/packages-publish/bucket-credentials
 kind: secret
 name: packages_secret_access_key
----
-kind: signature
-hmac: 5b45d48c835d668d95ef2d64843747d88a3dbb1c6ab4e1f48e1243d51d260c1c
-
-...
