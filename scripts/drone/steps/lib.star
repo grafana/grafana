@@ -514,6 +514,24 @@ def test_backend_integration_step(edition):
         ],
     }
 
+def swagger_gen_step(edition, ver_mode):
+    if edition in ['enterprise', 'enterprise2']:
+        return None
+    
+    if ver_mode != "pr":
+        return None
+
+    return {
+        'name': 'swagger-gen',
+        'image': go_image,
+        'depends_on': [],
+        'commands': [
+            'go run ./pkg/api/swaggergen/main.go .. ${DRONE_BRANCH} $${GITHUB_TOKEN}',
+        ],
+    }
+
+
+
 def betterer_frontend_step():
     return {
         'name': 'betterer-frontend',

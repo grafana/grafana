@@ -818,6 +818,40 @@ depends_on: []
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
+name: pr-swagger-gen
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - go run ./pkg/api/swaggergen/main.go .. ${DRONE_BRANCH} $${GITHUB_TOKEN}
+  depends_on: []
+  image: golang:1.19.1
+  name: swagger-gen
+trigger:
+  event:
+  - pull_request
+  paths:
+    exclude:
+    - docs/**
+    - '*.md'
+    include:
+    - pkg/**
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on: []
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
 name: main-docs
 node:
   type: no-parallel
@@ -5339,6 +5373,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 5ff426194c616a934af92cb113aebbb6cebf06d6317e62a693f4f8d7faa3b4cd
+hmac: 9b28577613b0640b55d68890825b078c73ac89fe88d3f086ac837f87125079c5
 
 ...

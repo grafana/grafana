@@ -80,7 +80,8 @@ func prepareEnv(grafanaDir, grafanaEnterpriseDir, branch, token string) *git.Rep
 	err = cmd.Run()
 	CheckIfError(cmd.Err)
 
-	files, _ := ioutil.ReadDir(filepath.Join(grafanaDir, "pkg", "extensions"))
+	files, err := ioutil.ReadDir(filepath.Join(grafanaDir, "pkg", "extensions"))
+	CheckIfError(err)
 	Info("pkg/extensions: %d", len(files))
 
 	return grafanaRepo
@@ -142,10 +143,19 @@ func main() {
 	dir, branch, _ := os.Args[1], os.Args[2], os.Args[3]
 
 	fmt.Println(">>>>>>>", dir, branch)
-	/*
-		grafanaDir := filepath.Join(dir, "grafana")
-		grafanaEnterpriseDir := filepath.Join(dir, "grafana-enterprise")
 
+	grafanaDir := filepath.Join(dir, "grafana")
+	grafanaEnterpriseDir := filepath.Join(dir, "grafana-enterprise")
+
+	files, err := ioutil.ReadDir(grafanaDir)
+	CheckIfError(err)
+	Info("grafana: %d", len(files))
+
+	files, err = ioutil.ReadDir(grafanaEnterpriseDir)
+	CheckIfError(err)
+	Info("grafana: %d", len(files))
+
+	/*
 		grafanaRepo := prepareEnv(grafanaDir, grafanaEnterpriseDir, branch, token)
 
 		generateSwagger(grafanaDir)
