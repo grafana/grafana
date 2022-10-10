@@ -58,7 +58,7 @@ func prepareEnv(grafanaDir, grafanaEnterpriseDir, branch, token string) *git.Rep
 
 	Info("enable enterprise")
 	//nolint:gosec
-	cmd := exec.Command("/bin/sh", filepath.Join(grafanaEnterpriseDir, "dev.sh"))
+	cmd := exec.Command(filepath.Join(grafanaEnterpriseDir, "dev.sh"))
 	cmd.Dir = grafanaEnterpriseDir
 	err = cmd.Run()
 	CheckIfError(err)
