@@ -15,12 +15,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/searchV2/dslookup"
-	"github.com/grafana/grafana/pkg/services/searchV2/object"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/store"
-	obj "github.com/grafana/grafana/pkg/services/store/object"
+	kdash "github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/setting"
 	"go.opentelemetry.io/otel/attribute"
 
@@ -55,7 +54,7 @@ type dashboard struct {
 	updated  time.Time
 
 	// Use generic structure
-	summary *obj.ObjectSummary
+	summary *models.ObjectSummary
 }
 
 // buildSignal is sent when search index is accessed in organization for which
@@ -839,7 +838,7 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 			slug:     "",
 			created:  time.Now(),
 			updated:  time.Now(),
-			summary: &obj.ObjectSummary{
+			summary: &models.ObjectSummary{
 				//ID:    0,
 				Name: "General",
 			},
@@ -850,7 +849,7 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 	loadDatasourceSpan.SetAttributes("orgID", orgID, attribute.Key("orgID").Int64(orgID))
 
 	// key will allow name or uid
-	lookup, err := dslookup.LoadDatasourceLookup(loadDatasourceCtx, orgID, l.sql)
+	lookup, err := kdash.LoadDatasourceLookup(loadDatasourceCtx, orgID, l.sql)
 	if err != nil {
 		loadDatasourceSpan.End()
 		return dashboards, err
@@ -897,15 +896,10 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 		readDashboardSpan.SetAttributes("orgID", orgID, attribute.Key("orgID").Int64(orgID))
 		readDashboardSpan.SetAttributes("dashboardCount", len(rows), attribute.Key("dashboardCount").Int(len(rows)))
 
-		reader := object.NewDashboardSummaryBuilder(lookup)
+		reader := kdash.NewStaticDashboardSummaryBuilder(lookup)
 
 		for _, row := range rows {
-			obj := &obj.RawObject{
-				UID:  row.Uid,
-				Kind: "dashboard",
-				Body: row.Data,
-			}
-			summary, err := reader(obj)
+			summary, _, err := reader(ctx, row.Uid, row.Data)
 			if err != nil {
 				l.logger.Warn("Error indexing dashboard data", "error", err, "dashboardId", row.Id, "dashboardSlug", row.Slug)
 				// But append info anyway for now, since we possibly extracted useful information.
@@ -918,7 +912,7 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 				slug:     row.Slug,
 				created:  row.Created,
 				updated:  row.Updated,
-				summary:  &summary,
+				summary:  summary,
 			})
 			lastID = row.Id
 		}

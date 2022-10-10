@@ -36,6 +36,7 @@ type Model struct {
 	Interval string `json:"interval"`
 
 	// The ordered list of items that the playlist will iterate over.
+	// FIXME! This should not be optional, but changing it makes the godegen awkward
 	Items *[]PlaylistItem `json:"items,omitempty"`
 
 	// Name of the playlist.
