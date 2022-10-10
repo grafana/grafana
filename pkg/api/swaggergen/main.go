@@ -155,9 +155,6 @@ func main() {
 	grafanaWorktree, err := grafanaRepo.Worktree()
 	CheckIfError(err)
 
-	h, err := grafanaRepo.Head()
-	CheckIfError(err)
-
 	commitHash := commitChanges(grafanaWorktree)
 	if commitHash == plumbing.ZeroHash {
 		fmt.Println("Everything seems up to date!")
@@ -171,6 +168,9 @@ func main() {
 	fmt.Println(obj)
 
 	/*
+		h, err = grafanaRepo.Head()
+		CheckIfError(err)
+
 		Info("git push origin %s", branch)
 		// push changes
 		err = grafanaRepo.Push(&git.PushOptions{
