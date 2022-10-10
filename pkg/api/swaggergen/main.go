@@ -27,7 +27,6 @@ func clone(dir, repo, branch, token string) (*git.Repository, error) {
 	return git.PlainClone(dir, false, &git.CloneOptions{
 		Auth:          auth,
 		Depth:         1,
-		NoCheckout:    true,
 		Progress:      os.Stdout,
 		ReferenceName: plumbing.NewBranchReferenceName(branch),
 		SingleBranch:  true,
