@@ -282,17 +282,40 @@ type GetUsersPermissionCommand struct {
 	ActionPrefix string `json:"actionPrefix"`
 }
 
-type SimplifiedUserPermissionDTO struct {
-	Action         string   `json:"action"`
-	ScopeResource  string   `json:"scopeResource"`
-	ScopeAttribute string   `json:"scopeAttribute"`
-	All            bool     `json:"all"`
-	UIDs           []string `json:"uids"`
+// PermissionSet groups permissions by actions
+type PermissionSet map[string]map[string]bool
+
+func (ps PermissionSet) Add(action, scope string) {
+	_, ok := ps[action]
+	if !ok {
+		ps[action] = map[string]bool{}
+	}
+	ps[action][scope] = true
 }
 
-type OrgUserSimplifiedPermissionsDTO struct {
-	UserID      int64                         `json:"userID"`
-	Permissions []SimplifiedUserPermissionDTO `json:"permission"`
+type SimplifiedUserPermissionDTO struct {
+	Action string   `json:"action"`
+	All    bool     `json:"all,omitempty"`
+	UIDs   []string `json:"uids,omitempty"`
+}
+
+func NewSimplifiedUserPermission(action string, scopes map[string]bool) *SimplifiedUserPermissionDTO {
+	s := &SimplifiedUserPermissionDTO{Action: action}
+	for scope := range scopes {
+		// TODO double check
+		if strings.HasSuffix(scope, "*") {
+			s.All = true
+			s.UIDs = nil
+			return s
+		}
+		// TODO double check
+		parts := strings.Split(scope, ":")
+		if len(parts) != 3 {
+			continue
+		}
+		s.UIDs = append(s.UIDs, parts[2])
+	}
+	return s
 }
 
 const (

@@ -40,9 +40,8 @@ func (api *AccessControlAPI) RegisterAPIEndpoints() {
 	api.RouteRegister.Post("/api/access-control/user/:userID/evaluation", authorize(middleware.ReqSignedIn,
 		ac.EvalPermission(ac.ActionUsersPermissionsRead, ac.Scope("users", "id", ac.Parameter(":userID")))),
 		routing.Wrap(api.evaluateMetadata))
-	api.RouteRegister.Post("/api/access-control/org/users/permissions", authorize(middleware.ReqSignedIn,
-		ac.EvalPermission(ac.ActionUsersPermissionsRead)),
-		routing.Wrap(api.evaluateMetadata))
+	api.RouteRegister.Get("/api/access-control/org/users/permissions", authorize(middleware.ReqSignedIn,
+		ac.EvalPermission(ac.ActionUsersPermissionsRead)), routing.Wrap(api.orgUsersPermissions))
 }
 
 // GET /api/access-control/user/permissions
@@ -137,18 +136,15 @@ func (api *AccessControlAPI) signedInUser(ctx context.Context, userID, orgID int
 
 // POST /api/access-control/org/users/permissions
 func (api *AccessControlAPI) orgUsersPermissions(c *models.ReqContext) response.Response {
-	var cmd ac.GetUsersPermissionCommand
-	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.JSON(http.StatusBadRequest, err)
-	}
+	actionPrefix := c.Query("actionPrefix")
 
 	// Validate request
-	if cmd.ActionPrefix == "" {
+	if actionPrefix == "" {
 		return response.JSON(http.StatusBadRequest, "missing action prefix")
 	}
 
 	// Compute metadata
-	permissions, err := api.Service.GetSimplifiedUsersPermissions(c.Req.Context(), c.OrgID, cmd)
+	permissions, err := api.Service.GetSimplifiedUsersPermissions(c.Req.Context(), c.OrgID, actionPrefix)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "could not get org user permissions", err)
 	}

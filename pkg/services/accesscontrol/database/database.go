@@ -60,8 +60,14 @@ func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query acces
 	return result, err
 }
 
-func (s *AccessControlStore) GetUsersPermissions(ctx context.Context, query accesscontrol.GetUsersPermissionCommand) ([]accesscontrol.Permission, error) {
-	result := make([]accesscontrol.Permission, 0)
+// GetUsersPermissions returns the list of user permissions indexed by UserID
+func (s *AccessControlStore) GetUsersPermissions(ctx context.Context, orgID int64, actionPrefix string) (map[int64]accesscontrol.PermissionSet, error) {
+	type UserPermission struct {
+		UserID int64  `xorm:"user_id"`
+		Action string `xorm:"action"`
+		Scope  string `xorm:"scope"`
+	}
+	res := make([]UserPermission, 0)
 	err := s.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		q := `
 		SELECT
@@ -97,14 +103,22 @@ func (s *AccessControlStore) GetUsersPermissions(ctx context.Context, query acce
 			AND action LIKE ?
 		`
 
-		if err := sess.SQL(q, globalOrgID, query.OrgID, query.ActionPrefix+"%").Find(&result); err != nil {
+		if err := sess.SQL(q, globalOrgID, orgID, actionPrefix+"%").Find(&res); err != nil {
 			return err
 		}
 
 		return nil
 	})
 
-	return result, err
+	mapped := map[int64]accesscontrol.PermissionSet{}
+	for i := range res {
+		if _, ok := mapped[res[i].UserID]; !ok {
+			mapped[res[i].UserID] = accesscontrol.PermissionSet{}
+		}
+		mapped[res[i].UserID].Add(res[i].Action, res[i].Scope)
+	}
+
+	return mapped, err
 }
 
 func userRolesFilter(orgID, userID int64, teamIDs []int64, roles []string) (string, []interface{}) {

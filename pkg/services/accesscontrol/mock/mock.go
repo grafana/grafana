@@ -204,3 +204,9 @@ func (m *Mock) EvaluateMetadata(ctx context.Context, cmd accesscontrol.EvaluateU
 	// TODO
 	return nil, nil
 }
+
+// GetSimplifiedUsersPermissions returns all users' permissions filtered by an action prefix
+func (m *Mock) GetSimplifiedUsersPermissions(ctx context.Context, orgID int64, actionPrefix string) (map[int64][]accesscontrol.SimplifiedUserPermissionDTO, error) {
+	// TODO
+	return nil, nil
+}

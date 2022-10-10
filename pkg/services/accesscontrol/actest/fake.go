@@ -11,9 +11,10 @@ var _ accesscontrol.Service = new(FakeService)
 var _ accesscontrol.RoleRegistry = new(FakeService)
 
 type FakeService struct {
-	ExpectedErr         error
-	ExpectedDisabled    bool
-	ExpectedPermissions []accesscontrol.Permission
+	ExpectedErr              error
+	ExpectedDisabled         bool
+	ExpectedPermissions      []accesscontrol.Permission
+	ExpectedUsersPermissions map[int64][]accesscontrol.SimplifiedUserPermissionDTO
 }
 
 func (f FakeService) GetUsageStats(ctx context.Context) map[string]interface{} {
@@ -22,6 +23,10 @@ func (f FakeService) GetUsageStats(ctx context.Context) map[string]interface{} {
 
 func (f FakeService) GetUserPermissions(ctx context.Context, user *user.SignedInUser, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
 	return f.ExpectedPermissions, f.ExpectedErr
+}
+
+func (f FakeService) GetSimplifiedUsersPermissions(ctx context.Context, OrgID int64, ActionPrefix string) (map[int64][]accesscontrol.SimplifiedUserPermissionDTO, error) {
+	return f.ExpectedUsersPermissions, f.ExpectedErr
 }
 
 func (f FakeService) DeleteUserPermissions(ctx context.Context, orgID, userID int64) error {
