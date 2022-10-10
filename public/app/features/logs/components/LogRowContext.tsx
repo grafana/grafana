@@ -53,10 +53,6 @@ const getLogRowContextStyles = (theme: GrafanaTheme2, wrapLogMessage?: boolean) 
         width: 75%;
       `;
   return {
-    sizes: css`
-      width: calc(100% + ${theme.spacing()});
-      left: -${theme.spacing()};
-    `,
     commonStyles: css`
       position: absolute;
       height: ${contextHeight}px;
@@ -82,7 +78,8 @@ const getLogRowContextStyles = (theme: GrafanaTheme2, wrapLogMessage?: boolean) 
     `,
     title: css`
       position: absolute;
-      top: -${contextHeight + headerHeight}px;
+      width: 75%;
+      margin-top: -${contextHeight + headerHeight}px;
       z-index: ${theme.zIndex.modal};
       height: ${headerHeight}px;
       background: ${theme.colors.background.secondary};
@@ -192,7 +189,7 @@ export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps
   groupPosition,
   logsSortOrder,
 }) => {
-  const { commonStyles, logs, sizes } = useStyles2(getLogRowContextStyles);
+  const { commonStyles, logs } = useStyles2(getLogRowContextStyles);
   const [scrollTop, setScrollTop] = useState(0);
   const [scrollHeight, setScrollHeight] = useState(0);
 
@@ -247,7 +244,7 @@ export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps
   };
 
   return (
-    <div className={cx(commonStyles, sizes, className)}>
+    <div className={cx(commonStyles, className)}>
       {/* When displaying "after" context */}
       {shouldScrollToBottom && !error && <LogRowContextGroupHeader {...headerProps} />}
       <div className={logs}>
@@ -300,7 +297,7 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
       document.removeEventListener('keydown', handleEscKeyDown, false);
     };
   }, [onOutsideClick]);
-  const { afterContext, beforeContext, title, top, actions, sizes } = useStyles2((theme) =>
+  const { afterContext, beforeContext, title, top, actions } = useStyles2((theme) =>
     getLogRowContextStyles(theme, wrapLogMessage)
   );
 
@@ -335,7 +332,7 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
             logsSortOrder={logsSortOrder}
           />
         )}
-        <div className={cx(title, sizes)}>
+        <div className={title}>
           <h5>Log context</h5>
           <div className={actions}>
             <IconButton size="lg" name="times" onClick={onOutsideClick} />
