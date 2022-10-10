@@ -297,7 +297,7 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
       document.removeEventListener('keydown', handleEscKeyDown, false);
     };
   }, [onOutsideClick]);
-  const { afterContext, beforeContext, title, top, actions, headerText } = useStyles2((theme) =>
+  const { afterContext, beforeContext, title, top, actions } = useStyles2((theme) =>
     getLogRowContextStyles(theme, wrapLogMessage)
   );
 
@@ -332,7 +332,7 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
             logsSortOrder={logsSortOrder}
           />
         )}
-        <div className={cx(title, headerText)}>
+        <div className={title}>
           <h5>Log context</h5>
           <div className={actions}>
             <IconButton size="lg" name="times" onClick={onOutsideClick} />
