@@ -61,6 +61,8 @@ Grafana will support the versions of these databases that are officially support
 >
 > Grafana can report errors when relying on read-only MySQL servers, such as in high-availability failover scenarios or serverless AWS Aurora MySQL. This is a known issue; for more information, see [issue #13399](https://github.com/grafana/grafana/issues/13399). Aurora with MySQL compatibility is not supported.
 
+Grafana can report errors when relying on read-only MySQL servers, such as in high-availability failover scenarios or serverless AWS Aurora MySQL. This is a known issue; for more information, see [issue #13399](https://github.com/grafana/grafana/issues/13399). AWS Aurora MySQL is not compatible with Grafana Alerting, see [issue #54556] .
+
 ## Supported web browsers
 
 Grafana is supported in the current version of the following browsers. Older versions of these browsers might not be supported, so you should always upgrade to the latest version when using Grafana.
