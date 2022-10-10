@@ -49,6 +49,7 @@ import * as barGaugePanel from 'app/plugins/panel/bargauge/module';
 import * as candlestickPanel from 'app/plugins/panel/candlestick/module';
 import * as dashListPanel from 'app/plugins/panel/dashlist/module';
 import * as debugPanel from 'app/plugins/panel/debug/module';
+import * as flamegraphPanel from 'app/plugins/panel/flamegraph/module';
 import * as gaugePanel from 'app/plugins/panel/gauge/module';
 import * as gettingStartedPanel from 'app/plugins/panel/gettingstarted/module';
 import * as histogramPanel from 'app/plugins/panel/histogram/module';
@@ -133,6 +134,7 @@ const builtInPlugins: any = {
   'app/plugins/panel/live/module': livePanel,
   'app/plugins/panel/stat/module': statPanel,
   'app/plugins/panel/debug/module': debugPanel,
+  'app/plugins/panel/flamegraph/module': flamegraphPanel,
   'app/plugins/panel/gettingstarted/module': gettingStartedPanel,
   'app/plugins/panel/gauge/module': gaugePanel,
   'app/plugins/panel/piechart/module': pieChartPanel,

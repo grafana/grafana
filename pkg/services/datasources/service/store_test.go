@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strconv"
 	"testing"
 	"time"
@@ -319,7 +318,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 			_, err := sess.Table("permission").Insert(ac.Permission{
 				RoleID:  1,
 				Action:  "datasources:read",
-				Scope:   ac.Scope("datasources", "id", fmt.Sprintf("%d", ds.Id)),
+				Scope:   datasources.ScopeProvider.GetResourceScope(ds.Uid),
 				Updated: time.Now(),
 				Created: time.Now(),
 			})

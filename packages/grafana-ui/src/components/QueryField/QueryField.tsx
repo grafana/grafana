@@ -4,7 +4,7 @@ import { debounce } from 'lodash';
 import React, { Context, PureComponent } from 'react';
 import { Value } from 'slate';
 import Plain from 'slate-plain-serializer';
-import { Editor, Plugin } from 'slate-react';
+import { Editor, EventHook, Plugin } from 'slate-react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -42,7 +42,7 @@ export interface QueryFieldProps extends Themeable2 {
   onBlur?: () => void;
   onChange?: (value: string) => void;
   onRichValueChange?: (value: Value) => void;
-  onClick?: (event: Event | React.MouseEvent, editor: Editor, next: () => any) => any;
+  onClick?: EventHook<React.MouseEvent<Element, MouseEvent>>;
   onTypeahead?: (typeahead: TypeaheadInput) => Promise<TypeaheadOutput>;
   onWillApplySuggestion?: (suggestion: string, state: SuggestionsState) => string;
   placeholder?: string;
