@@ -5,24 +5,12 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
 
-import { TOP_BAR_LEVEL_HEIGHT } from '../types';
-
-interface TopBarLayoutProps {
-  children: React.ReactNode;
-}
-
-export function TopBarLayout({ children }: TopBarLayoutProps) {
-  const styles = useStyles2(getStyles);
-
-  return <div className={styles.layout}>{children}</div>;
-}
-
-interface TopBarWrapperProps {
+interface TopSearchBarSectionProps {
   children: React.ReactNode;
   align?: 'left' | 'center' | 'right';
 }
 
-function TopBarWrapper({ children, align = 'left' }: TopBarWrapperProps) {
+export function TopSearchBarSection({ children, align = 'left' }: TopSearchBarSectionProps) {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
   const breakpoint = theme.breakpoints.values.sm;
@@ -44,23 +32,6 @@ function TopBarWrapper({ children, align = 'left' }: TopBarWrapperProps) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  layout: css({
-    height: TOP_BAR_LEVEL_HEIGHT,
-    display: 'flex',
-    gap: theme.spacing(0.5),
-    alignItems: 'center',
-    padding: theme.spacing(0, 2),
-    borderBottom: `1px solid ${theme.colors.border.weak}`,
-    justifyContent: 'space-between',
-
-    [theme.breakpoints.up('sm')]: {
-      gridTemplateColumns: '1fr 2fr 1fr',
-      display: 'grid',
-
-      justifyContent: 'flex-start',
-    },
-  }),
-
   wrapper: css({
     display: 'flex',
     gap: theme.spacing(0.5),
@@ -73,5 +44,3 @@ const getStyles = (theme: GrafanaTheme2) => ({
   left: css({}),
   center: css({}),
 });
-
-TopBarLayout.TopBarWrapper = TopBarWrapper;

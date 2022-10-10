@@ -14,10 +14,9 @@ export function TopSearchBarInput() {
 
   useMediaQueryChange({
     breakpoint,
-    onChange: (e: MediaQueryListEvent) => {
+    onChange: (e) => {
       setIsSmallScreen(e.matches);
     },
-    value: isSmallScreen,
   });
 
   const onOpenSearch = () => {

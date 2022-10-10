@@ -32,10 +32,9 @@ export function OrganizationSwitcher() {
 
   useMediaQueryChange({
     breakpoint,
-    onChange: (e: MediaQueryListEvent) => {
+    onChange: (e) => {
       setIsSmallScreen(e.matches);
     },
-    value: isSmallScreen,
   });
 
   if (orgs?.length <= 1) {

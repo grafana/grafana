@@ -9,9 +9,10 @@ import { useSelector } from 'app/types';
 import { NewsContainer } from './News/NewsContainer';
 import { OrganizationSwitcher } from './Organization/OrganizationSwitcher';
 import { SignInLink } from './TopBar/SignInLink';
-import { TopBarLayout } from './TopBar/TopBarLayout';
 import { TopNavBarMenu } from './TopBar/TopNavBarMenu';
+import { TopSearchBarSection } from './TopBar/TopSearchBarSection';
 import { TopSearchBarInput } from './TopSearchBarInput';
+import { TOP_BAR_LEVEL_HEIGHT } from './types';
 
 export function TopSearchBar() {
   const styles = useStyles2(getStyles);
@@ -21,23 +22,23 @@ export function TopSearchBar() {
   const profileNode = navIndex['profile'];
 
   return (
-    <TopBarLayout>
-      <TopBarLayout.TopBarWrapper>
+    <div className={styles.layout}>
+      <TopSearchBarSection>
         <a className={styles.logo} href="/" title="Go to home">
           <Icon name="grafana" size="xl" />
         </a>
         <OrganizationSwitcher />
-      </TopBarLayout.TopBarWrapper>
-      <TopBarLayout.TopBarWrapper>
+      </TopSearchBarSection>
+      <TopSearchBarSection>
         <TopSearchBarInput />
-      </TopBarLayout.TopBarWrapper>
-      <TopBarLayout.TopBarWrapper align="right">
+      </TopSearchBarSection>
+      <TopSearchBarSection align="right">
         {helpNode && (
           <Dropdown overlay={() => <TopNavBarMenu node={helpNode} />}>
             <ToolbarButton iconOnly icon="question-circle" aria-label="Help" />
           </Dropdown>
         )}
-        <NewsContainer />
+        <NewsContainer className={styles.newsButton} />
         {!contextSrv.user.isSignedIn && <SignInLink />}
         {profileNode && (
           <Dropdown overlay={<TopNavBarMenu node={profileNode} />}>
@@ -49,12 +50,28 @@ export function TopSearchBar() {
             />
           </Dropdown>
         )}
-      </TopBarLayout.TopBarWrapper>
-    </TopBarLayout>
+      </TopSearchBarSection>
+    </div>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  layout: css({
+    height: TOP_BAR_LEVEL_HEIGHT,
+    display: 'flex',
+    gap: theme.spacing(0.5),
+    alignItems: 'center',
+    padding: theme.spacing(0, 2),
+    borderBottom: `1px solid ${theme.colors.border.weak}`,
+    justifyContent: 'space-between',
+
+    [theme.breakpoints.up('sm')]: {
+      gridTemplateColumns: '1fr 2fr 1fr',
+      display: 'grid',
+
+      justifyContent: 'flex-start',
+    },
+  }),
   logo: css({
     display: 'flex',
   }),
@@ -64,6 +81,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
       height: '24px',
       marginRight: 0,
       width: '24px',
+    },
+  }),
+
+  newsButton: css({
+    [theme.breakpoints.down('sm')]: {
+      display: 'none',
     },
   }),
 });

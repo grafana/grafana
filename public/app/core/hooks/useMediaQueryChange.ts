@@ -3,11 +3,9 @@ import { useEffect } from 'react';
 export function useMediaQueryChange({
   breakpoint,
   onChange,
-  value,
 }: {
   breakpoint: number;
   onChange: (e: MediaQueryListEvent) => void;
-  value: boolean;
 }) {
   useEffect(() => {
     const mediaQuery = window.matchMedia(`(max-width: ${breakpoint}px)`);
@@ -15,5 +13,5 @@ export function useMediaQueryChange({
     mediaQuery.addEventListener('change', onMediaQueryChange);
 
     return () => mediaQuery.removeEventListener('change', onMediaQueryChange);
-  }, [breakpoint, onChange, value]);
+  }, [breakpoint, onChange]);
 }
