@@ -1,4 +1,4 @@
-package dslookup
+package dashboard
 
 import (
 	"context"
