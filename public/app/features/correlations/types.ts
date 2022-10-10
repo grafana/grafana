@@ -17,6 +17,7 @@ export interface Correlation {
   targetUID: string;
   label?: string;
   description?: string;
+  config: CorrelationConfig;
 }
 
 export type RemoveCorrelationParams = Pick<Correlation, 'sourceUID' | 'uid'>;
