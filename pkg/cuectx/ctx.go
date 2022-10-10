@@ -43,7 +43,7 @@ func GrafanaThemaRuntime() *thema.Runtime {
 // returned cue.Value.
 //
 // This is a convenience function for one-off JSON decoding. It's wasteful to
-// call it repeatedly. Most use cases use cases should probably prefer making
+// call it repeatedly. Most use cases should probably prefer making
 // their own Thema/CUE decoders.
 func JSONtoCUE(path string, b []byte) (cue.Value, error) {
 	return vmux.NewJSONEndec(path).Decode(ctx, b)
