@@ -1,4 +1,4 @@
-package service
+package folderimpl
 
 import (
 	"context"
@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	dashboardsvc "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -32,7 +33,7 @@ func TestIntegrationProvideFolderService(t *testing.T) {
 		cfg := setting.NewCfg()
 		ac := acmock.New()
 
-		ProvideFolderService(cfg, nil, nil, nil, nil, nil, ac, busmock.New())
+		ProvideService(ac, busmock.New(), cfg, nil, nil, nil, nil, nil)
 
 		require.Len(t, ac.Calls.RegisterAttributeScopeResolver, 2)
 	})
@@ -50,9 +51,9 @@ func TestIntegrationFolderService(t *testing.T) {
 		cfg.IsFeatureToggleEnabled = features.IsEnabled
 		folderPermissions := acmock.NewMockedPermissionsService()
 		dashboardPermissions := acmock.NewMockedPermissionsService()
-		dashboardService := ProvideDashboardService(cfg, store, nil, features, folderPermissions, dashboardPermissions, acmock.New())
+		dashboardService := dashboardsvc.ProvideDashboardService(cfg, store, nil, features, folderPermissions, dashboardPermissions, acmock.New())
 
-		service := FolderServiceImpl{
+		service := &Service{
 			cfg:              cfg,
 			log:              log.New("test-folder-service"),
 			dashboardService: dashboardService,
