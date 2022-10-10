@@ -14,34 +14,22 @@ var CoremodelSet = wire.NewSet(
 	NewBase,
 )
 
-// NewBase provides a registry of all coremodels, without any composition of
-// plugin-defined schemas.
-//
-// The returned registry will use Grafana's singleton [thema.Runtime],
-// returned from [cuectx.GrafanaThemaRuntime].
-func NewBase() *Base {
-	return provideBase(nil)
-}
-
-// NewBaseWithRuntime is the same as NewBase, but allows control over the
-// [thema.Runtime] used to initialize the underlying coremodels.
-//
-// Prefer NewBase unless you absolutely need this control.
-//
-// TODO it's OK to export this if it's ever actually needed
-func NewBaseWithRuntime(rt *thema.Runtime) *Base {
-	return provideBase(rt)
-}
-
 var (
 	baseOnce    sync.Once
 	defaultBase *Base
 )
 
-func provideBase(rt *thema.Runtime) *Base {
-	if rt == nil {
+// NewBase provides a registry of all coremodels, without any composition of
+// plugin-defined schemas.
+//
+// All calling code within grafana/grafana is expected to use Grafana's
+// singleton [thema.Runtime], returned from [cuectx.GrafanaThemaRuntime]. If nil
+// is passed, the singleton will be used.
+func NewBase(rt *thema.Runtime) *Base {
+	allrt := cuectx.GrafanaThemaRuntime()
+	if rt == nil || rt == allrt {
 		baseOnce.Do(func() {
-			defaultBase = doProvideBase(cuectx.GrafanaThemaRuntime())
+			defaultBase = doProvideBase(allrt)
 		})
 		return defaultBase
 	}
