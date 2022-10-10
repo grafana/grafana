@@ -139,39 +139,40 @@ func commitChanges(grafanaWorktree *git.Worktree) plumbing.Hash {
 
 func main() {
 	CheckArgs("<directory>", "<branch>", "<github token>")
-	dir, branch, token := os.Args[1], os.Args[2], os.Args[3]
+	dir, branch, _ := os.Args[1], os.Args[2], os.Args[3]
 
-	grafanaDir := filepath.Join(dir, "grafana")
-	grafanaEnterpriseDir := filepath.Join(dir, "grafana-enterprise")
-
-	grafanaRepo := prepareEnv(grafanaDir, grafanaEnterpriseDir, branch, token)
-
-	generateSwagger(grafanaDir)
-
-	grafanaWorktree, err := grafanaRepo.Worktree()
-	CheckIfError(err)
-
-	commitHash := commitChanges(grafanaWorktree)
-	if commitHash == plumbing.ZeroHash {
-		fmt.Println("Everything seems up to date!")
-		os.Exit(0)
-	}
-
-	Info("git show -s")
-	obj, err := grafanaRepo.CommitObject(commitHash)
-	CheckIfError(err)
-
-	fmt.Println(obj)
-
+	fmt.Println(">>>>>>>", dir, branch)
 	/*
-		Info("git push origin %s", branch)
-		// push changes
-		refSpec := config.RefSpec(fmt.Sprintf("refs/heads/%s:refs/remotes/origin/%s", branch, branch))
+		grafanaDir := filepath.Join(dir, "grafana")
+		grafanaEnterpriseDir := filepath.Join(dir, "grafana-enterprise")
 
-		err = grafanaRepo.Push(&git.PushOptions{
-			RefSpecs:          []config.RefSpec{refSpec},
-			RequireRemoteRefs: []config.RefSpec{refSpec},
-		})
+		grafanaRepo := prepareEnv(grafanaDir, grafanaEnterpriseDir, branch, token)
+
+		generateSwagger(grafanaDir)
+
+		grafanaWorktree, err := grafanaRepo.Worktree()
 		CheckIfError(err)
+
+		commitHash := commitChanges(grafanaWorktree)
+		if commitHash == plumbing.ZeroHash {
+			fmt.Println("Everything seems up to date!")
+			os.Exit(0)
+		}
+
+		Info("git show -s")
+		obj, err := grafanaRepo.CommitObject(commitHash)
+		CheckIfError(err)
+
+		fmt.Println(obj)
+
+			Info("git push origin %s", branch)
+			// push changes
+			refSpec := config.RefSpec(fmt.Sprintf("refs/heads/%s:refs/remotes/origin/%s", branch, branch))
+
+			err = grafanaRepo.Push(&git.PushOptions{
+				RefSpecs:          []config.RefSpec{refSpec},
+				RequireRemoteRefs: []config.RefSpec{refSpec},
+			})
+			CheckIfError(err)
 	*/
 }
