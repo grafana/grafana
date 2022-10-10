@@ -15,6 +15,7 @@ const (
 	WeightSavedItems
 	WeightCreate
 	WeightDashboard
+	WeightQueryLibrary
 	WeightExplore
 	WeightAlerting
 	WeightDataConnections

@@ -39,6 +39,20 @@ describe('Graphite query model', () => {
       expect(ctx.queryModel.target.targetFull).toBe(targetFullExpected);
     });
 
+    it('targetFull should include nested queries with repeated subqueries', () => {
+      ctx.target = { refId: 'C', target: 'scale(asPercent(diffSeries(#B, #A), #B), 100)' };
+      ctx.targets = [
+        { refId: 'A', target: 'first.query.count' },
+        { refId: 'B', target: 'second.query.count' },
+        { refId: 'C', target: 'scale(asPercent(diffSeries(#B, #A), #B), 100)' },
+      ];
+      ctx.queryModel = new GraphiteQuery(ctx.datasource, ctx.target, ctx.templateSrv);
+      ctx.queryModel.updateRenderedTarget(ctx.target, ctx.targets);
+      const targetFullExpected =
+        'scale(asPercent(diffSeries(second.query.count, first.query.count), second.query.count), 100)';
+      expect(ctx.queryModel.target.targetFull).toBe(targetFullExpected);
+    });
+
     it('should not hang on circular references', () => {
       ctx.target.target = 'asPercent(#A, #B)';
       ctx.targets = [
