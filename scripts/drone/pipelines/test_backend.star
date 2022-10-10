@@ -13,7 +13,8 @@ load(
     'pipeline',
 )
 
-def test_backend(trigger, ver_mode):
+def test_backend(trigger, ver_mode, edition="oss"):
+    environment = {'EDITION': edition}
     init_steps = [
         identify_runner_step(),
         compile_build_cmd(),
@@ -21,10 +22,13 @@ def test_backend(trigger, ver_mode):
         wire_install_step(),
     ]
     test_steps = [
-        test_backend_step(edition="oss"),
-        test_backend_integration_step(edition="oss"),
+        test_backend_step(edition),
+        test_backend_integration_step(edition),
     ]
 
+    pipeline_name = '{}-test-backend'.format(ver_mode)
+    if ver_mode in ("release-branch", "release"):
+        pipeline_name = '{}-{}-test-backend'.format(ver_mode, edition)
     return pipeline(
-        name='{}-test-backend'.format(ver_mode), edition="oss", trigger=trigger, services=[], steps=init_steps + test_steps,
+        name=pipeline_name, edition=edition, trigger=trigger, services=[], steps=init_steps + test_steps, environment=environment
     )

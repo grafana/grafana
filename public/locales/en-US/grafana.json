@@ -277,7 +277,7 @@
     "title": "Edit profile"
   },
   "user-session": {
-    "browser-column": "Browser &amp; OS",
+    "browser-column": "Browser & OS",
     "created-at-column": "Logged on",
     "ip-column": "IP address",
     "revoke": "Revoke user session",
