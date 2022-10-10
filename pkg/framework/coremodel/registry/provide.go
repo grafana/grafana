@@ -23,13 +23,13 @@ func NewBase() *Base {
 	return provideBase(nil)
 }
 
-// newBaseWithRuntime is the same as NewBase, but allows control over the
+// NewBaseWithRuntime is the same as NewBase, but allows control over the
 // [thema.Runtime] used to initialize the underlying coremodels.
 //
 // Prefer NewBase unless you absolutely need this control.
 //
 // TODO it's OK to export this if it's ever actually needed
-func newBaseWithRuntime(rt *thema.Runtime) *Base {
+func NewBaseWithRuntime(rt *thema.Runtime) *Base {
 	return provideBase(rt)
 }
 
