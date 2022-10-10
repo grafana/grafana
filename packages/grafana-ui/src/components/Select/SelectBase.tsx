@@ -143,6 +143,7 @@ export function SelectBase<T>({
   width,
   isValidNewOption,
   formatOptionLabel,
+  classNamePrefix,
 }: SelectBaseProps<T>) {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
@@ -274,6 +275,7 @@ export function SelectBase<T>({
   return (
     <>
       <ReactSelectComponent
+        classNamePrefix={classNamePrefix}
         ref={reactSelectRef}
         components={{
           MenuList: SelectMenuComponent,

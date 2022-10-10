@@ -16,6 +16,7 @@ export type InputActionMeta = {
 export type LoadOptionsCallback<T> = (options: Array<SelectableValue<T>>) => void;
 
 export interface SelectCommonProps<T> {
+  classNamePrefix?: string;
   /** Aria label applied to the input field */
   ['aria-label']?: string;
   allowCreateWhileLoading?: boolean;
