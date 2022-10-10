@@ -16,17 +16,20 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
 )
 
+func getAuth(token string) *http.BasicAuth {
+	if token == "" {
+		return nil
+	}
+	return &http.BasicAuth{
+		Username: "script", // yes, this can be anything except an empty string
+		Password: token,
+	}
+}
+
 func clone(dir, repo, branch, token string) (*git.Repository, error) {
 	Info("git clone %s %s %s", repo, branch, dir)
-	var auth *http.BasicAuth
-	if token != "" {
-		auth = &http.BasicAuth{
-			Username: "script", // yes, this can be anything except an empty string
-			Password: token,
-		}
-	}
 	return git.PlainClone(dir, false, &git.CloneOptions{
-		Auth:          auth,
+		Auth:          getAuth(token),
 		Depth:         1,
 		Progress:      os.Stdout,
 		ReferenceName: plumbing.NewBranchReferenceName(branch),
@@ -173,6 +176,7 @@ func main() {
 	err = grafanaRepo.Push(&git.PushOptions{
 		RefSpecs:          []config.RefSpec{refSpec},
 		RequireRemoteRefs: []config.RefSpec{refSpec},
+		Auth:              getAuth(token),
 	})
 	CheckIfError(err)
 }
