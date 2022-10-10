@@ -1,0 +1,289 @@
+{
+  "common": {
+    "locale": {
+      "default": "",
+      "en": "",
+      "es": "",
+      "fr": ""
+    },
+    "save": ""
+  },
+  "dashboard": {
+    "inspect": {
+      "actions-tab": "",
+      "data-tab": "",
+      "error-tab": "",
+      "json-tab": "",
+      "meta-tab": "",
+      "query-tab": "",
+      "stats-tab": "",
+      "subtitle": "",
+      "title": ""
+    },
+    "inspect-data": {
+      "data-options": "",
+      "dataframe-aria-label": "",
+      "dataframe-label": "",
+      "download-csv": "",
+      "download-excel-description": "",
+      "download-excel-label": "",
+      "download-logs": "",
+      "download-service": "",
+      "download-traces": "",
+      "excel-header": "",
+      "formatted": "",
+      "formatted-data-description": "",
+      "formatted-data-label": "",
+      "panel-transforms": "",
+      "series-to-columns": "",
+      "transformation": "",
+      "transformations-description": "",
+      "transformations-label": ""
+    },
+    "inspect-json": {
+      "dataframe-description": "",
+      "dataframe-label": "",
+      "panel-data-description": "",
+      "panel-data-label": "",
+      "panel-json-description": "",
+      "panel-json-label": "",
+      "select-source": "",
+      "unknown": ""
+    },
+    "inspect-meta": {
+      "no-inspector": ""
+    },
+    "inspect-stats": {
+      "data-title": "",
+      "processing-time": "",
+      "queries": "",
+      "request-time": "",
+      "rows": "",
+      "table-title": ""
+    },
+    "refresh-picker": {
+      "off-arialabel": "",
+      "off-description": "",
+      "off-label": "",
+      "on-description": ""
+    },
+    "toolbar": {
+      "add-panel": "",
+      "comments-show": "",
+      "mark-favorite": "",
+      "open-original": "",
+      "playlist-next": "",
+      "playlist-previous": "",
+      "playlist-stop": "",
+      "refresh": "",
+      "save": "",
+      "settings": "",
+      "share": "",
+      "tv-button": "",
+      "unmark-favorite": ""
+    }
+  },
+  "folder-picker": {
+    "loading": ""
+  },
+  "library-panel": {
+    "add-modal": {
+      "cancel": "",
+      "create": "",
+      "error": "",
+      "folder": "",
+      "folder-description": "",
+      "name": ""
+    }
+  },
+  "library-panels": {
+    "save": {
+      "error": "",
+      "success": ""
+    }
+  },
+  "nav": {
+    "alerting": "",
+    "alerting-admin": "",
+    "alerting-am-routes": "",
+    "alerting-channels": "",
+    "alerting-groups": "",
+    "alerting-legacy": "",
+    "alerting-list": "",
+    "alerting-receivers": "",
+    "alerting-silences": "",
+    "api-keys": "",
+    "config": "",
+    "correlations": "",
+    "create": "",
+    "create-alert": "",
+    "create-dashboard": "",
+    "create-folder": "",
+    "create-import": "",
+    "dashboards": "",
+    "datasources": "",
+    "explore": "",
+    "help": "",
+    "home": "",
+    "library-panels": "",
+    "live": "",
+    "live-cloud": "",
+    "live-pipeline": "",
+    "live-status": "",
+    "manage-dashboards": "",
+    "new-dashboard": "",
+    "new-folder": "",
+    "org-settings": "",
+    "playlists": "",
+    "plugins": "",
+    "profile/password": "",
+    "profile/settings": "",
+    "service-accounts": "",
+    "sign-out": "",
+    "snapshots": "",
+    "starred": "",
+    "starred-empty": "",
+    "teams": "",
+    "users": ""
+  },
+  "navigation": {
+    "kiosk": {
+      "tv-alert": ""
+    }
+  },
+  "panel": {
+    "header-menu": {
+      "inspect": "",
+      "inspect-data": "",
+      "inspect-json": "",
+      "more": "",
+      "share": "",
+      "view": ""
+    }
+  },
+  "share-modal": {
+    "dashboard": {
+      "title": ""
+    },
+    "embed": {
+      "copy": "",
+      "html": "",
+      "html-description": "",
+      "info": "",
+      "time-range": "",
+      "time-range-description": ""
+    },
+    "export": {
+      "cancel-button": "",
+      "info-text": "",
+      "save-button": "",
+      "share-default-label": "",
+      "share-externally-label": "",
+      "view-button": ""
+    },
+    "library": {
+      "info": ""
+    },
+    "link": {
+      "copy-link-button": "",
+      "info-text": "",
+      "link-url": "",
+      "render-alert": "",
+      "render-instructions": "",
+      "rendered-image": "",
+      "save-alert": "",
+      "save-dashboard": "",
+      "shorten-url": "",
+      "time-range-description": "",
+      "time-range-label": ""
+    },
+    "panel": {
+      "title": ""
+    },
+    "snapshot": {
+      "cancel-button": "",
+      "copy-link-button": "",
+      "delete-button": "",
+      "deleted-message": "",
+      "expire": "",
+      "expire-day": "",
+      "expire-hour": "",
+      "expire-never": "",
+      "expire-week": "",
+      "info-text-1": "",
+      "info-text-2": "",
+      "local-button": "",
+      "mistake-message": "",
+      "name": "",
+      "timeout": "",
+      "timeout-description": ""
+    },
+    "tab-title": {
+      "embed": "",
+      "export": "",
+      "library-panel": "",
+      "link": "",
+      "snapshot": ""
+    },
+    "theme-picker": {
+      "current": "",
+      "dark": "",
+      "field-name": "",
+      "light": ""
+    }
+  },
+  "shared-dashboard": {
+    "fields": {
+      "timezone-label": ""
+    }
+  },
+  "shared-preferences": {
+    "fields": {
+      "home-dashboard-label": "",
+      "home-dashboard-placeholder": "",
+      "locale-label": "",
+      "locale-placeholder": "",
+      "theme-label": "",
+      "week-start-label": ""
+    },
+    "theme": {
+      "dark-label": "",
+      "default-label": "",
+      "light-label": ""
+    },
+    "title": ""
+  },
+  "time-picker": {
+    "absolute": {
+      "recent-title": "",
+      "title": ""
+    }
+  },
+  "user-orgs": {
+    "current-org-button": "",
+    "name-column": "",
+    "role-column": "",
+    "select-org-button": "",
+    "title": ""
+  },
+  "user-profile": {
+    "fields": {
+      "email-error": "",
+      "email-label": "",
+      "name-error": "",
+      "name-label": "",
+      "username-label": ""
+    },
+    "title": ""
+  },
+  "user-session": {
+    "browser-column": "",
+    "created-at-column": "",
+    "ip-column": "",
+    "revoke": "",
+    "seen-at-column": ""
+  },
+  "user-sessions": {
+    "loading": ""
+  }
+}
