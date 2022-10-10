@@ -214,7 +214,6 @@ func Error(status int, message string, err error) *NormalResponse {
 	if err != nil {
 		resp.errMessage = message
 		resp.err = err
-		
 		if setting.Env != setting.Prod {
 			data["error"] = err.Error()
 		}
