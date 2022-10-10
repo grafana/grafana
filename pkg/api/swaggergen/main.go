@@ -75,7 +75,7 @@ func prepareEnv(grafanaDir, grafanaEnterpriseDir, branch, token string) *git.Rep
 
 	files, err := os.ReadDir(grafanaEnterpriseDir)
 	CheckIfError(err)
-	Info("enterprise: %d", len(files))
+	Info("enterprise files: %d", len(files))
 
 	Info("enable enterprise")
 	//nolint:gosec
@@ -91,9 +91,7 @@ func generateSwagger(grafanaDir string) {
 	Info("make clean-api-spec")
 	cmd := exec.Command("make", "clean-api-spec")
 	cmd.Dir = grafanaDir
-	o, err := cmd.CombinedOutput()
-	Info(string(o))
-	CheckIfError(err)
+	execCmd(cmd)
 
 	Info("make openapi3-gen")
 	cmd = exec.Command("make", "openapi3-gen")
