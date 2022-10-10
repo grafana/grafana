@@ -54,7 +54,7 @@ func AlertRuleGen(mutators ...AlertRuleMutator) func() *AlertRule {
 		if rand.Int63()%2 == 0 {
 			d := util.GenerateShortUID()
 			dashUID = &d
-			p := rand.Int63()
+			p := rand.Int63n(1 << 30)
 			panelID = &p
 		}
 
@@ -96,7 +96,7 @@ func WithUniqueID() AlertRuleMutator {
 	usedID := make(map[int64]struct{})
 	return func(rule *AlertRule) {
 		for {
-			id := rand.Int63()
+			id := rand.Int63n(1 << 30)
 			if _, ok := usedID[id]; !ok {
 				usedID[id] = struct{}{}
 				rule.ID = id
