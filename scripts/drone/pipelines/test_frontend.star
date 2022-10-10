@@ -26,7 +26,7 @@ def test_frontend(trigger, ver_mode, edition="oss"):
         test_frontend_step(),
     ]
     pipeline_name = '{}-test-frontend'.format(ver_mode)
-    if ver_mode == 'release':
+    if ver_mode in ("release-branch", "release"):
         pipeline_name = '{}-{}-test-frontend'.format(ver_mode, edition)
     return pipeline(
         name=pipeline_name, edition=edition, trigger=trigger, services=[], steps=init_steps + test_steps,

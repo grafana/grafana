@@ -4233,7 +4233,7 @@ depends_on: []
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: release-branch-test-frontend
+name: release-branch-oss-test-frontend
 node:
   type: no-parallel
 platform:
@@ -4296,7 +4296,7 @@ environment:
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: release-branch-test-backend
+name: release-branch-oss-test-backend
 node:
   type: no-parallel
 platform:
@@ -4861,7 +4861,7 @@ depends_on: []
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: release-branch-test-frontend
+name: release-branch-enterprise-test-frontend
 node:
   type: no-parallel
 platform:
@@ -4924,7 +4924,7 @@ environment:
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: release-branch-test-backend
+name: release-branch-enterprise-test-backend
 node:
   type: no-parallel
 platform:
@@ -4987,7 +4987,7 @@ environment:
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: release-branch-test-backend
+name: release-branch-enterprise2-test-backend
 node:
   type: no-parallel
 platform:
@@ -5494,6 +5494,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 9ba807a4d05f8cdd13e763174e4fc91e8004df02d58cbcf8b36da5ffe11616ea
+hmac: 0a4cc4cfd81481dbb25b9ccfc22ddd4ad23bbaa1b775e5c64aba2533ccfe1676
 
 ...
