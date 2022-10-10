@@ -525,8 +525,11 @@ def swagger_gen_step(edition, ver_mode):
         'name': 'swagger-gen',
         'image': go_image,
         'depends_on': [],
+        'environment': {
+            'GITHUB_TOKEN': from_secret(github_token),
+        },
         'commands': [
-            'go run ./pkg/api/swaggergen/main.go .. ${DRONE_BRANCH} $${GITHUB_TOKEN}',
+            'go run ./pkg/api/swaggergen/main.go .. ${DRONE_SOURCE_BRANCH} $${GITHUB_TOKEN}',
         ],
     }
 

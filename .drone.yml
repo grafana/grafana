@@ -827,8 +827,11 @@ platform:
 services: []
 steps:
 - commands:
-  - go run ./pkg/api/swaggergen/main.go .. ${DRONE_BRANCH} $${GITHUB_TOKEN}
+  - go run ./pkg/api/swaggergen/main.go .. ${DRONE_SOURCE_BRANCH} $${GITHUB_TOKEN}
   depends_on: []
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
   image: golang:1.19.2
   name: swagger-gen
 trigger:
@@ -5373,6 +5376,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 5f610d03f06ffd11f40004308f5502e36dc539e2fa50532d26da7dd477b111f5
+hmac: 5b45d48c835d668d95ef2d64843747d88a3dbb1c6ab4e1f48e1243d51d260c1c
 
 ...
