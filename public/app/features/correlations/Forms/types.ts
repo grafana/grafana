@@ -1,4 +1,4 @@
-import { Correlation, CorrelationConfig } from '../types';
+import { CorrelationConfig } from '../types';
 
 export interface FormDTO {
   sourceUID: string;
@@ -8,6 +8,4 @@ export interface FormDTO {
   config: CorrelationConfig;
 }
 
-type FormDTOWithoutTarget = Omit<FormDTO, 'targetUID'>;
-export type EditFormDTO = Partial<FormDTOWithoutTarget> &
-  Pick<FormDTO, 'sourceUID' | 'config'> & { uid: Correlation['uid'] };
+export type EditFormDTO = Omit<FormDTO, 'targetUID' | 'sourceUID'>;
