@@ -99,7 +99,7 @@ func (s CorrelationsService) updateCorrelation(ctx context.Context, cmd UpdateCo
 			return ErrSourceDataSourceReadOnly
 		}
 
-		if cmd.Label == nil && cmd.Description == nil && cmd.Config == nil {
+		if cmd.Label == nil && cmd.Description == nil && (cmd.Config == nil || (cmd.Config.Field == nil && cmd.Config.Target == nil && cmd.Config.Type == nil)) {
 			return ErrUpdateCorrelationEmptyParams
 		}
 		found, err := session.Get(&correlation)
