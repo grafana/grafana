@@ -6,6 +6,8 @@ load(
     'test_backend_integration_step',
     'verify_gen_cue_step',
     'compile_build_cmd',
+    'clone_enterprise_step',
+    'init_enterprise_step',
 )
 
 load(
@@ -15,12 +17,15 @@ load(
 
 def test_backend(trigger, ver_mode, edition="oss"):
     environment = {'EDITION': edition}
-    init_steps = [
+    init_steps = []
+    if edition != 'oss':
+        init_steps.extend([clone_enterprise_step(ver_mode), init_enterprise_step(ver_mode),])
+    init_steps.extend([
         identify_runner_step(),
-        compile_build_cmd(),
+        compile_build_cmd(edition),
         verify_gen_cue_step(edition="oss"),
         wire_install_step(),
-    ]
+    ])
     test_steps = [
         test_backend_step(edition),
         test_backend_integration_step(edition),
