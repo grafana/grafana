@@ -216,13 +216,13 @@ steps:
   image: grafana/build-container:1.6.3
   name: wire-install
 - commands:
-  - go test -short -covermode=atomic -timeout=30m ./pkg/...
+  - go test -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.6.3
   name: test-backend
 - commands:
-  - go test -run Integration -covermode=atomic -timeout=30m ./pkg/...
+  - go test -run Integration -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.6.3
@@ -631,7 +631,7 @@ steps:
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
   - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=30m {}'
+    -timeout=5m {}'
   depends_on:
   - wire-install
   environment:
@@ -648,7 +648,7 @@ steps:
     -prootpass
   - go clean -testcache
   - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=30m {}'
+    -timeout=5m {}'
   depends_on:
   - wire-install
   environment:
@@ -1056,13 +1056,13 @@ steps:
   image: grafana/build-container:1.6.3
   name: wire-install
 - commands:
-  - go test -short -covermode=atomic -timeout=30m ./pkg/...
+  - go test -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.6.3
   name: test-backend
 - commands:
-  - go test -run Integration -covermode=atomic -timeout=30m ./pkg/...
+  - go test -run Integration -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.6.3
@@ -1624,7 +1624,7 @@ steps:
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
   - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=30m {}'
+    -timeout=5m {}'
   depends_on:
   - wire-install
   environment:
@@ -1641,7 +1641,7 @@ steps:
     -prootpass
   - go clean -testcache
   - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=30m {}'
+    -timeout=5m {}'
   depends_on:
   - wire-install
   environment:
@@ -2304,13 +2304,13 @@ steps:
   image: grafana/build-container:1.6.3
   name: lint-frontend
 - commands:
-  - go test -short -covermode=atomic -timeout=30m ./pkg/...
+  - go test -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.6.3
   name: test-backend
 - commands:
-  - go test -run Integration -covermode=atomic -timeout=30m ./pkg/...
+  - go test -run Integration -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.6.3
@@ -2406,7 +2406,7 @@ steps:
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
   - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=30m {}'
+    -timeout=5m {}'
   depends_on:
   - wire-install
   environment:
@@ -2423,7 +2423,7 @@ steps:
     -prootpass
   - go clean -testcache
   - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=30m {}'
+    -timeout=5m {}'
   depends_on:
   - wire-install
   environment:
@@ -2970,13 +2970,13 @@ steps:
   image: grafana/build-container:1.6.3
   name: lint-frontend
 - commands:
-  - go test -short -covermode=atomic -timeout=30m ./pkg/...
+  - go test -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.6.3
   name: test-backend
 - commands:
-  - go test -run Integration -covermode=atomic -timeout=30m ./pkg/...
+  - go test -run Integration -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.6.3
@@ -2999,7 +2999,7 @@ steps:
   image: golang:1.19.2
   name: lint-backend-enterprise2
 - commands:
-  - go test -tags=pro -covermode=atomic -timeout=30m ./pkg/...
+  - go test -tags=pro -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.6.3
@@ -3119,7 +3119,7 @@ steps:
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
   - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=30m {}'
+    -timeout=5m {}'
   depends_on:
   - wire-install
   environment:
@@ -3136,7 +3136,7 @@ steps:
     -prootpass
   - go clean -testcache
   - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=30m {}'
+    -timeout=5m {}'
   depends_on:
   - wire-install
   environment:
@@ -4215,13 +4215,13 @@ steps:
   image: grafana/build-container:1.6.3
   name: lint-frontend
 - commands:
-  - go test -short -covermode=atomic -timeout=30m ./pkg/...
+  - go test -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.6.3
   name: test-backend
 - commands:
-  - go test -run Integration -covermode=atomic -timeout=30m ./pkg/...
+  - go test -run Integration -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.6.3
@@ -4311,7 +4311,7 @@ steps:
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
   - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=30m {}'
+    -timeout=5m {}'
   depends_on:
   - wire-install
   environment:
@@ -4328,7 +4328,7 @@ steps:
     -prootpass
   - go clean -testcache
   - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=30m {}'
+    -timeout=5m {}'
   depends_on:
   - wire-install
   environment:
@@ -4845,13 +4845,13 @@ steps:
   image: grafana/build-container:1.6.3
   name: lint-frontend
 - commands:
-  - go test -short -covermode=atomic -timeout=30m ./pkg/...
+  - go test -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.6.3
   name: test-backend
 - commands:
-  - go test -run Integration -covermode=atomic -timeout=30m ./pkg/...
+  - go test -run Integration -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.6.3
@@ -4874,7 +4874,7 @@ steps:
   image: golang:1.19.2
   name: lint-backend-enterprise2
 - commands:
-  - go test -tags=pro -covermode=atomic -timeout=30m ./pkg/...
+  - go test -tags=pro -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.6.3
@@ -4985,7 +4985,7 @@ steps:
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
   - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=30m {}'
+    -timeout=5m {}'
   depends_on:
   - wire-install
   environment:
@@ -5002,7 +5002,7 @@ steps:
     -prootpass
   - go clean -testcache
   - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=30m {}'
+    -timeout=5m {}'
   depends_on:
   - wire-install
   environment:
@@ -5339,6 +5339,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: cbcc3bfd12e065c989418a384df74322d4a2f9836032cb9b256c6d1274389ba3
+hmac: 74e91fca99550f9a5c85b01f1e8ab58629a1fff4e55ca07be3163d26e5f291bb
 
 ...
