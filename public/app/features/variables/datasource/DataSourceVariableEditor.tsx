@@ -3,10 +3,10 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Legend } from '@grafana/ui';
 
 import { StoreState } from '../../../types';
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
+import { VariableLegend } from '../editor/VariableLegend';
 import { VariableSelectField } from '../editor/VariableSelectField';
 import { VariableTextField } from '../editor/VariableTextField';
 import { initialVariableEditorState } from '../editor/reducer';
@@ -103,7 +103,7 @@ export class DataSourceVariableEditorUnConnected extends PureComponent<Props> {
 
     return (
       <>
-        <Legend>Data source options</Legend>
+        <VariableLegend>Data source options</VariableLegend>
         <VariableSelectField
           name="Type"
           value={typeValue}
@@ -129,7 +129,7 @@ export class DataSourceVariableEditorUnConnected extends PureComponent<Props> {
           }
         />
 
-        <Legend>Selection options</Legend>
+        <VariableLegend>Selection options</VariableLegend>
         <SelectionOptionsEditor
           variable={variable}
           onPropChange={this.onSelectionOptionsChange}

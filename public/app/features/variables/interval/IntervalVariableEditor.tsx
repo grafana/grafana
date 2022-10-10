@@ -3,9 +3,10 @@ import React, { ChangeEvent, FormEvent } from 'react';
 
 import { GrafanaTheme2, IntervalVariableModel, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Legend, useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 
 import { VariableCheckboxField } from '../editor/VariableCheckboxField';
+import { VariableLegend } from '../editor/VariableLegend';
 import { VariableSelectField } from '../editor/VariableSelectField';
 import { VariableTextField } from '../editor/VariableTextField';
 import { VariableEditorProps } from '../editor/types';
@@ -63,7 +64,7 @@ export const IntervalVariableEditor = React.memo(({ onPropChange, variable }: Pr
 
   return (
     <>
-      <Legend>Interval options</Legend>
+      <VariableLegend>Interval options</VariableLegend>
       <VariableTextField
         value={variable.query}
         name="Values"

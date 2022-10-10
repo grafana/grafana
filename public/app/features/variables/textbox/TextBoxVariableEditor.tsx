@@ -1,8 +1,8 @@
 import React, { FormEvent, ReactElement, useCallback } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Legend } from '@grafana/ui';
 
+import { VariableLegend } from '../editor/VariableLegend';
 import { VariableTextField } from '../editor/VariableTextField';
 import { VariableEditorProps } from '../editor/types';
 import { TextBoxVariableModel } from '../types';
@@ -24,7 +24,7 @@ export function TextBoxVariableEditor({ onPropChange, variable: { query } }: Pro
 
   return (
     <>
-      <Legend>Text options</Legend>
+      <VariableLegend>Text options</VariableLegend>
       <VariableTextField
         value={query}
         name="Default value"

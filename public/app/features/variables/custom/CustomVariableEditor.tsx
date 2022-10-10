@@ -2,11 +2,11 @@ import React, { FormEvent, PureComponent } from 'react';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Legend } from '@grafana/ui';
 import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
 import { StoreState } from 'app/types';
 
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
+import { VariableLegend } from '../editor/VariableLegend';
 import { VariableTextAreaField } from '../editor/VariableTextAreaField';
 import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
 import { changeVariableMultiValue } from '../state/actions';
@@ -45,7 +45,8 @@ class CustomVariableEditorUnconnected extends PureComponent<Props> {
   render() {
     return (
       <>
-        <Legend>Custom options</Legend>
+        <VariableLegend>Custom options</VariableLegend>
+
         <VariableTextAreaField
           name="Values separated by comma"
           value={this.props.variable.query}
@@ -56,7 +57,7 @@ class CustomVariableEditorUnconnected extends PureComponent<Props> {
           width={52}
           testId={selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.customValueInput}
         />
-        <Legend>Selection options</Legend>
+        <VariableLegend>Selection options</VariableLegend>
         <SelectionOptionsEditor
           variable={this.props.variable}
           onPropChange={this.onSelectionOptionsChange}

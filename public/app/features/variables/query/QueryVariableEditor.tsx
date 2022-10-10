@@ -4,11 +4,12 @@ import { connect, ConnectedProps } from 'react-redux';
 import { DataSourceInstanceSettings, getDataSourceRef, LoadingState, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { DataSourcePicker, getTemplateSrv } from '@grafana/runtime';
-import { Field, Legend } from '@grafana/ui';
+import { Field } from '@grafana/ui';
 
 import { StoreState } from '../../../types';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
+import { VariableLegend } from '../editor/VariableLegend';
 import { VariableTextAreaField } from '../editor/VariableTextAreaField';
 import { initialVariableEditorState } from '../editor/reducer';
 import { getQueryVariableEditorState } from '../editor/selectors';
@@ -139,12 +140,14 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
 
     if (isLegacyQueryEditor(VariableQueryEditor, datasource)) {
       return (
-        <VariableQueryEditor
-          datasource={datasource}
-          query={query}
-          templateSrv={getTemplateSrv()}
-          onChange={this.onLegacyQueryChange}
-        />
+        <Field label="Query">
+          <VariableQueryEditor
+            datasource={datasource}
+            query={query}
+            templateSrv={getTemplateSrv()}
+            onChange={this.onLegacyQueryChange}
+          />
+        </Field>
       );
     }
 
@@ -152,16 +155,18 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
 
     if (isQueryEditor(VariableQueryEditor, datasource)) {
       return (
-        <VariableQueryEditor
-          datasource={datasource}
-          query={query}
-          onChange={this.onQueryChange}
-          onRunQuery={() => {}}
-          data={{ series: [], state: LoadingState.Done, timeRange: range }}
-          range={range}
-          onBlur={() => {}}
-          history={[]}
-        />
+        <Field label="Query">
+          <VariableQueryEditor
+            datasource={datasource}
+            query={query}
+            onChange={this.onQueryChange}
+            onRunQuery={() => {}}
+            data={{ series: [], state: LoadingState.Done, timeRange: range }}
+            range={range}
+            onBlur={() => {}}
+            history={[]}
+          />
+        </Field>
       );
     }
 
@@ -171,7 +176,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
   render() {
     return (
       <>
-        <Legend>Query options</Legend>
+        <VariableLegend>Query options</VariableLegend>
         <Field label="Data source" htmlFor="data-source-picker">
           <DataSourcePicker
             current={this.props.variable.datasource}
@@ -212,7 +217,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
 
         <QueryVariableRefreshSelect onChange={this.onRefreshChange} refresh={this.props.variable.refresh} />
 
-        <Legend>Selection options</Legend>
+        <VariableLegend>Selection options</VariableLegend>
         <SelectionOptionsEditor
           variable={this.props.variable}
           onPropChange={this.onSelectionOptionsChange}

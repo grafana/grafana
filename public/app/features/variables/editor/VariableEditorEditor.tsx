@@ -5,7 +5,7 @@ import { bindActionCreators } from 'redux';
 import { LoadingState, SelectableValue, VariableType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
-import { Button, HorizontalGroup, Icon, Legend } from '@grafana/ui';
+import { Button, HorizontalGroup, Icon } from '@grafana/ui';
 
 import { StoreState, ThunkDispatch } from '../../../types';
 import { variableAdapters } from '../adapters';
@@ -20,6 +20,7 @@ import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 import { ConfirmDeleteModal } from './ConfirmDeleteModal';
 import { VariableHideSelect } from './VariableHideSelect';
+import { VariableLegend } from './VariableLegend';
 import { VariableTextAreaField } from './VariableTextAreaField';
 import { VariableTextField } from './VariableTextField';
 import { VariableTypeSelect } from './VariableTypeSelect';
@@ -150,7 +151,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props, State>
         <form aria-label="Variable editor Form" onSubmit={this.onHandleSubmit}>
           <VariableTypeSelect onChange={this.onTypeChange} type={this.props.variable.type} />
 
-          <Legend>General</Legend>
+          <VariableLegend>General</VariableLegend>
           <VariableTextField
             value={this.props.editor.name}
             onChange={this.onNameChange}
@@ -175,7 +176,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props, State>
           <VariableTextAreaField
             name="Description"
             value={variable.description ?? ''}
-            placeholder="descriptive text"
+            placeholder="Descriptive text"
             onChange={this.onDescriptionChange}
             width={52}
           />
@@ -189,7 +190,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props, State>
 
           {hasOptions(this.props.variable) ? <VariableValuesPreview variable={this.props.variable} /> : null}
 
-          <div style={{ marginTop: '40px' }}>
+          <div style={{ marginTop: '16px' }}>
             <HorizontalGroup spacing="md" height="inherit">
               <Button variant="destructive" fill="outline" onClick={this.onModalOpen}>
                 Delete

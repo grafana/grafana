@@ -52,7 +52,7 @@ export function VariableTextAreaField({
   );
 }
 
-function getStyles(theme: GrafanaTheme2) {
+export function getStyles(theme: GrafanaTheme2) {
   return {
     textarea: css`
       white-space: pre-wrap;

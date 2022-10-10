@@ -1,8 +1,8 @@
 import React, { FormEvent, PureComponent } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Legend } from '@grafana/ui';
 
+import { VariableLegend } from '../editor/VariableLegend';
 import { VariableTextField } from '../editor/VariableTextField';
 import { VariableEditorProps } from '../editor/types';
 import { ConstantVariableModel } from '../types';
@@ -28,7 +28,7 @@ export class ConstantVariableEditor extends PureComponent<Props> {
   render() {
     return (
       <>
-        <Legend>Constant options</Legend>
+        <VariableLegend>Constant options</VariableLegend>
         <VariableTextField
           value={this.props.variable.query}
           name="Value"

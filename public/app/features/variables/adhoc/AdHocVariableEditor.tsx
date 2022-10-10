@@ -3,9 +3,10 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
-import { Alert, Field, Legend } from '@grafana/ui';
+import { Alert, Field } from '@grafana/ui';
 import { StoreState } from 'app/types';
 
+import { VariableLegend } from '../editor/VariableLegend';
 import { initialVariableEditorState } from '../editor/reducer';
 import { getAdhocVariableEditorState } from '../editor/selectors';
 import { VariableEditorProps } from '../editor/types';
@@ -61,7 +62,7 @@ export class AdHocVariableEditorUnConnected extends PureComponent<Props> {
 
     return (
       <>
-        <Legend>Ad-hoc options</Legend>
+        <VariableLegend>Ad-hoc options</VariableLegend>
         <Field label="Data source" htmlFor="data-source-picker">
           <DataSourcePicker current={variable.datasource} onChange={this.onDatasourceChanged} width={30} noDefault />
         </Field>
