@@ -2,8 +2,9 @@ import { css } from '@emotion/css';
 import React, { useEffect } from 'react';
 
 import { locationService } from '@grafana/runtime';
-import { ErrorBoundaryAlert, LoadingPlaceholder } from '@grafana/ui';
+import { ErrorBoundaryAlert } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
+import { useAppNotification } from 'app/core/copy/appNotification';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { isTruthy } from 'app/core/utils/types';
@@ -31,12 +32,12 @@ const styles = {
 
 function Wrapper(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
   useExplorePageTitle();
-  const { correlations } = useSelector((state) => state.explore);
   const dispatch = useDispatch();
   const queryParams = props.queryParams;
   const { keybindings, chrome, config } = useGrafana();
   const navModel = useNavModel('explore');
   const { get } = useCorrelations();
+  const { warning } = useAppNotification();
 
   useEffect(() => {
     //This is needed for breadcrumbs and topnav.
@@ -58,10 +59,16 @@ function Wrapper(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
   }, []);
 
   useEffect(() => {
-    if (get.value || get.error) {
-      dispatch(saveCorrelationsAction(get.error ? [] : get.value!));
+    if (get.value) {
+      dispatch(saveCorrelationsAction(get.value));
+    } else if (get.error) {
+      dispatch(saveCorrelationsAction([]));
+      warning(
+        'Could not load correlations.',
+        'Correlations data could not be loaded, DataLinks may have partial data.'
+      );
     }
-  }, [get.value, get.error, dispatch]);
+  }, [get.value, get.error, dispatch, warning]);
 
   useEffect(() => {
     lastSavedUrl.left = undefined;
@@ -89,10 +96,6 @@ function Wrapper(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
   }, []);
 
   const hasSplit = Boolean(queryParams.left) && Boolean(queryParams.right);
-
-  if (!correlations) {
-    return <LoadingPlaceholder text="Loading..." />;
-  }
 
   return (
     <div className={styles.pageScrollbarWrapper}>
