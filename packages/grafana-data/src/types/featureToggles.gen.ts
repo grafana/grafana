@@ -68,5 +68,5 @@ export interface FeatureToggles {
   redshiftAsyncQueryDataSupport?: boolean;
   athenaAsyncQueryDataSupport?: boolean;
   increaseInMemDatabaseQueryCache?: boolean;
-  newPanelHeader?: boolean;
+  newPanelChromeUI?: boolean;
 }

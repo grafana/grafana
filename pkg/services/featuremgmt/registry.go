@@ -289,8 +289,8 @@ var (
 			Description: "Enable more in memory caching for database queries",
 		},
 		{
-			Name:         "newPanelHeader",
-			Description:  "Show updated design for panel header and panel menu",
+			Name:         "newPanelChromeUI",
+			Description:  "Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 		},

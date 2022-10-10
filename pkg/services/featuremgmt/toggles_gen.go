@@ -215,7 +215,7 @@ const (
 	// Enable more in memory caching for database queries
 	FlagIncreaseInMemDatabaseQueryCache = "increaseInMemDatabaseQueryCache"
 
-	// FlagNewPanelHeader
-	// Show updated design for panel header and panel menu
-	FlagNewPanelHeader = "newPanelHeader"
+	// FlagNewPanelChromeUI
+	// Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu
+	FlagNewPanelChromeUI = "newPanelChromeUI"
 )
