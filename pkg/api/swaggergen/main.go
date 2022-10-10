@@ -56,11 +56,23 @@ func prepareEnv(grafanaDir, grafanaEnterpriseDir, branch, token string) *git.Rep
 	}
 	CheckIfError(err)
 
+	if filepath.Base(grafanaDir) != "grafana" {
+		// grafana enterprise enablement script expects grafana OSS to be under grafana directory
+		// therefore we have to create a short link
+		Info("ln -s %s %s", grafanaDir, filepath.Join(filepath.Dir(grafanaDir), "grafana"))
+		//nolint:gosec
+		cmd := exec.Command("ln", "-s", grafanaDir, filepath.Join(filepath.Dir(grafanaDir), "grafana"))
+		o, err := cmd.Output()
+		Info(string(o))
+		CheckIfError(err)
+	}
+
 	Info("enable enterprise")
 	//nolint:gosec
-	cmd := exec.Command(filepath.Join(grafanaEnterpriseDir, "dev.sh"))
+	cmd := exec.Command("/bin/sh", filepath.Join(grafanaEnterpriseDir, "dev.sh"))
 	cmd.Dir = grafanaEnterpriseDir
-	err = cmd.Run()
+	o, err := cmd.Output()
+	Info(string(o))
 	CheckIfError(err)
 
 	return grafanaRepo
