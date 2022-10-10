@@ -47,7 +47,7 @@ func prepareEnv(grafanaDir, grafanaEnterpriseDir, branch, token string) *git.Rep
 	_, err = git.PlainOpen(grafanaEnterpriseDir)
 	if err != nil && errors.Is(err, git.ErrRepositoryNotExists) {
 		for _, b := range []string{branch, "main"} {
-			// Clone the grafana enterprise repository: checkout the branch if exists otherwise checkout the main branch
+			// Clone the grafana enterprise repository: checkout the specific branch if exists otherwise checkout the main
 			_, err = clone(grafanaEnterpriseDir, "https://github.com/grafana/grafana-enterprise.git", b, token)
 			if err == nil {
 				break
@@ -62,7 +62,7 @@ func prepareEnv(grafanaDir, grafanaEnterpriseDir, branch, token string) *git.Rep
 		Info("ln -s %s %s", grafanaDir, filepath.Join(filepath.Dir(grafanaDir), "grafana"))
 		//nolint:gosec
 		cmd := exec.Command("ln", "-s", grafanaDir, filepath.Join(filepath.Dir(grafanaDir), "grafana"))
-		o, err := cmd.Output()
+		o, err := cmd.CombinedOutput()
 		Info(string(o))
 		CheckIfError(err)
 	}
@@ -71,7 +71,7 @@ func prepareEnv(grafanaDir, grafanaEnterpriseDir, branch, token string) *git.Rep
 	//nolint:gosec
 	cmd := exec.Command("/bin/sh", filepath.Join(grafanaEnterpriseDir, "dev.sh"))
 	cmd.Dir = grafanaEnterpriseDir
-	o, err := cmd.Output()
+	o, err := cmd.CombinedOutput()
 	Info(string(o))
 	CheckIfError(err)
 
@@ -83,13 +83,15 @@ func generateSwagger(grafanaDir string) {
 	Info("make clean-api-spec")
 	cmd := exec.Command("make", "clean-api-spec")
 	cmd.Dir = grafanaDir
-	err := cmd.Run()
+	o, err := cmd.CombinedOutput()
+	Info(string(o))
 	CheckIfError(err)
 
 	Info("make openapi3-gen")
 	cmd = exec.Command("make", "openapi3-gen")
 	cmd.Dir = grafanaDir
-	err = cmd.Run()
+	o, err = cmd.CombinedOutput()
+	Info(string(o))
 	CheckIfError(err)
 }
 
@@ -141,8 +143,6 @@ func main() {
 	parentDir := filepath.Dir(wd)
 	grafanaDir := filepath.Join(parentDir, grafanaSubDir)
 	grafanaEnterpriseDir := filepath.Join(parentDir, "grafana-enterprise")
-
-	fmt.Println(">>>", grafanaDir, grafanaEnterpriseDir, branch)
 
 	grafanaRepo := prepareEnv(grafanaDir, grafanaEnterpriseDir, branch, token)
 
