@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-git/go-git/v5"
 	. "github.com/go-git/go-git/v5/_examples"
+	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
@@ -137,8 +138,6 @@ func main() {
 	CheckArgs("<grafana_subdir>", "<branch>", "<latest_commit>", "<github token>")
 	grafanaSubDir, branch, commit, token := os.Args[1], os.Args[2], os.Args[3], os.Args[4]
 
-	fmt.Println(">>>", branch, commit)
-
 	grafanaSubDir = filepath.Clean(grafanaSubDir)
 
 	wd, err := os.Getwd()
@@ -167,17 +166,15 @@ func main() {
 
 	fmt.Println(obj)
 
-	/*
-		h, err = grafanaRepo.Head()
-		CheckIfError(err)
+	h, err := grafanaRepo.Head()
+	CheckIfError(err)
 
-		Info("git push origin %s", branch)
-		// push changes
-		err = grafanaRepo.Push(&git.PushOptions{
-			RefSpecs:          []config.RefSpec{config.RefSpec(fmt.Sprintf("refs/heads/%s:refs/heads/%s", h.Name().String(), branch))},
-			RequireRemoteRefs: []config.RefSpec{config.RefSpec(fmt.Sprintf("%s:refs/heads/%s", commit, branch))},
-			Auth:              getAuth(token),
-		})
-		CheckIfError(err)
-	*/
+	Info("git push origin %s", branch)
+	// push changes
+	err = grafanaRepo.Push(&git.PushOptions{
+		RefSpecs:          []config.RefSpec{config.RefSpec(fmt.Sprintf("refs/heads/%s:refs/heads/%s", h.Name().String(), branch))},
+		RequireRemoteRefs: []config.RefSpec{config.RefSpec(fmt.Sprintf("%s:refs/heads/%s", commit, branch))},
+		Auth:              getAuth(token),
+	})
+	CheckIfError(err)
 }
