@@ -11,6 +11,7 @@ import (
 	"cuelang.org/go/cue/errors"
 	"cuelang.org/go/cue/load"
 	"github.com/grafana/grafana/pkg/cuectx"
+	"github.com/grafana/thema"
 	tload "github.com/grafana/thema/load"
 )
 
@@ -23,7 +24,7 @@ var defaultFramework cue.Value
 
 func init() {
 	var err error
-	defaultFramework, err = doLoadFrameworkCUE(cuectx.ProvideCUEContext())
+	defaultFramework, err = doLoadFrameworkCUE(cuectx.GrafanaCUEContext())
 	if err != nil {
 		panic(err)
 	}
@@ -89,23 +90,14 @@ func doLoadFrameworkCUE(ctx *cue.Context) (v cue.Value, err error) {
 // us declare all the frameworky CUE bits in a single package. Other Go types
 // make the constructs in this value easy to use.
 //
-// The returned cue.Value is built from Grafana's standard central CUE context,
-// ["github.com/grafana/grafana/pkg/cuectx".ProvideCueContext].
-func CUEFramework() cue.Value {
-	return defaultFramework
-}
-
-// cueFrameworkWithContext is the same as CUEFramework, but allows control over
-// the cue.Context that's used.
-//
-// Prefer CUEFramework unless you understand cue.Context, and absolutely need
-// this control.
-// NOTE export this if there's ever an actual need for it
-func cueFrameworkWithContext(ctx *cue.Context) cue.Value {
-	// Error guaranteed to be nil here because erroring would have caused init() to panic
-	if ctx == cuectx.ProvideCUEContext() {
+// All calling code within grafana/grafana is expected to use Grafana's
+// singleton [cue.Context], returned from [cuectx.GrafanaCUEContext]. If nil
+// is passed, the singleton will be used.
+func CUEFramework(ctx *cue.Context) cue.Value {
+	if ctx == nil || ctx == cuectx.GrafanaCUEContext() {
 		return defaultFramework
 	}
+	// Error guaranteed to be nil here because erroring would have caused init() to panic
 	v, _ := doLoadFrameworkCUE(ctx) // nolint:errcheck
 	return v
 }
@@ -138,7 +130,7 @@ func BindKind[T KindMetas](v cue.Value) (T, error) {
 		return *meta, ErrValueNotExist
 	}
 
-	fw := cueFrameworkWithContext(v.Context())
+	fw := CUEFramework(v.Context())
 	var kdef cue.Value
 
 	anymeta := any(*meta).(SomeKindMeta)
@@ -157,11 +149,9 @@ func BindKind[T KindMetas](v cue.Value) (T, error) {
 	item := v.Unify(kdef)
 	// TODO recall and comment on the difference between Err and Validate
 	if item.Err() != nil {
-		// return mo.Err[T](ewrap(item.Err(), ErrValueNotAKind))
 		return *meta, ewrap(item.Err(), ErrValueNotAKind)
 	}
 	if err := item.Validate(); err != nil {
-		// return mo.Err[T](ewrap(err, ErrValueNotAKind))
 		return *meta, ewrap(item.Err(), ErrValueNotAKind)
 	}
 	if err := item.Decode(meta); err != nil {
@@ -172,6 +162,34 @@ func BindKind[T KindMetas](v cue.Value) (T, error) {
 	return *meta, nil
 }
 
-func LoadKindValue(cueFS fs.FS) (cue.Value, error) {
+// ParsedKindDefinition is the result of a successful call to ParseKindFS. It
+// represents a kind definition in partially-processed form, amenable for
+// further processing into
+type ParsedKindDefinition struct {
+	// V is the cue.Value corresponding to the entire Kind declaration.
+	V cue.Value
+	// Meta configuration for the kind.
+	Meta SomeKindMeta
+}
+
+// BindKindLineage binds the lineage for the parsed kind. nil, nil is returned for raw kinds.
+//
+// For kinds with a corresponding Go type, it left to the caller to associate that Go type
+// with the returned lineage by calling [thema.BindType].
+func (pk *ParsedKindDefinition) BindKindLineage(rt *thema.Runtime, opts ...thema.BindOption) (thema.Lineage, error) {
+	switch pk.Meta.(type) {
+	case RawMeta:
+		return nil, nil
+	case CoreStructuredMeta, CustomStructuredMeta:
+		return thema.BindLineage(pk.V.LookupPath(cue.MakePath(cue.Str("lineage"))), rt, opts...)
+	default:
+		panic("unreachable")
+	}
+}
+
+// ParseKindFS takes an fs.FS and validates that it represents one
+// of the valid kind variants. On success, it returns a representation
+// of the entire kind definition contained in the provided kfs.
+func ParseKindFS(kfs fs.FS, rt *thema.Runtime) (*ParsedKindDefinition, error) {
 	panic("TODO")
 }

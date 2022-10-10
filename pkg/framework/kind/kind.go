@@ -2,7 +2,7 @@ package kind
 
 import "github.com/grafana/thema"
 
-// TODO
+// TODO docs
 type Maturity string
 
 const (
@@ -11,49 +11,39 @@ const (
 	MaturityMature       Maturity = "mature"
 )
 
-// TODO
+// TODO docs
 type Interface interface {
-	// TODO
+	// TODO docs
 	Name() string
 
-	// TODO
-	Maturity() Maturity
+	// TODO docs
+	Maturity() Maturity // TODO unclear if we want maturity for raw kinds
 }
 
-// TODO
+// TODO docs
 type Raw interface {
 	Interface
 
-	// TODO
+	// TODO docs
 	Meta() RawMeta
 }
 
-type CoreStructured[T thema.Assignee] interface {
+type Structured interface {
 	Interface
 
-	// TODO
-	Lineage() thema.ConvergentLineage[T]
-
-	// TODO
-	Meta() CoreStructuredMeta
-}
-
-type CustomStructured interface {
-	Interface
-
-	// TODO
+	// TODO docs
 	Lineage() thema.Lineage
 
-	// TODO
-	Meta() CustomStructuredMeta
+	// TODO docs
+	Meta() CoreStructuredMeta // TODO figure out how to reconcile this interface with CustomStructuredMeta
 }
 
-type SlotImplementation interface {
-	Interface
-
-	// TODO
-	Lineage() thema.Lineage
-
-	// TODO
-	Meta() SlotImplMeta
-}
+// type SlotImplementation interface {
+// 	Interface
+//
+// 	// TODO docs
+// 	Lineage() thema.Lineage
+//
+// 	// TODO docs
+// 	Meta() SlotImplMeta
+// }

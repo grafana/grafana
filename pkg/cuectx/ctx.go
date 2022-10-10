@@ -117,3 +117,9 @@ func prefixWithGrafanaCUE(prefix string, inputfs fs.FS) (fs.FS, error) {
 
 	return m, err
 }
+
+// Need a prefixing instance loader that:
+//  - can take multiple fs.FS, each one representing a CUE module (nesting?)
+//  - reconcile at most one of the provided fs with cwd
+//    - behavior must differ depending on whether cwd is in a cue module
+//    - behavior should(?) be controllable depending on

@@ -64,7 +64,7 @@ _sharedKind: {
 
 	// The entity system itself is not mature enough yet for any individual
 	// kind to be called "mature."
-	maturity: *"committed" | "synchronized"
+	maturity: *"committed" | "synchronized"  // TODO unclear if we want maturity for raw kinds
 
 	form: "structured" | "raw"
 }
@@ -93,15 +93,19 @@ _sharedKind: {
 #Structured: {
 	_sharedKind
 	#CoreStructured | #CustomStructured
-
 	form:     "structured"
-	lineage:  #thema.Lineage
+
+	lineage:  thema.#Lineage
+
+	// currentVersion is the syntactic version of the lineage's latest schema.
+	currentVersion: thema.#SyntacticVersion & (thema.#LatestVersion & { lin: lineage }).out
 }
 
 #CoreStructured: {
 	#Structured
 }
 
-#CustomStructured: {
+// NOTE not a definition b/c apps/plugins could be written against a later Grafana version
+CustomStructured: {
 	#Structured
 }
