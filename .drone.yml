@@ -829,7 +829,7 @@ steps:
 - commands:
   - go run ./pkg/api/swaggergen/main.go .. ${DRONE_BRANCH} $${GITHUB_TOKEN}
   depends_on: []
-  image: golang:1.19.1
+  image: golang:1.19.2
   name: swagger-gen
 trigger:
   event:
@@ -5373,6 +5373,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 9b28577613b0640b55d68890825b078c73ac89fe88d3f086ac837f87125079c5
+hmac: 5f610d03f06ffd11f40004308f5502e36dc539e2fa50532d26da7dd477b111f5
 
 ...
