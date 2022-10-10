@@ -22,7 +22,6 @@ type AzureMonitorConfig = {
 type AzureMonitorProvision = { datasources: AzureMonitorConfig[] };
 
 const dataSourceName = 'Azure Monitor E2E Tests';
-let addedDatasources = [];
 
 function provisionAzureMonitorDatasources(datasources: AzureMonitorProvision[]) {
   const datasource = datasources[0].datasources[0];
@@ -47,103 +46,7 @@ function provisionAzureMonitorDatasources(datasources: AzureMonitorProvision[]) 
     },
     expectedAlertMessage: 'Successfully connected to all Azure Monitor endpoints',
   });
-  // Don't remove datasource so it can be reused
-  addedDatasources = e2e.getScenarioContext().then(({ addedDataSources }: any) => addedDataSources);
-  e2e.setScenarioContext({ addedDataSources: [] });
 }
-
-e2e.scenario({
-  describeName: 'Add Azure Monitor datasource and import dashboard',
-  itName: 'fills out datasource connection configuration and imports JSON dashboard',
-  scenario: () => {
-    e2e()
-      .readFile(provisioningPath)
-      .then((azMonitorProvision: string) => {
-        const yaml = load(azMonitorProvision) as AzureMonitorProvision;
-        provisionAzureMonitorDatasources([yaml]);
-        e2e.flows.importDashboard(EXAMPLE_DASHBOARD, undefined, true);
-      });
-  },
-});
-
-e2e.scenario({
-  describeName: 'Create panel and run a metrics query',
-  itName: 'configures datasource, adds a panel, runs a metrics query',
-  scenario: () => {
-    e2e.flows.addDashboard({
-      timeRange: {
-        from: '2022-10-03 00:00:00',
-        to: '2022-10-03 23:59:59',
-        zone: 'Coordinated Universal Time',
-      },
-    });
-    e2e.flows.addPanel({
-      dataSourceName,
-      visitDashboardAtStart: false,
-      queriesForm: () => {
-        e2eSelectors.queryEditor.resourcePicker.select.button().click();
-        e2eSelectors.queryEditor.resourcePicker.search.input().type('azmonmetricstest');
-        e2e().contains('azmonmetricstest').click();
-        e2eSelectors.queryEditor.resourcePicker.apply.button().click();
-        e2e().contains('microsoft.storage/storageaccounts');
-        e2eSelectors.queryEditor.metricsQueryEditor.metricName.input().find('input').type('Used capacity{enter}');
-      },
-    });
-  },
-});
-
-e2e.scenario({
-  describeName: 'Create panel and run a logs query',
-  itName: 'configures datasource, adds a panel, runs a logs query',
-  scenario: () => {
-    e2e.flows.addDashboard({
-      timeRange: {
-        from: '2022-10-03 00:00:00',
-        to: '2022-10-03 23:59:59',
-        zone: 'Coordinated Universal Time',
-      },
-    });
-    e2e.flows.addPanel({
-      dataSourceName,
-      visitDashboardAtStart: false,
-      queriesForm: () => {
-        e2eSelectors.queryEditor.header.select().find('input').type('Logs{enter}');
-        e2eSelectors.queryEditor.resourcePicker.select.button().click();
-        e2eSelectors.queryEditor.resourcePicker.search.input().type('azmonlogstest');
-        e2e().contains('azmonlogstest').click();
-        e2eSelectors.queryEditor.resourcePicker.apply.button().click();
-        e2e.components.CodeEditor.container().type('AzureDiagnostics');
-        e2eSelectors.queryEditor.logsQueryEditor.formatSelection.input().type('Time series{enter}');
-      },
-    });
-  },
-});
-
-e2e.scenario({
-  describeName: 'Create panel and run an ARG query',
-  itName: 'configures datasource, adds a panel, runs an ARG query',
-  scenario: () => {
-    e2e.flows.addDashboard({
-      timeRange: {
-        from: '2022-10-03 00:00:00',
-        to: '2022-10-03 23:59:59',
-        zone: 'Coordinated Universal Time',
-      },
-    });
-    e2e.flows.addPanel({
-      dataSourceName,
-      visitDashboardAtStart: false,
-      queriesForm: () => {
-        e2eSelectors.queryEditor.header.select().find('input').type('Azure Resource Graph{enter}');
-        e2e().wait(1000); // Need to wait for code editor to completely load
-        e2e.components.CodeEditor.container().type(
-          "Resources | where resourceGroup == 'cloud-plugins-e2e-test' | project name, resourceGroup"
-        );
-        e2e.components.PanelEditor.toggleTableView().click({ force: true });
-      },
-    });
-  },
-});
 
 const addAzureMonitorVariable = (
   name: string,
@@ -189,6 +92,74 @@ const addAzureMonitorVariable = (
   e2e.pages.Dashboard.Settings.Variables.Edit.General.submitButton().click();
   e2e.components.PageToolbar.item('Go Back').click();
 };
+
+e2e.scenario({
+  describeName: 'Add Azure Monitor datasource and import dashboard',
+  itName: 'fills out datasource connection configuration and imports JSON dashboard',
+  scenario: () => {
+    e2e()
+      .readFile(provisioningPath)
+      .then((azMonitorProvision: string) => {
+        const yaml = load(azMonitorProvision) as AzureMonitorProvision;
+        provisionAzureMonitorDatasources([yaml]);
+        e2e.flows.importDashboard(EXAMPLE_DASHBOARD, undefined, true);
+      });
+    e2e.setScenarioContext({ addedDataSources: [] });
+  },
+});
+
+e2e.scenario({
+  describeName: 'Create dashboard and add a panel for each query type',
+  itName: 'create dashboard, add panel for metrics query, log analytics query, and ARG query',
+  scenario: () => {
+    e2e.flows.addDashboard({
+      timeRange: {
+        from: '2022-10-03 00:00:00',
+        to: '2022-10-03 23:59:59',
+        zone: 'Coordinated Universal Time',
+      },
+    });
+    e2e.flows.addPanel({
+      dataSourceName,
+      visitDashboardAtStart: false,
+      queriesForm: () => {
+        e2eSelectors.queryEditor.resourcePicker.select.button().click();
+        e2eSelectors.queryEditor.resourcePicker.search.input().type('azmonmetricstest{enter}');
+        e2e().contains('azmonmetricstest').click();
+        e2eSelectors.queryEditor.resourcePicker.apply.button().click();
+        e2e().contains('microsoft.storage/storageaccounts');
+        e2eSelectors.queryEditor.metricsQueryEditor.metricName.input().find('input').type('Used capacity{enter}');
+      },
+    });
+    e2e.components.PanelEditor.applyButton().click();
+    e2e.flows.addPanel({
+      dataSourceName,
+      visitDashboardAtStart: false,
+      queriesForm: () => {
+        e2eSelectors.queryEditor.header.select().find('input').type('Logs{enter}');
+        e2eSelectors.queryEditor.resourcePicker.select.button().click();
+        e2eSelectors.queryEditor.resourcePicker.search.input().type('azmonlogstest{enter}');
+        e2e().contains('azmonlogstest').click();
+        e2eSelectors.queryEditor.resourcePicker.apply.button().click();
+        e2e.components.CodeEditor.container().type('AzureDiagnostics');
+        e2eSelectors.queryEditor.logsQueryEditor.formatSelection.input().type('Time series{enter}');
+      },
+    });
+    e2e.components.PanelEditor.applyButton().click();
+    e2e.flows.addPanel({
+      dataSourceName,
+      visitDashboardAtStart: false,
+      queriesForm: () => {
+        e2eSelectors.queryEditor.header.select().find('input').type('Azure Resource Graph{enter}');
+        e2e().wait(1000); // Need to wait for code editor to completely load
+        e2e.components.CodeEditor.container().type(
+          "Resources | where resourceGroup == 'cloud-plugins-e2e-test' | project name, resourceGroup"
+        );
+        e2e.components.PanelEditor.toggleTableView().click({ force: true });
+      },
+    });
+  },
+});
 
 e2e.scenario({
   describeName: 'Create dashboard with template variables',
@@ -278,5 +249,13 @@ e2e.scenario({
         e2eSelectors.queryEditor.metricsQueryEditor.metricName.input().find('input').type('Used capacity{enter}');
       },
     });
+  },
+});
+
+e2e.scenario({
+  describeName: 'Remove datasource',
+  itName: 'remove azure monitor datasource',
+  scenario: () => {
+    e2e.flows.deleteDataSource({ name: dataSourceName, id: '', quick: true });
   },
 });
