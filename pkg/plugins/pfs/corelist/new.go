@@ -24,7 +24,7 @@ func New(rt *thema.Runtime) pfs.TreeList {
 		tl = make(pfs.TreeList, len(coreTrees))
 		copy(tl, coreTrees)
 	} else {
-		return coreTreeList(*rt)
+		return coreTreeList(rt)
 	}
 	return tl
 }
