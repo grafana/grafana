@@ -6,10 +6,12 @@ import { selectors } from '@grafana/e2e-selectors';
 import { useTheme2 } from '../../themes';
 import { IconName } from '../../types';
 import { ComponentSize } from '../../types/size';
-import { Button, ButtonVariant } from '../Button';
+import { Button, ButtonFill, ButtonVariant } from '../Button';
 import { Select } from '../Select/Select';
 
 export interface ValuePickerProps<T> {
+  /** Aria label applied to the input field */
+  ['aria-label']?: string;
   /** Label to display on the picker button */
   label: string;
   /** Icon to display on the picker button */
@@ -28,9 +30,12 @@ export interface ValuePickerProps<T> {
   isFullWidth?: boolean;
   /** Control where the menu is rendered */
   menuPlacement?: 'auto' | 'bottom' | 'top';
+  /** Which ButtonFill to use */
+  fill?: ButtonFill;
 }
 
 export function ValuePicker<T>({
+  'aria-label': ariaLabel,
   label,
   icon,
   options,
@@ -40,6 +45,7 @@ export function ValuePicker<T>({
   size = 'sm',
   isFullWidth = true,
   menuPlacement,
+  fill,
 }: ValuePickerProps<T>) {
   const [isPicking, setIsPicking] = useState(false);
   const theme = useTheme2();
@@ -52,8 +58,9 @@ export function ValuePicker<T>({
           icon={icon || 'plus'}
           onClick={() => setIsPicking(true)}
           variant={variant}
+          fill={fill}
           fullWidth={isFullWidth}
-          aria-label={selectors.components.ValuePicker.button(label)}
+          aria-label={selectors.components.ValuePicker.button(ariaLabel ?? label)}
         >
           {label}
         </Button>
@@ -64,7 +71,7 @@ export function ValuePicker<T>({
           <Select
             placeholder={label}
             options={options}
-            aria-label={selectors.components.ValuePicker.select(label)}
+            aria-label={selectors.components.ValuePicker.select(ariaLabel ?? label)}
             isOpen
             onCloseMenu={() => setIsPicking(false)}
             autoFocus={true}

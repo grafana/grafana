@@ -169,12 +169,25 @@ func TestLogTableToFrame(t *testing.T) {
 				return frame
 			},
 		},
+		{
+			name:     "empty data response",
+			testFile: "loganalytics/11-log-analytics-response-empty.json",
+			expectedFrame: func() *data.Frame {
+				return &data.Frame{
+					RefID: "A",
+					Meta: &data.FrameMeta{
+						ExecutedQueryString: "query",
+					},
+				}
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			res := loadLogAnalyticsTestFileWithNumber(t, tt.testFile)
-			frame, err := ResponseTableToFrame(&res.Tables[0], res)
+			frame, err := ResponseTableToFrame(&res.Tables[0], "A", "query")
+			appendErrorNotice(frame, res.Error)
 			require.NoError(t, err)
 
 			if diff := cmp.Diff(tt.expectedFrame(), frame, data.FrameTestCompareOptions()...); diff != "" {
