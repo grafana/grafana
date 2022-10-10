@@ -49,10 +49,6 @@ func execCmd(cmd *exec.Cmd) {
 func prepareEnv(grafanaDir, grafanaEnterpriseDir, branch, token string) *git.Repository {
 	var grafanaRepo *git.Repository
 	grafanaRepo, err := git.PlainOpen(grafanaDir)
-	if err != nil && errors.Is(err, git.ErrRepositoryNotExists) {
-		// Clone the grafana repository
-		grafanaRepo, err = clone(grafanaDir, "https://github.com/grafana/grafana.git", branch, "")
-	}
 	CheckIfError(err)
 
 	_, err = git.PlainOpen(grafanaEnterpriseDir)
@@ -149,10 +145,26 @@ func main() {
 
 	grafanaRepo := prepareEnv(grafanaDir, grafanaEnterpriseDir, branch, token)
 
-	generateSwagger(grafanaDir)
-
 	grafanaWorktree, err := grafanaRepo.Worktree()
 	CheckIfError(err)
+
+	err = grafanaWorktree.Checkout(&git.CheckoutOptions{
+		Branch: plumbing.NewBranchReferenceName(branch),
+	})
+	CheckIfError(err)
+
+	h, err := grafanaRepo.Head()
+	CheckIfError(err)
+
+	latest, err := grafanaRepo.CommitObject(h.Hash())
+	CheckIfError(err)
+
+	if latest.Hash.String() != commit {
+		fmt.Printf("\x1b[31;1munexpected commit: got:%s expected:%s\x1b[0m\n", latest.Hash.String(), commit)
+		os.Exit(1)
+	}
+
+	generateSwagger(grafanaDir)
 
 	commitHash := commitChanges(grafanaWorktree)
 	if commitHash == plumbing.ZeroHash {
@@ -160,19 +172,15 @@ func main() {
 		os.Exit(0)
 	}
 
-	Info("git show -s")
-	obj, err := grafanaRepo.CommitObject(commitHash)
+	Info("git show-ref --head HEAD")
+	ref, err := grafanaRepo.Head()
 	CheckIfError(err)
 
-	fmt.Println(obj)
-
-	h, err := grafanaRepo.Head()
-	CheckIfError(err)
+	Info("after: %v", ref)
 
 	Info("git push origin %s", branch)
-	// push changes
 	err = grafanaRepo.Push(&git.PushOptions{
-		RefSpecs:          []config.RefSpec{config.RefSpec(fmt.Sprintf("refs/heads/%s:refs/heads/%s", h.Name().String(), branch))},
+		RefSpecs:          []config.RefSpec{config.RefSpec(fmt.Sprintf("refs/heads/%s:refs/heads/%s", branch, branch))},
 		RequireRemoteRefs: []config.RefSpec{config.RefSpec(fmt.Sprintf("%s:refs/heads/%s", commit, branch))},
 		Auth:              getAuth(token),
 	})
