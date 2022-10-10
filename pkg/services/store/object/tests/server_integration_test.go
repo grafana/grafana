@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"reflect"
-	"strings"
 	"testing"
 	"time"
 
@@ -21,29 +20,22 @@ func createContentsHash(contents []byte) string {
 }
 
 type rawObjectMatcher struct {
-	uid           *string
-	kind          *string
-	createdRange  []time.Time
-	modifiedRange []time.Time
-	createdBy     *object.UserInfo
-	modifiedBy    *object.UserInfo
-	body          []byte
-	version       *string
-	comment       *string
+	uid          *string
+	kind         *string
+	createdRange []time.Time
+	updatedRange []time.Time
+	createdBy    string
+	updatedBy    string
+	body         []byte
+	version      *string
 }
 
-func userInfoMatches(expected *object.UserInfo, actual *object.UserInfo) (bool, string) {
-	var mismatches []string
-
-	if expected.Id != actual.Id {
-		mismatches = append(mismatches, fmt.Sprintf("expected ID %d, actual ID: %d", expected.Id, actual.Id))
-	}
-
-	if expected.Login != actual.Login {
-		mismatches = append(mismatches, fmt.Sprintf("expected login %s, actual login: %s", expected.Login, actual.Login))
-	}
-
-	return len(mismatches) == 0, strings.Join(mismatches, ", ")
+type objectVersionMatcher struct {
+	updatedRange []time.Time
+	updatedBy    string
+	version      *string
+	etag         *string
+	comment      *string
 }
 
 func timestampInRange(ts int64, tsRange []time.Time) bool {
@@ -52,6 +44,8 @@ func timestampInRange(ts int64, tsRange []time.Time) bool {
 
 func requireObjectMatch(t *testing.T, obj *object.RawObject, m rawObjectMatcher) {
 	t.Helper()
+	require.NotNil(t, obj)
+
 	mismatches := ""
 	if m.uid != nil && *m.uid != obj.UID {
 		mismatches += fmt.Sprintf("expected UID: %s, actual UID: %s\n", *m.uid, obj.UID)
@@ -65,22 +59,16 @@ func requireObjectMatch(t *testing.T, obj *object.RawObject, m rawObjectMatcher)
 		mismatches += fmt.Sprintf("expected createdBy range: [from %s to %s], actual created: %s\n", m.createdRange[0], m.createdRange[1], time.Unix(obj.Created, 0))
 	}
 
-	if len(m.modifiedRange) == 2 && !timestampInRange(obj.Modified, m.modifiedRange) {
-		mismatches += fmt.Sprintf("expected createdBy range: [from %s to %s], actual created: %s\n", m.createdRange[0], m.createdRange[1], time.Unix(obj.Created, 0))
+	if len(m.updatedRange) == 2 && !timestampInRange(obj.Updated, m.updatedRange) {
+		mismatches += fmt.Sprintf("expected updatedRange range: [from %s to %s], actual updated: %s\n", m.updatedRange[0], m.updatedRange[1], time.Unix(obj.Updated, 0))
 	}
 
-	if m.createdBy != nil {
-		userInfoMatches, msg := userInfoMatches(m.createdBy, obj.CreatedBy)
-		if !userInfoMatches {
-			mismatches += fmt.Sprintf("createdBy: %s\n", msg)
-		}
+	if m.createdBy != "" && m.createdBy != obj.CreatedBy {
+		mismatches += fmt.Sprintf("createdBy: expected:%s, found:%s\n", m.createdBy, obj.CreatedBy)
 	}
 
-	if m.modifiedBy != nil {
-		userInfoMatches, msg := userInfoMatches(m.modifiedBy, obj.ModifiedBy)
-		if !userInfoMatches {
-			mismatches += fmt.Sprintf("modifiedBy: %s\n", msg)
-		}
+	if m.updatedBy != "" && m.updatedBy != obj.UpdatedBy {
+		mismatches += fmt.Sprintf("updatedBy: expected:%s, found:%s\n", m.updatedBy, obj.UpdatedBy)
 	}
 
 	if !reflect.DeepEqual(m.body, obj.Body) {
@@ -97,8 +85,27 @@ func requireObjectMatch(t *testing.T, obj *object.RawObject, m rawObjectMatcher)
 		mismatches += fmt.Sprintf("expected version: %s, actual version: %s\n", *m.version, obj.Version)
 	}
 
-	if m.comment != nil && *m.comment != obj.Comment {
-		mismatches += fmt.Sprintf("expected comment: %s, actual comment: %s\n", *m.comment, obj.Comment)
+	require.True(t, len(mismatches) == 0, mismatches)
+}
+
+func requireVersionMatch(t *testing.T, obj *object.ObjectVersionInfo, m objectVersionMatcher) {
+	t.Helper()
+	mismatches := ""
+
+	if m.etag != nil && *m.etag != obj.ETag {
+		mismatches += fmt.Sprintf("expected etag: %s, actual etag: %s\n", *m.etag, obj.ETag)
+	}
+
+	if len(m.updatedRange) == 2 && !timestampInRange(obj.Updated, m.updatedRange) {
+		mismatches += fmt.Sprintf("expected updatedRange range: [from %s to %s], actual updated: %s\n", m.updatedRange[0], m.updatedRange[1], time.Unix(obj.Updated, 0))
+	}
+
+	if m.updatedBy != "" && m.updatedBy != obj.UpdatedBy {
+		mismatches += fmt.Sprintf("updatedBy: expected:%s, found:%s\n", m.updatedBy, obj.UpdatedBy)
+	}
+
+	if m.version != nil && *m.version != obj.Version {
+		mismatches += fmt.Sprintf("expected version: %s, actual version: %s\n", *m.version, obj.Version)
 	}
 
 	require.True(t, len(mismatches) == 0, mismatches)
@@ -113,12 +120,9 @@ func TestObjectServer(t *testing.T) {
 	testCtx := createTestContext(t)
 	ctx = metadata.AppendToOutgoingContext(ctx, "authorization", fmt.Sprintf("Bearer %s", testCtx.authToken))
 
-	fakeUser := &object.UserInfo{
-		Login: "fake",
-		Id:    1,
-	}
+	fakeUser := fmt.Sprintf("user:%d:%s", testCtx.user.UserID, testCtx.user.Login)
 	firstVersion := "1"
-	kind := "dashboard"
+	kind := "dummy"
 	uid := "my-test-entity"
 	body := []byte("{\"name\":\"John\"}")
 
@@ -144,18 +148,13 @@ func TestObjectServer(t *testing.T) {
 		writeResp, err := testCtx.client.Write(ctx, writeReq)
 		require.NoError(t, err)
 
-		objectMatcher := rawObjectMatcher{
-			uid:           &uid,
-			kind:          &kind,
-			createdRange:  []time.Time{before, time.Now()},
-			modifiedRange: []time.Time{before, time.Now()},
-			createdBy:     fakeUser,
-			modifiedBy:    fakeUser,
-			body:          body,
-			version:       &firstVersion,
-			comment:       &writeReq.Comment,
+		versionMatcher := objectVersionMatcher{
+			updatedRange: []time.Time{before, time.Now()},
+			updatedBy:    fakeUser,
+			version:      &firstVersion,
+			comment:      &writeReq.Comment,
 		}
-		requireObjectMatch(t, writeResp.Object, objectMatcher)
+		requireVersionMatch(t, writeResp.Object, versionMatcher)
 
 		readResp, err := testCtx.client.Read(ctx, &object.ReadObjectRequest{
 			UID:      uid,
@@ -165,7 +164,18 @@ func TestObjectServer(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Nil(t, readResp.SummaryJson)
-		requireObjectMatch(t, writeResp.Object, objectMatcher)
+
+		objectMatcher := rawObjectMatcher{
+			uid:          &uid,
+			kind:         &kind,
+			createdRange: []time.Time{before, time.Now()},
+			updatedRange: []time.Time{before, time.Now()},
+			createdBy:    fakeUser,
+			updatedBy:    fakeUser,
+			body:         body,
+			version:      &firstVersion,
+		}
+		requireObjectMatch(t, readResp.Object, objectMatcher)
 
 		deleteResp, err := testCtx.client.Delete(ctx, &object.DeleteObjectRequest{
 			UID:             uid,
@@ -195,6 +205,7 @@ func TestObjectServer(t *testing.T) {
 		}
 		writeResp1, err := testCtx.client.Write(ctx, writeReq1)
 		require.NoError(t, err)
+		require.Equal(t, object.WriteObjectResponse_CREATED, writeResp1.Status)
 
 		body2 := []byte("{\"name\":\"John2\"}")
 
@@ -208,6 +219,14 @@ func TestObjectServer(t *testing.T) {
 		require.NoError(t, err)
 		require.NotEqual(t, writeResp1.Object.Version, writeResp2.Object.Version)
 
+		// Duplicate write (no change)
+		writeDupRsp, err := testCtx.client.Write(ctx, writeReq2)
+		require.NoError(t, err)
+		require.Nil(t, writeDupRsp.Error)
+		require.Equal(t, object.WriteObjectResponse_UNCHANGED, writeDupRsp.Status)
+		require.Equal(t, writeResp2.Object.Version, writeDupRsp.Object.Version)
+		require.Equal(t, writeResp2.Object.ETag, writeDupRsp.Object.ETag)
+
 		body3 := []byte("{\"name\":\"John3\"}")
 		writeReq3 := &object.WriteObjectRequest{
 			UID:     uid,
@@ -220,15 +239,14 @@ func TestObjectServer(t *testing.T) {
 		require.NotEqual(t, writeResp3.Object.Version, writeResp2.Object.Version)
 
 		latestMatcher := rawObjectMatcher{
-			uid:           &uid,
-			kind:          &kind,
-			createdRange:  []time.Time{before, time.Now()},
-			modifiedRange: []time.Time{before, time.Now()},
-			createdBy:     fakeUser,
-			modifiedBy:    fakeUser,
-			body:          body3,
-			version:       &writeResp3.Object.Version,
-			comment:       &writeReq3.Comment,
+			uid:          &uid,
+			kind:         &kind,
+			createdRange: []time.Time{before, time.Now()},
+			updatedRange: []time.Time{before, time.Now()},
+			createdBy:    fakeUser,
+			updatedBy:    fakeUser,
+			body:         body3,
+			version:      &writeResp3.Object.Version,
 		}
 		readRespLatest, err := testCtx.client.Read(ctx, &object.ReadObjectRequest{
 			UID:      uid,
@@ -251,15 +269,14 @@ func TestObjectServer(t *testing.T) {
 		require.Nil(t, readRespFirstVer.SummaryJson)
 		require.NotNil(t, readRespFirstVer.Object)
 		requireObjectMatch(t, readRespFirstVer.Object, rawObjectMatcher{
-			uid:           &uid,
-			kind:          &kind,
-			createdRange:  []time.Time{before, time.Now()},
-			modifiedRange: []time.Time{before, time.Now()},
-			createdBy:     fakeUser,
-			modifiedBy:    fakeUser,
-			body:          body,
-			version:       &firstVersion,
-			comment:       &writeReq1.Comment,
+			uid:          &uid,
+			kind:         &kind,
+			createdRange: []time.Time{before, time.Now()},
+			updatedRange: []time.Time{before, time.Now()},
+			createdBy:    fakeUser,
+			updatedBy:    fakeUser,
+			body:         body,
+			version:      &firstVersion,
 		})
 
 		history, err := testCtx.client.History(ctx, &object.ObjectHistoryRequest{
@@ -267,11 +284,11 @@ func TestObjectServer(t *testing.T) {
 			Kind: kind,
 		})
 		require.NoError(t, err)
-		require.Equal(t, []*object.RawObject{
-			writeResp1.Object,
-			writeResp2.Object,
+		require.Equal(t, []*object.ObjectVersionInfo{
 			writeResp3.Object,
-		}, history.Object)
+			writeResp2.Object,
+			writeResp1.Object,
+		}, history.Versions)
 
 		deleteResp, err := testCtx.client.Delete(ctx, &object.DeleteObjectRequest{
 			UID:             uid,
@@ -316,19 +333,47 @@ func TestObjectServer(t *testing.T) {
 		require.NoError(t, err)
 
 		search, err := testCtx.client.Search(ctx, &object.ObjectSearchRequest{
-			Kind: []string{kind, kind2},
+			Kind:     []string{kind, kind2},
+			WithBody: false,
 		})
 		require.NoError(t, err)
-		require.Equal(t, []*object.RawObject{
-			w1.Object, w2.Object, w3.Object, w4.Object,
-		}, search.Results)
 
+		require.NotNil(t, search)
+		uids := make([]string, 0, len(search.Results))
+		kinds := make([]string, 0, len(search.Results))
+		version := make([]string, 0, len(search.Results))
+		for _, res := range search.Results {
+			uids = append(uids, res.UID)
+			kinds = append(kinds, res.Kind)
+			version = append(version, res.Version)
+		}
+		require.Equal(t, []string{"my-test-entity", "uid2", "uid3", "uid4"}, uids)
+		require.Equal(t, []string{"dummy", "dummy", "kind2", "kind2"}, kinds)
+		require.Equal(t, []string{
+			w1.Object.Version,
+			w2.Object.Version,
+			w3.Object.Version,
+			w4.Object.Version,
+		}, version)
+
+		// Again with only one kind
 		searchKind1, err := testCtx.client.Search(ctx, &object.ObjectSearchRequest{
 			Kind: []string{kind},
 		})
 		require.NoError(t, err)
-		require.Equal(t, []*object.RawObject{
-			w1.Object, w2.Object,
-		}, searchKind1.Results)
+		uids = make([]string, 0, len(searchKind1.Results))
+		kinds = make([]string, 0, len(searchKind1.Results))
+		version = make([]string, 0, len(searchKind1.Results))
+		for _, res := range searchKind1.Results {
+			uids = append(uids, res.UID)
+			kinds = append(kinds, res.Kind)
+			version = append(version, res.Version)
+		}
+		require.Equal(t, []string{"my-test-entity", "uid2"}, uids)
+		require.Equal(t, []string{"dummy", "dummy"}, kinds)
+		require.Equal(t, []string{
+			w1.Object.Version,
+			w2.Object.Version,
+		}, version)
 	})
 }

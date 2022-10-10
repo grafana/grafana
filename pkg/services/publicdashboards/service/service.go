@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/tokens"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/queries"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/validation"
@@ -147,7 +147,7 @@ func (pd *PublicDashboardServiceImpl) savePublicDashboardConfig(ctx context.Cont
 		return "", err
 	}
 
-	accessToken, err := GenerateAccessToken()
+	accessToken, err := tokens.GenerateAccessToken()
 	if err != nil {
 		return "", err
 	}
@@ -292,14 +292,8 @@ func (pd *PublicDashboardServiceImpl) AccessTokenExists(ctx context.Context, acc
 	return pd.store.AccessTokenExists(ctx, accessToken)
 }
 
-// generates a uuid formatted without dashes to use as access token
-func GenerateAccessToken() (string, error) {
-	token, err := uuid.NewRandom()
-	if err != nil {
-		return "", err
-	}
-
-	return fmt.Sprintf("%x", token[:]), nil
+func (pd *PublicDashboardServiceImpl) GetPublicDashboardOrgId(ctx context.Context, accessToken string) (int64, error) {
+	return pd.store.GetPublicDashboardOrgId(ctx, accessToken)
 }
 
 // intervalMS and maxQueryData values are being calculated on the frontend for regular dashboards

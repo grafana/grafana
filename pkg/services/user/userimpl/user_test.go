@@ -129,10 +129,12 @@ func TestUserService(t *testing.T) {
 }
 
 type FakeUserStore struct {
-	ExpectedUser            *user.User
-	ExpectedSignedInUser    *user.SignedInUser
-	ExpectedError           error
-	ExpectedDeleteUserError error
+	ExpectedUser                  *user.User
+	ExpectedSignedInUser          *user.SignedInUser
+	ExpectedUserProfile           *user.UserProfileDTO
+	ExpectedSearchUserQueryResult *user.SearchUserQueryResult
+	ExpectedError                 error
+	ExpectedDeleteUserError       error
 }
 
 func newUserStoreFake() *FakeUserStore {
@@ -189,4 +191,28 @@ func (f *FakeUserStore) GetSignedInUser(ctx context.Context, query *user.GetSign
 
 func (f *FakeUserStore) UpdateUser(ctx context.Context, user *user.User) error {
 	return f.ExpectedError
+}
+
+func (f *FakeUserStore) GetProfile(ctx context.Context, query *user.GetUserProfileQuery) (*user.UserProfileDTO, error) {
+	return f.ExpectedUserProfile, f.ExpectedError
+}
+
+func (f *FakeUserStore) SetHelpFlag(ctx context.Context, cmd *user.SetUserHelpFlagCommand) error {
+	return f.ExpectedError
+}
+
+func (f *FakeUserStore) UpdatePermissions(ctx context.Context, userID int64, isAdmin bool) error {
+	return f.ExpectedError
+}
+
+func (f *FakeUserStore) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisableUsersCommand) error {
+	return f.ExpectedError
+}
+
+func (f *FakeUserStore) Disable(ctx context.Context, cmd *user.DisableUserCommand) error {
+	return f.ExpectedError
+}
+
+func (f *FakeUserStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
+	return f.ExpectedSearchUserQueryResult, f.ExpectedError
 }

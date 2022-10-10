@@ -31,14 +31,12 @@ const (
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
 type Model struct {
-	// Unique playlist identifier for internal use, set by Grafana.
-	Id int64 `json:"id"`
-
 	// Interval sets the time between switching views in a playlist.
 	// FIXME: Is this based on a standardized format or what options are available? Can datemath be used?
 	Interval string `json:"interval"`
 
 	// The ordered list of items that the playlist will iterate over.
+	// FIXME! This should not be optional, but changing it makes the godegen awkward
 	Items *[]PlaylistItem `json:"items,omitempty"`
 
 	// Name of the playlist.
@@ -54,18 +52,8 @@ type Model struct {
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
 type PlaylistItem struct {
-	// FIXME: The prefixDropper removes playlist from playlist_id, that doesn't work for us since it'll mean we'll have Id twice.
-	// ID of the playlist item for internal use by Grafana. Deprecated.
-	Id int64 `json:"id"`
-
-	// Order is the position in the list for the item. Deprecated.
-	Order int `json:"order"`
-
-	// ID for the playlist containing the item. Deprecated.
-	Playlistid int64 `json:"playlistid"`
-
-	// Title is the human-readable identifier for the playlist item.
-	Title string `json:"title"`
+	// Title is an unused property -- it will be removed in the future
+	Title *string `json:"title,omitempty"`
 
 	// Type of the item.
 	Type PlaylistItemType `json:"type"`
@@ -74,9 +62,10 @@ type PlaylistItem struct {
 	//
 	//  - dashboard_by_id: The value is an internal numerical identifier set by Grafana. This
 	//  is not portable as the numerical identifier is non-deterministic between different instances.
-	//  Will be replaced by dashboard_by_uid in the future.
+	//  Will be replaced by dashboard_by_uid in the future. (deprecated)
 	//  - dashboard_by_tag: The value is a tag which is set on any number of dashboards. All
 	//  dashboards behind the tag will be added to the playlist.
+	//  - dashboard_by_uid: The value is the dashboard UID
 	Value string `json:"value"`
 }
 
