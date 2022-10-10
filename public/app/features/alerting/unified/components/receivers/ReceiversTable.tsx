@@ -8,6 +8,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AlertManagerCortexConfig, Receiver } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch, AccessControlAction, ContactPointsState, NotifiersState, ReceiversState } from 'app/types';
 
+import { receiversApi } from '../../api/receiversApi';
 import { Authorize } from '../../components/Authorize';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { deleteReceiverAction } from '../../state/actions';
@@ -17,7 +18,6 @@ import { isReceiverUsed } from '../../utils/alertmanager';
 import { isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
 import { makeAMLink } from '../../utils/misc';
 import { extractNotifierTypeCounts } from '../../utils/receivers';
-import { initialAsyncRequestState } from '../../utils/redux';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { ProvisioningBadge } from '../Provisioning';
 import { ActionIcon } from '../rules/ActionIcon';
@@ -122,8 +122,9 @@ function ReceiverHealth({ errorsByReceiver, someWithNoAttempt }: ReceiverHealthP
   );
 }
 const useContactPointsState = (alertManagerName: string) => {
-  const contactPointsStateRequest = useUnifiedAlertingSelector((state) => state.contactPointsState);
-  const { result: contactPointsState } = (alertManagerName && contactPointsStateRequest) || initialAsyncRequestState;
+  const { currentData: contactPointsState } = receiversApi.endpoints.contactPointsState.useQueryState({
+    amSourceName: alertManagerName,
+  });
   const receivers: ReceiversState = contactPointsState?.receivers ?? {};
   const errorStateAvailable = Object.keys(receivers).length > 0; // this logic can change depending on how we implement this in the BE
   return { contactPointsState, errorStateAvailable };

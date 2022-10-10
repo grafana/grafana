@@ -7,6 +7,7 @@ import { NavModelItem, GrafanaTheme2 } from '@grafana/data';
 import { Alert, LoadingPlaceholder, withErrorBoundary, useStyles2, Icon, Stack } from '@grafana/ui';
 import { useDispatch } from 'app/types';
 
+import { receiversApi } from './api/receiversApi';
 import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { NoAlertManagerWarning } from './components/NoAlertManagerWarning';
@@ -19,11 +20,7 @@ import { ReceiversAndTemplatesView } from './components/receivers/ReceiversAndTe
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
 import { useAlertManagersByPermission } from './hooks/useAlertManagerSources';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
-import {
-  fetchAlertManagerConfigAction,
-  fetchContactPointsStateAction,
-  fetchGrafanaNotifiersAction,
-} from './state/actions';
+import { fetchAlertManagerConfigAction, fetchGrafanaNotifiersAction } from './state/actions';
 import { CONTACT_POINTS_STATE_INTERVAL_MS } from './utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { initialAsyncRequestState } from './utils/redux';
@@ -63,16 +60,12 @@ const Receivers: FC = () => {
   const isRoot = location.pathname.endsWith('/alerting/notifications');
 
   const configRequests = useUnifiedAlertingSelector((state) => state.amConfigs);
-  const contactPointsStateRequest = useUnifiedAlertingSelector((state) => state.contactPointsState);
 
   const {
     result: config,
     loading,
     error,
   } = (alertManagerSourceName && configRequests[alertManagerSourceName]) || initialAsyncRequestState;
-
-  const { result: contactPointsState } =
-    (alertManagerSourceName && contactPointsStateRequest) || initialAsyncRequestState;
 
   const receiverTypes = useUnifiedAlertingSelector((state) => state.grafanaNotifiers);
 
@@ -94,18 +87,10 @@ const Receivers: FC = () => {
     }
   }, [alertManagerSourceName, dispatch, receiverTypes]);
 
-  useEffect(() => {
-    function fetchContactPointStates() {
-      if (shouldRenderNotificationStatus && alertManagerSourceName) {
-        dispatch(fetchContactPointsStateAction(alertManagerSourceName));
-      }
-    }
-    fetchContactPointStates();
-    const interval = setInterval(fetchContactPointStates, CONTACT_POINTS_STATE_INTERVAL_MS);
-    return () => {
-      clearInterval(interval);
-    };
-  }, [shouldRenderNotificationStatus, alertManagerSourceName, dispatch]);
+  const { currentData: contactPointsState } = receiversApi.useContactPointsStateQuery(
+    { amSourceName: alertManagerSourceName ?? '' },
+    { skip: !alertManagerSourceName, pollingInterval: CONTACT_POINTS_STATE_INTERVAL_MS }
+  );
 
   const integrationsErrorCount = contactPointsState?.errorCount ?? 0;
 
