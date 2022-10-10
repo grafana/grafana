@@ -3,9 +3,10 @@ import React, { Children, cloneElement, isValidElement, ReactElement } from 'rea
 
 import { useStyles2 } from '../../themes';
 
+type Child = string | undefined | ReactElement<{ className?: string; invalid?: unknown }>;
 interface InputGroupProps {
   // we type the children props so we can test them later on
-  children: Array<ReactElement<{ className?: string; invalid?: unknown }>>;
+  children: Child | Child[];
 }
 
 export const InputGroup = ({ children }: InputGroupProps) => {
