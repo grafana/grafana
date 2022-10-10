@@ -22,7 +22,13 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService, RefreshEvent } from '@grafana/runtime';
 import { VizLegendOptions } from '@grafana/schema';
-import { ErrorBoundary, PanelContext, PanelContextProvider, SeriesVisibilityChangeMode } from '@grafana/ui';
+import {
+  ErrorBoundary,
+  PanelChrome,
+  PanelContext,
+  PanelContextProvider,
+  SeriesVisibilityChangeMode,
+} from '@grafana/ui';
 import { PANEL_BORDER } from 'app/core/constants';
 import { profiler } from 'app/core/profiler';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
@@ -37,6 +43,7 @@ import { DashboardModel, PanelModel } from '../state';
 import { loadSnapshotData } from '../utils/loadSnapshotData';
 
 import { PanelHeader } from './PanelHeader/PanelHeader';
+import { PanelHeaderLoadingIndicator } from './PanelHeader/PanelHeaderLoadingIndicator';
 import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
 import { liveTimer } from './liveTimer';
 
@@ -517,7 +524,14 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
       [`panel-alert-state--${alertState}`]: alertState !== undefined,
     });
 
-    return (
+    // for new panel header design
+    const onCancelQuery = () => panel.getQueryRunner().cancelQuery();
+    const title = panel.getDisplayTitle();
+
+    const leftItems = [
+      <PanelHeaderLoadingIndicator state={data.state} onClick={onCancelQuery} key="loading-indicator" />,
+    ];
+    return !config.featureToggles.newPanelChromeUI ? (
       <section
         className={containerClassNames}
         aria-label={selectors.components.Panels.Panel.containerByTitle(panel.title)}
@@ -547,6 +561,25 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
           }}
         </ErrorBoundary>
       </section>
+    ) : (
+      <PanelChrome width={width} height={height} title={title} leftItems={leftItems}>
+        {(innerWidth, innerHeight) => (
+          <>
+            <ErrorBoundary
+              dependencies={[data, plugin, panel.getOptions()]}
+              onError={this.onPanelError}
+              onRecover={this.onPanelErrorRecover}
+            >
+              {({ error }) => {
+                if (error) {
+                  return null;
+                }
+                return this.renderPanel(innerWidth, innerHeight);
+              }}
+            </ErrorBoundary>
+          </>
+        )}
+      </PanelChrome>
     );
   }
 }
