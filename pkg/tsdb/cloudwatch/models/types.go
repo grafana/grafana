@@ -8,6 +8,7 @@ import (
 
 type RequestContext struct {
 	MetricsClientProvider MetricsClientProvider
+	OAMClientProvider     OAMClientProvider
 	Settings              CloudWatchSettings
 }
 
