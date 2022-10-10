@@ -80,6 +80,7 @@ go.sum @grafana/backend-platform
 /pkg/services/live/ @grafana/grafana-edge-squad
 /pkg/services/searchV2/ @grafana/grafana-edge-squad
 /pkg/services/store/ @grafana/grafana-edge-squad
+/pkg/services/querylibrary/ @grafana/grafana-edge-squad
 /pkg/services/export/ @grafana/grafana-edge-squad
 /pkg/infra/filestore/ @grafana/grafana-edge-squad
 /pkg/tsdb/testdatasource/sims/ @grafana/grafana-edge-squad

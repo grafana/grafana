@@ -31,7 +31,7 @@ export interface VizTooltipContentProps<T extends Dimensions = any> {
 
 export interface VizTooltipProps {
   /** Element used as tooltips content */
-  content?: React.ReactElement<any>;
+  content?: React.ReactElement;
 
   /** Optional component to be used as a tooltip content */
   tooltipComponent?: React.ComponentType<VizTooltipContentProps>;
