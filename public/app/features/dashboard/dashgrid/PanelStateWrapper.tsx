@@ -64,7 +64,7 @@ export interface State {
   liveTime?: TimeRange;
 }
 
-export class PanelChrome extends PureComponent<Props, State> {
+export class PanelStateWrapper extends PureComponent<Props, State> {
   private readonly timeSrv: TimeSrv = getTimeSrv();
   private subs = new Subscription();
   private eventFilter: EventFilterOptions = { onlyLocal: true };
