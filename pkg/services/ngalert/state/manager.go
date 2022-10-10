@@ -40,12 +40,13 @@ type Manager struct {
 	instanceStore InstanceStore
 	imageService  image.ImageService
 	historian     Historian
+	externalURL   *url.URL
 }
 
 func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL,
 	ruleStore RuleReader, instanceStore InstanceStore, imageService image.ImageService, clock clock.Clock, historian Historian) *Manager {
 	manager := &Manager{
-		cache:         newCache(logger, metrics, externalURL),
+		cache:         newCache(),
 		quit:          make(chan struct{}),
 		ResendDelay:   ResendDelay, // TODO: make this configurable
 		log:           logger,
@@ -55,6 +56,7 @@ func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL,
 		imageService:  imageService,
 		historian:     historian,
 		clock:         clock,
+		externalURL:   externalURL,
 	}
 	go manager.recordMetrics()
 	return manager
@@ -65,15 +67,16 @@ func (st *Manager) Close() {
 }
 
 func (st *Manager) Warm(ctx context.Context) {
-	st.log.Info("warming cache for startup")
-	st.ResetAllStates()
+	startTime := time.Now()
+	st.log.Info("Warming state cache for startup")
 
 	orgIds, err := st.instanceStore.FetchOrgIds(ctx)
 	if err != nil {
-		st.log.Error("unable to fetch orgIds", "msg", err.Error())
+		st.log.Error("unable to fetch orgIds", "err", err.Error())
 	}
 
-	var states []*State
+	statesCount := 0
+	states := make(map[int64]map[string]*ruleStates, len(orgIds))
 	for _, orgId := range orgIds {
 		// Get Rules
 		ruleCmd := ngModels.ListAlertRulesQuery{
@@ -88,6 +91,9 @@ func (st *Manager) Warm(ctx context.Context) {
 			ruleByUID[rule.UID] = rule
 		}
 
+		orgStates := make(map[string]*ruleStates, len(ruleByUID))
+		states[orgId] = orgStates
+
 		// Get Instances
 		cmd := ngModels.ListAlertInstancesQuery{
 			RuleOrgID: orgId,
@@ -99,8 +105,14 @@ func (st *Manager) Warm(ctx context.Context) {
 		for _, entry := range cmd.Result {
 			ruleForEntry, ok := ruleByUID[entry.RuleUID]
 			if !ok {
-				st.log.Error("rule not found for instance, ignoring", "rule", entry.RuleUID)
+				// TODO Should we delete the orphaned state from the db?
 				continue
+			}
+
+			rulesStates, ok := orgStates[entry.RuleUID]
+			if !ok {
+				rulesStates = &ruleStates{states: make(map[string]*State)}
+				orgStates[entry.RuleUID] = rulesStates
 			}
 
 			lbs := map[string]string(entry.Labels)
@@ -108,7 +120,7 @@ func (st *Manager) Warm(ctx context.Context) {
 			if err != nil {
 				st.log.Error("error getting cacheId for entry", "msg", err.Error())
 			}
-			stateForEntry := &State{
+			rulesStates.states[cacheId] = &State{
 				AlertRuleUID:         entry.RuleUID,
 				OrgID:                entry.RuleOrgID,
 				CacheId:              cacheId,
@@ -121,30 +133,15 @@ func (st *Manager) Warm(ctx context.Context) {
 				LastEvaluationTime:   entry.LastEvalTime,
 				Annotations:          ruleForEntry.Annotations,
 			}
-			states = append(states, stateForEntry)
+			statesCount++
 		}
 	}
-
-	for _, s := range states {
-		st.set(s)
-	}
+	st.cache.setAllStates(states)
+	st.log.Info("State cache has been initialized", "loaded_states", statesCount, "duration", time.Since(startTime))
 }
 
-func (st *Manager) getOrCreate(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels) *State {
-	return st.cache.getOrCreate(ctx, alertRule, result, extraLabels)
-}
-
-func (st *Manager) set(entry *State) {
-	st.cache.set(entry)
-}
-
-func (st *Manager) Get(orgID int64, alertRuleUID, stateId string) (*State, error) {
+func (st *Manager) Get(orgID int64, alertRuleUID, stateId string) *State {
 	return st.cache.get(orgID, alertRuleUID, stateId)
-}
-
-// ResetAllStates is used to ensure a clean cache on startup.
-func (st *Manager) ResetAllStates() {
-	st.cache.reset()
 }
 
 // ResetStateByRuleUID deletes all entries in the state manager that match the given rule UID.
@@ -215,7 +212,7 @@ func (st *Manager) maybeTakeScreenshot(
 
 // Set the current state based on evaluation results
 func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels) *State {
-	currentState := st.getOrCreate(ctx, alertRule, result, extraLabels)
+	currentState := st.cache.getOrCreate(ctx, st.log, alertRule, result, extraLabels, st.externalURL)
 
 	currentState.LastEvaluationTime = result.EvaluatedAt
 	currentState.EvaluationDuration = result.EvaluationDuration
@@ -265,7 +262,7 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 			"err", err)
 	}
 
-	st.set(currentState)
+	st.cache.set(currentState)
 
 	shouldUpdateAnnotation := oldState != currentState.State || oldReason != currentState.StateReason
 	if shouldUpdateAnnotation {
@@ -291,7 +288,7 @@ func (st *Manager) recordMetrics() {
 		select {
 		case <-ticker.C:
 			st.log.Debug("recording state cache metrics", "now", st.clock.Now())
-			st.cache.recordMetrics()
+			st.cache.recordMetrics(st.metrics)
 		case <-st.quit:
 			st.log.Debug("stopping state cache metrics recording", "now", st.clock.Now())
 			ticker.Stop()
@@ -302,7 +299,7 @@ func (st *Manager) recordMetrics() {
 
 func (st *Manager) Put(states []*State) {
 	for _, s := range states {
-		st.set(s)
+		st.cache.set(s)
 	}
 }
 
