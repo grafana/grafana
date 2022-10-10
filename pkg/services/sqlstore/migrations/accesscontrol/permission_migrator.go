@@ -1,7 +1,6 @@
 package accesscontrol
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -211,7 +210,7 @@ func batch(count, batchSize int, eachFn func(start, end int) error) error {
 func generateManagedRoleUID(orgID int64, name string) (string, error) {
 	parts := strings.Split(name, ":")
 	if len(parts) != 4 {
-		return "", errors.New(fmt.Sprintf("unexpected role name: %s", name))
+		return "", fmt.Errorf("unexpected role name: %s", name)
 	}
 	return fmt.Sprintf("managed_%d_%s_%s", orgID, parts[1], parts[2]), nil
 }
