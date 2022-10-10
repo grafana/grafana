@@ -1,8 +1,9 @@
 ---
 aliases:
   - /docs/grafana/latest/panels/query-a-data-source/share-query/
-  - /docs/sources/panels/query-a-data-source/share-query/
+  - /docs/grafana/latest/panels-visualizations/query-transform-data/share-query/
 title: Share query results with another panel
+menuTitle: Share query results
 weight: 60
 ---
 
@@ -14,9 +15,9 @@ The Dashboard data source lets you select a panel in your dashboard that contain
 
 This strategy can drastically reduce the number of queries being made when you for example have several panels visualizing the same data.
 
-1. [Create a dashboard and add a panel]({{< relref "../../dashboards/build-dashboards/add-organize-panels/#create-a-dashboard-and-add-a-panel" >}}).
+1. [Create a dashboard]({{< relref "../../../dashboards/build-dashboards/create-dashboard/" >}}).
 1. Change the title to "Source panel". You'll use this panel as a source for the other panels.
-1. Define the [query]({{< relref "add-a-query/" >}}) or queries that you want share.
+1. Define the [query]({{< relref "../#add-a-query" >}}) or queries that you want share.
 
    If you don't have a data source available, use the **Grafana** data source, which returns a random time series that you can use for testing.
 

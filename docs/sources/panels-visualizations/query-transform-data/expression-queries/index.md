@@ -1,18 +1,25 @@
 ---
 aliases:
+  - /docs/grafana/latest/panels/query-a-data-source/use-expressions-to-manipulate-data/
   - /docs/grafana/latest/panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions/
-  - /docs/sources/panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions/
-title: About expressions
-weight: 10
+  - /docs/grafana/latest/panels/query-a-data-source/use-expressions-to-manipulate-data/write-an-expression/
+  - docs/grafana/latest/panels-visualizations/query-transform-data/expression-queries/
+title: Write expression queries
+menuTitle: Write expression queries
+weight: 40
 ---
 
-# About expressions
+# Write expression queries
+
+Server-side expressions enable you to manipulate data returned from queries with math and other operations. Expressions create new data and do not manipulate the data returned by data sources.
+
+## About expressions
 
 > **Note:** This documentation is for a beta feature.
 
 Server-side expressions allow you to manipulate data returned from queries with math and other operations. Expressions create new data and do not manipulate the data returned by data sources, aside from some minor data restructuring to make the data acceptable input for expressions.
 
-## Using expressions
+### Using expressions
 
 Expressions are primarily used by [Grafana Alerting]({{< relref "../../../alerting/" >}}). The processing is done server-side, so expressions can operate without a browser session. However, expressions can also be used with backend data sources and visualization.
 
@@ -28,7 +35,7 @@ An individual expression takes one or more queries or other expressions as input
 
 To reference the output of an individual expression or a data source query in another expression, this identifier is used as a variable.
 
-## Types of expressions
+### Types of expressions
 
 Expressions work with two types of data.
 
@@ -37,7 +44,7 @@ Expressions work with two types of data.
 
 Each collection is returned from a single data source query or expression and represented by the RefID. Each collection is a set, where each item in the set is uniquely identified by its dimensions which are stored as [labels]({{< relref "../../../basics/timeseries-dimensions/#labels" >}}) or key-value pairs.
 
-## Data source queries
+### Data source queries
 
 Server-side expressions only support data source queries for backend data sources. The data is generally assumed to be labeled time series data. In the future we intended to add an assertion of the query return type (number or time series) data so expressions can handle errors better.
 
@@ -52,11 +59,11 @@ Currently, the only non-time series format (number) is supported when using data
 
 The example above will produce a number that works with expressions. The string columns become labels and the number column the corresponding value. For example `{"Loc": "MIA", "Host": "A"}` with a value of 1.
 
-## Operations
+### Operations
 
 You can use the following operations in expressions: math, reduce, and resample.
 
-### Math
+#### Math
 
 Math is for free-form math formulas on time series or number data. Math operations take numbers and time series as input and changes them to different numbers and time series.
 
@@ -64,7 +71,7 @@ Data from other queries or expressions are referenced with the RefID prefixed wi
 
 Numeric constants may be in decimal (`2.24`), octal (with a leading zero like `072`), or hex (with a leading 0x like `0x2A`). Exponentials and signs are also supported (e.g., `-0.8e-2`).
 
-#### Operators
+##### Operators
 
 The arithmetic (`+`, binary and unary `-`, `*`, `/`, `%`, exponent `**`), relational (`<`, `>`, `==`, `!=`, `>=`, `<=`), and logical (`&&`, `||`, and unary `!`) operators are supported.
 
@@ -94,53 +101,53 @@ So if you have numbers with labels like `{host=web01}` in `$A` and another numbe
 
 The relational and logical operators return 0 for false 1 for true.
 
-#### Math Functions
+##### Math Functions
 
 While most functions exist in the own expression operations, the math operation does have some functions that similar to math operators or symbols. When functions can take either numbers or series, than the same type as the argument will be returned. When it is a series, the operation of performed for the value of each point in the series.
 
-##### abs
+###### abs
 
 abs returns the absolute value of its argument which can be a number or a series. For example `abs(-1)` or `abs($A)`.
 
-##### is_inf
+###### is_inf
 
 is_inf takes a number or a series and returns `1` for `Inf` values (negative or positive) and `0` for other values. For example `is_inf($A)`.
 
 > **Note:** If you need to specifically check for negative infinity for example, you can do a comparison like `$A == infn()`.
 
-##### is_nan
+###### is_nan
 
 is_nan takes a number or a series and returns `1` for `NaN` values and `0` for other values. For example `is_nan($A)`. This function exists because `NaN` is not equal to `NaN`.
 
-##### is_null
+###### is_null
 
 is_null takes a number or a series and returns `1` for `null` values and `0` for other values. For example `is_null($A)`.
 
-##### is_number
+###### is_number
 
 is_number takes a number or a series and returns `1` for all real number values and `0` for other values (which are `null`, `Inf+`, `Inf-`, and `NaN`). For example `is_number($A)`.
 
-##### log
+###### log
 
 Log returns the natural logarithm of of its argument which can be a number or a series. If the value is less than 0, NaN is returned. For example `log(-1)` or `log($A)`.
 
-##### inf, infn, nan, and null
+###### inf, infn, nan, and null
 
 The inf, infn, nan, and null functions all return a single value of the name. They primarily exist for testing. Example: `null()`.
 
-##### round
+###### round
 
 Round returns a rounded integer value. For example, `round(3.123)` or `round($A)`. (This function should probably take an argument so it can add precision to the rounded value).
 
-##### ceil
+###### ceil
 
 Ceil rounds the number up to the nearest integer value. For example, `ceil(3.123)` returns 4.
 
-##### floor
+###### floor
 
 Floor rounds the number down to the nearest integer value. For example, `floor(3.123)` returns 3.
 
-### Reduce
+#### Reduce
 
 Reduce takes one or more time series returned from a query or an expression and turns each series into a single number. The labels of the time series are kept as labels on each outputted reduced number.
 
@@ -150,43 +157,43 @@ Reduce takes one or more time series returned from a query or an expression and 
 - **Input -** The variable (refID (such as `A`)) to resample
 - **Mode -** Allows control behavior of reduction function when a series contains non-numerical values (null, NaN, +\-Inf)
 
-#### Reduction Functions
+##### Reduction Functions
 
-##### Count
+###### Count
 
 Count returns the number of points in each series.
 
-##### Mean
+###### Mean
 
 Mean returns the total of all values in each series divided by the number of points in that series. In `strict` mode if any values in the series are null or nan, or if the series is empty, NaN is returned.
 
-##### Min and Max
+###### Min and Max
 
 Min and Max return the smallest or largest value in the series respectively. In `strict` mode if any values in the series are null or nan, or if the series is empty, NaN is returned.
 
-##### Sum
+###### Sum
 
 Sum returns the total of all values in the series. If series is of zero length, the sum will be 0. In `strict` mode if there are any NaN or Null values in the series, NaN is returned.
 
-#### Last
+##### Last
 
 Last returns the last number in the series. If the series has no values then returns NaN.
 
-#### Reduction Modes
+##### Reduction Modes
 
-##### Strict
+###### Strict
 
 In Strict mode the input series is processed as is. If any values in the series are non-numeric (null, NaN or +\-Inf), NaN is returned.
 
-##### Drop Non-Numeric
+###### Drop Non-Numeric
 
 In this mode all non-numeric values (null, NaN or +\-Inf) in the input series are filtered out before executing the reduction function.
 
-##### Replace Non-Numeric
+###### Replace Non-Numeric
 
 In this mode all non-numeric values are replaced by a pre-defined value.
 
-### Resample
+#### Resample
 
 Resample changes the time stamps in each time series to have a consistent time interval. The main use case is so you can resample time series that do not share the same timestamps so math can be performed between them. This can be done by resample each of the two series, and then in a Math operation referencing the resampled variables.
 
@@ -199,3 +206,18 @@ Resample changes the time stamps in each time series to have a consistent time i
   - **pad** fills with the last know value
   - **backfill** with next known value
   - **fillna** to fill empty sample windows with NaNs
+
+## Write an expression
+
+If your data source supports them, then Grafana displays the **Expression** button and shows any existing expressions in the query editor list.
+
+For more information about expressions, refer to [About expressions]({{< relref "#about-expressions" >}}).
+
+1. Open the panel.
+1. Below the query, click **Expression**.
+1. In the **Operation** field, select the type of expression you want to write.
+
+   For more information about expression operations, refer to [About expressions]({{< relref "#about-expressions" >}}).
+
+1. Write the expression.
+1. Click **Apply**.
