@@ -80,7 +80,7 @@ const RuleList = withErrorBoundary(
     useInterval(fetchRules, RULE_LIST_POLL_INTERVAL_MS);
 
     // Show splash only when we loaded all of the data sources and none of them has alerts
-    const showNewAlertSplash = allPromLoaded && allPromEmpty && promRequests.length > 0;
+    const hasNoAlertRulesCreatedYet = allPromLoaded && allPromEmpty && promRequests.length > 0;
 
     const combinedNamespaces: CombinedRuleNamespace[] = useCombinedRuleNamespaces();
     const filteredNamespaces = useFilteredRules(combinedNamespaces);
@@ -90,7 +90,7 @@ const RuleList = withErrorBoundary(
       <AlertingPageWrapper pageId="alert-list" isLoading={false}>
         <RuleListErrors />
         <RulesFilter />
-        {!showNewAlertSplash && (
+        {!hasNoAlertRulesCreatedYet && (
           <>
             <div className={styles.break} />
             <div className={styles.buttonsContainer}>
@@ -119,8 +119,8 @@ const RuleList = withErrorBoundary(
             </div>
           </>
         )}
-        {showNewAlertSplash && <NoRulesSplash />}
-        {!showNewAlertSplash && <ViewComponent expandAll={expandAll} namespaces={filteredNamespaces} />}
+        {hasNoAlertRulesCreatedYet && <NoRulesSplash />}
+        {!hasNoAlertRulesCreatedYet && <ViewComponent expandAll={expandAll} namespaces={filteredNamespaces} />}
       </AlertingPageWrapper>
     );
   },
