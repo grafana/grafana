@@ -27,7 +27,7 @@ export function TopNavBarMenu({ node: nodePlain }: TopNavBarMenuProps) {
     <Menu
       header={
         <div onClick={(e) => e.stopPropagation()} className={styles.header}>
-          <div>{node.text}</div>
+          <div>{getNavTranslation(node.id) ?? node.text}</div>
           {node.subTitle && <div className={styles.subTitle}>{node.subTitle}</div>}
         </div>
       }

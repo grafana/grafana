@@ -40,6 +40,8 @@ export default function getNavTranslation(navId: string | undefined) {
       return t('nav.new-dashboard', 'New dashboard');
     case 'dashboards/folder/new':
       return t('nav.new-folder', 'New folder');
+    case 'scenes':
+      return t('nav.scenes', 'Scenes');
     case 'explore':
       return t('nav.explore', 'Explore');
     case 'alerting':
@@ -88,9 +90,11 @@ export default function getNavTranslation(navId: string | undefined) {
       return t('nav.live-cloud', 'Cloud');
     case 'help':
       return t('nav.help', 'Help');
-    case 'profile-settings':
+    case 'profile/settings':
       return t('nav.profile/settings', 'Preferences');
-    case 'change-password':
+    case 'profile/notifications':
+      return t('nav.profile/notifications', 'Notification history');
+    case 'profile/password':
       return t('nav.profile/password', 'Change password');
     case 'sign-out':
       return t('nav.sign-out', 'Sign out');

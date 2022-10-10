@@ -4,6 +4,8 @@ import React from 'react';
 import { NavModelItem, GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
+import getNavTranslation from '../NavBar/navBarItem-translations';
+
 export interface Props {
   navItem: NavModelItem;
   subTitle?: React.ReactNode;
@@ -17,7 +19,7 @@ export function PageHeader({ navItem, subTitle }: Props) {
     <>
       <h1 className={styles.pageTitle}>
         {navItem.img && <img className={styles.pageImg} src={navItem.img} alt={`logo for ${navItem.text}`} />}
-        {navItem.text}
+        {getNavTranslation(navItem.id) ?? navItem.text}
       </h1>
       {sub && <div className={styles.pageSubTitle}>{sub}</div>}
       {navItem.headerExtra && <navItem.headerExtra />}

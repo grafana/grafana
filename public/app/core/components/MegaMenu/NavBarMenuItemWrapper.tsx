@@ -52,7 +52,7 @@ export function NavBarMenuItemWrapper({
                   target={childLink.target}
                   url={childLink.url}
                 >
-                  {childLink.text}
+                  {getNavTranslation(childLink.id) ?? childLink.text}
                 </NavBarMenuItem>
               )
             );
