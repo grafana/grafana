@@ -27,7 +27,7 @@ function renderComponent({
   );
 }
 
-describe('MonacoQueryField', () => {
+describe('MonacoFieldWrapper', () => {
   test('Renders with no errors', async () => {
     renderComponent();
 
