@@ -1,6 +1,6 @@
 import { NavModelItem } from '@grafana/data';
 
-import getNavTranslation from '../NavBar/navBarItem-translations';
+import { getNavTitle } from '../NavBar/navBarItem-translations';
 
 import { Breadcrumb } from './types';
 
@@ -18,10 +18,10 @@ export function buildBreadcrumbs(homeNav: NavModelItem, sectionNav: NavModelItem
     }
     if (!foundHome && !node.hideFromBreadcrumbs) {
       if (urlToMatch === homeNav.url) {
-        crumbs.unshift({ text: getNavTranslation(homeNav.id) ?? homeNav.text, href: node.url ?? '' });
+        crumbs.unshift({ text: getNavTitle(homeNav.id) ?? homeNav.text, href: node.url ?? '' });
         foundHome = true;
       } else {
-        crumbs.unshift({ text: getNavTranslation(node.id) ?? node.text, href: node.url ?? '' });
+        crumbs.unshift({ text: getNavTitle(node.id) ?? node.text, href: node.url ?? '' });
       }
     }
 
