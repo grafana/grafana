@@ -51,15 +51,10 @@ The following steps guide you in adding a transformation to data. This documenta
 1. Click the panel title and then click **Edit**.
 1. Click the **Transform** tab.
 1. Click a transformation.
-
    A transformation row appears where you configure the transformation options. For more information about how to configure a transformation, refer to [Transformation functions]({{< relref "#transformation-functions" >}}).
-
    For information about available calculations, refer to [Calculation types]({{< relref "../../calculation-types" >}}).
-
 1. To apply another transformation, click **Add transformation**.
-
    This transformation acts on the result set returned by the previous transformation.
-
    {{< figure src="/static/img/docs/transformations/transformations-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
 ## Debug a transformation
