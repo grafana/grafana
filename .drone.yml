@@ -2487,7 +2487,8 @@ clone:
   retries: 3
 depends_on:
 - release-oss-build-e2e-publish
-- release-oss-test
+- release-oss-test-frontend
+- release-oss-test-backend
 - release-oss-integration-tests
 environment:
   EDITION: oss
@@ -3272,7 +3273,8 @@ clone:
   disable: true
 depends_on:
 - release-enterprise-build-e2e-publish
-- release-enterprise-test
+- release-enterprise-test-frontend
+- release-enterprise-test-backend
 - release-enterprise-integration-tests
 environment:
   EDITION: enterprise
@@ -4461,7 +4463,8 @@ clone:
   retries: 3
 depends_on:
 - release-branch-oss-build-e2e-publish
-- release-branch-oss-test
+- release-branch-oss-test-frontend
+- release-branch-oss-test-backend
 - release-branch-oss-integration-tests
 environment:
   EDITION: oss
@@ -5198,7 +5201,8 @@ clone:
   disable: true
 depends_on:
 - release-branch-enterprise-build-e2e-publish
-- release-branch-enterprise-test
+- release-branch-enterprise-test-frontend
+- release-branch-enterprise-test-backend
 - release-branch-enterprise-integration-tests
 environment:
   EDITION: enterprise
@@ -5490,6 +5494,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 975d7fa9e21991017d3b176aede1025b0aff8721adc1029ae234221b8b40ef19
+hmac: 9ba807a4d05f8cdd13e763174e4fc91e8004df02d58cbcf8b36da5ffe11616ea
 
 ...

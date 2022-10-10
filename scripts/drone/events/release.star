@@ -213,7 +213,8 @@ def get_oss_pipelines(trigger, ver_mode):
         deps = {
             'depends_on': [
                 '{}-oss-build{}-publish'.format(ver_mode, get_e2e_suffix()),
-                '{}-oss-test'.format(ver_mode),
+                '{}-oss-test-frontend'.format(ver_mode),
+                '{}-oss-test-backend'.format(ver_mode),
                 '{}-oss-integration-tests'.format(ver_mode)
             ]
         }
@@ -339,7 +340,8 @@ def get_enterprise_pipelines(trigger, ver_mode):
         deps = {
             'depends_on': [
                 '{}-enterprise-build{}-publish'.format(ver_mode, get_e2e_suffix()),
-                '{}-enterprise-test'.format(ver_mode),
+                '{}-enterprise-test-frontend'.format(ver_mode),
+                '{}-enterprise-test-backend'.format(ver_mode),
                 '{}-enterprise-integration-tests'.format(ver_mode)
             ]
         }
