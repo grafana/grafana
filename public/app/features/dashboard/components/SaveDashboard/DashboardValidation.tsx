@@ -13,26 +13,24 @@ interface DashboardValidationProps {
   dashboard: DashboardModel;
 }
 
+type ValidationResponse = Awaited<ReturnType<typeof backendSrv.validateDashboard>>;
+
 function DashboardValidation({ dashboard }: DashboardValidationProps) {
   const styles = useStyles2(getStyles);
   const { loading, value, error } = useAsync(async () => {
     const saveModel = dashboard.getSaveModelClone();
     const respPromise = backendSrv
       .validateDashboard(saveModel)
-      .catch((err: FetchError<Awaited<ReturnType<typeof backendSrv.validateDashboard>>>) => {
+      // API returns schema validation errors in 4xx range, so resolve them rather than throwing
+      .catch((err: FetchError<ValidationResponse>) => {
         if (err.status >= 500) {
           throw err;
         }
 
-        // don't throw on 4xx status codes
         return err.data;
       });
 
-    const validationResponse = await respPromise;
-
-    console.log('validationResponse', validationResponse);
-
-    return validationResponse;
+    return respPromise;
   }, [dashboard]);
 
   let alert: React.ReactNode;
@@ -40,7 +38,6 @@ function DashboardValidation({ dashboard }: DashboardValidationProps) {
   if (loading) {
     alert = <Alert severity="info" title="Checking dashboard validity" />;
   } else if (value) {
-    // API will respond with status 200 even if the dashboard is invalid.
     if (!value.isValid) {
       alert = (
         <Alert severity="warning" title="Dashboard failed schema validation">
@@ -53,7 +50,6 @@ function DashboardValidation({ dashboard }: DashboardValidationProps) {
       );
     }
   } else {
-    // non-200 response from the API. This shouldn't happen normally
     const errorMessage = error?.message ?? 'Unknown error';
     alert = (
       <Alert severity="info" title="Error checking dashboard validity">
