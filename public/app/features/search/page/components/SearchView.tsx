@@ -267,8 +267,13 @@ export const SearchView = ({
       );
     }
 
+    /**
+     * We have a parent with "flex: 1 1 0" we need to reset it to "flex: 1 1 auto" to have the AutoSizer
+     * properly working. For more information go here:
+     * https://github.com/bvaughn/react-virtualized/blob/master/docs/usingAutoSizer.md#can-i-use-autosizer-within-a-flex-container
+     */
     return (
-      <div style={{ height: '100%', width: '100%' }}>
+      <div style={{ flex: '1 1 auto' }}>
         <AutoSizer>
           {({ width, height }) => {
             const props: SearchResultsProps = {

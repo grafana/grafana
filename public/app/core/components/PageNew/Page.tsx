@@ -162,6 +162,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexGrow: 1,
     }),
     pageContent: css({
+      display: 'flex',
+      flexDirection: 'column',
       label: 'page-content',
       flexGrow: 1,
     }),
