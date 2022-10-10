@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -80,7 +79,7 @@ func prepareEnv(grafanaDir, grafanaEnterpriseDir, branch, token string) *git.Rep
 	err = cmd.Run()
 	CheckIfError(cmd.Err)
 
-	files, err := ioutil.ReadDir(filepath.Join(grafanaDir, "pkg", "extensions"))
+	files, err := os.ReadDir(filepath.Join(grafanaDir, "pkg", "extensions"))
 	CheckIfError(err)
 	Info("pkg/extensions: %d", len(files))
 
@@ -144,18 +143,16 @@ func main() {
 
 	fmt.Println(">>>>>>>", dir, branch)
 
-	grafanaDir := filepath.Join(dir, "grafana")
-	grafanaEnterpriseDir := filepath.Join(dir, "grafana-enterprise")
-
-	files, err := ioutil.ReadDir(grafanaDir)
+	files, err := os.ReadDir(dir)
 	CheckIfError(err)
-	Info("grafana: %d", len(files))
-
-	files, err = ioutil.ReadDir(grafanaEnterpriseDir)
-	CheckIfError(err)
-	Info("grafana: %d", len(files))
+	for _, f := range files {
+		fmt.Println(f.IsDir(), f.IsDir())
+	}
 
 	/*
+		grafanaDir := filepath.Join(dir, "grafana")
+		grafanaEnterpriseDir := filepath.Join(dir, "grafana-enterprise")
+
 		grafanaRepo := prepareEnv(grafanaDir, grafanaEnterpriseDir, branch, token)
 
 		generateSwagger(grafanaDir)
