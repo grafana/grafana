@@ -63,7 +63,7 @@ func TestGetHomeDashboard(t *testing.T) {
 		SQLStore:                mockstore.NewSQLStoreMock(),
 		preferenceService:       prefService,
 		dashboardVersionService: dashboardVersionService,
-		Coremodels:              registry.NewBase(),
+		Coremodels:              registry.NewBase(nil),
 	}
 
 	tests := []struct {
@@ -147,7 +147,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			Features:                featuremgmt.WithFeatures(),
 			DashboardService:        dashboardService,
 			dashboardVersionService: fakeDashboardVersionService,
-			Coremodels:              registry.NewBase(),
+			Coremodels:              registry.NewBase(nil),
 		}
 
 		setUp := func() {
@@ -269,7 +269,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			DashboardService:        dashboardService,
 			dashboardVersionService: fakeDashboardVersionService,
 			Features:                featuremgmt.WithFeatures(),
-			Coremodels:              registry.NewBase(),
+			Coremodels:              registry.NewBase(nil),
 		}
 
 		setUp := func() {
@@ -912,7 +912,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				AccessControl:                accesscontrolmock.New(),
 				DashboardService:             dashboardService,
 				Features:                     featuremgmt.WithFeatures(),
-				Coremodels:                   registry.NewBase(),
+				Coremodels:                   registry.NewBase(nil),
 			}
 			hs.callGetDashboard(sc)
 
@@ -967,7 +967,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 		),
 		DashboardService: dashboardService,
 		Features:         featuremgmt.WithFeatures(),
-		Coremodels:       registry.NewBase(),
+		Coremodels:       registry.NewBase(nil),
 	}
 
 	hs.callGetDashboard(sc)
@@ -1033,7 +1033,7 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 			DashboardService:      dashboardService,
 			folderService:         folderService,
 			Features:              featuremgmt.WithFeatures(),
-			Coremodels:            registry.NewBase(),
+			Coremodels:            registry.NewBase(nil),
 		}
 
 		sc := setupScenarioContext(t, url)
@@ -1066,7 +1066,7 @@ func postDiffScenario(t *testing.T, desc string, url string, routePattern string
 			SQLStore:                sqlmock,
 			dashboardVersionService: fakeDashboardVersionService,
 			Features:                featuremgmt.WithFeatures(),
-			Coremodels:              registry.NewBase(),
+			Coremodels:              registry.NewBase(nil),
 		}
 
 		sc := setupScenarioContext(t, url)
@@ -1105,7 +1105,7 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 			SQLStore:                sqlStore,
 			Features:                featuremgmt.WithFeatures(),
 			dashboardVersionService: fakeDashboardVersionService,
-			Coremodels:              registry.NewBase(),
+			Coremodels:              registry.NewBase(nil),
 		}
 
 		sc := setupScenarioContext(t, url)
