@@ -140,10 +140,10 @@ Previously, plugin developers needed to manually track which fields were labeled
 We have extended our plugins platform to simplify this, which means one less thing for developers to worry about and better security for all users' data.
 For details on using this functionality, see [GitHub pull request #55313](https://github.com/grafana/grafana/pull/55313) and our [plugin examples](https://github.com/grafana/grafana-plugin-examples) repository.
 
-## Transformations: outer joins and bug fixes
+## Transformations: Inner joins and bug fixes
 
 Transformations allow you to shape raw data from data sources, like metrics series or GitHub issues, so that you can visualize them as clearly as possible.
-We have extended the Join transformation to support both inner and outer JOINs, which work similarly to SQL inner and outer JOINs.
+We have extended the Join transformation to support inner JOINs in addition to outer JOINs. These work similarly to SQL inner and outer JOINs.
 
 {{< figure src="/static/img/docs/transformations/transform-outer-join-9-2.png" max-width="750px" caption="Query builder groupings for Google Cloud monitoring" >}}
 
