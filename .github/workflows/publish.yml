@@ -3,7 +3,7 @@ name: publish_docs
 on:
   push:
     branches:
-    - main
+    - v9.2.x
     paths:
     - 'docs/sources/**'
     - 'packages/grafana-*/**'
@@ -30,7 +30,7 @@ jobs:
         key: yarn-${{ hashFiles('**/yarn.lock') }}
         restore-keys: |
             yarn-
-    - run: yarn install --immutable    
+    - run: yarn install --immutable
     - name: publish-to-git
       uses: ./.github/actions/website-sync
       id: publish
@@ -40,7 +40,7 @@ jobs:
         host: github.com
         github_pat: '${{ secrets.GH_BOT_ACCESS_TOKEN }}'
         source_folder: docs/sources
-        target_folder: content/docs/grafana/next
+        target_folder: content/docs/grafana/latest
         allow_no_changes: 'true'
     - shell: bash
       run: |
