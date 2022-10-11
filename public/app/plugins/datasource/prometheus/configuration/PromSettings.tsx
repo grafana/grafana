@@ -189,7 +189,7 @@ export const PromSettings = (props: Props) => {
             width={13}
             tooltip="You can use either POST or GET HTTP method to query your Prometheus data source. POST is the recommended method as it allows bigger queries. Change this to GET if you have a Prometheus version older than 2.1 or if POST requests are restricted in your network."
           >
-            HTTP Method
+            HTTP method
           </InlineFormLabel>
           <Select
             aria-label="Select HTTP method"
@@ -200,16 +200,16 @@ export const PromSettings = (props: Props) => {
         </div>
       </div>
 
-      <h3 className="page-heading">Prometheus</h3>
+      <h3 className="page-heading">Type and version</h3>
       <div className="gf-form-group">
         <div className="gf-form">
           <div className="gf-form">
             <FormField
-              label="Prometheus Flavor"
+              label="Prometheus type"
               labelWidth={13}
               inputEl={
                 <Select
-                  aria-label="Prometheus Flavor"
+                  aria-label="Prometheus type"
                   options={prometheusFlavorSelectItems}
                   value={prometheusFlavorSelectItems.find((o) => o.value === options.jsonData.prometheusFlavor)}
                   onChange={onChangeHandler(
@@ -230,7 +230,7 @@ export const PromSettings = (props: Props) => {
                   width={20}
                 />
               }
-              tooltip="Set this to the flavor of your prometheus database, e.g. Prometheus, Cortex, Mimir or Thanos. Changing this field will save your current settings, and attempt to detect the version."
+              tooltip="Set this to the type of your prometheus database, e.g. Prometheus, Cortex, Mimir or Thanos. Changing this field will save your current settings, and attempt to detect the version."
             />
           </div>
         </div>
@@ -238,11 +238,11 @@ export const PromSettings = (props: Props) => {
           {options.jsonData.prometheusFlavor && (
             <div className="gf-form">
               <FormField
-                label={`${options.jsonData.prometheusFlavor} Version`}
+                label={`${options.jsonData.prometheusFlavor} version`}
                 labelWidth={13}
                 inputEl={
                   <Select
-                    aria-label={`${options.jsonData.prometheusFlavor} Flavor`}
+                    aria-label={`${options.jsonData.prometheusFlavor} type`}
                     options={PromFlavorVersions[options.jsonData.prometheusFlavor]}
                     value={PromFlavorVersions[options.jsonData.prometheusFlavor]?.find(
                       (o) => o.value === options.jsonData.prometheusVersion
@@ -277,7 +277,7 @@ export const PromSettings = (props: Props) => {
             <FormField
               label="Custom query parameters"
               labelWidth={14}
-              tooltip="Add Custom parameters to all Prometheus or Thanos queries."
+              tooltip="Add custom parameters to all Prometheus or Thanos queries."
               inputEl={
                 <Input
                   className="width-25"
