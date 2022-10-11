@@ -1,0 +1,37 @@
+{
+  "type": "datasource",
+  "name": "Phlare",
+  "id": "phlare",
+  "category": "tracing",
+
+  "metrics": true,
+  "alerting": false,
+  "annotations": false,
+  "logs": false,
+  "streaming": false,
+  "tracing": false,
+  "backend": true,
+
+  "info": {
+    "description": "",
+    "author": {
+      "name": "Cyril Tovena",
+      "url": "https://www.grafana.com"
+    },
+    "keywords": ["grafana", "datasource", "phlare", "flamegraph"],
+    "logos": {
+      "small": "img/logo.svg",
+      "large": "img/logo.svg"
+    },
+    "links": [
+      {
+        "name": "Website",
+        "url": "https://github.com/grafana/grafana-starter-datasource-backend"
+      },
+      {
+        "name": "License",
+        "url": "https://github.com/grafana/grafana-starter-datasource-backend/blob/master/LICENSE"
+      }
+    ]
+  }
+}
