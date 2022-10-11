@@ -22,7 +22,7 @@ export interface Props extends Themeable2 {
   showDetectedFields?: string[];
   onClickShowDetectedField?: (key: string) => void;
   onClickHideDetectedField?: (key: string) => void;
-  row?: LogRowModel;
+  row: LogRowModel;
 }
 
 interface State {
