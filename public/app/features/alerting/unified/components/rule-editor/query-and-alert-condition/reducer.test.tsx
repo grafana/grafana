@@ -146,6 +146,66 @@ describe('Query and expressions reducer', () => {
     const newState = queriesAndExpressionsReducer(initialState, updateExpression(newExpression));
     expect(newState).toMatchSnapshot();
   });
+  it('Should update time range for all expressions that have this data source when dispatching updateExpressionTimeRange', () => {
+    const expressionQuery: AlertQuery = {
+      refId: 'B',
+      queryType: 'expression',
+      datasourceUid: '-100',
+      relativeTimeRange: { from: 1, to: 3 },
+      model: {
+        queryType: 'query',
+        datasource: '__expr__',
+        refId: 'B',
+        expression: 'A',
+        type: ExpressionQueryType.classic,
+        window: '10s',
+      } as ExpressionQuery,
+    };
+
+    const queryA: AlertQuery = {
+      refId: 'A',
+      relativeTimeRange: { from: 900, to: 1000 },
+      datasourceUid: 'dsuid',
+      model: { refId: 'A' },
+      queryType: 'query',
+    };
+    const newExpression: ExpressionQuery = {
+      ...expressionQuery.model,
+      type: ExpressionQueryType.resample,
+    };
+
+    const initialState: QueriesAndExpressionsState = {
+      queries: [queryA, expressionQuery],
+    };
+
+    const newState = queriesAndExpressionsReducer(initialState, updateExpression(newExpression));
+    expect(newState).toStrictEqual({
+      queries: [
+        {
+          refId: 'A',
+          relativeTimeRange: { from: 900, to: 1000 },
+          datasourceUid: 'dsuid',
+          model: { refId: 'A' },
+          queryType: 'query',
+        },
+        {
+          datasourceUid: '-100',
+          relativeTimeRange: { from: 900, to: 1000 },
+          model: {
+            datasource: '__expr__',
+            expression: 'A',
+            queryType: 'query',
+            refId: 'B',
+            type: 'resample',
+            window: '10s',
+          },
+          queryType: 'expression',
+          refId: 'B',
+        },
+      ],
+    });
+  });
+
   it('should use time range from data source when updating an expression', () => {
     const expressionQuery: AlertQuery = {
       refId: 'B',

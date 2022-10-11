@@ -270,10 +270,6 @@ Object {
       },
       "queryType": "",
       "refId": "B",
-      "relativeTimeRange": Object {
-        "from": 600,
-        "to": 0,
-      },
     },
   ],
 }

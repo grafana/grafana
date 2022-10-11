@@ -32,6 +32,7 @@ export const updateExpression = createAction<ExpressionQuery>('updateExpression'
 export const updateExpressionRefId = createAction<{ oldRefId: string; newRefId: string }>('updateExpressionRefId');
 export const rewireExpressions = createAction<{ oldRefId: string; newRefId: string }>('rewireExpressions');
 export const updateExpressionType = createAction<{ refId: string; type: ExpressionQueryType }>('updateExpressionType');
+export const updateExpressionTimeRange = createAction('updateExpressionTimeRange');
 
 export const queriesAndExpressionsReducer = createReducer(initialState, (builder) => {
   // data queries actions
@@ -80,14 +81,36 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
       state.queries = state.queries.map((query) => {
         const dataSource = state.queries.find((alertQuery) => alertQuery.refId === payload.expression);
         const relativeTimeRange = dataSource ? dataSource.relativeTimeRange : getDefaultRelativeTimeRange();
-        return query.refId === payload.refId
-          ? {
-              ...query,
-              model: payload,
-              relativeTimeRange: relativeTimeRange,
-            }
-          : query;
+        if (query.refId === payload.refId) {
+          return payload.type === ExpressionQueryType.resample
+            ? {
+                ...query,
+                model: payload,
+                relativeTimeRange: relativeTimeRange,
+              }
+            : {
+                ...query,
+                model: payload,
+              };
+        } else {
+          return query;
+        }
       });
+    })
+    .addCase(updateExpressionTimeRange, (state) => {
+      const newState = state.queries.map((query) => {
+        if (query.datasourceUid === ExpressionDatasourceUID) {
+          const dataSource = state.queries.find((alertQuery) => alertQuery.refId === query.model.expression);
+          const relativeTimeRange = dataSource ? dataSource.relativeTimeRange : getDefaultRelativeTimeRange();
+          return {
+            ...query,
+            relativeTimeRange: relativeTimeRange,
+          };
+        } else {
+          return query;
+        }
+      });
+      state.queries = newState;
     })
     .addCase(updateExpressionRefId, (state, { payload }) => {
       const { newRefId, oldRefId } = payload;
