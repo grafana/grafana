@@ -766,13 +766,6 @@ steps:
   - cd /hugo && make prod
   image: grafana/docs-base:latest
   name: build-docs-website
-- commands:
-  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
-  depends_on: []
-  environment:
-    CGO_ENABLED: 0
-  image: golang:1.19.2
-  name: compile-build-cmd
 trigger:
   event:
   - pull_request
@@ -887,13 +880,6 @@ steps:
   - cd /hugo && make prod
   image: grafana/docs-base:latest
   name: build-docs-website
-- commands:
-  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
-  depends_on: []
-  environment:
-    CGO_ENABLED: 0
-  image: golang:1.19.2
-  name: compile-build-cmd
 trigger:
   branch: main
   event:
@@ -5616,6 +5602,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: f91a8f7c107dc4c9248ecb85000d148f3489a77c42f4048be9ff35ba98589f60
+hmac: d5d39719ea023fdedb6cfa303ed2acac29fe23060c9679c0c40511b3cc215738
 
 ...
