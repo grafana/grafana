@@ -76,14 +76,14 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 
 			// Runtime calcs (will depend on the system state)
 			{Name: "resolved_ok", Type: migrator.DB_Bool, Nullable: false},
-			{Name: "resolved_key", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false},
+			{Name: "resolved_to", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false},
 			{Name: "resolved_warning", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "resolved_time", Type: migrator.DB_DateTime, Nullable: false}, // resolution cache timestamp
 		},
 		Indices: []*migrator.Index{
 			{Cols: []string{"key"}, Type: migrator.IndexType},
 			{Cols: []string{"kind"}, Type: migrator.IndexType},
-			{Cols: []string{"resolved_key"}, Type: migrator.IndexType},
+			{Cols: []string{"resolved_to"}, Type: migrator.IndexType},
 		},
 	}
 
@@ -125,7 +125,7 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 		},
 	}
 
-	// Initalize all tables
+	// Initialize all tables
 	tables := []migrator.Table{objectTable, objectLabelsTable, objectReferenceTable, objectHistoryTable, objectAliasTable}
 	for t := range tables {
 		mg.AddMigration("ObjectStore init: table "+tables[t].Name, migrator.NewAddTableMigration(tables[t]))

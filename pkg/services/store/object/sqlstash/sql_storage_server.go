@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
@@ -19,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/kind"
 	"github.com/grafana/grafana/pkg/services/store/object"
 	"github.com/grafana/grafana/pkg/services/store/resolver"
+	"github.com/grafana/grafana/pkg/services/store/router"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -28,6 +30,7 @@ func ProvideSQLObjectServer(db db.DB, cfg *setting.Cfg, grpcServerProvider grpcs
 		log:      log.New("in-memory-object-server"),
 		kinds:    kinds,
 		resolver: resolver,
+		router:   router.NewObjectStoreRouter(kinds),
 	}
 	object.RegisterObjectStoreServer(grpcServerProvider.GetServer(), objectServer)
 	return objectServer
@@ -38,6 +41,7 @@ type sqlObjectServer struct {
 	sess     *session.SessionDB
 	kinds    kind.KindRegistry
 	resolver resolver.ObjectReferenceResolver
+	router   router.ObjectStoreRouter
 }
 
 func getReadSelect(r *object.ReadObjectRequest) string {
@@ -117,11 +121,23 @@ func rowToReadObjectResponse(rows *sql.Rows, r *object.ReadObjectRequest) (*obje
 	return rsp, nil
 }
 
-func (s sqlObjectServer) Read(ctx context.Context, r *object.ReadObjectRequest) (*object.ReadObjectResponse, error) {
+func (s sqlObjectServer) getRouteInfo(ctx context.Context, kind string, uid string) (router.ResourceRouteInfo, error) {
 	modifier := store.UserFromContext(ctx)
-	key := fmt.Sprintf("%d/%s.%s", modifier.OrgID, r.UID, r.Kind)
+	return s.router.Route(ctx, models.GRN{
+		OrgID:     modifier.OrgID,
+		Kind:      kind,
+		UID:       uid,
+		Namespace: "flat", // "drive",
+	})
+}
 
-	args := []interface{}{key}
+func (s sqlObjectServer) Read(ctx context.Context, r *object.ReadObjectRequest) (*object.ReadObjectResponse, error) {
+	route, err := s.getRouteInfo(ctx, r.Kind, r.UID)
+	if err != nil {
+		return nil, err
+	}
+
+	args := []interface{}{route.Key}
 	where := "key=?"
 	if r.Version != "" {
 		args = append(args, r.Version)
@@ -140,15 +156,17 @@ func (s sqlObjectServer) Read(ctx context.Context, r *object.ReadObjectRequest) 
 }
 
 func (s sqlObjectServer) BatchRead(ctx context.Context, b *object.BatchReadObjectRequest) (*object.BatchReadObjectResponse, error) {
-	modifier := store.UserFromContext(ctx)
-
 	args := []interface{}{}
 	constraints := []string{}
 
 	for _, r := range b.Batch {
-		key := fmt.Sprintf("%d/%s.%s", modifier.OrgID, r.UID, r.Kind)
+		route, err := s.getRouteInfo(ctx, r.Kind, r.UID)
+		if err != nil {
+			return nil, err
+		}
+
 		where := "key=?"
-		args = append(args, key)
+		args = append(args, route.Key)
 		if r.Version != "" {
 			args = append(args, r.Version)
 			where = "(key=? AND version=?)"
@@ -181,9 +199,18 @@ func createContentsHash(contents []byte) string {
 }
 
 func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest) (*object.WriteObjectResponse, error) {
+	route, err := s.getRouteInfo(ctx, r.Kind, r.UID)
+	if err != nil {
+		return nil, err
+	}
+
 	builder := s.kinds.GetSummaryBuilder(r.Kind)
 	if builder == nil {
 		return nil, fmt.Errorf("unsupported kind")
+	}
+	modifier := store.UserFromContext(ctx)
+	if modifier == nil {
+		return nil, fmt.Errorf("can not find user in context")
 	}
 
 	summary, body, err := builder(ctx, r.UID, r.Body)
@@ -196,9 +223,7 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 		return nil, err
 	}
 	etag := createContentsHash(body)
-
-	modifier := store.UserFromContext(ctx)
-	key := fmt.Sprintf("%d/%s.%s", modifier.OrgID, r.UID, r.Kind)
+	key := route.Key
 
 	rsp := &object.WriteObjectResponse{
 		Status: object.WriteObjectResponse_CREATED, // Will be changed if not true
@@ -221,7 +246,10 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 		if rows.Next() {
 			update := time.Now()
 			current := &object.ObjectVersionInfo{}
-			rows.Scan(&current.ETag, &current.Version, &update, &current.Size)
+			err = rows.Scan(&current.ETag, &current.Version, &update, &current.Size)
+			if err != nil {
+				return err
+			}
 			current.Updated = update.UnixMilli()
 
 			if current.ETag == etag {
@@ -282,7 +310,7 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 			resolved := s.resolver.Resolve(ctx, ref)
 			_, err = tx.Exec(ctx, `INSERT INTO object_ref (`+
 				`"key", "kind", "type", "uid", `+
-				`"resolved_ok", "resolved_key", "resolved_warning", "resolved_time") `+
+				`"resolved_ok", "resolved_to", "resolved_warning", "resolved_time") `+
 				`VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
 				key, ref.Kind, ref.Type, ref.UID,
 				resolved.OK, resolved.Key, resolved.Warning, resolved.Timestamp,

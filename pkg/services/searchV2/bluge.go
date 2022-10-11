@@ -213,13 +213,13 @@ func getDashboardPanelDocs(dash dashboard, location string) []*bluge.Document {
 						Aggregatable().
 						SearchTermPositions())
 				}
-			case models.StandardKindPanel:
-				if ref.Type != "" {
-					doc.AddField(bluge.NewKeywordField(documentFieldPanelType, ref.Type).Aggregatable().StoreValue())
+			case models.StandardReferencePlugin:
+				if ref.Type == models.StandardKindPanel && ref.UID != "" {
+					doc.AddField(bluge.NewKeywordField(documentFieldPanelType, ref.UID).Aggregatable().StoreValue())
 				}
-			case models.StandardKindTransform:
-				if ref.Type != "" {
-					doc.AddField(bluge.NewKeywordField(documentFieldTransformer, ref.Type).Aggregatable())
+			case models.StandardReferenceRuntime:
+				if ref.Type == models.StandardReferenceType_RuntimeTransformer && ref.UID != "" {
+					doc.AddField(bluge.NewKeywordField(documentFieldTransformer, ref.UID).Aggregatable())
 				}
 			}
 		}

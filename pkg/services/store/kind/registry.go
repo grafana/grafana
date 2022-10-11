@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/services/store/kind/dummy"
+	"github.com/grafana/grafana/pkg/services/store/kind/geojson"
 	"github.com/grafana/grafana/pkg/services/store/kind/playlist"
 	"github.com/grafana/grafana/pkg/services/store/kind/png"
 	"github.com/grafana/grafana/pkg/services/store/kind/svg"
@@ -35,6 +36,10 @@ func NewKindRegistry() KindRegistry {
 	kinds[models.StandardKindPNG] = &kindValues{
 		info:    png.GetObjectKindInfo(),
 		builder: png.GetObjectSummaryBuilder(),
+	}
+	kinds[models.StandardKindGeoJSON] = &kindValues{
+		info:    geojson.GetObjectKindInfo(),
+		builder: geojson.GetObjectSummaryBuilder(),
 	}
 
 	// FIXME -- these are registered because existing tests use them

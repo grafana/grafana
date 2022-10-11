@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 )
 
 func GetObjectKindInfo() models.ObjectKindInfo {
@@ -64,18 +65,23 @@ func NewStaticDashboardSummaryBuilder(lookup DatasourceLookup) models.ObjectSumm
 			p.Description = panel.Description
 			p.URL = fmt.Sprintf("%s?viewPanel=%d", url, panel.ID)
 			p.Fields = make(map[string]interface{}, 0)
+			p.Fields["type"] = panel.Type
 
-			panelRefs.Add("panel", panel.Type, "")
+			if panel.Type != "row" {
+				panelRefs.Add(models.StandardReferencePlugin, string(plugins.Panel), panel.Type)
+				dashboardRefs.Add(models.StandardReferencePlugin, string(plugins.Panel), panel.Type)
+			}
 			for _, v := range panel.Datasource {
 				dashboardRefs.Add(models.StandardKindDataSource, v.Type, v.UID)
 				panelRefs.Add(models.StandardKindDataSource, v.Type, v.UID)
+				if v.Type != "" {
+					dashboardRefs.Add(models.StandardReferencePlugin, string(plugins.DataSource), v.Type)
+				}
 			}
-
 			for _, v := range panel.Transformer {
-				panelRefs.Add(models.StandardKindTransform, v, "")
+				panelRefs.Add(models.StandardReferenceRuntime, models.StandardReferenceType_RuntimeTransformer, v)
+				dashboardRefs.Add(models.StandardReferenceRuntime, models.StandardReferenceType_RuntimeTransformer, v)
 			}
-
-			dashboardRefs.Add(models.StandardKindPanel, panel.Type, "")
 			p.References = panelRefs.Get()
 			summary.Nested = append(summary.Nested, p)
 		}

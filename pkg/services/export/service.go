@@ -19,6 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/db"
+	"github.com/grafana/grafana/pkg/services/store/object"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -156,6 +158,8 @@ type StandardExport struct {
 	playlistService           playlist.Service
 	orgService                org.Service
 	datasourceService         datasources.DataSourceService
+	store                     object.ObjectStoreServer
+	db                        db.DB
 
 	// updated with mutex
 	exportJob Job
@@ -163,7 +167,7 @@ type StandardExport struct {
 
 func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles, gl *live.GrafanaLive, cfg *setting.Cfg,
 	dashboardsnapshotsService dashboardsnapshots.Service, playlistService playlist.Service, orgService org.Service,
-	datasourceService datasources.DataSourceService) ExportService {
+	datasourceService datasources.DataSourceService, store object.ObjectStoreServer, db db.DB) ExportService {
 	if !features.IsEnabled(featuremgmt.FlagExport) {
 		return &StubExport{}
 	}
@@ -178,6 +182,8 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 		datasourceService:         datasourceService,
 		exportJob:                 &stoppedJob{},
 		dataDir:                   cfg.DataPath,
+		store:                     store,
+		db:                        db,
 	}
 }
 
@@ -227,6 +233,8 @@ func (ex *StandardExport) HandleRequestExport(c *models.ReqContext) response.Res
 	switch cfg.Format {
 	case "dummy":
 		job, err = startDummyExportJob(cfg, broadcast)
+	case "objectStore":
+		job, err = startObjectStoreJob(cfg, broadcast, ex.db, ex.playlistService, ex.store)
 	case "git":
 		dir := filepath.Join(ex.dataDir, "export_git", fmt.Sprintf("git_%d", time.Now().Unix()))
 		if err := os.MkdirAll(dir, os.ModePerm); err != nil {

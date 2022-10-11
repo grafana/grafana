@@ -60,6 +60,7 @@ interface ExporterInfo {
 
 const formats: Array<SelectableValue<string>> = [
   { label: 'GIT', value: 'git', description: 'Exports a fresh git repository' },
+  { label: 'Object store', value: 'objectStore', description: 'Export to the SQL based object store' },
 ];
 
 interface Props {
