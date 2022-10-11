@@ -17,6 +17,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 )
@@ -302,6 +303,12 @@ func (server *Server) Users(logins []string) (
 		return nil, err
 	}
 
+	if SkipOrgRoleSync() {
+		for i := range serializedUsers {
+			serializedUsers[i].OrgRoles = map[int64]roletype.RoleType{}
+		}
+	}
+
 	server.log.Debug(
 		"LDAP users found", "users", spew.Sdump(serializedUsers),
 	)
@@ -363,7 +370,8 @@ func (server *Server) users(logins []string) (
 // If there are no ldap group mappings access is true
 // otherwise a single group must match
 func (server *Server) validateGrafanaUser(user *models.ExternalUserInfo) error {
-	if len(server.Config.Groups) > 0 && (len(user.OrgRoles) == 0 && (user.IsGrafanaAdmin == nil || !*user.IsGrafanaAdmin)) {
+	if !SkipOrgRoleSync() && len(server.Config.Groups) > 0 &&
+		(len(user.OrgRoles) == 0 && (user.IsGrafanaAdmin == nil || !*user.IsGrafanaAdmin)) {
 		server.log.Error(
 			"User does not belong in any of the specified LDAP groups",
 			"username", user.Login,
