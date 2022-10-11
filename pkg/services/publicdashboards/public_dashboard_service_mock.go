@@ -3,10 +3,9 @@
 package publicdashboards
 
 import (
-	backend "github.com/grafana/grafana-plugin-sdk-go/backend"
-	annotations "github.com/grafana/grafana/pkg/services/annotations"
-
 	context "context"
+
+	backend "github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	dtos "github.com/grafana/grafana/pkg/api/dtos"
 
@@ -71,15 +70,15 @@ func (_m *FakePublicDashboardService) BuildAnonymousUser(ctx context.Context, da
 }
 
 // GetAnnotations provides a mock function with given fields: ctx, reqDTO, accessToken
-func (_m *FakePublicDashboardService) GetAnnotations(ctx context.Context, reqDTO publicdashboardsmodels.AnnotationsQueryDTO, accessToken string) ([]*annotations.ItemDTO, error) {
+func (_m *FakePublicDashboardService) GetAnnotations(ctx context.Context, reqDTO publicdashboardsmodels.AnnotationsQueryDTO, accessToken string) ([]publicdashboardsmodels.AnnotationEvent, error) {
 	ret := _m.Called(ctx, reqDTO, accessToken)
 
-	var r0 []*annotations.ItemDTO
-	if rf, ok := ret.Get(0).(func(context.Context, publicdashboardsmodels.AnnotationsQueryDTO, string) []*annotations.ItemDTO); ok {
+	var r0 []publicdashboardsmodels.AnnotationEvent
+	if rf, ok := ret.Get(0).(func(context.Context, publicdashboardsmodels.AnnotationsQueryDTO, string) []publicdashboardsmodels.AnnotationEvent); ok {
 		r0 = rf(ctx, reqDTO, accessToken)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*annotations.ItemDTO)
+			r0 = ret.Get(0).([]publicdashboardsmodels.AnnotationEvent)
 		}
 	}
 
