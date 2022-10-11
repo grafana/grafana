@@ -17,19 +17,20 @@ var CoremodelSet = wire.NewSet(
 // NewBase provides a registry of all coremodels, without any composition of
 // plugin-defined schemas.
 //
-// The returned registry will use the default Grafana thema.Library, defined in
-// pkg/cuectx. If you need control over the thema.Library used by the coremodel
-// lineages, use NewBaseWithLib instead.
+// The returned registry will use Grafana's singleton [thema.Runtime],
+// returned from [cuectx.GrafanaThemaRuntime].
 func NewBase() *Base {
 	return provideBase(nil)
 }
 
-// NewBaseWithLib is the same as NewBase, but allows control over the
-// thema.Library used to initialize the underlying coremodels.
+// NewBaseWithRuntime is the same as NewBase, but allows control over the
+// [thema.Runtime] used to initialize the underlying coremodels.
 //
 // Prefer NewBase unless you absolutely need this control.
-func NewBaseWithLib(lib thema.Library) *Base {
-	return provideBase(&lib)
+//
+// TODO it's OK to export this if it's ever actually needed
+func NewBaseWithRuntime(rt *thema.Runtime) *Base {
+	return provideBase(rt)
 }
 
 var (
@@ -37,15 +38,15 @@ var (
 	defaultBase *Base
 )
 
-func provideBase(lib *thema.Library) *Base {
-	if lib == nil {
+func provideBase(rt *thema.Runtime) *Base {
+	if rt == nil {
 		baseOnce.Do(func() {
-			defaultBase = doProvideBase(cuectx.ProvideThemaLibrary())
+			defaultBase = doProvideBase(cuectx.GrafanaThemaRuntime())
 		})
 		return defaultBase
 	}
 
-	return doProvideBase(*lib)
+	return doProvideBase(rt)
 }
 
 // All returns a slice of all registered coremodels.
