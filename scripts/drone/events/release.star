@@ -308,7 +308,7 @@ def get_enterprise_pipelines(trigger, ver_mode):
         ]
     }
 
-    for step in [wire_install_step(), yarn_install_step(), verify_gen_cue_step(edition)]:
+    for step in [wire_install_step(), yarn_install_step(edition), verify_gen_cue_step(edition)]:
         step.update(deps_on_clone_enterprise_step)
         init_steps.extend([step])
 
