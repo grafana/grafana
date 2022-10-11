@@ -1,66 +1,100 @@
-import { MessageDescriptor } from '@lingui/core';
-import { defineMessage } from '@lingui/macro';
-
 // Maps the ID of the nav item to a translated phrase to later pass to <Trans />
 // Because the navigation content is dynamic (defined in the backend), we can not use
 // the normal inline message definition method.
+
+import { t } from 'app/core/internationalization';
 
 // The keys of the TRANSLATED_MENU_ITEMS object (NOT the id inside the defineMessage function)
 // must match the ID of the navigation item, as defined in the backend nav model
 
 // see pkg/api/index.go
-const TRANSLATED_MENU_ITEMS: Record<string, MessageDescriptor> = {
-  home: defineMessage({ id: 'nav.home', message: 'Home' }),
-
-  create: defineMessage({ id: 'nav.create', message: 'Create' }),
-  'create-dashboard': defineMessage({ id: 'nav.create-dashboard', message: 'Dashboard' }),
-  folder: defineMessage({ id: 'nav.create-folder', message: 'Folder' }),
-  import: defineMessage({ id: 'nav.create-import', message: 'Import' }),
-  alert: defineMessage({ id: 'nav.create-alert', message: 'New alert rule' }),
-
-  starred: defineMessage({ id: 'nav.starred', message: 'Starred' }),
-  'starred-empty': defineMessage({ id: 'nav.starred-empty', message: 'Your starred dashboards will appear here' }),
-  dashboards: defineMessage({ id: 'nav.dashboards', message: 'Dashboards' }),
-  'dashboards/browse': defineMessage({ id: 'nav.manage-dashboards', message: 'Browse' }),
-  'dashboards/playlists': defineMessage({ id: 'nav.playlists', message: 'Playlists' }),
-  'dashboards/snapshots': defineMessage({ id: 'nav.snapshots', message: 'Snapshots' }),
-  'dashboards/library-panels': defineMessage({ id: 'nav.library-panels', message: 'Library panels' }),
-  'dashboards/new': defineMessage({ id: 'nav.new-dashboard', message: 'New dashboard' }),
-  'dashboards/folder/new': defineMessage({ id: 'nav.new-folder', message: 'New folder' }),
-
-  explore: defineMessage({ id: 'nav.explore', message: 'Explore' }),
-
-  alerting: defineMessage({ id: 'nav.alerting', message: 'Alerting' }),
-  'alerting-legacy': defineMessage({ id: 'nav.alerting-legacy', message: 'Alerting (legacy)' }),
-  'alert-list': defineMessage({ id: 'nav.alerting-list', message: 'Alert rules' }),
-  receivers: defineMessage({ id: 'nav.alerting-receivers', message: 'Contact points' }),
-  'am-routes': defineMessage({ id: 'nav.alerting-am-routes', message: 'Notification policies' }),
-  channels: defineMessage({ id: 'nav.alerting-channels', message: 'Notification channels' }),
-
-  silences: defineMessage({ id: 'nav.alerting-silences', message: 'Silences' }),
-  groups: defineMessage({ id: 'nav.alerting-groups', message: 'Groups' }),
-  'alerting-admin': defineMessage({ id: 'nav.alerting-admin', message: 'Admin' }),
-
-  cfg: defineMessage({ id: 'nav.config', message: 'Configuration' }),
-  datasources: defineMessage({ id: 'nav.datasources', message: 'Data sources' }),
-  correlations: defineMessage({ id: 'nav.correlations', message: 'Correlations' }),
-  users: defineMessage({ id: 'nav.users', message: 'Users' }),
-  teams: defineMessage({ id: 'nav.teams', message: 'Teams' }),
-  plugins: defineMessage({ id: 'nav.plugins', message: 'Plugins' }),
-  'org-settings': defineMessage({ id: 'nav.org-settings', message: 'Preferences' }),
-  apikeys: defineMessage({ id: 'nav.api-keys', message: 'API keys' }),
-  serviceaccounts: defineMessage({ id: 'nav.service-accounts', message: 'Service accounts' }),
-
-  live: defineMessage({ id: 'nav.live', message: 'Event streaming' }),
-  'live-status': defineMessage({ id: 'nav.live-status', message: 'Status' }),
-  'live-pipeline': defineMessage({ id: 'nav.live-pipeline', message: 'Pipeline' }),
-  'live-cloud': defineMessage({ id: 'nav.live-cloud', message: 'Cloud' }),
-
-  help: defineMessage({ id: 'nav.help', message: 'Help' }),
-
-  'profile-settings': defineMessage({ id: 'nav.profile/settings', message: 'Preferences' }),
-  'change-password': defineMessage({ id: 'nav.profile/password', message: 'Change password' }),
-  'sign-out': defineMessage({ id: 'nav.sign-out', message: 'Sign out' }),
-};
-
-export default TRANSLATED_MENU_ITEMS;
+export default function getNavTranslation(navId: string | undefined) {
+  switch (navId) {
+    case 'home':
+      return t('nav.home', 'Home');
+    case 'create':
+      return t('nav.create', 'Create');
+    case 'create-dashboard':
+      return t('nav.create-dashboard', 'Dashboard');
+    case 'folder':
+      return t('nav.create-folder', 'Folder');
+    case 'import':
+      return t('nav.create-import', 'Import');
+    case 'alert':
+      return t('nav.create-alert', 'New alert rule');
+    case 'starred':
+      return t('nav.starred', 'Starred');
+    case 'starred-empty':
+      return t('nav.starred-empty', 'Your starred dashboards will appear here');
+    case 'dashboards':
+      return t('nav.dashboards', 'Dashboards');
+    case 'dashboards/browse':
+      return t('nav.manage-dashboards', 'Browse');
+    case 'dashboards/playlists':
+      return t('nav.playlists', 'Playlists');
+    case 'dashboards/snapshots':
+      return t('nav.snapshots', 'Snapshots');
+    case 'dashboards/library-panels':
+      return t('nav.library-panels', 'Library panels');
+    case 'dashboards/new':
+      return t('nav.new-dashboard', 'New dashboard');
+    case 'dashboards/folder/new':
+      return t('nav.new-folder', 'New folder');
+    case 'explore':
+      return t('nav.explore', 'Explore');
+    case 'alerting':
+      return t('nav.alerting', 'Alerting');
+    case 'alerting-legacy':
+      return t('nav.alerting-legacy', 'Alerting (legacy)');
+    case 'alert-list':
+      return t('nav.alerting-list', 'Alert rules');
+    case 'receivers':
+      return t('nav.alerting-receivers', 'Contact points');
+    case 'am-routes':
+      return t('nav.alerting-am-routes', 'Notification policies');
+    case 'channels':
+      return t('nav.alerting-channels', 'Notification channels');
+    case 'silences':
+      return t('nav.alerting-silences', 'Silences');
+    case 'groups':
+      return t('nav.alerting-groups', 'Groups');
+    case 'alerting-admin':
+      return t('nav.alerting-admin', 'Admin');
+    case 'cfg':
+      return t('nav.config', 'Configuration');
+    case 'datasources':
+      return t('nav.datasources', 'Data sources');
+    case 'correlations':
+      return t('nav.correlations', 'Correlations');
+    case 'users':
+      return t('nav.users', 'Users');
+    case 'teams':
+      return t('nav.teams', 'Teams');
+    case 'plugins':
+      return t('nav.plugins', 'Plugins');
+    case 'org-settings':
+      return t('nav.org-settings', 'Preferences');
+    case 'apikeys':
+      return t('nav.api-keys', 'API keys');
+    case 'serviceaccounts':
+      return t('nav.service-accounts', 'Service accounts');
+    case 'live':
+      return t('nav.live', 'Event streaming');
+    case 'live-status':
+      return t('nav.live-status', 'Status');
+    case 'live-pipeline':
+      return t('nav.live-pipeline', 'Pipeline');
+    case 'live-cloud':
+      return t('nav.live-cloud', 'Cloud');
+    case 'help':
+      return t('nav.help', 'Help');
+    case 'profile-settings':
+      return t('nav.profile/settings', 'Preferences');
+    case 'change-password':
+      return t('nav.profile/password', 'Change password');
+    case 'sign-out':
+      return t('nav.sign-out', 'Sign out');
+    default:
+      return undefined;
+  }
+}

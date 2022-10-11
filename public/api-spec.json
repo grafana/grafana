@@ -9261,6 +9261,74 @@
         }
       }
     },
+    "/user/stars/dashboard/uid/{dashboard_uid}": {
+      "post": {
+        "description": "Stars the given Dashboard for the actual user.",
+        "tags": [
+          "signed_in_user"
+        ],
+        "summary": "Star a dashboard.",
+        "operationId": "starDashboardByUID",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "dashboard_uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "delete": {
+        "description": "Deletes the starring of the given Dashboard for the actual user.",
+        "tags": [
+          "signed_in_user"
+        ],
+        "summary": "Unstar a dashboard.",
+        "operationId": "unstarDashboardByUID",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "dashboard_uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/user/stars/dashboard/{dashboard_id}": {
       "post": {
         "description": "Stars the given Dashboard for the actual user.",
@@ -9269,6 +9337,7 @@
         ],
         "summary": "Star a dashboard.",
         "operationId": "starDashboard",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -9302,6 +9371,7 @@
         ],
         "summary": "Unstar a dashboard.",
         "operationId": "unstarDashboard",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -10437,6 +10507,7 @@
       "type": "object",
       "required": [
         "field",
+        "type",
         "target"
       ],
       "properties": {
@@ -10445,13 +10516,17 @@
           "type": "string"
         },
         "target": {
-          "$ref": "#/definitions/CorrelationConfigTarget"
+          "description": "Target data query",
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "type": {
+          "$ref": "#/definitions/CorrelationConfigType"
         }
       }
     },
-    "CorrelationConfigTarget": {
-      "description": "CorrelationConfigTarget is the target data query specific to target data source (Correlation.TargetUID)",
-      "type": "object"
+    "CorrelationConfigType": {
+      "type": "string"
     },
     "CreateAlertNotificationCommand": {
       "type": "object",
@@ -10679,7 +10754,7 @@
         "items": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/PlaylistItemDTO"
+            "$ref": "#/definitions/PlaylistItem"
           }
         },
         "name": {
@@ -10997,9 +11072,6 @@
           "type": "boolean"
         },
         "isFolder": {
-          "type": "boolean"
-        },
-        "isHome": {
           "type": "boolean"
         },
         "isSnapshot": {
@@ -12467,6 +12539,32 @@
         }
       }
     },
+    "Model": {
+      "description": "THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.\nEquivalent Go types at stable import paths are provided in https://github.com/grafana/grok.",
+      "type": "object",
+      "title": "Model is the Go representation of a playlist.",
+      "properties": {
+        "interval": {
+          "description": "Interval sets the time between switching views in a playlist.\nFIXME: Is this based on a standardized format or what options are available? Can datemath be used?",
+          "type": "string"
+        },
+        "items": {
+          "description": "The ordered list of items that the playlist will iterate over.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PlaylistItem"
+          }
+        },
+        "name": {
+          "description": "Name of the playlist.",
+          "type": "string"
+        },
+        "uid": {
+          "description": "Unique playlist identifier. Generated on creation, either by the\ncreator of the playlist of by the application.",
+          "type": "string"
+        }
+      }
+    },
     "NavLink": {
       "type": "object",
       "properties": {
@@ -12821,30 +12919,6 @@
         }
       }
     },
-    "PlaylistDTO": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "interval": {
-          "type": "string"
-        },
-        "items": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/PlaylistItemDTO"
-          }
-        },
-        "name": {
-          "type": "string"
-        },
-        "uid": {
-          "type": "string"
-        }
-      }
-    },
     "PlaylistDashboard": {
       "type": "object",
       "properties": {
@@ -12876,31 +12950,28 @@
         "$ref": "#/definitions/PlaylistDashboard"
       }
     },
-    "PlaylistItemDTO": {
+    "PlaylistItem": {
+      "description": "THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.\nEquivalent Go types at stable import paths are provided in https://github.com/grafana/grok.",
       "type": "object",
+      "title": "PlaylistItem is the Go representation of a playlist.Item.",
       "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "order": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "playlistid": {
-          "type": "integer",
-          "format": "int64"
-        },
         "title": {
+          "description": "Title is an unused property -- it will be removed in the future",
           "type": "string"
         },
         "type": {
-          "type": "string"
+          "$ref": "#/definitions/PlaylistItemType"
         },
         "value": {
+          "description": "Value depends on type and describes the playlist item.\n\ndashboard_by_id: The value is an internal numerical identifier set by Grafana. This\nis not portable as the numerical identifier is non-deterministic between different instances.\nWill be replaced by dashboard_by_uid in the future. (deprecated)\ndashboard_by_tag: The value is a tag which is set on any number of dashboards. All\ndashboards behind the tag will be added to the playlist.\ndashboard_by_uid: The value is the dashboard UID",
           "type": "string"
         }
       }
+    },
+    "PlaylistItemType": {
+      "description": "THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.\nEquivalent Go types at stable import paths are provided in https://github.com/grafana/grok.",
+      "type": "string",
+      "title": "Type of the item."
     },
     "Playlists": {
       "type": "array",
@@ -14436,7 +14507,7 @@
         "items": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/PlaylistItemDTO"
+            "$ref": "#/definitions/PlaylistItem"
           }
         },
         "name": {
@@ -15492,14 +15563,14 @@
       "schema": {
         "type": "array",
         "items": {
-          "$ref": "#/definitions/PlaylistItemDTO"
+          "$ref": "#/definitions/PlaylistItem"
         }
       }
     },
     "getPlaylistResponse": {
       "description": "",
       "schema": {
-        "$ref": "#/definitions/PlaylistDTO"
+        "$ref": "#/definitions/Model"
       }
     },
     "getPreferencesResponse": {
@@ -16012,7 +16083,7 @@
     "updatePlaylistResponse": {
       "description": "",
       "schema": {
-        "$ref": "#/definitions/PlaylistDTO"
+        "$ref": "#/definitions/Model"
       }
     },
     "updateServiceAccountResponse": {

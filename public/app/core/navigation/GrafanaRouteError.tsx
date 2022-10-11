@@ -51,5 +51,8 @@ export function GrafanaRouteError({ error, errorInfo }: Props) {
 }
 
 const getStyles = stylesFactory(() => {
-  return css``;
+  return css`
+    width: 500px;
+    margin: 64px auto;
+  `;
 });

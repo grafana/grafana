@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/guardian"
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
@@ -21,17 +20,6 @@ const AlertRuleMaxTitleLength = 190
 
 // AlertRuleMaxRuleGroupNameLength is the maximum length of the alert rule group name
 const AlertRuleMaxRuleGroupNameLength = 190
-
-type UpdateRuleGroupCmd struct {
-	OrgID           int64
-	NamespaceUID    string
-	RuleGroupConfig apimodels.PostableRuleGroupConfig
-}
-
-type UpdateRule struct {
-	Existing *ngmodels.AlertRule
-	New      ngmodels.AlertRule
-}
 
 var (
 	ErrAlertRuleGroupNotFound = errors.New("rulegroup not found")
@@ -107,10 +95,10 @@ func (st DBstore) GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAler
 func (st DBstore) GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmodels.GetAlertRulesGroupByRuleUIDQuery) error {
 	return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var result []*ngmodels.AlertRule
-		err := sess.Table("alert_rule").Alias("A").Join(
+		err := sess.Table("alert_rule").Alias("a").Join(
 			"INNER",
-			"alert_rule AS B", "A.org_id = B.org_id AND A.namespace_uid = B.namespace_uid AND A.rule_group = B.rule_group AND B.uid = ?", query.UID,
-		).Where("A.org_id = ?", query.OrgID).Select("A.*").Find(&result)
+			"alert_rule AS b", "a.org_id = b.org_id AND a.namespace_uid = b.namespace_uid AND a.rule_group = b.rule_group AND b.uid = ?", query.UID,
+		).Where("a.org_id = ?", query.OrgID).Select("a.*").Find(&result)
 		if err != nil {
 			return err
 		}
@@ -185,7 +173,7 @@ func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRu
 }
 
 // UpdateAlertRules is a handler for updating alert rules.
-func (st DBstore) UpdateAlertRules(ctx context.Context, rules []UpdateRule) error {
+func (st DBstore) UpdateAlertRules(ctx context.Context, rules []ngmodels.UpdateRule) error {
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		ruleVersions := make([]ngmodels.AlertRuleVersion, 0, len(rules))
 		for _, r := range rules {

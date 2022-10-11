@@ -20,6 +20,7 @@ import (
 	databasestore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -38,16 +39,28 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type FakeFeatures struct {
+	BigTransactions bool
+}
+
+func (f *FakeFeatures) IsEnabled(feature string) bool {
+	if feature == featuremgmt.FlagAlertingBigTransactions {
+		return f.BigTransactions
+	}
+
+	return false
+}
+
 // SetupTestEnv initializes a store to used by the tests.
-func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *store.DBstore) {
-	t.Helper()
+func SetupTestEnv(tb testing.TB, baseInterval time.Duration) (*ngalert.AlertNG, *store.DBstore) {
+	tb.Helper()
 	origNewGuardian := guardian.New
 	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
 		CanSaveValue:  true,
 		CanViewValue:  true,
 		CanAdminValue: true,
 	})
-	t.Cleanup(func() {
+	tb.Cleanup(func() {
 		guardian.New = origNewGuardian
 	})
 
@@ -60,9 +73,9 @@ func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *
 	*cfg.UnifiedAlerting.Enabled = true
 
 	m := metrics.NewNGAlert(prometheus.NewRegistry())
-	sqlStore := sqlstore.InitTestDB(t)
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
-	dashboardStore := databasestore.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
+	sqlStore := sqlstore.InitTestDB(tb)
+	secretsService := secretsManager.SetupTestService(tb, database.ProvideSecretsStore(sqlStore))
+	dashboardStore := databasestore.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 
 	ac := acmock.New()
 	features := featuremgmt.WithFeatures()
@@ -76,18 +89,16 @@ func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *
 	)
 
 	bus := busmock.New()
-	folderService := dashboardservice.ProvideFolderService(
-		cfg, dashboardService, dashboardStore, nil,
-		features, folderPermissions, ac, bus,
-	)
+	folderService := folderimpl.ProvideService(ac, bus, cfg, dashboardService, dashboardStore, features, folderPermissions, nil)
 
 	ng, err := ngalert.ProvideService(
-		cfg, nil, nil, routing.NewRouteRegister(), sqlStore, nil, nil, nil, nil,
+		cfg, &FakeFeatures{}, nil, nil, routing.NewRouteRegister(), sqlStore, nil, nil, nil, nil,
 		secretsService, nil, m, folderService, ac, &dashboards.FakeDashboardService{}, nil, bus, ac, annotationstest.NewFakeAnnotationsRepo(),
 	)
-	require.NoError(t, err)
+	require.NoError(tb, err)
 	return ng, &store.DBstore{
-		SQLStore: ng.SQLStore,
+		FeatureToggles: ng.FeatureToggles,
+		SQLStore:       ng.SQLStore,
 		Cfg: setting.UnifiedAlertingSettings{
 			BaseInterval: baseInterval * time.Second,
 		},
@@ -98,11 +109,11 @@ func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *
 }
 
 // CreateTestAlertRule creates a dummy alert definition to be used by the tests.
-func CreateTestAlertRule(t *testing.T, ctx context.Context, dbstore *store.DBstore, intervalSeconds int64, orgID int64) *models.AlertRule {
+func CreateTestAlertRule(t testing.TB, ctx context.Context, dbstore *store.DBstore, intervalSeconds int64, orgID int64) *models.AlertRule {
 	return CreateTestAlertRuleWithLabels(t, ctx, dbstore, intervalSeconds, orgID, nil)
 }
 
-func CreateTestAlertRuleWithLabels(t *testing.T, ctx context.Context, dbstore *store.DBstore, intervalSeconds int64, orgID int64, labels map[string]string) *models.AlertRule {
+func CreateTestAlertRuleWithLabels(t testing.TB, ctx context.Context, dbstore *store.DBstore, intervalSeconds int64, orgID int64, labels map[string]string) *models.AlertRule {
 	ruleGroup := fmt.Sprintf("ruleGroup-%s", util.GenerateShortUID())
 	folderUID := "namespace"
 	user := &user.SignedInUser{

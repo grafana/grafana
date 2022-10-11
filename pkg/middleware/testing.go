@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
@@ -44,6 +45,7 @@ type scenarioContext struct {
 	apiKeyService        *apikeytest.Service
 	userService          *usertest.FakeUserService
 	oauthTokenService    *auth.MockOAuthTokenService
+	orgService           *orgtest.FakeOrgService
 
 	req *http.Request
 }

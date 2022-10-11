@@ -94,7 +94,7 @@ export const LinkSettingsEdit: React.FC<LinkSettingsEditProps> = ({ editLinkIdx,
       {linkSettings.type === 'dashboards' && (
         <>
           <Field label="With tags">
-            <TagsInput tags={linkSettings.tags} placeholder="add tags" onChange={onTagsChange} />
+            <TagsInput tags={linkSettings.tags} onChange={onTagsChange} />
           </Field>
         </>
       )}

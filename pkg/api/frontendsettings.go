@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
@@ -62,6 +63,11 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			continue
 		}
 
+		hideFromList := panel.HideFromList
+		if panel.ID == "flamegraph" {
+			hideFromList = !hs.Features.IsEnabled(featuremgmt.FlagFlameGraph)
+		}
+
 		panels[panel.ID] = plugins.PanelDTO{
 			ID:            panel.ID,
 			Name:          panel.Name,
@@ -69,7 +75,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			Module:        panel.Module,
 			BaseURL:       panel.BaseURL,
 			SkipDataQuery: panel.SkipDataQuery,
-			HideFromList:  panel.HideFromList,
+			HideFromList:  hideFromList,
 			ReleaseState:  string(panel.State),
 			Signature:     string(panel.Signature),
 			Sort:          getPanelSort(panel.ID),

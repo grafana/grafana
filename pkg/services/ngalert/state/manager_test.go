@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	"github.com/grafana/grafana/pkg/services/ngalert/state/historian"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests"
 )
 
@@ -38,7 +39,8 @@ func TestDashboardAnnotations(t *testing.T) {
 	_, dbstore := tests.SetupTestEnv(t, 1)
 
 	fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()
-	st := state.NewManager(log.New("test_stale_results_handler"), testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, clock.New(), fakeAnnoRepo)
+	hist := historian.NewAnnotationHistorian(fakeAnnoRepo, &dashboards.FakeDashboardService{}, log.NewNopLogger())
+	st := state.NewManager(log.New("test_stale_results_handler"), testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &image.NoopImageService{}, clock.New(), hist)
 
 	const mainOrgID int64 = 1
 
@@ -123,7 +125,8 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					State: eval.Normal,
+					Values: make(map[string]float64),
+					State:  eval.Normal,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -177,7 +180,8 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label_1":             "test",
 					},
-					State: eval.Normal,
+					Values: make(map[string]float64),
+					State:  eval.Normal,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -200,7 +204,8 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label_2":             "test",
 					},
-					State: eval.Alerting,
+					Values: make(map[string]float64),
+					State:  eval.Alerting,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -257,7 +262,8 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					State: eval.Normal,
+					Values: make(map[string]float64),
+					State:  eval.Normal,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -318,7 +324,8 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					State: eval.Alerting,
+					Values: make(map[string]float64),
+					State:  eval.Alerting,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -390,7 +397,8 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					State: eval.Alerting,
+					Values: make(map[string]float64),
+					State:  eval.Alerting,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -484,7 +492,8 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					State: eval.Pending,
+					Values: make(map[string]float64),
+					State:  eval.Pending,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime.Add(30 * time.Second),
@@ -565,7 +574,8 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					State: eval.NoData,
+					Values: make(map[string]float64),
+					State:  eval.NoData,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime.Add(20 * time.Second),
@@ -629,7 +639,8 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					State: eval.Pending,
+					Values: make(map[string]float64),
+					State:  eval.Pending,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -693,7 +704,8 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					State: eval.Pending,
+					Values: make(map[string]float64),
+					State:  eval.Pending,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -757,6 +769,7 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
+					Values:      make(map[string]float64),
 					State:       eval.Alerting,
 					StateReason: eval.NoData.String(),
 					Results: []state.Evaluation{
@@ -822,7 +835,8 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					State: eval.NoData,
+					Values: make(map[string]float64),
+					State:  eval.NoData,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -886,7 +900,8 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					State: eval.Normal,
+					Values: make(map[string]float64),
+					State:  eval.Normal,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -910,7 +925,8 @@ func TestProcessEvalResults(t *testing.T) {
 						"alertname":                    "test_title",
 						"label":                        "test",
 					},
-					State: eval.NoData,
+					Values: make(map[string]float64),
+					State:  eval.NoData,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime.Add(10 * time.Second),
@@ -975,7 +991,8 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test-1",
 					},
-					State: eval.Normal,
+					Values: make(map[string]float64),
+					State:  eval.Normal,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -1000,7 +1017,8 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test-2",
 					},
-					State: eval.Normal,
+					Values: make(map[string]float64),
+					State:  eval.Normal,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -1024,7 +1042,8 @@ func TestProcessEvalResults(t *testing.T) {
 						"alertname":                    "test_title",
 						"label":                        "test",
 					},
-					State: eval.NoData,
+					Values: make(map[string]float64),
+					State:  eval.NoData,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime.Add(10 * time.Second),
@@ -1091,7 +1110,8 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					State: eval.Normal,
+					Values: make(map[string]float64),
+					State:  eval.Normal,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -1120,7 +1140,8 @@ func TestProcessEvalResults(t *testing.T) {
 						"alertname":                    "test_title",
 						"label":                        "test",
 					},
-					State: eval.NoData,
+					Values: make(map[string]float64),
+					State:  eval.NoData,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime.Add(10 * time.Second),
@@ -1179,6 +1200,7 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
+					Values:      make(map[string]float64),
 					State:       eval.Normal,
 					StateReason: eval.NoData.String(),
 					Results: []state.Evaluation{
@@ -1245,6 +1267,7 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
+					Values:      make(map[string]float64),
 					State:       eval.Alerting,
 					StateReason: eval.NoData.String(),
 
@@ -1312,6 +1335,7 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
+					Values:      make(map[string]float64),
 					State:       eval.Pending,
 					StateReason: eval.Error.String(),
 					Results: []state.Evaluation{
@@ -1402,6 +1426,7 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
+					Values:      make(map[string]float64),
 					State:       eval.Alerting,
 					StateReason: eval.Error.String(),
 					Results: []state.Evaluation{
@@ -1483,7 +1508,8 @@ func TestProcessEvalResults(t *testing.T) {
 						"datasource_uid":               "datasource_uid_1",
 						"ref_id":                       "A",
 					},
-					State: eval.Error,
+					Values: make(map[string]float64),
+					State:  eval.Error,
 					Error: expr.QueryError{
 						RefID: "A",
 						Err:   errors.New("this is an error"),
@@ -1560,6 +1586,7 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
+					Values:      make(map[string]float64),
 					State:       eval.Normal,
 					StateReason: eval.Error.String(),
 					Error:       nil,
@@ -1633,6 +1660,7 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
+					Values:      make(map[string]float64),
 					State:       eval.Normal,
 					StateReason: eval.Error.String(),
 					Error:       nil,
@@ -1732,7 +1760,8 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					State: eval.Error,
+					Values: make(map[string]float64),
+					State:  eval.Error,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime.Add(40 * time.Second),
@@ -1813,7 +1842,8 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					State: eval.Alerting,
+					Values: make(map[string]float64),
+					State:  eval.Alerting,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime.Add(30 * time.Second),
@@ -1900,7 +1930,8 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					State: eval.NoData,
+					Values: make(map[string]float64),
+					State:  eval.NoData,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime.Add(30 * time.Second),
@@ -1962,7 +1993,8 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"job":                          "prod/grafana",
 					},
-					State: eval.Normal,
+					Values: make(map[string]float64),
+					State:  eval.Normal,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -1980,7 +2012,8 @@ func TestProcessEvalResults(t *testing.T) {
 
 	for _, tc := range testCases {
 		fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()
-		st := state.NewManager(log.New("test_state_manager"), testMetrics.GetStateMetrics(), nil, nil, &state.FakeInstanceStore{}, &dashboards.FakeDashboardService{}, &image.NotAvailableImageService{}, clock.New(), fakeAnnoRepo)
+		hist := historian.NewAnnotationHistorian(fakeAnnoRepo, &dashboards.FakeDashboardService{}, log.NewNopLogger())
+		st := state.NewManager(log.New("test_state_manager"), testMetrics.GetStateMetrics(), nil, nil, &state.FakeInstanceStore{}, &image.NotAvailableImageService{}, clock.New(), hist)
 		t.Run(tc.desc, func(t *testing.T) {
 			for _, res := range tc.evalResults {
 				_ = st.ProcessEvalResults(context.Background(), evaluationTime, tc.alertRule, res, data.Labels{
@@ -1994,8 +2027,7 @@ func TestProcessEvalResults(t *testing.T) {
 			assert.Len(t, states, len(tc.expectedStates))
 
 			for _, s := range tc.expectedStates {
-				cachedState, err := st.Get(s.OrgID, s.AlertRuleUID, s.CacheId)
-				require.NoError(t, err)
+				cachedState := st.Get(s.OrgID, s.AlertRuleUID, s.CacheId)
 				assert.Equal(t, s, cachedState)
 			}
 
@@ -2008,7 +2040,7 @@ func TestProcessEvalResults(t *testing.T) {
 	t.Run("should save state to database", func(t *testing.T) {
 		instanceStore := &state.FakeInstanceStore{}
 		clk := clock.New()
-		st := state.NewManager(log.New("test_state_manager"), testMetrics.GetStateMetrics(), nil, nil, instanceStore, &dashboards.FakeDashboardService{}, &image.NotAvailableImageService{}, clk, annotationstest.NewFakeAnnotationsRepo())
+		st := state.NewManager(log.New("test_state_manager"), testMetrics.GetStateMetrics(), nil, nil, instanceStore, &image.NotAvailableImageService{}, clk, &state.FakeHistorian{})
 		rule := models.AlertRuleGen()()
 		var results = eval.GenerateResults(rand.Intn(4)+1, eval.ResultGen(eval.WithEvaluatedAt(clk.Now())))
 
@@ -2016,10 +2048,10 @@ func TestProcessEvalResults(t *testing.T) {
 
 		require.NotEmpty(t, states)
 
-		savedStates := make(map[string]models.SaveAlertInstanceCommand)
+		savedStates := make(map[string]models.AlertInstance)
 		for _, op := range instanceStore.RecordedOps {
 			switch q := op.(type) {
-			case models.SaveAlertInstanceCommand:
+			case models.AlertInstance:
 				cacheId, err := q.Labels.StringKey()
 				require.NoError(t, err)
 				savedStates[cacheId] = q
@@ -2052,28 +2084,39 @@ func TestStaleResultsHandler(t *testing.T) {
 	const mainOrgID int64 = 1
 	rule := tests.CreateTestAlertRule(t, ctx, dbstore, int64(interval.Seconds()), mainOrgID)
 	lastEval := evaluationTime.Add(-2 * interval)
-	saveCmd1 := &models.SaveAlertInstanceCommand{
-		RuleOrgID:         rule.OrgID,
-		RuleUID:           rule.UID,
-		Labels:            models.InstanceLabels{"test1": "testValue1"},
-		State:             models.InstanceStateNormal,
-		LastEvalTime:      lastEval,
-		CurrentStateSince: lastEval,
-		CurrentStateEnd:   lastEval.Add(3 * interval),
+
+	labels1 := models.InstanceLabels{"test1": "testValue1"}
+	_, hash1, _ := labels1.StringAndHash()
+	labels2 := models.InstanceLabels{"test2": "testValue2"}
+	_, hash2, _ := labels2.StringAndHash()
+	instances := []models.AlertInstance{
+		{
+			AlertInstanceKey: models.AlertInstanceKey{
+				RuleOrgID:  rule.OrgID,
+				RuleUID:    rule.UID,
+				LabelsHash: hash1,
+			},
+			CurrentState:      models.InstanceStateNormal,
+			Labels:            labels1,
+			LastEvalTime:      lastEval,
+			CurrentStateSince: lastEval,
+			CurrentStateEnd:   lastEval.Add(3 * interval),
+		},
+		{
+			AlertInstanceKey: models.AlertInstanceKey{
+				RuleOrgID:  rule.OrgID,
+				RuleUID:    rule.UID,
+				LabelsHash: hash2,
+			},
+			CurrentState:      models.InstanceStateFiring,
+			Labels:            labels2,
+			LastEvalTime:      lastEval,
+			CurrentStateSince: lastEval,
+			CurrentStateEnd:   lastEval.Add(3 * interval),
+		},
 	}
 
-	_ = dbstore.SaveAlertInstance(ctx, saveCmd1)
-
-	saveCmd2 := &models.SaveAlertInstanceCommand{
-		RuleOrgID:         rule.OrgID,
-		RuleUID:           rule.UID,
-		Labels:            models.InstanceLabels{"test2": "testValue2"},
-		State:             models.InstanceStateFiring,
-		LastEvalTime:      lastEval,
-		CurrentStateSince: lastEval,
-		CurrentStateEnd:   lastEval.Add(3 * interval),
-	}
-	_ = dbstore.SaveAlertInstance(ctx, saveCmd2)
+	_ = dbstore.SaveAlertInstances(ctx, instances...)
 
 	testCases := []struct {
 		desc               string
@@ -2104,7 +2147,8 @@ func TestStaleResultsHandler(t *testing.T) {
 						"alertname":                    rule.Title,
 						"test1":                        "testValue1",
 					},
-					State: eval.Normal,
+					Values: make(map[string]float64),
+					State:  eval.Normal,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -2125,7 +2169,7 @@ func TestStaleResultsHandler(t *testing.T) {
 
 	for _, tc := range testCases {
 		ctx := context.Background()
-		st := state.NewManager(log.New("test_stale_results_handler"), testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, clock.New(), annotationstest.NewFakeAnnotationsRepo())
+		st := state.NewManager(log.New("test_stale_results_handler"), testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &image.NoopImageService{}, clock.New(), &state.FakeHistorian{})
 		st.Warm(ctx)
 		existingStatesForRule := st.GetStatesForRuleUID(rule.OrgID, rule.UID)
 
@@ -2144,8 +2188,7 @@ func TestStaleResultsHandler(t *testing.T) {
 				"__alert_rule_uid__":           rule.UID,
 			})
 			for _, s := range tc.expectedStates {
-				cachedState, err := st.Get(s.OrgID, s.AlertRuleUID, s.CacheId)
-				require.NoError(t, err)
+				cachedState := st.Get(s.OrgID, s.AlertRuleUID, s.CacheId)
 				assert.Equal(t, s, cachedState)
 			}
 		}
@@ -2188,7 +2231,7 @@ func TestStaleResults(t *testing.T) {
 		clk := clock.NewMock()
 		clk.Set(time.Now())
 
-		st := state.NewManager(log.New("test_stale_results_handler"), testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, clk, annotationstest.NewFakeAnnotationsRepo())
+		st := state.NewManager(log.New("test_stale_results_handler"), testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &image.NoopImageService{}, clk, &state.FakeHistorian{})
 
 		orgID := rand.Int63()
 		rule := tests.CreateTestAlertRule(t, ctx, dbstore, 10, orgID)

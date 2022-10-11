@@ -359,11 +359,11 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, groupKey ngmod
 		logger.Debug("updating database with the authorized changes", "add", len(finalChanges.New), "update", len(finalChanges.New), "delete", len(finalChanges.Delete))
 
 		if len(finalChanges.Update) > 0 || len(finalChanges.New) > 0 {
-			updates := make([]store.UpdateRule, 0, len(finalChanges.Update))
+			updates := make([]ngmodels.UpdateRule, 0, len(finalChanges.Update))
 			inserts := make([]ngmodels.AlertRule, 0, len(finalChanges.New))
 			for _, update := range finalChanges.Update {
 				logger.Debug("updating rule", "rule_uid", update.New.UID, "diff", update.Diff.String())
-				updates = append(updates, store.UpdateRule{
+				updates = append(updates, ngmodels.UpdateRule{
 					Existing: update.Existing,
 					New:      *update.New,
 				})

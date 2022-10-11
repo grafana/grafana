@@ -14,7 +14,7 @@ func (ss *SQLStore) AddOrgUser(ctx context.Context, cmd *models.AddOrgUserComman
 		var usr user.User
 		session := sess.ID(cmd.UserId)
 		if !cmd.AllowAddingServiceAccount {
-			session = session.Where(notServiceAccountFilter(ss))
+			session = session.Where(NotServiceAccountFilter(ss))
 		}
 
 		if exists, err := session.Get(&usr); err != nil {
