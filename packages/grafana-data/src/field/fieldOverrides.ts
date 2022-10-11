@@ -359,6 +359,11 @@ export const getLinksSupplier =
     timeZone?: TimeZone
   ) =>
   (config: ValueLinkConfig): Array<LinkModel<Field>> => {
+    if (config.frame !== undefined && config.seriesIdx !== undefined) {
+      frame = config.frame;
+      field = frame.fields[config.seriesIdx];
+    }
+
     if (!field.config.links || field.config.links.length === 0) {
       return [];
     }
