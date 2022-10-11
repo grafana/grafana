@@ -40,7 +40,7 @@ export function VariableEditorList({
     }
     reportInteraction('Variable drag and drop');
     const identifier = JSON.parse(result.draggableId);
-    onChangeOrder(identifier, result.source.index, result.destination.index);
+    onChangeOrder(identifier, variables[result.source.index].index, variables[result.destination.index].index);
   };
 
   return (

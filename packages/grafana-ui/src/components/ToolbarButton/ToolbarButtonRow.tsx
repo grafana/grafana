@@ -15,6 +15,8 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
   alignment?: 'left' | 'right';
 }
 
+const OVERFLOW_BUTTON_ID = 'overflow-button';
+
 export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(
   ({ alignment = 'left', className, children, ...rest }, ref) => {
     const [childVisibility, setChildVisibility] = useState<boolean[]>(
@@ -53,7 +55,10 @@ export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(
       );
       if (containerRef.current) {
         Array.from(containerRef.current.children).forEach((item) => {
-          intersectionObserver.observe(item);
+          // don't observe the overflow button
+          if (item instanceof HTMLElement && item.dataset.testid !== OVERFLOW_BUTTON_ID) {
+            intersectionObserver.observe(item);
+          }
         });
       }
       return () => intersectionObserver.disconnect();
@@ -70,12 +75,11 @@ export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(
           </div>
         ))}
         {childVisibility.includes(false) && (
-          <>
+          <div data-testid={OVERFLOW_BUTTON_ID} className={styles.overflowButton}>
             <ToolbarButton
               variant={showOverflowItems ? 'active' : 'default'}
               tooltip="Show more items"
               onClick={() => setShowOverflowItems(!showOverflowItems)}
-              className={styles.overflowButton}
               icon="ellipsis-v"
               iconOnly
               narrow
@@ -87,7 +91,7 @@ export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(
                 </div>
               </FocusScope>
             )}
-          </>
+          </div>
         )}
       </div>
     );

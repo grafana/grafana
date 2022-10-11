@@ -84,6 +84,7 @@ export { Tab } from './Tabs/Tab';
 export { VerticalTab } from './Tabs/VerticalTab';
 export { TabContent } from './Tabs/TabContent';
 export { Counter } from './Tabs/Counter';
+export { RenderUserContentAsHTML } from './RenderUserContentAsHTML/RenderUserContentAsHTML';
 
 // Visualizations
 export {
@@ -156,7 +157,11 @@ export { MenuItem, type MenuItemProps } from './Menu/MenuItem';
 export { WithContextMenu } from './ContextMenu/WithContextMenu';
 export { DataLinksInlineEditor } from './DataLinks/DataLinksInlineEditor/DataLinksInlineEditor';
 export { DataLinkInput } from './DataLinks/DataLinkInput';
-export { DataLinksContextMenu } from './DataLinks/DataLinksContextMenu';
+export {
+  DataLinksContextMenu,
+  type DataLinksContextMenuProps,
+  type DataLinksContextMenuApi,
+} from './DataLinks/DataLinksContextMenu';
 export { SeriesIcon } from './VizLegend/SeriesIcon';
 export { InfoBox } from './InfoBox/InfoBox';
 export { FeatureBadge, FeatureInfoBox } from './InfoBox/FeatureInfoBox';
@@ -269,7 +274,6 @@ export { useGraphNGContext } from './GraphNG/hooks';
 export { preparePlotFrame, buildScaleKey } from './GraphNG/utils';
 export { type GraphNGLegendEvent } from './GraphNG/types';
 export * from './PanelChrome/types';
-export { EmotionPerfTest } from './ThemeDemos/EmotionPerfTest';
 export { Label as BrowserLabel } from './BrowserLabel/Label';
 export { PanelContainer } from './PanelContainer/PanelContainer';
 export * from './QueryEditor';

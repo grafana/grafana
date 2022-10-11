@@ -89,7 +89,6 @@ export const PromSettings = (props: Props) => {
             options={httpOptions}
             value={httpOptions.find((o) => o.value === options.jsonData.httpMethod)}
             onChange={onChangeHandler('httpMethod', options, onOptionsChange)}
-            width={7}
           />
         </div>
       </div>

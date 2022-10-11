@@ -4,6 +4,9 @@ import React from 'react';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2, Icon } from '@grafana/ui';
+import { HOME_NAV_ID } from 'app/core/reducers/navModel';
+
+import { getNavTitle } from '../NavBar/navBarItem-translations';
 
 export interface Props {
   item: NavModelItem;
@@ -13,18 +16,18 @@ export function SectionNavItem({ item }: Props) {
   const styles = useStyles2(getStyles);
 
   const children = item.children?.filter((x) => !x.hideFromTabs);
-  const isRoot = item.parentItem == null;
+  const isSectionRoot = item.parentItem?.id === HOME_NAV_ID;
   const hasActiveChild = Boolean(children?.length && children.find((x) => x.active));
 
   // If first root child is a section skip the bottom margin (as sections have top margin already)
-  const noRootMargin = isRoot && Boolean(item.children![0].children?.length);
+  const noRootMargin = isSectionRoot && Boolean(item.children![0].children?.length);
 
   const linkClass = cx({
     [styles.link]: true,
     [styles.activeStyle]: item.active,
     [styles.isSection]: Boolean(children?.length),
     [styles.hasActiveChild]: hasActiveChild,
-    [styles.isRoot]: isRoot,
+    [styles.isSectionRoot]: isSectionRoot,
     [styles.noRootMargin]: noRootMargin,
   });
 
@@ -37,9 +40,9 @@ export function SectionNavItem({ item }: Props) {
         role="tab"
         aria-selected={item.active}
       >
-        {isRoot && item.icon && <Icon name={item.icon} />}
-        {isRoot && item.img && <img className={styles.sectionImg} src={item.img} alt={`logo of ${item.text}`} />}
-        {item.text}
+        {isSectionRoot && item.icon && <Icon name={item.icon} />}
+        {isSectionRoot && item.img && <img className={styles.sectionImg} src={item.img} alt={`logo of ${item.text}`} />}
+        {getNavTitle(item.id) ?? item.text}
         {item.tabSuffix && <item.tabSuffix className={styles.suffix} />}
       </a>
       {children?.map((child, index) => (
@@ -90,7 +93,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     sectionImg: css({
       height: 18,
     }),
-    isRoot: css({
+    isSectionRoot: css({
       color: theme.colors.text.primary,
       fontSize: theme.typography.h4.fontSize,
       marginTop: 0,

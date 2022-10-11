@@ -1,7 +1,7 @@
 import React, { FC, useCallback, useEffect } from 'react';
 import { Redirect, Route, RouteChildrenProps, Switch, useLocation } from 'react-router-dom';
 
-import { Alert, LoadingPlaceholder, withErrorBoundary } from '@grafana/ui';
+import { Alert, withErrorBoundary } from '@grafana/ui';
 import { Silence } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
 
@@ -15,6 +15,7 @@ import SilencesEditor from './components/silences/SilencesEditor';
 import SilencesTable from './components/silences/SilencesTable';
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
 import { useAlertManagersByPermission } from './hooks/useAlertManagerSources';
+import { useSilenceNavData } from './hooks/useSilenceNavData';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchAmAlertsAction, fetchSilencesAction } from './state/actions';
 import { SILENCES_POLL_INTERVAL_MS } from './utils/constants';
@@ -33,6 +34,7 @@ const Silences: FC = () => {
     : undefined;
 
   const location = useLocation();
+  const pageNav = useSilenceNavData();
   const isRoot = location.pathname.endsWith('/alerting/silences');
 
   const { currentData: amFeatures } = featureDiscoveryApi.useDiscoverAmFeaturesQuery(
@@ -66,7 +68,7 @@ const Silences: FC = () => {
 
   if (!alertManagerSourceName) {
     return isRoot ? (
-      <AlertingPageWrapper pageId="silences">
+      <AlertingPageWrapper pageId="silences" pageNav={pageNav}>
         <NoAlertManagerWarning availableAlertManagers={alertManagers} />
       </AlertingPageWrapper>
     ) : (
@@ -75,7 +77,7 @@ const Silences: FC = () => {
   }
 
   return (
-    <AlertingPageWrapper pageId="silences">
+    <AlertingPageWrapper pageId="silences" isLoading={loading} pageNav={pageNav}>
       <AlertManagerPicker
         disabled={!isRoot}
         current={alertManagerSourceName}
@@ -103,7 +105,6 @@ const Silences: FC = () => {
           {alertsRequest.error?.message || 'Unknown error.'}
         </Alert>
       )}
-      {loading && <LoadingPlaceholder text="loading silences..." />}
       {result && !error && (
         <Switch>
           <Route exact path="/alerting/silences">
