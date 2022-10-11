@@ -7,7 +7,11 @@ import { DEFAULT_FEED_URL } from 'app/plugins/panel/news/constants';
 
 import { NewsWrapper } from './NewsWrapper';
 
-export function NewsContainer() {
+interface NewsContainerProps {
+  className?: string;
+}
+
+export function NewsContainer({ className }: NewsContainerProps) {
   const [showNewsDrawer, onToggleShowNewsDrawer] = useToggle(false);
 
   const onChildClick = () => {
@@ -16,7 +20,7 @@ export function NewsContainer() {
 
   return (
     <>
-      <ToolbarButton onClick={onChildClick} iconOnly icon="rss" aria-label="News" />
+      <ToolbarButton className={className} onClick={onChildClick} iconOnly icon="rss" aria-label="News" />
       {showNewsDrawer && (
         <Drawer title={t('news.title', 'Latest from the blog')} scrollableContent onClose={onToggleShowNewsDrawer}>
           <NewsWrapper feedUrl={DEFAULT_FEED_URL} />
