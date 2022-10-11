@@ -2,6 +2,7 @@ import React from 'react';
 
 import { locationService } from '@grafana/runtime';
 import { FilterInput } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { useSearchQuery } from 'app/features/search/hooks/useSearchQuery';
 
 export function TopSearchBarInput() {
@@ -20,7 +21,7 @@ export function TopSearchBarInput() {
   return (
     <FilterInput
       onClick={onOpenSearch}
-      placeholder="Search Grafana"
+      placeholder={t('nav.search.placeholder', 'Search Grafana')}
       value={query.query ?? ''}
       onChange={onSearchChange}
     />
