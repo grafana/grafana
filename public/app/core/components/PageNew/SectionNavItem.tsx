@@ -6,6 +6,8 @@ import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2, Icon } from '@grafana/ui';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 
+import { getNavTitle } from '../NavBar/navBarItem-translations';
+
 export interface Props {
   item: NavModelItem;
 }
@@ -40,7 +42,7 @@ export function SectionNavItem({ item }: Props) {
       >
         {isSectionRoot && item.icon && <Icon name={item.icon} />}
         {isSectionRoot && item.img && <img className={styles.sectionImg} src={item.img} alt={`logo of ${item.text}`} />}
-        {item.text}
+        {getNavTitle(item.id) ?? item.text}
         {item.tabSuffix && <item.tabSuffix className={styles.suffix} />}
       </a>
       {children?.map((child, index) => (

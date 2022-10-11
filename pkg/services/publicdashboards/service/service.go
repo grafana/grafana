@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/tokens"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/queries"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/validation"
@@ -289,6 +290,10 @@ func (pd *PublicDashboardServiceImpl) PublicDashboardEnabled(ctx context.Context
 
 func (pd *PublicDashboardServiceImpl) AccessTokenExists(ctx context.Context, accessToken string) (bool, error) {
 	return pd.store.AccessTokenExists(ctx, accessToken)
+}
+
+func (pd *PublicDashboardServiceImpl) GetPublicDashboardOrgId(ctx context.Context, accessToken string) (int64, error) {
+	return pd.store.GetPublicDashboardOrgId(ctx, accessToken)
 }
 
 // intervalMS and maxQueryData values are being calculated on the frontend for regular dashboards

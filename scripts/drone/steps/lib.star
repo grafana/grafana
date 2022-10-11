@@ -1,14 +1,14 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
 grabpl_version = 'v3.0.11'
-build_image = 'grafana/build-container:1.6.2'
+build_image = 'grafana/build-container:1.6.3'
 publish_image = 'grafana/grafana-ci-deploy:1.3.3'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
 alpine_image = 'alpine:3.15.6'
 curl_image = 'byrnedo/alpine-curl:0.1.8'
 windows_image = 'mcr.microsoft.com/windows:1809'
 wix_image = 'grafana/ci-wix:0.1.1'
-go_image = 'golang:1.19.1'
+go_image = 'golang:1.19.2'
 
 disable_tests = False
 trigger_oss = {
@@ -36,16 +36,17 @@ def slack_step(channel, template, secret):
         },
     }
 
-def yarn_install_step():
+def yarn_install_step(edition="oss"):
+    deps = []
+    if edition == 'enterprise':
+        deps = ['init-enterprise']
     return {
         'name': 'yarn-install',
         'image': build_image,
         'commands': [
             'yarn install --immutable',
         ],
-        'depends_on': [
-            'grabpl',
-        ],
+        'depends_on': deps,
     }
 
 
@@ -449,6 +450,7 @@ def build_frontend_package_step(edition, ver_mode):
             'NODE_OPTIONS': '--max_old_space_size=8192',
         },
         'depends_on': [
+            'compile-build-cmd',
             'yarn-install',
         ],
         'commands': cmds,
@@ -467,6 +469,7 @@ def build_plugins_step(edition, ver_mode):
         'image': build_image,
         'environment': env,
         'depends_on': [
+            'compile-build-cmd',
             'yarn-install',
         ],
         'commands': [
@@ -485,7 +488,7 @@ def test_backend_step(edition):
                 'wire-install',
             ],
             'commands': [
-                'go test -tags=pro -covermode=atomic -timeout=30m ./pkg/...',
+                'go test -tags=pro -covermode=atomic -timeout=5m ./pkg/...',
             ],
         }
     else:
@@ -496,7 +499,7 @@ def test_backend_step(edition):
                 'wire-install',
             ],
             'commands': [
-                'go test -short -covermode=atomic -timeout=30m ./pkg/...',
+                'go test -short -covermode=atomic -timeout=5m ./pkg/...',
             ],
         }
 
@@ -510,17 +513,19 @@ def test_backend_integration_step(edition):
             'wire-install',
         ],
         'commands': [
-            'go test -run Integration -covermode=atomic -timeout=30m ./pkg/...',
+            'go test -run Integration -covermode=atomic -timeout=5m ./pkg/...',
         ],
     }
 
-def betterer_frontend_step():
+def betterer_frontend_step(edition="oss"):
+    deps = []
+    if edition == "enterprise":
+        deps.extend(['init-enterprise'])
+    deps.extend(['yarn-install'])
     return {
         'name': 'betterer-frontend',
         'image': build_image,
-        'depends_on': [
-            'yarn-install',
-        ],
+        'depends_on': deps,
         'commands': [
             'yarn betterer ci',
         ],
@@ -529,16 +534,18 @@ def betterer_frontend_step():
 
 
 
-def test_frontend_step():
+def test_frontend_step(edition="oss"):
+    deps = []
+    if edition == "enterprise":
+        deps.extend(['init-enterprise'])
+    deps.extend(['yarn-install'])
     return {
         'name': 'test-frontend',
         'image': build_image,
         'environment': {
             'TEST_MAX_WORKERS': '50%',
         },
-        'depends_on': [
-            'yarn-install',
-        ],
+        'depends_on': deps,
         'commands': [
             'yarn run ci:test-frontend',
         ],
@@ -859,7 +866,7 @@ def postgres_integration_tests_step(edition, ver_mode):
             'devenv/docker/blocks/postgres_tests/setup.sql',
             # Make sure that we don't use cached results for another database
             'go clean -testcache',
-            "go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=30m {}'",
+            "go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=5m {}'",
         ]
     return {
         'name': 'postgres-integration-tests',
@@ -882,7 +889,7 @@ def mysql_integration_tests_step(edition, ver_mode):
             'cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass',
             # Make sure that we don't use cached results for another database
             'go clean -testcache',
-            "go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=30m {}'",
+            "go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=5m {}'",
         ]
     return {
         'name': 'mysql-integration-tests',
@@ -1180,7 +1187,7 @@ def get_windows_steps(edition, ver_mode):
 
 def verify_gen_cue_step(edition):
     deps = []
-    if edition == "enterprise":
+    if edition in ('enterprise', 'enterprise2'):
         deps.extend(['init-enterprise'])
     return {
         'name': 'verify-gen-cue',
@@ -1198,19 +1205,20 @@ def trigger_test_release():
         'name': 'trigger-test-release',
         'image': build_image,
         'environment': {
-            'GITHUB_TOKEN': from_secret('github_token'),
+            'GITHUB_TOKEN': from_secret('github_token_pr'),
             'DOWNSTREAM_REPO': from_secret('downstream'),
             'TEST_TAG': 'v0.0.0-test',
         },
         'commands': [
             'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git" --depth=1',
             'cd grafana-enterprise',
-            'git fetch origin "refs/tags/*:refs/tags/*"',
-            'git tag -d $${TEST_TAG} && git push --delete origin $${TEST_TAG} && git tag $${TEST_TAG} && git push origin $${TEST_TAG}',
+            'git fetch origin "refs/tags/*:refs/tags/*" --quiet',
+            'if git show-ref --tags $${TEST_TAG} --quiet; then git tag -d $${TEST_TAG} && git push --delete origin $${TEST_TAG}; fi',
+            'git tag $${TEST_TAG} && git push origin $${TEST_TAG}',
             'cd -',
-            'git fetch origin "refs/tags/*:refs/tags/*"',
-            'git remote add downstream https://$${GITHUB_TOKEN}@github.com/grafana/$${DOWNSTREAM_REPO}.git',
-            'git tag -d $${TEST_TAG} && git push --delete downstream --quiet $${TEST_TAG} && git tag $${TEST_TAG} && git push downstream $${TEST_TAG} --quiet',
+            'git fetch https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git "refs/tags/*:refs/tags/*" --quiet && git fetch --quiet',
+            'if git show-ref --tags $${TEST_TAG} --quiet; then git tag -d $${TEST_TAG} && git push --delete https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git $${TEST_TAG}; fi',
+            'git tag $${TEST_TAG} && git push https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git $${TEST_TAG}',
         ],
         'failure': 'ignore',
         'when': {
@@ -1253,7 +1261,7 @@ def end_to_end_tests_deps(edition):
 
 def compile_build_cmd(edition='oss'):
     dependencies = []
-    if edition == 'enterprise':
+    if edition in ('enterprise', 'enterprise2'):
           dependencies = ['init-enterprise',]
     return {
         'name': 'compile-build-cmd',

@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -1406,7 +1407,7 @@ func createFolderWithACL(t *testing.T, sqlStore *sqlstore.SQLStore, title string
 	dashboardPermissions := acmock.NewMockedPermissionsService()
 	dashboardStore := database.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg))
 	d := dashboardservice.ProvideDashboardService(cfg, dashboardStore, nil, features, folderPermissions, dashboardPermissions, ac)
-	s := dashboardservice.ProvideFolderService(cfg, d, dashboardStore, nil, features, folderPermissions, ac, busmock.New())
+	s := folderimpl.ProvideService(ac, busmock.New(), cfg, d, dashboardStore, features, folderPermissions, nil)
 
 	t.Logf("Creating folder with title and UID %q", title)
 	folder, err := s.CreateFolder(context.Background(), user, user.OrgID, title, title)
@@ -1508,10 +1509,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			cfg, dashboardStore, &alerting.DashAlertExtractorService{},
 			features, folderPermissions, dashboardPermissions, ac,
 		)
-		folderService := dashboardservice.ProvideFolderService(
-			cfg, dashboardService, dashboardStore, nil,
-			features, folderPermissions, ac, busmock.New(),
-		)
+		folderService := folderimpl.ProvideService(ac, busmock.New(), cfg, dashboardService, dashboardStore, features, folderPermissions, nil)
 
 		elementService := libraryelements.ProvideService(cfg, sqlStore, routing.NewRouteRegister(), folderService)
 		service := LibraryPanelService{

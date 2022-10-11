@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	pref "github.com/grafana/grafana/pkg/services/preference"
+	"github.com/grafana/grafana/pkg/services/querylibrary"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -33,6 +34,7 @@ type ServiceImpl struct {
 	accesscontrolService ac.Service
 	kvStore              kvstore.KVStore
 	apiKeyService        apikey.Service
+	queryLibraryService  querylibrary.HTTPService
 
 	// Navigation
 	navigationAppConfig     map[string]NavigationAppConfig
@@ -44,7 +46,7 @@ type NavigationAppConfig struct {
 	SortWeight int64
 }
 
-func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStore plugins.Store, pluginSettings pluginsettings.Service, starService star.Service, features *featuremgmt.FeatureManager, dashboardService dashboards.DashboardService, accesscontrolService ac.Service, kvStore kvstore.KVStore, apiKeyService apikey.Service) navtree.Service {
+func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStore plugins.Store, pluginSettings pluginsettings.Service, starService star.Service, features *featuremgmt.FeatureManager, dashboardService dashboards.DashboardService, accesscontrolService ac.Service, kvStore kvstore.KVStore, apiKeyService apikey.Service, queryLibraryService querylibrary.HTTPService) navtree.Service {
 	service := &ServiceImpl{
 		cfg:                  cfg,
 		log:                  log.New("navtree service"),
@@ -57,6 +59,7 @@ func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStor
 		accesscontrolService: accesscontrolService,
 		kvStore:              kvStore,
 		apiKeyService:        apiKeyService,
+		queryLibraryService:  queryLibraryService,
 	}
 
 	service.readNavigationSettings()
@@ -118,6 +121,18 @@ func (s *ServiceImpl) GetNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 			SortWeight: navtree.WeightExplore,
 			Section:    navtree.NavSectionCore,
 			Url:        s.cfg.AppSubURL + "/explore",
+		})
+	}
+
+	if !s.queryLibraryService.IsDisabled() {
+		treeRoot.AddSection(&navtree.NavLink{
+			Text:       "Query Library",
+			Id:         "query",
+			SubTitle:   "Store, import, export and manage your team queries in an easy way.",
+			Icon:       "file-search-alt",
+			SortWeight: navtree.WeightQueryLibrary,
+			Section:    navtree.NavSectionCore,
+			Url:        s.cfg.AppSubURL + "/query-library",
 		})
 	}
 
