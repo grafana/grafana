@@ -2945,6 +2945,7 @@ steps:
 - commands:
   - yarn run ci:test-frontend
   depends_on:
+  - init-enterprise
   - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
@@ -2990,6 +2991,12 @@ steps:
       from_secret: github_token
   image: grafana/build-container:1.6.3
   name: clone-enterprise
+- commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.10/grabpl
+  - chmod +x bin/grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: grabpl
 - commands:
   - mv bin/grabpl /tmp/
   - rmdir bin
@@ -3087,6 +3094,12 @@ steps:
   image: grafana/build-container:1.6.3
   name: clone-enterprise
 - commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.10/grabpl
+  - chmod +x bin/grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: grabpl
+- commands:
   - mv bin/grabpl /tmp/
   - rmdir bin
   - mv grafana-enterprise /tmp/
@@ -3120,7 +3133,8 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
-  depends_on: []
+  depends_on:
+  - init-enterprise
   image: grafana/build-container:1.6.3
   name: verify-gen-cue
 - commands:
@@ -4960,6 +4974,7 @@ steps:
 - commands:
   - yarn run ci:test-frontend
   depends_on:
+  - init-enterprise
   - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
@@ -4999,6 +5014,12 @@ steps:
       from_secret: github_token
   image: grafana/build-container:1.6.3
   name: clone-enterprise
+- commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.10/grabpl
+  - chmod +x bin/grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: grabpl
 - commands:
   - mv bin/grabpl /tmp/
   - rmdir bin
@@ -5087,6 +5108,12 @@ steps:
   image: grafana/build-container:1.6.3
   name: clone-enterprise
 - commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.10/grabpl
+  - chmod +x bin/grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: grabpl
+- commands:
   - mv bin/grabpl /tmp/
   - rmdir bin
   - mv grafana-enterprise /tmp/
@@ -5117,7 +5144,8 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
-  depends_on: []
+  depends_on:
+  - init-enterprise
   image: grafana/build-container:1.6.3
   name: verify-gen-cue
 - commands:
@@ -5568,6 +5596,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: c34c966c6b330b3783efd376a09e59585ce0ea2d3d20d49ae3d850beb6da868f
+hmac: d89a505a95c3768cc6191aa2bdb77584beeebdcdd81def4847104ccd51661c04
 
 ...
