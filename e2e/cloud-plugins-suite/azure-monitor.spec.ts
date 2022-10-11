@@ -1,4 +1,5 @@
 import { load } from 'js-yaml';
+import { v4 as uuidv4 } from 'uuid';
 
 import { e2e } from '@grafana/e2e';
 
@@ -8,8 +9,6 @@ import {
   AzureDataSourceSecureJsonData,
   AzureQueryType,
 } from '../../public/app/plugins/datasource/grafana-azure-monitor-datasource/types';
-
-import EXAMPLE_DASHBOARD from './example-dashboards/azure-monitor.json';
 
 const provisioningPath = `../../provisioning/datasources/azmonitor-ds.yaml`;
 const e2eSelectors = e2e.getSelectors(selectors.components);
@@ -21,7 +20,7 @@ type AzureMonitorConfig = {
 
 type AzureMonitorProvision = { datasources: AzureMonitorConfig[] };
 
-const dataSourceName = 'Azure Monitor E2E Tests';
+const dataSourceName = `Azure Monitor E2E Tests - ${uuidv4()}`;
 
 function provisionAzureMonitorDatasources(datasources: AzureMonitorProvision[]) {
   const datasource = datasources[0].datasources[0];
@@ -249,6 +248,7 @@ e2e.scenario({
       },
     });
   },
+  skipScenario: true,
 });
 
 e2e.scenario({
