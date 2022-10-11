@@ -98,24 +98,25 @@ export class DashboardPanelUnconnected extends PureComponent<Props> {
       const PanelComponent = plugin.panel!;
       return (
         <PanelChromeUI width={200} height={200}>
-          <PanelComponent
-            id={panel.id}
-            data={data}
-            title={panel.title}
-            timeRange={timeRange}
-            timeZone={this.props.dashboard.getTimezone()}
-            options={panelOptions}
-            fieldConfig={panel.fieldConfig}
-            transparent={panel.transparent}
-            width={panelWidth}
-            height={innerPanelHeight}
-            renderCounter={renderCounter}
-            replaceVariables={panel.replaceVariables}
-            onOptionsChange={this.onOptionsChange}
-            onFieldConfigChange={this.onFieldConfigChange}
-            onChangeTimeRange={this.onChangeTimeRange}
-            eventBus={dashboard.events}
-          />
+          {() => <div></div>}
+          {/* <PanelComponent
+              id={panel.id}
+              data={data}
+              title={panel.title}
+              timeRange={timeRange}
+              timeZone={this.props.dashboard.getTimezone()}
+              options={panelOptions}
+              fieldConfig={panel.fieldConfig}
+              transparent={panel.transparent}
+              width={panelWidth}
+              height={innerPanelHeight}
+              renderCounter={renderCounter}
+              replaceVariables={panel.replaceVariables}
+              onOptionsChange={this.onOptionsChange}
+              onFieldConfigChange={this.onFieldConfigChange}
+              onChangeTimeRange={this.onChangeTimeRange}
+              eventBus={dashboard.events}
+            /> */}
         </PanelChromeUI>
       );
     } else {
