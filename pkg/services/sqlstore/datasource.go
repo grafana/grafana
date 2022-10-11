@@ -121,7 +121,7 @@ func (ss *SQLStore) DeleteDataSource(ctx context.Context, cmd *datasources.Delet
 
 			// Remove associated AccessControl permissions
 			if _, errDeletingPerms := sess.Exec("DELETE FROM permission WHERE scope=?",
-				ac.Scope("datasources", "id", fmt.Sprint(dsQuery.Result.Id))); errDeletingPerms != nil {
+				ac.Scope(datasources.ScopeProvider.GetResourceScope(dsQuery.Result.Uid))); errDeletingPerms != nil {
 				return errDeletingPerms
 			}
 		}
