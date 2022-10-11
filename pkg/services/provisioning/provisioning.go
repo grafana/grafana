@@ -15,6 +15,7 @@ import (
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards"
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/encryption"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/notifications"
@@ -44,7 +45,7 @@ func ProvideService(
 	datasourceService datasourceservice.DataSourceService,
 	correlationsService correlations.Service,
 	dashboardService dashboardservice.DashboardService,
-	folderService dashboardservice.FolderService,
+	folderService folder.Service,
 	alertingService *alerting.AlertNotificationService,
 	pluginSettings pluginsettings.Service,
 	searchService searchV2.SearchService,

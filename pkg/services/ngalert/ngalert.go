@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
@@ -54,7 +55,7 @@ func ProvideService(
 	secretsService secrets.Service,
 	notificationService notifications.Service,
 	m *metrics.NGAlert,
-	folderService dashboards.FolderService,
+	folderService folder.Service,
 	ac accesscontrol.AccessControl,
 	dashboardService dashboards.DashboardService,
 	renderService rendering.Service,
@@ -117,7 +118,7 @@ type AlertNG struct {
 	imageService        image.ImageService
 	schedule            schedule.ScheduleService
 	stateManager        *state.Manager
-	folderService       dashboards.FolderService
+	folderService       folder.Service
 	dashboardService    dashboards.DashboardService
 
 	// Alerting notification services
