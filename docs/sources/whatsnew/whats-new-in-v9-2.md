@@ -44,7 +44,7 @@ For example, you can place image layers and then overlay text that's updated by 
 
 We've planned additional features and design elements for future releases to make Canvas panels even more powerful tools for creating custom, interactive, data-driven visualizations. To learn more about the Canvas panel, see the [documentation]({{< relref "../visualizations/canvas/" >}}).
 
-{{< video-embed src="/static/img/docs/canvas-panel/canvas-beta-overview-9-2-0.mov" max-width="750px" caption="Canvas panel beta overview" >}}
+{{< video-embed src="/static/img/docs/canvas-panel/canvas-beta-overview-9-2-0.mp4" max-width="750px" caption="Canvas panel beta overview" >}}
 
 ## Support for Google Analytics 4 properties
 
