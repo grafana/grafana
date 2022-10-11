@@ -761,26 +761,11 @@ steps:
   image: grafana/build-container:1.6.3
   name: lint-docs
 - commands:
-  - ./bin/build build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
-  depends_on:
-  - yarn-install
-  environment:
-    NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.6.3
-  name: build-frontend-packages
-- commands:
   - mkdir -p /hugo/content/docs/grafana
   - cp -r docs/sources/* /hugo/content/docs/grafana/latest/
   - cd /hugo && make prod
   image: grafana/docs-base:latest
   name: build-docs-website
-- commands:
-  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
-  depends_on: []
-  environment:
-    CGO_ENABLED: 0
-  image: golang:1.19.2
-  name: compile-build-cmd
 trigger:
   event:
   - pull_request
@@ -890,26 +875,11 @@ steps:
   image: grafana/build-container:1.6.3
   name: lint-docs
 - commands:
-  - ./bin/build build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
-  depends_on:
-  - yarn-install
-  environment:
-    NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.6.3
-  name: build-frontend-packages
-- commands:
   - mkdir -p /hugo/content/docs/grafana
   - cp -r docs/sources/* /hugo/content/docs/grafana/latest/
   - cd /hugo && make prod
   image: grafana/docs-base:latest
   name: build-docs-website
-- commands:
-  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
-  depends_on: []
-  environment:
-    CGO_ENABLED: 0
-  image: golang:1.19.2
-  name: compile-build-cmd
 trigger:
   branch: main
   event:
@@ -5632,6 +5602,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: a8e4587efd7da775019ed2812c5980fb43fdb9ef5da50e2ac7e5c73151b6a685
+hmac: d5d39719ea023fdedb6cfa303ed2acac29fe23060c9679c0c40511b3cc215738
 
 ...
