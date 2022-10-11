@@ -24,14 +24,13 @@ import (
 //
 // For example if we have the following classic condition:
 //
-//     min(A) > 5 OR max(B) < 10 AND C = 1
+//	min(A) > 5 OR max(B) < 10 AND C = 1
 //
 // which reduces to the following boolean outcomes:
 //
-//     false OR true AND true
+//	false OR true AND true
 //
 // then the outcome of ClassicConditionsCmd is true.
-//
 type ClassicConditionsCmd struct {
 	Conditions []condition
 	refID      string
