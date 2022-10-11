@@ -1,5 +1,7 @@
 import { EchoBackend, EchoEventType, PageviewEchoEvent } from '@grafana/runtime';
 
+import { loadScript } from '../../utils';
+
 export interface GAEchoBackendOptions {
   googleAnalyticsId: string;
   debug?: boolean;
@@ -11,10 +13,7 @@ export class GAEchoBackend implements EchoBackend<PageviewEchoEvent, GAEchoBacke
 
   constructor(public options: GAEchoBackendOptions) {
     const url = `https://www.google-analytics.com/analytics${options.debug ? '_debug' : ''}.js`;
-
-    const script = document.createElement('script');
-    script.src = url;
-    document.head.appendChild(script)
+    loadScript(url);
 
     const ga = (window.ga =
       window.ga ||

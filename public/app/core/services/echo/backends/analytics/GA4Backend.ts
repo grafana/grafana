@@ -1,7 +1,7 @@
 import { CurrentUserDTO } from '@grafana/data';
 import { EchoBackend, EchoEventType, PageviewEchoEvent } from '@grafana/runtime';
 
-import { getUserIdentifier } from '../../utils';
+import { getUserIdentifier, loadScript } from '../../utils';
 
 declare global {
   interface Window {
@@ -20,10 +20,7 @@ export class GA4EchoBackend implements EchoBackend<PageviewEchoEvent, GA4EchoBac
 
   constructor(public options: GA4EchoBackendOptions) {
     const url = `https://www.googletagmanager.com/gtag/js?id=${options.googleAnalyticsId}`;
-
-    const script = document.createElement('script');
-    script.src = url;
-    document.head.appendChild(script)
+    loadScript(url);
 
     window.dataLayer = window.dataLayer || [];
     window.gtag = function gtag() {

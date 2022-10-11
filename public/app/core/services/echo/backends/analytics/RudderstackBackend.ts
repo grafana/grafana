@@ -10,7 +10,7 @@ import {
   PageviewEchoEvent,
 } from '@grafana/runtime';
 
-import { getUserIdentifier } from '../../utils';
+import { getUserIdentifier, loadScript } from '../../utils';
 
 interface Rudderstack {
   identify: typeof identify;
@@ -40,10 +40,7 @@ export class RudderstackBackend implements EchoBackend<PageviewEchoEvent, Rudder
 
   constructor(public options: RudderstackBackendOptions) {
     const url = options.sdkUrl || `https://cdn.rudderlabs.com/v1/rudder-analytics.min.js`;
-
-    const script = document.createElement('script');
-    script.src = url;
-    document.head.appendChild(script)
+    loadScript(url);
 
     const tempRudderstack = ((window as any).rudderanalytics = []);
 
