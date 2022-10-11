@@ -360,13 +360,13 @@ steps:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
     --depth=1
   - cd grafana-enterprise
-  - git fetch origin "refs/tags/*:refs/tags/*"
+  - git fetch origin "refs/tags/*:refs/tags/*" --quiet
   - if git show-ref --tags $${TEST_TAG} --quiet; then git tag -d $${TEST_TAG} && git
     push --delete origin $${TEST_TAG}; fi
   - git tag $${TEST_TAG} && git push origin $${TEST_TAG}
   - cd -
   - git fetch https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git "refs/tags/*:refs/tags/*"
-    && git fetch
+    --quiet && git fetch --quiet
   - if git show-ref --tags $${TEST_TAG} --quiet; then git tag -d $${TEST_TAG} && git
     push --delete https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git $${TEST_TAG};
     fi
@@ -1220,13 +1220,13 @@ steps:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
     --depth=1
   - cd grafana-enterprise
-  - git fetch origin "refs/tags/*:refs/tags/*"
+  - git fetch origin "refs/tags/*:refs/tags/*" --quiet
   - if git show-ref --tags $${TEST_TAG} --quiet; then git tag -d $${TEST_TAG} && git
     push --delete origin $${TEST_TAG}; fi
   - git tag $${TEST_TAG} && git push origin $${TEST_TAG}
   - cd -
   - git fetch https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git "refs/tags/*:refs/tags/*"
-    && git fetch
+    --quiet && git fetch --quiet
   - if git show-ref --tags $${TEST_TAG} --quiet; then git tag -d $${TEST_TAG} && git
     push --delete https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git $${TEST_TAG};
     fi
@@ -5632,6 +5632,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 43fa035e502c2a5120b844e5d2b7c728112c29db14b7976ec40f8d4a0505e447
+hmac: a8e4587efd7da775019ed2812c5980fb43fdb9ef5da50e2ac7e5c73151b6a685
 
 ...
