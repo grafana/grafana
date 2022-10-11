@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	dashboard2 "github.com/grafana/grafana/pkg/coremodel/dashboard"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -66,24 +67,32 @@ func TestGetAnnotations(t *testing.T) {
 
 	t.Run("Test can get grafana annotations and will skip annotation queries and disabled annotations", func(t *testing.T) {
 		dash := models.NewDashboard("test")
-		disabledGrafanaAnnotation := Annotation{
+		color := "red"
+		name := "annoName"
+		disabledGrafanaAnnotation := DashAnnotation{
 			Datasource: internal.CreateDatasource("grafana", "grafana"),
 			Enable:     false,
-			Name:       "someName",
-			IconColor:  "red",
+			Name:       &name,
+			IconColor:  &color,
 		}
-		grafanaAnnotation := Annotation{
+		grafanaAnnotation := DashAnnotation{
 			Datasource: internal.CreateDatasource("grafana", "grafana"),
 			Enable:     true,
-			Name:       "someName",
-			IconColor:  "red",
+			Name:       &name,
+			IconColor:  &color,
+			Target: &dashboard2.Target{
+				Limit:    100,
+				MatchAny: true,
+				Tags:     nil,
+				Type:     "dashboard",
+			},
 		}
-		queryAnnotation := Annotation{
+		queryAnnotation := DashAnnotation{
 			Datasource: internal.CreateDatasource("prometheus", "abc123"),
 			Enable:     true,
-			Name:       "someName",
+			Name:       &name,
 		}
-		annos := []Annotation{grafanaAnnotation, queryAnnotation, disabledGrafanaAnnotation}
+		annos := []DashAnnotation{grafanaAnnotation, queryAnnotation, disabledGrafanaAnnotation}
 		dashboard := internal.CreateDashboardWithAnnotations(t, dash, annos)
 
 		annotationsRepo := annotations.FakeAnnotationsRepo{}
@@ -116,7 +125,7 @@ func TestGetAnnotations(t *testing.T) {
 			Tags:        []string{},
 			IsRegion:    true,
 			Text:        "text",
-			Color:       "red",
+			Color:       color,
 			Time:        2,
 			TimeEnd:     1,
 			Source:      grafanaAnnotation,

@@ -106,7 +106,7 @@ seqs: [
 					// Query for annotation data.
 					rawQuery?: string     @reviewme()
 					showIn:    uint8 | *0 @reviewme()
-					target?:   #Target    @reviewme() // TODO currently a generic in AnnotationQuery
+					target?:   #Target    @reviewme()
 				} @cuetsy(kind="interface")
 
 				// FROM: packages/grafana-data/src/types/templateVars.ts
@@ -266,7 +266,12 @@ seqs: [
 				// with types derived from plugins in the Instance variant.
 				// When working directly from CUE, importers can extend this
 				// type directly to achieve the same effect.
-				#Target: {...} @reviewme()
+				#Target: {
+					limit: int64
+					matchAny: bool
+					tags: [...string]
+					type: string
+				} @reviewme()
 
 				// Dashboard panels. Panels are canonically defined inline
 				// because they share a version timeline with the dashboard

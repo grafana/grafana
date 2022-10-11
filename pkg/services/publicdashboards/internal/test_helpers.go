@@ -9,7 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	models2 "github.com/grafana/grafana/pkg/services/publicdashboards/models"
+	pubdashModels "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/stretchr/testify/require"
 )
 
@@ -36,9 +36,9 @@ func CreateDashboardFromFile(t *testing.T, path string) *models.Dashboard {
 	return models.NewDashboardFromJson(dashJSON)
 }
 
-func CreateDashboardWithAnnotations(t *testing.T, dash *models.Dashboard, annotations []models2.Annotation) *models.Dashboard {
+func CreateDashboardWithAnnotations(t *testing.T, dash *models.Dashboard, annotations []pubdashModels.DashAnnotation) *models.Dashboard {
 	type annotationsDto struct {
-		List []models2.Annotation `json:"list"`
+		List []pubdashModels.DashAnnotation `json:"list"`
 	}
 	annos := annotationsDto{}
 	annos.List = annotations
@@ -58,9 +58,15 @@ type Datasource struct {
 	Uid  string `json:"uid"`
 }
 
-func CreateDatasource(dsType string, uid string) Datasource {
-	return Datasource{
-		Type: dsType,
-		Uid:  uid,
+func CreateDatasource(dsType string, uid string) struct {
+	Type *string `json:"type,omitempty"`
+	Uid  *string `json:"uid,omitempty"`
+} {
+	return struct {
+		Type *string `json:"type,omitempty"`
+		Uid  *string `json:"uid,omitempty"`
+	}{
+		Type: &dsType,
+		Uid:  &uid,
 	}
 }

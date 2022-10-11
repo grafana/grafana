@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
@@ -253,7 +254,7 @@ func (pd *PublicDashboardServiceImpl) GetAnnotations(ctx context.Context, reqDTO
 
 	type annotationsDto struct {
 		Annotations struct {
-			List []Annotation `json:"list"`
+			List []DashAnnotation `json:"list"`
 		}
 	}
 
@@ -274,7 +275,7 @@ func (pd *PublicDashboardServiceImpl) GetAnnotations(ctx context.Context, reqDTO
 
 	var results []AnnotationEvent
 	for _, anno := range dto.Annotations.List {
-		if anno.Enable && anno.Datasource.Type == "grafana" {
+		if anno.Enable && *anno.Datasource.Type == grafanads.DatasourceUID {
 			annoQuery := &annotations.ItemQuery{
 				From:         reqDTO.From,
 				To:           reqDTO.To,
@@ -303,7 +304,7 @@ func (pd *PublicDashboardServiceImpl) GetAnnotations(ctx context.Context, reqDTO
 					Tags:        item.Tags,
 					IsRegion:    item.TimeEnd > 0 && item.Time != item.TimeEnd,
 					Text:        item.Text,
-					Color:       anno.IconColor,
+					Color:       *anno.IconColor,
 					Time:        item.Time,
 					TimeEnd:     item.TimeEnd,
 					Source:      anno,

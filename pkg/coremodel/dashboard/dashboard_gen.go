@@ -879,7 +879,12 @@ type SpecialValueMatch string
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
-type Target map[string]interface{}
+type Target struct {
+	Limit    int64    `json:"limit"`
+	MatchAny bool     `json:"matchAny"`
+	Tags     []string `json:"tags"`
+	Type     string   `json:"type"`
+}
 
 // TODO docs
 //

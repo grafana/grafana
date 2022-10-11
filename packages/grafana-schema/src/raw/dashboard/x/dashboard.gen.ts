@@ -40,7 +40,12 @@ export interface AnnotationQuery {
    */
   rawQuery?: string;
   showIn: number;
-  target?: Record<string, unknown>;
+  target?: {
+    limit: number;
+    matchAny: boolean;
+    tags: Array<string>;
+    type: string;
+  };
   type: string;
 }
 
@@ -373,7 +378,12 @@ export interface Panel {
   /**
    * TODO docs
    */
-  targets?: Array<Record<string, unknown>>;
+  targets?: Array<{
+    limit: number;
+    matchAny: boolean;
+    tags: Array<string>;
+    type: string;
+  }>;
   /**
    * TODO docs - seems to be an old field from old dashboard alerts?
    */
