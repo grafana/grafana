@@ -74,7 +74,7 @@ func (c *cache) getOrCreate(ctx context.Context, alertRule *ngModels.AlertRule, 
 	il := ngModels.InstanceLabels(lbs)
 	id, err := il.StringKey()
 	if err != nil {
-		c.log.Error("error getting cacheId for entry", "err", err.Error())
+		c.log.Error("error getting cacheID for entry", "err", err.Error())
 	}
 
 	if _, ok := c.states[alertRule.OrgID]; !ok {
@@ -106,7 +106,7 @@ func (c *cache) getOrCreate(ctx context.Context, alertRule *ngModels.AlertRule, 
 	newState := &State{
 		AlertRuleUID:       alertRule.UID,
 		OrgID:              alertRule.OrgID,
-		CacheId:            id,
+		CacheID:            id,
 		Labels:             lbs,
 		Annotations:        annotations,
 		EvaluationDuration: result.EvaluationDuration,
@@ -148,7 +148,7 @@ func (c *cache) set(entry *State) {
 	if _, ok := c.states[entry.OrgID][entry.AlertRuleUID]; !ok {
 		c.states[entry.OrgID][entry.AlertRuleUID] = make(map[string]*State)
 	}
-	c.states[entry.OrgID][entry.AlertRuleUID][entry.CacheId] = entry
+	c.states[entry.OrgID][entry.AlertRuleUID][entry.CacheID] = entry
 }
 
 func (c *cache) get(orgID int64, alertRuleUID, stateId string) (*State, error) {

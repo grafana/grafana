@@ -124,7 +124,7 @@
           "enterprise"
         ],
         "summary": "Update a custom role.",
-        "operationId": "updateRoleWithPermissions",
+        "operationId": "updateRole",
         "parameters": [
           {
             "name": "body",
@@ -166,7 +166,7 @@
           "enterprise"
         ],
         "summary": "Delete a custom role.",
-        "operationId": "deleteCustomRole",
+        "operationId": "deleteRole",
         "parameters": [
           {
             "type": "boolean",
@@ -194,6 +194,78 @@
           },
           "403": {
             "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/access-control/roles/{roleUID}/assignments": {
+      "get": {
+        "description": "Get role assignments for the role with the given UID.\n\nYou need to have a permission with action `teams.roles:list` and scope `teams:id:*` and `users.roles:list` and scope `users:id:*`.",
+        "tags": [
+          "access_control",
+          "enterprise"
+        ],
+        "summary": "Get role assignments.",
+        "operationId": "getRoleAssignments",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "roleUID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getRoleAssignmentsResponse"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "put": {
+        "description": "Set role assignments for the role with the given UID.\n\nYou need to have a permission with action `teams.roles:add` and `teams.roles:remove` and scope `permissions:type:delegate`, and `users.roles:add` and `users.roles:remove` and scope `permissions:type:delegate`.",
+        "tags": [
+          "access_control",
+          "enterprise"
+        ],
+        "summary": "Set role assignments.",
+        "operationId": "setRoleAssignments",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "roleUID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/SetRoleAssignmentsCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/setRoleAssignmentsResponse"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
           },
           "500": {
             "$ref": "#/responses/internalServerError"
@@ -553,7 +625,7 @@
         "tags": [
           "ldap_debug"
         ],
-        "summary": "Returns the current state of the LDAP background sync integration",
+        "summary": "Returns the current state of the LDAP background sync integration.",
         "operationId": "getSyncStatus",
         "responses": {
           "200": {
@@ -4095,9 +4167,7 @@
             "name": "DatasourceProxyParam",
             "in": "body",
             "required": true,
-            "schema": {
-              "type": "object"
-            }
+            "schema": {}
           },
           {
             "type": "string",
@@ -4236,9 +4306,7 @@
             "name": "DatasourceProxyParam",
             "in": "body",
             "required": true,
-            "schema": {
-              "type": "object"
-            }
+            "schema": {}
           },
           {
             "type": "string",
@@ -7630,11 +7698,11 @@
     },
     "/recording-rules/writer": {
       "get": {
-        "description": "Return the prometheus remote write target",
         "tags": [
           "recording_rules",
           "enterprise"
         ],
+        "summary": "Return the prometheus remote write target.",
         "operationId": "getRecordingRuleWriteTarget",
         "responses": {
           "200": {
@@ -7655,7 +7723,7 @@
         }
       },
       "post": {
-        "description": "It returns a 422 if there is not an existing prometheus data source configured",
+        "description": "It returns a 422 if there is not an existing prometheus data source configured.",
         "tags": [
           "recording_rules",
           "enterprise"
@@ -7757,7 +7825,7 @@
     },
     "/reports": {
       "get": {
-        "description": "Available to org admins only and with a valid or expired license\n\nYou need to have a permission with action `reports:read` with scope `reports:*`.",
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports:read` with scope `reports:*`.",
         "tags": [
           "reports",
           "enterprise"
@@ -7982,7 +8050,7 @@
     },
     "/reports/settings": {
       "get": {
-        "description": "Available to org admins only and with a valid or expired license\n\nYou need to have a permission with action `reports.settings:read`x.",
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.settings:read`x.",
         "tags": [
           "reports",
           "enterprise"
@@ -8005,7 +8073,7 @@
         }
       },
       "post": {
-        "description": "Available to org admins only and with a valid or expired license\n\nYou need to have a permission with action `reports.settings:write`xx.",
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.settings:write`xx.",
         "tags": [
           "reports",
           "enterprise"
@@ -8084,7 +8152,7 @@
     },
     "/reports/{id}": {
       "get": {
-        "description": "Available to org admins only and with a valid or expired license\n\nYou need to have a permission with action `reports:read` with scope `reports:id:\u003creport ID\u003e`.",
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports:read` with scope `reports:id:\u003creport ID\u003e`.",
         "tags": [
           "reports",
           "enterprise"
@@ -8122,7 +8190,7 @@
         }
       },
       "put": {
-        "description": "Available to org admins only and with a valid or expired license\n\nYou need to have a permission with action `reports.admin:write` with scope `reports:id:\u003creport ID\u003e`.",
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.admin:write` with scope `reports:id:\u003creport ID\u003e`.",
         "tags": [
           "reports",
           "enterprise"
@@ -8168,7 +8236,7 @@
         }
       },
       "delete": {
-        "description": "Available to org admins only and with a valid or expired license\n\nYou need to have a permission with action `reports.delete` with scope `reports:id:\u003creport ID\u003e`.",
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.delete` with scope `reports:id:\u003creport ID\u003e`.",
         "tags": [
           "reports",
           "enterprise"
@@ -8456,7 +8524,7 @@
         "tags": [
           "service_accounts"
         ],
-        "summary": "# Create service account",
+        "summary": "Create service account",
         "operationId": "createServiceAccount",
         "parameters": [
           {
@@ -8492,7 +8560,7 @@
         "tags": [
           "service_accounts"
         ],
-        "summary": "# Search service accounts with paging",
+        "summary": "Search service accounts with paging",
         "operationId": "searchOrgServiceAccountsWithPaging",
         "parameters": [
           {
@@ -8548,7 +8616,7 @@
         "tags": [
           "service_accounts"
         ],
-        "summary": "# Get single serviceaccount by Id",
+        "summary": "Get single serviceaccount by Id",
         "operationId": "retrieveServiceAccount",
         "parameters": [
           {
@@ -8585,7 +8653,7 @@
         "tags": [
           "service_accounts"
         ],
-        "summary": "# Delete service account",
+        "summary": "Delete service account",
         "operationId": "deleteServiceAccount",
         "parameters": [
           {
@@ -8619,7 +8687,7 @@
         "tags": [
           "service_accounts"
         ],
-        "summary": "# Update service account",
+        "summary": "Update service account",
         "operationId": "updateServiceAccount",
         "parameters": [
           {
@@ -8665,7 +8733,7 @@
         "tags": [
           "service_accounts"
         ],
-        "summary": "# Get service account tokens",
+        "summary": "Get service account tokens",
         "operationId": "listTokens",
         "parameters": [
           {
@@ -8699,7 +8767,7 @@
         "tags": [
           "service_accounts"
         ],
-        "summary": "# CreateNewToken adds a token to a service account",
+        "summary": "CreateNewToken adds a token to a service account",
         "operationId": "createToken",
         "parameters": [
           {
@@ -8748,7 +8816,7 @@
         "tags": [
           "service_accounts"
         ],
-        "summary": "# DeleteToken deletes service account tokens",
+        "summary": "DeleteToken deletes service account tokens",
         "operationId": "deleteToken",
         "parameters": [
           {
@@ -10957,9 +11025,7 @@
     "AlertTestResultLog": {
       "type": "object",
       "properties": {
-        "data": {
-          "type": "object"
-        },
+        "data": {},
         "message": {
           "type": "string"
         }
@@ -11020,6 +11086,19 @@
         },
         "type": {
           "$ref": "#/definitions/RuleType"
+        }
+      }
+    },
+    "AlertingStatus": {
+      "type": "object",
+      "properties": {
+        "alertmanagersChoice": {
+          "type": "string",
+          "enum": [
+            "all",
+            "internal",
+            "external"
+          ]
         }
       }
     },
@@ -12601,7 +12680,7 @@
           }
         },
         "value": {
-          "$ref": "#/definitions/Float"
+          "type": "string"
         }
       }
     },
@@ -12692,16 +12771,12 @@
         "color": {
           "description": "Map values to a display color\nNOTE: this interface is under development in the frontend... so simple map for now",
           "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          }
+          "additionalProperties": false
         },
         "custom": {
           "description": "Panel Specific Values",
           "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          }
+          "additionalProperties": false
         },
         "decimals": {
           "type": "integer",
@@ -12774,20 +12849,6 @@
           "items": {
             "$ref": "#/definitions/TagsDTO"
           }
-        }
-      }
-    },
-    "Float": {
-      "description": "It does not consider zero values to be null.\nIt will decode to null, not zero, if null.",
-      "type": "object",
-      "title": "Float is a nullable float64.",
-      "properties": {
-        "Float64": {
-          "type": "number",
-          "format": "double"
-        },
-        "Valid": {
-          "type": "boolean"
         }
       }
     },
@@ -12905,8 +12966,7 @@
           "type": "string"
         },
         "custom": {
-          "description": "Custom datasource specific values.",
-          "type": "object"
+          "description": "Custom datasource specific values."
         },
         "dataTopic": {
           "$ref": "#/definitions/DataTopic"
@@ -14964,9 +15024,7 @@
         "data": {
           "type": "string"
         },
-        "tags": {
-          "type": "object"
-        },
+        "tags": {},
         "what": {
           "type": "string"
         },
@@ -15599,16 +15657,12 @@
         "color": {
           "description": "Map values to a display color\nNOTE: this interface is under development in the frontend... so simple map for now",
           "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          }
+          "additionalProperties": false
         },
         "custom": {
           "description": "Panel Specific Values",
           "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          }
+          "additionalProperties": false
         },
         "decimals": {
           "type": "integer",
@@ -15800,9 +15854,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "additionalProperties": {
-              "type": "object"
-            }
+            "additionalProperties": false
           }
         },
         "range": {
@@ -15897,6 +15949,35 @@
         "authTokenId": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "RoleAssignmentsDTO": {
+      "type": "object",
+      "properties": {
+        "role_uid": {
+          "type": "string"
+        },
+        "service_accounts": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "teams": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "users": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
         }
       }
     },
@@ -16456,6 +16537,32 @@
           "type": "string",
           "format": "date-time",
           "example": "2022-03-21T14:35:33Z"
+        }
+      }
+    },
+    "SetRoleAssignmentsCommand": {
+      "type": "object",
+      "properties": {
+        "service_accounts": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "teams": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "users": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
         }
       }
     },
@@ -19404,6 +19511,12 @@
         }
       }
     },
+    "getRoleAssignmentsResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/RoleAssignmentsDTO"
+      }
+    },
     "getRoleResponse": {
       "description": "(empty)",
       "schema": {
@@ -19807,6 +19920,12 @@
       "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/SearchUserQueryResult"
+      }
+    },
+    "setRoleAssignmentsResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/RoleAssignmentsDTO"
       }
     },
     "testAlertResponse": {
