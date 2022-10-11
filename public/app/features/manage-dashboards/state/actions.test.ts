@@ -88,11 +88,16 @@ describe('validateDashboardJson', () => {
     const jsonImportNestedTags =
       '{"title": "Nested tags","tags": ["tag1", "tag2", ["nestedTag1", "nestedTag2"]],"schemaVersion": 36}';
     const validateDashboardJsonNestedTags = await validateDashboardJson(jsonImportNestedTags);
-    expect(validateDashboardJsonNestedTags).toBe('error: tags expected Array of Strings');
+    expect(validateDashboardJsonNestedTags).toBe('JSON expected array of strings');
   });
   it('Should not return true if not an array', async () => {
     const jsonImportNotArray = '{"title": "Not Array","tags": "tag1","schemaVersion":36}';
     const validateDashboardJsonNotArray = await validateDashboardJson(jsonImportNotArray);
-    expect(validateDashboardJsonNotArray).toBe('error: tags expected Array');
+    expect(validateDashboardJsonNotArray).toBe('JSON expected array');
+  });
+  it('Should not return true if not valid JSON', async () => {
+    const jsonImportInvalidJson = '{"schemaVersion": 36,"tags": {"tag", "nested tag"}, "title": "Nested lists"}';
+    const validateDashboardJsonNotValid = await validateDashboardJson(jsonImportInvalidJson);
+    expect(validateDashboardJsonNotValid).toBe('Not valid JSON');
   });
 });

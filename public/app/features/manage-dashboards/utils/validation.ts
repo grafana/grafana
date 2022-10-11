@@ -3,18 +3,22 @@ import { getBackendSrv } from '@grafana/runtime';
 import { validationSrv } from '../services/ValidationSrv';
 
 export const validateDashboardJson = (json: string) => {
-  let dashboard = JSON.parse(json);
-  if (dashboard && dashboard.tags) {
-    if (Array.isArray(dashboard.tags)) {
-      const hasInvalidTag = dashboard.tags.some((tag: string) => typeof tag !== 'string');
-      if (hasInvalidTag) {
-        return 'error: tags expected Array of Strings';
+  try {
+    let dashboard = JSON.parse(json);
+    if (dashboard && dashboard.tags) {
+      if (Array.isArray(dashboard.tags)) {
+        const hasInvalidTag = dashboard.tags.some((tag: string) => typeof tag !== 'string');
+        if (hasInvalidTag) {
+          return 'JSON expected array of strings';
+        }
+      } else {
+        return 'JSON expected array';
       }
-    } else {
-      return 'error: tags expected Array';
     }
+    return true;
+  } catch (error) {
+    return 'Not valid JSON';
   }
-  return true;
 };
 
 export const validateGcomDashboard = (gcomDashboard: string) => {
