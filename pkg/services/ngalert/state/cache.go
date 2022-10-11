@@ -3,6 +3,7 @@ package state
 import (
 	"context"
 	"fmt"
+	"math"
 	"net/url"
 	"strings"
 	"sync"
@@ -49,6 +50,15 @@ func (c *cache) getOrCreate(ctx context.Context, log log.Logger, alertRule *ngMo
 
 func (rs *ruleStates) getOrCreate(ctx context.Context, log log.Logger, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, externalURL *url.URL) *State {
 	ruleLabels, annotations := rs.expandRuleLabelsAndAnnotations(ctx, log, alertRule, result, extraLabels, externalURL)
+
+	values := make(map[string]float64)
+	for _, v := range result.Values {
+		if v.Value != nil {
+			values[v.Var] = *v.Value
+		} else {
+			values[v.Var] = math.NaN()
+		}
+	}
 
 	lbs := make(data.Labels, len(extraLabels)+len(ruleLabels)+len(result.Instance))
 	dupes := make(data.Labels)
@@ -102,6 +112,7 @@ func (rs *ruleStates) getOrCreate(ctx context.Context, log log.Logger, alertRule
 			}
 		}
 		state.Annotations = annotations
+		state.Values = values
 		rs.states[id] = state
 		return state
 	}
@@ -115,6 +126,7 @@ func (rs *ruleStates) getOrCreate(ctx context.Context, log log.Logger, alertRule
 		Labels:             lbs,
 		Annotations:        annotations,
 		EvaluationDuration: result.EvaluationDuration,
+		Values:             values,
 	}
 	if result.State == eval.Alerting {
 		newState.StartsAt = result.EvaluatedAt

@@ -89,4 +89,15 @@ describe('Render', () => {
     expect(screen.getByRole('tab', { name: 'Tab Child1' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Tab pageNav child1' })).toBeInTheDocument();
   });
+
+  it('should update document title', async () => {
+    setup({ navId: 'child1', pageNav });
+    expect(document.title).toBe('pageNav child1 - pageNav title - Child1 - Section name - Grafana');
+  });
+
+  it('should not include hideFromBreadcrumb nodes in title', async () => {
+    pageNav.children![0].hideFromBreadcrumbs = true;
+    setup({ navId: 'child1', pageNav });
+    expect(document.title).toBe('pageNav title - Child1 - Section name - Grafana');
+  });
 });
