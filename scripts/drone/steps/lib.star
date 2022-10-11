@@ -514,13 +514,15 @@ def test_backend_integration_step(edition):
         ],
     }
 
-def betterer_frontend_step():
+def betterer_frontend_step(edition="oss"):
+    deps = []
+    if edition == "enterprise":
+        deps.extend(['init-enterprise'])
+    deps.extend(['yarn-install'])
     return {
         'name': 'betterer-frontend',
         'image': build_image,
-        'depends_on': [
-            'yarn-install',
-        ],
+        'depends_on': deps,
         'commands': [
             'yarn betterer ci',
         ],
@@ -529,16 +531,18 @@ def betterer_frontend_step():
 
 
 
-def test_frontend_step():
+def test_frontend_step(edition="oss"):
+    deps = []
+    if edition == "enterprise":
+        deps.extend(['init-enterprise'])
+    deps.extend(['yarn-install'])
     return {
         'name': 'test-frontend',
         'image': build_image,
         'environment': {
             'TEST_MAX_WORKERS': '50%',
         },
-        'depends_on': [
-            'yarn-install',
-        ],
+        'depends_on': deps,
         'commands': [
             'yarn run ci:test-frontend',
         ],
@@ -1180,7 +1184,7 @@ def get_windows_steps(edition, ver_mode):
 
 def verify_gen_cue_step(edition):
     deps = []
-    if edition == "enterprise":
+    if edition in ('enterprise', 'enterprise2'):
         deps.extend(['init-enterprise'])
     return {
         'name': 'verify-gen-cue',
@@ -1198,19 +1202,20 @@ def trigger_test_release():
         'name': 'trigger-test-release',
         'image': build_image,
         'environment': {
-            'GITHUB_TOKEN': from_secret('github_token'),
+            'GITHUB_TOKEN': from_secret('github_token_pr'),
             'DOWNSTREAM_REPO': from_secret('downstream'),
             'TEST_TAG': 'v0.0.0-test',
         },
         'commands': [
             'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git" --depth=1',
             'cd grafana-enterprise',
-            'git fetch origin "refs/tags/*:refs/tags/*"',
-            'git tag -d $${TEST_TAG} && git push --delete origin $${TEST_TAG} && git tag $${TEST_TAG} && git push origin $${TEST_TAG}',
+            'git fetch origin "refs/tags/*:refs/tags/*" --quiet',
+            'if git show-ref --tags $${TEST_TAG} --quiet; then git tag -d $${TEST_TAG} && git push --delete origin $${TEST_TAG}; fi',
+            'git tag $${TEST_TAG} && git push origin $${TEST_TAG}',
             'cd -',
-            'git fetch origin "refs/tags/*:refs/tags/*"',
-            'git remote add downstream https://$${GITHUB_TOKEN}@github.com/grafana/$${DOWNSTREAM_REPO}.git',
-            'git tag -d $${TEST_TAG} && git push --delete downstream --quiet $${TEST_TAG} && git tag $${TEST_TAG} && git push downstream $${TEST_TAG} --quiet',
+            'git fetch https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git "refs/tags/*:refs/tags/*" --quiet && git fetch --quiet',
+            'if git show-ref --tags $${TEST_TAG} --quiet; then git tag -d $${TEST_TAG} && git push --delete https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git $${TEST_TAG}; fi',
+            'git tag $${TEST_TAG} && git push https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git $${TEST_TAG}',
         ],
         'failure': 'ignore',
         'when': {
@@ -1253,7 +1258,7 @@ def end_to_end_tests_deps(edition):
 
 def compile_build_cmd(edition='oss'):
     dependencies = []
-    if edition == 'enterprise':
+    if edition in ('enterprise', 'enterprise2'):
           dependencies = ['init-enterprise',]
     return {
         'name': 'compile-build-cmd',

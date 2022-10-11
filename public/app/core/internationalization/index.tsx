@@ -15,7 +15,6 @@ const loadTranslations: BackendModule = {
   type: 'backend',
   init() {},
   async read(language, namespace, callback) {
-    console.log('using loadTranslations plugin', { language, namespace, callback });
     const loader = messageLoaders[language];
     if (!loader) {
       return callback(new Error('No message loader available for ' + language), null);
