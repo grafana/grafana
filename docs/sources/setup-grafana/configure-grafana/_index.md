@@ -2054,7 +2054,7 @@ Maximum duration of a single crawl. Default is 1h.
 
 Minimum interval between two subsequent scheduler runs. Default is 12h.
 
-Refer to the [dashboards previews]({{< relref "../../dashboards/previews/" >}}) documentation for detailed instructions.
+Refer to the [dashboards previews]({{< relref "../../search/dashboard-previews/" >}}) documentation for detailed instructions.
 
 ## [rbac]
 
