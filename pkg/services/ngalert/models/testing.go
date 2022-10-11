@@ -58,20 +58,20 @@ func AlertRuleGen(mutators ...AlertRuleMutator) func() *AlertRule {
 		}
 
 		rule := &AlertRule{
-			ID:              rand.Int63(),
-			OrgID:           rand.Int63(),
+			ID:              rand.Int63n(1 << 30),
+			OrgID:           rand.Int63n(1 << 30),
 			Title:           "TEST-ALERT-" + util.GenerateShortUID(),
 			Condition:       "A",
 			Data:            []AlertQuery{GenerateAlertQuery()},
 			Updated:         time.Now().Add(-time.Duration(rand.Intn(100) + 1)),
 			IntervalSeconds: rand.Int63n(60) + 1,
-			Version:         rand.Int63(),
+			Version:         rand.Int63n(1 << 30),
 			UID:             util.GenerateShortUID(),
 			NamespaceUID:    util.GenerateShortUID(),
 			DashboardUID:    dashUID,
 			PanelID:         panelID,
 			RuleGroup:       "TEST-GROUP-" + util.GenerateShortUID(),
-			RuleGroupIndex:  rand.Int(),
+			RuleGroupIndex:  rand.Intn(1 << 30),
 			NoDataState:     randNoDataState(),
 			ExecErrState:    randErrState(),
 			For:             forInterval,
@@ -115,7 +115,7 @@ func WithUniqueGroupIndex() AlertRuleMutator {
 	usedIdx := make(map[int]struct{})
 	return func(rule *AlertRule) {
 		for {
-			idx := rand.Int()
+			idx := rand.Intn(1 << 30)
 			if _, ok := usedIdx[idx]; !ok {
 				usedIdx[idx] = struct{}{}
 				rule.RuleGroupIndex = idx
