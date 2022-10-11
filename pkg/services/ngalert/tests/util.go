@@ -20,6 +20,7 @@ import (
 	databasestore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -88,10 +89,7 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration) (*ngalert.AlertNG, 
 	)
 
 	bus := busmock.New()
-	folderService := dashboardservice.ProvideFolderService(
-		cfg, dashboardService, dashboardStore, nil,
-		features, folderPermissions, ac, bus,
-	)
+	folderService := folderimpl.ProvideService(ac, bus, cfg, dashboardService, dashboardStore, features, folderPermissions, nil)
 
 	ng, err := ngalert.ProvideService(
 		cfg, &FakeFeatures{}, nil, nil, routing.NewRouteRegister(), sqlStore, nil, nil, nil, nil,

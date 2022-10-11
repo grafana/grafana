@@ -76,6 +76,12 @@ export const AlertTemplateData: TemplateDataItem[] = [
     notes: 'Set of annotations attached to the alert.',
   },
   {
+    name: 'Values',
+    type: 'KeyValue',
+    notes:
+      'The values of all instant queries, reduce and math expressions, and classic conditions for the alert. It does not contain time series data.',
+  },
+  {
     name: 'StartsAt',
     type: 'time.Time',
     notes: 'Time the alert started firing.',

@@ -32,6 +32,7 @@ type State struct {
 	Resolved             bool
 	Annotations          map[string]string
 	Labels               data.Labels
+	Values               map[string]float64
 	Image                *models.Image
 	Error                error
 }

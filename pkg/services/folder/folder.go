@@ -1,4 +1,4 @@
-package dashboards
+package folder
 
 import (
 	"context"
@@ -7,10 +7,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-// FolderService is a service for operating on folders.
-//
-//go:generate mockery --name FolderService --structname FakeFolderService --inpackage --filename folder_service_mock.go
-type FolderService interface {
+//go:generate mockery --name Service --structname FakeService --inpackage --filename foldertest/folder_service_mock.go
+type Service interface {
 	GetFolders(ctx context.Context, user *user.SignedInUser, orgID int64, limit int64, page int64) ([]*models.Folder, error)
 	GetFolderByID(ctx context.Context, user *user.SignedInUser, id int64, orgID int64) (*models.Folder, error)
 	GetFolderByUID(ctx context.Context, user *user.SignedInUser, orgID int64, uid string) (*models.Folder, error)
