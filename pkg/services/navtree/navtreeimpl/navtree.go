@@ -76,7 +76,7 @@ func (s *ServiceImpl) GetNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 		treeRoot.AddSection(s.getHomeNode(c, prefs))
 	}
 
-	if hasAccess(ac.ReqSignedIn, ac.EvalAny(ac.EvalPermission(dashboards.ActionDashboardsRead))) {
+	if hasAccess(ac.ReqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsRead)) {
 		starredItemsLinks, err := s.buildStarredItemsNavLinks(c)
 		if err != nil {
 			return nil, err
