@@ -1,4 +1,4 @@
-import { groupBy, isEmpty, mapValues } from 'lodash';
+import { groupBy, mapValues } from 'lodash';
 import { Observable, of } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
@@ -87,9 +87,9 @@ export const decorateWithCorrelations = ({
   correlations: CorrelationData[] | undefined;
 }) => {
   return (data: PanelData): PanelData => {
-    if (!isEmpty(queries) && !isEmpty(correlations)) {
+    if (queries?.length && correlations?.length) {
       const queryRefIdToDataSourceUid = mapValues(groupBy(queries, 'refId'), '0.datasource.uid');
-      attachCorrelationsToDataFrames(data.series, correlations!, queryRefIdToDataSourceUid);
+      attachCorrelationsToDataFrames(data.series, correlations, queryRefIdToDataSourceUid);
     }
     return data;
   };
