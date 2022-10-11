@@ -9,9 +9,14 @@ import { useStyles2, useTheme2 } from '../../themes';
  * @internal
  */
 export interface PanelChromeProps {
+  title?: string;
+  description?: string;
+  link?: string;
+  timeshift?: string;
+  health?: string;
+  state?: string;
   width: number;
   height: number;
-  title?: string;
   padding?: PanelPadding;
   leftItems?: React.ReactNode[]; // rightItems will be added later (actions links etc.)
   children: (innerWidth: number, innerHeight: number) => React.ReactNode;
@@ -27,11 +32,16 @@ export type PanelPadding = 'none' | 'md';
  */
 export const PanelChrome: React.FC<PanelChromeProps> = ({
   title = '',
-  children,
+  description = '',
+  link = '',
+  timeshift = '',
+  health = '',
+  state = '',
   width,
   height,
   padding = 'md',
   leftItems = [],
+  children,
 }) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
@@ -95,39 +105,39 @@ const getStyles = (theme: GrafanaTheme2) => {
   const { padding, background, borderColor } = theme.components.panel;
 
   return {
-    container: css`
-      label: panel-container;
-      background-color: ${background};
-      border: 1px solid ${borderColor};
-      position: relative;
-      border-radius: 3px;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      flex: 0 0 0;
-    `,
-    content: css`
-      label: panel-content;
-      width: 100%;
-      flex-grow: 1;
-    `,
-    header: css`
-      label: panel-header;
-      display: flex;
-      align-items: center;
-    `,
-    headerTitle: css`
-      label: panel-header;
-      text-overflow: ellipsis;
-      overflow: hidden;
-      white-space: nowrap;
-      padding-left: ${theme.spacing(padding)};
-      flex-grow: 1;
-      font-weight: ${theme.typography.fontWeightMedium};
-    `,
-    leftItems: css`
-      display: flex;
-      padding-right: ${theme.spacing(padding)};
-    `,
+    container: css({
+      label: 'panel-container',
+      backgroundColor: background,
+      border: `1px solid ${borderColor}`,
+      position: 'relative',
+      borderRadius: '3px',
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      flex: '0 0 0',
+    }),
+    content: css({
+      label: 'panel-content',
+      width: '100%',
+      flexGrow: 1,
+    }),
+    header: css({
+      label: 'panel-header',
+      display: 'flex',
+      alignItems: 'center',
+    }),
+    headerTitle: css({
+      label: 'panel-header',
+      textOverflow: 'ellipsis',
+      overflow: 'hidden',
+      whiteSpace: 'nowrap',
+      paddingLeft: theme.spacing(padding),
+      flexGrow: 1,
+      fontWeight: theme.typography.fontWeightMedium,
+    }),
+    leftItems: css({
+      display: 'flex',
+      paddingRight: theme.spacing(padding),
+    }),
   };
 };

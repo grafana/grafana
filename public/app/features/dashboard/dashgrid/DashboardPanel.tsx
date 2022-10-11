@@ -95,28 +95,14 @@ export class DashboardPanelUnconnected extends PureComponent<Props> {
         />
       );
     } else if (newPanelChromeUIFlag) {
-      const PanelComponent = plugin.panel!;
       return (
-        <PanelChromeUI width={200} height={200}>
-          {() => <div></div>}
-          {/* <PanelComponent
-              id={panel.id}
-              data={data}
-              title={panel.title}
-              timeRange={timeRange}
-              timeZone={this.props.dashboard.getTimezone()}
-              options={panelOptions}
-              fieldConfig={panel.fieldConfig}
-              transparent={panel.transparent}
-              width={panelWidth}
-              height={innerPanelHeight}
-              renderCounter={renderCounter}
-              replaceVariables={panel.replaceVariables}
-              onOptionsChange={this.onOptionsChange}
-              onFieldConfigChange={this.onFieldConfigChange}
-              onChangeTimeRange={this.onChangeTimeRange}
-              eventBus={dashboard.events}
-            /> */}
+        <PanelChromeUI
+          title="Test Panel Here"
+          width={400}
+          height={300}
+          leftItems={[<div key={0} style={{ width: 20, height: 20, backgroundColor: 'pink' }}></div>]}
+        >
+          {(innerWidth, innerHeight) => <div style={{ width: innerWidth, height: innerHeight }}></div>}
         </PanelChromeUI>
       );
     } else {
