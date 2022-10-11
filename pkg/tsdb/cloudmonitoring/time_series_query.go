@@ -83,7 +83,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, r
 	defer span.End()
 
 	requestBody := map[string]interface{}{
-		"query":    timeSeriesQuery.Query,
+		"query": timeSeriesQuery.Query,
 	}
 	r, err := s.createRequest(ctx, &dsInfo, p, bytes.NewBuffer([]byte{}))
 	if err != nil {
