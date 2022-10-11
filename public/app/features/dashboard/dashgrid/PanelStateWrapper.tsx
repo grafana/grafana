@@ -27,6 +27,7 @@ import {
   PanelChrome,
   PanelContext,
   PanelContextProvider,
+  PanelPadding,
   SeriesVisibilityChangeMode,
 } from '@grafana/ui';
 import { PANEL_BORDER } from 'app/core/constants';
@@ -436,6 +437,57 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     );
   }
 
+  // TODO: cleanup -Move this outside of this component
+  renderPanelContent(innerWidth: number, innerHeight: number) {
+    const { panel, plugin, dashboard } = this.props;
+    const { renderCounter, data } = this.state;
+    const { state: loadingState } = data;
+
+    // do not render component until we have first data
+    if (this.skipFirstRender(loadingState)) {
+      return null;
+    }
+
+    // This is only done to increase a counter that is used by backend
+    // image rendering to know when to capture image
+    if (this.shouldSignalRenderingCompleted(loadingState, plugin.meta)) {
+      profiler.renderingCompleted();
+    }
+
+    const PanelComponent = plugin.panel!;
+    const timeRange = this.state.liveTime ?? data.timeRange ?? this.timeSrv.timeRange();
+    const panelOptions = panel.getOptions();
+
+    // Update the event filter (dashboard settings may have changed)
+    // Yes this is called ever render for a function that is triggered on every mouse move
+    this.eventFilter.onlyLocal = dashboard.graphTooltip === 0;
+
+    return (
+      <>
+        <PanelContextProvider value={this.state.context}>
+          <PanelComponent
+            id={panel.id}
+            data={data}
+            title={panel.title}
+            timeRange={timeRange}
+            timeZone={this.props.dashboard.getTimezone()}
+            options={panelOptions}
+            fieldConfig={panel.fieldConfig}
+            transparent={panel.transparent}
+            width={innerWidth}
+            height={innerHeight}
+            renderCounter={renderCounter}
+            replaceVariables={panel.replaceVariables}
+            onOptionsChange={this.onOptionsChange}
+            onFieldConfigChange={this.onFieldConfigChange}
+            onChangeTimeRange={this.onChangeTimeRange}
+            eventBus={dashboard.events}
+          />
+        </PanelContextProvider>
+      </>
+    );
+  }
+
   renderPanel(width: number, height: number) {
     const { panel, plugin, dashboard } = this.props;
     const { renderCounter, data } = this.state;
@@ -527,10 +579,11 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     // for new panel header design
     const onCancelQuery = () => panel.getQueryRunner().cancelQuery();
     const title = panel.getDisplayTitle();
-
+    const noPadding: PanelPadding = plugin.noPadding ? 'none' : 'md';
     const leftItems = [
       <PanelHeaderLoadingIndicator state={data.state} onClick={onCancelQuery} key="loading-indicator" />,
     ];
+
     return !config.featureToggles.newPanelChromeUI ? (
       <section
         className={containerClassNames}
@@ -562,7 +615,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         </ErrorBoundary>
       </section>
     ) : (
-      <PanelChrome width={width} height={height} title={title} leftItems={leftItems}>
+      <PanelChrome width={width} height={height} title={title} leftItems={leftItems} padding={noPadding}>
         {(innerWidth, innerHeight) => (
           <>
             <ErrorBoundary
@@ -574,7 +627,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
                 if (error) {
                   return null;
                 }
-                return this.renderPanel(innerWidth, innerHeight);
+                return this.renderPanelContent(innerWidth, innerHeight);
               }}
             </ErrorBoundary>
           </>
