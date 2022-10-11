@@ -173,6 +173,7 @@ compilation-stats.json
 *_gen.go
 !pkg/services/featuremgmt/toggles_gen.go
 !pkg/coremodel/**/*_gen.go
+!pkg/kind/**/*_gen.go
 !pkg/framework/**/*_gen.go
 !pkg/plugins/pfs/**/*_gen.go
 !public/app/plugins/**/*_gen.go
