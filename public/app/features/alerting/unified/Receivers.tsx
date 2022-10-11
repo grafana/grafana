@@ -87,10 +87,10 @@ const Receivers: FC = () => {
     }
   }, [alertManagerSourceName, dispatch, receiverTypes]);
 
-  const { currentData: contactPointsState } = receiversApi.useContactPointsStateQuery(
-    { amSourceName: alertManagerSourceName ?? '' },
-    { skip: !alertManagerSourceName, pollingInterval: CONTACT_POINTS_STATE_INTERVAL_MS }
-  );
+  const { currentData: contactPointsState } = receiversApi.useContactPointsStateQuery(alertManagerSourceName ?? '', {
+    skip: !alertManagerSourceName,
+    pollingInterval: CONTACT_POINTS_STATE_INTERVAL_MS,
+  });
 
   const integrationsErrorCount = contactPointsState?.errorCount ?? 0;
 

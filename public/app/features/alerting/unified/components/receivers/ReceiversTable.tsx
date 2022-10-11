@@ -122,9 +122,7 @@ function ReceiverHealth({ errorsByReceiver, someWithNoAttempt }: ReceiverHealthP
   );
 }
 const useContactPointsState = (alertManagerName: string) => {
-  const { currentData: contactPointsState } = receiversApi.endpoints.contactPointsState.useQueryState({
-    amSourceName: alertManagerName,
-  });
+  const { currentData: contactPointsState } = receiversApi.useContactPointsStateQuery(alertManagerName ?? '');
   const receivers: ReceiversState = contactPointsState?.receivers ?? {};
   const errorStateAvailable = Object.keys(receivers).length > 0; // this logic can change depending on how we implement this in the BE
   return { contactPointsState, errorStateAvailable };
