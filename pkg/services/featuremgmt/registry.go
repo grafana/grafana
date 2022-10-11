@@ -322,5 +322,10 @@ var (
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
 		},
+		{
+			Name:        "browserConsoleEchoBackend",
+			Description: "Logs EchoSrv events to the browser console",
+			State:       FeatureStateAlpha,
+		},
 	}
 )

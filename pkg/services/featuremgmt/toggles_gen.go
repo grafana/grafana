@@ -238,4 +238,8 @@ const (
 	// FlagQueryLibrary
 	// Reusable query library
 	FlagQueryLibrary = "queryLibrary"
+
+	// FlagBrowserConsoleEchoBackend
+	// Logs EchoSrv events to the browser console
+	FlagBrowserConsoleEchoBackend = "browserConsoleEchoBackend"
 )
