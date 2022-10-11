@@ -18,7 +18,10 @@ export const TutorialCard: FC<Props> = ({ card }) => {
   const styles = getStyles(theme, card.done);
 
   return (
-    <a className={styles.card} onClick={(event: MouseEvent<HTMLAnchorElement>) => handleTutorialClick(event, card)}>
+    <button
+      className={styles.card}
+      onClick={(event: MouseEvent<HTMLButtonElement>) => handleTutorialClick(event, card)}
+    >
       <div className={cardContent}>
         <div className={styles.type}>{card.type}</div>
         <div className={styles.heading}>{card.done ? 'complete' : card.heading}</div>
@@ -26,11 +29,11 @@ export const TutorialCard: FC<Props> = ({ card }) => {
         <div className={styles.info}>{card.info}</div>
         <Icon className={iconStyle(theme, card.done)} name={card.icon} size="xxl" />
       </div>
-    </a>
+    </button>
   );
 };
 
-const handleTutorialClick = (event: MouseEvent<HTMLAnchorElement>, card: TutorialCardType) => {
+const handleTutorialClick = (event: MouseEvent<HTMLButtonElement>, card: TutorialCardType) => {
   event.preventDefault();
   const isSet = store.get(card.key);
   if (!isSet) {
@@ -45,6 +48,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, complete: boolean) => {
       ${cardStyle(theme, complete)}
       width: 460px;
       min-width: 460px;
+      text-align: left;
 
       @media only screen and (max-width: ${theme.breakpoints.xl}) {
         min-width: 368px;
