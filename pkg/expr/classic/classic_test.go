@@ -16,7 +16,7 @@ func TestUnmarshalConditionCMD(t *testing.T) {
 	var tests = []struct {
 		name            string
 		rawJSON         string
-		expectedCommand *ConditionsCmd
+		expectedCommand *ClassicConditionsCmd
 		needsVars       []string
 	}{
 		{
@@ -46,7 +46,7 @@ func TestUnmarshalConditionCMD(t *testing.T) {
 				  }
 				]
 			}`,
-			expectedCommand: &ConditionsCmd{
+			expectedCommand: &ClassicConditionsCmd{
 				Conditions: []condition{
 					{
 						QueryRefID: "A",
@@ -86,7 +86,7 @@ func TestUnmarshalConditionCMD(t *testing.T) {
 				  }
 				]
 			}`,
-			expectedCommand: &ConditionsCmd{
+			expectedCommand: &ClassicConditionsCmd{
 				Conditions: []condition{
 					{
 						QueryRefID: "A",
@@ -119,7 +119,7 @@ func TestConditionsCmdExecute(t *testing.T) {
 	tests := []struct {
 		name          string
 		vars          mathexp.Vars
-		conditionsCmd *ConditionsCmd
+		conditionsCmd *ClassicConditionsCmd
 		resultNumber  func() mathexp.Number
 	}{
 		{
@@ -131,7 +131,7 @@ func TestConditionsCmdExecute(t *testing.T) {
 					},
 				},
 			},
-			conditionsCmd: &ConditionsCmd{
+			conditionsCmd: &ClassicConditionsCmd{
 				Conditions: []condition{
 					{
 						QueryRefID: "A",
@@ -155,7 +155,7 @@ func TestConditionsCmdExecute(t *testing.T) {
 					},
 				},
 			},
-			conditionsCmd: &ConditionsCmd{
+			conditionsCmd: &ClassicConditionsCmd{
 				Conditions: []condition{
 					{
 						QueryRefID: "A",
@@ -180,7 +180,7 @@ func TestConditionsCmdExecute(t *testing.T) {
 					},
 				},
 			},
-			conditionsCmd: &ConditionsCmd{
+			conditionsCmd: &ClassicConditionsCmd{
 				Conditions: []condition{
 					{
 						QueryRefID: "A",
@@ -204,7 +204,7 @@ func TestConditionsCmdExecute(t *testing.T) {
 					},
 				},
 			},
-			conditionsCmd: &ConditionsCmd{
+			conditionsCmd: &ClassicConditionsCmd{
 				Conditions: []condition{
 					{
 						QueryRefID: "A",
@@ -234,7 +234,7 @@ func TestConditionsCmdExecute(t *testing.T) {
 					},
 				},
 			},
-			conditionsCmd: &ConditionsCmd{
+			conditionsCmd: &ClassicConditionsCmd{
 				Conditions: []condition{
 					{
 						QueryRefID: "A",
@@ -259,7 +259,7 @@ func TestConditionsCmdExecute(t *testing.T) {
 					},
 				},
 			},
-			conditionsCmd: &ConditionsCmd{
+			conditionsCmd: &ClassicConditionsCmd{
 				Conditions: []condition{
 					{
 						QueryRefID: "A",
@@ -284,7 +284,7 @@ func TestConditionsCmdExecute(t *testing.T) {
 					},
 				},
 			},
-			conditionsCmd: &ConditionsCmd{
+			conditionsCmd: &ClassicConditionsCmd{
 				Conditions: []condition{
 					{
 						QueryRefID: "A",
@@ -308,7 +308,7 @@ func TestConditionsCmdExecute(t *testing.T) {
 					},
 				},
 			},
-			conditionsCmd: &ConditionsCmd{
+			conditionsCmd: &ClassicConditionsCmd{
 				Conditions: []condition{
 					{
 						QueryRefID: "A",
@@ -331,7 +331,7 @@ func TestConditionsCmdExecute(t *testing.T) {
 					Values: []mathexp.Value{},
 				},
 			},
-			conditionsCmd: &ConditionsCmd{
+			conditionsCmd: &ClassicConditionsCmd{
 				Conditions: []condition{
 					{
 						QueryRefID: "A",
@@ -358,7 +358,7 @@ func TestConditionsCmdExecute(t *testing.T) {
 					},
 				},
 			},
-			conditionsCmd: &ConditionsCmd{
+			conditionsCmd: &ClassicConditionsCmd{
 				Conditions: []condition{
 					{
 						QueryRefID: "A",

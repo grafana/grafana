@@ -7,6 +7,8 @@ import (
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 )
 
+type classicReducer string
+
 func nilOrNaN(f *float64) bool {
 	return f == nil || math.IsNaN(*f)
 }
