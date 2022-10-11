@@ -240,7 +240,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			for i := 0; i < 2; i++ {
 				states = append(states, &state.State{
 					AlertRuleUID: rule.UID,
-					CacheId:      util.GenerateShortUID(),
+					CacheID:      util.GenerateShortUID(),
 					OrgID:        rule.OrgID,
 					State:        s,
 					StartsAt:     sch.clock.Now(),
