@@ -5,16 +5,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"net/url"
 	"path"
 	"strconv"
 	"strings"
 	"time"
 
-	"go.opentelemetry.io/otel/attribute"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
@@ -35,32 +36,12 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) appendGraphPeriod(req *bac
 	return ""
 }
 
-func doRequestQueryPage(query string, nextPageToken string, s *Service, ctx context.Context, dsInfo datasourceInfo, path string, tracer tracing.Tracer, req *backend.QueryDataRequest) (cloudMonitoringResponse, error) {
-	requestBody := map[string]interface{}{
-		"query": query,
-	}
-	if nextPageToken != "" {
-		requestBody["pageToken"] = nextPageToken
-	}
-
+func doRequestQueryPage(requestBody map[string]interface{}, r *http.Request, dsInfo datasourceInfo) (cloudMonitoringResponse, error) {
 	buf, err := json.Marshal(requestBody)
 	if err != nil {
 		return cloudMonitoringResponse{}, err
 	}
-	r, err := s.createRequest(ctx, &dsInfo, path, bytes.NewBuffer(buf))
-	if err != nil {
-		return cloudMonitoringResponse{}, err
-	}
-
-	ctx, span := tracer.Start(ctx, "cloudMonitoring MQL query")
-	span.SetAttributes("query", query, attribute.Key("query").String(query))
-	span.SetAttributes("from", req.Queries[0].TimeRange.From, attribute.Key("from").String(req.Queries[0].TimeRange.From.String()))
-	span.SetAttributes("until", req.Queries[0].TimeRange.To, attribute.Key("until").String(req.Queries[0].TimeRange.To.String()))
-
-	defer span.End()
-	tracer.Inject(ctx, r.Header, span)
-
-	r = r.WithContext(ctx)
+	r.Body = io.NopCloser(bytes.NewBuffer(buf))
 	res, err := dsInfo.services[cloudMonitor].client.Do(r)
 	if err != nil {
 		return cloudMonitoringResponse{}, err
@@ -94,13 +75,36 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, r
 	timeFormat := "2006/01/02-15:04:05"
 	timeSeriesQuery.Query += fmt.Sprintf(" | within d'%s', d'%s'", from.UTC().Format(timeFormat), to.UTC().Format(timeFormat))
 	p := path.Join("/v3/projects", projectName, "timeSeries:query")
-	d, err := doRequestQueryPage(timeSeriesQuery.Query, "", s, ctx, dsInfo, p, tracer, req)
+	
+	ctx, span := tracer.Start(ctx, "cloudMonitoring MQL query")
+	span.SetAttributes("query", timeSeriesQuery.Query, attribute.Key("query").String(timeSeriesQuery.Query))
+	span.SetAttributes("from", req.Queries[0].TimeRange.From, attribute.Key("from").String(req.Queries[0].TimeRange.From.String()))
+	span.SetAttributes("until", req.Queries[0].TimeRange.To, attribute.Key("until").String(req.Queries[0].TimeRange.To.String()))
+	defer span.End()
+	
+	requestBody := map[string]interface{}{
+		"query": timeSeriesQuery.Query,
+		"pageSize": 10,
+	}
+	r, err := s.createRequest(ctx, &dsInfo, p, bytes.NewBuffer([]byte{}))
+	if err != nil {
+		dr.Error = err
+		return dr, cloudMonitoringResponse{}, "", nil
+	}
+	tracer.Inject(ctx, r.Header, span)
+	r = r.WithContext(ctx)
+
+	d, err := doRequestQueryPage(requestBody, r, dsInfo)
 	if err != nil {
 		dr.Error = err
 		return dr, cloudMonitoringResponse{}, "", nil
 	}
 	for d.NextPageToken != "" {
-		nextPage, err := doRequestQueryPage(timeSeriesQuery.Query, d.NextPageToken, s, ctx, dsInfo, p, tracer, req)
+		requestBody := map[string]interface{}{
+			"query": timeSeriesQuery.Query,
+			"pageToken": d.NextPageToken,
+		}	
+		nextPage, err := doRequestQueryPage(requestBody, r, dsInfo)
 		if err != nil {
 			dr.Error = err
 			return dr, cloudMonitoringResponse{}, "", nil
