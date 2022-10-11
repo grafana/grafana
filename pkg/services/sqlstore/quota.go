@@ -155,7 +155,7 @@ func (ss *SQLStore) GetUserQuotaByTarget(ctx context.Context, query *models.GetU
 		var used int64
 		if query.Target != alertRuleTarget || query.UnifiedAlertingEnabled {
 			// get quota used.
-			rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s where user_id=?", dialect.Quote(query.Target))
+			rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s where user_id=? and is_service_account = %s", dialect.Quote(query.Target), ss.Dialect.BooleanStr(false))
 			resp := make([]*targetCount, 0)
 			if err := sess.SQL(rawSQL, query.UserId).Find(&resp); err != nil {
 				return err
