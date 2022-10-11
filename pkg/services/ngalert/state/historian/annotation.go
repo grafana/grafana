@@ -55,7 +55,7 @@ func (h *AnnotationStateHistorian) RecordState(ctx context.Context, rule *ngmode
 			return
 		}
 
-		dashID, err := h.dashboards.getId(ctx, rule.OrgID, dashUid)
+		dashID, err := h.dashboards.getID(ctx, rule.OrgID, dashUid)
 		if err != nil {
 			h.log.Error("error getting dashboard for alert annotation", "dashboardUID", dashUid, "alertRuleUID", rule.UID, "err", err.Error())
 			return
