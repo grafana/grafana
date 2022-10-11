@@ -17,7 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func TestUpdateAlertRules(t *testing.T) {
+func TestIntegrationUpdateAlertRules(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
 	store := DBstore{
 		SQLStore: sqlStore,
@@ -26,7 +26,6 @@ func TestUpdateAlertRules(t *testing.T) {
 		},
 	}
 	createRule := func(t *testing.T) *models.AlertRule {
-		t.Helper()
 		rule := models.AlertRuleGen(withIntervalMatching(store.Cfg.BaseInterval))()
 		err := sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 			_, err := sess.Table(models.AlertRule{}).InsertOne(rule)
@@ -94,7 +93,7 @@ func withIntervalMatching(baseInterval time.Duration) func(*models.AlertRule) {
 	}
 }
 
-func Test_getFilterByOrgsString(t *testing.T) {
+func TestIntegration_getFilterByOrgsString(t *testing.T) {
 	testCases := []struct {
 		testName       string
 		orgs           map[int64]struct{}
