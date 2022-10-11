@@ -24,10 +24,9 @@ export function OrganizationSelect({ orgs, onSelectChange }: OrganizationBasePro
   return (
     <Select<UserOrg>
       aria-label="Change organization"
-      classNamePrefix={'organization-select'}
       width={'auto'}
       value={value}
-      prefix={<Icon className="organization-select__prefix" name="building" />}
+      prefix={<Icon className="prefix-icon" name="building" />}
       className={styles.select}
       options={orgs.map((org) => ({
         label: org.name,
@@ -43,15 +42,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
   select: css({
     border: 'none',
     background: 'none',
-
-    '& .organization-select__single-value': {
-      color: theme.colors.text.secondary,
-    },
+    color: theme.colors.text.secondary,
     '&:hover': {
-      '& .organization-select__single-value': {
-        color: theme.colors.text.primary,
-      },
-      '& .organization-select__prefix': css({
+      color: theme.colors.text.primary,
+
+      '& .prefix-icon': css({
         color: theme.colors.text.primary,
       }),
     },
