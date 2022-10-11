@@ -37,6 +37,6 @@ Alertmanagers are visible from the drop-down menu on the Alerting Contact Points
 
 **Useful links**
 
-[Prometheus Alertmanager documentation](https://prometheus.io/docs/alerting/latest/alertmanager/).
+[Prometheus Alertmanager documentation](https://prometheus.io/docs/alerting/latest/alertmanager/)
 
 [Add an external Alertmanager](https://grafana.com/docs/grafana/latest/alerting/set-up/configure-alertmanager/)
