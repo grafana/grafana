@@ -112,10 +112,10 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     this.toggleFieldsStats();
 
     reportInteraction('grafana_explore_logs_log_details_stats_clicked', {
-      dataSourceType: this.props.row?.datasourceType,
+      dataSourceType: this.props.row.datasourceType,
       fieldType: this.props.isLabel ? 'label' : 'detectedField',
       type: showFieldsStats ? 'close' : 'open',
-      logRowUid: this.props.row?.uid,
+      logRowUid: this.props.row.uid,
     });
   };
 
