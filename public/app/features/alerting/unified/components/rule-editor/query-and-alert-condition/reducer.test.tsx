@@ -1,4 +1,4 @@
-import { getDefaultRelativeTimeRange } from '@grafana/data';
+import { getDefaultRelativeTimeRange, RelativeTimeRange } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime/src/services/__mocks__/dataSourceSrv';
 import {
   dataSource as expressionDatasource,
@@ -145,6 +145,68 @@ describe('Query and expressions reducer', () => {
 
     const newState = queriesAndExpressionsReducer(initialState, updateExpression(newExpression));
     expect(newState).toMatchSnapshot();
+  });
+  it('should use time range from data source when updating an expression', () => {
+    const expressionQuery: AlertQuery = {
+      refId: 'B',
+      queryType: 'expression',
+      datasourceUid: '-100',
+      model: {
+        queryType: 'query',
+        datasource: '__expr__',
+        refId: 'B',
+        expression: 'A',
+        type: ExpressionQueryType.classic,
+        window: '10s',
+      } as ExpressionQuery,
+    };
+    const customTimeRange: RelativeTimeRange = { from: 900, to: 1000 };
+
+    const queryA: AlertQuery = {
+      refId: 'A',
+      relativeTimeRange: customTimeRange,
+      datasourceUid: 'dsuid',
+      model: { refId: 'A' },
+      queryType: 'query',
+    };
+    const newExpression: ExpressionQuery = {
+      ...expressionQuery.model,
+      type: ExpressionQueryType.resample,
+    };
+
+    const initialState: QueriesAndExpressionsState = {
+      queries: [queryA, expressionQuery],
+    };
+
+    const newState = queriesAndExpressionsReducer(initialState, updateExpression(newExpression));
+    expect(newState).toStrictEqual({
+      queries: [
+        {
+          refId: 'A',
+          relativeTimeRange: customTimeRange,
+          datasourceUid: 'dsuid',
+          model: { refId: 'A' },
+          queryType: 'query',
+        },
+        {
+          datasourceUid: '-100',
+          model: {
+            datasource: '__expr__',
+            expression: 'A',
+            queryType: 'query',
+            refId: 'B',
+            type: 'resample',
+            window: '10s',
+          },
+          queryType: 'expression',
+          refId: 'B',
+          relativeTimeRange: {
+            from: 900,
+            to: 1000,
+          },
+        },
+      ],
+    });
   });
 
   it('should update an expression refId and rewire expressions', () => {
