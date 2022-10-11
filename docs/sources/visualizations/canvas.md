@@ -16,7 +16,7 @@ weight: 600
 
 Canvas is a new panel that combines the power of Grafana with the flexibility of custom elements. Canvas visualizations are extensible form-built panels that allow you to explicitly place elements within static and dynamic layouts. This empowers you to design custom visualizations and overlay data in ways that aren't possible with standard Grafana panels, all within Grafana's UI. If you've used popular UI and web design tools, then designing Canvas panels will feel very familiar.
 
-{{< video-embed src="/static/img/docs/canvas-panel/canvas-beta-overview-9-2-0.mov" max-width="750px" caption="Canvas panel beta overview" >}}
+{{< video-embed src="/static/img/docs/canvas-panel/canvas-beta-overview-9-2-0.mp4" max-width="750px" caption="Canvas panel beta overview" >}}
 
 ## Elements
 
@@ -24,13 +24,13 @@ Canvas is a new panel that combines the power of Grafana with the flexibility of
 
 The metric value element allows you to easily select the data you want to display on canvas. This element has a unique “edit” mode that can be triggered either through the context menu “Edit” option or by double clicking. When in edit mode you can select which field data that you want to display.
 
-{{< video-embed src="/static/img/docs/canvas-panel/canvas-metric-value-9-2-0.mov" max-width="750px" caption="Metric value element demo" >}}
+{{< video-embed src="/static/img/docs/canvas-panel/canvas-metric-value-9-2-0.mp4" max-width="750px" caption="Metric value element demo" >}}
 
 ### Text
 
 The text element allows you to easily add text to the canvas. The element also supports an editing mode, triggered via either double clicking or the edit menu option in the context menu.
 
-{{< video-embed src="/static/img/docs/canvas-panel/canvas-text-9-2-0.mov" max-width="750px" caption="Text element demo" >}}
+{{< video-embed src="/static/img/docs/canvas-panel/canvas-text-9-2-0.mp4" max-width="750px" caption="Text element demo" >}}
 
 ### Rectangle
 
@@ -46,7 +46,7 @@ The icon element allows you to add a supported icon to the canvas. Icons can hav
 
 Canvas introduces a new editing experience. You can now edit your canvas panel inline while in the context of dashboard mode.
 
-{{< video-embed src="/static/img/docs/canvas-panel/canvas-inline-editor-9-2-0.mov" max-width="750px" caption="Inline editor demo" >}}
+{{< video-embed src="/static/img/docs/canvas-panel/canvas-inline-editor-9-2-0.mp4" max-width="750px" caption="Inline editor demo" >}}
 
 ### Context menu
 
@@ -62,4 +62,4 @@ The context menu is triggered by a right click action over the panel / over a gi
 
 The inline editing toggle allows you to lock or unlock the canvas panel. When turned off the canvas panel becomes “locked”, freezing elements in place and preventing unintended modifications.
 
-{{< video-embed src="/static/img/docs/canvas-panel/canvas-inline-editing-toggle-9-2-0.mov" max-width="750px" caption="Inline editing toggle demo" >}}
+{{< video-embed src="/static/img/docs/canvas-panel/canvas-inline-editing-toggle-9-2-0.mp4" max-width="750px" caption="Inline editing toggle demo" >}}
