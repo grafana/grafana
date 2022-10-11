@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/ui",
-  "version": "9.3.0-pre",
+  "version": "8.5.15",
   "description": "Grafana Components Library",
   "keywords": [
     "grafana",
@@ -47,9 +47,9 @@
   "dependencies": {
     "@emotion/css": "11.9.0",
     "@emotion/react": "11.9.3",
-    "@grafana/data": "9.3.0-pre",
-    "@grafana/e2e-selectors": "9.3.0-pre",
-    "@grafana/schema": "9.3.0-pre",
+    "@grafana/data": "8.5.15",
+    "@grafana/e2e-selectors": "8.5.15",
+    "@grafana/schema": "8.5.15",
     "@leeoniya/ufuzzy": "0.7.0",
     "@monaco-editor/react": "4.4.5",
     "@popperjs/core": "2.11.5",
