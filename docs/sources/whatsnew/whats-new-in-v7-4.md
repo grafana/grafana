@@ -61,7 +61,7 @@ The following transformations were added in Grafana 7.4.
 
 The _Sort by_ transformation allows you to sort data before sending it to the visualization.
 
-For more information, refer to [Sort by]({{< relref "../panels-visualizations/transform-data/" >}}).
+For more information, refer to [Sort by]({{< relref "../panels-visualizations/query-transform-data/transform-data/#sort-by" >}}).
 
 #### Filter data by value transform
 
@@ -69,7 +69,7 @@ The new _Filter data by value_ transformation allows you to filter your data dir
 
 This transformation is very useful if your data source does not natively filter by values. You might also use this to narrow values to display if you are using a shared query.
 
-For more information, refer to [Filter data by value]({{< relref "../panels-visualizations/transform-data/#filter-data-by-value" >}}).
+For more information, refer to [Filter data by value]({{< relref "../panels-visualizations/query-transform-data/transform-data/#filter-data-by-value" >}}).
 
 ### New override option
 
@@ -106,7 +106,7 @@ The main use case is for [multi-dimensional]({{< relref "../basics/timeseries-di
 
 > **Note:** Queries built with this feature might break with minor version upgrades until Grafana 8 is released. This feature does not work with the current Grafana Alerting.
 
-For more information, refer to [About expressions]({{< relref "../panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions/" >}}). [About queries]({{< relref "../panels/query-a-data-source/about-queries/" >}}) was also updated as a result of this feature.
+For more information, refer to [Write expression queries]({{< relref "../panels-visualizations/query-transform-data/expression-queries/" >}}). [About queries]({{< relref "../panels-visualizations/query-transform-data/#about-queries" >}}) was also updated as a result of this feature.
 
 ### Alert notification query label interpolation
 
@@ -175,7 +175,7 @@ For more information, refer to the [Google Cloud Monitoring docs]({{< relref "..
 
 The feature previously referred to as DataSource Start Pages or Cheat Sheets has been renamed to Query Editor Help, and is now supported in panel query editors (depending on the data source), as well as in Explore.
 
-[Queries]({{< relref "../panels-visualizations/manage-queries/" >}}) was updated as a result of this feature.
+[Queries]({{< relref "../panels-visualizations/query-transform-data/#manage-queries" >}}) was updated as a result of this feature.
 
 For more information on adding a query editor help component to your plugin, refer to [Add a query editor help component]({{< relref "../developers/plugins/add-query-editor-help/" >}}).
 

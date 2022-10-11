@@ -68,7 +68,7 @@ As this new option is a standard field option it works in every panel. Here is a
 
 In v7.0, we introduced a new table panel and inspect mode with Download CSV enabled. However, CSV export to Excel was removed. Due to a large number of inquiries and requests, this [community contribution from tomdaly](https://github.com/grafana/grafana/pull/27284) brought the feature back.
 
-For more information, refer to [Download raw query results]({{< relref "../panels/query-a-data-source/download-raw-query-results/" >}}).
+For more information, refer to [Download raw query results]({{< relref "../panels-visualizations/panel-inspector/#download-raw-query-results" >}}).
 
 ## Google Cloud monitoring out-of-the-box dashboards
 

@@ -124,7 +124,7 @@ Lots of panel editor improvements, heavily informed by user research and communi
 - The Value mappings feature has been completely redesigned. For more information, refer to [Configure value mappings]({{< relref "../panels-visualizations/configure-value-mappings/" >}}).
 - New **Table view** option is always available.
 
-The [Panels]({{< relref "../panels/" >}}) section has been updated to reflect these changes.
+The [Panels]({{< relref "../panels-visualizations/" >}}) section has been updated to reflect these changes.
 
 ### Look and feel update
 
