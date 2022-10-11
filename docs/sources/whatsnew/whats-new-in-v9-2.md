@@ -140,14 +140,14 @@ Previously, plugin developers needed to manually track which fields were labeled
 We have extended our plugins platform to simplify this, which means one less thing for developers to worry about and better security for all users' data.
 For details on using this functionality, see [GitHub pull request #55313](https://github.com/grafana/grafana/pull/55313) and our [plugin examples](https://github.com/grafana/grafana-plugin-examples) repository.
 
-## Transformations: outer joins and bug fixes
+## Transformations: INNER JOINs
 
-Transformations allow you to shape raw data from data sources, like metrics series or GitHub issues, so that you can visualize them as clearly as possible.
-We have extended the Join transformation to support both inner and outer JOINs, which work similarly to SQL inner and outer JOINs.
+Transformations allow you to shape raw data from data sources, like metrics series or GitHub issues, into a format that's appropriate for the chosen visualization.
+We have extended the Join transformation to support INNER JOINs in addition to OUTER JOINs. These work similarly to SQL JOINs.
 
 {{< figure src="/static/img/docs/transformations/transform-outer-join-9-2.png" max-width="750px" caption="Query builder groupings for Google Cloud monitoring" >}}
 
-Also, you can now click on the `x` to clear values in the select fields for the Outer Join and Grouping to Matrix transformations as expected.
+Also, you can now click on the `x` to clear values in the select fields for the OUTER JOIN and Grouping to Matrix transformations as expected.
 
 ## Simplified UI to create template variable queries for Loki data source
 
