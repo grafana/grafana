@@ -18,13 +18,6 @@ type CoreStructuredMeta struct {
 
 func (m CoreStructuredMeta) _private() {}
 
-// type CoreStructured[T thema.Assignee] struct {
-// 	Name    string
-// 	Lineage thema.ConvergentLineage[T]
-// 	// Maturity Maturity
-// 	Maturity string
-// }
-
 // TODO
 type CustomStructuredMeta struct {
 	CurrentVersion thema.SyntacticVersion
@@ -32,13 +25,6 @@ type CustomStructuredMeta struct {
 }
 
 func (m CustomStructuredMeta) _private() {}
-
-// type CustomStructured struct {
-// 	Name    string
-// 	Lineage thema.Lineage
-// 	// Maturity Maturity
-// 	Maturity string
-// }
 
 // TODO
 // type SlotImplMeta struct {
