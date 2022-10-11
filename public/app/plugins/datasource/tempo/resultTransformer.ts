@@ -720,8 +720,8 @@ export function createTableFrameFromTraceQlQuery(
       return rows;
     }, []);
 
-  for (const trace of tableRows) {
-    frame.add(trace);
+  for (const row of tableRows) {
+    frame.add(row);
   }
 
   return frame;
