@@ -13,7 +13,8 @@ import {
 } from './constants';
 
 const messageLoaders: Record<string, () => Promise<ResourceKey>> = {
-  [ENGLISH_US]: () => import('../../../locales/en-US/grafana.json'),
+  // English phrases are the default fallback string in the source, so we don't need to load the catalogue
+  [ENGLISH_US]: () => Promise.resolve({}),
   [FRENCH_FRANCE]: () => import('../../../locales/fr-FR/grafana.json'),
   [SPANISH_SPAIN]: () => import('../../../locales/es-ES/grafana.json'),
   [CHINESE_SIMPLIFIED]: () => import('../../../locales/zh-Hans/grafana.json'),
