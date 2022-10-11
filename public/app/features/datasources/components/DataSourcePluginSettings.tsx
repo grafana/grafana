@@ -1,7 +1,7 @@
 import { cloneDeep } from 'lodash';
 import React, { PureComponent } from 'react';
 
-import { DataSourcePluginMeta, DataSourceSettings as DataSourceSettingsType, DataSourceSettings } from '@grafana/data';
+import { DataSourcePluginMeta, DataSourceSettings } from '@grafana/data';
 import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 
 import { GenericDataSourcePlugin } from '../types';
@@ -11,13 +11,11 @@ export interface Props {
   dataSource: DataSourceSettings;
   dataSourceMeta: DataSourcePluginMeta;
   onModelChange: (dataSource: DataSourceSettings) => void;
-  onUpdate: (dataSource: DataSourceSettingsType) => Promise<DataSourceSettings>;
 }
 
 export class DataSourcePluginSettings extends PureComponent<Props> {
   element: HTMLDivElement | null = null;
   component?: AngularComponent;
-  onUpdate?: (dataSource: DataSourceSettingsType) => Promise<DataSourceSettings>;
   scopeProps: {
     ctrl: { datasourceMeta: DataSourcePluginMeta; current: DataSourceSettings };
     onModelChanged: (dataSource: DataSourceSettings) => void;

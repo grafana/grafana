@@ -159,7 +159,6 @@ export function EditDataSourceView({
           dataSource={dataSource}
           dataSourceMeta={dataSourceMeta}
           onModelChange={onOptionsChange}
-          onUpdate={onUpdate}
         />
       )}
 
