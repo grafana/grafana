@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -224,8 +225,8 @@ func getSHA256(u string) ([]byte, error) {
 		return nil, fmt.Errorf("failed downloading %s: %s", u, resp.Status)
 	}
 
-	var sha256 []byte
-	if err := json.NewDecoder(resp.Body).Decode(&sha256); err != nil {
+	sha256, err := io.ReadAll(resp.Body)
+	if err != nil {
 		return nil, err
 	}
 	return sha256, nil

@@ -20,7 +20,7 @@ weight: 200
 
 # Query and transform data
 
-Data source queries return data that appear in visualizations. The query language in which you write depends on the data source you query. Grafana supports connections with many types of data sources.
+Data source queries return data that can then be transformed via transformations and then visualized by different types of visualizations. The query language and query builder UI depends on the data source type. Grafana supports many different types of data sources.
 
 ## About queries
 
@@ -88,21 +88,14 @@ The Query tab consists of the following elements:
 
 A query returns data that Grafana visualizes in dashboards. When you create a panel, Grafana automatically selects the default data source.
 
-**Before you begin:**
-
-- [Add a data source](../../../datasources/add-a-data-source).
-- Ensure that you know the query language of the data source.
-
 **To add a query**:
 
 1. Edit the panel to which you are adding a query.
 1. Click the **Query** tab.
 1. Click the **Data source** drop-down menu and select a data source.
-1. Click **Query options** to configure the maximum number of data points returned by the query and how frequently you want the query to request data from the data source.
-
+1. Click **Query options** to configure the maximum number of data points you need.
    For more information about query options, refer to [Query options]({{< relref "#query-options" >}}).
-
-1. Write the query.
+1. Write the query using the query editor.
 1. Click **Apply**.
 
 The system queries the data source and presents the data in the visualization.
