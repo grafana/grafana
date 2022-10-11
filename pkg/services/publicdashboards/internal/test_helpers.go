@@ -53,11 +53,6 @@ func AddAnnotationsToDashboard(t *testing.T, dash *models.Dashboard, annotations
 	return dash
 }
 
-type Datasource struct {
-	Type string `json:"type"`
-	Uid  string `json:"uid"`
-}
-
 func CreateDatasource(dsType string, uid string) struct {
 	Type *string `json:"type,omitempty"`
 	Uid  *string `json:"uid,omitempty"`
