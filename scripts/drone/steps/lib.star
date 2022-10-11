@@ -1184,7 +1184,7 @@ def get_windows_steps(edition, ver_mode):
 
 def verify_gen_cue_step(edition):
     deps = []
-    if edition == "enterprise":
+    if edition in ('enterprise', 'enterprise2'):
         deps.extend(['init-enterprise'])
     return {
         'name': 'verify-gen-cue',

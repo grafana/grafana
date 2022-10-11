@@ -1,6 +1,7 @@
 load(
     'scripts/drone/steps/lib.star',
     'identify_runner_step',
+    'download_grabpl_step',
     'wire_install_step',
     'test_backend_step',
     'test_backend_integration_step',
@@ -19,7 +20,7 @@ def test_backend(trigger, ver_mode, edition="oss"):
     environment = {'EDITION': edition}
     init_steps = []
     if edition != 'oss':
-        init_steps.extend([clone_enterprise_step(ver_mode), init_enterprise_step(ver_mode),])
+        init_steps.extend([clone_enterprise_step(ver_mode), download_grabpl_step(), init_enterprise_step(ver_mode),])
     init_steps.extend([
         identify_runner_step(),
         compile_build_cmd(edition),
