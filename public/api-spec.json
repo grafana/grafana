@@ -7877,7 +7877,7 @@
         "tags": [
           "service_accounts"
         ],
-        "summary": "Create service account",
+        "summary": "# Create service account",
         "operationId": "createServiceAccount",
         "parameters": [
           {
@@ -7913,7 +7913,7 @@
         "tags": [
           "service_accounts"
         ],
-        "summary": "Search service accounts with paging",
+        "summary": "# Search service accounts with paging",
         "operationId": "searchOrgServiceAccountsWithPaging",
         "parameters": [
           {
@@ -7969,7 +7969,7 @@
         "tags": [
           "service_accounts"
         ],
-        "summary": "Get single serviceaccount by Id",
+        "summary": "# Get single serviceaccount by Id",
         "operationId": "retrieveServiceAccount",
         "parameters": [
           {
@@ -8006,7 +8006,7 @@
         "tags": [
           "service_accounts"
         ],
-        "summary": "Delete service account",
+        "summary": "# Delete service account",
         "operationId": "deleteServiceAccount",
         "parameters": [
           {
@@ -8040,7 +8040,7 @@
         "tags": [
           "service_accounts"
         ],
-        "summary": "Update service account",
+        "summary": "# Update service account",
         "operationId": "updateServiceAccount",
         "parameters": [
           {
@@ -8086,7 +8086,7 @@
         "tags": [
           "service_accounts"
         ],
-        "summary": "Get service account tokens",
+        "summary": "# Get service account tokens",
         "operationId": "listTokens",
         "parameters": [
           {
@@ -8120,7 +8120,7 @@
         "tags": [
           "service_accounts"
         ],
-        "summary": "CreateNewToken adds a token to a service account",
+        "summary": "# CreateNewToken adds a token to a service account",
         "operationId": "createToken",
         "parameters": [
           {
@@ -8169,7 +8169,7 @@
         "tags": [
           "service_accounts"
         ],
-        "summary": "DeleteToken deletes service account tokens",
+        "summary": "# DeleteToken deletes service account tokens",
         "operationId": "deleteToken",
         "parameters": [
           {
@@ -10513,12 +10513,16 @@
       "properties": {
         "field": {
           "description": "Field used to attach the correlation link",
-          "type": "string"
+          "type": "string",
+          "example": "message"
         },
         "target": {
           "description": "Target data query",
           "type": "object",
-          "additionalProperties": {}
+          "additionalProperties": {},
+          "example": {
+            "expr": "job=app"
+          }
         },
         "type": {
           "$ref": "#/definitions/CorrelationConfigType"
@@ -10527,6 +10531,27 @@
     },
     "CorrelationConfigType": {
       "type": "string"
+    },
+    "CorrelationConfigUpdateDTO": {
+      "type": "object",
+      "properties": {
+        "field": {
+          "description": "Field used to attach the correlation link",
+          "type": "string",
+          "example": "message"
+        },
+        "target": {
+          "description": "Target data query",
+          "type": "object",
+          "additionalProperties": {},
+          "example": {
+            "expr": "job=app"
+          }
+        },
+        "type": {
+          "$ref": "#/definitions/CorrelationConfigType"
+        }
+      }
     },
     "CreateAlertNotificationCommand": {
       "type": "object",
@@ -10581,7 +10606,7 @@
           "example": "My label"
         },
         "targetUID": {
-          "description": "Target data source UID to which the correlation is created",
+          "description": "Target data source UID to which the correlation is created. required if config.type = query",
           "type": "string",
           "example": "PE1C5CBDA0504A6A3"
         }
@@ -12549,7 +12574,7 @@
           "type": "string"
         },
         "items": {
-          "description": "The ordered list of items that the playlist will iterate over.",
+          "description": "The ordered list of items that the playlist will iterate over.\nFIXME! This should not be optional, but changing it makes the godegen awkward",
           "type": "array",
           "items": {
             "$ref": "#/definitions/PlaylistItem"
@@ -14337,6 +14362,9 @@
       "description": "UpdateCorrelationCommand is the command for updating a correlation",
       "type": "object",
       "properties": {
+        "config": {
+          "$ref": "#/definitions/CorrelationConfigUpdateDTO"
+        },
         "description": {
           "description": "Optional description of the correlation",
           "type": "string",
