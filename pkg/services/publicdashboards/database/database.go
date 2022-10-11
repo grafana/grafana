@@ -120,7 +120,7 @@ func (d *PublicDashboardStoreImpl) GenerateNewPublicDashboardAccessToken(ctx con
 	err := d.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		for i := 0; i < 3; i++ {
 			var err error
-			accessToken, err = GenerateAccessToken()
+			accessToken, err = generateAccessToken()
 			if err != nil {
 				continue
 			}

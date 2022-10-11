@@ -5,7 +5,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func GenerateAccessToken() (string, error) {
+func generateAccessToken() (string, error) {
 	token, err := uuid.NewRandom()
 	if err != nil {
 		return "", err
