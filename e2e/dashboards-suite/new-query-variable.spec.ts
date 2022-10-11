@@ -27,10 +27,10 @@ describe('Variables - Query - Add variable', () => {
         expect(input.val()).equals('');
       });
     e2e()
-      .get('[placeholder="descriptive text"]')
+      .get('[placeholder="Descriptive text"]')
       .should('be.visible')
       .within((input) => {
-        expect(input.attr('placeholder')).equals('descriptive text');
+        expect(input.attr('placeholder')).equals('Descriptive text');
         expect(input.val()).equals('');
       });
     e2e().get('label').contains('Show on dashboard').should('be.visible');
@@ -84,7 +84,7 @@ describe('Variables - Query - Add variable', () => {
       .clear()
       .type('a label');
 
-    e2e().get('[placeholder="descriptive text"]').should('be.visible').clear().type('a description');
+    e2e().get('[placeholder="Descriptive text"]').should('be.visible').clear().type('a description');
 
     e2e.components.DataSourcePicker.inputV2().should('be.visible').type('gdev-testdata{enter}');
 
@@ -134,7 +134,7 @@ describe('Variables - Query - Add variable', () => {
       .clear()
       .type('a label');
 
-    e2e().get('[placeholder="descriptive text"]').should('be.visible').clear().type('a description');
+    e2e().get('[placeholder="Descriptive text"]').should('be.visible').clear().type('a description');
 
     e2e.components.DataSourcePicker.inputV2().type('gdev-testdata{enter}');
 
