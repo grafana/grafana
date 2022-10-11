@@ -112,14 +112,14 @@ func (st *Manager) Warm(ctx context.Context) {
 			}
 
 			lbs := map[string]string(entry.Labels)
-			cacheId, err := entry.Labels.StringKey()
+			cacheID, err := entry.Labels.StringKey()
 			if err != nil {
-				st.log.Error("error getting cacheId for entry", "msg", err.Error())
+				st.log.Error("error getting cacheID for entry", "msg", err.Error())
 			}
 			stateForEntry := &State{
 				AlertRuleUID:         entry.RuleUID,
 				OrgID:                entry.RuleOrgID,
-				CacheId:              cacheId,
+				CacheID:              cacheID,
 				Labels:               lbs,
 				State:                translateInstanceState(entry.CurrentState),
 				StateReason:          entry.CurrentReason,
@@ -180,7 +180,7 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 	for _, result := range results {
 		s := st.setNextState(ctx, alertRule, result, extraLabels)
 		states = append(states, s)
-		processedResults[s.CacheId] = s
+		processedResults[s.CacheID] = s
 	}
 	resolvedStates := st.staleResultsHandler(ctx, evaluatedAt, alertRule, processedResults)
 	if len(states) > 0 {
@@ -408,10 +408,10 @@ func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Tim
 	var resolvedStates []*State
 	allStates := st.GetStatesForRuleUID(alertRule.OrgID, alertRule.UID)
 	for _, s := range allStates {
-		_, ok := states[s.CacheId]
+		_, ok := states[s.CacheID]
 		if !ok && isItStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds) {
-			st.log.Debug("removing stale state entry", "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID, "cacheID", s.CacheId)
-			st.cache.deleteEntry(s.OrgID, s.AlertRuleUID, s.CacheId)
+			st.log.Debug("removing stale state entry", "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID, "cacheID", s.CacheID)
+			st.cache.deleteEntry(s.OrgID, s.AlertRuleUID, s.CacheID)
 			ilbs := ngModels.InstanceLabels(s.Labels)
 			_, labelsHash, err := ilbs.StringAndHash()
 			if err != nil {
@@ -419,7 +419,7 @@ func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Tim
 			}
 
 			if err = st.instanceStore.DeleteAlertInstance(ctx, s.OrgID, s.AlertRuleUID, labelsHash); err != nil {
-				st.log.Error("unable to delete stale instance from database", "err", err.Error(), "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID, "cacheID", s.CacheId)
+				st.log.Error("unable to delete stale instance from database", "err", err.Error(), "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID, "cacheID", s.CacheID)
 			}
 
 			if s.State == eval.Alerting {
