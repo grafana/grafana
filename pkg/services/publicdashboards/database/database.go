@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/tokens"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -121,7 +122,7 @@ func (d *PublicDashboardStoreImpl) GenerateNewPublicDashboardAccessToken(ctx con
 	err := d.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		for i := 0; i < 3; i++ {
 			var err error
-			accessToken, err = generateAccessToken()
+			accessToken, err = tokens.GenerateAccessToken()
 			if err != nil {
 				continue
 			}
