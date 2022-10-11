@@ -209,14 +209,15 @@ func Error(status int, message string, err error) *NormalResponse {
 		data["message"] = message
 	}
 
+	if err != nil && setting.Env != setting.Prod {
+		data["error"] = err.Error()
+	}
+
 	resp := JSON(status, data)
 
 	if err != nil {
 		resp.errMessage = message
 		resp.err = err
-		if setting.Env != setting.Prod {
-			data["error"] = err.Error()
-		}
 	}
 
 	return resp
