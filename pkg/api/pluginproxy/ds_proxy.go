@@ -214,7 +214,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 		}
 	}
 
-	proxyutil.ClearCookieHeader(req, keepCookieNames)
+	proxyutil.ClearCookieHeader(req, keepCookieNames, []string{proxy.cfg.LoginCookieName})
 	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
 
 	jsonData := make(map[string]interface{})
