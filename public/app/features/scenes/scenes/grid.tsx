@@ -1,10 +1,10 @@
 import { getDefaultTimeRange } from '@grafana/data';
 
 import { Scene } from '../components/Scene';
-import { SceneFlexLayout } from '../components/SceneFlexLayout';
-import { SceneGridCell, SceneGridLayout } from '../components/SceneGridLayout';
 import { SceneTimePicker } from '../components/SceneTimePicker';
 import { VizPanel } from '../components/VizPanel';
+import { SceneFlexChild, SceneFlexLayout } from '../components/layout/SceneFlexLayout';
+import { SceneGridCell, SceneGridLayout } from '../components/layout/SceneGridLayout';
 import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneEditManager } from '../editor/SceneEditManager';
 import { SceneQueryRunner } from '../querying/SceneQueryRunner';
@@ -48,15 +48,24 @@ export function getGridLayoutTest(): Scene {
           children: [
             new SceneFlexLayout({
               direction: 'column',
-              size: { height: '100%' },
               children: [
-                new VizPanel({
-                  pluginId: 'timeseries',
-                  title: 'Fill height',
+                new SceneFlexChild({
+                  size: { ySizing: 'fill' },
+                  children: [
+                    new VizPanel({
+                      pluginId: 'timeseries',
+                      title: 'Fill height',
+                    }),
+                  ],
                 }),
-                new VizPanel({
-                  pluginId: 'timeseries',
-                  title: 'Fill height',
+                new SceneFlexChild({
+                  size: { ySizing: 'fill' },
+                  children: [
+                    new VizPanel({
+                      pluginId: 'timeseries',
+                      title: 'Fill height',
+                    }),
+                  ],
                 }),
               ],
             }),

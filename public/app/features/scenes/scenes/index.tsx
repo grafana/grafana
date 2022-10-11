@@ -3,6 +3,7 @@ import { Scene } from '../components/Scene';
 import { getFlexLayoutTest, getScenePanelRepeaterTest } from './demo';
 import { getGridLayoutTest } from './grid';
 import { getMultipleGridLayoutTest } from './gridMultiple';
+import { getGridWithRowsTest } from './gridWithRows';
 import { getNestedScene } from './nested';
 import { getSceneWithRows } from './sceneWithRows';
 
@@ -11,6 +12,7 @@ export function getScenes(): Scene[] {
     getFlexLayoutTest(),
     getGridLayoutTest(),
     getMultipleGridLayoutTest(),
+    getGridWithRowsTest(),
     getScenePanelRepeaterTest(),
     getNestedScene(),
     getSceneWithRows(),
