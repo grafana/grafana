@@ -50,6 +50,10 @@ export function initializeI18n(locale: string) {
       // If translations are empty strings (no translation), fall back to the default value in source code
       returnEmptyString: false,
     });
+
+  // This is a placeholder so we can put a 'comment' in the message json files.
+  // Starts with an underscore so it's sorted to the top of the file
+  t('_comment', '');
 }
 
 export function changeLanguage(locale: string) {
