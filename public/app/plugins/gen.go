@@ -48,7 +48,7 @@ func main() {
 	groot := filepath.Join(sep, filepath.Join(grootp[:len(grootp)-3]...))
 
 	wd := codegen.NewWriteDiffer()
-	lib := cuectx.ProvideThemaLibrary()
+	lib := cuectx.GrafanaThemaRuntime()
 
 	type ptreepath struct {
 		Path string

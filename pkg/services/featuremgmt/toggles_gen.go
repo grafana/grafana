@@ -215,6 +215,10 @@ const (
 	// Show the TraceQL editor in the explore page
 	FlagTraceqlEditor = "traceqlEditor"
 
+	// FlagFlameGraph
+	// Show the flame graph
+	FlagFlameGraph = "flameGraph"
+
 	// FlagRedshiftAsyncQueryDataSupport
 	// Enable async query data support for Redshift
 	FlagRedshiftAsyncQueryDataSupport = "redshiftAsyncQueryDataSupport"
@@ -226,4 +230,12 @@ const (
 	// FlagIncreaseInMemDatabaseQueryCache
 	// Enable more in memory caching for database queries
 	FlagIncreaseInMemDatabaseQueryCache = "increaseInMemDatabaseQueryCache"
+
+	// FlagNewPanelChromeUI
+	// Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu
+	FlagNewPanelChromeUI = "newPanelChromeUI"
+
+	// FlagQueryLibrary
+	// Reusable query library
+	FlagQueryLibrary = "queryLibrary"
 )

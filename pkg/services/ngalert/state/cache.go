@@ -3,6 +3,7 @@ package state
 import (
 	"context"
 	"fmt"
+	"math"
 	"net/url"
 	"strings"
 	"sync"
@@ -50,22 +51,33 @@ func (c *cache) getOrCreate(ctx context.Context, log log.Logger, alertRule *ngMo
 func (rs *ruleStates) getOrCreate(ctx context.Context, log log.Logger, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, externalURL *url.URL) *State {
 	ruleLabels, annotations := rs.expandRuleLabelsAndAnnotations(ctx, log, alertRule, result, extraLabels, externalURL)
 
+	values := make(map[string]float64)
+	for _, v := range result.Values {
+		if v.Value != nil {
+			values[v.Var] = *v.Value
+		} else {
+			values[v.Var] = math.NaN()
+		}
+	}
+
 	lbs := make(data.Labels, len(extraLabels)+len(ruleLabels)+len(result.Instance))
 	dupes := make(data.Labels)
 	for key, val := range extraLabels {
 		lbs[key] = val
 	}
 	for key, val := range ruleLabels {
-		_, ok := lbs[key]
+		ruleVal, ok := lbs[key]
 		// if duplicate labels exist, reserved label will take precedence
 		if ok {
-			dupes[key] = val
+			if ruleVal != val {
+				dupes[key] = val
+			}
 		} else {
 			lbs[key] = val
 		}
 	}
 	if len(dupes) > 0 {
-		log.Warn("rule declares one or many reserved labels. Those rules labels will be ignored", "labels", dupes)
+		log.Warn("Rule declares one or many reserved labels. Those rules labels will be ignored", "labels", dupes)
 	}
 	dupes = make(data.Labels)
 	for key, val := range result.Instance {
@@ -100,6 +112,7 @@ func (rs *ruleStates) getOrCreate(ctx context.Context, log log.Logger, alertRule
 			}
 		}
 		state.Annotations = annotations
+		state.Values = values
 		rs.states[id] = state
 		return state
 	}
@@ -109,10 +122,11 @@ func (rs *ruleStates) getOrCreate(ctx context.Context, log log.Logger, alertRule
 	newState := &State{
 		AlertRuleUID:       alertRule.UID,
 		OrgID:              alertRule.OrgID,
-		CacheId:            id,
+		CacheID:            id,
 		Labels:             lbs,
 		Annotations:        annotations,
 		EvaluationDuration: result.EvaluationDuration,
+		Values:             values,
 	}
 	if result.State == eval.Alerting {
 		newState.StartsAt = result.EvaluatedAt
@@ -157,7 +171,7 @@ func (c *cache) set(entry *State) {
 	if _, ok := c.states[entry.OrgID][entry.AlertRuleUID]; !ok {
 		c.states[entry.OrgID][entry.AlertRuleUID] = &ruleStates{states: make(map[string]*State)}
 	}
-	c.states[entry.OrgID][entry.AlertRuleUID].states[entry.CacheId] = entry
+	c.states[entry.OrgID][entry.AlertRuleUID].states[entry.CacheID] = entry
 }
 
 func (c *cache) get(orgID int64, alertRuleUID, stateId string) *State {

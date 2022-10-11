@@ -103,53 +103,208 @@
     }
   },
   "nav": {
-    "alerting": "",
-    "alerting-admin": "",
-    "alerting-am-routes": "",
-    "alerting-channels": "",
-    "alerting-groups": "",
-    "alerting-legacy": "",
-    "alerting-list": "",
-    "alerting-receivers": "",
-    "alerting-silences": "",
-    "api-keys": "",
-    "config": "",
-    "correlations": "",
-    "create": "",
-    "create-alert": "",
-    "create-dashboard": "",
-    "create-folder": "",
-    "create-import": "",
-    "dashboards": "",
-    "datasources": "",
-    "explore": "",
-    "help": "",
-    "home": "",
-    "library-panels": "",
-    "live": "",
-    "live-cloud": "",
-    "live-pipeline": "",
-    "live-status": "",
-    "manage-dashboards": "",
-    "new-dashboard": "",
-    "new-folder": "",
-    "org-settings": "",
-    "playlists": "",
-    "plugins": "",
-    "profile/password": "",
-    "profile/settings": "",
-    "service-accounts": "",
-    "sign-out": "",
-    "snapshots": "",
-    "starred": "",
-    "starred-empty": "",
-    "teams": "",
-    "users": ""
+    "admin": {
+      "subtitle": "",
+      "title": ""
+    },
+    "alerting": {
+      "subtitle": "",
+      "title": ""
+    },
+    "alerting-admin": {
+      "title": ""
+    },
+    "alerting-am-routes": {
+      "subtitle": "",
+      "title": ""
+    },
+    "alerting-channels": {
+      "title": ""
+    },
+    "alerting-groups": {
+      "subtitle": "",
+      "title": ""
+    },
+    "alerting-legacy": {
+      "title": ""
+    },
+    "alerting-list": {
+      "subtitle": "",
+      "title": ""
+    },
+    "alerting-receivers": {
+      "subtitle": "",
+      "title": ""
+    },
+    "alerting-silences": {
+      "subtitle": "",
+      "title": ""
+    },
+    "alerts-and-incidents": {
+      "subtitle": "",
+      "title": ""
+    },
+    "api-keys": {
+      "subtitle": "",
+      "title": ""
+    },
+    "apps": {
+      "subtitle": "",
+      "title": ""
+    },
+    "config": {
+      "title": ""
+    },
+    "correlations": {
+      "subtitle": "",
+      "title": ""
+    },
+    "create": {
+      "title": ""
+    },
+    "create-alert": {
+      "title": ""
+    },
+    "create-dashboard": {
+      "title": ""
+    },
+    "create-folder": {
+      "title": ""
+    },
+    "create-import": {
+      "title": ""
+    },
+    "dashboards": {
+      "subtitle": "",
+      "title": ""
+    },
+    "datasources": {
+      "subtitle": "",
+      "title": ""
+    },
+    "explore": {
+      "title": ""
+    },
+    "global-orgs": {
+      "subtitle": "",
+      "title": ""
+    },
+    "global-users": {
+      "subtitle": "",
+      "title": ""
+    },
+    "help": {
+      "title": ""
+    },
+    "help/community": "",
+    "help/documentation": "",
+    "help/keyboard-shortcuts": "",
+    "help/support": "",
+    "home": {
+      "title": ""
+    },
+    "library-panels": {
+      "subtitle": "",
+      "title": ""
+    },
+    "live": {
+      "title": ""
+    },
+    "live-cloud": {
+      "title": ""
+    },
+    "live-pipeline": {
+      "title": ""
+    },
+    "live-status": {
+      "title": ""
+    },
+    "manage-dashboards": {
+      "title": ""
+    },
+    "monitoring": {
+      "subtitle": "",
+      "title": ""
+    },
+    "new-dashboard": {
+      "title": ""
+    },
+    "new-folder": {
+      "title": ""
+    },
+    "org-settings": {
+      "subtitle": "",
+      "title": ""
+    },
+    "playlists": {
+      "subtitle": "",
+      "title": ""
+    },
+    "plugins": {
+      "subtitle": "",
+      "title": ""
+    },
+    "profile/notifications": {
+      "title": ""
+    },
+    "profile/password": {
+      "title": ""
+    },
+    "profile/settings": {
+      "title": ""
+    },
+    "profile/switch-org": "",
+    "scenes": {
+      "title": ""
+    },
+    "search": {
+      "placeholder": ""
+    },
+    "server-settings": {
+      "subtitle": "",
+      "title": ""
+    },
+    "service-accounts": {
+      "subtitle": "",
+      "title": ""
+    },
+    "sign-in": "",
+    "sign-out": {
+      "title": ""
+    },
+    "snapshots": {
+      "subtitle": "",
+      "title": ""
+    },
+    "starred": {
+      "title": ""
+    },
+    "starred-empty": {
+      "title": ""
+    },
+    "storage": {
+      "subtitle": "",
+      "title": ""
+    },
+    "teams": {
+      "subtitle": "",
+      "title": ""
+    },
+    "upgrading": {
+      "title": ""
+    },
+    "users": {
+      "subtitle": "",
+      "title": ""
+    }
   },
   "navigation": {
     "kiosk": {
       "tv-alert": ""
     }
+  },
+  "news": {
+    "title": ""
   },
   "panel": {
     "header-menu": {
