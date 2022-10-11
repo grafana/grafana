@@ -761,14 +761,6 @@ steps:
   image: grafana/build-container:1.6.3
   name: lint-docs
 - commands:
-  - ./bin/build build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
-  depends_on:
-  - yarn-install
-  environment:
-    NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.6.3
-  name: build-frontend-packages
-- commands:
   - mkdir -p /hugo/content/docs/grafana
   - cp -r docs/sources/* /hugo/content/docs/grafana/latest/
   - cd /hugo && make prod
@@ -889,14 +881,6 @@ steps:
     NODE_OPTIONS: --max_old_space_size=8192
   image: grafana/build-container:1.6.3
   name: lint-docs
-- commands:
-  - ./bin/build build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
-  depends_on:
-  - yarn-install
-  environment:
-    NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.6.3
-  name: build-frontend-packages
 - commands:
   - mkdir -p /hugo/content/docs/grafana
   - cp -r docs/sources/* /hugo/content/docs/grafana/latest/
@@ -5632,6 +5616,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: a8e4587efd7da775019ed2812c5980fb43fdb9ef5da50e2ac7e5c73151b6a685
+hmac: f91a8f7c107dc4c9248ecb85000d148f3489a77c42f4048be9ff35ba98589f60
 
 ...
