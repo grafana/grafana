@@ -93,7 +93,7 @@ func TestGetAnnotations(t *testing.T) {
 			Name:       &name,
 		}
 		annos := []DashAnnotation{grafanaAnnotation, queryAnnotation, disabledGrafanaAnnotation}
-		dashboard := internal.CreateDashboardWithAnnotations(t, dash, annos)
+		dashboard := internal.AddAnnotationsToDashboard(t, dash, annos)
 
 		annotationsRepo := annotations.FakeAnnotationsRepo{}
 		fakeStore := FakePublicDashboardStore{}

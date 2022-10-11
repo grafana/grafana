@@ -36,7 +36,7 @@ func CreateDashboardFromFile(t *testing.T, path string) *models.Dashboard {
 	return models.NewDashboardFromJson(dashJSON)
 }
 
-func CreateDashboardWithAnnotations(t *testing.T, dash *models.Dashboard, annotations []pubdashModels.DashAnnotation) *models.Dashboard {
+func AddAnnotationsToDashboard(t *testing.T, dash *models.Dashboard, annotations []pubdashModels.DashAnnotation) *models.Dashboard {
 	type annotationsDto struct {
 		List []pubdashModels.DashAnnotation `json:"list"`
 	}
