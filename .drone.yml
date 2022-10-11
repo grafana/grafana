@@ -361,12 +361,17 @@ steps:
     --depth=1
   - cd grafana-enterprise
   - git fetch origin "refs/tags/*:refs/tags/*"
-  - git tag -d $${TEST_TAG} && git push --delete origin $${TEST_TAG} && git tag $${TEST_TAG}
-    && git push origin $${TEST_TAG}
+  - if git show-ref --tags $${TEST_TAG} --quiet; then git tag -d $${TEST_TAG} && git
+    push --delete origin $${TEST_TAG}; fi
+  - git tag $${TEST_TAG} && git push origin $${TEST_TAG}
   - cd -
-  - git fetch origin "refs/tags/*:refs/tags/*"
-  - git tag -d $${TEST_TAG} && git push --delete origin --quiet $${TEST_TAG} && git
-    tag $${TEST_TAG} && git push origin $${TEST_TAG} --quiet
+  - git fetch https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git "refs/tags/*:refs/tags/*"
+    && git fetch
+  - if git show-ref --tags $${TEST_TAG} --quiet; then git tag -d $${TEST_TAG} && git
+    push --delete https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git $${TEST_TAG};
+    fi
+  - git tag $${TEST_TAG} && git push https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git
+    $${TEST_TAG}
   environment:
     DOWNSTREAM_REPO:
       from_secret: downstream
@@ -1216,12 +1221,17 @@ steps:
     --depth=1
   - cd grafana-enterprise
   - git fetch origin "refs/tags/*:refs/tags/*"
-  - git tag -d $${TEST_TAG} && git push --delete origin $${TEST_TAG} && git tag $${TEST_TAG}
-    && git push origin $${TEST_TAG}
+  - if git show-ref --tags $${TEST_TAG} --quiet; then git tag -d $${TEST_TAG} && git
+    push --delete origin $${TEST_TAG}; fi
+  - git tag $${TEST_TAG} && git push origin $${TEST_TAG}
   - cd -
-  - git fetch origin "refs/tags/*:refs/tags/*"
-  - git tag -d $${TEST_TAG} && git push --delete origin --quiet $${TEST_TAG} && git
-    tag $${TEST_TAG} && git push origin $${TEST_TAG} --quiet
+  - git fetch https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git "refs/tags/*:refs/tags/*"
+    && git fetch
+  - if git show-ref --tags $${TEST_TAG} --quiet; then git tag -d $${TEST_TAG} && git
+    push --delete https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git $${TEST_TAG};
+    fi
+  - git tag $${TEST_TAG} && git push https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git
+    $${TEST_TAG}
   environment:
     DOWNSTREAM_REPO:
       from_secret: downstream
@@ -5622,6 +5632,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 56293402eca2076816c0fc9ef3bac7508ffb51e27536c6a2bbabd2741525c8f1
+hmac: 43fa035e502c2a5120b844e5d2b7c728112c29db14b7976ec40f8d4a0505e447
 
 ...
