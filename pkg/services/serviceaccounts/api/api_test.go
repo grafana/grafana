@@ -284,7 +284,7 @@ func setupTestServer(t *testing.T, svc *tests.ServiceAccountMock,
 	sqlStore *sqlstore.SQLStore, saStore serviceaccounts.Store) (*web.Mux, *ServiceAccountsAPI) {
 	cfg := setting.NewCfg()
 	teamSvc := teamimpl.ProvideService(sqlStore, cfg)
-	userSvc := userimpl.ProvideService(sqlStore, nil, cfg, sqlStore, teamimpl.ProvideService(sqlStore, cfg), nil)
+	userSvc := userimpl.ProvideService(sqlStore, nil, cfg, teamimpl.ProvideService(sqlStore, cfg), nil)
 	saPermissionService, err := ossaccesscontrol.ProvideServiceAccountPermissions(
 		cfg, routing.NewRouteRegister(), sqlStore, acmock, &licensing.OSSLicensingService{}, saStore, acmock, teamSvc, userSvc)
 	require.NoError(t, err)

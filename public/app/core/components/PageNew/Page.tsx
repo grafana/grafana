@@ -82,12 +82,12 @@ export const Page: PageType = ({
               />
             </>
           )}
-          <div className={styles.pageContent}>
+          <div className={styles.pageContainer}>
             <CustomScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
               <div className={styles.pageInner}>
                 {pageHeaderNav && <PageHeader navItem={pageHeaderNav} subTitle={subTitle} />}
                 {pageNav && pageNav.children && <PageTabs navItem={pageNav} />}
-                {children}
+                <div className={styles.pageContent}>{children}</div>
               </div>
               <Footer />
             </CustomScrollbar>
@@ -96,7 +96,7 @@ export const Page: PageType = ({
       )}
       {layout === PageLayoutType.Canvas && (
         <CustomScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
-          <div className={styles.dashboardContent}>
+          <div className={styles.canvasContent}>
             {toolbar}
             {children}
           </div>
@@ -137,14 +137,16 @@ const getStyles = (theme: GrafanaTheme2) => {
         top: theme.spacing(2),
       },
     }),
-    wrapper: css`
-      height: 100%;
-      display: flex;
-      flex: 1 1 0;
-      flex-direction: column;
-      min-height: 0;
-    `,
+    wrapper: css({
+      label: 'page-wrapper',
+      height: '100%',
+      display: 'flex',
+      flex: '1 1 0',
+      flexDirection: 'column',
+      minHeight: 0,
+    }),
     panes: css({
+      label: 'page-panes',
       display: 'flex',
       height: '100%',
       width: '100%',
@@ -155,10 +157,16 @@ const getStyles = (theme: GrafanaTheme2) => {
         flexDirection: 'row',
       },
     }),
+    pageContainer: css({
+      label: 'page-container',
+      flexGrow: 1,
+    }),
     pageContent: css({
+      label: 'page-content',
       flexGrow: 1,
     }),
     pageInner: css({
+      label: 'page-inner',
       padding: theme.spacing(3),
       boxShadow: shadow,
       background: theme.colors.background.primary,
@@ -167,7 +175,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'column',
       flexGrow: 1,
     }),
-    dashboardContent: css({
+    canvasContent: css({
+      label: 'canvas-content',
       display: 'flex',
       flexDirection: 'column',
       padding: theme.spacing(2),

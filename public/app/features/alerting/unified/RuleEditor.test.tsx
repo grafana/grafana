@@ -296,7 +296,7 @@ describe('RuleEditor', () => {
             labels: { severity: 'warn', team: 'the a-team' },
             for: '5m',
             grafana_alert: {
-              condition: 'B',
+              condition: 'C',
               data: getDefaultQueries(),
               exec_err_state: GrafanaAlertStateDecision.Error,
               no_data_state: 'NoData',

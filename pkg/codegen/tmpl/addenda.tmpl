@@ -18,8 +18,8 @@ var currentVersion = thema.SV({{ .LatestSeqv }}, {{ .LatestSchv }})
 {{- if .IsComposed }}//
 // This is the base variant of the schema. It does not include any composed
 // plugin schemas.{{ end }}
-func Lineage(lib thema.Library, opts ...thema.BindOption) (thema.Lineage, error) {
-	return cuectx.LoadGrafanaInstancesWithThema(filepath.Join("pkg", "coremodel", "{{ .Name }}"), cueFS, lib, opts...)
+func Lineage(rt *thema.Runtime, opts ...thema.BindOption) (thema.Lineage, error) {
+	return cuectx.LoadGrafanaInstancesWithThema(filepath.Join("pkg", "coremodel", "{{ .Name }}"), cueFS, rt, opts...)
 }
 
 var _ thema.LineageFactory = Lineage
@@ -52,8 +52,8 @@ func (c *Coremodel) GoType() interface{} {
 // Note that this function does not cache, and initially loading a Thema lineage
 // can be expensive. As such, the Grafana backend should prefer to access this
 // coremodel through a registry (pkg/framework/coremodel/registry), which does cache.
-func New(lib thema.Library) (*Coremodel, error) {
-	lin, err := Lineage(lib)
+func New(rt *thema.Runtime) (*Coremodel, error) {
+	lin, err := Lineage(rt)
 	if err != nil {
 		return nil, err
 	}

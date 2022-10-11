@@ -33,6 +33,19 @@ For details, see [GitHub issue #55005](https://github.com/grafana/grafana/issues
 
 {{< figure src="/static/img/docs/panels/panel-help-9-2.gif" max-width="750px" caption="Retrieving a panel's query response data and panel settings" >}}
 
+## Canvas panel
+
+_Available in beta in Grafana Open Source._
+
+Introducing the Canvas panel, a new panel that combines the power of Grafana with the flexibility of custom elements.
+Canvas visualizations are extensible form-built panels that allow you to explicitly place elements within static and dynamic layouts. This empowers you to design custom visualizations and overlay data in ways that aren't possible with standard Grafana panels, all within Grafana's UI. If you've used popular UI and web design tools, then designing Canvas panels will feel very familiar.
+
+For example, you can place image layers and then overlay text that's updated by Grafana data sources, and display icons that can change color conditionally based on data.
+
+We've planned additional features and design elements for future releases to make Canvas panels even more powerful tools for creating custom, interactive, data-driven visualizations. To learn more about the Canvas panel, see the [documentation]({{< relref "../visualizations/canvas/" >}}).
+
+{{< video-embed src="/static/img/docs/canvas-panel/canvas-beta-overview-9-2-0.mov" max-width="750px" caption="Canvas panel beta overview" >}}
+
 ## Support for Google Analytics 4 properties
 
 _Generally available in Grafana Open Source._
@@ -72,7 +85,7 @@ _Generally available in all editions._
 
 Starting with release 9.2, the URL configuration of external alertmanagers from the Admin tab on the Alerting page is deprecated. It will be removed in a future release.
 
-External alertmanagers should now be configured as data sources from the Configuration page. This enables you to manage the contact points and notification policies of external alertmanagers from within Grafana and also encrypts HTTP basic authentication credentials that were previously visible when configuring external alertmanagers by URL.
+External alertmanagers should now be configured as data sources using Grafana Configuration from the main Grafana navigation menu. This enables you to manage the contact points and notification policies of external alertmanagers from within Grafana and also encrypts HTTP basic authentication credentials that were previously visible when configuring external alertmanagers by URL.
 
 ## Public dashboards
 

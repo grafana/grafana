@@ -84,6 +84,7 @@ export { Tab } from './Tabs/Tab';
 export { VerticalTab } from './Tabs/VerticalTab';
 export { TabContent } from './Tabs/TabContent';
 export { Counter } from './Tabs/Counter';
+export { RenderUserContentAsHTML } from './RenderUserContentAsHTML/RenderUserContentAsHTML';
 
 // Visualizations
 export {
