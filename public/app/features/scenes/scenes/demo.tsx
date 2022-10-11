@@ -2,11 +2,11 @@ import { getDefaultTimeRange } from '@grafana/data';
 
 import { Scene } from '../components/Scene';
 import { SceneCanvasText } from '../components/SceneCanvasText';
-import { SceneFlexLayout } from '../components/SceneFlexLayout';
 import { ScenePanelRepeater } from '../components/ScenePanelRepeater';
 import { SceneTimePicker } from '../components/SceneTimePicker';
 import { SceneToolbarInput } from '../components/SceneToolbarButton';
 import { VizPanel } from '../components/VizPanel';
+import { SceneFlexChild, SceneFlexLayout } from '../components/layout/SceneFlexLayout';
 import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneEditManager } from '../editor/SceneEditManager';
 import { SceneQueryRunner } from '../querying/SceneQueryRunner';
@@ -17,33 +17,55 @@ export function getFlexLayoutTest(): Scene {
     layout: new SceneFlexLayout({
       direction: 'row',
       children: [
-        new VizPanel({
-          pluginId: 'timeseries',
-          title: 'Dynamic height and width',
-          size: { minWidth: '70%' },
+        new SceneFlexChild({
+          children: [
+            new VizPanel({
+              pluginId: 'timeseries',
+              title: 'Dynamic height and width',
+              size: { minWidth: '70%' },
+            }),
+          ],
         }),
+
         new SceneFlexLayout({
           // size: { width: 450 },
           direction: 'column',
           children: [
-            new VizPanel({
-              pluginId: 'timeseries',
-              title: 'Fill height',
+            new SceneFlexChild({
+              children: [
+                new VizPanel({
+                  pluginId: 'timeseries',
+                  title: 'Fill height',
+                }),
+              ],
             }),
-            new VizPanel({
-              pluginId: 'timeseries',
-              title: 'Fill height',
+            new SceneFlexChild({
+              children: [
+                new VizPanel({
+                  pluginId: 'timeseries',
+                  title: 'Fill height',
+                }),
+              ],
             }),
-            new SceneCanvasText({
-              text: 'Size to content',
-              fontSize: 20,
+            new SceneFlexChild({
               size: { ySizing: 'content' },
-              align: 'center',
+              children: [
+                new SceneCanvasText({
+                  text: 'Size to content',
+                  fontSize: 20,
+
+                  align: 'center',
+                }),
+              ],
             }),
-            new VizPanel({
-              pluginId: 'timeseries',
-              title: 'Fixed height',
-              size: { height: 300 },
+            new SceneFlexChild({
+              children: [
+                new VizPanel({
+                  pluginId: 'timeseries',
+                  title: 'Fixed height',
+                  size: { height: 300 },
+                }),
+              ],
             }),
           ],
         }),
@@ -94,20 +116,28 @@ export function getScenePanelRepeaterTest(): Scene {
           new SceneFlexLayout({
             size: { minHeight: 200 },
             children: [
-              new VizPanel({
-                pluginId: 'timeseries',
-                title: 'Title',
-                options: {
-                  legend: { displayMode: 'hidden' },
-                },
+              new SceneFlexChild({
+                children: [
+                  new VizPanel({
+                    pluginId: 'timeseries',
+                    title: 'Title',
+                    options: {
+                      legend: { displayMode: 'hidden' },
+                    },
+                  }),
+                ],
               }),
-              new VizPanel({
-                size: { width: 300 },
-                pluginId: 'stat',
-                fieldConfig: { defaults: { displayName: 'Last' }, overrides: [] },
-                options: {
-                  graphMode: 'none',
-                },
+              new SceneFlexChild({
+                children: [
+                  new VizPanel({
+                    size: { width: 300 },
+                    pluginId: 'stat',
+                    fieldConfig: { defaults: { displayName: 'Last' }, overrides: [] },
+                    options: {
+                      graphMode: 'none',
+                    },
+                  }),
+                ],
               }),
             ],
           }),

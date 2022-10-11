@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -24,7 +24,7 @@ export class NestedScene extends SceneObjectBase<NestedSceneState> {
       isCollapsed: !this.state.isCollapsed,
       size: {
         ...this.state.size,
-        ySizing: this.state.isCollapsed ? 'fill' : 'content',
+        ySizing: this.state.isCollapsed ? 'content' : 'fill',
       },
     });
   };
@@ -59,7 +59,7 @@ export function NestedSceneRenderer({ model, isEditing }: SceneComponentProps<Ne
   }
 
   return (
-    <div className={styles.row}>
+    <div className={cx(styles.row, isCollapsed && styles.rowCollapsed)}>
       <div className={styles.rowHeader}>
         <Stack gap={0}>
           <div className={styles.title} role="heading" aria-level={1}>
@@ -92,7 +92,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexGrow: 1,
     gap: theme.spacing(1),
     cursor: 'pointer',
+    height: '100%',
   }),
+  rowCollapsed: css({ flexGrow: 0, height: 'auto' }),
   toggle: css({}),
   title: css({
     fontSize: theme.typography.h5.fontSize,

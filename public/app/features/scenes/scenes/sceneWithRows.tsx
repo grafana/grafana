@@ -2,9 +2,9 @@ import { getDefaultTimeRange } from '@grafana/data';
 
 import { NestedScene } from '../components/NestedScene';
 import { Scene } from '../components/Scene';
-import { SceneFlexLayout } from '../components/SceneFlexLayout';
 import { SceneTimePicker } from '../components/SceneTimePicker';
 import { VizPanel } from '../components/VizPanel';
+import { SceneFlexChild, SceneFlexLayout } from '../components/layout/SceneFlexLayout';
 import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneEditManager } from '../editor/SceneEditManager';
 
@@ -22,13 +22,21 @@ export function getSceneWithRows(): Scene {
           layout: new SceneFlexLayout({
             direction: 'row',
             children: [
-              new VizPanel({
-                pluginId: 'timeseries',
-                title: 'Fill height',
+              new SceneFlexChild({
+                children: [
+                  new VizPanel({
+                    pluginId: 'timeseries',
+                    title: 'Fill height',
+                  }),
+                ],
               }),
-              new VizPanel({
-                pluginId: 'timeseries',
-                title: 'Fill height',
+              new SceneFlexChild({
+                children: [
+                  new VizPanel({
+                    pluginId: 'timeseries',
+                    title: 'Fill height',
+                  }),
+                ],
               }),
             ],
           }),
@@ -39,13 +47,21 @@ export function getSceneWithRows(): Scene {
           layout: new SceneFlexLayout({
             direction: 'row',
             children: [
-              new VizPanel({
-                pluginId: 'timeseries',
-                title: 'Fill height',
+              new SceneFlexChild({
+                children: [
+                  new VizPanel({
+                    pluginId: 'timeseries',
+                    title: 'Fill height',
+                  }),
+                ],
               }),
-              new VizPanel({
-                pluginId: 'timeseries',
-                title: 'Fill height',
+              new SceneFlexChild({
+                children: [
+                  new VizPanel({
+                    pluginId: 'timeseries',
+                    title: 'Fill height',
+                  }),
+                ],
               }),
             ],
           }),
