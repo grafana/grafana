@@ -445,9 +445,6 @@ def release_pipelines(ver_mode='release', trigger=None):
                 ]
             },
             'ref': ['refs/tags/v*',],
-            'repo': {
-                'exclude': ['grafana/grafana'],
-            },
         }
 
     # The release pipelines include also enterprise ones, so both editions are built for a release.
