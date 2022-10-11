@@ -75,15 +75,15 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, r
 	timeFormat := "2006/01/02-15:04:05"
 	timeSeriesQuery.Query += fmt.Sprintf(" | within d'%s', d'%s'", from.UTC().Format(timeFormat), to.UTC().Format(timeFormat))
 	p := path.Join("/v3/projects", projectName, "timeSeries:query")
-	
+
 	ctx, span := tracer.Start(ctx, "cloudMonitoring MQL query")
 	span.SetAttributes("query", timeSeriesQuery.Query, attribute.Key("query").String(timeSeriesQuery.Query))
 	span.SetAttributes("from", req.Queries[0].TimeRange.From, attribute.Key("from").String(req.Queries[0].TimeRange.From.String()))
 	span.SetAttributes("until", req.Queries[0].TimeRange.To, attribute.Key("until").String(req.Queries[0].TimeRange.To.String()))
 	defer span.End()
-	
+
 	requestBody := map[string]interface{}{
-		"query": timeSeriesQuery.Query,
+		"query":    timeSeriesQuery.Query,
 		"pageSize": 10,
 	}
 	r, err := s.createRequest(ctx, &dsInfo, p, bytes.NewBuffer([]byte{}))
@@ -101,9 +101,9 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, r
 	}
 	for d.NextPageToken != "" {
 		requestBody := map[string]interface{}{
-			"query": timeSeriesQuery.Query,
+			"query":     timeSeriesQuery.Query,
 			"pageToken": d.NextPageToken,
-		}	
+		}
 		nextPage, err := doRequestQueryPage(requestBody, r, dsInfo)
 		if err != nil {
 			dr.Error = err
