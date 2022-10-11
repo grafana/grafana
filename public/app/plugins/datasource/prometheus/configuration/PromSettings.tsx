@@ -106,7 +106,7 @@ const setPrometheusVersion = (
         .get(`/api/datasources/${updatedOptions.id}/resources/version-detect`)
         .then((rawResponse: PromBuildInfoResponse) => {
           if (rawResponse.data?.version && semver.valid(rawResponse.data?.version)) {
-            const versionString = getVersionString(rawResponse.data?.version, updatedOptions.jsonData.prometheusFlavor);
+            const versionString = getVersionString(rawResponse.data?.version, updatedOptions.jsonData.prometheusType);
             // If we got a successful response, let's update the backend with the version right away if it's new
             if (versionString) {
               onUpdate({
@@ -211,9 +211,9 @@ export const PromSettings = (props: Props) => {
                 <Select
                   aria-label="Prometheus type"
                   options={prometheusFlavorSelectItems}
-                  value={prometheusFlavorSelectItems.find((o) => o.value === options.jsonData.prometheusFlavor)}
+                  value={prometheusFlavorSelectItems.find((o) => o.value === options.jsonData.prometheusType)}
                   onChange={onChangeHandler(
-                    'prometheusFlavor',
+                    'prometheusType',
                     {
                       ...options,
                       jsonData: { ...options.jsonData, prometheusVersion: undefined },
@@ -235,23 +235,23 @@ export const PromSettings = (props: Props) => {
           </div>
         </div>
         <div className="gf-form">
-          {options.jsonData.prometheusFlavor && (
+          {options.jsonData.prometheusType && (
             <div className="gf-form">
               <FormField
-                label={`${options.jsonData.prometheusFlavor} version`}
+                label={`${options.jsonData.prometheusType} version`}
                 labelWidth={13}
                 inputEl={
                   <Select
-                    aria-label={`${options.jsonData.prometheusFlavor} type`}
-                    options={PromFlavorVersions[options.jsonData.prometheusFlavor]}
-                    value={PromFlavorVersions[options.jsonData.prometheusFlavor]?.find(
+                    aria-label={`${options.jsonData.prometheusType} type`}
+                    options={PromFlavorVersions[options.jsonData.prometheusType]}
+                    value={PromFlavorVersions[options.jsonData.prometheusType]?.find(
                       (o) => o.value === options.jsonData.prometheusVersion
                     )}
                     onChange={onChangeHandler('prometheusVersion', options, onOptionsChange)}
                     width={20}
                   />
                 }
-                tooltip={`Use this to set the version of your ${options.jsonData.prometheusFlavor} instance if it is not automatically configured.`}
+                tooltip={`Use this to set the version of your ${options.jsonData.prometheusType} instance if it is not automatically configured.`}
               />
             </div>
           )}

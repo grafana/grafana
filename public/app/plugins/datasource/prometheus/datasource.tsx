@@ -123,7 +123,7 @@ export class PrometheusDatasource
     this.languageProvider = languageProvider ?? new PrometheusLanguageProvider(this);
     this.lookupsDisabled = instanceSettings.jsonData.disableMetricsLookup ?? false;
     this.customQueryParameters = new URLSearchParams(instanceSettings.jsonData.customQueryParameters);
-    this.datasourceConfigurationPrometheusFlavor = instanceSettings.jsonData.prometheusFlavor;
+    this.datasourceConfigurationPrometheusFlavor = instanceSettings.jsonData.prometheusType;
     this.datasourceConfigurationPrometheusVersion = instanceSettings.jsonData.prometheusVersion;
     this.variables = new PrometheusVariableSupport(this, this.templateSrv, this.timeSrv);
     this.exemplarsAvailable = true;
