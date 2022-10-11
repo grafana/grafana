@@ -19,8 +19,9 @@ import (
 )
 
 var (
-	logger      = log.New("oauthtoken")
-	ExpiryDelta = 10 * time.Second
+	logger                 = log.New("oauthtoken")
+	ExpiryDelta            = 10 * time.Second
+	ErrNoRefreshTokenFound = errors.New("no refresh token found")
 )
 
 type Service struct {
@@ -106,6 +107,10 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr *models.UserAuth) err
 		if !strings.Contains(authProvider, "oauth") {
 			logger.Error("the specified User's auth provider is not OAuth", "authmodule", usr.AuthModule, "userid", usr.UserId)
 			return nil, errors.New("not an OAuth provider")
+		}
+
+		if usr.OAuthRefreshToken == "" {
+			return nil, ErrNoRefreshTokenFound
 		}
 
 		return o.tryGetOrRefreshAccessToken(ctx, usr)

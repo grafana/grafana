@@ -347,7 +347,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 		sc.withTokenSessionCookie("token")
 		sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: 2, UserID: userID}
-		sc.oauthTokenService.ExpectedAuthUser = &models.UserAuth{UserId: userID, OAuthExpiry: fakeGetTime()().Add(-11 * time.Second)}
+		sc.oauthTokenService.ExpectedAuthUser = &models.UserAuth{UserId: userID, OAuthExpiry: fakeGetTime()().Add(11 * time.Second)}
 		t.Logf("now: %v; oauthExpiry: %v", fakeGetTime()(), sc.oauthTokenService.ExpectedAuthUser.OAuthExpiry)
 
 		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
@@ -375,7 +375,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 		sc.withTokenSessionCookie("token")
 		sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: 2, UserID: userID}
-		sc.oauthTokenService.ExpectedAuthUser = &models.UserAuth{UserId: userID, OAuthExpiry: fakeGetTime()().Add(-9 * time.Second)}
+		sc.oauthTokenService.ExpectedAuthUser = &models.UserAuth{UserId: userID, OAuthExpiry: fakeGetTime()().Add(-1 * time.Second)}
 		sc.oauthTokenService.ExpectedErrors = map[string]error{"TryTokenRefresh": errors.New("error")}
 		t.Logf("now: %v; oauthExpiry: %v", fakeGetTime()(), sc.oauthTokenService.ExpectedAuthUser.OAuthExpiry)
 
@@ -402,7 +402,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 		sc.withTokenSessionCookie("token")
 		sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: 2, UserID: userID}
-		sc.oauthTokenService.ExpectedAuthUser = &models.UserAuth{UserId: userID, OAuthExpiry: fakeGetTime()().Add(-5 * time.Second)}
+		sc.oauthTokenService.ExpectedAuthUser = &models.UserAuth{UserId: userID, OAuthExpiry: fakeGetTime()().Add(-5 * time.Second), OAuthRefreshToken: "refreshtoken"}
 		t.Logf("now: %v; oauthExpiry: %v", fakeGetTime()(), sc.oauthTokenService.ExpectedAuthUser.OAuthExpiry)
 
 		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
