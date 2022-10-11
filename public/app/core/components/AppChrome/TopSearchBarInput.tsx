@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { locationService } from '@grafana/runtime';
 import { FilterInput, ToolbarButton, useTheme2 } from '@grafana/ui';
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
+import { t } from 'app/core/internationalization';
 import { useSearchQuery } from 'app/features/search/hooks/useSearchQuery';
 
 export function TopSearchBarInput() {
@@ -37,7 +38,7 @@ export function TopSearchBarInput() {
   return (
     <FilterInput
       onClick={onOpenSearch}
-      placeholder="Search Grafana"
+      placeholder={t('nav.search.placeholder', 'Search Grafana')}
       value={query.query ?? ''}
       onChange={onSearchChange}
     />

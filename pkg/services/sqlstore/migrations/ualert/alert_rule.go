@@ -100,7 +100,6 @@ func addMigrationInfo(da *dashAlert) (map[string]string, map[string]string) {
 func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string) (*alertRule, error) {
 	lbls, annotations := addMigrationInfo(&da)
 	name := normalizeRuleName(da.Name)
-	lbls["alertname"] = name
 	annotations["message"] = da.Message
 	var err error
 
@@ -123,6 +122,7 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 		Updated:         time.Now().UTC(),
 		Annotations:     annotations,
 		Labels:          lbls,
+		RuleGroupIndex:  1,
 	}
 
 	ar.NoDataState, err = transNoData(da.ParsedSettings.NoDataState)
