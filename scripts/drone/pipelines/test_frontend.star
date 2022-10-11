@@ -22,7 +22,7 @@ def test_frontend(trigger, ver_mode, edition="oss"):
     init_steps.extend([
         identify_runner_step(),
         download_grabpl_step(),
-        yarn_install_step(),
+        yarn_install_step(edition),
     ])
     test_steps = [
         betterer_frontend_step(edition),
