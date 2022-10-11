@@ -120,6 +120,10 @@ To use the debug view:
 
 {{< figure src="/static/img/docs/ldap_debug_mapping_testing.png" class="docs-image--no-shadow" max-width="600px" >}}
 
+[Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise" >}}) users with [enhanced LDAP integration]({{< relref "enhanced_ldap" >}}) enabled can also see sync status in the debug view. This requires the `ldap.status:read` permission.
+
+{{< figure src="/static/img/docs/ldap_sync_debug.png" class="docs-image--no-shadow" max-width="600px" >}}
+
 ### Bind
 
 #### Bind and Bind Password
