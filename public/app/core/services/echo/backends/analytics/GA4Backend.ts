@@ -21,11 +21,9 @@ export class GA4EchoBackend implements EchoBackend<PageviewEchoEvent, GA4EchoBac
   constructor(public options: GA4EchoBackendOptions) {
     const url = `https://www.googletagmanager.com/gtag/js?id=${options.googleAnalyticsId}`;
 
-    fetch(url, {
-      headers: {
-        Accept: 'text/javascript',
-      },
-    });
+    const script = document.createElement('script');
+    script.src = url;
+    document.head.appendChild(script)
 
     window.dataLayer = window.dataLayer || [];
     window.gtag = function gtag() {

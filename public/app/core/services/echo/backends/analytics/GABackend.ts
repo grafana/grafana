@@ -12,11 +12,9 @@ export class GAEchoBackend implements EchoBackend<PageviewEchoEvent, GAEchoBacke
   constructor(public options: GAEchoBackendOptions) {
     const url = `https://www.google-analytics.com/analytics${options.debug ? '_debug' : ''}.js`;
 
-    fetch(url, {
-      headers: {
-        Accept: 'text/javascript',
-      },
-    });
+    const script = document.createElement('script');
+    script.src = url;
+    document.head.appendChild(script)
 
     const ga = (window.ga =
       window.ga ||

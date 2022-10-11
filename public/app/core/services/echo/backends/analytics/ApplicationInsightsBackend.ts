@@ -29,21 +29,21 @@ export class ApplicationInsightsBackend implements EchoBackend<PageviewEchoEvent
   supportedEvents = [EchoEventType.Pageview, EchoEventType.Interaction];
 
   constructor(public options: ApplicationInsightsBackendOptions) {
-    fetch('https://js.monitor.azure.com/scripts/b/ai.2.min.js', {
-      headers: {
-        Accept: 'text/javascript',
-      },
-    }).then(function () {
-      const applicationInsightsOpts = {
-        config: {
-          connectionString: options.connectionString,
-          endpointUrl: options.endpointUrl,
-        },
-      };
+    const url = 'https://js.monitor.azure.com/scripts/b/ai.2.min.js'
 
-      const init = new (window as any).Microsoft.ApplicationInsights.ApplicationInsights(applicationInsightsOpts);
-      (window as any).applicationInsights = init.loadAppInsights();
-    });
+    const script = document.createElement('script');
+    script.src = url;
+    document.head.appendChild(script)
+
+    const applicationInsightsOpts = {
+      config: {
+        connectionString: options.connectionString,
+        endpointUrl: options.endpointUrl,
+      },
+    };
+
+    const init = new (window as any).Microsoft.ApplicationInsights.ApplicationInsights(applicationInsightsOpts);
+    (window as any).applicationInsights = init.loadAppInsights();
   }
 
   addEvent = (e: PageviewEchoEvent | InteractionEchoEvent) => {
