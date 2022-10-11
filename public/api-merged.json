@@ -18,10 +18,6 @@
       "url": "https://grafana.com",
       "email": "hello@grafana.com"
     },
-    "license": {
-      "name": "GNU Affero General Public License v3.0",
-      "url": "https://www.gnu.org/licenses/agpl-3.0.en.html"
-    },
     "version": "0.0.1"
   },
   "basePath": "/api",
@@ -8524,7 +8520,7 @@
         "tags": [
           "service_accounts"
         ],
-        "summary": "# Create service account",
+        "summary": "Create service account",
         "operationId": "createServiceAccount",
         "parameters": [
           {
@@ -8560,7 +8556,7 @@
         "tags": [
           "service_accounts"
         ],
-        "summary": "# Search service accounts with paging",
+        "summary": "Search service accounts with paging",
         "operationId": "searchOrgServiceAccountsWithPaging",
         "parameters": [
           {
@@ -8616,7 +8612,7 @@
         "tags": [
           "service_accounts"
         ],
-        "summary": "# Get single serviceaccount by Id",
+        "summary": "Get single serviceaccount by Id",
         "operationId": "retrieveServiceAccount",
         "parameters": [
           {
@@ -8653,7 +8649,7 @@
         "tags": [
           "service_accounts"
         ],
-        "summary": "# Delete service account",
+        "summary": "Delete service account",
         "operationId": "deleteServiceAccount",
         "parameters": [
           {
@@ -8687,7 +8683,7 @@
         "tags": [
           "service_accounts"
         ],
-        "summary": "# Update service account",
+        "summary": "Update service account",
         "operationId": "updateServiceAccount",
         "parameters": [
           {
@@ -8733,7 +8729,7 @@
         "tags": [
           "service_accounts"
         ],
-        "summary": "# Get service account tokens",
+        "summary": "Get service account tokens",
         "operationId": "listTokens",
         "parameters": [
           {
@@ -8767,7 +8763,7 @@
         "tags": [
           "service_accounts"
         ],
-        "summary": "# CreateNewToken adds a token to a service account",
+        "summary": "CreateNewToken adds a token to a service account",
         "operationId": "createToken",
         "parameters": [
           {
@@ -8816,7 +8812,7 @@
         "tags": [
           "service_accounts"
         ],
-        "summary": "# DeleteToken deletes service account tokens",
+        "summary": "DeleteToken deletes service account tokens",
         "operationId": "deleteToken",
         "parameters": [
           {
@@ -10397,27 +10393,6 @@
         "active_viewers": {
           "type": "integer",
           "format": "int64"
-        }
-      }
-    },
-    "AddBuiltInRoleCommand": {
-      "type": "object",
-      "properties": {
-        "builtInRole": {
-          "type": "string",
-          "enum": [
-            "Viewer",
-            " Editor",
-            " Admin",
-            " Grafana Admin"
-          ]
-        },
-        "global": {
-          "description": "A flag indicating if the assignment is global or not. If set to false, the default org ID of the authenticated user will be used from the request to create organization local assignment. Refer to the Built-in role assignments for more information.",
-          "type": "boolean"
-        },
-        "roleUid": {
-          "type": "string"
         }
       }
     },
