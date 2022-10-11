@@ -84,7 +84,6 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, r
 
 	requestBody := map[string]interface{}{
 		"query":    timeSeriesQuery.Query,
-		"pageSize": 10,
 	}
 	r, err := s.createRequest(ctx, &dsInfo, p, bytes.NewBuffer([]byte{}))
 	if err != nil {
