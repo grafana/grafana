@@ -514,13 +514,15 @@ def test_backend_integration_step(edition):
         ],
     }
 
-def betterer_frontend_step():
+def betterer_frontend_step(edition="oss"):
+    deps = []
+    if edition == "enterprise":
+        deps.extend(['init-enterprise'])
+    deps.extend(['yarn-install'])
     return {
         'name': 'betterer-frontend',
         'image': build_image,
-        'depends_on': [
-            'yarn-install',
-        ],
+        'depends_on': deps,
         'commands': [
             'yarn betterer ci',
         ],
@@ -529,16 +531,18 @@ def betterer_frontend_step():
 
 
 
-def test_frontend_step():
+def test_frontend_step(edition="oss"):
+    deps = []
+    if edition == "enterprise":
+        deps.extend(['init-enterprise'])
+    deps.extend(['yarn-install'])
     return {
         'name': 'test-frontend',
         'image': build_image,
         'environment': {
             'TEST_MAX_WORKERS': '50%',
         },
-        'depends_on': [
-            'yarn-install',
-        ],
+        'depends_on': deps,
         'commands': [
             'yarn run ci:test-frontend',
         ],
@@ -1253,7 +1257,7 @@ def end_to_end_tests_deps(edition):
 
 def compile_build_cmd(edition='oss'):
     dependencies = []
-    if edition == 'enterprise':
+    if edition in ('enterprise', 'enterprise2'):
           dependencies = ['init-enterprise',]
     return {
         'name': 'compile-build-cmd',

@@ -23,7 +23,7 @@ def test_backend(trigger, ver_mode, edition="oss"):
     init_steps.extend([
         identify_runner_step(),
         compile_build_cmd(edition),
-        verify_gen_cue_step(edition="oss"),
+        verify_gen_cue_step(edition),
         wire_install_step(),
     ])
     test_steps = [
