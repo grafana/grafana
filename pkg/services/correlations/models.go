@@ -58,6 +58,18 @@ func (c CorrelationConfig) MarshalJSON() ([]byte, error) {
 	})
 }
 
+type CorrelationConfigUpdateDTO struct {
+	// Field used to attach the correlation link
+	// required:true
+	Field *string `json:"field"`
+	// Target type
+	// required:true
+	Type *CorrelationConfigType `json:"type"`
+	// Target data query
+	// required:true
+	Target *map[string]interface{} `json:"target"`
+}
+
 // Correlation is the model for correlations definitions
 // swagger:model
 type Correlation struct {
@@ -77,7 +89,7 @@ type Correlation struct {
 	// example: Logs to Traces
 	Description string `json:"description" xorm:"description"`
 	// Correlation Configuration
-	// example: { field: "job", target: { query: "job=app" } }
+	// example: { field: "job", type: "query", target: { query: "job=app" } }
 	Config CorrelationConfig `json:"config" xorm:"jsonb config"`
 }
 
@@ -106,7 +118,7 @@ type CreateCorrelationCommand struct {
 	// example: Logs to Traces
 	Description string `json:"description"`
 	// Arbitrary configuration object handled in frontend
-	// example: { field: "job", target: { query: "job=app" } }
+	// example: { field: "job", type: "query", target: { query: "job=app" } }
 	Config CorrelationConfig `json:"config" binding:"Required"`
 }
 
@@ -154,6 +166,9 @@ type UpdateCorrelationCommand struct {
 	// Optional description of the correlation
 	// example: Logs to Traces
 	Description *string `json:"description"`
+	// Correlation Configuration
+	// example: { field: "job", type: "query", target: { query: "job=app" } }
+	Config *CorrelationConfigUpdateDTO `json:"config"`
 }
 
 // GetCorrelationQuery is the query to retrieve a single correlation

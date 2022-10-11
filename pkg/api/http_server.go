@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware/csrf"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/querylibrary"
 	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/services/store/object"
@@ -176,7 +177,7 @@ type HTTPServer struct {
 	NotificationService          *notifications.NotificationService
 	DashboardService             dashboards.DashboardService
 	dashboardProvisioningService dashboards.DashboardProvisioningService
-	folderService                dashboards.FolderService
+	folderService                folder.Service
 	DatasourcePermissionsService permissions.DatasourcePermissionsService
 	commentsService              *comments.Service
 	AlertNotificationService     *alerting.AlertNotificationService
@@ -232,7 +233,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	ldapGroups ldap.Groups, teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service,
 	authInfoService login.AuthInfoService, storageService store.StorageService, httpObjectStore object.HTTPObjectStore,
 	notificationService *notifications.NotificationService, dashboardService dashboards.DashboardService,
-	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService dashboards.FolderService,
+	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService folder.Service,
 	datasourcePermissionsService permissions.DatasourcePermissionsService, alertNotificationService *alerting.AlertNotificationService,
 	dashboardsnapshotsService dashboardsnapshots.Service, commentsService *comments.Service, pluginSettings pluginSettings.Service,
 	avatarCacheServer *avatar.AvatarCacheServer, preferenceService pref.Service,

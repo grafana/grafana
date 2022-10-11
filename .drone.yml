@@ -84,13 +84,6 @@ steps:
   image: grafana/build-container:1.6.3
   name: yarn-install
 - commands:
-  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
-  depends_on: []
-  environment:
-    CGO_ENABLED: 0
-  image: golang:1.19.2
-  name: compile-build-cmd
-- commands:
   - yarn betterer ci
   depends_on:
   - yarn-install
@@ -178,6 +171,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -216,13 +211,13 @@ steps:
   image: grafana/build-container:1.6.3
   name: wire-install
 - commands:
-  - go test -short -covermode=atomic -timeout=30m ./pkg/...
+  - go test -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.6.3
   name: test-backend
 - commands:
-  - go test -run Integration -covermode=atomic -timeout=30m ./pkg/...
+  - go test -run Integration -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.6.3
@@ -631,7 +626,7 @@ steps:
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
   - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=30m {}'
+    -timeout=5m {}'
   depends_on:
   - wire-install
   environment:
@@ -648,7 +643,7 @@ steps:
     -prootpass
   - go clean -testcache
   - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=30m {}'
+    -timeout=5m {}'
   depends_on:
   - wire-install
   environment:
@@ -930,13 +925,6 @@ steps:
   image: grafana/build-container:1.6.3
   name: yarn-install
 - commands:
-  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
-  depends_on: []
-  environment:
-    CGO_ENABLED: 0
-  image: golang:1.19.2
-  name: compile-build-cmd
-- commands:
   - yarn betterer ci
   depends_on:
   - yarn-install
@@ -1018,6 +1006,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -1056,13 +1046,13 @@ steps:
   image: grafana/build-container:1.6.3
   name: wire-install
 - commands:
-  - go test -short -covermode=atomic -timeout=30m ./pkg/...
+  - go test -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.6.3
   name: test-backend
 - commands:
-  - go test -run Integration -covermode=atomic -timeout=30m ./pkg/...
+  - go test -run Integration -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.6.3
@@ -1624,7 +1614,7 @@ steps:
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
   - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=30m {}'
+    -timeout=5m {}'
   depends_on:
   - wire-install
   environment:
@@ -1641,7 +1631,7 @@ steps:
     -prootpass
   - go clean -testcache
   - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=30m {}'
+    -timeout=5m {}'
   depends_on:
   - wire-install
   environment:
@@ -1923,7 +1913,7 @@ clone:
   retries: 3
 depends_on: []
 environment:
-  EDITION: OSS
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -2232,12 +2222,10 @@ volumes:
 clone:
   retries: 3
 depends_on: []
-environment:
-  EDITION: OSS
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: release-oss-test
+name: release-oss-test-frontend
 node:
   type: no-parallel
 platform:
@@ -2256,65 +2244,18 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
-  - '# It is required that code generated from Thema/CUE be committed and in sync
-    with its inputs.'
-  - '# The following command will fail if running code generators produces any diff
-    in output.'
-  - CODEGEN_VERIFY=1 make gen-cue
-  depends_on: []
-  image: grafana/build-container:1.6.3
-  name: verify-gen-cue
-- commands:
-  - make gen-go
-  depends_on:
-  - verify-gen-cue
-  image: grafana/build-container:1.6.3
-  name: wire-install
-- commands:
   - yarn install --immutable
   depends_on:
   - grabpl
   image: grafana/build-container:1.6.3
   name: yarn-install
 - commands:
-  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
-  depends_on: []
-  environment:
-    CGO_ENABLED: 0
-  image: golang:1.19.2
-  name: compile-build-cmd
-- commands:
-  - apt-get update && apt-get install make
-  - make lint-go
-  depends_on:
-  - wire-install
-  environment:
-    CGO_ENABLED: "1"
-  image: golang:1.19.2
-  name: lint-backend
-- commands:
-  - yarn run prettier:check
-  - yarn run lint
-  - yarn run i18n:compile
-  - yarn run typecheck
+  - yarn betterer ci
   depends_on:
   - yarn-install
-  environment:
-    TEST_MAX_WORKERS: 50%
+  failure: ignore
   image: grafana/build-container:1.6.3
-  name: lint-frontend
-- commands:
-  - go test -short -covermode=atomic -timeout=30m ./pkg/...
-  depends_on:
-  - wire-install
-  image: grafana/build-container:1.6.3
-  name: test-backend
-- commands:
-  - go test -run Integration -covermode=atomic -timeout=30m ./pkg/...
-  depends_on:
-  - wire-install
-  image: grafana/build-container:1.6.3
-  name: test-backend-integration
+  name: betterer-frontend
 - commands:
   - yarn run ci:test-frontend
   depends_on:
@@ -2342,7 +2283,76 @@ clone:
   retries: 3
 depends_on: []
 environment:
-  EDITION: OSS
+  EDITION: oss
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: release-oss-test-backend
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.15.6
+  name: identify-runner
+- commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.19.2
+  name: compile-build-cmd
+- commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
+  image: grafana/build-container:1.6.3
+  name: verify-gen-cue
+- commands:
+  - make gen-go
+  depends_on:
+  - verify-gen-cue
+  image: grafana/build-container:1.6.3
+  name: wire-install
+- commands:
+  - go test -short -covermode=atomic -timeout=5m ./pkg/...
+  depends_on:
+  - wire-install
+  image: grafana/build-container:1.6.3
+  name: test-backend
+- commands:
+  - go test -run Integration -covermode=atomic -timeout=5m ./pkg/...
+  depends_on:
+  - wire-install
+  image: grafana/build-container:1.6.3
+  name: test-backend-integration
+trigger:
+  event:
+    exclude:
+    - promote
+  ref:
+  - refs/tags/v*
+  repo:
+    exclude:
+    - grafana/grafana
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on: []
+environment:
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -2406,7 +2416,7 @@ steps:
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
   - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=30m {}'
+    -timeout=5m {}'
   depends_on:
   - wire-install
   environment:
@@ -2423,7 +2433,7 @@ steps:
     -prootpass
   - go clean -testcache
   - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=30m {}'
+    -timeout=5m {}'
   depends_on:
   - wire-install
   environment:
@@ -2456,10 +2466,11 @@ clone:
   retries: 3
 depends_on:
 - release-oss-build-e2e-publish
-- release-oss-test
+- release-oss-test-frontend
+- release-oss-test-backend
 - release-oss-integration-tests
 environment:
-  EDITION: OSS
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -2522,7 +2533,7 @@ clone:
   disable: true
 depends_on: []
 environment:
-  EDITION: ENTERPRISE
+  EDITION: enterprise
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -2871,12 +2882,10 @@ volumes:
 clone:
   disable: true
 depends_on: []
-environment:
-  EDITION: ENTERPRISE
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: release-enterprise-test
+name: release-enterprise-test-frontend
 node:
   type: no-parallel
 platform:
@@ -2885,15 +2894,67 @@ platform:
 services: []
 steps:
 - commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.15.6
+  name: identify-runner
+- commands:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.11/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
-  - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15.6
-  name: identify-runner
+  - yarn install --immutable
+  depends_on:
+  - grabpl
+  image: grafana/build-container:1.6.3
+  name: yarn-install
+- commands:
+  - yarn betterer ci
+  depends_on:
+  - yarn-install
+  failure: ignore
+  image: grafana/build-container:1.6.3
+  name: betterer-frontend
+- commands:
+  - yarn run ci:test-frontend
+  depends_on:
+  - yarn-install
+  environment:
+    TEST_MAX_WORKERS: 50%
+  image: grafana/build-container:1.6.3
+  name: test-frontend
+trigger:
+  event:
+    exclude:
+    - promote
+  ref:
+  - refs/tags/v*
+  repo:
+    exclude:
+    - grafana/grafana
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  disable: true
+depends_on: []
+environment:
+  EDITION: enterprise
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: release-enterprise-test-backend
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
@@ -2920,6 +2981,10 @@ steps:
   image: grafana/build-container:1.6.3
   name: init-enterprise
 - commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.15.6
+  name: identify-runner
+- commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   depends_on:
   - init-enterprise
@@ -2928,82 +2993,32 @@ steps:
   image: golang:1.19.2
   name: compile-build-cmd
 - commands:
-  - make gen-go
-  depends_on:
-  - init-enterprise
-  image: grafana/build-container:1.6.3
-  name: wire-install
-- commands:
-  - yarn install --immutable
-  depends_on:
-  - init-enterprise
-  image: grafana/build-container:1.6.3
-  name: yarn-install
-- commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
     with its inputs.'
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
-  depends_on:
-  - init-enterprise
+  depends_on: []
   image: grafana/build-container:1.6.3
   name: verify-gen-cue
 - commands:
-  - apt-get update && apt-get install make
-  - make lint-go
+  - make gen-go
   depends_on:
-  - wire-install
-  environment:
-    CGO_ENABLED: "1"
-  image: golang:1.19.2
-  name: lint-backend
-- commands:
-  - yarn run prettier:check
-  - yarn run lint
-  - yarn run i18n:compile
-  - yarn run typecheck
-  depends_on:
-  - yarn-install
-  environment:
-    TEST_MAX_WORKERS: 50%
+  - verify-gen-cue
   image: grafana/build-container:1.6.3
-  name: lint-frontend
+  name: wire-install
 - commands:
-  - go test -short -covermode=atomic -timeout=30m ./pkg/...
+  - go test -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.6.3
   name: test-backend
 - commands:
-  - go test -run Integration -covermode=atomic -timeout=30m ./pkg/...
+  - go test -run Integration -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.6.3
   name: test-backend-integration
-- commands:
-  - yarn run ci:test-frontend
-  depends_on:
-  - yarn-install
-  environment:
-    TEST_MAX_WORKERS: 50%
-  image: grafana/build-container:1.6.3
-  name: test-frontend
-- commands:
-  - apt-get update && apt-get install make
-  - make lint-go
-  depends_on:
-  - wire-install
-  environment:
-    CGO_ENABLED: "1"
-  image: golang:1.19.2
-  name: lint-backend-enterprise2
-- commands:
-  - go test -tags=pro -covermode=atomic -timeout=30m ./pkg/...
-  depends_on:
-  - wire-install
-  image: grafana/build-container:1.6.3
-  name: test-backend-enterprise2
 trigger:
   event:
     exclude:
@@ -3023,7 +3038,101 @@ clone:
   disable: true
 depends_on: []
 environment:
-  EDITION: ENTERPRISE
+  EDITION: enterprise2
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: release-enterprise2-test-backend
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+  - cd grafana-enterprise
+  - git checkout ${DRONE_TAG}
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: grafana/build-container:1.6.3
+  name: clone-enterprise
+- commands:
+  - mv bin/grabpl /tmp/
+  - rmdir bin
+  - mv grafana-enterprise /tmp/
+  - /tmp/grabpl init-enterprise --github-token $${GITHUB_TOKEN} /tmp/grafana-enterprise
+    ${DRONE_TAG}
+  - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
+  - mkdir bin
+  - mv /tmp/grabpl bin/
+  depends_on:
+  - clone-enterprise
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: grafana/build-container:1.6.3
+  name: init-enterprise
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.15.6
+  name: identify-runner
+- commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.19.2
+  name: compile-build-cmd
+- commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
+  image: grafana/build-container:1.6.3
+  name: verify-gen-cue
+- commands:
+  - make gen-go
+  depends_on:
+  - verify-gen-cue
+  image: grafana/build-container:1.6.3
+  name: wire-install
+- commands:
+  - go test -tags=pro -covermode=atomic -timeout=5m ./pkg/...
+  depends_on:
+  - wire-install
+  image: grafana/build-container:1.6.3
+  name: test-backend-enterprise2
+- commands:
+  - go test -run Integration -covermode=atomic -timeout=5m ./pkg/...
+  depends_on:
+  - wire-install
+  image: grafana/build-container:1.6.3
+  name: test-backend-integration
+trigger:
+  event:
+    exclude:
+    - promote
+  ref:
+  - refs/tags/v*
+  repo:
+    exclude:
+    - grafana/grafana
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  disable: true
+depends_on: []
+environment:
+  EDITION: enterprise
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -3119,7 +3228,7 @@ steps:
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
   - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=30m {}'
+    -timeout=5m {}'
   depends_on:
   - wire-install
   environment:
@@ -3136,7 +3245,7 @@ steps:
     -prootpass
   - go clean -testcache
   - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=30m {}'
+    -timeout=5m {}'
   depends_on:
   - wire-install
   environment:
@@ -3187,10 +3296,11 @@ clone:
   disable: true
 depends_on:
 - release-enterprise-build-e2e-publish
-- release-enterprise-test
+- release-enterprise-test-frontend
+- release-enterprise-test-backend
 - release-enterprise-integration-tests
 environment:
-  EDITION: ENTERPRISE
+  EDITION: enterprise
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -3865,7 +3975,7 @@ clone:
   retries: 3
 depends_on: []
 environment:
-  EDITION: OSS
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -4143,12 +4253,10 @@ volumes:
 clone:
   retries: 3
 depends_on: []
-environment:
-  EDITION: OSS
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: release-branch-oss-test
+name: release-branch-oss-test-frontend
 node:
   type: no-parallel
 platform:
@@ -4167,65 +4275,18 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
-  - '# It is required that code generated from Thema/CUE be committed and in sync
-    with its inputs.'
-  - '# The following command will fail if running code generators produces any diff
-    in output.'
-  - CODEGEN_VERIFY=1 make gen-cue
-  depends_on: []
-  image: grafana/build-container:1.6.3
-  name: verify-gen-cue
-- commands:
-  - make gen-go
-  depends_on:
-  - verify-gen-cue
-  image: grafana/build-container:1.6.3
-  name: wire-install
-- commands:
   - yarn install --immutable
   depends_on:
   - grabpl
   image: grafana/build-container:1.6.3
   name: yarn-install
 - commands:
-  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
-  depends_on: []
-  environment:
-    CGO_ENABLED: 0
-  image: golang:1.19.2
-  name: compile-build-cmd
-- commands:
-  - apt-get update && apt-get install make
-  - make lint-go
-  depends_on:
-  - wire-install
-  environment:
-    CGO_ENABLED: "1"
-  image: golang:1.19.2
-  name: lint-backend
-- commands:
-  - yarn run prettier:check
-  - yarn run lint
-  - yarn run i18n:compile
-  - yarn run typecheck
+  - yarn betterer ci
   depends_on:
   - yarn-install
-  environment:
-    TEST_MAX_WORKERS: 50%
+  failure: ignore
   image: grafana/build-container:1.6.3
-  name: lint-frontend
-- commands:
-  - go test -short -covermode=atomic -timeout=30m ./pkg/...
-  depends_on:
-  - wire-install
-  image: grafana/build-container:1.6.3
-  name: test-backend
-- commands:
-  - go test -run Integration -covermode=atomic -timeout=30m ./pkg/...
-  depends_on:
-  - wire-install
-  image: grafana/build-container:1.6.3
-  name: test-backend-integration
+  name: betterer-frontend
 - commands:
   - yarn run ci:test-frontend
   depends_on:
@@ -4247,7 +4308,70 @@ clone:
   retries: 3
 depends_on: []
 environment:
-  EDITION: OSS
+  EDITION: oss
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: release-branch-oss-test-backend
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.15.6
+  name: identify-runner
+- commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.19.2
+  name: compile-build-cmd
+- commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
+  image: grafana/build-container:1.6.3
+  name: verify-gen-cue
+- commands:
+  - make gen-go
+  depends_on:
+  - verify-gen-cue
+  image: grafana/build-container:1.6.3
+  name: wire-install
+- commands:
+  - go test -short -covermode=atomic -timeout=5m ./pkg/...
+  depends_on:
+  - wire-install
+  image: grafana/build-container:1.6.3
+  name: test-backend
+- commands:
+  - go test -run Integration -covermode=atomic -timeout=5m ./pkg/...
+  depends_on:
+  - wire-install
+  image: grafana/build-container:1.6.3
+  name: test-backend-integration
+trigger:
+  ref:
+  - refs/heads/v[0-9]*
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on: []
+environment:
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -4311,7 +4435,7 @@ steps:
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
   - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=30m {}'
+    -timeout=5m {}'
   depends_on:
   - wire-install
   environment:
@@ -4328,7 +4452,7 @@ steps:
     -prootpass
   - go clean -testcache
   - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=30m {}'
+    -timeout=5m {}'
   depends_on:
   - wire-install
   environment:
@@ -4355,10 +4479,11 @@ clone:
   retries: 3
 depends_on:
 - release-branch-oss-build-e2e-publish
-- release-branch-oss-test
+- release-branch-oss-test-frontend
+- release-branch-oss-test-backend
 - release-branch-oss-integration-tests
 environment:
-  EDITION: OSS
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -4411,7 +4536,7 @@ clone:
   disable: true
 depends_on: []
 environment:
-  EDITION: ENTERPRISE
+  EDITION: enterprise
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -4749,12 +4874,10 @@ volumes:
 clone:
   disable: true
 depends_on: []
-environment:
-  EDITION: ENTERPRISE
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: release-branch-enterprise-test
+name: release-branch-enterprise-test-frontend
 node:
   type: no-parallel
 platform:
@@ -4763,15 +4886,61 @@ platform:
 services: []
 steps:
 - commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.15.6
+  name: identify-runner
+- commands:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.11/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
-  - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15.6
-  name: identify-runner
+  - yarn install --immutable
+  depends_on:
+  - grabpl
+  image: grafana/build-container:1.6.3
+  name: yarn-install
+- commands:
+  - yarn betterer ci
+  depends_on:
+  - yarn-install
+  failure: ignore
+  image: grafana/build-container:1.6.3
+  name: betterer-frontend
+- commands:
+  - yarn run ci:test-frontend
+  depends_on:
+  - yarn-install
+  environment:
+    TEST_MAX_WORKERS: 50%
+  image: grafana/build-container:1.6.3
+  name: test-frontend
+trigger:
+  ref:
+  - refs/heads/v[0-9]*
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  disable: true
+depends_on: []
+environment:
+  EDITION: enterprise
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: release-branch-enterprise-test-backend
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
@@ -4795,6 +4964,10 @@ steps:
   image: grafana/build-container:1.6.3
   name: init-enterprise
 - commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.15.6
+  name: identify-runner
+- commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   depends_on:
   - init-enterprise
@@ -4803,82 +4976,32 @@ steps:
   image: golang:1.19.2
   name: compile-build-cmd
 - commands:
-  - make gen-go
-  depends_on:
-  - init-enterprise
-  image: grafana/build-container:1.6.3
-  name: wire-install
-- commands:
-  - yarn install --immutable
-  depends_on:
-  - init-enterprise
-  image: grafana/build-container:1.6.3
-  name: yarn-install
-- commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
     with its inputs.'
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
-  depends_on:
-  - init-enterprise
+  depends_on: []
   image: grafana/build-container:1.6.3
   name: verify-gen-cue
 - commands:
-  - apt-get update && apt-get install make
-  - make lint-go
+  - make gen-go
   depends_on:
-  - wire-install
-  environment:
-    CGO_ENABLED: "1"
-  image: golang:1.19.2
-  name: lint-backend
-- commands:
-  - yarn run prettier:check
-  - yarn run lint
-  - yarn run i18n:compile
-  - yarn run typecheck
-  depends_on:
-  - yarn-install
-  environment:
-    TEST_MAX_WORKERS: 50%
+  - verify-gen-cue
   image: grafana/build-container:1.6.3
-  name: lint-frontend
+  name: wire-install
 - commands:
-  - go test -short -covermode=atomic -timeout=30m ./pkg/...
+  - go test -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.6.3
   name: test-backend
 - commands:
-  - go test -run Integration -covermode=atomic -timeout=30m ./pkg/...
+  - go test -run Integration -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.6.3
   name: test-backend-integration
-- commands:
-  - yarn run ci:test-frontend
-  depends_on:
-  - yarn-install
-  environment:
-    TEST_MAX_WORKERS: 50%
-  image: grafana/build-container:1.6.3
-  name: test-frontend
-- commands:
-  - apt-get update && apt-get install make
-  - make lint-go
-  depends_on:
-  - wire-install
-  environment:
-    CGO_ENABLED: "1"
-  image: golang:1.19.2
-  name: lint-backend-enterprise2
-- commands:
-  - go test -tags=pro -covermode=atomic -timeout=30m ./pkg/...
-  depends_on:
-  - wire-install
-  image: grafana/build-container:1.6.3
-  name: test-backend-enterprise2
 trigger:
   ref:
   - refs/heads/v[0-9]*
@@ -4892,7 +5015,92 @@ clone:
   disable: true
 depends_on: []
 environment:
-  EDITION: ENTERPRISE
+  EDITION: enterprise2
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: release-branch-enterprise2-test-backend
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+  - cd grafana-enterprise
+  - git checkout ${DRONE_BRANCH}
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: grafana/build-container:1.6.3
+  name: clone-enterprise
+- commands:
+  - mv bin/grabpl /tmp/
+  - rmdir bin
+  - mv grafana-enterprise /tmp/
+  - /tmp/grabpl init-enterprise  /tmp/grafana-enterprise
+  - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
+  - mkdir bin
+  - mv /tmp/grabpl bin/
+  depends_on:
+  - clone-enterprise
+  environment: {}
+  image: grafana/build-container:1.6.3
+  name: init-enterprise
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.15.6
+  name: identify-runner
+- commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.19.2
+  name: compile-build-cmd
+- commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
+  image: grafana/build-container:1.6.3
+  name: verify-gen-cue
+- commands:
+  - make gen-go
+  depends_on:
+  - verify-gen-cue
+  image: grafana/build-container:1.6.3
+  name: wire-install
+- commands:
+  - go test -tags=pro -covermode=atomic -timeout=5m ./pkg/...
+  depends_on:
+  - wire-install
+  image: grafana/build-container:1.6.3
+  name: test-backend-enterprise2
+- commands:
+  - go test -run Integration -covermode=atomic -timeout=5m ./pkg/...
+  depends_on:
+  - wire-install
+  image: grafana/build-container:1.6.3
+  name: test-backend-integration
+trigger:
+  ref:
+  - refs/heads/v[0-9]*
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  disable: true
+depends_on: []
+environment:
+  EDITION: enterprise
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -4985,7 +5193,7 @@ steps:
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
   - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=30m {}'
+    -timeout=5m {}'
   depends_on:
   - wire-install
   environment:
@@ -5002,7 +5210,7 @@ steps:
     -prootpass
   - go clean -testcache
   - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=30m {}'
+    -timeout=5m {}'
   depends_on:
   - wire-install
   environment:
@@ -5047,10 +5255,11 @@ clone:
   disable: true
 depends_on:
 - release-branch-enterprise-build-e2e-publish
-- release-branch-enterprise-test
+- release-branch-enterprise-test-frontend
+- release-branch-enterprise-test-backend
 - release-branch-enterprise-integration-tests
 environment:
-  EDITION: ENTERPRISE
+  EDITION: enterprise
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -5339,6 +5548,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: cbcc3bfd12e065c989418a384df74322d4a2f9836032cb9b256c6d1274389ba3
+hmac: 82dedf98f127a4d16c71b668d9a2df17502c109cc6ff0ab01e770547250135e7
 
 ...
