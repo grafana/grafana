@@ -32,7 +32,6 @@ load(
     'verify_gen_cue_step',
     'test_a11y_frontend_step',
     'trigger_oss',
-    'betterer_frontend_step',
     'trigger_test_release',
     'compile_build_cmd',
 )

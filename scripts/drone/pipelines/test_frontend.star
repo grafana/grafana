@@ -5,14 +5,45 @@ load(
     'init_enterprise_step',
     'download_grabpl_step',
     'yarn_install_step',
-    'betterer_frontend_step',
-    'test_frontend_step',
+    'build_image',
 )
 
 load(
     'scripts/drone/utils/utils.star',
     'pipeline',
 )
+
+def betterer_frontend_step(edition="oss"):
+    deps = []
+    if edition == "enterprise":
+        deps.extend(['init-enterprise'])
+    deps.extend(['yarn-install'])
+    return {
+        'name': 'betterer-frontend',
+        'image': build_image,
+        'depends_on': deps,
+        'commands': [
+            'yarn betterer ci',
+        ],
+        'failure': 'ignore',
+    }
+
+def test_frontend_step(edition="oss"):
+    deps = []
+    if edition == "enterprise":
+        deps.extend(['init-enterprise'])
+    deps.extend(['yarn-install'])
+    return {
+        'name': 'test-frontend',
+        'image': build_image,
+        'environment': {
+            'TEST_MAX_WORKERS': '50%',
+        },
+        'depends_on': deps,
+        'commands': [
+            'yarn run ci:test-frontend',
+        ],
+    }
 
 def test_frontend(trigger, ver_mode, edition="oss"):
     environment = {'EDITION': edition}

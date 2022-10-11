@@ -6,7 +6,6 @@ load(
     'download_grabpl_step',
     'lint_frontend_step',
     'codespell_step',
-    'test_frontend_step',
     'build_storybook_step',
     'build_frontend_package_step',
     'build_docs_website_step',
