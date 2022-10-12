@@ -50,15 +50,15 @@ function getLanguageOptions(): Array<SelectableValue<string>> {
     },
     {
       value: ENGLISH_US,
-      label: t('common.locale.en', 'English'),
+      label: t('common.locale.en-US', 'English'),
     },
     {
       value: SPANISH_SPAIN,
-      label: t('common.locale.es', 'Spanish'),
+      label: t('common.locale.es-ES', 'Spanish'),
     },
     {
       value: FRENCH_FRANCE,
-      label: t('common.locale.fr', 'French'),
+      label: t('common.locale.fr-FR', 'French'),
     },
     {
       value: CHINESE_SIMPLIFIED,

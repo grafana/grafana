@@ -54,7 +54,10 @@ export function initializeI18n(locale: string) {
 
   // This is a placeholder so we can put a 'comment' in the message json files.
   // Starts with an underscore so it's sorted to the top of the file
-  t('_comment', '');
+  t(
+    '_comment',
+    'Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source'
+  );
 }
 
 export function changeLanguage(locale: string) {
