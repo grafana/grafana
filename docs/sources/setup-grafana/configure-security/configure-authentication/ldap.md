@@ -43,7 +43,7 @@ allow_sign_up = true
 
 ## Disable org role synchronization
 
-If you are using LDAP to authenticate users but don't use role mapping and prefer manually assigning organizations
+If you use LDAP to authenticate users but don't use role mapping, and prefer to manually assign organizations
 and roles, you can use the `skip_org_role_sync` configuration option.
 
 ```ini
