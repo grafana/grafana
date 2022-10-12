@@ -21,13 +21,6 @@ type GridCellLayout = {
   height: number;
 };
 
-// TODO: Separet children and size propertions into separate interfaces
-interface SceneGridCellState extends Omit<SceneLayoutState, 'size'> {
-  isResizable?: boolean;
-  isDraggable?: boolean;
-  size: GridCellLayout;
-}
-
 export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
   static Component = SceneGridLayoutRenderer;
 
@@ -72,20 +65,25 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
         });
       }
     }
+
+    this.updateLayout();
   };
+
+  getDragHandle(): JSX.Element {
+    return <SceneGridDragHandle className={`grid-drag-handle-${this.state.key}`} />;
+  }
 }
 
 function SceneGridLayoutRenderer({ model }: SceneComponentProps<SceneGridLayout>) {
   const { children } = model.useState();
 
   const layout = useMemo(() => {
-    return children.map((child) => {
+    const lg = children.map((child) => {
       const size = child.state.size;
-      if (child instanceof SceneGridRow) {
-        console.log(child.state);
-      }
+
       const resizeHandles: ReactGridLayout.Layout['resizeHandles'] =
         child instanceof SceneGridRow && Boolean(child.state.isResizable) ? ['s'] : undefined;
+
       return {
         i: child.state.key!,
         x: size.x,
@@ -97,6 +95,8 @@ function SceneGridLayoutRenderer({ model }: SceneComponentProps<SceneGridLayout>
         resizeHandles,
       };
     });
+
+    return { lg, sm: lg.map((l) => ({ ...l, w: 24 })) };
   }, [children]);
 
   return (
@@ -105,14 +105,6 @@ function SceneGridLayoutRenderer({ model }: SceneComponentProps<SceneGridLayout>
         if (width === 0) {
           return null;
         }
-
-        // const draggable = width <= 769 ? false : dashboard.meta.canEdit;
-
-        /*
-            Disable draggable if mobile device, solving an issue with unintentionally
-            moving panels. https://github.com/grafana/grafana/issues/18497
-            theme.breakpoints.md = 769
-          */
 
         return (
           /**
@@ -123,24 +115,34 @@ function SceneGridLayoutRenderer({ model }: SceneComponentProps<SceneGridLayout>
           <div style={{ width: `${width}px`, height: '100%' }}>
             <ReactGridLayout
               width={width}
-              isDraggable={false}
+              /*
+                  Disable draggable if mobile device, solving an issue with unintentionally
+                  moving panels. https://github.com/grafana/grafana/issues/18497
+                  theme.breakpoints.md = 769
+                */
+              isDraggable={width > 768}
               isResizable={false}
               containerPadding={[0, 0]}
               useCSSTransforms={false}
               margin={[GRID_CELL_VMARGIN, GRID_CELL_VMARGIN]}
               cols={GRID_COLUMN_COUNT}
               rowHeight={GRID_CELL_HEIGHT}
-              draggableHandle=".grid-drag-handle"
-              layout={layout}
+              draggableHandle={`.grid-drag-handle-${model.state.key}`}
+              layout={width > 768 ? layout.lg : layout.sm}
               onDragStop={model.onDragStop}
               onResizeStop={model.onResizeStop}
               isBounded={true}
             >
               {children.map((child) => {
+                /* eslint-disable-next-line */
+                const childProps: SceneGridCellRendererProps<any> = {
+                  model: child,
+                  isLayoutDraggable: width > 768,
+                };
+
                 return (
                   <div key={child.state.key}>
-                    {/* eslint-disable-next-line */}
-                    <child.Component model={child as any} key={child.state.key} />
+                    <child.Component {...childProps} key={child.state.key} />
                   </div>
                 );
               })}
@@ -152,18 +154,35 @@ function SceneGridLayoutRenderer({ model }: SceneComponentProps<SceneGridLayout>
   );
 }
 
-export class SceneGridCell extends SceneObjectBase<SceneGridCellState> {
-  static Component = SceneGridCellRenderer;
+interface SceneGridCellState extends Omit<SceneLayoutState, 'size'> {
+  isResizable?: boolean;
+  isDraggable?: boolean;
+  size: GridCellLayout;
 }
 
-function SceneGridCellRenderer({ model }: SceneComponentProps<SceneGridCell>) {
-  const { isDraggable } = model.useState();
+export class SceneGridCell extends SceneObjectBase<SceneGridCellState> {
+  static Component = SceneGridCellRenderer;
+  getLayout = (): SceneGridLayout => {
+    if (this.parent instanceof SceneGridLayout) {
+      return this.parent;
+    }
+    throw new Error('SceneGridCell must be a child of SceneGridLayout');
+  };
+}
+
+interface SceneGridCellRendererProps<T> extends SceneComponentProps<T> {
+  isLayoutDraggable?: boolean;
+}
+
+function SceneGridCellRenderer(props: SceneGridCellRendererProps<SceneGridCell>) {
+  const state = props.model.useState();
+  const isDraggable = Boolean(props.isLayoutDraggable) ? state.isDraggable : false;
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative', zIndex: 0 }}>
       {/* TODO: This is a temporary solution to make the grid cell draggable*/}
-      {isDraggable && <SceneGridDragHandle />}
+      {isDraggable && props.model.getLayout().getDragHandle()}
       <>
-        {model.state.children.map((child) => {
+        {props.model.state.children.map((child) => {
           return <child.Component key={child.state.key} model={child} />;
         })}
       </>
@@ -171,10 +190,10 @@ function SceneGridCellRenderer({ model }: SceneComponentProps<SceneGridCell>) {
   );
 }
 
-function SceneGridDragHandle() {
+function SceneGridDragHandle({ className }: { className?: string }) {
   return (
     <div
-      className="grid-drag-handle"
+      className={className}
       style={{
         width: '20px',
         height: '20px',
@@ -263,12 +282,19 @@ export class SceneGridRow extends SceneObjectBase<SceneGridRowState> {
       layout.updateLayout();
     }
   };
+
+  getLayout = (): SceneGridLayout => {
+    if (this.parent instanceof SceneGridLayout) {
+      return this.parent;
+    }
+    throw new Error('SceneGridRow must be a child of SceneGridLayout');
+  };
 }
 
-function SceneGridRowRenderer({ model }: SceneComponentProps<SceneGridRow>) {
+function SceneGridRowRenderer({ model, isLayoutDraggable }: SceneGridCellRendererProps<SceneGridRow>) {
   const styles = useStyles2(getSceneGridRowStyles);
-  const { isCollapsible, isCollapsed, isDraggable, title } = model.useState();
-
+  const { isCollapsible, isCollapsed, title, ...state } = model.useState();
+  const isDraggable = Boolean(isLayoutDraggable) ? state.isDraggable : false;
   return (
     <div className={styles.row}>
       <div className={cx(styles.rowHeader, isCollapsed && styles.rowHeaderCollapsed)}>
@@ -276,11 +302,7 @@ function SceneGridRowRenderer({ model }: SceneComponentProps<SceneGridRow>) {
           {isCollapsible && <Icon name={isCollapsed ? 'angle-right' : 'angle-down'} />}
           <span className={styles.rowTitle}>{title}</span>
         </div>
-        {isDraggable && (
-          <div>
-            <SceneGridDragHandle />
-          </div>
-        )}
+        {isDraggable && <div>{isDraggable && model.getLayout().getDragHandle()}</div>}
       </div>
 
       {!isCollapsed && (
