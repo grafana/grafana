@@ -17,7 +17,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 )
@@ -303,12 +302,6 @@ func (server *Server) Users(logins []string) (
 		return nil, err
 	}
 
-	if SkipOrgRoleSync() {
-		for i := range serializedUsers {
-			serializedUsers[i].OrgRoles = map[int64]roletype.RoleType{}
-		}
-	}
-
 	server.log.Debug(
 		"LDAP users found", "users", spew.Sdump(serializedUsers),
 	)
@@ -452,6 +445,11 @@ func (server *Server) buildGrafanaUser(user *ldap.Entry) (*models.ExternalUserIn
 		Email:    getAttribute(attrs.Email, user),
 		Groups:   memberOf,
 		OrgRoles: map[int64]org.RoleType{},
+	}
+
+	// Skipping org role sync
+	if SkipOrgRoleSync() {
+		return extUser, nil
 	}
 
 	for _, group := range server.Config.Groups {
