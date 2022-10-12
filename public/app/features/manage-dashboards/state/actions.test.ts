@@ -95,6 +95,11 @@ describe('validateDashboardJson', () => {
     const validateDashboardJsonNotArray = await validateDashboardJson(jsonImportNotArray);
     expect(validateDashboardJsonNotArray).toBe('tags expected array');
   });
+  it('Should not return true if not an array and is blank string', async () => {
+    const jsonImportEmptyTags = '{"schemaVersion": 36,"tags": "", "title": "Empty Tags"}';
+    const validateDashboardJsonEmptyTags = await validateDashboardJson(jsonImportEmptyTags);
+    expect(validateDashboardJsonEmptyTags).toBe('tags expected array');
+  });
   it('Should not return true if not valid JSON', async () => {
     const jsonImportInvalidJson = '{"schemaVersion": 36,"tags": {"tag", "nested tag"}, "title": "Nested lists"}';
     const validateDashboardJsonNotValid = await validateDashboardJson(jsonImportInvalidJson);
