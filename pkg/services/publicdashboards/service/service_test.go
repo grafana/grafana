@@ -65,6 +65,65 @@ func TestGetAnnotations(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	t.Run("Test panelId set to zero when annotation event is for a tags query", func(t *testing.T) {
+		dash := models.NewDashboard("test")
+		color := "red"
+		name := "annoName"
+		grafanaAnnotation := DashAnnotation{
+			Datasource: internal.CreateDatasource("grafana", "grafana"),
+			Enable:     true,
+			Name:       &name,
+			IconColor:  &color,
+			Target: &dashboard2.Target{
+				Limit:    100,
+				MatchAny: false,
+				Tags:     []string{"tag1"},
+				Type:     "tags",
+			},
+		}
+		annos := []DashAnnotation{grafanaAnnotation}
+		dashboard := internal.AddAnnotationsToDashboard(t, dash, annos)
+
+		annotationsRepo := annotations.FakeAnnotationsRepo{}
+		fakeStore := FakePublicDashboardStore{}
+		service := &PublicDashboardServiceImpl{
+			log:                log.New("test.logger"),
+			store:              &fakeStore,
+			AnnotationsService: &annotationsRepo,
+		}
+		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.Uid}
+		fakeStore.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dashboard, nil)
+		annotationsRepo.On("Find", mock.Anything, mock.Anything).Return([]*annotations.ItemDTO{
+			{
+				Id:          1,
+				DashboardId: 1,
+				PanelId:     1,
+				Tags:        []string{},
+				TimeEnd:     1,
+				Time:        2,
+				Text:        "text",
+			},
+		}, nil).Maybe()
+
+		items, err := service.GetAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
+
+		expected := AnnotationEvent{
+			Id:          1,
+			DashboardId: 1,
+			PanelId:     0,
+			Tags:        []string{},
+			IsRegion:    true,
+			Text:        "text",
+			Color:       color,
+			Time:        2,
+			TimeEnd:     1,
+			Source:      grafanaAnnotation,
+		}
+		require.NoError(t, err)
+		assert.Len(t, items, 1)
+		assert.Equal(t, expected, items[0])
+	})
+
 	t.Run("Test can get grafana annotations and will skip annotation queries and disabled annotations", func(t *testing.T) {
 		dash := models.NewDashboard("test")
 		color := "red"
@@ -86,6 +145,7 @@ func TestGetAnnotations(t *testing.T) {
 				Tags:     nil,
 				Type:     "dashboard",
 			},
+			Type: "dashboard",
 		}
 		queryAnnotation := DashAnnotation{
 			Datasource: internal.CreateDatasource("prometheus", "abc123"),

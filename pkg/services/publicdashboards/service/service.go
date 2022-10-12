@@ -276,7 +276,7 @@ func (pd *PublicDashboardServiceImpl) GetAnnotations(ctx context.Context, reqDTO
 	var results []AnnotationEvent
 	for _, anno := range dto.Annotations.List {
 		// only consider enabled, grafana annotations
-		if anno.Enable && *anno.Datasource.Type == grafanads.DatasourceUID {
+		if anno.Enable && (*anno.Datasource.Uid == grafanads.DatasourceUID || *anno.Datasource.Uid == grafanads.DatasourceName) {
 			annoQuery := &annotations.ItemQuery{
 				From:         reqDTO.From,
 				To:           reqDTO.To,
@@ -301,7 +301,6 @@ func (pd *PublicDashboardServiceImpl) GetAnnotations(ctx context.Context, reqDTO
 				event := AnnotationEvent{
 					Id:          item.Id,
 					DashboardId: item.DashboardId,
-					PanelId:     item.PanelId,
 					Tags:        item.Tags,
 					IsRegion:    item.TimeEnd > 0 && item.Time != item.TimeEnd,
 					Text:        item.Text,
@@ -310,6 +309,10 @@ func (pd *PublicDashboardServiceImpl) GetAnnotations(ctx context.Context, reqDTO
 					TimeEnd:     item.TimeEnd,
 					Source:      anno,
 				}
+				if anno.Type == "dashboard" {
+					event.PanelId = item.PanelId
+				}
+
 				results = append(results, event)
 			}
 		}
