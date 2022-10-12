@@ -118,7 +118,7 @@ func (api *Api) GetPublicDashboard(c *models.ReqContext) response.Response {
 func (api *Api) ListPublicDashboards(c *models.ReqContext) response.Response {
 	resp, err := api.PublicDashboardService.ListPublicDashboards(c.Req.Context(), c.OrgID)
 	if err != nil {
-		return api.handleError(http.StatusInternalServerError, "Failed to list public dashboards", err)
+		return api.handleError(http.StatusInternalServerError, "failed to list public dashboards", err)
 	}
 	return response.JSON(http.StatusOK, resp)
 }

@@ -46,6 +46,10 @@ var userViewer = &user.SignedInUser{UserID: 3, OrgID: 1, OrgRole: org.RoleViewer
 var userViewerRBAC = &user.SignedInUser{UserID: 4, OrgID: 1, OrgRole: org.RoleViewer, Login: "testViewerUserRBAC", Permissions: map[int64]map[string][]string{1: {dashboards.ActionDashboardsRead: {dashboards.ScopeDashboardsAll}}}}
 var anonymousUser *user.SignedInUser
 
+type JsonErrResponse struct {
+	Error string `json:"error"`
+}
+
 func TestAPIFeatureFlag(t *testing.T) {
 	testCases := []struct {
 		Name   string
@@ -85,7 +89,7 @@ func TestAPIFeatureFlag(t *testing.T) {
 			cfg.RBACEnabled = false
 			service := publicdashboards.NewFakePublicDashboardService(t)
 			features := featuremgmt.WithFeatures()
-			testServer := setupTestServer(t, cfg, features, service, nil, anonymousUser)
+			testServer := setupTestServer(t, cfg, features, service, nil, userAdmin)
 			response := callAPI(testServer, test.Method, test.Path, nil, t)
 			assert.Equal(t, http.StatusNotFound, response.Code)
 		})
@@ -93,69 +97,72 @@ func TestAPIFeatureFlag(t *testing.T) {
 }
 
 func TestAPIListPublicDashboard(t *testing.T) {
-	DashboardUid := "dashboard-abcd1234"
-	token, err := uuid.NewRandom()
-	require.NoError(t, err)
-	accessToken := fmt.Sprintf("%x", token)
+	successResp := []PublicDashboardListResponse{
+		{
+			Uid:          "1234asdfasdf",
+			AccessToken:  "asdfasdf",
+			DashboardUid: "abc1234",
+			IsEnabled:    true,
+		},
+	}
 
 	testCases := []struct {
 		Name                 string
-		AccessToken          string
+		User                 *user.SignedInUser
+		Response             []PublicDashboardListResponse
+		ResponseErr          error
 		ExpectedHttpResponse int
-		DashboardResult      *models.Dashboard
-		Err                  error
 	}{
 		{
-			Name:                 "It gets a public dashboard",
-			AccessToken:          accessToken,
-			ExpectedHttpResponse: http.StatusOK,
-			DashboardResult: &models.Dashboard{
-				Data: simplejson.NewFromAny(map[string]interface{}{
-					"Uid": DashboardUid,
-				}),
-			},
-			Err: nil,
+			Name:                 "Anonymous user cannot list dashboards",
+			User:                 anonymousUser,
+			Response:             successResp,
+			ResponseErr:          nil,
+			ExpectedHttpResponse: http.StatusUnauthorized,
 		},
 		{
-			Name:                 "It should return 404 if no public dashboard",
-			AccessToken:          accessToken,
-			ExpectedHttpResponse: http.StatusNotFound,
-			DashboardResult:      nil,
-			Err:                  ErrPublicDashboardNotFound,
+			Name:                 "User viewer can see public dashboards",
+			User:                 userViewer,
+			Response:             successResp,
+			ResponseErr:          nil,
+			ExpectedHttpResponse: http.StatusOK,
+		},
+		{
+			Name:                 "Handles Service error",
+			User:                 userViewer,
+			Response:             nil,
+			ResponseErr:          errors.New("error, service broken"),
+			ExpectedHttpResponse: http.StatusInternalServerError,
 		},
 	}
 
 	for _, test := range testCases {
 		t.Run(test.Name, func(t *testing.T) {
 			service := publicdashboards.NewFakePublicDashboardService(t)
-			service.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).
-				Return(&PublicDashboard{}, test.DashboardResult, test.Err).Maybe()
+			service.On("ListPublicDashboards", mock.Anything, mock.Anything).
+				Return(test.Response, test.ResponseErr).Maybe()
 
 			cfg := setting.NewCfg()
 			cfg.RBACEnabled = false
 			features := featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards)
-			testServer := setupTestServer(t, cfg, features, service, nil, anonymousUser)
+			testServer := setupTestServer(t, cfg, features, service, nil, test.User)
 
-			path := fmt.Sprintf("/api/public/dashboards/%s", test.AccessToken)
-			response := callAPI(testServer, http.MethodGet, path, nil, t)
+			response := callAPI(testServer, http.MethodGet, "/api/dashboards/public", nil, t)
 			assert.Equal(t, test.ExpectedHttpResponse, response.Code)
 
-			if test.Err == nil {
-				var dashResp dtos.DashboardFullWithMeta
-				err := json.Unmarshal(response.Body.Bytes(), &dashResp)
+			if test.ExpectedHttpResponse == http.StatusOK {
+				var jsonResp []PublicDashboardListResponse
+				err := json.Unmarshal(response.Body.Bytes(), &jsonResp)
 				require.NoError(t, err)
+				assert.Equal(t, jsonResp[0].Uid, "1234asdfasdf")
+			}
 
-				assert.Equal(t, DashboardUid, dashResp.Dashboard.Get("Uid").MustString())
-				assert.Equal(t, false, dashResp.Meta.CanEdit)
-				assert.Equal(t, false, dashResp.Meta.CanDelete)
-				assert.Equal(t, false, dashResp.Meta.CanSave)
-			} else {
-				var errResp struct {
-					Error string `json:"error"`
-				}
+			if test.ResponseErr != nil {
+				var errResp JsonErrResponse
 				err := json.Unmarshal(response.Body.Bytes(), &errResp)
 				require.NoError(t, err)
-				assert.Equal(t, test.Err.Error(), errResp.Error)
+				assert.Equal(t, "error, service broken", errResp.Error)
+				service.AssertNotCalled(t, "ListPublicDashboards")
 			}
 		})
 	}
@@ -230,9 +237,7 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 				assert.Equal(t, false, dashResp.Meta.CanDelete)
 				assert.Equal(t, false, dashResp.Meta.CanSave)
 			} else {
-				var errResp struct {
-					Error string `json:"error"`
-				}
+				var errResp JsonErrResponse
 				err := json.Unmarshal(response.Body.Bytes(), &errResp)
 				require.NoError(t, err)
 				assert.Equal(t, test.Err.Error(), errResp.Error)

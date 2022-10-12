@@ -16,9 +16,8 @@ export interface ListPublicDashboardResponse {
 }
 
 export const LIST_PUBLIC_DASHBOARD_URL = `/api/dashboards/public`;
-export const getPublicDashboards = async () => {
-  const resp: ListPublicDashboardResponse[] = await getBackendSrv().get(LIST_PUBLIC_DASHBOARD_URL);
-  return resp.sort((a, b) => Number(b.isEnabled) - Number(a.isEnabled));
+export const getPublicDashboards = async (): Promise<ListPublicDashboardResponse[]> => {
+  return getBackendSrv().get(LIST_PUBLIC_DASHBOARD_URL);
 };
 
 export const viewPublicDashboardUrl = (accessToken: string): string => {
@@ -40,7 +39,7 @@ export const ListPublicDashboardTable = () => {
         <thead>
           <tr>
             <th>Dashboard</th>
-            <th>Public dashboard Enabled</th>
+            <th>Public dashboard enabled</th>
             <th></th>
           </tr>
         </thead>
