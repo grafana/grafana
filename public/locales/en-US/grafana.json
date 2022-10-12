@@ -155,7 +155,8 @@
       "title": "Apps"
     },
     "config": {
-      "title": "Configuration"
+      "title": "Administration",
+      "titleBeforeTopnav": "Configuration"
     },
     "correlations": {
       "subtitle": "Add and configure correlations",
