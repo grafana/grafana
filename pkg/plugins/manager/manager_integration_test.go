@@ -164,6 +164,7 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *store.Serv
 		"candlestick":    {},
 		"news":           {},
 		"nodeGraph":      {},
+		"flamegraph":     {},
 		"traces":         {},
 		"piechart":       {},
 		"stat":           {},

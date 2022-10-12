@@ -37,17 +37,12 @@ func (s *searchHTTPService) doQuery(c *models.ReqContext) response.Response {
 			"reason": searchReadinessCheckResp.Reason,
 		}).Inc()
 
-		bytes, err := (&backend.DataResponse{
+		return response.JSON(200, &backend.DataResponse{
 			Frames: []*data.Frame{{
 				Name: "Loading",
 			}},
 			Error: nil,
-		}).MarshalJSON()
-
-		if err != nil {
-			return response.Error(500, "error marshalling response", err)
-		}
-		return response.JSON(200, bytes)
+		})
 	}
 
 	body, err := io.ReadAll(c.Req.Body)

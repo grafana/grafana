@@ -179,7 +179,8 @@ compilation-stats.json
 
 # Auto-generated internationalization files
 public/locales/_build/
-public/locales/**/*.js
+public/locales/*/*.js
+public/locales/*/grafana_old.json
 
 deployment_tools_config.json
 

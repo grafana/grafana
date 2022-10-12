@@ -24,6 +24,7 @@ var (
 	ErrAbsoluteRedirectTo    = errors.New("absolute URLs are not allowed for redirect_to cookie value")
 	ErrInvalidRedirectTo     = errors.New("invalid redirect_to cookie value")
 	ErrForbiddenRedirectTo   = errors.New("forbidden redirect_to cookie value")
+	ErrNoAuthProvider        = errors.New("enable at least one login provider")
 )
 
 var loginLogger = log.New("login")
@@ -57,9 +58,15 @@ func (a *AuthenticatorService) AuthenticateUser(ctx context.Context, query *mode
 		return err
 	}
 
-	err := loginUsingGrafanaDB(ctx, query, a.userService)
-	if err == nil || (!errors.Is(err, user.ErrUserNotFound) && !errors.Is(err, ErrInvalidCredentials) &&
-		!errors.Is(err, ErrUserDisabled)) {
+	isGrafanaLoginEnabled := !query.Cfg.DisableLogin
+	var err error
+
+	if isGrafanaLoginEnabled {
+		err = loginUsingGrafanaDB(ctx, query, a.userService)
+	}
+
+	if isGrafanaLoginEnabled && (err == nil || (!errors.Is(err, user.ErrUserNotFound) && !errors.Is(err, ErrInvalidCredentials) &&
+		!errors.Is(err, ErrUserDisabled))) {
 		query.AuthModule = "grafana"
 		return err
 	}
@@ -82,6 +89,10 @@ func (a *AuthenticatorService) AuthenticateUser(ctx context.Context, query *mode
 		}
 
 		return ErrInvalidCredentials
+	}
+
+	if !isGrafanaLoginEnabled && !ldapEnabled {
+		return ErrNoAuthProvider
 	}
 
 	return err

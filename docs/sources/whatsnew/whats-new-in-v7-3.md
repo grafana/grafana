@@ -60,7 +60,7 @@ Another thing to highlight is that all these new color schemes are theme aware a
 
 {{< figure src="/static/img/docs/v73/table_color_scheme_mono_light.png" max-width="900px" caption="table color monochrome scheme" >}}
 
-As this new option is a standard field option it works in every panel. Here is another example from the [Bar Gauge]({{< relref "../visualizations/bar-gauge-panel/" >}}) panel.
+As this new option is a standard field option it works in every panel. Here is another example from the [Bar Gauge]({{< relref "../panels-visualizations/visualizations/bar-gauge/" >}}) panel.
 
 {{< figure src="/static/img/docs/v73/bar_gauge_gradient_color_scheme.png" max-width="900px" caption="bar gauge color scheme" >}}
 
@@ -68,7 +68,7 @@ As this new option is a standard field option it works in every panel. Here is a
 
 In v7.0, we introduced a new table panel and inspect mode with Download CSV enabled. However, CSV export to Excel was removed. Due to a large number of inquiries and requests, this [community contribution from tomdaly](https://github.com/grafana/grafana/pull/27284) brought the feature back.
 
-For more information, refer to [Download raw query results]({{< relref "../panels/query-a-data-source/download-raw-query-results/" >}}).
+For more information, refer to [Download raw query results]({{< relref "../panels-visualizations/panel-inspector/#download-raw-query-results" >}}).
 
 ## Google Cloud monitoring out-of-the-box dashboards
 
