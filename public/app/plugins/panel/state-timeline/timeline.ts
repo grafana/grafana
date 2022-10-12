@@ -324,17 +324,21 @@ export function getConfig(opts: TimelineCoreOptions) {
                   let txt = formatValue(sidx, dataY[ix]);
                   let hideText = false;
                   const estimatedTextWidth = txt.length * txtSizeCalcScaler;
+
                   if (boxRect && estimatedTextWidth > boxRect.w * 0.75 && estimatedTextWidth < boxRect.w * 1.25) {
                     hideText = boxRect.w < u.ctx.measureText(txt).width;
                   } else if (boxRect && estimatedTextWidth > boxRect.w) {
                     hideText = true;
                   }
+
                   if (!boxRect || (showValue === VisibilityMode.Auto && hideText)) {
                     continue;
                   }
+
                   if (boxRect.x >= xDim) {
                     continue; // out of view
                   }
+
                   // center-aligned
                   let x = round(boxRect.x + xOff + boxRect.w / 2);
                   if (mode === TimelineMode.Changes) {
@@ -344,6 +348,7 @@ export function getConfig(opts: TimelineCoreOptions) {
                       x = round(boxRect.x + xOff + boxRect.w - strokeWidth - textPadding);
                     }
                   }
+
                   // TODO: cache by fillColor to avoid setting ctx for label
                   u.ctx.fillStyle = theme.colors.getContrastText(boxRect.fillColor, 3);
                   u.ctx.fillText(txt, x, y);
