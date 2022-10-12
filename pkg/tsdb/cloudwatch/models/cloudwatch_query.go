@@ -1,4 +1,4 @@
-package cloudwatch
+package models
 
 import (
 	"encoding/json"
@@ -10,7 +10,30 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/cwlog"
 )
 
-type cloudWatchQuery struct {
+type (
+	MetricQueryType  uint32
+	MetricEditorMode uint32
+	GMDApiMode       uint32
+)
+
+const (
+	MetricEditorModeBuilder MetricEditorMode = iota
+	MetricEditorModeRaw
+)
+
+const (
+	MetricQueryTypeSearch MetricQueryType = iota
+	MetricQueryTypeQuery
+)
+
+const (
+	GMDApiModeMetricStat GMDApiMode = iota
+	GMDApiModeInferredSearchExpression
+	GMDApiModeMathExpression
+	GMDApiModeSQLExpression
+)
+
+type CloudWatchQuery struct {
 	RefId             string
 	Region            string
 	Id                string
@@ -27,13 +50,13 @@ type cloudWatchQuery struct {
 	MatchExact        bool
 	UsedExpression    string
 	TimezoneUTCOffset string
-	MetricQueryType   metricQueryType
-	MetricEditorMode  metricEditorMode
+	MetricQueryType   MetricQueryType
+	MetricEditorMode  MetricEditorMode
 }
 
-func (q *cloudWatchQuery) getGMDAPIMode() gmdApiMode {
+func (q *CloudWatchQuery) GetGMDAPIMode() GMDApiMode {
 	if q.MetricQueryType == MetricQueryTypeSearch && q.MetricEditorMode == MetricEditorModeBuilder {
-		if q.isInferredSearchExpression() {
+		if q.IsInferredSearchExpression() {
 			return GMDApiModeInferredSearchExpression
 		}
 		return GMDApiModeMetricStat
@@ -43,23 +66,23 @@ func (q *cloudWatchQuery) getGMDAPIMode() gmdApiMode {
 		return GMDApiModeSQLExpression
 	}
 
-	cwlog.Warn("Could not resolve CloudWatch metric query type. Falling back to metric stat.", "query", q)
+	cwlog.Warn("could not resolve CloudWatch metric query type. Falling back to metric stat.", "query", q)
 	return GMDApiModeMetricStat
 }
 
-func (q *cloudWatchQuery) isMathExpression() bool {
-	return q.MetricQueryType == MetricQueryTypeSearch && q.MetricEditorMode == MetricEditorModeRaw && !q.isUserDefinedSearchExpression()
+func (q *CloudWatchQuery) IsMathExpression() bool {
+	return q.MetricQueryType == MetricQueryTypeSearch && q.MetricEditorMode == MetricEditorModeRaw && !q.IsUserDefinedSearchExpression()
 }
 
-func (q *cloudWatchQuery) isSearchExpression() bool {
-	return q.MetricQueryType == MetricQueryTypeSearch && (q.isUserDefinedSearchExpression() || q.isInferredSearchExpression())
+func (q *CloudWatchQuery) IsSearchExpression() bool {
+	return q.MetricQueryType == MetricQueryTypeSearch && (q.IsUserDefinedSearchExpression() || q.IsInferredSearchExpression())
 }
 
-func (q *cloudWatchQuery) isUserDefinedSearchExpression() bool {
+func (q *CloudWatchQuery) IsUserDefinedSearchExpression() bool {
 	return q.MetricQueryType == MetricQueryTypeSearch && q.MetricEditorMode == MetricEditorModeRaw && strings.Contains(q.Expression, "SEARCH(")
 }
 
-func (q *cloudWatchQuery) isInferredSearchExpression() bool {
+func (q *CloudWatchQuery) IsInferredSearchExpression() bool {
 	if q.MetricQueryType != MetricQueryTypeSearch || q.MetricEditorMode != MetricEditorModeBuilder {
 		return false
 	}
@@ -84,7 +107,7 @@ func (q *cloudWatchQuery) isInferredSearchExpression() bool {
 	return false
 }
 
-func (q *cloudWatchQuery) isMultiValuedDimensionExpression() bool {
+func (q *CloudWatchQuery) IsMultiValuedDimensionExpression() bool {
 	if q.MetricQueryType != MetricQueryTypeSearch || q.MetricEditorMode != MetricEditorModeBuilder {
 		return false
 	}
@@ -104,8 +127,29 @@ func (q *cloudWatchQuery) isMultiValuedDimensionExpression() bool {
 	return false
 }
 
-func (q *cloudWatchQuery) buildDeepLink(startTime time.Time, endTime time.Time, dynamicLabelEnabled bool) (string, error) {
-	if q.isMathExpression() || q.MetricQueryType == MetricQueryTypeQuery {
+type cloudWatchLink struct {
+	View    string        `json:"view"`
+	Stacked bool          `json:"stacked"`
+	Title   string        `json:"title"`
+	Start   string        `json:"start"`
+	End     string        `json:"end"`
+	Region  string        `json:"region"`
+	Metrics []interface{} `json:"metrics"`
+}
+
+type metricExpression struct {
+	Expression string `json:"expression"`
+	Label      string `json:"label,omitempty"`
+}
+
+type metricStatMeta struct {
+	Stat   string `json:"stat"`
+	Period int    `json:"period"`
+	Label  string `json:"label,omitempty"`
+}
+
+func (q *CloudWatchQuery) BuildDeepLink(startTime time.Time, endTime time.Time, dynamicLabelEnabled bool) (string, error) {
+	if q.IsMathExpression() || q.MetricQueryType == MetricQueryTypeQuery {
 		return "", nil
 	}
 
@@ -118,7 +162,7 @@ func (q *cloudWatchQuery) buildDeepLink(startTime time.Time, endTime time.Time, 
 		End:     endTime.UTC().Format(time.RFC3339),
 	}
 
-	if q.isSearchExpression() {
+	if q.IsSearchExpression() {
 		metricExpressions := &metricExpression{Expression: q.UsedExpression}
 		if dynamicLabelEnabled {
 			metricExpressions.Label = q.Label

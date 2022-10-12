@@ -1,6 +1,7 @@
 package cloudwatch
 
 import (
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"testing"
 	"time"
 
@@ -34,7 +35,7 @@ func TestMetricDataInputBuilder(t *testing.T) {
 
 			from := now.Add(time.Hour * -2)
 			to := now.Add(time.Hour * -1)
-			mdi, err := executor.buildMetricDataInput(from, to, []*cloudWatchQuery{query})
+			mdi, err := executor.buildMetricDataInput(from, to, []*models.CloudWatchQuery{query})
 
 			assert.NoError(t, err)
 			require.NotNil(t, mdi)
