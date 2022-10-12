@@ -61,11 +61,6 @@ func (h *AnnotationStateHistorian) RecordState(ctx context.Context, rule *ngmode
 			return
 		}
 
-		if dashID == dashboardNotFound {
-			h.log.Warn("dashboard referenced by rule does not exist", "dashboardUID", dashUid, "alertRuleUID", rule.UID)
-			return
-		}
-
 		item.PanelId = panelId
 		item.DashboardId = dashID
 	}

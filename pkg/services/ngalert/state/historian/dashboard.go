@@ -3,6 +3,7 @@ package historian
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -14,7 +15,6 @@ import (
 )
 
 const (
-	dashboardNotFound           = int64(-1)
 	defaultDashboardCacheExpiry = 1 * time.Minute
 	minCleanupInterval          = 1 * time.Second
 )
@@ -44,39 +44,37 @@ func (r *dashboardResolver) getID(ctx context.Context, orgID int64, uid string) 
 	key := packCacheKey(orgID, uid)
 
 	if id, found := r.cache.Get(key); found {
-		return id.(int64), nil
+		return toQueryResult(id, nil)
 	}
 
 	id, err, _ := r.singleflight.Do(key, func() (interface{}, error) {
 		r.log.Debug("dashboard cache miss, querying dashboards", "dashboardUID", uid)
 
-		var id int64
+		var result interface{}
 		query := &models.GetDashboardQuery{
 			Uid:   uid,
 			OrgId: orgID,
 		}
 		err := r.dashboards.GetDashboard(ctx, query)
+		// We also cache lookups where we don't find anything.
 		if err != nil && errors.Is(err, dashboards.ErrDashboardNotFound) {
-			id = dashboardNotFound
+			result = err
 		} else if err != nil {
 			return 0, err
 		}
 
 		if query.Result != nil {
-			id = query.Result.Id
+			result = query.Result.Id
 		} else {
-			id = dashboardNotFound
+			result = dashboards.ErrDashboardNotFound
 		}
 
 		// By setting the cache inside the singleflighted routine, we avoid any accidental re-queries that could get initiated after the query completes.
-		r.cache.Set(key, id, cache.DefaultExpiration)
-		return id, nil
+		r.cache.Set(key, result, cache.DefaultExpiration)
+		return result, nil
 	})
-	if err != nil {
-		return 0, err
-	}
 
-	return id.(int64), nil
+	return toQueryResult(id, err)
 }
 
 func packCacheKey(orgID int64, uid string) string {
@@ -89,4 +87,19 @@ func maxDuration(a, b time.Duration) time.Duration {
 		return a
 	}
 	return b
+}
+
+func toQueryResult(cacheVal interface{}, err error) (int64, error) {
+	if err != nil {
+		return 0, err
+	}
+
+	switch cacheVal.(type) {
+	case error:
+		return 0, cacheVal.(error)
+	case int64:
+		return cacheVal.(int64), err
+	default:
+		panic(fmt.Sprintf("unexpected value stored in cache: %#v", cacheVal))
+	}
 }

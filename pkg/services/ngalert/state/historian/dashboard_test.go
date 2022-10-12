@@ -34,10 +34,10 @@ func TestDashboardResolver(t *testing.T) {
 		}).Return(dashboards.ErrDashboardNotFound)
 		sut := createDashboardResolverSut(dbs)
 
-		id, err := sut.getID(context.Background(), 1, "not-exist")
+		_, err := sut.getID(context.Background(), 1, "not-exist")
 
-		require.NoError(t, err)
-		require.Equal(t, dashboardNotFound, id)
+		require.Error(t, err)
+		require.ErrorIs(t, err, dashboards.ErrDashboardNotFound)
 	})
 }
 
