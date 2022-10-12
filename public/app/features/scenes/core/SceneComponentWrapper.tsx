@@ -4,9 +4,13 @@ import { SceneComponentEditingWrapper } from '../editor/SceneComponentEditWrappe
 
 import { SceneComponentProps, SceneObject } from './types';
 
-export function SceneComponentWrapper<T extends SceneObject>({ model, isEditing }: SceneComponentProps<T>) {
+export function SceneComponentWrapper<T extends SceneObject>({
+  model,
+  isEditing,
+  ...otherProps
+}: SceneComponentProps<T>) {
   const Component = (model as any).constructor['Component'] ?? EmptyRenderer;
-  const inner = <Component model={model} isEditing={isEditing} />;
+  const inner = <Component {...otherProps} model={model} isEditing={isEditing} />;
 
   // Handle component activation state state
   useEffect(() => {
