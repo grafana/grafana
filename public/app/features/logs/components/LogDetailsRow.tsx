@@ -93,6 +93,12 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     if (onClickFilterLabel) {
       onClickFilterLabel(parsedKey, parsedValue);
     }
+
+    reportInteraction('grafana_explore_logs_log_details_filter_clicked', {
+      datasourceType: this.props.row.datasourceType,
+      filterType: 'include',
+      logRowUid: this.props.row.uid,
+    });
   };
 
   filterOutLabel = () => {
@@ -100,6 +106,12 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     if (onClickFilterOutLabel) {
       onClickFilterOutLabel(parsedKey, parsedValue);
     }
+
+    reportInteraction('grafana_explore_logs_log_details_filter_clicked', {
+      datasourceType: this.props.row.datasourceType,
+      filterType: 'exclude',
+      logRowUid: this.props.row.uid,
+    });
   };
 
   showStats = () => {
