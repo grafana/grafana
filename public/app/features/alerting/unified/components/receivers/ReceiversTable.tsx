@@ -203,8 +203,8 @@ function NotifiersTable({ notifiersState }: NotifiersTableProps) {
       {
         id: 'lastNotifyDuration',
         label: 'Last duration',
-        renderCell: ({ data: { lastNotifyDuration } }) => (
-          <>{durationIsNull(lastNotifyDuration) ? '-' : lastNotifyDuration}</>
+        renderCell: ({ data: { lastNotify, lastNotifyDuration } }) => (
+          <>{isLastNotifyNullDate(lastNotify) && durationIsNull(lastNotifyDuration) ? '-' : lastNotifyDuration}</>
         ),
         size: 1,
       },
