@@ -15,13 +15,15 @@ weight: 800
 
 # Set up Grafana monitoring
 
-Grafana supports [Jaeger tracing](https://www.jaegertracing.io/).
+Grafana supports tracing.
 
-Grafana can emit Jaeger traces for its HTTP API endpoints and propagate Jaeger trace information to data sources.
+Grafana can emit Jaeger/OTLP traces for its HTTP API endpoints and propagate Jaeger/w3c trace information to data sources.
 All HTTP endpoints are logged evenly (annotations, dashboard, tags, and so on).
 When a trace ID is propagated, it is reported with operation 'HTTP /datasources/proxy/:id/\*'.
 
-Refer to [Configuration]({{< relref "configure-grafana/#tracingjaeger" >}}) for information about enabling Jaeger tracing.
+Refer to [Configuration]({{< relref "configure-grafana/#tracingopentelemetryjaeger" >}}) for information about enabling Jaeger tracing.
+
+Refer to [Configuration]({{< relref "configure-grafana/#tracingopentelemetryotlp" >}}) for information about enabling OTLP tracing.
 
 ## View Grafana internal metrics
 
