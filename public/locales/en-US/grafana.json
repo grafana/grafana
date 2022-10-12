@@ -2,9 +2,10 @@
   "common": {
     "locale": {
       "default": "Default",
-      "en": "English",
-      "es": "Spanish",
-      "fr": "French"
+      "en-US": "English",
+      "es-ES": "Spanish",
+      "fr-FR": "French",
+      "zh-Hans": "Chinese (Simplified)"
     },
     "save": "Save"
   },
