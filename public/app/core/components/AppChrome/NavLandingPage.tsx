@@ -6,6 +6,8 @@ import { useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 
+import { getNavTitle, getNavSubTitle } from '../NavBar/navBarItem-translations';
+
 import { NavLandingPageCard } from './NavLandingPageCard';
 
 interface Props {
@@ -27,8 +29,8 @@ export function NavLandingPage({ navId }: Props) {
               {directChildren?.map((child) => (
                 <NavLandingPageCard
                   key={child.id}
-                  description={child.subTitle}
-                  text={child.text}
+                  description={getNavSubTitle(child.id) ?? child.subTitle}
+                  text={getNavTitle(child.id) ?? child.text}
                   url={child.url ?? ''}
                 />
               ))}
@@ -36,14 +38,14 @@ export function NavLandingPage({ navId }: Props) {
           )}
           {nestedChildren?.map((child) => (
             <section key={child.id}>
-              <h2 className={styles.nestedTitle}>{child.text}</h2>
-              <div className={styles.nestedDescription}>{child.subTitle}</div>
+              <h2 className={styles.nestedTitle}>{getNavTitle(child.id) ?? child.text}</h2>
+              <div className={styles.nestedDescription}>{getNavSubTitle(child.id) ?? child.subTitle}</div>
               <div className={styles.grid}>
                 {child.children?.map((child) => (
                   <NavLandingPageCard
                     key={child.id}
-                    description={child.subTitle}
-                    text={child.text}
+                    description={getNavSubTitle(child.id) ?? child.subTitle}
+                    text={getNavTitle(child.id) ?? child.text}
                     url={child.url ?? ''}
                   />
                 ))}

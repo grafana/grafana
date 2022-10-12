@@ -6,7 +6,7 @@ aliases:
   - /docs/grafana/latest/linking/dashboard-links/
   - /docs/grafana/latest/dashboards/manage-dashboard-links/
   - /docs/grafana/latest/panels/working-with-panels/add-link-to-panel/
-  - /docs/grafana/next/dashboards/build-dashboards/manage-dashboard-links/
+  - /docs/grafana/latest/dashboards/build-dashboards/manage-dashboard-links/
 description: How to link Grafana dashboards.
 keywords:
   - link
@@ -36,7 +36,7 @@ The next step is to figure out which link type is right for your workflow. Even 
 - If the link relates to most if not all of the panels in the dashboard, use [dashboard links]({{< relref "#dashboard-links" >}}).
 - If you want to drill down into specific panels, use [panel links]({{< relref "#panel-links" >}}).
 - If you want to link to an external site, you can use either a dashboard link or a panel link.
-- If you want to drill down into a specific series, or even a single measurement, use [data links]({{< relref "../../../panels/configure-data-links/#data-links" >}}).
+- If you want to drill down into a specific series, or even a single measurement, use [data links]({{< relref "../../../panels-visualizations/configure-data-links/#data-links" >}}).
 
 ## Controlling time range using the URL
 
@@ -48,7 +48,7 @@ You can control the time range of a panel or dashboard by providing following qu
 
 ## Dashboard links
 
-When you create a dashboard link, you can include the time range and current template variables to directly jump to the same context in another dashboard. This way, you don’t have to worry whether the person you send the link to is looking at the right data. For other types of links, refer to [Data link variables]({{< relref "../../../panels/configure-data-links/#data-link-variables/" >}}).
+When you create a dashboard link, you can include the time range and current template variables to directly jump to the same context in another dashboard. This way, you don’t have to worry whether the person you send the link to is looking at the right data. For other types of links, refer to [Data link variables]({{< relref "../../../panels-visualizations/configure-data-links/#data-link-variables/" >}}).
 
 Dashboard links can also be used as shortcuts to external systems, such as submitting [a GitHub issue with the current dashboard name](https://github.com/grafana/grafana/issues/new?title=Dashboard%3A%20HTTP%20Requests).
 

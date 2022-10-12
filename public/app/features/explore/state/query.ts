@@ -1,7 +1,7 @@
 import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
 import deepEqual from 'fast-deep-equal';
 import { flatten, groupBy } from 'lodash';
-import { identity, Observable, of, SubscriptionLike, Unsubscribable } from 'rxjs';
+import { identity, Observable, of, SubscriptionLike, Unsubscribable, combineLatest } from 'rxjs';
 import { mergeMap, throttleTime } from 'rxjs/operators';
 
 import {
@@ -15,7 +15,6 @@ import {
   hasQueryImportSupport,
   HistoryItem,
   LoadingState,
-  PanelData,
   PanelEvents,
   QueryFixAction,
   toLegacyResponseData,
@@ -32,8 +31,10 @@ import {
   updateHistory,
 } from 'app/core/utils/explore';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
+import { CorrelationData } from 'app/features/correlations/useCorrelations';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
+import { store } from 'app/store/store';
 import { ExploreItemState, ExplorePanelData, ThunkDispatch, ThunkResult } from 'app/types';
 import { ExploreId, ExploreState, QueryOptions } from 'app/types/explore';
 
@@ -401,6 +402,8 @@ export const runQueries = (
   return (dispatch, getState) => {
     dispatch(updateTime({ exploreId }));
 
+    const correlations$ = getCorrelations();
+
     // We always want to clear cache unless we explicitly pass preserveCache parameter
     const preserveCache = options?.preserveCache === true;
     if (!preserveCache) {
@@ -438,15 +441,16 @@ export const runQueries = (
 
     // If we have results saved in cache, we are going to use those results instead of running queries
     if (cachedValue) {
-      newQuerySub = of(cachedValue)
+      newQuerySub = combineLatest([of(cachedValue), correlations$])
         .pipe(
-          mergeMap((data: PanelData) =>
+          mergeMap(([data, correlations]) =>
             decorateData(
               data,
               queryResponse,
               absoluteRange,
               refreshInterval,
               queries,
+              correlations,
               datasourceInstance != null && hasLogsVolumeSupport(datasourceInstance)
             )
           )
@@ -493,19 +497,23 @@ export const runQueries = (
 
       dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Loading }));
 
-      newQuerySub = runRequest(datasourceInstance, transaction.request)
-        .pipe(
+      newQuerySub = combineLatest([
+        runRequest(datasourceInstance, transaction.request)
           // Simple throttle for live tailing, in case of > 1000 rows per interval we spend about 200ms on processing and
           // rendering. In case this is optimized this can be tweaked, but also it should be only as fast as user
           // actually can see what is happening.
-          live ? throttleTime(500) : identity,
-          mergeMap((data: PanelData) =>
+          .pipe(live ? throttleTime(500) : identity),
+        correlations$,
+      ])
+        .pipe(
+          mergeMap(([data, correlations]) =>
             decorateData(
               data,
               queryResponse,
               absoluteRange,
               refreshInterval,
               queries,
+              correlations,
               datasourceInstance != null && hasLogsVolumeSupport(datasourceInstance)
             )
           )
@@ -902,6 +910,28 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
   }
 
   return state;
+};
+
+/**
+ * Creates an observable that emits correlations once they are loaded
+ */
+const getCorrelations = () => {
+  return new Observable<CorrelationData[]>((subscriber) => {
+    const existingCorrelations = store.getState().explore.correlations;
+    if (existingCorrelations) {
+      subscriber.next(existingCorrelations);
+      subscriber.complete();
+    } else {
+      const unsubscribe = store.subscribe(() => {
+        const { correlations } = store.getState().explore;
+        if (correlations) {
+          unsubscribe();
+          subscriber.next(correlations);
+          subscriber.complete();
+        }
+      });
+    }
+  });
 };
 
 export const processQueryResponse = (

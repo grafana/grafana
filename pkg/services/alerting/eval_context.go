@@ -107,7 +107,7 @@ func (c *EvalContext) shouldUpdateAlertState() bool {
 
 // GetDurationMs returns the duration of the alert evaluation.
 func (c *EvalContext) GetDurationMs() float64 {
-	return float64(c.EndTime.Nanosecond()-c.StartTime.Nanosecond()) / float64(1000000)
+	return float64(c.EndTime.Sub(c.StartTime).Nanoseconds()) / float64(time.Millisecond)
 }
 
 // GetNotificationTitle returns the title of the alert rule including alert state.
