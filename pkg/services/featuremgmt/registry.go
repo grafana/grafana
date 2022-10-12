@@ -322,5 +322,10 @@ var (
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
 		},
+		{
+			Name:        "mysqlAnsiQuotes",
+			Description: "Use double quote to escape keyword in Mysql query",
+			State:       FeatureStateAlpha,
+		},
 	}
 )
