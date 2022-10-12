@@ -102,32 +102,33 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   };
 
   filterOutLabel = () => {
-    const { onClickFilterOutLabel, parsedKey, parsedValue } = this.props;
+    const { onClickFilterOutLabel, parsedKey, parsedValue, row } = this.props;
     if (onClickFilterOutLabel) {
       onClickFilterOutLabel(parsedKey, parsedValue);
     }
 
     reportInteraction('grafana_explore_logs_log_details_filter_clicked', {
-      datasourceType: this.props.row.datasourceType,
+      datasourceType: row.datasourceType,
       filterType: 'exclude',
-      logRowUid: this.props.row.uid,
+      logRowUid: row.uid,
     });
   };
 
   showStats = () => {
+    const { getStats, isLabel, row } = this.props;
     const { showFieldsStats } = this.state;
     if (!showFieldsStats) {
-      const fieldStats = this.props.getStats();
+      const fieldStats = getStats();
       const fieldCount = fieldStats ? fieldStats.reduce((sum, stat) => sum + stat.count, 0) : 0;
       this.setState({ fieldStats, fieldCount });
     }
     this.toggleFieldsStats();
 
     reportInteraction('grafana_explore_logs_log_details_stats_clicked', {
-      dataSourceType: this.props.row.datasourceType,
-      fieldType: this.props.isLabel ? 'label' : 'detectedField',
+      dataSourceType: row.datasourceType,
+      fieldType: isLabel ? 'label' : 'detectedField',
       type: showFieldsStats ? 'close' : 'open',
-      logRowUid: this.props.row.uid,
+      logRowUid: row.uid,
     });
   };
 
