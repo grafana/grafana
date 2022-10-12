@@ -41,9 +41,6 @@ exports[`no enzyme tests`] = {
     "packages/jaeger-ui-components/src/TraceTimelineViewer/VirtualizedTraceView.test.js:551014442": [
       [13, 26, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/core/components/Select/MetricSelect.test.tsx:1074737147": [
-      [0, 19, 13, "RegExp match", "2409514259"]
-    ],
     "public/app/features/dimensions/editors/ThresholdsEditor/ThresholdsEditor.test.tsx:145048794": [
       [0, 17, 13, "RegExp match", "2409514259"]
     ]
@@ -2597,10 +2594,6 @@ exports[`better eslint`] = {
     ],
     "public/app/core/components/RolePicker/RolePickerMenu.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/core/components/Select/MetricSelect.test.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/core/components/Select/ReadonlyFolderPicker/api.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
