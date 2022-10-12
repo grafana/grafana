@@ -155,7 +155,8 @@
       "title": ""
     },
     "config": {
-      "title": ""
+      "title": "",
+      "titleBeforeTopnav": ""
     },
     "correlations": {
       "subtitle": "",
