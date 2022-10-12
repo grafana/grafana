@@ -1,4 +1,4 @@
-import { merge , isEmpty} from 'lodash';
+import { merge } from 'lodash';
 import React, { useEffect, FC } from 'react';
 import { useDispatch } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -6,12 +6,22 @@ import { ThunkDispatch } from 'redux-thunk';
 /* eslint-disable-next-line  */
 import { locationService as locationSrv, HistoryWrapper } from '@grafana/runtime';
 import { setInitialMountState, updateFnState } from 'app/core/reducers/fn-slice';
-import DashboardPage, { DashboardPageProps } from 'app/features/dashboard/containers/DashboardPage';
+import DashboardPage, {
+  Props,
+  MapStateToDashboardPageProps,
+  MappedDispatch,
+} from 'app/features/dashboard/containers/DashboardPage';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { cancelVariables } from 'app/features/variables/state/actions';
 import { DashboardRoutes, StoreState, useSelector } from 'app/types';
 
+import { Themeable2 } from '../../../../packages/grafana-ui/src/types/theme';
 import { FNDashboardProps } from '../types';
+
+type DashboardPageProps = Omit<
+  Props,
+  keyof ReturnType<MapStateToDashboardPageProps> | keyof MappedDispatch | keyof Themeable2
+>;
 
 /* eslint-disable-next-line  */
 const locationService = locationSrv as HistoryWrapper;
@@ -36,17 +46,7 @@ const DEFAULT_DASHBOARD_PAGE_PROPS: Pick<DashboardPageProps, 'isFNDashboard' | '
 };
 
 export const RenderFNDashboard: FC<FNDashboardProps> = (props) => {
-  const {
-    queryParams,
-    uid,
-    slug,
-    theme,
-    controlsContainer,
-    pageTitle = '',
-    hiddenVariables,
-    setErrors,
-    fnLoader,
-  } = props;
+  const { queryParams, uid, slug, theme, controlsContainer, pageTitle = '', hiddenVariables, setErrors } = props;
 
   const dispatch = useDispatch<ThunkDispatch<any, any, any>>();
 
@@ -115,8 +115,7 @@ export const RenderFNDashboard: FC<FNDashboardProps> = (props) => {
     queryParams,
     hiddenVariables,
     controlsContainer,
-    fnLoader,
   });
 
-  return isEmpty(queryParams || {}) ? <>{fnLoader}</> : <DashboardPage {...dashboardPageProps} />;
+  return <DashboardPage {...dashboardPageProps} />;
 };
