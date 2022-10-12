@@ -449,6 +449,7 @@ func (server *Server) buildGrafanaUser(user *ldap.Entry) (*models.ExternalUserIn
 
 	// Skipping org role sync
 	if SkipOrgRoleSync() {
+		server.log.Debug("skipping organization role mapping.")
 		return extUser, nil
 	}
 
