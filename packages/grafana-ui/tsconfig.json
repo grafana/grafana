@@ -4,7 +4,8 @@
     "declarationDir": "./compiled",
     "emitDeclarationOnly": true,
     "isolatedModules": true,
-    "rootDirs": ["."]
+    "rootDirs": ["."],
+    "jsx": "react"
   },
   "exclude": ["dist/**/*"],
   "extends": "@grafana/tsconfig",

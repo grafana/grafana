@@ -104,6 +104,8 @@ export interface Props {
   onToggle?: (isOpen: boolean) => void;
   /** Additional class name for the root element */
   className?: string;
+  /** Element child component */
+  children?: React.ReactNode;
 }
 
 export const ControlledCollapse: FunctionComponent<Props> = ({ isOpen, onToggle, ...otherProps }) => {
