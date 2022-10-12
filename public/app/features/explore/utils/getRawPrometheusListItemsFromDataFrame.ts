@@ -8,9 +8,12 @@ type instantQueryMetricList = { [index: string]: { [index: string]: instantQuery
  * transform dataFrame to instantQueryRawVirtualizedListData
  * @param dataFrame
  */
-export const getRawPrometheusListItemsFromDataFrame = (dataFrame: DataFrame): instantQueryRawVirtualizedListData[] => {
+export const getRawPrometheusListItemsFromDataFrame = (dataFrame: DataFrame, selectedValue: string): instantQueryRawVirtualizedListData[] => {
   const metricList: instantQueryMetricList = {};
   const outputList: instantQueryRawVirtualizedListData[] = [];
+
+  console.log('dataFrame', dataFrame);
+  console.log('selectedValue', selectedValue);
 
   // Filter out time
   const newFields = dataFrame.fields.filter((field) => !['Time'].includes(field.name));

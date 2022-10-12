@@ -11,6 +11,7 @@ import RawListItem from './RawListItem';
 interface RawListProps {
   listItemData: instantQueryRawVirtualizedListData;
   listKey: number;
+  selectedValueName: string;
 }
 
 export type RawListValue = { key: string; value: string };
@@ -39,8 +40,9 @@ const getStyles = (theme: GrafanaTheme) => ({
   `,
 });
 
-const RawList = ({ listItemData, listKey }: RawListProps) => {
-  const { Value, __name__, ...AllLabels } = listItemData;
+const RawList = ({ listItemData, listKey, selectedValueName }: RawListProps) => {
+  const {__name__, ...AllLabels } = listItemData;
+  const Value = listItemData[selectedValueName] ?? listItemData.Value;
 
   const [_, copyToClipboard] = useCopyToClipboard();
 
@@ -49,7 +51,7 @@ const RawList = ({ listItemData, listKey }: RawListProps) => {
   let attributeValues: RawListValue[] = [];
 
   for (const key in AllLabels) {
-    if (key in AllLabels && AllLabels[key]) {
+    if (key in AllLabels && AllLabels[key] && !key.includes('Value')) {
       attributeValues.push({
         key: key,
         value: AllLabels[key],
