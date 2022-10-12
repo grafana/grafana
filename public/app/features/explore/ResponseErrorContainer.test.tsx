@@ -57,6 +57,7 @@ function setup(error: DataQueryError) {
     traceFrames: [],
     nodeGraphFrames: [],
     rawPrometheusFrames: [],
+    flameGraphFrames: [],
     graphResult: null,
     logsResult: null,
     tableResult: null,

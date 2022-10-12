@@ -10,6 +10,11 @@ var (
 	// Register each toggle here
 	standardFeatureFlags = []FeatureFlag{
 		{
+			Name:        "alertingBigTransactions",
+			Description: "Use big transactions for alerting database writes",
+			State:       FeatureStateAlpha,
+		},
+		{
 			Name:        "trimDefaults",
 			Description: "Use cue schema to remove values that will be applied automatically",
 			State:       FeatureStateBeta,
@@ -98,6 +103,11 @@ var (
 		{
 			Name:        "lokiDataframeApi",
 			Description: "use experimental loki api for websocket streaming (early prototype)",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "lokiMonacoEditor",
+			Description: "Access to Monaco query editor for Loki",
 			State:       FeatureStateAlpha,
 		},
 		{
@@ -267,9 +277,21 @@ var (
 			Description:     "Run GRPC server",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
-		}, {
+		},
+		{
+			Name:            "objectStore",
+			Description:     "SQL based object store",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
 			Name:        "traceqlEditor",
 			Description: "Show the TraceQL editor in the explore page",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "flameGraph",
+			Description: "Show the flame graph",
 			State:       FeatureStateAlpha,
 		},
 		{
@@ -287,6 +309,23 @@ var (
 		{
 			Name:        "increaseInMemDatabaseQueryCache",
 			Description: "Enable more in memory caching for database queries",
+		},
+		{
+			Name:         "newPanelChromeUI",
+			Description:  "Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
+			Name:            "queryLibrary",
+			Description:     "Reusable query library",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
+			Name:        "mysqlAnsiQuotes",
+			Description: "Use double quote to escape keyword in Mysql query",
+			State:       FeatureStateAlpha,
 		},
 	}
 )

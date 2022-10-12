@@ -13,10 +13,12 @@ export function buildInitialState(): NavIndex {
 
   // set home as parent for the rootNodes
   buildNavIndex(navIndex, rootNodes, homeNav);
+
   // remove circular parent reference on the home node
   if (navIndex[HOME_NAV_ID]) {
     delete navIndex[HOME_NAV_ID].parentItem;
   }
+
   return navIndex;
 }
 

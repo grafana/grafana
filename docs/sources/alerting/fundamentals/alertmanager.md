@@ -9,34 +9,34 @@ weight: 116
 
 # Alertmanager
 
-The Alertmanager helps both group and manage alert rules, adding a layer of orchestration on top of the alerting engines. To learn more, see [Prometheus Alertmanager documentation](https://prometheus.io/docs/alerting/latest/alertmanager/).
+Alertmanager enables you to quickly and efficiently manage and respond to alerts. It receives alerts, handles silencing, inhibition, grouping, and routing by sending notifications out via your channel of choice, for example, email or Slack.
 
-Grafana includes built-in support for Prometheus Alertmanager. By default, notifications for Grafana managed alerts are handled by the embedded Alertmanager that is part of core Grafana. You can configure the Alertmanager's contact points, notification policies, silences, and templates from the alerting UI by selecting the `Grafana` option from the Alertmanager drop-down.
+In Grafana, you can use the Cloud Alertmanager, Grafana Alertmanager, or an external Alertmanager. You can also run multiple alertmanagers; your decision depends on your set up and where your alerts are being generated.
 
-> **Note:** Before v8.2, the configuration of the embedded Alertmanager was shared across organizations. If you are on an older Grafana version, we recommend that you use Grafana alerts only if you have one organization. Otherwise, your contact points are visible to all organizations.
+**Cloud Alertmanager**
 
-Grafana Alerting added support for external Alertmanager configuration. When you add an [Alertmanager data source]({{< relref "../../datasources/alertmanager/" >}}), the Alertmanager drop-down shows a list of available external Alertmanager data sources. Select a data source to create and manage alerting for standalone Grafana Mimir or Loki data sources.
+Cloud Alertmanager runs in Grafana Cloud and it can receive alerts from Grafana, Mimir, and Loki.
 
-{{< figure max-width="40%" src="/static/img/docs/alerting/unified/contact-points-select-am-8-0.gif" max-width="250px" caption="Select Alertmanager" >}}
+**Grafana Alertmanager**
 
-You can configure one or several external Alertmanagers to receive alerts from Grafana. Once configured, both the embedded Alertmanager **and** any configured external Alertmanagers will receive _all_ alerts.
+Grafana Alertmanager is an internal Alertmanager that is pre-configured and available for selection by default if you run Grafana on-premise or open-source.
 
-You can do the setup in the "Admin" tab within the Grafana v8 Alerts UI.
+The Grafana Alertmanager can receive alerts from Grafana, but it cannot receive alerts from outside Grafana, for example, from Mimir or Loki.
 
-### Add a new external Alertmanager
+**External Alertmanager**
 
-1. In the Grafana menu, click the Alerting (bell) icon to open the Alerting page listing existing alerts.
-2. Click **Admin** and then scroll down to the External Alertmanager section.
-3. Click **Add Alertmanager** and a modal opens.
-4. Add the URL and the port for the external Alertmanager. You do not need to specify the path suffix, for example, `/api/v(1|2)/alerts`. Grafana automatically adds this.
+If you want to use a single alertmanager to receive all your Grafana, Loki, Mimir, and Prometheus alerts, you can set up Grafana to use an external Alertmanager. This external Alertmanager can be configured and administered from within Grafana itself.
 
-The external URL is listed in the table with a pending status. Once Grafana verifies that the Alertmanager is discovered, the status changes to active. No requests are made to the external Alertmanager at this point; the verification signals that alerts are ready to be sent.
+Here are two examples of when you may want to configure your own external alertmanager and send your alerts there instead of the Grafana Alertmanager:
 
-### Edit an external Alertmanager
+1. You may already have alertmanagers on-premise in your own Cloud infrastructure that you have set up and still want to use, because you have other alert generators, such as Prometheus.
 
-1. Click the pen symbol to the right of the Alertmanager row in the table.
-2. When the edit modal opens, you can view all the URLs that were added.
+2. You want to use both Prometheus on-premise and hosted Grafana to send alerts to the same alertmanager that runs in your Cloud infrastructure.
 
-The edited URL will be pending until Grafana verifies it again.
+Alertmanagers are visible from the drop-down menu on the Alerting Contact Points, Notification Policies, and Silences pages.
 
-{{< figure max-width="40%" src="/static/img/docs/alerting/unified/ext-alertmanager-active.png" max-width="650px" caption="External Alertmanagers" >}}
+**Useful links**
+
+[Prometheus Alertmanager documentation](https://prometheus.io/docs/alerting/latest/alertmanager/)
+
+[Add an external Alertmanager](https://grafana.com/docs/grafana/latest/alerting/set-up/configure-alertmanager/)

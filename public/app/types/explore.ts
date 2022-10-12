@@ -18,6 +18,8 @@ import {
 } from '@grafana/data';
 import { RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistoryTypes';
 
+import { CorrelationData } from '../features/correlations/useCorrelations';
+
 export enum ExploreId {
   left = 'left',
   right = 'right',
@@ -44,6 +46,8 @@ export interface ExploreState {
    * Explore state of the right area in split view.
    */
   right?: ExploreItemState;
+
+  correlations?: CorrelationData[];
 
   /**
    * Settings for rich history (note: filters are stored per each pane separately)
@@ -169,6 +173,7 @@ export interface ExploreItemState {
   showRawPrometheus?: boolean;
   showTrace?: boolean;
   showNodeGraph?: boolean;
+  showFlameGraph?: boolean;
 
   /**
    * History of all queries
@@ -237,6 +242,7 @@ export interface ExplorePanelData extends PanelData {
   traceFrames: DataFrame[];
   nodeGraphFrames: DataFrame[];
   rawPrometheusFrames: DataFrame[];
+  flameGraphFrames: DataFrame[];
   graphResult: DataFrame[] | null;
   tableResult: DataFrame | null;
   logsResult: LogsModel | null;

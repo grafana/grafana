@@ -28,7 +28,7 @@ This means that you should be able to configure LDAP integration using any compl
 In order to use LDAP integration you'll first need to enable LDAP in the [main config file]({{< relref "../../configure-grafana/" >}}) as well as specify the path to the LDAP
 specific configuration file (default: `/etc/grafana/ldap.toml`).
 
-```bash
+```ini
 [auth.ldap]
 # Set to `true` to enable LDAP integration (default: `false`)
 enabled = true
@@ -36,9 +36,30 @@ enabled = true
 # Path to the LDAP specific configuration file (default: `/etc/grafana/ldap.toml`)
 config_file = /etc/grafana/ldap.toml
 
-# Allow sign up should almost always be true (default) to allow new Grafana users to be created (if LDAP authentication is ok). If set to
-# false only pre-existing Grafana users will be able to login (if LDAP authentication is ok).
+# Allow sign-up should be `true` (default) to allow Grafana to create users on successful LDAP authentication.
+# If set to `false` only already existing Grafana users will be able to login.
 allow_sign_up = true
+```
+
+## Disable org role synchronization
+
+If you use LDAP to authenticate users but don't use role mapping, and prefer to manually assign organizations
+and roles, you can use the `skip_org_role_sync` configuration option.
+
+```ini
+[auth.ldap]
+# Set to `true` to enable LDAP integration (default: `false`)
+enabled = true
+
+# Path to the LDAP specific configuration file (default: `/etc/grafana/ldap.toml`)
+config_file = /etc/grafana/ldap.toml
+
+# Allow sign-up should be `true` (default) to allow Grafana to create users on successful LDAP authentication.
+# If set to `false` only already existing Grafana users will be able to login.
+allow_sign_up = true
+
+# Prevent synchronizing ldap users organization roles
+skip_org_role_sync = true
 ```
 
 ## Grafana LDAP Configuration
@@ -71,6 +92,8 @@ bind_dn = "cn=admin,dc=grafana,dc=org"
 # Search user bind password
 # If the password contains # or ; you have to wrap it with triple quotes. Ex """#password;"""
 bind_password = "grafana"
+# We recommend using variable expansion for the bind_password, for more info https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#variable-expansion
+# bind_password = '$__env{LDAP_BIND_PASSWORD}'
 
 # Timeout in seconds. Applies to each host specified in the 'host' entry (space separated).
 timeout = 10
@@ -117,6 +140,10 @@ To use the debug view:
 1.  If the user is found within any of your LDAP instances, the mapping information is displayed
 
 {{< figure src="/static/img/docs/ldap_debug_mapping_testing.png" class="docs-image--no-shadow" max-width="600px" >}}
+
+[Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise" >}}) users with [enhanced LDAP integration]({{< relref "enhanced_ldap" >}}) enabled can also see sync status in the debug view. This requires the `ldap.status:read` permission.
+
+{{< figure src="/static/img/docs/ldap_sync_debug.png" class="docs-image--no-shadow" max-width="600px" >}}
 
 ### Bind
 

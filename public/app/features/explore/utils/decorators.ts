@@ -1,4 +1,4 @@
-import { groupBy } from 'lodash';
+import { groupBy, mapValues } from 'lodash';
 import { Observable, of } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
@@ -15,8 +15,10 @@ import { config } from '@grafana/runtime';
 
 import { dataFrameToLogsModel } from '../../../core/logsModel';
 import { refreshIntervalToSortOrder } from '../../../core/utils/explore';
-import { sortLogsResult } from '../../../features/logs/utils';
 import { ExplorePanelData } from '../../../types';
+import { CorrelationData } from '../../correlations/useCorrelations';
+import { attachCorrelationsToDataFrames } from '../../correlations/utils';
+import { sortLogsResult } from '../../logs/utils';
 import { preProcessPanelData } from '../../query/state/runRequest';
 
 /**
@@ -31,6 +33,7 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
   const logsFrames: DataFrame[] = [];
   const traceFrames: DataFrame[] = [];
   const nodeGraphFrames: DataFrame[] = [];
+  const flameGraphFrames: DataFrame[] = [];
 
   for (const frame of data.series) {
     switch (frame.meta?.preferredVisualisationType) {
@@ -52,6 +55,9 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
       case 'nodeGraph':
         nodeGraphFrames.push(frame);
         break;
+      case 'flamegraph':
+        config.featureToggles.flameGraph ? flameGraphFrames.push(frame) : tableFrames.push(frame);
+        break;
       default:
         if (isTimeSeries(frame)) {
           graphFrames.push(frame);
@@ -70,11 +76,28 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
     logsFrames,
     traceFrames,
     nodeGraphFrames,
+    flameGraphFrames,
     rawPrometheusFrames,
     graphResult: null,
     tableResult: null,
     logsResult: null,
     rawPrometheusResult: null,
+  };
+};
+
+export const decorateWithCorrelations = ({
+  queries,
+  correlations,
+}: {
+  queries: DataQuery[] | undefined;
+  correlations: CorrelationData[] | undefined;
+}) => {
+  return (data: PanelData): PanelData => {
+    if (queries?.length && correlations?.length) {
+      const queryRefIdToDataSourceUid = mapValues(groupBy(queries, 'refId'), '0.datasource.uid');
+      attachCorrelationsToDataFrames(data.series, correlations, queryRefIdToDataSourceUid);
+    }
+    return data;
   };
 };
 
@@ -220,10 +243,12 @@ export function decorateData(
   absoluteRange: AbsoluteTimeRange,
   refreshInterval: string | undefined,
   queries: DataQuery[] | undefined,
+  correlations: CorrelationData[] | undefined,
   fullRangeLogsVolumeAvailable: boolean
 ): Observable<ExplorePanelData> {
   return of(data).pipe(
     map((data: PanelData) => preProcessPanelData(data, queryResponse)),
+    map(decorateWithCorrelations({ queries, correlations })),
     map(decorateWithFrameTypeMetadata),
     map(decorateWithGraphResult),
     map(decorateWithGraphResult),

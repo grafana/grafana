@@ -97,6 +97,7 @@ export const createEmptyQueryResponse = (): ExplorePanelData => ({
   logsFrames: [],
   traceFrames: [],
   nodeGraphFrames: [],
+  flameGraphFrames: [],
   tableFrames: [],
   rawPrometheusFrames: [],
   rawPrometheusResult: null,

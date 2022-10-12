@@ -172,6 +172,7 @@ export const dynamicGeoJSONLayer: MapLayerRegistryItem<DynamicGeoJSONMapperConfi
         if (frame) {
           const field = findField(frame, config.idField);
           if (field) {
+            idToIdx.clear();
             field.values.toArray().forEach((v, i) => idToIdx.set(v, i));
           }
 
