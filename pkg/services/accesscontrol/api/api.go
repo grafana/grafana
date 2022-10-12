@@ -30,15 +30,15 @@ type AccessControlAPI struct {
 func (api *AccessControlAPI) RegisterAPIEndpoints() {
 	authorize := ac.Middleware(api.AccessControl)
 	// Users
-	api.RouteRegister.Get("/api/access-control/user/permissions",
-		middleware.ReqSignedIn, routing.Wrap(api.getUsersPermissions))
-
-	api.RouteRegister.Get("/api/access-control/users/permissions", authorize(middleware.ReqSignedIn,
-		ac.EvalPermission(ac.ActionUsersPermissionsRead)), routing.Wrap(api.orgUsersPermissions))
+	api.RouteRegister.Group("/api/access-control", func(rr routing.RouteRegister) {
+		rr.Get("/user/permissions", middleware.ReqSignedIn, routing.Wrap(api.getUserPermissions))
+		rr.Get("/users/permissions", authorize(middleware.ReqSignedIn,
+			ac.EvalPermission(ac.ActionUsersPermissionsRead)), routing.Wrap(api.getSimpliedUsersPermissions))
+	})
 }
 
 // GET /api/access-control/user/permissions
-func (api *AccessControlAPI) getUsersPermissions(c *models.ReqContext) response.Response {
+func (api *AccessControlAPI) getUserPermissions(c *models.ReqContext) response.Response {
 	reloadCache := c.QueryBool("reloadcache")
 	permissions, err := api.Service.GetUserPermissions(c.Req.Context(),
 		c.SignedInUser, ac.Options{ReloadCache: reloadCache})
@@ -49,8 +49,8 @@ func (api *AccessControlAPI) getUsersPermissions(c *models.ReqContext) response.
 	return response.JSON(http.StatusOK, ac.BuildPermissionsMap(permissions))
 }
 
-// POST /api/access-control/org/users/permissions
-func (api *AccessControlAPI) orgUsersPermissions(c *models.ReqContext) response.Response {
+// GET /api/access-control/org/users/permissions
+func (api *AccessControlAPI) getSimpliedUsersPermissions(c *models.ReqContext) response.Response {
 	actionPrefix := c.Query("actionPrefix")
 
 	// Validate request

@@ -229,7 +229,6 @@ func (s *Service) DeclarePluginRoles(pluginID string, registrations ...accesscon
 
 // GetSimplifiedUsersPermissions returns all users' permissions filtered by action prefixes
 // TODO fetch BASIC roles permissions in OSS
-// TODO filter based on user
 func (s *Service) GetSimplifiedUsersPermissions(ctx context.Context, user *user.SignedInUser, orgID int64,
 	actionPrefix string) (map[int64][]accesscontrol.SimplifiedUserPermissionDTO, error) {
 
