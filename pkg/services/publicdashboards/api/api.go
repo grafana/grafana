@@ -64,7 +64,7 @@ func (api *Api) RegisterAPIEndpoints() {
 	api.RouteRegister.Post("/api/public/dashboards/:accessToken/panels/:panelId/query", routing.Wrap(api.QueryPublicDashboard))
 
 	// List Public Dashboards
-	api.RouteRegister.Get("/api/dashboards/public", auth(middleware.ReqSignedIn, accesscontrol.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(api.ListPublicDashboards))
+	api.RouteRegister.Get("/api/dashboards/public", middleware.ReqSignedIn, routing.Wrap(api.ListPublicDashboards))
 
 	// Create/Update Public Dashboard
 	uidScope := dashboards.ScopeDashboardsProvider.GetResourceScopeUID(accesscontrol.Parameter(":uid"))

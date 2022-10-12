@@ -63,17 +63,6 @@ func TestIntegrationListPublicDashboard(t *testing.T) {
 	assert.Equal(t, resp[1].Uid, c.Uid)
 	assert.Equal(t, resp[2].Uid, a.Uid)
 	assert.Equal(t, resp[3].Uid, d.Uid)
-
-	// insert public dashboard isEnabledFalse
-	// insert dashboard title = a, publicdashboard.IsEnabled = false
-	// insert dashboard title = b, publicdashboard.IsEnabled = true
-	// insert dashboard title = c, publicdashboard.IsEnabled = true
-	// insert dashboard nil, publicdashboard.IsEnabled = false
-
-	// run query
-	// assert
-	// b, c, a, nil
-
 }
 
 func TestIntegrationGetDashboard(t *testing.T) {
