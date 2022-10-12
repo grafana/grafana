@@ -42,33 +42,39 @@ const themes: SelectableValue[] = [
   { value: 'light', label: t('shared-preferences.theme.light-label', 'Light') },
 ];
 
-const languages: Array<SelectableValue<string>> = [
-  {
-    value: '',
-    label: t('common.locale.default', 'Default'),
-  },
-  {
-    value: ENGLISH_US,
-    label: t('common.locale.en-US', 'English'),
-  },
-  {
-    value: SPANISH_SPAIN,
-    label: t('common.locale.es-ES', 'Spanish'),
-  },
-  {
-    value: FRENCH_FRANCE,
-    label: t('common.locale.fr-FR', 'French'),
-  },
-  {
-    value: CHINESE_SIMPLIFIED,
-    label: t('common.locale.zh-Hans', 'Chinese (Simplified)'),
-  },
-  // TODO: dev only
-  {
-    value: PSEUDO_LOCALE,
-    label: 'Pseudo-locale', // no need to translate this key
-  },
-];
+function getLanguageOptions(): Array<SelectableValue<string>> {
+  const options = [
+    {
+      value: '',
+      label: t('common.locale.default', 'Default'),
+    },
+    {
+      value: ENGLISH_US,
+      label: t('common.locale.en-US', 'English'),
+    },
+    {
+      value: SPANISH_SPAIN,
+      label: t('common.locale.es-ES', 'Spanish'),
+    },
+    {
+      value: FRENCH_FRANCE,
+      label: t('common.locale.fr-FR', 'French'),
+    },
+    {
+      value: CHINESE_SIMPLIFIED,
+      label: t('common.locale.zh-Hans', 'Chinese (Simplified)'),
+    },
+  ];
+
+  if (process.env.NODE_ENV === 'development') {
+    options.push({
+      value: PSEUDO_LOCALE,
+      label: 'Pseudo-locale', // no need to translate this key
+    });
+  }
+
+  return options;
+}
 
 const i18nFlag = Boolean(config.featureToggles.internationalization);
 
@@ -134,6 +140,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
     const { theme, timezone, weekStart, homeDashboardUID, locale } = this.state;
     const { disabled } = this.props;
     const styles = getStyles();
+    const languages = getLanguageOptions();
 
     return (
       <Form onSubmit={this.onSubmitForm}>

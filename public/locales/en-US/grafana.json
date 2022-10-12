@@ -1,4 +1,5 @@
 {
+  "_comment": "Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source",
   "common": {
     "locale": {
       "default": "Default",
