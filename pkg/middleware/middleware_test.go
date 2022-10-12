@@ -423,6 +423,33 @@ func TestMiddlewareContext(t *testing.T) {
 		assert.Empty(t, sc.resp.Header().Get("Set-Cookie"))
 	})
 
+	middlewareScenario(t, "Non-expired auth token in cookie and OAuth Access Token's Expiry is not set", func(
+		t *testing.T, sc *scenarioContext) {
+		const userID int64 = 12
+		sc.contextHandler.GetTime = fakeGetTime()
+
+		sc.withTokenSessionCookie("token")
+		sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: 2, UserID: userID}
+		sc.oauthTokenService.ExpectedAuthUser = &models.UserAuth{UserId: userID}
+
+		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
+			return &models.UserToken{
+				UserId:        userID,
+				UnhashedToken: unhashedToken,
+			}, nil
+		}
+
+		sc.fakeReq("GET", "/").exec()
+
+		require.NotNil(t, sc.context)
+		require.NotNil(t, sc.context.UserToken)
+		assert.True(t, sc.context.IsSignedIn)
+		assert.Equal(t, userID, sc.context.UserID)
+		assert.Equal(t, userID, sc.context.UserToken.UserId)
+		assert.Equal(t, "token", sc.context.UserToken.UnhashedToken)
+		assert.Empty(t, sc.resp.Header().Get("Set-Cookie"))
+	})
+
 	middlewareScenario(t, "When anonymous access is enabled", func(t *testing.T, sc *scenarioContext) {
 		sc.mockSQLStore.ExpectedOrg = &models.Org{Id: 1, Name: sc.cfg.AnonymousOrgName}
 		sc.orgService.ExpectedOrg = &org.Org{ID: 1, Name: sc.cfg.AnonymousOrgName}

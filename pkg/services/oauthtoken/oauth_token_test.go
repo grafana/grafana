@@ -19,7 +19,7 @@ import (
 )
 
 func TestService_TryTokenRefresh_ValidToken(t *testing.T) {
-	srv, _, socialConnector := setupOAuthTokenService(t)
+	srv, authInfoStore, socialConnector := setupOAuthTokenService(t)
 	ctx := context.Background()
 	token := &oauth2.Token{
 		AccessToken:  "testaccess",
@@ -35,42 +35,25 @@ func TestService_TryTokenRefresh_ValidToken(t *testing.T) {
 		OAuthTokenType:    token.TokenType,
 	}
 
+	authInfoStore.ExpectedOAuth = usr
+
 	socialConnector.On("TokenSource", mock.Anything, mock.Anything).Return(oauth2.StaticTokenSource(token))
 
 	err := srv.TryTokenRefresh(ctx, usr)
-
-	socialConnector.AssertNumberOfCalls(t, "TokenSource", 1)
-	assert.Nil(t, err)
-}
-
-func TestService_TryTokenRefresh_ExpiredToken(t *testing.T) {
-	srv, _, socialConnector := setupOAuthTokenService(t)
-	ctx := context.Background()
-	token := &oauth2.Token{
-		AccessToken:  "testaccess",
-		RefreshToken: "testrefresh",
-		Expiry:       time.Now().Add(-time.Hour),
-		TokenType:    "Bearer",
-	}
-	usr := &models.UserAuth{
-		AuthModule:        "oauth_generic_oauth",
-		OAuthAccessToken:  token.AccessToken,
-		OAuthRefreshToken: token.RefreshToken,
-		OAuthExpiry:       token.Expiry,
-		OAuthTokenType:    token.TokenType,
-	}
-
-	socialConnector.On("TokenSource", mock.Anything, mock.Anything).Return(&fakeTokenSource{token, &oauth2.Token{
-		AccessToken:  "newAccessToken",
-		RefreshToken: "newRefreshToken",
-		Expiry:       time.Now().Add(8 * time.Hour),
-		TokenType:    "Bearer",
-	}, nil})
-
-	err := srv.TryTokenRefresh(ctx, usr)
-
 	assert.Nil(t, err)
 	socialConnector.AssertNumberOfCalls(t, "TokenSource", 1)
+
+	authInfoQuery := &models.GetAuthInfoQuery{}
+	err = srv.AuthInfoService.GetAuthInfo(ctx, authInfoQuery)
+
+	assert.Nil(t, err)
+
+	// User's token data had not been updated
+	resultUsr := authInfoQuery.Result
+	assert.Equal(t, resultUsr.OAuthAccessToken, token.AccessToken)
+	assert.Equal(t, resultUsr.OAuthExpiry, token.Expiry)
+	assert.Equal(t, resultUsr.OAuthRefreshToken, token.RefreshToken)
+	assert.Equal(t, resultUsr.OAuthTokenType, token.TokenType)
 }
 
 func TestService_TryTokenRefresh_NoRefreshToken(t *testing.T) {
@@ -98,10 +81,55 @@ func TestService_TryTokenRefresh_NoRefreshToken(t *testing.T) {
 	assert.ErrorIs(t, err, ErrNoRefreshTokenFound)
 
 	socialConnector.AssertNotCalled(t, "TokenSource")
-
 }
 
-func setupOAuthTokenService(t *testing.T) (*Service, login.AuthInfoService, *MockSocialConnector) {
+func TestService_TryTokenRefresh_ExpiredToken(t *testing.T) {
+	srv, authInfoStore, socialConnector := setupOAuthTokenService(t)
+	ctx := context.Background()
+	token := &oauth2.Token{
+		AccessToken:  "testaccess",
+		RefreshToken: "testrefresh",
+		Expiry:       time.Now().Add(-time.Hour),
+		TokenType:    "Bearer",
+	}
+
+	newToken := &oauth2.Token{
+		AccessToken:  "testaccess_new",
+		RefreshToken: "testrefresh_new",
+		Expiry:       time.Now().Add(time.Hour),
+		TokenType:    "Bearer",
+	}
+
+	usr := &models.UserAuth{
+		AuthModule:        "oauth_generic_oauth",
+		OAuthAccessToken:  token.AccessToken,
+		OAuthRefreshToken: token.RefreshToken,
+		OAuthExpiry:       token.Expiry,
+		OAuthTokenType:    token.TokenType,
+	}
+
+	authInfoStore.ExpectedOAuth = usr
+
+	socialConnector.On("TokenSource", mock.Anything, mock.Anything).Return(oauth2.ReuseTokenSource(token, oauth2.StaticTokenSource(newToken)), nil)
+
+	err := srv.TryTokenRefresh(ctx, usr)
+
+	assert.Nil(t, err)
+	socialConnector.AssertNumberOfCalls(t, "TokenSource", 1)
+
+	authInfoQuery := &models.GetAuthInfoQuery{}
+	err = srv.AuthInfoService.GetAuthInfo(ctx, authInfoQuery)
+
+	assert.Nil(t, err)
+
+	// newToken should be returned after the .Token() call, therefore the User had to be updated
+	assert.Equal(t, authInfoQuery.Result.OAuthAccessToken, newToken.AccessToken)
+	assert.Equal(t, authInfoQuery.Result.OAuthExpiry, newToken.Expiry)
+	assert.Equal(t, authInfoQuery.Result.OAuthRefreshToken, newToken.RefreshToken)
+	assert.Equal(t, authInfoQuery.Result.OAuthTokenType, newToken.TokenType)
+}
+
+func setupOAuthTokenService(t *testing.T) (*Service, *FakeAuthInfoStore, *MockSocialConnector) {
 	t.Helper()
 
 	socialConnector := &MockSocialConnector{}
@@ -115,7 +143,7 @@ func setupOAuthTokenService(t *testing.T) (*Service, login.AuthInfoService, *Moc
 		SocialService:     socialService,
 		AuthInfoService:   authInfoService,
 		singleFlightGroup: &singleflight.Group{},
-	}, authInfoService, socialConnector
+	}, authInfoStore, socialConnector
 }
 
 type FakeSocialService struct {
@@ -209,6 +237,10 @@ func (f *FakeAuthInfoStore) UpdateAuthInfoDate(ctx context.Context, authInfo *mo
 	return f.ExpectedError
 }
 func (f *FakeAuthInfoStore) UpdateAuthInfo(ctx context.Context, cmd *models.UpdateAuthInfoCommand) error {
+	f.ExpectedOAuth.OAuthAccessToken = cmd.OAuthToken.AccessToken
+	f.ExpectedOAuth.OAuthExpiry = cmd.OAuthToken.Expiry
+	f.ExpectedOAuth.OAuthTokenType = cmd.OAuthToken.TokenType
+	f.ExpectedOAuth.OAuthRefreshToken = cmd.OAuthToken.RefreshToken
 	return f.ExpectedError
 }
 func (f *FakeAuthInfoStore) DeleteAuthInfo(ctx context.Context, cmd *models.DeleteAuthInfoCommand) error {
@@ -244,21 +276,4 @@ func (f *FakeAuthInfoStore) RunMetricsCollection(ctx context.Context) error {
 
 func (f *FakeAuthInfoStore) GetLoginStats(ctx context.Context) (login.LoginStats, error) {
 	return f.ExpectedLoginStats, f.ExpectedError
-}
-
-type fakeTokenSource struct {
-	t           *oauth2.Token
-	newToken    *oauth2.Token
-	expectedErr error
-}
-
-func (s *fakeTokenSource) Token() (*oauth2.Token, error) {
-	if s.expectedErr != nil {
-		return nil, s.expectedErr
-	}
-
-	if s.t.Valid() {
-		return s.t, nil
-	}
-	return s.newToken, nil
 }

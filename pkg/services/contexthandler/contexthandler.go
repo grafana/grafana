@@ -441,8 +441,8 @@ func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, org
 	// Check whether the logged in User has a token
 	exists, oauthToken := h.oauthTokenService.HasOAuthEntry(ctx, queryResult)
 	if exists {
-		if oauthToken.OAuthExpiry.Round(0).Add(-oauthtoken.ExpiryDelta).Before(getTime()) {
-			reqContext.Logger.Info("access token expired", "userId", query.UserID, "tokenExpiry", fmt.Sprintf("%v", oauthToken.OAuthExpiry))
+		if !oauthToken.OAuthExpiry.IsZero() && oauthToken.OAuthExpiry.Round(0).Add(-oauthtoken.ExpiryDelta).Before(getTime()) {
+			reqContext.Logger.Info("access token expired", "userId", query.UserID, "expiry", fmt.Sprintf("%v", oauthToken.OAuthExpiry))
 
 			// If the User doesn't have a refresh_token then log out
 			if oauthToken.OAuthRefreshToken == "" {
