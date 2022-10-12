@@ -1,4 +1,4 @@
-import { colors, fuzzyMatch } from '@grafana/ui';
+import { colors } from '@grafana/ui';
 
 import {
   BAR_BORDER_WIDTH,
@@ -93,7 +93,7 @@ export function renderRect(
   const l = 65 + 7 * intensity;
 
   const name = rect.label;
-  const queryResult = query && fuzzyMatch(name.toLowerCase(), query.toLowerCase()).found;
+  const queryResult = query && name.toLowerCase().includes(query.toLowerCase());
 
   if (!rect.collapsed) {
     ctx.stroke();
