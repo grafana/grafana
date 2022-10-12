@@ -41,7 +41,7 @@ export const Global: ComponentStory<typeof DataTable> = (args) => {
       },
       {
         id: 'customcontent',
-        sortType: 'number',
+        header: 'Not Sortable',
         cell: () => <Badge color="green" text="I'm custom content!" />,
       },
     ],
@@ -50,8 +50,8 @@ export const Global: ComponentStory<typeof DataTable> = (args) => {
   const data = useMemo(
     () => [
       { header1: 'a', header2: 1 },
-      { header1: 'b' },
-      { header1: 'c', noheader: "This column doesn't have an header" },
+      { header1: 'b', noheader: "This column doesn't have an header" },
+      { header1: 'c', noheader: "But it's still sortable" },
     ],
     []
   );
