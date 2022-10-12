@@ -57,44 +57,6 @@ func (a *AccessControl) RegisterScopeAttributeResolver(prefix string, resolver a
 	a.resolvers.AddScopeAttributeResolver(prefix, resolver)
 }
 
-func (a *AccessControl) EvaluateMetadata(ctx context.Context, cmd accesscontrol.EvaluateUserPermissionCommand) (map[string]accesscontrol.Metadata, error) {
-	if !verifyPermissions(cmd.SignedInUser) {
-		a.log.Warn("no permissions set for user", "userID", cmd.SignedInUser.UserID, "orgID", cmd.SignedInUser.OrgID)
-		return map[string]accesscontrol.Metadata{}, nil
-	}
-
-	// Limit permissions to the action of interest
-	if cmd.Action != "" {
-		scopes, ok := cmd.SignedInUser.Permissions[cmd.SignedInUser.OrgID][cmd.Action]
-		if !ok {
-			return map[string]accesscontrol.Metadata{}, nil
-		}
-		cmd.SignedInUser.Permissions[cmd.SignedInUser.OrgID] = map[string][]string{cmd.Action: scopes}
-	}
-
-	// Only checking for an action
-	if cmd.Action != "" && (cmd.Resource == "" && cmd.Attribute == "" && len(cmd.UIDs) == 0) {
-		return map[string]accesscontrol.Metadata{"-": {cmd.Action: true}}, nil
-	}
-
-	// Compute metadata
-	if cmd.Resource != "" && cmd.Attribute != "" && len(cmd.UIDs) != 0 {
-		scopePrefix := accesscontrol.Scope(cmd.Resource, cmd.Attribute, "")
-		uids := map[string]bool{}
-		for _, uid := range cmd.UIDs {
-			uids[uid] = true
-		}
-		return accesscontrol.GetResourcesMetadata(ctx, cmd.SignedInUser.Permissions[cmd.SignedInUser.OrgID], scopePrefix, uids), nil
-	}
-
-	return nil, &accesscontrol.ErrorInvalidEvaluationRequest{
-		Action:    cmd.Action,
-		Resource:  cmd.Resource,
-		Attribute: cmd.Attribute,
-		UIDs:      cmd.UIDs,
-	}
-}
-
 func (a *AccessControl) IsDisabled() bool {
 	return accesscontrol.IsDisabled(a.cfg)
 }

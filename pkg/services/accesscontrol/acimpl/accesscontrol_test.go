@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestAccessControl_Evaluate(t *testing.T) {
@@ -77,123 +76,6 @@ func TestAccessControl_Evaluate(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 			}
-		})
-	}
-}
-
-func TestAccessControl_EvaluateMetadata(t *testing.T) {
-	testUser := func(opts ...func(*user.SignedInUser)) *user.SignedInUser {
-		user := &user.SignedInUser{
-			UserID:  1,
-			OrgID:   1,
-			OrgRole: "Viewer",
-			Permissions: map[int64]map[string][]string{
-				1: {
-					"teams:read":  []string{"teams:*"},
-					"teams:write": []string{"teams:id:1", "teams:id:2"},
-				},
-			},
-		}
-		for _, fn := range opts {
-			fn(user)
-		}
-		return user
-	}
-	tests := []struct {
-		name    string
-		cmd     accesscontrol.EvaluateUserPermissionCommand
-		want    map[string]accesscontrol.Metadata
-		wantErr bool
-	}{
-		{
-			name: "has action",
-			cmd: accesscontrol.EvaluateUserPermissionCommand{
-				SignedInUser: testUser(),
-				Action:       "teams:read",
-			},
-			want:    map[string]accesscontrol.Metadata{"-": {"teams:read": true}},
-			wantErr: false,
-		},
-		{
-			name: "does not have action",
-			cmd: accesscontrol.EvaluateUserPermissionCommand{
-				SignedInUser: testUser(),
-				Action:       "teams:delete",
-			},
-			want:    map[string]accesscontrol.Metadata{},
-			wantErr: false,
-		},
-		{
-			name: "get metadata",
-			cmd: accesscontrol.EvaluateUserPermissionCommand{
-				SignedInUser: testUser(),
-				Resource:     "teams",
-				Attribute:    "id",
-				UIDs:         []string{"1", "3"},
-			},
-			want: map[string]accesscontrol.Metadata{
-				"1": {"teams:read": true, "teams:write": true},
-				"3": {"teams:read": true},
-			},
-			wantErr: false,
-		},
-		{
-			name: "get metadata filter by action",
-			cmd: accesscontrol.EvaluateUserPermissionCommand{
-				SignedInUser: testUser(),
-				Action:       "teams:write",
-				Resource:     "teams",
-				Attribute:    "id",
-				UIDs:         []string{"1", "3"},
-			},
-			want: map[string]accesscontrol.Metadata{
-				"1": {"teams:write": true},
-			},
-			wantErr: false,
-		},
-		{
-			name: "no permissions",
-			cmd: accesscontrol.EvaluateUserPermissionCommand{
-				SignedInUser: testUser(func(siu *user.SignedInUser) { siu.Permissions = nil }),
-			},
-			want:    map[string]accesscontrol.Metadata{},
-			wantErr: false,
-		},
-		{
-			name: "missing filtering field",
-			cmd: accesscontrol.EvaluateUserPermissionCommand{
-				SignedInUser: testUser(),
-				Action:       "teams:write",
-				Resource:     "teams",
-				UIDs:         []string{"1", "3"},
-			},
-			wantErr: true,
-		},
-		{
-			name: "missing filtering uids",
-			cmd: accesscontrol.EvaluateUserPermissionCommand{
-				SignedInUser: testUser(),
-				Resource:     "teams",
-				Attribute:    "id",
-				UIDs:         []string{},
-			},
-			wantErr: true,
-		},
-		{
-			name:    "missing all filtering fields",
-			cmd:     accesscontrol.EvaluateUserPermissionCommand{SignedInUser: testUser()},
-			wantErr: true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			ac := ProvideAccessControl(setting.NewCfg())
-
-			metadata, err := ac.EvaluateMetadata(context.Background(), tt.cmd)
-			if tt.wantErr {
-				require.Error(t, err)
-			}
-			require.EqualValues(t, tt.want, metadata)
 		})
 	}
 }

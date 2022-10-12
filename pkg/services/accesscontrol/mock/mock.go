@@ -200,11 +200,6 @@ func (m *Mock) DeleteUserPermissions(ctx context.Context, orgID, userID int64) e
 	return nil
 }
 
-func (m *Mock) EvaluateMetadata(ctx context.Context, cmd accesscontrol.EvaluateUserPermissionCommand) (map[string]accesscontrol.Metadata, error) {
-	// TODO
-	return nil, nil
-}
-
 // GetSimplifiedUsersPermissions returns all users' permissions filtered by an action prefix
 func (m *Mock) GetSimplifiedUsersPermissions(ctx context.Context, orgID int64, actionPrefix string) (map[int64][]accesscontrol.SimplifiedUserPermissionDTO, error) {
 	// TODO
