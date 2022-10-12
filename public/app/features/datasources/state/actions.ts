@@ -211,7 +211,7 @@ export function loadDataSourcePlugins(): ThunkResult<void> {
 }
 
 export function updateDataSource(dataSource: DataSourceSettings) {
-  return async (dispatch: (arg0: ThunkResult<Promise<DataSourceSettings>>) => DataSourceSettings) => {
+  return async (dispatch: (dataSourceSettings: ThunkResult<Promise<DataSourceSettings>>) => DataSourceSettings) => {
     await api.updateDataSource(dataSource);
     await getDatasourceSrv().reload();
     return dispatch(loadDataSource(dataSource.uid));

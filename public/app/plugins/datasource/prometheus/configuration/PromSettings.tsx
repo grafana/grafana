@@ -4,7 +4,6 @@ import semver from 'semver/preload';
 import {
   DataSourcePluginOptionsEditorProps,
   DataSourceSettings as DataSourceSettingsType,
-  DataSourceSettings,
   onUpdateDatasourceJsonDataOptionChecked,
   SelectableValue,
   updateDatasourcePluginJsonDataOption,
@@ -33,7 +32,9 @@ const httpOptions = [
   { value: 'GET', label: 'GET' },
 ];
 
-const prometheusFlavorSelectItems: Array<{ value: PromApplication; label: PromApplication }> = [
+type PrometheusSelectItemsType = Array<{ value: PromApplication; label: PromApplication }>;
+
+const prometheusFlavorSelectItems: PrometheusSelectItemsType = [
   { value: PromApplication.Prometheus, label: PromApplication.Prometheus },
   { value: PromApplication.Cortex, label: PromApplication.Cortex },
   { value: PromApplication.Mimir, label: PromApplication.Mimir },
@@ -69,6 +70,7 @@ const getVersionString = (version: string, flavor?: string): string | undefined 
   if (closestVersion) {
     const differenceBetweenActualAndClosest = semver.diff(closestVersion, version);
 
+    // Only return versions if the target is close to the actual.
     if (['patch', 'prepatch', 'prerelease', null].includes(differenceBetweenActualAndClosest)) {
       return closestVersion;
     }
@@ -95,9 +97,9 @@ const unableToDeterminePrometheusVersion = (error?: Error): void => {
  * @param onUpdate
  */
 const setPrometheusVersion = (
-  options: DataSourceSettings<PromOptions>,
-  onOptionsChange: (options: DataSourceSettings<PromOptions>) => void,
-  onUpdate: (dataSource: DataSourceSettingsType<PromOptions>) => Promise<DataSourceSettings<PromOptions>>
+  options: DataSourceSettingsType<PromOptions>,
+  onOptionsChange: (options: DataSourceSettingsType<PromOptions>) => void,
+  onUpdate: (dataSource: DataSourceSettingsType<PromOptions>) => Promise<DataSourceSettingsType<PromOptions>>
 ) => {
   // This will save the current state of the form, as the url is needed for this API call to function
   onUpdate(options)
