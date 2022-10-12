@@ -238,4 +238,8 @@ const (
 	// FlagQueryLibrary
 	// Reusable query library
 	FlagQueryLibrary = "queryLibrary"
+
+	// FlagMysqlAnsiQuotes
+	// Use double quote to escape keyword in Mysql query
+	FlagMysqlAnsiQuotes = "mysqlAnsiQuotes"
 )

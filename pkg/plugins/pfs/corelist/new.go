@@ -15,16 +15,16 @@ var coreOnce sync.Once
 // in the current version of Grafana.
 //
 // Go code within the grafana codebase should only ever call this with nil.
-func New(lib *thema.Library) pfs.TreeList {
+func New(rt *thema.Runtime) pfs.TreeList {
 	var tl pfs.TreeList
-	if lib == nil {
+	if rt == nil {
 		coreOnce.Do(func() {
-			coreTrees = coreTreeList(cuectx.ProvideThemaLibrary())
+			coreTrees = coreTreeList(cuectx.GrafanaThemaRuntime())
 		})
 		tl = make(pfs.TreeList, len(coreTrees))
 		copy(tl, coreTrees)
 	} else {
-		return coreTreeList(*lib)
+		return coreTreeList(rt)
 	}
 	return tl
 }

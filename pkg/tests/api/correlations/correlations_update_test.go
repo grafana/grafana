@@ -99,8 +99,10 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 
 	t.Run("inexistent source data source should result in a 404", func(t *testing.T) {
 		res := ctx.Patch(PatchParams{
-			url:  fmt.Sprintf("/api/datasources/uid/%s/correlations/%s", "some-ds-uid", "some-correlation-uid"),
-			body: `{}`,
+			url: fmt.Sprintf("/api/datasources/uid/%s/correlations/%s", "some-ds-uid", "some-correlation-uid"),
+			body: `{
+				"label": "some-label"
+			}`,
 			user: adminUser,
 		})
 		require.Equal(t, http.StatusNotFound, res.StatusCode)
@@ -145,7 +147,9 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 		res := ctx.Patch(PatchParams{
 			url:  fmt.Sprintf("/api/datasources/uid/%s/correlations/%s", readOnlyDS, "nonexistent-correlation-uid"),
 			user: adminUser,
-			body: `{}`,
+			body: `{
+				"label": "some-label"
+			}`,
 		})
 		require.Equal(t, http.StatusForbidden, res.StatusCode)
 
