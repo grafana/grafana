@@ -335,7 +335,7 @@ func TestConditionsCmdExecute(t *testing.T) {
 				Conditions: []condition{
 					{
 						QueryRefID: "A",
-						Reducer:    reducer("avg"),
+						Reducer:    classicReducer("avg"),
 						Operator:   "and",
 						Evaluator:  &thresholdEvaluator{"gt", 1},
 					},
