@@ -59,7 +59,7 @@ func (api *AccessControlAPI) orgUsersPermissions(c *models.ReqContext) response.
 	}
 
 	// Compute metadata
-	permissions, err := api.Service.GetSimplifiedUsersPermissions(c.Req.Context(), c.OrgID, actionPrefix)
+	permissions, err := api.Service.GetSimplifiedUsersPermissions(c.Req.Context(), c.SignedInUser, c.OrgID, actionPrefix)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "could not get org user permissions", err)
 	}

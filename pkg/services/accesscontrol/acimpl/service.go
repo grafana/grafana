@@ -3,6 +3,8 @@ package acimpl
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -228,7 +230,7 @@ func (s *Service) DeclarePluginRoles(pluginID string, registrations ...accesscon
 // GetSimplifiedUsersPermissions returns all users' permissions filtered by action prefixes
 // TODO fetch BASIC roles permissions in OSS
 // TODO filter based on user
-func (s *Service) GetSimplifiedUsersPermissions(ctx context.Context, orgID int64,
+func (s *Service) GetSimplifiedUsersPermissions(ctx context.Context, user *user.SignedInUser, orgID int64,
 	actionPrefix string) (map[int64][]accesscontrol.SimplifiedUserPermissionDTO, error) {
 
 	usersPermissions, err := s.store.GetUsersPermissions(ctx, orgID, actionPrefix)
@@ -236,9 +238,41 @@ func (s *Service) GetSimplifiedUsersPermissions(ctx context.Context, orgID int64
 		return nil, err
 	}
 
-	res := map[int64][]accesscontrol.SimplifiedUserPermissionDTO{}
+	// TODO replace with checker eventually
+	canView := func() func(userID int64) bool {
+		siuPermissions, ok := user.Permissions[orgID]
+		if !ok {
+			return func(_ int64) bool { return false }
+		}
+		scopes, ok := siuPermissions[accesscontrol.ActionUsersPermissionsRead]
+		if !ok {
+			return func(_ int64) bool { return false }
+		}
 
+		ids := map[int64]bool{}
+		for i := range scopes {
+			if strings.HasSuffix(scopes[i], "*") {
+				return func(_ int64) bool { return true }
+			}
+			parts := strings.Split(scopes[i], "")
+			if len(parts) != 3 {
+				continue
+			}
+			id, err := strconv.ParseInt(parts[2], 10, 64)
+			if err != nil {
+				continue
+			}
+			ids[id] = true
+		}
+
+		return func(userID int64) bool { return ids[userID] }
+	}()
+
+	res := map[int64][]accesscontrol.SimplifiedUserPermissionDTO{}
 	for userID, pSet := range usersPermissions {
+		if !canView(userID) {
+			continue
+		}
 		for action, scopes := range pSet {
 			res[userID] = append(res[userID], *accesscontrol.NewSimplifiedUserPermission(action, scopes))
 		}

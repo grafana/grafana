@@ -201,7 +201,7 @@ func (m *Mock) DeleteUserPermissions(ctx context.Context, orgID, userID int64) e
 }
 
 // GetSimplifiedUsersPermissions returns all users' permissions filtered by an action prefix
-func (m *Mock) GetSimplifiedUsersPermissions(ctx context.Context, orgID int64, actionPrefix string) (map[int64][]accesscontrol.SimplifiedUserPermissionDTO, error) {
+func (m *Mock) GetSimplifiedUsersPermissions(ctx context.Context, user *user.SignedInUser, orgID int64, actionPrefix string) (map[int64][]accesscontrol.SimplifiedUserPermissionDTO, error) {
 	// TODO
 	return nil, nil
 }

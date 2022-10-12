@@ -25,7 +25,7 @@ func (f FakeService) GetUserPermissions(ctx context.Context, user *user.SignedIn
 	return f.ExpectedPermissions, f.ExpectedErr
 }
 
-func (f FakeService) GetSimplifiedUsersPermissions(ctx context.Context, OrgID int64, ActionPrefix string) (map[int64][]accesscontrol.SimplifiedUserPermissionDTO, error) {
+func (f FakeService) GetSimplifiedUsersPermissions(ctx context.Context, user *user.SignedInUser, OrgID int64, ActionPrefix string) (map[int64][]accesscontrol.SimplifiedUserPermissionDTO, error) {
 	return f.ExpectedUsersPermissions, f.ExpectedErr
 }
 
