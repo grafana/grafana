@@ -80,61 +80,83 @@ func (d DashboardPermissionFilter) Where() (string, []interface{}) {
 }
 
 type AccessControlDashboardPermissionFilter struct {
-	User             *user.SignedInUser
-	dashboardActions []string
-	folderActions    []string
+	user            *user.SignedInUser
+	folderAction    string
+	dashboardAction string
 }
 
 // NewAccessControlDashboardPermissionFilter creates a new AccessControlDashboardPermissionFilter that is configured with specific actions calculated based on the models.PermissionType and query type
 func NewAccessControlDashboardPermissionFilter(user *user.SignedInUser, permissionLevel models.PermissionType, queryType string) AccessControlDashboardPermissionFilter {
 	needEdit := permissionLevel > models.PERMISSION_VIEW
-	folderActions := []string{dashboards.ActionFoldersRead}
-	var dashboardActions []string
+	folderAction := ""
+	dashboardAction := ""
 	if queryType == searchstore.TypeAlertFolder {
-		folderActions = append(folderActions, accesscontrol.ActionAlertingRuleRead)
+		folderAction = accesscontrol.ActionAlertingRuleRead
 		if needEdit {
-			folderActions = append(folderActions, accesscontrol.ActionAlertingRuleCreate)
+			folderAction = accesscontrol.ActionAlertingRuleCreate
 		}
 	} else {
-		dashboardActions = append(dashboardActions, dashboards.ActionDashboardsRead)
+		folderAction = dashboards.ActionFoldersRead
+		dashboardAction = dashboards.ActionDashboardsRead
 		if needEdit {
-			folderActions = append(folderActions, dashboards.ActionDashboardsCreate)
-			dashboardActions = append(dashboardActions, dashboards.ActionDashboardsWrite)
+			folderAction = dashboards.ActionFoldersWrite
+			dashboardAction = dashboards.ActionDashboardsWrite
 		}
 	}
-	return AccessControlDashboardPermissionFilter{User: user, folderActions: folderActions, dashboardActions: dashboardActions}
+	return AccessControlDashboardPermissionFilter{user: user, folderAction: folderAction, dashboardAction: dashboardAction}
 }
 
 func (f AccessControlDashboardPermissionFilter) Where() (string, []interface{}) {
+	if f.user == nil || f.user.Permissions == nil || f.user.Permissions[f.user.OrgID] == nil {
+		return "(1 = 0)", nil
+	}
+	dashWildcards := accesscontrol.WildcardsFromPrefix(dashboards.ScopeDashboardsPrefix)
+	folderWildcards := accesscontrol.WildcardsFromPrefix(dashboards.ScopeDashboardsPrefix)
+
+	filter, params := accesscontrol.UserRolesFilter(f.user.OrgID, f.user.UserID, f.user.Teams, accesscontrol.GetOrgRoles(f.user))
+	rolesFilter := "AND role_id IN(SELECT distinct id FROM role " + filter + ")"
 	var args []interface{}
 	builder := strings.Builder{}
-	builder.WriteString("(")
+	builder.WriteRune('(')
+	if f.dashboardAction != "" {
+		var hasWildcard bool
+		for _, scope := range f.user.Permissions[f.user.OrgID][f.dashboardAction] {
+			if dashWildcards.Contains(scope) || folderWildcards.Contains(scope) {
+				hasWildcard = true
+				builder.WriteString("(1 = 1 AND NOT dashboard.is_folder)")
+			}
+		}
 
-	if len(f.dashboardActions) > 0 {
-		builder.WriteString("((")
-
-		dashFilter, _ := accesscontrol.Filter(f.User, "dashboard.uid", dashboards.ScopeDashboardsPrefix, f.dashboardActions...)
-		builder.WriteString(dashFilter.Where)
-		args = append(args, dashFilter.Args...)
-
-		builder.WriteString(" OR dashboard.folder_id IN(SELECT id FROM dashboard WHERE ")
-		dashFolderFilter, _ := accesscontrol.Filter(f.User, "dashboard.uid", dashboards.ScopeFoldersPrefix, f.dashboardActions...)
-
-		builder.WriteString(dashFolderFilter.Where)
-		builder.WriteString(")) AND NOT dashboard.is_folder)")
-		args = append(args, dashFolderFilter.Args...)
+		if !hasWildcard {
+			builder.WriteString("(dashboard.uid IN (SELECT SUBSTR(scope, 16) as uid FROM permission WHERE action = ? AND scope LIKE 'dashboards:uid:%'  " + rolesFilter + " )")
+			builder.WriteString(" OR ")
+			builder.WriteString("dashboard.folder_id IN (SELECT id FROM dashboard as d WHERE d.uid IN (SELECT SUBSTR(scope, 13) as uid FROM permission WHERE action = ? AND scope LIKE 'folders:uid:%' " + rolesFilter + " )))")
+			args = append(args, f.dashboardAction)
+			args = append(args, params...)
+			args = append(args, f.dashboardAction)
+			args = append(args, params...)
+		}
 	}
 
-	if len(f.folderActions) > 0 {
-		if len(f.dashboardActions) > 0 {
+	if f.folderAction != "" {
+		if f.dashboardAction != "" {
 			builder.WriteString(" OR ")
 		}
-		builder.WriteString("(")
-		folderFilter, _ := accesscontrol.Filter(f.User, "dashboard.uid", dashboards.ScopeFoldersPrefix, f.folderActions...)
-		builder.WriteString(folderFilter.Where)
-		builder.WriteString(" AND dashboard.is_folder)")
-		args = append(args, folderFilter.Args...)
+
+		var hasWildcard bool
+		for _, scope := range f.user.Permissions[f.user.OrgID][f.dashboardAction] {
+			if folderWildcards.Contains(scope) {
+				hasWildcard = true
+				builder.WriteString("(1 = 1 AND dashboard.is_folder)")
+			}
+		}
+		if !hasWildcard {
+			builder.WriteString("(dashboard.uid IN (SELECT SUBSTR(scope, 13) as uid FROM permission WHERE action = ? AND scope LIKE 'folders:uid:%' " + rolesFilter + "))")
+			args = append(args, f.folderAction)
+			args = append(args, params...)
+		}
 	}
-	builder.WriteString(")")
+	builder.WriteRune(')')
+
 	return builder.String(), args
 }
