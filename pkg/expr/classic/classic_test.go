@@ -328,6 +328,29 @@ func TestConditionsCmdExecute(t *testing.T) {
 			name: "single query with no data",
 			vars: mathexp.Vars{
 				"A": mathexp.Results{
+					Values: []mathexp.Value{mathexp.NoData{}.New()},
+				},
+			},
+			conditionsCmd: &ConditionsCmd{
+				Conditions: []condition{
+					{
+						InputRefID: "A",
+						Reducer:    reducer("avg"),
+						Operator:   "and",
+						Evaluator:  &thresholdEvaluator{"gt", 1},
+					},
+				},
+			},
+			resultNumber: func() mathexp.Number {
+				v := valBasedNumber(nil)
+				v.SetMeta([]EvalMatch{{Metric: "NoData"}})
+				return v
+			},
+		},
+		{
+			name: "single query with no values",
+			vars: mathexp.Vars{
+				"A": mathexp.Results{
 					Values: []mathexp.Value{},
 				},
 			},

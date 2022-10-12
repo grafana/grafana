@@ -82,6 +82,11 @@ func (cmd *ConditionsCmd) Execute(_ context.Context, vars mathexp.Vars) (mathexp
 			var reducedNum mathexp.Number
 			var name string
 			switch v := val.(type) {
+			case mathexp.NoData:
+				// To keep this code as simple as possible we translate mathexp.NoData into a
+				// mathexp.Number with a nil value so number.GetFloat64Value() returns nil
+				reducedNum = mathexp.NewNumber("no data", nil)
+				reducedNum.SetValue(nil)
 			case mathexp.Series:
 				reducedNum = c.Reducer.Reduce(v)
 				name = v.GetName()
