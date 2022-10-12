@@ -110,6 +110,8 @@ export const metricAggregationConfig: MetricsConfiguration = {
     defaults: {},
   },
   moving_avg: {
+    // deprecated in 6.4.0, removed in 8.0.0,
+    // recommended replacement is moving_fn
     label: 'Moving Average',
     requiresField: true,
     isPipelineAgg: true,

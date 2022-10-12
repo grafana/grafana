@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -52,7 +53,8 @@ func (d *PublicDashboardStoreImpl) GetDashboard(ctx context.Context, dashboardUi
 	return dashboard, err
 }
 
-// Retrieves public dashboard configuration
+// Retrieves public dashboard. This method makes 2 queries to the db so that in the
+// even that the underlying dashboard is missing it will return a 404.
 func (d *PublicDashboardStoreImpl) GetPublicDashboard(ctx context.Context, accessToken string) (*PublicDashboard, *models.Dashboard, error) {
 	if accessToken == "" {
 		return nil, nil, ErrPublicDashboardIdentifierNotSet
@@ -180,10 +182,10 @@ func (d *PublicDashboardStoreImpl) SavePublicDashboardConfig(ctx context.Context
 	return err
 }
 
-// updates existing public dashboard configuration
+// Updates existing public dashboard configuration
 func (d *PublicDashboardStoreImpl) UpdatePublicDashboardConfig(ctx context.Context, cmd SavePublicDashboardConfigCommand) error {
 	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		timeSettingsJSON, err := cmd.PublicDashboard.TimeSettings.MarshalJSON()
+		timeSettingsJSON, err := json.Marshal(cmd.PublicDashboard.TimeSettings)
 		if err != nil {
 			return err
 		}
@@ -205,6 +207,7 @@ func (d *PublicDashboardStoreImpl) UpdatePublicDashboardConfig(ctx context.Conte
 	return err
 }
 
+// Responds true if public dashboard for a dashboard exists and isEnabled
 func (d *PublicDashboardStoreImpl) PublicDashboardEnabled(ctx context.Context, dashboardUid string) (bool, error) {
 	hasPublicDashboard := false
 	err := d.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
@@ -223,6 +226,8 @@ func (d *PublicDashboardStoreImpl) PublicDashboardEnabled(ctx context.Context, d
 	return hasPublicDashboard, err
 }
 
+// Responds true if accessToken exists and isEnabled. May be renamed in the
+// future
 func (d *PublicDashboardStoreImpl) AccessTokenExists(ctx context.Context, accessToken string) (bool, error) {
 	hasPublicDashboard := false
 	err := d.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
@@ -239,4 +244,21 @@ func (d *PublicDashboardStoreImpl) AccessTokenExists(ctx context.Context, access
 	})
 
 	return hasPublicDashboard, err
+}
+
+// Responds with OrgId from if exists and isEnabled.
+func (d *PublicDashboardStoreImpl) GetPublicDashboardOrgId(ctx context.Context, accessToken string) (int64, error) {
+	var orgId int64
+	err := d.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		sql := "SELECT org_id FROM dashboard_public WHERE access_token=? AND is_enabled=true"
+
+		_, err := dbSession.SQL(sql, accessToken).Get(&orgId)
+		if err != nil {
+			return err
+		}
+
+		return err
+	})
+
+	return orgId, err
 }

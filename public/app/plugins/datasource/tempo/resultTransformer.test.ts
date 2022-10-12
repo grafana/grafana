@@ -2,13 +2,7 @@ import { collectorTypes } from '@opentelemetry/exporter-collector';
 
 import { FieldType, MutableDataFrame, PluginType, DataSourceInstanceSettings, dateTime } from '@grafana/data';
 
-import {
-  SearchResponse,
-  createTableFrame,
-  transformToOTLP,
-  transformFromOTLP,
-  createTableFrameFromSearch,
-} from './resultTransformer';
+import { createTableFrame, transformToOTLP, transformFromOTLP, createTableFrameFromSearch } from './resultTransformer';
 import {
   badOTLPResponse,
   otlpDataFrameToResponse,
@@ -16,6 +10,7 @@ import {
   otlpResponse,
   tempoSearchResponse,
 } from './testResponse';
+import { TraceSearchMetadata } from './types';
 
 const defaultSettings: DataSourceInstanceSettings = {
   id: 0,
@@ -94,7 +89,7 @@ describe('createTableFrameFromSearch()', () => {
   const mockTimeUnix = dateTime(1643357709095).valueOf();
   global.Date.now = jest.fn(() => mockTimeUnix);
   test('transforms search response to dataFrame', () => {
-    const frame = createTableFrameFromSearch(tempoSearchResponse.traces as SearchResponse[], defaultSettings);
+    const frame = createTableFrameFromSearch(tempoSearchResponse.traces as TraceSearchMetadata[], defaultSettings);
     expect(frame.fields[0].name).toBe('traceID');
     expect(frame.fields[0].values.get(0)).toBe('e641dcac1c3a0565');
 

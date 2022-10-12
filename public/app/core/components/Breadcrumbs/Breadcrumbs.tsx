@@ -9,13 +9,14 @@ import { Breadcrumb } from './types';
 
 export interface Props {
   breadcrumbs: Breadcrumb[];
+  className?: string;
 }
 
-export function Breadcrumbs({ breadcrumbs }: Props) {
+export function Breadcrumbs({ breadcrumbs, className }: Props) {
   const styles = useStyles2(getStyles);
 
   return (
-    <nav aria-label="Breadcrumbs">
+    <nav aria-label="Breadcrumbs" className={className}>
       <ol className={styles.breadcrumbs}>
         {breadcrumbs.map((breadcrumb, index) => (
           <BreadcrumbItem {...breadcrumb} isCurrent={index === breadcrumbs.length - 1} key={index} />

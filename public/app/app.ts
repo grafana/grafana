@@ -34,6 +34,7 @@ import {
 } from '@grafana/runtime';
 import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
 import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
+import { setPluginPage } from '@grafana/runtime/src/components/PluginPage';
 import { getScrollbarWidth } from '@grafana/ui';
 import config from 'app/core/config';
 import { arrayMove } from 'app/core/utils/arrayMove';
@@ -44,7 +45,9 @@ import getDefaultMonacoLanguages from '../lib/monaco-languages';
 import { AppWrapper } from './AppWrapper';
 import { AppChromeService } from './core/components/AppChrome/AppChromeService';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/components/OptionsUI/registry';
+import { PluginPage } from './core/components/PageNew/PluginPage';
 import { GrafanaContextType } from './core/context/GrafanaContext';
+import { initializeI18n } from './core/internationalization';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
 import { ModalManager } from './core/services/ModalManager';
 import { backendSrv } from './core/services/backend_srv';
@@ -53,10 +56,12 @@ import { Echo } from './core/services/echo/Echo';
 import { reportPerformance } from './core/services/echo/EchoSrv';
 import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
 import { ApplicationInsightsBackend } from './core/services/echo/backends/analytics/ApplicationInsightsBackend';
+import { GA4EchoBackend } from './core/services/echo/backends/analytics/GA4Backend';
 import { GAEchoBackend } from './core/services/echo/backends/analytics/GABackend';
 import { RudderstackBackend } from './core/services/echo/backends/analytics/RudderstackBackend';
 import { GrafanaJavascriptAgentBackend } from './core/services/echo/backends/grafana-javascript-agent/GrafanaJavascriptAgentBackend';
 import { SentryEchoBackend } from './core/services/echo/backends/sentry/SentryBackend';
+import { KeybindingSrv } from './core/services/keybindingSrv';
 import { initDevFeatures } from './dev';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
@@ -97,12 +102,18 @@ export class GrafanaApp {
 
   async init() {
     try {
+      // Let iframe container know grafana has started loading
+      parent.postMessage('GrafanaAppInit', '*');
+
+      const loadLocalePromise = initializeI18n(config.bootData.user.locale);
+
       setBackendSrv(backendSrv);
       initEchoSrv();
       addClassIfNoOverlayScrollbar();
       setLocale(config.bootData.user.locale);
       setWeekStart(config.bootData.user.weekStart);
       setPanelRenderer(PanelRenderer);
+      setPluginPage(PluginPage);
       setPanelDataErrorView(PanelDataErrorView);
       setLocationSrv(locationService);
       setTimeZoneResolver(() => config.bootData.user.timezone);
@@ -148,13 +159,26 @@ export class GrafanaApp {
       const modalManager = new ModalManager();
       modalManager.init();
 
-      // Preload selected app plugins
-      await preloadPlugins(config.pluginsToPreload);
+      await Promise.all([
+        loadLocalePromise,
+
+        // Preload selected app plugins
+        await preloadPlugins(config.pluginsToPreload),
+      ]);
+
+      // initialize chrome service
+      const queryParams = locationService.getSearchObject();
+      const chromeService = new AppChromeService();
+      const keybindingsService = new KeybindingSrv(locationService, chromeService);
+
+      // Read initial kiosk mode from url at app startup
+      chromeService.setKioskModeFromUrl(queryParams.kiosk);
 
       this.context = {
         backend: backendSrv,
         location: locationService,
-        chrome: new AppChromeService(),
+        chrome: chromeService,
+        keybindings: keybindingsService,
         config,
       };
 
@@ -236,6 +260,14 @@ function initEchoSrv() {
     registerEchoBackend(
       new GAEchoBackend({
         googleAnalyticsId: config.googleAnalyticsId,
+      })
+    );
+  }
+
+  if (config.googleAnalytics4Id) {
+    registerEchoBackend(
+      new GA4EchoBackend({
+        googleAnalyticsId: config.googleAnalytics4Id,
       })
     );
   }

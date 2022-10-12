@@ -18,25 +18,6 @@ func TestProcessManager_Start(t *testing.T) {
 		require.ErrorIs(t, err, backendplugin.ErrPluginNotRegistered)
 	})
 
-	t.Run("Cannot start a core plugin", func(t *testing.T) {
-		pluginID := "core-datasource"
-
-		bp := newFakeBackendPlugin(true)
-		p := createPlugin(t, bp, func(plugin *plugins.Plugin) {
-			plugin.ID = pluginID
-			plugin.Class = plugins.Core
-			plugin.Backend = true
-		})
-
-		m := NewManager(newFakePluginRegistry(map[string]*plugins.Plugin{
-			pluginID: p,
-		}))
-		err := m.Start(context.Background(), pluginID)
-		require.NoError(t, err)
-		require.True(t, p.Exited())
-		require.Zero(t, bp.startCount)
-	})
-
 	t.Run("Plugin state determines process start", func(t *testing.T) {
 		tcs := []struct {
 			name               string

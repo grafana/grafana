@@ -1,6 +1,6 @@
 import { sortBy } from 'lodash';
 
-import { urlUtil, UrlQueryMap, Labels, DataSourceInstanceSettings } from '@grafana/data';
+import { urlUtil, UrlQueryMap, Labels, DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { alertInstanceKey } from 'app/features/alerting/unified/utils/rules';
 import { SortOrder } from 'app/plugins/panel/alertlist/types';
@@ -98,7 +98,7 @@ export function makeLabelBasedSilenceLink(alertManagerSourceName: string, labels
   return `${config.appSubUrl}/alerting/silence/new?${silenceUrlParams.toString()}`;
 }
 
-export function makeDataSourceLink<T>(dataSource: DataSourceInstanceSettings<T>) {
+export function makeDataSourceLink<T extends DataSourceJsonData>(dataSource: DataSourceInstanceSettings<T>) {
   return `${config.appSubUrl}/datasources/edit/${dataSource.uid}`;
 }
 

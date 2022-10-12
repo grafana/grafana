@@ -63,7 +63,7 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 
 		sc.userService.ExpectedUser = &user.User{Password: encoded, ID: id, Salt: salt}
 		sc.userService.ExpectedSignedInUser = &user.SignedInUser{UserID: id}
-		login.ProvideService(sc.mockSQLStore, &logintest.LoginServiceFake{}, sc.userService)
+		login.ProvideService(sc.mockSQLStore, &logintest.LoginServiceFake{}, nil, sc.userService)
 
 		authHeader := util.GetBasicAuthHeader("myUser", password)
 		sc.fakeReq("GET", "/").withAuthorizationHeader(authHeader).exec()

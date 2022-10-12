@@ -70,10 +70,10 @@ export class PreviewSettings extends PureComponent<Props, State> {
             </tr>
             <tr>
               <td>
-                <img src={getThumbnailURL(uid, false)} style={imgstyle} />
+                <img src={getThumbnailURL(uid, false)} alt="Preview of dashboard in dark theme" style={imgstyle} />
               </td>
               <td>
-                <img src={getThumbnailURL(uid, true)} style={imgstyle} />
+                <img src={getThumbnailURL(uid, true)} alt="Preview of dashboard in light theme" style={imgstyle} />
               </td>
             </tr>
             <tr>

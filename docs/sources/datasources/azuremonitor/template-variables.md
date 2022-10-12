@@ -20,7 +20,7 @@ weight: 2
 
 Instead of hard-coding values for fields like resource group or resource name in your queries, you can use variables in their place to create more interactive, dynamic, and reusable dashboards.
 
-Check out the [Templating]({{< relref "../../variables/" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../../dashboards/variables" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 The Azure Monitor data source provides the following queries you can specify in the Query field in the Variable edit view

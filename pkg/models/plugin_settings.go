@@ -23,6 +23,14 @@ type PluginSetting struct {
 	Updated time.Time
 }
 
+type PluginSettingInfo struct {
+	PluginID      string `xorm:"plugin_id"`
+	OrgID         int64  `xorm:"org_id"`
+	Enabled       bool   `xorm:"enabled"`
+	Pinned        bool   `xorm:"pinned"`
+	PluginVersion string `xorm:"plugin_id"`
+}
+
 // ----------------------
 // COMMANDS
 

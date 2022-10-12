@@ -3,7 +3,6 @@ package kvstore
 import (
 	"context"
 	"encoding/base64"
-	"errors"
 	"sync"
 	"time"
 
@@ -30,10 +29,7 @@ type cachedDecrypted struct {
 	value   string
 }
 
-var (
-	b64                   = base64.RawStdEncoding
-	errFallbackNotAllowed = errors.New("fallback not allowed for sql secret store")
-)
+var b64 = base64.RawStdEncoding
 
 func NewSQLSecretsKVStore(sqlStore sqlstore.Store, secretsService secrets.Service, logger log.Logger) *SecretsKVStoreSQL {
 	return &SecretsKVStoreSQL{
@@ -242,14 +238,6 @@ func (kv *SecretsKVStoreSQL) GetAll(ctx context.Context) ([]Item, error) {
 	}
 
 	return items, err
-}
-
-func (kv *SecretsKVStoreSQL) Fallback() SecretsKVStore {
-	return nil
-}
-
-func (kv *SecretsKVStoreSQL) SetFallback(_ SecretsKVStore) error {
-	return errFallbackNotAllowed
 }
 
 func (kv *SecretsKVStoreSQL) getDecryptedValue(ctx context.Context, item Item) ([]byte, error) {

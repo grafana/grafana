@@ -48,18 +48,14 @@ func (m *Manager) Start(ctx context.Context, pluginID string) error {
 		return nil
 	}
 
-	if p.IsCorePlugin() {
-		return nil
-	}
-
-	m.log.Info("Plugin registered", "pluginID", p.ID)
 	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	if err := startPluginAndRestartKilledProcesses(ctx, p); err != nil {
 		return err
 	}
 
 	p.Logger().Debug("Successfully started backend plugin process")
-	m.mu.Unlock()
 	return nil
 }
 
@@ -103,6 +99,10 @@ func (m *Manager) shutdown(ctx context.Context) {
 func startPluginAndRestartKilledProcesses(ctx context.Context, p *plugins.Plugin) error {
 	if err := p.Start(ctx); err != nil {
 		return err
+	}
+
+	if p.IsCorePlugin() {
+		return nil
 	}
 
 	go func(ctx context.Context, p *plugins.Plugin) {

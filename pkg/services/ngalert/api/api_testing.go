@@ -40,11 +40,10 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *models.ReqContext, body a
 
 	evalCond := ngmodels.Condition{
 		Condition: body.GrafanaManagedCondition.Condition,
-		OrgID:     c.SignedInUser.OrgID,
 		Data:      body.GrafanaManagedCondition.Data,
 	}
 
-	if err := validateCondition(c.Req.Context(), evalCond, c.SignedInUser, c.SkipCache, srv.DatasourceCache); err != nil {
+	if err := srv.evaluator.Validate(c.Req.Context(), c.SignedInUser, evalCond); err != nil {
 		return ErrResp(http.StatusBadRequest, err, "invalid condition")
 	}
 
@@ -53,7 +52,7 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *models.ReqContext, body a
 		now = timeNow()
 	}
 
-	evalResults := srv.evaluator.ConditionEval(c.Req.Context(), evalCond, now)
+	evalResults := srv.evaluator.ConditionEval(c.Req.Context(), c.SignedInUser, evalCond, now)
 
 	frame := evalResults.AsDataFrame()
 	return response.JSONStreaming(http.StatusOK, util.DynMap{
@@ -111,11 +110,7 @@ func (srv TestingApiSrv) RouteEvalQueries(c *models.ReqContext, cmd apimodels.Ev
 		return ErrResp(http.StatusUnauthorized, fmt.Errorf("%w to query one or many data sources used by the rule", ErrAuthorization), "")
 	}
 
-	if _, err := validateQueriesAndExpressions(c.Req.Context(), cmd.Data, c.SignedInUser, c.SkipCache, srv.DatasourceCache); err != nil {
-		return ErrResp(http.StatusBadRequest, err, "invalid queries or expressions")
-	}
-
-	evalResults, err := srv.evaluator.QueriesAndExpressionsEval(c.Req.Context(), c.SignedInUser.OrgID, cmd.Data, now)
+	evalResults, err := srv.evaluator.QueriesAndExpressionsEval(c.Req.Context(), c.SignedInUser, cmd.Data, now)
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "Failed to evaluate queries and expressions")
 	}

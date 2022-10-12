@@ -58,6 +58,9 @@ auth_url = https://gitlab.com/oauth/authorize
 token_url = https://gitlab.com/oauth/token
 api_url = https://gitlab.com/api/v4
 allowed_groups =
+role_attribute_path =
+role_attribute_strict = false
+allow_assign_grafana_admin = false
 ```
 
 You may have to set the `root_url` option of `[server]` for the callback URL to be
@@ -102,7 +105,7 @@ characters. Make sure you always use the group or subgroup name as it appears
 in the URL of the group or subgroup.
 
 Here's a complete example with `allow_sign_up` enabled, with access limited to
-the `example` and `foo/bar` groups. The example also promotes all GitLab Admins to Grafana Admins:
+the `example` and `foo/bar` groups. The example also promotes all GitLab Admins to Grafana organization admins:
 
 ```ini
 [auth.gitlab]
@@ -116,6 +119,8 @@ token_url = https://gitlab.com/oauth/token
 api_url = https://gitlab.com/api/v4
 allowed_groups = example, foo/bar
 role_attribute_path = is_admin && 'Admin' || 'Viewer'
+role_attribute_strict = true
+allow_assign_grafana_admin = false
 ```
 
 ### Map roles
@@ -124,9 +129,23 @@ You can use GitLab OAuth to map roles. During mapping, Grafana checks for the pr
 
 For the path lookup, Grafana uses JSON obtained from querying GitLab's API [`/api/v4/user`](https://docs.gitlab.com/ee/api/users.html#list-current-user-for-normal-users) endpoint and a `groups` key containing all of the user's teams. The result of evaluating the `role_attribute_path` JMESPath expression must be a valid Grafana role, for example, `Viewer`, `Editor` or `Admin`. For more information about roles and permissions in Grafana, refer to [Roles and permissions]({{< relref "../../../administration/roles-and-permissions/" >}}).
 
+> **Warning**: Currently if no organization role mapping is found for a user, Grafana doesn't
+> update the user's organization role. This is going to change in Grafana 10. To avoid overriding manually set roles,
+> enable the `oauth_skip_org_role_update_sync` option.
+> See [configure-grafana]({{< relref "../../configure-grafana#oauth_skip_org_role_update_sync" >}}) for more information.
+
+On first login, if the`role_attribute_path` property does not return a role, then the user is assigned the role
+specified by [the `auto_assign_org_role` option]({{< relref "../../configure-grafana#auto_assign_org_role" >}}).
+You can disable this default role assignment by setting `role_attribute_strict = true`.
+It denies user access if no role or an invalid role is returned.
+
+> **Warning**: With Grafana 10, **on every login**, if the`role_attribute_path` property does not return a role,
+> then the user is assigned the role specified by
+> [the `auto_assign_org_role` option]({{< relref "../../configure-grafana#auto_assign_org_role" >}}).
+
 An example Query could look like the following:
 
-```bash
+```ini
 role_attribute_path = is_admin && 'Admin' || 'Viewer'
 ```
 
@@ -139,11 +158,32 @@ Groups can also be used to map roles. Group name (lowercased and unique) is used
 For instance, if you have a group with display name 'Example-Group' you can use the following snippet to
 ensure those members inherit the role 'Editor'.
 
-```bash
+```ini
 role_attribute_path = contains(groups[*], 'example-group') && 'Editor' || 'Viewer'
 ```
 
 Note: If a match is found in other fields, groups will be ignored.
+
+#### Map server administrator privileges
+
+> Available in Grafana v9.2 and later versions.
+
+If the application role received by Grafana is `GrafanaAdmin`, Grafana grants the user server administrator privileges.  
+This is useful if you want to grant server administrator privileges to a subset of users.  
+Grafana also assigns the user the `Admin` role of the default organization.
+
+The setting `allow_assign_grafana_admin` under `[auth.gitlab]` must be set to `true` for this to work.  
+If the setting is set to `false`, the user is assigned the role of `Admin` of the default organization, but not server administrator privileges.
+
+```ini
+allow_assign_grafana_admin = true
+```
+
+Example:
+
+```ini
+role_attribute_path = is_admin && 'GrafanaAdmin' || 'Viewer'
+```
 
 ### Team Sync (Enterprise only)
 

@@ -101,7 +101,7 @@ export function GeneralSettingsUnconnected({
             <Input id="description-input" name="description" onBlur={onBlur} defaultValue={dashboard.description} />
           </Field>
           <Field label="Tags">
-            <TagsInput id="tags-input" tags={dashboard.tags} onChange={onTagsChange} />
+            <TagsInput id="tags-input" tags={dashboard.tags} onChange={onTagsChange} width={40} />
           </Field>
           <Field label="Folder">
             <FolderPicker

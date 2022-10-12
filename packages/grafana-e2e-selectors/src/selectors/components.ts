@@ -123,10 +123,13 @@ export const Components = {
     DataPane: {
       content: 'Panel editor data pane content',
     },
-    applyButton: 'Apply changes and go back to dashboard',
+    applyButton: 'data-testid Apply changes and go back to dashboard',
     toggleVizPicker: 'toggle-viz-picker',
     toggleVizOptions: 'toggle-viz-options',
     toggleTableView: 'toggle-table-view',
+
+    // [Geomap] Map controls
+    measureButton: 'show measure tools',
   },
   PanelInspector: {
     Data: {
@@ -315,6 +318,8 @@ export const Components = {
     expandFolder: (sectionId: string) => `data-testid Expand folder ${sectionId}`,
     dashboardItem: (item: string) => `${Components.Search.dashboardItems} ${item}`,
     dashboardCard: (item: string) => `data-testid Search card ${item}`,
+    folderHeader: (folderName: string) => `data-testid Folder header ${folderName}`,
+    folderContent: (folderName: string) => `data-testid Folder content ${folderName}`,
     dashboardItems: 'data-testid Dashboard search item',
   },
   DashboardLinks: {
@@ -367,5 +372,8 @@ export const Components = {
   FileUpload: {
     inputField: 'data-testid-file-upload-input-field',
     fileNameSpan: 'data-testid-file-upload-file-name',
+  },
+  DebugOverlay: {
+    wrapper: 'debug-overlay',
   },
 };

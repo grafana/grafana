@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
-//Internal interval and range variables
+// Internal interval and range variables
 const (
 	varInterval     = "$__interval"
 	varIntervalMs   = "$__interval_ms"
@@ -21,8 +21,8 @@ const (
 	varRateInterval = "$__rate_interval"
 )
 
-//Internal interval and range variables with {} syntax
-//Repetitive code, we should have functionality to unify these
+// Internal interval and range variables with {} syntax
+// Repetitive code, we should have functionality to unify these
 const (
 	varIntervalAlt     = "${__interval}"
 	varIntervalMsAlt   = "${__interval_ms}"
@@ -133,8 +133,8 @@ func (query *Query) TimeRange() TimeRange {
 	return TimeRange{
 		Step: query.Step,
 		// Align query range to step. It rounds start and end down to a multiple of step.
-		Start: alignTimeRange(query.Start, query.Step, query.UtcOffsetSec),
-		End:   alignTimeRange(query.End, query.Step, query.UtcOffsetSec),
+		Start: AlignTimeRange(query.Start, query.Step, query.UtcOffsetSec),
+		End:   AlignTimeRange(query.End, query.Step, query.UtcOffsetSec),
 	}
 }
 
@@ -181,7 +181,7 @@ func calculateRateInterval(interval time.Duration, scrapeInterval string, interv
 		return time.Duration(0)
 	}
 
-	rateInterval := time.Duration(int(math.Max(float64(interval+scrapeIntervalDuration), float64(4)*float64(scrapeIntervalDuration))))
+	rateInterval := time.Duration(int64(math.Max(float64(interval+scrapeIntervalDuration), float64(4)*float64(scrapeIntervalDuration))))
 	return rateInterval
 }
 
@@ -225,6 +225,8 @@ func isVariableInterval(interval string) bool {
 	return false
 }
 
-func alignTimeRange(t time.Time, step time.Duration, offset int64) time.Time {
-	return time.Unix(int64(math.Floor((float64(t.Unix()+offset)/step.Seconds()))*step.Seconds()-float64(offset)), 0)
+func AlignTimeRange(t time.Time, step time.Duration, offset int64) time.Time {
+	offsetNano := float64(offset * 1e9)
+	stepNano := float64(step.Nanoseconds())
+	return time.Unix(0, int64(math.Floor((float64(t.UnixNano())+offsetNano)/stepNano)*stepNano-offsetNano)).UTC()
 }

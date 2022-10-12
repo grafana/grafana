@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { useTheme2 } from '../../themes';
-import { IconButton } from '../IconButton/IconButton';
+import { IconButton, Props as IconButtonProps } from '../IconButton/IconButton';
 
 import { getSelectStyles } from './getSelectStyles';
 
@@ -21,7 +21,7 @@ export const MultiValueContainer: React.FC<MultiValueContainerProps> = ({ innerP
 };
 
 export type MultiValueRemoveProps = {
-  innerProps: any;
+  innerProps: IconButtonProps;
 };
 
 export const MultiValueRemove: React.FC<MultiValueRemoveProps> = ({ children, innerProps }) => {

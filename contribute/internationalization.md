@@ -7,6 +7,10 @@ Grafana uses the [LinguiJS](https://github.com/lingui/js-lingui) framework for m
 - Use `<Trans id="search-results.panel-link">Go to {panel.title}</Trans>` in code to add a translatable phrase
 - Translations are stored in .po files in `public/locales/{locale}/messages.po`
 - If a particular phrase is not available in the a language then it will fall back to English
+- To update phrases in English, edit the `en/messages.po` file, not the source JSX
+- To update phrases in any translated language, edit the phrase in Crowdin
+
+**Please note:** We do not currently accept contributions for translations. Please do not submit pull requests for messages.po files - they will be rejected.
 
 ## How to add a new translation phrase
 
@@ -33,6 +37,18 @@ const ErrorMessage = ({ id, message }) => <Trans id={`errors.${id}`}>There was a
 2. Upon reload, the default English phrase will appear on the page.
 
 3. Before submitting your PR, run the `yarn i18n:extract` command to extract the messages you added into the `messages.po` file and make them available for translation.
+
+## How to add a new language
+
+1. Add new locale in Crowdin and sync files to repo
+   1. Grafana OSS Crowdin project -> "dot dot dot" menu in top right -> Target languages
+   2. Grafana OSS Crowdin project -> Integrations -> Github -> Sync Now
+   3. If Crowdin's locale code is different from our IETF language tag, add a custom mapping in Project Settings -> Language mapping
+2. Update `public/app/core/internationalization/constants.ts` (add new constant, and add to `VALID_LOCALES`)
+3. Update `public/app/core/internationalization/index.tsx` to add the message loader for the new locale
+4. Update `public/app/core/components/SharedPreferences/SharedPreferences.tsx` to add the new locale to the options.
+5. Update `public/locales/i18next-parser.config.js` to add the new locale to `locales`
+6. Run `yarn i18n:extract` and commit the result
 
 ## How translations work in Grafana
 

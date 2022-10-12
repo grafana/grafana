@@ -7,6 +7,7 @@ aliases:
   - /docs/grafana/latest/enterprise/license/license-expiration/
   - /docs/grafana/latest/enterprise/license-restrictions/
   - /docs/grafana/latest/enterprise/license/license-restrictions/
+  - /docs/grafana/latest/administration/enterprise-licensing/
 description: Activate and manage a Grafana Enterprise license
 keywords:
   - grafana

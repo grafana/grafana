@@ -26,7 +26,9 @@ func TestFatalPluginErr_PluginFailsToStartWithFatalFlagNotSet(t *testing.T) {
 	require.IsType(t, &CachedKVStore{}, p.SecretsKVStore)
 
 	cachedKv, _ := p.SecretsKVStore.(*CachedKVStore)
-	assert.IsType(t, &SecretsKVStoreSQL{}, cachedKv.GetUnwrappedStore())
+	store, err := GetUnwrappedStoreFromCache(cachedKv)
+	require.NoError(t, err)
+	assert.IsType(t, &SecretsKVStoreSQL{}, store)
 }
 
 // With fatal flag not set, store a secret in the plugin while backwards compatibility is disabled
@@ -52,7 +54,7 @@ func TestFatalPluginErr_FatalFlagGetsUnSetWithBackwardsCompatEnabled(t *testing.
 	require.NotNil(t, p.SecretsKVStore)
 
 	// setup - store secret and manually bypassing the remote plugin impl
-	_, err = p.PluginManager.SecretsManager().SecretsManager.SetSecret(context.Background(), &secretsmanagerplugin.SetSecretRequest{
+	_, err = p.PluginManager.SecretsManager(context.Background()).SecretsManager.SetSecret(context.Background(), &secretsmanagerplugin.SetSecretRequest{
 		KeyDescriptor: &secretsmanagerplugin.Key{
 			OrgId:     0,
 			Namespace: "postgres",

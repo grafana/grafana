@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/internal"
+	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 
 	"github.com/google/uuid"
@@ -18,14 +20,14 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	dashboardsDB "github.com/grafana/grafana/pkg/services/dashboards/database"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards"
-	database "github.com/grafana/grafana/pkg/services/publicdashboards/database"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/database"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
-var timeSettings, _ = simplejson.NewJson([]byte(`{"from": "now-12h", "to": "now"}`))
-var defaultPubdashTimeSettings, _ = simplejson.NewJson([]byte(`{}`))
+var timeSettings = &TimeSettings{From: "now-12h", To: "now"}
+var defaultPubdashTimeSettings = &TimeSettings{}
 var dashboardData = simplejson.NewFromAny(map[string]interface{}{"time": map[string]interface{}{"from": "now-8h", "to": "now"}})
 var SignedInUser = &user.SignedInUser{UserID: 1234, Login: "user@login.com"}
 
@@ -116,7 +118,7 @@ func TestGetPublicDashboard(t *testing.T) {
 func TestSavePublicDashboard(t *testing.T) {
 	t.Run("Saving public dashboard", func(t *testing.T) {
 		sqlStore := sqlstore.InitTestDB(t)
-		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures())
+		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 		publicdashboardStore := database.ProvideStore(sqlStore)
 		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{})
 
@@ -160,7 +162,7 @@ func TestSavePublicDashboard(t *testing.T) {
 
 	t.Run("Validate pubdash has default time setting value", func(t *testing.T) {
 		sqlStore := sqlstore.InitTestDB(t)
-		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures())
+		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 		publicdashboardStore := database.ProvideStore(sqlStore)
 		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{})
 
@@ -190,7 +192,7 @@ func TestSavePublicDashboard(t *testing.T) {
 
 	t.Run("Validate pubdash whose dashboard has template variables returns error", func(t *testing.T) {
 		sqlStore := sqlstore.InitTestDB(t)
-		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures())
+		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 		publicdashboardStore := database.ProvideStore(sqlStore)
 		templateVars := make([]map[string]interface{}, 1)
 		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, templateVars)
@@ -219,7 +221,7 @@ func TestSavePublicDashboard(t *testing.T) {
 func TestUpdatePublicDashboard(t *testing.T) {
 	t.Run("Updating public dashboard", func(t *testing.T) {
 		sqlStore := sqlstore.InitTestDB(t)
-		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures())
+		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 		publicdashboardStore := database.ProvideStore(sqlStore)
 		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{})
 
@@ -280,7 +282,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 
 	t.Run("Updating set empty time settings", func(t *testing.T) {
 		sqlStore := sqlstore.InitTestDB(t)
-		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures())
+		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 		publicdashboardStore := database.ProvideStore(sqlStore)
 		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{})
 
@@ -324,16 +326,13 @@ func TestUpdatePublicDashboard(t *testing.T) {
 		updatedPubdash, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
-		timeSettings, err := simplejson.NewJson([]byte("{}"))
-		require.NoError(t, err)
-
-		assert.Equal(t, timeSettings, updatedPubdash.TimeSettings)
+		assert.Equal(t, &TimeSettings{}, updatedPubdash.TimeSettings)
 	})
 }
 
 func TestBuildAnonymousUser(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
-	dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures())
+	dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 	dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{})
 	publicdashboardStore := database.ProvideStore(sqlStore)
 	service := &PublicDashboardServiceImpl{
@@ -352,13 +351,57 @@ func TestBuildAnonymousUser(t *testing.T) {
 	})
 }
 
-func TestBuildPublicDashboardMetricRequest(t *testing.T) {
+func TestGetMetricRequest(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
-	dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures())
+	dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
+	publicdashboardStore := database.ProvideStore(sqlStore)
+	dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{})
+	publicDashboard := &PublicDashboard{
+		Uid:          "1",
+		DashboardUid: dashboard.Uid,
+		IsEnabled:    true,
+		AccessToken:  "abc123",
+	}
+	service := &PublicDashboardServiceImpl{
+		log:                log.New("test.logger"),
+		store:              publicdashboardStore,
+		intervalCalculator: intervalv2.NewCalculator(),
+	}
+
+	t.Run("will return an error when validation fails", func(t *testing.T) {
+		publicDashboardQueryDTO := PublicDashboardQueryDTO{
+			IntervalMs:    int64(-1),
+			MaxDataPoints: int64(-1),
+		}
+
+		_, err := service.GetMetricRequest(context.Background(), dashboard, publicDashboard, 1, publicDashboardQueryDTO)
+
+		require.Error(t, err)
+	})
+
+	t.Run("will not return an error when validation succeeds", func(t *testing.T) {
+		publicDashboardQueryDTO := PublicDashboardQueryDTO{
+			IntervalMs:    int64(1),
+			MaxDataPoints: int64(1),
+		}
+		from, to := internal.GetTimeRangeFromDashboard(t, dashboard.Data)
+
+		metricReq, err := service.GetMetricRequest(context.Background(), dashboard, publicDashboard, 1, publicDashboardQueryDTO)
+
+		require.NoError(t, err)
+		require.Equal(t, from, metricReq.From)
+		require.Equal(t, to, metricReq.To)
+	})
+}
+
+func TestBuildMetricRequest(t *testing.T) {
+	sqlStore := sqlstore.InitTestDB(t)
+	dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 	publicdashboardStore := database.ProvideStore(sqlStore)
 
 	publicDashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{})
 	nonPublicDashboard := insertTestDashboard(t, dashboardStore, "testNonPublicDashie", 1, 0, true, []map[string]interface{}{})
+	from, to := internal.GetTimeRangeFromDashboard(t, publicDashboard.Data)
 
 	service := &PublicDashboardServiceImpl{
 		log:                log.New("test.logger"),
@@ -366,7 +409,7 @@ func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 		intervalCalculator: intervalv2.NewCalculator(),
 	}
 
-	publicDashboardQueryDTO := &PublicDashboardQueryDTO{
+	publicDashboardQueryDTO := PublicDashboardQueryDTO{
 		IntervalMs:    int64(10000000),
 		MaxDataPoints: int64(200),
 	}
@@ -400,7 +443,7 @@ func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("extracts queries from provided dashboard", func(t *testing.T) {
-		reqDTO, err := service.buildPublicDashboardMetricRequest(
+		reqDTO, err := service.buildMetricRequest(
 			context.Background(),
 			publicDashboard,
 			publicDashboardPD,
@@ -409,8 +452,8 @@ func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		require.Equal(t, timeSettings.Get("from").MustString(), reqDTO.From)
-		require.Equal(t, timeSettings.Get("to").MustString(), reqDTO.To)
+		require.Equal(t, from, reqDTO.From)
+		require.Equal(t, to, reqDTO.To)
 
 		for i := range reqDTO.Queries {
 			require.Equal(t, publicDashboardQueryDTO.IntervalMs, reqDTO.Queries[i].Get("intervalMs").MustInt64())
@@ -449,7 +492,7 @@ func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 	})
 
 	t.Run("returns an error when panel missing", func(t *testing.T) {
-		_, err := service.buildPublicDashboardMetricRequest(
+		_, err := service.buildMetricRequest(
 			context.Background(),
 			publicDashboard,
 			publicDashboardPD,
@@ -457,7 +500,7 @@ func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 			publicDashboardQueryDTO,
 		)
 
-		require.ErrorContains(t, err, "Panel not found")
+		require.ErrorContains(t, err, ErrPublicDashboardPanelNotFound.Reason)
 	})
 }
 
@@ -514,9 +557,13 @@ func insertTestDashboard(t *testing.T, dashboardStore *dashboardsDB.DashboardSto
 			"templating": map[string]interface{}{
 				"list": templateVars,
 			},
+			"time": map[string]interface{}{
+				"from": "2022-09-01T00:00:00.000Z",
+				"to":   "2022-09-01T12:00:00.000Z",
+			},
 		}),
 	}
-	dash, err := dashboardStore.SaveDashboard(cmd)
+	dash, err := dashboardStore.SaveDashboard(context.Background(), cmd)
 	require.NoError(t, err)
 	require.NotNil(t, dash)
 	dash.Data.Set("id", dash.Id)
@@ -526,8 +573,8 @@ func insertTestDashboard(t *testing.T, dashboardStore *dashboardsDB.DashboardSto
 
 func TestPublicDashboardServiceImpl_getSafeIntervalAndMaxDataPoints(t *testing.T) {
 	type args struct {
-		reqDTO *PublicDashboardQueryDTO
-		ts     *TimeSettings
+		reqDTO PublicDashboardQueryDTO
+		ts     TimeSettings
 	}
 	tests := []struct {
 		name                  string
@@ -538,11 +585,11 @@ func TestPublicDashboardServiceImpl_getSafeIntervalAndMaxDataPoints(t *testing.T
 		{
 			name: "return original interval",
 			args: args{
-				reqDTO: &PublicDashboardQueryDTO{
+				reqDTO: PublicDashboardQueryDTO{
 					IntervalMs:    10000,
 					MaxDataPoints: 300,
 				},
-				ts: &TimeSettings{
+				ts: TimeSettings{
 					From: "now-3h",
 					To:   "now",
 				},
@@ -553,11 +600,11 @@ func TestPublicDashboardServiceImpl_getSafeIntervalAndMaxDataPoints(t *testing.T
 		{
 			name: "return safe interval because of a small interval",
 			args: args{
-				reqDTO: &PublicDashboardQueryDTO{
+				reqDTO: PublicDashboardQueryDTO{
 					IntervalMs:    1000,
 					MaxDataPoints: 300,
 				},
-				ts: &TimeSettings{
+				ts: TimeSettings{
 					From: "now-6h",
 					To:   "now",
 				},
@@ -568,11 +615,11 @@ func TestPublicDashboardServiceImpl_getSafeIntervalAndMaxDataPoints(t *testing.T
 		{
 			name: "return safe interval for long time range",
 			args: args{
-				reqDTO: &PublicDashboardQueryDTO{
+				reqDTO: PublicDashboardQueryDTO{
 					IntervalMs:    100,
 					MaxDataPoints: 300,
 				},
-				ts: &TimeSettings{
+				ts: TimeSettings{
 					From: "now-90d",
 					To:   "now",
 				},
@@ -583,8 +630,8 @@ func TestPublicDashboardServiceImpl_getSafeIntervalAndMaxDataPoints(t *testing.T
 		{
 			name: "return safe interval when reqDTO is empty",
 			args: args{
-				reqDTO: &PublicDashboardQueryDTO{},
-				ts: &TimeSettings{
+				reqDTO: PublicDashboardQueryDTO{},
+				ts: TimeSettings{
 					From: "now-90d",
 					To:   "now",
 				},

@@ -4,7 +4,7 @@ import React, { PureComponent } from 'react';
 import { QueryEditorHelpProps } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 
-import LokiLanguageProvider from '../language_provider';
+import LokiLanguageProvider from '../LanguageProvider';
 import { LokiQuery } from '../types';
 
 const DEFAULT_EXAMPLES = ['{job="default/prometheus"}'];

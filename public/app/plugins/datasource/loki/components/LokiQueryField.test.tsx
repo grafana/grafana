@@ -3,8 +3,8 @@ import React, { ComponentProps } from 'react';
 
 import { dateTime } from '@grafana/data';
 
+import LokiLanguageProvider from '../LanguageProvider';
 import { LokiDatasource } from '../datasource';
-import LokiLanguageProvider from '../language_provider';
 import syntax from '../syntax';
 
 import { LokiQueryField } from './LokiQueryField';

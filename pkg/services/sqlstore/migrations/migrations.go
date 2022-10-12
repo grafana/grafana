@@ -97,6 +97,8 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 
 	ualert.UpdateRuleGroupIndexMigration(mg)
 	accesscontrol.AddManagedFolderAlertActionsRepeatMigration(mg)
+	accesscontrol.AddAdminOnlyMigration(mg)
+	accesscontrol.AddSeedAssignmentMigrations(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {

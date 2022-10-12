@@ -57,7 +57,7 @@ func setupTestMigrateFromPluginService(t *testing.T) (*MigrateFromPluginService,
 
 	secretsSql := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 
-	return migratorService, manager.SecretsManager().SecretsManager, secretsSql
+	return migratorService, manager.SecretsManager(context.Background()).SecretsManager, secretsSql
 }
 
 func addSecretToPluginStore(t *testing.T, plugin secretsmanagerplugin.SecretsManagerPlugin, ctx context.Context, orgId int64, namespace string, typ string, value string) {

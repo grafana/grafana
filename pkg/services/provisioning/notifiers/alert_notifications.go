@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/services/org"
 )
 
 type Manager interface {
@@ -29,8 +30,8 @@ type SQLStore interface {
 }
 
 // Provision alert notifiers
-func Provision(ctx context.Context, configDirectory string, alertingService Manager, sqlstore SQLStore, encryptionService encryption.Internal, notificationService *notifications.NotificationService) error {
-	dc := newNotificationProvisioner(sqlstore, alertingService, encryptionService, notificationService, log.New("provisioning.notifiers"))
+func Provision(ctx context.Context, configDirectory string, alertingService Manager, orgService org.Service, sqlstore SQLStore, encryptionService encryption.Internal, notificationService *notifications.NotificationService) error {
+	dc := newNotificationProvisioner(orgService, sqlstore, alertingService, encryptionService, notificationService, log.New("provisioning.notifiers"))
 	return dc.applyChanges(ctx, configDirectory)
 }
 
@@ -40,9 +41,10 @@ type NotificationProvisioner struct {
 	cfgProvider     *configReader
 	alertingManager Manager
 	sqlstore        SQLStore
+	orgService      org.Service
 }
 
-func newNotificationProvisioner(store SQLStore, alertingManager Manager, encryptionService encryption.Internal, notifiationService *notifications.NotificationService, log log.Logger) NotificationProvisioner {
+func newNotificationProvisioner(orgService org.Service, store SQLStore, alertingManager Manager, encryptionService encryption.Internal, notifiationService *notifications.NotificationService, log log.Logger) NotificationProvisioner {
 	return NotificationProvisioner{
 		log:             log,
 		alertingManager: alertingManager,
@@ -52,7 +54,8 @@ func newNotificationProvisioner(store SQLStore, alertingManager Manager, encrypt
 			log:                 log,
 			orgStore:            store,
 		},
-		sqlstore: store,
+		sqlstore:   store,
+		orgService: orgService,
 	}
 }
 
@@ -73,11 +76,12 @@ func (dc *NotificationProvisioner) deleteNotifications(ctx context.Context, noti
 		dc.log.Info("Deleting alert notification", "name", notification.Name, "uid", notification.UID)
 
 		if notification.OrgID == 0 && notification.OrgName != "" {
-			getOrg := &models.GetOrgByNameQuery{Name: notification.OrgName}
-			if err := dc.sqlstore.GetOrgByNameHandler(ctx, getOrg); err != nil {
+			getOrg := org.GetOrgByNameQuery{Name: notification.OrgName}
+			res, err := dc.orgService.GetByName(ctx, &getOrg)
+			if err != nil {
 				return err
 			}
-			notification.OrgID = getOrg.Result.Id
+			notification.OrgID = res.ID
 		} else if notification.OrgID < 0 {
 			notification.OrgID = 1
 		}
@@ -102,11 +106,12 @@ func (dc *NotificationProvisioner) deleteNotifications(ctx context.Context, noti
 func (dc *NotificationProvisioner) mergeNotifications(ctx context.Context, notificationToMerge []*notificationFromConfig) error {
 	for _, notification := range notificationToMerge {
 		if notification.OrgID == 0 && notification.OrgName != "" {
-			getOrg := &models.GetOrgByNameQuery{Name: notification.OrgName}
-			if err := dc.sqlstore.GetOrgByNameHandler(ctx, getOrg); err != nil {
+			getOrg := org.GetOrgByNameQuery{Name: notification.OrgName}
+			res, err := dc.orgService.GetByName(ctx, &getOrg)
+			if err != nil {
 				return err
 			}
-			notification.OrgID = getOrg.Result.Id
+			notification.OrgID = res.ID
 		} else if notification.OrgID < 0 {
 			notification.OrgID = 1
 		}
