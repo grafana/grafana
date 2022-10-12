@@ -44,6 +44,7 @@ const getStyles = (theme: GrafanaTheme2, showContextButton: boolean, isInDashboa
       label: rowWithContext;
       z-index: 1;
       outline: 9999px solid ${outlineColor};
+      display: inherit;
     `,
     horizontalScroll: css`
       label: verticalScroll;
@@ -173,8 +174,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
           <div
             className={cx(
               { [styles.positionRelative]: wrapLogMessage },
-              { [styles.horizontalScroll]: !wrapLogMessage },
-              { [styles.rowWithContext]: contextIsOpen }
+              { [styles.horizontalScroll]: !wrapLogMessage }
             )}
           >
             {contextIsOpen && context && (
@@ -193,7 +193,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
                 }}
               />
             )}
-            <span className={cx(styles.positionRelative)}>
+            <span className={cx(styles.positionRelative, { [styles.rowWithContext]: contextIsOpen })}>
               {renderLogMessage(hasAnsi, restructuredEntry, row.searchWords, style.logsRowMatchHighLight)}
             </span>
           </div>
