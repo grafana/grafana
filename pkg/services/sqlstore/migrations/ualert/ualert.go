@@ -839,7 +839,7 @@ func (c updateRulesOrderInGroup) Exec(sess *xorm.Session, migrator *migrator.Mig
 	}
 
 	updated := time.Now()
-	versions := make([]*alertRuleVersion, 0, len(toUpdate))
+	versions := make([]interface{}, 0, len(toUpdate))
 
 	for _, rule := range toUpdate {
 		rule.Updated = updated
@@ -855,8 +855,7 @@ func (c updateRulesOrderInGroup) Exec(sess *xorm.Session, migrator *migrator.Mig
 		migrator.Logger.Debug("updated group index for alert rule", "rule_uid", rule.UID)
 		versions = append(versions, version)
 	}
-
-	_, err := sess.Insert(&versions)
+	_, err := sess.Insert(versions...)
 	if err != nil {
 		migrator.Logger.Error("failed to insert changes to alert_rule_version", "err", err)
 		return fmt.Errorf("unable to update alert rules with group index: %w", err)

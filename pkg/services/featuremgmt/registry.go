@@ -106,6 +106,11 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:        "lokiMonacoEditor",
+			Description: "Access to Monaco query editor for Loki",
+			State:       FeatureStateAlpha,
+		},
+		{
 			Name:        "swaggerUi",
 			Description: "Serves swagger UI",
 			State:       FeatureStateBeta,
@@ -272,9 +277,21 @@ var (
 			Description:     "Run GRPC server",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
-		}, {
+		},
+		{
+			Name:            "objectStore",
+			Description:     "SQL based object store",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
 			Name:        "traceqlEditor",
 			Description: "Show the TraceQL editor in the explore page",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "flameGraph",
+			Description: "Show the flame graph",
 			State:       FeatureStateAlpha,
 		},
 		{
@@ -296,6 +313,23 @@ var (
 		{
 			Name:        "interFont",
 			Description: "Switch to inter font",
+		},
+		{
+			Name:         "newPanelChromeUI",
+			Description:  "Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
+			Name:            "queryLibrary",
+			Description:     "Reusable query library",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
+			Name:        "mysqlAnsiQuotes",
+			Description: "Use double quote to escape keyword in Mysql query",
+			State:       FeatureStateAlpha,
 		},
 	}
 )

@@ -6,7 +6,6 @@
 //	Schemes: http, https
 //	BasePath: /api
 //	Version: 0.0.1
-//	License: GNU Affero General Public License v3.0 https://www.gnu.org/licenses/agpl-3.0.en.html
 //	Contact: Grafana Labs<hello@grafana.com> https://grafana.com
 //
 //	Consumes:
@@ -141,7 +140,12 @@ func (hs *HTTPServer) registerRoutes() {
 	}
 
 	if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
-		r.Get("/public-dashboards/:accessToken", publicdashboardsapi.SetPublicDashboardFlag(), publicdashboardsapi.CountPublicDashboardRequest(), hs.Index)
+		r.Get("/public-dashboards/:accessToken",
+			publicdashboardsapi.SetPublicDashboardFlag,
+			publicdashboardsapi.SetPublicDashboardOrgIdOnContext(hs.PublicDashboardsApi.PublicDashboardService),
+			publicdashboardsapi.CountPublicDashboardRequest(),
+			hs.Index,
+		)
 	}
 
 	r.Get("/explore", authorize(func(c *models.ReqContext) {
@@ -277,6 +281,10 @@ func (hs *HTTPServer) registerRoutes() {
 
 		if hs.Features.IsEnabled(featuremgmt.FlagPanelTitleSearch) {
 			apiRoute.Group("/search-v2", hs.SearchV2HTTPService.RegisterHTTPRoutes)
+		}
+
+		if hs.QueryLibraryHTTPService != nil && !hs.QueryLibraryHTTPService.IsDisabled() {
+			apiRoute.Group("/query-library", hs.QueryLibraryHTTPService.RegisterHTTPRoutes)
 		}
 
 		// current org
