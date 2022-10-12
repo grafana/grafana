@@ -26,7 +26,7 @@ const props: Props = {
 describe('MetricSelect', () => {
   it('passes the placeholder, options and onChange correctly to Select', async () => {
     render(<MetricSelect {...props} />);
-    const metricSelect = screen.getByRole<HTMLInputElement>('combobox');
+    const metricSelect = screen.getByRole('combobox');
     expect(metricSelect).toBeInTheDocument();
     expect(screen.getByText('Select Reducer')).toBeInTheDocument();
 
@@ -43,7 +43,7 @@ describe('MetricSelect', () => {
     };
     render(<MetricSelect {...propsWithoutOptions} />);
 
-    const metricSelect = screen.getByRole<HTMLInputElement>('combobox');
+    const metricSelect = screen.getByRole('combobox');
     expect(metricSelect).toBeInTheDocument();
 
     openMenu(metricSelect);
