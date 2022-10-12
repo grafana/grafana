@@ -275,6 +275,7 @@ func (pd *PublicDashboardServiceImpl) GetAnnotations(ctx context.Context, reqDTO
 
 	var results []AnnotationEvent
 	for _, anno := range dto.Annotations.List {
+		// only consider enabled, grafana annotations
 		if anno.Enable && *anno.Datasource.Type == grafanads.DatasourceUID {
 			annoQuery := &annotations.ItemQuery{
 				From:         reqDTO.From,
