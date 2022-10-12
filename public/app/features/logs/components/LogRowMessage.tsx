@@ -173,7 +173,8 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
           <div
             className={cx(
               { [styles.positionRelative]: wrapLogMessage },
-              { [styles.horizontalScroll]: !wrapLogMessage }
+              { [styles.horizontalScroll]: !wrapLogMessage },
+              { [styles.rowWithContext]: contextIsOpen }
             )}
           >
             {contextIsOpen && context && (
@@ -192,7 +193,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
                 }}
               />
             )}
-            <span className={cx(styles.positionRelative, { [styles.rowWithContext]: contextIsOpen })}>
+            <span className={cx(styles.positionRelative)}>
               {renderLogMessage(hasAnsi, restructuredEntry, row.searchWords, style.logsRowMatchHighLight)}
             </span>
           </div>

@@ -166,6 +166,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     const { errorMessage, hasError } = checkLogsError(row);
     const logRowBackground = cx(style.logsRow, {
       [styles.errorLogRow]: hasError,
+      [style.contextBackground]: showContext,
     });
 
     const processedRow =
