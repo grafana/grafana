@@ -28,7 +28,7 @@ This means that you should be able to configure LDAP integration using any compl
 In order to use LDAP integration you'll first need to enable LDAP in the [main config file]({{< relref "../../configure-grafana/" >}}) as well as specify the path to the LDAP
 specific configuration file (default: `/etc/grafana/ldap.toml`).
 
-```bash
+```ini
 [auth.ldap]
 # Set to `true` to enable LDAP integration (default: `false`)
 enabled = true
@@ -36,9 +36,30 @@ enabled = true
 # Path to the LDAP specific configuration file (default: `/etc/grafana/ldap.toml`)
 config_file = /etc/grafana/ldap.toml
 
-# Allow sign up should almost always be true (default) to allow new Grafana users to be created (if LDAP authentication is ok). If set to
-# false only pre-existing Grafana users will be able to login (if LDAP authentication is ok).
+# Allow sign-up should be `true` (default) to allow Grafana to create users on successful LDAP authentication.
+# If set to `false` only already existing Grafana users will be able to login.
 allow_sign_up = true
+```
+
+## Disable org role synchronization
+
+If you use LDAP to authenticate users but don't use role mapping, and prefer to manually assign organizations
+and roles, you can use the `skip_org_role_sync` configuration option.
+
+```ini
+[auth.ldap]
+# Set to `true` to enable LDAP integration (default: `false`)
+enabled = true
+
+# Path to the LDAP specific configuration file (default: `/etc/grafana/ldap.toml`)
+config_file = /etc/grafana/ldap.toml
+
+# Allow sign-up should be `true` (default) to allow Grafana to create users on successful LDAP authentication.
+# If set to `false` only already existing Grafana users will be able to login.
+allow_sign_up = true
+
+# Prevent synchronizing ldap users organization roles
+skip_org_role_sync = true
 ```
 
 ## Grafana LDAP Configuration
