@@ -99,7 +99,7 @@ func NewAccessControlDashboardPermissionFilter(user *user.SignedInUser, permissi
 		folderAction = dashboards.ActionFoldersRead
 		dashboardAction = dashboards.ActionDashboardsRead
 		if needEdit {
-			folderAction = dashboards.ActionFoldersWrite
+			folderAction = dashboards.ActionDashboardsCreate
 			dashboardAction = dashboards.ActionDashboardsWrite
 		}
 	}
