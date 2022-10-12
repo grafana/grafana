@@ -2,7 +2,7 @@
 aliases:
   - /docs/grafana/latest/dashboards/dashboard-history/
   - /docs/grafana/latest/reference/dashboard_history/
-  - /docs/grafana/next/dashboards/build-dashboards/manage-version-history/
+  - /docs/grafana/latest/dashboards/build-dashboards/manage-version-history/
 keywords:
   - grafana
   - dashboard

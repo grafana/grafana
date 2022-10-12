@@ -36,16 +36,17 @@ def slack_step(channel, template, secret):
         },
     }
 
-def yarn_install_step():
+def yarn_install_step(edition="oss"):
+    deps = []
+    if edition == 'enterprise':
+        deps = ['init-enterprise']
     return {
         'name': 'yarn-install',
         'image': build_image,
         'commands': [
             'yarn install --immutable',
         ],
-        'depends_on': [
-            'grabpl',
-        ],
+        'depends_on': deps,
     }
 
 
@@ -449,6 +450,7 @@ def build_frontend_package_step(edition, ver_mode):
             'NODE_OPTIONS': '--max_old_space_size=8192',
         },
         'depends_on': [
+            'compile-build-cmd',
             'yarn-install',
         ],
         'commands': cmds,
@@ -467,6 +469,7 @@ def build_plugins_step(edition, ver_mode):
         'image': build_image,
         'environment': env,
         'depends_on': [
+            'compile-build-cmd',
             'yarn-install',
         ],
         'commands': [

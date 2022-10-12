@@ -79,8 +79,7 @@ steps:
   name: grabpl
 - commands:
   - yarn install --immutable
-  depends_on:
-  - grabpl
+  depends_on: []
   image: grafana/build-container:1.6.3
   name: yarn-install
 - commands:
@@ -352,8 +351,7 @@ steps:
   name: wire-install
 - commands:
   - yarn install --immutable
-  depends_on:
-  - grabpl
+  depends_on: []
   image: grafana/build-container:1.6.3
   name: yarn-install
 - commands:
@@ -420,6 +418,7 @@ steps:
 - commands:
   - ./bin/build build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
+  - compile-build-cmd
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
@@ -428,6 +427,7 @@ steps:
 - commands:
   - ./bin/build  build-plugins --jobs 8 --edition oss
   depends_on:
+  - compile-build-cmd
   - yarn-install
   environment: null
   image: grafana/build-container:1.6.3
@@ -736,8 +736,7 @@ steps:
   name: identify-runner
 - commands:
   - yarn install --immutable
-  depends_on:
-  - grabpl
+  depends_on: []
   image: grafana/build-container:1.6.3
   name: yarn-install
 - commands:
@@ -850,8 +849,7 @@ steps:
   name: identify-runner
 - commands:
   - yarn install --immutable
-  depends_on:
-  - grabpl
+  depends_on: []
   image: grafana/build-container:1.6.3
   name: yarn-install
 - commands:
@@ -922,8 +920,7 @@ steps:
   name: grabpl
 - commands:
   - yarn install --immutable
-  depends_on:
-  - grabpl
+  depends_on: []
   image: grafana/build-container:1.6.3
   name: yarn-install
 - commands:
@@ -1182,8 +1179,7 @@ steps:
   name: wire-install
 - commands:
   - yarn install --immutable
-  depends_on:
-  - grabpl
+  depends_on: []
   image: grafana/build-container:1.6.3
   name: yarn-install
 - commands:
@@ -1237,6 +1233,7 @@ steps:
 - commands:
   - ./bin/build build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
+  - compile-build-cmd
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
@@ -1245,6 +1242,7 @@ steps:
 - commands:
   - ./bin/build  build-plugins --jobs 8 --edition oss
   depends_on:
+  - compile-build-cmd
   - yarn-install
   environment:
     GRAFANA_API_KEY:
@@ -1958,8 +1956,7 @@ steps:
   name: wire-install
 - commands:
   - yarn install --immutable
-  depends_on:
-  - grabpl
+  depends_on: []
   image: grafana/build-container:1.6.3
   name: yarn-install
 - commands:
@@ -1988,6 +1985,7 @@ steps:
 - commands:
   - ./bin/build build-frontend-packages --jobs 8 --edition oss ${DRONE_TAG}
   depends_on:
+  - compile-build-cmd
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
@@ -1996,6 +1994,7 @@ steps:
 - commands:
   - ./bin/build  build-plugins --jobs 8 --edition oss
   depends_on:
+  - compile-build-cmd
   - yarn-install
   environment:
     GRAFANA_API_KEY:
@@ -2248,8 +2247,7 @@ steps:
   name: grabpl
 - commands:
   - yarn install --immutable
-  depends_on:
-  - grabpl
+  depends_on: []
   image: grafana/build-container:1.6.3
   name: yarn-install
 - commands:
@@ -2620,6 +2618,7 @@ steps:
 - commands:
   - ./bin/build build-frontend-packages --jobs 8 --edition enterprise ${DRONE_TAG}
   depends_on:
+  - compile-build-cmd
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
@@ -2628,6 +2627,7 @@ steps:
 - commands:
   - ./bin/build  build-plugins --jobs 8 --edition enterprise
   depends_on:
+  - compile-build-cmd
   - yarn-install
   environment:
     GRAFANA_API_KEY:
@@ -2919,7 +2919,7 @@ steps:
 - commands:
   - yarn install --immutable
   depends_on:
-  - grabpl
+  - init-enterprise
   image: grafana/build-container:1.6.3
   name: yarn-install
 - commands:
@@ -3731,8 +3731,7 @@ steps:
   name: grabpl
 - commands:
   - yarn install --immutable
-  depends_on:
-  - grabpl
+  depends_on: []
   image: grafana/build-container:1.6.3
   name: yarn-install
 - commands:
@@ -4029,8 +4028,7 @@ steps:
   name: wire-install
 - commands:
   - yarn install --immutable
-  depends_on:
-  - grabpl
+  depends_on: []
   image: grafana/build-container:1.6.3
   name: yarn-install
 - commands:
@@ -4059,6 +4057,7 @@ steps:
 - commands:
   - ./bin/build build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
+  - compile-build-cmd
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
@@ -4067,6 +4066,7 @@ steps:
 - commands:
   - ./bin/build  build-plugins --jobs 8 --edition oss
   depends_on:
+  - compile-build-cmd
   - yarn-install
   environment:
     GRAFANA_API_KEY:
@@ -4291,8 +4291,7 @@ steps:
   name: grabpl
 - commands:
   - yarn install --immutable
-  depends_on:
-  - grabpl
+  depends_on: []
   image: grafana/build-container:1.6.3
   name: yarn-install
 - commands:
@@ -4644,6 +4643,7 @@ steps:
 - commands:
   - ./bin/build build-frontend-packages --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
+  - compile-build-cmd
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
@@ -4652,6 +4652,7 @@ steps:
 - commands:
   - ./bin/build  build-plugins --jobs 8 --edition enterprise
   depends_on:
+  - compile-build-cmd
   - yarn-install
   environment:
     GRAFANA_API_KEY:
@@ -4935,7 +4936,7 @@ steps:
 - commands:
   - yarn install --immutable
   depends_on:
-  - grabpl
+  - init-enterprise
   image: grafana/build-container:1.6.3
   name: yarn-install
 - commands:
@@ -5602,6 +5603,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: d5d39719ea023fdedb6cfa303ed2acac29fe23060c9679c0c40511b3cc215738
+hmac: b4e9ae069d6557aeb32126291f2b06a1a0df3311e609acbe0d3c3810f1606312
 
 ...
