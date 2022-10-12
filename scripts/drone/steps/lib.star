@@ -1057,7 +1057,7 @@ def publish_linux_packages_step(edition):
         'settings': {
             'access_key_id': from_secret('packages_access_key_id'),
             'secret_access_key': from_secret('packages_secret_access_key'),
-            'service_account_json': from_secret('packages_service_account_json'),
+            'service_account_json': from_secret('packages_service_account'),
             'target_bucket': 'grafana-packages',
             'deb_distribution': 'stable',
             'gpg_passphrase': from_secret('packages_gpg_passphrase'),
