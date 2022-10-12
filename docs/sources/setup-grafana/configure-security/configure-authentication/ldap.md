@@ -36,8 +36,8 @@ enabled = true
 # Path to the LDAP specific configuration file (default: `/etc/grafana/ldap.toml`)
 config_file = /etc/grafana/ldap.toml
 
-# Allow sign up should almost always be true (default) to allow new Grafana users to be created (if LDAP authentication is ok). If set to
-# false only pre-existing Grafana users will be able to login (if LDAP authentication is ok).
+# Allow sign-up should be `true` (default) to allow Grafana to create users on successful LDAP authentication.
+# If set to `false` only already existing Grafana users will be able to login.
 allow_sign_up = true
 ```
 
@@ -54,11 +54,11 @@ enabled = true
 # Path to the LDAP specific configuration file (default: `/etc/grafana/ldap.toml`)
 config_file = /etc/grafana/ldap.toml
 
-# Allow sign up should almost always be true (default) to allow new Grafana users to be created (if LDAP authentication is ok). If set to
-# false only pre-existing Grafana users will be able to login (if LDAP authentication is ok).
+# Allow sign-up should be `true` (default) to allow Grafana to create users on successful LDAP authentication.
+# If set to `false` only already existing Grafana users will be able to login.
 allow_sign_up = true
 
-# prevent synchronizing ldap users organization roles
+# Prevent synchronizing ldap users organization roles
 skip_org_role_sync = true
 ```
 
