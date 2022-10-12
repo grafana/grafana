@@ -1,24 +1,21 @@
-import { screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
+import { Provider } from 'react-redux';
 import selectEvent from 'react-select-event';
-import { render } from 'test/redux-rtl';
 
 import { AwsAuthType } from '@grafana/aws-sdk';
+import { toOption } from '@grafana/data';
+import { configureStore } from 'app/store/configureStore';
 
 import { setupMockedDataSource } from '../__mocks__/CloudWatchDataSource';
 
 import { ConfigEditor, Props } from './ConfigEditor';
 
-declare global {
-  interface Window {
-    grafanaBootData?: any;
-  }
-}
-
 jest.mock('app/features/plugins/datasource_srv', () => ({
   getDatasourceSrv: () => ({
     loadDatasource: jest.fn().mockResolvedValue({
       api: {
+        describeLogGroups: jest.fn().mockResolvedValue(['logGroup-foo', 'logGroup-bar'].map(toOption)),
         getRegions: jest.fn().mockResolvedValue([
           {
             label: 'ap-east-1',
@@ -28,9 +25,6 @@ jest.mock('app/features/plugins/datasource_srv', () => ({
       },
       getActualRegion: jest.fn().mockReturnValue('ap-east-1'),
       getVariables: jest.fn().mockReturnValue([]),
-      logsQueryRunner: {
-        describeLogGroups: jest.fn().mockResolvedValue(['logGroup-foo', 'logGroup-bar']),
-      },
     }),
   }),
 }));
@@ -87,37 +81,32 @@ const props: Props = {
 };
 
 const setup = (optionOverrides?: Partial<Props['options']>) => {
-  const mergedOptions = { ...props.options, ...optionOverrides };
-  return render(<ConfigEditor onOptionsChange={props.onOptionsChange} options={mergedOptions} />);
+  const store = configureStore();
+  const newProps = {
+    ...props,
+    options: {
+      ...props.options,
+      ...optionOverrides,
+    },
+  };
+
+  render(
+    <Provider store={store}>
+      <ConfigEditor {...newProps} />
+    </Provider>
+  );
 };
 
 describe('Render', () => {
-  let oldBootData = {};
-
-  beforeAll(() => {
-    oldBootData = window.grafanaBootData;
-    window.grafanaBootData = {
-      settings: {
-        awsAllowedAuthProviders: ['keys'],
-        awsAssumeRoleEnabled: true,
-      },
-    };
-  });
-
-  afterAll(() => {
-    window.grafanaBootData = oldBootData;
-  });
-
   beforeEach(() => {
-    jest.spyOn(console, 'error').mockImplementation();
-  });
-
-  afterEach(() => {
+    (window as any).grafanaBootData = {
+      settings: {},
+    };
     jest.resetAllMocks();
     putMock.mockImplementation(async () => ({ datasource: setupMockedDataSource().datasource }));
   });
 
-  it('should render component', () => {
+  it('should render component without blowing up', () => {
     expect(() => setup()).not.toThrow();
   });
 
@@ -127,7 +116,7 @@ describe('Render', () => {
         secretKey: true,
       },
     });
-    expect((screen.getByText('Secret Access Key').nextSibling as HTMLElement).querySelector('input')).toBeDisabled();
+    expect(screen.getByPlaceholderText('Configured')).toBeDisabled();
   });
 
   it('should show credentials profile name field', () => {
@@ -136,7 +125,6 @@ describe('Render', () => {
         authType: AwsAuthType.Credentials,
       },
     });
-
     expect(screen.getByLabelText('Credentials Profile Name')).toBeInTheDocument();
   });
 
@@ -146,7 +134,6 @@ describe('Render', () => {
         authType: AwsAuthType.Keys,
       },
     });
-
     expect(screen.getByLabelText('Access Key ID')).toBeInTheDocument();
     expect(screen.getByLabelText('Secret Access Key')).toBeInTheDocument();
   });
@@ -154,15 +141,14 @@ describe('Render', () => {
   it('should show arn role field', () => {
     setup({
       jsonData: {
-        authType: AwsAuthType.Default,
+        authType: AwsAuthType.ARN,
       },
     });
-
     expect(screen.getByLabelText('Assume Role ARN')).toBeInTheDocument();
   });
 
   it('should load log groups when multiselect is opened', async () => {
-    render(<ConfigEditor {...props} />);
+    setup();
     const multiselect = await screen.findByLabelText('Log Groups');
     selectEvent.openMenu(multiselect);
     expect(await screen.findByText('logGroup-foo')).toBeInTheDocument();

@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/framework/coremodel/registry"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
@@ -29,6 +30,7 @@ import (
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/dashboardversion/dashvertest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/live"
@@ -39,6 +41,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -57,11 +60,11 @@ func TestGetHomeDashboard(t *testing.T) {
 
 	hs := &HTTPServer{
 		Cfg:                     cfg,
-		pluginStore:             &fakePluginStore{},
+		pluginStore:             &plugins.FakePluginStore{},
 		SQLStore:                mockstore.NewSQLStoreMock(),
 		preferenceService:       prefService,
 		dashboardVersionService: dashboardVersionService,
-		Coremodels:              registry.NewBase(),
+		Coremodels:              registry.NewBase(nil),
 	}
 
 	tests := []struct {
@@ -76,7 +79,6 @@ func TestGetHomeDashboard(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			dash := dtos.DashboardFullWithMeta{}
-			dash.Meta.IsHome = true
 			dash.Meta.FolderTitle = "General"
 
 			homeDashJSON, err := os.ReadFile(tc.expectedDashboardPath)
@@ -140,13 +142,13 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 		hs := &HTTPServer{
 			Cfg:                     setting.NewCfg(),
-			pluginStore:             &fakePluginStore{},
+			pluginStore:             &plugins.FakePluginStore{},
 			SQLStore:                mockSQLStore,
 			AccessControl:           accesscontrolmock.New(),
 			Features:                featuremgmt.WithFeatures(),
 			DashboardService:        dashboardService,
 			dashboardVersionService: fakeDashboardVersionService,
-			Coremodels:              registry.NewBase(),
+			Coremodels:              registry.NewBase(nil),
 		}
 
 		setUp := func() {
@@ -268,7 +270,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			DashboardService:        dashboardService,
 			dashboardVersionService: fakeDashboardVersionService,
 			Features:                featuremgmt.WithFeatures(),
-			Coremodels:              registry.NewBase(),
+			Coremodels:              registry.NewBase(nil),
 		}
 
 		setUp := func() {
@@ -911,7 +913,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				AccessControl:                accesscontrolmock.New(),
 				DashboardService:             dashboardService,
 				Features:                     featuremgmt.WithFeatures(),
-				Coremodels:                   registry.NewBase(),
+				Coremodels:                   registry.NewBase(nil),
 			}
 			hs.callGetDashboard(sc)
 
@@ -935,7 +937,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 
 	if dashboardStore == nil {
 		sql := sqlstore.InitTestDB(t)
-		dashboardStore = database.ProvideDashboardStore(sql, featuremgmt.WithFeatures())
+		dashboardStore = database.ProvideDashboardStore(sql, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql, sql.Cfg))
 	}
 
 	libraryPanelsService := mockLibraryPanelService{}
@@ -966,7 +968,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 		),
 		DashboardService: dashboardService,
 		Features:         featuremgmt.WithFeatures(),
-		Coremodels:       registry.NewBase(),
+		Coremodels:       registry.NewBase(nil),
 	}
 
 	hs.callGetDashboard(sc)
@@ -1016,7 +1018,7 @@ func callPostDashboardShouldReturnSuccess(sc *scenarioContext) {
 	assert.Equal(sc.t, 200, sc.resp.Code)
 }
 
-func postDashboardScenario(t *testing.T, desc string, url string, routePattern string, cmd models.SaveDashboardCommand, dashboardService dashboards.DashboardService, folderService dashboards.FolderService, fn scenarioFunc) {
+func postDashboardScenario(t *testing.T, desc string, url string, routePattern string, cmd models.SaveDashboardCommand, dashboardService dashboards.DashboardService, folderService folder.Service, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		cfg := setting.NewCfg()
 		hs := HTTPServer{
@@ -1026,13 +1028,13 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 			QuotaService: &quotaimpl.Service{
 				Cfg: cfg,
 			},
-			pluginStore:           &fakePluginStore{},
+			pluginStore:           &plugins.FakePluginStore{},
 			LibraryPanelService:   &mockLibraryPanelService{},
 			LibraryElementService: &mockLibraryElementService{},
 			DashboardService:      dashboardService,
 			folderService:         folderService,
 			Features:              featuremgmt.WithFeatures(),
-			Coremodels:            registry.NewBase(),
+			Coremodels:            registry.NewBase(nil),
 		}
 
 		sc := setupScenarioContext(t, url)
@@ -1065,7 +1067,7 @@ func postDiffScenario(t *testing.T, desc string, url string, routePattern string
 			SQLStore:                sqlmock,
 			dashboardVersionService: fakeDashboardVersionService,
 			Features:                featuremgmt.WithFeatures(),
-			Coremodels:              registry.NewBase(),
+			Coremodels:              registry.NewBase(nil),
 		}
 
 		sc := setupScenarioContext(t, url)
@@ -1104,7 +1106,7 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 			SQLStore:                sqlStore,
 			Features:                featuremgmt.WithFeatures(),
 			dashboardVersionService: fakeDashboardVersionService,
-			Coremodels:              registry.NewBase(),
+			Coremodels:              registry.NewBase(nil),
 		}
 
 		sc := setupScenarioContext(t, url)
@@ -1140,7 +1142,7 @@ type mockDashboardProvisioningService struct {
 	dashboards.DashboardProvisioningService
 }
 
-func (s mockDashboardProvisioningService) GetProvisionedDashboardDataByDashboardID(dashboardID int64) (
+func (s mockDashboardProvisioningService) GetProvisionedDashboardDataByDashboardID(ctx context.Context, dashboardID int64) (
 	*models.DashboardProvisioning, error) {
 	return nil, nil
 }

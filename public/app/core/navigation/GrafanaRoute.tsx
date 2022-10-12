@@ -1,11 +1,14 @@
-import React, { useEffect } from 'react';
+import React, { Suspense, useEffect } from 'react';
 // @ts-ignore
 import Drop from 'tether-drop';
 
 import { locationSearchToObject, navigationLogger, reportPageview } from '@grafana/runtime';
+import { ErrorBoundary } from '@grafana/ui';
 
 import { useGrafana } from '../context/GrafanaContext';
 
+import { GrafanaRouteError } from './GrafanaRouteError';
+import { GrafanaRouteLoading } from './GrafanaRouteLoading';
 import { GrafanaRouteComponentProps, RouteDescriptor } from './types';
 
 export interface Props extends Omit<GrafanaRouteComponentProps, 'queryParams'> {}
@@ -38,7 +41,21 @@ export function GrafanaRoute(props: Props) {
 
   navigationLogger('GrafanaRoute', false, 'Rendered', props.route);
 
-  return <props.route.component {...props} queryParams={locationSearchToObject(props.location.search)} />;
+  return (
+    <ErrorBoundary>
+      {({ error, errorInfo }) => {
+        if (error) {
+          return <GrafanaRouteError error={error} errorInfo={errorInfo} />;
+        }
+
+        return (
+          <Suspense fallback={<GrafanaRouteLoading />}>
+            <props.route.component {...props} queryParams={locationSearchToObject(props.location.search)} />
+          </Suspense>
+        );
+      }}
+    </ErrorBoundary>
+  );
 }
 
 function getPageClasses(route: RouteDescriptor) {

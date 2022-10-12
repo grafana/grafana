@@ -3,8 +3,7 @@ import { cloneDeep } from 'lodash';
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { GrafanaTheme2, NavModelItem, NavSection } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { GrafanaTheme2, NavSection } from '@grafana/data';
 import { useTheme2 } from '@grafana/ui';
 import { useSelector } from 'app/types';
 
@@ -23,16 +22,6 @@ export const MegaMenu = React.memo<Props>(({ onClose, searchBarHidden }) => {
   const styles = getStyles(theme);
   const location = useLocation();
 
-  const homeItem: NavModelItem = enrichWithInteractionTracking(
-    {
-      id: 'home',
-      text: 'Home',
-      url: config.appSubUrl || '/',
-      icon: 'home-alt',
-    },
-    true
-  );
-
   const navTree = cloneDeep(navBarTree);
 
   const coreItems = navTree
@@ -46,16 +35,13 @@ export const MegaMenu = React.memo<Props>(({ onClose, searchBarHidden }) => {
     location
   ).map((item) => enrichWithInteractionTracking(item, true));
 
-  const activeItem = getActiveItem(navTree, location.pathname);
+  const navItems = [...coreItems, ...pluginItems, ...configItems];
+
+  const activeItem = getActiveItem(navItems, location.pathname);
 
   return (
     <div className={styles.menuWrapper}>
-      <NavBarMenu
-        activeItem={activeItem}
-        navItems={[homeItem, ...coreItems, ...pluginItems, ...configItems]}
-        onClose={onClose}
-        searchBarHidden={searchBarHidden}
-      />
+      <NavBarMenu activeItem={activeItem} navItems={navItems} onClose={onClose} searchBarHidden={searchBarHidden} />
     </div>
   );
 });

@@ -9,7 +9,7 @@ import { WithContextMenu } from '../ContextMenu/WithContextMenu';
 import { MenuGroup, MenuItemsGroup } from '../Menu/MenuGroup';
 import { MenuItem } from '../Menu/MenuItem';
 
-interface DataLinksContextMenuProps {
+export interface DataLinksContextMenuProps {
   children: (props: DataLinksContextMenuApi) => JSX.Element;
   links: () => LinkModel[];
   style?: CSSProperties;

@@ -10,17 +10,16 @@ import (
 	prometheusModel "github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/ticker"
 
 	"github.com/benbjohnson/clock"
 	"golang.org/x/sync/errgroup"
@@ -41,7 +40,6 @@ type ScheduleService interface {
 	// the following are used by tests only used for tests
 	evalApplied(ngmodels.AlertRuleKey, time.Time)
 	stopApplied(ngmodels.AlertRuleKey)
-	overrideCfg(cfg SchedulerCfg)
 }
 
 // AlertsSender is an interface for a service that is responsible for sending notifications to the end-user.
@@ -67,8 +65,6 @@ type schedule struct {
 	maxAttempts int64
 
 	clock clock.Clock
-
-	ticker *alerting.Ticker
 
 	// evalApplied is only used for tests: test code can set it to non-nil
 	// function, and then it'll be called from the event loop whenever the
@@ -112,22 +108,18 @@ type SchedulerCfg struct {
 	StopAppliedFunc func(ngmodels.AlertRuleKey)
 	Evaluator       eval.Evaluator
 	RuleStore       RulesStore
-	InstanceStore   store.InstanceStore
 	Metrics         *metrics.Scheduler
 	AlertSender     AlertsSender
 }
 
 // NewScheduler returns a new schedule.
 func NewScheduler(cfg SchedulerCfg, appURL *url.URL, stateManager *state.Manager) *schedule {
-	ticker := alerting.NewTicker(cfg.C, cfg.Cfg.BaseInterval, cfg.Metrics.Ticker)
-
 	sch := schedule{
 		registry:              alertRuleInfoRegistry{alertRuleInfo: make(map[ngmodels.AlertRuleKey]*alertRuleInfo)},
 		maxAttempts:           cfg.Cfg.MaxAttempts,
 		clock:                 cfg.C,
 		baseInterval:          cfg.Cfg.BaseInterval,
 		log:                   cfg.Logger,
-		ticker:                ticker,
 		evalAppliedFunc:       cfg.EvalAppliedFunc,
 		stopAppliedFunc:       cfg.StopAppliedFunc,
 		evaluator:             cfg.Evaluator,
@@ -145,9 +137,10 @@ func NewScheduler(cfg SchedulerCfg, appURL *url.URL, stateManager *state.Manager
 }
 
 func (sch *schedule) Run(ctx context.Context) error {
-	defer sch.ticker.Stop()
+	t := ticker.New(sch.clock, sch.baseInterval, sch.metrics.Ticker)
+	defer t.Stop()
 
-	if err := sch.schedulePeriodic(ctx); err != nil {
+	if err := sch.schedulePeriodic(ctx, t); err != nil {
 		sch.log.Error("failure while running the rule evaluation loop", "err", err)
 	}
 	return nil
@@ -186,11 +179,11 @@ func (sch *schedule) DeleteAlertRule(keys ...ngmodels.AlertRuleKey) {
 	sch.metrics.SchedulableAlertRulesHash.Set(float64(hashUIDs(alertRules)))
 }
 
-func (sch *schedule) schedulePeriodic(ctx context.Context) error {
+func (sch *schedule) schedulePeriodic(ctx context.Context, t *ticker.T) error {
 	dispatcherGroup, ctx := errgroup.WithContext(ctx)
 	for {
 		select {
-		case tick := <-sch.ticker.C:
+		case tick := <-t.C:
 			// We use Round(0) on the start time to remove the monotonic clock.
 			// This is required as ticks from the ticker and time.Now() can have
 			// a monotonic clock that when subtracted do not represent the delta
@@ -307,7 +300,7 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 			// waiting for all rule evaluation routines to stop
 			waitErr := dispatcherGroup.Wait()
 			// close the state manager and flush the state
-			sch.stateManager.Close(ctx)
+			sch.stateManager.Close()
 			return waitErr
 		}
 	}
@@ -442,16 +435,6 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 			return nil
 		}
 	}
-}
-
-// overrideCfg is only used on tests.
-func (sch *schedule) overrideCfg(cfg SchedulerCfg) {
-	sch.clock = cfg.C
-	sch.baseInterval = cfg.Cfg.BaseInterval
-	sch.ticker.Stop()
-	sch.ticker = alerting.NewTicker(cfg.C, cfg.Cfg.BaseInterval, cfg.Metrics.Ticker)
-	sch.evalAppliedFunc = cfg.EvalAppliedFunc
-	sch.stopAppliedFunc = cfg.StopAppliedFunc
 }
 
 // evalApplied is only used on tests.

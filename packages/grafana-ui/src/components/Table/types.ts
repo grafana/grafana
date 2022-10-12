@@ -45,3 +45,10 @@ export type GrafanaTableColumn = Omit<Column, 'Cell'> & {
   justifyContent: Property.JustifyContent;
   minWidth: number;
 };
+
+export interface TableFooterCalc {
+  show: boolean;
+  reducer: string[]; // actually 1 value
+  fields?: string[];
+  enablePagination?: boolean;
+}

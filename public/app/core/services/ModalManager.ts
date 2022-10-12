@@ -9,7 +9,6 @@ import { copyPanel } from 'app/features/dashboard/utils/panel';
 
 import { ShowConfirmModalEvent, ShowConfirmModalPayload, ShowModalReactEvent } from '../../types/events';
 import { AngularModalProxy } from '../components/modals/AngularModalProxy';
-import { provideI18n } from '../internationalization';
 import { provideTheme } from '../utils/ConfigProvider';
 
 export class ModalManager {
@@ -34,7 +33,7 @@ export class ModalManager {
       },
     };
 
-    const elem = React.createElement(provideI18n(provideTheme(AngularModalProxy, config.theme2)), modalProps);
+    const elem = React.createElement(provideTheme(AngularModalProxy, config.theme2), modalProps);
     this.reactModalRoot.appendChild(this.reactModalNode);
     this.root.render(elem);
   }

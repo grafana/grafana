@@ -4,10 +4,11 @@ import React from 'react';
 
 import { DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data';
 
+import { MISSING_LABEL_FILTER_ERROR_MESSAGE } from '../../../prometheus/querybuilder/shared/LabelFilters';
 import { LokiDatasource } from '../../datasource';
 import { LokiOperationId, LokiVisualQuery } from '../types';
 
-import { MISSING_LABEL_FILTER_ERROR_MESSAGE, LokiQueryBuilder } from './LokiQueryBuilder';
+import { LokiQueryBuilder } from './LokiQueryBuilder';
 import { EXPLAIN_LABEL_FILTER_CONTENT } from './LokiQueryBuilderExplained';
 
 const defaultQuery: LokiVisualQuery = {

@@ -5,6 +5,7 @@ import './global-jquery-shim';
 import angular from 'angular';
 
 import { EventBusSrv } from '@grafana/data';
+import 'blob-polyfill';
 import 'mutationobserver-shim';
 import './mocks/workers';
 

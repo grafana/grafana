@@ -203,19 +203,19 @@ func UnmarshalConditionsCmd(rawQuery map[string]interface{}, refID string) (*Con
 		cond := condition{}
 
 		if i > 0 && cj.Operator.Type != "and" && cj.Operator.Type != "or" {
-			return nil, fmt.Errorf("classic condition %v operator must be `and` or `or`", i+1)
+			return nil, fmt.Errorf("condition %v operator must be `and` or `or`", i+1)
 		}
 		cond.Operator = cj.Operator.Type
 
 		if len(cj.Query.Params) == 0 || cj.Query.Params[0] == "" {
-			return nil, fmt.Errorf("classic condition %v is missing the query refID argument", i+1)
+			return nil, fmt.Errorf("condition %v is missing the query refID argument", i+1)
 		}
 
 		cond.QueryRefID = cj.Query.Params[0]
 
 		cond.Reducer = classicReducer(cj.Reducer.Type)
 		if !cond.Reducer.ValidReduceFunc() {
-			return nil, fmt.Errorf("reducer '%v' in condition %v is not a valid reducer", cond.Reducer, i+1)
+			return nil, fmt.Errorf("invalid reducer '%v' in condition %v", cond.Reducer, i+1)
 		}
 
 		cond.Evaluator, err = newAlertEvaluator(cj.Evaluator)

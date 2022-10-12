@@ -104,6 +104,7 @@ export const QueryOperationRow = ({
               <div ref={provided.innerRef} className={styles.wrapper} {...provided.draggableProps}>
                 <div>
                   <QueryOperationRowHeader
+                    id={id}
                     actionsElement={actionsElement}
                     disabled={disabled}
                     draggable
@@ -127,6 +128,7 @@ export const QueryOperationRow = ({
   return (
     <div className={styles.wrapper}>
       <QueryOperationRowHeader
+        id={id}
         actionsElement={actionsElement}
         disabled={disabled}
         draggable={false}
