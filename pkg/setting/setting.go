@@ -147,6 +147,7 @@ var (
 
 	// LDAP
 	LDAPEnabled           bool
+	LDAPSkipOrgRoleSync   bool
 	LDAPConfigFile        string
 	LDAPSyncCron          string
 	LDAPAllowSignup       bool
@@ -413,8 +414,9 @@ type Cfg struct {
 	FeedbackLinksEnabled                bool
 
 	// LDAP
-	LDAPEnabled     bool
-	LDAPAllowSignup bool
+	LDAPEnabled         bool
+	LDAPSkipOrgRoleSync bool
+	LDAPAllowSignup     bool
 
 	Quota QuotaSettings
 
@@ -1131,6 +1133,8 @@ func (cfg *Cfg) readLDAPConfig() {
 	LDAPSyncCron = ldapSec.Key("sync_cron").String()
 	LDAPEnabled = ldapSec.Key("enabled").MustBool(false)
 	cfg.LDAPEnabled = LDAPEnabled
+	LDAPSkipOrgRoleSync = ldapSec.Key("skip_org_role_sync").MustBool(false)
+	cfg.LDAPSkipOrgRoleSync = LDAPSkipOrgRoleSync
 	LDAPActiveSyncEnabled = ldapSec.Key("active_sync_enabled").MustBool(false)
 	LDAPAllowSignup = ldapSec.Key("allow_sign_up").MustBool(true)
 	cfg.LDAPAllowSignup = LDAPAllowSignup
