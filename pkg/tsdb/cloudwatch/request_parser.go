@@ -14,6 +14,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/cwlog"
 )
 
 var validMetricDataID = regexp.MustCompile(`^[a-z][a-zA-Z0-9_]*$`)
@@ -160,7 +161,7 @@ func migrateAliasToDynamicLabel(queryJson *QueryJson) {
 }
 
 func parseRequestQuery(model QueryJson, refId string, startTime time.Time, endTime time.Time) (*cloudWatchQuery, error) {
-	plog.Debug("Parsing request query", "query", model)
+	cwlog.Debug("Parsing request query", "query", model)
 	cloudWatchQuery := cloudWatchQuery{
 		Alias:             "",
 		Label:             "",

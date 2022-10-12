@@ -20,6 +20,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/cwlog"
 )
 
 type suggestData struct {
@@ -75,7 +76,7 @@ func (e *cloudWatchExecutor) handleGetRegions(pluginCtx backend.PluginContext, p
 	r, err := client.DescribeRegions(&ec2.DescribeRegionsInput{})
 	if err != nil {
 		// ignore error for backward compatibility
-		plog.Error("Failed to get regions", "error", err)
+		cwlog.Error("Failed to get regions", "error", err)
 	} else {
 		for _, region := range r.Regions {
 			exists := false
@@ -494,7 +495,7 @@ func (e *cloudWatchExecutor) listMetrics(pluginCtx backend.PluginContext, region
 		return nil, err
 	}
 
-	plog.Debug("Listing metrics pages")
+	cwlog.Debug("Listing metrics pages")
 	var cloudWatchMetrics []*cloudwatch.Metric
 
 	pageNum := 0
@@ -562,7 +563,7 @@ func (e *cloudWatchExecutor) resourceGroupsGetResources(pluginCtx backend.Plugin
 var metricsCacheLock sync.Mutex
 
 func (e *cloudWatchExecutor) getMetricsForCustomMetrics(region, namespace string, pluginCtx backend.PluginContext) ([]string, error) {
-	plog.Debug("Getting metrics for custom metrics", "region", region, "namespace", namespace)
+	cwlog.Debug("Getting metrics for custom metrics", "region", region, "namespace", namespace)
 	metricsCacheLock.Lock()
 	defer metricsCacheLock.Unlock()
 
