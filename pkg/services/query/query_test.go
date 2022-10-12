@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
@@ -59,19 +60,21 @@ func TestQueryDataMultipleSources(t *testing.T) {
 			HTTPRequest:                nil,
 		}
 
-		_, err = tc.queryService.QueryData(context.Background(), nil, true, reqDTO)
+		_, err = tc.queryService.QueryData(context.Background(), tc.signedInUser, true, reqDTO)
 
 		require.NoError(t, err)
 	})
 
 	t.Run("can query multiple datasources with an expression present", func(t *testing.T) {
 		tc := setup(t)
+		// refId does get set if not included, but better to include it explicitly here
 		query1, err := simplejson.NewJson([]byte(`
 			{
 				"datasource": {
 					"type": "mysql",
 					"uid": "ds1"
-				}
+				},
+				"refId": "A"
 			}
 		`))
 		require.NoError(t, err)
@@ -108,7 +111,7 @@ func TestQueryDataMultipleSources(t *testing.T) {
 			HTTPRequest:                nil,
 		}
 
-		_, err = tc.queryService.QueryData(context.Background(), nil, true, reqDTO)
+		_, err = tc.queryService.QueryData(context.Background(), tc.signedInUser, true, reqDTO)
 
 		require.NoError(t, err)
 	})
@@ -145,7 +148,7 @@ func TestQueryDataMultipleSources(t *testing.T) {
 			HTTPRequest:                nil,
 		}
 
-		_, err := tc.queryService.QueryData(context.Background(), nil, true, reqDTO)
+		_, err := tc.queryService.QueryData(context.Background(), tc.signedInUser, true, reqDTO)
 
 		require.Error(t, err)
 	})
@@ -183,7 +186,7 @@ func TestQueryData(t *testing.T) {
 		httpReq, err := http.NewRequest(http.MethodGet, "/", nil)
 		require.NoError(t, err)
 		metricReq.HTTPRequest = httpReq
-		_, err = tc.queryService.QueryData(context.Background(), nil, true, metricReq)
+		_, err = tc.queryService.QueryData(context.Background(), tc.signedInUser, true, metricReq)
 		require.NoError(t, err)
 
 		require.Empty(t, tc.pluginContext.req.Headers)
@@ -204,7 +207,7 @@ func TestQueryData(t *testing.T) {
 		httpReq.AddCookie(&http.Cookie{Name: "foo", Value: "oof"})
 		httpReq.AddCookie(&http.Cookie{Name: "c"})
 		metricReq.HTTPRequest = httpReq
-		_, err = tc.queryService.QueryData(context.Background(), nil, true, metricReq)
+		_, err = tc.queryService.QueryData(context.Background(), tc.signedInUser, true, metricReq)
 		require.NoError(t, err)
 
 		require.Equal(t, map[string]string{"Cookie": "bar=rab; foo=oof"}, tc.pluginContext.req.Headers)
@@ -226,7 +229,8 @@ func setup(t *testing.T) *testContext {
 		DataSources:           nil,
 		SimulatePluginFailure: false,
 	}
-	exprService := expr.ProvideService(nil, pc, fakeDatasourceService)
+	exprService := expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, pc, fakeDatasourceService)
+	queryService := query.ProvideService(nil, dc, exprService, rv, ds, pc, tc)
 
 	return &testContext{
 		pluginContext:          pc,
@@ -234,7 +238,8 @@ func setup(t *testing.T) *testContext {
 		dataSourceCache:        dc,
 		oauthTokenService:      tc,
 		pluginRequestValidator: rv,
-		queryService:           query.ProvideService(nil, dc, exprService, rv, ds, pc, tc),
+		queryService:           queryService,
+		signedInUser:           &user.SignedInUser{OrgID: 1},
 	}
 }
 
@@ -245,6 +250,7 @@ type testContext struct {
 	oauthTokenService      *fakeOAuthTokenService
 	pluginRequestValidator *fakePluginRequestValidator
 	queryService           *query.Service
+	signedInUser           *user.SignedInUser
 }
 
 func metricRequest() dtos.MetricRequest {
@@ -287,7 +293,9 @@ func (c *fakeDataSourceCache) GetDatasource(ctx context.Context, datasourceID in
 }
 
 func (c *fakeDataSourceCache) GetDatasourceByUID(ctx context.Context, datasourceUID string, user *user.SignedInUser, skipCache bool) (*datasources.DataSource, error) {
-	return c.ds, nil
+	return &datasources.DataSource{
+		Uid: datasourceUID,
+	}, nil
 }
 
 type fakePluginClient struct {
