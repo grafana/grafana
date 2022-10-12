@@ -4,15 +4,15 @@ import { validationSrv } from '../services/ValidationSrv';
 
 export const validateDashboardJson = (json: string) => {
   try {
-    let dashboard = JSON.parse(json);
+    const dashboard = JSON.parse(json);
     if (dashboard && dashboard.tags) {
       if (Array.isArray(dashboard.tags)) {
         const hasInvalidTag = dashboard.tags.some((tag: string) => typeof tag !== 'string');
         if (hasInvalidTag) {
-          return 'JSON expected array of strings';
+          return 'tags expected array of strings';
         }
       } else {
-        return 'JSON expected array';
+        return 'tags expected array';
       }
     }
     return true;
