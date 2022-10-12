@@ -31,16 +31,31 @@ func TestParseGRNStr(t *testing.T) {
 			GRN{},
 			true,
 		},
+		{ // Missing Kind
+			"grn:::foo",
+			GRN{},
+			true,
+		},
 		{ // good!
-			"grn::::roles/Admin",
-			GRN{ResourceIdentifier: "roles/Admin"},
+			"grn:::roles/Admin",
+			GRN{ResourceKind: "roles", ResourceIdentifier: "Admin"},
+			false,
+		},
+		{ // good!
+			"grn:::roles/Admin/with/some/slashes",
+			GRN{ResourceKind: "roles", ResourceIdentifier: "Admin/with/some/slashes"},
+			false,
+		},
+		{ // Weird, but valid.
+			"grn:::roles///Admin/with/leading/slashes",
+			GRN{ResourceKind: "roles", ResourceIdentifier: "//Admin/with/leading/slashes"},
 			false,
 		},
 	}
 
 	for _, test := range tests {
-		t.Run(fmt.Sprintf("ParseGRNStr(%q)", test.input), func(t *testing.T) {
-			got, err := ParseGRNStr(test.input)
+		t.Run(fmt.Sprintf("ParseStr(%q)", test.input), func(t *testing.T) {
+			got, err := ParseStr(test.input)
 			if test.expectErr && err == nil {
 				t.Fatal("wrong result. Expected error, got success")
 			}
