@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/adapters"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
-	publicDashboards "github.com/grafana/grafana/pkg/services/publicdashboards/queries"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
@@ -70,57 +69,56 @@ func (s *Service) Run(ctx context.Context) error {
 }
 
 // QueryData can process queries and return query responses.
-func (s *Service) QueryData(ctx context.Context, user *user.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest, handleExpressions bool) (*backend.QueryDataResponse, error) {
+func (s *Service) QueryData(ctx context.Context, user *user.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error) {
+	// Parse the request into parsed queries grouped by datasource uid
 	parsedReq, err := s.parseMetricRequest(ctx, user, skipCache, reqDTO)
 	if err != nil {
 		return nil, err
 	}
-	if handleExpressions && parsedReq.hasExpression {
+	// If there are expressions, handle them and return
+	if parsedReq.hasExpression {
 		return s.handleExpressions(ctx, user, parsedReq)
 	}
-	return s.handleQueryData(ctx, user, parsedReq)
-}
-
-// QueryData can process queries and return query responses.
-func (s *Service) QueryDataMultipleSources(ctx context.Context, user *user.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest, handleExpressions bool) (*backend.QueryDataResponse, error) {
-	byDataSource := publicDashboards.GroupQueriesByDataSource(reqDTO.Queries)
-
-	// The expression service will handle mixed datasources, so we don't need to group them when an expression is present.
-	if publicDashboards.HasExpressionQuery(reqDTO.Queries) || len(byDataSource) == 1 {
-		return s.QueryData(ctx, user, skipCache, reqDTO, handleExpressions)
-	} else {
-		resp := backend.NewQueryDataResponse()
-
-		g, ctx := errgroup.WithContext(ctx)
-		results := make([]backend.Responses, len(byDataSource))
-
-		for _, queries := range byDataSource {
-			dataSourceQueries := queries
-			g.Go(func() error {
-				subDTO := reqDTO.CloneWithQueries(dataSourceQueries)
-
-				subResp, err := s.QueryData(ctx, user, skipCache, subDTO, handleExpressions)
-
-				if err == nil {
-					results = append(results, subResp.Responses)
-				}
-
-				return err
-			})
-		}
-
-		if err := g.Wait(); err != nil {
-			return nil, err
-		}
-
-		for _, result := range results {
-			for refId, dataResponse := range result {
-				resp.Responses[refId] = dataResponse
-			}
-		}
-
-		return resp, nil
+	// If there is only one datasource, query it and return
+	if len(parsedReq.parsedQueries) == 1 {
+		return s.handleQueryData(ctx, user, parsedReq)
 	}
+	// If there are multiple datasources, handle their queries concurrently and return the aggregate result
+	byDataSource := parsedReq.parsedQueries
+	resp := backend.NewQueryDataResponse()
+
+	g, ctx := errgroup.WithContext(ctx)
+	results := make([]backend.Responses, len(byDataSource))
+
+	for _, queries := range byDataSource {
+		rawQueries := make([]*simplejson.Json, len(queries))
+		for i := 0; i < len(queries); i++ {
+			rawQueries[i] = queries[i].rawQuery
+		}
+		g.Go(func() error {
+			subDTO := reqDTO.CloneWithQueries(rawQueries)
+
+			subResp, err := s.QueryData(ctx, user, skipCache, subDTO)
+
+			if err == nil {
+				results = append(results, subResp.Responses)
+			}
+
+			return err
+		})
+	}
+
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
+
+	for _, result := range results {
+		for refId, dataResponse := range result {
+			resp.Responses[refId] = dataResponse
+		}
+	}
+
+	return resp, nil
 }
 
 // handleExpressions handles POST /api/ds/query when there is an expression.
@@ -130,7 +128,7 @@ func (s *Service) handleExpressions(ctx context.Context, user *user.SignedInUser
 		Queries: []expr.Query{},
 	}
 
-	for _, pq := range parsedReq.parsedQueries {
+	for _, pq := range parsedReq.getFlattenedQueries() {
 		if pq.datasource == nil {
 			return nil, ErrMissingDataSourceInfo.Build(errutil.TemplateData{
 				Public: map[string]interface{}{
@@ -161,7 +159,8 @@ func (s *Service) handleExpressions(ctx context.Context, user *user.SignedInUser
 }
 
 func (s *Service) handleQueryData(ctx context.Context, user *user.SignedInUser, parsedReq *parsedRequest) (*backend.QueryDataResponse, error) {
-	ds := parsedReq.parsedQueries[0].datasource
+	queries := parsedReq.getFlattenedQueries()
+	ds := queries[0].datasource
 	if err := s.pluginRequestValidator.Validate(ds.Url, nil); err != nil {
 		return nil, datasources.ErrDataSourceAccessDenied
 	}
@@ -208,7 +207,7 @@ func (s *Service) handleQueryData(ctx context.Context, user *user.SignedInUser, 
 		}
 	}
 
-	for _, q := range parsedReq.parsedQueries {
+	for _, q := range queries {
 		req.Queries = append(req.Queries, q.query)
 	}
 
@@ -220,12 +219,21 @@ func (s *Service) handleQueryData(ctx context.Context, user *user.SignedInUser, 
 type parsedQuery struct {
 	datasource *datasources.DataSource
 	query      backend.DataQuery
+	rawQuery   *simplejson.Json
 }
 
 type parsedRequest struct {
 	hasExpression bool
-	parsedQueries []parsedQuery
+	parsedQueries map[string][]parsedQuery
 	httpRequest   *http.Request
+}
+
+func (pr parsedRequest) getFlattenedQueries() []parsedQuery {
+	queries := make([]parsedQuery, 0)
+	for _, pq := range pr.parsedQueries {
+		queries = append(queries, pq...)
+	}
+	return queries
 }
 
 func (s *Service) parseMetricRequest(ctx context.Context, user *user.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest) (*parsedRequest, error) {
@@ -236,10 +244,10 @@ func (s *Service) parseMetricRequest(ctx context.Context, user *user.SignedInUse
 	timeRange := legacydata.NewDataTimeRange(reqDTO.From, reqDTO.To)
 	req := &parsedRequest{
 		hasExpression: false,
-		parsedQueries: []parsedQuery{},
+		parsedQueries: make(map[string][]parsedQuery),
 	}
 
-	// Parse the queries
+	// Parse the queries and store them by datasource
 	datasourcesByUid := map[string]*datasources.DataSource{}
 	for _, query := range reqDTO.Queries {
 		ds, err := s.getDataSourceFromQuery(ctx, user, skipCache, query, datasourcesByUid)
@@ -255,6 +263,10 @@ func (s *Service) parseMetricRequest(ctx context.Context, user *user.SignedInUse
 			req.hasExpression = true
 		}
 
+		if _, ok := req.parsedQueries[ds.Uid]; !ok {
+			req.parsedQueries[ds.Uid] = []parsedQuery{}
+		}
+
 		s.log.Debug("Processing metrics query", "query", query)
 
 		modelJSON, err := query.MarshalJSON()
@@ -262,7 +274,7 @@ func (s *Service) parseMetricRequest(ctx context.Context, user *user.SignedInUse
 			return nil, err
 		}
 
-		req.parsedQueries = append(req.parsedQueries, parsedQuery{
+		req.parsedQueries[ds.Uid] = append(req.parsedQueries[ds.Uid], parsedQuery{
 			datasource: ds,
 			query: backend.DataQuery{
 				TimeRange: backend.TimeRange{
@@ -275,14 +287,8 @@ func (s *Service) parseMetricRequest(ctx context.Context, user *user.SignedInUse
 				QueryType:     query.Get("queryType").MustString(""),
 				JSON:          modelJSON,
 			},
+			rawQuery: query,
 		})
-	}
-
-	if !req.hasExpression {
-		if len(datasourcesByUid) > 1 {
-			// We do not (yet) support mixed query type
-			return nil, ErrMultipleDatasources
-		}
 	}
 
 	if reqDTO.HTTPRequest != nil {

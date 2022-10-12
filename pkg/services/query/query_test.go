@@ -59,7 +59,7 @@ func TestQueryDataMultipleSources(t *testing.T) {
 			HTTPRequest:                nil,
 		}
 
-		_, err = tc.queryService.QueryDataMultipleSources(context.Background(), nil, true, reqDTO, false)
+		_, err = tc.queryService.QueryData(context.Background(), nil, true, reqDTO)
 
 		require.NoError(t, err)
 	})
@@ -108,7 +108,7 @@ func TestQueryDataMultipleSources(t *testing.T) {
 			HTTPRequest:                nil,
 		}
 
-		_, err = tc.queryService.QueryDataMultipleSources(context.Background(), nil, true, reqDTO, false)
+		_, err = tc.queryService.QueryData(context.Background(), nil, true, reqDTO)
 
 		require.NoError(t, err)
 	})
@@ -145,7 +145,7 @@ func TestQueryDataMultipleSources(t *testing.T) {
 			HTTPRequest:                nil,
 		}
 
-		_, err := tc.queryService.QueryDataMultipleSources(context.Background(), nil, true, reqDTO, false)
+		_, err := tc.queryService.QueryData(context.Background(), nil, true, reqDTO)
 
 		require.Error(t, err)
 	})
@@ -163,7 +163,7 @@ func TestQueryData(t *testing.T) {
 		tc.oauthTokenService.passThruEnabled = true
 		tc.oauthTokenService.token = token
 
-		_, err := tc.queryService.QueryData(context.Background(), nil, true, metricRequest(), false)
+		_, err := tc.queryService.QueryData(context.Background(), nil, true, metricRequest())
 		require.Nil(t, err)
 
 		expected := map[string]string{
@@ -183,7 +183,7 @@ func TestQueryData(t *testing.T) {
 		httpReq, err := http.NewRequest(http.MethodGet, "/", nil)
 		require.NoError(t, err)
 		metricReq.HTTPRequest = httpReq
-		_, err = tc.queryService.QueryData(context.Background(), nil, true, metricReq, false)
+		_, err = tc.queryService.QueryData(context.Background(), nil, true, metricReq)
 		require.NoError(t, err)
 
 		require.Empty(t, tc.pluginContext.req.Headers)
@@ -204,7 +204,7 @@ func TestQueryData(t *testing.T) {
 		httpReq.AddCookie(&http.Cookie{Name: "foo", Value: "oof"})
 		httpReq.AddCookie(&http.Cookie{Name: "c"})
 		metricReq.HTTPRequest = httpReq
-		_, err = tc.queryService.QueryData(context.Background(), nil, true, metricReq, false)
+		_, err = tc.queryService.QueryData(context.Background(), nil, true, metricReq)
 		require.NoError(t, err)
 
 		require.Equal(t, map[string]string{"Cookie": "bar=rab; foo=oof"}, tc.pluginContext.req.Headers)
