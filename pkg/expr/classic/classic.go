@@ -13,9 +13,9 @@ import (
 
 // ClassicConditionsCmd is a command that supports the reduction and comparison of conditions.
 //
-// A condition in ClassicConditionsCmd can reduce a time series; or contain either an instant metric
-// or the result of another expression; and check if it exceeds a threshold, falls within a
-// range, or does not contain a value.
+// A condition in ClassicConditionsCmd can reduce a time series, contain an instant metric,
+// or the result of another expression; and checks if it exceeds a threshold, falls within a range,
+// or does not contain a value.
 //
 // If ClassicConditionsCmd contains more than one condition, it reduces the boolean outcomes of the
 // threshold, range or value checks using the logical operator of the right hand side condition
@@ -183,7 +183,6 @@ type ConditionJSON struct {
 	Operator  ConditionOperatorJSON `json:"operator"`
 	Query     ConditionQueryJSON    `json:"query"`
 	Reducer   ConditionReducerJSON  `json:"reducer"`
-	// Params []interface{} `json:"params"` (Unused)
 }
 
 type ConditionEvalJSON struct {
@@ -201,6 +200,7 @@ type ConditionQueryJSON struct {
 
 type ConditionReducerJSON struct {
 	Type string `json:"type"`
+	// Params []interface{} `json:"params"` (Unused)
 }
 
 // UnmarshalConditionsCmd creates a new ClassicConditionsCmd.

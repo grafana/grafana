@@ -9,10 +9,6 @@ import (
 
 type classicReducer string
 
-func nilOrNaN(f *float64) bool {
-	return f == nil || math.IsNaN(*f)
-}
-
 func (cr classicReducer) ValidReduceFunc() bool {
 	switch cr {
 	case "avg", "sum", "min", "max", "count", "last", "median":
@@ -184,6 +180,10 @@ func calculateDiff(ff mathexp.Float64Field, allNull bool, value float64, fn func
 		}
 	}
 	return allNull, value
+}
+
+func nilOrNaN(f *float64) bool {
+	return f == nil || math.IsNaN(*f)
 }
 
 var diff = func(newest, oldest float64) float64 {
