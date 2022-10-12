@@ -75,8 +75,8 @@ func (ss *SQLStore) GetOrgQuotas(ctx context.Context, query *models.GetOrgQuotas
 		defaultQuotas := setting.Quota.Org.ToMap()
 
 		seenTargets := make(map[string]bool)
-		for _, quota := range quotas {
-			seenTargets[quota.Target] = true
+		for _, q := range quotas {
+			seenTargets[q.Target] = true
 		}
 
 		for t, v := range defaultQuotas {
@@ -90,26 +90,26 @@ func (ss *SQLStore) GetOrgQuotas(ctx context.Context, query *models.GetOrgQuotas
 		}
 
 		result := make([]*models.OrgQuotaDTO, len(quotas))
-		for i, quota := range quotas {
+		for i, q := range quotas {
 			var used int64
-			if quota.Target != alertRuleTarget || query.UnifiedAlertingEnabled {
+			if q.Target != alertRuleTarget || query.UnifiedAlertingEnabled {
 				// get quota used.
-				rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s where org_id=?", dialect.Quote(quota.Target))
+				rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s where org_id=?", dialect.Quote(q.Target))
 
 				// removing service accounts from the count
-				if quota.Target == dialect.Quote("user") {
+				if q.Target == dialect.Quote("user") {
 					rawSQL += notServiceAccount(dialect)
 				}
 				resp := make([]*targetCount, 0)
-				if err := sess.SQL(rawSQL, quota.OrgId).Find(&resp); err != nil {
+				if err := sess.SQL(rawSQL, q.OrgId).Find(&resp); err != nil {
 					return err
 				}
 				used = resp[0].Count
 			}
 			result[i] = &models.OrgQuotaDTO{
-				Target: quota.Target,
-				Limit:  quota.Limit,
-				OrgId:  quota.OrgId,
+				Target: q.Target,
+				Limit:  q.Limit,
+				OrgId:  q.OrgId,
 				Used:   used,
 			}
 		}
@@ -213,25 +213,25 @@ func (ss *SQLStore) GetUserQuotas(ctx context.Context, query *models.GetUserQuot
 		}
 
 		result := make([]*models.UserQuotaDTO, len(quotas))
-		for i, quota := range quotas {
+		for i, q := range quotas {
 			var used int64
-			if quota.Target != alertRuleTarget || query.UnifiedAlertingEnabled {
+			if q.Target != alertRuleTarget || query.UnifiedAlertingEnabled {
 				// get quota used.
-				rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s where user_id=?", dialect.Quote(quota.Target))
+				rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s where user_id=?", dialect.Quote(q.Target))
 				// removing service accounts from the count
-				if quota.Target == dialect.Quote("user") {
+				if q.Target == dialect.Quote("user") {
 					rawSQL += notServiceAccount(dialect)
 				}
 				resp := make([]*targetCount, 0)
-				if err := sess.SQL(rawSQL, quota.UserId).Find(&resp); err != nil {
+				if err := sess.SQL(rawSQL, q.UserId).Find(&resp); err != nil {
 					return err
 				}
 				used = resp[0].Count
 			}
 			result[i] = &models.UserQuotaDTO{
-				Target: quota.Target,
-				Limit:  quota.Limit,
-				UserId: quota.UserId,
+				Target: q.Target,
+				Limit:  q.Limit,
+				UserId: q.UserId,
 				Used:   used,
 			}
 		}
