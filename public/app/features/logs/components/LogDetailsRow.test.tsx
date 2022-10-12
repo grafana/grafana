@@ -34,6 +34,11 @@ const setup = (propOverrides?: Partial<Props>) => {
   );
 };
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
+
 describe('LogDetailsRow', () => {
   it('should render parsed key', () => {
     setup({ parsedKey: 'test key' });
