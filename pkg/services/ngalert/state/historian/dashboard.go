@@ -94,11 +94,11 @@ func toQueryResult(cacheVal interface{}, err error) (int64, error) {
 		return 0, err
 	}
 
-	switch cacheVal.(type) {
+	switch cacheVal := cacheVal.(type) {
 	case error:
-		return 0, cacheVal.(error)
+		return 0, cacheVal
 	case int64:
-		return cacheVal.(int64), err
+		return cacheVal, err
 	default:
 		panic(fmt.Sprintf("unexpected value stored in cache: %#v", cacheVal))
 	}
