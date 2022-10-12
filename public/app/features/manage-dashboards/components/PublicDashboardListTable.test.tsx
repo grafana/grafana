@@ -42,28 +42,6 @@ jest.mock('@grafana/runtime', () => ({
   }),
 }));
 
-describe('getPublicDashboards', () => {
-  test('returns public dashboards sorted by isEnabled', async () => {
-    const results = await getPublicDashboards();
-    expect(results).toEqual([
-      {
-        uid: 'EuiEbd3nz',
-        accessToken: '8687b0498ccf4babb2f92810d8563b33',
-        title: 'New dashboard',
-        dashboardUid: 'kFlxbd37k',
-        isEnabled: true,
-      },
-      {
-        uid: 'SdZwuCZVz',
-        accessToken: 'beeaf92f6ab3467f80b2be922c7741ab',
-        title: 'New dashboardasdf',
-        dashboardUid: 'iF36Qb6nz',
-        isEnabled: false,
-      },
-    ]);
-  });
-});
-
 //describe('ListPublicDashboardTable', () => {
 //  test('renders properly', async() => {
 //    act(() => {
