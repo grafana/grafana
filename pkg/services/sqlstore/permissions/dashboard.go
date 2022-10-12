@@ -124,6 +124,7 @@ func (f AccessControlDashboardPermissionFilter) Where() (string, []interface{}) 
 			if dashWildcards.Contains(scope) || folderWildcards.Contains(scope) {
 				hasWildcard = true
 				builder.WriteString("(1 = 1 AND NOT dashboard.is_folder)")
+				break
 			}
 		}
 
@@ -148,6 +149,7 @@ func (f AccessControlDashboardPermissionFilter) Where() (string, []interface{}) 
 			if folderWildcards.Contains(scope) {
 				hasWildcard = true
 				builder.WriteString("(1 = 1 AND dashboard.is_folder)")
+				break
 			}
 		}
 		if !hasWildcard {
