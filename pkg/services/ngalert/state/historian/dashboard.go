@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/patrickmn/go-cache"
+	"golang.org/x/sync/singleflight"
 )
 
 const (
@@ -21,59 +21,62 @@ const (
 
 // dashboardResolver resolves dashboard UIDs to IDs with caching.
 type dashboardResolver struct {
-	dashboards dashboards.DashboardService
-	cache      *cache.Cache
-	lock       sync.Mutex
-	log        log.Logger
+	dashboards   dashboards.DashboardService
+	cache        *cache.Cache
+	singleflight singleflight.Group
+	log          log.Logger
 }
 
 func newDashboardResolver(dbs dashboards.DashboardService, log log.Logger, expiry time.Duration) *dashboardResolver {
 	return &dashboardResolver{
-		dashboards: dbs,
-		cache:      cache.New(expiry, maxDuration(2*expiry, minCleanupInterval)),
-		log:        log,
+		dashboards:   dbs,
+		cache:        cache.New(expiry, maxDuration(2*expiry, minCleanupInterval)),
+		singleflight: singleflight.Group{},
+		log:          log,
 	}
 }
 
 // getId gets the ID of the dashboard with the given uid/orgID combination, or returns dashboardNotFound if the dashboard does not exist.
 func (r *dashboardResolver) getID(ctx context.Context, orgID int64, uid string) (int64, error) {
-	// Optimistically query without acquiring lock. This works because cache.Cache is thread-safe.
-	// That way, we don't block valid queries on unrelated cache misses.
-	// We use a double-checked lock to prevent queries from being needlessly ran.
-	if id, found := r.cache.Get(packCacheKey(orgID, uid)); found {
+	// Optimistically query without acquiring lock. This is okay because cache.Cache is thread-safe.
+	// We don't need to lock anything ourselves on cache miss, because singleflight will lock for us within a given key.
+	// Different keys which correspond to different queries will never block each other.
+	key := packCacheKey(orgID, uid)
+
+	if id, found := r.cache.Get(key); found {
 		return id.(int64), nil
 	}
 
-	r.lock.Lock()
-	defer r.lock.Unlock()
+	id, err, _ := r.singleflight.Do(key, func() (interface{}, error) {
+		r.log.Debug("dashboard cache miss, querying dashboards", "dashboardUID", uid)
 
-	if id, found := r.cache.Get(packCacheKey(orgID, uid)); found {
-		return id.(int64), nil
-	}
+		var id int64
+		query := &models.GetDashboardQuery{
+			Uid:   uid,
+			OrgId: orgID,
+		}
+		err := r.dashboards.GetDashboard(ctx, query)
+		if err != nil && errors.Is(err, dashboards.ErrDashboardNotFound) {
+			id = dashboardNotFound
+		} else if err != nil {
+			return 0, err
+		}
 
-	r.log.Debug("dashboard cache miss, querying dashboards", "dashboardUID", uid)
+		if query.Result != nil {
+			id = query.Result.Id
+		} else {
+			id = dashboardNotFound
+		}
 
-	var id int64
-	query := &models.GetDashboardQuery{
-		Uid:   uid,
-		OrgId: orgID,
-	}
-	err := r.dashboards.GetDashboard(ctx, query)
-	if err != nil && errors.Is(err, dashboards.ErrDashboardNotFound) {
-		id = dashboardNotFound
-	} else if err != nil {
+		// By setting the cache inside the singleflighted routine, we avoid any accidental re-queries that could get initiated after the query completes.
+		r.cache.Set(key, id, cache.DefaultExpiration)
+		return id, nil
+	})
+	if err != nil {
 		return 0, err
 	}
 
-	if query.Result != nil {
-		id = query.Result.Id
-	} else {
-		id = dashboardNotFound
-	}
-
-	r.cache.Set(packCacheKey(orgID, uid), id, cache.DefaultExpiration)
-
-	return id, nil
+	return id.(int64), nil
 }
 
 func packCacheKey(orgID int64, uid string) string {
