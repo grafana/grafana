@@ -41,7 +41,7 @@ export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSour
     this.interval = PublicDashboardDataSource.resolveInterval(datasource);
 
     this.annotations = {
-      prepareQuery(anno: AnnotationQuery<DataQuery>): DataQuery | undefined {
+      prepareQuery(anno: AnnotationQuery): DataQuery | undefined {
         return { ...anno, queryType: GrafanaQueryType.Annotations, refId: 'anno' };
       },
     };
