@@ -161,6 +161,7 @@ Content-Type: application/json
 Status codes:
 
 - **200** – OK
+- **400** – Bad request
 - **401** – Unauthorized
 - **403** – Forbidden, source data source is read-only
 - **404** – Not found, either source or target data source could not be found

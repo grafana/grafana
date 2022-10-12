@@ -10,7 +10,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -127,21 +126,6 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, query.Result.Email, "ac1@test.com")
 				require.Equal(t, query.Result.Login, "ac1")
-			})
-
-			t.Run("Can search users", func(t *testing.T) {
-				query := models.SearchUsersQuery{Query: "", SignedInUser: &user.SignedInUser{
-					OrgID: 1,
-					Permissions: map[int64]map[string][]string{
-						1: {accesscontrol.ActionUsersRead: {accesscontrol.ScopeGlobalUsersAll}},
-					},
-				}}
-				err := sqlStore.SearchUsers(context.Background(), &query)
-
-				require.NoError(t, err)
-				require.Len(t, query.Result.Users, 2)
-				require.Equal(t, query.Result.Users[0].Email, "ac1@test.com")
-				require.Equal(t, query.Result.Users[1].Email, "ac2@test.com")
 			})
 
 			t.Run("Given an added org user", func(t *testing.T) {
@@ -358,89 +342,4 @@ func updateDashboardACL(t *testing.T, sqlStore *SQLStore, dashboardID int64, ite
 		return err
 	})
 	return err
-}
-
-// This function was copied from pkg/services/dashboards/database to circumvent
-// import cycles. When this org-related code is refactored into a service the
-// tests can the real GetDashboardACLInfoList functions
-func getDashboardACLInfoList(s *SQLStore, query *models.GetDashboardACLInfoListQuery) error {
-	outerErr := s.WithDbSession(context.Background(), func(dbSession *DBSession) error {
-		query.Result = make([]*models.DashboardACLInfoDTO, 0)
-		falseStr := dialect.BooleanStr(false)
-
-		if query.DashboardID == 0 {
-			sql := `SELECT
-		da.id,
-		da.org_id,
-		da.dashboard_id,
-		da.user_id,
-		da.team_id,
-		da.permission,
-		da.role,
-		da.created,
-		da.updated,
-		'' as user_login,
-		'' as user_email,
-		'' as team,
-		'' as title,
-		'' as slug,
-		'' as uid,` +
-				falseStr + ` AS is_folder,` +
-				falseStr + ` AS inherited
-		FROM dashboard_acl as da
-		WHERE da.dashboard_id = -1`
-			return dbSession.SQL(sql).Find(&query.Result)
-		}
-
-		rawSQL := `
-			-- get permissions for the dashboard and its parent folder
-			SELECT
-				da.id,
-				da.org_id,
-				da.dashboard_id,
-				da.user_id,
-				da.team_id,
-				da.permission,
-				da.role,
-				da.created,
-				da.updated,
-				u.login AS user_login,
-				u.email AS user_email,
-				ug.name AS team,
-				ug.email AS team_email,
-				d.title,
-				d.slug,
-				d.uid,
-				d.is_folder,
-				CASE WHEN (da.dashboard_id = -1 AND d.folder_id > 0) OR da.dashboard_id = d.folder_id THEN ` + dialect.BooleanStr(true) + ` ELSE ` + falseStr + ` END AS inherited
-			FROM dashboard as d
-				LEFT JOIN dashboard folder on folder.id = d.folder_id
-				LEFT JOIN dashboard_acl AS da ON
-				da.dashboard_id = d.id OR
-				da.dashboard_id = d.folder_id OR
-				(
-					-- include default permissions -->
-					da.org_id = -1 AND (
-					  (folder.id IS NOT NULL AND folder.has_acl = ` + falseStr + `) OR
-					  (folder.id IS NULL AND d.has_acl = ` + falseStr + `)
-					)
-				)
-				LEFT JOIN ` + dialect.Quote("user") + ` AS u ON u.id = da.user_id
-				LEFT JOIN team ug on ug.id = da.team_id
-			WHERE d.org_id = ? AND d.id = ? AND da.id IS NOT NULL
-			ORDER BY da.id ASC
-			`
-
-		return dbSession.SQL(rawSQL, query.OrgID, query.DashboardID).Find(&query.Result)
-	})
-
-	if outerErr != nil {
-		return outerErr
-	}
-
-	for _, p := range query.Result {
-		p.PermissionName = p.Permission.String()
-	}
-
-	return nil
 }

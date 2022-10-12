@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/services/store/kind"
 	"github.com/grafana/grafana/pkg/web"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -22,12 +23,14 @@ type HTTPObjectStore interface {
 type httpObjectStore struct {
 	store ObjectStoreServer
 	log   log.Logger
+	kinds kind.KindRegistry
 }
 
-func ProvideHTTPObjectStore(store ObjectStoreServer) HTTPObjectStore {
+func ProvideHTTPObjectStore(store ObjectStoreServer, kinds kind.KindRegistry) HTTPObjectStore {
 	return &httpObjectStore{
 		store: store,
 		log:   log.New("http-object-store"),
+		kinds: kinds,
 	}
 }
 
@@ -55,10 +58,18 @@ func parseRequestParams(req *http.Request) (uid string, kind string, params map[
 	idx := strings.LastIndex(path, ".")
 	if idx > 0 {
 		uid = path[:idx]
-		kind = path[idx:]
+		kind = path[idx+1:]
 	} else {
 		uid = path
 		kind = "?"
+	}
+
+	// Read parameters that are encoded in the URL
+	vals := req.URL.Query()
+	for k, v := range vals {
+		if len(v) > 0 {
+			params[k] = v[0]
+		}
 	}
 	return
 }
@@ -68,9 +79,9 @@ func (s *httpObjectStore) doGetObject(c *models.ReqContext) response.Response {
 	rsp, err := s.store.Read(c.Req.Context(), &ReadObjectRequest{
 		UID:         uid,
 		Kind:        kind,
-		Version:     params["version"], // ?version = XYZ
-		WithBody:    true,              // ?? allow false?
-		WithSummary: true,              // ?? allow false?
+		Version:     params["version"],           // ?version = XYZ
+		WithBody:    params["body"] != "false",   // default to true
+		WithSummary: params["summary"] == "true", // default to false
 	})
 	if err != nil {
 		return response.Error(500, "error fetching object", err)
@@ -108,6 +119,11 @@ func (s *httpObjectStore) doGetRawObject(c *models.ReqContext) response.Response
 	if err != nil {
 		return response.Error(500, "?", err)
 	}
+	info, err := s.kinds.GetInfo(kind)
+	if err != nil {
+		return response.Error(400, "Unsupported kind", err)
+	}
+
 	if rsp.Object != nil && rsp.Object.Body != nil {
 		// Configure etag support
 		currentEtag := rsp.Object.ETag
@@ -121,10 +137,13 @@ func (s *httpObjectStore) doGetRawObject(c *models.ReqContext) response.Response
 				http.StatusNotModified, // 304
 			)
 		}
-
+		mime := info.MimeType
+		if mime == "" {
+			mime = "application/json"
+		}
 		return response.CreateNormalResponse(
 			http.Header{
-				"Content-Type": []string{"application/json"}, // TODO, based on kind!!!
+				"Content-Type": []string{mime},
 				"ETag":         []string{currentEtag},
 			},
 			rsp.Object.Body,
@@ -151,7 +170,7 @@ func (s *httpObjectStore) doWriteObject(c *models.ReqContext) response.Response 
 		Kind:            kind,
 		Body:            b,
 		Comment:         params["comment"],
-		PreviousVersion: params["previous"],
+		PreviousVersion: params["previousVersion"],
 	})
 	if err != nil {
 		return response.Error(500, "?", err)
@@ -164,7 +183,7 @@ func (s *httpObjectStore) doDeleteObject(c *models.ReqContext) response.Response
 	rsp, err := s.store.Delete(c.Req.Context(), &DeleteObjectRequest{
 		UID:             uid,
 		Kind:            kind,
-		PreviousVersion: params["previous"],
+		PreviousVersion: params["previousVersion"],
 	})
 	if err != nil {
 		return response.Error(500, "?", err)
@@ -192,5 +211,16 @@ func (s *httpObjectStore) doListFolder(c *models.ReqContext) response.Response {
 }
 
 func (s *httpObjectStore) doSearch(c *models.ReqContext) response.Response {
-	return response.JSON(501, "Not implemented yet")
+	req := &ObjectSearchRequest{
+		WithBody:   true,
+		WithLabels: true,
+		WithFields: true,
+		// TODO!!!
+	}
+
+	rsp, err := s.store.Search(c.Req.Context(), req)
+	if err != nil {
+		return response.Error(500, "?", err)
+	}
+	return response.JSON(200, rsp)
 }

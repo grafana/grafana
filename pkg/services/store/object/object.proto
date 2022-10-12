@@ -3,15 +3,6 @@ package object;
 
 option go_package = "./;object";
 
-// Will be replaced with something from the SDK
-message UserInfo {
-  // internal grafana user ID
-  int64 id = 1;
-
-  // login name
-  string login = 2; // string ID? 
-}
-
 // The canonical object/document data -- this represents the raw bytes and storage level metadata
 message RawObject {
   // Unique ID
@@ -24,14 +15,14 @@ message RawObject {
   // Time in epoch milliseconds that the object was created
   int64 created = 3;
 
-  // Time in epoch milliseconds that the object was modified
-  int64 modified = 4;
+  // Time in epoch milliseconds that the object was updated
+  int64 updated = 4;
 
   // Who created the object
-  UserInfo created_by = 5;
+  string created_by = 5;
 
-  // Who modified the object
-  UserInfo modified_by = 6;
+  // Who updated the object
+  string updated_by = 6;
 
   // Content Length
   int64 size = 7;
@@ -47,20 +38,16 @@ message RawObject {
   // NOTE: currently managed by the dashboard+dashboard_version tables
   string version = 10;
 
-  // optional "save" or "commit" message
-  //
-  // NOTE: currently managed by the dashboard_version table, and will be returned from a "history" command
-  string comment = 11;
+  // External location info
+  RawObjectSyncInfo sync = 11;
+}
 
-  // Location (path/repo/etc) that defines the canonocal form
-  //
+message RawObjectSyncInfo {
   // NOTE: currently managed by the dashboard_provisioning table
-  string sync_src = 12;
+  string source = 11;
 
   // Time in epoch milliseconds that the object was last synced with an external system (provisioning/git)
-  //
-  // NOTE: currently managed by the dashboard_provisioning table
-  int64 sync_time = 13;
+  int64 time = 12;
 }
 
 // Report error while working with objects
@@ -74,6 +61,29 @@ message ObjectErrorInfo {
 
   // Details encoded in JSON
   bytes details_json = 3;
+}
+
+// This is a subset of RawObject that does not include body or sync info
+message ObjectVersionInfo {
+  // The version will change when the object is saved. It is not necessarily sortable
+  string version = 1;
+
+  // Time in epoch milliseconds that the object was updated
+  int64 updated = 2;
+
+  // Who updated the object
+  string updated_by = 3;
+
+  // Content Length
+  int64 size = 4;
+
+  // MD5 digest of the body
+  string ETag = 5;
+
+  // optional "save" or "commit" message
+  //
+  // NOTE: currently managed by the dashboard_version table, and will be returned from a "history" command
+  string comment = 6;
 }
 
 //-----------------------------------------------
@@ -143,10 +153,21 @@ message WriteObjectResponse {
   ObjectErrorInfo error = 1;
 
   // Object details with the body removed
-  RawObject object = 2; 
+  ObjectVersionInfo object = 2; 
 
   // Object summary as JSON
   bytes summary_json = 3;
+
+  // Status code
+  Status status = 4;
+
+  // Status enumeration
+  enum Status {
+    ERROR = 0;
+    CREATED = 1;
+    UPDATED = 2;
+    UNCHANGED = 3;
+  }
 }
 
 //-----------------------------------------------
@@ -188,7 +209,7 @@ message ObjectHistoryRequest {
 
 message ObjectHistoryResponse {
   // Object metadata without the raw bytes
-  repeated RawObject object = 1;
+  repeated ObjectVersionInfo versions = 1;
 
   // More results exist... pass this in the next request
   string next_page_token = 2;
@@ -221,16 +242,59 @@ message ObjectSearchRequest {
   // Sorting instructions `field ASC/DESC`
   repeated string sort = 7;
 
-  // TODO, limit the set of fields we actually want returned
-  // Only supported in the QueryResponse flavor?
-  repeated string fields = 8;
+  // Return the full body in each payload
+  bool with_body = 8;
 
   // Return the full body in each payload
-  bool with_body = 9;
+  bool with_labels = 9;
+
+  // Return the full body in each payload
+  bool with_fields = 10;
+}
+
+// Search result metadata for each object
+message ObjectSearchResult {
+  // Unique ID
+  string UID = 1;
+
+  // Identify the object kind.  This kind will be used to apply a schema to the body and
+  // will trigger additional indexing behavior.
+  string kind = 2;
+
+  // The current veresion of this object
+  string version = 3;
+
+  // Time in epoch milliseconds that the object was updated
+  int64 updated = 4;
+
+  // Who updated the object
+  string updated_by = 5;
+
+  // Optionally include the full object body
+  bytes body = 6;
+
+  //----------------------------------------
+  // Derived from body in the summary
+  //----------------------------------------
+
+  // Always included
+  string name = 7;
+
+  // Always included
+  string description = 8;
+
+  // The structured labels
+  map<string,string> labels = 9;
+
+  // Optionally include extracted JSON
+  bytes fields_json = 10;
+
+  // ObjectErrorInfo in json
+  bytes error_json = 11;
 }
 
 message ObjectSearchResponse {
-  repeated RawObject results = 1;
+  repeated ObjectSearchResult results = 1;
 
   // More results exist... pass this in the next request
   string next_page_token = 2;
