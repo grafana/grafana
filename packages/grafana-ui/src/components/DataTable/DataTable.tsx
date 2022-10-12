@@ -1,5 +1,5 @@
 import { cx, css } from '@emotion/css';
-import React, { useMemo, Fragment } from 'react';
+import React, { useMemo, Fragment, ReactNode } from 'react';
 import { useExpanded, useSortBy, useTable, TableOptions } from 'react-table';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -16,9 +16,19 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border: solid 1px ${theme.colors.border.weak};
     background-color: ${theme.colors.background.secondary};
     width: 100%;
+    th {
+      position: relative;
+      white-space: nowrap;
+      padding: ${theme.spacing(1)};
+      padding-right: ${theme.spacing(2.5)};
+    }
+
+    td {
+      padding: ${theme.spacing(1)};
+    }
+
     td,
     th {
-      padding: ${theme.spacing(1)};
       min-width: ${theme.spacing(3)};
     }
   `,
@@ -28,12 +38,21 @@ const getStyles = (theme: GrafanaTheme2) => ({
   shrink: css`
     width: 0%;
   `,
+  sortIcon: css`
+    position: absolute;
+    top: ${theme.spacing(1)};
+  `,
+  sortableHeader: css`
+    &:hover {
+      background-color: ${theme.colors.emphasize(theme.colors.background.secondary, 0.05)};
+    }
+  `,
 });
 
 interface Props<TableData extends object> {
   columns: Array<Column<TableData>>;
   data: TableData[];
-  renderExpandedRow?: (row: TableData) => JSX.Element;
+  renderExpandedRow?: (row: TableData) => ReactNode;
   className?: string;
   getRowId: TableOptions<TableData>['getRowId'];
 }
@@ -91,10 +110,21 @@ export function DataTable<TableData extends object>({
                 );
 
                 return (
-                  <th key={key} className={cx(column.width === 0 && styles.shrink)} {...headerCellProps}>
+                  <th
+                    key={key}
+                    className={cx({ [styles.shrink]: column.width === 0, [styles.sortableHeader]: column.canSort })}
+                    {...headerCellProps}
+                  >
                     {column.render('Header')}
 
-                    {column.isSorted && <Icon name={column.isSortedDesc ? 'angle-down' : 'angle-up'} />}
+                    {column.isSorted && (
+                      <span
+                        // FIXME: move this
+                        className={styles.sortIcon}
+                      >
+                        <Icon name={column.isSortedDesc ? 'angle-down' : 'angle-up'} />
+                      </span>
+                    )}
                   </th>
                 );
               })}

@@ -43,7 +43,6 @@ export {
 export { DateTimePicker } from './DateTimePickers/DateTimePicker/DateTimePicker';
 export { List } from './List/List';
 export { DataTable } from './DataTable/DataTable';
-export type { Column } from './DataTable/types';
 export { TagsInput } from './TagsInput/TagsInput';
 export { Pagination } from './Pagination/Pagination';
 export { Tag, type OnTagClick } from './Tags/Tag';

@@ -1,11 +1,22 @@
 import { css } from '@emotion/css';
 import { negate } from 'lodash';
 import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
-import { CellProps, SortByFn } from 'react-table';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
-import { Badge, Button, DeleteButton, HorizontalGroup, LoadingPlaceholder, useStyles2, Alert } from '@grafana/ui';
+import {
+  Badge,
+  Button,
+  DeleteButton,
+  HorizontalGroup,
+  LoadingPlaceholder,
+  useStyles2,
+  Alert,
+  DataTable,
+  type Column,
+  type CellProps,
+  type SortByFn,
+} from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { useNavModel } from 'app/core/hooks/useNavModel';
@@ -14,7 +25,6 @@ import { AccessControlAction } from 'app/types';
 import { AddCorrelationForm } from './Forms/AddCorrelationForm';
 import { EditCorrelationForm } from './Forms/EditCorrelationForm';
 import { EmptyCorrelationsCTA } from './components/EmptyCorrelationsCTA';
-import { Column, Table } from './components/Table';
 import { CorrelationData, useCorrelations } from './useCorrelations';
 
 const sortDatasource: SortByFn<CorrelationData> = (a, b, column) =>
@@ -145,7 +155,7 @@ export default function CorrelationsPage() {
           {isAdding && <AddCorrelationForm onClose={() => setIsAdding(false)} onCreated={handleAdd} />}
 
           {data && data.length >= 1 && (
-            <Table
+            <DataTable
               renderExpandedRow={({ target, source, ...correlation }) => (
                 <EditCorrelationForm
                   correlation={{ ...correlation, sourceUID: source.uid, targetUID: target.uid }}

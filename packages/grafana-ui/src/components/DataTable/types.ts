@@ -9,7 +9,7 @@ export interface Column<TableData extends object> {
    */
   id?: IdType<TableData>;
   cell?: (props: CellProps<TableData>) => ReactNode;
-  header?: (() => ReactNode | string) | string;
+  header?: string;
   sortType?: DefaultSortTypes | SortByFn<TableData>;
   shrink?: boolean;
   visible?: (col: TableData[]) => boolean;

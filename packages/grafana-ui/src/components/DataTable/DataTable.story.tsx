@@ -1,11 +1,13 @@
 import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React, { useMemo } from 'react';
 
-import { DataTable, Column } from '@grafana/ui';
+import { DataTable, Column, Badge } from '@grafana/ui';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import mdx from './DataTable.mdx';
+
+const EXCLUDED_PROPS = ['className', 'renderExpandedRow', 'getRowId'];
 
 const meta: ComponentMeta<typeof DataTable> = {
   title: 'Layout/DataTable',
@@ -15,23 +17,48 @@ const meta: ComponentMeta<typeof DataTable> = {
     docs: {
       page: mdx,
     },
-    controls: {},
+    controls: {
+      exclude: EXCLUDED_PROPS,
+    },
   },
   args: {},
   argTypes: {},
 };
 
 interface TableData {
-  label: string;
+  header1: string;
+  header2?: number;
 }
 
 export const Global: ComponentStory<typeof DataTable> = (args) => {
-  const columns = useMemo<[Column<TableData>]>(() => [{ id: 'label', header: 'Label', sortType: 'alphanumeric' }], []);
-  const data = useMemo(() => [{ label: 'a' }], []);
+  const columns = useMemo<Array<Column<TableData>>>(
+    () => [
+      { id: 'header1', header: 'Header 1', sortType: 'alphanumeric' },
+      { id: 'header2', header: 'With missing values', sortType: 'number', shrink: true },
+      {
+        id: 'noheader',
+        sortType: 'number',
+      },
+      {
+        id: 'customcontent',
+        sortType: 'number',
+        cell: () => <Badge color="green" text="I'm custom content!" />,
+      },
+    ],
+    []
+  );
+  const data = useMemo(
+    () => [
+      { header1: 'a', header2: 1 },
+      { header1: 'b' },
+      { header1: 'c', noheader: "This column doesn't have an header" },
+    ],
+    []
+  );
 
   return (
     <>
-      <DataTable columns={columns} data={data} getRowId={() => '1'}></DataTable>
+      <DataTable columns={columns} data={data} getRowId={(r) => r.header1} renderExpandedRow={() => null} />
     </>
   );
 };
