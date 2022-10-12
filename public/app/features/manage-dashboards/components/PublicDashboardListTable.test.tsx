@@ -1,7 +1,6 @@
 import {
   LIST_PUBLIC_DASHBOARD_URL,
   viewPublicDashboardUrl,
-  getPublicDashboards,
   //ListPublicDashboardTable,
 } from './PublicDashboardListTable';
 
