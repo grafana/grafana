@@ -19,7 +19,13 @@ import {
 } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { t, Trans } from 'app/core/internationalization';
-import { ENGLISH_US, FRENCH_FRANCE, PSEUDO_LOCALE, SPANISH_SPAIN } from 'app/core/internationalization/constants';
+import {
+  CHINESE_SIMPLIFIED,
+  ENGLISH_US,
+  FRENCH_FRANCE,
+  PSEUDO_LOCALE,
+  SPANISH_SPAIN,
+} from 'app/core/internationalization/constants';
 import { PreferencesService } from 'app/core/services/PreferencesService';
 import { UserPreferencesDTO } from 'app/types';
 
@@ -43,15 +49,19 @@ const languages: Array<SelectableValue<string>> = [
   },
   {
     value: ENGLISH_US,
-    label: t('common.locale.en', 'English'),
+    label: t('common.locale.en-US', 'English'),
   },
   {
     value: SPANISH_SPAIN,
-    label: t('common.locale.es', 'Spanish'),
+    label: t('common.locale.es-ES', 'Spanish'),
   },
   {
     value: FRENCH_FRANCE,
-    label: t('common.locale.fr', 'French'),
+    label: t('common.locale.fr-FR', 'French'),
+  },
+  {
+    value: CHINESE_SIMPLIFIED,
+    label: t('common.locale.zh-Hans', 'Chinese (Simplified)'),
   },
   // TODO: dev only
   {
