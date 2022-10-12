@@ -7,9 +7,9 @@ import (
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 )
 
-type classicReducer string
+type reducer string
 
-func (cr classicReducer) ValidReduceFunc() bool {
+func (cr reducer) ValidReduceFunc() bool {
 	switch cr {
 	case "avg", "sum", "min", "max", "count", "last", "median":
 		return true
@@ -20,7 +20,7 @@ func (cr classicReducer) ValidReduceFunc() bool {
 }
 
 //nolint:gocyclo
-func (cr classicReducer) Reduce(series mathexp.Series) mathexp.Number {
+func (cr reducer) Reduce(series mathexp.Series) mathexp.Number {
 	num := mathexp.NewNumber("", nil)
 
 	if series.GetLabels() != nil {

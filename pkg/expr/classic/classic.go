@@ -11,15 +11,15 @@ import (
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 )
 
-// ClassicConditionsCmd is a command that supports the reduction and comparison of conditions.
+// ConditionsCmd is a command that supports the reduction and comparison of conditions.
 //
-// A condition in ClassicConditionsCmd can reduce a time series, contain an instant metric,
-// or the result of another expression; and checks if it exceeds a threshold, falls within a range,
+// A condition in ConditionsCmd can reduce a time series, contain an instant metric, or the
+// result of another expression; and checks if it exceeds a threshold, falls within a range,
 // or does not contain a value.
 //
-// If ClassicConditionsCmd contains more than one condition, it reduces the boolean outcomes of the
+// If ConditionsCmd contains more than one condition, it reduces the boolean outcomes of the
 // threshold, range or value checks using the logical operator of the right hand side condition
-// until all conditions have been reduced to a single boolean outcome. ClassicConditionsCmd does not
+// until all conditions have been reduced to a single boolean outcome. ConditionsCmd does not
 // follow operator precedence.
 //
 // For example if we have the following classic condition:
@@ -30,57 +30,44 @@ import (
 //
 //	false OR true AND true
 //
-// then the outcome of ClassicConditionsCmd is true.
-type ClassicConditionsCmd struct {
+// then the outcome of ConditionsCmd is true.
+type ConditionsCmd struct {
 	Conditions []condition
-	refID      string
+	RefID      string
 }
 
-// condition is a single condition in ClassicConditionsCmd.
+// condition is a single condition in ConditionsCmd.
 type condition struct {
-	QueryRefID string
-	Reducer    classicReducer
-	Evaluator  evaluator
-	Operator   string
+	InputRefID string
+
+	// Reducer reduces a series of data into a single result. An example of a reducer is the avg,
+	// min and max functions.
+	Reducer reducer
+
+	// Evaluator evaluates the reduced time series, instant metric, or result of another expression
+	// against an evaluator. An example of an evaluator is checking if it exceeds a threshold,
+	// falls within a range, or does not contain a value.
+	Evaluator evaluator
+
+	// Operator is the logical operator to use when there are two conditions in ConditionsCmd.
+	// If there are more than two conditions in ConditionsCmd then operator is used to compare
+	// the outcome of this condition with that of the condition before it.
+	Operator string
 }
 
 // NeedsVars returns the variable names (refIds) that are dependencies
 // to execute the command and allows the command to fulfill the Command interface.
-func (cmd *ClassicConditionsCmd) NeedsVars() []string {
+func (cmd *ConditionsCmd) NeedsVars() []string {
 	vars := []string{}
 	for _, c := range cmd.Conditions {
-		vars = append(vars, c.QueryRefID)
+		vars = append(vars, c.InputRefID)
 	}
 	return vars
 }
 
-// EvalMatch represents the series violating the threshold.
-// It goes into the metadata of data frames so it can be extracted.
-type EvalMatch struct {
-	Value  *float64    `json:"value"`
-	Metric string      `json:"metric"`
-	Labels data.Labels `json:"labels"`
-}
-
-func (em EvalMatch) MarshalJSON() ([]byte, error) {
-	fs := ""
-	if em.Value != nil {
-		fs = strconv.FormatFloat(*em.Value, 'f', -1, 64)
-	}
-	return json.Marshal(struct {
-		Value  string      `json:"value"`
-		Metric string      `json:"metric"`
-		Labels data.Labels `json:"labels"`
-	}{
-		fs,
-		em.Metric,
-		em.Labels,
-	})
-}
-
 // Execute runs the command and returns the results or an error if the command
 // failed to execute.
-func (cmd *ClassicConditionsCmd) Execute(_ context.Context, vars mathexp.Vars) (mathexp.Results, error) {
+func (cmd *ConditionsCmd) Execute(_ context.Context, vars mathexp.Vars) (mathexp.Results, error) {
 	firing := true
 	newRes := mathexp.Results{}
 	noDataFound := true
@@ -88,7 +75,7 @@ func (cmd *ClassicConditionsCmd) Execute(_ context.Context, vars mathexp.Vars) (
 	matches := []EvalMatch{}
 
 	for i, c := range cmd.Conditions {
-		querySeriesSet := vars[c.QueryRefID]
+		querySeriesSet := vars[c.InputRefID]
 		nilReducedCount := 0
 		firingCount := 0
 		for _, val := range querySeriesSet.Values {
@@ -176,7 +163,31 @@ func (cmd *ClassicConditionsCmd) Execute(_ context.Context, vars mathexp.Vars) (
 	return newRes, nil
 }
 
-// ConditionJSON is the JSON model for a single condition in ClassicConditionsCmd.
+// EvalMatch represents the series violating the threshold.
+// It goes into the metadata of data frames so it can be extracted.
+type EvalMatch struct {
+	Value  *float64    `json:"value"`
+	Metric string      `json:"metric"`
+	Labels data.Labels `json:"labels"`
+}
+
+func (em EvalMatch) MarshalJSON() ([]byte, error) {
+	fs := ""
+	if em.Value != nil {
+		fs = strconv.FormatFloat(*em.Value, 'f', -1, 64)
+	}
+	return json.Marshal(struct {
+		Value  string      `json:"value"`
+		Metric string      `json:"metric"`
+		Labels data.Labels `json:"labels"`
+	}{
+		fs,
+		em.Metric,
+		em.Labels,
+	})
+}
+
+// ConditionJSON is the JSON model for a single condition in ConditionsCmd.
 // It is based on services/alerting/conditions/query.go's newQueryCondition().
 type ConditionJSON struct {
 	Evaluator ConditionEvalJSON     `json:"evaluator"`
@@ -203,8 +214,8 @@ type ConditionReducerJSON struct {
 	// Params []interface{} `json:"params"` (Unused)
 }
 
-// UnmarshalConditionsCmd creates a new ClassicConditionsCmd.
-func UnmarshalConditionsCmd(rawQuery map[string]interface{}, refID string) (*ClassicConditionsCmd, error) {
+// UnmarshalConditionsCmd creates a new ConditionsCmd.
+func UnmarshalConditionsCmd(rawQuery map[string]interface{}, refID string) (*ConditionsCmd, error) {
 	jsonFromM, err := json.Marshal(rawQuery["conditions"])
 	if err != nil {
 		return nil, fmt.Errorf("failed to remarshal classic condition body: %w", err)
@@ -214,8 +225,8 @@ func UnmarshalConditionsCmd(rawQuery map[string]interface{}, refID string) (*Cla
 		return nil, fmt.Errorf("failed to unmarshal remarshaled classic condition body: %w", err)
 	}
 
-	c := &ClassicConditionsCmd{
-		refID: refID,
+	c := &ConditionsCmd{
+		RefID: refID,
 	}
 
 	for i, cj := range ccj {
@@ -227,12 +238,12 @@ func UnmarshalConditionsCmd(rawQuery map[string]interface{}, refID string) (*Cla
 		cond.Operator = cj.Operator.Type
 
 		if len(cj.Query.Params) == 0 || cj.Query.Params[0] == "" {
-			return nil, fmt.Errorf("condition %v is missing the query refID argument", i+1)
+			return nil, fmt.Errorf("condition %v is missing the query RefID argument", i+1)
 		}
 
-		cond.QueryRefID = cj.Query.Params[0]
+		cond.InputRefID = cj.Query.Params[0]
 
-		cond.Reducer = classicReducer(cj.Reducer.Type)
+		cond.Reducer = reducer(cj.Reducer.Type)
 		if !cond.Reducer.ValidReduceFunc() {
 			return nil, fmt.Errorf("invalid reducer '%v' in condition %v", cond.Reducer, i+1)
 		}
