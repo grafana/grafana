@@ -273,7 +273,7 @@ func (pd *PublicDashboardServiceImpl) GetAnnotations(ctx context.Context, reqDTO
 		return nil, err
 	}
 
-	var results []AnnotationEvent
+	uniqueEvents := make(map[int64]AnnotationEvent, 0)
 	for _, anno := range dto.Annotations.List {
 		// only consider enabled, grafana annotations
 		if anno.Enable && (*anno.Datasource.Uid == grafanads.DatasourceUID || *anno.Datasource.Uid == grafanads.DatasourceName) {
@@ -313,9 +313,18 @@ func (pd *PublicDashboardServiceImpl) GetAnnotations(ctx context.Context, reqDTO
 					event.PanelId = item.PanelId
 				}
 
-				results = append(results, event)
+				// We want events from tag queries to overwrite existing events
+				_, has := uniqueEvents[event.Id]
+				if !has || (has && anno.Target.Type == "tags") {
+					uniqueEvents[event.Id] = event
+				}
 			}
 		}
+	}
+
+	var results []AnnotationEvent
+	for _, result := range uniqueEvents {
+		results = append(results, result)
 	}
 
 	return results, nil
