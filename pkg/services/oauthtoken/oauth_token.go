@@ -24,7 +24,7 @@ type Service struct {
 }
 
 type OAuthTokenService interface {
-	GetCurrentOAuthToken(context.Context, *models.SignedInUser) *oauth2.Token
+	GetCurrentOAuthToken(context.Context, *user.SignedInUser) *oauth2.Token
 	IsOAuthPassThruEnabled(*datasources.DataSource) bool
 }
 
@@ -36,19 +36,19 @@ func ProvideService(socialService social.Service, authInfoService login.AuthInfo
 }
 
 // GetCurrentOAuthToken returns the OAuth token, if any, for the authenticated user. Will try to refresh the token if it has expired.
-func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr *models.SignedInUser) *oauth2.Token {
+func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr *user.SignedInUser) *oauth2.Token {
 	if usr == nil {
 		// No user, therefore no token
 		return nil
 	}
 
-	authInfoQuery := &models.GetAuthInfoQuery{UserId: usr.UserId}
+	authInfoQuery := &models.GetAuthInfoQuery{UserId: usr.UserID}
 	if err := o.AuthInfoService.GetAuthInfo(ctx, authInfoQuery); err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
 			// Not necessarily an error.  User may be logged in another way.
-			logger.Debug("no OAuth token for user found", "userId", usr.UserId, "username", usr.Login)
+			logger.Debug("no OAuth token for user found", "userId", usr.UserID, "username", usr.Login)
 		} else {
-			logger.Error("failed to get OAuth token for user", "userId", usr.UserId, "username", usr.Login, "error", err)
+			logger.Error("failed to get OAuth token for user", "userId", usr.UserID, "username", usr.Login, "error", err)
 		}
 		return nil
 	}
@@ -81,7 +81,7 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr *models.SignedIn
 	// TokenSource handles refreshing the token if it has expired
 	token, err := connect.TokenSource(ctx, persistedToken).Token()
 	if err != nil {
-		logger.Error("failed to retrieve OAuth access token", "provider", authInfoQuery.Result.AuthModule, "userId", usr.UserId, "username", usr.Login, "error", err)
+		logger.Error("failed to retrieve OAuth access token", "provider", authInfoQuery.Result.AuthModule, "userId", usr.UserID, "username", usr.Login, "error", err)
 		return nil
 	}
 
@@ -94,10 +94,10 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr *models.SignedIn
 			OAuthToken: token,
 		}
 		if err := o.AuthInfoService.UpdateAuthInfo(ctx, updateAuthCommand); err != nil {
-			logger.Error("failed to update auth info during token refresh", "userId", usr.UserId, "username", usr.Login, "error", err)
+			logger.Error("failed to update auth info during token refresh", "userId", usr.UserID, "username", usr.Login, "error", err)
 			return nil
 		}
-		logger.Debug("updated OAuth info for user", "userId", usr.UserId, "username", usr.Login)
+		logger.Debug("updated OAuth info for user", "userId", usr.UserID, "username", usr.Login)
 	}
 	return token
 }

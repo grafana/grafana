@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React, { useEffect } from 'react';
 
 import { GrafanaTheme } from '@grafana/data';
+import { FetchError } from '@grafana/runtime';
 import { Button, ConfirmModal, Modal, stylesFactory, useTheme } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state';
 
@@ -14,7 +15,7 @@ interface SaveDashboardErrorProxyProps {
   dashboard: DashboardModel;
   /** dashboard save model with applied modifications, i.e. title */
   dashboardSaveModel: any;
-  error: any;
+  error: FetchError;
   onDismiss: () => void;
 }
 

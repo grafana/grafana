@@ -5,6 +5,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -34,7 +36,9 @@ func TestPluginProvisioner(t *testing.T) {
 		}
 		reader := &testConfigReader{result: cfg}
 		store := &mockStore{}
-		ap := PluginProvisioner{log: log.New("test"), cfgProvider: reader, store: store, pluginSettings: store}
+		orgMock := orgtest.NewOrgServiceFake()
+		orgMock.ExpectedOrg = &org.Org{ID: 4}
+		ap := PluginProvisioner{log: log.New("test"), cfgProvider: reader, pluginSettings: store, orgService: orgMock}
 
 		err := ap.applyChanges(context.Background(), "")
 		require.NoError(t, err)
@@ -106,7 +110,7 @@ func (m *mockStore) UpdatePluginSettingPluginVersion(_ context.Context, _ *plugi
 	return nil
 }
 
-func (m *mockStore) GetPluginSettings(_ context.Context, _ *pluginsettings.GetArgs) ([]*pluginsettings.DTO, error) {
+func (m *mockStore) GetPluginSettings(_ context.Context, _ *pluginsettings.GetArgs) ([]*pluginsettings.InfoDTO, error) {
 	return nil, nil
 }
 

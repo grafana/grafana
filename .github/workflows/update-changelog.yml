@@ -4,11 +4,11 @@ on:
     inputs:
       version:
         required: true
-        description: Needs to match, exactly, the name of a milestone
+        description: 'Needs to match, exactly, the name of a milestone. The version to be released please respect: major.minor.patch or major.minor.patch-beta<number> format. example: 7.4.3 or 7.4.3-beta1'
   workflow_call:
     inputs:
       version_call:
-        description: Needs to match, exactly, the name of a milestone
+        description: 'Needs to match, exactly, the name of a milestone. The version to be released please respect: major.minor.patch or major.minor.patch-beta<number> format. example: 7.4.3 or 7.4.3-beta1'
         required: true
         type: string
     secrets:
@@ -35,9 +35,9 @@ jobs:
           token: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
           metricsWriteAPIKey: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
       - name: Run update changelog (workflow invoked)
-        if: ${{ inputs.version_call != '' }}
+        if: ${{ inputs.version != '' }}
         uses: ./actions/update-changelog
         with:
-          version_call: ${{ inputs.version_call }}
+          version_call: ${{ inputs.version }}
           token: ${{ secrets.token }}
           metricsWriteAPIKey: ${{ secrets.metricsWriteAPIKey }}

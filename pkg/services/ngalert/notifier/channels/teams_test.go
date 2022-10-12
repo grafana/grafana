@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -34,193 +34,240 @@ func TestTeamsNotifier(t *testing.T) {
 		expMsg       map[string]interface{}
 		expInitError string
 		expMsgError  error
-	}{
-		{
-			name:     "Default config with one alert",
-			settings: `{"url": "http://localhost"}`,
-			alerts: []*types.Alert{
-				{
-					Alert: model.Alert{
-						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
-						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh"},
-					},
+	}{{
+		name:     "Default config with one alert",
+		settings: `{"url": "http://localhost"}`,
+		alerts: []*types.Alert{
+			{
+				Alert: model.Alert{
+					Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+					Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh"},
 				},
 			},
-			expMsg: map[string]interface{}{
-				"@type":      "MessageCard",
-				"@context":   "http://schema.org/extensions",
-				"summary":    "[FIRING:1]  (val1)",
-				"title":      "[FIRING:1]  (val1)",
-				"themeColor": "#D63232",
-				"sections": []map[string]interface{}{
-					{
-						"title": "",
-						"text":  "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
+		},
+		expMsg: map[string]interface{}{
+			"attachments": []map[string]interface{}{{
+				"content": map[string]interface{}{
+					"$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+					"body": []map[string]interface{}{{
+						"color":  "attention",
+						"size":   "large",
+						"text":   "[FIRING:1]  (val1)",
+						"type":   "TextBlock",
+						"weight": "bolder",
+						"wrap":   true,
+					}, {
+						"text": "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
+						"type": "TextBlock",
+						"wrap": true,
+					}, {
+						"actions": []map[string]interface{}{{
+							"title": "View URL",
+							"type":  "Action.OpenUrl",
+							"url":   "http://localhost/alerting/list",
+						}},
+						"type": "ActionSet",
+					}},
+					"type":    "AdaptiveCard",
+					"version": "1.4",
+					"msTeams": map[string]interface{}{
+						"width": "Full",
 					},
 				},
-				"potentialAction": []map[string]interface{}{
-					{
-						"@context": "http://schema.org",
-						"@type":    "OpenUri",
-						"name":     "View Rule",
-						"targets":  []map[string]interface{}{{"os": "default", "uri": "http://localhost/alerting/list"}},
-					},
+				"contentType": "application/vnd.microsoft.card.adaptive",
+			}},
+			"summary": "[FIRING:1]  (val1)",
+			"type":    "message",
+		},
+		expMsgError: nil,
+	}, {
+		name: "Custom config with multiple alerts",
+		settings: `{
+	"url": "http://localhost",
+	"title": "{{ .CommonLabels.alertname }}",
+	"sectiontitle": "Details",
+	"message": "{{ len .Alerts.Firing }} alerts are firing, {{ len .Alerts.Resolved }} are resolved"
+}`,
+		alerts: []*types.Alert{
+			{
+				Alert: model.Alert{
+					Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+					Annotations: model.LabelSet{"ann1": "annv1"},
 				},
-			},
-			expMsgError: nil,
-		}, {
-			name: "Custom config with multiple alerts",
-			settings: `{
-				"url": "http://localhost",
-				"title": "{{ .CommonLabels.alertname }}",
-				"sectiontitle": "Details",
-				"message": "{{ len .Alerts.Firing }} alerts are firing, {{ len .Alerts.Resolved }} are resolved"
-			}`,
-			alerts: []*types.Alert{
-				{
-					Alert: model.Alert{
-						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
-						Annotations: model.LabelSet{"ann1": "annv1"},
-					},
-				}, {
-					Alert: model.Alert{
-						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val2"},
-						Annotations: model.LabelSet{"ann1": "annv2"},
-					},
-				},
-			},
-			expMsg: map[string]interface{}{
-				"@type":      "MessageCard",
-				"@context":   "http://schema.org/extensions",
-				"summary":    "alert1",
-				"title":      "alert1",
-				"themeColor": "#D63232",
-				"sections": []map[string]interface{}{
-					{
-						"title": "Details",
-						"text":  "2 alerts are firing, 0 are resolved",
-					},
-				},
-				"potentialAction": []map[string]interface{}{
-					{
-						"@context": "http://schema.org",
-						"@type":    "OpenUri",
-						"name":     "View Rule",
-						"targets":  []map[string]interface{}{{"os": "default", "uri": "http://localhost/alerting/list"}},
-					},
+			}, {
+				Alert: model.Alert{
+					Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val2"},
+					Annotations: model.LabelSet{"ann1": "annv2"},
 				},
 			},
-			expMsgError: nil,
-		}, {
-			name: "Missing field in template",
-			settings: `{
-				"url": "http://localhost",
-				"title": "{{ .CommonLabels.alertname }}",
-				"sectiontitle": "Details",
-				"message": "I'm a custom template {{ .NotAField }} bad template"
-			}`,
-			alerts: []*types.Alert{
-				{
-					Alert: model.Alert{
-						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
-						Annotations: model.LabelSet{"ann1": "annv1"},
+		},
+		expMsg: map[string]interface{}{
+			"attachments": []map[string]interface{}{{
+				"content": map[string]interface{}{
+					"$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+					"body": []map[string]interface{}{{
+						"color":  "attention",
+						"size":   "large",
+						"text":   "alert1",
+						"type":   "TextBlock",
+						"weight": "bolder",
+						"wrap":   true,
+					}, {
+						"text": "2 alerts are firing, 0 are resolved",
+						"type": "TextBlock",
+						"wrap": true,
+					}, {
+						"actions": []map[string]interface{}{{
+							"title": "View URL",
+							"type":  "Action.OpenUrl",
+							"url":   "http://localhost/alerting/list",
+						}},
+						"type": "ActionSet",
+					}},
+					"type":    "AdaptiveCard",
+					"version": "1.4",
+					"msTeams": map[string]interface{}{
+						"width": "Full",
 					},
-				}, {
-					Alert: model.Alert{
-						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val2"},
-						Annotations: model.LabelSet{"ann1": "annv2"},
-					},
+				},
+				"contentType": "application/vnd.microsoft.card.adaptive",
+			}},
+			"summary": "alert1",
+			"type":    "message",
+		},
+		expMsgError: nil,
+	}, {
+		name: "Missing field in template",
+		settings: `{
+	"url": "http://localhost",
+	"title": "{{ .CommonLabels.alertname }}",
+	"sectiontitle": "Details",
+	"message": "I'm a custom template {{ .NotAField }} bad template"
+}`,
+		alerts: []*types.Alert{
+			{
+				Alert: model.Alert{
+					Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+					Annotations: model.LabelSet{"ann1": "annv1"},
+				},
+			}, {
+				Alert: model.Alert{
+					Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val2"},
+					Annotations: model.LabelSet{"ann1": "annv2"},
 				},
 			},
-			expMsg: map[string]interface{}{
-				"@type":      "MessageCard",
-				"@context":   "http://schema.org/extensions",
-				"summary":    "alert1",
-				"title":      "alert1",
-				"themeColor": "#D63232",
-				"sections": []map[string]interface{}{
-					{
-						"title": "Details",
-						"text":  "I'm a custom template ",
+		},
+		expMsg: map[string]interface{}{
+			"attachments": []map[string]interface{}{{
+				"content": map[string]interface{}{
+					"$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+					"body": []map[string]interface{}{{
+						"color":  "attention",
+						"size":   "large",
+						"text":   "alert1",
+						"type":   "TextBlock",
+						"weight": "bolder",
+						"wrap":   true,
+					}, {
+						"text": "I'm a custom template ",
+						"type": "TextBlock",
+						"wrap": true,
+					}, {
+						"actions": []map[string]interface{}{{
+							"title": "View URL",
+							"type":  "Action.OpenUrl",
+							"url":   "http://localhost/alerting/list",
+						}},
+						"type": "ActionSet",
+					}},
+					"type":    "AdaptiveCard",
+					"version": "1.4",
+					"msTeams": map[string]interface{}{
+						"width": "Full",
 					},
 				},
-				"potentialAction": []map[string]interface{}{
-					{
-						"@context": "http://schema.org",
-						"@type":    "OpenUri",
-						"name":     "View Rule",
-						"targets":  []map[string]interface{}{{"os": "default", "uri": "http://localhost/alerting/list"}},
-					},
-				},
-			},
-			expMsgError: nil,
-		}, {
-			name: "Invalid template",
-			settings: `{
+				"contentType": "application/vnd.microsoft.card.adaptive",
+			}},
+			"type": "message",
+		},
+		expMsgError: nil,
+	}, {
+		name: "Invalid template",
+		settings: `{
 				"url": "http://localhost",
 				"title": "{{ .CommonLabels.alertname }}",
 				"sectiontitle": "Details",
 				"message": "I'm a custom template {{ {.NotAField }} bad template"
 			}`,
-			alerts: []*types.Alert{
-				{
-					Alert: model.Alert{
-						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
-						Annotations: model.LabelSet{"ann1": "annv1"},
-					},
-				}, {
-					Alert: model.Alert{
-						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val2"},
-						Annotations: model.LabelSet{"ann1": "annv2"},
-					},
+		alerts: []*types.Alert{
+			{
+				Alert: model.Alert{
+					Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+					Annotations: model.LabelSet{"ann1": "annv1"},
+				},
+			}, {
+				Alert: model.Alert{
+					Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val2"},
+					Annotations: model.LabelSet{"ann1": "annv2"},
 				},
 			},
-			expMsg: map[string]interface{}{
-				"@type":      "MessageCard",
-				"@context":   "http://schema.org/extensions",
-				"summary":    "alert1",
-				"title":      "alert1",
-				"themeColor": "#D63232",
-				"sections": []map[string]interface{}{
-					{
-						"title": "Details",
-						"text":  "",
-					},
-				},
-				"potentialAction": []map[string]interface{}{
-					{
-						"@context": "http://schema.org",
-						"@type":    "OpenUri",
-						"name":     "View Rule",
-						"targets":  []map[string]interface{}{{"os": "default", "uri": "http://localhost/alerting/list"}},
-					},
-				},
-			},
-			expMsgError: nil,
-		}, {
-			name:         "Error in initing",
-			settings:     `{}`,
-			expInitError: `could not find url property in settings`,
 		},
-		{
-			name:     "webhook returns error message in body with 200",
-			settings: `{"url": "http://localhost"}`,
-			alerts: []*types.Alert{
-				{
-					Alert: model.Alert{
-						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
-						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh"},
+		expMsg: map[string]interface{}{
+			"attachments": []map[string]interface{}{{
+				"content": map[string]interface{}{
+					"$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+					"body": []map[string]interface{}{{
+						"color":  "attention",
+						"size":   "large",
+						"text":   "alert1",
+						"type":   "TextBlock",
+						"weight": "bolder",
+						"wrap":   true,
+					}, {
+						"text": "",
+						"type": "TextBlock",
+						"wrap": true,
+					}, {
+						"actions": []map[string]interface{}{{
+							"title": "View URL",
+							"type":  "Action.OpenUrl",
+							"url":   "http://localhost/alerting/list",
+						}},
+						"type": "ActionSet",
+					}},
+					"type":    "AdaptiveCard",
+					"version": "1.4",
+					"msTeams": map[string]interface{}{
+						"width": "Full",
 					},
 				},
-			},
-			response: &mockResponse{
-				status: 200,
-				body:   "some error message",
-				error:  nil,
-			},
-			expMsgError: errors.New("send notification to Teams: webhook failed validation: some error message"),
+				"contentType": "application/vnd.microsoft.card.adaptive",
+			}},
+			"type": "message",
 		},
-	}
+		expMsgError: nil,
+	}, {
+		name:         "Error in initing",
+		settings:     `{}`,
+		expInitError: `could not find url property in settings`,
+	}, {
+		name:     "webhook returns error message in body with 200",
+		settings: `{"url": "http://localhost"}`,
+		alerts: []*types.Alert{
+			{
+				Alert: model.Alert{
+					Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+					Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh"},
+				},
+			},
+		},
+		response: &mockResponse{
+			status: 200,
+			body:   "some error message",
+			error:  nil,
+		},
+		expMsgError: errors.New("send notification to Teams: webhook failed validation: some error message"),
+	}}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -268,7 +315,7 @@ func TestTeamsNotifier(t *testing.T) {
 			expBody, err := json.Marshal(c.expMsg)
 			require.NoError(t, err)
 
-			body, err := ioutil.ReadAll(clientStub.lastRequest.Body)
+			body, err := io.ReadAll(clientStub.lastRequest.Body)
 			require.NoError(t, err)
 			require.JSONEq(t, string(expBody), string(body))
 		})
@@ -311,6 +358,6 @@ func newMockClient(resp *mockResponse) *mockClient {
 func makeResponse(status int, body string) *http.Response {
 	return &http.Response{
 		StatusCode: status,
-		Body:       ioutil.NopCloser(strings.NewReader(body)),
+		Body:       io.NopCloser(strings.NewReader(body)),
 	}
 }

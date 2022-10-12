@@ -5,9 +5,11 @@ package setting
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"net/url"
 	"os"
@@ -115,6 +117,7 @@ var (
 
 	// HTTP auth
 	SigV4AuthEnabled bool
+	AzureAuthEnabled bool
 
 	AnonymousEnabled bool
 
@@ -135,6 +138,7 @@ var (
 
 	// analytics
 	GoogleAnalyticsId       string
+	GoogleAnalytics4Id      string
 	GoogleTagManagerId      string
 	RudderstackDataPlaneUrl string
 	RudderstackWriteKey     string
@@ -222,12 +226,13 @@ type Cfg struct {
 	Packaging string
 
 	// Paths
-	HomePath           string
-	ProvisioningPath   string
-	DataPath           string
-	LogsPath           string
-	PluginsPath        string
-	BundledPluginsPath string
+	HomePath              string
+	ProvisioningPath      string
+	DataPath              string
+	LogsPath              string
+	PluginsPath           string
+	BundledPluginsPath    string
+	EnterpriseLicensePath string
 
 	// SMTP email settings
 	Smtp SmtpSettings
@@ -237,6 +242,7 @@ type Cfg struct {
 	CSVsDir                        string
 	RendererUrl                    string
 	RendererCallbackUrl            string
+	RendererAuthToken              string
 	RendererConcurrentRequestLimit int
 
 	// Security
@@ -258,7 +264,9 @@ type Cfg struct {
 	CSPTemplate           string
 	AngularSupportEnabled bool
 
-	TempDataLifetime                 time.Duration
+	TempDataLifetime time.Duration
+
+	// Plugins
 	PluginsEnableAlpha               bool
 	PluginsAppsSkipVerifyTLS         bool
 	PluginSettings                   PluginSettings
@@ -267,8 +275,9 @@ type Cfg struct {
 	PluginCatalogHiddenPlugins       []string
 	PluginAdminEnabled               bool
 	PluginAdminExternalManageEnabled bool
-	DisableSanitizeHtml              bool
-	EnterpriseLicensePath            string
+
+	// Panels
+	DisableSanitizeHtml bool
 
 	// Metrics
 	MetricsEndpointEnabled           bool
@@ -287,9 +296,12 @@ type Cfg struct {
 	TokenRotationIntervalMinutes int
 	SigV4AuthEnabled             bool
 	SigV4VerboseLogging          bool
+	AzureAuthEnabled             bool
 	BasicAuthEnabled             bool
 	AdminUser                    string
 	AdminPassword                string
+	AdminEmail                   string
+	DisableSyncLock              bool
 
 	// AWS Plugin Auth
 	AWSAllowedAuthProviders []string
@@ -314,16 +326,20 @@ type Cfg struct {
 	OAuthCookieMaxAge int
 
 	// JWT Auth
-	JWTAuthEnabled       bool
-	JWTAuthHeaderName    string
-	JWTAuthEmailClaim    string
-	JWTAuthUsernameClaim string
-	JWTAuthExpectClaims  string
-	JWTAuthJWKSetURL     string
-	JWTAuthCacheTTL      time.Duration
-	JWTAuthKeyFile       string
-	JWTAuthJWKSetFile    string
-	JWTAuthAutoSignUp    bool
+	JWTAuthEnabled                 bool
+	JWTAuthHeaderName              string
+	JWTAuthURLLogin                bool
+	JWTAuthEmailClaim              string
+	JWTAuthUsernameClaim           string
+	JWTAuthExpectClaims            string
+	JWTAuthJWKSetURL               string
+	JWTAuthCacheTTL                time.Duration
+	JWTAuthKeyFile                 string
+	JWTAuthJWKSetFile              string
+	JWTAuthAutoSignUp              bool
+	JWTAuthRoleAttributePath       string
+	JWTAuthRoleAttributeStrict     bool
+	JWTAuthAllowAssignGrafanaAdmin bool
 
 	// Dataproxy
 	SendUserHeader                 bool
@@ -364,6 +380,7 @@ type Cfg struct {
 
 	// Annotations
 	AnnotationCleanupJobBatchSize      int64
+	AnnotationMaximumTagsLength        int64
 	AlertingAnnotationCleanupSetting   AnnotationCleanupSettings
 	DashboardAnnotationCleanupSettings AnnotationCleanupSettings
 	APIAnnotationCleanupSettings       AnnotationCleanupSettings
@@ -443,12 +460,19 @@ type Cfg struct {
 
 	DashboardPreviews DashboardPreviewsSettings
 
+	Storage StorageSettings
+
+	Search SearchSettings
+
 	// Access Control
 	RBACEnabled         bool
 	RBACPermissionCache bool
-	// Undocumented option as a backup in case removing builtin-role assignment
-	// fails
-	RBACBuiltInRoleAssignmentEnabled bool
+	// Enable Permission validation during role creation and provisioning
+	RBACPermissionValidationEnabled bool
+	// GRPC Server.
+	GRPCServerNetwork   string
+	GRPCServerAddress   string
+	GRPCServerTLSConfig *tls.Config
 }
 
 type CommandLineArgs struct {
@@ -588,9 +612,20 @@ func (cfg *Cfg) readGrafanaEnvironmentMetrics() error {
 	return nil
 }
 
-func (cfg *Cfg) readAnnotationSettings() {
+func (cfg *Cfg) readAnnotationSettings() error {
 	section := cfg.Raw.Section("annotations")
 	cfg.AnnotationCleanupJobBatchSize = section.Key("cleanupjob_batchsize").MustInt64(100)
+	cfg.AnnotationMaximumTagsLength = section.Key("tags_length").MustInt64(500)
+	switch {
+	case cfg.AnnotationMaximumTagsLength > 4096:
+		// ensure that the configuration does not exceed the respective column size
+		return fmt.Errorf("[annotations.tags_length] configuration exceeds the maximum allowed (4096)")
+	case cfg.AnnotationMaximumTagsLength > 500:
+		cfg.Logger.Info("[annotations.tags_length] has been increased from its default value; this may affect the performance", "tagLength", cfg.AnnotationMaximumTagsLength)
+	case cfg.AnnotationMaximumTagsLength < 500:
+		cfg.Logger.Warn("[annotations.tags_length] is too low; the minimum allowed (500) is enforced")
+		cfg.AnnotationMaximumTagsLength = 500
+	}
 
 	dashboardAnnotation := cfg.Raw.Section("annotations.dashboard")
 	apiIAnnotation := cfg.Raw.Section("annotations.api")
@@ -611,6 +646,8 @@ func (cfg *Cfg) readAnnotationSettings() {
 	cfg.AlertingAnnotationCleanupSetting = newAnnotationCleanupSettings(alertingSection, "max_annotation_age")
 	cfg.DashboardAnnotationCleanupSettings = newAnnotationCleanupSettings(dashboardAnnotation, "max_age")
 	cfg.APIAnnotationCleanupSettings = newAnnotationCleanupSettings(apiIAnnotation, "max_age")
+
+	return nil
 }
 
 func (cfg *Cfg) readExpressionsSettings() {
@@ -835,9 +872,10 @@ var skipStaticRootValidation = false
 
 func NewCfg() *Cfg {
 	return &Cfg{
-		Logger: log.New("settings"),
-		Raw:    ini.Empty(),
-		Azure:  &azsettings.AzureSettings{},
+		Logger:      log.New("settings"),
+		Raw:         ini.Empty(),
+		Azure:       &azsettings.AzureSettings{},
+		RBACEnabled: true,
 	}
 }
 
@@ -918,6 +956,10 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 		return err
 	}
 
+	if err := readGRPCServerSettings(cfg, iniFile); err != nil {
+		return err
+	}
+
 	// read dashboard settings
 	dashboards := iniFile.Section("dashboards")
 	DashboardVersionsToKeep = dashboards.Key("versions_to_keep").MustInt(20)
@@ -946,6 +988,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.CheckForGrafanaUpdates = analytics.Key("check_for_updates").MustBool(true)
 	cfg.CheckForPluginUpdates = analytics.Key("check_for_plugin_updates").MustBool(true)
 	GoogleAnalyticsId = analytics.Key("google_analytics_ua_id").String()
+	GoogleAnalytics4Id = analytics.Key("google_analytics_4_id").String()
 	GoogleTagManagerId = analytics.Key("google_tag_manager_id").String()
 	RudderstackWriteKey = analytics.Key("rudderstack_write_key").String()
 	RudderstackDataPlaneUrl = analytics.Key("rudderstack_data_plane_url").String()
@@ -1005,7 +1048,10 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.readSessionConfig()
 	cfg.readSmtpSettings()
 	cfg.readQuotaSettings()
-	cfg.readAnnotationSettings()
+	if err := cfg.readAnnotationSettings(); err != nil {
+		return err
+	}
+
 	cfg.readExpressionsSettings()
 	if err := cfg.readGrafanaEnvironmentMetrics(); err != nil {
 		return err
@@ -1014,6 +1060,8 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.readDataSourcesSettings()
 
 	cfg.DashboardPreviews = readDashboardPreviewsSettings(iniFile)
+	cfg.Storage = readStorageSettings(iniFile)
+	cfg.Search = readSearchSettings(iniFile)
 
 	if VerifyEmailEnabled && !cfg.Smtp.Enabled {
 		cfg.Logger.Warn("require_email_validation is enabled but smtp is disabled")
@@ -1244,6 +1292,7 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.DisableInitAdminCreation = security.Key("disable_initial_admin_creation").MustBool(false)
 	cfg.AdminUser = valueAsString(security, "admin_user", "")
 	cfg.AdminPassword = valueAsString(security, "admin_password", "")
+	cfg.AdminEmail = valueAsString(security, "admin_email", fmt.Sprintf("%s@localhost", cfg.AdminUser))
 
 	return nil
 }
@@ -1274,6 +1323,9 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 		cfg.TokenRotationIntervalMinutes = 2
 	}
 
+	// Debug setting unlocking frontend auth sync lock. Users will still be reset on their next login.
+	cfg.DisableSyncLock = auth.Key("disable_sync_lock").MustBool(false)
+
 	DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
 	DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
 	OAuthAutoLogin = auth.Key("oauth_auto_login").MustBool(false)
@@ -1285,6 +1337,10 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	SigV4AuthEnabled = auth.Key("sigv4_auth_enabled").MustBool(false)
 	cfg.SigV4AuthEnabled = SigV4AuthEnabled
 	cfg.SigV4VerboseLogging = auth.Key("sigv4_verbose_logging").MustBool(false)
+
+	// Azure Auth
+	AzureAuthEnabled = auth.Key("azure_auth_enabled").MustBool(false)
+	cfg.AzureAuthEnabled = AzureAuthEnabled
 
 	// anonymous access
 	AnonymousEnabled = iniFile.Section("auth.anonymous").Key("enabled").MustBool(false)
@@ -1302,6 +1358,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	authJWT := iniFile.Section("auth.jwt")
 	cfg.JWTAuthEnabled = authJWT.Key("enabled").MustBool(false)
 	cfg.JWTAuthHeaderName = valueAsString(authJWT, "header_name", "")
+	cfg.JWTAuthURLLogin = authJWT.Key("url_login").MustBool(false)
 	cfg.JWTAuthEmailClaim = valueAsString(authJWT, "email_claim", "")
 	cfg.JWTAuthUsernameClaim = valueAsString(authJWT, "username_claim", "")
 	cfg.JWTAuthExpectClaims = valueAsString(authJWT, "expect_claims", "{}")
@@ -1310,6 +1367,9 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	cfg.JWTAuthKeyFile = valueAsString(authJWT, "key_file", "")
 	cfg.JWTAuthJWKSetFile = valueAsString(authJWT, "jwk_set_file", "")
 	cfg.JWTAuthAutoSignUp = authJWT.Key("auto_sign_up").MustBool(false)
+	cfg.JWTAuthRoleAttributePath = valueAsString(authJWT, "role_attribute_path", "")
+	cfg.JWTAuthRoleAttributeStrict = authJWT.Key("role_attribute_strict").MustBool(false)
+	cfg.JWTAuthAllowAssignGrafanaAdmin = authJWT.Key("allow_assign_grafana_admin").MustBool(false)
 
 	authProxy := iniFile.Section("auth.proxy")
 	AuthProxyEnabled = authProxy.Key("enabled").MustBool(false)
@@ -1344,7 +1404,7 @@ func readAccessControlSettings(iniFile *ini.File, cfg *Cfg) {
 	rbac := iniFile.Section("rbac")
 	cfg.RBACEnabled = rbac.Key("enabled").MustBool(true)
 	cfg.RBACPermissionCache = rbac.Key("permission_cache").MustBool(true)
-	cfg.RBACBuiltInRoleAssignmentEnabled = rbac.Key("builtin_role_assignment_enabled").MustBool(false)
+	cfg.RBACPermissionValidationEnabled = rbac.Key("permission_validation_enabled").MustBool(false)
 }
 
 func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
@@ -1400,6 +1460,7 @@ func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) error {
 	renderSec := iniFile.Section("rendering")
 	cfg.RendererUrl = valueAsString(renderSec, "server_url", "")
 	cfg.RendererCallbackUrl = valueAsString(renderSec, "callback_url", "")
+	cfg.RendererAuthToken = valueAsString(renderSec, "renderer_token", "-")
 
 	if cfg.RendererCallbackUrl == "" {
 		cfg.RendererCallbackUrl = AppUrl
@@ -1442,6 +1503,68 @@ func readAlertingSettings(iniFile *ini.File) error {
 	AlertingMaxAttempts = alerting.Key("max_attempts").MustInt(3)
 	AlertingMinInterval = alerting.Key("min_interval_seconds").MustInt64(1)
 
+	return nil
+}
+
+func readGRPCServerSettings(cfg *Cfg, iniFile *ini.File) error {
+	server := iniFile.Section("grpc_server")
+	errPrefix := "grpc_server:"
+	useTLS := server.Key("use_tls").MustBool(false)
+	certFile := server.Key("cert_file").String()
+	keyFile := server.Key("cert_key").String()
+	if useTLS {
+		serverCert, err := tls.LoadX509KeyPair(certFile, keyFile)
+		if err != nil {
+			return fmt.Errorf("%s error loading X509 key pair: %w", errPrefix, err)
+		}
+		cfg.GRPCServerTLSConfig = &tls.Config{
+			Certificates: []tls.Certificate{serverCert},
+			ClientAuth:   tls.NoClientCert,
+		}
+	}
+
+	cfg.GRPCServerNetwork = valueAsString(server, "network", "tcp")
+	cfg.GRPCServerAddress = valueAsString(server, "address", "")
+	switch cfg.GRPCServerNetwork {
+	case "unix":
+		if cfg.GRPCServerAddress != "" {
+			// Explicitly provided path for unix domain socket.
+			if stat, err := os.Stat(cfg.GRPCServerAddress); os.IsNotExist(err) {
+				// File does not exist - nice, nothing to do.
+			} else if err != nil {
+				return fmt.Errorf("%s error getting stat for a file: %s", errPrefix, cfg.GRPCServerAddress)
+			} else {
+				if stat.Mode()&fs.ModeSocket == 0 {
+					return fmt.Errorf("%s file %s already exists and is not a unix domain socket", errPrefix, cfg.GRPCServerAddress)
+				}
+				// Unix domain socket file, should be safe to remove.
+				err := os.Remove(cfg.GRPCServerAddress)
+				if err != nil {
+					return fmt.Errorf("%s can't remove unix socket file: %s", errPrefix, cfg.GRPCServerAddress)
+				}
+			}
+		} else {
+			// Use temporary file path for a unix domain socket.
+			tf, err := os.CreateTemp("", "gf_grpc_server_api")
+			if err != nil {
+				return fmt.Errorf("%s error creating tmp file: %v", errPrefix, err)
+			}
+			unixPath := tf.Name()
+			if err := tf.Close(); err != nil {
+				return fmt.Errorf("%s error closing tmp file: %v", errPrefix, err)
+			}
+			if err := os.Remove(unixPath); err != nil {
+				return fmt.Errorf("%s error removing tmp file: %v", errPrefix, err)
+			}
+			cfg.GRPCServerAddress = unixPath
+		}
+	case "tcp":
+		if cfg.GRPCServerAddress == "" {
+			cfg.GRPCServerAddress = "127.0.0.1:10000"
+		}
+	default:
+		return fmt.Errorf("%s unsupported network %s", errPrefix, cfg.GRPCServerNetwork)
+	}
 	return nil
 }
 

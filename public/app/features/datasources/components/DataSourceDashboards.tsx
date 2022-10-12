@@ -1,10 +1,9 @@
 import React, { useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { importDashboard, removeDashboard } from 'app/features/dashboard/state/actions';
 import { loadPluginDashboards } from 'app/features/plugins/admin/state/actions';
-import { PluginDashboard, StoreState } from 'app/types';
+import { PluginDashboard, StoreState, useDispatch, useSelector } from 'app/types';
 
 import DashboardTable from '../components/DashboardsTable';
 import { useLoadDataSource } from '../state';

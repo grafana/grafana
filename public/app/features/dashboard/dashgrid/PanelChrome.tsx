@@ -29,7 +29,6 @@ import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { changeSeriesColorConfigFactory } from 'app/plugins/panel/timeseries/overrides/colorSeriesConfigFactory';
 import { RenderEvent } from 'app/types/events';
 
-import { contextSrv } from '../../../core/services/context_srv';
 import { isSoloRoute } from '../../../routes/utils';
 import { deleteAnnotation, saveAnnotation, updateAnnotation } from '../../annotations/api';
 import { getDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
@@ -89,52 +88,15 @@ export class PanelChrome extends PureComponent<Props, State> {
         onAnnotationCreate: this.onAnnotationCreate,
         onAnnotationUpdate: this.onAnnotationUpdate,
         onAnnotationDelete: this.onAnnotationDelete,
-        canAddAnnotations: this.canAddAnnotation,
         onInstanceStateChange: this.onInstanceStateChange,
         onToggleLegendSort: this.onToggleLegendSort,
-        canEditAnnotations: this.canEditAnnotation,
-        canDeleteAnnotations: this.canDeleteAnnotation,
+        canAddAnnotations: props.dashboard.canAddAnnotations.bind(props.dashboard),
+        canEditAnnotations: props.dashboard.canEditAnnotations.bind(props.dashboard),
+        canDeleteAnnotations: props.dashboard.canDeleteAnnotations.bind(props.dashboard),
       },
       data: this.getInitialPanelDataState(),
     };
   }
-
-  canEditDashboard = () => Boolean(this.props.dashboard.meta.canEdit || this.props.dashboard.meta.canMakeEditable);
-
-  canAddAnnotation = () => {
-    let canAdd = true;
-
-    if (contextSrv.accessControlEnabled()) {
-      canAdd = !!this.props.dashboard.meta.annotationsPermissions?.dashboard.canAdd;
-    }
-    return canAdd && this.canEditDashboard();
-  };
-
-  canEditAnnotation = (dashboardId: number) => {
-    let canEdit = true;
-
-    if (contextSrv.accessControlEnabled()) {
-      if (dashboardId !== 0) {
-        canEdit = !!this.props.dashboard.meta.annotationsPermissions?.dashboard.canEdit;
-      } else {
-        canEdit = !!this.props.dashboard.meta.annotationsPermissions?.organization.canEdit;
-      }
-    }
-    return canEdit && this.canEditDashboard();
-  };
-
-  canDeleteAnnotation = (dashboardId: number) => {
-    let canDelete = true;
-
-    if (contextSrv.accessControlEnabled()) {
-      if (dashboardId !== 0) {
-        canDelete = !!this.props.dashboard.meta.annotationsPermissions?.dashboard.canDelete;
-      } else {
-        canDelete = !!this.props.dashboard.meta.annotationsPermissions?.organization.canDelete;
-      }
-    }
-    return canDelete && this.canEditDashboard();
-  };
 
   // Due to a mutable panel model we get the sync settings via function that proactively reads from the model
   getSync = () => (this.props.isEditing ? DashboardCursorSync.Off : this.props.dashboard.graphTooltip);
@@ -356,13 +318,14 @@ export class PanelChrome extends PureComponent<Props, State> {
       if (this.state.refreshWhenInView) {
         this.setState({ refreshWhenInView: false });
       }
-      panel.runAllPanelQueries(
-        dashboard.id,
-        dashboard.getTimezone(),
+      panel.runAllPanelQueries({
+        dashboardId: dashboard.id,
+        dashboardUID: dashboard.uid,
+        dashboardTimezone: dashboard.getTimezone(),
+        publicDashboardAccessToken: dashboard.meta.publicDashboardAccessToken,
         timeData,
         width,
-        dashboard.meta.publicDashboardAccessToken
-      );
+      });
     } else {
       // The panel should render on refresh as well if it doesn't have a query, like clock panel
       this.setState({
@@ -400,7 +363,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   onAnnotationCreate = async (event: AnnotationEventUIModel) => {
     const isRegion = event.from !== event.to;
     const anno = {
-      dashboardId: this.props.dashboard.id,
+      dashboardUID: this.props.dashboard.uid,
       panelId: this.props.panel.id,
       isRegion,
       time: event.from,
@@ -423,7 +386,7 @@ export class PanelChrome extends PureComponent<Props, State> {
     const isRegion = event.from !== event.to;
     const anno = {
       id: event.id,
-      dashboardId: this.props.dashboard.id,
+      dashboardUID: this.props.dashboard.uid,
       panelId: this.props.panel.id,
       isRegion,
       time: event.from,

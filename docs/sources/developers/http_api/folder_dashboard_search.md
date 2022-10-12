@@ -28,6 +28,8 @@ Query parameters:
 - **tag** – List of tags to search for
 - **type** – Type to search for, `dash-folder` or `dash-db`
 - **dashboardIds** – List of dashboard id's to search for
+- **dashboardUID** - List of dashboard uid's to search for, It is deprecated since Grafana v9.1, please use dashboardUIDs instead
+- **dashboardUIDs** – List of dashboard uid's to search for
 - **folderIds** – List of folder id's to search in for dashboards
 - **starred** – Flag indicating if only starred Dashboards should be returned
 - **limit** – Limit the number of returned results (max is 5000; default is 1000)

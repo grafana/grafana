@@ -13,10 +13,12 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	sdkHTTPClient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/middleware"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/utils"
 	"github.com/grafana/grafana/pkg/util/maputil"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
@@ -24,7 +26,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 )
 
-//Internal interval and range variables
+// Internal interval and range variables
 const (
 	varInterval     = "$__interval"
 	varIntervalMs   = "$__interval_ms"
@@ -34,8 +36,8 @@ const (
 	varRateInterval = "$__rate_interval"
 )
 
-//Internal interval and range variables with {} syntax
-//Repetitive code, we should have functionality to unify these
+// Internal interval and range variables with {} syntax
+// Repetitive code, we should have functionality to unify these
 const (
 	varIntervalAlt     = "${__interval}"
 	varIntervalMsAlt   = "${__interval_ms}"
@@ -92,6 +94,17 @@ func New(roundTripper http.RoundTripper, tracer tracing.Tracer, settings backend
 }
 
 func (b *Buffered) ExecuteTimeSeriesQuery(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	// Add headers from the request to context so they are added later on by a context middleware. This is because
+	// prom client does not allow us to do this directly.
+
+	addHeaders := make(map[string]string)
+
+	if req.Headers["FromAlert"] == "true" {
+		addHeaders["FromAlert"] = "true"
+	}
+
+	ctxWithHeaders := sdkHTTPClient.WithContextualMiddleware(ctx, middleware.ReqHeadersMiddleware(addHeaders))
+
 	queries, err := b.parseTimeSeriesQuery(req)
 	if err != nil {
 		result := backend.QueryDataResponse{
@@ -100,7 +113,7 @@ func (b *Buffered) ExecuteTimeSeriesQuery(ctx context.Context, req *backend.Quer
 		return &result, fmt.Errorf("error parsing time series query: %v", err)
 	}
 
-	return b.runQueries(ctx, queries)
+	return b.runQueries(ctxWithHeaders, queries)
 }
 
 func (b *Buffered) runQueries(ctx context.Context, queries []*PrometheusQuery) (*backend.QueryDataResponse, error) {
@@ -362,15 +375,11 @@ func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data
 			tags[string(k)] = string(v)
 		}
 		timeField := data.NewFieldFromFieldType(data.FieldTypeTime, len(v.Values))
-		valueField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, len(v.Values))
+		valueField := data.NewFieldFromFieldType(data.FieldTypeFloat64, len(v.Values))
 
 		for i, k := range v.Values {
 			timeField.Set(i, k.Timestamp.Time().UTC())
-			value := float64(k.Value)
-
-			if !math.IsNaN(value) {
-				valueField.Set(i, &value)
-			}
+			valueField.Set(i, float64(k.Value))
 		}
 
 		name := formatLegend(v.Metric, query)
@@ -554,6 +563,10 @@ func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *Prometheu
 			}
 		}
 	}
+
+	sort.SliceStable(sampleExemplars, func(i, j int) bool {
+		return sampleExemplars[i].Time.Before(sampleExemplars[j].Time)
+	})
 
 	// Create DF from sampled exemplars
 	timeField := data.NewFieldFromFieldType(data.FieldTypeTime, len(sampleExemplars))

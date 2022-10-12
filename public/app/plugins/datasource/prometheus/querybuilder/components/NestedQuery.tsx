@@ -17,9 +17,11 @@ export interface Props {
   onChange: (index: number, update: PromVisualQueryBinary) => void;
   onRemove: (index: number) => void;
   onRunQuery: () => void;
+  showExplain: boolean;
 }
 
-export const NestedQuery = React.memo<Props>(({ nestedQuery, index, datasource, onChange, onRemove, onRunQuery }) => {
+export const NestedQuery = React.memo<Props>((props) => {
+  const { nestedQuery, index, datasource, onChange, onRemove, onRunQuery, showExplain } = props;
   const styles = useStyles2(getStyles);
 
   return (
@@ -73,6 +75,7 @@ export const NestedQuery = React.memo<Props>(({ nestedQuery, index, datasource, 
       <div className={styles.body}>
         <EditorRows>
           <PromQueryBuilder
+            showExplain={showExplain}
             query={nestedQuery.query}
             datasource={datasource}
             onRunQuery={onRunQuery}

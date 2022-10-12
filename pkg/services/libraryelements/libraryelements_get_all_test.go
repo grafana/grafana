@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/search"
 )
 
@@ -1239,8 +1240,8 @@ func TestGetAllLibraryElements(t *testing.T) {
 			require.Equal(t, int64(1), result.Result.Elements[0].FolderID)
 			require.Equal(t, "Text - Library Panel", result.Result.Elements[0].Name)
 
-			sc.reqContext.SignedInUser.OrgId = 2
-			sc.reqContext.SignedInUser.OrgRole = models.ROLE_ADMIN
+			sc.reqContext.SignedInUser.OrgID = 2
+			sc.reqContext.SignedInUser.OrgRole = org.RoleAdmin
 			resp = sc.service.getAllHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
 

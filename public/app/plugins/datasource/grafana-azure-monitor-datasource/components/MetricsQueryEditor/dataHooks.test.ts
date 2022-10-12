@@ -44,14 +44,14 @@ describe('AzureMonitor: metrics dataHooks', () => {
       name: 'useMetricNames',
       hook: useMetricNames,
       emptyQueryPartial: {
-        resourceUri:
-          '/subscriptions/99999999-cccc-bbbb-aaaa-9106972f9572/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana',
         metricNamespace: 'azure/vm',
+        resourceGroup: 'rg',
+        resourceName: 'rn',
       },
       customProperties: {
-        resourceUri:
-          '/subscriptions/99999999-cccc-bbbb-aaaa-9106972f9572/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana',
         metricNamespace: 'azure/vm',
+        resourceGroup: 'rg',
+        resourceName: 'rn',
         metricName: 'metric-$ENVIRONMENT',
       },
       expectedOptions: [
@@ -74,14 +74,14 @@ describe('AzureMonitor: metrics dataHooks', () => {
       name: 'useMetricNamespaces',
       hook: useMetricNamespaces,
       emptyQueryPartial: {
-        resourceUri:
-          '/subscriptions/99999999-cccc-bbbb-aaaa-9106972f9572/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana',
         metricNamespace: 'azure/vm',
+        resourceGroup: 'rg',
+        resourceName: 'rn',
       },
       customProperties: {
-        resourceUri:
-          '/subscriptions/99999999-cccc-bbbb-aaaa-9106972f9572/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana',
         metricNamespace: 'azure/vm-$ENVIRONMENT',
+        resourceGroup: 'rg',
+        resourceName: 'rn',
         metricName: 'metric-name',
       },
       expectedOptions: [
@@ -127,10 +127,6 @@ describe('AzureMonitor: metrics dataHooks', () => {
         opt('Web App - Production', 'web-app-production'),
         opt('Web App - Development', 'web-app-development'),
       ]);
-
-    datasource.getMetricDefinitions = jest
-      .fn()
-      .mockResolvedValue([opt('Virtual Machine', 'azure/vm'), opt('Database', 'azure/db')]);
 
     datasource.getResourceNames = jest
       .fn()
@@ -192,8 +188,8 @@ describe('AzureMonitor: metrics dataHooks', () => {
       name: 'useMetricMetadata',
       hook: useMetricMetadata,
       emptyQueryPartial: {
-        resourceUri:
-          '/subscriptions/99999999-cccc-bbbb-aaaa-9106972f9572/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana',
+        resourceGroup: 'rg',
+        resourceName: 'rn',
         metricNamespace: 'azure/vm',
         metricName: 'Average CPU',
       },
@@ -236,6 +232,42 @@ describe('AzureMonitor: metrics dataHooks', () => {
           allowedTimeGrainsMs: [60_000, 300_000, 900_000, 1_800_000, 3_600_000, 21_600_000, 43_200_000, 86_400_000],
         },
       });
+    });
+  });
+
+  describe('useMetricNamespaces', () => {
+    const metricNamespacesConfig = {
+      name: 'useMetricNamespaces',
+      hook: useMetricNamespaces,
+      emptyQueryPartial: {
+        resourceGroup: 'rg',
+        resourceName: 'rn',
+        metricNamespace: 'azure/vm',
+      },
+      customProperties: {},
+      expectedOptions: [
+        { label: 'Compute Virtual Machine', value: 'azure/vmc' },
+        { label: 'Database NS', value: 'azure/dbns' },
+        { label: 'azure/vm', value: 'azure/vm' },
+      ],
+    };
+
+    it('call getMetricNamespaces without global region', async () => {
+      const query = {
+        ...bareQuery,
+        azureMonitor: metricNamespacesConfig.emptyQueryPartial,
+      };
+      const { result, waitForNextUpdate } = renderHook(() =>
+        metricNamespacesConfig.hook(query, datasource, onChange, jest.fn())
+      );
+      await waitForNextUpdate(WAIT_OPTIONS);
+
+      expect(result.current).toEqual(metricNamespacesConfig.expectedOptions);
+      expect(datasource.azureMonitorDatasource.getMetricNamespaces).toHaveBeenCalledWith(
+        expect.objectContaining(metricNamespacesConfig.emptyQueryPartial),
+        // Here, "global" should be false
+        false
+      );
     });
   });
 });

@@ -12,7 +12,7 @@ export enum DashboardSearchItemType {
  * @deprecated
  */
 export interface DashboardSection {
-  id: number;
+  id?: number;
   uid?: string;
   title: string;
   expanded?: boolean;
@@ -37,7 +37,7 @@ export interface DashboardSectionItem {
   folderTitle?: string;
   folderUid?: string;
   folderUrl?: string;
-  id: number;
+  id?: number;
   isStarred: boolean;
   selected?: boolean;
   tags: string[];
@@ -52,11 +52,17 @@ export interface DashboardSectionItem {
 }
 
 /**
- * @deprecated - It uses dashboard ID which is depreacted in favor of dashboard UID. Please, use DashboardSearchItem instead.
+ * @deprecated - It uses dashboard ID which is deprecated in favor of dashboard UID. Please, use DashboardSearchItem instead.
  */
 export interface DashboardSearchHit extends DashboardSectionItem, DashboardSection, WithAccessControlMetadata {}
 
-export interface DashboardSearchItem extends Omit<DashboardSearchHit, 'id'> {}
+export interface DashboardSearchItem
+  extends Omit<
+    DashboardSearchHit,
+    'id' | 'uid' | 'expanded' | 'selected' | 'checked' | 'folderId' | 'icon' | 'sortMeta' | 'sortMetaName'
+  > {
+  uid: string;
+}
 
 export interface SearchAction extends Action {
   payload?: any;

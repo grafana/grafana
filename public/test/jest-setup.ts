@@ -7,6 +7,7 @@ import angular from 'angular';
 import { configure } from 'enzyme';
 
 import { EventBusSrv } from '@grafana/data';
+import 'blob-polyfill';
 import 'mutationobserver-shim';
 import './mocks/workers';
 
@@ -39,6 +40,14 @@ angular.module('grafana.controllers', []);
 angular.module('grafana.directives', []);
 angular.module('grafana.filters', []);
 angular.module('grafana.routes', ['ngRoute']);
+
+// Mock IntersectionObserver
+const mockIntersectionObserver = jest.fn().mockReturnValue({
+  observe: jest.fn(),
+  unobserve: jest.fn(),
+  disconnect: jest.fn(),
+});
+global.IntersectionObserver = mockIntersectionObserver;
 
 jest.mock('../app/core/core', () => ({
   ...jest.requireActual('../app/core/core'),

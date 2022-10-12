@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -18,36 +19,38 @@ type AuthInfoStore struct {
 	sqlStore       sqlstore.Store
 	secretsService secrets.Service
 	logger         log.Logger
+	userService    user.Service
 }
 
-func ProvideAuthInfoStore(sqlStore sqlstore.Store, secretsService secrets.Service) *AuthInfoStore {
+func ProvideAuthInfoStore(sqlStore sqlstore.Store, secretsService secrets.Service, userService user.Service) login.Store {
 	store := &AuthInfoStore{
 		sqlStore:       sqlStore,
 		secretsService: secretsService,
 		logger:         log.New("login.authinfo.store"),
+		userService:    userService,
 	}
 	InitMetrics()
 	return store
 }
 
 func (s *AuthInfoStore) GetExternalUserInfoByLogin(ctx context.Context, query *models.GetExternalUserInfoByLoginQuery) error {
-	userQuery := models.GetUserByLoginQuery{LoginOrEmail: query.LoginOrEmail}
-	err := s.sqlStore.GetUserByLogin(ctx, &userQuery)
+	userQuery := user.GetUserByLoginQuery{LoginOrEmail: query.LoginOrEmail}
+	usr, err := s.userService.GetByLogin(ctx, &userQuery)
 	if err != nil {
 		return err
 	}
 
-	authInfoQuery := &models.GetAuthInfoQuery{UserId: userQuery.Result.ID}
+	authInfoQuery := &models.GetAuthInfoQuery{UserId: usr.ID}
 	if err := s.GetAuthInfo(ctx, authInfoQuery); err != nil {
 		return err
 	}
 
 	query.Result = &models.ExternalUserInfo{
-		UserId:     userQuery.Result.ID,
-		Login:      userQuery.Result.Login,
-		Email:      userQuery.Result.Email,
-		Name:       userQuery.Result.Name,
-		IsDisabled: userQuery.Result.IsDisabled,
+		UserId:     usr.ID,
+		Login:      usr.Login,
+		Email:      usr.Email,
+		Name:       usr.Name,
+		IsDisabled: usr.IsDisabled,
 		AuthModule: authInfoQuery.Result.AuthModule,
 		AuthId:     authInfoQuery.Result.AuthId,
 	}
@@ -221,30 +224,33 @@ func (s *AuthInfoStore) DeleteAuthInfo(ctx context.Context, cmd *models.DeleteAu
 }
 
 func (s *AuthInfoStore) GetUserById(ctx context.Context, id int64) (*user.User, error) {
-	query := models.GetUserByIdQuery{Id: id}
-	if err := s.sqlStore.GetUserById(ctx, &query); err != nil {
+	query := user.GetUserByIDQuery{ID: id}
+	user, err := s.userService.GetByID(ctx, &query)
+	if err != nil {
 		return nil, err
 	}
 
-	return query.Result, nil
+	return user, nil
 }
 
 func (s *AuthInfoStore) GetUserByLogin(ctx context.Context, login string) (*user.User, error) {
-	query := models.GetUserByLoginQuery{LoginOrEmail: login}
-	if err := s.sqlStore.GetUserByLogin(ctx, &query); err != nil {
+	query := user.GetUserByLoginQuery{LoginOrEmail: login}
+	usr, err := s.userService.GetByLogin(ctx, &query)
+	if err != nil {
 		return nil, err
 	}
 
-	return query.Result, nil
+	return usr, nil
 }
 
 func (s *AuthInfoStore) GetUserByEmail(ctx context.Context, email string) (*user.User, error) {
-	query := models.GetUserByEmailQuery{Email: email}
-	if err := s.sqlStore.GetUserByEmail(ctx, &query); err != nil {
+	query := user.GetUserByEmailQuery{Email: email}
+	usr, err := s.userService.GetByEmail(ctx, &query)
+	if err != nil {
 		return nil, err
 	}
 
-	return query.Result, nil
+	return usr, nil
 }
 
 // decodeAndDecrypt will decode the string with the standard base64 decoder and then decrypt it

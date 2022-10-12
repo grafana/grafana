@@ -413,6 +413,25 @@ func TestBuildExternalURL(t *testing.T) {
 			},
 			expectedURL: "https://johndoe:123@localhost:9000/path/to/am",
 		},
+		{
+			name: "with no scheme specified in the datasource",
+			ds: &datasources.DataSource{
+				Url:           "localhost:9000/path/to/am",
+				BasicAuth:     true,
+				BasicAuthUser: "johndoe",
+				SecureJsonData: map[string][]byte{
+					"basicAuthPassword": []byte("123"),
+				},
+			},
+			expectedURL: "http://johndoe:123@localhost:9000/path/to/am",
+		},
+		{
+			name: "with no scheme specified not auth in the datasource",
+			ds: &datasources.DataSource{
+				Url: "localhost:9000/path/to/am",
+			},
+			expectedURL: "http://localhost:9000/path/to/am",
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

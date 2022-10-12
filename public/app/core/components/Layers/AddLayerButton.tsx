@@ -3,7 +3,7 @@ import React from 'react';
 import { SelectableValue } from '@grafana/data';
 import { ValuePicker } from '@grafana/ui';
 
-type AddLayerButtonProps = {
+export type AddLayerButtonProps = {
   onChange: (sel: SelectableValue<string>) => void;
   options: Array<SelectableValue<string>>;
   label: string;

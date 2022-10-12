@@ -23,3 +23,17 @@ export function useAllFieldNamesFromDataFrames(input: DataFrame[]): string[] {
     );
   }, [input]);
 }
+
+export function getDistinctLabels(input: DataFrame[]): Set<string> {
+  const distinct = new Set<string>();
+  for (const frame of input) {
+    for (const field of frame.fields) {
+      if (field.labels) {
+        for (const k of Object.keys(field.labels)) {
+          distinct.add(k);
+        }
+      }
+    }
+  }
+  return distinct;
+}

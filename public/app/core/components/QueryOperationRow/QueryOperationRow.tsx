@@ -56,8 +56,8 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
     // Ref: https://github.com/atlassian/react-beautiful-dnd/blob/master/docs/guides/how-we-use-dom-events.md#a-mouse-drag-has-started-and-the-user-is-now-dragging
     if (e.defaultPrevented) {
       const rect = e.currentTarget.getBoundingClientRect();
-      var x = e.clientX - rect.left;
-      var y = e.clientY - rect.top;
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
 
       // report relative mouse position within the header element
       reportInteraction('query_row_reorder_drag_position', {
@@ -104,6 +104,7 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
               <div ref={provided.innerRef} className={styles.wrapper} {...provided.draggableProps}>
                 <div>
                   <QueryOperationRowHeader
+                    id={id}
                     actionsElement={actionsElement}
                     disabled={disabled}
                     draggable
@@ -127,6 +128,7 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
   return (
     <div className={styles.wrapper}>
       <QueryOperationRowHeader
+        id={id}
         actionsElement={actionsElement}
         disabled={disabled}
         draggable={false}

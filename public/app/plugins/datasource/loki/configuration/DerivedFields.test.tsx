@@ -1,10 +1,6 @@
-import { mount } from 'enzyme';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import React from 'react';
-import { act } from 'react-dom/test-utils';
 
-import { Button } from '@grafana/ui';
-
-import { DerivedField } from './DerivedField';
 import { DerivedFields } from './DerivedFields';
 
 describe('DerivedFields', () => {
@@ -18,65 +14,38 @@ describe('DerivedFields', () => {
     window.getSelection = originalGetSelection;
   });
 
-  it('renders correctly when no fields', async () => {
-    let wrapper: any;
-    //@ts-ignore
-    await act(async () => {
-      wrapper = await mount(<DerivedFields onChange={() => {}} />);
-    });
-    expect(wrapper.find(Button).length).toBe(1);
-    expect(wrapper.find(Button).contains('Add')).toBeTruthy();
-    expect(wrapper.find(DerivedField).length).toBe(0);
+  it('renders correctly when no fields', () => {
+    render(<DerivedFields onChange={() => {}} />);
+
+    expect(screen.getByText('Add')).toBeInTheDocument();
+    expect(screen.queryByText(/example log message/)).not.toBeInTheDocument();
+    expect(screen.queryByTestId('derived-field')).not.toBeInTheDocument();
   });
 
   it('renders correctly when there are fields', async () => {
-    let wrapper: any;
-    //@ts-ignore
-    await act(async () => {
-      wrapper = await mount(<DerivedFields value={testValue} onChange={() => {}} />);
-    });
+    render(<DerivedFields value={testValue} onChange={() => {}} />);
 
-    expect(wrapper.find(Button).filterWhere((button: any) => button.contains('Add')).length).toBe(1);
-    expect(wrapper.find(Button).filterWhere((button: any) => button.contains('Show example log message')).length).toBe(
-      1
-    );
-    expect(
-      wrapper
-        .find(Button)
-        .filterWhere((button: any) => button.contains('Show example log message'))
-        .getDOMNode()
-    ).toHaveAttribute('type', 'button');
-    expect(wrapper.find(DerivedField).length).toBe(2);
+    await waitFor(() => expect(screen.getAllByTestId('derived-field')).toHaveLength(2));
+    expect(screen.getByText('Add')).toBeInTheDocument();
+    expect(screen.getByText('Show example log message')).toBeInTheDocument();
   });
 
-  it('adds new field', async () => {
-    const onChangeMock = jest.fn();
-    let wrapper: any;
-    //@ts-ignore
-    await act(async () => {
-      wrapper = await mount(<DerivedFields onChange={onChangeMock} />);
-    });
-    const addButton = wrapper.find(Button).filterWhere((button: any) => button.contains('Add'));
-    addButton.simulate('click');
-    expect(onChangeMock.mock.calls[0][0].length).toBe(1);
+  it('adds a new field', async () => {
+    const onChange = jest.fn();
+    render(<DerivedFields onChange={onChange} />);
+
+    fireEvent.click(screen.getByText('Add'));
+
+    await waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
   });
 
-  it('removes field', async () => {
-    const onChangeMock = jest.fn();
-    let wrapper: any;
-    //@ts-ignore
-    await act(async () => {
-      wrapper = await mount(<DerivedFields value={testValue} onChange={onChangeMock} />);
-    });
-    const removeButton = wrapper.find(DerivedField).at(0).find(Button);
-    removeButton.simulate('click');
-    const newValue = onChangeMock.mock.calls[0][0];
-    expect(newValue.length).toBe(1);
-    expect(newValue[0]).toMatchObject({
-      matcherRegex: 'regex2',
-      name: 'test2',
-      url: 'localhost2',
-    });
+  it('removes a field', async () => {
+    const onChange = jest.fn();
+    render(<DerivedFields value={testValue} onChange={onChange} />);
+
+    fireEvent.click((await screen.findAllByTitle('Remove field'))[0]);
+
+    await waitFor(() => expect(onChange).toHaveBeenCalledWith([testValue[1]]));
   });
 });
 

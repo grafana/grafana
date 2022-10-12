@@ -295,8 +295,9 @@ describe('MSSQLDatasource', () => {
         { type: 'query', name: 'summarize', current: { value: '1m' } },
         { type: 'query', name: 'host', current: { value: 'a' } },
       ]);
-      const ds = new MssqlDatasource(instanceSettings, templateSrv);
+      const ds = new MssqlDatasource(instanceSettings);
 
+      Reflect.set(ds, 'templateSrv', templateSrv);
       expect(ds.targetContainsTemplate(query)).toBeTruthy();
     });
 
@@ -321,7 +322,9 @@ describe('MSSQLDatasource', () => {
         { type: 'query', name: 'summarize', current: { value: '1m' } },
         { type: 'query', name: 'host', current: { value: 'a' } },
       ]);
-      const ds = new MssqlDatasource(instanceSettings, templateSrv);
+      const ds = new MssqlDatasource(instanceSettings);
+      Reflect.set(ds, 'templateSrv', templateSrv);
+
       expect(ds.targetContainsTemplate(query)).toBeFalsy();
     });
   });

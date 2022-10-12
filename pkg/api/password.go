@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -19,21 +20,32 @@ func (hs *HTTPServer) SendResetPasswordEmail(c *models.ReqContext) response.Resp
 	if err := web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	if setting.LDAPEnabled || setting.AuthProxyEnabled {
-		return response.Error(401, "Not allowed to reset password when LDAP or Auth Proxy is enabled", nil)
-	}
 	if setting.DisableLoginForm {
 		return response.Error(401, "Not allowed to reset password when login form is disabled", nil)
 	}
 
-	userQuery := models.GetUserByLoginQuery{LoginOrEmail: form.UserOrEmail}
+	userQuery := user.GetUserByLoginQuery{LoginOrEmail: form.UserOrEmail}
 
-	if err := hs.SQLStore.GetUserByLogin(c.Req.Context(), &userQuery); err != nil {
+	usr, err := hs.userService.GetByLogin(c.Req.Context(), &userQuery)
+	if err != nil {
 		c.Logger.Info("Requested password reset for user that was not found", "user", userQuery.LoginOrEmail)
 		return response.Error(http.StatusOK, "Email sent", err)
 	}
 
-	emailCmd := models.SendResetPasswordEmailCommand{User: userQuery.Result}
+	if usr.IsDisabled {
+		c.Logger.Info("Requested password reset for disabled user", "user", userQuery.LoginOrEmail)
+		return response.Error(http.StatusOK, "Email sent", nil)
+	}
+
+	getAuthQuery := models.GetAuthInfoQuery{UserId: usr.ID}
+	if err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil {
+		authModule := getAuthQuery.Result.AuthModule
+		if authModule == login.LDAPAuthModule || authModule == login.AuthProxyAuthModule {
+			return response.Error(401, "Not allowed to reset password for LDAP or Auth Proxy user", nil)
+		}
+	}
+
+	emailCmd := models.SendResetPasswordEmailCommand{User: usr}
 	if err := hs.NotificationService.SendResetPasswordEmail(c.Req.Context(), &emailCmd); err != nil {
 		return response.Error(500, "Failed to send email", err)
 	}
@@ -49,9 +61,9 @@ func (hs *HTTPServer) ResetPassword(c *models.ReqContext) response.Response {
 	query := models.ValidateResetPasswordCodeQuery{Code: form.Code}
 
 	getUserByLogin := func(ctx context.Context, login string) (*user.User, error) {
-		userQuery := models.GetUserByLoginQuery{LoginOrEmail: login}
-		err := hs.SQLStore.GetUserByLogin(ctx, &userQuery)
-		return userQuery.Result, err
+		userQuery := user.GetUserByLoginQuery{LoginOrEmail: login}
+		usr, err := hs.userService.GetByLogin(ctx, &userQuery)
+		return usr, err
 	}
 
 	if err := hs.NotificationService.ValidateResetPasswordCode(c.Req.Context(), &query, getUserByLogin); err != nil {
@@ -70,15 +82,15 @@ func (hs *HTTPServer) ResetPassword(c *models.ReqContext) response.Response {
 		return response.Error(400, "New password is too short", nil)
 	}
 
-	cmd := models.ChangeUserPasswordCommand{}
-	cmd.UserId = query.Result.ID
+	cmd := user.ChangeUserPasswordCommand{}
+	cmd.UserID = query.Result.ID
 	var err error
 	cmd.NewPassword, err = util.EncodePassword(form.NewPassword, query.Result.Salt)
 	if err != nil {
 		return response.Error(500, "Failed to encode password", err)
 	}
 
-	if err := hs.SQLStore.ChangeUserPassword(c.Req.Context(), &cmd); err != nil {
+	if err := hs.userService.ChangePassword(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to change user password", err)
 	}
 

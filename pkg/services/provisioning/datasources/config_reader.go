@@ -3,7 +3,7 @@ package datasources
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -23,7 +23,7 @@ type configReader struct {
 func (cr *configReader) readConfig(ctx context.Context, path string) ([]*configs, error) {
 	var datasources []*configs
 
-	files, err := ioutil.ReadDir(path)
+	files, err := os.ReadDir(path)
 	if err != nil {
 		cr.log.Error("can't read datasource provisioning files from directory", "path", path, "error", err)
 		return datasources, nil
@@ -50,12 +50,12 @@ func (cr *configReader) readConfig(ctx context.Context, path string) ([]*configs
 	return datasources, nil
 }
 
-func (cr *configReader) parseDatasourceConfig(path string, file os.FileInfo) (*configs, error) {
+func (cr *configReader) parseDatasourceConfig(path string, file fs.DirEntry) (*configs, error) {
 	filename, _ := filepath.Abs(filepath.Join(path, file.Name()))
 
 	// nolint:gosec
 	// We can ignore the gosec G304 warning on this one because `filename` comes from ps.Cfg.ProvisioningPath
-	yamlFile, err := ioutil.ReadFile(filename)
+	yamlFile, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}

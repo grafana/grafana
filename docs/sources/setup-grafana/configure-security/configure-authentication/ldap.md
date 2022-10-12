@@ -51,11 +51,11 @@ See [configuration examples](#configuration-examples) for more information.
 ```bash
 [[servers]]
 # Ldap server host (specify multiple hosts space separated)
-host = "127.0.0.1"
+host = "ldap.my_secure_remote_server.org"
 # Default port is 389 or 636 if use_ssl = true
-port = 389
+port = 636
 # Set to true if LDAP server should use an encrypted TLS connection (either with STARTTLS or LDAPS)
-use_ssl = false
+use_ssl = true
 # If set to true, use LDAP with STARTTLS instead of LDAPS
 start_tls = false
 # set to true if you want to skip SSL cert validation
@@ -71,6 +71,8 @@ bind_dn = "cn=admin,dc=grafana,dc=org"
 # Search user bind password
 # If the password contains # or ; you have to wrap it with triple quotes. Ex """#password;"""
 bind_password = "grafana"
+# We recommend using variable expansion for the bind_password, for more info https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#variable-expansion
+# bind_password = '$__env{LDAP_BIND_PASSWORD}'
 
 # Timeout in seconds. Applies to each host specified in the 'host' entry (space separated).
 timeout = 10
@@ -117,6 +119,10 @@ To use the debug view:
 1.  If the user is found within any of your LDAP instances, the mapping information is displayed
 
 {{< figure src="/static/img/docs/ldap_debug_mapping_testing.png" class="docs-image--no-shadow" max-width="600px" >}}
+
+[Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise" >}}) users with [enhanced LDAP integration]({{< relref "enhanced_ldap" >}}) enabled can also see sync status in the debug view. This requires the `ldap.status:read` permission.
+
+{{< figure src="/static/img/docs/ldap_sync_debug.png" class="docs-image--no-shadow" max-width="600px" >}}
 
 ### Bind
 
@@ -190,7 +196,7 @@ org_role = "Viewer"
 | Setting         | Required | Description                                                                                                                                                              | Default              |
 | --------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------- |
 | `group_dn`      | Yes      | LDAP distinguished name (DN) of LDAP group. If you want to match all (or no LDAP groups) then you can use wildcard (`"*"`)                                               |
-| `org_role`      | Yes      | Assign users of `group_dn` the organization role `"Admin"`, `"Editor"` or `"Viewer"`                                                                                     |
+| `org_role`      | Yes      | Assign users of `group_dn` the organization role `Admin`, `Editor`, or `Viewer`. The organization role name is case sensitive.                                           |
 | `org_id`        | No       | The Grafana organization database id. Setting this allows for multiple group_dn's to be assigned to the same `org_role` provided the `org_id` differs                    | `1` (default org id) |
 | `grafana_admin` | No       | When `true` makes user of `group_dn` Grafana server admin. A Grafana server admin has admin access over all organizations and users. Available in Grafana v5.3 and above | `false`              |
 

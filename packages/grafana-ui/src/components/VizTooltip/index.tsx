@@ -1,3 +1,3 @@
-export { VizTooltip, VizTooltipContentProps, VizTooltipProps, ActiveDimensions } from './VizTooltip';
-export { VizTooltipContainer, VizTooltipContainerProps } from './VizTooltipContainer';
-export { SeriesTable, SeriesTableRow, SeriesTableProps, SeriesTableRowProps } from './SeriesTable';
+export { VizTooltip, type VizTooltipContentProps, type VizTooltipProps, type ActiveDimensions } from './VizTooltip';
+export { VizTooltipContainer, type VizTooltipContainerProps } from './VizTooltipContainer';
+export { SeriesTable, SeriesTableRow, type SeriesTableProps, type SeriesTableRowProps } from './SeriesTable';

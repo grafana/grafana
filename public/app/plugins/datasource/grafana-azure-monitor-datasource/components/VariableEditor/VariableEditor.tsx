@@ -9,6 +9,7 @@ import DataSource from '../../datasource';
 import { migrateQuery } from '../../grafanaTemplateVariableFns';
 import { AzureMonitorOption, AzureMonitorQuery, AzureQueryType } from '../../types';
 import useLastError from '../../utils/useLastError';
+import ArgQueryEditor from '../ArgQueryEditor';
 import LogsQueryEditor from '../LogsQueryEditor';
 import { Space } from '../Space';
 
@@ -31,6 +32,7 @@ const VariableEditor = (props: Props) => {
     { label: 'Resource Names', value: AzureQueryType.ResourceNamesQuery },
     { label: 'Metric Names', value: AzureQueryType.MetricNamesQuery },
     { label: 'Workspaces', value: AzureQueryType.WorkspacesQuery },
+    { label: 'Resource Graph', value: AzureQueryType.AzureResourceGraph },
     { label: 'Logs', value: AzureQueryType.LogAnalytics },
   ];
   if (typeof props.query === 'object' && props.query.queryType === AzureQueryType.GrafanaTemplateVariableFn) {
@@ -149,6 +151,10 @@ const VariableEditor = (props: Props) => {
       onChange({
         ...query,
         queryType: selectableValue.value,
+        subscription: undefined,
+        resourceGroup: undefined,
+        namespace: undefined,
+        resource: undefined,
       });
     }
   };
@@ -158,6 +164,9 @@ const VariableEditor = (props: Props) => {
       onChange({
         ...query,
         subscription: selectableValue.value,
+        resourceGroup: undefined,
+        namespace: undefined,
+        resource: undefined,
       });
     }
   };
@@ -166,6 +175,8 @@ const VariableEditor = (props: Props) => {
     onChange({
       ...query,
       resourceGroup: selectableValue.value,
+      namespace: undefined,
+      resource: undefined,
     });
   };
 
@@ -173,6 +184,7 @@ const VariableEditor = (props: Props) => {
     onChange({
       ...query,
       namespace: selectableValue.value,
+      resource: undefined,
     });
   };
 
@@ -183,7 +195,7 @@ const VariableEditor = (props: Props) => {
     });
   };
 
-  const onLogsQueryChange = (queryChange: AzureMonitorQuery) => {
+  const onQueryChange = (queryChange: AzureMonitorQuery) => {
     onChange(queryChange);
   };
 
@@ -204,7 +216,7 @@ const VariableEditor = (props: Props) => {
             subscriptionId={query.subscription}
             query={query}
             datasource={datasource}
-            onChange={onLogsQueryChange}
+            onChange={onQueryChange}
             variableOptionGroup={variableOptionGroup}
             setError={setError}
             hideFormatAs={true}
@@ -229,7 +241,7 @@ const VariableEditor = (props: Props) => {
             onChange={onChangeSubscription}
             options={subscriptions.concat(variableOptionGroup)}
             width={25}
-            value={query.subscription}
+            value={query.subscription || null}
           />
         </InlineField>
       )}
@@ -244,8 +256,8 @@ const VariableEditor = (props: Props) => {
                 : resourceGroups.concat(variableOptionGroup, removeOption)
             }
             width={25}
-            value={query.resourceGroup}
-            placeholder={requireResourceGroup ? '' : 'Optional'}
+            value={query.resourceGroup || null}
+            placeholder={requireResourceGroup ? undefined : 'Optional'}
           />
         </InlineField>
       )}
@@ -260,8 +272,8 @@ const VariableEditor = (props: Props) => {
                 : namespaces.concat(variableOptionGroup, removeOption)
             }
             width={25}
-            value={query.namespace}
-            placeholder={requireNamespace ? '' : 'Optional'}
+            value={query.namespace || null}
+            placeholder={requireNamespace ? undefined : 'Optional'}
           />
         </InlineField>
       )}
@@ -272,9 +284,29 @@ const VariableEditor = (props: Props) => {
             onChange={onChangeResource}
             options={resources.concat(variableOptionGroup)}
             width={25}
-            value={query.resource}
+            value={query.resource || null}
           />
         </InlineField>
+      )}
+      {query.queryType === AzureQueryType.AzureResourceGraph && (
+        <>
+          <ArgQueryEditor
+            subscriptionId={datasource.azureLogAnalyticsDatasource.defaultSubscriptionId}
+            query={query}
+            datasource={datasource}
+            onChange={onQueryChange}
+            variableOptionGroup={variableOptionGroup}
+            setError={setError}
+          />
+          {errorMessage && (
+            <>
+              <Space v={2} />
+              <Alert severity="error" title="An error occurred while requesting metadata from Azure Monitor">
+                {errorMessage}
+              </Alert>
+            </>
+          )}
+        </>
       )}
     </>
   );

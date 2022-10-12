@@ -54,10 +54,10 @@ export const getStyles = (theme: GrafanaTheme2) => ({
 
     .react-colorful {
       &__saturation {
-        border-radius: ${theme.v1.border.radius.sm} ${theme.v1.border.radius.sm} 0 0;
+        border-radius: ${theme.shape.borderRadius(1)} ${theme.shape.borderRadius(1)} 0 0;
       }
       &__alpha {
-        border-radius: 0 0 ${theme.v1.border.radius.sm} ${theme.v1.border.radius.sm};
+        border-radius: 0 0 ${theme.shape.borderRadius(1)} ${theme.shape.borderRadius(1)};
       }
       &__alpha,
       &__hue {

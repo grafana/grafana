@@ -1,4 +1,4 @@
-import { ScopedVars, TimeRange, VariableModel } from '@grafana/data';
+import { ScopedVars, TimeRange, TypedVariableModel } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
 
 import { variableRegex } from '../variables/utils';
@@ -15,14 +15,16 @@ export class TemplateSrvMock implements TemplateSrv {
   private regex = variableRegex;
   constructor(private variables: Record<string, string>) {}
 
-  getVariables(): VariableModel[] {
+  getVariables(): TypedVariableModel[] {
     return Object.keys(this.variables).map((key) => {
       return {
         type: 'custom',
         name: key,
         label: key,
       };
-    });
+      // TODO: we remove this type assertion in a later PR
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    }) as TypedVariableModel[];
   }
 
   replace(target?: string, scopedVars?: ScopedVars, format?: string | Function): string {

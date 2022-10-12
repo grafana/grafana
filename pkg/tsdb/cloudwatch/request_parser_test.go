@@ -11,6 +11,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestQueryJSON(t *testing.T) {
+	jsonString := []byte(`{
+		"type": "timeSeriesQuery"
+	}`)
+	var res QueryJson
+	err := json.Unmarshal(jsonString, &res)
+	require.NoError(t, err)
+	assert.Equal(t, "timeSeriesQuery", res.QueryType)
+}
+
 func TestRequestParser(t *testing.T) {
 	average := "Average"
 	false := false
@@ -290,6 +300,34 @@ func TestRequestParser(t *testing.T) {
 			assert.Equal(t, MetricQueryTypeSearch, res.MetricQueryType)
 			assert.Equal(t, MetricEditorModeRaw, res.MetricEditorMode)
 			assert.Equal(t, GMDApiModeMathExpression, res.getGMDAPIMode())
+		})
+	})
+
+	t.Run("hide and returnData", func(t *testing.T) {
+		t.Run("default", func(t *testing.T) {
+			query := getBaseJsonQuery()
+			query.QueryType = "timeSeriesQuery"
+			res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour))
+			require.NoError(t, err)
+			require.True(t, res.ReturnData)
+		})
+		t.Run("hide is true", func(t *testing.T) {
+			query := getBaseJsonQuery()
+			query.QueryType = "timeSeriesQuery"
+			true := true
+			query.Hide = &true
+			res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour))
+			require.NoError(t, err)
+			require.False(t, res.ReturnData)
+		})
+		t.Run("hide is false", func(t *testing.T) {
+			query := getBaseJsonQuery()
+			query.QueryType = "timeSeriesQuery"
+			false := false
+			query.Hide = &false
+			res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour))
+			require.NoError(t, err)
+			require.True(t, res.ReturnData)
 		})
 	})
 

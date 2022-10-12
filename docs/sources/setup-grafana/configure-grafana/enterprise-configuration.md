@@ -9,7 +9,7 @@ weight: 100
 
 # Configure Grafana Enterprise
 
-This page describes Grafana Enterprise-specific configuration options that you can specify in a `.ini` configuration file or using environment variables. Refer to [Configuration]({{< relref "/" >}}) for more information about available configuration options.
+This page describes Grafana Enterprise-specific configuration options that you can specify in a `.ini` configuration file or using environment variables. Refer to [Configuration]({{< relref "../" >}}) for more information about available configuration options.
 
 ## [enterprise]
 
@@ -176,6 +176,14 @@ List of enabled loggers.
 ### log_dashboard_content
 
 Keep dashboard content in the logs (request or response fields). This can significantly increase the size of your logs.
+
+### verbose
+
+Log all GET requests and always include request body for generic POST/PUT/PATCH requests.
+
+### log_all_status_codes
+
+Set to false to only log requests with 2xx, 3xx, 401, 403, 500 responses.
 
 ## [auditing.logs.file]
 
@@ -466,7 +474,7 @@ The default is `"grafana"`.
 
 ## [caching.memcached]
 
-### memcached_servers
+### servers
 
 A space-separated list of memcached servers. Example: `memcached-server-1:11211 memcached-server-2:11212 memcached-server-3:11211`. Or if there's only one server: `memcached-server:11211`.
 

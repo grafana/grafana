@@ -197,5 +197,13 @@ func TestCredentials_getAzureCredentials(t *testing.T) {
 			// Azure Monitor datasource doesn't support custom IdP authorities (Authority is always empty)
 			assert.Equal(t, "", clientSecretCredentials.Authority)
 		})
+
+		t.Run("should error if no client secret is set", func(t *testing.T) {
+			cfg := &setting.Cfg{}
+			_, err := getAzureCredentials(cfg, jsonData, map[string]string{
+				"clientSecret": "",
+			})
+			require.ErrorContains(t, err, "clientSecret must be set")
+		})
 	})
 }

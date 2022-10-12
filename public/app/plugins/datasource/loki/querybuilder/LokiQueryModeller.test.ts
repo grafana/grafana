@@ -127,7 +127,7 @@ describe('LokiQueryModeller', () => {
         labels: [{ label: 'app', op: '=', value: 'grafana' }],
         operations: [{ id: LokiOperationId.LabelFilter, params: ['__error__', '=', 'value'] }],
       })
-    ).toBe('{app="grafana"} | __error__=`value`');
+    ).toBe('{app="grafana"} | __error__ = `value`');
   });
 
   it('Can query with label filter expression using greater than operator', () => {

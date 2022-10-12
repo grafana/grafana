@@ -140,7 +140,7 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async ({ signatureType,
     if (signatureType) {
       manifest.signatureType = signatureType;
     }
-    if (rootUrls) {
+    if (rootUrls && rootUrls.length > 0) {
       rootUrls.forEach(assertRootUrlIsValid);
       manifest.rootUrls = rootUrls;
     }

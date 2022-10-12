@@ -1,6 +1,5 @@
 import { act, render, screen } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
-import { UserEvent } from '@testing-library/user-event/dist/types/setup';
 import React from 'react';
 
 import { Cascader, CascaderOption, CascaderProps } from './Cascader';
@@ -47,7 +46,7 @@ describe('Cascader', () => {
   const placeholder = 'cascader-placeholder';
 
   describe('options from state change', () => {
-    let user: UserEvent;
+    let user: ReturnType<typeof userEvent.setup>;
 
     beforeEach(() => {
       jest.useFakeTimers();

@@ -9,7 +9,7 @@ import impressionSrv from 'app/core/services/impression_srv';
 import kbn from 'app/core/utils/kbn';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getGrafanaStorage } from 'app/features/storage/storage';
-import { DashboardRoutes } from 'app/types';
+import { DashboardDTO, DashboardRoutes } from 'app/types';
 
 import { appEvents } from '../../../core/core';
 
@@ -69,9 +69,9 @@ export class DashboardLoaderSrv {
         });
     }
 
-    promise.then((result: any) => {
+    promise.then((result: DashboardDTO) => {
       if (result.meta.dashboardNotFound !== true) {
-        impressionSrv.addDashboardImpression(result.dashboard.id);
+        impressionSrv.addDashboardImpression(result.dashboard.uid);
       }
 
       return result;

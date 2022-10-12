@@ -46,6 +46,7 @@ export interface DataSourcePickerProps {
   inputId?: string;
   filter?: (dataSource: DataSourceInstanceSettings) => boolean;
   onClear?: () => void;
+  invalid?: boolean;
 }
 
 /**
@@ -186,11 +187,11 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
           placeholder={placeholder}
           noOptionsMessage="No datasources found"
           value={value ?? null}
-          invalid={!!error}
+          invalid={Boolean(error) || Boolean(this.props.invalid)}
           getOptionLabel={(o) => {
             if (o.meta && isUnsignedPluginSignature(o.meta.signature) && o !== value) {
               return (
-                <HorizontalGroup align="center" justify="space-between">
+                <HorizontalGroup align="center" justify="space-between" height="auto">
                   <span>{o.label}</span> <PluginSignatureBadge status={o.meta.signature} />
                 </HorizontalGroup>
               );

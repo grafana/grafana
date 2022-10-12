@@ -2,7 +2,7 @@ package sender
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"sync"
@@ -71,7 +71,7 @@ func (am *FakeExternalAlertmanager) Alerts() amv2.PostableAlerts {
 
 func (am *FakeExternalAlertmanager) Handler() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		b, err := ioutil.ReadAll(r.Body)
+		b, err := io.ReadAll(r.Body)
 		require.NoError(am.t, err)
 
 		a := amv2.PostableAlerts{}

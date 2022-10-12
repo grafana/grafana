@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useRef } from 'react';
 
+import { SQLEditor } from '@grafana/experimental';
+
 import { LanguageCompletionProvider, SQLQuery } from '../../types';
 import { formatSQL } from '../../utils/formatSQL';
-
-import { SQLEditor } from './SQLEditor';
 
 type Props = {
   query: SQLQuery;

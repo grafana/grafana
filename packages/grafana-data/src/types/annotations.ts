@@ -33,6 +33,7 @@ export interface AnnotationEvent {
   id?: string;
   annotation?: any;
   dashboardId?: number;
+  dashboardUID?: string;
   panelId?: number;
   userId?: number;
   login?: string;

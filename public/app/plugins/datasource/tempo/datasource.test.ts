@@ -17,9 +17,7 @@ import config from 'app/core/config';
 
 import {
   DEFAULT_LIMIT,
-  TempoJsonData,
   TempoDatasource,
-  TempoQuery,
   buildExpr,
   buildLinkExpr,
   getRateAlignedValues,
@@ -29,11 +27,17 @@ import {
 } from './datasource';
 import mockJson from './mockJsonResponse.json';
 import mockServiceGraph from './mockServiceGraph.json';
+import { TempoJsonData, TempoQuery } from './types';
 
+let mockObservable: () => Observable<any>;
 jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
     reportInteraction: jest.fn(),
+    getBackendSrv: () => ({
+      fetch: mockObservable,
+      _request: mockObservable,
+    }),
   };
 });
 
@@ -343,6 +347,24 @@ describe('Tempo data source', () => {
     const lokiDS4 = ds4.getLokiSearchDS();
     expect(lokiDS4).toBe(undefined);
   });
+
+  describe('test the testDatasource function', () => {
+    it('should return a success msg if response.ok is true', async () => {
+      mockObservable = () => of({ ok: true });
+      const ds = new TempoDatasource(defaultSettings);
+      const response = await ds.testDatasource();
+      expect(response.status).toBe('success');
+    });
+  });
+
+  describe('test the metadataRequest function', () => {
+    it('should return the last value from the observed stream', async () => {
+      mockObservable = () => of('321', '123', '456');
+      const ds = new TempoDatasource(defaultSettings);
+      const response = await ds.metadataRequest('/api/search/tags');
+      expect(response).toBe('456');
+    });
+  });
 });
 
 describe('Tempo apm table', () => {
@@ -487,7 +509,7 @@ describe('Tempo apm table', () => {
     expect(builtQuery).toBe('sum(rate(traces_spanmetrics_calls_total{}[$__rate_interval]))');
   });
 
-  it('should build link expr correctly', () => {
+  it('should get field config correctly', () => {
     let datasourceUid = 's4Jvz8Qnk';
     let tempoDatasourceUid = 'EbPO1fYnz';
     let targetField = '__data.fields.target';
@@ -582,21 +604,18 @@ describe('Tempo apm table', () => {
     ];
     const objToAlign = {
       'HTTP GET - root': {
-        name: 'HTTP GET - root',
-        value: 0.2724936652307618,
+        value: 0.1234,
       },
       'HTTP GET': {
-        name: 'HTTP GET',
-        value: 0.2724936652307618,
+        value: 0.6789,
       },
       'HTTP POST - post': {
-        name: 'HTTP POST - post',
-        value: 0.03697421858453128,
+        value: 0.4321,
       },
     };
 
     let value = getRateAlignedValues(resp, objToAlign as any);
-    expect(value.toString()).toBe('0,0.2724936652307618,0.2724936652307618,0,0.03697421858453128');
+    expect(value.toString()).toBe('0,0.6789,0.1234,0,0.4321');
   });
 
   it('should make apm request correctly', () => {
@@ -694,15 +713,16 @@ const defaultSettings: DataSourceInstanceSettings<TempoJsonData> = {
       enabled: true,
     },
   },
+  readOnly: false,
 };
 
 const rateMetric = new MutableDataFrame({
-  refId: 'topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name))',
+  refId: 'topk(5, sum(rate(traces_spanmetrics_calls_total{span_kind="SPAN_KIND_SERVER"}[$__range])) by (span_name))',
   fields: [
     { name: 'Time', values: [1653725618609, 1653725618609] },
     { name: 'span_name', values: ['HTTP Client', 'HTTP GET - root'] },
     {
-      name: 'Value #topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name))',
+      name: 'Value #topk(5, sum(rate(traces_spanmetrics_calls_total{span_kind="SPAN_KIND_SERVER"}[$__range])) by (span_name))',
       values: [12.75164671814457, 12.121331111401608],
     },
   ],

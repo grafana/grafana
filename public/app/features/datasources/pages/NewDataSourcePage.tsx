@@ -1,35 +1,27 @@
 import React from 'react';
 
-import { NavModel } from '@grafana/data';
+import { NavModelItem } from '@grafana/data';
 import { Page } from 'app/core/components/Page/Page';
 
 import { NewDataSource } from '../components/NewDataSource';
-
-const navModel = getNavModel();
+import { DATASOURCES_ROUTES } from '../constants';
 
 export function NewDataSourcePage() {
+  const pageNav: NavModelItem = {
+    icon: 'database',
+    id: 'datasource-new',
+    text: 'Add data source',
+    url: DATASOURCES_ROUTES.New,
+    subTitle: 'Choose a data source type',
+  };
+
   return (
-    <Page navModel={navModel}>
+    <Page navId="datasources" pageNav={pageNav}>
       <Page.Contents>
         <NewDataSource />
       </Page.Contents>
     </Page>
   );
-}
-
-export function getNavModel(): NavModel {
-  const main = {
-    icon: 'database',
-    id: 'datasource-new',
-    text: 'Add data source',
-    href: 'datasources/new',
-    subTitle: 'Choose a data source type',
-  };
-
-  return {
-    main: main,
-    node: main,
-  };
 }
 
 export default NewDataSourcePage;

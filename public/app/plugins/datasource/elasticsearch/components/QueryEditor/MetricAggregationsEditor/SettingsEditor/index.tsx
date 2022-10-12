@@ -4,7 +4,7 @@ import React, { ComponentProps, useRef, useState } from 'react';
 import { InlineField, Input, InlineSwitch, Select } from '@grafana/ui';
 
 import { useDispatch } from '../../../../hooks/useStatelessReducer';
-import { extendedStats } from '../../../../query_def';
+import { extendedStats } from '../../../../queryDef';
 import { useQuery } from '../../ElasticsearchQueryContext';
 import { SettingsEditorContainer } from '../../SettingsEditorContainer';
 import {

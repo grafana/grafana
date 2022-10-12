@@ -200,10 +200,23 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
             allowPointerEvents={isToolTipOpen.current}
           >
             {shouldDisplayCloseButton && (
-              <>
-                <CloseButton onClick={onCloseToolTip} />
-                <div className={styles.closeButtonSpacer} />
-              </>
+              <div
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                }}
+              >
+                <CloseButton
+                  onClick={onCloseToolTip}
+                  style={{
+                    position: 'relative',
+                    top: 'auto',
+                    right: 'auto',
+                    marginRight: 0,
+                  }}
+                />
+              </div>
             )}
             <HeatmapHoverView data={info} hover={hover} showHistogram={options.tooltip.yHistogram} />
           </VizTooltipContainer>
@@ -214,9 +227,6 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  closeButtonSpacer: css`
-    margin-bottom: 15px;
-  `,
   colorScaleWrapper: css`
     margin-left: 25px;
     padding: 10px 0;

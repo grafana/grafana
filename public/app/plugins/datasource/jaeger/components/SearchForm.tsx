@@ -12,7 +12,7 @@ import { JaegerDatasource } from '../datasource';
 import { JaegerQuery } from '../types';
 import { transformToLogfmt } from '../util';
 
-import { AdvancedOptions } from './AdvancedOptions';
+const durationPlaceholder = 'e.g. 1.2s, 100ms, 500us';
 
 type Props = {
   datasource: JaegerDatasource;
@@ -96,13 +96,14 @@ export function SearchForm({ datasource, query, onChange }: Props) {
   return (
     <div className={css({ maxWidth: '500px' })}>
       <InlineFieldRow>
-        <InlineField label="Service" labelWidth={14} grow>
+        <InlineField label="Service Name" labelWidth={14} grow>
           <Select
             inputId="service"
             options={serviceOptions}
             onOpenMenu={() => loadOptions('/api/services', 'services')}
             isLoading={isLoading.services}
             value={serviceOptions?.find((v) => v?.value === query.service) || undefined}
+            placeholder="Select a service"
             onChange={(v) =>
               onChange({
                 ...query,
@@ -118,7 +119,7 @@ export function SearchForm({ datasource, query, onChange }: Props) {
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineField label="Operation" labelWidth={14} grow disabled={!query.service}>
+        <InlineField label="Operation Name" labelWidth={14} grow disabled={!query.service}>
           <Select
             inputId="operation"
             options={operationOptions}
@@ -130,6 +131,7 @@ export function SearchForm({ datasource, query, onChange }: Props) {
             }
             isLoading={isLoading.operations}
             value={operationOptions?.find((v) => v.value === query.operation) || null}
+            placeholder="Select an operation"
             onChange={(v) =>
               onChange({
                 ...query,
@@ -144,7 +146,7 @@ export function SearchForm({ datasource, query, onChange }: Props) {
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineField label="Tags" labelWidth={14} grow>
+        <InlineField label="Tags" labelWidth={14} grow tooltip="Values should be in logfmt.">
           <Input
             id="tags"
             value={transformToLogfmt(query.tags)}
@@ -158,7 +160,54 @@ export function SearchForm({ datasource, query, onChange }: Props) {
           />
         </InlineField>
       </InlineFieldRow>
-      <AdvancedOptions query={query} onChange={onChange} />
+      <InlineFieldRow>
+        <InlineField label="Min Duration" labelWidth={14} grow>
+          <Input
+            id="minDuration"
+            name="minDuration"
+            value={query.minDuration || ''}
+            placeholder={durationPlaceholder}
+            onChange={(v) =>
+              onChange({
+                ...query,
+                minDuration: v.currentTarget.value,
+              })
+            }
+          />
+        </InlineField>
+      </InlineFieldRow>
+      <InlineFieldRow>
+        <InlineField label="Max Duration" labelWidth={14} grow>
+          <Input
+            id="maxDuration"
+            name="maxDuration"
+            value={query.maxDuration || ''}
+            placeholder={durationPlaceholder}
+            onChange={(v) =>
+              onChange({
+                ...query,
+                maxDuration: v.currentTarget.value,
+              })
+            }
+          />
+        </InlineField>
+      </InlineFieldRow>
+      <InlineFieldRow>
+        <InlineField label="Limit" labelWidth={14} grow tooltip="Maximum number of returned results">
+          <Input
+            id="limit"
+            name="limit"
+            value={query.limit || ''}
+            type="number"
+            onChange={(v) =>
+              onChange({
+                ...query,
+                limit: v.currentTarget.value ? parseInt(v.currentTarget.value, 10) : undefined,
+              })
+            }
+          />
+        </InlineField>
+      </InlineFieldRow>
     </div>
   );
 }

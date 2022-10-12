@@ -7,3 +7,10 @@ export type DataSourceRights = {
   hasWriteRights: boolean;
   hasDeleteRights: boolean;
 };
+
+export type DataSourcesRoutes = {
+  New: string;
+  Edit: string;
+  List: string;
+  Dashboards: string;
+};

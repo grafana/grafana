@@ -34,8 +34,8 @@ To use images in notifications, Grafana must be set up to use [image rendering](
 
 If Grafana has been set up to use [image rendering]({{< relref "../setup-grafana/image-rendering/" >}}) images in notifications can be turned on via the `capture` option in `[unified_alerting.screenshots]`:
 
-    # Enable screenshots in notifications. This option requires a remote HTTP image rendering service. Please
-    # see [rendering] for further configuration options.
+    # Enable screenshots in notifications. This option requires the Grafana Image Renderer plugin.
+    # For more information on configuration options, refer to [rendering].
     capture = true
 
 It is recommended that `max_concurrent_screenshots` is set to a value that is less than or equal to `concurrent_render_request_limit`. The default value for both `max_concurrent_screenshots` and `concurrent_render_request_limit` is `5`:
@@ -71,7 +71,7 @@ Images in notifications are supported in the following notifiers and additional 
 | Opsgenie                | No                      | Yes                     |
 | Pagerduty               | No                      | Yes                     |
 | Prometheus Alertmanager | No                      | No                      |
-| Pushover                | No                      | No                      |
+| Pushover                | Yes                     | No                      |
 | Sensu Go                | No                      | No                      |
 | Slack                   | No                      | Yes                     |
 | Telegram                | No                      | No                      |

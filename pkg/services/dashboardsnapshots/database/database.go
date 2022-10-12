@@ -6,8 +6,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/setting"
@@ -91,7 +91,7 @@ func (d *DashboardSnapshotStore) GetDashboardSnapshot(ctx context.Context, query
 		if err != nil {
 			return err
 		} else if !has {
-			return dashboardsnapshots.ErrDashboardSnapshotNotFound
+			return dashboardsnapshots.ErrBaseNotFound.Errorf("dashboard snapshot not found")
 		}
 
 		query.Result = &snapshot
@@ -115,10 +115,10 @@ func (d *DashboardSnapshotStore) SearchDashboardSnapshots(ctx context.Context, q
 
 		// admins can see all snapshots, everyone else can only see their own snapshots
 		switch {
-		case query.SignedInUser.OrgRole == models.ROLE_ADMIN:
+		case query.SignedInUser.OrgRole == org.RoleAdmin:
 			sess.Where("org_id = ?", query.OrgId)
 		case !query.SignedInUser.IsAnonymous:
-			sess.Where("org_id = ? AND user_id = ?", query.OrgId, query.SignedInUser.UserId)
+			sess.Where("org_id = ? AND user_id = ?", query.OrgId, query.SignedInUser.UserID)
 		default:
 			query.Result = snapshots
 			return nil

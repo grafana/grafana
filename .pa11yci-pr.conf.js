@@ -1,8 +1,54 @@
+var dashboardSettings = [
+  {
+    url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=settings',
+    wait: 500,
+    rootElement: '.main-view',
+    threshold: 0,
+  },
+  {
+    url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=annotations',
+    wait: 500,
+    rootElement: '.main-view',
+    threshold: 0,
+  },
+  {
+    url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=templating',
+    wait: 500,
+    rootElement: '.main-view',
+    threshold: 0,
+  },
+  {
+    url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=links',
+    wait: 500,
+    rootElement: '.main-view',
+    threshold: 0,
+  },
+  {
+    url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=versions',
+    wait: 500,
+    rootElement: '.main-view',
+    threshold: 0,
+  },
+  {
+    url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=permissions',
+    wait: 500,
+    rootElement: '.main-view',
+    threshold: 9,
+  },
+  {
+    url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=dashboard_json',
+    wait: 500,
+    rootElement: '.main-view',
+    threshold: 2,
+  },
+];
+
 var config = {
   defaults: {
     concurrency: 1,
     runners: ['axe'],
     useIncognitoBrowserContext: false,
+    standard: 'WCAG2AA',
     chromeLaunchConfig: {
       args: ['--no-sandbox'],
     },
@@ -42,12 +88,7 @@ var config = {
       rootElement: '.main-view',
       threshold: 0,
     },
-    {
-      url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=settings',
-      wait: 500,
-      rootElement: '.main-view',
-      threshold: 0,
-    },
+    ...dashboardSettings,
     {
       url: '${HOST}/?orgId=1&search=open',
       wait: 500,
@@ -96,7 +137,7 @@ var config = {
       url: '${HOST}/org/apikeys',
       wait: 500,
       rootElement: '.main-view',
-      threshold: 4,
+      threshold: 3,
     },
     {
       url: '${HOST}/dashboards',

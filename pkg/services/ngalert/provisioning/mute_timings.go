@@ -77,7 +77,7 @@ func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt definitio
 		OrgID:                     orgID,
 	}
 	err = svc.xact.InTransaction(ctx, func(ctx context.Context) error {
-		err = svc.config.UpdateAlertmanagerConfiguration(ctx, &cmd)
+		err = PersistConfig(ctx, svc.config, &cmd)
 		if err != nil {
 			return err
 		}
@@ -132,7 +132,7 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitio
 		OrgID:                     orgID,
 	}
 	err = svc.xact.InTransaction(ctx, func(ctx context.Context) error {
-		err = svc.config.UpdateAlertmanagerConfiguration(ctx, &cmd)
+		err = PersistConfig(ctx, svc.config, &cmd)
 		if err != nil {
 			return err
 		}
@@ -181,7 +181,7 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, name string,
 		OrgID:                     orgID,
 	}
 	return svc.xact.InTransaction(ctx, func(ctx context.Context) error {
-		err = svc.config.UpdateAlertmanagerConfiguration(ctx, &cmd)
+		err = PersistConfig(ctx, svc.config, &cmd)
 		if err != nil {
 			return err
 		}

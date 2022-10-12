@@ -14,7 +14,7 @@ export interface Props extends GrafanaRouteComponentProps<{ slug: string }> {}
 export function StorageFolderPage(props: Props) {
   const slug = props.match.params.slug ?? '';
   const listing = useAsync((): Promise<DataFrame | undefined> => {
-    return getGrafanaStorage().list(slug);
+    return getGrafanaStorage().list('content/' + slug);
   }, [slug]);
 
   const childRoot = slug.length > 0 ? `g/${slug}/` : 'g/';

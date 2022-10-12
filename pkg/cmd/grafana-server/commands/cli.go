@@ -97,6 +97,10 @@ func RunServer(opt ServerOptions) int {
 		fmt.Println("diagnostics: pprof profiling enabled", "addr", profileDiagnostics.addr, "port", profileDiagnostics.port)
 		runtime.SetBlockProfileRate(1)
 		go func() {
+			// TODO: We should enable the linter and fix G114 here.
+			//	G114: Use of net/http serve function that has no support for setting timeouts (gosec)
+			//
+			//nolint:gosec
 			err := http.ListenAndServe(fmt.Sprintf("%s:%d", profileDiagnostics.addr, profileDiagnostics.port), nil)
 			if err != nil {
 				panic(err)
@@ -124,6 +128,20 @@ func executeServer(configFile, homePath, pidFile, packaging string, traceDiagnos
 	defer func() {
 		if err := log.Close(); err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to close log: %s\n", err)
+		}
+	}()
+
+	defer func() {
+		// If we've managed to initialize them, this is the last place
+		// where we're able to log anything that'll end up in Grafana's
+		// log files.
+		// Since operators are not always looking at stderr, we'll try
+		// to log any and all panics that are about to crash Grafana to
+		// our regular log locations before exiting.
+		if r := recover(); r != nil {
+			reason := fmt.Sprintf("%v", r)
+			clilog.Error("Critical error", "reason", reason, "stackTrace", string(debug.Stack()))
+			panic(r)
 		}
 	}()
 

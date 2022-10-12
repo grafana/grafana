@@ -15,14 +15,24 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
+// swagger:route GET /folders/{folder_uid}/permissions folder_permissions getFolderPermissionList
+//
+// Gets all existing permissions for the folder with the given `uid`.
+//
+// Responses:
+// 200: getFolderPermissionListResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (hs *HTTPServer) GetFolderPermissionList(c *models.ReqContext) response.Response {
-	folder, err := hs.folderService.GetFolderByUID(c.Req.Context(), c.SignedInUser, c.OrgId, web.Params(c.Req)[":uid"])
+	folder, err := hs.folderService.GetFolderByUID(c.Req.Context(), c.SignedInUser, c.OrgID, web.Params(c.Req)[":uid"])
 
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g := guardian.New(c.Req.Context(), folder.Id, c.OrgId, c.SignedInUser)
+	g := guardian.New(c.Req.Context(), folder.Id, c.OrgID, c.SignedInUser)
 
 	if canAdmin, err := g.CanAdmin(); err != nil || !canAdmin {
 		return apierrors.ToFolderErrorResponse(dashboards.ErrFolderAccessDenied)
@@ -58,6 +68,16 @@ func (hs *HTTPServer) GetFolderPermissionList(c *models.ReqContext) response.Res
 	return response.JSON(http.StatusOK, filteredACLs)
 }
 
+// swagger:route POST /folders/{folder_uid}/permissions folder_permissions updateFolderPermissions
+//
+// Updates permissions for a folder. This operation will remove existing permissions if they’re not included in the request.
+//
+// Responses:
+// 200: okResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (hs *HTTPServer) UpdateFolderPermissions(c *models.ReqContext) response.Response {
 	apiCmd := dtos.UpdateDashboardACLCommand{}
 	if err := web.Bind(c.Req, &apiCmd); err != nil {
@@ -67,12 +87,12 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *models.ReqContext) response.Res
 		return response.Error(400, err.Error(), err)
 	}
 
-	folder, err := hs.folderService.GetFolderByUID(c.Req.Context(), c.SignedInUser, c.OrgId, web.Params(c.Req)[":uid"])
+	folder, err := hs.folderService.GetFolderByUID(c.Req.Context(), c.SignedInUser, c.OrgID, web.Params(c.Req)[":uid"])
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g := guardian.New(c.Req.Context(), folder.Id, c.OrgId, c.SignedInUser)
+	g := guardian.New(c.Req.Context(), folder.Id, c.OrgID, c.SignedInUser)
 	canAdmin, err := g.CanAdmin()
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
@@ -85,7 +105,7 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *models.ReqContext) response.Res
 	var items []*models.DashboardACL
 	for _, item := range apiCmd.Items {
 		items = append(items, &models.DashboardACL{
-			OrgID:       c.OrgId,
+			OrgID:       c.OrgID,
 			DashboardID: folder.Id,
 			UserID:      item.UserID,
 			TeamID:      item.TeamID,
@@ -120,7 +140,7 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *models.ReqContext) response.Res
 		if err != nil {
 			return response.Error(500, "Error while checking dashboard permissions", err)
 		}
-		if err := hs.updateDashboardAccessControl(c.Req.Context(), c.OrgId, folder.Uid, true, items, old); err != nil {
+		if err := hs.updateDashboardAccessControl(c.Req.Context(), c.OrgID, folder.Uid, true, items, old); err != nil {
 			return response.Error(500, "Failed to create permission", err)
 		}
 		return response.Success("Dashboard permissions updated")
@@ -146,4 +166,27 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *models.ReqContext) response.Res
 		"id":      folder.Id,
 		"title":   folder.Title,
 	})
+}
+
+// swagger:parameters getFolderPermissionList
+type GetFolderPermissionListParams struct {
+	// in:path
+	// required:true
+	FolderUID string `json:"folder_uid"`
+}
+
+// swagger:parameters updateFolderPermissions
+type UpdateFolderPermissionsParams struct {
+	// in:path
+	// required:true
+	FolderUID string `json:"folder_uid"`
+	// in:body
+	// required:true
+	Body dtos.UpdateDashboardACLCommand
+}
+
+// swagger:response getFolderPermissionListResponse
+type GetFolderPermissionsResponse struct {
+	// in: body
+	Body []*models.DashboardACLInfoDTO `json:"body"`
 }

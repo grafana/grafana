@@ -27,28 +27,14 @@ export function getTreeData(root?: RootElement | FrameState, selection?: string[
         dataRef: item,
       };
 
-      const isSelected = isItemSelected(item, selection);
-      if (isSelected) {
-        element.style = { backgroundColor: selectedColor };
-      }
-
       if (item instanceof FrameState) {
         element.children = getTreeData(item, selection, selectedColor);
-        if (isSelected) {
-          element.children.map((child) => {
-            child.style = { backgroundColor: selectedColor };
-          });
-        }
       }
       elements.push(element);
     }
   }
 
   return elements;
-}
-
-function isItemSelected(item: ElementState, selection: string[] | undefined) {
-  return Boolean(selection?.includes(item.getName()));
 }
 
 export function onNodeDrop(

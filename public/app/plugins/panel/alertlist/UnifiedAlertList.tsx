@@ -1,16 +1,27 @@
 import { css } from '@emotion/css';
 import { sortBy } from 'lodash';
 import React, { useEffect, useMemo } from 'react';
-import { useDispatch } from 'react-redux';
+import { useEffectOnce } from 'react-use';
 
 import { GrafanaTheme2, PanelProps } from '@grafana/data';
-import { Alert, CustomScrollbar, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { TimeRangeUpdatedEvent } from '@grafana/runtime';
+import {
+  Alert,
+  BigValue,
+  BigValueGraphMode,
+  BigValueJustifyMode,
+  BigValueTextMode,
+  CustomScrollbar,
+  LoadingPlaceholder,
+  useStyles2,
+} from '@grafana/ui';
+import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import alertDef from 'app/features/alerting/state/alertDef';
 import { useUnifiedAlertingSelector } from 'app/features/alerting/unified/hooks/useUnifiedAlertingSelector';
 import { fetchAllPromRulesAction } from 'app/features/alerting/unified/state/actions';
 import { labelsMatchMatchers, parseMatchers } from 'app/features/alerting/unified/utils/alertmanager';
-import { Annotation, RULE_LIST_POLL_INTERVAL_MS } from 'app/features/alerting/unified/utils/constants';
+import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import {
   getAllRulesSourceNames,
   GRAFANA_DATASOURCE_NAME,
@@ -18,11 +29,12 @@ import {
 } from 'app/features/alerting/unified/utils/datasource';
 import { flattenRules, getFirstActiveAt } from 'app/features/alerting/unified/utils/rules';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { AccessControlAction } from 'app/types';
+import { DashboardModel } from 'app/features/dashboard/state';
+import { useDispatch, AccessControlAction } from 'app/types';
 import { PromRuleWithLocation } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
-import { GroupMode, SortOrder, UnifiedAlertListOptions } from './types';
+import { GroupMode, SortOrder, UnifiedAlertListOptions, ViewMode } from './types';
 import GroupedModeView from './unified-alerting/GroupedView';
 import UngroupedModeView from './unified-alerting/UngroupedView';
 import { filterAlerts } from './util';
@@ -39,13 +51,19 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
     props.options.stateFilter.inactive = undefined; // now disable inactive
   }, [props.options.stateFilter]);
 
+  let dashboard: DashboardModel | undefined = undefined;
+
+  useEffectOnce(() => {
+    dashboard = getDashboardSrv().getCurrent();
+  });
+
   useEffect(() => {
     dispatch(fetchAllPromRulesAction());
-    const interval = setInterval(() => dispatch(fetchAllPromRulesAction()), RULE_LIST_POLL_INTERVAL_MS);
+    const sub = dashboard?.events.subscribe(TimeRangeUpdatedEvent, () => dispatch(fetchAllPromRulesAction()));
     return () => {
-      clearInterval(interval);
+      sub?.unsubscribe();
     };
-  }, [dispatch]);
+  }, [dispatch, dashboard]);
 
   const promRulesRequests = useUnifiedAlertingSelector((state) => state.promRules);
 
@@ -86,10 +104,21 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
         {dispatched && loading && !haveResults && <LoadingPlaceholder text="Loading..." />}
         {noAlertsMessage && <div className={styles.noAlertsMessage}>{noAlertsMessage}</div>}
         <section>
-          {props.options.groupMode === GroupMode.Custom && haveResults && (
+          {props.options.viewMode === ViewMode.Stat && haveResults && (
+            <BigValue
+              width={props.width}
+              height={props.height}
+              graphMode={BigValueGraphMode.None}
+              textMode={BigValueTextMode.Auto}
+              justifyMode={BigValueJustifyMode.Auto}
+              theme={config.theme2}
+              value={{ text: `${rules.length}`, numeric: rules.length }}
+            />
+          )}
+          {props.options.viewMode === ViewMode.List && props.options.groupMode === GroupMode.Custom && haveResults && (
             <GroupedModeView rules={rules} options={props.options} />
           )}
-          {props.options.groupMode === GroupMode.Default && haveResults && (
+          {props.options.viewMode === ViewMode.List && props.options.groupMode === GroupMode.Default && haveResults && (
             <UngroupedModeView rules={rules} options={props.options} />
           )}
         </section>

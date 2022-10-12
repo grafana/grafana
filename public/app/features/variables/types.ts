@@ -4,11 +4,56 @@ import {
   BusEventWithPayload,
   DataQuery,
   DataSourceJsonData,
-  DataSourceRef,
   LoadingState,
   QueryEditorProps,
-  VariableModel as BaseVariableModel,
-  VariableType,
+  BaseVariableModel,
+  VariableHide,
+} from '@grafana/data';
+export {
+  /** @deprecated Import from @grafana/data instead */
+  VariableRefresh,
+  /** @deprecated Import from @grafana/data instead */
+  VariableSort,
+  /** @deprecated Import from @grafana/data instead */
+  VariableHide,
+  /** @deprecated Import from @grafana/data instead */
+  AdHocVariableFilter,
+  /** @deprecated Import from @grafana/data instead */
+  AdHocVariableModel,
+  /** @deprecated Import from @grafana/data instead */
+  VariableOption,
+  /** @deprecated Import from @grafana/data instead */
+  IntervalVariableModel,
+  /** @deprecated Import from @grafana/data instead */
+  CustomVariableModel,
+  /** @deprecated Import from @grafana/data instead */
+  DataSourceVariableModel,
+  /** @deprecated Import from @grafana/data instead */
+  QueryVariableModel,
+  /** @deprecated Import from @grafana/data instead */
+  TextBoxVariableModel,
+  /** @deprecated Import from @grafana/data instead */
+  ConstantVariableModel,
+  /** @deprecated Import from @grafana/data instead */
+  VariableWithMultiSupport,
+  /** @deprecated Import from @grafana/data instead */
+  VariableWithOptions,
+  /** @deprecated Import from @grafana/data instead */
+  DashboardProps,
+  /** @deprecated Import from @grafana/data instead */
+  DashboardVariableModel,
+  /** @deprecated Import from @grafana/data instead */
+  OrgProps,
+  /** @deprecated Import from @grafana/data instead */
+  OrgVariableModel,
+  /** @deprecated Import from @grafana/data instead */
+  UserProps,
+  /** @deprecated Import from @grafana/data instead */
+  UserVariableModel,
+  /** @deprecated Import from @grafana/data instead */
+  SystemVariable,
+  /** @deprecated Import from @grafana/data instead */
+  BaseVariableModel as VariableModel,
 } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
 
@@ -20,133 +65,12 @@ export enum TransactionStatus {
   Completed = 'Completed',
 }
 
-export enum VariableRefresh {
-  never, // removed from the UI
-  onDashboardLoad,
-  onTimeRangeChanged,
-}
-
-export enum VariableHide {
-  dontHide,
-  hideLabel,
-  hideVariable,
-}
-
-export enum VariableSort {
-  disabled,
-  alphabeticalAsc,
-  alphabeticalDesc,
-  numericalAsc,
-  numericalDesc,
-  alphabeticalCaseInsensitiveAsc,
-  alphabeticalCaseInsensitiveDesc,
-}
-
-export interface VariableOption {
-  selected: boolean;
-  text: string | string[];
-  value: string | string[];
-  isNone?: boolean;
-}
-
-export interface AdHocVariableFilter {
-  key: string;
-  operator: string;
-  value: string;
-  condition: string;
-}
-
-export interface AdHocVariableModel extends VariableModel {
-  datasource: DataSourceRef | null;
-  filters: AdHocVariableFilter[];
-}
-
-export interface IntervalVariableModel extends VariableWithOptions {
-  auto: boolean;
-  auto_min: string;
-  auto_count: number;
-  refresh: VariableRefresh;
-}
-
-export interface CustomVariableModel extends VariableWithMultiSupport {}
-
-export interface DataSourceVariableModel extends VariableWithMultiSupport {
-  regex: string;
-  refresh: VariableRefresh;
-}
-
-export interface QueryVariableModel extends DataSourceVariableModel {
-  datasource: DataSourceRef | null;
-  definition: string;
-  sort: VariableSort;
-  queryValue?: string;
-  query: any;
-}
-
-export interface TextBoxVariableModel extends VariableWithOptions {
-  originalQuery: string | null;
-}
-
-export interface ConstantVariableModel extends VariableWithOptions {}
-
-export interface VariableWithMultiSupport extends VariableWithOptions {
-  multi: boolean;
-  includeAll: boolean;
-  allValue?: string | null;
-}
-
-export interface VariableWithOptions extends VariableModel {
-  current: VariableOption;
-  options: VariableOption[];
-  query: string;
-}
-
-export interface DashboardProps {
-  name: string;
-  uid: string;
-  toString: () => string;
-}
-
-export interface DashboardVariableModel extends SystemVariable<DashboardProps> {}
-
-export interface OrgProps {
-  name: string;
-  id: number;
-  toString: () => string;
-}
-
-export interface OrgVariableModel extends SystemVariable<OrgProps> {}
-
-export interface UserProps {
-  login: string;
-  id: number;
-  email?: string;
-  toString: () => string;
-}
-
-export interface UserVariableModel extends SystemVariable<UserProps> {}
-
-export interface SystemVariable<TProps extends { toString: () => string }> extends VariableModel {
-  current: { value: TProps };
-}
-
-export interface VariableModel extends BaseVariableModel {
-  id: string;
-  rootStateKey: string | null;
-  global: boolean;
-  hide: VariableHide;
-  skipUrlSync: boolean;
-  index: number;
-  state: LoadingState;
-  error: any | null;
-  description: string | null;
-}
-
-export const initialVariableModelState: VariableModel = {
+export const initialVariableModelState: BaseVariableModel = {
   id: NEW_VARIABLE_ID,
   rootStateKey: null,
   name: '',
-  type: '' as unknown as VariableType,
+  // TODO: in a later PR, remove type and type this object to Partial<BaseVariableModel>
+  type: 'query',
   global: false,
   index: -1,
   hide: VariableHide.dontHide,

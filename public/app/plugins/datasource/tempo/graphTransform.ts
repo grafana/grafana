@@ -148,6 +148,7 @@ export const durationMetric = {
   expr: 'histogram_quantile(.9, sum(rate(traces_spanmetrics_latency_bucket{}[$__range])) by (le))',
   params: [],
 };
+export const defaultTableFilter = 'span_kind="SPAN_KIND_SERVER"';
 
 export const serviceMapMetrics = [
   secondsMetric,

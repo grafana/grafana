@@ -33,7 +33,7 @@ export default class ResponseParser {
     return list;
   }
 
-  static parseResourceNames(result: any, metricDefinition?: string): Array<{ text: string; value: string }> {
+  static parseResourceNames(result: any, metricNamespace?: string): Array<{ text: string; value: string }> {
     const list: Array<{ text: string; value: string }> = [];
 
     if (!result) {
@@ -43,7 +43,7 @@ export default class ResponseParser {
     for (let i = 0; i < result.value.length; i++) {
       if (
         typeof result.value[i].type === 'string' &&
-        (!metricDefinition || result.value[i].type.toLocaleLowerCase() === metricDefinition.toLocaleLowerCase())
+        (!metricNamespace || result.value[i].type.toLocaleLowerCase() === metricNamespace.toLocaleLowerCase())
       ) {
         list.push({
           text: result.value[i].name,

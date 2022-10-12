@@ -19,7 +19,7 @@ import AzureResourceGraphDatasource from './azure_resource_graph/azure_resource_
 import ResourcePickerData from './resourcePicker/resourcePickerData';
 import { AzureDataSourceJsonData, AzureMonitorQuery, AzureQueryType } from './types';
 import migrateAnnotation from './utils/migrateAnnotation';
-import { datasourceMigrations } from './utils/migrateQuery';
+import migrateQuery from './utils/migrateQuery';
 import { VariableSupport } from './variables';
 
 export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery, AzureDataSourceJsonData> {
@@ -46,7 +46,7 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     this.azureMonitorDatasource = new AzureMonitorDatasource(instanceSettings);
     this.azureLogAnalyticsDatasource = new AzureLogAnalyticsDatasource(instanceSettings);
     this.azureResourceGraphDatasource = new AzureResourceGraphDatasource(instanceSettings);
-    this.resourcePickerData = new ResourcePickerData(instanceSettings);
+    this.resourcePickerData = new ResourcePickerData(instanceSettings, this.azureMonitorDatasource);
 
     this.pseudoDatasource = {
       [AzureQueryType.AzureMonitor]: this.azureMonitorDatasource,
@@ -70,7 +70,7 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
 
     for (const baseTarget of options.targets) {
       // Migrate old query structures
-      const target = datasourceMigrations(baseTarget, this.templateSrv);
+      const target = migrateQuery(baseTarget);
 
       // Skip hidden or invalid queries or ones without properties
       if (!target.queryType || target.hide || !hasQueryForType(target)) {
@@ -147,34 +147,27 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     return this.azureMonitorDatasource.getResourceGroups(this.templateSrv.replace(subscriptionId));
   }
 
-  getMetricDefinitions(subscriptionId: string, resourceGroup: string) {
-    return this.azureMonitorDatasource.getMetricDefinitions(
-      this.templateSrv.replace(subscriptionId),
-      this.templateSrv.replace(resourceGroup)
-    );
-  }
-
   getMetricNamespaces(subscriptionId: string, resourceGroup?: string) {
     let url = `/subscriptions/${subscriptionId}`;
     if (resourceGroup) {
       url += `/resourceGroups/${resourceGroup};`;
     }
-    return this.azureMonitorDatasource.getMetricNamespaces({ resourceUri: url });
+    return this.azureMonitorDatasource.getMetricNamespaces({ resourceUri: url }, true);
   }
 
-  getResourceNames(subscriptionId: string, resourceGroup?: string, metricDefinition?: string) {
+  getResourceNames(subscriptionId: string, resourceGroup?: string, metricNamespace?: string) {
     return this.azureMonitorDatasource.getResourceNames(
       this.templateSrv.replace(subscriptionId),
       this.templateSrv.replace(resourceGroup),
-      this.templateSrv.replace(metricDefinition)
+      this.templateSrv.replace(metricNamespace)
     );
   }
 
-  getMetricNames(subscriptionId: string, resourceGroup: string, metricDefinition: string, resourceName: string) {
+  getMetricNames(subscriptionId: string, resourceGroup: string, metricNamespace: string, resourceName: string) {
     return this.azureMonitorDatasource.getMetricNames({
       subscription: subscriptionId,
       resourceGroup,
-      metricDefinition,
+      metricNamespace,
       resourceName,
     });
   }

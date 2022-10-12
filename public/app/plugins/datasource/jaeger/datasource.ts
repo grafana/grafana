@@ -48,12 +48,21 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
     return res.data.data;
   }
 
+  isSearchFormValid(query: JaegerQuery): boolean {
+    return !!query.service;
+  }
+
   query(options: DataQueryRequest<JaegerQuery>): Observable<DataQueryResponse> {
     // At this moment we expect only one target. In case we somehow change the UI to be able to show multiple
     // traces at one we need to change this.
     const target: JaegerQuery = options.targets[0];
+
     if (!target) {
       return of({ data: [emptyTraceDataFrame] });
+    }
+
+    if (target.queryType === 'search' && !this.isSearchFormValid(target)) {
+      return of({ error: { message: 'You must select a service.' }, data: [] });
     }
 
     if (target.queryType !== 'search' && target.query) {
@@ -89,7 +98,7 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
         }
         return of({ data });
       } catch (error) {
-        return of({ error: { message: 'JSON is not valid Jaeger format' }, data: [] });
+        return of({ error: { message: 'The JSON file uploaded is not in a valid Jaeger format' }, data: [] });
       }
     }
 

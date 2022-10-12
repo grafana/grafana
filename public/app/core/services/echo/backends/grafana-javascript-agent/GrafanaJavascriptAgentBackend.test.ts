@@ -87,6 +87,7 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
           metas: [],
           parseStacktrace: jest.fn(),
           app: jest.fn(),
+          paused: false,
         },
         metas: {
           add: jest.fn(),
@@ -97,7 +98,11 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
           add: jest.fn(),
           execute: jest.fn(),
           transports: [],
+          pause: jest.fn(),
+          unpause: jest.fn(),
         },
+        pause: jest.fn(),
+        unpause: jest.fn(),
       };
     };
     jest.mocked(initializeAgent).mockImplementation(mockedAgent);
@@ -110,7 +115,6 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
     expect(mockedSetUser).toHaveBeenCalledTimes(1);
     expect(mockedSetUser).toHaveBeenCalledWith({
       id: '504',
-      email: 'darth.vader@sith.glx',
       attributes: {
         orgId: '1',
       },
@@ -141,6 +145,7 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
           metas: [],
           parseStacktrace: jest.fn(),
           app: jest.fn(),
+          paused: false,
         },
         metas: {
           add: jest.fn(),
@@ -151,7 +156,11 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
           add: jest.fn(),
           execute: jest.fn(),
           transports: [],
+          pause: jest.fn(),
+          unpause: jest.fn(),
         },
+        pause: jest.fn(),
+        unpause: jest.fn(),
       };
     };
 

@@ -40,6 +40,9 @@ def pipeline(
         'trigger': trigger,
         'services': services,
         'steps': steps,
+        'clone': {
+            'retries': 3,
+        },
         'volumes': [{
             'name': 'docker',
             'host': {
@@ -47,6 +50,7 @@ def pipeline(
             },
         }],
         'depends_on': depends_on,
+        'image_pull_secrets': [pull_secret],
     }
     if environment:
         pipeline.update({
@@ -57,7 +61,6 @@ def pipeline(
     pipeline.update(platform_conf)
 
     if edition in ('enterprise', 'enterprise2'):
-        pipeline['image_pull_secrets'] = [pull_secret]
         # We have a custom clone step for enterprise
         pipeline['clone'] = {
             'disable': True,
@@ -79,6 +82,9 @@ def notify_pipeline(name, slack_channel, trigger, depends_on=[], template=None, 
         'steps': [
             slack_step(slack_channel, template, secret),
         ],
+        'clone': {
+            'retries': 3,
+        },
         'depends_on': depends_on,
     }
 

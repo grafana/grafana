@@ -16,7 +16,6 @@ import { AppChrome } from './core/components/AppChrome/AppChrome';
 import { AppNotificationList } from './core/components/AppNotifications/AppNotificationList';
 import { NavBar } from './core/components/NavBar/NavBar';
 import { GrafanaContext } from './core/context/GrafanaContext';
-import { I18nProvider } from './core/internationalization';
 import { GrafanaRoute } from './core/navigation/GrafanaRoute';
 import { RouteDescriptor } from './core/navigation/types';
 import { contextSrv } from './core/services/context_srv';
@@ -113,8 +112,8 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
     };
 
     return (
-      <Provider store={store}>
-        <I18nProvider>
+      <React.StrictMode>
+        <Provider store={store}>
           <ErrorBoundaryAlert style="page">
             <GrafanaContext.Provider value={app.context}>
               <ThemeProvider value={config.theme2}>
@@ -151,8 +150,8 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
               </ThemeProvider>
             </GrafanaContext.Provider>
           </ErrorBoundaryAlert>
-        </I18nProvider>
-      </Provider>
+        </Provider>
+      </React.StrictMode>
     );
   }
 }

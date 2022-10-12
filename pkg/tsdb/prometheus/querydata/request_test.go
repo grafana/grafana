@@ -4,18 +4,18 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"math"
 	"net/http"
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/buffered"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/querydata"
@@ -388,7 +388,7 @@ func toAPIResponse(d interface{}) (*http.Response, error) {
 
 	return &http.Response{
 		StatusCode: 200,
-		Body:       ioutil.NopCloser(bytes.NewReader(raw)),
+		Body:       io.NopCloser(bytes.NewReader(raw)),
 	}, nil
 }
 
@@ -405,7 +405,7 @@ func setup(wideFrames bool) (*testContext, error) {
 		},
 		res: &http.Response{
 			StatusCode: 200,
-			Body:       ioutil.NopCloser(bytes.NewReader([]byte(`{}`))),
+			Body:       io.NopCloser(bytes.NewReader([]byte(`{}`))),
 		},
 	}
 	settings := backend.DataSourceInstanceSettings{
@@ -415,7 +415,7 @@ func setup(wideFrames bool) (*testContext, error) {
 
 	features := &fakeFeatureToggles{flags: map[string]bool{"prometheusStreamingJSONParser": true, "prometheusWideSeries": wideFrames}}
 
-	opts, err := buffered.CreateTransportOptions(settings, &azsettings.AzureSettings{}, features, &fakeLogger{})
+	opts, err := buffered.CreateTransportOptions(settings, &setting.Cfg{}, &fakeLogger{})
 	if err != nil {
 		return nil, err
 	}

@@ -7,7 +7,7 @@ import { toUtc, dateTimeParse } from '../datetime';
 import { GrafanaTheme2 } from '../themes/types';
 import { KeyValue, TimeZone } from '../types';
 import { Field, FieldType } from '../types/dataFrame';
-import { DisplayProcessor, DisplayValue } from '../types/displayValue';
+import { DecimalCount, DisplayProcessor, DisplayValue } from '../types/displayValue';
 import { anyToNumber } from '../utils/anyToNumber';
 import { getValueMappingResult } from '../utils/valueMappings';
 import { getValueFormat, isBooleanUnit } from '../valueFormats/valueFormats';
@@ -62,7 +62,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
         start /= 1e3;
         end /= 1e3;
       }
-      showMs = end - start < 60; //show ms when minute or less
+      showMs = Math.abs(end - start) < 60; //show ms when minute or less
     }
   } else if (field.type === FieldType.boolean) {
     if (!isBooleanUnit(unit)) {
@@ -75,7 +75,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
   const formatFunc = getValueFormat(unit || 'none');
   const scaleFunc = getScaleCalculator(field, options.theme);
 
-  return (value: any) => {
+  return (value: any, decimals?: DecimalCount) => {
     const { mappings } = config;
     const isStringUnit = unit === 'string';
 
@@ -111,7 +111,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
 
     if (!isNaN(numeric)) {
       if (text == null && !isBoolean(value)) {
-        const v = formatFunc(numeric, config.decimals, null, options.timeZone, showMs);
+        const v = formatFunc(numeric, decimals ?? config.decimals, null, options.timeZone, showMs);
         text = v.text;
         suffix = v.suffix;
         prefix = v.prefix;

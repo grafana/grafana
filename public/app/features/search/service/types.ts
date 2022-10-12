@@ -15,7 +15,6 @@ export interface SearchQuery {
   kind?: string[];
   panel_type?: string;
   uid?: string[];
-  id?: number[];
   facet?: FacetField[];
   explain?: boolean;
   withAllowedActions?: boolean;
@@ -23,6 +22,7 @@ export interface SearchQuery {
   hasPreview?: string; // theme
   limit?: number;
   from?: number;
+  starred?: boolean;
 }
 
 export interface DashboardQueryResult {
@@ -68,6 +68,7 @@ export interface QueryResponse {
 
 export interface GrafanaSearcher {
   search: (query: SearchQuery) => Promise<QueryResponse>;
+  starred: (query: SearchQuery) => Promise<QueryResponse>;
   tags: (query: SearchQuery) => Promise<TermCount[]>;
   getSortOptions: () => Promise<SelectableValue[]>;
 }
