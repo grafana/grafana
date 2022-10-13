@@ -47,7 +47,7 @@ def swagger_gen_step(edition, ver_mode):
             'GITHUB_TOKEN': from_secret(github_token),
         },
         'commands': [
-            'go run ./grafana/pkg/api/swaggergen/main.go ${DRONE_SOURCE_BRANCH} ${DRONE_COMMIT_SHA} $${GITHUB_TOKEN}',
+            'cd grafana && go run ./pkg/api/swaggergen/main.go ${DRONE_SOURCE_BRANCH} ${DRONE_COMMIT_SHA} $${GITHUB_TOKEN}',
         ],
     }
 

@@ -844,7 +844,7 @@ steps:
   image: golang:1.19.2
   name: clone-branch
 - commands:
-  - go run ./grafana/pkg/api/swaggergen/main.go ${DRONE_SOURCE_BRANCH} ${DRONE_COMMIT_SHA}
+  - cd grafana && go run ./pkg/api/swaggergen/main.go ${DRONE_SOURCE_BRANCH} ${DRONE_COMMIT_SHA}
     $${GITHUB_TOKEN}
   depends_on: []
   environment:
@@ -5647,6 +5647,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: e24b746aaa67cabd8bcf5355cb3c35529ddff0b99e1aa4933512ef3662f72ca9
+hmac: 62a35c8aa497ab49ffa2489947eb946f46cc1c2120298893503b5b65adbc64a3
 
 ...
