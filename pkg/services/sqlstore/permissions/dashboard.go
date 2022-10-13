@@ -111,7 +111,7 @@ func (f AccessControlDashboardPermissionFilter) Where() (string, []interface{}) 
 		return "(1 = 0)", nil
 	}
 	dashWildcards := accesscontrol.WildcardsFromPrefix(dashboards.ScopeDashboardsPrefix)
-	folderWildcards := accesscontrol.WildcardsFromPrefix(dashboards.ScopeDashboardsPrefix)
+	folderWildcards := accesscontrol.WildcardsFromPrefix(dashboards.ScopeFoldersPrefix)
 
 	filter, params := accesscontrol.UserRolesFilter(f.user.OrgID, f.user.UserID, f.user.Teams, accesscontrol.GetOrgRoles(f.user))
 	rolesFilter := "AND role_id IN(SELECT distinct id FROM role " + filter + ")"
