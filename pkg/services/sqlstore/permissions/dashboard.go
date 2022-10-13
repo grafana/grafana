@@ -119,8 +119,6 @@ func (f AccessControlDashboardPermissionFilter) Where() (string, []interface{}) 
 	builder.WriteRune('(')
 	if len(f.dashboardActions) > 0 {
 		actionsToCheck := make([]interface{}, 0, len(f.dashboardActions))
-		// dashboards:read dashboards:uid:1 and dashboards:write dashboard:*
-		// *, dashboards:*, dashboards:uid:*
 		for _, action := range f.dashboardActions {
 			var hasWildcard bool
 			for _, scope := range f.user.Permissions[f.user.OrgID][action] {
@@ -156,8 +154,6 @@ func (f AccessControlDashboardPermissionFilter) Where() (string, []interface{}) 
 		}
 
 		actionsToCheck := make([]interface{}, 0, len(f.dashboardActions))
-		// dashboards:read dashboards:uid:1 and dashboards:write dashboard:*
-		// *, dashboards:*, dashboards:uid:*
 		for _, action := range f.folderActions {
 			var hasWildcard bool
 			for _, scope := range f.user.Permissions[f.user.OrgID][action] {
@@ -182,6 +178,5 @@ func (f AccessControlDashboardPermissionFilter) Where() (string, []interface{}) 
 
 	}
 	builder.WriteRune(')')
-
 	return builder.String(), args
 }
