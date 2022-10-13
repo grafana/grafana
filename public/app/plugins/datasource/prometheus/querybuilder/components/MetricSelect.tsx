@@ -1,14 +1,16 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import { SelectableValue, toOption, GrafanaTheme2 } from '@grafana/data';
 import { Select, FormatOptionLabelMeta, useStyles2, EditorField, EditorFieldGroup } from '@grafana/ui';
 
+import { useAppNotification } from '../../../../../core/copy/appNotification';
 import { PromVisualQuery } from '../types';
 
 // We are matching words split with space
 const splitSeparator = ' ';
+const MAX_NUMBER_OF_METRICS_TO_SAVE_TO_REACT_STATE = 10000;
 
 export interface Props {
   query: PromVisualQuery;
@@ -21,7 +23,22 @@ export function MetricSelect({ query, onChange, onGetMetrics }: Props) {
   const [state, setState] = useState<{
     metrics?: Array<SelectableValue<any>>;
     isLoading?: boolean;
+    isOverLimit?: boolean;
+    metricsLength?: number;
   }>({});
+
+  const notifyApp = useAppNotification();
+
+  useEffect(() => {
+    const length = state?.metricsLength ?? 0;
+    if (!state.isOverLimit || length < MAX_NUMBER_OF_METRICS_TO_SAVE_TO_REACT_STATE) {
+      return;
+    }
+
+    notifyApp.warning(
+      `Fetched ${length} metrics, only displaying first ${MAX_NUMBER_OF_METRICS_TO_SAVE_TO_REACT_STATE}.`
+    );
+  }, [state.isOverLimit, state.metricsLength, notifyApp]);
 
   const customFilterOption = useCallback((option: SelectableValue<any>, searchQuery: string) => {
     const label = option.label ?? option.value;
@@ -71,7 +88,20 @@ export function MetricSelect({ query, onChange, onGetMetrics }: Props) {
           onOpenMenu={async () => {
             setState({ isLoading: true });
             const metrics = await onGetMetrics();
-            setState({ metrics, isLoading: undefined });
+            const metricsLength = metrics.length;
+
+            if (metrics.length > MAX_NUMBER_OF_METRICS_TO_SAVE_TO_REACT_STATE) {
+              // Truncate the metrics array past the limit before trying to save to state, or we'll run out of memory
+              metrics.splice(0, metrics.length - MAX_NUMBER_OF_METRICS_TO_SAVE_TO_REACT_STATE);
+              setState({
+                metrics,
+                isLoading: undefined,
+                isOverLimit: true,
+                metricsLength,
+              });
+            } else {
+              setState({ metrics, isLoading: undefined, isOverLimit: undefined, metricsLength: undefined });
+            }
           }}
           isLoading={state.isLoading}
           options={state.metrics}
