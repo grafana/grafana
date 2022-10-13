@@ -84,14 +84,14 @@ describe('Alertmanager utils', () => {
     });
 
     it('should parse matchers with or without quotes', () => {
-      expect(parseMatchers('foo="bar",bar=bazz')).toEqual<Matcher[]>([
+      expect(parseMatchers('foo="bar", bar=bazz')).toEqual<Matcher[]>([
         { name: 'foo', value: 'bar', isRegex: false, isEqual: true },
         { name: 'bar', value: 'bazz', isEqual: true, isRegex: false },
       ]);
     });
 
     it('should parse matchers for key with special characters', () => {
-      expect(parseMatchers('foo.bar-baz="bar",baz-bar.foo=bazz')).toEqual<Matcher[]>([
+      expect(parseMatchers('foo.bar-baz="bar", baz-bar.foo=bazz')).toEqual<Matcher[]>([
         { name: 'foo.bar-baz', value: 'bar', isRegex: false, isEqual: true },
         { name: 'baz-bar.foo', value: 'bazz', isEqual: true, isRegex: false },
       ]);
@@ -106,7 +106,7 @@ describe('Alertmanager utils', () => {
         bazz: 'buzz',
       };
 
-      const matchers = parseMatchers('foo=bar,bar=bazz');
+      const matchers = parseMatchers('foo=bar, bar=bazz');
       expect(labelsMatchMatchers(labels, matchers)).toBe(true);
     });
     it('should return false for no matching labels', () => {
@@ -123,7 +123,7 @@ describe('Alertmanager utils', () => {
         bar: 'bazz',
         email: 'admin@grafana.com',
       };
-      const matchers = parseMatchers('foo!=bazz,bar=~ba.+');
+      const matchers = parseMatchers('foo!=bazz, bar=~ba.+');
       expect(labelsMatchMatchers(labels, matchers)).toBe(true);
     });
   });

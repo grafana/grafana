@@ -159,7 +159,7 @@ export function parseMatcher(matcher: string): Matcher {
 }
 
 export function parseMatchers(matcherQueryString: string): Matcher[] {
-  const matcherRegExp = /\b([\w.-]+)(=~|!=|!~|=(?="?\w))"?([^"\n,]*)"?/g;
+  const matcherRegExp = /\b([\w.-]+)(=~|!=|!~|=(?="?\w))"?((?<=~|!=|!~|=(?="?\w)|")(.*?)(?=,\s|",|"}|$|"$))"?/g;
   const matchers: Matcher[] = [];
 
   matcherQueryString.replace(matcherRegExp, (_, key, operator, value) => {
