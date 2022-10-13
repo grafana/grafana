@@ -111,6 +111,7 @@ export const QueryEditorRowHeader = <TQuery extends DataQuery>(props: Props<TQue
               onChange={onInputChange}
               className={styles.queryNameInput}
               data-testid="query-name-input"
+              maxLength={100}
             />
             {validationError && <FieldValidationMessage horizontal>{validationError}</FieldValidationMessage>}
           </>
