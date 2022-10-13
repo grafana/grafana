@@ -53,7 +53,7 @@ Canvas introduces a new editing experience. You can now edit your canvas panel i
 
 ### Context menu
 
-Related to a fresh look at panel editing, the context menu allows you to perform common tasks quickly and efficiently. Supported functionality includes opening / closing the inline editor, duplicating an element, deleting an element, and more.
+Related to a fresh look at panel editing, the context menu enables you to perform common tasks quickly and efficiently. Supported functionality includes opening / closing the inline editor, duplicating an element, deleting an element, and more.
 
 The context menu is triggered by a right click action over the panel / over a given canvas element
 
@@ -63,6 +63,6 @@ The context menu is triggered by a right click action over the panel / over a gi
 
 ### Inline editing
 
-The inline editing toggle allows you to lock or unlock the canvas panel. When turned off the canvas panel becomes “locked”, freezing elements in place and preventing unintended modifications.
+The inline editing toggle enables you to lock or unlock the canvas panel. When turned off the canvas panel becomes “locked”, freezing elements in place and preventing unintended modifications.
 
 {{< video-embed src="/static/img/docs/canvas-panel/canvas-inline-editing-toggle-9-2-0.mp4" max-width="750px" caption="Inline editing toggle demo" >}}
