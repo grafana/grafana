@@ -24,7 +24,7 @@ const history = [
 ];
 
 const labelNames = ['place', 'source'];
-const labelValues = ['moon', 'luna'];
+const labelValues = ['moon', 'luna', 'server\\1'];
 const extractedLabelKeys = ['extracted', 'label'];
 const otherLabels: Label[] = [
   {
@@ -244,6 +244,11 @@ describe('getCompletions', () => {
         label: 'luna',
         type: 'LABEL_VALUE',
       },
+      {
+        insertText: '"server\\\\1"',
+        label: 'server\\1',
+        type: 'LABEL_VALUE',
+      },
     ]);
 
     completions = await getCompletions({ ...situation, betweenQuotes: true }, completionProvider);
@@ -257,6 +262,11 @@ describe('getCompletions', () => {
       {
         insertText: 'luna',
         label: 'luna',
+        type: 'LABEL_VALUE',
+      },
+      {
+        insertText: 'server\\\\1',
+        label: 'server\\1',
         type: 'LABEL_VALUE',
       },
     ]);
