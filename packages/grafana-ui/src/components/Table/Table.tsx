@@ -375,7 +375,7 @@ export const Table = memo((props: Props) => {
 
   return (
     <div {...getTableProps()} className={tableStyles.table} aria-label={ariaLabel} role="table" ref={tableDivRef}>
-      {data.fields[1].name === 'spanID' ? ( // Only show the button if we're in the TraceQL tab, not when using Search.
+      {data.fields[1]?.name === 'spanID' ? ( // Only show the button if we're in the TraceQL tab, not when using Search.
         <div>
           <Button size="sm" onClick={() => setShowSpans((val) => !val)}>
             {showSpans ? 'Hide spans' : 'Show spans'}
