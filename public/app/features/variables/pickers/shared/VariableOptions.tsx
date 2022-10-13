@@ -20,18 +20,18 @@ export interface Props extends React.HTMLProps<HTMLUListElement> {
 }
 
 export class VariableOptions extends PureComponent<Props> {
-  onToggle = (option: VariableOption) => (event: React.MouseEvent<HTMLAnchorElement>) => {
+  onToggle = (option: VariableOption) => (event: React.MouseEvent<HTMLButtonElement>) => {
     const clearOthers = event.shiftKey || event.ctrlKey || event.metaKey;
     this.handleEvent(event);
     this.props.onToggle(option, clearOthers);
   };
 
-  onToggleAll = (event: React.MouseEvent<HTMLAnchorElement>) => {
+  onToggleAll = (event: React.MouseEvent<HTMLButtonElement>) => {
     this.handleEvent(event);
     this.props.onToggleAll();
   };
 
-  handleEvent(event: React.MouseEvent<HTMLAnchorElement>) {
+  handleEvent(event: React.MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
     event.stopPropagation();
   }
@@ -63,12 +63,17 @@ export class VariableOptions extends PureComponent<Props> {
 
     return (
       <li key={`${option.value}`}>
-        <a role="checkbox" aria-checked={option.selected} className={highlightClass} onClick={this.onToggle(option)}>
+        <button
+          role="checkbox"
+          aria-checked={option.selected}
+          className={`${highlightClass} ${noStyledButton}`}
+          onClick={this.onToggle(option)}
+        >
           <span className="variable-option-icon"></span>
           <span data-testid={selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts(`${option.text}`)}>
             {option.text}
           </span>
-        </a>
+        </button>
       </li>
     );
   }
@@ -82,12 +87,12 @@ export class VariableOptions extends PureComponent<Props> {
 
     return (
       <Tooltip content={'Clear selections'} placement={'top'}>
-        <a
+        <button
           className={`${
             selectedValues.length > 1
               ? 'variable-options-column-header many-selected'
               : 'variable-options-column-header'
-          }`}
+          } ${noStyledButton}`}
           role="checkbox"
           aria-checked={selectedValues.length > 1 ? 'mixed' : 'false'}
           onClick={this.onToggleAll}
@@ -96,7 +101,7 @@ export class VariableOptions extends PureComponent<Props> {
         >
           <span className="variable-option-icon"></span>
           Selected ({selectedValues.length})
-        </a>
+        </button>
       </Tooltip>
     );
   }
@@ -108,3 +113,10 @@ const listStyles = cx(
     list-style-type: none;
   `
 );
+
+const noStyledButton = css`
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
+`;
