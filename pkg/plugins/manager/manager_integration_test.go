@@ -111,7 +111,7 @@ func TestIntegrationPluginManager(t *testing.T) {
 	verifyBundledPlugins(t, ctx, ps)
 	verifyPluginStaticRoutes(t, ctx, ps)
 	verifyBackendProcesses(t, reg.Plugins(ctx))
-	verifyPluginQuery(t, ctx, client.ProvideService(reg, cfg))
+	verifyPluginQuery(t, ctx, client.ProvideService(reg, pCfg))
 }
 
 func verifyPluginQuery(t *testing.T, ctx context.Context, c plugins.Client) {

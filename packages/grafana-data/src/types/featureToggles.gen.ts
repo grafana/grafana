@@ -71,12 +71,9 @@ export interface FeatureToggles {
   flameGraph?: boolean;
   redshiftAsyncQueryDataSupport?: boolean;
   athenaAsyncQueryDataSupport?: boolean;
-<<<<<<< HEAD
   increaseInMemDatabaseQueryCache?: boolean;
   newPanelChromeUI?: boolean;
   queryLibrary?: boolean;
   mysqlAnsiQuotes?: boolean;
-=======
   datasourceLogger?: boolean;
->>>>>>> ac8b932f05 (log all datsource requests behind a feature toggle)
 }
