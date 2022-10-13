@@ -9,14 +9,14 @@ import { FileUpload } from './FileUpload';
 describe('FileUpload', () => {
   it('should render upload button with default text and no file name', () => {
     render(<FileUpload onFileUpload={() => {}} />);
-    expect(screen.getByLabelText('Upload file')).toBeInTheDocument();
+    expect(screen.getByText('Upload file')).toBeInTheDocument();
     expect(screen.queryByLabelText('File name')).toBeNull();
   });
 
   it('clicking the button should trigger the input', async () => {
     const mockInputOnClick = jest.fn();
     const { getByTestId } = render(<FileUpload onFileUpload={() => {}} />);
-    const button = screen.getByLabelText('Upload file');
+    const button = screen.getByText('Upload file');
     const input = getByTestId(selectors.components.FileUpload.inputField);
 
     // attach a click listener to the input
