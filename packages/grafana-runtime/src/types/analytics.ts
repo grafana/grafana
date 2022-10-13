@@ -73,8 +73,7 @@ export type MetaAnalyticsEventPayload = DashboardViewEventPayload | DataRequestE
  *
  * @public
  */
-export interface MetaAnalyticsEvent extends EchoEvent<EchoEventType.MetaAnalytics, MetaAnalyticsEventPayload> {
-}
+export interface MetaAnalyticsEvent extends EchoEvent<EchoEventType.MetaAnalytics, MetaAnalyticsEventPayload> {}
 
 /**
  * Describes the payload of a pageview event.
