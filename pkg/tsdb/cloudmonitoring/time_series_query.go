@@ -5,16 +5,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"net/url"
 	"path"
 	"strconv"
 	"strings"
 	"time"
 
-	"go.opentelemetry.io/otel/attribute"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
@@ -33,6 +34,24 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) appendGraphPeriod(req *bac
 		return fmt.Sprintf(" | graph_period %s", graphPeriod)
 	}
 	return ""
+}
+
+func doRequestQueryPage(requestBody map[string]interface{}, r *http.Request, dsInfo datasourceInfo) (cloudMonitoringResponse, error) {
+	buf, err := json.Marshal(requestBody)
+	if err != nil {
+		return cloudMonitoringResponse{}, err
+	}
+	r.Body = io.NopCloser(bytes.NewBuffer(buf))
+	res, err := dsInfo.services[cloudMonitor].client.Do(r)
+	if err != nil {
+		return cloudMonitoringResponse{}, err
+	}
+
+	dnext, err := unmarshalResponse(res)
+	if err != nil {
+		return cloudMonitoringResponse{}, err
+	}
+	return dnext, nil
 }
 
 func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, req *backend.QueryDataRequest,
@@ -55,39 +74,42 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, r
 	to := req.Queries[0].TimeRange.To
 	timeFormat := "2006/01/02-15:04:05"
 	timeSeriesQuery.Query += fmt.Sprintf(" | within d'%s', d'%s'", from.UTC().Format(timeFormat), to.UTC().Format(timeFormat))
-
-	buf, err := json.Marshal(map[string]interface{}{
-		"query": timeSeriesQuery.Query,
-	})
-	if err != nil {
-		dr.Error = err
-		return dr, cloudMonitoringResponse{}, "", nil
-	}
-	r, err := s.createRequest(ctx, &dsInfo, path.Join("/v3/projects", projectName, "timeSeries:query"), bytes.NewBuffer(buf))
-	if err != nil {
-		dr.Error = err
-		return dr, cloudMonitoringResponse{}, "", nil
-	}
+	p := path.Join("/v3/projects", projectName, "timeSeries:query")
 
 	ctx, span := tracer.Start(ctx, "cloudMonitoring MQL query")
 	span.SetAttributes("query", timeSeriesQuery.Query, attribute.Key("query").String(timeSeriesQuery.Query))
 	span.SetAttributes("from", req.Queries[0].TimeRange.From, attribute.Key("from").String(req.Queries[0].TimeRange.From.String()))
 	span.SetAttributes("until", req.Queries[0].TimeRange.To, attribute.Key("until").String(req.Queries[0].TimeRange.To.String()))
-
 	defer span.End()
-	tracer.Inject(ctx, r.Header, span)
 
-	r = r.WithContext(ctx)
-	res, err := dsInfo.services[cloudMonitor].client.Do(r)
+	requestBody := map[string]interface{}{
+		"query": timeSeriesQuery.Query,
+	}
+	r, err := s.createRequest(ctx, &dsInfo, p, bytes.NewBuffer([]byte{}))
 	if err != nil {
 		dr.Error = err
 		return dr, cloudMonitoringResponse{}, "", nil
 	}
+	tracer.Inject(ctx, r.Header, span)
+	r = r.WithContext(ctx)
 
-	d, err := unmarshalResponse(res)
+	d, err := doRequestQueryPage(requestBody, r, dsInfo)
 	if err != nil {
 		dr.Error = err
 		return dr, cloudMonitoringResponse{}, "", nil
+	}
+	for d.NextPageToken != "" {
+		requestBody := map[string]interface{}{
+			"query":     timeSeriesQuery.Query,
+			"pageToken": d.NextPageToken,
+		}
+		nextPage, err := doRequestQueryPage(requestBody, r, dsInfo)
+		if err != nil {
+			dr.Error = err
+			return dr, cloudMonitoringResponse{}, "", nil
+		}
+		d.TimeSeriesData = append(d.TimeSeriesData, nextPage.TimeSeriesData...)
+		d.NextPageToken = nextPage.NextPageToken
 	}
 
 	return dr, d, timeSeriesQuery.Query, nil
