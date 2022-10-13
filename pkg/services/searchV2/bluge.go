@@ -218,7 +218,7 @@ func getDashboardPanelDocs(dash dashboard, location string) []*bluge.Document {
 					doc.AddField(bluge.NewKeywordField(documentFieldPanelType, ref.UID).Aggregatable().StoreValue())
 				}
 			case models.ExternalEntityReferenceRuntime:
-				if ref.Type == models.ExternalEntityReferenceType_RuntimeTransformer && ref.UID != "" {
+				if ref.Type == models.ExternalEntityReferenceRuntime_Transformer && ref.UID != "" {
 					doc.AddField(bluge.NewKeywordField(documentFieldTransformer, ref.UID).Aggregatable())
 				}
 			}
