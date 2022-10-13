@@ -23,8 +23,6 @@ type QueryListItemProps = {
   date: string;
 };
 
-const hardcodedRepo = 'https://github.com/ArturWierzbicki/test-repo-export/tree/main/org_1/root/';
-
 const options = {
   type: 'edit',
 } as const;
@@ -35,12 +33,6 @@ export const QueryListItem = memo(
 
     const styles = useStyles2(getStyles);
     const [dsInfo, setDsInfo] = useState<DataSourceApi[]>([]);
-
-    const gitUidStart = '^it/';
-    const regexp = new RegExp(gitUidStart);
-
-    const hasGitIntegration = regexp.test(query.uid);
-    const gitUrl = hasGitIntegration ? `${hardcodedRepo}${query.uid.substring('it/'.length)}` : hardcodedRepo;
 
     useEffect(() => {
       const getQueryDsInstance = async () => {
@@ -122,24 +114,7 @@ export const QueryListItem = memo(
           <Icon name={'lock'} className={styles.disabled} title={'Implementation coming soon!'} />
         </td>
         <td>
-          <Badge
-            color={'green'}
-            text={'1'}
-            icon={'link'}
-            tooltip={
-              'Implementation coming soon! Saved query usages (alerts and dashboards) are visible in the Query Editor drawer'
-            }
-          />
-          {hasGitIntegration && (
-            <a href={gitUrl}>
-              <img
-                src={'public/app/features/query-library/img/git.png'}
-                alt="git icon"
-                className={styles.gitIcon}
-                title={gitUrl}
-              />
-            </a>
-          )}
+          <Badge color={'green'} text={'1'} icon={'link'} tooltip={'Implementation coming soon!'} />
         </td>
         <td onClick={openDrawer}>{query.title}</td>
         <td onClick={openDrawer}>
@@ -170,11 +145,7 @@ export const QueryListItem = memo(
           <IconButton name="copy" tooltip={'Copy'} onClick={copyToClipboard} />
           <IconButton name="upload" tooltip={'Upload'} onClick={implementationComingSoonAlert} />
           <IconButton name="cog" tooltip={'Settings'} onClick={implementationComingSoonAlert} />
-          <IconButton
-            name="trash-alt"
-            tooltip={'Delete'}
-            onClick={hasGitIntegration ? implementationComingSoonAlert : deleteQuery}
-          />
+          <IconButton name="trash-alt" tooltip={'Delete'} onClick={deleteQuery} />
         </td>
       </tr>
     );

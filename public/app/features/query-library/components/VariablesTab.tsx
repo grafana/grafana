@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { DataQuery, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Card, HorizontalGroup, useStyles2 } from '@grafana/ui';
 import { LayerName } from 'app/core/components/Layers/LayerName';
 
@@ -10,7 +10,7 @@ import { SavedQuery, useUpdateSavedQueryMutation } from '../api/SavedQueriesApi'
 import { SavedQueryUpdateOpts } from './QueryEditorDrawer';
 
 type Props = {
-  savedQuery: SavedQuery<DataQuery>;
+  savedQuery: SavedQuery;
   options: SavedQueryUpdateOpts;
 };
 
@@ -28,12 +28,13 @@ export const VariablesTab = ({ savedQuery, options }: Props) => {
       return v;
     });
 
-    const newSavedQuery = {
-      ...savedQuery,
-      variables: newVariables,
-    } as SavedQuery<DataQuery>;
-
-    updateSavedQuery({ query: newSavedQuery, opts: options });
+    updateSavedQuery({
+      query: {
+        ...savedQuery,
+        variables: newVariables,
+      },
+      opts: options,
+    });
   };
 
   const onVariableValueChange = (variable: any, newValue: string) => {
@@ -45,12 +46,13 @@ export const VariablesTab = ({ savedQuery, options }: Props) => {
       return v;
     });
 
-    const newSavedQuery = {
-      ...savedQuery,
-      variables: newVariables,
-    } as SavedQuery<DataQuery>;
-
-    updateSavedQuery({ query: newSavedQuery, opts: options });
+    updateSavedQuery({
+      query: {
+        ...savedQuery,
+        variables: newVariables,
+      },
+      opts: options,
+    });
   };
 
   const onAddVariable = () => {

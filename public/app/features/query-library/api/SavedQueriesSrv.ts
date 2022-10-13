@@ -1,5 +1,5 @@
-import { getBackendSrv } from '../../../core/services/backend_srv';
-import { SavedQueryUpdateOpts } from '../components/QueryEditorDrawer';
+import { getBackendSrv } from 'app/core/services/backend_srv';
+import { SavedQueryUpdateOpts } from 'app/features/query-library/components/QueryEditorDrawer';
 
 import { SavedQuery, SavedQueryRef } from './SavedQueriesApi';
 

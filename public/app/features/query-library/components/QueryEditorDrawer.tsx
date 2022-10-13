@@ -5,7 +5,6 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { DataQuery } from '@grafana/data/src/types/query';
 import { Drawer, IconName, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 
-import { WorkflowID } from '../../storage/types';
 import { SavedQuery } from '../api/SavedQueriesApi';
 
 import { HistoryTab } from './HistoryTab';
@@ -14,10 +13,9 @@ import { QueryEditorDrawerHeader } from './QueryEditorDrawerHeader';
 import { UsagesTab } from './UsagesTab';
 import { VariablesTab } from './VariablesTab';
 
-export type SavedQueryUpdateOpts = { message?: string; workflowId?: WorkflowID } & (
+export type SavedQueryUpdateOpts = { message?: string } & (
   | {
       type: 'create-new';
-      storage: 'git' | 'sql';
     }
   | {
       type: 'edit';

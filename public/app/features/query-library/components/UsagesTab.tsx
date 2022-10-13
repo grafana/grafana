@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { useMemo } from 'react';
 import { useAsync } from 'react-use';
 
-import { DataQuery, GrafanaTheme2 } from '@grafana/data/src';
+import { GrafanaTheme2 } from '@grafana/data/src';
 import { Button, Card, Icon, IconName, Spinner, useStyles2 } from '@grafana/ui/src';
 
 import { HorizontalGroup } from '../../plugins/admin/components/HorizontalGroup';
@@ -11,7 +11,7 @@ import { SavedQuery } from '../api/SavedQueriesApi';
 import { QueryItem } from '../types';
 
 type Props = {
-  savedQuery: SavedQuery<DataQuery>;
+  savedQuery: SavedQuery;
 };
 
 export const UsagesTab = ({ savedQuery }: Props) => {

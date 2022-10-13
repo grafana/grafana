@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Card, Drawer, Icon, ModalsController, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { Button, Card, Drawer, Icon, ModalsController, useStyles2 } from '@grafana/ui';
 
 import { SavedQuery } from '../api/SavedQueriesApi';
 
@@ -18,7 +18,6 @@ export const QueryCreateDrawer = ({ onDismiss, updateComponent }: Props) => {
   const styles = useStyles2(getStyles);
 
   const type: SavedQueryUpdateOpts['type'] = 'create-new';
-  const [storage, setStorage] = useState<'sql' | 'git'>('sql');
 
   const closeDrawer = () => {
     onDismiss();
@@ -35,16 +34,6 @@ export const QueryCreateDrawer = ({ onDismiss, updateComponent }: Props) => {
       scrollableContent
     >
       <div>
-        Choose storage &nbsp;
-        <RadioButtonGroup
-          value={storage}
-          options={[
-            { label: 'SQL', value: 'sql' },
-            { label: 'Git', value: 'git' },
-          ]}
-          onChange={setStorage}
-        />
-        <br />
         <Card>
           <Card.Heading>Create by query builder</Card.Heading>
           <Card.Description></Card.Description>
@@ -61,7 +50,7 @@ export const QueryCreateDrawer = ({ onDismiss, updateComponent }: Props) => {
                     onClick={() => {
                       showModal(QueryEditorDrawer, {
                         onDismiss: closeDrawer,
-                        options: { type, storage },
+                        options: { type },
                         savedQuery: {
                           title: 'New Query',
                           queries: [
@@ -101,7 +90,7 @@ export const QueryCreateDrawer = ({ onDismiss, updateComponent }: Props) => {
                     onClick={() => {
                       showModal(QueryImportDrawer, {
                         onDismiss: closeDrawer,
-                        options: { type, storage },
+                        options: { type },
                       });
                     }}
                   >
