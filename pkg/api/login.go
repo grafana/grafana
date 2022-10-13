@@ -299,6 +299,12 @@ func (hs *HTTPServer) Logout(c *models.ReqContext) {
 		}
 	}
 
+	if exists, entry := hs.oauthTokenService.HasOAuthEntry(c.Req.Context(), c.SignedInUser); exists {
+		if err := hs.oauthTokenService.InvalidateOAuthTokens(c.Req.Context(), entry); err != nil {
+			hs.log.Warn("failed to invalidate OAuth tokens for User", "userId", c.UserID, "error", err)
+		}
+	}
+
 	err := hs.AuthTokenService.RevokeToken(c.Req.Context(), c.UserToken, false)
 	if err != nil && !errors.Is(err, models.ErrUserTokenNotFound) {
 		hs.log.Error("failed to revoke auth token", "error", err)
