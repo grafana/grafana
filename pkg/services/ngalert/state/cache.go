@@ -122,7 +122,7 @@ func (rs *ruleStates) getOrCreate(ctx context.Context, log log.Logger, alertRule
 	newState := &State{
 		AlertRuleUID:       alertRule.UID,
 		OrgID:              alertRule.OrgID,
-		CacheId:            id,
+		CacheID:            id,
 		Labels:             lbs,
 		Annotations:        annotations,
 		EvaluationDuration: result.EvaluationDuration,
@@ -171,7 +171,7 @@ func (c *cache) set(entry *State) {
 	if _, ok := c.states[entry.OrgID][entry.AlertRuleUID]; !ok {
 		c.states[entry.OrgID][entry.AlertRuleUID] = &ruleStates{states: make(map[string]*State)}
 	}
-	c.states[entry.OrgID][entry.AlertRuleUID].states[entry.CacheId] = entry
+	c.states[entry.OrgID][entry.AlertRuleUID].states[entry.CacheID] = entry
 }
 
 func (c *cache) get(orgID int64, alertRuleUID, stateId string) *State {

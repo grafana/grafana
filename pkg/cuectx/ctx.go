@@ -1,6 +1,6 @@
-// Package cuectx provides a single, central CUE context (runtime) and Thema
-// library that can be used uniformly across Grafana, and related helper
-// functions for loading Thema lineages.
+// Package cuectx provides a single, central ["cuelang.org/go/cue".Context] and
+// ["github.com/grafana/thema".Runtime] that can be used uniformly across
+// Grafana, and related helper functions for loading Thema lineages.
 
 package cuectx
 
@@ -12,21 +12,27 @@ import (
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/cuecontext"
 	"github.com/grafana/thema"
-	"github.com/grafana/thema/kernel"
 	"github.com/grafana/thema/load"
+	"github.com/grafana/thema/vmux"
 )
 
 var ctx = cuecontext.New()
-var lib = thema.NewLibrary(ctx)
+var rt = thema.NewRuntime(ctx)
 
-// ProvideCUEContext is a wire service provider of a central cue.Context.
-func ProvideCUEContext() *cue.Context {
+// GrafanaCUEContext returns Grafana's singleton instance of [cue.Context].
+//
+// All code within grafana/grafana that needs a *cue.Context should get it
+// from this function, when one was not otherwise provided.
+func GrafanaCUEContext() *cue.Context {
 	return ctx
 }
 
-// ProvideThemaLibrary is a wire service provider of a central thema.Library.
-func ProvideThemaLibrary() thema.Library {
-	return lib
+// GrafanaThemaRuntime returns Grafana's singleton instance of [thema.Runtime].
+//
+// All code within grafana/grafana that needs a *thema.Runtime should get it
+// from this function, when one was not otherwise provided.
+func GrafanaThemaRuntime() *thema.Runtime {
+	return rt
 }
 
 // JSONtoCUE attempts to decode the given []byte into a cue.Value, relying on
@@ -37,10 +43,10 @@ func ProvideThemaLibrary() thema.Library {
 // returned cue.Value.
 //
 // This is a convenience function for one-off JSON decoding. It's wasteful to
-// call it repeatedly. Most use cases use cases should probably prefer making
+// call it repeatedly. Most use cases should probably prefer making
 // their own Thema/CUE decoders.
 func JSONtoCUE(path string, b []byte) (cue.Value, error) {
-	return kernel.NewJSONDecoder(path)(ctx, b)
+	return vmux.NewJSONEndec(path).Decode(ctx, b)
 }
 
 // LoadGrafanaInstancesWithThema loads CUE files containing a lineage
@@ -54,7 +60,7 @@ func JSONtoCUE(path string, b []byte) (cue.Value, error) {
 // More details on underlying behavior can be found in the docs for github.com/grafana/thema/load.InstancesWithThema.
 //
 // TODO this approach is complicated and confusing, refactor to something understandable
-func LoadGrafanaInstancesWithThema(path string, cueFS fs.FS, lib thema.Library, opts ...thema.BindOption) (thema.Lineage, error) {
+func LoadGrafanaInstancesWithThema(path string, cueFS fs.FS, rt *thema.Runtime, opts ...thema.BindOption) (thema.Lineage, error) {
 	prefix := filepath.FromSlash(path)
 	fs, err := prefixWithGrafanaCUE(prefix, cueFS)
 	if err != nil {
@@ -68,9 +74,9 @@ func LoadGrafanaInstancesWithThema(path string, cueFS fs.FS, lib thema.Library, 
 		return nil, err
 	}
 
-	val := lib.Context().BuildInstance(inst)
+	val := rt.Context().BuildInstance(inst)
 
-	lin, err := thema.BindLineage(val, lib, opts...)
+	lin, err := thema.BindLineage(val, rt, opts...)
 	if err != nil {
 		return nil, err
 	}

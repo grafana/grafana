@@ -79,8 +79,7 @@ steps:
   name: grabpl
 - commands:
   - yarn install --immutable
-  depends_on:
-  - grabpl
+  depends_on: []
   image: grafana/build-container:1.6.3
   name: yarn-install
 - commands:
@@ -352,10 +351,41 @@ steps:
   name: wire-install
 - commands:
   - yarn install --immutable
-  depends_on:
-  - grabpl
+  depends_on: []
   image: grafana/build-container:1.6.3
   name: yarn-install
+- commands:
+  - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+    --depth=1
+  - cd grafana-enterprise
+  - git fetch origin "refs/tags/*:refs/tags/*" --quiet
+  - if git show-ref --tags $${TEST_TAG} --quiet; then git tag -d $${TEST_TAG} && git
+    push --delete origin $${TEST_TAG}; fi
+  - git tag $${TEST_TAG} && git push origin $${TEST_TAG}
+  - cd -
+  - git fetch https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git "refs/tags/*:refs/tags/*"
+    --quiet && git fetch --quiet
+  - if git show-ref --tags $${TEST_TAG} --quiet; then git tag -d $${TEST_TAG} && git
+    push --delete https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git $${TEST_TAG};
+    fi
+  - git tag $${TEST_TAG} && git push https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git
+    $${TEST_TAG}
+  environment:
+    DOWNSTREAM_REPO:
+      from_secret: downstream
+    GITHUB_TOKEN:
+      from_secret: github_token_pr
+    TEST_TAG: v0.0.0-test
+  failure: ignore
+  image: grafana/build-container:1.6.3
+  name: trigger-test-release
+  when:
+    paths:
+      include:
+      - .drone.yml
+      - pkg/build/**
+    repo:
+    - grafana/grafana
 - failure: ignore
   image: grafana/drone-downstream
   name: trigger-enterprise-downstream
@@ -388,6 +418,7 @@ steps:
 - commands:
   - ./bin/build build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
+  - compile-build-cmd
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
@@ -396,6 +427,7 @@ steps:
 - commands:
   - ./bin/build  build-plugins --jobs 8 --edition oss
   depends_on:
+  - compile-build-cmd
   - yarn-install
   environment: null
   image: grafana/build-container:1.6.3
@@ -704,8 +736,7 @@ steps:
   name: identify-runner
 - commands:
   - yarn install --immutable
-  depends_on:
-  - grabpl
+  depends_on: []
   image: grafana/build-container:1.6.3
   name: yarn-install
 - commands:
@@ -729,26 +760,11 @@ steps:
   image: grafana/build-container:1.6.3
   name: lint-docs
 - commands:
-  - ./bin/build build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
-  depends_on:
-  - yarn-install
-  environment:
-    NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.6.3
-  name: build-frontend-packages
-- commands:
   - mkdir -p /hugo/content/docs/grafana
   - cp -r docs/sources/* /hugo/content/docs/grafana/latest/
   - cd /hugo && make prod
   image: grafana/docs-base:latest
   name: build-docs-website
-- commands:
-  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
-  depends_on: []
-  environment:
-    CGO_ENABLED: 0
-  image: golang:1.19.2
-  name: compile-build-cmd
 trigger:
   event:
   - pull_request
@@ -833,8 +849,7 @@ steps:
   name: identify-runner
 - commands:
   - yarn install --immutable
-  depends_on:
-  - grabpl
+  depends_on: []
   image: grafana/build-container:1.6.3
   name: yarn-install
 - commands:
@@ -858,26 +873,11 @@ steps:
   image: grafana/build-container:1.6.3
   name: lint-docs
 - commands:
-  - ./bin/build build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
-  depends_on:
-  - yarn-install
-  environment:
-    NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.6.3
-  name: build-frontend-packages
-- commands:
   - mkdir -p /hugo/content/docs/grafana
   - cp -r docs/sources/* /hugo/content/docs/grafana/latest/
   - cd /hugo && make prod
   image: grafana/docs-base:latest
   name: build-docs-website
-- commands:
-  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
-  depends_on: []
-  environment:
-    CGO_ENABLED: 0
-  image: golang:1.19.2
-  name: compile-build-cmd
 trigger:
   branch: main
   event:
@@ -920,8 +920,7 @@ steps:
   name: grabpl
 - commands:
   - yarn install --immutable
-  depends_on:
-  - grabpl
+  depends_on: []
   image: grafana/build-container:1.6.3
   name: yarn-install
 - commands:
@@ -1180,27 +1179,30 @@ steps:
   name: wire-install
 - commands:
   - yarn install --immutable
-  depends_on:
-  - grabpl
+  depends_on: []
   image: grafana/build-container:1.6.3
   name: yarn-install
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
     --depth=1
   - cd grafana-enterprise
-  - git fetch origin "refs/tags/*:refs/tags/*"
-  - git tag -d $${TEST_TAG} && git push --delete origin $${TEST_TAG} && git tag $${TEST_TAG}
-    && git push origin $${TEST_TAG}
+  - git fetch origin "refs/tags/*:refs/tags/*" --quiet
+  - if git show-ref --tags $${TEST_TAG} --quiet; then git tag -d $${TEST_TAG} && git
+    push --delete origin $${TEST_TAG}; fi
+  - git tag $${TEST_TAG} && git push origin $${TEST_TAG}
   - cd -
-  - git fetch origin "refs/tags/*:refs/tags/*"
-  - git remote add downstream https://$${GITHUB_TOKEN}@github.com/grafana/$${DOWNSTREAM_REPO}.git
-  - git tag -d $${TEST_TAG} && git push --delete downstream --quiet $${TEST_TAG} &&
-    git tag $${TEST_TAG} && git push downstream $${TEST_TAG} --quiet
+  - git fetch https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git "refs/tags/*:refs/tags/*"
+    --quiet && git fetch --quiet
+  - if git show-ref --tags $${TEST_TAG} --quiet; then git tag -d $${TEST_TAG} && git
+    push --delete https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git $${TEST_TAG};
+    fi
+  - git tag $${TEST_TAG} && git push https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git
+    $${TEST_TAG}
   environment:
     DOWNSTREAM_REPO:
       from_secret: downstream
     GITHUB_TOKEN:
-      from_secret: github_token
+      from_secret: github_token_pr
     TEST_TAG: v0.0.0-test
   failure: ignore
   image: grafana/build-container:1.6.3
@@ -1231,6 +1233,7 @@ steps:
 - commands:
   - ./bin/build build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
+  - compile-build-cmd
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
@@ -1239,6 +1242,7 @@ steps:
 - commands:
   - ./bin/build  build-plugins --jobs 8 --edition oss
   depends_on:
+  - compile-build-cmd
   - yarn-install
   environment:
     GRAFANA_API_KEY:
@@ -1952,8 +1956,7 @@ steps:
   name: wire-install
 - commands:
   - yarn install --immutable
-  depends_on:
-  - grabpl
+  depends_on: []
   image: grafana/build-container:1.6.3
   name: yarn-install
 - commands:
@@ -1982,6 +1985,7 @@ steps:
 - commands:
   - ./bin/build build-frontend-packages --jobs 8 --edition oss ${DRONE_TAG}
   depends_on:
+  - compile-build-cmd
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
@@ -1990,6 +1994,7 @@ steps:
 - commands:
   - ./bin/build  build-plugins --jobs 8 --edition oss
   depends_on:
+  - compile-build-cmd
   - yarn-install
   environment:
     GRAFANA_API_KEY:
@@ -2204,9 +2209,6 @@ trigger:
     - promote
   ref:
   - refs/tags/v*
-  repo:
-    exclude:
-    - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -2245,8 +2247,7 @@ steps:
   name: grabpl
 - commands:
   - yarn install --immutable
-  depends_on:
-  - grabpl
+  depends_on: []
   image: grafana/build-container:1.6.3
   name: yarn-install
 - commands:
@@ -2270,9 +2271,6 @@ trigger:
     - promote
   ref:
   - refs/tags/v*
-  repo:
-    exclude:
-    - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -2339,9 +2337,6 @@ trigger:
     - promote
   ref:
   - refs/tags/v*
-  repo:
-    exclude:
-    - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -2447,9 +2442,6 @@ trigger:
     - promote
   ref:
   - refs/tags/v*
-  repo:
-    exclude:
-    - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -2520,9 +2512,6 @@ trigger:
     - promote
   ref:
   - refs/tags/v*
-  repo:
-    exclude:
-    - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -2629,6 +2618,7 @@ steps:
 - commands:
   - ./bin/build build-frontend-packages --jobs 8 --edition enterprise ${DRONE_TAG}
   depends_on:
+  - compile-build-cmd
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
@@ -2637,6 +2627,7 @@ steps:
 - commands:
   - ./bin/build  build-plugins --jobs 8 --edition enterprise
   depends_on:
+  - compile-build-cmd
   - yarn-install
   environment:
     GRAFANA_API_KEY:
@@ -2864,9 +2855,6 @@ trigger:
     - promote
   ref:
   - refs/tags/v*
-  repo:
-    exclude:
-    - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -2894,6 +2882,31 @@ platform:
 services: []
 steps:
 - commands:
+  - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+  - cd grafana-enterprise
+  - git checkout ${DRONE_TAG}
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: grafana/build-container:1.6.3
+  name: clone-enterprise
+- commands:
+  - mv bin/grabpl /tmp/
+  - rmdir bin
+  - mv grafana-enterprise /tmp/
+  - /tmp/grabpl init-enterprise --github-token $${GITHUB_TOKEN} /tmp/grafana-enterprise
+    ${DRONE_TAG}
+  - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
+  - mkdir bin
+  - mv /tmp/grabpl bin/
+  depends_on:
+  - clone-enterprise
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: grafana/build-container:1.6.3
+  name: init-enterprise
+- commands:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.15.6
   name: identify-runner
@@ -2906,12 +2919,13 @@ steps:
 - commands:
   - yarn install --immutable
   depends_on:
-  - grabpl
+  - init-enterprise
   image: grafana/build-container:1.6.3
   name: yarn-install
 - commands:
   - yarn betterer ci
   depends_on:
+  - init-enterprise
   - yarn-install
   failure: ignore
   image: grafana/build-container:1.6.3
@@ -2919,6 +2933,7 @@ steps:
 - commands:
   - yarn run ci:test-frontend
   depends_on:
+  - init-enterprise
   - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
@@ -2930,9 +2945,6 @@ trigger:
     - promote
   ref:
   - refs/tags/v*
-  repo:
-    exclude:
-    - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -2964,6 +2976,12 @@ steps:
       from_secret: github_token
   image: grafana/build-container:1.6.3
   name: clone-enterprise
+- commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.11/grabpl
+  - chmod +x bin/grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: grabpl
 - commands:
   - mv bin/grabpl /tmp/
   - rmdir bin
@@ -2998,7 +3016,8 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
-  depends_on: []
+  depends_on:
+  - init-enterprise
   image: grafana/build-container:1.6.3
   name: verify-gen-cue
 - commands:
@@ -3025,9 +3044,6 @@ trigger:
     - promote
   ref:
   - refs/tags/v*
-  repo:
-    exclude:
-    - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -3060,6 +3076,12 @@ steps:
   image: grafana/build-container:1.6.3
   name: clone-enterprise
 - commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.11/grabpl
+  - chmod +x bin/grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: grabpl
+- commands:
   - mv bin/grabpl /tmp/
   - rmdir bin
   - mv grafana-enterprise /tmp/
@@ -3081,7 +3103,8 @@ steps:
   name: identify-runner
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
-  depends_on: []
+  depends_on:
+  - init-enterprise
   environment:
     CGO_ENABLED: 0
   image: golang:1.19.2
@@ -3092,7 +3115,8 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
-  depends_on: []
+  depends_on:
+  - init-enterprise
   image: grafana/build-container:1.6.3
   name: verify-gen-cue
 - commands:
@@ -3119,9 +3143,6 @@ trigger:
     - promote
   ref:
   - refs/tags/v*
-  repo:
-    exclude:
-    - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -3277,9 +3298,6 @@ trigger:
     - promote
   ref:
   - refs/tags/v*
-  repo:
-    exclude:
-    - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -3370,9 +3388,6 @@ trigger:
     - promote
   ref:
   - refs/tags/v*
-  repo:
-    exclude:
-    - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -3716,8 +3731,7 @@ steps:
   name: grabpl
 - commands:
   - yarn install --immutable
-  depends_on:
-  - grabpl
+  depends_on: []
   image: grafana/build-container:1.6.3
   name: yarn-install
 - commands:
@@ -3829,7 +3843,7 @@ steps:
     secret_access_key:
       from_secret: packages_secret_access_key
     service_account_json:
-      from_secret: packages_service_account_json
+      from_secret: packages_service_account
     target_bucket: grafana-packages
 trigger:
   event:
@@ -3919,7 +3933,7 @@ steps:
     secret_access_key:
       from_secret: packages_secret_access_key
     service_account_json:
-      from_secret: packages_service_account_json
+      from_secret: packages_service_account
     target_bucket: grafana-packages
 trigger:
   event:
@@ -4014,8 +4028,7 @@ steps:
   name: wire-install
 - commands:
   - yarn install --immutable
-  depends_on:
-  - grabpl
+  depends_on: []
   image: grafana/build-container:1.6.3
   name: yarn-install
 - commands:
@@ -4044,6 +4057,7 @@ steps:
 - commands:
   - ./bin/build build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
+  - compile-build-cmd
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
@@ -4052,6 +4066,7 @@ steps:
 - commands:
   - ./bin/build  build-plugins --jobs 8 --edition oss
   depends_on:
+  - compile-build-cmd
   - yarn-install
   environment:
     GRAFANA_API_KEY:
@@ -4276,8 +4291,7 @@ steps:
   name: grabpl
 - commands:
   - yarn install --immutable
-  depends_on:
-  - grabpl
+  depends_on: []
   image: grafana/build-container:1.6.3
   name: yarn-install
 - commands:
@@ -4629,6 +4643,7 @@ steps:
 - commands:
   - ./bin/build build-frontend-packages --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
+  - compile-build-cmd
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
@@ -4637,6 +4652,7 @@ steps:
 - commands:
   - ./bin/build  build-plugins --jobs 8 --edition enterprise
   depends_on:
+  - compile-build-cmd
   - yarn-install
   environment:
     GRAFANA_API_KEY:
@@ -4886,6 +4902,28 @@ platform:
 services: []
 steps:
 - commands:
+  - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+  - cd grafana-enterprise
+  - git checkout ${DRONE_BRANCH}
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: grafana/build-container:1.6.3
+  name: clone-enterprise
+- commands:
+  - mv bin/grabpl /tmp/
+  - rmdir bin
+  - mv grafana-enterprise /tmp/
+  - /tmp/grabpl init-enterprise  /tmp/grafana-enterprise
+  - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
+  - mkdir bin
+  - mv /tmp/grabpl bin/
+  depends_on:
+  - clone-enterprise
+  environment: {}
+  image: grafana/build-container:1.6.3
+  name: init-enterprise
+- commands:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.15.6
   name: identify-runner
@@ -4898,12 +4936,13 @@ steps:
 - commands:
   - yarn install --immutable
   depends_on:
-  - grabpl
+  - init-enterprise
   image: grafana/build-container:1.6.3
   name: yarn-install
 - commands:
   - yarn betterer ci
   depends_on:
+  - init-enterprise
   - yarn-install
   failure: ignore
   image: grafana/build-container:1.6.3
@@ -4911,6 +4950,7 @@ steps:
 - commands:
   - yarn run ci:test-frontend
   depends_on:
+  - init-enterprise
   - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
@@ -4951,6 +4991,12 @@ steps:
   image: grafana/build-container:1.6.3
   name: clone-enterprise
 - commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.11/grabpl
+  - chmod +x bin/grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: grabpl
+- commands:
   - mv bin/grabpl /tmp/
   - rmdir bin
   - mv grafana-enterprise /tmp/
@@ -4981,7 +5027,8 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
-  depends_on: []
+  depends_on:
+  - init-enterprise
   image: grafana/build-container:1.6.3
   name: verify-gen-cue
 - commands:
@@ -5037,6 +5084,12 @@ steps:
   image: grafana/build-container:1.6.3
   name: clone-enterprise
 - commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.11/grabpl
+  - chmod +x bin/grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: grabpl
+- commands:
   - mv bin/grabpl /tmp/
   - rmdir bin
   - mv grafana-enterprise /tmp/
@@ -5055,7 +5108,8 @@ steps:
   name: identify-runner
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
-  depends_on: []
+  depends_on:
+  - init-enterprise
   environment:
     CGO_ENABLED: 0
   image: golang:1.19.2
@@ -5066,7 +5120,8 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
-  depends_on: []
+  depends_on:
+  - init-enterprise
   image: grafana/build-container:1.6.3
   name: verify-gen-cue
 - commands:
@@ -5548,6 +5603,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 82dedf98f127a4d16c71b668d9a2df17502c109cc6ff0ab01e770547250135e7
+hmac: b58e7f5c931ca8ca3521ec8b04cc3f150a646990f2f48e1d7c9e0ad1b453b5cc
 
 ...
