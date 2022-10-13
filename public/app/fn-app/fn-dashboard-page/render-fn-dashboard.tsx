@@ -46,8 +46,9 @@ const DEFAULT_DASHBOARD_PAGE_PROPS: Pick<DashboardPageProps, 'isFNDashboard' | '
 };
 
 export const RenderFNDashboard: FC<FNDashboardProps> = (props) => {
-  const { queryParams, uid, slug, theme, controlsContainer, pageTitle = '', hiddenVariables, setErrors } = props;
+  const { queryParams, uid, slug, mode, controlsContainer, pageTitle = '', hiddenVariables, setErrors, theme } = props;
 
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   const dispatch = useDispatch<ThunkDispatch<any, any, any>>();
 
   const firstError = useSelector((state: StoreState) => {
@@ -55,6 +56,8 @@ export const RenderFNDashboard: FC<FNDashboardProps> = (props) => {
 
     return Object.values(appNotifications.byId).find(({ severity }) => severity === 'error');
   });
+
+  console.log('lands in renderFNDashboard');
 
   /**
    * NOTE:
@@ -75,6 +78,7 @@ export const RenderFNDashboard: FC<FNDashboardProps> = (props) => {
         uid,
         slug,
         theme,
+        mode,
         controlsContainer,
         pageTitle,
         queryParams,
@@ -102,7 +106,7 @@ export const RenderFNDashboard: FC<FNDashboardProps> = (props) => {
       );
       dispatch(cancelVariables(uid));
     };
-  }, [dispatch, uid, slug, theme, controlsContainer, pageTitle, hiddenVariables, queryParams]);
+  }, [dispatch, uid, slug, theme, controlsContainer, pageTitle, hiddenVariables, queryParams, mode]);
 
   const dashboardPageProps: DashboardPageProps = merge({}, DEFAULT_DASHBOARD_PAGE_PROPS, {
     ...DEFAULT_DASHBOARD_PAGE_PROPS,

@@ -1,12 +1,13 @@
+import { Theme, createTheme } from '@mui/material';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { GrafanaThemeType } from '@grafana/data';
-
 export interface FnGlobalState {
   FNDashboard: boolean;
   uid: string;
   slug: string;
-  theme: GrafanaThemeType;
+  mode: GrafanaThemeType;
+  theme: Theme;
   controlsContainer: HTMLElement | null | undefined;
   pageTitle: string;
   queryParams: object;
@@ -17,7 +18,8 @@ const initialState: FnGlobalState = {
   FNDashboard: false,
   uid: '',
   slug: '',
-  theme: GrafanaThemeType.Light,
+  mode: GrafanaThemeType.Light,
+  theme: createTheme(),
   controlsContainer: null,
   pageTitle: '',
   queryParams: {},

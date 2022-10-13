@@ -1,12 +1,12 @@
 import React, { FunctionComponent, PropsWithChildren, ReactElement, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 
+import { GrafanaThemeType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Tooltip } from '@grafana/ui';
 import { FnGlobalState } from 'app/core/reducers/fn-slice';
 import type { StoreState } from 'app/types';
 
-import { GrafanaThemeType } from '../../../../../packages/grafana-data/src/types/theme';
 import { variableAdapters } from '../adapters';
 import { VariableHide, VariableModel } from '../types';
 
@@ -14,13 +14,6 @@ interface Props {
   variable: VariableModel;
   readOnly?: boolean;
 }
-
-const changeLabelStyle = (theme: GrafanaThemeType) => {
-  if (theme === GrafanaThemeType.Light) {
-    return { color: '#2D333E' };
-  }
-  return { color: '#fff' };
-};
 
 export const PickerRenderer: FunctionComponent<Props> = (props) => {
   const PickerToRender = useMemo(() => variableAdapters.get(props.variable.type).picker, [props.variable]);
@@ -41,10 +34,31 @@ export const PickerRenderer: FunctionComponent<Props> = (props) => {
 
 function PickerLabel({ variable }: PropsWithChildren<Props>): ReactElement | null {
   const labelOrName = useMemo(() => variable.label || variable.name, [variable]);
-  const { FNDashboard, theme } = useSelector<StoreState, FnGlobalState>((state) => state.fnGlobalState);
+  const { FNDashboard, mode, theme } = useSelector<StoreState, FnGlobalState>((state) => state.fnGlobalState);
+
+  const changeLabelStyle = useMemo(() => {
+    if (!FNDashboard) {
+      return {};
+    }
+    const commonStyles = {
+      borderRadius: '4px',
+      border: 'none',
+      color: theme.palette.text.primary,
+      fontWeight: 600,
+      fontSize: '12px',
+    };
+    const createLabelTheme =
+      mode === GrafanaThemeType.Light
+        ? { backgroundColor: theme.palette.grey[200] }
+        : { backgroundColor: theme.palette.background.default };
+
+    return { ...createLabelTheme, ...commonStyles };
+  }, [FNDashboard, mode, theme]);
+
   if (variable.hide !== VariableHide.dontHide) {
     return null;
   }
+  const fnLabelOrName = FNDashboard ? labelOrName.replace('druid', '') : labelOrName;
 
   const elementId = `var-${variable.id}`;
   if (variable.description) {
@@ -52,24 +66,23 @@ function PickerLabel({ variable }: PropsWithChildren<Props>): ReactElement | nul
       <Tooltip content={variable.description} placement={'bottom'}>
         <label
           className="gf-form-label gf-form-label--variable"
-          style={FNDashboard ? changeLabelStyle(theme) : {}}
+          style={FNDashboard ? changeLabelStyle : {}}
           data-testid={selectors.pages.Dashboard.SubMenu.submenuItemLabels(labelOrName)}
           htmlFor={elementId}
         >
-          {labelOrName}
+          {fnLabelOrName}
         </label>
       </Tooltip>
     );
   }
-
   return (
     <label
       className="gf-form-label gf-form-label--variable"
-      style={FNDashboard ? changeLabelStyle(theme) : {}}
+      style={FNDashboard ? changeLabelStyle : {}}
       data-testid={selectors.pages.Dashboard.SubMenu.submenuItemLabels(labelOrName)}
       htmlFor={elementId}
     >
-      {labelOrName}
+      {fnLabelOrName}
     </label>
   );
 }
