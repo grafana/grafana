@@ -170,6 +170,63 @@ func TestIntegrationOrgDataAccess(t *testing.T) {
 			assert.Equal(t, int64(1), result.ID)
 		})
 	})
+
+	t.Run("Testing Account DB Access", func(t *testing.T) {
+		sqlStore := sqlstore.InitTestDB(t)
+
+		t.Run("Given we have organizations, we can query them by IDs", func(t *testing.T) {
+			var err error
+			var cmd *models.CreateOrgCommand
+			ids := []int64{}
+
+			for i := 1; i < 4; i++ {
+				cmd = &models.CreateOrgCommand{Name: fmt.Sprint("Org #", i)}
+				err = sqlStore.CreateOrg(context.Background(), cmd)
+				require.NoError(t, err)
+
+				ids = append(ids, cmd.Result.Id)
+			}
+
+			query := &org.SearchOrgsQuery{IDs: ids}
+			queryResult, err := orgStore.Search(context.Background(), query)
+
+			require.NoError(t, err)
+			require.Equal(t, len(queryResult), 3)
+		})
+
+		t.Run("Given we have organizations, we can limit and paginate search", func(t *testing.T) {
+			sqlStore = sqlstore.InitTestDB(t)
+			for i := 1; i < 4; i++ {
+				cmd := &models.CreateOrgCommand{Name: fmt.Sprint("Org #", i)}
+				err := sqlStore.CreateOrg(context.Background(), cmd)
+				require.NoError(t, err)
+			}
+
+			t.Run("Should be able to search with defaults", func(t *testing.T) {
+				query := &org.SearchOrgsQuery{}
+				queryResult, err := orgStore.Search(context.Background(), query)
+
+				require.NoError(t, err)
+				require.Equal(t, len(queryResult), 3)
+			})
+
+			t.Run("Should be able to limit search", func(t *testing.T) {
+				query := &org.SearchOrgsQuery{Limit: 1}
+				queryResult, err := orgStore.Search(context.Background(), query)
+
+				require.NoError(t, err)
+				require.Equal(t, len(queryResult), 1)
+			})
+
+			t.Run("Should be able to limit and paginate search", func(t *testing.T) {
+				query := &org.SearchOrgsQuery{Limit: 2, Page: 1}
+				queryResult, err := orgStore.Search(context.Background(), query)
+
+				require.NoError(t, err)
+				require.Equal(t, len(queryResult), 1)
+			})
+		})
+	})
 }
 
 func TestIntegrationOrgUserDataAccess(t *testing.T) {
