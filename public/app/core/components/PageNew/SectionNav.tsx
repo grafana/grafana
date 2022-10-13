@@ -26,7 +26,7 @@ export function SectionNav({ model, isExpanded }: Props) {
     >
       <CustomScrollbar showScrollIndicators>
         <div className={styles.items} role="tablist">
-          <SectionNavItem item={model.main} />
+          <SectionNavItem item={model.main} isSectionRoot />
         </div>
       </CustomScrollbar>
     </nav>

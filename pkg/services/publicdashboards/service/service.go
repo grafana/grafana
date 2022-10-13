@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
-	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/tokens"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/queries"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/validation"
@@ -62,6 +61,12 @@ func ProvideService(
 	}
 }
 
+// Gets a list of public dashboards by orgId
+func (pd *PublicDashboardServiceImpl) ListPublicDashboards(ctx context.Context, orgId int64) ([]PublicDashboardListResponse, error) {
+	return pd.store.ListPublicDashboards(ctx, orgId)
+}
+
+// Gets a dashboard by Uid
 func (pd *PublicDashboardServiceImpl) GetDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error) {
 	dashboard, err := pd.store.GetDashboard(ctx, dashboardUid)
 
@@ -155,7 +160,7 @@ func (pd *PublicDashboardServiceImpl) savePublicDashboardConfig(ctx context.Cont
 		return "", err
 	}
 
-	accessToken, err := tokens.GenerateAccessToken()
+	accessToken, err := pd.store.GenerateNewPublicDashboardAccessToken(ctx)
 	if err != nil {
 		return "", err
 	}

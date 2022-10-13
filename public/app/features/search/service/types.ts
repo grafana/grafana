@@ -71,4 +71,5 @@ export interface GrafanaSearcher {
   starred: (query: SearchQuery) => Promise<QueryResponse>;
   tags: (query: SearchQuery) => Promise<TermCount[]>;
   getSortOptions: () => Promise<SelectableValue[]>;
+  sortPlaceholder?: string;
 }
