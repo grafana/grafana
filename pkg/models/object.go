@@ -36,15 +36,15 @@ const (
 	// References are referenced from objects
 	//----------------------------------------
 
-	// StandardReferencePlugin: requires a plugin to be installed
-	StandardReferencePlugin = "plugin"
+	// ExternalEntityReferencePlugin: requires a plugin to be installed
+	ExternalEntityReferencePlugin = "plugin"
 
-	// StandardReferenceRuntime: runtime requirements
-	StandardReferenceRuntime = "runtime"
+	// ExternalEntityReferenceRuntime: frontend runtime requirements
+	ExternalEntityReferenceRuntime = "runtime"
 
-	// StandardReferenceType_RuntimeTransformer is a "type" under runtime
+	// ExternalEntityReferenceRuntime_Transformer is a "type" under runtime
 	// UIDs include: joinByField, organize, seriesToColumns, etc
-	StandardReferenceType_RuntimeTransformer = "transformer"
+	ExternalEntityReferenceRuntime_Transformer = "transformer"
 )
 
 // ObjectKindInfo describes information needed from the object store
