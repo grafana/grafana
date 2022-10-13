@@ -34,8 +34,8 @@ var (
 		Reason:     "failed to generate unique public dashboard id",
 		StatusCode: 500,
 	}
-	ErrPublicDashboardFailedGenerateAccesstoken = PublicDashboardErr{
-		Reason:     "failed to public dashboard access token",
+	ErrPublicDashboardFailedGenerateAccessToken = PublicDashboardErr{
+		Reason:     "failed to create public dashboard",
 		StatusCode: 500,
 	}
 	ErrPublicDashboardNotFound = PublicDashboardErr{

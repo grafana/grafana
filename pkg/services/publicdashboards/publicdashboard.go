@@ -32,6 +32,7 @@ type Store interface {
 	AccessTokenExists(ctx context.Context, accessToken string) (bool, error)
 	GenerateNewPublicDashboardUid(ctx context.Context) (string, error)
 	GetDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error)
+	GenerateNewPublicDashboardAccessToken(ctx context.Context) (string, error)
 	GetPublicDashboard(ctx context.Context, accessToken string) (*PublicDashboard, *models.Dashboard, error)
 	GetPublicDashboardByUid(ctx context.Context, uid string) (*PublicDashboard, error)
 	GetPublicDashboardConfig(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error)
