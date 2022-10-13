@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -52,7 +51,7 @@ func TestAPIGetAnnotations(t *testing.T) {
 	testCases := []struct {
 		Name                 string
 		ExpectedHttpResponse int
-		Annotations          []*annotations.ItemDTO
+		Annotations          []AnnotationEvent
 		ServiceError         error
 		From                 string
 		To                   string
@@ -60,26 +59,10 @@ func TestAPIGetAnnotations(t *testing.T) {
 		{
 			Name:                 "will return success when there is no error and to and from are provided",
 			ExpectedHttpResponse: http.StatusOK,
-			Annotations:          []*annotations.ItemDTO{{Id: 1}},
+			Annotations:          []AnnotationEvent{{Id: 1}},
 			ServiceError:         nil,
 			From:                 "123",
 			To:                   "123",
-		},
-		{
-			Name:                 "will return 400 when from not provided",
-			ExpectedHttpResponse: http.StatusBadRequest,
-			Annotations:          nil,
-			ServiceError:         nil,
-			From:                 "",
-			To:                   "123",
-		},
-		{
-			Name:                 "will return 400 when to not provided",
-			ExpectedHttpResponse: http.StatusBadRequest,
-			Annotations:          nil,
-			ServiceError:         nil,
-			From:                 "123",
-			To:                   "",
 		},
 		{
 			Name:                 "will return 500 when service returns an error",
@@ -110,7 +93,7 @@ func TestAPIGetAnnotations(t *testing.T) {
 			assert.Equal(t, test.ExpectedHttpResponse, response.Code)
 
 			if test.ExpectedHttpResponse == http.StatusOK {
-				var items []*annotations.ItemDTO
+				var items []AnnotationEvent
 				err := json.Unmarshal(response.Body.Bytes(), &items)
 				assert.NoError(t, err)
 				assert.Equal(t, items, test.Annotations)
