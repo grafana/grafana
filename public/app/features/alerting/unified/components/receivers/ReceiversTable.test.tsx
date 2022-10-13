@@ -12,7 +12,7 @@ import {
 import { configureStore } from 'app/store/configureStore';
 import { ContactPointsState, NotifierDTO, NotifierType } from 'app/types';
 
-import { useGetContactPointsState } from '../../api/receiversApi';
+import * as receiversApi from '../../api/receiversApi';
 import { fetchGrafanaNotifiersAction } from '../../state/actions';
 
 import { ReceiversTable } from './ReceiversTable';
@@ -53,12 +53,7 @@ const mockNotifier = (type: NotifierType, name: string): NotifierDTO => ({
   options: [],
 });
 
-jest.mock('../../api/receiversApi', () => ({
-  ...jest.requireActual('../../api/receiversApi'),
-  useGetContactPointsState: jest.fn(),
-}));
-
-const useGetContactPointsStateMock = jest.mocked(useGetContactPointsState);
+const useGetContactPointsStateMock = jest.spyOn(receiversApi, 'useGetContactPointsState');
 
 describe('ReceiversTable', () => {
   beforeEach(() => {
