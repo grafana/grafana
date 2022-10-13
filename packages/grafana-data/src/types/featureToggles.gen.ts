@@ -74,4 +74,5 @@ export interface FeatureToggles {
   increaseInMemDatabaseQueryCache?: boolean;
   newPanelChromeUI?: boolean;
   queryLibrary?: boolean;
+  mysqlAnsiQuotes?: boolean;
 }
