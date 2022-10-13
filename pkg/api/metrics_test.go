@@ -65,6 +65,10 @@ func (ts *fakeOAuthTokenService) TryTokenRefresh(ctx context.Context, usr *model
 	return nil
 }
 
+func (ts *fakeOAuthTokenService) InvalidateOAuthTokens(ctx context.Context, usr *models.UserAuth) error {
+	return nil
+}
+
 // `/ds/query` endpoint test
 func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 	qds := query.ProvideService(

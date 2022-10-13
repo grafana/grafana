@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"net"
+	"time"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -109,14 +110,19 @@ func (s *FakeUserAuthTokenService) BatchRevokeAllUserTokens(ctx context.Context,
 }
 
 type MockOAuthTokenService struct {
-	passThruEnabled  bool
-	token            *oauth2.Token
+	passThruEnabled bool
+	// token            *oauth2.Token
 	ExpectedAuthUser *models.UserAuth
 	ExpectedErrors   map[string]error
 }
 
 func (ts *MockOAuthTokenService) GetCurrentOAuthToken(context.Context, *user.SignedInUser) *oauth2.Token {
-	return ts.token
+	return &oauth2.Token{
+		AccessToken:  ts.ExpectedAuthUser.OAuthAccessToken,
+		RefreshToken: ts.ExpectedAuthUser.OAuthRefreshToken,
+		Expiry:       ts.ExpectedAuthUser.OAuthExpiry,
+		TokenType:    ts.ExpectedAuthUser.OAuthTokenType,
+	}
 }
 
 func (ts *MockOAuthTokenService) IsOAuthPassThruEnabled(*datasources.DataSource) bool {
@@ -128,6 +134,14 @@ func (ts *MockOAuthTokenService) HasOAuthEntry(context.Context, *user.SignedInUs
 		return true, ts.ExpectedAuthUser
 	}
 	return false, nil
+}
+
+func (ts *MockOAuthTokenService) InvalidateOAuthTokens(ctx context.Context, usr *models.UserAuth) error {
+	ts.ExpectedAuthUser.OAuthAccessToken = ""
+	ts.ExpectedAuthUser.OAuthRefreshToken = ""
+	ts.ExpectedAuthUser.OAuthExpiry = time.Time{}
+	ts.ExpectedAuthUser.OAuthIdToken = ""
+	return nil
 }
 
 func (ts *MockOAuthTokenService) TryTokenRefresh(ctx context.Context, usr *models.UserAuth) error {

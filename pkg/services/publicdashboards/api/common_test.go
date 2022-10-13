@@ -172,6 +172,10 @@ func (ts *fakeOAuthTokenService) TryTokenRefresh(ctx context.Context, usr *model
 	return nil
 }
 
+func (ts *fakeOAuthTokenService) InvalidateOAuthTokens(ctx context.Context, usr *models.UserAuth) error {
+	return nil
+}
+
 // copied from pkg/api/plugins_test.go
 type fakePluginClient struct {
 	plugins.Client

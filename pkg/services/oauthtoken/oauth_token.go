@@ -34,7 +34,8 @@ type OAuthTokenService interface {
 	GetCurrentOAuthToken(context.Context, *user.SignedInUser) *oauth2.Token
 	IsOAuthPassThruEnabled(*datasources.DataSource) bool
 	HasOAuthEntry(context.Context, *user.SignedInUser) (bool, *models.UserAuth)
-	TryTokenRefresh(ctx context.Context, usr *models.UserAuth) error
+	TryTokenRefresh(context.Context, *models.UserAuth) error
+	InvalidateOAuthTokens(context.Context, *models.UserAuth) error
 }
 
 func ProvideService(socialService social.Service, authInfoService login.AuthInfoService) *Service {
@@ -116,6 +117,19 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr *models.UserAuth) err
 		return o.tryGetOrRefreshAccessToken(ctx, usr)
 	})
 	return err
+}
+
+func (o *Service) InvalidateOAuthTokens(ctx context.Context, usr *models.UserAuth) error {
+	return o.AuthInfoService.UpdateAuthInfo(ctx, &models.UpdateAuthInfoCommand{
+		UserId:     usr.UserId,
+		AuthModule: usr.AuthModule,
+		AuthId:     usr.AuthId,
+		OAuthToken: &oauth2.Token{
+			AccessToken:  "",
+			RefreshToken: "",
+			Expiry:       time.Time{},
+		},
+	})
 }
 
 func (o *Service) tryGetOrRefreshAccessToken(ctx context.Context, usr *models.UserAuth) (*oauth2.Token, error) {

@@ -1070,6 +1070,10 @@ func (m *mockOAuthTokenService) HasOAuthEntry(context.Context, *user.SignedInUse
 	return false, nil
 }
 
-func (m *mockOAuthTokenService) TryTokenRefresh(ctx context.Context, usr *models.UserAuth) error {
+func (m *mockOAuthTokenService) TryTokenRefresh(context.Context, *models.UserAuth) error {
+	return nil
+}
+
+func (m *mockOAuthTokenService) InvalidateOAuthTokens(context.Context, *models.UserAuth) error {
 	return nil
 }

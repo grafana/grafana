@@ -374,8 +374,13 @@ func TestMiddlewareContext(t *testing.T) {
 		sc.contextHandler.GetTime = fakeGetTime()
 
 		sc.withTokenSessionCookie("token")
-		sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: 2, UserID: userID}
-		sc.oauthTokenService.ExpectedAuthUser = &models.UserAuth{UserId: userID, OAuthExpiry: fakeGetTime()().Add(-1 * time.Second)}
+		signedInUser := &user.SignedInUser{OrgID: 2, UserID: userID}
+		sc.userService.ExpectedSignedInUser = signedInUser
+		sc.oauthTokenService.ExpectedAuthUser = &models.UserAuth{
+			UserId:            userID,
+			OAuthExpiry:       fakeGetTime()().Add(-1 * time.Second),
+			OAuthAccessToken:  "access_token",
+			OAuthRefreshToken: "refresh_token"}
 		sc.oauthTokenService.ExpectedErrors = map[string]error{"TryTokenRefresh": errors.New("error")}
 		t.Logf("now: %v; oauthExpiry: %v", fakeGetTime()(), sc.oauthTokenService.ExpectedAuthUser.OAuthExpiry)
 
@@ -387,6 +392,11 @@ func TestMiddlewareContext(t *testing.T) {
 		}
 
 		sc.fakeReq("GET", "/").exec()
+
+		token := sc.oauthTokenService.GetCurrentOAuthToken(sc.context.Req.Context(), signedInUser)
+		assert.Equal(t, token.AccessToken, "")
+		assert.Equal(t, token.RefreshToken, "")
+		assert.True(t, token.Expiry.IsZero())
 
 		require.NotNil(t, sc.context)
 		require.Nil(t, sc.context.UserToken)

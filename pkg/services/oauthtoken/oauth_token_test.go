@@ -219,10 +219,6 @@ type FakeAuthInfoStore struct {
 	ExpectedLoginStats              login.LoginStats
 }
 
-func newFakeAuthInfoStore() *FakeAuthInfoStore {
-	return &FakeAuthInfoStore{}
-}
-
 func (f *FakeAuthInfoStore) GetExternalUserInfoByLogin(ctx context.Context, query *models.GetExternalUserInfoByLoginQuery) error {
 	return f.ExpectedError
 }

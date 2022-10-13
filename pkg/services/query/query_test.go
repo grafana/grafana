@@ -283,7 +283,11 @@ func (ts *fakeOAuthTokenService) HasOAuthEntry(context.Context, *user.SignedInUs
 	return false, nil
 }
 
-func (ts *fakeOAuthTokenService) TryTokenRefresh(ctx context.Context, usr *models.UserAuth) error {
+func (ts *fakeOAuthTokenService) TryTokenRefresh(context.Context, *models.UserAuth) error {
+	return nil
+}
+
+func (ts *fakeOAuthTokenService) InvalidateOAuthTokens(context.Context, *models.UserAuth) error {
 	return nil
 }
 
