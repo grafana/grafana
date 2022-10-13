@@ -96,7 +96,6 @@ export const queriesImportedAction = createAction<QueriesImportedPayload>('explo
 export interface ModifyQueriesPayload {
   exploreId: ExploreId;
   modification: QueryFixAction;
-  index?: number;
   modifier: (query: DataQuery, modification: QueryFixAction) => DataQuery;
 }
 export const modifyQueriesAction = createAction<ModifyQueriesPayload>('explore/modifyQueries');
@@ -354,17 +353,11 @@ export const importQueries = (
  * Action to modify a query given a datasource-specific modifier action.
  * @param exploreId Explore area
  * @param modification Action object with a type, e.g., ADD_FILTER
- * @param index Optional query row index. If omitted, the modification is applied to all query rows.
  * @param modifier Function that executes the modification, typically `datasourceInstance.modifyQueries`.
  */
-export function modifyQueries(
-  exploreId: ExploreId,
-  modification: QueryFixAction,
-  modifier: any,
-  index?: number
-): ThunkResult<void> {
+export function modifyQueries(exploreId: ExploreId, modification: QueryFixAction, modifier: any): ThunkResult<void> {
   return (dispatch) => {
-    dispatch(modifyQueriesAction({ exploreId, modification, index, modifier }));
+    dispatch(modifyQueriesAction({ exploreId, modification, modifier }));
     if (!modification.preventSubmit) {
       dispatch(runQueries(exploreId));
     }
@@ -745,25 +738,12 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
 
   if (modifyQueriesAction.match(action)) {
     const { queries } = state;
-    const { modification, index, modifier } = action.payload;
+    const { modification, modifier } = action.payload;
     let nextQueries: DataQuery[];
-    if (index === undefined) {
-      // Modify all queries
-      nextQueries = queries.map((query, i) => {
-        const nextQuery = modifier({ ...query }, modification);
-        return generateNewKeyAndAddRefIdIfMissing(nextQuery, queries, i);
-      });
-    } else {
-      // Modify query only at index
-      nextQueries = queries.map((query, i) => {
-        if (i === index) {
-          const nextQuery = modifier({ ...query }, modification);
-          return generateNewKeyAndAddRefIdIfMissing(nextQuery, queries, i);
-        }
-
-        return query;
-      });
-    }
+    nextQueries = queries.map((query, i) => {
+      const nextQuery = modifier({ ...query }, modification);
+      return generateNewKeyAndAddRefIdIfMissing(nextQuery, queries, i);
+    });
     return {
       ...state,
       queries: nextQueries,

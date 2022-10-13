@@ -381,6 +381,15 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *models.ReqContext, hasEditPerm b
 			Url:      s.cfg.AppSubURL + "/library-panels",
 			Icon:     "library-panel",
 		})
+
+		if s.features.IsEnabled(featuremgmt.FlagPublicDashboards) {
+			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
+				Text: "Public dashboards",
+				Id:   "dashboards/public",
+				Url:  s.cfg.AppSubURL + "/dashboard/public",
+				Icon: "library-panel",
+			})
+		}
 	}
 
 	if s.features.IsEnabled(featuremgmt.FlagScenes) {

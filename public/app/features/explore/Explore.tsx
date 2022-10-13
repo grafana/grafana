@@ -173,12 +173,12 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     makeAbsoluteTime();
   };
 
-  onModifyQueries = (action: QueryFixAction, index?: number) => {
+  onModifyQueries = (action: QueryFixAction) => {
     const { datasourceInstance } = this.props;
     if (datasourceInstance?.modifyQuery) {
       const modifier = (queries: DataQuery, modification: QueryFixAction) =>
         datasourceInstance.modifyQuery!(queries, modification);
-      this.props.modifyQueries(this.props.exploreId, action, modifier, index);
+      this.props.modifyQueries(this.props.exploreId, action, modifier);
     }
   };
 

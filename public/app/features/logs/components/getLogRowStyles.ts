@@ -45,6 +45,9 @@ export const getLogRowStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
       font-size: ${theme.typography.bodySmall.fontSize};
       width: 100%;
     `,
+    contextBackground: css`
+      background: ${hoverBgColor};
+    `,
     logsRow: css`
       label: logs-row;
       width: 100%;
@@ -56,6 +59,8 @@ export const getLogRowStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
           visibility: visible;
           z-index: 1;
         }
+
+        background: ${hoverBgColor};
       }
 
       td:not(.log-row-menu-cell):last-child {
@@ -68,10 +73,6 @@ export const getLogRowStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
         border-top: 1px solid transparent;
         border-bottom: 1px solid transparent;
         height: 100%;
-      }
-
-      &:hover {
-        background: ${hoverBgColor};
       }
     `,
     logsRowDuplicates: css`

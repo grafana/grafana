@@ -428,14 +428,16 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 	am.dispatcher = dispatch.NewDispatcher(am.alerts, am.route, routingStage, am.marker, am.timeoutFunc, &nilLimits{}, am.logger, am.dispatcherMetrics)
 
 	// Check which receivers are active and create the receiver stage.
+	var receivers []*notify.Receiver
 	activeReceivers := am.getActiveReceiversMap(am.route)
 	for name := range integrationsMap {
 		stage := am.createReceiverStage(name, integrationsMap[name], am.waitFunc, am.notificationLog)
 		routingStage[name] = notify.MultiStage{meshStage, silencingStage, timeMuteStage, inhibitionStage, stage}
 		_, isActive := activeReceivers[name]
 
-		am.receivers = append(am.receivers, notify.NewReceiver(name, isActive, integrationsMap[name]))
+		receivers = append(receivers, notify.NewReceiver(name, isActive, integrationsMap[name]))
 	}
+	am.receivers = receivers
 
 	am.wg.Add(1)
 	go func() {
