@@ -6,8 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
-	"path"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -87,19 +85,12 @@ func createExternalDashboardSnapshot(cmd dashboardsnapshots.CreateDashboardSnaps
 }
 
 func createOriginalDashboardURL(appURL string, cmd *dashboardsnapshots.CreateDashboardSnapshotCommand) (string, error) {
-	parsedAppUrl, err := url.Parse(appURL)
-	if err != nil {
-		return "", err
+	dashUID := cmd.Dashboard.Get("uid").MustString("")
+	if ok := util.IsValidShortUID(dashUID); !ok {
+		return "", fmt.Errorf("invalid dashboard UID")
 	}
 
-	parsedAppUrl.Path = path.Join(parsedAppUrl.Path, fmt.Sprintf("/d/%v", cmd.Dashboard.Get("uid").MustString("")))
-	refresh := cmd.Dashboard.Get("refresh").MustString("")
-	parsedAppUrl.RawQuery = fmt.Sprintf("orgId=%d", cmd.OrgId)
-	if len(refresh) > 0 {
-		parsedAppUrl.RawQuery = parsedAppUrl.RawQuery + fmt.Sprintf("&refresh=%v", refresh)
-	}
-
-	return parsedAppUrl.String(), nil
+	return fmt.Sprintf("/d/%v", dashUID), nil
 }
 
 // swagger:route POST /snapshots snapshots createDashboardSnapshot

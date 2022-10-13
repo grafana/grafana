@@ -85,15 +85,16 @@ export const DashNav = React.memo<Props>((props) => {
   // We don't really care about the event payload here only that it triggeres a re-render of this component
   useBusEvent(props.dashboard.events, DashboardMetaChangedEvent);
 
+  const originalUrl = props.dashboard.snapshot?.originalUrl ?? '';
   const gotoSnapshotOrigin = () => {
     window.location.href = textUtil.sanitizeUrl(props.dashboard.snapshot.originalUrl);
   };
 
-  const showModal = useModal({ url: props.dashboard.snapshot?.originalUrl ?? '', onConfirm: gotoSnapshotOrigin });
+  const showModal = useModal({ url: originalUrl, onConfirm: gotoSnapshotOrigin });
   const notifyApp = useAppNotification();
   const onOpenSnapshotOriginal = () => {
     try {
-      const sanitizedUrl = new URL(textUtil.sanitizeUrl(props.dashboard.snapshot.originalUrl));
+      const sanitizedUrl = new URL(textUtil.sanitizeUrl(originalUrl), config.appUrl);
       const appUrl = new URL(config.appUrl);
       if (sanitizedUrl.host !== appUrl.host) {
         showModal();
