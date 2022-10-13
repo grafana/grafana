@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import { LanguageMap, languages as prismLanguages } from 'prismjs';
 import React, { ReactNode } from 'react';
 import { Plugin } from 'slate';
@@ -27,6 +28,11 @@ import { PromOptions, PromQuery } from '../types';
 
 import { PrometheusMetricsBrowser } from './PrometheusMetricsBrowser';
 import { MonacoQueryFieldWrapper } from './monaco-query-field/MonacoQueryFieldWrapper';
+
+const noStyledButton = css`
+  background: transparent;
+  border: none;
+`;
 
 export const RECORDING_RULES_GROUP = '__recording_rules__';
 const LAST_USED_LABELS_KEY = 'grafana.datasources.prometheus.browser.labels';
@@ -333,9 +339,9 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
                   <div className="prom-query-field-info text-warning">
                     {hint.label}{' '}
                     {hint.fix ? (
-                      <a className="text-link muted" onClick={this.onClickHintFix}>
+                      <button className={`text-link muted ${noStyledButton}`} onClick={this.onClickHintFix}>
                         {hint.fix.label}
-                      </a>
+                      </button>
                     ) : null}
                   </div>
                 </div>
