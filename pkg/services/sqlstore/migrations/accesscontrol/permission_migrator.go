@@ -94,6 +94,7 @@ func (m *permissionMigrator) bulkAssignRoles(allRoles []*accesscontrol.Role) err
 				Created: ts,
 			})
 		} else if strings.HasPrefix(role.Name, "managed:builtins") {
+			//nolint:staticcheck
 			builtIn := strings.Title(strings.Split(role.Name, ":")[2])
 			builtInRoleAssignments = append(builtInRoleAssignments, accesscontrol.BuiltinRole{
 				OrgID:   role.OrgID,

@@ -2,7 +2,7 @@ package notifications
 
 import (
 	"context"
-	"io/ioutil"
+	"io/ioutil"  //nolint:staticcheck // No need to change in v8.
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"

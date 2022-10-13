@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
+	"io/ioutil"  //nolint:staticcheck // No need to change in v8.
 	"mime/multipart"
 	"net"
 	"net/http"
@@ -928,6 +928,7 @@ func newMockNotificationChannel(t *testing.T, grafanaListedAddr string) *mockNot
 	require.NoError(t, err)
 
 	nc := &mockNotificationChannel{
+		//nolint:gosec
 		server: &http.Server{
 			Addr: listener.Addr().String(),
 		},

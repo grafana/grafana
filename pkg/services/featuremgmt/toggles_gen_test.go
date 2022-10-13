@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
-	"io/ioutil"
+	"io/ioutil"  //nolint:staticcheck // No need to change in v8.
 	"os"
 	"path/filepath"
 	"strings"
@@ -92,6 +92,7 @@ func isLetterOrNumber(c rune) bool {
 func asCamelCase(key string) string {
 	parts := strings.FieldsFunc(key, isLetterOrNumber)
 	for idx, part := range parts {
+		//nolint:staticcheck
 		parts[idx] = strings.Title(part)
 	}
 	return strings.Join(parts, "")

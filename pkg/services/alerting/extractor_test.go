@@ -3,7 +3,7 @@ package alerting
 import (
 	"context"
 	"errors"
-	"io/ioutil"
+	"io/ioutil"  //nolint:staticcheck // No need to change in v8.
 	"testing"
 	"time"
 

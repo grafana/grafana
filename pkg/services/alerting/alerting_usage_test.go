@@ -3,7 +3,7 @@ package alerting
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"io/ioutil"  //nolint:staticcheck // No need to change in v8.
 	"testing"
 
 	"github.com/google/go-cmp/cmp"

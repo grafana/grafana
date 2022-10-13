@@ -59,6 +59,7 @@ public/css/*.min.css
 *.sublime-workspace
 *.swp
 .idea/
+.fleet/
 *.iml
 *.tmp
 .DS_Store

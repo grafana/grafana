@@ -3,7 +3,7 @@ package fs
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
+	"io/ioutil"  //nolint:staticcheck // No need to change in v8.
 	"os"
 	"path/filepath"
 )
@@ -76,6 +76,7 @@ func copyFileContents(src, dst string) (err error) {
 		}
 	}()
 
+	//nolint:gosec
 	out, err := os.Create(dst)
 	if err != nil {
 		return

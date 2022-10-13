@@ -173,6 +173,8 @@ func (rs *RenderingService) readFileResponse(ctx context.Context, resp *http.Res
 			resp.Status)
 	}
 
+	// Path comes from configuration.
+	//nolint:gosec
 	out, err := os.Create(filePath)
 	if err != nil {
 		return err

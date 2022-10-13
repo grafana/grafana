@@ -3,7 +3,7 @@ package loki
 import (
 	"bytes"
 	"context"
-	"io/ioutil"
+	"io/ioutil"  //nolint:staticcheck // No need to change in v8.
 	"net/http"
 	"os"
 	"path/filepath"
@@ -56,6 +56,7 @@ func TestSuccessResponse(t *testing.T) {
 			responseFileName := filepath.Join("testdata", test.filepath+".json")
 			goldenFileName := filepath.Join("testdata", test.filepath+".golden.txt")
 
+			//nolint:gosec
 			bytes, err := os.ReadFile(responseFileName)
 			require.NoError(t, err)
 

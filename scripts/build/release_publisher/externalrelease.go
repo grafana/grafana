@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io/ioutil"  //nolint:staticcheck // No need to change in v8.
 	"net/http"
 	"strings"
 	"time"
@@ -56,11 +56,13 @@ type urlGetter interface {
 type getHTTPContents struct{}
 
 func (getHTTPContents) getContents(url string) (string, error) {
+	//nolint:gosec
 	response, err := http.Get(url)
 	if err != nil {
 		return "", err
 	}
 
+	//nolint:errcheck
 	defer response.Body.Close()
 	all, err := ioutil.ReadAll(response.Body)
 	if err != nil {

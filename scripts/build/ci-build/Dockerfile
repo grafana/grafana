@@ -81,8 +81,8 @@ RUN cd /tmp && \
     rm -rf /tmp/x86_64-centos6-linux-gnu/ && \
     rm -rf /tmp/crosstool-ng-${CTNG}
 
-ARG GOLANGCILINT_VERSION=1.37.1
-ARG GOLANGCILINT_CHKSUM=1929425d7733d136b342395c77f171d459aa89b198933465ec4c854aa34c41a2
+ARG GOLANGCILINT_VERSION=1.49.0
+ARG GOLANGCILINT_CHKSUM=5badc6e9fee2003621efa07e385910d9a88c89b38f6c35aded153193c5125178
 
 RUN curl -fLO https://github.com/golangci/golangci-lint/releases/download/v${GOLANGCILINT_VERSION}/golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64.tar.gz
 RUN echo ${GOLANGCILINT_CHKSUM} golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64.tar.gz | sha256sum --check --strict --status
@@ -110,7 +110,7 @@ RUN rm dockerize-linux-amd64-v${DOCKERIZE_VERSION}.tar.gz
 # Use old Debian (this has support into 2022) in order to ensure binary compatibility with older glibc's.
 FROM debian:stretch-20210208
 
-ENV GOVERSION=1.17.11 \
+ENV GOVERSION=1.19.2 \
     PATH=/usr/local/go/bin:$PATH \
     GOPATH=/go \
     NODEVERSION=16.14.0-1nodesource1 \
@@ -145,7 +145,8 @@ RUN apt-get update && \
         ruby-dev        \
         rubygems        \
         unzip &&        \
-    gem install -N fpm && \
+    gem install -N public_suffix -v 4.0.7 && \
+    gem install --conservative -N fpm && \
     ln -s /usr/bin/llvm-dsymutil-6.0 /usr/bin/dsymutil && \
     curl -fsS https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add -  && \
     curl -O https://deb.nodesource.com/node_16.x/pool/main/n/nodejs/nodejs_${NODEVERSION}_amd64.deb &&\
@@ -183,11 +184,11 @@ RUN cd /tmp && \
     tar xf x86_64-linux-musl-cross.tgz && \
     rm x86_64-linux-musl-cross.tgz
 
-RUN go get -u github.com/mgechev/revive@v1.0.2 && \
+RUN go install github.com/mgechev/revive@v1.0.2 && \
   mv ${GOPATH}/bin/revive /usr/local/bin/ && \
-  go get github.com/google/go-jsonnet/cmd/jsonnetfmt && \
+  go install github.com/google/go-jsonnet/cmd/jsonnetfmt@latest && \
   mv ${GOPATH}/bin/jsonnetfmt /usr/local/bin/ && \
-  go get github.com/monitoring-mixins/mixtool/cmd/mixtool && \
+  go install github.com/monitoring-mixins/mixtool/cmd/mixtool@latest && \
   mv ${GOPATH}/bin/mixtool /usr/local/bin/
 
 COPY ./bootstrap.sh /tmp/bootstrap.sh

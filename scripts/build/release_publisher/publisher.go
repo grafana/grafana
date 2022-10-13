@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io/ioutil"  //nolint:staticcheck // No need to change in v8.
 	"log"
 	"net/http"
 	"strings"
@@ -252,7 +252,7 @@ func (p *publisher) postRequest(url string, obj interface{}, desc string) error 
 	}
 
 	if p.dryRun {
-		log.Println(fmt.Sprintf("POST to %s:", p.apiURL(url)))
+		log.Printf("POST to %s:\n", p.apiURL(url))
 		log.Println(string(jsonBytes))
 		return nil
 	}
@@ -275,6 +275,7 @@ func (p *publisher) postRequest(url string, obj interface{}, desc string) error 
 	}
 
 	if res.Body != nil {
+		//nolint:errcheck
 		defer res.Body.Close()
 		body, err := ioutil.ReadAll(res.Body)
 		if err != nil {

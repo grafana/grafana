@@ -35,8 +35,8 @@ func (s *AuthService) initClaimExpectations() error {
 			switch value := value.(type) {
 			case []interface{}:
 				for _, val := range value {
-					if val, ok := val.(string); ok {
-						s.expectRegistered.Audience = append(s.expectRegistered.Audience, val)
+					if v, ok := val.(string); ok {
+						s.expectRegistered.Audience = append(s.expectRegistered.Audience, v)
 					} else {
 						return fmt.Errorf("%q expectation contains value with invalid type %T, string expected", key, val)
 					}
@@ -73,8 +73,8 @@ func (s *AuthService) validateClaims(claims models.JWTClaims) error {
 			switch value := value.(type) {
 			case []interface{}:
 				for _, val := range value {
-					if val, ok := val.(string); ok {
-						registeredClaims.Audience = append(registeredClaims.Audience, val)
+					if v, ok := val.(string); ok {
+						registeredClaims.Audience = append(registeredClaims.Audience, v)
 					} else {
 						return fmt.Errorf("%q claim contains value with invalid type %T, string expected", key, val)
 					}

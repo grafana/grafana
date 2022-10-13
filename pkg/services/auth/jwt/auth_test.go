@@ -6,7 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
-	"io/ioutil"
+	"io/ioutil"  //nolint:staticcheck // No need to change in v8.
 	"net/http"
 	"net/http/httptest"
 	"os"

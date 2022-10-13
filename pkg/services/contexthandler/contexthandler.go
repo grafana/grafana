@@ -29,6 +29,8 @@ import (
 
 const (
 	InvalidUsernamePassword = "invalid username or password"
+	// False positive.
+	//nolint:gosec
 	InvalidAPIKey           = "invalid API key"
 )
 

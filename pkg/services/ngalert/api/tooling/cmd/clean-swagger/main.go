@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"io/ioutil"
+	"io/ioutil"  //nolint:staticcheck // No need to change in v8.
 	"log"
 	"strings"
 )
