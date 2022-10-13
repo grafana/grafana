@@ -11,8 +11,6 @@ import {
 } from 'app/core/components/Select/ReadonlyFolderPicker/ReadonlyFolderPicker';
 import { PermissionLevelString } from 'app/types';
 
-import { GRAFANA_DATASOURCE_NAME } from '../../../features/alerting/unified/utils/datasource';
-
 import { AlertList } from './AlertList';
 import { alertListPanelMigrationHandler } from './AlertListMigrationHandler';
 import { GroupBy } from './GroupByWithLoading';
@@ -248,10 +246,9 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
     .addCustomEditor({
       path: 'folder',
       name: 'Folder',
-      description: 'Filter for alerts in the selected folder',
+      description: 'Filter for alerts in the selected folder (only for Grafana alerts)',
       id: 'folder',
       defaultValue: null,
-      showIf: (options) => !options.datasource || options.datasource === GRAFANA_DATASOURCE_NAME,
       editor: function RenderFolderPicker(props) {
         return (
           <FolderPicker
@@ -282,7 +279,7 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
             noDefault
             current={props.value}
             onChange={(ds) => props.onChange(ds.name)}
-            onClear={() => props.onChange('')}
+            onClear={() => props.onChange(null)}
           />
         );
       },
