@@ -1,9 +1,11 @@
 import { render, RenderResult } from '@testing-library/react';
 import { noop } from 'lodash';
 import React from 'react';
+import { Provider } from 'react-redux';
 
 import { CoreApp } from '@grafana/data';
 
+import { configureStore } from '../../../../store/configureStore';
 import { PrometheusDatasource } from '../datasource';
 
 import { testIds as regularTestIds } from './PromQueryEditor';
@@ -51,15 +53,18 @@ function setup(app: CoreApp): RenderResult & { onRunQuery: jest.Mock } {
     },
   } as unknown as PrometheusDatasource;
   const onRunQuery = jest.fn();
+  const store = configureStore();
 
   const renderOutput = render(
-    <PromQueryEditorByApp
-      app={app}
-      onChange={noop}
-      onRunQuery={onRunQuery}
-      datasource={dataSource}
-      query={{ refId: 'A', expr: '' }}
-    />
+    <Provider store={store}>
+      <PromQueryEditorByApp
+        app={app}
+        onChange={noop}
+        onRunQuery={onRunQuery}
+        datasource={dataSource}
+        query={{ refId: 'A', expr: '' }}
+      />
+    </Provider>
   );
 
   return {

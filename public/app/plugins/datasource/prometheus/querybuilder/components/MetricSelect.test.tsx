@@ -1,6 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { Provider } from 'react-redux';
+
+import { configureStore } from '../../../../../store/configureStore';
 
 import { MetricSelect } from './MetricSelect';
 
@@ -17,8 +20,17 @@ const props = {
 };
 
 describe('MetricSelect', () => {
+  const renderMetricSelect = () => {
+    const store = configureStore();
+
+    render(
+      <Provider store={store}>
+        <MetricSelect {...props} />
+      </Provider>
+    );
+  };
   it('shows all metric options', async () => {
-    render(<MetricSelect {...props} />);
+    renderMetricSelect();
     await openMetricSelect();
     await waitFor(() => expect(screen.getByText('random_metric')).toBeInTheDocument());
     await waitFor(() => expect(screen.getByText('unique_metric')).toBeInTheDocument());
@@ -27,7 +39,7 @@ describe('MetricSelect', () => {
   });
 
   it('shows option to set custom value when typing', async () => {
-    render(<MetricSelect {...props} />);
+    renderMetricSelect();
     await openMetricSelect();
     const input = screen.getByRole('combobox');
     await userEvent.type(input, 'custom value');
@@ -35,7 +47,7 @@ describe('MetricSelect', () => {
   });
 
   it('shows searched options when typing', async () => {
-    render(<MetricSelect {...props} />);
+    renderMetricSelect();
     await openMetricSelect();
     const input = screen.getByRole('combobox');
     await userEvent.type(input, 'unique');
@@ -43,7 +55,7 @@ describe('MetricSelect', () => {
   });
 
   it('searches on split words', async () => {
-    render(<MetricSelect {...props} />);
+    renderMetricSelect();
     await openMetricSelect();
     const input = screen.getByRole('combobox');
     await userEvent.type(input, 'more unique');
@@ -51,7 +63,7 @@ describe('MetricSelect', () => {
   });
 
   it('searches on multiple split words', async () => {
-    render(<MetricSelect {...props} />);
+    renderMetricSelect();
     await openMetricSelect();
     const input = screen.getByRole('combobox');
     await userEvent.type(input, 'more unique metric');
@@ -59,7 +71,7 @@ describe('MetricSelect', () => {
   });
 
   it('highlights matching string', async () => {
-    render(<MetricSelect {...props} />);
+    renderMetricSelect();
     await openMetricSelect();
     const input = screen.getByRole('combobox');
     await userEvent.type(input, 'more');
@@ -67,7 +79,7 @@ describe('MetricSelect', () => {
   });
 
   it('highlights multiple matching strings in 1 input row', async () => {
-    render(<MetricSelect {...props} />);
+    renderMetricSelect();
     await openMetricSelect();
     const input = screen.getByRole('combobox');
     await userEvent.type(input, 'more metric');
@@ -75,7 +87,7 @@ describe('MetricSelect', () => {
   });
 
   it('highlights multiple matching strings in multiple input rows', async () => {
-    render(<MetricSelect {...props} />);
+    renderMetricSelect();
     await openMetricSelect();
     const input = screen.getByRole('combobox');
     await userEvent.type(input, 'unique metric');
@@ -83,7 +95,7 @@ describe('MetricSelect', () => {
   });
 
   it('does not highlight matching string in create option', async () => {
-    render(<MetricSelect {...props} />);
+    renderMetricSelect();
     await openMetricSelect();
     const input = screen.getByRole('combobox');
     await userEvent.type(input, 'new');

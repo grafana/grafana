@@ -2,7 +2,9 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { cloneDeep, defaultsDeep } from 'lodash';
 import React from 'react';
+import { Provider } from 'react-redux';
 
+import { configureStore } from '../../../../../store/configureStore';
 import { PrometheusDatasource } from '../../datasource';
 import PromQlLanguageProvider from '../../language_provider';
 import { EmptyLanguageProviderMock } from '../../language_provider.mock';
@@ -135,15 +137,18 @@ describe('PromQueryEditorSelector', () => {
       editorMode: QueryEditorMode.Code,
     });
     await switchToMode(QueryEditorMode.Builder);
+    const store = configureStore();
     rerender(
-      <PromQueryEditorSelector
-        {...defaultProps}
-        query={{
-          refId: 'A',
-          expr: 'rate(test_metric{instance="host.docker.internal:3000"}[$__interval])',
-          editorMode: QueryEditorMode.Builder,
-        }}
-      />
+      <Provider store={store}>
+        <PromQueryEditorSelector
+          {...defaultProps}
+          query={{
+            refId: 'A',
+            expr: 'rate(test_metric{instance="host.docker.internal:3000"}[$__interval])',
+            editorMode: QueryEditorMode.Builder,
+          }}
+        />
+      </Provider>
     );
 
     await screen.findByText('test_metric');
@@ -160,8 +165,13 @@ function renderWithMode(mode: QueryEditorMode) {
 function renderWithProps(overrides?: Partial<PromQuery>) {
   const query = defaultsDeep(overrides ?? {}, cloneDeep(defaultQuery));
   const onChange = jest.fn();
+  const store = configureStore();
 
-  const stuff = render(<PromQueryEditorSelector {...defaultProps} query={query} onChange={onChange} />);
+  const stuff = render(
+    <Provider store={store}>
+      <PromQueryEditorSelector {...defaultProps} query={query} onChange={onChange} />
+    </Provider>
+  );
   return { onChange, ...stuff };
 }
 
