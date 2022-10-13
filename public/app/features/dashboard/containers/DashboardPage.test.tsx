@@ -5,11 +5,13 @@ import { Router } from 'react-router-dom';
 import { useEffectOnce } from 'react-use';
 import { AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
+import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { createTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService, setDataSourceSrv } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
+import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { DashboardInitPhase, DashboardMeta, DashboardRoutes } from 'app/types';
 
@@ -130,12 +132,16 @@ function dashboardPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
         ctx.props = props;
         ctx.dashboard = props.dashboard;
 
+        const context = getGrafanaContextMock();
+
         const { container, rerender, unmount } = render(
-          <Provider store={store}>
-            <Router history={locationService.getHistory()}>
-              <UnthemedDashboardPage {...props} />
-            </Router>
-          </Provider>
+          <GrafanaContext.Provider value={context}>
+            <Provider store={store}>
+              <Router history={locationService.getHistory()}>
+                <UnthemedDashboardPage {...props} />
+              </Router>
+            </Provider>
+          </GrafanaContext.Provider>
         );
 
         ctx.container = container;
@@ -144,11 +150,13 @@ function dashboardPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
           Object.assign(props, newProps);
 
           rerender(
-            <Provider store={store}>
-              <Router history={locationService.getHistory()}>
-                <UnthemedDashboardPage {...props} />
-              </Router>
-            </Provider>
+            <GrafanaContext.Provider value={context}>
+              <Provider store={store}>
+                <Router history={locationService.getHistory()}>
+                  <UnthemedDashboardPage {...props} />
+                </Router>
+              </Provider>
+            </GrafanaContext.Provider>
           );
         };
 
@@ -179,6 +187,7 @@ describe('DashboardPage', () => {
         routeName: 'normal-dashboard',
         urlSlug: 'my-dash',
         urlUid: '11',
+        keybindingSrv: expect.anything(),
       });
     });
   });
@@ -241,7 +250,7 @@ describe('DashboardPage', () => {
     });
 
     it('Should render panel editor', () => {
-      expect(screen.getByLabelText('Apply changes and go back to dashboard')).toBeInTheDocument();
+      expect(screen.getByTitle('Apply changes and go back to dashboard')).toBeInTheDocument();
     });
 
     it('Should reset state when leaving', () => {
@@ -294,9 +303,8 @@ describe('DashboardPage', () => {
 
   dashboardPageScenario('When in full kiosk mode', (ctx) => {
     ctx.setup(() => {
-      locationService.partial({ kiosk: true });
       ctx.mount({
-        queryParams: {},
+        queryParams: { kiosk: true },
         dashboard: getTestDashboard(),
       });
       ctx.rerender({ dashboard: ctx.dashboard });

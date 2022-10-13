@@ -18,8 +18,9 @@ import {
 import { LokiQueryField } from '../../loki/components/LokiQueryField';
 import { LokiDatasource } from '../../loki/datasource';
 import { LokiQuery } from '../../loki/types';
-import { TempoDatasource, TempoQuery, TempoQueryType } from '../datasource';
+import { TempoDatasource } from '../datasource';
 import { QueryEditor } from '../traceql/QueryEditor';
+import { TempoQuery, TempoQueryType } from '../types';
 
 import NativeSearch from './NativeSearch';
 import { ServiceGraphSection } from './ServiceGraphSection';

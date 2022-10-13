@@ -63,7 +63,7 @@ export const generateLabel = (feature: FeatureLike, idx: number): string => {
   const names = ['Name', 'name', 'Title', 'ID', 'id'];
   let props = feature.getProperties();
   let first = '';
-  const frame = feature.get('frame') as DataFrame;
+  const frame = feature.get('frame') as DataFrame; // eslint-disable-line
   if (frame) {
     const rowIndex = feature.get('rowIndex');
     for (const f of frame.fields) {

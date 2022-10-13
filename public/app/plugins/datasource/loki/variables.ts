@@ -5,7 +5,7 @@ import { CustomVariableSupport, DataQueryRequest, DataQueryResponse } from '@gra
 
 import { LokiVariableQueryEditor } from './components/VariableQueryEditor';
 import { LokiDatasource } from './datasource';
-import { LokiVariableQuery, LokiVariableQueryType } from './types';
+import { LokiVariableQuery } from './types';
 
 export class LokiVariableSupport extends CustomVariableSupport<LokiDatasource, LokiVariableQuery> {
   editor = LokiVariableQueryEditor;
@@ -16,20 +16,7 @@ export class LokiVariableSupport extends CustomVariableSupport<LokiDatasource, L
   }
 
   async execute(query: LokiVariableQuery) {
-    if (query.type === LokiVariableQueryType.LabelNames) {
-      return this.datasource.labelNamesQuery();
-    }
-
-    if (!query.label) {
-      return [];
-    }
-
-    // If we have query expr, use /series endpoint
-    if (query.stream) {
-      return this.datasource.labelValuesSeriesQuery(query.stream, query.label);
-    }
-
-    return this.datasource.labelValuesQuery(query.label);
+    return this.datasource.metricFindQuery(query);
   }
 
   query(request: DataQueryRequest<LokiVariableQuery>): Observable<DataQueryResponse> {

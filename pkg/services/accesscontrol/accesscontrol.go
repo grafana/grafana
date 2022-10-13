@@ -45,12 +45,6 @@ type Options struct {
 	ReloadCache bool
 }
 
-type Store interface {
-	// GetUserPermissions returns user permissions with only action and scope fields set.
-	GetUserPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]Permission, error)
-	DeleteUserPermissions(ctx context.Context, orgID, userID int64) error
-}
-
 type TeamPermissionsService interface {
 	GetPermissions(ctx context.Context, user *user.SignedInUser, resourceID string) ([]ResourcePermission, error)
 	SetUserPermission(ctx context.Context, orgID int64, user User, resourceID, permission string) (*ResourcePermission, error)
@@ -93,7 +87,7 @@ type User struct {
 }
 
 // HasGlobalAccess checks user access with globally assigned permissions only
-func HasGlobalAccess(ac AccessControl, c *models.ReqContext) func(fallback func(*models.ReqContext) bool, evaluator Evaluator) bool {
+func HasGlobalAccess(ac AccessControl, service Service, c *models.ReqContext) func(fallback func(*models.ReqContext) bool, evaluator Evaluator) bool {
 	return func(fallback func(*models.ReqContext) bool, evaluator Evaluator) bool {
 		if ac.IsDisabled() {
 			return fallback(c)
@@ -103,11 +97,22 @@ func HasGlobalAccess(ac AccessControl, c *models.ReqContext) func(fallback func(
 		userCopy.OrgID = GlobalOrgID
 		userCopy.OrgRole = ""
 		userCopy.OrgName = ""
+		if userCopy.Permissions[GlobalOrgID] == nil {
+			permissions, err := service.GetUserPermissions(c.Req.Context(), &userCopy, Options{})
+			if err != nil {
+				c.Logger.Error("failed fetching permissions for user", "userID", userCopy.UserID, "error", err)
+			}
+			userCopy.Permissions[GlobalOrgID] = GroupScopesByAction(permissions)
+		}
+
 		hasAccess, err := ac.Evaluate(c.Req.Context(), &userCopy, evaluator)
 		if err != nil {
 			c.Logger.Error("Error from access control system", "error", err)
 			return false
 		}
+
+		// set on user so we don't fetch global permissions every time this is called
+		c.SignedInUser.Permissions[GlobalOrgID] = userCopy.Permissions[GlobalOrgID]
 
 		return hasAccess
 	}
@@ -150,6 +155,12 @@ var ReqOrgAdminOrEditor = func(c *models.ReqContext) bool {
 	return c.OrgRole == org.RoleAdmin || c.OrgRole == org.RoleEditor
 }
 
+// ReqHasRole generates a fallback to check whether the user has a role
+// Note that while ReqOrgAdmin returns false for a Grafana Admin / Viewer, ReqHasRole(org.RoleAdmin) will return true
+func ReqHasRole(role org.RoleType) func(c *models.ReqContext) bool {
+	return func(c *models.ReqContext) bool { return c.HasRole(role) }
+}
+
 func BuildPermissionsMap(permissions []Permission) map[string]bool {
 	permissionsMap := make(map[string]bool)
 	for _, p := range permissions {
@@ -162,8 +173,8 @@ func BuildPermissionsMap(permissions []Permission) map[string]bool {
 // GroupScopesByAction will group scopes on action
 func GroupScopesByAction(permissions []Permission) map[string][]string {
 	m := make(map[string][]string)
-	for _, p := range permissions {
-		m[p.Action] = append(m[p.Action], p.Scope)
+	for i := range permissions {
+		m[permissions[i].Action] = append(m[permissions[i].Action], permissions[i].Scope)
 	}
 	return m
 }
@@ -205,4 +216,15 @@ func GetOrgRoles(user *user.SignedInUser) []string {
 	}
 
 	return roles
+}
+
+func BackgroundUser(name string, orgID int64, role org.RoleType, permissions []Permission) *user.SignedInUser {
+	return &user.SignedInUser{
+		OrgID:   orgID,
+		OrgRole: role,
+		Login:   "grafana_" + name,
+		Permissions: map[int64]map[string][]string{
+			orgID: GroupScopesByAction(permissions),
+		},
+	}
 }

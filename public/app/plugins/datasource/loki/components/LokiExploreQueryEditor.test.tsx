@@ -4,8 +4,8 @@ import React from 'react';
 import { LoadingState, PanelData, toUtc, TimeRange, HistoryItem } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
 
+import LokiLanguageProvider from '../LanguageProvider';
 import { LokiDatasource } from '../datasource';
-import LokiLanguageProvider from '../language_provider';
 import { createLokiDatasource } from '../mocks';
 import { LokiQuery } from '../types';
 

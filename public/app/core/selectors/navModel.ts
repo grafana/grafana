@@ -1,5 +1,7 @@
 import { NavModel, NavModelItem, NavIndex } from '@grafana/data';
 
+import { HOME_NAV_ID } from '../reducers/navModel';
+
 const getNotFoundModel = (): NavModel => {
   const node: NavModelItem = {
     id: 'not-found',
@@ -18,12 +20,12 @@ const getNotFoundModel = (): NavModel => {
 export const getNavModel = (navIndex: NavIndex, id: string, fallback?: NavModel, onlyChild = false): NavModel => {
   if (navIndex[id]) {
     const node = navIndex[id];
-    const nodeWithActive = enrichNodeWithActiveState(node);
-    const main = onlyChild ? nodeWithActive : getSectionRoot(nodeWithActive);
+    const main = onlyChild ? node : getRootSectionForNode(node);
+    const mainWithActive = enrichNodeWithActiveState(main, id);
 
     return {
-      node: nodeWithActive,
-      main,
+      node: node,
+      main: mainWithActive,
     };
   }
 
@@ -34,31 +36,23 @@ export const getNavModel = (navIndex: NavIndex, id: string, fallback?: NavModel,
   return getNotFoundModel();
 };
 
-function getSectionRoot(node: NavModelItem): NavModelItem {
-  return node.parentItem ? getSectionRoot(node.parentItem) : node;
+export function getRootSectionForNode(node: NavModelItem): NavModelItem {
+  return node.parentItem && node.parentItem.id !== HOME_NAV_ID ? getRootSectionForNode(node.parentItem) : node;
 }
 
-function enrichNodeWithActiveState(node: NavModelItem): NavModelItem {
-  const nodeCopy = { ...node };
-
-  if (nodeCopy.parentItem) {
-    nodeCopy.parentItem = { ...nodeCopy.parentItem };
-    const root = nodeCopy.parentItem;
-
-    if (root.children) {
-      root.children = root.children.map((item) => {
-        if (item.id === node.id) {
-          return { ...nodeCopy, active: true };
-        }
-
-        return item;
-      });
-    }
-
-    nodeCopy.parentItem = enrichNodeWithActiveState(root);
+function enrichNodeWithActiveState(node: NavModelItem, activeId: string): NavModelItem {
+  if (node.id === activeId) {
+    return { ...node, active: true };
   }
 
-  return nodeCopy;
+  if (node.children && node.children.length > 0) {
+    return {
+      ...node,
+      children: node.children.map((child) => enrichNodeWithActiveState(child, activeId)),
+    };
+  }
+
+  return node;
 }
 
 export const getTitleFromNavModel = (navModel: NavModel) => {

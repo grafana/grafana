@@ -1,7 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { take } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useDispatch } from 'react-redux';
 
 import { GrafanaTheme2, InterpolateFunction, PanelProps } from '@grafana/data';
 import { CustomScrollbar, stylesFactory, useStyles2 } from '@grafana/ui';
@@ -13,6 +12,7 @@ import impressionSrv from 'app/core/services/impression_srv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { SearchCard } from 'app/features/search/components/SearchCard';
 import { DashboardSearchItem } from 'app/features/search/types';
+import { useDispatch } from 'app/types';
 
 import { PanelLayout, PanelOptions } from './models.gen';
 import { getStyles } from './styles';

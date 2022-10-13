@@ -38,7 +38,7 @@ describe('ConfigEditor', () => {
     expect(mockOnOptionsChange).toHaveBeenCalledWith(
       expect.objectContaining({
         jsonData: expect.objectContaining({
-          esVersion: '5.0.0',
+          esVersion: '8.0.0',
           timeField: '@timestamp',
           maxConcurrentShardRequests: 5,
         }),

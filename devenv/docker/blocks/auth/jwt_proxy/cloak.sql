@@ -2243,6 +2243,7 @@ d4b2c483-1dd3-47f6-86bf-42548009918d	\N	password	74e29604-ff35-42bb-a26d-4d0b81e
 cb2bd4ed-94b8-4259-bcaa-9250c3fb28d3	\N	password	6db3c5e5-b84b-4f9d-a7a8-8d05b03c929d	1657026827644	\N	{"value":"q3Z59Nh/5bdezDEpCwEbMPu8d+VgJ5WetafXkR8l0FlsTTkSDQgW+j6GaM3seJR93p3/jCxyfsvZl062d1pq7w==","salt":"ohuHnjLnwF9dBZ38DRJJWg==","additionalParameters":{}}	{"hashIterations":27500,"algorithm":"pbkdf2-sha256","additionalParameters":{}}	10
 b58e1964-6466-40b2-879c-982b724d7f9c	\N	password	88692d07-bb9a-46cf-844c-7ff5c529cd04	1657026904515	\N	{"value":"+/0zWjiJyE3+dCOEf0SO6G3n1/LsFAVoDAZREKTfN4vQ5xJH8srJoCjxcgb+bI1crMr8gknDlFyGRy7CpYn2VQ==","salt":"v/2okNt3wGOZz+x4DjOCDQ==","additionalParameters":{}}	{"hashIterations":27500,"algorithm":"pbkdf2-sha256","additionalParameters":{}}	10
 3ff7dd8f-a299-4b51-bf5d-99665ccfd313	\N	password	8f58cbec-6e40-4bab-bff0-1c5ff899fe2e	1657026943075	\N	{"value":"nMYodMJMiq/J8g9vRPktGc7WSWnOKr6leMDZX4p9K9KgAUYeXFDSu+d29PWWn0rFn93dL0PNdIdHWNQhfkIDMg==","salt":"rmi9WLHgarmIXGukecSIig==","additionalParameters":{}}	{"hashIterations":27500,"algorithm":"pbkdf2-sha256","additionalParameters":{}}	10
+c9582964-cfdd-49a1-99fb-847604b0c78c	\N	password	1a85b7e0-4baa-420b-89f8-1cea43a540dd	1662480997923	\N	{"value":"ViNTHbpBUNdtH1qGSlip7WFI8Z9lvcGQdbL8Yw48zUgB46jVFbD1eNrOw68p3ovDwfDCIJKm34EFNbw9/uzHSg==","salt":"Z9P8RfnrQwCn0xUTpWC2DQ==","additionalParameters":{}}	{"hashIterations":27500,"algorithm":"pbkdf2-sha256","additionalParameters":{}}	10
 \.
 
 
@@ -2599,6 +2600,7 @@ c49bddc6-ec92-4caa-bc04-57ba80a92eb9	grafana	f	${role_offline-access}	offline_ac
 c029a218-4519-4537-ae12-d8f3c27a0003	grafana	f	Grafana Server Admin	serveradmin	grafana	\N	grafana
 c9a776f9-2740-435f-a725-4dbcc17a6c91	grafana	f	Grafana Viewer	viewer	grafana	\N	grafana
 c4c74006-c346-48cf-8cf1-1617e3e1cde1	grafana	f	Grafana Editor	editor	grafana	\N	grafana
+31150c12-e9fe-4465-a792-816b7298a595	grafana	f	Grafana Server Administrator	grafanaadmin	grafana	\N	grafana
 \.
 
 
@@ -3008,7 +3010,7 @@ df78645e-c32b-4160-b79f-42e622d71982	String	jsonType.label
 
 COPY public.realm (id, access_code_lifespan, user_action_lifespan, access_token_lifespan, account_theme, admin_theme, email_theme, enabled, events_enabled, events_expiration, login_theme, name, not_before, password_policy, registration_allowed, remember_me, reset_password_allowed, social, ssl_required, sso_idle_timeout, sso_max_lifespan, update_profile_on_soc_login, verify_email, master_admin_client, login_lifespan, internationalization_enabled, default_locale, reg_email_as_username, admin_events_enabled, admin_events_details_enabled, edit_username_allowed, otp_policy_counter, otp_policy_window, otp_policy_period, otp_policy_digits, otp_policy_alg, otp_policy_type, browser_flow, registration_flow, direct_grant_flow, reset_credentials_flow, client_auth_flow, offline_session_idle_timeout, revoke_refresh_token, access_token_life_implicit, login_with_email_allowed, duplicate_emails_allowed, docker_auth_flow, refresh_token_max_reuse, allow_user_managed_access, sso_max_lifespan_remember_me, sso_idle_timeout_remember_me) FROM stdin;
 master	60	300	60	\N	\N	\N	t	f	0	\N	master	1643820855	\N	f	f	f	f	EXTERNAL	1800	36000	f	f	3cd285ea-0f6e-43b6-ab5c-d021c33a551b	1800	f	\N	f	f	f	f	0	1	30	6	HmacSHA1	totp	ef998ef5-ca12-45db-a252-2e71b1419039	1695e7d2-ad80-4502-8479-8121a6e2a2f0	5f6f801e-0588-4a6e-860a-35483f5c1ec7	954b046d-2b24-405e-84ee-c44ffe603df2	023dc515-c259-42bb-88a8-2e8d84abca92	2592000	f	900	t	f	032b05cf-0007-44da-a370-b42039f6b762	0	f	0	0
-grafana	60	300	300	\N	\N	\N	t	f	0	\N	grafana	1643820879	\N	f	f	f	f	EXTERNAL	1800	36000	f	f	ef7f6eac-9fff-44aa-a86c-5125d52acc82	1800	f	\N	f	f	f	f	0	1	30	6	HmacSHA1	totp	a38aeb47-f27e-4e68-82ff-7cc7371a47a7	9d02badd-cb1c-4655-bf5e-f888861433ff	b478ecfb-db7e-4797-a245-8fc3b4dec884	3085fb68-fc1f-4e1c-a8be-33fb45194b04	cbb4b3ca-ced6-4046-8b59-f1c3959c7948	2592000	f	900	t	f	95e02703-f5bc-4e04-8bef-f6adc2d8173f	0	f	0	0
+grafana	60	300	300	\N	\N	\N	t	f	0	\N	grafana	1662482026	\N	f	f	f	f	EXTERNAL	1800	36000	f	f	ef7f6eac-9fff-44aa-a86c-5125d52acc82	1800	f	\N	f	f	f	f	0	1	30	6	HmacSHA1	totp	a38aeb47-f27e-4e68-82ff-7cc7371a47a7	9d02badd-cb1c-4655-bf5e-f888861433ff	b478ecfb-db7e-4797-a245-8fc3b4dec884	3085fb68-fc1f-4e1c-a8be-33fb45194b04	cbb4b3ca-ced6-4046-8b59-f1c3959c7948	2592000	f	900	t	f	95e02703-f5bc-4e04-8bef-f6adc2d8173f	0	f	0	0
 \.
 
 
@@ -3325,6 +3327,7 @@ COPY public.user_entity (id, email, email_constraint, email_verified, enabled, f
 6db3c5e5-b84b-4f9d-a7a8-8d05b03c929d	jwt-admin@example.org	jwt-admin@example.org	f	t	\N	Admin	JWT	grafana	jwt-admin	1657026796311	\N	0
 88692d07-bb9a-46cf-844c-7ff5c529cd04	jwt-editor@example.com	jwt-editor@example.com	f	t	\N	Editor	JWT	grafana	jwt-editor	1657026894275	\N	0
 8f58cbec-6e40-4bab-bff0-1c5ff899fe2e	jwt-viewer@example.com	jwt-viewer@example.com	f	t	\N	Viewer	JWT	grafana	jwt-viewer	1657026933578	\N	0
+1a85b7e0-4baa-420b-89f8-1cea43a540dd	jwt-grafanaadmin@example.com	jwt-grafanaadmin@example.com	t	t	\N	Grafanaadmin	JWT	grafana	jwt-grafanaadmin	1662480983434	\N	0
 \.
 
 
@@ -3401,6 +3404,11 @@ f1311ecb-6a6a-49d6-bb16-5132daf93a64	8f58cbec-6e40-4bab-bff0-1c5ff899fe2e
 18a7066b-fe71-410e-9581-69f78347ec29	8f58cbec-6e40-4bab-bff0-1c5ff899fe2e
 c9a776f9-2740-435f-a725-4dbcc17a6c91	8f58cbec-6e40-4bab-bff0-1c5ff899fe2e
 c4c74006-c346-48cf-8cf1-1617e3e1cde1	88692d07-bb9a-46cf-844c-7ff5c529cd04
+c49bddc6-ec92-4caa-bc04-57ba80a92eb9	1a85b7e0-4baa-420b-89f8-1cea43a540dd
+0f3d47bb-002a-4cd0-a502-725f224308a7	1a85b7e0-4baa-420b-89f8-1cea43a540dd
+f1311ecb-6a6a-49d6-bb16-5132daf93a64	1a85b7e0-4baa-420b-89f8-1cea43a540dd
+18a7066b-fe71-410e-9581-69f78347ec29	1a85b7e0-4baa-420b-89f8-1cea43a540dd
+31150c12-e9fe-4465-a792-816b7298a595	1a85b7e0-4baa-420b-89f8-1cea43a540dd
 \.
 
 

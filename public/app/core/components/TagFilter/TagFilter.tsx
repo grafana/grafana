@@ -161,9 +161,9 @@ export const TagFilter: FC<Props> = ({
   return (
     <div className={styles.tagFilter}>
       {isClearable && tags.length > 0 && (
-        <span className={styles.clear} onClick={() => onTagChange([])} tabIndex={0}>
+        <button className={styles.clear} onClick={() => onTagChange([])}>
           Clear tags
-        </span>
+        </button>
       )}
       <MultiSelect {...selectOptions} prefix={<Icon name="tag-alt" />} aria-label="Tag filter" />
     </div>
@@ -184,8 +184,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     }
   `,
   clear: css`
+    background: none;
+    border: none;
     text-decoration: underline;
     font-size: 12px;
+    padding: none;
     position: absolute;
     top: -17px;
     right: 0;

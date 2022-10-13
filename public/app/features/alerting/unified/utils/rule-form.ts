@@ -21,6 +21,8 @@ import {
   GrafanaAlertStateDecision,
   Labels,
   PostableRuleGrafanaRuleDTO,
+  RulerAlertingRuleDTO,
+  RulerRecordingRuleDTO,
   RulerRuleDTO,
 } from 'app/types/unified-alerting-dto';
 
@@ -54,7 +56,7 @@ export const getDefaultFormValues = (): RuleFormValues => {
     queries: [],
     condition: '',
     noDataState: GrafanaAlertStateDecision.NoData,
-    execErrState: GrafanaAlertStateDecision.Alerting,
+    execErrState: GrafanaAlertStateDecision.Error,
     evaluateEvery: '1m',
     evaluateFor: '5m',
 
@@ -136,32 +138,26 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
     }
   } else {
     if (isAlertingRulerRule(rule)) {
-      const [forTime, forTimeUnit] = rule.for
-        ? parseInterval(rule.for)
-        : [defaultFormValues.forTime, defaultFormValues.forTimeUnit];
+      const alertingRuleValues = alertingRulerRuleToRuleForm(rule);
+
       return {
         ...defaultFormValues,
-        name: rule.alert,
+        ...alertingRuleValues,
         type: RuleFormType.cloudAlerting,
         dataSourceName: ruleSourceName,
         namespace,
         group: group.name,
-        expression: rule.expr,
-        forTime,
-        forTimeUnit,
-        annotations: listifyLabelsOrAnnotations(rule.annotations),
-        labels: listifyLabelsOrAnnotations(rule.labels),
       };
     } else if (isRecordingRulerRule(rule)) {
+      const recordingRuleValues = recordingRulerRuleToRuleForm(rule);
+
       return {
         ...defaultFormValues,
-        name: rule.record,
+        ...recordingRuleValues,
         type: RuleFormType.cloudRecording,
         dataSourceName: ruleSourceName,
         namespace,
         group: group.name,
-        expression: rule.expr,
-        labels: listifyLabelsOrAnnotations(rule.labels),
       };
     } else {
       throw new Error('Unexpected type of rule for cloud rules source');
@@ -169,11 +165,40 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
   }
 }
 
+export function alertingRulerRuleToRuleForm(
+  rule: RulerAlertingRuleDTO
+): Pick<RuleFormValues, 'name' | 'forTime' | 'forTimeUnit' | 'expression' | 'annotations' | 'labels'> {
+  const defaultFormValues = getDefaultFormValues();
+
+  const [forTime, forTimeUnit] = rule.for
+    ? parseInterval(rule.for)
+    : [defaultFormValues.forTime, defaultFormValues.forTimeUnit];
+
+  return {
+    name: rule.alert,
+    expression: rule.expr,
+    forTime,
+    forTimeUnit,
+    annotations: listifyLabelsOrAnnotations(rule.annotations),
+    labels: listifyLabelsOrAnnotations(rule.labels),
+  };
+}
+
+export function recordingRulerRuleToRuleForm(
+  rule: RulerRecordingRuleDTO
+): Pick<RuleFormValues, 'name' | 'expression' | 'labels'> {
+  return {
+    name: rule.record,
+    expression: rule.expr,
+    labels: listifyLabelsOrAnnotations(rule.labels),
+  };
+}
+
 export const getDefaultQueries = (): AlertQuery[] => {
   const dataSource = getDefaultOrFirstCompatibleDataSource();
 
   if (!dataSource) {
-    return [getDefaultExpression('A')];
+    return [...getDefaultExpressions('A', 'B')];
   }
   const relativeTimeRange = getDefaultRelativeTimeRange();
 
@@ -188,15 +213,18 @@ export const getDefaultQueries = (): AlertQuery[] => {
         hide: false,
       },
     },
-    getDefaultExpression('B'),
+    ...getDefaultExpressions('B', 'C'),
   ];
 };
 
-const getDefaultExpression = (refId: string): AlertQuery => {
-  const model: ExpressionQuery = {
-    refId,
+const getDefaultExpressions = (...refIds: [string, string]): AlertQuery[] => {
+  const refOne = refIds[0];
+  const refTwo = refIds[1];
+
+  const reduceExpression: ExpressionQuery = {
+    refId: refIds[0],
     hide: false,
-    type: ExpressionQueryType.classic,
+    type: ExpressionQueryType.reduce,
     datasource: {
       uid: ExpressionDatasourceUID,
       type: ExpressionDatasourceRef.type,
@@ -205,14 +233,14 @@ const getDefaultExpression = (refId: string): AlertQuery => {
       {
         type: 'query',
         evaluator: {
-          params: [3],
+          params: [],
           type: EvalFunction.IsAbove,
         },
         operator: {
           type: 'and',
         },
         query: {
-          params: ['A'],
+          params: [refOne],
         },
         reducer: {
           params: [],
@@ -220,15 +248,54 @@ const getDefaultExpression = (refId: string): AlertQuery => {
         },
       },
     ],
+    reducer: 'last',
     expression: 'A',
   };
 
-  return {
-    refId,
-    datasourceUid: ExpressionDatasourceUID,
-    queryType: '',
-    model,
+  const thresholdExpression: ExpressionQuery = {
+    refId: refTwo,
+    hide: false,
+    type: ExpressionQueryType.threshold,
+    datasource: {
+      uid: ExpressionDatasourceUID,
+      type: ExpressionDatasourceRef.type,
+    },
+    conditions: [
+      {
+        type: 'query',
+        evaluator: {
+          params: [0],
+          type: EvalFunction.IsAbove,
+        },
+        operator: {
+          type: 'and',
+        },
+        query: {
+          params: [refTwo],
+        },
+        reducer: {
+          params: [],
+          type: 'last',
+        },
+      },
+    ],
+    expression: refOne,
   };
+
+  return [
+    {
+      refId: refOne,
+      datasourceUid: ExpressionDatasourceUID,
+      queryType: '',
+      model: reduceExpression,
+    },
+    {
+      refId: refTwo,
+      datasourceUid: ExpressionDatasourceUID,
+      queryType: '',
+      model: thresholdExpression,
+    },
+  ];
 };
 
 const dataQueriesToGrafanaQueries = async (
@@ -313,7 +380,14 @@ export const panelToRuleFormValues = async (
   }
 
   if (!queries.find((query) => query.datasourceUid === ExpressionDatasourceUID)) {
-    queries.push(getDefaultExpression(getNextRefIdChar(queries.map((query) => query.model))));
+    const [reduceExpression, _thresholdExpression] = getDefaultExpressions(getNextRefIdChar(queries), '-');
+    queries.push(reduceExpression);
+
+    const [_reduceExpression, thresholdExpression] = getDefaultExpressions(
+      reduceExpression.refId,
+      getNextRefIdChar(queries)
+    );
+    queries.push(thresholdExpression);
   }
 
   const { folderId, folderTitle } = dashboard.meta;

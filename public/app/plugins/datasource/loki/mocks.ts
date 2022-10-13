@@ -18,15 +18,19 @@ const rawRange = {
 };
 
 const defaultTimeSrvMock = {
-  timeRange: () => ({
+  timeRange: jest.fn().mockReturnValue({
     from: rawRange.from,
     to: rawRange.to,
     raw: rawRange,
   }),
 };
 
+const defaultTemplateSrvMock = {
+  replace: (input: string) => input,
+};
+
 export function createLokiDatasource(
-  templateSrvMock: TemplateSrv,
+  templateSrvMock: Partial<TemplateSrv> = defaultTemplateSrvMock,
   settings: Partial<DataSourceInstanceSettings<LokiOptions>> = {},
   timeSrvStub = defaultTimeSrvMock
 ): LokiDatasource {

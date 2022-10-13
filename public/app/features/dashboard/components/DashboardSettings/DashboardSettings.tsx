@@ -46,12 +46,19 @@ export function DashboardSettings({ dashboard, editview, pageNav, sectionNav }: 
   const location = useLocation();
   const editIndex = getEditIndex(location);
   const subSectionNav = getSectionNav(pageNav, sectionNav, pages, currentPage, location);
+  const size = config.featureToggles.topnav ? 'sm' : 'md';
 
   const actions = [
     canSaveAs && (
-      <SaveDashboardAsButton dashboard={dashboard} onSaveSuccess={onPostSave} variant="secondary" key="save as" />
+      <SaveDashboardAsButton
+        dashboard={dashboard}
+        onSaveSuccess={onPostSave}
+        variant="secondary"
+        key="save as"
+        size={size}
+      />
     ),
-    canSave && <SaveDashboardButton dashboard={dashboard} onSaveSuccess={onPostSave} key="Save" />,
+    canSave && <SaveDashboardButton dashboard={dashboard} onSaveSuccess={onPostSave} key="Save" size={size} />,
   ];
 
   return (

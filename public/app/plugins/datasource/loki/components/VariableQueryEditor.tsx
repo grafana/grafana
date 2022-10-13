@@ -14,21 +14,38 @@ const variableOptions = [
 
 export type Props = QueryEditorProps<LokiDatasource, LokiQuery, LokiOptions, LokiVariableQuery>;
 
-export const LokiVariableQueryEditor: FC<Props> = ({ onChange, query }) => {
+const refId = 'LokiVariableQueryEditor-VariableQuery';
+
+export const LokiVariableQueryEditor: FC<Props> = ({ onChange, query, datasource }) => {
   const [type, setType] = useState<number | undefined>(undefined);
   const [label, setLabel] = useState('');
+  const [labelOptions, setLabelOptions] = useState<Array<SelectableValue<string>>>([]);
   const [stream, setStream] = useState('');
 
   useEffect(() => {
-    if (!query || typeof query !== 'string') {
+    if (!query) {
       return;
     }
 
-    const variableQuery = migrateVariableQuery(query);
+    const variableQuery = typeof query === 'string' ? migrateVariableQuery(query) : query;
     setType(variableQuery.type);
     setLabel(variableQuery.label || '');
     setStream(variableQuery.stream || '');
+
+    if (variableQuery.label) {
+      setLabelOptions([{ label: variableQuery.label, value: variableQuery.label }]);
+    }
   }, [query]);
+
+  useEffect(() => {
+    if (type !== QueryType.LabelValues) {
+      return;
+    }
+
+    datasource.labelNamesQuery().then((labelNames: Array<{ text: string }>) => {
+      setLabelOptions(labelNames.map(({ text }) => ({ label: text, value: text })));
+    });
+  }, [datasource, type]);
 
   const onQueryTypeChange = (newType: SelectableValue<QueryType>) => {
     setType(newType.value);
@@ -37,13 +54,13 @@ export const LokiVariableQueryEditor: FC<Props> = ({ onChange, query }) => {
         type: newType.value,
         label,
         stream,
-        refId: 'LokiVariableQueryEditor-VariableQuery',
+        refId,
       });
     }
   };
 
-  const onLabelChange = (e: FormEvent<HTMLInputElement>) => {
-    setLabel(e.currentTarget.value);
+  const onLabelChange = (newLabel: SelectableValue<string>) => {
+    setLabel(newLabel.value || '');
   };
 
   const onStreamChange = (e: FormEvent<HTMLInputElement>) => {
@@ -71,15 +88,33 @@ export const LokiVariableQueryEditor: FC<Props> = ({ onChange, query }) => {
       {type === QueryType.LabelValues && (
         <>
           <InlineField label="Label" labelWidth={20}>
-            <Input type="text" aria-label="Label" value={label} onChange={onLabelChange} onBlur={handleBlur} />
+            <Select
+              aria-label="Label"
+              onChange={onLabelChange}
+              onBlur={handleBlur}
+              value={label}
+              options={labelOptions}
+              width={16}
+              allowCustomValue
+            />
           </InlineField>
-          <InlineField label="Stream selector" labelWidth={20}>
+          <InlineField
+            label="Stream selector"
+            labelWidth={20}
+            tooltip={
+              <div>
+                Optional. If defined, a list of values for the label in the specified log stream selector is returned.
+              </div>
+            }
+          >
             <Input
               type="text"
               aria-label="Stream selector"
+              placeholder="Optional stream selector"
               value={stream}
               onChange={onStreamChange}
               onBlur={handleBlur}
+              width={22}
             />
           </InlineField>
         </>

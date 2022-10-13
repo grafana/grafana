@@ -9,10 +9,12 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -110,7 +112,8 @@ func setupTestDatabase(t *testing.T) (*sqlstore.SQLStore, *ServiceAccountsStoreI
 	db := sqlstore.InitTestDB(t)
 	apiKeyService := apikeyimpl.ProvideService(db, db.Cfg)
 	kvStore := kvstore.ProvideService(db)
-	return db, ProvideServiceAccountsStore(db, apiKeyService, kvStore)
+	orgService := orgimpl.ProvideService(db, setting.NewCfg())
+	return db, ProvideServiceAccountsStore(db, apiKeyService, kvStore, orgService)
 }
 
 func TestStore_RetrieveServiceAccount(t *testing.T) {

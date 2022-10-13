@@ -19,7 +19,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -50,7 +49,7 @@ func TestWarmStateCache(t *testing.T) {
 		{
 			AlertRuleUID: rule.UID,
 			OrgID:        rule.OrgID,
-			CacheId:      `[["test1","testValue1"]]`,
+			CacheID:      `[["test1","testValue1"]]`,
 			Labels:       data.Labels{"test1": "testValue1"},
 			State:        eval.Normal,
 			Results: []state.Evaluation{
@@ -63,7 +62,7 @@ func TestWarmStateCache(t *testing.T) {
 		}, {
 			AlertRuleUID: rule.UID,
 			OrgID:        rule.OrgID,
-			CacheId:      `[["test2","testValue2"]]`,
+			CacheID:      `[["test2","testValue2"]]`,
 			Labels:       data.Labels{"test2": "testValue2"},
 			State:        eval.Alerting,
 			Results: []state.Evaluation{
@@ -115,20 +114,18 @@ func TestWarmStateCache(t *testing.T) {
 	}
 
 	schedCfg := schedule.SchedulerCfg{
-		Cfg:           cfg,
-		C:             clock.NewMock(),
-		Logger:        log.New("ngalert cache warming test"),
-		RuleStore:     dbstore,
-		InstanceStore: dbstore,
-		Metrics:       testMetrics.GetSchedulerMetrics(),
+		Cfg:       cfg,
+		C:         clock.NewMock(),
+		Logger:    log.New("ngalert cache warming test"),
+		RuleStore: dbstore,
+		Metrics:   testMetrics.GetSchedulerMetrics(),
 	}
-	st := state.NewManager(schedCfg.Logger, testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, clock.NewMock())
+	st := state.NewManager(schedCfg.Logger, testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &image.NoopImageService{}, clock.NewMock(), &state.FakeHistorian{})
 	st.Warm(ctx)
 
 	t.Run("instance cache has expected entries", func(t *testing.T) {
 		for _, entry := range expectedEntries {
-			cacheEntry, err := st.Get(entry.OrgID, entry.AlertRuleUID, entry.CacheId)
-			require.NoError(t, err)
+			cacheEntry := st.Get(entry.OrgID, entry.AlertRuleUID, entry.CacheID)
 
 			if diff := cmp.Diff(entry, cacheEntry, cmpopts.IgnoreFields(state.State{}, "Results")); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
@@ -170,13 +167,12 @@ func TestAlertingTicker(t *testing.T) {
 		StopAppliedFunc: func(alertDefKey models.AlertRuleKey) {
 			stopAppliedCh <- alertDefKey
 		},
-		RuleStore:     dbstore,
-		InstanceStore: dbstore,
-		Logger:        log.New("ngalert schedule test"),
-		Metrics:       testMetrics.GetSchedulerMetrics(),
-		AlertSender:   notifier,
+		RuleStore:   dbstore,
+		Logger:      log.New("ngalert schedule test"),
+		Metrics:     testMetrics.GetSchedulerMetrics(),
+		AlertSender: notifier,
 	}
-	st := state.NewManager(schedCfg.Logger, testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, clock.NewMock())
+	st := state.NewManager(schedCfg.Logger, testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &image.NoopImageService{}, clock.NewMock(), &state.FakeHistorian{})
 	appUrl := &url.URL{
 		Scheme: "http",
 		Host:   "localhost",
@@ -262,7 +258,7 @@ func assertEvalRun(t *testing.T, ch <-chan evalAppliedInfo, tick time.Time, keys
 		case info := <-ch:
 			_, ok := expected[info.alertDefKey]
 			if !ok {
-				t.Fatalf(fmt.Sprintf("alert rule: %v should not have been evaluated at: %v", info.alertDefKey, info.now))
+				t.Fatalf("alert rule: %v should not have been evaluated at: %v", info.alertDefKey, info.now)
 			}
 			t.Logf("alert rule: %v evaluated at: %v", info.alertDefKey, info.now)
 			assert.Equal(t, tick, info.now)

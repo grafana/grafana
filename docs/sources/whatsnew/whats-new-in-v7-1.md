@@ -63,11 +63,11 @@ The new table panel introduced in 7.0 was missing a few features that the old ta
 
 ## Ad hoc filtering in the new table panel
 
-[Ad hoc filtering]({{< relref "../variables/variable-types/#ad-hoc-filters" >}}), a way to automatically add filters to queries without having to define template variables is now supported in the new Table panel.
+[Ad hoc filtering]({{< relref "../dashboards/variables/add-template-variables/#add-ad-hoc-filters" >}}), a way to automatically add filters to queries without having to define template variables is now supported in the new Table panel.
 
 ## Stat panel text mode
 
-The [stat panel]({{< relref "../visualizations/stat-panel/#text-mode" >}}) has a new **Text mode** option to control what text to show.
+The [stat panel]({{< relref "../panels-visualizations/visualizations/stat/#text-mode" >}}) has a new **Text mode** option to control what text to show.
 
 By default, the Stat panel displays:
 
@@ -108,7 +108,7 @@ You can now use HashiCorp Vault to get secrets for configuration and provisionin
 
 ### Support for monthly schedules in reports
 
-With Grafana Enterprise 7.1, you can generate reports on a [monthly schedule]({{< relref "../share-dashboards-panels/#scheduling" >}}).
+With Grafana Enterprise 7.1, you can generate reports on a [monthly schedule]({{< relref "../dashboards/share-dashboards-panels/#scheduling" >}}).
 
 ## Upgrading
 

@@ -2,23 +2,15 @@
 //  
 //  Frame[0] 
 //  Name: ordering frame
-//  Dimensions: 2 Fields by 10 Rows
-//  +---------------------------+--------------------+
-//  | Name: name                | Name: score        |
-//  | Labels:                   | Labels:            |
-//  | Type: []string            | Type: []float64    |
-//  +---------------------------+--------------------+
-//  | dynamic (2)               | 61.26983678470653  |
-//  | roci-simple-2             | 52.417145624935095 |
-//  | Prometheus 2.0            | 45.193422538475374 |
-//  | Prometheus 20.0           | 45.193422538475374 |
-//  | Prometheus Stats          | 45.193422538475374 |
-//  | prometheus histogram      | 45.193422538475374 |
-//  | prometheus histogram2     | 45.193422538475374 |
-//  | Panel Tests - Bar Gauge 2 | 40.74215154954845  |
-//  | Prometheus 2.0 Stats      | 38.70210379766075  |
-//  | Prometheus Second Word    | 38.70210379766075  |
-//  +---------------------------+--------------------+
+//  Dimensions: 2 Fields by 2 Rows
+//  +----------------------+-------------------+
+//  | Name: name           | Name: score       |
+//  | Labels:              | Labels:           |
+//  | Type: []string       | Type: []float64   |
+//  +----------------------+-------------------+
+//  | Prometheus 2.0       | 7.621131552585596 |
+//  | Prometheus 2.0 Stats | 7.621131552585596 |
+//  +----------------------+-------------------+
 //  
 //  
 //  🌟 This was machine generated.  Do not edit. 🌟
@@ -47,28 +39,12 @@
       "data": {
         "values": [
           [
-            "dynamic (2)",
-            "roci-simple-2",
             "Prometheus 2.0",
-            "Prometheus 20.0",
-            "Prometheus Stats",
-            "prometheus histogram",
-            "prometheus histogram2",
-            "Panel Tests - Bar Gauge 2",
-            "Prometheus 2.0 Stats",
-            "Prometheus Second Word"
+            "Prometheus 2.0 Stats"
           ],
           [
-            61.26983678470653,
-            52.417145624935095,
-            45.193422538475374,
-            45.193422538475374,
-            45.193422538475374,
-            45.193422538475374,
-            45.193422538475374,
-            40.74215154954845,
-            38.70210379766075,
-            38.70210379766075
+            7.621131552585596,
+            7.621131552585596
           ]
         ]
       }

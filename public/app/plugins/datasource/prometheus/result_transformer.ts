@@ -65,7 +65,7 @@ const isHeatmapResult = (dataFrame: DataFrame, options: DataQueryRequest<PromQue
   return target?.format === 'heatmap';
 };
 
-// V2 result trasnformer used to transform query results from queries that were run trough prometheus backend
+// V2 result transformer used to transform query results from queries that were run through prometheus backend
 export function transformV2(
   response: DataQueryResponse,
   request: DataQueryRequest<PromQuery>,

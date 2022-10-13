@@ -284,7 +284,7 @@ func upsertProperty(dialect migrator.Dialect, sess *sqlstore.DBSession, now time
 	return err
 }
 
-//nolint: gocyclo
+//nolint:gocyclo
 func (s dbFileStorage) List(ctx context.Context, folderPath string, paging *Paging, options *ListOptions) (*ListResponse, error) {
 	var resp *ListResponse
 
