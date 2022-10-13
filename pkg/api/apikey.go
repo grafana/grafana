@@ -93,7 +93,7 @@ func (hs *HTTPServer) DeleteAPIKey(c *models.ReqContext) response.Response {
 
 // swagger:route POST /auth/keys api_keys addAPIkey
 //
-// Creates an API key.
+// Create an API key.
 //
 // Will return details of the created API key.
 //
