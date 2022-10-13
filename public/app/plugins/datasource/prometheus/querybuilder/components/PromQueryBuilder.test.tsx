@@ -1,6 +1,7 @@
 import { getByText, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { Provider } from 'react-redux';
 
 import {
   DataSourceInstanceSettings,
@@ -11,6 +12,7 @@ import {
   TimeRange,
 } from '@grafana/data';
 
+import { configureStore } from '../../../../../store/configureStore';
 import { PrometheusDatasource } from '../../datasource';
 import PromQlLanguageProvider from '../../language_provider';
 import { EmptyLanguageProviderMock } from '../../language_provider.mock';
@@ -196,15 +198,18 @@ describe('PromQueryBuilder', () => {
     const { datasource } = createDatasource();
     const props = createProps(datasource);
     props.showExplain = true;
+    const store = configureStore();
     render(
-      <PromQueryBuilder
-        {...props}
-        query={{
-          metric: 'histogram_metric_sum',
-          labels: [],
-          operations: [],
-        }}
-      />
+      <Provider store={store}>
+        <PromQueryBuilder
+          {...props}
+          query={{
+            metric: 'histogram_metric_sum',
+            labels: [],
+            operations: [],
+          }}
+        />
+      </Provider>
     );
     expect(await screen.findByText(EXPLAIN_LABEL_FILTER_CONTENT)).toBeInTheDocument();
   });
@@ -212,15 +217,18 @@ describe('PromQueryBuilder', () => {
   it('does not show explain section when showExplain is false', async () => {
     const { datasource } = createDatasource();
     const props = createProps(datasource);
+    const store = configureStore();
     render(
-      <PromQueryBuilder
-        {...props}
-        query={{
-          metric: 'histogram_metric_sum',
-          labels: [],
-          operations: [],
-        }}
-      />
+      <Provider store={store}>
+        <PromQueryBuilder
+          {...props}
+          query={{
+            metric: 'histogram_metric_sum',
+            labels: [],
+            operations: [],
+          }}
+        />
+      </Provider>
     );
     expect(await screen.queryByText(EXPLAIN_LABEL_FILTER_CONTENT)).not.toBeInTheDocument();
   });
@@ -254,7 +262,13 @@ function createProps(datasource: PrometheusDatasource, data?: PanelData) {
 function setup(query: PromVisualQuery = defaultQuery, data?: PanelData) {
   const { datasource, languageProvider } = createDatasource();
   const props = createProps(datasource, data);
-  const { container } = render(<PromQueryBuilder {...props} query={query} />);
+
+  const store = configureStore();
+  const { container } = render(
+    <Provider store={store}>
+      <PromQueryBuilder {...props} query={query} />
+    </Provider>
+  );
   return { languageProvider, datasource, container };
 }
 
