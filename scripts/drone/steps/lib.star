@@ -516,27 +516,6 @@ def test_backend_integration_step(edition):
 
 
 
-def swagger_gen_step(edition, ver_mode):
-    if edition in ['enterprise', 'enterprise2']:
-        return None
-    
-    if ver_mode != "pr":
-        return None
-
-    return {
-        'name': 'swagger-gen',
-        'image': go_image,
-        'depends_on': [],
-        'environment': {
-            'GITHUB_TOKEN': from_secret(github_token),
-        },
-        'commands': [
-            'go run ./pkg/api/swaggergen/main.go src ${DRONE_SOURCE_BRANCH} ${DRONE_COMMIT_SHA} $${GITHUB_TOKEN}',
-        ],
-    }
-
-
-
 def betterer_frontend_step(edition="oss"):
     deps = []
     if edition == "enterprise":

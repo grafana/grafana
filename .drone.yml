@@ -808,7 +808,7 @@ volumes:
   name: docker
 ---
 clone:
-  retries: 3
+  disable: true
 depends_on: []
 image_pull_secrets:
 - dockerconfigjson
@@ -821,6 +821,12 @@ platform:
   os: linux
 services: []
 steps:
+- commands:
+  - git clone "https://github.com/grafana/grafana.git"
+  - cd grafana
+  - git checkout ${DRONE_SOURCE_BRANCH}
+  image: golang:1.19.2
+  name: clone-enterprise
 - commands:
   - go run ./pkg/api/swaggergen/main.go src ${DRONE_SOURCE_BRANCH} ${DRONE_COMMIT_SHA}
     $${GITHUB_TOKEN}
@@ -5639,6 +5645,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 6ec25fb77e0d29f7cfdc4162031a1c1d3c12fb89aa8d265291fa3806390bb596
+hmac: d94144c1c94e56e4afff55c7dabfba01987f5d4b14a03a1937b5aef88748ada5
 
 ...

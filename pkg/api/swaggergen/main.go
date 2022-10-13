@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/go-git/go-git/v5"
@@ -14,6 +15,11 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
+)
+
+const (
+	GF_DIR            = "grafana"
+	GF_ENTERPRISE_DIR = "grafana-enterprise"
 )
 
 func getAuth(token string) *http.BasicAuth {
@@ -46,16 +52,35 @@ func execCmd(cmd *exec.Cmd) {
 	CheckIfError(err)
 }
 
-func prepareEnv(grafanaDir, grafanaEnterpriseDir, branch, token string) *git.Repository {
+func prepareEnv(grafanaDir, grafanaEnterpriseDir, branch, commit, token string) *git.Repository {
 	var grafanaRepo *git.Repository
 	grafanaRepo, err := git.PlainOpen(grafanaDir)
 	CheckIfError(err)
 
-	_, err = git.PlainOpen(grafanaEnterpriseDir)
+	// check grafana branch
+	h, err := grafanaRepo.Head()
+	CheckIfError(err)
+	if h.Name().String() != plumbing.NewBranchReferenceName(branch).String() {
+		fmt.Printf("\x1b[31;1munexpected grafana branch: got:%s expected:%s\x1b[0m\n", h.Name().String(), plumbing.NewBranchReferenceName(branch).String())
+		os.Exit(1)
+	}
+
+	// check latest commit
+	latest, err := grafanaRepo.CommitObject(h.Hash())
+	CheckIfError(err)
+
+	if latest.Hash.String() != commit {
+		fmt.Printf("\x1b[31;1munexpected commit: got:%s expected:%s\x1b[0m\n", latest.Hash.String(), commit)
+		os.Exit(1)
+	}
+
+	// clone enterprise (if not exists)
+	grafanaEnterpriseRepo, err := git.PlainOpen(grafanaEnterpriseDir)
+	expEnterpriseBranches := []string{branch, "main"}
 	if err != nil && errors.Is(err, git.ErrRepositoryNotExists) {
-		for _, b := range []string{branch, "main"} {
-			// Clone the grafana enterprise repository: checkout the specific branch if exists otherwise checkout the main
-			_, err = clone(grafanaEnterpriseDir, "https://github.com/grafana/grafana-enterprise.git", b, token)
+		for _, b := range expEnterpriseBranches {
+			// checkout the specific branch if exists, otherwise checkout the main
+			grafanaEnterpriseRepo, err = clone(grafanaEnterpriseDir, "https://github.com/grafana/grafana-enterprise.git", b, token)
 			if err == nil {
 				break
 			}
@@ -63,13 +88,13 @@ func prepareEnv(grafanaDir, grafanaEnterpriseDir, branch, token string) *git.Rep
 	}
 	CheckIfError(err)
 
-	if filepath.Base(grafanaDir) != "grafana" {
-		// grafana enterprise enablement script expects grafana OSS to be under grafana directory
-		// therefore we have to create a short link
-		Info("ln -s %s %s", grafanaDir, filepath.Join(filepath.Dir(grafanaDir), "grafana"))
-		//nolint:gosec
-		cmd := exec.Command("ln", "-s", grafanaDir, filepath.Join(filepath.Dir(grafanaDir), "grafana"))
-		execCmd(cmd)
+	// check grafana enterprise branch
+	h, err = grafanaEnterpriseRepo.Head()
+	CheckIfError(err)
+	if h.Name().String() != plumbing.NewBranchReferenceName(branch).String() &&
+		h.Name().String() != plumbing.NewBranchReferenceName("main").String() {
+		fmt.Printf("\x1b[31;1munexpected enterprise branch: got:%s expected:%s\x1b[0m\n", h.Name().String(), strings.Join([]string{plumbing.NewBranchReferenceName(branch).String(), plumbing.NewBranchReferenceName("main").String()}, " or "))
+		os.Exit(1)
 	}
 
 	Info("enable enterprise")
@@ -131,19 +156,17 @@ func commitChanges(grafanaWorktree *git.Worktree) plumbing.Hash {
 }
 
 func main() {
-	CheckArgs("<grafana_subdir>", "<branch>", "<latest_commit>", "<github token>")
-	grafanaSubDir, branch, commit, token := os.Args[1], os.Args[2], os.Args[3], os.Args[4]
-
-	grafanaSubDir = filepath.Clean(grafanaSubDir)
+	CheckArgs("<branch>", "<latest_commit>", "<github token>")
+	branch, commit, token := os.Args[1], os.Args[2], os.Args[3]
 
 	wd, err := os.Getwd()
 	CheckIfError(err)
 
 	parentDir := filepath.Dir(wd)
-	grafanaDir := filepath.Join(parentDir, grafanaSubDir)
-	grafanaEnterpriseDir := filepath.Join(parentDir, "grafana-enterprise")
+	grafanaDir := filepath.Join(parentDir, GF_DIR)
+	grafanaEnterpriseDir := filepath.Join(parentDir, GF_ENTERPRISE_DIR)
 
-	grafanaRepo := prepareEnv(grafanaDir, grafanaEnterpriseDir, branch, token)
+	grafanaRepo := prepareEnv(grafanaDir, grafanaEnterpriseDir, branch, commit, token)
 
 	grafanaWorktree, err := grafanaRepo.Worktree()
 	CheckIfError(err)
@@ -152,17 +175,6 @@ func main() {
 		Branch: plumbing.NewBranchReferenceName(branch),
 	})
 	CheckIfError(err)
-
-	h, err := grafanaRepo.Head()
-	CheckIfError(err)
-
-	latest, err := grafanaRepo.CommitObject(h.Hash())
-	CheckIfError(err)
-
-	if latest.Hash.String() != commit {
-		fmt.Printf("\x1b[31;1munexpected commit: got:%s expected:%s\x1b[0m\n", latest.Hash.String(), commit)
-		os.Exit(1)
-	}
 
 	generateSwagger(grafanaDir)
 
