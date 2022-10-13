@@ -1,8 +1,9 @@
 ---
 aliases:
   - /docs/grafana/latest/basics/
-title: Grafana basics
-weight: 15
+  - /docs/grafana/latest/fundamentals/
+title: Fundamentals
+weight: 8
 ---
 
 # Fundamentals
