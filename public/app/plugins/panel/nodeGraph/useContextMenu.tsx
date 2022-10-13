@@ -28,17 +28,24 @@ export function useContextMenu(
 
   const onNodeOpen = useCallback(
     (event, node) => {
-      const extraNodeItem = config.gridLayout
-        ? [
-            {
-              label: 'Show in Graph layout',
-              onClick: (node: NodeDatum) => {
-                setFocusedNodeId(node.id);
-                setConfig({ ...config, gridLayout: false });
-              },
-            },
-          ]
-        : undefined;
+      let label = 'Show in Grid layout';
+      let showGridLayout = true;
+
+      if (config.gridLayout) {
+        label = 'Show in Graph layout';
+        showGridLayout = false;
+      }
+
+      const extraNodeItem = [
+        {
+          label: label,
+          onClick: (node: NodeDatum) => {
+            setFocusedNodeId(node.id);
+            setConfig({ ...config, gridLayout: showGridLayout });
+          },
+        },
+      ];
+
       const renderer = getItemsRenderer(getLinks(nodes, node.dataFrameRowIndex), node, extraNodeItem);
 
       if (renderer) {
