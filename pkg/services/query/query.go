@@ -68,7 +68,7 @@ func (s *Service) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-// QueryData can process queries and return query responses.
+// QueryData processes queries and returns query responses. It handles queries to single or mixed datasources, as well as expressions.
 func (s *Service) QueryData(ctx context.Context, user *user.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error) {
 	// Parse the request into parsed queries grouped by datasource uid
 	parsedReq, err := s.parseMetricRequest(ctx, user, skipCache, reqDTO)
@@ -158,11 +158,19 @@ func (s *Service) handleExpressions(ctx context.Context, user *user.SignedInUser
 	return qdr, nil
 }
 
+// handleQueryData handles one or more queries to a single datasource.
 func (s *Service) handleQueryData(ctx context.Context, user *user.SignedInUser, parsedReq *parsedRequest) (*backend.QueryDataResponse, error) {
 	queries := parsedReq.getFlattenedQueries()
 	ds := queries[0].datasource
 	if err := s.pluginRequestValidator.Validate(ds.Url, nil); err != nil {
 		return nil, datasources.ErrDataSourceAccessDenied
+	}
+
+	// ensure that each query passed to this function has the same datasource
+	for _, pq := range queries {
+		if ds.Uid != pq.datasource.Uid {
+			return nil, fmt.Errorf("all queries must have the same datasource - found %s and %s", ds.Uid, pq.datasource.Uid)
+		}
 	}
 
 	instanceSettings, err := adapters.ModelToInstanceSettings(ds, s.decryptSecureJsonDataFn(ctx))
@@ -236,6 +244,7 @@ func (pr parsedRequest) getFlattenedQueries() []parsedQuery {
 	return queries
 }
 
+// parseRequest parses a request into parsed queries grouped by datasource uid
 func (s *Service) parseMetricRequest(ctx context.Context, user *user.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest) (*parsedRequest, error) {
 	if len(reqDTO.Queries) == 0 {
 		return nil, ErrNoQueriesFound
