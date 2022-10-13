@@ -68,6 +68,10 @@ export const onDashboardLoadedHandler = ({
     let metricsQueries: CloudWatchMetricsQuery[] = [];
 
     for (const query of cloudWatchQueries) {
+      if (query.hide) {
+        continue;
+      }
+
       if (isCloudWatchLogsQuery(query)) {
         query.logGroupNames?.length && logsQueries.push(query);
       } else if (isCloudWatchMetricsQuery(query)) {

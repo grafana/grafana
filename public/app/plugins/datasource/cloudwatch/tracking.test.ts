@@ -32,8 +32,8 @@ describe('onDashboardLoadedHandler', () => {
       metrics_query_count: 7,
       metrics_search_builder_count: 9,
       metrics_search_code_count: 5,
-      metrics_search_count: 14,
-      metrics_search_match_exact_count: 9,
+      metrics_search_count: 18,
+      metrics_search_match_exact_count: 18,
     });
   });
 });
