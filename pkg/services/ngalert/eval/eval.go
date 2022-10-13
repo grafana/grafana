@@ -79,7 +79,7 @@ type ExecutionResults struct {
 	// Condition contains the results of the condition
 	Condition data.Frames
 
-	// Results contains the results of all queries, reduce and math expressions
+	// Results contains the results of all datasource queries and expressions
 	Results map[string]data.Frames
 
 	// NoData contains the DatasourceUID for RefIDs that returned no data.
@@ -109,8 +109,8 @@ type Result struct {
 	// Error message for Error state. should be nil if State != Error.
 	Error error
 
-	// Results contains the results of all queries, reduce and math expressions
-	Results map[string]data.Frames
+	// Frames contains the results of all datasource queries and expressions
+	Frames map[string]*data.Frame
 
 	// Values contains the RefID and value of reduce and math expressions.
 	// It does not contain values for classic conditions as the values
@@ -374,6 +374,27 @@ func datasourceUIDsToRefIDs(refIDsToDatasourceUIDs map[string]string) map[string
 	return result
 }
 
+// framesForResults returns the queries and expressions frames for each result.
+func framesForResults(r ExecutionResults) map[int]map[string]*data.Frame {
+	// framesForResults contains the data frames for each Ref ID for each label set
+	result := make(map[int]map[string]*data.Frame)
+	for refID, frames := range r.Results {
+		if len(frames) > 0 {
+			for ix, frame := range frames {
+				if len(frame.Fields) > 0 {
+					refIDsFrames, ok := result[ix]
+					if !ok {
+						refIDsFrames = make(map[string]*data.Frame)
+					}
+					refIDsFrames[refID] = frame
+					result[ix] = refIDsFrames
+				}
+			}
+		}
+	}
+	return result
+}
+
 // evaluateExecutionResult takes the ExecutionResult which includes data.Frames returned
 // from SSE (Server Side Expressions). It will create Results (slice of Result) with a State
 // extracted from each Frame.
@@ -436,7 +457,8 @@ func evaluateExecutionResult(execResults ExecutionResults, ts time.Time) Results
 		return evalResults
 	}
 
-	for _, f := range execResults.Condition {
+	resultsFrames := framesForResults(execResults)
+	for ix, f := range execResults.Condition {
 		rowLen, err := f.RowLen()
 		if err != nil {
 			appendErrRes(&invalidEvalResultFormatError{refID: f.RefID, reason: "unable to get frame row length", err: err})
@@ -479,6 +501,7 @@ func evaluateExecutionResult(execResults ExecutionResults, ts time.Time) Results
 		r := Result{
 			Instance:           f.Fields[0].Labels,
 			EvaluatedAt:        ts,
+			Frames:             resultsFrames[ix],
 			EvaluationDuration: time.Since(ts),
 			EvaluationString:   extractEvalString(f),
 			Values:             extractValues(f),
