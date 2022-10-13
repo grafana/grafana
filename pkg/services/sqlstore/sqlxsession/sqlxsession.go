@@ -3,13 +3,12 @@ package sqlxsession
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
-	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	"github.com/grafana/grafana/pkg/services/sqlstore/commonSession"
 	"github.com/jmoiron/sqlx"
-	"github.com/mattn/go-sqlite3"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 )
@@ -79,68 +78,7 @@ func (gs *SessionDB) ExecWithReturningId(ctx context.Context, query string, args
 	return execWithReturningId(ctx, gs.driverName(), query, gs, args...)
 }
 
-func (gs *SessionDB) SqlxInTransactionWithRetry(ctx context.Context, fn func(ctx context.Context) error, retry int) error {
-	return sqlxInTransactionWithRetryCtx(ctx, gs, gs.bus, func(tx *SessionTx) error {
-		withValue := context.WithValue(ctx, ContextSQLxTransactionKey{}, tx)
-		return fn(withValue)
-	}, retry, gs.logger)
-}
-
-func sqlxInTransactionWithRetryCtx(ctx context.Context, sess *SessionDB, bus bus.Bus, callback SQLxDBTransactionFunc, retry int, logger log.Logger) error {
-	trans, isNew, err := sqlxStartTransactionOrUseExisting(ctx, sess, logger)
-	if err != nil {
-		return err
-	}
-
-	if !trans.transactionOpen && !isNew {
-		// this should not happen because the only place that creates reusable session begins a new transaction.
-		return fmt.Errorf("cannot reuse existing session that did not start transaction")
-	}
-
-	err = callback(trans)
-
-	if !isNew {
-		logger.Debug("skip committing the transaction because it belongs to a session created in the outer scope")
-		// Do not commit the transaction if the session was reused.
-		return err
-	}
-
-	// special handling of database locked errors for sqlite, then we can retry 5 times
-	var sqlError sqlite3.Error
-	if errors.As(err, &sqlError) && retry < 5 && (sqlError.Code == sqlite3.ErrLocked || sqlError.Code == sqlite3.ErrBusy) {
-		if rollErr := trans.sqlxtx.Rollback(); rollErr != nil {
-			return fmt.Errorf("rolling back transaction due to error failed: %s: %w", rollErr, err)
-		}
-
-		time.Sleep(time.Millisecond * time.Duration(10))
-		logger.Info("Database locked, sleeping then retrying", "error", err, "retry", retry)
-		return sqlxInTransactionWithRetryCtx(ctx, sess, bus, callback, retry+1, logger)
-	}
-
-	if err != nil {
-		if rollErr := trans.sqlxtx.Rollback(); rollErr != nil {
-			return fmt.Errorf("rolling back transaction due to error failed: %s: %w", rollErr, err)
-		}
-		return err
-	}
-	if isNew { // if this call initiated the session, it should be responsible for committing it.
-		if err = trans.sqlxtx.Commit(); err != nil {
-			return err
-		}
-	}
-
-	if len(trans.events) > 0 {
-		for _, e := range trans.events {
-			if err = bus.Publish(ctx, e); err != nil {
-				logger.Error("Failed to publish event after commit.", "error", err)
-			}
-		}
-	}
-
-	return nil
-}
-
-func sqlxStartTransactionOrUseExisting(ctx context.Context, sess *SessionDB, logger log.Logger) (*SessionTx, bool, error) {
+func (gs *SessionDB) StartSessionOrUseExisting(ctx context.Context, _ bool) (commonSession.Session, bool, error) {
 	value := ctx.Value(ContextSQLxTransactionKey{})
 	var trans *SessionTx
 	trans, ok := value.(*SessionTx)
@@ -150,7 +88,7 @@ func sqlxStartTransactionOrUseExisting(ctx context.Context, sess *SessionDB, log
 		return trans, false, nil
 	}
 
-	tx, err := sess.Beginx()
+	tx, err := gs.Beginx()
 	if err != nil {
 		return nil, false, err
 	}
@@ -182,6 +120,26 @@ func (gtx *SessionTx) driverName() string {
 
 func (gtx *SessionTx) ExecWithReturningId(ctx context.Context, query string, args ...interface{}) (int64, error) {
 	return execWithReturningId(ctx, gtx.driverName(), query, gtx, args...)
+}
+
+func (gtx *SessionTx) IsTransactionOpen() bool {
+	return gtx.transactionOpen
+}
+
+func (gtx *SessionTx) Close() {
+	gtx.transactionOpen = false
+}
+
+func (gtx *SessionTx) Commit() error {
+	return gtx.sqlxtx.Commit()
+}
+
+func (gtx *SessionTx) Rollback() error {
+	return gtx.sqlxtx.Rollback()
+}
+
+func (gtx *SessionTx) GetEvents() []interface{} {
+	return gtx.events
 }
 
 func execWithReturningId(ctx context.Context, driverName string, query string, sess Session, args ...interface{}) (int64, error) {

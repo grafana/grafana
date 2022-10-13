@@ -7,17 +7,18 @@ import (
 	"time"
 
 	"github.com/mattn/go-sqlite3"
-	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/sqlstore/commonSession"
+	"github.com/grafana/grafana/pkg/services/sqlstore/sqlxsession"
 )
 
 var tsclogger = log.New("sqlstore.transactions")
 
 // WithTransactionalDbSession calls the callback with a session within a transaction.
 func (ss *SQLStore) WithTransactionalDbSession(ctx context.Context, callback DBTransactionFunc) error {
-	return inTransactionWithRetryCtx(ctx, ss.engine, ss.bus, callback, 0)
+	return inTransactionWithRetryCtx(ctx, &XormEngine{ss.engine}, ss.bus, callback, 0)
 }
 
 // InTransaction starts a transaction and calls the fn
@@ -26,20 +27,27 @@ func (ss *SQLStore) InTransaction(ctx context.Context, fn func(ctx context.Conte
 	return ss.inTransactionWithRetry(ctx, fn, 0)
 }
 
+func (ss *SQLStore) SqlxInTransactionWithRetry(ctx context.Context, fn func(ctx context.Context) error, retry int) error {
+	return inTransactionWithRetryCtx(ctx, ss.GetSqlxSession(), ss.bus, func(sess commonSession.Session) error {
+		withValue := context.WithValue(ctx, sqlxsession.ContextSQLxTransactionKey{}, sess)
+		return fn(withValue)
+	}, retry)
+}
+
 func (ss *SQLStore) inTransactionWithRetry(ctx context.Context, fn func(ctx context.Context) error, retry int) error {
-	return inTransactionWithRetryCtx(ctx, ss.engine, ss.bus, func(sess *DBSession) error {
+	return inTransactionWithRetryCtx(ctx, &XormEngine{ss.engine}, ss.bus, func(sess commonSession.Session) error {
 		withValue := context.WithValue(ctx, ContextSessionKey{}, sess)
 		return fn(withValue)
 	}, retry)
 }
 
-func inTransactionWithRetryCtx(ctx context.Context, engine *xorm.Engine, bus bus.Bus, callback DBTransactionFunc, retry int) error {
-	sess, isNew, err := startSessionOrUseExisting(ctx, engine, true)
+func inTransactionWithRetryCtx(ctx context.Context, engine commonSession.Engine, bus bus.Bus, callback DBTransactionFunc, retry int) error {
+	sess, isNew, err := engine.StartSessionOrUseExisting(ctx, true)
 	if err != nil {
 		return err
 	}
 
-	if !sess.transactionOpen && !isNew {
+	if !sess.IsTransactionOpen() && !isNew {
 		// this should not happen because the only place that creates reusable session begins a new transaction.
 		return fmt.Errorf("cannot reuse existing session that did not start transaction")
 	}
@@ -80,8 +88,9 @@ func inTransactionWithRetryCtx(ctx context.Context, engine *xorm.Engine, bus bus
 		return err
 	}
 
-	if len(sess.events) > 0 {
-		for _, e := range sess.events {
+	events := sess.GetEvents()
+	if len(events) > 0 {
+		for _, e := range events {
 			if err = bus.Publish(ctx, e); err != nil {
 				ctxLogger.Error("Failed to publish event after commit.", "error", err)
 			}
@@ -93,7 +102,7 @@ func inTransactionWithRetryCtx(ctx context.Context, engine *xorm.Engine, bus bus
 
 func (ss *SQLStore) SQLxInTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
 	if ss.Cfg.IsFeatureToggleEnabled("newDBLibrary") {
-		return ss.GetSqlxSession().SqlxInTransactionWithRetry(ctx, fn, 0)
+		return ss.SqlxInTransactionWithRetry(ctx, fn, 0)
 	}
 	return ss.inTransactionWithRetry(ctx, fn, 0)
 }
