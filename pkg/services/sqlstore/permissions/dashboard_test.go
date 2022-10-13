@@ -45,7 +45,7 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 			expectedResult: 100,
 		},
 		{
-			desc: "Should be able to view a subset of dashboards scopes",
+			desc: "Should be able to view a subset of dashboards with dashboard scopes",
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:11"},
 				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:40"},
@@ -57,7 +57,7 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 			expectedResult: 6,
 		},
 		{
-			desc: "Should be able to view a subset of folder scopes with dashboard action",
+			desc: "Should be able to view a subset of dashboards with dashboard action and folder scope",
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionDashboardsRead, Scope: "folders:uid:2"},
 				{Action: dashboards.ActionDashboardsRead, Scope: "folders:uid:8"},
@@ -70,6 +70,15 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:*"},
 			},
 			expectedResult: 10,
+		},
+		{
+			desc: "Should be able to view a subset folders",
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:2"},
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:6"},
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:9"},
+			},
+			expectedResult: 3,
 		},
 	}
 
