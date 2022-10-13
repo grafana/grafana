@@ -8,7 +8,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AlertManagerCortexConfig, Receiver } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch, AccessControlAction, ContactPointsState, NotifiersState, ReceiversState } from 'app/types';
 
-import { receiversApi } from '../../api/receiversApi';
+import { useGetContactPointsState } from '../../api/receiversApi';
 import { Authorize } from '../../components/Authorize';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { deleteReceiverAction } from '../../state/actions';
@@ -122,7 +122,7 @@ function ReceiverHealth({ errorsByReceiver, someWithNoAttempt }: ReceiverHealthP
   );
 }
 const useContactPointsState = (alertManagerName: string) => {
-  const { currentData: contactPointsState } = receiversApi.useContactPointsStateQuery(alertManagerName ?? '');
+  const contactPointsState = useGetContactPointsState(alertManagerName ?? '');
   const receivers: ReceiversState = contactPointsState?.receivers ?? {};
   const errorStateAvailable = Object.keys(receivers).length > 0; // this logic can change depending on how we implement this in the BE
   return { contactPointsState, errorStateAvailable };

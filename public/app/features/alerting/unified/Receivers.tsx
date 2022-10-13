@@ -7,7 +7,9 @@ import { NavModelItem, GrafanaTheme2 } from '@grafana/data';
 import { Alert, LoadingPlaceholder, withErrorBoundary, useStyles2, Icon, Stack } from '@grafana/ui';
 import { useDispatch } from 'app/types';
 
-import { receiversApi } from './api/receiversApi';
+import { ContactPointsState } from '../../../types/alerting';
+
+import { useGetContactPointsState } from './api/receiversApi';
 import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { NoAlertManagerWarning } from './components/NoAlertManagerWarning';
@@ -21,7 +23,6 @@ import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
 import { useAlertManagersByPermission } from './hooks/useAlertManagerSources';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchAlertManagerConfigAction, fetchGrafanaNotifiersAction } from './state/actions';
-import { CONTACT_POINTS_STATE_INTERVAL_MS } from './utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { initialAsyncRequestState } from './utils/redux';
 
@@ -86,12 +87,7 @@ const Receivers: FC = () => {
       dispatch(fetchGrafanaNotifiersAction());
     }
   }, [alertManagerSourceName, dispatch, receiverTypes]);
-
-  const { currentData: contactPointsState } = receiversApi.useContactPointsStateQuery(alertManagerSourceName ?? '', {
-    skip: !alertManagerSourceName,
-    pollingInterval: CONTACT_POINTS_STATE_INTERVAL_MS,
-  });
-
+  const contactPointsState: ContactPointsState = useGetContactPointsState(alertManagerSourceName ?? '');
   const integrationsErrorCount = contactPointsState?.errorCount ?? 0;
 
   const disableAmSelect = !isRoot;

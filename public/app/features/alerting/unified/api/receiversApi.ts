@@ -1,5 +1,6 @@
 import { ContactPointsState, ReceiversStateDTO } from 'app/types';
 
+import { CONTACT_POINTS_STATE_INTERVAL_MS } from '../utils/constants';
 import { getDatasourceAPIUid } from '../utils/datasource';
 
 import { alertingApi } from './alertingApi';
@@ -17,3 +18,12 @@ export const receiversApi = alertingApi.injectEndpoints({
     }),
   }),
 });
+
+export const useGetContactPointsState = (alertManagerSourceName: string) => {
+  const contactPointsStateEmpty: ContactPointsState = { receivers: {}, errorCount: 0 };
+  const { currentData: contactPointsState } = receiversApi.useContactPointsStateQuery(alertManagerSourceName ?? '', {
+    skip: !alertManagerSourceName,
+    pollingInterval: CONTACT_POINTS_STATE_INTERVAL_MS,
+  });
+  return contactPointsState ?? contactPointsStateEmpty;
+};

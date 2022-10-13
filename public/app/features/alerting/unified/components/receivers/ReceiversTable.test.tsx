@@ -10,8 +10,9 @@ import {
   Receiver,
 } from 'app/plugins/datasource/alertmanager/types';
 import { configureStore } from 'app/store/configureStore';
-import { NotifierDTO, NotifierType } from 'app/types';
+import { ContactPointsState, NotifierDTO, NotifierType } from 'app/types';
 
+import { useGetContactPointsState } from '../../api/receiversApi';
 import { fetchGrafanaNotifiersAction } from '../../state/actions';
 
 import { ReceiversTable } from './ReceiversTable';
@@ -52,7 +53,20 @@ const mockNotifier = (type: NotifierType, name: string): NotifierDTO => ({
   options: [],
 });
 
+jest.mock('../../api/receiversApi', () => ({
+  ...jest.requireActual('../../api/receiversApi'),
+  useGetContactPointsState: jest.fn(),
+}));
+
+const useGetContactPointsStateMock = jest.mocked(useGetContactPointsState);
+
 describe('ReceiversTable', () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
+    const emptyContactPointsState: ContactPointsState = { receivers: {}, errorCount: 0 };
+    useGetContactPointsStateMock.mockReturnValue(emptyContactPointsState);
+  });
+
   it('render receivers with grafana notifiers', async () => {
     const receivers: Receiver[] = [
       {
