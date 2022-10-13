@@ -222,16 +222,20 @@ type FakeAuthInfoStore struct {
 func (f *FakeAuthInfoStore) GetExternalUserInfoByLogin(ctx context.Context, query *models.GetExternalUserInfoByLoginQuery) error {
 	return f.ExpectedError
 }
+
 func (f *FakeAuthInfoStore) GetAuthInfo(ctx context.Context, query *models.GetAuthInfoQuery) error {
 	query.Result = f.ExpectedOAuth
 	return f.ExpectedError
 }
+
 func (f *FakeAuthInfoStore) SetAuthInfo(ctx context.Context, cmd *models.SetAuthInfoCommand) error {
 	return f.ExpectedError
 }
+
 func (f *FakeAuthInfoStore) UpdateAuthInfoDate(ctx context.Context, authInfo *models.UserAuth) error {
 	return f.ExpectedError
 }
+
 func (f *FakeAuthInfoStore) UpdateAuthInfo(ctx context.Context, cmd *models.UpdateAuthInfoCommand) error {
 	f.ExpectedOAuth.OAuthAccessToken = cmd.OAuthToken.AccessToken
 	f.ExpectedOAuth.OAuthExpiry = cmd.OAuthToken.Expiry
@@ -239,9 +243,11 @@ func (f *FakeAuthInfoStore) UpdateAuthInfo(ctx context.Context, cmd *models.Upda
 	f.ExpectedOAuth.OAuthRefreshToken = cmd.OAuthToken.RefreshToken
 	return f.ExpectedError
 }
+
 func (f *FakeAuthInfoStore) DeleteAuthInfo(ctx context.Context, cmd *models.DeleteAuthInfoCommand) error {
 	return f.ExpectedError
 }
+
 func (f *FakeAuthInfoStore) GetUserById(ctx context.Context, id int64) (*user.User, error) {
 	return f.ExpectedUser, f.ExpectedError
 }

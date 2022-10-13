@@ -452,7 +452,12 @@ func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, org
 
 				reqContext.Resp.Before(h.deleteInvalidCookieEndOfRequestFunc(reqContext))
 				if err = h.oauthTokenService.InvalidateOAuthTokens(ctx, oauthToken); err != nil {
-					reqContext.Logger.Error("could not invalidate tokens", "userId", oauthToken.UserId, "error", err)
+					reqContext.Logger.Error("could not invalidate OAuth tokens", "userId", oauthToken.UserId, "error", err)
+				}
+
+				err = h.AuthTokenService.RevokeToken(ctx, token, false)
+				if err != nil && !errors.Is(err, models.ErrUserTokenNotFound) {
+					reqContext.Logger.Error("failed to revoke auth token", "error", err)
 				}
 				return false
 			}
