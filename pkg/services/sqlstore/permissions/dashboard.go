@@ -129,9 +129,11 @@ func (f AccessControlDashboardPermissionFilter) Where() (string, []interface{}) 
 		}
 
 		if !hasWildcard {
-			builder.WriteString("(dashboard.uid IN (SELECT SUBSTR(scope, 16) as uid FROM permission WHERE action = ? AND scope LIKE 'dashboards:uid:%'  " + rolesFilter + " )")
+			builder.WriteRune('(')
+			builder.WriteString("dashboard.uid IN (SELECT SUBSTR(scope, 16) as uid FROM permission WHERE action = ? AND scope LIKE 'dashboards:uid:%'  " + rolesFilter + " )")
 			builder.WriteString(" OR ")
-			builder.WriteString("dashboard.folder_id IN (SELECT id FROM dashboard as d WHERE d.uid IN (SELECT SUBSTR(scope, 13) as uid FROM permission WHERE action = ? AND scope LIKE 'folders:uid:%' " + rolesFilter + " )))")
+			builder.WriteString("dashboard.folder_id IN (SELECT id FROM dashboard as d WHERE d.uid IN (SELECT SUBSTR(scope, 13) as uid FROM permission WHERE action = ? AND scope LIKE 'folders:uid:%' " + rolesFilter + " ))")
+			builder.WriteString(" AND NOT dashboard.is_folder)")
 			args = append(args, f.dashboardAction)
 			args = append(args, params...)
 			args = append(args, f.dashboardAction)
@@ -145,7 +147,7 @@ func (f AccessControlDashboardPermissionFilter) Where() (string, []interface{}) 
 		}
 
 		var hasWildcard bool
-		for _, scope := range f.user.Permissions[f.user.OrgID][f.dashboardAction] {
+		for _, scope := range f.user.Permissions[f.user.OrgID][f.folderAction] {
 			if folderWildcards.Contains(scope) {
 				hasWildcard = true
 				builder.WriteString("(1 = 1 AND dashboard.is_folder)")
@@ -153,7 +155,7 @@ func (f AccessControlDashboardPermissionFilter) Where() (string, []interface{}) 
 			}
 		}
 		if !hasWildcard {
-			builder.WriteString("(dashboard.uid IN (SELECT SUBSTR(scope, 13) as uid FROM permission WHERE action = ? AND scope LIKE 'folders:uid:%' " + rolesFilter + "))")
+			builder.WriteString("(dashboard.uid IN (SELECT SUBSTR(scope, 13) as uid FROM permission WHERE action = ? AND scope LIKE 'folders:uid:%' " + rolesFilter + ") AND dashboard.is_folder)")
 			args = append(args, f.folderAction)
 			args = append(args, params...)
 		}
