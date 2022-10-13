@@ -99,6 +99,7 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	accesscontrol.AddManagedFolderAlertActionsRepeatMigration(mg)
 	accesscontrol.AddAdminOnlyMigration(mg)
 	accesscontrol.AddSeedAssignmentMigrations(mg)
+	addFolderMigrations(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {
