@@ -104,7 +104,7 @@ jobs:
     - name: Post to Slack
       id: slack
       if: ${{ steps.levitate-run.outputs.exit_code == 1 && steps.does-label-exist.outputs.result == 0 }}
-      uses: slackapi/slack-github-action@v1.19.0
+      uses: slackapi/slack-github-action@v1.23.0
       with:
         payload: |
           {
