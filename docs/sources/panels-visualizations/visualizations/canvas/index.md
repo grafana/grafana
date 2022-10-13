@@ -25,23 +25,23 @@ Canvas is a new panel that combines the power of Grafana with the flexibility of
 
 ### Metric value
 
-The metric value element allows you to easily select the data you want to display on canvas. This element has a unique “edit” mode that can be triggered either through the context menu “Edit” option or by double clicking. When in edit mode you can select which field data that you want to display.
+The metric value element enables you to easily select the data you want to display on canvas. This element has a unique “edit” mode that can be triggered either through the context menu “Edit” option or by double clicking. When in edit mode you can select which field data that you want to display.
 
 {{< video-embed src="/static/img/docs/canvas-panel/canvas-metric-value-9-2-0.mp4" max-width="750px" caption="Metric value element demo" >}}
 
 ### Text
 
-The text element allows you to easily add text to the canvas. The element also supports an editing mode, triggered via either double clicking or the edit menu option in the context menu.
+The text element enables you to easily add text to the canvas. The element also supports an editing mode, triggered via either double clicking or the edit menu option in the context menu.
 
 {{< video-embed src="/static/img/docs/canvas-panel/canvas-text-9-2-0.mp4" max-width="750px" caption="Text element demo" >}}
 
 ### Rectangle
 
-The rectangle element allows you to add a basic rectangle to the canvas. Rectangle elements support displaying text (both fixed and field data) as well as can change background color based on data thresholds.
+The rectangle element enables you to add a basic rectangle to the canvas. Rectangle elements support displaying text (both fixed and field data) as well as can change background color based on data thresholds.
 
 ### Icon
 
-The icon element allows you to add a supported icon to the canvas. Icons can have their color set based on thresholds / value mappings.
+The icon element enables you to add a supported icon to the canvas. Icons can have their color set based on thresholds / value mappings.
 
 ## Canvas Editing
 
