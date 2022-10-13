@@ -3,6 +3,7 @@ import { getDefaultTimeRange } from '@grafana/data';
 import { Scene } from '../components/Scene';
 import { SceneTimePicker } from '../components/SceneTimePicker';
 import { VizPanel } from '../components/VizPanel';
+import { SceneFlexChild, SceneFlexLayout } from '../components/layout/SceneFlexLayout';
 import { SceneGridCell, SceneGridLayout, SceneGridRow } from '../components/layout/SceneGridLayout';
 import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneEditManager } from '../editor/SceneEditManager';
@@ -83,7 +84,31 @@ export function getGridNestedTest(): Scene {
   const scene = new Scene({
     title: 'Grid nested test',
     layout: new SceneGridLayout({
-      children: [row, cell1, cell2],
+      children: [
+        row,
+        new SceneGridCell({
+          isResizable: false,
+          size: {
+            x: 0,
+            y: 0,
+            width: 24,
+            height: 10,
+          },
+          children: [
+            new SceneFlexLayout({
+              children: [
+                new SceneFlexChild({
+                  children: [
+                    new SceneGridLayout({
+                      children: [cell1, cell2],
+                    }),
+                  ],
+                }),
+              ],
+            }),
+          ],
+        }),
+      ],
     }),
     $editor: new SceneEditManager({}),
     $timeRange: new SceneTimeRange(getDefaultTimeRange()),

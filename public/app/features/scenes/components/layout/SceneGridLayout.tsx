@@ -4,7 +4,7 @@ import ReactGridLayout from 'react-grid-layout';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { Icon, useStyles2, useTheme2 } from '@grafana/ui';
 import { DEFAULT_ROW_HEIGHT, GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 
 import { SceneObjectBase } from '../../core/SceneObjectBase';
@@ -44,6 +44,47 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
     });
   };
 
+  // When layout changes, figure out if it's a nested grid layout and update enclosing cell's size if needed
+  onLayoutChange = (layout: ReactGridLayout.Layout[]) => {
+    let enclosingCell;
+    let parent = this.parent;
+    while (parent) {
+      if (parent instanceof SceneGridCell || parent instanceof SceneGridRow) {
+        enclosingCell = parent;
+        break;
+      } else {
+        parent = parent.parent;
+      }
+    }
+
+    // When not nested, we don't need to update anything
+    if (!enclosingCell) {
+      return;
+    }
+
+    // Collect all cells accumulated heights (cell's y position + height)
+    const accH = [];
+    for (let i = 0; i < layout.length; i++) {
+      const c = layout[i];
+      accH.push(c.y + c.h);
+    }
+
+    // If enclosing cell size is different than updated layout height, resize it accordingly
+    if (enclosingCell.state.size.height !== Math.max(...accH)) {
+      const diff = Math.max(...accH) - enclosingCell.state.size.height;
+      enclosingCell.setState({
+        size: {
+          ...enclosingCell.state.size,
+          height: enclosingCell.state.size.height + diff + (enclosingCell instanceof SceneGridRow ? 1 : 0),
+        },
+      });
+      // Update parent layout
+      if (enclosingCell.parent && enclosingCell.parent instanceof SceneGridLayout) {
+        enclosingCell.parent.updateLayout();
+      }
+    }
+  };
+
   onDragStop: ReactGridLayout.ItemCallback = (l, o, n) => {
     // Update children positions if they have changed
     for (let i = 0; i < l.length; i++) {
@@ -76,7 +117,7 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
 
 function SceneGridLayoutRenderer({ model }: SceneComponentProps<SceneGridLayout>) {
   const { children } = model.useState();
-
+  const theme = useTheme2();
   const layout = useMemo(() => {
     const lg = children.map((child) => {
       const size = child.state.size;
@@ -106,13 +147,22 @@ function SceneGridLayoutRenderer({ model }: SceneComponentProps<SceneGridLayout>
           return null;
         }
 
+        // Dev only, to be removed
+        const background = generateGridBackground({
+          cellSize: { width: (width - 23 * GRID_CELL_VMARGIN) / 24, height: GRID_CELL_HEIGHT },
+          margin: [GRID_CELL_VMARGIN, GRID_CELL_VMARGIN],
+          cols: 24,
+          gridWidth: width,
+          theme,
+        });
+
         return (
           /**
            * The children is using a width of 100% so we need to guarantee that it is wrapped
            * in an element that has the calculated size given by the AutoSizer. The AutoSizer
            * has a width of 0 and will let its content overflow its div.
            */
-          <div style={{ width: `${width}px`, height: '100%' }}>
+          <div style={{ width: `${width}px`, height: '100%', background }}>
             <ReactGridLayout
               width={width}
               /*
@@ -131,6 +181,7 @@ function SceneGridLayoutRenderer({ model }: SceneComponentProps<SceneGridLayout>
               layout={width > 768 ? layout.lg : layout.sm}
               onDragStop={model.onDragStop}
               onResizeStop={model.onResizeStop}
+              onLayoutChange={model.onLayoutChange}
               isBounded={true}
             >
               {children.map((child) => {
@@ -351,3 +402,37 @@ const getSceneGridRowStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
+
+// Source: https://github.com/metabase/metabase/blob/master/frontend/src/metabase/dashboard/components/grid/utils.js#L28
+// © 2022 Metabase, Inc.
+export function generateGridBackground({
+  cellSize,
+  margin,
+  cols,
+  gridWidth,
+  theme,
+}: {
+  cellSize: { width: number; height: number };
+  margin: [number, number];
+  cols: number;
+  gridWidth: number;
+  theme: GrafanaTheme2;
+}) {
+  const XMLNS = 'http://www.w3.org/2000/svg';
+  const [horizontalMargin, verticalMargin] = margin;
+  const rowHeight = cellSize.height + verticalMargin;
+  const cellStrokeColor = theme.colors.border.weak;
+
+  const y = 0;
+  const w = cellSize.width;
+  const h = cellSize.height;
+
+  const rectangles = new Array(cols).fill(undefined).map((_, i) => {
+    const x = i * (cellSize.width + horizontalMargin);
+    return `<rect stroke='${cellStrokeColor}' stroke-width='1' fill='none' x='${x}' y='${y}' width='${w}' height='${h}'/>`;
+  });
+
+  const svg = [`<svg xmlns='${XMLNS}' width='${gridWidth}' height='${rowHeight}'>`, ...rectangles, `</svg>`].join('');
+
+  return `url("data:image/svg+xml;utf8,${encodeURIComponent(svg)}")`;
+}
