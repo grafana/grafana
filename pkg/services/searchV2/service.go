@@ -13,7 +13,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -123,14 +122,14 @@ func (s *StandardSearchService) IsDisabled() bool {
 }
 
 func (s *StandardSearchService) Run(ctx context.Context) error {
-	orgQuery := &models.SearchOrgsQuery{}
-	err := s.sql.SearchOrgs(ctx, orgQuery)
+	orgQuery := &org.SearchOrgsQuery{}
+	result, err := s.orgService.Search(ctx, orgQuery)
 	if err != nil {
 		return fmt.Errorf("can't get org list: %w", err)
 	}
-	orgIDs := make([]int64, 0, len(orgQuery.Result))
-	for _, org := range orgQuery.Result {
-		orgIDs = append(orgIDs, org.Id)
+	orgIDs := make([]int64, 0, len(result))
+	for _, org := range result {
+		orgIDs = append(orgIDs, org.ID)
 	}
 	return s.dashboardIndex.run(ctx, orgIDs, s.reIndexCh)
 }

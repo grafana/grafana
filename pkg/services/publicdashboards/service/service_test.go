@@ -216,6 +216,38 @@ func TestSavePublicDashboard(t *testing.T) {
 		_, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
 		require.Error(t, err)
 	})
+
+	t.Run("Pubdash access token generation throws an error and pubdash is not persisted", func(t *testing.T) {
+		dashboard := models.NewDashboard("testDashie")
+
+		publicDashboardStore := &FakePublicDashboardStore{}
+		publicDashboardStore.On("GetDashboard", mock.Anything, mock.Anything).Return(dashboard, nil)
+		publicDashboardStore.On("GetPublicDashboardByUid", mock.Anything, mock.Anything).Return(nil, nil)
+		publicDashboardStore.On("GenerateNewPublicDashboardUid", mock.Anything).Return("an-uid", nil)
+		publicDashboardStore.On("GenerateNewPublicDashboardAccessToken", mock.Anything).Return("", ErrPublicDashboardFailedGenerateAccessToken)
+
+		service := &PublicDashboardServiceImpl{
+			log:   log.New("test.logger"),
+			store: publicDashboardStore,
+		}
+
+		dto := &SavePublicDashboardConfigDTO{
+			DashboardUid: "an-id",
+			OrgId:        8,
+			UserId:       7,
+			PublicDashboard: &PublicDashboard{
+				IsEnabled:    true,
+				DashboardUid: "NOTTHESAME",
+				OrgId:        9999999,
+			},
+		}
+
+		_, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
+
+		require.Error(t, err)
+		require.Equal(t, err, ErrPublicDashboardFailedGenerateAccessToken)
+		publicDashboardStore.AssertNotCalled(t, "SavePublicDashboardConfig")
+	})
 }
 
 func TestUpdatePublicDashboard(t *testing.T) {
