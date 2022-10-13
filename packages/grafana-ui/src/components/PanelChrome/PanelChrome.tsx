@@ -4,6 +4,7 @@ import React, { CSSProperties, ReactNode } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../themes';
+import { Icon } from '../Icon/Icon';
 
 /**
  * @internal
@@ -59,6 +60,10 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
     <div className={styles.container} style={containerStyles}>
       <div className={styles.header} style={headerStyles}>
         <div className={styles.headerTitle}>{title}</div>
+        <div className={styles.iconItem}>{<Icon name="info-circle" size="sm" />}</div>
+        <div className={styles.iconItem}>{<Icon name="link" size="sm" />}</div>
+        <div className={styles.iconItem}>{<Icon name="clock-nine" size="sm" />}</div>
+        <div className={styles.iconItem}>{<Icon name="heart-rate" size="sm" />}</div>
         {itemsRenderer(leftItems, (items) => {
           return <div className={styles.leftItems}>{items}</div>;
         })}
@@ -132,7 +137,14 @@ const getStyles = (theme: GrafanaTheme2) => {
       overflow: 'hidden',
       whiteSpace: 'nowrap',
       paddingLeft: theme.spacing(padding),
-      flexGrow: 1,
+      fontWeight: theme.typography.fontWeightMedium,
+    }),
+    iconItem: css({
+      label: 'panel-header',
+      textOverflow: 'ellipsis',
+      overflow: 'hidden',
+      whiteSpace: 'nowrap',
+      paddingLeft: theme.spacing(padding),
       fontWeight: theme.typography.fontWeightMedium,
     }),
     leftItems: css({
