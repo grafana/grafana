@@ -1,3 +1,4 @@
+// @ts-nocheck
 declare let __webpack_public_path__: string;
 
 // This is a path to the public folder without '/build'
@@ -18,7 +19,7 @@ import { FNDashboardProps, FailedToMountGrafanaErrorName } from './types';
 
 /**
  * NOTE:
- * Qiankun expects Promise. Otherwise warnings are logged nad life cycle hooks do not work
+ * Qiankun expects Promise. Otherwise warnings are logged and life cycle hooks do not work
  */
 /* eslint-disable-next-line  */
 export declare type LifeCycleFn<T extends { [key: string]: any }> = (app: any, global: typeof window) => Promise<any>;
@@ -26,6 +27,7 @@ export declare type LifeCycleFn<T extends { [key: string]: any }> = (app: any, g
 /**
  * NOTE: single-spa and qiankun lifeCycles
  */
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export declare type FrameworkLifeCycles<T = any> = {
   beforeLoad: LifeCycleFn<T> | Array<LifeCycleFn<T>>;
   beforeMount: LifeCycleFn<T> | Array<LifeCycleFn<T>>;
@@ -43,10 +45,10 @@ class createMfe {
 
   private static readonly logPrefix = '[FN Grafana]';
 
-  theme: FNDashboardProps['theme'];
-
+  mode: FNDashboardProps['mode'];
+  static component: ComponentType<FNDashboardProps>;
   constructor(readonly props: FNDashboardProps) {
-    this.theme = props.theme;
+    this.mode = props.mode;
   }
 
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
@@ -76,21 +78,22 @@ class createMfe {
     return () => fn_app.init();
   }
 
-  private static loadFnTheme = (theme: FNDashboardProps['theme']) => {
-    createMfe.logger('Trying to load theme...', theme);
+  private static loadFnTheme = (mode: FNDashboardProps['mode']) => {
+    createMfe.logger('Trying to load theme...', mode);
 
     config.theme2 = createTheme({
       colors: {
-        mode: theme,
+        mode,
       },
     });
     config.theme = config.theme2.v1;
-    config.bootData.user.lightTheme = theme === 'light' ? true : false;
+
+    config.bootData.user.lightTheme = mode === 'light' ? true : false;
     appEvents.publish(new ThemeChangedEvent(config.theme2));
-    const other = theme === 'dark' ? 'light' : 'dark';
+    const other = mode === 'dark' ? 'light' : 'dark';
     const newCssLink = document.createElement('link');
     newCssLink.rel = 'stylesheet';
-    newCssLink.href = config.bootData.themePaths[theme];
+    newCssLink.href = config.bootData.themePaths[mode];
     document.body.appendChild(newCssLink);
     const bodyLinks = document.getElementsByTagName('link');
     for (let i = 0; i < bodyLinks.length; i++) {
@@ -100,7 +103,7 @@ class createMfe {
       }
     }
 
-    createMfe.logger('Successfully loaded theme:', theme);
+    createMfe.logger('Successfully loaded theme:', mode);
   };
 
   private static getContainer(props: FNDashboardProps) {
@@ -109,21 +112,15 @@ class createMfe {
     return parentElement.querySelector(createMfe.containerSelector);
   }
 
-  private get container() {
-    return createMfe.getContainer(this.props);
-  }
-
   static mountFnApp(component: ComponentType<FNDashboardProps>) {
     const lifeCycleFn: FrameworkLifeCycles['mount'] = (props: FNDashboardProps) => {
       return new Promise((res, rej) => {
         createMfe.logger('Trying to mount grafana...');
 
         try {
-          const mfe = new createMfe(props);
-
-          createMfe.loadFnTheme(props.theme);
-
-          ReactDOM.render(React.createElement(component, { ...props }), mfe.container, () => {
+          createMfe.loadFnTheme(props.mode);
+          createMfe.component = component;
+          ReactDOM.render(React.createElement(component, { ...props }), createMfe.getContainer(props), () => {
             createMfe.logger('Successfully mounted grafana.');
 
             res(true);
@@ -167,11 +164,15 @@ class createMfe {
   }
 
   static updateFnApp() {
-    const lifeCycleFn: FrameworkLifeCycles['update'] = (props: Pick<FNDashboardProps, 'theme'>) => {
-      createMfe.logger('Trying to update grafana with theme:', props.theme);
+    const lifeCycleFn: FrameworkLifeCycles['update'] = (props: FNDashboardProps) => {
+      createMfe.logger('Trying to update grafana with theme:', props.mode);
 
-      if (props.theme) {
-        createMfe.loadFnTheme(props.theme);
+      if (props.mode) {
+        createMfe.loadFnTheme(props.mode);
+
+        ReactDOM.render(React.createElement(createMfe.component, { ...props }), createMfe.getContainer(props), () => {
+          createMfe.logger('Successfully mounted grafana.');
+        });
       }
 
       return Promise.resolve(false);

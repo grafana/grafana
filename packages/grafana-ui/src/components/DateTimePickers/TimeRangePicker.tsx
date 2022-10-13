@@ -43,6 +43,7 @@ export interface TimeRangePickerProps extends Themeable {
   history?: TimeRange[];
   hideQuickRanges?: boolean;
   widthOverride?: number;
+  fnText?: string | JSX.Element;
 }
 
 export interface State {
@@ -67,6 +68,7 @@ export function UnthemedTimeRangePicker(props: TimeRangePickerProps): ReactEleme
     onChangeFiscalYearStartMonth,
     hideQuickRanges,
     widthOverride,
+    fnText = '',
   } = props;
 
   const onChange = (timeRange: TimeRange) => {
@@ -113,6 +115,7 @@ export function UnthemedTimeRangePicker(props: TimeRangePickerProps): ReactEleme
           icon="clock-nine"
           isOpen={isOpen}
           variant={variant}
+          fnText={fnText}
         >
           <TimePickerButtonLabel {...props} />
         </ToolbarButton>
