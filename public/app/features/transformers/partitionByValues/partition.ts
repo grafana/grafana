@@ -1,8 +1,15 @@
-const digArrs = (map, depth, acc = []) => {
-    if (depth == 0)
-        acc.push(map);
+type Idxs = number[];
+type KeyMap = Map<unknown, KeyMap | Idxs>
+type Accum = Idxs[];
+
+const digArrs = (map: KeyMap | Idxs, depth: number, acc: Accum = []) => {
+    // the leaf nodes are always Idxs
+    if (depth === 0) {
+        acc.push(map as Idxs);
+    }
+    // the branch nodes are always KeyMaps
     else {
-        map.forEach(v => {
+        (map as KeyMap).forEach(v => {
             digArrs(v, depth - 1, acc);
         });
     }
@@ -12,30 +19,30 @@ const digArrs = (map, depth, acc = []) => {
 
 // in:  [['a','b','z','b'], ['c','c','x','c']]
 // out: [[0], [1,3], [2]]
-export function partition(keys) {
+export function partition(keys: unknown[][]) {
     let len = keys[0].length;
     let klen = keys.length;
 
-    let groups = new Map();
+    let rootMap: KeyMap = new Map();
 
     for (let i = 0; i < len; i++) {
-        let g = groups;
+        let cur: KeyMap | Idxs = rootMap;
 
         for (let j = 0; j < klen; j++) {
             let key = keys[j][i];
 
-            let g2 = g.get(key);
+            let next: KeyMap | Idxs | undefined = (cur as KeyMap).get(key);
 
-            if (g2 == null) {
-                g2 = j == klen - 1 ? [] : new Map();
-                g.set(key, g2);
+            if (next == null) {
+                next = j === klen - 1 ? [] : new Map();
+                (cur as KeyMap).set(key, next);
             }
 
-            g = g2;
+            cur = next;
         }
 
-        g.push(i);
+        (cur as Idxs).push(i);
     }
 
-    return digArrs(groups, klen);
+    return digArrs(rootMap, klen);
 }
