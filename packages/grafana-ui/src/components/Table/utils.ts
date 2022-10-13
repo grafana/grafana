@@ -61,6 +61,7 @@ export function getColumns(
   data: DataFrame,
   availableWidth: number,
   columnMinWidth: number,
+  showSpans: boolean,
   footerValues?: FooterItem[]
 ): GrafanaTableColumn[] {
   const columns: GrafanaTableColumn[] = [];
@@ -68,6 +69,10 @@ export function getColumns(
 
   for (const [fieldIndex, field] of data.fields.entries()) {
     const fieldTableOptions = (field.config.custom || {}) as TableFieldOptions;
+
+    if (fieldTableOptions.subcol && !showSpans) {
+      continue;
+    }
 
     if (fieldTableOptions.hidden) {
       continue;
