@@ -98,18 +98,12 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     target: SQLQuery,
     scopedVars: ScopedVars
   ): Record<string, string | DataSourceRef | SQLQuery['format']> {
-    const queryModel = this.getQueryModel(target, this.templateSrv, scopedVars);
-    const rawSql = this.clean(queryModel.interpolate());
     return {
       refId: target.refId,
       datasource: this.getRef(),
-      rawSql,
+      rawSql: this.templateSrv.replace(target.rawSql, scopedVars, this.interpolateVariable),
       format: target.format,
     };
-  }
-
-  clean(value: string) {
-    return value.replace(/''/g, "'");
   }
 
   async metricFindQuery(query: string, optionalOptions?: MetricFindQueryOptions): Promise<MetricFindValue[]> {
