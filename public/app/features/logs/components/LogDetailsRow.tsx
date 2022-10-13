@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import React, { PureComponent } from 'react';
 
-import { Field, LinkModel, LogLabelStatsModel, GrafanaTheme2, LogRowModel } from '@grafana/data';
+import { Field, LinkModel, LogLabelStatsModel, GrafanaTheme2, LogRowModel, CoreApp } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { withTheme2, Themeable2, ClipboardButton, DataLinkButton, IconButton } from '@grafana/ui';
 
@@ -23,6 +23,7 @@ export interface Props extends Themeable2 {
   onClickShowDetectedField?: (key: string) => void;
   onClickHideDetectedField?: (key: string) => void;
   row: LogRowModel;
+  app?: CoreApp;
 }
 
 interface State {
@@ -115,7 +116,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   };
 
   showStats = () => {
-    const { getStats, isLabel, row } = this.props;
+    const { getStats, isLabel, row, app } = this.props;
     const { showFieldsStats } = this.state;
     if (!showFieldsStats) {
       const fieldStats = getStats();
@@ -129,6 +130,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
       fieldType: isLabel ? 'label' : 'detectedField',
       type: showFieldsStats ? 'close' : 'open',
       logRowUid: row.uid,
+      app,
     });
   };
 

@@ -250,6 +250,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             wrapLogMessage={wrapLogMessage}
             hasError={hasError}
             showDetectedFields={showDetectedFields}
+            app={app}
           />
         )}
       </>
