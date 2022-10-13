@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
+	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -25,27 +26,32 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 
 	type testCase struct {
 		desc           string
+		queryType      string
+		permission     models.PermissionType
 		permissions    []accesscontrol.Permission
 		expectedResult int
 	}
 
 	tests := []testCase{
 		{
-			desc: "Should be able to view all dashboards with wildcard scope",
+			desc:       "Should be able to view all dashboards with wildcard scope",
+			permission: models.PERMISSION_VIEW,
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeDashboardsAll},
 			},
 			expectedResult: 100,
 		},
 		{
-			desc: "Should be able to view all dashboards with folder wildcard scope",
+			desc:       "Should be able to view all dashboards with folder wildcard scope",
+			permission: models.PERMISSION_VIEW,
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeFoldersAll},
 			},
 			expectedResult: 100,
 		},
 		{
-			desc: "Should be able to view a subset of dashboards with dashboard scopes",
+			desc:       "Should be able to view a subset of dashboards with dashboard scopes",
+			permission: models.PERMISSION_VIEW,
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:11"},
 				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:40"},
@@ -57,7 +63,8 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 			expectedResult: 6,
 		},
 		{
-			desc: "Should be able to view a subset of dashboards with dashboard action and folder scope",
+			desc:       "Should be able to view a subset of dashboards with dashboard action and folder scope",
+			permission: models.PERMISSION_VIEW,
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionDashboardsRead, Scope: "folders:uid:2"},
 				{Action: dashboards.ActionDashboardsRead, Scope: "folders:uid:8"},
@@ -65,14 +72,16 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 			expectedResult: 20,
 		},
 		{
-			desc: "Should be able to view all folders with folder wildcard",
+			desc:       "Should be able to view all folders with folder wildcard",
+			permission: models.PERMISSION_VIEW,
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:*"},
 			},
 			expectedResult: 10,
 		},
 		{
-			desc: "Should be able to view a subset folders",
+			desc:       "Should be able to view a subset folders",
+			permission: models.PERMISSION_VIEW,
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:2"},
 				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:6"},
@@ -80,14 +89,32 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 			},
 			expectedResult: 3,
 		},
+		{
+			desc:       "Should return folders and dashboard with 'edit' permission",
+			permission: models.PERMISSION_EDIT,
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionDashboardsCreate, Scope: "folders:uid:2"},
+				{Action: dashboards.ActionDashboardsWrite, Scope: "dashboards:uid:33"},
+			},
+			expectedResult: 2,
+		},
+		{
+			desc:       "Should return folders that users can read alerts from",
+			permission: models.PERMISSION_VIEW,
+			queryType:  searchstore.TypeAlertFolder,
+			permissions: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionAlertingRuleRead, Scope: "folders:uid:2"},
+				{Action: accesscontrol.ActionAlertingRuleRead, Scope: "folders:uid:8"},
+			},
+			expectedResult: 2,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			store := setup(t, tt.permissions)
-			filter := permissions.NewAccessControlDashboardPermissionFilter(&user.SignedInUser{
-				OrgID: 1, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)},
-			}, models.PERMISSION_VIEW, "")
+			store := setup(t, 10, 100, tt.permissions)
+			usr := &user.SignedInUser{OrgID: 1, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}
+			filter := permissions.NewAccessControlDashboardPermissionFilter(usr, tt.permission, tt.queryType)
 
 			var result int
 			err := store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
@@ -102,11 +129,11 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 	}
 }
 
-func setup(t *testing.T, permissions []accesscontrol.Permission) *sqlstore.SQLStore {
+func setup(t *testing.T, numFolders, numDashboards int, permissions []accesscontrol.Permission) *sqlstore.SQLStore {
 	store := sqlstore.InitTestDB(t)
 	err := store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		dashes := make([]models.Dashboard, 0, 110)
-		for i := 1; i <= 10; i++ {
+		dashes := make([]models.Dashboard, 0, numFolders+numDashboards)
+		for i := 1; i <= numFolders; i++ {
 			str := strconv.Itoa(i)
 			dashes = append(dashes, models.Dashboard{
 				OrgId:    1,
@@ -120,11 +147,11 @@ func setup(t *testing.T, permissions []accesscontrol.Permission) *sqlstore.SQLSt
 			})
 		}
 		// Seed 100 dashboard
-		for i := 11; i <= 110; i++ {
+		for i := numFolders + 1; i <= numFolders+numDashboards; i++ {
 			str := strconv.Itoa(i)
-			folderID := 10
-			if i%10 != 0 {
-				folderID = i % 10
+			folderID := numFolders
+			if i%numFolders != 0 {
+				folderID = i % numFolders
 			}
 			dashes = append(dashes, models.Dashboard{
 				OrgId:    1,
