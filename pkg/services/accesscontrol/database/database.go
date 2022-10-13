@@ -9,10 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-const (
-	globalOrgID = 0
-)
-
 func ProvideService(sql db.DB) *AccessControlStore {
 	return &AccessControlStore{sql}
 }

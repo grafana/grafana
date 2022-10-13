@@ -577,7 +577,6 @@ func setupRBACRole(t *testing.T, repo xormRepositoryImpl, user *user.SignedInUse
 func setupRBACPermission(t *testing.T, repo xormRepositoryImpl, role *accesscontrol.Role, user *user.SignedInUser) {
 	t.Helper()
 	err := repo.db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-
 		if _, err := sess.Exec("DELETE FROM permission WHERE role_id = ?", role.ID); err != nil {
 			return err
 		}
