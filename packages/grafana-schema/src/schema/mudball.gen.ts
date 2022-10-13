@@ -483,6 +483,7 @@ export interface TableFieldOptions {
   hidden?: boolean;
   inspect: boolean;
   minWidth?: number;
+  subcol?: boolean;
   width?: number;
 }
 

@@ -15,6 +15,7 @@ import { FixedSizeList } from 'react-window';
 import { DataFrame, getFieldDisplayName, Field } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../themes';
+import { Button } from '../Button';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { Pagination } from '../Pagination/Pagination';
 
@@ -134,6 +135,8 @@ export const Table: FC<Props> = memo((props: Props) => {
     enablePagination,
   } = props;
 
+  const [showSpans, setShowSpans] = useState(false);
+
   const listRef = useRef<FixedSizeList>(null);
   const tableDivRef = useRef<HTMLDivElement>(null);
   const fixedSizeListScrollbarRef = useRef<HTMLDivElement>(null);
@@ -177,8 +180,8 @@ export const Table: FC<Props> = memo((props: Props) => {
 
   // React-table column definitions
   const memoizedColumns = useMemo(
-    () => getColumns(data, width, columnMinWidth, footerItems),
-    [data, width, columnMinWidth, footerItems]
+    () => getColumns(data, width, columnMinWidth, showSpans, footerItems),
+    [data, width, columnMinWidth, showSpans, footerItems]
   );
 
   // Internal react table state reducer
@@ -290,22 +293,40 @@ export const Table: FC<Props> = memo((props: Props) => {
         row = page[rowIndex];
       }
       prepareRow(row);
-      return (
-        <div {...row.getRowProps({ style })} className={tableStyles.row}>
-          {row.cells.map((cell: Cell, index: number) => (
-            <TableCell
-              key={index}
-              tableStyles={tableStyles}
-              cell={cell}
-              onCellFilterAdded={onCellFilterAdded}
-              columnIndex={index}
-              columnCount={row.cells.length}
-            />
-          ))}
-        </div>
-      );
+      if (!showSpans && row.values[0]) {
+        return (
+          <div {...row.getRowProps({ style })} className={tableStyles.row}>
+            {row.cells.map((cell: Cell, index: number) => (
+              <TableCell
+                key={index}
+                tableStyles={tableStyles}
+                cell={cell}
+                onCellFilterAdded={onCellFilterAdded}
+                columnIndex={index}
+                columnCount={row.cells.length}
+              />
+            ))}
+          </div>
+        );
+      } else if (showSpans) {
+        return (
+          <div {...row.getRowProps({ style })} className={tableStyles.row}>
+            {row.cells.map((cell: Cell, index: number) => (
+              <TableCell
+                key={index}
+                tableStyles={tableStyles}
+                cell={cell}
+                onCellFilterAdded={onCellFilterAdded}
+                columnIndex={index}
+                columnCount={row.cells.length}
+              />
+            ))}
+          </div>
+        );
+      }
+      return null;
     },
-    [onCellFilterAdded, page, enablePagination, prepareRow, rows, tableStyles]
+    [onCellFilterAdded, page, enablePagination, prepareRow, rows, showSpans, tableStyles]
   );
 
   const onNavigate = useCallback(
@@ -354,6 +375,14 @@ export const Table: FC<Props> = memo((props: Props) => {
 
   return (
     <div {...getTableProps()} className={tableStyles.table} aria-label={ariaLabel} role="table" ref={tableDivRef}>
+      {data.fields[1].name === 'spanID' ? ( // Only show the button if we're in the TraceQL tab, not when using Search.
+        <div>
+          <Button size="sm" onClick={() => setShowSpans((val) => !val)}>
+            {showSpans ? 'Hide spans' : 'Show spans'}
+          </Button>
+          <br /> <br />
+        </div>
+      ) : null}
       <CustomScrollbar hideVerticalTrack={true}>
         <div className={tableStyles.tableContentWrapper(totalColumnsWidth)}>
           {!noHeader && <HeaderRow headerGroups={headerGroups} showTypeIcons={showTypeIcons} />}
