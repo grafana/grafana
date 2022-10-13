@@ -35,13 +35,13 @@ const getLogRowContextStyles = (theme: GrafanaTheme2, wrapLogMessage?: boolean) 
   const headerHeight = 40;
   const logsHeight = 220;
   const contextHeight = headerHeight + logsHeight;
+  const width = wrapLogMessage ? '100%' : '75%';
   const afterContext = wrapLogMessage
     ? css`
         top: -${contextHeight}px;
       `
     : css`
         margin-top: -${contextHeight}px;
-        width: 75%;
       `;
 
   const beforeContext = wrapLogMessage
@@ -50,12 +50,10 @@ const getLogRowContextStyles = (theme: GrafanaTheme2, wrapLogMessage?: boolean) 
       `
     : css`
         margin-top: 20px;
-        width: 75%;
       `;
   return {
-    sizes: css`
-      width: calc(100% + ${theme.spacing()});
-      left: -${theme.spacing()};
+    width: css`
+      width: ${width};
     `,
     commonStyles: css`
       position: absolute;
@@ -82,7 +80,8 @@ const getLogRowContextStyles = (theme: GrafanaTheme2, wrapLogMessage?: boolean) 
     `,
     title: css`
       position: absolute;
-      top: -${contextHeight + headerHeight}px;
+      width: ${width};
+      margin-top: -${contextHeight + headerHeight}px;
       z-index: ${theme.zIndex.modal};
       height: ${headerHeight}px;
       background: ${theme.colors.background.secondary};
@@ -192,7 +191,7 @@ export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps
   groupPosition,
   logsSortOrder,
 }) => {
-  const { commonStyles, logs, sizes } = useStyles2(getLogRowContextStyles);
+  const { commonStyles, logs } = useStyles2(getLogRowContextStyles);
   const [scrollTop, setScrollTop] = useState(0);
   const [scrollHeight, setScrollHeight] = useState(0);
 
@@ -247,7 +246,7 @@ export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps
   };
 
   return (
-    <div className={cx(commonStyles, sizes, className)}>
+    <div className={cx(commonStyles, className)}>
       {/* When displaying "after" context */}
       {shouldScrollToBottom && !error && <LogRowContextGroupHeader {...headerProps} />}
       <div className={logs}>
@@ -300,7 +299,7 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
       document.removeEventListener('keydown', handleEscKeyDown, false);
     };
   }, [onOutsideClick]);
-  const { afterContext, beforeContext, title, top, actions, sizes } = useStyles2((theme) =>
+  const { afterContext, beforeContext, title, top, actions, width } = useStyles2((theme) =>
     getLogRowContextStyles(theme, wrapLogMessage)
   );
 
@@ -314,7 +313,7 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
             rows={context.after}
             error={errors && errors.after}
             row={row}
-            className={cx(afterContext, top)}
+            className={cx(afterContext, top, width)}
             shouldScrollToBottom
             canLoadMoreRows={hasMoreContextRows ? hasMoreContextRows.after : false}
             onLoadMoreContext={onLoadMoreContext}
@@ -330,12 +329,12 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
             row={row}
             rows={context.before}
             error={errors && errors.before}
-            className={beforeContext}
+            className={cx(beforeContext, width)}
             groupPosition={LogGroupPosition.Bottom}
             logsSortOrder={logsSortOrder}
           />
         )}
-        <div className={cx(title, sizes)}>
+        <div className={cx(title, width)}>
           <h5>Log context</h5>
           <div className={actions}>
             <IconButton size="lg" name="times" onClick={onOutsideClick} />

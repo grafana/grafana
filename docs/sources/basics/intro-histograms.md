@@ -32,7 +32,7 @@ Here is an example showing height distribution of people.
 
 {{< figure src="/static/img/docs/histogram-panel/histogram-example-v8-0.png" max-width="625px" caption="Bar chart example" >}}
 
-For more information about histogram visualization options, refer to [Histogram]({{< relref "../visualizations/histogram/" >}}).
+For more information about histogram visualization options, refer to [Histogram]({{< relref "../panels-visualizations/visualizations/histogram/" >}}).
 
 Histograms only look at _value distributions_ over a specific time range. The problem with histograms is that you cannot see any trends or changes in the distribution over time. This is where heatmaps become useful.
 
@@ -44,7 +44,7 @@ In this example, you can clearly see what values are more common and how they tr
 
 ![](/static/img/docs/v43/heatmap_histogram_over_time.png)
 
-For more information about heatmap visualization options, refer to [Heatmap]({{< relref "../visualizations/heatmap/" >}}).
+For more information about heatmap visualization options, refer to [Heatmap]({{< relref "../panels-visualizations/visualizations//heatmap/" >}}).
 
 ## Pre-bucketed data
 

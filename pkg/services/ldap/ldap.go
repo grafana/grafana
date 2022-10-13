@@ -363,7 +363,8 @@ func (server *Server) users(logins []string) (
 // If there are no ldap group mappings access is true
 // otherwise a single group must match
 func (server *Server) validateGrafanaUser(user *models.ExternalUserInfo) error {
-	if len(server.Config.Groups) > 0 && (len(user.OrgRoles) == 0 && (user.IsGrafanaAdmin == nil || !*user.IsGrafanaAdmin)) {
+	if !SkipOrgRoleSync() && len(server.Config.Groups) > 0 &&
+		(len(user.OrgRoles) == 0 && (user.IsGrafanaAdmin == nil || !*user.IsGrafanaAdmin)) {
 		server.log.Error(
 			"User does not belong in any of the specified LDAP groups",
 			"username", user.Login,
@@ -444,6 +445,12 @@ func (server *Server) buildGrafanaUser(user *ldap.Entry) (*models.ExternalUserIn
 		Email:    getAttribute(attrs.Email, user),
 		Groups:   memberOf,
 		OrgRoles: map[int64]org.RoleType{},
+	}
+
+	// Skipping org role sync
+	if SkipOrgRoleSync() {
+		server.log.Debug("skipping organization role mapping.")
+		return extUser, nil
 	}
 
 	for _, group := range server.Config.Groups {

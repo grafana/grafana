@@ -109,6 +109,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
                         getStats={() => calculateLogsLabelStats(getRows(), key)}
                         onClickFilterOutLabel={onClickFilterOutLabel}
                         onClickFilterLabel={onClickFilterLabel}
+                        row={row}
                       />
                     );
                   })}
@@ -146,6 +147,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
                       }
                       showDetectedFields={showDetectedFields}
                       wrapLogMessage={wrapLogMessage}
+                      row={row}
                     />
                   );
                 })}
