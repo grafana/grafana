@@ -67,7 +67,7 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 			permission: models.PERMISSION_VIEW,
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionDashboardsRead, Scope: "folders:uid:2"},
-				{Action: dashboards.ActionDashboardsRead, Scope: "folders:uid:8"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "folders:uid:1"},
 			},
 			expectedResult: 20,
 		},
@@ -93,7 +93,9 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 			desc:       "Should return folders and dashboard with 'edit' permission",
 			permission: models.PERMISSION_EDIT,
 			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:2"},
 				{Action: dashboards.ActionDashboardsCreate, Scope: "folders:uid:2"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:33"},
 				{Action: dashboards.ActionDashboardsWrite, Scope: "dashboards:uid:33"},
 			},
 			expectedResult: 2,
@@ -103,6 +105,19 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 			permission: models.PERMISSION_VIEW,
 			queryType:  searchstore.TypeAlertFolder,
 			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:2"},
+				{Action: accesscontrol.ActionAlertingRuleRead, Scope: "folders:uid:2"},
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:8"},
+				{Action: accesscontrol.ActionAlertingRuleRead, Scope: "folders:uid:8"},
+			},
+			expectedResult: 2,
+		},
+		{
+			desc:       "Should return folders that users can read alerts when user has read wildcard",
+			permission: models.PERMISSION_VIEW,
+			queryType:  searchstore.TypeAlertFolder,
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: "*"},
 				{Action: accesscontrol.ActionAlertingRuleRead, Scope: "folders:uid:2"},
 				{Action: accesscontrol.ActionAlertingRuleRead, Scope: "folders:uid:8"},
 			},
