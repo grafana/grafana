@@ -36,7 +36,7 @@ const (
 )
 
 // query processes single Fire query transforming the response to data.Frame packaged in DataResponse
-func (d *FireDatasource) query(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
+func (d *PhlareDatasource) query(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
 	var qm queryModel
 	response := backend.DataResponse{}
 

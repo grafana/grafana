@@ -26,18 +26,18 @@ var (
 	_ backend.StreamHandler       = (*Service)(nil)
 )
 
-var logger = log.New("tsdb.fire")
+var logger = log.New("tsdb.phlare")
 
 type Service struct {
 	im instancemgmt.InstanceManager
 }
 
-func (s *Service) getInstance(pluginCtx backend.PluginContext) (*FireDatasource, error) {
+func (s *Service) getInstance(pluginCtx backend.PluginContext) (*PhlareDatasource, error) {
 	i, err := s.im.Get(pluginCtx)
 	if err != nil {
 		return nil, err
 	}
-	in := i.(*FireDatasource)
+	in := i.(*PhlareDatasource)
 	return in, nil
 }
 
@@ -49,7 +49,7 @@ func ProvideService(httpClientProvider httpclient.Provider) *Service {
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		return NewFireDatasource(httpClientProvider, settings)
+		return NewPhlareDatasource(httpClientProvider, settings)
 	}
 }
 

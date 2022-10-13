@@ -18,7 +18,7 @@ import (
 // This is where the tests for the datasource backend live.
 func Test_query(t *testing.T) {
 	client := &FakeClient{}
-	ds := &FireDatasource{
+	ds := &PhlareDatasource{
 		client: client,
 	}
 

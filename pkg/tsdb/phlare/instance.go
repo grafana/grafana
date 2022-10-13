@@ -18,19 +18,19 @@ import (
 )
 
 var (
-	_ backend.QueryDataHandler    = (*FireDatasource)(nil)
-	_ backend.CallResourceHandler = (*FireDatasource)(nil)
-	_ backend.CheckHealthHandler  = (*FireDatasource)(nil)
-	_ backend.StreamHandler       = (*FireDatasource)(nil)
+	_ backend.QueryDataHandler    = (*PhlareDatasource)(nil)
+	_ backend.CallResourceHandler = (*PhlareDatasource)(nil)
+	_ backend.CheckHealthHandler  = (*PhlareDatasource)(nil)
+	_ backend.StreamHandler       = (*PhlareDatasource)(nil)
 )
 
 // FireDatasource is an datasource for querying application performance profiles.
-type FireDatasource struct {
+type PhlareDatasource struct {
 	client querierv1connect.QuerierServiceClient
 }
 
 // NewFireDatasource creates a new datasource instance.
-func NewFireDatasource(httpClientProvider httpclient.Provider, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+func NewPhlareDatasource(httpClientProvider httpclient.Provider, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	logger.Info("Created DataSource", "settings", settings)
 
 	opt, err := settings.HTTPClientOptions()
@@ -42,12 +42,12 @@ func NewFireDatasource(httpClientProvider httpclient.Provider, settings backend.
 		return nil, err
 	}
 
-	return &FireDatasource{
+	return &PhlareDatasource{
 		client: querierv1connect.NewQuerierServiceClient(httpClient, settings.URL),
 	}, nil
 }
 
-func (d *FireDatasource) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+func (d *PhlareDatasource) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	logger.Info("CallResource", "req", req)
 	if req.Path == "profileTypes" {
 		return d.callProfileTypes(ctx, req, sender)
@@ -63,7 +63,7 @@ func (d *FireDatasource) CallResource(ctx context.Context, req *backend.CallReso
 	})
 }
 
-func (d *FireDatasource) callProfileTypes(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+func (d *PhlareDatasource) callProfileTypes(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	res, err := d.client.ProfileTypes(ctx, connect.NewRequest(&querierv1.ProfileTypesRequest{}))
 	if err != nil {
 		return err
@@ -83,7 +83,7 @@ type SeriesRequestJson struct {
 	Matchers []string `json:"matchers"`
 }
 
-func (d *FireDatasource) callSeries(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+func (d *PhlareDatasource) callSeries(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	parsedUrl, err := url.Parse(req.URL)
 	matchers, ok := parsedUrl.Query()["matchers"]
 	if !ok {
@@ -111,7 +111,7 @@ func (d *FireDatasource) callSeries(ctx context.Context, req *backend.CallResour
 	return nil
 }
 
-func (d *FireDatasource) callLabelNames(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+func (d *PhlareDatasource) callLabelNames(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	res, err := d.client.LabelNames(ctx, connect.NewRequest(&querierv1.LabelNamesRequest{}))
 	if err != nil {
 		return err
@@ -131,7 +131,7 @@ func (d *FireDatasource) callLabelNames(ctx context.Context, req *backend.CallRe
 // req contains the queries []DataQuery (where each query contains RefID as a unique identifier).
 // The QueryDataResponse contains a map of RefID to the response for each query, and each response
 // contains Frames ([]*Frame).
-func (d *FireDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (d *PhlareDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	logger.Info("QueryData called", "request", req)
 
 	// create response struct
@@ -153,7 +153,7 @@ func (d *FireDatasource) QueryData(ctx context.Context, req *backend.QueryDataRe
 // The main use case for these health checks is the test button on the
 // datasource configuration page which allows users to verify that
 // a datasource is working as expected.
-func (d *FireDatasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+func (d *PhlareDatasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	logger.Info("CheckHealth called", "request", req)
 
 	status := backend.HealthStatusOk
@@ -172,7 +172,7 @@ func (d *FireDatasource) CheckHealth(ctx context.Context, req *backend.CheckHeal
 
 // SubscribeStream is called when a client wants to connect to a stream. This callback
 // allows sending the first message.
-func (d *FireDatasource) SubscribeStream(_ context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+func (d *PhlareDatasource) SubscribeStream(_ context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
 	logger.Info("SubscribeStream called", "request", req)
 
 	status := backend.SubscribeStreamStatusPermissionDenied
@@ -187,7 +187,7 @@ func (d *FireDatasource) SubscribeStream(_ context.Context, req *backend.Subscri
 
 // RunStream is called once for any open channel.  Results are shared with everyone
 // subscribed to the same channel.
-func (d *FireDatasource) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
+func (d *PhlareDatasource) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	logger.Info("RunStream called", "request", req)
 
 	// Create the same data frame as for query data.
@@ -224,7 +224,7 @@ func (d *FireDatasource) RunStream(ctx context.Context, req *backend.RunStreamRe
 }
 
 // PublishStream is called when a client sends a message to the stream.
-func (d *FireDatasource) PublishStream(_ context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
+func (d *PhlareDatasource) PublishStream(_ context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
 	logger.Info("PublishStream called", "request", req)
 
 	// Do not allow publishing at all.

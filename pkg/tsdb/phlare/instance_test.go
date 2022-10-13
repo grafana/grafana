@@ -10,7 +10,7 @@ import (
 
 // This is where the tests for the datasource backend live.
 func Test_QueryData(t *testing.T) {
-	ds := FireDatasource{}
+	ds := PhlareDatasource{}
 
 	resp, err := ds.QueryData(
 		context.Background(),
@@ -30,7 +30,7 @@ func Test_QueryData(t *testing.T) {
 }
 
 func Test_CallResource(t *testing.T) {
-	ds := &FireDatasource{
+	ds := &PhlareDatasource{
 		client: &FakeClient{},
 	}
 
