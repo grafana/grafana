@@ -2,7 +2,6 @@ package database
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -45,8 +44,8 @@ func TestIntegrationListPublicDashboard(t *testing.T) {
 	// these are in order of how they should be returned from ListPUblicDashboards
 	b := insertPublicDashboard(t, publicdashboardStore, bDash.Uid, orgId, true)
 	c := insertPublicDashboard(t, publicdashboardStore, cDash.Uid, orgId, true)
-	a := insertPublicDashboard(t, publicdashboardStore, aDash.Uid, orgId, false)
 	d := insertPublicDashboard(t, publicdashboardStore, "missing", orgId, false)
+	a := insertPublicDashboard(t, publicdashboardStore, aDash.Uid, orgId, false)
 
 	// should not be included in response
 	_ = insertPublicDashboard(t, publicdashboardStore, "wrongOrgId", 777, false)
@@ -54,15 +53,11 @@ func TestIntegrationListPublicDashboard(t *testing.T) {
 	resp, err := publicdashboardStore.ListPublicDashboards(context.Background(), orgId)
 	require.NoError(t, err)
 
-	for i, r := range resp {
-		fmt.Println(i, r.Uid, r.IsEnabled, r.Title)
-	}
-
 	assert.Len(t, resp, 4)
 	assert.Equal(t, resp[0].Uid, b.Uid)
 	assert.Equal(t, resp[1].Uid, c.Uid)
-	assert.Equal(t, resp[2].Uid, a.Uid)
-	assert.Equal(t, resp[3].Uid, d.Uid)
+	assert.Equal(t, resp[2].Uid, d.Uid)
+	assert.Equal(t, resp[3].Uid, a.Uid)
 }
 
 func TestIntegrationGetDashboard(t *testing.T) {
