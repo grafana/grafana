@@ -11,6 +11,8 @@ import {
 } from 'app/core/components/Select/ReadonlyFolderPicker/ReadonlyFolderPicker';
 import { PermissionLevelString } from 'app/types';
 
+import { GRAFANA_DATASOURCE_NAME } from '../../../features/alerting/unified/utils/datasource';
+
 import { AlertList } from './AlertList';
 import { alertListPanelMigrationHandler } from './AlertListMigrationHandler';
 import { GroupBy } from './GroupByWithLoading';
@@ -249,6 +251,7 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
       description: 'Filter for alerts in the selected folder',
       id: 'folder',
       defaultValue: null,
+      showIf: (options) => !options.datasource || options.datasource === GRAFANA_DATASOURCE_NAME,
       editor: function RenderFolderPicker(props) {
         return (
           <FolderPicker
