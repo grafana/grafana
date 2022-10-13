@@ -55,10 +55,9 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
   interpolateVariable = (value: string | string[] | number, variable: VariableWithMultiSupport) => {
     if (typeof value === 'string') {
       if (variable.multi || variable.includeAll) {
-        const result = this.getQueryModel().quoteLiteral(value);
-        return result;
+        return this.getQueryModel().quoteLiteral(value);
       } else {
-        return value;
+        return String(value).replace(/'/g, "''");
       }
     }
 
