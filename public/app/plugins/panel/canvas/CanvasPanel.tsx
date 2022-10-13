@@ -74,6 +74,7 @@ export class CanvasPanel extends Component<Props, State> {
       this.props.eventBus.subscribe(PanelEditExitedEvent, (evt: PanelEditExitedEvent) => {
         if (this.props.id === evt.payload) {
           this.needsReload = true;
+          this.scene.clearCurrentSelection();
           this.scene.load(
             this.props.options.root,
             this.props.options.inlineEditing,

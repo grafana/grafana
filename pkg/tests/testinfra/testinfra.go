@@ -82,13 +82,9 @@ func SetUpDatabase(t *testing.T, grafDir string) *sqlstore.SQLStore {
 	sqlStore := sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{
 		EnsureDefaultOrgAndUser: true,
 	})
-	// We need the main org, since it's used for anonymous access
-	org, err := sqlStore.GetOrgByName(sqlstore.MainOrgName)
-	require.NoError(t, err)
-	require.NotNil(t, org)
 
 	// Make sure changes are synced with other goroutines
-	err = sqlStore.Sync()
+	err := sqlStore.Sync()
 	require.NoError(t, err)
 
 	return sqlStore

@@ -68,19 +68,19 @@ func NewStaticDashboardSummaryBuilder(lookup DatasourceLookup) models.ObjectSumm
 			p.Fields["type"] = panel.Type
 
 			if panel.Type != "row" {
-				panelRefs.Add(models.StandardReferencePlugin, string(plugins.Panel), panel.Type)
-				dashboardRefs.Add(models.StandardReferencePlugin, string(plugins.Panel), panel.Type)
+				panelRefs.Add(models.ExternalEntityReferencePlugin, string(plugins.Panel), panel.Type)
+				dashboardRefs.Add(models.ExternalEntityReferencePlugin, string(plugins.Panel), panel.Type)
 			}
 			for _, v := range panel.Datasource {
 				dashboardRefs.Add(models.StandardKindDataSource, v.Type, v.UID)
 				panelRefs.Add(models.StandardKindDataSource, v.Type, v.UID)
 				if v.Type != "" {
-					dashboardRefs.Add(models.StandardReferencePlugin, string(plugins.DataSource), v.Type)
+					dashboardRefs.Add(models.ExternalEntityReferencePlugin, string(plugins.DataSource), v.Type)
 				}
 			}
 			for _, v := range panel.Transformer {
-				panelRefs.Add(models.StandardReferenceRuntime, models.StandardReferenceType_RuntimeTransformer, v)
-				dashboardRefs.Add(models.StandardReferenceRuntime, models.StandardReferenceType_RuntimeTransformer, v)
+				panelRefs.Add(models.ExternalEntityReferenceRuntime, models.ExternalEntityReferenceRuntime_Transformer, v)
+				dashboardRefs.Add(models.ExternalEntityReferenceRuntime, models.ExternalEntityReferenceRuntime_Transformer, v)
 			}
 			p.References = panelRefs.Get()
 			summary.Nested = append(summary.Nested, p)

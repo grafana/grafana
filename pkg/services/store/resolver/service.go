@@ -54,10 +54,10 @@ func (r *standardReferenceResolver) Resolve(ctx context.Context, ref *models.Obj
 	case models.StandardKindDataSource:
 		return r.resolveDatasource(ctx, ref)
 
-	case models.StandardReferencePlugin:
+	case models.ExternalEntityReferencePlugin:
 		return r.resolvePlugin(ctx, ref)
 
-	case models.StandardReferenceRuntime:
+	case models.ExternalEntityReferenceRuntime:
 		return ResolutionInfo{
 			OK:        false,
 			Timestamp: getNow(),
