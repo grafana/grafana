@@ -372,6 +372,76 @@ func TestConditionsCmdExecute(t *testing.T) {
 			},
 		},
 		{
+			name: "single query with no data and other query with data",
+			vars: mathexp.Vars{
+				"A": mathexp.Results{
+					Values: []mathexp.Value{mathexp.NoData{}.New()},
+				},
+				"B": mathexp.Results{
+					Values: []mathexp.Value{valBasedSeries(ptr.Float64(10), ptr.Float64(20))},
+				},
+			},
+			conditionsCmd: &ConditionsCmd{
+				Conditions: []condition{
+					{
+						InputRefID: "A",
+						Reducer:    reducer("avg"),
+						Operator:   "and",
+						Evaluator:  &thresholdEvaluator{"gt", 1},
+					},
+					{
+						InputRefID: "B",
+						Reducer:    reducer("avg"),
+						Operator:   "and",
+						Evaluator:  &thresholdEvaluator{"gt", 5},
+					},
+				},
+			},
+			resultNumber: func() mathexp.Number {
+				v := valBasedNumber(ptr.Float64(0))
+				v.SetMeta([]EvalMatch{
+					{Metric: "NoData"},
+					{Metric: "", Value: ptr.Float64(15)},
+				})
+				return v
+			},
+		},
+		{
+			name: "single query with data and other query with no data",
+			vars: mathexp.Vars{
+				"A": mathexp.Results{
+					Values: []mathexp.Value{valBasedSeries(ptr.Float64(10), ptr.Float64(20))},
+				},
+				"B": mathexp.Results{
+					Values: []mathexp.Value{mathexp.NoData{}.New()},
+				},
+			},
+			conditionsCmd: &ConditionsCmd{
+				Conditions: []condition{
+					{
+						InputRefID: "A",
+						Reducer:    reducer("avg"),
+						Operator:   "and",
+						Evaluator:  &thresholdEvaluator{"gt", 5},
+					},
+					{
+						InputRefID: "B",
+						Reducer:    reducer("avg"),
+						Operator:   "and",
+						Evaluator:  &thresholdEvaluator{"gt", 1},
+					},
+				},
+			},
+			resultNumber: func() mathexp.Number {
+				v := valBasedNumber(ptr.Float64(0))
+				v.SetMeta([]EvalMatch{
+					{Metric: "", Value: ptr.Float64(15)},
+					{Metric: "NoData"},
+				})
+				return v
+			},
+		},
+		{
 			name: "should accept numbers",
 			vars: mathexp.Vars{
 				"A": mathexp.Results{
