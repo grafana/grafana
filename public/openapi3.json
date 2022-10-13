@@ -13698,7 +13698,7 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "Creates an API key.",
+        "summary": "Create an API key.",
         "tags": [
           "api_keys"
         ]

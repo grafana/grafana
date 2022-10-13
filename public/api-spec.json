@@ -2481,7 +2481,7 @@
         "tags": [
           "api_keys"
         ],
-        "summary": "Creates an API key.",
+        "summary": "Create an API key.",
         "operationId": "addAPIkey",
         "parameters": [
           {
