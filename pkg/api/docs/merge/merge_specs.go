@@ -84,6 +84,7 @@ func mergeSpecs(output string, sources ...string) error {
 		return fmt.Errorf("failed to intend new spec: %w", err)
 	}
 
+	//nolint:gosec
 	f, err = os.Create(output)
 	if err != nil {
 		return fmt.Errorf("failed to create file for new spec: %w", err)

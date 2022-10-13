@@ -222,6 +222,7 @@ func formatApplicationInsightsLegendKey(alias string, metricName string, labels 
 	for k := range lowerLabels {
 		keys = append(keys, k)
 	}
+	//nolint:staticcheck
 	keys = sort.StringSlice(keys)
 
 	result := types.LegendKeyFormat.ReplaceAllFunc([]byte(alias), func(in []byte) []byte {

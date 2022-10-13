@@ -928,6 +928,7 @@ func newMockNotificationChannel(t *testing.T, grafanaListedAddr string) *mockNot
 	require.NoError(t, err)
 
 	nc := &mockNotificationChannel{
+		//nolint:gosec
 		server: &http.Server{
 			Addr: listener.Addr().String(),
 		},

@@ -531,6 +531,7 @@ func (evalResults Results) AsDataFrame() data.Frame {
 		labelColumns = append(labelColumns, k)
 	}
 
+	//nolint:staticcheck
 	labelColumns = sort.StringSlice(labelColumns)
 
 	frame := data.NewFrame("evaluation results")
