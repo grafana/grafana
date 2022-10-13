@@ -3,7 +3,7 @@ package notifier
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io/ioutil"  //nolint:staticcheck // No need to change in v8.
 	"path/filepath"
 	"strconv"
 	"sync"

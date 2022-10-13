@@ -3,7 +3,7 @@ package loki
 import (
 	"bytes"
 	"context"
-	"io/ioutil"
+	"io/ioutil"  //nolint:staticcheck // No need to change in v8.
 	"net/http"
 	"os"
 	"path/filepath"

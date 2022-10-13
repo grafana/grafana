@@ -3,7 +3,7 @@ package cloudmonitoring
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io/ioutil"  //nolint:staticcheck // No need to change in v8.
 	"math"
 	"net/url"
 	"strconv"

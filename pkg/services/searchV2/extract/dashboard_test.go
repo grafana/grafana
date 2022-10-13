@@ -50,6 +50,7 @@ func TestReadDashboard(t *testing.T) {
 
 		update := false
 		savedPath := "testdata/" + input + "-info.json"
+		//nolint:gosec
 		saved, err := os.ReadFile(savedPath)
 		if err != nil {
 			update = true

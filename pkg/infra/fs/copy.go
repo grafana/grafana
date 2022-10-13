@@ -3,7 +3,7 @@ package fs
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
+	"io/ioutil"  //nolint:staticcheck // No need to change in v8.
 	"os"
 	"path/filepath"
 )

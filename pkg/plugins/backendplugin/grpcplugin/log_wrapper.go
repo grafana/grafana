@@ -3,7 +3,7 @@ package grpcplugin
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
+	"io/ioutil"  //nolint:staticcheck // No need to change in v8.
 	"log"
 
 	glog "github.com/grafana/grafana/pkg/infra/log"

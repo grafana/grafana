@@ -104,6 +104,7 @@ func ToCamelCase(str string) string {
 	}
 
 	for index, part := range finalParts[1:] {
+		//nolint:staticcheck
 		finalParts[index+1] = strings.Title(part)
 	}
 

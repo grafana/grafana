@@ -49,6 +49,7 @@ func shaFile(file string) error {
 		return err
 	}
 
+	//nolint:gosec
 	out, err := os.Create(file + ".sha256")
 	if err != nil {
 		return err
@@ -77,6 +78,7 @@ func md5File(file string) error {
 		return err
 	}
 
+	//nolint:gosec
 	out, err := os.Create(file + ".md5")
 	if err != nil {
 		return err

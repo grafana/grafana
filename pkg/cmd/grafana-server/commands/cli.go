@@ -97,6 +97,10 @@ func RunServer(opt ServerOptions) int {
 		fmt.Println("diagnostics: pprof profiling enabled", "addr", profileDiagnostics.addr, "port", profileDiagnostics.port)
 		runtime.SetBlockProfileRate(1)
 		go func() {
+			// TODO: We should enable the linter and fix G114 here.
+			//	G114: Use of net/http serve function that has no support for setting timeouts (gosec)
+			//
+			//nolint:gosec
 			err := http.ListenAndServe(fmt.Sprintf("%s:%d", profileDiagnostics.addr, profileDiagnostics.port), nil)
 			if err != nil {
 				panic(err)

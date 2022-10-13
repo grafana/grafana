@@ -22,13 +22,12 @@ rules = "pkg/ruleguard.rules.go"
 disable-all = true
 enable = [
   "bodyclose",
-  "deadcode",
   "depguard",
   "dogsled",
   "errcheck",
   # "gochecknoinits",
   "goconst",
-  "gocritic",
+  # "gocritic", # broken in 1.49.0?
   # "goimports", # ignored for v8.5.x to reduce size of Go 1.19.2 upgrade refactoring.
   "goprintffuncname",
   "gosec",
@@ -40,12 +39,10 @@ enable = [
   "rowserrcheck",
   "exportloopref",
   "staticcheck",
-  "structcheck",
   "stylecheck",
   "typecheck",
   "unconvert",
   "unused",
-  "varcheck",
   "whitespace",
   "gocyclo",
   "exhaustive",

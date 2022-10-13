@@ -3,7 +3,7 @@ package httpclient
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io/ioutil"  //nolint:staticcheck // No need to change in v8.
 	"strings"
 	"testing"
 

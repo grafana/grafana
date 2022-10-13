@@ -3,7 +3,7 @@ package influxdb
 import (
 	"encoding/json"
 	"io"
-	"io/ioutil"
+	"io/ioutil"  //nolint:staticcheck // No need to change in v8.
 	"strings"
 	"testing"
 	"time"
