@@ -89,15 +89,15 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   };
 
   filterLabel = () => {
-    const { onClickFilterLabel, parsedKey, parsedValue } = this.props;
+    const { onClickFilterLabel, parsedKey, parsedValue, row } = this.props;
     if (onClickFilterLabel) {
       onClickFilterLabel(parsedKey, parsedValue);
     }
 
     reportInteraction('grafana_explore_logs_log_details_filter_clicked', {
-      datasourceType: this.props.row.datasourceType,
+      datasourceType: row.datasourceType,
       filterType: 'include',
-      logRowUid: this.props.row.uid,
+      logRowUid: row.uid,
     });
   };
 
