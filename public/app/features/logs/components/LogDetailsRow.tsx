@@ -1,7 +1,8 @@
 import { css, cx } from '@emotion/css';
 import React, { PureComponent } from 'react';
 
-import { Field, LinkModel, LogLabelStatsModel, GrafanaTheme2 } from '@grafana/data';
+import { Field, LinkModel, LogLabelStatsModel, GrafanaTheme2, LogRowModel } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { withTheme2, Themeable2, ClipboardButton, DataLinkButton, IconButton } from '@grafana/ui';
 
 import { LogLabelStats } from './LogLabelStats';
@@ -21,6 +22,7 @@ export interface Props extends Themeable2 {
   showDetectedFields?: string[];
   onClickShowDetectedField?: (key: string) => void;
   onClickHideDetectedField?: (key: string) => void;
+  row: LogRowModel;
 }
 
 interface State {
@@ -108,6 +110,13 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
       this.setState({ fieldStats, fieldCount });
     }
     this.toggleFieldsStats();
+
+    reportInteraction('grafana_explore_logs_log_details_stats_clicked', {
+      dataSourceType: this.props.row.datasourceType,
+      fieldType: this.props.isLabel ? 'label' : 'detectedField',
+      type: showFieldsStats ? 'close' : 'open',
+      logRowUid: this.props.row.uid,
+    });
   };
 
   toggleFieldsStats() {

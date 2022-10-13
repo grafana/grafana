@@ -13,6 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/x/persistentcollection"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
+	"github.com/grafana/grafana/pkg/services/store"
+	"github.com/grafana/grafana/pkg/services/store/kind"
 	"github.com/grafana/grafana/pkg/services/store/object"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -25,7 +27,6 @@ type ObjectVersionWithBody struct {
 
 type RawObjectWithHistory struct {
 	Object  *object.RawObject        `json:"object,omitempty"`
-	Summary *object.ObjectSummary    `json:"summary,omitempty"`
 	History []*ObjectVersionWithBody `json:"history,omitempty"`
 }
 
@@ -34,10 +35,11 @@ var (
 	rawObjectVersion = 6
 )
 
-func ProvideDummyObjectServer(cfg *setting.Cfg, grpcServerProvider grpcserver.Provider) object.ObjectStoreServer {
+func ProvideDummyObjectServer(cfg *setting.Cfg, grpcServerProvider grpcserver.Provider, kinds kind.KindRegistry) object.ObjectStoreServer {
 	objectServer := &dummyObjectServer{
 		collection: persistentcollection.NewLocalFSPersistentCollection[*RawObjectWithHistory]("raw-object", cfg.DataPath, rawObjectVersion),
 		log:        log.New("in-memory-object-server"),
+		kinds:      kinds,
 	}
 	object.RegisterObjectStoreServer(grpcServerProvider.GetServer(), objectServer)
 	return objectServer
@@ -46,6 +48,7 @@ func ProvideDummyObjectServer(cfg *setting.Cfg, grpcServerProvider grpcserver.Pr
 type dummyObjectServer struct {
 	log        log.Logger
 	collection persistentcollection.PersistentCollection[*RawObjectWithHistory]
+	kinds      kind.KindRegistry
 }
 
 func namespaceFromUID(uid string) string {
@@ -115,15 +118,15 @@ func (i dummyObjectServer) Read(ctx context.Context, r *object.ReadObjectRequest
 		Object: objVersion,
 	}
 	if r.WithSummary {
-		summary, _, e2 := object.GetSafeSaveObject(&object.WriteObjectRequest{
-			UID:  r.UID,
-			Kind: r.Kind,
-			Body: objVersion.Body,
-		})
-		if e2 != nil {
-			return nil, e2
+		// Since we do not store the summary, we can just recreate on demand
+		builder := i.kinds.GetSummaryBuilder(r.Kind)
+		if builder != nil {
+			summary, _, e2 := builder(ctx, r.UID, objVersion.Body)
+			if e2 != nil {
+				return nil, e2
+			}
+			rsp.SummaryJson, err = json.Marshal(summary)
 		}
-		rsp.SummaryJson, err = json.Marshal(summary)
 	}
 	return rsp, err
 }
@@ -147,6 +150,10 @@ func createContentsHash(contents []byte) string {
 }
 
 func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequest, namespace string) (*object.WriteObjectResponse, error) {
+	builder := i.kinds.GetSummaryBuilder(r.Kind)
+	if builder == nil {
+		return nil, fmt.Errorf("unsupported kind: " + r.Kind)
+	}
 	rsp := &object.WriteObjectResponse{}
 
 	updatedCount, err := i.collection.Update(ctx, namespace, func(i *RawObjectWithHistory) (bool, *RawObjectWithHistory, error) {
@@ -164,7 +171,7 @@ func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequ
 			return false, nil, err
 		}
 
-		modifier := object.UserFromContext(ctx)
+		modifier := store.UserFromContext(ctx)
 
 		updated := &object.RawObject{
 			UID:       r.UID,
@@ -172,7 +179,7 @@ func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequ
 			Created:   i.Object.Created,
 			CreatedBy: i.Object.CreatedBy,
 			Updated:   time.Now().Unix(),
-			UpdatedBy: object.GetUserIDString(modifier),
+			UpdatedBy: store.GetUserIDString(modifier),
 			Size:      int64(len(r.Body)),
 			ETag:      createContentsHash(r.Body),
 			Body:      r.Body,
@@ -218,7 +225,7 @@ func (i dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequ
 }
 
 func (i dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectRequest, namespace string) (*object.WriteObjectResponse, error) {
-	modifier := object.GetUserIDString(object.UserFromContext(ctx))
+	modifier := store.GetUserIDString(store.UserFromContext(ctx))
 	rawObj := &object.RawObject{
 		UID:       r.UID,
 		Kind:      r.Kind,

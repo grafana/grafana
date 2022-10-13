@@ -77,13 +77,14 @@ export { PageToolbar } from './PageLayout/PageToolbar';
 export { SetInterval } from './SetInterval/SetInterval';
 
 export { Table } from './Table/Table';
-export { TableCellDisplayMode, type TableSortByFieldState } from './Table/types';
+export { TableCellDisplayMode, type TableSortByFieldState, type TableFooterCalc } from './Table/types';
 export { TableInputCSV } from './TableInputCSV/TableInputCSV';
 export { TabsBar } from './Tabs/TabsBar';
 export { Tab } from './Tabs/Tab';
 export { VerticalTab } from './Tabs/VerticalTab';
 export { TabContent } from './Tabs/TabContent';
 export { Counter } from './Tabs/Counter';
+export { RenderUserContentAsHTML } from './RenderUserContentAsHTML/RenderUserContentAsHTML';
 
 // Visualizations
 export {
