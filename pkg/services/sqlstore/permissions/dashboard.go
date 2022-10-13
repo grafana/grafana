@@ -129,11 +129,9 @@ func (f AccessControlDashboardPermissionFilter) Where() (string, []interface{}) 
 		}
 
 		if !hasWildcard {
-			builder.WriteRune('(')
-			builder.WriteString("dashboard.uid IN (SELECT SUBSTR(scope, 16) as uid FROM permission WHERE action = ? AND scope LIKE 'dashboards:uid:%'  " + rolesFilter + " )")
+			builder.WriteString("(dashboard.uid IN (SELECT SUBSTR(scope, 16) as uid FROM permission WHERE action = ? AND scope LIKE 'dashboards:uid:%'  " + rolesFilter + " ) AND NOT dashboard.is_folder)")
 			builder.WriteString(" OR ")
-			builder.WriteString("dashboard.folder_id IN (SELECT id FROM dashboard as d WHERE d.uid IN (SELECT SUBSTR(scope, 13) as uid FROM permission WHERE action = ? AND scope LIKE 'folders:uid:%' " + rolesFilter + " ))")
-			builder.WriteString(" AND NOT dashboard.is_folder)")
+			builder.WriteString("(dashboard.folder_id IN (SELECT id FROM dashboard as d WHERE d.uid IN (SELECT SUBSTR(scope, 13) as uid FROM permission WHERE action = ? AND scope LIKE 'folders:uid:%' " + rolesFilter + " )) AND NOT dashboard.is_folder)")
 			args = append(args, f.dashboardAction)
 			args = append(args, params...)
 			args = append(args, f.dashboardAction)
