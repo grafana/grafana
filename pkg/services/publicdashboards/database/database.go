@@ -37,6 +37,28 @@ func ProvideStore(sqlStore *sqlstore.SQLStore) *PublicDashboardStoreImpl {
 	}
 }
 
+// Gets list of public dashboards by orgId
+func (d *PublicDashboardStoreImpl) ListPublicDashboards(ctx context.Context, orgId int64) ([]PublicDashboardListResponse, error) {
+	resp := make([]PublicDashboardListResponse, 0)
+
+	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		sess.Table("dashboard_public").
+			Join("LEFT", "dashboard", "dashboard.uid = dashboard_public.dashboard_uid AND dashboard.org_id = dashboard_public.org_id").
+			Cols("dashboard_public.uid", "dashboard_public.access_token", "dashboard_public.dashboard_uid", "dashboard_public.is_enabled", "dashboard.title").
+			Where("dashboard_public.org_id = ?", orgId).
+			OrderBy("is_enabled DESC, dashboard.title ASC")
+
+		err := sess.Find(&resp)
+		return err
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
 func (d *PublicDashboardStoreImpl) GetDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error) {
 	dashboard := &models.Dashboard{Uid: dashboardUid}
 	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {

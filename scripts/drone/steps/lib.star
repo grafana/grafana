@@ -1,6 +1,6 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = 'v3.0.11'
+grabpl_version = 'v3.0.12'
 build_image = 'grafana/build-container:1.6.3'
 publish_image = 'grafana/grafana-ci-deploy:1.3.3'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
@@ -1057,7 +1057,7 @@ def publish_linux_packages_step(edition):
         'settings': {
             'access_key_id': from_secret('packages_access_key_id'),
             'secret_access_key': from_secret('packages_secret_access_key'),
-            'service_account_json': from_secret('packages_service_account_json'),
+            'service_account_json': from_secret('packages_service_account'),
             'target_bucket': 'grafana-packages',
             'deb_distribution': 'stable',
             'gpg_passphrase': from_secret('packages_gpg_passphrase'),

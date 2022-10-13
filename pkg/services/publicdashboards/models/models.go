@@ -81,6 +81,14 @@ func (pd PublicDashboard) TableName() string {
 	return "dashboard_public"
 }
 
+type PublicDashboardListResponse struct {
+	Uid          string `json:"uid" xorm:"uid"`
+	AccessToken  string `json:"accessToken" xorm:"access_token"`
+	Title        string `json:"title" xorm:"title"`
+	DashboardUid string `json:"dashboardUid" xorm:"dashboard_uid"`
+	IsEnabled    bool   `json:"isEnabled" xorm:"is_enabled"`
+}
+
 type TimeSettings struct {
 	From string `json:"from,omitempty"`
 	To   string `json:"to,omitempty"`
