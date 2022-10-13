@@ -31,6 +31,10 @@ export interface CloudWatchLogsQueryFieldProps
 const rowGap = css`
   gap: 3px;
 `;
+const noStyledButton = css`
+  background: transparent;
+  border: none;
+`;
 
 interface State {
   hint:
@@ -167,9 +171,9 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
           <div className="query-row-break">
             <div className="text-warning">
               {hint.message}
-              <a className="text-link muted" onClick={hint.fix.action}>
+              <button className={`text-link muted ${noStyledButton}`} onClick={hint.fix.action}>
                 {hint.fix.label}
-              </a>
+              </button>
             </div>
           </div>
         )}
