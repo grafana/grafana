@@ -60,11 +60,12 @@ _sharedKind: {
 
 	// maturity indicates the how far a given kind declaration is in its initial
 	// journey towards what might otherwise be referred to as 1.0.
-	maturity: *"committed" | "synchronized" | "mature"
+	maturity: "committed" | "experimental" | "stable" | "mature"
 
-	// The entity system itself is not mature enough yet for any individual
+	// The kind system itself is not mature enough yet for any particula
 	// kind to be called "mature."
-	maturity: *"committed" | "synchronized"  // TODO unclear if we want maturity for raw kinds
+	 // TODO remove this once system is ready https://github.com/orgs/grafana/projects/133/views/8
+	maturity: "committed" | "experimental" | "stable"
 
 	form: "structured" | "raw"
 }
@@ -77,6 +78,16 @@ _sharedKind: {
 	_sharedKind
 	form: "raw"
 	extensions?: [...string]
+
+	maturity: *"experimental" | "mature" // TODO unclear if we want maturity for raw kinds
+
+	// Set this if there's a sanitize function that should be associated with this
+	// raw type. A call to the named function will be generated.
+	// TODO decide where this gets generated - almost certainly must be outside pkg/kind tree
+	//
+	// The function must conform to (TODO decide on a type signature)
+	sanitizeFuncName?: string
+
 	// need
 	// - sanitize function
 	// - get summary
@@ -92,7 +103,6 @@ _sharedKind: {
 // the risks arising from executing code from potentially untrusted third parties.
 #Structured: {
 	_sharedKind
-	#CoreStructured | #CustomStructured
 	form:     "structured"
 
 	lineage:  thema.#Lineage
@@ -101,11 +111,30 @@ _sharedKind: {
 	currentVersion: thema.#SyntacticVersion & (thema.#LatestVersion & { lin: lineage }).out
 }
 
+// TODO
 #CoreStructured: {
 	#Structured
+	maturity: *"committed" | "experimental" | "stable" | "mature"
 }
 
-// NOTE not a definition b/c apps/plugins could be written against a later Grafana version
+// TODO
 CustomStructured: {
 	#Structured
+	maturity: *"experimental" | "mature"
+}
+
+// SlotKind is a variety of structured kind that provides schema elements for
+// composition into CoreStructured and CustomStructured kinds. Grafana plugins
+// provide SlotKinds; for example, a datasource plugin provides a SlotKind to
+// describe the structure of its queries, which is then composed into dashboards
+// and alerting rules.
+//
+// Each SlotKind is an implementation of exactly one Slot, a shared meta-schema
+// defined by Grafana itself that constrains the shape of schemas declared in
+// that SlotKind.
+#SlotKind: {
+	_sharedKind
+	form: "structured"
+
+	maturity: *"experimental" | "mature"
 }
