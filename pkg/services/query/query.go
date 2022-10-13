@@ -81,7 +81,7 @@ func (s *Service) QueryData(ctx context.Context, user *user.SignedInUser, skipCa
 	}
 	// If there is only one datasource, query it and return
 	if len(parsedReq.parsedQueries) == 1 {
-		return s.handleQueryData(ctx, user, parsedReq)
+		return s.handleQuerySingleDatasource(ctx, user, parsedReq)
 	}
 	// If there are multiple datasources, handle their queries concurrently and return the aggregate result
 	byDataSource := parsedReq.parsedQueries
@@ -158,8 +158,8 @@ func (s *Service) handleExpressions(ctx context.Context, user *user.SignedInUser
 	return qdr, nil
 }
 
-// handleQueryData handles one or more queries to a single datasource.
-func (s *Service) handleQueryData(ctx context.Context, user *user.SignedInUser, parsedReq *parsedRequest) (*backend.QueryDataResponse, error) {
+// handleQuerySingleDatasource handles one or more queries to a single datasource
+func (s *Service) handleQuerySingleDatasource(ctx context.Context, user *user.SignedInUser, parsedReq *parsedRequest) (*backend.QueryDataResponse, error) {
 	queries := parsedReq.getFlattenedQueries()
 	ds := queries[0].datasource
 	if err := s.pluginRequestValidator.Validate(ds.Url, nil); err != nil {
