@@ -23,7 +23,7 @@ def clone_pr_branch(edition, ver_mode):
 
     committish = '${DRONE_SOURCE_BRANCH}'
     return {
-        'name': 'clone-enterprise',
+        'name': 'clone-branch',
         'image': go_image,
         'commands': [
             'git clone "https://github.com/grafana/grafana.git"',
@@ -47,7 +47,7 @@ def swagger_gen_step(edition, ver_mode):
             'GITHUB_TOKEN': from_secret(github_token),
         },
         'commands': [
-            'go run ./pkg/api/swaggergen/main.go ${DRONE_SOURCE_BRANCH} ${DRONE_COMMIT_SHA} $${GITHUB_TOKEN}',
+            'go run ./grafana/pkg/api/swaggergen/main.go ${DRONE_SOURCE_BRANCH} ${DRONE_COMMIT_SHA} $${GITHUB_TOKEN}',
         ],
     }
 
