@@ -44,6 +44,7 @@ const getStyles = (theme: GrafanaTheme2, showContextButton: boolean, isInDashboa
       label: rowWithContext;
       z-index: 1;
       outline: 9999px solid ${outlineColor};
+      display: inherit;
     `,
     horizontalScroll: css`
       label: verticalScroll;

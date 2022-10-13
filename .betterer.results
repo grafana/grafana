@@ -40,9 +40,6 @@ exports[`no enzyme tests`] = {
     ],
     "packages/jaeger-ui-components/src/TraceTimelineViewer/VirtualizedTraceView.test.js:551014442": [
       [13, 26, 13, "RegExp match", "2409514259"]
-    ],
-    "public/app/features/dimensions/editors/ThresholdsEditor/ThresholdsEditor.test.tsx:145048794": [
-      [0, 17, 13, "RegExp match", "2409514259"]
     ]
   }`
 };
@@ -4114,9 +4111,7 @@ exports[`better eslint`] = {
     "public/app/features/dimensions/editors/ThresholdsEditor/ThresholdsEditor.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
     "public/app/features/dimensions/editors/ThresholdsEditor/ThresholdsEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
