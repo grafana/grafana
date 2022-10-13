@@ -40,6 +40,7 @@ func TestMatrixResponses(t *testing.T) {
 			query, err := loadStoredPrometheusQuery(queryFileName)
 			require.NoError(t, err)
 
+			//nolint:gosec
 			responseBytes, err := os.ReadFile(responseFileName)
 			require.NoError(t, err)
 
@@ -98,6 +99,7 @@ type storedPrometheusQuery struct {
 }
 
 func loadStoredPrometheusQuery(fileName string) (PrometheusQuery, error) {
+	//nolint:gosec
 	bytes, err := os.ReadFile(fileName)
 	if err != nil {
 		return PrometheusQuery{}, err

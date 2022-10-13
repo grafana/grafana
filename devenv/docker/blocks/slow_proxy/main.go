@@ -47,5 +47,6 @@ func main() {
 		proxy.ServeHTTP(w, r)
 	})
 
+	//nolint:gosec
 	log.Fatal(http.ListenAndServe(":3011", nil))
 }

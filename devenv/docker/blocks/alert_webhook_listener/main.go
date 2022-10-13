@@ -25,5 +25,6 @@ func hello(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	http.HandleFunc("/", hello)
+	//nolint:gosec
 	log.Fatal(http.ListenAndServe(":3010", nil))
 }
