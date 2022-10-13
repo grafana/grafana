@@ -29,7 +29,7 @@ enable = [
   # "gochecknoinits",
   "goconst",
   "gocritic",
-  "goimports",
+  # "goimports", # ignored for v8.5.x to reduce size of Go 1.19.2 upgrade refactoring.
   "goprintffuncname",
   "gosec",
   "gosimple",
