@@ -130,7 +130,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
       fieldType: isLabel ? 'label' : 'detectedField',
       type: showFieldsStats ? 'close' : 'open',
       logRowUid: row.uid,
-      app: app,
+      app,
     });
   };
 
