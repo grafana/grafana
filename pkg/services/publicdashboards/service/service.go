@@ -261,19 +261,10 @@ func (pd *PublicDashboardServiceImpl) buildMetricRequest(ctx context.Context, da
 
 	// determine safe resolution to query data at
 	safeInterval, safeResolution := pd.getSafeIntervalAndMaxDataPoints(reqDTO, ts)
-
-	n := 0
-	for _, q := range queries {
-		mapQuery := q.MustMap()
-		if mapQuery["hide"] != true {
-			queries[n] = q
-			queries[n].Set("intervalMs", safeInterval)
-			queries[n].Set("maxDataPoints", safeResolution)
-			n++
-		}
+	for i := range queries {
+		queries[i].Set("intervalMs", safeInterval)
+		queries[i].Set("maxDataPoints", safeResolution)
 	}
-
-	queries = queries[:n]
 
 	return dtos.MetricRequest{
 		From:    ts.From,
