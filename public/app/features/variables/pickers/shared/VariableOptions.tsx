@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import classNames from 'classnames';
 import React, { PureComponent } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -65,8 +66,9 @@ export class VariableOptions extends PureComponent<Props> {
       <li key={`${option.value}`}>
         <button
           role="checkbox"
+          type="button"
           aria-checked={option.selected}
-          className={`${highlightClass} ${noStyledButton}`}
+          className={classNames(highlightClass, noStyledButton)}
           onClick={this.onToggle(option)}
         >
           <span className="variable-option-icon"></span>

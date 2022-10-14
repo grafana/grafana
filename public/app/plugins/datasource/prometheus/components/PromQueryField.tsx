@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import classNames from 'classnames';
 import { LanguageMap, languages as prismLanguages } from 'prismjs';
 import React, { ReactNode } from 'react';
 import { Plugin } from 'slate';
@@ -339,7 +340,11 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
                   <div className="prom-query-field-info text-warning">
                     {hint.label}{' '}
                     {hint.fix ? (
-                      <button className={`text-link muted ${noStyledButton}`} onClick={this.onClickHintFix}>
+                      <button
+                        type="button"
+                        className={classNames('text-link', 'muted', noStyledButton)}
+                        onClick={this.onClickHintFix}
+                      >
                         {hint.fix.label}
                       </button>
                     ) : null}

@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import classNames from 'classnames';
 import { LanguageMap, languages as prismLanguages } from 'prismjs';
 import React, { ReactNode } from 'react';
 import { Node, Plugin } from 'slate';
@@ -171,7 +172,11 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
           <div className="query-row-break">
             <div className="text-warning">
               {hint.message}
-              <button className={`text-link muted ${noStyledButton}`} onClick={hint.fix.action}>
+              <button
+                type="button"
+                className={classNames('text-link', 'muted', noStyledButton)}
+                onClick={hint.fix.action}
+              >
                 {hint.fix.label}
               </button>
             </div>
