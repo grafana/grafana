@@ -184,7 +184,7 @@ func (s *SocialAzureAD) extractGroups(client *http.Client, claims azureClaims, t
 	}
 
 	// Fallback to the Graph API
-	endpoint, errBuildGraphURI := s.groupsGraphAPIURL(claims, token)
+	endpoint, errBuildGraphURI := groupsGraphAPIURL(claims, token)
 	if errBuildGraphURI != nil {
 		return nil, errBuildGraphURI
 	}
@@ -225,7 +225,7 @@ func (s *SocialAzureAD) extractGroups(client *http.Client, claims azureClaims, t
 
 // groupsGraphAPIURL retrieves the Microsoft Graph API URL to fetch user groups from the _claim_sources if present
 // otherwise it generates an handcrafted URL.
-func (*SocialAzureAD) groupsGraphAPIURL(claims azureClaims, token *oauth2.Token) (string, error) {
+func groupsGraphAPIURL(claims azureClaims, token *oauth2.Token) (string, error) {
 	var endpoint string
 	// First check if an endpoint was specified in the claims
 	if claims.ClaimNames.Groups != "" {
