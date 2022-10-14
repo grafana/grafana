@@ -426,6 +426,60 @@ func TestGetMetricRequest(t *testing.T) {
 	})
 }
 
+func TestGetQueryDataResponse(t *testing.T) {
+	sqlStore := sqlstore.InitTestDB(t)
+	dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
+	publicdashboardStore := database.ProvideStore(sqlStore)
+
+	service := &PublicDashboardServiceImpl{
+		log:                log.New("test.logger"),
+		store:              publicdashboardStore,
+		intervalCalculator: intervalv2.NewCalculator(),
+	}
+
+	publicDashboardQueryDTO := PublicDashboardQueryDTO{
+		IntervalMs:    int64(1),
+		MaxDataPoints: int64(1),
+	}
+
+	t.Run("Returns nil when query is hidden", func(t *testing.T) {
+		hiddenQuery := map[string]interface{}{
+			"datasource": map[string]interface{}{
+				"type": "mysql",
+				"uid":  "ds1",
+			},
+			"hide":  true,
+			"refId": "A",
+		}
+		customPanels := []interface{}{
+			map[string]interface{}{
+				"id": 1,
+				"datasource": map[string]interface{}{
+					"uid": "ds1",
+				},
+				"targets": []interface{}{hiddenQuery},
+			}}
+
+		dashboard := insertTestDashboard(t, dashboardStore, "testDashWithHiddenQuery", 1, 0, true, []map[string]interface{}{}, customPanels)
+		dto := &SavePublicDashboardConfigDTO{
+			DashboardUid: dashboard.Uid,
+			OrgId:        dashboard.OrgId,
+			UserId:       7,
+			PublicDashboard: &PublicDashboard{
+				IsEnabled:    true,
+				DashboardUid: "NOTTHESAME",
+				OrgId:        9999999,
+				TimeSettings: timeSettings,
+			},
+		}
+		pubdashDto, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
+		require.NoError(t, err)
+
+		resp, err := service.GetQueryDataResponse(context.Background(), true, publicDashboardQueryDTO, 1, pubdashDto.AccessToken)
+		require.Nil(t, resp)
+	})
+}
+
 func TestBuildMetricRequest(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
 	dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
