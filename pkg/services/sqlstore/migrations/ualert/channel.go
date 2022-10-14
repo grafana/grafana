@@ -5,9 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"regexp"
 	"sort"
-	"strings"
 
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
@@ -100,7 +98,10 @@ func (m *migration) setupAlertmanagerConfigs(rulesPerOrg map[int64]map[*alertRul
 
 			if len(filteredReceiverNames) != 0 {
 				// Only create a contact label if there are specific receivers, otherwise it defaults to the root-level route.
-				ar.Labels[ContactLabel] = contactListToString(filteredReceiverNames)
+				ar.Labels[ContactLabel], err = keysString(filteredReceiverNames)
+				if err != nil {
+					return nil, fmt.Errorf("failed to create contact label for alertRule %s in orgId %d: %w", ar.Title, orgID, err)
+				}
 			}
 		}
 
@@ -114,20 +115,19 @@ func (m *migration) setupAlertmanagerConfigs(rulesPerOrg map[int64]map[*alertRul
 	return amConfigPerOrg, nil
 }
 
-// contactListToString creates a sorted string representation of a given map (set) of receiver names. Each name will be comma-separated and double-quoted. Double quotes inside a name are escaped.
-func contactListToString(m map[string]interface{}) string {
+func keysString(m map[string]interface{}) (string, error) {
 	keys := make([]string, 0, len(m))
 	for k := range m {
-		keys = append(keys, quote(k))
+		keys = append(keys, k)
 	}
 	sort.Strings(keys)
 
-	return strings.Join(keys, ",")
-}
+	jsonStr, err := json.Marshal(keys)
+	if err != nil {
+		return "", err
+	}
 
-// quote will surround the given string in double quotes and escape any existing interior double quotes.
-func quote(s string) string {
-	return `"` + strings.ReplaceAll(s, `"`, `\"`) + `"`
+	return string(jsonStr), nil
 }
 
 // getNotificationChannelMap returns a map of all channelUIDs to channel config as well as a separate map for just those channels that are default.
@@ -264,21 +264,18 @@ func (m *migration) createDefaultRouteAndReceiver(defaultChannels []*notificatio
 
 // Create one route per contact point, matching based on ContactLabel.
 func createRoute(recv *PostableApiReceiver) (*Route, error) {
-	// We create a regex matcher so that each alert rule need only have a single ContactLabel entry for all contact points it sends to.
-	// For example, if an alert needs to send to contact1 and contact2 it will have ContactLabel=`"contact1","contact2"` and will match both routes looking
+	// We create a regex matcher so that each alert rule need only have a single ContactLabel entry for all contact points it needs to send to.
+	// For example, if an alert needs to send to contact1 and contact2 it will have ContactLabel=`["contact1","contact2"]` and will match both routes looking
 	// for `.*"contact1".*` and `.*"contact2".*`.
-
-	// We quote and escape here to ensure the regex will correctly match the ContactLabel on the alerts.
-	name := fmt.Sprintf(`.*%s.*`, regexp.QuoteMeta(quote(recv.Name)))
-	mat, err := labels.NewMatcher(labels.MatchRegexp, ContactLabel, name)
+	mat, err := labels.NewMatcher(labels.MatchRegexp, ContactLabel, fmt.Sprintf(`.*"%s".*`, recv.Name))
 	if err != nil {
 		return nil, err
 	}
 
 	return &Route{
-		Receiver:       recv.Name,
-		ObjectMatchers: ObjectMatchers{mat},
-		Continue:       true, // We continue so that each sibling contact point route can separately match.
+		Receiver: recv.Name,
+		Matchers: Matchers{mat},
+		Continue: true, // We continue so that each sibling contact point route can separately match.
 	}, nil
 }
 
@@ -407,23 +404,22 @@ type PostableApiAlertingConfig struct {
 }
 
 type Route struct {
-	Receiver       string         `yaml:"receiver,omitempty" json:"receiver,omitempty"`
-	ObjectMatchers ObjectMatchers `yaml:"object_matchers,omitempty" json:"object_matchers,omitempty"`
-	Routes         []*Route       `yaml:"routes,omitempty" json:"routes,omitempty"`
-	Continue       bool           `yaml:"continue,omitempty" json:"continue,omitempty"`
-	GroupByStr     []string       `yaml:"group_by,omitempty" json:"group_by,omitempty"`
+	Receiver   string   `yaml:"receiver,omitempty" json:"receiver,omitempty"`
+	Matchers   Matchers `yaml:"matchers,omitempty" json:"matchers,omitempty"`
+	Routes     []*Route `yaml:"routes,omitempty" json:"routes,omitempty"`
+	Continue   bool     `yaml:"continue,omitempty" json:"continue,omitempty"`
+	GroupByStr []string `yaml:"group_by,omitempty" json:"group_by,omitempty"`
 }
 
-type ObjectMatchers labels.Matchers
+type Matchers labels.Matchers
 
-// MarshalJSON implements the json.Marshaler interface for Matchers. Vendored from definitions.ObjectMatchers.
-func (m ObjectMatchers) MarshalJSON() ([]byte, error) {
+func (m Matchers) MarshalJSON() ([]byte, error) {
 	if len(m) == 0 {
 		return nil, nil
 	}
-	result := make([][3]string, len(m))
+	result := make([]string, len(m))
 	for i, matcher := range m {
-		result[i] = [3]string{matcher.Name, matcher.Type.String(), matcher.Value}
+		result[i] = matcher.String()
 	}
 	return json.Marshal(result)
 }

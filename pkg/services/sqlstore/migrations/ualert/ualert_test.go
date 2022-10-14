@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
-	"strings"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -20,35 +19,17 @@ var ClearMigrationEntryTitle = clearMigrationEntryTitle
 
 type RmMigration = rmMigration
 
-// UnmarshalJSON implements the json.Unmarshaler interface for Matchers. Vendored from definitions.ObjectMatchers.
-func (m *ObjectMatchers) UnmarshalJSON(data []byte) error {
-	var rawMatchers [][3]string
-	if err := json.Unmarshal(data, &rawMatchers); err != nil {
+func (m *Matchers) UnmarshalJSON(data []byte) error {
+	var lines []string
+	if err := json.Unmarshal(data, &lines); err != nil {
 		return err
 	}
-	for _, rawMatcher := range rawMatchers {
-		var matchType labels.MatchType
-		switch rawMatcher[1] {
-		case "=":
-			matchType = labels.MatchEqual
-		case "!=":
-			matchType = labels.MatchNotEqual
-		case "=~":
-			matchType = labels.MatchRegexp
-		case "!~":
-			matchType = labels.MatchNotRegexp
-		default:
-			return fmt.Errorf("unsupported match type %q in matcher", rawMatcher[1])
-		}
-
-		rawMatcher[2] = strings.TrimPrefix(rawMatcher[2], "\"")
-		rawMatcher[2] = strings.TrimSuffix(rawMatcher[2], "\"")
-
-		matcher, err := labels.NewMatcher(matchType, rawMatcher[0], rawMatcher[2])
+	for _, line := range lines {
+		pm, err := labels.ParseMatchers(line)
 		if err != nil {
 			return err
 		}
-		*m = append(*m, matcher)
+		*m = append(*m, pm...)
 	}
 	sort.Sort(labels.Matchers(*m))
 	return nil

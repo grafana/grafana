@@ -130,24 +130,11 @@ func TestCreateRoute(t *testing.T) {
 				Name: "recv1",
 			},
 			expected: &Route{
-				Receiver:       "recv1",
-				ObjectMatchers: ObjectMatchers{{Type: 2, Name: ContactLabel, Value: `.*"recv1".*`}},
-				Routes:         nil,
-				Continue:       true,
-				GroupByStr:     nil,
-			},
-		},
-		{
-			name: "notification channel should be escaped for regex in the matcher",
-			recv: &PostableApiReceiver{
-				Name: `. ^ $ * + - ? " ( ) [ ] { } \ |`,
-			},
-			expected: &Route{
-				Receiver:       `. ^ $ * + - ? " ( ) [ ] { } \ |`,
-				ObjectMatchers: ObjectMatchers{{Type: 2, Name: ContactLabel, Value: `.*"\. \^ \$ \* \+ - \? \\" \( \) \[ \] \{ \} \\ \|".*`}},
-				Routes:         nil,
-				Continue:       true,
-				GroupByStr:     nil,
+				Receiver:   "recv1",
+				Matchers:   Matchers{{Type: 2, Name: ContactLabel, Value: `.*"recv1".*`}},
+				Routes:     nil,
+				Continue:   true,
+				GroupByStr: nil,
 			},
 		},
 	}
@@ -163,7 +150,7 @@ func TestCreateRoute(t *testing.T) {
 					if a.Receiver != b.Receiver {
 						return a.Receiver < b.Receiver
 					}
-					return a.ObjectMatchers[0].Value < b.ObjectMatchers[0].Value
+					return a.Matchers[0].Value < b.Matchers[0].Value
 				}),
 				cmpopts.IgnoreUnexported(Route{}, labels.Matcher{}),
 			}
