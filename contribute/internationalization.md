@@ -14,6 +14,8 @@ Grafana uses the [i18next](https://www.i18next.com/) framework for managing tran
 
 ## How to add a new translation phrase
 
+### JSX
+
 1. For JSX children, use the `<Trans />` component from `app/core/internationalization` with the `i18nKey`, ensuring it conforms to the guidelines below, with the default english translation. e.g.
 
 ```jsx
@@ -39,6 +41,26 @@ const ErrorMessage = ({ id, message }) => <Trans i18nKey={`errors.${id}`}>There 
 2. Upon reload, the default English phrase will appear on the page.
 
 3. Before submitting your PR, run the `yarn i18n:extract` command to extract the messages you added into the `grafana.json` file and make them available for translation.
+
+### Plain JS usage
+
+Sometimes you may need to translate a string cannot be represented in JSX, such as `placeholder` props. Use the `t` macro for this.
+
+```jsx
+import { t } from "app/core/internationalization"
+
+const placeholder = t('form.username-placeholder','Username');
+
+return <input type="value" placeholder={placeholder}>
+```
+
+Interpolating phrases is a bit more verbose. Make sure the placeholders in the string match the values passed in the object - there's no type safety here!
+
+```jsx
+const placeholder = t('page.greeting', 'Hello {{ username }}', { username });
+```
+
+While the `t` function can technically be used outside of React functions (e.g, in actions/reducers), aim to keep all UI phrases within the React UI functions.
 
 ## How to add a new language
 
@@ -79,28 +101,6 @@ For components used all over the site, use just two segments:
 ### I18next context
 
 We rely on a global i18next singleton (that lives inside the i18next) for storing the i18next config/context.
-
-### Plain JS usage
-
-See [Lingui Docs](https://lingui.js.org/ref/macro.html#t) for more details.
-
-Sometimes you may need to translate a string cannot be represented in JSX, such as `placeholder` props. Use the `t` macro for this.
-
-```jsx
-import { t } from "app/core/internationalization"
-
-const placeholder = t('form.username-placeholder','Username');
-
-return <input type="value" placeholder={placeholder}>
-```
-
-Interpolating phrases is a bit more verbose. Make sure the placeholders in the string match the values passed in the object - there's no type safety here!
-
-```jsx
-const placeholder = t('page.greeting', 'Hello {{ username }}', { username });
-```
-
-While the `t` function can technically be used outside of React functions (e.g, in actions/reducers), aim to keep all UI phrases within the React UI functions.
 
 ## Examples
 
@@ -148,7 +148,7 @@ const userName = user.name;
 Both HTML tags and React components can be included in a phase. The Trans function will handle interpolating it's children properly
 
 ```js
-import { Trans } from "@lingui/macro"
+import { Trans } from "app/core/internationalization"
 
 <Trans i18nKey="page.explainer">
   Click <button>here</button> to <a href="https://grafana.com">learn more.</a>
