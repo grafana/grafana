@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import { size } from 'lodash';
 import React, { useCallback, useState } from 'react';
 
@@ -121,20 +122,25 @@ export function FilterSection({
             return (
               <InlineFormLabel key={idx} width="auto" data-testid={testIds.list + idx}>
                 {fil.tagk} = {fil.type}({fil.filter}), groupBy = {'' + fil.groupBy}
-                <a onClick={() => editFilter(fil, idx)}>
+                <button type="button" className={noStyledButton} onClick={() => editFilter(fil, idx)}>
                   <Icon name={'pen'} />
-                </a>
-                <a onClick={() => removeFilter(idx)} data-testid={testIds.remove}>
+                </button>
+                <button
+                  type="button"
+                  className={noStyledButton}
+                  onClick={() => removeFilter(idx)}
+                  data-testid={testIds.remove}
+                >
                   <Icon name={'times'} />
-                </a>
+                </button>
               </InlineFormLabel>
             );
           })}
         {!addFilterMode && (
           <label className="gf-form-label query-keyword">
-            <a onClick={changeAddFilterMode} data-testid={testIds.open}>
+            <button type="button" className={noStyledButton} onClick={changeAddFilterMode} data-testid={testIds.open}>
               <Icon name={'plus'} />
-            </a>
+            </button>
           </label>
         )}
       </div>
@@ -222,10 +228,12 @@ export function FilterSection({
             )}
 
             <label className="gf-form-label">
-              <a onClick={addFilter}>add filter</a>
-              <a onClick={changeAddFilterMode}>
+              <button type="button" className={noStyledButton} onClick={addFilter}>
+                add filter
+              </button>
+              <button type="button" className={noStyledButton} onClick={changeAddFilterMode}>
                 <Icon name={'times'} />
-              </a>
+              </button>
             </label>
           </div>
         </div>
@@ -236,6 +244,11 @@ export function FilterSection({
     </div>
   );
 }
+
+const noStyledButton = css`
+  background: transparent;
+  border: none;
+`;
 
 export const testIds = {
   section: 'opentsdb-filter',
