@@ -205,6 +205,10 @@ func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, 
 		return nil, err
 	}
 
+	if len(metricReq.Queries) == 0 {
+		return nil, nil
+	}
+
 	anonymousUser, err := pd.BuildAnonymousUser(ctx, dashboard)
 	if err != nil {
 		return nil, err
@@ -257,10 +261,19 @@ func (pd *PublicDashboardServiceImpl) buildMetricRequest(ctx context.Context, da
 
 	// determine safe resolution to query data at
 	safeInterval, safeResolution := pd.getSafeIntervalAndMaxDataPoints(reqDTO, ts)
-	for i := range queries {
-		queries[i].Set("intervalMs", safeInterval)
-		queries[i].Set("maxDataPoints", safeResolution)
+
+	n := 0
+	for _, q := range queries {
+		mapQuery := q.MustMap()
+		if mapQuery["hide"] != true {
+			queries[n] = q
+			queries[n].Set("intervalMs", safeInterval)
+			queries[n].Set("maxDataPoints", safeResolution)
+			n++
+		}
 	}
+
+	queries = queries[:n]
 
 	return dtos.MetricRequest{
 		From:    ts.From,
