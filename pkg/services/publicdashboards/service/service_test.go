@@ -293,9 +293,25 @@ func TestGetAnnotations(t *testing.T) {
 			store:           &fakeStore,
 			AnnotationsRepo: &annotationsRepo,
 		}
-		dashboard := internal.CreateDashboardFromFile(t, "./testData/dashboardWithAnnotations.json")
-		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.Uid}
-		fakeStore.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dashboard, nil)
+		dash := models.NewDashboard("test")
+		color := "red"
+		name := "annoName"
+		grafanaAnnotation := DashAnnotation{
+			Datasource: internal.CreateDatasource("grafana", "grafana"),
+			Enable:     true,
+			Name:       &name,
+			IconColor:  &color,
+			Target: &dashboard2.AnnotationTarget{
+				Limit:    100,
+				MatchAny: false,
+				Tags:     []string{"tag1"},
+				Type:     "tags",
+			},
+		}
+		annos := []DashAnnotation{grafanaAnnotation}
+		dash = AddAnnotationsToDashboard(t, dash, annos)
+		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dash.Uid}
+		fakeStore.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dash, nil)
 		annotationsRepo.On("Find", mock.Anything, mock.Anything).Return(nil, errors.New("failed")).Maybe()
 
 		items, err := service.GetAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")

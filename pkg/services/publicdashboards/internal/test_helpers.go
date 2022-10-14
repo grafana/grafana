@@ -1,13 +1,11 @@
 package internal
 
 import (
-	"os"
 	"strconv"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/stretchr/testify/require"
 )
 
@@ -23,15 +21,6 @@ func GetTimeRangeFromDashboard(t *testing.T, dashboardData *simplejson.Json) (st
 	fromUnixMilli := strconv.FormatInt(fromTime.UnixMilli(), 10)
 
 	return fromUnixMilli, toUnixMilli
-}
-
-func CreateDashboardFromFile(t *testing.T, path string) *models.Dashboard {
-	json, err := os.ReadFile(path)
-	require.Nil(t, err)
-	dashJSON, err := simplejson.NewJson(json)
-	require.Nil(t, err)
-
-	return models.NewDashboardFromJson(dashJSON)
 }
 
 func CreateDatasource(dsType string, uid string) struct {
