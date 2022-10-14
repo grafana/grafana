@@ -62,6 +62,7 @@ const dummyProps: Props = {
   scanStopAction: scanStopAction,
   setQueries: jest.fn(),
   queryKeys: [],
+  queries: [],
   isLive: false,
   syncedTimes: false,
   updateTimeRange: jest.fn(),

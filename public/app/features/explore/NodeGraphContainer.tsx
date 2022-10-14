@@ -116,5 +116,5 @@ function mapStateToProps(state: StoreState, { exploreId }: OwnProps) {
   };
 }
 
-const connector = connect(mapStateToProps);
+const connector = connect(mapStateToProps, {});
 export const NodeGraphContainer = connector(UnconnectedNodeGraphContainer);

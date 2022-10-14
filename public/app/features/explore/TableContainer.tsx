@@ -30,7 +30,7 @@ function mapStateToProps(state: StoreState, { exploreId }: TableContainerProps) 
   return { loading, tableResult, range };
 }
 
-const connector = connect(mapStateToProps);
+const connector = connect(mapStateToProps, {});
 
 type Props = TableContainerProps & ConnectedProps<typeof connector>;
 
