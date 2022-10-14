@@ -374,9 +374,81 @@ func datasourceUIDsToRefIDs(refIDsToDatasourceUIDs map[string]string) map[string
 	return result
 }
 
-// framesForResults returns the queries and expressions frames for each result.
+// framesForResults returns the data frames of all queries and expressions for each
+// result. While result can be identified via its unique labels, we use the index of
+// the field as in the condition data frame.
+//
+// To better understand what the data frames look like we have two examples. The first
+// example contains the data frames for a range vector with a result, while the second example
+// contains the data frames for a range vector with two or more results. In both examples
+// A is the query and B is a reduce expression.
+//
+// Example 1:
+//
+//	 A:
+//		 fields: 2
+//			 name Time, type []time.Time, len 21
+//				 2022-09-16 11:13:30 +0000 UTC
+//				 2022-09-16 11:13:45 +0000 UTC
+//				 2022-09-16 11:14:00 +0000 UTC
+//				 2022-09-16 11:14:15 +0000 UTC
+//				 2022-09-16 11:14:30 +0000 UTC
+//				 2022-09-16 11:14:45 +0000 UTC
+//				 2022-09-16 11:15:00 +0000 UTC
+//				 2022-09-16 11:15:15 +0000 UTC
+//				 2022-09-16 11:15:30 +0000 UTC
+//				 2022-09-16 11:15:45 +0000 UTC
+//				 2022-09-16 11:16:00 +0000 UTC
+//				 2022-09-16 11:16:15 +0000 UTC
+//				 2022-09-16 11:16:30 +0000 UTC
+//				 2022-09-16 11:16:45 +0000 UTC
+//				 2022-09-16 11:17:00 +0000 UTC
+//				 2022-09-16 11:17:15 +0000 UTC
+//				 2022-09-16 11:17:30 +0000 UTC
+//				 2022-09-16 11:17:45 +0000 UTC
+//				 2022-09-16 11:18:00 +0000 UTC
+//				 2022-09-16 11:18:15 +0000 UTC
+//				 2022-09-16 11:18:30 +0000 UTC
+//			 name 1, type []*float64, len 21
+//				 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+//	 B: [0x14001710cc0]
+//		fields: 1
+//			name B, type []*float64, len 1
+//				1
+//
+// Example 2:
+//
+//	 A:
+//		 fields: 2
+//			 name Time, type []time.Time, len 2
+//				 2022-09-16 15:16:30 +0000 UTC
+//				 2022-09-16 15:16:45 +0000 UTC
+//			 name Value, type []*float64, len 2
+//				 166, 165
+//		 fields: 2
+//			 name Time, type []time.Time, len 3
+//				 2022-09-16 15:16:15 +0000 UTC
+//				 2022-09-16 15:16:30 +0000 UTC
+//				 2022-09-16 15:16:45 +0000 UTC
+//			 name Value, type []*float64, len 3
+//				 6, 6, 6, 2
+//		 fields: 2
+//			 name Time, type []time.Time, len 2
+//				 2022-09-16 15:16:30 +0000 UTC
+//				 2022-09-16 15:16:45 +0000 UTC
+//			 name Value, type []*float64, len 2
+//				 40, 41
+//	 B:
+//		 fields: 1
+//			 name B, type []*float64, len 1
+//				 165.5
+//		 fields: 1
+//			 name B, type []*float64, len 1
+//				 6
+//		 fields: 1
+//			 name B, type []*float64, len 1
+//				 40.5
 func framesForResults(r ExecutionResults) map[int]map[string]*data.Frame {
-	// framesForResults contains the data frames for each Ref ID for each label set
 	result := make(map[int]map[string]*data.Frame)
 	for refID, frames := range r.Results {
 		if len(frames) > 0 {
