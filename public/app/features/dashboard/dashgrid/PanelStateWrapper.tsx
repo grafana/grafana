@@ -437,7 +437,6 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     );
   }
 
-  // TODO: cleanup -Move this outside of this component
   renderPanelContent(innerWidth: number, innerHeight: number) {
     const { panel, plugin, dashboard } = this.props;
     const { renderCounter, data } = this.state;
