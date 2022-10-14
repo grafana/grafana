@@ -55,10 +55,9 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
   interpolateVariable = (value: string | string[] | number, variable: VariableWithMultiSupport) => {
     if (typeof value === 'string') {
       if (variable.multi || variable.includeAll) {
-        const result = this.getQueryModel().quoteLiteral(value);
-        return result;
+        return this.getQueryModel().quoteLiteral(value);
       } else {
-        return value;
+        return String(value).replace(/'/g, "''");
       }
     }
 
@@ -98,18 +97,12 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     target: SQLQuery,
     scopedVars: ScopedVars
   ): Record<string, string | DataSourceRef | SQLQuery['format']> {
-    const queryModel = this.getQueryModel(target, this.templateSrv, scopedVars);
-    const rawSql = this.clean(queryModel.interpolate());
     return {
       refId: target.refId,
       datasource: this.getRef(),
-      rawSql,
+      rawSql: this.templateSrv.replace(target.rawSql, scopedVars, this.interpolateVariable),
       format: target.format,
     };
-  }
-
-  clean(value: string) {
-    return value.replace(/''/g, "'");
   }
 
   async metricFindQuery(query: string, optionalOptions?: MetricFindQueryOptions): Promise<MetricFindValue[]> {
