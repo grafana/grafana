@@ -151,6 +151,7 @@ class LegendSeriesLabel extends PureComponent<LegendSeriesLabelProps & LegendSer
         onToggleAxis={onToggleAxis}
       />,
       <button
+        type="button"
         className="graph-legend-alias pointer"
         title={label}
         key="label"

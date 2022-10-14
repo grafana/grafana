@@ -78,6 +78,7 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
       <div className={classes} data-testid="dashboard-row-container">
         <button
           className="dashboard-row__title pointer"
+          type="button"
           data-testid={selectors.components.DashboardRow.title(title)}
           onClick={this.onToggle}
         >
@@ -94,7 +95,7 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
               repeat={this.props.panel.repeat}
               onUpdate={this.onUpdate}
             />
-            <button className="pointer" onClick={this.onDelete} aria-label="Delete row">
+            <button type="button" className="pointer" onClick={this.onDelete} aria-label="Delete row">
               <Icon name="trash-alt" />
             </button>
           </div>

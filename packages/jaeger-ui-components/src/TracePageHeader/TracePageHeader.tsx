@@ -241,6 +241,7 @@ export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
         {links && links.length > 0 && <ExternalLinks links={links} className={styles.TracePageHeaderBack} />}
         {canCollapse ? (
           <button
+            type="button"
             className={styles.TracePageHeaderTitleLink}
             onClick={onSlimViewClicked}
             role="switch"

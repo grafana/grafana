@@ -441,6 +441,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
               removeHoverIndentGuideId={removeHoverIndentGuideId}
             />
             <button
+              type="button"
               className={cx(styles.name, { [styles.nameDetailExpanded]: isDetailExpanded })}
               aria-checked={isDetailExpanded}
               title={labelDetail}
