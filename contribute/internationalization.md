@@ -9,7 +9,7 @@ Grafana uses the [i18next](https://www.i18next.com/) framework for managing tran
 - Use `<Trans i18nKey="search-results.panel-link">Go to {{ pageTitle }}</Trans>` in code to add a translatable phrase
 - Translations are stored in JSON files in `public/locales/{locale}/grafana.json`
 - If a particular phrase is not available in the a language then it will fall back to English
-- To update phrases in English, edit the default phrase in the component's source. Do not edit the `en-ES/grafana.json` or update the english phrase in Crowdin
+- To update phrases in English, edit the default phrase in the component's source, then run `yarn i18n:extract`. Do not edit the `en-ES/grafana.json` or update the english phrase in Crowdin
 - To update phrases in any translated language, edit the phrase in Crowdin. Do not edit the `{locale}/grafana.json`
 
 ## How to add a new translation phrase
