@@ -102,6 +102,7 @@
     "@lingui/cli": "3.14.0",
     "@lingui/macro": "3.14.0",
     "@microsoft/api-extractor": "7.28.6",
+    "@mui/material": "^5.10.9",
     "@pmmmwh/react-refresh-webpack-plugin": "0.5.7",
     "@react-types/button": "3.5.1",
     "@react-types/menu": "3.6.1",
@@ -251,6 +252,7 @@
   "dependencies": {
     "@emotion/css": "11.9.0",
     "@emotion/react": "11.9.3",
+    "@emotion/styled": "^11.10.4",
     "@grafana/agent-core": "0.4.0",
     "@grafana/agent-web": "0.4.0",
     "@grafana/aws-sdk": "0.0.37",

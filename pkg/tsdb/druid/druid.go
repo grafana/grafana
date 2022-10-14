@@ -24,6 +24,25 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 )
 
+// Internal interval and range variables
+var (
+	varInterval     = variableVariants("__interval")
+	varIntervalMs   = variableVariants("__interval_ms")
+	varRange        = variableVariants("__range")
+	varRangeS       = variableVariants("__range_s")
+	varRangeMs      = variableVariants("__range_ms")
+	varRateInterval = variableVariants("__rate_interval")
+)
+
+func variableVariants(base string) []string {
+	return []string{
+		fmt.Sprintf(`"${%s}"`, base),
+		fmt.Sprintf(`"$%s"`, base),
+		fmt.Sprintf(`$%s`, base),
+		fmt.Sprintf(`${%s}`, base),
+	}
+}
+
 type druidQuery struct {
 	Builder  map[string]interface{} `json:"builder"`
 	Settings map[string]interface{} `json:"settings"`
@@ -326,9 +345,11 @@ func (ds *Service) settings(ctx backend.PluginContext) (*druidInstanceSettings, 
 
 func (ds *Service) query(qry backend.DataQuery, s *druidInstanceSettings, headers http.Header) backend.DataResponse {
 	log.DefaultLogger.Info("DRUID EXECUTE QUERY", "_________________________GRAFANA QUERY___________________________", qry)
+	rawQuery := interpolateVariables(string(qry.JSON), qry.Interval, qry.TimeRange.Duration())
+
 	// feature: probably implement a short (1s ? 500ms ? configurable in datasource ? beware memory: constrain size ?) life cache (druidInstanceSettings.cache ?) and early return then
 	response := backend.DataResponse{}
-	q, stg, err := ds.prepareQuery(qry.JSON, s)
+	q, stg, err := ds.prepareQuery([]byte(rawQuery), s)
 	if err != nil {
 		response.Error = err
 		return response
@@ -347,6 +368,58 @@ func (ds *Service) query(qry backend.DataQuery, s *druidInstanceSettings, header
 	}
 	log.DefaultLogger.Info("DRUID EXECUTE QUERY", "_________________________GRAFANA RESPONSE___________________________", response)
 	return response
+}
+
+func interpolateVariables(expr string, interval time.Duration, timeRange time.Duration) string {
+	rangeMs := timeRange.Milliseconds()
+	rangeSRounded := int64(math.Round(float64(rangeMs) / 1000.0))
+
+	expr = multiReplace(expr, varIntervalMs, strconv.FormatInt(int64(interval/time.Millisecond), 10))
+	expr = multiReplace(expr, varInterval, formatDuration(interval))
+	expr = multiReplace(expr, varRangeMs, strconv.FormatInt(rangeMs, 10))
+	expr = multiReplace(expr, varRangeS, strconv.FormatInt(rangeSRounded, 10))
+	expr = multiReplace(expr, varRange, strconv.FormatInt(rangeSRounded, 10)+"s")
+	expr = multiReplace(expr, varRateInterval, interval.String())
+
+	return expr
+}
+
+func multiReplace(s string, olds []string, new string) string {
+	res := s
+	for _, old := range olds {
+		res = strings.ReplaceAll(res, old, new)
+	}
+	return res
+}
+
+func formatDuration(inter time.Duration) string {
+	day := time.Hour * 24
+	year := day * 365
+	if inter >= year {
+		return fmt.Sprintf("%dy", inter/year)
+	}
+
+	if inter >= day {
+		return fmt.Sprintf("%dd", inter/day)
+	}
+
+	if inter >= time.Hour {
+		return fmt.Sprintf("%dh", inter/time.Hour)
+	}
+
+	if inter >= time.Minute {
+		return fmt.Sprintf("%dm", inter/time.Minute)
+	}
+
+	if inter >= time.Second {
+		return fmt.Sprintf("%ds", inter/time.Second)
+	}
+
+	if inter >= time.Millisecond {
+		return fmt.Sprintf("%dms", inter/time.Millisecond)
+	}
+
+	return "1ms"
 }
 
 func (ds *Service) prepareQuery(qry []byte, s *druidInstanceSettings) (druidquerybuilder.Query, map[string]interface{}, error) {

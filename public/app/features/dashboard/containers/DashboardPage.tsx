@@ -1,5 +1,5 @@
 import classnames from 'classnames';
-import React, { PureComponent } from 'react';
+import React, { PureComponent, ReactNode } from 'react';
 import { connect, ConnectedProps, MapDispatchToProps, MapStateToProps } from 'react-redux';
 
 import { locationUtil, NavModelItem, TimeRange } from '@grafana/data';
@@ -92,7 +92,11 @@ type OwnProps = {
   isFNDashboard?: boolean;
   controlsContainer?: HTMLElement | null;
   hiddenVariables?: string[];
+  fnLoader?: ReactNode;
 };
+
+export type DashboardPageProps = OwnProps &
+  GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams>;
 
 export type Props = OwnProps &
   Themeable2 &
@@ -384,12 +388,12 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, initError, queryParams, isPublic, isFNDashboard } = this.props;
+    const { dashboard, initError, queryParams, isPublic, isFNDashboard, fnLoader } = this.props;
     const { editPanel, viewPanel, updateScrollTop } = this.state;
     const kioskMode = !isPublic ? getKioskMode() : KioskMode.Full;
 
     if (!dashboard) {
-      return <DashboardLoading initPhase={this.props.initPhase} />;
+      return fnLoader ? <>{fnLoader}</> : <DashboardLoading initPhase={this.props.initPhase} />;
     }
 
     const inspectPanel = this.getInspectPanel();
