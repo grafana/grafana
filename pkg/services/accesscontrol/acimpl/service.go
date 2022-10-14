@@ -53,7 +53,7 @@ func ProvideOSSService(cfg *setting.Cfg, store store, cache *localcache.CacheSer
 
 type store interface {
 	GetUserPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]accesscontrol.Permission, error)
-	GetUsersPermissions(ctx context.Context, orgID int64, actionPrefix string) (map[int64]accesscontrol.PermissionSet, error)
+	GetUsersPermissions(ctx context.Context, orgID int64, actionPrefix string) (map[int64][]accesscontrol.Permission, map[int64][]string, error)
 	DeleteUserPermissions(ctx context.Context, orgID, userID int64) error
 }
 
@@ -228,11 +228,10 @@ func (s *Service) DeclarePluginRoles(pluginID string, registrations ...accesscon
 }
 
 // GetSimplifiedUsersPermissions returns all users' permissions filtered by action prefixes
-// TODO fetch BASIC roles permissions in OSS
 func (s *Service) GetSimplifiedUsersPermissions(ctx context.Context, user *user.SignedInUser, orgID int64,
 	actionPrefix string) (map[int64][]accesscontrol.SimplifiedUserPermissionDTO, error) {
 
-	usersPermissions, err := s.store.GetUsersPermissions(ctx, orgID, actionPrefix)
+	usersPermissions, usersRoles, err := s.store.GetUsersPermissions(ctx, orgID, actionPrefix)
 	if err != nil {
 		return nil, err
 	}
@@ -268,12 +267,51 @@ func (s *Service) GetSimplifiedUsersPermissions(ctx context.Context, user *user.
 	}()
 
 	res := map[int64][]accesscontrol.SimplifiedUserPermissionDTO{}
-	for userID, pSet := range usersPermissions {
+	for userID, perms := range usersPermissions {
 		if !canView(userID) {
 			continue
 		}
+		// Merge basic role permissions (RAM)
+		if roles, ok := usersRoles[userID]; ok {
+			for i := range roles {
+				basicRole, ok := s.roles[roles[i]]
+				if !ok {
+					s.log.Debug("unknown role", "userID", userID, "role", roles[i])
+					continue
+				}
+				perms = append(perms, basicRole.Permissions...)
+			}
+			delete(usersRoles, userID)
+		}
+		// Todo remove the need of the set
+		pSet := accesscontrol.PermissionSet{}
+		for i := range perms {
+			pSet.Add(perms[i].Action, perms[i].Scope)
+		}
 		for action, scopes := range pSet {
 			res[userID] = append(res[userID], *accesscontrol.NewSimplifiedUserPermission(action, scopes))
+		}
+	}
+
+	// Handle the remaining users that had no stored permissions
+	for userID, roles := range usersRoles {
+		if !canView(userID) {
+			continue
+		}
+		for i := range roles {
+			basicRole, ok := s.roles[roles[i]]
+			if !ok {
+				s.log.Debug("unknown role", "userID", userID, "role", roles[i])
+				continue
+			}
+			// Todo remove the need of the set
+			pSet := accesscontrol.PermissionSet{}
+			for i := range basicRole.Permissions {
+				pSet.Add(basicRole.Permissions[i].Action, basicRole.Permissions[i].Scope)
+			}
+			for action, scopes := range pSet {
+				res[userID] = append(res[userID], *accesscontrol.NewSimplifiedUserPermission(action, scopes))
+			}
 		}
 	}
 

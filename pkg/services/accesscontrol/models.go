@@ -290,7 +290,9 @@ func (ps PermissionSet) Add(action, scope string) {
 	if !ok {
 		ps[action] = map[string]bool{}
 	}
-	ps[action][scope] = true
+	if scope != "" {
+		ps[action][scope] = true
+	}
 }
 
 type SimplifiedUserPermissionDTO struct {

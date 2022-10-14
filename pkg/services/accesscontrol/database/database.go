@@ -61,14 +61,21 @@ func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query acces
 }
 
 // GetUsersPermissions returns the list of user permissions indexed by UserID
-func (s *AccessControlStore) GetUsersPermissions(ctx context.Context, orgID int64, actionPrefix string) (map[int64]accesscontrol.PermissionSet, error) {
-	type UserPermission struct {
+func (s *AccessControlStore) GetUsersPermissions(ctx context.Context, orgID int64, actionPrefix string) (map[int64][]accesscontrol.Permission, map[int64][]string, error) {
+	type UserRBACPermission struct {
 		UserID int64  `xorm:"user_id"`
 		Action string `xorm:"action"`
 		Scope  string `xorm:"scope"`
 	}
-	res := make([]UserPermission, 0)
+	type UserOrgRole struct {
+		UserID  int64  `xorm:"id"`
+		OrgRole string `xorm:"role"`
+		IsAdmin bool   `xorm:"is_admin"`
+	}
+	dbPerms := make([]UserRBACPermission, 0)
+	dbRoles := make([]UserOrgRole, 0)
 	err := s.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		// Find permissions
 		q := `
 		SELECT
 			user_id,
@@ -103,22 +110,39 @@ func (s *AccessControlStore) GetUsersPermissions(ctx context.Context, orgID int6
 			AND action LIKE ?
 		`
 
-		if err := sess.SQL(q, globalOrgID, orgID, actionPrefix+"%").Find(&res); err != nil {
+		if err := sess.SQL(q, globalOrgID, orgID, actionPrefix+"%").Find(&dbPerms); err != nil {
 			return err
 		}
 
+		// Find roles
+		// Technically Grafana Admins won't be returned here if they are not members of the org
+		q = `
+		SELECT u.id, ou.role, u.is_admin
+		FROM user AS u 
+		INNER JOIN org_user AS ou ON u.id = ou.user_id
+		WHERE ou.org_id = ?
+		`
+
+		if err := sess.SQL(q, orgID).Find(&dbRoles); err != nil {
+			return err
+		}
 		return nil
 	})
 
-	mapped := map[int64]accesscontrol.PermissionSet{}
-	for i := range res {
-		if _, ok := mapped[res[i].UserID]; !ok {
-			mapped[res[i].UserID] = accesscontrol.PermissionSet{}
-		}
-		mapped[res[i].UserID].Add(res[i].Action, res[i].Scope)
+	mapped := map[int64][]accesscontrol.Permission{}
+	for i := range dbPerms {
+		mapped[dbPerms[i].UserID] = append(mapped[dbPerms[i].UserID], accesscontrol.Permission{Action: dbPerms[i].Action, Scope: dbPerms[i].Scope})
 	}
 
-	return mapped, err
+	roles := map[int64][]string{}
+	for i := range dbRoles {
+		roles[dbRoles[i].UserID] = []string{dbRoles[i].OrgRole}
+		if dbRoles[i].IsAdmin {
+			roles[dbRoles[i].UserID] = append(roles[dbRoles[i].UserID], accesscontrol.RoleGrafanaAdmin)
+		}
+	}
+
+	return mapped, roles, err
 }
 
 func userRolesFilter(orgID, userID int64, teamIDs []int64, roles []string) (string, []interface{}) {
