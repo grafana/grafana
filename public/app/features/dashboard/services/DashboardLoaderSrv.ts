@@ -32,7 +32,7 @@ export class DashboardLoaderSrv {
     };
   }
 
-  loadDashboard(type: UrlQueryValue, slug: any, uid: any) {
+  loadDashboard(type: UrlQueryValue, slug: any, uid: any): Promise<DashboardDTO> {
     let promise;
 
     if (type === 'script') {
