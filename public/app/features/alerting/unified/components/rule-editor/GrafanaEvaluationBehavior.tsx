@@ -1,9 +1,10 @@
 import { css, cx } from '@emotion/css';
 import classNames from 'classnames';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { RegisterOptions, useFormContext } from 'react-hook-form';
 
-import { durationToMilliseconds, GrafanaTheme2, parseDuration } from '@grafana/data';
+import { durationToMilliseconds, GrafanaTheme2, parseDuration, SelectableValue } from '@grafana/data';
+import { Stack } from '@grafana/experimental';
 import {
   Button,
   Card,
@@ -13,17 +14,21 @@ import {
   Input,
   InputControl,
   Label,
-  Stack,
   Tooltip,
   useStyles2,
 } from '@grafana/ui';
 import { FolderPickerFilter } from 'app/core/components/Select/FolderPicker';
 import { contextSrv } from 'app/core/core';
 import { DashboardSearchHit } from 'app/features/search/types';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction, useDispatch } from 'app/types';
+import { RuleNamespace } from 'app/types/unified-alerting';
 
+import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
+import { fetchAllPromRulesAction } from '../../state/actions';
 import { RuleForm, RuleFormValues } from '../../types/rule-form';
 import { checkEvaluationIntervalGlobalLimit } from '../../utils/config';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { AsyncRequestState } from '../../utils/redux';
 import { parsePrometheusDuration } from '../../utils/time';
 import { CollapseToggle } from '../CollapseToggle';
 import { EvaluationIntervalLimitExceeded } from '../InvalidIntervalWarning';
@@ -33,9 +38,28 @@ import { RuleEditorSection } from './RuleEditorSection';
 import { containsSlashes, Folder, RuleFolderPicker } from './RuleFolderPicker';
 import { checkForPathSeparator } from './util';
 
-export const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
+const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
 
-export const forValidationOptions = (evaluateEvery: string): RegisterOptions => ({
+const useGetGroups = (groupfoldersForGrafana: AsyncRequestState<RuleNamespace[]>, folderName: string) => {
+  const groupOptions = useMemo(() => {
+    const groupsForFolderResult: [string, RuleNamespace] | undefined = Object.entries(
+      groupfoldersForGrafana?.result ?? {}
+    ).find((entry) => entry[1].name === folderName);
+    if (!groupfoldersForGrafana?.loading && !groupfoldersForGrafana?.error && groupfoldersForGrafana?.result) {
+      return groupsForFolderResult ? groupsForFolderResult[1].groups.map((group) => group.name) : [];
+    } else {
+      return [];
+    }
+  }, [groupfoldersForGrafana, folderName]);
+
+  return groupOptions;
+};
+
+function mapGroupsToOptions(groups: string[]): Array<SelectableValue<string>> {
+  return groups.map((group) => ({ label: group, value: group }));
+}
+
+const forValidationOptions = (evaluateEvery: string): RegisterOptions => ({
   required: {
     value: true,
     message: 'Required.',
@@ -114,10 +138,25 @@ function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
   const {
     register,
     formState: { errors },
+    watch,
   } = useFormContext<RuleFormValues>();
 
   const styles = useStyles2(getStyles);
   const folderFilter = useRuleFolderFilter(initialFolder);
+  const dispatch = useDispatch();
+
+  const folder = watch('folder');
+  const promRules = useUnifiedAlertingSelector((state) => state.promRules);
+  const groupfoldersForGrafana = promRules[GRAFANA_RULES_SOURCE_NAME];
+
+  const groupOptions: Array<SelectableValue<string>> = mapGroupsToOptions(
+    useGetGroups(groupfoldersForGrafana, folder?.title ?? '')
+  );
+
+  useEffect(() => {
+    dispatch(fetchAllPromRulesAction());
+  }, [dispatch]);
+
   return (
     <div className={classNames([styles.flexRow, styles.alignBaseline])}>
       <Field
@@ -196,7 +235,6 @@ function EvaluationIntervalInput({ initialFolder }: { initialFolder: RuleForm | 
       value: true,
       message: 'Required.',
     },
-    pattern: positiveDurationValidationPattern,
     validate: (value: string) => {
       const duration = parseDuration(value);
       if (Object.keys(duration).length) {
