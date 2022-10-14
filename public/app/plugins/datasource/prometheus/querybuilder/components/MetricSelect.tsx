@@ -15,6 +15,13 @@ export interface Props {
   onChange: (query: PromVisualQuery) => void;
   onGetMetrics: () => Promise<SelectableValue[]>;
 }
+const getFakeMetric = (i: number) => {
+  return {
+    label: `LABEL_${i}`,
+    title: `TITLE_${i}`,
+    value: `VALUE_${i}`,
+  };
+};
 
 export function MetricSelect({ query, onChange, onGetMetrics }: Props) {
   const styles = useStyles2(getStyles);
@@ -61,25 +68,19 @@ export function MetricSelect({ query, onChange, onGetMetrics }: Props) {
       <EditorField label="Metric">
         <Select
           inputId="prometheus-metric-select"
-          className={styles.select}
-          value={query.metric ? toOption(query.metric) : undefined}
           placeholder="Select metric"
           virtualized
-          allowCustomValue
-          formatOptionLabel={formatOptionLabel}
-          filterOption={customFilterOption}
           onOpenMenu={async () => {
             setState({ isLoading: true });
-            const metrics = await onGetMetrics();
+            // const metrics = await onGetMetrics();
+            const metrics = new Array(1000000).fill(getFakeMetric(0));
+            console.log('METRRIC SAMPLE', metrics);
+            // metrics.splice(0, metrics.length - 100000)
             setState({ metrics, isLoading: undefined });
           }}
           isLoading={state.isLoading}
           options={state.metrics}
-          onChange={({ value }) => {
-            if (value) {
-              onChange({ ...query, metric: value });
-            }
-          }}
+          onChange={({ value }) => {}}
         />
       </EditorField>
     </EditorFieldGroup>
