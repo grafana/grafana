@@ -13,7 +13,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/cwlog"
 )
 
@@ -44,9 +43,9 @@ type QueryJson struct {
 }
 
 // parseQueries parses the json queries and returns a map of cloudWatchQueries by region. The cloudWatchQuery has a 1 to 1 mapping to a query editor row
-func (e *cloudWatchExecutor) parseQueries(queries []backend.DataQuery, startTime time.Time, endTime time.Time) (map[string][]*cloudWatchQuery, error) {
+func parseQueries(queries []backend.DataQuery, startTime time.Time, endTime time.Time, dynamicLabelsEnabled bool) (map[string][]*cloudWatchQuery, error) {
 	requestQueries := make(map[string][]*cloudWatchQuery)
-	migratedQueries, err := migrateLegacyQuery(queries, e.features.IsEnabled(featuremgmt.FlagCloudWatchDynamicLabels))
+	migratedQueries, err := migrateLegacyQuery(queries, dynamicLabelsEnabled)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +58,7 @@ func (e *cloudWatchExecutor) parseQueries(queries []backend.DataQuery, startTime
 		}
 
 		queryType := model.QueryType
-		if queryType != timeSeriesQuery && queryType != "" {
+		if queryType != timeSeriesQuery && queryType != "" { // TODO: Can we depend on a check in QueryData instead and remove this condition here?
 			continue
 		}
 
