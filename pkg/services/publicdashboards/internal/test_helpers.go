@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"encoding/json"
 	"os"
 	"strconv"
 	"testing"
@@ -9,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	pubdashModels "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/stretchr/testify/require"
 )
 
@@ -34,23 +32,6 @@ func CreateDashboardFromFile(t *testing.T, path string) *models.Dashboard {
 	require.Nil(t, err)
 
 	return models.NewDashboardFromJson(dashJSON)
-}
-
-func AddAnnotationsToDashboard(t *testing.T, dash *models.Dashboard, annotations []pubdashModels.DashAnnotation) *models.Dashboard {
-	type annotationsDto struct {
-		List []pubdashModels.DashAnnotation `json:"list"`
-	}
-	annos := annotationsDto{}
-	annos.List = annotations
-	annoJSON, err := json.Marshal(annos)
-	require.NoError(t, err)
-
-	dashAnnos, err := simplejson.NewJson(annoJSON)
-	require.NoError(t, err)
-
-	dash.Data.Set("annotations", dashAnnos)
-
-	return dash
 }
 
 func CreateDatasource(dsType string, uid string) struct {

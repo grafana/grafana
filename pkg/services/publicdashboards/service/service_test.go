@@ -95,7 +95,7 @@ func TestGetAnnotations(t *testing.T) {
 			},
 		}
 		annos := []DashAnnotation{grafanaAnnotation, grafanaTagAnnotation}
-		dashboard := internal.AddAnnotationsToDashboard(t, dash, annos)
+		dashboard := AddAnnotationsToDashboard(t, dash, annos)
 
 		annotationsRepo := annotations.FakeAnnotationsRepo{}
 		fakeStore := FakePublicDashboardStore{}
@@ -154,7 +154,7 @@ func TestGetAnnotations(t *testing.T) {
 			},
 		}
 		annos := []DashAnnotation{grafanaAnnotation}
-		dashboard := internal.AddAnnotationsToDashboard(t, dash, annos)
+		dashboard := AddAnnotationsToDashboard(t, dash, annos)
 
 		annotationsRepo := annotations.FakeAnnotationsRepo{}
 		fakeStore := FakePublicDashboardStore{}
@@ -225,7 +225,7 @@ func TestGetAnnotations(t *testing.T) {
 			Name:       &name,
 		}
 		annos := []DashAnnotation{grafanaAnnotation, queryAnnotation, disabledGrafanaAnnotation}
-		dashboard := internal.AddAnnotationsToDashboard(t, dash, annos)
+		dashboard := AddAnnotationsToDashboard(t, dash, annos)
 
 		annotationsRepo := annotations.FakeAnnotationsRepo{}
 		fakeStore := FakePublicDashboardStore{}
