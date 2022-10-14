@@ -53,6 +53,13 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
   const headerStyles: CSSProperties = {
     height: headerHeight,
   };
+  const iconStyles: CSSProperties = {
+    minHeight: headerHeight,
+    minWidth: headerHeight,
+    display: 'flex',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+  };
   const containerStyles: CSSProperties = { width, height };
 
   return (
@@ -62,16 +69,41 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
           <div className={styles.headerContainer} style={headerStyles}>
             <div className={styles.title}>{title}</div>
             <div className={styles.view}>
-              {<Icon className={styles.iconItem} name="info-circle" size="sm" />}
-              {<Icon className={styles.iconItem} name="link" size="sm" />}
+              {
+                <div style={iconStyles}>
+                  <Icon name="info-circle" size="sm" />
+                </div>
+              }
+              {
+                <div style={iconStyles}>
+                  <Icon name="external-link-alt" size="sm" />
+                </div>
+              }
             </div>
             <div className={styles.edit}>
-              {<Icon className={styles.iconItem} name="clock-nine" size="sm" />}
-              {<Icon className={styles.iconItem} name="heart" size="sm" />}
+              {
+                <div style={iconStyles}>
+                  <Icon name="clock-nine" size="sm" />
+                </div>
+              }
+              {
+                <div style={iconStyles}>
+                  <Icon name="heart" size="sm" />
+                </div>
+              }
             </div>
-            <div className={styles.menu}>{<Icon className={styles.iconItem} name="ellipsis-v" size="sm" />}</div>
+            <div className={styles.menu}>
+              {
+                <div style={iconStyles}>
+                  <Icon name="ellipsis-v" size="sm" />
+                </div>
+              }
+            </div>
             <div className={styles.dragSpace}></div>
-            <div className={styles.status}>{<Icon className={styles.iconItem} name="fa fa-spinner" size="sm" />}</div>
+            <div className={styles.status}>
+              {<Icon name="fa fa-spinner" size="sm" />}
+              {/* <PanelHeaderLoadingIndicator state={data.state} onClick={onCancelQuery} /> */}
+            </div>
 
             {/* {itemsRenderer(leftItems, (items) => {
               return <div className={styles.leftItems}>{items}</div>;
@@ -81,13 +113,13 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
         // : (
         //   // TODO: Create headerless behavior (title, menu, etc shown on focus/hover, drag handler is present, etc..)
         //   <div className={styles.headerContainer} style={headerStyles}>
-        //     <div className={styles.dragIcon}>{<Icon className={styles.iconItem} name="draggabledots" size="sm" />}</div>
+        //     <div className={styles.dragIcon}>{<Icon name="draggabledots" size="sm" />}</div>
         //     <div className={styles.edit}>
-        //       {<Icon className={styles.iconItem} name="clock-nine" size="sm" />}
-        //       {<Icon className={styles.iconItem} name="heart-rate" size="sm" />}
+        //       {<Icon name="clock-nine" size="sm" />}
+        //       {<Icon name="heart-rate" size="sm" />}
         //     </div>
-        //     <div className={styles.menu}>{<Icon className={styles.iconItem} name="ellipsis-v" size="sm" />}</div>
-        //     <div className={styles.status}>{<Icon className={styles.iconItem} name="fa fa-spinner" size="sm" />}</div>
+        //     <div className={styles.menu}>{<Icon name="ellipsis-v" size="sm" />}</div>
+        //     <div className={styles.status}>{<Icon name="fa fa-spinner" size="sm" />}</div>
         //   </div>
         // )
       }
@@ -154,7 +186,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'panel-header',
       display: 'flex',
       alignItems: 'center',
-      padding: theme.spacing(padding),
+      padding: `0 ${theme.spacing(padding)}`,
     }),
     title: css({
       label: 'panel-title',
@@ -173,15 +205,12 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
     }),
     dragSpace: css({
-      flexBasis: `20%`,
+      flexBasis: `30%`,
       width: '100%',
     }),
     status: css({
       display: 'flex',
       marginLeft: 'auto',
-    }),
-    iconItem: css({
-      margin: '0 4px',
     }),
     leftItems: css({
       display: 'flex',
