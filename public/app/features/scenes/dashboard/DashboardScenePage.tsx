@@ -9,7 +9,7 @@ import { getDashboardLoader } from './DashboardsLoader';
 
 export interface Props extends GrafanaRouteComponentProps<{ uid: string }> {}
 
-export const SceneDashboardPage: FC<Props> = ({ match }) => {
+export const DashboardScenePage: FC<Props> = ({ match }) => {
   const loader = getDashboardLoader();
   const { dashboard, isLoading } = loader.useState();
 
@@ -29,4 +29,4 @@ export const SceneDashboardPage: FC<Props> = ({ match }) => {
   return <dashboard.Component model={dashboard} />;
 };
 
-export default SceneDashboardPage;
+export default DashboardScenePage;

@@ -20,7 +20,15 @@ export interface DashboardLoaderState {
 }
 
 export class DashboardLoader extends StateManagerBase<DashboardLoaderState> {
+  cache: Record<string, DashboardScene> = {};
+
   async load(uid: string) {
+    const fromCache = this.cache[uid];
+    if (fromCache) {
+      this.setState({ dashboard: fromCache });
+      return;
+    }
+
     this.setState({ isLoading: true });
 
     try {
@@ -74,6 +82,7 @@ export class DashboardLoader extends StateManagerBase<DashboardLoaderState> {
       actions: [new SceneTimePicker({})],
     });
 
+    this.cache[rsp.dashboard.uid] = dashboard;
     this.setState({ dashboard, isLoading: false });
   }
 }

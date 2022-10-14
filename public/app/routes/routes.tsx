@@ -536,7 +536,7 @@ export function getDynamicDashboardRoutes(cfg = config): RouteDescriptor[] {
     {
       path: '/scenes/dashboard/:uid',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "scenes"*/ 'app/features/scenes/dashboard/SceneDashboardPage')
+        () => import(/* webpackChunkName: "scenes"*/ 'app/features/scenes/dashboard/DashboardScenePage')
       ),
     },
     {
