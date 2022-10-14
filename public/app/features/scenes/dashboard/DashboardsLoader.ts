@@ -1,8 +1,15 @@
+import { getDefaultTimeRange } from '@grafana/data';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
+import { DashboardModel } from 'app/features/dashboard/state';
 import { DashboardDTO } from 'app/types';
 
-import { SceneFlexLayout } from '../components/SceneFlexLayout';
+import { SceneGridLayout } from '../components/SceneGridLayout';
+import { SceneTimePicker } from '../components/SceneTimePicker';
+import { VizPanel } from '../components/VizPanel';
+import { SceneTimeRange } from '../core/SceneTimeRange';
+import { SceneObject } from '../core/types';
+import { SceneQueryRunner } from '../querying/SceneQueryRunner';
 
 import { DashboardScene } from './DashboardScene';
 
@@ -30,11 +37,41 @@ export class DashboardLoader extends StateManagerBase<DashboardLoaderState> {
   }
 
   initDashboard(rsp: DashboardDTO) {
+    // Just to have migrations run
+    const oldModel = new DashboardModel(rsp.dashboard, rsp.meta);
+    const panels: SceneObject[] = [];
+
+    for (const panel of oldModel.panels) {
+      if (panel.type === 'row') {
+        continue;
+      }
+
+      panels.push(
+        new VizPanel({
+          title: panel.title,
+          pluginId: panel.type,
+          size: {
+            x: panel.gridPos.x,
+            y: panel.gridPos.y,
+            width: panel.gridPos.w,
+            height: panel.gridPos.h,
+          },
+          options: panel.options,
+          fieldConfig: panel.fieldConfig,
+          $data: new SceneQueryRunner({
+            queries: panel.targets,
+          }),
+        })
+      );
+    }
+
     const dashboard = new DashboardScene({
-      title: rsp.dashboard.title,
-      layout: new SceneFlexLayout({
-        children: [],
+      title: oldModel.title,
+      layout: new SceneGridLayout({
+        children: panels,
       }),
+      $timeRange: new SceneTimeRange(getDefaultTimeRange()),
+      actions: [new SceneTimePicker({})],
     });
 
     this.setState({ dashboard, isLoading: false });
