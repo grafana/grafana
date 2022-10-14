@@ -30,6 +30,9 @@ export interface ControlsOptions {
 
   // Show measure
   showMeasure?: boolean;
+
+  // Show search
+  showSearch?: boolean;
 }
 
 export enum TooltipMode {

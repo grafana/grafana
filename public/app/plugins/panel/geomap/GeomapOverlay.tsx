@@ -7,17 +7,19 @@ import { useStyles2 } from '@grafana/ui';
 export interface OverlayProps {
   topRight1?: React.ReactNode[];
   topRight2?: React.ReactNode[];
+  topLeft?: React.ReactNode[];
   bottomLeft?: React.ReactNode[];
   blStyle?: CSSProperties;
 }
 
-export const GeomapOverlay = ({ topRight1, topRight2, bottomLeft, blStyle }: OverlayProps) => {
+export const GeomapOverlay = ({ topRight1, topRight2, topLeft, bottomLeft, blStyle }: OverlayProps) => {
   const topRight1Exists = (topRight1 && topRight1.length > 0) ?? false;
   const styles = useStyles2(getStyles(topRight1Exists));
   return (
     <div className={styles.overlay}>
       {Boolean(topRight1?.length) && <div className={styles.TR1}>{topRight1}</div>}
       {Boolean(topRight2?.length) && <div className={styles.TR2}>{topRight2}</div>}
+      {Boolean(topLeft?.length) && <div className={styles.TL}>{topLeft}</div>}
       {Boolean(bottomLeft?.length) && (
         <div className={styles.BL} style={blStyle}>
           {bottomLeft}
@@ -46,6 +48,12 @@ const getStyles = (topRight1Exists: boolean) => (theme: GrafanaTheme2) => ({
     top: ${topRight1Exists ? '80' : '8'}px;
     right: 8px;
     pointer-events: auto;
+  `,
+  TL: css`
+    left: 0.5em;
+    pointer-events: auto;
+    position: absolute;
+    top: 80px;
   `,
   BL: css`
     position: absolute;

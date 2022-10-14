@@ -21,6 +21,7 @@ import { GeomapTooltip } from './GeomapTooltip';
 import { DebugOverlay } from './components/DebugOverlay';
 import { MeasureOverlay } from './components/MeasureOverlay';
 import { MeasureVectorLayer } from './components/MeasureVectorLayer';
+import { SearchOverlay } from './components/SearchOverlay';
 import { GeomapHoverPayload } from './event';
 import { getGlobalStyles } from './globalStyles';
 import { defaultMarkersConfig } from './layers/data/markersLayer';
@@ -357,7 +358,12 @@ export class GeomapPanel extends Component<Props, State> {
       topRight2 = [<DebugOverlay key="debug" map={this.map} />];
     }
 
-    this.setState({ topRight1, topRight2 });
+    let topLeft: ReactNode[] = [];
+    if (options.showSearch) {
+      topLeft = [<SearchOverlay key="search" map={this.map} />];
+    }
+
+    this.setState({ topRight1, topRight2, topLeft });
   }
 
   getLegends() {
@@ -372,7 +378,7 @@ export class GeomapPanel extends Component<Props, State> {
   }
 
   render() {
-    let { ttip, ttipOpen, topRight1, legends, topRight2 } = this.state;
+    let { ttip, ttipOpen, topRight1, legends, topRight2, topLeft } = this.state;
     const { options } = this.props;
     const showScale = options.controls.showScale;
     if (!ttipOpen && options.tooltip?.mode === TooltipMode.None) {
@@ -388,6 +394,7 @@ export class GeomapPanel extends Component<Props, State> {
             bottomLeft={legends}
             topRight1={topRight1}
             topRight2={topRight2}
+            topLeft={topLeft}
             blStyle={{ bottom: showScale ? '35px' : '8px' }}
           />
         </div>

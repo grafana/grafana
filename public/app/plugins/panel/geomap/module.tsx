@@ -127,6 +127,13 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
       })
       .addBooleanSwitch({
         category,
+        path: 'controls.showSearch',
+        name: 'Show search',
+        description: 'Show search tool',
+        defaultValue: false,
+      })
+      .addBooleanSwitch({
+        category,
         path: 'controls.showDebug',
         name: 'Show debug',
         description: 'Show map info',
