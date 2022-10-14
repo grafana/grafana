@@ -210,7 +210,7 @@ func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, 
 		return nil, err
 	}
 
-	res, err := pd.QueryDataService.QueryDataMultipleSources(ctx, anonymousUser, skipCache, metricReq, true)
+	res, err := pd.QueryDataService.QueryData(ctx, anonymousUser, skipCache, metricReq)
 
 	reqDatasources := metricReq.GetUniqueDatasourceTypes()
 	if err != nil {
