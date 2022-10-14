@@ -14,7 +14,7 @@ const (
 	globalOrgID = 0
 )
 
-func ProvideService(sql sqlstore.Store) *AccessControlStore {
+func ProvideService(sql db.DB) *AccessControlStore {
 	return &AccessControlStore{sql}
 }
 

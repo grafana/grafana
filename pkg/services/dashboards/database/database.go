@@ -37,8 +37,8 @@ type DashboardStore struct {
 // DashboardStore implements the Store interface
 var _ dashboards.Store = (*DashboardStore)(nil)
 
-func ProvideDashboardStore(sqlStore db.DB, features featuremgmt.FeatureToggles, tagService tag.Service) *DashboardStore {
-	return &DashboardStore{sqlStore: sqlStore, log: log.New("dashboard-store"), features: features, tagService: tagService}
+func ProvideDashboardStore(sqlStore db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tagService tag.Service) *DashboardStore {
+	return &DashboardStore{sqlStore: sqlStore, cfg: cfg, log: log.New("dashboard-store"), features: features, tagService: tagService}
 }
 
 func (d *DashboardStore) emitEntityEvent() bool {

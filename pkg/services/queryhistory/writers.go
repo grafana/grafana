@@ -23,7 +23,7 @@ func writeStarredSQL(query SearchInQueryHistoryQuery, sqlStore db.DB, builder *s
 	}
 }
 
-func writeFiltersSQL(query SearchInQueryHistoryQuery, user *user.SignedInUser, sqlStore *sqlstore.SQLStore, builder *sqlstore.SQLBuilder) {
+func writeFiltersSQL(query SearchInQueryHistoryQuery, user *user.SignedInUser, sqlStore db.DB, builder *sqlstore.SQLBuilder) {
 	params := []interface{}{user.OrgID, user.UserID, query.From, query.To, "%" + query.SearchString + "%", "%" + query.SearchString + "%"}
 	var sql bytes.Buffer
 	sql.WriteString(" WHERE query_history.org_id = ? AND query_history.created_by = ? AND query_history.created_at >= ? AND query_history.created_at <= ? AND (query_history.queries " + sqlStore.GetDialect().LikeStr() + " ? OR query_history.comment " + sqlStore.GetDialect().LikeStr() + " ?) ")
@@ -37,7 +37,7 @@ func writeFiltersSQL(query SearchInQueryHistoryQuery, user *user.SignedInUser, s
 	builder.Write(sql.String(), params...)
 }
 
-func writeSortSQL(query SearchInQueryHistoryQuery, sqlStore *sqlstore.SQLStore, builder *sqlstore.SQLBuilder) {
+func writeSortSQL(query SearchInQueryHistoryQuery, sqlStore db.DB, builder *sqlstore.SQLBuilder) {
 	if query.Sort == "time-asc" {
 		builder.Write(" ORDER BY created_at ASC ")
 	} else {
@@ -45,10 +45,10 @@ func writeSortSQL(query SearchInQueryHistoryQuery, sqlStore *sqlstore.SQLStore, 
 	}
 }
 
-func writeLimitSQL(query SearchInQueryHistoryQuery, sqlStore *sqlstore.SQLStore, builder *sqlstore.SQLBuilder) {
+func writeLimitSQL(query SearchInQueryHistoryQuery, sqlStore db.DB, builder *sqlstore.SQLBuilder) {
 	builder.Write(" LIMIT ? ", query.Limit)
 }
 
-func writeOffsetSQL(query SearchInQueryHistoryQuery, sqlStore *sqlstore.SQLStore, builder *sqlstore.SQLBuilder) {
+func writeOffsetSQL(query SearchInQueryHistoryQuery, sqlStore db.DB, builder *sqlstore.SQLBuilder) {
 	builder.Write(" OFFSET ? ", query.Limit*(query.Page-1))
 }
