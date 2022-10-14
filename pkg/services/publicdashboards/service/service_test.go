@@ -373,8 +373,7 @@ func TestBuildAnonymousUser(t *testing.T) {
 	}
 
 	t.Run("will add datasource read and query permissions to user for each datasource in dashboard", func(t *testing.T) {
-		user, err := service.BuildAnonymousUser(context.Background(), dashboard)
-		require.NoError(t, err)
+		user := service.BuildAnonymousUser(context.Background(), dashboard)
 		require.Equal(t, dashboard.OrgId, user.OrgID)
 		require.Equal(t, "datasources:uid:ds1", user.Permissions[user.OrgID]["datasources:query"][0])
 		require.Equal(t, "datasources:uid:ds3", user.Permissions[user.OrgID]["datasources:query"][1])
