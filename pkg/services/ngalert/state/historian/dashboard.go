@@ -61,12 +61,10 @@ func (r *dashboardResolver) getID(ctx context.Context, orgID int64, uid string) 
 			result = err
 		} else if err != nil {
 			return 0, err
-		}
-
-		if query.Result != nil {
-			result = query.Result.Id
-		} else {
+		} else if query.Result == nil {
 			result = dashboards.ErrDashboardNotFound
+		} else {
+			result = query.Result.Id
 		}
 
 		// By setting the cache inside the singleflighted routine, we avoid any accidental re-queries that could get initiated after the query completes.
