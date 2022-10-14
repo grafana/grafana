@@ -1,7 +1,9 @@
 import { get as lodashGet, isEqual } from 'lodash';
+import React from 'react';
 
 import { FrameGeometrySourceMode, MapLayerOptions } from '@grafana/data';
 import { NestedPanelOptions, NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
+import { Switch } from '@grafana/ui';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 import { addLocationFields } from 'app/features/geo/editor/locationEditor';
 
@@ -114,11 +116,13 @@ export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<Map
             },
           });
         }
-        builder.addBooleanSwitch({
+        builder.addCustomEditor({
+          id: 'tooltip',
           path: 'tooltip',
           name: 'Display tooltip',
           description: 'Show the tooltip for layer',
           defaultValue: true,
+          editor: (props) => <Switch value={props.value} onChange={(e) => props.onChange(e.currentTarget.checked)} />,
         });
       }
     },
