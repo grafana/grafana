@@ -225,3 +225,11 @@ Grafana attempts to retrieve the user's group membership by calling the included
 
 > Note: The token must include the `GroupMember.Read.All` permission for group overage claim calls to succeed.
 > Admin consent may be required for this permission.
+
+### Force fetching groups from Microsoft graph API
+
+To force fetching groups from Microsoft Graph API instead of the `id_token`. You can use the `force_use_graph_api` config option.
+
+```
+force_use_graph_api = true
+```

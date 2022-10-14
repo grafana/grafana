@@ -7,8 +7,7 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/store"
+	"github.com/grafana/grafana/pkg/plugins"
 )
 
 func GetObjectKindInfo() models.ObjectKindInfo {
@@ -19,26 +18,15 @@ func GetObjectKindInfo() models.ObjectKindInfo {
 	}
 }
 
-func NewDashboardSummary(sql *sqlstore.SQLStore) models.ObjectSummaryBuilder {
+// This summary does not resolve old name as UID
+func GetObjectSummaryBuilder() models.ObjectSummaryBuilder {
+	builder := NewStaticDashboardSummaryBuilder(&directLookup{})
 	return func(ctx context.Context, uid string, body []byte) (*models.ObjectSummary, []byte, error) {
-		// This just gets the orgID (that will soon/eventually be encoded in a GRN and passed instead of a UID)
-		user := store.UserFromContext(ctx)
-		if user == nil {
-			return nil, nil, fmt.Errorf("can not find user in context")
-		}
-
-		// Totally inefficient to look this up every time, but for the current use case that is OK
-		// The lookup is currently structured to support searchV2, but I think should become a real fallback
-		// that is only executed when we find a legacy dashboard ref
-		lookup, err := LoadDatasourceLookup(ctx, user.OrgID, sql)
-		if err != nil {
-			return nil, nil, err
-		}
-		builder := NewStaticDashboardSummaryBuilder(lookup)
 		return builder(ctx, uid, body)
 	}
 }
 
+// This implementation moves datasources referenced by internal ID or name to UID
 func NewStaticDashboardSummaryBuilder(lookup DatasourceLookup) models.ObjectSummaryBuilder {
 	return func(ctx context.Context, uid string, body []byte) (*models.ObjectSummary, []byte, error) {
 		summary := &models.ObjectSummary{
@@ -77,18 +65,23 @@ func NewStaticDashboardSummaryBuilder(lookup DatasourceLookup) models.ObjectSumm
 			p.Description = panel.Description
 			p.URL = fmt.Sprintf("%s?viewPanel=%d", url, panel.ID)
 			p.Fields = make(map[string]interface{}, 0)
+			p.Fields["type"] = panel.Type
 
-			panelRefs.Add("panel", panel.Type, "")
+			if panel.Type != "row" {
+				panelRefs.Add(models.ExternalEntityReferencePlugin, string(plugins.Panel), panel.Type)
+				dashboardRefs.Add(models.ExternalEntityReferencePlugin, string(plugins.Panel), panel.Type)
+			}
 			for _, v := range panel.Datasource {
 				dashboardRefs.Add(models.StandardKindDataSource, v.Type, v.UID)
 				panelRefs.Add(models.StandardKindDataSource, v.Type, v.UID)
+				if v.Type != "" {
+					dashboardRefs.Add(models.ExternalEntityReferencePlugin, string(plugins.DataSource), v.Type)
+				}
 			}
-
 			for _, v := range panel.Transformer {
-				panelRefs.Add(models.StandardKindTransform, v, "")
+				panelRefs.Add(models.ExternalEntityReferenceRuntime, models.ExternalEntityReferenceRuntime_Transformer, v)
+				dashboardRefs.Add(models.ExternalEntityReferenceRuntime, models.ExternalEntityReferenceRuntime_Transformer, v)
 			}
-
-			dashboardRefs.Add(models.StandardKindPanel, panel.Type, "")
 			p.References = panelRefs.Get()
 			summary.Nested = append(summary.Nested, p)
 		}

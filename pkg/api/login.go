@@ -220,6 +220,11 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
 			return resp
 		}
 
+		if errors.Is(err, login.ErrNoAuthProvider) {
+			resp = response.Error(http.StatusInternalServerError, "No authorization providers enabled", err)
+			return resp
+		}
+
 		// Do not expose disabled status,
 		// just show incorrect user credentials error (see #17947)
 		if errors.Is(err, login.ErrUserDisabled) {
