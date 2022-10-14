@@ -53,21 +53,45 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
   const headerStyles: CSSProperties = {
     height: headerHeight,
   };
-
   const containerStyles: CSSProperties = { width, height };
 
   return (
     <div className={styles.container} style={containerStyles}>
-      <div className={styles.header} style={headerStyles}>
-        <div className={styles.headerTitle}>{title}</div>
-        <div className={styles.iconItem}>{<Icon name="info-circle" size="sm" />}</div>
-        <div className={styles.iconItem}>{<Icon name="link" size="sm" />}</div>
-        <div className={styles.iconItem}>{<Icon name="clock-nine" size="sm" />}</div>
-        <div className={styles.iconItem}>{<Icon name="heart-rate" size="sm" />}</div>
-        {itemsRenderer(leftItems, (items) => {
-          return <div className={styles.leftItems}>{items}</div>;
-        })}
-      </div>
+      {
+        title.length > 0 && (
+          <div className={styles.headerContainer} style={headerStyles}>
+            <div className={styles.title}>{title}</div>
+            <div className={styles.view}>
+              {<Icon className={styles.iconItem} name="info-circle" size="sm" />}
+              {<Icon className={styles.iconItem} name="link" size="sm" />}
+            </div>
+            <div className={styles.edit}>
+              {<Icon className={styles.iconItem} name="clock-nine" size="sm" />}
+              {<Icon className={styles.iconItem} name="heart" size="sm" />}
+            </div>
+            <div className={styles.menu}>{<Icon className={styles.iconItem} name="ellipsis-v" size="sm" />}</div>
+            <div className={styles.dragSpace}></div>
+            <div className={styles.status}>{<Icon className={styles.iconItem} name="fa fa-spinner" size="sm" />}</div>
+
+            {/* {itemsRenderer(leftItems, (items) => {
+              return <div className={styles.leftItems}>{items}</div>;
+            })} */}
+          </div>
+        )
+        // : (
+        //   // TODO: Create headerless behavior (title, menu, etc shown on focus/hover, drag handler is present, etc..)
+        //   <div className={styles.headerContainer} style={headerStyles}>
+        //     <div className={styles.dragIcon}>{<Icon className={styles.iconItem} name="draggabledots" size="sm" />}</div>
+        //     <div className={styles.edit}>
+        //       {<Icon className={styles.iconItem} name="clock-nine" size="sm" />}
+        //       {<Icon className={styles.iconItem} name="heart-rate" size="sm" />}
+        //     </div>
+        //     <div className={styles.menu}>{<Icon className={styles.iconItem} name="ellipsis-v" size="sm" />}</div>
+        //     <div className={styles.status}>{<Icon className={styles.iconItem} name="fa fa-spinner" size="sm" />}</div>
+        //   </div>
+        // )
+      }
+
       <div className={styles.content} style={contentStyle}>
         {children(innerWidth, innerHeight)}
       </div>
@@ -126,26 +150,38 @@ const getStyles = (theme: GrafanaTheme2) => {
       width: '100%',
       flexGrow: 1,
     }),
-    header: css({
+    headerContainer: css({
       label: 'panel-header',
       display: 'flex',
       alignItems: 'center',
+      padding: theme.spacing(padding),
     }),
-    headerTitle: css({
-      label: 'panel-header',
+    title: css({
+      label: 'panel-title',
       textOverflow: 'ellipsis',
       overflow: 'hidden',
       whiteSpace: 'nowrap',
-      paddingLeft: theme.spacing(padding),
       fontWeight: theme.typography.fontWeightMedium,
+    }),
+    view: css({
+      display: 'flex',
+    }),
+    edit: css({
+      display: 'flex',
+    }),
+    menu: css({
+      display: 'flex',
+    }),
+    dragSpace: css({
+      flexBasis: `20%`,
+      width: '100%',
+    }),
+    status: css({
+      display: 'flex',
+      marginLeft: 'auto',
     }),
     iconItem: css({
-      label: 'panel-header',
-      textOverflow: 'ellipsis',
-      overflow: 'hidden',
-      whiteSpace: 'nowrap',
-      paddingLeft: theme.spacing(padding),
-      fontWeight: theme.typography.fontWeightMedium,
+      margin: '0 4px',
     }),
     leftItems: css({
       display: 'flex',

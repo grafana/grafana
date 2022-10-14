@@ -157,7 +157,7 @@ Basic.argTypes = {
 Basic.args = {
   width: 400,
   height: 200,
-  title: 'Title text',
+  title: 'Very long title that should get ellipsis when there is no more space',
 };
 
 export default meta;
