@@ -829,7 +829,7 @@ func (l sqlDashboardLoader) loadAllDashboards(ctx context.Context, limit int, or
 		for {
 			select {
 			case <-ctx.Done():
-				break
+				return
 			default:
 			}
 
