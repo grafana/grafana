@@ -90,16 +90,18 @@ case "$1" in
 	return=$?
 	if [ $return -eq 0 ]
 	then
-	  sleep 1
-
-    # check if pid file has been written to
-	  if ! [[ -s $PID_FILE ]]; then
-	    log_end_msg 1
-	    exit 1
-	  fi
-
-		i=0
 		timeout=10
+		i=0
+    # check if pid file has been written to
+		until ! [[ -s $PID_FILE ]] >/dev/null 2>&1
+		do
+	    sleep 1
+      if [ $i -gt $timeout ]; then
+        log_end_msg 1
+        exit 1
+      fi
+		done
+		i=0
 		# Wait for the process to be properly started before exiting
 		until { cat "$PID_FILE" | xargs kill -0; } >/dev/null 2>&1
 		do
