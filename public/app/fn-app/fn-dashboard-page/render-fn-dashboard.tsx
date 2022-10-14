@@ -13,6 +13,7 @@ import DashboardPage, {
 } from 'app/features/dashboard/containers/DashboardPage';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { cancelVariables } from 'app/features/variables/state/actions';
+import { FnLoggerService } from 'app/fn_logger';
 import { DashboardRoutes, StoreState, useSelector } from 'app/types';
 
 import { Themeable2 } from '../../../../packages/grafana-ui/src/types/theme';
@@ -70,7 +71,7 @@ export const RenderFNDashboard: FC<FNDashboardProps> = (props) => {
   }, [firstError, setErrors]);
 
   useEffect(() => {
-    console.log('[FN Grafana] Trying to set initial state...');
+    FnLoggerService.log(null, '[FN Grafana] Trying to set initial state...');
 
     dispatch(
       setInitialMountState({
@@ -87,7 +88,8 @@ export const RenderFNDashboard: FC<FNDashboardProps> = (props) => {
     );
 
     // TODO: catch success in redux-thunk way
-    console.log(
+    FnLoggerService.log(
+      null,
       '[FN Grafana] Successfully set initial state.',
       locationService.getLocation(),
       locationService.getHistory,
