@@ -3,6 +3,7 @@ import { Observable, of } from 'rxjs';
 import { DataQueryRequest, DataQueryResponse, DataSourceInstanceSettings } from '@grafana/data';
 import { DataSourceWithBackend } from '@grafana/runtime';
 
+import { normalizeQuery } from './QueryEditor/QueryEditor';
 import { FireDataSourceOptions, Query, ProfileTypeMessage, SeriesMessage } from './types';
 
 export class FireDataSource extends DataSourceWithBackend<Query, FireDataSourceOptions> {
@@ -21,7 +22,7 @@ export class FireDataSource extends DataSourceWithBackend<Query, FireDataSourceO
             labelSelector: '{}',
           };
         }
-        return t;
+        return normalizeQuery(t, request.app);
       });
     if (!validTargets.length) {
       return of({ data: [] });

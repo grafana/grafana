@@ -111,7 +111,7 @@ function useProfileName(profileTypes: ProfileTypeMessage[], profileTypeId: strin
   }, [profileTypeId, profileTypes]);
 }
 
-function normalizeQuery(query: Query, app?: CoreApp) {
+export function normalizeQuery(query: Query, app?: CoreApp | string) {
   let normalized = defaults(query, defaultQuery);
   if (app !== CoreApp.Explore && normalized.queryType === 'both') {
     // In dashboards and other places, we can't show both types of graphs at the same time.
