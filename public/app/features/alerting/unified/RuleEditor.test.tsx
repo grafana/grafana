@@ -100,6 +100,8 @@ const ui = {
   },
 };
 
+const getLabelInput = (selector: HTMLElement) => within(selector).getByRole('combobox');
+
 describe('RuleEditor', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -175,10 +177,10 @@ describe('RuleEditor', () => {
     // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
     await userEvent.click(ui.buttons.addLabel.get(), { pointerEventsCheck: PointerEventsCheckLevel.Never });
 
-    await userEvent.type(ui.inputs.labelKey(0).get(), 'severity');
-    await userEvent.type(ui.inputs.labelValue(0).get(), 'warn');
-    await userEvent.type(ui.inputs.labelKey(1).get(), 'team');
-    await userEvent.type(ui.inputs.labelValue(1).get(), 'the a-team');
+    await userEvent.type(getLabelInput(ui.inputs.labelKey(0).get()), 'severity{enter}');
+    await userEvent.type(getLabelInput(ui.inputs.labelValue(0).get()), 'warn{enter}');
+    await userEvent.type(getLabelInput(ui.inputs.labelKey(1).get()), 'team{enter}');
+    await userEvent.type(getLabelInput(ui.inputs.labelValue(1).get()), 'the a-team{enter}');
 
     // save and check what was sent to backend
     await userEvent.click(ui.buttons.save.get());
@@ -276,10 +278,10 @@ describe('RuleEditor', () => {
     // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
     await userEvent.click(ui.buttons.addLabel.get(), { pointerEventsCheck: PointerEventsCheckLevel.Never });
 
-    await userEvent.type(ui.inputs.labelKey(0).get(), 'severity');
-    await userEvent.type(ui.inputs.labelValue(0).get(), 'warn');
-    await userEvent.type(ui.inputs.labelKey(1).get(), 'team');
-    await userEvent.type(ui.inputs.labelValue(1).get(), 'the a-team');
+    await userEvent.type(getLabelInput(ui.inputs.labelKey(0).get()), 'severity{enter}');
+    await userEvent.type(getLabelInput(ui.inputs.labelValue(0).get()), 'warn{enter}');
+    await userEvent.type(getLabelInput(ui.inputs.labelKey(1).get()), 'team{enter}');
+    await userEvent.type(getLabelInput(ui.inputs.labelValue(1).get()), 'the a-team{enter}');
 
     // save and check what was sent to backend
     await userEvent.click(ui.buttons.save.get());
@@ -370,8 +372,8 @@ describe('RuleEditor', () => {
     // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
     await userEvent.click(ui.buttons.addLabel.get(), { pointerEventsCheck: PointerEventsCheckLevel.Never });
 
-    await userEvent.type(ui.inputs.labelKey(1).get(), 'team');
-    await userEvent.type(ui.inputs.labelValue(1).get(), 'the a-team');
+    await userEvent.type(getLabelInput(ui.inputs.labelKey(1).get()), 'team{enter}');
+    await userEvent.type(getLabelInput(ui.inputs.labelValue(1).get()), 'the a-team{enter}');
 
     // try to save, find out that recording rule name is invalid
     await userEvent.click(ui.buttons.save.get());
@@ -502,8 +504,8 @@ describe('RuleEditor', () => {
     await userEvent.type(ui.inputs.annotationValue(2).get(), 'value');
 
     //add a label
-    await userEvent.type(ui.inputs.labelKey(2).get(), 'custom');
-    await userEvent.type(ui.inputs.labelValue(2).get(), 'value');
+    await userEvent.type(getLabelInput(ui.inputs.labelKey(2).get()), 'custom{enter}');
+    await userEvent.type(getLabelInput(ui.inputs.labelValue(2).get()), 'value{enter}');
 
     // save and check what was sent to backend
     await userEvent.click(ui.buttons.save.get());
