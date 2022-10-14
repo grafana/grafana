@@ -347,6 +347,8 @@ export function modifyQueries(
 ): ThunkResult<void> {
   return async (dispatch, getState) => {
     const state = getState().explore[exploreId];
+
+    // to make typescript happy
     if (state == null) {
       return;
     }
