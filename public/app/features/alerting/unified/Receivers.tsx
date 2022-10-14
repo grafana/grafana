@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import pluralize from 'pluralize';
-import React, { FC, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Redirect, Route, RouteChildrenProps, Switch, useLocation, useParams } from 'react-router-dom';
 
 import { NavModelItem, GrafanaTheme2 } from '@grafana/data';
@@ -48,7 +48,7 @@ function NotificationError({ errorCount }: NotificationErrorProps) {
   );
 }
 
-const Receivers: FC = () => {
+const Receivers = () => {
   const alertManagers = useAlertManagersByPermission('notification');
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName(alertManagers);
   const dispatch = useDispatch();
