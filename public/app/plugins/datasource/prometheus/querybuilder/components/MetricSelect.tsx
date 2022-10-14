@@ -73,7 +73,7 @@ export function MetricSelect({ query, onChange, onGetMetrics }: Props) {
           onOpenMenu={async () => {
             setState({ isLoading: true });
             // const metrics = await onGetMetrics();
-            const metrics = new Array(1000000).fill(getFakeMetric());
+            const metrics = new Array(100000).fill(getFakeMetric());
             setState({ metrics, isLoading: undefined });
           }}
           isLoading={state.isLoading}
