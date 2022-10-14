@@ -193,9 +193,8 @@ export function FolderPicker(props: Props) {
   }, [folder]);
 
   const onFolderChange = useCallback(
-    (newFolder: SelectableValue<number>, actionMeta: ActionMeta) => {
-      const value = newFolder.value;
-      if (value === VALUE_FOR_ADD) {
+    (newFolder: SelectableValue<number> | null | undefined, actionMeta: ActionMeta) => {
+      if (newFolder?.value === VALUE_FOR_ADD) {
         setFolder({
           id: VALUE_FOR_ADD,
           title: inputValue,
