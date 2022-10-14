@@ -4,8 +4,8 @@ import { VariableModel } from 'app/features/variables/types';
 import {
   PublicDashboard,
   dashboardHasTemplateVariables,
-  generatePublicDashboardUrl,
   publicDashboardPersisted,
+  generatePublicDashboardUrl,
 } from './SharePublicDashboardUtils';
 
 describe('dashboardHasTemplateVariables', () => {
