@@ -319,9 +319,9 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
     const adhocFiltersFromDashboard = options.targets.flatMap((target: InfluxQuery) => target.adhocFilters ?? []);
     if (adhocFilters?.length || adhocFiltersFromDashboard?.length) {
-      const ahfilters = adhocFilters?.length ? adhocFilters : adhocFiltersFromDashboard;
+      const ahFilters = adhocFilters?.length ? adhocFilters : adhocFiltersFromDashboard;
       const tmpQuery = new InfluxQueryModel({ refId: 'A' }, this.templateSrv, scopedVars);
-      timeFilter += ' AND ' + tmpQuery.renderAdhocFilters(ahfilters);
+      timeFilter += ' AND ' + tmpQuery.renderAdhocFilters(ahFilters);
     }
     // replace grafana variables
     scopedVars.timeFilter = { value: timeFilter };
