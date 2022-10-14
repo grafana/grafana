@@ -40,7 +40,7 @@ type QueryJson struct {
 	TimezoneUTCOffset string                 `json:"timezoneUTCOffset,omitempty"`
 	QueryType         string                 `json:"type,omitempty"`
 	Hide              *bool                  `json:"hide,omitempty"`
-	Alias             *string                `json:"alias,omitempty"`
+	Alias             string                 `json:"alias,omitempty"`
 }
 
 // parseQueries parses the json queries and returns a map of cloudWatchQueries by region. The cloudWatchQuery has a 1 to 1 mapping to a query editor row
@@ -141,11 +141,10 @@ var aliasPatterns = map[string]string{
 var legacyAliasRegexp = regexp.MustCompile(`{{\s*(.+?)\s*}}`)
 
 func migrateAliasToDynamicLabel(queryJson *QueryJson) {
-	fullAliasField := ""
+	fullAliasField := queryJson.Alias
 
-	if queryJson.Alias != nil && *queryJson.Alias != "" {
-		matches := legacyAliasRegexp.FindAllStringSubmatch(*queryJson.Alias, -1)
-		fullAliasField = *queryJson.Alias
+	if fullAliasField != "" {
+		matches := legacyAliasRegexp.FindAllStringSubmatch(fullAliasField, -1)
 
 		for _, groups := range matches {
 			fullMatch := groups[0]
@@ -163,7 +162,7 @@ func migrateAliasToDynamicLabel(queryJson *QueryJson) {
 func parseRequestQuery(model QueryJson, refId string, startTime time.Time, endTime time.Time) (*cloudWatchQuery, error) {
 	cwlog.Debug("Parsing request query", "query", model)
 	cloudWatchQuery := cloudWatchQuery{
-		Alias:             "",
+		Alias:             model.Alias,
 		Label:             "",
 		MatchExact:        true,
 		Statistic:         "",
@@ -255,10 +254,6 @@ func parseRequestQuery(model QueryJson, refId string, startTime time.Time, endTi
 
 	if model.MatchExact != nil {
 		cloudWatchQuery.MatchExact = *model.MatchExact
-	}
-
-	if model.Alias != nil {
-		cloudWatchQuery.Alias = *model.Alias
 	}
 
 	if model.Label != nil {
