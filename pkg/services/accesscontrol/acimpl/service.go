@@ -310,7 +310,9 @@ func (s *Service) GetSimplifiedUsersPermissions(ctx context.Context, user *user.
 				pSet.Add(basicRole.Permissions[i].Action, basicRole.Permissions[i].Scope)
 			}
 			for action, scopes := range pSet {
-				res[userID] = append(res[userID], *accesscontrol.NewSimplifiedUserPermission(action, scopes))
+				if strings.HasPrefix(action, actionPrefix) {
+					res[userID] = append(res[userID], *accesscontrol.NewSimplifiedUserPermission(action, scopes))
+				}
 			}
 		}
 	}

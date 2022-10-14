@@ -105,9 +105,7 @@ func (s *AccessControlStore) GetUsersPermissions(ctx context.Context, orgID int6
 					) AS sa ON 1 = 1 
 					WHERE br.role = 'Grafana Admin'
 		) AS up
-		WHERE
-			(org_id = ? OR org_id = ?)
-			AND action LIKE ?
+		WHERE (org_id = ? OR org_id = ?) AND action LIKE ?
 		`
 
 		if err := sess.SQL(q, globalOrgID, orgID, actionPrefix+"%").Find(&dbPerms); err != nil {
