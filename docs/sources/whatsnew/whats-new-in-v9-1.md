@@ -85,7 +85,7 @@ As part of the upcoming improvements to Grafana's navigation, you can now direct
 #### Heatmap improvements
 
 The beta heatmap announced in version 9.0 is now used throughout Grafana.
-Its performance is improved, and it now supports [exemplars]({{< relref "../basics/exemplars/" >}}).
+Its performance is improved, and it now supports [exemplars]({{< relref "../fundamentals/exemplars/" >}}).
 To learn more about the heatmap panel, see the [documentation]({{< relref "../panels-visualizations/visualizations/heatmap/" >}}).
 
 {{< figure src="/static/img/docs/panels/heatmap-panel-9-1.png" max-width="750px" caption="A heatmap panel" >}}
