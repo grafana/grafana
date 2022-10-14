@@ -140,6 +140,10 @@ func (hs *HTTPServer) registerRoutes() {
 	}
 
 	if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
+		// list public dashboards
+		r.Get("/public-dashboards/list", reqSignedIn, hs.Index)
+
+		// anonymous view public dashboard
 		r.Get("/public-dashboards/:accessToken",
 			publicdashboardsapi.SetPublicDashboardFlag,
 			publicdashboardsapi.SetPublicDashboardOrgIdOnContext(hs.PublicDashboardsApi.PublicDashboardService),
