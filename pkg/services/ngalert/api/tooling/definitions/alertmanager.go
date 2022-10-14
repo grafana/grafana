@@ -12,6 +12,7 @@ import (
 
 	"github.com/go-openapi/strfmt"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
+	amv2silence "github.com/prometheus/alertmanager/api/v2/restapi/operations/silence"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
@@ -199,7 +200,7 @@ import (
 // create silence
 //
 //     Responses:
-//       201: gettableSilence
+//       201: postSilencesOKBody
 //       400: ValidationError
 
 // swagger:route POST /api/alertmanager/{DatasourceUID}/api/v2/silences alertmanager RouteCreateSilence
@@ -207,7 +208,7 @@ import (
 // create silence
 //
 //     Responses:
-//       201: gettableSilence
+//       201: postSilencesOKBody
 //       400: ValidationError
 //       404: NotFound
 
@@ -388,6 +389,9 @@ func NewGettableStatus(cfg *PostableApiAlertingConfig) *GettableStatus {
 
 // swagger:model postableSilence
 type PostableSilence = amv2.PostableSilence
+
+// swagger:model postSilencesOKBody
+type PostSilencesOKBody = amv2silence.PostSilencesOKBody
 
 // swagger:model gettableSilences
 type GettableSilences = amv2.GettableSilences
