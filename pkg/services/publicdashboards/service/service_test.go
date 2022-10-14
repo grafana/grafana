@@ -74,7 +74,7 @@ func TestGetAnnotations(t *testing.T) {
 			Enable:     true,
 			Name:       &name,
 			IconColor:  &color,
-			Target: &dashboard2.Target{
+			Target: &dashboard2.AnnotationTarget{
 				Limit:    100,
 				MatchAny: false,
 				Tags:     nil,
@@ -87,7 +87,7 @@ func TestGetAnnotations(t *testing.T) {
 			Enable:     true,
 			Name:       &name,
 			IconColor:  &color,
-			Target: &dashboard2.Target{
+			Target: &dashboard2.AnnotationTarget{
 				Limit:    100,
 				MatchAny: false,
 				Tags:     []string{"tag1"},
@@ -146,7 +146,7 @@ func TestGetAnnotations(t *testing.T) {
 			Enable:     true,
 			Name:       &name,
 			IconColor:  &color,
-			Target: &dashboard2.Target{
+			Target: &dashboard2.AnnotationTarget{
 				Limit:    100,
 				MatchAny: false,
 				Tags:     []string{"tag1"},
@@ -211,7 +211,7 @@ func TestGetAnnotations(t *testing.T) {
 			Enable:     true,
 			Name:       &name,
 			IconColor:  &color,
-			Target: &dashboard2.Target{
+			Target: &dashboard2.AnnotationTarget{
 				Limit:    100,
 				MatchAny: true,
 				Tags:     nil,

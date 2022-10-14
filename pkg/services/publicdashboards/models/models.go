@@ -81,6 +81,12 @@ type PublicDashboard struct {
 // Alias the generated type
 type DashAnnotation = dashboard.AnnotationQuery
 
+type AnnotationsDto struct {
+	Annotations struct {
+		List []DashAnnotation `json:"list"`
+	}
+}
+
 type AnnotationEvent struct {
 	Id          int64                     `json:"id"`
 	DashboardId int64                     `json:"dashboardId"`

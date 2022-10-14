@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -257,18 +256,7 @@ func (pd *PublicDashboardServiceImpl) GetAnnotations(ctx context.Context, reqDTO
 		return nil, err
 	}
 
-	type annotationsDto struct {
-		Annotations struct {
-			List []DashAnnotation `json:"list"`
-		}
-	}
-
-	dto := annotationsDto{}
-	bytes, err := dash.Data.MarshalJSON()
-	if err != nil {
-		return nil, err
-	}
-	err = json.Unmarshal(bytes, &dto)
+	annoDto, err := UnmarshalDashboardAnnotations(dash.Data)
 	if err != nil {
 		return nil, err
 	}
@@ -279,50 +267,51 @@ func (pd *PublicDashboardServiceImpl) GetAnnotations(ctx context.Context, reqDTO
 	}
 
 	uniqueEvents := make(map[int64]AnnotationEvent, 0)
-	for _, anno := range dto.Annotations.List {
-		// only consider enabled, grafana annotations
-		if anno.Enable && (*anno.Datasource.Uid == grafanads.DatasourceUID || *anno.Datasource.Uid == grafanads.DatasourceName) {
-			annoQuery := &annotations.ItemQuery{
-				From:         reqDTO.From,
-				To:           reqDTO.To,
-				OrgId:        dash.OrgId,
-				DashboardId:  dash.Id,
-				DashboardUid: dash.Uid,
-				Limit:        anno.Target.Limit,
-				MatchAny:     anno.Target.MatchAny,
-				SignedInUser: anonymousUser,
+	for _, anno := range annoDto.Annotations.List {
+		// skip annotations that are not enabled or are not a grafana datasource
+		if !anno.Enable || (*anno.Datasource.Uid != grafanads.DatasourceUID && *anno.Datasource.Uid != grafanads.DatasourceName) {
+			continue
+		}
+		annoQuery := &annotations.ItemQuery{
+			From:         reqDTO.From,
+			To:           reqDTO.To,
+			OrgId:        dash.OrgId,
+			DashboardId:  dash.Id,
+			DashboardUid: dash.Uid,
+			Limit:        anno.Target.Limit,
+			MatchAny:     anno.Target.MatchAny,
+			SignedInUser: anonymousUser,
+		}
+
+		if anno.Target.Type == "tags" {
+			annoQuery.Tags = anno.Target.Tags
+		}
+
+		annotationItems, err := pd.AnnotationsService.Find(ctx, annoQuery)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, item := range annotationItems {
+			event := AnnotationEvent{
+				Id:          item.Id,
+				DashboardId: item.DashboardId,
+				Tags:        item.Tags,
+				IsRegion:    item.TimeEnd > 0 && item.Time != item.TimeEnd,
+				Text:        item.Text,
+				Color:       *anno.IconColor,
+				Time:        item.Time,
+				TimeEnd:     item.TimeEnd,
+				Source:      anno,
+			}
+			if anno.Type == "dashboard" {
+				event.PanelId = item.PanelId
 			}
 
-			if anno.Target.Type == "tags" {
-				annoQuery.Tags = anno.Target.Tags
-			}
-
-			annotationItems, err := pd.AnnotationsService.Find(ctx, annoQuery)
-			if err != nil {
-				return nil, err
-			}
-
-			for _, item := range annotationItems {
-				event := AnnotationEvent{
-					Id:          item.Id,
-					DashboardId: item.DashboardId,
-					Tags:        item.Tags,
-					IsRegion:    item.TimeEnd > 0 && item.Time != item.TimeEnd,
-					Text:        item.Text,
-					Color:       *anno.IconColor,
-					Time:        item.Time,
-					TimeEnd:     item.TimeEnd,
-					Source:      anno,
-				}
-				if anno.Type == "dashboard" {
-					event.PanelId = item.PanelId
-				}
-
-				// We want events from tag queries to overwrite existing events
-				_, has := uniqueEvents[event.Id]
-				if !has || (has && anno.Target.Type == "tags") {
-					uniqueEvents[event.Id] = event
-				}
+			// We want events from tag queries to overwrite existing events
+			_, has := uniqueEvents[event.Id]
+			if !has || (has && anno.Target.Type == "tags") {
+				uniqueEvents[event.Id] = event
 			}
 		}
 	}
