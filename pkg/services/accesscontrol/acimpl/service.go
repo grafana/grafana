@@ -231,6 +231,16 @@ func (s *Service) DeclarePluginRoles(pluginID string, registrations ...accesscon
 func (s *Service) GetSimplifiedUsersPermissions(ctx context.Context, user *user.SignedInUser, orgID int64,
 	actionPrefix string) (map[int64][]accesscontrol.SimplifiedUserPermissionDTO, error) {
 
+	// Filter ram permissions
+	basicPermissions := map[string][]accesscontrol.Permission{}
+	for role, basicRole := range s.roles {
+		for i := range basicRole.Permissions {
+			if strings.HasPrefix(basicRole.Permissions[i].Action, actionPrefix) {
+				basicPermissions[role] = append(basicPermissions[role], basicRole.Permissions[i])
+			}
+		}
+	}
+
 	usersPermissions, usersRoles, err := s.store.GetUsersPermissions(ctx, orgID, actionPrefix)
 	if err != nil {
 		return nil, err
@@ -274,16 +284,12 @@ func (s *Service) GetSimplifiedUsersPermissions(ctx context.Context, user *user.
 		// Merge basic role permissions (RAM)
 		if roles, ok := usersRoles[userID]; ok {
 			for i := range roles {
-				basicRole, ok := s.roles[roles[i]]
+				basicPermission, ok := basicPermissions[roles[i]]
 				if !ok {
 					s.log.Debug("unknown role", "userID", userID, "role", roles[i])
 					continue
 				}
-				for i := range basicRole.Permissions {
-					if strings.HasPrefix(basicRole.Permissions[i].Action, actionPrefix) {
-						perms = append(perms, basicRole.Permissions[i])
-					}
-				}
+				perms = append(perms, basicPermission...)
 			}
 			delete(usersRoles, userID)
 		}
@@ -303,20 +309,18 @@ func (s *Service) GetSimplifiedUsersPermissions(ctx context.Context, user *user.
 			continue
 		}
 		for i := range roles {
-			basicRole, ok := s.roles[roles[i]]
+			basicPermission, ok := basicPermissions[roles[i]]
 			if !ok {
 				s.log.Debug("unknown role", "userID", userID, "role", roles[i])
 				continue
 			}
 			// Todo remove the need of the set
 			pSet := accesscontrol.PermissionSet{}
-			for i := range basicRole.Permissions {
-				pSet.Add(basicRole.Permissions[i].Action, basicRole.Permissions[i].Scope)
+			for i := range basicPermission {
+				pSet.Add(basicPermission[i].Action, basicPermission[i].Scope)
 			}
 			for action, scopes := range pSet {
-				if strings.HasPrefix(action, actionPrefix) {
-					res[userID] = append(res[userID], *accesscontrol.NewSimplifiedUserPermission(action, scopes))
-				}
+				res[userID] = append(res[userID], *accesscontrol.NewSimplifiedUserPermission(action, scopes))
 			}
 		}
 	}
