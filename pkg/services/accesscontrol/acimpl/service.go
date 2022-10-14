@@ -284,12 +284,9 @@ func (s *Service) GetSimplifiedUsersPermissions(ctx context.Context, user *user.
 		// Merge basic role permissions (RAM)
 		if roles, ok := usersRoles[userID]; ok {
 			for i := range roles {
-				basicPermission, ok := basicPermissions[roles[i]]
-				if !ok {
-					s.log.Debug("unknown role", "userID", userID, "role", roles[i])
-					continue
+				if basicPermission, ok := basicPermissions[roles[i]]; ok {
+					perms = append(perms, basicPermission...)
 				}
-				perms = append(perms, basicPermission...)
 			}
 			delete(usersRoles, userID)
 		}
@@ -311,7 +308,6 @@ func (s *Service) GetSimplifiedUsersPermissions(ctx context.Context, user *user.
 		for i := range roles {
 			basicPermission, ok := basicPermissions[roles[i]]
 			if !ok {
-				s.log.Debug("unknown role", "userID", userID, "role", roles[i])
 				continue
 			}
 			// Todo remove the need of the set
