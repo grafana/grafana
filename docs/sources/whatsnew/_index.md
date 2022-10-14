@@ -64,7 +64,7 @@ For release highlights, deprecations, and breaking changes in Grafana releases, 
 
 > **Note:** For Grafana versions prior to v9.2, additional information might also be available in the archive of [release notes]({{< relref "../release-notes/" >}}).
 
-For a complete list of every change, with links to pull requests and related issues when available, see the [CHANGELOG](https://github.com/grafana/grafana/blob/main/CHANGELOG.md).
+For a complete list of every change, with links to pull requests and related issues when available, see the [Changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md).
 
 ## Grafana 9
 
