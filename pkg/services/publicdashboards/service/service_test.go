@@ -428,7 +428,7 @@ func TestGetMetricRequest(t *testing.T) {
 
 func TestGetQueryDataResponse(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
-	dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
+	dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 	publicdashboardStore := database.ProvideStore(sqlStore)
 
 	service := &PublicDashboardServiceImpl{
