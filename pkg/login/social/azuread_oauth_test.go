@@ -434,7 +434,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 
 			var raw string
 			if tt.claims != nil {
-				if tt.claims.ClaimNames.Groups != "" || tt.fields.forceUseGraphAPI {
+				if tt.claims.ClaimNames.Groups != "" {
 					server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 						tokenParts := strings.Split(request.Header.Get("Authorization"), " ")
 						require.Len(t, tokenParts, 2)
