@@ -1,6 +1,6 @@
 import React from 'react';
 
-const TestProvider: React.FC = ({ children }) => {
+const TestProvider = ({ children }: React.PropsWithChildren<{}>) => {
   return <>{children}</>;
 };
 

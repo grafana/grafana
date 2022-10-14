@@ -54,7 +54,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext) response.Response {
 
 	reqDTO.HTTPRequest = c.Req
 
-	resp, err := hs.queryDataService.QueryData(c.Req.Context(), c.SignedInUser, c.SkipCache, reqDTO, true)
+	resp, err := hs.queryDataService.QueryData(c.Req.Context(), c.SignedInUser, c.SkipCache, reqDTO)
 	if err != nil {
 		return hs.handleQueryMetricsError(err)
 	}
