@@ -9,8 +9,8 @@ func addFolderMigrations(mg *migrator.Migrator) {
 
 	// copy any existing folders in the dashboard table into the new folder table
 	mg.AddMigration("copy existing folders from dashboard table", migrator.NewRawSQLMigration(
-		"INSERT INTO folder (id, uid, org_id, title, parent_uid, created, updated) SELECT id, uid, org_id, title, folder_id, created, updated FROM dashboard WHERE is_folder = 1;",
-	).Postgres("INSERT INTO folder (id, uid, org_id, title, parent_uid, created, updated) SELECT id, uid, org_id, title, folder_id, created, updated FROM dashboard WHERE is_folder = true;"))
+		"INSERT INTO folder (id, uid, org_id, title, parent_uid, version, created, updated) SELECT id, uid, org_id, title, folder_id, version, created, updated FROM dashboard WHERE is_folder = 1;",
+	).Postgres("INSERT INTO folder (id, uid, org_id, title, parent_uid, version, created, updated) SELECT id, uid, org_id, title, folder_id, version, created, updated FROM dashboard WHERE is_folder = true;"))
 
 	mg.AddMigration("Add index for parent_uid", migrator.NewAddIndexMigration(folderv1(), &migrator.Index{
 		Cols: []string{"parent_uid", "org_id"}, Type: migrator.UniqueIndex,
@@ -29,6 +29,7 @@ func folderv1() migrator.Table {
 			{Name: "parent_uid", Type: migrator.DB_NVarchar, Length: 40},
 			{Name: "created", Type: migrator.DB_DateTime, Nullable: false},
 			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
+			{Name: "version", Type: migrator.DB_Int, Nullable: false},
 		},
 	}
 }

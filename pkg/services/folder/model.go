@@ -37,6 +37,7 @@ type UpdateFolderCommand struct {
 	Title       string  `json:"title"`
 	Description string  `json:"description"`
 	Version     int     `json:"version"`
+	Overwrite   bool    `json:"overwrite"`
 }
 
 // CreateFolderCommand captures the information required by the folder service
