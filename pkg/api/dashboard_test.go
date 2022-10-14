@@ -40,6 +40,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
@@ -102,7 +103,7 @@ func TestGetHomeDashboard(t *testing.T) {
 	}
 }
 
-func newTestLive(t *testing.T, store *sqlstore.SQLStore) *live.GrafanaLive {
+func newTestLive(t *testing.T, store db.DB) *live.GrafanaLive {
 	features := featuremgmt.WithFeatures()
 	cfg := &setting.Cfg{AppURL: "http://localhost:3000/"}
 	cfg.IsFeatureToggleEnabled = features.IsEnabled
@@ -991,7 +992,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 
 	if dashboardStore == nil {
 		sql := sqlstore.InitTestDB(t)
-		dashboardStore = database.ProvideDashboardStore(sql, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql, sql.Cfg))
+		dashboardStore = database.ProvideDashboardStore(sql, sql.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql, sql.Cfg))
 	}
 
 	libraryPanelsService := mockLibraryPanelService{}

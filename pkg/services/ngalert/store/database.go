@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -33,7 +34,7 @@ type AlertingStore interface {
 type DBstore struct {
 	Cfg              setting.UnifiedAlertingSettings
 	FeatureToggles   featuremgmt.FeatureToggles
-	SQLStore         *sqlstore.SQLStore
+	SQLStore         db.DB
 	Logger           log.Logger
 	FolderService    folder.Service
 	AccessControl    accesscontrol.AccessControl

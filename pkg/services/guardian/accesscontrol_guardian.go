@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -23,7 +23,7 @@ var _ DashboardGuardian = new(AccessControlDashboardGuardian)
 
 func NewAccessControlDashboardGuardian(
 	ctx context.Context, dashboardId int64, user *user.SignedInUser,
-	store sqlstore.Store, ac accesscontrol.AccessControl,
+	store db.DB, ac accesscontrol.AccessControl,
 	folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService,
 	dashboardService dashboards.DashboardService,
@@ -47,7 +47,7 @@ type AccessControlDashboardGuardian struct {
 	dashboardID                 int64
 	dashboard                   *models.Dashboard
 	user                        *user.SignedInUser
-	store                       sqlstore.Store
+	store                       db.DB
 	ac                          accesscontrol.AccessControl
 	folderPermissionsService    accesscontrol.FolderPermissionsService
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService

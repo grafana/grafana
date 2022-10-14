@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -50,7 +50,7 @@ type Store interface {
 
 func New(
 	options Options, cfg *setting.Cfg, router routing.RouteRegister, license models.Licensing,
-	ac accesscontrol.AccessControl, service accesscontrol.Service, sqlStore *sqlstore.SQLStore,
+	ac accesscontrol.AccessControl, service accesscontrol.Service, sqlStore db.DB,
 	teamService team.Service, userService user.Service,
 ) (*Service, error) {
 	var permissions []string
@@ -109,7 +109,7 @@ type Service struct {
 	options     Options
 	permissions []string
 	actions     []string
-	sqlStore    *sqlstore.SQLStore
+	sqlStore    db.DB
 	teamService team.Service
 	userService user.Service
 }
