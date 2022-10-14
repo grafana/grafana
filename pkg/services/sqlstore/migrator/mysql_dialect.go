@@ -87,7 +87,12 @@ func (db *MySQLDialect) SQLType(c *Column) string {
 
 	switch c.Type {
 	case DB_Char, DB_Varchar, DB_NVarchar, DB_TinyText, DB_Text, DB_MediumText, DB_LongText:
-		res += " CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+		switch c.Name {
+		case "uid":
+			res += " CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_as_cs"
+		default:
+			res += " CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+		}
 	}
 
 	return res
