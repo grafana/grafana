@@ -170,6 +170,7 @@ func setup(t *testing.T, numFolders, numDashboards int, permissions []accesscont
 			}
 			dashes = append(dashes, models.Dashboard{
 				OrgId:    1,
+				IsFolder: false,
 				FolderId: int64(folderID),
 				Uid:      str,
 				Slug:     str,

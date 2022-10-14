@@ -415,8 +415,9 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 	dashboardStore := dashboardstore.ProvideDashboardStore(sql, sql.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql, sql.Cfg))
 
 	testDashboard1 := models.SaveDashboardCommand{
-		UserId: 1,
-		OrgId:  1,
+		UserId:   1,
+		OrgId:    1,
+		IsFolder: false,
 		Dashboard: simplejson.NewFromAny(map[string]interface{}{
 			"title": "Dashboard 1",
 		}),
