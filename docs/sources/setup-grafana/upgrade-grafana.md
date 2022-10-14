@@ -19,8 +19,8 @@ In order to make this a reality, Grafana upgrades are backward compatible and th
 
 Upgrading between many minor versions and one major version is generally safe, and dashboards and graphs will look the same.
 There might be minor breaking changes in some releases.
-We outline these in the [What's New overviews]({{< relref "../../whatsnew/" >}}) for each release.
-For versions of Grafana prior to v9.2, we also published additional information in the [Release Notes]({{< relref "../../release-notes/" >}}).
+We outline these in the [What's New overviews]({{< relref "../whatsnew/" >}}) for each release.
+For versions of Grafana prior to v9.2, we also published additional information in the [Release Notes]({{< relref "../release-notes/" >}}).
 We also list all changes, with links to pull requests or issues when availble, in the [Changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md).
 
 ## Backup
