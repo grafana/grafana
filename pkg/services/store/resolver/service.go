@@ -23,7 +23,7 @@ type ResolutionInfo struct {
 }
 
 type ObjectReferenceResolver interface {
-	Resolve(ctx context.Context, ref *models.ObjectExternalReference) ResolutionInfo
+	Resolve(ctx context.Context, ref *models.ObjectExternalReference) (ResolutionInfo, error)
 }
 
 func ProvideObjectReferenceResolver(cfg *setting.Cfg, db db.DB, pluginRegistry registry.Service) ObjectReferenceResolver {
@@ -41,13 +41,13 @@ type standardReferenceResolver struct {
 	ds             dsCache
 }
 
-func (r *standardReferenceResolver) Resolve(ctx context.Context, ref *models.ObjectExternalReference) ResolutionInfo {
+func (r *standardReferenceResolver) Resolve(ctx context.Context, ref *models.ObjectExternalReference) (ResolutionInfo, error) {
 	if ref == nil {
 		return ResolutionInfo{
 			OK:        false,
 			Timestamp: getNow(),
 			Warning:   "invalid reference (nil)",
-		}
+		}, nil
 	}
 
 	switch ref.Kind {
@@ -62,27 +62,31 @@ func (r *standardReferenceResolver) Resolve(ctx context.Context, ref *models.Obj
 			OK:        false,
 			Timestamp: getNow(),
 			Warning:   "not implemented yet", // TODO, runtime registry?
-		}
+		}, nil
 	}
 
 	return ResolutionInfo{
 		OK:        false,
 		Timestamp: getNow(),
 		Warning:   "resolution not yet implemented",
-	}
+	}, nil
 }
 
-func (r *standardReferenceResolver) resolveDatasource(ctx context.Context, ref *models.ObjectExternalReference) ResolutionInfo {
-	ds := r.ds.getDS(ctx, ref.UID)
+func (r *standardReferenceResolver) resolveDatasource(ctx context.Context, ref *models.ObjectExternalReference) (ResolutionInfo, error) {
+	ds, err := r.ds.getDS(ctx, ref.UID)
+	if err != nil || ds == nil || ds.UID == "" {
+		return ResolutionInfo{
+			OK:        false,
+			Timestamp: r.ds.timestamp,
+		}, err
+	}
+
 	res := ResolutionInfo{
 		OK:        true,
 		Timestamp: r.ds.timestamp,
 		Key:       ds.UID, // TODO!
 	}
-	if ds.UID == "" {
-		res.OK = false
-		res.Warning = "not found"
-	} else if !ds.PluginExists {
+	if !ds.PluginExists {
 		res.OK = false
 		res.Warning = "datasource plugin not found"
 	} else if ref.Type == "" {
@@ -91,17 +95,17 @@ func (r *standardReferenceResolver) resolveDatasource(ctx context.Context, ref *
 	} else if ref.Type != ds.Type {
 		res.Warning = fmt.Sprintf("type mismatch (expect:%s, found:%s)", ref.Type, ds.Type)
 	}
-	return res
+	return res, nil
 }
 
-func (r *standardReferenceResolver) resolvePlugin(ctx context.Context, ref *models.ObjectExternalReference) ResolutionInfo {
+func (r *standardReferenceResolver) resolvePlugin(ctx context.Context, ref *models.ObjectExternalReference) (ResolutionInfo, error) {
 	p, ok := r.pluginRegistry.Plugin(ctx, ref.UID)
 	if !ok || p == nil {
 		return ResolutionInfo{
 			OK:        false,
 			Timestamp: getNow(),
 			Warning:   "Plugin not found",
-		}
+		}, nil
 	}
 
 	if p.Type != plugins.Type(ref.Type) {
@@ -109,11 +113,11 @@ func (r *standardReferenceResolver) resolvePlugin(ctx context.Context, ref *mode
 			OK:        false,
 			Timestamp: getNow(),
 			Warning:   fmt.Sprintf("expected type: %s, found%s", ref.Type, p.Type),
-		}
+		}, nil
 	}
 
 	return ResolutionInfo{
 		OK:        true,
 		Timestamp: getNow(),
-	}
+	}, nil
 }

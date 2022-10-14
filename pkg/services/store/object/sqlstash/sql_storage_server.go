@@ -307,7 +307,10 @@ func (s sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest
 
 		// 3. Add the references rows
 		for _, ref := range summary.References {
-			resolved := s.resolver.Resolve(ctx, ref)
+			resolved, err := s.resolver.Resolve(ctx, ref)
+			if err != nil {
+				return err
+			}
 			_, err = tx.Exec(ctx, `INSERT INTO object_ref (`+
 				`"key", "kind", "type", "uid", `+
 				`"resolved_ok", "resolved_to", "resolved_warning", "resolved_time") `+
