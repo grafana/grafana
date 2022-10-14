@@ -18,9 +18,6 @@ type Store interface {
 	GetDialect() migrator.Dialect
 	GetDBType() core.DbType
 	GetSystemStats(ctx context.Context, query *models.GetSystemStatsQuery) error
-	GetOrgByName(name string) (*models.Org, error)
-	GetOrgById(context.Context, *models.GetOrgByIdQuery) error
-	GetOrgByNameHandler(ctx context.Context, query *models.GetOrgByNameQuery) error
 	CreateUser(ctx context.Context, cmd user.CreateUserCommand) (*user.User, error)
 	GetUserProfile(ctx context.Context, query *models.GetUserProfileQuery) error
 	GetSignedInUser(ctx context.Context, query *models.GetSignedInUserQuery) error
@@ -40,6 +37,5 @@ type Store interface {
 	Reset() error
 	Quote(value string) string
 	GetDBHealthQuery(ctx context.Context, query *models.GetDBHealthQuery) error
-	SearchOrgs(ctx context.Context, query *models.SearchOrgsQuery) error
 	GetSqlxSession() *session.SessionDB
 }

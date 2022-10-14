@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
-	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/tokens"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/queries"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/validation"
@@ -153,7 +152,7 @@ func (pd *PublicDashboardServiceImpl) savePublicDashboardConfig(ctx context.Cont
 		return "", err
 	}
 
-	accessToken, err := tokens.GenerateAccessToken()
+	accessToken, err := pd.store.GenerateNewPublicDashboardAccessToken(ctx)
 	if err != nil {
 		return "", err
 	}

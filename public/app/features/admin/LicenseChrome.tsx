@@ -77,7 +77,7 @@ interface CircleProps {
   style?: React.CSSProperties;
 }
 
-export const Circle: React.FC<CircleProps> = ({ size, style, children }) => {
+export const Circle = ({ size, style, children }: React.PropsWithChildren<CircleProps>) => {
   return (
     <div
       style={{

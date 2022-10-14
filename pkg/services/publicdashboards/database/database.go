@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/tokens"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -135,6 +136,38 @@ func (d *PublicDashboardStoreImpl) GenerateNewPublicDashboardUid(ctx context.Con
 	}
 
 	return uid, nil
+}
+
+// Generates a new unique access token for a new public dashboard
+func (d *PublicDashboardStoreImpl) GenerateNewPublicDashboardAccessToken(ctx context.Context) (string, error) {
+	var accessToken string
+
+	err := d.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		for i := 0; i < 3; i++ {
+			var err error
+			accessToken, err = tokens.GenerateAccessToken()
+			if err != nil {
+				continue
+			}
+
+			exists, err := sess.Get(&PublicDashboard{AccessToken: accessToken})
+			if err != nil {
+				return err
+			}
+
+			if !exists {
+				return nil
+			}
+		}
+
+		return ErrPublicDashboardFailedGenerateAccessToken
+	})
+
+	if err != nil {
+		return "", err
+	}
+
+	return accessToken, nil
 }
 
 // Retrieves public dashboard configuration by Uid
