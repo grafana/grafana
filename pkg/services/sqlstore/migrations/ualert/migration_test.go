@@ -157,9 +157,9 @@ func TestAMConfigMigration(t *testing.T) {
 							Receiver:   "autogen-contact-point-default",
 							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 							Routes: []*ualert.Route{
-								{Receiver: "notifier1", Matchers: ualert.Matchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true},
-								{Receiver: "notifier2", Matchers: ualert.Matchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier2".*`}}, Routes: nil, Continue: true},
-								{Receiver: "notifier3", Matchers: ualert.Matchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier3".*`}}, Routes: nil, Continue: true},
+								{Receiver: "notifier1", ObjectMatchers: ualert.ObjectMatchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true},
+								{Receiver: "notifier2", ObjectMatchers: ualert.ObjectMatchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier2".*`}}, Routes: nil, Continue: true},
+								{Receiver: "notifier3", ObjectMatchers: ualert.ObjectMatchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier3".*`}}, Routes: nil, Continue: true},
 							},
 						},
 						Receivers: []*ualert.PostableApiReceiver{
@@ -176,9 +176,9 @@ func TestAMConfigMigration(t *testing.T) {
 							Receiver:   "notifier6",
 							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 							Routes: []*ualert.Route{
-								{Receiver: "notifier4", Matchers: ualert.Matchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier4".*`}}, Routes: nil, Continue: true},
-								{Receiver: "notifier5", Matchers: ualert.Matchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier5".*`}}, Routes: nil, Continue: true},
-								{Receiver: "notifier6", Matchers: ualert.Matchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier6".*`}}, Routes: nil, Continue: true},
+								{Receiver: "notifier4", ObjectMatchers: ualert.ObjectMatchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier4".*`}}, Routes: nil, Continue: true},
+								{Receiver: "notifier5", ObjectMatchers: ualert.ObjectMatchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier5".*`}}, Routes: nil, Continue: true},
+								{Receiver: "notifier6", ObjectMatchers: ualert.ObjectMatchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier6".*`}}, Routes: nil, Continue: true},
 							},
 						},
 						Receivers: []*ualert.PostableApiReceiver{
@@ -203,7 +203,7 @@ func TestAMConfigMigration(t *testing.T) {
 							Receiver:   "autogen-contact-point-default",
 							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 							Routes: []*ualert.Route{
-								{Receiver: "notifier1", Matchers: ualert.Matchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true},
+								{Receiver: "notifier1", ObjectMatchers: ualert.ObjectMatchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true},
 							},
 						},
 						Receivers: []*ualert.PostableApiReceiver{
@@ -227,7 +227,7 @@ func TestAMConfigMigration(t *testing.T) {
 							Receiver:   "notifier1",
 							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 							Routes: []*ualert.Route{
-								{Receiver: "notifier1", Matchers: ualert.Matchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true},
+								{Receiver: "notifier1", ObjectMatchers: ualert.ObjectMatchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true},
 							},
 						},
 						Receivers: []*ualert.PostableApiReceiver{
@@ -251,8 +251,8 @@ func TestAMConfigMigration(t *testing.T) {
 							Receiver:   "autogen-contact-point-default",
 							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 							Routes: []*ualert.Route{
-								{Receiver: "notifier1", Matchers: ualert.Matchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true},
-								{Receiver: "notifier2", Matchers: ualert.Matchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier2".*`}}, Routes: nil, Continue: true},
+								{Receiver: "notifier1", ObjectMatchers: ualert.ObjectMatchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true},
+								{Receiver: "notifier2", ObjectMatchers: ualert.ObjectMatchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier2".*`}}, Routes: nil, Continue: true},
 							},
 						},
 						Receivers: []*ualert.PostableApiReceiver{
@@ -279,9 +279,9 @@ func TestAMConfigMigration(t *testing.T) {
 							Receiver:   "autogen-contact-point-default",
 							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 							Routes: []*ualert.Route{
-								{Receiver: "notifier1", Matchers: ualert.Matchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true},
-								{Receiver: "notifier2", Matchers: ualert.Matchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier2".*`}}, Routes: nil, Continue: true},
-								{Receiver: "notifier3", Matchers: ualert.Matchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier3".*`}}, Routes: nil, Continue: true},
+								{Receiver: "notifier1", ObjectMatchers: ualert.ObjectMatchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true},
+								{Receiver: "notifier2", ObjectMatchers: ualert.ObjectMatchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier2".*`}}, Routes: nil, Continue: true},
+								{Receiver: "notifier3", ObjectMatchers: ualert.ObjectMatchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier3".*`}}, Routes: nil, Continue: true},
 							},
 						},
 						Receivers: []*ualert.PostableApiReceiver{
@@ -310,8 +310,8 @@ func TestAMConfigMigration(t *testing.T) {
 							Receiver:   "autogen-contact-point-default",
 							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 							Routes: []*ualert.Route{
-								{Receiver: "notifier1", Matchers: ualert.Matchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true},
-								{Receiver: "notifier2", Matchers: ualert.Matchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier2".*`}}, Routes: nil, Continue: true},
+								{Receiver: "notifier1", ObjectMatchers: ualert.ObjectMatchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true},
+								{Receiver: "notifier2", ObjectMatchers: ualert.ObjectMatchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier2".*`}}, Routes: nil, Continue: true},
 							},
 						},
 						Receivers: []*ualert.PostableApiReceiver{
@@ -340,8 +340,8 @@ func TestAMConfigMigration(t *testing.T) {
 							Receiver:   "autogen-contact-point-default",
 							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 							Routes: []*ualert.Route{
-								{Receiver: "notifier1", Matchers: ualert.Matchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true},
-								{Receiver: "notifier2", Matchers: ualert.Matchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier2".*`}}, Routes: nil, Continue: true},
+								{Receiver: "notifier1", ObjectMatchers: ualert.ObjectMatchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true},
+								{Receiver: "notifier2", ObjectMatchers: ualert.ObjectMatchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier2".*`}}, Routes: nil, Continue: true},
 							},
 						},
 						Receivers: []*ualert.PostableApiReceiver{
@@ -366,7 +366,7 @@ func TestAMConfigMigration(t *testing.T) {
 							Receiver:   "autogen-contact-point-default",
 							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 							Routes: []*ualert.Route{
-								{Receiver: "notifier1", Matchers: ualert.Matchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true},
+								{Receiver: "notifier1", ObjectMatchers: ualert.ObjectMatchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true},
 							},
 						},
 						Receivers: []*ualert.PostableApiReceiver{
@@ -392,7 +392,7 @@ func TestAMConfigMigration(t *testing.T) {
 							Receiver:   "autogen-contact-point-default",
 							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 							Routes: []*ualert.Route{
-								{Receiver: "notifier1", Matchers: ualert.Matchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true},
+								{Receiver: "notifier1", ObjectMatchers: ualert.ObjectMatchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true},
 							},
 						},
 						Receivers: []*ualert.PostableApiReceiver{
@@ -419,7 +419,7 @@ func TestAMConfigMigration(t *testing.T) {
 							Receiver:   "autogen-contact-point-default",
 							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 							Routes: []*ualert.Route{
-								{Receiver: "notifier1", Matchers: ualert.Matchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true},
+								{Receiver: "notifier1", ObjectMatchers: ualert.ObjectMatchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true},
 							},
 						},
 						Receivers: []*ualert.PostableApiReceiver{
@@ -457,7 +457,7 @@ func TestAMConfigMigration(t *testing.T) {
 						if a.Receiver != b.Receiver {
 							return a.Receiver < b.Receiver
 						}
-						return a.Matchers[0].Value < b.Matchers[0].Value
+						return a.ObjectMatchers[0].Value < b.ObjectMatchers[0].Value
 					}),
 					cmpopts.IgnoreUnexported(ualert.Route{}, labels.Matcher{}),
 				}
@@ -494,13 +494,13 @@ func TestDashAlertMigration(t *testing.T) {
 		}
 		expected := map[int64]map[string]*ngModels.AlertRule{
 			int64(1): {
-				"alert1": {Labels: map[string]string{ualert.ContactLabel: `["notifier1"]`}},
-				"alert2": {Labels: map[string]string{ualert.ContactLabel: `["notifier2","notifier3"]`}},
-				"alert3": {Labels: map[string]string{ualert.ContactLabel: `["notifier3"]`}},
+				"alert1": {Labels: map[string]string{ualert.ContactLabel: `"notifier1"`}},
+				"alert2": {Labels: map[string]string{ualert.ContactLabel: `"notifier2","notifier3"`}},
+				"alert3": {Labels: map[string]string{ualert.ContactLabel: `"notifier3"`}},
 			},
 			int64(2): {
-				"alert4": {Labels: map[string]string{ualert.ContactLabel: `["notifier4","notifier6"]`}},
-				"alert5": {Labels: map[string]string{ualert.ContactLabel: `["notifier4","notifier5","notifier6"]`}},
+				"alert4": {Labels: map[string]string{ualert.ContactLabel: `"notifier4","notifier6"`}},
+				"alert5": {Labels: map[string]string{ualert.ContactLabel: `"notifier4","notifier5","notifier6"`}},
 				"alert6": {Labels: map[string]string{}},
 			},
 		}

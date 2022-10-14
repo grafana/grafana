@@ -37,7 +37,7 @@ type alertRule struct {
 	For             duration
 	Updated         time.Time
 	Annotations     map[string]string
-	Labels          map[string]string // (Labels are not Created in the migration)
+	Labels          map[string]string
 }
 
 type alertRuleVersion struct {
