@@ -279,7 +279,11 @@ func (s *Service) GetSimplifiedUsersPermissions(ctx context.Context, user *user.
 					s.log.Debug("unknown role", "userID", userID, "role", roles[i])
 					continue
 				}
-				perms = append(perms, basicRole.Permissions...)
+				for i := range basicRole.Permissions {
+					if strings.HasPrefix(basicRole.Permissions[i].Action, actionPrefix) {
+						perms = append(perms, basicRole.Permissions[i])
+					}
+				}
 			}
 			delete(usersRoles, userID)
 		}
