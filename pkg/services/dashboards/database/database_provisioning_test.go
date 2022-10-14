@@ -5,13 +5,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-
-	"github.com/stretchr/testify/require"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 )
 
 func TestIntegrationDashboardProvisioningTest(t *testing.T) {
@@ -19,7 +18,7 @@ func TestIntegrationDashboardProvisioningTest(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	sqlStore := sqlstore.InitTestDB(t)
-	dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
+	dashboardStore := ProvideDashboardStore(sqlStore, sqlStore.Cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 
 	folderCmd := models.SaveDashboardCommand{
 		OrgId:    1,
