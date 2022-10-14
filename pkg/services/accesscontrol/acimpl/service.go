@@ -291,13 +291,8 @@ func (s *Service) GetSimplifiedUsersPermissions(ctx context.Context, user *user.
 			delete(usersRoles, userID)
 		}
 		// Todo remove the need of the set
-		pSet := accesscontrol.PermissionSet{}
-		for i := range perms {
-			pSet.Add(perms[i].Action, perms[i].Scope)
-		}
-		for action, scopes := range pSet {
-			res[userID] = append(res[userID], *accesscontrol.NewSimplifiedUserPermission(action, scopes))
-		}
+		var c accesscontrol.Permissions = perms
+		res[userID] = c.Simplify()
 	}
 
 	// Handle the remaining users that had no stored permissions
@@ -310,14 +305,8 @@ func (s *Service) GetSimplifiedUsersPermissions(ctx context.Context, user *user.
 			if !ok {
 				continue
 			}
-			// Todo remove the need of the set
-			pSet := accesscontrol.PermissionSet{}
-			for i := range basicPermission {
-				pSet.Add(basicPermission[i].Action, basicPermission[i].Scope)
-			}
-			for action, scopes := range pSet {
-				res[userID] = append(res[userID], *accesscontrol.NewSimplifiedUserPermission(action, scopes))
-			}
+			var c accesscontrol.Permissions = basicPermission
+			res[userID] = c.Simplify()
 		}
 	}
 

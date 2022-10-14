@@ -282,42 +282,45 @@ type GetUsersPermissionCommand struct {
 	ActionPrefix string `json:"actionPrefix"`
 }
 
-// PermissionSet groups permissions by actions
-type PermissionSet map[string]map[string]bool
-
-func (ps PermissionSet) Add(action, scope string) {
-	_, ok := ps[action]
-	if !ok {
-		ps[action] = map[string]bool{}
-	}
-	if scope != "" {
-		ps[action][scope] = true
-	}
-}
-
 type SimplifiedUserPermissionDTO struct {
 	Action string   `json:"action"`
 	All    bool     `json:"all,omitempty"`
 	UIDs   []string `json:"uids,omitempty"`
 }
 
-func NewSimplifiedUserPermission(action string, scopes map[string]bool) *SimplifiedUserPermissionDTO {
-	s := &SimplifiedUserPermissionDTO{Action: action}
-	for scope := range scopes {
-		// TODO double check
-		if strings.HasSuffix(scope, "*") {
-			s.All = true
-			s.UIDs = nil
-			return s
+type Permissions []Permission
+
+func (ps Permissions) Simplify() []SimplifiedUserPermissionDTO {
+	var ok bool
+	permByAction := map[string]*SimplifiedUserPermissionDTO{}
+	res := []SimplifiedUserPermissionDTO{}
+	for i := range ps {
+		var s *SimplifiedUserPermissionDTO
+		if s, ok = permByAction[ps[i].Action]; ok {
+			// Action already processed
+			if s.All {
+				// Action applied to a wildcard
+				continue
+			}
+		} else {
+			res = append(res, SimplifiedUserPermissionDTO{Action: ps[i].Action})
+			s = &res[len(res)-1]
+			permByAction[ps[i].Action] = s
 		}
 		// TODO double check
-		parts := strings.Split(scope, ":")
+		if strings.HasSuffix(ps[i].Scope, "*") {
+			s.All = true
+			s.UIDs = nil
+			continue
+		}
+		// TODO double check
+		parts := strings.Split(ps[i].Scope, ":")
 		if len(parts) != 3 {
 			continue
 		}
 		s.UIDs = append(s.UIDs, parts[2])
 	}
-	return s
+	return res
 }
 
 const (
