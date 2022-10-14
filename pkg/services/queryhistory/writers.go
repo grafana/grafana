@@ -5,17 +5,18 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-func writeStarredSQL(query SearchInQueryHistoryQuery, sqlStore *sqlstore.SQLStore, builder *sqlstore.SQLBuilder) {
+func writeStarredSQL(query SearchInQueryHistoryQuery, sqlStore db.DB, builder *sqlstore.SQLBuilder) {
 	if query.OnlyStarred {
-		builder.Write(sqlStore.Dialect.BooleanStr(true) + ` AS starred
+		builder.Write(sqlStore.GetDialect().BooleanStr(true) + ` AS starred
 				FROM query_history
 				INNER JOIN query_history_star ON query_history_star.query_uid = query_history.uid 
 				`)
 	} else {
-		builder.Write(` CASE WHEN query_history_star.query_uid IS NULL THEN ` + sqlStore.Dialect.BooleanStr(false) + ` ELSE ` + sqlStore.Dialect.BooleanStr(true) + ` END AS starred
+		builder.Write(` CASE WHEN query_history_star.query_uid IS NULL THEN ` + sqlStore.GetDialect().BooleanStr(false) + ` ELSE ` + sqlStore.GetDialect().BooleanStr(true) + ` END AS starred
 				FROM query_history
 				LEFT JOIN query_history_star ON query_history_star.query_uid = query_history.uid 
 				`)
@@ -25,7 +26,7 @@ func writeStarredSQL(query SearchInQueryHistoryQuery, sqlStore *sqlstore.SQLStor
 func writeFiltersSQL(query SearchInQueryHistoryQuery, user *user.SignedInUser, sqlStore *sqlstore.SQLStore, builder *sqlstore.SQLBuilder) {
 	params := []interface{}{user.OrgID, user.UserID, query.From, query.To, "%" + query.SearchString + "%", "%" + query.SearchString + "%"}
 	var sql bytes.Buffer
-	sql.WriteString(" WHERE query_history.org_id = ? AND query_history.created_by = ? AND query_history.created_at >= ? AND query_history.created_at <= ? AND (query_history.queries " + sqlStore.Dialect.LikeStr() + " ? OR query_history.comment " + sqlStore.Dialect.LikeStr() + " ?) ")
+	sql.WriteString(" WHERE query_history.org_id = ? AND query_history.created_by = ? AND query_history.created_at >= ? AND query_history.created_at <= ? AND (query_history.queries " + sqlStore.GetDialect().LikeStr() + " ? OR query_history.comment " + sqlStore.GetDialect().LikeStr() + " ?) ")
 
 	if len(query.DatasourceUIDs) > 0 {
 		for _, uid := range query.DatasourceUIDs {

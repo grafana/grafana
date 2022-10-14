@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 )
 
 const (
@@ -18,7 +19,7 @@ func ProvideService(sql sqlstore.Store) *AccessControlStore {
 }
 
 type AccessControlStore struct {
-	sql sqlstore.Store
+	sql db.DB
 }
 
 func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]accesscontrol.Permission, error) {
