@@ -48,9 +48,9 @@ func TestGetAnnotations(t *testing.T) {
 		annotationsRepo := annotationsimpl.ProvideService(sqlStore, config, tagService)
 		fakeStore := FakePublicDashboardStore{}
 		service := &PublicDashboardServiceImpl{
-			log:                log.New("test.logger"),
-			store:              &fakeStore,
-			AnnotationsService: annotationsRepo,
+			log:             log.New("test.logger"),
+			store:           &fakeStore,
+			AnnotationsRepo: annotationsRepo,
 		}
 		fakeStore.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).
 			Return(&PublicDashboard{Uid: "uid1", IsEnabled: true}, models.NewDashboard("dash1"), nil)
@@ -100,9 +100,9 @@ func TestGetAnnotations(t *testing.T) {
 		annotationsRepo := annotations.FakeAnnotationsRepo{}
 		fakeStore := FakePublicDashboardStore{}
 		service := &PublicDashboardServiceImpl{
-			log:                log.New("test.logger"),
-			store:              &fakeStore,
-			AnnotationsService: &annotationsRepo,
+			log:             log.New("test.logger"),
+			store:           &fakeStore,
+			AnnotationsRepo: &annotationsRepo,
 		}
 		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.Uid}
 		fakeStore.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dashboard, nil)
@@ -159,9 +159,9 @@ func TestGetAnnotations(t *testing.T) {
 		annotationsRepo := annotations.FakeAnnotationsRepo{}
 		fakeStore := FakePublicDashboardStore{}
 		service := &PublicDashboardServiceImpl{
-			log:                log.New("test.logger"),
-			store:              &fakeStore,
-			AnnotationsService: &annotationsRepo,
+			log:             log.New("test.logger"),
+			store:           &fakeStore,
+			AnnotationsRepo: &annotationsRepo,
 		}
 		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.Uid}
 		fakeStore.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dashboard, nil)
@@ -230,9 +230,9 @@ func TestGetAnnotations(t *testing.T) {
 		annotationsRepo := annotations.FakeAnnotationsRepo{}
 		fakeStore := FakePublicDashboardStore{}
 		service := &PublicDashboardServiceImpl{
-			log:                log.New("test.logger"),
-			store:              &fakeStore,
-			AnnotationsService: &annotationsRepo,
+			log:             log.New("test.logger"),
+			store:           &fakeStore,
+			AnnotationsRepo: &annotationsRepo,
 		}
 		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.Uid}
 		fakeStore.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, dashboard, nil)
@@ -271,9 +271,9 @@ func TestGetAnnotations(t *testing.T) {
 		annotationsRepo := annotations.FakeAnnotationsRepo{}
 		fakeStore := FakePublicDashboardStore{}
 		service := &PublicDashboardServiceImpl{
-			log:                log.New("test.logger"),
-			store:              &fakeStore,
-			AnnotationsService: &annotationsRepo,
+			log:             log.New("test.logger"),
+			store:           &fakeStore,
+			AnnotationsRepo: &annotationsRepo,
 		}
 		dashboard := models.NewDashboard("dashWithNoAnnotations")
 		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.Uid}
@@ -289,9 +289,9 @@ func TestGetAnnotations(t *testing.T) {
 		annotationsRepo := annotations.FakeAnnotationsRepo{}
 		fakeStore := FakePublicDashboardStore{}
 		service := &PublicDashboardServiceImpl{
-			log:                log.New("test.logger"),
-			store:              &fakeStore,
-			AnnotationsService: &annotationsRepo,
+			log:             log.New("test.logger"),
+			store:           &fakeStore,
+			AnnotationsRepo: &annotationsRepo,
 		}
 		dashboard := internal.CreateDashboardFromFile(t, "./testData/dashboardWithAnnotations.json")
 		pubdash := &PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.Uid}

@@ -33,7 +33,7 @@ type PublicDashboardServiceImpl struct {
 	store              publicdashboards.Store
 	intervalCalculator intervalv2.Calculator
 	QueryDataService   *query.Service
-	AnnotationsService annotations.Repository
+	AnnotationsRepo    annotations.Repository
 }
 
 var LogPrefix = "publicdashboards.service"
@@ -56,7 +56,7 @@ func ProvideService(
 		store:              store,
 		intervalCalculator: intervalv2.NewCalculator(),
 		QueryDataService:   qds,
-		AnnotationsService: anno,
+		AnnotationsRepo:    anno,
 	}
 }
 
@@ -287,7 +287,7 @@ func (pd *PublicDashboardServiceImpl) GetAnnotations(ctx context.Context, reqDTO
 			annoQuery.Tags = anno.Target.Tags
 		}
 
-		annotationItems, err := pd.AnnotationsService.Find(ctx, annoQuery)
+		annotationItems, err := pd.AnnotationsRepo.Find(ctx, annoQuery)
 		if err != nil {
 			return nil, err
 		}
