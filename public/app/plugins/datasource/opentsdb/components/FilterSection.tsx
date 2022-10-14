@@ -1,9 +1,8 @@
-import { css } from '@emotion/css';
 import { size } from 'lodash';
 import React, { useCallback, useState } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
-import { InlineLabel, Select, InlineFormLabel, InlineSwitch, Icon } from '@grafana/ui';
+import { InlineLabel, Select, InlineFormLabel, InlineSwitch, Icon, clearButtonStyles, useTheme2 } from '@grafana/ui';
 
 import { OpenTsdbFilter, OpenTsdbQuery } from '../types';
 
@@ -24,6 +23,8 @@ export function FilterSection({
   filterTypes,
   suggestTagValues,
 }: FilterSectionProps) {
+  const theme = useTheme2();
+
   const [tagKeys, updTagKeys] = useState<Array<SelectableValue<string>>>();
   const [keyIsLoading, updKeyIsLoading] = useState<boolean>();
 
@@ -122,12 +123,12 @@ export function FilterSection({
             return (
               <InlineFormLabel key={idx} width="auto" data-testid={testIds.list + idx}>
                 {fil.tagk} = {fil.type}({fil.filter}), groupBy = {'' + fil.groupBy}
-                <button type="button" className={noStyledButton} onClick={() => editFilter(fil, idx)}>
+                <button type="button" className={clearButtonStyles(theme)} onClick={() => editFilter(fil, idx)}>
                   <Icon name={'pen'} />
                 </button>
                 <button
                   type="button"
-                  className={noStyledButton}
+                  className={clearButtonStyles(theme)}
                   onClick={() => removeFilter(idx)}
                   data-testid={testIds.remove}
                 >
@@ -138,7 +139,12 @@ export function FilterSection({
           })}
         {!addFilterMode && (
           <label className="gf-form-label query-keyword">
-            <button type="button" className={noStyledButton} onClick={changeAddFilterMode} data-testid={testIds.open}>
+            <button
+              type="button"
+              className={clearButtonStyles(theme)}
+              onClick={changeAddFilterMode}
+              data-testid={testIds.open}
+            >
               <Icon name={'plus'} />
             </button>
           </label>
@@ -228,10 +234,10 @@ export function FilterSection({
             )}
 
             <label className="gf-form-label">
-              <button type="button" className={noStyledButton} onClick={addFilter}>
+              <button type="button" className={clearButtonStyles(theme)} onClick={addFilter}>
                 add filter
               </button>
-              <button type="button" className={noStyledButton} onClick={changeAddFilterMode}>
+              <button type="button" className={clearButtonStyles(theme)} onClick={changeAddFilterMode}>
                 <Icon name={'times'} />
               </button>
             </label>
@@ -244,11 +250,6 @@ export function FilterSection({
     </div>
   );
 }
-
-const noStyledButton = css`
-  background: transparent;
-  border: none;
-`;
 
 export const testIds = {
   section: 'opentsdb-filter',

@@ -1,9 +1,8 @@
-import { css } from '@emotion/css';
 import { has, size } from 'lodash';
 import React, { useCallback, useState } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
-import { Select, InlineFormLabel, Icon } from '@grafana/ui';
+import { Select, InlineFormLabel, Icon, useTheme2, clearButtonStyles } from '@grafana/ui';
 
 import { OpenTsdbQuery } from '../types';
 
@@ -24,6 +23,8 @@ export function TagSection({
   suggestTagValues,
   tsdbVersion,
 }: TagSectionProps) {
+  const theme = useTheme2();
+
   const [tagKeys, updTagKeys] = useState<Array<SelectableValue<string>>>();
   const [keyIsLoading, updKeyIsLoading] = useState<boolean>();
 
@@ -120,12 +121,12 @@ export function TagSection({
             return (
               <InlineFormLabel key={idx} width="auto" data-testid={testIds.list + idx}>
                 {tagKey}={tagValue}
-                <button type="button" className={noStyledButton} onClick={() => editTag(tagKey, tagValue)}>
+                <button type="button" className={clearButtonStyles(theme)} onClick={() => editTag(tagKey, tagValue)}>
                   <Icon name={'pen'} />
                 </button>
                 <button
                   type="button"
-                  className={noStyledButton}
+                  className={clearButtonStyles(theme)}
                   onClick={() => removeTag(tagKey)}
                   data-testid={testIds.remove}
                 >
@@ -136,7 +137,12 @@ export function TagSection({
           })}
         {!addTagMode && (
           <label className="gf-form-label query-keyword">
-            <button type="button" className={noStyledButton} onClick={changeAddTagMode} data-testid={testIds.open}>
+            <button
+              type="button"
+              className={clearButtonStyles(theme)}
+              onClick={changeAddTagMode}
+              data-testid={testIds.open}
+            >
               <Icon name={'plus'} />
             </button>
           </label>
@@ -201,10 +207,10 @@ export function TagSection({
             )}
 
             <label className="gf-form-label">
-              <button type="button" className={noStyledButton} onClick={addTag}>
+              <button type="button" className={clearButtonStyles(theme)} onClick={addTag}>
                 add tag
               </button>
-              <button type="button" className={noStyledButton} onClick={changeAddTagMode}>
+              <button type="button" className={clearButtonStyles(theme)} onClick={changeAddTagMode}>
                 <Icon name={'times'} />
               </button>
             </label>
@@ -217,11 +223,6 @@ export function TagSection({
     </div>
   );
 }
-
-const noStyledButton = css`
-  background: transparent;
-  border: none;
-`;
 
 export const testIds = {
   section: 'opentsdb-tag',
