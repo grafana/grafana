@@ -304,6 +304,9 @@ func (pd *PublicDashboardServiceImpl) GetAnnotations(ctx context.Context, reqDTO
 				TimeEnd:     item.TimeEnd,
 				Source:      anno,
 			}
+
+			// We want dashboard annotations to reference the panel they're for. If no panelId is provided, they'll show up on all panels
+			// which is only intended for tag and org annotations.
 			if anno.Type == "dashboard" {
 				event.PanelId = item.PanelId
 			}
