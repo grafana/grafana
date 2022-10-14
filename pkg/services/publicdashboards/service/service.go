@@ -361,15 +361,16 @@ func (pd *PublicDashboardServiceImpl) BuildAnonymousUser(ctx context.Context, da
 	anonymousUser := &user.SignedInUser{OrgID: dashboard.OrgId, Permissions: make(map[int64]map[string][]string)}
 
 	// Scopes needed for Annotation queries
-	annotationScopes := []string{"annotations:type:dashboard"}
-	dashboardScopes := []string{fmt.Sprintf("dashboards:uid:%s", dashboard.Uid)}
+	annotationScopes := []string{accesscontrol.ScopeAnnotationsTypeDashboard}
+	dashboardScopes := []string{dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dashboard.Uid)}
 
 	// Scopes needed for datasource queries
 	queryScopes := make([]string, 0)
 	readScopes := make([]string, 0)
 	for _, uid := range datasourceUids {
-		queryScopes = append(queryScopes, fmt.Sprintf("datasources:uid:%s", uid))
-		readScopes = append(readScopes, fmt.Sprintf("datasources:uid:%s", uid))
+		scope := datasources.ScopeProvider.GetResourceScopeUID(uid)
+		queryScopes = append(queryScopes, scope)
+		readScopes = append(readScopes, scope)
 	}
 
 	// Apply all scopes to the actions we need the user to be able to perform
