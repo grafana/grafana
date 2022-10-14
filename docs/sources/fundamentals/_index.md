@@ -1,11 +1,12 @@
 ---
 aliases:
   - /docs/grafana/latest/basics/
-title: Grafana basics
-weight: 15
+  - /docs/grafana/latest/fundamentals/
+title: Fundamentals
+weight: 8
 ---
 
-# Grafana basics
+# Fundamentals
 
 This section provides basic information about observability topics in general and Grafana in particular. These topics will help people who are just starting out with observability and monitoring.
 
