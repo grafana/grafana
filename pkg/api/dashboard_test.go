@@ -1120,7 +1120,7 @@ func postValidateScenario(t *testing.T, desc string, url string, routePattern st
 			LibraryElementService: &mockLibraryElementService{},
 			SQLStore:              sqlmock,
 			Features:              featuremgmt.WithFeatures(),
-			Coremodels:            registry.NewBase(),
+			Coremodels:            registry.NewBase(nil),
 		}
 
 		sc := setupScenarioContext(t, url)
