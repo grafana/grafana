@@ -13,6 +13,7 @@ import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv';
 import fn_app from 'app/fn_app';
+import { FnLoggerService } from 'app/fn_logger';
 
 import { FNDashboardProps, FailedToMountGrafanaErrorName } from './types';
 
@@ -127,7 +128,7 @@ class createMfe {
         } catch (err) {
           const message = `[FN Grafana]: Failed to mount grafana. ${err}`;
 
-          console.log(message);
+          FnLoggerService.log(null, message);
 
           const fnError = new Error(message);
 
