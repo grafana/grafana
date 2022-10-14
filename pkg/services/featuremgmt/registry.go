@@ -328,8 +328,8 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:        "datasourceLogger",
-			Description: "Logs all datasource requests",
+			Name:        "logPluginRequests",
+			Description: "Logs all plugin requests",
 		},
 	}
 )

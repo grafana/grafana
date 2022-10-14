@@ -75,5 +75,5 @@ export interface FeatureToggles {
   newPanelChromeUI?: boolean;
   queryLibrary?: boolean;
   mysqlAnsiQuotes?: boolean;
-  datasourceLogger?: boolean;
+  logPluginRequests?: boolean;
 }
