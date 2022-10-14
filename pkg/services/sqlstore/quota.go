@@ -44,7 +44,7 @@ func (ss *SQLStore) GetOrgQuotaByTarget(ctx context.Context, query *models.GetOr
 
 			// removing service accounts from the count
 			if query.Target == dialect.Quote("user") {
-				rawSQL += notServiceAccount(dialect)
+				rawSQL += " AND " + notServiceAccount(dialect)
 			}
 
 			resp := make([]*targetCount, 0)
@@ -96,10 +96,17 @@ func (ss *SQLStore) GetOrgQuotas(ctx context.Context, query *models.GetOrgQuotas
 				// get quota used.
 				rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s where org_id=?", dialect.Quote(q.Target))
 
-				// removing service accounts from the count
-				if q.Target == dialect.Quote("user") {
-					rawSQL += notServiceAccount(dialect)
+				// need to account for removing service accounts from the user table
+				if q.Target == "org_user" {
+					rawSQL := "SELECT COUNT(*) as count from"
+					// need to make a subquery for getting user_id from the org_user table
+					rawSQL += fmt.Sprintf(" (select user_id from %s where org_id=? AND user_id IN (SELECT id as user_id FROM %s WHERE is_service_account=%s))",
+						dialect.Quote(q.Target),
+						dialect.Quote("user"),
+						dialect.BooleanStr(false),
+					)
 				}
+
 				resp := make([]*targetCount, 0)
 				if err := sess.SQL(rawSQL, q.OrgId).Find(&resp); err != nil {
 					return err
@@ -166,9 +173,10 @@ func (ss *SQLStore) GetUserQuotaByTarget(ctx context.Context, query *models.GetU
 		if query.Target != alertRuleTarget || query.UnifiedAlertingEnabled {
 			// get quota used.
 			rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s where user_id=?", dialect.Quote(query.Target))
+
 			// removing service accounts from the count
 			if query.Target == dialect.Quote("user") {
-				rawSQL += notServiceAccount(dialect)
+				rawSQL += " AND " + notServiceAccount(dialect)
 			}
 			resp := make([]*targetCount, 0)
 			if err := sess.SQL(rawSQL, query.UserId).Find(&resp); err != nil {
@@ -220,7 +228,7 @@ func (ss *SQLStore) GetUserQuotas(ctx context.Context, query *models.GetUserQuot
 				rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s where user_id=?", dialect.Quote(q.Target))
 				// removing service accounts from the count
 				if q.Target == dialect.Quote("user") {
-					rawSQL += notServiceAccount(dialect)
+					rawSQL += " AND " + notServiceAccount(dialect)
 				}
 				resp := make([]*targetCount, 0)
 				if err := sess.SQL(rawSQL, q.UserId).Find(&resp); err != nil {
