@@ -175,7 +175,6 @@ func (f AccessControlDashboardPermissionFilter) Where() (string, []interface{}) 
 		} else {
 			builder.WriteString("dashboard.is_folder")
 		}
-
 	}
 	builder.WriteRune(')')
 	return builder.String(), args
