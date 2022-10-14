@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/commonSession"
 
 	"github.com/stretchr/testify/require"
 )
@@ -120,7 +121,8 @@ func TestIntegrationPluginSettings(t *testing.T) {
 			Updated:        time.Now(),
 		}
 
-		err = db.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		err = db.WithTransactionalDbSession(context.Background(), func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+			sess := tx.ConcreteType()
 			affectedRows, innerErr := sess.Insert(&existing)
 			require.Equal(t, int64(1), affectedRows)
 			return innerErr

@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/sqlstore/commonSession"
 	"xorm.io/xorm"
 )
 
@@ -109,7 +110,8 @@ func (ss *SQLStore) createOrg(ctx context.Context, name string, userID int64, en
 		Created: time.Now(),
 		Updated: time.Now(),
 	}
-	if err := inTransactionWithRetryCtx(ctx, engine, ss.bus, func(sess *DBSession) error {
+	if err := ss.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		if isNameTaken, err := isOrgNameTaken(name, 0, sess); err != nil {
 			return err
 		} else if isNameTaken {
@@ -137,7 +139,7 @@ func (ss *SQLStore) createOrg(ctx context.Context, name string, userID int64, en
 		})
 
 		return err
-	}, 0); err != nil {
+	}); err != nil {
 		return orga, err
 	}
 
@@ -160,7 +162,8 @@ func (ss *SQLStore) CreateOrg(ctx context.Context, cmd *models.CreateOrgCommand)
 }
 
 func (ss *SQLStore) UpdateOrgAddress(ctx context.Context, cmd *models.UpdateOrgAddressCommand) error {
-	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
+	return ss.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		org := models.Org{
 			Address1: cmd.Address1,
 			Address2: cmd.Address2,
@@ -187,7 +190,8 @@ func (ss *SQLStore) UpdateOrgAddress(ctx context.Context, cmd *models.UpdateOrgA
 }
 
 func (ss *SQLStore) DeleteOrg(ctx context.Context, cmd *models.DeleteOrgCommand) error {
-	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
+	return ss.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		if res, err := sess.Query("SELECT 1 from org WHERE id=?", cmd.Id); err != nil {
 			return err
 		} else if len(res) != 1 {

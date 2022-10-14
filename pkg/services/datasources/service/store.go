@@ -14,6 +14,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/commonSession"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/util"
 	"xorm.io/xorm"
@@ -124,7 +125,8 @@ func (ss *SqlStore) GetDefaultDataSource(ctx context.Context, query *datasources
 // DeleteDataSource removes a datasource by org_id as well as either uid (preferred), id, or name
 // and is added to the bus. It also removes permissions related to the datasource.
 func (ss *SqlStore) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		dsQuery := &datasources.GetDataSourceQuery{Id: cmd.ID, Uid: cmd.UID, Name: cmd.Name, OrgId: cmd.OrgID}
 		errGettingDS := ss.getDataSource(ctx, dsQuery, sess)
 
@@ -172,7 +174,8 @@ func (ss *SqlStore) DeleteDataSource(ctx context.Context, cmd *datasources.Delet
 }
 
 func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		existing := datasources.DataSource{OrgId: cmd.OrgId, Name: cmd.Name}
 		has, _ := sess.Get(&existing)
 
@@ -255,7 +258,8 @@ func updateIsDefaultFlag(ds *datasources.DataSource, sess *sqlstore.DBSession) e
 }
 
 func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		if cmd.JsonData == nil {
 			cmd.JsonData = simplejson.New()
 		}

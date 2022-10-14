@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/commonSession"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -41,7 +42,8 @@ func ProvideStore(sqlStore *sqlstore.SQLStore) *PublicDashboardStoreImpl {
 func (d *PublicDashboardStoreImpl) ListPublicDashboards(ctx context.Context, orgId int64) ([]PublicDashboardListResponse, error) {
 	resp := make([]PublicDashboardListResponse, 0)
 
-	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := d.sqlStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		sess.Table("dashboard_public").
 			Join("LEFT", "dashboard", "dashboard.uid = dashboard_public.dashboard_uid AND dashboard.org_id = dashboard_public.org_id").
 			Cols("dashboard_public.uid", "dashboard_public.access_token", "dashboard_public.dashboard_uid", "dashboard_public.is_enabled", "dashboard.title").
@@ -61,7 +63,8 @@ func (d *PublicDashboardStoreImpl) ListPublicDashboards(ctx context.Context, org
 
 func (d *PublicDashboardStoreImpl) GetDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error) {
 	dashboard := &models.Dashboard{Uid: dashboardUid}
-	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := d.sqlStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		has, err := sess.Get(dashboard)
 		if err != nil {
 			return err
@@ -84,7 +87,8 @@ func (d *PublicDashboardStoreImpl) GetPublicDashboard(ctx context.Context, acces
 
 	// get public dashboard
 	pdRes := &PublicDashboard{AccessToken: accessToken}
-	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := d.sqlStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		has, err := sess.Get(pdRes)
 		if err != nil {
 			return err
@@ -145,7 +149,8 @@ func (d *PublicDashboardStoreImpl) GetPublicDashboardByUid(ctx context.Context, 
 
 	var found bool
 	pdRes := &PublicDashboard{Uid: uid}
-	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := d.sqlStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		var err error
 		found, err = sess.Get(pdRes)
 		return err
@@ -169,7 +174,8 @@ func (d *PublicDashboardStoreImpl) GetPublicDashboardConfig(ctx context.Context,
 	}
 
 	pdRes := &PublicDashboard{OrgId: orgId, DashboardUid: dashboardUid}
-	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := d.sqlStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		// publicDashboard
 		_, err := sess.Get(pdRes)
 		if err != nil {
@@ -192,7 +198,8 @@ func (d *PublicDashboardStoreImpl) SavePublicDashboardConfig(ctx context.Context
 		return dashboards.ErrDashboardIdentifierNotSet
 	}
 
-	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := d.sqlStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		_, err := sess.UseBool("is_enabled").Insert(&cmd.PublicDashboard)
 		if err != nil {
 			return err
@@ -206,7 +213,8 @@ func (d *PublicDashboardStoreImpl) SavePublicDashboardConfig(ctx context.Context
 
 // Updates existing public dashboard configuration
 func (d *PublicDashboardStoreImpl) UpdatePublicDashboardConfig(ctx context.Context, cmd SavePublicDashboardConfigCommand) error {
-	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := d.sqlStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		timeSettingsJSON, err := json.Marshal(cmd.PublicDashboard.TimeSettings)
 		if err != nil {
 			return err

@@ -18,7 +18,7 @@ type DBSession struct {
 	events          []interface{}
 }
 
-type DBTransactionFunc func(sess commonSession.Session) error
+type DBTransactionFunc func(sess commonSession.Tx[*DBSessionTx]) error
 type DBSessionFunc func(sess *DBSession) error
 
 func (sess *DBSession) publishAfterCommit(msg interface{}) {
@@ -37,7 +37,8 @@ type XormEngine struct {
 	*xorm.Engine
 }
 
-func (xe *XormEngine) StartSessionOrUseExisting(ctx context.Context, beginTran bool) (commonSession.Session, bool, error) {
+// implements SessionGetter[*DBSessionTx]
+func (xe *XormEngine) StartSessionOrUseExisting(ctx context.Context, beginTran bool) (commonSession.Tx[*DBSessionTx], bool, error) {
 	return xe.startSessionOrUseExisting(ctx, beginTran)
 }
 
@@ -77,7 +78,7 @@ func (ss *SQLStore) WithDbSession(ctx context.Context, callback DBSessionFunc) e
 }
 
 // WithNewDbSession calls the callback with a new session that is closed upon completion.
-func (ss *SQLStore) WithNewDbSession(ctx context.Context, callback DBTransactionFunc) error {
+func (ss *SQLStore) WithNewDbSession(ctx context.Context, callback DBSessionFunc) error {
 	sess := &DBSession{Session: ss.engine.NewSession(), transactionOpen: false}
 	defer sess.Close()
 	return callback(sess)

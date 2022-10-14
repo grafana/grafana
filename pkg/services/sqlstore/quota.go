@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore/commonSession"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -109,7 +110,8 @@ func (ss *SQLStore) GetOrgQuotas(ctx context.Context, query *models.GetOrgQuotas
 }
 
 func (ss *SQLStore) UpdateOrgQuota(ctx context.Context, cmd *models.UpdateOrgQuotaCmd) error {
-	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
+	return ss.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		// Check if quota is already defined in the DB
 		quota := models.Quota{
 			Target: cmd.Target,
@@ -223,7 +225,8 @@ func (ss *SQLStore) GetUserQuotas(ctx context.Context, query *models.GetUserQuot
 }
 
 func (ss *SQLStore) UpdateUserQuota(ctx context.Context, cmd *models.UpdateUserQuotaCmd) error {
-	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
+	return ss.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		// Check if quota is already defined in the DB
 		quota := models.Quota{
 			Target: cmd.Target,

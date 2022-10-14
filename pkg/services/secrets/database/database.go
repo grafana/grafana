@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/kmsproviders"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/commonSession"
 	"xorm.io/xorm"
 )
 
@@ -100,7 +101,8 @@ func (ss *SecretsStoreImpl) CreateDataKeyWithDBSession(_ context.Context, dataKe
 }
 
 func (ss *SecretsStoreImpl) DisableDataKeys(ctx context.Context) error {
-	return ss.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.sqlStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		_, err := sess.Table(dataKeysTable).
 			Where("active = ?", ss.sqlStore.Dialect.BooleanStr(true)).
 			UseBool("active").Update(&secrets.DataKey{Active: false})
@@ -133,7 +135,8 @@ func (ss *SecretsStoreImpl) ReEncryptDataKeys(
 	}
 
 	for _, k := range keys {
-		err := ss.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		err := ss.sqlStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+			sess := tx.ConcreteType()
 			provider, ok := providers[kmsproviders.NormalizeProviderID(k.Provider)]
 			if !ok {
 				ss.log.Warn(

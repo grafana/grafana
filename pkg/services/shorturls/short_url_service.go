@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/commonSession"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -53,7 +54,8 @@ func (s ShortURLService) GetShortURLByUID(ctx context.Context, user *user.Signed
 
 func (s ShortURLService) UpdateLastSeenAt(ctx context.Context, shortURL *models.ShortUrl) error {
 	shortURL.LastSeenAt = getTime().Unix()
-	return s.SQLStore.WithTransactionalDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+	return s.SQLStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		dbSession := tx.ConcreteType()
 		_, err := dbSession.ID(shortURL.Id).Update(shortURL)
 		if err != nil {
 			return err
@@ -94,7 +96,8 @@ func (s ShortURLService) CreateShortURL(ctx context.Context, user *user.SignedIn
 }
 
 func (s ShortURLService) DeleteStaleShortURLs(ctx context.Context, cmd *models.DeleteShortUrlCommand) error {
-	return s.SQLStore.WithTransactionalDbSession(ctx, func(session *sqlstore.DBSession) error {
+	return s.SQLStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		session := tx.ConcreteType()
 		var rawSql = "DELETE FROM short_url WHERE created_at <= ? AND (last_seen_at IS NULL OR last_seen_at = 0)"
 
 		if result, err := session.Exec(rawSql, cmd.OlderThan.Unix()); err != nil {

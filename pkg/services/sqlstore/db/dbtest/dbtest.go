@@ -18,10 +18,10 @@ func (f *FakeDB) WithTransactionalDbSession(ctx context.Context, callback sqlsto
 	return f.ExpectedError
 }
 
-func (f *FakeDB) WithDbSession(ctx context.Context, callback sqlstore.DBTransactionFunc) error {
+func (f *FakeDB) WithDbSession(ctx context.Context, callback sqlstore.DBSessionFunc) error {
 	return f.ExpectedError
 }
 
-func (f *FakeDB) WithNewDbSession(ctx context.Context, callback sqlstore.DBTransactionFunc) error {
+func (f *FakeDB) WithNewDbSession(ctx context.Context, callback sqlstore.DBSessionFunc) error {
 	return f.ExpectedError
 }

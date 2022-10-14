@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/commonSession"
 )
 
 func (s simpleSecret) reencrypt(ctx context.Context, secretsSrv *manager.SecretsService, sqlStore *sqlstore.SQLStore) bool {
@@ -32,7 +33,8 @@ func (s simpleSecret) reencrypt(ctx context.Context, secretsSrv *manager.Secrets
 			continue
 		}
 
-		err := sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		err := sqlStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+			sess := tx.ConcreteType()
 			decrypted, err := secretsSrv.Decrypt(ctx, row.Secret)
 			if err != nil {
 				logger.Warn("Could not decrypt secret while re-encrypting it", "table", s.tableName, "id", row.Id, "error", err)
@@ -88,7 +90,8 @@ func (s b64Secret) reencrypt(ctx context.Context, secretsSrv *manager.SecretsSer
 			continue
 		}
 
-		err := sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		err := sqlStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+			sess := tx.ConcreteType()
 			decoded, err := s.encoding.DecodeString(row.Secret)
 			if err != nil {
 				logger.Warn("Could not decode base64-encoded secret while re-encrypting it", "table", s.tableName, "id", row.Id, "error", err)
@@ -158,7 +161,8 @@ func (s jsonSecret) reencrypt(ctx context.Context, secretsSrv *manager.SecretsSe
 			continue
 		}
 
-		err := sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		err := sqlStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+			sess := tx.ConcreteType()
 			decrypted, err := secretsSrv.DecryptJsonData(ctx, row.SecureJsonData)
 			if err != nil {
 				logger.Warn("Could not decrypt secrets while re-encrypting them", "table", s.tableName, "id", row.Id, "error", err)
@@ -217,7 +221,8 @@ func (s alertingSecret) reencrypt(ctx context.Context, secretsSrv *manager.Secre
 	for _, result := range results {
 		result := result
 
-		err := sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		err := sqlStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+			sess := tx.ConcreteType()
 			postableUserConfig, err := notifier.Load([]byte(result.AlertmanagerConfiguration))
 			if err != nil {
 				logger.Warn("Could not load alert_configuration while re-encrypting it", "id", result.Id, "error", err)

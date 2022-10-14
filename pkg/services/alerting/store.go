@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/commonSession"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/setting"
@@ -185,7 +186,8 @@ func (ss *sqlStore) HandleAlertsQuery(ctx context.Context, query *models.GetAler
 }
 
 func (ss *sqlStore) SaveAlerts(ctx context.Context, dashID int64, alerts []*models.Alert) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		existingAlerts, err := GetAlertsByDashboardId2(dashID, sess)
 		if err != nil {
 			return err
@@ -298,7 +300,8 @@ func GetAlertsByDashboardId2(dashboardId int64, sess *sqlstore.DBSession) ([]*mo
 }
 
 func (ss *sqlStore) SetAlertState(ctx context.Context, cmd *models.SetAlertStateCommand) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		alert := models.Alert{}
 
 		if has, err := sess.ID(cmd.AlertId).Get(&alert); err != nil {
@@ -337,7 +340,8 @@ func (ss *sqlStore) SetAlertState(ctx context.Context, cmd *models.SetAlertState
 }
 
 func (ss *sqlStore) PauseAlert(ctx context.Context, cmd *models.PauseAlertCommand) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		if len(cmd.AlertIds) == 0 {
 			return fmt.Errorf("command contains no alertids")
 		}
@@ -371,7 +375,8 @@ func (ss *sqlStore) PauseAlert(ctx context.Context, cmd *models.PauseAlertComman
 }
 
 func (ss *sqlStore) PauseAllAlerts(ctx context.Context, cmd *models.PauseAllAlertCommand) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		var newState string
 		if cmd.Paused {
 			newState = string(models.AlertStatePaused)

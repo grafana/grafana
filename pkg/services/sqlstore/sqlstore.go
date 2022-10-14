@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/sqlstore/commonSession"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
@@ -46,7 +47,7 @@ var (
 type ContextSessionKey struct{}
 type SQLStore struct {
 	Cfg          *setting.Cfg
-	sqlxSession  *sqlxsession.SessionDB
+	sqlxSession  *sqlxsession.DBSession
 	CacheService *localcache.CacheService
 
 	bus                         bus.Bus
@@ -179,7 +180,7 @@ func (ss *SQLStore) Bus() bus.Bus {
 	return ss.bus
 }
 
-func (ss *SQLStore) GetSqlxSession() *sqlxsession.SessionDB {
+func (ss *SQLStore) GetSqlxSession() *sqlxsession.DBSession {
 	if ss.sqlxSession == nil {
 		ss.sqlxSession = sqlxsession.GetSession(sqlx.NewDb(ss.engine.DB().DB, ss.GetDialect().DriverName()), ss.bus)
 	}
@@ -188,7 +189,9 @@ func (ss *SQLStore) GetSqlxSession() *sqlxsession.SessionDB {
 
 func (ss *SQLStore) ensureMainOrgAndAdminUser() error {
 	ctx := context.Background()
-	err := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
+	err := ss.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*DBSessionTx]) error {
+		sess := tx.ConcreteType()
+
 		ss.log.Debug("Ensuring main org and admin user exist")
 		var stats models.SystemUserCountStats
 		// TODO: Should be able to rename "Count" to "count", for more standard SQL style

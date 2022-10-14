@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/commonSession"
 )
 
 // ListAlertInstances is a handler for retrieving alert instances within specific organisation
@@ -249,7 +250,8 @@ func (st DBstore) DeleteAlertInstances(ctx context.Context, keys ...models.Alert
 		return nil
 	}
 
-	err := st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := st.SQLStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		counter := 0
 
 		// Create batches of up to 200 items and execute a new delete statement for each batch.
@@ -290,7 +292,8 @@ func (st DBstore) DeleteAlertInstances(ctx context.Context, keys ...models.Alert
 }
 
 func (st DBstore) DeleteAlertInstancesByRule(ctx context.Context, key models.AlertRuleKey) error {
-	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return st.SQLStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		_, err := sess.Exec("DELETE FROM alert_instance WHERE rule_org_id = ? AND rule_uid = ?", key.OrgID, key.UID)
 		return err
 	})

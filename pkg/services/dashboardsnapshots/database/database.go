@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/commonSession"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -29,7 +30,8 @@ func ProvideStore(db db.DB) *DashboardSnapshotStore {
 // SnapShotRemoveExpired is deprecated and should be removed in the future.
 // Snapshot expiry is decided by the user when they share the snapshot.
 func (d *DashboardSnapshotStore) DeleteExpiredSnapshots(ctx context.Context, cmd *dashboardsnapshots.DeleteExpiredSnapshotsCommand) error {
-	return d.store.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return d.store.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		if !setting.SnapShotRemoveExpired {
 			d.log.Warn("[Deprecated] The snapshot_remove_expired setting is outdated. Please remove from your config.")
 			return nil
@@ -47,7 +49,8 @@ func (d *DashboardSnapshotStore) DeleteExpiredSnapshots(ctx context.Context, cmd
 }
 
 func (d *DashboardSnapshotStore) CreateDashboardSnapshot(ctx context.Context, cmd *dashboardsnapshots.CreateDashboardSnapshotCommand) error {
-	return d.store.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return d.store.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		var expires = time.Now().Add(time.Hour * 24 * 365 * 50)
 		if cmd.Expires > 0 {
 			expires = time.Now().Add(time.Second * time.Duration(cmd.Expires))
@@ -76,7 +79,8 @@ func (d *DashboardSnapshotStore) CreateDashboardSnapshot(ctx context.Context, cm
 }
 
 func (d *DashboardSnapshotStore) DeleteDashboardSnapshot(ctx context.Context, cmd *dashboardsnapshots.DeleteDashboardSnapshotCommand) error {
-	return d.store.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return d.store.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		var rawSQL = "DELETE FROM dashboard_snapshot WHERE delete_key=?"
 		_, err := sess.Exec(rawSQL, cmd.DeleteKey)
 		return err

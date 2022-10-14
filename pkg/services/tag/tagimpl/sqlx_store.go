@@ -10,7 +10,7 @@ import (
 )
 
 type sqlxStore struct {
-	sess *sqlxsession.SessionDB
+	sess *sqlxsession.DBSession
 }
 
 func (s *sqlxStore) EnsureTagsExist(ctx context.Context, tags []*tag.Tag) ([]*tag.Tag, error) {

@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/commonSession"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -59,7 +60,8 @@ func ProvideStore(db db.DB, cfg *setting.Cfg) sqlStore {
 func (ss *sqlStore) Insert(ctx context.Context, cmd *user.User) (int64, error) {
 	var userID int64
 	var err error
-	err = ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err = ss.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		sess.UseBool("is_admin")
 
 		if userID, err = sess.Insert(cmd); err != nil {
@@ -268,7 +270,8 @@ func (ss *sqlStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) err
 		cmd.Email = strings.ToLower(cmd.Email)
 	}
 
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		user := user.User{
 			Name:    cmd.Name,
 			Email:   cmd.Email,
@@ -300,7 +303,8 @@ func (ss *sqlStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) err
 }
 
 func (ss *sqlStore) ChangePassword(ctx context.Context, cmd *user.ChangeUserPasswordCommand) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		user := user.User{
 			Password: cmd.NewPassword,
 			Updated:  time.Now(),
@@ -312,7 +316,8 @@ func (ss *sqlStore) ChangePassword(ctx context.Context, cmd *user.ChangeUserPass
 }
 
 func (ss *sqlStore) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLastSeenAtCommand) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		user := user.User{
 			ID:         cmd.UserID,
 			LastSeenAt: time.Now(),
@@ -390,7 +395,8 @@ func (ss *sqlStore) GetSignedInUser(ctx context.Context, query *user.GetSignedIn
 }
 
 func (ss *sqlStore) UpdateUser(ctx context.Context, user *user.User) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		_, err := sess.ID(user.ID).Update(user)
 		return err
 	})
@@ -427,7 +433,8 @@ func (ss *sqlStore) GetProfile(ctx context.Context, query *user.GetUserProfileQu
 }
 
 func (ss *sqlStore) SetHelpFlag(ctx context.Context, cmd *user.SetUserHelpFlagCommand) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		user := user.User{
 			ID:         cmd.UserID,
 			HelpFlags1: cmd.HelpFlags1,
@@ -441,7 +448,8 @@ func (ss *sqlStore) SetHelpFlag(ctx context.Context, cmd *user.SetUserHelpFlagCo
 
 // UpdatePermissions sets the user Server Admin flag
 func (ss *sqlStore) UpdatePermissions(ctx context.Context, userID int64, isAdmin bool) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		var user user.User
 		if _, err := sess.ID(userID).Where(ss.notServiceAccountFilter()).Get(&user); err != nil {
 			return err
@@ -476,7 +484,8 @@ func validateOneAdminLeft(ctx context.Context, sess *sqlstore.DBSession) error {
 }
 
 func (ss *sqlStore) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisableUsersCommand) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		userIds := cmd.UserIDs
 
 		if len(userIds) == 0 {

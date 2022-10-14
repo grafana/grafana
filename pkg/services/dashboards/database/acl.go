@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/commonSession"
 )
 
 // GetDashboardACLInfoList returns a list of permissions for a dashboard. They can be fetched from three
@@ -151,7 +152,8 @@ func (d *DashboardStore) HasAdminPermissionInDashboardsOrFolders(ctx context.Con
 }
 
 func (d *DashboardStore) DeleteACLByUser(ctx context.Context, userID int64) error {
-	return d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return d.sqlStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		var rawSQL = "DELETE FROM dashboard_acl WHERE user_id = ?"
 		_, err := sess.Exec(rawSQL, userID)
 		return err

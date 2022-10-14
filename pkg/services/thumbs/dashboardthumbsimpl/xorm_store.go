@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/commonSession"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/thumbs"
 )
@@ -42,7 +43,8 @@ func marshalDatasourceUids(dsUids []string) (string, error) {
 }
 
 func (ss *xormStore) Save(ctx context.Context, cmd *thumbs.SaveDashboardThumbnailCommand) (*thumbs.DashboardThumbnail, error) {
-	err := ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := ss.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		existing, err := findThumbnailByMeta(sess, cmd.DashboardThumbnailMeta)
 
 		if err != nil && !errors.Is(err, dashboards.ErrDashboardThumbnailNotFound) {
@@ -93,7 +95,8 @@ func (ss *xormStore) Save(ctx context.Context, cmd *thumbs.SaveDashboardThumbnai
 }
 
 func (ss *xormStore) UpdateState(ctx context.Context, cmd *thumbs.UpdateThumbnailStateCommand) error {
-	err := ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := ss.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		existing, err := findThumbnailByMeta(sess, cmd.DashboardThumbnailMeta)
 
 		if err != nil {

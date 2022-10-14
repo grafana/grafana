@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/commonSession"
 )
 
 func (s simpleSecret) rollback(
@@ -36,7 +37,8 @@ func (s simpleSecret) rollback(
 			continue
 		}
 
-		err := sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		err := sqlStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+			sess := tx.ConcreteType()
 			decrypted, err := secretsSrv.Decrypt(ctx, row.Secret)
 			if err != nil {
 				logger.Warn("Could not decrypt secret while rolling it back", "table", s.tableName, "id", row.Id, "error", err)
@@ -96,7 +98,8 @@ func (s b64Secret) rollback(
 			continue
 		}
 
-		err := sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		err := sqlStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+			sess := tx.ConcreteType()
 			decoded, err := s.encoding.DecodeString(row.Secret)
 			if err != nil {
 				logger.Warn("Could not decode base64-encoded secret while rolling it back", "table", s.tableName, "id", row.Id, "error", err)
@@ -170,7 +173,8 @@ func (s jsonSecret) rollback(
 			continue
 		}
 
-		err := sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		err := sqlStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+			sess := tx.ConcreteType()
 			decrypted, err := secretsSrv.DecryptJsonData(ctx, row.SecureJsonData)
 			if err != nil {
 				logger.Warn("Could not decrypt secrets while rolling them back", "table", s.tableName, "id", row.Id, "error", err)
@@ -233,7 +237,8 @@ func (s alertingSecret) rollback(
 	for _, result := range results {
 		result := result
 
-		err := sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		err := sqlStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+			sess := tx.ConcreteType()
 			postableUserConfig, err := notifier.Load([]byte(result.AlertmanagerConfiguration))
 			if err != nil {
 				logger.Warn("Could not load configuration (alert_configuration with id: %d) while rolling it back", result.Id, err)

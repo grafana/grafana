@@ -6,6 +6,7 @@ import (
 
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/commonSession"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
@@ -39,7 +40,8 @@ func (ss *sqlStore) Get(ctx context.Context, query *dashver.GetDashboardVersionQ
 
 func (ss *sqlStore) GetBatch(ctx context.Context, cmd *dashver.DeleteExpiredVersionsCommand, perBatch int, versionsToKeep int) ([]interface{}, error) {
 	var versionIds []interface{}
-	err := ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := ss.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		versionIdsToDeleteQuery := `SELECT id
 			FROM dashboard_version, (
 				SELECT dashboard_id, count(version) as count, min(version) as min
@@ -58,7 +60,8 @@ func (ss *sqlStore) GetBatch(ctx context.Context, cmd *dashver.DeleteExpiredVers
 
 func (ss *sqlStore) DeleteBatch(ctx context.Context, cmd *dashver.DeleteExpiredVersionsCommand, versionIdsToDelete []interface{}) (int64, error) {
 	var deleted int64
-	err := ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := ss.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		deleteExpiredSQL := `DELETE FROM dashboard_version WHERE id IN (?` + strings.Repeat(",?", len(versionIdsToDelete)-1) + `)`
 		sqlOrArgs := append([]interface{}{deleteExpiredSQL}, versionIdsToDelete...)
 		expiredResponse, err := sess.Exec(sqlOrArgs...)

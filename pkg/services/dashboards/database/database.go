@@ -16,6 +16,7 @@ import (
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/commonSession"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
@@ -45,7 +46,8 @@ func (d *DashboardStore) emitEntityEvent() bool {
 
 func (d *DashboardStore) ValidateDashboardBeforeSave(ctx context.Context, dashboard *models.Dashboard, overwrite bool) (bool, error) {
 	isParentFolderChanged := false
-	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := d.sqlStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		var err error
 		isParentFolderChanged, err = getExistingDashboardByIdOrUidForUpdate(sess, dashboard, d.sqlStore.Dialect, overwrite)
 		if err != nil {
@@ -75,7 +77,8 @@ func (d *DashboardStore) GetFolderByTitle(ctx context.Context, orgID int64, titl
 	// there is a unique constraint on org_id, folder_id, title
 	// there are no nested folders so the parent folder id is always 0
 	dashboard := models.Dashboard{OrgId: orgID, FolderId: 0, Title: title}
-	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := d.sqlStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		has, err := sess.Table(&models.Dashboard{}).Where("is_folder = " + d.sqlStore.Dialect.BooleanStr(true)).Where("folder_id=0").Get(&dashboard)
 		if err != nil {
 			return err
@@ -92,7 +95,8 @@ func (d *DashboardStore) GetFolderByTitle(ctx context.Context, orgID int64, titl
 
 func (d *DashboardStore) GetFolderByID(ctx context.Context, orgID int64, id int64) (*models.Folder, error) {
 	dashboard := models.Dashboard{OrgId: orgID, FolderId: 0, Id: id}
-	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := d.sqlStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		has, err := sess.Table(&models.Dashboard{}).Where("is_folder = " + d.sqlStore.Dialect.BooleanStr(true)).Where("folder_id=0").Get(&dashboard)
 		if err != nil {
 			return err
@@ -116,7 +120,8 @@ func (d *DashboardStore) GetFolderByUID(ctx context.Context, orgID int64, uid st
 	}
 
 	dashboard := models.Dashboard{OrgId: orgID, FolderId: 0, Uid: uid}
-	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := d.sqlStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		has, err := sess.Table(&models.Dashboard{}).Where("is_folder = " + d.sqlStore.Dialect.BooleanStr(true)).Where("folder_id=0").Get(&dashboard)
 		if err != nil {
 			return err
@@ -136,7 +141,8 @@ func (d *DashboardStore) GetFolderByUID(ctx context.Context, orgID int64, uid st
 
 func (d *DashboardStore) GetProvisionedDataByDashboardID(ctx context.Context, dashboardID int64) (*models.DashboardProvisioning, error) {
 	var data models.DashboardProvisioning
-	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := d.sqlStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		_, err := sess.Where("dashboard_id = ?", dashboardID).Get(&data)
 		return err
 	})
@@ -149,7 +155,8 @@ func (d *DashboardStore) GetProvisionedDataByDashboardID(ctx context.Context, da
 
 func (d *DashboardStore) GetProvisionedDataByDashboardUID(ctx context.Context, orgID int64, dashboardUID string) (*models.DashboardProvisioning, error) {
 	var provisionedDashboard models.DashboardProvisioning
-	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := d.sqlStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		var dashboard models.Dashboard
 		exists, err := sess.Where("org_id = ? AND uid = ?", orgID, dashboardUID).Get(&dashboard)
 		if err != nil {
@@ -172,14 +179,16 @@ func (d *DashboardStore) GetProvisionedDataByDashboardUID(ctx context.Context, o
 
 func (d *DashboardStore) GetProvisionedDashboardData(ctx context.Context, name string) ([]*models.DashboardProvisioning, error) {
 	var result []*models.DashboardProvisioning
-	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := d.sqlStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		return sess.Where("name = ?", name).Find(&result)
 	})
 	return result, err
 }
 
 func (d *DashboardStore) SaveProvisionedDashboard(ctx context.Context, cmd models.SaveDashboardCommand, provisioning *models.DashboardProvisioning) (*models.Dashboard, error) {
-	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := d.sqlStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		if err := saveDashboard(sess, &cmd, d.emitEntityEvent()); err != nil {
 			return err
 		}
@@ -195,14 +204,16 @@ func (d *DashboardStore) SaveProvisionedDashboard(ctx context.Context, cmd model
 }
 
 func (d *DashboardStore) SaveDashboard(ctx context.Context, cmd models.SaveDashboardCommand) (*models.Dashboard, error) {
-	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := d.sqlStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		return saveDashboard(sess, &cmd, d.emitEntityEvent())
 	})
 	return cmd.Result, err
 }
 
 func (d *DashboardStore) UpdateDashboardACL(ctx context.Context, dashboardID int64, items []*models.DashboardACL) error {
-	return d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return d.sqlStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		// delete existing items
 		_, err := sess.Exec("DELETE FROM dashboard_acl WHERE dashboard_id=?", dashboardID)
 		if err != nil {
@@ -232,7 +243,8 @@ func (d *DashboardStore) UpdateDashboardACL(ctx context.Context, dashboardID int
 }
 
 func (d *DashboardStore) SaveAlerts(ctx context.Context, dashID int64, alerts []*models.Alert) error {
-	return d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return d.sqlStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		existingAlerts, err := GetAlertsByDashboardId2(dashID, sess)
 		if err != nil {
 			return err
@@ -253,7 +265,8 @@ func (d *DashboardStore) SaveAlerts(ctx context.Context, dashID int64, alerts []
 // UnprovisionDashboard removes row in dashboard_provisioning for the dashboard making it seem as if manually created.
 // The dashboard will still have `created_by = -1` to see it was not created by any particular user.
 func (d *DashboardStore) UnprovisionDashboard(ctx context.Context, id int64) error {
-	return d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return d.sqlStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		_, err := sess.Where("dashboard_id = ?", id).Delete(&models.DashboardProvisioning{})
 		return err
 	})
@@ -691,7 +704,8 @@ func (d *DashboardStore) GetDashboardsByPluginID(ctx context.Context, query *mod
 }
 
 func (d *DashboardStore) DeleteDashboard(ctx context.Context, cmd *models.DeleteDashboardCommand) error {
-	return d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return d.sqlStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		return d.deleteDashboard(cmd, sess, d.emitEntityEvent())
 	})
 }

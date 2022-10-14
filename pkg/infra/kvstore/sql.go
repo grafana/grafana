@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/commonSession"
 )
 
 // kvStoreSQL provides a key/value store backed by the Grafana database
@@ -44,7 +45,8 @@ func (kv *kvStoreSQL) Get(ctx context.Context, orgId int64, namespace string, ke
 
 // Set an item in the store
 func (kv *kvStoreSQL) Set(ctx context.Context, orgId int64, namespace string, key string, value string) error {
-	return kv.sqlStore.WithTransactionalDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+	return kv.sqlStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		dbSession := tx.ConcreteType()
 		item := Item{
 			OrgId:     &orgId,
 			Namespace: &namespace,

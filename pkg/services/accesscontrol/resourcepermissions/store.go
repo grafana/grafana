@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/commonSession"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -57,7 +58,8 @@ func (s *store) SetUserResourcePermission(
 
 	var err error
 	var permission *accesscontrol.ResourcePermission
-	err = s.sql.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err = s.sql.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		permission, err = s.setUserResourcePermission(sess, orgID, usr, cmd, hook)
 		return err
 	})
@@ -95,7 +97,8 @@ func (s *store) SetTeamResourcePermission(
 	var err error
 	var permission *accesscontrol.ResourcePermission
 
-	err = s.sql.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err = s.sql.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		permission, err = s.setTeamResourcePermission(sess, orgID, teamID, cmd, hook)
 		return err
 	})
@@ -134,7 +137,8 @@ func (s *store) SetBuiltInResourcePermission(
 	var err error
 	var permission *accesscontrol.ResourcePermission
 
-	err = s.sql.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err = s.sql.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		permission, err = s.setBuiltInResourcePermission(sess, orgID, builtInRole, cmd, hook)
 		return err
 	})
@@ -173,7 +177,8 @@ func (s *store) SetResourcePermissions(
 	var err error
 	var permissions []accesscontrol.ResourcePermission
 
-	err = s.sql.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err = s.sql.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		for _, cmd := range commands {
 			var p *accesscontrol.ResourcePermission
 			if cmd.User.ID != 0 {

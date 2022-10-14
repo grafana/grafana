@@ -12,7 +12,7 @@ import (
 )
 
 type sqlxStore struct {
-	sess *sqlxsession.SessionDB
+	sess *sqlxsession.DBSession
 }
 
 func (s *sqlxStore) Get(ctx context.Context, query *pref.Preference) (*pref.Preference, error) {

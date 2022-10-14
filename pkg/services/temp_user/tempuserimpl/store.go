@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/commonSession"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 )
 
@@ -23,7 +24,8 @@ type xormStore struct {
 }
 
 func (ss *xormStore) UpdateTempUserStatus(ctx context.Context, cmd *models.UpdateTempUserStatusCommand) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		var rawSQL = "UPDATE temp_user SET status=? WHERE code=?"
 		_, err := sess.Exec(rawSQL, string(cmd.Status), cmd.Code)
 		return err
@@ -31,7 +33,8 @@ func (ss *xormStore) UpdateTempUserStatus(ctx context.Context, cmd *models.Updat
 }
 
 func (ss *xormStore) CreateTempUser(ctx context.Context, cmd *models.CreateTempUserCommand) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		// create user
 		user := &models.TempUser{
 			Email:           cmd.Email,
@@ -58,7 +61,8 @@ func (ss *xormStore) CreateTempUser(ctx context.Context, cmd *models.CreateTempU
 }
 
 func (ss *xormStore) UpdateTempUserWithEmailSent(ctx context.Context, cmd *models.UpdateTempUserWithEmailSentCommand) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		user := &models.TempUser{
 			EmailSent:   true,
 			EmailSentOn: time.Now(),
@@ -146,7 +150,8 @@ func (ss *xormStore) GetTempUserByCode(ctx context.Context, query *models.GetTem
 }
 
 func (ss *xormStore) ExpireOldUserInvites(ctx context.Context, cmd *models.ExpireTempUsersCommand) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		var rawSQL = "UPDATE temp_user SET status = ?, updated = ? WHERE created <= ? AND status in (?, ?)"
 		if result, err := sess.Exec(rawSQL, string(models.TmpUserExpired), time.Now().Unix(), cmd.OlderThan.Unix(), string(models.TmpUserSignUpStarted), string(models.TmpUserInvitePending)); err != nil {
 			return err

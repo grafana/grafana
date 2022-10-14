@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/commonSession"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -19,7 +20,8 @@ func (s CorrelationsService) createCorrelation(ctx context.Context, cmd CreateCo
 		Config:      cmd.Config,
 	}
 
-	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *sqlstore.DBSession) error {
+	err := s.SQLStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		session := tx.ConcreteType()
 		var err error
 
 		query := &datasources.GetDataSourceQuery{
@@ -86,7 +88,8 @@ func (s CorrelationsService) updateCorrelation(ctx context.Context, cmd UpdateCo
 		SourceUID: cmd.SourceUID,
 	}
 
-	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *sqlstore.DBSession) error {
+	err := s.SQLStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		session := tx.ConcreteType()
 		query := &datasources.GetDataSourceQuery{
 			OrgId: cmd.OrgId,
 			Uid:   cmd.SourceUID,
@@ -148,7 +151,8 @@ func (s CorrelationsService) getCorrelation(ctx context.Context, cmd GetCorrelat
 		SourceUID: cmd.SourceUID,
 	}
 
-	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *sqlstore.DBSession) error {
+	err := s.SQLStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		session := tx.ConcreteType()
 		query := &datasources.GetDataSourceQuery{
 			OrgId: cmd.OrgId,
 			Uid:   cmd.SourceUID,
@@ -174,7 +178,8 @@ func (s CorrelationsService) getCorrelation(ctx context.Context, cmd GetCorrelat
 func (s CorrelationsService) getCorrelationsBySourceUID(ctx context.Context, cmd GetCorrelationsBySourceUIDQuery) ([]Correlation, error) {
 	correlations := make([]Correlation, 0)
 
-	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *sqlstore.DBSession) error {
+	err := s.SQLStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		session := tx.ConcreteType()
 		query := &datasources.GetDataSourceQuery{
 			OrgId: cmd.OrgId,
 			Uid:   cmd.SourceUID,

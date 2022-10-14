@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/commonSession"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -145,7 +146,8 @@ func (s *AuthInfoStore) SetAuthInfo(ctx context.Context, cmd *models.SetAuthInfo
 		authUser.OAuthExpiry = cmd.OAuthToken.Expiry
 	}
 
-	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return s.sqlStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		_, err := sess.Insert(authUser)
 		return err
 	})
@@ -161,7 +163,8 @@ func (s *AuthInfoStore) UpdateAuthInfoDate(ctx context.Context, authInfo *models
 		UserId:     authInfo.UserId,
 		AuthModule: authInfo.AuthModule,
 	}
-	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return s.sqlStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		_, err := sess.Cols("created").Update(authInfo, cond)
 		return err
 	})
@@ -209,7 +212,8 @@ func (s *AuthInfoStore) UpdateAuthInfo(ctx context.Context, cmd *models.UpdateAu
 		AuthModule: cmd.AuthModule,
 	}
 
-	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return s.sqlStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		upd, err := sess.Update(authUser, cond)
 		s.logger.Debug("Updated user_auth", "user_id", cmd.UserId, "auth_module", cmd.AuthModule, "rows", upd)
 		return err
@@ -217,7 +221,8 @@ func (s *AuthInfoStore) UpdateAuthInfo(ctx context.Context, cmd *models.UpdateAu
 }
 
 func (s *AuthInfoStore) DeleteAuthInfo(ctx context.Context, cmd *models.DeleteAuthInfoCommand) error {
-	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return s.sqlStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		_, err := sess.Delete(cmd.UserAuth)
 		return err
 	})

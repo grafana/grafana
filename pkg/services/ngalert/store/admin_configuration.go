@@ -6,6 +6,7 @@ import (
 
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/commonSession"
 )
 
 var (
@@ -76,7 +77,8 @@ func (st DBstore) DeleteAdminConfiguration(orgID int64) error {
 }
 
 func (st DBstore) UpdateAdminConfiguration(cmd UpdateAdminConfigurationCmd) error {
-	return st.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	return st.SQLStore.WithTransactionalDbSession(context.Background(), func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		has, err := sess.Table("ngalert_configuration").Where("org_id = ?", cmd.AdminConfiguration.OrgID).Exist()
 		if err != nil {
 			return err

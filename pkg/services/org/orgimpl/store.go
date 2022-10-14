@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/commonSession"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -122,7 +123,8 @@ func (ss *sqlStore) DeleteUserFromAll(ctx context.Context, userID int64) error {
 }
 
 func (ss *sqlStore) Update(ctx context.Context, cmd *org.UpdateOrgCommand) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		if isNameTaken, err := isOrgNameTaken(cmd.Name, cmd.OrgId, sess); err != nil {
 			return err
 		} else if isNameTaken {
@@ -172,7 +174,8 @@ func isOrgNameTaken(name string, existingId int64, sess *sqlstore.DBSession) (bo
 
 // TODO: refactor move logic to service method
 func (ss *sqlStore) UpdateAddress(ctx context.Context, cmd *org.UpdateOrgAddressCommand) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		org := org.Org{
 			Address1: cmd.Address1,
 			Address2: cmd.Address2,
@@ -200,7 +203,8 @@ func (ss *sqlStore) UpdateAddress(ctx context.Context, cmd *org.UpdateOrgAddress
 
 // TODO: refactor move logic to service method
 func (ss *sqlStore) Delete(ctx context.Context, cmd *org.DeleteOrgCommand) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		if res, err := sess.Query("SELECT 1 from org WHERE id=?", cmd.ID); err != nil {
 			return err
 		} else if len(res) != 1 {
@@ -303,7 +307,8 @@ func (ss *sqlStore) CreateWithMember(ctx context.Context, cmd *org.CreateOrgComm
 		Created: time.Now(),
 		Updated: time.Now(),
 	}
-	if err := ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	if err := ss.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		if isNameTaken, err := isOrgNameTaken(cmd.Name, 0, sess); err != nil {
 			return err
 		} else if isNameTaken {
@@ -338,7 +343,8 @@ func (ss *sqlStore) CreateWithMember(ctx context.Context, cmd *org.CreateOrgComm
 }
 
 func (ss *sqlStore) AddOrgUser(ctx context.Context, cmd *org.AddOrgUserCommand) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		// check if user exists
 		var usr user.User
 		session := sess.ID(cmd.UserID)
@@ -407,7 +413,8 @@ func setUsingOrgInTransaction(sess *sqlstore.DBSession, userID int64, orgID int6
 }
 
 func (ss *sqlStore) UpdateOrgUser(ctx context.Context, cmd *org.UpdateOrgUserCommand) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		var orgUser org.OrgUser
 		exists, err := sess.Where("org_id=? AND user_id=?", cmd.OrgID, cmd.UserID).Get(&orgUser)
 		if err != nil {
@@ -641,7 +648,8 @@ func (ss *sqlStore) GetByName(ctx context.Context, query *org.GetOrgByNameQuery)
 }
 
 func (ss *sqlStore) RemoveOrgUser(ctx context.Context, cmd *org.RemoveOrgUserCommand) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		// check if user exists
 		var usr user.User
 		if exists, err := sess.ID(cmd.UserID).Where(ss.notServiceAccountFilter()).Get(&usr); err != nil {

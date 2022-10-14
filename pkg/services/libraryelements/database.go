@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/commonSession"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
@@ -137,7 +138,8 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 		return LibraryElementDTO{}, err
 	}
 
-	err := l.SQLStore.WithTransactionalDbSession(c, func(session *sqlstore.DBSession) error {
+	err := l.SQLStore.WithTransactionalDbSession(c, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		session := tx.ConcreteType()
 		if err := l.requireEditPermissionsOnFolder(c, signedInUser, cmd.FolderID); err != nil {
 			return err
 		}
@@ -184,7 +186,8 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 // deleteLibraryElement deletes a library element.
 func (l *LibraryElementService) deleteLibraryElement(c context.Context, signedInUser *user.SignedInUser, uid string) (int64, error) {
 	var elementID int64
-	err := l.SQLStore.WithTransactionalDbSession(c, func(session *sqlstore.DBSession) error {
+	err := l.SQLStore.WithTransactionalDbSession(c, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		session := tx.ConcreteType()
 		element, err := getLibraryElement(l.SQLStore.Dialect, session, uid, signedInUser.OrgID)
 		if err != nil {
 			return err
@@ -462,7 +465,8 @@ func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInU
 	if err := l.requireSupportedElementKind(cmd.Kind); err != nil {
 		return LibraryElementDTO{}, err
 	}
-	err := l.SQLStore.WithTransactionalDbSession(c, func(session *sqlstore.DBSession) error {
+	err := l.SQLStore.WithTransactionalDbSession(c, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		session := tx.ConcreteType()
 		elementInDB, err := getLibraryElement(l.SQLStore.Dialect, session, uid, signedInUser.OrgID)
 		if err != nil {
 			return err
@@ -658,7 +662,8 @@ func (l *LibraryElementService) getElementsForDashboardID(c context.Context, das
 
 // connectElementsToDashboardID adds connections for all elements Library Elements in a Dashboard.
 func (l *LibraryElementService) connectElementsToDashboardID(c context.Context, signedInUser *user.SignedInUser, elementUIDs []string, dashboardID int64) error {
-	err := l.SQLStore.WithTransactionalDbSession(c, func(session *sqlstore.DBSession) error {
+	err := l.SQLStore.WithTransactionalDbSession(c, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		session := tx.ConcreteType()
 		_, err := session.Exec("DELETE FROM "+models.LibraryElementConnectionTableName+" WHERE kind=1 AND connection_id=?", dashboardID)
 		if err != nil {
 			return err
@@ -694,7 +699,8 @@ func (l *LibraryElementService) connectElementsToDashboardID(c context.Context, 
 
 // disconnectElementsFromDashboardID deletes connections for all Library Elements in a Dashboard.
 func (l *LibraryElementService) disconnectElementsFromDashboardID(c context.Context, dashboardID int64) error {
-	return l.SQLStore.WithTransactionalDbSession(c, func(session *sqlstore.DBSession) error {
+	return l.SQLStore.WithTransactionalDbSession(c, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		session := tx.ConcreteType()
 		_, err := session.Exec("DELETE FROM "+models.LibraryElementConnectionTableName+" WHERE kind=1 AND connection_id=?", dashboardID)
 		if err != nil {
 			return err
@@ -705,7 +711,8 @@ func (l *LibraryElementService) disconnectElementsFromDashboardID(c context.Cont
 
 // deleteLibraryElementsInFolderUID deletes all Library Elements in a folder.
 func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Context, signedInUser *user.SignedInUser, folderUID string) error {
-	return l.SQLStore.WithTransactionalDbSession(c, func(session *sqlstore.DBSession) error {
+	return l.SQLStore.WithTransactionalDbSession(c, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		session := tx.ConcreteType()
 		var folderUIDs []struct {
 			ID int64 `xorm:"id"`
 		}

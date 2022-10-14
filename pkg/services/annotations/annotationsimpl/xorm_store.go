@@ -13,6 +13,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/commonSession"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
@@ -81,7 +82,8 @@ func (r *xormRepositoryImpl) Add(ctx context.Context, item *annotations.Item) er
 }
 
 func (r *xormRepositoryImpl) Update(ctx context.Context, item *annotations.Item) error {
-	return r.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return r.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		var (
 			isExist bool
 			err     error
@@ -293,7 +295,8 @@ func getAccessControlFilter(user *user.SignedInUser) (string, []interface{}, err
 }
 
 func (r *xormRepositoryImpl) Delete(ctx context.Context, params *annotations.DeleteParams) error {
-	return r.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return r.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		var (
 			sql        string
 			annoTagSQL string

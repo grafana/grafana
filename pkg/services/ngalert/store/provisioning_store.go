@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/commonSession"
 )
 
 type provenanceRecord struct {
@@ -66,7 +67,8 @@ func (st DBstore) SetProvenance(ctx context.Context, o models.Provisionable, org
 	recordType := o.ResourceType()
 	recordKey := o.ResourceID()
 
-	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return st.SQLStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		// TODO: Add a unit-of-work pattern, so updating objects + provenance will happen consistently with rollbacks across stores.
 		// TODO: Need to make sure that writing a record where our concurrency key fails will also fail the whole transaction. That way, this gets rolled back too. can't just check that 0 updates happened inmemory. Check with jp. If not possible, we need our own concurrency key.
 		// TODO: Clean up stale provenance records periodically.
@@ -94,7 +96,8 @@ func (st DBstore) SetProvenance(ctx context.Context, o models.Provisionable, org
 
 // DeleteProvenance deletes the provenance record from the table
 func (st DBstore) DeleteProvenance(ctx context.Context, o models.Provisionable, org int64) error {
-	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return st.SQLStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		_, err := sess.Delete(provenanceRecord{
 			RecordKey:  o.ResourceID(),
 			RecordType: o.ResourceType(),

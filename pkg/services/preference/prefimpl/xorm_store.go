@@ -6,6 +6,7 @@ import (
 
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/commonSession"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 )
 
@@ -64,7 +65,8 @@ func (s *sqlStore) List(ctx context.Context, query *pref.Preference) ([]*pref.Pr
 }
 
 func (s *sqlStore) Update(ctx context.Context, cmd *pref.Preference) error {
-	return s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return s.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		_, err := sess.ID(cmd.ID).AllCols().Update(cmd)
 		return err
 	})
@@ -73,7 +75,8 @@ func (s *sqlStore) Update(ctx context.Context, cmd *pref.Preference) error {
 func (s *sqlStore) Insert(ctx context.Context, cmd *pref.Preference) (int64, error) {
 	var ID int64
 	var err error
-	err = s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err = s.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		ID, err = sess.Insert(cmd)
 		return err
 	})

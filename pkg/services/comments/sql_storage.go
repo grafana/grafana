@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/comments/commentmodel"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/commonSession"
 )
 
 type sqlStorage struct {
@@ -34,7 +35,8 @@ func (s *sqlStorage) Create(ctx context.Context, orgID int64, objectType string,
 
 	var result *commentmodel.Comment
 
-	return result, s.sql.WithTransactionalDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+	return result, s.sql.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		dbSession := tx.ConcreteType()
 		var group commentmodel.CommentGroup
 		has, err := dbSession.NoAutoCondition().Where(
 			"org_id=? AND object_type=? AND object_id=?",
@@ -96,7 +98,8 @@ func (s *sqlStorage) Get(ctx context.Context, orgID int64, objectType string, ob
 		}
 	}
 
-	return result, s.sql.WithTransactionalDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+	return result, s.sql.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		dbSession := tx.ConcreteType()
 		var group commentmodel.CommentGroup
 		has, err := dbSession.NoAutoCondition().Where(
 			"org_id=? AND object_type=? AND object_id=?",

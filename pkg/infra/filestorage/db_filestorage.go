@@ -16,6 +16,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/commonSession"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
@@ -150,7 +151,8 @@ func (s dbFileStorage) Delete(ctx context.Context, filePath string) error {
 	if err != nil {
 		return err
 	}
-	err = s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err = s.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		deletedFilesCount, err := sess.Table("file").Where("path_hash = ?", pathHash).Delete(&file{})
 		if err != nil {
 			return err
@@ -179,7 +181,8 @@ func (s dbFileStorage) Upsert(ctx context.Context, cmd *UpsertFileCommand) error
 		return err
 	}
 
-	err = s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err = s.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		existing := &file{}
 		exists, err := sess.Table("file").Where("path_hash = ?", pathHash).Get(existing)
 		if err != nil {
@@ -438,7 +441,8 @@ func (s dbFileStorage) CreateFolder(ctx context.Context, path string) error {
 	now := time.Now()
 	precedingFolders := precedingFolders(path)
 
-	err := s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := s.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		var insertErr error
 		sess.MustLogSQL(true)
 		previousFolder := Delimiter
@@ -516,7 +520,8 @@ func (s dbFileStorage) DeleteFolder(ctx context.Context, folderPath string, opti
 		return s.Delete(ctx, lowerFolderPath)
 	}
 
-	err := s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := s.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		var rawHashes []interface{}
 
 		// xorm does not support `.Delete()` with `.Join()`, so we first have to retrieve all path_hashes and then use them to filter `file_meta` table

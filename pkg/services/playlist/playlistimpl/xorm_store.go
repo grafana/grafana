@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/commonSession"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -16,7 +17,8 @@ type sqlStore struct {
 
 func (s *sqlStore) Insert(ctx context.Context, cmd *playlist.CreatePlaylistCommand) (*playlist.Playlist, error) {
 	p := playlist.Playlist{}
-	err := s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := s.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		uid, err := generateAndValidateNewPlaylistUid(sess, cmd.OrgId)
 		if err != nil {
 			return err
@@ -54,7 +56,8 @@ func (s *sqlStore) Insert(ctx context.Context, cmd *playlist.CreatePlaylistComma
 
 func (s *sqlStore) Update(ctx context.Context, cmd *playlist.UpdatePlaylistCommand) (*playlist.PlaylistDTO, error) {
 	dto := playlist.PlaylistDTO{}
-	err := s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := s.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		p := playlist.Playlist{
 			UID:      cmd.UID,
 			OrgId:    cmd.OrgId,
@@ -128,7 +131,8 @@ func (s *sqlStore) Delete(ctx context.Context, cmd *playlist.DeletePlaylistComma
 		return playlist.ErrCommandValidationFailed
 	}
 
-	return s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return s.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		playlist := playlist.Playlist{UID: cmd.UID, OrgId: cmd.OrgId}
 		_, err := sess.Get(&playlist)
 		if err != nil {

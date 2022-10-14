@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/commonSession"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/star"
 )
@@ -29,7 +30,8 @@ func (s *sqlStore) Get(ctx context.Context, query *star.IsStarredByUserQuery) (b
 }
 
 func (s *sqlStore) Insert(ctx context.Context, cmd *star.StarDashboardCommand) error {
-	return s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return s.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSession]) error {
+		sess := tx.ConcreteType()
 		entity := star.Star{
 			UserID:      cmd.UserID,
 			DashboardID: cmd.DashboardID,
@@ -41,7 +43,8 @@ func (s *sqlStore) Insert(ctx context.Context, cmd *star.StarDashboardCommand) e
 }
 
 func (s *sqlStore) Delete(ctx context.Context, cmd *star.UnstarDashboardCommand) error {
-	return s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return s.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSession]) error {
+		sess := tx.ConcreteType()
 		var rawSQL = "DELETE FROM star WHERE user_id=? and dashboard_id=?"
 		_, err := sess.Exec(rawSQL, cmd.UserID, cmd.DashboardID)
 		return err
@@ -49,7 +52,8 @@ func (s *sqlStore) Delete(ctx context.Context, cmd *star.UnstarDashboardCommand)
 }
 
 func (s *sqlStore) DeleteByUser(ctx context.Context, userID int64) error {
-	return s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return s.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSession]) error {
+		sess := tx.ConcreteType()
 		var rawSQL = "DELETE FROM star WHERE user_id = ?"
 		_, err := sess.Exec(rawSQL, userID)
 		return err

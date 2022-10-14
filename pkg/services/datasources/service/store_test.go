@@ -14,6 +14,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/commonSession"
 )
 
 func TestIntegrationDataAccess(t *testing.T) {
@@ -314,7 +315,8 @@ func TestIntegrationDataAccess(t *testing.T) {
 		ss := SqlStore{db: db}
 
 		// Init associated permission
-		errAddPermissions := db.WithTransactionalDbSession(context.TODO(), func(sess *sqlstore.DBSession) error {
+		errAddPermissions := db.WithTransactionalDbSession(context.TODO(), func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+			sess := tx.ConcreteType()
 			_, err := sess.Table("permission").Insert(ac.Permission{
 				RoleID:  1,
 				Action:  "datasources:read",
@@ -334,7 +336,8 @@ func TestIntegrationDataAccess(t *testing.T) {
 
 		// Check associated permission
 		permCount := int64(0)
-		errGetPermissions := db.WithTransactionalDbSession(context.TODO(), func(sess *sqlstore.DBSession) error {
+		errGetPermissions := db.WithTransactionalDbSession(context.TODO(), func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+			sess := tx.ConcreteType()
 			var err error
 			permCount, err = sess.Table("permission").Count()
 			return err

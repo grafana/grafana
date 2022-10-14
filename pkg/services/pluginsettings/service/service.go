@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/commonSession"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 )
 
@@ -171,7 +172,8 @@ func (s *Service) getPluginSettingById(ctx context.Context, query *models.GetPlu
 }
 
 func (s *Service) updatePluginSetting(ctx context.Context, cmd *models.UpdatePluginSettingCmd) error {
-	return s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return s.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		var pluginSetting models.PluginSetting
 
 		exists, err := sess.Where("org_id=? and plugin_id=?", cmd.OrgId, cmd.PluginId).Get(&pluginSetting)
@@ -229,7 +231,8 @@ func (s *Service) updatePluginSetting(ctx context.Context, cmd *models.UpdatePlu
 }
 
 func (s *Service) updatePluginSettingVersion(ctx context.Context, cmd *models.UpdatePluginSettingVersionCmd) error {
-	return s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return s.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		_, err := sess.Exec("UPDATE plugin_setting SET plugin_version=? WHERE org_id=? AND plugin_id=?", cmd.PluginVersion, cmd.OrgId, cmd.PluginId)
 		return err
 	})

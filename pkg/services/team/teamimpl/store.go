@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/commonSession"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -94,7 +95,8 @@ func (ss *xormStore) Create(name, email string, orgID int64) (models.Team, error
 		Created: time.Now(),
 		Updated: time.Now(),
 	}
-	err := ss.db.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err := ss.db.WithTransactionalDbSession(context.Background(), func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		if isNameTaken, err := isTeamNameTaken(orgID, name, 0, sess); err != nil {
 			return err
 		} else if isNameTaken {
@@ -108,7 +110,8 @@ func (ss *xormStore) Create(name, email string, orgID int64) (models.Team, error
 }
 
 func (ss *xormStore) Update(ctx context.Context, cmd *models.UpdateTeamCommand) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		if isNameTaken, err := isTeamNameTaken(cmd.OrgId, cmd.Name, cmd.Id, sess); err != nil {
 			return err
 		} else if isNameTaken {
@@ -139,7 +142,8 @@ func (ss *xormStore) Update(ctx context.Context, cmd *models.UpdateTeamCommand) 
 
 // DeleteTeam will delete a team, its member and any permissions connected to the team
 func (ss *xormStore) Delete(ctx context.Context, cmd *models.DeleteTeamCommand) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		if _, err := teamExists(cmd.OrgId, cmd.Id, sess); err != nil {
 			return err
 		}
@@ -347,7 +351,8 @@ func (ss *xormStore) GetByUser(ctx context.Context, query *models.GetTeamsByUser
 
 // AddTeamMember adds a user to a team
 func (ss *xormStore) AddMember(userID, orgID, teamID int64, isExternal bool, permission models.PermissionType) error {
-	return ss.db.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	return ss.db.WithTransactionalDbSession(context.Background(), func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		if isMember, err := isTeamMember(sess, orgID, teamID, userID); err != nil {
 			return err
 		} else if isMember {
@@ -375,7 +380,8 @@ func getTeamMember(sess *sqlstore.DBSession, orgId int64, teamId int64, userId i
 
 // UpdateTeamMember updates a team member
 func (ss *xormStore) UpdateMember(ctx context.Context, cmd *models.UpdateTeamMemberCommand) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		return updateTeamMember(sess, cmd.OrgId, cmd.TeamId, cmd.UserId, cmd.Permission)
 	})
 }
@@ -383,7 +389,8 @@ func (ss *xormStore) UpdateMember(ctx context.Context, cmd *models.UpdateTeamMem
 func (ss *xormStore) IsMember(orgId int64, teamId int64, userId int64) (bool, error) {
 	var isMember bool
 
-	err := ss.db.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err := ss.db.WithTransactionalDbSession(context.Background(), func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		var err error
 		isMember, err = isTeamMember(sess, orgId, teamId, userId)
 		return err
@@ -455,7 +462,8 @@ func updateTeamMember(sess *sqlstore.DBSession, orgID, teamID, userID int64, per
 
 // RemoveTeamMember removes a member from a team
 func (ss *xormStore) RemoveMember(ctx context.Context, cmd *models.RemoveTeamMemberCommand) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		return removeTeamMember(sess, cmd)
 	})
 }

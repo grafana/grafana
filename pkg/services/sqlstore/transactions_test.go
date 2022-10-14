@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/sqlstore/commonSession"
 	"github.com/stretchr/testify/require"
 )
 
@@ -29,7 +30,8 @@ func TestIntegrationReuseSessionWithTransaction(t *testing.T) {
 				return nil
 			}))
 
-			require.NoError(t, ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
+			require.NoError(t, ss.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*DBSessionTx]) error {
+				sess := tx.ConcreteType()
 				require.Equal(t, outerSession, sess)
 				require.False(t, sess.IsClosed(), "Session is closed but it should not be")
 				return nil
@@ -57,7 +59,7 @@ func TestIntegrationReuseSessionWithTransaction(t *testing.T) {
 				return nil
 			}))
 
-			require.Error(t, ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
+			require.Error(t, ss.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*DBSession]) error {
 				require.FailNow(t, "WithTransactionalDbSession should not be able to reuse session that did not open the transaction ")
 				return nil
 			}))

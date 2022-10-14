@@ -11,7 +11,7 @@ import (
 )
 
 type sqlxStore struct {
-	sess *sqlxsession.SessionDB
+	sess *sqlxsession.DBSession
 }
 
 func (s *sqlxStore) Insert(ctx context.Context, cmd *playlist.CreatePlaylistCommand) (*playlist.Playlist, error) {
@@ -29,7 +29,7 @@ func (s *sqlxStore) Insert(ctx context.Context, cmd *playlist.CreatePlaylistComm
 		UID:      uid,
 	}
 
-	err = s.sess.WithTransaction(ctx, func(tx *sqlxsession.SessionTx) error {
+	err = s.sess.WithTransaction(ctx, func(tx *sqlxsession.DBSessionTx) error {
 		query := `INSERT INTO playlist (name, "interval", org_id, uid) VALUES (?, ?, ?, ?)`
 		var err error
 		p.Id, err = tx.ExecWithReturningId(ctx, query, p.Name, p.Interval, p.OrgId, p.UID)
@@ -78,7 +78,7 @@ func (s *sqlxStore) Update(ctx context.Context, cmd *playlist.UpdatePlaylistComm
 		Interval: cmd.Interval,
 	}
 
-	err = s.sess.WithTransaction(ctx, func(tx *sqlxsession.SessionTx) error {
+	err = s.sess.WithTransaction(ctx, func(tx *sqlxsession.DBSessionTx) error {
 		query := `UPDATE playlist SET uid=:uid, org_id=:org_id, name=:name, "interval"=:interval WHERE id=:id`
 		_, err = tx.NamedExec(ctx, query, p)
 		if err != nil {
@@ -137,7 +137,7 @@ func (s *sqlxStore) Delete(ctx context.Context, cmd *playlist.DeletePlaylistComm
 		return err
 	}
 
-	err := s.sess.WithTransaction(ctx, func(tx *sqlxsession.SessionTx) error {
+	err := s.sess.WithTransaction(ctx, func(tx *sqlxsession.DBSessionTx) error {
 		if _, err := tx.Exec(ctx, "DELETE FROM playlist WHERE uid = ? and org_id = ?", cmd.UID, cmd.OrgId); err != nil {
 			return err
 		}
@@ -184,7 +184,7 @@ func (s *sqlxStore) GetItems(ctx context.Context, query *playlist.GetPlaylistIte
 	return playlistItems, err
 }
 
-func newGenerateAndValidateNewPlaylistUid(ctx context.Context, sess *sqlxsession.SessionDB, orgId int64) (string, error) {
+func newGenerateAndValidateNewPlaylistUid(ctx context.Context, sess *sqlxsession.DBSession, orgId int64) (string, error) {
 	for i := 0; i < 3; i++ {
 		uid := generateNewUid()
 		p := playlist.Playlist{OrgId: orgId, UID: uid}

@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/sqlstore/commonSession"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -162,7 +163,8 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args user.C
 // deprecated method, use only for tests
 func (ss *SQLStore) CreateUser(ctx context.Context, cmd user.CreateUserCommand) (*user.User, error) {
 	var user user.User
-	createErr := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) (err error) {
+	createErr := ss.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*DBSession]) (err error) {
+		sess := tx.ConcreteType()
 		user, err = ss.createUser(ctx, sess, cmd)
 		return
 	})
@@ -218,7 +220,8 @@ func (ss *SQLStore) SetUsingOrg(ctx context.Context, cmd *models.SetUsingOrgComm
 		return fmt.Errorf("user does not belong to org")
 	}
 
-	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
+	return ss.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		return setUsingOrgInTransaction(sess, cmd.UserId, cmd.OrgId)
 	})
 }
@@ -464,7 +467,8 @@ func getTeamSelectSQLBase(filteredUsers []string) string {
 }
 
 func (ss *SQLStore) DeleteUser(ctx context.Context, cmd *models.DeleteUserCommand) error {
-	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
+	return ss.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		return deleteUserInTransaction(ss, sess, cmd)
 	})
 }

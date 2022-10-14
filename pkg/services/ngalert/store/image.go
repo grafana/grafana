@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/commonSession"
 )
 
 const (
@@ -68,7 +69,8 @@ func (st DBstore) GetImages(ctx context.Context, tokens []string) ([]models.Imag
 }
 
 func (st DBstore) SaveImage(ctx context.Context, img *models.Image) error {
-	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return st.SQLStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		if img.ID == 0 {
 			// If the ID is zero then this is a new image. It needs a token, a created timestamp
 			// and an expiration time. The expiration time of the image is derived from the created
@@ -104,7 +106,8 @@ func (st DBstore) SaveImage(ctx context.Context, img *models.Image) error {
 
 func (st DBstore) DeleteExpiredImages(ctx context.Context) (int64, error) {
 	var n int64
-	if err := st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	if err := st.SQLStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		rows, err := sess.Where("expires_at < ?", TimeNow().UTC()).Delete(&models.Image{})
 		if err != nil {
 			return fmt.Errorf("failed to delete expired images: %w", err)

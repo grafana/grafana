@@ -15,7 +15,7 @@ import (
 )
 
 type sqlxStore struct {
-	sess *sqlxsession.SessionDB
+	sess *sqlxsession.DBSession
 	cfg  *setting.Cfg
 }
 

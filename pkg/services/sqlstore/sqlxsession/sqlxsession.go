@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
-type SQLxDBTransactionFunc func(tx *SessionTx) error
 type ContextSQLxTransactionKey struct{}
 
 type Session interface {
@@ -22,42 +21,42 @@ type Session interface {
 	NamedExec(ctx context.Context, query string, arg interface{}) (sql.Result, error)
 }
 
-type SessionDB struct {
+type DBSession struct {
 	sqlxdb *sqlx.DB
 	bus    bus.Bus
 	logger log.Logger
 }
 
-func GetSession(sqlxdb *sqlx.DB, bus bus.Bus) *SessionDB {
-	return &SessionDB{sqlxdb: sqlxdb, bus: bus, logger: log.New("sqlx_session")}
+func GetSession(sqlxdb *sqlx.DB, bus bus.Bus) *DBSession {
+	return &DBSession{sqlxdb: sqlxdb, bus: bus, logger: log.New("sqlx_session")}
 }
 
-func (gs *SessionDB) Get(ctx context.Context, dest interface{}, query string, args ...interface{}) error {
+func (gs *DBSession) Get(ctx context.Context, dest interface{}, query string, args ...interface{}) error {
 	return gs.sqlxdb.GetContext(ctx, dest, gs.sqlxdb.Rebind(query), args...)
 }
 
-func (gs *SessionDB) Select(ctx context.Context, dest interface{}, query string, args ...interface{}) error {
+func (gs *DBSession) Select(ctx context.Context, dest interface{}, query string, args ...interface{}) error {
 	return gs.sqlxdb.SelectContext(ctx, dest, gs.sqlxdb.Rebind(query), args...)
 }
 
-func (gs *SessionDB) Exec(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
+func (gs *DBSession) Exec(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
 	return gs.sqlxdb.ExecContext(ctx, gs.sqlxdb.Rebind(query), args...)
 }
 
-func (gs *SessionDB) NamedExec(ctx context.Context, query string, arg interface{}) (sql.Result, error) {
+func (gs *DBSession) NamedExec(ctx context.Context, query string, arg interface{}) (sql.Result, error) {
 	return gs.sqlxdb.NamedExecContext(ctx, gs.sqlxdb.Rebind(query), arg)
 }
 
-func (gs *SessionDB) driverName() string {
+func (gs *DBSession) driverName() string {
 	return gs.sqlxdb.DriverName()
 }
 
-func (gs *SessionDB) Beginx() (*SessionTx, error) {
+func (gs *DBSession) Beginx() (*DBSessionTx, error) {
 	tx, err := gs.sqlxdb.Beginx()
-	return &SessionTx{sqlxtx: tx}, err
+	return &DBSessionTx{sqlxtx: tx}, err
 }
 
-func (gs *SessionDB) WithTransaction(ctx context.Context, callback func(*SessionTx) error) error {
+func (gs *DBSession) WithTransaction(ctx context.Context, callback func(*DBSessionTx) error) error {
 	// Instead of begin a transaction, we need to check the transaction in context, if it exists,
 	// we can reuse it.
 	tx, err := gs.Beginx()
@@ -74,14 +73,15 @@ func (gs *SessionDB) WithTransaction(ctx context.Context, callback func(*Session
 	return tx.sqlxtx.Commit()
 }
 
-func (gs *SessionDB) ExecWithReturningId(ctx context.Context, query string, args ...interface{}) (int64, error) {
+func (gs *DBSession) ExecWithReturningId(ctx context.Context, query string, args ...interface{}) (int64, error) {
 	return execWithReturningId(ctx, gs.driverName(), query, gs, args...)
 }
 
-func (gs *SessionDB) StartSessionOrUseExisting(ctx context.Context, _ bool) (commonSession.Session, bool, error) {
+// implements SessionGetter[*DBSessionTx]
+func (gs *DBSession) StartSessionOrUseExisting(ctx context.Context, _ bool) (commonSession.Tx[*DBSessionTx], bool, error) {
 	value := ctx.Value(ContextSQLxTransactionKey{})
-	var trans *SessionTx
-	trans, ok := value.(*SessionTx)
+	var trans *DBSessionTx
+	trans, ok := value.(*DBSessionTx)
 
 	if ok {
 		logger.Debug("reusing existing session", "transaction", trans.transactionOpen)
@@ -96,49 +96,53 @@ func (gs *SessionDB) StartSessionOrUseExisting(ctx context.Context, _ bool) (com
 	return tx, true, nil
 }
 
-type SessionTx struct {
+type DBSessionTx struct {
 	sqlxtx          *sqlx.Tx
 	transactionOpen bool
 	events          []interface{}
 }
 
-func (gtx *SessionTx) NamedExec(ctx context.Context, query string, arg interface{}) (sql.Result, error) {
+func (gtx *DBSessionTx) ConcreteType() *DBSessionTx {
+	return gtx
+}
+
+func (gtx *DBSessionTx) NamedExec(ctx context.Context, query string, arg interface{}) (sql.Result, error) {
 	return gtx.sqlxtx.NamedExecContext(ctx, gtx.sqlxtx.Rebind(query), arg)
 }
 
-func (gtx *SessionTx) Exec(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
+func (gtx *DBSessionTx) Exec(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
 	return gtx.sqlxtx.ExecContext(ctx, gtx.sqlxtx.Rebind(query), args...)
 }
 
-func (gtx *SessionTx) Get(ctx context.Context, dest interface{}, query string, args ...interface{}) error {
+func (gtx *DBSessionTx) Get(ctx context.Context, dest interface{}, query string, args ...interface{}) error {
 	return gtx.sqlxtx.GetContext(ctx, dest, gtx.sqlxtx.Rebind(query), args...)
 }
 
-func (gtx *SessionTx) driverName() string {
+func (gtx *DBSessionTx) driverName() string {
 	return gtx.sqlxtx.DriverName()
 }
 
-func (gtx *SessionTx) ExecWithReturningId(ctx context.Context, query string, args ...interface{}) (int64, error) {
+func (gtx *DBSessionTx) ExecWithReturningId(ctx context.Context, query string, args ...interface{}) (int64, error) {
 	return execWithReturningId(ctx, gtx.driverName(), query, gtx, args...)
 }
 
-func (gtx *SessionTx) IsTransactionOpen() bool {
+func (gtx *DBSessionTx) IsTransactionOpen() bool {
 	return gtx.transactionOpen
 }
 
-func (gtx *SessionTx) Close() {
+func (gtx *DBSessionTx) Close() {
 	gtx.transactionOpen = false
 }
 
-func (gtx *SessionTx) Commit() error {
+func (gtx *DBSessionTx) Commit() error {
 	return gtx.sqlxtx.Commit()
 }
 
-func (gtx *SessionTx) Rollback() error {
+func (gtx *DBSessionTx) Rollback() error {
 	return gtx.sqlxtx.Rollback()
 }
 
-func (gtx *SessionTx) GetEvents() []interface{} {
+func (gtx *DBSessionTx) GetEvents() []interface{} {
 	return gtx.events
 }
 

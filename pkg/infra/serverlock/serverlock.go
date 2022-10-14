@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/commonSession"
 	"go.opentelemetry.io/otel/attribute"
 )
 
@@ -101,7 +102,8 @@ func (sl *ServerLockService) getOrCreate(ctx context.Context, actionName string)
 
 	var result *serverLock
 
-	err := sl.SQLStore.WithTransactionalDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+	err := sl.SQLStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		dbSession := tx.ConcreteType()
 		lockRows := []*serverLock{}
 		err := dbSession.Where("operation_uid = ?", actionName).Find(&lockRows)
 		if err != nil {
@@ -171,7 +173,8 @@ func (sl *ServerLockService) acquireForRelease(ctx context.Context, actionName s
 	defer span.End()
 
 	// getting the lock - as the action name has a Unique constraint, this will fail if the lock is already on the database
-	err := sl.SQLStore.WithTransactionalDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+	err := sl.SQLStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		dbSession := tx.ConcreteType()
 		// we need to find if the lock is in the database
 		lockRows := []*serverLock{}
 		err := dbSession.Where("operation_uid = ?", actionName).Find(&lockRows)

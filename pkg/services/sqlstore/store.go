@@ -24,8 +24,8 @@ type Store interface {
 	CreateUser(ctx context.Context, cmd user.CreateUserCommand) (*user.User, error)
 	GetUserProfile(ctx context.Context, query *models.GetUserProfileQuery) error
 	GetSignedInUser(ctx context.Context, query *models.GetSignedInUserQuery) error
-	WithDbSession(ctx context.Context, callback DBTransactionFunc) error
-	WithNewDbSession(ctx context.Context, callback DBTransactionFunc) error
+	WithDbSession(ctx context.Context, callback DBSessionFunc) error
+	WithNewDbSession(ctx context.Context, callback DBSessionFunc) error
 	GetOrgQuotaByTarget(ctx context.Context, query *models.GetOrgQuotaByTargetQuery) error
 	GetOrgQuotas(ctx context.Context, query *models.GetOrgQuotasQuery) error
 	UpdateOrgQuota(ctx context.Context, cmd *models.UpdateOrgQuotaCmd) error
@@ -41,5 +41,5 @@ type Store interface {
 	Quote(value string) string
 	GetDBHealthQuery(ctx context.Context, query *models.GetDBHealthQuery) error
 	SearchOrgs(ctx context.Context, query *models.SearchOrgsQuery) error
-	GetSqlxSession() *sqlxsession.SessionDB
+	GetSqlxSession() *sqlxsession.DBSession
 }

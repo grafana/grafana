@@ -16,9 +16,16 @@ import (
 
 var tsclogger = log.New("sqlstore.transactions")
 
+// DBSessionTx is a type alias to DBSession in order to reduce XORM ambigiuty between sessions and transactions
+type DBSessionTx = DBSession
+
+func (tx *DBSessionTx) ConcreteType() *DBSessionTx {
+	return tx
+}
+
 // WithTransactionalDbSession calls the callback with a session within a transaction.
 func (ss *SQLStore) WithTransactionalDbSession(ctx context.Context, callback DBTransactionFunc) error {
-	return inTransactionWithRetryCtx(ctx, &XormEngine{ss.engine}, ss.bus, callback, 0)
+	return inTransactionWithRetryCtx[*DBSessionTx](ctx, &XormEngine{ss.engine}, ss.bus, callback, 0)
 }
 
 // InTransaction starts a transaction and calls the fn
@@ -28,20 +35,20 @@ func (ss *SQLStore) InTransaction(ctx context.Context, fn func(ctx context.Conte
 }
 
 func (ss *SQLStore) SqlxInTransactionWithRetry(ctx context.Context, fn func(ctx context.Context) error, retry int) error {
-	return inTransactionWithRetryCtx(ctx, ss.GetSqlxSession(), ss.bus, func(sess commonSession.Session) error {
+	return inTransactionWithRetryCtx[*sqlxsession.DBSessionTx](ctx, ss.GetSqlxSession(), ss.bus, func(sess commonSession.Tx[*sqlxsession.DBSessionTx]) error {
 		withValue := context.WithValue(ctx, sqlxsession.ContextSQLxTransactionKey{}, sess)
 		return fn(withValue)
 	}, retry)
 }
 
 func (ss *SQLStore) inTransactionWithRetry(ctx context.Context, fn func(ctx context.Context) error, retry int) error {
-	return inTransactionWithRetryCtx(ctx, &XormEngine{ss.engine}, ss.bus, func(sess commonSession.Session) error {
+	return inTransactionWithRetryCtx[*DBSessionTx](ctx, &XormEngine{ss.engine}, ss.bus, func(sess commonSession.Tx[*DBSessionTx]) error {
 		withValue := context.WithValue(ctx, ContextSessionKey{}, sess)
 		return fn(withValue)
 	}, retry)
 }
 
-func inTransactionWithRetryCtx(ctx context.Context, engine commonSession.Engine, bus bus.Bus, callback DBTransactionFunc, retry int) error {
+func inTransactionWithRetryCtx[T *DBSessionTx | *sqlxsession.DBSessionTx](ctx context.Context, engine commonSession.TxSessionGetter[T], bus bus.Bus, callback func(commonSession.Tx[T]) error, retry int) error {
 	sess, isNew, err := engine.StartSessionOrUseExisting(ctx, true)
 	if err != nil {
 		return err

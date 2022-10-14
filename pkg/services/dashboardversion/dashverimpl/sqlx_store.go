@@ -11,7 +11,7 @@ import (
 )
 
 type sqlxStore struct {
-	sess *sqlxsession.SessionDB
+	sess *sqlxsession.DBSession
 }
 
 func (ss *sqlxStore) Get(ctx context.Context, query *dashver.GetDashboardVersionQuery) (*dashver.DashboardVersion, error) {
@@ -47,7 +47,7 @@ func (ss *sqlxStore) GetBatch(ctx context.Context, cmd *dashver.DeleteExpiredVer
 // Here we need to make sure that the transaction is shared between services
 func (ss *sqlxStore) DeleteBatch(ctx context.Context, cmd *dashver.DeleteExpiredVersionsCommand, versionIdsToDelete []interface{}) (int64, error) {
 	var deleted int64
-	err := ss.sess.WithTransaction(ctx, func(tx *sqlxsession.SessionTx) error {
+	err := ss.sess.WithTransaction(ctx, func(tx *sqlxsession.DBSessionTx) error {
 		deleteExpiredSQL := `DELETE FROM dashboard_version WHERE id IN (?` + strings.Repeat(",?", len(versionIdsToDelete)-1) + `)`
 		expiredResponse, err := tx.Exec(ctx, deleteExpiredSQL, versionIdsToDelete...)
 		if err != nil {

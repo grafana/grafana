@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/commonSession"
 )
 
 // SecretsKVStoreSQL provides a key/value store backed by the Grafana database
@@ -86,7 +87,8 @@ func (kv *SecretsKVStoreSQL) Set(ctx context.Context, orgId int64, namespace str
 		return err
 	}
 	encodedValue := b64.EncodeToString(encryptedValue)
-	return kv.sqlStore.WithTransactionalDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+	return kv.sqlStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSession]) error {
+		dbSession := tx.ConcreteType()
 		item := Item{
 			OrgId:     &orgId,
 			Namespace: &namespace,
@@ -185,7 +187,8 @@ func (kv *SecretsKVStoreSQL) Keys(ctx context.Context, orgId int64, namespace st
 
 // Rename an item in the store
 func (kv *SecretsKVStoreSQL) Rename(ctx context.Context, orgId int64, namespace string, typ string, newNamespace string) error {
-	return kv.sqlStore.WithTransactionalDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+	return kv.sqlStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSession]) error {
+		dbSession := tx.ConcreteType()
 		item := Item{
 			OrgId:     &orgId,
 			Namespace: &namespace,

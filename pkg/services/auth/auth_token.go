@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/commonSession"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -163,7 +164,8 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 		expireBefore := getTime().Add(-urgentRotateTime).Unix()
 
 		var affectedRows int64
-		err = s.SQLStore.WithTransactionalDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		err = s.SQLStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+			dbSession := tx.ConcreteType()
 			affectedRows, err = dbSession.Where("id = ? AND prev_auth_token = ? AND rotated_at < ?",
 				modelCopy.Id,
 				modelCopy.PrevAuthToken,
@@ -190,7 +192,8 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 		modelCopy.SeenAt = getTime().Unix()
 
 		var affectedRows int64
-		err = s.SQLStore.WithTransactionalDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		err = s.SQLStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+			dbSession := tx.ConcreteType()
 			affectedRows, err = dbSession.Where("id = ? AND auth_token = ?",
 				modelCopy.Id,
 				modelCopy.AuthToken).
@@ -274,7 +277,8 @@ func (s *UserAuthTokenService) TryRotateToken(ctx context.Context, token *models
 		WHERE id = ? AND (auth_token_seen = ? OR rotated_at < ?)`
 
 	var affected int64
-	err = s.SQLStore.WithTransactionalDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+	err = s.SQLStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		dbSession := tx.ConcreteType()
 		res, err := dbSession.Exec(sql, userAgent, clientIPStr, s.SQLStore.Dialect.BooleanStr(true), hashedToken,
 			s.SQLStore.Dialect.BooleanStr(false), now.Unix(), model.Id, s.SQLStore.Dialect.BooleanStr(true),
 			now.Add(-30*time.Second).Unix())
@@ -363,7 +367,8 @@ func (s *UserAuthTokenService) RevokeAllUserTokens(ctx context.Context, userId i
 }
 
 func (s *UserAuthTokenService) BatchRevokeAllUserTokens(ctx context.Context, userIds []int64) error {
-	return s.SQLStore.WithTransactionalDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+	return s.SQLStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		dbSession := tx.ConcreteType()
 		if len(userIds) == 0 {
 			return nil
 		}

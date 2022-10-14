@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/commonSession"
 )
 
 func createTestableServerLock(t *testing.T) *ServerLockService {
@@ -105,7 +106,8 @@ func TestLockAndRelease(t *testing.T) {
 		}
 
 		// inserting a row with lock in the past
-		err := sl.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		err := sl.SQLStore.WithTransactionalDbSession(context.Background(), func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+			sess := tx.ConcreteType()
 			r, err := sess.Insert(lock)
 			require.NoError(t, err)
 			require.Equal(t, int64(1), r)
@@ -118,7 +120,8 @@ func TestLockAndRelease(t *testing.T) {
 		require.NoError(t, err)
 
 		//validate that the lock LastExecution was updated (at least different from the original)
-		err = sl.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		err = sl.SQLStore.WithTransactionalDbSession(context.Background(), func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+			sess := tx.ConcreteType()
 			lockRows := []*serverLock{}
 			err := sess.Where("operation_uid = ?", operationUID).Find(&lockRows)
 			require.NoError(t, err)

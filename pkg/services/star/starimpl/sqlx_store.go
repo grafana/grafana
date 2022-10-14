@@ -10,7 +10,7 @@ import (
 )
 
 type sqlxStore struct {
-	sess *sqlxsession.SessionDB
+	sess *sqlxsession.DBSession
 }
 
 func (s *sqlxStore) Get(ctx context.Context, query *star.IsStarredByUserQuery) (bool, error) {

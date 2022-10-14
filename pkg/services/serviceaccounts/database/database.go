@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/commonSession"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -52,7 +53,7 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, org
 		role = *saForm.Role
 	}
 	var newSA *user.User
-	createErr := s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) (err error) {
+	createErr := s.sqlStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
 		var errUser error
 		newSA, errUser = s.sqlStore.CreateUser(ctx, user.CreateUserCommand{
 			Login:            generatedLogin,
@@ -104,7 +105,8 @@ func (s *ServiceAccountsStoreImpl) UpdateServiceAccount(ctx context.Context,
 	saForm *serviceaccounts.UpdateServiceAccountForm) (*serviceaccounts.ServiceAccountProfileDTO, error) {
 	updatedUser := &serviceaccounts.ServiceAccountProfileDTO{}
 
-	err := s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := s.sqlStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		var err error
 		updatedUser, err = s.RetrieveServiceAccount(ctx, orgId, serviceAccountId)
 		if err != nil {
@@ -165,7 +167,8 @@ func ServiceAccountDeletions() []string {
 
 // DeleteServiceAccount deletes service account and all associated tokens
 func (s *ServiceAccountsStoreImpl) DeleteServiceAccount(ctx context.Context, orgId, serviceAccountId int64) error {
-	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return s.sqlStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		return s.deleteServiceAccount(sess, orgId, serviceAccountId)
 	})
 }
@@ -459,7 +462,8 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccountFromApikey(ctx context.Co
 		IsServiceAccount: true,
 	}
 
-	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return s.sqlStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		newSA, errCreateSA := s.sqlStore.CreateUser(ctx, cmd)
 		if errCreateSA != nil {
 			return fmt.Errorf("failed to create service account: %w", errCreateSA)
@@ -503,7 +507,8 @@ func (s *ServiceAccountsStoreImpl) RevertApiKey(ctx context.Context, saId int64,
 		return fmt.Errorf("cannot revert token: service account contains more than one token")
 	}
 
-	err = s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err = s.sqlStore.WithTransactionalDbSession(ctx, func(tx commonSession.Tx[*sqlstore.DBSessionTx]) error {
+		sess := tx.ConcreteType()
 		user := user.User{}
 		has, err := sess.Where(`org_id = ? and id = ? and is_service_account = ?`,
 			key.OrgId, *key.ServiceAccountId, s.sqlStore.Dialect.BooleanStr(true)).Get(&user)

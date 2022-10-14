@@ -202,11 +202,11 @@ func (m *SQLStoreMock) NewSession(ctx context.Context) *sqlstore.DBSession {
 	return nil
 }
 
-func (m *SQLStoreMock) WithDbSession(ctx context.Context, callback sqlstore.DBTransactionFunc) error {
+func (m *SQLStoreMock) WithDbSession(ctx context.Context, callback sqlstore.DBSessionFunc) error {
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) WithNewDbSession(ctx context.Context, callback sqlstore.DBTransactionFunc) error {
+func (m *SQLStoreMock) WithNewDbSession(ctx context.Context, callback sqlstore.DBSessionFunc) error {
 	return m.ExpectedError
 }
 
@@ -419,6 +419,6 @@ func (m *SQLStoreMock) GetAPIKeyByHash(ctx context.Context, hash string) (*apike
 	return nil, m.ExpectedError
 }
 
-func (m *SQLStoreMock) GetSqlxSession() *sqlxsession.SessionDB {
+func (m *SQLStoreMock) GetSqlxSession() *sqlxsession.DBSession {
 	return nil
 }
