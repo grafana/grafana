@@ -14528,29 +14528,6 @@
         ]
       }
     },
-    "/dashboards/validate": {
-      "post": {
-        "description": "Validates a dashboard JSON against the schema",
-        "operationId": "validateDashboard",
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/validateDashboardResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "tags": [
-          "dashboards"
-        ]
-      }
-    },
     "/datasources": {
       "get": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scope: `datasources:*`.",

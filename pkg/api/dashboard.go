@@ -752,7 +752,7 @@ func (hs *HTTPServer) GetDashboardVersion(c *models.ReqContext) response.Respons
 	return response.JSON(http.StatusOK, dashVersionMeta)
 }
 
-// swagger:route POST /dashboards/validate dashboards validateDashboard
+// swagger:route POST /dashboards/validate dashboards alpha validateDashboard
 //
 // Validates a dashboard JSON against the schema.
 //
