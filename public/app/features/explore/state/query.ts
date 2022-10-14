@@ -355,14 +355,6 @@ export function modifyQueries(
 
     const nextQueriesRaw = await Promise.all(queries.map((query) => modifier({ ...query }, modification)));
 
-    // we did some async calculations here,
-    // the redux-store could have changed in the meantime.
-    // we will check, and, if changed, we will not apply our changes.
-    const currentQueries = getState().explore[exploreId]?.queries ?? [];
-    if (queries !== currentQueries) {
-      return;
-    }
-
     const nextQueries = nextQueriesRaw.map((nextQuery, i) => {
       return generateNewKeyAndAddRefIdIfMissing(nextQuery, queries, i);
     });
