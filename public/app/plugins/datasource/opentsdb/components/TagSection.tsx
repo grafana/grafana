@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import { has, size } from 'lodash';
 import React, { useCallback, useState } from 'react';
 
@@ -119,20 +120,25 @@ export function TagSection({
             return (
               <InlineFormLabel key={idx} width="auto" data-testid={testIds.list + idx}>
                 {tagKey}={tagValue}
-                <a onClick={() => editTag(tagKey, tagValue)}>
+                <button type="button" className={noStyledButton} onClick={() => editTag(tagKey, tagValue)}>
                   <Icon name={'pen'} />
-                </a>
-                <a onClick={() => removeTag(tagKey)} data-testid={testIds.remove}>
+                </button>
+                <button
+                  type="button"
+                  className={noStyledButton}
+                  onClick={() => removeTag(tagKey)}
+                  data-testid={testIds.remove}
+                >
                   <Icon name={'times'} />
-                </a>
+                </button>
               </InlineFormLabel>
             );
           })}
         {!addTagMode && (
           <label className="gf-form-label query-keyword">
-            <a onClick={changeAddTagMode} data-testid={testIds.open}>
+            <button type="button" className={noStyledButton} onClick={changeAddTagMode} data-testid={testIds.open}>
               <Icon name={'plus'} />
-            </a>
+            </button>
           </label>
         )}
       </div>
@@ -195,10 +201,12 @@ export function TagSection({
             )}
 
             <label className="gf-form-label">
-              <a onClick={addTag}>add tag</a>
-              <a onClick={changeAddTagMode}>
+              <button type="button" className={noStyledButton} onClick={addTag}>
+                add tag
+              </button>
+              <button type="button" className={noStyledButton} onClick={changeAddTagMode}>
                 <Icon name={'times'} />
-              </a>
+              </button>
             </label>
           </div>
         </div>
@@ -209,6 +217,11 @@ export function TagSection({
     </div>
   );
 }
+
+const noStyledButton = css`
+  background: transparent;
+  border: none;
+`;
 
 export const testIds = {
   section: 'opentsdb-tag',
