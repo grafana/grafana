@@ -32,7 +32,7 @@ export const ResourceDimensionEditor: FC<
   const labelWidth = 9;
 
   const onModeChange = useCallback(
-    (mode) => {
+    (mode: ResourceDimensionMode) => {
       onChange({
         ...value,
         mode,
@@ -42,7 +42,7 @@ export const ResourceDimensionEditor: FC<
   );
 
   const onFieldChange = useCallback(
-    (field) => {
+    (field = '') => {
       onChange({
         ...value,
         field,
