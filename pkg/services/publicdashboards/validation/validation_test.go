@@ -5,7 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	publicdashboardModels "github.com/grafana/grafana/pkg/services/publicdashboards/models"
+	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/stretchr/testify/require"
 )
 
@@ -22,10 +22,10 @@ func TestValidateSavePublicDashboard(t *testing.T) {
 		}`)
 		dashboardData, _ := simplejson.NewJson(templateVars)
 		dashboard := models.NewDashboardFromJson(dashboardData)
-		dto := &publicdashboardModels.SavePublicDashboardConfigDTO{DashboardUid: "abc123", OrgId: 1, UserId: 1, PublicDashboard: nil}
+		dto := &SavePublicDashboardConfigDTO{DashboardUid: "abc123", OrgId: 1, UserId: 1, PublicDashboard: nil}
 
 		err := ValidateSavePublicDashboard(dto, dashboard)
-		require.ErrorContains(t, err, publicdashboardModels.ErrPublicDashboardHasTemplateVariables.Reason)
+		require.ErrorContains(t, err, ErrPublicDashboardHasTemplateVariables.Reason)
 	})
 
 	t.Run("Returns no validation error when dashboard has no template variables", func(t *testing.T) {
@@ -36,7 +36,7 @@ func TestValidateSavePublicDashboard(t *testing.T) {
 		}`)
 		dashboardData, _ := simplejson.NewJson(templateVars)
 		dashboard := models.NewDashboardFromJson(dashboardData)
-		dto := &publicdashboardModels.SavePublicDashboardConfigDTO{DashboardUid: "abc123", OrgId: 1, UserId: 1, PublicDashboard: nil}
+		dto := &SavePublicDashboardConfigDTO{DashboardUid: "abc123", OrgId: 1, UserId: 1, PublicDashboard: nil}
 
 		err := ValidateSavePublicDashboard(dto, dashboard)
 		require.NoError(t, err)

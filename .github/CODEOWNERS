@@ -30,6 +30,7 @@
 /docs/sources/old-alerting @brendamuir
 /docs/sources/panels/ @chri2547
 /docs/sources/release-notes/ @gguillotte-grafana
+/docs/sources/setup-grafana/ @chri2547
 /docs/sources/visualization/ @chri2547
 /docs/sources/whatsnew/ @gguillotte-grafana
 
@@ -80,6 +81,7 @@ go.sum @grafana/backend-platform
 /pkg/services/live/ @grafana/grafana-edge-squad
 /pkg/services/searchV2/ @grafana/grafana-edge-squad
 /pkg/services/store/ @grafana/grafana-edge-squad
+/pkg/services/querylibrary/ @grafana/grafana-edge-squad
 /pkg/services/export/ @grafana/grafana-edge-squad
 /pkg/infra/filestore/ @grafana/grafana-edge-squad
 /pkg/tsdb/testdatasource/sims/ @grafana/grafana-edge-squad
@@ -110,6 +112,7 @@ go.sum @grafana/backend-platform
 /contribute/architecture/backend @grafana/backend-platform
 /contribute/engineering/backend @grafana/backend-platform
 
+/public/locales @grafana/user-essentials
 /e2e @grafana/user-essentials
 /packages @grafana/user-essentials @grafana/plugins-platform-frontend @grafana/grafana-bi-squad
 /packages/grafana-e2e-selectors @grafana/user-essentials

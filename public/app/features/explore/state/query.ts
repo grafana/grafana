@@ -1,7 +1,7 @@
 import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
 import deepEqual from 'fast-deep-equal';
 import { flatten, groupBy } from 'lodash';
-import { identity, Observable, of, SubscriptionLike, Unsubscribable } from 'rxjs';
+import { identity, Observable, of, SubscriptionLike, Unsubscribable, combineLatest } from 'rxjs';
 import { mergeMap, throttleTime } from 'rxjs/operators';
 
 import {
@@ -15,7 +15,6 @@ import {
   hasQueryImportSupport,
   HistoryItem,
   LoadingState,
-  PanelData,
   PanelEvents,
   QueryFixAction,
   toLegacyResponseData,
@@ -32,8 +31,10 @@ import {
   updateHistory,
 } from 'app/core/utils/explore';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
+import { CorrelationData } from 'app/features/correlations/useCorrelations';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
+import { store } from 'app/store/store';
 import { ExploreItemState, ExplorePanelData, ThunkDispatch, ThunkResult } from 'app/types';
 import { ExploreId, ExploreState, QueryOptions } from 'app/types/explore';
 
@@ -45,7 +46,7 @@ import { decorateData } from '../utils/decorators';
 import { addHistoryItem, historyUpdatedAction, loadRichHistory } from './history';
 import { stateSave } from './main';
 import { updateTime } from './time';
-import { createCacheKey, getResultsFromCache } from './utils';
+import { createCacheKey, getResultsFromCache, storeLogsVolumeEnabled } from './utils';
 
 //
 // Actions and Payloads
@@ -95,7 +96,6 @@ export const queriesImportedAction = createAction<QueriesImportedPayload>('explo
 export interface ModifyQueriesPayload {
   exploreId: ExploreId;
   modification: QueryFixAction;
-  index?: number;
   modifier: (query: DataQuery, modification: QueryFixAction) => DataQuery;
 }
 export const modifyQueriesAction = createAction<ModifyQueriesPayload>('explore/modifyQueries');
@@ -107,6 +107,10 @@ export interface QueryStoreSubscriptionPayload {
 
 export const queryStoreSubscriptionAction = createAction<QueryStoreSubscriptionPayload>(
   'explore/queryStoreSubscription'
+);
+
+const setLogsVolumeEnabledAction = createAction<{ exploreId: ExploreId; enabled: boolean }>(
+  'explore/setLogsVolumeEnabledAction'
 );
 
 export interface StoreLogsVolumeDataProvider {
@@ -349,17 +353,11 @@ export const importQueries = (
  * Action to modify a query given a datasource-specific modifier action.
  * @param exploreId Explore area
  * @param modification Action object with a type, e.g., ADD_FILTER
- * @param index Optional query row index. If omitted, the modification is applied to all query rows.
  * @param modifier Function that executes the modification, typically `datasourceInstance.modifyQueries`.
  */
-export function modifyQueries(
-  exploreId: ExploreId,
-  modification: QueryFixAction,
-  modifier: any,
-  index?: number
-): ThunkResult<void> {
+export function modifyQueries(exploreId: ExploreId, modification: QueryFixAction, modifier: any): ThunkResult<void> {
   return (dispatch) => {
-    dispatch(modifyQueriesAction({ exploreId, modification, index, modifier }));
+    dispatch(modifyQueriesAction({ exploreId, modification, modifier }));
     if (!modification.preventSubmit) {
       dispatch(runQueries(exploreId));
     }
@@ -397,6 +395,8 @@ export const runQueries = (
   return (dispatch, getState) => {
     dispatch(updateTime({ exploreId }));
 
+    const correlations$ = getCorrelations();
+
     // We always want to clear cache unless we explicitly pass preserveCache parameter
     const preserveCache = options?.preserveCache === true;
     if (!preserveCache) {
@@ -415,6 +415,7 @@ export const runQueries = (
       refreshInterval,
       absoluteRange,
       cache,
+      logsVolumeEnabled,
     } = exploreItemState;
     let newQuerySub;
 
@@ -433,15 +434,16 @@ export const runQueries = (
 
     // If we have results saved in cache, we are going to use those results instead of running queries
     if (cachedValue) {
-      newQuerySub = of(cachedValue)
+      newQuerySub = combineLatest([of(cachedValue), correlations$])
         .pipe(
-          mergeMap((data: PanelData) =>
+          mergeMap(([data, correlations]) =>
             decorateData(
               data,
               queryResponse,
               absoluteRange,
               refreshInterval,
               queries,
+              correlations,
               datasourceInstance != null && hasLogsVolumeSupport(datasourceInstance)
             )
           )
@@ -488,19 +490,23 @@ export const runQueries = (
 
       dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Loading }));
 
-      newQuerySub = runRequest(datasourceInstance, transaction.request)
-        .pipe(
+      newQuerySub = combineLatest([
+        runRequest(datasourceInstance, transaction.request)
           // Simple throttle for live tailing, in case of > 1000 rows per interval we spend about 200ms on processing and
           // rendering. In case this is optimized this can be tweaked, but also it should be only as fast as user
           // actually can see what is happening.
-          live ? throttleTime(500) : identity,
-          mergeMap((data: PanelData) =>
+          .pipe(live ? throttleTime(500) : identity),
+        correlations$,
+      ])
+        .pipe(
+          mergeMap(([data, correlations]) =>
             decorateData(
               data,
               queryResponse,
               absoluteRange,
               refreshInterval,
               queries,
+              correlations,
               datasourceInstance != null && hasLogsVolumeSupport(datasourceInstance)
             )
           )
@@ -550,6 +556,12 @@ export const runQueries = (
         );
         dispatch(cleanLogsVolumeAction({ exploreId }));
       } else if (hasLogsVolumeSupport(datasourceInstance)) {
+        // we always prepare the logsVolumeProvider,
+        // but we only load it, if the logs-volume-histogram is enabled.
+        // (we need to have the logsVolumeProvider always actual,
+        // even when the visuals are disabled, because when the user
+        // enables the visuals again, we need to load the histogram,
+        // so we need the provider)
         const sourceRequest = {
           ...transaction.request,
           requestId: transaction.request.requestId + '_log_volume',
@@ -564,7 +576,9 @@ export const runQueries = (
         const { logsVolumeData, absoluteRange } = getState().explore[exploreId]!;
         if (!canReuseLogsVolumeData(logsVolumeData, queries, absoluteRange)) {
           dispatch(cleanLogsVolumeAction({ exploreId }));
-          dispatch(loadLogsVolumeData(exploreId));
+          if (logsVolumeEnabled) {
+            dispatch(loadLogsVolumeData(exploreId));
+          }
         }
       } else {
         dispatch(
@@ -670,6 +684,16 @@ export function loadLogsVolumeData(exploreId: ExploreId): ThunkResult<void> {
   };
 }
 
+export function setLogsVolumeEnabled(exploreId: ExploreId, enabled: boolean): ThunkResult<void> {
+  return (dispatch, getState) => {
+    dispatch(setLogsVolumeEnabledAction({ exploreId, enabled }));
+    storeLogsVolumeEnabled(enabled);
+    if (enabled) {
+      dispatch(loadLogsVolumeData(exploreId));
+    }
+  };
+}
+
 //
 // Reducer
 //
@@ -714,25 +738,12 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
 
   if (modifyQueriesAction.match(action)) {
     const { queries } = state;
-    const { modification, index, modifier } = action.payload;
+    const { modification, modifier } = action.payload;
     let nextQueries: DataQuery[];
-    if (index === undefined) {
-      // Modify all queries
-      nextQueries = queries.map((query, i) => {
-        const nextQuery = modifier({ ...query }, modification);
-        return generateNewKeyAndAddRefIdIfMissing(nextQuery, queries, i);
-      });
-    } else {
-      // Modify query only at index
-      nextQueries = queries.map((query, i) => {
-        if (i === index) {
-          const nextQuery = modifier({ ...query }, modification);
-          return generateNewKeyAndAddRefIdIfMissing(nextQuery, queries, i);
-        }
-
-        return query;
-      });
-    }
+    nextQueries = queries.map((query, i) => {
+      const nextQuery = modifier({ ...query }, modification);
+      return generateNewKeyAndAddRefIdIfMissing(nextQuery, queries, i);
+    });
     return {
       ...state,
       queries: nextQueries,
@@ -754,6 +765,20 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     return {
       ...state,
       querySubscription,
+    };
+  }
+
+  if (setLogsVolumeEnabledAction.match(action)) {
+    const { enabled } = action.payload;
+    if (!enabled && state.logsVolumeDataSubscription) {
+      state.logsVolumeDataSubscription.unsubscribe();
+    }
+    return {
+      ...state,
+      logsVolumeEnabled: enabled,
+      // NOTE: the dataProvider is not cleared, we may need it later,
+      // if the user re-enables the histogram-visualization
+      logsVolumeData: undefined,
     };
   }
 
@@ -867,6 +892,28 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
   return state;
 };
 
+/**
+ * Creates an observable that emits correlations once they are loaded
+ */
+const getCorrelations = () => {
+  return new Observable<CorrelationData[]>((subscriber) => {
+    const existingCorrelations = store.getState().explore.correlations;
+    if (existingCorrelations) {
+      subscriber.next(existingCorrelations);
+      subscriber.complete();
+    } else {
+      const unsubscribe = store.subscribe(() => {
+        const { correlations } = store.getState().explore;
+        if (correlations) {
+          unsubscribe();
+          subscriber.next(correlations);
+          subscriber.complete();
+        }
+      });
+    }
+  });
+};
+
 export const processQueryResponse = (
   state: ExploreItemState,
   action: PayloadAction<QueryEndedPayload>
@@ -882,6 +929,7 @@ export const processQueryResponse = (
     tableResult,
     traceFrames,
     nodeGraphFrames,
+    flameGraphFrames,
   } = response;
 
   if (error) {
@@ -925,5 +973,6 @@ export const processQueryResponse = (
     showTable: !!tableResult,
     showTrace: !!traceFrames.length,
     showNodeGraph: !!nodeGraphFrames.length,
+    showFlameGraph: !!flameGraphFrames.length,
   };
 };

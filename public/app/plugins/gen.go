@@ -48,7 +48,7 @@ func main() {
 	groot := filepath.Join(sep, filepath.Join(grootp[:len(grootp)-3]...))
 
 	wd := codegen.NewWriteDiffer()
-	lib := cuectx.ProvideThemaLibrary()
+	lib := cuectx.GrafanaThemaRuntime()
 
 	type ptreepath struct {
 		Path string
@@ -89,12 +89,15 @@ func main() {
 
 	var wdm codegen.WriteDiffer
 	for _, ptp := range ptrees {
-		wdm, err = ptp.Tree.GenerateTS(ptp.Path)
+		tfast, err := ptp.Tree.GenerateTypeScriptAST()
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "generating typescript failed for %s: %s\n", ptp.Path, err)
 			os.Exit(1)
 		}
-		wd.Merge(wdm)
+		// nil return if there was nothing to generate (no slot implementations)
+		if tfast != nil {
+			wd[filepath.Join(ptp.Path, "models.gen.ts")] = []byte(tfast.String())
+		}
 
 		relp, _ := filepath.Rel(groot, ptp.Path)
 		wdm, err = ptp.Tree.GenerateGo(ptp.Path, codegen.GoGenConfig{

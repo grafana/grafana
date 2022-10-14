@@ -3,7 +3,6 @@ package codegen
 import (
 	"bytes"
 	"fmt"
-	"go/ast"
 	"go/format"
 	"go/parser"
 	"go/token"
@@ -11,12 +10,13 @@ import (
 	"path/filepath"
 	"strings"
 
+	"golang.org/x/tools/go/ast/astutil"
 	"golang.org/x/tools/imports"
 )
 
 type genGoFile struct {
 	path   string
-	walker ast.Visitor
+	walker astutil.ApplyFunc
 	in     []byte
 }
 
@@ -30,7 +30,7 @@ func postprocessGoFile(cfg genGoFile) ([]byte, error) {
 	}
 
 	if cfg.walker != nil {
-		ast.Walk(cfg.walker, gf)
+		astutil.Apply(gf, cfg.walker, nil)
 
 		err = format.Node(buf, fset, gf)
 		if err != nil {

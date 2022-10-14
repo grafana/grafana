@@ -105,6 +105,7 @@ export const availableIconsIndex = {
   grafana: true,
   'graph-bar': true,
   heart: true,
+  'heart-rate': true,
   'heart-break': true,
   history: true,
   home: true,

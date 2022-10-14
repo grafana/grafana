@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -54,6 +53,12 @@ func ProvideService(
 	}
 }
 
+// Gets a list of public dashboards by orgId
+func (pd *PublicDashboardServiceImpl) ListPublicDashboards(ctx context.Context, orgId int64) ([]PublicDashboardListResponse, error) {
+	return pd.store.ListPublicDashboards(ctx, orgId)
+}
+
+// Gets a dashboard by Uid
 func (pd *PublicDashboardServiceImpl) GetDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error) {
 	dashboard, err := pd.store.GetDashboard(ctx, dashboardUid)
 
@@ -96,12 +101,8 @@ func (pd *PublicDashboardServiceImpl) GetPublicDashboardConfig(ctx context.Conte
 // SavePublicDashboardConfig is a helper method to persist the sharing config
 // to the database. It handles validations for sharing config and persistence
 func (pd *PublicDashboardServiceImpl) SavePublicDashboardConfig(ctx context.Context, u *user.SignedInUser, dto *SavePublicDashboardConfigDTO) (*PublicDashboard, error) {
+	// validate if the dashboard exists
 	dashboard, err := pd.GetDashboard(ctx, dto.DashboardUid)
-	if err != nil {
-		return nil, err
-	}
-
-	err = validation.ValidateSavePublicDashboard(dto, dashboard)
 	if err != nil {
 		return nil, err
 	}
@@ -120,6 +121,10 @@ func (pd *PublicDashboardServiceImpl) SavePublicDashboardConfig(ctx context.Cont
 	// save changes
 	var pubdashUid string
 	if existingPubdash == nil {
+		err = validation.ValidateSavePublicDashboard(dto, dashboard)
+		if err != nil {
+			return nil, err
+		}
 		pubdashUid, err = pd.savePublicDashboardConfig(ctx, dto)
 	} else {
 		pubdashUid, err = pd.updatePublicDashboardConfig(ctx, dto)
@@ -147,7 +152,7 @@ func (pd *PublicDashboardServiceImpl) savePublicDashboardConfig(ctx context.Cont
 		return "", err
 	}
 
-	accessToken, err := GenerateAccessToken()
+	accessToken, err := pd.store.GenerateNewPublicDashboardAccessToken(ctx)
 	if err != nil {
 		return "", err
 	}
@@ -207,15 +212,15 @@ func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, 
 
 	res, err := pd.QueryDataService.QueryDataMultipleSources(ctx, anonymousUser, skipCache, metricReq, true)
 
-	// We want to track which datasources were successful and which were not
 	reqDatasources := metricReq.GetUniqueDatasourceTypes()
 	if err != nil {
-		pd.log.Error("Error querying datasources for public dashboard", "error", err.Error(), "datasources", reqDatasources)
+		LogQueryFailure(reqDatasources, pd.log, err)
 		return nil, err
 	}
+	LogQuerySuccess(reqDatasources, pd.log)
 
-	pd.log.Info("Successfully queried datasources for public dashboard", "datasources", reqDatasources)
 	queries.SanitizeMetadataFromQueryData(res)
+
 	return res, nil
 }
 
@@ -292,14 +297,8 @@ func (pd *PublicDashboardServiceImpl) AccessTokenExists(ctx context.Context, acc
 	return pd.store.AccessTokenExists(ctx, accessToken)
 }
 
-// generates a uuid formatted without dashes to use as access token
-func GenerateAccessToken() (string, error) {
-	token, err := uuid.NewRandom()
-	if err != nil {
-		return "", err
-	}
-
-	return fmt.Sprintf("%x", token[:]), nil
+func (pd *PublicDashboardServiceImpl) GetPublicDashboardOrgId(ctx context.Context, accessToken string) (int64, error) {
+	return pd.store.GetPublicDashboardOrgId(ctx, accessToken)
 }
 
 // intervalMS and maxQueryData values are being calculated on the frontend for regular dashboards

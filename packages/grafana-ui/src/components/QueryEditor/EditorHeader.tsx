@@ -7,7 +7,7 @@ import { stylesFactory, useTheme2 } from '../../themes';
 
 interface EditorHeaderProps {}
 
-export const EditorHeader: React.FC<EditorHeaderProps> = ({ children }) => {
+export const EditorHeader = ({ children }: React.PropsWithChildren<EditorHeaderProps>) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
 

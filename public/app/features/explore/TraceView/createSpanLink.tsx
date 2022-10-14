@@ -171,8 +171,12 @@ function legacyCreateSpanLinkFactory(
           internalLink: dataLink.internal!,
           scopedVars: {},
           range: getTimeRangeFromSpan(span, {
-            startMs: 0,
-            endMs: 0,
+            startMs: traceToMetricsOptions.spanStartTimeShift
+              ? rangeUtil.intervalToMs(traceToMetricsOptions.spanStartTimeShift)
+              : 0,
+            endMs: traceToMetricsOptions.spanEndTimeShift
+              ? rangeUtil.intervalToMs(traceToMetricsOptions.spanEndTimeShift)
+              : 0,
           }),
           field: {} as Field,
           onClickFn: splitOpenFn,

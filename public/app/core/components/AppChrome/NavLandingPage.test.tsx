@@ -14,13 +14,13 @@ describe('NavLandingPage', () => {
   const mockSectionSubtitle = 'Section subtitle';
   const mockChild1 = {
     text: 'Child 1',
-    description: 'Child 1 description',
+    subTitle: 'Child 1 subTitle',
     id: 'child1',
     url: 'mock-section-url/child1',
   };
   const mockChild2 = {
     text: 'Child 2',
-    description: 'Child 2 description',
+    subTitle: 'Child 2 subTitle',
     id: 'child2',
     url: 'mock-section-url/child2',
   };
@@ -33,7 +33,7 @@ describe('NavLandingPage', () => {
     children: [
       {
         text: 'Child 3.1',
-        description: 'Child 3.1 description',
+        subTitle: 'Child 3.1 subTitle',
         id: 'child3.1',
         url: 'mock-section-url/child3/child3.1',
       },
@@ -75,29 +75,9 @@ describe('NavLandingPage', () => {
     expect(screen.getByRole('link', { name: mockChild2.text })).toBeInTheDocument();
   });
 
-  it('renders the description for each direct child', () => {
+  it('renders the subTitle for each direct child', () => {
     setup();
-    expect(screen.getByText(mockChild1.description)).toBeInTheDocument();
-    expect(screen.getByText(mockChild2.description)).toBeInTheDocument();
-  });
-
-  it('renders the heading for nested sections', () => {
-    setup();
-    expect(screen.getByRole('heading', { name: mockChild3.text })).toBeInTheDocument();
-  });
-
-  it('renders the subTitle for a nested section', () => {
-    setup();
-    expect(screen.getByText(mockChild3.subTitle)).toBeInTheDocument();
-  });
-
-  it('renders a link for a nested child', () => {
-    setup();
-    expect(screen.getByRole('link', { name: mockChild3.children[0].text })).toBeInTheDocument();
-  });
-
-  it('renders the description for a nested child', () => {
-    setup();
-    expect(screen.getByText(mockChild3.children[0].description)).toBeInTheDocument();
+    expect(screen.getByText(mockChild1.subTitle)).toBeInTheDocument();
+    expect(screen.getByText(mockChild2.subTitle)).toBeInTheDocument();
   });
 });

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
@@ -15,6 +14,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 )
 
 const (
@@ -94,6 +94,7 @@ func initOrgIndex(dashboards []dashboard, logger log.Logger, extendDoc ExtendDas
 		}
 		folderUID := folderIdLookup[dash.folderID]
 		location := folderUID
+
 		doc := getNonFolderDashboardDoc(dash, location)
 		if err := extendDoc(dash.uid, doc); err != nil {
 			return nil, err
@@ -138,11 +139,11 @@ func getFolderDashboardDoc(dash dashboard) *bluge.Document {
 	if uid == "" {
 		uid = "general"
 		url = "/dashboards"
-		dash.info.Title = "General"
-		dash.info.Description = ""
+		dash.summary.Name = "General"
+		dash.summary.Description = ""
 	}
 
-	return newSearchDocument(uid, dash.info.Title, dash.info.Description, url).
+	return newSearchDocument(uid, dash.summary.Name, dash.summary.Description, url).
 		AddField(bluge.NewKeywordField(documentFieldKind, string(entityKindFolder)).Aggregatable().StoreValue()).
 		AddField(bluge.NewDateTimeField(DocumentFieldCreatedAt, dash.created).Sortable().StoreValue()).
 		AddField(bluge.NewDateTimeField(DocumentFieldUpdatedAt, dash.updated).Sortable().StoreValue())
@@ -152,31 +153,34 @@ func getNonFolderDashboardDoc(dash dashboard, location string) *bluge.Document {
 	url := fmt.Sprintf("/d/%s/%s", dash.uid, dash.slug)
 
 	// Dashboard document
-	doc := newSearchDocument(dash.uid, dash.info.Title, dash.info.Description, url).
+	doc := newSearchDocument(dash.uid, dash.summary.Name, dash.summary.Description, url).
 		AddField(bluge.NewKeywordField(documentFieldKind, string(entityKindDashboard)).Aggregatable().StoreValue()).
 		AddField(bluge.NewKeywordField(documentFieldLocation, location).Aggregatable().StoreValue()).
 		AddField(bluge.NewDateTimeField(DocumentFieldCreatedAt, dash.created).Sortable().StoreValue()).
 		AddField(bluge.NewDateTimeField(DocumentFieldUpdatedAt, dash.updated).Sortable().StoreValue())
 
-	for _, tag := range dash.info.Tags {
-		doc.AddField(bluge.NewKeywordField(documentFieldTag, tag).
+	// dashboards only use the key part of labels
+	for k := range dash.summary.Labels {
+		doc.AddField(bluge.NewKeywordField(documentFieldTag, k).
 			StoreValue().
 			Aggregatable().
 			SearchTermPositions())
 	}
 
-	for _, ds := range dash.info.Datasource {
-		if ds.UID != "" {
-			doc.AddField(bluge.NewKeywordField(documentFieldDSUID, ds.UID).
-				StoreValue().
-				Aggregatable().
-				SearchTermPositions())
-		}
-		if ds.Type != "" {
-			doc.AddField(bluge.NewKeywordField(documentFieldDSType, ds.Type).
-				StoreValue().
-				Aggregatable().
-				SearchTermPositions())
+	for _, ref := range dash.summary.References {
+		if ref.Kind == models.StandardKindDataSource {
+			if ref.Type != "" {
+				doc.AddField(bluge.NewKeywordField(documentFieldDSType, ref.Type).
+					StoreValue().
+					Aggregatable().
+					SearchTermPositions())
+			}
+			if ref.UID != "" {
+				doc.AddField(bluge.NewKeywordField(documentFieldDSUID, ref.UID).
+					StoreValue().
+					Aggregatable().
+					SearchTermPositions())
+			}
 		}
 	}
 
@@ -185,36 +189,38 @@ func getNonFolderDashboardDoc(dash dashboard, location string) *bluge.Document {
 
 func getDashboardPanelDocs(dash dashboard, location string) []*bluge.Document {
 	var docs []*bluge.Document
-	url := fmt.Sprintf("/d/%s/%s", dash.uid, dash.slug)
-	for _, panel := range dash.info.Panels {
-		if panel.Type == "row" {
+	for _, panel := range dash.summary.Nested {
+		if panel.Kind == "panel-row" {
 			continue // for now, we are excluding rows from the search index
 		}
 
-		uid := dash.uid + "#" + strconv.FormatInt(panel.ID, 10)
-		purl := fmt.Sprintf("%s?viewPanel=%d", url, panel.ID)
-
-		doc := newSearchDocument(uid, panel.Title, panel.Description, purl).
-			AddField(bluge.NewKeywordField(documentFieldPanelType, panel.Type).Aggregatable().StoreValue()).
+		doc := newSearchDocument(panel.UID, panel.Name, panel.Description, panel.URL).
 			AddField(bluge.NewKeywordField(documentFieldLocation, location).Aggregatable().StoreValue()).
 			AddField(bluge.NewKeywordField(documentFieldKind, string(entityKindPanel)).Aggregatable().StoreValue()) // likely want independent index for this
 
-		for _, xform := range panel.Transformer {
-			doc.AddField(bluge.NewKeywordField(documentFieldTransformer, xform).Aggregatable())
-		}
-
-		for _, ds := range panel.Datasource {
-			if ds.UID != "" {
-				doc.AddField(bluge.NewKeywordField(documentFieldDSUID, ds.UID).
-					StoreValue().
-					Aggregatable().
-					SearchTermPositions())
-			}
-			if ds.Type != "" {
-				doc.AddField(bluge.NewKeywordField(documentFieldDSType, ds.Type).
-					StoreValue().
-					Aggregatable().
-					SearchTermPositions())
+		for _, ref := range dash.summary.References {
+			switch ref.Kind {
+			case models.StandardKindDashboard:
+				if ref.Type != "" {
+					doc.AddField(bluge.NewKeywordField(documentFieldDSType, ref.Type).
+						StoreValue().
+						Aggregatable().
+						SearchTermPositions())
+				}
+				if ref.UID != "" {
+					doc.AddField(bluge.NewKeywordField(documentFieldDSUID, ref.UID).
+						StoreValue().
+						Aggregatable().
+						SearchTermPositions())
+				}
+			case models.ExternalEntityReferencePlugin:
+				if ref.Type == models.StandardKindPanel && ref.UID != "" {
+					doc.AddField(bluge.NewKeywordField(documentFieldPanelType, ref.UID).Aggregatable().StoreValue())
+				}
+			case models.ExternalEntityReferenceRuntime:
+				if ref.Type == models.ExternalEntityReferenceRuntime_Transformer && ref.UID != "" {
+					doc.AddField(bluge.NewKeywordField(documentFieldTransformer, ref.UID).Aggregatable())
+				}
 			}
 		}
 

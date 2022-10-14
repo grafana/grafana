@@ -74,6 +74,7 @@ export class CanvasPanel extends Component<Props, State> {
       this.props.eventBus.subscribe(PanelEditExitedEvent, (evt: PanelEditExitedEvent) => {
         if (this.props.id === evt.payload) {
           this.needsReload = true;
+          this.scene.clearCurrentSelection();
           this.scene.load(
             this.props.options.root,
             this.props.options.inlineEditing,
@@ -168,15 +169,16 @@ export class CanvasPanel extends Component<Props, State> {
     const shouldShowAdvancedTypesSwitched =
       this.props.options.showAdvancedTypes !== nextProps.options.showAdvancedTypes;
     if (shouldUpdateSceneAndPanel || inlineEditingSwitched || shouldShowAdvancedTypesSwitched) {
+      if (inlineEditingSwitched) {
+        // Replace scene div to prevent selecto instance leaks
+        this.scene.revId++;
+      }
+
       this.needsReload = false;
       this.scene.load(nextProps.options.root, nextProps.options.inlineEditing, nextProps.options.showAdvancedTypes);
       this.scene.updateSize(nextProps.width, nextProps.height);
       this.scene.updateData(nextProps.data);
       changed = true;
-
-      if (inlineEditingSwitched && this.props.options.inlineEditing) {
-        this.scene.selecto?.destroy();
-      }
     }
 
     return changed;
