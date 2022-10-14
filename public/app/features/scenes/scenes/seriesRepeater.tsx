@@ -28,9 +28,9 @@ export function getScenePanelRepeaterTest(): Scene {
       direction: 'column',
       children: [
         new ScenePanelRepeater({
-          inputParams: { data: dataNode1 },
+          $data: dataNode1,
           panel: new VizPanel({
-            inputParams: { data: null },
+            $data: null,
             title: 'Title',
             pluginId: 'timeseries',
             options: {
@@ -44,7 +44,7 @@ export function getScenePanelRepeaterTest(): Scene {
           }),
         }),
         new VizPanel({
-          inputParams: { data: dataNode1 },
+          $data: dataNode1,
           title: 'Non-split series',
           pluginId: 'timeseries',
         }),

@@ -46,12 +46,12 @@ export function getSceneWithRows(): Scene {
             direction: 'row',
             children: [
               new VizPanel({
-                inputParams: { data: dataNode },
+                $data: dataNode,
                 pluginId: 'timeseries',
                 title: 'Fill height',
               }),
               new VizPanel({
-                inputParams: { data: dataNode },
+                $data: dataNode,
                 pluginId: 'timeseries',
                 title: 'Fill height',
               }),
@@ -66,12 +66,12 @@ export function getSceneWithRows(): Scene {
             direction: 'row',
             children: [
               new VizPanel({
-                inputParams: { data: dataNode1 },
+                $data: dataNode1,
                 pluginId: 'timeseries',
                 title: 'Fill height',
               }),
               new VizPanel({
-                inputParams: { data: dataNode1 },
+                $data: dataNode1,
                 pluginId: 'timeseries',
                 title: 'Fill height',
               }),

@@ -56,13 +56,15 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
 
   private setParent() {
     for (const propValue of Object.values(this.state)) {
-      if (isSceneObject(propValue)) {
+      // Data objects are not part of the layout hierarchy
+      if (isSceneObject(propValue) && !(propValue instanceof SceneDataObject)) {
         propValue.parent = this;
       }
 
       if (Array.isArray(propValue)) {
         for (const child of propValue) {
-          if (isSceneObject(child)) {
+          // Data objects are not part of the layout hierarchy
+          if (isSceneObject(child) && !(propValue instanceof SceneDataObject)) {
             child.parent = this;
           }
         }
@@ -101,18 +103,16 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
 
   activate() {
     this.isActive = true;
-    if (Object.prototype.hasOwnProperty.call(this.state, 'inputParams')) {
-      const params = (this.state as any).inputParams;
-      for (const param in params) {
-        if (isSceneObject(params[param])) {
-          if (!params[param].isActive) {
-            // Input params (data currently) are separate from the layout hierarchy. But they need a way for resolving scoped context,
-            // hence they reuse its consumer context
-            params[param].setCtxResolver(this.getContext);
-            params[param].activate();
-          }
+    if (Object.prototype.hasOwnProperty.call(this.state, '$data')) {
+      const dataObj = (this.state as any).$data;
+      if (dataObj instanceof SceneDataObject) {
+        if (!dataObj.isActive) {
+          // Data-providing objects are separate from the layout hierarchy. But they need a way for resolving scoped context,
+          // hence they reuse its consumer context
+          dataObj.setCtxResolver(this.getContext);
+          dataObj.activate();
         }
-        params[param]._refCounter.add(this.state.key);
+        dataObj._refCounter.add(this.state.key!);
       }
     }
   }
@@ -120,16 +120,14 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
   deactivate(): void {
     this.isActive = false;
 
-    if (Object.prototype.hasOwnProperty.call(this.state, 'inputParams')) {
-      const params = (this.state as any).inputParams;
+    if (Object.prototype.hasOwnProperty.call(this.state, '$data')) {
+      const dataObj = (this.state as any).$data;
 
-      for (const param in params) {
-        if (isSceneObject(params[param]) && params[param].isActive) {
-          if (params[param]._refCounter.size === 1) {
-            params[param].deactivate();
-          }
-          params[param]._refCounter.delete(this.state.key);
+      if (dataObj instanceof SceneDataObject && dataObj.isActive) {
+        if (dataObj._refCounter.size === 1) {
+          dataObj.deactivate();
         }
+        dataObj._refCounter.delete(this.state.key!);
       }
     }
 
@@ -143,10 +141,6 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
   }
 
   getContext: () => StandardSceneObjectContext = () => {
-    // if (isContextObject(this) && !(this.state as SceneContextObjectState).inheritContext) {
-    //   return this.ctx;
-    // }
-
     if (this.parent) {
       return this.parent.getContext();
     }
@@ -169,12 +163,11 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
    * Will resolve nearest data provider object, based on input params or hierarchy
    */
   getData(): SceneObject<SceneDataState> {
-    if (Object.prototype.hasOwnProperty.call(this.state, 'inputParams')) {
-      const params = (this.state as any).inputParams;
-      for (const param in params) {
-        if (params[param] instanceof SceneDataObject) {
-          return params[param];
-        }
+    if (Object.prototype.hasOwnProperty.call(this.state, '$data')) {
+      const dataObj = (this.state as any).$data;
+
+      if (dataObj instanceof SceneDataObject) {
+        return dataObj;
       }
     }
 

@@ -108,7 +108,7 @@ export interface SceneObjectRef {
 }
 
 export function isSceneObject(obj: any): obj is SceneObject {
-  return obj.useState !== undefined;
+  return Boolean(obj) && obj.useState !== undefined;
 }
 
 /** These functions are still just temporary until this get's refined */
@@ -128,14 +128,10 @@ export interface SceneDataState extends SceneObjectStatePlain {
   $data?: PanelData;
 }
 
-/** Parametrized state allows specifying explicite dependencies on SceneObject */
-export interface SceneParametrizedState<T extends Record<string, SceneObject<any>>> extends SceneObjectStatePlain {
-  inputParams: T;
-}
-
-export type DataInputParams<
+/** Statete used by objects that can consume data-providing objects */
+export type DataInputState<
   TState extends SceneDataState,
   T extends SceneDataObject<TState> = SceneDataObject<TState>
 > = {
-  data: T;
+  $data: T;
 };

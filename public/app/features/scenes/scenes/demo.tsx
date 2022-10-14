@@ -26,7 +26,7 @@ export function getFlexLayoutTest(): Scene {
       direction: 'row',
       children: [
         new VizPanel({
-          inputParams: { data: dataNode1 },
+          $data: dataNode1,
           pluginId: 'timeseries',
           title: 'Dynamic height and width',
           size: { minWidth: '70%' },
@@ -36,12 +36,12 @@ export function getFlexLayoutTest(): Scene {
           direction: 'column',
           children: [
             new VizPanel({
-              inputParams: { data: dataNode1 },
+              $data: dataNode1,
               pluginId: 'timeseries',
               title: 'Fill height',
             }),
             new VizPanel({
-              inputParams: { data: dataNode1 },
+              $data: dataNode1,
               pluginId: 'timeseries',
               title: 'Fill height',
             }),
@@ -52,7 +52,7 @@ export function getFlexLayoutTest(): Scene {
               align: 'center',
             }),
             new VizPanel({
-              inputParams: { data: dataNode1 },
+              $data: dataNode1,
               pluginId: 'timeseries',
               title: 'Fixed height',
               size: { height: 300 },

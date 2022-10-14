@@ -1,5 +1,15 @@
+import { Scene } from '../components/Scene';
+
 import { SceneContextObject } from './SceneContextObject';
-import { SceneLayoutChild, SceneObject, SceneObjectStatePlain } from './types';
+import { SceneDataObject, SceneObjectBase } from './SceneObjectBase';
+import {
+  DataInputState,
+  SceneDataState,
+  SceneLayoutChild,
+  SceneLayoutState,
+  SceneObject,
+  SceneObjectStatePlain,
+} from './types';
 
 interface TestSceneState extends SceneObjectStatePlain {
   name?: string;
@@ -64,5 +74,93 @@ describe('SceneObject', () => {
 
     const clone = scene.clone({ name: 'new name' });
     expect(clone.state.name).toBe('new name');
+  });
+});
+
+describe('SceneDataObject context', () => {
+  interface TestDataConsumerState extends SceneObjectStatePlain, DataInputState<SceneDataState, SceneDataObject> {}
+  class TestDataConsumer extends SceneObjectBase<TestDataConsumerState> {}
+  class TestDataProducer extends SceneDataObject<SceneDataState> {}
+
+  interface BasicSceneLayoutState extends SceneObjectStatePlain, SceneLayoutState {}
+  class BasicSceneLayout extends SceneObjectBase<BasicSceneLayoutState> {}
+
+  class SceneContextProvider extends SceneContextObject<
+    SceneObjectStatePlain & { layout: SceneObject; inheritContext?: boolean }
+  > {}
+
+  it('should use Scene context', () => {
+    const dataProducer = new TestDataProducer({});
+    const dataConsumer = new TestDataConsumer({
+      $data: dataProducer,
+    });
+
+    const scene = new Scene({
+      title: 'Test',
+      layout: dataConsumer,
+    });
+
+    dataConsumer.activate();
+    expect(dataProducer.getContext()).toEqual(scene.getContext());
+  });
+
+  it('should use closes context', () => {
+    const dataProducer1 = new TestDataProducer({});
+    const dataConsumer1 = new TestDataConsumer({
+      $data: dataProducer1,
+    });
+
+    const dataProducer2 = new TestDataProducer({});
+    const dataConsumer2 = new TestDataConsumer({
+      $data: dataProducer2,
+    });
+
+    const nestedScene = new Scene({
+      title: 'Nested',
+      layout: dataConsumer2,
+    });
+
+    const scene = new SceneContextProvider({
+      layout: new BasicSceneLayout({
+        children: [dataConsumer1, nestedScene],
+      }),
+    });
+
+    dataConsumer1.activate();
+    dataConsumer2.activate();
+    expect(dataProducer1.getContext()).toEqual(scene.getContext());
+    expect(nestedScene.getContext()).not.toEqual(scene.getContext());
+    expect(dataProducer2.getContext()).toEqual(nestedScene.getContext());
+  });
+
+  it('should use inherit context', () => {
+    const dataProducer1 = new TestDataProducer({});
+    const dataConsumer1 = new TestDataConsumer({
+      $data: dataProducer1,
+    });
+
+    const dataProducer2 = new TestDataProducer({});
+    const dataConsumer2 = new TestDataConsumer({
+      $data: dataProducer2,
+    });
+
+    const nestedScene = new SceneContextProvider({
+      inheritContext: true,
+      layout: dataConsumer2,
+    });
+
+    const scene = new Scene({
+      title: 'Test',
+      layout: new BasicSceneLayout({
+        children: [dataConsumer1, nestedScene],
+      }),
+    });
+
+    dataConsumer1.activate();
+    dataConsumer2.activate();
+
+    expect(dataProducer1.getContext()).toEqual(scene.getContext());
+    expect(nestedScene.getContext()).toEqual(scene.getContext());
+    expect(dataProducer2.getContext()).toEqual(scene.getContext());
   });
 });

@@ -24,7 +24,7 @@ export function getNestedScene(): Scene {
       direction: 'column',
       children: [
         new VizPanel({
-          inputParams: { data: dataNode },
+          $data: dataNode,
           key: '3',
           pluginId: 'timeseries',
           title: 'Panel 3',
@@ -60,7 +60,7 @@ export function getInnerScene(title: string) {
       direction: 'row',
       children: [
         new VizPanel({
-          inputParams: { data: dataNode },
+          $data: dataNode,
           key: '3',
           pluginId: 'timeseries',
           title: 'Data',

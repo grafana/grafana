@@ -6,17 +6,13 @@ import { PanelRenderer } from '@grafana/runtime';
 import { Field, PanelChrome, Input } from '@grafana/ui';
 
 import { SceneDataObject, SceneObjectBase } from '../core/SceneObjectBase';
-import { SceneComponentProps, SceneDataState, SceneLayoutChildState, SceneParametrizedState } from '../core/types';
-
-type DataInputParams<TState extends SceneDataState, T extends SceneDataObject<TState> = SceneDataObject<TState>> = {
-  data: T;
-};
+import { DataInputState, SceneComponentProps, SceneDataState, SceneLayoutChildState } from '../core/types';
 
 export interface VizPanelState<
   TState extends SceneDataState,
   T extends SceneDataObject<TState> = SceneDataObject<TState>
 > extends SceneLayoutChildState,
-    SceneParametrizedState<DataInputParams<TState, T>> {
+    DataInputState<TState, T> {
   title?: string;
   pluginId: string;
   options?: object;

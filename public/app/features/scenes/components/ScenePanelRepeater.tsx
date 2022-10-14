@@ -8,17 +8,16 @@ import {
   SceneComponentProps,
   SceneObjectStatePlain,
   SceneLayoutChild,
-  SceneParametrizedState,
-  DataInputParams,
   SceneDataState,
   SceneLayout,
+  DataInputState,
 } from '../core/types';
 
 import { VizPanel } from './VizPanel';
 
 interface RepeatOptions<TState extends SceneDataState, T extends SceneDataObject<TState> = SceneDataObject<TState>>
   extends SceneObjectStatePlain,
-    SceneParametrizedState<DataInputParams<TState, T>> {
+    DataInputState<TState, T> {
   panel: VizPanel;
   layout: SceneLayout;
 }
@@ -46,14 +45,12 @@ export class ScenePanelRepeater extends SceneObjectBase<RepeatOptions<any, any>>
     for (const series of data.series) {
       const clone = panel.clone({
         key: `${newChildren.length}`,
-        inputParams: {
-          data: new SceneDataNode({
-            $data: {
-              ...data,
-              series: [series],
-            },
-          }),
-        },
+        $data: new SceneDataNode({
+          $data: {
+            ...data,
+            series: [series],
+          },
+        }),
       });
 
       newChildren.push(clone);
