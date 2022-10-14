@@ -133,11 +133,10 @@ type NotifierItemTableProps = DynamicTableItemProps<NotifierStatus>;
 interface NotifiersTableProps {
   notifiersState: NotifiersState;
 }
+const isLastNotifyNullDate = (lastNotify: string) => lastNotify === '0001-01-01T00:00:00.000Z';
 
 function LastNotify({ lastNotifyDate }: { lastNotifyDate: string }) {
-  const isLastNotifyNullDate = lastNotifyDate === '0001-01-01T00:00:00.000Z';
-
-  if (isLastNotifyNullDate) {
+  if (isLastNotifyNullDate(lastNotifyDate)) {
     return <>{'-'}</>;
   } else {
     return (
@@ -149,6 +148,9 @@ function LastNotify({ lastNotifyDate }: { lastNotifyDate: string }) {
     );
   }
 }
+
+const possibleNullDurations = ['', '0', '0ms', '0s', '0m', '0h', '0d', '0w', '0y'];
+const durationIsNull = (duration: string) => possibleNullDurations.includes(duration);
 
 function NotifiersTable({ notifiersState }: NotifiersTableProps) {
   function getNotifierColumns(): NotifierTableColumnProps[] {
@@ -176,7 +178,9 @@ function NotifiersTable({ notifiersState }: NotifiersTableProps) {
       {
         id: 'lastNotifyDuration',
         label: 'Last duration',
-        renderCell: ({ data: { lastNotifyDuration } }) => <>{lastNotifyDuration}</>,
+        renderCell: ({ data: { lastNotify, lastNotifyDuration } }) => (
+          <>{isLastNotifyNullDate(lastNotify) && durationIsNull(lastNotifyDuration) ? '-' : lastNotifyDuration}</>
+        ),
         size: 1,
       },
       {
