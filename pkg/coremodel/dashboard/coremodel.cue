@@ -84,6 +84,13 @@ seqs: [
 				///////////////////////////////////////
 				// Definitions (referenced above) are declared below
 
+				#AnnotationTarget: {
+					limit: int64
+					matchAny: bool
+					tags: [...string]
+					type: string
+				}
+
 				// TODO docs
 				// FROM: AnnotationQuery in grafana-data/src/types/annotations.ts
 				#AnnotationQuery: {
@@ -106,7 +113,7 @@ seqs: [
 					// Query for annotation data.
 					rawQuery?: string     @reviewme()
 					showIn:    uint8 | *0 @reviewme()
-					target?:   #Target    @reviewme()
+					target?:   #AnnotationTarget @reviewme()
 				} @cuetsy(kind="interface")
 
 				// FROM: packages/grafana-data/src/types/templateVars.ts
@@ -266,12 +273,7 @@ seqs: [
 				// with types derived from plugins in the Instance variant.
 				// When working directly from CUE, importers can extend this
 				// type directly to achieve the same effect.
-				#Target: {
-					limit: int64
-					matchAny: bool
-					tags: [...string]
-					type: string
-				} @reviewme()
+				#Target: {...} @reviewme()
 
 				// Dashboard panels. Panels are canonically defined inline
 				// because they share a version timeline with the dashboard

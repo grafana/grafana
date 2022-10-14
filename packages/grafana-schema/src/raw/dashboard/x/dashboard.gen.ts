@@ -378,12 +378,7 @@ export interface Panel {
   /**
    * TODO docs
    */
-  targets?: Array<{
-    limit: number;
-    matchAny: boolean;
-    tags: Array<string>;
-    type: string;
-  }>;
+  targets?: Array<Record<string, unknown>>;
   /**
    * TODO docs - seems to be an old field from old dashboard alerts?
    */
