@@ -122,7 +122,7 @@ func UpdateDebRepo(cfg PublishConfig, workDir string) error {
 		repoName = "beta"
 	}
 
-	repoRoot, err := fsutil.CreateTempFile("rpm-repo")
+	repoRoot, err := fsutil.CreateTempFile("deb-repo")
 	if err != nil {
 		return err
 	}
