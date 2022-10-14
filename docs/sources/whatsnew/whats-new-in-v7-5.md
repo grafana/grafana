@@ -29,7 +29,7 @@ Grafana 7.5 adds a beta version of the next-generation pie chart panel.
 
 ![Pie chart panel](/static/img/docs/pie-chart-panel/pie-chart-panel-7-5.png)
 
-For more information, refer to [Pie chart panel]({{< relref "../visualizations/pie-chart-panel/" >}}).
+For more information, refer to [Pie chart panel]({{< relref "../panels-visualizations/visualizations/pie-chart/" >}}).
 
 ### Alerting for Loki
 

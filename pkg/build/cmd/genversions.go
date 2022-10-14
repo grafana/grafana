@@ -51,6 +51,8 @@ func GenerateMetadata(c *cli.Context) (config.Metadata, error) {
 			return config.Metadata{}, err
 		}
 		releaseMode = mode
+	case config.Cronjob:
+		releaseMode = config.ReleaseMode{Mode: config.CronjobMode}
 	}
 
 	if version == "" {

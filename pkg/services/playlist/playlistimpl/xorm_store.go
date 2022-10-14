@@ -35,12 +35,12 @@ func (s *sqlStore) Insert(ctx context.Context, cmd *playlist.CreatePlaylistComma
 		}
 
 		playlistItems := make([]playlist.PlaylistItem, 0)
-		for _, item := range cmd.Items {
+		for order, item := range cmd.Items {
 			playlistItems = append(playlistItems, playlist.PlaylistItem{
 				PlaylistId: p.Id,
 				Type:       item.Type,
 				Value:      item.Value,
-				Order:      item.Order,
+				Order:      order + 1,
 				Title:      item.Title,
 			})
 		}
@@ -70,10 +70,7 @@ func (s *sqlStore) Update(ctx context.Context, cmd *playlist.UpdatePlaylistComma
 		p.Id = existingPlaylist.Id
 
 		dto = playlist.PlaylistDTO{
-
-			Id:       p.Id,
-			UID:      p.UID,
-			OrgId:    p.OrgId,
+			Uid:      p.UID,
 			Name:     p.Name,
 			Interval: p.Interval,
 		}
@@ -90,10 +87,10 @@ func (s *sqlStore) Update(ctx context.Context, cmd *playlist.UpdatePlaylistComma
 			return err
 		}
 
-		playlistItems := make([]models.PlaylistItem, 0)
+		playlistItems := make([]playlist.PlaylistItem, 0)
 
 		for index, item := range cmd.Items {
-			playlistItems = append(playlistItems, models.PlaylistItem{
+			playlistItems = append(playlistItems, playlist.PlaylistItem{
 				PlaylistId: p.Id,
 				Type:       item.Type,
 				Value:      item.Value,
@@ -199,7 +196,7 @@ func generateAndValidateNewPlaylistUid(sess *sqlstore.DBSession, orgId int64) (s
 	for i := 0; i < 3; i++ {
 		uid := generateNewUid()
 
-		playlist := models.Playlist{OrgId: orgId, UID: uid}
+		playlist := playlist.Playlist{OrgId: orgId, UID: uid}
 		exists, err := sess.Get(&playlist)
 		if err != nil {
 			return "", err
@@ -210,7 +207,7 @@ func generateAndValidateNewPlaylistUid(sess *sqlstore.DBSession, orgId int64) (s
 		}
 	}
 
-	return "", models.ErrPlaylistFailedGenerateUniqueUid
+	return "", playlist.ErrPlaylistFailedGenerateUniqueUid
 }
 
 var generateNewUid func() string = util.GenerateShortUID

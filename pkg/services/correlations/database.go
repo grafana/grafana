@@ -34,11 +34,13 @@ func (s CorrelationsService) createCorrelation(ctx context.Context, cmd CreateCo
 			return ErrSourceDataSourceReadOnly
 		}
 
-		if err = s.DataSourceService.GetDataSource(ctx, &datasources.GetDataSourceQuery{
-			OrgId: cmd.OrgId,
-			Uid:   cmd.TargetUID,
-		}); err != nil {
-			return ErrTargetDataSourceDoesNotExists
+		if cmd.TargetUID != nil {
+			if err = s.DataSourceService.GetDataSource(ctx, &datasources.GetDataSourceQuery{
+				OrgId: cmd.OrgId,
+				Uid:   *cmd.TargetUID,
+			}); err != nil {
+				return ErrTargetDataSourceDoesNotExists
+			}
 		}
 
 		_, err = session.Insert(correlation)
@@ -97,32 +99,39 @@ func (s CorrelationsService) updateCorrelation(ctx context.Context, cmd UpdateCo
 			return ErrSourceDataSourceReadOnly
 		}
 
-		if cmd.Label == nil && cmd.Description == nil {
-			return ErrUpdateCorrelationEmptyParams
-		}
-		update := Correlation{}
-		if cmd.Label != nil {
-			update.Label = *cmd.Label
-			session.MustCols("label")
-		}
-		if cmd.Description != nil {
-			update.Description = *cmd.Description
-			session.MustCols("description")
-		}
-
-		updateCount, err := session.Where("uid = ? AND source_uid = ?", correlation.UID, correlation.SourceUID).Limit(1).Update(update)
-		if updateCount == 0 {
+		found, err := session.Get(&correlation)
+		if !found {
 			return ErrCorrelationNotFound
 		}
 		if err != nil {
 			return err
 		}
 
-		found, err := session.Get(&correlation)
-		if !found {
-			return ErrCorrelationNotFound
+		if cmd.Label != nil {
+			correlation.Label = *cmd.Label
+			session.MustCols("label")
+		}
+		if cmd.Description != nil {
+			correlation.Description = *cmd.Description
+			session.MustCols("description")
+		}
+		if cmd.Config != nil {
+			session.MustCols("config")
+			if cmd.Config.Field != nil {
+				correlation.Config.Field = *cmd.Config.Field
+			}
+			if cmd.Config.Type != nil {
+				correlation.Config.Type = *cmd.Config.Type
+			}
+			if cmd.Config.Target != nil {
+				correlation.Config.Target = *cmd.Config.Target
+			}
 		}
 
+		updateCount, err := session.Where("uid = ? AND source_uid = ?", correlation.UID, correlation.SourceUID).Limit(1).Update(correlation)
+		if updateCount == 0 {
+			return ErrCorrelationNotFound
+		}
 		return err
 	})
 
@@ -206,7 +215,7 @@ func (s CorrelationsService) deleteCorrelationsBySourceUID(ctx context.Context, 
 
 func (s CorrelationsService) deleteCorrelationsByTargetUID(ctx context.Context, cmd DeleteCorrelationsByTargetUIDCommand) error {
 	return s.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
-		_, err := session.Delete(&Correlation{TargetUID: cmd.TargetUID})
+		_, err := session.Delete(&Correlation{TargetUID: &cmd.TargetUID})
 		return err
 	})
 }

@@ -1,11 +1,12 @@
 import { css, cx } from '@emotion/css';
-import React, { useRef, useState, useLayoutEffect, useEffect } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import usePrevious from 'react-use/lib/usePrevious';
 
-import { GrafanaTheme2, DataQueryError, LogRowModel, textUtil, LogsSortOrder } from '@grafana/data';
-import { useStyles2, Alert, ClickOutsideWrapper, CustomScrollbar, List } from '@grafana/ui';
+import { DataQueryError, GrafanaTheme2, LogRowModel, LogsSortOrder, textUtil } from '@grafana/data';
+import { Alert, Button, ClickOutsideWrapper, CustomScrollbar, IconButton, List, useStyles2 } from '@grafana/ui';
 
 import { LogMessageAnsi } from './LogMessageAnsi';
-import { LogRowContextRows, LogRowContextQueryErrors, HasMoreContextRows } from './LogRowContextProvider';
+import { HasMoreContextRows, LogRowContextQueryErrors, LogRowContextRows } from './LogRowContextProvider';
 
 export enum LogGroupPosition {
   Bottom = 'bottom',
@@ -31,13 +32,16 @@ const getLogRowContextStyles = (theme: GrafanaTheme2, wrapLogMessage?: boolean) 
    * We also adjust width to 75%.
    */
 
+  const headerHeight = 40;
+  const logsHeight = 220;
+  const contextHeight = headerHeight + logsHeight;
+  const width = wrapLogMessage ? '100%' : '75%';
   const afterContext = wrapLogMessage
     ? css`
-        top: -250px;
+        top: -${contextHeight}px;
       `
     : css`
-        margin-top: -250px;
-        width: 75%;
+        margin-top: -${contextHeight}px;
       `;
 
   const beforeContext = wrapLogMessage
@@ -45,32 +49,76 @@ const getLogRowContextStyles = (theme: GrafanaTheme2, wrapLogMessage?: boolean) 
         top: 100%;
       `
     : css`
-        margin-top: 40px;
-        width: 75%;
+        margin-top: 20px;
       `;
   return {
+    width: css`
+      width: ${width};
+    `,
     commonStyles: css`
       position: absolute;
-      height: 250px;
+      height: ${contextHeight}px;
       z-index: ${theme.zIndex.dropdown};
       overflow: hidden;
       background: ${theme.colors.background.primary};
       box-shadow: 0 0 10px ${theme.v1.palette.black};
       border: 1px solid ${theme.colors.background.secondary};
       border-radius: ${theme.shape.borderRadius(2)};
-      width: 100%;
+      font-family: ${theme.typography.fontFamily};
     `,
     header: css`
-      height: 30px;
+      height: ${headerHeight}px;
       padding: 0 10px;
       display: flex;
       align-items: center;
+      background: ${theme.colors.background.canvas};
+    `,
+    top: css`
+      border-radius: 0 0 ${theme.shape.borderRadius(2)} ${theme.shape.borderRadius(2)};
+      box-shadow: 0 0 10px ${theme.v1.palette.black};
+      clip-path: inset(0px -10px -10px -10px);
+    `,
+    title: css`
+      position: absolute;
+      width: ${width};
+      margin-top: -${contextHeight + headerHeight}px;
+      z-index: ${theme.zIndex.modal};
+      height: ${headerHeight}px;
       background: ${theme.colors.background.secondary};
+      border: 1px solid ${theme.colors.background.secondary};
+      border-radius: ${theme.shape.borderRadius(2)} ${theme.shape.borderRadius(2)} 0 0;
+      box-shadow: 0 0 10px ${theme.v1.palette.black};
+      clip-path: inset(-10px -10px 0px -10px);
+      font-family: ${theme.typography.fontFamily};
+
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+
+      padding: ${theme.spacing()};
+
+      > h5 {
+        margin: 0;
+        flex: 1;
+      }
+    `,
+    actions: css`
+      align-items: center;
+      display: flex;
+    `,
+    headerButton: css`
+      margin-left: 8px;
     `,
     logs: css`
-      height: 220px;
+      height: ${logsHeight}px;
       padding: 10px;
+      font-family: ${theme.typography.fontFamilyMonospace};
+
+      .scrollbar-view {
+        overscroll-behavior: contain;
+      }
     `,
+
     afterContext,
     beforeContext,
   };
@@ -101,7 +149,7 @@ const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeader
   groupPosition,
   logsSortOrder,
 }) => {
-  const { header } = useStyles2(getLogRowContextStyles);
+  const { header, headerButton } = useStyles2(getLogRowContextStyles);
 
   // determine the position in time for this LogGroup by taking the ordering of
   // logs and position of the component itself into account.
@@ -124,18 +172,9 @@ const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeader
         Showing {rows.length} lines {logGroupPosition} match.
       </span>
       {(rows.length >= 10 || (rows.length > 10 && rows.length % 10 !== 0)) && canLoadMoreRows && (
-        <span
-          className={css`
-            margin-left: 10px;
-            &:hover {
-              text-decoration: underline;
-              cursor: pointer;
-            }
-          `}
-          onClick={onLoadMoreContext}
-        >
-          Load 10 more
-        </span>
+        <Button className={headerButton} variant="secondary" size="sm" onClick={onLoadMoreContext}>
+          Load 10 more lines
+        </Button>
       )}
     </div>
   );
@@ -154,15 +193,48 @@ export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps
 }) => {
   const { commonStyles, logs } = useStyles2(getLogRowContextStyles);
   const [scrollTop, setScrollTop] = useState(0);
-  const listContainerRef = useRef<HTMLDivElement>(null);
+  const [scrollHeight, setScrollHeight] = useState(0);
 
+  const listContainerRef = useRef<HTMLDivElement>(null);
+  const prevRows = usePrevious(rows);
+  const prevScrollTop = usePrevious(scrollTop);
+  const prevScrollHeight = usePrevious(scrollHeight);
+
+  /**
+   * This hook is responsible of keeping the right scroll position of the top
+   * context when rows are added. Since rows are added at the top of the DOM,
+   * the scroll position changes and we need to adjust the scrollTop.
+   */
   useLayoutEffect(() => {
-    // We want to scroll to bottom only when we receive first 10 log lines
-    const shouldScrollRows = rows.length > 0 && rows.length <= 10;
-    if (shouldScrollToBottom && shouldScrollRows && listContainerRef.current) {
-      setScrollTop(listContainerRef.current.offsetHeight);
+    if (!shouldScrollToBottom || !listContainerRef.current) {
+      return;
     }
-  }, [shouldScrollToBottom, rows]);
+
+    const previousRowsLength = prevRows?.length ?? 0;
+    const previousScrollHeight = prevScrollHeight ?? 0;
+    const previousScrollTop = prevScrollTop ?? 0;
+    const scrollElement = listContainerRef.current.parentElement;
+    let currentScrollHeight = 0;
+
+    if (scrollElement) {
+      currentScrollHeight = scrollElement.scrollHeight - scrollElement.clientHeight;
+      setScrollHeight(currentScrollHeight);
+    }
+
+    if (rows.length > previousRowsLength && currentScrollHeight > previousScrollHeight) {
+      setScrollTop(previousScrollTop + (currentScrollHeight - previousScrollHeight));
+    }
+  }, [shouldScrollToBottom, rows, prevRows, prevScrollTop, prevScrollHeight]);
+
+  /**
+   * Keeps track of the scroll position of the list container.
+   */
+  const updateScroll = () => {
+    const scrollElement = listContainerRef.current?.parentElement;
+    if (scrollElement) {
+      setScrollTop(listContainerRef.current?.parentElement.scrollTop);
+    }
+  };
 
   const headerProps = {
     row,
@@ -178,7 +250,7 @@ export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps
       {/* When displaying "after" context */}
       {shouldScrollToBottom && !error && <LogRowContextGroupHeader {...headerProps} />}
       <div className={logs}>
-        <CustomScrollbar autoHide scrollTop={scrollTop} autoHeightMin={'210px'}>
+        <CustomScrollbar autoHide onScroll={updateScroll} scrollTop={scrollTop} autoHeightMin={'210px'}>
           <div ref={listContainerRef}>
             {!error && (
               <List
@@ -227,7 +299,9 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
       document.removeEventListener('keydown', handleEscKeyDown, false);
     };
   }, [onOutsideClick]);
-  const { afterContext, beforeContext } = useStyles2((theme) => getLogRowContextStyles(theme, wrapLogMessage));
+  const { afterContext, beforeContext, title, top, actions, width } = useStyles2((theme) =>
+    getLogRowContextStyles(theme, wrapLogMessage)
+  );
 
   return (
     <ClickOutsideWrapper onClick={onOutsideClick}>
@@ -239,7 +313,7 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
             rows={context.after}
             error={errors && errors.after}
             row={row}
-            className={afterContext}
+            className={cx(afterContext, top, width)}
             shouldScrollToBottom
             canLoadMoreRows={hasMoreContextRows ? hasMoreContextRows.after : false}
             onLoadMoreContext={onLoadMoreContext}
@@ -255,11 +329,17 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
             row={row}
             rows={context.before}
             error={errors && errors.before}
-            className={beforeContext}
+            className={cx(beforeContext, width)}
             groupPosition={LogGroupPosition.Bottom}
             logsSortOrder={logsSortOrder}
           />
         )}
+        <div className={cx(title, width)}>
+          <h5>Log context</h5>
+          <div className={actions}>
+            <IconButton size="lg" name="times" onClick={onOutsideClick} />
+          </div>
+        </div>
       </div>
     </ClickOutsideWrapper>
   );

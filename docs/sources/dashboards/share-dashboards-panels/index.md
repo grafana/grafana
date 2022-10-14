@@ -16,7 +16,7 @@ aliases:
   - docs/grafana/latest/dashboards/share-dashboards-panels/
   - /docs/grafana/latest/share-dashboards-panels/
 title: Share dashboards and panels
-menuTitle: Share dashboards and panels
+menuTitle: Sharing
 weight: 85
 keywords:
   - grafana

@@ -2,6 +2,7 @@
 aliases:
   - /docs/grafana/latest/reference/templating/
   - /docs/grafana/latest/variables/inspect-variable/
+  - /docs/grafana/latest/dashboards/variables/inspect-variable/
 keywords:
   - grafana
   - templating
