@@ -1,25 +1,21 @@
 import React, { ReactNode } from 'react';
-import ReactGridLayout, { Layout } from 'react-grid-layout';
+import ReactGridLayout, { ItemCallback, Layout } from 'react-grid-layout';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 
 import { SceneObjectBase } from '../core/SceneObjectBase';
-import { SceneLayoutState, SceneComponentProps, SceneLayoutChild, SceneObject, SceneObjectSize } from '../core/types';
+import { SceneLayoutState, SceneComponentProps, SceneLayoutChild, SceneObjectSize } from '../core/types';
 
 interface SceneGridLayoutState extends SceneLayoutState {}
 
 export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
   static Component = SceneGridLayoutRenderer;
-  private panelMap: { [key: string]: SceneObject } = {};
 
   buildLayout(): Layout[] {
     const layout = [];
-    this.panelMap = {};
 
     for (const child of this.state.children) {
-      this.panelMap[child.state.key!] = child;
-
       if (!child.state.size) {
         console.log('panel without gridpos');
         continue;
@@ -55,6 +51,43 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
 
     return { i: key, x, y, h, w };
   }
+
+  gridPosToSize(layout: Layout): SceneObjectSize {
+    return {
+      x: layout.x,
+      y: layout.y,
+      width: layout.w,
+      height: layout.h,
+    };
+  }
+
+  updateGridPos(update: ReactGridLayout.Layout) {
+    for (const child of this.state.children) {
+      if (child.state.key === update.i) {
+        child.setState({ size: this.gridPosToSize(update) });
+      }
+    }
+  }
+
+  onResize: ItemCallback = (layout, oldItem, newItem) => {
+    this.updateGridPos(newItem);
+  };
+
+  onResizeStop: ItemCallback = (layout, oldItem, newItem) => {
+    this.updateGridPos(newItem);
+  };
+
+  onDragStop: ItemCallback = (layout, oldItem, newItem) => {
+    this.updateGridPos(newItem);
+  };
+
+  onLayoutChange = (newLayout: ReactGridLayout.Layout[]) => {
+    for (const newPos of newLayout) {
+      this.updateGridPos(newPos);
+    }
+
+    //this.props.dashboard.sortPanelsByGridPos();
+  };
 }
 
 function SceneGridLayoutRenderer({ model }: SceneComponentProps<SceneGridLayout>) {
@@ -100,10 +133,10 @@ function SceneGridLayoutRenderer({ model }: SceneComponentProps<SceneGridLayout>
                 rowHeight={GRID_CELL_HEIGHT}
                 draggableHandle=".grid-drag-handle"
                 layout={model.buildLayout()}
-                // onDragStop={model.onDragStop}
-                // onResize={model.onResize}
-                // onResizeStop={model.onResizeStop}
-                // onLayoutChange={model.onLayoutChange}
+                onDragStop={model.onDragStop}
+                onResize={model.onResize}
+                onResizeStop={model.onResizeStop}
+                onLayoutChange={model.onLayoutChange}
               >
                 {renderPanels(children)}
               </ReactGridLayout>
