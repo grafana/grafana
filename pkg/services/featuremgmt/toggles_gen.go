@@ -239,6 +239,10 @@ const (
 	// Reusable query library
 	FlagQueryLibrary = "queryLibrary"
 
+	// FlagShowDashboardValidationWarnings
+	// Show warnings when Dashboards do not validate against the schema
+	FlagShowDashboardValidationWarnings = "showDashboardValidationWarnings"
+
 	// FlagMysqlAnsiQuotes
 	// Use double quote to escape keyword in Mysql query
 	FlagMysqlAnsiQuotes = "mysqlAnsiQuotes"
