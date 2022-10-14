@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 )
@@ -184,7 +183,6 @@ type grafanaMetricFindValue struct {
 }
 
 func (ds *Service) QueryVariableData(ctx context.Context, req *backend.CallResourceRequest) ([]grafanaMetricFindValue, error) {
-	log.DefaultLogger.Info("QUERY VARIABLE", "_________________________REQ___________________________", string(req.Body))
 	s, err := ds.settings(req.PluginContext)
 	if err != nil {
 		return []grafanaMetricFindValue{}, err
@@ -193,21 +191,17 @@ func (ds *Service) QueryVariableData(ctx context.Context, req *backend.CallResou
 }
 
 func (ds *Service) queryVariable(qry []byte, s *druidInstanceSettings, headers http.Header) ([]grafanaMetricFindValue, error) {
-	log.DefaultLogger.Info("DRUID EXECUTE QUERY VARIABLE", "_________________________GRAFANA QUERY___________________________", string(qry))
 	// feature: probably implement a short (1s ? 500ms ? configurable in datasource ? beware memory: constrain size ?) life cache (druidInstanceSettings.cache ?) and early return then
 	response := []grafanaMetricFindValue{}
 	q, stg, err := ds.prepareQuery(qry, s)
 	if err != nil {
 		return response, err
 	}
-	log.DefaultLogger.Info("DRUID EXECUTE QUERY VARIABLE", "_________________________DRUID QUERY___________________________", q)
 	r, err := ds.executeQuery("variable", q, s, stg, headers)
 	if err != nil {
 		return response, err
 	}
-	log.DefaultLogger.Info("DRUID EXECUTE QUERY VARIABLE", "_________________________DRUID RESPONSE___________________________", r)
 	response, err = ds.prepareVariableResponse(r, stg)
-	log.DefaultLogger.Info("DRUID EXECUTE QUERY VARIABLE", "_________________________GRAFANA RESPONSE___________________________", response)
 	return response, err
 }
 
@@ -344,7 +338,6 @@ func (ds *Service) settings(ctx backend.PluginContext) (*druidInstanceSettings, 
 }
 
 func (ds *Service) query(qry backend.DataQuery, s *druidInstanceSettings, headers http.Header) backend.DataResponse {
-	log.DefaultLogger.Info("DRUID EXECUTE QUERY", "_________________________GRAFANA QUERY___________________________", qry)
 	rawQuery := interpolateVariables(string(qry.JSON), qry.Interval, qry.TimeRange.Duration())
 
 	// feature: probably implement a short (1s ? 500ms ? configurable in datasource ? beware memory: constrain size ?) life cache (druidInstanceSettings.cache ?) and early return then
@@ -354,19 +347,16 @@ func (ds *Service) query(qry backend.DataQuery, s *druidInstanceSettings, header
 		response.Error = err
 		return response
 	}
-	log.DefaultLogger.Info("DRUID EXECUTE QUERY", "_________________________DRUID QUERY___________________________", q)
 	r, err := ds.executeQuery(qry.RefID, q, s, stg, headers)
 	if err != nil {
 		response.Error = err
 		return response
 	}
-	log.DefaultLogger.Info("DRUID EXECUTE QUERY", "_________________________DRUID RESPONSE___________________________", r)
 	response, err = ds.prepareResponse(r, stg)
 	if err != nil {
 		// note: error could be set from prepareResponse but this gives a chance to react to error here
 		response.Error = err
 	}
-	log.DefaultLogger.Info("DRUID EXECUTE QUERY", "_________________________GRAFANA RESPONSE___________________________", response)
 	return response
 }
 
@@ -891,17 +881,20 @@ func (ds *Service) prepareResponse(resp *druidResponse, settings map[string]inte
 				if r[ic] == nil {
 					r[ic] = ""
 				}
-				ff = append(ff.([]string), r[ic].(string))
+				value, _ := r[ic].(string)
+				ff = append(ff.([]string), value)
 			case "float":
 				if r[ic] == nil {
 					r[ic] = 0.0
 				}
-				ff = append(ff.([]float64), r[ic].(float64))
+				value, _ := r[ic].(float64)
+				ff = append(ff.([]float64), value)
 			case "int":
 				if r[ic] == nil {
 					r[ic] = "0"
 				}
-				i, err := strconv.Atoi(r[ic].(string))
+				value, _ := r[ic].(string)
+				i, err := strconv.Atoi(value)
 				if err != nil {
 					i = 0
 				}
@@ -911,7 +904,8 @@ func (ds *Service) prepareResponse(resp *druidResponse, settings map[string]inte
 				var err error
 				b, ok := r[ic].(bool)
 				if !ok {
-					b, err = strconv.ParseBool(r[ic].(string))
+					value, _ := r[ic].(string)
+					b, err = strconv.ParseBool(value)
 					if err != nil {
 						b = false
 					}
@@ -925,13 +919,15 @@ func (ds *Service) prepareResponse(resp *druidResponse, settings map[string]inte
 				}
 				switch r[ic].(type) {
 				case string:
-					t, err := time.Parse("2006-01-02T15:04:05.000Z", r[ic].(string))
+					value, _ := r[ic].(string)
+					t, err := time.Parse("2006-01-02T15:04:05.000Z", value)
 					if err != nil {
 						t = time.Now()
 					}
 					ff = append(ff.([]time.Time), t)
 				case float64:
-					sec, dec := math.Modf(r[ic].(float64) / 1000)
+					value, _ := r[ic].(float64)
+					sec, dec := math.Modf(value / 1000)
 					ff = append(ff.([]time.Time), time.Unix(int64(sec), int64(dec*(1e9))))
 				}
 			}
