@@ -122,13 +122,16 @@ func treeToNestedSetDataFrame(tree *v1alpha1.Flamegraph) *data.Frame {
 	levelField := data.NewField("level", nil, []int64{})
 	valueField := data.NewField("value", nil, []int64{})
 	valueField.Config = &data.FieldConfig{Unit: normalizeUnit(tree.Unit)}
+	selfField := data.NewField("self", nil, []int64{})
+	selfField.Config = &data.FieldConfig{Unit: normalizeUnit(tree.Unit)}
 	labelField := data.NewField("label", nil, []string{})
-	frame.Fields = data.Fields{levelField, valueField, labelField}
+	frame.Fields = data.Fields{levelField, valueField, selfField, labelField}
 
-	walkTree(tree.Root, func(level int64, value int64, name string) {
+	walkTree(tree.Root, func(level int64, value int64, name string, self int64) {
 		levelField.Append(level)
 		valueField.Append(value)
 		labelField.Append(name)
+		selfField.Append(self)
 	})
 	return frame
 }
@@ -138,12 +141,16 @@ type Node struct {
 	Level int64
 }
 
-func walkTree(tree *v1alpha1.FlamegraphRootNode, fn func(level int64, value int64, name string)) {
-	fn(0, tree.Cumulative, "total")
+func walkTree(tree *v1alpha1.FlamegraphRootNode, fn func(level int64, value int64, name string, self int64)) {
 	var stack []*Node
+	var childrenValue int64 = 0
+
 	for _, child := range tree.Children {
+		childrenValue += child.Cumulative
 		stack = append(stack, &Node{Node: child, Level: 1})
 	}
+
+	fn(0, tree.Cumulative, "total", tree.Cumulative-childrenValue)
 
 	for {
 		if len(stack) == 0 {
@@ -153,15 +160,18 @@ func walkTree(tree *v1alpha1.FlamegraphRootNode, fn func(level int64, value int6
 		// shift stack
 		node := stack[0]
 		stack = stack[1:]
-		fn(node.Level, node.Node.Cumulative, nodeName(node.Node))
+		childrenValue = 0
+
 		if node.Node.Children != nil {
 			var children []*Node
 			for _, child := range node.Node.Children {
+				childrenValue += child.Cumulative
 				children = append(children, &Node{Node: child, Level: node.Level + 1})
 			}
 			// Put the children first so we do depth first traversal
 			stack = append(children, stack...)
 		}
+		fn(node.Level, node.Node.Cumulative, nodeName(node.Node), node.Node.Cumulative-childrenValue)
 	}
 }
 
