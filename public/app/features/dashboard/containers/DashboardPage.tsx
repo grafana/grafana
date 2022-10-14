@@ -1,6 +1,5 @@
 import classnames from 'classnames';
 import React, { PureComponent } from 'react';
-import ReactDOM from 'react-dom';
 import { connect, ConnectedProps, MapDispatchToProps, MapStateToProps } from 'react-redux';
 
 import { locationUtil, NavModelItem, TimeRange } from '@grafana/data';
@@ -16,6 +15,7 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { getPageNavFromSlug, getRootContentNavModel } from 'app/features/storage/StorageFolderPage';
+import { RenderPortal } from 'app/fn-app/utils';
 import { DashboardRoutes, DashboardState, KioskMode, StoreState } from 'app/types';
 import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
 
@@ -409,11 +409,18 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
         />
       </header>
     );
+
     return (
       <Page
         {...this.getPageProps()}
         layout={PageLayoutType.Dashboard}
-        toolbar={this.props.controlsContainer ? ReactDOM.createPortal(toolbar, this.props.controlsContainer) : toolbar}
+        toolbar={
+          this.props.controlsContainer ? (
+            <RenderPortal renderContainer={this.props.controlsContainer}>{toolbar}</RenderPortal>
+          ) : (
+            toolbar
+          )
+        } //ReactDOM.createPortal(toolbar, this.props.controlsContainer)
         className={containerClassNames}
         scrollRef={this.setScrollRef}
         scrollTop={updateScrollTop}

@@ -1,4 +1,3 @@
-// @ts-nocheck
 declare let __webpack_public_path__: string;
 
 // This is a path to the public folder without '/build'
@@ -169,7 +168,6 @@ class createMfe {
 
       if (props.mode) {
         createMfe.loadFnTheme(props.mode);
-
         ReactDOM.render(React.createElement(createMfe.component, { ...props }), createMfe.getContainer(props), () => {
           createMfe.logger('Successfully mounted grafana.');
         });

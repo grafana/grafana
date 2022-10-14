@@ -21830,6 +21830,7 @@ __metadata:
     "@lingui/react": 3.14.0
     "@microsoft/api-extractor": 7.28.6
     "@mui/material": ^5.10.9
+    "@mui/styled-engine": ^5.10.8
     "@opentelemetry/api": 1.1.0
     "@opentelemetry/exporter-collector": 0.25.0
     "@opentelemetry/semantic-conventions": 1.5.0
