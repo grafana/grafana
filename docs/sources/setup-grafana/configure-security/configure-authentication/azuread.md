@@ -228,7 +228,7 @@ Grafana attempts to retrieve the user's group membership by calling the included
 
 ### Force fetching groups from Microsoft graph API
 
-To force fetching groups from Microsoft Graph API instead of the `id_token`. You can use the `force_use_graph_api` config option.
+To force fetching groups from Microsoft Graph API instead of the `id_token`, use the `force_use_graph_api` configuration option.
 
 ```
 force_use_graph_api = true
