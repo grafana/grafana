@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -19,14 +18,14 @@ import (
 // AnnotationStateHistorian is an implementation of state.Historian that uses Grafana Annotations as the backing datastore.
 type AnnotationStateHistorian struct {
 	annotations annotations.Repository
-	dashboards  dashboards.DashboardService
+	dashboards  *dashboardResolver
 	log         log.Logger
 }
 
 func NewAnnotationHistorian(annotations annotations.Repository, dashboards dashboards.DashboardService, log log.Logger) *AnnotationStateHistorian {
 	return &AnnotationStateHistorian{
 		annotations: annotations,
-		dashboards:  dashboards,
+		dashboards:  newDashboardResolver(dashboards, log, defaultDashboardCacheExpiry),
 		log:         log,
 	}
 }
@@ -56,19 +55,14 @@ func (h *AnnotationStateHistorian) RecordState(ctx context.Context, rule *ngmode
 			return
 		}
 
-		query := &models.GetDashboardQuery{
-			Uid:   dashUid,
-			OrgId: rule.OrgID,
-		}
-
-		err = h.dashboards.GetDashboard(ctx, query)
+		dashID, err := h.dashboards.getID(ctx, rule.OrgID, dashUid)
 		if err != nil {
 			h.log.Error("error getting dashboard for alert annotation", "dashboardUID", dashUid, "alertRuleUID", rule.UID, "err", err.Error())
 			return
 		}
 
 		item.PanelId = panelId
-		item.DashboardId = query.Result.Id
+		item.DashboardId = dashID
 	}
 
 	if err := h.annotations.Save(ctx, item); err != nil {
