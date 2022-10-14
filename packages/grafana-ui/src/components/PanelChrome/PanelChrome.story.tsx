@@ -8,6 +8,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { PanelChrome, useTheme2, PanelChromeProps } from '@grafana/ui';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+import { Icon } from '../Icon/Icon';
 import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
 
 const meta: ComponentMeta<typeof PanelChrome> = {
@@ -63,8 +64,46 @@ export const Examples = () => {
     <div style={{ background: theme.colors.background.canvas, padding: 100 }}>
       <HorizontalGroup spacing="md">
         <VerticalGroup spacing="md">
-          {renderPanel('Default panel', {}, theme)}
-          {renderPanel('No padding', { padding: 'none' }, theme)}
+          {renderPanel(
+            'Default panel with error state indicator',
+            {
+              title: 'Default title',
+              items: {
+                orderedList: [
+                  <Icon name="info-circle" size="sm" key="0" />,
+                  <Icon name="external-link-alt" size="sm" key="1" />,
+                  <Icon name="clock-nine" size="sm" key="2" />,
+                  <Icon name="heart" size="sm" key="3" />,
+                ],
+              },
+              actionItems: {
+                orderedList: [<Icon name="ellipsis-v" size="sm" key="0" />],
+              },
+              leftItems: [
+                <PanelChrome.ErrorIndicator
+                  key="errorIndicator"
+                  error="Error text"
+                  onClick={action('ErrorIndicator: onClick fired')}
+                />,
+              ],
+            },
+            theme
+          )}
+          {renderPanel(
+            'No padding with error state indicator',
+            {
+              padding: 'none',
+              title: 'Default title',
+              leftItems: [
+                <PanelChrome.ErrorIndicator
+                  key="errorIndicator"
+                  error="Error text"
+                  onClick={action('ErrorIndicator: onClick fired')}
+                />,
+              ],
+            },
+            theme
+          )}
         </VerticalGroup>
         <VerticalGroup spacing="md">
           {renderPanel('No title', { title: '' }, theme)}

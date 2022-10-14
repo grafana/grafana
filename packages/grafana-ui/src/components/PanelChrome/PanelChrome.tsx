@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { CSSProperties, ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -11,16 +11,20 @@ import { Icon } from '../Icon/Icon';
  */
 export interface PanelChromeProps {
   title?: string;
-  description?: string;
-  link?: string;
-  timeshift?: string;
-  health?: string;
-  state?: string;
+  items?: {
+    orderedList: ReactNode[];
+    position?: 'left' | 'right'; // Default is 'left'
+  };
+  actionItems?: {
+    orderedList: ReactNode[];
+    position?: 'left' | 'right'; // Default is 'left'
+    show?: 'always' | 'hover' | 'never'; // Default is 'hover'
+  };
   width: number;
   height: number;
   padding?: PanelPadding;
-  leftItems?: React.ReactNode[]; // rightItems will be added later (actions links etc.)
-  children: (innerWidth: number, innerHeight: number) => React.ReactNode;
+  leftItems?: ReactNode[]; // rightItems will be added later (actions links etc.)
+  children: (innerWidth: number, innerHeight: number) => ReactNode;
 }
 
 /**
@@ -33,11 +37,8 @@ export type PanelPadding = 'none' | 'md';
  */
 export const PanelChrome: React.FC<PanelChromeProps> = ({
   title = '',
-  description = '',
-  link = '',
-  timeshift = '',
-  health = '',
-  state = '',
+  items,
+  actionItems,
   width,
   height,
   padding = 'md',
@@ -53,12 +54,9 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
   const headerStyles: CSSProperties = {
     height: headerHeight,
   };
-  const iconStyles: CSSProperties = {
+  const itemStyles: CSSProperties = {
     minHeight: headerHeight,
     minWidth: headerHeight,
-    display: 'flex',
-    justifyContent: 'space-around',
-    alignItems: 'center',
   };
   const containerStyles: CSSProperties = { width, height };
 
@@ -68,46 +66,47 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
         title.length > 0 && (
           <div className={styles.headerContainer} style={headerStyles}>
             <div className={styles.title}>{title}</div>
-            <div className={styles.view}>
-              {
-                <div style={iconStyles}>
-                  <Icon name="info-circle" size="sm" />
-                </div>
-              }
-              {
-                <div style={iconStyles}>
-                  <Icon name="external-link-alt" size="sm" />
-                </div>
-              }
-            </div>
-            <div className={styles.edit}>
-              {
-                <div style={iconStyles}>
-                  <Icon name="clock-nine" size="sm" />
-                </div>
-              }
-              {
-                <div style={iconStyles}>
-                  <Icon name="heart" size="sm" />
-                </div>
-              }
-            </div>
-            <div className={styles.menu}>
-              {
-                <div style={iconStyles}>
-                  <Icon name="ellipsis-v" size="sm" />
-                </div>
-              }
-            </div>
-            <div className={styles.dragSpace}></div>
-            <div className={styles.status}>
-              {<Icon name="fa fa-spinner" size="sm" />}
-              {/* <PanelHeaderLoadingIndicator state={data.state} onClick={onCancelQuery} /> */}
-            </div>
-
-            {/* {itemsRenderer(leftItems, (items) => {
-              return <div className={styles.leftItems}>{items}</div>;
-            })} */}
+            {items && Array.isArray(items.orderedList) && items.orderedList.length > 0 && (
+              <div className={styles.items}>
+                {itemsRenderer(items.orderedList, (item) => (
+                  <div className={styles.item} style={itemStyles}>
+                    {item}
+                  </div>
+                ))}
+              </div>
+            )}
+            {/* todo hide/show on hover if show: 'hover' */}
+            {actionItems && Array.isArray(actionItems.orderedList) && actionItems.orderedList.length > 0 && (
+              <div className={styles.items}>
+                {itemsRenderer(actionItems.orderedList, (item) => (
+                  <div className={styles.item} style={itemStyles}>
+                    {item}
+                  </div>
+                ))}
+              </div>
+            )}
+            {/* todo hide/show on hover if show: 'hover' */}
+            {actionItems && actionItems.position === 'right' && Array.isArray(actionItems.orderedList) && (
+              <div className={cx(styles.rightAligned, styles.items)}>
+                {itemsRenderer(actionItems.orderedList, (item) => (
+                  <div className={styles.item} style={itemStyles}>
+                    {item}
+                  </div>
+                ))}
+              </div>
+            )}
+            {items && items.position === 'right' && Array.isArray(items.orderedList) && (
+              <div className={cx(styles.rightAligned, styles.items)}>
+                {itemsRenderer(items.orderedList, (item) => (
+                  <div className={styles.item} style={itemStyles}>
+                    {item}
+                  </div>
+                ))}
+              </div>
+            )}
+            {leftItems.length > 0 && (
+              <div className={cx(styles.rightAligned, styles.items)}>{itemsRenderer(leftItems, (item) => item)}</div>
+            )}
           </div>
         )
         // : (
@@ -187,34 +186,26 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       padding: `0 ${theme.spacing(padding)}`,
+      // todo see if we can just have headerHeight calc here
     }),
     title: css({
-      label: 'panel-title',
       textOverflow: 'ellipsis',
       overflow: 'hidden',
       whiteSpace: 'nowrap',
       fontWeight: theme.typography.fontWeightMedium,
     }),
-    view: css({
+    items: css({
       display: 'flex',
+      // todo arrange when items take up more space than section is allowed to
+      // overflow: 'overlay',
     }),
-    edit: css({
+    item: css({
       display: 'flex',
+      justifyContent: 'space-around',
+      alignItems: 'center',
     }),
-    menu: css({
-      display: 'flex',
-    }),
-    dragSpace: css({
-      flexBasis: `30%`,
-      width: '100%',
-    }),
-    status: css({
-      display: 'flex',
+    rightAligned: css({
       marginLeft: 'auto',
-    }),
-    leftItems: css({
-      display: 'flex',
-      paddingRight: theme.spacing(padding),
     }),
   };
 };
