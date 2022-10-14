@@ -7,6 +7,7 @@ import (
 	"context"
 
 	"github.com/google/wire"
+	"github.com/grafana/grafana/pkg/tsdb/parca"
 	phlare "github.com/grafana/grafana/pkg/tsdb/phlare"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
@@ -260,6 +261,7 @@ var wireSet = wire.NewSet(
 	prometheus.ProvideService,
 	elasticsearch.ProvideService,
 	phlare.ProvideService,
+	parca.ProvideService,
 	secretsMigrator.ProvideSecretsMigrator,
 	wire.Bind(new(secrets.Migrator), new(*secretsMigrator.SecretsMigrator)),
 	grafanads.ProvideService,

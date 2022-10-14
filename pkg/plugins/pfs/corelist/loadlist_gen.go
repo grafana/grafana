@@ -53,6 +53,7 @@ func coreTreeList(lib thema.Library) pfs.TreeList {
 		makeTreeOrPanic("public/app/plugins/datasource/loki", "loki", lib),
 		makeTreeOrPanic("public/app/plugins/datasource/mssql", "mssql", lib),
 		makeTreeOrPanic("public/app/plugins/datasource/mysql", "mysql", lib),
+		makeTreeOrPanic("public/app/plugins/datasource/parca", "parca", lib),
 		makeTreeOrPanic("public/app/plugins/datasource/phlare", "phlare", lib),
 		makeTreeOrPanic("public/app/plugins/datasource/postgres", "postgres", lib),
 		makeTreeOrPanic("public/app/plugins/datasource/prometheus", "prometheus", lib),

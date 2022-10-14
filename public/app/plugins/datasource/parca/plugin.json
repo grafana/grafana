@@ -1,0 +1,29 @@
+{
+  "type": "datasource",
+  "name": "Parca",
+  "id": "parca",
+  "metrics": true,
+  "backend": true,
+  "info": {
+    "description": "",
+    "author": {
+      "name": "Andrej Ocenas",
+      "url": "https://www.grafana.com"
+    },
+    "keywords": ["grafana", "datasource", "parca", "profiling"],
+    "logos": {
+      "small": "img/logo.svg",
+      "large": "img/logo.svg"
+    },
+    "links": [
+      {
+        "name": "Website",
+        "url": "https://github.com/grafana/grafana-starter-datasource-backend"
+      },
+      {
+        "name": "License",
+        "url": "https://github.com/grafana/grafana-starter-datasource-backend/blob/master/LICENSE"
+      }
+    ]
+  }
+}
