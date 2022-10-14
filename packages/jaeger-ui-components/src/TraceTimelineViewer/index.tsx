@@ -13,13 +13,13 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
+import { SpanBarOptions } from '@jaegertracing/jaeger-ui-components/src/types';
 import React, { RefObject } from 'react';
 
 import { GrafanaTheme2, LinkModel, TimeZone } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { stylesFactory, withTheme2 } from '@grafana/ui';
 
-import { SpanBarOptions } from '../../../../public/app/core/components/SpanBarSettings/SpanBarSettings';
 import { Accessors } from '../ScrollManager';
 import { autoColor } from '../Theme';
 import { merge as mergeShortcuts } from '../keyboard-shortcuts';

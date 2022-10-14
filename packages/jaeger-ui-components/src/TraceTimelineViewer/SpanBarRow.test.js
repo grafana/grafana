@@ -16,9 +16,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { NONE, DURATION, TAG } from 'app/core/components/SpanBarSettings/SpanBarSettings';
-
-import SpanBarRow from './SpanBarRow';
+import SpanBarRow, { NONE, DURATION, TAG } from './SpanBarRow';
 
 describe('<SpanBarRow>', () => {
   const spanID = 'some-id';

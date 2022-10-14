@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { NONE, DURATION, TAG } from '@jaegertracing/jaeger-ui-components/src/TraceTimelineViewer/SpanBarRow';
 import React from 'react';
 
 import {
@@ -9,8 +10,6 @@ import {
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { InlineField, InlineFieldRow, Input, Select, useStyles } from '@grafana/ui';
-
-import { DURATION, NONE, TAG } from '../../../../../packages/jaeger-ui-components/src/TraceTimelineViewer/SpanBarRow';
 
 export interface SpanBarOptions {
   type?: string;
