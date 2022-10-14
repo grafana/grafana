@@ -19,7 +19,9 @@ import (
 )
 
 var (
-	logger                 = log.New("oauthtoken")
+	logger = log.New("oauthtoken")
+	// ExpiryDelta is used to prevent any issue that is caused by the clock skew (server times can differ slightly between different machines).
+	// Shouldn't be more than 30s
 	ExpiryDelta            = 10 * time.Second
 	ErrNoRefreshTokenFound = errors.New("no refresh token found")
 )
@@ -57,9 +59,9 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr *user.SignedInUs
 	if err := o.AuthInfoService.GetAuthInfo(ctx, authInfoQuery); err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
 			// Not necessarily an error.  User may be logged in another way.
-			logger.Debug("no OAuth token for user found", "userId", usr.UserID, "username", usr.Login)
+			logger.Debug("no oauth token for user found", "userId", usr.UserID, "username", usr.Login)
 		} else {
-			logger.Error("failed to get OAuth token for user", "userId", usr.UserID, "username", usr.Login, "error", err)
+			logger.Error("failed to get oauth token for user", "userId", usr.UserID, "username", usr.Login, "error", err)
 		}
 		return nil
 	}
@@ -87,7 +89,7 @@ func (o *Service) HasOAuthEntry(ctx context.Context, usr *user.SignedInUser) (bo
 	err := o.AuthInfoService.GetAuthInfo(ctx, authInfoQuery)
 	if err != nil {
 		if !errors.Is(err, user.ErrUserNotFound) {
-			logger.Error("failed to get OAuth token for user", "userId", usr.UserID, "username", usr.Login, "error", err)
+			logger.Error("failed to get oauth token for user", "userId", usr.UserID, "username", usr.Login, "error", err)
 		}
 		return false, nil
 	}
@@ -119,6 +121,7 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr *models.UserAuth) err
 	return err
 }
 
+// InvalidateOAuthTokens invalidates the OAuth tokens (access_token, refresh_token) and sets the Expiry to default/zero
 func (o *Service) InvalidateOAuthTokens(ctx context.Context, usr *models.UserAuth) error {
 	return o.AuthInfoService.UpdateAuthInfo(ctx, &models.UpdateAuthInfoCommand{
 		UserId:     usr.UserId,
@@ -136,13 +139,13 @@ func (o *Service) tryGetOrRefreshAccessToken(ctx context.Context, usr *models.Us
 	authProvider := usr.AuthModule
 	connect, err := o.SocialService.GetConnector(authProvider)
 	if err != nil {
-		logger.Error("failed to get OAuth connector", "provider", authProvider, "error", err)
+		logger.Error("failed to get oauth connector", "provider", authProvider, "error", err)
 		return nil, err
 	}
 
 	client, err := o.SocialService.GetOAuthHttpClient(authProvider)
 	if err != nil {
-		logger.Error("failed to get OAuth http client", "provider", authProvider, "error", err)
+		logger.Error("failed to get oauth http client", "provider", authProvider, "error", err)
 		return nil, err
 	}
 	ctx = context.WithValue(ctx, oauth2.HTTPClient, client)
@@ -161,7 +164,7 @@ func (o *Service) tryGetOrRefreshAccessToken(ctx context.Context, usr *models.Us
 	// TokenSource handles refreshing the token if it has expired
 	token, err := connect.TokenSource(ctx, persistedToken).Token()
 	if err != nil {
-		logger.Error("failed to retrieve OAuth access token", "provider", usr.AuthModule, "userId", usr.UserId, "error", err)
+		logger.Error("failed to retrieve oauth access token", "provider", usr.AuthModule, "userId", usr.UserId, "error", err)
 		return nil, err
 	}
 
@@ -177,7 +180,7 @@ func (o *Service) tryGetOrRefreshAccessToken(ctx context.Context, usr *models.Us
 			logger.Error("failed to update auth info during token refresh", "userId", usr.UserId, "error", err)
 			return nil, err
 		}
-		logger.Debug("updated OAuth info for user", "userId", usr.UserId)
+		logger.Debug("updated oauth info for user", "userId", usr.UserId)
 	}
 	return token, nil
 }

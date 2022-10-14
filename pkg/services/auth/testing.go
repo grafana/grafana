@@ -109,14 +109,13 @@ func (s *FakeUserAuthTokenService) BatchRevokeAllUserTokens(ctx context.Context,
 	return s.BatchRevokedTokenProvider(ctx, userIds)
 }
 
-type MockOAuthTokenService struct {
-	passThruEnabled bool
-	// token            *oauth2.Token
+type FakeOAuthTokenService struct {
+	passThruEnabled  bool
 	ExpectedAuthUser *models.UserAuth
 	ExpectedErrors   map[string]error
 }
 
-func (ts *MockOAuthTokenService) GetCurrentOAuthToken(context.Context, *user.SignedInUser) *oauth2.Token {
+func (ts *FakeOAuthTokenService) GetCurrentOAuthToken(context.Context, *user.SignedInUser) *oauth2.Token {
 	return &oauth2.Token{
 		AccessToken:  ts.ExpectedAuthUser.OAuthAccessToken,
 		RefreshToken: ts.ExpectedAuthUser.OAuthRefreshToken,
@@ -125,18 +124,18 @@ func (ts *MockOAuthTokenService) GetCurrentOAuthToken(context.Context, *user.Sig
 	}
 }
 
-func (ts *MockOAuthTokenService) IsOAuthPassThruEnabled(*datasources.DataSource) bool {
+func (ts *FakeOAuthTokenService) IsOAuthPassThruEnabled(*datasources.DataSource) bool {
 	return ts.passThruEnabled
 }
 
-func (ts *MockOAuthTokenService) HasOAuthEntry(context.Context, *user.SignedInUser) (bool, *models.UserAuth) {
+func (ts *FakeOAuthTokenService) HasOAuthEntry(context.Context, *user.SignedInUser) (bool, *models.UserAuth) {
 	if ts.ExpectedAuthUser != nil {
 		return true, ts.ExpectedAuthUser
 	}
 	return false, nil
 }
 
-func (ts *MockOAuthTokenService) InvalidateOAuthTokens(ctx context.Context, usr *models.UserAuth) error {
+func (ts *FakeOAuthTokenService) InvalidateOAuthTokens(ctx context.Context, usr *models.UserAuth) error {
 	ts.ExpectedAuthUser.OAuthAccessToken = ""
 	ts.ExpectedAuthUser.OAuthRefreshToken = ""
 	ts.ExpectedAuthUser.OAuthExpiry = time.Time{}
@@ -144,7 +143,7 @@ func (ts *MockOAuthTokenService) InvalidateOAuthTokens(ctx context.Context, usr 
 	return nil
 }
 
-func (ts *MockOAuthTokenService) TryTokenRefresh(ctx context.Context, usr *models.UserAuth) error {
+func (ts *FakeOAuthTokenService) TryTokenRefresh(ctx context.Context, usr *models.UserAuth) error {
 	if err, ok := ts.ExpectedErrors["TryTokenRefresh"]; ok {
 		return err
 	}

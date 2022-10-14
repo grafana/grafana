@@ -44,7 +44,7 @@ type scenarioContext struct {
 	loginService         *loginservice.LoginServiceMock
 	apiKeyService        *apikeytest.Service
 	userService          *usertest.FakeUserService
-	oauthTokenService    *auth.MockOAuthTokenService
+	oauthTokenService    *auth.FakeOAuthTokenService
 	orgService           *orgtest.FakeOrgService
 
 	req *http.Request

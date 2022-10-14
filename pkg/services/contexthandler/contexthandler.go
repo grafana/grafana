@@ -438,9 +438,10 @@ func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, org
 		getTime = time.Now
 	}
 
-	// Check whether the logged in User has a token
+	// Check whether the logged in User has a token (whether the User used an OAuth provider to login)
 	exists, oauthToken := h.oauthTokenService.HasOAuthEntry(ctx, queryResult)
 	if exists {
+		// Skip where the OAuthExpiry is default/zero/unset
 		if !oauthToken.OAuthExpiry.IsZero() && oauthToken.OAuthExpiry.Round(0).Add(-oauthtoken.ExpiryDelta).Before(getTime()) {
 			reqContext.Logger.Info("access token expired", "userId", query.UserID, "expiry", fmt.Sprintf("%v", oauthToken.OAuthExpiry))
 

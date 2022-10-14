@@ -348,7 +348,6 @@ func TestMiddlewareContext(t *testing.T) {
 		sc.withTokenSessionCookie("token")
 		sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: 2, UserID: userID}
 		sc.oauthTokenService.ExpectedAuthUser = &models.UserAuth{UserId: userID, OAuthExpiry: fakeGetTime()().Add(11 * time.Second)}
-		t.Logf("now: %v; oauthExpiry: %v", fakeGetTime()(), sc.oauthTokenService.ExpectedAuthUser.OAuthExpiry)
 
 		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
 			return &models.UserToken{
@@ -382,7 +381,6 @@ func TestMiddlewareContext(t *testing.T) {
 			OAuthAccessToken:  "access_token",
 			OAuthRefreshToken: "refresh_token"}
 		sc.oauthTokenService.ExpectedErrors = map[string]error{"TryTokenRefresh": errors.New("error")}
-		t.Logf("now: %v; oauthExpiry: %v", fakeGetTime()(), sc.oauthTokenService.ExpectedAuthUser.OAuthExpiry)
 
 		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
 			return &models.UserToken{
@@ -413,7 +411,6 @@ func TestMiddlewareContext(t *testing.T) {
 		sc.withTokenSessionCookie("token")
 		sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: 2, UserID: userID}
 		sc.oauthTokenService.ExpectedAuthUser = &models.UserAuth{UserId: userID, OAuthExpiry: fakeGetTime()().Add(-5 * time.Second), OAuthRefreshToken: "refreshtoken"}
-		t.Logf("now: %v; oauthExpiry: %v", fakeGetTime()(), sc.oauthTokenService.ExpectedAuthUser.OAuthExpiry)
 
 		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
 			return &models.UserToken{
@@ -776,7 +773,7 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 		sc.userService = usertest.NewUserServiceFake()
 		sc.orgService = orgtest.NewOrgServiceFake()
 		sc.apiKeyService = &apikeytest.Service{}
-		sc.oauthTokenService = &auth.MockOAuthTokenService{}
+		sc.oauthTokenService = &auth.FakeOAuthTokenService{}
 		ctxHdlr := getContextHandler(t, cfg, sc.mockSQLStore, sc.loginService, sc.apiKeyService, sc.userService, sc.orgService, sc.oauthTokenService)
 		sc.sqlStore = ctxHdlr.SQLStore
 		sc.contextHandler = ctxHdlr
@@ -813,7 +810,7 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 func getContextHandler(t *testing.T, cfg *setting.Cfg, mockSQLStore *mockstore.SQLStoreMock,
 	loginService *loginservice.LoginServiceMock, apiKeyService *apikeytest.Service,
 	userService *usertest.FakeUserService, orgService *orgtest.FakeOrgService,
-	oauthTokenService *auth.MockOAuthTokenService,
+	oauthTokenService *auth.FakeOAuthTokenService,
 ) *contexthandler.ContextHandler {
 	t.Helper()
 
