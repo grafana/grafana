@@ -1,0 +1,8 @@
+metadata:
+  repository: https://github.com/fluxninja/grafana
+
+applications:
+  grafana:
+    image:
+      name: grafana
+      dockerfile: Dockerfile
