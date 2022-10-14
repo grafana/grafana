@@ -74,7 +74,6 @@
         // any marked "error" contain specific overrides we'll need to keep
         "jsx-a11y/anchor-is-valid": "off",
         "jsx-a11y/click-events-have-key-events": "off",
-        "jsx-a11y/interactive-supports-focus": "off",
         "jsx-a11y/label-has-associated-control": "off",
         "jsx-a11y/mouse-events-have-key-events": "off",
         "jsx-a11y/no-autofocus": [
