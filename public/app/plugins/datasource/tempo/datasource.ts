@@ -607,6 +607,7 @@ function makePromServiceMapRequest(options: DataQueryRequest<TempoQuery>): DataQ
     ...options,
     targets: serviceMapMetrics.map((metric) => {
       return {
+        format: 'table',
         refId: metric,
         // options.targets[0] is not correct here, but not sure what should happen if you have multiple queries for
         // service map at the same time anyway
