@@ -35,7 +35,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 
 	var resp *backend.QueryDataResponse
-	err := instrumentation.InstrumentQueryDataRequest(ctx, &req.PluginContext, s.cfg.LogPluginRequests, func() (innerErr error) {
+	err := instrumentation.InstrumentQueryDataRequest(ctx, &req.PluginContext, s.cfg, func() (innerErr error) {
 		resp, innerErr = plugin.QueryData(ctx, req)
 		return
 	})
@@ -69,7 +69,7 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	if !exists {
 		return backendplugin.ErrPluginNotRegistered
 	}
-	err := instrumentation.InstrumentCallResourceRequest(ctx, &req.PluginContext, s.cfg.LogPluginRequests, func() error {
+	err := instrumentation.InstrumentCallResourceRequest(ctx, &req.PluginContext, s.cfg, func() error {
 		if err := p.CallResource(ctx, req, sender); err != nil {
 			return err
 		}
@@ -90,7 +90,7 @@ func (s *Service) CollectMetrics(ctx context.Context, req *backend.CollectMetric
 	}
 
 	var resp *backend.CollectMetricsResult
-	err := instrumentation.InstrumentCollectMetrics(ctx, &req.PluginContext, s.cfg.LogPluginRequests, func() (innerErr error) {
+	err := instrumentation.InstrumentCollectMetrics(ctx, &req.PluginContext, s.cfg, func() (innerErr error) {
 		resp, innerErr = p.CollectMetrics(ctx, req)
 		return
 	})
@@ -108,7 +108,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	}
 
 	var resp *backend.CheckHealthResult
-	err := instrumentation.InstrumentCheckHealthRequest(ctx, &req.PluginContext, s.cfg.LogPluginRequests, func() (innerErr error) {
+	err := instrumentation.InstrumentCheckHealthRequest(ctx, &req.PluginContext, s.cfg, func() (innerErr error) {
 		resp, innerErr = p.CheckHealth(ctx, req)
 		return
 	})
