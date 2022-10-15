@@ -381,7 +381,6 @@
                     angles.a1 = calculateAngle(gaugeOptionsi, layout, 0.0);
                     angles.a2 = calculateAngle(gaugeOptionsi, layout, data);
                 }
-                alert(gaugeOptionsi.gauge.min + " - " + gaugeOptionsi.gauge.max);
             } else {
                 angles.a1 = gaugeOptionsi.gauge.startAngle;
                 angles.a2 = calculateAngle(gaugeOptionsi, layout, data);
