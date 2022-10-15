@@ -325,8 +325,10 @@
          */
         Gauge.prototype.drawGauge = function(gaugeOptionsi, layout, cellLayout, label, data) {
 
-
             var blur = gaugeOptionsi.gauge.shadow.show ? gaugeOptionsi.gauge.shadow.blur : 0;
+            var color = getColor(gaugeOptionsi, data);
+            var hasNegative = gaugeOptionsi.gauge.min < 0.0
+            var angles = calculateAnglesForGauge(gaugeOptionsi, layout, data, hasNegative);
 
             // draw gauge frame
             drawArcWithShadow(
@@ -342,9 +344,6 @@
                 blur);
 
             // draw gauge
-            var c1 = getColor(gaugeOptionsi, data);
-            var angles = calculateAnglesForGauge(gaugeOptionsi, layout, data);
-
             drawArcWithShadow(
                 cellLayout.cx, // center x
                 cellLayout.cy, // center y
@@ -352,37 +351,67 @@
                 layout.width - 2,
                 toRad(angles.a1),
                 toRad(angles.a2),
-                c1,           // line color
+                color,
                 1,            // line width
-                c1,           // fill color
+                color,           // fill color
                 blur);
+            
+            if(hasNegative)  
+                drawZeroMarker(gaugeOptionsi, layout, cellLayout, color);
         }
 
-
         /**
-         * if gauge min is negative and has the absolute value of min and max are the same
-         * then calculate a1 and a2 in a way, that zero is at 12 o'clock
+         * Calcualte the angles for the gauge, depending on if there are
+         * negative numbers or not.
          * 
          * @method calculateAnglesForGauge
          * @param {Object} gaugeOptionsi the options of the gauge
+         * @param  {Number} data the value of the gauge
          * @returns {Object}
          */
-        function calculateAnglesForGauge(gaugeOptionsi, layout, data) {
+        function calculateAnglesForGauge(gaugeOptionsi, layout, data, hasNegative) {
             let angles = {};
-            var setNorth = (gaugeOptionsi.gauge.min + gaugeOptionsi.gauge.max) == 0.0
-            
-            angles.a1 = gaugeOptionsi.gauge.startAngle;
-            angles.a2 = calculateAngle(gaugeOptionsi, layout, data);
+            var isNegative = data < 0.0
 
-            if(setNorth && angles.a2<=1.5) {
-                angles.a1 = angles.a2;
-                angles.a2 = 1.5;
-            }
-            if(setNorth && angles.a2>1.5) {
-                angles.a1 = 1.5;
+            if (hasNegative) {
+                if (isNegative) {
+                    angles.a1 = calculateAngle(gaugeOptionsi, layout, data);
+                    angles.a2 = calculateAngle(gaugeOptionsi, layout, 0.0);
+                } else {
+                    angles.a1 = calculateAngle(gaugeOptionsi, layout, 0.0);
+                    angles.a2 = calculateAngle(gaugeOptionsi, layout, data);
+                }
+                alert(gaugeOptionsi.gauge.min + " - " + gaugeOptionsi.gauge.max);
+            } else {
+                angles.a1 = gaugeOptionsi.gauge.startAngle;
+                angles.a2 = calculateAngle(gaugeOptionsi, layout, data);
             }
             
             return angles;
+        }
+
+        /**
+         * Draw zero marker for Gauge with negative values
+         * 
+         * @method drawZeroMarker
+         * @param  {Object} gaugeOptionsi the options of the gauge
+         * @param  {Object} layout the layout properties
+         * @param  {Object} cellLayout the cell layout properties
+         * @param  {String} color line color
+         */
+        function drawZeroMarker(gaugeOptionsi, layout, cellLayout, color) {
+            var diff = (gaugeOptionsi.gauge.max - gaugeOptionsi.gauge.min) / 800;
+
+            drawArc(context,
+                cellLayout.cx,
+                cellLayout.cy,
+                layout.radius - 2,
+                layout.width - 4,
+                toRad(calculateAngle(gaugeOptionsi, layout, -diff)),
+                toRad(calculateAngle(gaugeOptionsi, layout, diff)),
+                color,
+                2,
+                gaugeOptionsi.gauge.background.color);
         }
 
         /**
@@ -609,7 +638,7 @@
          * @param  {Object} textOptions the option of the text
          * @param  {Number} [a] the angle of the value drawn
          */
-        function drawText(x, y, id, text, textOptions, a) {
+         function drawText(x, y, id, text, textOptions, a) {
             var span = $(placeholder).find("#" + id);
             var exists = span.length;
             if (!exists) {
