@@ -15,7 +15,6 @@ export function getFlexLayoutTest(): Scene {
   const scene = new Scene({
     title: 'Flex layout test',
     layout: new SceneFlexLayout({
-      direction: 'row',
       children: [
         new VizPanel({
           pluginId: 'timeseries',

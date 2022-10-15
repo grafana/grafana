@@ -18,6 +18,13 @@ import {
   SceneLayoutChild,
 } from './types';
 
+type InexactPartial<T> = { [K in keyof T]?: T[K] | undefined };
+
+export type Defaultize<TState, TDefaults> = Pick<TState, Exclude<keyof TState, keyof TDefaults>> &
+  InexactPartial<Pick<TState, Extract<keyof TState, keyof TDefaults>>>;
+
+export type ExtractDefaultPropsType<T> = T extends { defaultProps: infer D } ? D : {};
+
 export abstract class SceneObjectBase<TState extends SceneObjectState = {}> implements SceneObject<TState> {
   subject = new Subject<TState>();
   state: TState;
@@ -26,6 +33,8 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
   isActive?: boolean;
   events = new EventBusSrv();
 
+  // this is not working
+  // constructor(state: Defaultize<TState, ExtractDefaultPropsType<this>>) {
   constructor(state: TState) {
     if (!state.key) {
       state.key = uuidv4();

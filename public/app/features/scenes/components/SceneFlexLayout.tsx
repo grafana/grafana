@@ -2,18 +2,28 @@ import React, { CSSProperties } from 'react';
 
 import { Field, RadioButtonGroup } from '@grafana/ui';
 
-import { SceneObjectBase } from '../core/SceneObjectBase';
+import { Defaultize, SceneObjectBase } from '../core/SceneObjectBase';
 import { SceneObjectSize, SceneLayoutState, SceneComponentProps, SceneLayoutChild } from '../core/types';
 
 export type FlexLayoutDirection = 'column' | 'row';
-
 interface SceneFlexLayoutState extends SceneLayoutState {
-  direction?: FlexLayoutDirection;
+  direction: FlexLayoutDirection;
 }
+
+const defaultProps = {
+  direction: 'row' as const,
+};
 
 export class SceneFlexLayout extends SceneObjectBase<SceneFlexLayoutState> {
   static Component = FlexLayoutRenderer;
   static Editor = FlexLayoutEditor;
+
+  constructor(state: Defaultize<SceneFlexLayoutState, typeof defaultProps>) {
+    super({
+      ...defaultProps,
+      ...state,
+    });
+  }
 
   toggleDirection() {
     this.setState({
@@ -23,7 +33,7 @@ export class SceneFlexLayout extends SceneObjectBase<SceneFlexLayoutState> {
 }
 
 function FlexLayoutRenderer({ model, isEditing }: SceneComponentProps<SceneFlexLayout>) {
-  const { direction = 'row', children } = model.useState();
+  const { direction, children } = model.useState();
 
   return (
     <div style={{ flexGrow: 1, flexDirection: direction, display: 'flex', gap: '8px' }}>
