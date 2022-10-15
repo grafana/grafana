@@ -1,7 +1,7 @@
 import React from 'react';
 import { Subscribable } from 'rxjs';
 
-import { EventBus, PanelData, TimeRange, UrlQueryMap } from '@grafana/data';
+import { EventBus, PanelData, TimeRange, TimeZone, UrlQueryMap } from '@grafana/data';
 
 import { SceneVariableSet } from '../variables/types';
 
@@ -98,7 +98,10 @@ export interface SceneEditor extends SceneObject<SceneEditorState> {
   onSelectObject(model: SceneObject): void;
 }
 
-export interface SceneTimeRangeState extends SceneObjectStatePlain, TimeRange {}
+export interface SceneTimeRangeState extends SceneObjectStatePlain, TimeRange {
+  timeZone?: TimeZone;
+}
+
 export interface SceneTimeRange extends SceneObject<SceneTimeRangeState> {
   onTimeRangeChange(timeRange: TimeRange): void;
   onIntervalChanged(interval: string): void;

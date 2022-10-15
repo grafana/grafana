@@ -1,5 +1,9 @@
-import { DataQuery, LoadingState } from '@grafana/data';
+import { v4 as uuidv4 } from 'uuid';
+
+import { CoreApp, DataQuery, DataQueryRequest, LoadingState } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
+import { runRequest } from 'app/features/query/state/runRequest';
+import { hasLegacyVariableSupport } from 'app/features/variables/guard';
 
 import { SceneObjectBase } from '../core/SceneObjectBase';
 
@@ -12,22 +16,26 @@ export interface QueryVariableState extends SceneVariableState {
 export class QueryVariable extends SceneObjectBase<QueryVariableState> implements SceneVariable {
   async update(ctx: VariableUpdateContext) {
     const { query } = this.state;
+    const range = this.getTimeRange();
 
     try {
       this.setState({ state: LoadingState.Loading });
 
-      const datasource = await getDataSourceSrv().get(query.datasource);
+      const dataSource = await getDataSourceSrv().get(query.datasource);
 
-      // We need to await the result from variableQueryRunner before moving on otherwise variables dependent on this
-      // variable will have the wrong current value as input
-      await new Promise((resolve, reject) => {
-        const subscription: Subscription = new Subscription();
-        const observer = variableQueryObserver(resolve, reject, subscription);
-        const responseSubscription = getVariableQueryRunner().getResponse(identifier).subscribe(observer);
-        subscription.add(responseSubscription);
+      const request: DataQueryRequest = {
+        app: CoreApp.Dashboard,
+        requestId: uuidv4(),
+        timezone: range.state.timeZone ?? 'utc',
+        range: range.state,
+        interval: '',
+        intervalMs: 0,
+        targets: [query],
+        scopedVars: {},
+        startTime: Date.now(),
+      };
 
-        getVariableQueryRunner().queueRequest({ identifier, datasource, searchFilter });
-      });
+      return runRequest(dataSource, request);
     } catch (err) {
       this.setState({ error: err, state: LoadingState.Error });
       throw err;

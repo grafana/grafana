@@ -1,3 +1,5 @@
+import { Observable } from 'rxjs';
+
 import { LoadingState } from '@grafana/data';
 import { VariableHide } from 'app/features/variables/types';
 
@@ -14,7 +16,7 @@ export interface SceneVariableState extends SceneObjectStatePlain {
 }
 
 export interface SceneVariable extends SceneObject<SceneVariableState> {
-  update(context: VariableUpdateContext): Promise<void>;
+  update(context: VariableUpdateContext): Observable<void>;
 }
 
 export interface VariableUpdateContext {
