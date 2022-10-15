@@ -16115,6 +16115,17 @@
       "schema": {
         "$ref": "#/definitions/UserProfileDTO"
       }
+    },
+    "validateDashboardResponse": {
+      "description": "",
+      "headers": {
+        "isValid": {
+          "type": "boolean"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
     }
   },
   "securityDefinitions": {

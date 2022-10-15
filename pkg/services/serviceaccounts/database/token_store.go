@@ -3,11 +3,12 @@ package database
 import (
 	"context"
 
+	"github.com/pkg/errors"
+
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/pkg/errors"
 )
 
 const maxRetrievedTokens = 300
@@ -17,7 +18,7 @@ func (s *ServiceAccountsStoreImpl) ListTokens(
 ) ([]apikey.APIKey, error) {
 	result := make([]apikey.APIKey, 0)
 	err := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
-		quotedUser := s.sqlStore.Dialect.Quote("user")
+		quotedUser := s.sqlStore.GetDialect().Quote("user")
 		sess := dbSession.Limit(maxRetrievedTokens, 0).Where("api_key.service_account_id IS NOT NULL")
 
 		if query.OrgID != nil {
@@ -89,7 +90,7 @@ func (s *ServiceAccountsStoreImpl) RevokeServiceAccountToken(ctx context.Context
 	rawSQL := "UPDATE api_key SET is_revoked = ? WHERE id=? and org_id=? and service_account_id=?"
 
 	return s.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		result, err := sess.Exec(rawSQL, s.sqlStore.Dialect.BooleanStr(true), tokenId, orgId, serviceAccountId)
+		result, err := sess.Exec(rawSQL, s.sqlStore.GetDialect().BooleanStr(true), tokenId, orgId, serviceAccountId)
 		if err != nil {
 			return err
 		}
