@@ -13,7 +13,13 @@ export interface SceneVariableState extends SceneObjectStatePlain {
   current: { value: string; text?: string };
 }
 
-export interface SceneVariable extends SceneObject<SceneVariableState> {}
+export interface SceneVariable extends SceneObject<SceneVariableState> {
+  update(context: VariableUpdateContext): Promise<void>;
+}
+
+export interface VariableUpdateContext {
+  searchFilter?: string;
+}
 
 export interface SceneVariableSetState extends SceneObjectStatePlain {
   variables: SceneVariable[];
