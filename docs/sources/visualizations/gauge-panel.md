@@ -53,10 +53,3 @@ Adjust the sizes of the gauge text.
 
 - **Title -** Enter a numeric value for the gauge title size.
 - **Value -** Enter a numeric value for the gauge value size.
-
-## Standard options
-
-Adjust various options.
-
-- **Min/Max -** If the values of min and max are additive inverse numbers (e.g. min=-500, max=500), then the neutral point of the gauge is put at 12 o'clock. Negative values are plotted to the left side, positive values to the right side.
-
