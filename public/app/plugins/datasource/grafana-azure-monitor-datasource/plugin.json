@@ -4,12 +4,6 @@
   "id": "grafana-azure-monitor-datasource",
   "category": "cloud",
   "includes": [
-    { "type": "dashboard", "name": "Azure / Insights / Storage Accounts", "path": "dashboards/storage.json" },
-    { "type": "dashboard", "name": "Azure / Insights / CosmosDB", "path": "dashboards/cosmosdb.json" },
-    { "type": "dashboard", "name": "Azure / Insights / Key Vaults", "path": "dashboards/keyvault.json" },
-    { "type": "dashboard", "name": "Azure / Insights / SQL Database", "path": "dashboards/sqldb.json" },
-    { "type": "dashboard", "name": "Azure / Insights / Data Explorer Clusters", "path": "dashboards/adx.json" },
-    { "type": "dashboard", "name": "Azure / Resources Overview", "path": "dashboards/arg.json" },
     { "type": "dashboard", "name": "Azure / Alert Consumption", "path": "dashboards/v1Alerts.json" },
     {
       "type": "dashboard",
@@ -18,14 +12,30 @@
     },
     {
       "type": "dashboard",
-      "name": "Azure / Insights / Virtual Machines by Workspace",
-      "path": "dashboards/vMInsightsWorkspace.json"
+      "name": "Azure / Insights / Applications Test Availability Geo Map",
+      "path": "dashboards/appInsightsGeoMap.json"
     },
+    { "type": "dashboard", "name": "Azure / Insights / CosmosDB", "path": "dashboards/cosmosdb.json" },
+    { "type": "dashboard", "name": "Azure / Insights / Data Explorer Clusters", "path": "dashboards/adx.json" },
+    { "type": "dashboard", "name": "Azure / Insights / Key Vaults", "path": "dashboards/keyvault.json" },
+    {
+      "type": "dashboard",
+      "name": "Azure / Insights / Networks",
+      "path": "dashboards/networkInsightsDashboard.json"
+    },
+    { "type": "dashboard", "name": "Azure / Insights / SQL Database", "path": "dashboards/sqldb.json" },
+    { "type": "dashboard", "name": "Azure / Insights / Storage Accounts", "path": "dashboards/storage.json" },
     {
       "type": "dashboard",
       "name": "Azure / Insights / Virtual Machines by Resource Group",
       "path": "dashboards/vMInsightsRG.json"
-    }
+    },
+    {
+      "type": "dashboard",
+      "name": "Azure / Insights / Virtual Machines by Workspace",
+      "path": "dashboards/vMInsightsWorkspace.json"
+    },
+    { "type": "dashboard", "name": "Azure / Resources Overview", "path": "dashboards/arg.json" }
   ],
 
   "info": {

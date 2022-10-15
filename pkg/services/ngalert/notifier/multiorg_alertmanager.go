@@ -3,7 +3,7 @@ package notifier
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strconv"
 	"sync"
@@ -85,7 +85,7 @@ func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore AlertingStore, orgSto
 			true,
 			cfg.UnifiedAlerting.HAPushPullInterval,
 			cfg.UnifiedAlerting.HAGossipInterval,
-			cluster.DefaultTcpTimeout,
+			cluster.DefaultTCPTimeout,
 			cluster.DefaultProbeTimeout,
 			cluster.DefaultProbeInterval,
 			nil,
@@ -245,7 +245,7 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 func (moa *MultiOrgAlertmanager) cleanupOrphanLocalOrgState(ctx context.Context,
 	activeOrganizations map[int64]struct{}) {
 	dataDir := filepath.Join(moa.settings.DataPath, workingDir)
-	files, err := ioutil.ReadDir(dataDir)
+	files, err := os.ReadDir(dataDir)
 	if err != nil {
 		moa.logger.Error("failed to list local working directory", "dir", dataDir, "err", err)
 		return

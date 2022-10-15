@@ -45,7 +45,7 @@ const QueryEditor: React.FC<AzureMonitorQueryEditorProps> = ({
     [onChange, onRunQuery]
   );
 
-  const query = usePreparedQuery(baseQuery, onQueryChange, setError);
+  const query = usePreparedQuery(baseQuery, onQueryChange);
 
   const subscriptionId = query.subscription || datasource.azureMonitorDatasource.defaultSubscriptionId;
   const variableOptionGroup = {

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"strings"
 	"testing"
@@ -50,12 +49,12 @@ func getRequest(t *testing.T, url string, expStatusCode int) *http.Response {
 	t.Helper()
 	// nolint:gosec
 	resp, err := http.Get(url)
+	require.NoError(t, err)
 	t.Cleanup(func() {
 		require.NoError(t, resp.Body.Close())
 	})
-	require.NoError(t, err)
 	if expStatusCode != resp.StatusCode {
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		t.Fatal(string(b))
 	}
@@ -72,7 +71,7 @@ func postRequest(t *testing.T, url string, body string, expStatusCode int) *http
 		require.NoError(t, resp.Body.Close())
 	})
 	if expStatusCode != resp.StatusCode {
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		t.Fatal(string(b))
 	}
@@ -81,7 +80,7 @@ func postRequest(t *testing.T, url string, body string, expStatusCode int) *http
 
 func getBody(t *testing.T, body io.ReadCloser) string {
 	t.Helper()
-	b, err := ioutil.ReadAll(body)
+	b, err := io.ReadAll(body)
 	require.NoError(t, err)
 	return string(b)
 }
@@ -217,7 +216,7 @@ func (a apiClient) PostRulesGroup(t *testing.T, folder string, group *apimodels.
 	defer func() {
 		_ = resp.Body.Close()
 	}()
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
 	return resp.StatusCode, string(b)
 }
@@ -231,7 +230,7 @@ func (a apiClient) GetRulesGroup(t *testing.T, folder string, group string) apim
 	defer func() {
 		_ = resp.Body.Close()
 	}()
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
 	require.Equal(t, http.StatusAccepted, resp.StatusCode)
 
@@ -249,7 +248,7 @@ func (a apiClient) GetAllRulesGroupInFolder(t *testing.T, folder string) apimode
 	defer func() {
 		_ = resp.Body.Close()
 	}()
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 

@@ -1,15 +1,23 @@
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
-import { BackgroundImageSize, CanvasElementOptions } from 'app/features/canvas';
+import { CanvasElementOptions } from 'app/features/canvas';
 import { ColorDimensionEditor, ResourceDimensionEditor } from 'app/features/dimensions/editors';
+import { BackgroundSizeEditor } from 'app/features/dimensions/editors/BackgroundSizeEditor';
 
 interface OptionSuppliers {
   addBackground: PanelOptionsSupplier<CanvasElementOptions>;
   addBorder: PanelOptionsSupplier<CanvasElementOptions>;
 }
 
+const getCategoryName = (str: string, type: string | undefined) => {
+  if (type !== 'frame' && type !== undefined) {
+    return [str + ` (${type})`];
+  }
+  return [str];
+};
+
 export const optionBuilder: OptionSuppliers = {
   addBackground: (builder, context) => {
-    const category = ['Background'];
+    const category = getCategoryName('Background', context.options?.type);
     builder
       .addCustomEditor({
         category,
@@ -33,25 +41,20 @@ export const optionBuilder: OptionSuppliers = {
           resourceType: 'image',
         },
       })
-      .addRadio({
+      .addCustomEditor({
         category,
+        id: 'background.size',
         path: 'background.size',
         name: 'Image size',
+        editor: BackgroundSizeEditor,
         settings: {
-          options: [
-            { value: BackgroundImageSize.Original, label: 'Original' },
-            { value: BackgroundImageSize.Contain, label: 'Contain' },
-            { value: BackgroundImageSize.Cover, label: 'Cover' },
-            { value: BackgroundImageSize.Fill, label: 'Fill' },
-            { value: BackgroundImageSize.Tile, label: 'Tile' },
-          ],
+          resourceType: 'image',
         },
-        defaultValue: BackgroundImageSize.Cover,
       });
   },
 
   addBorder: (builder, context) => {
-    const category = ['Border'];
+    const category = getCategoryName('Border', context.options?.type);
     builder.addSliderInput({
       category,
       path: 'border.width',

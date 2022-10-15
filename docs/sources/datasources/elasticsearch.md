@@ -128,7 +128,7 @@ Instead of hard-coding things like server, application and sensor name in your m
 Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data
 being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../variables/" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../dashboards/variables/" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### Query variable
@@ -180,7 +180,7 @@ Example dashboard:
 
 ## Annotations
 
-[Annotations]({{< relref "../dashboards/annotations/" >}}) allow you to overlay rich event information on top of graphs. You add annotation
+[Annotations]({{< relref "../dashboards/build-dashboards/annotate-visualizations" >}}) allow you to overlay rich event information on top of graphs. You add annotation
 queries via the Dashboard menu / Annotations view. Grafana can query any Elasticsearch index
 for annotation events.
 
@@ -194,7 +194,7 @@ for annotation events.
 
 ## Querying Logs
 
-Querying and displaying log data from Elasticsearch is available in [Explore]({{< relref "../explore/" >}}), and in the [logs panel]({{< relref "../visualizations/logs-panel/" >}}) in dashboards.
+Querying and displaying log data from Elasticsearch is available in [Explore]({{< relref "../explore/" >}}), and in the [logs panel]({{< relref "../panels-visualizations/visualizations/logs/" >}}) in dashboards.
 Select the Elasticsearch data source, and then optionally enter a lucene query to display your logs.
 
 When switching from a Prometheus or Loki data source in Explore, your query is translated to an Elasticsearch log query with a correct Lucene filter.

@@ -1,9 +1,9 @@
 import { cx, css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-import { useTheme } from '../../themes';
+import { useStyles2 } from '../../themes';
 
 export interface Props {
   grow?: boolean;
@@ -11,9 +11,8 @@ export interface Props {
 }
 
 /** @beta */
-export const InlineSegmentGroup: FC<Props> = ({ children, className, grow, ...htmlProps }) => {
-  const theme = useTheme();
-  const styles = getStyles(theme, grow);
+export const InlineSegmentGroup = ({ children, className, grow, ...htmlProps }: React.PropsWithChildren<Props>) => {
+  const styles = useStyles2((theme) => getStyles(theme, grow));
 
   return (
     <div className={cx(styles.container, className)} {...htmlProps}>
@@ -24,7 +23,7 @@ export const InlineSegmentGroup: FC<Props> = ({ children, className, grow, ...ht
 
 InlineSegmentGroup.displayName = 'InlineSegmentGroup';
 
-const getStyles = (theme: GrafanaTheme, grow?: boolean) => {
+const getStyles = (theme: GrafanaTheme2, grow?: boolean) => {
   return {
     container: css`
       display: flex;
@@ -33,7 +32,7 @@ const getStyles = (theme: GrafanaTheme, grow?: boolean) => {
       text-align: left;
       position: relative;
       flex: ${grow ? 1 : 0} 0 auto;
-      margin-bottom: ${theme.spacing.xs};
+      margin-bottom: ${theme.spacing(0.5)};
     `,
   };
 };

@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import React, { MouseEvent, useCallback, useState } from 'react';
 
-import { DataFrame, Field, GrafanaTheme, LinkModel } from '@grafana/data';
-import { ContextMenu, MenuGroup, MenuItem, stylesFactory, useTheme } from '@grafana/ui';
+import { DataFrame, Field, GrafanaTheme2, LinkModel } from '@grafana/data';
+import { ContextMenu, MenuGroup, MenuItem, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { Config } from './layout';
 import { EdgeDatum, NodeDatum } from './types';
@@ -109,7 +109,17 @@ function mapMenuItem<T extends NodeDatum | EdgeDatum>(item: T) {
         url={link.url}
         label={link.label}
         ariaLabel={link.ariaLabel}
-        onClick={link.onClick ? () => link.onClick?.(item) : undefined}
+        onClick={
+          link.onClick
+            ? (event) => {
+                if (!(event?.ctrlKey || event?.metaKey || event?.shiftKey)) {
+                  event?.preventDefault();
+                  event?.stopPropagation();
+                  link.onClick?.(item);
+                }
+              }
+            : undefined
+        }
         target={'_self'}
       />
     );
@@ -172,7 +182,7 @@ function NodeHeader(props: { node: NodeDatum; nodes: DataFrame }) {
 function EdgeHeader(props: { edge: EdgeDatum; edges: DataFrame }) {
   const index = props.edge.dataFrameRowIndex;
   const fields = getEdgeFields(props.edges);
-  const styles = getLabelStyles(useTheme());
+  const styles = getLabelStyles(useTheme2());
   const valueSource = fields.source?.values.get(index) || '';
   const valueTarget = fields.target?.values.get(index) || '';
 
@@ -193,31 +203,10 @@ function EdgeHeader(props: { edge: EdgeDatum; edges: DataFrame }) {
   );
 }
 
-export const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
-  return {
-    label: css`
-      label: Label;
-      line-height: 1.25;
-      margin: ${theme.spacing.formLabelMargin};
-      padding: ${theme.spacing.formLabelPadding};
-      color: ${theme.colors.textFaint};
-      font-size: ${theme.typography.size.sm};
-      font-weight: ${theme.typography.weight.semibold};
-    `,
-    value: css`
-      label: Value;
-      font-size: ${theme.typography.size.sm};
-      font-weight: ${theme.typography.weight.semibold};
-      color: ${theme.colors.formLabel};
-      margin-top: ${theme.spacing.xxs};
-      display: block;
-    `,
-  };
-});
 function Label(props: { field: Field; index: number }) {
   const { field, index } = props;
   const value = field.values.get(index) || '';
-  const styles = getLabelStyles(useTheme());
+  const styles = useStyles2(getLabelStyles);
 
   return (
     <div className={styles.label}>
@@ -226,3 +215,25 @@ function Label(props: { field: Field; index: number }) {
     </div>
   );
 }
+
+export const getLabelStyles = (theme: GrafanaTheme2) => {
+  return {
+    label: css`
+      label: Label;
+      line-height: 1.25;
+      margin-bottom: ${theme.spacing(0.5)};
+      padding-left: ${theme.spacing(0.25)};
+      color: ${theme.colors.text.disabled};
+      font-size: ${theme.typography.size.sm};
+      font-weight: ${theme.typography.fontWeightMedium};
+    `,
+    value: css`
+      label: Value;
+      font-size: ${theme.typography.size.sm};
+      font-weight: ${theme.typography.fontWeightMedium};
+      color: ${theme.colors.text.primary};
+      margin-top: ${theme.spacing(0.25)};
+      display: block;
+    `,
+  };
+};

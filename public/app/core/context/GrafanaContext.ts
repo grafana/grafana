@@ -5,12 +5,14 @@ import { LocationService } from '@grafana/runtime/src/services/LocationService';
 import { BackendSrv } from '@grafana/runtime/src/services/backendSrv';
 
 import { AppChromeService } from '../components/AppChrome/AppChromeService';
+import { KeybindingSrv } from '../services/keybindingSrv';
 
 export interface GrafanaContextType {
   backend: BackendSrv;
   location: LocationService;
   config: GrafanaConfig;
   chrome: AppChromeService;
+  keybindings: KeybindingSrv;
 }
 
 export const GrafanaContext = React.createContext<GrafanaContextType | undefined>(undefined);
@@ -20,6 +22,5 @@ export function useGrafana(): GrafanaContextType {
   if (!context) {
     throw new Error('No GrafanaContext found');
   }
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  return context as GrafanaContextType;
+  return context;
 }

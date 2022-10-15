@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { AnnotationQuery } from '@grafana/data';
-import { Input, AutoSizeInput, EditorField, EditorRow, EditorRows, EditorSwitch, Space } from '@grafana/ui';
+import { AutoSizeInput, EditorField, EditorRow, EditorRows, EditorSwitch, Input, Space } from '@grafana/ui';
 
 import { PromQueryCodeEditor } from '../querybuilder/components/PromQueryCodeEditor';
 import { PromQuery } from '../types';
@@ -25,6 +25,7 @@ export function AnnotationQueryEditor(props: Props) {
         <PromQueryCodeEditor
           {...props}
           query={query}
+          showExplain={false}
           onChange={(query) => {
             onAnnotationChange({
               ...annotation,

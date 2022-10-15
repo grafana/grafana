@@ -1,17 +1,16 @@
 import { css } from '@emotion/css';
 import React, { ReactNode } from 'react';
 
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-import { useTheme, stylesFactory } from '../../../themes';
+import { useStyles2 } from '../../../themes';
 
 interface Props {
   title: string | ReactNode;
 }
 
-export const TimeZoneTitle: React.FC<Props> = ({ title }) => {
-  const theme = useTheme();
-  const styles = getStyles(theme);
+export const TimeZoneTitle = ({ title }: Props) => {
+  const styles = useStyles2(getStyles);
 
   if (!title) {
     return null;
@@ -20,11 +19,11 @@ export const TimeZoneTitle: React.FC<Props> = ({ title }) => {
   return <span className={styles.title}>{title}</span>;
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     title: css`
-      font-weight: ${theme.typography.weight.regular};
+      font-weight: ${theme.typography.fontWeightRegular};
       text-overflow: ellipsis;
     `,
   };
-});
+};

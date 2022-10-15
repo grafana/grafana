@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -155,6 +156,8 @@ func (api *API) authorize(method, path string) web.Handler {
 	case http.MethodPost + "/api/alertmanager/grafana/config/api/v1/alerts":
 		// additional authorization is done in the request handler
 		eval = ac.EvalAny(ac.EvalPermission(ac.ActionAlertingNotificationsWrite))
+	case http.MethodGet + "/api/alertmanager/grafana/config/api/v1/receivers":
+		eval = ac.EvalPermission(ac.ActionAlertingNotificationsRead)
 	case http.MethodPost + "/api/alertmanager/grafana/config/api/v1/receivers/test":
 		fallback = middleware.ReqEditorRole
 		eval = ac.EvalPermission(ac.ActionAlertingNotificationsRead)
@@ -171,6 +174,16 @@ func (api *API) authorize(method, path string) web.Handler {
 	case http.MethodPost + "/api/alertmanager/{DatasourceUID}/config/api/v1/receivers/test":
 		eval = ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":DatasourceUID")))
 
+	case http.MethodGet + "/api/v1/ngalert":
+		// let user with any alerting permission access this API
+		eval = ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingInstanceRead),
+			ac.EvalPermission(ac.ActionAlertingInstancesExternalRead),
+			ac.EvalPermission(ac.ActionAlertingRuleRead),
+			ac.EvalPermission(ac.ActionAlertingRuleExternalRead),
+			ac.EvalPermission(ac.ActionAlertingNotificationsRead),
+			ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead),
+		)
 	// Raw Alertmanager Config Paths
 	case http.MethodDelete + "/api/v1/ngalert/admin_config",
 		http.MethodGet + "/api/v1/ngalert/admin_config",
@@ -242,7 +255,7 @@ func authorizeAccessToRuleGroup(rules []*ngmodels.AlertRule, evaluator func(eval
 // NOTE: if there are rules for deletion, and the user does not have access to data sources that a rule uses, the rule is removed from the list.
 // If the user is not authorized to perform the changes the function returns ErrAuthorization with a description of what action is not authorized.
 // Return changes that the user is authorized to perform or ErrAuthorization
-func authorizeRuleChanges(change *changes, evaluator func(evaluator ac.Evaluator) bool) error {
+func authorizeRuleChanges(change *store.GroupDelta, evaluator func(evaluator ac.Evaluator) bool) error {
 	namespaceScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(change.GroupKey.NamespaceUID)
 
 	rules, ok := change.AffectedGroups[change.GroupKey]

@@ -1,24 +1,28 @@
 import React, { useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
+import { config, isFetchError } from '@grafana/runtime';
 import { Drawer, Spinner, Tab, TabsBar } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { jsonDiff } from '../VersionHistory/utils';
 
+import DashboardValidation from './DashboardValidation';
 import { SaveDashboardDiff } from './SaveDashboardDiff';
 import { SaveDashboardErrorProxy } from './SaveDashboardErrorProxy';
 import { SaveDashboardAsForm } from './forms/SaveDashboardAsForm';
 import { SaveDashboardForm } from './forms/SaveDashboardForm';
 import { SaveProvisionedDashboardForm } from './forms/SaveProvisionedDashboardForm';
+import { SaveToStorageForm } from './forms/SaveToStorageForm';
 import { SaveDashboardData, SaveDashboardModalProps, SaveDashboardOptions } from './types';
 import { useDashboardSave } from './useDashboardSave';
 
 export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCopy }: SaveDashboardModalProps) => {
   const [options, setOptions] = useState<SaveDashboardOptions>({});
 
-  const isProvisioned = dashboard.meta.provisioned;
-  const isNew = dashboard.version === 0;
+  const isFromStorage = config.featureToggles.dashboardsFromStorage && dashboard.uid?.indexOf('/') > 0;
+  const isProvisioned = dashboard.meta.provisioned && !isFromStorage;
+  const isNew = dashboard.version === 0 && !isFromStorage;
 
   const previous = useAsync(async () => {
     if (isNew) {
@@ -65,7 +69,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
       }
     : onDismiss;
 
-  const renderBody = () => {
+  const renderSaveBody = () => {
     if (showDiff) {
       return <SaveDashboardDiff diff={data.diff} oldValue={previous.value} newValue={data.clone} />;
     }
@@ -75,6 +79,22 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
         <div>
           <Spinner />
         </div>
+      );
+    }
+
+    if (isFromStorage) {
+      return (
+        <SaveToStorageForm
+          dashboard={dashboard}
+          saveModel={data}
+          onCancel={onDismiss}
+          onSuccess={onSuccess}
+          onSubmit={onDashboardSave}
+          options={options}
+          onOptionsChange={setOptions}
+          isNew={isNew}
+          isCopy={isCopy}
+        />
       );
     }
 
@@ -107,7 +127,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
     );
   };
 
-  if (state.error) {
+  if (state.error && isFetchError(state.error) && !state.error.isHandled) {
     return (
       <SaveDashboardErrorProxy
         error={state.error}
@@ -134,13 +154,17 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
       tabs={
         <TabsBar>
           <Tab label={'Details'} active={!showDiff} onChangeTab={() => setShowDiff(false)} />
-          <Tab label={'Changes'} active={showDiff} onChangeTab={() => setShowDiff(true)} counter={data.diffCount} />
+          {data.hasChanges && (
+            <Tab label={'Changes'} active={showDiff} onChangeTab={() => setShowDiff(true)} counter={data.diffCount} />
+          )}
         </TabsBar>
       }
       expandable
       scrollableContent
     >
-      {renderBody()}
+      {renderSaveBody()}
+
+      {config.featureToggles.showDashboardValidationWarnings && <DashboardValidation dashboard={dashboard} />}
     </Drawer>
   );
 };

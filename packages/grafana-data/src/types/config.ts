@@ -5,9 +5,8 @@ import { GrafanaTheme2 } from '../themes';
 import { DataSourceInstanceSettings } from './datasource';
 import { FeatureToggles } from './featureToggles.gen';
 import { PanelPluginMeta } from './panel';
-import { GrafanaTheme } from './theme';
 
-import { NavLinkDTO, OrgRole } from '.';
+import { GrafanaTheme, IconName, NavLinkDTO, OrgRole } from '.';
 
 /**
  * Describes the build information that will be available via the Grafana configuration.
@@ -73,6 +72,10 @@ export interface GrafanaJavascriptAgentConfig {
   apiKey: string;
 }
 
+export interface UnifiedAlertingConfig {
+  minInterval: string;
+}
+
 /**
  * Describes the plugins that should be preloaded prior to start Grafana.
  *
@@ -101,7 +104,7 @@ export type OAuth =
  *
  * @public
  */
-export type OAuthSettings = Partial<Record<OAuth, { name: string; icon?: string }>>;
+export type OAuthSettings = Partial<Record<OAuth, { name: string; icon?: IconName }>>;
 
 /** Current user info included in bootData
  *
@@ -150,6 +153,7 @@ export interface GrafanaConfig {
   isPublicDashboardView: boolean;
   datasources: { [str: string]: DataSourceInstanceSettings };
   panels: { [key: string]: PanelPluginMeta };
+  auth: AuthSettings;
   minRefreshInterval: string;
   appSubUrl: string;
   windowTitlePrefix: string;
@@ -173,21 +177,21 @@ export interface GrafanaConfig {
   profileEnabled: boolean;
   ldapEnabled: boolean;
   sigV4AuthEnabled: boolean;
+  azureAuthEnabled: boolean;
   samlEnabled: boolean;
   autoAssignOrg: boolean;
   verifyEmailEnabled: boolean;
   oauth: OAuthSettings;
   rbacEnabled: boolean;
-  rbacBuiltInRoleAssignmentEnabled: boolean;
   disableUserSignUp: boolean;
   loginHint: string;
   passwordHint: string;
   loginError?: string;
-  navTree: any;
   viewersCanEdit: boolean;
   editorsCanAdmin: boolean;
   disableSanitizeHtml: boolean;
   liveEnabled: boolean;
+  /** @deprecated Use `theme2` instead. */
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
   pluginsToPreload: PreloadPlugin[];
@@ -201,12 +205,21 @@ export interface GrafanaConfig {
   geomapDefaultBaseLayer?: MapLayerOptions;
   geomapDisableCustomBaseLayer?: boolean;
   unifiedAlertingEnabled: boolean;
+  unifiedAlerting: UnifiedAlertingConfig;
   angularSupportEnabled: boolean;
   feedbackLinksEnabled: boolean;
   secretsManagerPluginEnabled: boolean;
   googleAnalyticsId: string | undefined;
+  googleAnalytics4Id: string | undefined;
   rudderstackWriteKey: string | undefined;
   rudderstackDataPlaneUrl: string | undefined;
   rudderstackSdkUrl: string | undefined;
   rudderstackConfigUrl: string | undefined;
+}
+
+export interface AuthSettings {
+  OAuthSkipOrgRoleUpdateSync?: boolean;
+  SAMLSkipOrgRoleSync?: boolean;
+  LDAPSkipOrgRoleSync?: boolean;
+  DisableSyncLock?: boolean;
 }

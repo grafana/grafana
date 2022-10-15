@@ -41,7 +41,7 @@ func TestUserAuthToken(t *testing.T) {
 		userToken := createToken()
 
 		t.Run("Can count active tokens", func(t *testing.T) {
-			count, err := ctx.tokenService.ActiveTokenCount(context.Background())
+			count, err := ctx.activeTokenService.ActiveTokenCount(context.Background())
 			require.Nil(t, err)
 			require.Equal(t, int64(1), count)
 		})
@@ -209,7 +209,7 @@ func TestUserAuthToken(t *testing.T) {
 			require.Nil(t, notGood)
 
 			t.Run("should not find active token when expired", func(t *testing.T) {
-				count, err := ctx.tokenService.ActiveTokenCount(context.Background())
+				count, err := ctx.activeTokenService.ActiveTokenCount(context.Background())
 				require.Nil(t, err)
 				require.Equal(t, int64(0), count)
 			})
@@ -534,62 +534,86 @@ func createTestContext(t *testing.T) *testContext {
 	maxInactiveDurationVal, _ := time.ParseDuration("168h")
 	maxLifetimeDurationVal, _ := time.ParseDuration("720h")
 	sqlstore := sqlstore.InitTestDB(t)
+
+	cfg := &setting.Cfg{
+		LoginMaxInactiveLifetime:     maxInactiveDurationVal,
+		LoginMaxLifetime:             maxLifetimeDurationVal,
+		TokenRotationIntervalMinutes: 10,
+	}
+
 	tokenService := &UserAuthTokenService{
 		SQLStore: sqlstore,
-		Cfg: &setting.Cfg{
-			LoginMaxInactiveLifetime:     maxInactiveDurationVal,
-			LoginMaxLifetime:             maxLifetimeDurationVal,
-			TokenRotationIntervalMinutes: 10,
-		},
-		log: log.New("test-logger"),
+		Cfg:      cfg,
+		log:      log.New("test-logger"),
+	}
+
+	activeTokenService := &ActiveAuthTokenService{
+		cfg:      cfg,
+		sqlStore: sqlstore,
 	}
 
 	return &testContext{
-		sqlstore:     sqlstore,
-		tokenService: tokenService,
+		sqlstore:           sqlstore,
+		tokenService:       tokenService,
+		activeTokenService: activeTokenService,
 	}
 }
 
 type testContext struct {
-	sqlstore     *sqlstore.SQLStore
-	tokenService *UserAuthTokenService
+	sqlstore           *sqlstore.SQLStore
+	tokenService       *UserAuthTokenService
+	activeTokenService *ActiveAuthTokenService
 }
 
 func (c *testContext) getAuthTokenByID(id int64) (*userAuthToken, error) {
-	sess := c.sqlstore.NewSession(context.Background())
-	var t userAuthToken
-	found, err := sess.ID(id).Get(&t)
-	if err != nil || !found {
-		return nil, err
-	}
+	var res *userAuthToken
+	err := c.sqlstore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		var t userAuthToken
+		found, err := sess.ID(id).Get(&t)
+		if err != nil || !found {
+			return err
+		}
 
-	return &t, nil
+		res = &t
+		return nil
+	})
+
+	return res, err
 }
 
 func (c *testContext) markAuthTokenAsSeen(id int64) (bool, error) {
-	sess := c.sqlstore.NewSession(context.Background())
-	res, err := sess.Exec("UPDATE user_auth_token SET auth_token_seen = ? WHERE id = ?", c.sqlstore.Dialect.BooleanStr(true), id)
-	if err != nil {
-		return false, err
-	}
+	hasRowsAffected := false
+	err := c.sqlstore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		res, err := sess.Exec("UPDATE user_auth_token SET auth_token_seen = ? WHERE id = ?", c.sqlstore.Dialect.BooleanStr(true), id)
+		if err != nil {
+			return err
+		}
 
-	rowsAffected, err := res.RowsAffected()
-	if err != nil {
-		return false, err
-	}
-	return rowsAffected == 1, nil
+		rowsAffected, err := res.RowsAffected()
+		if err != nil {
+			return err
+		}
+		hasRowsAffected = rowsAffected == 1
+		return nil
+	})
+	return hasRowsAffected, err
 }
 
 func (c *testContext) updateRotatedAt(id, rotatedAt int64) (bool, error) {
-	sess := c.sqlstore.NewSession(context.Background())
-	res, err := sess.Exec("UPDATE user_auth_token SET rotated_at = ? WHERE id = ?", rotatedAt, id)
-	if err != nil {
-		return false, err
-	}
+	hasRowsAffected := false
+	err := c.sqlstore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		res, err := sess.Exec("UPDATE user_auth_token SET rotated_at = ? WHERE id = ?", rotatedAt, id)
+		if err != nil {
+			return err
+		}
 
-	rowsAffected, err := res.RowsAffected()
-	if err != nil {
-		return false, err
-	}
-	return rowsAffected == 1, nil
+		rowsAffected, err := res.RowsAffected()
+		if err != nil {
+			return err
+		}
+
+		hasRowsAffected = rowsAffected == 1
+		return nil
+	})
+	return hasRowsAffected, err
 }

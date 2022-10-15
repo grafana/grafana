@@ -52,5 +52,10 @@ func (sm *SecretsManagerGRPCClient) RenameSecret(ctx context.Context, req *Renam
 	return sm.SecretsManagerClient.RenameSecret(ctx, req)
 }
 
+// Get all items from the store
+func (sm *SecretsManagerGRPCClient) GetAllSecrets(ctx context.Context, req *GetAllSecretsRequest, opts ...grpc.CallOption) (*GetAllSecretsResponse, error) {
+	return sm.SecretsManagerClient.GetAllSecrets(ctx, req)
+}
+
 var _ SecretsManagerClient = &SecretsManagerGRPCClient{}
 var _ plugin.GRPCPlugin = &SecretsManagerGRPCPlugin{}

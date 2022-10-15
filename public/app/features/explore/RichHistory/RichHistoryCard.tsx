@@ -49,8 +49,8 @@ export type Props<T extends DataQuery = DataQuery> = ConnectedProps<typeof conne
 
 const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
   /* Hard-coded value so all buttons and icons on right side of card are aligned */
-  const rigtColumnWidth = '240px';
-  const rigtColumnContentWidth = '170px';
+  const rightColumnWidth = '240px';
+  const rightColumnContentWidth = '170px';
 
   /* If datasource was removed, card will have inactive color */
   const cardColor = theme.colors.bg2;
@@ -90,7 +90,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
       font-weight: ${theme.typography.weight.semibold};
     `,
     queryActionButtons: css`
-      max-width: ${rigtColumnContentWidth};
+      max-width: ${rightColumnContentWidth};
       display: flex;
       justify-content: flex-end;
       font-size: ${theme.typography.size.base};
@@ -100,7 +100,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
     `,
     queryContainer: css`
       font-weight: ${theme.typography.weight.semibold};
-      width: calc(100% - ${rigtColumnWidth});
+      width: calc(100% - ${rightColumnWidth});
     `,
     queryRow: css`
       border-top: 1px solid ${theme.colors.border1};
@@ -112,7 +112,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
       }
     `,
     updateCommentContainer: css`
-      width: calc(100% + ${rigtColumnWidth});
+      width: calc(100% + ${rightColumnWidth});
       margin-top: ${theme.spacing.sm};
     `,
     comment: css`
@@ -130,7 +130,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
       width: 100%;
     `,
     runButton: css`
-      max-width: ${rigtColumnContentWidth};
+      max-width: ${rightColumnContentWidth};
       display: flex;
       justify-content: flex-end;
       button {

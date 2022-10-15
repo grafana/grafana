@@ -4,13 +4,13 @@ import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
-import { getGrafanaStorage } from 'app/features/storage/storage';
 import { DashboardDTO, FolderInfo, PermissionLevelString, ThunkResult } from 'app/types';
 
 import { LibraryElementExport } from '../../dashboard/components/DashExportModal/DashboardExporter';
 import { getLibraryPanel } from '../../library-panels/state/api';
 import { LibraryElementDTO, LibraryElementKind } from '../../library-panels/types';
 import { DashboardSearchHit } from '../../search/types';
+import { DeleteDashboardResponse } from '../types';
 
 import {
   clearDashboard,
@@ -267,10 +267,6 @@ export function deleteFoldersAndDashboards(folderUids: string[], dashboardUids: 
 export function saveDashboard(options: SaveDashboardCommand) {
   dashboardWatcher.ignoreNextSave();
 
-  if (options.dashboard.uid.indexOf('/') > 0) {
-    return getGrafanaStorage().saveDashboard(options);
-  }
-
   return getBackendSrv().post('/api/dashboards/db/', {
     dashboard: options.dashboard,
     message: options.message ?? '',
@@ -280,11 +276,7 @@ export function saveDashboard(options: SaveDashboardCommand) {
 }
 
 function deleteFolder(uid: string, showSuccessAlert: boolean) {
-  return getBackendSrv().request({
-    method: 'DELETE',
-    url: `/api/folders/${uid}?forceDeleteRules=false`,
-    showSuccessAlert: showSuccessAlert,
-  });
+  return getBackendSrv().delete(`/api/folders/${uid}?forceDeleteRules=false`, undefined, { showSuccessAlert });
 }
 
 export function createFolder(payload: any) {
@@ -309,11 +301,7 @@ export function getFolderById(id: number): Promise<{ id: number; title: string }
 }
 
 export function deleteDashboard(uid: string, showSuccessAlert: boolean) {
-  return getBackendSrv().request({
-    method: 'DELETE',
-    url: `/api/dashboards/uid/${uid}`,
-    showSuccessAlert: showSuccessAlert,
-  });
+  return getBackendSrv().delete<DeleteDashboardResponse>(`/api/dashboards/uid/${uid}`, { showSuccessAlert });
 }
 
 function executeInOrder(tasks: any[]) {

@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import React, { HTMLProps, useEffect } from 'react';
-import { useForm, Mode, DeepPartial, UnpackNestedValue, SubmitHandler } from 'react-hook-form';
+import { useForm, Mode, DeepPartial, UnpackNestedValue, SubmitHandler, FieldValues } from 'react-hook-form';
 
 import { FormAPI } from '../../types';
 
-interface FormProps<T> extends Omit<HTMLProps<HTMLFormElement>, 'onSubmit'> {
+interface FormProps<T extends FieldValues> extends Omit<HTMLProps<HTMLFormElement>, 'onSubmit' | 'children'> {
   validateOn?: Mode;
   validateOnMount?: boolean;
   validateFieldsOnMount?: string | string[];
@@ -15,7 +15,7 @@ interface FormProps<T> extends Omit<HTMLProps<HTMLFormElement>, 'onSubmit'> {
   maxWidth?: number | 'none';
 }
 
-export function Form<T>({
+export function Form<T extends FieldValues>({
   defaultValues,
   onSubmit,
   validateOnMount = false,

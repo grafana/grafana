@@ -19,7 +19,6 @@ import { getDashboardSrv } from '../../../features/dashboard/services/DashboardS
 import { applyFilterFromTable } from '../../../features/variables/adhoc/actions';
 import { dispatch } from '../../../store/store';
 
-import { getFooterCells } from './footer';
 import { PanelOptions } from './models.gen';
 
 interface Props extends PanelProps<PanelOptions> {}
@@ -97,7 +96,6 @@ export class TablePanel extends Component<Props> {
 
   renderTable(frame: DataFrame, width: number, height: number) {
     const { options } = this.props;
-    const footerValues = options.footer?.show ? getFooterCells(frame, options.footer) : undefined;
 
     return (
       <Table
@@ -111,7 +109,7 @@ export class TablePanel extends Component<Props> {
         onSortByChange={this.onSortByChange}
         onColumnResize={this.onColumnResize}
         onCellFilterAdded={this.onCellFilterAdded}
-        footerValues={footerValues}
+        footerOptions={options.footer}
         enablePagination={options.footer?.enablePagination}
       />
     );
@@ -133,7 +131,7 @@ export class TablePanel extends Component<Props> {
     }
 
     if (count > 1) {
-      const inputHeight = config.theme.spacing.formInputHeight;
+      const inputHeight = config.theme2.spacing.gridSize * config.theme2.components.height.md;
       const padding = 8 * 2;
       const currentIndex = this.getCurrentFrameIndex(frames, options);
       const names = frames.map((frame, index) => {

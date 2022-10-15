@@ -2,7 +2,19 @@
   "type": "datasource",
   "name": "-- Dashboard --",
   "id": "dashboard",
-
   "builtIn": true,
+
+  "info": {
+    "description": "TODO",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "public/img/icn-datasource.svg",
+      "large": "public/img/icn-datasource.svg"
+    }
+  },
+
   "metrics": true
 }

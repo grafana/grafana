@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func TestIntegrationStatsDataAccess(t *testing.T) {
@@ -28,7 +30,7 @@ func TestIntegrationStatsDataAccess(t *testing.T) {
 		assert.Equal(t, int64(3), query.Result.Admins)
 		assert.Equal(t, int64(0), query.Result.LibraryPanels)
 		assert.Equal(t, int64(0), query.Result.LibraryVariables)
-		assert.Equal(t, int64(1), query.Result.APIKeys)
+		assert.Equal(t, int64(0), query.Result.APIKeys)
 	})
 
 	t.Run("Get system user count stats should not results in error", func(t *testing.T) {
@@ -78,58 +80,34 @@ func populateDB(t *testing.T, sqlStore *SQLStore) {
 		users[i] = *user
 	}
 
-	// get 1st user's organisation
-	getOrgByIdQuery := &models.GetOrgByIdQuery{Id: users[0].OrgID}
-	err := sqlStore.GetOrgById(context.Background(), getOrgByIdQuery)
-	require.NoError(t, err)
-	org := getOrgByIdQuery.Result
-
 	// add 2nd user as editor
 	cmd := &models.AddOrgUserCommand{
-		OrgId:  org.Id,
+		OrgId:  users[0].OrgID,
 		UserId: users[1].ID,
-		Role:   models.ROLE_EDITOR,
+		Role:   org.RoleEditor,
 	}
-	err = sqlStore.AddOrgUser(context.Background(), cmd)
+	err := sqlStore.AddOrgUser(context.Background(), cmd)
 	require.NoError(t, err)
 
 	// add 3rd user as viewer
 	cmd = &models.AddOrgUserCommand{
-		OrgId:  org.Id,
+		OrgId:  users[0].OrgID,
 		UserId: users[2].ID,
-		Role:   models.ROLE_VIEWER,
+		Role:   org.RoleViewer,
 	}
 	err = sqlStore.AddOrgUser(context.Background(), cmd)
 	require.NoError(t, err)
-
-	// get 2nd user's organisation
-	getOrgByIdQuery = &models.GetOrgByIdQuery{Id: users[1].OrgID}
-	err = sqlStore.GetOrgById(context.Background(), getOrgByIdQuery)
-	require.NoError(t, err)
-	org = getOrgByIdQuery.Result
 
 	// add 1st user as admin
 	cmd = &models.AddOrgUserCommand{
-		OrgId:  org.Id,
+		OrgId:  users[1].OrgID,
 		UserId: users[0].ID,
-		Role:   models.ROLE_ADMIN,
+		Role:   org.RoleAdmin,
 	}
 	err = sqlStore.AddOrgUser(context.Background(), cmd)
-	require.NoError(t, err)
-
-	// update 1st user last seen at
-	updateUserLastSeenAtCmd := &models.UpdateUserLastSeenAtCommand{
-		UserId: users[0].ID,
-	}
-	err = sqlStore.UpdateUserLastSeenAt(context.Background(), updateUserLastSeenAtCmd)
 	require.NoError(t, err)
 
 	// force renewal of user stats
 	err = sqlStore.updateUserRoleCountsIfNecessary(context.Background(), true)
-	require.NoError(t, err)
-
-	// add 1st api key
-	addAPIKeyCmd := &models.AddApiKeyCommand{OrgId: org.Id, Name: "Test key 1", Key: "secret-key", Role: models.ROLE_VIEWER}
-	err = sqlStore.AddAPIKey(context.Background(), addAPIKeyCmd)
 	require.NoError(t, err)
 }

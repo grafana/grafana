@@ -1,6 +1,18 @@
 package encryption
 
-import "context"
+import (
+	"context"
+	"crypto/sha256"
+
+	"golang.org/x/crypto/pbkdf2"
+)
+
+const (
+	SaltLength = 8
+
+	AesCfb = "aes-cfb"
+	AesGcm = "aes-gcm"
+)
 
 // Internal must not be used for general purpose encryption.
 // This service is used as an internal component for envelope encryption
@@ -8,11 +20,29 @@ import "context"
 //
 // Unless there is any specific reason, you must use secrets.Service instead.
 type Internal interface {
-	Encrypt(ctx context.Context, payload []byte, secret string) ([]byte, error)
-	Decrypt(ctx context.Context, payload []byte, secret string) ([]byte, error)
+	Cipher
+	Decipher
 
 	EncryptJsonData(ctx context.Context, kv map[string]string, secret string) (map[string][]byte, error)
 	DecryptJsonData(ctx context.Context, sjd map[string][]byte, secret string) (map[string]string, error)
 
 	GetDecryptedValue(ctx context.Context, sjd map[string][]byte, key string, fallback string, secret string) string
+}
+
+type Cipher interface {
+	Encrypt(ctx context.Context, payload []byte, secret string) ([]byte, error)
+}
+
+type Decipher interface {
+	Decrypt(ctx context.Context, payload []byte, secret string) ([]byte, error)
+}
+
+type Provider interface {
+	ProvideCiphers() map[string]Cipher
+	ProvideDeciphers() map[string]Decipher
+}
+
+// KeyToBytes key length needs to be 32 bytes
+func KeyToBytes(secret, salt string) ([]byte, error) {
+	return pbkdf2.Key([]byte(secret), []byte(salt), 10000, 32, sha256.New), nil
 }

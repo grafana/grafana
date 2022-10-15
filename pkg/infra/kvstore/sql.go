@@ -66,7 +66,7 @@ func (kv *kvStoreSQL) Set(ctx context.Context, orgId int64, namespace string, ke
 		item.Updated = time.Now()
 
 		if has {
-			_, err = dbSession.ID(item.Id).Update(&item)
+			_, err = dbSession.Exec("UPDATE kv_store SET value = ?, updated = ? WHERE id = ?", item.Value, item.Updated, item.Id)
 			if err != nil {
 				kv.log.Debug("error updating kvstore value", "orgId", orgId, "namespace", namespace, "key", key, "value", value, "err", err)
 			} else {

@@ -1,7 +1,7 @@
 package frontendlogging
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -39,7 +39,7 @@ func ReadSourceMapFromFS(dir string, path string) ([]byte, error) {
 			logger.Error("Failed to close source map file", "err", err)
 		}
 	}()
-	return ioutil.ReadAll(file)
+	return io.ReadAll(file)
 }
 
 type SourceMapStore struct {

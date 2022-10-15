@@ -3,6 +3,8 @@ package models
 import (
 	"errors"
 	"time"
+
+	"github.com/grafana/grafana/pkg/services/org"
 )
 
 // Typed errors
@@ -42,11 +44,6 @@ type DeleteOrgCommand struct {
 	Id int64
 }
 
-type UpdateOrgCommand struct {
-	Name  string
-	OrgId int64
-}
-
 type UpdateOrgAddressCommand struct {
 	OrgId int64
 	Address
@@ -84,7 +81,7 @@ type OrgDetailsDTO struct {
 }
 
 type UserOrgDTO struct {
-	OrgId int64    `json:"orgId"`
-	Name  string   `json:"name"`
-	Role  RoleType `json:"role"`
+	OrgId int64        `json:"orgId"`
+	Name  string       `json:"name"`
+	Role  org.RoleType `json:"role"`
 }

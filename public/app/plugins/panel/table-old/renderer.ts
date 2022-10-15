@@ -12,7 +12,7 @@ import {
   TimeZone,
   dateTimeFormatISO,
   dateTimeFormat,
-  GrafanaTheme,
+  GrafanaTheme2,
 } from '@grafana/data';
 import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
@@ -29,7 +29,7 @@ export class TableRenderer {
     private timeZone: TimeZone,
     private sanitize: (v: any) => any,
     private templateSrv: TemplateSrv = getTemplateSrv(),
-    private theme: GrafanaTheme
+    private theme: GrafanaTheme2
   ) {
     this.initColumns();
   }

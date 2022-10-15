@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-imports */
 import {
   Action,
   AsyncThunk,
@@ -14,7 +15,7 @@ import {
 import { ThunkAction, ThunkDispatch as GenericThunkDispatch } from 'redux-thunk';
 
 import type { createRootReducer } from 'app/core/reducers/root';
-import { configureStore } from 'app/store/configureStore';
+import { AppDispatch, RootState } from 'app/store/configureStore';
 
 export type StoreState = ReturnType<ReturnType<typeof createRootReducer>>;
 
@@ -26,13 +27,13 @@ export type ThunkResult<R> = ThunkAction<R, StoreState, undefined, PayloadAction
 export type ThunkDispatch = GenericThunkDispatch<StoreState, undefined, Action>;
 
 // Typed useDispatch & useSelector hooks
-export type AppDispatch = ReturnType<typeof configureStore>['dispatch'];
-export const useDispatch = () => useDispatchUntyped<AppDispatch>();
-export const useSelector: TypedUseSelectorHook<StoreState> = useSelectorUntyped;
+export const useDispatch: () => AppDispatch = useDispatchUntyped;
+export const useSelector: TypedUseSelectorHook<RootState> = useSelectorUntyped;
 
 type DefaultThunkApiConfig = { dispatch: AppDispatch; state: StoreState };
-export const createAsyncThunk = <Returned, ThunkArg = void, ThunkApiConfig = DefaultThunkApiConfig>(
+export const createAsyncThunk = <Returned, ThunkArg = void, ThunkApiConfig extends {} = DefaultThunkApiConfig>(
   typePrefix: string,
   payloadCreator: AsyncThunkPayloadCreator<Returned, ThunkArg, ThunkApiConfig>,
   options?: AsyncThunkOptions<ThunkArg, ThunkApiConfig>
-): AsyncThunk<Returned, ThunkArg, ThunkApiConfig> => createAsyncThunkUntyped(typePrefix, payloadCreator, options);
+): AsyncThunk<Returned, ThunkArg, ThunkApiConfig> =>
+  createAsyncThunkUntyped<Returned, ThunkArg, ThunkApiConfig>(typePrefix, payloadCreator, options);

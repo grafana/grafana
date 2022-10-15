@@ -1,20 +1,27 @@
-import { mount, shallow } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { act } from 'react-dom/test-utils';
 
-import { ExploreMode, LoadingState, PanelData, toUtc, TimeRange } from '@grafana/data';
+import { LoadingState, PanelData, toUtc, TimeRange, HistoryItem } from '@grafana/data';
+import { TemplateSrv } from '@grafana/runtime';
 
+import LokiLanguageProvider from '../LanguageProvider';
 import { LokiDatasource } from '../datasource';
-import LokiLanguageProvider from '../language_provider';
-import { makeMockLokiDatasource } from '../mocks';
+import { createLokiDatasource } from '../mocks';
 import { LokiQuery } from '../types';
 
-import { LokiExploreQueryEditor } from './LokiExploreQueryEditor';
-import { LokiOptionFields } from './LokiOptionFields';
+import { LokiExploreQueryEditor, Props } from './LokiExploreQueryEditor';
 
-const setup = (renderMethod: any, propOverrides?: object) => {
-  const datasource: LokiDatasource = makeMockLokiDatasource({});
+const setup = () => {
+  const mockTemplateSrv: TemplateSrv = {
+    getVariables: jest.fn(),
+    replace: jest.fn(),
+    containsTemplate: jest.fn(),
+    updateTimeRange: jest.fn(),
+  };
+  const datasource: LokiDatasource = createLokiDatasource(mockTemplateSrv);
   datasource.languageProvider = new LokiLanguageProvider(datasource);
+  jest.spyOn(datasource, 'metadataRequest').mockResolvedValue([]);
+
   const onRunQuery = jest.fn();
   const onChange = jest.fn();
   const query: LokiQuery = { expr: '', refId: 'A', maxLines: 0 };
@@ -58,22 +65,19 @@ const setup = (renderMethod: any, propOverrides?: object) => {
       },
     },
   };
-  const history: any[] = [];
-  const exploreMode: ExploreMode = ExploreMode.Logs;
+  const history: Array<HistoryItem<LokiQuery>> = [];
 
-  const props: any = {
+  const props: Props = {
     query,
     data,
     range,
     datasource,
-    exploreMode,
     history,
     onChange,
     onRunQuery,
   };
 
-  Object.assign(props, { ...props, ...propOverrides });
-  return renderMethod(<LokiExploreQueryEditor {...props} />);
+  render(<LokiExploreQueryEditor {...props} />);
 };
 
 describe('LokiExploreQueryEditor', () => {
@@ -87,16 +91,12 @@ describe('LokiExploreQueryEditor', () => {
     window.getSelection = originalGetSelection;
   });
 
-  it('should render component', () => {
-    const wrapper = setup(shallow);
-    expect(wrapper).toMatchSnapshot();
+  it('should render component without throwing an error', () => {
+    expect(() => setup()).not.toThrow();
   });
 
   it('should render LokiQueryField with ExtraFieldElement when ExploreMode is set to Logs', async () => {
-    // @ts-ignore strict null error TS2345: Argument of type '() => Promise<void>' is not assignable to parameter of type '() => void | undefined'.
-    await act(async () => {
-      const wrapper = setup(mount);
-      expect(wrapper.find(LokiOptionFields).length).toBe(1);
-    });
+    setup();
+    expect(screen.getByLabelText('Loki extra field')).toBeInTheDocument();
   });
 });

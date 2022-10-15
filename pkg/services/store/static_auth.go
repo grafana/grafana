@@ -5,10 +5,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
-type createPathFilterByAction func(ctx context.Context, user *models.SignedInUser, storageName string) map[string]filestorage.PathFilter
+type createPathFilterByAction func(ctx context.Context, user *user.SignedInUser, storageName string) map[string]filestorage.PathFilter
 
 func newStaticStorageAuthService(createPathFilterByAction createPathFilterByAction) storageAuthService {
 	return &staticStorageAuth{
@@ -24,7 +24,7 @@ type staticStorageAuth struct {
 	createPathFilterByAction createPathFilterByAction
 }
 
-func (a *staticStorageAuth) newGuardian(ctx context.Context, user *models.SignedInUser, storageName string) fileGuardian {
+func (a *staticStorageAuth) newGuardian(ctx context.Context, user *user.SignedInUser, storageName string) fileGuardian {
 	pathFilter := a.createPathFilterByAction(ctx, user, storageName)
 
 	if pathFilter == nil {

@@ -29,7 +29,7 @@ export class NestedScene extends SceneObjectBase<NestedSceneState> {
     });
   };
 
-  /** Removes itself from it's parent's children array */
+  /** Removes itself from its parent's children array */
   onRemove = () => {
     const parent = this.parent!;
     if ('children' in parent.state) {
@@ -62,7 +62,7 @@ export function NestedSceneRenderer({ model, isEditing }: SceneComponentProps<Ne
     <div className={styles.row}>
       <div className={styles.rowHeader}>
         <Stack gap={0}>
-          <div className={styles.title} role="heading">
+          <div className={styles.title} role="heading" aria-level={1}>
             {title}
           </div>
           {canCollapse && (

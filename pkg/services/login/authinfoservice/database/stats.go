@@ -2,62 +2,38 @@ package database
 
 import (
 	"context"
-	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-type LoginStats struct {
-	DuplicateUserEntries int `xorm:"duplicate_user_entries"`
-	MixedCasedUsers      int `xorm:"mixed_cased_users"`
-}
-
-const (
-	ExporterName              = "grafana"
-	metricsCollectionInterval = time.Second * 60 * 4 // every 4 hours, indication of duplicate users
-)
-
-var (
-	// MStatDuplicateUserEntries is a indication metric gauge for number of users with duplicate emails or logins
-	MStatDuplicateUserEntries prometheus.Gauge
-
-	// MStatHasDuplicateEntries is a metric for if there is duplicate users
-	MStatHasDuplicateEntries prometheus.Gauge
-
-	// MStatMixedCasedUsers is a metric for if there is duplicate users
-	MStatMixedCasedUsers prometheus.Gauge
-
-	once        sync.Once
-	Initialised bool = false
-)
-
 func InitMetrics() {
-	once.Do(func() {
-		MStatDuplicateUserEntries = prometheus.NewGauge(prometheus.GaugeOpts{
+	login.Once.Do(func() {
+		login.MStatDuplicateUserEntries = prometheus.NewGauge(prometheus.GaugeOpts{
 			Name:      "stat_users_total_duplicate_user_entries",
 			Help:      "total number of duplicate user entries by email or login",
-			Namespace: ExporterName,
+			Namespace: login.ExporterName,
 		})
 
-		MStatHasDuplicateEntries = prometheus.NewGauge(prometheus.GaugeOpts{
+		login.MStatHasDuplicateEntries = prometheus.NewGauge(prometheus.GaugeOpts{
 			Name:      "stat_users_has_duplicate_user_entries",
 			Help:      "instance has duplicate user entries by email or login",
-			Namespace: ExporterName,
+			Namespace: login.ExporterName,
 		})
 
-		MStatMixedCasedUsers = prometheus.NewGauge(prometheus.GaugeOpts{
+		login.MStatMixedCasedUsers = prometheus.NewGauge(prometheus.GaugeOpts{
 			Name:      "stat_users_total_mixed_cased_users",
 			Help:      "total number of users with upper and lower case logins or emails",
-			Namespace: ExporterName,
+			Namespace: login.ExporterName,
 		})
 
 		prometheus.MustRegister(
-			MStatDuplicateUserEntries,
-			MStatHasDuplicateEntries,
-			MStatMixedCasedUsers,
+			login.MStatDuplicateUserEntries,
+			login.MStatHasDuplicateEntries,
+			login.MStatMixedCasedUsers,
 		)
 	})
 }
@@ -66,7 +42,7 @@ func (s *AuthInfoStore) RunMetricsCollection(ctx context.Context) error {
 	if _, err := s.GetLoginStats(ctx); err != nil {
 		s.logger.Warn("Failed to get authinfo metrics", "error", err.Error())
 	}
-	updateStatsTicker := time.NewTicker(metricsCollectionInterval)
+	updateStatsTicker := time.NewTicker(login.MetricsCollectionInterval)
 	defer updateStatsTicker.Stop()
 
 	for {
@@ -81,8 +57,8 @@ func (s *AuthInfoStore) RunMetricsCollection(ctx context.Context) error {
 	}
 }
 
-func (s *AuthInfoStore) GetLoginStats(ctx context.Context) (LoginStats, error) {
-	var stats LoginStats
+func (s *AuthInfoStore) GetLoginStats(ctx context.Context) (login.LoginStats, error) {
+	var stats login.LoginStats
 	outerErr := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		rawSQL := `SELECT
 		(SELECT COUNT(*) FROM (` + s.duplicateUserEntriesSQL(ctx) + `) AS d WHERE (d.dup_login IS NOT NULL OR d.dup_email IS NOT NULL)) as duplicate_user_entries,
@@ -96,14 +72,14 @@ func (s *AuthInfoStore) GetLoginStats(ctx context.Context) (LoginStats, error) {
 	}
 
 	// set prometheus metrics stats
-	MStatDuplicateUserEntries.Set(float64(stats.DuplicateUserEntries))
+	login.MStatDuplicateUserEntries.Set(float64(stats.DuplicateUserEntries))
 	if stats.DuplicateUserEntries == 0 {
-		MStatHasDuplicateEntries.Set(float64(0))
+		login.MStatHasDuplicateEntries.Set(float64(0))
 	} else {
-		MStatHasDuplicateEntries.Set(float64(1))
+		login.MStatHasDuplicateEntries.Set(float64(1))
 	}
 
-	MStatMixedCasedUsers.Set(float64(stats.MixedCasedUsers))
+	login.MStatMixedCasedUsers.Set(float64(stats.MixedCasedUsers))
 	return stats, nil
 }
 
@@ -115,14 +91,12 @@ func (s *AuthInfoStore) CollectLoginStats(ctx context.Context) (map[string]inter
 		s.logger.Error("Failed to get login stats", "error", err)
 		return nil, err
 	}
-
 	m["stats.users.duplicate_user_entries"] = loginStats.DuplicateUserEntries
 	if loginStats.DuplicateUserEntries > 0 {
 		m["stats.users.has_duplicate_user_entries"] = 1
 	} else {
 		m["stats.users.has_duplicate_user_entries"] = 0
 	}
-
 	m["stats.users.mixed_cased_users"] = loginStats.MixedCasedUsers
 
 	return m, nil

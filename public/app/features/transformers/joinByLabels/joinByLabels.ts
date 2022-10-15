@@ -124,7 +124,7 @@ export function joinByLabels(options: JoinByLabelsTransformOptions, data: DataFr
     const old = inputFields[allNames[i]];
     frame.fields.push({
       name: allNames[i],
-      config: old.config ?? {},
+      config: {},
       type: old.type ?? FieldType.number,
       values: new ArrayVector(nameValues[i]),
     });

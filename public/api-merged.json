@@ -1,7 +1,14 @@
 {
-  "consumes": ["application/json"],
-  "produces": ["application/json"],
-  "schemes": ["http", "https"],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "schemes": [
+    "http",
+    "https"
+  ],
   "swagger": "2.0",
   "info": {
     "description": "The Grafana backend exposes an HTTP API, the same API is used by the frontend to do\neverything from saving dashboards, creating users and updating data sources.",
@@ -11,112 +18,17 @@
       "url": "https://grafana.com",
       "email": "hello@grafana.com"
     },
-    "license": {
-      "name": "GNU Affero General Public License v3.0",
-      "url": "https://www.gnu.org/licenses/agpl-3.0.en.html"
-    },
     "version": "0.0.1"
   },
   "basePath": "/api",
   "paths": {
-    "/access-control/builtin-roles": {
-      "get": {
-        "description": "You need to have a permission with action `roles.builtin:list` with scope `roles:*`.",
-        "tags": ["access_control", "enterprise"],
-        "summary": "Get all built-in role assignments.",
-        "operationId": "listBuiltinRoles",
-        "responses": {
-          "200": {
-            "$ref": "#/responses/listBuiltinRolesResponse"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "post": {
-        "description": "You need to have a permission with action `roles.builtin:add` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only create built-in role assignments with the roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to create a built-in role assignment which will allow to do that. This is done to prevent escalation of privileges.",
-        "tags": ["access_control", "enterprise"],
-        "summary": "Create a built-in role assignment.",
-        "operationId": "addBuiltinRole",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/AddBuiltInRoleCommand"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/okResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/access-control/builtin-roles/{builtinRole}/roles/{roleUID}": {
-      "delete": {
-        "description": "Deletes a built-in role assignment (for one of Viewer, Editor, Admin, or Grafana Admin) to the role with the provided UID.\n\nYou need to have a permission with action `roles.builtin:remove` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only remove built-in role assignments with the roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to remove a built-in role assignment which allows to do that.",
-        "tags": ["access_control", "enterprise"],
-        "summary": "Remove a built-in role assignment.",
-        "operationId": "removeBuiltinRole",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "builtinRole",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "boolean",
-            "description": "A flag indicating if the assignment is global or not. If set to false, the default org ID of the authenticated user will be used from the request to remove assignment.",
-            "name": "global",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "name": "roleUID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/okResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
     "/access-control/roles": {
       "get": {
-        "description": "Gets all existing roles. The response contains all global and organization local roles, for the organization which user is signed in.\n\nYou need to have a permission with action `roles:list` and scope `roles:*`.",
-        "tags": ["access_control", "enterprise"],
+        "description": "Gets all existing roles. The response contains all global and organization local roles, for the organization which user is signed in.\n\nYou need to have a permission with action `roles:read` and scope `roles:*`.",
+        "tags": [
+          "access_control",
+          "enterprise"
+        ],
         "summary": "Get all roles.",
         "operationId": "listRoles",
         "parameters": [
@@ -139,8 +51,11 @@
         }
       },
       "post": {
-        "description": "Creates a new custom role and maps given permissions to that role. Note that roles with the same prefix as Fixed Roles can’t be created.\n\nYou need to have a permission with action `roles:write` and scope `permissions:type:delegate`. `permissions:type:delegate`` scope ensures that users can only create custom roles with the same, or a subset of permissions which the user has.\nFor example, if a user does not have required permissions for creating users, they won’t be able to create a custom role which allows to do that. This is done to prevent escalation of privileges.",
-        "tags": ["access_control", "enterprise"],
+        "description": "Creates a new custom role and maps given permissions to that role. Note that roles with the same prefix as Fixed Roles can’t be created.\n\nYou need to have a permission with action `roles:write` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only create custom roles with the same, or a subset of permissions which the user has.\nFor example, if a user does not have required permissions for creating users, they won’t be able to create a custom role which allows to do that. This is done to prevent escalation of privileges.",
+        "tags": [
+          "access_control",
+          "enterprise"
+        ],
         "summary": "Create a new custom role.",
         "operationId": "createRole",
         "parameters": [
@@ -172,7 +87,10 @@
     "/access-control/roles/{roleUID}": {
       "get": {
         "description": "Get a role for the given UID.\n\nYou need to have a permission with action `roles:read` and scope `roles:*`.",
-        "tags": ["access_control", "enterprise"],
+        "tags": [
+          "access_control",
+          "enterprise"
+        ],
         "summary": "Get a role.",
         "operationId": "getRole",
         "parameters": [
@@ -196,10 +114,13 @@
         }
       },
       "put": {
-        "description": "You need to have a permission with action `roles:write` and scope `permissions:type:delegate`. `permissions:type:delegate`` scope ensures that users can only create custom roles with the same, or a subset of permissions which the user has.",
-        "tags": ["access_control", "enterprise"],
+        "description": "You need to have a permission with action `roles:write` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only create custom roles with the same, or a subset of permissions which the user has.",
+        "tags": [
+          "access_control",
+          "enterprise"
+        ],
         "summary": "Update a custom role.",
-        "operationId": "updateRoleWithPermissions",
+        "operationId": "updateRole",
         "parameters": [
           {
             "name": "body",
@@ -236,9 +157,12 @@
       },
       "delete": {
         "description": "Delete a role with the given UID, and it’s permissions. If the role is assigned to a built-in role, the deletion operation will fail, unless force query param is set to true, and in that case all assignments will also be deleted.\n\nYou need to have a permission with action `roles:delete` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only delete a custom role with the same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to delete a custom role which allows to do that.",
-        "tags": ["access_control", "enterprise"],
+        "tags": [
+          "access_control",
+          "enterprise"
+        ],
         "summary": "Delete a custom role.",
-        "operationId": "deleteCustomRole",
+        "operationId": "deleteRole",
         "parameters": [
           {
             "type": "boolean",
@@ -273,10 +197,85 @@
         }
       }
     },
+    "/access-control/roles/{roleUID}/assignments": {
+      "get": {
+        "description": "Get role assignments for the role with the given UID.\n\nYou need to have a permission with action `teams.roles:list` and scope `teams:id:*` and `users.roles:list` and scope `users:id:*`.",
+        "tags": [
+          "access_control",
+          "enterprise"
+        ],
+        "summary": "Get role assignments.",
+        "operationId": "getRoleAssignments",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "roleUID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getRoleAssignmentsResponse"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "put": {
+        "description": "Set role assignments for the role with the given UID.\n\nYou need to have a permission with action `teams.roles:add` and `teams.roles:remove` and scope `permissions:type:delegate`, and `users.roles:add` and `users.roles:remove` and scope `permissions:type:delegate`.",
+        "tags": [
+          "access_control",
+          "enterprise"
+        ],
+        "summary": "Set role assignments.",
+        "operationId": "setRoleAssignments",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "roleUID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/SetRoleAssignmentsCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/setRoleAssignmentsResponse"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/access-control/status": {
       "get": {
         "description": "Returns an indicator to check if fine-grained access control is enabled or not.\n\nYou need to have a permission with action `status:accesscontrol` and scope `services:accesscontrol`.",
-        "tags": ["access_control", "enterprise"],
+        "tags": [
+          "access_control",
+          "enterprise"
+        ],
         "summary": "Get status.",
         "operationId": "getAccessControlStatus",
         "responses": {
@@ -297,8 +296,11 @@
     },
     "/access-control/teams/{teamId}/roles": {
       "get": {
-        "description": "You need to have a permission with action `teams.roles:list` and scope `teams:id:\u003cteam ID\u003e`.",
-        "tags": ["access_control", "enterprise"],
+        "description": "You need to have a permission with action `teams.roles:read` and scope `teams:id:\u003cteam ID\u003e`.",
+        "tags": [
+          "access_control",
+          "enterprise"
+        ],
         "summary": "Get team roles.",
         "operationId": "listTeamRoles",
         "parameters": [
@@ -327,7 +329,10 @@
       },
       "put": {
         "description": "You need to have a permission with action `teams.roles:add` and `teams.roles:remove` and scope `permissions:type:delegate` for each.",
-        "tags": ["access_control", "enterprise"],
+        "tags": [
+          "access_control",
+          "enterprise"
+        ],
         "summary": "Update team role.",
         "operationId": "setTeamRoles",
         "parameters": [
@@ -359,7 +364,10 @@
       },
       "post": {
         "description": "You need to have a permission with action `teams.roles:add` and scope `permissions:type:delegate`.",
-        "tags": ["access_control", "enterprise"],
+        "tags": [
+          "access_control",
+          "enterprise"
+        ],
         "summary": "Add team role.",
         "operationId": "addTeamRole",
         "parameters": [
@@ -401,7 +409,10 @@
     "/access-control/teams/{teamId}/roles/{roleUID}": {
       "delete": {
         "description": "You need to have a permission with action `teams.roles:remove` and scope `permissions:type:delegate`.",
-        "tags": ["access_control", "enterprise"],
+        "tags": [
+          "access_control",
+          "enterprise"
+        ],
         "summary": "Remove team role.",
         "operationId": "removeTeamRole",
         "parameters": [
@@ -440,8 +451,11 @@
     },
     "/access-control/users/{userId}/roles": {
       "get": {
-        "description": "Lists the roles that have been directly assigned to a given user. The list does not include built-in roles (Viewer, Editor, Admin or Grafana Admin), and it does not include roles that have been inherited from a team.\n\nYou need to have a permission with action `users.roles:list` and scope `users:id:\u003cuser ID\u003e`.",
-        "tags": ["access_control", "enterprise"],
+        "description": "Lists the roles that have been directly assigned to a given user. The list does not include built-in roles (Viewer, Editor, Admin or Grafana Admin), and it does not include roles that have been inherited from a team.\n\nYou need to have a permission with action `users.roles:read` and scope `users:id:\u003cuser ID\u003e`.",
+        "tags": [
+          "access_control",
+          "enterprise"
+        ],
         "summary": "List roles assigned to a user.",
         "operationId": "listUserRoles",
         "parameters": [
@@ -470,7 +484,10 @@
       },
       "put": {
         "description": "Update the user’s role assignments to match the provided set of UIDs. This will remove any assigned roles that aren’t in the request and add roles that are in the set but are not already assigned to the user.\nIf you want to add or remove a single role, consider using Add a user role assignment or Remove a user role assignment instead.\n\nYou need to have a permission with action `users.roles:add` and `users.roles:remove` and scope `permissions:type:delegate` for each. `permissions:type:delegate`  scope ensures that users can only assign or unassign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to assign or unassign a role which will allow to do that. This is done to prevent escalation of privileges.",
-        "tags": ["access_control", "enterprise"],
+        "tags": [
+          "access_control",
+          "enterprise"
+        ],
         "summary": "Set user role assignments.",
         "operationId": "setUserRoles",
         "parameters": [
@@ -510,7 +527,10 @@
       },
       "post": {
         "description": "Assign a role to a specific user. For bulk updates consider Set user role assignments.\n\nYou need to have a permission with action `users.roles:add` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only assign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to assign a role which will allow to do that. This is done to prevent escalation of privileges.",
-        "tags": ["access_control", "enterprise"],
+        "tags": [
+          "access_control",
+          "enterprise"
+        ],
         "summary": "Add a user role assignment.",
         "operationId": "addUserRole",
         "parameters": [
@@ -549,7 +569,10 @@
     "/access-control/users/{userId}/roles/{roleUID}": {
       "delete": {
         "description": "Revoke a role from a user. For bulk updates consider Set user role assignments.\n\nYou need to have a permission with action `users.roles:remove` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only unassign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to unassign a role which will allow to do that. This is done to prevent escalation of privileges.",
-        "tags": ["access_control", "enterprise"],
+        "tags": [
+          "access_control",
+          "enterprise"
+        ],
         "summary": "Remove a user role assignment.",
         "operationId": "removeUserRole",
         "parameters": [
@@ -595,8 +618,10 @@
     "/admin/ldap-sync-status": {
       "get": {
         "description": "You need to have a permission with action `ldap.status:read`.",
-        "tags": ["ldap_debug"],
-        "summary": "Returns the current state of the LDAP background sync integration",
+        "tags": [
+          "ldap_debug"
+        ],
+        "summary": "Returns the current state of the LDAP background sync integration.",
         "operationId": "getSyncStatus",
         "responses": {
           "200": {
@@ -622,7 +647,9 @@
           }
         ],
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `ldap.config:reload`.",
-        "tags": ["admin_ldap"],
+        "tags": [
+          "admin_ldap"
+        ],
         "summary": "Reloads the LDAP configuration.",
         "operationId": "reloadLDAPCfg",
         "responses": {
@@ -649,7 +676,9 @@
           }
         ],
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `ldap.status:read`.",
-        "tags": ["admin_ldap"],
+        "tags": [
+          "admin_ldap"
+        ],
         "summary": "Attempts to connect to all the configured LDAP servers and returns information on whenever they're available or not.",
         "operationId": "getLDAPStatus",
         "responses": {
@@ -676,7 +705,9 @@
           }
         ],
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `ldap.user:sync`.",
-        "tags": ["admin_ldap"],
+        "tags": [
+          "admin_ldap"
+        ],
         "summary": "Enables a single Grafana user to be synchronized against LDAP.",
         "operationId": "postSyncUserWithLDAP",
         "parameters": [
@@ -712,7 +743,9 @@
           }
         ],
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `ldap.user:read`.",
-        "tags": ["admin_ldap"],
+        "tags": [
+          "admin_ldap"
+        ],
         "summary": "Finds an user based on a username in LDAP. This helps illustrate how would the particular user be mapped in Grafana when synced.",
         "operationId": "getUserFromLDAP",
         "parameters": [
@@ -746,7 +779,9 @@
             "basic": []
           }
         ],
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "summary": "Pause/unpause all (legacy) alerts.",
         "operationId": "pauseAllAlerts",
         "parameters": [
@@ -777,7 +812,10 @@
     },
     "/admin/provisioning/access-control/reload": {
       "post": {
-        "tags": ["access_control_provisioning", "enterprise"],
+        "tags": [
+          "access_control_provisioning",
+          "enterprise"
+        ],
         "summary": "You need to have a permission with action `provisioning:reload` with scope `provisioners:accesscontrol`.",
         "operationId": "adminProvisioningReloadAccessControl",
         "responses": {
@@ -801,7 +839,9 @@
           }
         ],
         "description": "Reloads the provisioning config files for dashboards again. It won’t return until the new provisioned entities are already stored in the database. In case of dashboards, it will stop polling for changes in dashboard files and then restart it with new configurations after returning.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `provisioning:reload` and scope `provisioners:dashboards`.",
-        "tags": ["admin_provisioning"],
+        "tags": [
+          "admin_provisioning"
+        ],
         "summary": "Reload dashboard provisioning configurations.",
         "operationId": "adminProvisioningReloadDashboards",
         "responses": {
@@ -828,7 +868,9 @@
           }
         ],
         "description": "Reloads the provisioning config files for datasources again. It won’t return until the new provisioned entities are already stored in the database. In case of dashboards, it will stop polling for changes in dashboard files and then restart it with new configurations after returning.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `provisioning:reload` and scope `provisioners:datasources`.",
-        "tags": ["admin_provisioning"],
+        "tags": [
+          "admin_provisioning"
+        ],
         "summary": "Reload datasource provisioning configurations.",
         "operationId": "adminProvisioningReloadDatasources",
         "responses": {
@@ -855,7 +897,9 @@
           }
         ],
         "description": "Reloads the provisioning config files for legacy alert notifiers again. It won’t return until the new provisioned entities are already stored in the database. In case of dashboards, it will stop polling for changes in dashboard files and then restart it with new configurations after returning.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `provisioning:reload` and scope `provisioners:notifications`.",
-        "tags": ["admin_provisioning"],
+        "tags": [
+          "admin_provisioning"
+        ],
         "summary": "Reload legacy alert notifier provisioning configurations.",
         "operationId": "adminProvisioningReloadNotifications",
         "responses": {
@@ -882,7 +926,9 @@
           }
         ],
         "description": "Reloads the provisioning config files for plugins again. It won’t return until the new provisioned entities are already stored in the database. In case of dashboards, it will stop polling for changes in dashboard files and then restart it with new configurations after returning.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `provisioning:reload` and scope `provisioners:plugin`.",
-        "tags": ["admin_provisioning"],
+        "tags": [
+          "admin_provisioning"
+        ],
         "summary": "Reload plugin provisioning configurations.",
         "operationId": "adminProvisioningReloadPlugins",
         "responses": {
@@ -909,7 +955,9 @@
           }
         ],
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `settings:read` and scopes: `settings:*`, `settings:auth.saml:` and `settings:auth.saml:enabled` (property level).",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "summary": "Fetch settings.",
         "operationId": "adminGetSettings",
         "responses": {
@@ -928,7 +976,9 @@
     "/admin/stats": {
       "get": {
         "description": "Only works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `server:stats:read`.",
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "summary": "Fetch Grafana Stats.",
         "operationId": "adminGetStats",
         "responses": {
@@ -955,7 +1005,9 @@
           }
         ],
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:create`.\nNote that OrgId is an optional parameter that can be used to assign a new user to a different organization when `auto_assign_org` is set to `true`.",
-        "tags": ["admin_users"],
+        "tags": [
+          "admin_users"
+        ],
         "summary": "Create new user.",
         "operationId": "adminCreateUser",
         "parameters": [
@@ -998,7 +1050,9 @@
           }
         ],
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:delete` and scope `global.users:*`.",
-        "tags": ["admin_users"],
+        "tags": [
+          "admin_users"
+        ],
         "summary": "Delete global User.",
         "operationId": "adminDeleteUser",
         "parameters": [
@@ -1037,7 +1091,9 @@
           }
         ],
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.authtoken:list` and scope `global.users:*`.",
-        "tags": ["admin_users"],
+        "tags": [
+          "admin_users"
+        ],
         "summary": "Return a list of all auth tokens (devices) that the user currently have logged in from.",
         "operationId": "adminGetUserAuthTokens",
         "parameters": [
@@ -1073,7 +1129,9 @@
           }
         ],
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:disable` and scope `global.users:1` (userIDScope).",
-        "tags": ["admin_users"],
+        "tags": [
+          "admin_users"
+        ],
         "summary": "Disable user.",
         "operationId": "adminDisableUser",
         "parameters": [
@@ -1112,7 +1170,9 @@
           }
         ],
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:enable` and scope `global.users:1` (userIDScope).",
-        "tags": ["admin_users"],
+        "tags": [
+          "admin_users"
+        ],
         "summary": "Enable user.",
         "operationId": "adminEnableUser",
         "parameters": [
@@ -1151,7 +1211,9 @@
           }
         ],
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.logout` and scope `global.users:*`.",
-        "tags": ["admin_users"],
+        "tags": [
+          "admin_users"
+        ],
         "summary": "Logout user revokes all auth tokens (devices) for the user. User of issued auth tokens (devices) will no longer be logged in and will be required to authenticate again upon next activity.",
         "operationId": "adminLogoutUser",
         "parameters": [
@@ -1193,7 +1255,9 @@
           }
         ],
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.password:update` and scope `global.users:*`.",
-        "tags": ["admin_users"],
+        "tags": [
+          "admin_users"
+        ],
         "summary": "Set password for user.",
         "operationId": "adminUpdateUserPassword",
         "parameters": [
@@ -1235,7 +1299,9 @@
     "/admin/users/{user_id}/permissions": {
       "put": {
         "description": "Only works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.permissions:update` and scope `global.users:*`.",
-        "tags": ["admin_users"],
+        "tags": [
+          "admin_users"
+        ],
         "summary": "Set permissions for user.",
         "operationId": "adminUpdateUserPermissions",
         "parameters": [
@@ -1282,7 +1348,9 @@
           }
         ],
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.quotas:list` and scope `global.users:1` (userIDScope).",
-        "tags": ["admin_users"],
+        "tags": [
+          "admin_users"
+        ],
         "summary": "Fetch user quota.",
         "operationId": "getUserQuota",
         "parameters": [
@@ -1321,7 +1389,9 @@
           }
         ],
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.quotas:update` and scope `global.users:1` (userIDScope).",
-        "tags": ["admin_users"],
+        "tags": [
+          "admin_users"
+        ],
         "summary": "Update user quota.",
         "operationId": "updateUserQuota",
         "parameters": [
@@ -1374,7 +1444,9 @@
           }
         ],
         "description": "Revokes the given auth token (device) for the user. User of issued auth token (device) will no longer be logged in and will be required to authenticate again upon next activity.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.authtoken:update` and scope `global.users:*`.",
-        "tags": ["admin_users"],
+        "tags": [
+          "admin_users"
+        ],
         "summary": "Revoke auth token for user.",
         "operationId": "adminRevokeUserAuthToken",
         "parameters": [
@@ -1419,7 +1491,9 @@
     "/alert-notifications": {
       "get": {
         "description": "Returns all notification channels that the authenticated user has permission to view.",
-        "tags": ["legacy_alerts_notification_channels"],
+        "tags": [
+          "legacy_alerts_notification_channels"
+        ],
         "summary": "Get all notification channels.",
         "operationId": "getAlertNotificationChannels",
         "responses": {
@@ -1439,7 +1513,9 @@
       },
       "post": {
         "description": "You can find the full list of [supported notifiers](https://grafana.com/docs/grafana/latest/alerting/old-alerting/notifications/#list-of-supported-notifiers) on the alert notifiers page.",
-        "tags": ["legacy_alerts_notification_channels"],
+        "tags": [
+          "legacy_alerts_notification_channels"
+        ],
         "summary": "Create notification channel.",
         "operationId": "createAlertNotificationChannel",
         "parameters": [
@@ -1474,8 +1550,10 @@
     "/alert-notifications/lookup": {
       "get": {
         "description": "Returns all notification channels, but with less detailed information. Accessible by any authenticated user and is mainly used by providing alert notification channels in Grafana UI when configuring alert rule.",
-        "tags": ["legacy_alerts_notification_channels"],
-        "summary": "Get all notification channels (lookup)",
+        "tags": [
+          "legacy_alerts_notification_channels"
+        ],
+        "summary": "Get all notification channels (lookup).",
         "operationId": "getAlertNotificationLookup",
         "responses": {
           "200": {
@@ -1496,7 +1574,9 @@
     "/alert-notifications/test": {
       "post": {
         "description": "Sends a test notification to the channel.",
-        "tags": ["legacy_alerts_notification_channels"],
+        "tags": [
+          "legacy_alerts_notification_channels"
+        ],
         "summary": "Test notification channel.",
         "operationId": "notificationChannelTest",
         "parameters": [
@@ -1534,8 +1614,10 @@
     "/alert-notifications/uid/{notification_channel_uid}": {
       "get": {
         "description": "Returns the notification channel given the notification channel UID.",
-        "tags": ["legacy_alerts_notification_channels"],
-        "summary": "Get notification channel by UID",
+        "tags": [
+          "legacy_alerts_notification_channels"
+        ],
+        "summary": "Get notification channel by UID.",
         "operationId": "getAlertNotificationChannelByUID",
         "parameters": [
           {
@@ -1565,7 +1647,9 @@
       },
       "put": {
         "description": "Updates an existing notification channel identified by uid.",
-        "tags": ["legacy_alerts_notification_channels"],
+        "tags": [
+          "legacy_alerts_notification_channels"
+        ],
         "summary": "Update notification channel by UID.",
         "operationId": "updateAlertNotificationChannelByUID",
         "parameters": [
@@ -1604,7 +1688,9 @@
       },
       "delete": {
         "description": "Deletes an existing notification channel identified by UID.",
-        "tags": ["legacy_alerts_notification_channels"],
+        "tags": [
+          "legacy_alerts_notification_channels"
+        ],
         "summary": "Delete alert notification by UID.",
         "operationId": "deleteAlertNotificationChannelByUID",
         "parameters": [
@@ -1637,7 +1723,9 @@
     "/alert-notifications/{notification_channel_id}": {
       "get": {
         "description": "Returns the notification channel given the notification channel ID.",
-        "tags": ["legacy_alerts_notification_channels"],
+        "tags": [
+          "legacy_alerts_notification_channels"
+        ],
         "summary": "Get notification channel by ID.",
         "operationId": "getAlertNotificationChannelByID",
         "parameters": [
@@ -1669,7 +1757,9 @@
       },
       "put": {
         "description": "Updates an existing notification channel identified by ID.",
-        "tags": ["legacy_alerts_notification_channels"],
+        "tags": [
+          "legacy_alerts_notification_channels"
+        ],
         "summary": "Update notification channel by ID.",
         "operationId": "updateAlertNotificationChannel",
         "parameters": [
@@ -1709,7 +1799,9 @@
       },
       "delete": {
         "description": "Deletes an existing notification channel identified by ID.",
-        "tags": ["legacy_alerts_notification_channels"],
+        "tags": [
+          "legacy_alerts_notification_channels"
+        ],
         "summary": "Delete alert notification by ID.",
         "operationId": "deleteAlertNotificationChannel",
         "parameters": [
@@ -1742,7 +1834,9 @@
     },
     "/alerts": {
       "get": {
-        "tags": ["legacy_alerts"],
+        "tags": [
+          "legacy_alerts"
+        ],
         "summary": "Get legacy alerts.",
         "operationId": "getAlerts",
         "parameters": [
@@ -1769,7 +1863,15 @@
             "in": "query"
           },
           {
-            "enum": ["all", "no_data", "paused", "alerting", "ok", "pending", "unknown"],
+            "enum": [
+              "all",
+              "no_data",
+              "paused",
+              "alerting",
+              "ok",
+              "pending",
+              "unknown"
+            ],
             "type": "string",
             "description": "Return alerts with one or more of the following alert states",
             "name": "state",
@@ -1824,7 +1926,9 @@
     },
     "/alerts/states-for-dashboard": {
       "get": {
-        "tags": ["legacy_alerts"],
+        "tags": [
+          "legacy_alerts"
+        ],
         "summary": "Get alert states for a dashboard.",
         "operationId": "getDashboardStates",
         "parameters": [
@@ -1851,7 +1955,9 @@
     },
     "/alerts/test": {
       "post": {
-        "tags": ["legacy_alerts"],
+        "tags": [
+          "legacy_alerts"
+        ],
         "summary": "Test alert.",
         "operationId": "testAlert",
         "parameters": [
@@ -1885,7 +1991,9 @@
     "/alerts/{alert_id}": {
       "get": {
         "description": "“evalMatches” data in the response is cached in the db when and only when the state of the alert changes (e.g. transitioning from “ok” to “alerting” state).\nIf data from one server triggers the alert first and, before that server is seen leaving alerting state, a second server also enters a state that would trigger the alert, the second server will not be visible in “evalMatches” data.",
-        "tags": ["legacy_alerts"],
+        "tags": [
+          "legacy_alerts"
+        ],
         "summary": "Get alert by ID.",
         "operationId": "getAlertByID",
         "parameters": [
@@ -1911,7 +2019,9 @@
     },
     "/alerts/{alert_id}/pause": {
       "post": {
-        "tags": ["legacy_alerts"],
+        "tags": [
+          "legacy_alerts"
+        ],
         "summary": "Pause/unpause alert by id.",
         "operationId": "pauseAlert",
         "parameters": [
@@ -1952,7 +2062,9 @@
     "/annotations": {
       "get": {
         "description": "Starting in Grafana v6.4 regions annotations are now returned in one entity that now includes the timeEnd property.",
-        "tags": ["annotations"],
+        "tags": [
+          "annotations"
+        ],
         "summary": "Find Annotations.",
         "operationId": "getAnnotations",
         "parameters": [
@@ -2022,7 +2134,10 @@
             "in": "query"
           },
           {
-            "enum": ["alert", "annotation"],
+            "enum": [
+              "alert",
+              "annotation"
+            ],
             "type": "string",
             "description": "Return alerts or user created annotations",
             "name": "type",
@@ -2049,7 +2164,9 @@
       },
       "post": {
         "description": "Creates an annotation in the Grafana database. The dashboardId and panelId fields are optional. If they are not specified then an organization annotation is created and can be queried in any dashboard that adds the Grafana annotations data source. When creating a region annotation include the timeEnd property.\nThe format for `time` and `timeEnd` should be epoch numbers in millisecond resolution.\nThe response for this HTTP request is slightly different in versions prior to v6.4. In prior versions you would also get an endId if you where creating a region. But in 6.4 regions are represented using a single event with time and timeEnd properties.",
-        "tags": ["annotations"],
+        "tags": [
+          "annotations"
+        ],
         "summary": "Create Annotation.",
         "operationId": "postAnnotation",
         "parameters": [
@@ -2084,7 +2201,9 @@
     "/annotations/graphite": {
       "post": {
         "description": "Creates an annotation by using Graphite-compatible event format. The `when` and `data` fields are optional. If `when` is not specified then the current time will be used as annotation’s timestamp. The `tags` field can also be in prior to Graphite `0.10.0` format (string with multiple tags being separated by a space).",
-        "tags": ["annotations"],
+        "tags": [
+          "annotations"
+        ],
         "summary": "Create Annotation in Graphite format.",
         "operationId": "postGraphiteAnnotation",
         "parameters": [
@@ -2118,7 +2237,9 @@
     },
     "/annotations/mass-delete": {
       "post": {
-        "tags": ["annotations"],
+        "tags": [
+          "annotations"
+        ],
         "summary": "Delete multiple annotations.",
         "operationId": "massDeleteAnnotations",
         "parameters": [
@@ -2147,7 +2268,9 @@
     "/annotations/tags": {
       "get": {
         "description": "Find all the event tags created in the annotations.",
-        "tags": ["annotations"],
+        "tags": [
+          "annotations"
+        ],
         "summary": "Find Annotations Tags.",
         "operationId": "getAnnotationTags",
         "parameters": [
@@ -2180,8 +2303,10 @@
     },
     "/annotations/{annotation_id}": {
       "get": {
-        "tags": ["annotations"],
-        "summary": "Get Annotation by Id.",
+        "tags": [
+          "annotations"
+        ],
+        "summary": "Get Annotation by ID.",
         "operationId": "getAnnotationByID",
         "parameters": [
           {
@@ -2205,7 +2330,9 @@
       },
       "put": {
         "description": "Updates all properties of an annotation that matches the specified id. To only update certain property, consider using the Patch Annotation operation.",
-        "tags": ["annotations"],
+        "tags": [
+          "annotations"
+        ],
         "summary": "Update Annotation.",
         "operationId": "updateAnnotation",
         "parameters": [
@@ -2244,7 +2371,9 @@
       },
       "delete": {
         "description": "Deletes the annotation that matches the specified ID.",
-        "tags": ["annotations"],
+        "tags": [
+          "annotations"
+        ],
         "summary": "Delete Annotation By ID.",
         "operationId": "deleteAnnotationByID",
         "parameters": [
@@ -2272,8 +2401,10 @@
       },
       "patch": {
         "description": "Updates one or more properties of an annotation that matches the specified ID.\nThis operation currently supports updating of the `text`, `tags`, `time` and `timeEnd` properties.\nThis is available in Grafana 6.0.0-beta2 and above.",
-        "tags": ["annotations"],
-        "summary": "Patch Annotation",
+        "tags": [
+          "annotations"
+        ],
+        "summary": "Patch Annotation.",
         "operationId": "patchAnnotation",
         "parameters": [
           {
@@ -2312,8 +2443,12 @@
     },
     "/api/v1/provisioning/alert-rules": {
       "post": {
-        "consumes": ["application/json"],
-        "tags": ["provisioning"],
+        "consumes": [
+          "application/json"
+        ],
+        "tags": [
+          "provisioning"
+        ],
         "summary": "Create a new alert rule.",
         "operationId": "RoutePostAlertRule",
         "parameters": [
@@ -2343,7 +2478,9 @@
     },
     "/api/v1/provisioning/alert-rules/{UID}": {
       "get": {
-        "tags": ["provisioning"],
+        "tags": [
+          "provisioning"
+        ],
         "summary": "Get a specific alert rule by UID.",
         "operationId": "RouteGetAlertRule",
         "parameters": [
@@ -2368,8 +2505,12 @@
         }
       },
       "put": {
-        "consumes": ["application/json"],
-        "tags": ["provisioning"],
+        "consumes": [
+          "application/json"
+        ],
+        "tags": [
+          "provisioning"
+        ],
         "summary": "Update an existing alert rule.",
         "operationId": "RoutePutAlertRule",
         "parameters": [
@@ -2404,7 +2545,9 @@
         }
       },
       "delete": {
-        "tags": ["provisioning"],
+        "tags": [
+          "provisioning"
+        ],
         "summary": "Delete a specific alert rule by UID.",
         "operationId": "RouteDeleteAlertRule",
         "parameters": [
@@ -2425,7 +2568,9 @@
     },
     "/api/v1/provisioning/contact-points": {
       "get": {
-        "tags": ["provisioning"],
+        "tags": [
+          "provisioning"
+        ],
         "summary": "Get all the contact points.",
         "operationId": "RouteGetContactpoints",
         "parameters": [
@@ -2446,8 +2591,12 @@
         }
       },
       "post": {
-        "consumes": ["application/json"],
-        "tags": ["provisioning"],
+        "consumes": [
+          "application/json"
+        ],
+        "tags": [
+          "provisioning"
+        ],
         "summary": "Create a contact point.",
         "operationId": "RoutePostContactpoints",
         "parameters": [
@@ -2477,8 +2626,12 @@
     },
     "/api/v1/provisioning/contact-points/{UID}": {
       "put": {
-        "consumes": ["application/json"],
-        "tags": ["provisioning"],
+        "consumes": [
+          "application/json"
+        ],
+        "tags": [
+          "provisioning"
+        ],
         "summary": "Update an existing contact point.",
         "operationId": "RoutePutContactpoint",
         "parameters": [
@@ -2513,8 +2666,12 @@
         }
       },
       "delete": {
-        "consumes": ["application/json"],
-        "tags": ["provisioning"],
+        "consumes": [
+          "application/json"
+        ],
+        "tags": [
+          "provisioning"
+        ],
         "summary": "Delete a contact point.",
         "operationId": "RouteDeleteContactpoints",
         "parameters": [
@@ -2535,7 +2692,9 @@
     },
     "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
       "get": {
-        "tags": ["provisioning"],
+        "tags": [
+          "provisioning"
+        ],
         "summary": "Get a rule group.",
         "operationId": "RouteGetAlertRuleGroup",
         "parameters": [
@@ -2565,8 +2724,12 @@
         }
       },
       "put": {
-        "consumes": ["application/json"],
-        "tags": ["provisioning"],
+        "consumes": [
+          "application/json"
+        ],
+        "tags": [
+          "provisioning"
+        ],
         "summary": "Update the interval of a rule group.",
         "operationId": "RoutePutAlertRuleGroup",
         "parameters": [
@@ -2586,15 +2749,15 @@
             "name": "Body",
             "in": "body",
             "schema": {
-              "$ref": "#/definitions/AlertRuleGroupMetadata"
+              "$ref": "#/definitions/AlertRuleGroup"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "AlertRuleGroupMetadata",
+            "description": "AlertRuleGroup",
             "schema": {
-              "$ref": "#/definitions/AlertRuleGroupMetadata"
+              "$ref": "#/definitions/AlertRuleGroup"
             }
           },
           "400": {
@@ -2608,7 +2771,9 @@
     },
     "/api/v1/provisioning/mute-timings": {
       "get": {
-        "tags": ["provisioning"],
+        "tags": [
+          "provisioning"
+        ],
         "summary": "Get all the mute timings.",
         "operationId": "RouteGetMuteTimings",
         "responses": {
@@ -2621,8 +2786,12 @@
         }
       },
       "post": {
-        "consumes": ["application/json"],
-        "tags": ["provisioning"],
+        "consumes": [
+          "application/json"
+        ],
+        "tags": [
+          "provisioning"
+        ],
         "summary": "Create a new mute timing.",
         "operationId": "RoutePostMuteTiming",
         "parameters": [
@@ -2652,7 +2821,9 @@
     },
     "/api/v1/provisioning/mute-timings/{name}": {
       "get": {
-        "tags": ["provisioning"],
+        "tags": [
+          "provisioning"
+        ],
         "summary": "Get a mute timing.",
         "operationId": "RouteGetMuteTiming",
         "parameters": [
@@ -2677,8 +2848,12 @@
         }
       },
       "put": {
-        "consumes": ["application/json"],
-        "tags": ["provisioning"],
+        "consumes": [
+          "application/json"
+        ],
+        "tags": [
+          "provisioning"
+        ],
         "summary": "Replace an existing mute timing.",
         "operationId": "RoutePutMuteTiming",
         "parameters": [
@@ -2713,7 +2888,9 @@
         }
       },
       "delete": {
-        "tags": ["provisioning"],
+        "tags": [
+          "provisioning"
+        ],
         "summary": "Delete a mute timing.",
         "operationId": "RouteDeleteMuteTiming",
         "parameters": [
@@ -2734,7 +2911,9 @@
     },
     "/api/v1/provisioning/policies": {
       "get": {
-        "tags": ["provisioning"],
+        "tags": [
+          "provisioning"
+        ],
         "summary": "Get the notification policy tree.",
         "operationId": "RouteGetPolicyTree",
         "responses": {
@@ -2747,8 +2926,12 @@
         }
       },
       "put": {
-        "consumes": ["application/json"],
-        "tags": ["provisioning"],
+        "consumes": [
+          "application/json"
+        ],
+        "tags": [
+          "provisioning"
+        ],
         "summary": "Sets the notification policy tree.",
         "operationId": "RoutePutPolicyTree",
         "parameters": [
@@ -2777,8 +2960,12 @@
         }
       },
       "delete": {
-        "consumes": ["application/json"],
-        "tags": ["provisioning"],
+        "consumes": [
+          "application/json"
+        ],
+        "tags": [
+          "provisioning"
+        ],
         "summary": "Clears the notification policy tree.",
         "operationId": "RouteResetPolicyTree",
         "responses": {
@@ -2793,7 +2980,9 @@
     },
     "/api/v1/provisioning/templates": {
       "get": {
-        "tags": ["provisioning"],
+        "tags": [
+          "provisioning"
+        ],
         "summary": "Get all message templates.",
         "operationId": "RouteGetTemplates",
         "responses": {
@@ -2811,7 +3000,9 @@
     },
     "/api/v1/provisioning/templates/{name}": {
       "get": {
-        "tags": ["provisioning"],
+        "tags": [
+          "provisioning"
+        ],
         "summary": "Get a message template.",
         "operationId": "RouteGetTemplate",
         "parameters": [
@@ -2836,8 +3027,12 @@
         }
       },
       "put": {
-        "consumes": ["application/json"],
-        "tags": ["provisioning"],
+        "consumes": [
+          "application/json"
+        ],
+        "tags": [
+          "provisioning"
+        ],
         "summary": "Updates an existing template.",
         "operationId": "RoutePutTemplate",
         "parameters": [
@@ -2872,7 +3067,9 @@
         }
       },
       "delete": {
-        "tags": ["provisioning"],
+        "tags": [
+          "provisioning"
+        ],
         "summary": "Delete a template.",
         "operationId": "RouteDeleteTemplate",
         "parameters": [
@@ -2894,7 +3091,9 @@
     "/auth/keys": {
       "get": {
         "description": "Will return auth keys.",
-        "tags": ["api_keys"],
+        "tags": [
+          "api_keys"
+        ],
         "summary": "Get auth keys.",
         "operationId": "getAPIkeys",
         "parameters": [
@@ -2925,8 +3124,10 @@
         }
       },
       "post": {
-        "description": "Will return details of the created API key",
-        "tags": ["api_keys"],
+        "description": "Will return details of the created API key.",
+        "tags": [
+          "api_keys"
+        ],
         "summary": "Creates an API key.",
         "operationId": "addAPIkey",
         "parameters": [
@@ -2935,7 +3136,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/AddApiKeyCommand"
+              "$ref": "#/definitions/AddCommand"
             }
           }
         ],
@@ -2963,7 +3164,9 @@
     },
     "/auth/keys/{id}": {
       "delete": {
-        "tags": ["api_keys"],
+        "tags": [
+          "api_keys"
+        ],
         "summary": "Delete API key.",
         "operationId": "deleteAPIkey",
         "parameters": [
@@ -2996,7 +3199,9 @@
     },
     "/dashboard/snapshots": {
       "get": {
-        "tags": ["snapshots"],
+        "tags": [
+          "snapshots"
+        ],
         "summary": "List snapshots.",
         "operationId": "searchDashboardSnapshots",
         "parameters": [
@@ -3027,8 +3232,13 @@
     },
     "/dashboards/calculate-diff": {
       "post": {
-        "produces": ["application/json", "text/html"],
-        "tags": ["dashboards"],
+        "produces": [
+          "application/json",
+          "text/html"
+        ],
+        "tags": [
+          "dashboards"
+        ],
         "summary": "Perform diff on two dashboards.",
         "operationId": "calculateDashboardDiff",
         "parameters": [
@@ -3045,7 +3255,10 @@
                 "diffType": {
                   "description": "The type of diff to return\nDescription:\n`basic`\n`json`",
                   "type": "string",
-                  "enum": ["basic", "json"]
+                  "enum": [
+                    "basic",
+                    "json"
+                  ]
                 },
                 "new": {
                   "$ref": "#/definitions/CalculateDiffTarget"
@@ -3073,7 +3286,9 @@
     "/dashboards/db": {
       "post": {
         "description": "Creates a new dashboard or updates an existing dashboard.",
-        "tags": ["dashboards"],
+        "tags": [
+          "dashboards"
+        ],
         "summary": "Create / Update dashboard",
         "operationId": "postDashboard",
         "parameters": [
@@ -3116,7 +3331,9 @@
     },
     "/dashboards/home": {
       "get": {
-        "tags": ["dashboards"],
+        "tags": [
+          "dashboards"
+        ],
         "summary": "Get home dashboard.",
         "operationId": "getHomeDashboard",
         "responses": {
@@ -3135,7 +3352,9 @@
     "/dashboards/id/{DashboardID}/permissions": {
       "get": {
         "description": "Please refer to [updated API](#/dashboard_permissions/getDashboardPermissionsListByUID) instead",
-        "tags": ["dashboard_permissions"],
+        "tags": [
+          "dashboard_permissions"
+        ],
         "summary": "Gets all existing permissions for the given dashboard.",
         "operationId": "getDashboardPermissionsListByID",
         "deprecated": true,
@@ -3168,7 +3387,9 @@
       },
       "post": {
         "description": "Please refer to [updated API](#/dashboard_permissions/updateDashboardPermissionsByUID) instead\n\nThis operation will remove existing permissions if they’re not included in the request.",
-        "tags": ["dashboard_permissions"],
+        "tags": [
+          "dashboard_permissions"
+        ],
         "summary": "Updates permissions for a dashboard.",
         "operationId": "updateDashboardPermissionsByID",
         "deprecated": true,
@@ -3214,7 +3435,9 @@
     "/dashboards/id/{DashboardID}/restore": {
       "post": {
         "description": "Please refer to [updated API](#/dashboard_versions/restoreDashboardVersionByUID) instead",
-        "tags": ["dashboard_versions"],
+        "tags": [
+          "dashboard_versions"
+        ],
         "summary": "Restore a dashboard to a given dashboard version.",
         "operationId": "restoreDashboardVersionByID",
         "deprecated": true,
@@ -3257,7 +3480,9 @@
     "/dashboards/id/{DashboardID}/versions": {
       "get": {
         "description": "Please refer to [updated API](#/dashboard_versions/getDashboardVersionsByUID) instead",
-        "tags": ["dashboard_versions"],
+        "tags": [
+          "dashboard_versions"
+        ],
         "summary": "Gets all existing versions for the dashboard.",
         "operationId": "getDashboardVersionsByID",
         "deprecated": true,
@@ -3292,7 +3517,9 @@
     "/dashboards/id/{DashboardID}/versions/{DashboardVersionID}": {
       "get": {
         "description": "Please refer to [updated API](#/dashboard_versions/getDashboardVersionByUID) instead",
-        "tags": ["dashboard_versions"],
+        "tags": [
+          "dashboard_versions"
+        ],
         "summary": "Get a specific dashboard version.",
         "operationId": "getDashboardVersionByID",
         "deprecated": true,
@@ -3333,7 +3560,9 @@
     },
     "/dashboards/import": {
       "post": {
-        "tags": ["dashboards"],
+        "tags": [
+          "dashboards"
+        ],
         "summary": "Import dashboard.",
         "operationId": "importDashboard",
         "parameters": [
@@ -3370,7 +3599,9 @@
     },
     "/dashboards/tags": {
       "get": {
-        "tags": ["dashboards"],
+        "tags": [
+          "dashboards"
+        ],
         "summary": "Get all dashboards tags of an organisation.",
         "operationId": "getDashboardTags",
         "responses": {
@@ -3388,7 +3619,9 @@
     },
     "/dashboards/trim": {
       "post": {
-        "tags": ["dashboards"],
+        "tags": [
+          "dashboards"
+        ],
         "summary": "Trim defaults from dashboard.",
         "operationId": "trimDashboard",
         "parameters": [
@@ -3417,7 +3650,9 @@
     "/dashboards/uid/{uid}": {
       "get": {
         "description": "Will return the dashboard given the dashboard unique identifier (uid).",
-        "tags": ["dashboards"],
+        "tags": [
+          "dashboards"
+        ],
         "summary": "Get dashboard by uid.",
         "operationId": "getDashboardByUID",
         "parameters": [
@@ -3448,7 +3683,9 @@
       },
       "delete": {
         "description": "Will delete the dashboard given the specified unique identifier (uid).",
-        "tags": ["dashboards"],
+        "tags": [
+          "dashboards"
+        ],
         "summary": "Delete dashboard by uid.",
         "operationId": "deleteDashboardByUID",
         "parameters": [
@@ -3480,7 +3717,9 @@
     },
     "/dashboards/uid/{uid}/permissions": {
       "get": {
-        "tags": ["dashboard_permissions"],
+        "tags": [
+          "dashboard_permissions"
+        ],
         "summary": "Gets all existing permissions for the given dashboard.",
         "operationId": "getDashboardPermissionsListByUID",
         "parameters": [
@@ -3511,7 +3750,9 @@
       },
       "post": {
         "description": "This operation will remove existing permissions if they’re not included in the request.",
-        "tags": ["dashboard_permissions"],
+        "tags": [
+          "dashboard_permissions"
+        ],
         "summary": "Updates permissions for a dashboard.",
         "operationId": "updateDashboardPermissionsByUID",
         "parameters": [
@@ -3554,7 +3795,9 @@
     },
     "/dashboards/uid/{uid}/restore": {
       "post": {
-        "tags": ["dashboard_versions"],
+        "tags": [
+          "dashboard_versions"
+        ],
         "summary": "Restore a dashboard to a given dashboard version using UID.",
         "operationId": "restoreDashboardVersionByUID",
         "parameters": [
@@ -3594,7 +3837,9 @@
     },
     "/dashboards/uid/{uid}/versions": {
       "get": {
-        "tags": ["dashboard_versions"],
+        "tags": [
+          "dashboard_versions"
+        ],
         "summary": "Gets all existing versions for the dashboard using UID.",
         "operationId": "getDashboardVersionsByUID",
         "parameters": [
@@ -3642,7 +3887,9 @@
     },
     "/dashboards/uid/{uid}/versions/{DashboardVersionID}": {
       "get": {
-        "tags": ["dashboard_versions"],
+        "tags": [
+          "dashboard_versions"
+        ],
         "summary": "Get a specific dashboard version using UID.",
         "operationId": "getDashboardVersionByUID",
         "parameters": [
@@ -3682,7 +3929,9 @@
     "/datasources": {
       "get": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scope: `datasources:*`.",
-        "tags": ["datasources"],
+        "tags": [
+          "datasources"
+        ],
         "summary": "Get all data sources.",
         "operationId": "getDataSources",
         "responses": {
@@ -3702,7 +3951,9 @@
       },
       "post": {
         "description": "By defining `password` and `basicAuthPassword` under secureJsonData property\nGrafana encrypts them securely as an encrypted blob in the database.\nThe response then lists the encrypted fields under secureJsonFields.\n\nIf you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:create`",
-        "tags": ["datasources"],
+        "tags": [
+          "datasources"
+        ],
         "summary": "Create a data source.",
         "operationId": "addDataSource",
         "parameters": [
@@ -3734,10 +3985,35 @@
         }
       }
     },
+    "/datasources/correlations": {
+      "get": {
+        "tags": [
+          "correlations"
+        ],
+        "summary": "Gets all correlations.",
+        "operationId": "getCorrelations",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getCorrelationsResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/datasources/id/{name}": {
       "get": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:name:*` and `datasources:name:test_datasource` (single data source).",
-        "tags": ["datasources"],
+        "tags": [
+          "datasources"
+        ],
         "summary": "Get data source Id by Name.",
         "operationId": "getDataSourceIdByName",
         "parameters": [
@@ -3770,7 +4046,9 @@
     "/datasources/name/{name}": {
       "get": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:name:*` and `datasources:name:test_datasource` (single data source).",
-        "tags": ["datasources"],
+        "tags": [
+          "datasources"
+        ],
         "summary": "Get a single data source by Name.",
         "operationId": "getDataSourceByName",
         "parameters": [
@@ -3798,7 +4076,9 @@
       },
       "delete": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:name:*` and `datasources:name:test_datasource` (single data source).",
-        "tags": ["datasources"],
+        "tags": [
+          "datasources"
+        ],
         "summary": "Delete an existing data source by name.",
         "operationId": "deleteDataSourceByName",
         "parameters": [
@@ -3831,7 +4111,9 @@
     "/datasources/proxy/uid/{uid}/{datasource_proxy_route}": {
       "get": {
         "description": "Proxies all calls to the actual data source.",
-        "tags": ["datasources"],
+        "tags": [
+          "datasources"
+        ],
         "summary": "Data source proxy GET calls.",
         "operationId": "datasourceProxyGETByUIDcalls",
         "parameters": [
@@ -3871,7 +4153,9 @@
       },
       "post": {
         "description": "Proxies all calls to the actual data source. The data source should support POST methods for the specific path and role as defined",
-        "tags": ["datasources"],
+        "tags": [
+          "datasources"
+        ],
         "summary": "Data source proxy POST calls.",
         "operationId": "datasourceProxyPOSTByUIDcalls",
         "parameters": [
@@ -3879,9 +4163,7 @@
             "name": "DatasourceProxyParam",
             "in": "body",
             "required": true,
-            "schema": {
-              "type": "object"
-            }
+            "schema": {}
           },
           {
             "type": "string",
@@ -3922,7 +4204,9 @@
       },
       "delete": {
         "description": "Proxies all calls to the actual data source.",
-        "tags": ["datasources"],
+        "tags": [
+          "datasources"
+        ],
         "summary": "Data source proxy DELETE calls.",
         "operationId": "datasourceProxyDELETEByUIDcalls",
         "parameters": [
@@ -3964,7 +4248,9 @@
     "/datasources/proxy/{id}/{datasource_proxy_route}": {
       "get": {
         "description": "Proxies all calls to the actual data source.\n\nPlease refer to [updated API](#/datasources/datasourceProxyGETByUIDcalls) instead",
-        "tags": ["datasources"],
+        "tags": [
+          "datasources"
+        ],
         "summary": "Data source proxy GET calls.",
         "operationId": "datasourceProxyGETcalls",
         "deprecated": true,
@@ -4005,7 +4291,9 @@
       },
       "post": {
         "description": "Proxies all calls to the actual data source. The data source should support POST methods for the specific path and role as defined\n\nPlease refer to [updated API](#/datasources/datasourceProxyPOSTByUIDcalls) instead",
-        "tags": ["datasources"],
+        "tags": [
+          "datasources"
+        ],
         "summary": "Data source proxy POST calls.",
         "operationId": "datasourceProxyPOSTcalls",
         "deprecated": true,
@@ -4014,9 +4302,7 @@
             "name": "DatasourceProxyParam",
             "in": "body",
             "required": true,
-            "schema": {
-              "type": "object"
-            }
+            "schema": {}
           },
           {
             "type": "string",
@@ -4057,7 +4343,9 @@
       },
       "delete": {
         "description": "Proxies all calls to the actual data source.\n\nPlease refer to [updated API](#/datasources/datasourceProxyDELETEByUIDcalls) instead",
-        "tags": ["datasources"],
+        "tags": [
+          "datasources"
+        ],
         "summary": "Data source proxy DELETE calls.",
         "operationId": "datasourceProxyDELETEcalls",
         "deprecated": true,
@@ -4098,8 +4386,39 @@
       }
     },
     "/datasources/uid/{sourceUID}/correlations": {
+      "get": {
+        "tags": [
+          "correlations"
+        ],
+        "summary": "Gets all correlations originating from the given data source.",
+        "operationId": "getCorrelationsBySourceUID",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "sourceUID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getCorrelationsBySourceUIDResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
       "post": {
-        "tags": ["correlations"],
+        "tags": [
+          "correlations"
+        ],
         "summary": "Add correlation.",
         "operationId": "createCorrelation",
         "parameters": [
@@ -4140,10 +4459,97 @@
         }
       }
     },
+    "/datasources/uid/{sourceUID}/correlations/{correlationUID}": {
+      "get": {
+        "tags": [
+          "correlations"
+        ],
+        "summary": "Gets a correlation.",
+        "operationId": "getCorrelation",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "sourceUID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "correlationUID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getCorrelationResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "correlations"
+        ],
+        "summary": "Updates a correlation.",
+        "operationId": "updateCorrelation",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "sourceUID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "correlationUID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/UpdateCorrelationCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/updateCorrelationResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/datasources/uid/{uid}": {
       "get": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:kLtEtcRGk` (single data source).",
-        "tags": ["datasources"],
+        "tags": [
+          "datasources"
+        ],
         "summary": "Get a single data source by UID.",
         "operationId": "getDataSourceByUID",
         "parameters": [
@@ -4177,7 +4583,9 @@
       },
       "put": {
         "description": "Similar to creating a data source, `password` and `basicAuthPassword` should be defined under\nsecureJsonData in order to be stored securely as an encrypted blob in the database. Then, the\nencrypted fields are listed under secureJsonFields section in the response.\n\nIf you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:write` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:1` (single data source).",
-        "tags": ["datasources"],
+        "tags": [
+          "datasources"
+        ],
         "summary": "Update an existing data source.",
         "operationId": "updateDataSourceByUID",
         "parameters": [
@@ -4213,7 +4621,9 @@
       },
       "delete": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:kLtEtcRGk` (single data source).",
-        "tags": ["datasources"],
+        "tags": [
+          "datasources"
+        ],
         "summary": "Delete an existing data source by UID.",
         "operationId": "deleteDataSourceByUID",
         "parameters": [
@@ -4245,7 +4655,9 @@
     },
     "/datasources/uid/{uid}/correlations/{correlationUID}": {
       "delete": {
-        "tags": ["correlations"],
+        "tags": [
+          "correlations"
+        ],
         "summary": "Delete a correlation.",
         "operationId": "deleteCorrelation",
         "parameters": [
@@ -4283,7 +4695,9 @@
     },
     "/datasources/uid/{uid}/health": {
       "get": {
-        "tags": ["datasources"],
+        "tags": [
+          "datasources"
+        ],
         "summary": "Sends a health check request to the plugin datasource identified by the UID.",
         "operationId": "checkDatasourceHealthWithUID",
         "parameters": [
@@ -4315,7 +4729,9 @@
     },
     "/datasources/uid/{uid}/resources/{datasource_proxy_route}": {
       "get": {
-        "tags": ["datasources"],
+        "tags": [
+          "datasources"
+        ],
         "summary": "Fetch data source resources.",
         "operationId": "callDatasourceResourceWithUID",
         "parameters": [
@@ -4357,7 +4773,10 @@
     "/datasources/{datasourceId}/disable-permissions": {
       "post": {
         "description": "Disables permissions for the data source with the given id. All existing permissions will be removed and anyone will be able to query the data source.\n\nYou need to have a permission with action `datasources.permissions:toggle` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
-        "tags": ["datasource_permissions", "enterprise"],
+        "tags": [
+          "datasource_permissions",
+          "enterprise"
+        ],
         "summary": "Disable permissions for a data source.",
         "operationId": "disablePermissions",
         "parameters": [
@@ -4393,7 +4812,10 @@
     "/datasources/{datasourceId}/enable-permissions": {
       "post": {
         "description": "Enables permissions for the data source with the given id.\nNo one except Org Admins will be able to query the data source until permissions have been added\nwhich permit certain users or teams to query the data source.\n\nYou need to have a permission with action `datasources.permissions:toggle` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
-        "tags": ["datasource_permissions", "enterprise"],
+        "tags": [
+          "datasource_permissions",
+          "enterprise"
+        ],
         "summary": "Enable permissions for a data source.",
         "operationId": "enablePermissions",
         "parameters": [
@@ -4429,7 +4851,10 @@
     "/datasources/{datasourceId}/permissions": {
       "get": {
         "description": "Gets all existing permissions for the data source with the given id.\n\nYou need to have a permission with action `datasources.permissions:read` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
-        "tags": ["datasource_permissions", "enterprise"],
+        "tags": [
+          "datasource_permissions",
+          "enterprise"
+        ],
         "summary": "Get permissions for a data source.",
         "operationId": "getAllPermissions",
         "parameters": [
@@ -4460,7 +4885,10 @@
       },
       "post": {
         "description": "You need to have a permission with action `datasources.permissions:read` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
-        "tags": ["datasource_permissions", "enterprise"],
+        "tags": [
+          "datasource_permissions",
+          "enterprise"
+        ],
         "summary": "Add permissions for a data source.",
         "operationId": "addPermission",
         "parameters": [
@@ -4516,7 +4944,10 @@
     "/datasources/{datasourceId}/permissions/{permissionId}": {
       "delete": {
         "description": "Removes the permission with the given permissionId for the data source with the given id.\n\nYou need to have a permission with action `datasources.permissions:delete` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
-        "tags": ["datasource_permissions", "enterprise"],
+        "tags": [
+          "datasource_permissions",
+          "enterprise"
+        ],
         "summary": "Remove permission for a data source.",
         "operationId": "deletePermissions",
         "parameters": [
@@ -4552,7 +4983,9 @@
     "/datasources/{id}": {
       "get": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).\n\nPlease refer to [updated API](#/datasources/getDataSourceByUID) instead",
-        "tags": ["datasources"],
+        "tags": [
+          "datasources"
+        ],
         "summary": "Get a single data source by Id.",
         "operationId": "getDataSourceByID",
         "deprecated": true,
@@ -4587,7 +5020,9 @@
       },
       "put": {
         "description": "Similar to creating a data source, `password` and `basicAuthPassword` should be defined under\nsecureJsonData in order to be stored securely as an encrypted blob in the database. Then, the\nencrypted fields are listed under secureJsonFields section in the response.\n\nIf you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:write` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).\n\nPlease refer to [updated API](#/datasources/updateDataSourceByUID) instead",
-        "tags": ["datasources"],
+        "tags": [
+          "datasources"
+        ],
         "summary": "Update an existing data source by its sequential ID.",
         "operationId": "updateDataSourceByID",
         "deprecated": true,
@@ -4624,7 +5059,9 @@
       },
       "delete": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).\n\nPlease refer to [updated API](#/datasources/deleteDataSourceByUID) instead",
-        "tags": ["datasources"],
+        "tags": [
+          "datasources"
+        ],
         "summary": "Delete an existing data source by id.",
         "operationId": "deleteDataSourceByID",
         "deprecated": true,
@@ -4658,7 +5095,9 @@
     "/datasources/{id}/health": {
       "get": {
         "description": "Please refer to [updated API](#/datasources/checkDatasourceHealthWithUID) instead",
-        "tags": ["datasources"],
+        "tags": [
+          "datasources"
+        ],
         "summary": "Sends a health check request to the plugin datasource identified by the ID.",
         "operationId": "checkDatasourceHealthByID",
         "deprecated": true,
@@ -4692,7 +5131,9 @@
     "/datasources/{id}/resources/{datasource_proxy_route}": {
       "get": {
         "description": "Please refer to [updated API](#/datasources/callDatasourceResourceWithUID) instead",
-        "tags": ["datasources"],
+        "tags": [
+          "datasources"
+        ],
         "summary": "Fetch data source resources by Id.",
         "operationId": "callDatasourceResourceByID",
         "deprecated": true,
@@ -4735,8 +5176,10 @@
     "/ds/query": {
       "post": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:query`.",
-        "tags": ["ds"],
-        "summary": "DataSource query metrics with expressions",
+        "tags": [
+          "ds"
+        ],
+        "summary": "DataSource query metrics with expressions.",
         "operationId": "queryMetricsWithExpressions",
         "parameters": [
           {
@@ -4773,7 +5216,9 @@
     "/folders": {
       "get": {
         "description": "Returns all folders that the authenticated user has permission to view.",
-        "tags": ["folders"],
+        "tags": [
+          "folders"
+        ],
         "summary": "Get all folders.",
         "operationId": "getFolders",
         "parameters": [
@@ -4810,7 +5255,9 @@
         }
       },
       "post": {
-        "tags": ["folders"],
+        "tags": [
+          "folders"
+        ],
         "summary": "Create folder.",
         "operationId": "createFolder",
         "parameters": [
@@ -4848,7 +5295,9 @@
     "/folders/id/{folder_id}": {
       "get": {
         "description": "Returns the folder identified by id.",
-        "tags": ["folders"],
+        "tags": [
+          "folders"
+        ],
         "summary": "Get folder by id.",
         "operationId": "getFolderByID",
         "parameters": [
@@ -4881,7 +5330,9 @@
     },
     "/folders/{folder_uid}": {
       "get": {
-        "tags": ["folders"],
+        "tags": [
+          "folders"
+        ],
         "summary": "Get folder by uid.",
         "operationId": "getFolderByUID",
         "parameters": [
@@ -4911,7 +5362,9 @@
         }
       },
       "put": {
-        "tags": ["folders"],
+        "tags": [
+          "folders"
+        ],
         "summary": "Update folder.",
         "operationId": "updateFolder",
         "parameters": [
@@ -4957,7 +5410,9 @@
       },
       "delete": {
         "description": "Deletes an existing folder identified by UID along with all dashboards (and their alerts) stored in the folder. This operation cannot be reverted.",
-        "tags": ["folders"],
+        "tags": [
+          "folders"
+        ],
         "summary": "Delete folder.",
         "operationId": "deleteFolder",
         "parameters": [
@@ -4999,7 +5454,9 @@
     },
     "/folders/{folder_uid}/permissions": {
       "get": {
-        "tags": ["folder_permissions"],
+        "tags": [
+          "folder_permissions"
+        ],
         "summary": "Gets all existing permissions for the folder with the given `uid`.",
         "operationId": "getFolderPermissionList",
         "parameters": [
@@ -5029,7 +5486,9 @@
         }
       },
       "post": {
-        "tags": ["folder_permissions"],
+        "tags": [
+          "folder_permissions"
+        ],
         "summary": "Updates permissions for a folder. This operation will remove existing permissions if they’re not included in the request.",
         "operationId": "updateFolderPermissions",
         "parameters": [
@@ -5070,7 +5529,9 @@
     "/library-elements": {
       "get": {
         "description": "Returns a list of all library elements the authenticated user has permission to view.\nUse the `perPage` query parameter to control the maximum number of library elements returned; the default limit is `100`.\nYou can also use the `page` query parameter to fetch library elements from any page other than the first one.",
-        "tags": ["library_elements"],
+        "tags": [
+          "library_elements"
+        ],
         "summary": "Get all library elements.",
         "operationId": "getLibraryElements",
         "parameters": [
@@ -5081,7 +5542,10 @@
             "in": "query"
           },
           {
-            "enum": [1, 2],
+            "enum": [
+              1,
+              2
+            ],
             "type": "integer",
             "format": "int64",
             "description": "Kind of element to search for.",
@@ -5089,7 +5553,10 @@
             "in": "query"
           },
           {
-            "enum": ["alpha-asc", "alpha-desc"],
+            "enum": [
+              "alpha-asc",
+              "alpha-desc"
+            ],
             "type": "string",
             "description": "Sort order of elements.",
             "name": "sortDirection",
@@ -5144,7 +5611,9 @@
       },
       "post": {
         "description": "Creates a new library element.",
-        "tags": ["library_elements"],
+        "tags": [
+          "library_elements"
+        ],
         "summary": "Create library element.",
         "operationId": "createLibraryElement",
         "parameters": [
@@ -5182,7 +5651,9 @@
     "/library-elements/name/{library_element_name}": {
       "get": {
         "description": "Returns a library element with the given name.",
-        "tags": ["library_elements"],
+        "tags": [
+          "library_elements"
+        ],
         "summary": "Get library element by name.",
         "operationId": "getLibraryElementByName",
         "parameters": [
@@ -5212,7 +5683,9 @@
     "/library-elements/{library_element_uid}": {
       "get": {
         "description": "Returns a library element with the given UID.",
-        "tags": ["library_elements"],
+        "tags": [
+          "library_elements"
+        ],
         "summary": "Get library element by UID.",
         "operationId": "getLibraryElementByUID",
         "parameters": [
@@ -5240,7 +5713,9 @@
       },
       "delete": {
         "description": "Deletes an existing library element as specified by the UID. This operation cannot be reverted.\nYou cannot delete a library element that is connected. This operation cannot be reverted.",
-        "tags": ["library_elements"],
+        "tags": [
+          "library_elements"
+        ],
         "summary": "Delete library element.",
         "operationId": "deleteLibraryElementByUID",
         "parameters": [
@@ -5274,7 +5749,9 @@
       },
       "patch": {
         "description": "Updates an existing library element identified by uid.",
-        "tags": ["library_elements"],
+        "tags": [
+          "library_elements"
+        ],
         "summary": "Update library element.",
         "operationId": "updateLibraryElement",
         "parameters": [
@@ -5321,7 +5798,9 @@
     "/library-elements/{library_element_uid}/connections/": {
       "get": {
         "description": "Returns a list of connections for a library element based on the UID specified.",
-        "tags": ["library_elements"],
+        "tags": [
+          "library_elements"
+        ],
         "summary": "Get library element connections.",
         "operationId": "getLibraryElementConnections",
         "parameters": [
@@ -5350,7 +5829,10 @@
     },
     "/licensing/check": {
       "get": {
-        "tags": ["licensing", "enterprise"],
+        "tags": [
+          "licensing",
+          "enterprise"
+        ],
         "summary": "Check license availability.",
         "operationId": "getStatus",
         "responses": {
@@ -5363,7 +5845,10 @@
     "/licensing/custom-permissions": {
       "get": {
         "description": "You need to have a permission with action `licensing.reports:read`.",
-        "tags": ["licensing", "enterprise"],
+        "tags": [
+          "licensing",
+          "enterprise"
+        ],
         "summary": "Get custom permissions report.",
         "operationId": "getCustomPermissionsReport",
         "responses": {
@@ -5379,8 +5864,13 @@
     "/licensing/custom-permissions-csv": {
       "get": {
         "description": "You need to have a permission with action `licensing.reports:read`.",
-        "produces": ["text/csv"],
-        "tags": ["licensing", "enterprise"],
+        "produces": [
+          "text/csv"
+        ],
+        "tags": [
+          "licensing",
+          "enterprise"
+        ],
         "summary": "Get custom permissions report in CSV format.",
         "operationId": "getCustomPermissionsCSV",
         "responses": {
@@ -5396,7 +5886,10 @@
     "/licensing/refresh-stats": {
       "get": {
         "description": "You need to have a permission with action `licensing:read`.",
-        "tags": ["licensing", "enterprise"],
+        "tags": [
+          "licensing",
+          "enterprise"
+        ],
         "summary": "Refresh license stats.",
         "operationId": "refreshLicenseStats",
         "responses": {
@@ -5412,7 +5905,10 @@
     "/licensing/token": {
       "get": {
         "description": "You need to have a permission with action `licensing:read`.",
-        "tags": ["licensing", "enterprise"],
+        "tags": [
+          "licensing",
+          "enterprise"
+        ],
         "summary": "Get license token.",
         "operationId": "getLicenseToken",
         "responses": {
@@ -5423,7 +5919,10 @@
       },
       "post": {
         "description": "You need to have a permission with action `licensing:update`.",
-        "tags": ["licensing", "enterprise"],
+        "tags": [
+          "licensing",
+          "enterprise"
+        ],
         "summary": "Create license token.",
         "operationId": "postLicenseToken",
         "parameters": [
@@ -5447,7 +5946,10 @@
       },
       "delete": {
         "description": "Removes the license stored in the Grafana database. Available in Grafana Enterprise v7.4+.\n\nYou need to have a permission with action `licensing:delete`.",
-        "tags": ["licensing", "enterprise"],
+        "tags": [
+          "licensing",
+          "enterprise"
+        ],
         "summary": "Remove license from database.",
         "operationId": "deleteLicenseToken",
         "parameters": [
@@ -5485,7 +5987,10 @@
     "/licensing/token/renew": {
       "post": {
         "description": "Manually ask license issuer for a new token. Available in Grafana Enterprise v7.4+.\n\nYou need to have a permission with action `licensing:update`.",
-        "tags": ["licensing", "enterprise"],
+        "tags": [
+          "licensing",
+          "enterprise"
+        ],
         "summary": "Manually force license refresh.",
         "operationId": "postRenewLicenseToken",
         "parameters": [
@@ -5513,7 +6018,10 @@
     },
     "/logout/saml": {
       "get": {
-        "tags": ["saml", "enterprise"],
+        "tags": [
+          "saml",
+          "enterprise"
+        ],
         "summary": "GetLogout initiates single logout process.",
         "operationId": "getSAMLLogout",
         "responses": {
@@ -5531,8 +6039,10 @@
     },
     "/org": {
       "get": {
-        "description": "Get current Organization",
-        "tags": ["org"],
+        "tags": [
+          "org"
+        ],
+        "summary": "Get current Organization.",
         "operationId": "getCurrentOrg",
         "responses": {
           "200": {
@@ -5550,7 +6060,9 @@
         }
       },
       "put": {
-        "tags": ["org"],
+        "tags": [
+          "org"
+        ],
         "summary": "Update current Organization.",
         "operationId": "updateCurrentOrg",
         "parameters": [
@@ -5584,7 +6096,9 @@
     },
     "/org/address": {
       "put": {
-        "tags": ["org"],
+        "tags": [
+          "org"
+        ],
         "summary": "Update current Organization's address.",
         "operationId": "updateCurrentOrgAddress",
         "parameters": [
@@ -5618,7 +6132,9 @@
     },
     "/org/invites": {
       "get": {
-        "tags": ["org_invites"],
+        "tags": [
+          "org_invites"
+        ],
         "summary": "Get pending invites.",
         "operationId": "getPendingOrgInvites",
         "responses": {
@@ -5637,7 +6153,9 @@
         }
       },
       "post": {
-        "tags": ["org_invites"],
+        "tags": [
+          "org_invites"
+        ],
         "summary": "Add invite.",
         "operationId": "addOrgInvite",
         "parameters": [
@@ -5674,7 +6192,9 @@
     },
     "/org/invites/{invitation_code}/revoke": {
       "delete": {
-        "tags": ["org_invites"],
+        "tags": [
+          "org_invites"
+        ],
         "summary": "Revoke invite.",
         "operationId": "revokeInvite",
         "parameters": [
@@ -5706,7 +6226,9 @@
     },
     "/org/preferences": {
       "get": {
-        "tags": ["org_preferences"],
+        "tags": [
+          "org_preferences"
+        ],
         "summary": "Get Current Org Prefs.",
         "operationId": "getOrgPreferences",
         "responses": {
@@ -5725,7 +6247,9 @@
         }
       },
       "put": {
-        "tags": ["org_preferences"],
+        "tags": [
+          "org_preferences"
+        ],
         "summary": "Update Current Org Prefs.",
         "operationId": "updateOrgPreferences",
         "parameters": [
@@ -5757,7 +6281,9 @@
         }
       },
       "patch": {
-        "tags": ["org_preferences"],
+        "tags": [
+          "org_preferences"
+        ],
         "summary": "Patch Current Org Prefs.",
         "operationId": "patchOrgPreferences",
         "parameters": [
@@ -5792,7 +6318,9 @@
     "/org/users": {
       "get": {
         "description": "Returns all org users within the current organization. Accessible to users with org admin role.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `org.users:read` with scope `users:*`.",
-        "tags": ["org"],
+        "tags": [
+          "org"
+        ],
         "summary": "Get all users within the current organization.",
         "operationId": "getOrgUsersForCurrentOrg",
         "responses": {
@@ -5812,8 +6340,10 @@
       },
       "post": {
         "description": "Adds a global user to the current organization.\n\nIf you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `org.users:add` with scope `users:*`.",
-        "tags": ["org"],
-        "summary": "Add a new user to the current organization",
+        "tags": [
+          "org"
+        ],
+        "summary": "Add a new user to the current organization.",
         "operationId": "addOrgUserToCurrentOrg",
         "parameters": [
           {
@@ -5844,7 +6374,9 @@
     "/org/users/lookup": {
       "get": {
         "description": "Returns all org users within the current organization, but with less detailed information.\nAccessible to users with org admin role, admin in any folder or admin of any team.\nMainly used by Grafana UI for providing list of users when adding team members and when editing folder/dashboard permissions.",
-        "tags": ["org"],
+        "tags": [
+          "org"
+        ],
         "summary": "Get all users within the current organization (lookup)",
         "operationId": "getOrgUsersForCurrentOrgLookup",
         "parameters": [
@@ -5879,8 +6411,10 @@
     "/org/users/{user_id}": {
       "delete": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `org.users:remove` with scope `users:*`.",
-        "tags": ["org"],
-        "summary": "Delete user in current organization",
+        "tags": [
+          "org"
+        ],
+        "summary": "Delete user in current organization.",
         "operationId": "removeOrgUserForCurrentOrg",
         "parameters": [
           {
@@ -5911,8 +6445,10 @@
       },
       "patch": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `org.users.role:update` with scope `users:*`.",
-        "tags": ["org"],
-        "summary": "Updates the given user",
+        "tags": [
+          "org"
+        ],
+        "summary": "Updates the given user.",
         "operationId": "updateOrgUserForCurrentOrg",
         "parameters": [
           {
@@ -5957,8 +6493,10 @@
             "basic": []
           }
         ],
-        "description": "Search all Organizations",
-        "tags": ["orgs"],
+        "tags": [
+          "orgs"
+        ],
+        "summary": "Search all Organizations.",
         "operationId": "searchOrgs",
         "parameters": [
           {
@@ -6008,7 +6546,9 @@
       },
       "post": {
         "description": "Only works if [users.allow_org_create](https://grafana.com/docs/grafana/latest/administration/configuration/#allow_org_create) is set.",
-        "tags": ["orgs"],
+        "tags": [
+          "orgs"
+        ],
         "summary": "Create Organization.",
         "operationId": "createOrg",
         "parameters": [
@@ -6047,7 +6587,9 @@
             "basic": []
           }
         ],
-        "tags": ["orgs"],
+        "tags": [
+          "orgs"
+        ],
         "summary": "Get Organization by ID.",
         "operationId": "getOrgByName",
         "parameters": [
@@ -6081,7 +6623,9 @@
             "basic": []
           }
         ],
-        "tags": ["orgs"],
+        "tags": [
+          "orgs"
+        ],
         "summary": "Get Organization by ID.",
         "operationId": "getOrgByID",
         "parameters": [
@@ -6114,7 +6658,9 @@
             "basic": []
           }
         ],
-        "tags": ["orgs"],
+        "tags": [
+          "orgs"
+        ],
         "summary": "Update Organization.",
         "operationId": "updateOrg",
         "parameters": [
@@ -6158,7 +6704,9 @@
             "basic": []
           }
         ],
-        "tags": ["orgs"],
+        "tags": [
+          "orgs"
+        ],
         "summary": "Delete Organization.",
         "operationId": "deleteOrgByID",
         "parameters": [
@@ -6194,7 +6742,9 @@
     },
     "/orgs/{org_id}/address": {
       "put": {
-        "tags": ["orgs"],
+        "tags": [
+          "orgs"
+        ],
         "summary": "Update Organization's address.",
         "operationId": "updateOrgAddress",
         "parameters": [
@@ -6235,8 +6785,10 @@
     },
     "/orgs/{org_id}/quotas": {
       "get": {
-        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `orgs.quotas:read` and scope `org:id:1` (orgIDScope).\nlist",
-        "tags": ["orgs"],
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `orgs.quotas:read` and scope `org:id:1` (orgIDScope).",
+        "tags": [
+          "orgs"
+        ],
         "summary": "Fetch Organization quota.",
         "operationId": "getOrgQuota",
         "parameters": [
@@ -6275,7 +6827,9 @@
           }
         ],
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `orgs.quotas:write` and scope `org:id:1` (orgIDScope).",
-        "tags": ["orgs"],
+        "tags": [
+          "orgs"
+        ],
         "summary": "Update user quota.",
         "operationId": "updateOrgQuota",
         "parameters": [
@@ -6328,7 +6882,9 @@
           }
         ],
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `org.users:read` with scope `users:*`.",
-        "tags": ["orgs"],
+        "tags": [
+          "orgs"
+        ],
         "summary": "Get Users in Organization.",
         "operationId": "getOrgUsers",
         "parameters": [
@@ -6357,8 +6913,10 @@
       },
       "post": {
         "description": "Adds a global user to the current organization.\n\nIf you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `org.users:add` with scope `users:*`.",
-        "tags": ["orgs"],
-        "summary": "Add a new user to the current organization",
+        "tags": [
+          "orgs"
+        ],
+        "summary": "Add a new user to the current organization.",
         "operationId": "addOrgUser",
         "parameters": [
           {
@@ -6396,8 +6954,10 @@
     "/orgs/{org_id}/users/{user_id}": {
       "delete": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `org.users:remove` with scope `users:*`.",
-        "tags": ["orgs"],
-        "summary": "Delete user in current organization",
+        "tags": [
+          "orgs"
+        ],
+        "summary": "Delete user in current organization.",
         "operationId": "removeOrgUser",
         "parameters": [
           {
@@ -6435,7 +6995,9 @@
       },
       "patch": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `org.users.role:update` with scope `users:*`.",
-        "tags": ["orgs"],
+        "tags": [
+          "orgs"
+        ],
         "summary": "Update Users in Organization.",
         "operationId": "updateOrgUser",
         "parameters": [
@@ -6483,7 +7045,9 @@
     },
     "/playlists": {
       "get": {
-        "tags": ["playlists"],
+        "tags": [
+          "playlists"
+        ],
         "summary": "Get playlists.",
         "operationId": "searchPlaylists",
         "parameters": [
@@ -6510,7 +7074,9 @@
         }
       },
       "post": {
-        "tags": ["playlists"],
+        "tags": [
+          "playlists"
+        ],
         "summary": "Create playlist.",
         "operationId": "createPlaylist",
         "parameters": [
@@ -6544,7 +7110,9 @@
     },
     "/playlists/{uid}": {
       "get": {
-        "tags": ["playlists"],
+        "tags": [
+          "playlists"
+        ],
         "summary": "Get playlist.",
         "operationId": "getPlaylist",
         "parameters": [
@@ -6574,7 +7142,9 @@
         }
       },
       "put": {
-        "tags": ["playlists"],
+        "tags": [
+          "playlists"
+        ],
         "summary": "Update playlist.",
         "operationId": "updatePlaylist",
         "parameters": [
@@ -6612,7 +7182,9 @@
         }
       },
       "delete": {
-        "tags": ["playlists"],
+        "tags": [
+          "playlists"
+        ],
         "summary": "Delete playlist.",
         "operationId": "deletePlaylist",
         "parameters": [
@@ -6644,7 +7216,9 @@
     },
     "/playlists/{uid}/dashboards": {
       "get": {
-        "tags": ["playlists"],
+        "tags": [
+          "playlists"
+        ],
         "summary": "Get playlist dashboards.",
         "operationId": "getPlaylistDashboards",
         "parameters": [
@@ -6676,7 +7250,9 @@
     },
     "/playlists/{uid}/items": {
       "get": {
-        "tags": ["playlists"],
+        "tags": [
+          "playlists"
+        ],
         "summary": "Get playlist items.",
         "operationId": "getPlaylistItems",
         "parameters": [
@@ -6709,7 +7285,9 @@
     "/query-history": {
       "get": {
         "description": "Returns a list of queries in the query history that matches the search criteria.\nQuery history search supports pagination. Use the `limit` parameter to control the maximum number of queries returned; the default limit is 100.\nYou can also use the `page` query parameter to fetch queries from any page other than the first one.",
-        "tags": ["query_history"],
+        "tags": [
+          "query_history"
+        ],
         "summary": "Query history search.",
         "operationId": "searchQueries",
         "parameters": [
@@ -6736,7 +7314,10 @@
             "in": "query"
           },
           {
-            "enum": ["time-desc", "time-asc"],
+            "enum": [
+              "time-desc",
+              "time-asc"
+            ],
             "type": "string",
             "default": "time-desc",
             "description": "Sort method",
@@ -6786,7 +7367,9 @@
       },
       "post": {
         "description": "Adds new query to query history.",
-        "tags": ["query_history"],
+        "tags": [
+          "query_history"
+        ],
         "summary": "Add query to query history.",
         "operationId": "createQuery",
         "parameters": [
@@ -6818,7 +7401,9 @@
     "/query-history/migrate": {
       "post": {
         "description": "Adds multiple queries to query history.",
-        "tags": ["query_history"],
+        "tags": [
+          "query_history"
+        ],
         "summary": "Migrate queries to query history.",
         "operationId": "migrateQueries",
         "parameters": [
@@ -6850,7 +7435,9 @@
     "/query-history/star/{query_history_uid}": {
       "post": {
         "description": "Adds star to query in query history as specified by the UID.",
-        "tags": ["query_history"],
+        "tags": [
+          "query_history"
+        ],
         "summary": "Add star to query in query history.",
         "operationId": "starQuery",
         "parameters": [
@@ -6875,7 +7462,9 @@
       },
       "delete": {
         "description": "Removes star from query in query history as specified by the UID.",
-        "tags": ["query_history"],
+        "tags": [
+          "query_history"
+        ],
         "summary": "Remove star to query in query history.",
         "operationId": "unstarQuery",
         "parameters": [
@@ -6902,7 +7491,9 @@
     "/query-history/{query_history_uid}": {
       "delete": {
         "description": "Deletes an existing query in query history as specified by the UID. This operation cannot be reverted.",
-        "tags": ["query_history"],
+        "tags": [
+          "query_history"
+        ],
         "summary": "Delete query in query history.",
         "operationId": "deleteQuery",
         "parameters": [
@@ -6927,7 +7518,9 @@
       },
       "patch": {
         "description": "Updates comment for query in query history as specified by the UID.",
-        "tags": ["query_history"],
+        "tags": [
+          "query_history"
+        ],
         "summary": "Update comment for query in query history.",
         "operationId": "patchQueryComment",
         "parameters": [
@@ -6964,8 +7557,11 @@
     },
     "/recording-rules": {
       "get": {
-        "description": "Lists all rules in the database: active or deleted",
-        "tags": ["recording_rules", "enterprise"],
+        "tags": [
+          "recording_rules",
+          "enterprise"
+        ],
+        "summary": "Lists all rules in the database: active or deleted.",
         "operationId": "listRecordingRules",
         "responses": {
           "200": {
@@ -6986,8 +7582,11 @@
         }
       },
       "put": {
-        "description": "Update the active status of a rule",
-        "tags": ["recording_rules", "enterprise"],
+        "tags": [
+          "recording_rules",
+          "enterprise"
+        ],
+        "summary": "Update the active status of a rule.",
         "operationId": "updateRecordingRule",
         "parameters": [
           {
@@ -7018,8 +7617,11 @@
         }
       },
       "post": {
-        "description": "Create a recording rule that is then registered and started",
-        "tags": ["recording_rules", "enterprise"],
+        "tags": [
+          "recording_rules",
+          "enterprise"
+        ],
+        "summary": "Create a recording rule that is then registered and started.",
         "operationId": "createRecordingRule",
         "parameters": [
           {
@@ -7052,7 +7654,10 @@
     },
     "/recording-rules/test": {
       "post": {
-        "tags": ["recording_rules", "enterprise"],
+        "tags": [
+          "recording_rules",
+          "enterprise"
+        ],
         "summary": "Test a recording rule.",
         "operationId": "testCreateRecordingRule",
         "parameters": [
@@ -7089,8 +7694,11 @@
     },
     "/recording-rules/writer": {
       "get": {
-        "description": "Return the prometheus remote write target",
-        "tags": ["recording_rules", "enterprise"],
+        "tags": [
+          "recording_rules",
+          "enterprise"
+        ],
+        "summary": "Return the prometheus remote write target.",
         "operationId": "getRecordingRuleWriteTarget",
         "responses": {
           "200": {
@@ -7111,8 +7719,11 @@
         }
       },
       "post": {
-        "description": "It returns a 422 if there is not an existing prometheus data source configured",
-        "tags": ["recording_rules", "enterprise"],
+        "description": "It returns a 422 if there is not an existing prometheus data source configured.",
+        "tags": [
+          "recording_rules",
+          "enterprise"
+        ],
         "summary": "Create a remote write target.",
         "operationId": "createRecordingRuleWriteTarget",
         "parameters": [
@@ -7147,7 +7758,10 @@
         }
       },
       "delete": {
-        "tags": ["recording_rules", "enterprise"],
+        "tags": [
+          "recording_rules",
+          "enterprise"
+        ],
         "summary": "Delete the remote write target.",
         "operationId": "deleteRecordingRuleWriteTarget",
         "responses": {
@@ -7171,7 +7785,10 @@
     },
     "/recording-rules/{recordingRuleID}": {
       "delete": {
-        "tags": ["recording_rules", "enterprise"],
+        "tags": [
+          "recording_rules",
+          "enterprise"
+        ],
         "summary": "Delete removes the rule from the registry and stops it.",
         "operationId": "deleteRecordingRule",
         "parameters": [
@@ -7204,8 +7821,11 @@
     },
     "/reports": {
       "get": {
-        "description": "Available to org admins only and with a valid or expired license\n\nYou need to have a permission with action `reports:read` with scope `reports:*`.",
-        "tags": ["reports", "enterprise"],
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports:read` with scope `reports:*`.",
+        "tags": [
+          "reports",
+          "enterprise"
+        ],
         "summary": "List reports.",
         "operationId": "getReports",
         "responses": {
@@ -7225,7 +7845,10 @@
       },
       "post": {
         "description": "Available to org admins only and with a valid license.\n\nYou need to have a permission with action `reports.admin:create`.",
-        "tags": ["reports", "enterprise"],
+        "tags": [
+          "reports",
+          "enterprise"
+        ],
         "summary": "Create a report.",
         "operationId": "createReport",
         "parameters": [
@@ -7263,7 +7886,10 @@
     "/reports/email": {
       "post": {
         "description": "Generate and send a report. This API waits for the report to be generated before returning. We recommend that you set the client’s timeout to at least 60 seconds. Available to org admins only and with a valid license.\n\nOnly available in Grafana Enterprise v7.0+.\nThis API endpoint is experimental and may be deprecated in a future release. On deprecation, a migration strategy will be provided and the endpoint will remain functional until the next major release of Grafana.\n\nYou need to have a permission with action `reports:send`.",
-        "tags": ["reports", "enterprise"],
+        "tags": [
+          "reports",
+          "enterprise"
+        ],
         "summary": "Send a report.",
         "operationId": "sendReport",
         "parameters": [
@@ -7301,8 +7927,13 @@
     "/reports/render/pdf/{dashboardID}": {
       "get": {
         "description": "Please refer to [reports enterprise](#/reports/renderReportPDFs) instead. This will be removed in Grafana 10.",
-        "produces": ["application/pdf"],
-        "tags": ["reports", "enterprise"],
+        "produces": [
+          "application/pdf"
+        ],
+        "tags": [
+          "reports",
+          "enterprise"
+        ],
         "summary": "Render report for dashboard.",
         "operationId": "renderReportPDF",
         "deprecated": true,
@@ -7371,8 +8002,13 @@
     "/reports/render/pdfs": {
       "get": {
         "description": "Available to all users and with a valid license.",
-        "produces": ["application/pdf"],
-        "tags": ["reports", "enterprise"],
+        "produces": [
+          "application/pdf"
+        ],
+        "tags": [
+          "reports",
+          "enterprise"
+        ],
         "summary": "Render report for multiple dashboards.",
         "operationId": "renderReportPDFs",
         "parameters": [
@@ -7410,8 +8046,11 @@
     },
     "/reports/settings": {
       "get": {
-        "description": "Available to org admins only and with a valid or expired license\n\nYou need to have a permission with action `reports.settings:read`x.",
-        "tags": ["reports", "enterprise"],
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.settings:read`x.",
+        "tags": [
+          "reports",
+          "enterprise"
+        ],
         "summary": "Get settings.",
         "operationId": "getReportSettings",
         "responses": {
@@ -7430,8 +8069,11 @@
         }
       },
       "post": {
-        "description": "Available to org admins only and with a valid or expired license\n\nYou need to have a permission with action `reports.settings:write`xx.",
-        "tags": ["reports", "enterprise"],
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.settings:write`xx.",
+        "tags": [
+          "reports",
+          "enterprise"
+        ],
         "summary": "Save settings.",
         "operationId": "saveReportSettings",
         "parameters": [
@@ -7466,7 +8108,10 @@
     "/reports/test-email": {
       "post": {
         "description": "Available to org admins only and with a valid license.\n\nYou need to have a permission with action `reports:send`.",
-        "tags": ["reports", "enterprise"],
+        "tags": [
+          "reports",
+          "enterprise"
+        ],
         "summary": "Send test report via email.",
         "operationId": "sendTestEmail",
         "parameters": [
@@ -7503,8 +8148,11 @@
     },
     "/reports/{id}": {
       "get": {
-        "description": "Available to org admins only and with a valid or expired license\n\nYou need to have a permission with action `reports:read` with scope `reports:id:\u003creport ID\u003e`.",
-        "tags": ["reports", "enterprise"],
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports:read` with scope `reports:id:\u003creport ID\u003e`.",
+        "tags": [
+          "reports",
+          "enterprise"
+        ],
         "summary": "Get a report.",
         "operationId": "getReport",
         "parameters": [
@@ -7538,8 +8186,11 @@
         }
       },
       "put": {
-        "description": "Available to org admins only and with a valid or expired license\n\nYou need to have a permission with action `reports.admin:write` with scope `reports:id:\u003creport ID\u003e`.",
-        "tags": ["reports", "enterprise"],
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.admin:write` with scope `reports:id:\u003creport ID\u003e`.",
+        "tags": [
+          "reports",
+          "enterprise"
+        ],
         "summary": "Update a report.",
         "operationId": "updateReport",
         "parameters": [
@@ -7581,8 +8232,11 @@
         }
       },
       "delete": {
-        "description": "Available to org admins only and with a valid or expired license\n\nYou need to have a permission with action `reports.delete` with scope `reports:id:\u003creport ID\u003e`.",
-        "tags": ["reports", "enterprise"],
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.delete` with scope `reports:id:\u003creport ID\u003e`.",
+        "tags": [
+          "reports",
+          "enterprise"
+        ],
         "summary": "Delete a report.",
         "operationId": "deleteReport",
         "parameters": [
@@ -7618,7 +8272,10 @@
     },
     "/saml/acs": {
       "post": {
-        "tags": ["saml", "enterprise"],
+        "tags": [
+          "saml",
+          "enterprise"
+        ],
         "summary": "It performs assertion Consumer Service (ACS).",
         "operationId": "postACS",
         "parameters": [
@@ -7643,8 +8300,13 @@
     },
     "/saml/metadata": {
       "get": {
-        "produces": ["application/xml;application/samlmetadata+xml"],
-        "tags": ["saml", "enterprise"],
+        "produces": [
+          "application/xml;application/samlmetadata+xml"
+        ],
+        "tags": [
+          "saml",
+          "enterprise"
+        ],
         "summary": "It exposes the SP (Grafana's) metadata for the IdP's consumption.",
         "operationId": "getMetadata",
         "responses": {
@@ -7655,9 +8317,35 @@
       }
     },
     "/saml/slo": {
+      "get": {
+        "description": "There might be two possible requests:\n1. Logout response (callback) when Grafana initiates single logout and IdP returns response to logout request.\n2. Logout request when another SP initiates single logout and IdP sends logout request to the Grafana,\nor in case of IdP-initiated logout.",
+        "tags": [
+          "saml",
+          "enterprise"
+        ],
+        "summary": "It performs Single Logout (SLO) callback.",
+        "operationId": "getSLO",
+        "responses": {
+          "302": {
+            "description": "(empty)"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
       "post": {
         "description": "There might be two possible requests:\n1. Logout response (callback) when Grafana initiates single logout and IdP returns response to logout request.\n2. Logout request when another SP initiates single logout and IdP sends logout request to the Grafana,\nor in case of IdP-initiated logout.",
-        "tags": ["saml", "enterprise"],
+        "tags": [
+          "saml",
+          "enterprise"
+        ],
         "summary": "It performs Single Logout (SLO) callback.",
         "operationId": "postSLO",
         "parameters": [
@@ -7690,7 +8378,9 @@
     },
     "/search": {
       "get": {
-        "tags": ["search"],
+        "tags": [
+          "search"
+        ],
         "operationId": "search",
         "parameters": [
           {
@@ -7710,7 +8400,10 @@
             "in": "query"
           },
           {
-            "enum": ["dash-folder", "dash-db"],
+            "enum": [
+              "dash-folder",
+              "dash-db"
+            ],
             "type": "string",
             "description": "Type to search for, dash-folder or dash-db",
             "name": "type",
@@ -7766,7 +8459,10 @@
             "in": "query"
           },
           {
-            "enum": ["Edit", "View"],
+            "enum": [
+              "Edit",
+              "View"
+            ],
             "type": "string",
             "default": "View",
             "description": "Set to `Edit` to return dashboards/folders that the user can edit",
@@ -7774,7 +8470,10 @@
             "in": "query"
           },
           {
-            "enum": ["alpha-asc", "alpha-desc"],
+            "enum": [
+              "alpha-asc",
+              "alpha-desc"
+            ],
             "type": "string",
             "default": "alpha-asc",
             "description": "Sort method; for listing all the possible sort methods use the search sorting endpoint.",
@@ -7800,8 +8499,10 @@
     },
     "/search/sorting": {
       "get": {
-        "description": "List search sorting options",
-        "tags": ["search"],
+        "tags": [
+          "search"
+        ],
+        "summary": "List search sorting options.",
         "operationId": "listSortOptions",
         "responses": {
           "200": {
@@ -7816,7 +8517,9 @@
     "/serviceaccounts": {
       "post": {
         "description": "Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):\naction: `serviceaccounts:write` scope: `serviceaccounts:*`\n\nRequires basic authentication and that the authenticated user is a Grafana Admin.",
-        "tags": ["service_accounts"],
+        "tags": [
+          "service_accounts"
+        ],
         "summary": "Create service account",
         "operationId": "createServiceAccount",
         "parameters": [
@@ -7850,7 +8553,9 @@
     "/serviceaccounts/search": {
       "get": {
         "description": "Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):\naction: `serviceaccounts:read` scope: `serviceaccounts:*`",
-        "tags": ["service_accounts"],
+        "tags": [
+          "service_accounts"
+        ],
         "summary": "Search service accounts with paging",
         "operationId": "searchOrgServiceAccountsWithPaging",
         "parameters": [
@@ -7904,7 +8609,9 @@
     "/serviceaccounts/{serviceAccountId}": {
       "get": {
         "description": "Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):\naction: `serviceaccounts:read` scope: `serviceaccounts:id:1` (single service account)",
-        "tags": ["service_accounts"],
+        "tags": [
+          "service_accounts"
+        ],
         "summary": "Get single serviceaccount by Id",
         "operationId": "retrieveServiceAccount",
         "parameters": [
@@ -7939,7 +8646,9 @@
       },
       "delete": {
         "description": "Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):\naction: `serviceaccounts:delete` scope: `serviceaccounts:id:1` (single service account)",
-        "tags": ["service_accounts"],
+        "tags": [
+          "service_accounts"
+        ],
         "summary": "Delete service account",
         "operationId": "deleteServiceAccount",
         "parameters": [
@@ -7971,7 +8680,9 @@
       },
       "patch": {
         "description": "Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):\naction: `serviceaccounts:write` scope: `serviceaccounts:id:1` (single service account)",
-        "tags": ["service_accounts"],
+        "tags": [
+          "service_accounts"
+        ],
         "summary": "Update service account",
         "operationId": "updateServiceAccount",
         "parameters": [
@@ -8015,7 +8726,9 @@
     "/serviceaccounts/{serviceAccountId}/tokens": {
       "get": {
         "description": "Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):\naction: `serviceaccounts:read` scope: `global:serviceaccounts:id:1` (single service account)\n\nRequires basic authentication and that the authenticated user is a Grafana Admin.",
-        "tags": ["service_accounts"],
+        "tags": [
+          "service_accounts"
+        ],
         "summary": "Get service account tokens",
         "operationId": "listTokens",
         "parameters": [
@@ -8047,7 +8760,9 @@
       },
       "post": {
         "description": "Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):\naction: `serviceaccounts:write` scope: `serviceaccounts:id:1` (single service account)",
-        "tags": ["service_accounts"],
+        "tags": [
+          "service_accounts"
+        ],
         "summary": "CreateNewToken adds a token to a service account",
         "operationId": "createToken",
         "parameters": [
@@ -8094,7 +8809,9 @@
     "/serviceaccounts/{serviceAccountId}/tokens/{tokenId}": {
       "delete": {
         "description": "Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):\naction: `serviceaccounts:write` scope: `serviceaccounts:id:1` (single service account)\n\nRequires basic authentication and that the authenticated user is a Grafana Admin.",
-        "tags": ["service_accounts"],
+        "tags": [
+          "service_accounts"
+        ],
         "summary": "DeleteToken deletes service account tokens",
         "operationId": "deleteToken",
         "parameters": [
@@ -8137,7 +8854,9 @@
     },
     "/snapshot/shared-options": {
       "get": {
-        "tags": ["snapshots"],
+        "tags": [
+          "snapshots"
+        ],
         "summary": "Get snapshot sharing settings.",
         "operationId": "getSharingOptions",
         "responses": {
@@ -8153,7 +8872,9 @@
     "/snapshots": {
       "post": {
         "description": "Snapshot public mode should be enabled or authentication is required.",
-        "tags": ["snapshots"],
+        "tags": [
+          "snapshots"
+        ],
         "summary": "When creating a snapshot using the API, you have to provide the full dashboard payload including the snapshot data. This endpoint is designed for the Grafana UI.",
         "operationId": "createDashboardSnapshot",
         "parameters": [
@@ -8185,7 +8906,9 @@
     "/snapshots-delete/{deleteKey}": {
       "get": {
         "description": "Snapshot public mode should be enabled or authentication is required.",
-        "tags": ["snapshots"],
+        "tags": [
+          "snapshots"
+        ],
         "summary": "Delete Snapshot by deleteKey.",
         "operationId": "deleteDashboardSnapshotByDeleteKey",
         "parameters": [
@@ -8217,7 +8940,9 @@
     },
     "/snapshots/{key}": {
       "get": {
-        "tags": ["snapshots"],
+        "tags": [
+          "snapshots"
+        ],
         "summary": "Get Snapshot by Key.",
         "operationId": "getDashboardSnapshot",
         "parameters": [
@@ -8232,6 +8957,9 @@
           "200": {
             "$ref": "#/responses/getDashboardSnapshotResponse"
           },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
           "404": {
             "$ref": "#/responses/notFoundError"
           },
@@ -8241,7 +8969,9 @@
         }
       },
       "delete": {
-        "tags": ["snapshots"],
+        "tags": [
+          "snapshots"
+        ],
         "summary": "Delete Snapshot by Key.",
         "operationId": "deleteDashboardSnapshot",
         "parameters": [
@@ -8270,7 +9000,9 @@
     },
     "/teams": {
       "post": {
-        "tags": ["teams"],
+        "tags": [
+          "teams"
+        ],
         "summary": "Add Team.",
         "operationId": "createTeam",
         "parameters": [
@@ -8304,7 +9036,9 @@
     },
     "/teams/search": {
       "get": {
-        "tags": ["teams"],
+        "tags": [
+          "teams"
+        ],
         "summary": "Team Search With Paging.",
         "operationId": "searchTeams",
         "parameters": [
@@ -8353,7 +9087,10 @@
     },
     "/teams/{teamId}/groups": {
       "get": {
-        "tags": ["sync_team_groups", "enterprise"],
+        "tags": [
+          "sync_team_groups",
+          "enterprise"
+        ],
         "summary": "Get External Groups.",
         "operationId": "getTeamGroupsApi",
         "parameters": [
@@ -8387,7 +9124,10 @@
         }
       },
       "post": {
-        "tags": ["sync_team_groups", "enterprise"],
+        "tags": [
+          "sync_team_groups",
+          "enterprise"
+        ],
         "summary": "Add External Group.",
         "operationId": "addTeamGroupApi",
         "parameters": [
@@ -8431,7 +9171,10 @@
     },
     "/teams/{teamId}/groups/{groupId}": {
       "delete": {
-        "tags": ["sync_team_groups", "enterprise"],
+        "tags": [
+          "sync_team_groups",
+          "enterprise"
+        ],
         "summary": "Remove External Group.",
         "operationId": "removeTeamGroupApi",
         "parameters": [
@@ -8473,7 +9216,9 @@
     },
     "/teams/{team_id}": {
       "get": {
-        "tags": ["teams"],
+        "tags": [
+          "teams"
+        ],
         "summary": "Get Team By ID.",
         "operationId": "getTeamByID",
         "parameters": [
@@ -8503,7 +9248,9 @@
         }
       },
       "put": {
-        "tags": ["teams"],
+        "tags": [
+          "teams"
+        ],
         "summary": "Update Team.",
         "operationId": "updateTeam",
         "parameters": [
@@ -8544,7 +9291,9 @@
         }
       },
       "delete": {
-        "tags": ["teams"],
+        "tags": [
+          "teams"
+        ],
         "summary": "Delete Team By ID.",
         "operationId": "deleteTeamByID",
         "parameters": [
@@ -8576,7 +9325,9 @@
     },
     "/teams/{team_id}/members": {
       "get": {
-        "tags": ["teams"],
+        "tags": [
+          "teams"
+        ],
         "summary": "Get Team Members.",
         "operationId": "getTeamMembers",
         "parameters": [
@@ -8606,7 +9357,9 @@
         }
       },
       "post": {
-        "tags": ["teams"],
+        "tags": [
+          "teams"
+        ],
         "summary": "Add Team Member.",
         "operationId": "addTeamMember",
         "parameters": [
@@ -8646,7 +9399,9 @@
     },
     "/teams/{team_id}/members/{user_id}": {
       "put": {
-        "tags": ["teams"],
+        "tags": [
+          "teams"
+        ],
         "summary": "Update Team Member.",
         "operationId": "updateTeamMember",
         "parameters": [
@@ -8691,7 +9446,9 @@
         }
       },
       "delete": {
-        "tags": ["teams"],
+        "tags": [
+          "teams"
+        ],
         "summary": "Remove Member From Team.",
         "operationId": "removeTeamMember",
         "parameters": [
@@ -8730,7 +9487,9 @@
     },
     "/teams/{team_id}/preferences": {
       "get": {
-        "tags": ["teams"],
+        "tags": [
+          "teams"
+        ],
         "summary": "Get Team Preferences.",
         "operationId": "getTeamPreferences",
         "parameters": [
@@ -8754,7 +9513,9 @@
         }
       },
       "put": {
-        "tags": ["teams"],
+        "tags": [
+          "teams"
+        ],
         "summary": "Update Team Preferences.",
         "operationId": "updateTeamPreferences",
         "parameters": [
@@ -8792,7 +9553,9 @@
     "/user": {
       "get": {
         "description": "Get (current authenticated user)",
-        "tags": ["signed_in_user"],
+        "tags": [
+          "signed_in_user"
+        ],
         "operationId": "getSignedInUser",
         "responses": {
           "200": {
@@ -8813,7 +9576,9 @@
         }
       },
       "put": {
-        "tags": ["signed_in_user"],
+        "tags": [
+          "signed_in_user"
+        ],
         "summary": "Update signed in User.",
         "operationId": "updateSignedInUser",
         "parameters": [
@@ -8846,7 +9611,9 @@
     "/user/auth-tokens": {
       "get": {
         "description": "Return a list of all auth tokens (devices) that the actual user currently have logged in from.",
-        "tags": ["signed_in_user"],
+        "tags": [
+          "signed_in_user"
+        ],
         "summary": "Auth tokens of the actual User.",
         "operationId": "getUserAuthTokens",
         "responses": {
@@ -8867,7 +9634,9 @@
     },
     "/user/helpflags/clear": {
       "get": {
-        "tags": ["signed_in_user"],
+        "tags": [
+          "signed_in_user"
+        ],
         "summary": "Clear user help flag.",
         "operationId": "clearHelpFlags",
         "responses": {
@@ -8888,7 +9657,9 @@
     },
     "/user/helpflags/{flag_id}": {
       "put": {
-        "tags": ["signed_in_user"],
+        "tags": [
+          "signed_in_user"
+        ],
         "summary": "Set user help flag.",
         "operationId": "setHelpFlag",
         "parameters": [
@@ -8923,7 +9694,9 @@
           }
         ],
         "description": "Return a list of all organizations of the current user.",
-        "tags": ["signed_in_user"],
+        "tags": [
+          "signed_in_user"
+        ],
         "summary": "Organizations of the actual User.",
         "operationId": "getSignedInUserOrgList",
         "responses": {
@@ -8950,7 +9723,9 @@
           }
         ],
         "description": "Changes the password for the user.",
-        "tags": ["signed_in_user"],
+        "tags": [
+          "signed_in_user"
+        ],
         "summary": "Change Password.",
         "operationId": "changeUserPassword",
         "parameters": [
@@ -8985,7 +9760,9 @@
     },
     "/user/preferences": {
       "get": {
-        "tags": ["user_preferences"],
+        "tags": [
+          "user_preferences"
+        ],
         "summary": "Get user preferences.",
         "operationId": "getUserPreferences",
         "responses": {
@@ -9002,7 +9779,9 @@
       },
       "put": {
         "description": "Omitting a key (`theme`, `homeDashboardId`, `timezone`) will cause the current value to be replaced with the system default value.",
-        "tags": ["user_preferences"],
+        "tags": [
+          "user_preferences"
+        ],
         "summary": "Update user preferences.",
         "operationId": "updateUserPreferences",
         "parameters": [
@@ -9031,7 +9810,9 @@
         }
       },
       "patch": {
-        "tags": ["user_preferences"],
+        "tags": [
+          "user_preferences"
+        ],
         "summary": "Patch user preferences.",
         "operationId": "patchUserPreferences",
         "parameters": [
@@ -9062,7 +9843,9 @@
     },
     "/user/quotas": {
       "get": {
-        "tags": ["signed_in_user"],
+        "tags": [
+          "signed_in_user"
+        ],
         "summary": "Fetch user quota.",
         "operationId": "getUserQuotas",
         "responses": {
@@ -9087,7 +9870,9 @@
     "/user/revoke-auth-token": {
       "post": {
         "description": "Revokes the given auth token (device) for the actual user. User of issued auth token (device) will no longer be logged in and will be required to authenticate again upon next activity.",
-        "tags": ["signed_in_user"],
+        "tags": [
+          "signed_in_user"
+        ],
         "summary": "Revoke an auth token of the actual User.",
         "operationId": "revokeUserAuthToken",
         "parameters": [
@@ -9119,12 +9904,83 @@
         }
       }
     },
+    "/user/stars/dashboard/uid/{dashboard_uid}": {
+      "post": {
+        "description": "Stars the given Dashboard for the actual user.",
+        "tags": [
+          "signed_in_user"
+        ],
+        "summary": "Star a dashboard.",
+        "operationId": "starDashboardByUID",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "dashboard_uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "delete": {
+        "description": "Deletes the starring of the given Dashboard for the actual user.",
+        "tags": [
+          "signed_in_user"
+        ],
+        "summary": "Unstar a dashboard.",
+        "operationId": "unstarDashboardByUID",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "dashboard_uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/user/stars/dashboard/{dashboard_id}": {
       "post": {
         "description": "Stars the given Dashboard for the actual user.",
-        "tags": ["signed_in_user"],
+        "tags": [
+          "signed_in_user"
+        ],
         "summary": "Star a dashboard.",
         "operationId": "starDashboard",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -9153,9 +10009,12 @@
       },
       "delete": {
         "description": "Deletes the starring of the given Dashboard for the actual user.",
-        "tags": ["signed_in_user"],
+        "tags": [
+          "signed_in_user"
+        ],
         "summary": "Unstar a dashboard.",
         "operationId": "unstarDashboard",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -9186,7 +10045,9 @@
     "/user/teams": {
       "get": {
         "description": "Return a list of all teams that the current user is member of.",
-        "tags": ["signed_in_user"],
+        "tags": [
+          "signed_in_user"
+        ],
         "summary": "Teams that the actual User is member of.",
         "operationId": "getSignedInUserTeamList",
         "responses": {
@@ -9208,7 +10069,9 @@
     "/user/using/{org_id}": {
       "post": {
         "description": "Switch user context to the given organization.",
-        "tags": ["signed_in_user"],
+        "tags": [
+          "signed_in_user"
+        ],
         "summary": "Switch user context for signed in user.",
         "operationId": "userSetUsingOrg",
         "parameters": [
@@ -9242,7 +10105,9 @@
     "/users": {
       "get": {
         "description": "Returns all users that the authenticated user has permission to view, admin permission required.",
-        "tags": ["users"],
+        "tags": [
+          "users"
+        ],
         "summary": "Get users.",
         "operationId": "searchUsers",
         "parameters": [
@@ -9281,7 +10146,9 @@
     },
     "/users/lookup": {
       "get": {
-        "tags": ["users"],
+        "tags": [
+          "users"
+        ],
         "summary": "Get user by login or email.",
         "operationId": "getUserByLoginOrEmail",
         "parameters": [
@@ -9314,7 +10181,9 @@
     },
     "/users/search": {
       "get": {
-        "tags": ["users"],
+        "tags": [
+          "users"
+        ],
         "summary": "Get users with paging.",
         "operationId": "searchUsersWithPaging",
         "responses": {
@@ -9338,7 +10207,9 @@
     },
     "/users/{user_id}": {
       "get": {
-        "tags": ["users"],
+        "tags": [
+          "users"
+        ],
         "summary": "Get user by id.",
         "operationId": "getUserByID",
         "parameters": [
@@ -9370,7 +10241,9 @@
       },
       "put": {
         "description": "Update the user identified by id.",
-        "tags": ["users"],
+        "tags": [
+          "users"
+        ],
         "summary": "Update user.",
         "operationId": "updateUser",
         "parameters": [
@@ -9413,7 +10286,9 @@
     "/users/{user_id}/orgs": {
       "get": {
         "description": "Get organizations for user identified by id.",
-        "tags": ["users"],
+        "tags": [
+          "users"
+        ],
         "summary": "Get organizations for user.",
         "operationId": "getUserOrgList",
         "parameters": [
@@ -9447,7 +10322,9 @@
     "/users/{user_id}/teams": {
       "get": {
         "description": "Get teams for user identified by id.",
-        "tags": ["users"],
+        "tags": [
+          "users"
+        ],
         "summary": "Get teams for user.",
         "operationId": "getUserTeams",
         "parameters": [
@@ -9519,8 +10396,7 @@
         }
       }
     },
-    "AddApiKeyCommand": {
-      "description": "COMMANDS",
+    "AddCommand": {
       "type": "object",
       "properties": {
         "name": {
@@ -9528,27 +10404,15 @@
         },
         "role": {
           "type": "string",
-          "enum": ["Viewer", "Editor", "Admin"]
+          "enum": [
+            "Viewer",
+            "Editor",
+            "Admin"
+          ]
         },
         "secondsToLive": {
           "type": "integer",
           "format": "int64"
-        }
-      }
-    },
-    "AddBuiltInRoleCommand": {
-      "type": "object",
-      "properties": {
-        "builtInRole": {
-          "type": "string",
-          "enum": ["Viewer", " Editor", " Admin", " Grafana Admin"]
-        },
-        "global": {
-          "description": "A flag indicating if the assignment is global or not. If set to false, the default org ID of the authenticated user will be used from the request to create organization local assignment. Refer to the Built-in role assignments for more information.",
-          "type": "boolean"
-        },
-        "roleUid": {
-          "type": "string"
         }
       }
     },
@@ -9611,7 +10475,11 @@
         },
         "role": {
           "type": "string",
-          "enum": ["Viewer", "Editor", "Admin"]
+          "enum": [
+            "Viewer",
+            "Editor",
+            "Admin"
+          ]
         },
         "sendEmail": {
           "type": "boolean"
@@ -9626,7 +10494,11 @@
         },
         "role": {
           "type": "string",
-          "enum": ["Viewer", "Editor", "Admin"]
+          "enum": [
+            "Viewer",
+            "Editor",
+            "Admin"
+          ]
         }
       }
     },
@@ -9849,7 +10721,12 @@
     "Alert": {
       "type": "object",
       "title": "Alert has info for an alert.",
-      "required": ["labels", "annotations", "state", "value"],
+      "required": [
+        "labels",
+        "annotations",
+        "state",
+        "value"
+      ],
       "properties": {
         "activeAt": {
           "type": "string",
@@ -9872,7 +10749,9 @@
     "AlertDiscovery": {
       "type": "object",
       "title": "AlertDiscovery has info for all active alerts.",
-      "required": ["alerts"],
+      "required": [
+        "alerts"
+      ],
       "properties": {
         "alerts": {
           "type": "array",
@@ -9952,9 +10831,6 @@
           "type": "string"
         }
       }
-    },
-    "AlertManagerNotFound": {
-      "type": "object"
     },
     "AlertManagerNotReady": {
       "type": "object"
@@ -10072,7 +10948,9 @@
     },
     "AlertResponse": {
       "type": "object",
-      "required": ["status"],
+      "required": [
+        "status"
+      ],
       "properties": {
         "data": {
           "$ref": "#/definitions/AlertDiscovery"
@@ -10085,87 +10963,6 @@
         },
         "status": {
           "type": "string"
-        }
-      }
-    },
-    "AlertRule": {
-      "type": "object",
-      "title": "AlertRule is the model for alert rules in unified alerting.",
-      "properties": {
-        "Annotations": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "Condition": {
-          "type": "string"
-        },
-        "DashboardUID": {
-          "type": "string"
-        },
-        "Data": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/AlertQuery"
-          }
-        },
-        "ExecErrState": {
-          "type": "string",
-          "enum": ["Alerting", "Error", "OK"]
-        },
-        "For": {
-          "$ref": "#/definitions/Duration"
-        },
-        "ID": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "IntervalSeconds": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Labels": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "NamespaceUID": {
-          "type": "string"
-        },
-        "NoDataState": {
-          "type": "string",
-          "enum": ["Alerting", "NoData", "OK"]
-        },
-        "OrgID": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "PanelID": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "RuleGroup": {
-          "type": "string"
-        },
-        "RuleGroupIndex": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Title": {
-          "type": "string"
-        },
-        "UID": {
-          "type": "string"
-        },
-        "Updated": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "Version": {
-          "type": "integer",
-          "format": "int64"
         }
       }
     },
@@ -10182,7 +10979,7 @@
         "rules": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/AlertRule"
+            "$ref": "#/definitions/ProvisionedAlertRule"
           }
         },
         "title": {
@@ -10273,9 +11070,7 @@
     "AlertTestResultLog": {
       "type": "object",
       "properties": {
-        "data": {
-          "type": "object"
-        },
+        "data": {},
         "message": {
           "type": "string"
         }
@@ -10284,7 +11079,15 @@
     "AlertingRule": {
       "description": "adapted from cortex",
       "type": "object",
-      "required": ["name", "query", "health", "type", "state", "annotations", "alerts"],
+      "required": [
+        "name",
+        "query",
+        "health",
+        "type",
+        "state",
+        "annotations",
+        "alerts"
+      ],
       "properties": {
         "alerts": {
           "type": "array",
@@ -10328,6 +11131,19 @@
         },
         "type": {
           "$ref": "#/definitions/RuleType"
+        }
+      }
+    },
+    "AlertingStatus": {
+      "type": "object",
+      "properties": {
+        "alertmanagersChoice": {
+          "type": "string",
+          "enum": [
+            "all",
+            "internal",
+            "external"
+          ]
         }
       }
     },
@@ -10375,7 +11191,11 @@
         },
         "role": {
           "type": "string",
-          "enum": ["Viewer", "Editor", "Admin"]
+          "enum": [
+            "Viewer",
+            "Editor",
+            "Admin"
+          ]
         }
       }
     },
@@ -10395,7 +11215,7 @@
           "type": "string"
         },
         "for": {
-          "$ref": "#/definitions/Duration"
+          "type": "string"
         },
         "labels": {
           "type": "object",
@@ -10608,6 +11428,9 @@
       "description": "Correlation is the model for correlations definitions",
       "type": "object",
       "properties": {
+        "config": {
+          "$ref": "#/definitions/CorrelationConfig"
+        },
         "description": {
           "description": "Description of the correlation",
           "type": "string",
@@ -10632,6 +11455,56 @@
           "description": "Unique identifier of the correlation",
           "type": "string",
           "example": "50xhMlg9k"
+        }
+      }
+    },
+    "CorrelationConfig": {
+      "type": "object",
+      "required": [
+        "field",
+        "type",
+        "target"
+      ],
+      "properties": {
+        "field": {
+          "description": "Field used to attach the correlation link",
+          "type": "string",
+          "example": "message"
+        },
+        "target": {
+          "description": "Target data query",
+          "type": "object",
+          "additionalProperties": false,
+          "example": {
+            "expr": "job=app"
+          }
+        },
+        "type": {
+          "$ref": "#/definitions/CorrelationConfigType"
+        }
+      }
+    },
+    "CorrelationConfigType": {
+      "type": "string"
+    },
+    "CorrelationConfigUpdateDTO": {
+      "type": "object",
+      "properties": {
+        "field": {
+          "description": "Field used to attach the correlation link",
+          "type": "string",
+          "example": "message"
+        },
+        "target": {
+          "description": "Target data query",
+          "type": "object",
+          "additionalProperties": false,
+          "example": {
+            "expr": "job=app"
+          }
+        },
+        "type": {
+          "$ref": "#/definitions/CorrelationConfigType"
         }
       }
     },
@@ -10674,6 +11547,9 @@
       "description": "CreateCorrelationCommand is the command for creating a correlation",
       "type": "object",
       "properties": {
+        "config": {
+          "$ref": "#/definitions/CorrelationConfig"
+        },
         "description": {
           "description": "Optional description of the correlation",
           "type": "string",
@@ -10685,7 +11561,7 @@
           "example": "My label"
         },
         "targetUID": {
-          "description": "Target data source UID to which the correlation is created",
+          "description": "Target data source UID to which the correlation is created. required if config.type = query",
           "type": "string",
           "example": "PE1C5CBDA0504A6A3"
         }
@@ -10706,7 +11582,9 @@
     },
     "CreateDashboardSnapshotCommand": {
       "type": "object",
-      "required": ["dashboard"],
+      "required": [
+        "dashboard"
+      ],
       "properties": {
         "Result": {
           "$ref": "#/definitions/DashboardSnapshot"
@@ -10767,7 +11645,10 @@
           "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels\n2 - library variables",
           "type": "integer",
           "format": "int64",
-          "enum": [1, 2]
+          "enum": [
+            1,
+            2
+          ]
         },
         "model": {
           "description": "The JSON model for the library element.",
@@ -10853,7 +11734,7 @@
         "items": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/PlaylistItemDTO"
+            "$ref": "#/definitions/PlaylistItem"
           }
         },
         "name": {
@@ -10864,7 +11745,9 @@
     "CreateQueryInQueryHistoryCommand": {
       "description": "CreateQueryInQueryHistoryCommand is the command for adding query history",
       "type": "object",
-      "required": ["queries"],
+      "required": [
+        "queries"
+      ],
       "properties": {
         "datasourceUid": {
           "description": "UID of the data source for which are queries stored.",
@@ -10925,7 +11808,11 @@
         },
         "role": {
           "type": "string",
-          "enum": ["Viewer", "Editor", "Admin"],
+          "enum": [
+            "Viewer",
+            "Editor",
+            "Admin"
+          ],
           "example": "Admin"
         }
       }
@@ -11017,7 +11904,11 @@
         },
         "role": {
           "type": "string",
-          "enum": ["Viewer", "Editor", "Admin"]
+          "enum": [
+            "Viewer",
+            "Editor",
+            "Admin"
+          ]
         },
         "slug": {
           "type": "string"
@@ -11071,7 +11962,11 @@
         },
         "role": {
           "type": "string",
-          "enum": ["Viewer", "Editor", "Admin"]
+          "enum": [
+            "Viewer",
+            "Editor",
+            "Admin"
+          ]
         },
         "teamId": {
           "type": "integer",
@@ -11159,9 +12054,6 @@
         "isFolder": {
           "type": "boolean"
         },
-        "isHome": {
-          "type": "boolean"
-        },
         "isSnapshot": {
           "type": "boolean"
         },
@@ -11179,6 +12071,9 @@
         },
         "publicDashboardEnabled": {
           "type": "boolean"
+        },
+        "publicDashboardUid": {
+          "type": "string"
         },
         "slug": {
           "type": "string"
@@ -11345,6 +12240,7 @@
           "format": "date-time"
         },
         "createdBy": {
+          "description": "Since we get created by with left join user table, this can be null technically,\nbut in reality it will always be set, when database is not corrupted.",
           "type": "string"
         },
         "dashboardId": {
@@ -11653,25 +12549,6 @@
       "type": "string",
       "title": "DataTopic is used to identify which topic the frame should be assigned to."
     },
-    "DateTime": {
-      "description": "DateTime is a time but it serializes to ISO8601 format with millis\nIt knows how to read 3 different variations of a RFC3339 date time.\nMost APIs we encounter want either millisecond or second precision times.\nThis just tries to make it worry-free.",
-      "type": "string",
-      "format": "date-time"
-    },
-    "DayOfMonthRange": {
-      "type": "object",
-      "title": "A DayOfMonthRange is an inclusive range that may have negative Beginning/End values that represent distance from the End of the month Beginning at -1.",
-      "properties": {
-        "Begin": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "End": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
     "DeleteCorrelationResponseBody": {
       "type": "object",
       "properties": {
@@ -11691,7 +12568,9 @@
     },
     "DiscoveryBase": {
       "type": "object",
-      "required": ["status"],
+      "required": [
+        "status"
+      ],
       "properties": {
         "error": {
           "type": "string"
@@ -11772,7 +12651,10 @@
     "EmbeddedContactPoint": {
       "description": "EmbeddedContactPoint is the contact point type that is used\nby grafanas embedded alertmanager implementation.",
       "type": "object",
-      "required": ["type", "settings"],
+      "required": [
+        "type",
+        "settings"
+      ],
       "properties": {
         "disableResolveMessage": {
           "type": "boolean",
@@ -11823,7 +12705,9 @@
     },
     "ErrorResponseBody": {
       "type": "object",
-      "required": ["message"],
+      "required": [
+        "message"
+      ],
       "properties": {
         "error": {
           "description": "Error An optional detailed description of the actual error. Only included if running in developer mode.",
@@ -11875,7 +12759,7 @@
           }
         },
         "value": {
-          "$ref": "#/definitions/Float"
+          "type": "string"
         }
       }
     },
@@ -11966,16 +12850,12 @@
         "color": {
           "description": "Map values to a display color\nNOTE: this interface is under development in the frontend... so simple map for now",
           "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          }
+          "additionalProperties": false
         },
         "custom": {
           "description": "Panel Specific Values",
           "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          }
+          "additionalProperties": false
         },
         "decimals": {
           "type": "integer",
@@ -12048,20 +12928,6 @@
           "items": {
             "$ref": "#/definitions/TagsDTO"
           }
-        }
-      }
-    },
-    "Float": {
-      "description": "It does not consider zero values to be null.\nIt will decode to null, not zero, if null.",
-      "type": "object",
-      "title": "Float is a nullable float64.",
-      "properties": {
-        "Float64": {
-          "type": "number",
-          "format": "double"
-        },
-        "Valid": {
-          "type": "boolean"
         }
       }
     },
@@ -12179,8 +13045,7 @@
           "type": "string"
         },
         "custom": {
-          "description": "Custom datasource specific values.",
-          "type": "object"
+          "description": "Custom datasource specific values."
         },
         "dataTopic": {
           "$ref": "#/definitions/DataTopic"
@@ -12366,6 +13231,12 @@
             "$ref": "#/definitions/SNSConfig"
           }
         },
+        "telegram_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TelegramConfig"
+          }
+        },
         "victorops_configs": {
           "type": "array",
           "items": {
@@ -12402,7 +13273,7 @@
           "type": "string"
         },
         "for": {
-          "$ref": "#/definitions/Duration"
+          "type": "string"
         },
         "grafana_alert": {
           "$ref": "#/definitions/GettableGrafanaRule"
@@ -12472,7 +13343,11 @@
         },
         "exec_err_state": {
           "type": "string",
-          "enum": ["OK", "Alerting", "Error"]
+          "enum": [
+            "OK",
+            "Alerting",
+            "Error"
+          ]
         },
         "id": {
           "type": "integer",
@@ -12491,7 +13366,11 @@
         },
         "no_data_state": {
           "type": "string",
-          "enum": ["Alerting", "NoData", "OK"]
+          "enum": [
+            "Alerting",
+            "NoData",
+            "OK"
+          ]
         },
         "orgId": {
           "type": "integer",
@@ -12530,7 +13409,11 @@
         },
         "alertmanagersChoice": {
           "type": "string",
-          "enum": ["all", "internal", "external"]
+          "enum": [
+            "all",
+            "internal",
+            "external"
+          ]
         }
       }
     },
@@ -12559,7 +13442,12 @@
     },
     "GettableStatus": {
       "type": "object",
-      "required": ["cluster", "config", "uptime", "versionInfo"],
+      "required": [
+        "cluster",
+        "config",
+        "uptime",
+        "versionInfo"
+      ],
       "properties": {
         "cluster": {
           "$ref": "#/definitions/clusterStatus"
@@ -12649,6 +13537,9 @@
         "smtp_smarthost": {
           "$ref": "#/definitions/HostPort"
         },
+        "telegram_api_url": {
+          "$ref": "#/definitions/URL"
+        },
         "victorops_api_key": {
           "$ref": "#/definitions/Secret"
         },
@@ -12682,6 +13573,10 @@
         "bearer_token_file": {
           "description": "The bearer token file for the targets. Deprecated in favour of\nAuthorization.CredentialsFile.",
           "type": "string"
+        },
+        "enable_http2": {
+          "description": "EnableHTTP2 specifies whether the client should configure HTTP2.\nThe omitempty flag is not set, because it would be hidden from the\nmarshalled configuration when set to false.",
+          "type": "boolean"
         },
         "follow_redirects": {
           "description": "FollowRedirects specifies whether the client should follow HTTP 3xx redirects.\nThe omitempty flag is not set, because it would be hidden from the\nmarshalled configuration when set to false.",
@@ -12873,20 +13768,6 @@
         },
         "uid": {
           "type": "string"
-        }
-      }
-    },
-    "InclusiveRange": {
-      "type": "object",
-      "title": "InclusiveRange is used to hold the Beginning and End values of many time interval components.",
-      "properties": {
-        "Begin": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "End": {
-          "type": "integer",
-          "format": "int64"
         }
       }
     },
@@ -13391,7 +14272,11 @@
     },
     "MetricRequest": {
       "type": "object",
-      "required": ["from", "to", "queries"],
+      "required": [
+        "from",
+        "to",
+        "queries"
+      ],
       "properties": {
         "debug": {
           "type": "boolean"
@@ -13443,17 +14328,29 @@
         }
       }
     },
-    "MonthRange": {
+    "Model": {
+      "description": "THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.\nEquivalent Go types at stable import paths are provided in https://github.com/grafana/grok.",
       "type": "object",
-      "title": "A MonthRange is an inclusive range between [1, 12] where 1 = January.",
+      "title": "Model is the Go representation of a playlist.",
       "properties": {
-        "Begin": {
-          "type": "integer",
-          "format": "int64"
+        "interval": {
+          "description": "Interval sets the time between switching views in a playlist.\nFIXME: Is this based on a standardized format or what options are available? Can datemath be used?",
+          "type": "string"
         },
-        "End": {
-          "type": "integer",
-          "format": "int64"
+        "items": {
+          "description": "The ordered list of items that the playlist will iterate over.\nFIXME! This should not be optional, but changing it makes the godegen awkward",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PlaylistItem"
+          }
+        },
+        "name": {
+          "description": "Name of the playlist.",
+          "type": "string"
+        },
+        "uid": {
+          "description": "Unique playlist identifier. Generated on creation, either by the\ncreator of the playlist of by the application.",
+          "type": "string"
         }
       }
     },
@@ -13628,6 +14525,9 @@
             "type": "string"
           }
         },
+        "proxy_url": {
+          "$ref": "#/definitions/URL"
+        },
         "scopes": {
           "type": "array",
           "items": {
@@ -13763,6 +14663,9 @@
         },
         "email": {
           "type": "string"
+        },
+        "isDisabled": {
+          "type": "boolean"
         },
         "lastSeenAt": {
           "type": "string",
@@ -13920,7 +14823,10 @@
           "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels\n2 - library variables",
           "type": "integer",
           "format": "int64",
-          "enum": [1, 2]
+          "enum": [
+            1,
+            2
+          ]
         },
         "model": {
           "description": "The JSON model for the library element.",
@@ -13963,11 +14869,17 @@
         },
         "theme": {
           "type": "string",
-          "enum": ["light", "dark"]
+          "enum": [
+            "light",
+            "dark"
+          ]
         },
         "timezone": {
           "type": "string",
-          "enum": ["utc", "browser"]
+          "enum": [
+            "utc",
+            "browser"
+          ]
         },
         "weekStart": {
           "type": "string"
@@ -14050,30 +14962,6 @@
         }
       }
     },
-    "PlaylistDTO": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "interval": {
-          "type": "string"
-        },
-        "items": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/PlaylistItemDTO"
-          }
-        },
-        "name": {
-          "type": "string"
-        },
-        "uid": {
-          "type": "string"
-        }
-      }
-    },
     "PlaylistDashboard": {
       "type": "object",
       "properties": {
@@ -14105,31 +14993,28 @@
         "$ref": "#/definitions/PlaylistDashboard"
       }
     },
-    "PlaylistItemDTO": {
+    "PlaylistItem": {
+      "description": "THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.\nEquivalent Go types at stable import paths are provided in https://github.com/grafana/grok.",
       "type": "object",
+      "title": "PlaylistItem is the Go representation of a playlist.Item.",
       "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "order": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "playlistid": {
-          "type": "integer",
-          "format": "int64"
-        },
         "title": {
+          "description": "Title is an unused property -- it will be removed in the future",
           "type": "string"
         },
         "type": {
-          "type": "string"
+          "$ref": "#/definitions/PlaylistItemType"
         },
         "value": {
+          "description": "Value depends on type and describes the playlist item.\n\ndashboard_by_id: The value is an internal numerical identifier set by Grafana. This\nis not portable as the numerical identifier is non-deterministic between different instances.\nWill be replaced by dashboard_by_uid in the future. (deprecated)\ndashboard_by_tag: The value is a tag which is set on any number of dashboards. All\ndashboards behind the tag will be added to the playlist.\ndashboard_by_uid: The value is the dashboard UID",
           "type": "string"
         }
       }
+    },
+    "PlaylistItemType": {
+      "description": "THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.\nEquivalent Go types at stable import paths are provided in https://github.com/grafana/grok.",
+      "type": "string",
+      "title": "Type of the item."
     },
     "Playlists": {
       "type": "array",
@@ -14153,6 +15038,9 @@
     },
     "PostAnnotationsCmd": {
       "type": "object",
+      "required": [
+        "text"
+      ],
       "properties": {
         "dashboardId": {
           "type": "integer",
@@ -14193,9 +15081,7 @@
         "data": {
           "type": "string"
         },
-        "tags": {
-          "type": "object"
-        },
+        "tags": {},
         "what": {
           "type": "string"
         },
@@ -14290,6 +15176,12 @@
             "$ref": "#/definitions/SNSConfig"
           }
         },
+        "telegram_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TelegramConfig"
+          }
+        },
         "victorops_configs": {
           "type": "array",
           "items": {
@@ -14326,7 +15218,7 @@
           "type": "string"
         },
         "for": {
-          "$ref": "#/definitions/Duration"
+          "type": "string"
         },
         "grafana_alert": {
           "$ref": "#/definitions/PostableGrafanaRule"
@@ -14393,11 +15285,19 @@
         },
         "exec_err_state": {
           "type": "string",
-          "enum": ["OK", "Alerting", "Error"]
+          "enum": [
+            "OK",
+            "Alerting",
+            "Error"
+          ]
         },
         "no_data_state": {
           "type": "string",
-          "enum": ["Alerting", "NoData", "OK"]
+          "enum": [
+            "Alerting",
+            "NoData",
+            "OK"
+          ]
         },
         "title": {
           "type": "string"
@@ -14418,7 +15318,11 @@
         },
         "alertmanagersChoice": {
           "type": "string",
-          "enum": ["all", "internal", "external"]
+          "enum": [
+            "all",
+            "internal",
+            "external"
+          ]
         }
       }
     },
@@ -14539,7 +15443,10 @@
                 "conditions": [
                   {
                     "evaluator": {
-                      "params": [0, 0],
+                      "params": [
+                        0,
+                        0
+                      ],
                       "type": "gt"
                     },
                     "operator": {
@@ -14577,7 +15484,11 @@
         },
         "execErrState": {
           "type": "string",
-          "enum": ["Alerting", "Error", "OK"]
+          "enum": [
+            "Alerting",
+            "Error",
+            "OK"
+          ]
         },
         "folderUID": {
           "type": "string",
@@ -14601,7 +15512,11 @@
         },
         "noDataState": {
           "type": "string",
-          "enum": ["Alerting", "NoData", "OK"]
+          "enum": [
+            "Alerting",
+            "NoData",
+            "OK"
+          ]
         },
         "orgID": {
           "type": "integer",
@@ -14636,7 +15551,7 @@
       "type": "object",
       "properties": {
         "expire": {
-          "$ref": "#/definitions/duration"
+          "type": "string"
         },
         "html": {
           "type": "boolean"
@@ -14651,7 +15566,7 @@
           "type": "string"
         },
         "retry": {
-          "$ref": "#/definitions/duration"
+          "type": "string"
         },
         "send_resolved": {
           "type": "boolean"
@@ -14799,16 +15714,12 @@
         "color": {
           "description": "Map values to a display color\nNOTE: this interface is under development in the frontend... so simple map for now",
           "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          }
+          "additionalProperties": false
         },
         "custom": {
           "description": "Panel Specific Values",
           "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          }
+          "additionalProperties": false
         },
         "decimals": {
           "type": "integer",
@@ -14941,6 +15852,12 @@
             "$ref": "#/definitions/SNSConfig"
           }
         },
+        "telegram_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TelegramConfig"
+          }
+        },
         "victorops_configs": {
           "type": "array",
           "items": {
@@ -14994,9 +15911,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "additionalProperties": {
-              "type": "object"
-            }
+            "additionalProperties": false
           }
         },
         "range": {
@@ -15094,6 +16009,35 @@
         }
       }
     },
+    "RoleAssignmentsDTO": {
+      "type": "object",
+      "properties": {
+        "role_uid": {
+          "type": "string"
+        },
+        "service_accounts": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "teams": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "users": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      }
+    },
     "RoleDTO": {
       "type": "object",
       "properties": {
@@ -15152,10 +16096,10 @@
           }
         },
         "group_interval": {
-          "$ref": "#/definitions/Duration"
+          "type": "string"
         },
         "group_wait": {
-          "$ref": "#/definitions/Duration"
+          "type": "string"
         },
         "match": {
           "description": "Deprecated. Remove before v1.0 release.",
@@ -15186,7 +16130,7 @@
           "type": "string"
         },
         "repeat_interval": {
-          "$ref": "#/definitions/Duration"
+          "type": "string"
         },
         "routes": {
           "type": "array",
@@ -15199,7 +16143,12 @@
     "Rule": {
       "description": "adapted from cortex",
       "type": "object",
-      "required": ["name", "query", "health", "type"],
+      "required": [
+        "name",
+        "query",
+        "health",
+        "type"
+      ],
       "properties": {
         "evaluationTime": {
           "type": "number",
@@ -15231,7 +16180,9 @@
     },
     "RuleDiscovery": {
       "type": "object",
-      "required": ["groups"],
+      "required": [
+        "groups"
+      ],
       "properties": {
         "groups": {
           "type": "array",
@@ -15243,7 +16194,12 @@
     },
     "RuleGroup": {
       "type": "object",
-      "required": ["name", "file", "rules", "interval"],
+      "required": [
+        "name",
+        "file",
+        "rules",
+        "interval"
+      ],
       "properties": {
         "evaluationTime": {
           "type": "number",
@@ -15297,7 +16253,9 @@
     },
     "RuleResponse": {
       "type": "object",
-      "required": ["status"],
+      "required": [
+        "status"
+      ],
       "properties": {
         "data": {
           "$ref": "#/definitions/RuleDiscovery"
@@ -15639,6 +16597,32 @@
         }
       }
     },
+    "SetRoleAssignmentsCommand": {
+      "type": "object",
+      "properties": {
+        "service_accounts": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "teams": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "users": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      }
+    },
     "SetUserRolesCommand": {
       "type": "object",
       "properties": {
@@ -15931,11 +16915,18 @@
           "description": "The client key file for the targets.",
           "type": "string"
         },
+        "min_version": {
+          "$ref": "#/definitions/TLSVersion"
+        },
         "server_name": {
           "description": "Used to verify the hostname for the targets.",
           "type": "string"
         }
       }
+    },
+    "TLSVersion": {
+      "type": "integer",
+      "format": "uint16"
     },
     "TagsDTO": {
       "type": "object",
@@ -16050,6 +17041,37 @@
         }
       }
     },
+    "TelegramConfig": {
+      "type": "object",
+      "title": "TelegramConfig configures notifications via Telegram.",
+      "properties": {
+        "api_url": {
+          "$ref": "#/definitions/URL"
+        },
+        "chat": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "disable_notifications": {
+          "type": "boolean"
+        },
+        "http_config": {
+          "$ref": "#/definitions/HTTPClientConfig"
+        },
+        "message": {
+          "type": "string"
+        },
+        "parse_mode": {
+          "type": "string"
+        },
+        "send_resolved": {
+          "type": "boolean"
+        },
+        "token": {
+          "$ref": "#/definitions/Secret"
+        }
+      }
+    },
     "TempUserDTO": {
       "type": "object",
       "properties": {
@@ -16092,7 +17114,11 @@
         },
         "role": {
           "type": "string",
-          "enum": ["Viewer", "Editor", "Admin"]
+          "enum": [
+            "Viewer",
+            "Editor",
+            "Admin"
+          ]
         },
         "status": {
           "$ref": "#/definitions/TempUserStatus"
@@ -16244,13 +17270,13 @@
         "days_of_month": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/DayOfMonthRange"
+            "type": "string"
           }
         },
         "months": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/MonthRange"
+            "type": "string"
           }
         },
         "times": {
@@ -16262,13 +17288,13 @@
         "weekdays": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/WeekdayRange"
+            "type": "string"
           }
         },
         "years": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/YearRange"
+            "type": "string"
           }
         }
       }
@@ -16408,6 +17434,10 @@
           "format": "int64",
           "example": 1
         },
+        "isRevoked": {
+          "type": "boolean",
+          "example": false
+        },
         "lastUsedAt": {
           "type": "string",
           "format": "date-time",
@@ -16454,9 +17484,8 @@
       "type": "string"
     },
     "URL": {
-      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
       "type": "object",
-      "title": "A URL represents a parsed URL (technically, a URI reference).",
+      "title": "URL is a custom URL type that allows validation at configuration load time.",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -16466,6 +17495,9 @@
         },
         "Host": {
           "type": "string"
+        },
+        "OmitHost": {
+          "type": "boolean"
         },
         "Opaque": {
           "type": "string"
@@ -16587,6 +17619,37 @@
         "timeEnd": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "UpdateCorrelationCommand": {
+      "description": "UpdateCorrelationCommand is the command for updating a correlation",
+      "type": "object",
+      "properties": {
+        "config": {
+          "$ref": "#/definitions/CorrelationConfigUpdateDTO"
+        },
+        "description": {
+          "description": "Optional description of the correlation",
+          "type": "string",
+          "example": "Logs to Traces"
+        },
+        "label": {
+          "description": "Optional label identifying the correlation",
+          "type": "string",
+          "example": "My label"
+        }
+      }
+    },
+    "UpdateCorrelationResponseBody": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string",
+          "example": "Correlation updated"
+        },
+        "result": {
+          "$ref": "#/definitions/Correlation"
         }
       }
     },
@@ -16719,7 +17782,11 @@
       "properties": {
         "role": {
           "type": "string",
-          "enum": ["Viewer", "Editor", "Admin"]
+          "enum": [
+            "Viewer",
+            "Editor",
+            "Admin"
+          ]
         }
       }
     },
@@ -16732,7 +17799,7 @@
         "items": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/PlaylistItemDTO"
+            "$ref": "#/definitions/PlaylistItem"
           }
         },
         "name": {
@@ -16766,11 +17833,17 @@
         },
         "theme": {
           "type": "string",
-          "enum": ["light", "dark"]
+          "enum": [
+            "light",
+            "dark"
+          ]
         },
         "timezone": {
           "type": "string",
-          "enum": ["utc", "browser"]
+          "enum": [
+            "utc",
+            "browser"
+          ]
         },
         "weekStart": {
           "type": "string"
@@ -16821,7 +17894,11 @@
         },
         "role": {
           "type": "string",
-          "enum": ["Viewer", "Editor", "Admin"]
+          "enum": [
+            "Viewer",
+            "Editor",
+            "Admin"
+          ]
         }
       }
     },
@@ -16916,7 +17993,11 @@
         },
         "role": {
           "type": "string",
-          "enum": ["Viewer", "Editor", "Admin"]
+          "enum": [
+            "Viewer",
+            "Editor",
+            "Admin"
+          ]
         }
       }
     },
@@ -17224,38 +18305,12 @@
         }
       }
     },
-    "WeekdayRange": {
-      "type": "object",
-      "title": "A WeekdayRange is an inclusive range between [0, 6] where 0 = Sunday.",
-      "properties": {
-        "Begin": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "End": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
-    "YearRange": {
-      "type": "object",
-      "title": "A YearRange is a positive inclusive range.",
-      "properties": {
-        "Begin": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "End": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
     "alert": {
       "description": "Alert alert",
       "type": "object",
-      "required": ["labels"],
+      "required": [
+        "labels"
+      ],
       "properties": {
         "generatorURL": {
           "description": "generator URL\nFormat: uri",
@@ -17270,7 +18325,11 @@
     "alertGroup": {
       "description": "AlertGroup alert group",
       "type": "object",
-      "required": ["alerts", "labels", "receiver"],
+      "required": [
+        "alerts",
+        "labels",
+        "receiver"
+      ],
       "properties": {
         "alerts": {
           "description": "alerts",
@@ -17297,7 +18356,11 @@
     "alertStatus": {
       "description": "AlertStatus alert status",
       "type": "object",
-      "required": ["inhibitedBy", "silencedBy", "state"],
+      "required": [
+        "inhibitedBy",
+        "silencedBy",
+        "state"
+      ],
       "properties": {
         "inhibitedBy": {
           "description": "inhibited by",
@@ -17316,14 +18379,18 @@
         "state": {
           "description": "state",
           "type": "string",
-          "enum": ["[unprocessed active suppressed]"]
+          "enum": [
+            "[unprocessed active suppressed]"
+          ]
         }
       }
     },
     "alertmanagerConfig": {
       "description": "AlertmanagerConfig alertmanager config",
       "type": "object",
-      "required": ["original"],
+      "required": [
+        "original"
+      ],
       "properties": {
         "original": {
           "description": "original",
@@ -17334,7 +18401,12 @@
     "alertmanagerStatus": {
       "description": "AlertmanagerStatus alertmanager status",
       "type": "object",
-      "required": ["cluster", "config", "uptime", "versionInfo"],
+      "required": [
+        "cluster",
+        "config",
+        "uptime",
+        "versionInfo"
+      ],
       "properties": {
         "cluster": {
           "$ref": "#/definitions/clusterStatus"
@@ -17355,7 +18427,9 @@
     "clusterStatus": {
       "description": "ClusterStatus cluster status",
       "type": "object",
-      "required": ["status"],
+      "required": [
+        "status"
+      ],
       "properties": {
         "name": {
           "description": "name",
@@ -17371,16 +18445,25 @@
         "status": {
           "description": "status",
           "type": "string",
-          "enum": ["[ready settling disabled]"]
+          "enum": [
+            "[ready settling disabled]"
+          ]
         }
       }
     },
-    "duration": {
-      "$ref": "#/definitions/Duration"
-    },
     "gettableAlert": {
+      "description": "GettableAlert gettable alert",
       "type": "object",
-      "required": ["labels", "annotations", "endsAt", "fingerprint", "receivers", "startsAt", "status", "updatedAt"],
+      "required": [
+        "labels",
+        "annotations",
+        "endsAt",
+        "fingerprint",
+        "receivers",
+        "startsAt",
+        "status",
+        "updatedAt"
+      ],
       "properties": {
         "annotations": {
           "$ref": "#/definitions/labelSet"
@@ -17434,7 +18517,16 @@
     "gettableSilence": {
       "description": "GettableSilence gettable silence",
       "type": "object",
-      "required": ["comment", "createdBy", "endsAt", "matchers", "startsAt", "id", "status", "updatedAt"],
+      "required": [
+        "comment",
+        "createdBy",
+        "endsAt",
+        "matchers",
+        "startsAt",
+        "id",
+        "status",
+        "updatedAt"
+      ],
       "properties": {
         "comment": {
           "description": "comment",
@@ -17472,9 +18564,40 @@
       }
     },
     "gettableSilences": {
+      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
+      }
+    },
+    "integration": {
+      "type": "object",
+      "required": [
+        "name",
+        "sendResolved"
+      ],
+      "properties": {
+        "lastNotifyAttempt": {
+          "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastNotifyAttemptDuration": {
+          "description": "Duration of the last attempt to deliver a notification in humanized format (`1s` or `15ms`, etc).",
+          "type": "string"
+        },
+        "lastNotifyAttemptError": {
+          "description": "Error string for the last attempt to deliver a notification. Empty if the last attempt was successful.",
+          "type": "string"
+        },
+        "name": {
+          "description": "name",
+          "type": "string"
+        },
+        "sendResolved": {
+          "description": "send resolved",
+          "type": "boolean"
+        }
       }
     },
     "labelSet": {
@@ -17487,7 +18610,11 @@
     "matcher": {
       "description": "Matcher matcher",
       "type": "object",
-      "required": ["isRegex", "name", "value"],
+      "required": [
+        "isRegex",
+        "name",
+        "value"
+      ],
       "properties": {
         "isEqual": {
           "description": "is equal",
@@ -17525,7 +18652,10 @@
     "peerStatus": {
       "description": "PeerStatus peer status",
       "type": "object",
-      "required": ["address", "name"],
+      "required": [
+        "address",
+        "name"
+      ],
       "properties": {
         "address": {
           "description": "address",
@@ -17540,7 +18670,9 @@
     "postableAlert": {
       "description": "PostableAlert postable alert",
       "type": "object",
-      "required": ["labels"],
+      "required": [
+        "labels"
+      ],
       "properties": {
         "annotations": {
           "$ref": "#/definitions/labelSet"
@@ -17575,7 +18707,13 @@
     "postableSilence": {
       "description": "PostableSilence postable silence",
       "type": "object",
-      "required": ["comment", "createdBy", "endsAt", "matchers", "startsAt"],
+      "required": [
+        "comment",
+        "createdBy",
+        "endsAt",
+        "matchers",
+        "startsAt"
+      ],
       "properties": {
         "comment": {
           "description": "comment",
@@ -17605,10 +18743,24 @@
       }
     },
     "receiver": {
-      "description": "Receiver receiver",
       "type": "object",
-      "required": ["name"],
+      "required": [
+        "active",
+        "integrations",
+        "name"
+      ],
       "properties": {
+        "active": {
+          "description": "active",
+          "type": "boolean"
+        },
+        "integrations": {
+          "description": "integrations",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/integration"
+          }
+        },
         "name": {
           "description": "name",
           "type": "string"
@@ -17618,7 +18770,13 @@
     "silence": {
       "description": "Silence silence",
       "type": "object",
-      "required": ["comment", "createdBy", "endsAt", "matchers", "startsAt"],
+      "required": [
+        "comment",
+        "createdBy",
+        "endsAt",
+        "matchers",
+        "startsAt"
+      ],
       "properties": {
         "comment": {
           "description": "comment",
@@ -17646,19 +18804,30 @@
     "silenceStatus": {
       "description": "SilenceStatus silence status",
       "type": "object",
-      "required": ["state"],
+      "required": [
+        "state"
+      ],
       "properties": {
         "state": {
           "description": "state",
           "type": "string",
-          "enum": ["[expired active pending]"]
+          "enum": [
+            "[expired active pending]"
+          ]
         }
       }
     },
     "versionInfo": {
       "description": "VersionInfo version info",
       "type": "object",
-      "required": ["branch", "buildDate", "buildUser", "goVersion", "revision", "version"],
+      "required": [
+        "branch",
+        "buildDate",
+        "buildUser",
+        "goVersion",
+        "revision",
+        "version"
+      ],
       "properties": {
         "branch": {
           "description": "branch",
@@ -17808,7 +18977,12 @@
       "description": "(empty)",
       "schema": {
         "type": "object",
-        "required": ["id", "name", "message", "datasource"],
+        "required": [
+          "id",
+          "name",
+          "message",
+          "datasource"
+        ],
         "properties": {
           "datasource": {
             "$ref": "#/definitions/DataSource"
@@ -17836,7 +19010,10 @@
       "description": "(empty)",
       "schema": {
         "type": "object",
-        "required": ["orgId", "message"],
+        "required": [
+          "orgId",
+          "message"
+        ],
         "properties": {
           "message": {
             "description": "Message Message of the created org.",
@@ -17931,7 +19108,10 @@
       "description": "(empty)",
       "schema": {
         "type": "object",
-        "required": ["id", "message"],
+        "required": [
+          "id",
+          "message"
+        ],
         "properties": {
           "id": {
             "description": "ID Identifier of the deleted notification channel.",
@@ -17956,7 +19136,11 @@
       "description": "(empty)",
       "schema": {
         "type": "object",
-        "required": ["id", "title", "message"],
+        "required": [
+          "id",
+          "title",
+          "message"
+        ],
         "properties": {
           "id": {
             "description": "ID Identifier of the deleted dashboard.",
@@ -17981,7 +19165,10 @@
       "description": "(empty)",
       "schema": {
         "type": "object",
-        "required": ["id", "message"],
+        "required": [
+          "id",
+          "message"
+        ],
         "properties": {
           "id": {
             "description": "ID Identifier of the deleted data source.",
@@ -18001,7 +19188,11 @@
       "description": "(empty)",
       "schema": {
         "type": "object",
-        "required": ["id", "title", "message"],
+        "required": [
+          "id",
+          "title",
+          "message"
+        ],
         "properties": {
           "id": {
             "description": "ID Identifier of the deleted folder.",
@@ -18130,6 +19321,30 @@
         }
       }
     },
+    "getCorrelationResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/Correlation"
+      }
+    },
+    "getCorrelationsBySourceUIDResponse": {
+      "description": "(empty)",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/Correlation"
+        }
+      }
+    },
+    "getCorrelationsResponse": {
+      "description": "(empty)",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/Correlation"
+        }
+      }
+    },
     "getCurrentOrgResponse": {
       "description": "(empty)",
       "schema": {
@@ -18179,7 +19394,9 @@
       "description": "(empty)",
       "schema": {
         "type": "object",
-        "required": ["id"],
+        "required": [
+          "id"
+        ],
         "properties": {
           "id": {
             "description": "ID Identifier of the data source.",
@@ -18309,14 +19526,14 @@
       "schema": {
         "type": "array",
         "items": {
-          "$ref": "#/definitions/PlaylistItemDTO"
+          "$ref": "#/definitions/PlaylistItem"
         }
       }
     },
     "getPlaylistResponse": {
       "description": "(empty)",
       "schema": {
-        "$ref": "#/definitions/PlaylistDTO"
+        "$ref": "#/definitions/Model"
       }
     },
     "getPreferencesResponse": {
@@ -18377,6 +19594,12 @@
         "items": {
           "$ref": "#/definitions/ConfigDTO"
         }
+      }
+    },
+    "getRoleAssignmentsResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/RoleAssignmentsDTO"
       }
     },
     "getRoleResponse": {
@@ -18579,7 +19802,10 @@
       "description": "(empty)",
       "schema": {
         "type": "object",
-        "required": ["alertId", "message"],
+        "required": [
+          "alertId",
+          "message"
+        ],
         "properties": {
           "alertId": {
             "type": "integer",
@@ -18599,7 +19825,10 @@
       "description": "(empty)",
       "schema": {
         "type": "object",
-        "required": ["alertsAffected", "message"],
+        "required": [
+          "alertsAffected",
+          "message"
+        ],
         "properties": {
           "alertsAffected": {
             "description": "AlertsAffected is the number of the affected alerts.",
@@ -18626,7 +19855,10 @@
       "description": "(empty)",
       "schema": {
         "type": "object",
-        "required": ["id", "message"],
+        "required": [
+          "id",
+          "message"
+        ],
         "properties": {
           "id": {
             "description": "ID Identifier of the created annotation.",
@@ -18645,7 +19877,14 @@
       "description": "(empty)",
       "schema": {
         "type": "object",
-        "required": ["status", "title", "version", "id", "uid", "url"],
+        "required": [
+          "status",
+          "title",
+          "version",
+          "id",
+          "uid",
+          "url"
+        ],
         "properties": {
           "id": {
             "description": "ID The unique identifier (id) of the created/updated dashboard.",
@@ -18768,6 +20007,12 @@
         "$ref": "#/definitions/SearchUserQueryResult"
       }
     },
+    "setRoleAssignmentsResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/RoleAssignmentsDTO"
+      }
+    },
     "testAlertResponse": {
       "description": "(empty)",
       "schema": {
@@ -18792,10 +20037,16 @@
         "$ref": "#/definitions/ErrorResponseBody"
       }
     },
+    "updateCorrelationResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/UpdateCorrelationResponseBody"
+      }
+    },
     "updatePlaylistResponse": {
       "description": "(empty)",
       "schema": {
-        "$ref": "#/definitions/PlaylistDTO"
+        "$ref": "#/definitions/Model"
       }
     },
     "updateServiceAccountResponse": {
@@ -18823,6 +20074,17 @@
       "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/UserProfileDTO"
+      }
+    },
+    "validateDashboardResponse": {
+      "description": "(empty)",
+      "headers": {
+        "isValid": {
+          "type": "boolean"
+        },
+        "message": {
+          "type": "string"
+        }
       }
     }
   },

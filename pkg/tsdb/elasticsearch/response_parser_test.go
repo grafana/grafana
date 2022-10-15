@@ -634,7 +634,7 @@ func TestResponseParser(t *testing.T) {
 			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "@metric:logins.count")
 		})
 
-		t.Run("With dropfirst and last aggregation", func(t *testing.T) {
+		t.Run("With drop first and last aggregation (numeric)", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
 					"timeField": "@timestamp",
@@ -691,17 +691,88 @@ func TestResponseParser(t *testing.T) {
 			frame := dataframes[0]
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
-			require.Equal(t, frame.Fields[0].Len(), 2)
+			require.Equal(t, frame.Fields[0].Len(), 1)
 			require.Equal(t, frame.Fields[1].Name, "value")
-			require.Equal(t, frame.Fields[1].Len(), 2)
+			require.Equal(t, frame.Fields[1].Len(), 1)
 			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "Average")
 
 			frame = dataframes[1]
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
-			require.Equal(t, frame.Fields[0].Len(), 2)
+			require.Equal(t, frame.Fields[0].Len(), 1)
 			require.Equal(t, frame.Fields[1].Name, "value")
-			require.Equal(t, frame.Fields[1].Len(), 2)
+			require.Equal(t, frame.Fields[1].Len(), 1)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "Count")
+		})
+
+		t.Run("With drop first and last aggregation (string)", func(t *testing.T) {
+			targets := map[string]string{
+				"A": `{
+					"timeField": "@timestamp",
+					"metrics": [{ "type": "avg", "id": "1" }, { "type": "count" }],
+          "bucketAggs": [
+						{
+							"type": "date_histogram",
+							"field": "@timestamp",
+							"id": "2",
+							"settings": { "trimEdges": "1" }
+						}
+					]
+				}`,
+			}
+			response := `{
+        "responses": [
+          {
+            "aggregations": {
+              "2": {
+                "buckets": [
+                  {
+                    "1": { "value": 1000 },
+                    "key": 1,
+                    "doc_count": 369
+                  },
+                  {
+                    "1": { "value": 2000 },
+                    "key": 2,
+                    "doc_count": 200
+                  },
+                  {
+                    "1": { "value": 2000 },
+                    "key": 3,
+                    "doc_count": 200
+                  }
+                ]
+              }
+            }
+          }
+        ]
+			}`
+			rp, err := newResponseParserForTest(targets, response)
+			require.NoError(t, err)
+			result, err := rp.getTimeSeries()
+			require.NoError(t, err)
+			require.Len(t, result.Responses, 1)
+
+			queryRes := result.Responses["A"]
+			require.NotNil(t, queryRes)
+			dataframes := queryRes.Frames
+			require.NoError(t, err)
+			require.Len(t, dataframes, 2)
+
+			frame := dataframes[0]
+			require.Len(t, frame.Fields, 2)
+			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Len(), 1)
+			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Len(), 1)
+			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "Average")
+
+			frame = dataframes[1]
+			require.Len(t, frame.Fields, 2)
+			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Len(), 1)
+			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Len(), 1)
 			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "Count")
 		})
 

@@ -232,7 +232,7 @@ func (m *migration) SQL(dialect migrator.Dialect) string {
 	return codeMigration
 }
 
-// nolint: gocyclo
+//nolint:gocyclo
 func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	m.sess = sess
 	m.mg = mg
@@ -257,6 +257,8 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 
 	// cache for folders created for dashboards that have custom permissions
 	folderCache := make(map[string]*dashboard)
+	// cache for the general folders
+	generalFolderCache := make(map[int64]*dashboard)
 
 	// Store of newly created rules to later create routes
 	rulesPerOrg := make(map[int64]map[string]dashAlert)
@@ -315,7 +317,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 				err = folderHelper.setACL(f.OrgId, f.Id, permissions)
 				if err != nil {
 					return MigrationError{
-						Err:     fmt.Errorf("failed to set folder %d under organisation %d permissions: %w", folder.Id, folder.OrgId, err),
+						Err:     fmt.Errorf("failed to set folder %d under organisation %d permissions: %w", f.Id, f.OrgId, err),
 						AlertId: da.Id,
 					}
 				}
@@ -333,7 +335,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 			}
 			folder = &f
 		default:
-			f, ok := folderCache[GENERAL_FOLDER]
+			f, ok := generalFolderCache[dash.OrgId]
 			if !ok {
 				// get or create general folder
 				f, err = folderHelper.getOrCreateGeneralFolder(dash.OrgId)
@@ -343,7 +345,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 						AlertId: da.Id,
 					}
 				}
-				folderCache[GENERAL_FOLDER] = f
+				generalFolderCache[dash.OrgId] = f
 			}
 			// No need to assign default permissions to general folder
 			// because they are included to the query result if it's a folder with no permissions
@@ -837,7 +839,7 @@ func (c updateRulesOrderInGroup) Exec(sess *xorm.Session, migrator *migrator.Mig
 	}
 
 	updated := time.Now()
-	versions := make([]*alertRuleVersion, 0, len(toUpdate))
+	versions := make([]interface{}, 0, len(toUpdate))
 
 	for _, rule := range toUpdate {
 		rule.Updated = updated
@@ -853,8 +855,7 @@ func (c updateRulesOrderInGroup) Exec(sess *xorm.Session, migrator *migrator.Mig
 		migrator.Logger.Debug("updated group index for alert rule", "rule_uid", rule.UID)
 		versions = append(versions, version)
 	}
-
-	_, err := sess.Insert(&versions)
+	_, err := sess.Insert(versions...)
 	if err != nil {
 		migrator.Logger.Error("failed to insert changes to alert_rule_version", "err", err)
 		return fmt.Errorf("unable to update alert rules with group index: %w", err)

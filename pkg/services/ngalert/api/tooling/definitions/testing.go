@@ -38,6 +38,7 @@ import (
 //
 //     Responses:
 //       200: TestRuleResponse
+//       404: NotFound
 
 // swagger:route Post /api/v1/eval testing RouteEvalQueries
 //

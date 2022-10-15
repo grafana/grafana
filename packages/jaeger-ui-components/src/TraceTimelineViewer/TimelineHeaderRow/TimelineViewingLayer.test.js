@@ -46,12 +46,12 @@ describe('<TimelineViewingLayer>', () => {
 
   it('renders without exploding', () => {
     expect(wrapper).toBeDefined();
-    expect(wrapper.find('[data-test-id="TimelineViewingLayer"]').length).toBe(1);
+    expect(wrapper.find('[data-testid="TimelineViewingLayer"]').length).toBe(1);
   });
 
   it('sets _root to the root DOM node', () => {
     expect(instance._root).toBeDefined();
-    expect(wrapper.find('[data-test-id="TimelineViewingLayer"]').getDOMNode()).toBe(instance._root);
+    expect(wrapper.find('[data-testid="TimelineViewingLayer"]').getDOMNode()).toBe(instance._root);
   });
 
   describe('uses DraggableManager', () => {
@@ -67,7 +67,7 @@ describe('<TimelineViewingLayer>', () => {
 
     it('provides the DraggableManager handlers as callbacks', () => {
       const { handleMouseDown, handleMouseLeave, handleMouseMove } = instance._draggerReframe;
-      const rootWrapper = wrapper.find('[data-test-id="TimelineViewingLayer"]');
+      const rootWrapper = wrapper.find('[data-testid="TimelineViewingLayer"]');
       expect(rootWrapper.prop('onMouseDown')).toBe(handleMouseDown);
       expect(rootWrapper.prop('onMouseLeave')).toBe(handleMouseLeave);
       expect(rootWrapper.prop('onMouseMove')).toBe(handleMouseMove);
@@ -137,17 +137,17 @@ describe('<TimelineViewingLayer>', () => {
       const baseViewRangeTime = { ...props.viewRangeTime, cursor };
       wrapper.setProps({ viewRangeTime: baseViewRangeTime });
       // cursor is rendered when solo
-      expect(wrapper.find('[data-test-id="TimelineViewingLayer--cursorGuide"]').length).toBe(1);
+      expect(wrapper.find('[data-testid="TimelineViewingLayer--cursorGuide"]').length).toBe(1);
       // cursor is skipped when shiftStart, shiftEnd, or reframe are present
       let viewRangeTime = { ...baseViewRangeTime, shiftStart: cursor };
       wrapper.setProps({ viewRangeTime });
-      expect(wrapper.find('[data-test-id="TimelineViewingLayer--cursorGuide"]').length).toBe(0);
+      expect(wrapper.find('[data-testid="TimelineViewingLayer--cursorGuide"]').length).toBe(0);
       viewRangeTime = { ...baseViewRangeTime, shiftEnd: cursor };
       wrapper.setProps({ viewRangeTime });
-      expect(wrapper.find('[data-test-id="TimelineViewingLayer--cursorGuide"]').length).toBe(0);
+      expect(wrapper.find('[data-testid="TimelineViewingLayer--cursorGuide"]').length).toBe(0);
       viewRangeTime = { ...baseViewRangeTime, reframe: { anchor: cursor, shift: cursor } };
       wrapper.setProps({ viewRangeTime });
-      expect(wrapper.find('[data-test-id="TimelineViewingLayer--cursorGuide"]').length).toBe(0);
+      expect(wrapper.find('[data-testid="TimelineViewingLayer--cursorGuide"]').length).toBe(0);
     });
 
     it('renders the reframe dragging', () => {
@@ -156,7 +156,7 @@ describe('<TimelineViewingLayer>', () => {
       const styles = getStyles();
       expect(
         wrapper
-          .find('[data-test-id="Dragged"]')
+          .find('[data-testid="Dragged"]')
           .prop('className')
           .indexOf(
             cx(styles.dragged, styles.draggedDraggingLeft, styles.draggedDraggingRight, styles.draggedReframeDrag)
@@ -170,7 +170,7 @@ describe('<TimelineViewingLayer>', () => {
       const styles = getStyles();
       expect(
         wrapper
-          .find('[data-test-id="Dragged"]')
+          .find('[data-testid="Dragged"]')
           .prop('className')
           .indexOf(
             cx(styles.dragged, styles.draggedDraggingLeft, styles.draggedDraggingRight, styles.draggedShiftDrag)
@@ -185,7 +185,7 @@ describe('<TimelineViewingLayer>', () => {
       const styles = getStyles();
       expect(
         wrapper
-          .find('[data-test-id="Dragged"]')
+          .find('[data-testid="Dragged"]')
           .prop('className')
           .indexOf(cx(styles.dragged, styles.draggedDraggingLeft, styles.draggedShiftDrag)) >= 0
       ).toBe(true);

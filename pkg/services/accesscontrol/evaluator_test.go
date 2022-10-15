@@ -62,7 +62,7 @@ type injectTestCase struct {
 	desc        string
 	expected    bool
 	evaluator   Evaluator
-	params      ScopeParams
+	params      scopeParams
 	permissions map[string][]string
 }
 
@@ -72,7 +72,7 @@ func TestPermission_Inject(t *testing.T) {
 			desc:      "should inject field",
 			expected:  true,
 			evaluator: EvalPermission("orgs:read", Scope("orgs", Field("OrgID"))),
-			params: ScopeParams{
+			params: scopeParams{
 				OrgID: 3,
 			},
 			permissions: map[string][]string{
@@ -83,7 +83,7 @@ func TestPermission_Inject(t *testing.T) {
 			desc:      "should inject correct param",
 			expected:  true,
 			evaluator: EvalPermission("reports:read", Scope("reports", Parameter(":reportId"))),
-			params: ScopeParams{
+			params: scopeParams{
 				URLParams: map[string]string{
 					":id":       "10",
 					":reportId": "1",
@@ -97,7 +97,7 @@ func TestPermission_Inject(t *testing.T) {
 			desc:      "should fail for nil params",
 			expected:  false,
 			evaluator: EvalPermission("reports:read", Scope("reports", Parameter(":reportId"))),
-			params:    ScopeParams{},
+			params:    scopeParams{},
 			permissions: map[string][]string{
 				"reports:read": {"reports:1"},
 			},
@@ -106,7 +106,7 @@ func TestPermission_Inject(t *testing.T) {
 			desc:      "should inject several parameters to one permission",
 			expected:  true,
 			evaluator: EvalPermission("reports:read", Scope("reports", Parameter(":reportId"), Parameter(":reportId2"))),
-			params: ScopeParams{
+			params: scopeParams{
 				URLParams: map[string]string{
 					":reportId":  "report",
 					":reportId2": "report2",
@@ -120,7 +120,7 @@ func TestPermission_Inject(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			injected, err := test.evaluator.MutateScopes(context.TODO(), ScopeInjector(test.params))
+			injected, err := test.evaluator.MutateScopes(context.TODO(), scopeInjector(test.params))
 			assert.NoError(t, err)
 			ok := injected.Evaluate(test.permissions)
 			assert.Equal(t, test.expected, ok)
@@ -185,7 +185,7 @@ func TestAll_Inject(t *testing.T) {
 				EvalPermission("reports:read", Scope("reports", Parameter(":reportId"))),
 				EvalPermission("settings:read", Scope("settings", Parameter(":settingsId"))),
 			),
-			params: ScopeParams{
+			params: scopeParams{
 				URLParams: map[string]string{
 					":id":         "10",
 					":settingsId": "3",
@@ -204,7 +204,7 @@ func TestAll_Inject(t *testing.T) {
 				EvalPermission("orgs:read", Scope("orgs", Field("OrgID"))),
 				EvalPermission("orgs:read", Scope("orgs", Parameter(":orgId"))),
 			),
-			params: ScopeParams{
+			params: scopeParams{
 				OrgID: 3,
 				URLParams: map[string]string{
 					":orgId": "4",
@@ -221,7 +221,7 @@ func TestAll_Inject(t *testing.T) {
 				EvalPermission("settings:read", Scope("reports", Parameter(":settingsId"))),
 				EvalPermission("reports:read", Scope("reports", Parameter(":reportId"))),
 			),
-			params: ScopeParams{},
+			params: scopeParams{},
 			permissions: map[string][]string{
 				"reports:read":  {"reports:1"},
 				"settings:read": {"settings:3"},
@@ -231,7 +231,7 @@ func TestAll_Inject(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			injected, err := test.evaluator.MutateScopes(context.TODO(), ScopeInjector(test.params))
+			injected, err := test.evaluator.MutateScopes(context.TODO(), scopeInjector(test.params))
 			assert.NoError(t, err)
 			ok := injected.Evaluate(test.permissions)
 			assert.NoError(t, err)
@@ -295,7 +295,7 @@ func TestAny_Inject(t *testing.T) {
 				EvalPermission("reports:read", Scope("reports", Parameter(":reportId"))),
 				EvalPermission("settings:read", Scope("settings", Parameter(":settingsId"))),
 			),
-			params: ScopeParams{
+			params: scopeParams{
 				URLParams: map[string]string{
 					":id":         "10",
 					":settingsId": "3",
@@ -314,7 +314,7 @@ func TestAny_Inject(t *testing.T) {
 				EvalPermission("orgs:read", Scope("orgs", Field("OrgID"))),
 				EvalPermission("orgs:read", Scope("orgs", Parameter(":orgId"))),
 			),
-			params: ScopeParams{
+			params: scopeParams{
 				OrgID: 3,
 				URLParams: map[string]string{
 					":orgId": "4",
@@ -331,7 +331,7 @@ func TestAny_Inject(t *testing.T) {
 				EvalPermission("settings:read", Scope("reports", Parameter(":settingsId"))),
 				EvalPermission("reports:read", Scope("reports", Parameter(":reportId"))),
 			),
-			params: ScopeParams{},
+			params: scopeParams{},
 			permissions: map[string][]string{
 				"reports:read":  {"reports:1"},
 				"settings:read": {"settings:3"},
@@ -341,7 +341,7 @@ func TestAny_Inject(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			injected, err := test.evaluator.MutateScopes(context.TODO(), ScopeInjector(test.params))
+			injected, err := test.evaluator.MutateScopes(context.TODO(), scopeInjector(test.params))
 			assert.NoError(t, err)
 			ok := injected.Evaluate(test.permissions)
 			assert.NoError(t, err)

@@ -9,17 +9,18 @@ import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import { NEW_VARIABLE_ID } from '../constants';
 import { LegacyVariableQueryEditor } from '../editor/LegacyVariableQueryEditor';
 import { KeyedVariableIdentifier } from '../state/types';
-import { VariableModel } from '../types';
+import { QueryVariableModel } from '../types';
 
 import { Props, QueryVariableEditorUnConnected } from './QueryVariableEditor';
 import { initialQueryVariableModelState } from './reducer';
 
 const setupTestContext = (options: Partial<Props>) => {
-  const variableDefaults: Partial<VariableModel> = { rootStateKey: 'key' };
+  const variableDefaults: Partial<QueryVariableModel> = { rootStateKey: 'key' };
   const extended = {
     VariableQueryEditor: LegacyVariableQueryEditor,
     dataSource: {} as unknown as DataSourceApi,
   };
+
   const defaults: Props = {
     variable: { ...initialQueryVariableModelState, ...variableDefaults },
     initQueryVariableEditor: jest.fn(),
@@ -109,7 +110,7 @@ describe('QueryVariableEditor', () => {
 const getQueryField = () =>
   screen.getByRole('textbox', { name: /variable editor form default variable query editor textarea/i });
 
-const getRegExField = () => screen.getByLabelText('Regex');
+const getRegExField = () => screen.getByLabelText(/Regex/);
 
 const fieldAccessors: Record<string, () => HTMLElement> = {
   query: getQueryField,

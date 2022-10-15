@@ -10,11 +10,15 @@ import {
   LogRowModel,
   DataHoverClearEvent,
   DataHoverEvent,
+  CoreApp,
 } from '@grafana/data';
-import { LogRows, CustomScrollbar, LogLabels, useStyles2, usePanelContext } from '@grafana/ui';
+import { CustomScrollbar, useStyles2, usePanelContext } from '@grafana/ui';
 import { dataFrameToLogsModel, dedupLogRows, COMMON_LABELS } from 'app/core/logsModel';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
+
+import { LogLabels } from '../../../features/logs/components/LogLabels';
+import { LogRows } from '../../../features/logs/components/LogRows';
 
 import { Options } from './types';
 
@@ -62,9 +66,11 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
 
   // Important to memoize stuff here, as panel rerenders a lot for example when resizing.
   const [logRows, deduplicatedRows, commonLabels] = useMemo(() => {
-    const newResults = data ? dataFrameToLogsModel(data.series, data.request?.intervalMs) : null;
-    const logRows = newResults?.rows || [];
-    const commonLabels = newResults?.meta?.find((m) => m.label === COMMON_LABELS);
+    const logs = data
+      ? dataFrameToLogsModel(data.series, data.request?.intervalMs, undefined, data.request?.targets)
+      : null;
+    const logRows = logs?.rows || [];
+    const commonLabels = logs?.meta?.find((m) => m.label === COMMON_LABELS);
     const deduplicatedRows = dedupLogRows(logRows, dedupStrategy);
     return [logRows, deduplicatedRows, commonLabels];
   }, [data, dedupStrategy]);
@@ -113,6 +119,7 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
           enableLogDetails={enableLogDetails}
           previewLimit={isAscending ? logRows.length : undefined}
           onLogRowHover={onLogRowHover}
+          app={CoreApp.Dashboard}
         />
         {showCommonLabels && isAscending && renderCommonLabels()}
       </div>

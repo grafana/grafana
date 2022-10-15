@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -67,6 +68,7 @@ func TestMiddleware(t *testing.T) {
 			endpointCalled := false
 			server.Get("/", func(c *models.ReqContext) {
 				endpointCalled = true
+				c.Resp.WriteHeader(http.StatusOK)
 			})
 
 			request, err := http.NewRequest(http.MethodGet, "/", nil)
@@ -81,14 +83,63 @@ func TestMiddleware(t *testing.T) {
 	}
 }
 
-func contextProvider() web.Handler {
+func TestMiddleware_forceLogin(t *testing.T) {
+	tests := []struct {
+		url             string
+		redirectToLogin bool
+	}{
+		{url: "/endpoint?forceLogin=true", redirectToLogin: true},
+		{url: "/endpoint?forceLogin=false"},
+		{url: "/endpoint"},
+	}
+
+	for _, tc := range tests {
+		var endpointCalled bool
+
+		server := web.New()
+		server.UseMiddleware(web.Renderer("../../public/views", "[[", "]]"))
+
+		server.Get("/endpoint", func(c *models.ReqContext) {
+			endpointCalled = true
+			c.Resp.WriteHeader(http.StatusOK)
+		})
+
+		ac := mock.New().WithPermissions([]accesscontrol.Permission{{Action: "endpoint:read", Scope: "endpoint:1"}})
+		server.Use(contextProvider(func(c *models.ReqContext) {
+			c.AllowAnonymous = true
+			c.SignedInUser.IsAnonymous = true
+			c.IsSignedIn = false
+		}))
+		server.Use(
+			accesscontrol.Middleware(ac)(nil, accesscontrol.EvalPermission("endpoint:read", "endpoint:1")),
+		)
+
+		request, err := http.NewRequest(http.MethodGet, tc.url, nil)
+		assert.NoError(t, err)
+		recorder := httptest.NewRecorder()
+
+		server.ServeHTTP(recorder, request)
+
+		expectedCode := http.StatusOK
+		if tc.redirectToLogin {
+			expectedCode = http.StatusFound
+		}
+		assert.Equal(t, expectedCode, recorder.Code)
+		assert.Equal(t, !tc.redirectToLogin, endpointCalled, "/endpoint should be called?")
+	}
+}
+
+func contextProvider(modifiers ...func(c *models.ReqContext)) web.Handler {
 	return func(c *web.Context) {
 		reqCtx := &models.ReqContext{
 			Context:      c,
 			Logger:       log.New(""),
-			SignedInUser: &models.SignedInUser{},
+			SignedInUser: &user.SignedInUser{},
 			IsSignedIn:   true,
 			SkipCache:    true,
+		}
+		for _, modifier := range modifiers {
+			modifier(reqCtx)
 		}
 		c.Req = c.Req.WithContext(ctxkey.Set(c.Req.Context(), reqCtx))
 	}

@@ -1,17 +1,16 @@
 import { css } from '@emotion/css';
-import React, { PropsWithChildren, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
-import { GrafanaTheme, TimeZoneInfo } from '@grafana/data';
+import { GrafanaTheme2, TimeZoneInfo } from '@grafana/data';
 
-import { useTheme, stylesFactory } from '../../../themes';
+import { useStyles2 } from '../../../themes';
 
 interface Props {
   info?: TimeZoneInfo;
 }
 
-export const TimeZoneDescription: React.FC<PropsWithChildren<Props>> = ({ info }) => {
-  const theme = useTheme();
-  const styles = getStyles(theme);
+export const TimeZoneDescription = ({ info }: Props) => {
+  const styles = useStyles2(getStyles);
   const description = useDescription(info);
 
   if (!info) {
@@ -42,14 +41,14 @@ const useDescription = (info?: TimeZoneInfo): string => {
   }, [info]);
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     description: css`
       font-weight: normal;
       font-size: ${theme.typography.size.sm};
-      color: ${theme.colors.textWeak};
+      color: ${theme.colors.text.secondary};
       white-space: normal;
       text-overflow: ellipsis;
     `,
   };
-});
+};

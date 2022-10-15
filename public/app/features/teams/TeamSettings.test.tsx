@@ -7,13 +7,20 @@ import { getMockTeam } from './__mocks__/teamMocks';
 
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
+    licensedAccessControlEnabled: () => false,
+    hasPermission: () => true,
     hasPermissionInMetadata: () => true,
+    user: { orgId: 1 },
   },
 }));
 
 jest.mock('app/core/components/SharedPreferences/SharedPreferences', () => {
   return { SharedPreferences: () => <div /> };
 });
+
+jest.mock('app/core/components/RolePicker/hooks', () => ({
+  useRoleOptions: jest.fn().mockReturnValue([{ roleOptions: [] }, jest.fn()]),
+}));
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
@@ -30,7 +37,7 @@ describe('Team settings', () => {
   it('should render component', () => {
     setup();
 
-    expect(screen.getByText('Team settings')).toBeInTheDocument();
+    expect(screen.getByText('Team details')).toBeInTheDocument();
   });
 
   it('should validate required fields', async () => {

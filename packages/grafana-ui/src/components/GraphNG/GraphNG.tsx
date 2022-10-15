@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Component } from 'react';
 import { Subscription } from 'rxjs';
 import { throttleTime } from 'rxjs/operators';
 import uPlot, { AlignedData } from 'uplot';
@@ -44,7 +44,7 @@ export interface GraphNGProps extends Themeable2 {
   width: number;
   height: number;
   timeRange: TimeRange;
-  timeZones: TimeZone[] | TimeZone;
+  timeZone: TimeZone[] | TimeZone;
   legend: VizLegendOptions;
   fields?: XYFieldMatchers; // default will assume timeseries data
   renderers?: Renderers;
@@ -92,7 +92,7 @@ export interface GraphNGState {
 /**
  * "Time as X" core component, expects ascending x
  */
-export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
+export class GraphNG extends Component<GraphNGProps, GraphNGState> {
   static contextType = PanelContextRoot;
   panelContext: PanelContext = {} as PanelContext;
   private plotInstance: React.RefObject<uPlot>;
@@ -216,17 +216,17 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
   }
 
   componentDidUpdate(prevProps: GraphNGProps) {
-    const { frames, structureRev, timeZones, propsToDiff } = this.props;
+    const { frames, structureRev, timeZone, propsToDiff } = this.props;
 
     const propsChanged = !sameProps(prevProps, this.props, propsToDiff);
 
-    if (frames !== prevProps.frames || propsChanged || timeZones !== prevProps.timeZones) {
+    if (frames !== prevProps.frames || propsChanged || timeZone !== prevProps.timeZone) {
       let newState = this.prepState(this.props, false);
 
       if (newState) {
         const shouldReconfig =
           this.state.config === undefined ||
-          timeZones !== prevProps.timeZones ||
+          timeZone !== prevProps.timeZone ||
           structureRev !== prevProps.structureRev ||
           !structureRev ||
           propsChanged;

@@ -43,6 +43,20 @@ type User struct {
 	password string
 }
 
+type GetParams struct {
+	url  string
+	user User
+}
+
+func (c TestContext) Get(params GetParams) *http.Response {
+	c.t.Helper()
+
+	resp, err := http.Get(c.getURL(params.url, params.user))
+	require.NoError(c.t, err)
+
+	return resp
+}
+
 type PostParams struct {
 	url  string
 	body string
@@ -59,6 +73,25 @@ func (c TestContext) Post(params PostParams) *http.Response {
 		"application/json",
 		buf,
 	)
+	require.NoError(c.t, err)
+
+	return resp
+}
+
+type PatchParams struct {
+	url  string
+	body string
+	user User
+}
+
+func (c TestContext) Patch(params PatchParams) *http.Response {
+	c.t.Helper()
+
+	req, err := http.NewRequest(http.MethodPatch, c.getURL(params.url, params.user), bytes.NewBuffer([]byte(params.body)))
+	req.Header.Set("Content-Type", "application/json")
+	require.NoError(c.t, err)
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(c.t, err)
 	require.NoError(c.t, err)
 
 	return resp
@@ -108,7 +141,7 @@ func (c TestContext) createUser(cmd user.CreateUserCommand) {
 func (c TestContext) createDs(cmd *datasources.AddDataSourceCommand) {
 	c.t.Helper()
 
-	err := c.env.SQLStore.AddDataSource(context.Background(), cmd)
+	err := c.env.Server.HTTPServer.DataSourcesService.AddDataSource(context.Background(), cmd)
 	require.NoError(c.t, err)
 }
 

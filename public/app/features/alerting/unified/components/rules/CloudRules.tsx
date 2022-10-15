@@ -3,7 +3,7 @@ import pluralize from 'pluralize';
 import React, { FC, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { LoadingPlaceholder, Pagination, useStyles2 } from '@grafana/ui';
+import { LoadingPlaceholder, Pagination, Spinner, useStyles2 } from '@grafana/ui';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
@@ -11,6 +11,7 @@ import { usePagination } from '../../hooks/usePagination';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { getPaginationStyles } from '../../styles/pagination';
 import { getRulesDataSources, getRulesSourceUid } from '../../utils/datasource';
+import { isAsyncRequestStatePending } from '../../utils/redux';
 
 import { RulesGroup } from './RulesGroup';
 import { useCombinedGroupNamespace } from './useCombinedGroupNamespace';
@@ -24,14 +25,23 @@ export const CloudRules: FC<Props> = ({ namespaces, expandAll }) => {
   const styles = useStyles2(getStyles);
 
   const dsConfigs = useUnifiedAlertingSelector((state) => state.dataSources);
-  const rules = useUnifiedAlertingSelector((state) => state.promRules);
+  const promRules = useUnifiedAlertingSelector((state) => state.promRules);
   const rulesDataSources = useMemo(getRulesDataSources, []);
   const groupsWithNamespaces = useCombinedGroupNamespace(namespaces);
 
   const dataSourcesLoading = useMemo(
-    () => rulesDataSources.filter((ds) => rules[ds.name]?.loading || dsConfigs[ds.name]?.loading),
-    [rules, dsConfigs, rulesDataSources]
+    () =>
+      rulesDataSources.filter(
+        (ds) => isAsyncRequestStatePending(promRules[ds.name]) || isAsyncRequestStatePending(dsConfigs[ds.name])
+      ),
+    [promRules, dsConfigs, rulesDataSources]
   );
+
+  const hasSomeResults = rulesDataSources.some((ds) => promRules[ds.name]?.result?.length ?? 0 > 0);
+
+  const hasDataSourcesConfigured = rulesDataSources.length > 0;
+  const hasDataSourcesLoading = dataSourcesLoading.length > 0;
+  const hasNamespaces = namespaces.length > 0;
 
   const { numberOfPages, onPageChange, page, pageItems } = usePagination(
     groupsWithNamespaces,
@@ -60,11 +70,15 @@ export const CloudRules: FC<Props> = ({ namespaces, expandAll }) => {
             key={`${getRulesSourceUid(namespace.rulesSource)}-${namespace.name}-${group.name}`}
             namespace={namespace}
             expandAll={expandAll}
+            viewMode={'grouped'}
           />
         );
       })}
-      {namespaces?.length === 0 && !!rulesDataSources.length && <p>No rules found.</p>}
-      {!rulesDataSources.length && <p>There are no Prometheus or Loki data sources configured.</p>}
+
+      {!hasDataSourcesConfigured && <p>There are no Prometheus or Loki data sources configured.</p>}
+      {hasDataSourcesConfigured && !hasDataSourcesLoading && !hasNamespaces && <p>No rules found.</p>}
+      {!hasSomeResults && hasDataSourcesLoading && <Spinner size={24} className={styles.spinner} />}
+
       <Pagination
         className={styles.pagination}
         currentPage={page}
@@ -86,6 +100,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   wrapper: css`
     margin-bottom: ${theme.spacing(4)};
+  `,
+  spinner: css`
+    text-align: center;
+    padding: ${theme.spacing(2)};
   `,
   pagination: getPaginationStyles(theme),
 });

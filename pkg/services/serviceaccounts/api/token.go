@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 	"github.com/grafana/grafana/pkg/web"
@@ -36,6 +37,8 @@ type TokenDTO struct {
 	SecondsUntilExpiration *float64 `json:"secondsUntilExpiration"`
 	// example: false
 	HasExpired bool `json:"hasExpired"`
+	// example: false
+	IsRevoked *bool `json:"isRevoked"`
 }
 
 func hasExpired(expiration *int64) bool {
@@ -50,7 +53,7 @@ const sevenDaysAhead = 7 * 24 * time.Hour
 
 // swagger:route GET /serviceaccounts/{serviceAccountId}/tokens service_accounts listTokens
 //
-// Get service account tokens
+// # Get service account tokens
 //
 // Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):
 // action: `serviceaccounts:read` scope: `global:serviceaccounts:id:1` (single service account)
@@ -69,15 +72,21 @@ func (api *ServiceAccountsAPI) ListTokens(ctx *models.ReqContext) response.Respo
 		return response.Error(http.StatusBadRequest, "Service Account ID is invalid", err)
 	}
 
-	saTokens, err := api.store.ListTokens(ctx.Req.Context(), ctx.OrgId, saID)
+	saTokens, err := api.store.ListTokens(ctx.Req.Context(), &serviceaccounts.GetSATokensQuery{
+		OrgID:            &ctx.OrgID,
+		ServiceAccountID: &saID,
+	})
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Internal server error", err)
 	}
 
-	result := make([]*TokenDTO, len(saTokens))
+	result := make([]TokenDTO, len(saTokens))
 	for i, t := range saTokens {
-		var expiration *time.Time = nil
-		var secondsUntilExpiration float64 = 0
+		var (
+			token                             = t // pin pointer
+			expiration             *time.Time = nil
+			secondsUntilExpiration float64    = 0
+		)
 
 		isExpired := hasExpired(t.Expires)
 		if t.Expires != nil {
@@ -88,14 +97,15 @@ func (api *ServiceAccountsAPI) ListTokens(ctx *models.ReqContext) response.Respo
 			}
 		}
 
-		result[i] = &TokenDTO{
-			Id:                     t.Id,
-			Name:                   t.Name,
-			Created:                &t.Created,
+		result[i] = TokenDTO{
+			Id:                     token.Id,
+			Name:                   token.Name,
+			Created:                &token.Created,
 			Expiration:             expiration,
 			SecondsUntilExpiration: &secondsUntilExpiration,
 			HasExpired:             isExpired,
-			LastUsedAt:             t.LastUsedAt,
+			LastUsedAt:             token.LastUsedAt,
+			IsRevoked:              token.IsRevoked,
 		}
 	}
 
@@ -104,7 +114,7 @@ func (api *ServiceAccountsAPI) ListTokens(ctx *models.ReqContext) response.Respo
 
 // swagger:route POST /serviceaccounts/{serviceAccountId}/tokens service_accounts createToken
 //
-// CreateNewToken adds a token to a service account
+// # CreateNewToken adds a token to a service account
 //
 // Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):
 // action: `serviceaccounts:write` scope: `serviceaccounts:id:1` (single service account)
@@ -124,7 +134,7 @@ func (api *ServiceAccountsAPI) CreateToken(c *models.ReqContext) response.Respon
 	}
 
 	// confirm service account exists
-	if _, err := api.store.RetrieveServiceAccount(c.Req.Context(), c.OrgId, saID); err != nil {
+	if _, err := api.store.RetrieveServiceAccount(c.Req.Context(), c.OrgID, saID); err != nil {
 		switch {
 		case errors.Is(err, serviceaccounts.ErrServiceAccountNotFound):
 			return response.Error(http.StatusNotFound, "Failed to retrieve service account", err)
@@ -139,7 +149,7 @@ func (api *ServiceAccountsAPI) CreateToken(c *models.ReqContext) response.Respon
 	}
 
 	// Force affected service account to be the one referenced in the URL
-	cmd.OrgId = c.OrgId
+	cmd.OrgId = c.OrgID
 
 	if api.cfg.ApiKeyMaxSecondsToLive != -1 {
 		if cmd.SecondsToLive == 0 {
@@ -178,7 +188,7 @@ func (api *ServiceAccountsAPI) CreateToken(c *models.ReqContext) response.Respon
 
 // swagger:route DELETE /serviceaccounts/{serviceAccountId}/tokens/{tokenId} service_accounts deleteToken
 //
-// DeleteToken deletes service account tokens
+// # DeleteToken deletes service account tokens
 //
 // Required permissions (See note in the [introduction](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/#service-account-api) for an explanation):
 // action: `serviceaccounts:write` scope: `serviceaccounts:id:1` (single service account)
@@ -199,7 +209,7 @@ func (api *ServiceAccountsAPI) DeleteToken(c *models.ReqContext) response.Respon
 	}
 
 	// confirm service account exists
-	if _, err := api.store.RetrieveServiceAccount(c.Req.Context(), c.OrgId, saID); err != nil {
+	if _, err := api.store.RetrieveServiceAccount(c.Req.Context(), c.OrgID, saID); err != nil {
 		switch {
 		case errors.Is(err, serviceaccounts.ErrServiceAccountNotFound):
 			return response.Error(http.StatusNotFound, "Failed to retrieve service account", err)
@@ -213,12 +223,12 @@ func (api *ServiceAccountsAPI) DeleteToken(c *models.ReqContext) response.Respon
 		return response.Error(http.StatusBadRequest, "Token ID is invalid", err)
 	}
 
-	if err = api.store.DeleteServiceAccountToken(c.Req.Context(), c.OrgId, saID, tokenID); err != nil {
+	if err = api.store.DeleteServiceAccountToken(c.Req.Context(), c.OrgID, saID, tokenID); err != nil {
 		status := http.StatusNotFound
-		if err != nil && !errors.Is(err, models.ErrApiKeyNotFound) {
+		if err != nil && !errors.Is(err, apikey.ErrNotFound) {
 			status = http.StatusInternalServerError
 		} else {
-			err = models.ErrApiKeyNotFound
+			err = apikey.ErrNotFound
 		}
 
 		return response.Error(status, failedToDeleteMsg, err)

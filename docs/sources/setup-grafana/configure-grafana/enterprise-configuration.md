@@ -9,7 +9,7 @@ weight: 100
 
 # Configure Grafana Enterprise
 
-This page describes Grafana Enterprise-specific configuration options that you can specify in a `.ini` configuration file or using environment variables. Refer to [Configuration]({{< relref "/" >}}) for more information about available configuration options.
+This page describes Grafana Enterprise-specific configuration options that you can specify in a `.ini` configuration file or using environment variables. Refer to [Configuration]({{< relref "../" >}}) for more information about available configuration options.
 
 ## [enterprise]
 
@@ -474,7 +474,7 @@ The default is `"grafana"`.
 
 ## [caching.memcached]
 
-### memcached_servers
+### servers
 
 A space-separated list of memcached servers. Example: `memcached-server-1:11211 memcached-server-2:11212 memcached-server-3:11211`. Or if there's only one server: `memcached-server:11211`.
 

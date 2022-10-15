@@ -1,12 +1,15 @@
 package channels
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/pkg/errors"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
+	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -14,18 +17,211 @@ import (
 	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
-// TeamsNotifier is responsible for sending
-// alert notifications to Microsoft teams.
-type TeamsNotifier struct {
-	*Base
-	URL          string
-	Message      string
-	Title        string
-	SectionTitle string
-	tmpl         *template.Template
-	log          log.Logger
-	ns           notifications.WebhookSender
-	images       ImageStore
+const (
+	ImageSizeSmall  = "small"
+	ImageSizeMedium = "medium"
+	ImageSizeLarge  = "large"
+
+	TextColorDark      = "dark"
+	TextColorLight     = "light"
+	TextColorAccent    = "accent"
+	TextColorGood      = "good"
+	TextColorWarning   = "warning"
+	TextColorAttention = "attention"
+
+	TextSizeSmall      = "small"
+	TextSizeMedium     = "medium"
+	TextSizeLarge      = "large"
+	TextSizeExtraLarge = "extraLarge"
+	TextSizeDefault    = "default"
+
+	TextWeightLighter = "lighter"
+	TextWeightBolder  = "bolder"
+	TextWeightDefault = "default"
+)
+
+// AdaptiveCardsMessage represents a message for adaptive cards.
+type AdaptiveCardsMessage struct {
+	Attachments []AdaptiveCardsAttachment `json:"attachments"`
+	Summary     string                    `json:"summary,omitempty"` // Summary is the text shown in notifications
+	Type        string                    `json:"type"`
+}
+
+// NewAdaptiveCardsMessage returns a message prepared for adaptive cards.
+// https://docs.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/connectors-using#send-adaptive-cards-using-an-incoming-webhook
+func NewAdaptiveCardsMessage(card AdaptiveCard) AdaptiveCardsMessage {
+	return AdaptiveCardsMessage{
+		Attachments: []AdaptiveCardsAttachment{{
+			ContentType: "application/vnd.microsoft.card.adaptive",
+			Content:     card,
+		}},
+		Type: "message",
+	}
+}
+
+// AdaptiveCardsAttachment contains an adaptive card.
+type AdaptiveCardsAttachment struct {
+	Content     AdaptiveCard `json:"content"`
+	ContentType string       `json:"contentType"`
+	ContentURL  string       `json:"contentUrl,omitempty"`
+}
+
+// AdapativeCard repesents an Adaptive Card.
+// https://adaptivecards.io/explorer/AdaptiveCard.html
+type AdaptiveCard struct {
+	Body    []AdaptiveCardItem
+	Schema  string
+	Type    string
+	Version string
+}
+
+// NewAdaptiveCard returns a prepared Adaptive Card.
+func NewAdaptiveCard() AdaptiveCard {
+	return AdaptiveCard{
+		Body:    make([]AdaptiveCardItem, 0),
+		Schema:  "http://adaptivecards.io/schemas/adaptive-card.json",
+		Type:    "AdaptiveCard",
+		Version: "1.4",
+	}
+}
+
+func (c *AdaptiveCard) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Body    []AdaptiveCardItem     `json:"body"`
+		Schema  string                 `json:"$schema"`
+		Type    string                 `json:"type"`
+		Version string                 `json:"version"`
+		MsTeams map[string]interface{} `json:"msTeams,omitempty"`
+	}{
+		Body:    c.Body,
+		Schema:  c.Schema,
+		Type:    c.Type,
+		Version: c.Version,
+		MsTeams: map[string]interface{}{"width": "Full"},
+	})
+}
+
+// AppendItem appends an item, such as text or an image, to the Adaptive Card.
+func (c *AdaptiveCard) AppendItem(i AdaptiveCardItem) {
+	c.Body = append(c.Body, i)
+}
+
+// AdaptiveCardItem is an interface for adaptive card items such as containers, elements and inputs.
+type AdaptiveCardItem interface {
+	MarshalJSON() ([]byte, error)
+}
+
+// AdaptiveCardTextBlockItem is a TextBlock.
+type AdaptiveCardTextBlockItem struct {
+	Color  string
+	Size   string
+	Text   string
+	Weight string
+	Wrap   bool
+}
+
+func (i AdaptiveCardTextBlockItem) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Type   string `json:"type"`
+		Text   string `json:"text"`
+		Color  string `json:"color,omitempty"`
+		Size   string `json:"size,omitempty"`
+		Weight string `json:"weight,omitempty"`
+		Wrap   bool   `json:"wrap,omitempty"`
+	}{
+		Type:   "TextBlock",
+		Text:   i.Text,
+		Color:  i.Color,
+		Size:   i.Size,
+		Weight: i.Weight,
+		Wrap:   i.Wrap,
+	})
+}
+
+// AdaptiveCardImageSetItem is an ImageSet.
+type AdaptiveCardImageSetItem struct {
+	Images []AdaptiveCardImageItem
+	Size   string
+}
+
+// AppendImage appends an image to image set.
+func (i *AdaptiveCardImageSetItem) AppendImage(image AdaptiveCardImageItem) {
+	i.Images = append(i.Images, image)
+}
+
+func (i AdaptiveCardImageSetItem) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Type   string                  `json:"type"`
+		Images []AdaptiveCardImageItem `json:"images"`
+		Size   string                  `json:"imageSize"`
+	}{
+		Type:   "ImageSet",
+		Images: i.Images,
+		Size:   i.Size,
+	})
+}
+
+// AdaptiveCardImageItem is an Image.
+type AdaptiveCardImageItem struct {
+	AltText string
+	Size    string
+	URL     string
+}
+
+func (i AdaptiveCardImageItem) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Type    string                 `json:"type"`
+		URL     string                 `json:"url"`
+		AltText string                 `json:"altText,omitempty"`
+		Size    string                 `json:"size,omitempty"`
+		MsTeams map[string]interface{} `json:"msTeams,omitempty"`
+	}{
+		Type:    "Image",
+		URL:     i.URL,
+		AltText: i.AltText,
+		Size:    i.Size,
+		MsTeams: map[string]interface{}{"allowExpand": true},
+	})
+}
+
+// AdaptiveCardActionSetItem is an ActionSet.
+type AdaptiveCardActionSetItem struct {
+	Actions []AdaptiveCardActionItem
+}
+
+func (i AdaptiveCardActionSetItem) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Type    string                   `json:"type"`
+		Actions []AdaptiveCardActionItem `json:"actions"`
+	}{
+		Type:    "ActionSet",
+		Actions: i.Actions,
+	})
+}
+
+type AdaptiveCardActionItem interface {
+	MarshalJSON() ([]byte, error)
+}
+
+// AdapativeCardOpenURLActionItem is an Action.OpenUrl action.
+type AdaptiveCardOpenURLActionItem struct {
+	IconURL string
+	Title   string
+	URL     string
+}
+
+func (i AdaptiveCardOpenURLActionItem) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Type    string `json:"type"`
+		Title   string `json:"title"`
+		URL     string `json:"url"`
+		IconURL string `json:"iconUrl,omitempty"`
+	}{
+		Type:    "Action.OpenUrl",
+		Title:   i.Title,
+		URL:     i.URL,
+		IconURL: i.IconURL,
+	})
 }
 
 type TeamsConfig struct {
@@ -34,17 +230,6 @@ type TeamsConfig struct {
 	Message      string
 	Title        string
 	SectionTitle string
-}
-
-func TeamsFactory(fc FactoryConfig) (NotificationChannel, error) {
-	cfg, err := NewTeamsConfig(fc.Config)
-	if err != nil {
-		return nil, receiverInitError{
-			Reason: err.Error(),
-			Cfg:    *fc.Config,
-		}
-	}
-	return NewTeamsNotifier(cfg, fc.NotificationService, fc.ImageStore, fc.Template), nil
 }
 
 func NewTeamsConfig(config *NotificationChannelConfig) (*TeamsConfig, error) {
@@ -61,8 +246,16 @@ func NewTeamsConfig(config *NotificationChannelConfig) (*TeamsConfig, error) {
 	}, nil
 }
 
-type teamsImage struct {
-	Image string `json:"image"`
+type TeamsNotifier struct {
+	*Base
+	URL          string
+	Message      string
+	Title        string
+	SectionTitle string
+	tmpl         *template.Template
+	log          log.Logger
+	ns           notifications.WebhookSender
+	images       ImageStore
 }
 
 // NewTeamsNotifier is the constructor for Teams notifier.
@@ -86,60 +279,65 @@ func NewTeamsNotifier(config *TeamsConfig, ns notifications.WebhookSender, image
 	}
 }
 
-// Notify send an alert notification to Microsoft teams.
+func TeamsFactory(fc FactoryConfig) (NotificationChannel, error) {
+	cfg, err := NewTeamsConfig(fc.Config)
+	if err != nil {
+		return nil, receiverInitError{
+			Reason: err.Error(),
+			Cfg:    *fc.Config,
+		}
+	}
+	return NewTeamsNotifier(cfg, fc.NotificationService, fc.ImageStore, fc.Template), nil
+}
+
 func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	var tmplErr error
 	tmpl, _ := TmplText(ctx, tn.tmpl, as, tn.log, &tmplErr)
 
-	ruleURL := joinUrlPath(tn.tmpl.ExternalURL.String(), "/alerting/list", tn.log)
+	card := NewAdaptiveCard()
+	card.AppendItem(AdaptiveCardTextBlockItem{
+		Color:  getTeamsTextColor(types.Alerts(as...)),
+		Text:   tmpl(tn.Title),
+		Size:   TextSizeLarge,
+		Weight: TextWeightBolder,
+		Wrap:   true,
+	})
+	card.AppendItem(AdaptiveCardTextBlockItem{
+		Text: tmpl(tn.Message),
+		Wrap: true,
+	})
 
-	var images []teamsImage
+	var s AdaptiveCardImageSetItem
 	_ = withStoredImages(ctx, tn.log, tn.images,
 		func(_ int, image ngmodels.Image) error {
-			if len(image.URL) != 0 {
-				images = append(images, teamsImage{Image: image.URL})
+			if image.URL != "" {
+				s.AppendImage(AdaptiveCardImageItem{URL: image.URL})
 			}
 			return nil
 		},
 		as...)
 
-	// Note: these template calls must remain in this order
-	title := tmpl(tn.Title)
-	sections := []map[string]interface{}{
-		{
-			"title": tmpl(tn.SectionTitle),
-			"text":  tmpl(tn.Message),
-		},
+	if len(s.Images) > 2 {
+		s.Size = ImageSizeMedium
+		card.AppendItem(s)
+	} else if len(s.Images) > 0 {
+		s.Size = ImageSizeLarge
+		card.AppendItem(s)
 	}
 
-	if len(images) != 0 {
-		sections[0]["images"] = images
-	}
-
-	body := map[string]interface{}{
-		"@type":    "MessageCard",
-		"@context": "http://schema.org/extensions",
-		// summary MUST not be empty or the webhook request fails
-		// summary SHOULD contain some meaningful information, since it is used for mobile notifications
-		"summary":    title,
-		"title":      title,
-		"themeColor": getAlertStatusColor(types.Alerts(as...).Status()),
-		"sections":   sections,
-		"potentialAction": []map[string]interface{}{
-			{
-				"@context": "http://schema.org",
-				"@type":    "OpenUri",
-				"name":     "View Rule",
-				"targets": []map[string]interface{}{
-					{
-						"os":  "default",
-						"uri": ruleURL,
-					},
-				},
+	card.AppendItem(AdaptiveCardActionSetItem{
+		Actions: []AdaptiveCardActionItem{
+			AdaptiveCardOpenURLActionItem{
+				Title: "View URL",
+				URL:   joinUrlPath(tn.tmpl.ExternalURL.String(), "/alerting/list", tn.log),
 			},
 		},
-	}
+	})
 
+	msg := NewAdaptiveCardsMessage(card)
+	msg.Summary = tmpl(tn.Title)
+
+	// This check for tmplErr must happen before templating the URL
 	if tmplErr != nil {
 		tn.log.Warn("failed to template Teams message", "err", tmplErr.Error())
 		tmplErr = nil
@@ -151,23 +349,20 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		u = tn.URL
 	}
 
-	b, err := json.Marshal(&body)
+	b, err := json.Marshal(msg)
 	if err != nil {
-		return false, errors.Wrap(err, "marshal json")
+		return false, fmt.Errorf("failed to marshal JSON: %w", err)
 	}
+
 	cmd := &models.SendWebhookSync{Url: u, Body: string(b)}
-
-	// Teams does not always return non-2xx response when the request fails. Instead, the response body can contain an error message regardless of status code.
-	// Ex. 429 - Too Many Requests: https://docs.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/connectors-using?tabs=cURL#rate-limiting-for-connectors
+	// Teams sometimes does not use status codes to show when a request has failed. Instead, the
+	// response can contain an error message, irrespective of status code (i.e. https://docs.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/connectors-using?tabs=cURL#rate-limiting-for-connectors)
 	cmd.Validation = func(b []byte, statusCode int) error {
-		body := string(b)
-
+		// The request succeeded if the response is "1"
 		// https://docs.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/connectors-using?tabs=cURL#send-messages-using-curl-and-powershell
-		// Above states that if the POST succeeds, you must see a simple "1" output.
-		if body != "1" {
-			return errors.New(body)
+		if !bytes.Equal(b, []byte("1")) {
+			return errors.New(string(b))
 		}
-
 		return nil
 	}
 
@@ -180,4 +375,12 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 
 func (tn *TeamsNotifier) SendResolved() bool {
 	return !tn.GetDisableResolveMessage()
+}
+
+// getTeamsTextColor returns the text color for the message title.
+func getTeamsTextColor(alerts model.Alerts) string {
+	if getAlertStatusColor(alerts.Status()) == ColorAlertFiring {
+		return TextColorAttention
+	}
+	return TextColorGood
 }

@@ -5,6 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
+import { KioskMode } from 'app/types';
 
 import { MegaMenu } from '../MegaMenu/MegaMenu';
 
@@ -19,25 +20,36 @@ export function AppChrome({ children }: Props) {
   const { chrome } = useGrafana();
   const state = chrome.useState();
 
-  if (state.chromeless || !config.featureToggles.topnav) {
-    return <main className="main-view">{children} </main>;
+  if (!config.featureToggles.topnav) {
+    return <main className="main-view">{children}</main>;
   }
+
+  const searchBarHidden = state.searchBarHidden || state.kioskMode === KioskMode.TV;
+
+  const contentClass = cx({
+    [styles.content]: true,
+    [styles.contentNoSearchBar]: searchBarHidden,
+    [styles.contentChromeless]: state.chromeless,
+  });
 
   return (
     <main className="main-view">
-      <div className={styles.topNav}>
-        {!state.searchBarHidden && <TopSearchBar />}
-        <NavToolbar
-          searchBarHidden={state.searchBarHidden}
-          sectionNav={state.sectionNav}
-          pageNav={state.pageNav}
-          actions={state.actions}
-          onToggleSearchBar={chrome.toggleSearchBar}
-          onToggleMegaMenu={chrome.toggleMegaMenu}
-        />
-      </div>
-      <div className={cx(styles.content, state.searchBarHidden && styles.contentNoSearchBar)}>{children}</div>
-      {state.megaMenuOpen && <MegaMenu searchBarHidden={state.searchBarHidden} onClose={chrome.toggleMegaMenu} />}
+      {!state.chromeless && (
+        <div className={cx(styles.topNav)}>
+          {!searchBarHidden && <TopSearchBar />}
+          <NavToolbar
+            searchBarHidden={searchBarHidden}
+            sectionNav={state.sectionNav}
+            pageNav={state.pageNav}
+            actions={state.actions}
+            onToggleSearchBar={chrome.onToggleSearchBar}
+            onToggleMegaMenu={chrome.onToggleMegaMenu}
+            onToggleKioskMode={chrome.onToggleKioskMode}
+          />
+        </div>
+      )}
+      <div className={contentClass}>{children}</div>
+      {!state.chromeless && <MegaMenu searchBarHidden={searchBarHidden} onClose={() => chrome.setMegaMenu(false)} />}
     </main>
   );
 }
@@ -57,6 +69,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     contentNoSearchBar: css({
       paddingTop: TOP_BAR_LEVEL_HEIGHT,
+    }),
+    contentChromeless: css({
+      paddingTop: 0,
     }),
     topNav: css({
       display: 'flex',

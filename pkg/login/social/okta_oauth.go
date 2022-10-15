@@ -13,10 +13,8 @@ import (
 
 type SocialOkta struct {
 	*SocialBase
-	apiUrl              string
-	allowedGroups       []string
-	roleAttributePath   string
-	roleAttributeStrict bool
+	apiUrl        string
+	allowedGroups []string
 }
 
 type OktaUserInfoJson struct {
@@ -77,26 +75,29 @@ func (s *SocialOkta) UserInfo(client *http.Client, token *oauth2.Token) (*BasicU
 		return nil, err
 	}
 
-	role, err := s.extractRole(&data)
-	if err != nil {
-		s.log.Error("Failed to extract role", "error", err)
-	}
-	if s.roleAttributeStrict && !models.RoleType(role).IsValid() {
-		return nil, errors.New("invalid role")
-	}
-
 	groups := s.GetGroups(&data)
 	if !s.IsGroupMember(groups) {
 		return nil, errMissingGroupMembership
 	}
 
+	role, grafanaAdmin := s.extractRoleAndAdmin(data.rawJSON, groups, true)
+	if s.roleAttributeStrict && !role.IsValid() {
+		return nil, ErrInvalidBasicRole
+	}
+
+	var isGrafanaAdmin *bool = nil
+	if s.allowAssignGrafanaAdmin {
+		isGrafanaAdmin = &grafanaAdmin
+	}
+
 	return &BasicUserInfo{
-		Id:     claims.ID,
-		Name:   claims.Name,
-		Email:  email,
-		Login:  email,
-		Role:   role,
-		Groups: groups,
+		Id:             claims.ID,
+		Name:           claims.Name,
+		Email:          email,
+		Login:          email,
+		Role:           role,
+		IsGrafanaAdmin: isGrafanaAdmin,
+		Groups:         groups,
 	}, nil
 }
 
@@ -117,18 +118,6 @@ func (s *SocialOkta) extractAPI(data *OktaUserInfoJson, client *http.Client) err
 
 	s.log.Debug("Received user info response", "raw_json", string(data.rawJSON), "data", data)
 	return nil
-}
-
-func (s *SocialOkta) extractRole(data *OktaUserInfoJson) (string, error) {
-	if s.roleAttributePath == "" {
-		return "", nil
-	}
-
-	role, err := s.searchJSONForStringAttr(s.roleAttributePath, data.rawJSON)
-	if err != nil {
-		return "", err
-	}
-	return role, nil
 }
 
 func (s *SocialOkta) GetGroups(data *OktaUserInfoJson) []string {
