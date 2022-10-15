@@ -445,10 +445,19 @@ export class ElementState implements LayerElement {
   };
 
   render() {
-    const { item } = this;
+    const { item, div } = this;
+    const scene = this.getScene();
+    // TODO: Rethink selected state handling
+    const isSelected = div && scene && scene.selecto && scene.selecto.getSelectedTargets().includes(div);
+
     return (
       <div key={this.UID} ref={this.initElement}>
-        <item.display key={`${this.UID}/${this.revId}`} config={this.options.config} data={this.data} />
+        <item.display
+          key={`${this.UID}/${this.revId}`}
+          config={this.options.config}
+          data={this.data}
+          isSelected={isSelected}
+        />
       </div>
     );
   }

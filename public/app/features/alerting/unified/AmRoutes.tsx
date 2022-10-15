@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
-import { useDispatch } from 'react-redux';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, LoadingPlaceholder, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { Receiver } from 'app/plugins/datasource/alertmanager/types';
+import { useDispatch } from 'app/types';
 
 import { useCleanup } from '../../../core/hooks/useCleanup';
 
@@ -24,7 +24,7 @@ import { amRouteToFormAmRoute, formAmRouteToAmRoute, stringsToSelectableValues }
 import { isVanillaPrometheusAlertManagerDataSource } from './utils/datasource';
 import { initialAsyncRequestState } from './utils/redux';
 
-const AmRoutes: FC = () => {
+const AmRoutes = () => {
   const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
   const [isRootRouteEditMode, setIsRootRouteEditMode] = useState(false);
@@ -66,7 +66,8 @@ const AmRoutes: FC = () => {
     setIsRootRouteEditMode(false);
   };
 
-  useCleanup((state) => state.unifiedAlerting.saveAMConfig);
+  useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
+
   const handleSave = (data: Partial<FormAmRoute>) => {
     if (!result) {
       return;

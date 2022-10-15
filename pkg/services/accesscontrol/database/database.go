@@ -7,18 +7,19 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 )
 
 const (
 	globalOrgID = 0
 )
 
-func ProvideService(sqlStore *sqlstore.SQLStore) *AccessControlStore {
-	return &AccessControlStore{sqlStore}
+func ProvideService(sql db.DB) *AccessControlStore {
+	return &AccessControlStore{sql}
 }
 
 type AccessControlStore struct {
-	sql *sqlstore.SQLStore
+	sql db.DB
 }
 
 func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]accesscontrol.Permission, error) {
@@ -49,7 +50,6 @@ func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query acces
 				params = append(params, a)
 			}
 		}
-
 		if err := sess.SQL(q, params...).Find(&result); err != nil {
 			return err
 		}

@@ -1,6 +1,10 @@
 package pluginmeta
 
-import "github.com/grafana/thema"
+import (
+	"strings"
+
+	"github.com/grafana/thema"
+)
 
 thema.#Lineage
 name: "pluginmeta"
@@ -11,18 +15,20 @@ seqs: [
 				// Unique name of the plugin. If the plugin is published on
 				// grafana.com, then the plugin id has to follow the naming
 				// conventions.
-				id: =~"^[0-9a-z]+\\-([0-9a-z]+\\-)?(app|panel|datasource)$"
+				id: string & strings.MinRunes(1)
+				id: =~"^([0-9a-z]+\\-([0-9a-z]+\\-)?(\(strings.Join([for t in _types {t}], "|"))))|(alertGroups|alertlist|annolist|barchart|bargauge|candlestick|canvas|dashlist|debug|gauge|geomap|gettingstarted|graph|heatmap|heatmap-old|histogram|icon|live|logs|news|nodeGraph|piechart|pluginlist|stat|state-timeline|status-history|table|table-old|text|timeseries|traces|welcome|xychart|alertmanager|cloudwatch|dashboard|elasticsearch|grafana|grafana-azure-monitor-datasource|graphite|influxdb|jaeger|loki|mixed|mssql|mysql|opentsdb|postgres|prometheus|stackdriver|tempo|testdata|zipkin)$"
+
+				// The set of all plugin types. This hidden field exists solely
+				// so that the set can be string-interpolated into other fields.
+				_types: ["app", "datasource", "panel", "renderer", "secretsmanager"]
 
 				// type indicates which type of Grafana plugin this is, of the defined
 				// set of Grafana plugin types.
-				type: #Type
-
-				// Type is a string identifier of the Grafana plugin type.
-				#Type: "app" | "datasource" | "panel" | "renderer" | "secretsmanager"
+				type: or(_types)
 
 				// IncludeType is a string identifier of a plugin include type, which is
 				// a superset of plugin types.
-				#IncludeType: #Type | "dashboard" | "page"
+				#IncludeType: type | "dashboard" | "page"
 
 				// Human-readable name of the plugin that is shown to the user in
 				// the UI.
@@ -41,6 +47,14 @@ seqs: [
 				// If the plugin has a backend component.
 				backend?: bool
 
+				// builtin indicates whether the plugin is developed and shipped as part
+				// of Grafana. Also known as a "core plugin."
+				builtIn: bool | *false
+
+				// hideFromList excludes the plugin from listings in Grafana's UI. Only
+				// allowed for builtin plugins.
+				hideFromList: bool | *false
+
 				// The first part of the file name of the backend component
 				// executable. There can be multiple executables built for
 				// different operating system and architecture. Grafana will
@@ -58,7 +72,7 @@ seqs: [
 				state?: #ReleaseState
 
 				// ReleaseState indicates release maturity state of a plugin.
-				#ReleaseState: "alpha" | "beta" | *"stable"
+				#ReleaseState: "alpha" | "beta" | "deprecated" | *"stable"
 
 				// Resources to include in plugin.
 				includes?: [...#Include]
@@ -128,7 +142,7 @@ seqs: [
 
 					// Required Grafana version for this plugin. Validated using
 					// https://github.com/npm/node-semver.
-					grafanaDependency: =~"^(<=|>=|<|>|=|~|\\^)?([0-9]+)(\\.[0-9x\\*]+)(\\.[0-9x\\*])?(\\s(<=|>=|<|=>)?([0-9]+)(\\.[0-9x]+)(\\.[0-9x]))?$"
+					grafanaDependency: =~"^(<=|>=|<|>|=|~|\\^)?([0-9]+)(\\.[0-9x\\*]+)(\\.[0-9x\\*]+)?(\\s(<=|>=|<|=>)?([0-9]+)(\\.[0-9x]+)(\\.[0-9x]+))?$"
 
 					// An array of required plugins on which this plugin depends.
 					plugins?: [...#Dependency]
@@ -185,7 +199,7 @@ seqs: [
 					}]
 
 					// SVG images that are used as plugin icons.
-					logos: {
+					logos?: {
 						// Link to the "small" version of the plugin logo, which must be
 						// an SVG image. "Large" and "small" logos can be the same image.
 						small: string
@@ -203,10 +217,10 @@ seqs: [
 					}]
 
 					// Date when this plugin was built.
-					updated: =~"^(\\d{4}-\\d{2}-\\d{2}|\\%TODAY\\%)$"
+					updated?: =~"^(\\d{4}-\\d{2}-\\d{2}|\\%TODAY\\%)$"
 
 					// Project version of this commit, e.g. `6.7.x`.
-					version: =~"^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*$|\\%VERSION\\%)"
+					version?: =~"^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)|(\\%VERSION\\%)$"
 				}
 
 				#BuildInfo: {

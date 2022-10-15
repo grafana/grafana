@@ -255,6 +255,7 @@ func (srv *ProvisioningSrv) RouteRouteGetAlertRule(c *models.ReqContext, UID str
 
 func (srv *ProvisioningSrv) RoutePostAlertRule(c *models.ReqContext, ar definitions.ProvisionedAlertRule) response.Response {
 	upstreamModel, err := ar.UpstreamModel()
+	upstreamModel.OrgID = c.OrgID
 	if err != nil {
 		ErrResp(http.StatusBadRequest, err, "")
 	}
@@ -271,10 +272,9 @@ func (srv *ProvisioningSrv) RoutePostAlertRule(c *models.ReqContext, ar definiti
 		}
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
-	ar.ID = createdAlertRule.ID
-	ar.UID = createdAlertRule.UID
-	ar.Updated = createdAlertRule.Updated
-	return response.JSON(http.StatusCreated, ar)
+
+	resp := definitions.NewAlertRule(createdAlertRule, alerting_models.ProvenanceAPI)
+	return response.JSON(http.StatusCreated, resp)
 }
 
 func (srv *ProvisioningSrv) RoutePutAlertRule(c *models.ReqContext, ar definitions.ProvisionedAlertRule, UID string) response.Response {
@@ -282,6 +282,7 @@ func (srv *ProvisioningSrv) RoutePutAlertRule(c *models.ReqContext, ar definitio
 	if err != nil {
 		ErrResp(http.StatusBadRequest, err, "")
 	}
+	updated.OrgID = c.OrgID
 	updated.UID = UID
 	updatedAlertRule, err := srv.alertRules.UpdateAlertRule(c.Req.Context(), updated, alerting_models.ProvenanceAPI)
 	if errors.Is(err, alerting_models.ErrAlertRuleNotFound) {
@@ -296,8 +297,9 @@ func (srv *ProvisioningSrv) RoutePutAlertRule(c *models.ReqContext, ar definitio
 		}
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
-	ar.Updated = updatedAlertRule.Updated
-	return response.JSON(http.StatusOK, ar)
+
+	resp := definitions.NewAlertRule(updatedAlertRule, alerting_models.ProvenanceAPI)
+	return response.JSON(http.StatusOK, resp)
 }
 
 func (srv *ProvisioningSrv) RouteDeleteAlertRule(c *models.ReqContext, UID string) response.Response {

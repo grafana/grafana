@@ -56,7 +56,7 @@ function stringSupplant(str: string, encodeFn: (unencoded: any) => string, map: 
   });
 }
 
-export function processTemplate(template: any, encodeFn: (unencoded: any) => string): ProcessedTemplate {
+export function processTemplate(template: unknown, encodeFn: (unencoded: any) => string): ProcessedTemplate {
   if (typeof template !== 'string') {
     /*
 
@@ -76,10 +76,10 @@ export function processTemplate(template: any, encodeFn: (unencoded: any) => str
 
 export function createTestFunction(entry: any) {
   if (typeof entry === 'string') {
-    return (arg: any) => arg === entry;
+    return (arg: unknown) => arg === entry;
   }
   if (Array.isArray(entry)) {
-    return (arg: any) => entry.indexOf(arg) > -1;
+    return (arg: unknown) => entry.indexOf(arg) > -1;
   }
   /*
 

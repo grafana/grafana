@@ -55,27 +55,34 @@ func (_m *MockFileStorage) DeleteFolder(ctx context.Context, path string, option
 	return r0
 }
 
-// Get provides a mock function with given fields: ctx, path
-func (_m *MockFileStorage) Get(ctx context.Context, path string) (*File, error) {
-	ret := _m.Called(ctx, path)
+// Get provides a mock function with given fields: ctx, path, options
+func (_m *MockFileStorage) Get(ctx context.Context, path string, options *GetFileOptions) (*File, bool, error) {
+	ret := _m.Called(ctx, path, options)
 
 	var r0 *File
-	if rf, ok := ret.Get(0).(func(context.Context, string) *File); ok {
-		r0 = rf(ctx, path)
+	if rf, ok := ret.Get(0).(func(context.Context, string, *GetFileOptions) *File); ok {
+		r0 = rf(ctx, path, options)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*File)
 		}
 	}
 
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, path)
+	var r1 bool
+	if rf, ok := ret.Get(1).(func(context.Context, string, *GetFileOptions) bool); ok {
+		r1 = rf(ctx, path, options)
 	} else {
-		r1 = ret.Error(1)
+		r1 = ret.Get(1).(bool)
 	}
 
-	return r0, r1
+	var r2 error
+	if rf, ok := ret.Get(2).(func(context.Context, string, *GetFileOptions) error); ok {
+		r2 = rf(ctx, path, options)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
 }
 
 // List provides a mock function with given fields: ctx, folderPath, paging, options

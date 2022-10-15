@@ -234,4 +234,40 @@ describe('AzureMonitor: metrics dataHooks', () => {
       });
     });
   });
+
+  describe('useMetricNamespaces', () => {
+    const metricNamespacesConfig = {
+      name: 'useMetricNamespaces',
+      hook: useMetricNamespaces,
+      emptyQueryPartial: {
+        resourceGroup: 'rg',
+        resourceName: 'rn',
+        metricNamespace: 'azure/vm',
+      },
+      customProperties: {},
+      expectedOptions: [
+        { label: 'Compute Virtual Machine', value: 'azure/vmc' },
+        { label: 'Database NS', value: 'azure/dbns' },
+        { label: 'azure/vm', value: 'azure/vm' },
+      ],
+    };
+
+    it('call getMetricNamespaces without global region', async () => {
+      const query = {
+        ...bareQuery,
+        azureMonitor: metricNamespacesConfig.emptyQueryPartial,
+      };
+      const { result, waitForNextUpdate } = renderHook(() =>
+        metricNamespacesConfig.hook(query, datasource, onChange, jest.fn())
+      );
+      await waitForNextUpdate(WAIT_OPTIONS);
+
+      expect(result.current).toEqual(metricNamespacesConfig.expectedOptions);
+      expect(datasource.azureMonitorDatasource.getMetricNamespaces).toHaveBeenCalledWith(
+        expect.objectContaining(metricNamespacesConfig.emptyQueryPartial),
+        // Here, "global" should be false
+        false
+      );
+    });
+  });
 });

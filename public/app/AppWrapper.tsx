@@ -16,7 +16,6 @@ import { AppChrome } from './core/components/AppChrome/AppChrome';
 import { AppNotificationList } from './core/components/AppNotifications/AppNotificationList';
 import { NavBar } from './core/components/NavBar/NavBar';
 import { GrafanaContext } from './core/context/GrafanaContext';
-import { I18nProvider } from './core/internationalization';
 import { GrafanaRoute } from './core/navigation/GrafanaRoute';
 import { RouteDescriptor } from './core/navigation/types';
 import { contextSrv } from './core/services/context_srv';
@@ -106,7 +105,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
     navigationLogger('AppWrapper', false, 'rendering');
 
     const commandPaletteActionSelected = (action: Action) => {
-      reportInteraction('commandPalette_action_selected', {
+      reportInteraction('command_palette_action_selected', {
         actionId: action.id,
         actionName: action.name,
       });
@@ -115,44 +114,42 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
     return (
       <React.StrictMode>
         <Provider store={store}>
-          <I18nProvider>
-            <ErrorBoundaryAlert style="page">
-              <GrafanaContext.Provider value={app.context}>
-                <ThemeProvider value={config.theme2}>
-                  <KBarProvider
-                    actions={[]}
-                    options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
-                  >
-                    <ModalsProvider>
-                      <GlobalStyles />
-                      {this.commandPaletteEnabled() && <CommandPalette />}
-                      <div className="grafana-app">
-                        <Router history={locationService.getHistory()}>
-                          {this.renderNavBar()}
-                          <AppChrome>
-                            {pageBanners.map((Banner, index) => (
-                              <Banner key={index.toString()} />
-                            ))}
+          <ErrorBoundaryAlert style="page">
+            <GrafanaContext.Provider value={app.context}>
+              <ThemeProvider value={config.theme2}>
+                <KBarProvider
+                  actions={[]}
+                  options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
+                >
+                  <ModalsProvider>
+                    <GlobalStyles />
+                    {this.commandPaletteEnabled() && <CommandPalette />}
+                    <div className="grafana-app">
+                      <Router history={locationService.getHistory()}>
+                        {this.renderNavBar()}
+                        <AppChrome>
+                          {pageBanners.map((Banner, index) => (
+                            <Banner key={index.toString()} />
+                          ))}
 
-                            <AngularRoot />
-                            <AppNotificationList />
-                            {this.searchBarEnabled() && <SearchWrapper />}
-                            {ready && this.renderRoutes()}
-                            {bodyRenderHooks.map((Hook, index) => (
-                              <Hook key={index.toString()} />
-                            ))}
-                          </AppChrome>
-                        </Router>
-                      </div>
-                      <LiveConnectionWarning />
-                      <ModalRoot />
-                      <PortalContainer />
-                    </ModalsProvider>
-                  </KBarProvider>
-                </ThemeProvider>
-              </GrafanaContext.Provider>
-            </ErrorBoundaryAlert>
-          </I18nProvider>
+                          <AngularRoot />
+                          <AppNotificationList />
+                          {this.searchBarEnabled() && <SearchWrapper />}
+                          {ready && this.renderRoutes()}
+                          {bodyRenderHooks.map((Hook, index) => (
+                            <Hook key={index.toString()} />
+                          ))}
+                        </AppChrome>
+                      </Router>
+                    </div>
+                    <LiveConnectionWarning />
+                    <ModalRoot />
+                    <PortalContainer />
+                  </ModalsProvider>
+                </KBarProvider>
+              </ThemeProvider>
+            </GrafanaContext.Provider>
+          </ErrorBoundaryAlert>
         </Provider>
       </React.StrictMode>
     );

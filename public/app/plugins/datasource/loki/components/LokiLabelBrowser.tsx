@@ -18,8 +18,8 @@ import {
 } from '@grafana/ui';
 
 import PromQlLanguageProvider from '../../prometheus/language_provider';
-import LokiLanguageProvider from '../language_provider';
-import { escapeLabelValueInExactSelector, escapeLabelValueInRegexSelector } from '../language_utils';
+import LokiLanguageProvider from '../LanguageProvider';
+import { escapeLabelValueInExactSelector, escapeLabelValueInRegexSelector } from '../languageUtils';
 
 // Hard limit on labels to render
 const MAX_LABEL_COUNT = 1000;
@@ -152,6 +152,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   valueList: css`
     margin-right: ${theme.spacing(1)};
+    resize: horizontal;
   `,
   valueListWrapper: css`
     border-left: 1px solid ${theme.colors.border.medium};

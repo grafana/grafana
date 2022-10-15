@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
 import React from 'react';
-// @ts-ignore
 import Highlighter from 'react-highlight-words';
 
 import { GrafanaTheme } from '@grafana/data';
@@ -13,7 +12,7 @@ import { PartialHighlighter } from './PartialHighlighter';
 interface Props {
   isSelected: boolean;
   item: CompletionItem;
-  style: any;
+  style: React.CSSProperties;
   prefix?: string;
 
   onClickItem?: (event: React.MouseEvent) => void;
@@ -60,7 +59,7 @@ const getStyles = (theme: GrafanaTheme) => ({
   `,
 });
 
-export const TypeaheadItem: React.FC<Props> = (props: Props) => {
+export const TypeaheadItem = (props: Props) => {
   const styles = useStyles(getStyles);
 
   const { isSelected, item, prefix, style, onMouseEnter, onMouseLeave, onClickItem } = props;

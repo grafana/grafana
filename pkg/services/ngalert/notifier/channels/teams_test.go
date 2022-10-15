@@ -70,6 +70,9 @@ func TestTeamsNotifier(t *testing.T) {
 					}},
 					"type":    "AdaptiveCard",
 					"version": "1.4",
+					"msTeams": map[string]interface{}{
+						"width": "Full",
+					},
 				},
 				"contentType": "application/vnd.microsoft.card.adaptive",
 			}},
@@ -123,6 +126,9 @@ func TestTeamsNotifier(t *testing.T) {
 					}},
 					"type":    "AdaptiveCard",
 					"version": "1.4",
+					"msTeams": map[string]interface{}{
+						"width": "Full",
+					},
 				},
 				"contentType": "application/vnd.microsoft.card.adaptive",
 			}},
@@ -176,6 +182,9 @@ func TestTeamsNotifier(t *testing.T) {
 					}},
 					"type":    "AdaptiveCard",
 					"version": "1.4",
+					"msTeams": map[string]interface{}{
+						"width": "Full",
+					},
 				},
 				"contentType": "application/vnd.microsoft.card.adaptive",
 			}},
@@ -228,6 +237,9 @@ func TestTeamsNotifier(t *testing.T) {
 					}},
 					"type":    "AdaptiveCard",
 					"version": "1.4",
+					"msTeams": map[string]interface{}{
+						"width": "Full",
+					},
 				},
 				"contentType": "application/vnd.microsoft.card.adaptive",
 			}},

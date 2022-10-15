@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { CoreApp, TimeZone } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime/src';
 import { TabbedContainer, TabConfig } from '@grafana/ui';
 import { ExploreDrawer } from 'app/features/explore/ExploreDrawer';
 import { InspectDataTab } from 'app/features/inspector/InspectDataTab';
@@ -26,6 +27,10 @@ export function ExploreQueryInspector(props: Props) {
   const { loading, width, onClose, queryResponse, timeZone } = props;
   const dataFrames = queryResponse?.series || [];
   const error = queryResponse?.error;
+
+  useEffect(() => {
+    reportInteraction('grafana_explore_query_inspector_opened');
+  }, []);
 
   const statsTab: TabConfig = {
     label: 'Stats',

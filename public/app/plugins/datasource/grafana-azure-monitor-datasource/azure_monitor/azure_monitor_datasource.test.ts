@@ -93,6 +93,36 @@ describe('AzureMonitorDatasource', () => {
         },
       });
     });
+
+    it('should migrate resource URI template variable to resource object', () => {
+      const subscription = '44693801-6ee6-49de-9b2d-9106972f9572';
+      const resourceGroup = 'cloud-datasources';
+      const metricNamespace = 'microsoft.insights/components';
+      const resourceName = 'AppInsightsTestData';
+      templateSrv.init([
+        {
+          id: 'resourceUri',
+          name: 'resourceUri',
+          current: {
+            value: `/subscriptions/${subscription}/resourceGroups/${resourceGroup}/providers/${metricNamespace}/${resourceName}`,
+          },
+        },
+      ]);
+      const query = createMockQuery({
+        azureMonitor: {
+          resourceUri: '$resourceUri',
+        },
+      });
+      const templatedQuery = ctx.ds.azureMonitorDatasource.applyTemplateVariables(query, {});
+      expect(templatedQuery).toMatchObject({
+        subscription,
+        azureMonitor: {
+          resourceGroup,
+          metricNamespace,
+          resourceName,
+        },
+      });
+    });
   });
 
   describe('When performing getMetricNamespaces', () => {
@@ -125,7 +155,7 @@ describe('AzureMonitorDatasource', () => {
         const expected =
           basePath +
           '/providers/microsoft.insights/components/resource1' +
-          '/providers/microsoft.insights/metricNamespaces?region=global&api-version=2017-12-01-preview';
+          '/providers/microsoft.insights/metricNamespaces?api-version=2017-12-01-preview&region=global';
         expect(path).toBe(expected);
         return Promise.resolve(response);
       });
@@ -133,10 +163,13 @@ describe('AzureMonitorDatasource', () => {
 
     it('should return list of Metric Namspaces', () => {
       return ctx.ds.azureMonitorDatasource
-        .getMetricNamespaces({
-          resourceUri:
-            '/subscriptions/mock-subscription-id/resourceGroups/nodeapp/providers/microsoft.insights/components/resource1',
-        })
+        .getMetricNamespaces(
+          {
+            resourceUri:
+              '/subscriptions/mock-subscription-id/resourceGroups/nodeapp/providers/microsoft.insights/components/resource1',
+          },
+          true
+        )
         .then((results: Array<{ text: string; value: string }>) => {
           expect(results.length).toEqual(2);
           expect(results[0].text).toEqual('Azure.ApplicationInsights');
@@ -189,7 +222,7 @@ describe('AzureMonitorDatasource', () => {
         const expected =
           basePath +
           '/providers/microsoft.insights/components/resource1' +
-          '/providers/microsoft.insights/metricdefinitions?api-version=2018-01-01&metricnamespace=microsoft.insights%2Fcomponents';
+          '/providers/microsoft.insights/metricdefinitions?api-version=2018-01-01';
         expect(path).toBe(expected);
         return Promise.resolve(response);
       });
@@ -254,7 +287,7 @@ describe('AzureMonitorDatasource', () => {
         const expected =
           basePath +
           '/providers/microsoft.insights/components/resource1' +
-          '/providers/microsoft.insights/metricdefinitions?api-version=2018-01-01&metricnamespace=microsoft.insights%2Fcomponents';
+          '/providers/microsoft.insights/metricdefinitions?api-version=2018-01-01';
         expect(path).toBe(expected);
         return Promise.resolve(response);
       });
@@ -591,7 +624,7 @@ describe('AzureMonitorDatasource', () => {
           const expected =
             basePath +
             '/providers/microsoft.insights/components/resource1' +
-            '/providers/microsoft.insights/metricdefinitions?api-version=2018-01-01&metricnamespace=microsoft.insights%2Fcomponents';
+            '/providers/microsoft.insights/metricdefinitions?api-version=2018-01-01';
           expect(path).toBe(expected);
           return Promise.resolve(response);
         });
@@ -657,7 +690,7 @@ describe('AzureMonitorDatasource', () => {
           const expected =
             basePath +
             '/providers/microsoft.insights/components/resource1' +
-            '/providers/microsoft.insights/metricdefinitions?api-version=2018-01-01&metricnamespace=microsoft.insights%2Fcomponents';
+            '/providers/microsoft.insights/metricdefinitions?api-version=2018-01-01';
           expect(path).toBe(expected);
           return Promise.resolve(response);
         });
@@ -725,7 +758,7 @@ describe('AzureMonitorDatasource', () => {
           const expected =
             basePath +
             '/providers/microsoft.insights/components/resource1' +
-            '/providers/microsoft.insights/metricdefinitions?api-version=2018-01-01&metricnamespace=microsoft.insights%2Fcomponents';
+            '/providers/microsoft.insights/metricdefinitions?api-version=2018-01-01';
           expect(path).toBe(expected);
           return Promise.resolve(response);
         });

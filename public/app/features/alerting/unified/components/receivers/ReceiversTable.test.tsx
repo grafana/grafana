@@ -1,8 +1,7 @@
-import { render } from '@testing-library/react';
+import { screen, render, within } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
-import { byRole } from 'testing-library-selector';
 
 import { locationService } from '@grafana/runtime';
 import {
@@ -11,8 +10,9 @@ import {
   Receiver,
 } from 'app/plugins/datasource/alertmanager/types';
 import { configureStore } from 'app/store/configureStore';
-import { NotifierDTO, NotifierType } from 'app/types';
+import { ContactPointsState, NotifierDTO, NotifierType } from 'app/types';
 
+import * as receiversApi from '../../api/receiversApi';
 import { fetchGrafanaNotifiersAction } from '../../state/actions';
 
 import { ReceiversTable } from './ReceiversTable';
@@ -53,11 +53,15 @@ const mockNotifier = (type: NotifierType, name: string): NotifierDTO => ({
   options: [],
 });
 
-const ui = {
-  table: byRole<HTMLTableElement>('table'),
-};
+const useGetContactPointsStateMock = jest.spyOn(receiversApi, 'useGetContactPointsState');
 
 describe('ReceiversTable', () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
+    const emptyContactPointsState: ContactPointsState = { receivers: {}, errorCount: 0 };
+    useGetContactPointsStateMock.mockReturnValue(emptyContactPointsState);
+  });
+
   it('render receivers with grafana notifiers', async () => {
     const receivers: Receiver[] = [
       {
@@ -74,14 +78,12 @@ describe('ReceiversTable', () => {
 
     await renderReceieversTable(receivers, notifiers);
 
-    const table = await ui.table.find();
-
-    const rows = table.querySelector('tbody')?.querySelectorAll('tr')!;
+    const rows = within(screen.getByTestId('dynamic-table')).getAllByTestId('row');
     expect(rows).toHaveLength(2);
-    expect(rows[0].querySelectorAll('td')[0]).toHaveTextContent('with receivers');
-    expect(rows[0].querySelectorAll('td')[1]).toHaveTextContent('Google Chat, Sensu Go');
-    expect(rows[1].querySelectorAll('td')[0]).toHaveTextContent('without receivers');
-    expect(rows[1].querySelectorAll('td')[1].textContent).toEqual('');
+    expect(rows[0]).toHaveTextContent('with receivers');
+    expect(rows[0].querySelector('[data-column="Type"]')).toHaveTextContent('Google Chat, Sensu Go');
+    expect(rows[1]).toHaveTextContent('without receivers');
+    expect(rows[1].querySelector('[data-column="Type"]')).toHaveTextContent('');
   });
 
   it('render receivers with alertmanager notifers', async () => {
@@ -117,13 +119,11 @@ describe('ReceiversTable', () => {
 
     await renderReceieversTable(receivers, []);
 
-    const table = await ui.table.find();
-
-    const rows = table.querySelector('tbody')?.querySelectorAll('tr')!;
+    const rows = within(screen.getByTestId('dynamic-table')).getAllByTestId('row');
     expect(rows).toHaveLength(2);
-    expect(rows[0].querySelectorAll('td')[0]).toHaveTextContent('with receivers');
-    expect(rows[0].querySelectorAll('td')[1]).toHaveTextContent('Email, Webhook, OpsGenie, Foo');
-    expect(rows[1].querySelectorAll('td')[0]).toHaveTextContent('without receivers');
-    expect(rows[1].querySelectorAll('td')[1].textContent).toEqual('');
+    expect(rows[0]).toHaveTextContent('with receivers');
+    expect(rows[0].querySelector('[data-column="Type"]')).toHaveTextContent('Email, Webhook, OpsGenie, Foo');
+    expect(rows[1]).toHaveTextContent('without receivers');
+    expect(rows[1].querySelector('[data-column="Type"]')).toHaveTextContent('');
   });
 });

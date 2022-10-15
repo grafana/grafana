@@ -8,23 +8,24 @@ Hash: SHA512
   "signedByOrg": "willbrowne",
   "signedByOrgName": "Will Browne",
   "rootUrls": [
-    "http://localhost:3000/grafana/"
+    "http://localhost:3000/grafana"
   ],
-  "plugin": "test",
+  "plugin": "test-datasource",
   "version": "1.0.0",
-  "time": 1623165794939,
+  "time": 1661171981629,
   "keyId": "7e4d0c6a708866e7",
   "files": {
-    "plugin.json": "2bb467c0bfd6c454551419efe475b8bf8573734e73c7bab52b14842adb62886f"
+    "plugin.json": "203ef4a613c5693c437a665cd67f95e2756a0f71b336b2ffb265db7c180d0b19"
   }
 }
 -----BEGIN PGP SIGNATURE-----
-Version: OpenPGP.js v4.10.1
+Version: OpenPGP.js v4.10.10
 Comment: https://openpgpjs.org
 
-wqEEARMKAAYFAmC/i2MACgkQfk0ManCIZudCEgII80waYmySwVuB2cdeU3Vy
-FvYrhViYYimvTy5EQbDfC955UpHphcr4V5S+09se7D2bK8XZ/MYufnUp9QIU
-gOxCDrkCCQHTQ/aWxt8JAHGG/eoydKQEeAc9aFJyphdX57qXHVkAjvLzY5aO
-y9UltPQKOAN/soDra2m39VUf6DBi9K/sXfjwaA==
-=cd6n
+wrcEARMKAAYFAmMDeQ0AIQkQfk0ManCIZucWIQTzOyW2kQdOhGNlcPN+TQxq
+cIhm5ygmAgiUFIfZrpxCa5VajERXgejFRwGrWYILWXmmXWC4vqHiQaFEE1Ef
+DtLz0JcdEMhvhydD+efJbWuUcv7fEMWMv6k0YAIGLG4xVsef4OhnfMYKjRBf
+Obc4/RuzqbjLg04Z9XDq6gAY06NESYscSj+Vy3rKNo0IiVnjrm9qGvZmSqRx
+sLyae5M=
+=ZAe8
 -----END PGP SIGNATURE-----

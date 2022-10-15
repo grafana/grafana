@@ -55,7 +55,7 @@ interface OwnProps {}
 
 type Props = OwnProps & ConnectedProps<typeof connector>;
 
-const UserListAdminPageUnConnected: React.FC<Props> = ({
+const UserListAdminPageUnConnected = ({
   fetchUsers,
   query,
   changeQuery,
@@ -67,7 +67,7 @@ const UserListAdminPageUnConnected: React.FC<Props> = ({
   changeFilter,
   filters,
   isLoading,
-}) => {
+}: Props) => {
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
@@ -77,7 +77,7 @@ const UserListAdminPageUnConnected: React.FC<Props> = ({
   const showLicensedRole = useMemo(() => users.some((user) => user.licensedRole), [users]);
 
   return (
-    <Page navId="global-users" subTitle="Manage and create users across the whole Grafana server.">
+    <Page navId="global-users">
       <Page.Contents>
         <div className="page-action-bar">
           <div className="gf-form gf-form--grow">

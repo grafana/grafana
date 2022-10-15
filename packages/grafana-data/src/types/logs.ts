@@ -78,6 +78,7 @@ export interface LogRowModel {
   timeUtc: string;
   uid: string;
   uniqueLabels?: Labels;
+  datasourceType?: string;
 }
 
 export interface LogsModel {
@@ -110,6 +111,7 @@ export enum LogsDedupStrategy {
   signature = 'signature',
 }
 
+/** @deprecated will be removed in the next major version */
 export interface LogsParser {
   /**
    * Value-agnostic matcher for a field label.
@@ -165,7 +167,7 @@ export interface DataSourceWithLogsContextSupport<TQuery extends DataQuery = Dat
   showContextToggle(row?: LogRowModel): boolean;
 }
 
-export const hasLogsContextSupport = (datasource: any): datasource is DataSourceWithLogsContextSupport => {
+export const hasLogsContextSupport = (datasource: unknown): datasource is DataSourceWithLogsContextSupport => {
   if (!datasource) {
     return false;
   }

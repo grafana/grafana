@@ -3,6 +3,7 @@ import {
   createMockARGResourceGroupsResponse,
   createMockARGSubscriptionResponse,
 } from '../__mocks__/argResourcePickerResponse';
+import createMockDatasource from '../__mocks__/datasource';
 import { createMockInstanceSetttings } from '../__mocks__/instanceSettings';
 import { AzureGraphResponse } from '../types';
 
@@ -10,8 +11,11 @@ import ResourcePickerData from './resourcePickerData';
 
 const createResourcePickerData = (responses: AzureGraphResponse[]) => {
   const instanceSettings = createMockInstanceSetttings();
-  const resourcePickerData = new ResourcePickerData(instanceSettings);
-
+  const mockDatasource = createMockDatasource();
+  mockDatasource.azureMonitorDatasource.getMetricNamespaces = jest
+    .fn()
+    .mockResolvedValueOnce([{ text: 'Microsoft.Storage/storageAccounts', value: 'Microsoft.Storage/storageAccounts' }]);
+  const resourcePickerData = new ResourcePickerData(instanceSettings, mockDatasource.azureMonitorDatasource);
   const postResource = jest.fn();
   responses.forEach((res) => {
     postResource.mockResolvedValueOnce(res);
@@ -192,14 +196,18 @@ describe('AzureMonitor resourcePickerData', () => {
     });
 
     it('filters by metric specific resources', async () => {
-      const mockResponse = createMockARGResourceGroupsResponse();
-      const { resourcePickerData, postResource } = createResourcePickerData([mockResponse]);
+      const mockSubscriptionsResponse = createMockARGSubscriptionResponse();
+      const mockResourceGroupsResponse = createMockARGResourceGroupsResponse();
+      const { resourcePickerData, postResource } = createResourcePickerData([
+        mockSubscriptionsResponse,
+        mockResourceGroupsResponse,
+      ]);
       await resourcePickerData.getResourceGroupsBySubscriptionId('123', 'metrics');
 
-      expect(postResource).toBeCalledTimes(1);
-      const firstCall = postResource.mock.calls[0];
-      const [_, postBody] = firstCall;
-      expect(postBody.query).toContain('wandisco.fusion/migrators');
+      expect(postResource).toBeCalledTimes(2);
+      const secondCall = postResource.mock.calls[1];
+      const [_, postBody] = secondCall;
+      expect(postBody.query).toContain('microsoft.storage/storageaccounts');
     });
   });
 
@@ -262,19 +270,25 @@ describe('AzureMonitor resourcePickerData', () => {
     });
 
     it('should filter metrics resources', async () => {
-      const mockResponse = createARGResourcesResponse();
-      const { resourcePickerData, postResource } = createResourcePickerData([mockResponse]);
+      const mockSubscriptionsResponse = createMockARGSubscriptionResponse();
+      const mockResourcesResponse = createARGResourcesResponse();
+      const { resourcePickerData, postResource } = createResourcePickerData([
+        mockSubscriptionsResponse,
+        mockResourcesResponse,
+      ]);
       await resourcePickerData.getResourcesForResourceGroup('dev', 'metrics');
 
-      expect(postResource).toBeCalledTimes(1);
-      const firstCall = postResource.mock.calls[0];
-      const [_, postBody] = firstCall;
-      expect(postBody.query).toContain('wandisco.fusion/migrators');
+      expect(postResource).toBeCalledTimes(2);
+      const secondCall = postResource.mock.calls[1];
+      const [_, postBody] = secondCall;
+      expect(postBody.query).toContain('microsoft.storage/storageaccounts');
     });
   });
 
   describe('search', () => {
     it('makes requests for metrics searches', async () => {
+      const mockSubscriptionsResponse = createMockARGSubscriptionResponse();
+
       const mockResponse = {
         data: [
           {
@@ -287,11 +301,11 @@ describe('AzureMonitor resourcePickerData', () => {
           },
         ],
       };
-      const { resourcePickerData, postResource } = createResourcePickerData([mockResponse]);
+      const { resourcePickerData, postResource } = createResourcePickerData([mockSubscriptionsResponse, mockResponse]);
       const formattedResults = await resourcePickerData.search('vmname', 'metrics');
-      expect(postResource).toBeCalledTimes(1);
-      const firstCall = postResource.mock.calls[0];
-      const [_, postBody] = firstCall;
+      expect(postResource).toBeCalledTimes(2);
+      const secondCall = postResource.mock.calls[1];
+      const [_, postBody] = secondCall;
       expect(postBody.query).not.toContain('union resourcecontainers');
       expect(postBody.query).toContain('where id contains "vmname"');
 

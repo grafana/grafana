@@ -32,7 +32,7 @@ const filterConditionsToMultiFilters = (filters: MultiFilterCondition[]) => {
   return res;
 };
 
-export const MultiFilter: React.FC<Props> = ({ filters, onChange, keyPlaceholder }) => {
+export const MultiFilter = ({ filters, onChange, keyPlaceholder }: Props) => {
   const [items, setItems] = useState<MultiFilterCondition[]>([]);
   useEffect(() => setItems(filters ? multiFiltersToFilterConditions(filters) : []), [filters]);
   const onFiltersChange = (newItems: Array<Partial<MultiFilterCondition>>) => {

@@ -3,6 +3,7 @@
     ports:
       - "6831:6831/udp"
       - "16686:16686"
+      - "14268:14268"
   # Additional loki to generate some traces
   # datasource URL: http://localhost:3100/
   loki:
@@ -24,7 +25,7 @@
   promtail:
     image: grafana/promtail:master
     volumes:
-      - ./docker/blocks/loki/config.yaml:/etc/promtail/docker-config.yaml
+      - ./docker/blocks/jaeger/promtail-config.yaml:/etc/promtail/docker-config.yaml
       - /var/log:/var/log
       - ../data/log:/var/log/grafana
     command:

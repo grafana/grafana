@@ -1,7 +1,7 @@
 import { contextSrv } from 'app/core/services/context_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import { SearchSrv } from 'app/core/services/search_srv';
-import { DashboardSearchHit } from 'app/features/search/types';
+import { DashboardSearchItem } from 'app/features/search/types';
 
 import { backendSrv } from '../services/backend_srv';
 
@@ -40,7 +40,7 @@ describe('SearchSrv', () => {
           return Promise.resolve([
             { uid: 'DSNdW0gVk', title: 'second but first' },
             { uid: 'srx16xR4z', title: 'first but second' },
-          ] as DashboardSearchHit[]);
+          ] as DashboardSearchItem[]);
         }
         return Promise.resolve([]);
       });
@@ -70,7 +70,7 @@ describe('SearchSrv', () => {
             return Promise.resolve([
               { uid: 'DSNdW0gVk', title: 'two' },
               { uid: 'srx16xR4z', title: 'one' },
-            ] as DashboardSearchHit[]);
+            ] as DashboardSearchItem[]);
           }
           return Promise.resolve([]);
         });
@@ -98,7 +98,7 @@ describe('SearchSrv', () => {
     beforeEach(() => {
       searchMock.mockImplementation((options) => {
         if (options.starred) {
-          return Promise.resolve([{ id: 1, title: 'starred' }] as DashboardSearchHit[]);
+          return Promise.resolve([{ uid: '1', title: 'starred' }] as DashboardSearchItem[]);
         }
         return Promise.resolve([]);
       });
@@ -123,9 +123,9 @@ describe('SearchSrv', () => {
           return Promise.resolve([
             { uid: 'srx16xR4z', title: 'starred and recent', isStarred: true },
             { uid: 'DSNdW0gVk', title: 'recent' },
-          ] as DashboardSearchHit[]);
+          ] as DashboardSearchItem[]);
         }
-        return Promise.resolve([{ uid: 'srx16xR4z', title: 'starred and recent' }] as DashboardSearchHit[]);
+        return Promise.resolve([{ uid: 'srx16xR4z', title: 'starred and recent' }] as DashboardSearchItem[]);
       });
 
       impressionSrv.getDashboardOpened = jest.fn().mockResolvedValue(['srx16xR4z', 'DSNdW0gVk']);
@@ -158,24 +158,24 @@ describe('SearchSrv', () => {
               {
                 title: 'folder1',
                 type: 'dash-folder',
-                id: 1,
+                uid: 'folder-1',
               },
               {
                 title: 'dash with no folder',
                 type: 'dash-db',
-                id: 2,
+                uid: '2',
               },
               {
                 title: 'dash in folder1 1',
                 type: 'dash-db',
-                id: 3,
-                folderId: 1,
+                uid: '3',
+                folderUid: 'folder-1',
               },
               {
                 title: 'dash in folder1 2',
                 type: 'dash-db',
-                id: 4,
-                folderId: 1,
+                uid: '4',
+                folderUid: 'folder-1',
               },
             ])
           )
@@ -202,15 +202,13 @@ describe('SearchSrv', () => {
       searchMock.mockImplementation(
         jest.fn().mockResolvedValue([
           {
-            id: 2,
+            folderUid: 'dash-with-no-folder-uid',
             title: 'dash with no folder',
             type: 'dash-db',
           },
           {
-            id: 3,
             title: 'dash in folder1 1',
             type: 'dash-db',
-            folderId: 1,
             folderUid: 'uid',
             folderTitle: 'folder1',
             folderUrl: '/dashboards/f/uid/folder1',
@@ -229,8 +227,7 @@ describe('SearchSrv', () => {
 
     it('should group results by folder', () => {
       expect(results).toHaveLength(2);
-      expect(results[0].id).toEqual(0);
-      expect(results[1].id).toEqual(1);
+      expect(results[0].uid).toEqual('dash-with-no-folder-uid');
       expect(results[1].uid).toEqual('uid');
       expect(results[1].title).toEqual('folder1');
       expect(results[1].url).toEqual('/dashboards/f/uid/folder1');

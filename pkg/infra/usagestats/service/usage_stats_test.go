@@ -12,6 +12,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -45,7 +47,7 @@ func TestMetrics(t *testing.T) {
 		return map[string]interface{}{metricName: 1}, nil
 	})
 
-	err := uss.sendUsageStats(context.Background())
+	_, err := uss.sendUsageStats(context.Background())
 	require.NoError(t, err)
 
 	t.Run("Given reporting not enabled and sending usage stats", func(t *testing.T) {
@@ -54,12 +56,13 @@ func TestMetrics(t *testing.T) {
 			sendUsageStats = origSendUsageStats
 		})
 		statsSent := false
-		sendUsageStats = func(uss *UsageStats, b *bytes.Buffer) {
+		sendUsageStats = func(uss *UsageStats, ctx context.Context, b *bytes.Buffer) error {
 			statsSent = true
+			return nil
 		}
 
 		uss.Cfg.ReportingEnabled = false
-		err := uss.sendUsageStats(context.Background())
+		_, err := uss.sendUsageStats(context.Background())
 		require.NoError(t, err)
 
 		require.False(t, statsSent)
@@ -105,8 +108,10 @@ func TestMetrics(t *testing.T) {
 		})
 		usageStatsURL = ts.URL
 
-		err := uss.sendUsageStats(context.Background())
-		require.NoError(t, err)
+		go func() {
+			_, err := uss.sendUsageStats(context.Background())
+			require.NoError(t, err)
+		}()
 
 		// Wait for fake HTTP server to receive a request
 		var resp httpResp
@@ -198,31 +203,6 @@ func TestRegisterMetrics(t *testing.T) {
 	})
 }
 
-type fakePluginStore struct {
-	plugins.Store
-
-	plugins map[string]plugins.PluginDTO
-}
-
-func (pr fakePluginStore) Plugin(_ context.Context, pluginID string) (plugins.PluginDTO, bool) {
-	p, exists := pr.plugins[pluginID]
-
-	return p, exists
-}
-
-func (pr fakePluginStore) Plugins(_ context.Context, pluginTypes ...plugins.Type) []plugins.PluginDTO {
-	var result []plugins.PluginDTO
-	for _, v := range pr.plugins {
-		for _, t := range pluginTypes {
-			if v.Type == t {
-				result = append(result, v)
-			}
-		}
-	}
-
-	return result
-}
-
 type httpResp struct {
 	req            *http.Request
 	responseBuffer *bytes.Buffer
@@ -237,8 +217,9 @@ func createService(t *testing.T, cfg setting.Cfg, sqlStore sqlstore.Store, withD
 
 	return ProvideService(
 		&cfg,
-		&fakePluginStore{},
+		&plugins.FakePluginStore{},
 		kvstore.ProvideService(sqlStore),
 		routing.NewRouteRegister(),
+		tracing.InitializeTracerForTest(),
 	)
 }

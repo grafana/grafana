@@ -15,9 +15,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
@@ -28,39 +31,61 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	"github.com/grafana/grafana/pkg/services/ngalert/state/historian"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, dataSourceService datasources.DataSourceService, routeRegister routing.RouteRegister,
-	sqlStore *sqlstore.SQLStore, kvStore kvstore.KVStore, expressionService *expr.Service, dataProxy *datasourceproxy.DataSourceProxyService,
-	quotaService quota.Service, secretsService secrets.Service, notificationService notifications.Service, m *metrics.NGAlert,
-	folderService dashboards.FolderService, ac accesscontrol.AccessControl, dashboardService dashboards.DashboardService, renderService rendering.Service,
-	bus bus.Bus) (*AlertNG, error) {
+func ProvideService(
+	cfg *setting.Cfg,
+	featureToggles featuremgmt.FeatureToggles,
+	dataSourceCache datasources.CacheService,
+	dataSourceService datasources.DataSourceService,
+	routeRegister routing.RouteRegister,
+	sqlStore *sqlstore.SQLStore,
+	kvStore kvstore.KVStore,
+	expressionService *expr.Service,
+	dataProxy *datasourceproxy.DataSourceProxyService,
+	quotaService quota.Service,
+	secretsService secrets.Service,
+	notificationService notifications.Service,
+	m *metrics.NGAlert,
+	folderService folder.Service,
+	ac accesscontrol.AccessControl,
+	dashboardService dashboards.DashboardService,
+	renderService rendering.Service,
+	bus bus.Bus,
+	accesscontrolService accesscontrol.Service,
+	annotationsRepo annotations.Repository,
+) (*AlertNG, error) {
 	ng := &AlertNG{
-		Cfg:                 cfg,
-		DataSourceCache:     dataSourceCache,
-		DataSourceService:   dataSourceService,
-		RouteRegister:       routeRegister,
-		SQLStore:            sqlStore,
-		KVStore:             kvStore,
-		ExpressionService:   expressionService,
-		DataProxy:           dataProxy,
-		QuotaService:        quotaService,
-		SecretsService:      secretsService,
-		Metrics:             m,
-		Log:                 log.New("ngalert"),
-		NotificationService: notificationService,
-		folderService:       folderService,
-		accesscontrol:       ac,
-		dashboardService:    dashboardService,
-		renderService:       renderService,
-		bus:                 bus,
+		Cfg:                  cfg,
+		FeatureToggles:       featureToggles,
+		DataSourceCache:      dataSourceCache,
+		DataSourceService:    dataSourceService,
+		RouteRegister:        routeRegister,
+		SQLStore:             sqlStore,
+		KVStore:              kvStore,
+		ExpressionService:    expressionService,
+		DataProxy:            dataProxy,
+		QuotaService:         quotaService,
+		SecretsService:       secretsService,
+		Metrics:              m,
+		Log:                  log.New("ngalert"),
+		NotificationService:  notificationService,
+		folderService:        folderService,
+		accesscontrol:        ac,
+		dashboardService:     dashboardService,
+		renderService:        renderService,
+		bus:                  bus,
+		accesscontrolService: accesscontrolService,
+		annotationsRepo:      annotationsRepo,
 	}
 
 	if ng.IsDisabled() {
@@ -77,10 +102,11 @@ func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, 
 // AlertNG is the service for evaluating the condition of an alert definition.
 type AlertNG struct {
 	Cfg                 *setting.Cfg
+	FeatureToggles      featuremgmt.FeatureToggles
 	DataSourceCache     datasources.CacheService
 	DataSourceService   datasources.DataSourceService
 	RouteRegister       routing.RouteRegister
-	SQLStore            *sqlstore.SQLStore
+	SQLStore            db.DB
 	KVStore             kvstore.KVStore
 	ExpressionService   *expr.Service
 	DataProxy           *datasourceproxy.DataSourceProxyService
@@ -93,13 +119,15 @@ type AlertNG struct {
 	imageService        image.ImageService
 	schedule            schedule.ScheduleService
 	stateManager        *state.Manager
-	folderService       dashboards.FolderService
+	folderService       folder.Service
 	dashboardService    dashboards.DashboardService
 
 	// Alerting notification services
 	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
 	AlertsRouter         *sender.AlertsRouter
 	accesscontrol        accesscontrol.AccessControl
+	accesscontrolService accesscontrol.Service
+	annotationsRepo      annotations.Repository
 
 	bus bus.Bus
 }
@@ -109,6 +137,7 @@ func (ng *AlertNG) init() error {
 
 	store := &store.DBstore{
 		Cfg:              ng.Cfg.UnifiedAlerting,
+		FeatureToggles:   ng.FeatureToggles,
 		SQLStore:         ng.SQLStore,
 		Logger:           ng.Log,
 		FolderService:    ng.folderService,
@@ -123,7 +152,7 @@ func (ng *AlertNG) init() error {
 		return err
 	}
 
-	imageService, err := image.NewScreenshotImageServiceFromCfg(ng.Cfg, ng.Metrics.Registerer, store, ng.dashboardService, ng.renderService)
+	imageService, err := image.NewScreenshotImageServiceFromCfg(ng.Cfg, store, ng.dashboardService, ng.renderService, ng.Metrics.Registerer)
 	if err != nil {
 		return err
 	}
@@ -153,17 +182,17 @@ func (ng *AlertNG) init() error {
 	ng.AlertsRouter = alertsRouter
 
 	schedCfg := schedule.SchedulerCfg{
-		Cfg:           ng.Cfg.UnifiedAlerting,
-		C:             clk,
-		Logger:        ng.Log,
-		Evaluator:     eval.NewEvaluator(ng.Cfg, ng.Log, ng.DataSourceCache, ng.SecretsService, ng.ExpressionService),
-		InstanceStore: store,
-		RuleStore:     store,
-		Metrics:       ng.Metrics.GetSchedulerMetrics(),
-		AlertSender:   alertsRouter,
+		Cfg:         ng.Cfg.UnifiedAlerting,
+		C:           clk,
+		Logger:      ng.Log,
+		Evaluator:   eval.NewEvaluator(ng.Cfg, ng.Log, ng.DataSourceCache, ng.ExpressionService),
+		RuleStore:   store,
+		Metrics:     ng.Metrics.GetSchedulerMetrics(),
+		AlertSender: alertsRouter,
 	}
 
-	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), appUrl, store, store, ng.dashboardService, ng.imageService, clk)
+	historian := historian.NewAnnotationHistorian(ng.annotationsRepo, ng.dashboardService, ng.Log)
+	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), appUrl, store, store, ng.imageService, clk, historian)
 	scheduler := schedule.NewScheduler(schedCfg, appUrl, stateManager)
 
 	// if it is required to include folder title to the alerts, we need to subscribe to changes of alert title
@@ -192,9 +221,7 @@ func (ng *AlertNG) init() error {
 		Schedule:             ng.schedule,
 		DataProxy:            ng.DataProxy,
 		QuotaService:         ng.QuotaService,
-		SecretsService:       ng.SecretsService,
 		TransactionManager:   store,
-		InstanceStore:        store,
 		RuleStore:            store,
 		AlertingStore:        store,
 		AdminConfigStore:     store,
@@ -211,10 +238,10 @@ func (ng *AlertNG) init() error {
 	}
 	api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
 
-	return DeclareFixedRoles(ng.accesscontrol)
+	return DeclareFixedRoles(ng.accesscontrolService)
 }
 
-func subscribeToFolderChanges(logger log.Logger, bus bus.Bus, dbStore store.RuleStore, scheduler schedule.ScheduleService) {
+func subscribeToFolderChanges(logger log.Logger, bus bus.Bus, dbStore api.RuleStore, scheduler schedule.ScheduleService) {
 	// if folder title is changed, we update all alert rules in that folder to make sure that all peers (in HA mode) will update folder title and
 	// clean up the current state
 	bus.AddEventListener(func(ctx context.Context, e *events.FolderTitleUpdated) error {

@@ -173,8 +173,8 @@ var (
 	}
 )
 
-func DeclareFixedRoles(ac accesscontrol.AccessControl) error {
-	return ac.DeclareFixedRoles(
+func DeclareFixedRoles(service accesscontrol.Service) error {
+	return service.DeclareFixedRoles(
 		rulesReaderRole, rulesWriterRole,
 		instancesReaderRole, instancesWriterRole,
 		notificationsReaderRole, notificationsWriterRole,

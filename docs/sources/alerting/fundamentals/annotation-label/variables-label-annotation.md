@@ -87,7 +87,7 @@ no data, we can use an if statement to check for `$values.B`:
 
 ## Classic conditions
 
-If the rule uses a classic condition instead of a reduce and math expresison, then `$values` contains the combination
+If the rule uses a classic condition instead of a reduce and math expression, then `$values` contains the combination
 of the `refID` and position of the condition. For example, `{{ $values.A0 }}` and `{{ $values.A1 }}`.
 
 ## Variables
@@ -97,5 +97,5 @@ The following template variables are available when expanding annotations and la
 | Name    | Description                                                                                                                                                                                                                                                                                                                                                                                                |
 | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | $labels | The labels from the query or condition. For example, `{{ $labels.instance }}` and `{{ $labels.job }}`. This is unavailable when the rule uses a [classic condition]({{< relref "../../alerting-rules/create-grafana-managed-rule/#single-and-multi-dimensional-rule" >}}).                                                                                                                                 |
-| $values | The values of all reduce and math expressions that were evaluated for this alert rule. For example, `{{ $values.A }}`, `{{ $values.A.Labels }}` and `{{ $values.A.Value }}` where `A` is the `refID` of the reduce or math expression. If the rule uses a classic condition instead of a reduce and math expresison, then `$values` contains the combination of the `refID` and position of the condition. |
+| $values | The values of all reduce and math expressions that were evaluated for this alert rule. For example, `{{ $values.A }}`, `{{ $values.A.Labels }}` and `{{ $values.A.Value }}` where `A` is the `refID` of the reduce or math expression. If the rule uses a classic condition instead of a reduce and math expression, then `$values` contains the combination of the `refID` and position of the condition. |
 | $value  | The value string of the alert instance. For example, `[ var='A' labels={instance=foo} value=10 ]`.                                                                                                                                                                                                                                                                                                         |

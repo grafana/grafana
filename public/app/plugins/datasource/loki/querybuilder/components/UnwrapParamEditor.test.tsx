@@ -85,6 +85,7 @@ const createProps = (
         url: '',
         jsonData: {},
         meta: {} as DataSourcePluginMeta,
+        readOnly: false,
       },
       undefined,
       undefined

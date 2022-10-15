@@ -1,9 +1,8 @@
-import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { getTimeZone, GrafanaTheme2 } from '@grafana/data';
-import { Button, ConfirmModal, IconButton, useStyles2 } from '@grafana/ui';
+import { getTimeZone, NavModelItem } from '@grafana/data';
+import { Button, ConfirmModal, HorizontalGroup } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -71,7 +70,7 @@ export const ServiceAccountPageUnconnected = ({
   const [isTokenModalOpen, setIsTokenModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDisableModalOpen, setIsDisableModalOpen] = useState(false);
-  const styles = useStyles2(getStyles);
+
   const serviceAccountId = parseInt(match.params.id, 10);
   const tokenActionsDisabled =
     !contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite) || serviceAccount.isDisabled;
@@ -82,6 +81,13 @@ export const ServiceAccountPageUnconnected = ({
     serviceAccount!,
     false
   );
+
+  const pageNav: NavModelItem = {
+    text: serviceAccount.name,
+    img: serviceAccount.avatarUrl,
+    breadcrumbs: [{ title: 'Service accounts', url: 'org/serviceaccounts' }],
+    subTitle: 'Manage settings for an individual service account.',
+  };
 
   useEffect(() => {
     loadServiceAccount(serviceAccountId);
@@ -130,24 +136,11 @@ export const ServiceAccountPageUnconnected = ({
   };
 
   return (
-    <Page navId="serviceaccounts">
+    <Page navId="serviceaccounts" pageNav={pageNav}>
       <Page.Contents isLoading={isLoading}>
-        {serviceAccount && (
-          <div className={styles.headerContainer}>
-            <a href="org/serviceaccounts">
-              <IconButton
-                size="xxl"
-                variant="secondary"
-                name="arrow-left"
-                className={styles.returnButton}
-                aria-label="Back to service accounts list"
-              />
-            </a>
-            <div className={styles.headerAvatar}>
-              <img src={serviceAccount.avatarUrl} alt={`Avatar for user ${serviceAccount.name}`} />
-            </div>
-            <h3>{serviceAccount.name}</h3>
-            <div className={styles.buttonRow}>
+        <div>
+          {serviceAccount && (
+            <HorizontalGroup spacing="md" height="auto" justify="flex-end">
               <Button
                 type={'button'}
                 variant="destructive"
@@ -175,10 +168,8 @@ export const ServiceAccountPageUnconnected = ({
                   Disable service account
                 </Button>
               )}
-            </div>
-          </div>
-        )}
-        <div className={styles.pageBody}>
+            </HorizontalGroup>
+          )}
           {serviceAccount && (
             <ServiceAccountProfile
               serviceAccount={serviceAccount}
@@ -187,12 +178,12 @@ export const ServiceAccountPageUnconnected = ({
               onChange={onProfileChange}
             />
           )}
-          <div className={styles.tokensListHeader}>
+          <HorizontalGroup justify="space-between" height="auto">
             <h3>Tokens</h3>
             <Button onClick={() => setIsTokenModalOpen(true)} disabled={tokenActionsDisabled}>
               Add service account token
             </Button>
-          </div>
+          </HorizontalGroup>
           {tokens && (
             <ServiceAccountTokensTable
               tokens={tokens}
@@ -203,6 +194,7 @@ export const ServiceAccountPageUnconnected = ({
           )}
           {canReadPermissions && <ServiceAccountPermissions serviceAccount={serviceAccount} />}
         </div>
+
         <ConfirmModal
           isOpen={isDeleteModalOpen}
           title="Delete service account"
@@ -229,46 +221,6 @@ export const ServiceAccountPageUnconnected = ({
       </Page.Contents>
     </Page>
   );
-};
-
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    headerContainer: css`
-      display: flex;
-      margin-bottom: ${theme.spacing(2)};
-      align-items: center;
-
-      h3 {
-        margin-bottom: ${theme.spacing(0.5)};
-        flex-grow: 1;
-      }
-    `,
-    headerAvatar: css`
-      margin-right: ${theme.spacing(1)};
-      margin-bottom: ${theme.spacing(0.6)};
-      img {
-        width: 25px;
-        height: 25px;
-        border-radius: 50%;
-      }
-    `,
-    returnButton: css`
-      margin-right: ${theme.spacing(1)};
-    `,
-    buttonRow: css`
-      > * {
-        margin-right: ${theme.spacing(2)};
-      }
-    `,
-    pageBody: css`
-      padding-left: ${theme.spacing(5.5)};
-    `,
-    tokensListHeader: css`
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    `,
-  };
 };
 
 export const ServiceAccountPage = connector(ServiceAccountPageUnconnected);

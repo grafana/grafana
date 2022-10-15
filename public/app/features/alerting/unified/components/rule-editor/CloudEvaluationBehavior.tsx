@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme } from '@grafana/data';
@@ -11,7 +11,7 @@ import { timeOptions } from '../../utils/time';
 import { PreviewRule } from './PreviewRule';
 import { RuleEditorSection } from './RuleEditorSection';
 
-export const CloudEvaluationBehavior: FC = () => {
+export const CloudEvaluationBehavior = () => {
   const styles = useStyles(getStyles);
   const {
     register,

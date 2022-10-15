@@ -127,6 +127,7 @@ export const ServiceAccountCreatePage = ({}: Props): JSX.Element => {
                         roleOptions={roleOptions}
                         onApplyRoles={onPendingRolesUpdate}
                         pendingRoles={pendingRoles}
+                        maxWidth="100%"
                       />
                     ) : (
                       <OrgRolePicker aria-label="Role" value={serviceAccount.role} onChange={onRoleChange} />

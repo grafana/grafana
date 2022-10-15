@@ -57,6 +57,7 @@ describe('VariableEditor:', () => {
       })
     );
   });
+
   describe('log queries:', () => {
     it('should render', async () => {
       render(<VariableEditor {...defaultProps} />);
@@ -78,6 +79,49 @@ describe('VariableEditor:', () => {
         queryType: 'Azure Log Analytics',
         refId: 'A',
         subscription: 'id',
+      });
+    });
+  });
+
+  describe('Azure Resource Graph queries:', () => {
+    const ARGqueryProps = {
+      ...defaultProps,
+      query: {
+        refId: 'A',
+        queryType: AzureQueryType.AzureResourceGraph,
+        azureResourceGraph: {
+          query: 'Resources | distinct type',
+          resultFormat: 'table',
+        },
+        subscriptions: ['sub'],
+      },
+    };
+
+    it('should render', async () => {
+      render(<VariableEditor {...ARGqueryProps} />);
+      await waitFor(() => screen.queryByTestId('mockeditor'));
+      expect(screen.queryByLabelText('Subscriptions')).toBeInTheDocument();
+      expect(screen.queryByText('Resource Graph')).toBeInTheDocument();
+      expect(screen.queryByLabelText('Select subscription')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Select query type')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Select resource group')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Select namespace')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Select resource')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('mockeditor')).toBeInTheDocument();
+    });
+
+    it('should call on change if the query changes', async () => {
+      const onChange = jest.fn();
+      render(<VariableEditor {...ARGqueryProps} onChange={onChange} />);
+      await waitFor(() => screen.queryByTestId('mockeditor'));
+      expect(screen.queryByTestId('mockeditor')).toBeInTheDocument();
+      await userEvent.type(screen.getByTestId('mockeditor'), '{backspace}');
+      expect(onChange).toHaveBeenCalledWith({
+        ...ARGqueryProps.query,
+        azureResourceGraph: {
+          query: 'Resources | distinct typ',
+          resultFormat: 'table',
+        },
       });
     });
   });

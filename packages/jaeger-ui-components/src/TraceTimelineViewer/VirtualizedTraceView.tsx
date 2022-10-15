@@ -392,10 +392,10 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       hoverIndentGuideIds,
       addHoverIndentGuideId,
       removeHoverIndentGuideId,
-      theme,
       createSpanLink,
       focusedSpanId,
       focusedSpanIdForSearch,
+      theme,
     } = this.props;
     // to avert flow error
     if (!trace) {
@@ -487,11 +487,11 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       addHoverIndentGuideId,
       removeHoverIndentGuideId,
       linksGetter,
-      theme,
       createSpanLink,
       focusedSpanId,
       createFocusSpanLink,
       topOfViewRefType,
+      theme,
     } = this.props;
     const detailState = detailStates.get(spanID);
     if (!trace || !detailState) {
