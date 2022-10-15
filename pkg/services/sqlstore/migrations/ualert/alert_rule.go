@@ -17,7 +17,7 @@ const (
 	// ContactLabel is a private label created during migration and used in notification policies.
 	// It stores a string array of all contact point names an alert rule should send to.
 	// It was created as a means to simplify post-migration notification policies.
-	ContactLabel = "__contacts__"
+	ContactLabel = "__contact%d__"
 )
 
 type alertRule struct {
@@ -37,7 +37,7 @@ type alertRule struct {
 	For             duration
 	Updated         time.Time
 	Annotations     map[string]string
-	Labels          map[string]string // (Labels are not Created in the migration)
+	Labels          map[string]string
 }
 
 type alertRuleVersion struct {
