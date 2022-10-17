@@ -753,9 +753,9 @@ def cloud_plugins_e2e_tests_step(suite, edition, cloud, port=3001, video="false"
             'CYPRESS_CI': 'true',
             'HOST': 'grafana-server' + enterprise2_suffix(edition),
             'GITHUB_TOKEN': from_secret('github_token_pr'),
-            'CYPRESS_AZURE_SP_APP_ID': from_secret('azure_sp_app_id'),
-            'CYPRESS_AZURE_SP_PASSWORD': from_secret('azure_sp_pw'),
-            'CYPRESS_AZURE_TENANT': from_secret('azure_tenant')
+            'AZURE_SP_APP_ID': from_secret('azure_sp_app_id'),
+            'AZURE_SP_PASSWORD': from_secret('azure_sp_pw'),
+            'AZURE_TENANT': from_secret('azure_tenant')
         }
     gitcmd = 'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/cloud-data-sources" --depth=1'
     branch = "${DRONE_SOURCE_BRANCH}".replace("/", "-")

@@ -510,11 +510,11 @@ steps:
   depends_on:
   - grafana-server
   environment:
-    CYPRESS_AZURE_SP_APP_ID:
+    AZURE_SP_APP_ID:
       from_secret: azure_sp_app_id
-    CYPRESS_AZURE_SP_PASSWORD:
+    AZURE_SP_PASSWORD:
       from_secret: azure_sp_pw
-    CYPRESS_AZURE_TENANT:
+    AZURE_TENANT:
       from_secret: azure_tenant
     CYPRESS_CI: "true"
     GITHUB_TOKEN:
@@ -1335,11 +1335,11 @@ steps:
   depends_on:
   - grafana-server
   environment:
-    CYPRESS_AZURE_SP_APP_ID:
+    AZURE_SP_APP_ID:
       from_secret: azure_sp_app_id
-    CYPRESS_AZURE_SP_PASSWORD:
+    AZURE_SP_PASSWORD:
       from_secret: azure_sp_pw
-    CYPRESS_AZURE_TENANT:
+    AZURE_TENANT:
       from_secret: azure_tenant
     CYPRESS_CI: "true"
     GITHUB_TOKEN:
@@ -5636,6 +5636,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 4af6634aa8266afd4746d05704a061fcd36fed4e1fae6801665e5f91d863f8a0
+hmac: 01e95873c6924e0ba2e14384a2d4439ff07d87c3ce005c794dbd59847ca9b3ce
 
 ...
