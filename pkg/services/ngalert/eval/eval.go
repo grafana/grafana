@@ -73,6 +73,21 @@ func (e *invalidEvalResultFormatError) Unwrap() error {
 	return e.err
 }
 
+// EvaluationContext represents the context in which a condition is evaluated.
+type EvaluationContext struct {
+	Ctx  context.Context
+	User *user.SignedInUser
+	At   time.Time
+}
+
+func Context(ctx context.Context, user *user.SignedInUser) EvaluationContext {
+	return EvaluationContext{
+		Ctx:  ctx,
+		User: user,
+		At:   time.Now(),
+	}
+}
+
 // ExecutionResults contains the unevaluated results from executing
 // a condition.
 type ExecutionResults struct {
