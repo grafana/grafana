@@ -30,12 +30,13 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	var sqlStore *sqlstore.SQLStore
+	var cfg *setting.Cfg
 	var savedFolder, savedDash, savedDash2 *models.Dashboard
 	var dashboardStore *DashboardStore
 	var starService star.Service
 
 	setup := func() {
-		sqlStore, cfg := db.InitTestDBwithCfg(t)
+		sqlStore, cfg = db.InitTestDBwithCfg(t)
 		starService = starimpl.ProvideService(sqlStore, cfg)
 		dashboardStore = ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, cfg))
 		savedFolder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, true, "prod", "webapp")
@@ -604,7 +605,7 @@ func TestIntegrationDashboard_Filter(t *testing.T) {
 	assert.Equal(t, dashB.Id, results[0].ID)
 }
 
-func insertTestRule(t *testing.T, sqlStore db.DB, foderOrgID int64, folderUID string) {
+func insertTestRule(t *testing.T, sqlStore sqlstore.Store, foderOrgID int64, folderUID string) {
 	err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 		type alertQuery struct {
 			RefID         string
