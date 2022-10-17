@@ -361,7 +361,7 @@ func TestGroupQueriesByPanelId(t *testing.T) {
 		queries := GroupQueriesByPanelId(json)
 
 		panelId := int64(2)
-		queriesByDatasource := GroupQueriesByDataSource(queries[panelId])
+		queriesByDatasource := groupQueriesByDataSource(t, queries[panelId])
 		require.Len(t, queriesByDatasource[0], 1)
 	})
 	t.Run("will delete exemplar property from target if exists", func(t *testing.T) {
@@ -370,7 +370,7 @@ func TestGroupQueriesByPanelId(t *testing.T) {
 		queries := GroupQueriesByPanelId(json)
 
 		panelId := int64(2)
-		queriesByDatasource := GroupQueriesByDataSource(queries[panelId])
+		queriesByDatasource := groupQueriesByDataSource(t, queries[panelId])
 		for _, query := range queriesByDatasource[0] {
 			_, ok := query.CheckGet("exemplar")
 			require.False(t, ok)
@@ -382,7 +382,7 @@ func TestGroupQueriesByPanelId(t *testing.T) {
 		queries := GroupQueriesByPanelId(json)
 
 		panelId := int64(2)
-		queriesByDatasource := GroupQueriesByDataSource(queries[panelId])
+		queriesByDatasource := groupQueriesByDataSource(t, queries[panelId])
 		require.Len(t, queriesByDatasource[0], 2)
 	})
 	t.Run("can extract no queries from empty dashboard", func(t *testing.T) {
@@ -487,7 +487,7 @@ func TestGroupQueriesByDataSource(t *testing.T) {
 			}`)),
 		}
 
-		queriesByDatasource := GroupQueriesByDataSource(queries)
+		queriesByDatasource := groupQueriesByDataSource(t, queries)
 		require.Len(t, queriesByDatasource, 2)
 		require.Contains(t, queriesByDatasource, []*simplejson.Json{simplejson.MustJson([]byte(`{
             "datasource": {
@@ -564,4 +564,20 @@ func TestSanitizeMetadataFromQueryData(t *testing.T) {
 			}
 		}
 	})
+}
+
+func groupQueriesByDataSource(t *testing.T, queries []*simplejson.Json) (result [][]*simplejson.Json) {
+	t.Helper()
+	byDataSource := make(map[string][]*simplejson.Json)
+
+	for _, query := range queries {
+		uid := GetDataSourceUidFromJson(query)
+		byDataSource[uid] = append(byDataSource[uid], query)
+	}
+
+	for _, queries := range byDataSource {
+		result = append(result, queries)
+	}
+
+	return
 }

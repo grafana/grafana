@@ -2,6 +2,7 @@
 aliases:
   - /docs/grafana/latest/alerting/alerting-rules/rule-list/
   - /docs/grafana/latest/alerting/unified-alerting/alerting-rules/rule-list/
+  - /docs/grafana/latest/alerting/view-alert-rules/
 description: Manage alerting rules
 keywords:
   - grafana
@@ -9,22 +10,21 @@ keywords:
   - guide
   - rules
   - view
-title: Manage alert rules
-weight: 402
+title: View and filter alert rules
+weight: 140
 ---
 
-# Manage alert rules
+# View and filter alert rules
 
 The Alerting page lists all existing alert rules. By default, rules are grouped by types of data sources. The Grafana section lists all Grafana managed rules. Alert rules for Prometheus compatible data sources are also listed here. You can view alert rules for Prometheus compatible data sources but you cannot edit them.
 
 The Mimir/Cortex/Loki rules section lists all rules for Mimir, Cortex, or Loki data sources. Cloud alert rules are also listed in this section.
 
-- [Manage alert rules](#manage-alert-rules)
+- [View and filter alert rules](#view-and-filter-alert-rules)
   - [View alert rules](#view-alert-rules)
     - [Grouped view](#grouped-view)
     - [State view](#state-view)
   - [Filter alert rules](#filter-alert-rules)
-  - [Edit or delete an alert rule](#edit-or-delete-an-alert-rule)
 
 ## View alert rules
 
@@ -55,12 +55,3 @@ To filter alert rules:
 - From **Select data sources**, select a data source. You can see alert rules that query the selected data source.
 - In the **Search by label**, enter search criteria using label selectors. For example, `environment=production,region=~US|EU,severity!=warning`.
 - From **Filter alerts by state**, select an alerting state you want to see. You can see alerting rules that match the state. Rules matching other states are hidden.
-
-## Edit or delete an alert rule
-
-Grafana managed alert rules can only be edited or deleted by users with Edit permissions for the folder storing the rules. Alert rules for an external Grafana Mimir or Loki instance can be edited or deleted by users with Editor or Admin roles.
-To edit or delete a rule:
-
-1. Expand a rule row until you can see the rule controls of **View**, **Edit**, and **Delete**.
-1. Click **Edit** to open the create rule page. Make updates following instructions in [Create a Grafana managed alerting rule]({{< relref "create-grafana-managed-rule/" >}}) or [Create a Grafana Mimir or Loki managed alerting rule]({{< relref "create-mimir-loki-managed-rule/" >}}).
-1. Click **Delete** to delete an alert rule.

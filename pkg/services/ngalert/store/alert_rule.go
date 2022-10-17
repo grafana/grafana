@@ -154,7 +154,7 @@ func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRu
 			// not able to fetch the inserted id as it's not supported by xorm
 			for i := range newRules {
 				if _, err := sess.Insert(&newRules[i]); err != nil {
-					if st.SQLStore.Dialect.IsUniqueConstraintViolation(err) {
+					if st.SQLStore.GetDialect().IsUniqueConstraintViolation(err) {
 						return ngmodels.ErrAlertRuleUniqueConstraintViolation
 					}
 					return fmt.Errorf("failed to create new rules: %w", err)
@@ -189,7 +189,7 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, rules []ngmodels.UpdateR
 			// no way to update multiple rules at once
 			if updated, err := sess.ID(r.Existing.ID).AllCols().Update(r.New); err != nil || updated == 0 {
 				if err != nil {
-					if st.SQLStore.Dialect.IsUniqueConstraintViolation(err) {
+					if st.SQLStore.GetDialect().IsUniqueConstraintViolation(err) {
 						return ngmodels.ErrAlertRuleUniqueConstraintViolation
 					}
 					return fmt.Errorf("failed to update rule [%s] %s: %w", r.New.UID, r.New.Title, err)

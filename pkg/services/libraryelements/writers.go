@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 )
 
 type Pair struct {
@@ -31,10 +32,10 @@ func writeParamSelectorSQL(builder *sqlstore.SQLBuilder, params ...Pair) {
 	}
 }
 
-func writePerPageSQL(query searchLibraryElementsQuery, sqlStore *sqlstore.SQLStore, builder *sqlstore.SQLBuilder) {
+func writePerPageSQL(query searchLibraryElementsQuery, sqlStore db.DB, builder *sqlstore.SQLBuilder) {
 	if query.perPage != 0 {
 		offset := query.perPage * (query.page - 1)
-		builder.Write(sqlStore.Dialect.LimitOffset(int64(query.perPage), int64(offset)))
+		builder.Write(sqlStore.GetDialect().LimitOffset(int64(query.perPage), int64(offset)))
 	}
 }
 
@@ -56,10 +57,10 @@ func writeTypeFilterSQL(typeFilter []string, builder *sqlstore.SQLBuilder) {
 	}
 }
 
-func writeSearchStringSQL(query searchLibraryElementsQuery, sqlStore *sqlstore.SQLStore, builder *sqlstore.SQLBuilder) {
+func writeSearchStringSQL(query searchLibraryElementsQuery, sqlStore db.DB, builder *sqlstore.SQLBuilder) {
 	if len(strings.TrimSpace(query.searchString)) > 0 {
-		builder.Write(" AND (le.name "+sqlStore.Dialect.LikeStr()+" ?", "%"+query.searchString+"%")
-		builder.Write(" OR le.description "+sqlStore.Dialect.LikeStr()+" ?)", "%"+query.searchString+"%")
+		builder.Write(" AND (le.name "+sqlStore.GetDialect().LikeStr()+" ?", "%"+query.searchString+"%")
+		builder.Write(" OR le.description "+sqlStore.GetDialect().LikeStr()+" ?)", "%"+query.searchString+"%")
 	}
 }
 
