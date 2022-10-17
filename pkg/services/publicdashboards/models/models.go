@@ -34,8 +34,8 @@ var (
 		Reason:     "failed to generate unique public dashboard id",
 		StatusCode: 500,
 	}
-	ErrPublicDashboardFailedGenerateAccesstoken = PublicDashboardErr{
-		Reason:     "failed to public dashboard access token",
+	ErrPublicDashboardFailedGenerateAccessToken = PublicDashboardErr{
+		Reason:     "failed to create public dashboard",
 		StatusCode: 500,
 	}
 	ErrPublicDashboardNotFound = PublicDashboardErr{
@@ -79,6 +79,14 @@ type PublicDashboard struct {
 
 func (pd PublicDashboard) TableName() string {
 	return "dashboard_public"
+}
+
+type PublicDashboardListResponse struct {
+	Uid          string `json:"uid" xorm:"uid"`
+	AccessToken  string `json:"accessToken" xorm:"access_token"`
+	Title        string `json:"title" xorm:"title"`
+	DashboardUid string `json:"dashboardUid" xorm:"dashboard_uid"`
+	IsEnabled    bool   `json:"isEnabled" xorm:"is_enabled"`
 }
 
 type TimeSettings struct {

@@ -22,7 +22,14 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService, RefreshEvent } from '@grafana/runtime';
 import { VizLegendOptions } from '@grafana/schema';
-import { ErrorBoundary, PanelContext, PanelContextProvider, SeriesVisibilityChangeMode } from '@grafana/ui';
+import {
+  ErrorBoundary,
+  PanelChrome,
+  PanelContext,
+  PanelContextProvider,
+  PanelPadding,
+  SeriesVisibilityChangeMode,
+} from '@grafana/ui';
 import { PANEL_BORDER } from 'app/core/constants';
 import { profiler } from 'app/core/profiler';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
@@ -37,6 +44,7 @@ import { DashboardModel, PanelModel } from '../state';
 import { loadSnapshotData } from '../utils/loadSnapshotData';
 
 import { PanelHeader } from './PanelHeader/PanelHeader';
+import { PanelHeaderLoadingIndicator } from './PanelHeader/PanelHeaderLoadingIndicator';
 import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
 import { liveTimer } from './liveTimer';
 
@@ -64,7 +72,7 @@ export interface State {
   liveTime?: TimeRange;
 }
 
-export class PanelChrome extends PureComponent<Props, State> {
+export class PanelStateWrapper extends PureComponent<Props, State> {
   private readonly timeSrv: TimeSrv = getTimeSrv();
   private subs = new Subscription();
   private eventFilter: EventFilterOptions = { onlyLocal: true };
@@ -429,6 +437,56 @@ export class PanelChrome extends PureComponent<Props, State> {
     );
   }
 
+  renderPanelContent(innerWidth: number, innerHeight: number) {
+    const { panel, plugin, dashboard } = this.props;
+    const { renderCounter, data } = this.state;
+    const { state: loadingState } = data;
+
+    // do not render component until we have first data
+    if (this.skipFirstRender(loadingState)) {
+      return null;
+    }
+
+    // This is only done to increase a counter that is used by backend
+    // image rendering to know when to capture image
+    if (this.shouldSignalRenderingCompleted(loadingState, plugin.meta)) {
+      profiler.renderingCompleted();
+    }
+
+    const PanelComponent = plugin.panel!;
+    const timeRange = this.state.liveTime ?? data.timeRange ?? this.timeSrv.timeRange();
+    const panelOptions = panel.getOptions();
+
+    // Update the event filter (dashboard settings may have changed)
+    // Yes this is called ever render for a function that is triggered on every mouse move
+    this.eventFilter.onlyLocal = dashboard.graphTooltip === 0;
+
+    return (
+      <>
+        <PanelContextProvider value={this.state.context}>
+          <PanelComponent
+            id={panel.id}
+            data={data}
+            title={panel.title}
+            timeRange={timeRange}
+            timeZone={this.props.dashboard.getTimezone()}
+            options={panelOptions}
+            fieldConfig={panel.fieldConfig}
+            transparent={panel.transparent}
+            width={innerWidth}
+            height={innerHeight}
+            renderCounter={renderCounter}
+            replaceVariables={panel.replaceVariables}
+            onOptionsChange={this.onOptionsChange}
+            onFieldConfigChange={this.onFieldConfigChange}
+            onChangeTimeRange={this.onChangeTimeRange}
+            eventBus={dashboard.events}
+          />
+        </PanelContextProvider>
+      </>
+    );
+  }
+
   renderPanel(width: number, height: number) {
     const { panel, plugin, dashboard } = this.props;
     const { renderCounter, data } = this.state;
@@ -517,36 +575,67 @@ export class PanelChrome extends PureComponent<Props, State> {
       [`panel-alert-state--${alertState}`]: alertState !== undefined,
     });
 
-    return (
-      <section
-        className={containerClassNames}
-        aria-label={selectors.components.Panels.Panel.containerByTitle(panel.title)}
-      >
-        <PanelHeader
-          panel={panel}
-          dashboard={dashboard}
-          title={panel.title}
-          description={panel.description}
-          links={panel.links}
-          error={errorMessage}
-          isEditing={isEditing}
-          isViewing={isViewing}
-          alertState={alertState}
-          data={data}
-        />
-        <ErrorBoundary
-          dependencies={[data, plugin, panel.getOptions()]}
-          onError={this.onPanelError}
-          onRecover={this.onPanelErrorRecover}
+    // for new panel header design
+    const onCancelQuery = () => panel.getQueryRunner().cancelQuery();
+    const title = panel.getDisplayTitle();
+    const noPadding: PanelPadding = plugin.noPadding ? 'none' : 'md';
+    const leftItems = [
+      <PanelHeaderLoadingIndicator state={data.state} onClick={onCancelQuery} key="loading-indicator" />,
+    ];
+
+    if (config.featureToggles.newPanelChromeUI) {
+      return (
+        <PanelChrome width={width} height={height} title={title} leftItems={leftItems} padding={noPadding}>
+          {(innerWidth, innerHeight) => (
+            <>
+              <ErrorBoundary
+                dependencies={[data, plugin, panel.getOptions()]}
+                onError={this.onPanelError}
+                onRecover={this.onPanelErrorRecover}
+              >
+                {({ error }) => {
+                  if (error) {
+                    return null;
+                  }
+                  return this.renderPanelContent(innerWidth, innerHeight);
+                }}
+              </ErrorBoundary>
+            </>
+          )}
+        </PanelChrome>
+      );
+    } else {
+      return (
+        <section
+          className={containerClassNames}
+          aria-label={selectors.components.Panels.Panel.containerByTitle(panel.title)}
         >
-          {({ error }) => {
-            if (error) {
-              return null;
-            }
-            return this.renderPanel(width, height);
-          }}
-        </ErrorBoundary>
-      </section>
-    );
+          <PanelHeader
+            panel={panel}
+            dashboard={dashboard}
+            title={panel.title}
+            description={panel.description}
+            links={panel.links}
+            error={errorMessage}
+            isEditing={isEditing}
+            isViewing={isViewing}
+            alertState={alertState}
+            data={data}
+          />
+          <ErrorBoundary
+            dependencies={[data, plugin, panel.getOptions()]}
+            onError={this.onPanelError}
+            onRecover={this.onPanelErrorRecover}
+          >
+            {({ error }) => {
+              if (error) {
+                return null;
+              }
+              return this.renderPanel(width, height);
+            }}
+          </ErrorBoundary>
+        </section>
+      );
+    }
   }
 }

@@ -31,7 +31,7 @@ export interface QueryOperationRowRenderProps {
   onClose: () => void;
 }
 
-export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
+export function QueryOperationRow({
   children,
   actions,
   title,
@@ -43,7 +43,7 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
   draggable,
   index,
   id,
-}: QueryOperationRowProps) => {
+}: QueryOperationRowProps) {
   const [isContentVisible, setIsContentVisible] = useState(isOpen !== undefined ? isOpen : true);
   const theme = useTheme();
   const styles = getQueryOperationRowStyles(theme);
@@ -51,7 +51,7 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
     setIsContentVisible(!isContentVisible);
   }, [isContentVisible, setIsContentVisible]);
 
-  const reportDragMousePosition = useCallback((e) => {
+  const reportDragMousePosition = useCallback((e: React.MouseEvent) => {
     // When drag detected react-beautiful-dnd will preventDefault the event
     // Ref: https://github.com/atlassian/react-beautiful-dnd/blob/master/docs/guides/how-we-use-dom-events.md#a-mouse-drag-has-started-and-the-user-is-now-dragging
     if (e.defaultPrevented) {
@@ -141,7 +141,7 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
       {isContentVisible && <div className={styles.content}>{children}</div>}
     </div>
   );
-};
+}
 
 const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
