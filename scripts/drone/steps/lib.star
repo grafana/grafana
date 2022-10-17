@@ -529,7 +529,6 @@ def betterer_frontend_step(edition="oss"):
         'commands': [
             'yarn betterer ci',
         ],
-        'failure': 'ignore',
     }
 
 
