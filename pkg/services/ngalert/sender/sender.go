@@ -50,6 +50,7 @@ func NewExternalAlertmanagerSender() (*ExternalAlertmanager, error) {
 		sdCancel: sdCancel,
 	}
 
+	s.logger.Info("initiating communication with a group of external Alertmanagers")
 	s.manager = notifier.NewManager(
 		// Injecting a new registry here means these metrics are not exported.
 		// Once we fix the individual Alertmanager metrics we should fix this scenario too.
@@ -69,6 +70,7 @@ func (s *ExternalAlertmanager) ApplyConfig(cfg *ngmodels.AdminConfiguration) err
 		return err
 	}
 
+	s.logger.Info("synchronizing config with external Alertmanager group")
 	if err := s.manager.ApplyConfig(notifierCfg); err != nil {
 		return err
 	}
@@ -100,7 +102,7 @@ func (s *ExternalAlertmanager) Run() {
 // SendAlerts sends a set of alerts to the configured Alertmanager(s).
 func (s *ExternalAlertmanager) SendAlerts(alerts apimodels.PostableAlerts) {
 	if len(alerts.PostableAlerts) == 0 {
-		s.logger.Debug("no alerts to send to external Alertmanager(s)")
+		s.logger.Info("no alerts to send to external Alertmanager(s)")
 		return
 	}
 	as := make([]*notifier.Alert, 0, len(alerts.PostableAlerts))
@@ -109,12 +111,13 @@ func (s *ExternalAlertmanager) SendAlerts(alerts apimodels.PostableAlerts) {
 		as = append(as, na)
 	}
 
-	s.logger.Debug("sending alerts to the external Alertmanager(s)", "am_count", len(s.manager.Alertmanagers()), "alert_count", len(as))
+	s.logger.Info("sending alerts to the external Alertmanager(s)", "am_count", len(s.manager.Alertmanagers()), "alert_count", len(as))
 	s.manager.Send(as...)
 }
 
 // Stop shuts down the sender.
 func (s *ExternalAlertmanager) Stop() {
+	s.logger.Info("shutting down communication with the external Alertmanager group")
 	s.sdCancel()
 	s.manager.Stop()
 	s.wg.Wait()

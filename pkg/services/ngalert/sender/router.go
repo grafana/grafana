@@ -75,20 +75,19 @@ func NewAlertsRouter(multiOrgNotifier *notifier.MultiOrgAlertmanager, store stor
 // SyncAndApplyConfigFromDatabase looks for the admin configuration in the database
 // and adjusts the sender(s) and alert handling mechanism accordingly.
 func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
-	d.logger.Debug("start of admin configuration sync")
 	cfgs, err := d.adminConfigStore.GetAdminConfigurations()
 	if err != nil {
 		return err
 	}
 
-	d.logger.Debug("found admin configurations", "count", len(cfgs))
+	d.logger.Info("attempting to sync admin configs", "count", len(cfgs))
 
 	orgsFound := make(map[int64]struct{}, len(cfgs))
 	d.adminConfigMtx.Lock()
 	for _, cfg := range cfgs {
 		_, isDisabledOrg := d.disabledOrgs[cfg.OrgID]
 		if isDisabledOrg {
-			d.logger.Debug("skipping starting sender for disabled org", "org", cfg.OrgID)
+			d.logger.Warn("skipping alert sender for disabled org", "org", cfg.OrgID)
 			continue
 		}
 
@@ -101,7 +100,7 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 
 		//  We have no running sender and alerts are handled internally, no-op.
 		if !ok && cfg.SendAlertsTo == models.InternalAlertmanager {
-			d.logger.Debug("alerts are handled internally", "org", cfg.OrgID)
+			d.logger.Warn("Grafana is configured to send alerts to the internal alertmanager only. Skipping synchronization with external alertmanager.", "org", cfg.OrgID)
 			continue
 		}
 
@@ -116,13 +115,13 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 
 		// We have no running sender and no Alertmanager(s) configured, no-op.
 		if !ok && len(cfg.Alertmanagers) == 0 {
-			d.logger.Debug("no external alertmanagers configured", "org", cfg.OrgID)
+			d.logger.Info("no external alertmanagers configured", "org", cfg.OrgID)
 			continue
 		}
 
 		// We have a running sender but no Alertmanager(s) configured, shut it down.
 		if ok && len(cfg.Alertmanagers) == 0 {
-			d.logger.Debug("no external alertmanager(s) configured, sender will be stopped", "org", cfg.OrgID)
+			d.logger.Warn("no external alertmanager(s) configured, sender will be stopped", "org", cfg.OrgID)
 			delete(orgsFound, cfg.OrgID)
 			continue
 		}
@@ -150,7 +149,7 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 				continue
 			}
 
-			d.logger.Debug("applying new configuration to sender", "org", cfg.OrgID, "alertmanagers", redactedAMs)
+			d.logger.Info("applying new configuration to sender", "org", cfg.OrgID, "alertmanagers", redactedAMs)
 			err := existing.ApplyConfig(cfg)
 			if err != nil {
 				d.logger.Error("failed to apply configuration", "error", err, "org", cfg.OrgID)
@@ -198,7 +197,7 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 		d.logger.Info("stopped sender", "org", orgID)
 	}
 
-	d.logger.Debug("finish of admin configuration sync")
+	d.logger.Info("finish of admin configuration sync")
 
 	return nil
 }
@@ -257,16 +256,16 @@ func (d *AlertsRouter) buildExternalURL(ds *datasources.DataSource) (string, err
 func (d *AlertsRouter) Send(key models.AlertRuleKey, alerts definitions.PostableAlerts) {
 	logger := d.logger.New("rule_uid", key.UID, "org", key.OrgID)
 	if len(alerts.PostableAlerts) == 0 {
-		logger.Debug("no alerts to notify about")
+		logger.Info("no alerts to notify about")
 		return
 	}
 	// Send alerts to local notifier if they need to be handled internally
 	// or if no external AMs have been discovered yet.
 	var localNotifierExist, externalNotifierExist bool
 	if d.sendAlertsTo[key.OrgID] == models.ExternalAlertmanagers && len(d.AlertmanagersFor(key.OrgID)) > 0 {
-		logger.Debug("no alerts to put in the notifier")
+		logger.Debug("all alerts for the given org should be routed to external notifiers only. skipping the internal notifier.", "org_id", key.OrgID)
 	} else {
-		logger.Debug("sending alerts to local notifier", "count", len(alerts.PostableAlerts), "alerts", alerts.PostableAlerts)
+		logger.Info("sending alerts to local notifier", "count", len(alerts.PostableAlerts), "alerts", alerts.PostableAlerts)
 		n, err := d.multiOrgNotifier.AlertmanagerFor(key.OrgID)
 		if err == nil {
 			localNotifierExist = true
@@ -288,7 +287,7 @@ func (d *AlertsRouter) Send(key models.AlertRuleKey, alerts definitions.Postable
 	defer d.adminConfigMtx.RUnlock()
 	s, ok := d.externalAlertmanagers[key.OrgID]
 	if ok && d.sendAlertsTo[key.OrgID] != models.InternalAlertmanager {
-		logger.Debug("sending alerts to external notifier", "count", len(alerts.PostableAlerts), "alerts", alerts.PostableAlerts)
+		logger.Info("sending alerts to external notifier", "count", len(alerts.PostableAlerts), "alerts", alerts.PostableAlerts)
 		s.SendAlerts(alerts)
 		externalNotifierExist = true
 	}
