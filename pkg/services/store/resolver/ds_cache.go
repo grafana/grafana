@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 )
@@ -22,7 +22,7 @@ type dsVal struct {
 }
 
 type dsCache struct {
-	db             db.DB
+	ds             datasources.DataSourceService
 	pluginRegistry registry.Service
 	cache          map[int64]map[string]*dsVal
 	timestamp      time.Time // across all orgIDs
@@ -42,32 +42,34 @@ func (c *dsCache) check(ctx context.Context) error {
 	cache := make(map[int64]map[string]*dsVal, 0)
 	defaultDS := make(map[int64]*dsVal, 0)
 
-	rows, err := c.db.GetSqlxSession().Query(ctx,
-		"SELECT org_id,id,is_default,name,type,UID FROM data_source")
+	q := &datasources.GetAllDataSourcesQuery{}
+	err := c.ds.GetAllDataSources(ctx, q)
 	if err != nil {
 		return err
 	}
 
-	orgID := int64(0)
-	for rows.Next() {
-		val := &dsVal{}
-		err = rows.Scan(&orgID, &val.InternalID, &val.IsDefault, &val.Name, &val.Type, &val.UID)
-		if err == nil {
-			_, ok := c.pluginRegistry.Plugin(ctx, val.Type)
-			val.PluginExists = ok
+	for _, ds := range q.Result {
+		val := &dsVal{
+			InternalID: ds.Id,
+			Name:       ds.Name,
+			UID:        ds.Uid,
+			Type:       ds.Type,
+			IsDefault:  ds.IsDefault,
+		}
+		_, ok := c.pluginRegistry.Plugin(ctx, val.Type)
+		val.PluginExists = ok
 
-			orgCache, ok := cache[orgID]
-			if !ok {
-				orgCache = make(map[string]*dsVal, 0)
-				cache[orgID] = orgCache
-			}
+		orgCache, ok := cache[ds.OrgId]
+		if !ok {
+			orgCache = make(map[string]*dsVal, 0)
+			cache[ds.OrgId] = orgCache
+		}
 
-			orgCache[val.UID] = val
+		orgCache[val.UID] = val
 
-			// Empty string or
-			if val.IsDefault {
-				defaultDS[orgID] = val
-			}
+		// Empty string or
+		if val.IsDefault {
+			defaultDS[ds.OrgId] = val
 		}
 	}
 
@@ -101,7 +103,9 @@ func (c *dsCache) check(ctx context.Context) error {
 			ds = gds // use the internal grafana datasource
 		}
 		orgDSCache[""] = ds
-		orgDSCache["default"] = ds
+		if orgDSCache["default"] == nil {
+			orgDSCache["default"] = ds
+		}
 	}
 
 	c.cache = cache

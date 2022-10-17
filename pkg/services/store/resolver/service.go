@@ -8,8 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 // for testing
@@ -26,11 +25,11 @@ type ObjectReferenceResolver interface {
 	Resolve(ctx context.Context, ref *models.ObjectExternalReference) (ResolutionInfo, error)
 }
 
-func ProvideObjectReferenceResolver(cfg *setting.Cfg, db db.DB, pluginRegistry registry.Service) ObjectReferenceResolver {
+func ProvideObjectReferenceResolver(ds datasources.DataSourceService, pluginRegistry registry.Service) ObjectReferenceResolver {
 	return &standardReferenceResolver{
 		pluginRegistry: pluginRegistry,
 		ds: dsCache{
-			db:             db,
+			ds:             ds,
 			pluginRegistry: pluginRegistry,
 		},
 	}
@@ -91,7 +90,7 @@ func (r *standardReferenceResolver) resolveDatasource(ctx context.Context, ref *
 		res.Warning = "datasource plugin not found"
 	} else if ref.Type == "" {
 		ref.Type = ds.Type // awkward! but makes the reporting accurate for dashboards before schemaVersion 36
-		res.Warning = "not type specified"
+		res.Warning = "type not specified"
 	} else if ref.Type != ds.Type {
 		res.Warning = fmt.Sprintf("type mismatch (expect:%s, found:%s)", ref.Type, ds.Type)
 	}

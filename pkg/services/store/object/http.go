@@ -1,6 +1,7 @@
 package object
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -8,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/services/store/kind"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -47,6 +49,9 @@ func (s *httpObjectStore) RegisterHTTPRoutes(route routing.RouteRegister) {
 	route.Get("/history/*", reqGrafanaAdmin, routing.Wrap(s.doGetHistory))
 	route.Get("/list/*", reqGrafanaAdmin, routing.Wrap(s.doListFolder)) // Simplified version of search -- path is prefix
 	route.Get("/search", reqGrafanaAdmin, routing.Wrap(s.doSearch))
+
+	// File upload
+	route.Post("/upload", reqGrafanaAdmin, routing.Wrap(s.doUpload))
 }
 
 // This function will extract UID+Kind from the requested path "*" in our router
@@ -206,6 +211,89 @@ func (s *httpObjectStore) doGetHistory(c *models.ReqContext) response.Response {
 	return response.JSON(200, rsp)
 }
 
+func (s *httpObjectStore) doUpload(c *models.ReqContext) response.Response {
+	type rspInfo struct {
+		Message string `json:"message,omitempty"`
+		Path    string `json:"path,omitempty"`
+		Count   int    `json:"count,omitempty"`
+		Bytes   int    `json:"bytes,omitempty"`
+		Error   bool   `json:"err,omitempty"`
+	}
+	rsp := &rspInfo{Message: "uploaded"}
+
+	c.Req.Body = http.MaxBytesReader(c.Resp, c.Req.Body, MAX_UPLOAD_SIZE)
+	if err := c.Req.ParseMultipartForm(MAX_UPLOAD_SIZE); err != nil {
+		rsp.Message = fmt.Sprintf("Please limit file uploaded under %s", util.ByteCountSI(MAX_UPLOAD_SIZE))
+		rsp.Error = true
+		return response.JSON(400, rsp)
+	}
+	message := getMultipartFormValue(c.Req, "message")
+	overwriteExistingFile := getMultipartFormValue(c.Req, "overwriteExistingFile") != "false" // must explicitly overwrite
+	folder := getMultipartFormValue(c.Req, "folder")
+
+	for k, fileHeaders := range c.Req.MultipartForm.File {
+		path := getMultipartFormValue(c.Req, k+".path") // match the path with a file
+		if len(fileHeaders) > 1 {
+			path = ""
+		}
+		if path == "" && folder == "" {
+			rsp.Message = "please specify the upload folder or full path"
+			rsp.Error = true
+			return response.JSON(400, rsp)
+		}
+
+		for _, fileHeader := range fileHeaders {
+			// restrict file size based on file size
+			// open each file to copy contents
+			file, err := fileHeader.Open()
+			if err != nil {
+				return response.Error(500, "Internal Server Error", err)
+			}
+			err = file.Close()
+			if err != nil {
+				return response.Error(500, "Internal Server Error", err)
+			}
+			data, err := io.ReadAll(file)
+			if err != nil {
+				return response.Error(500, "Internal Server Error", err)
+			}
+
+			if path == "" {
+				path = folder + "/" + fileHeader.Filename
+			}
+
+			uid := path
+			kind := models.StandardKindDashboard
+			mimeType := http.DetectContentType(data)
+
+			if strings.HasPrefix(mimeType, "image") || strings.HasSuffix(path, ".svg") {
+				kind = models.StandardKindPNG
+			}
+
+			if !overwriteExistingFile {
+				fmt.Printf("????")
+			}
+
+			result, err := s.store.Write(c.Req.Context(), &WriteObjectRequest{
+				UID:     uid,
+				Kind:    kind,
+				Body:    data,
+				Comment: message,
+				//	PreviousVersion: params["previousVersion"],
+			})
+
+			if err != nil {
+				return response.Error(500, err.Error(), err) // TODO, better errors
+			}
+			rsp.Count++
+			rsp.Bytes += len(data)
+			rsp.Path = result.Object.ETag
+		}
+	}
+
+	return response.JSON(200, rsp)
+}
+
 func (s *httpObjectStore) doListFolder(c *models.ReqContext) response.Response {
 	return response.JSON(501, "Not implemented yet")
 }
@@ -223,4 +311,12 @@ func (s *httpObjectStore) doSearch(c *models.ReqContext) response.Response {
 		return response.Error(500, "?", err)
 	}
 	return response.JSON(200, rsp)
+}
+
+func getMultipartFormValue(req *http.Request, key string) string {
+	v, ok := req.MultipartForm.Value[key]
+	if !ok || len(v) != 1 {
+		return ""
+	}
+	return v[0]
 }
