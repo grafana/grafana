@@ -10,13 +10,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 )
 
 func (s simpleSecret) rollback(
 	ctx context.Context,
 	secretsSrv *manager.SecretsService,
 	encryptionSrv encryption.Internal,
-	sqlStore *sqlstore.SQLStore,
+	sqlStore db.DB,
 	secretKey string,
 ) (anyFailure bool) {
 	var rows []struct {
@@ -76,7 +77,7 @@ func (s b64Secret) rollback(
 	ctx context.Context,
 	secretsSrv *manager.SecretsService,
 	encryptionSrv encryption.Internal,
-	sqlStore *sqlstore.SQLStore,
+	sqlStore db.DB,
 	secretKey string,
 ) (anyFailure bool) {
 	var rows []struct {
@@ -150,7 +151,7 @@ func (s jsonSecret) rollback(
 	ctx context.Context,
 	secretsSrv *manager.SecretsService,
 	encryptionSrv encryption.Internal,
-	sqlStore *sqlstore.SQLStore,
+	sqlStore db.DB,
 	secretKey string,
 ) (anyFailure bool) {
 	var rows []struct {
@@ -214,7 +215,7 @@ func (s alertingSecret) rollback(
 	ctx context.Context,
 	secretsSrv *manager.SecretsService,
 	encryptionSrv encryption.Internal,
-	sqlStore *sqlstore.SQLStore,
+	sqlStore db.DB,
 	secretKey string,
 ) (anyFailure bool) {
 	var results []struct {
