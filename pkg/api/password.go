@@ -27,9 +27,21 @@ func SendResetPasswordEmail(c *models.ReqContext) response.Response {
 
 	userQuery := models.GetUserByLoginQuery{LoginOrEmail: form.UserOrEmail}
 
+<<<<<<< HEAD
 	if err := bus.Dispatch(c.Req.Context(), &userQuery); err != nil {
 		c.Logger.Info("Requested password reset for user that was not found", "user", userQuery.LoginOrEmail)
 		return response.Error(200, "Email sent", err)
+||||||| parent of 8841c4fd21 (Security: Omit error from http response when user does not exists)
+	usr, err := hs.userService.GetByLogin(c.Req.Context(), &userQuery)
+	if err != nil {
+		c.Logger.Info("Requested password reset for user that was not found", "user", userQuery.LoginOrEmail)
+		return response.Error(http.StatusOK, "Email sent", err)
+=======
+	usr, err := hs.userService.GetByLogin(c.Req.Context(), &userQuery)
+	if err != nil {
+		c.Logger.Info("Requested password reset for user that was not found", "user", userQuery.LoginOrEmail, "error", err)
+		return response.Error(http.StatusOK, "Email sent", nil)
+>>>>>>> 8841c4fd21 (Security: Omit error from http response when user does not exists)
 	}
 
 	emailCmd := models.SendResetPasswordEmailCommand{User: userQuery.Result}
