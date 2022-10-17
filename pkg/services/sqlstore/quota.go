@@ -99,7 +99,7 @@ func (ss *SQLStore) GetOrgQuotas(ctx context.Context, query *models.GetOrgQuotas
 
 				// need to account for removing service accounts from the user table
 				if q.Target == "org_user" {
-					rawSQL = fmt.Sprintf("SELECT COUNT(*) as count from (select user_id from %s where org_id=? AND user_id IN (SELECT id as user_id FROM %s WHERE is_service_account=%s))",
+					rawSQL = fmt.Sprintf("SELECT COUNT(*) as count from (select user_id from %s where org_id=? AND user_id IN (SELECT id as user_id FROM %s WHERE is_service_account=%s)) as subq",
 						dialect.Quote(q.Target),
 						dialect.Quote("user"),
 						dialect.BooleanStr(false),
