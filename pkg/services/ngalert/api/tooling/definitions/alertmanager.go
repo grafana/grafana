@@ -12,7 +12,6 @@ import (
 
 	"github.com/go-openapi/strfmt"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
-	amv2silence "github.com/prometheus/alertmanager/api/v2/restapi/operations/silence"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
@@ -390,8 +389,12 @@ func NewGettableStatus(cfg *PostableApiAlertingConfig) *GettableStatus {
 // swagger:model postableSilence
 type PostableSilence = amv2.PostableSilence
 
+// PostSilencesOKBody vendored from "github.com/prometheus/alertmanager/api/v2/restapi/operations/silence/PostSilencesOKBody"
 // swagger:model postSilencesOKBody
-type PostSilencesOKBody = amv2silence.PostSilencesOKBody
+type PostSilencesOKBody struct {
+	// silence ID
+	SilenceID string `json:"silenceID,omitempty"`
+}
 
 // swagger:model gettableSilences
 type GettableSilences = amv2.GettableSilences
