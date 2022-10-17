@@ -6,7 +6,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 // GetDashboardACLInfoList returns a list of permissions for a dashboard. They can be fetched from three
@@ -104,7 +103,7 @@ func (d *DashboardStore) HasEditPermissionInFolders(ctx context.Context, query *
 			return nil
 		}
 
-		builder := sqlstore.NewSqlBuilder(d.cfg)
+		builder := db.NewSqlBuilder(d.cfg)
 		builder.Write("SELECT COUNT(dashboard.id) AS count FROM dashboard WHERE dashboard.org_id = ? AND dashboard.is_folder = ?",
 			query.SignedInUser.OrgID, d.store.GetDialect().BooleanStr(true))
 		builder.WriteDashboardPermissionFilter(query.SignedInUser, models.PERMISSION_EDIT)
@@ -132,7 +131,7 @@ func (d *DashboardStore) HasAdminPermissionInDashboardsOrFolders(ctx context.Con
 			return nil
 		}
 
-		builder := sqlstore.NewSqlBuilder(d.cfg)
+		builder := db.NewSqlBuilder(d.cfg)
 		builder.Write("SELECT COUNT(dashboard.id) AS count FROM dashboard WHERE dashboard.org_id = ?", query.SignedInUser.OrgID)
 		builder.WriteDashboardPermissionFilter(query.SignedInUser, models.PERMISSION_ADMIN)
 

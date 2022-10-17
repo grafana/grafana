@@ -456,7 +456,7 @@ func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
 		},
 	}
 
-	store := db.InitTestDB(t, sqlstore.InitTestDBOpt{})
+	store := db.InitTestDB(t, db.InitTestDBOpt{})
 	teamSvc := ProvideService(store, store.Cfg)
 
 	// Seed 10 teams
@@ -519,7 +519,7 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 		require.NoError(t, errAddMember)
 	}
 
-	store := db.InitTestDB(t, sqlstore.InitTestDBOpt{})
+	store := db.InitTestDB(t, db.InitTestDBOpt{})
 	setup(store)
 	teamSvc := ProvideService(store, store.Cfg)
 

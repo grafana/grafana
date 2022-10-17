@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"fmt"
 	"os"
 
 	"xorm.io/core"
@@ -53,10 +52,4 @@ func IsTestDBMSSQL() bool {
 	}
 
 	return false
-}
-
-func NotServiceAccountFilter(db DB) string {
-	return fmt.Sprintf("%s.is_service_account = %s",
-		db.GetDialect().Quote("user"),
-		db.GetDialect().BooleanStr(false))
 }

@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -187,7 +186,7 @@ func createDashboards(t *testing.T, store db.DB, startID, endID int, orgID int64
 			tags := dash.GetTags()
 			if len(tags) > 0 {
 				for _, tag := range tags {
-					if _, err := sess.Insert(&sqlstore.DashboardTag{DashboardId: dash.Id, Term: tag}); err != nil {
+					if _, err := sess.Insert(&DashboardTag{DashboardId: dash.Id, Term: tag}); err != nil {
 						return err
 					}
 				}
@@ -213,4 +212,10 @@ func lexiCounter(n int) string {
 	}
 
 	return value
+}
+
+type DashboardTag struct {
+	Id          int64
+	DashboardId int64
+	Term        string
 }

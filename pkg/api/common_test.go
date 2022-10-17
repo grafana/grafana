@@ -358,7 +358,7 @@ func setupHTTPServer(t *testing.T, useFakeAccessControl bool, options ...APITest
 }
 
 func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl bool, cfg *setting.Cfg, options ...APITestServerOption) accessControlScenarioContext {
-	db := db.InitTestDB(t, sqlstore.InitTestDBOpt{})
+	db := db.InitTestDB(t, db.InitTestDBOpt{})
 	return setupHTTPServerWithCfgDb(t, useFakeAccessControl, cfg, db, db, featuremgmt.WithFeatures(), options...)
 }
 
