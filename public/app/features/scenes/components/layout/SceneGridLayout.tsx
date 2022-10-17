@@ -286,7 +286,6 @@ export class SceneGridRow extends SceneObjectBase<SceneGridRowState> {
       isDraggable: true,
       isCollapsible: true,
       ...state,
-
       size: {
         ...state.size,
         height: state.isCollapsed ? GRID_CELL_HEIGHT : state.size?.height || DEFAULT_ROW_HEIGHT,
