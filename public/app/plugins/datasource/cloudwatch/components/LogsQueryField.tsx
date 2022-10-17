@@ -113,7 +113,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
 
   render() {
     const { onRunQuery, onChange, ExtraFieldElement, data, query, datasource } = this.props;
-    const { region, refId, expression, logGroupNames } = query;
+    const { region, expression, logGroupNames } = query;
     const { hint } = this.state;
 
     const showError = data && data.error && data.error.refId === query.refId;
@@ -135,14 +135,20 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
             className="flex-grow-1"
             inputEl={
               <LogGroupSelector
-                region={region}
                 selectedLogGroups={logGroupNames ?? datasource.logsQueryRunner.defaultLogGroups}
-                datasource={datasource}
                 onChange={function (logGroups: string[]): void {
                   onChange({ ...query, logGroupNames: logGroups });
                 }}
-                onRunQuery={onRunQuery}
-                refId={refId}
+                describeLogGroups={(logGroupNamePrefix?: string) => {
+                  if (!datasource?.api?.describeLogGroups) {
+                    return;
+                  }
+                  return datasource.api.describeLogGroups({
+                    logGroupNamePrefix,
+                    region: region,
+                  });
+                }}
+                onBlur={onRunQuery}
               />
             }
           />

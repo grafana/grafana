@@ -1,73 +1,65 @@
-import { debounce, intersection, unionBy } from 'lodash';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { debounce, isEqual, unionWith } from 'lodash';
+import React, { useCallback, useState } from 'react';
 
-import { SelectableValue, toOption } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 import { MultiSelect } from '@grafana/ui';
 import { InputActionMeta } from '@grafana/ui/src/components/Select/types';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { dispatch } from 'app/store/store';
 
-import { CloudWatchDatasource } from '../datasource';
-import { appendTemplateVariables } from '../utils/utils';
+import { SelectableResourceValue } from '../api';
 
 const MAX_LOG_GROUPS = 20;
 const MAX_VISIBLE_LOG_GROUPS = 4;
 const DEBOUNCE_TIMER = 300;
 
 export interface LogGroupSelectorProps {
-  region: string;
   selectedLogGroups: string[];
-  onChange: (logGroups: string[]) => void;
-
-  datasource?: CloudWatchDatasource;
-  onRunQuery?: () => void;
-  onOpenMenu?: () => Promise<void>;
-  refId?: string;
+  onChange: (logGroupsToSave: string[]) => void;
+  describeLogGroups: (logGroupNamePrefix?: string) => Promise<SelectableResourceValue[]> | undefined;
+  onBlur?: () => void;
   width?: number | 'auto';
-  saved?: boolean;
 }
 
 export const LogGroupSelector: React.FC<LogGroupSelectorProps> = ({
-  region,
   selectedLogGroups,
   onChange,
-  datasource,
-  onRunQuery,
-  onOpenMenu,
-  refId,
+  onBlur,
+  describeLogGroups,
   width,
-  saved = true,
 }) => {
   const [loadingLogGroups, setLoadingLogGroups] = useState(false);
-  const [availableLogGroups, setAvailableLogGroups] = useState<Array<SelectableValue<string>>>([]);
-  const logGroupOptions = useMemo(
-    () => unionBy(availableLogGroups, selectedLogGroups?.map(toOption), 'value'),
-    [availableLogGroups, selectedLogGroups]
-  );
+  const [fetchedLogGroupOptions, setFetchedLogGroupOptions] = useState<Array<SelectableValue<string>>>([]);
 
   const fetchLogGroupOptions = useCallback(
-    async (region: string, logGroupNamePrefix?: string) => {
-      if (!datasource) {
-        return [];
-      }
+    async (logGroupNamePrefix?: string) => {
       try {
-        const logGroups = await datasource.api.describeLogGroups({
-          refId,
-          region,
-          logGroupNamePrefix,
-        });
-        return logGroups;
+        setLoadingLogGroups(true);
+        const logGroups = await describeLogGroups(logGroupNamePrefix);
+        if (logGroups) {
+          setFetchedLogGroupOptions(logGroups);
+        }
       } catch (err) {
-        dispatch(notifyApp(createErrorNotification(typeof err === 'string' ? err : JSON.stringify(err))));
-        return [];
+        setFetchedLogGroupOptions([]);
+        dispatch(
+          notifyApp(
+            createErrorNotification(
+              'Error Finding Log Groups:',
+              typeof err === 'string'
+                ? err
+                : 'Unexpected error while fetching log groups, please check connection details and aws permissions'
+            )
+          )
+        );
       }
+      setLoadingLogGroups(false);
     },
-    [datasource, refId]
+    [describeLogGroups]
   );
 
-  const onLogGroupSearch = async (searchTerm: string, region: string, actionMeta: InputActionMeta) => {
-    if (actionMeta.action !== 'input-change' || !datasource) {
+  const onLogGroupSearch = async (searchTerm: string, actionMeta: InputActionMeta) => {
+    if (actionMeta.action !== 'input-change') {
       return;
     }
 
@@ -82,58 +74,29 @@ export const LogGroupSelector: React.FC<LogGroupSelectorProps> = ({
       return;
     }
 
-    setLoadingLogGroups(true);
-    const matchingLogGroups = await fetchLogGroupOptions(region, searchTerm);
-    setAvailableLogGroups(unionBy(availableLogGroups, matchingLogGroups, 'value'));
-    setLoadingLogGroups(false);
-  };
-
-  // Reset the log group options if the datasource or region change and are saved
-  useEffect(() => {
-    async function resetLogGroups() {
-      // Don't call describeLogGroups if datasource or region is undefined
-      if (!datasource || !datasource.getActualRegion(region)) {
-        setAvailableLogGroups([]);
-        return;
-      }
-
-      setLoadingLogGroups(true);
-      return fetchLogGroupOptions(datasource.getActualRegion(region))
-        .then((logGroups) => {
-          const newSelectedLogGroups = intersection(
-            selectedLogGroups,
-            logGroups.map((l) => l.value || '')
-          );
-          onChange(newSelectedLogGroups);
-          setAvailableLogGroups(logGroups);
-        })
-        .finally(() => {
-          setLoadingLogGroups(false);
-        });
-    }
-    // Only reset if the current datasource is saved
-    saved && resetLogGroups();
-    // this hook shouldn't get called every time selectedLogGroups or onChange updates
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [datasource, region, saved]);
-
-  const onOpenLogGroupMenu = async () => {
-    if (onOpenMenu) {
-      await onOpenMenu();
-    }
+    fetchLogGroupOptions(searchTerm);
   };
 
   const onLogGroupSearchDebounced = debounce(onLogGroupSearch, DEBOUNCE_TIMER);
+
+  // always show selected log groups even if they are no longer valid,
+  // it's too confusing to see them disappear,
+  // and fairly clear to show an error that they are not valid when queried
+  const logGroupOptions = unionWith(
+    fetchedLogGroupOptions,
+    selectedLogGroups.map((s) => ({ text: s, value: s, label: s })),
+    isEqual
+  );
 
   return (
     <MultiSelect
       inputId="default-log-groups"
       aria-label="Log Groups"
       allowCustomValue
-      options={datasource ? appendTemplateVariables(datasource, logGroupOptions) : logGroupOptions}
+      options={logGroupOptions}
       value={selectedLogGroups}
-      onChange={(v) => onChange(v.filter(({ value }) => value).map(({ value }) => value))}
-      onBlur={onRunQuery}
+      onChange={(logGroups: Array<SelectableValue<string>>) => onChange(logGroups.map((lg) => lg.text))}
+      onBlur={onBlur}
       closeMenuOnSelect={false}
       isClearable
       isOptionDisabled={() => selectedLogGroups.length >= MAX_LOG_GROUPS}
@@ -141,9 +104,9 @@ export const LogGroupSelector: React.FC<LogGroupSelectorProps> = ({
       maxVisibleValues={MAX_VISIBLE_LOG_GROUPS}
       noOptionsMessage="No log groups available"
       isLoading={loadingLogGroups}
-      onOpenMenu={onOpenLogGroupMenu}
+      onOpenMenu={fetchLogGroupOptions}
       onInputChange={(value, actionMeta) => {
-        onLogGroupSearchDebounced(value, region, actionMeta);
+        onLogGroupSearchDebounced(value, actionMeta);
       }}
       width={width}
     />

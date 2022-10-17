@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, useEffect, useRef, useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { ConnectionConfig } from '@grafana/aws-sdk';
@@ -10,7 +10,7 @@ import {
   updateDatasourcePluginOption,
 } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import { Input, InlineField } from '@grafana/ui';
+import { Input, InlineField, Button } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createWarningNotification } from 'app/core/copy/appNotification';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -28,12 +28,31 @@ export type Props = DataSourcePluginOptionsEditorProps<CloudWatchJsonData, Cloud
 export const ConfigEditor: FC<Props> = (props: Props) => {
   const { options } = props;
   const { defaultLogGroups, logsTimeout, defaultRegion } = options.jsonData;
-  const [saved, setSaved] = useState(!!options.version && options.version > 1);
+  const didMount = useRef(false);
 
-  const datasource = useDatasource(options.name, saved);
   useAuthenticationWarning(options.jsonData);
-  const logsTimeoutError = useTimoutValidation(logsTimeout);
+  const logsTimeoutError = useTimeoutValidation(logsTimeout);
+
+  // we offer users a save button after config settings so that
+  // users are reminded that subsequent requests for log groups depend upon connection data being up to date
+  const [saved, setSaved] = useState(true);
+  const saveOptions = async (): Promise<void> => {
+    await getBackendSrv()
+      .put(`/api/datasources/${options.id}`, options)
+      .then((result: { datasource: any }) => {
+        updateDatasourcePluginOption(props, 'version', result.datasource.version);
+        setSaved(true);
+      });
+  };
+
+  // we keep track of when the connection config form is dirty and needs to be saved
+  // so that we can determine whether or not to disable the save button
   useEffect(() => {
+    // skip on mount, we assume on load of page it is already saved
+    if (!didMount.current) {
+      didMount.current = true;
+      return;
+    }
     setSaved(false);
   }, [
     props.options.jsonData.assumeRoleArn,
@@ -46,17 +65,7 @@ export const ConfigEditor: FC<Props> = (props: Props) => {
     props.options.secureJsonData?.secretKey,
   ]);
 
-  const saveOptions = async (): Promise<void> => {
-    if (saved) {
-      return;
-    }
-    await getBackendSrv()
-      .put(`/api/datasources/${options.id}`, options)
-      .then((result: { datasource: any }) => {
-        updateDatasourcePluginOption(props, 'version', result.datasource.version);
-      });
-    setSaved(true);
-  };
+  const datasource = useDatasource(options.name, saved);
 
   return (
     <>
@@ -85,7 +94,11 @@ export const ConfigEditor: FC<Props> = (props: Props) => {
           />
         </InlineField>
       </ConnectionConfig>
-
+      <div className="gf-form-group">
+        <Button onClick={saveOptions} disabled={saved}>
+          Save Connection Details
+        </Button>
+      </div>
       <h3 className="page-heading">CloudWatch Logs</h3>
       <div className="gf-form-group">
         <InlineField
@@ -108,15 +121,20 @@ export const ConfigEditor: FC<Props> = (props: Props) => {
           tooltip="Optionally, specify default log groups for CloudWatch Logs queries."
         >
           <LogGroupSelector
-            region={defaultRegion ?? ''}
             selectedLogGroups={defaultLogGroups ?? []}
-            datasource={datasource}
             onChange={(logGroups) => {
               updateDatasourcePluginJsonDataOption(props, 'defaultLogGroups', logGroups);
             }}
-            onOpenMenu={saveOptions}
             width={60}
-            saved={saved}
+            describeLogGroups={(logGroupNamePrefix) => {
+              if (!datasource?.api?.describeLogGroups) {
+                return;
+              }
+              return datasource.api.describeLogGroups({
+                region: defaultRegion || '',
+                logGroupNamePrefix,
+              });
+            }}
           />
         </InlineField>
       </div>
@@ -149,7 +167,6 @@ function useAuthenticationWarning(jsonData: CloudWatchJsonData) {
 
 function useDatasource(datasourceName: string, saved: boolean) {
   const [datasource, setDatasource] = useState<CloudWatchDatasource>();
-
   useEffect(() => {
     // reload the datasource when it's saved
     if (!saved) {
@@ -167,7 +184,7 @@ function useDatasource(datasourceName: string, saved: boolean) {
   return datasource;
 }
 
-function useTimoutValidation(value: string | undefined) {
+function useTimeoutValidation(value: string | undefined) {
   const [err, setErr] = useState<undefined | string>(undefined);
   useDebounce(
     () => {

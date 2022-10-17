@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
 import selectEvent from 'react-select-event';
@@ -20,6 +20,10 @@ jest.mock('app/features/plugins/datasource_srv', () => ({
           {
             label: 'ap-east-1',
             value: 'ap-east-1',
+          },
+          {
+            label: 'us-east-1',
+            value: 'us-east-1',
           },
         ]),
       },
@@ -80,7 +84,7 @@ const props: Props = {
   onOptionsChange: jest.fn(),
 };
 
-const setup = (optionOverrides?: Partial<Props['options']>) => {
+const setup = async (optionOverrides?: Partial<Props['options']>) => {
   const store = configureStore();
   const newProps = {
     ...props,
@@ -95,6 +99,9 @@ const setup = (optionOverrides?: Partial<Props['options']>) => {
       <ConfigEditor {...newProps} />
     </Provider>
   );
+
+  // wait for log groups fetch to finish
+  await waitFor(() => expect(screen.getByText('Choose Log Groups')).toBeInTheDocument());
 };
 
 describe('Render', () => {
@@ -106,11 +113,11 @@ describe('Render', () => {
     putMock.mockImplementation(async () => ({ datasource: setupMockedDataSource().datasource }));
   });
 
-  it('should render component without blowing up', () => {
+  it('should render component without blowing up', async () => {
     expect(() => setup()).not.toThrow();
   });
 
-  it('should disable access key id field', () => {
+  it('should disable access key id field', async () => {
     setup({
       secureJsonFields: {
         secretKey: true,
@@ -148,7 +155,7 @@ describe('Render', () => {
   });
 
   it('should load log groups when multiselect is opened', async () => {
-    setup();
+    await setup();
     const multiselect = await screen.findByLabelText('Log Groups');
     selectEvent.openMenu(multiselect);
     expect(await screen.findByText('logGroup-foo')).toBeInTheDocument();
