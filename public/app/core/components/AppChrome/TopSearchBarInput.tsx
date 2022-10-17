@@ -1,12 +1,16 @@
+import { useKBar } from 'kbar';
 import React, { useState } from 'react';
 
-import { locationService } from '@grafana/runtime';
-import { FilterInput, ToolbarButton, useTheme2 } from '@grafana/ui';
+import { Button, FilterInput, ToolbarButton, useTheme2 } from '@grafana/ui';
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
 import { t } from 'app/core/internationalization';
 import { useSearchQuery } from 'app/features/search/hooks/useSearchQuery';
 
 export function TopSearchBarInput() {
+  const { query: kbar, goToDashboardAction } = useKBar((state) => ({
+    goToDashboardAction: state.actions['go/dashboard'],
+  }));
+
   const theme = useTheme2();
   const { query, onQueryChange } = useSearchQuery({});
   const breakpoint = theme.breakpoints.values.sm;
@@ -21,7 +25,9 @@ export function TopSearchBarInput() {
   });
 
   const onOpenSearch = () => {
-    locationService.partial({ search: 'open' });
+    // locationService.partial({ search: 'open' });
+    kbar.setCurrentRootAction(goToDashboardAction.id);
+    kbar.toggle();
   };
 
   const onSearchChange = (value: string) => {
@@ -41,6 +47,16 @@ export function TopSearchBarInput() {
       placeholder={t('nav.search.placeholder', 'Search Grafana')}
       value={query.query ?? ''}
       onChange={onSearchChange}
+      suffix={
+        <span>
+          <Button variant="secondary" size="sm">
+            ctrl
+          </Button>{' '}
+          <Button variant="secondary" size="sm">
+            k
+          </Button>
+        </span>
+      }
     />
   );
 }

@@ -65,8 +65,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderBottom: `1px solid ${theme.colors.border.weak}`,
     justifyContent: 'space-between',
 
+    // '> div:nth-child(2)': {
+    //   flex: '0.5',
+    //   background: 'red',
+    // },
+
     [theme.breakpoints.up('sm')]: {
-      gridTemplateColumns: '1fr 2fr 1fr',
+      gridTemplateColumns: '1.5fr 1fr 1.5fr',
       display: 'grid',
 
       justifyContent: 'flex-start',

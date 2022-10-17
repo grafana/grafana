@@ -7,11 +7,12 @@ import { Button } from '../Button';
 import { Icon } from '../Icon/Icon';
 import { Input } from '../Input/Input';
 
-export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'onChange'> {
+export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'onChange' | 'suffix'> {
   value: string | undefined;
   width?: number;
   onChange: (value: string) => void;
   escapeRegex?: boolean;
+  suffix?: React.ReactNode;
 }
 
 export const FilterInput = React.forwardRef<HTMLInputElement, Props>(

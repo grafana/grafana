@@ -29,14 +29,28 @@ import getGlobalActions from './actions/global.static.actions';
  * @constructor
  */
 
+const parentNames: Record<string, string> = {
+  'go/dashboard': 'Dashboards',
+};
+
 export const CommandPalette = () => {
   const styles = useStyles2(getSearchStyles);
   const { keybindings } = useGrafana();
   const [actions, setActions] = useState<Action[]>([]);
   const [staticActions, setStaticActions] = useState<Action[]>([]);
-  const { query, showing } = useKBar((state) => ({
-    showing: state.visualState === VisualState.showing,
-  }));
+
+  const { query, showing, parentName } = useKBar((state) => {
+    const actions = state?.actions ?? {};
+    const newParentName = state.currentRootActionId
+      ? parentNames[state.currentRootActionId] ?? actions[state.currentRootActionId].name
+      : undefined;
+
+    return {
+      showing: state.visualState === VisualState.showing,
+      parentName: newParentName,
+    };
+  });
+
   const isNotLogin = locationService.getLocation().pathname !== '/login';
 
   const { navBarTree } = useSelector((state) => {
@@ -51,6 +65,7 @@ export const CommandPalette = () => {
       setStaticActions(staticActionsResp);
       setActions([...staticActionsResp]);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isNotLogin, navBarTree]);
 
   useEffect(() => {
@@ -82,7 +97,10 @@ export const CommandPalette = () => {
       <KBarPositioner className={styles.positioner}>
         <KBarAnimator className={styles.animator}>
           <FocusScope contain>
-            <KBarSearch className={styles.search} />
+            <div className={styles.searchContainer}>
+              {parentName && <div className={styles.parent}>{parentName}</div>}
+              <KBarSearch className={styles.search} />
+            </div>
             <RenderResults />
           </FocusScope>
         </KBarAnimator>
@@ -135,8 +153,20 @@ const getSearchStyles = (theme: GrafanaTheme2) => ({
     overflow: 'hidden',
     boxShadow: theme.shadows.z3,
   }),
+  searchContainer: css({
+    display: 'flex',
+    borderBottom: `1px solid ${theme.colors.border.weak}`,
+    padding: theme.spacing(0, 1.5),
+    alignItems: 'center',
+  }),
+  parent: css({
+    background: theme.colors.background.secondary,
+    padding: theme.spacing(0.5, 1),
+    borderRadius: theme.shape.borderRadius(2),
+    flexShrink: 0,
+  }),
   search: css({
-    padding: theme.spacing(2, 3),
+    padding: theme.spacing(2, 1.5),
     fontSize: theme.typography.fontSize,
     width: '100%',
     boxSizing: 'border-box',
@@ -144,7 +174,6 @@ const getSearchStyles = (theme: GrafanaTheme2) => ({
     border: 'none',
     background: theme.colors.background.canvas,
     color: theme.colors.text.primary,
-    borderBottom: `1px solid ${theme.colors.border.weak}`,
   }),
   sectionHeader: css({
     padding: theme.spacing(1, 2),

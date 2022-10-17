@@ -15,7 +15,7 @@ export default (navBarTree: NavModelItem[]) => {
   const globalActions: Action[] = [
     {
       id: 'go/search',
-      name: 'Go to dashboard search',
+      name: 'Go to search',
       keywords: 'navigate',
       perform: () => locationService.push('?search=open'),
       section: 'Navigation',
@@ -23,7 +23,7 @@ export default (navBarTree: NavModelItem[]) => {
     },
     {
       id: 'go/dashboard',
-      name: 'Go to dashboard...',
+      name: 'Search dashboards...',
       keywords: 'navigate',
       section: 'Navigation',
       priority: Priority.NORMAL,
