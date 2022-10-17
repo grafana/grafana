@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { Redirect, Route, RouteChildrenProps, Switch, useLocation } from 'react-router-dom';
 
 import { Alert, withErrorBoundary } from '@grafana/ui';
@@ -19,7 +19,7 @@ import { fetchAmAlertsAction, fetchSilencesAction } from './state/actions';
 import { SILENCES_POLL_INTERVAL_MS } from './utils/constants';
 import { AsyncRequestState, initialAsyncRequestState } from './utils/redux';
 
-const Silences: FC = () => {
+const Silences = () => {
   const alertManagers = useAlertManagersByPermission('instance');
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName(alertManagers);
 
