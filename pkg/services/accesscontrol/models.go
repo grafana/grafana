@@ -308,14 +308,14 @@ func (ps Permissions) Simplify() []SimplifiedUserPermissionDTO {
 			permByAction[ps[i].Action] = s
 		}
 		// TODO double check
-		if strings.HasSuffix(ps[i].Scope, "*") {
+		if ps[i].Scope == "*" || strings.HasSuffix(ps[i].Scope, ":*") {
 			s.All = true
 			s.UIDs = nil
 			continue
 		}
 		// TODO double check
 		parts := strings.Split(ps[i].Scope, ":")
-		if len(parts) != 3 {
+		if len(parts) != maxPrefixParts+1 {
 			continue
 		}
 		s.UIDs = append(s.UIDs, parts[2])
