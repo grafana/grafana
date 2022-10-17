@@ -58,7 +58,7 @@ export class KeybindingSrv {
   }
 
   globalEsc() {
-    const anyDoc = document as any;
+    const anyDoc = document;
     const activeElement = anyDoc.activeElement;
 
     // typehead needs to handle it
@@ -68,13 +68,13 @@ export class KeybindingSrv {
     }
 
     // second check if we are in an input we can blur
-    if (activeElement && activeElement.blur) {
+    if (activeElement && activeElement instanceof HTMLElement) {
       if (
         activeElement.nodeName === 'INPUT' ||
         activeElement.nodeName === 'TEXTAREA' ||
         activeElement.hasAttribute('data-slate-editor')
       ) {
-        anyDoc.activeElement.blur();
+        activeElement.blur();
         return;
       }
     }
