@@ -12,13 +12,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestConcurrentUsersMetrics(t *testing.T) {
-	sqlStore := db.InitTestDB(t)
-	s := createService(t, setting.NewCfg(), sqlStore)
+	sqlStore, cfg := db.InitTestDBwithCfg(t)
+	s := createService(t, cfg, sqlStore)
 
 	createConcurrentTokens(t, sqlStore)
 
@@ -34,8 +33,8 @@ func TestConcurrentUsersMetrics(t *testing.T) {
 }
 
 func TestConcurrentUsersStats(t *testing.T) {
-	sqlStore := db.InitTestDB(t)
-	s := createService(t, setting.NewCfg(), sqlStore)
+	sqlStore, cfg := db.InitTestDBwithCfg(t)
+	s := createService(t, cfg, sqlStore)
 
 	createConcurrentTokens(t, sqlStore)
 

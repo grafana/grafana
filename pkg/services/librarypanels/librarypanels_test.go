@@ -1499,8 +1499,8 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		cfg.RBACEnabled = false
 		orgID := int64(1)
 		role := org.RoleAdmin
-		sqlStore := db.InitTestDB(t)
-		dashboardStore := database.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
+		sqlStore, cfg := db.InitTestDBwithCfg(t)
+		dashboardStore := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 
 		features := featuremgmt.WithFeatures()
 		ac := acmock.New()

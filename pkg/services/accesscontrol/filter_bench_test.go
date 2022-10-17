@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	dsService "github.com/grafana/grafana/pkg/services/datasources/service"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -52,7 +51,7 @@ func benchmarkFilter(b *testing.B, numDs, numPermissions int) {
 	}
 }
 
-func setupFilterBenchmark(b *testing.B, numDs, numPermissions int) (*sqlstore.SQLStore, []accesscontrol.Permission) {
+func setupFilterBenchmark(b *testing.B, numDs, numPermissions int) (db.DB, []accesscontrol.Permission) {
 	b.Helper()
 	sqlStore := db.InitTestDB(b)
 	store := dsService.CreateStore(sqlStore, log.New("accesscontrol.test"))

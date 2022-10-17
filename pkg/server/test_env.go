@@ -1,18 +1,18 @@
 package server
 
 import (
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-func ProvideTestEnv(server *Server, store db.DB, ns *notifications.NotificationServiceMock, grpcServer grpcserver.Provider) (*TestEnv, error) {
+func ProvideTestEnv(server *Server, store *sqlstore.SQLStore, ns *notifications.NotificationServiceMock, grpcServer grpcserver.Provider) (*TestEnv, error) {
 	return &TestEnv{server, store, ns, grpcServer}, nil
 }
 
 type TestEnv struct {
 	Server              *Server
-	SQLStore            db.DB
+	SQLStore            *sqlstore.SQLStore
 	NotificationService *notifications.NotificationServiceMock
 	GRPCServer          grpcserver.Provider
 }

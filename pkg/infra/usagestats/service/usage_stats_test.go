@@ -12,18 +12,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/tracing"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -41,7 +39,7 @@ func Test_InterfaceContractValidity(t *testing.T) {
 func TestMetrics(t *testing.T) {
 	const metricName = "stats.test_metric.count"
 
-	sqlStore := mockstore.NewSQLStoreMock()
+	sqlStore := dbtest.NewFakeDB()
 	uss := createService(t, setting.Cfg{}, sqlStore, false)
 
 	uss.RegisterMetricsFunc(func(context.Context) (map[string]interface{}, error) {
@@ -150,7 +148,7 @@ func TestMetrics(t *testing.T) {
 }
 
 func TestGetUsageReport_IncludesMetrics(t *testing.T) {
-	sqlStore := mockstore.NewSQLStoreMock()
+	sqlStore := dbtest.NewFakeDB()
 	uss := createService(t, setting.Cfg{}, sqlStore, true)
 	metricName := "stats.test_metric.count"
 
@@ -168,7 +166,7 @@ func TestGetUsageReport_IncludesMetrics(t *testing.T) {
 func TestRegisterMetrics(t *testing.T) {
 	const goodMetricName = "stats.test_external_metric.count"
 
-	sqlStore := mockstore.NewSQLStoreMock()
+	sqlStore := dbtest.NewFakeDB()
 	uss := createService(t, setting.Cfg{}, sqlStore, false)
 	metrics := map[string]interface{}{"stats.test_metric.count": 1, "stats.test_metric_second.count": 2}
 
@@ -210,7 +208,7 @@ type httpResp struct {
 	err            error
 }
 
-func createService(t *testing.T, cfg setting.Cfg, sqlStore sqlstore.Store, withDB bool) *UsageStats {
+func createService(t *testing.T, cfg setting.Cfg, sqlStore db.DB, withDB bool) *UsageStats {
 	t.Helper()
 	if withDB {
 		sqlStore = db.InitTestDB(t)
