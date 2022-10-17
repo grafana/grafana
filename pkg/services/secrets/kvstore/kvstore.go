@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/secrets"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -20,7 +20,7 @@ const (
 )
 
 func ProvideService(
-	sqlStore sqlstore.Store,
+	sqlStore db.DB,
 	secretsService secrets.Service,
 	pluginsManager plugins.SecretsPluginManager,
 	kvstore kvstore.KVStore,

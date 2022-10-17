@@ -20,7 +20,7 @@ export interface DataLinksContextMenuApi {
   targetClassName?: string;
 }
 
-export const DataLinksContextMenu: React.FC<DataLinksContextMenuProps> = ({ children, links, style }) => {
+export const DataLinksContextMenu = ({ children, links, style }: DataLinksContextMenuProps) => {
   const itemsGroup: MenuItemsGroup[] = [{ items: linkModelToContextMenuItems(links), label: 'Data links' }];
   const linksCounter = itemsGroup[0].items.length;
   const renderMenuGroupItems = () => {

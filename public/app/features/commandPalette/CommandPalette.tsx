@@ -55,7 +55,7 @@ export const CommandPalette = () => {
 
   useEffect(() => {
     if (showing) {
-      reportInteraction('commandPalette_opened');
+      reportInteraction('command_palette_opened');
 
       // Do dashboard search on demand
       getDashboardNavActions('go/dashboard').then((dashAct) => {
