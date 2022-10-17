@@ -3,7 +3,6 @@
 package eval
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"runtime/debug"
@@ -17,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -71,21 +69,6 @@ func (e *invalidEvalResultFormatError) Error() string {
 
 func (e *invalidEvalResultFormatError) Unwrap() error {
 	return e.err
-}
-
-// EvaluationContext represents the context in which a condition is evaluated.
-type EvaluationContext struct {
-	Ctx  context.Context
-	User *user.SignedInUser
-	At   time.Time
-}
-
-func Context(ctx context.Context, user *user.SignedInUser) EvaluationContext {
-	return EvaluationContext{
-		Ctx:  ctx,
-		User: user,
-		At:   time.Now(),
-	}
 }
 
 // ExecutionResults contains the unevaluated results from executing
@@ -579,11 +562,10 @@ func (e *evaluatorImpl) ConditionEval(ctx EvaluationContext, condition models.Co
 
 // QueriesAndExpressionsEval executes queries and expressions and returns the result.
 func (e *evaluatorImpl) QueriesAndExpressionsEval(ctx EvaluationContext, data []models.AlertQuery) (*backend.QueryDataResponse, error) {
-	timeoutCtx, cancelFn := context.WithTimeout(ctx.Ctx, e.cfg.UnifiedAlerting.EvaluationTimeout)
+	timeoutCtx, cancelFn := ctx.WithTimeout(e.cfg.UnifiedAlerting.EvaluationTimeout)
 	defer cancelFn()
-	ctx.Ctx = timeoutCtx
 
-	execResult, err := executeQueriesAndExpressions(ctx, data, e.expressionService, e.dataSourceCache, e.log)
+	execResult, err := executeQueriesAndExpressions(timeoutCtx, data, e.expressionService, e.dataSourceCache, e.log)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute conditions: %w", err)
 	}
