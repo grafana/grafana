@@ -176,9 +176,8 @@ func (s State) String() string {
 
 // AlertExecCtx is the context provided for executing an alert condition.
 type AlertExecCtx struct {
-	User               *user.SignedInUser
-	ExpressionsEnabled bool
-	Log                log.Logger
+	User *user.SignedInUser
+	Log  log.Logger
 
 	Ctx context.Context
 }
@@ -591,7 +590,7 @@ func (e *evaluatorImpl) QueriesAndExpressionsEval(ctx EvaluationContext, data []
 	alertCtx, cancelFn := context.WithTimeout(ctx.Ctx, e.cfg.UnifiedAlerting.EvaluationTimeout)
 	defer cancelFn()
 
-	alertExecCtx := AlertExecCtx{User: ctx.User, Ctx: alertCtx, ExpressionsEnabled: e.cfg.ExpressionsEnabled, Log: e.log}
+	alertExecCtx := AlertExecCtx{User: ctx.User, Ctx: alertCtx, Log: e.log}
 
 	execResult, err := executeQueriesAndExpressions(alertExecCtx, data, ctx.At, e.expressionService, e.dataSourceCache)
 	if err != nil {
@@ -603,10 +602,9 @@ func (e *evaluatorImpl) QueriesAndExpressionsEval(ctx EvaluationContext, data []
 
 func (e *evaluatorImpl) Validate(ctx context.Context, user *user.SignedInUser, condition models.Condition) error {
 	evalctx := AlertExecCtx{
-		User:               user,
-		ExpressionsEnabled: e.cfg.ExpressionsEnabled,
-		Log:                e.log,
-		Ctx:                ctx,
+		User: user,
+		Log:  e.log,
+		Ctx:  ctx,
 	}
 
 	if len(condition.Data) == 0 {
