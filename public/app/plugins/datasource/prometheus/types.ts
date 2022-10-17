@@ -32,7 +32,7 @@ export interface PromOptions extends DataSourceJsonData {
   customQueryParameters?: string;
   disableMetricsLookup?: boolean;
   exemplarTraceIdDestinations?: ExemplarTraceIdDestination[];
-  prometheusFlavor?: PromApplication;
+  prometheusType?: PromApplication;
   prometheusVersion?: string;
 }
 

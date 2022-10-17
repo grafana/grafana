@@ -29,13 +29,5 @@ module.exports = {
     '\\.svg': '<rootDir>/public/test/mocks/svg.ts',
     '\\.css': '<rootDir>/public/test/mocks/style.ts',
     'monaco-editor/esm/vs/editor/editor.api': '<rootDir>/public/test/mocks/monaco.ts',
-
-    // lingui-macro (for i18n) makes use of babel-macro, which we do not enable in tests, so we
-    // provide our own mock component
-    '@lingui/macro': '<rootDir>/public/test/mocks/linguiMacro.tsx',
-
-    // i18n messages.js files are auto-generated, and may not exist when the tests are ran.
-    // Because we mock out <Trans /> anyway, we can mock the messages also
-    'locales/\\w+/messages$': '<rootDir>/public/test/mocks/i18nMessages.ts',
   },
 };

@@ -36,7 +36,7 @@ type SqlStore struct {
 	logger log.Logger
 }
 
-func CreateStore(db sqlstore.Store, logger log.Logger) *SqlStore {
+func CreateStore(db db.DB, logger log.Logger) *SqlStore {
 	return &SqlStore{db: db, logger: logger}
 }
 
@@ -144,7 +144,7 @@ func (ss *SqlStore) DeleteDataSource(ctx context.Context, cmd *datasources.Delet
 
 			// Remove associated AccessControl permissions
 			if _, errDeletingPerms := sess.Exec("DELETE FROM permission WHERE scope=?",
-				ac.Scope("datasources", "id", fmt.Sprint(dsQuery.Result.Id))); errDeletingPerms != nil {
+				ac.Scope(datasources.ScopeProvider.GetResourceScope(dsQuery.Result.Uid))); errDeletingPerms != nil {
 				return errDeletingPerms
 			}
 		}

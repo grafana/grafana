@@ -171,7 +171,11 @@ func (s *ServiceImpl) getServerAdminNode(c *models.ReqContext) *navtree.NavLink 
 	}
 
 	if len(adminNavLinks) > 0 {
-		adminNode.Url = adminNavLinks[0].Url
+		if s.cfg.IsFeatureToggleEnabled(featuremgmt.FlagTopnav) {
+			adminNode.Url = s.cfg.AppSubURL + "/admin/server"
+		} else {
+			adminNode.Url = adminNavLinks[0].Url
+		}
 	}
 
 	return adminNode

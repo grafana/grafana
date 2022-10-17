@@ -17,7 +17,7 @@ import { DataSourcePluginCategory, ThunkDispatch, ThunkResult } from 'app/types'
 
 import * as api from '../api';
 import { DATASOURCES_ROUTES } from '../constants';
-import { nameExits, findNewName } from '../utils';
+import { findNewName, nameExits } from '../utils';
 
 import { buildCategories } from './buildCategories';
 import { buildNavModel } from './navModel';
@@ -210,8 +210,8 @@ export function loadDataSourcePlugins(): ThunkResult<void> {
   };
 }
 
-export function updateDataSource(dataSource: DataSourceSettings): ThunkResult<void> {
-  return async (dispatch) => {
+export function updateDataSource(dataSource: DataSourceSettings) {
+  return async (dispatch: (dataSourceSettings: ThunkResult<Promise<DataSourceSettings>>) => DataSourceSettings) => {
     await api.updateDataSource(dataSource);
     await getDatasourceSrv().reload();
     return dispatch(loadDataSource(dataSource.uid));

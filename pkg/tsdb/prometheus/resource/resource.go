@@ -106,6 +106,7 @@ func (r *Resource) DetectVersion(ctx context.Context, req *backend.CallResourceR
 	}
 
 	resp, err := r.Execute(ctx, newReq)
+
 	if err != nil {
 		return nil, err
 	}

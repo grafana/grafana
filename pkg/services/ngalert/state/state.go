@@ -15,25 +15,52 @@ import (
 )
 
 type State struct {
-	AlertRuleUID string
 	OrgID        int64
-	CacheId      string
+	AlertRuleUID string
 
-	StartsAt   time.Time
-	EndsAt     time.Time
-	LastSentAt time.Time
+	// CacheID is a unique, opaque identifier for the state, and is used to find the state
+	// in the state cache. It tends to be derived from the state's labels.
+	CacheID string
 
-	State                eval.State
-	StateReason          string
+	// State represents the current state.
+	State eval.State
+
+	// StateReason is a textual description to explain why the state has its current state.
+	StateReason string
+
+	// Results contains the result of the current and previous evaluations.
+	Results []Evaluation
+
+	// Error is set if the current evaluation returned an error. If error is non-nil results
+	// can still contain the results of previous evaluations.
+	Error error
+
+	// Resolved is set to true if this state is the transitional state between Firing and Normal.
+	// All subsequent states will be false until the next transition from Firing to Normal.
+	Resolved bool
+
+	// Image contains an optional image for the state. It tends to be included in notifications
+	// as a visualization to show why the alert fired.
+	Image *models.Image
+
+	// Annotations contains the annotations from the alert rule. If an annotation is templated
+	// then the template is first evaluated to derive the final annotation.
+	Annotations map[string]string
+
+	// Labels contain the labels from the query and any custom labels from the alert rule.
+	// If a label is templated then the template is first evaluated to derive the final label.
+	Labels data.Labels
+
+	// Values contains the values of any instant vectors, reduce and math expressions, or classic
+	// conditions.
+	Values map[string]float64
+
+	StartsAt             time.Time
+	EndsAt               time.Time
+	LastSentAt           time.Time
 	LastEvaluationString string
 	LastEvaluationTime   time.Time
 	EvaluationDuration   time.Duration
-	Results              []Evaluation
-	Resolved             bool
-	Annotations          map[string]string
-	Labels               data.Labels
-	Image                *models.Image
-	Error                error
 }
 
 func (a *State) GetRuleKey() models.AlertRuleKey {
@@ -191,7 +218,7 @@ func (a *State) NeedsSending(resendDelay time.Duration) bool {
 func (a *State) Equals(b *State) bool {
 	return a.AlertRuleUID == b.AlertRuleUID &&
 		a.OrgID == b.OrgID &&
-		a.CacheId == b.CacheId &&
+		a.CacheID == b.CacheID &&
 		a.Labels.String() == b.Labels.String() &&
 		a.State.String() == b.State.String() &&
 		a.StartsAt == b.StartsAt &&

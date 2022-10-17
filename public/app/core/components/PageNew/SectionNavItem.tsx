@@ -4,17 +4,18 @@ import React from 'react';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2, Icon } from '@grafana/ui';
-import { HOME_NAV_ID } from 'app/core/reducers/navModel';
+
+import { getNavTitle } from '../NavBar/navBarItem-translations';
 
 export interface Props {
   item: NavModelItem;
+  isSectionRoot?: boolean;
 }
 
-export function SectionNavItem({ item }: Props) {
+export function SectionNavItem({ item, isSectionRoot = false }: Props) {
   const styles = useStyles2(getStyles);
 
   const children = item.children?.filter((x) => !x.hideFromTabs);
-  const isSectionRoot = item.parentItem?.id === HOME_NAV_ID;
   const hasActiveChild = Boolean(children?.length && children.find((x) => x.active));
 
   // If first root child is a section skip the bottom margin (as sections have top margin already)
@@ -40,7 +41,7 @@ export function SectionNavItem({ item }: Props) {
       >
         {isSectionRoot && item.icon && <Icon name={item.icon} />}
         {isSectionRoot && item.img && <img className={styles.sectionImg} src={item.img} alt={`logo of ${item.text}`} />}
-        {item.text}
+        {getNavTitle(item.id) ?? item.text}
         {item.tabSuffix && <item.tabSuffix className={styles.suffix} />}
       </a>
       {children?.map((child, index) => (

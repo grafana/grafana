@@ -3,7 +3,7 @@ import semver from 'semver/preload';
 
 import {
   DataSourcePluginOptionsEditorProps,
-  DataSourceSettings,
+  DataSourceSettings as DataSourceSettingsType,
   onUpdateDatasourceJsonDataOptionChecked,
   SelectableValue,
   updateDatasourcePluginJsonDataOption,
@@ -16,22 +16,26 @@ import {
   InlineSwitch,
   LegacyForms,
   regexValidation,
+  Select,
 } from '@grafana/ui';
 
+import { useUpdateDatasource } from '../../../../features/datasources/state';
 import { PromApplication, PromBuildInfoResponse } from '../../../../types/unified-alerting-dto';
 import { PromOptions } from '../types';
 
 import { ExemplarsSettings } from './ExemplarsSettings';
 import { PromFlavorVersions } from './PromFlavorVersions';
 
-const { Select, Input, FormField } = LegacyForms;
+const { Input, FormField } = LegacyForms;
 
 const httpOptions = [
   { value: 'POST', label: 'POST' },
   { value: 'GET', label: 'GET' },
 ];
 
-const prometheusFlavorSelectItems: Array<{ value: PromApplication; label: PromApplication }> = [
+type PrometheusSelectItemsType = Array<{ value: PromApplication; label: PromApplication }>;
+
+const prometheusFlavorSelectItems: PrometheusSelectItemsType = [
   { value: PromApplication.Prometheus, label: PromApplication.Prometheus },
   { value: PromApplication.Cortex, label: PromApplication.Cortex },
   { value: PromApplication.Mimir, label: PromApplication.Mimir },
@@ -67,6 +71,7 @@ const getVersionString = (version: string, flavor?: string): string | undefined 
   if (closestVersion) {
     const differenceBetweenActualAndClosest = semver.diff(closestVersion, version);
 
+    // Only return versions if the target is close to the actual.
     if (['patch', 'prepatch', 'prerelease', null].includes(differenceBetweenActualAndClosest)) {
       return closestVersion;
     }
@@ -75,34 +80,63 @@ const getVersionString = (version: string, flavor?: string): string | undefined 
   return;
 };
 
+const unableToDeterminePrometheusVersion = (error?: Error): void => {
+  console.warn('Error fetching version from buildinfo API, must manually select version!', error);
+};
+
+/**
+ * I don't like the daisy chain of network requests, and that we have to save on behalf of the user, but currently
+ * the backend doesn't allow for the prometheus client url to be passed in from the frontend, so we currently need to save it
+ * to the database before consumption.
+ *
+ * Since the prometheus version fields are below the url field, we can expect users to populate this field before
+ * hitting save and test at the bottom of the page. For this case we need to save the current fields before calling the
+ * resource to auto-detect the version.
+ *
+ * @param options
+ * @param onOptionsChange
+ * @param onUpdate
+ */
 const setPrometheusVersion = (
-  options: DataSourceSettings<PromOptions>,
-  onOptionsChange: (options: DataSourceSettings<PromOptions>) => void
+  options: DataSourceSettingsType<PromOptions>,
+  onOptionsChange: (options: DataSourceSettingsType<PromOptions>) => void,
+  onUpdate: (dataSource: DataSourceSettingsType<PromOptions>) => Promise<DataSourceSettingsType<PromOptions>>
 ) => {
-  getBackendSrv()
-    .get(`/api/datasources/${options.id}/resources/version-detect`)
-    .then((rawResponse: PromBuildInfoResponse) => {
-      if (rawResponse.data?.version && semver.valid(rawResponse.data?.version)) {
-        onOptionsChange({
-          ...options,
-          jsonData: {
-            ...options.jsonData,
-            prometheusVersion: getVersionString(rawResponse.data?.version, options.jsonData.prometheusFlavor),
-          },
+  // This will save the current state of the form, as the url is needed for this API call to function
+  onUpdate(options)
+    .then((updatedOptions) => {
+      getBackendSrv()
+        .get(`/api/datasources/${updatedOptions.id}/resources/version-detect`)
+        .then((rawResponse: PromBuildInfoResponse) => {
+          if (rawResponse.data?.version && semver.valid(rawResponse.data?.version)) {
+            const versionString = getVersionString(rawResponse.data?.version, updatedOptions.jsonData.prometheusType);
+            // If we got a successful response, let's update the backend with the version right away if it's new
+            if (versionString) {
+              onUpdate({
+                ...updatedOptions,
+                jsonData: {
+                  ...updatedOptions.jsonData,
+                  prometheusVersion: versionString,
+                },
+              }).then((updatedUpdatedOptions) => {
+                onOptionsChange(updatedUpdatedOptions);
+              });
+            }
+          } else {
+            unableToDeterminePrometheusVersion();
+          }
         });
-      } else {
-        // show UI to prompt manual population?
-        console.warn('Error fetching version from buildinfo API, user must manually select version!');
-      }
     })
     .catch((error) => {
-      // show UI to prompt manual population?
-      console.warn('Error fetching version from buildinfo API, user must manually select version!', error);
+      unableToDeterminePrometheusVersion(error);
     });
 };
 
 export const PromSettings = (props: Props) => {
   const { options, onOptionsChange } = props;
+
+  // This update call is typed as void, but it returns a response which we need
+  const onUpdate = useUpdateDatasource();
 
   // We are explicitly adding httpMethod so it is correctly displayed in dropdown. This way, it is more predictable for users.
   if (!options.jsonData.httpMethod) {
@@ -158,39 +192,39 @@ export const PromSettings = (props: Props) => {
             width={13}
             tooltip="You can use either POST or GET HTTP method to query your Prometheus data source. POST is the recommended method as it allows bigger queries. Change this to GET if you have a Prometheus version older than 2.1 or if POST requests are restricted in your network."
           >
-            HTTP Method
+            HTTP method
           </InlineFormLabel>
           <Select
             aria-label="Select HTTP method"
             options={httpOptions}
             value={httpOptions.find((o) => o.value === options.jsonData.httpMethod)}
             onChange={onChangeHandler('httpMethod', options, onOptionsChange)}
-            width={14}
+            className="width-6"
           />
         </div>
       </div>
 
-      <h3 className="page-heading">Prometheus</h3>
+      <h3 className="page-heading">Type and version</h3>
       <div className="gf-form-group">
         <div className="gf-form">
           <div className="gf-form">
             <FormField
-              label="Prometheus Flavor"
+              label="Prometheus type"
               labelWidth={13}
               inputEl={
                 <Select
-                  aria-label="Prometheus Flavor"
+                  aria-label="Prometheus type"
                   options={prometheusFlavorSelectItems}
-                  value={prometheusFlavorSelectItems.find((o) => o.value === options.jsonData.prometheusFlavor)}
+                  value={prometheusFlavorSelectItems.find((o) => o.value === options.jsonData.prometheusType)}
                   onChange={onChangeHandler(
-                    'prometheusFlavor',
+                    'prometheusType',
                     {
                       ...options,
                       jsonData: { ...options.jsonData, prometheusVersion: undefined },
                     },
                     (options) => {
                       // Check buildinfo api and set default version if we can
-                      setPrometheusVersion(options, onOptionsChange);
+                      setPrometheusVersion(options, onOptionsChange, onUpdate);
                       return onOptionsChange({
                         ...options,
                         jsonData: { ...options.jsonData, prometheusVersion: undefined },
@@ -200,28 +234,28 @@ export const PromSettings = (props: Props) => {
                   width={20}
                 />
               }
-              tooltip="Set this to the flavor of your prometheus database, e.g. Prometheus, Cortex, Mimir or Thanos."
+              tooltip="Set this to the type of your prometheus database, e.g. Prometheus, Cortex, Mimir or Thanos. Changing this field will save your current settings, and attempt to detect the version."
             />
           </div>
         </div>
         <div className="gf-form">
-          {options.jsonData.prometheusFlavor && (
+          {options.jsonData.prometheusType && (
             <div className="gf-form">
               <FormField
-                label={`${options.jsonData.prometheusFlavor} Version`}
+                label={`${options.jsonData.prometheusType} version`}
                 labelWidth={13}
                 inputEl={
                   <Select
-                    aria-label={`${options.jsonData.prometheusFlavor} Flavor`}
-                    options={PromFlavorVersions[options.jsonData.prometheusFlavor]}
-                    value={PromFlavorVersions[options.jsonData.prometheusFlavor]?.find(
+                    aria-label={`${options.jsonData.prometheusType} type`}
+                    options={PromFlavorVersions[options.jsonData.prometheusType]}
+                    value={PromFlavorVersions[options.jsonData.prometheusType]?.find(
                       (o) => o.value === options.jsonData.prometheusVersion
                     )}
                     onChange={onChangeHandler('prometheusVersion', options, onOptionsChange)}
                     width={20}
                   />
                 }
-                tooltip={`Use this to set the version of your ${options.jsonData.prometheusFlavor} instance. Auto-detects on change of field above.`}
+                tooltip={`Use this to set the version of your ${options.jsonData.prometheusType} instance if it is not automatically configured.`}
               />
             </div>
           )}
@@ -247,7 +281,7 @@ export const PromSettings = (props: Props) => {
             <FormField
               label="Custom query parameters"
               labelWidth={14}
-              tooltip="Add Custom parameters to all Prometheus or Thanos queries."
+              tooltip="Add custom parameters to all Prometheus or Thanos queries."
               inputEl={
                 <Input
                   className="width-25"

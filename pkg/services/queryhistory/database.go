@@ -202,7 +202,7 @@ func (s QueryHistoryService) starQuery(ctx context.Context, user *user.SignedInU
 
 		_, err = session.Insert(&queryHistoryStar)
 		if err != nil {
-			if s.SQLStore.Dialect.IsUniqueConstraintViolation(err) {
+			if s.SQLStore.GetDialect().IsUniqueConstraintViolation(err) {
 				return ErrQueryAlreadyStarred
 			}
 			return err

@@ -4,12 +4,13 @@ import React from 'react';
 
 import { RenderFunction } from '../../types';
 
-const StoryContainer: React.FC<{ width?: number; height?: number; showBoundaries: boolean }> = ({
-  children,
-  width,
-  height,
-  showBoundaries,
-}) => {
+interface Props {
+  width?: number;
+  height?: number;
+  showBoundaries: boolean;
+}
+
+const StoryContainer = ({ width, height, showBoundaries, children }: React.PropsWithChildren<Props>) => {
   const checkColor = '#f0f0f0';
   const finalWidth = width ? `${width}px` : '100%';
   const finalHeight = height !== 0 ? `${height}px` : 'auto';

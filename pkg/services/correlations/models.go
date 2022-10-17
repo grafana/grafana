@@ -33,12 +33,14 @@ func (t CorrelationConfigType) Validate() error {
 type CorrelationConfig struct {
 	// Field used to attach the correlation link
 	// required:true
+	// example: message
 	Field string `json:"field" binding:"Required"`
 	// Target type
 	// required:true
 	Type CorrelationConfigType `json:"type" binding:"Required"`
 	// Target data query
 	// required:true
+	// example: { "expr": "job=app" }
 	Target map[string]interface{} `json:"target" binding:"Required"`
 }
 
@@ -77,7 +79,6 @@ type Correlation struct {
 	// example: Logs to Traces
 	Description string `json:"description" xorm:"description"`
 	// Correlation Configuration
-	// example: { field: "job", target: { query: "job=app" } }
 	Config CorrelationConfig `json:"config" xorm:"jsonb config"`
 }
 
@@ -96,7 +97,7 @@ type CreateCorrelationCommand struct {
 	SourceUID         string `json:"-"`
 	OrgId             int64  `json:"-"`
 	SkipReadOnlyCheck bool   `json:"-"`
-	// Target data source UID to which the correlation is created
+	// Target data source UID to which the correlation is created. required if config.type = query
 	// example:PE1C5CBDA0504A6A3
 	TargetUID *string `json:"targetUID"`
 	// Optional label identifying the correlation
@@ -106,7 +107,6 @@ type CreateCorrelationCommand struct {
 	// example: Logs to Traces
 	Description string `json:"description"`
 	// Arbitrary configuration object handled in frontend
-	// example: { field: "job", target: { query: "job=app" } }
 	Config CorrelationConfig `json:"config" binding:"Required"`
 }
 
@@ -141,9 +141,32 @@ type UpdateCorrelationResponseBody struct {
 	Message string `json:"message"`
 }
 
+// swagger:model
+type CorrelationConfigUpdateDTO struct {
+	// Field used to attach the correlation link
+	// example: message
+	Field *string `json:"field"`
+	// Target type
+	Type *CorrelationConfigType `json:"type"`
+	// Target data query
+	// example: { "expr": "job=app" }
+	Target *map[string]interface{} `json:"target"`
+}
+
+func (c CorrelationConfigUpdateDTO) Validate() error {
+	if c.Type != nil {
+		if err := c.Type.Validate(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // UpdateCorrelationCommand is the command for updating a correlation
+// swagger:model
 type UpdateCorrelationCommand struct {
-	// UID of the correlation to be deleted.
+	// UID of the correlation to be updated.
 	UID       string `json:"-"`
 	SourceUID string `json:"-"`
 	OrgId     int64  `json:"-"`
@@ -154,6 +177,22 @@ type UpdateCorrelationCommand struct {
 	// Optional description of the correlation
 	// example: Logs to Traces
 	Description *string `json:"description"`
+	// Correlation Configuration
+	Config *CorrelationConfigUpdateDTO `json:"config"`
+}
+
+func (c UpdateCorrelationCommand) Validate() error {
+	if c.Config != nil {
+		if err := c.Config.Validate(); err != nil {
+			return err
+		}
+	}
+
+	if c.Label == nil && c.Description == nil && (c.Config == nil || (c.Config.Field == nil && c.Config.Type == nil && c.Config.Target == nil)) {
+		return ErrUpdateCorrelationEmptyParams
+	}
+
+	return nil
 }
 
 // GetCorrelationQuery is the query to retrieve a single correlation
