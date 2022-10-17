@@ -743,6 +743,49 @@ def e2e_tests_step(suite, edition, port=3001, tries=None):
         ],
     }
 
+def cloud_plugins_e2e_tests_step(suite, edition, cloud, port=3001, video="false", tries=None, trigger=None):
+    cmd = './bin/build e2e-tests --port {} --suite {} --video {}'.format(port, suite, video)
+    if tries:
+        cmd += ' --tries {}'.format(tries)
+    environment = {}
+    if cloud == 'azure':
+        environment = {
+            'CYPRESS_CI': 'true',
+            'HOST': 'grafana-server' + enterprise2_suffix(edition),
+            'GITHUB_TOKEN': from_secret('github_token_pr'),
+            'CYPRESS_AZURE_SP_APP_ID': from_secret('azure_sp_app_id'),
+            'CYPRESS_AZURE_SP_PASSWORD': from_secret('azure_sp_pw'),
+            'CYPRESS_AZURE_TENANT': from_secret('azure_tenant')
+        }
+    gitcmd = 'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/cloud-data-sources" --depth=1'
+    branch = "${DRONE_SOURCE_BRANCH}".replace("/", "-")
+    step = {
+        'name': 'end-to-end-tests-{}-{}'.format(suite, cloud) + enterprise2_suffix(edition),
+        'image': 'cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97',
+        'depends_on': [
+            'grafana-server',
+        ],
+        'environment': environment,
+        'commands': [
+            'apt-get update && apt-get install git curl jq --yes',
+            'cd ..',
+            gitcmd,
+            'cd cloud-data-sources/e2e-scripts',
+            './scripts/install-dependencies-ci.sh {}'.format(cloud),
+            'export PATH=$PATH:/root/.pulumi/bin',
+            './scripts/{}-login.sh'.format(cloud),
+            './scripts/install.sh {}'.format(cloud),
+            './scripts/azure-pulumi-login.sh {} deploy {}'.format(cloud, branch),
+            'cd ../../grafana',
+            cmd,
+            'cd ../cloud-data-sources/e2e-scripts',
+            './scripts/destroy.sh {} destroy {}'.format(cloud, branch),
+            'cd ../.. && rm -rf cloud-data-sources'
+        ],
+    }
+    if trigger:
+        step = dict(step, when=trigger)
+    return step
 
 def build_docs_website_step():
     return {

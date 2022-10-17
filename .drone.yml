@@ -493,6 +493,39 @@ steps:
   image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
   name: end-to-end-tests-various-suite
 - commands:
+  - apt-get update && apt-get install git curl jq --yes
+  - cd ..
+  - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/cloud-data-sources" --depth=1
+  - cd cloud-data-sources/e2e-scripts
+  - ./scripts/install-dependencies-ci.sh azure
+  - export PATH=$PATH:/root/.pulumi/bin
+  - ./scripts/azure-login.sh
+  - ./scripts/install.sh azure
+  - ./scripts/azure-pulumi-login.sh azure deploy ${DRONE_SOURCE_BRANCH}
+  - cd ../../grafana
+  - ./bin/build e2e-tests --port 3001 --suite cloud-plugins-suite --video false
+  - cd ../cloud-data-sources/e2e-scripts
+  - ./scripts/destroy.sh azure destroy ${DRONE_SOURCE_BRANCH}
+  - cd ../.. && rm -rf cloud-data-sources
+  depends_on:
+  - grafana-server
+  environment:
+    CYPRESS_AZURE_SP_APP_ID:
+      from_secret: azure_sp_app_id
+    CYPRESS_AZURE_SP_PASSWORD:
+      from_secret: azure_sp_pw
+    CYPRESS_AZURE_TENANT:
+      from_secret: azure_tenant
+    CYPRESS_CI: "true"
+    GITHUB_TOKEN:
+      from_secret: github_token_pr
+    HOST: grafana-server
+  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  name: end-to-end-tests-cloud-plugins-suite-azure
+  when:
+    repo:
+    - grafana/grafana
+- commands:
   - apt-get update
   - apt-get install -yq zip
   - ls -lah ./e2e
@@ -1284,6 +1317,39 @@ steps:
     HOST: grafana-server
   image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
   name: end-to-end-tests-various-suite
+- commands:
+  - apt-get update && apt-get install git curl jq --yes
+  - cd ..
+  - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/cloud-data-sources" --depth=1
+  - cd cloud-data-sources/e2e-scripts
+  - ./scripts/install-dependencies-ci.sh azure
+  - export PATH=$PATH:/root/.pulumi/bin
+  - ./scripts/azure-login.sh
+  - ./scripts/install.sh azure
+  - ./scripts/azure-pulumi-login.sh azure deploy ${DRONE_SOURCE_BRANCH}
+  - cd ../../grafana
+  - ./bin/build e2e-tests --port 3001 --suite cloud-plugins-suite --video false
+  - cd ../cloud-data-sources/e2e-scripts
+  - ./scripts/destroy.sh azure destroy ${DRONE_SOURCE_BRANCH}
+  - cd ../.. && rm -rf cloud-data-sources
+  depends_on:
+  - grafana-server
+  environment:
+    CYPRESS_AZURE_SP_APP_ID:
+      from_secret: azure_sp_app_id
+    CYPRESS_AZURE_SP_PASSWORD:
+      from_secret: azure_sp_pw
+    CYPRESS_AZURE_TENANT:
+      from_secret: azure_tenant
+    CYPRESS_CI: "true"
+    GITHUB_TOKEN:
+      from_secret: github_token_pr
+    HOST: grafana-server
+  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  name: end-to-end-tests-cloud-plugins-suite-azure
+  when:
+    repo:
+    - grafana/grafana
 - commands:
   - apt-get update
   - apt-get install -yq zip
@@ -5570,6 +5636,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 7855c8576dd6072319a95a944c642df1d792bc90c3a71b38366196cc86d92d57
+hmac: 4af6634aa8266afd4746d05704a061fcd36fed4e1fae6801665e5f91d863f8a0
 
 ...
