@@ -12,8 +12,11 @@ export interface PageProps extends HTMLAttributes<HTMLDivElement> {
   navId?: string;
   navModel?: NavModel;
   pageNav?: NavModelItem;
-  subTitle?: React.ReactNode;
   layout?: PageLayoutType;
+  /** Set page actions */
+  actions?: React.ReactNode;
+  /** Override or set custom page sub title */
+  subTitle?: React.ReactNode;
   /** Something we can remove when we remove the old nav. */
   toolbar?: React.ReactNode;
   /** Can be used to get the scroll container element to access scroll position */
