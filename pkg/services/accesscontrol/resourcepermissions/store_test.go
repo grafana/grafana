@@ -336,10 +336,11 @@ func TestIntegrationStore_SetResourcePermissions(t *testing.T) {
 }
 
 type getResourcePermissionsTest struct {
-	desc     string
-	user     *user.SignedInUser
-	numUsers int
-	query    GetResourcePermissionsQuery
+	desc        string
+	user        *user.SignedInUser
+	numUsers    int
+	query       GetResourcePermissionsQuery
+	expectedLen int
 }
 
 func TestIntegrationStore_GetResourcePermissions(t *testing.T) {
@@ -353,11 +354,13 @@ func TestIntegrationStore_GetResourcePermissions(t *testing.T) {
 				}},
 			numUsers: 3,
 			query: GetResourcePermissionsQuery{
-				Actions:           []string{"datasources:query"},
-				Resource:          "datasources",
-				ResourceID:        "1",
-				ResourceAttribute: "uid",
+				Actions:              []string{"datasources:query"},
+				Resource:             "datasources",
+				ResourceID:           "1",
+				ResourceAttribute:    "uid",
+				EnforceAccessControl: true,
 			},
+			expectedLen: 4,
 		},
 		{
 			desc: "should return manage permissions for all resource ids",
@@ -368,12 +371,48 @@ func TestIntegrationStore_GetResourcePermissions(t *testing.T) {
 				}},
 			numUsers: 3,
 			query: GetResourcePermissionsQuery{
-				Actions:           []string{"datasources:query"},
-				Resource:          "datasources",
-				ResourceID:        "1",
-				ResourceAttribute: "uid",
-				OnlyManaged:       true,
+				Actions:              []string{"datasources:query"},
+				Resource:             "datasources",
+				ResourceID:           "1",
+				ResourceAttribute:    "uid",
+				OnlyManaged:          true,
+				EnforceAccessControl: true,
 			},
+			expectedLen: 3,
+		},
+		{
+			desc: "should return users caller can read",
+			user: &user.SignedInUser{
+				OrgID: 1,
+				Permissions: map[int64]map[string][]string{
+					1: {accesscontrol.ActionOrgUsersRead: {"users:id:1", "users:id:3"}},
+				}},
+			numUsers: 3,
+			query: GetResourcePermissionsQuery{
+				Actions:              []string{"datasources:query"},
+				Resource:             "datasources",
+				ResourceID:           "1",
+				ResourceAttribute:    "uid",
+				OnlyManaged:          true,
+				EnforceAccessControl: true,
+			},
+			expectedLen: 2,
+		},
+		{
+			desc: "should return permissions for all users when access control is not enforces",
+			user: &user.SignedInUser{
+				OrgID:       1,
+				Permissions: map[int64]map[string][]string{1: {}}},
+			numUsers: 3,
+			query: GetResourcePermissionsQuery{
+				Actions:              []string{"datasources:query"},
+				Resource:             "datasources",
+				ResourceID:           "1",
+				ResourceAttribute:    "uid",
+				OnlyManaged:          true,
+				EnforceAccessControl: false,
+			},
+			expectedLen: 3,
 		},
 	}
 
@@ -421,12 +460,7 @@ func TestIntegrationStore_GetResourcePermissions(t *testing.T) {
 			tt.query.User = tt.user
 			permissions, err := store.GetResourcePermissions(context.Background(), tt.user.OrgID, tt.query)
 			require.NoError(t, err)
-
-			expectedLen := tt.numUsers
-			if !tt.query.OnlyManaged {
-				expectedLen += 1
-			}
-			assert.Len(t, permissions, expectedLen)
+			assert.Len(t, permissions, tt.expectedLen)
 		})
 	}
 }
