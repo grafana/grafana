@@ -45,9 +45,9 @@ func TestResolver(t *testing.T) {
 	p3.ID = "xyz"
 
 	pluginRegistry := registry.ProvideService()
-	pluginRegistry.Add(ctxOrg1, p1)
-	pluginRegistry.Add(ctxOrg1, p2)
-	pluginRegistry.Add(ctxOrg1, p3)
+	_ = pluginRegistry.Add(ctxOrg1, p1)
+	_ = pluginRegistry.Add(ctxOrg1, p2)
+	_ = pluginRegistry.Add(ctxOrg1, p3)
 
 	provider := ProvideObjectReferenceResolver(ds, pluginRegistry)
 
