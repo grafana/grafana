@@ -67,7 +67,7 @@ services:
     logging: *default-logging
 
   tempo:
-    image: kvrhdn/tempo:traceql-engine-62aa7804b-221007-1504
+    image: kvrhdn/tempo:traceql-engine-519c87251-221017-0957
     command:
       - --config.file=/etc/tempo.yaml
       - --search.enabled=true
