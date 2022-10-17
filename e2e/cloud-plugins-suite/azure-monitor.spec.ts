@@ -97,7 +97,7 @@ e2e.scenario({
   itName: 'fills out datasource connection configuration',
   scenario: () => {
     // This variable will be set in CI
-    const CI = process.env.CI;
+    const CI = e2e.env('CI');
     if (CI) {
       provisionAzureMonitorDatasources([
         {
@@ -105,10 +105,10 @@ e2e.scenario({
             {
               jsonData: {
                 cloudName: 'Azure',
-                tenantId: process.env.AZURE_TENANT,
-                clientId: process.env.AZURE_SP_APP_ID,
+                tenantId: e2e.env('AZURE_TENANT'),
+                clientId: e2e.env('AZURE_SP_APP_ID'),
               },
-              secureJsonData: { clientSecret: process.env.AZURE_SP_PASSWORD },
+              secureJsonData: { clientSecret: e2e.env('AZURE_SP_PASSWORD') },
             },
           ],
         },
@@ -141,7 +141,7 @@ e2e.scenario({
       visitDashboardAtStart: false,
       queriesForm: () => {
         e2eSelectors.queryEditor.resourcePicker.select.button().click();
-        e2eSelectors.queryEditor.resourcePicker.search.input().type('azmonmetricstest{enter}');
+        e2eSelectors.queryEditor.resourcePicker.search.input().type('azmonmetricstest').wait(500).type('{enter}');
         e2e().contains('azmonmetricstest').click();
         e2eSelectors.queryEditor.resourcePicker.apply.button().click();
         e2e().contains('microsoft.storage/storageaccounts');
@@ -155,7 +155,7 @@ e2e.scenario({
       queriesForm: () => {
         e2eSelectors.queryEditor.header.select().find('input').type('Logs{enter}');
         e2eSelectors.queryEditor.resourcePicker.select.button().click();
-        e2eSelectors.queryEditor.resourcePicker.search.input().type('azmonlogstest{enter}');
+        e2eSelectors.queryEditor.resourcePicker.search.input().type('azmonlogstest').wait(500).type('{enter}');
         e2e().contains('azmonlogstest').click();
         e2eSelectors.queryEditor.resourcePicker.apply.button().click();
         e2e.components.CodeEditor.container().type('AzureDiagnostics');
@@ -203,9 +203,9 @@ e2e.scenario({
       namespace: '$namespace',
     });
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('subscription').click();
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('Primary Subscription').click();
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('grafanalabs-datasources-dev').click();
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('resourceGroups').click();
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('cloud-plugins-e2e-test').click();
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('test-resources').click();
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('namespaces').parent().find('button').click();
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('namespaces')
       .parent()
