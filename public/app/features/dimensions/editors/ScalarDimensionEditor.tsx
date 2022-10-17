@@ -54,7 +54,7 @@ export const ScalarDimensionEditor: FC<StandardEditorProps<ScalarDimensionConfig
   );
 
   const onModeChange = useCallback(
-    (mode) => {
+    (mode: ScalarDimensionMode) => {
       onChange({
         ...value,
         mode,
