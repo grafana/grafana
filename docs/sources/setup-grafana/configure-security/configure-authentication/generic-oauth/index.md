@@ -243,16 +243,16 @@ For more information, refer to the [JMESPath examples](#jmespath-examples).
 > **Warning**: Currently if no organization role mapping is found for a user, Grafana doesn't
 > update the user's organization role. This is going to change in Grafana 10. To avoid overriding manually set roles,
 > enable the `oauth_skip_org_role_update_sync` option.
-> See [configure-grafana]({{< relref "../../configure-grafana#oauth_skip_org_role_update_sync" >}}) for more information.
+> See [configure-grafana]({{< relref "../../../configure-grafana#oauth_skip_org_role_update_sync" >}}) for more information.
 
 On first login, if the`role_attribute_path` property does not return a role, then the user is assigned the role
-specified by [the `auto_assign_org_role` option]({{< relref "../../configure-grafana#auto_assign_org_role" >}}).
+specified by [the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
 You can disable this default role assignment by setting `role_attribute_strict = true`.
 It denies user access if no role or an invalid role is returned.
 
 > **Warning**: With Grafana 10, **on every login**, if the`role_attribute_path` property does not return a role,
 > then the user is assigned the role specified by
-> [the `auto_assign_org_role` option]({{< relref "../../configure-grafana#auto_assign_org_role" >}}).
+> [the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
 
 ### JMESPath examples
 
@@ -336,7 +336,7 @@ With Team Sync you can map your Generic OAuth groups to teams in Grafana so that
 
 Generic OAuth groups can be referenced by group ID, like `8bab1c86-8fba-33e5-2089-1d1c80ec267d` or `myteam`.
 
-[Learn more about Team Sync]({{< relref "../configure-team-sync/" >}})
+[Learn more about Team Sync]({{< relref "../../configure-team-sync/" >}})
 
 Config:
 
