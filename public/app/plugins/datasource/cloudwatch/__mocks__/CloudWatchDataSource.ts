@@ -61,7 +61,9 @@ export const CloudWatchSettings: DataSourceInstanceSettings<CloudWatchJsonData> 
 export function setupMockedDataSource({
   variables,
   mockGetVariableName = true,
+  getMock = jest.fn(),
 }: {
+  getMock?: jest.Func;
   variables?: CustomVariableModel[];
   mockGetVariableName?: boolean;
 } = {}) {
@@ -84,7 +86,7 @@ export function setupMockedDataSource({
   setBackendSrv({
     ...getBackendSrv(),
     fetch: fetchMock,
-    get: jest.fn(),
+    get: getMock,
   });
 
   return { datasource, fetchMock, templateService, timeSrv };
