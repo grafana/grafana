@@ -3,11 +3,11 @@ import classNames from 'classnames';
 import React, { PureComponent } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Tooltip } from '@grafana/ui';
+import { Tooltip, Themeable2, withTheme2, clearButtonStyles } from '@grafana/ui';
 
 import { VariableOption } from '../../types';
 
-export interface Props extends React.HTMLProps<HTMLUListElement> {
+export interface Props extends React.HTMLProps<HTMLUListElement>, Themeable2 {
   multi: boolean;
   values: VariableOption[];
   selectedValues: VariableOption[];
@@ -20,7 +20,7 @@ export interface Props extends React.HTMLProps<HTMLUListElement> {
   id: string;
 }
 
-export class VariableOptions extends PureComponent<Props> {
+class VariableOptions extends PureComponent<Props> {
   onToggle = (option: VariableOption) => (event: React.MouseEvent<HTMLButtonElement>) => {
     const clearOthers = event.shiftKey || event.ctrlKey || event.metaKey;
     this.handleEvent(event);
@@ -58,7 +58,7 @@ export class VariableOptions extends PureComponent<Props> {
   }
 
   renderOption(option: VariableOption, index: number) {
-    const { highlightIndex } = this.props;
+    const { highlightIndex, theme } = this.props;
     const selectClass = option.selected ? 'variable-option pointer selected' : 'variable-option pointer';
     const highlightClass = index === highlightIndex ? `${selectClass} highlighted` : selectClass;
 
@@ -68,7 +68,7 @@ export class VariableOptions extends PureComponent<Props> {
           role="checkbox"
           type="button"
           aria-checked={option.selected}
-          className={classNames(highlightClass, noStyledButton)}
+          className={classNames(highlightClass, clearButtonStyles(theme), noStyledButton)}
           onClick={this.onToggle(option)}
         >
           <span className="variable-option-icon"></span>
@@ -81,7 +81,7 @@ export class VariableOptions extends PureComponent<Props> {
   }
 
   renderMultiToggle() {
-    const { multi, selectedValues } = this.props;
+    const { multi, selectedValues, theme } = this.props;
 
     if (!multi) {
       return null;
@@ -94,7 +94,7 @@ export class VariableOptions extends PureComponent<Props> {
             selectedValues.length > 1
               ? 'variable-options-column-header many-selected'
               : 'variable-options-column-header'
-          } ${noStyledButton}`}
+          } ${noStyledButton} ${clearButtonStyles(theme)}`}
           role="checkbox"
           aria-checked={selectedValues.length > 1 ? 'mixed' : 'false'}
           onClick={this.onToggleAll}
@@ -117,8 +117,8 @@ const listStyles = cx(
 );
 
 const noStyledButton = css`
-  background: transparent;
-  border: none;
   width: 100%;
   text-align: left;
 `;
+
+export default withTheme2(VariableOptions);
