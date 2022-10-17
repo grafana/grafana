@@ -104,6 +104,8 @@ func (ss *SQLStore) GetOrgQuotas(ctx context.Context, query *models.GetOrgQuotas
 						dialect.Quote("user"),
 						dialect.BooleanStr(false),
 					)
+				} else if q.Target == dialect.Quote("user") {
+					rawSQL += fmt.Sprintf(" WHERE is_service_account=%s", dialect.BooleanStr(false))
 				}
 
 				resp := make([]*targetCount, 0)
@@ -220,10 +222,6 @@ func (ss *SQLStore) GetUserQuotas(ctx context.Context, query *models.GetUserQuot
 			if q.Target != alertRuleTarget || query.UnifiedAlertingEnabled {
 				// get quota used.
 				rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s where user_id=?", dialect.Quote(q.Target))
-				// removing service accounts from the count
-				if q.Target == dialect.Quote("user") {
-					rawSQL += " AND " + notServiceAccount(dialect)
-				}
 				resp := make([]*targetCount, 0)
 				if err := sess.SQL(rawSQL, q.UserId).Find(&resp); err != nil {
 					return err
@@ -296,9 +294,9 @@ func (ss *SQLStore) GetGlobalQuotaByTarget(ctx context.Context, query *models.Ge
 			if query.Target == dashboardTarget {
 				rawSQL += fmt.Sprintf(" WHERE is_folder=%s", dialect.BooleanStr(false))
 			}
-			// removing service accounts from the count
+			// removing service accounts from count
 			if query.Target == dialect.Quote("user") {
-				rawSQL += notServiceAccount(dialect)
+				rawSQL += fmt.Sprintf(" WHERE is_service_account=%s", dialect.BooleanStr(false))
 			}
 			resp := make([]*targetCount, 0)
 			if err := sess.SQL(rawSQL).Find(&resp); err != nil {
