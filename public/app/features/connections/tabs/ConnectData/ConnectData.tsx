@@ -29,6 +29,7 @@ export function ConnectData() {
     () => plugins.map((plugin) => ({ id: plugin.id, name: plugin.name, logo: plugin.info.logos.small })),
     [plugins]
   );
+  const showNoResults = useMemo(() => !isLoading && !error && plugins.length < 1, [isLoading, error, plugins]);
 
   return (
     <>
@@ -37,7 +38,7 @@ export function ConnectData() {
       <div className={styles.spacer} />
       <CategoryHeader iconName="database" label="Data sources" />
       <CardGrid items={cardGridItems} isLoading={isLoading} error={error} />
-      {plugins.length < 1 && <NoResults />}
+      {showNoResults && <NoResults />}
     </>
   );
 }
