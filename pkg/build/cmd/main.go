@@ -58,6 +58,11 @@ func main() {
 					Value: "grafana-server",
 					Usage: "Specify the server host",
 				},
+				&cli.StringFlag{
+					Name:  "video",
+					Value: "true",
+					Usage: "Specify if videos should be recorded",
+				},
 			},
 		},
 		{
