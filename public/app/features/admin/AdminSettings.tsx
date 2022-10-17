@@ -7,10 +7,7 @@ import { Page } from 'app/core/components/Page/Page';
 type Settings = { [key: string]: { [key: string]: string } };
 
 function AdminSettings() {
-  const { loading, value: settings } = useAsync(
-    () => getBackendSrv().get('/api/admin/settings') as Promise<Settings>,
-    []
-  );
+  const { loading, value: settings } = useAsync(() => getBackendSrv().get<Settings>('/api/admin/settings'), []);
 
   return (
     <Page navId="server-settings">
