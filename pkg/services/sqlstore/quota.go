@@ -104,10 +104,7 @@ func (ss *SQLStore) GetOrgQuotas(ctx context.Context, query *models.GetOrgQuotas
 						dialect.Quote("user"),
 						dialect.BooleanStr(false),
 					)
-				} else if q.Target == dialect.Quote("user") {
-					rawSQL += fmt.Sprintf(" WHERE is_service_account=%s", dialect.BooleanStr(false))
 				}
-
 				resp := make([]*targetCount, 0)
 				if err := sess.SQL(rawSQL, q.OrgId).Find(&resp); err != nil {
 					return err
