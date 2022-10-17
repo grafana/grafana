@@ -144,10 +144,10 @@ import (
 
 // swagger:route GET /api/alertmanager/grafana/config/api/v1/receivers alertmanager RouteGetGrafanaReceivers
 //
-// Get a list of all receivers.
+// Get a list of all receivers
 //
 //     Responses:
-//       200: receivers
+//       200: receiversResponse
 
 // swagger:route POST /api/alertmanager/grafana/config/api/v1/receivers/test alertmanager RoutePostTestGrafanaReceivers
 //
@@ -416,8 +416,11 @@ type AlertGroup = amv2.AlertGroup
 // swagger:model receiver
 type Receiver = amv2.Receiver
 
-// swagger:model receivers
-type Receivers = []amv2.Receiver
+// swagger:response receiversResponse
+type ReceiversResponse struct {
+	// in:body
+	Body []amv2.Receiver
+}
 
 // swagger:model integration
 type Integration = amv2.Integration
