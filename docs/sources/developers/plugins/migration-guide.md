@@ -68,7 +68,7 @@ This guide helps you identify the steps required to update a plugin from the Gra
 
 ### React and React-dom as peer dependencies
 
-In earlier versions of Grafana packages react and react-dom were installed during a `yarn install` regardless of a plugins dependencies. In 9.2.0 the `@grafana` packages declare these react packages as peerDependencies and will need adding to a plugins `package.json` file for test commands to continue to run successfully.
+In earlier versions of Grafana packages `react` and `react-dom` were installed during a `yarn install` regardless of a plugins dependencies. In 9.2.0 the `@grafana` packages declare these react packages as peerDependencies and will need adding to a plugins `package.json` file for test commands to continue to run successfully.
 
 Example:
 
