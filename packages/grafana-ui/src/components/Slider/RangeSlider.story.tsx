@@ -27,7 +27,7 @@ const meta: ComponentMeta<typeof RangeSlider> = {
 export const Basic: ComponentStory<typeof RangeSlider> = (args) => {
   return (
     <div style={{ width: '200px', height: '200px' }}>
-      <RangeSlider value={[10, 20]} {...args} />
+      <RangeSlider value={[10, 62]} {...args} />
     </div>
   );
 };
