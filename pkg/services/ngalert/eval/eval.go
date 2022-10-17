@@ -164,6 +164,7 @@ func buildDatasourceHeaders(ctx EvaluationContext) map[string]string {
 		//
 		// Note: The spelling of this headers is intentionally degenerate from the others for compatibility reasons.
 		// When sent over a network, the key of this header is canonicalized to "Fromalert".
+		// However, some datasources still compare against the string "FromAlert".
 		"FromAlert": "true",
 
 		"X-Cache-Skip": "true",
@@ -179,12 +180,8 @@ func buildDatasourceHeaders(ctx EvaluationContext) map[string]string {
 // getExprRequest validates the condition, gets the datasource information and creates an expr.Request from it.
 func getExprRequest(ctx EvaluationContext, data []models.AlertQuery, dsCacheService datasources.CacheService) (*expr.Request, error) {
 	req := &expr.Request{
-		OrgId: ctx.User.OrgID,
-		Headers: map[string]string{
-
-			"FromAlert":    "true",
-			"X-Cache-Skip": "true",
-		},
+		OrgId:   ctx.User.OrgID,
+		Headers: buildDatasourceHeaders(ctx),
 	}
 
 	datasources := make(map[string]*datasources.DataSource, len(data))
