@@ -1,8 +1,8 @@
 import { createAction, createReducer } from '@reduxjs/toolkit';
-import produce from 'immer';
 
 import { DataQuery, RelativeTimeRange, getDefaultRelativeTimeRange } from '@grafana/data';
 import { getNextRefIdChar } from 'app/core/utils/query';
+import { findDataSourceFromExpressionRecursive } from 'app/features/alerting/utils/dataSourceFromExpression';
 import {
   dataSource as expressionDatasource,
   ExpressionDatasourceUID,
@@ -18,25 +18,6 @@ import { queriesWithUpdatedReferences, refIdExists } from '../util';
 export interface QueriesAndExpressionsState {
   queries: AlertQuery[];
 }
-
-const findDataSourceFromExpressionRecursive = (
-  queries: AlertQuery[],
-  alertQuery: AlertQuery
-): AlertQuery | null | undefined => {
-  // We have the data source in this dataQuery
-  if (alertQuery.datasourceUid !== ExpressionDatasourceUID) {
-    return alertQuery;
-  }
-  // alertQuery it's an expression, we have to traverse all the tree up to the data source
-  else {
-    const alertQueryReferenced = queries.find((alertQuery_) => alertQuery_.refId === alertQuery.model.expression);
-    if (alertQueryReferenced) {
-      return findDataSourceFromExpressionRecursive(queries, alertQueryReferenced);
-    } else {
-      return null;
-    }
-  }
-};
 
 const findDataSourceFromExpression = (
   queries: AlertQuery[],
@@ -115,13 +96,12 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
           : getDefaultRelativeTimeRange();
 
         if (query.refId === payload.refId) {
-          return produce(query, (draft) => {
-            draft.model = payload;
-            payload.type === ExpressionQueryType.resample && (draft.relativeTimeRange = relativeTimeRange);
-          });
-        } else {
-          return query;
+          query.model = payload;
+          if (payload.type === ExpressionQueryType.resample) {
+            query.relativeTimeRange = relativeTimeRange;
+          }
         }
+        return query;
       });
     })
     .addCase(updateExpressionTimeRange, (state) => {
@@ -130,12 +110,9 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
         if (query.datasourceUid === ExpressionDatasourceUID) {
           const dataSource = findDataSourceFromExpression(state.queries, query.model.expression);
           const relativeTimeRange = dataSource ? dataSource.relativeTimeRange : getDefaultRelativeTimeRange();
-          return produce(query, (draft) => {
-            draft.relativeTimeRange = relativeTimeRange;
-          });
-        } else {
-          return query;
+          query.relativeTimeRange = relativeTimeRange;
         }
+        return query;
       });
       state.queries = newState;
     })
