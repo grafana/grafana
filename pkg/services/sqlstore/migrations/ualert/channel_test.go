@@ -140,11 +140,11 @@ func TestCreateRoute(t *testing.T) {
 		{
 			name: "notification channel should be escaped for regex in the matcher",
 			recv: &PostableApiReceiver{
-				Name: `. ^ $ * + - ? " ( ) [ ] { } \ |`,
+				Name: `. ^ $ * + - ? ( ) [ ] { } \ |`,
 			},
 			expected: &Route{
-				Receiver:       `. ^ $ * + - ? " ( ) [ ] { } \ |`,
-				ObjectMatchers: ObjectMatchers{{Type: 2, Name: ContactLabel, Value: `.*"\. \^ \$ \* \+ - \? \\" \( \) \[ \] \{ \} \\ \|".*`}},
+				Receiver:       `. ^ $ * + - ? ( ) [ ] { } \ |`,
+				ObjectMatchers: ObjectMatchers{{Type: 2, Name: ContactLabel, Value: `.*"\. \^ \$ \* \+ - \? \( \) \[ \] \{ \} \\ \|".*`}},
 				Routes:         nil,
 				Continue:       true,
 				GroupByStr:     nil,
@@ -218,6 +218,58 @@ func TestCreateReceivers(t *testing.T) {
 				{
 					Name:                    "name2",
 					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name2"}},
+				},
+			},
+		},
+		{
+			name:        "when given notification channel contains double quote sanitize with underscore",
+			allChannels: []*notificationChannel{createNotChannel(t, "uid1", int64(1), "name\"1")},
+			expRecvMap: map[uidOrID]*PostableApiReceiver{
+				"uid1": {
+					Name:                    "name_1",
+					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name_1"}},
+				},
+				int64(1): {
+					Name:                    "name_1",
+					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name_1"}},
+				},
+			},
+			expRecv: []*PostableApiReceiver{
+				{
+					Name:                    "name_1",
+					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name_1"}},
+				},
+			},
+		},
+		{
+			name:        "when given notification channels collide after sanitization add short hash to end",
+			allChannels: []*notificationChannel{createNotChannel(t, "uid1", int64(1), "name\"1"), createNotChannel(t, "uid2", int64(2), "name_1")},
+			expRecvMap: map[uidOrID]*PostableApiReceiver{
+				"uid1": {
+					Name:                    "name_1",
+					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name_1"}},
+				},
+				"uid2": {
+					Name:                    "name_1_dba13d",
+					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name_1_dba13d"}},
+				},
+				int64(1): {
+					Name:                    "name_1",
+					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name_1"}},
+				},
+				int64(2): {
+					Name:                    "name_1_dba13d",
+					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name_1_dba13d"}},
+				},
+			},
+			expRecv: []*PostableApiReceiver{
+				{
+					Name:                    "name_1",
+					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name_1"}},
+				},
+				{
+					Name:                    "name_1_dba13d",
+					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name_1_dba13d"}},
 				},
 			},
 		},

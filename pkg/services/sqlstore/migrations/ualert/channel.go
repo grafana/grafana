@@ -1,6 +1,7 @@
 package ualert
 
 import (
+	"crypto/md5"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -114,7 +115,7 @@ func (m *migration) setupAlertmanagerConfigs(rulesPerOrg map[int64]map[*alertRul
 	return amConfigPerOrg, nil
 }
 
-// contactListToString creates a sorted string representation of a given map (set) of receiver names. Each name will be comma-separated and double-quoted. Double quotes inside a name are escaped.
+// contactListToString creates a sorted string representation of a given map (set) of receiver names. Each name will be comma-separated and double-quoted. Names should not contain double quotes.
 func contactListToString(m map[string]interface{}) string {
 	keys := make([]string, 0, len(m))
 	for k := range m {
@@ -125,9 +126,9 @@ func contactListToString(m map[string]interface{}) string {
 	return strings.Join(keys, ",")
 }
 
-// quote will surround the given string in double quotes and escape any existing interior double quotes.
+// quote will surround the given string in double quotes.
 func quote(s string) string {
-	return `"` + strings.ReplaceAll(s, `"`, `\"`) + `"`
+	return `"` + s + `"`
 }
 
 // getNotificationChannelMap returns a map of all channelUIDs to channel config as well as a separate map for just those channels that are default.
@@ -200,14 +201,27 @@ func (m *migration) createNotifier(c *notificationChannel) (*PostableGrafanaRece
 func (m *migration) createReceivers(allChannels []*notificationChannel) (map[uidOrID]*PostableApiReceiver, []*PostableApiReceiver, error) {
 	var receivers []*PostableApiReceiver
 	receiversMap := make(map[uidOrID]*PostableApiReceiver)
+
+	set := make(map[string]struct{}) // Used to deduplicate sanitized names.
 	for _, c := range allChannels {
 		notifier, err := m.createNotifier(c)
 		if err != nil {
 			return nil, nil, err
 		}
 
+		// We remove double quotes because this character will be used as the separator in the ContactLabel. To prevent partial matches in the Route Matcher we choose to sanitize them early on instead of complicating the Matcher regex.
+		sanitizedName := strings.ReplaceAll(c.Name, `"`, `_`)
+		// There can be name collisions after we sanitize. We check for this and attempt to make the name unique again using a short hash of the original name.
+		if _, ok := set[sanitizedName]; ok {
+			sanitizedName = sanitizedName + fmt.Sprintf("_%.3x", md5.Sum([]byte(c.Name)))
+			m.mg.Logger.Warn("alert contains duplicate contact name after sanitization, appending unique suffix", "type", c.Type, "name", c.Name, "new_name", sanitizedName, "uid", c.Uid)
+		}
+		notifier.Name = sanitizedName
+
+		set[sanitizedName] = struct{}{}
+
 		recv := &PostableApiReceiver{
-			Name:                    c.Name, // Channel name is unique within an Org.
+			Name:                    sanitizedName, // Channel name is unique within an Org.
 			GrafanaManagedReceivers: []*PostableGrafanaReceiver{notifier},
 		}
 

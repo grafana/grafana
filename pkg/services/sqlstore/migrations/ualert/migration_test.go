@@ -512,7 +512,33 @@ func TestDashAlertMigration(t *testing.T) {
 			expectedRulesMap := expected[orgId]
 			require.Len(t, rules, len(expectedRulesMap))
 			for _, r := range rules {
-				require.Equal(t, r.Labels[ualert.ContactLabel], expectedRulesMap[r.Title].Labels[ualert.ContactLabel])
+				require.Equal(t, expectedRulesMap[r.Title].Labels[ualert.ContactLabel], r.Labels[ualert.ContactLabel])
+			}
+		}
+	})
+
+	t.Run("when DashAlertMigration create ContactLabel with sanitized name if name contains double quote", func(t *testing.T) {
+		defer teardown(t, x)
+		legacyChannels := []*models.AlertNotification{
+			createAlertNotification(t, int64(1), "notif\"ier1", "email", emailSettings, false),
+		}
+		alerts := []*models.Alert{
+			createAlert(t, int64(1), int64(1), int64(1), "alert1", []string{"notif\"ier1"}),
+		}
+		expected := map[int64]map[string]*ngModels.AlertRule{
+			int64(1): {
+				"alert1": {Labels: map[string]string{ualert.ContactLabel: `"notif_ier1"`}},
+			},
+		}
+		setupLegacyAlertsTables(t, x, legacyChannels, alerts)
+		runDashAlertMigrationTestRun(t, x)
+
+		for orgId := range expected {
+			rules := getAlertRules(t, x, orgId)
+			expectedRulesMap := expected[orgId]
+			require.Len(t, rules, len(expectedRulesMap))
+			for _, r := range rules {
+				require.Equal(t, expectedRulesMap[r.Title].Labels[ualert.ContactLabel], r.Labels[ualert.ContactLabel])
 			}
 		}
 	})
