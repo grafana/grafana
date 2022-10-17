@@ -58,7 +58,7 @@ func parseQueries(queries []backend.DataQuery, startTime time.Time, endTime time
 		}
 
 		queryType := model.QueryType
-		if queryType != timeSeriesQuery && queryType != "" { // TODO: Can we depend on a check in QueryData instead and remove this condition here?
+		if queryType != timeSeriesQuery && queryType != "" {
 			continue
 		}
 
