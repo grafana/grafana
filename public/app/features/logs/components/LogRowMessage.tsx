@@ -5,6 +5,7 @@ import Highlighter from 'react-highlight-words';
 import tinycolor from 'tinycolor2';
 
 import { LogRowModel, findHighlightChunksInText, GrafanaTheme2, LogsSortOrder, CoreApp } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { withTheme2, Themeable2, IconButton, Tooltip } from '@grafana/ui';
 
 import { LogMessageAnsi } from './LogMessageAnsi';
@@ -123,6 +124,14 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
   onContextToggle = (e: React.SyntheticEvent<HTMLElement>) => {
     e.stopPropagation();
     this.props.onToggleContext();
+
+    const { datasourceType, uid: logRowUid } = this.props.row;
+
+    reportInteraction('grafana_explore_logs_log_context_clicked', {
+      datasourceType,
+      logRowUid,
+      type: 'open',
+    });
   };
 
   onShowContextClick = (e: React.SyntheticEvent<HTMLElement, Event>) => {
