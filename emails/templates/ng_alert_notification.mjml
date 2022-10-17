@@ -36,7 +36,7 @@
       <mj-include path="./partials/alerting/firing_instance.mjml" />
       <mj-include path="./partials/alerting/instance_details.mjml" />
     </mj-wrapper>
-    <mj-section padding="5px" />
+    <mj-section padding="10px" />
 
     <!-- end Firing instances loop -->
     <mj-raw>
@@ -80,9 +80,7 @@
     <mj-raw>
       {{ end }}
     </mj-raw>
-    </mj-wrapper>
-
-    <mj-section>
+    <mj-section padding-top="10px">
       <mj-include path="./partials/layout/footer.mjml" />
     </mj-section>
   </mj-body>
