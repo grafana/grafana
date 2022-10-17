@@ -279,8 +279,8 @@ func (ts *fakeOAuthTokenService) IsOAuthPassThruEnabled(*datasources.DataSource)
 	return ts.passThruEnabled
 }
 
-func (ts *fakeOAuthTokenService) HasOAuthEntry(context.Context, *user.SignedInUser) (bool, *models.UserAuth) {
-	return false, nil
+func (ts *fakeOAuthTokenService) HasOAuthEntry(context.Context, *user.SignedInUser) (*models.UserAuth, bool, error) {
+	return nil, false, nil
 }
 
 func (ts *fakeOAuthTokenService) TryTokenRefresh(context.Context, *models.UserAuth) error {

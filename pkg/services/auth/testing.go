@@ -128,18 +128,20 @@ func (ts *FakeOAuthTokenService) IsOAuthPassThruEnabled(*datasources.DataSource)
 	return ts.passThruEnabled
 }
 
-func (ts *FakeOAuthTokenService) HasOAuthEntry(context.Context, *user.SignedInUser) (bool, *models.UserAuth) {
+func (ts *FakeOAuthTokenService) HasOAuthEntry(context.Context, *user.SignedInUser) (*models.UserAuth, bool, error) {
 	if ts.ExpectedAuthUser != nil {
-		return true, ts.ExpectedAuthUser
+		return ts.ExpectedAuthUser, true, nil
 	}
-	return false, nil
+	if error, ok := ts.ExpectedErrors["HasOAuthEntry"]; ok {
+		return nil, false, error
+	}
+	return nil, false, nil
 }
 
 func (ts *FakeOAuthTokenService) InvalidateOAuthTokens(ctx context.Context, usr *models.UserAuth) error {
 	ts.ExpectedAuthUser.OAuthAccessToken = ""
 	ts.ExpectedAuthUser.OAuthRefreshToken = ""
 	ts.ExpectedAuthUser.OAuthExpiry = time.Time{}
-	ts.ExpectedAuthUser.OAuthIdToken = ""
 	return nil
 }
 

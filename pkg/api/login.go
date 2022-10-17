@@ -305,7 +305,7 @@ func (hs *HTTPServer) Logout(c *models.ReqContext) {
 	}
 
 	// Invalidate the OAuth tokens in case the User logged in with OAuth or the last external AuthEntry is an OAuth one
-	if exists, entry := hs.oauthTokenService.HasOAuthEntry(c.Req.Context(), c.SignedInUser); exists {
+	if entry, exists, _ := hs.oauthTokenService.HasOAuthEntry(c.Req.Context(), c.SignedInUser); exists {
 		if err := hs.oauthTokenService.InvalidateOAuthTokens(c.Req.Context(), entry); err != nil {
 			hs.log.Warn("failed to invalidate oauth tokens for user", "userId", c.UserID, "error", err)
 		}

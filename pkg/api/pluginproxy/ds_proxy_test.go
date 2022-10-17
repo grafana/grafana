@@ -1066,8 +1066,8 @@ func (m *mockOAuthTokenService) IsOAuthPassThruEnabled(ds *datasources.DataSourc
 	return m.oAuthEnabled
 }
 
-func (m *mockOAuthTokenService) HasOAuthEntry(context.Context, *user.SignedInUser) (bool, *models.UserAuth) {
-	return false, nil
+func (m *mockOAuthTokenService) HasOAuthEntry(context.Context, *user.SignedInUser) (*models.UserAuth, bool, error) {
+	return nil, false, nil
 }
 
 func (m *mockOAuthTokenService) TryTokenRefresh(context.Context, *models.UserAuth) error {

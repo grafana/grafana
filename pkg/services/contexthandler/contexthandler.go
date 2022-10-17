@@ -439,7 +439,7 @@ func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, org
 	}
 
 	// Check whether the logged in User has a token (whether the User used an OAuth provider to login)
-	exists, oauthToken := h.oauthTokenService.HasOAuthEntry(ctx, queryResult)
+	oauthToken, exists, _ := h.oauthTokenService.HasOAuthEntry(ctx, queryResult)
 	if exists {
 		// Skip where the OAuthExpiry is default/zero/unset
 		if !oauthToken.OAuthExpiry.IsZero() && oauthToken.OAuthExpiry.Round(0).Add(-oauthtoken.ExpiryDelta).Before(getTime()) {

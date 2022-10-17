@@ -24,6 +24,7 @@ var (
 	// Shouldn't be more than 30s
 	ExpiryDelta            = 10 * time.Second
 	ErrNoRefreshTokenFound = errors.New("no refresh token found")
+	ErrNotAnOAuthProvider  = errors.New("not an oauth provider")
 )
 
 type Service struct {
@@ -35,7 +36,7 @@ type Service struct {
 type OAuthTokenService interface {
 	GetCurrentOAuthToken(context.Context, *user.SignedInUser) *oauth2.Token
 	IsOAuthPassThruEnabled(*datasources.DataSource) bool
-	HasOAuthEntry(context.Context, *user.SignedInUser) (bool, *models.UserAuth)
+	HasOAuthEntry(context.Context, *user.SignedInUser) (*models.UserAuth, bool, error)
 	TryTokenRefresh(context.Context, *models.UserAuth) error
 	InvalidateOAuthTokens(context.Context, *models.UserAuth) error
 }
@@ -79,24 +80,26 @@ func (o *Service) IsOAuthPassThruEnabled(ds *datasources.DataSource) bool {
 }
 
 // HasOAuthEntry returns true and the UserAuth object when OAuth info exists for the specified User
-func (o *Service) HasOAuthEntry(ctx context.Context, usr *user.SignedInUser) (bool, *models.UserAuth) {
+func (o *Service) HasOAuthEntry(ctx context.Context, usr *user.SignedInUser) (*models.UserAuth, bool, error) {
 	if usr == nil {
 		// No user, therefore no token
-		return false, nil
+		return nil, false, nil
 	}
 
 	authInfoQuery := &models.GetAuthInfoQuery{UserId: usr.UserID}
 	err := o.AuthInfoService.GetAuthInfo(ctx, authInfoQuery)
 	if err != nil {
-		if !errors.Is(err, user.ErrUserNotFound) {
-			logger.Error("failed to get oauth token for user", "userId", usr.UserID, "username", usr.Login, "error", err)
+		if errors.Is(err, user.ErrUserNotFound) {
+			// Not necessarily an error.  User may be logged in another way.
+			return nil, false, nil
 		}
-		return false, nil
+		logger.Error("failed to fetch oauth token for user", "userId", usr.UserID, "username", usr.Login, "error", err)
+		return nil, false, err
 	}
 	if !strings.Contains(authInfoQuery.Result.AuthModule, "oauth") {
-		return false, nil
+		return nil, false, nil
 	}
-	return true, authInfoQuery.Result
+	return authInfoQuery.Result, true, nil
 }
 
 // TryTokenRefresh returns an error in case the OAuth token refresh was unsuccessful
@@ -108,8 +111,8 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr *models.UserAuth) err
 		authProvider := usr.AuthModule
 
 		if !strings.Contains(authProvider, "oauth") {
-			logger.Error("the specified User's auth provider is not OAuth", "authmodule", usr.AuthModule, "userid", usr.UserId)
-			return nil, errors.New("not an OAuth provider")
+			logger.Error("the specified user's auth provider is not oauth", "authmodule", usr.AuthModule, "userid", usr.UserId)
+			return nil, ErrNotAnOAuthProvider
 		}
 
 		if usr.OAuthRefreshToken == "" {

@@ -2,14 +2,11 @@ package oauthtoken
 
 import (
 	"context"
+	"errors"
 	"net/http"
+	"reflect"
 	"testing"
 	"time"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"golang.org/x/oauth2"
-	"golang.org/x/sync/singleflight"
 
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login/social"
@@ -17,7 +14,84 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"golang.org/x/oauth2"
+	"golang.org/x/sync/singleflight"
 )
+
+func TestService_HasOAuthEntry(t *testing.T) {
+	testCases := []struct {
+		name            string
+		user            *user.SignedInUser
+		want            *models.UserAuth
+		wantExist       bool
+		wantErr         bool
+		err             error
+		getAuthInfoErr  error
+		getAuthInfoUser models.UserAuth
+	}{
+		{
+			name:      "returns false without an error in case user is nil",
+			user:      nil,
+			want:      nil,
+			wantExist: false,
+			wantErr:   false,
+		},
+		{
+			name:           "returns false and an error in case GetAuthInfo returns an error",
+			user:           &user.SignedInUser{},
+			want:           nil,
+			wantExist:      false,
+			wantErr:        true,
+			getAuthInfoErr: errors.New("error"),
+		},
+		{
+			name:           "returns false without an error in case auth entry is not found",
+			user:           &user.SignedInUser{},
+			want:           nil,
+			wantExist:      false,
+			wantErr:        false,
+			getAuthInfoErr: user.ErrUserNotFound,
+		},
+		{
+			name:      "returns false without an error in case the auth entry is not oauth",
+			user:      &user.SignedInUser{},
+			want:      nil,
+			wantExist: false,
+			wantErr:   false,
+			getAuthInfoUser: models.UserAuth{
+				AuthModule: "auth_saml",
+			},
+		},
+		{
+			name:            "returns true when the auth entry is found",
+			user:            &user.SignedInUser{},
+			want:            &models.UserAuth{AuthModule: "oauth_generic_oauth"},
+			wantExist:       true,
+			wantErr:         false,
+			getAuthInfoUser: models.UserAuth{AuthModule: "oauth_generic_oauth"},
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			srv, authInfoStore, _ := setupOAuthTokenService(t)
+			authInfoStore.ExpectedOAuth = &tc.getAuthInfoUser
+			authInfoStore.ExpectedError = tc.getAuthInfoErr
+
+			entry, exists, err := srv.HasOAuthEntry(context.Background(), tc.user)
+
+			if tc.wantErr {
+				assert.Error(t, err)
+			}
+
+			if tc.want != nil {
+				assert.True(t, reflect.DeepEqual(tc.want, entry))
+			}
+			assert.Equal(t, tc.wantExist, exists)
+		})
+	}
+}
 
 func TestService_TryTokenRefresh_ValidToken(t *testing.T) {
 	srv, authInfoStore, socialConnector := setupOAuthTokenService(t)
@@ -128,6 +202,24 @@ func TestService_TryTokenRefresh_ExpiredToken(t *testing.T) {
 	assert.Equal(t, authInfoQuery.Result.OAuthExpiry, newToken.Expiry)
 	assert.Equal(t, authInfoQuery.Result.OAuthRefreshToken, newToken.RefreshToken)
 	assert.Equal(t, authInfoQuery.Result.OAuthTokenType, newToken.TokenType)
+}
+
+func TestService_TryTokenRefresh_DifferentAuthModuleForUser(t *testing.T) {
+	srv, _, socialConnector := setupOAuthTokenService(t)
+	ctx := context.Background()
+	token := &oauth2.Token{}
+	usr := &models.UserAuth{
+		AuthModule: "auth.saml",
+	}
+
+	socialConnector.On("TokenSource", mock.Anything, mock.Anything).Return(oauth2.StaticTokenSource(token))
+
+	err := srv.TryTokenRefresh(ctx, usr)
+
+	assert.NotNil(t, err)
+	assert.ErrorIs(t, err, ErrNotAnOAuthProvider)
+
+	socialConnector.AssertNotCalled(t, "TokenSource")
 }
 
 func setupOAuthTokenService(t *testing.T) (*Service, *FakeAuthInfoStore, *MockSocialConnector) {
