@@ -44,7 +44,7 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *models.ReqContext, body a
 	}
 	ctx := eval.Context(c.Req.Context(), c.SignedInUser)
 
-	if err := srv.evaluator.Validate(c.Req.Context(), c.SignedInUser, evalCond); err != nil {
+	if err := srv.evaluator.Validate(ctx, evalCond); err != nil {
 		return ErrResp(http.StatusBadRequest, err, "invalid condition")
 	}
 

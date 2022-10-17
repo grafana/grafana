@@ -31,7 +31,7 @@ type Evaluator interface {
 	// QueriesAndExpressionsEval executes queries and expressions and returns the result.
 	QueriesAndExpressionsEval(ctx EvaluationContext, data []models.AlertQuery) (*backend.QueryDataResponse, error)
 	// Validate validates that the condition is correct. Returns nil if the condition is correct. Otherwise, error that describes the failure
-	Validate(ctx context.Context, user *user.SignedInUser, condition models.Condition) error
+	Validate(ctx EvaluationContext, condition models.Condition) error
 }
 
 type evaluatorImpl struct {
@@ -600,11 +600,11 @@ func (e *evaluatorImpl) QueriesAndExpressionsEval(ctx EvaluationContext, data []
 	return execResult, nil
 }
 
-func (e *evaluatorImpl) Validate(ctx context.Context, user *user.SignedInUser, condition models.Condition) error {
+func (e *evaluatorImpl) Validate(ctx EvaluationContext, condition models.Condition) error {
 	evalctx := AlertExecCtx{
-		User: user,
+		User: ctx.User,
 		Log:  e.log,
-		Ctx:  ctx,
+		Ctx:  ctx.Ctx,
 	}
 
 	if len(condition.Data) == 0 {
