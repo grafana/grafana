@@ -9,11 +9,11 @@ keywords:
   - rendering
   - plugin
   - monitoring
-title: Monitoring the image renderer
+title: Monitor the image renderer
 weight: 100
 ---
 
-# Monitoring the image renderer
+# Monitor the image renderer
 
 Rendering images requires a lot of memory, mainly because Grafana creates browser instances in the background for the actual rendering. Monitoring your service can help you allocate the right amount of resources to your rendering service and set the right [rendering mode]({{< relref "./#rendering-mode" >}}).
 
