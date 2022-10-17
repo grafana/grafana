@@ -72,16 +72,24 @@ func (pd *PublicDashboardServiceImpl) GetDashboard(ctx context.Context, dashboar
 // Gets public dashboard via access token
 func (pd *PublicDashboardServiceImpl) GetPublicDashboard(ctx context.Context, accessToken string) (*PublicDashboard, *models.Dashboard, error) {
 	pubdash, dash, err := pd.store.GetPublicDashboard(ctx, accessToken)
+	ctxLogger := pd.log.FromContext(ctx)
 
 	if err != nil {
 		return nil, nil, err
 	}
 
-	if pubdash == nil || dash == nil {
+	if pubdash == nil {
+		ctxLogger.Error("GetPublicDashboard: Public dashboard not found", "accessToken", accessToken)
+		return nil, nil, ErrPublicDashboardNotFound
+	}
+
+	if dash == nil {
+		ctxLogger.Error("GetPublicDashboard: Dashboard not found", "accessToken", accessToken)
 		return nil, nil, ErrPublicDashboardNotFound
 	}
 
 	if !pubdash.IsEnabled {
+		ctxLogger.Error("GetPublicDashboard: Public dashboard is disabled", "accessToken", accessToken)
 		return nil, nil, ErrPublicDashboardNotFound
 	}
 
@@ -205,11 +213,7 @@ func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, 
 		return nil, err
 	}
 
-	anonymousUser, err := pd.BuildAnonymousUser(ctx, dashboard)
-	if err != nil {
-		return nil, err
-	}
-
+	anonymousUser := pd.BuildAnonymousUser(ctx, dashboard)
 	res, err := pd.QueryDataService.QueryData(ctx, anonymousUser, skipCache, metricReq)
 
 	reqDatasources := metricReq.GetUniqueDatasourceTypes()
@@ -225,8 +229,9 @@ func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, 
 }
 
 func (pd *PublicDashboardServiceImpl) GetMetricRequest(ctx context.Context, dashboard *models.Dashboard, publicDashboard *PublicDashboard, panelId int64, queryDto PublicDashboardQueryDTO) (dtos.MetricRequest, error) {
-	if err := validation.ValidateQueryPublicDashboardRequest(queryDto); err != nil {
-		return dtos.MetricRequest{}, ErrPublicDashboardBadRequest
+	err := validation.ValidateQueryPublicDashboardRequest(queryDto)
+	if err != nil {
+		return dtos.MetricRequest{}, err
 	}
 
 	metricReqDTO, err := pd.buildMetricRequest(
@@ -270,7 +275,7 @@ func (pd *PublicDashboardServiceImpl) buildMetricRequest(ctx context.Context, da
 }
 
 // BuildAnonymousUser creates a user with permissions to read from all datasources used in the dashboard
-func (pd *PublicDashboardServiceImpl) BuildAnonymousUser(ctx context.Context, dashboard *models.Dashboard) (*user.SignedInUser, error) {
+func (pd *PublicDashboardServiceImpl) BuildAnonymousUser(ctx context.Context, dashboard *models.Dashboard) *user.SignedInUser {
 	datasourceUids := queries.GetUniqueDashboardDatasourceUids(dashboard.Data)
 
 	// Create a temp user with read-only datasource permissions
@@ -286,7 +291,7 @@ func (pd *PublicDashboardServiceImpl) BuildAnonymousUser(ctx context.Context, da
 	permissions[datasources.ActionRead] = readScopes
 	anonymousUser.Permissions[dashboard.OrgId] = permissions
 
-	return anonymousUser, nil
+	return anonymousUser
 }
 
 func (pd *PublicDashboardServiceImpl) PublicDashboardEnabled(ctx context.Context, dashboardUid string) (bool, error) {
@@ -337,7 +342,7 @@ func (pd *PublicDashboardServiceImpl) logIsEnabledChanged(existingPubdash *Publi
 		if newPubdash.IsEnabled {
 			verb = "enabled"
 		}
-		pd.log.Info(fmt.Sprintf("Public dashboard %v: dashboardUid: %v, user:%v", verb, newPubdash.Uid, u.Login))
+		pd.log.Info("Public dashboard "+verb, "publicDashboardUid", newPubdash.Uid, "dashboardUid", newPubdash.DashboardUid, "user", u.Login)
 	}
 }
 

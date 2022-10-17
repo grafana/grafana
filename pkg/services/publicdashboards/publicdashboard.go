@@ -15,7 +15,7 @@ import (
 //go:generate mockery --name Service --structname FakePublicDashboardService --inpackage --filename public_dashboard_service_mock.go
 type Service interface {
 	AccessTokenExists(ctx context.Context, accessToken string) (bool, error)
-	BuildAnonymousUser(ctx context.Context, dashboard *models.Dashboard) (*user.SignedInUser, error)
+	BuildAnonymousUser(ctx context.Context, dashboard *models.Dashboard) *user.SignedInUser
 	GetDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error)
 	GetMetricRequest(ctx context.Context, dashboard *models.Dashboard, publicDashboard *PublicDashboard, panelId int64, reqDTO PublicDashboardQueryDTO) (dtos.MetricRequest, error)
 	GetPublicDashboard(ctx context.Context, accessToken string) (*PublicDashboard, *models.Dashboard, error)
