@@ -14,7 +14,6 @@ import (
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 type commitHelper struct {
@@ -45,7 +44,7 @@ type commitOptions struct {
 	comment string
 }
 
-func (ch *commitHelper) initOrg(sql *sqlstore.SQLStore, orgID int64) error {
+func (ch *commitHelper) initOrg(sql db.DB, orgID int64) error {
 	return sql.WithDbSession(ch.ctx, func(sess *db.Session) error {
 		sess.Table("user").
 			Join("inner", "org_user", "user.id = org_user.user_id").

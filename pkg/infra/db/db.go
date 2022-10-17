@@ -2,6 +2,8 @@ package db
 
 import (
 	"context"
+	"fmt"
+	"os"
 
 	"xorm.io/core"
 
@@ -21,5 +23,39 @@ type DB interface {
 }
 
 type Session = sqlstore.DBSession
+type SQLBuilder = sqlstore.SQLBuilder
+type InitTestDBOpt = sqlstore.InitTestDBOpt
 
 var InitTestDB = sqlstore.InitTestDB
+var ProvideService = sqlstore.ProvideService
+var NewSqlBuilder = sqlstore.NewSqlBuilder
+
+func IsTestDbMySQL() bool {
+	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
+		return db == migrator.MySQL
+	}
+
+	return false
+}
+
+func IsTestDbPostgres() bool {
+	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
+		return db == migrator.Postgres
+	}
+
+	return false
+}
+
+func IsTestDBMSSQL() bool {
+	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
+		return db == migrator.MSSQL
+	}
+
+	return false
+}
+
+func NotServiceAccountFilter(db DB) string {
+	return fmt.Sprintf("%s.is_service_account = %s",
+		db.GetDialect().Quote("user"),
+		db.GetDialect().BooleanStr(false))
+}

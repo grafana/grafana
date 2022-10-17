@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/thumbs"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -24,7 +23,7 @@ func TestIntegrationSqlStorage(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	var sqlStore *sqlstore.SQLStore
+	var sqlStore db.DB
 	var store store
 	var savedFolder *models.Dashboard
 
@@ -285,7 +284,7 @@ func updateThumbnailState(t *testing.T, store store, dashboardUID string, orgId 
 	require.NoError(t, err)
 }
 
-func updateTestDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, dashModel *models.Dashboard, data map[string]interface{}) {
+func updateTestDashboard(t *testing.T, sqlStore db.DB, dashModel *models.Dashboard, data map[string]interface{}) {
 	t.Helper()
 
 	data["id"] = dashModel.Id
@@ -346,7 +345,7 @@ func updateTestDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, dashModel *m
 	require.NoError(t, err)
 }
 
-func insertTestDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, title string, orgId int64,
+func insertTestDashboard(t *testing.T, sqlStore db.DB, title string, orgId int64,
 	folderId int64, isFolder bool, tags ...interface{}) *models.Dashboard {
 	t.Helper()
 	cmd := models.SaveDashboardCommand{

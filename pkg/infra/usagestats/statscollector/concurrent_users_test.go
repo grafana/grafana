@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -82,7 +81,7 @@ func TestConcurrentUsersStats(t *testing.T) {
 	assert.Equal(t, expectedResult, actualResult)
 }
 
-func createConcurrentTokens(t *testing.T, sqlStore sqlstore.Store) {
+func createConcurrentTokens(t *testing.T, sqlStore db.DB) {
 	t.Helper()
 	for u := 1; u <= 6; u++ {
 		for tkn := 1; tkn <= u*3; tkn++ {
@@ -91,7 +90,7 @@ func createConcurrentTokens(t *testing.T, sqlStore sqlstore.Store) {
 	}
 }
 
-func createToken(t *testing.T, uID int, sqlStore sqlstore.Store) {
+func createToken(t *testing.T, uID int, sqlStore db.DB) {
 	t.Helper()
 	token, err := util.RandomHex(16)
 	require.NoError(t, err)

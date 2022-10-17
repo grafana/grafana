@@ -5,13 +5,12 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/tag"
 
 	"github.com/stretchr/testify/require"
 )
 
-type getStore func(*sqlstore.SQLStore) store
+type getStore func(db.DB) store
 
 func testIntegrationSavingTags(t *testing.T, fn getStore) {
 	if testing.Short() {

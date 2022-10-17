@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/commandstest"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -26,7 +25,7 @@ func TestPasswordMigrationCommand(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func passwordMigration(t *testing.T, session *db.Session, sqlstore *sqlstore.SQLStore) {
+func passwordMigration(t *testing.T, session *db.Session, sqlstore db.DB) {
 	ds := []*datasources.DataSource{
 		{Type: "influxdb", Name: "influxdb", Password: "foobar", Uid: "influx"},
 		{Type: "graphite", Name: "graphite", BasicAuthPassword: "foobar", Uid: "graphite"},

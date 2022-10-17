@@ -7,13 +7,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 // kvStoreSQL provides a key/value store backed by the Grafana database
 type kvStoreSQL struct {
 	log      log.Logger
-	sqlStore sqlstore.Store
+	sqlStore db.DB
 }
 
 // Get an item from the store
@@ -90,7 +89,7 @@ func (kv *kvStoreSQL) Set(ctx context.Context, orgId int64, namespace string, ke
 // Del deletes an item from the store.
 func (kv *kvStoreSQL) Del(ctx context.Context, orgId int64, namespace string, key string) error {
 	err := kv.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
-		query := fmt.Sprintf("DELETE FROM kv_store WHERE org_id=? and namespace=? and %s=?", kv.sqlStore.Quote("key"))
+		query := fmt.Sprintf("DELETE FROM kv_store WHERE org_id=? and namespace=? and %s=?", kv.sqlStore.GetDialect().Quote("key"))
 		_, err := dbSession.Exec(query, orgId, namespace, key)
 		return err
 	})
@@ -102,7 +101,7 @@ func (kv *kvStoreSQL) Del(ctx context.Context, orgId int64, namespace string, ke
 func (kv *kvStoreSQL) Keys(ctx context.Context, orgId int64, namespace string, keyPrefix string) ([]Key, error) {
 	var keys []Key
 	err := kv.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
-		query := dbSession.Where("namespace = ?", namespace).And(fmt.Sprintf("%s LIKE ?", kv.sqlStore.Quote("key")), keyPrefix+"%")
+		query := dbSession.Where("namespace = ?", namespace).And(fmt.Sprintf("%s LIKE ?", kv.sqlStore.GetDialect().Quote("key")), keyPrefix+"%")
 		if orgId != AllOrganizations {
 			query.And("org_id = ?", orgId)
 		}

@@ -9,10 +9,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-func saveEvent(ctx context.Context, sql *sqlstore.SQLStore, cmd SaveEventCmd) error {
+func saveEvent(ctx context.Context, sql db.DB, cmd SaveEventCmd) error {
 	entityEvent := &EntityEvent{
 		EventType: cmd.EventType,
 		EntityId:  cmd.EntityId,

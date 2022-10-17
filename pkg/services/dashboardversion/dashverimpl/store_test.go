@@ -10,14 +10,13 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-type getStore func(*sqlstore.SQLStore) store
+type getStore func(db.DB) store
 
 func testIntegrationGetDashboardVersion(t *testing.T, fn getStore) {
 	if testing.Short() {
@@ -113,7 +112,7 @@ func testIntegrationGetDashboardVersion(t *testing.T, fn getStore) {
 	})
 }
 
-func getDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, dashboard *models.Dashboard) error {
+func getDashboard(t *testing.T, sqlStore db.DB, dashboard *models.Dashboard) error {
 	t.Helper()
 	return sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 		has, err := sess.Get(dashboard)
@@ -130,7 +129,7 @@ func getDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, dashboard *models.D
 	})
 }
 
-func insertTestDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, title string, orgId int64,
+func insertTestDashboard(t *testing.T, sqlStore db.DB, title string, orgId int64,
 	folderId int64, isFolder bool, tags ...interface{}) *models.Dashboard {
 	t.Helper()
 	cmd := models.SaveDashboardCommand{
@@ -185,7 +184,7 @@ func insertTestDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, title string
 	return dash
 }
 
-func updateTestDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, dashboard *models.Dashboard, data map[string]interface{}) {
+func updateTestDashboard(t *testing.T, sqlStore db.DB, dashboard *models.Dashboard, data map[string]interface{}) {
 	t.Helper()
 
 	data["id"] = dashboard.Id

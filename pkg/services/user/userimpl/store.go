@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -431,7 +430,7 @@ func (ss *sqlStore) SetHelpFlag(ctx context.Context, cmd *user.SetUserHelpFlagCo
 		user := user.User{
 			ID:         cmd.UserID,
 			HelpFlags1: cmd.HelpFlags1,
-			Updated:    sqlstore.TimeNow(),
+			Updated:    time.Now(),
 		}
 
 		_, err := sess.ID(cmd.UserID).Cols("help_flags1").Update(&user)

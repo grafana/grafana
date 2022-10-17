@@ -11,13 +11,12 @@ import (
 	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretskvs "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -56,7 +55,7 @@ func TestFatalPluginErr_MigrationTestWithErrorDeletingUnifiedSecrets(t *testing.
 	p, err := secretskvs.SetupFatalCrashTest(t, false, false, true)
 	assert.NoError(t, err)
 
-	migration := setupTestMigratorServiceWithDeletionError(t, p.SecretsKVStore, &mockstore.SQLStoreMock{
+	migration := setupTestMigratorServiceWithDeletionError(t, p.SecretsKVStore, &dbtest.FakeDB{
 		ExpectedError: errors.New("random error"),
 	}, p.KVStore)
 	err = migration.Migrate(context.Background())
@@ -124,7 +123,7 @@ func setupTestMigrateToPluginService(t *testing.T) (*MigrateToPluginService, sec
 func setupTestMigratorServiceWithDeletionError(
 	t *testing.T,
 	secretskv secretskvs.SecretsKVStore,
-	sqlStore sqlstore.Store,
+	sqlStore db.DB,
 	kvstore kvstore.KVStore,
 ) *MigrateToPluginService {
 	t.Helper()

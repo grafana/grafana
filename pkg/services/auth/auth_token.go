@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -24,7 +23,7 @@ var getTime = time.Now
 
 const urgentRotateTime = 1 * time.Minute
 
-func ProvideUserAuthTokenService(sqlStore *sqlstore.SQLStore, serverLockService *serverlock.ServerLockService,
+func ProvideUserAuthTokenService(sqlStore db.DB, serverLockService *serverlock.ServerLockService,
 	cfg *setting.Cfg) *UserAuthTokenService {
 	s := &UserAuthTokenService{
 		SQLStore:          sqlStore,
@@ -36,7 +35,7 @@ func ProvideUserAuthTokenService(sqlStore *sqlstore.SQLStore, serverLockService 
 }
 
 type UserAuthTokenService struct {
-	SQLStore          *sqlstore.SQLStore
+	SQLStore          db.DB
 	ServerLockService *serverlock.ServerLockService
 	Cfg               *setting.Cfg
 	log               log.Logger
@@ -44,10 +43,10 @@ type UserAuthTokenService struct {
 
 type ActiveAuthTokenService struct {
 	cfg      *setting.Cfg
-	sqlStore sqlstore.Store
+	sqlStore db.DB
 }
 
-func ProvideActiveAuthTokenService(cfg *setting.Cfg, sqlStore sqlstore.Store) *ActiveAuthTokenService {
+func ProvideActiveAuthTokenService(cfg *setting.Cfg, sqlStore db.DB) *ActiveAuthTokenService {
 	return &ActiveAuthTokenService{
 		cfg:      cfg,
 		sqlStore: sqlStore,
@@ -275,8 +274,8 @@ func (s *UserAuthTokenService) TryRotateToken(ctx context.Context, token *models
 
 	var affected int64
 	err = s.SQLStore.WithTransactionalDbSession(ctx, func(dbSession *db.Session) error {
-		res, err := dbSession.Exec(sql, userAgent, clientIPStr, s.SQLStore.Dialect.BooleanStr(true), hashedToken,
-			s.SQLStore.Dialect.BooleanStr(false), now.Unix(), model.Id, s.SQLStore.Dialect.BooleanStr(true),
+		res, err := dbSession.Exec(sql, userAgent, clientIPStr, s.SQLStore.GetDialect().BooleanStr(true), hashedToken,
+			s.SQLStore.GetDialect().BooleanStr(false), now.Unix(), model.Id, s.SQLStore.GetDialect().BooleanStr(true),
 			now.Add(-30*time.Second).Unix())
 		if err != nil {
 			return err

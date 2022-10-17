@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/store"
 	kdash "github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/setting"
@@ -806,13 +805,13 @@ func (i *searchIndex) updateDashboard(ctx context.Context, orgID int64, index *o
 }
 
 type sqlDashboardLoader struct {
-	sql      *sqlstore.SQLStore
+	sql      db.DB
 	logger   log.Logger
 	tracer   tracing.Tracer
 	settings setting.SearchSettings
 }
 
-func newSQLDashboardLoader(sql *sqlstore.SQLStore, tracer tracing.Tracer, settings setting.SearchSettings) *sqlDashboardLoader {
+func newSQLDashboardLoader(sql db.DB, tracer tracing.Tracer, settings setting.SearchSettings) *sqlDashboardLoader {
 	return &sqlDashboardLoader{sql: sql, logger: log.New("sqlDashboardLoader"), tracer: tracer, settings: settings}
 }
 
@@ -979,7 +978,7 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 	return dashboards, err
 }
 
-func newFolderIDLookup(sql *sqlstore.SQLStore) folderUIDLookup {
+func newFolderIDLookup(sql db.DB) folderUIDLookup {
 	return func(ctx context.Context, folderID int64) (string, error) {
 		uid := ""
 		err := sql.WithDbSession(ctx, func(sess *db.Session) error {

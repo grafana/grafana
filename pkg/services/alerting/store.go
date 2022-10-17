@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -106,7 +105,7 @@ func deleteAlertByIdInternal(alertId int64, reason string, sess *db.Session, log
 
 func (ss *sqlStore) HandleAlertsQuery(ctx context.Context, query *models.GetAlertsQuery) error {
 	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		builder := sqlstore.NewSqlBuilder(ss.cfg)
+		builder := db.NewSqlBuilder(ss.cfg)
 
 		builder.Write(`SELECT
 		alert.id,

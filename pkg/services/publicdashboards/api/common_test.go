@@ -7,10 +7,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"golang.org/x/oauth2"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/stretchr/testify/require"
+	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -23,16 +23,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/publicdashboards"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/user"
-
-	"github.com/stretchr/testify/require"
-
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	datasourceService "github.com/grafana/grafana/pkg/services/datasources/service"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/query"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -42,7 +38,7 @@ func setupTestServer(
 	cfg *setting.Cfg,
 	features *featuremgmt.FeatureManager,
 	service publicdashboards.Service,
-	db *sqlstore.SQLStore,
+	db db.DB,
 	user *user.SignedInUser,
 ) *web.Mux {
 	// build router to register routes
@@ -109,7 +105,7 @@ func callAPI(server *web.Mux, method, path string, body io.Reader, t *testing.T)
 
 // helper to query.Service
 // allows us to stub the cache and plugin clients
-func buildQueryDataService(t *testing.T, cs datasources.CacheService, fpc *fakePluginClient, store *sqlstore.SQLStore) *query.Service {
+func buildQueryDataService(t *testing.T, cs datasources.CacheService, fpc *fakePluginClient, store db.DB) *query.Service {
 	//	build database if we need one
 	if store == nil {
 		store = db.InitTestDB(t)

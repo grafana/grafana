@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -70,7 +69,7 @@ type EntityEventsService interface {
 	deleteEventsOlderThan(ctx context.Context, duration time.Duration) error
 }
 
-func ProvideEntityEventsService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, features featuremgmt.FeatureToggles) EntityEventsService {
+func ProvideEntityEventsService(cfg *setting.Cfg, sqlStore db.DB, features featuremgmt.FeatureToggles) EntityEventsService {
 	if !features.IsEnabled(featuremgmt.FlagPanelTitleSearch) {
 		return &dummyEntityEventsService{}
 	}
@@ -84,7 +83,7 @@ func ProvideEntityEventsService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, f
 }
 
 type entityEventService struct {
-	sql           *sqlstore.SQLStore
+	sql           db.DB
 	log           log.Logger
 	features      featuremgmt.FeatureToggles
 	eventHandlers []EventHandler

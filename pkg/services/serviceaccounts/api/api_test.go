@@ -30,7 +30,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
@@ -282,7 +281,7 @@ func serviceAccountRequestScenario(t *testing.T, httpMethod string, endpoint str
 func setupTestServer(t *testing.T, svc *tests.ServiceAccountMock,
 	routerRegister routing.RouteRegister,
 	acmock *accesscontrolmock.Mock,
-	sqlStore *sqlstore.SQLStore, saStore serviceaccounts.Store) (*web.Mux, *ServiceAccountsAPI) {
+	sqlStore db.DB, saStore serviceaccounts.Store) (*web.Mux, *ServiceAccountsAPI) {
 	cfg := setting.NewCfg()
 	teamSvc := teamimpl.ProvideService(sqlStore, cfg)
 	userSvc := userimpl.ProvideService(sqlStore, nil, cfg, teamimpl.ProvideService(sqlStore, cfg), nil)

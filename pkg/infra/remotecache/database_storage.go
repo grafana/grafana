@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 var getTime = time.Now
@@ -14,11 +13,11 @@ var getTime = time.Now
 const databaseCacheType = "database"
 
 type databaseCache struct {
-	SQLStore *sqlstore.SQLStore
+	SQLStore db.DB
 	log      log.Logger
 }
 
-func newDatabaseCache(sqlstore *sqlstore.SQLStore) *databaseCache {
+func newDatabaseCache(sqlstore db.DB) *databaseCache {
 	dc := &databaseCache{
 		SQLStore: sqlstore,
 		log:      log.New("remotecache.database"),
@@ -110,10 +109,10 @@ func (dc *databaseCache) Set(ctx context.Context, key string, value interface{},
 			// if the update fails propagate the error
 			// which eventually will result in a key that is not finally set
 			// but since it's a cache does not harm a lot
-			if dc.SQLStore.Dialect.IsUniqueConstraintViolation(err) || dc.SQLStore.Dialect.IsDeadlock(err) {
+			if dc.SQLStore.GetDialect().IsUniqueConstraintViolation(err) || dc.SQLStore.GetDialect().IsDeadlock(err) {
 				sql := `UPDATE cache_data SET data=?, created_at=?, expires=? WHERE cache_key=?`
 				_, err = session.Exec(sql, data, getTime().Unix(), expiresInSeconds, key)
-				if err != nil && dc.SQLStore.Dialect.IsDeadlock(err) {
+				if err != nil && dc.SQLStore.GetDialect().IsDeadlock(err) {
 					// most probably somebody else is upserting the key
 					// so it is safe enough not to propagate this error
 					return nil

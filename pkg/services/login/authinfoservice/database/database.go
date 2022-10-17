@@ -10,20 +10,19 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/secrets"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
 var GetTime = time.Now
 
 type AuthInfoStore struct {
-	sqlStore       sqlstore.Store
+	sqlStore       db.DB
 	secretsService secrets.Service
 	logger         log.Logger
 	userService    user.Service
 }
 
-func ProvideAuthInfoStore(sqlStore sqlstore.Store, secretsService secrets.Service, userService user.Service) login.Store {
+func ProvideAuthInfoStore(sqlStore db.DB, secretsService secrets.Service, userService user.Service) login.Store {
 	store := &AuthInfoStore{
 		sqlStore:       sqlStore,
 		secretsService: secretsService,

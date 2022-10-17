@@ -10,10 +10,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-func ProvideService(sqlStore *sqlstore.SQLStore, tracer tracing.Tracer) *ServerLockService {
+func ProvideService(sqlStore db.DB, tracer tracing.Tracer) *ServerLockService {
 	return &ServerLockService{
 		SQLStore: sqlStore,
 		tracer:   tracer,
@@ -25,7 +24,7 @@ func ProvideService(sqlStore *sqlstore.SQLStore, tracer tracing.Tracer) *ServerL
 // It exposes 2 services LockAndExecute and LockExecuteAndRelease, which are intended to be used independently, don't mix
 // them up (ie, use the same actionName for both of them).
 type ServerLockService struct {
-	SQLStore *sqlstore.SQLStore
+	SQLStore db.DB
 	tracer   tracing.Tracer
 	log      log.Logger
 }

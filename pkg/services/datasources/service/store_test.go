@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 func TestIntegrationDataAccess(t *testing.T) {
@@ -37,7 +36,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 		Url:    "http://test",
 	}
 
-	initDatasource := func(db *sqlstore.SQLStore) *datasources.DataSource {
+	initDatasource := func(db db.DB) *datasources.DataSource {
 		cmd := defaultAddDatasourceCommand
 		ss := SqlStore{db: db}
 		err := ss.AddDataSource(context.Background(), &cmd)

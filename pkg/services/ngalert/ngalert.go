@@ -38,7 +38,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/secrets"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -48,7 +47,7 @@ func ProvideService(
 	dataSourceCache datasources.CacheService,
 	dataSourceService datasources.DataSourceService,
 	routeRegister routing.RouteRegister,
-	sqlStore *sqlstore.SQLStore,
+	sqlStore db.DB,
 	kvStore kvstore.KVStore,
 	expressionService *expr.Service,
 	dataProxy *datasourceproxy.DataSourceProxyService,

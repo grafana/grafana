@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardstore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -407,7 +406,7 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	sql := db.InitTestDB(t, sqlstore.InitTestDBOpt{})
+	sql := db.InitTestDB(t)
 	var maximumTagsLength int64 = 60
 	repo := xormRepositoryImpl{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql, sql.Cfg), maximumTagsLength: maximumTagsLength}
 	dashboardStore := dashboardstore.ProvideDashboardStore(sql, sql.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql, sql.Cfg))

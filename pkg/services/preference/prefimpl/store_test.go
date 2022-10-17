@@ -10,11 +10,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	pref "github.com/grafana/grafana/pkg/services/preference"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-type getStore func(*sqlstore.SQLStore) store
+type getStore func(db.DB) store
 
 func testIntegrationPreferencesDataAccess(t *testing.T, fn getStore) {
 	if testing.Short() {

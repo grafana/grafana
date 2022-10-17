@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -560,7 +559,7 @@ func createTestContext(t *testing.T) *testContext {
 }
 
 type testContext struct {
-	sqlstore           *sqlstore.SQLStore
+	sqlstore           db.DB
 	tokenService       *UserAuthTokenService
 	activeTokenService *ActiveAuthTokenService
 }
@@ -584,7 +583,7 @@ func (c *testContext) getAuthTokenByID(id int64) (*userAuthToken, error) {
 func (c *testContext) markAuthTokenAsSeen(id int64) (bool, error) {
 	hasRowsAffected := false
 	err := c.sqlstore.WithDbSession(context.Background(), func(sess *db.Session) error {
-		res, err := sess.Exec("UPDATE user_auth_token SET auth_token_seen = ? WHERE id = ?", c.sqlstore.Dialect.BooleanStr(true), id)
+		res, err := sess.Exec("UPDATE user_auth_token SET auth_token_seen = ? WHERE id = ?", c.sqlstore.GetDialect().BooleanStr(true), id)
 		if err != nil {
 			return err
 		}

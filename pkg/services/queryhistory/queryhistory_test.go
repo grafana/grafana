@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -34,7 +33,7 @@ type scenarioContext struct {
 	ctx           *web.Context
 	service       *QueryHistoryService
 	reqContext    *models.ReqContext
-	sqlStore      *sqlstore.SQLStore
+	sqlStore      db.DB
 	initialResult QueryHistoryResponse
 }
 
@@ -49,8 +48,8 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		ctx.Req.Header.Add("Content-Type", "application/json")
 		sqlStore := db.InitTestDB(t)
 		service := QueryHistoryService{
-			Cfg:      setting.NewCfg(),
-			SQLStore: sqlStore,
+			Cfg:   setting.NewCfg(),
+			store: sqlStore,
 		}
 
 		service.Cfg.QueryHistoryEnabled = true

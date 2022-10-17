@@ -12,7 +12,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 const (
@@ -46,7 +45,7 @@ const (
 
 func runTests(createCases func() []fsTestCase, t *testing.T) {
 	var testLogger log.Logger
-	var sqlStore *sqlstore.SQLStore
+	var sqlStore db.DB
 	var filestorage FileStorage
 	var ctx context.Context
 	var tempDir string

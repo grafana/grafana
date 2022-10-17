@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -22,7 +21,7 @@ func init() {
 	Register(CacheableStruct{})
 }
 
-func createTestClient(t *testing.T, opts *setting.RemoteCacheOptions, sqlstore *sqlstore.SQLStore) CacheStorage {
+func createTestClient(t *testing.T, opts *setting.RemoteCacheOptions, sqlstore db.DB) CacheStorage {
 	t.Helper()
 
 	cfg := &setting.Cfg{

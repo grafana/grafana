@@ -45,7 +45,7 @@ func TestBuilder_EqualResults_Basic(t *testing.T) {
 			searchstore.OrgFilter{OrgId: user.OrgID},
 			searchstore.TitleSorter{},
 		},
-		Dialect: store.Dialect,
+		Dialect: store.GetDialect(),
 	}
 
 	res := []dashboards.DashboardSearchProjection{}
@@ -82,7 +82,7 @@ func TestBuilder_Pagination(t *testing.T) {
 			searchstore.OrgFilter{OrgId: user.OrgID},
 			searchstore.TitleSorter{},
 		},
-		Dialect: store.Dialect,
+		Dialect: store.GetDialect(),
 	}
 
 	resPg1 := []dashboards.DashboardSearchProjection{}
@@ -130,14 +130,14 @@ func TestBuilder_Permissions(t *testing.T) {
 			searchstore.OrgFilter{OrgId: user.OrgID},
 			searchstore.TitleSorter{},
 			permissions.DashboardPermissionFilter{
-				Dialect:         store.Dialect,
+				Dialect:         store.GetDialect(),
 				OrgRole:         user.OrgRole,
 				OrgId:           user.OrgID,
 				UserId:          user.UserID,
 				PermissionLevel: level,
 			},
 		},
-		Dialect: store.Dialect,
+		Dialect: store.GetDialect(),
 	}
 
 	res := []dashboards.DashboardSearchProjection{}
@@ -150,7 +150,7 @@ func TestBuilder_Permissions(t *testing.T) {
 	assert.Len(t, res, 0)
 }
 
-func setupTestEnvironment(t *testing.T) *sqlstore.SQLStore {
+func setupTestEnvironment(t *testing.T) db.DB {
 	t.Helper()
 	store := db.InitTestDB(t)
 	return store

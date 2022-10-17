@@ -15,9 +15,9 @@ import (
 // 2) permissions for its parent folder
 // 3) if no specific permissions have been set for the dashboard or its parent folder then get the default permissions
 func (d *DashboardStore) GetDashboardACLInfoList(ctx context.Context, query *models.GetDashboardACLInfoListQuery) error {
-	outerErr := d.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
+	outerErr := d.store.WithDbSession(ctx, func(dbSession *db.Session) error {
 		query.Result = make([]*models.DashboardACLInfoDTO, 0)
-		falseStr := d.sqlStore.GetDialect().BooleanStr(false)
+		falseStr := d.store.GetDialect().BooleanStr(false)
 
 		if query.DashboardID == 0 {
 			sql := `SELECT
@@ -63,7 +63,7 @@ func (d *DashboardStore) GetDashboardACLInfoList(ctx context.Context, query *mod
 				d.slug,
 				d.uid,
 				d.is_folder,
-				CASE WHEN (da.dashboard_id = -1 AND d.folder_id > 0) OR da.dashboard_id = d.folder_id THEN ` + d.sqlStore.GetDialect().BooleanStr(true) + ` ELSE ` + falseStr + ` END AS inherited
+				CASE WHEN (da.dashboard_id = -1 AND d.folder_id > 0) OR da.dashboard_id = d.folder_id THEN ` + d.store.GetDialect().BooleanStr(true) + ` ELSE ` + falseStr + ` END AS inherited
 			FROM dashboard as d
 				LEFT JOIN dashboard folder on folder.id = d.folder_id
 				LEFT JOIN dashboard_acl AS da ON
@@ -76,7 +76,7 @@ func (d *DashboardStore) GetDashboardACLInfoList(ctx context.Context, query *mod
 					  (folder.id IS NULL AND d.has_acl = ` + falseStr + `)
 					)
 				)
-				LEFT JOIN ` + d.sqlStore.GetDialect().Quote("user") + ` AS u ON u.id = da.user_id
+				LEFT JOIN ` + d.store.GetDialect().Quote("user") + ` AS u ON u.id = da.user_id
 				LEFT JOIN team ug on ug.id = da.team_id
 			WHERE d.org_id = ? AND d.id = ? AND da.id IS NOT NULL
 			ORDER BY da.id ASC
@@ -98,7 +98,7 @@ func (d *DashboardStore) GetDashboardACLInfoList(ctx context.Context, query *mod
 
 // HasEditPermissionInFolders validates that an user have access to a certain folder
 func (d *DashboardStore) HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error {
-	return d.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
+	return d.store.WithDbSession(ctx, func(dbSession *db.Session) error {
 		if query.SignedInUser.HasRole(org.RoleEditor) {
 			query.Result = true
 			return nil
@@ -106,7 +106,7 @@ func (d *DashboardStore) HasEditPermissionInFolders(ctx context.Context, query *
 
 		builder := sqlstore.NewSqlBuilder(d.cfg)
 		builder.Write("SELECT COUNT(dashboard.id) AS count FROM dashboard WHERE dashboard.org_id = ? AND dashboard.is_folder = ?",
-			query.SignedInUser.OrgID, d.sqlStore.GetDialect().BooleanStr(true))
+			query.SignedInUser.OrgID, d.store.GetDialect().BooleanStr(true))
 		builder.WriteDashboardPermissionFilter(query.SignedInUser, models.PERMISSION_EDIT)
 
 		type folderCount struct {
@@ -126,7 +126,7 @@ func (d *DashboardStore) HasEditPermissionInFolders(ctx context.Context, query *
 }
 
 func (d *DashboardStore) HasAdminPermissionInDashboardsOrFolders(ctx context.Context, query *models.HasAdminPermissionInDashboardsOrFoldersQuery) error {
-	return d.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
+	return d.store.WithDbSession(ctx, func(dbSession *db.Session) error {
 		if query.SignedInUser.HasRole(org.RoleAdmin) {
 			query.Result = true
 			return nil
@@ -152,7 +152,7 @@ func (d *DashboardStore) HasAdminPermissionInDashboardsOrFolders(ctx context.Con
 }
 
 func (d *DashboardStore) DeleteACLByUser(ctx context.Context, userID int64) error {
-	return d.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+	return d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		var rawSQL = "DELETE FROM dashboard_acl WHERE user_id = ?"
 		_, err := sess.Exec(rawSQL, userID)
 		return err

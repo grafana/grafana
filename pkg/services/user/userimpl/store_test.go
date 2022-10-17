@@ -770,7 +770,7 @@ func createFiveTestUsers(t *testing.T, sqlStore *sqlstore.SQLStore, fn func(i in
 }
 
 // TODO: Use FakeDashboardStore when org has its own service
-func updateDashboardACL(t *testing.T, sqlStore *sqlstore.SQLStore, dashboardID int64, items ...*models.DashboardACL) error {
+func updateDashboardACL(t *testing.T, sqlStore db.DB, dashboardID int64, items ...*models.DashboardACL) error {
 	t.Helper()
 
 	err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {

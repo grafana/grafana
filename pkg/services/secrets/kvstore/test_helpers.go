@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -290,7 +289,7 @@ type fatalCrashTestFields struct {
 	SecretsKVStore SecretsKVStore
 	PluginManager  plugins.SecretsPluginManager
 	KVStore        kvstore.KVStore
-	SqlStore       *sqlstore.SQLStore
+	SqlStore       db.DB
 }
 
 func SetupTestConfig(t *testing.T) *setting.Cfg {

@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -165,7 +164,7 @@ func TestOldAnnotationsAreDeletedFirst(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func assertAnnotationCount(t *testing.T, fakeSQL *sqlstore.SQLStore, sql string, expectedCount int64) {
+func assertAnnotationCount(t *testing.T, fakeSQL db.DB, sql string, expectedCount int64) {
 	t.Helper()
 
 	err := fakeSQL.WithDbSession(context.Background(), func(sess *db.Session) error {
@@ -177,7 +176,7 @@ func assertAnnotationCount(t *testing.T, fakeSQL *sqlstore.SQLStore, sql string,
 	require.NoError(t, err)
 }
 
-func assertAnnotationTagCount(t *testing.T, fakeSQL *sqlstore.SQLStore, expectedCount int64) {
+func assertAnnotationTagCount(t *testing.T, fakeSQL db.DB, expectedCount int64) {
 	t.Helper()
 
 	err := fakeSQL.WithDbSession(context.Background(), func(sess *db.Session) error {
@@ -189,7 +188,7 @@ func assertAnnotationTagCount(t *testing.T, fakeSQL *sqlstore.SQLStore, expected
 	require.NoError(t, err)
 }
 
-func createTestAnnotations(t *testing.T, store *sqlstore.SQLStore, expectedCount int, oldAnnotations int) {
+func createTestAnnotations(t *testing.T, store db.DB, expectedCount int, oldAnnotations int) {
 	t.Helper()
 
 	cutoffDate := time.Now()
