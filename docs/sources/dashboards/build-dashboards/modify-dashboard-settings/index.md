@@ -45,15 +45,8 @@ Adjust dashboard time settings when you want to change the dashboard timezone, t
 
 ## Add an annotation query
 
-An annotation query is a query that xxx. An annotation query provides the following benefits:
-
-- xxx
-- xxx
-- xxx
-
-**Before you begin:**
-
-- Ensure that you are familiar with the query language of the data source you select.
+An annotation query is a query that queries for events. These events can be visualized in Graphs across the dashboard as vertical lines along with a small
+icon you can hover over to get the event information.
 
 **To add an annotation query:**
 
@@ -62,18 +55,18 @@ An annotation query is a query that xxx. An annotation query provides the follow
 1. Enter a name and select a data source.
 1. Complete the rest of the form to build a query and annotation.
 
-> **Note:** The **Dashboard settings** page is dynamic and provides a unique set of query and annotation fields for you to populate.
+The query editor UI will depened on the data source you select. Please refer to the data source documentation for details on how to construct a query.
 
 ## Add a variable
 
-Add a variable when you want to create interactive and dynamic dashboards that instantly update when select a variable from a picklist.
-
-What are the benefits here? That I don't need to create 40 different dashboards each with a hard-coded value? More efficient use of dashboard space?
+Variables allow you to create more interactive and dynamic dashboards. Instead of hard-coding things like server, application,
+and sensor names in your metric queries, you can use variables in their place. Variables are displayed as dropdown lists at the top of
+the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
 
 For more information about variables, refer to [Variables]({{< relref "../../variables/" >}}).
 
-1. On the **Dashboard settings** page, click **Add variable**.
-1. In the **General** section, complete the **Name**, **xx**, and **xx** fields.
+1. On the **Dashboard settings** page, click **Variable** in the left side section menu and then the **Add variable** button.
+1. In the **General** section, the the name of the variable. This is the name that you will later use in queries.
 1. Select a variable **Type**.
 
    > **Note:** The variable type you select impacts which fields you populate on the page.
@@ -84,29 +77,16 @@ For more information about variables, refer to [Variables]({{< relref "../../var
 
 Dashboard Links enable you to place links to other dashboards and web sites directly below the dashboard header. Links provide for easy navigation to other, related dashboards and content.
 
-1. On the **Dashboard settings** page, click **Add dashboard links**.
+1. On the **Dashboard settings** page, click **Links** in the left side section menu and then the **Add link** button.
 1. Enter title and and in the **Type** field, select **Dashboard** or **Link**.
 1. To add a dashboard link:
-
-   a. Add an optional tag.
-
-   Tags are useful for filtering and sorting dashboards.
-
+   a. Add an optional tag. Tags are useful creating a dynamic dropdown of dashboards that all have a specific tag.
    b. Select any of the dashboard link **Options**.
-
-   Is there anything helpful we want to say here about any of these options? Only add content here if it's not obvious what any option does.
-
    c. Click **Apply**.
-
 1. To add a link:
-
    a. Add a URL and tooltip text that appears when the user hovers over the link.
-
    b. Select an icon that appears next to the link.
-
    c. Select any of the dashboard link **Options**.
-
-   We can repeat guidance from above if there are any options that are not obvious to the user.
 
 ## View dashboard JSON model
 
