@@ -544,11 +544,11 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *models.ReqContext) *navtree
 	})
 
 	children = append(children, &navtree.NavLink{
-		Id:          baseId + "-connect-data",
-		Text:        "Connect Data",
-		Icon:        "plug",
-		SubTitle: 	 "Manage data sources",
-		Url:         baseUrl + "/connect-data",
+		Id:       baseId + "-connect-data",
+		Text:     "Connect Data",
+		Icon:     "plug",
+		SubTitle: "Manage data sources",
+		Url:      baseUrl + "/connect-data",
 	})
 
 	navLink = &navtree.NavLink{
