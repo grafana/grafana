@@ -1183,38 +1183,6 @@ steps:
   image: grafana/build-container:1.6.3
   name: yarn-install
 - commands:
-  - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
-    --depth=1
-  - cd grafana-enterprise
-  - git fetch origin "refs/tags/*:refs/tags/*" --quiet
-  - if git show-ref --tags $${TEST_TAG} --quiet; then git tag -d $${TEST_TAG} && git
-    push --delete origin $${TEST_TAG}; fi
-  - git tag $${TEST_TAG} && git push origin $${TEST_TAG}
-  - cd -
-  - git fetch https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git "refs/tags/*:refs/tags/*"
-    --quiet && git fetch --quiet
-  - if git show-ref --tags $${TEST_TAG} --quiet; then git tag -d $${TEST_TAG} && git
-    push --delete https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git $${TEST_TAG};
-    fi
-  - git tag $${TEST_TAG} && git push https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git
-    $${TEST_TAG}
-  environment:
-    DOWNSTREAM_REPO:
-      from_secret: downstream
-    GITHUB_TOKEN:
-      from_secret: github_token_pr
-    TEST_TAG: v0.0.0-test
-  failure: ignore
-  image: grafana/build-container:1.6.3
-  name: trigger-test-release
-  when:
-    paths:
-      include:
-      - .drone.yml
-      - pkg/build/**
-    repo:
-    - grafana/grafana
-- commands:
   - ./bin/build build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - wire-install
@@ -5602,6 +5570,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: ead459950183bdae94b7e670d6bb883f3ff01775294324c43813fde99553f57d
+hmac: 7855c8576dd6072319a95a944c642df1d792bc90c3a71b38366196cc86d92d57
 
 ...
