@@ -16,11 +16,11 @@ keywords:
 
 The dashboard settings page enables you to:
 
-- edit general dashboard properties, including time settings
-- add annotation queries
-- add dashboard variables
-- add links
-- view the dashboard JSON model
+- Edit general dashboard properties, including time settings
+- Add annotation queries
+- Add dashboard variables
+- Add links
+- View the dashboard JSON model
 
 To access the dashboard setting page:
 
@@ -45,21 +45,19 @@ Adjust dashboard time settings when you want to change the dashboard timezone, t
 
 ## Add an annotation query
 
-An annotation query is a query that queries for events. These events can be visualized in Graphs across the dashboard as vertical lines along with a small
-icon you can hover over to get the event information.
-
-**To add an annotation query:**
+An annotation query is a query that queries for events. These events can be visualized in graphs across the dashboard as vertical lines along with a small
+icon you can hover over to see the event information.
 
 1. On the **Dashboard settings** page, click **Annotations**.
 1. Click **Add annotation query**.
 1. Enter a name and select a data source.
 1. Complete the rest of the form to build a query and annotation.
 
-The query editor UI will depened on the data source you select. Please refer to the data source documentation for details on how to construct a query.
+The query editor UI changes based on the data source you select. Refer to the [Data source]({{< relref "../../../datasources/" >}}) documentation for details on how to construct a query.
 
 ## Add a variable
 
-Variables allow you to create more interactive and dynamic dashboards. Instead of hard-coding things like server, application,
+Variables enable you to create more interactive and dynamic dashboards. Instead of hard-coding things like server, application,
 and sensor names in your metric queries, you can use variables in their place. Variables are displayed as dropdown lists at the top of
 the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
 
@@ -75,7 +73,7 @@ For more information about variables, refer to [Variables]({{< relref "../../var
 
 ## Add a link
 
-Dashboard Links enable you to place links to other dashboards and web sites directly below the dashboard header. Links provide for easy navigation to other, related dashboards and content.
+Dashboard links enable you to place links to other dashboards and web sites directly below the dashboard header. Links provide for easy navigation to other, related dashboards and content.
 
 1. On the **Dashboard settings** page, click **Links** in the left side section menu and then the **Add link** button.
 1. Enter title and and in the **Type** field, select **Dashboard** or **Link**.
