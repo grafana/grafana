@@ -305,9 +305,9 @@ export function getPropertiesForVariant(theme: GrafanaTheme2, variant: ButtonVar
 
 export const clearButtonStyles = (theme: GrafanaTheme2) => {
   return css`
-    background: 'transparent';
+    background: transparent;
     color: ${theme.colors.text.primary};
-    border: 'none';
+    border: none;
     padding: 0;
   `;
 };
