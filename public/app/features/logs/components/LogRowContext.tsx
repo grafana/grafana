@@ -3,6 +3,7 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import usePrevious from 'react-use/lib/usePrevious';
 
 import { DataQueryError, GrafanaTheme2, LogRowModel, LogsSortOrder, textUtil } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { Alert, Button, ClickOutsideWrapper, CustomScrollbar, IconButton, List, useStyles2 } from '@grafana/ui';
 
 import { LogMessageAnsi } from './LogMessageAnsi';
@@ -290,15 +291,22 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
 }) => {
   useEffect(() => {
     const handleEscKeyDown = (e: KeyboardEvent): void => {
+      const { datasourceType, uid: logRowUid } = row;
       if (e.keyCode === 27) {
         onOutsideClick();
+
+        reportInteraction('grafana_explore_logs_log_context_clicked', {
+          datasourceType,
+          logRowUid,
+          type: 'close_esc',
+        });
       }
     };
     document.addEventListener('keydown', handleEscKeyDown, false);
     return () => {
       document.removeEventListener('keydown', handleEscKeyDown, false);
     };
-  }, [onOutsideClick]);
+  }, [onOutsideClick, row]);
   const { afterContext, beforeContext, title, top, actions, width } = useStyles2((theme) =>
     getLogRowContextStyles(theme, wrapLogMessage)
   );
