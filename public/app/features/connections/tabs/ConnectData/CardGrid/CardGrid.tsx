@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { FC } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Card, useStyles2 } from '@grafana/ui';
+import { Card, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   sourcesList: css`
@@ -41,12 +41,19 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
 export interface CardGridProps {
   items: Array<{ id: string; name: string; logo?: string }>;
+  isLoading: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  error: any;
 }
 
-export const CardGrid: FC<CardGridProps> = ({ items }) => {
+export const CardGrid: FC<CardGridProps> = ({ items, isLoading, error }) => {
   const styles = useStyles2(getStyles);
 
-  return (
+  return isLoading ? (
+    <LoadingPlaceholder text="Loading..." />
+  ) : !!error ? (
+    <div>Error: {error.message}</div>
+  ) : (
     <ul className={styles.sourcesList}>
       {items.map((item) => (
         <Card key={item.id} className={styles.card} href={`plugins/${item.id}`}>
