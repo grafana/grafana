@@ -3,7 +3,6 @@ import React, { FC } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Card, useStyles2 } from '@grafana/ui';
-import { CatalogPlugin } from 'app/features/plugins/admin/types';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   sourcesList: css`
@@ -40,21 +39,25 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
 });
 
-export const CardGrid: FC<{ plugins: CatalogPlugin[] }> = ({ plugins }) => {
+export interface CardGridProps {
+  items: Array<{ id: string; name: string; logo?: string }>;
+}
+
+export const CardGrid: FC<CardGridProps> = ({ items }) => {
   const styles = useStyles2(getStyles);
 
   return (
     <ul className={styles.sourcesList}>
-      {plugins.map((plugin) => (
-        <Card key={plugin.id} className={styles.card} href={`plugins/${plugin.id}`}>
+      {items.map((item) => (
+        <Card key={item.id} className={styles.card} href={`plugins/${item.id}`}>
           <Card.Heading>
             <div className={styles.cardContent}>
-              {plugin.info.logos.small && (
+              {item.logo && (
                 <div className={styles.logoWrapper}>
-                  <img src={plugin.info.logos.small} alt={`logo of ${plugin.name}`} />
+                  <img src={item.logo} alt={`logo of ${item.name}`} />
                 </div>
               )}
-              <h4 className={styles.label}>{plugin.name}</h4>
+              <h4 className={styles.label}>{item.name}</h4>
             </div>
           </Card.Heading>
         </Card>

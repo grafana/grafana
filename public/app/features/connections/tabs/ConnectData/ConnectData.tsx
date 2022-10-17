@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { useGetAllWithFilters } from 'app/features/plugins/admin/state/hooks';
@@ -25,6 +25,11 @@ export function ConnectData() {
 
   const { isLoading, error, plugins } = useGetAllWithFilters({ query: searchTerm, filterBy: '' });
 
+  const cardGridItems = useMemo(
+    () => plugins.map((plugin) => ({ id: plugin.id, name: plugin.name, logo: plugin.info.logos.small })),
+    [plugins]
+  );
+
   return (
     <>
       <Search onChange={handleSearchChange} />
@@ -37,7 +42,7 @@ export function ConnectData() {
       ) : (
         <>
           <CategoryHeader iconName="database" label="Data sources" />
-          <CardGrid plugins={plugins} />
+          <CardGrid items={cardGridItems} />
           {plugins.length < 1 && <NoResults />}
         </>
       )}
