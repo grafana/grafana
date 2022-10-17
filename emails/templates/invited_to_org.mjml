@@ -1,0 +1,20 @@
+<mjml>
+  <mj-head>
+    <!-- ⬇ Don't forget to specifify an email subject! Use the HTML comment below ⬇ -->
+    <mj-title>
+      {{ Subject .Subject "{{ .InvitedBy }} has added you to the {{ .OrgName }} organization" }}
+    </mj-title>
+    <mj-include path="./partials/layout/head.mjml" />
+  </mj-head>
+  <mj-body background-color="#111217">
+    <mj-section>
+      <mj-include path="./partials/layout/header.mjml" />
+    </mj-section>
+    <mj-section background-color="#22252b" border="1px solid #2f3037">
+      <mj-include path="./partials/invited_to_org.mjml" />
+    </mj-section>
+    <mj-section>
+      <mj-include path="./partials/layout/footer.mjml" />
+    </mj-section>
+  </mj-body>
+</mjml>

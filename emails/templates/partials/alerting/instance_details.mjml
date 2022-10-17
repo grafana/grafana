@@ -1,0 +1,16 @@
+<mj-section padding="0" text-align="left">
+  <mj-column>
+    <mj-text>
+      Observed <strong>{{ ago .StartsAt }}</strong> before this notification was delivered
+    </mj-text>
+    <mj-raw>
+      {{ if .Annotations.description }}
+    </mj-raw>
+    <mj-text>
+      {{ .Annotations.description }}
+    </mj-text>
+    <mj-raw>
+      {{ end }}
+    </mj-raw>
+  </mj-column>
+</mj-section>

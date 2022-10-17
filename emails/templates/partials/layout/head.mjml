@@ -1,0 +1,8 @@
+<mj-attributes>
+  <mj-text align="left" color="#FFF" />
+</mj-attributes>
+<mj-style inline="inline">
+  a {
+    color: #6E9FFF;
+  }
+</mj-style>

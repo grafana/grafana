@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/Masterminds/sprig/v3"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -53,6 +54,7 @@ func ProvideService(bus bus.Bus, cfg *setting.Cfg, mailer Mailer, store TempUser
 	mailTemplates.Funcs(template.FuncMap{
 		"Subject": subjectTemplateFunc,
 	})
+	mailTemplates.Funcs(sprig.FuncMap())
 
 	for _, pattern := range ns.Cfg.Smtp.TemplatesPatterns {
 		templatePattern := filepath.Join(ns.Cfg.StaticRootPath, pattern)

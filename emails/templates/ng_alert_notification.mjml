@@ -1,0 +1,96 @@
+<mjml>
+  <mj-head>
+    <!-- ⬇ Don't forget to specifify an email subject below! ⬇ -->
+    <mj-title>
+      {{ Subject .Subject "{{ .Title }}" }}
+    </mj-title>
+    <mj-include path="./partials/layout/head.mjml" />
+  </mj-head>
+  <mj-body background-color="#111217">
+    <mj-section>
+      <mj-include path="./partials/layout/header.mjml" />
+    </mj-section>
+
+    <!-- This is our grouping header, it says what grouping labels have been applied to this email -->
+    <mj-section padding="0">
+      <mj-column>
+        <mj-text padding="0" align="left">
+          <!-- TODO show the label keys here too! -->
+          <h2>{{ .GroupLabels.SortedPairs.Values | join " › " }}</h2>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Firing instances -->
+    <mj-raw>
+      {{ if gt (len .Alerts.Firing) 0  }}
+    </mj-raw>
+
+    <!-- Firing header -->
+    <mj-section padding="0">
+      <mj-column>
+        <mj-text padding="0">
+          <h3>🔥 {{ .Alerts.Firing | len }} firing instances</h3>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Firing instances loop -->
+    <mj-raw>
+      {{ range .Alerts.Firing }}
+    </mj-raw>
+    <mj-wrapper background-color="#22252b" border="1px solid #2f3037" padding="0">
+      <mj-include path="./partials/alerting/firing_instance.mjml" />
+      <mj-include path="./partials/alerting/instance_details.mjml" />
+    </mj-wrapper>
+    <mj-section padding="5px" />
+
+    <!-- end Firing instances loop -->
+    <mj-raw>
+      {{ end }}
+    </mj-raw>
+
+    <!-- end Firing instances section -->
+    <mj-raw>
+      {{ end }}
+    </mj-raw>
+
+    <!-- Resolved instances -->
+    <mj-raw>
+      {{ if gt (len .Alerts.Resolved) 0 }}
+    </mj-raw>
+
+    <mj-section padding="0">
+      <mj-column>
+        <mj-text padding="0">
+          <h3>✅ {{ .Alerts.Resolved | len }} resolved instances</h3>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Resolved instances loop -->
+    <mj-raw>
+      {{ range .Alerts.Resolved }}
+    </mj-raw>
+    <mj-wrapper background-color="#22252b" border="1px solid #2f3037" padding="0">
+      <mj-include path="./partials/alerting/resolved_instance.mjml" />
+      <mj-include path="./partials/alerting/instance_details.mjml" />
+    </mj-wrapper>
+    <mj-section padding="5px" />
+
+    <!-- end Resolved instances loop -->
+    <mj-raw>
+      {{ end }}
+    </mj-raw>
+
+    <!-- end Resolved instances -->
+    <mj-raw>
+      {{ end }}
+    </mj-raw>
+    </mj-wrapper>
+
+    <mj-section>
+      <mj-include path="./partials/layout/footer.mjml" />
+    </mj-section>
+  </mj-body>
+</mjml>
