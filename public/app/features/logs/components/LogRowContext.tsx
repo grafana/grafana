@@ -3,7 +3,6 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import usePrevious from 'react-use/lib/usePrevious';
 
 import { DataQueryError, GrafanaTheme2, LogRowModel, LogsSortOrder, textUtil } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
 import { Alert, Button, ClickOutsideWrapper, CustomScrollbar, IconButton, List, useStyles2 } from '@grafana/ui';
 
 import { LogMessageAnsi } from './LogMessageAnsi';
@@ -21,7 +20,7 @@ interface LogRowContextProps {
   errors?: LogRowContextQueryErrors;
   hasMoreContextRows?: HasMoreContextRows;
   logsSortOrder?: LogsSortOrder | null;
-  onOutsideClick: () => void;
+  onOutsideClick: (method: string) => void;
   onLoadMoreContext: () => void;
 }
 
@@ -291,15 +290,8 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
 }) => {
   useEffect(() => {
     const handleEscKeyDown = (e: KeyboardEvent): void => {
-      const { datasourceType, uid: logRowUid } = row;
       if (e.key === 'Escape' || e.key === 'Esc') {
-        onOutsideClick();
-
-        reportInteraction('grafana_explore_logs_log_context_clicked', {
-          datasourceType,
-          logRowUid,
-          type: 'close_esc',
-        });
+        onOutsideClick('close_esc');
       }
     };
     document.addEventListener('keydown', handleEscKeyDown, false);
@@ -312,7 +304,7 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
   );
 
   return (
-    <ClickOutsideWrapper onClick={onOutsideClick}>
+    <ClickOutsideWrapper onClick={() => onOutsideClick('close_outside_click')}>
       {/* e.stopPropagation is necessary so the log details doesn't open when clicked on log line in context
        * and/or when context log line is being highlighted */}
       <div onClick={(e) => e.stopPropagation()}>
@@ -345,7 +337,7 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
         <div className={cx(title, width)}>
           <h5>Log context</h5>
           <div className={actions}>
-            <IconButton size="lg" name="times" onClick={onOutsideClick} />
+            <IconButton size="lg" name="times" onClick={() => onOutsideClick('close_button')} />
           </div>
         </div>
       </div>

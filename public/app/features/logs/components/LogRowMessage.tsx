@@ -5,7 +5,6 @@ import Highlighter from 'react-highlight-words';
 import tinycolor from 'tinycolor2';
 
 import { LogRowModel, findHighlightChunksInText, GrafanaTheme2, LogsSortOrder, CoreApp } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
 import { withTheme2, Themeable2, IconButton, Tooltip } from '@grafana/ui';
 
 import { LogMessageAnsi } from './LogMessageAnsi';
@@ -28,7 +27,7 @@ interface Props extends Themeable2 {
   scrollElement?: HTMLDivElement;
   showContextToggle?: (row?: LogRowModel) => boolean;
   getRows: () => LogRowModel[];
-  onToggleContext: () => void;
+  onToggleContext: (method: string) => void;
   updateLimit?: () => void;
   logsSortOrder?: LogsSortOrder | null;
 }
@@ -123,15 +122,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
 
   onContextToggle = (e: React.SyntheticEvent<HTMLElement>) => {
     e.stopPropagation();
-    this.props.onToggleContext();
-
-    const { datasourceType, uid: logRowUid } = this.props.row;
-
-    reportInteraction('grafana_explore_logs_log_context_clicked', {
-      datasourceType,
-      logRowUid,
-      type: 'open',
-    });
+    this.props.onToggleContext('open');
   };
 
   onShowContextClick = (e: React.SyntheticEvent<HTMLElement, Event>) => {
