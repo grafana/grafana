@@ -3685,6 +3685,7 @@
    "type": "object"
   },
   "receiver": {
+   "description": "Receiver receiver",
    "properties": {
     "active": {
      "description": "active",
@@ -6120,6 +6121,29 @@
     "summary": "Updates an existing template.",
     "tags": [
      "provisioning"
+    ]
+   }
+  },
+  "/api/v1/rule/backtest": {
+   "post": {
+    "consumes": [
+     "application/json"
+    ],
+    "description": "Test rule",
+    "operationId": "BacktestConfig",
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "200": {
+      "description": "EvalQueriesResponse",
+      "schema": {
+       "$ref": "#/definitions/EvalQueriesResponse"
+      }
+     }
+    },
+    "tags": [
+     "testing"
     ]
    }
   },

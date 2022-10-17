@@ -2358,6 +2358,29 @@
         }
       }
     },
+    "/api/v1/rule/backtest": {
+      "post": {
+        "description": "Test rule",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "testing"
+        ],
+        "operationId": "BacktestConfig",
+        "responses": {
+          "200": {
+            "description": "EvalQueriesResponse",
+            "schema": {
+              "$ref": "#/definitions/EvalQueriesResponse"
+            }
+          }
+        }
+      }
+    },
     "/api/v1/rule/test/grafana": {
       "post": {
         "description": "Test a rule against Grafana ruler",
@@ -6130,6 +6153,7 @@
       "$ref": "#/definitions/postableSilence"
     },
     "receiver": {
+      "description": "Receiver receiver",
       "type": "object",
       "required": [
         "active",

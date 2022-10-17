@@ -19,11 +19,15 @@ import (
 )
 
 type TestingApi interface {
+	BacktestConfig(*models.ReqContext) response.Response
 	RouteEvalQueries(*models.ReqContext) response.Response
 	RouteTestRuleConfig(*models.ReqContext) response.Response
 	RouteTestRuleGrafanaConfig(*models.ReqContext) response.Response
 }
 
+func (f *TestingApiHandler) BacktestConfig(ctx *models.ReqContext) response.Response {
+	return f.handleBacktestConfig(ctx)
+}
 func (f *TestingApiHandler) RouteEvalQueries(ctx *models.ReqContext) response.Response {
 	// Parse Request Body
 	conf := apimodels.EvalQueriesPayload{}
@@ -53,6 +57,16 @@ func (f *TestingApiHandler) RouteTestRuleGrafanaConfig(ctx *models.ReqContext) r
 
 func (api *API) RegisterTestingApiEndpoints(srv TestingApi, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
+		group.Post(
+			toMacaronPath("/api/v1/rule/backtest"),
+			api.authorize(http.MethodPost, "/api/v1/rule/backtest"),
+			metrics.Instrument(
+				http.MethodPost,
+				"/api/v1/rule/backtest",
+				srv.BacktestConfig,
+				m,
+			),
+		)
 		group.Post(
 			toMacaronPath("/api/v1/eval"),
 			api.authorize(http.MethodPost, "/api/v1/eval"),
