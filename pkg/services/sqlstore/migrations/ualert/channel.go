@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
 
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
@@ -83,11 +84,12 @@ func (m *migration) setupAlertmanagerConfigs(rulesPerOrg map[int64]map[*alertRul
 			amConfig.AlertmanagerConfig.Receivers = append(amConfig.AlertmanagerConfig.Receivers, defaultReceiver)
 		}
 
-		routeMap, err := createRoutes(receivers)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create routes in orgId %d: %w", orgID, err)
-		}
-		for _, route := range routeMap {
+		for _, recv := range receivers {
+			route, err := createRoute(recv)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create route for receiver %s in orgId %d: %w", recv.Name, orgID, err)
+			}
+
 			amConfigPerOrg[orgID].AlertmanagerConfig.Route.Routes = append(amConfigPerOrg[orgID].AlertmanagerConfig.Route.Routes, route)
 		}
 
@@ -96,14 +98,9 @@ func (m *migration) setupAlertmanagerConfigs(rulesPerOrg map[int64]map[*alertRul
 
 			if len(filteredReceiverNames) != 0 {
 				// Only create a contact label if there are specific receivers, otherwise it defaults to the root-level route.
-				for name := range filteredReceiverNames {
-					// We create a ContactLabel label for each contact point this alerts sends to.
-					// For example, if this alert needs to send to contact1 and contact2 it will have two labels: ContactLabel1=contact1 and ContactLabel2=contact2.
-					matcher := routeMap[name].Matchers[0]
-
-					// Adding the contact point name as the label value is not strictly necessary since the Matcher just needs the label to exist,
-					// but it adds a convenient way to more clearly identify where it will be sent at a glance.
-					ar.Labels[matcher.Name] = name
+				ar.Labels[ContactLabel], err = keysString(filteredReceiverNames)
+				if err != nil {
+					return nil, fmt.Errorf("failed to create contact label for alertRule %s in orgId %d: %w", ar.Title, orgID, err)
 				}
 			}
 		}
@@ -116,6 +113,21 @@ func (m *migration) setupAlertmanagerConfigs(rulesPerOrg map[int64]map[*alertRul
 	}
 
 	return amConfigPerOrg, nil
+}
+
+func keysString(m map[string]interface{}) (string, error) {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	jsonStr, err := json.Marshal(keys)
+	if err != nil {
+		return "", err
+	}
+
+	return string(jsonStr), nil
 }
 
 // getNotificationChannelMap returns a map of all channelUIDs to channel config as well as a separate map for just those channels that are default.
@@ -250,25 +262,21 @@ func (m *migration) createDefaultRouteAndReceiver(defaultChannels []*notificatio
 	return defaultReceiver, defaultRoute, nil
 }
 
-// createRoutes creates one route per contact point, matching based on ContactLabel.
-func createRoutes(recvs []*PostableApiReceiver) (map[string]*Route, error) {
-	routeMap := make(map[string]*Route)
-	for i, recv := range recvs {
-		// We create a matcher for each route that will check for the existence of a specific ContactLabel. The value of the label
-		// needs to be non-empty.
-		mat, err := labels.NewMatcher(labels.MatchNotEqual, fmt.Sprintf(ContactLabel, i), "")
-		if err != nil {
-			return nil, fmt.Errorf("failed to create route for receiver %s: %w", recv.Name, err)
-		}
-
-		routeMap[recv.Name] = &Route{
-			Receiver: recv.Name,
-			Matchers: Matchers{mat},
-			Continue: true, // We continue so that each sibling contact point route can separately match.
-		}
+// Create one route per contact point, matching based on ContactLabel.
+func createRoute(recv *PostableApiReceiver) (*Route, error) {
+	// We create a regex matcher so that each alert rule need only have a single ContactLabel entry for all contact points it needs to send to.
+	// For example, if an alert needs to send to contact1 and contact2 it will have ContactLabel=`["contact1","contact2"]` and will match both routes looking
+	// for `.*"contact1".*` and `.*"contact2".*`.
+	mat, err := labels.NewMatcher(labels.MatchRegexp, ContactLabel, fmt.Sprintf(`.*"%s".*`, recv.Name))
+	if err != nil {
+		return nil, err
 	}
 
-	return routeMap, nil
+	return &Route{
+		Receiver: recv.Name,
+		Matchers: Matchers{mat},
+		Continue: true, // We continue so that each sibling contact point route can separately match.
+	}, nil
 }
 
 // Filter receivers to select those that were associated to the given rule as channels.

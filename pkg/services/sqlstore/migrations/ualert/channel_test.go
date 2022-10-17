@@ -1,7 +1,6 @@
 package ualert
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -122,34 +121,27 @@ func TestFilterReceiversForAlert(t *testing.T) {
 func TestCreateRoute(t *testing.T) {
 	tc := []struct {
 		name     string
-		recv     []*PostableApiReceiver
-		expected map[string]*Route
+		recv     *PostableApiReceiver
+		expected *Route
 	}{
 		{
-			name: "when receivers are passed in, the route should match based on name with continue=true",
-			recv: []*PostableApiReceiver{{Name: "recv1"}, {Name: "recv2"}},
-			expected: map[string]*Route{
-				"recv1": {
-					Receiver:   "recv1",
-					Matchers:   Matchers{{Type: 1, Name: fmt.Sprintf(ContactLabel, 0), Value: ""}},
-					Routes:     nil,
-					Continue:   true,
-					GroupByStr: nil,
-				},
-				"recv2": {
-					Receiver:   "recv2",
-					Matchers:   Matchers{{Type: 1, Name: fmt.Sprintf(ContactLabel, 1), Value: ""}},
-					Routes:     nil,
-					Continue:   true,
-					GroupByStr: nil,
-				},
+			name: "when a receiver is passed in, the route should regex match based on quoted name with continue=true",
+			recv: &PostableApiReceiver{
+				Name: "recv1",
+			},
+			expected: &Route{
+				Receiver:   "recv1",
+				Matchers:   Matchers{{Type: 2, Name: ContactLabel, Value: `.*"recv1".*`}},
+				Routes:     nil,
+				Continue:   true,
+				GroupByStr: nil,
 			},
 		},
 	}
 
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
-			res, err := createRoutes(tt.recv)
+			res, err := createRoute(tt.recv)
 			require.NoError(t, err)
 
 			// Order of nested routes is not guaranteed.
