@@ -27,8 +27,9 @@ func falseBoolPtr() *bool {
 
 func TestSocialAzureAD_UserInfo(t *testing.T) {
 	type fields struct {
-		SocialBase    *SocialBase
-		allowedGroups []string
+		SocialBase       *SocialBase
+		allowedGroups    []string
+		forceUseGraphAPI bool
 	}
 	type args struct {
 		client *http.Client
@@ -346,6 +347,33 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "Fetch groups when forceUseGraphAPI is set",
+			fields: fields{
+				SocialBase:       newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, ""),
+				forceUseGraphAPI: true,
+			},
+			claims: &azureClaims{
+				ID:                "1",
+				Name:              "test",
+				PreferredUsername: "test",
+				Email:             "test@test.com",
+				Roles:             []string{"Viewer"},
+				ClaimNames:        claimNames{Groups: "src1"},
+				ClaimSources:      nil,                    // set by the test
+				Groups:            []string{"foo", "bar"}, // must be ignored
+			},
+			settingAutoAssignOrgRole: "",
+			want: &BasicUserInfo{
+				Id:     "1",
+				Name:   "test",
+				Email:  "test@test.com",
+				Login:  "test@test.com",
+				Role:   "Viewer",
+				Groups: []string{"from_server"},
+			},
+			wantErr: false,
+		},
+		{
 			name: "Fetch empty role when strict attribute role is true and no match",
 			fields: fields{
 				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{RoleAttributeStrict: true}, ""),
@@ -382,8 +410,9 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &SocialAzureAD{
-				SocialBase:    tt.fields.SocialBase,
-				allowedGroups: tt.fields.allowedGroups,
+				SocialBase:       tt.fields.SocialBase,
+				allowedGroups:    tt.fields.allowedGroups,
+				forceUseGraphAPI: tt.fields.forceUseGraphAPI,
 			}
 
 			if tt.fields.SocialBase == nil {

@@ -5,12 +5,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
-	"github.com/grafana/grafana/pkg/services/team/teamimpl"
-	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/services/user/userimpl"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -22,8 +16,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashdb "github.com/grafana/grafana/pkg/services/dashboards/database"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
+	"github.com/grafana/grafana/pkg/services/team/teamimpl"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -592,7 +591,7 @@ func setupAccessControlGuardianTest(t *testing.T, uid string, permissions []acce
 	toSave.SetUid(uid)
 
 	// seed dashboard
-	dashStore := dashdb.ProvideDashboardStore(store, featuremgmt.WithFeatures(), tagimpl.ProvideService(store, store.Cfg))
+	dashStore := dashdb.ProvideDashboardStore(store, store.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(store, store.Cfg))
 	dash, err := dashStore.SaveDashboard(context.Background(), models.SaveDashboardCommand{
 		Dashboard: toSave.Data,
 		UserId:    1,

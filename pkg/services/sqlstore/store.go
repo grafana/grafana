@@ -3,11 +3,12 @@ package sqlstore
 import (
 	"context"
 
+	"xorm.io/core"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/user"
-	"xorm.io/core"
 )
 
 type Store interface {

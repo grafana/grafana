@@ -40,7 +40,7 @@ function mockLocationHref(href: string) {
 
   // @ts-ignore
   delete window.location;
-  (window as any).location = {
+  window.location = {
     ...location,
     href,
     origin: new URL(href).origin,
@@ -60,7 +60,7 @@ describe('ShareEmbed', () => {
       user: {
         orgId: 1,
       },
-    } as any;
+    } as BootData;
   });
 
   afterAll(() => {

@@ -23,10 +23,15 @@ const SelectNav = ({ children, customCss }: { children: NavModelItem[]; customCs
   return (
     <div className={`gf-form-select-wrapper width-20 ${customCss}`}>
       <div className="dropdown">
-        <div className="gf-form-input dropdown-toggle" data-toggle="dropdown">
+        <button
+          type="button"
+          className="gf-form-input dropdown-toggle"
+          data-toggle="dropdown"
+          style={{ textAlign: 'left' }}
+        >
           {defaultSelectedItem?.text}
-        </div>
-        <ul className="dropdown-menu dropdown-menu--menu">
+        </button>
+        <ul role="menu" className="dropdown-menu dropdown-menu--menu">
           {children.map((navItem: NavModelItem) => {
             if (navItem.hideFromTabs) {
               // TODO: Rename hideFromTabs => hideFromNav

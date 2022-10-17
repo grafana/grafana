@@ -3,6 +3,7 @@ aliases:
   - /docs/grafana/latest/basics/timeseries-dimensions/
   - /docs/grafana/latest/getting-started/timeseries-dimensions/
   - /docs/grafana/latest/guides/timeseries-dimensions/
+  - /docs/rafana/latest/fundamentals/timeseries-dimensions/
 description: time series dimensions
 keywords:
   - grafana
@@ -85,10 +86,10 @@ In this case the labels that represent the dimensions will have two keys based o
 
 > **Note:** More than one dimension is currently only supported in the Logs queries within the Azure Monitor service as of version 7.1.
 
-> **Note:** Multiple dimensions are not supported in a way that maps to multiple alerts in Grafana, but rather they are treated as multiple conditions to a single alert. For more information, see See the documentation on [creating alerts with multiple series]({{< relref "../alerting/alerting-rules/create-grafana-managed-rule/#single-and-multi-dimensional-rule" >}}).
+> **Note:** Multiple dimensions are not supported in a way that maps to multiple alerts in Grafana, but rather they are treated as multiple conditions to a single alert. For more information, see See the documentation on [creating alerts with multiple series]({{< relref "../../alerting/alerting-rules/create-grafana-managed-rule/#single-and-multi-dimensional-rule" >}}).
 
 ### Multiple values
 
 In the case of SQL-like data sources, more than one numeric column can be selected, with or without additional string columns to be used as dimensions. For example, `AVG(Temperature) AS AvgTemp, MAX(Temperature) AS MaxTemp`. This, if combined with multiple dimensions, can result in a lot of series. Selecting multiple values is currently only designed to be used with visualization.
 
-Additional technical information on tabular time series formats and how dimensions are extracted can be found in [the developer documentation on data frames as time series]({{< relref "../developers/plugins/data-frames/#data-frames-as-time-series" >}}).
+Additional technical information on tabular time series formats and how dimensions are extracted can be found in [the developer documentation on data frames as time series]({{< relref "../../developers/plugins/data-frames/#data-frames-as-time-series" >}}).
