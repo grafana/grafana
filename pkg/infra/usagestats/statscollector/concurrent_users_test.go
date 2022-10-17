@@ -8,17 +8,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/setting"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestConcurrentUsersMetrics(t *testing.T) {
-	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore := db.InitTestDB(t)
 	s := createService(t, setting.NewCfg(), sqlStore)
 
 	createConcurrentTokens(t, sqlStore)
@@ -35,7 +35,7 @@ func TestConcurrentUsersMetrics(t *testing.T) {
 }
 
 func TestConcurrentUsersStats(t *testing.T) {
-	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore := db.InitTestDB(t)
 	s := createService(t, setting.NewCfg(), sqlStore)
 
 	createConcurrentTokens(t, sqlStore)
@@ -115,7 +115,7 @@ func createToken(t *testing.T, uID int, sqlStore sqlstore.Store) {
 		AuthTokenSeen: false,
 	}
 
-	err = sqlStore.WithDbSession(context.Background(), func(dbSession *sqlstore.DBSession) error {
+	err = sqlStore.WithDbSession(context.Background(), func(dbSession *db.Session) error {
 		_, err = dbSession.Insert(&userAuthToken)
 		return err
 	})

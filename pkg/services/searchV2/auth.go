@@ -3,6 +3,7 @@ package searchV2
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -48,7 +49,7 @@ func (a *simpleSQLAuthService) GetDashboardReadFilter(user *user.SignedInUser) (
 	filter := a.getDashboardTableAuthFilter(user)
 	rows := make([]*dashIdQueryResult, 0)
 
-	err := a.sql.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err := a.sql.WithDbSession(context.Background(), func(sess *db.Session) error {
 		sql, params := filter.Where()
 		sess.Table("dashboard").
 			Where(sql, params...).

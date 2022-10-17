@@ -11,7 +11,9 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -26,12 +28,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 
+	"github.com/stretchr/testify/require"
+
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	datasourceService "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/stretchr/testify/require"
 )
 
 func setupTestServer(
@@ -109,7 +112,7 @@ func callAPI(server *web.Mux, method, path string, body io.Reader, t *testing.T)
 func buildQueryDataService(t *testing.T, cs datasources.CacheService, fpc *fakePluginClient, store *sqlstore.SQLStore) *query.Service {
 	//	build database if we need one
 	if store == nil {
-		store = sqlstore.InitTestDB(t)
+		store = db.InitTestDB(t)
 	}
 
 	// default cache service

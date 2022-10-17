@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -43,7 +44,7 @@ func benchmarkFilter(b *testing.B, numDs, numPermissions int) {
 		require.NoError(b, err)
 
 		var datasources []datasources.DataSource
-		err = store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		err = store.WithDbSession(context.Background(), func(sess *db.Session) error {
 			return sess.SQL(baseSql+acFilter.Where, acFilter.Args...).Find(&datasources)
 		})
 		require.NoError(b, err)
@@ -53,7 +54,7 @@ func benchmarkFilter(b *testing.B, numDs, numPermissions int) {
 
 func setupFilterBenchmark(b *testing.B, numDs, numPermissions int) (*sqlstore.SQLStore, []accesscontrol.Permission) {
 	b.Helper()
-	sqlStore := sqlstore.InitTestDB(b)
+	sqlStore := db.InitTestDB(b)
 	store := dsService.CreateStore(sqlStore, log.New("accesscontrol.test"))
 	for i := 1; i <= numDs; i++ {
 		err := store.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{

@@ -6,9 +6,10 @@ import (
 	"fmt"
 
 	"github.com/fatih/color"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -28,7 +29,7 @@ var (
 // EncryptDatasourcePasswords migrates unencrypted secrets on datasources
 // to the secureJson Column.
 func EncryptDatasourcePasswords(c utils.CommandLine, sqlStore *sqlstore.SQLStore) error {
-	return sqlStore.WithDbSession(context.Background(), func(session *sqlstore.DBSession) error {
+	return sqlStore.WithDbSession(context.Background(), func(session *db.Session) error {
 		passwordsUpdated, err := migrateColumn(session, "password")
 		if err != nil {
 			return err
@@ -61,7 +62,7 @@ func EncryptDatasourcePasswords(c utils.CommandLine, sqlStore *sqlstore.SQLStore
 	})
 }
 
-func migrateColumn(session *sqlstore.DBSession, column string) (int, error) {
+func migrateColumn(session *db.Session, column string) (int, error) {
 	var rows []map[string][]byte
 
 	session.Cols("id", column, "secure_json_data")
@@ -81,7 +82,7 @@ func migrateColumn(session *sqlstore.DBSession, column string) (int, error) {
 	return rowsUpdated, err
 }
 
-func updateRows(session *sqlstore.DBSession, rows []map[string][]byte, passwordFieldName string) (int, error) {
+func updateRows(session *db.Session, rows []map[string][]byte, passwordFieldName string) (int, error) {
 	var rowsUpdated int
 
 	for _, row := range rows {

@@ -4,20 +4,21 @@ import (
 	"context"
 	"testing"
 
+	"github.com/prometheus/alertmanager/config"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/prometheus/alertmanager/config"
-	"github.com/stretchr/testify/require"
 )
 
 func TestContactPointService(t *testing.T) {
-	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore := db.InitTestDB(t)
 	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 	t.Run("service gets contact points from AM config", func(t *testing.T) {
 		sut := createContactPointServiceSut(secretsService)

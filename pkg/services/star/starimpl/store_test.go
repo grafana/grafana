@@ -4,9 +4,11 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/star"
-	"github.com/stretchr/testify/require"
 )
 
 type getStore func(*sqlstore.SQLStore) store
@@ -16,7 +18,7 @@ func testIntegrationUserStarsDataAccess(t *testing.T, fn getStore) {
 		t.Skip("skipping integration test")
 	}
 	t.Run("Testing User Stars Data Access", func(t *testing.T) {
-		ss := sqlstore.InitTestDB(t)
+		ss := db.InitTestDB(t)
 		starStore := fn(ss)
 
 		t.Run("Given saved star", func(t *testing.T) {

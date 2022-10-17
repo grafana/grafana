@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/commandstest"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -17,15 +18,15 @@ import (
 
 func TestPasswordMigrationCommand(t *testing.T) {
 	// setup datasources with password, basic_auth and none
-	store := sqlstore.InitTestDB(t)
-	err := store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	store := db.InitTestDB(t)
+	err := store.WithDbSession(context.Background(), func(sess *db.Session) error {
 		passwordMigration(t, sess, store)
 		return nil
 	})
 	require.NoError(t, err)
 }
 
-func passwordMigration(t *testing.T, session *sqlstore.DBSession, sqlstore *sqlstore.SQLStore) {
+func passwordMigration(t *testing.T, session *db.Session, sqlstore *sqlstore.SQLStore) {
 	ds := []*datasources.DataSource{
 		{Type: "influxdb", Name: "influxdb", Password: "foobar", Uid: "influx"},
 		{Type: "graphite", Name: "graphite", BasicAuthPassword: "foobar", Uid: "graphite"},

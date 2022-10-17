@@ -19,3 +19,7 @@ type DB interface {
 	GetSqlxSession() *session.SessionDB
 	InTransaction(ctx context.Context, fn func(ctx context.Context) error) error
 }
+
+type Session = sqlstore.DBSession
+
+var InitTestDB = sqlstore.InitTestDB

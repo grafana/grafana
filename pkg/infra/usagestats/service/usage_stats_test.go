@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 
 	"github.com/stretchr/testify/assert"
@@ -212,7 +213,7 @@ type httpResp struct {
 func createService(t *testing.T, cfg setting.Cfg, sqlStore sqlstore.Store, withDB bool) *UsageStats {
 	t.Helper()
 	if withDB {
-		sqlStore = sqlstore.InitTestDB(t)
+		sqlStore = db.InitTestDB(t)
 	}
 
 	return ProvideService(

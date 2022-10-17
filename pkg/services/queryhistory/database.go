@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
@@ -23,7 +24,7 @@ func (s QueryHistoryService) createQuery(ctx context.Context, user *user.SignedI
 		Comment:       "",
 	}
 
-	err := s.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
+	err := s.SQLStore.WithDbSession(ctx, func(session *db.Session) error {
 		_, err := session.Insert(&queryHistory)
 		return err
 	})
@@ -65,7 +66,7 @@ func (s QueryHistoryService) searchQueries(ctx context.Context, user *user.Signe
 		query.Sort = "time-desc"
 	}
 
-	err := s.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
+	err := s.SQLStore.WithDbSession(ctx, func(session *db.Session) error {
 		dtosBuilder := sqlstore.SQLBuilder{}
 		dtosBuilder.Write(`SELECT
 			query_history.uid,
@@ -111,7 +112,7 @@ func (s QueryHistoryService) searchQueries(ctx context.Context, user *user.Signe
 
 func (s QueryHistoryService) deleteQuery(ctx context.Context, user *user.SignedInUser, UID string) (int64, error) {
 	var queryID int64
-	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *sqlstore.DBSession) error {
+	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *db.Session) error {
 		// Try to unstar the query first
 		_, err := session.Table("query_history_star").Where("user_id = ? AND query_uid = ?", user.UserID, UID).Delete(QueryHistoryStar{})
 		if err != nil {
@@ -139,7 +140,7 @@ func (s QueryHistoryService) patchQueryComment(ctx context.Context, user *user.S
 	var queryHistory QueryHistory
 	var isStarred bool
 
-	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *sqlstore.DBSession) error {
+	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *db.Session) error {
 		exists, err := session.Where("org_id = ? AND created_by = ? AND uid = ?", user.OrgID, user.UserID, UID).Get(&queryHistory)
 		if err != nil {
 			return err
@@ -184,7 +185,7 @@ func (s QueryHistoryService) starQuery(ctx context.Context, user *user.SignedInU
 	var queryHistory QueryHistory
 	var isStarred bool
 
-	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *sqlstore.DBSession) error {
+	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *db.Session) error {
 		// Check if query exists as we want to star only existing queries
 		exists, err := session.Table("query_history").Where("org_id = ? AND created_by = ? AND uid = ?", user.OrgID, user.UserID, UID).Get(&queryHistory)
 		if err != nil {
@@ -234,7 +235,7 @@ func (s QueryHistoryService) unstarQuery(ctx context.Context, user *user.SignedI
 	var queryHistory QueryHistory
 	var isStarred bool
 
-	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *sqlstore.DBSession) error {
+	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *db.Session) error {
 		exists, err := session.Table("query_history").Where("org_id = ? AND created_by = ? AND uid = ?", user.OrgID, user.UserID, UID).Get(&queryHistory)
 		if err != nil {
 			return err
@@ -277,7 +278,7 @@ func (s QueryHistoryService) migrateQueries(ctx context.Context, usr *user.Signe
 	queryHistories := make([]*QueryHistory, 0, len(cmd.Queries))
 	starredQueries := make([]*QueryHistoryStar, 0)
 
-	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *sqlstore.DBSession) error {
+	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *db.Session) error {
 		for _, query := range cmd.Queries {
 			uid := util.GenerateShortUID()
 			queryHistories = append(queryHistories, &QueryHistory{
@@ -334,7 +335,7 @@ func (s QueryHistoryService) migrateQueries(ctx context.Context, usr *user.Signe
 func (s QueryHistoryService) deleteStaleQueries(ctx context.Context, olderThan int64) (int, error) {
 	var rowsCount int64
 
-	err := s.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
+	err := s.SQLStore.WithDbSession(ctx, func(session *db.Session) error {
 		sql := `DELETE 
 			FROM query_history 
 			WHERE uid IN (
@@ -373,7 +374,7 @@ func (s QueryHistoryService) deleteStaleQueries(ctx context.Context, olderThan i
 func (s QueryHistoryService) enforceQueryHistoryRowLimit(ctx context.Context, limit int, starredQueries bool) (int, error) {
 	var deletedRowsCount int64
 
-	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *sqlstore.DBSession) error {
+	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *db.Session) error {
 		var rowsCount int64
 		var err error
 		if starredQueries {

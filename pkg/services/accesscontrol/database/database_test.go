@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	rs "github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
@@ -243,7 +244,7 @@ func createUserAndTeam(t *testing.T, sql *sqlstore.SQLStore, teamSvc team.Servic
 }
 
 func setupTestEnv(t testing.TB) (*AccessControlStore, rs.Store, *sqlstore.SQLStore, team.Service) {
-	sql := sqlstore.InitTestDB(t)
+	sql := db.InitTestDB(t)
 	acstore := ProvideService(sql)
 	permissionStore := rs.NewStore(sql)
 	teamService := teamimpl.ProvideService(sql, sql.Cfg)

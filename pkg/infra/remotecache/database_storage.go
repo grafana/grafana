@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
@@ -39,7 +40,7 @@ func (dc *databaseCache) Run(ctx context.Context) error {
 }
 
 func (dc *databaseCache) internalRunGC() {
-	err := dc.SQLStore.WithDbSession(context.Background(), func(session *sqlstore.DBSession) error {
+	err := dc.SQLStore.WithDbSession(context.Background(), func(session *db.Session) error {
 		now := getTime().Unix()
 		sql := `DELETE FROM cache_data WHERE (? - created_at) >= expires AND expires <> 0`
 
@@ -56,7 +57,7 @@ func (dc *databaseCache) Get(ctx context.Context, key string) (interface{}, erro
 	cacheHit := CacheData{}
 
 	item := &cachedItem{}
-	err := dc.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
+	err := dc.SQLStore.WithDbSession(ctx, func(session *db.Session) error {
 		exist, err := session.Where("cache_key= ?", key).Get(&cacheHit)
 
 		if err != nil {
@@ -95,7 +96,7 @@ func (dc *databaseCache) Set(ctx context.Context, key string, value interface{},
 		return err
 	}
 
-	return dc.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
+	return dc.SQLStore.WithDbSession(ctx, func(session *db.Session) error {
 		var expiresInSeconds int64
 		if expire != 0 {
 			expiresInSeconds = int64(expire) / int64(time.Second)
@@ -125,7 +126,7 @@ func (dc *databaseCache) Set(ctx context.Context, key string, value interface{},
 }
 
 func (dc *databaseCache) Delete(ctx context.Context, key string) error {
-	return dc.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
+	return dc.SQLStore.WithDbSession(ctx, func(session *db.Session) error {
 		sql := "DELETE FROM cache_data WHERE cache_key=?"
 		_, err := session.Exec(sql, key)
 

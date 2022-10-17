@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
@@ -18,7 +19,7 @@ func (s *ServiceAccountsStoreImpl) GetUsageMetrics(ctx context.Context) (*servic
 		` WHERE service_account_id IS NOT NULL ) AS serviceaccount_tokens`)
 
 	var sqlStats serviceaccounts.Stats
-	if err := s.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	if err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		_, err := sess.SQL(sb.GetSQLString(), sb.GetParams()...).Get(&sqlStats)
 		return err
 	}); err != nil {

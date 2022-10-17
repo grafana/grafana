@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -14,7 +15,7 @@ import (
 // 2) permissions for its parent folder
 // 3) if no specific permissions have been set for the dashboard or its parent folder then get the default permissions
 func (d *DashboardStore) GetDashboardACLInfoList(ctx context.Context, query *models.GetDashboardACLInfoListQuery) error {
-	outerErr := d.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+	outerErr := d.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
 		query.Result = make([]*models.DashboardACLInfoDTO, 0)
 		falseStr := d.sqlStore.GetDialect().BooleanStr(false)
 
@@ -97,7 +98,7 @@ func (d *DashboardStore) GetDashboardACLInfoList(ctx context.Context, query *mod
 
 // HasEditPermissionInFolders validates that an user have access to a certain folder
 func (d *DashboardStore) HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error {
-	return d.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+	return d.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
 		if query.SignedInUser.HasRole(org.RoleEditor) {
 			query.Result = true
 			return nil
@@ -125,7 +126,7 @@ func (d *DashboardStore) HasEditPermissionInFolders(ctx context.Context, query *
 }
 
 func (d *DashboardStore) HasAdminPermissionInDashboardsOrFolders(ctx context.Context, query *models.HasAdminPermissionInDashboardsOrFoldersQuery) error {
-	return d.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+	return d.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
 		if query.SignedInUser.HasRole(org.RoleAdmin) {
 			query.Result = true
 			return nil
@@ -151,7 +152,7 @@ func (d *DashboardStore) HasAdminPermissionInDashboardsOrFolders(ctx context.Con
 }
 
 func (d *DashboardStore) DeleteACLByUser(ctx context.Context, userID int64) error {
-	return d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return d.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		var rawSQL = "DELETE FROM dashboard_acl WHERE user_id = ?"
 		_, err := sess.Exec(rawSQL, userID)
 		return err

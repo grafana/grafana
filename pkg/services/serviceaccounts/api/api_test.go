@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -43,7 +44,7 @@ var (
 )
 
 func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
-	store := sqlstore.InitTestDB(t)
+	store := db.InitTestDB(t)
 	apiKeyService := apikeyimpl.ProvideService(store, store.Cfg)
 	kvStore := kvstore.ProvideService(store)
 	orgService := orgimpl.ProvideService(store, setting.NewCfg())
@@ -210,7 +211,7 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 // test the accesscontrol endpoints
 // with permissions and without permissions
 func TestServiceAccountsAPI_DeleteServiceAccount(t *testing.T) {
-	store := sqlstore.InitTestDB(t)
+	store := db.InitTestDB(t)
 	kvStore := kvstore.ProvideService(store)
 	apiKeyService := apikeyimpl.ProvideService(store, store.Cfg)
 	saStore := database.ProvideServiceAccountsStore(store, apiKeyService, kvStore, nil)
@@ -315,7 +316,7 @@ func setupTestServer(t *testing.T, svc *tests.ServiceAccountMock,
 }
 
 func TestServiceAccountsAPI_RetrieveServiceAccount(t *testing.T) {
-	store := sqlstore.InitTestDB(t)
+	store := db.InitTestDB(t)
 	apiKeyService := apikeyimpl.ProvideService(store, store.Cfg)
 	kvStore := kvstore.ProvideService(store)
 	saStore := database.ProvideServiceAccountsStore(store, apiKeyService, kvStore, nil)
@@ -407,7 +408,7 @@ func newString(s string) *string {
 }
 
 func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
-	store := sqlstore.InitTestDB(t)
+	store := db.InitTestDB(t)
 	apiKeyService := apikeyimpl.ProvideService(store, store.Cfg)
 	kvStore := kvstore.ProvideService(store)
 	saStore := database.ProvideServiceAccountsStore(store, apiKeyService, kvStore, nil)

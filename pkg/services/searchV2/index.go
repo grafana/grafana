@@ -13,6 +13,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/blugelabs/bluge"
+	"go.opentelemetry.io/otel/attribute"
+
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
@@ -21,9 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/store"
 	kdash "github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/setting"
-	"go.opentelemetry.io/otel/attribute"
-
-	"github.com/blugelabs/bluge"
 )
 
 type dashboardLoader interface {
@@ -981,7 +982,7 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 func newFolderIDLookup(sql *sqlstore.SQLStore) folderUIDLookup {
 	return func(ctx context.Context, folderID int64) (string, error) {
 		uid := ""
-		err := sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		err := sql.WithDbSession(ctx, func(sess *db.Session) error {
 			res, err := sess.Query("SELECT uid FROM dashboard WHERE id=?", folderID)
 			if err != nil {
 				return err

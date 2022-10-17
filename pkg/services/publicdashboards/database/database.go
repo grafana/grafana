@@ -4,14 +4,13 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/tokens"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -40,7 +39,7 @@ func ProvideStore(sqlStore db.DB) *PublicDashboardStoreImpl {
 func (d *PublicDashboardStoreImpl) ListPublicDashboards(ctx context.Context, orgId int64) ([]PublicDashboardListResponse, error) {
 	resp := make([]PublicDashboardListResponse, 0)
 
-	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		sess.Table("dashboard_public").
 			Join("LEFT", "dashboard", "dashboard.uid = dashboard_public.dashboard_uid AND dashboard.org_id = dashboard_public.org_id").
 			Cols("dashboard_public.uid", "dashboard_public.access_token", "dashboard_public.dashboard_uid", "dashboard_public.is_enabled", "dashboard.title").
@@ -60,7 +59,7 @@ func (d *PublicDashboardStoreImpl) ListPublicDashboards(ctx context.Context, org
 
 func (d *PublicDashboardStoreImpl) GetDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error) {
 	dashboard := &models.Dashboard{Uid: dashboardUid}
-	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		has, err := sess.Get(dashboard)
 		if err != nil {
 			return err
@@ -83,7 +82,7 @@ func (d *PublicDashboardStoreImpl) GetPublicDashboard(ctx context.Context, acces
 
 	// get public dashboard
 	pdRes := &PublicDashboard{AccessToken: accessToken}
-	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		has, err := sess.Get(pdRes)
 		if err != nil {
 			return err
@@ -111,7 +110,7 @@ func (d *PublicDashboardStoreImpl) GetPublicDashboard(ctx context.Context, acces
 func (d *PublicDashboardStoreImpl) GenerateNewPublicDashboardUid(ctx context.Context) (string, error) {
 	var uid string
 
-	err := d.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		for i := 0; i < 3; i++ {
 			uid = util.GenerateShortUID()
 
@@ -139,7 +138,7 @@ func (d *PublicDashboardStoreImpl) GenerateNewPublicDashboardUid(ctx context.Con
 func (d *PublicDashboardStoreImpl) GenerateNewPublicDashboardAccessToken(ctx context.Context) (string, error) {
 	var accessToken string
 
-	err := d.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		for i := 0; i < 3; i++ {
 			var err error
 			accessToken, err = tokens.GenerateAccessToken()
@@ -175,7 +174,7 @@ func (d *PublicDashboardStoreImpl) GetPublicDashboardByUid(ctx context.Context, 
 
 	var found bool
 	pdRes := &PublicDashboard{Uid: uid}
-	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		var err error
 		found, err = sess.Get(pdRes)
 		return err
@@ -199,7 +198,7 @@ func (d *PublicDashboardStoreImpl) GetPublicDashboardConfig(ctx context.Context,
 	}
 
 	pdRes := &PublicDashboard{OrgId: orgId, DashboardUid: dashboardUid}
-	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		// publicDashboard
 		_, err := sess.Get(pdRes)
 		if err != nil {
@@ -222,7 +221,7 @@ func (d *PublicDashboardStoreImpl) SavePublicDashboardConfig(ctx context.Context
 		return dashboards.ErrDashboardIdentifierNotSet
 	}
 
-	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		_, err := sess.UseBool("is_enabled").Insert(&cmd.PublicDashboard)
 		if err != nil {
 			return err
@@ -236,7 +235,7 @@ func (d *PublicDashboardStoreImpl) SavePublicDashboardConfig(ctx context.Context
 
 // Updates existing public dashboard configuration
 func (d *PublicDashboardStoreImpl) UpdatePublicDashboardConfig(ctx context.Context, cmd SavePublicDashboardConfigCommand) error {
-	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		timeSettingsJSON, err := json.Marshal(cmd.PublicDashboard.TimeSettings)
 		if err != nil {
 			return err
@@ -262,7 +261,7 @@ func (d *PublicDashboardStoreImpl) UpdatePublicDashboardConfig(ctx context.Conte
 // Responds true if public dashboard for a dashboard exists and isEnabled
 func (d *PublicDashboardStoreImpl) PublicDashboardEnabled(ctx context.Context, dashboardUid string) (bool, error) {
 	hasPublicDashboard := false
-	err := d.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+	err := d.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
 		sql := "SELECT COUNT(*) FROM dashboard_public WHERE dashboard_uid=? AND is_enabled=true"
 
 		result, err := dbSession.SQL(sql, dashboardUid).Count()
@@ -281,7 +280,7 @@ func (d *PublicDashboardStoreImpl) PublicDashboardEnabled(ctx context.Context, d
 // future
 func (d *PublicDashboardStoreImpl) AccessTokenExists(ctx context.Context, accessToken string) (bool, error) {
 	hasPublicDashboard := false
-	err := d.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+	err := d.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
 		sql := "SELECT COUNT(*) FROM dashboard_public WHERE access_token=? AND is_enabled=true"
 
 		result, err := dbSession.SQL(sql, accessToken).Count()
@@ -299,7 +298,7 @@ func (d *PublicDashboardStoreImpl) AccessTokenExists(ctx context.Context, access
 // Responds with OrgId from if exists and isEnabled.
 func (d *PublicDashboardStoreImpl) GetPublicDashboardOrgId(ctx context.Context, accessToken string) (int64, error) {
 	var orgId int64
-	err := d.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+	err := d.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
 		sql := "SELECT org_id FROM dashboard_public WHERE access_token=? AND is_enabled=true"
 
 		_, err := dbSession.SQL(sql, accessToken).Get(&orgId)

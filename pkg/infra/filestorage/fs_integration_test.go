@@ -8,9 +8,11 @@ import (
 	"path"
 	"testing"
 
+	"gocloud.dev/blob"
+
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"gocloud.dev/blob"
 )
 
 const (
@@ -74,13 +76,13 @@ func runTests(createCases func() []fsTestCase, t *testing.T) {
 
 	setupSqlFS := func() {
 		commonSetup()
-		sqlStore = sqlstore.InitTestDB(t)
+		sqlStore = db.InitTestDB(t)
 		filestorage = NewDbStorage(testLogger, sqlStore, nil, "/")
 	}
 
 	setupSqlFSNestedPath := func() {
 		commonSetup()
-		sqlStore = sqlstore.InitTestDB(t)
+		sqlStore = db.InitTestDB(t)
 		filestorage = NewDbStorage(testLogger, sqlStore, nil, "/5/dashboards/")
 	}
 

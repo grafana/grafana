@@ -5,19 +5,21 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestAnnotationCleanUp(t *testing.T) {
-	fakeSQL := sqlstore.InitTestDB(t)
+	fakeSQL := db.InitTestDB(t)
 
 	t.Cleanup(func() {
-		err := fakeSQL.WithDbSession(context.Background(), func(session *sqlstore.DBSession) error {
+		err := fakeSQL.WithDbSession(context.Background(), func(session *db.Session) error {
 			_, err := session.Exec("DELETE FROM annotation")
 			return err
 		})
@@ -111,10 +113,10 @@ func TestAnnotationCleanUp(t *testing.T) {
 }
 
 func TestOldAnnotationsAreDeletedFirst(t *testing.T) {
-	fakeSQL := sqlstore.InitTestDB(t)
+	fakeSQL := db.InitTestDB(t)
 
 	t.Cleanup(func() {
-		err := fakeSQL.WithDbSession(context.Background(), func(session *sqlstore.DBSession) error {
+		err := fakeSQL.WithDbSession(context.Background(), func(session *db.Session) error {
 			_, err := session.Exec("DELETE FROM annotation")
 			return err
 		})
@@ -132,7 +134,7 @@ func TestOldAnnotationsAreDeletedFirst(t *testing.T) {
 		Created:     time.Now().AddDate(-10, 0, -10).UnixNano() / int64(time.Millisecond),
 	}
 
-	err := fakeSQL.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err := fakeSQL.WithDbSession(context.Background(), func(sess *db.Session) error {
 		_, err := sess.Insert(a)
 		require.NoError(t, err, "cannot insert annotation")
 		_, err = sess.Insert(a)
@@ -166,7 +168,7 @@ func TestOldAnnotationsAreDeletedFirst(t *testing.T) {
 func assertAnnotationCount(t *testing.T, fakeSQL *sqlstore.SQLStore, sql string, expectedCount int64) {
 	t.Helper()
 
-	err := fakeSQL.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err := fakeSQL.WithDbSession(context.Background(), func(sess *db.Session) error {
 		count, err := sess.Where(sql).Count(&annotations.Item{})
 		require.NoError(t, err)
 		require.Equal(t, expectedCount, count)
@@ -178,7 +180,7 @@ func assertAnnotationCount(t *testing.T, fakeSQL *sqlstore.SQLStore, sql string,
 func assertAnnotationTagCount(t *testing.T, fakeSQL *sqlstore.SQLStore, expectedCount int64) {
 	t.Helper()
 
-	err := fakeSQL.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err := fakeSQL.WithDbSession(context.Background(), func(sess *db.Session) error {
 		count, err := sess.SQL("select count(*) from annotation_tag").Count()
 		require.NoError(t, err)
 		require.Equal(t, expectedCount, count)
@@ -221,7 +223,7 @@ func createTestAnnotations(t *testing.T, store *sqlstore.SQLStore, expectedCount
 			a.Created = cutoffDate.AddDate(-10, 0, -10).UnixNano() / int64(time.Millisecond)
 		}
 
-		err := store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		err := store.WithDbSession(context.Background(), func(sess *db.Session) error {
 			_, err := sess.Insert(a)
 			require.NoError(t, err, "should be able to save annotation", err)
 

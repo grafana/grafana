@@ -5,10 +5,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type CacheableStruct struct {
@@ -39,7 +41,7 @@ func TestCachedBasedOnConfig(t *testing.T) {
 	})
 	require.Nil(t, err, "Failed to load config")
 
-	client := createTestClient(t, cfg.RemoteCacheOptions, sqlstore.InitTestDB(t))
+	client := createTestClient(t, cfg.RemoteCacheOptions, db.InitTestDB(t))
 	runTestsForClient(t, client)
 }
 
