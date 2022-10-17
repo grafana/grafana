@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback } from 'react';
+import React, { ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { useObservable } from 'react-use';
 import { of } from 'rxjs';
 
@@ -12,6 +12,8 @@ import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensi
 import { CanvasElementItem, CanvasElementProps, defaultTextColor } from '../element';
 import { ElementState } from '../runtime/element';
 import { Align, TextConfig, TextData, VAlign } from '../types';
+
+let cursor: number | null = null;
 
 const TextDisplay = (props: CanvasElementProps<TextConfig, TextData>) => {
   const { data, isSelected } = props;
@@ -38,8 +40,24 @@ const TextEdit = (props: CanvasElementProps<TextConfig, TextData>) => {
   let panelData: DataFrame[];
   panelData = context.instanceState?.scene?.data.series;
 
-  const onTextChange = (event: React.SyntheticEvent<HTMLInputElement>) => {
+  const [textVal, setTextVal] = useState(config.text?.fixed ?? '');
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    const input: any = inputRef.current;
+    const inputCharsLength = input?.value.length;
+    if (input) {
+      if (!cursor) {
+        cursor = inputCharsLength;
+      }
+      input.setSelectionRange(cursor, cursor);
+    }
+  }, [inputRef]);
+
+  const onTextChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { value: textValue } = event.currentTarget;
+    setTextVal(textValue);
+    cursor = event.target.selectionStart;
     saveText(textValue);
   };
 
@@ -50,6 +68,9 @@ const TextEdit = (props: CanvasElementProps<TextConfig, TextData>) => {
       if (scene) {
         scene.editModeEnabled.next(false);
       }
+
+      const input: any = inputRef.current;
+      cursor = input?.value.length;
     }
   };
 
@@ -77,10 +98,23 @@ const TextEdit = (props: CanvasElementProps<TextConfig, TextData>) => {
     [context.instanceState?.scene, context.instanceState?.selected]
   );
 
+  const onFocus = (event: React.FocusEvent<HTMLInputElement>) => {
+    event.target.selectionStart = cursor;
+  };
+
   const styles = useStyles2(getStyles(data));
   return (
     <div className={styles.inlineEditorContainer}>
-      {panelData && <Input value={config.text?.fixed ?? ''} onChange={onTextChange} onKeyDown={onKeyDown} autoFocus />}
+      {panelData && (
+        <Input
+          ref={inputRef}
+          value={textVal}
+          onChange={onTextChange}
+          onKeyDown={onKeyDown}
+          onFocus={onFocus}
+          autoFocus
+        />
+      )}
     </div>
   );
 };
