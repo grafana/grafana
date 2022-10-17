@@ -48,9 +48,9 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *models.ReqContext, body a
 		return ErrResp(http.StatusBadRequest, err, "invalid condition")
 	}
 
-	ctx.At = body.GrafanaManagedCondition.Now
+	ctx = ctx.When(body.GrafanaManagedCondition.Now)
 	if ctx.At.IsZero() {
-		ctx.At = timeNow()
+		ctx = ctx.When(timeNow())
 	}
 
 	evalResults := srv.evaluator.ConditionEval(ctx, evalCond)
@@ -106,10 +106,9 @@ func (srv TestingApiSrv) RouteEvalQueries(c *models.ReqContext, cmd apimodels.Ev
 		return ErrResp(http.StatusUnauthorized, fmt.Errorf("%w to query one or many data sources used by the rule", ErrAuthorization), "")
 	}
 
-	ctx := eval.Context(c.Req.Context(), c.SignedInUser)
-	ctx.At = cmd.Now
+	ctx := eval.Context(c.Req.Context(), c.SignedInUser).When(cmd.Now)
 	if ctx.At.IsZero() {
-		ctx.At = timeNow()
+		ctx = ctx.When(timeNow())
 	}
 
 	evalResults, err := srv.evaluator.QueriesAndExpressionsEval(ctx, cmd.Data)

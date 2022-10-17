@@ -340,8 +340,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 				},
 			},
 		}
-		evalCtx := eval.Context(ctx, schedulerUser)
-		evalCtx.At = e.scheduledAt
+		evalCtx := eval.Context(ctx, schedulerUser).When(e.scheduledAt).WithRule(e.rule)
 
 		results := sch.evaluator.ConditionEval(evalCtx, e.rule.GetEvalCondition())
 		dur := sch.clock.Now().Sub(start)
