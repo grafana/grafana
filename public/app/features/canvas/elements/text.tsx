@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { useObservable } from 'react-use';
 import { of } from 'rxjs';
 
@@ -12,8 +12,6 @@ import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensi
 import { CanvasElementItem, CanvasElementProps, defaultTextColor } from '../element';
 import { ElementState } from '../runtime/element';
 import { Align, TextConfig, TextData, VAlign } from '../types';
-
-let cursor: number | null = null;
 
 const TextDisplay = (props: CanvasElementProps<TextConfig, TextData>) => {
   const { data, isSelected } = props;
@@ -40,26 +38,14 @@ const TextEdit = (props: CanvasElementProps<TextConfig, TextData>) => {
   let panelData: DataFrame[];
   panelData = context.instanceState?.scene?.data.series;
 
-  const [textVal, setTextVal] = useState(config.text?.fixed ?? '');
-  const inputRef = useRef(null);
+  const textRef = useRef<string>(config.text?.fixed ?? '');
 
+  // Save text on TextEdit unmount
   useEffect(() => {
-    const input: any = inputRef.current;
-    const inputCharsLength = input?.value.length;
-    if (input) {
-      if (!cursor) {
-        cursor = inputCharsLength;
-      }
-      input.setSelectionRange(cursor, cursor);
-    }
-  }, [inputRef]);
-
-  const onTextChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { value: textValue } = event.currentTarget;
-    setTextVal(textValue);
-    cursor = event.target.selectionStart;
-    saveText(textValue);
-  };
+    return () => {
+      saveText(textRef.current);
+    };
+  });
 
   const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
@@ -68,10 +54,11 @@ const TextEdit = (props: CanvasElementProps<TextConfig, TextData>) => {
       if (scene) {
         scene.editModeEnabled.next(false);
       }
-
-      const input: any = inputRef.current;
-      cursor = input?.value.length;
     }
+  };
+
+  const onKeyUp = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    textRef.current = event.currentTarget.value;
   };
 
   const saveText = useCallback(
@@ -98,23 +85,10 @@ const TextEdit = (props: CanvasElementProps<TextConfig, TextData>) => {
     [context.instanceState?.scene, context.instanceState?.selected]
   );
 
-  const onFocus = (event: React.FocusEvent<HTMLInputElement>) => {
-    event.target.selectionStart = cursor;
-  };
-
   const styles = useStyles2(getStyles(data));
   return (
     <div className={styles.inlineEditorContainer}>
-      {panelData && (
-        <Input
-          ref={inputRef}
-          value={textVal}
-          onChange={onTextChange}
-          onKeyDown={onKeyDown}
-          onFocus={onFocus}
-          autoFocus
-        />
-      )}
+      {panelData && <Input defaultValue={config.text?.fixed ?? ''} onKeyDown={onKeyDown} onKeyUp={onKeyUp} autoFocus />}
     </div>
   );
 };
