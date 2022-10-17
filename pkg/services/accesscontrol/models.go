@@ -279,9 +279,7 @@ type SimplifiedUserPermissionDTO struct {
 	UIDs   []string `json:"uids,omitempty"`
 }
 
-type Permissions []Permission
-
-func (ps Permissions) Simplify() []SimplifiedUserPermissionDTO {
+func Simplify(ps []Permission) []SimplifiedUserPermissionDTO {
 	var ok bool
 	permByAction := map[string]*SimplifiedUserPermissionDTO{}
 	res := []SimplifiedUserPermissionDTO{}
