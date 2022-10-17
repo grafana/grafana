@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 // RoleRegistration stores a role and its assignments to built-in roles
@@ -267,14 +266,6 @@ type SetResourcePermissionCommand struct {
 	TeamID      int64
 	BuiltinRole string
 	Permission  string
-}
-
-type EvaluateUserPermissionCommand struct {
-	SignedInUser *user.SignedInUser `json:"-"`
-	Action       string             `json:"action,omitempty"`
-	Resource     string             `json:"resource,omitempty"`
-	Attribute    string             `json:"attribute,omitempty"`
-	UIDs         []string           `json:"uids,omitempty"`
 }
 
 type GetUsersPermissionCommand struct {
