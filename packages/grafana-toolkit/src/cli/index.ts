@@ -1,9 +1,6 @@
 import chalk from 'chalk';
 import { program } from 'commander';
 
-import { changelogTask } from './tasks/changelog';
-import { cherryPickTask } from './tasks/cherrypick';
-import { closeMilestoneTask } from './tasks/closeMilestone';
 import { componentCreateTask } from './tasks/component.create';
 import { nodeVersionCheckerTask } from './tasks/nodeVersionChecker';
 import { buildPackageTask } from './tasks/package.build';
@@ -39,30 +36,6 @@ export const run = (includeInternalScripts = false) => {
       });
 
     program
-      .command('changelog')
-      .option('-m, --milestone <milestone>', 'Specify milestone')
-      .description('Builds changelog markdown')
-      .action(async (cmd) => {
-        if (!cmd.milestone) {
-          console.log('Please specify milestone, example: -m <milestone id from github milestone URL>');
-          return;
-        }
-
-        await execTask(changelogTask)({
-          milestone: cmd.milestone,
-          silent: true,
-        });
-      });
-
-    program
-      .command('cherrypick')
-      .option('-e, --enterprise', 'Run task for grafana-enterprise')
-      .description('Helps find commits to cherry pick')
-      .action(async (cmd) => {
-        await execTask(cherryPickTask)({ enterprise: !!cmd.enterprise });
-      });
-
-    program
       .command('node-version-check')
       .description('Verify node version')
       .action(async (cmd) => {
@@ -91,30 +64,19 @@ export const run = (includeInternalScripts = false) => {
         await execTask(searchTestDataSetupTask)({ count: cmd.count });
       });
 
-    program
-      .command('close-milestone')
-      .option('-m, --milestone <milestone>', 'Specify milestone')
-      .option('--dryRun', 'Only simulate actions')
-      .description('Helps ends a milestone by removing the cherry-pick label and closing it')
-      .action(async (cmd) => {
-        if (!cmd.milestone) {
-          console.log('Please specify milestone, example: -m <milestone id from github milestone URL>');
-          return;
-        }
-
-        await execTask(closeMilestoneTask)({
-          milestone: cmd.milestone,
-          dryRun: !!cmd.dryRun,
-        });
-      });
-
     // React generator
     program
       .command('component:create')
       .description(
-        'Scaffold React components. Optionally add test, story and .mdx files. The components are created in the same dir the script is run from.'
+        '[deprecated] Scaffold React components. Optionally add test, story and .mdx files. The components are created in the same dir the script is run from.'
       )
       .action(async () => {
+        chalk.yellow.bold(
+          `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
+        );
+        console.log(
+          'if you were reliant on this command we recommend https://www.npmjs.com/package/react-gen-component'
+        );
         await execTask(componentCreateTask)({});
       });
   }

@@ -1,7 +1,6 @@
 package export
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"path"
@@ -11,9 +10,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
-	"github.com/grafana/grafana/pkg/services/searchV2/dslookup"
-	"github.com/grafana/grafana/pkg/services/searchV2/extract"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 )
 
 func exportDashboards(helper *commitHelper, job *gitExportJob) error {
@@ -26,7 +24,7 @@ func exportDashboards(helper *commitHelper, job *gitExportJob) error {
 		folders[0] = job.cfg.GeneralFolderPath // "general"
 	}
 
-	lookup, err := dslookup.LoadDatasourceLookup(helper.ctx, helper.orgID, job.sql)
+	lookup, err := dashboard.LoadDatasourceLookup(helper.ctx, helper.orgID, job.sql)
 	if err != nil {
 		return err
 	}
@@ -60,20 +58,22 @@ func exportDashboards(helper *commitHelper, job *gitExportJob) error {
 			return err
 		}
 
+		reader := dashboard.NewStaticDashboardSummaryBuilder(lookup)
+
 		// Process all folders
 		for _, row := range rows {
 			if !row.IsFolder {
 				continue
 			}
-			dash, err := extract.ReadDashboard(bytes.NewReader(row.Data), lookup)
+			dash, _, err := reader(helper.ctx, row.UID, row.Data)
 			if err != nil {
 				return err
 			}
 
 			dash.UID = row.UID
-			slug := cleanFileName(dash.Title)
+			slug := cleanFileName(dash.Name)
 			folder := map[string]string{
-				"title": dash.Title,
+				"title": dash.Name,
 			}
 
 			folderStructure.body = append(folderStructure.body, commitBody{

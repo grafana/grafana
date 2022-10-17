@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
 import {
-  LogRowModel,
-  toDataFrame,
+  DataQueryError,
+  DataQueryResponse,
   Field,
   FieldCache,
+  LogRowModel,
   LogsSortOrder,
-  DataQueryResponse,
-  DataQueryError,
+  toDataFrame,
 } from '@grafana/data';
 
 export interface RowContextOptions {
@@ -93,7 +93,7 @@ export const getRowContexts = async (
           // ns which came before but they come in the response that search for logs after. This means right now
           // we will show those as if they came after. This is not strictly correct but seems better than losing them
           // and making this correct would mean quite a bit of complexity to shuffle things around and messing up
-          //counts.
+          // counts.
           if (idField.values.get(fieldIndex) === row.uid) {
             continue;
           }
@@ -109,7 +109,10 @@ export const getRowContexts = async (
         const lineField: Field<string> = dataFrame.fields.filter((field) => field.name === 'line')[0];
         const line = lineField.values.get(fieldIndex); // assuming that both fields have same length
 
-        data.push(line);
+        // since we request limit+1 logs, we occasionally get one extra log in the response
+        if (data.length < limit) {
+          data.push(line);
+        }
       }
     }
 

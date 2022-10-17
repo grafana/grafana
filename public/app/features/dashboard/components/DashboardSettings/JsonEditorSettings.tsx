@@ -1,9 +1,8 @@
 import { css } from '@emotion/css';
 import React, { useState } from 'react';
-import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, CodeEditor, Stack, useStyles2 } from '@grafana/ui';
+import { Button, CodeEditor, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/PageNew/Page';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 
@@ -13,16 +12,10 @@ import { SettingsPageProps } from './types';
 
 export function JsonEditorSettings({ dashboard, sectionNav }: SettingsPageProps) {
   const [dashboardJson, setDashboardJson] = useState<string>(JSON.stringify(dashboard.getSaveModelClone(), null, 2));
-  const onBlur = (value: string) => {
-    setDashboardJson(value);
-  };
 
-  const onClick = () => {
-    getDashboardSrv()
-      .saveJSONDashboard(dashboardJson)
-      .then(() => {
-        dashboardWatcher.reloadPage();
-      });
+  const onClick = async () => {
+    await getDashboardSrv().saveJSONDashboard(dashboardJson);
+    dashboardWatcher.reloadPage();
   };
 
   const styles = useStyles2(getStyles);
@@ -31,36 +24,35 @@ export function JsonEditorSettings({ dashboard, sectionNav }: SettingsPageProps)
 
   return (
     <Page navModel={sectionNav} subTitle={subTitle}>
-      <div className="dashboard-settings__subheader"></div>
-
-      <Stack direction="column" gap={4} flexGrow={1}>
-        <div className={styles.editWrapper}>
-          <AutoSizer>
-            {({ width, height }) => (
-              <CodeEditor
-                value={dashboardJson}
-                language="json"
-                width={width}
-                height={height}
-                showMiniMap={true}
-                showLineNumbers={true}
-                onBlur={onBlur}
-              />
-            )}
-          </AutoSizer>
-        </div>
-        <div>
-          {dashboard.meta.canSave && (
+      <div className={styles.wrapper}>
+        <CodeEditor
+          value={dashboardJson}
+          language="json"
+          showMiniMap={true}
+          showLineNumbers={true}
+          onBlur={setDashboardJson}
+          containerStyles={styles.codeEditor}
+        />
+        {dashboard.meta.canSave && (
+          <div>
             <Button type="submit" onClick={onClick}>
               Save changes
             </Button>
-          )}
-        </div>
-      </Stack>
+          </div>
+        )}
+      </div>
     </Page>
   );
 }
 
-const getStyles = (_: GrafanaTheme2) => ({
-  editWrapper: css({ flexGrow: 1 }),
+const getStyles = (theme: GrafanaTheme2) => ({
+  wrapper: css({
+    display: 'flex',
+    height: '100%',
+    flexDirection: 'column',
+    gap: theme.spacing(2),
+  }),
+  codeEditor: css({
+    flexGrow: 1,
+  }),
 });

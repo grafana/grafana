@@ -76,21 +76,6 @@ func HasExpressionQuery(queries []*simplejson.Json) bool {
 	return false
 }
 
-func GroupQueriesByDataSource(queries []*simplejson.Json) (result [][]*simplejson.Json) {
-	byDataSource := make(map[string][]*simplejson.Json)
-
-	for _, query := range queries {
-		uid := GetDataSourceUidFromJson(query)
-		byDataSource[uid] = append(byDataSource[uid], query)
-	}
-
-	for _, queries := range byDataSource {
-		result = append(result, queries)
-	}
-
-	return
-}
-
 func GetDataSourceUidFromJson(query *simplejson.Json) string {
 	uid := query.Get("datasource").Get("uid").MustString()
 

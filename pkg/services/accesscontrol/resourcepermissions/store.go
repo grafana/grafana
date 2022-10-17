@@ -10,16 +10,17 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func NewStore(sql *sqlstore.SQLStore) *store {
+func NewStore(sql db.DB) *store {
 	return &store{sql}
 }
 
 type store struct {
-	sql *sqlstore.SQLStore
+	sql db.DB
 }
 
 type flatResourcePermission struct {
@@ -309,7 +310,7 @@ func (s *store) getResourcePermissions(sess *sqlstore.DBSession, orgID int64, qu
     `
 	userFrom := rawFrom + `
 		INNER JOIN user_role ur ON r.id = ur.role_id AND (ur.org_id = 0 OR ur.org_id = ?)
-		INNER JOIN ` + s.sql.Dialect.Quote("user") + ` u ON ur.user_id = u.id
+		INNER JOIN ` + s.sql.GetDialect().Quote("user") + ` u ON ur.user_id = u.id
 	`
 	teamFrom := rawFrom + `
 		INNER JOIN team_role tr ON r.id = tr.role_id AND (tr.org_id = 0 OR tr.org_id = ?)
@@ -591,7 +592,7 @@ func (s *store) getPermissions(sess *sqlstore.DBSession, resource, resourceID, r
 		LEFT JOIN team_role tr ON r.id = tr.role_id
 		LEFT JOIN team t ON tr.team_id = t.id
 		LEFT JOIN user_role ur ON r.id = ur.role_id
-		LEFT JOIN ` + s.sql.Dialect.Quote("user") + ` u ON ur.user_id = u.id
+		LEFT JOIN ` + s.sql.GetDialect().Quote("user") + ` u ON ur.user_id = u.id
 		LEFT JOIN builtin_role br ON r.id = br.role_id
 	WHERE r.id = ? AND p.scope = ?
 	`

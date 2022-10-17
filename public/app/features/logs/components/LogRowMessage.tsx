@@ -44,6 +44,7 @@ const getStyles = (theme: GrafanaTheme2, showContextButton: boolean, isInDashboa
       label: rowWithContext;
       z-index: 1;
       outline: 9999px solid ${outlineColor};
+      display: inherit;
     `,
     horizontalScroll: css`
       label: verticalScroll;
@@ -61,7 +62,6 @@ const getStyles = (theme: GrafanaTheme2, showContextButton: boolean, isInDashboa
       justify-content: space-evenly;
       align-items: center;
       position: absolute;
-      right: ${isInDashboard ? '0px' : '-8px'};
       top: 0;
       bottom: auto;
       height: 36px;
@@ -71,6 +71,11 @@ const getStyles = (theme: GrafanaTheme2, showContextButton: boolean, isInDashboa
       z-index: 100;
       visibility: hidden;
       width: ${showContextButton ? '80px' : '40px'};
+    `,
+    logRowMenuCell: css`
+      position: absolute;
+      right: ${isInDashboard ? '40px' : `calc(75px + ${theme.spacing()} + ${showContextButton ? '80px' : '40px'})`};
+      margin-top: -1px;
     `,
   };
 };
@@ -156,36 +161,45 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
     const styles = getStyles(theme, shouldShowContextToggle, app === CoreApp.Dashboard);
 
     return (
-      // When context is open, the position has to be NOT relative.
-      // Setting the postion as inline-style to overwrite the more sepecific style definition from `style.logsRowMessage`.
-      <td
-        ref={this.logRowRef}
-        style={contextIsOpen ? { position: 'unset' } : undefined}
-        className={style.logsRowMessage}
-      >
-        <div
-          className={cx({ [styles.positionRelative]: wrapLogMessage }, { [styles.horizontalScroll]: !wrapLogMessage })}
+      <>
+        {
+          // When context is open, the position has to be NOT relative. // Setting the postion as inline-style to
+          // overwrite the more sepecific style definition from `style.logsRowMessage`.
+        }
+        <td
+          ref={this.logRowRef}
+          style={contextIsOpen ? { position: 'unset' } : undefined}
+          className={style.logsRowMessage}
         >
-          {contextIsOpen && context && (
-            <LogRowContext
-              row={row}
-              context={context}
-              errors={errors}
-              wrapLogMessage={wrapLogMessage}
-              hasMoreContextRows={hasMoreContextRows}
-              onOutsideClick={onToggleContext}
-              logsSortOrder={logsSortOrder}
-              onLoadMoreContext={() => {
-                if (updateLimit) {
-                  updateLimit();
-                }
-              }}
-            />
-          )}
-          <span className={cx(styles.positionRelative, { [styles.rowWithContext]: contextIsOpen })}>
-            {renderLogMessage(hasAnsi, restructuredEntry, row.searchWords, style.logsRowMatchHighLight)}
-          </span>
-          {showRowMenu && (
+          <div
+            className={cx(
+              { [styles.positionRelative]: wrapLogMessage },
+              { [styles.horizontalScroll]: !wrapLogMessage }
+            )}
+          >
+            {contextIsOpen && context && (
+              <LogRowContext
+                row={row}
+                context={context}
+                errors={errors}
+                wrapLogMessage={wrapLogMessage}
+                hasMoreContextRows={hasMoreContextRows}
+                onOutsideClick={onToggleContext}
+                logsSortOrder={logsSortOrder}
+                onLoadMoreContext={() => {
+                  if (updateLimit) {
+                    updateLimit();
+                  }
+                }}
+              />
+            )}
+            <span className={cx(styles.positionRelative, { [styles.rowWithContext]: contextIsOpen })}>
+              {renderLogMessage(hasAnsi, restructuredEntry, row.searchWords, style.logsRowMatchHighLight)}
+            </span>
+          </div>
+        </td>
+        {showRowMenu && (
+          <td className={cx('log-row-menu-cell', styles.logRowMenuCell)}>
             <span className={cx('log-row-menu', styles.rowMenu)} onClick={(e) => e.stopPropagation()}>
               {shouldShowContextToggle && (
                 <Tooltip placement="top" content={'Show context'}>
@@ -200,9 +214,9 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
                 />
               </Tooltip>
             </span>
-          )}
-        </div>
-      </td>
+          </td>
+        )}
+      </>
     );
   }
 }

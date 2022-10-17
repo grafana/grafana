@@ -95,10 +95,10 @@ func (st DBstore) GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAler
 func (st DBstore) GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmodels.GetAlertRulesGroupByRuleUIDQuery) error {
 	return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var result []*ngmodels.AlertRule
-		err := sess.Table("alert_rule").Alias("A").Join(
+		err := sess.Table("alert_rule").Alias("a").Join(
 			"INNER",
-			"alert_rule AS B", "A.org_id = B.org_id AND A.namespace_uid = B.namespace_uid AND A.rule_group = B.rule_group AND B.uid = ?", query.UID,
-		).Where("A.org_id = ?", query.OrgID).Select("A.*").Find(&result)
+			"alert_rule AS b", "a.org_id = b.org_id AND a.namespace_uid = b.namespace_uid AND a.rule_group = b.rule_group AND b.uid = ?", query.UID,
+		).Where("a.org_id = ?", query.OrgID).Select("a.*").Find(&result)
 		if err != nil {
 			return err
 		}
@@ -154,7 +154,7 @@ func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRu
 			// not able to fetch the inserted id as it's not supported by xorm
 			for i := range newRules {
 				if _, err := sess.Insert(&newRules[i]); err != nil {
-					if st.SQLStore.Dialect.IsUniqueConstraintViolation(err) {
+					if st.SQLStore.GetDialect().IsUniqueConstraintViolation(err) {
 						return ngmodels.ErrAlertRuleUniqueConstraintViolation
 					}
 					return fmt.Errorf("failed to create new rules: %w", err)
@@ -189,7 +189,7 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, rules []ngmodels.UpdateR
 			// no way to update multiple rules at once
 			if updated, err := sess.ID(r.Existing.ID).AllCols().Update(r.New); err != nil || updated == 0 {
 				if err != nil {
-					if st.SQLStore.Dialect.IsUniqueConstraintViolation(err) {
+					if st.SQLStore.GetDialect().IsUniqueConstraintViolation(err) {
 						return ngmodels.ErrAlertRuleUniqueConstraintViolation
 					}
 					return fmt.Errorf("failed to update rule [%s] %s: %w", r.New.UID, r.New.Title, err)

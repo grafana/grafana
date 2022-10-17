@@ -28,6 +28,8 @@ Reporting enables you to automatically generate PDFs from any of your dashboards
 
 Any changes you make to a dashboard used in a report are reflected the next time the report is sent. For example, if you change the time range in the dashboard, then the time range in the report also changes.
 
+For information about recent improvements to the reporting UI, refer to [Grafana reporting: How we improved the UX in Grafana](https://grafana.com/blog/2022/06/29/grafana-reporting-how-we-improved-the-ux-in-grafana/).
+
 ## Requirements
 
 - SMTP must be configured for reports to be sent. Refer to [SMTP]({{< relref "../../setup-grafana/configure-grafana/#smtp" >}}) in [Configuration]({{< relref "../../setup-grafana/configure-grafana/" >}}) for more information.
@@ -84,7 +86,7 @@ You can configure report-specific template variables for the dashboard on the re
 
 > **Note:** Available in [Grafana Enterprise]({{< relref "../../enterprise/" >}}) version 8.0 and later, and [Grafana Cloud Pro and Advanced]({{< ref "/grafana-cloud" >}}).
 
-You can include dynamic dashboards with panels or rows, set to repeat by a variable, into reports. For detailed information about setting up repeating panels or rows in dashboards, refer to [Repeat panels or rows]({{< relref "../../panels/configure-panel-options/#configure-repeating-rows-or-panels" >}}).
+You can include dynamic dashboards with panels or rows, set to repeat by a variable, into reports. For detailed information about setting up repeating panels or rows in dashboards, refer to [Repeat panels or rows]({{< relref "../../panels-visualizations/configure-panel-options/#configure-repeating-rows-or-panels" >}}).
 
 #### Caveats
 
