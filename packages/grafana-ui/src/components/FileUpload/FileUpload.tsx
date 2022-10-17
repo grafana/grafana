@@ -58,7 +58,7 @@ export const FileUpload = ({
         accept={accept}
         data-testid={selectors.components.FileUpload.inputField}
       />
-      <label role="button" htmlFor={id} className={cx(style.labelWrapper, className)}>
+      <label htmlFor={id} className={cx(style.labelWrapper, className)}>
         <Icon name="upload" className={style.icon} />
         {children}
       </label>

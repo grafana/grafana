@@ -3,10 +3,11 @@ package db
 import (
 	"context"
 
+	"xorm.io/core"
+
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
-	"xorm.io/core"
 )
 
 type DB interface {
