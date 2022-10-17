@@ -521,7 +521,6 @@ var NamespaceDimensionKeysMap = map[string][]string{
 	"CloudWatchSynthetics":        {"CanaryName"},
 }
 
-// Known AWS regions.
 var Regions = []string{
 	"af-south-1", "ap-east-1", "ap-northeast-1", "ap-northeast-2", "ap-northeast-3", "ap-south-1", "ap-southeast-1",
 	"ap-southeast-2", "ap-southeast-3", "ca-central-1", "cn-north-1", "cn-northwest-1", "eu-central-1", "eu-north-1", "eu-south-1", "eu-west-1",
