@@ -346,12 +346,7 @@ export function modifyQueries(
   modifier: (query: DataQuery, modification: QueryFixAction) => Promise<DataQuery>
 ): ThunkResult<void> {
   return async (dispatch, getState) => {
-    const state = getState().explore[exploreId];
-
-    // to make typescript happy
-    if (state == null) {
-      return;
-    }
+    const state = getState().explore[exploreId]!;
 
     const { queries } = state;
 
