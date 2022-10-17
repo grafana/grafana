@@ -1,4 +1,3 @@
-import { css } from '@emotion/css';
 import classNames from 'classnames';
 import { LanguageMap, languages as prismLanguages } from 'prismjs';
 import React, { ReactNode } from 'react';
@@ -15,6 +14,9 @@ import {
   SuggestionsState,
   TypeaheadInput,
   TypeaheadOutput,
+  Themeable2,
+  withTheme2,
+  clearButtonStyles,
 } from '@grafana/ui';
 import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
 import {
@@ -29,11 +31,6 @@ import { PromOptions, PromQuery } from '../types';
 
 import { PrometheusMetricsBrowser } from './PrometheusMetricsBrowser';
 import { MonacoQueryFieldWrapper } from './monaco-query-field/MonacoQueryFieldWrapper';
-
-const noStyledButton = css`
-  background: transparent;
-  border: none;
-`;
 
 export const RECORDING_RULES_GROUP = '__recording_rules__';
 const LAST_USED_LABELS_KEY = 'grafana.datasources.prometheus.browser.labels';
@@ -81,7 +78,7 @@ export function willApplySuggestion(suggestion: string, { typeaheadContext, type
   return suggestion;
 }
 
-interface PromQueryFieldProps extends QueryEditorProps<PrometheusDatasource, PromQuery, PromOptions> {
+interface PromQueryFieldProps extends QueryEditorProps<PrometheusDatasource, PromQuery, PromOptions>, Themeable2 {
   ExtraFieldElement?: ReactNode;
   'data-testid'?: string;
 }
@@ -284,6 +281,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
       query,
       ExtraFieldElement,
       history = [],
+      theme,
     } = this.props;
 
     const { labelBrowserVisible, syntaxLoaded, hint } = this.state;
@@ -342,7 +340,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
                     {hint.fix ? (
                       <button
                         type="button"
-                        className={classNames('text-link', 'muted', noStyledButton)}
+                        className={classNames('text-link', 'muted', clearButtonStyles(theme))}
                         onClick={this.onClickHintFix}
                       >
                         {hint.fix.label}
@@ -359,4 +357,4 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   }
 }
 
-export default PromQueryField;
+export default withTheme2(PromQueryField);
