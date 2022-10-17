@@ -97,7 +97,7 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 			err = sqlStore.GetOrgQuotaByTarget(context.Background(), &query)
 
 			require.NoError(t, err)
-			require.Equal(t, int64(0), query.Result.Used)
+			require.Equal(t, int64(1), query.Result.Used)
 		})
 
 		t.Run("Should be able to get zero used org alert quota when table does not exist (ngalert is not enabled - default case)", func(t *testing.T) {
@@ -176,7 +176,7 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 			err = sqlStore.GetUserQuotaByTarget(context.Background(), &query)
 
 			require.NoError(t, err)
-			require.Equal(t, int64(1), query.Result.Used)
+			require.Equal(t, int64(2), query.Result.Used)
 		})
 
 		t.Run("Should be able to get used user quota when no rows exist", func(t *testing.T) {
@@ -194,7 +194,7 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 			require.NoError(t, err)
 			require.Len(t, query.Result, 1)
 			require.Equal(t, int64(10), query.Result[0].Limit)
-			require.Equal(t, int64(1), query.Result[0].Used)
+			require.Equal(t, int64(2), query.Result[0].Used)
 		})
 	})
 
@@ -204,7 +204,7 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, int64(5), query.Result.Limit)
-		require.Equal(t, int64(0), query.Result.Used)
+		require.Equal(t, int64(1), query.Result.Used)
 	})
 
 	t.Run("Should be able to global org quota", func(t *testing.T) {
@@ -213,7 +213,7 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, int64(5), query.Result.Limit)
-		require.Equal(t, int64(1), query.Result.Used)
+		require.Equal(t, int64(2), query.Result.Used)
 	})
 
 	t.Run("Should be able to get zero used global alert quota when table does not exist (ngalert is not enabled - default case)", func(t *testing.T) {
