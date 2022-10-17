@@ -32,7 +32,7 @@ export const filterFieldsByNameTransformer: DataTransformerInfo<FilterFieldsByNa
     ),
 };
 
-const getMatcherConfig = (options?: RegexpOrNamesMatcherOptions): MatcherConfig | undefined => {
+export const getMatcherConfig = (options?: RegexpOrNamesMatcherOptions): MatcherConfig | undefined => {
   if (!options) {
     return undefined;
   }

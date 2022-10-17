@@ -7,32 +7,47 @@ import {
   PluginState,
   SynchronousDataTransformerInfo,
   TransformerRegistryItem,
+  getFieldMatcher,
+  FieldMatcher,
 } from '@grafana/data';
+import {
+  FilterFieldsByNameTransformerOptions,
+  getMatcherConfig,
+} from '@grafana/data/src/transformations/transformers/filterByName';
 
-import { PartitionByValuesEditor } from './PartitionByValuesEditor';
+import { FilterByNameTransformerEditor } from '../editors/FilterByNameTransformerEditor';
+
 import { partition } from './partition';
 
-interface PartitionByValuesOptions {
-  fields: string[];
-}
-
-export const partitionByValuesTransformer: SynchronousDataTransformerInfo<PartitionByValuesOptions> = {
+export const partitionByValuesTransformer: SynchronousDataTransformerInfo<FilterFieldsByNameTransformerOptions> = {
   id: DataTransformerID.partitionByValues,
   name: 'Partition by values',
-  description: `Will split a combined dataset into multiple series discriminated by unique values in one or more chosen fields.`,
+  description: `Splits a combined dataset into multiple series discriminated by unique values in one or more chosen fields.`,
   defaultOptions: {},
 
   operator: (options) => (source) =>
     source.pipe(map((data) => partitionByValuesTransformer.transformer(options)(data))),
 
-  transformer: (options: PartitionByValuesOptions) => {
+  transformer: (options: FilterFieldsByNameTransformerOptions) => {
+    let matcher: FieldMatcher | undefined;
+
+    if (options.include) {
+      matcher = getFieldMatcher(getMatcherConfig(options.include)!);
+    }
+
     return (data: DataFrame[]) => {
-      let keyField = data[0].fields.find((f) => f.name === 'Gender')!
-      let keys = keyField.values.toArray();
-      let frames = partition([keys]).map((idxs: number[]) => {
+      if (!matcher || !data.length) {
+        return data;
+      }
+
+      let keyFields = data[0].fields.filter((f) => matcher!(f, data[0], data))!;
+      let keys = keyFields.map((f) => f.values.toArray());
+      let frames = partition(keys).map((idxs: number[]) => {
+        let name = keyFields.map((f, i) => keys[i][idxs[0]]).join('/');
+
         return {
           ...data[0],
-          name: keyField.name + '/' + keyField.values.get(idxs[0]),
+          name,
           length: idxs.length,
           fields: data[0].fields.map((f) => {
             let vals = f.values.toArray();
@@ -44,10 +59,11 @@ export const partitionByValuesTransformer: SynchronousDataTransformerInfo<Partit
 
             return {
               ...f,
+              state: undefined,
               values: new ArrayVector(vals2),
             };
-          })
-        }
+          }),
+        };
       });
 
       return frames;
@@ -55,9 +71,9 @@ export const partitionByValuesTransformer: SynchronousDataTransformerInfo<Partit
   },
 };
 
-export const partitionByValuesTransformRegistryItem: TransformerRegistryItem<PartitionByValuesOptions> = {
+export const partitionByValuesTransformRegistryItem: TransformerRegistryItem<FilterFieldsByNameTransformerOptions> = {
   id: DataTransformerID.partitionByValues,
-  editor: PartitionByValuesEditor,
+  editor: FilterByNameTransformerEditor,
   transformation: partitionByValuesTransformer,
   name: partitionByValuesTransformer.name,
   description: partitionByValuesTransformer.description,
