@@ -682,7 +682,7 @@ export function createTableFrameFromTraceQlQuery(
           ],
         },
       },
-      // { name: 'traceName', type: FieldType.string, config: { displayNameFromDS: 'Name' } },
+      { name: 'traceName', type: FieldType.string, config: { displayNameFromDS: 'Trace name' } },
       // { name: 'attributes', type: FieldType.string, config: { displayNameFromDS: 'Attributes' } },
       { name: 'startTime', type: FieldType.string, config: { displayNameFromDS: 'Start time' } },
       { name: 'duration', type: FieldType.number, config: { displayNameFromDS: 'Duration', unit: 'ms' } },
