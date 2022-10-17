@@ -26,8 +26,8 @@ export class SceneDataProvider extends SceneDataObject<SceneDataProviderState> {
 
     this.subs.add(
       timeRange.subscribe({
-        next: (range) => {
-          this.performQueries(range.range);
+        next: (data) => {
+          this.performQueries(data.range);
         },
       })
     );
