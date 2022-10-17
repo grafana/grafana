@@ -49,6 +49,7 @@ export const FolderView = ({
     const rsp = await getGrafanaSearcher().search({
       query: '*',
       kind: ['folder'],
+      sort: 'name_sort',
     });
     for (const row of rsp.view) {
       folders.push({
