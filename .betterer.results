@@ -3645,13 +3645,13 @@ exports[`better eslint`] = {
     "public/app/features/dashboard/dashgrid/LazyLoader.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/features/dashboard/dashgrid/PanelChrome.tsx:5381": [
+    "public/app/features/dashboard/dashgrid/PanelHeader/PanelHeaderMenuItem.tsx:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "public/app/features/dashboard/dashgrid/PanelStateWrapper.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
-    ],
-    "public/app/features/dashboard/dashgrid/PanelHeader/PanelHeaderMenuItem.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/features/dashboard/dashgrid/SeriesVisibilityConfigFactory.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
