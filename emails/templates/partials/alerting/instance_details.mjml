@@ -1,3 +1,24 @@
+<!-- Images -->
+<mj-section padding="0" text-align="left">
+  <mj-column>
+    <!-- Embedded Image -->
+    <mj-raw>
+      {{ if .EmbeddedImage }}
+      <img src="cid:{{ .EmbeddedImage }}" alt="Alerting Chart Attached Below" />
+      {{ end }}
+    </mj-raw>
+
+    <!-- Image from screenshot service -->
+    <mj-raw>
+      {{ if .ImageURL }}
+    </mj-raw>
+    <mj-image src="{{ .ImageURL }}" padding="0" alt="Alerting Panel" />
+    <mj-raw>
+      {{ end }}
+    </mj-raw>
+  </mj-column>
+</mj-section>
+
 <mj-section padding="0" text-align="left">
   <mj-column>
     <!-- Summary -->
@@ -23,9 +44,9 @@
     </mj-text>
     <mj-text line-height="1.5">
       <mj-raw>
-        {{ range (regexSplit "\n" .Annotations.description -1) }}
+        {{ range $line := (regexSplit "\n" .Annotations.description -1) }}
       </mj-raw>
-      {{ . }}<br />
+      {{ $line }}<br />
       <mj-raw>
         {{ end }}
       </mj-raw>
@@ -33,7 +54,40 @@
     <mj-raw>
       {{ end }}
     </mj-raw>
+  </mj-column>
+</mj-section>
 
+<!-- Values -->
+<mj-raw>
+  {{ if .Values }}
+</mj-raw>
+<mj-section padding="0" text-align="left">
+  <mj-column>
+    <mj-text>
+      <strong>Values</strong>
+    </mj-text>
+  </mj-column>
+</mj-section>
+<mj-section padding="0" text-align="left">
+  <mj-column padding="10px" background-color="#111217" border-bottom="1px solid #2f3037" border-top="1px solid #2f3037">
+    <mj-text>
+      <mj-raw>
+        {{ range $refID, $value := .Values }}
+      </mj-raw>
+      {{ $refID }}={{ $value }}&nbsp;
+      <mj-raw>
+        {{ end }}
+      </mj-raw>
+    </mj-text>
+  </mj-column>
+</mj-section>
+<mj-raw>
+  {{ end }}
+</mj-raw>
+
+<!-- Labels and annotations -->
+<mj-section>
+  <mj-column>
     <!-- Labels -->
     <mj-raw>
       {{ if .Labels.SortedPairs }}
@@ -97,7 +151,7 @@
 <!-- Observed -->
 <mj-section border-top="1px solid #2f3037" padding="5px 0">
   <mj-column>
-    <mj-text>
+    <mj-text color="#91929e">
       Observed <strong>{{ ago .StartsAt }}</strong> before this notification was delivered, at <strong>{{ .StartsAt }}</strong>
     </mj-text>
   </mj-column>

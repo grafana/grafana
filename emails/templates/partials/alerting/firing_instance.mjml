@@ -5,7 +5,7 @@
     </mj-button>
   </mj-column>
   <mj-column vertical-align="middle">
-    <mj-text align="center">
+    <mj-text align="center" padding="0">
       <strong>{{ .Labels.alertname }}</strong>
     </mj-text>
   </mj-column>

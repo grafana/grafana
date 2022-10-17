@@ -12,40 +12,11 @@
     </mj-section>
 
     <!-- This is our grouping header, it says what grouping labels have been applied to this email -->
-    <mj-section padding="0">
-      <mj-column>
-        <!-- we show this only when we're using the default grouping (grafana_folder, alertname) -->
-        <mj-raw>
-          {{ if eq (.GroupLabels.SortedPairs.Names | join ",") "alertname,grafana_folder" }}
-        </mj-raw>
-        <mj-text padding="0" align="left">
-          <h2>{{ .GroupLabels.grafana_folder }} &rsaquo; {{ .GroupLabels.alertname }}</h2>
-        </mj-text>
-        <mj-raw>
-          {{ else }}
-        </mj-raw>
-        <!-- non-default grouping labels are just printed verbatim -->
-        <mj-text padding="0" align="left">
-          <h2>
-            Grouping:&nbsp;
-            <mj-raw>
-              {{ range .GroupLabels.SortedPairs }}
-            </mj-raw>
-            {{ .Name }}={{ .Value }}
-            <mj-raw>
-              {{ end }}
-            </mj-raw>
-          </h2>
-        </mj-text>
-        <mj-raw>
-          {{ end }}
-        </mj-raw>
-      </mj-column>
-    </mj-section>
+    <mj-include path="./partials/alerting/grouping_labels.mjml" />
 
     <!-- Firing instances -->
     <mj-raw>
-      {{ if gt (len .Alerts.Firing) 0  }}
+      {{ if .Alerts.Firing  }}
     </mj-raw>
 
     <!-- Firing header -->
@@ -79,7 +50,7 @@
 
     <!-- Resolved instances -->
     <mj-raw>
-      {{ if gt (len .Alerts.Resolved) 0 }}
+      {{ if .Alerts.Resolved }}
     </mj-raw>
 
     <mj-section padding="0">
@@ -98,7 +69,7 @@
       <mj-include path="./partials/alerting/resolved_instance.mjml" />
       <mj-include path="./partials/alerting/instance_details.mjml" />
     </mj-wrapper>
-    <mj-section padding="5px" />
+    <mj-section padding="10px" />
 
     <!-- end Resolved instances loop -->
     <mj-raw>
