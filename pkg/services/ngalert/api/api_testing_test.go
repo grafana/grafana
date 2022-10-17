@@ -71,7 +71,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 			evaluator := &eval.FakeEvaluator{}
 			var result []eval.Result
 			evaluator.EXPECT().Validate(mock.Anything, mock.Anything, mock.Anything).Return(nil)
-			evaluator.EXPECT().ConditionEval(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(result)
+			evaluator.EXPECT().ConditionEval(mock.Anything, mock.Anything).Return(result)
 
 			srv := createTestingApiSrv(ds, ac, evaluator)
 
@@ -113,7 +113,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 			evaluator := &eval.FakeEvaluator{}
 			var result []eval.Result
 			evaluator.EXPECT().Validate(mock.Anything, mock.Anything, mock.Anything).Return(nil)
-			evaluator.EXPECT().ConditionEval(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(result)
+			evaluator.EXPECT().ConditionEval(mock.Anything, mock.Anything).Return(result)
 
 			srv := createTestingApiSrv(ds, ac, evaluator)
 

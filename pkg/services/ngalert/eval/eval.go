@@ -27,7 +27,7 @@ import (
 //go:generate mockery --name Evaluator --structname FakeEvaluator --inpackage --filename evaluator_mock.go --with-expecter
 type Evaluator interface {
 	// ConditionEval executes conditions and evaluates the result.
-	ConditionEval(ctx context.Context, user *user.SignedInUser, condition models.Condition, now time.Time) Results
+	ConditionEval(ctx EvaluationContext, condition models.Condition) Results
 	// QueriesAndExpressionsEval executes queries and expressions and returns the result.
 	QueriesAndExpressionsEval(ctx context.Context, user *user.SignedInUser, data []models.AlertQuery, now time.Time) (*backend.QueryDataResponse, error)
 	// Validate validates that the condition is correct. Returns nil if the condition is correct. Otherwise, error that describes the failure
@@ -575,15 +575,15 @@ func (evalResults Results) AsDataFrame() data.Frame {
 }
 
 // ConditionEval executes conditions and evaluates the result.
-func (e *evaluatorImpl) ConditionEval(ctx context.Context, user *user.SignedInUser, condition models.Condition, now time.Time) Results {
-	execResp, err := e.QueriesAndExpressionsEval(ctx, user, condition.Data, now)
+func (e *evaluatorImpl) ConditionEval(ctx EvaluationContext, condition models.Condition) Results {
+	execResp, err := e.QueriesAndExpressionsEval(ctx.Ctx, ctx.User, condition.Data, ctx.At)
 	var execResults ExecutionResults
 	if err != nil {
 		execResults = ExecutionResults{Error: err}
 	} else {
 		execResults = queryDataResponseToExecutionResults(condition, execResp)
 	}
-	return evaluateExecutionResult(execResults, now)
+	return evaluateExecutionResult(execResults, ctx.At)
 }
 
 // QueriesAndExpressionsEval executes queries and expressions and returns the result.

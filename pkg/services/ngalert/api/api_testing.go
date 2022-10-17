@@ -42,17 +42,18 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *models.ReqContext, body a
 		Condition: body.GrafanaManagedCondition.Condition,
 		Data:      body.GrafanaManagedCondition.Data,
 	}
+	ctx := eval.Context(c.Req.Context(), c.SignedInUser)
 
 	if err := srv.evaluator.Validate(c.Req.Context(), c.SignedInUser, evalCond); err != nil {
 		return ErrResp(http.StatusBadRequest, err, "invalid condition")
 	}
 
-	now := body.GrafanaManagedCondition.Now
-	if now.IsZero() {
-		now = timeNow()
+	ctx.At = body.GrafanaManagedCondition.Now
+	if ctx.At.IsZero() {
+		ctx.At = timeNow()
 	}
 
-	evalResults := srv.evaluator.ConditionEval(c.Req.Context(), c.SignedInUser, evalCond, now)
+	evalResults := srv.evaluator.ConditionEval(ctx, evalCond)
 
 	frame := evalResults.AsDataFrame()
 	return response.JSONStreaming(http.StatusOK, util.DynMap{
