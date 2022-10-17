@@ -9,13 +9,13 @@ import {
   useResizeColumns,
   useSortBy,
   useTable,
+  useExpanded,
 } from 'react-table';
 import { FixedSizeList } from 'react-window';
 
-import { DataFrame, getFieldDisplayName, Field } from '@grafana/data';
+import { DataFrame, getFieldDisplayName, Field, MutableDataFrame, ArrayVector } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../themes';
-import { Button } from '../Button';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { Pagination } from '../Pagination/Pagination';
 
@@ -135,8 +135,6 @@ export const Table: FC<Props> = memo((props: Props) => {
     enablePagination,
   } = props;
 
-  const [showSpans, setShowSpans] = useState(false);
-
   const listRef = useRef<FixedSizeList>(null);
   const tableDivRef = useRef<HTMLDivElement>(null);
   const fixedSizeListScrollbarRef = useRef<HTMLDivElement>(null);
@@ -144,6 +142,9 @@ export const Table: FC<Props> = memo((props: Props) => {
   const theme = useTheme2();
   const headerHeight = noHeader ? 0 : tableStyles.cellHeight;
   const [footerItems, setFooterItems] = useState<FooterItem[] | undefined>(footerValues);
+  const [expandedIndex, setExpandedIndex] = useState<number>();
+
+  const { mainData, subData, indexesToKeepBlank } = useMainData(data, expandedIndex);
 
   const footerHeight = useMemo(() => {
     const EXTENDED_ROW_HEIGHT = 33;
@@ -169,19 +170,19 @@ export const Table: FC<Props> = memo((props: Props) => {
   // React table data array. This data acts just like a dummy array to let react-table know how many rows exist
   // The cells use the field to look up values
   const memoizedData = useMemo(() => {
-    if (!data.fields.length) {
+    if (!mainData.fields.length) {
       return [];
     }
     // as we only use this to fake the length of our data set for react-table we need to make sure we always return an array
     // filled with values at each index otherwise we'll end up trying to call accessRow for null|undefined value in
     // https://github.com/tannerlinsley/react-table/blob/7be2fc9d8b5e223fc998af88865ae86a88792fdb/src/hooks/useTable.js#L585
-    return Array(data.length).fill(0);
-  }, [data]);
+    return Array(mainData.length).fill(0);
+  }, [mainData]);
 
   // React-table column definitions
   const memoizedColumns = useMemo(
-    () => getColumns(data, width, columnMinWidth, showSpans, footerItems),
-    [data, width, columnMinWidth, showSpans, footerItems]
+    () => getColumns(mainData, width, columnMinWidth, expandedIndex, setExpandedIndex, footerItems),
+    [mainData, width, columnMinWidth, footerItems, expandedIndex]
   );
 
   // Internal react table state reducer
@@ -215,7 +216,7 @@ export const Table: FC<Props> = memo((props: Props) => {
     gotoPage,
     setPageSize,
     pageOptions,
-  } = useTable(options, useFilters, useSortBy, usePagination, useAbsoluteLayout, useResizeColumns);
+  } = useTable(options, useFilters, useSortBy, useAbsoluteLayout, useResizeColumns, usePagination);
 
   /*
     Footer value calculation is being moved in the Table component and the footerValues prop will be deprecated.
@@ -293,40 +294,55 @@ export const Table: FC<Props> = memo((props: Props) => {
         row = page[rowIndex];
       }
       prepareRow(row);
-      if (!showSpans && row.values[0]) {
+
+      if (expandedIndex !== undefined && expandedIndex + 1 === rowIndex) {
+        const rowProps = row.getRowProps({ style });
+        rowProps.style = {
+          ...rowProps.style,
+          height: tableStyles.rowHeight * indexesToKeepBlank.length,
+        };
         return (
-          <div {...row.getRowProps({ style })} className={tableStyles.row}>
-            {row.cells.map((cell: Cell, index: number) => (
-              <TableCell
-                key={index}
-                tableStyles={tableStyles}
-                cell={cell}
-                onCellFilterAdded={onCellFilterAdded}
-                columnIndex={index}
-                columnCount={row.cells.length}
-              />
-            ))}
-          </div>
-        );
-      } else if (showSpans) {
-        return (
-          <div {...row.getRowProps({ style })} className={tableStyles.row}>
-            {row.cells.map((cell: Cell, index: number) => (
-              <TableCell
-                key={index}
-                tableStyles={tableStyles}
-                cell={cell}
-                onCellFilterAdded={onCellFilterAdded}
-                columnIndex={index}
-                columnCount={row.cells.length}
-              />
-            ))}
+          <div {...rowProps}>
+            <Table data={subData!} width={width} height={tableStyles.rowHeight * indexesToKeepBlank.length} />
           </div>
         );
       }
-      return null;
+
+      // if (indexesToKeepBlank.includes(rowIndex)) {
+      //   return <div {...row.getRowProps({ style })} />;
+      // }
+
+      if (indexesToKeepBlank.includes(rowIndex)) {
+        return null;
+      }
+
+      return (
+        <div {...row.getRowProps({ style })} className={tableStyles.row}>
+          {row.cells.map((cell: Cell, index: number) => (
+            <TableCell
+              key={index}
+              tableStyles={tableStyles}
+              cell={cell}
+              onCellFilterAdded={onCellFilterAdded}
+              columnIndex={index}
+              columnCount={row.cells.length}
+            />
+          ))}
+        </div>
+      );
     },
-    [onCellFilterAdded, page, enablePagination, prepareRow, rows, showSpans, tableStyles]
+    [
+      onCellFilterAdded,
+      page,
+      enablePagination,
+      prepareRow,
+      rows,
+      tableStyles,
+      expandedIndex,
+      indexesToKeepBlank,
+      width,
+      subData,
+    ]
   );
 
   const onNavigate = useCallback(
@@ -375,14 +391,6 @@ export const Table: FC<Props> = memo((props: Props) => {
 
   return (
     <div {...getTableProps()} className={tableStyles.table} aria-label={ariaLabel} role="table" ref={tableDivRef}>
-      {data.fields[1]?.name === 'spanID' ? ( // Only show the button if we're in the TraceQL tab, not when using Search.
-        <div>
-          <Button size="sm" onClick={() => setShowSpans((val) => !val)}>
-            {showSpans ? 'Hide spans' : 'Show spans'}
-          </Button>
-          <br /> <br />
-        </div>
-      ) : null}
       <CustomScrollbar hideVerticalTrack={true}>
         <div className={tableStyles.tableContentWrapper(totalColumnsWidth)}>
           {!noHeader && <HeaderRow headerGroups={headerGroups} showTypeIcons={showTypeIcons} />}
@@ -421,5 +429,101 @@ export const Table: FC<Props> = memo((props: Props) => {
     </div>
   );
 });
+
+function useMainData(
+  data: DataFrame,
+  // This is index after filtering so we cannot use it directly with data
+  expandedIndex: number | undefined
+): { mainData: DataFrame; subData?: DataFrame; indexesToKeepBlank: number[] } {
+  return useMemo(() => {
+    const subCols: Field[] = [];
+    const mainCols: Field[] = [];
+    let indexesToKeepBlank: number[] = [];
+
+    for (const f of data.fields) {
+      if (f.config.custom?.subcol) {
+        subCols.push(f);
+      } else {
+        mainCols.push(f);
+      }
+    }
+
+    if (!subCols.length) {
+      return {
+        mainData: data,
+        subData: undefined,
+        indexesToKeepBlank,
+      };
+    }
+
+    // We need to filter out rows and there does not seem to be an easy util for that. This is a bit convoluted though.
+    // Probably try using DataFrameView and MutableDataFrame to loop over rows instead of this manual indexing.
+
+    let inSubColumns = false;
+    const newMainValues = mainCols.map(() => new ArrayVector());
+    const newSubValues = subCols.map(() => new ArrayVector());
+
+    for (let rowIndex = 0; rowIndex < mainCols[0].values.length; rowIndex++) {
+      const isMainRow = mainCols.some((col) => col.values.get(rowIndex));
+      if (isMainRow) {
+        for (let columnIndex = 0; columnIndex < mainCols.length; columnIndex++) {
+          newMainValues[columnIndex].add(mainCols[columnIndex].values.get(rowIndex));
+        }
+
+        inSubColumns = false;
+        continue;
+      }
+
+      const isFirstExpandedSubRow =
+        !isMainRow && expandedIndex !== undefined && newMainValues[0].length - 1 === expandedIndex;
+      if (isFirstExpandedSubRow || inSubColumns) {
+        indexesToKeepBlank.push(newMainValues[0].length);
+
+        for (let columnIndex = 0; columnIndex < mainCols.length; columnIndex++) {
+          newMainValues[columnIndex].add(null);
+        }
+
+        for (let columnIndex = 0; columnIndex < subCols.length; columnIndex++) {
+          newSubValues[columnIndex].add(subCols[columnIndex].values.get(rowIndex));
+        }
+
+        inSubColumns = true;
+      }
+    }
+
+    const newMainFields = mainCols.map((col, index) => {
+      return {
+        ...col,
+        values: newMainValues[index],
+      };
+    });
+
+    const newSubFields = subCols.map<Field>((col, index) => {
+      return {
+        ...col,
+        config: {
+          ...col.config,
+          custom: {
+            ...(col.config.custom || {}),
+            subcol: false,
+          },
+        },
+        values: newSubValues[index],
+      };
+    });
+
+    return {
+      mainData: new MutableDataFrame({
+        ...data,
+        fields: newMainFields,
+      }),
+      subData: new MutableDataFrame({
+        ...data,
+        fields: newSubFields,
+      }),
+      indexesToKeepBlank,
+    };
+  }, [data, expandedIndex]);
+}
 
 Table.displayName = 'Table';

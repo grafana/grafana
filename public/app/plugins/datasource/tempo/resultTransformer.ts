@@ -654,6 +654,10 @@ export function createTableFrameFromTraceQlQuery(
           ],
         },
       },
+      { name: 'traceName', type: FieldType.string, config: { displayNameFromDS: 'Name' } },
+      { name: 'startTime', type: FieldType.string, config: { displayNameFromDS: 'Start time' } },
+      { name: 'duration', type: FieldType.number, config: { displayNameFromDS: 'Duration', unit: 'ms' } },
+
       {
         name: 'spanID',
         type: FieldType.string,
@@ -677,10 +681,11 @@ export function createTableFrameFromTraceQlQuery(
           ],
         },
       },
-      { name: 'traceName', type: FieldType.string, config: { displayNameFromDS: 'Name' } },
-      { name: 'attributes', type: FieldType.string, config: { displayNameFromDS: 'Attributes' } },
-      { name: 'startTime', type: FieldType.string, config: { displayNameFromDS: 'Start time' } },
-      { name: 'duration', type: FieldType.number, config: { displayNameFromDS: 'Duration', unit: 'ms' } },
+      {
+        name: 'attributes',
+        type: FieldType.string,
+        config: { displayNameFromDS: 'Attributes', custom: { subcol: true } },
+      },
     ],
     meta: {
       preferredVisualisationType: 'table',
@@ -689,22 +694,21 @@ export function createTableFrameFromTraceQlQuery(
   if (!data?.length) {
     return frame;
   }
-  // Show the most recent traces
-  const traceData = data
-    .sort((a, b) => parseInt(b?.startTimeUnixNano!, 10) / 1000000 - parseInt(a?.startTimeUnixNano!, 10) / 1000000)
-    .reduce((list: TraceTableData[], t) => {
-      const firstSpanSet = t.spanSets?.[0];
-      const trace: TraceTableData = transformToTraceData(t);
-      trace.attributes = firstSpanSet?.attributes
-        .map((atr) => Object.keys(atr).map((key) => `${key} = ${atr[key]}`))
-        .join(', ');
-      list.push(trace);
-      firstSpanSet?.spans.forEach((span) => list.push(transformSpanToTraceData(span)));
-      return list;
-    }, []);
 
-  for (const trace of traceData) {
+  const copy = [...data];
+  copy.sort((a, b) => parseInt(b?.startTimeUnixNano!, 10) / 1000000 - parseInt(a?.startTimeUnixNano!, 10) / 1000000);
+
+  for (const traceMeta of copy) {
+    const firstSpanSet = traceMeta.spanSets?.[0];
+    const trace: TraceTableData = transformToTraceData(traceMeta);
+    // trace.attributes = firstSpanSet?.attributes
+    //   .map((atr) => Object.keys(atr).map((key) => `${key} = ${atr[key]}`))
+    //   .join(', ');
     frame.add(trace);
+
+    for (const span of firstSpanSet?.spans ?? []) {
+      frame.add(transformSpanToTraceData(span));
+    }
   }
 
   return frame;
@@ -712,33 +716,33 @@ export function createTableFrameFromTraceQlQuery(
 
 interface TraceTableData {
   traceID?: string;
-  traceName: string;
+  traceName?: string;
   spanID?: string;
   attributes?: string;
-  startTime: string;
-  duration: number;
+  startTime?: string;
+  duration?: number;
 }
 
 function transformSpanToTraceData(data: Span): TraceTableData {
-  const traceStartTime = data.startTimeUnixNano / 1000000;
-  const traceEndTime = data.endTimeUnixNano / 1000000;
+  // const traceStartTime = data.startTimeUnixNano / 1000000;
+  // const traceEndTime = data.endTimeUnixNano / 1000000;
 
-  let startTime = dateTimeFormat(traceStartTime);
+  // let startTime = dateTimeFormat(traceStartTime);
 
-  if (Math.abs(differenceInHours(new Date(traceStartTime), Date.now())) <= 1) {
-    startTime = formatDistance(new Date(traceStartTime), Date.now(), {
-      addSuffix: true,
-      includeSeconds: true,
-    });
-  }
+  // if (Math.abs(differenceInHours(new Date(traceStartTime), Date.now())) <= 1) {
+  //   startTime = formatDistance(new Date(traceStartTime), Date.now(), {
+  //     addSuffix: true,
+  //     includeSeconds: true,
+  //   });
+  // }
 
   return {
-    traceID: undefined,
-    traceName: data.name,
+    // traceID: undefined,
+    // traceName: data.name,
     spanID: data.spanId,
     attributes: data.attributes?.map((atr) => Object.keys(atr).map((key) => `${key} = ${atr[key]}`)).join(', '),
-    startTime,
-    duration: traceEndTime - traceStartTime,
+    // startTime,
+    // duration: traceEndTime - traceStartTime,
   };
 }
 
