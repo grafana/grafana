@@ -172,11 +172,6 @@ func (ss *SQLStore) GetUserQuotaByTarget(ctx context.Context, query *models.GetU
 		if query.Target != alertRuleTarget || query.UnifiedAlertingEnabled {
 			// get quota used.
 			rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s where user_id=?", dialect.Quote(query.Target))
-
-			// removing service accounts from the count
-			if query.Target == dialect.Quote("user") {
-				rawSQL += " AND " + notServiceAccount(dialect)
-			}
 			resp := make([]*targetCount, 0)
 			if err := sess.SQL(rawSQL, query.UserId).Find(&resp); err != nil {
 				return err
