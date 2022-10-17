@@ -929,9 +929,16 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 	defer cancelLoadingDashboardCtx()
 
 	dashboardsChannel := l.loadAllDashboards(loadingDashboardCtx, limit, orgID, dashboardUID)
+	defer close(dashboardsChannel)
 
 	for {
-		res := <-dashboardsChannel
+		var res *dashboardsRes
+		select {
+		case <-ctx.Done():
+			return nil, errors.New("context cancelled")
+		case res = <-dashboardsChannel:
+		}
+
 		if res.err != nil {
 			l.logger.Error("Error when loading dashboards", "error", err, "orgID", orgID, "dashboardUID", dashboardUID)
 			break
