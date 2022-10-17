@@ -99,20 +99,24 @@ e2e.scenario({
     // This variable will be set in CI
     const CI = e2e.env('CI');
     if (CI) {
-      provisionAzureMonitorDatasources([
-        {
-          datasources: [
+      e2e()
+        .readFile('../../../cloud-data-sources/e2e-scripts/outputs.json')
+        .then((outputs) => {
+          provisionAzureMonitorDatasources([
             {
-              jsonData: {
-                cloudName: 'Azure',
-                tenantId: e2e.env('AZURE_TENANT'),
-                clientId: e2e.env('AZURE_SP_APP_ID'),
-              },
-              secureJsonData: { clientSecret: e2e.env('AZURE_SP_PASSWORD') },
+              datasources: [
+                {
+                  jsonData: {
+                    cloudName: 'Azure',
+                    tenantId: outputs.tenantId,
+                    clientId: outputs.clientId,
+                  },
+                  secureJsonData: { clientSecret: outputs.clientSecret },
+                },
+              ],
             },
-          ],
-        },
-      ]);
+          ]);
+        });
     } else {
       e2e()
         .readFile(provisioningPath)
