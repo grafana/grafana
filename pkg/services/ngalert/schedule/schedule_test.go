@@ -49,7 +49,7 @@ func TestWarmStateCache(t *testing.T) {
 		{
 			AlertRuleUID: rule.UID,
 			OrgID:        rule.OrgID,
-			CacheId:      `[["test1","testValue1"]]`,
+			CacheID:      `[["test1","testValue1"]]`,
 			Labels:       data.Labels{"test1": "testValue1"},
 			State:        eval.Normal,
 			Results: []state.Evaluation{
@@ -62,7 +62,7 @@ func TestWarmStateCache(t *testing.T) {
 		}, {
 			AlertRuleUID: rule.UID,
 			OrgID:        rule.OrgID,
-			CacheId:      `[["test2","testValue2"]]`,
+			CacheID:      `[["test2","testValue2"]]`,
 			Labels:       data.Labels{"test2": "testValue2"},
 			State:        eval.Alerting,
 			Results: []state.Evaluation{
@@ -125,7 +125,7 @@ func TestWarmStateCache(t *testing.T) {
 
 	t.Run("instance cache has expected entries", func(t *testing.T) {
 		for _, entry := range expectedEntries {
-			cacheEntry := st.Get(entry.OrgID, entry.AlertRuleUID, entry.CacheId)
+			cacheEntry := st.Get(entry.OrgID, entry.AlertRuleUID, entry.CacheID)
 
 			if diff := cmp.Diff(entry, cacheEntry, cmpopts.IgnoreFields(state.State{}, "Results")); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)

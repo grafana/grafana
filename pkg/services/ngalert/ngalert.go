@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
@@ -37,6 +38,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -54,7 +56,7 @@ func ProvideService(
 	secretsService secrets.Service,
 	notificationService notifications.Service,
 	m *metrics.NGAlert,
-	folderService dashboards.FolderService,
+	folderService folder.Service,
 	ac accesscontrol.AccessControl,
 	dashboardService dashboards.DashboardService,
 	renderService rendering.Service,
@@ -104,7 +106,7 @@ type AlertNG struct {
 	DataSourceCache     datasources.CacheService
 	DataSourceService   datasources.DataSourceService
 	RouteRegister       routing.RouteRegister
-	SQLStore            *sqlstore.SQLStore
+	SQLStore            db.DB
 	KVStore             kvstore.KVStore
 	ExpressionService   *expr.Service
 	DataProxy           *datasourceproxy.DataSourceProxyService
@@ -117,7 +119,7 @@ type AlertNG struct {
 	imageService        image.ImageService
 	schedule            schedule.ScheduleService
 	stateManager        *state.Manager
-	folderService       dashboards.FolderService
+	folderService       folder.Service
 	dashboardService    dashboards.DashboardService
 
 	// Alerting notification services

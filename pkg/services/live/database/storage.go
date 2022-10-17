@@ -6,15 +6,15 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 )
 
 type Storage struct {
-	store *sqlstore.SQLStore
+	store db.DB
 	cache *localcache.CacheService
 }
 
-func NewStorage(store *sqlstore.SQLStore, cache *localcache.CacheService) *Storage {
+func NewStorage(store db.DB, cache *localcache.CacheService) *Storage {
 	return &Storage{store: store, cache: cache}
 }
 

@@ -1,4 +1,4 @@
-import React, { FC, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useObservable } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -26,7 +26,7 @@ interface State {
   data?: PanelData;
 }
 
-export const TestStuffPage: FC = () => {
+export const TestStuffPage = () => {
   const [state, setState] = useState<State>(getDefaultState());
   const { queryOptions, queryRunner } = state;
 

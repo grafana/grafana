@@ -19,10 +19,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
@@ -1367,7 +1369,7 @@ func getExpected(t *testing.T, res libraryelements.LibraryElementDTO, UID string
 	}
 }
 
-func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user *user.SignedInUser, dash *models.Dashboard, folderID int64) *models.Dashboard {
+func createDashboard(t *testing.T, sqlStore db.DB, user *user.SignedInUser, dash *models.Dashboard, folderID int64) *models.Dashboard {
 	dash.FolderId = folderID
 	dashItem := &dashboards.SaveDashboardDTO{
 		Dashboard: dash,
@@ -1377,11 +1379,11 @@ func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user *user.Signe
 		Overwrite: false,
 	}
 
-	dashboardStore := database.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
-	dashAlertService := alerting.ProvideDashAlertExtractorService(nil, nil, nil)
 	cfg := setting.NewCfg()
 	cfg.RBACEnabled = false
 	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
+	dashboardStore := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg))
+	dashAlertService := alerting.ProvideDashAlertExtractorService(nil, nil, nil)
 	ac := acmock.New()
 	service := dashboardservice.ProvideDashboardService(
 		cfg, dashboardStore, dashAlertService,
@@ -1393,7 +1395,7 @@ func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user *user.Signe
 	return dashboard
 }
 
-func createFolderWithACL(t *testing.T, sqlStore *sqlstore.SQLStore, title string, user *user.SignedInUser,
+func createFolderWithACL(t *testing.T, sqlStore db.DB, title string, user *user.SignedInUser,
 	items []folderACLItem) *models.Folder {
 	t.Helper()
 
@@ -1404,9 +1406,9 @@ func createFolderWithACL(t *testing.T, sqlStore *sqlstore.SQLStore, title string
 	features := featuremgmt.WithFeatures()
 	folderPermissions := acmock.NewMockedPermissionsService()
 	dashboardPermissions := acmock.NewMockedPermissionsService()
-	dashboardStore := database.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg))
+	dashboardStore := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg))
 	d := dashboardservice.ProvideDashboardService(cfg, dashboardStore, nil, features, folderPermissions, dashboardPermissions, ac)
-	s := dashboardservice.ProvideFolderService(cfg, d, dashboardStore, nil, features, folderPermissions, ac, busmock.New())
+	s := folderimpl.ProvideService(ac, busmock.New(), cfg, d, dashboardStore, features, folderPermissions, nil)
 
 	t.Logf("Creating folder with title and UID %q", title)
 	folder, err := s.CreateFolder(context.Background(), user, user.OrgID, title, title)
@@ -1497,7 +1499,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		orgID := int64(1)
 		role := org.RoleAdmin
 		sqlStore := sqlstore.InitTestDB(t)
-		dashboardStore := database.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
+		dashboardStore := database.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 
 		features := featuremgmt.WithFeatures()
 		ac := acmock.New()
@@ -1508,10 +1510,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			cfg, dashboardStore, &alerting.DashAlertExtractorService{},
 			features, folderPermissions, dashboardPermissions, ac,
 		)
-		folderService := dashboardservice.ProvideFolderService(
-			cfg, dashboardService, dashboardStore, nil,
-			features, folderPermissions, ac, busmock.New(),
-		)
+		folderService := folderimpl.ProvideService(ac, busmock.New(), cfg, dashboardService, dashboardStore, features, folderPermissions, nil)
 
 		elementService := libraryelements.ProvideService(cfg, sqlStore, routing.NewRouteRegister(), folderService)
 		service := LibraryPanelService{

@@ -1,6 +1,6 @@
 import uPlot, { Axis, AlignedData, Scale } from 'uplot';
 
-import { DataFrame, GrafanaTheme2 } from '@grafana/data';
+import { DataFrame, GrafanaTheme2, TimeZone } from '@grafana/data';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import {
   StackingMode,
@@ -51,6 +51,7 @@ export interface BarsOptions {
   getColor?: (seriesIdx: number, valueIdx: number, value: any) => string | null;
   fillOpacity?: number;
   formatValue: (seriesIdx: number, value: any) => string;
+  timeZone?: TimeZone;
   text?: VizTextDisplayOptions;
   onHover?: (seriesIdx: number, valueIdx: number) => void;
   onLeave?: (seriesIdx: number, valueIdx: number) => void;

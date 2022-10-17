@@ -45,6 +45,7 @@ export const DashboardListPage: FC<Props> = memo(({ match, location }) => {
         className={css`
           display: flex;
           flex-direction: column;
+          height: 100%;
           overflow: hidden;
         `}
       >
