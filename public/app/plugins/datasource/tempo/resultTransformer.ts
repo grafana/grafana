@@ -732,7 +732,7 @@ interface TraceTableData {
   traceID?: string;
   spanID?: string;
   //attributes?: string;
-  startTime: string;
+  startTime?: string;
   duration: number;
 }
 
