@@ -49,7 +49,7 @@ export { TagList } from './Tags/TagList';
 export { FilterPill } from './FilterPill/FilterPill';
 
 export { ConfirmModal, type ConfirmModalProps } from './ConfirmModal/ConfirmModal';
-export { QueryField } from './QueryField/QueryField';
+export { QueryField, type QueryFieldProps } from './QueryField/QueryField';
 
 export { CodeEditor } from './Monaco/CodeEditor';
 
@@ -66,7 +66,7 @@ export {
 export { variableSuggestionToCodeEditorSuggestion } from './Monaco/utils';
 
 // TODO: namespace
-export { Modal } from './Modal/Modal';
+export { Modal, type Props as ModalProps } from './Modal/Modal';
 export { ModalHeader } from './Modal/ModalHeader';
 export { ModalTabsHeader } from './Modal/ModalTabsHeader';
 export { ModalTabContent } from './Modal/ModalTabContent';
@@ -198,7 +198,7 @@ export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
 export { Link } from './Link/Link';
 
 export { Label } from './Forms/Label';
-export { Field } from './Forms/Field';
+export { Field, type FieldProps } from './Forms/Field';
 export { Legend } from './Forms/Legend';
 export { FieldSet } from './Forms/FieldSet';
 export { FieldValidationMessage } from './Forms/FieldValidationMessage';
