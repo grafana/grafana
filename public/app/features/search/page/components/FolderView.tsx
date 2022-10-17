@@ -50,6 +50,7 @@ export const FolderView = ({
       query: '*',
       kind: ['folder'],
       sort: 'name_sort',
+      limit: 1000,
     });
     for (const row of rsp.view) {
       folders.push({
