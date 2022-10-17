@@ -1,4 +1,4 @@
-import { DataQuery, DataSourceJsonData } from '@grafana/data';
+import { DataQuery, DataSourceJsonData, AdHocVariableFilter } from '@grafana/data';
 
 export enum InfluxVersion {
   InfluxQL = 'InfluxQL',
@@ -70,4 +70,5 @@ export interface InfluxQuery extends DataQuery {
   titleColumn?: string;
   name?: string;
   textEditor?: boolean;
+  adhocFilters?: AdHocVariableFilter[];
 }
