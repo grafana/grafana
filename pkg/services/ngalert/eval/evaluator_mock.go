@@ -13,8 +13,6 @@ import (
 
 	testing "testing"
 
-	time "time"
-
 	user "github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -71,13 +69,13 @@ func (_c *FakeEvaluator_ConditionEval_Call) Return(_a0 Results) *FakeEvaluator_C
 	return _c
 }
 
-// QueriesAndExpressionsEval provides a mock function with given fields: ctx, _a1, data, now
-func (_m *FakeEvaluator) QueriesAndExpressionsEval(ctx context.Context, _a1 *user.SignedInUser, data []models.AlertQuery, now time.Time) (*backend.QueryDataResponse, error) {
-	ret := _m.Called(ctx, _a1, data, now)
+// QueriesAndExpressionsEval provides a mock function with given fields: ctx, data
+func (_m *FakeEvaluator) QueriesAndExpressionsEval(ctx EvaluationContext, data []models.AlertQuery) (*backend.QueryDataResponse, error) {
+	ret := _m.Called(ctx, data)
 
 	var r0 *backend.QueryDataResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *user.SignedInUser, []models.AlertQuery, time.Time) *backend.QueryDataResponse); ok {
-		r0 = rf(ctx, _a1, data, now)
+	if rf, ok := ret.Get(0).(func(EvaluationContext, []models.AlertQuery) *backend.QueryDataResponse); ok {
+		r0 = rf(ctx, data)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*backend.QueryDataResponse)
@@ -85,8 +83,8 @@ func (_m *FakeEvaluator) QueriesAndExpressionsEval(ctx context.Context, _a1 *use
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *user.SignedInUser, []models.AlertQuery, time.Time) error); ok {
-		r1 = rf(ctx, _a1, data, now)
+	if rf, ok := ret.Get(1).(func(EvaluationContext, []models.AlertQuery) error); ok {
+		r1 = rf(ctx, data)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -100,17 +98,15 @@ type FakeEvaluator_QueriesAndExpressionsEval_Call struct {
 }
 
 // QueriesAndExpressionsEval is a helper method to define mock.On call
-//  - ctx context.Context
-//  - _a1 *user.SignedInUser
+//  - ctx EvaluationContext
 //  - data []models.AlertQuery
-//  - now time.Time
-func (_e *FakeEvaluator_Expecter) QueriesAndExpressionsEval(ctx interface{}, _a1 interface{}, data interface{}, now interface{}) *FakeEvaluator_QueriesAndExpressionsEval_Call {
-	return &FakeEvaluator_QueriesAndExpressionsEval_Call{Call: _e.mock.On("QueriesAndExpressionsEval", ctx, _a1, data, now)}
+func (_e *FakeEvaluator_Expecter) QueriesAndExpressionsEval(ctx interface{}, data interface{}) *FakeEvaluator_QueriesAndExpressionsEval_Call {
+	return &FakeEvaluator_QueriesAndExpressionsEval_Call{Call: _e.mock.On("QueriesAndExpressionsEval", ctx, data)}
 }
 
-func (_c *FakeEvaluator_QueriesAndExpressionsEval_Call) Run(run func(ctx context.Context, _a1 *user.SignedInUser, data []models.AlertQuery, now time.Time)) *FakeEvaluator_QueriesAndExpressionsEval_Call {
+func (_c *FakeEvaluator_QueriesAndExpressionsEval_Call) Run(run func(ctx EvaluationContext, data []models.AlertQuery)) *FakeEvaluator_QueriesAndExpressionsEval_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*user.SignedInUser), args[2].([]models.AlertQuery), args[3].(time.Time))
+		run(args[0].(EvaluationContext), args[1].([]models.AlertQuery))
 	})
 	return _c
 }

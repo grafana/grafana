@@ -29,7 +29,7 @@ type Evaluator interface {
 	// ConditionEval executes conditions and evaluates the result.
 	ConditionEval(ctx EvaluationContext, condition models.Condition) Results
 	// QueriesAndExpressionsEval executes queries and expressions and returns the result.
-	QueriesAndExpressionsEval(ctx context.Context, user *user.SignedInUser, data []models.AlertQuery, now time.Time) (*backend.QueryDataResponse, error)
+	QueriesAndExpressionsEval(ctx EvaluationContext, data []models.AlertQuery) (*backend.QueryDataResponse, error)
 	// Validate validates that the condition is correct. Returns nil if the condition is correct. Otherwise, error that describes the failure
 	Validate(ctx context.Context, user *user.SignedInUser, condition models.Condition) error
 }
@@ -576,7 +576,7 @@ func (evalResults Results) AsDataFrame() data.Frame {
 
 // ConditionEval executes conditions and evaluates the result.
 func (e *evaluatorImpl) ConditionEval(ctx EvaluationContext, condition models.Condition) Results {
-	execResp, err := e.QueriesAndExpressionsEval(ctx.Ctx, ctx.User, condition.Data, ctx.At)
+	execResp, err := e.QueriesAndExpressionsEval(ctx, condition.Data)
 	var execResults ExecutionResults
 	if err != nil {
 		execResults = ExecutionResults{Error: err}
@@ -587,13 +587,13 @@ func (e *evaluatorImpl) ConditionEval(ctx EvaluationContext, condition models.Co
 }
 
 // QueriesAndExpressionsEval executes queries and expressions and returns the result.
-func (e *evaluatorImpl) QueriesAndExpressionsEval(ctx context.Context, user *user.SignedInUser, data []models.AlertQuery, now time.Time) (*backend.QueryDataResponse, error) {
-	alertCtx, cancelFn := context.WithTimeout(ctx, e.cfg.UnifiedAlerting.EvaluationTimeout)
+func (e *evaluatorImpl) QueriesAndExpressionsEval(ctx EvaluationContext, data []models.AlertQuery) (*backend.QueryDataResponse, error) {
+	alertCtx, cancelFn := context.WithTimeout(ctx.Ctx, e.cfg.UnifiedAlerting.EvaluationTimeout)
 	defer cancelFn()
 
-	alertExecCtx := AlertExecCtx{User: user, Ctx: alertCtx, ExpressionsEnabled: e.cfg.ExpressionsEnabled, Log: e.log}
+	alertExecCtx := AlertExecCtx{User: ctx.User, Ctx: alertCtx, ExpressionsEnabled: e.cfg.ExpressionsEnabled, Log: e.log}
 
-	execResult, err := executeQueriesAndExpressions(alertExecCtx, data, now, e.expressionService, e.dataSourceCache)
+	execResult, err := executeQueriesAndExpressions(alertExecCtx, data, ctx.At, e.expressionService, e.dataSourceCache)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute conditions: %w", err)
 	}

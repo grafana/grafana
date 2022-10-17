@@ -203,7 +203,7 @@ func TestRouteEvalQueries(t *testing.T) {
 					},
 				},
 			}
-			evaluator.EXPECT().QueriesAndExpressionsEval(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(result, nil)
+			evaluator.EXPECT().QueriesAndExpressionsEval(mock.Anything, mock.Anything).Return(result, nil)
 
 			srv := createTestingApiSrv(ds, ac, evaluator)
 
@@ -246,7 +246,7 @@ func TestRouteEvalQueries(t *testing.T) {
 					},
 				},
 			}
-			evaluator.EXPECT().QueriesAndExpressionsEval(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(result, nil)
+			evaluator.EXPECT().QueriesAndExpressionsEval(mock.Anything, mock.Anything).Return(result, nil)
 
 			srv := createTestingApiSrv(ds, ac, evaluator)
 

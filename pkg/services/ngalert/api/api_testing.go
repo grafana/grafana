@@ -100,18 +100,19 @@ func (srv TestingApiSrv) RouteTestRuleConfig(c *models.ReqContext, body apimodel
 }
 
 func (srv TestingApiSrv) RouteEvalQueries(c *models.ReqContext, cmd apimodels.EvalQueriesPayload) response.Response {
-	now := cmd.Now
-	if now.IsZero() {
-		now = timeNow()
-	}
-
 	if !authorizeDatasourceAccessForRule(&ngmodels.AlertRule{Data: cmd.Data}, func(evaluator accesscontrol.Evaluator) bool {
 		return accesscontrol.HasAccess(srv.accessControl, c)(accesscontrol.ReqSignedIn, evaluator)
 	}) {
 		return ErrResp(http.StatusUnauthorized, fmt.Errorf("%w to query one or many data sources used by the rule", ErrAuthorization), "")
 	}
 
-	evalResults, err := srv.evaluator.QueriesAndExpressionsEval(c.Req.Context(), c.SignedInUser, cmd.Data, now)
+	ctx := eval.Context(c.Req.Context(), c.SignedInUser)
+	ctx.At = cmd.Now
+	if ctx.At.IsZero() {
+		ctx.At = timeNow()
+	}
+
+	evalResults, err := srv.evaluator.QueriesAndExpressionsEval(ctx, cmd.Data)
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "Failed to evaluate queries and expressions")
 	}
