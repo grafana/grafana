@@ -620,7 +620,7 @@ function transformToTraceData(data: TraceSearchMetadata) {
 
   return {
     traceID: data.traceID,
-    startTime: startTime,
+    //startTime: startTime,
     duration: data.durationMs,
     traceName,
   };
