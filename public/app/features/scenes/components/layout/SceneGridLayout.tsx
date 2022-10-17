@@ -213,12 +213,21 @@ interface SceneGridCellState extends Omit<SceneLayoutState, 'size'> {
 
 export class SceneGridCell extends SceneObjectBase<SceneGridCellState> {
   static Component = SceneGridCellRenderer;
-  getLayout = (): SceneGridLayout => {
+
+  constructor(state: SceneGridCellState) {
+    super({
+      isDraggable: true,
+      isResizable: true,
+      ...state,
+    });
+  }
+
+  getLayout(): SceneGridLayout {
     if (this.parent instanceof SceneGridLayout) {
       return this.parent;
     }
     throw new Error('SceneGridCell must be a child of SceneGridLayout');
-  };
+  }
 }
 
 interface SceneGridCellRendererProps<T> extends SceneComponentProps<T> {
@@ -229,15 +238,12 @@ function SceneGridCellRenderer(props: SceneGridCellRendererProps<SceneGridCell>)
   const state = props.model.useState();
   const isDraggable = Boolean(props.isLayoutDraggable) ? state.isDraggable : false;
   return (
-    <div style={{ width: '100%', height: '100%', position: 'relative', zIndex: 0 }}>
-      {/* TODO: This is a temporary solution to make the grid cell draggable*/}
+    <>
       {isDraggable && props.model.getLayout().getDragHandle()}
-      <>
-        {props.model.state.children.map((child) => {
-          return <child.Component key={child.state.key} model={child} />;
-        })}
-      </>
-    </div>
+      {props.model.state.children.map((child) => {
+        return <child.Component key={child.state.key} model={child} />;
+      })}
+    </>
   );
 }
 
@@ -280,7 +286,7 @@ export class SceneGridRow extends SceneObjectBase<SceneGridRowState> {
       isDraggable: true,
       isCollapsible: true,
       ...state,
-      isCollapsed: Boolean(state.isCollapsed),
+
       size: {
         ...state.size,
         height: state.isCollapsed ? GRID_CELL_HEIGHT : state.size?.height || DEFAULT_ROW_HEIGHT,

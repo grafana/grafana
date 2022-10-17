@@ -16,9 +16,6 @@ export function getGridWithRowsTest(): Scene {
   });
   const row1 = new SceneGridRow({
     title: 'Collapsible/draggable row with flex layout',
-    isResizable: true,
-    isDraggable: true,
-    isCollapsible: true,
     size: { x: 0, y: 0, height: 10 },
     children: [
       new SceneFlexLayout({
@@ -54,8 +51,6 @@ export function getGridWithRowsTest(): Scene {
   });
 
   const cell1 = new SceneGridCell({
-    isResizable: true,
-    isDraggable: true,
     size: {
       x: 0,
       y: 10,
@@ -79,8 +74,6 @@ export function getGridWithRowsTest(): Scene {
 
   const row2 = new SceneGridRow({
     size: { x: 12, y: 10, height: 10, width: 12 },
-    isCollapsible: true,
-    isDraggable: true,
     title: 'Row with a nested flex layout',
     children: [
       new SceneFlexLayout({

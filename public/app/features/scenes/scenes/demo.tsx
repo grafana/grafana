@@ -18,17 +18,16 @@ export function getFlexLayoutTest(): Scene {
       direction: 'row',
       children: [
         new SceneFlexChild({
+          size: { minWidth: '70%' },
           children: [
             new VizPanel({
               pluginId: 'timeseries',
               title: 'Dynamic height and width',
-              size: { minWidth: '70%' },
             }),
           ],
         }),
 
         new SceneFlexLayout({
-          // size: { width: 450 },
           direction: 'column',
           children: [
             new SceneFlexChild({
@@ -53,17 +52,16 @@ export function getFlexLayoutTest(): Scene {
                 new SceneCanvasText({
                   text: 'Size to content',
                   fontSize: 20,
-
                   align: 'center',
                 }),
               ],
             }),
             new SceneFlexChild({
+              size: { height: 300 },
               children: [
                 new VizPanel({
                   pluginId: 'timeseries',
                   title: 'Fixed height',
-                  size: { height: 300 },
                 }),
               ],
             }),
@@ -114,6 +112,7 @@ export function getScenePanelRepeaterTest(): Scene {
         direction: 'column',
         children: [
           new SceneFlexLayout({
+            direction: 'row',
             size: { minHeight: 200 },
             children: [
               new SceneFlexChild({
@@ -128,9 +127,9 @@ export function getScenePanelRepeaterTest(): Scene {
                 ],
               }),
               new SceneFlexChild({
+                size: { width: 300 },
                 children: [
                   new VizPanel({
-                    size: { width: 300 },
                     pluginId: 'stat',
                     fieldConfig: { defaults: { displayName: 'Last' }, overrides: [] },
                     options: {

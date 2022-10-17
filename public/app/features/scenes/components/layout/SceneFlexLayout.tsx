@@ -59,10 +59,18 @@ interface SceneFlexLayoutState extends SceneLayoutState {
   gap?: FlexLayoutGap;
   children: SceneObject[];
 }
+
 interface SceneFlexChildState extends SceneFlexLayoutState {}
 
 export class SceneFlexChild extends SceneObjectBase<SceneFlexChildState> {
   static Component = FlexLayoutChildComponent;
+
+  getLayout(): SceneFlexLayout {
+    if (this.parent instanceof SceneFlexLayout) {
+      return this.parent;
+    }
+    throw new Error('SceneFlexChild must be a child of SceneFlexLayout');
+  }
 }
 
 export class SceneFlexLayout extends SceneObjectBase<SceneFlexLayoutState> {
@@ -111,7 +119,8 @@ function FlexLayoutRenderer({ model, isEditing }: SceneComponentProps<SceneFlexL
 }
 
 export function FlexLayoutChildComponent({ model, isEditing }: SceneComponentProps<SceneFlexChild>) {
-  const { children, size, direction } = model.useState();
+  const { children, size } = model.useState();
+  const { direction } = model.getLayout().useState();
 
   return (
     // Rethink, the wrapping div here may cause issues ltr on
@@ -126,7 +135,6 @@ function getItemStyles(direction: FlexLayoutDirection, sizing: SceneObjectSize =
 
   const style: CSSProperties = {
     display: 'flex',
-    // flexDirection: direction,
     minWidth: sizing.minWidth,
     minHeight: sizing.minHeight,
   };

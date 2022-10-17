@@ -23,34 +23,28 @@ export function getGridNestedTest(): Scene {
         children: [
           new SceneGridCell({
             size: { x: 0, y: 0, width: 12, height: 10 },
-            isResizable: true,
-            isDraggable: true,
             children: [
               new VizPanel({
                 pluginId: 'timeseries',
-                title: 'No resize/no drag',
+                title: 'Test Panel',
               }),
             ],
           }),
           new SceneGridCell({
             size: { x: 12, y: 0, width: 12, height: 5 },
-            isResizable: true,
-            isDraggable: true,
             children: [
               new VizPanel({
                 pluginId: 'timeseries',
-                title: 'No resize/no drag',
+                title: 'Test Panel',
               }),
             ],
           }),
           new SceneGridCell({
             size: { x: 12, y: 5, width: 12, height: 5 },
-            isResizable: true,
-            isDraggable: true,
             children: [
               new VizPanel({
                 pluginId: 'timeseries',
-                title: 'No resize/no drag',
+                title: 'Test Panel',
               }),
             ],
           }),
@@ -59,8 +53,6 @@ export function getGridNestedTest(): Scene {
     ],
   });
   const cell1 = new SceneGridCell({
-    isResizable: true,
-    isDraggable: true,
     size: {
       x: 0,
       y: 11,
@@ -70,8 +62,6 @@ export function getGridNestedTest(): Scene {
     children: [panel],
   });
   const cell2 = new SceneGridCell({
-    isResizable: true,
-    isDraggable: true,
     size: {
       x: 12,
       y: 11,

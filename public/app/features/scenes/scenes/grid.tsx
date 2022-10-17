@@ -15,8 +15,6 @@ export function getGridLayoutTest(): Scene {
     layout: new SceneGridLayout({
       children: [
         new SceneGridCell({
-          isResizable: true,
-          isDraggable: true,
           size: {
             x: 0,
             y: 0,
@@ -42,8 +40,6 @@ export function getGridLayoutTest(): Scene {
           ],
         }),
         new SceneGridCell({
-          isResizable: true,
-          isDraggable: true,
           size: { x: 6, y: 11, width: 12, height: 10 },
           children: [
             new SceneFlexLayout({
