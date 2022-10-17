@@ -988,12 +988,12 @@ def upload_packages_step(edition, ver_mode, trigger=None):
 
 def publish_packages_step(edition, ver_mode):
     if ver_mode == 'release':
-        cmd = './bin/grabpl publish packages --edition {} --gcp-key /tmp/gcpkey.json ${{DRONE_TAG}}'.format(
+        cmd = './bin/build publish packages --edition {} --gcp-key /tmp/gcpkey.json ${{DRONE_TAG}}'.format(
             edition,
         )
     elif ver_mode == 'main':
         build_no = '${DRONE_BUILD_NUMBER}'
-        cmd = './bin/grabpl publish packages --edition {} --gcp-key /tmp/gcpkey.json --build-id {}'.format(
+        cmd = './bin/build publish packages --edition {} --gcp-key /tmp/gcpkey.json --build-id {}'.format(
             edition, build_no,
         )
     else:
@@ -1003,7 +1003,7 @@ def publish_packages_step(edition, ver_mode):
         'name': 'publish-packages-{}'.format(edition),
         'image': publish_image,
         'depends_on': [
-            'grabpl',
+            'compile-build-cmd',
         ],
         'environment': {
             'GRAFANA_COM_API_KEY': from_secret('grafana_api_key'),

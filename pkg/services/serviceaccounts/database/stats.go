@@ -8,7 +8,7 @@ import (
 )
 
 func (s *ServiceAccountsStoreImpl) GetUsageMetrics(ctx context.Context) (*serviceaccounts.Stats, error) {
-	dialect := s.sqlStore.Dialect
+	dialect := s.sqlStore.GetDialect()
 
 	sb := &sqlstore.SQLBuilder{}
 	sb.Write("SELECT ")

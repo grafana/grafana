@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -42,7 +42,7 @@ type dashboardEvent struct {
 type DashboardHandler struct {
 	Publisher        models.ChannelPublisher
 	ClientCount      models.ChannelClientCount
-	Store            sqlstore.Store
+	Store            db.DB
 	DashboardService dashboards.DashboardService
 }
 

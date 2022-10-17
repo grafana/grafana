@@ -135,7 +135,6 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRu
 		Timeout:      screenshotTimeout,
 	}
 
-	//
 	k := fmt.Sprintf("%s-%d-%s", opts.DashboardUID, opts.PanelID, opts.Theme)
 	result, err, _ := s.singleflight.Do(k, func() (interface{}, error) {
 		screenshot, err := s.limiter.Do(ctx, opts, s.screenshots.Take)
