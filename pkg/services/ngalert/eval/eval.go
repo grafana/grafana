@@ -285,16 +285,18 @@ type NumberValueCapture struct {
 	Var    string // RefID
 	Labels data.Labels
 	Value  *float64
+	Metric string
 }
 
 func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.QueryDataResponse) ExecutionResults {
 	// eval captures for the '__value_string__' annotation and the Value property of the API response.
 	captures := make([]NumberValueCapture, 0, len(execResp.Responses))
-	captureVal := func(refID string, labels data.Labels, value *float64) {
+	captureVal := func(refID string, labels data.Labels, name string, value *float64) {
 		captures = append(captures, NumberValueCapture{
 			Var:    refID,
 			Value:  value,
 			Labels: labels.Copy(),
+			Metric: name,
 		})
 	}
 
@@ -330,7 +332,7 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 			if frame.Fields[0].Len() == 1 {
 				v = frame.At(0, 0).(*float64) // type checked above
 			}
-			captureVal(frame.RefID, frame.Fields[0].Labels, v)
+			captureVal(frame.RefID, frame.Fields[0].Labels, frame.Fields[0].Name, v)
 		}
 
 		if refID == c.Condition {

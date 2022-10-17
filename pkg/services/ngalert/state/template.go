@@ -23,6 +23,7 @@ import (
 type templateCaptureValue struct {
 	Labels map[string]string
 	Value  float64
+	Metric string
 }
 
 // String implements the Stringer interface to print the value of each RefID
@@ -82,6 +83,7 @@ func newTemplateCaptureValues(values map[string]eval.NumberValueCapture) map[str
 		m[k] = templateCaptureValue{
 			Labels: v.Labels,
 			Value:  f,
+			Metric: v.Metric,
 		}
 	}
 	return m

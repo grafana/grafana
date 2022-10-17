@@ -91,6 +91,7 @@ func extractValues(frame *data.Frame) map[string]NumberValueCapture {
 				Var:    frame.RefID,
 				Labels: match.Labels,
 				Value:  match.Value,
+				Metric: match.Metric,
 			}
 		}
 		return v
