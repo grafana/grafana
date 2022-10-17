@@ -96,12 +96,31 @@ e2e.scenario({
   describeName: 'Add Azure Monitor datasource',
   itName: 'fills out datasource connection configuration',
   scenario: () => {
-    e2e()
-      .readFile(provisioningPath)
-      .then((azMonitorProvision: string) => {
-        const yaml = load(azMonitorProvision) as AzureMonitorProvision;
-        provisionAzureMonitorDatasources([yaml]);
-      });
+    // This variable will be set in CI
+    const CI = process.env.CI;
+    if (CI) {
+      provisionAzureMonitorDatasources([
+        {
+          datasources: [
+            {
+              jsonData: {
+                cloudName: 'Azure',
+                tenantId: process.env.AZURE_TENANT,
+                clientId: process.env.AZURE_SP_APP_ID,
+              },
+              secureJsonData: { clientSecret: process.env.AZURE_SP_PASSWORD },
+            },
+          ],
+        },
+      ]);
+    } else {
+      e2e()
+        .readFile(provisioningPath)
+        .then((azMonitorProvision: string) => {
+          const yaml = load(azMonitorProvision) as AzureMonitorProvision;
+          provisionAzureMonitorDatasources([yaml]);
+        });
+    }
     e2e.setScenarioContext({ addedDataSources: [] });
   },
 });
