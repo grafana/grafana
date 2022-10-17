@@ -89,6 +89,16 @@ func extendAlert(alert template.Alert, externalURL string, logger log.Logger) *E
 			u.RawQuery = "viewPanel=" + panelId
 			extended.PanelURL = u.String()
 		}
+
+		orgId := alert.Annotations[ngmodels.OrgIDAnnotation]
+		if len(orgId) > 0 {
+			extended.DashboardURL = extended.DashboardURL + "?orgId=" + orgId
+
+			q := u.Query()
+			q.Add("orgId", orgId)
+			u.RawQuery = q.Encode()
+			extended.PanelURL = u.String()
+		}
 	}
 
 	if alert.Annotations != nil {

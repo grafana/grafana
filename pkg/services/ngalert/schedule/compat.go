@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"path"
+	"strconv"
 	"time"
 
 	"github.com/benbjohnson/clock"
@@ -53,6 +54,10 @@ func stateToPostableAlert(alertState *state.State, appURL *url.URL) *models.Post
 
 	if alertState.StateReason != "" {
 		nA[ngModels.StateReasonAnnotation] = alertState.StateReason
+	}
+
+	if alertState.OrgID != 0 {
+		nA[ngModels.OrgIDAnnotation] = strconv.FormatInt(alertState.OrgID, 10)
 	}
 
 	var urlStr string
