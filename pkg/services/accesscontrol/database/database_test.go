@@ -274,17 +274,25 @@ func createUsersAndTeams(t *testing.T, svcs helperServices, orgID int64, users [
 		})
 		require.NoError(t, err)
 
+		// User is not member of the org
+		if users[i].orgRole == "" {
+			err = svcs.orgSvc.RemoveOrgUser(context.Background(),
+				&org.RemoveOrgUserCommand{OrgID: orgID, UserID: user.ID})
+			require.NoError(t, err)
+
+			res = append(res, dbUser{userID: user.ID})
+			continue
+		}
+
 		team, err := svcs.teamSvc.CreateTeam(fmt.Sprintf("team%v", i+1), "", orgID)
 		require.NoError(t, err)
 
 		err = svcs.teamSvc.AddTeamMember(user.ID, orgID, team.Id, false, models.PERMISSION_VIEW)
 		require.NoError(t, err)
 
-		if users[i].orgRole != "" {
-			err = svcs.orgSvc.UpdateOrgUser(context.Background(),
-				&org.UpdateOrgUserCommand{Role: users[i].orgRole, OrgID: orgID, UserID: user.ID})
-			require.NoError(t, err)
-		}
+		err = svcs.orgSvc.UpdateOrgUser(context.Background(),
+			&org.UpdateOrgUserCommand{Role: users[i].orgRole, OrgID: orgID, UserID: user.ID})
+		require.NoError(t, err)
 
 		res = append(res, dbUser{userID: user.ID, teamID: team.Id})
 	}
@@ -443,6 +451,19 @@ func TestAccessControlStore_GetUsersPermissions(t *testing.T) {
 			},
 			wantOrgRole: map[int64][]string{
 				1: {string(org.RoleAdmin), accesscontrol.RoleGrafanaAdmin},
+			},
+		},
+		{
+			name: "include not org member server admin permissions",
+			// Three users, one member, one not member but Server Admin, one not member and not server admin
+			users:    []testUser{{orgRole: org.RoleAdmin, isAdmin: false}, {isAdmin: true}, {}},
+			permCmds: []rs.SetResourcePermissionsCommand{{BuiltinRole: accesscontrol.RoleGrafanaAdmin, SetResourcePermissionCommand: readTeamPerm("1")}},
+			wantPerm: map[int64][]accesscontrol.Permission{
+				2: {{Action: "teams:read", Scope: "teams:id:1"}},
+			},
+			wantOrgRole: map[int64][]string{
+				1: {string(org.RoleAdmin)},
+				2: {string(accesscontrol.RoleGrafanaAdmin)},
 			},
 		},
 	}

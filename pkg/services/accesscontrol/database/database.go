@@ -113,12 +113,11 @@ func (s *AccessControlStore) GetUsersPermissions(ctx context.Context, orgID int6
 		}
 
 		// Find roles
-		// Technically Grafana Admins won't be returned here if they are not members of the org
 		q = `
 		SELECT u.id, ou.role, u.is_admin
 		FROM user AS u 
-		INNER JOIN org_user AS ou ON u.id = ou.user_id
-		WHERE ou.org_id = ?
+		LEFT JOIN org_user AS ou ON u.id = ou.user_id
+		WHERE u.is_admin OR ou.org_id = ?
 		`
 
 		if err := sess.SQL(q, orgID).Find(&dbRoles); err != nil {
@@ -134,7 +133,9 @@ func (s *AccessControlStore) GetUsersPermissions(ctx context.Context, orgID int6
 
 	roles := map[int64][]string{}
 	for i := range dbRoles {
-		roles[dbRoles[i].UserID] = []string{dbRoles[i].OrgRole}
+		if dbRoles[i].OrgRole != "" {
+			roles[dbRoles[i].UserID] = []string{dbRoles[i].OrgRole}
+		}
 		if dbRoles[i].IsAdmin {
 			roles[dbRoles[i].UserID] = append(roles[dbRoles[i].UserID], accesscontrol.RoleGrafanaAdmin)
 		}
