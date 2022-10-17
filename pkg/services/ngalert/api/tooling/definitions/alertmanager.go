@@ -389,9 +389,8 @@ func NewGettableStatus(cfg *PostableApiAlertingConfig) *GettableStatus {
 // swagger:model postableSilence
 type PostableSilence = amv2.PostableSilence
 
-// PostSilencesOKBody vendored from "github.com/prometheus/alertmanager/api/v2/restapi/operations/silence/PostSilencesOKBody"
 // swagger:model postSilencesOKBody
-type PostSilencesOKBody struct {
+type PostSilencesOKBody struct { // vendored from "github.com/prometheus/alertmanager/api/v2/restapi/operations/silence/PostSilencesOKBody" because import brings too many other things
 	// silence ID
 	SilenceID string `json:"silenceID,omitempty"`
 }
