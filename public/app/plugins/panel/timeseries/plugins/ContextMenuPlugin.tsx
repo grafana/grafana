@@ -263,8 +263,6 @@ export const ContextMenuView: React.FC<ContextMenuViewProps> = ({
         valueLinkConfig.valueRowIndex = field.values.getOrderIndex(dataIdx);
       } else {
         valueLinkConfig.valueRowIndex = dataIdx;
-        valueLinkConfig.frame = data;
-        valueLinkConfig.seriesIdx = seriesIdx;
       }
 
       if (hasLinks) {

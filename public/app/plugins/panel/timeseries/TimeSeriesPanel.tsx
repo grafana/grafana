@@ -63,6 +63,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
       height={height}
       legend={options.legend}
       options={options}
+      replaceVariables={replaceVariables}
     >
       {(config, alignedDataFrame) => {
         return (

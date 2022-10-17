@@ -241,6 +241,7 @@ export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
       tweakAxis={tweakAxis}
       tweakScale={tweakScale}
       options={options}
+      replaceVariables={replaceVariables}
     >
       {(config, alignedDataFrame) => {
         return (
