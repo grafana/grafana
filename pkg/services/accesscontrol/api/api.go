@@ -8,15 +8,13 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-func NewAccessControlAPI(router routing.RouteRegister, accesscontrol ac.AccessControl, service ac.Service, userStore sqlstore.Store) *AccessControlAPI {
+func NewAccessControlAPI(router routing.RouteRegister, accesscontrol ac.AccessControl, service ac.Service) *AccessControlAPI {
 	return &AccessControlAPI{
 		RouteRegister: router,
 		Service:       service,
 		AccessControl: accesscontrol,
-		userStore:     userStore,
 	}
 }
 
@@ -24,7 +22,6 @@ type AccessControlAPI struct {
 	Service       ac.Service
 	AccessControl ac.AccessControl
 	RouteRegister routing.RouteRegister
-	userStore     sqlstore.Store
 }
 
 func (api *AccessControlAPI) RegisterAPIEndpoints() {

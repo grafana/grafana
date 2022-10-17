@@ -30,7 +30,7 @@ func ProvideService(cfg *setting.Cfg, store db.DB, routeRegister routing.RouteRe
 	service := ProvideOSSService(cfg, database.ProvideService(store), cache)
 
 	if !accesscontrol.IsDisabled(cfg) {
-		api.NewAccessControlAPI(routeRegister, accessControl, service, store).RegisterAPIEndpoints()
+		api.NewAccessControlAPI(routeRegister, accessControl, service).RegisterAPIEndpoints()
 		if err := accesscontrol.DeclareFixedRoles(service); err != nil {
 			return nil, err
 		}
