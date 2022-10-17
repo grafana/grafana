@@ -292,7 +292,7 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
   useEffect(() => {
     const handleEscKeyDown = (e: KeyboardEvent): void => {
       const { datasourceType, uid: logRowUid } = row;
-      if (e.keyCode === 27) {
+      if (e.key === 'Escape' || e.key === 'Esc') {
         onOutsideClick();
 
         reportInteraction('grafana_explore_logs_log_context_clicked', {
