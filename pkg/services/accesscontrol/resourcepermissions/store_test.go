@@ -336,14 +336,10 @@ func TestIntegrationStore_SetResourcePermissions(t *testing.T) {
 }
 
 type getResourcePermissionsTest struct {
-	desc              string
-	user              *user.SignedInUser
-	numUsers          int
-	actions           []string
-	resource          string
-	resourceID        string
-	resourceAttribute string
-	onlyManaged       bool
+	desc     string
+	user     *user.SignedInUser
+	numUsers int
+	query    GetResourcePermissionsQuery
 }
 
 func TestIntegrationStore_GetResourcePermissions(t *testing.T) {
@@ -355,11 +351,13 @@ func TestIntegrationStore_GetResourcePermissions(t *testing.T) {
 				Permissions: map[int64]map[string][]string{
 					1: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}},
 				}},
-			numUsers:          3,
-			actions:           []string{"datasources:query"},
-			resource:          "datasources",
-			resourceID:        "1",
-			resourceAttribute: "uid",
+			numUsers: 3,
+			query: GetResourcePermissionsQuery{
+				Actions:           []string{"datasources:query"},
+				Resource:          "datasources",
+				ResourceID:        "1",
+				ResourceAttribute: "uid",
+			},
 		},
 		{
 			desc: "should return manage permissions for all resource ids",
@@ -368,22 +366,24 @@ func TestIntegrationStore_GetResourcePermissions(t *testing.T) {
 				Permissions: map[int64]map[string][]string{
 					1: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}},
 				}},
-			numUsers:          3,
-			actions:           []string{"datasources:query"},
-			resource:          "datasources",
-			resourceID:        "1",
-			resourceAttribute: "uid",
-			onlyManaged:       true,
+			numUsers: 3,
+			query: GetResourcePermissionsQuery{
+				Actions:           []string{"datasources:query"},
+				Resource:          "datasources",
+				ResourceID:        "1",
+				ResourceAttribute: "uid",
+				OnlyManaged:       true,
+			},
 		},
 	}
 
-	for _, test := range tests {
-		t.Run(test.desc, func(t *testing.T) {
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
 			store, sql := setupTestEnv(t)
 
 			err := sql.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 				role := &accesscontrol.Role{
-					OrgID:   test.user.OrgID,
+					OrgID:   tt.user.OrgID,
 					UID:     "seeded",
 					Name:    "seeded",
 					Updated: time.Now(),
@@ -416,20 +416,14 @@ func TestIntegrationStore_GetResourcePermissions(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			seedResourcePermissions(t, store, sql, test.actions, test.resource, test.resourceID, test.resourceAttribute, test.numUsers)
+			seedResourcePermissions(t, store, sql, tt.query.Actions, tt.query.Resource, tt.query.ResourceID, tt.query.ResourceAttribute, tt.numUsers)
 
-			permissions, err := store.GetResourcePermissions(context.Background(), test.user.OrgID, GetResourcePermissionsQuery{
-				User:              test.user,
-				Actions:           test.actions,
-				Resource:          test.resource,
-				ResourceID:        test.resourceID,
-				ResourceAttribute: test.resourceAttribute,
-				OnlyManaged:       test.onlyManaged,
-			})
+			tt.query.User = tt.user
+			permissions, err := store.GetResourcePermissions(context.Background(), tt.user.OrgID, tt.query)
 			require.NoError(t, err)
 
-			expectedLen := test.numUsers
-			if !test.onlyManaged {
+			expectedLen := tt.numUsers
+			if !tt.query.OnlyManaged {
 				expectedLen += 1
 			}
 			assert.Len(t, permissions, expectedLen)
