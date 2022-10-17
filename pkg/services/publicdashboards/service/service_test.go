@@ -58,9 +58,12 @@ func TestGetAnnotations(t *testing.T) {
 			From: 1,
 			To:   2,
 		}
+		dash := models.NewDashboard("testDashboard")
 
 		items, err := service.GetAnnotations(context.Background(), reqDTO, "abc123")
+		anonUser, err := service.BuildAnonymousUser(context.Background(), dash)
 
+		assert.Equal(t, "dashboards:*", anonUser.Permissions[0]["dashboards:read"][0])
 		assert.Len(t, items, 0)
 		require.NoError(t, err)
 	})

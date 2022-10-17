@@ -284,6 +284,7 @@ func (pd *PublicDashboardServiceImpl) GetAnnotations(ctx context.Context, reqDTO
 		}
 
 		if anno.Target.Type == "tags" {
+			annoQuery.DashboardId = 0
 			annoQuery.Tags = anno.Target.Tags
 		}
 
@@ -362,7 +363,8 @@ func (pd *PublicDashboardServiceImpl) BuildAnonymousUser(ctx context.Context, da
 
 	// Scopes needed for Annotation queries
 	annotationScopes := []string{accesscontrol.ScopeAnnotationsTypeDashboard}
-	dashboardScopes := []string{dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dashboard.Uid)}
+	// Need to access all dashboards since tags annotations span across all dashboards
+	dashboardScopes := []string{dashboards.ScopeDashboardsProvider.GetResourceAllScope()}
 
 	// Scopes needed for datasource queries
 	queryScopes := make([]string, 0)
