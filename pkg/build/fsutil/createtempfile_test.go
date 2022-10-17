@@ -13,7 +13,7 @@ func TestCreateTempFile(t *testing.T) {
 		require.NoError(t, err)
 
 		pathParts := strings.Split(filePath, "/")
-		require.Len(t, pathParts, 7)
+		require.Greater(t, len(pathParts), 1)
 		require.Len(t, strings.Split(pathParts[len(pathParts)-1], "-"), 1)
 	})
 
@@ -22,7 +22,7 @@ func TestCreateTempFile(t *testing.T) {
 		require.NoError(t, err)
 
 		pathParts := strings.Split(filePath, "/")
-		require.Len(t, pathParts, 7)
+		require.Greater(t, len(pathParts), 1)
 		require.Len(t, strings.Split(pathParts[len(pathParts)-1], "-"), 2)
 	})
 }
