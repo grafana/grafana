@@ -24,6 +24,21 @@ type DatasourceQueryResult struct {
 	IsDefault bool   `xorm:"is_default"`
 }
 
+type directLookup struct{}
+
+func (d *directLookup) ByRef(ref *DataSourceRef) *DataSourceRef {
+	if ref == nil {
+		return &DataSourceRef{} // indicates the default
+	}
+	return ref
+}
+
+func (d *directLookup) ByType(dsType string) []DataSourceRef {
+	return []DataSourceRef{
+		{Type: dsType, UID: "*"},
+	}
+}
+
 func CreateDatasourceLookup(rows []*DatasourceQueryResult) DatasourceLookup {
 	byUID := make(map[string]*DataSourceRef, 50)
 	byName := make(map[string]*DataSourceRef, 50)

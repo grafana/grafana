@@ -9,7 +9,7 @@ import { Stack } from './Stack';
 
 interface EditorRowProps {}
 
-export const EditorRow: React.FC<EditorRowProps> = ({ children }) => {
+export const EditorRow = ({ children }: React.PropsWithChildren<EditorRowProps>) => {
   const styles = useStyles2(getStyles);
 
   return (

@@ -16,6 +16,7 @@ import {
   InlineSwitch,
   LegacyForms,
   regexValidation,
+  Select,
 } from '@grafana/ui';
 
 import { useUpdateDatasource } from '../../../../features/datasources/state';
@@ -25,7 +26,7 @@ import { PromOptions } from '../types';
 import { ExemplarsSettings } from './ExemplarsSettings';
 import { PromFlavorVersions } from './PromFlavorVersions';
 
-const { Select, Input, FormField } = LegacyForms;
+const { Input, FormField } = LegacyForms;
 
 const httpOptions = [
   { value: 'POST', label: 'POST' },
@@ -198,6 +199,7 @@ export const PromSettings = (props: Props) => {
             options={httpOptions}
             value={httpOptions.find((o) => o.value === options.jsonData.httpMethod)}
             onChange={onChangeHandler('httpMethod', options, onOptionsChange)}
+            className="width-6"
           />
         </div>
       </div>

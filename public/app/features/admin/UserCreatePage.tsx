@@ -23,7 +23,7 @@ const pageNav: NavModelItem = {
   breadcrumbs: [{ title: 'Server admin', url: 'admin/users' }],
 };
 
-const UserCreatePage: React.FC = () => {
+const UserCreatePage = () => {
   const history = useHistory();
 
   const onSubmit = useCallback(

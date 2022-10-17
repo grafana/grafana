@@ -35,6 +35,7 @@ let isInlineEditOpen = false;
 export const activePanelSubject = new ReplaySubject<SelectionAction>(1);
 
 export class CanvasPanel extends Component<Props, State> {
+  declare context: React.ContextType<typeof PanelContextRoot>;
   static contextType = PanelContextRoot;
   panelContext: PanelContext = {} as PanelContext;
 
@@ -74,6 +75,7 @@ export class CanvasPanel extends Component<Props, State> {
       this.props.eventBus.subscribe(PanelEditExitedEvent, (evt: PanelEditExitedEvent) => {
         if (this.props.id === evt.payload) {
           this.needsReload = true;
+          this.scene.clearCurrentSelection();
           this.scene.load(
             this.props.options.root,
             this.props.options.inlineEditing,
