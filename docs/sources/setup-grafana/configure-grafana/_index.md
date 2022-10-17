@@ -367,11 +367,11 @@ Defaults to `private`.
 
 ### query_retries
 
-For "sqlite" only. How many times to retry a query in case of database is locked failures. Default is 0 (disabled).
+This setting applies to `sqlite` only and controls the number of times the system retries a query when the database is locked. The default value is `0` (disabled).
 
 ### transaction_retries
 
-For "sqlite" only. How many times to retry a transaction in case of database is locked failures. Default is 5.
+This setting applies to `sqlite` only and controls the number of times the system retries a transaction when the database is locked. The default value is `5`.
 
 <hr />
 
