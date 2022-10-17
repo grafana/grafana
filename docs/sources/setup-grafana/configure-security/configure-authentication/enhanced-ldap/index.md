@@ -2,6 +2,8 @@
 aliases:
   - /docs/grafana/latest/enterprise/enhanced_ldap/
   - /docs/grafana/latest/setup-grafana/configure-security/configure-authentication/enhanced_ldap/
+  - /docs/grafana/latest/setup-grafana/configure-security/configure-authentication/enhanced-ldap/
+
 description: Grafana Enhanced LDAP Integration Guide
 keywords:
   - grafana
@@ -18,9 +20,9 @@ weight: 900
 
 The enhanced LDAP integration adds additional functionality on top of the [LDAP integration]({{< relref "ldap/" >}}) available in the open source edition of Grafana.
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../../enterprise/" >}}) and [Grafana Cloud Advanced]({{< ref "/grafana-cloud" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced]({{< ref "/grafana-cloud" >}}).
 
-> To control user access with role-based permissions, refer to [role-based access control]({{< relref "../../../administration/roles-and-permissions/access-control/" >}}).
+> To control user access with role-based permissions, refer to [role-based access control]({{< relref "../../../../administration/roles-and-permissions/access-control/" >}}).
 
 ## LDAP group synchronization for teams
 
@@ -33,7 +35,7 @@ Grafana keeps track of all synchronized users in teams, and you can see which us
 This mechanism allows Grafana to remove an existing synchronized user from a team when its LDAP group membership changes. This mechanism also allows you to manually add
 a user as member of a team, and it will not be removed when the user signs in. This gives you flexibility to combine LDAP group memberships and Grafana team memberships.
 
-[Learn more about team sync.]({{< relref "../configure-team-sync/" >}})
+[Learn more about team sync.]({{< relref "../../configure-team-sync/" >}})
 
 <div class="clearfix"></div>
 

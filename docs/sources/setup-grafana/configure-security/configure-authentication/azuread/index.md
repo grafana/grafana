@@ -105,7 +105,7 @@ To enable the Azure AD OAuth2, register your application with Azure AD.
 By default, Azure AD authentication will map users to organization roles based on the most privileged application role assigned to the user in AzureAD.
 
 If no application role is found, the user is assigned the role specified by
-[the `auto_assign_org_role` option]({{< relref "../../configure-grafana#auto_assign_org_role" >}}).
+[the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
 You can disable this default role assignment by setting `role_attribute_strict = true`.
 It denies user access if no role or an invalid role is returned.
 
@@ -114,7 +114,7 @@ their organization membership will be reset to the default organization.
 
 If Azure AD authentication is not intended to sync user roles and organization membership,
 `oauth_skip_org_role_update_sync` should be enabled.
-See [configure-grafana]({{< relref "../../configure-grafana#oauth_skip_org_role_update_sync" >}}) for more details.
+See [configure-grafana]({{< relref "../../../configure-grafana#oauth_skip_org_role_update_sync" >}}) for more details.
 
 ### Assign server administrator privileges
 
@@ -142,7 +142,7 @@ If the setting is set to `false`, the user is assigned the role of `Admin` of th
 
 ## Enable Azure AD OAuth in Grafana
 
-1. Add the following to the [Grafana configuration file]({{< relref "../../configure-grafana/#config-file-locations" >}}):
+1. Add the following to the [Grafana configuration file]({{< relref "../../../configure-grafana/#config-file-locations" >}}):
 
 ```
 [auth.azuread]
@@ -167,7 +167,7 @@ GF_AUTH_AZUREAD_CLIENT_ID
 GF_AUTH_AZUREAD_CLIENT_SECRET
 ```
 
-**Note:** Verify that the Grafana [root_url]({{< relref "../../configure-grafana/#root-url" >}}) is set in your Azure Application Redirect URLs.
+**Note:** Verify that the Grafana [root_url]({{< relref "../../../configure-grafana/#root-url" >}}) is set in your Azure Application Redirect URLs.
 
 ### Configure allowed groups
 
@@ -201,7 +201,7 @@ the correct teams.
 
 You can reference Azure AD groups by group object ID, like `8bab1c86-8fba-33e5-2089-1d1c80ec267d`.
 
-To learn more, refer to the [Team Sync]({{< relref "../configure-team-sync/" >}}) documentation.
+To learn more, refer to the [Team Sync]({{< relref "../../configure-team-sync/" >}}) documentation.
 
 ## Common troubleshooting
 
