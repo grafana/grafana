@@ -475,7 +475,7 @@ func TestGetQueryDataResponse(t *testing.T) {
 		pubdashDto, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
-		resp, err := service.GetQueryDataResponse(context.Background(), true, publicDashboardQueryDTO, 1, pubdashDto.AccessToken)
+		resp, _ := service.GetQueryDataResponse(context.Background(), true, publicDashboardQueryDTO, 1, pubdashDto.AccessToken)
 		require.Nil(t, resp)
 	})
 }
