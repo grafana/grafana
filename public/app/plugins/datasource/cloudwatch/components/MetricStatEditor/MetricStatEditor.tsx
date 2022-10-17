@@ -10,6 +10,7 @@ import { useDimensionKeys, useMetrics, useNamespaces } from '../../hooks';
 import { standardStatistics } from '../../standardStatistics';
 import { MetricStat } from '../../types';
 import { appendTemplateVariables, toOption } from '../../utils/utils';
+import { Account } from '../Account';
 
 export type Props = {
   refId: string;
@@ -114,6 +115,13 @@ export function MetricStatEditor({
       </EditorRow>
 
       <EditorRow>
+        {!disableExpressions && (
+          <Account
+            query={metricStat}
+            onChange={(accountArn?: string) => onMetricStatChange({ ...metricStat, accountArn })}
+            api={datasource.api}
+          ></Account>
+        )}
         <EditorField label="Dimensions">
           <Dimensions
             metricStat={metricStat}
@@ -123,9 +131,7 @@ export function MetricStatEditor({
             datasource={datasource}
           />
         </EditorField>
-      </EditorRow>
-      {!disableExpressions && (
-        <EditorRow>
+        {!disableExpressions && (
           <EditorField
             label="Match exact"
             optional={true}
@@ -142,8 +148,8 @@ export function MetricStatEditor({
               }}
             />
           </EditorField>
-        </EditorRow>
-      )}
+        )}
+      </EditorRow>
     </EditorRows>
   );
 }

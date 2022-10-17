@@ -13,6 +13,7 @@ import {
   GetMetricsRequest,
   MetricResponse,
   MultiFilters,
+  Account,
 } from './types';
 
 export interface SelectableResourceValue extends SelectableValue<string> {
@@ -31,6 +32,12 @@ export class CloudWatchAPI extends CloudWatchRequest {
 
   private getRequest<T>(subtype: string, parameters?: Record<string, string | string[] | number>): Promise<T> {
     return getBackendSrv().get(`/api/datasources/${this.instanceSettings.id}/resources/${subtype}`, parameters);
+  }
+
+  getAccounts(region: string): Promise<Account[]> {
+    return getBackendSrv().get(`/api/datasources/${this.instanceSettings.id}/resources/accounts`, {
+      region: this.templateSrv.replace(region),
+    });
   }
 
   getRegions() {

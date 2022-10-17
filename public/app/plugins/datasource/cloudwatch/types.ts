@@ -64,6 +64,7 @@ export interface MetricStat {
   dimensions?: Dimensions;
   matchExact?: boolean;
   period?: string;
+  accountArn?: string;
   statistic?: string;
   /**
    * @deprecated use statistic
@@ -475,4 +476,16 @@ export interface GetDimensionValuesRequest extends ResourceRequest {
 
 export interface GetMetricsRequest extends ResourceRequest {
   namespace?: string;
+}
+
+export interface Account {
+  arn: string;
+  accountId: string;
+  label: string;
+  isMonitoringAccount: boolean;
+}
+
+export interface MetricResponse {
+  name: string;
+  namespace: string;
 }
