@@ -1,6 +1,7 @@
 import { Property } from 'csstype';
 import { clone } from 'lodash';
 import memoizeOne from 'memoize-one';
+import React from 'react';
 import { Row } from 'react-table';
 
 import {
@@ -61,18 +62,40 @@ export function getColumns(
   data: DataFrame,
   availableWidth: number,
   columnMinWidth: number,
-  showSpans: boolean,
+  expandedIndex: number | undefined,
+  setExpandedIndex: (index: number | undefined) => void,
   footerValues?: FooterItem[]
 ): GrafanaTableColumn[] {
-  const columns: GrafanaTableColumn[] = [];
+  const columns: GrafanaTableColumn[] = [
+    {
+      // Make an expander cell
+      Header: () => null, // No header
+      id: 'expander', // It needs an ID
+      Cell: ({ row }) => (
+        // Use Cell to render an expander for each row.
+        // We can use the getToggleRowExpandedProps prop-getter
+        // to build the expander.
+        <span
+          {...row.getRowProps()}
+          onClick={() => setExpandedIndex(row.index === expandedIndex ? undefined : row.index)}
+        >
+          {row.index === expandedIndex ? '👇' : '👉'}
+        </span>
+      ),
+      width: 20,
+      minWidth: 20,
+      filter: (rows: Row[], id: string, filterValues?: SelectableValue[]) => {
+        return [];
+      },
+      justifyContent: 'left',
+      field: data.fields[0],
+      sortType: 'basic',
+    },
+  ];
   let fieldCountWithoutWidth = 0;
 
   for (const [fieldIndex, field] of data.fields.entries()) {
     const fieldTableOptions = (field.config.custom || {}) as TableFieldOptions;
-
-    if (fieldTableOptions.subcol && !showSpans) {
-      continue;
-    }
 
     if (fieldTableOptions.hidden) {
       continue;

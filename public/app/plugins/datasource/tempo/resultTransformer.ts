@@ -654,6 +654,10 @@ export function createTableFrameFromTraceQlQuery(
           ],
         },
       },
+      { name: 'traceName', type: FieldType.string, config: { displayNameFromDS: 'Name' } },
+      { name: 'startTime', type: FieldType.string, config: { displayNameFromDS: 'Start time' } },
+      { name: 'duration', type: FieldType.number, config: { displayNameFromDS: 'Duration', unit: 'ms' } },
+
       {
         name: 'traceIdHidden',
         config: {
