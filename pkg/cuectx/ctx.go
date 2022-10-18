@@ -11,9 +11,11 @@ import (
 
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/cuecontext"
+	"github.com/grafana/grafana"
 	"github.com/grafana/thema"
 	"github.com/grafana/thema/load"
 	"github.com/grafana/thema/vmux"
+	"github.com/yalue/merged_fs"
 )
 
 var ctx = cuecontext.New()
@@ -62,7 +64,7 @@ func JSONtoCUE(path string, b []byte) (cue.Value, error) {
 // TODO this approach is complicated and confusing, refactor to something understandable
 func LoadGrafanaInstancesWithThema(path string, cueFS fs.FS, rt *thema.Runtime, opts ...thema.BindOption) (thema.Lineage, error) {
 	prefix := filepath.FromSlash(path)
-	fs, err := prefixWithGrafanaCUE(prefix, cueFS)
+	fs, err := PrefixWithGrafanaCUE(prefix, cueFS)
 	if err != nil {
 		return nil, err
 	}
@@ -84,16 +86,16 @@ func LoadGrafanaInstancesWithThema(path string, cueFS fs.FS, rt *thema.Runtime, 
 	return lin, nil
 }
 
-// prefixWithGrafanaCUE constructs an fs.FS that merges the provided fs.FS with one
-// containing grafana's cue.mod at the root. The provided prefix should be the
+// PrefixWithGrafanaCUE constructs an fs.FS that merges the provided fs.FS with
+// the embedded FS containing Grafana's core CUE files, [grafana.CueSchemaFS].
+// The provided prefix should be the relative path from the grafana repository
+// root to the directory root of the provided inputfs.
 //
-// The returned fs.FS is suitable for passing to a CUE loader, such as
-// cuelang.org/cue/load.Instances or
-// github.com/grafana/thema/load.InstancesWithThema.
-func prefixWithGrafanaCUE(prefix string, inputfs fs.FS) (fs.FS, error) {
+// The returned fs.FS is suitable for passing to a CUE loader, such as [load.InstancesWithThema].
+func PrefixWithGrafanaCUE(prefix string, inputfs fs.FS) (fs.FS, error) {
 	m := fstest.MapFS{
 		// fstest can recognize only forward slashes.
-		filepath.ToSlash(filepath.Join("cue.mod", "module.cue")): &fstest.MapFile{Data: []byte(`module: "github.com/grafana/grafana"`)},
+		// filepath.ToSlash(filepath.Join("cue.mod", "module.cue")): &fstest.MapFile{Data: []byte(`module: "github.com/grafana/grafana"`)},
 	}
 
 	prefix = filepath.FromSlash(prefix)
@@ -114,8 +116,10 @@ func prefixWithGrafanaCUE(prefix string, inputfs fs.FS) (fs.FS, error) {
 		m[filepath.ToSlash(filepath.Join(prefix, path))] = &fstest.MapFile{Data: b}
 		return nil
 	})
-
-	return m, err
+	if err != nil {
+		return nil, err
+	}
+	return merged_fs.NewMergedFS(m, grafana.CueSchemaFS), nil
 }
 
 // Need a prefixing instance loader that:
@@ -123,3 +127,9 @@ func prefixWithGrafanaCUE(prefix string, inputfs fs.FS) (fs.FS, error) {
 //  - reconcile at most one of the provided fs with cwd
 //    - behavior must differ depending on whether cwd is in a cue module
 //    - behavior should(?) be controllable depending on
+
+// Within grafana/grafana, need:
+// - pass in an fs.FS that, in its root, contains the .cue files to load
+// - has no cue.mod
+// - gets prefixed with the appropriate path within grafana/grafana
+// - and merged with all the other .cue files from grafana/grafana
