@@ -1,0 +1,7 @@
+flex==6.14.1
+Jinja2==3.1.2
+loguru==0.6.0
+MarkupSafe==2.1.1
+prance==0.21.8.0
+requests==2.28.1
+typer==0.6.1

@@ -56,7 +56,7 @@ install_plugins() {
 		printf 'Installing Python tools\n'
 		# install python tools
 		pushd "${git_root}" >/dev/null
-		make install-python-tools
+		pip install -r "${git_root}"/requirements.txt
 		popd >/dev/null
 	fi
 	if asdf where python &>/dev/null; then
