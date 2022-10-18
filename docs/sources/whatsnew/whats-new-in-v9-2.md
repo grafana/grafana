@@ -14,7 +14,7 @@ title: What's new in Grafana v9.2
 weight: -33
 ---
 
-# What's new in Grafana v9.2 (Beta)
+# What's new in Grafana v9.2
 
 Welcome to Grafana v9.2, a hefty minor release with a swath of improvements that help you create and share dashboards and alerts.
 Read on to learn about progress on public dashboards, our new panel help menu, custom branding in Grafana Enterprise, and improvements to access control.
@@ -42,9 +42,9 @@ Canvas visualizations are extensible form-built panels that allow you to explici
 
 For example, you can place image layers and then overlay text that's updated by Grafana data sources, and display icons that can change color conditionally based on data.
 
-We've planned additional features and design elements for future releases to make Canvas panels even more powerful tools for creating custom, interactive, data-driven visualizations. To learn more about the Canvas panel, see the [documentation]({{< relref "../visualizations/canvas/" >}}).
+We've planned additional features and design elements for future releases to make Canvas panels even more powerful tools for creating custom, interactive, data-driven visualizations. To learn more about the Canvas panel, see the [documentation]({{< relref "../panels-visualizations/visualizations/canvas" >}}).
 
-{{< video-embed src="/static/img/docs/canvas-panel/canvas-beta-overview-9-2-0.mov" max-width="750px" caption="Canvas panel beta overview" >}}
+{{< video-embed src="/static/img/docs/canvas-panel/canvas-beta-overview-9-2-0.mp4" max-width="750px" caption="Canvas panel beta overview" >}}
 
 ## Support for Google Analytics 4 properties
 

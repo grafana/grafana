@@ -5,15 +5,16 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/team"
 )
 
 type TeamGuardianStoreImpl struct {
-	sqlStore    sqlstore.Store
+	sqlStore    db.DB
 	teamService team.Service
 }
 
-func ProvideTeamGuardianStore(sqlStore sqlstore.Store, teamService team.Service) *TeamGuardianStoreImpl {
+func ProvideTeamGuardianStore(sqlStore db.DB, teamService team.Service) *TeamGuardianStoreImpl {
 	return &TeamGuardianStoreImpl{sqlStore: sqlStore, teamService: teamService}
 }
 

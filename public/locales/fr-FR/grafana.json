@@ -1,10 +1,12 @@
 {
+  "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file.",
   "common": {
     "locale": {
       "default": "",
-      "en": "",
-      "es": "",
-      "fr": ""
+      "en-US": "",
+      "es-ES": "",
+      "fr-FR": "",
+      "zh-Hans": ""
     },
     "save": ""
   },
@@ -153,7 +155,8 @@
       "title": ""
     },
     "config": {
-      "title": ""
+      "title": "",
+      "titleBeforeTopnav": ""
     },
     "correlations": {
       "subtitle": "",

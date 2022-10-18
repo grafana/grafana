@@ -1,13 +1,16 @@
 import { css } from '@emotion/css';
 import pluralize from 'pluralize';
-import React, { FC, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Redirect, Route, RouteChildrenProps, Switch, useLocation, useParams } from 'react-router-dom';
 
 import { NavModelItem, GrafanaTheme2 } from '@grafana/data';
 import { Alert, LoadingPlaceholder, withErrorBoundary, useStyles2, Icon, Stack } from '@grafana/ui';
 import { useDispatch } from 'app/types';
 
+import { ContactPointsState } from '../../../types/alerting';
+
 import { alertmanagerApi } from './api/alertmanagerApi';
+import { useGetContactPointsState } from './api/receiversApi';
 import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { GrafanaAlertmanagerDisabledWarning } from './components/GrafanaAlertmanagerDisabledWarning';
@@ -21,12 +24,7 @@ import { ReceiversAndTemplatesView } from './components/receivers/ReceiversAndTe
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
 import { useAlertManagersByPermission } from './hooks/useAlertManagerSources';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
-import {
-  fetchAlertManagerConfigAction,
-  fetchContactPointsStateAction,
-  fetchGrafanaNotifiersAction,
-} from './state/actions';
-import { CONTACT_POINTS_STATE_INTERVAL_MS } from './utils/constants';
+import { fetchAlertManagerConfigAction, fetchGrafanaNotifiersAction } from './state/actions';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { initialAsyncRequestState } from './utils/redux';
 
@@ -67,16 +65,12 @@ const Receivers: FC = () => {
   const isRoot = location.pathname.endsWith('/alerting/notifications');
 
   const configRequests = useUnifiedAlertingSelector((state) => state.amConfigs);
-  const contactPointsStateRequest = useUnifiedAlertingSelector((state) => state.contactPointsState);
 
   const {
     result: config,
     loading,
     error,
   } = (alertManagerSourceName && configRequests[alertManagerSourceName]) || initialAsyncRequestState;
-
-  const { result: contactPointsState } =
-    (alertManagerSourceName && contactPointsStateRequest) || initialAsyncRequestState;
 
   const receiverTypes = useUnifiedAlertingSelector((state) => state.grafanaNotifiers);
 
@@ -98,22 +92,10 @@ const Receivers: FC = () => {
     }
   }, [alertManagerSourceName, dispatch, receiverTypes]);
 
-  const { data: alertmanagerChoice } = useGetAlertmanagerChoiceQuery();
-
-  useEffect(() => {
-    function fetchContactPointStates() {
-      if (shouldRenderNotificationStatus && alertManagerSourceName) {
-        dispatch(fetchContactPointsStateAction(alertManagerSourceName));
-      }
-    }
-    fetchContactPointStates();
-    const interval = setInterval(fetchContactPointStates, CONTACT_POINTS_STATE_INTERVAL_MS);
-    return () => {
-      clearInterval(interval);
-    };
-  }, [shouldRenderNotificationStatus, alertManagerSourceName, dispatch]);
-
+  const contactPointsState: ContactPointsState = useGetContactPointsState(alertManagerSourceName ?? '');
   const integrationsErrorCount = contactPointsState?.errorCount ?? 0;
+
+  const { data: alertmanagerChoice } = useGetAlertmanagerChoiceQuery();
 
   const disableAmSelect = !isRoot;
 

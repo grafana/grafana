@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, LoadingPlaceholder, useStyles2, withErrorBoundary } from '@grafana/ui';
@@ -26,7 +26,7 @@ import { amRouteToFormAmRoute, formAmRouteToAmRoute, stringsToSelectableValues }
 import { isVanillaPrometheusAlertManagerDataSource } from './utils/datasource';
 import { initialAsyncRequestState } from './utils/redux';
 
-const AmRoutes: FC = () => {
+const AmRoutes = () => {
   const dispatch = useDispatch();
   const { useGetAlertmanagerChoiceQuery } = alertmanagerApi;
   const styles = useStyles2(getStyles);

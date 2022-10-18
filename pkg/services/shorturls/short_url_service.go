@@ -8,13 +8,14 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 var getTime = time.Now
 
-func ProvideService(sqlStore *sqlstore.SQLStore) *ShortURLService {
+func ProvideService(sqlStore db.DB) *ShortURLService {
 	return &ShortURLService{
 		SQLStore: sqlStore,
 	}
@@ -28,7 +29,7 @@ type Service interface {
 }
 
 type ShortURLService struct {
-	SQLStore *sqlstore.SQLStore
+	SQLStore db.DB
 }
 
 func (s ShortURLService) GetShortURLByUID(ctx context.Context, user *user.SignedInUser, uid string) (*models.ShortUrl, error) {

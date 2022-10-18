@@ -2,12 +2,22 @@ import i18n, { BackendModule, ResourceKey } from 'i18next';
 import React from 'react';
 import { Trans as I18NextTrans, initReactI18next } from 'react-i18next'; // eslint-disable-line no-restricted-imports
 
-import { DEFAULT_LOCALE, ENGLISH_US, FRENCH_FRANCE, SPANISH_SPAIN, PSEUDO_LOCALE, VALID_LOCALES } from './constants';
+import {
+  DEFAULT_LOCALE,
+  ENGLISH_US,
+  FRENCH_FRANCE,
+  SPANISH_SPAIN,
+  PSEUDO_LOCALE,
+  VALID_LOCALES,
+  CHINESE_SIMPLIFIED,
+} from './constants';
 
 const messageLoaders: Record<string, () => Promise<ResourceKey>> = {
-  [ENGLISH_US]: () => import('../../../locales/en-US/grafana.json'),
+  // English phrases are the default fallback string in the source, so we don't need to load the catalogue
+  [ENGLISH_US]: () => Promise.resolve({}),
   [FRENCH_FRANCE]: () => import('../../../locales/fr-FR/grafana.json'),
   [SPANISH_SPAIN]: () => import('../../../locales/es-ES/grafana.json'),
+  [CHINESE_SIMPLIFIED]: () => import('../../../locales/zh-Hans/grafana.json'),
   [PSEUDO_LOCALE]: () => import('../../../locales/pseudo-LOCALE/grafana.json'),
 };
 
@@ -40,7 +50,16 @@ export function initializeI18n(locale: string) {
 
       // If translations are empty strings (no translation), fall back to the default value in source code
       returnEmptyString: false,
+
+      pluralSeparator: '__',
     });
+
+  // This is a placeholder so we can put a 'comment' in the message json files.
+  // Starts with an underscore so it's sorted to the top of the file
+  t(
+    '_comment',
+    'Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source'
+  );
 }
 
 export function changeLanguage(locale: string) {

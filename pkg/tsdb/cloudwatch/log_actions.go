@@ -14,6 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/cwlog"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -240,7 +241,7 @@ func (e *cloudWatchExecutor) handleStartQuery(ctx context.Context, logsClient cl
 	if err != nil {
 		var awsErr awserr.Error
 		if errors.As(err, &awsErr) && awsErr.Code() == "LimitExceededException" {
-			plog.Debug("executeStartQuery limit exceeded", "err", awsErr)
+			cwlog.Debug("executeStartQuery limit exceeded", "err", awsErr)
 			return nil, &AWSError{Code: limitExceededException, Message: err.Error()}
 		}
 		return nil, err

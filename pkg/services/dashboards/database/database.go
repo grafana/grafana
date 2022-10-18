@@ -16,18 +16,20 @@ import (
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/tag"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 type DashboardStore struct {
-	sqlStore   *sqlstore.SQLStore
+	sqlStore   db.DB
+	cfg        *setting.Cfg
 	log        log.Logger
-	dialect    migrator.Dialect
 	features   featuremgmt.FeatureToggles
 	tagService tag.Service
 }
@@ -35,8 +37,8 @@ type DashboardStore struct {
 // DashboardStore implements the Store interface
 var _ dashboards.Store = (*DashboardStore)(nil)
 
-func ProvideDashboardStore(sqlStore *sqlstore.SQLStore, features featuremgmt.FeatureToggles, tagService tag.Service) *DashboardStore {
-	return &DashboardStore{sqlStore: sqlStore, log: log.New("dashboard-store"), dialect: sqlStore.Dialect, features: features, tagService: tagService}
+func ProvideDashboardStore(sqlStore db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tagService tag.Service) *DashboardStore {
+	return &DashboardStore{sqlStore: sqlStore, cfg: cfg, log: log.New("dashboard-store"), features: features, tagService: tagService}
 }
 
 func (d *DashboardStore) emitEntityEvent() bool {
@@ -47,12 +49,12 @@ func (d *DashboardStore) ValidateDashboardBeforeSave(ctx context.Context, dashbo
 	isParentFolderChanged := false
 	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var err error
-		isParentFolderChanged, err = getExistingDashboardByIdOrUidForUpdate(sess, dashboard, d.sqlStore.Dialect, overwrite)
+		isParentFolderChanged, err = getExistingDashboardByIdOrUidForUpdate(sess, dashboard, d.sqlStore.GetDialect(), overwrite)
 		if err != nil {
 			return err
 		}
 
-		isParentFolderChanged, err = getExistingDashboardByTitleAndFolder(sess, dashboard, d.sqlStore.Dialect, overwrite,
+		isParentFolderChanged, err = getExistingDashboardByTitleAndFolder(sess, dashboard, d.sqlStore.GetDialect(), overwrite,
 			isParentFolderChanged)
 		if err != nil {
 			return err
@@ -76,7 +78,7 @@ func (d *DashboardStore) GetFolderByTitle(ctx context.Context, orgID int64, titl
 	// there are no nested folders so the parent folder id is always 0
 	dashboard := models.Dashboard{OrgId: orgID, FolderId: 0, Title: title}
 	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		has, err := sess.Table(&models.Dashboard{}).Where("is_folder = " + d.sqlStore.Dialect.BooleanStr(true)).Where("folder_id=0").Get(&dashboard)
+		has, err := sess.Table(&models.Dashboard{}).Where("is_folder = " + d.sqlStore.GetDialect().BooleanStr(true)).Where("folder_id=0").Get(&dashboard)
 		if err != nil {
 			return err
 		}
@@ -93,7 +95,7 @@ func (d *DashboardStore) GetFolderByTitle(ctx context.Context, orgID int64, titl
 func (d *DashboardStore) GetFolderByID(ctx context.Context, orgID int64, id int64) (*models.Folder, error) {
 	dashboard := models.Dashboard{OrgId: orgID, FolderId: 0, Id: id}
 	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		has, err := sess.Table(&models.Dashboard{}).Where("is_folder = " + d.sqlStore.Dialect.BooleanStr(true)).Where("folder_id=0").Get(&dashboard)
+		has, err := sess.Table(&models.Dashboard{}).Where("is_folder = " + d.sqlStore.GetDialect().BooleanStr(true)).Where("folder_id=0").Get(&dashboard)
 		if err != nil {
 			return err
 		}
@@ -117,7 +119,7 @@ func (d *DashboardStore) GetFolderByUID(ctx context.Context, orgID int64, uid st
 
 	dashboard := models.Dashboard{OrgId: orgID, FolderId: 0, Uid: uid}
 	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		has, err := sess.Table(&models.Dashboard{}).Where("is_folder = " + d.sqlStore.Dialect.BooleanStr(true)).Where("folder_id=0").Get(&dashboard)
+		has, err := sess.Table(&models.Dashboard{}).Where("is_folder = " + d.sqlStore.GetDialect().BooleanStr(true)).Where("folder_id=0").Get(&dashboard)
 		if err != nil {
 			return err
 		}
@@ -682,7 +684,7 @@ func (d *DashboardStore) deleteAlertByIdInternal(alertId int64, reason string, s
 func (d *DashboardStore) GetDashboardsByPluginID(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error {
 	return d.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		var dashboards = make([]*models.Dashboard, 0)
-		whereExpr := "org_id=? AND plugin_id=? AND is_folder=" + d.sqlStore.Dialect.BooleanStr(false)
+		whereExpr := "org_id=? AND plugin_id=? AND is_folder=" + d.sqlStore.GetDialect().BooleanStr(false)
 
 		err := dbSession.Where(whereExpr, query.OrgId, query.PluginId).Find(&dashboards)
 		query.Result = dashboards
@@ -914,13 +916,13 @@ func (d *DashboardStore) FindDashboards(ctx context.Context, query *models.FindP
 		permissions.DashboardPermissionFilter{
 			OrgRole:         query.SignedInUser.OrgRole,
 			OrgId:           query.SignedInUser.OrgID,
-			Dialect:         d.dialect,
+			Dialect:         d.sqlStore.GetDialect(),
 			UserId:          query.SignedInUser.UserID,
 			PermissionLevel: query.Permission,
 		},
 	}
 
-	if !ac.IsDisabled(d.sqlStore.Cfg) {
+	if !ac.IsDisabled(d.cfg) {
 		// if access control is enabled, overwrite the filters so far
 		filters = []interface{}{
 			permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, query.Permission, query.Type),
@@ -954,11 +956,11 @@ func (d *DashboardStore) FindDashboards(ctx context.Context, query *models.FindP
 	}
 
 	if len(query.Title) > 0 {
-		filters = append(filters, searchstore.TitleFilter{Dialect: d.dialect, Title: query.Title})
+		filters = append(filters, searchstore.TitleFilter{Dialect: d.sqlStore.GetDialect(), Title: query.Title})
 	}
 
 	if len(query.Type) > 0 {
-		filters = append(filters, searchstore.TypeFilter{Dialect: d.dialect, Type: query.Type})
+		filters = append(filters, searchstore.TypeFilter{Dialect: d.sqlStore.GetDialect(), Type: query.Type})
 	}
 
 	if len(query.FolderIds) > 0 {
@@ -966,7 +968,7 @@ func (d *DashboardStore) FindDashboards(ctx context.Context, query *models.FindP
 	}
 
 	var res []dashboards.DashboardSearchProjection
-	sb := &searchstore.Builder{Dialect: d.dialect, Filters: filters}
+	sb := &searchstore.Builder{Dialect: d.sqlStore.GetDialect(), Filters: filters}
 
 	limit := query.Limit
 	if limit < 1 {
