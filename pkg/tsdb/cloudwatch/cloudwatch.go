@@ -29,7 +29,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/clients"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/cwlog"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 )
 
 type datasourceInfo struct {
@@ -110,6 +112,28 @@ func newExecutor(im instancemgmt.InstanceManager, cfg *setting.Cfg, sessions Ses
 		sessions: sessions,
 		features: features,
 	}
+
+	cwe.getClients = func(pluginCtx backend.PluginContext, region string) (models.ClientsProvider, error) {
+		r := region
+		if region == defaultRegion {
+			dsInfo, err := cwe.getDSInfo(pluginCtx)
+			if err != nil {
+				return nil, err
+			}
+			r = dsInfo.region
+		}
+
+		sess, err := cwe.newSession(pluginCtx, r)
+		if err != nil {
+			return nil, err
+		}
+		return struct {
+			models.MetricsClientProvider
+		}{
+			MetricsClientProvider: clients.NewMetricsClient(cloudwatch.New(sess), cfg),
+		}, nil
+	}
+
 	cwe.resourceHandler = httpadapter.New(cwe.newResourceMux())
 	return cwe
 }
@@ -179,10 +203,11 @@ func NewInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 
 // cloudWatchExecutor executes CloudWatch requests.
 type cloudWatchExecutor struct {
-	im       instancemgmt.InstanceManager
-	cfg      *setting.Cfg
-	sessions SessionCache
-	features featuremgmt.FeatureToggles
+	im         instancemgmt.InstanceManager
+	cfg        *setting.Cfg
+	sessions   SessionCache
+	features   featuremgmt.FeatureToggles
+	getClients models.ClientsFactoryFunc
 
 	resourceHandler backend.CallResourceHandler
 }

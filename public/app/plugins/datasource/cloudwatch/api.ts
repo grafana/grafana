@@ -1,4 +1,4 @@
-import { DataSourceInstanceSettings, SelectableValue } from '@grafana/data';
+import { DataSourceInstanceSettings, SelectableValue, toOption } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
@@ -70,17 +70,19 @@ export class CloudWatchAPI extends CloudWatchRequest {
     region: string,
     dimensionFilters: Dimensions = {},
     metricName = ''
-  ) {
+  ): Promise<SelectableValue[]> {
     if (!namespace) {
       return [];
     }
 
-    return this.resourceRequest('dimension-keys', {
-      region: this.templateSrv.replace(this.getActualRegion(region)),
-      namespace: this.templateSrv.replace(namespace),
-      dimensionFilters: JSON.stringify(this.convertDimensionFormat(dimensionFilters, {})),
-      metricName,
-    });
+    return getBackendSrv()
+      .get(`/api/datasources/${this.instanceSettings.id}/resources/dimension-keys`, {
+        region: this.templateSrv.replace(this.getActualRegion(region)),
+        namespace: this.templateSrv.replace(namespace),
+        dimensionFilters: JSON.stringify(this.convertDimensionFormat(dimensionFilters, {})),
+        metricName,
+      })
+      .then((dimensionKeys) => dimensionKeys.map(toOption));
   }
 
   async getDimensionValues(
