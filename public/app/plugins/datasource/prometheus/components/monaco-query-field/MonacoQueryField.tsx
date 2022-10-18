@@ -90,12 +90,13 @@ const MonacoQueryField = (props: Props) => {
   // we need only one instance of `overrideServices` during the lifetime of the react component
   const overrideServicesRef = useRef(getOverrideServices());
   const containerRef = useRef<HTMLDivElement>(null);
-  const { languageProvider, history, onBlur, onRunQuery, initialValue, placeholder } = props;
+  const { languageProvider, history, onBlur, onRunQuery, initialValue, placeholder, onChange } = props;
 
   const lpRef = useLatest(languageProvider);
   const historyRef = useLatest(history);
   const onRunQueryRef = useLatest(onRunQuery);
   const onBlurRef = useLatest(onBlur);
+  const onChangeRef = useLatest(onChange);
 
   const autocompleteDisposeFun = useRef<(() => void) | null>(null);
 
@@ -200,6 +201,15 @@ const MonacoQueryField = (props: Props) => {
 
           editor.onDidContentSizeChange(updateElementHeight);
           updateElementHeight();
+
+          // Whenever the editor changes, lets save the last value so the next query for this editor will be up-to-date.
+          // This change is being introduced to fix a bug where you can submit a query via shift+enter:
+          // If you clicked into another field and haven't un-blurred the active field,
+          // then the query that is run will be stale, as the reference is only updated
+          // with the value of the last blurred input.
+          editor.getModel()?.onDidChangeContent(() => {
+            onChangeRef.current(editor.getValue());
+          });
 
           // handle: shift + enter
           // FIXME: maybe move this functionality into CodeEditor?

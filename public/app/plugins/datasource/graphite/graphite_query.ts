@@ -212,19 +212,10 @@ export default class GraphiteQuery {
     let targetWithNestedQueries = target.target;
 
     // Use ref count to track circular references
-    function countTargetRefs(targetsByRefId: any, refId: string) {
-      let refCount = 0;
-      each(targetsByRefId, (t, id) => {
-        if (id !== refId) {
-          const match = nestedSeriesRefRegex.exec(t.target);
-          const count = match && match.length ? match.length - 1 : 0;
-          refCount += count;
-        }
-      });
-      targetsByRefId[refId].refCount = refCount;
-    }
     each(targetsByRefId, (t, id) => {
-      countTargetRefs(targetsByRefId, id);
+      const regex = RegExp(`\#(${id})`, 'g');
+      const refMatches = targetWithNestedQueries.match(regex);
+      t.refCount = refMatches?.length ?? 0;
     });
 
     // Keep interpolating until there are no query references

@@ -1,4 +1,4 @@
-import { merge, Observable, of } from 'rxjs';
+import { lastValueFrom, merge, Observable, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 
 import {
@@ -24,6 +24,8 @@ import {
   getGrafanaLiveSrv,
   StreamingFrameOptions,
   StreamingFrameAction,
+  BackendSrvRequest,
+  FetchResponse,
 } from '../services';
 
 import { BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
@@ -110,7 +112,7 @@ class DataSourceWithBackend<
    * Ideally final -- any other implementation may not work as expected
    */
   query(request: DataQueryRequest<TQuery>): Observable<DataQueryResponse> {
-    const { intervalMs, maxDataPoints, range, requestId } = request;
+    const { intervalMs, maxDataPoints, range, requestId, hideFromInspector = false } = request;
     let targets = request.targets;
 
     if (this.filterQuery) {
@@ -174,6 +176,7 @@ class DataSourceWithBackend<
         method: 'POST',
         data: body,
         requestId,
+        hideFromInspector,
       })
       .pipe(
         switchMap((raw) => {
@@ -218,29 +221,38 @@ class DataSourceWithBackend<
   /**
    * Make a GET request to the datasource resource path
    */
-  async getResource(path: string, params?: any): Promise<any> {
-    return getBackendSrv().get(`/api/datasources/${this.id}/resources/${path}`, params);
+  async getResource(
+    path: string,
+    params?: BackendSrvRequest['params'],
+    options?: Partial<BackendSrvRequest>
+  ): Promise<any> {
+    return getBackendSrv().get(`/api/datasources/${this.id}/resources/${path}`, params, options?.requestId, options);
   }
 
   /**
    * Send a POST request to the datasource resource path
    */
-  async postResource(path: string, body?: any): Promise<any> {
-    return getBackendSrv().post(`/api/datasources/${this.id}/resources/${path}`, { ...body });
+  async postResource(
+    path: string,
+    data?: BackendSrvRequest['data'],
+    options?: Partial<BackendSrvRequest>
+  ): Promise<any> {
+    return getBackendSrv().post(`/api/datasources/${this.id}/resources/${path}`, { ...data }, options);
   }
 
   /**
    * Run the datasource healthcheck
    */
   async callHealthCheck(): Promise<HealthCheckResult> {
-    return getBackendSrv()
-      .request({ method: 'GET', url: `/api/datasources/${this.id}/health`, showErrorAlert: false })
-      .then((v) => {
-        return v as HealthCheckResult;
+    return lastValueFrom(
+      getBackendSrv().fetch<HealthCheckResult>({
+        method: 'GET',
+        url: `/api/datasources/${this.id}/health`,
+        showErrorAlert: false,
       })
-      .catch((err) => {
-        return err.data as HealthCheckResult;
-      });
+    )
+      .then((v: FetchResponse) => v.data as HealthCheckResult)
+      .catch((err) => err.data as HealthCheckResult);
   }
 
   /**

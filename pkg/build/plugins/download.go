@@ -65,6 +65,7 @@ func Download(ctx context.Context, grafanaDir string, p syncutil.WorkerPool) err
 		pm := m.Plugins[i]
 		p.Schedule(g.Wrap(func() error {
 			tgt := filepath.Join(grafanaDir, "plugins-bundled", fmt.Sprintf("%s-%s.zip", pm.Name, pm.Version))
+			//nolint:gosec
 			out, err := os.Create(tgt)
 			if err != nil {
 				return err

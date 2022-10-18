@@ -287,6 +287,9 @@ const migrateGrafanaTemplateVariableFn = (query: AzureMonitorQuery) => {
     case 'MetricNamespaceQuery':
       migratedQuery.queryType = AzureQueryType.NamespacesQuery;
       break;
+    case 'MetricDefinitionsQuery':
+      migratedQuery.queryType = AzureQueryType.NamespacesQuery;
+      break;
     case 'MetricNamesQuery':
       migratedQuery.queryType = AzureQueryType.MetricNamesQuery;
       break;

@@ -19,7 +19,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/star/starimpl"
+	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestIntegrationDashboardDataAccess(t *testing.T) {
@@ -34,7 +36,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 	setup := func() {
 		sqlStore = sqlstore.InitTestDB(t)
 		starService = starimpl.ProvideService(sqlStore, sqlStore.Cfg)
-		dashboardStore = ProvideDashboardStore(sqlStore, testFeatureToggles)
+		dashboardStore = ProvideDashboardStore(sqlStore, sqlStore.Cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
 		savedFolder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, true, "prod", "webapp")
 		savedDash = insertTestDashboard(t, dashboardStore, "test dash 23", 1, savedFolder.Id, false, "prod", "webapp")
 		insertTestDashboard(t, dashboardStore, "test dash 45", 1, savedFolder.Id, false, "prod")
@@ -162,7 +164,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 			}),
 			UserId: 100,
 		}
-		dashboard, err := dashboardStore.SaveDashboard(cmd)
+		dashboard, err := dashboardStore.SaveDashboard(context.Background(), cmd)
 		require.NoError(t, err)
 		require.EqualValues(t, dashboard.CreatedBy, 100)
 		require.False(t, dashboard.Created.IsZero())
@@ -183,7 +185,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 			FolderId:  2,
 			UserId:    100,
 		}
-		dash, err := dashboardStore.SaveDashboard(cmd)
+		dash, err := dashboardStore.SaveDashboard(context.Background(), cmd)
 		require.NoError(t, err)
 		require.EqualValues(t, dash.FolderId, 2)
 
@@ -198,7 +200,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 			Overwrite: true,
 			UserId:    100,
 		}
-		_, err = dashboardStore.SaveDashboard(cmd)
+		_, err = dashboardStore.SaveDashboard(context.Background(), cmd)
 		require.NoError(t, err)
 
 		query := models.GetDashboardQuery{
@@ -274,7 +276,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 			}),
 		}
 
-		_, err := dashboardStore.SaveDashboard(cmd)
+		_, err := dashboardStore.SaveDashboard(context.Background(), cmd)
 		require.Equal(t, err, dashboards.ErrDashboardNotFound)
 	})
 
@@ -288,7 +290,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 				"tags":  []interface{}{},
 			}),
 		}
-		_, err := dashboardStore.SaveDashboard(cmd)
+		_, err := dashboardStore.SaveDashboard(context.Background(), cmd)
 		require.NoError(t, err)
 	})
 
@@ -485,7 +487,9 @@ func TestIntegrationDashboardDataAccessGivenPluginWithImportedDashboards(t *test
 		t.Skip("skipping integration test")
 	}
 	sqlStore := sqlstore.InitTestDB(t)
-	dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles)
+	cfg := setting.NewCfg()
+	cfg.IsFeatureToggleEnabled = func(key string) bool { return false }
+	dashboardStore := ProvideDashboardStore(sqlStore, &setting.Cfg{}, testFeatureToggles, tagimpl.ProvideService(sqlStore, cfg))
 	pluginId := "test-app"
 
 	appFolder := insertTestDashboardForPlugin(t, dashboardStore, "app-test", 1, 0, true, pluginId)
@@ -507,7 +511,9 @@ func TestIntegrationDashboard_SortingOptions(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	sqlStore := sqlstore.InitTestDB(t)
-	dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles)
+	cfg := setting.NewCfg()
+	cfg.IsFeatureToggleEnabled = func(key string) bool { return false }
+	dashboardStore := ProvideDashboardStore(sqlStore, &setting.Cfg{}, testFeatureToggles, tagimpl.ProvideService(sqlStore, cfg))
 
 	dashB := insertTestDashboard(t, dashboardStore, "Beta", 1, 0, false)
 	dashA := insertTestDashboard(t, dashboardStore, "Alfa", 1, 0, false)
@@ -556,7 +562,9 @@ func TestIntegrationDashboard_Filter(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	sqlStore := sqlstore.InitTestDB(t)
-	dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles)
+	cfg := setting.NewCfg()
+	cfg.IsFeatureToggleEnabled = func(key string) bool { return false }
+	dashboardStore := ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, cfg))
 	insertTestDashboard(t, dashboardStore, "Alfa", 1, 0, false)
 	dashB := insertTestDashboard(t, dashboardStore, "Beta", 1, 0, false)
 	qNoFilter := &models.FindPersistedDashboardsQuery{
@@ -696,7 +704,7 @@ func insertTestDashboard(t *testing.T, dashboardStore *DashboardStore, title str
 			"tags":  tags,
 		}),
 	}
-	dash, err := dashboardStore.SaveDashboard(cmd)
+	dash, err := dashboardStore.SaveDashboard(context.Background(), cmd)
 	require.NoError(t, err)
 	require.NotNil(t, dash)
 	dash.Data.Set("id", dash.Id)
@@ -718,7 +726,7 @@ func insertTestDashboardForPlugin(t *testing.T, dashboardStore *DashboardStore, 
 		PluginId: pluginId,
 	}
 
-	dash, err := dashboardStore.SaveDashboard(cmd)
+	dash, err := dashboardStore.SaveDashboard(context.Background(), cmd)
 	require.NoError(t, err)
 
 	return dash

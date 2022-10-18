@@ -11,7 +11,8 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
-	"github.com/grafana/grafana/pkg/plugins/manager/installer"
+	"github.com/grafana/grafana/pkg/plugins/repo"
+	"github.com/grafana/grafana/pkg/plugins/storage"
 )
 
 func validateInput(c utils.CommandLine, pluginFolder string) error {
@@ -48,16 +49,49 @@ func (cmd Command) installCommand(c utils.CommandLine) error {
 
 	pluginID := c.Args().First()
 	version := c.Args().Get(1)
-	return InstallPlugin(pluginID, version, c)
+	return installPlugin(context.Background(), pluginID, version, c)
 }
 
-// InstallPlugin downloads the plugin code as a zip file from the Grafana.com API
-// and then extracts the zip into the plugins directory.
-func InstallPlugin(pluginID, version string, c utils.CommandLine) error {
+// installPlugin downloads the plugin code as a zip file from the Grafana.com API
+// and then extracts the zip into the plugin's directory.
+func installPlugin(ctx context.Context, pluginID, version string, c utils.CommandLine) error {
 	skipTLSVerify := c.Bool("insecure")
+	repository := repo.New(skipTLSVerify, c.PluginRepoURL(), services.Logger)
 
-	i := installer.New(skipTLSVerify, services.GrafanaVersion, services.Logger)
-	return i.Install(context.Background(), pluginID, version, c.PluginDirectory(), c.PluginURL(), c.PluginRepoURL())
+	compatOpts := repo.NewCompatOpts(services.GrafanaVersion, runtime.GOOS, runtime.GOARCH)
+
+	var archive *repo.PluginArchive
+	var err error
+	pluginZipURL := c.PluginURL()
+	if pluginZipURL != "" {
+		if archive, err = repository.GetPluginArchiveByURL(ctx, pluginZipURL, compatOpts); err != nil {
+			return err
+		}
+	} else {
+		if archive, err = repository.GetPluginArchive(ctx, pluginID, version, compatOpts); err != nil {
+			return err
+		}
+	}
+
+	pluginFs := storage.FileSystem(services.Logger, c.PluginDirectory())
+	extractedArchive, err := pluginFs.Add(ctx, pluginID, archive.File)
+	if err != nil {
+		return err
+	}
+
+	for _, dep := range extractedArchive.Dependencies {
+		services.Logger.Infof("Fetching %s dependency...", dep.ID)
+		d, err := repository.GetPluginArchive(ctx, dep.ID, dep.Version, compatOpts)
+		if err != nil {
+			return fmt.Errorf("%v: %w", fmt.Sprintf("failed to download plugin %s from repository", dep.ID), err)
+		}
+
+		_, err = pluginFs.Add(ctx, dep.ID, d.File)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func osAndArchString() string {

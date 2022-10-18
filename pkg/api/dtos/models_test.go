@@ -1,12 +1,74 @@
 package dtos
 
 import (
+	"sort"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestGetUniqueDatasourceTypes(t *testing.T) {
+	testcases := []struct {
+		desc    string
+		queries []*simplejson.Json
+		result  []string
+	}{
+		{
+			desc:   "can get unique datasource names",
+			result: []string{"mysql", "prometheus"},
+			queries: []*simplejson.Json{
+				simplejson.NewFromAny(map[string]interface{}{
+					"datasource": map[string]interface{}{
+						"type": "prometheus",
+						"uid":  "uid1",
+					},
+				}),
+				simplejson.NewFromAny(map[string]interface{}{
+					"datasource": map[string]interface{}{
+						"type": "prometheus",
+						"uid":  "uid2",
+					},
+				}),
+				simplejson.NewFromAny(map[string]interface{}{
+					"datasource": map[string]interface{}{
+						"type": "mysql",
+						"uid":  "uid3",
+					},
+				}),
+			},
+		},
+		{
+			desc:   "returns empty slice when datasources have no type property",
+			result: []string{},
+			queries: []*simplejson.Json{
+				simplejson.NewFromAny(map[string]interface{}{
+					"datasource": map[string]interface{}{
+						"uid": "uid1",
+					},
+				}),
+				simplejson.NewFromAny(map[string]interface{}{
+					"datasource": map[string]interface{}{
+						"uid": "uid3",
+					},
+				}),
+			},
+		},
+	}
+
+	for _, testcase := range testcases {
+		t.Run(testcase.desc, func(t *testing.T) {
+			metReq := MetricRequest{
+				Queries: testcase.queries,
+			}
+			result := metReq.GetUniqueDatasourceTypes()
+			sort.Strings(result)
+			assert.Equal(t, testcase.result, result)
+		})
+	}
+}
 
 func TestIsHiddenUser(t *testing.T) {
 	emptyHiddenUsers := map[string]struct{}{}

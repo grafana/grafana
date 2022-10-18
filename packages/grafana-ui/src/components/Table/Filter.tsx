@@ -27,12 +27,11 @@ export const Filter: FC<Props> = ({ column, field, tableStyles }) => {
   if (!field || !field.config.custom?.filterable) {
     return null;
   }
-
   return (
     <span
       className={cx(tableStyles.headerFilter, filterEnabled ? styles.filterIconEnabled : styles.filterIconDisabled)}
       ref={ref}
-      role="filterIcon"
+      role="button"
       onClick={onShowPopover}
     >
       <Icon name="filter" />

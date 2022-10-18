@@ -462,7 +462,7 @@ export function ChangeOrgButton({
   );
 }
 
-const ExternalUserTooltip: React.FC = () => {
+const ExternalUserTooltip = () => {
   const theme = useTheme();
   const styles = getTooltipStyles(theme);
 
@@ -470,6 +470,7 @@ const ExternalUserTooltip: React.FC = () => {
     <div className={styles.disabledTooltip}>
       <Tooltip
         placement="right-end"
+        interactive={true}
         content={
           <div>
             This user&apos;s built-in role is not editable because it is synchronized from your auth provider. Refer to

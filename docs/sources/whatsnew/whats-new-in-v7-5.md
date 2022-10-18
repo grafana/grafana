@@ -29,7 +29,7 @@ Grafana 7.5 adds a beta version of the next-generation pie chart panel.
 
 ![Pie chart panel](/static/img/docs/pie-chart-panel/pie-chart-panel-7-5.png)
 
-For more information, refer to [Pie chart panel]({{< relref "../visualizations/pie-chart-panel/" >}}).
+For more information, refer to [Pie chart panel]({{< relref "../panels-visualizations/visualizations/pie-chart/" >}}).
 
 ### Alerting for Loki
 
@@ -131,7 +131,7 @@ If you have created dashboards with template variables, then you can choose whic
 
 Enable this feature in configuration settings using the `templateVariables` flag.
 
-For more information, refer to [Reporting]({{< relref "../enterprise/reporting/#choose-template-variables" >}}).
+For more information, refer to [Reporting]({{< relref "../dashboards/share-dashboards-panels/#choose-template-variables" >}}).
 
 ### Active user limits
 

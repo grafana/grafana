@@ -17,6 +17,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/db"
+	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
+	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -797,7 +800,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 
 type permissionScenarioContext struct {
 	dashboardGuardianMock    *guardian.FakeDashboardGuardian
-	sqlStore                 *sqlstore.SQLStore
+	sqlStore                 db.DB
 	dashboardStore           dashboards.Store
 	savedFolder              *models.Dashboard
 	savedDashInFolder        *models.Dashboard
@@ -817,8 +820,9 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 	t.Run(desc, func(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.RBACEnabled = false
+		cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
 		sqlStore := sqlstore.InitTestDB(t)
-		dashboardStore := database.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures())
+		dashboardStore := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg))
 		service := ProvideDashboardService(
 			cfg, dashboardStore, &dummyDashAlertExtractor{},
 			featuremgmt.WithFeatures(),
@@ -826,7 +830,7 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 			accesscontrolmock.NewMockedPermissionsService(),
 			accesscontrolmock.New(),
 		)
-		guardian.InitLegacyGuardian(sqlStore, service)
+		guardian.InitLegacyGuardian(sqlStore, service, &teamtest.FakeService{})
 
 		savedFolder := saveTestFolder(t, "Saved folder", testOrgID, sqlStore)
 		savedDashInFolder := saveTestDashboard(t, "Saved dash in folder", testOrgID, savedFolder.Id, sqlStore)
@@ -868,14 +872,14 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 	})
 }
 
-func callSaveWithResult(t *testing.T, cmd models.SaveDashboardCommand, sqlStore *sqlstore.SQLStore) *models.Dashboard {
+func callSaveWithResult(t *testing.T, cmd models.SaveDashboardCommand, sqlStore db.DB) *models.Dashboard {
 	t.Helper()
 
 	dto := toSaveDashboardDto(cmd)
-	dashboardStore := database.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures())
 	cfg := setting.NewCfg()
 	cfg.RBACEnabled = false
 	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
+	dashboardStore := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg))
 	service := ProvideDashboardService(
 		cfg, dashboardStore, &dummyDashAlertExtractor{},
 		featuremgmt.WithFeatures(),
@@ -889,12 +893,12 @@ func callSaveWithResult(t *testing.T, cmd models.SaveDashboardCommand, sqlStore 
 	return res
 }
 
-func callSaveWithError(cmd models.SaveDashboardCommand, sqlStore *sqlstore.SQLStore) error {
+func callSaveWithError(cmd models.SaveDashboardCommand, sqlStore db.DB) error {
 	dto := toSaveDashboardDto(cmd)
-	dashboardStore := database.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures())
 	cfg := setting.NewCfg()
 	cfg.RBACEnabled = false
 	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
+	dashboardStore := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg))
 	service := ProvideDashboardService(
 		cfg, dashboardStore, &dummyDashAlertExtractor{},
 		featuremgmt.WithFeatures(),
@@ -906,7 +910,7 @@ func callSaveWithError(cmd models.SaveDashboardCommand, sqlStore *sqlstore.SQLSt
 	return err
 }
 
-func saveTestDashboard(t *testing.T, title string, orgID, folderID int64, sqlStore *sqlstore.SQLStore) *models.Dashboard {
+func saveTestDashboard(t *testing.T, title string, orgID, folderID int64, sqlStore db.DB) *models.Dashboard {
 	t.Helper()
 
 	cmd := models.SaveDashboardCommand{
@@ -928,10 +932,10 @@ func saveTestDashboard(t *testing.T, title string, orgID, folderID int64, sqlSto
 		},
 	}
 
-	dashboardStore := database.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures())
 	cfg := setting.NewCfg()
 	cfg.RBACEnabled = false
 	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
+	dashboardStore := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg))
 	service := ProvideDashboardService(
 		cfg, dashboardStore, &dummyDashAlertExtractor{},
 		featuremgmt.WithFeatures(),
@@ -945,7 +949,7 @@ func saveTestDashboard(t *testing.T, title string, orgID, folderID int64, sqlSto
 	return res
 }
 
-func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore *sqlstore.SQLStore) *models.Dashboard {
+func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore db.DB) *models.Dashboard {
 	t.Helper()
 	cmd := models.SaveDashboardCommand{
 		OrgId:    orgID,
@@ -966,10 +970,10 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore *sqlstore.
 		},
 	}
 
-	dashboardStore := database.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures())
 	cfg := setting.NewCfg()
 	cfg.RBACEnabled = false
 	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
+	dashboardStore := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg))
 	service := ProvideDashboardService(
 		cfg, dashboardStore, &dummyDashAlertExtractor{},
 		featuremgmt.WithFeatures(),

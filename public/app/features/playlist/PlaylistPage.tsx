@@ -1,41 +1,26 @@
-import React, { useState } from 'react';
-import { useDebounce } from 'react-use';
+import React, { useMemo, useState } from 'react';
+import { useAsync } from 'react-use';
 
 import { ConfirmModal } from '@grafana/ui';
+import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import EmptyListCTA from '../../core/components/EmptyListCTA/EmptyListCTA';
-
 import { EmptyQueryListBanner } from './EmptyQueryListBanner';
 import { PlaylistPageList } from './PlaylistPageList';
 import { StartModal } from './StartModal';
-import { deletePlaylist, getAllPlaylist } from './api';
-import { PlaylistDTO } from './types';
+import { deletePlaylist, getAllPlaylist, searchPlaylists } from './api';
+import { Playlist } from './types';
 
 export const PlaylistPage = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
-  const [hasFetched, setHasFetched] = useState(false);
-  const [startPlaylist, setStartPlaylist] = useState<PlaylistDTO | undefined>();
-  const [playlistToDelete, setPlaylistToDelete] = useState<PlaylistDTO | undefined>();
   const [forcePlaylistsFetch, setForcePlaylistsFetch] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
+  const allPlaylists = useAsync(() => getAllPlaylist(), [forcePlaylistsFetch]);
+  const playlists = useMemo(() => searchPlaylists(allPlaylists.value ?? [], searchQuery), [searchQuery, allPlaylists]);
 
-  const [playlists, setPlaylists] = useState<PlaylistDTO[]>([]);
-
-  useDebounce(
-    async () => {
-      const playlists = await getAllPlaylist(searchQuery);
-      if (!hasFetched) {
-        setHasFetched(true);
-      }
-      setPlaylists(playlists);
-      setDebouncedSearchQuery(searchQuery);
-    },
-    350,
-    [forcePlaylistsFetch, searchQuery]
-  );
+  const [startPlaylist, setStartPlaylist] = useState<Playlist | undefined>();
+  const [playlistToDelete, setPlaylistToDelete] = useState<Playlist | undefined>();
 
   const hasPlaylists = playlists && playlists.length > 0;
   const onDismissDelete = () => setPlaylistToDelete(undefined);
@@ -63,11 +48,11 @@ export const PlaylistPage = () => {
     />
   );
 
-  const showSearch = playlists.length > 0 || searchQuery.length > 0 || debouncedSearchQuery.length > 0;
+  const showSearch = playlists.length > 0 || searchQuery.length > 0;
 
   return (
     <Page navId="dashboards/playlists">
-      <Page.Contents isLoading={!hasFetched}>
+      <Page.Contents isLoading={allPlaylists.loading}>
         {showSearch && (
           <PageActionBar
             searchQuery={searchQuery}

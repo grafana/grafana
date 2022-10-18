@@ -12,33 +12,28 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type Options struct {
-	ReloadCache bool
-}
-
 type AccessControl interface {
-	registry.ProvidesUsageStats
-
 	// Evaluate evaluates access to the given resources.
 	Evaluate(ctx context.Context, user *user.SignedInUser, evaluator Evaluator) (bool, error)
-
-	// GetUserPermissions returns user permissions with only action and scope fields set.
-	GetUserPermissions(ctx context.Context, user *user.SignedInUser, options Options) ([]Permission, error)
-
-	//IsDisabled returns if access control is enabled or not
-	IsDisabled() bool
-
-	// DeclareFixedRoles allows the caller to declare, to the service, fixed roles and their
-	// assignments to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
-	DeclareFixedRoles(...RoleRegistration) error
-
 	// RegisterScopeAttributeResolver allows the caller to register a scope resolver for a
 	// specific scope prefix (ex: datasources:name:)
-	RegisterScopeAttributeResolver(scopePrefix string, resolver ScopeAttributeResolver)
+	RegisterScopeAttributeResolver(prefix string, resolver ScopeAttributeResolver)
+	//IsDisabled returns if access control is enabled or not
+	IsDisabled() bool
+}
 
+type Service interface {
+	registry.ProvidesUsageStats
+	// GetUserPermissions returns user permissions with only action and scope fields set.
+	GetUserPermissions(ctx context.Context, user *user.SignedInUser, options Options) ([]Permission, error)
 	// DeleteUserPermissions removes all permissions user has in org and all permission to that user
 	// If orgID is set to 0 remove permissions from all orgs
 	DeleteUserPermissions(ctx context.Context, orgID, userID int64) error
+	// DeclareFixedRoles allows the caller to declare, to the service, fixed roles and their
+	// assignments to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
+	DeclareFixedRoles(registrations ...RoleRegistration) error
+	//IsDisabled returns if access control is enabled or not
+	IsDisabled() bool
 }
 
 type RoleRegistry interface {
@@ -46,10 +41,8 @@ type RoleRegistry interface {
 	RegisterFixedRoles(ctx context.Context) error
 }
 
-type PermissionsStore interface {
-	// GetUserPermissions returns user permissions with only action and scope fields set.
-	GetUserPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]Permission, error)
-	DeleteUserPermissions(ctx context.Context, orgID, userID int64) error
+type Options struct {
+	ReloadCache bool
 }
 
 type TeamPermissionsService interface {
@@ -93,12 +86,8 @@ type User struct {
 	IsExternal bool
 }
 
-// Metadata contains user accesses for a given resource
-// Ex: map[string]bool{"create":true, "delete": true}
-type Metadata map[string]bool
-
 // HasGlobalAccess checks user access with globally assigned permissions only
-func HasGlobalAccess(ac AccessControl, c *models.ReqContext) func(fallback func(*models.ReqContext) bool, evaluator Evaluator) bool {
+func HasGlobalAccess(ac AccessControl, service Service, c *models.ReqContext) func(fallback func(*models.ReqContext) bool, evaluator Evaluator) bool {
 	return func(fallback func(*models.ReqContext) bool, evaluator Evaluator) bool {
 		if ac.IsDisabled() {
 			return fallback(c)
@@ -108,11 +97,22 @@ func HasGlobalAccess(ac AccessControl, c *models.ReqContext) func(fallback func(
 		userCopy.OrgID = GlobalOrgID
 		userCopy.OrgRole = ""
 		userCopy.OrgName = ""
+		if userCopy.Permissions[GlobalOrgID] == nil {
+			permissions, err := service.GetUserPermissions(c.Req.Context(), &userCopy, Options{})
+			if err != nil {
+				c.Logger.Error("failed fetching permissions for user", "userID", userCopy.UserID, "error", err)
+			}
+			userCopy.Permissions[GlobalOrgID] = GroupScopesByAction(permissions)
+		}
+
 		hasAccess, err := ac.Evaluate(c.Req.Context(), &userCopy, evaluator)
 		if err != nil {
 			c.Logger.Error("Error from access control system", "error", err)
 			return false
 		}
+
+		// set on user so we don't fetch global permissions every time this is called
+		c.SignedInUser.Permissions[GlobalOrgID] = userCopy.Permissions[GlobalOrgID]
 
 		return hasAccess
 	}
@@ -155,6 +155,12 @@ var ReqOrgAdminOrEditor = func(c *models.ReqContext) bool {
 	return c.OrgRole == org.RoleAdmin || c.OrgRole == org.RoleEditor
 }
 
+// ReqHasRole generates a fallback to check whether the user has a role
+// Note that while ReqOrgAdmin returns false for a Grafana Admin / Viewer, ReqHasRole(org.RoleAdmin) will return true
+func ReqHasRole(role org.RoleType) func(c *models.ReqContext) bool {
+	return func(c *models.ReqContext) bool { return c.HasRole(role) }
+}
+
 func BuildPermissionsMap(permissions []Permission) map[string]bool {
 	permissionsMap := make(map[string]bool)
 	for _, p := range permissions {
@@ -167,8 +173,8 @@ func BuildPermissionsMap(permissions []Permission) map[string]bool {
 // GroupScopesByAction will group scopes on action
 func GroupScopesByAction(permissions []Permission) map[string][]string {
 	m := make(map[string][]string)
-	for _, p := range permissions {
-		m[p.Action] = append(m[p.Action], p.Scope)
+	for i := range permissions {
+		m[permissions[i].Action] = append(m[permissions[i].Action], permissions[i].Scope)
 	}
 	return m
 }
@@ -185,66 +191,6 @@ func ValidateScope(scope string) bool {
 	return !strings.ContainsAny(prefix, "*?")
 }
 
-func addActionToMetadata(allMetadata map[string]Metadata, action, id string) map[string]Metadata {
-	metadata, initialized := allMetadata[id]
-	if !initialized {
-		metadata = Metadata{action: true}
-	} else {
-		metadata[action] = true
-	}
-	allMetadata[id] = metadata
-	return allMetadata
-}
-
-// GetResourcesMetadata returns a map of accesscontrol metadata, listing for each resource, users available actions
-func GetResourcesMetadata(ctx context.Context, permissions map[string][]string, prefix string, resourceIDs map[string]bool) map[string]Metadata {
-	rootPrefix, attributePrefix, ok := extractPrefixes(prefix)
-	if !ok {
-		return map[string]Metadata{}
-	}
-
-	allScope := GetResourceAllScope(strings.TrimSuffix(rootPrefix, ":"))
-	allAttributeScope := Scope(strings.TrimSuffix(attributePrefix, ":"), "*")
-
-	// index of the attribute in the scope
-	attributeIndex := len(attributePrefix)
-
-	// Loop through permissions once
-	result := map[string]Metadata{}
-
-	for action, scopes := range permissions {
-		for _, scope := range scopes {
-			if scope == "*" || scope == allScope || scope == allAttributeScope {
-				// Add global action to all resources
-				for id := range resourceIDs {
-					result = addActionToMetadata(result, action, id)
-				}
-			} else {
-				if len(scope) > attributeIndex && strings.HasPrefix(scope, attributePrefix) && resourceIDs[scope[attributeIndex:]] {
-					// Add action to a specific resource
-					result = addActionToMetadata(result, action, scope[attributeIndex:])
-				}
-			}
-		}
-	}
-
-	return result
-}
-
-// MergeMeta will merge actions matching prefix of second metadata into first
-func MergeMeta(prefix string, first Metadata, second Metadata) Metadata {
-	if first == nil {
-		first = Metadata{}
-	}
-
-	for key := range second {
-		if strings.HasPrefix(key, prefix) {
-			first[key] = true
-		}
-	}
-	return first
-}
-
 func ManagedUserRoleName(userID int64) string {
 	return fmt.Sprintf("managed:users:%d:permissions", userID)
 }
@@ -255,16 +201,6 @@ func ManagedTeamRoleName(teamID int64) string {
 
 func ManagedBuiltInRoleName(builtInRole string) string {
 	return fmt.Sprintf("managed:builtins:%s:permissions", strings.ToLower(builtInRole))
-}
-
-func extractPrefixes(prefix string) (string, string, bool) {
-	parts := strings.Split(strings.TrimSuffix(prefix, ":"), ":")
-	if len(parts) != 2 {
-		return "", "", false
-	}
-	rootPrefix := parts[0] + ":"
-	attributePrefix := rootPrefix + parts[1] + ":"
-	return rootPrefix, attributePrefix, true
 }
 
 func IsDisabled(cfg *setting.Cfg) bool {
@@ -280,4 +216,15 @@ func GetOrgRoles(user *user.SignedInUser) []string {
 	}
 
 	return roles
+}
+
+func BackgroundUser(name string, orgID int64, role org.RoleType, permissions []Permission) *user.SignedInUser {
+	return &user.SignedInUser{
+		OrgID:   orgID,
+		OrgRole: role,
+		Login:   "grafana_" + name,
+		Permissions: map[int64]map[string][]string{
+			orgID: GroupScopesByAction(permissions),
+		},
+	}
 }

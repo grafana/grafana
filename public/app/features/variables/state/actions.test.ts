@@ -10,12 +10,7 @@ import { createConstantVariableAdapter } from '../constant/adapter';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, NEW_VARIABLE_ID } from '../constants';
 import { createCustomVariableAdapter } from '../custom/adapter';
 import { changeVariableName } from '../editor/actions';
-import {
-  changeVariableNameFailed,
-  changeVariableNameSucceeded,
-  cleanEditorState,
-  setIdInEditor,
-} from '../editor/reducer';
+import { changeVariableNameFailed, changeVariableNameSucceeded, cleanEditorState } from '../editor/reducer';
 import { cleanPickerState } from '../pickers/OptionsPicker/reducer';
 import { setVariableQueryRunner, VariableQueryRunner } from '../query/VariableQueryRunner';
 import { createQueryVariableAdapter } from '../query/adapter';
@@ -511,7 +506,6 @@ describe('shared actions', () => {
               key,
               changeVariableNameSucceeded({ type: 'constant', id: 'constant1', data: { newName: 'constant1' } })
             ),
-            toKeyedAction(key, setIdInEditor({ id: 'constant1' })),
             toKeyedAction(key, removeVariable({ type: 'constant', id: 'constant', data: { reIndex: false } }))
           );
       });
@@ -557,7 +551,6 @@ describe('shared actions', () => {
               key,
               changeVariableNameSucceeded({ type: 'constant', id: 'constant1', data: { newName: 'constant1' } })
             ),
-            toKeyedAction(key, setIdInEditor({ id: 'constant1' })),
             toKeyedAction(key, removeVariable({ type: 'constant', id: NEW_VARIABLE_ID, data: { reIndex: false } }))
           );
       });

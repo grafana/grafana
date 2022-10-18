@@ -21,6 +21,7 @@ import { getSearchFilterScopedVar } from 'app/features/variables/utils';
 import { queryMetricTree } from './metricTree';
 import { generateRandomNodes, savedNodesResponse } from './nodeGraphUtils';
 import { runStream } from './runStreams';
+import { flameGraphData } from './testData/flameGraphResponse';
 import { Scenario, TestDataQuery } from './types';
 import { TestDataVariableSupport } from './variables';
 
@@ -65,6 +66,9 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
           break;
         case 'node_graph':
           streams.push(this.nodesQuery(target, options));
+          break;
+        case 'flame_graph':
+          streams.push(this.flameGraphQuery());
           break;
         case 'raw_frame':
           streams.push(this.rawFrameQuery(target, options));
@@ -213,6 +217,10 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
     return of({ data: frames }).pipe(delay(100));
   }
 
+  flameGraphQuery(): Observable<DataQueryResponse> {
+    return of({ data: [flameGraphData] }).pipe(delay(100));
+  }
+
   rawFrameQuery(target: TestDataQuery, options: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
     try {
       const data = JSON.parse(target.rawFrameContent ?? '[]').map((v: any) => {
@@ -234,7 +242,6 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
     options: DataQueryRequest<TestDataQuery>
   ): Observable<DataQueryResponse> | null {
     const { errorType } = target;
-    console.log("we're here!", target);
 
     if (errorType === 'server_panic') {
       return null;

@@ -35,17 +35,19 @@ export const LinkSettingsList: React.FC<LinkSettingsListProps> = ({ dashboard, o
 
   if (isEmptyList) {
     return (
-      <EmptyListCTA
-        onClick={onNew}
-        title="There are no dashboard links added yet"
-        buttonIcon="link"
-        buttonTitle="Add dashboard link"
-        infoBoxTitle="What are dashboard links?"
-        infoBox={{
-          __html:
-            '<p>Dashboard Links allow you to place links to other dashboards and web sites directly below the dashboard header.</p>',
-        }}
-      />
+      <div>
+        <EmptyListCTA
+          onClick={onNew}
+          title="There are no dashboard links added yet"
+          buttonIcon="link"
+          buttonTitle="Add dashboard link"
+          infoBoxTitle="What are dashboard links?"
+          infoBox={{
+            __html:
+              '<p>Dashboard Links allow you to place links to other dashboards and web sites directly below the dashboard header.</p>',
+          }}
+        />
+      </div>
     );
   }
 

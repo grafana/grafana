@@ -1,62 +1,34 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { NavModel, GrafanaTheme2 } from '@grafana/data';
-import { IconName, useStyles2, Icon, VerticalTab } from '@grafana/ui';
+import { useStyles2, CustomScrollbar } from '@grafana/ui';
+
+import { SectionNavItem } from './SectionNavItem';
 
 export interface Props {
   model: NavModel;
+  isExpanded: boolean;
 }
 
-export function SectionNav(props: Props) {
+export function SectionNav({ model, isExpanded }: Props) {
   const styles = useStyles2(getStyles);
 
-  const main = props.model.main;
-  const directChildren = props.model.main.children!.filter((x) => !x.hideFromTabs && !x.children);
-  const nestedItems = props.model.main.children!.filter((x) => x.children && x.children.length);
+  if (!Boolean(model.main?.children?.length)) {
+    return null;
+  }
 
   return (
-    <nav className={styles.nav}>
-      <h2 className={styles.sectionName}>
-        {main.icon && <Icon name={main.icon as IconName} size="lg" />}
-        {main.img && <img className={styles.sectionImg} src={main.img} alt={`logo of ${main.text}`} />}
-        {props.model.main.text}
-      </h2>
-      <div className={styles.items}>
-        {directChildren.map((child, index) => {
-          return (
-            !child.hideFromTabs &&
-            !child.children && (
-              <VerticalTab
-                label={child.text}
-                active={child.active}
-                key={`${child.url}-${index}`}
-                // icon={child.icon as IconName}
-                href={child.url}
-              />
-            )
-          );
-        })}
-        {nestedItems.map((child) => (
-          <>
-            <div className={styles.subSection}>{child.text}</div>
-            {child.children!.map((child, index) => {
-              return (
-                !child.hideFromTabs &&
-                !child.children && (
-                  <VerticalTab
-                    label={child.text}
-                    active={child.active}
-                    key={`${child.url}-${index}`}
-                    // icon={child.icon as IconName}
-                    href={child.url}
-                  />
-                )
-              );
-            })}
-          </>
-        ))}
-      </div>
+    <nav
+      className={cx(styles.nav, {
+        [styles.navExpanded]: isExpanded,
+      })}
+    >
+      <CustomScrollbar showScrollIndicators>
+        <div className={styles.items} role="tablist">
+          <SectionNavItem item={model.main} isSectionRoot />
+        </div>
+      </CustomScrollbar>
     </nav>
   );
 }
@@ -67,29 +39,28 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'column',
       background: theme.colors.background.canvas,
-      padding: theme.spacing(3, 2),
       flexShrink: 0,
+      transition: theme.transitions.create(['width', 'max-height']),
+      [theme.breakpoints.up('md')]: {
+        width: 0,
+      },
+      [theme.breakpoints.down('md')]: {
+        maxHeight: 0,
+      },
+    }),
+    navExpanded: css({
       [theme.breakpoints.up('md')]: {
         width: '250px',
       },
-    }),
-    sectionName: css({
-      display: 'flex',
-      alignItems: 'center',
-      gap: theme.spacing(1),
-      padding: theme.spacing(0.5, 0, 3, 0.25),
-      fontSize: theme.typography.h4.fontSize,
-      margin: 0,
+      [theme.breakpoints.down('md')]: {
+        maxHeight: '50vh',
+      },
     }),
     items: css({
-      // paddingLeft: '9px',
-    }),
-    sectionImg: css({
-      height: 48,
-    }),
-    subSection: css({
-      padding: theme.spacing(3, 0, 0.5, 1),
-      fontWeight: 500,
+      display: 'flex',
+      flexDirection: 'column',
+      padding: theme.spacing(4.5, 1, 2, 2),
+      minWidth: '250px',
     }),
   };
 };

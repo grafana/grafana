@@ -44,7 +44,7 @@ export interface GraphNGProps extends Themeable2 {
   width: number;
   height: number;
   timeRange: TimeRange;
-  timeZones: TimeZone[] | TimeZone;
+  timeZone: TimeZone[] | TimeZone;
   legend: VizLegendOptions;
   fields?: XYFieldMatchers; // default will assume timeseries data
   renderers?: Renderers;
@@ -216,17 +216,17 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
   }
 
   componentDidUpdate(prevProps: GraphNGProps) {
-    const { frames, structureRev, timeZones, propsToDiff } = this.props;
+    const { frames, structureRev, timeZone, propsToDiff } = this.props;
 
     const propsChanged = !sameProps(prevProps, this.props, propsToDiff);
 
-    if (frames !== prevProps.frames || propsChanged || timeZones !== prevProps.timeZones) {
+    if (frames !== prevProps.frames || propsChanged || timeZone !== prevProps.timeZone) {
       let newState = this.prepState(this.props, false);
 
       if (newState) {
         const shouldReconfig =
           this.state.config === undefined ||
-          timeZones !== prevProps.timeZones ||
+          timeZone !== prevProps.timeZone ||
           structureRev !== prevProps.structureRev ||
           !structureRev ||
           propsChanged;

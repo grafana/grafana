@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/plugins"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -51,7 +52,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features *featuremgmt.
 		},
 		SQLStore:             sqlStore,
 		SettingsProvider:     setting.ProvideProvider(cfg),
-		pluginStore:          &fakePluginStore{},
+		pluginStore:          &plugins.FakePluginStore{},
 		grafanaUpdateChecker: &updatechecker.GrafanaService{},
 		AccessControl:        accesscontrolmock.New().WithDisabled(),
 		PluginSettings:       pluginSettings.ProvideService(sqlStore, secretsService),

@@ -429,7 +429,13 @@ func buildFilterString(metricType string, filterParts []string) string {
 }
 
 func buildSLOFilterExpression(q sloQuery) string {
-	return fmt.Sprintf(`%s("projects/%s/services/%s/serviceLevelObjectives/%s")`, q.SelectorName, q.ProjectName, q.ServiceId, q.SloId)
+	sloName := fmt.Sprintf("projects/%s/services/%s/serviceLevelObjectives/%s", q.ProjectName, q.ServiceId, q.SloId)
+
+	if q.SelectorName == "select_slo_burn_rate" {
+		return fmt.Sprintf(`%s("%s", "%s")`, q.SelectorName, sloName, q.LookbackPeriod)
+	} else {
+		return fmt.Sprintf(`%s("%s")`, q.SelectorName, sloName)
+	}
 }
 
 func setMetricAggParams(params *url.Values, query *metricQuery, durationSeconds int, intervalMs int64) {
@@ -590,7 +596,12 @@ func calcBucketBound(bucketOptions cloudMonitoringBucketOptions, n int) string {
 	case bucketOptions.ExponentialBuckets != nil:
 		bucketBound = strconv.FormatInt(int64(bucketOptions.ExponentialBuckets.Scale*math.Pow(bucketOptions.ExponentialBuckets.GrowthFactor, float64(n-1))), 10)
 	case bucketOptions.ExplicitBuckets != nil:
-		bucketBound = fmt.Sprintf("%g", bucketOptions.ExplicitBuckets.Bounds[n])
+		if n < len(bucketOptions.ExplicitBuckets.Bounds) {
+			bucketBound = fmt.Sprintf("%g", bucketOptions.ExplicitBuckets.Bounds[n])
+		} else {
+			lastBound := bucketOptions.ExplicitBuckets.Bounds[len(bucketOptions.ExplicitBuckets.Bounds)-1]
+			bucketBound = fmt.Sprintf("%g+", lastBound)
+		}
 	}
 	return bucketBound
 }

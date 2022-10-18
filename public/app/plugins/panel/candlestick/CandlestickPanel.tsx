@@ -47,7 +47,7 @@ export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
   const theme = useTheme2();
 
   const info = useMemo(() => {
-    return prepareCandlestickFields(data?.series, options, theme, timeRange);
+    return prepareCandlestickFields(data.series, options, theme, timeRange);
   }, [data, options, theme, timeRange]);
 
   const { renderers, tweakScale, tweakAxis } = useMemo(() => {
@@ -212,7 +212,7 @@ export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
       tweakAxis,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [options, data.structureRev]);
+  }, [options, data.structureRev, data.series.length]);
 
   if (!info) {
     return (
@@ -233,7 +233,7 @@ export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
       frames={[info.frame]}
       structureRev={data.structureRev}
       timeRange={timeRange}
-      timeZones={timeZone}
+      timeZone={timeZone}
       width={width}
       height={height}
       legend={options.legend}

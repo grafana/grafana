@@ -10,11 +10,8 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/query"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -31,22 +28,13 @@ func (hs *HTTPServer) handleQueryMetricsError(err error) *response.NormalRespons
 		return response.Error(http.StatusInternalServerError, fmt.Sprint("Secrets Plugin error: ", err.Error()), err)
 	}
 
-	var badQuery query.ErrBadQuery
-	if errors.As(err, &badQuery) {
-		return response.Error(http.StatusBadRequest, util.Capitalize(badQuery.Message), err)
-	}
-
-	if errors.Is(err, backendplugin.ErrPluginNotRegistered) {
-		return response.Error(http.StatusNotFound, "Plugin not found", err)
-	}
-
-	return response.Error(http.StatusInternalServerError, "Query data error", err)
+	return response.ErrOrFallback(http.StatusInternalServerError, "Query data error", err)
 }
 
 // QueryMetricsV2 returns query metrics.
 // swagger:route POST /ds/query ds queryMetricsWithExpressions
 //
-// DataSource query metrics with expressions
+// DataSource query metrics with expressions.
 //
 // If you are running Grafana Enterprise and have Fine-grained access control enabled
 // you need to have a permission with action: `datasources:query`.
@@ -66,7 +54,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext) response.Response {
 
 	reqDTO.HTTPRequest = c.Req
 
-	resp, err := hs.queryDataService.QueryData(c.Req.Context(), c.SignedInUser, c.SkipCache, reqDTO, true)
+	resp, err := hs.queryDataService.QueryData(c.Req.Context(), c.SignedInUser, c.SkipCache, reqDTO)
 	if err != nil {
 		return hs.handleQueryMetricsError(err)
 	}

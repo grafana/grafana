@@ -23,7 +23,7 @@ interface Props {
   onChangeTab(tab: ModalTab): void;
 }
 
-export const ModalTabsHeader: React.FC<Props> = ({ icon, title, tabs, activeTab, onChangeTab }) => {
+export const ModalTabsHeader = ({ icon, title, tabs, activeTab, onChangeTab }: Props) => {
   return (
     <ModalHeader icon={icon} title={title}>
       <TabsBar hideBorder={true}>

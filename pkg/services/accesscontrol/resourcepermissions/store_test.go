@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -438,9 +439,8 @@ func TestIntegrationStore_GetResourcePermissions(t *testing.T) {
 
 func seedResourcePermissions(t *testing.T, store *store, sql *sqlstore.SQLStore, actions []string, resource, resourceID, resourceAttribute string, numUsers int) {
 	t.Helper()
+	var org *models.Org
 	for i := 0; i < numUsers; i++ {
-		org, _ := sql.GetOrgByName("test")
-
 		if org == nil {
 			addedOrg, err := sql.CreateOrgWithMember("test", int64(i))
 			require.NoError(t, err)
