@@ -177,6 +177,8 @@ const getStyles = (selectedView: SelectedView) => ({
   graph: css`
     cursor: pointer;
     float: left;
+    height: calc(100% - 44px);
+    overflow: scroll;
     width: ${selectedView === SelectedView.FlameGraph ? '100%' : '50%'};
   `,
 });

@@ -129,6 +129,7 @@ const getStyles = (selectedView: SelectedView) => {
     topTableContainer: css`
       cursor: pointer;
       float: left;
+      height: calc(100% - 44px);
       margin-right: ${marginRight};
       width: ${selectedView === SelectedView.TopTable ? '100%' : `calc(50% - ${marginRight})`};
     `,

@@ -94,8 +94,7 @@ const FlameGraphContainer = (props: Props) => {
 
 const getStyles = () => ({
   container: css`
-    overflow: scroll;
-    flex: auto;
+    height: 100%;
   `,
 });
 
