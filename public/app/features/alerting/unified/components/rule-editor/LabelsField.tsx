@@ -30,7 +30,7 @@ const LabelsField: FC<Props> = ({ className }) => {
     type: AlertLabelDropdownProps['type']
   ) =>
     [...new Set(fields.map((field) => field[type]))]
-      .filter((field) => !!field)
+      .filter((field) => Boolean(field))
       .map((field) => ({ label: field, value: field }));
 
   const keys = useMemo(() => {
@@ -54,13 +54,13 @@ const LabelsField: FC<Props> = ({ className }) => {
                   <div className={cx(styles.flexRow, styles.centerAlignRow)}>
                     <Field
                       className={styles.labelInput}
-                      invalid={!!errors.labels?.[index]?.key?.message}
+                      invalid={Boolean(errors.labels?.[index]?.key?.message)}
                       error={errors.labels?.[index]?.key?.message}
                       data-testid={`label-key-${index}`}
                     >
                       <AlertLabelDropdown
                         {...register(`labels.${index}.key`, {
-                          required: { value: !!labels[index]?.value, message: 'Required.' },
+                          required: { value: Boolean(labels[index]?.value), message: 'Required.' },
                         })}
                         defaultValue={field.key ? { label: field.key, value: field.key } : undefined}
                         options={keys}
@@ -71,13 +71,13 @@ const LabelsField: FC<Props> = ({ className }) => {
                     <InlineLabel className={styles.equalSign}>=</InlineLabel>
                     <Field
                       className={styles.labelInput}
-                      invalid={!!errors.labels?.[index]?.value?.message}
+                      invalid={Boolean(errors.labels?.[index]?.value?.message)}
                       error={errors.labels?.[index]?.value?.message}
                       data-testid={`label-value-${index}`}
                     >
                       <AlertLabelDropdown
                         {...register(`labels.${index}.value`, {
-                          required: { value: !!labels[index]?.key, message: 'Required.' },
+                          required: { value: Boolean(labels[index]?.key), message: 'Required.' },
                         })}
                         defaultValue={field.value ? { label: field.value, value: field.value } : undefined}
                         options={values}
