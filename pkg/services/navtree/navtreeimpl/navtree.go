@@ -71,7 +71,9 @@ func (s *ServiceImpl) GetNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 			Children:       starredItemsLinks,
 			EmptyMessageId: "starred-empty",
 		})
+	}
 
+	if hasAccess(ac.ReqSignedIn, ac.EvalAny(ac.EvalPermission(dashboards.ActionDashboardsRead), ac.EvalPermission(dashboards.ActionDashboardsCreate))) {
 		dashboardChildLinks := s.buildDashboardNavLinks(c, hasEditPerm)
 
 		dashboardsUrl := "/dashboards"
