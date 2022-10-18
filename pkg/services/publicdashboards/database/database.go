@@ -8,18 +8,18 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/tokens"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 // Define the storage implementation. We're generating the mock implementation
 // automatically
 type PublicDashboardStoreImpl struct {
-	sqlStore *sqlstore.SQLStore
+	sqlStore db.DB
 	log      log.Logger
-	dialect  migrator.Dialect
 }
 
 var LogPrefix = "publicdashboards.store"
@@ -29,12 +29,33 @@ var LogPrefix = "publicdashboards.store"
 var _ publicdashboards.Store = (*PublicDashboardStoreImpl)(nil)
 
 // Factory used by wire to dependency injection
-func ProvideStore(sqlStore *sqlstore.SQLStore) *PublicDashboardStoreImpl {
+func ProvideStore(sqlStore db.DB) *PublicDashboardStoreImpl {
 	return &PublicDashboardStoreImpl{
 		sqlStore: sqlStore,
 		log:      log.New(LogPrefix),
-		dialect:  sqlStore.Dialect,
 	}
+}
+
+// Gets list of public dashboards by orgId
+func (d *PublicDashboardStoreImpl) ListPublicDashboards(ctx context.Context, orgId int64) ([]PublicDashboardListResponse, error) {
+	resp := make([]PublicDashboardListResponse, 0)
+
+	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		sess.Table("dashboard_public").
+			Join("LEFT", "dashboard", "dashboard.uid = dashboard_public.dashboard_uid AND dashboard.org_id = dashboard_public.org_id").
+			Cols("dashboard_public.uid", "dashboard_public.access_token", "dashboard_public.dashboard_uid", "dashboard_public.is_enabled", "dashboard.title").
+			Where("dashboard_public.org_id = ?", orgId).
+			OrderBy("is_enabled DESC, dashboard.title ASC")
+
+		err := sess.Find(&resp)
+		return err
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
 }
 
 func (d *PublicDashboardStoreImpl) GetDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error) {
@@ -79,7 +100,6 @@ func (d *PublicDashboardStoreImpl) GetPublicDashboard(ctx context.Context, acces
 
 	// find dashboard
 	dashRes, err := d.GetDashboard(ctx, pdRes.DashboardUid)
-
 	if err != nil {
 		return nil, nil, err
 	}
@@ -113,6 +133,38 @@ func (d *PublicDashboardStoreImpl) GenerateNewPublicDashboardUid(ctx context.Con
 	}
 
 	return uid, nil
+}
+
+// Generates a new unique access token for a new public dashboard
+func (d *PublicDashboardStoreImpl) GenerateNewPublicDashboardAccessToken(ctx context.Context) (string, error) {
+	var accessToken string
+
+	err := d.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		for i := 0; i < 3; i++ {
+			var err error
+			accessToken, err = tokens.GenerateAccessToken()
+			if err != nil {
+				continue
+			}
+
+			exists, err := sess.Get(&PublicDashboard{AccessToken: accessToken})
+			if err != nil {
+				return err
+			}
+
+			if !exists {
+				return nil
+			}
+		}
+
+		return ErrPublicDashboardFailedGenerateAccessToken
+	})
+
+	if err != nil {
+		return "", err
+	}
+
+	return accessToken, nil
 }
 
 // Retrieves public dashboard configuration by Uid
@@ -219,7 +271,6 @@ func (d *PublicDashboardStoreImpl) PublicDashboardEnabled(ctx context.Context, d
 		}
 
 		hasPublicDashboard = result > 0
-
 		return err
 	})
 
@@ -239,7 +290,6 @@ func (d *PublicDashboardStoreImpl) AccessTokenExists(ctx context.Context, access
 		}
 
 		hasPublicDashboard = result > 0
-
 		return err
 	})
 

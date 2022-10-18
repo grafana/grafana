@@ -308,7 +308,7 @@ def get_enterprise_pipelines(trigger, ver_mode):
         ]
     }
 
-    for step in [wire_install_step(), yarn_install_step(), verify_gen_cue_step(edition)]:
+    for step in [wire_install_step(), yarn_install_step(edition), verify_gen_cue_step(edition)]:
         step.update(deps_on_clone_enterprise_step)
         init_steps.extend([step])
 
@@ -390,7 +390,8 @@ def publish_packages_pipeline():
         compile_build_cmd(),
         publish_packages_step(edition='oss', ver_mode='release'),
         publish_grafanacom_step(edition='oss', ver_mode='release'),
-        publish_linux_packages_step(edition='oss'),
+        publish_linux_packages_step(edition='oss', package_manager='deb'),
+        publish_linux_packages_step(edition='oss', package_manager='rpm'),
     ]
 
     enterprise_steps = [
@@ -398,7 +399,8 @@ def publish_packages_pipeline():
         compile_build_cmd(),
         publish_packages_step(edition='enterprise', ver_mode='release'),
         publish_grafanacom_step(edition='enterprise', ver_mode='release'),
-        publish_linux_packages_step(edition='enterprise'),
+        publish_linux_packages_step(edition='enterprise', package_manager='deb'),
+        publish_linux_packages_step(edition='enterprise', package_manager='rpm'),
     ]
     deps = [
         'publish-artifacts-public',
@@ -445,9 +447,6 @@ def release_pipelines(ver_mode='release', trigger=None):
                 ]
             },
             'ref': ['refs/tags/v*',],
-            'repo': {
-                'exclude': ['grafana/grafana'],
-            },
         }
 
     # The release pipelines include also enterprise ones, so both editions are built for a release.
