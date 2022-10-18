@@ -13,7 +13,7 @@ import {
   FilterFieldsByNameTransformerOptions,
   getMatcherConfig,
 } from '@grafana/data/src/transformations/transformers/filterByName';
-import {noopTransformer} from '@grafana/data/src/transformations/transformers/noop'
+import { noopTransformer } from '@grafana/data/src/transformations/transformers/noop';
 
 import { FilterByNameTransformerEditor } from '../editors/FilterByNameTransformerEditor';
 
@@ -29,29 +29,30 @@ export const partitionByValuesTransformer: SynchronousDataTransformerInfo<Filter
     source.pipe(map((data) => partitionByValuesTransformer.transformer(options)(data))),
 
   transformer: (options: FilterFieldsByNameTransformerOptions) => {
-    const matcherConfig = getMatcherConfig(options.include)
+    const matcherConfig = getMatcherConfig(options.include);
     if (!matcherConfig) {
-      return noopTransformer.transformer({})
+      return noopTransformer.transformer({});
     }
     const matcher = getFieldMatcher(matcherConfig);
-    
+
     // TODO docs+errors? around this only applyign to the first frame?
     return (data: DataFrame[]) => {
       if (!data.length) {
         return data;
       }
-      let keyFields = data[0].fields.filter((f) => matcher!(f, data[0], data))!;
-      let keys = keyFields.map((f) => f.values.toArray());
-      let frames = partition(keys).map((idxs: number[]) => {
-        let name = keyFields.map((f, i) => keys[i][idxs[0]]).join('/');
+      const frame = data[0]; // only the first frame?  should this work for all?
+      const keyFields = frame.fields.filter((f) => matcher!(f, frame, data))!;
+      const keys = keyFields.map((f) => f.values.toArray());
+      return partition(keys).map((idxs: number[]) => {
+        const name = keyFields.map((f, i) => keys[i][idxs[0]]).join('/');
 
         return {
-          ...data[0],
+          ...frame,
           name,
           length: idxs.length,
-          fields: data[0].fields.map((f) => {
-            let vals = f.values.toArray();
-            let vals2 = Array(idxs.length);
+          fields: frame.fields.map((f) => {
+            const vals = f.values.toArray();
+            const vals2 = Array(idxs.length);
 
             for (let i = 0; i < idxs.length; i++) {
               vals2[i] = vals[idxs[i]];
@@ -65,8 +66,6 @@ export const partitionByValuesTransformer: SynchronousDataTransformerInfo<Filter
           }),
         };
       });
-
-      return frames;
     };
   },
 };
