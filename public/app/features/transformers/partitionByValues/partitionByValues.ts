@@ -8,12 +8,12 @@ import {
   SynchronousDataTransformerInfo,
   TransformerRegistryItem,
   getFieldMatcher,
-  FieldMatcher,
 } from '@grafana/data';
 import {
   FilterFieldsByNameTransformerOptions,
   getMatcherConfig,
 } from '@grafana/data/src/transformations/transformers/filterByName';
+import {noopTransformer} from '@grafana/data/src/transformations/transformers/noop'
 
 import { FilterByNameTransformerEditor } from '../editors/FilterByNameTransformerEditor';
 
@@ -29,17 +29,17 @@ export const partitionByValuesTransformer: SynchronousDataTransformerInfo<Filter
     source.pipe(map((data) => partitionByValuesTransformer.transformer(options)(data))),
 
   transformer: (options: FilterFieldsByNameTransformerOptions) => {
-    let matcher: FieldMatcher | undefined;
-
-    if (options.include) {
-      matcher = getFieldMatcher(getMatcherConfig(options.include)!);
+    const matcherConfig = getMatcherConfig(options.include)
+    if (!matcherConfig) {
+      return noopTransformer.transformer({})
     }
-
+    const matcher = getFieldMatcher(matcherConfig);
+    
+    // TODO docs+errors? around this only applyign to the first frame?
     return (data: DataFrame[]) => {
-      if (!matcher || !data.length) {
+      if (!data.length) {
         return data;
       }
-
       let keyFields = data[0].fields.filter((f) => matcher!(f, data[0], data))!;
       let keys = keyFields.map((f) => f.values.toArray());
       let frames = partition(keys).map((idxs: number[]) => {

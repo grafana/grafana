@@ -1,48 +1,50 @@
 type Idxs = number[];
-type KeyMap = Map<unknown, KeyMap | Idxs>
+type KeyMap = Map<unknown, KeyMap | Idxs>;
 type Accum = Idxs[];
 
+// eslint-ignore
 const digArrs = (map: KeyMap | Idxs, depth: number, acc: Accum = []) => {
-    // the leaf nodes are always Idxs
-    if (depth === 0) {
-        acc.push(map as Idxs);
-    }
-    // the branch nodes are always KeyMaps
-    else {
-        (map as KeyMap).forEach(v => {
-            digArrs(v, depth - 1, acc);
-        });
-    }
+  // the leaf nodes are always Idxs
+  if (depth === 0) {
+    acc.push(map as Idxs);
+  }
+  // the branch nodes are always KeyMaps
+  else {
+    (map as KeyMap).forEach((v) => {
+      digArrs(v, depth - 1, acc);
+    });
+  }
 
-    return acc;
+  return acc;
 };
 
 // in:  [['a','b','z','b'], ['c','c','x','c']]
 // out: [[0], [1,3], [2]]
+// eslint-ignore
 export function partition(keys: unknown[][]) {
-    let len = keys[0].length;
-    let klen = keys.length;
+  const len = keys[0].length;
+  const klen = keys.length;
 
-    let rootMap: KeyMap = new Map();
+  const rootMap: KeyMap = new Map();
 
-    for (let i = 0; i < len; i++) {
-        let cur: KeyMap | Idxs = rootMap;
+  for (let i = 0; i < len; i++) {
+    let cur: KeyMap | Idxs = rootMap;
 
-        for (let j = 0; j < klen; j++) {
-            let key = keys[j][i];
+    for (let j = 0; j < klen; j++) {
+      let key = keys[j][i];
 
-            let next: KeyMap | Idxs | undefined = (cur as KeyMap).get(key);
+      let next: KeyMap | Idxs | undefined = (cur as KeyMap).get(key);
 
-            if (next == null) {
-                next = j === klen - 1 ? [] : new Map();
-                (cur as KeyMap).set(key, next);
-            }
+      if (next == null) {
+        next = j === klen - 1 ? [] : new Map();
+        (cur as KeyMap).set(key, next);
+      }
 
-            cur = next;
-        }
-
-        (cur as Idxs).push(i);
+      cur = next;
     }
 
-    return digArrs(rootMap, klen);
+    (cur as Idxs).push(i);
+  }
+
+  return digArrs(rootMap, klen);
 }
