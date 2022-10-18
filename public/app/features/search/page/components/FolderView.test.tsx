@@ -30,13 +30,13 @@ describe('FolderView', () => {
         name: 'kind',
         type: FieldType.string,
         config: {},
-        values: new ArrayVector([DashboardSearchItemType.DashFolder, DashboardSearchItemType.DashFolder]),
+        values: new ArrayVector([DashboardSearchItemType.DashFolder]),
       },
-      { name: 'name', type: FieldType.string, config: {}, values: new ArrayVector(['My folder 1', 'Another folder']) },
-      { name: 'uid', type: FieldType.string, config: {}, values: new ArrayVector(['my-folder-1', 'another-folder']) },
-      { name: 'url', type: FieldType.string, config: {}, values: new ArrayVector(['/my-folder-1', '/another-folder']) },
+      { name: 'name', type: FieldType.string, config: {}, values: new ArrayVector(['My folder 1']) },
+      { name: 'uid', type: FieldType.string, config: {}, values: new ArrayVector(['my-folder-1']) },
+      { name: 'url', type: FieldType.string, config: {}, values: new ArrayVector(['/my-folder-1']) },
     ],
-    length: 2,
+    length: 1,
   };
 
   const mockSearchResult: QueryResponse = {
@@ -120,24 +120,6 @@ describe('FolderView', () => {
       <FolderView onTagSelected={mockOnTagSelected} selection={mockSelection} selectionToggle={mockSelectionToggle} />
     );
     expect(await screen.findByRole('button', { name: 'General' })).toBeInTheDocument();
-  });
-
-  it('sorts folders alphabetically by name by default', async () => {
-    render(
-      <FolderView
-        hidePseudoFolders
-        onTagSelected={mockOnTagSelected}
-        selection={mockSelection}
-        selectionToggle={mockSelectionToggle}
-      />
-    );
-    const testIdPrefix = selectors.components.Search.folderHeader('');
-    const names = (
-      (await screen.findAllByTestId(testIdPrefix, { exact: false })).map((el) =>
-        el.dataset.testid?.replace(testIdPrefix, '')
-      ) as string[]
-    ).sort();
-    expect(names).toEqual(['Another folder', 'General', 'My folder 1']);
   });
 
   describe('when hidePseudoFolders is set', () => {
