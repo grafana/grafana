@@ -10,11 +10,9 @@ import {
   Field,
   FieldMatcherID,
   fieldMatchers,
-  InterpolateFunction,
   LegacyGraphHoverEvent,
   TimeRange,
   TimeZone,
-  getLinksSupplier,
 } from '@grafana/data';
 import { VizLegendOptions } from '@grafana/schema';
 
@@ -58,7 +56,6 @@ export interface GraphNGProps extends Themeable2 {
   propsToDiff?: Array<string | PropDiffFn>;
   preparePlotFrame?: (frames: DataFrame[], dimFields: XYFieldMatchers) => DataFrame;
   renderLegend: (config: UPlotConfigBuilder) => React.ReactElement | null;
-  replaceVariables?: InterpolateFunction;
 
   /**
    * needed for propsToDiff to re-init the plot & config
@@ -115,7 +112,7 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
   prepState(props: GraphNGProps, withConfig = true) {
     let state: GraphNGState = null as any;
 
-    const { frames, fields, preparePlotFrame, replaceVariables, timeZone } = props;
+    const { frames, fields, preparePlotFrame } = props;
 
     const preparePlotFrameFn = preparePlotFrame || defaultPreparePlotFrame;
 
@@ -130,18 +127,6 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
     pluginLog('GraphNG', false, 'data aligned', alignedFrame);
 
     if (alignedFrame) {
-      if (replaceVariables) {
-        alignedFrame.fields.forEach((field) => {
-          field.getLinks = getLinksSupplier(
-            alignedFrame,
-            field,
-            field.state!.scopedVars!,
-            replaceVariables,
-            Array.isArray(timeZone) ? timeZone[0] : timeZone
-          );
-        });
-      }
-
       let config = this.state?.config;
 
       if (withConfig) {
