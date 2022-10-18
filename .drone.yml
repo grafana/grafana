@@ -3554,7 +3554,7 @@ steps:
   - gen-version
   failure: ignore
   image: us.gcr.io/kubernetes-dev/package-publish:latest
-  name: publish-linux-packages
+  name: publish-linux-packages-deb
   privileged: true
   settings:
     access_key_id:
@@ -3567,6 +3567,28 @@ steps:
     gpg_public_key:
       from_secret: packages_gpg_public_key
     package_path: gs://grafana-prerelease/artifacts/downloads/*${DRONE_TAG}/oss/**.deb
+    secret_access_key:
+      from_secret: packages_secret_access_key
+    service_account_json:
+      from_secret: packages_service_account_json
+    target_bucket: grafana-packages
+- depends_on:
+  - gen-version
+  failure: ignore
+  image: us.gcr.io/kubernetes-dev/package-publish:latest
+  name: publish-linux-packages-rpm
+  privileged: true
+  settings:
+    access_key_id:
+      from_secret: packages_access_key_id
+    deb_distribution: stable
+    gpg_passphrase:
+      from_secret: packages_gpg_passphrase
+    gpg_private_key:
+      from_secret: packages_gpg_private_key
+    gpg_public_key:
+      from_secret: packages_gpg_public_key
+    package_path: gs://grafana-prerelease/artifacts/downloads/*${DRONE_TAG}/oss/**.rpm
     secret_access_key:
       from_secret: packages_secret_access_key
     service_account_json:
@@ -3632,7 +3654,7 @@ steps:
   - gen-version
   failure: ignore
   image: us.gcr.io/kubernetes-dev/package-publish:latest
-  name: publish-linux-packages
+  name: publish-linux-packages-deb
   privileged: true
   settings:
     access_key_id:
@@ -3645,6 +3667,28 @@ steps:
     gpg_public_key:
       from_secret: packages_gpg_public_key
     package_path: gs://grafana-prerelease/artifacts/downloads/*${DRONE_TAG}/enterprise/**.deb
+    secret_access_key:
+      from_secret: packages_secret_access_key
+    service_account_json:
+      from_secret: packages_service_account_json
+    target_bucket: grafana-packages
+- depends_on:
+  - gen-version
+  failure: ignore
+  image: us.gcr.io/kubernetes-dev/package-publish:latest
+  name: publish-linux-packages-rpm
+  privileged: true
+  settings:
+    access_key_id:
+      from_secret: packages_access_key_id
+    deb_distribution: stable
+    gpg_passphrase:
+      from_secret: packages_gpg_passphrase
+    gpg_private_key:
+      from_secret: packages_gpg_private_key
+    gpg_public_key:
+      from_secret: packages_gpg_public_key
+    package_path: gs://grafana-prerelease/artifacts/downloads/*${DRONE_TAG}/enterprise/**.rpm
     secret_access_key:
       from_secret: packages_secret_access_key
     service_account_json:
@@ -5164,6 +5208,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: c2315645dc460a0b74775ef8f1f6f124daf43d073f4efa496a4c08399756327f
+hmac: 458d9ee826d376913faceeedd7ee2c22b98db438951ccea3bbf9159f4fbfd3a1
 
 ...
