@@ -74,7 +74,7 @@ export function SelectRow({ sql, columns, onSqlChange, functions }: SelectRowPro
     (item: QueryEditorFunctionExpression, index: number) => (alias: SelectableValue<string>) => {
       const newItem = {
         ...item,
-        name: alias?.value,
+        alias: alias?.value,
       };
 
       const newSql: SQLExpression = {
@@ -134,6 +134,7 @@ export function SelectRow({ sql, columns, onSqlChange, functions }: SelectRowPro
             </EditorField>
             <EditorField label="Alias" optional width={15}>
               <Select
+                value={item.alias ? toOption(item.alias) : null}
                 options={timeSeriesAliasOpts}
                 onChange={onAliasChange(item, index)}
                 isClearable
