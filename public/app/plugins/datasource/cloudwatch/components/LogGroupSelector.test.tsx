@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import lodash from 'lodash'; // eslint-disable-line lodash/import-scope
 import React from 'react';
