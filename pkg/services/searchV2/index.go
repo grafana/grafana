@@ -830,6 +830,13 @@ func (l sqlDashboardLoader) loadAllDashboards(ctx context.Context, limit int, or
 		for {
 			select {
 			case <-ctx.Done():
+				err := ctx.Err()
+				if err != nil {
+					ch <- &dashboardsRes{
+						dashboards: nil,
+						err:        err,
+					}
+				}
 				return
 			default:
 			}
