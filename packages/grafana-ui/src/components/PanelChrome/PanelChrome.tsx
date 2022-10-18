@@ -63,47 +63,35 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
   return (
     <div className={styles.container} style={containerStyles}>
       {
+        // todo handle only the "hidden: false" case
         title.length > 0 && (
           <div className={styles.headerContainer} style={headerStyles}>
             <div className={styles.title}>{title}</div>
+
             {items && Array.isArray(items.orderedList) && items.orderedList.length > 0 && (
-              <div className={styles.items}>
-                {itemsRenderer(items.orderedList, (item) => (
-                  <div className={styles.item} style={itemStyles}>
-                    {item}
-                  </div>
-                ))}
+              <div className={cx({ [styles.rightAligned]: items.position === 'right' }, styles.items)}>
+                {itemsRenderer(items.orderedList, (validItems: ReactNode[]) =>
+                  validItems.map((item, i) => (
+                    <div key={i} className={styles.item} style={itemStyles}>
+                      {item}
+                    </div>
+                  ))
+                )}
               </div>
             )}
-            {/* todo hide/show on hover if show: 'hover' */}
+            {/* todo hide/show on hover if show = 'hover' */}
             {actionItems && Array.isArray(actionItems.orderedList) && actionItems.orderedList.length > 0 && (
-              <div className={styles.items}>
-                {itemsRenderer(actionItems.orderedList, (item) => (
-                  <div className={styles.item} style={itemStyles}>
-                    {item}
-                  </div>
-                ))}
+              <div className={cx({ [styles.rightAligned]: actionItems.position === 'right' }, styles.items)}>
+                {itemsRenderer(actionItems.orderedList, (validItems: ReactNode[]) =>
+                  validItems.map((item, i) => (
+                    <div key={i} className={styles.item} style={itemStyles}>
+                      {item}
+                    </div>
+                  ))
+                )}
               </div>
             )}
-            {/* todo hide/show on hover if show: 'hover' */}
-            {actionItems && actionItems.position === 'right' && Array.isArray(actionItems.orderedList) && (
-              <div className={cx(styles.rightAligned, styles.items)}>
-                {itemsRenderer(actionItems.orderedList, (item) => (
-                  <div className={styles.item} style={itemStyles}>
-                    {item}
-                  </div>
-                ))}
-              </div>
-            )}
-            {items && items.position === 'right' && Array.isArray(items.orderedList) && (
-              <div className={cx(styles.rightAligned, styles.items)}>
-                {itemsRenderer(items.orderedList, (item) => (
-                  <div className={styles.item} style={itemStyles}>
-                    {item}
-                  </div>
-                ))}
-              </div>
-            )}
+
             {leftItems.length > 0 && (
               <div className={cx(styles.rightAligned, styles.items)}>{itemsRenderer(leftItems, (item) => item)}</div>
             )}
@@ -130,7 +118,7 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
   );
 };
 
-const itemsRenderer = (items: ReactNode[], renderer: (items: ReactNode[]) => ReactNode): ReactNode => {
+const itemsRenderer = (items: ReactNode[], renderer: (itemsss: ReactNode[]) => ReactNode): ReactNode => {
   const toRender = React.Children.toArray(items).filter(Boolean);
   return toRender.length > 0 ? renderer(toRender) : null;
 };
@@ -205,6 +193,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
     }),
     rightAligned: css({
+      // todo margin left is not the best when >= set of items are put on the right
       marginLeft: 'auto',
     }),
   };
