@@ -390,7 +390,8 @@ def publish_packages_pipeline():
         compile_build_cmd(),
         publish_packages_step(edition='oss', ver_mode='release'),
         publish_grafanacom_step(edition='oss', ver_mode='release'),
-        publish_linux_packages_step(edition='oss'),
+        publish_linux_packages_step(edition='oss', package_manager='deb'),
+        publish_linux_packages_step(edition='oss', package_manager='rpm'),
     ]
 
     enterprise_steps = [
@@ -398,7 +399,8 @@ def publish_packages_pipeline():
         compile_build_cmd(),
         publish_packages_step(edition='enterprise', ver_mode='release'),
         publish_grafanacom_step(edition='enterprise', ver_mode='release'),
-        publish_linux_packages_step(edition='enterprise'),
+        publish_linux_packages_step(edition='enterprise', package_manager='deb'),
+        publish_linux_packages_step(edition='enterprise', package_manager='rpm'),
     ]
     deps = [
         'publish-artifacts-public',
