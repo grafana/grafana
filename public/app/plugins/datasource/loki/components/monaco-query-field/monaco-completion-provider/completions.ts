@@ -64,12 +64,17 @@ const DURATION_COMPLETIONS: Completion[] = ['$__interval', '$__range', '1m', '5m
   })
 );
 
-const LINE_FILTER_COMPLETIONS: Completion[] = ['|=', '!=', '|~', '!~'].map((item) => ({
-  type: 'LINE_FILTER',
-  label: `${item} ""`,
-  insertText: `${item} "$0"`,
-  isSnippet: true,
-}));
+function getLineFilterCompletions(afterPipe: boolean): Completion[] {
+  const lineFilters = afterPipe ? ['=', '~'] : ['|=', '!=', '|~', '!~'];
+  const prefix = afterPipe ? '|' : '';
+
+  return lineFilters.map((operator) => ({
+    type: 'LINE_FILTER',
+    label: `${prefix}${operator} ""`,
+    insertText: `${operator} "$0"`,
+    isSnippet: true,
+  }));
+}
 
 async function getAllHistoryCompletions(dataProvider: CompletionDataProvider): Promise<Completion[]> {
   const history = await dataProvider.getHistory();
@@ -133,7 +138,7 @@ async function getAfterSelectorCompletions(
   const { extractedLabelKeys, hasJSON, hasLogfmt } = await dataProvider.getParserAndLabelKeys(labels);
   const allParsers = new Set(['json', 'logfmt', 'pattern', 'regexp', 'unpack']);
   const completions: Completion[] = [];
-  const prefix = afterPipe ? '' : '| ';
+  const prefix = afterPipe ? ' ' : '| ';
   const hasLevelInExtractedLabels = extractedLabelKeys.some((key) => key === 'level');
   if (hasJSON) {
     allParsers.delete('json');
@@ -185,7 +190,7 @@ async function getAfterSelectorCompletions(
     isSnippet: true,
   });
 
-  return [...LINE_FILTER_COMPLETIONS, ...completions];
+  return [...getLineFilterCompletions(afterPipe), ...completions];
 }
 
 async function getLabelValuesForMetricCompletions(
