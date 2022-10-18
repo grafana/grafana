@@ -37,7 +37,6 @@ func TestMetricsClient(t *testing.T) {
 	})
 
 	t.Run("List Metrics and page limit is not reached", func(t *testing.T) {
-
 		pageLimit := 2
 		fakeApi := &mocks.FakeMetricsAPI{Metrics: metrics}
 		client := NewMetricsClient(fakeApi, &setting.Cfg{AWSListMetricsPageLimit: pageLimit})
