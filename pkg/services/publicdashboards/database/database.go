@@ -100,7 +100,6 @@ func (d *PublicDashboardStoreImpl) GetPublicDashboard(ctx context.Context, acces
 
 	// find dashboard
 	dashRes, err := d.GetDashboard(ctx, pdRes.DashboardUid)
-
 	if err != nil {
 		return nil, nil, err
 	}
@@ -272,7 +271,6 @@ func (d *PublicDashboardStoreImpl) PublicDashboardEnabled(ctx context.Context, d
 		}
 
 		hasPublicDashboard = result > 0
-
 		return err
 	})
 
@@ -292,7 +290,6 @@ func (d *PublicDashboardStoreImpl) AccessTokenExists(ctx context.Context, access
 		}
 
 		hasPublicDashboard = result > 0
-
 		return err
 	})
 
