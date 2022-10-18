@@ -46,9 +46,12 @@ export const FolderView = ({
     }
     folders.push({ title: 'General', url: '/dashboards', kind: 'folder', uid: GENERAL_FOLDER_UID });
 
-    const rsp = await getGrafanaSearcher().search({
+    const searcher = getGrafanaSearcher();
+    const rsp = await searcher.search({
       query: '*',
       kind: ['folder'],
+      sort: searcher.getFolderViewSort(),
+      limit: 1000,
     });
     for (const row of rsp.view) {
       folders.push({
