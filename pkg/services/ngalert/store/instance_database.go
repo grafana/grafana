@@ -73,7 +73,7 @@ func (st DBstore) SaveAlertInstances(ctx context.Context, cmd ...models.AlertIns
 		maxRows := 20
 		maxArgs := maxRows * fieldsPerRow
 
-		bigUpsertSQL, err := st.SQLStore.Dialect.UpsertMultipleSQL(
+		bigUpsertSQL, err := st.SQLStore.GetDialect().UpsertMultipleSQL(
 			"alert_instance", keyNames, fieldNames, maxRows)
 		if err != nil {
 			return err
@@ -119,7 +119,7 @@ func (st DBstore) SaveAlertInstances(ctx context.Context, cmd ...models.AlertIns
 
 		// Write the final batch of up to maxRows in size.
 		if values(args) != 0 && values(args)%fieldsPerRow == 0 {
-			upsertSQL, err := st.SQLStore.Dialect.UpsertMultipleSQL(
+			upsertSQL, err := st.SQLStore.GetDialect().UpsertMultipleSQL(
 				"alert_instance", keyNames, fieldNames, values(args)/fieldsPerRow)
 			if err != nil {
 				return err
@@ -154,7 +154,7 @@ func (st DBstore) SaveAlertInstance(ctx context.Context, alertInstance models.Al
 		}
 		params := append(make([]interface{}, 0), alertInstance.RuleOrgID, alertInstance.RuleUID, labelTupleJSON, alertInstance.LabelsHash, alertInstance.CurrentState, alertInstance.CurrentReason, alertInstance.CurrentStateSince.Unix(), alertInstance.CurrentStateEnd.Unix(), alertInstance.LastEvalTime.Unix())
 
-		upsertSQL := st.SQLStore.Dialect.UpsertSQL(
+		upsertSQL := st.SQLStore.GetDialect().UpsertSQL(
 			"alert_instance",
 			[]string{"rule_org_id", "rule_uid", "labels_hash"},
 			[]string{"rule_org_id", "rule_uid", "labels", "labels_hash", "current_state", "current_reason", "current_state_since", "current_state_end", "last_eval_time"})

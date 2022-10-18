@@ -27,10 +27,10 @@ External alertmanagers should now be configured as data sources using Grafana Co
 To add an external Alertmanager, complete the following steps.
 
 1. Click Configuration and then Data sources.
-1. Search for Alertmanager.
-1. Choose your Implementation and fill out the fields on the page, as required.
+2. Search for Alertmanager.
+3. Choose your Implementation and fill out the fields on the page, as required.
 
 **Note:**
 Prometheus, Grafana Mimir, and Cortex implementations of Alertmanager are supported. For Prometheus, contact points and notification policies are read-only in the Grafana Alerting UI.
 
-1. Click Save & test.
+4. Click Save & test.

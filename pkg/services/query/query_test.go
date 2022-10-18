@@ -1,4 +1,4 @@
-package query_test
+package query
 
 import (
 	"context"
@@ -8,6 +8,8 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
@@ -20,13 +22,152 @@ import (
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	dsSvc "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretskvs "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 )
+
+func TestParseMetricRequest(t *testing.T) {
+	tc := setup(t)
+
+	t.Run("Test a simple single datasource query", func(t *testing.T) {
+		mr := metricRequestWithQueries(t, `{
+			"refId": "A",
+			"datasource": {
+				"uid": "gIEkMvIVz",
+				"type": "postgres"
+			}
+		}`, `{
+			"refId": "B",
+			"datasource": {
+				"uid": "gIEkMvIVz",
+				"type": "postgres"
+			}
+		}`)
+		parsedReq, err := tc.queryService.parseMetricRequest(context.Background(), tc.signedInUser, true, mr)
+		require.NoError(t, err)
+		require.NotNil(t, parsedReq)
+		assert.False(t, parsedReq.hasExpression)
+		assert.Len(t, parsedReq.parsedQueries, 1)
+		assert.Contains(t, parsedReq.parsedQueries, "gIEkMvIVz")
+		assert.Len(t, parsedReq.getFlattenedQueries(), 2)
+	})
+
+	t.Run("Test a single datasource query with expressions", func(t *testing.T) {
+		mr := metricRequestWithQueries(t, `{
+			"refId": "A",
+			"datasource": {
+				"uid": "gIEkMvIVz",
+				"type": "postgres"
+			}
+		}`, `{
+			"refId": "B",
+			"datasource": {
+				"type": "__expr__",
+				"uid": "__expr__",
+				"name": "Expression"
+			},
+			"type": "math",
+			"expression": "$A - 50"
+		}`)
+		parsedReq, err := tc.queryService.parseMetricRequest(context.Background(), tc.signedInUser, true, mr)
+		require.NoError(t, err)
+		require.NotNil(t, parsedReq)
+		assert.True(t, parsedReq.hasExpression)
+		assert.Len(t, parsedReq.parsedQueries, 2)
+		assert.Contains(t, parsedReq.parsedQueries, "gIEkMvIVz")
+		assert.Len(t, parsedReq.getFlattenedQueries(), 2)
+		// Make sure we end up with something valid
+		_, err = tc.queryService.handleExpressions(context.Background(), tc.signedInUser, parsedReq)
+		assert.NoError(t, err)
+	})
+
+	t.Run("Test a simple mixed datasource query", func(t *testing.T) {
+		mr := metricRequestWithQueries(t, `{
+			"refId": "A",
+			"datasource": {
+				"uid": "gIEkMvIVz",
+				"type": "postgres"
+			}
+		}`, `{
+			"refId": "B",
+			"datasource": {
+				"uid": "sEx6ZvSVk",
+				"type": "testdata"
+			}
+		}`)
+		parsedReq, err := tc.queryService.parseMetricRequest(context.Background(), tc.signedInUser, true, mr)
+		require.NoError(t, err)
+		require.NotNil(t, parsedReq)
+		assert.False(t, parsedReq.hasExpression)
+		assert.Len(t, parsedReq.parsedQueries, 2)
+		assert.Contains(t, parsedReq.parsedQueries, "gIEkMvIVz")
+		assert.Contains(t, parsedReq.parsedQueries, "sEx6ZvSVk")
+		assert.Len(t, parsedReq.getFlattenedQueries(), 2)
+	})
+
+	t.Run("Test a mixed datasource query with expressions", func(t *testing.T) {
+		mr := metricRequestWithQueries(t, `{
+			"refId": "A",
+			"datasource": {
+				"uid": "gIEkMvIVz",
+				"type": "postgres"
+			}
+		}`, `{
+			"refId": "B",
+			"datasource": {
+				"uid": "sEx6ZvSVk",
+				"type": "testdata"
+			}
+		}`, `{
+			"refId": "A_resample",
+			"datasource": {
+				"type": "__expr__",
+				"uid": "__expr__",
+				"name": "Expression"
+			},
+			"expression": "A",
+			"type": "resample",
+			"downsampler": "mean",
+			"upsampler": "fillna",
+			"window": "10s"
+		}`, `{
+			"refId": "B_resample",
+			"datasource": {
+				"type": "__expr__",
+				"uid": "__expr__",
+				"name": "Expression"
+			},
+			"expression": "B",
+			"type": "resample",
+			"downsampler": "mean",
+			"upsampler": "fillna",
+			"window": "10s"
+		}`, `{
+			"refId": "C",
+			"datasource": {
+				"type": "__expr__",
+				"uid": "__expr__",
+				"name": "Expression"
+			},
+			"type": "math",
+			"expression": "$A_resample + $B_resample"
+		}`)
+		parsedReq, err := tc.queryService.parseMetricRequest(context.Background(), tc.signedInUser, true, mr)
+		require.NoError(t, err)
+		require.NotNil(t, parsedReq)
+		assert.True(t, parsedReq.hasExpression)
+		assert.Len(t, parsedReq.parsedQueries, 3)
+		assert.Contains(t, parsedReq.parsedQueries, "gIEkMvIVz")
+		assert.Contains(t, parsedReq.parsedQueries, "sEx6ZvSVk")
+		assert.Len(t, parsedReq.getFlattenedQueries(), 5)
+		// Make sure we end up with something valid
+		_, err = tc.queryService.handleExpressions(context.Background(), tc.signedInUser, parsedReq)
+		assert.NoError(t, err)
+	})
+}
 
 func TestQueryDataMultipleSources(t *testing.T) {
 	t.Run("can query multiple datasources", func(t *testing.T) {
@@ -59,19 +200,21 @@ func TestQueryDataMultipleSources(t *testing.T) {
 			HTTPRequest:                nil,
 		}
 
-		_, err = tc.queryService.QueryDataMultipleSources(context.Background(), nil, true, reqDTO, false)
+		_, err = tc.queryService.QueryData(context.Background(), tc.signedInUser, true, reqDTO)
 
 		require.NoError(t, err)
 	})
 
 	t.Run("can query multiple datasources with an expression present", func(t *testing.T) {
 		tc := setup(t)
+		// refId does get set if not included, but better to include it explicitly here
 		query1, err := simplejson.NewJson([]byte(`
 			{
 				"datasource": {
 					"type": "mysql",
 					"uid": "ds1"
-				}
+				},
+				"refId": "A"
 			}
 		`))
 		require.NoError(t, err)
@@ -108,7 +251,7 @@ func TestQueryDataMultipleSources(t *testing.T) {
 			HTTPRequest:                nil,
 		}
 
-		_, err = tc.queryService.QueryDataMultipleSources(context.Background(), nil, true, reqDTO, false)
+		_, err = tc.queryService.QueryData(context.Background(), tc.signedInUser, true, reqDTO)
 
 		require.NoError(t, err)
 	})
@@ -145,7 +288,7 @@ func TestQueryDataMultipleSources(t *testing.T) {
 			HTTPRequest:                nil,
 		}
 
-		_, err := tc.queryService.QueryDataMultipleSources(context.Background(), nil, true, reqDTO, false)
+		_, err := tc.queryService.QueryData(context.Background(), tc.signedInUser, true, reqDTO)
 
 		require.Error(t, err)
 	})
@@ -163,7 +306,7 @@ func TestQueryData(t *testing.T) {
 		tc.oauthTokenService.passThruEnabled = true
 		tc.oauthTokenService.token = token
 
-		_, err := tc.queryService.QueryData(context.Background(), nil, true, metricRequest(), false)
+		_, err := tc.queryService.QueryData(context.Background(), nil, true, metricRequest())
 		require.Nil(t, err)
 
 		expected := map[string]string{
@@ -183,7 +326,7 @@ func TestQueryData(t *testing.T) {
 		httpReq, err := http.NewRequest(http.MethodGet, "/", nil)
 		require.NoError(t, err)
 		metricReq.HTTPRequest = httpReq
-		_, err = tc.queryService.QueryData(context.Background(), nil, true, metricReq, false)
+		_, err = tc.queryService.QueryData(context.Background(), tc.signedInUser, true, metricReq)
 		require.NoError(t, err)
 
 		require.Empty(t, tc.pluginContext.req.Headers)
@@ -204,7 +347,7 @@ func TestQueryData(t *testing.T) {
 		httpReq.AddCookie(&http.Cookie{Name: "foo", Value: "oof"})
 		httpReq.AddCookie(&http.Cookie{Name: "c"})
 		metricReq.HTTPRequest = httpReq
-		_, err = tc.queryService.QueryData(context.Background(), nil, true, metricReq, false)
+		_, err = tc.queryService.QueryData(context.Background(), tc.signedInUser, true, metricReq)
 		require.NoError(t, err)
 
 		require.Equal(t, map[string]string{"Cookie": "bar=rab; foo=oof"}, tc.pluginContext.req.Headers)
@@ -212,6 +355,7 @@ func TestQueryData(t *testing.T) {
 }
 
 func setup(t *testing.T) *testContext {
+	t.Helper()
 	pc := &fakePluginClient{}
 	dc := &fakeDataSourceCache{ds: &datasources.DataSource{}}
 	tc := &fakeOAuthTokenService{}
@@ -226,15 +370,16 @@ func setup(t *testing.T) *testContext {
 		DataSources:           nil,
 		SimulatePluginFailure: false,
 	}
-	exprService := expr.ProvideService(nil, pc, fakeDatasourceService)
-
+	exprService := expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, pc, fakeDatasourceService)
+	queryService := ProvideService(nil, dc, exprService, rv, ds, pc, tc) // provider belonging to this package
 	return &testContext{
 		pluginContext:          pc,
 		secretStore:            ss,
 		dataSourceCache:        dc,
 		oauthTokenService:      tc,
 		pluginRequestValidator: rv,
-		queryService:           query.ProvideService(nil, dc, exprService, rv, ds, pc, tc),
+		queryService:           queryService,
+		signedInUser:           &user.SignedInUser{OrgID: 1},
 	}
 }
 
@@ -244,7 +389,8 @@ type testContext struct {
 	dataSourceCache        *fakeDataSourceCache
 	oauthTokenService      *fakeOAuthTokenService
 	pluginRequestValidator *fakePluginRequestValidator
-	queryService           *query.Service
+	queryService           *Service // implementation belonging to this package
+	signedInUser           *user.SignedInUser
 }
 
 func metricRequest() dtos.MetricRequest {
@@ -253,6 +399,22 @@ func metricRequest() dtos.MetricRequest {
 		From:    "",
 		To:      "",
 		Queries: []*simplejson.Json{q},
+		Debug:   false,
+	}
+}
+
+func metricRequestWithQueries(t *testing.T, rawQueries ...string) dtos.MetricRequest {
+	t.Helper()
+	queries := make([]*simplejson.Json, 0)
+	for _, q := range rawQueries {
+		json, err := simplejson.NewJson([]byte(q))
+		require.NoError(t, err)
+		queries = append(queries, json)
+	}
+	return dtos.MetricRequest{
+		From:    "now-1h",
+		To:      "now",
+		Queries: queries,
 		Debug:   false,
 	}
 }
@@ -287,7 +449,9 @@ func (c *fakeDataSourceCache) GetDatasource(ctx context.Context, datasourceID in
 }
 
 func (c *fakeDataSourceCache) GetDatasourceByUID(ctx context.Context, datasourceUID string, user *user.SignedInUser, skipCache bool) (*datasources.DataSource, error) {
-	return c.ds, nil
+	return &datasources.DataSource{
+		Uid: datasourceUID,
+	}, nil
 }
 
 type fakePluginClient struct {

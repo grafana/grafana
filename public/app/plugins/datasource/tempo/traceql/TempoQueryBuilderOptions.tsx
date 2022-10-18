@@ -26,7 +26,7 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query }) 
               placeholder="auto"
               type="number"
               min={1}
-              defaultValue={DEFAULT_LIMIT}
+              defaultValue={query.limit || DEFAULT_LIMIT}
               onCommitChange={onLimitChange}
               value={query.limit}
             />

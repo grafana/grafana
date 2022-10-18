@@ -367,12 +367,11 @@ func setupHTTPServerWithCfgDb(
 ) accessControlScenarioContext {
 	t.Helper()
 
-	db.Cfg.RBACEnabled = cfg.RBACEnabled
-
 	license := &licensing.OSSLicensingService{}
 	routeRegister := routing.NewRouteRegister()
 	teamService := teamimpl.ProvideService(db, cfg)
-	dashboardsStore := dashboardsstore.ProvideDashboardStore(db, featuremgmt.WithFeatures(), tagimpl.ProvideService(db, db.Cfg))
+	cfg.IsFeatureToggleEnabled = features.IsEnabled
+	dashboardsStore := dashboardsstore.ProvideDashboardStore(db, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(db, cfg))
 
 	var acmock *accesscontrolmock.Mock
 	var ac accesscontrol.AccessControl

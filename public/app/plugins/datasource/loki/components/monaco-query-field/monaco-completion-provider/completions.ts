@@ -1,3 +1,4 @@
+import { escapeLabelValueInExactSelector } from '../../../languageUtils';
 import { AGGREGATION_OPERATORS, RANGE_VEC_FUNCTIONS } from '../../../syntax';
 
 import { CompletionDataProvider } from './CompletionDataProvider';
@@ -197,7 +198,7 @@ async function getLabelValuesForMetricCompletions(
   return values.map((text) => ({
     type: 'LABEL_VALUE',
     label: text,
-    insertText: betweenQuotes ? text : `"${text}"`,
+    insertText: betweenQuotes ? escapeLabelValueInExactSelector(text) : `"${escapeLabelValueInExactSelector(text)}"`,
   }));
 }
 

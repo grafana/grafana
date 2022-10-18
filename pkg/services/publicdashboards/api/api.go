@@ -63,9 +63,11 @@ func (api *Api) RegisterAPIEndpoints() {
 	api.RouteRegister.Get("/api/public/dashboards/:accessToken", routing.Wrap(api.GetPublicDashboard))
 	api.RouteRegister.Post("/api/public/dashboards/:accessToken/panels/:panelId/query", routing.Wrap(api.QueryPublicDashboard))
 
+	// List Public Dashboards
+	api.RouteRegister.Get("/api/dashboards/public", middleware.ReqSignedIn, routing.Wrap(api.ListPublicDashboards))
+
 	// Create/Update Public Dashboard
 	uidScope := dashboards.ScopeDashboardsProvider.GetResourceScopeUID(accesscontrol.Parameter(":uid"))
-
 	api.RouteRegister.Get("/api/dashboards/uid/:uid/public-config",
 		auth(middleware.ReqSignedIn, accesscontrol.EvalPermission(dashboards.ActionDashboardsRead, uidScope)),
 		routing.Wrap(api.GetPublicDashboardConfig))
@@ -109,6 +111,16 @@ func (api *Api) GetPublicDashboard(c *models.ReqContext) response.Response {
 	dto := dtos.DashboardFullWithMeta{Meta: meta, Dashboard: dash.Data}
 
 	return response.JSON(http.StatusOK, dto)
+}
+
+// Gets list of public dashboards for an org
+// GET /api/dashboards/public
+func (api *Api) ListPublicDashboards(c *models.ReqContext) response.Response {
+	resp, err := api.PublicDashboardService.ListPublicDashboards(c.Req.Context(), c.OrgID)
+	if err != nil {
+		return api.handleError(http.StatusInternalServerError, "failed to list public dashboards", err)
+	}
+	return response.JSON(http.StatusOK, resp)
 }
 
 // Gets public dashboard configuration for dashboard
