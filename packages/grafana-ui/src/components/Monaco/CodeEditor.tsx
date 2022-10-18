@@ -104,9 +104,7 @@ class UnthemedCodeEditor extends PureComponent<Props> {
 
     if (onEditorDidMount) {
       languagePromise.then(() => onEditorDidMount(editor, monaco));
-      editor.getModel()?.onDidChangeContent((_) => {
-        onChange?.(editor.getValue());
-      });
+      editor.getModel()?.onDidChangeContent(() => onChange?.(editor.getValue()));
     }
   };
 
