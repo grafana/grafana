@@ -46,7 +46,7 @@ module.exports = (env = {}) =>
       minimize: parseInt(env.noMinify, 10) !== 1,
       minimizer: [
         new ESBuildMinifyPlugin({
-          target: 'es2015', // Syntax to compile to (see options below for possible values)
+          target: 'es2015',
         }),
         new CssMinimizerPlugin(),
       ],
