@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -27,15 +28,21 @@ func GetSignUpOptions(c *models.ReqContext) response.Response {
 // POST /api/user/signup
 func (hs *HTTPServer) SignUp(c *models.ReqContext) response.Response {
 	form := dtos.SignUpForm{}
-	if err := web.Bind(c.Req, &form); err != nil {
+	var err error
+	if err = web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	if !setting.AllowUserSignUp {
 		return response.Error(401, "User signup is disabled", nil)
 	}
 
+	form.Email, err = ValidateAndNormalizeEmail(form.Email)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Invalid email address", nil)
+	}
+
 	existing := models.GetUserByLoginQuery{LoginOrEmail: form.Email}
-	if err := hs.SQLStore.GetUserByLogin(c.Req.Context(), &existing); err == nil {
+	if err = hs.SQLStore.GetUserByLogin(c.Req.Context(), &existing); err == nil {
 		return response.Error(422, "User with same email address already exists", nil)
 	}
 
@@ -44,7 +51,6 @@ func (hs *HTTPServer) SignUp(c *models.ReqContext) response.Response {
 	cmd.Email = form.Email
 	cmd.Status = models.TmpUserSignUpStarted
 	cmd.InvitedByUserId = c.UserId
-	var err error
 	cmd.Code, err = util.GetRandomString(20)
 	if err != nil {
 		return response.Error(500, "Failed to generate random string", err)
@@ -75,6 +81,9 @@ func (hs *HTTPServer) SignUpStep2(c *models.ReqContext) response.Response {
 	if !setting.AllowUserSignUp {
 		return response.Error(401, "User signup is disabled", nil)
 	}
+
+	form.Email = strings.TrimSpace(form.Email)
+	form.Username = strings.TrimSpace(form.Username)
 
 	createUserCmd := models.CreateUserCommand{
 		Email:    form.Email,
