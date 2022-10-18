@@ -13,7 +13,6 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
-import { SpanBarOptions } from '@jaegertracing/jaeger-ui-components/src/types';
 import React, { RefObject } from 'react';
 
 import { GrafanaTheme2, LinkModel, TimeZone } from '@grafana/data';
@@ -23,7 +22,7 @@ import { stylesFactory, withTheme2 } from '@grafana/ui';
 import { Accessors } from '../ScrollManager';
 import { autoColor } from '../Theme';
 import { merge as mergeShortcuts } from '../keyboard-shortcuts';
-import { SpanLinkFunc, TNil } from '../types';
+import { SpanBarOptions, SpanLinkFunc, TNil } from '../types';
 import TTraceTimeline from '../types/TTraceTimeline';
 import { TraceSpan, Trace, TraceLog, TraceKeyValuePair, TraceLink, TraceSpanReference } from '../types/trace';
 
