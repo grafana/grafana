@@ -955,7 +955,6 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 
 		reader := kdash.NewStaticDashboardSummaryBuilder(lookup)
 
-		time.Sleep(1 * time.Second)
 		for _, row := range rows {
 			summary, _, err := reader(ctx, row.Uid, row.Data)
 			if err != nil {
