@@ -254,4 +254,8 @@ const (
 	// FlagAccessControlOnCall
 	// Access control primitives for OnCall
 	FlagAccessControlOnCall = "accessControlOnCall"
+
+	// FlagTemporaryJWTAuth
+	// Enable generation of temporary JWT tokens for authentication.
+	FlagTemporaryJWTAuth = "temporaryJWTAuth"
 )

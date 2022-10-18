@@ -336,8 +336,12 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:            "accessControlOnCall",
-			Description:     "Access control primitives for OnCall",
+			Name:        "accessControlOnCall",
+			Description: "Access control primitives for OnCall",
+		},
+		{
+			Name:            "temporaryJWTAuth",
+			Description:     "Enable generation of temporary JWT tokens for authentication.",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
 		},
