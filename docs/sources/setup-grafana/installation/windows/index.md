@@ -11,7 +11,7 @@ weight: 500
 
 You can either download the Windows installer package or a standalone Windows binary file.
 
-Read [Upgrading Grafana]({{< relref "../upgrade-grafana/" >}}) for tips and guidance on updating an existing
+Read [Upgrading Grafana]({{< relref "../../upgrade-grafana/" >}}) for tips and guidance on updating an existing
 installation.
 
 1. Navigate to [Download Grafana](https://grafana.com/grafana/download?platform=windows).
@@ -30,7 +30,7 @@ You can either use the Windows installer or you can install a standalone Windows
 1. Click **Download the installer**.
 1. Open and run the installer.
 
-To run Grafana, open your browser and go to the Grafana port (http://localhost:3000/ is default) and then follow the instructions in [Getting Started]({{< relref "../../getting-started/build-first-dashboard/" >}}).
+To run Grafana, open your browser and go to the Grafana port (http://localhost:3000/ is default) and then follow the instructions in [Getting Started]({{< relref "../../../getting-started/build-first-dashboard/" >}}).
 
 ## Install standalone Windows binary
 
@@ -42,10 +42,10 @@ To run Grafana, open your browser and go to the Grafana port (http://localhost:3
 1. Start Grafana by executing `grafana-server.exe`, located in the `bin` directory, preferably from the command line. If you want to run Grafana as a Windows service, then download
    [NSSM](https://nssm.cc/). It is very easy to add Grafana as a Windows service using that tool.
 
-To run Grafana, open your browser and go to the Grafana port (http://localhost:3000/ is default) and then follow the instructions in [Getting Started]({{< relref "../../getting-started/build-first-dashboard/" >}}).
+To run Grafana, open your browser and go to the Grafana port (http://localhost:3000/ is default) and then follow the instructions in [Getting Started]({{< relref "../../../getting-started/build-first-dashboard/" >}}).
 
 > **Note:** The default Grafana port is `3000`. This port might require extra permissions on Windows. If it does not appear in the default port, you can try changing to a different port.
 >
 > 1. Go into the `conf` directory and copy `sample.ini` to `custom.ini`. **Note:** You should edit `custom.ini`, never `defaults.ini`.
 > 1. Edit `custom.ini` and uncomment the `http_port` configuration option (`;` is the comment character in ini files) and change it to something like `8080` or similar. That port should not require extra Windows privileges.
->    Read more about the [configuration options]({{< relref "../configure-grafana/" >}}).
+>    Read more about the [configuration options]({{< relref "../../configure-grafana/" >}}).
