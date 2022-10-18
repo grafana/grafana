@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/assert"
@@ -36,7 +37,7 @@ func benchmarkDashboardPermissionFilter(b *testing.B, numUsers, numDashboards in
 	}
 }
 
-func setupBenchMark(b *testing.B, numUsers, numDashboards int) *sqlstore.SQLStore {
+func setupBenchMark(b *testing.B, numUsers, numDashboards int) db.DB {
 	store := sqlstore.InitTestDB(b)
 	now := time.Now()
 	err := store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
@@ -88,19 +89,19 @@ func setupBenchMark(b *testing.B, numUsers, numDashboards int) *sqlstore.SQLStor
 			}
 		}
 
-		err = batch(len(roles), 1000, func(start, end int) error {
+		err = batch(len(roles), 10000, func(start, end int) error {
 			_, err := sess.InsertMulti(roles[start:end])
 			return err
 		})
 		require.NoError(b, err)
 
-		err = batch(len(assignments), 1000, func(start, end int) error {
+		err = batch(len(assignments), 10000, func(start, end int) error {
 			_, err := sess.InsertMulti(assignments[start:end])
 			return err
 		})
 		require.NoError(b, err)
 
-		err = batch(len(permissions), 500, func(start, end int) error {
+		err = batch(len(permissions), 10000, func(start, end int) error {
 			_, err := sess.InsertMulti(permissions[start:end])
 			return err
 		})
@@ -116,12 +117,12 @@ func BenchmarkDashboardPermissionFilter_100_100(b *testing.B) {
 	benchmarkDashboardPermissionFilter(b, 100, 100)
 }
 
-func BenchmarkDashboardPermissionFilter_1000_1000(b *testing.B) {
-	benchmarkDashboardPermissionFilter(b, 1000, 1000)
+func BenchmarkDashboardPermissionFilter_100_1000(b *testing.B) {
+	benchmarkDashboardPermissionFilter(b, 100, 1000)
 }
 
-func BenchmarkDashboardPermissionFilter_1000_10000(b *testing.B) {
-	benchmarkDashboardPermissionFilter(b, 1000, 10000)
+func BenchmarkDashboardPermissionFilter_300_10000(b *testing.B) {
+	benchmarkDashboardPermissionFilter(b, 300, 10000)
 }
 
 func batch(count, batchSize int, eachFn func(start, end int) error) error {

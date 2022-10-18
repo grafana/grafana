@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -144,7 +145,7 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 	}
 }
 
-func setupTest(t *testing.T, numFolders, numDashboards int, permissions []accesscontrol.Permission) *sqlstore.SQLStore {
+func setupTest(t *testing.T, numFolders, numDashboards int, permissions []accesscontrol.Permission) db.DB {
 	store := sqlstore.InitTestDB(t)
 	err := store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		dashes := make([]models.Dashboard, 0, numFolders+numDashboards)
