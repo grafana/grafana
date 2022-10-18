@@ -4,7 +4,6 @@ import React, { CSSProperties, ReactNode } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../themes';
-import { Icon } from '../Icon/Icon';
 
 /**
  * @internal
