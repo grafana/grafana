@@ -1,6 +1,7 @@
 import { cloneDeep } from 'lodash';
 import React, { useEffect, useState } from 'react';
 
+import { contextSrv } from 'app/core/core';
 import { initialState, updateNavTree } from 'app/core/reducers/navBarTree';
 import { updateNavIndex } from 'app/core/reducers/navModel';
 import { fetchFolders } from 'app/features/manage-dashboards/state/actions';
@@ -32,6 +33,7 @@ const PerconaNavigation: React.FC = () => {
   const { result } = useSelector(getPerconaSettings);
   const { alertingEnabled, sttEnabled, dbaasEnabled, backupEnabled } = result!;
   const { isPlatformUser, isAuthorized } = useSelector(getPerconaUser);
+  const isLoggedIn = !!contextSrv.user.isSignedIn;
   const dispatch = useAppDispatch();
 
   dispatch(updateNavIndex(getPmmSettingsPage(alertingEnabled)));
@@ -45,8 +47,10 @@ const PerconaNavigation: React.FC = () => {
   dispatch(updateNavIndex(PMM_ENVIRONMENT_OVERVIEW_PAGE));
 
   useEffect(() => {
-    fetchFolders().then(setFolders);
-  }, []);
+    if (isLoggedIn) {
+      fetchFolders().then(setFolders);
+    }
+  }, [isLoggedIn]);
 
   useEffect(() => {
     const updatedNavTree = cloneDeep(initialState);
