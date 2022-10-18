@@ -22,6 +22,7 @@ import { buildVisualQueryFromString } from '../parsing';
 import { LokiOperationId, LokiVisualQuery } from '../types';
 
 import { EXPLAIN_LABEL_FILTER_CONTENT } from './LokiQueryBuilderExplained';
+import { testIds } from './LokiQueryEditorSelector';
 import { NestedQueryList } from './NestedQueryList';
 
 export interface Props {
@@ -100,7 +101,7 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, onChange
 
   const lang = { grammar: logqlGrammar, name: 'logql' };
   return (
-    <>
+    <div data-testid={testIds.editor}>
       <EditorRow>
         <LabelFilters
           onGetLabelNames={(forLabel: Partial<QueryBuilderLabelFilter>) =>
@@ -163,7 +164,7 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, onChange
           showExplain={showExplain}
         />
       )}
-    </>
+    </div>
   );
 });
 

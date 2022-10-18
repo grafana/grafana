@@ -8,6 +8,7 @@ import { buildVisualQueryFromString } from '../parsing';
 import { LokiVisualQuery } from '../types';
 
 import { LokiQueryBuilder } from './LokiQueryBuilder';
+import { testIds } from './LokiQueryEditorSelector';
 import { QueryPreview } from './QueryPreview';
 
 export interface Props {
@@ -64,6 +65,7 @@ export function LokiQueryBuilderContainer(props: Props) {
         onChange={onVisQueryChange}
         onRunQuery={onRunQuery}
         showExplain={showExplain}
+        data-testid={testIds.editor}
       />
       {showRawQuery && <QueryPreview query={query.expr} />}
     </>

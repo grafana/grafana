@@ -23,6 +23,10 @@ import { LokiQueryBuilderOptions } from './LokiQueryBuilderOptions';
 import { LokiQueryCodeEditor } from './LokiQueryCodeEditor';
 import { QueryPatternsModal } from './QueryPatternsModal';
 
+export const testIds = {
+  editor: 'loki-editor',
+};
+
 export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) => {
   const { onChange, onRunQuery, onAddQuery, data, app, queries } = props;
   const [parseModalOpen, setParseModalOpen] = useState(false);
