@@ -13,7 +13,7 @@ import { alertmanagerApi } from './api/alertmanagerApi';
 import { useGetContactPointsState } from './api/receiversApi';
 import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
-import { GrafanaAlertmanagerDisabledWarning } from './components/GrafanaAlertmanagerDisabledWarning';
+import { GrafanaAlertmanagerDeliveryWarning } from './components/GrafanaAlertmanagerDeliveryWarning';
 import { NoAlertManagerWarning } from './components/NoAlertManagerWarning';
 import { EditReceiverView } from './components/receivers/EditReceiverView';
 import { EditTemplateView } from './components/receivers/EditTemplateView';
@@ -129,7 +129,7 @@ const Receivers = () => {
           {error.message || 'Unknown error.'}
         </Alert>
       )}
-      <GrafanaAlertmanagerDisabledWarning
+      <GrafanaAlertmanagerDeliveryWarning
         alertmanagerChoice={alertmanagerChoice}
         currentAlertmanager={alertManagerSourceName}
       />

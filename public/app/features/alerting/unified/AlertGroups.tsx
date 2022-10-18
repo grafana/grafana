@@ -46,7 +46,7 @@ const AlertGroups = () => {
   const groupedAlerts = useGroupedAlerts(results, groupBy);
   const filteredAlertGroups = useFilteredAmGroups(groupedAlerts);
 
-  const grafanaAmDisabled =
+  const grafanaAmDeliveryDisabled =
     alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME && alertmanagerChoice === AlertmanagerChoice.External;
 
   useEffect(() => {
@@ -80,8 +80,8 @@ const AlertGroups = () => {
         </Alert>
       )}
 
-      {grafanaAmDisabled && (
-        <Alert title="Grafana Alertmanager does not receive any alerts">
+      {grafanaAmDeliveryDisabled && (
+        <Alert title="Grafana alerts are not delivered to built-in Grafana Alertmanager">
           Grafana is configured to send alerts to the external Alertmanagers only.
         </Alert>
       )}

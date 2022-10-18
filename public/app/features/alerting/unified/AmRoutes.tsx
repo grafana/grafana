@@ -11,7 +11,7 @@ import { useCleanup } from '../../../core/hooks/useCleanup';
 import { alertmanagerApi } from './api/alertmanagerApi';
 import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
-import { GrafanaAlertmanagerDisabledWarning } from './components/GrafanaAlertmanagerDisabledWarning';
+import { GrafanaAlertmanagerDeliveryWarning } from './components/GrafanaAlertmanagerDeliveryWarning';
 import { NoAlertManagerWarning } from './components/NoAlertManagerWarning';
 import { ProvisionedResource, ProvisioningAlert } from './components/Provisioning';
 import { AmRootRoute } from './components/amroutes/AmRootRoute';
@@ -131,7 +131,7 @@ const AmRoutes = () => {
           {resultError.message || 'Unknown error.'}
         </Alert>
       )}
-      <GrafanaAlertmanagerDisabledWarning
+      <GrafanaAlertmanagerDeliveryWarning
         currentAlertmanager={alertManagerSourceName}
         alertmanagerChoice={alertmanagerChoice}
       />

@@ -9,7 +9,7 @@ import { alertmanagerApi } from './api/alertmanagerApi';
 import { featureDiscoveryApi } from './api/featureDiscoveryApi';
 import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
-import { GrafanaAlertmanagerDisabledWarning } from './components/GrafanaAlertmanagerDisabledWarning';
+import { GrafanaAlertmanagerDeliveryWarning } from './components/GrafanaAlertmanagerDeliveryWarning';
 import { NoAlertManagerWarning } from './components/NoAlertManagerWarning';
 import SilencesEditor from './components/silences/SilencesEditor';
 import SilencesTable from './components/silences/SilencesTable';
@@ -84,7 +84,7 @@ const Silences = () => {
         onChange={setAlertManagerSourceName}
         dataSources={alertManagers}
       />
-      <GrafanaAlertmanagerDisabledWarning
+      <GrafanaAlertmanagerDeliveryWarning
         currentAlertmanager={alertManagerSourceName}
         alertmanagerChoice={alertmanagerChoice}
       />
