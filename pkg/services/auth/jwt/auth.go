@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -11,7 +12,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"gopkg.in/square/go-jose.v2"
 	"gopkg.in/square/go-jose.v2/jwt"
@@ -19,8 +22,8 @@ import (
 
 const ServiceName = "AuthService"
 
-func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, features *featuremgmt.FeatureManager) (*AuthService, error) {
-	s := newService(cfg, remoteCache, features)
+func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, features *featuremgmt.FeatureManager, secretsKvStore kvstore.SecretsKVStore) (*AuthService, error) {
+	s := newService(cfg, remoteCache, features, secretsKvStore)
 	if err := s.init(); err != nil {
 		return nil, err
 	}
@@ -28,7 +31,7 @@ func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, feat
 	return s, nil
 }
 
-func newService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, features *featuremgmt.FeatureManager) *AuthService {
+func newService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, features *featuremgmt.FeatureManager, secretsKvStore kvstore.SecretsKVStore) *AuthService {
 	return &AuthService{
 		Cfg:         cfg,
 		Features:    features,
@@ -36,7 +39,8 @@ func newService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, features
 		log:         log.New("auth.jwt"),
 
 		// TODO: make this configurable after alpha
-		jwtExpiration: 1 * time.Minute,
+		jwtExpiration:  1 * time.Minute,
+		secretsKVStore: kvstore.With(secretsKvStore, accesscontrol.GlobalOrgID, "grafana-auth-jwt", "private-jwk"),
 	}
 }
 
@@ -66,8 +70,9 @@ type AuthService struct {
 	expectRegistered jwt.Expected
 
 	// Used by feature FlagTemporaryJWTAuth
-	signer        jose.Signer
-	jwtExpiration time.Duration
+	signer         jose.Signer
+	jwtExpiration  time.Duration
+	secretsKVStore *kvstore.FixedKVStore
 }
 
 // Sanitize JWT base64 strings to remove paddings everywhere
@@ -87,6 +92,7 @@ func (s *AuthService) Verify(ctx context.Context, strToken string) (models.JWTCl
 		return nil, err
 	}
 
+	fmt.Println("token", token.Headers)
 	keys, err := s.getKeys(ctx, token.Headers[0].KeyID)
 	if err != nil {
 		return nil, err

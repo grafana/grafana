@@ -20,6 +20,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -446,7 +447,7 @@ func initAuthService(t *testing.T, cbs ...configureFunc) (*AuthService, error) {
 		cb(t, cfg)
 	}
 
-	service := newService(cfg, remotecache.NewFakeStore(t), features)
+	service := newService(cfg, remotecache.NewFakeStore(t), features, kvstore.NewFakeSecretsKVStore())
 	err := service.init()
 	return service, err
 }
