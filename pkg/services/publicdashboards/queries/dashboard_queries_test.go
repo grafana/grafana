@@ -303,6 +303,80 @@ const (
   ],
   "schemaVersion": 21
 }`
+
+	dashboardWithOneHiddenQuery = `
+{
+  "panels": [
+    {
+      "id": 2,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "_yxMP8Ynk"
+          },
+          "exemplar": true,
+          "expr": "go_goroutines{job=\"$job\"}",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A",
+          "hide": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "promds2"
+          },
+          "exemplar": true,
+          "expr": "query2",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "B"
+        }
+      ],
+      "title": "Panel Title",
+      "type": "timeseries"
+    }
+  ],
+  "schemaVersion": 35
+}`
+	dashboardWithAllHiddenQueries = `
+{
+  "panels": [
+    {
+      "id": 2,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "_yxMP8Ynk"
+          },
+          "exemplar": true,
+          "expr": "go_goroutines{job=\"$job\"}",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A",
+          "hide": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "promds2"
+          },
+          "exemplar": true,
+          "expr": "query2",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "B",
+		  "hide": true
+        }
+      ],
+      "title": "Panel Title",
+      "type": "timeseries"
+    }
+  ],
+  "schemaVersion": 35
+}`
 )
 
 func TestGetUniqueDashboardDatasourceUids(t *testing.T) {
@@ -457,6 +531,27 @@ func TestGroupQueriesByPanelId(t *testing.T) {
             "legendFormat": "",
             "refId": "A"
 		}`, string(query))
+	})
+
+	t.Run("hidden query filtered", func(t *testing.T) {
+		json, err := simplejson.NewJson([]byte(dashboardWithOneHiddenQuery))
+		require.NoError(t, err)
+		queries := GroupQueriesByPanelId(json)[2]
+
+		require.Len(t, queries, 1)
+		for _, query := range queries {
+			if hideAttr, exists := query.CheckGet("hide"); exists && hideAttr.MustBool() {
+				require.Fail(t, "hidden queries should have been filtered")
+			}
+		}
+	})
+
+	t.Run("hidden query filtered, so empty queries returned", func(t *testing.T) {
+		json, err := simplejson.NewJson([]byte(dashboardWithAllHiddenQueries))
+		require.NoError(t, err)
+		queries := GroupQueriesByPanelId(json)[2]
+
+		require.Len(t, queries, 0)
 	})
 }
 

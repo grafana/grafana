@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/cwlog"
 )
 
 func (e *cloudWatchExecutor) newResourceMux() *http.ServeMux {
@@ -47,7 +48,7 @@ func handleResourceReq(handleFunc handleFn) func(rw http.ResponseWriter, req *ht
 		rw.WriteHeader(http.StatusOK)
 		_, err = rw.Write(body)
 		if err != nil {
-			plog.Error("Unable to write HTTP response", "error", err)
+			cwlog.Error("Unable to write HTTP response", "error", err)
 		}
 	}
 }
@@ -56,6 +57,6 @@ func writeResponse(rw http.ResponseWriter, code int, msg string) {
 	rw.WriteHeader(code)
 	_, err := rw.Write([]byte(msg))
 	if err != nil {
-		plog.Error("Unable to write HTTP response", "error", err)
+		cwlog.Error("Unable to write HTTP response", "error", err)
 	}
 }

@@ -47,7 +47,7 @@ func (_m *FakePublicDashboardService) AccessTokenExists(ctx context.Context, acc
 }
 
 // BuildAnonymousUser provides a mock function with given fields: ctx, dashboard
-func (_m *FakePublicDashboardService) BuildAnonymousUser(ctx context.Context, dashboard *models.Dashboard) (*user.SignedInUser, error) {
+func (_m *FakePublicDashboardService) BuildAnonymousUser(ctx context.Context, dashboard *models.Dashboard) *user.SignedInUser {
 	ret := _m.Called(ctx, dashboard)
 
 	var r0 *user.SignedInUser
@@ -59,14 +59,7 @@ func (_m *FakePublicDashboardService) BuildAnonymousUser(ctx context.Context, da
 		}
 	}
 
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *models.Dashboard) error); ok {
-		r1 = rf(ctx, dashboard)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // GetDashboard provides a mock function with given fields: ctx, dashboardUid
