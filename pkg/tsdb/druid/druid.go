@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"math"
 	"net/http"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -21,6 +20,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
+	"github.com/grafana/grafana/pkg/tsdb/druid/result"
 )
 
 // Internal interval and range variables
@@ -49,11 +49,23 @@ type druidQuery struct {
 
 type druidResponse struct {
 	Reference string
-	Columns   []struct {
-		Name string
-		Type string
-	}
-	Rows [][]interface{}
+	Columns   []responseColumn
+	Rows      [][]interface{}
+}
+
+type columnType string
+
+const (
+	ColumnString columnType = "string"
+	ColumnTime   columnType = "time"
+	ColumnBool   columnType = "bool"
+	ColumnInt    columnType = "int"
+	ColumnFloat  columnType = "float"
+)
+
+type responseColumn struct {
+	Name string
+	Type columnType
 }
 
 type druidInstanceSettings struct {
@@ -197,7 +209,7 @@ func (ds *Service) queryVariable(qry []byte, s *druidInstanceSettings, headers h
 	if err != nil {
 		return response, err
 	}
-	r, err := ds.executeQuery("variable", q, s, stg, headers)
+	r, err := ds.oldExecuteQuery("variable", q, s, stg, headers)
 	if err != nil {
 		return response, err
 	}
@@ -448,7 +460,55 @@ func (ds *Service) prepareQueryContext(parameters []interface{}) map[string]inte
 	return ctx
 }
 
-func (ds *Service) executeQuery(queryRef string, q druidquerybuilder.Query, s *druidInstanceSettings, settings map[string]interface{}, headers http.Header) (*druidResponse, error) {
+func (ds *Service) executeQuery(
+	queryRef string,
+	q druidquerybuilder.Query,
+	s *druidInstanceSettings,
+	settings map[string]interface{},
+	headers http.Header,
+) (*data.Frame, error) {
+	var resultFramer result.Framer
+	qtyp := q.Type()
+	switch qtyp {
+	case "sql":
+		q.(*druidquery.SQL).SetResultFormat("array").SetHeader(true)
+		return nil, errors.New("not implemented")
+	case "timeseries":
+		var r result.TimeseriesResult
+		_, err := s.client.Query().Execute(q, &r, headers)
+		if err != nil {
+			return nil, fmt.Errorf("Query error: %w", err)
+		}
+		resultFramer = &r
+	case "topN":
+		var r result.TopNResult
+		_, err := s.client.Query().Execute(q, &r, headers)
+		if err != nil {
+			return nil, fmt.Errorf("Query error: %w", err)
+		}
+		resultFramer = &r
+	case "groupBy":
+		return nil, errors.New("not implemented")
+	case "scan":
+		q.(*druidquery.Scan).SetResultFormat("compactedList")
+		return nil, errors.New("not implemented")
+	case "search":
+		return nil, errors.New("not implemented")
+	case "timeBoundary":
+		return nil, errors.New("not implemented")
+	case "dataSourceMetadata":
+		return nil, errors.New("not implemented")
+	case "segmentMetadata":
+		return nil, errors.New("not implemented")
+	default:
+		return nil, errors.New("unknown query type")
+	}
+	f := resultFramer.Frame()
+	f.Name = queryRef
+	return f, nil
+}
+
+func (ds *Service) oldExecuteQuery(queryRef string, q druidquerybuilder.Query, s *druidInstanceSettings, settings map[string]interface{}, headers http.Header) (*druidResponse, error) {
 	// refactor: probably need to extract per-query preprocessor and postprocessor into a per-query file. load those "plugins" (ak. QueryProcessor ?) into a register and then do something like plugins[q.Type()].preprocess(q) and plugins[q.Type()].postprocess(r)
 	r := &druidResponse{Reference: queryRef}
 	qtyp := q.Type()
@@ -458,120 +518,62 @@ func (ds *Service) executeQuery(queryRef string, q druidquerybuilder.Query, s *d
 	case "scan":
 		q.(*druidquery.Scan).SetResultFormat("compactedList")
 	}
-	var result json.RawMessage
-	_, err := s.client.Query().Execute(q, &result, headers)
+	var res json.RawMessage
+	_, err := s.client.Query().Execute(q, &res, headers)
 	if err != nil {
 		return r, err
-	}
-	detectColumnType := func(c *struct {
-		Name string
-		Type string
-	}, pos int, rr [][]interface{}) {
-		t := map[string]int{"nil": 0}
-		for i := 0; i < len(rr); i += int(math.Ceil(float64(len(rr)) / 5.0)) {
-			r := rr[i]
-			switch r[pos].(type) {
-			case string:
-				v := r[pos].(string)
-				_, err := strconv.Atoi(v)
-				if err != nil {
-					_, err := strconv.ParseBool(v)
-					if err != nil {
-						_, err := time.Parse("2006-01-02T15:04:05.000Z", v)
-						if err != nil {
-							t["string"]++
-							continue
-						}
-						t["time"]++
-						continue
-					}
-					t["bool"]++
-					continue
-				}
-				t["int"]++
-				continue
-			case float64:
-				if c.Name == "__time" || strings.Contains(strings.ToLower(c.Name), "time_") {
-					t["time"]++
-					continue
-				}
-				t["float"]++
-				continue
-			case bool:
-				t["bool"]++
-				continue
-			}
-		}
-		election := func(values map[string]int) string {
-			type kv struct {
-				Key   string
-				Value int
-			}
-			var ss []kv
-			for k, v := range values {
-				ss = append(ss, kv{k, v})
-			}
-			sort.Slice(ss, func(i, j int) bool {
-				return ss[i].Value > ss[j].Value
-			})
-			if len(ss) == 2 {
-				return ss[0].Key
-			}
-			return "string"
-		}
-		c.Type = election(t)
 	}
 	switch qtyp {
 	case "sql":
 		var sqlr []interface{}
-		err := json.Unmarshal(result, &sqlr)
+		err := json.Unmarshal(res, &sqlr)
 		if err == nil && len(sqlr) > 1 {
 			for _, row := range sqlr[1:] {
 				r.Rows = append(r.Rows, row.([]interface{}))
 			}
 			for i, c := range sqlr[0].([]interface{}) {
-				col := struct {
-					Name string
-					Type string
-				}{Name: c.(string)}
+				col := responseColumn{
+					Name: c.(string),
+				}
 				detectColumnType(&col, i, r.Rows)
 				r.Columns = append(r.Columns, col)
 			}
 		}
 	case "timeseries":
-		var tsr []map[string]interface{}
-		err := json.Unmarshal(result, &tsr)
-		if err == nil && len(tsr) > 0 {
-			columns := []string{"timestamp"}
-			for c := range tsr[0]["result"].(map[string]interface{}) {
-				columns = append(columns, c)
+		var tsResult result.TimeseriesResult
+		err := json.Unmarshal(res, &tsResult)
+		if err != nil {
+			return r, err
+		}
+		if len(tsResult) == 0 {
+			return r, nil
+		}
+		columns := tsResult.Columns()
+		for _, result := range tsResult {
+			var row []interface{}
+			t := result.Timestamp
+			if t.IsZero() {
+				// If timestamp not set, use value from previous row.
+				// This can happen when grand total is calculated.
+				t = r.Rows[len(r.Rows)-1][0].(time.Time)
 			}
-			for _, result := range tsr {
-				var row []interface{}
-				t := result["timestamp"]
-				if t == nil {
-					// grand total, lets keep it last
-					t = r.Rows[len(r.Rows)-1][0]
-				}
-				row = append(row, t)
-				colResults := result["result"].(map[string]interface{})
-				for _, c := range columns[1:] {
-					row = append(row, colResults[c])
-				}
-				r.Rows = append(r.Rows, row)
+			row = append(row, t)
+			colResults := result.Result
+			for _, c := range columns[1:] {
+				row = append(row, colResults[c])
 			}
-			for i, c := range columns {
-				col := struct {
-					Name string
-					Type string
-				}{Name: c}
-				detectColumnType(&col, i, r.Rows)
-				r.Columns = append(r.Columns, col)
+			r.Rows = append(r.Rows, row)
+		}
+		for i, c := range columns {
+			col := responseColumn{
+				Name: c,
 			}
+			detectColumnType(&col, i, r.Rows)
+			r.Columns = append(r.Columns, col)
 		}
 	case "topN":
 		var tn []map[string]interface{}
-		err := json.Unmarshal(result, &tn)
+		err := json.Unmarshal(res, &tn)
 		if err == nil && len(tn) > 0 {
 			columns := []string{"timestamp"}
 			for c := range tn[0]["result"].([]interface{})[0].(map[string]interface{}) {
@@ -589,17 +591,16 @@ func (ds *Service) executeQuery(queryRef string, q druidquerybuilder.Query, s *d
 				}
 			}
 			for i, c := range columns {
-				col := struct {
-					Name string
-					Type string
-				}{Name: c}
+				col := responseColumn{
+					Name: c,
+				}
 				detectColumnType(&col, i, r.Rows)
 				r.Columns = append(r.Columns, col)
 			}
 		}
 	case "groupBy":
 		var gb []map[string]interface{}
-		err := json.Unmarshal(result, &gb)
+		err := json.Unmarshal(res, &gb)
 		if err == nil && len(gb) > 0 {
 			columns := []string{"timestamp"}
 			for c := range gb[0]["event"].(map[string]interface{}) {
@@ -615,33 +616,31 @@ func (ds *Service) executeQuery(queryRef string, q druidquerybuilder.Query, s *d
 				r.Rows = append(r.Rows, row)
 			}
 			for i, c := range columns {
-				col := struct {
-					Name string
-					Type string
-				}{Name: c}
+				col := responseColumn{
+					Name: c,
+				}
 				detectColumnType(&col, i, r.Rows)
 				r.Columns = append(r.Columns, col)
 			}
 		}
 	case "scan":
 		var scanr []map[string]interface{}
-		err := json.Unmarshal(result, &scanr)
+		err := json.Unmarshal(res, &scanr)
 		if err == nil && len(scanr) > 0 {
 			for _, e := range scanr[0]["events"].([]interface{}) {
 				r.Rows = append(r.Rows, e.([]interface{}))
 			}
 			for i, c := range scanr[0]["columns"].([]interface{}) {
-				col := struct {
-					Name string
-					Type string
-				}{Name: c.(string)}
+				col := responseColumn{
+					Name: c.(string),
+				}
 				detectColumnType(&col, i, r.Rows)
 				r.Columns = append(r.Columns, col)
 			}
 		}
 	case "search":
 		var s []map[string]interface{}
-		err := json.Unmarshal(result, &s)
+		err := json.Unmarshal(res, &s)
 		if err == nil && len(s) > 0 {
 			columns := []string{"timestamp"}
 			for c := range s[0]["result"].([]interface{})[0].(map[string]interface{}) {
@@ -659,17 +658,16 @@ func (ds *Service) executeQuery(queryRef string, q druidquerybuilder.Query, s *d
 				}
 			}
 			for i, c := range columns {
-				col := struct {
-					Name string
-					Type string
-				}{Name: c}
+				col := responseColumn{
+					Name: c,
+				}
 				detectColumnType(&col, i, r.Rows)
 				r.Columns = append(r.Columns, col)
 			}
 		}
 	case "timeBoundary":
 		var tb []map[string]interface{}
-		err := json.Unmarshal(result, &tb)
+		err := json.Unmarshal(res, &tb)
 		if err == nil && len(tb) > 0 {
 			columns := []string{"timestamp"}
 			for c := range tb[0]["result"].(map[string]interface{}) {
@@ -685,17 +683,16 @@ func (ds *Service) executeQuery(queryRef string, q druidquerybuilder.Query, s *d
 				r.Rows = append(r.Rows, row)
 			}
 			for i, c := range columns {
-				col := struct {
-					Name string
-					Type string
-				}{Name: c}
+				col := responseColumn{
+					Name: c,
+				}
 				detectColumnType(&col, i, r.Rows)
 				r.Columns = append(r.Columns, col)
 			}
 		}
 	case "dataSourceMetadata":
 		var dsm []map[string]interface{}
-		err := json.Unmarshal(result, &dsm)
+		err := json.Unmarshal(res, &dsm)
 		if err == nil && len(dsm) > 0 {
 			columns := []string{"timestamp"}
 			for c := range dsm[0]["result"].(map[string]interface{}) {
@@ -711,17 +708,16 @@ func (ds *Service) executeQuery(queryRef string, q druidquerybuilder.Query, s *d
 				r.Rows = append(r.Rows, row)
 			}
 			for i, c := range columns {
-				col := struct {
-					Name string
-					Type string
-				}{Name: c}
+				col := responseColumn{
+					Name: c,
+				}
 				detectColumnType(&col, i, r.Rows)
 				r.Columns = append(r.Columns, col)
 			}
 		}
 	case "segmentMetadata":
 		var sm []map[string]interface{}
-		err := json.Unmarshal(result, &sm)
+		err := json.Unmarshal(res, &sm)
 		if err == nil && len(sm) > 0 {
 			var columns []string
 			switch settings["view"].(string) {
@@ -822,10 +818,9 @@ func (ds *Service) executeQuery(queryRef string, q druidquerybuilder.Query, s *d
 				}
 			}
 			for i, c := range columns {
-				col := struct {
-					Name string
-					Type string
-				}{Name: c}
+				col := responseColumn{
+					Name: c,
+				}
 				detectColumnType(&col, i, r.Rows)
 				r.Columns = append(r.Columns, col)
 			}
@@ -837,105 +832,17 @@ func (ds *Service) executeQuery(queryRef string, q druidquerybuilder.Query, s *d
 	return r, err
 }
 
-func (ds *Service) prepareResponse(resp *druidResponse, settings map[string]interface{}) (backend.DataResponse, error) {
+func (ds *Service) prepareResponse(frame *data.Frame, settings map[string]interface{}) (backend.DataResponse, error) {
 	// refactor: probably some method that returns a container (make([]whattypeever, 0)) and its related appender func based on column type)
 	response := backend.DataResponse{}
-	frame := data.NewFrame(resp.Reference)
-	// fetch settings
-	hideEmptyColumns, _ := settings["hideEmptyColumns"].(bool)
-	responseLimit, _ := settings["responseLimit"].(float64)
+	// TODO support those settings
+	// hideEmptyColumns, _ := settings["hideEmptyColumns"].(bool)
+	// responseLimit, _ := settings["responseLimit"].(float64)
 	format, found := settings["format"]
 	if !found {
 		format = "long"
 	} else {
 		format = format.(string)
-	}
-	// turn druid response into grafana long frame
-	if responseLimit > 0 && len(resp.Rows) > int(responseLimit) {
-		resp.Rows = resp.Rows[:int(responseLimit)]
-		response.Error = fmt.Errorf("query response limit exceeded (> %d rows): consider adding filters and/or reducing the query time range", int(responseLimit))
-	}
-	for ic, c := range resp.Columns {
-		var ff interface{}
-		columnIsEmpty := true
-		switch c.Type {
-		case "string":
-			ff = make([]string, 0)
-		case "float":
-			ff = make([]float64, 0)
-		case "int":
-			ff = make([]int64, 0)
-		case "bool":
-			ff = make([]bool, 0)
-		case "nil":
-			ff = make([]string, 0)
-		case "time":
-			ff = make([]time.Time, 0)
-		}
-		for _, r := range resp.Rows {
-			if columnIsEmpty && r[ic] != nil && r[ic] != "" {
-				columnIsEmpty = false
-			}
-			switch c.Type {
-			case "string":
-				if r[ic] == nil {
-					r[ic] = ""
-				}
-				value, _ := r[ic].(string)
-				ff = append(ff.([]string), value)
-			case "float":
-				if r[ic] == nil {
-					r[ic] = 0.0
-				}
-				value, _ := r[ic].(float64)
-				ff = append(ff.([]float64), value)
-			case "int":
-				if r[ic] == nil {
-					r[ic] = "0"
-				}
-				value, _ := r[ic].(string)
-				i, err := strconv.Atoi(value)
-				if err != nil {
-					i = 0
-				}
-				ff = append(ff.([]int64), int64(i))
-			case "bool":
-				var b bool
-				var err error
-				b, ok := r[ic].(bool)
-				if !ok {
-					value, _ := r[ic].(string)
-					b, err = strconv.ParseBool(value)
-					if err != nil {
-						b = false
-					}
-				}
-				ff = append(ff.([]bool), b)
-			case "nil":
-				ff = append(ff.([]string), "nil")
-			case "time":
-				if r[ic] == nil {
-					r[ic] = 0.0
-				}
-				switch r[ic].(type) {
-				case string:
-					value, _ := r[ic].(string)
-					t, err := time.Parse("2006-01-02T15:04:05.000Z", value)
-					if err != nil {
-						t = time.Now()
-					}
-					ff = append(ff.([]time.Time), t)
-				case float64:
-					value, _ := r[ic].(float64)
-					sec, dec := math.Modf(value / 1000)
-					ff = append(ff.([]time.Time), time.Unix(int64(sec), int64(dec*(1e9))))
-				}
-			}
-		}
-		if hideEmptyColumns && columnIsEmpty {
-			continue
-		}
-		frame.Fields = append(frame.Fields, data.NewField(c.Name, nil, ff))
 	}
 	// convert to other formats if specified
 	if format == "wide" && len(frame.Fields) > 0 {
