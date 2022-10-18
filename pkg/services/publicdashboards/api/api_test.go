@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardStore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -138,7 +139,7 @@ func TestAPIListPublicDashboard(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.Name, func(t *testing.T) {
 			service := publicdashboards.NewFakePublicDashboardService(t)
-			service.On("ListPublicDashboards", mock.Anything, mock.Anything).
+			service.On("ListPublicDashboards", mock.Anything, mock.Anything, mock.Anything).
 				Return(test.Response, test.ResponseErr).Maybe()
 
 			cfg := setting.NewCfg()
@@ -633,8 +634,9 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	// create public dashboard
 	store := publicdashboardsStore.ProvideStore(db)
 	cfg := setting.NewCfg()
+	ac := acmock.New()
 	cfg.RBACEnabled = false
-	service := publicdashboardsService.ProvideService(cfg, store, qds)
+	service := publicdashboardsService.ProvideService(cfg, store, qds, ac)
 	pubdash, err := service.SavePublicDashboardConfig(context.Background(), &user.SignedInUser{}, savePubDashboardCmd)
 	require.NoError(t, err)
 

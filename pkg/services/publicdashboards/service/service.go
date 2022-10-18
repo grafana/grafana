@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -9,6 +10,8 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
@@ -29,6 +32,7 @@ type PublicDashboardServiceImpl struct {
 	store              publicdashboards.Store
 	intervalCalculator intervalv2.Calculator
 	QueryDataService   *query.Service
+	ac                 accesscontrol.AccessControl
 }
 
 var LogPrefix = "publicdashboards.service"
@@ -43,6 +47,7 @@ func ProvideService(
 	cfg *setting.Cfg,
 	store publicdashboards.Store,
 	qds *query.Service,
+	ac accesscontrol.AccessControl,
 ) *PublicDashboardServiceImpl {
 	return &PublicDashboardServiceImpl{
 		log:                log.New(LogPrefix),
@@ -50,12 +55,8 @@ func ProvideService(
 		store:              store,
 		intervalCalculator: intervalv2.NewCalculator(),
 		QueryDataService:   qds,
+		ac:                 ac,
 	}
-}
-
-// Gets a list of public dashboards by orgId
-func (pd *PublicDashboardServiceImpl) ListPublicDashboards(ctx context.Context, orgId int64) ([]PublicDashboardListResponse, error) {
-	return pd.store.ListPublicDashboards(ctx, orgId)
 }
 
 // Gets a dashboard by Uid
@@ -298,6 +299,16 @@ func (pd *PublicDashboardServiceImpl) BuildAnonymousUser(ctx context.Context, da
 	return anonymousUser
 }
 
+// Gets a list of public dashboards by orgId
+func (pd *PublicDashboardServiceImpl) ListPublicDashboards(ctx context.Context, u *user.SignedInUser, orgId int64) ([]PublicDashboardListResponse, error) {
+	publicDashboards, err := pd.store.ListPublicDashboards(ctx, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	return pd.filterDashboardsByPermissions(ctx, u, publicDashboards)
+}
+
 func (pd *PublicDashboardServiceImpl) PublicDashboardEnabled(ctx context.Context, dashboardUid string) (bool, error) {
 	return pd.store.PublicDashboardEnabled(ctx, dashboardUid)
 }
@@ -350,7 +361,23 @@ func (pd *PublicDashboardServiceImpl) logIsEnabledChanged(existingPubdash *Publi
 	}
 }
 
-// Checks to see if PublicDashboard.Isenabled is true on create or changed on update
+// Filter out dashboards that user does not have read access to
+func (pd *PublicDashboardServiceImpl) filterDashboardsByPermissions(ctx context.Context, u *user.SignedInUser, publicDashboards []PublicDashboardListResponse) ([]PublicDashboardListResponse, error) {
+	for i := len(publicDashboards) - 1; i >= 0; i-- {
+		hasAccess, err := pd.ac.Evaluate(ctx, u, accesscontrol.EvalPermission(dashboards.ActionDashboardsRead, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(publicDashboards[i].DashboardUid)))
+		// If original dashboard does not exist, the public dashboard is an orphan. We want to list it anyway
+		if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {
+			return nil, err
+		}
+
+		if !hasAccess && err == nil {
+			publicDashboards = append(publicDashboards[:i], publicDashboards[i+1:]...)
+		}
+	}
+	return publicDashboards, nil
+}
+
+// Checks to see if PublicDashboard.IsEnabled is true on create or changed on update
 func publicDashboardIsEnabledChanged(existingPubdash *PublicDashboard, newPubdash *PublicDashboard) bool {
 	// creating dashboard, enabled true
 	newDashCreated := existingPubdash == nil && newPubdash.IsEnabled
