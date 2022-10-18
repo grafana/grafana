@@ -1,5 +1,5 @@
 export const Messages = {
-  title: 'Alerting',
+  title: 'Percona Alerting',
   tabs: {
     alerts: 'Alerts',
     alertRules: 'Alert Rules',
@@ -64,5 +64,5 @@ export const Messages = {
       },
     },
   },
-  alerting: 'Alerting',
+  alerting: 'Percona Alerting',
 };
