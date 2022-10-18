@@ -86,7 +86,6 @@ steps:
   - yarn betterer ci
   depends_on:
   - yarn-install
-  failure: ignore
   image: grafana/build-container:1.6.3
   name: betterer-frontend
 - commands:
@@ -927,7 +926,6 @@ steps:
   - yarn betterer ci
   depends_on:
   - yarn-install
-  failure: ignore
   image: grafana/build-container:1.6.3
   name: betterer-frontend
 - commands:
@@ -2222,7 +2220,6 @@ steps:
   - yarn betterer ci
   depends_on:
   - yarn-install
-  failure: ignore
   image: grafana/build-container:1.6.3
   name: betterer-frontend
 - commands:
@@ -2895,7 +2892,6 @@ steps:
   depends_on:
   - init-enterprise
   - yarn-install
-  failure: ignore
   image: grafana/build-container:1.6.3
   name: betterer-frontend
 - commands:
@@ -4309,7 +4305,6 @@ steps:
   - yarn betterer ci
   depends_on:
   - yarn-install
-  failure: ignore
   image: grafana/build-container:1.6.3
   name: betterer-frontend
 - commands:
@@ -4955,7 +4950,6 @@ steps:
   depends_on:
   - init-enterprise
   - yarn-install
-  failure: ignore
   image: grafana/build-container:1.6.3
   name: betterer-frontend
 - commands:
@@ -5614,6 +5608,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: c64b7293490c926f8813dc04cf93ab930b145d03861d50786ada158af70c63bb
+hmac: f74313ae5345e0a4bc07b46794ba73ef902d5f651e81f45e07bfba2390208644
 
 ...
