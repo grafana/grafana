@@ -2,15 +2,7 @@ import { css as cssCore, Global } from '@emotion/react';
 import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useClickAway } from 'react-use';
 
-import {
-  CartesianCoords2D,
-  DataFrame,
-  getFieldDisplayName,
-  InterpolateFunction,
-  SortedVector,
-  TimeZone,
-  ValueLinkConfig,
-} from '@grafana/data';
+import { CartesianCoords2D, DataFrame, getFieldDisplayName, InterpolateFunction, TimeZone } from '@grafana/data';
 import {
   ContextMenu,
   GraphContextMenuHeader,
