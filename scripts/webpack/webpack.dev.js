@@ -34,10 +34,10 @@ module.exports = (env = {}) =>
         {
           test: /\.tsx?$/,
           use: {
-            loader: 'babel-loader',
+            loader: 'esbuild-loader',
             options: {
-              cacheDirectory: true,
-              cacheCompression: false,
+              loader: 'tsx',
+              target: 'es2015',
             },
           },
           exclude: /node_modules/,

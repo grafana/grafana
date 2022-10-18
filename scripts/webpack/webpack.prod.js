@@ -27,15 +27,13 @@ module.exports = (env = {}) =>
         {
           test: /\.tsx?$/,
           exclude: /node_modules/,
-          use: [
-            {
-              loader: 'babel-loader',
-              options: {
-                cacheDirectory: true,
-                cacheCompression: false,
-              },
+          use: {
+            loader: 'esbuild-loader',
+            options: {
+              loader: 'tsx',
+              target: 'es2015',
             },
-          ],
+          },
         },
         require('./sass.rule.js')({
           sourceMap: false,
