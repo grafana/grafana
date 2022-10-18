@@ -4,11 +4,11 @@ import React from 'react';
 import { CoreApp, GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
+import { testIds } from '../../components/LokiQueryEditor';
 import { LokiQueryField } from '../../components/LokiQueryField';
 import { LokiQueryEditorProps } from '../../components/types';
 
 import { LokiQueryBuilderExplained } from './LokiQueryBuilderExplained';
-import { testIds } from './LokiQueryEditorSelector';
 
 type Props = LokiQueryEditorProps & {
   showExplain: boolean;

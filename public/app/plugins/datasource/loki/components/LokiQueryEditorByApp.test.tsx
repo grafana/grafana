@@ -5,8 +5,8 @@ import React from 'react';
 import { CoreApp } from '@grafana/data';
 
 import { LokiDatasource } from '../datasource';
-import { testIds as regularTestIds } from '../querybuilder/components/LokiQueryEditorSelector';
 
+import { testIds as regularTestIds } from './LokiQueryEditor';
 import { LokiQueryEditorByApp } from './LokiQueryEditorByApp';
 import { testIds as alertingTestIds } from './LokiQueryEditorForAlerting';
 

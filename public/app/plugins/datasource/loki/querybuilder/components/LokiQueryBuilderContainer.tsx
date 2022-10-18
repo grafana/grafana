@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import React, { useEffect, useReducer } from 'react';
 
+import { testIds } from '../../components/LokiQueryEditor';
 import { LokiDatasource } from '../../datasource';
 import { LokiQuery } from '../../types';
 import { lokiQueryModeller } from '../LokiQueryModeller';
@@ -8,7 +9,6 @@ import { buildVisualQueryFromString } from '../parsing';
 import { LokiVisualQuery } from '../types';
 
 import { LokiQueryBuilder } from './LokiQueryBuilder';
-import { testIds } from './LokiQueryEditorSelector';
 import { QueryPreview } from './QueryPreview';
 
 export interface Props {

@@ -12,16 +12,16 @@ import {
   lokiQueryEditorExplainKey,
   lokiQueryEditorRawQueryKey,
   useFlag,
-} from '../../../prometheus/querybuilder/shared/hooks/useFlag';
-import { LokiQueryEditorProps } from '../../components/types';
-import { LokiQuery } from '../../types';
-import { buildVisualQueryFromString } from '../parsing';
-import { changeEditorMode, getQueryWithDefaults } from '../state';
+} from '../../prometheus/querybuilder/shared/hooks/useFlag';
+import { LokiQueryBuilderContainer } from '../querybuilder/components/LokiQueryBuilderContainer';
+import { LokiQueryBuilderOptions } from '../querybuilder/components/LokiQueryBuilderOptions';
+import { LokiQueryCodeEditor } from '../querybuilder/components/LokiQueryCodeEditor';
+import { QueryPatternsModal } from '../querybuilder/components/QueryPatternsModal';
+import { buildVisualQueryFromString } from '../querybuilder/parsing';
+import { changeEditorMode, getQueryWithDefaults } from '../querybuilder/state';
+import { LokiQuery } from '../types';
 
-import { LokiQueryBuilderContainer } from './LokiQueryBuilderContainer';
-import { LokiQueryBuilderOptions } from './LokiQueryBuilderOptions';
-import { LokiQueryCodeEditor } from './LokiQueryCodeEditor';
-import { QueryPatternsModal } from './QueryPatternsModal';
+import { LokiQueryEditorProps } from './types';
 
 export const testIds = {
   editor: 'loki-editor',

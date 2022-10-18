@@ -2,8 +2,7 @@ import React, { memo } from 'react';
 
 import { CoreApp } from '@grafana/data';
 
-import { LokiQueryEditorSelector } from '../querybuilder/components/LokiQueryEditorSelector';
-
+import { LokiQueryEditorSelector } from './LokiQueryEditor';
 import { LokiQueryEditorForAlerting } from './LokiQueryEditorForAlerting';
 import { LokiQueryEditorProps } from './types';
 

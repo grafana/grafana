@@ -6,11 +6,11 @@ import React from 'react';
 import { DataSourcePluginMeta } from '@grafana/data';
 import { QueryEditorMode } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
 
-import { LokiDatasource } from '../../datasource';
-import { LokiQuery, LokiQueryType } from '../../types';
+import { LokiDatasource } from '../datasource';
+import { EXPLAIN_LABEL_FILTER_CONTENT } from '../querybuilder/components/LokiQueryBuilderExplained';
+import { LokiQuery, LokiQueryType } from '../types';
 
-import { EXPLAIN_LABEL_FILTER_CONTENT } from './LokiQueryBuilderExplained';
-import { LokiQueryEditorSelector } from './LokiQueryEditorSelector';
+import { LokiQueryEditorSelector } from './LokiQueryEditor';
 
 jest.mock('@grafana/runtime', () => {
   return {

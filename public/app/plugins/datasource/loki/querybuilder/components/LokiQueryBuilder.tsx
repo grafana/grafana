@@ -14,6 +14,7 @@ import {
   QueryBuilderOperation,
 } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
 
+import { testIds } from '../../components/LokiQueryEditor';
 import { LokiDatasource } from '../../datasource';
 import { escapeLabelValueInSelector } from '../../languageUtils';
 import logqlGrammar from '../../syntax';
@@ -22,7 +23,6 @@ import { buildVisualQueryFromString } from '../parsing';
 import { LokiOperationId, LokiVisualQuery } from '../types';
 
 import { EXPLAIN_LABEL_FILTER_CONTENT } from './LokiQueryBuilderExplained';
-import { testIds } from './LokiQueryEditorSelector';
 import { NestedQueryList } from './NestedQueryList';
 
 export interface Props {
