@@ -74,7 +74,7 @@ export class CloudWatchAPI extends CloudWatchRequest {
     region: string,
     dimensionFilters: Dimensions = {},
     metricName = ''
-  ) {
+  ): Promise<SelectableValue[]> {
     if (!namespace) {
       return [];
     }
