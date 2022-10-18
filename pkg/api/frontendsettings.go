@@ -223,7 +223,7 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 		}
 
 		if c.IsPublicDashboardView {
-			// If RBAC is enabled, it will filter out all datasources for the anonymous user, so we need to skip it
+			// If RBAC is enabled, it will filter out all datasources for a public user, so we need to skip it
 			orgDataSources = query.Result
 		} else {
 			filtered, err := hs.filterDatasourcesByQueryPermission(c.Req.Context(), c.SignedInUser, query.Result)
