@@ -30,6 +30,7 @@ const copyFiles = () => {
     'src/config/tsconfig.plugin.local.json',
     'src/config/eslint.plugin.js',
     'src/config/styles.mock.js',
+    'src/config/jest.babel.config.js',
     'src/config/jest.plugin.config.local.js',
     'src/config/matchMedia.js',
     'src/config/react-inlinesvg.tsx',
