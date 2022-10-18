@@ -6,10 +6,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/comments/commentmodel"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 )
 
 type sqlStorage struct {
-	sql *sqlstore.SQLStore
+	sql db.DB
 }
 
 func checkObjectType(contentType string) bool {

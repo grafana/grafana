@@ -8,18 +8,18 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/tokens"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 // Define the storage implementation. We're generating the mock implementation
 // automatically
 type PublicDashboardStoreImpl struct {
-	sqlStore *sqlstore.SQLStore
+	sqlStore db.DB
 	log      log.Logger
-	dialect  migrator.Dialect
 }
 
 var LogPrefix = "publicdashboards.store"
@@ -29,11 +29,10 @@ var LogPrefix = "publicdashboards.store"
 var _ publicdashboards.Store = (*PublicDashboardStoreImpl)(nil)
 
 // Factory used by wire to dependency injection
-func ProvideStore(sqlStore *sqlstore.SQLStore) *PublicDashboardStoreImpl {
+func ProvideStore(sqlStore db.DB) *PublicDashboardStoreImpl {
 	return &PublicDashboardStoreImpl{
 		sqlStore: sqlStore,
 		log:      log.New(LogPrefix),
-		dialect:  sqlStore.Dialect,
 	}
 }
 
@@ -101,7 +100,6 @@ func (d *PublicDashboardStoreImpl) GetPublicDashboard(ctx context.Context, acces
 
 	// find dashboard
 	dashRes, err := d.GetDashboard(ctx, pdRes.DashboardUid)
-
 	if err != nil {
 		return nil, nil, err
 	}
@@ -135,6 +133,38 @@ func (d *PublicDashboardStoreImpl) GenerateNewPublicDashboardUid(ctx context.Con
 	}
 
 	return uid, nil
+}
+
+// Generates a new unique access token for a new public dashboard
+func (d *PublicDashboardStoreImpl) GenerateNewPublicDashboardAccessToken(ctx context.Context) (string, error) {
+	var accessToken string
+
+	err := d.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		for i := 0; i < 3; i++ {
+			var err error
+			accessToken, err = tokens.GenerateAccessToken()
+			if err != nil {
+				continue
+			}
+
+			exists, err := sess.Get(&PublicDashboard{AccessToken: accessToken})
+			if err != nil {
+				return err
+			}
+
+			if !exists {
+				return nil
+			}
+		}
+
+		return ErrPublicDashboardFailedGenerateAccessToken
+	})
+
+	if err != nil {
+		return "", err
+	}
+
+	return accessToken, nil
 }
 
 // Retrieves public dashboard configuration by Uid
@@ -241,7 +271,6 @@ func (d *PublicDashboardStoreImpl) PublicDashboardEnabled(ctx context.Context, d
 		}
 
 		hasPublicDashboard = result > 0
-
 		return err
 	})
 
@@ -261,7 +290,6 @@ func (d *PublicDashboardStoreImpl) AccessTokenExists(ctx context.Context, access
 		}
 
 		hasPublicDashboard = result > 0
-
 		return err
 	})
 

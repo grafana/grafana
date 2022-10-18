@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/constants"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -140,7 +141,7 @@ func TestQuery_Regions(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		expRegions := append(knownRegions, regionName)
+		expRegions := append(constants.Regions, regionName)
 		expFrame := data.NewFrame(
 			"",
 			data.NewField("text", nil, expRegions),
@@ -148,7 +149,7 @@ func TestQuery_Regions(t *testing.T) {
 		)
 		expFrame.Meta = &data.FrameMeta{
 			Custom: map[string]interface{}{
-				"rowCount": len(knownRegions) + 1,
+				"rowCount": len(constants.Regions) + 1,
 			},
 		}
 
@@ -387,7 +388,7 @@ func TestQuery_GetAllMetrics(t *testing.T) {
 		require.NoError(t, err)
 
 		metricCount := 0
-		for _, metrics := range metricsMap {
+		for _, metrics := range constants.NamespaceMetricsMap {
 			metricCount += len(metrics)
 		}
 
@@ -467,7 +468,7 @@ func TestQuery_GetDimensionKeys(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		expValues := dimensionsMap["AWS/EC2"]
+		expValues := constants.NamespaceDimensionKeysMap["AWS/EC2"]
 		expResponse := []suggestData{}
 		for _, val := range expValues {
 			expResponse = append(expResponse, suggestData{val, val, val})
@@ -477,7 +478,7 @@ func TestQuery_GetDimensionKeys(t *testing.T) {
 	})
 }
 func Test_isCustomMetrics(t *testing.T) {
-	metricsMap = map[string][]string{
+	constants.NamespaceMetricsMap = map[string][]string{
 		"AWS/EC2": {"ExampleMetric"},
 	}
 

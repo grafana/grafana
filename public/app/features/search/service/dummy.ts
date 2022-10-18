@@ -34,4 +34,8 @@ export class DummySearcher implements GrafanaSearcher {
   async tags(query: SearchQuery): Promise<TermCount[]> {
     return Promise.resolve(this.expectedTagsResponse);
   }
+
+  getFolderViewSort(): string {
+    return '';
+  }
 }
