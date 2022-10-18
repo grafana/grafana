@@ -10,6 +10,7 @@ import {
 } from '@percona/platform-core';
 import React, { FC, useMemo } from 'react';
 import { Field, withTypes } from 'react-final-form';
+import { useSelector } from 'react-redux';
 
 import { SelectableValue } from '@grafana/data';
 import { Button, HorizontalGroup, useStyles } from '@grafana/ui';
@@ -17,6 +18,7 @@ import { AsyncSelectField } from 'app/percona/shared/components/Form/AsyncSelect
 import { MultiSelectField } from 'app/percona/shared/components/Form/MultiSelectField';
 import { SelectField } from 'app/percona/shared/components/Form/SelectField';
 import { Databases, DATABASE_LABELS } from 'app/percona/shared/core';
+import { getBackupLocations } from 'app/percona/shared/core/selectors';
 import { validators as customValidators } from 'app/percona/shared/helpers/validators';
 
 import { BackupMode, DataModel } from '../../Backup.types';
@@ -45,6 +47,7 @@ import {
   getBackupModeOptions,
   getDataModelFromVendor,
   isDataModelDisabled,
+  getLabelForStorageOption,
 } from './AddBackupModal.utils';
 import { RetryModeSelector } from './RetryModeSelector';
 
@@ -58,7 +61,15 @@ export const AddBackupModal: FC<AddBackupModalProps> = ({
 }) => {
   const styles = useStyles(getStyles);
   const initialValues = useMemo(() => toFormBackup(backup), [backup]);
+  const { result: locations = [], loading: locationsLoading } = useSelector(getBackupLocations);
   const { Form } = withTypes<AddBackupFormProps>();
+  const locationsOptions = locations.map(
+    ({ locationID, name, type }): SelectableValue<string> => ({
+      label: name,
+      value: locationID,
+      description: getLabelForStorageOption(type),
+    })
+  );
 
   const handleSubmit = (values: AddBackupFormProps) =>
     onBackup({
@@ -131,12 +142,12 @@ export const AddBackupModal: FC<AddBackupModalProps> = ({
                 <Field name="location" validate={validators.required}>
                   {({ input }) => (
                     <div>
-                      <AsyncSelectField
+                      <SelectField
                         label={Messages.location}
                         isSearchable={false}
                         disabled={!!backup}
-                        loadOptions={AddBackupModalService.loadLocationOptions}
-                        defaultOptions
+                        options={locationsOptions}
+                        isLoading={locationsLoading}
                         {...input}
                         data-testid="location-select-input"
                       />

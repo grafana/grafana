@@ -10,6 +10,7 @@ export const getStyles = ({ palette, border }: GrafanaTheme) => ({
   testButton: css`
     background: linear-gradient(180deg, ${palette.greenBase} 0%, ${palette.greenShade} 100%);
     border: ${border.width.sm} solid ${palette.greenShade};
+    transition: none;
 
     &:hover,
     &:focus {

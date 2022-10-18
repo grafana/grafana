@@ -16,9 +16,11 @@ import { TechnicalPreview } from 'app/percona/shared/components/Elements/Technic
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
 import { DATABASE_LABELS } from 'app/percona/shared/core';
+import { fetchStorageLocations } from 'app/percona/shared/core/reducers/backupLocations';
 import { getPerconaSettingFlag } from 'app/percona/shared/core/selectors';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
 import { getCronStringFromValues } from 'app/percona/shared/helpers/cron/cron';
+import { useAppDispatch } from 'app/store/store';
 
 import { Messages } from '../../Backup.messages';
 import { RetryMode } from '../../Backup.types';
@@ -44,6 +46,7 @@ export const ScheduledBackups: FC = () => {
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const navModel = usePerconaNavModel('scheduled-backups');
   const [generateToken] = useCancelToken();
+  const dispatch = useAppDispatch();
   const styles = useStyles(getStyles);
 
   const retentionValue = useCallback((n: number) => {
@@ -312,6 +315,7 @@ export const ScheduledBackups: FC = () => {
 
   useEffect(() => {
     getData();
+    dispatch(fetchStorageLocations());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

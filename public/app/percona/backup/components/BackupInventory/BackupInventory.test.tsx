@@ -8,6 +8,7 @@ import { StoreState } from 'app/types';
 import { BackupInventory } from './BackupInventory';
 
 jest.mock('./BackupInventory.service');
+jest.mock('app/percona/backup/components/StorageLocations/StorageLocations.service');
 jest.mock('../../hooks/recurringCall.hook');
 
 describe('BackupInventory', () => {

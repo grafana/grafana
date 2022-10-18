@@ -15,6 +15,6 @@ export const getStyles = ({ spacing }: GrafanaTheme) => ({
   fullLock: css`
     position: absolute;
     right: 7px;
-    top: 30px;
+    top: 34px;
   `,
 });

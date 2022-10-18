@@ -54,7 +54,6 @@ describe('AddStorageLocationModal', () => {
     expect(screen.queryByTestId('secretKey-field-container')).not.toBeInTheDocument();
     expect(screen.queryByTestId('endpoint-field-container')).not.toBeInTheDocument();
     //LocalFields
-    expect(screen.queryByTestId('server-field-container')).not.toBeInTheDocument();
     expect(screen.queryByTestId('client-field-container')).not.toBeInTheDocument();
   });
 
@@ -109,7 +108,24 @@ describe('AddStorageLocationModal', () => {
     expect(buttons[buttons.length - 1]).toBeDisabled();
   });
 
-  it('should enable the test button if the form is valid', () => {
+  it("should enable the test button if the form is valid and it's an S3 storage", () => {
+    const location: S3Location = {
+      locationID: 'Location_1',
+      name: 'client_fs',
+      description: 'description',
+      type: LocationType.S3,
+      path: '/foo/bar',
+      accessKey: 'key',
+      secretKey: 'key',
+      bucketName: 'bucket',
+    };
+    render(<AddStorageLocationModal location={location} onClose={jest.fn()} onAdd={jest.fn()} isVisible />);
+
+    const buttons = screen.getAllByTestId('storage-location-test-button');
+    expect(buttons[buttons.length - 1]).not.toBeDisabled();
+  });
+
+  it('should hide test button with client storage', () => {
     const location: StorageLocation = {
       locationID: 'Location_1',
       name: 'client_fs',
@@ -119,8 +135,7 @@ describe('AddStorageLocationModal', () => {
     };
     render(<AddStorageLocationModal location={location} onClose={jest.fn()} onAdd={jest.fn()} isVisible />);
 
-    const buttons = screen.getAllByTestId('storage-location-test-button');
-    expect(buttons[buttons.length - 1]).not.toBeDisabled();
+    expect(screen.queryByTestId('torage-location-test-button')).not.toBeInTheDocument();
   });
 
   it('should disable the add button while waiting for test validation', () => {

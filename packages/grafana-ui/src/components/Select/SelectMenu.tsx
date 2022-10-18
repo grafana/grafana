@@ -64,6 +64,9 @@ export const SelectMenuOptions: FC<SelectMenuOptionProps<any>> = ({
       )}
       {...innerProps}
       aria-label="Select option"
+      // @PERCONA
+      // Added data-testid
+      data-testid={`${data.label ? data.label + '-' : ''}select-option`}
       title={data.title}
     >
       {data.icon && <Icon name={data.icon as IconName} className={styles.optionIcon} />}

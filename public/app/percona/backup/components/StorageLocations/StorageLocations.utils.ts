@@ -13,7 +13,7 @@ export const formatLocationList = (rawList: StorageLocationListReponse): Storage
   const parsedLocations: StorageLocation[] = [];
 
   locations.forEach((location) => {
-    const { location_id, name, description, pmm_server_config, pmm_client_config, s3_config } = location;
+    const { location_id, name, description, pmm_client_config, s3_config } = location;
     const newLocation: Partial<StorageLocation> = { name, description, locationID: location_id };
 
     if (s3_config) {
@@ -23,9 +23,6 @@ export const formatLocationList = (rawList: StorageLocationListReponse): Storage
       (newLocation as S3Location).accessKey = access_key;
       (newLocation as S3Location).secretKey = secret_key;
       (newLocation as S3Location).bucketName = bucket_name;
-    } else if (pmm_server_config) {
-      newLocation.path = pmm_server_config.path;
-      newLocation.type = LocationType.SERVER;
     } else if (pmm_client_config) {
       newLocation.path = pmm_client_config.path;
       newLocation.type = LocationType.CLIENT;
@@ -49,8 +46,6 @@ export const formatToRawLocation = (
     result.s3_config = { endpoint: path, access_key: accessKey, secret_key: secretKey, bucket_name: bucketName };
   } else if (type === LocationType.CLIENT) {
     result.pmm_client_config = localObj;
-  } else {
-    result.pmm_server_config = localObj;
   }
 
   return result;

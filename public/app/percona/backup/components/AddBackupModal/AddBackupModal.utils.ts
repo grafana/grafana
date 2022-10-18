@@ -7,6 +7,7 @@ import { PeriodType } from 'app/percona/shared/helpers/cron/types';
 import { formatBackupMode } from '../../Backup.utils';
 import { Backup } from '../BackupInventory/BackupInventory.types';
 import { ScheduledBackup } from '../ScheduledBackups/ScheduledBackups.types';
+import { LocationType } from '../StorageLocations/StorageLocations.types';
 
 import { AddBackupFormProps } from './AddBackupModal.types';
 
@@ -170,3 +171,6 @@ export const getDataModelFromVendor = (db: Databases): DataModel => {
 
 export const isDataModelDisabled = (values: AddBackupFormProps) =>
   values.service?.value?.vendor === Databases.mysql || values.mode === BackupMode.PITR;
+
+export const getLabelForStorageOption = (type: LocationType) =>
+  `${type}${type === LocationType.CLIENT ? ' (not available for MySQL)' : ''}`;

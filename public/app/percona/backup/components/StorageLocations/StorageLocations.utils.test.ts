@@ -36,7 +36,7 @@ const rawFSLocation: StorageLocationReponse = {
   location_id: 'location_4',
   name: 'second location',
   description: 'description_2',
-  pmm_server_config: {
+  pmm_client_config: {
     path: '/foo/bar',
   },
 };
@@ -64,8 +64,8 @@ describe('StorageLocationsUtils', () => {
       locationID: rawFSLocation.location_id,
       name: rawFSLocation.name,
       description: rawFSLocation.description,
-      type: LocationType.SERVER,
-      path: rawFSLocation.pmm_server_config?.path,
+      type: LocationType.CLIENT,
+      path: rawFSLocation.pmm_client_config?.path,
     });
   });
 
@@ -91,11 +91,11 @@ describe('StorageLocationsUtils', () => {
       },
     });
 
-    expect(formatToRawLocation({ ...fsLocation, type: LocationType.SERVER })).toEqual({
+    expect(formatToRawLocation({ ...fsLocation, type: LocationType.CLIENT })).toEqual({
       location_id: fsLocation.locationID,
       name: fsLocation.name,
       description: fsLocation.description,
-      pmm_server_config: {
+      pmm_client_config: {
         path: fsLocation.path,
       },
     });

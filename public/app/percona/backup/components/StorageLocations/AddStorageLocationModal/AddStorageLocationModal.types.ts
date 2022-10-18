@@ -16,7 +16,6 @@ export interface AddStorageLocationFormProps {
   type: LocationType;
   endpoint: string;
   client: string;
-  server: string;
   accessKey: string;
   secretKey: string;
   bucketName: string;

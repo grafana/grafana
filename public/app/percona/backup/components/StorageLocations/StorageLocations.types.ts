@@ -1,7 +1,6 @@
 export enum LocationType {
   S3 = 'S3',
   CLIENT = 'Local Client',
-  SERVER = 'Local Server',
 }
 
 export interface StorageLocation {
@@ -34,7 +33,6 @@ export interface StorageLocationReponse {
   name: string;
   description: string;
   s3_config?: S3ConfigResponse;
-  pmm_server_config?: FSConfigResponse;
   pmm_client_config?: FSConfigResponse;
 }
 

@@ -36,6 +36,8 @@ export const Messages = {
     },
     deleteModalTitle: 'Delete backup artifact',
     deleteFromStorage: 'Delete from storage',
+    deleteWarning:
+      "For security reasons, we won't delete this backup from the filesystem. Please make sure to manually remove it.",
     getLogsTitle: (name: string) => `Backup logs for ${name}`,
     getDeleteMessage: (name: string) => `Are you sure you want to delete "${name}"?`,
   },

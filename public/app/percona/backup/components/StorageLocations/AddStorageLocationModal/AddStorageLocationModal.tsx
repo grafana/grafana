@@ -28,12 +28,11 @@ import { LocalFields } from './LocalFields';
 import { S3Fields } from './S3Fields';
 
 const TypeField: FC<TypeFieldProps> = ({ values }) => {
-  const { type, client, server, endpoint, accessKey, secretKey, bucketName } = values;
+  const { type, client, endpoint, accessKey, secretKey, bucketName } = values;
   const fieldMap = {
     [LocationType.S3]: (
       <S3Fields endpoint={endpoint} bucketName={bucketName} accessKey={accessKey} secretKey={secretKey} />
     ),
-    [LocationType.SERVER]: <LocalFields name="server" path={server} />,
     [LocationType.CLIENT]: <LocalFields name="client" path={client} />,
   };
 
@@ -48,10 +47,6 @@ const typeOptions: Array<SelectableValue<LocationType>> = [
   {
     value: LocationType.CLIENT,
     label: 'Local Client',
-  },
-  {
-    value: LocationType.SERVER,
-    label: 'Local Server',
   },
 ];
 
@@ -84,8 +79,7 @@ export const AddStorageLocationModal: FC<AddStorageLocationModalProps> = ({
               validators={[validators.required, validators.maxLength(MAX_NAME_LENGTH)]}
             />
             <TextareaInputField name="description" label={Messages.description} />
-            {/* TODO remove disabled when API allows all three types */}
-            <RadioButtonGroupField disabled options={typeOptions} name="type" label={Messages.type} fullWidth />
+            <RadioButtonGroupField options={typeOptions} name="type" label={Messages.type} fullWidth />
             <TypeField values={values} />
             <HorizontalGroup justify="center" spacing="md">
               <LoaderButton
@@ -99,17 +93,19 @@ export const AddStorageLocationModal: FC<AddStorageLocationModalProps> = ({
               >
                 {location ? Messages.editAction : Messages.addAction}
               </LoaderButton>
-              <LoaderButton
-                type="button"
-                className={cx(styles.button, styles.testButton)}
-                data-testid="storage-location-test-button"
-                size="md"
-                loading={waitingLocationValidation}
-                disabled={!valid}
-                onClick={() => handleTest(values)}
-              >
-                {Messages.test}
-              </LoaderButton>
+              {values.type === LocationType.S3 && (
+                <LoaderButton
+                  type="button"
+                  className={cx(styles.button, styles.testButton)}
+                  data-testid="storage-location-test-button"
+                  size="md"
+                  loading={waitingLocationValidation}
+                  disabled={!valid}
+                  onClick={() => handleTest(values)}
+                >
+                  {Messages.test}
+                </LoaderButton>
+              )}
               <Button
                 className={styles.button}
                 data-testid="storage-location-cancel-button"
