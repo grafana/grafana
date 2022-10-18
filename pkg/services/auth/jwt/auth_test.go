@@ -121,7 +121,7 @@ func TestJWTGeneration(t *testing.T) {
 
 	enableFeature := func(t *testing.T, cfg *setting.Cfg) {
 		t.Helper()
-		features = featuremgmt.WithFeatures(featuremgmt.FlagTemporaryJWTAuth)
+		features = featuremgmt.WithFeatures(featuremgmt.FlagJwtTokenGeneration)
 		t.Cleanup(func() {
 			features = featuremgmt.WithFeatures()
 		})

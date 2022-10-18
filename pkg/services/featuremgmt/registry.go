@@ -340,8 +340,8 @@ var (
 			Description: "Access control primitives for OnCall",
 		},
 		{
-			Name:            "temporaryJWTAuth",
-			Description:     "Enable generation of temporary JWT tokens for authentication.",
+			Name:            "jwtTokenGeneration",
+			Description:     "Enable token generation in JWT Auth service.",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
 		},

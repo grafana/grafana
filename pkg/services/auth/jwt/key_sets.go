@@ -63,7 +63,7 @@ func (s *AuthService) checkKeySetConfiguration() error {
 		return ErrKeySetConfigurationAmbiguous
 	}
 
-	if s.Features.IsEnabled(featuremgmt.FlagTemporaryJWTAuth) {
+	if s.Features.IsEnabled(featuremgmt.FlagJwtTokenGeneration) {
 		count++
 	}
 
@@ -169,7 +169,7 @@ func (s *AuthService) initKeySet() error {
 		})
 	}
 
-	if s.Features.IsEnabled(featuremgmt.FlagTemporaryJWTAuth) {
+	if s.Features.IsEnabled(featuremgmt.FlagJwtTokenGeneration) {
 		set := jose.JSONWebKeySet{}
 		privKey, pubKey, err := generateJWK()
 		if err != nil {

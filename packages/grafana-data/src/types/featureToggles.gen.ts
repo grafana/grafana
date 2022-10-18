@@ -78,5 +78,5 @@ export interface FeatureToggles {
   showDashboardValidationWarnings?: boolean;
   mysqlAnsiQuotes?: boolean;
   accessControlOnCall?: boolean;
-  temporaryJWTAuth?: boolean;
+  jwtTokenGeneration?: boolean;
 }
