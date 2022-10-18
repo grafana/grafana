@@ -218,6 +218,7 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
       reportInteraction('grafana_explore_logs_log_context_load_more_clicked', {
         datasourceType,
         logRowUid,
+        newLimit: limit + 10,
       });
     },
     limit,
