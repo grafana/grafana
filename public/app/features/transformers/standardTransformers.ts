@@ -23,7 +23,7 @@ import { sortByTransformRegistryItem } from './editors/SortByTransformerEditor';
 import { extractFieldsTransformRegistryItem } from './extractFields/ExtractFieldsTransformerEditor';
 import { joinByLabelsTransformRegistryItem } from './joinByLabels/JoinByLabelsTransformerEditor';
 import { fieldLookupTransformRegistryItem } from './lookupGazetteer/FieldLookupTransformerEditor';
-import { partitionByValuesTransformRegistryItem } from './partitionByValues/partitionByValues';
+import { partitionByValuesTransformRegistryItem } from './partitionByValues/PartitionByValuesEditor';
 import { prepareTimeseriesTransformerRegistryItem } from './prepareTimeSeries/PrepareTimeSeriesEditor';
 import { rowsToFieldsTransformRegistryItem } from './rowsToFields/RowsToFieldsTransformerEditor';
 import { spatialTransformRegistryItem } from './spatial/SpatialTransformerEditor';

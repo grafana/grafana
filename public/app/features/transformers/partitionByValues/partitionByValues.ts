@@ -4,9 +4,7 @@ import {
   ArrayVector,
   DataFrame,
   DataTransformerID,
-  PluginState,
   SynchronousDataTransformerInfo,
-  TransformerRegistryItem,
   getFieldMatcher,
 } from '@grafana/data';
 import {
@@ -14,8 +12,6 @@ import {
   getMatcherConfig,
 } from '@grafana/data/src/transformations/transformers/filterByName';
 import { noopTransformer } from '@grafana/data/src/transformations/transformers/noop';
-
-import { FilterByNameTransformerEditor } from '../editors/FilterByNameTransformerEditor';
 
 import { partition } from './partition';
 
@@ -68,13 +64,4 @@ export const partitionByValuesTransformer: SynchronousDataTransformerInfo<Filter
       });
     };
   },
-};
-
-export const partitionByValuesTransformRegistryItem: TransformerRegistryItem<FilterFieldsByNameTransformerOptions> = {
-  id: DataTransformerID.partitionByValues,
-  editor: FilterByNameTransformerEditor,
-  transformation: partitionByValuesTransformer,
-  name: partitionByValuesTransformer.name,
-  description: partitionByValuesTransformer.description,
-  state: PluginState.alpha,
 };
