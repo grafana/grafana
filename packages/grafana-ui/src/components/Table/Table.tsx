@@ -8,7 +8,6 @@ import {
   useResizeColumns,
   useSortBy,
   useTable,
-  useExpanded,
 } from 'react-table';
 import { FixedSizeList } from 'react-window';
 
