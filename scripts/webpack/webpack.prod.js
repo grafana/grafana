@@ -1,10 +1,10 @@
 'use strict';
 
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
+const { ESBuildMinifyPlugin } = require('esbuild-loader');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const path = require('path');
-const TerserPlugin = require('terser-webpack-plugin');
 const { WebpackManifestPlugin } = require('webpack-manifest-plugin');
 const { merge } = require('webpack-merge');
 
@@ -45,8 +45,8 @@ module.exports = (env = {}) =>
       nodeEnv: 'production',
       minimize: parseInt(env.noMinify, 10) !== 1,
       minimizer: [
-        new TerserPlugin({
-          parallel: false,
+        new ESBuildMinifyPlugin({
+          target: 'es2015', // Syntax to compile to (see options below for possible values)
         }),
         new CssMinimizerPlugin(),
       ],
