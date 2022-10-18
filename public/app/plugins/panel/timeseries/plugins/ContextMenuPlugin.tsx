@@ -2,15 +2,7 @@ import { css as cssCore, Global } from '@emotion/react';
 import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useClickAway } from 'react-use';
 
-import {
-  CartesianCoords2D,
-  DataFrame,
-  getFieldDisplayName,
-  InterpolateFunction,
-  SortedVector,
-  TimeZone,
-  ValueLinkConfig,
-} from '@grafana/data';
+import { CartesianCoords2D, DataFrame, getFieldDisplayName, InterpolateFunction, TimeZone } from '@grafana/data';
 import {
   ContextMenu,
   GraphContextMenuHeader,
@@ -257,27 +249,23 @@ export const ContextMenuView: React.FC<ContextMenuViewProps> = ({
 
       const hasLinks = field.config.links && field.config.links.length > 0;
 
-      const valueLinkConfig: ValueLinkConfig = {};
-
-      if (field.values instanceof SortedVector) {
-        valueLinkConfig.valueRowIndex = field.values.getOrderIndex(dataIdx);
-      } else {
-        valueLinkConfig.valueRowIndex = dataIdx;
-      }
-
       if (hasLinks) {
         if (field.getLinks) {
           items.push({
-            items: field.getLinks(valueLinkConfig).map<MenuItemProps>((link) => {
-              return {
-                label: link.title,
-                ariaLabel: link.title,
-                url: link.href,
-                target: link.target,
-                icon: link.target === '_self' ? 'link' : 'external-link-alt',
-                onClick: link.onClick,
-              };
-            }),
+            items: field
+              .getLinks({
+                valueRowIndex: dataIdx,
+              })
+              .map<MenuItemProps>((link) => {
+                return {
+                  label: link.title,
+                  ariaLabel: link.title,
+                  url: link.href,
+                  target: link.target,
+                  icon: link.target === '_self' ? 'link' : 'external-link-alt',
+                  onClick: link.onClick,
+                };
+              }),
           });
         }
       }

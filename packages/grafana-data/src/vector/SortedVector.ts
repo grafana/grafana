@@ -16,10 +16,6 @@ export class SortedVector<T = any> implements Vector<T> {
     return this.source.get(this.order[index]);
   }
 
-  getOrderIndex(index: number): number {
-    return this.order[index];
-  }
-
   toArray(): T[] {
     return vectorToArray(this);
   }
