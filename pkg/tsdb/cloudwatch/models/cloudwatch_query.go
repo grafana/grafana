@@ -10,6 +10,27 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/cwlog"
 )
 
+type CloudWatchQuery struct {
+	RefId             string
+	Region            string
+	Id                string
+	Namespace         string
+	MetricName        string
+	Statistic         string
+	Expression        string
+	SqlExpression     string
+	ReturnData        bool
+	Dimensions        map[string][]string
+	Period            int
+	Alias             string
+	Label             string
+	MatchExact        bool
+	UsedExpression    string
+	TimezoneUTCOffset string
+	MetricQueryType   MetricQueryType
+	MetricEditorMode  MetricEditorMode
+}
+
 type (
 	MetricQueryType  uint32
 	MetricEditorMode uint32
@@ -32,27 +53,6 @@ const (
 	GMDApiModeMathExpression
 	GMDApiModeSQLExpression
 )
-
-type CloudWatchQuery struct {
-	RefId             string
-	Region            string
-	Id                string
-	Namespace         string
-	MetricName        string
-	Statistic         string
-	Expression        string
-	SqlExpression     string
-	ReturnData        bool
-	Dimensions        map[string][]string
-	Period            int
-	Alias             string
-	Label             string
-	MatchExact        bool
-	UsedExpression    string
-	TimezoneUTCOffset string
-	MetricQueryType   MetricQueryType
-	MetricEditorMode  MetricEditorMode
-}
 
 func (q *CloudWatchQuery) GetGMDAPIMode() GMDApiMode {
 	if q.MetricQueryType == MetricQueryTypeSearch && q.MetricEditorMode == MetricEditorModeBuilder {

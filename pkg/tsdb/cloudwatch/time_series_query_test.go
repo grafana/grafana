@@ -13,7 +13,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -143,16 +145,16 @@ type queryDimensions struct {
 }
 
 type queryParameters struct {
-	MetricQueryType  metricQueryType  `json:"metricQueryType"`
-	MetricEditorMode metricEditorMode `json:"metricEditorMode"`
-	Dimensions       queryDimensions  `json:"dimensions"`
-	Expression       string           `json:"expression"`
-	Alias            string           `json:"alias"`
-	Label            *string          `json:"label"`
-	Statistic        string           `json:"statistic"`
-	Period           string           `json:"period"`
-	MatchExact       bool             `json:"matchExact"`
-	MetricName       string           `json:"metricName"`
+	MetricQueryType  models.MetricQueryType  `json:"metricQueryType"`
+	MetricEditorMode models.MetricEditorMode `json:"metricEditorMode"`
+	Dimensions       queryDimensions         `json:"dimensions"`
+	Expression       string                  `json:"expression"`
+	Alias            string                  `json:"alias"`
+	Label            *string                 `json:"label"`
+	Statistic        string                  `json:"statistic"`
+	Period           string                  `json:"period"`
+	MatchExact       bool                    `json:"matchExact"`
+	MetricName       string                  `json:"metricName"`
 }
 
 var queryId = "query id"
@@ -161,11 +163,11 @@ func newTestQuery(t testing.TB, p queryParameters) json.RawMessage {
 	t.Helper()
 
 	tsq := struct {
-		Type             string           `json:"type"`
-		MetricQueryType  metricQueryType  `json:"metricQueryType"`
-		MetricEditorMode metricEditorMode `json:"metricEditorMode"`
-		Namespace        string           `json:"namespace"`
-		MetricName       string           `json:"metricName"`
+		Type             string                  `json:"type"`
+		MetricQueryType  models.MetricQueryType  `json:"metricQueryType"`
+		MetricEditorMode models.MetricEditorMode `json:"metricEditorMode"`
+		Namespace        string                  `json:"namespace"`
+		MetricName       string                  `json:"metricName"`
 		Dimensions       struct {
 			InstanceID []string `json:"InstanceId,omitempty"`
 		} `json:"dimensions"`
@@ -315,8 +317,8 @@ func Test_QueryData_response_data_frame_names(t *testing.T) {
 
 	t.Run("where user defines search expression and alias is defined, then frame name prioritizes period and stat from expression over input", func(t *testing.T) {
 		query := newTestQuery(t, queryParameters{
-			MetricQueryType:  MetricQueryTypeSearch, // contributes to isUserDefinedSearchExpression = true
-			MetricEditorMode: MetricEditorModeRaw,   // contributes to isUserDefinedSearchExpression = true
+			MetricQueryType:  models.MetricQueryTypeSearch, // contributes to isUserDefinedSearchExpression = true
+			MetricEditorMode: models.MetricEditorModeRaw,   // contributes to isUserDefinedSearchExpression = true
 			Alias:            "{{period}} {{stat}}",
 			Expression:       `SEARCH('{AWS/EC2,InstanceId} MetricName="CPUUtilization"', 'Average', 300)`, // period 300 and stat 'Average' parsed from this expression
 			Statistic:        "Maximum",                                                                    // stat parsed from expression takes precedence over 'Maximum'
@@ -340,8 +342,8 @@ func Test_QueryData_response_data_frame_names(t *testing.T) {
 
 	t.Run("where no alias is provided and query is math expression, then frame name is queryId", func(t *testing.T) {
 		query := newTestQuery(t, queryParameters{
-			MetricQueryType:  MetricQueryTypeSearch,
-			MetricEditorMode: MetricEditorModeRaw,
+			MetricQueryType:  models.MetricQueryTypeSearch,
+			MetricEditorMode: models.MetricEditorModeRaw,
 		})
 
 		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
@@ -361,7 +363,7 @@ func Test_QueryData_response_data_frame_names(t *testing.T) {
 
 	t.Run("where no alias provided and query type is MetricQueryTypeQuery, then frame name is label", func(t *testing.T) {
 		query := newTestQuery(t, queryParameters{
-			MetricQueryType: MetricQueryTypeQuery,
+			MetricQueryType: models.MetricQueryTypeQuery,
 		})
 
 		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{

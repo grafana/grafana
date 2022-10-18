@@ -13,12 +13,37 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/cwlog"
 )
 
 const timeSeriesQuery = "timeSeriesQuery"
 
 var validMetricDataID = regexp.MustCompile(`^[a-z][a-zA-Z0-9_]*$`)
+
+type metricsDataQuery struct {
+	Datasource        map[string]string      `json:"datasource,omitempty"`
+	Dimensions        map[string]interface{} `json:"dimensions,omitempty"`
+	Expression        string                 `json:"expression,omitempty"`
+	Id                string                 `json:"id,omitempty"`
+	Label             *string                `json:"label,omitempty"`
+	MatchExact        *bool                  `json:"matchExact,omitempty"`
+	MaxDataPoints     int                    `json:"maxDataPoints,omitempty"`
+	MetricEditorMode  *int                   `json:"metricEditorMode,omitempty"`
+	MetricName        string                 `json:"metricName,omitempty"`
+	MetricQueryType   MetricQueryType        `json:"metricQueryType,omitempty"`
+	Namespace         string                 `json:"namespace,omitempty"`
+	Period            string                 `json:"period,omitempty"`
+	RefId             string                 `json:"refId,omitempty"`
+	Region            string                 `json:"region,omitempty"`
+	SqlExpression     string                 `json:"sqlExpression,omitempty"`
+	Statistic         *string                `json:"statistic,omitempty"`
+	Statistics        []*string              `json:"statistics,omitempty"`
+	TimezoneUTCOffset string                 `json:"timezoneUTCOffset,omitempty"`
+	QueryType         string                 `json:"type,omitempty"`
+	Hide              *bool                  `json:"hide,omitempty"`
+	Alias             string                 `json:"alias,omitempty"`
+}
 
 // ParseQueries parses the json queries and returns a map of cloudWatchQueries by region. The cloudWatchQuery has a 1 to 1 mapping to a query editor row
 func ParseQueries(queries []backend.DataQuery, startTime time.Time, endTime time.Time, dynamicLabelsEnabled bool) (map[string][]*CloudWatchQuery, error) {
@@ -29,10 +54,10 @@ func ParseQueries(queries []backend.DataQuery, startTime time.Time, endTime time
 	}
 
 	for _, query := range migratedQueries {
-		var metricsDataQuery MetricsDataQuery
+		var metricsDataQuery metricsDataQuery
 		err := json.Unmarshal(query.JSON, &metricsDataQuery)
 		if err != nil {
-			return nil, &queryError{err: err, RefID: query.RefID}
+			return nil, &QueryError{Err: err, RefID: query.RefID}
 		}
 
 		queryType := metricsDataQuery.QueryType
@@ -48,7 +73,7 @@ func ParseQueries(queries []backend.DataQuery, startTime time.Time, endTime time
 		refID := query.RefID
 		query, err := parseRequestQuery(metricsDataQuery, refID, startTime, endTime)
 		if err != nil {
-			return nil, &queryError{err: err, RefID: refID}
+			return nil, &QueryError{Err: err, RefID: refID}
 		}
 
 		if _, exist := result[query.Region]; !exist {
@@ -65,7 +90,7 @@ func migrateLegacyQuery(queries []backend.DataQuery, dynamicLabelsEnabled bool) 
 	migratedQueries := []*backend.DataQuery{}
 	for _, q := range queries {
 		query := q
-		var queryJson *MetricsDataQuery
+		var queryJson *metricsDataQuery
 		err := json.Unmarshal(query.JSON, &queryJson)
 		if err != nil {
 			return nil, err
@@ -92,7 +117,7 @@ func migrateLegacyQuery(queries []backend.DataQuery, dynamicLabelsEnabled bool) 
 // migrateStatisticsToStatistic migrates queries that has a `statistics` field to use the `statistic` field instead.
 // In case the query used more than one stat, the first stat in the slice will be used in the statistic field
 // Read more here https://github.com/grafana/grafana/issues/30629
-func migrateStatisticsToStatistic(queryJson *MetricsDataQuery) error {
+func migrateStatisticsToStatistic(queryJson *metricsDataQuery) error {
 	// If there's not a statistic property in the json, we know it's the legacy format and then it has to be migrated
 	if queryJson.Statistic == nil {
 		if queryJson.Statistics == nil {
@@ -117,7 +142,7 @@ var aliasPatterns = map[string]string{
 
 var legacyAliasRegexp = regexp.MustCompile(`{{\s*(.+?)\s*}}`)
 
-func migrateAliasToDynamicLabel(queryJson *MetricsDataQuery) {
+func migrateAliasToDynamicLabel(queryJson *metricsDataQuery) {
 	fullAliasField := queryJson.Alias
 
 	if fullAliasField != "" {
@@ -136,7 +161,7 @@ func migrateAliasToDynamicLabel(queryJson *MetricsDataQuery) {
 	queryJson.Label = &fullAliasField
 }
 
-func parseRequestQuery(dataQuery MetricsDataQuery, refId string, startTime time.Time, endTime time.Time) (*CloudWatchQuery, error) {
+func parseRequestQuery(dataQuery metricsDataQuery, refId string, startTime time.Time, endTime time.Time) (*CloudWatchQuery, error) {
 	cwlog.Debug("Parsing request query", "query", dataQuery)
 	result := CloudWatchQuery{
 		Alias:             dataQuery.Alias,
