@@ -29,7 +29,7 @@ type dsCache struct {
 	mu             sync.Mutex
 }
 
-func (c *dsCache) check(ctx context.Context) error {
+func (c *dsCache) refreshCache(ctx context.Context) error {
 	old := c.timestamp
 
 	c.mu.Lock()
@@ -92,7 +92,7 @@ func (c *dsCache) check(ctx context.Context) error {
 
 		// Register the internal builtin grafana datasource
 		gds := &dsVal{
-			Name:         grafanads.DatasourceUID,
+			Name:         grafanads.DatasourceName,
 			UID:          grafanads.DatasourceUID,
 			Type:         grafanads.DatasourceUID,
 			PluginExists: true,
