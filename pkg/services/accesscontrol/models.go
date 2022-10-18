@@ -285,25 +285,25 @@ type SimplifiedUserPermissionDTO struct {
 
 func Simplify(ps []Permission) []SimplifiedUserPermissionDTO {
 	var ok bool
-	permByAction := map[string]*SimplifiedUserPermissionDTO{}
+	actionIndexes := map[string]int{}
 	res := []SimplifiedUserPermissionDTO{}
 	for i := range ps {
-		var s *SimplifiedUserPermissionDTO
-		if s, ok = permByAction[ps[i].Action]; ok {
+		var actionIndex int
+		if actionIndex, ok = actionIndexes[ps[i].Action]; ok {
 			// Action already processed
-			if s.All {
+			if res[actionIndex].All {
 				// Action applied to a wildcard
 				continue
 			}
 		} else {
 			res = append(res, SimplifiedUserPermissionDTO{Action: ps[i].Action})
-			s = &res[len(res)-1]
-			permByAction[ps[i].Action] = s
+			actionIndex = len(res) - 1
+			actionIndexes[ps[i].Action] = actionIndex
 		}
 		// TODO double check
 		if ps[i].Scope == "*" || strings.HasSuffix(ps[i].Scope, ":*") {
-			s.All = true
-			s.UIDs = nil
+			res[actionIndex].All = true
+			res[actionIndex].UIDs = nil
 			continue
 		}
 		// TODO double check
@@ -311,7 +311,7 @@ func Simplify(ps []Permission) []SimplifiedUserPermissionDTO {
 		if len(parts) != maxPrefixParts+1 {
 			continue
 		}
-		s.UIDs = append(s.UIDs, parts[2])
+		res[actionIndex].UIDs = append(res[actionIndex].UIDs, parts[2])
 	}
 	return res
 }

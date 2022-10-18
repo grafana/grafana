@@ -103,12 +103,13 @@ func (s *AccessControlStore) GetUsersPermissions(ctx context.Context, orgID int6
 						SELECT user.id AS user_id
 						FROM user WHERE user.is_admin
 					) AS sa ON 1 = 1 
-					WHERE br.role = 'Grafana Admin'
+					WHERE br.role = ?
 		) AS up
 		WHERE (org_id = ? OR org_id = ?) AND action LIKE ?
 		`
 
-		if err := sess.SQL(q, globalOrgID, orgID, actionPrefix+"%").Find(&dbPerms); err != nil {
+		if err := sess.SQL(q, accesscontrol.RoleGrafanaAdmin, globalOrgID, orgID, actionPrefix+"%").
+			Find(&dbPerms); err != nil {
 			return err
 		}
 

@@ -262,7 +262,7 @@ func (s *Service) GetSimplifiedUsersPermissions(ctx context.Context, user *user.
 			if strings.HasSuffix(scopes[i], "*") {
 				return func(_ int64) bool { return true }
 			}
-			parts := strings.Split(scopes[i], "")
+			parts := strings.Split(scopes[i], ":")
 			if len(parts) != 3 {
 				continue
 			}
@@ -298,12 +298,16 @@ func (s *Service) GetSimplifiedUsersPermissions(ctx context.Context, user *user.
 		if !canView(userID) {
 			continue
 		}
+		perms := []accesscontrol.Permission{}
 		for i := range roles {
 			basicPermission, ok := basicPermissions[roles[i]]
 			if !ok {
 				continue
 			}
-			res[userID] = accesscontrol.Simplify(basicPermission)
+			perms = append(perms, basicPermission...)
+		}
+		if len(perms) > 0 {
+			res[userID] = accesscontrol.Simplify(perms)
 		}
 	}
 
