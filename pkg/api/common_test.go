@@ -394,9 +394,9 @@ func setupHTTPServerWithCfgDb(
 		userSvc = userMock
 	} else {
 		var err error
+		ac = acimpl.ProvideAccessControl(cfg)
 		acService, err = acimpl.ProvideService(cfg, db, routeRegister, localcache.ProvideService(), ac)
 		require.NoError(t, err)
-		ac = acimpl.ProvideAccessControl(cfg)
 		userSvc = userimpl.ProvideService(db, nil, cfg, teamimpl.ProvideService(db, cfg), localcache.ProvideService())
 	}
 	teamPermissionService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, routeRegister, db, ac, license, acService, teamService, userSvc)
