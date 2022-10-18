@@ -5,6 +5,7 @@ package dashboard
 import (
 	"embed"
 
+	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/framework/kind"
 	"github.com/grafana/thema"
 	"github.com/grafana/thema/vmux"
@@ -12,6 +13,11 @@ import (
 
 //go:embed kind.cue
 var cueFS embed.FS
+
+// rootrel is the relative path from the grafana repository root to the
+// directory containing these files. Necessary for error messages to
+// point to the right .cue file.
+const rootrel string = "pkg/kind/dashboard"
 
 // TODO standard generated docs
 type Kind struct {
@@ -26,7 +32,11 @@ var _ kind.Structured = &Kind{}
 
 // TODO standard generated docs
 func NewKind(rt *thema.Runtime, opts ...thema.BindOption) (*Kind, error) {
-	kdef, err := kind.ParseKindFS(cueFS, rt)
+	kfs, err := cuectx.PrefixWithGrafanaCUE(rootrel, cueFS)
+	if err != nil {
+		return nil, err
+	}
+	kdef, err := kind.ParseKindFS(kfs, rootrel, rt.Context())
 	if err != nil {
 		return nil, err
 	}

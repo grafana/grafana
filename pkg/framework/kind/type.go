@@ -20,7 +20,7 @@ func (m CoreStructuredMeta) _private() {}
 
 // TODO
 type CustomStructuredMeta struct {
-	CurrentVersion thema.SyntacticVersion
+	CurrentVersion thema.SyntacticVersion `json:"currentVersion"`
 	Maturity       Maturity
 }
 

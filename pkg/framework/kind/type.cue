@@ -39,8 +39,8 @@ import (
 //   - Byte sequences are like arguments to the class constructor
 //   - Entities are like objects - what's returned from the constructor
 //
-// There are two fundamental varieties of Kinds: Raw and Structured.
-#Kind: #Raw | #Structured
+// There are four essential categories of kinds: Raw, Slot, CoreStructured and CustomStructured.
+#Kind: #Raw | #Slot | #CoreStructured | #CustomStructured
 
 // properties shared between all kind varieties.
 _sharedKind: {
@@ -64,13 +64,13 @@ _sharedKind: {
 
 	// The kind system itself is not mature enough yet for any particula
 	// kind to be called "mature."
-	 // TODO remove this once system is ready https://github.com/orgs/grafana/projects/133/views/8
+	// TODO remove this once system is ready https://github.com/orgs/grafana/projects/133/views/8
 	maturity: "committed" | "experimental" | "stable"
 
 	form: "structured" | "raw"
 }
 
-// Raw is a variety of Kind that specifies a type for a raw file,
+// Raw is a category of Kind that specifies a type for a raw file,
 // like an svg or parquet file. Grafana mostly acts as asset storage for raw
 // types: the byte sequence is a black box to Grafana, and type is determined
 // through metadata such as file extension.
@@ -81,19 +81,12 @@ _sharedKind: {
 
 	maturity: *"experimental" | "mature" // TODO unclear if we want maturity for raw kinds
 
-	// Set this if there's a sanitize function that should be associated with this
-	// raw type. A call to the named function will be generated.
-	// TODO decide where this gets generated - almost certainly must be outside pkg/kind tree
-	//
-	// The function must conform to (TODO decide on a type signature)
-	sanitizeFuncName?: string
-
-	// need
+	// known TODOs
 	// - sanitize function
 	// - get summary
 }
 
-// Structured is a variety of Kind where a schema specifies
+// Structured is a category of Kind where a schema specifies
 // validity rules for the byte sequence. These represent all the conventional
 // types and functional resources in Grafana, such as dashboards and datasources.
 //
@@ -103,12 +96,11 @@ _sharedKind: {
 // the risks arising from executing code from potentially untrusted third parties.
 #Structured: {
 	_sharedKind
-	form:     "structured"
+	form: "structured"
 
-	lineage:  thema.#Lineage
+	lineage: thema.#Lineage
 
-	// currentVersion is the syntactic version of the lineage's latest schema.
-	currentVersion: thema.#SyntacticVersion & (thema.#LatestVersion & { lin: lineage }).out
+	currentVersion: thema.#SyntacticVersion & (thema.#LatestVersion & {lin: lineage}).out
 }
 
 // TODO
@@ -118,12 +110,13 @@ _sharedKind: {
 }
 
 // TODO
-CustomStructured: {
+#CustomStructured: {
 	#Structured
 	maturity: *"experimental" | "mature"
+	...
 }
 
-// SlotKind is a variety of structured kind that provides schema elements for
+// A Slot is a structured kind that provides schema elements for
 // composition into CoreStructured and CustomStructured kinds. Grafana plugins
 // provide SlotKinds; for example, a datasource plugin provides a SlotKind to
 // describe the structure of its queries, which is then composed into dashboards
@@ -132,7 +125,7 @@ CustomStructured: {
 // Each SlotKind is an implementation of exactly one Slot, a shared meta-schema
 // defined by Grafana itself that constrains the shape of schemas declared in
 // that SlotKind.
-#SlotKind: {
+#Slot: {
 	_sharedKind
 	form: "structured"
 
