@@ -7,7 +7,7 @@ import { NavModelItem, GrafanaTheme2 } from '@grafana/data';
 import { Alert, LoadingPlaceholder, withErrorBoundary, useStyles2, Icon, Stack } from '@grafana/ui';
 import { useDispatch } from 'app/types';
 
-import { ContactPointsState } from '../../../types/alerting';
+import { ContactPointsState } from '../../../types';
 
 import { alertmanagerApi } from './api/alertmanagerApi';
 import { useGetContactPointsState } from './api/receiversApi';
@@ -52,7 +52,7 @@ function NotificationError({ errorCount }: NotificationErrorProps) {
 
 type PageType = 'receivers' | 'templates' | 'global-config';
 
-const Receivers: FC = () => {
+const Receivers = () => {
   const { useGetAlertmanagerChoiceQuery } = alertmanagerApi;
 
   const alertManagers = useAlertManagersByPermission('notification');
