@@ -20,6 +20,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/constants"
 )
 
 type suggestData struct {
@@ -71,7 +72,7 @@ func (e *cloudWatchExecutor) handleGetRegions(pluginCtx backend.PluginContext, p
 	if err != nil {
 		return nil, err
 	}
-	regions := knownRegions
+	regions := constants.Regions
 	r, err := client.DescribeRegions(&ec2.DescribeRegionsInput{})
 	if err != nil {
 		// ignore error for backward compatibility
@@ -105,7 +106,7 @@ func (e *cloudWatchExecutor) handleGetRegions(pluginCtx backend.PluginContext, p
 
 func (e *cloudWatchExecutor) handleGetNamespaces(pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
 	var keys []string
-	for key := range metricsMap {
+	for key := range constants.NamespaceMetricsMap {
 		keys = append(keys, key)
 	}
 
@@ -135,7 +136,7 @@ func (e *cloudWatchExecutor) handleGetMetrics(pluginCtx backend.PluginContext, p
 	var namespaceMetrics []string
 	if !isCustomMetrics(namespace) {
 		var exists bool
-		if namespaceMetrics, exists = metricsMap[namespace]; !exists {
+		if namespaceMetrics, exists = constants.NamespaceMetricsMap[namespace]; !exists {
 			return nil, fmt.Errorf("unable to find namespace %q", namespace)
 		}
 	} else {
@@ -157,7 +158,7 @@ func (e *cloudWatchExecutor) handleGetMetrics(pluginCtx backend.PluginContext, p
 // handleGetAllMetrics returns a slice of suggestData structs with metric and its namespace
 func (e *cloudWatchExecutor) handleGetAllMetrics(pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
 	result := make([]suggestData, 0)
-	for namespace, metrics := range metricsMap {
+	for namespace, metrics := range constants.NamespaceMetricsMap {
 		for _, metric := range metrics {
 			result = append(result, suggestData{Text: namespace, Value: metric, Label: namespace})
 		}
@@ -244,7 +245,7 @@ func (e *cloudWatchExecutor) handleGetDimensionKeys(pluginCtx backend.PluginCont
 			}
 		} else {
 			var exists bool
-			if dimensionValues, exists = dimensionsMap[namespace]; !exists {
+			if dimensionValues, exists = constants.NamespaceDimensionKeysMap[namespace]; !exists {
 				return nil, fmt.Errorf("unable to find dimension %q", namespace)
 			}
 		}
@@ -732,7 +733,7 @@ func isDuplicate(nameList []string, target string) bool {
 }
 
 func isCustomMetrics(namespace string) bool {
-	if _, ok := metricsMap[namespace]; ok {
+	if _, ok := constants.NamespaceMetricsMap[namespace]; ok {
 		return false
 	}
 	return true
