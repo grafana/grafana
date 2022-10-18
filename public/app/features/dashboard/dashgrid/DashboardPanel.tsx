@@ -2,7 +2,6 @@ import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { config } from '@grafana/runtime';
-import { PanelChrome as PanelChromeUI } from '@grafana/ui';
 import { StoreState } from 'app/types';
 
 import { initPanelState } from '../../panel/state/actions';
@@ -45,8 +44,6 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 
 export type Props = OwnProps & ConnectedProps<typeof connector>;
 
-const newPanelChromeUIFlag = Boolean(config.featureToggles.newPanelChromeUI);
-
 export class DashboardPanelUnconnected extends PureComponent<Props> {
   static defaultProps: Partial<Props> = {
     lazy: true,
@@ -73,16 +70,12 @@ export class DashboardPanelUnconnected extends PureComponent<Props> {
     }
   };
 
-  renderPanelChrome = (isInView: boolean) => {
-    const { plugin } = this.props;
-    if (!plugin) {
-      return null;
-    }
+  render() {
+    const { dashboard, panel, isViewing, isEditing, width, height, lazy, plugin } = this.props;
 
-    const { panel, dashboard, isEditing, isViewing, width, height } = this.props;
-
-    if (plugin.angularPanelCtrl) {
-      return (
+    const renderPanelChrome = (isInView: boolean) =>
+      plugin &&
+      (plugin.angularPanelCtrl ? (
         <PanelChromeAngular
           plugin={plugin}
           panel={panel}
@@ -93,20 +86,7 @@ export class DashboardPanelUnconnected extends PureComponent<Props> {
           width={width}
           height={height}
         />
-      );
-    } else if (newPanelChromeUIFlag) {
-      return (
-        <PanelChromeUI
-          title="Test Panel Here"
-          width={400}
-          height={300}
-          leftItems={[<div key={0} style={{ width: 20, height: 20, backgroundColor: 'pink' }}></div>]}
-        >
-          {(innerWidth, innerHeight) => <div style={{ width: innerWidth, height: innerHeight }}></div>}
-        </PanelChromeUI>
-      );
-    } else {
-      return (
+      ) : (
         <PanelChrome
           plugin={plugin}
           panel={panel}
@@ -118,19 +98,14 @@ export class DashboardPanelUnconnected extends PureComponent<Props> {
           height={height}
           onInstanceStateChange={this.onInstanceStateChange}
         />
-      );
-    }
-  };
-
-  render() {
-    const { width, height, lazy } = this.props;
+      ));
 
     return lazy ? (
       <LazyLoader width={width} height={height} onChange={this.onVisibilityChange} onLoad={this.onPanelLoad}>
-        {({ isInView }) => this.renderPanelChrome(isInView)}
+        {({ isInView }) => renderPanelChrome(isInView)}
       </LazyLoader>
     ) : (
-      this.renderPanelChrome(true)
+      renderPanelChrome(true)
     );
   }
 }
