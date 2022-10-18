@@ -106,6 +106,8 @@ func (n Number) Type() parse.ReturnType { return parse.TypeNumberSet }
 // Value returns the actual value allows it to fulfill the Value interface.
 func (n Number) Value() interface{} { return &n }
 
+func (n Number) GetName() string { return n.Frame.Fields[0].Name }
+
 func (n Number) GetLabels() data.Labels { return n.Frame.Fields[0].Labels }
 
 func (n Number) SetLabels(ls data.Labels) { n.Frame.Fields[0].Labels = ls }

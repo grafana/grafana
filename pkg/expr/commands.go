@@ -165,7 +165,7 @@ func (gr *ReduceCommand) Execute(_ context.Context, _ time.Time, vars mathexp.Va
 			}
 			newRes.Values = append(newRes.Values, num)
 		case mathexp.Number: // if incoming vars is just a number, any reduce op is just a noop, add it as it is
-			copyV := mathexp.NewNumber(gr.refID, v.GetLabels())
+			copyV := mathexp.NewNumber(v.GetName(), v.GetLabels())
 			copyV.SetValue(v.GetFloat64Value())
 			copyV.AddNotice(data.Notice{
 				Severity: data.NoticeSeverityWarning,
@@ -270,7 +270,7 @@ func (gr *ResampleCommand) Execute(_ context.Context, now time.Time, vars mathex
 		if !ok {
 			return newRes, fmt.Errorf("can only resample type series, got type %v", val.Type())
 		}
-		num, err := series.Resample(gr.refID, gr.Window, gr.Downsampler, gr.Upsampler, timeRange.From, timeRange.To)
+		num, err := series.Resample(gr.Window, gr.Downsampler, gr.Upsampler, timeRange.From, timeRange.To)
 		if err != nil {
 			return newRes, err
 		}

@@ -47,6 +47,7 @@ func extractEvalString(frame *data.Frame) (s string) {
 		for i, c := range caps {
 			sb.WriteString("[ ")
 			sb.WriteString(fmt.Sprintf("var='%s' ", c.Var))
+			sb.WriteString(fmt.Sprintf("metric='%s' ", c.Metric))
 			sb.WriteString(fmt.Sprintf("labels={%s} ", c.Labels))
 
 			valString := "null"

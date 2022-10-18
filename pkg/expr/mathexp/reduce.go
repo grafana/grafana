@@ -113,7 +113,7 @@ func (s Series) Reduce(refID, rFunc string, mapper ReduceMapper) (Number, error)
 	if s.GetLabels() != nil {
 		l = s.GetLabels().Copy()
 	}
-	number := NewNumber(refID, l)
+	number := NewNumber(s.GetName(), l)
 	var f *float64
 	series := s
 	if mapper != nil {
@@ -129,6 +129,7 @@ func (s Series) Reduce(refID, rFunc string, mapper ReduceMapper) (Number, error)
 	if f != nil && mapper != nil {
 		f = mapper.MapOutput(f)
 	}
+	number.Frame.Fields[0].Name = series.GetName()
 	number.SetValue(f)
 	return number, nil
 }
@@ -140,7 +141,7 @@ type ReduceMapper interface {
 
 // mapSeries creates a series where all points are mapped using the provided map function ReduceMapper.MapInput
 func mapSeries(s Series, mapper ReduceMapper) Series {
-	newSeries := NewSeries(s.Frame.RefID, s.GetLabels(), 0)
+	newSeries := NewSeries(s.GetName(), s.GetLabels(), 0)
 	for i := 0; i < s.Len(); i++ {
 		f := s.GetValue(i)
 		f = mapper.MapInput(f)

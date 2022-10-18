@@ -8,12 +8,12 @@ import (
 )
 
 // Resample turns the Series into a Number based on the given reduction function
-func (s Series) Resample(refID string, interval time.Duration, downsampler string, upsampler string, from, to time.Time) (Series, error) {
+func (s Series) Resample(interval time.Duration, downsampler string, upsampler string, from, to time.Time) (Series, error) {
 	newSeriesLength := int(float64(to.Sub(from).Nanoseconds()) / float64(interval.Nanoseconds()))
 	if newSeriesLength <= 0 {
 		return s, fmt.Errorf("the series cannot be sampled further; the time range is shorter than the interval")
 	}
-	resampled := NewSeries(refID, s.GetLabels(), newSeriesLength+1)
+	resampled := NewSeries(s.GetName(), s.GetLabels(), newSeriesLength+1)
 	bookmark := 0
 	var lastSeen *float64
 	idx := 0

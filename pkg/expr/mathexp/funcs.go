@@ -202,8 +202,9 @@ func perFloat(e *State, val Value, floatF func(x float64) float64) (Value, error
 	var newVal Value
 	switch val.Type() {
 	case parse.TypeNumberSet:
-		n := NewNumber(e.RefID, val.GetLabels())
-		f := val.(Number).GetFloat64Value()
+		number := val.(Number)
+		n := NewNumber(number.GetName(), val.GetLabels())
+		f := number.GetFloat64Value()
 		nF := math.NaN()
 		if f != nil {
 			nF = floatF(*f)
@@ -219,7 +220,7 @@ func perFloat(e *State, val Value, floatF func(x float64) float64) (Value, error
 		newVal = NewScalar(e.RefID, &nF)
 	case parse.TypeSeriesSet:
 		resSeries := val.(Series)
-		newSeries := NewSeries(e.RefID, resSeries.GetLabels(), resSeries.Len())
+		newSeries := NewSeries(resSeries.GetName(), resSeries.GetLabels(), resSeries.Len())
 		for i := 0; i < resSeries.Len(); i++ {
 			t, f := resSeries.GetPoint(i)
 			nF := math.NaN()
@@ -252,7 +253,7 @@ func perNullableFloat(e *State, val Value, floatF func(x *float64) *float64) (Va
 		newVal = NewScalar(e.RefID, floatF(f))
 	case parse.TypeSeriesSet:
 		resSeries := val.(Series)
-		newSeries := NewSeries(e.RefID, resSeries.GetLabels(), resSeries.Len())
+		newSeries := NewSeries(resSeries.GetName(), resSeries.GetLabels(), resSeries.Len())
 		for i := 0; i < resSeries.Len(); i++ {
 			t, f := resSeries.GetPoint(i)
 			newSeries.SetPoint(i, t, floatF(f))

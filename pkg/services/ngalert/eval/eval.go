@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"runtime/debug"
 	"sort"
 	"strconv"
@@ -323,9 +324,12 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 		}
 
 		// for each frame within each response, the response can contain several data types including time-series data.
-		// For now, we favour simplicity and only care about single scalar values.
 		for _, frame := range res.Frames {
 			if len(frame.Fields) != 1 || frame.Fields[0].Type() != data.FieldTypeNullableFloat64 {
+				if series, err := mathexp.SeriesFromFrame(frame); err == nil {
+					// Capture nil value for time series data that contains multiple values.
+					captureVal(frame.RefID, series.GetLabels(), series.GetName(), nil)
+				}
 				continue
 			}
 			var v *float64

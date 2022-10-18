@@ -128,10 +128,10 @@ FIELDS:
 }
 
 // NewSeries returns a dataframe of type Series.
-func NewSeries(refID string, labels data.Labels, size int) Series {
+func NewSeries(name string, labels data.Labels, size int) Series {
 	fields := make([]*data.Field, 2)
 	fields[seriesTypeTimeIdx] = data.NewField("Time", nil, make([]time.Time, size))
-	fields[seriesTypeValIdx] = data.NewField(refID, labels, make([]*float64, size))
+	fields[seriesTypeValIdx] = data.NewField(name, labels, make([]*float64, size))
 
 	return Series{
 		Frame: data.NewFrame("", fields...),
