@@ -82,11 +82,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
   headerLabel: css`
     label: collapse__header-label;
     font-weight: ${theme.typography.fontWeightMedium};
+    margin-right: ${theme.spacing(1)};
     font-size: ${theme.typography.size.md};
   `,
   icon: css`
     label: collapse__icon;
-    color: ${theme.colors.text.maxContrast};
     margin: ${theme.spacing(0.25, 1, 0, -1)};
   `,
 });
