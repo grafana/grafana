@@ -60,10 +60,10 @@ func (h *DimensionKeyHandler) ServeHTTP(rw http.ResponseWriter, req *http.Reques
 	}
 }
 
-type fluffy struct {
-}
-
-func (f *fluffy) newListMetricsService(pluginCtx backend.PluginContext, clientFactory models.ClientsFactoryFunc, region string) (models.ListMetricsProvider, error) {
+// newListMetricsService is an list metrics service factory.
+//
+// Stubbable by tests.
+var newListMetricsService = func(pluginCtx backend.PluginContext, clientFactory models.ClientsFactoryFunc, region string) (models.ListMetricsProvider, error) {
 	clients, err := clientFactory(pluginCtx, region)
 	if err != nil {
 		return nil, err
@@ -71,9 +71,3 @@ func (f *fluffy) newListMetricsService(pluginCtx backend.PluginContext, clientFa
 
 	return services.NewListMetricsService(clients.MetricsClientProvider), nil
 }
-
-// newListMetricsService is an list metrics service factory.
-//
-// Stubbable by tests.
-var fluffyTheCat = fluffy{}
-var newListMetricsService = fluffyTheCat.newListMetricsService
