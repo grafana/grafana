@@ -13,7 +13,7 @@ const { round, min, ceil } = Math;
 
 const textPadding = 2;
 
-const txtSizeCalcScaler = 8.5;
+let pxPerChar = 6;
 
 const pxRatio = devicePixelRatio;
 
@@ -315,23 +315,16 @@ export function getConfig(opts: TimelineCoreOptions) {
             sidx,
             (series, dataX, dataY, scaleX, scaleY, valToPosX, valToPosY, xOff, yOff, xDim, yDim) => {
               let strokeWidth = round((series.width || 0) * pxRatio);
-
               let y = round(yOff + yMids[sidx - 1]);
 
               for (let ix = 0; ix < dataY.length; ix++) {
                 if (dataY[ix] != null) {
                   const boxRect = boxRectsBySeries[sidx - 1][ix];
                   let txt = formatValue(sidx, dataY[ix]);
-                  let hideText = false;
-                  const estimatedTextWidth = txt.length * txtSizeCalcScaler;
+                  let maxChars = Math.floor(boxRect?.w / pxPerChar);
+                  txt = txt.slice(0, maxChars);
 
-                  if (boxRect && estimatedTextWidth > boxRect.w * 0.75 && estimatedTextWidth < boxRect.w * 1.25) {
-                    hideText = boxRect.w < u.ctx.measureText(txt).width;
-                  } else if (boxRect && estimatedTextWidth > boxRect.w) {
-                    hideText = true;
-                  }
-
-                  if (!boxRect || (showValue === VisibilityMode.Auto && hideText)) {
+                  if (!boxRect || (showValue === VisibilityMode.Auto && txt.length < 3)) {
                     continue;
                   }
 
@@ -351,7 +344,7 @@ export function getConfig(opts: TimelineCoreOptions) {
 
                   // TODO: cache by fillColor to avoid setting ctx for label
                   u.ctx.fillStyle = theme.colors.getContrastText(boxRect.fillColor, 3);
-                  u.ctx.fillText(txt, x, y);
+                  u.ctx.fillText(txt, x, y, boxRect.w);
                 }
               }
             }
@@ -364,6 +357,11 @@ export function getConfig(opts: TimelineCoreOptions) {
 
   const init = (u: uPlot) => {
     let over = u.over;
+    let chars = '';
+    for (let i = 32; i <= 126; i++) {
+      chars += String.fromCharCode(i);
+    }
+    pxPerChar = Math.ceil((u.ctx.measureText(chars).width / chars.length) * pxRatio);
     over.style.overflow = 'hidden';
     hoverMarks.forEach((m) => {
       over.appendChild(m);
