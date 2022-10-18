@@ -2,7 +2,8 @@ type Idxs = number[];
 type KeyMap = Map<unknown, KeyMap | Idxs>;
 type Accum = Idxs[];
 
-// eslint-ignore
+/** The tottaly type aware flavor is much slower, so we prefer to disable the lint rule in this case */
+/* eslint-disable */
 const digArrs = (map: KeyMap | Idxs, depth: number, acc: Accum = []) => {
   // the leaf nodes are always Idxs
   if (depth === 0) {
@@ -20,7 +21,6 @@ const digArrs = (map: KeyMap | Idxs, depth: number, acc: Accum = []) => {
 
 // in:  [['a','b','z','b'], ['c','c','x','c']]
 // out: [[0], [1,3], [2]]
-// eslint-ignore
 export function partition(keys: unknown[][]) {
   const len = keys[0].length;
   const klen = keys.length;
@@ -48,3 +48,5 @@ export function partition(keys: unknown[][]) {
 
   return digArrs(rootMap, klen);
 }
+
+/* eslint-enable */
