@@ -338,7 +338,7 @@ export const DashNav = React.memo<Props>((props) => {
 
     buttons.push(renderTimeControls());
     buttons.push(tvButton);
-    return buttons.filter(Boolean);
+    return buttons;
   };
 
   const gotoSnapshotOrigin = (snapshotUrl: string) => {
