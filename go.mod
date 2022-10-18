@@ -58,7 +58,7 @@ require (
 	github.com/grafana/grafana-aws-sdk v0.11.0
 	github.com/grafana/grafana-azure-sdk-go v1.3.1
 	github.com/grafana/grafana-plugin-sdk-go v0.139.0
-	github.com/grafana/thema v0.0.0-20220929145912-2c7c4a7bb20b
+	github.com/grafana/thema v0.0.0-20221018102748-575b71ccbac7
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-hclog v1.0.0
 	github.com/hashicorp/go-plugin v1.4.3
@@ -147,7 +147,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/cheekybits/genny v1.0.0 // indirect
 	github.com/cockroachdb/apd/v2 v2.0.2 // indirect
-	github.com/deepmap/oapi-codegen v1.10.1
+	github.com/deepmap/oapi-codegen v1.11.0
 	github.com/dennwc/varint v1.0.0 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/dlclark/regexp2 v1.4.1-0.20201116162257-a2a8dda75c91 // indirect
@@ -247,7 +247,7 @@ require (
 	github.com/blugelabs/bluge_segment_api v0.2.0
 	github.com/dlmiddlecote/sqlstats v1.0.2
 	github.com/drone/drone-cli v1.5.0
-	github.com/getkin/kin-openapi v0.94.0
+	github.com/getkin/kin-openapi v0.103.0
 	github.com/golang-migrate/migrate/v4 v4.7.0
 	github.com/google/go-github/v45 v45.2.0
 	github.com/grafana/dskit v0.0.0-20211011144203-3a88ec0b675f
@@ -274,11 +274,11 @@ require (
 	github.com/gosimple/unidecode v1.0.1 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
 	github.com/hashicorp/memberlist v0.4.0 // indirect
+	github.com/invopop/yaml v0.1.0 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/mitchellh/mapstructure v1.4.3 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
-	github.com/samber/mo v1.5.1 // indirect
 	github.com/segmentio/asm v1.1.4 // indirect
 	go.starlark.net v0.0.0-20201118183435-e55f603d8c79 // indirect
 )
