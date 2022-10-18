@@ -4,7 +4,7 @@ import { NestedScene } from '../components/NestedScene';
 import { Scene } from '../components/Scene';
 import { SceneTimePicker } from '../components/SceneTimePicker';
 import { VizPanel } from '../components/VizPanel';
-import { SceneFlexChild, SceneFlexLayout } from '../components/layout/SceneFlexLayout';
+import { SceneFlexLayout } from '../components/layout/SceneFlexLayout';
 import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneQueryRunner } from '../querying/SceneQueryRunner';
 
@@ -15,14 +15,10 @@ export function getNestedScene(): Scene {
       direction: 'column',
       children: [
         getInnerScene('Inner scene'),
-        new SceneFlexChild({
-          children: [
-            new VizPanel({
-              key: '3',
-              pluginId: 'timeseries',
-              title: 'Panel 3',
-            }),
-          ],
+        new VizPanel({
+          key: '3',
+          pluginId: 'timeseries',
+          title: 'Panel 3',
         }),
       ],
     }),
@@ -53,14 +49,10 @@ export function getInnerScene(title: string) {
     layout: new SceneFlexLayout({
       direction: 'row',
       children: [
-        new SceneFlexChild({
-          children: [
-            new VizPanel({
-              key: '3',
-              pluginId: 'timeseries',
-              title: 'Data',
-            }),
-          ],
+        new VizPanel({
+          key: '3',
+          pluginId: 'timeseries',
+          title: 'Data',
         }),
       ],
     }),

@@ -13,9 +13,18 @@ export interface SceneObjectStatePlain {
   $variables?: SceneVariableSet;
 }
 
-export interface SceneLayoutChildState extends SceneObjectStatePlain {
+export interface SceneLayoutChildSize {
   size?: SceneObjectSize;
 }
+export interface SceneLayoutChildInteractions {
+  isDraggable?: boolean;
+  isResizable?: boolean;
+}
+
+export interface SceneLayoutChildState
+  extends SceneObjectStatePlain,
+    SceneLayoutChildSize,
+    SceneLayoutChildInteractions {}
 
 export type SceneObjectState = SceneObjectStatePlain | SceneLayoutState | SceneLayoutChildState;
 

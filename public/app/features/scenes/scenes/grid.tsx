@@ -3,8 +3,8 @@ import { getDefaultTimeRange } from '@grafana/data';
 import { Scene } from '../components/Scene';
 import { SceneTimePicker } from '../components/SceneTimePicker';
 import { VizPanel } from '../components/VizPanel';
-import { SceneFlexChild, SceneFlexLayout } from '../components/layout/SceneFlexLayout';
-import { SceneGridCell, SceneGridLayout } from '../components/layout/SceneGridLayout';
+import { SceneFlexLayout } from '../components/layout/SceneFlexLayout';
+import { SceneGridLayout } from '../components/layout/SceneGridLayout';
 import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneEditManager } from '../editor/SceneEditManager';
 import { SceneQueryRunner } from '../querying/SceneQueryRunner';
@@ -14,56 +14,42 @@ export function getGridLayoutTest(): Scene {
     title: 'Grid layout test',
     layout: new SceneGridLayout({
       children: [
-        new SceneGridCell({
+        new VizPanel({
+          isResizable: true,
+          isDraggable: true,
+          pluginId: 'timeseries',
+          title: 'Draggable and resizable',
           size: {
             x: 0,
             y: 0,
             width: 12,
             height: 10,
           },
-          children: [
-            new VizPanel({
-              pluginId: 'timeseries',
-              title: 'Fill height',
-            }),
-          ],
         }),
-        new SceneGridCell({
+
+        new VizPanel({
+          pluginId: 'timeseries',
+          title: 'No drag and no resize',
           isResizable: false,
           isDraggable: false,
           size: { x: 12, y: 0, width: 12, height: 10 },
-          children: [
-            new VizPanel({
-              pluginId: 'timeseries',
-              title: 'Fill height',
-            }),
-          ],
         }),
-        new SceneGridCell({
+
+        new SceneFlexLayout({
+          direction: 'column',
+          isDraggable: true,
+          isResizable: true,
           size: { x: 6, y: 11, width: 12, height: 10 },
           children: [
-            new SceneFlexLayout({
-              direction: 'column',
-              children: [
-                new SceneFlexChild({
-                  size: { ySizing: 'fill' },
-                  children: [
-                    new VizPanel({
-                      pluginId: 'timeseries',
-                      title: 'Fill height',
-                    }),
-                  ],
-                }),
-                new SceneFlexChild({
-                  size: { ySizing: 'fill' },
-                  children: [
-                    new VizPanel({
-                      pluginId: 'timeseries',
-                      title: 'Fill height',
-                    }),
-                  ],
-                }),
-              ],
+            new VizPanel({
+              size: { ySizing: 'fill' },
+              pluginId: 'timeseries',
+              title: 'Child of flex layout',
+            }),
+            new VizPanel({
+              size: { ySizing: 'fill' },
+              pluginId: 'timeseries',
+              title: 'Child of flex layout',
             }),
           ],
         }),

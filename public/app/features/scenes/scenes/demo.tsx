@@ -6,7 +6,7 @@ import { ScenePanelRepeater } from '../components/ScenePanelRepeater';
 import { SceneTimePicker } from '../components/SceneTimePicker';
 import { SceneToolbarInput } from '../components/SceneToolbarButton';
 import { VizPanel } from '../components/VizPanel';
-import { SceneFlexChild, SceneFlexLayout } from '../components/layout/SceneFlexLayout';
+import { SceneFlexLayout } from '../components/layout/SceneFlexLayout';
 import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneEditManager } from '../editor/SceneEditManager';
 import { SceneQueryRunner } from '../querying/SceneQueryRunner';
@@ -17,53 +17,33 @@ export function getFlexLayoutTest(): Scene {
     layout: new SceneFlexLayout({
       direction: 'row',
       children: [
-        new SceneFlexChild({
+        new VizPanel({
           size: { minWidth: '70%' },
-          children: [
-            new VizPanel({
-              pluginId: 'timeseries',
-              title: 'Dynamic height and width',
-            }),
-          ],
+          pluginId: 'timeseries',
+          title: 'Dynamic height and width',
         }),
 
         new SceneFlexLayout({
           direction: 'column',
           children: [
-            new SceneFlexChild({
-              children: [
-                new VizPanel({
-                  pluginId: 'timeseries',
-                  title: 'Fill height',
-                }),
-              ],
+            new VizPanel({
+              pluginId: 'timeseries',
+              title: 'Fill height',
             }),
-            new SceneFlexChild({
-              children: [
-                new VizPanel({
-                  pluginId: 'timeseries',
-                  title: 'Fill height',
-                }),
-              ],
+            new VizPanel({
+              pluginId: 'timeseries',
+              title: 'Fill height',
             }),
-            new SceneFlexChild({
+            new SceneCanvasText({
               size: { ySizing: 'content' },
-              children: [
-                new SceneCanvasText({
-                  text: 'Size to content',
-                  fontSize: 20,
-                  align: 'center',
-                }),
-              ],
+              text: 'Size to content',
+              fontSize: 20,
+              align: 'center',
             }),
-            new SceneFlexChild({
+            new VizPanel({
               size: { height: 300 },
-              children: [
-                new VizPanel({
-                  pluginId: 'timeseries',
-                  title: 'Fixed height',
-                }),
-              ],
+              pluginId: 'timeseries',
+              title: 'Fixed height',
             }),
           ],
         }),
@@ -115,28 +95,20 @@ export function getScenePanelRepeaterTest(): Scene {
             direction: 'row',
             size: { minHeight: 200 },
             children: [
-              new SceneFlexChild({
-                children: [
-                  new VizPanel({
-                    pluginId: 'timeseries',
-                    title: 'Title',
-                    options: {
-                      legend: { displayMode: 'hidden' },
-                    },
-                  }),
-                ],
+              new VizPanel({
+                pluginId: 'timeseries',
+                title: 'Title',
+                options: {
+                  legend: { displayMode: 'hidden' },
+                },
               }),
-              new SceneFlexChild({
+              new VizPanel({
                 size: { width: 300 },
-                children: [
-                  new VizPanel({
-                    pluginId: 'stat',
-                    fieldConfig: { defaults: { displayName: 'Last' }, overrides: [] },
-                    options: {
-                      graphMode: 'none',
-                    },
-                  }),
-                ],
+                pluginId: 'stat',
+                fieldConfig: { defaults: { displayName: 'Last' }, overrides: [] },
+                options: {
+                  graphMode: 'none',
+                },
               }),
             ],
           }),

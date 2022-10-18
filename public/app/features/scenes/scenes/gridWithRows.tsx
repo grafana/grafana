@@ -3,8 +3,8 @@ import { getDefaultTimeRange } from '@grafana/data';
 import { Scene } from '../components/Scene';
 import { SceneTimePicker } from '../components/SceneTimePicker';
 import { VizPanel } from '../components/VizPanel';
-import { SceneFlexChild, SceneFlexLayout } from '../components/layout/SceneFlexLayout';
-import { SceneGridCell, SceneGridLayout, SceneGridRow } from '../components/layout/SceneGridLayout';
+import { SceneFlexLayout } from '../components/layout/SceneFlexLayout';
+import { SceneGridLayout, SceneGridRow } from '../components/layout/SceneGridLayout';
 import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneEditManager } from '../editor/SceneEditManager';
 import { SceneQueryRunner } from '../querying/SceneQueryRunner';
@@ -14,6 +14,7 @@ export function getGridWithRowsTest(): Scene {
     pluginId: 'timeseries',
     title: 'Fill height',
   });
+
   const row1 = new SceneGridRow({
     title: 'Collapsible/draggable row with flex layout',
     size: { x: 0, y: 0, height: 10 },
@@ -21,55 +22,40 @@ export function getGridWithRowsTest(): Scene {
       new SceneFlexLayout({
         direction: 'row',
         children: [
-          new SceneFlexChild({
-            children: [
-              new VizPanel({
-                pluginId: 'timeseries',
-                title: 'Fill height',
-              }),
-            ],
+          new VizPanel({
+            pluginId: 'timeseries',
+            title: 'Fill height',
           }),
-          new SceneFlexChild({
-            children: [
-              new VizPanel({
-                pluginId: 'timeseries',
-                title: 'Fill height',
-              }),
-            ],
+          new VizPanel({
+            pluginId: 'timeseries',
+            title: 'Fill height',
           }),
-          new SceneFlexChild({
-            children: [
-              new VizPanel({
-                pluginId: 'timeseries',
-                title: 'Fill height',
-              }),
-            ],
+          new VizPanel({
+            pluginId: 'timeseries',
+            title: 'Fill height',
           }),
         ],
       }),
     ],
   });
 
-  const cell1 = new SceneGridCell({
+  const cell1 = new VizPanel({
     size: {
       x: 0,
       y: 10,
       width: 12,
       height: 20,
     },
-    children: [panel],
+    pluginId: 'timeseries',
+    title: 'Cell 1',
   });
 
-  const cell2 = new SceneGridCell({
+  const cell2 = new VizPanel({
     isResizable: false,
     isDraggable: false,
     size: { x: 12, y: 20, width: 12, height: 10 },
-    children: [
-      new VizPanel({
-        pluginId: 'timeseries',
-        title: 'No resize/no drag',
-      }),
-    ],
+    pluginId: 'timeseries',
+    title: 'No resize/no drag',
   });
 
   const row2 = new SceneGridRow({
@@ -78,21 +64,13 @@ export function getGridWithRowsTest(): Scene {
     children: [
       new SceneFlexLayout({
         children: [
-          new SceneFlexChild({
-            children: [
-              new SceneFlexLayout({
-                direction: 'column',
-                children: [new SceneFlexChild({ children: [panel] }), new SceneFlexChild({ children: [panel] })],
-              }),
-            ],
+          new SceneFlexLayout({
+            direction: 'column',
+            children: [panel, panel],
           }),
-          new SceneFlexChild({
-            children: [
-              new SceneFlexLayout({
-                direction: 'column',
-                children: [new SceneFlexChild({ children: [panel] }), new SceneFlexChild({ children: [panel] })],
-              }),
-            ],
+          new SceneFlexLayout({
+            direction: 'column',
+            children: [panel, panel],
           }),
         ],
       }),

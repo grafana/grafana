@@ -16,6 +16,7 @@ import {
   isSceneObject,
   SceneObjectState,
   SceneLayoutChild,
+  SceneLayoutState,
 } from './types';
 
 export abstract class SceneObjectBase<TState extends SceneObjectState = {}> implements SceneObject<TState> {
@@ -153,6 +154,18 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
     }
 
     throw new Error('No data found in scene tree');
+  }
+
+  getLayout(): SceneObject<SceneLayoutState> {
+    if (this.constructor.name === 'SceneFlexLayout' || this.constructor.name === 'SceneGridLayout') {
+      return this as SceneObject<SceneLayoutState>;
+    }
+
+    if (this.parent) {
+      return this.parent.getLayout();
+    }
+
+    throw new Error('No layout found in scene tree');
   }
 
   /**

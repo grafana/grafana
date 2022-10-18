@@ -8,11 +8,16 @@ import { Icon, useStyles2, useTheme2 } from '@grafana/ui';
 import { DEFAULT_ROW_HEIGHT, GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 
 import { SceneObjectBase } from '../../core/SceneObjectBase';
-import { SceneComponentProps, SceneLayoutState } from '../../core/types';
+import {
+  SceneComponentProps,
+  SceneLayoutChild,
+  SceneLayoutChildState,
+  SceneLayoutState,
+  SceneObject,
+} from '../../core/types';
+import { SceneDragHandle } from '../SceneDragHandle';
 
-interface SceneGridLayoutState extends SceneLayoutState {
-  children: Array<SceneGridCell | SceneGridRow>;
-}
+interface SceneGridLayoutState extends SceneLayoutState {}
 
 type GridCellLayout = {
   x: number;
@@ -23,6 +28,13 @@ type GridCellLayout = {
 
 export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
   static Component = SceneGridLayoutRenderer;
+
+  constructor(state: SceneGridLayoutState) {
+    super({
+      isDraggable: true,
+      ...state,
+    });
+  }
 
   updateLayout() {
     this.setState({
@@ -46,43 +58,46 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
 
   // When layout changes, figure out if it's a nested grid layout and update enclosing cell's size if needed
   onLayoutChange = (layout: ReactGridLayout.Layout[]) => {
-    let enclosingCell;
-    let parent = this.parent;
-    while (parent) {
-      if (parent instanceof SceneGridCell || parent instanceof SceneGridRow) {
-        enclosingCell = parent;
-        break;
-      } else {
-        parent = parent.parent;
-      }
-    }
-
-    // When not nested, we don't need to update anything
-    if (!enclosingCell) {
-      return;
-    }
-
+    // debugger;
+    // let enclosingLayout = this.parent ? this.parent.getLayout() : undefined;
+    // if (!enclosingLayout) {
+    //   return;
+    // }
+    // if (enclosingLayout && enclosingLayout instanceof SceneGridLayout) {
+    //   const accH = [];
+    //   for (let i = 0; i < layout.length; i++) {
+    //     const c = layout[i];
+    //     accH.push(c.y + c.h);
+    //   }
+    //   if (enclosingLayout.state.size.height !== Math.max(...accH)) {
+    //     const diff = Math.max(...accH) - enclosingLayout.state.size.height;
+    //     enclosingLayout.setState({
+    //       size: {
+    //         ...enclosingLayout.state.size,
+    //         height: enclosingLayout.state.size.height + diff + (enclosingLayout instanceof SceneGridRow ? 1 : 0),
+    //       },
+    //     });
+    //     // Update parent layout
+    //     if (enclosingLayout.parent && enclosingLayout.parent instanceof SceneGridLayout) {
+    //       enclosingLayout.updateLayout();
+    //     }
+    //   }
+    // }
+    // let parent = this.parent;
+    // while (parent) {
+    //   if (parent instanceof SceneGridRow) {
+    //     enclosingCell = parent;
+    //     break;
+    //   } else {
+    //     parent = parent.parent;
+    //   }
+    // }
+    // // When not nested, we don't need to update anything
+    // if (!enclosingCell) {
+    //   return;
+    // }
     // Collect all cells accumulated heights (cell's y position + height)
-    const accH = [];
-    for (let i = 0; i < layout.length; i++) {
-      const c = layout[i];
-      accH.push(c.y + c.h);
-    }
-
     // If enclosing cell size is different than updated layout height, resize it accordingly
-    if (enclosingCell.state.size.height !== Math.max(...accH)) {
-      const diff = Math.max(...accH) - enclosingCell.state.size.height;
-      enclosingCell.setState({
-        size: {
-          ...enclosingCell.state.size,
-          height: enclosingCell.state.size.height + diff + (enclosingCell instanceof SceneGridRow ? 1 : 0),
-        },
-      });
-      // Update parent layout
-      if (enclosingCell.parent && enclosingCell.parent instanceof SceneGridLayout) {
-        enclosingCell.parent.updateLayout();
-      }
-    }
   };
 
   onDragStop: ReactGridLayout.ItemCallback = (l, o, n) => {
@@ -109,28 +124,28 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
 
     this.updateLayout();
   };
-
-  getDragHandle(): JSX.Element {
-    return <SceneGridDragHandle className={`grid-drag-handle-${this.state.key}`} />;
-  }
 }
 
 function SceneGridLayoutRenderer({ model }: SceneComponentProps<SceneGridLayout>) {
   const { children } = model.useState();
+
+  validateChildrenSize(children);
+
   const theme = useTheme2();
+
   const layout = useMemo(() => {
     const lg = children.map((child) => {
-      const size = child.state.size;
+      const size = child.state.size!;
 
       const resizeHandles: ReactGridLayout.Layout['resizeHandles'] =
         child instanceof SceneGridRow && Boolean(child.state.isResizable) ? ['s'] : undefined;
 
       return {
         i: child.state.key!,
-        x: size.x,
-        y: size.y,
-        w: size.width,
-        h: size.height,
+        x: size.x!,
+        y: size.y!,
+        w: size.width!,
+        h: size.height!,
         isResizable: Boolean(child.state.isResizable),
         isDraggable: Boolean(child.state.isDraggable),
         resizeHandles,
@@ -178,6 +193,7 @@ function SceneGridLayoutRenderer({ model }: SceneComponentProps<SceneGridLayout>
               cols={GRID_COLUMN_COUNT}
               rowHeight={GRID_CELL_HEIGHT}
               draggableHandle={`.grid-drag-handle-${model.state.key}`}
+              // @ts-ignore: ignoring for now until we make the size type numbers-only
               layout={width > 768 ? layout.lg : layout.sm}
               onDragStop={model.onDragStop}
               onResizeStop={model.onResizeStop}
@@ -185,15 +201,10 @@ function SceneGridLayoutRenderer({ model }: SceneComponentProps<SceneGridLayout>
               isBounded={true}
             >
               {children.map((child) => {
-                /* eslint-disable-next-line */
-                const childProps: SceneGridCellRendererProps<any> = {
-                  model: child,
-                  isLayoutDraggable: width > 768,
-                };
-
                 return (
-                  <div key={child.state.key}>
-                    <child.Component {...childProps} key={child.state.key} />
+                  // Grid items are flex, to be able to render flex layouts inside
+                  <div key={child.state.key} style={{ display: 'flex' }}>
+                    <child.Component model={child} key={child.state.key} />
                   </div>
                 );
               })}
@@ -205,73 +216,11 @@ function SceneGridLayoutRenderer({ model }: SceneComponentProps<SceneGridLayout>
   );
 }
 
-interface SceneGridCellState extends Omit<SceneLayoutState, 'size'> {
-  isResizable?: boolean;
-  isDraggable?: boolean;
-  size: GridCellLayout;
-}
-
-export class SceneGridCell extends SceneObjectBase<SceneGridCellState> {
-  static Component = SceneGridCellRenderer;
-
-  constructor(state: SceneGridCellState) {
-    super({
-      isDraggable: true,
-      isResizable: true,
-      ...state,
-    });
-  }
-
-  getLayout(): SceneGridLayout {
-    if (this.parent instanceof SceneGridLayout) {
-      return this.parent;
-    }
-    throw new Error('SceneGridCell must be a child of SceneGridLayout');
-  }
-}
-
-interface SceneGridCellRendererProps<T> extends SceneComponentProps<T> {
-  isLayoutDraggable?: boolean;
-}
-
-function SceneGridCellRenderer(props: SceneGridCellRendererProps<SceneGridCell>) {
-  const state = props.model.useState();
-  const isDraggable = Boolean(props.isLayoutDraggable) ? state.isDraggable : false;
-  return (
-    <>
-      {isDraggable && props.model.getLayout().getDragHandle()}
-      {props.model.state.children.map((child) => {
-        return <child.Component key={child.state.key} model={child} />;
-      })}
-    </>
-  );
-}
-
-function SceneGridDragHandle({ className }: { className?: string }) {
-  return (
-    <div
-      className={className}
-      style={{
-        width: '20px',
-        height: '20px',
-        position: 'absolute',
-        top: '5px',
-        right: '5px',
-        zIndex: 1,
-        cursor: 'move',
-      }}
-    >
-      <Icon name="draggabledots" />
-    </div>
-  );
-}
-
-interface SceneGridRowState extends Omit<SceneGridCellState, 'size'> {
+interface SceneGridRowState extends SceneLayoutChildState {
   title: string;
-  size: GridCellLayout;
   isCollapsible?: boolean;
-  isDraggable?: boolean;
   isCollapsed?: boolean;
+  children: Array<SceneObject<SceneLayoutChildState>>;
 }
 
 export class SceneGridRow extends SceneObjectBase<SceneGridRowState> {
@@ -338,19 +287,15 @@ export class SceneGridRow extends SceneObjectBase<SceneGridRowState> {
       layout.updateLayout();
     }
   };
-
-  getLayout = (): SceneGridLayout => {
-    if (this.parent instanceof SceneGridLayout) {
-      return this.parent;
-    }
-    throw new Error('SceneGridRow must be a child of SceneGridLayout');
-  };
 }
 
-function SceneGridRowRenderer({ model, isLayoutDraggable }: SceneGridCellRendererProps<SceneGridRow>) {
+function SceneGridRowRenderer({ model }: SceneComponentProps<SceneGridRow>) {
   const styles = useStyles2(getSceneGridRowStyles);
   const { isCollapsible, isCollapsed, title, ...state } = model.useState();
-  const isDraggable = Boolean(isLayoutDraggable) ? state.isDraggable : false;
+  const layout = model.getLayout();
+  const isDraggable = layout.state.isDraggable ? state.isDraggable : false;
+  const dragHandle = <SceneDragHandle layoutKey={layout.state.key!} />;
+
   return (
     <div className={styles.row}>
       <div className={cx(styles.rowHeader, isCollapsed && styles.rowHeaderCollapsed)}>
@@ -358,11 +303,11 @@ function SceneGridRowRenderer({ model, isLayoutDraggable }: SceneGridCellRendere
           {isCollapsible && <Icon name={isCollapsed ? 'angle-right' : 'angle-down'} />}
           <span className={styles.rowTitle}>{title}</span>
         </div>
-        {isDraggable && <div>{isDraggable && model.getLayout().getDragHandle()}</div>}
+        {isDraggable && <div>{dragHandle}</div>}
       </div>
 
       {!isCollapsed && (
-        <div style={{ flexGrow: 1, height: 'calc(100%-30px)', width: '100%' }}>
+        <div style={{ display: 'flex', flexGrow: 1, height: 'calc(100%-30px)', width: '100%' }}>
           {model.state.children.map((child) => {
             return <child.Component key={child.state.key} model={child} />;
           })}
@@ -440,4 +385,19 @@ export function generateGridBackground({
   const svg = [`<svg xmlns='${XMLNS}' width='${gridWidth}' height='${rowHeight}'>`, ...rectangles, `</svg>`].join('');
 
   return `url("data:image/svg+xml;utf8,${encodeURIComponent(svg)}")`;
+}
+
+function validateChildrenSize(children: SceneLayoutChild[]) {
+  if (
+    children.find(
+      (c) =>
+        !c.state.size ||
+        c.state.size.height === undefined ||
+        c.state.size.width === undefined ||
+        c.state.size.x === undefined ||
+        c.state.size.y === undefined
+    )
+  ) {
+    throw new Error('All children must have a size specified');
+  }
 }
