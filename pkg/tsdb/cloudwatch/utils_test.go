@@ -186,23 +186,6 @@ func (c fakeCheckHealthClient) DescribeLogGroups(input *cloudwatchlogs.DescribeL
 	return nil, nil
 }
 
-func chunkSlice(slice []*cloudwatch.Metric, chunkSize int) [][]*cloudwatch.Metric {
-	var chunks [][]*cloudwatch.Metric
-	for {
-		if len(slice) == 0 {
-			break
-		}
-		if len(slice) < chunkSize {
-			chunkSize = len(slice)
-		}
-
-		chunks = append(chunks, slice[0:chunkSize])
-		slice = slice[chunkSize:]
-	}
-
-	return chunks
-}
-
 func newTestConfig() *setting.Cfg {
 	return &setting.Cfg{AWSAllowedAuthProviders: []string{"default"}, AWSAssumeRoleEnabled: true, AWSListMetricsPageLimit: 1000}
 }
