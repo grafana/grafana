@@ -776,7 +776,7 @@ func TestNotificationChannels(t *testing.T) {
 		resp = getRequest(t, receiversURL, http.StatusOK) // nolint
 		b = getBody(t, resp.Body)
 
-		var receivers apimodels.Receivers
+		var receivers []apimodels.Receiver
 		err := json.Unmarshal([]byte(b), &receivers)
 		require.NoError(t, err)
 		for _, rcv := range receivers {
@@ -824,7 +824,7 @@ func TestNotificationChannels(t *testing.T) {
 	resp := getRequest(t, receiversURL, http.StatusOK) // nolint
 	b := getBody(t, resp.Body)
 
-	var receivers apimodels.Receivers
+	var receivers []apimodels.Receiver
 	err := json.Unmarshal([]byte(b), &receivers)
 	require.NoError(t, err)
 	for _, rcv := range receivers {

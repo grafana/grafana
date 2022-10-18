@@ -394,14 +394,14 @@
     },
     "/api/alertmanager/grafana/config/api/v1/receivers": {
       "get": {
+        "description": "Get a list of all receivers",
         "tags": [
           "alertmanager"
         ],
-        "summary": "Get a list of all receivers.",
         "operationId": "RouteGetGrafanaReceivers",
         "responses": {
           "200": {
-            "$ref": "#/responses/receivers"
+            "$ref": "#/responses/receiversResponse"
           }
         }
       }
@@ -5817,6 +5817,7 @@
       }
     },
     "alertGroup": {
+      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -6213,6 +6214,7 @@
       }
     },
     "postableSilence": {
+      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",
@@ -6361,6 +6363,17 @@
         "version": {
           "description": "version",
           "type": "string"
+        }
+      }
+    }
+  },
+  "responses": {
+    "receiversResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/receiver"
         }
       }
     }
