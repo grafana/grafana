@@ -21,6 +21,17 @@ const asteriskValue = { label: '*', value: '*' };
 export function SelectRow({ sql, columns, onSqlChange, functions }: SelectRowProps) {
   const styles = useStyles2(getStyles);
   const columnsWithAsterisk = [asteriskValue, ...(columns || [])];
+  const timeSeriesAliasOpts: Array<SelectableValue<string>> = [];
+
+  timeSeriesAliasOpts.push({
+    label: 'Time',
+    value: 'time',
+  });
+
+  timeSeriesAliasOpts.push({
+    label: 'Value',
+    value: 'value',
+  });
 
   const onColumnChange = useCallback(
     (item: QueryEditorFunctionExpression, index: number) => (column: SelectableValue<string>) => {
@@ -49,6 +60,23 @@ export function SelectRow({ sql, columns, onSqlChange, functions }: SelectRowPro
         ...item,
         name: aggregation?.value,
       };
+      const newSql: SQLExpression = {
+        ...sql,
+        columns: sql.columns?.map((c, i) => (i === index ? newItem : c)),
+      };
+
+      onSqlChange(newSql);
+    },
+    [onSqlChange, sql]
+  );
+
+  const onAliasChange = useCallback(
+    (item: QueryEditorFunctionExpression, index: number) => (alias: SelectableValue<string>) => {
+      const newItem = {
+        ...item,
+        name: alias?.value,
+      };
+
       const newSql: SQLExpression = {
         ...sql,
         columns: sql.columns?.map((c, i) => (i === index ? newItem : c)),
@@ -102,6 +130,15 @@ export function SelectRow({ sql, columns, onSqlChange, functions }: SelectRowPro
                 allowCustomValue
                 options={functions}
                 onChange={onAggregationChange(item, index)}
+              />
+            </EditorField>
+            <EditorField label="Alias" optional width={15}>
+              <Select
+                options={timeSeriesAliasOpts}
+                onChange={onAliasChange(item, index)}
+                isClearable
+                menuShouldPortal
+                allowCustomValue
               />
             </EditorField>
             <Button
