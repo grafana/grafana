@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/clients"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/cwlog"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/routes"
 )
 
 type datasourceInfo struct {
@@ -105,27 +106,22 @@ type SessionCache interface {
 	GetSession(c awsds.SessionConfig) (*session.Session, error)
 }
 
-type fluffyClient struct {
-	cwe *cloudWatchExecutor
-	cfg *setting.Cfg
-}
-
-func (f *fluffyClient) GetClients(pluginCtx backend.PluginContext, region string) (models.Clients, error) {
+func (cwe *cloudWatchExecutor) GetClients(pluginCtx backend.PluginContext, region string) (models.Clients, error) {
 	r := region
 	if region == defaultRegion {
-		dsInfo, err := f.cwe.getDSInfo(pluginCtx)
+		dsInfo, err := cwe.getDSInfo(pluginCtx)
 		if err != nil {
 			return models.Clients{}, err
 		}
 		r = dsInfo.region
 	}
 
-	sess, err := f.cwe.newSession(pluginCtx, r)
+	sess, err := cwe.newSession(pluginCtx, r)
 	if err != nil {
 		return models.Clients{}, err
 	}
 	return models.Clients{
-		MetricsClientProvider: clients.NewMetricsClient(cloudwatch.New(sess), f.cfg),
+		MetricsClientProvider: clients.NewMetricsClient(cloudwatch.New(sess), cwe.cfg),
 	}, nil
 }
 
@@ -137,12 +133,7 @@ func newExecutor(im instancemgmt.InstanceManager, cfg *setting.Cfg, sessions Ses
 		features: features,
 	}
 
-	fluffy := fluffyClient{
-		cwe: cwe,
-		cfg: cfg,
-	}
-	cwe.getClients = fluffy.GetClients
-
+	cwe.dimensionKeyHandler = &routes.DimensionKeyHandler{ClientFactory: cwe.GetClients}
 	cwe.resourceHandler = httpadapter.New(cwe.newResourceMux())
 	return cwe
 }
@@ -212,13 +203,13 @@ func NewInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 
 // cloudWatchExecutor executes CloudWatch requests.
 type cloudWatchExecutor struct {
-	im         instancemgmt.InstanceManager
-	cfg        *setting.Cfg
-	sessions   SessionCache
-	features   featuremgmt.FeatureToggles
-	getClients models.ClientsFactoryFunc
+	im       instancemgmt.InstanceManager
+	cfg      *setting.Cfg
+	sessions SessionCache
+	features featuremgmt.FeatureToggles
 
-	resourceHandler backend.CallResourceHandler
+	dimensionKeyHandler http.Handler
+	resourceHandler     backend.CallResourceHandler
 }
 
 func (e *cloudWatchExecutor) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {

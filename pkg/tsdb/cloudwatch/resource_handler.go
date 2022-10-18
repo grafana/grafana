@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/cwlog"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/routes"
 )
 
 func (e *cloudWatchExecutor) newResourceMux() *http.ServeMux {
@@ -24,7 +23,7 @@ func (e *cloudWatchExecutor) newResourceMux() *http.ServeMux {
 	mux.HandleFunc("/resource-arns", handleResourceReq(e.handleGetResourceArns))
 	mux.HandleFunc("/log-groups", handleResourceReq(e.handleGetLogGroups))
 	mux.HandleFunc("/all-log-groups", handleResourceReq(e.handleGetAllLogGroups))
-	mux.Handle("/dimension-keys", &routes.DimensionKeyHandler{ClientFactory: e.getClients})
+	mux.Handle("/dimension-keys", e.dimensionKeyHandler)
 	return mux
 }
 
