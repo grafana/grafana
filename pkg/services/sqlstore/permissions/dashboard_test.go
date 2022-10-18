@@ -127,7 +127,7 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			store := setup(t, 10, 100, tt.permissions)
+			store := setupTest(t, 10, 100, tt.permissions)
 			usr := &user.SignedInUser{OrgID: 1, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}
 			filter := permissions.NewAccessControlDashboardPermissionFilter(usr, tt.permission, tt.queryType)
 
@@ -144,7 +144,7 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 	}
 }
 
-func setup(t *testing.T, numFolders, numDashboards int, permissions []accesscontrol.Permission) *sqlstore.SQLStore {
+func setupTest(t *testing.T, numFolders, numDashboards int, permissions []accesscontrol.Permission) *sqlstore.SQLStore {
 	store := sqlstore.InitTestDB(t)
 	err := store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		dashes := make([]models.Dashboard, 0, numFolders+numDashboards)
