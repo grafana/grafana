@@ -113,7 +113,7 @@ func TestCloudWatchQuery(t *testing.T) {
 			Id:         "id1",
 		}
 
-		assert.True(t, query.IsSearchExpression(), "Expected a search expression")
+		assert.True(t, query.isSearchExpression(), "Expected a search expression")
 		assert.False(t, query.IsMathExpression(), "Expected not math expression")
 	})
 
@@ -131,7 +131,7 @@ func TestCloudWatchQuery(t *testing.T) {
 			},
 		}
 
-		assert.False(t, query.IsSearchExpression(), "Expected not a search expression")
+		assert.False(t, query.isSearchExpression(), "Expected not a search expression")
 		assert.False(t, query.IsMathExpression(), "Expected not math expressions")
 	})
 
@@ -148,7 +148,7 @@ func TestCloudWatchQuery(t *testing.T) {
 			},
 		}
 
-		assert.True(t, query.IsSearchExpression(), "Expected a search expression")
+		assert.True(t, query.isSearchExpression(), "Expected a search expression")
 		assert.False(t, query.IsMathExpression(), "Expected not math expressions")
 	})
 
@@ -166,7 +166,7 @@ func TestCloudWatchQuery(t *testing.T) {
 			},
 		}
 
-		assert.True(t, query.IsSearchExpression(), "Expected a search expression")
+		assert.True(t, query.isSearchExpression(), "Expected a search expression")
 		assert.False(t, query.IsMathExpression(), "Expected not math expression")
 	})
 
@@ -184,7 +184,7 @@ func TestCloudWatchQuery(t *testing.T) {
 			},
 		}
 
-		assert.True(t, query.IsSearchExpression(), "Expected a search expression")
+		assert.True(t, query.isSearchExpression(), "Expected a search expression")
 		assert.True(t, query.IsMultiValuedDimensionExpression(), "Expected a multi-valued dimension expression")
 	})
 
@@ -201,13 +201,13 @@ func TestCloudWatchQuery(t *testing.T) {
 		}
 		t.Run("Match exact is false", func(t *testing.T) {
 			query.MatchExact = false
-			assert.True(t, query.IsSearchExpression(), "Expected a search expression")
+			assert.True(t, query.isSearchExpression(), "Expected a search expression")
 			assert.False(t, query.IsMathExpression(), "Expected not math expression")
 		})
 
 		t.Run("Match exact is true", func(t *testing.T) {
 			query.MatchExact = true
-			assert.False(t, query.IsSearchExpression(), "Exxpected not search expression")
+			assert.False(t, query.isSearchExpression(), "Exxpected not search expression")
 			assert.False(t, query.IsMathExpression(), "Expected not math expression")
 		})
 	})
@@ -226,7 +226,7 @@ func TestCloudWatchQuery(t *testing.T) {
 			},
 		}
 
-		assert.True(t, query.IsSearchExpression(), "Expected search expression")
+		assert.True(t, query.isSearchExpression(), "Expected search expression")
 		assert.False(t, query.IsMathExpression(), "Expected not math expression")
 	})
 }

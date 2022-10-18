@@ -74,7 +74,7 @@ func (q *CloudWatchQuery) IsMathExpression() bool {
 	return q.MetricQueryType == MetricQueryTypeSearch && q.MetricEditorMode == MetricEditorModeRaw && !q.IsUserDefinedSearchExpression()
 }
 
-func (q *CloudWatchQuery) IsSearchExpression() bool {
+func (q *CloudWatchQuery) isSearchExpression() bool {
 	return q.MetricQueryType == MetricQueryTypeSearch && (q.IsUserDefinedSearchExpression() || q.IsInferredSearchExpression())
 }
 
@@ -162,7 +162,7 @@ func (q *CloudWatchQuery) BuildDeepLink(startTime time.Time, endTime time.Time, 
 		End:     endTime.UTC().Format(time.RFC3339),
 	}
 
-	if q.IsSearchExpression() {
+	if q.isSearchExpression() {
 		metricExpressions := &metricExpression{Expression: q.UsedExpression}
 		if dynamicLabelEnabled {
 			metricExpressions.Label = q.Label
