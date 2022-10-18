@@ -213,6 +213,10 @@ func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, 
 		return nil, err
 	}
 
+	if len(metricReq.Queries) == 0 {
+		return nil, nil
+	}
+
 	anonymousUser := pd.BuildAnonymousUser(ctx, dashboard)
 	res, err := pd.QueryDataService.QueryData(ctx, anonymousUser, skipCache, metricReq)
 

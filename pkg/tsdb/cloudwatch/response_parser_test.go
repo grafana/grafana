@@ -29,7 +29,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 	startTime := time.Now()
 	endTime := startTime.Add(2 * time.Hour)
 	t.Run("when aggregating multi-outputs response", func(t *testing.T) {
-		getMetricDataOutputs, err := loadGetMetricDataOutputsFromFile("./test-data/multiple-outputs-query-a.json")
+		getMetricDataOutputs, err := loadGetMetricDataOutputsFromFile("./testdata/multiple-outputs-query-a.json")
 		require.NoError(t, err)
 		aggregatedResponse := aggregateResponse(getMetricDataOutputs)
 		idA := "a"
@@ -59,7 +59,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 	})
 
 	t.Run("when aggregating multi-outputs response with PartialData and ArithmeticError", func(t *testing.T) {
-		getMetricDataOutputs, err := loadGetMetricDataOutputsFromFile("./test-data/multiple-outputs-query-b.json")
+		getMetricDataOutputs, err := loadGetMetricDataOutputsFromFile("./testdata/multiple-outputs-query-b.json")
 		require.NoError(t, err)
 		aggregatedResponse := aggregateResponse(getMetricDataOutputs)
 		idB := "b"
@@ -73,7 +73,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 	})
 
 	t.Run("when aggregating multi-outputs response", func(t *testing.T) {
-		getMetricDataOutputs, err := loadGetMetricDataOutputsFromFile("./test-data/single-output-multiple-metric-data-results.json")
+		getMetricDataOutputs, err := loadGetMetricDataOutputsFromFile("./testdata/single-output-multiple-metric-data-results.json")
 		require.NoError(t, err)
 		aggregatedResponse := aggregateResponse(getMetricDataOutputs)
 		idA := "a"
@@ -91,7 +91,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 	})
 
 	t.Run("when aggregating response and error codes are in first GetMetricDataOutput", func(t *testing.T) {
-		getMetricDataOutputs, err := loadGetMetricDataOutputsFromFile("./test-data/multiple-outputs2.json")
+		getMetricDataOutputs, err := loadGetMetricDataOutputsFromFile("./testdata/multiple-outputs2.json")
 		require.NoError(t, err)
 		aggregatedResponse := aggregateResponse(getMetricDataOutputs)
 		t.Run("response for id a", func(t *testing.T) {

@@ -4,6 +4,7 @@ package contexthandler
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -23,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -44,39 +46,42 @@ func ProvideService(cfg *setting.Cfg, tokenService models.UserTokenService, jwtS
 	remoteCache *remotecache.RemoteCache, renderService rendering.Service, sqlStore sqlstore.Store,
 	tracer tracing.Tracer, authProxy *authproxy.AuthProxy, loginService login.Service,
 	apiKeyService apikey.Service, authenticator loginpkg.Authenticator, userService user.Service,
-	orgService org.Service) *ContextHandler {
+	orgService org.Service, oauthTokenService oauthtoken.OAuthTokenService,
+) *ContextHandler {
 	return &ContextHandler{
-		Cfg:              cfg,
-		AuthTokenService: tokenService,
-		JWTAuthService:   jwtService,
-		RemoteCache:      remoteCache,
-		RenderService:    renderService,
-		SQLStore:         sqlStore,
-		tracer:           tracer,
-		authProxy:        authProxy,
-		authenticator:    authenticator,
-		loginService:     loginService,
-		apiKeyService:    apiKeyService,
-		userService:      userService,
-		orgService:       orgService,
+		Cfg:               cfg,
+		AuthTokenService:  tokenService,
+		JWTAuthService:    jwtService,
+		RemoteCache:       remoteCache,
+		RenderService:     renderService,
+		SQLStore:          sqlStore,
+		tracer:            tracer,
+		authProxy:         authProxy,
+		authenticator:     authenticator,
+		loginService:      loginService,
+		apiKeyService:     apiKeyService,
+		userService:       userService,
+		orgService:        orgService,
+		oauthTokenService: oauthTokenService,
 	}
 }
 
 // ContextHandler is a middleware.
 type ContextHandler struct {
-	Cfg              *setting.Cfg
-	AuthTokenService models.UserTokenService
-	JWTAuthService   models.JWTService
-	RemoteCache      *remotecache.RemoteCache
-	RenderService    rendering.Service
-	SQLStore         sqlstore.Store
-	tracer           tracing.Tracer
-	authProxy        *authproxy.AuthProxy
-	authenticator    loginpkg.Authenticator
-	loginService     login.Service
-	apiKeyService    apikey.Service
-	userService      user.Service
-	orgService       org.Service
+	Cfg               *setting.Cfg
+	AuthTokenService  models.UserTokenService
+	JWTAuthService    models.JWTService
+	RemoteCache       *remotecache.RemoteCache
+	RenderService     rendering.Service
+	SQLStore          sqlstore.Store
+	tracer            tracing.Tracer
+	authProxy         *authproxy.AuthProxy
+	authenticator     loginpkg.Authenticator
+	loginService      login.Service
+	apiKeyService     apikey.Service
+	userService       user.Service
+	orgService        org.Service
+	oauthTokenService oauthtoken.OAuthTokenService
 	// GetTime returns the current time.
 	// Stubbable by tests.
 	GetTime func() time.Time
@@ -426,6 +431,38 @@ func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, org
 	if err != nil {
 		reqContext.Logger.Error("Failed to get user with id", "userId", token.UserId, "error", err)
 		return false
+	}
+
+	getTime := h.GetTime
+	if getTime == nil {
+		getTime = time.Now
+	}
+
+	// Check whether the logged in User has a token (whether the User used an OAuth provider to login)
+	oauthToken, exists, _ := h.oauthTokenService.HasOAuthEntry(ctx, queryResult)
+	if exists {
+		// Skip where the OAuthExpiry is default/zero/unset
+		if !oauthToken.OAuthExpiry.IsZero() && oauthToken.OAuthExpiry.Round(0).Add(-oauthtoken.ExpiryDelta).Before(getTime()) {
+			reqContext.Logger.Info("access token expired", "userId", query.UserID, "expiry", fmt.Sprintf("%v", oauthToken.OAuthExpiry))
+
+			// If the User doesn't have a refresh_token or refreshing the token was unsuccessful then log out the User and Invalidate the OAuth tokens
+			if err = h.oauthTokenService.TryTokenRefresh(ctx, oauthToken); err != nil {
+				if !errors.Is(err, oauthtoken.ErrNoRefreshTokenFound) {
+					reqContext.Logger.Error("could not fetch a new access token", "userId", oauthToken.UserId, "error", err)
+				}
+
+				reqContext.Resp.Before(h.deleteInvalidCookieEndOfRequestFunc(reqContext))
+				if err = h.oauthTokenService.InvalidateOAuthTokens(ctx, oauthToken); err != nil {
+					reqContext.Logger.Error("could not invalidate OAuth tokens", "userId", oauthToken.UserId, "error", err)
+				}
+
+				err = h.AuthTokenService.RevokeToken(ctx, token, false)
+				if err != nil && !errors.Is(err, models.ErrUserTokenNotFound) {
+					reqContext.Logger.Error("failed to revoke auth token", "error", err)
+				}
+				return false
+			}
+		}
 	}
 
 	reqContext.SignedInUser = queryResult
