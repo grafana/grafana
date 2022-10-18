@@ -818,13 +818,14 @@ func newSQLDashboardLoader(sql *sqlstore.SQLStore, tracer tracing.Tracer, settin
 type dashboardsRes struct {
 	dashboards []*dashboardQueryResult
 	err        error
-	end        bool
 }
 
 func (l sqlDashboardLoader) loadAllDashboards(ctx context.Context, limit int, orgID int64, dashboardUID string) chan *dashboardsRes {
 	ch := make(chan *dashboardsRes, 3)
 
 	go func() {
+		defer close(ch)
+
 		var lastID int64
 		for {
 			select {
@@ -865,14 +866,12 @@ func (l sqlDashboardLoader) loadAllDashboards(ctx context.Context, limit int, or
 				ch <- &dashboardsRes{
 					dashboards: rows,
 					err:        err,
-					end:        true,
 				}
 				break
 			}
 
 			ch <- &dashboardsRes{
 				dashboards: rows,
-				end:        false,
 			}
 
 			if len(rows) > 0 {
@@ -929,18 +928,15 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 	defer cancelLoadingDashboardCtx()
 
 	dashboardsChannel := l.loadAllDashboards(loadingDashboardCtx, limit, orgID, dashboardUID)
-	defer close(dashboardsChannel)
 
 	for {
-		var res *dashboardsRes
-		select {
-		case <-ctx.Done():
-			return nil, errors.New("context cancelled")
-		case res = <-dashboardsChannel:
+		res, ok := <-dashboardsChannel
+		if res != nil && res.err != nil {
+			l.logger.Error("Error when loading dashboards", "error", err, "orgID", orgID, "dashboardUID", dashboardUID)
+			break
 		}
 
-		if res.err != nil {
-			l.logger.Error("Error when loading dashboards", "error", err, "orgID", orgID, "dashboardUID", dashboardUID)
+		if res == nil || !ok {
 			break
 		}
 
@@ -952,6 +948,7 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 
 		reader := kdash.NewStaticDashboardSummaryBuilder(lookup)
 
+		time.Sleep(1 * time.Second)
 		for _, row := range rows {
 			summary, _, err := reader(ctx, row.Uid, row.Data)
 			if err != nil {
@@ -970,10 +967,6 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 			})
 		}
 		readDashboardSpan.End()
-
-		if res.end {
-			break
-		}
 	}
 
 	return dashboards, err
