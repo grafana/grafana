@@ -94,7 +94,6 @@ export class VideoPanel extends PureComponent<Props, State> {
         const samples = [
           'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
           'https://storage.googleapis.com/grafana-downloads/files/temp/sample-10s.mp4',
-          'http://localhost:3000/public/videos/skate.mp4',
         ];
         if (this.videoidx >= samples.length) {
           this.videoidx = 0;

@@ -1,0 +1,292 @@
+{
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": {
+            "type": "grafana",
+            "uid": "-- Grafana --"
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "target": {
+            "limit": 100,
+            "matchAny": false,
+            "tags": [],
+            "type": "dashboard"
+          },
+          "type": "dashboard"
+        }
+      ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 2,
+    "id": 107,
+    "links": [],
+    "liveNow": false,
+    "panels": [
+      {
+        "datasource": {
+          "type": "testdata",
+          "uid": "PD8C576611E62080A"
+        },
+        "gridPos": {
+          "h": 3,
+          "w": 24,
+          "x": 0,
+          "y": 0
+        },
+        "id": 9,
+        "options": {
+          "code": {
+            "language": "plaintext",
+            "showLineNumbers": false,
+            "showMiniMap": false
+          },
+          "content": "This panel show very early development with a video panel that will sync time events with graphs",
+          "mode": "markdown"
+        },
+        "pluginVersion": "9.3.0-pre",
+        "title": "Alpha panel overview",
+        "type": "text"
+      },
+      {
+        "datasource": {
+          "type": "testdata",
+          "uid": "PD8C576611E62080A"
+        },
+        "gridPos": {
+          "h": 10,
+          "w": 9,
+          "x": 0,
+          "y": 3
+        },
+        "id": 2,
+        "options": {
+          "autoPlay": false
+        },
+        "targets": [
+          {
+            "csvContent": "start,video\n1,https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4\n2,https://storage.googleapis.com/grafana-downloads/files/temp/sample-10s.mp4\n",
+            "datasource": {
+              "type": "testdata",
+              "uid": "PD8C576611E62080A"
+            },
+            "refId": "A",
+            "scenarioId": "csv_content"
+          }
+        ],
+        "title": "Video  (loaded from URLs in static CSV file)",
+        "type": "video"
+      },
+      {
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "drawStyle": "line",
+              "fillOpacity": 0,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "lineInterpolation": "linear",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green"
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 10,
+          "w": 15,
+          "x": 9,
+          "y": 3
+        },
+        "id": 4,
+        "options": {
+          "legend": {
+            "calcs": [],
+            "displayMode": "list",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "tooltip": {
+            "mode": "single",
+            "sort": "none"
+          }
+        },
+        "title": "Panel Title",
+        "type": "timeseries"
+      },
+      {
+        "datasource": {
+          "type": "testdata",
+          "uid": "PD8C576611E62080A"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green"
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 10,
+          "w": 9,
+          "x": 0,
+          "y": 13
+        },
+        "id": 6,
+        "options": {
+          "counters": {
+            "dataChanged": true,
+            "render": true,
+            "schemaChanged": true
+          },
+          "mode": "cursor",
+          "stateView": ""
+        },
+        "title": "Cursor event info (debug panel)",
+        "type": "debug"
+      },
+      {
+        "datasource": {
+          "type": "testdata",
+          "uid": "PD8C576611E62080A"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "continuous-BlPu"
+            },
+            "custom": {
+              "fillOpacity": 70,
+              "lineWidth": 0,
+              "spanNulls": false
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green"
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 10,
+          "w": 15,
+          "x": 9,
+          "y": 13
+        },
+        "id": 7,
+        "maxDataPoints": 20,
+        "options": {
+          "alignValue": "left",
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "mergeValues": true,
+          "rowHeight": 0.9,
+          "showValue": "auto",
+          "tooltip": {
+            "mode": "single",
+            "sort": "none"
+          }
+        },
+        "targets": [
+          {
+            "datasource": {
+              "type": "testdata",
+              "uid": "PD8C576611E62080A"
+            },
+            "drop": 20,
+            "refId": "A",
+            "scenarioId": "random_walk",
+            "seriesCount": 3
+          }
+        ],
+        "title": "Panel Title",
+        "type": "state-timeline"
+      }
+    ],
+    "refresh": false,
+    "schemaVersion": 37,
+    "style": "dark",
+    "tags": [],
+    "templating": {
+      "list": []
+    },
+    "time": {
+      "from": "2022-09-01T07:00:00.000Z",
+      "to": "2022-09-01T07:00:20.000Z"
+    },
+    "timepicker": {},
+    "timezone": "",
+    "title": "Video panel with cursor sync (alpha)",
+    "uid": "wKBcKQS4k",
+    "version": 6,
+    "weekStart": ""
+  }
+  
