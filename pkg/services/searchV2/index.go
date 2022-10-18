@@ -815,6 +815,81 @@ func newSQLDashboardLoader(sql *sqlstore.SQLStore, tracer tracing.Tracer, settin
 	return &sqlDashboardLoader{sql: sql, logger: log.New("sqlDashboardLoader"), tracer: tracer, settings: settings}
 }
 
+type dashboardsRes struct {
+	dashboards []*dashboardQueryResult
+	err        error
+}
+
+func (l sqlDashboardLoader) loadAllDashboards(ctx context.Context, limit int, orgID int64, dashboardUID string) chan *dashboardsRes {
+	ch := make(chan *dashboardsRes, 3)
+
+	go func() {
+		defer close(ch)
+
+		var lastID int64
+		for {
+			select {
+			case <-ctx.Done():
+				err := ctx.Err()
+				if err != nil {
+					ch <- &dashboardsRes{
+						dashboards: nil,
+						err:        err,
+					}
+				}
+				return
+			default:
+			}
+
+			dashboardQueryCtx, dashboardQuerySpan := l.tracer.Start(ctx, "sqlDashboardLoader dashboardQuery")
+			dashboardQuerySpan.SetAttributes("orgID", orgID, attribute.Key("orgID").Int64(orgID))
+			dashboardQuerySpan.SetAttributes("dashboardUID", dashboardUID, attribute.Key("dashboardUID").String(dashboardUID))
+			dashboardQuerySpan.SetAttributes("lastID", lastID, attribute.Key("lastID").Int64(lastID))
+
+			rows := make([]*dashboardQueryResult, 0)
+			err := l.sql.WithDbSession(dashboardQueryCtx, func(sess *sqlstore.DBSession) error {
+				sess.Table("dashboard").
+					Where("org_id = ?", orgID)
+
+				if lastID > 0 {
+					sess.Where("id > ?", lastID)
+				}
+
+				if dashboardUID != "" {
+					sess.Where("uid = ?", dashboardUID)
+				}
+
+				sess.Cols("id", "uid", "is_folder", "folder_id", "data", "slug", "created", "updated")
+
+				sess.OrderBy("id ASC")
+				sess.Limit(limit)
+
+				return sess.Find(&rows)
+			})
+
+			dashboardQuerySpan.End()
+
+			if err != nil || len(rows) < limit || dashboardUID != "" {
+				ch <- &dashboardsRes{
+					dashboards: rows,
+					err:        err,
+				}
+				break
+			}
+
+			ch <- &dashboardsRes{
+				dashboards: rows,
+			}
+
+			if len(rows) > 0 {
+				lastID = rows[len(rows)-1].Id
+			}
+		}
+	}()
+
+	return ch
+}
+
 func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, dashboardUID string) ([]dashboard, error) {
 	ctx, span := l.tracer.Start(ctx, "sqlDashboardLoader LoadDashboards")
 	span.SetAttributes("orgID", orgID, attribute.Key("orgID").Int64(orgID))
@@ -856,41 +931,23 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 	}
 	loadDatasourceSpan.End()
 
-	var lastID int64
+	loadingDashboardCtx, cancelLoadingDashboardCtx := context.WithCancel(ctx)
+	defer cancelLoadingDashboardCtx()
+
+	dashboardsChannel := l.loadAllDashboards(loadingDashboardCtx, limit, orgID, dashboardUID)
 
 	for {
-		dashboardQueryCtx, dashboardQuerySpan := l.tracer.Start(ctx, "sqlDashboardLoader dashboardQuery")
-		dashboardQuerySpan.SetAttributes("orgID", orgID, attribute.Key("orgID").Int64(orgID))
-		dashboardQuerySpan.SetAttributes("dashboardUID", dashboardUID, attribute.Key("dashboardUID").String(dashboardUID))
-		dashboardQuerySpan.SetAttributes("lastID", lastID, attribute.Key("lastID").Int64(lastID))
-
-		rows := make([]dashboardQueryResult, 0, limit)
-
-		err = l.sql.WithDbSession(dashboardQueryCtx, func(sess *sqlstore.DBSession) error {
-			sess.Table("dashboard").
-				Where("org_id = ?", orgID)
-
-			if lastID > 0 {
-				sess.Where("id > ?", lastID)
-			}
-
-			if dashboardUID != "" {
-				sess.Where("uid = ?", dashboardUID)
-			}
-
-			sess.Cols("id", "uid", "is_folder", "folder_id", "data", "slug", "created", "updated")
-
-			sess.OrderBy("id ASC")
-			sess.Limit(limit)
-
-			return sess.Find(&rows)
-		})
-
-		if err != nil {
-			dashboardQuerySpan.End()
-			return nil, err
+		res, ok := <-dashboardsChannel
+		if res != nil && res.err != nil {
+			l.logger.Error("Error when loading dashboards", "error", err, "orgID", orgID, "dashboardUID", dashboardUID)
+			break
 		}
-		dashboardQuerySpan.End()
+
+		if res == nil || !ok {
+			break
+		}
+
+		rows := res.dashboards
 
 		_, readDashboardSpan := l.tracer.Start(ctx, "sqlDashboardLoader readDashboard")
 		readDashboardSpan.SetAttributes("orgID", orgID, attribute.Key("orgID").Int64(orgID))
@@ -914,13 +971,8 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 				updated:  row.Updated,
 				summary:  summary,
 			})
-			lastID = row.Id
 		}
 		readDashboardSpan.End()
-
-		if len(rows) < limit || dashboardUID != "" {
-			break
-		}
 	}
 
 	return dashboards, err
