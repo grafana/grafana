@@ -8,6 +8,7 @@ alpine_image = 'alpine:3.15'
 curl_image = 'byrnedo/alpine-curl:0.1.8'
 windows_image = 'mcr.microsoft.com/windows:1809'
 wix_image = 'grafana/ci-wix:0.1.1'
+go_image = "golang:1.19.4"
 
 disable_tests = False
 trigger_oss = {
@@ -1005,6 +1006,56 @@ def store_packages_step(edition, ver_mode):
         ],
     }
 
+def publish_grafanacom_step(edition, ver_mode):
+    if ver_mode == 'release':
+        cmd = './bin/build publish grafana-com --edition {} ${{DRONE_TAG}}'.format(
+            edition,
+        )
+    elif ver_mode == 'main':
+        build_no = '${DRONE_BUILD_NUMBER}'
+        cmd = './bin/build publish grafana-com --edition {} --build-id {}'.format(
+            edition, build_no,
+        )
+    else:
+        fail('Unexpected version mode {}'.format(ver_mode))
+
+    return {
+        'name': 'publish-grafanacom-{}'.format(edition),
+        'image': publish_image,
+        'depends_on': [
+            "publish-linux-packages-deb",
+            "publish-linux-packages-rpm",
+        ],
+        'environment': {
+            'GRAFANA_COM_API_KEY': from_secret('grafana_api_key'),
+        },
+        'commands': [
+            cmd,
+        ],
+    }
+
+def publish_linux_packages_step(edition, package_manager='deb'):
+    return {
+        'name': 'publish-linux-packages-{}'.format(package_manager),
+        # See https://github.com/grafana/deployment_tools/blob/master/docker/package-publish/README.md for docs on that image
+        'image': 'us.gcr.io/kubernetes-dev/package-publish:latest',
+        'depends_on': [
+            'grabpl'
+        ],
+        'privileged': True,
+        'failure': 'ignore', # While we're testing it
+        'settings': {
+            'access_key_id': from_secret('packages_access_key_id'),
+            'secret_access_key': from_secret('packages_secret_access_key'),
+            'service_account_json': from_secret('packages_service_account'),
+            'target_bucket': 'grafana-packages',
+            'deb_distribution': 'stable',
+            'gpg_passphrase': from_secret('packages_gpg_passphrase'),
+            'gpg_public_key': from_secret('packages_gpg_public_key'),
+            'gpg_private_key': from_secret('packages_gpg_private_key'),
+            'package_path': 'gs://grafana-prerelease/artifacts/downloads/*${{DRONE_TAG}}/{}/**.{}'.format(edition, package_manager)
+        }
+    }
 
 def get_windows_steps(edition, ver_mode):
     init_cmds = []
@@ -1166,3 +1217,21 @@ def end_to_end_tests_deps(edition):
         'end-to-end-tests-smoke-tests-suite' + enterprise2_suffix(edition),
         'end-to-end-tests-various-suite' + enterprise2_suffix(edition),
     ]
+
+def compile_build_cmd(edition = "oss"):
+    dependencies = []
+    if edition in ("enterprise", "enterprise2"):
+        dependencies = [
+            "init-enterprise",
+        ]
+    return {
+        "name": "compile-build-cmd",
+        "image": go_image,
+        "commands": [
+            "go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd",
+        ],
+        "depends_on": dependencies,
+        "environment": {
+            "CGO_ENABLED": 0,
+        },
+    }

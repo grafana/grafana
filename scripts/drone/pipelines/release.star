@@ -11,6 +11,8 @@ load(
     'build_image',
     'identify_runner_step',
     'publish_image',
+    'publish_linux_packages_step',
+    'publish_grafanacom_step',
     'lint_backend_step',
     'lint_frontend_step',
     'codespell_step',
@@ -42,7 +44,8 @@ load(
     'validate_scuemata_step',
     'ensure_cuetsified_step',
     'publish_images_step',
-    'trigger_oss'
+    'trigger_oss',
+    'compile_build_cmd',
 )
 
 load(
@@ -404,12 +407,18 @@ def publish_packages_pipeline():
     }
     oss_steps = [
         download_grabpl_step(),
-        store_packages_step(edition='oss', ver_mode='release'),
+        compile_build_cmd(),
+        publish_linux_packages_step(edition = "oss", package_manager = "deb"),
+        publish_linux_packages_step(edition = "oss", package_manager = "rpm"),
+        publish_grafanacom_step(edition = "oss", ver_mode = "release"),
     ]
 
     enterprise_steps = [
         download_grabpl_step(),
-        store_packages_step(edition='enterprise', ver_mode='release'),
+        compile_build_cmd(),
+        publish_linux_packages_step(edition = "enterprise", package_manager = "deb"),
+        publish_linux_packages_step(edition = "enterprise", package_manager = "rpm"),
+        publish_grafanacom_step(edition = "enterprise", ver_mode = "release"),
     ]
     deps = [
         'publish-artifacts-public',
