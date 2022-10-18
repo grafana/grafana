@@ -404,14 +404,16 @@ def publish_packages_pipeline():
         download_grabpl_step(),
         gen_version_step(ver_mode='release'),
         store_packages_step(edition='oss', ver_mode='release'),
-        publish_linux_packages_step(edition='oss'),
+        publish_linux_packages_step(edition='oss', package_manager='deb'),
+        publish_linux_packages_step(edition='oss', package_manager='rpm'),
     ]
 
     enterprise_steps = [
         download_grabpl_step(),
         gen_version_step(ver_mode='release'),
         store_packages_step(edition='enterprise', ver_mode='release'),
-        publish_linux_packages_step(edition='enterprise'),
+        publish_linux_packages_step(edition='enterprise', package_manager='deb'),
+        publish_linux_packages_step(edition='enterprise', package_manager='rpm'),
     ]
     deps = [
         'publish-artifacts-public',
