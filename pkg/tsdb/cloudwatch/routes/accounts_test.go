@@ -18,9 +18,6 @@ func Test_accounts_route(t *testing.T) {
 	t.Cleanup(func() {
 		newAccountsService = origNewAccountsService
 	})
-	var clientFactoryMock = func(pluginCtx backend.PluginContext, region string) (clients models.ClientsProvider, err error) {
-		return nil, nil
-	}
 
 	t.Run("successfully returns array of accounts json", func(t *testing.T) {
 		mockAccountsService := mocks.AccountsServiceMock{}
@@ -35,7 +32,7 @@ func Test_accounts_route(t *testing.T) {
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/accounts?region=us-east-1", nil)
-		handler := http.HandlerFunc(RouteInjector(AccountsHandler, clientFactoryMock))
+		handler := http.HandlerFunc(RouteInjector(AccountsHandler, nil))
 		handler.ServeHTTP(rr, req)
 
 		assert.Equal(t, http.StatusOK, rr.Code)
@@ -45,7 +42,7 @@ func Test_accounts_route(t *testing.T) {
 	t.Run("rejects POST method", func(t *testing.T) {
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("POST", "/accounts?region=us-east-1", nil)
-		handler := http.HandlerFunc(RouteInjector(AccountsHandler, clientFactoryMock))
+		handler := http.HandlerFunc(RouteInjector(AccountsHandler, nil))
 		handler.ServeHTTP(rr, req)
 		assert.Equal(t, http.StatusMethodNotAllowed, rr.Code)
 	})
@@ -53,7 +50,7 @@ func Test_accounts_route(t *testing.T) {
 	t.Run("requires region query value", func(t *testing.T) {
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/accounts", nil)
-		handler := http.HandlerFunc(RouteInjector(AccountsHandler, clientFactoryMock))
+		handler := http.HandlerFunc(RouteInjector(AccountsHandler, nil))
 		handler.ServeHTTP(rr, req)
 		assert.Equal(t, http.StatusBadRequest, rr.Code)
 	})
@@ -68,7 +65,7 @@ func Test_accounts_route(t *testing.T) {
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/accounts?region=us-east-1", nil)
-		handler := http.HandlerFunc(RouteInjector(AccountsHandler, clientFactoryMock))
+		handler := http.HandlerFunc(RouteInjector(AccountsHandler, nil))
 		handler.ServeHTTP(rr, req)
 
 		assert.Equal(t, http.StatusForbidden, rr.Code)
@@ -86,7 +83,7 @@ func Test_accounts_route(t *testing.T) {
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/accounts?region=us-east-1", nil)
-		handler := http.HandlerFunc(RouteInjector(AccountsHandler, clientFactoryMock))
+		handler := http.HandlerFunc(RouteInjector(AccountsHandler, nil))
 		handler.ServeHTTP(rr, req)
 
 		assert.Equal(t, http.StatusInternalServerError, rr.Code)
