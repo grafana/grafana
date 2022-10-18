@@ -15,5 +15,5 @@ export const noopTransformer: SynchronousDataTransformerInfo<NoopTransformerOpti
   operator: (options: NoopTransformerOptions) => (source) => source,
 
   /** no operation */
-  transformer: (options: NoopTransformerOptions)  => (data: DataFrame[]) => data,
+  transformer: (options: NoopTransformerOptions) => (data: DataFrame[]) => data,
 };
