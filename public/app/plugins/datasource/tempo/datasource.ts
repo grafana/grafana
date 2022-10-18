@@ -427,6 +427,12 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
       }
 
       const { nodes, edges } = mapPromMetricsToServiceMap(responses, request.range);
+
+      // No handling of multiple targets assume just one. NodeGraph does not support it anyway, but still should be
+      // fixed at some point.
+      nodes.refId = request.targets[0].refId;
+      edges.refId = request.targets[0].refId;
+
       nodes.fields[0].config = getFieldConfig(
         datasourceUid,
         tempoDatasourceUid,
