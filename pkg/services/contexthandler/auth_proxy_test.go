@@ -104,7 +104,7 @@ func getContextHandler(t *testing.T) *ContextHandler {
 
 	return ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc,
 		renderSvc, sqlStore, tracer, authProxy, loginService, nil, authenticator,
-		&userService, orgService)
+		&userService, orgService, nil)
 }
 
 type FakeGetSignUserStore struct {
