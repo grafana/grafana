@@ -32,4 +32,12 @@ export const Basic: ComponentStory<typeof RangeSlider> = (args) => {
   );
 };
 
+export const Vertical: ComponentStory<typeof RangeSlider> = (args) => {
+  return (
+    <div style={{ width: '200px', height: '200px' }}>
+      <RangeSlider orientation="vertical" {...args} />
+    </div>
+  );
+};
+
 export default meta;

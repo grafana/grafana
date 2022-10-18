@@ -32,12 +32,11 @@ export const Slider: FunctionComponent<SliderProps> = ({
   const [sliderValue, setSliderValue] = useState<number>(value ?? min);
 
   const onSliderChange = useCallback(
-    (v: number) => {
-      setSliderValue(v);
+    (v: number | number[]) => {
+      const value = typeof v === 'number' ? v : v[0];
 
-      if (onChange) {
-        onChange(v);
-      }
+      setSliderValue(value);
+      onChange?.(value);
     },
     [setSliderValue, onChange]
   );
@@ -78,6 +77,14 @@ export const Slider: FunctionComponent<SliderProps> = ({
     [max, min]
   );
 
+  const handleAfterChange = useCallback(
+    (v: number | number[]) => {
+      const value = typeof v === 'number' ? v : v[0];
+      onAfterChange?.(value);
+    },
+    [onAfterChange]
+  );
+
   const sliderInputClassNames = !isHorizontal ? [styles.sliderInputVertical] : [];
   const sliderInputFieldClassNames = !isHorizontal ? [styles.sliderInputFieldVertical] : [];
 
@@ -92,19 +99,19 @@ export const Slider: FunctionComponent<SliderProps> = ({
           step={step}
           defaultValue={value}
           value={sliderValue}
-          // onChange={onSliderChange}
-          // onAfterChange={onAfterChange}
+          onChange={onSliderChange}
+          onAfterChange={handleAfterChange}
           vertical={!isHorizontal}
           reverse={reverse}
           ariaLabelForHandle={ariaLabelForHandle}
           marks={marks}
           included={included}
         />
-        {/* Uses text input so that the number spinners are not shown */}
+
         <Input
           type="text"
           className={cx(styles.sliderInputField, ...sliderInputFieldClassNames)}
-          value={`${sliderValue}`} // to fix the react leading zero issue
+          value={sliderValue}
           onChange={onSliderInputChange}
           onBlur={onSliderInputBlur}
           min={min}
