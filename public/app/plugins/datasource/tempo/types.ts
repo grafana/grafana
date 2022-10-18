@@ -56,8 +56,8 @@ export type TraceSearchMetadata = {
   traceID: string;
   rootServiceName: string;
   rootTraceName: string;
-  startTimeUnixNano: string;
-  durationMs: number;
+  startTimeUnixNano?: string;
+  durationMs?: number;
   spanSet?: { spans: Span[] };
 };
 

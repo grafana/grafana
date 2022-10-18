@@ -733,7 +733,7 @@ interface TraceTableData {
   spanID?: string;
   //attributes?: string;
   startTime?: string;
-  duration: number;
+  duration?: number;
 }
 
 function transformSpanToTraceData(span: Span, traceID: string): TraceTableData {
