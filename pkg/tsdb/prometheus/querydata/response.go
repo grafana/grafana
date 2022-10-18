@@ -27,9 +27,6 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 		MatrixWideSeries: s.enableWideSeries,
 		VectorWideSeries: s.enableWideSeries,
 	})
-	if r == nil {
-		return nil, fmt.Errorf("received empty response from prometheus")
-	}
 
 	// The ExecutedQueryString can be viewed in QueryInspector in UI
 	for _, frame := range r.Frames {
@@ -41,7 +38,7 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 	}
 
 	r = processExemplars(q, r)
-	return r, nil
+	return &r, nil
 }
 
 func addMetadataToMultiFrame(q *models.Query, frame *data.Frame) {
@@ -135,7 +132,7 @@ func getName(q *models.Query, field *data.Field) string {
 	return legend
 }
 
-func processExemplars(q *models.Query, dr *backend.DataResponse) *backend.DataResponse {
+func processExemplars(q *models.Query, dr backend.DataResponse) backend.DataResponse {
 	sampler := newExemplarSampler()
 
 	// we are moving from a multi-frame response returned
@@ -203,7 +200,7 @@ func processExemplars(q *models.Query, dr *backend.DataResponse) *backend.DataRe
 
 	frames = append(frames, exemplarFrame)
 
-	return &backend.DataResponse{
+	return backend.DataResponse{
 		Frames: frames,
 		Error:  dr.Error,
 	}

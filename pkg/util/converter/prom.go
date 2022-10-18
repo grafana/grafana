@@ -24,7 +24,7 @@ type Options struct {
 }
 
 // ReadPrometheusStyleResult will read results from a prometheus or loki server and return data frames
-func ReadPrometheusStyleResult(iter *jsoniter.Iterator, opt Options) *backend.DataResponse {
+func ReadPrometheusStyleResult(iter *jsoniter.Iterator, opt Options) backend.DataResponse {
 	var rsp *backend.DataResponse
 	status := "unknown"
 	errorType := ""
@@ -55,7 +55,7 @@ func ReadPrometheusStyleResult(iter *jsoniter.Iterator, opt Options) *backend.Da
 	}
 
 	if status == "error" {
-		return &backend.DataResponse{
+		return backend.DataResponse{
 			Error: fmt.Errorf("%s: %s", errorType, err),
 		}
 	}
@@ -69,7 +69,7 @@ func ReadPrometheusStyleResult(iter *jsoniter.Iterator, opt Options) *backend.Da
 		}
 	}
 
-	return rsp
+	return *rsp
 }
 
 func readWarnings(iter *jsoniter.Iterator) []data.Notice {
