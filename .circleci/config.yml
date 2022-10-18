@@ -8,7 +8,91 @@ executors:
     docker:
       - image: cimg/base:2022.07
 
+commands:
+  asdf_install:
+    description: "Install tools using ASDF"
+    parameters:
+      tools:
+        type: string
+        description:
+          "Newline separated list of tools to install. If empty, will install
+          everything."
+        default: ""
+      cache_name:
+        type: string
+        description: "Name of asdf cache"
+        default: "default"
+    steps:
+      - run:
+          name: Install ASDF
+          command: |
+            git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.10.2
+            printf '\nsource "${HOME}/.asdf/asdf.sh"\n' >> "${BASH_ENV}"
+            date +%m > ~/month
+            date +%d > ~/day
+      # We need to restore ASDF cache after installing, otherwise we will try to clone it to non-empty dir
+      - restore_cache:
+          name: Restore ASDF cache
+          keys:
+            - grafana-asdf-cache-v7-{{ checksum "~/month" }}-<<
+              parameters.cache_name >>-{{ checksum ".tool-versions" }}
+            - grafana-asdf-cache-v7-{{ checksum "~/month" }}-<<
+              parameters.cache_name >>-
+      - run:
+          name: Install ASDF tools
+          environment:
+            TOOLS: << parameters.tools >>
+          command: .circleci/scripts/asdf_install.sh
+  asdf_save_cache:
+    parameters:
+      cache_name:
+        type: string
+        description: "Name of asdf cache"
+        default: "default"
+    steps:
+      - save_cache:
+          name: Save ASDF cache
+          key:
+            grafana-asdf-cache-v7-{{ checksum "~/month" }}-<<
+            parameters.cache_name >>-{{ checksum ".tool-versions" }}
+          paths:
+            - ~/.asdf
+  opsninja_install:
+    steps:
+      - add_ssh_keys:
+          fingerprints:
+            - "8d:43:0f:09:ed:86:44:23:4f:43:88:29:71:bf:92:e7" # fluxninja/cloud R/O
+      - run:
+          name: Install opsninja and its dependencies
+          command: |
+            # We need R/O access to cloud repository to be able to fetch opsninja library
+            # FIXME: make "releases" of opsninja library somehow, even as a separate repository
+            # to limit exposure.
+            export CLOUD_RO_KEY_FINGERPRINT="8d:43:0f:09:ed:86:44:23:4f:43:88:29:71:bf:92:e7"
+            export GIT_SSH_COMMAND="ssh -i ~/.ssh/id_rsa_$(echo "${CLOUD_RO_KEY_FINGERPRINT}" | tr -d ':')"
+            export SSH_AUTH_SOCK=""
+            # Bust asdf cache as our opsninja version is always 0.0.0
+            pip uninstall -y opsninja
+            pip install 'git+ssh://git@github.com/fluxninja/cloud@main#egg=opsninja&subdirectory=ops/apps/opsninja/'
+            asdf reshim
+
 jobs:
+  release-components:
+    executor: base-cimg-executor
+    steps:
+      - checkout
+      - asdf_install:
+          cache_name: release
+          tools: |-
+            python
+            gcloud
+      - opsninja_install
+      - run:
+          name: Schedule release jobs
+          working_directory: ops/apps/opsninja
+          command: fn circleci trigger-release --tag << pipeline.git.tag >>
+      - asdf_save_cache:
+          cache_name: release
   build-push-add-tag:
     parameters:
       attach-workspace:
@@ -104,4 +188,14 @@ workflows:
       - build-push-add-tag:
           name: image-build-grafana-alpine
           image: cf-fn/grafana
-
+  release-components:
+    when:
+      matches: { value: << pipeline.git.tag >>, pattern: "^releases/.+$" }
+    jobs:
+      - release-components:
+          # both this and workflow's when is needed
+          filters:
+            branches:
+              ignore: /.+/
+            tags:
+              only: /releases\/.+/
