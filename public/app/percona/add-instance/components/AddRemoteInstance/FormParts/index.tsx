@@ -2,3 +2,4 @@ export { AdditionalOptionsFormPart as AdditionalOptions } from './AdditionalOpti
 export { LabelsFormPart as Labels } from './Labels/Labels';
 export { MainDetailsFormPart as MainDetails } from './MainDetails/MainDetails';
 export { PostgreSQLConnectionDetails } from './PostgreSQLConnectionDetails/PostgreSQLConnectionDetails';
+export { MySQLConnectionDetails } from './MySQLConnectionDetails/MySQLConnectionDetails';

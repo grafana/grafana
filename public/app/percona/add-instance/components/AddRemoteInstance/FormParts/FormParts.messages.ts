@@ -29,6 +29,9 @@ export const Messages = {
       postgresqlDetails: {
         database: 'Database',
       },
+      mysqlDetails: {
+        maxQueryLength: 'Max query length',
+      },
       labels: {
         environment: 'Environment',
         region: 'Region',
@@ -77,6 +80,9 @@ export const Messages = {
       postgresqlDetails: {
         database: 'Database (default: postgres)',
       },
+      mysqlDetails: {
+        maxQueryLength: 'Max query length',
+      },
       labels: {
         environment: 'Environment',
         region: 'Region',
@@ -108,6 +114,9 @@ export const Messages = {
       },
       postgresqlDetails: {
         database: 'Database name',
+      },
+      mysqlDetails: {
+        maxQueryLength: 'Full Example (Fingerprint) storage is not allowed by default to have the best performance',
       },
       haproxy: {
         port: 'HAProxy prometheus exporter port',

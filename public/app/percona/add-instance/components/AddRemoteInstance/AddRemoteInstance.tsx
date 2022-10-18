@@ -1,4 +1,5 @@
 /* eslint-disable react/display-name */
+/* eslint-disable @typescript-eslint/consistent-type-assertions */
 import { logger } from '@percona/platform-core';
 import { FormApi } from 'final-form';
 import React, { FC, useCallback, useMemo, useState } from 'react';
@@ -23,7 +24,13 @@ import {
   MSAzurePayload,
   TrackingOptions,
 } from './AddRemoteInstance.types';
-import { AdditionalOptions, Labels, MainDetails, PostgreSQLConnectionDetails } from './FormParts';
+import {
+  AdditionalOptions,
+  Labels,
+  MainDetails,
+  MySQLConnectionDetails,
+  PostgreSQLConnectionDetails,
+} from './FormParts';
 import { ExternalServiceConnectionDetails } from './FormParts/ExternalServiceConnectionDetails/ExternalServiceConnectionDetails';
 import { HAProxyConnectionDetails } from './FormParts/HAProxyConnectionDetails/HAProxyConnectionDetails';
 
@@ -83,6 +90,8 @@ const AddRemoteInstance: FC<AddRemoteInstanceProps> = ({ instance: { type, crede
           return <HAProxyConnectionDetails remoteInstanceCredentials={remoteInstanceCredentials} />;
         case Databases.postgresql:
           return <PostgreSQLConnectionDetails remoteInstanceCredentials={remoteInstanceCredentials} />;
+        case Databases.mysql:
+          return <MySQLConnectionDetails remoteInstanceCredentials={remoteInstanceCredentials} />;
         default:
           return <MainDetails form={form} remoteInstanceCredentials={remoteInstanceCredentials} />;
       }
