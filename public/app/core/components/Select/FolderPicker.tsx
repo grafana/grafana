@@ -68,10 +68,10 @@ export function FolderPicker(props: Props) {
     onClear,
     enableReset,
     initialFolderId,
-    initialTitle,
-    permissionLevel,
-    rootName,
-    showRoot,
+    initialTitle = '',
+    permissionLevel = PermissionLevelString.Edit,
+    rootName = 'General',
+    showRoot = true,
     skipInitialLoad,
     accessControlMetadata,
     customAdd,
@@ -106,7 +106,7 @@ export function FolderPicker(props: Props) {
         initialTitle !== '' &&
         !options.find((option) => option.label === initialTitle)
       ) {
-        Boolean(initialTitle) && options.unshift({ label: initialTitle, value: initialFolderId });
+        options.unshift({ label: initialTitle, value: initialFolderId });
       }
       if (enableCreateNew && Boolean(customAdd)) {
         return [...options, { value: VALUE_FOR_ADD, label: ADD_NEW_FOLER_OPTION, title: query }];
