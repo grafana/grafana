@@ -5,11 +5,10 @@ import (
 	"fmt"
 	"io/fs"
 	"path/filepath"
-	"testing/fstest"
 
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/errors"
-	"cuelang.org/go/cue/load"
+	"github.com/grafana/grafana"
 	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/thema"
 	tload "github.com/grafana/thema/load"
@@ -30,57 +29,31 @@ func init() {
 	}
 }
 
-var prefix = filepath.Join("/pkg", "framework", "entity")
+var prefix = filepath.Join("/pkg", "framework", "kind")
 
-//nolint:nakedret
-func doLoadFrameworkCUE(ctx *cue.Context) (v cue.Value, err error) {
-	m := make(fstest.MapFS)
-
-	err = fs.WalkDir(cueFS, ".", func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if d.IsDir() {
-			return nil
-		}
-		b, err := fs.ReadFile(cueFS, path)
-		if err != nil {
-			return err
-		}
-		m[path] = &fstest.MapFile{Data: b}
-		return nil
-	})
-	if err != nil {
-		return
-	}
-
-	over := make(map[string]load.Source)
+func doLoadFrameworkCUE(ctx *cue.Context) (cue.Value, error) {
+	var v cue.Value
+	var err error
 
 	absolutePath := prefix
 	if !filepath.IsAbs(absolutePath) {
 		absolutePath, err = filepath.Abs(absolutePath)
 		if err != nil {
-			return
+			return v, err
 		}
 	}
 
-	err = tload.ToOverlay(absolutePath, m, over)
+	bi, err := tload.InstancesWithThema(grafana.CueSchemaFS, absolutePath)
 	if err != nil {
-		return
+		return v, err
+	}
+	v = ctx.BuildInstance(bi)
+
+	if err = v.Validate(cue.Concrete(false), cue.All()); err != nil {
+		return cue.Value{}, fmt.Errorf("coremodel framework loaded cue.Value has err: %w", err)
 	}
 
-	bi := load.Instances(nil, &load.Config{
-		Dir:     absolutePath,
-		Package: "kind",
-		Overlay: over,
-	})
-	v = ctx.BuildInstance(bi[0])
-
-	if v.Err() != nil {
-		return cue.Value{}, fmt.Errorf("coremodel framework loaded cue.Value has err: %w", v.Err())
-	}
-
-	return
+	return v, nil
 }
 
 // CUEFramework returns a cue.Value representing all the kind framework
@@ -147,11 +120,7 @@ func BindKind[T KindMetas](v cue.Value) (T, error) {
 	}
 
 	item := v.Unify(kdef)
-	// TODO recall and comment on the difference between Err and Validate
-	if item.Err() != nil {
-		return *meta, ewrap(item.Err(), ErrValueNotAKind)
-	}
-	if err := item.Validate(); err != nil {
+	if err := item.Validate(cue.Concrete(false), cue.All()); err != nil {
 		return *meta, ewrap(item.Err(), ErrValueNotAKind)
 	}
 	if err := item.Decode(meta); err != nil {
@@ -164,18 +133,19 @@ func BindKind[T KindMetas](v cue.Value) (T, error) {
 
 // ParsedKindDefinition is the result of a successful call to ParseKindFS. It
 // represents a kind definition in partially-processed form, amenable for
-// further processing into
+// further processing into a proper kind.
 type ParsedKindDefinition struct {
-	// V is the cue.Value corresponding to the entire Kind declaration.
+	// V is the cue.Value containing the entire Kind declaration.
 	V cue.Value
-	// Meta configuration for the kind.
+	// Meta contains the kind's metadata settings.
 	Meta SomeKindMeta
 }
 
-// BindKindLineage binds the lineage for the parsed kind. nil, nil is returned for raw kinds.
+// BindKindLineage binds the lineage for the parsed kind. nil, nil is returned
+// for raw kinds.
 //
-// For kinds with a corresponding Go type, it left to the caller to associate that Go type
-// with the returned lineage by calling [thema.BindType].
+// For kinds with a corresponding Go type, it is left to the caller to associate
+// that Go type with the lineage returned from this function by a call to [thema.BindType].
 func (pk *ParsedKindDefinition) BindKindLineage(rt *thema.Runtime, opts ...thema.BindOption) (thema.Lineage, error) {
 	switch pk.Meta.(type) {
 	case RawMeta:
@@ -187,9 +157,26 @@ func (pk *ParsedKindDefinition) BindKindLineage(rt *thema.Runtime, opts ...thema
 	}
 }
 
-// ParseKindFS takes an fs.FS and validates that it represents one
-// of the valid kind variants. On success, it returns a representation
-// of the entire kind definition contained in the provided kfs.
-func ParseKindFS(kfs fs.FS, rt *thema.Runtime) (*ParsedKindDefinition, error) {
-	panic("TODO")
+// ParseKindFS takes an fs.FS and validates that it contains a valid kind
+// definition from any of the kind categories. On success, it returns a
+// representation of the entire kind definition contained in the provided kfs.
+func ParseKindFS(kfs fs.FS, path string, ctx *cue.Context) (*ParsedKindDefinition, error) {
+	// TODO use a more genericized loader
+	inst, err := tload.InstancesWithThema(kfs, path)
+	if err != nil {
+		return nil, err
+	}
+
+	vk := ctx.BuildInstance(inst)
+	if err = vk.Validate(cue.Concrete(false), cue.All()); err != nil {
+		return nil, err
+	}
+	pkd := &ParsedKindDefinition{
+		V: vk,
+	}
+	pkd.Meta, err = BindSomeKind(vk)
+	if err != nil {
+		return nil, err
+	}
+	return pkd, nil
 }
