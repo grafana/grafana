@@ -27,6 +27,8 @@ const (
 
 	CategoryOther Category = "other"
 
+	CategoryProfiling Category = "profiling"
+
 	CategorySql Category = "sql"
 
 	CategoryTracing Category = "tracing"

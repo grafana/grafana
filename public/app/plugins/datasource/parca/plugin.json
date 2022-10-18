@@ -2,6 +2,7 @@
   "type": "datasource",
   "name": "Parca",
   "id": "parca",
+  "category": "profiling",
   "metrics": true,
   "backend": true,
   "info": {

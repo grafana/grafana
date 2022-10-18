@@ -2,7 +2,7 @@
   "type": "datasource",
   "name": "Phlare",
   "id": "phlare",
-  "category": "tracing",
+  "category": "profiling",
 
   "metrics": true,
   "alerting": false,

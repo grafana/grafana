@@ -35,7 +35,7 @@ seqs: [
 				name: string
 
 				// Plugin category used on the Add data source page.
-				category?: "tsdb" | "logging" | "cloud" | "tracing" | "sql" | "enterprise" | "other"
+				category?: "tsdb" | "logging" | "cloud" | "tracing" | "sql" | "enterprise" | "profiling" | "other"
 
 				// For data source plugins, if the plugin supports annotation
 				// queries.
