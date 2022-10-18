@@ -230,7 +230,6 @@ func (s *Service) DeclarePluginRoles(pluginID string, registrations ...accesscon
 // GetSimplifiedUsersPermissions returns all users' permissions filtered by action prefixes
 func (s *Service) GetSimplifiedUsersPermissions(ctx context.Context, user *user.SignedInUser, orgID int64,
 	actionPrefix string) (map[int64][]accesscontrol.SimplifiedUserPermissionDTO, error) {
-
 	// Filter ram permissions
 	basicPermissions := map[string][]accesscontrol.Permission{}
 	for role, basicRole := range s.roles {
@@ -240,13 +239,13 @@ func (s *Service) GetSimplifiedUsersPermissions(ctx context.Context, user *user.
 			}
 		}
 	}
-
+	// Get stored (DB) permissions
 	usersPermissions, usersRoles, err := s.store.GetUsersPermissions(ctx, orgID, actionPrefix)
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO replace with checker eventually
+	// FIXME replace with checker eventually
 	canView := func() func(userID int64) bool {
 		siuPermissions, ok := user.Permissions[orgID]
 		if !ok {
@@ -276,12 +275,12 @@ func (s *Service) GetSimplifiedUsersPermissions(ctx context.Context, user *user.
 		return func(userID int64) bool { return ids[userID] }
 	}()
 
+	// Merge stored (DB) and basic role permissions (RAM)
 	res := map[int64][]accesscontrol.SimplifiedUserPermissionDTO{}
 	for userID, perms := range usersPermissions {
 		if !canView(userID) {
 			continue
 		}
-		// Merge basic role permissions (RAM)
 		if roles, ok := usersRoles[userID]; ok {
 			for i := range roles {
 				if basicPermission, ok := basicPermissions[roles[i]]; ok {
