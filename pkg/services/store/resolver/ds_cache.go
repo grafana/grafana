@@ -114,22 +114,23 @@ func (c *dsCache) refreshCache(ctx context.Context) error {
 }
 
 func (c *dsCache) getDS(ctx context.Context, uid string) (*dsVal, error) {
-	var err error
-
 	// refresh cache every 1 min
 	if c.cache == nil || c.timestamp.Before(getNow().Add(time.Minute*-1)) {
-		err = c.check(ctx)
+		err := c.refreshCache(ctx)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	orgID := store.UserFromContext(ctx).OrgID
 
 	v, ok := c.cache[orgID]
 	if !ok {
-		return nil, err // org not found
+		return nil, nil // org not found
 	}
 	ds, ok := v[uid]
 	if !ok {
-		return nil, err // data source not found
+		return nil, nil // data source not found
 	}
-	return ds, err
+	return ds, nil
 }

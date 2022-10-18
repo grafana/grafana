@@ -11,6 +11,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
+const (
+	WarningNotImplemented           = "not implemented"
+	WarningDatasourcePluginNotFound = "datasource plugin not found"
+	WarningTypeNotSpecified         = "type not specified"
+	WarningPluginNotFound           = "plugin not found"
+)
+
 // for testing
 var getNow = func() time.Time { return time.Now() }
 
@@ -42,11 +49,7 @@ type standardReferenceResolver struct {
 
 func (r *standardReferenceResolver) Resolve(ctx context.Context, ref *models.ObjectExternalReference) (ResolutionInfo, error) {
 	if ref == nil {
-		return ResolutionInfo{
-			OK:        false,
-			Timestamp: getNow(),
-			Warning:   "invalid reference (nil)",
-		}, nil
+		return ResolutionInfo{OK: false, Timestamp: getNow()}, fmt.Errorf("ref is nil")
 	}
 
 	switch ref.Kind {
@@ -56,18 +59,18 @@ func (r *standardReferenceResolver) Resolve(ctx context.Context, ref *models.Obj
 	case models.ExternalEntityReferencePlugin:
 		return r.resolvePlugin(ctx, ref)
 
-	case models.ExternalEntityReferenceRuntime:
-		return ResolutionInfo{
-			OK:        false,
-			Timestamp: getNow(),
-			Warning:   "not implemented yet", // TODO, runtime registry?
-		}, nil
+		// case models.ExternalEntityReferenceRuntime:
+		// 	return ResolutionInfo{
+		// 		OK:        false,
+		// 		Timestamp: getNow(),
+		// 		Warning:   WarningNotImplemented,
+		// 	}, nil
 	}
 
 	return ResolutionInfo{
 		OK:        false,
 		Timestamp: getNow(),
-		Warning:   "resolution not yet implemented",
+		Warning:   WarningNotImplemented,
 	}, nil
 }
 
@@ -87,10 +90,10 @@ func (r *standardReferenceResolver) resolveDatasource(ctx context.Context, ref *
 	}
 	if !ds.PluginExists {
 		res.OK = false
-		res.Warning = "datasource plugin not found"
+		res.Warning = WarningDatasourcePluginNotFound
 	} else if ref.Type == "" {
 		ref.Type = ds.Type // awkward! but makes the reporting accurate for dashboards before schemaVersion 36
-		res.Warning = "type not specified"
+		res.Warning = WarningTypeNotSpecified
 	} else if ref.Type != ds.Type {
 		res.Warning = fmt.Sprintf("type mismatch (expect:%s, found:%s)", ref.Type, ds.Type)
 	}
@@ -103,7 +106,7 @@ func (r *standardReferenceResolver) resolvePlugin(ctx context.Context, ref *mode
 		return ResolutionInfo{
 			OK:        false,
 			Timestamp: getNow(),
-			Warning:   "Plugin not found",
+			Warning:   WarningPluginNotFound,
 		}, nil
 	}
 

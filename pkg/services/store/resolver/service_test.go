@@ -114,6 +114,13 @@ func TestResolver(t *testing.T) {
 			},
 			ctx: ctxOrg1,
 		},
+		{
+			name:   "invalid input",
+			given:  nil,
+			expect: ResolutionInfo{OK: false},
+			err:    "ref is nil",
+			ctx:    ctxOrg1,
+		},
 	}
 
 	for _, scenario := range scenarios {
