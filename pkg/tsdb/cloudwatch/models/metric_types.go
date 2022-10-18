@@ -13,3 +13,4 @@ type ListMetricsProvider interface {
 type MetricsClientProvider interface {
 	ListMetricsWithPageLimit(params *cloudwatch.ListMetricsInput) ([]*cloudwatch.Metric, error)
 }
+
