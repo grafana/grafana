@@ -1,9 +1,10 @@
+import { noop } from 'lodash';
 import React from 'react';
 import { Controller } from 'react-hook-form';
 import { useAsync } from 'react-use';
 
 import { getDataSourceSrv } from '@grafana/runtime';
-import { Field, LoadingPlaceholder, Alert } from '@grafana/ui';
+import { Field, LoadingPlaceholder, Alert, Button, HorizontalGroup, Icon } from '@grafana/ui';
 
 interface Props {
   dsUid?: string;
@@ -24,6 +25,17 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
     return getDataSourceSrv().get(dsUid);
   }, [dsUid]);
   const QueryEditor = datasource?.components?.QueryEditor;
+  console.log('QueryEditor', datasource);
+
+  // TODO: Get status of query from state
+  // initialise isValidQuery state locally
+  const isValidQuery = false;
+
+  const handleValidation = () => {
+    // trigger query
+    // filter result as we only need whether it was successful or not
+    // if it was successful change state for isValidQuery to true
+  };
 
   return (
     <Field label="Query" invalid={invalid} error={error}>
@@ -53,7 +65,23 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
             return <Alert title="Data source does not export a query editor."></Alert>;
           }
 
-          return <QueryEditor onRunQuery={() => {}} onChange={onChange} datasource={datasource} query={value} />;
+          // TODO: not sure about noop yet
+          return (
+            <>
+              <QueryEditor onRunQuery={noop} onChange={onChange} datasource={datasource} query={value} />
+              <HorizontalGroup justify="flex-end">
+                {isValidQuery && (
+                  <div className="styles.valid">
+                    <Icon name="check" /> This query will process <strong>some text depending on the result</strong>{' '}
+                    when run.
+                  </div>
+                )}
+                <Button variant="primary" icon={'check'} type="button" onClick={handleValidation}>
+                  {isValidQuery ? 'Query is valid' : 'Validate query'}
+                </Button>
+              </HorizontalGroup>
+            </>
+          );
         }}
       />
     </Field>
