@@ -46,6 +46,7 @@ export const VideoJSWrapper = (props: VideoPlayerProps) => {
 
   return (
     <div data-vjs-player>
+      {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
       <video ref={videoRef} className="video-js vjs-big-play-centered" />
     </div>
   );
