@@ -3840,7 +3840,7 @@ steps:
     secret_access_key:
       from_secret: packages_secret_access_key
     service_account_json:
-      from_secret: packages_service_account_json
+      from_secret: packages_service_account
     target_bucket: grafana-packages
 - depends_on:
   - grabpl
@@ -3862,7 +3862,7 @@ steps:
     secret_access_key:
       from_secret: packages_secret_access_key
     service_account_json:
-      from_secret: packages_service_account_json
+      from_secret: packages_service_account
     target_bucket: grafana-packages
 trigger:
   event:
@@ -3951,7 +3951,7 @@ steps:
     secret_access_key:
       from_secret: packages_secret_access_key
     service_account_json:
-      from_secret: packages_service_account_json
+      from_secret: packages_service_account
     target_bucket: grafana-packages
 - depends_on:
   - grabpl
@@ -3973,7 +3973,7 @@ steps:
     secret_access_key:
       from_secret: packages_secret_access_key
     service_account_json:
-      from_secret: packages_service_account_json
+      from_secret: packages_service_account
     target_bucket: grafana-packages
 trigger:
   event:
@@ -5612,6 +5612,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 9e279c40640c4c3485b124fa6d72b4eca52a5bcefff86c7d01d40e550cfe3315
+hmac: 32fd3238c41c567091d1a3a654de77a138e66a28bf47799c982629960e53d806
 
 ...
