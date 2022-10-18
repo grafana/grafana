@@ -23,14 +23,14 @@ export const KubernetesClusterActions: FC<DBClusterActionsProps> = ({
     (kubernetesCluster: Kubernetes) => {
       const actions: Action[] = [
         {
-          title: Messages.kubernetes.deleteAction,
+          content: Messages.kubernetes.deleteAction,
           action: () => {
             setSelectedCluster(kubernetesCluster);
             setDeleteModalVisible(true);
           },
         },
         {
-          title: Messages.kubernetes.showConfiguration,
+          content: Messages.kubernetes.showConfiguration,
           action: () => {
             setSelectedCluster(kubernetesCluster);
             setViewConfigModalVisible(true);
@@ -40,7 +40,7 @@ export const KubernetesClusterActions: FC<DBClusterActionsProps> = ({
 
       if (isAdmin) {
         actions.push({
-          title: Messages.kubernetes.manageComponents,
+          content: Messages.kubernetes.manageComponents,
           disabled: !hasActiveOperator(kubernetesCluster),
           action: () => {
             setSelectedCluster(kubernetesCluster);

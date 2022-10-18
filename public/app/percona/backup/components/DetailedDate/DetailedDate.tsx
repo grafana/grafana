@@ -1,3 +1,4 @@
+import { cx } from '@emotion/css';
 import moment from 'moment/moment';
 import React, { FC } from 'react';
 
@@ -20,7 +21,7 @@ export const DetailedDate: FC<DetailedDateProps> = ({
   const hourTime = momentObj.format(hourFormat);
 
   return (
-    <span data-testid={dataTestId} className={className}>
+    <span data-testid={dataTestId} className={cx(className, styles.timeWrapper)}>
       <span>{dayTime}</span>
       <span className={styles.hourWrapper}>{hourTime}</span>
     </span>

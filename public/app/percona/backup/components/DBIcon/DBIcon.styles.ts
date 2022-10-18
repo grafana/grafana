@@ -11,4 +11,9 @@ export const getStyles = ({ colors }: GrafanaTheme) => ({
       pointer-events: none;
     }
   `,
+  iconWrapper: css`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  `,
 });

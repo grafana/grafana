@@ -1,6 +1,6 @@
 export const Messages = {
   serviceName: 'Service name',
-  vendor: 'Vendor',
+  vendor: 'DB technology',
   dataModel: 'Data model',
   type: 'Backup type',
   databases: 'Databases',

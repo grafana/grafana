@@ -1,42 +1,17 @@
 import React, { FC } from 'react';
 
-import { useStyles } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
+import { ExpandableRowButton } from 'app/percona/shared/components/Elements/ExpandableRowButton/ExpandableRowButton';
 
-import { DBIcon } from '../../DBIcon';
-
-import { Messages } from './RestoreHistoryActions.messages';
 import { getStyles } from './RestoreHistoryActions.styles';
 import { BackupInventoryActionsProps } from './RestoreHistoryActions.types';
 
-export const RestoreHistoryActions: FC<BackupInventoryActionsProps> = ({ restore, onCancel, onRestore, onDelete }) => {
-  const styles = useStyles(getStyles);
-  const handleCancel = () => onCancel(restore);
-  const handleRestore = () => onRestore(restore);
-  const handleDelete = () => onDelete(restore);
+export const RestoreHistoryActions: FC<BackupInventoryActionsProps> = ({ row }) => {
+  const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.actionsWrapper}>
-      <DBIcon
-        tooltipText={Messages.cancelRestore}
-        type="cancel"
-        data-testid="restore-backup-artifact-button"
-        role="button"
-        onClick={handleCancel}
-      />
-      <DBIcon
-        tooltipText={Messages.repeatRestore}
-        type="restore"
-        data-testid="restore-button"
-        role="button"
-        onClick={handleRestore}
-      />
-      <DBIcon
-        tooltipText={Messages.deleteRestore}
-        type="delete"
-        data-testid="restore-backup-artifact-button"
-        role="button"
-        onClick={handleDelete}
-      />
+      <ExpandableRowButton row={row} />
     </div>
   );
 };

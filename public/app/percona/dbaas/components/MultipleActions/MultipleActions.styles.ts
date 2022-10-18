@@ -12,4 +12,12 @@ export const getStyles = ({ colors }: GrafanaTheme) => ({
       background-color: ${colors.dropdownBg} !important;
     }
   `,
+  iconWrapper: css`
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  `,
+  icon: css`
+    margin-right: 0;
+  `,
 });

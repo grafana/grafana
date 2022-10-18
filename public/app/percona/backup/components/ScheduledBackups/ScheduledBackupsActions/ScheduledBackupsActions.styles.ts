@@ -1,15 +1,16 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-export const getStyles = ({ spacing }: GrafanaTheme) => ({
+export const getStyles = ({ v1: { spacing } }: GrafanaTheme2) => ({
   actionsWrapper: css`
     display: flex;
-    justify-content: space-between;
+    justify-content: space-around;
     align-items: center;
-
-    button {
-      margin-left: ${spacing.md};
-    }
+  `,
+  dropdownField: css`
+    display: flex;
+    align-items: center;
+    gap: ${spacing.sm};
   `,
 });

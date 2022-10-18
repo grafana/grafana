@@ -5,15 +5,15 @@ import { MultipleActions } from './MultipleActions';
 
 describe('MultipleActions::', () => {
   it('renders correctly with actions', async () => {
-    const { container } = render(
+    render(
       <MultipleActions
         actions={[
           {
-            title: 'Test action 1',
+            content: 'Test action 1',
             action: jest.fn(),
           },
           {
-            title: 'Test action 2',
+            content: 'Test action 2',
             action: jest.fn(),
           },
         ]}
@@ -22,9 +22,9 @@ describe('MultipleActions::', () => {
 
     const btn = screen.getByTestId('dropdown-menu-toggle');
     await waitFor(() => fireEvent.click(btn));
-
-    expect(container.querySelectorAll('span')).toHaveLength(2);
+    expect(screen.getAllByTestId('dropdown-button')).toHaveLength(2);
   });
+
   it('renders correctly disabled', () => {
     render(<MultipleActions actions={[]} disabled />);
 

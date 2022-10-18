@@ -1,9 +1,12 @@
 import { css } from '@emotion/css';
 
 export const getStyles = () => ({
-  actionsWrapper: css`
+  buttonWrapper: css`
     display: flex;
-    justify-content: space-around;
+    justify-content: center;
     align-items: center;
+  `,
+  icon: css`
+    margin-right: 0;
   `,
 });

@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-export const getStyles = ({ spacing }: GrafanaTheme) => ({
+export const getStyles = ({ v1: { spacing } }: GrafanaTheme2) => ({
   addWrapper: css`
     display: flex;
     justify-content: flex-end;

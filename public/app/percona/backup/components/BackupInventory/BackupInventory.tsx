@@ -5,11 +5,10 @@ import React, { FC, useMemo, useState, useEffect, useCallback, useRef } from 're
 import { useSelector } from 'react-redux';
 import { Column, Row } from 'react-table';
 
-import { Alert, Button, useStyles } from '@grafana/ui';
+import { Alert, Button, useStyles2 } from '@grafana/ui';
 import { OldPage } from 'app/core/components/Page/Page';
 import { Table } from 'app/percona/integrated-alerting/components/Table';
 import { DeleteModal } from 'app/percona/shared/components/Elements/DeleteModal';
-import { ExpandableCell } from 'app/percona/shared/components/Elements/ExpandableCell/ExpandableCell';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
 import { TechnicalPreview } from 'app/percona/shared/components/Elements/TechnicalPreview/TechnicalPreview';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
@@ -65,11 +64,21 @@ export const BackupInventory: FC = () => {
   const columns = useMemo(
     (): Array<Column<Backup>> => [
       {
+        Header: Messages.backupInventory.table.columns.status,
+        accessor: 'status',
+        width: '100px',
+        Cell: ({ value, row }) => (
+          <Status
+            showLogsAction={row.original.vendor === Databases.mongodb}
+            status={value}
+            onLogClick={() => onLogClick(row.original)}
+          />
+        ),
+      },
+      {
         Header: Messages.backupInventory.table.columns.name,
         accessor: 'name',
         id: 'name',
-        width: '250px',
-        Cell: ({ row, value }) => <ExpandableCell row={row} value={value} />,
       },
       {
         Header: Messages.backupInventory.table.columns.vendor,
@@ -79,6 +88,7 @@ export const BackupInventory: FC = () => {
       {
         Header: Messages.backupInventory.table.columns.created,
         accessor: 'created',
+        width: '200px',
         Cell: ({ value }) => <DetailedDate date={value} />,
       },
       {
@@ -89,35 +99,27 @@ export const BackupInventory: FC = () => {
       {
         Header: Messages.backupInventory.table.columns.location,
         accessor: 'locationName',
-      },
-      {
-        Header: Messages.backupInventory.table.columns.status,
-        accessor: 'status',
-        Cell: ({ value, row }) => (
-          <Status
-            showLogsAction={row.original.vendor === Databases.mongodb}
-            status={value}
-            onLogClick={() => onLogClick(row.original)}
-          />
-        ),
+        width: '250px',
       },
       {
         Header: Messages.backupInventory.table.columns.actions,
         accessor: 'id',
         Cell: ({ row }) => (
           <BackupInventoryActions
+            row={row}
             onRestore={onRestoreClick}
             onBackup={onBackupClick}
             backup={row.original}
             onDelete={onDeleteClick}
           />
         ),
-        width: '150px',
+        width: '100px',
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   const onRestoreClick = (backup: Backup) => {
     setSelectedBackup(backup);
@@ -282,12 +284,11 @@ export const BackupInventory: FC = () => {
           <div className={styles.addWrapper}>
             <Button
               size="md"
-              icon="plus-square"
-              fill="text"
+              variant="primary"
               data-testid="backup-add-modal-button"
               onClick={() => onBackupClick(null)}
             >
-              {Messages.add}
+              {Messages.createNewBackup}
             </Button>
           </div>
           <Table

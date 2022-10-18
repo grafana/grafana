@@ -24,7 +24,7 @@ export const DBIcon: FC<DBIconProps> = ({ type, size, tooltipText, disabled, ...
   }
   const Icon = Icons[type];
   const IconEl = (
-    <span className={cx({ [styles.disabled]: disabled })}>
+    <span className={cx({ [styles.disabled]: disabled }, styles.iconWrapper)}>
       <Icon size={size} {...rest} />
     </span>
   );

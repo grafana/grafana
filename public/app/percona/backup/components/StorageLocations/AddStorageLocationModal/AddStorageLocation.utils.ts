@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/consistent-type-assertions */
 import { StorageLocation, LocationType, S3Location } from '../StorageLocations.types';
 
 import { AddStorageLocationFormProps } from './AddStorageLocationModal.types';

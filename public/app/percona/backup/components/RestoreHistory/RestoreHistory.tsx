@@ -5,7 +5,6 @@ import { Column, Row } from 'react-table';
 
 import { OldPage } from 'app/core/components/Page/Page';
 import { Table } from 'app/percona/integrated-alerting/components/Table';
-import { ExpandableCell } from 'app/percona/shared/components/Elements/ExpandableCell';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
 import { TechnicalPreview } from 'app/percona/shared/components/Elements/TechnicalPreview/TechnicalPreview';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
@@ -22,6 +21,7 @@ import { Status } from '../Status';
 import { DATA_INTERVAL, LIST_RESTORES_CANCEL_TOKEN } from './RestoreHistory.constants';
 import { RestoreHistoryService } from './RestoreHistory.service';
 import { Restore } from './RestoreHistory.types';
+import { RestoreHistoryActions } from './RestoreHistoryActions';
 import { RestoreHistoryDetails } from './RestoreHistoryDetails';
 
 export const RestoreHistory: FC = () => {
@@ -33,11 +33,15 @@ export const RestoreHistory: FC = () => {
   const columns = useMemo(
     (): Array<Column<Restore>> => [
       {
+        Header: Messages.backupInventory.table.columns.status,
+        accessor: 'status',
+        Cell: ({ value }) => <Status status={value} />,
+        width: '100px',
+      },
+      {
         Header: Messages.backupInventory.table.columns.name,
         accessor: 'name',
         id: 'name',
-        width: '250px',
-        Cell: ({ row, value }) => <ExpandableCell row={row} value={value} />,
       },
       {
         Header: Messages.backupInventory.table.columns.vendor,
@@ -48,17 +52,20 @@ export const RestoreHistory: FC = () => {
         Header: Messages.restoreHistory.table.columns.started,
         accessor: 'started',
         Cell: ({ value }) => <DetailedDate date={value} />,
+        width: '200px',
       },
       {
         Header: Messages.backupInventory.table.columns.location,
         accessor: 'locationName',
       },
       {
-        Header: Messages.backupInventory.table.columns.status,
-        accessor: 'status',
-        Cell: ({ value }) => <Status status={value} />,
+        Header: Messages.restoreHistory.table.columns.actions,
+        accessor: 'id',
+        width: '100px',
+        Cell: ({ row }) => <RestoreHistoryActions row={row} />,
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 

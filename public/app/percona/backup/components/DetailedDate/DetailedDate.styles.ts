@@ -8,4 +8,9 @@ export const getStyles = ({ typography, colors, spacing }: GrafanaTheme) => ({
     color: ${colors.textSemiWeak};
     margin-left: ${spacing.xxs};
   `,
+  timeWrapper: css`
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  `,
 });

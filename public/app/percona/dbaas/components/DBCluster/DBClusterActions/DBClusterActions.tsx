@@ -22,7 +22,7 @@ export const DBClusterActions: FC<DBClusterActionsProps> = ({
   const getActions = useCallback(
     (dbCluster: DBCluster) => [
       {
-        title: Messages.dbcluster.table.actions.updateCluster,
+        content: Messages.dbcluster.table.actions.updateCluster,
         disabled:
           !dbCluster.availableImage ||
           dbCluster.status === DBClusterStatus.upgrading ||
@@ -34,7 +34,7 @@ export const DBClusterActions: FC<DBClusterActionsProps> = ({
         },
       },
       {
-        title: Messages.dbcluster.table.actions.deleteCluster,
+        content: Messages.dbcluster.table.actions.deleteCluster,
         disabled: dbCluster.status === DBClusterStatus.deleting,
         action: () => {
           setSelectedCluster(dbCluster);
@@ -42,7 +42,7 @@ export const DBClusterActions: FC<DBClusterActionsProps> = ({
         },
       },
       {
-        title: Messages.dbcluster.table.actions.editCluster,
+        content: Messages.dbcluster.table.actions.editCluster,
         disabled: dbCluster.status !== DBClusterStatus.ready,
         action: () => {
           setSelectedCluster(dbCluster);
@@ -50,7 +50,7 @@ export const DBClusterActions: FC<DBClusterActionsProps> = ({
         },
       },
       {
-        title: Messages.dbcluster.table.actions.restartCluster,
+        content: Messages.dbcluster.table.actions.restartCluster,
         disabled: isClusterChanging(dbCluster),
         action: async () => {
           try {
@@ -64,7 +64,7 @@ export const DBClusterActions: FC<DBClusterActionsProps> = ({
         },
       },
       {
-        title:
+        content:
           dbCluster.status === DBClusterStatus.ready
             ? Messages.dbcluster.table.actions.suspend
             : Messages.dbcluster.table.actions.resume,
@@ -86,7 +86,7 @@ export const DBClusterActions: FC<DBClusterActionsProps> = ({
         },
       },
       {
-        title: Messages.dbcluster.table.actions.logs,
+        content: Messages.dbcluster.table.actions.logs,
         action: () => {
           setSelectedCluster(dbCluster);
           setLogsModalVisible(true);

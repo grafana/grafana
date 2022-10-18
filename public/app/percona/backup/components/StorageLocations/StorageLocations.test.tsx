@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
 
@@ -28,11 +28,12 @@ describe('StorageLocations', () => {
     );
 
     await screen.findByText('first location');
-    expect(screen.queryByText('Delete Storage Location')).toBeFalsy();
+    const btn = screen.getAllByTestId('dropdown-menu-toggle')[0];
+    await waitFor(() => fireEvent.click(btn));
+    const deleteBtn = screen.getAllByTestId('dropdown-button')[1];
+    await waitFor(() => fireEvent.click(deleteBtn));
 
-    fireEvent.click(screen.getAllByTestId('delete-storage-location-button')[0]);
-
-    expect(screen.getByText('Delete Storage Location')).toBeTruthy();
+    expect(screen.getByText(/Are you sure you want to delete the Storage Location/i)).toBeTruthy();
   });
 
   it('should close delete modal after deletion confirmation', async () => {
@@ -52,7 +53,10 @@ describe('StorageLocations', () => {
 
     await screen.findByText('first location');
 
-    fireEvent.click(screen.getAllByTestId('delete-storage-location-button')[0]);
+    const btn = screen.getAllByTestId('dropdown-menu-toggle')[0];
+    await waitFor(() => fireEvent.click(btn));
+    const deleteBtn = screen.getAllByTestId('dropdown-button')[1];
+    await waitFor(() => fireEvent.click(deleteBtn));
 
     expect(screen.getByText('Delete Storage Location')).toBeTruthy();
     fireEvent.submit(screen.getByTestId('confirm-delete-modal-button'));
@@ -64,24 +68,26 @@ describe('StorageLocations', () => {
   });
 
   it('should open the modal by clicking the "Add" button', async () => {
-    render(
-      <Provider
-        store={configureStore({
-          percona: {
-            user: { isAuthorized: true },
-            settings: { result: { backupEnabled: true, isConnectedToPortal: false } },
-          },
-        } as StoreState)}
-      >
-        <StorageLocations />
-      </Provider>
+    await waitFor(() =>
+      render(
+        <Provider
+          store={configureStore({
+            percona: {
+              user: { isAuthorized: true },
+              settings: { result: { backupEnabled: true, isConnectedToPortal: false } },
+            },
+          } as StoreState)}
+        >
+          <StorageLocations />
+        </Provider>
+      )
     );
 
     await screen.findByText('first location');
 
     expect(screen.queryByText('Add Storage Location')).toBeFalsy();
 
-    fireEvent.click(screen.getAllByTestId('storage-location-add-modal-button')[0]);
+    await waitFor(() => fireEvent.click(screen.getAllByTestId('storage-location-add-modal-button')[0]));
 
     expect(screen.getByText('Add Storage Location')).toBeTruthy();
   });

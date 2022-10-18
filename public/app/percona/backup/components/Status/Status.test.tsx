@@ -36,6 +36,16 @@ describe('Status', () => {
       expect(screen.queryByTestId('ellipsis')).not.toBeInTheDocument();
       expect(screen.getByTestId('statusMsg')).toBeInTheDocument();
     });
+
+    it('should show success icon when status is success', () => {
+      render(<Status status={BackupStatus.BACKUP_STATUS_SUCCESS} />);
+      expect(screen.getByTestId('success-icon')).toBeInTheDocument();
+    });
+
+    it('should show fail icon when status failed', () => {
+      render(<Status status={BackupStatus.BACKUP_STATUS_ERROR} />);
+      expect(screen.getByTestId('fail-icon')).toBeInTheDocument();
+    });
   });
 
   describe('logs action', () => {
