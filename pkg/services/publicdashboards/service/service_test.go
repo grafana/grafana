@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"testing"
 	"time"
@@ -73,7 +74,7 @@ func TestGetAnnotations(t *testing.T) {
 		color := "red"
 		name := "annoName"
 		grafanaAnnotation := DashAnnotation{
-			Datasource: internal.CreateDatasource("grafana", "grafana"),
+			Datasource: CreateDatasource("grafana", "grafana"),
 			Enable:     true,
 			Name:       &name,
 			IconColor:  &color,
@@ -86,7 +87,7 @@ func TestGetAnnotations(t *testing.T) {
 			Type: "dashboard",
 		}
 		grafanaTagAnnotation := DashAnnotation{
-			Datasource: internal.CreateDatasource("grafana", "grafana"),
+			Datasource: CreateDatasource("grafana", "grafana"),
 			Enable:     true,
 			Name:       &name,
 			IconColor:  &color,
@@ -145,7 +146,7 @@ func TestGetAnnotations(t *testing.T) {
 		color := "red"
 		name := "annoName"
 		grafanaAnnotation := DashAnnotation{
-			Datasource: internal.CreateDatasource("grafana", "grafana"),
+			Datasource: CreateDatasource("grafana", "grafana"),
 			Enable:     true,
 			Name:       &name,
 			IconColor:  &color,
@@ -204,13 +205,13 @@ func TestGetAnnotations(t *testing.T) {
 		color := "red"
 		name := "annoName"
 		disabledGrafanaAnnotation := DashAnnotation{
-			Datasource: internal.CreateDatasource("grafana", "grafana"),
+			Datasource: CreateDatasource("grafana", "grafana"),
 			Enable:     false,
 			Name:       &name,
 			IconColor:  &color,
 		}
 		grafanaAnnotation := DashAnnotation{
-			Datasource: internal.CreateDatasource("grafana", "grafana"),
+			Datasource: CreateDatasource("grafana", "grafana"),
 			Enable:     true,
 			Name:       &name,
 			IconColor:  &color,
@@ -223,7 +224,7 @@ func TestGetAnnotations(t *testing.T) {
 			Type: "dashboard",
 		}
 		queryAnnotation := DashAnnotation{
-			Datasource: internal.CreateDatasource("prometheus", "abc123"),
+			Datasource: CreateDatasource("prometheus", "abc123"),
 			Enable:     true,
 			Name:       &name,
 		}
@@ -300,7 +301,7 @@ func TestGetAnnotations(t *testing.T) {
 		color := "red"
 		name := "annoName"
 		grafanaAnnotation := DashAnnotation{
-			Datasource: internal.CreateDatasource("grafana", "grafana"),
+			Datasource: CreateDatasource("grafana", "grafana"),
 			Enable:     true,
 			Name:       &name,
 			IconColor:  &color,
@@ -663,12 +664,21 @@ func TestBuildAnonymousUser(t *testing.T) {
 
 	t.Run("will add datasource read and query permissions to user for each datasource in dashboard", func(t *testing.T) {
 		user, err := service.BuildAnonymousUser(context.Background(), dashboard)
+
 		require.NoError(t, err)
 		require.Equal(t, dashboard.OrgId, user.OrgID)
 		require.Equal(t, "datasources:uid:ds1", user.Permissions[user.OrgID]["datasources:query"][0])
 		require.Equal(t, "datasources:uid:ds3", user.Permissions[user.OrgID]["datasources:query"][1])
 		require.Equal(t, "datasources:uid:ds1", user.Permissions[user.OrgID]["datasources:read"][0])
 		require.Equal(t, "datasources:uid:ds3", user.Permissions[user.OrgID]["datasources:read"][1])
+	})
+	t.Run("will add dashboard and annotation permissions needed for getting annotations", func(t *testing.T) {
+		user, err := service.BuildAnonymousUser(context.Background(), dashboard)
+
+		require.NoError(t, err)
+		require.Equal(t, dashboard.OrgId, user.OrgID)
+		require.Equal(t, "annotations:type:dashboard", user.Permissions[user.OrgID]["annotations:read"][0])
+		require.Equal(t, "dashboards:*", user.Permissions[user.OrgID]["dashboards:read"][0])
 	})
 }
 
@@ -989,4 +999,34 @@ func TestDashboardEnabledChanged(t *testing.T) {
 	t.Run("updated isEnabled changed", func(t *testing.T) {
 		assert.True(t, publicDashboardIsEnabledChanged(&PublicDashboard{IsEnabled: false}, &PublicDashboard{IsEnabled: true}))
 	})
+}
+
+func CreateDatasource(dsType string, uid string) struct {
+	Type *string `json:"type,omitempty"`
+	Uid  *string `json:"uid,omitempty"`
+} {
+	return struct {
+		Type *string `json:"type,omitempty"`
+		Uid  *string `json:"uid,omitempty"`
+	}{
+		Type: &dsType,
+		Uid:  &uid,
+	}
+}
+
+func AddAnnotationsToDashboard(t *testing.T, dash *models.Dashboard, annotations []DashAnnotation) *models.Dashboard {
+	type annotationsDto struct {
+		List []DashAnnotation `json:"list"`
+	}
+	annos := annotationsDto{}
+	annos.List = annotations
+	annoJSON, err := json.Marshal(annos)
+	require.NoError(t, err)
+
+	dashAnnos, err := simplejson.NewJson(annoJSON)
+	require.NoError(t, err)
+
+	dash.Data.Set("annotations", dashAnnos)
+
+	return dash
 }

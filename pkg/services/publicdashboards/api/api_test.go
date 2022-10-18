@@ -81,13 +81,8 @@ func TestAPIGetAnnotations(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.RBACEnabled = false
 			service := publicdashboards.NewFakePublicDashboardService(t)
-			if test.ServiceError != nil {
-				service.On("GetAnnotations", mock.Anything, mock.Anything, mock.AnythingOfType("string")).
-					Return(nil, test.ServiceError).Maybe()
-			} else {
-				service.On("GetAnnotations", mock.Anything, mock.Anything, mock.AnythingOfType("string")).
-					Return(test.Annotations, nil).Maybe()
-			}
+			service.On("GetAnnotations", mock.Anything, mock.Anything, mock.AnythingOfType("string")).
+				Return(test.Annotations, test.ServiceError).Once()
 			testServer := setupTestServer(t, cfg, featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards), service, nil, anonymousUser)
 
 			path := fmt.Sprintf("/api/public/dashboards/abc123/annotations?from=%s&to=%s", test.From, test.To)

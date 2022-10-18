@@ -22,16 +22,3 @@ func GetTimeRangeFromDashboard(t *testing.T, dashboardData *simplejson.Json) (st
 
 	return fromUnixMilli, toUnixMilli
 }
-
-func CreateDatasource(dsType string, uid string) struct {
-	Type *string `json:"type,omitempty"`
-	Uid  *string `json:"uid,omitempty"`
-} {
-	return struct {
-		Type *string `json:"type,omitempty"`
-		Uid  *string `json:"uid,omitempty"`
-	}{
-		Type: &dsType,
-		Uid:  &uid,
-	}
-}
