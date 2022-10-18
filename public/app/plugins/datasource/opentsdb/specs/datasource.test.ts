@@ -126,18 +126,55 @@ describe('opentsdb', () => {
       expect(ds.interpolateVariablesInQueries([], {})).toHaveLength(0);
     });
 
-    it('should replace correct variables', () => {
+    it('should replace metric variable', () => {
       const { ds, templateSrv } = getTestcontext();
-      const variableName = 'someVar';
       const logQuery: OpenTsdbQuery = {
         refId: 'someRefId',
-        metric: `$${variableName}`,
+        metric: '$someVar',
+        filters: [
+          {
+            type: 'type',
+            tagk: 'someTagk',
+            filter: 'someTagv',
+            groupBy: true,
+          },
+        ],
       };
 
       ds.interpolateVariablesInQueries([logQuery], {});
 
       expect(templateSrv.replace).toHaveBeenCalledWith('$someVar', {});
       expect(templateSrv.replace).toHaveBeenCalledTimes(1);
+    });
+
+    it('should replace filter tag key and value', () => {
+      const { ds, templateSrv } = getTestcontext();
+      let logQuery: OpenTsdbQuery = {
+        refId: 'A',
+        datasource: {
+          type: 'opentsdb',
+          uid: 'P311D5F9D9B165031',
+        },
+        aggregator: 'sum',
+        downsampleAggregator: 'avg',
+        downsampleFillPolicy: 'none',
+        metric: 'logins.count',
+        filters: [
+          {
+            type: 'iliteral_or',
+            tagk: '$someTagk',
+            filter: '$someTagv',
+            groupBy: false,
+          },
+        ],
+      };
+
+      ds.interpolateVariablesInFilters(logQuery, {});
+
+      expect(templateSrv.replace).toHaveBeenCalledWith('$someTagk', undefined, 'pipe');
+      expect(templateSrv.replace).toHaveBeenCalledWith('$someTagv', undefined, 'pipe');
+
+      expect(templateSrv.replace).toHaveBeenCalledTimes(2);
     });
   });
 });

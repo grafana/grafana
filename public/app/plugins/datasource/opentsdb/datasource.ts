@@ -541,13 +541,7 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
       query.filters = cloneDeep(target.filters);
 
       if (query.filters) {
-        for (const filterKey in query.filters) {
-          query.filters[filterKey].filter = this.templateSrv.replace(
-            query.filters[filterKey].filter,
-            options.scopedVars,
-            'pipe'
-          );
-        }
+        this.interpolateVariablesInFilters(query, options);
       }
     } else {
       query.tags = cloneDeep(target.tags);
@@ -564,6 +558,23 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
     }
 
     return query;
+  }
+
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+  interpolateVariablesInFilters(query: any, options: any) {
+    for (const filterKey in query.filters) {
+      query.filters[filterKey].tagk = this.templateSrv.replace(
+        query.filters[filterKey].tagk,
+        options.scopedVars,
+        'pipe'
+      );
+
+      query.filters[filterKey].filter = this.templateSrv.replace(
+        query.filters[filterKey].filter,
+        options.scopedVars,
+        'pipe'
+      );
+    }
   }
 
   mapMetricsToTargets(metrics: any, options: any, tsdbVersion: number) {
