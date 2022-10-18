@@ -1,10 +1,10 @@
 package cloudwatch
 
 import (
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
