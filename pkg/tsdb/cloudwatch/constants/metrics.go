@@ -1,6 +1,6 @@
-package cloudwatch
+package constants
 
-var metricsMap = map[string][]string{
+var NamespaceMetricsMap = map[string][]string{
 	"AWS/ACMPrivateCA":            {"CRLGenerated", "Failure", "MisconfiguredCRLBucket", "Success", "Time"},
 	"AWS/AmazonMQ":                {"AckRate", "BurstBalance", "ChannelCount", "ConfirmRate", "ConnectionCount", "ConsumerCount", "CpuCreditBalance", "CpuUtilization", "CurrentConnectionsCount", "DequeueCount", "DispatchCount", "EnqueueCount", "EnqueueTime", "EstablishedConnectionsCount", "ExchangeCount", "ExpiredCount", "HeapUsage", "InactiveDurableTopicSubscribersCount", "InFlightCount", "JobSchedulerStorePercentUsage", "JournalFilesForFastRecovery", "JournalFilesForFullRecovery", "MemoryUsage", "MessageCount", "MessageReadyCount", "MessageUnacknowledgedCount", "NetworkIn", "NetworkOut", "OpenTransactionCount", "ProducerCount", "PublishRate", "QueueCount", "QueueSize", "RabbitMQDiskFree", "RabbitMQDiskFreeLimit", "RabbitMQFdUsed", "RabbitMQMemLimit", "RabbitMQMemUsed", "ReceiveCount", "StorePercentUsage", "SystemCpuUtilization", "TempPercentUsage", "TotalConsumerCount", "TotalDequeueCount", "TotalEnqueueCount", "TotalMessageCount", "TotalProducerCount", "VolumeReadOps", "VolumeWriteOps"},
 	"AWS/ApiGateway":              {"4xx", "4XXError", "5xx", "5XXError", "CacheHitCount", "CacheMissCount", "ClientError", "Count", "ConnectCount", "DataProcessed", "ExecutionError", "IntegrationError", "IntegrationLatency", "Latency", "MessageCount"},
@@ -404,7 +404,7 @@ var metricsMap = map[string][]string{
 	"CloudWatchSynthetics":     {"SuccessPercent", "Duration", "2xx", "4xx", "5xx", "Failed", "Failed requests", "VisualMonitoringSuccessPercent", "VisualMonitoringTotalComparisons"},
 }
 
-var dimensionsMap = map[string][]string{
+var NamespaceDimensionKeysMap = map[string][]string{
 	"AWS/ACMPrivateCA":            {},
 	"AWS/AmazonMQ":                {"Broker", "NetworkConnector", "Queue", "Topic", "Node", "Virtual host"},
 	"AWS/ApiGateway":              {"ApiId", "ApiName", "Method", "Resource", "Route", "Stage"},
@@ -521,8 +521,7 @@ var dimensionsMap = map[string][]string{
 	"CloudWatchSynthetics":        {"CanaryName"},
 }
 
-// Known AWS regions.
-var knownRegions = []string{
+var Regions = []string{
 	"af-south-1", "ap-east-1", "ap-northeast-1", "ap-northeast-2", "ap-northeast-3", "ap-south-1", "ap-southeast-1",
 	"ap-southeast-2", "ap-southeast-3", "ca-central-1", "cn-north-1", "cn-northwest-1", "eu-central-1", "eu-north-1", "eu-south-1", "eu-west-1",
 	"eu-west-2", "eu-west-3", "me-south-1", "sa-east-1", "us-east-1", "us-east-2", "us-gov-east-1", "us-gov-west-1",
