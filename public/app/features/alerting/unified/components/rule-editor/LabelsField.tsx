@@ -62,7 +62,7 @@ const LabelsField: FC<Props> = ({ className }) => {
                         {...register(`labels.${index}.key`, {
                           required: { value: !!labels[index]?.value, message: 'Required.' },
                         })}
-                        defaultValue={{ label: field.key, value: field.key }}
+                        defaultValue={field.key ? { label: field.key, value: field.key } : undefined}
                         options={keys}
                         onChange={(newValue: SelectableValue) => setValue(`labels.${index}.key`, newValue.value)}
                         type="key"
@@ -79,7 +79,7 @@ const LabelsField: FC<Props> = ({ className }) => {
                         {...register(`labels.${index}.value`, {
                           required: { value: !!labels[index]?.key, message: 'Required.' },
                         })}
-                        defaultValue={{ label: field.value, value: field.value }}
+                        defaultValue={field.value ? { label: field.value, value: field.value } : undefined}
                         options={values}
                         onChange={(newValue: SelectableValue) => setValue(`labels.${index}.value`, newValue.value)}
                         type="value"

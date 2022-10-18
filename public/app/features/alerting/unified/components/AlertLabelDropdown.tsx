@@ -16,7 +16,7 @@ const AlertLabelDropdown: FC<AlertLabelDropdownProps> = React.forwardRef<HTMLDiv
       <div ref={ref}>
         <Field disabled={false} data-testid={`alertlabel-${type}-picker`}>
           <Select
-            placeholder={'Choose key'}
+            placeholder={`Choose ${type}`}
             width={29}
             className="ds-picker select-container"
             backspaceRemovesValue={false}
