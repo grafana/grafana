@@ -6,10 +6,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
-type ClientsProvider interface {
-	MetricsClientProvider
+type Clients struct {
+	MetricsClientProvider MetricsClientProvider
 }
 
-type ClientsFactoryFunc func(pluginCtx backend.PluginContext, region string) (clients ClientsProvider, err error)
+type ClientsFactoryFunc func(pluginCtx backend.PluginContext, region string) (clients Clients, err error)
 
 type RouteHandlerFunc func(http.ResponseWriter, *http.Request, ClientsFactoryFunc, backend.PluginContext)

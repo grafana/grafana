@@ -113,23 +113,21 @@ func newExecutor(im instancemgmt.InstanceManager, cfg *setting.Cfg, sessions Ses
 		features: features,
 	}
 
-	cwe.getClients = func(pluginCtx backend.PluginContext, region string) (models.ClientsProvider, error) {
+	cwe.getClients = func(pluginCtx backend.PluginContext, region string) (models.Clients, error) {
 		r := region
 		if region == defaultRegion {
 			dsInfo, err := cwe.getDSInfo(pluginCtx)
 			if err != nil {
-				return nil, err
+				return models.Clients{}, err
 			}
 			r = dsInfo.region
 		}
 
 		sess, err := cwe.newSession(pluginCtx, r)
 		if err != nil {
-			return nil, err
+			return models.Clients{}, err
 		}
-		return struct {
-			models.MetricsClientProvider
-		}{
+		return models.Clients{
 			MetricsClientProvider: clients.NewMetricsClient(cloudwatch.New(sess), cfg),
 		}, nil
 	}

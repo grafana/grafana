@@ -57,10 +57,10 @@ func DimensionKeysHandler(rw http.ResponseWriter, req *http.Request, clientFacto
 //
 // Stubbable by tests.
 var newListMetricsService = func(pluginCtx backend.PluginContext, clientFactory models.ClientsFactoryFunc, region string) (models.ListMetricsProvider, error) {
-	metricClient, err := clientFactory(pluginCtx, region)
+	clients, err := clientFactory(pluginCtx, region)
 	if err != nil {
 		return nil, err
 	}
 
-	return services.NewListMetricsService(metricClient), nil
+	return services.NewListMetricsService(clients.MetricsClientProvider), nil
 }
