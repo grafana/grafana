@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import { cx } from '@emotion/css';
 import { LanguageMap, languages as prismLanguages } from 'prismjs';
 import React, { ReactNode } from 'react';
 import { Plugin } from 'slate';
@@ -340,7 +340,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
                     {hint.fix ? (
                       <button
                         type="button"
-                        className={classNames('text-link', 'muted', clearButtonStyles(theme))}
+                        className={cx(clearButtonStyles(theme), 'text-link', 'muted')}
                         onClick={this.onClickHintFix}
                       >
                         {hint.fix.label}
