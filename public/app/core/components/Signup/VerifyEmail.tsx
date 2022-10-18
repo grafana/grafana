@@ -4,6 +4,7 @@ import { getConfig } from 'app/core/config';
 import { getBackendSrv } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { AppEvents } from '@grafana/data';
+import { w3cStandardEmailValidator } from 'app/features/admin/utils';
 
 interface EmailDTO {
   email: string;
@@ -52,7 +53,7 @@ export const VerifyEmail: FC = () => {
               {...register('email', {
                 required: 'Email is required',
                 pattern: {
-                  value: /^\S+@\S+$/,
+                  value: w3cStandardEmailValidator,
                   message: 'Email is invalid',
                 },
               })}

@@ -7,6 +7,8 @@ import { contextSrv } from 'app/core/core';
 import { getConfig } from 'app/core/config';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
+import { w3cStandardEmailValidator } from '../admin/utils';
+
 interface FormModel {
   email: string;
   name?: string;
@@ -76,7 +78,7 @@ export const SignupInvitedPage: FC<Props> = ({ match }) => {
                   {...register('email', {
                     required: 'Email is required',
                     pattern: {
-                      value: /^\S+@\S+$/,
+                      value: w3cStandardEmailValidator,
                       message: 'Email is invalid',
                     },
                   })}
