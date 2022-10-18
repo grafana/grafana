@@ -105,6 +105,30 @@ type SessionCache interface {
 	GetSession(c awsds.SessionConfig) (*session.Session, error)
 }
 
+type fluffyClient struct {
+	cwe *cloudWatchExecutor
+	cfg *setting.Cfg
+}
+
+func (f *fluffyClient) GetClients(pluginCtx backend.PluginContext, region string) (models.Clients, error) {
+	r := region
+	if region == defaultRegion {
+		dsInfo, err := f.cwe.getDSInfo(pluginCtx)
+		if err != nil {
+			return models.Clients{}, err
+		}
+		r = dsInfo.region
+	}
+
+	sess, err := f.cwe.newSession(pluginCtx, r)
+	if err != nil {
+		return models.Clients{}, err
+	}
+	return models.Clients{
+		MetricsClientProvider: clients.NewMetricsClient(cloudwatch.New(sess), f.cfg),
+	}, nil
+}
+
 func newExecutor(im instancemgmt.InstanceManager, cfg *setting.Cfg, sessions SessionCache, features featuremgmt.FeatureToggles) *cloudWatchExecutor {
 	cwe := &cloudWatchExecutor{
 		im:       im,
@@ -113,24 +137,11 @@ func newExecutor(im instancemgmt.InstanceManager, cfg *setting.Cfg, sessions Ses
 		features: features,
 	}
 
-	cwe.getClients = func(pluginCtx backend.PluginContext, region string) (models.Clients, error) {
-		r := region
-		if region == defaultRegion {
-			dsInfo, err := cwe.getDSInfo(pluginCtx)
-			if err != nil {
-				return models.Clients{}, err
-			}
-			r = dsInfo.region
-		}
-
-		sess, err := cwe.newSession(pluginCtx, r)
-		if err != nil {
-			return models.Clients{}, err
-		}
-		return models.Clients{
-			MetricsClientProvider: clients.NewMetricsClient(cloudwatch.New(sess), cfg),
-		}, nil
+	fluffy := fluffyClient{
+		cwe: cwe,
+		cfg: cfg,
 	}
+	cwe.getClients = fluffy.GetClients
 
 	cwe.resourceHandler = httpadapter.New(cwe.newResourceMux())
 	return cwe
