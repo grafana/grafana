@@ -21,6 +21,8 @@ Canvas is a new panel that combines the power of Grafana with the flexibility of
 
 {{< video-embed src="/static/img/docs/canvas-panel/canvas-beta-overview-9-2-0.mp4" max-width="750px" caption="Canvas panel beta overview" >}}
 
+> Note: If you are using a version of Grafana <9.2.0, you will need to add `enable_alpha = true` to the `[plugins]` section of your grafana.ini file in order to use the Canvas panel.
+
 ## Elements
 
 ### Metric value
