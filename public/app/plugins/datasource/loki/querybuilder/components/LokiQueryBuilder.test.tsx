@@ -51,6 +51,23 @@ describe('LokiQueryBuilder', () => {
     await waitFor(() => expect(screen.getByText('job')).toBeInTheDocument());
   });
 
+  it('does not show already existing label names as option in label filter', async () => {
+    const props = createDefaultProps();
+    props.datasource.getDataSamples = jest.fn().mockResolvedValue([]);
+    props.datasource.languageProvider.fetchSeriesLabels = jest
+      .fn()
+      .mockReturnValue({ job: ['a'], instance: ['b'], baz: ['bar'] });
+
+    render(<LokiQueryBuilder {...props} query={defaultQuery} />);
+    await userEvent.click(screen.getByLabelText('Add'));
+    const labels = screen.getByText(/Label filters/);
+    const selects = getAllByRole(labels.parentElement!.parentElement!.parentElement!, 'combobox');
+    await userEvent.click(selects[3]);
+    await waitFor(() => expect(screen.getByText('job')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('instance')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getAllByText('baz')).toHaveLength(1));
+  });
+
   it('shows error for query with operations and no stream selector', async () => {
     const query = { labels: [], operations: [{ id: LokiOperationId.Logfmt, params: [] }] };
     render(<LokiQueryBuilder {...createDefaultProps()} query={query} />);
