@@ -60,13 +60,7 @@ export const ExternalAlertmanagers = () => {
   const theme = useTheme2();
 
   useEffect(() => {
-    // dispatch(fetchExternalAlertmanagersAction());
     dispatch(loadDataSources());
-    // const interval = setInterval(() => dispatch(fetchExternalAlertmanagersAction()), 5000);
-
-    // return () => {
-    //   clearInterval(interval);
-    // };
   }, [dispatch]);
 
   const onDelete = useCallback(

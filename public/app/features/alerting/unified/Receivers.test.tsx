@@ -535,8 +535,10 @@ describe('Receivers', () => {
     expect(receiversTable).toBeInTheDocument();
     expect(ui.newContactPointButton.get()).toBeInTheDocument();
   });
+
   describe('Contact points state', () => {
     it('Should render error notifications when there are some points state ', async () => {
+      mockAlertmanagerChoiceResponse(server, { alertmanagersChoice: AlertmanagerChoice.All });
       mocks.api.fetchConfig.mockResolvedValue(someGrafanaAlertManagerConfig);
       mocks.api.updateConfig.mockResolvedValue();
 
@@ -608,6 +610,7 @@ describe('Receivers', () => {
       expect(byText('OK').getAll(criticalDetailTable)).toHaveLength(2);
     });
     it('Should render no attempt message when there are some points state with null lastNotifyAttempt, and "-" in null values', async () => {
+      mockAlertmanagerChoiceResponse(server, { alertmanagersChoice: AlertmanagerChoice.All });
       mocks.api.fetchConfig.mockResolvedValue(someGrafanaAlertManagerConfig);
       mocks.api.updateConfig.mockResolvedValue();
 
@@ -684,6 +687,7 @@ describe('Receivers', () => {
     });
 
     it('Should not render error notifications when fetching contact points state raises 404 error ', async () => {
+      mockAlertmanagerChoiceResponse(server, { alertmanagersChoice: AlertmanagerChoice.All });
       mocks.api.fetchConfig.mockResolvedValue(someGrafanaAlertManagerConfig);
       mocks.api.updateConfig.mockResolvedValue();
 
