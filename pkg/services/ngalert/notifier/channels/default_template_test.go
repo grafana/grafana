@@ -20,11 +20,11 @@ func TestDefaultTemplateString(t *testing.T) {
 			Alert: model.Alert{
 				Labels: model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
 				Annotations: model.LabelSet{
-					"ann1": "annv1", "__dashboardUid__": "dbuid123", "__panelId__": "puid123", "__values__": "{\"A\": 1234}", "__value_string__": "1234",
+					"ann1": "annv1", "__orgId__": "1", "__dashboardUid__": "dbuid123", "__panelId__": "puid123", "__values__": "{\"A\": 1234}", "__value_string__": "1234",
 				},
 				StartsAt:     time.Now(),
 				EndsAt:       time.Now().Add(1 * time.Hour),
-				GeneratorURL: "http://localhost/alert1",
+				GeneratorURL: "http://localhost/alert1?orgId=1",
 			},
 		}, { // Firing without dashboard and panel ID.
 			Alert: model.Alert{
@@ -38,7 +38,7 @@ func TestDefaultTemplateString(t *testing.T) {
 			Alert: model.Alert{
 				Labels: model.LabelSet{"alertname": "alert1", "lbl1": "val3"},
 				Annotations: model.LabelSet{
-					"ann1": "annv3", "__dashboardUid__": "dbuid456", "__panelId__": "puid456", "__values__": "{\"A\": 1234}", "__value_string__": "1234",
+					"ann1": "annv3", "__orgId__": "1", "__dashboardUid__": "dbuid456", "__panelId__": "puid456", "__values__": "{\"A\": 1234}", "__value_string__": "1234",
 				},
 				StartsAt:     time.Now().Add(-1 * time.Hour),
 				EndsAt:       time.Now().Add(-30 * time.Minute),
@@ -97,10 +97,10 @@ Labels:
  - lbl1 = val1
 Annotations:
  - ann1 = annv1
-Source: http://localhost/alert1
+Source: http://localhost/alert1?orgId=1
 Silence: http://localhost/grafana/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1
-Dashboard: http://localhost/grafana/d/dbuid123
-Panel: http://localhost/grafana/d/dbuid123?viewPanel=puid123
+Dashboard: http://localhost/grafana/d/dbuid123?orgId=1
+Panel: http://localhost/grafana/d/dbuid123?orgId=1&viewPanel=puid123
 
 Value: A=1234
 Labels:
@@ -120,10 +120,10 @@ Labels:
  - lbl1 = val3
 Annotations:
  - ann1 = annv3
-Source: http://localhost/alert3
+Source: http://localhost/alert3?orgId=1
 Silence: http://localhost/grafana/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval3
-Dashboard: http://localhost/grafana/d/dbuid456
-Panel: http://localhost/grafana/d/dbuid456?viewPanel=puid456
+Dashboard: http://localhost/grafana/d/dbuid456?orgId=1
+Panel: http://localhost/grafana/d/dbuid456?orgId=1&viewPanel=puid456
 
 Value: A=1234
 Labels:
@@ -147,13 +147,13 @@ Labels:
 Annotations:
  - ann1 = annv1
 
-Source: [http://localhost/alert1](http://localhost/alert1)
+Source: [http://localhost/alert1?orgId=1](http://localhost/alert1?orgId=1)
 
 Silence: [http://localhost/grafana/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1](http://localhost/grafana/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1)
 
-Dashboard: [http://localhost/grafana/d/dbuid123](http://localhost/grafana/d/dbuid123)
+Dashboard: [http://localhost/grafana/d/dbuid123?orgId=1](http://localhost/grafana/d/dbuid123?orgId=1)
 
-Panel: [http://localhost/grafana/d/dbuid123?viewPanel=puid123](http://localhost/grafana/d/dbuid123?viewPanel=puid123)
+Panel: [http://localhost/grafana/d/dbuid123?orgId=1&viewPanel=puid123](http://localhost/grafana/d/dbuid123?orgId=1&viewPanel=puid123)
 
 
 
@@ -182,13 +182,13 @@ Labels:
 Annotations:
  - ann1 = annv3
 
-Source: [http://localhost/alert3](http://localhost/alert3)
+Source: [http://localhost/alert3?orgId=1](http://localhost/alert3?orgId=1)
 
 Silence: [http://localhost/grafana/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval3](http://localhost/grafana/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval3)
 
-Dashboard: [http://localhost/grafana/d/dbuid456](http://localhost/grafana/d/dbuid456)
+Dashboard: [http://localhost/grafana/d/dbuid456?orgId=1](http://localhost/grafana/d/dbuid456?orgId=1)
 
-Panel: [http://localhost/grafana/d/dbuid456?viewPanel=puid456](http://localhost/grafana/d/dbuid456?viewPanel=puid456)
+Panel: [http://localhost/grafana/d/dbuid456?orgId=1&viewPanel=puid456](http://localhost/grafana/d/dbuid456?orgId=1&viewPanel=puid456)
 
 
 

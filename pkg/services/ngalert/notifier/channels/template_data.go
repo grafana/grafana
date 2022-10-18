@@ -90,14 +90,32 @@ func extendAlert(alert template.Alert, externalURL string, logger log.Logger) *E
 			extended.PanelURL = u.String()
 		}
 
+		generatorUrl, gErr := url.Parse(extended.GeneratorURL)
+		if gErr != nil {
+			logger.Debug("failed to parse generator URL while extending template data", "url", extended.GeneratorURL, "err", gErr.Error())
+			return extended
+		}
+
+		dashboardUrl, dErr := url.Parse(extended.DashboardURL)
+		if dErr != nil {
+			logger.Debug("failed to parse dashboard URL while extending template data", "url", extended.DashboardURL, "err", dErr.Error())
+			return extended
+		}
+
 		orgId := alert.Annotations[ngmodels.OrgIDAnnotation]
 		if len(orgId) > 0 {
-			extended.DashboardURL = extended.DashboardURL + "?orgId=" + orgId
+			orgIdParam := "orgId=" + orgId
+
+			dashboardUrl.RawQuery = orgIdParam
+			extended.DashboardURL = dashboardUrl.String()
 
 			q := u.Query()
 			q.Add("orgId", orgId)
 			u.RawQuery = q.Encode()
 			extended.PanelURL = u.String()
+
+			generatorUrl.RawQuery = orgIdParam
+			extended.GeneratorURL = generatorUrl.String()
 		}
 	}
 
