@@ -1,3 +1,31 @@
+<!-- 9.2.1 START -->
+
+# 9.2.1 (2022-10-18)
+
+### Features and enhancements
+
+- **Alerting:** Improve notification policies created during migration. [#52071](https://github.com/grafana/grafana/pull/52071), [@JacobsonMT](https://github.com/JacobsonMT)
+- **AzureAD:** Add option to force fetch the groups from the Graph API. [#56916](https://github.com/grafana/grafana/pull/56916), [@gamab](https://github.com/gamab)
+- **AzureAD:** Add option to force fetch the groups from the Graph API (#56916). [#56947](https://github.com/grafana/grafana/pull/56947), [@gamab](https://github.com/gamab)
+- **Docs:** Note end of release notes publication. [#57013](https://github.com/grafana/grafana/pull/57013), [@gguillotte-grafana](https://github.com/gguillotte-grafana)
+- **Inspect:** Handle JSON tab crash when the provided object is too big to stringify. [#55939](https://github.com/grafana/grafana/pull/55939), [@TsotosA](https://github.com/TsotosA)
+- **TablePanel:** Footer now updates values on column filtering. [#56354](https://github.com/grafana/grafana/pull/56354), [@mdvictor](https://github.com/mdvictor)
+
+### Bug fixes
+
+- **Alerting:** Fix email image embedding on Windows. [#56766](https://github.com/grafana/grafana/pull/56766), [@joeblubaugh](https://github.com/joeblubaugh)
+- **Alerting:** Fix mathexp.NoData for ConditionsCmd. [#56816](https://github.com/grafana/grafana/pull/56816), [@grobinson-grafana](https://github.com/grobinson-grafana)
+- **Legacy Alerting:** Fix duration calculation when testing a rule. [#56616](https://github.com/grafana/grafana/pull/56616), [@jorgelbg](https://github.com/jorgelbg)
+- **Loki:** Propagate additional headers from Grafana to Loki when querying data. [#56896](https://github.com/grafana/grafana/pull/56896), [@alexweav](https://github.com/alexweav)
+- **Search:** Sort alphabetically in the folder view, increase the limit of the folder search from 50 to 1000. [#57141](https://github.com/grafana/grafana/pull/57141), [@ArturWierzbicki](https://github.com/ArturWierzbicki)
+- **TablePanel:** Fix last table column to be centered. [#56047](https://github.com/grafana/grafana/pull/56047), [@gitstart](https://github.com/gitstart)
+
+### Plugin development fixes & changes
+
+- **Grafana UI:** Export prop types for queryfield, modal and field components. [#57097](https://github.com/grafana/grafana/pull/57097), [@jackw](https://github.com/jackw)
+- **Toolkit:** Fix `Cannot use import statement outside...` error in tests. [#57071](https://github.com/grafana/grafana/pull/57071), [@jackw](https://github.com/jackw)
+
+<!-- 9.2.1 END -->
 <!-- 9.2.0 START -->
 
 # 9.2.0 (2022-10-11)
