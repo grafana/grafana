@@ -5,11 +5,18 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/services"
 )
 
-func DimensionKeysHandler(rw http.ResponseWriter, req *http.Request, clientFactory models.ClientsFactoryFunc, pluginCtx backend.PluginContext) {
+type DimensionKeyHandler struct {
+	ClientFactory models.ClientsFactoryFunc
+}
+
+func (h *DimensionKeyHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	pluginCtx := httpadapter.PluginConfigFromContext(req.Context())
+
 	if req.Method != "GET" {
 		respondWithError(rw, http.StatusMethodNotAllowed, "Invalid method", nil)
 		return
@@ -20,7 +27,7 @@ func DimensionKeysHandler(rw http.ResponseWriter, req *http.Request, clientFacto
 		return
 	}
 
-	service, err := newListMetricsService(pluginCtx, clientFactory, dimensionKeysQuery.Region)
+	service, err := newListMetricsService(pluginCtx, h.ClientFactory, dimensionKeysQuery.Region)
 	if err != nil {
 		respondWithError(rw, http.StatusInternalServerError, "error in DimensionKeysHandler", err)
 		return

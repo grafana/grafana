@@ -24,7 +24,7 @@ func (e *cloudWatchExecutor) newResourceMux() *http.ServeMux {
 	mux.HandleFunc("/resource-arns", handleResourceReq(e.handleGetResourceArns))
 	mux.HandleFunc("/log-groups", handleResourceReq(e.handleGetLogGroups))
 	mux.HandleFunc("/all-log-groups", handleResourceReq(e.handleGetAllLogGroups))
-	mux.HandleFunc("/dimension-keys", routes.RouteInjector(routes.DimensionKeysHandler, e.getClients))
+	mux.Handle("/dimension-keys", &routes.DimensionKeyHandler{ClientFactory: e.getClients})
 	return mux
 }
 
