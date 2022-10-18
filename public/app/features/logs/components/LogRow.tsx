@@ -97,14 +97,12 @@ class UnThemedLogRow extends PureComponent<Props, State> {
   };
 
   toggleContext = (method: string) => {
-    if (method) {
-      const { datasourceType, uid: logRowUid } = this.props.row;
-      reportInteraction('grafana_explore_logs_log_context_clicked', {
-        datasourceType,
-        logRowUid,
-        type: method,
-      });
-    }
+    const { datasourceType, uid: logRowUid } = this.props.row;
+    reportInteraction('grafana_explore_logs_log_context_clicked', {
+      datasourceType,
+      logRowUid,
+      type: method,
+    });
 
     this.props.toggleContextIsOpen?.();
     this.setState((state) => {
