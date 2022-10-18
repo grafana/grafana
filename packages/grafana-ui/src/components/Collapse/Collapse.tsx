@@ -4,7 +4,7 @@ import React, { FunctionComponent, useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { Icon } from '../Icon/Icon';
+import { IconButton } from '../IconButton/IconButton';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   collapse: css`
@@ -82,11 +82,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
   headerLabel: css`
     label: collapse__header-label;
     font-weight: ${theme.typography.fontWeightMedium};
-    margin-right: ${theme.spacing(1)};
     font-size: ${theme.typography.size.md};
   `,
   icon: css`
     label: collapse__icon;
+    color: ${theme.colors.text.maxContrast};
     margin: ${theme.spacing(0.25, 1, 0, -1)};
   `,
 });
@@ -142,15 +142,25 @@ export const Collapse = ({
   const panelClass = cx([style.collapse, className]);
   const loaderClass = loading ? cx([style.loader, style.loaderActive]) : cx([style.loader]);
   const headerClass = collapsible ? cx([style.header]) : cx([style.headerCollapsed]);
+  const idContent = label?.toString();
 
   return (
     <div className={panelClass}>
       <div className={headerClass} onClick={onClickToggle}>
-        {collapsible && <Icon className={style.icon} name={isOpen ? 'angle-down' : 'angle-right'} />}
-        <div className={cx([style.headerLabel])}>{label}</div>
+        {collapsible && (
+          <IconButton
+            aria-expanded={isOpen}
+            aria-controls={idContent}
+            className={cx([style.icon])}
+            name={isOpen ? 'angle-down' : 'angle-right'}
+          />
+        )}
+        <div className={cx([style.headerLabel])} id={`header-${idContent}`}>
+          {label}
+        </div>
       </div>
       {isOpen && (
-        <div className={cx([style.collapseBody])}>
+        <div id={idContent} aria-labelledby={`header-${idContent}`} className={cx([style.collapseBody])}>
           <div className={loaderClass} />
           <div className={style.bodyContentWrapper}>{children}</div>
         </div>
