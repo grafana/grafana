@@ -36,7 +36,7 @@ func (ss *SQLStore) createOrg(ctx context.Context, name string, userID int64, en
 		Created: time.Now(),
 		Updated: time.Now(),
 	}
-	if err := inTransactionWithRetryCtx(ctx, engine, ss.bus, func(sess *DBSession) error {
+	if err := ss.inTransactionWithRetryCtx(ctx, engine, ss.bus, func(sess *DBSession) error {
 		if isNameTaken, err := isOrgNameTaken(name, 0, sess); err != nil {
 			return err
 		} else if isNameTaken {
