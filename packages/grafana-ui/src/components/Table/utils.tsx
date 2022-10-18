@@ -64,34 +64,41 @@ export function getColumns(
   columnMinWidth: number,
   expandedIndex: number | undefined,
   setExpandedIndex: (index: number | undefined) => void,
+  expander: boolean,
   footerValues?: FooterItem[]
 ): GrafanaTableColumn[] {
-  const columns: GrafanaTableColumn[] = [
-    {
-      // Make an expander cell
-      Header: () => null, // No header
-      id: 'expander', // It needs an ID
-      Cell: ({ row }) => (
-        // Use Cell to render an expander for each row.
-        // We can use the getToggleRowExpandedProps prop-getter
-        // to build the expander.
-        <span
-          {...row.getRowProps()}
-          onClick={() => setExpandedIndex(row.index === expandedIndex ? undefined : row.index)}
-        >
-          {row.index === expandedIndex ? '👇' : '👉'}
-        </span>
-      ),
-      width: 20,
-      minWidth: 20,
-      filter: (rows: Row[], id: string, filterValues?: SelectableValue[]) => {
-        return [];
-      },
-      justifyContent: 'left',
-      field: data.fields[0],
-      sortType: 'basic',
-    },
-  ];
+  const columns: GrafanaTableColumn[] = expander
+    ? [
+        {
+          // Make an expander cell
+          Header: () => null, // No header
+          id: 'expander', // It needs an ID
+          Cell: ({ row }) => {
+            const props = row.getRowProps();
+            props.style = {
+              ...props.style,
+              cursor: 'pointer',
+            };
+            // Use Cell to render an expander for each row.
+            // We can use the getToggleRowExpandedProps prop-getter
+            // to build the expander.
+            return (
+              <span {...props} onClick={() => setExpandedIndex(row.index === expandedIndex ? undefined : row.index)}>
+                {row.index === expandedIndex ? '👇' : '👉'}
+              </span>
+            );
+          },
+          width: 20,
+          minWidth: 20,
+          filter: (rows: Row[], id: string, filterValues?: SelectableValue[]) => {
+            return [];
+          },
+          justifyContent: 'left',
+          field: data.fields[0],
+          sortType: 'basic',
+        },
+      ]
+    : [];
   let fieldCountWithoutWidth = 0;
 
   for (const [fieldIndex, field] of data.fields.entries()) {

@@ -144,7 +144,7 @@ export const Table = memo((props: Props) => {
   const [footerItems, setFooterItems] = useState<FooterItem[] | undefined>(footerValues);
   const [expandedIndex, setExpandedIndex] = useState<number>();
 
-  const { mainData, subData, indexesToKeepBlank } = useMainData(data, expandedIndex);
+  const { mainData, subData, indexesToKeepBlank, expandable } = useMainData(data, expandedIndex);
 
   const footerHeight = useMemo(() => {
     const EXTENDED_ROW_HEIGHT = 33;
@@ -181,8 +181,8 @@ export const Table = memo((props: Props) => {
 
   // React-table column definitions
   const memoizedColumns = useMemo(
-    () => getColumns(mainData, width, columnMinWidth, expandedIndex, setExpandedIndex, footerItems),
-    [mainData, width, columnMinWidth, footerItems, expandedIndex]
+    () => getColumns(mainData, width, columnMinWidth, expandedIndex, setExpandedIndex, expandable, footerItems),
+    [mainData, width, columnMinWidth, footerItems, expandedIndex, expandable]
   );
 
   // Internal react table state reducer
@@ -300,6 +300,9 @@ export const Table = memo((props: Props) => {
         rowProps.style = {
           ...rowProps.style,
           height: tableStyles.rowHeight * indexesToKeepBlank.length,
+          paddingTop: tableStyles.rowHeight / 2,
+          paddingBottom: tableStyles.rowHeight / 2,
+          paddingLeft: 10,
         };
         return (
           <div {...rowProps}>
@@ -434,7 +437,7 @@ function useMainData(
   data: DataFrame,
   // This is index after filtering so we cannot use it directly with data
   expandedIndex: number | undefined
-): { mainData: DataFrame; subData?: DataFrame; indexesToKeepBlank: number[] } {
+): { mainData: DataFrame; subData?: DataFrame; indexesToKeepBlank: number[]; expandable: boolean } {
   return useMemo(() => {
     const subCols: Field[] = [];
     const mainCols: Field[] = [];
@@ -453,6 +456,7 @@ function useMainData(
         mainData: data,
         subData: undefined,
         indexesToKeepBlank,
+        expandable: false,
       };
     }
 
@@ -478,6 +482,19 @@ function useMainData(
         !isMainRow && expandedIndex !== undefined && newMainValues[0].length - 1 === expandedIndex;
       if (isFirstExpandedSubRow || inSubColumns) {
         indexesToKeepBlank.push(newMainValues[0].length);
+
+        if (isFirstExpandedSubRow) {
+          // We add 2 empty rows to account for subtable header and some padding
+          for (let columnIndex = 0; columnIndex < mainCols.length; columnIndex++) {
+            newMainValues[columnIndex].add(null);
+          }
+          indexesToKeepBlank.push(newMainValues[0].length);
+
+          for (let columnIndex = 0; columnIndex < mainCols.length; columnIndex++) {
+            newMainValues[columnIndex].add(null);
+          }
+          indexesToKeepBlank.push(newMainValues[0].length);
+        }
 
         for (let columnIndex = 0; columnIndex < mainCols.length; columnIndex++) {
           newMainValues[columnIndex].add(null);
@@ -522,6 +539,7 @@ function useMainData(
         fields: newSubFields,
       }),
       indexesToKeepBlank,
+      expandable: true,
     };
   }, [data, expandedIndex]);
 }
